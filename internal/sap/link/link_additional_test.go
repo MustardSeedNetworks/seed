@@ -877,8 +877,7 @@ func TestDefaultPollInterval(t *testing.T) {
 func BenchmarkParseDuplex(b *testing.B) {
 	inputs := []string{"full", "half", "unknown", "Full", "Half", ""}
 
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		for _, input := range inputs {
 			_ = link.ParseDuplex(input)
 		}
@@ -889,8 +888,7 @@ func BenchmarkParseDuplex(b *testing.B) {
 func BenchmarkParseState(b *testing.B) {
 	inputs := []string{"up", "down", "dormant", "unknown", "UP", "DOWN", ""}
 
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		for _, input := range inputs {
 			_ = link.ParseState(input)
 		}
@@ -910,14 +908,14 @@ func BenchmarkGetFlapCount(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		_ = m.GetFlapCount(time.Hour)
 	}
 }
 
 // BenchmarkListInterfaces benchmarks ListInterfaces performance.
 func BenchmarkListInterfaces(b *testing.B) {
-	for range b.N {
+	for b.Loop() {
 		_, _ = link.ListInterfaces()
 	}
 }
@@ -933,7 +931,7 @@ func BenchmarkGetStatus(b *testing.B) {
 	ifaceName := interfaces[0].Interface
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		_, _ = link.GetStatus(ifaceName)
 	}
 }
@@ -942,8 +940,7 @@ func BenchmarkGetStatus(b *testing.B) {
 func BenchmarkIsPhysicalInterface(b *testing.B) {
 	interfaces := []string{"eth0", "en0", "lo0", "docker0", "veth123"}
 
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		for _, iface := range interfaces {
 			_ = link.IsPhysicalInterface(iface)
 		}

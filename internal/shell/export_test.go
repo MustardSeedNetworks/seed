@@ -4,6 +4,8 @@ package shell
 // and provides access to internal implementation details.
 
 import (
+	"time"
+
 	"github.com/krisarmstrong/seed/internal/discovery"
 )
 
@@ -171,4 +173,84 @@ func (a *VulnerabilityServiceTestAccessor) SetCancel(cancel func()) {
 // SetRogueServiceCancel sets the cancel function for testing.
 func (a *RogueServiceTestAccessor) SetCancel(cancel func()) {
 	a.Service.cancel = cancel
+}
+
+// TestablePostureService creates a PostureService that can be tested with mock data.
+type TestablePostureService struct {
+	Service        *PostureService
+	MockVulns      []Vulnerability
+	MockVulnsError error
+}
+
+// NewTestablePostureService creates a testable posture service with mock vulnerability data.
+func NewTestablePostureService(vulns []Vulnerability) *TestablePostureService {
+	return &TestablePostureService{
+		Service: &PostureService{
+			cfg:           nil,
+			db:            nil,
+			discovery:     nil,
+			vulnerability: nil,
+		},
+		MockVulns: vulns,
+	}
+}
+
+// AssessWithMockVulns performs assessment with mock vulnerability data.
+// This directly tests the scoring logic without needing a real vulnerability service.
+func AssessWithMockVulns(vulns []Vulnerability) *PostureScore {
+	score := &PostureScore{
+		Overall:    perfectSecurityScore,
+		Categories: make(map[string]int),
+		Issues:     make([]PostureIssue, 0),
+		AssessedAt: time.Now(),
+	}
+
+	// Deduct points for vulnerabilities
+	for _, v := range vulns {
+		switch v.Severity {
+		case SeverityCritical:
+			score.Overall -= 20
+			score.Issues = append(score.Issues, PostureIssue{
+				Category:    "vulnerabilities",
+				Severity:    "critical",
+				Description: "Critical vulnerability: " + v.CVEID,
+				Remediation: v.Remediation,
+			})
+		case SeverityHigh:
+			score.Overall -= 10
+		case SeverityMedium:
+			score.Overall -= 5
+		case SeverityLow:
+			score.Overall -= 2
+		case SeverityInfo:
+			// Info severity doesn't affect score
+		}
+	}
+	score.Categories["vulnerabilities"] = max(0, perfectSecurityScore-len(vulns)*vulnerabilityPenaltyMultiplier)
+
+	// Ensure score doesn't go below 0
+	if score.Overall < 0 {
+		score.Overall = 0
+	}
+
+	return score
+}
+
+// CountVulnsBySeverity counts vulnerabilities by severity like the Scan method does.
+func CountVulnsBySeverity(vulns []Vulnerability) (critical, high, medium, low int) {
+	for _, v := range vulns {
+		switch v.Severity {
+		case SeverityCritical:
+			critical++
+		case SeverityHigh:
+			high++
+		case SeverityMedium:
+			medium++
+		case SeverityLow:
+			low++
+		case SeverityInfo:
+			// Info severity not counted
+		}
+	}
+	return
 }

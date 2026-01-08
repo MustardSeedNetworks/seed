@@ -388,7 +388,7 @@ func BenchmarkCheckAndNotify(b *testing.B) {
 	m := link.NewMonitor(loopbackName)
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		m.ExportCheckAndNotify()
 	}
 }
@@ -408,7 +408,7 @@ func BenchmarkCheckAndNotifyWithCallbacks(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		m.ExportCheckAndNotify()
 	}
 }
@@ -424,7 +424,7 @@ func BenchmarkWaitForState(b *testing.B) {
 	targetState := link.ExportCheckLinkStatePlatform(loopbackName)
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		m.WaitForState(targetState, 10*time.Millisecond)
 	}
 }

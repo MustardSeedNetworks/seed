@@ -265,7 +265,7 @@ func TestGetVlanInfoWithInterfaceNameLengths(t *testing.T) {
 		{"seven chars", "vlan100", 100},
 		{"eight chars", "vlan1000", 1000},
 		{"sixteen chars (IFNAMSIZ limit)", "vlan123456789012", 123456789012}, // Parses as number.
-		{"exactly IFNAMSIZ", "vlan12345678901", 12345678901},                // Parses as number.
+		{"exactly IFNAMSIZ", "vlan12345678901", 12345678901},                 // Parses as number.
 		{"longer than IFNAMSIZ", "verylonginterfacenamethatexceedsifnamsizlimit", 0},
 	}
 

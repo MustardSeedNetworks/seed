@@ -294,11 +294,11 @@ func TestRogueDetectorGetRogueServersComprehensive(t *testing.T) {
 		ip   string
 		auth bool
 	}{
-		{"192.168.1.1", true},   // Known
-		{"192.168.1.2", true},   // Known
+		{"192.168.1.1", true},    // Known
+		{"192.168.1.2", true},    // Known
 		{"192.168.1.100", false}, // Rogue
 		{"192.168.1.200", false}, // Rogue
-		{"10.0.0.1", false},     // Rogue
+		{"10.0.0.1", false},      // Rogue
 	}
 
 	for _, s := range servers {
@@ -379,7 +379,13 @@ func TestRogueDetectorPruneExpiredServersComprehensive(t *testing.T) {
 			if i%10 == 0 {
 				lastSeen = fresh // Every 10th is fresh
 			}
-			ip := "192." + string(rune('0'+i/256/256%10)) + "." + string(rune('0'+i/256%10)) + "." + string(rune('0'+i%256))
+			ip := "192." + string(
+				rune('0'+i/256/256%10),
+			) + "." + string(
+				rune('0'+i/256%10),
+			) + "." + string(
+				rune('0'+i%256),
+			)
 			rd.AddDetectedServer(&dhcp.RogueServer{
 				IP:       ip,
 				LastSeen: lastSeen,
@@ -708,9 +714,9 @@ func TestRogueDetectorExportGetServerIdentifierComprehensive(t *testing.T) {
 			name: "multiple options with server ID",
 			dhcp: &dhcp.MockDHCPv4{
 				Options: []dhcp.MockDHCPOption{
-					{Type: 53, Data: []byte{2}},                // Message Type
-					{Type: 1, Data: []byte{255, 255, 255, 0}},  // Subnet Mask
-					{Type: 54, Data: []byte{172, 16, 0, 1}},    // Server Identifier
+					{Type: 53, Data: []byte{2}},               // Message Type
+					{Type: 1, Data: []byte{255, 255, 255, 0}}, // Subnet Mask
+					{Type: 54, Data: []byte{172, 16, 0, 1}},   // Server Identifier
 				},
 			},
 			expected: "172.16.0.1",

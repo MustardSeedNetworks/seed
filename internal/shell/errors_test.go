@@ -131,22 +131,22 @@ func TestWrappedErrors(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name       string
-		baseErr    error
-		wantMatch  bool
-		targetErr  error
+		name      string
+		baseErr   error
+		wantMatch bool
+		targetErr error
 	}{
 		{
-			name:       "wrapped_ErrNotImplemented",
-			baseErr:    shell.ErrNotImplemented,
-			wantMatch:  true,
-			targetErr:  shell.ErrNotImplemented,
+			name:      "wrapped_ErrNotImplemented",
+			baseErr:   shell.ErrNotImplemented,
+			wantMatch: true,
+			targetErr: shell.ErrNotImplemented,
 		},
 		{
-			name:       "wrapped_ErrNotInitialized",
-			baseErr:    shell.ErrNotInitialized,
-			wantMatch:  true,
-			targetErr:  shell.ErrNotInitialized,
+			name:      "wrapped_ErrNotInitialized",
+			baseErr:   shell.ErrNotInitialized,
+			wantMatch: true,
+			targetErr: shell.ErrNotInitialized,
 		},
 	}
 

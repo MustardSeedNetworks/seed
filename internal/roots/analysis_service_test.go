@@ -375,9 +375,9 @@ func TestAnalysisService_ExportCalculateScore(t *testing.T) {
 		{
 			name: "combined penalties",
 			analysis: &roots.PathAnalysis{
-				PacketLoss:  20.0,                                       // -20
-				AverageRTT:  150.0,                                      // -5
-				Bottlenecks: []roots.PathBottleneck{{HopNumber: 1}},     // -5
+				PacketLoss:  20.0,                                   // -20
+				AverageRTT:  150.0,                                  // -5
+				Bottlenecks: []roots.PathBottleneck{{HopNumber: 1}}, // -5
 			},
 			want: 70, // 100 - 20 - 5 - 5 = 70
 		},
@@ -619,4 +619,3 @@ func containsString(s, substr string) bool {
 	}
 	return false
 }
-

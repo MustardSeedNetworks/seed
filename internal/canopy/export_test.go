@@ -88,3 +88,24 @@ func (m *Module) SetAI(ai *AIService) {
 	defer m.mu.Unlock()
 	m.ai = ai
 }
+
+// SetChannelServiceScanner sets the scanner on a channel service for testing.
+func (s *ChannelService) SetScanner(scanner *wifi.Scanner) {
+	s.scanner = scanner
+}
+
+// NewChannelServiceForTest creates a channel service with injected scanner for testing.
+func NewChannelServiceForTest(scanner *wifi.Scanner) *ChannelService {
+	return &ChannelService{
+		scanner: scanner,
+	}
+}
+
+// NewWiFiServiceForTest creates a minimal WiFi service for testing.
+func NewWiFiServiceForTest(scanner *wifi.Scanner, manager *wifi.Manager) *WiFiService {
+	return &WiFiService{
+		scanner:   scanner,
+		manager:   manager,
+		available: true,
+	}
+}

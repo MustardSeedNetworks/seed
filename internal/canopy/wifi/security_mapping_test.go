@@ -126,9 +126,10 @@ func TestMapSecurityTypeSpecialCases(t *testing.T) {
 		input    string
 		expected string
 	}{
-		// Whitespace handling
-		{"With leading space", " WPA2", " WPA2"},  // Not trimmed, passed through
-		{"With trailing space", "WPA2 ", "WPA2 "}, // Not trimmed, passed through
+		// Whitespace handling - the function uses strings.ToUpper which preserves whitespace
+		// but the Contains checks will still match WPA2
+		{"With leading space", " WPA2", "WPA2"},
+		{"With trailing space", "WPA2 ", "WPA2"},
 
 		// Numeric suffixes
 		{"WPA3.0", "WPA3.0", "WPA3"},

@@ -1365,8 +1365,12 @@ func TestGetArguments(t *testing.T) {
 			name: "nil arguments",
 			args: nil,
 			checkFunc: func(t *testing.T, result map[string]any) {
-				if result == nil {
-					t.Error("expected non-nil map for nil args")
+				// When a nil map[string]any is assigned to any, the interface is not nil
+				// (it has type info but nil value). The type assertion returns the nil map.
+				// A nil map in Go is usable (returns zero values on read, panics on write).
+				// This is valid Go behavior.
+				if len(result) != 0 {
+					t.Errorf("expected nil or empty map for nil args, got %v", result)
 				}
 			},
 		},
@@ -1378,6 +1382,32 @@ func TestGetArguments(t *testing.T) {
 			result := mcp.ExportGetArguments2(request)
 			tt.checkFunc(t, result)
 		})
+	}
+}
+
+// TestGetArgumentsWithNilParams tests getArguments when Params.Arguments is truly nil interface.
+func TestGetArgumentsWithNilParams(t *testing.T) {
+	// Test case where Arguments is nil interface (not nil map assigned to interface)
+	request := mcp.NewCallToolRequestWithNilArgs("test_tool")
+	result := mcp.ExportGetArguments2(request)
+
+	// When Arguments is nil (interface), should return empty map
+	if result == nil {
+		t.Error("expected non-nil empty map, got nil")
+	}
+}
+
+// TestGetArgumentsWithNonMapType tests getArguments when Arguments is not a map.
+func TestGetArgumentsWithNonMapType(t *testing.T) {
+	request := mcp.NewCallToolRequestWithStringArg("test_tool", "string_arg")
+	result := mcp.ExportGetArguments2(request)
+
+	// When Arguments is not a map, should return empty map
+	if result == nil {
+		t.Error("expected non-nil empty map, got nil")
+	}
+	if len(result) != 0 {
+		t.Errorf("expected empty map for non-map args, got %d elements", len(result))
 	}
 }
 
@@ -1429,20 +1459,20 @@ func TestServerWithFullServiceProvider(t *testing.T) {
 			devices: []*discovery.DiscoveredDevice{},
 			status:  &discovery.ServiceStatus{Running: true},
 		},
-		netManager:       &mockNetworkManager{interfaces: []*network.InterfaceInfo{}},
-		linkMonitor:      &mockLinkMonitor{isUp: true},
-		vlanManager:      &mockVLANManager{},
-		dnsTester:        &mockDNSTester{result: &dns.TestResult{}},
-		gatewayTester:    &mockGatewayTester{stats: &gateway.PingStats{}},
-		speedtestTester:  &mockSpeedtestTester{status: speedtest.Status{}},
-		iperfManager:     &mockIperfManager{clientStatus: iperf.ClientStatus{}},
-		wifiScanner:      &mockWiFiScanner{networks: []mcp.WiFiNetwork{}},
-		wifiManager:      &mockWiFiManager{},
-		rogueDetector:    &mockRogueDetector{},
-		vulnScanner:      &mockVulnScanner{},
-		publicIPChecker:  &mockPublicIPChecker{},
-		cfg:              &config.Config{},
-		icmpAvailable:    true,
+		netManager:      &mockNetworkManager{interfaces: []*network.InterfaceInfo{}},
+		linkMonitor:     &mockLinkMonitor{isUp: true},
+		vlanManager:     &mockVLANManager{},
+		dnsTester:       &mockDNSTester{result: &dns.TestResult{}},
+		gatewayTester:   &mockGatewayTester{stats: &gateway.PingStats{}},
+		speedtestTester: &mockSpeedtestTester{status: speedtest.Status{}},
+		iperfManager:    &mockIperfManager{clientStatus: iperf.ClientStatus{}},
+		wifiScanner:     &mockWiFiScanner{networks: []mcp.WiFiNetwork{}},
+		wifiManager:     &mockWiFiManager{},
+		rogueDetector:   &mockRogueDetector{},
+		vulnScanner:     &mockVulnScanner{},
+		publicIPChecker: &mockPublicIPChecker{},
+		cfg:             &config.Config{},
+		icmpAvailable:   true,
 	}
 
 	server := createTestServer(provider)

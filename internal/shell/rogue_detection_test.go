@@ -441,23 +441,23 @@ func TestRogueServiceWithDifferentInterfaces(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name      string
+		name       string
 		interface_ string
 	}{
 		{
-			name:      "loopback",
+			name:       "loopback",
 			interface_: "lo",
 		},
 		{
-			name:      "eth0",
+			name:       "eth0",
 			interface_: "eth0",
 		},
 		{
-			name:      "en0",
+			name:       "en0",
 			interface_: "en0",
 		},
 		{
-			name:      "wlan0",
+			name:       "wlan0",
 			interface_: "wlan0",
 		},
 	}

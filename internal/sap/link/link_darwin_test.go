@@ -304,14 +304,14 @@ func TestDarwinListInterfacesContent(t *testing.T) {
 
 // BenchmarkDarwinCheckLinkStatePlatform benchmarks link state detection on macOS.
 func BenchmarkDarwinCheckLinkStatePlatform(b *testing.B) {
-	for range b.N {
+	for b.Loop() {
 		_ = link.ExportCheckLinkStatePlatform("en0")
 	}
 }
 
 // BenchmarkDarwinGetSpeedDuplex benchmarks speed/duplex detection on macOS.
 func BenchmarkDarwinGetSpeedDuplex(b *testing.B) {
-	for range b.N {
+	for b.Loop() {
 		_, _ = link.ExportGetSpeedDuplex("en0")
 	}
 }
@@ -320,8 +320,7 @@ func BenchmarkDarwinGetSpeedDuplex(b *testing.B) {
 func BenchmarkDarwinIsPhysicalInterfacePlatform(b *testing.B) {
 	interfaces := []string{"en0", "lo0", "utun0", "bridge0", "awdl0"}
 
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		for _, iface := range interfaces {
 			_ = link.ExportIsPhysicalInterfacePlatform(iface)
 		}
@@ -332,8 +331,7 @@ func BenchmarkDarwinIsPhysicalInterfacePlatform(b *testing.B) {
 func BenchmarkDarwinParseSpeedPlatform(b *testing.B) {
 	speeds := []string{"1000", "100", "10000", "1g", "10g", "100g", "unknown"}
 
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		for _, s := range speeds {
 			_ = link.ExportParseSpeedPlatform(s)
 		}

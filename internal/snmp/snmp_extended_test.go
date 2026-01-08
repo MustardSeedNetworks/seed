@@ -1382,3 +1382,565 @@ func TestMACFromOIDExtended(t *testing.T) {
 		})
 	}
 }
+
+// TestParseInetCidrRouteIndexExtended tests extended cases for parseInetCidrRouteIndex.
+func TestParseInetCidrRouteIndexExtended(t *testing.T) {
+	tests := []struct {
+		name       string
+		oid        string
+		wantDest   string
+		wantPrefix int
+		wantNext   string
+	}{
+		{
+			name:       "valid IPv4 route",
+			oid:        "1.3.6.1.2.1.4.24.7.1.1.1.4.10.0.0.0.24.1.4.192.168.1.1",
+			wantDest:   "10.0.0.0",
+			wantPrefix: 24,
+			wantNext:   "0.0.0.0",
+		},
+		{
+			name:       "default route",
+			oid:        "1.3.6.1.2.1.4.24.7.1.1.1.4.0.0.0.0.0.1.4.10.0.0.1",
+			wantDest:   "0.0.0.0",
+			wantPrefix: 0,
+			wantNext:   "0.0.0.0",
+		},
+		{
+			name:       "host route /32",
+			oid:        "1.3.6.1.2.1.4.24.7.1.1.1.4.192.168.1.100.32.1.4.192.168.1.1",
+			wantDest:   "192.168.1.100",
+			wantPrefix: 32,
+			wantNext:   "0.0.0.0",
+		},
+		{
+			name:       "too short OID",
+			oid:        "1.3.6.1.2.1.4.24",
+			wantDest:   "",
+			wantPrefix: 0,
+			wantNext:   "",
+		},
+		{
+			name:       "empty OID",
+			oid:        "",
+			wantDest:   "",
+			wantPrefix: 0,
+			wantNext:   "",
+		},
+		{
+			name:       "OID with no IPv4 pattern",
+			oid:        "1.3.6.1.2.1.4.24.7.1.1.9.9.9.9.9.9.9.9.9.9.9",
+			wantDest:   "",
+			wantPrefix: 0,
+			wantNext:   "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotDest, gotPrefix, gotNext := snmp.ExportParseInetCidrRouteIndex(tt.oid)
+			if gotDest != tt.wantDest {
+				t.Errorf("parseInetCidrRouteIndex(%v) dest = %v, want %v", tt.oid, gotDest, tt.wantDest)
+			}
+			if gotPrefix != tt.wantPrefix {
+				t.Errorf("parseInetCidrRouteIndex(%v) prefix = %v, want %v", tt.oid, gotPrefix, tt.wantPrefix)
+			}
+			if gotNext != tt.wantNext {
+				t.Errorf("parseInetCidrRouteIndex(%v) next = %v, want %v", tt.oid, gotNext, tt.wantNext)
+			}
+		})
+	}
+}
+
+// TestParseIPCidrRouteIndexExtended tests extended cases for parseIPCidrRouteIndex.
+func TestParseIPCidrRouteIndexExtended(t *testing.T) {
+	tests := []struct {
+		name     string
+		oid      string
+		wantDest string
+		wantMask string
+		wantNext string
+	}{
+		{
+			name:     "valid route with /24 subnet",
+			oid:      "1.3.6.1.2.1.4.24.4.1.1.192.168.1.0.255.255.255.0.0.10.0.0.1",
+			wantDest: "192.168.1.0",
+			wantMask: "255.255.255.0",
+			wantNext: "10.0.0.1",
+		},
+		{
+			name:     "default route",
+			oid:      "1.3.6.1.2.1.4.24.4.1.1.0.0.0.0.0.0.0.0.0.10.0.0.1",
+			wantDest: "0.0.0.0",
+			wantMask: "0.0.0.0",
+			wantNext: "10.0.0.1",
+		},
+		{
+			name:     "host route",
+			oid:      "1.3.6.1.2.1.4.24.4.1.1.192.168.1.100.255.255.255.255.0.192.168.1.1",
+			wantDest: "192.168.1.100",
+			wantMask: "255.255.255.255",
+			wantNext: "192.168.1.1",
+		},
+		{
+			name:     "too short OID returns empty",
+			oid:      "1.3.6.1.2.1",
+			wantDest: "",
+			wantMask: "",
+			wantNext: "",
+		},
+		{
+			name:     "empty OID returns empty",
+			oid:      "",
+			wantDest: "",
+			wantMask: "",
+			wantNext: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotDest, gotMask, gotNext := snmp.ExportParseIPCidrRouteIndex(tt.oid)
+			if gotDest != tt.wantDest {
+				t.Errorf("parseIPCidrRouteIndex(%v) dest = %v, want %v", tt.oid, gotDest, tt.wantDest)
+			}
+			if gotMask != tt.wantMask {
+				t.Errorf("parseIPCidrRouteIndex(%v) mask = %v, want %v", tt.oid, gotMask, tt.wantMask)
+			}
+			if gotNext != tt.wantNext {
+				t.Errorf("parseIPCidrRouteIndex(%v) next = %v, want %v", tt.oid, gotNext, tt.wantNext)
+			}
+		})
+	}
+}
+
+// TestParseVLANAndMACExtended tests extended cases for parseVLANAndMAC.
+func TestParseVLANAndMACExtended(t *testing.T) {
+	tests := []struct {
+		name     string
+		parts    []string
+		wantVLAN int
+		wantMAC  string
+		wantOK   bool
+	}{
+		{
+			name:     "valid VLAN 1 with MAC",
+			parts:    []string{"1", "3", "6", "1", "2", "1", "17", "7", "1", "2", "2", "1", "2", "1", "0", "26", "85", "0", "25", "96"},
+			wantVLAN: 1,
+			wantMAC:  "00:1a:55:00:19:60",
+			wantOK:   true,
+		},
+		{
+			name:     "valid VLAN 100 with MAC",
+			parts:    []string{"1", "3", "6", "1", "2", "1", "17", "7", "1", "2", "2", "1", "2", "100", "170", "187", "204", "221", "238", "255"},
+			wantVLAN: 100,
+			wantMAC:  "aa:bb:cc:dd:ee:ff",
+			wantOK:   true,
+		},
+		{
+			name:     "valid VLAN 4094 with broadcast MAC",
+			parts:    []string{"1", "3", "6", "1", "2", "1", "17", "7", "1", "2", "2", "1", "2", "4094", "255", "255", "255", "255", "255", "255"},
+			wantVLAN: 4094,
+			wantMAC:  "ff:ff:ff:ff:ff:ff",
+			wantOK:   true,
+		},
+		{
+			name:     "too few parts",
+			parts:    []string{"1", "2", "3", "4", "5"},
+			wantVLAN: 0,
+			wantMAC:  "",
+			wantOK:   false,
+		},
+		{
+			name:     "empty parts",
+			parts:    []string{},
+			wantVLAN: 0,
+			wantMAC:  "",
+			wantOK:   false,
+		},
+		{
+			name:     "invalid VLAN (non-numeric)",
+			parts:    []string{"1", "3", "6", "1", "2", "1", "17", "7", "1", "2", "2", "1", "2", "xx", "0", "0", "0", "0", "0", "0"},
+			wantVLAN: 0,
+			wantMAC:  "",
+			wantOK:   false,
+		},
+		{
+			name:     "invalid MAC octet (non-numeric)",
+			parts:    []string{"1", "3", "6", "1", "2", "1", "17", "7", "1", "2", "2", "1", "2", "1", "xx", "0", "0", "0", "0", "0"},
+			wantVLAN: 0,
+			wantMAC:  "",
+			wantOK:   false,
+		},
+		{
+			name:     "MAC octet out of range (>255)",
+			parts:    []string{"1", "3", "6", "1", "2", "1", "17", "7", "1", "2", "2", "1", "2", "1", "256", "0", "0", "0", "0", "0"},
+			wantVLAN: 0,
+			wantMAC:  "",
+			wantOK:   false,
+		},
+		{
+			name:     "negative MAC octet",
+			parts:    []string{"1", "3", "6", "1", "2", "1", "17", "7", "1", "2", "2", "1", "2", "1", "-1", "0", "0", "0", "0", "0"},
+			wantVLAN: 0,
+			wantMAC:  "",
+			wantOK:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotVLAN, gotMAC, gotOK := snmp.ExportParseVLANAndMAC(tt.parts)
+			if gotVLAN != tt.wantVLAN {
+				t.Errorf("parseVLANAndMAC(%v) vlan = %v, want %v", tt.parts, gotVLAN, tt.wantVLAN)
+			}
+			if gotMAC != tt.wantMAC {
+				t.Errorf("parseVLANAndMAC(%v) mac = %v, want %v", tt.parts, gotMAC, tt.wantMAC)
+			}
+			if gotOK != tt.wantOK {
+				t.Errorf("parseVLANAndMAC(%v) ok = %v, want %v", tt.parts, gotOK, tt.wantOK)
+			}
+		})
+	}
+}
+
+// TestParseBridgePortExtended tests extended cases for parseBridgePort.
+func TestParseBridgePortExtended(t *testing.T) {
+	tests := []struct {
+		name     string
+		pdu      gosnmp.SnmpPDU
+		wantPort int
+		wantOK   bool
+	}{
+		{
+			name: "valid port 1",
+			pdu: gosnmp.SnmpPDU{
+				Value: 1,
+			},
+			wantPort: 1,
+			wantOK:   true,
+		},
+		{
+			name: "valid port 48",
+			pdu: gosnmp.SnmpPDU{
+				Value: 48,
+			},
+			wantPort: 48,
+			wantOK:   true,
+		},
+		{
+			name: "port zero is valid",
+			pdu: gosnmp.SnmpPDU{
+				Value: 0,
+			},
+			wantPort: 0,
+			wantOK:   true,
+		},
+		{
+			name: "non-int value returns false",
+			pdu: gosnmp.SnmpPDU{
+				Value: "not-an-int",
+			},
+			wantPort: 0,
+			wantOK:   false,
+		},
+		{
+			name: "nil value returns false",
+			pdu: gosnmp.SnmpPDU{
+				Value: nil,
+			},
+			wantPort: 0,
+			wantOK:   false,
+		},
+		{
+			name: "float value returns false",
+			pdu: gosnmp.SnmpPDU{
+				Value: 3.14,
+			},
+			wantPort: 0,
+			wantOK:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotPort, gotOK := snmp.ExportParseBridgePort(tt.pdu)
+			if gotPort != tt.wantPort {
+				t.Errorf("parseBridgePort() port = %v, want %v", gotPort, tt.wantPort)
+			}
+			if gotOK != tt.wantOK {
+				t.Errorf("parseBridgePort() ok = %v, want %v", gotOK, tt.wantOK)
+			}
+		})
+	}
+}
+
+// TestCollectMACEntriesExtended tests collectMACEntries function.
+func TestCollectMACEntriesExtended(t *testing.T) {
+	tests := []struct {
+		name       string
+		macToEntry map[string]*snmp.MACEntry
+		wantCount  int
+	}{
+		{
+			name:       "empty map",
+			macToEntry: map[string]*snmp.MACEntry{},
+			wantCount:  0,
+		},
+		{
+			name: "single entry",
+			macToEntry: map[string]*snmp.MACEntry{
+				"00:11:22:33:44:55": {MAC: "00:11:22:33:44:55", IfIndex: 1, VLAN: 1},
+			},
+			wantCount: 1,
+		},
+		{
+			name: "multiple entries",
+			macToEntry: map[string]*snmp.MACEntry{
+				"00:11:22:33:44:55": {MAC: "00:11:22:33:44:55", IfIndex: 1, VLAN: 1},
+				"00:11:22:33:44:56": {MAC: "00:11:22:33:44:56", IfIndex: 2, VLAN: 1},
+				"00:11:22:33:44:57": {MAC: "00:11:22:33:44:57", IfIndex: 3, VLAN: 2},
+			},
+			wantCount: 3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := snmp.ExportCollectMACEntries(tt.macToEntry)
+			if len(got) != tt.wantCount {
+				t.Errorf("collectMACEntries() count = %v, want %v", len(got), tt.wantCount)
+			}
+		})
+	}
+}
+
+// TestFormatIPv6FromOctetsExtended tests extended cases for formatIPv6FromOctets.
+func TestFormatIPv6FromOctetsExtended(t *testing.T) {
+	tests := []struct {
+		name   string
+		octets []string
+		want   string
+	}{
+		{
+			name:   "loopback ::1",
+			octets: []string{"0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "1"},
+			want:   "0000:0000:0000:0000:0000:0000:0000:0001",
+		},
+		{
+			name:   "all zeros ::",
+			octets: []string{"0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"},
+			want:   "0000:0000:0000:0000:0000:0000:0000:0000",
+		},
+		{
+			name:   "all ff",
+			octets: []string{"255", "255", "255", "255", "255", "255", "255", "255", "255", "255", "255", "255", "255", "255", "255", "255"},
+			want:   "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+		},
+		{
+			name:   "link-local fe80::1",
+			octets: []string{"254", "128", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "1"},
+			want:   "fe80:0000:0000:0000:0000:0000:0000:0001",
+		},
+		{
+			name:   "wrong length returns empty",
+			octets: []string{"0", "0", "0", "0"},
+			want:   "",
+		},
+		{
+			name:   "empty returns empty",
+			octets: []string{},
+			want:   "",
+		},
+		{
+			name:   "non-numeric returns empty",
+			octets: []string{"0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "xx"},
+			want:   "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := snmp.ExportFormatIPv6FromOctets(tt.octets)
+			if got != tt.want {
+				t.Errorf("formatIPv6FromOctets(%v) = %v, want %v", tt.octets, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestGetMaxRepetitionsExtended tests getMaxRepetitions edge cases.
+func TestGetMaxRepetitionsExtended(t *testing.T) {
+	tests := []struct {
+		name string
+		cfg  *config.SNMPConfig
+		want uint32
+	}{
+		{
+			name: "nil config returns default",
+			cfg:  nil,
+			want: 25,
+		},
+		{
+			name: "zero value returns default",
+			cfg:  &config.SNMPConfig{MaxRepetitions: 0},
+			want: 25,
+		},
+		{
+			name: "small value returned as-is",
+			cfg:  &config.SNMPConfig{MaxRepetitions: 10},
+			want: 10,
+		},
+		{
+			name: "value at max",
+			cfg:  &config.SNMPConfig{MaxRepetitions: 100},
+			want: 100,
+		},
+		{
+			name: "value over max capped",
+			cfg:  &config.SNMPConfig{MaxRepetitions: 150},
+			want: 100,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := snmp.ExportGetMaxRepetitions(tt.cfg)
+			if got != tt.want {
+				t.Errorf("getMaxRepetitions() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestQueryWithNilConfig tests Query with nil config.
+func TestQueryWithNilConfig(t *testing.T) {
+	ctx := context.Background()
+	_, err := snmp.Query(ctx, "192.168.1.1", "1.3.6.1.2.1.1.1.0", nil)
+	if err == nil {
+		t.Error("Query() with nil config should return error")
+	}
+}
+
+// TestQueryMultipleWithNilConfig tests QueryMultiple with nil config.
+func TestQueryMultipleWithNilConfig(t *testing.T) {
+	ctx := context.Background()
+	_, err := snmp.QueryMultiple(ctx, "192.168.1.1", []string{"1.3.6.1.2.1.1.1.0"}, nil)
+	if err == nil {
+		t.Error("QueryMultiple() with nil config should return error")
+	}
+}
+
+// TestGetVendorVersionNilConfigExtended tests GetVendorVersion with nil config.
+func TestGetVendorVersionNilConfigExtended(t *testing.T) {
+	ctx := context.Background()
+	version, err := snmp.GetVendorVersion(ctx, "192.168.1.1", nil)
+	if version != "" {
+		t.Errorf("GetVendorVersion() with nil config version = %v, want empty", version)
+	}
+	if err == nil {
+		t.Error("GetVendorVersion() with nil config should return error")
+	}
+}
+
+// TestGetRoutesNilConfigExtended tests GetRoutes with nil config.
+func TestGetRoutesNilConfigExtended(t *testing.T) {
+	ctx := context.Background()
+	_, err := snmp.GetRoutes(ctx, "192.168.1.1", nil)
+	if err == nil {
+		t.Error("GetRoutes() with nil config should return error")
+	}
+}
+
+// TestGetAllInterfacesNilConfigExtended tests GetAllInterfaces with nil config.
+func TestGetAllInterfacesNilConfigExtended(t *testing.T) {
+	ctx := context.Background()
+	_, err := snmp.GetAllInterfaces(ctx, "192.168.1.1", nil)
+	if err == nil {
+		t.Error("GetAllInterfaces() with nil config should return error")
+	}
+}
+
+// TestGetMACTableNilConfigExtended tests GetMACTable with nil config.
+func TestGetMACTableNilConfigExtended(t *testing.T) {
+	ctx := context.Background()
+	_, err := snmp.GetMACTable(ctx, "192.168.1.1", nil)
+	if err == nil {
+		t.Error("GetMACTable() with nil config should return error")
+	}
+}
+
+// TestGetPortVLANsNilConfigExtended tests GetPortVLANs with nil config.
+func TestGetPortVLANsNilConfigExtended(t *testing.T) {
+	ctx := context.Background()
+	_, err := snmp.GetPortVLANs(ctx, "192.168.1.1", 1, nil)
+	if err == nil {
+		t.Error("GetPortVLANs() with nil config should return error")
+	}
+}
+
+// TestContextCanceledQuery tests Query with canceled context.
+func TestContextCanceledQuery(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	cfg := &config.SNMPConfig{
+		Communities: []string{"public"},
+		Timeout:     1,
+		Retries:     0,
+	}
+
+	_, err := snmp.Query(ctx, "192.168.1.1", "1.3.6.1.2.1.1.1.0", cfg)
+	if err == nil {
+		t.Error("Query() with canceled context should return error")
+	}
+}
+
+// TestContextCanceledGetSystemInfo tests GetSystemInfo with canceled context.
+func TestContextCanceledGetSystemInfo(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	cfg := &config.SNMPConfig{
+		Communities: []string{"public"},
+		Timeout:     1,
+		Retries:     0,
+	}
+
+	_, err := snmp.GetSystemInfo(ctx, "192.168.1.1", cfg)
+	if err == nil {
+		t.Error("GetSystemInfo() with canceled context should return error")
+	}
+}
+
+// TestEmptyCommunitiesAndCredentials tests functions with empty communities and credentials.
+func TestEmptyCommunitiesAndCredentials(t *testing.T) {
+	ctx := context.Background()
+	cfg := &config.SNMPConfig{
+		Communities:   []string{},
+		V3Credentials: []config.SNMPv3Credential{},
+		Timeout:       1,
+		Retries:       0,
+	}
+
+	t.Run("Query", func(t *testing.T) {
+		_, err := snmp.Query(ctx, "192.168.1.1", "1.3.6.1.2.1.1.1.0", cfg)
+		if err == nil {
+			t.Error("Query() with empty credentials should return error")
+		}
+	})
+
+	t.Run("GetRoutes", func(t *testing.T) {
+		_, err := snmp.GetRoutes(ctx, "192.168.1.1", cfg)
+		if err == nil {
+			t.Error("GetRoutes() with empty credentials should return error")
+		}
+	})
+
+	t.Run("GetAllInterfaces", func(t *testing.T) {
+		_, err := snmp.GetAllInterfaces(ctx, "192.168.1.1", cfg)
+		if err == nil {
+			t.Error("GetAllInterfaces() with empty credentials should return error")
+		}
+	})
+}

@@ -84,164 +84,51 @@ func TestBytesConversion(t *testing.T) {
 
 func TestFormatJSONResult(t *testing.T) {
 	tests := []struct {
-		name        string
-		input       any
-		wantErr     bool
-		checkOutput func(t *testing.T, output string)
+		name    string
+		input   any
+		wantErr bool
 	}{
-		{
-			name:    "simple map",
-			input:   map[string]string{"key": "value"},
-			wantErr: false,
-			checkOutput: func(t *testing.T, output string) {
-				var result map[string]string
-				if err := json.Unmarshal([]byte(output), &result); err != nil {
-					t.Errorf("failed to unmarshal output: %v", err)
-					return
-				}
-				if result["key"] != "value" {
-					t.Errorf("expected key=value, got key=%s", result["key"])
-				}
-			},
-		},
-		{
-			name:    "nested map",
-			input:   map[string]any{"outer": map[string]string{"inner": "value"}},
-			wantErr: false,
-			checkOutput: func(t *testing.T, output string) {
-				var result map[string]any
-				if err := json.Unmarshal([]byte(output), &result); err != nil {
-					t.Errorf("failed to unmarshal output: %v", err)
-					return
-				}
-				outer, ok := result["outer"].(map[string]any)
-				if !ok {
-					t.Errorf("expected outer to be a map")
-					return
-				}
-				if outer["inner"] != "value" {
-					t.Errorf("expected inner=value, got inner=%v", outer["inner"])
-				}
-			},
-		},
-		{
-			name:    "slice of strings",
-			input:   []string{"a", "b", "c"},
-			wantErr: false,
-			checkOutput: func(t *testing.T, output string) {
-				var result []string
-				if err := json.Unmarshal([]byte(output), &result); err != nil {
-					t.Errorf("failed to unmarshal output: %v", err)
-					return
-				}
-				if len(result) != 3 {
-					t.Errorf("expected 3 elements, got %d", len(result))
-				}
-			},
-		},
-		{
-			name:    "slice of ints",
-			input:   []int{1, 2, 3, 4, 5},
-			wantErr: false,
-			checkOutput: func(t *testing.T, output string) {
-				var result []int
-				if err := json.Unmarshal([]byte(output), &result); err != nil {
-					t.Errorf("failed to unmarshal output: %v", err)
-					return
-				}
-				if len(result) != 5 {
-					t.Errorf("expected 5 elements, got %d", len(result))
-				}
-			},
-		},
-		{
-			name:    "empty map",
-			input:   map[string]string{},
-			wantErr: false,
-			checkOutput: func(t *testing.T, output string) {
-				if output != "{}" {
-					t.Errorf("expected {}, got %s", output)
-				}
-			},
-		},
-		{
-			name:    "empty slice",
-			input:   []string{},
-			wantErr: false,
-			checkOutput: func(t *testing.T, output string) {
-				if output != "[]" {
-					t.Errorf("expected [], got %s", output)
-				}
-			},
-		},
-		{
-			name:    "nil value",
-			input:   nil,
-			wantErr: false,
-			checkOutput: func(t *testing.T, output string) {
-				if output != "null" {
-					t.Errorf("expected null, got %s", output)
-				}
-			},
-		},
+		{name: "simple map", input: map[string]string{"key": "value"}, wantErr: false},
+		{name: "nested map", input: map[string]any{"outer": map[string]string{"inner": "value"}}, wantErr: false},
+		{name: "slice of strings", input: []string{"a", "b", "c"}, wantErr: false},
+		{name: "slice of ints", input: []int{1, 2, 3, 4, 5}, wantErr: false},
+		{name: "empty map", input: map[string]string{}, wantErr: false},
+		{name: "empty slice", input: []string{}, wantErr: false},
+		{name: "nil value", input: nil, wantErr: false},
 		{
 			name: "complex struct",
 			input: struct {
 				Name    string `json:"name"`
 				Count   int    `json:"count"`
 				Enabled bool   `json:"enabled"`
-			}{
-				Name:    "test",
-				Count:   42,
-				Enabled: true,
-			},
+			}{Name: "test", Count: 42, Enabled: true},
 			wantErr: false,
-			checkOutput: func(t *testing.T, output string) {
-				var result map[string]any
-				if err := json.Unmarshal([]byte(output), &result); err != nil {
-					t.Errorf("failed to unmarshal output: %v", err)
-					return
-				}
-				if result["name"] != "test" {
-					t.Errorf("expected name=test, got name=%v", result["name"])
-				}
-				if result["count"] != float64(42) {
-					t.Errorf("expected count=42, got count=%v", result["count"])
-				}
-				if result["enabled"] != true {
-					t.Errorf("expected enabled=true, got enabled=%v", result["enabled"])
-				}
-			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := mcp.ExportFormatJSONResult(tt.input)
-
-			if tt.wantErr {
-				if err == nil {
-					t.Errorf("ExportFormatJSONResult() expected error, got nil")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Errorf("ExportFormatJSONResult() unexpected error: %v", err)
-				return
-			}
-
-			// The result is a *mcp.CallToolResult, we need to extract the text content
-			// For testing purposes, we'll use a type assertion approach
-			if result == nil {
-				t.Errorf("ExportFormatJSONResult() returned nil")
-				return
-			}
-
-			// Since we can't easily access the internal structure of CallToolResult,
-			// we'll just verify it's not nil for now
-			// More detailed testing would require mocking or integration tests
+			checkFormatJSONResultError(t, tt.name, tt.wantErr, result, err)
 		})
+	}
+}
+
+// checkFormatJSONResultError validates the result of ExportFormatJSONResult.
+func checkFormatJSONResultError(t *testing.T, name string, wantErr bool, result any, err error) {
+	t.Helper()
+	if wantErr {
+		if err == nil {
+			t.Errorf("%s: expected error, got nil", name)
+		}
+		return
+	}
+	if err != nil {
+		t.Errorf("%s: unexpected error: %v", name, err)
+		return
+	}
+	if result == nil {
+		t.Errorf("%s: returned nil", name)
 	}
 }
 

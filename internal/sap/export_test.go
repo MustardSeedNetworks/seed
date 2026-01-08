@@ -3,7 +3,12 @@ package sap
 // This file is only compiled during testing.
 // It exports internal functions for testing purposes.
 
-import "time"
+import (
+	"time"
+
+	"github.com/krisarmstrong/seed/internal/sap/cable"
+	"github.com/krisarmstrong/seed/internal/sap/gateway"
+)
 
 // DefaultInterfaceConst exposes the DefaultInterface constant for testing.
 const DefaultInterfaceConst = DefaultInterface
@@ -673,5 +678,65 @@ func MakeSystemHealthFull(
 		Uptime:        uptime,
 		LoadAverage:   loadAverage,
 		SampledAt:     time.Now(),
+	}
+}
+
+// =============================================================================
+// Internal Function Wrappers for Coverage
+// =============================================================================
+
+// ConvertCableStatusActual wraps the actual convertCableStatus function.
+func ConvertCableStatusActual(status cable.Status) CableStatus {
+	return convertCableStatus(status)
+}
+
+// ConvertPairResultsActual wraps the actual convertPairResults function.
+func ConvertPairResultsActual(pairs []cable.PairResult) []PairResult {
+	return convertPairResults(pairs)
+}
+
+// ConvertGatewayStatusActual wraps the actual convertGatewayStatus function.
+func ConvertGatewayStatusActual(status gateway.Status) HealthStatus {
+	return convertGatewayStatus(status)
+}
+
+// CableStatusOKValue exposes cable.StatusOK for testing.
+var CableStatusOKValue = cable.StatusOK
+
+// CableStatusOpenValue exposes cable.StatusOpen for testing.
+var CableStatusOpenValue = cable.StatusOpen
+
+// CableStatusShortValue exposes cable.StatusShort for testing.
+var CableStatusShortValue = cable.StatusShort
+
+// CableStatusImpedanceMismatchValue exposes cable.StatusImpedanceMismatch for testing.
+var CableStatusImpedanceMismatchValue = cable.StatusImpedanceMismatch
+
+// CableStatusCrosstalkValue exposes cable.StatusCrosstalk for testing.
+var CableStatusCrosstalkValue = cable.StatusCrosstalk
+
+// CableStatusSplitPairValue exposes cable.StatusSplitPair for testing.
+var CableStatusSplitPairValue = cable.StatusSplitPair
+
+// CableStatusUnknownValue exposes cable.StatusUnknown for testing.
+var CableStatusUnknownValue = cable.StatusUnknown
+
+// GatewayStatusSuccessValue exposes gateway.StatusSuccess for testing.
+var GatewayStatusSuccessValue = gateway.StatusSuccess
+
+// GatewayStatusWarningValue exposes gateway.StatusWarning for testing.
+var GatewayStatusWarningValue = gateway.StatusWarning
+
+// GatewayStatusErrorValue exposes gateway.StatusError for testing.
+var GatewayStatusErrorValue = gateway.StatusError
+
+// GatewayStatusUnknownValue exposes gateway.StatusUnknown for testing.
+var GatewayStatusUnknownValue = gateway.StatusUnknown
+
+// MakeCablePairResult creates a cable.PairResult for testing.
+func MakeCablePairResult(status cable.Status, lengthM *float64) cable.PairResult {
+	return cable.PairResult{
+		Status:  status,
+		LengthM: lengthM,
 	}
 }

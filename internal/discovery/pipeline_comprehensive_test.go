@@ -367,10 +367,10 @@ func TestPipelineFailedPayload(t *testing.T) {
 			Errors:   []string{"network timeout", "permission denied"},
 		},
 		{
-			Phase:        "resolution",
+			Phase:         "resolution",
 			NamesResolved: 0,
-			Duration:     10 * time.Second,
-			Errors:       []string{"DNS server unreachable"},
+			Duration:      10 * time.Second,
+			Errors:        []string{"DNS server unreachable"},
 		},
 	}
 

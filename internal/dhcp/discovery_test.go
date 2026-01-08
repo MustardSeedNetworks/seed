@@ -10,8 +10,8 @@ import (
 // TestMonitorRecordPhaseComprehensive tests RecordPhase with comprehensive scenarios.
 func TestMonitorRecordPhaseComprehensive(t *testing.T) {
 	tests := []struct {
-		name           string
-		phases         []struct {
+		name   string
+		phases []struct {
 			phase  dhcp.Phase
 			offset time.Duration
 		}
@@ -76,8 +76,8 @@ func TestMonitorRecordPhaseComprehensive(t *testing.T) {
 			}{
 				{dhcp.PhaseAck, 100 * time.Millisecond},
 			},
-			expectComplete: true,  // Ack marks complete regardless
-			expectTiming:   true,  // But timing will be calculated
+			expectComplete: true, // Ack marks complete regardless
+			expectTiming:   true, // But timing will be calculated
 		},
 	}
 
@@ -110,8 +110,8 @@ func TestMonitorRecordPhaseComprehensive(t *testing.T) {
 // TestMonitorCalculateTimingComprehensive tests calculateTiming with various scenarios.
 func TestMonitorCalculateTimingComprehensive(t *testing.T) {
 	tests := []struct {
-		name            string
-		tx              *dhcp.Transaction
+		name             string
+		tx               *dhcp.Transaction
 		expectedDiscover time.Duration
 		expectedOffer    time.Duration
 		expectedRequest  time.Duration
@@ -600,12 +600,12 @@ func TestTimingToMsComprehensive(t *testing.T) {
 		{
 			name: "microsecond precision loss",
 			timing: &dhcp.Timing{
-				Discover: 50500 * time.Microsecond, // 50.5ms
+				Discover: 50500 * time.Microsecond,  // 50.5ms
 				Total:    100500 * time.Microsecond, // 100.5ms
 				Complete: true,
 			},
 			expected: dhcp.TimingMs{
-				Discover: 50, // Truncated to 50ms
+				Discover: 50,  // Truncated to 50ms
 				Total:    100, // Truncated to 100ms
 			},
 		},

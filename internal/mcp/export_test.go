@@ -40,7 +40,8 @@ func ExportParsePortPart(ports []int, seen map[int]bool, part string) ([]int, er
 }
 
 // ExportGetArguments exposes getArguments for testing.
-func ExportGetArguments(request any) map[string]any {
+// Deprecated: Use ExportGetArguments2 instead which uses the proper mcp.CallToolRequest type.
+func ExportGetArguments(_ any) map[string]any {
 	// Need to use the mcp.CallToolRequest type here
 	// Since we can't directly use the external type, we handle this differently
 	return make(map[string]any)
@@ -252,4 +253,25 @@ func NewCallToolRequest(toolName string, arguments map[string]any) CallToolReque
 // ExportGetArguments2 exposes getArguments properly for testing with mcp.CallToolRequest.
 func ExportGetArguments2(request mcp.CallToolRequest) map[string]any {
 	return getArguments(request)
+}
+
+// NewCallToolRequestWithNilArgs creates a CallToolRequest with nil Arguments.
+func NewCallToolRequestWithNilArgs(toolName string) CallToolRequest {
+	return mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name:      toolName,
+			Arguments: nil, // This is a nil interface, not a nil map
+		},
+	}
+}
+
+// NewCallToolRequestWithStringArg creates a CallToolRequest with a string argument
+// (not a map) to test the fallback branch.
+func NewCallToolRequestWithStringArg(toolName string, arg string) CallToolRequest {
+	return mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name:      toolName,
+			Arguments: arg, // This is a string, not a map
+		},
+	}
 }

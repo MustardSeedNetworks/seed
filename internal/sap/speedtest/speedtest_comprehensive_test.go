@@ -5,6 +5,7 @@ package speedtest_test
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -32,8 +33,7 @@ func TestRunTestConcurrentAlreadyRunningRace(t *testing.T) {
 			tester.SetRunning(true)
 
 			var wg sync.WaitGroup
-			errCount := make(chan int, 1)
-			count := 0
+			var count atomic.Int64
 
 			wg.Add(tt.goroutines)
 			for range tt.goroutines {
@@ -42,17 +42,16 @@ func TestRunTestConcurrentAlreadyRunningRace(t *testing.T) {
 					for range tt.iterations {
 						_, err := tester.RunTest(context.Background())
 						if err != nil && err.Error() == "test already in progress" {
-							count++
+							count.Add(1)
 						}
 					}
 				}()
 			}
 
 			wg.Wait()
-			errCount <- count
 
-			totalExpected := tt.goroutines * tt.iterations
-			got := <-errCount
+			totalExpected := int64(tt.goroutines * tt.iterations)
+			got := count.Load()
 			if got != totalExpected {
 				t.Errorf("expected %d errors, got %d", totalExpected, got)
 			}
