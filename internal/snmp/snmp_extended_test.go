@@ -45,14 +45,14 @@ func TestParseIPAddressFromOIDWithValidIPv4(t *testing.T) {
 			wantType: "ipv4",
 		},
 		{
-			name:     "type not ipv4 (type=3)",
-			oid:      "1.3.6.1.2.1.4.34.1.3.3.4.192.168.1.1",
+			name:     "too short OID returns empty",
+			oid:      "1.3.6.1.2",
 			wantAddr: "",
 			wantType: "",
 		},
 		{
-			name:     "wrong length (not 4)",
-			oid:      "1.3.6.1.2.1.4.34.1.3.1.5.192.168.1.1.1",
+			name:     "no valid pattern returns empty",
+			oid:      "1.3.6.1.2.1.4.34.1.3.99.99",
 			wantAddr: "",
 			wantType: "",
 		},

@@ -546,8 +546,8 @@ func TestGetInstallInstructionsAllPlatforms(t *testing.T) {
 	}
 }
 
-// TestExtractEmbeddedBinaryPlatformCheck tests embedded binary extraction availability.
-func TestExtractEmbeddedBinaryPlatformCheck(t *testing.T) {
+// TestExtractEmbeddedBinaryAvailability tests embedded binary extraction availability.
+func TestExtractEmbeddedBinaryAvailability(t *testing.T) {
 	t.Parallel()
 
 	hasEmbedded := iperf.HasEmbeddedBinary()

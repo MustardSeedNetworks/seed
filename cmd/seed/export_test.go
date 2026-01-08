@@ -44,48 +44,48 @@ func InitTestCommands(state *cliState) {
 	initCommands(state)
 }
 
-// TestModeString exposes modeString for testing.
-func TestModeString(mode paths.Mode) string {
+// ExportModeString exposes modeString for testing.
+func ExportModeString(mode paths.Mode) string {
 	return modeString(mode)
 }
 
-// TestParseOSRelease exposes parseOSRelease for testing.
-func TestParseOSRelease(content string) *Distro {
+// ExportParseOSRelease exposes parseOSRelease for testing.
+func ExportParseOSRelease(content string) *Distro {
 	return parseOSRelease(content)
 }
 
-// TestCheckConfigWarnings exposes checkConfigWarnings for testing.
-func TestCheckConfigWarnings(cfg *config.Config) []string {
+// ExportCheckConfigWarnings exposes checkConfigWarnings for testing.
+func ExportCheckConfigWarnings(cfg *config.Config) []string {
 	return checkConfigWarnings(cfg)
 }
 
-// TestRedactSecrets exposes redactSecrets for testing.
-func TestRedactSecrets(cfg *config.Config) *config.Config {
+// ExportRedactSecrets exposes redactSecrets for testing.
+func ExportRedactSecrets(cfg *config.Config) *config.Config {
 	return redactSecrets(cfg)
 }
 
-// TestPreserveExistingCredentials exposes preserveExistingCredentials for testing.
-func TestPreserveExistingCredentials(newCfg, existingCfg *config.Config, flags resetFlags) {
+// ExportPreserveExistingCredentials exposes preserveExistingCredentials for testing.
+func ExportPreserveExistingCredentials(newCfg, existingCfg *config.Config, flags resetFlags) {
 	preserveExistingCredentials(newCfg, existingCfg, flags)
 }
 
-// TestDetermineUninstallMode exposes determineUninstallMode for testing.
-func TestDetermineUninstallMode(flags uninstallFlags) paths.Mode {
+// ExportDetermineUninstallMode exposes determineUninstallMode for testing.
+func ExportDetermineUninstallMode(flags uninstallFlags) paths.Mode {
 	return determineUninstallMode(flags)
 }
 
-// TestEnsureConfigDir exposes ensureConfigDir for testing.
-func TestEnsureConfigDir(configPath string) error {
+// ExportEnsureConfigDir exposes ensureConfigDir for testing.
+func ExportEnsureConfigDir(configPath string) error {
 	return ensureConfigDir(configPath)
 }
 
-// TestOutputCredentials exposes outputCredentials for testing.
-func TestOutputCredentials(creds setupCredentials, asJSON bool) error {
+// ExportOutputCredentials exposes outputCredentials for testing.
+func ExportOutputCredentials(creds setupCredentials, asJSON bool) error {
 	return outputCredentials(creds, asJSON)
 }
 
-// TestOutputResult exposes outputResult for testing.
-func TestOutputResult(result ValidationResult, asJSON bool) {
+// ExportOutputResult exposes outputResult for testing.
+func ExportOutputResult(result ValidationResult, asJSON bool) {
 	outputResult(result, asJSON)
 }
 

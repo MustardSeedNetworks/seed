@@ -1698,3 +1698,377 @@ func TestModuleStartError(t *testing.T) {
 		t.Errorf("Stop returned error: %v", stopErr)
 	}
 }
+
+// =============================================================================
+// LinkService Additional Tests
+// =============================================================================
+
+// TestLinkServiceStart verifies Start method.
+func TestLinkServiceStart(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	service := sap.NewLinkService(cfg)
+
+	ctx := context.Background()
+	err := service.Start(ctx)
+	// May fail if interface doesn't exist
+	if err != nil {
+		t.Logf("LinkService Start returned error (may be expected): %v", err)
+	}
+
+	// Stop should always work
+	service.Stop()
+}
+
+// TestLinkServiceGetStatusAfterStart verifies GetStatus after Start.
+func TestLinkServiceGetStatusAfterStart(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	service := sap.NewLinkService(cfg)
+
+	ctx := context.Background()
+	err := service.Start(ctx)
+	if err != nil {
+		t.Skipf("Skipping - Start failed: %v", err)
+	}
+	defer service.Stop()
+
+	status, err := service.GetStatus(ctx)
+	if err != nil {
+		t.Errorf("GetStatus returned error after Start: %v", err)
+	}
+	if status != nil {
+		t.Logf("GetStatus returned %d interfaces", len(status))
+		for _, s := range status {
+			if s.Interface == "" {
+				t.Error("expected non-empty Interface name")
+			}
+			if s.UpdatedAt.IsZero() {
+				t.Error("expected non-zero UpdatedAt")
+			}
+		}
+	}
+}
+
+// TestLinkServiceGetInterfaceStatus verifies GetInterfaceStatus method.
+func TestLinkServiceGetInterfaceStatus(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	service := sap.NewLinkService(cfg)
+
+	ctx := context.Background()
+	// Test with a likely existing interface
+	status, err := service.GetInterfaceStatus(ctx, "lo0")
+	if err != nil {
+		t.Logf("GetInterfaceStatus returned error (may be expected): %v", err)
+	}
+	if status != nil {
+		if status.Interface != "lo0" {
+			t.Errorf("Interface = %q, want %q", status.Interface, "lo0")
+		}
+		if status.UpdatedAt.IsZero() {
+			t.Error("expected non-zero UpdatedAt")
+		}
+	}
+}
+
+// TestLinkServiceGetInterfaceStatusNonexistent verifies GetInterfaceStatus with bad interface.
+func TestLinkServiceGetInterfaceStatusNonexistent(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	service := sap.NewLinkService(cfg)
+
+	ctx := context.Background()
+	status, err := service.GetInterfaceStatus(ctx, "nonexistent99")
+	// May return error or status with unknown state
+	if err != nil {
+		t.Logf("GetInterfaceStatus for nonexistent returned error: %v", err)
+	}
+	if status != nil {
+		t.Logf("GetInterfaceStatus returned status: %+v", status)
+	}
+}
+
+// =============================================================================
+// VLANService Additional Tests
+// =============================================================================
+
+// TestVLANServiceCreate verifies Create method.
+func TestVLANServiceCreate(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	service := sap.NewVLANService(cfg)
+
+	ctx := context.Background()
+	// This will likely fail without permissions
+	err := service.Create(ctx, "eth0", 100)
+	if err != nil {
+		t.Logf("VLAN Create returned error (expected without permissions): %v", err)
+	}
+}
+
+// TestVLANServiceDelete verifies Delete method.
+func TestVLANServiceDelete(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	service := sap.NewVLANService(cfg)
+
+	ctx := context.Background()
+	// This will likely fail
+	err := service.Delete(ctx, "eth0.100")
+	if err != nil {
+		t.Logf("VLAN Delete returned error (expected): %v", err)
+	}
+}
+
+// =============================================================================
+// CableService Additional Tests with Real Interface
+// =============================================================================
+
+// TestCableServiceTestWithRealInterface verifies Cable Test with existing interface.
+func TestCableServiceTestWithRealInterface(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	service := sap.NewCableService(cfg)
+
+	ctx := context.Background()
+	// Test with lo0 which exists but won't support TDR
+	result, err := service.Test(ctx, "lo0")
+	if err != nil {
+		if errors.Is(err, sap.ErrNotSupported) {
+			t.Log("Cable test not supported on lo0 (expected)")
+		} else if errors.Is(err, sap.ErrTestFailed) {
+			t.Log("Cable test failed on lo0 (expected)")
+		} else {
+			t.Logf("Cable Test returned error: %v", err)
+		}
+	}
+	if result != nil {
+		t.Logf("Cable Test result: Interface=%s, Status=%s", result.Interface, result.Status)
+		if result.TestedAt.IsZero() {
+			t.Error("expected non-zero TestedAt")
+		}
+	}
+}
+
+// =============================================================================
+// Module Start with Successful Start Tests
+// =============================================================================
+
+// TestModuleStartSuccess tests successful module start.
+func TestModuleStartSuccess(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	module := sap.New(cfg, nil)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err := module.Start(ctx)
+	if err != nil {
+		t.Logf("Module Start returned error (may be expected): %v", err)
+	}
+
+	// All services should work
+	_ = module.Link()
+	_ = module.Gateway()
+	_ = module.Telemetry()
+
+	if stopErr := module.Stop(); stopErr != nil {
+		t.Errorf("Stop returned error: %v", stopErr)
+	}
+}
+
+// =============================================================================
+// DHCP Service Additional Tests
+// =============================================================================
+
+// TestDHCPServiceTestWithNonexistentInterface tests DHCP with bad interface.
+func TestDHCPServiceTestWithNonexistentInterface(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	service := sap.NewDHCPService(cfg)
+
+	ctx := context.Background()
+	result, err := service.Test(ctx, "nonexistent999")
+	// Should return a result with Success=false
+	if err != nil {
+		t.Logf("DHCP Test returned error: %v", err)
+	}
+	if result != nil {
+		if result.Success {
+			t.Error("expected Success=false for nonexistent interface")
+		}
+		if result.Error == "" {
+			t.Log("No error message set for failed DHCP test")
+		}
+		if result.TestedAt.IsZero() {
+			t.Error("expected non-zero TestedAt")
+		}
+	}
+}
+
+// =============================================================================
+// GatewayService Additional Tests
+// =============================================================================
+
+// TestGatewayServiceStartThenGetHealth tests GetHealth after Start.
+func TestGatewayServiceStartThenGetHealth(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	service := sap.NewGatewayService(cfg)
+
+	ctx := context.Background()
+	if err := service.Start(ctx); err != nil {
+		t.Errorf("Start returned error: %v", err)
+	}
+	defer service.Stop()
+
+	health, err := service.GetHealth(ctx)
+	if err != nil {
+		t.Errorf("GetHealth returned error: %v", err)
+	}
+	if health != nil {
+		t.Logf("Gateway health: IP=%s, Reachable=%v, Status=%s", health.IP, health.Reachable, health.Status)
+		if health.LastCheck.IsZero() {
+			t.Error("expected non-zero LastCheck")
+		}
+	}
+}
+
+// =============================================================================
+// More Status Conversion Tests
+// =============================================================================
+
+// TestConvertGatewayStatusAllCases tests all gateway status conversion paths.
+func TestConvertGatewayStatusAllCases(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		input    string
+		expected sap.HealthStatus
+	}{
+		{"success", sap.HealthStatusHealthy},
+		{"warning", sap.HealthStatusDegraded},
+		{"error", sap.HealthStatusUnhealthy},
+		{"unknown", sap.HealthStatusUnknown},
+		{"", sap.HealthStatusUnknown},
+		{"something_else", sap.HealthStatusUnknown},
+		{"SUCCESS", sap.HealthStatusUnknown}, // case sensitive
+		{"Warning", sap.HealthStatusUnknown}, // case sensitive
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := sap.ConvertGatewayStatus(tt.input)
+			if result != tt.expected {
+				t.Errorf("ConvertGatewayStatus(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+// =============================================================================
+// PerformanceService Stop Test
+// =============================================================================
+
+// TestPerformanceServiceStopMultiple verifies multiple Stop calls are safe.
+func TestPerformanceServiceStopMultiple(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	service := sap.NewPerformanceService(cfg)
+
+	// Multiple stops should not panic
+	for i := 0; i < 5; i++ {
+		service.Stop()
+	}
+}
+
+// =============================================================================
+// Module Concurrent Start/Stop Tests
+// =============================================================================
+
+// TestModuleConcurrentStartStop tests concurrent Start and Stop calls.
+func TestModuleConcurrentStartStop(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	module := sap.New(cfg, nil)
+
+	const goroutines = 5
+	var wg sync.WaitGroup
+	wg.Add(goroutines * 2)
+
+	ctx := context.Background()
+
+	// Mix of Start and Stop calls
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			_ = module.Start(ctx)
+		}()
+		go func() {
+			defer wg.Done()
+			_ = module.Stop()
+		}()
+	}
+
+	wg.Wait()
+
+	// Final cleanup
+	_ = module.Stop()
+}
+
+// =============================================================================
+// Type Constants Tests
+// =============================================================================
+
+// TestLinkStateEnumValues tests all LinkState values.
+func TestLinkStateEnumValues(t *testing.T) {
+	t.Parallel()
+	states := []sap.LinkState{
+		sap.LinkStateUp,
+		sap.LinkStateDown,
+		sap.LinkStateDormant,
+		sap.LinkStateUnknown,
+	}
+
+	for _, state := range states {
+		if state == "" {
+			t.Errorf("LinkState should not be empty: %v", state)
+		}
+	}
+}
+
+// TestCableStatusEnumValues tests all CableStatus values.
+func TestCableStatusEnumValues(t *testing.T) {
+	t.Parallel()
+	statuses := []sap.CableStatus{
+		sap.CableStatusOK,
+		sap.CableStatusOpen,
+		sap.CableStatusShort,
+		sap.CableStatusImpedance,
+		sap.CableStatusUnknown,
+	}
+
+	for _, status := range statuses {
+		if status == "" {
+			t.Errorf("CableStatus should not be empty: %v", status)
+		}
+	}
+}
+
+// TestHealthStatusEnumValues tests all HealthStatus values.
+func TestHealthStatusEnumValues(t *testing.T) {
+	t.Parallel()
+	statuses := []sap.HealthStatus{
+		sap.HealthStatusHealthy,
+		sap.HealthStatusDegraded,
+		sap.HealthStatusUnhealthy,
+		sap.HealthStatusUnknown,
+	}
+
+	for _, status := range statuses {
+		if status == "" {
+			t.Errorf("HealthStatus should not be empty: %v", status)
+		}
+	}
+}

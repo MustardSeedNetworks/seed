@@ -111,9 +111,9 @@ func TestPipelineConfig_CustomValues(t *testing.T) {
 			ConnectTimeout: 5 * time.Second,
 		},
 		SNMPCollection: discovery.SNMPCollectionConfig{
-			Enabled:     true,
-			WalkTimeout: 60 * time.Second,
-			Concurrency: 20,
+			Enabled:           true,
+			WalkTimeout:       60 * time.Second,
+			MaxOIDsPerRequest: 20,
 			MIBs: discovery.SNMPMIBSelection{
 				System:      true,
 				Interfaces:  true,
@@ -149,8 +149,8 @@ func TestPipelineConfig_CustomValues(t *testing.T) {
 	if len(cfg.PortScan.CustomPorts) != 4 {
 		t.Errorf("CustomPorts should have 4 entries, got %d", len(cfg.PortScan.CustomPorts))
 	}
-	if cfg.SNMPCollection.Concurrency != 20 {
-		t.Errorf("SNMP Concurrency should be 20, got %d", cfg.SNMPCollection.Concurrency)
+	if cfg.SNMPCollection.MaxOIDsPerRequest != 20 {
+		t.Errorf("SNMP MaxOIDsPerRequest should be 20, got %d", cfg.SNMPCollection.MaxOIDsPerRequest)
 	}
 	if cfg.Resolution.NetBIOS {
 		t.Error("NetBIOS resolution should be disabled")

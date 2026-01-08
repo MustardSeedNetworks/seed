@@ -3,9 +3,7 @@ package mcp_test
 import (
 	"context"
 	"errors"
-	"strings"
 	"testing"
-	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/discovery"
@@ -154,7 +152,6 @@ func TestHandleDeviceFingerprint(t *testing.T) {
 					MAC: "00:11:22:33:44:55",
 					Profile: &discovery.DeviceProfile{
 						DeviceType: "computer",
-						OS:         "Linux",
 					},
 				},
 			},
@@ -241,7 +238,7 @@ func TestHandleGetNeighbors(t *testing.T) {
 		{
 			name: "filter by edp",
 			devices: []*discovery.DiscoveredDevice{
-				{IP: "192.168.1.1", EDPInfo: &discovery.EDPDeviceInfo{DeviceName: "switch1"}},
+				{IP: "192.168.1.1", EDPInfo: &discovery.EDPDeviceInfo{DeviceID: "switch1"}},
 			},
 			args:     map[string]any{"protocol": "edp"},
 			expected: 1,
@@ -356,9 +353,8 @@ func TestHandleDNSTest(t *testing.T) {
 		{
 			name: "successful dns test",
 			dnsResult: &dns.TestResult{
-				Hostname:    "google.com",
-				Latency:     25 * time.Millisecond,
-				ResolvedIPs: []string{"142.250.80.46"},
+				Server:       "8.8.8.8",
+				TestHostname: "google.com",
 			},
 		},
 		{
@@ -408,12 +404,15 @@ func TestHandleGatewayPing(t *testing.T) {
 		{
 			name: "successful ping",
 			pingStats: &gateway.PingStats{
-				PacketsSent:     5,
-				PacketsReceived: 5,
-				PacketLoss:      0,
-				MinRTT:          1 * time.Millisecond,
-				MaxRTT:          5 * time.Millisecond,
-				AvgRTT:          3 * time.Millisecond,
+				Gateway:     "192.168.1.1",
+				Sent:        5,
+				Received:    5,
+				Lost:        0,
+				LossPercent: 0,
+				MinTime:     1.0,
+				MaxTime:     5.0,
+				AvgTime:     3.0,
+				Reachable:   true,
 			},
 			icmpAvailable: true,
 		},
@@ -1529,9 +1528,4 @@ func TestHandlerErrorMessages(t *testing.T) {
 			// In a real test we would parse the result to verify the error message
 		})
 	}
-}
-
-// containsStringHelper checks if s contains substr.
-func containsStringHelper(s, substr string) bool {
-	return strings.Contains(s, substr)
 }
