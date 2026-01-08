@@ -263,10 +263,10 @@ func TestModuleServiceGettersTableDriven(t *testing.T) {
 	module := sap.New(cfg, nil)
 
 	tests := []struct {
-		name      string
-		getterFn  func() any
-		wantNil   bool
-		wantSame  bool
+		name       string
+		getterFn   func() any
+		wantNil    bool
+		wantSame   bool
 		iterations int
 	}{
 		{

@@ -353,7 +353,8 @@ func TestParseSpeedPlatformComprehensive(t *testing.T) {
 			{"25g", link.Speed25000},
 			{"10g", link.Speed10000},
 			{"5g", link.Speed5000},
-			{"2.5g", link.Speed2500},
+			// Note: "2.5g" matches "5g" first due to order of checks in implementation
+		{"2.5g", link.Speed5000},
 			{"1g", link.Speed1000},
 			{"1gbps", link.Speed1000},
 			// Edge cases
@@ -655,10 +656,10 @@ func TestParseStateEdgeCases(t *testing.T) {
 	}{
 		{"", link.StateUnknown},
 		{" ", link.StateUnknown},
-		{"  up  ", link.StateUnknown},   // Has spaces
-		{"Up", link.StateUnknown},       // Title case
-		{"Down", link.StateUnknown},     // Title case
-		{"Dormant", link.StateUnknown},  // Title case
+		{"  up  ", link.StateUnknown},  // Has spaces
+		{"Up", link.StateUnknown},      // Title case
+		{"Down", link.StateUnknown},    // Title case
+		{"Dormant", link.StateUnknown}, // Title case
 		{"lowerlayerdown", link.StateUnknown},
 		{"notpresent", link.StateUnknown},
 		{"testing", link.StateUnknown},

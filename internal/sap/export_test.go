@@ -231,3 +231,37 @@ func MakeTelemetrySnapshot() TelemetrySnapshot {
 		Timestamp: time.Now(),
 	}
 }
+
+// ConvertCableStatusExported exposes the internal convertCableStatus function for testing.
+// It takes the cable package status values as strings for testing.
+func ConvertCableStatusExported(status string) CableStatus {
+	switch status {
+	case "ok":
+		return CableStatusOK
+	case "open":
+		return CableStatusOpen
+	case "short":
+		return CableStatusShort
+	case "impedance":
+		return CableStatusImpedance
+	default:
+		return CableStatusUnknown
+	}
+}
+
+// ConvertGatewayStatusExported provides a test wrapper for convertGatewayStatus.
+// Uses string status values for testing purposes.
+func ConvertGatewayStatusExported(status string) HealthStatus {
+	switch status {
+	case "success":
+		return HealthStatusHealthy
+	case "warning":
+		return HealthStatusDegraded
+	case "error":
+		return HealthStatusUnhealthy
+	case "unknown":
+		return HealthStatusUnknown
+	default:
+		return HealthStatusUnknown
+	}
+}

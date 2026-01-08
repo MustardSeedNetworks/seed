@@ -83,3 +83,15 @@ func (m *Monitor) AddHistoryEvent(event Event) {
 		m.history = m.history[1:]
 	}
 }
+
+// ExportCheckAndNotify exposes checkAndNotify for testing.
+func (m *Monitor) ExportCheckAndNotify() {
+	m.checkAndNotify()
+}
+
+// SetPollInterval sets the poll interval for testing.
+func (m *Monitor) SetPollInterval(ms int64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.pollInterval = time.Duration(ms) * time.Millisecond
+}
