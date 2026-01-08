@@ -1,4 +1,3 @@
-// Package ai exports internal functions for testing.
 package ai
 
 // ExportCalculateDistance exposes calculateDistance for testing.

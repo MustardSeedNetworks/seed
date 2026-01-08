@@ -70,6 +70,19 @@ const (
 	OverlapPenalty            = 2.0  // Penalty multiplier for overlapping channels
 )
 
+// Channel overlap and utilization constants.
+const (
+	Channel24GHzWidth     = 5    // Number of channels a 2.4 GHz signal overlaps
+	MaxUtilizationPercent = 100  // Maximum utilization percentage cap
+	Channel6GHzCount      = 59   // Number of 6 GHz channels (every 4th from 1-233)
+	MaxInterferenceScore  = 100  // Maximum interference score
+	SignalStrongThreshold = -30  // Signal strength threshold for "very strong" (dBm)
+	SignalWeakThreshold   = -90  // Signal strength threshold for "very weak" (dBm)
+	InterferenceScaleMin  = 1.0  // Minimum interference factor
+	InterferenceScaleMax  = 10.0 // Maximum interference factor
+	SignalRange           = 60   // Range between strong and weak thresholds
+)
+
 // NetworkInfo contains network data for channel analysis.
 type NetworkInfo struct {
 	SSID         string
@@ -81,6 +94,8 @@ type NetworkInfo struct {
 }
 
 // ChannelInfo contains information about a specific channel.
+//
+//nolint:revive // Intentional: explicit naming for clarity when used outside package
 type ChannelInfo struct {
 	Number        int     `json:"number"`
 	CenterFreqMHz int     `json:"centerFreqMHz"`
@@ -182,6 +197,8 @@ func GetBand(freq int) Band {
 }
 
 // ChannelToFrequency converts a WiFi channel number to center frequency in MHz.
+//
+//nolint:revive // Intentional: explicit naming for clarity when used outside package
 func ChannelToFrequency(channel int, band Band) int {
 	switch band {
 	case Band24GHz:
@@ -239,10 +256,10 @@ func GetChannelOverlap(channel1, channel2 int) int {
 		return 0
 	}
 	diff := abs(channel1 - channel2)
-	if diff >= 5 {
+	if diff >= Channel24GHzWidth {
 		return 0 // No overlap
 	}
-	return 5 - diff // 5 channels wide in 2.4 GHz
+	return Channel24GHzWidth - diff // 5 channels wide in 2.4 GHz
 }
 
 // CalculateInterference calculates interference score for a channel.
@@ -262,14 +279,15 @@ func CalculateInterference(channel int, band Band, networks []NetworkInfo) float
 			// Adjacent channel interference (2.4 GHz only)
 			overlap := GetChannelOverlap(channel, n.Channel)
 			if overlap > 0 {
-				score += float64(overlap) * AdjacentInterference * signalToInterference(n.Signal) / 5.0
+				overlapFactor := float64(overlap) / float64(Channel24GHzWidth)
+				score += overlapFactor * AdjacentInterference * signalToInterference(n.Signal)
 			}
 		}
 	}
 
 	// Normalize to 0-100 scale
-	if score > 100 {
-		score = 100
+	if score > MaxInterferenceScore {
+		score = MaxInterferenceScore
 	}
 
 	return score
@@ -294,7 +312,7 @@ func getChannelsForBand(band Band) []int {
 		}
 	case Band6GHz:
 		// 6 GHz channels (simplified set)
-		channels := make([]int, 0, 59)
+		channels := make([]int, 0, Channel6GHzCount)
 		for ch := 1; ch <= 233; ch += 4 {
 			channels = append(channels, ch)
 		}
@@ -342,8 +360,8 @@ func buildChannelInfo(
 	}
 
 	// Cap utilization at 100%
-	if info.Utilization > 100 {
-		info.Utilization = 100
+	if info.Utilization > MaxUtilizationPercent {
+		info.Utilization = MaxUtilizationPercent
 	}
 
 	// Calculate interference score
@@ -374,15 +392,16 @@ func signalToInterference(signal int) float64 {
 	// Stronger signals cause more interference
 	// Convert dBm to interference factor (stronger = higher interference)
 	// Typical range: -30 dBm (very strong) to -90 dBm (weak)
-	if signal >= -30 {
-		return 10.0
+	if signal >= SignalStrongThreshold {
+		return InterferenceScaleMax
 	}
-	if signal <= -90 {
-		return 1.0
+	if signal <= SignalWeakThreshold {
+		return InterferenceScaleMin
 	}
 	// Linear interpolation from 1.0 (at -90 dBm) to 10.0 (at -30 dBm)
 	// For signal = -40: 1.0 + 9.0 * ((-40) - (-90)) / 60.0 = 1.0 + 9.0 * 50/60 = 8.5
-	return 1.0 + 9.0*float64(signal+90)/60.0
+	scaleRange := InterferenceScaleMax - InterferenceScaleMin
+	return InterferenceScaleMin + scaleRange*float64(signal-SignalWeakThreshold)/float64(SignalRange)
 }
 
 func abs(x int) int {

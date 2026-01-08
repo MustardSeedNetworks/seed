@@ -133,6 +133,18 @@ func TestResult_Structure(t *testing.T) {
 	if result.Complete {
 		t.Error("Complete should be false")
 	}
+	if result.Duration != 100*time.Millisecond {
+		t.Errorf("Duration = %v, want %v", result.Duration, 100*time.Millisecond)
+	}
+	if result.DurationMs != 100.0 {
+		t.Errorf("DurationMs = %f, want 100.0", result.DurationMs)
+	}
+	if !result.StartedAt.Equal(now) {
+		t.Errorf("StartedAt = %v, want %v", result.StartedAt, now)
+	}
+	if !result.CompletedAt.Equal(now.Add(100 * time.Millisecond)) {
+		t.Errorf("CompletedAt = %v, want %v", result.CompletedAt, now.Add(100*time.Millisecond))
+	}
 }
 
 func TestOptions_Defaults(t *testing.T) {
@@ -218,166 +230,148 @@ func TestPathAnalysis_Structure(t *testing.T) {
 	if analysis.PacketLoss != 10.0 {
 		t.Errorf("PacketLoss = %f, want 10.0", analysis.PacketLoss)
 	}
+	if analysis.ASNTransitions != 3 {
+		t.Errorf("ASNTransitions = %d, want 3", analysis.ASNTransitions)
+	}
 	if len(analysis.Bottlenecks) != 1 {
 		t.Errorf("Bottlenecks length = %d, want 1", len(analysis.Bottlenecks))
+	}
+	if analysis.Analysis != "Good path quality with acceptable latency." {
+		t.Errorf("Analysis = %q, want %q", analysis.Analysis, "Good path quality with acceptable latency.")
 	}
 	if analysis.Score != 75 {
 		t.Errorf("Score = %d, want 75", analysis.Score)
 	}
 }
 
-func TestAnalyzePath(t *testing.T) {
-	tests := []struct {
-		name      string
-		result    *traceroute.Result
-		wantErr   bool
-		checkFunc func(*testing.T, *traceroute.PathAnalysis)
-	}{
-		{
-			name:    "nil result returns error",
-			result:  nil,
-			wantErr: true,
-		},
-		{
-			name: "empty hops",
-			result: &traceroute.Result{
-				Target: "example.com",
-				Hops:   []traceroute.Hop{},
-			},
-			wantErr: false,
-			checkFunc: func(t *testing.T, a *traceroute.PathAnalysis) {
-				if a.Hops != 0 {
-					t.Errorf("Hops = %d, want 0", a.Hops)
-				}
-				if a.Score != traceroute.MaxScore {
-					t.Errorf("Score = %d, want %d", a.Score, traceroute.MaxScore)
-				}
-			},
-		},
-		{
-			name: "all hops responding",
-			result: &traceroute.Result{
-				Target: "example.com",
-				Hops: []traceroute.Hop{
-					{Number: 1, RTTMs: 1.0, Lost: false},
-					{Number: 2, RTTMs: 5.0, Lost: false},
-					{Number: 3, RTTMs: 10.0, Lost: false},
-				},
-			},
-			wantErr: false,
-			checkFunc: func(t *testing.T, a *traceroute.PathAnalysis) {
-				if a.Hops != 3 {
-					t.Errorf("Hops = %d, want 3", a.Hops)
-				}
-				if a.PacketLoss != 0 {
-					t.Errorf("PacketLoss = %f, want 0", a.PacketLoss)
-				}
-				expectedAvg := (1.0 + 5.0 + 10.0) / 3
-				if a.AverageRTT != expectedAvg {
-					t.Errorf("AverageRTT = %f, want %f", a.AverageRTT, expectedAvg)
-				}
-			},
-		},
-		{
-			name: "some hops lost",
-			result: &traceroute.Result{
-				Target: "example.com",
-				Hops: []traceroute.Hop{
-					{Number: 1, RTTMs: 1.0, Lost: false},
-					{Number: 2, Lost: true},
-					{Number: 3, RTTMs: 10.0, Lost: false},
-					{Number: 4, Lost: true},
-				},
-			},
-			wantErr: false,
-			checkFunc: func(t *testing.T, a *traceroute.PathAnalysis) {
-				if a.Hops != 4 {
-					t.Errorf("Hops = %d, want 4", a.Hops)
-				}
-				expectedLoss := 50.0 // 2 out of 4 hops lost
-				if a.PacketLoss != expectedLoss {
-					t.Errorf("PacketLoss = %f, want %f", a.PacketLoss, expectedLoss)
-				}
-				expectedAvg := (1.0 + 10.0) / 2
-				if a.AverageRTT != expectedAvg {
-					t.Errorf("AverageRTT = %f, want %f", a.AverageRTT, expectedAvg)
-				}
-			},
-		},
-		{
-			name: "bottleneck detection",
-			result: &traceroute.Result{
-				Target: "example.com",
-				Hops: []traceroute.Hop{
-					{Number: 1, RTTMs: 5.0, Lost: false},
-					{Number: 2, RTTMs: 60.0, Lost: false}, // 55ms increase > threshold
-					{Number: 3, RTTMs: 65.0, Lost: false},
-				},
-			},
-			wantErr: false,
-			checkFunc: func(t *testing.T, a *traceroute.PathAnalysis) {
-				if len(a.Bottlenecks) != 1 {
-					t.Errorf("Bottlenecks count = %d, want 1", len(a.Bottlenecks))
-				}
-				if len(a.Bottlenecks) > 0 && a.Bottlenecks[0].HopNumber != 2 {
-					t.Errorf("Bottleneck hop = %d, want 2", a.Bottlenecks[0].HopNumber)
-				}
-			},
-		},
-		{
-			name: "ratio-based bottleneck detection",
-			result: &traceroute.Result{
-				Target: "example.com",
-				Hops: []traceroute.Hop{
-					{Number: 1, RTTMs: 10.0, Lost: false},
-					{Number: 2, RTTMs: 25.0, Lost: false}, // 2.5x ratio > threshold
-					{Number: 3, RTTMs: 30.0, Lost: false},
-				},
-			},
-			wantErr: false,
-			checkFunc: func(t *testing.T, a *traceroute.PathAnalysis) {
-				if len(a.Bottlenecks) != 1 {
-					t.Errorf("Bottlenecks count = %d, want 1", len(a.Bottlenecks))
-				}
-			},
-		},
-		{
-			name: "high RTT penalty",
-			result: &traceroute.Result{
-				Target: "example.com",
-				Hops: []traceroute.Hop{
-					{Number: 1, RTTMs: 150.0, Lost: false}, // High RTT
-					{Number: 2, RTTMs: 160.0, Lost: false},
-					{Number: 3, RTTMs: 170.0, Lost: false},
-				},
-			},
-			wantErr: false,
-			checkFunc: func(t *testing.T, a *traceroute.PathAnalysis) {
-				// Average RTT is 160ms, above 100ms threshold
-				if a.Score >= traceroute.MaxScore {
-					t.Errorf("Score = %d should be less than max due to high RTT", a.Score)
-				}
-			},
+func TestAnalyzePath_NilResult(t *testing.T) {
+	_, err := traceroute.AnalyzePath(nil)
+	if err == nil {
+		t.Error("AnalyzePath(nil) should return error")
+	}
+}
+
+func TestAnalyzePath_EmptyHops(t *testing.T) {
+	result := &traceroute.Result{Target: "example.com", Hops: []traceroute.Hop{}}
+	analysis, err := traceroute.AnalyzePath(result)
+	if err != nil {
+		t.Fatalf("AnalyzePath() error = %v", err)
+	}
+	if analysis.Hops != 0 {
+		t.Errorf("Hops = %d, want 0", analysis.Hops)
+	}
+	if analysis.Score != traceroute.MaxScore {
+		t.Errorf("Score = %d, want %d", analysis.Score, traceroute.MaxScore)
+	}
+}
+
+func TestAnalyzePath_AllHopsResponding(t *testing.T) {
+	result := &traceroute.Result{
+		Target: "example.com",
+		Hops: []traceroute.Hop{
+			{Number: 1, RTTMs: 1.0, Lost: false},
+			{Number: 2, RTTMs: 5.0, Lost: false},
+			{Number: 3, RTTMs: 10.0, Lost: false},
 		},
 	}
+	analysis, err := traceroute.AnalyzePath(result)
+	if err != nil {
+		t.Fatalf("AnalyzePath() error = %v", err)
+	}
+	if analysis.Hops != 3 {
+		t.Errorf("Hops = %d, want 3", analysis.Hops)
+	}
+	if analysis.PacketLoss != 0 {
+		t.Errorf("PacketLoss = %f, want 0", analysis.PacketLoss)
+	}
+	expectedAvg := (1.0 + 5.0 + 10.0) / 3
+	if analysis.AverageRTT != expectedAvg {
+		t.Errorf("AverageRTT = %f, want %f", analysis.AverageRTT, expectedAvg)
+	}
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			analysis, err := traceroute.AnalyzePath(tt.result)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("AnalyzePath() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if tt.wantErr {
-				return
-			}
-			if analysis == nil {
-				t.Fatal("AnalyzePath() returned nil analysis")
-			}
-			if tt.checkFunc != nil {
-				tt.checkFunc(t, analysis)
-			}
-		})
+func TestAnalyzePath_SomeHopsLost(t *testing.T) {
+	result := &traceroute.Result{
+		Target: "example.com",
+		Hops: []traceroute.Hop{
+			{Number: 1, RTTMs: 1.0, Lost: false},
+			{Number: 2, Lost: true},
+			{Number: 3, RTTMs: 10.0, Lost: false},
+			{Number: 4, Lost: true},
+		},
+	}
+	analysis, err := traceroute.AnalyzePath(result)
+	if err != nil {
+		t.Fatalf("AnalyzePath() error = %v", err)
+	}
+	if analysis.Hops != 4 {
+		t.Errorf("Hops = %d, want 4", analysis.Hops)
+	}
+	expectedLoss := 50.0 // 2 out of 4 hops lost
+	if analysis.PacketLoss != expectedLoss {
+		t.Errorf("PacketLoss = %f, want %f", analysis.PacketLoss, expectedLoss)
+	}
+	expectedAvg := (1.0 + 10.0) / 2
+	if analysis.AverageRTT != expectedAvg {
+		t.Errorf("AverageRTT = %f, want %f", analysis.AverageRTT, expectedAvg)
+	}
+}
+
+func TestAnalyzePath_BottleneckDetection(t *testing.T) {
+	result := &traceroute.Result{
+		Target: "example.com",
+		Hops: []traceroute.Hop{
+			{Number: 1, RTTMs: 5.0, Lost: false},
+			{Number: 2, RTTMs: 60.0, Lost: false}, // 55ms increase > threshold
+			{Number: 3, RTTMs: 65.0, Lost: false},
+		},
+	}
+	analysis, err := traceroute.AnalyzePath(result)
+	if err != nil {
+		t.Fatalf("AnalyzePath() error = %v", err)
+	}
+	if len(analysis.Bottlenecks) != 1 {
+		t.Errorf("Bottlenecks count = %d, want 1", len(analysis.Bottlenecks))
+	}
+	if len(analysis.Bottlenecks) > 0 && analysis.Bottlenecks[0].HopNumber != 2 {
+		t.Errorf("Bottleneck hop = %d, want 2", analysis.Bottlenecks[0].HopNumber)
+	}
+}
+
+func TestAnalyzePath_RatioBasedBottleneck(t *testing.T) {
+	result := &traceroute.Result{
+		Target: "example.com",
+		Hops: []traceroute.Hop{
+			{Number: 1, RTTMs: 10.0, Lost: false},
+			{Number: 2, RTTMs: 25.0, Lost: false}, // 2.5x ratio > threshold
+			{Number: 3, RTTMs: 30.0, Lost: false},
+		},
+	}
+	analysis, err := traceroute.AnalyzePath(result)
+	if err != nil {
+		t.Fatalf("AnalyzePath() error = %v", err)
+	}
+	if len(analysis.Bottlenecks) != 1 {
+		t.Errorf("Bottlenecks count = %d, want 1", len(analysis.Bottlenecks))
+	}
+}
+
+func TestAnalyzePath_HighRTTPenalty(t *testing.T) {
+	result := &traceroute.Result{
+		Target: "example.com",
+		Hops: []traceroute.Hop{
+			{Number: 1, RTTMs: 150.0, Lost: false}, // High RTT
+			{Number: 2, RTTMs: 160.0, Lost: false},
+			{Number: 3, RTTMs: 170.0, Lost: false},
+		},
+	}
+	analysis, err := traceroute.AnalyzePath(result)
+	if err != nil {
+		t.Fatalf("AnalyzePath() error = %v", err)
+	}
+	// Average RTT is 160ms, above 100ms threshold
+	if analysis.Score >= traceroute.MaxScore {
+		t.Errorf("Score = %d should be less than max due to high RTT", analysis.Score)
 	}
 }
 
@@ -552,8 +546,8 @@ func TestConstants(t *testing.T) {
 	// Verify constants have expected values
 	tests := []struct {
 		name  string
-		got   interface{}
-		want  interface{}
+		got   any
+		want  any
 		check func() bool
 	}{
 		{

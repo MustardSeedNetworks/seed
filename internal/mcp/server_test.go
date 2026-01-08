@@ -17,22 +17,22 @@ import (
 
 // mockServiceProvider implements mcp.ServiceProvider for testing.
 type mockServiceProvider struct {
-	discoveryService  mcp.DiscoveryService
-	deviceDiscovery   mcp.DeviceDiscovery
-	netManager        mcp.NetworkManager
-	linkMonitor       mcp.LinkMonitor
-	vlanManager       mcp.VLANManager
-	dnsTester         mcp.DNSTester
-	gatewayTester     mcp.GatewayTester
-	speedtestTester   mcp.SpeedtestTester
-	iperfManager      mcp.IperfManager
-	wifiScanner       mcp.WiFiScanner
-	wifiManager       mcp.WiFiManager
-	rogueDetector     mcp.RogueDetector
-	vulnScanner       mcp.VulnScanner
-	publicIPChecker   mcp.PublicIPChecker
-	cfg               *config.Config
-	icmpAvailable     bool
+	discoveryService mcp.DiscoveryService
+	deviceDiscovery  mcp.DeviceDiscovery
+	netManager       mcp.NetworkManager
+	linkMonitor      mcp.LinkMonitor
+	vlanManager      mcp.VLANManager
+	dnsTester        mcp.DNSTester
+	gatewayTester    mcp.GatewayTester
+	speedtestTester  mcp.SpeedtestTester
+	iperfManager     mcp.IperfManager
+	wifiScanner      mcp.WiFiScanner
+	wifiManager      mcp.WiFiManager
+	rogueDetector    mcp.RogueDetector
+	vulnScanner      mcp.VulnScanner
+	publicIPChecker  mcp.PublicIPChecker
+	cfg              *config.Config
+	icmpAvailable    bool
 }
 
 func (m *mockServiceProvider) GetDiscoveryService() mcp.DiscoveryService {
@@ -270,9 +270,9 @@ func (m *mockRogueDetector) IsRunning() bool {
 
 // mockVulnScanner implements mcp.VulnScanner for testing.
 type mockVulnScanner struct {
-	result         any
+	result          any
 	vulnerabilities any
-	scanErr        error
+	scanErr         error
 }
 
 func (m *mockVulnScanner) ScanDevice(
@@ -491,11 +491,11 @@ func TestMockDiscoveryServiceScan(t *testing.T) {
 
 func TestMockSpeedtestTester(t *testing.T) {
 	tests := []struct {
-		name     string
-		result   *speedtest.Result
-		status   speedtest.Status
-		runErr   error
-		wantErr  bool
+		name    string
+		result  *speedtest.Result
+		status  speedtest.Status
+		runErr  error
+		wantErr bool
 	}{
 		{
 			name: "successful speedtest",
@@ -560,7 +560,8 @@ func TestMockIperfManager(t *testing.T) {
 		{
 			name: "successful iperf test",
 			result: &iperf.Result{
-				Success: true,
+				Bandwidth: 100.5,
+				Protocol:  "tcp",
 			},
 			clientStatus: iperf.ClientStatus{
 				Running: false,
@@ -730,6 +731,9 @@ func TestWiFiNetworkStruct(t *testing.T) {
 	if network.SSID != "TestSSID" {
 		t.Errorf("expected SSID TestSSID, got %s", network.SSID)
 	}
+	if network.BSSID != "00:11:22:33:44:55" {
+		t.Errorf("expected BSSID 00:11:22:33:44:55, got %s", network.BSSID)
+	}
 	if network.Signal > 0 {
 		t.Error("signal strength should be negative (dBm)")
 	}
@@ -738,6 +742,9 @@ func TestWiFiNetworkStruct(t *testing.T) {
 	}
 	if network.Frequency <= 0 {
 		t.Error("frequency should be positive")
+	}
+	if network.Security != "WPA2-PSK" {
+		t.Errorf("expected Security WPA2-PSK, got %s", network.Security)
 	}
 }
 
@@ -754,8 +761,20 @@ func TestWiFiConnectionInfoStruct(t *testing.T) {
 	if info.SSID != "ConnectedNetwork" {
 		t.Errorf("expected SSID ConnectedNetwork, got %s", info.SSID)
 	}
+	if info.BSSID != "00:11:22:33:44:55" {
+		t.Errorf("expected BSSID 00:11:22:33:44:55, got %s", info.BSSID)
+	}
 	if info.Signal > 0 {
 		t.Error("signal strength should be negative (dBm)")
+	}
+	if info.Channel != 11 {
+		t.Errorf("expected Channel 11, got %d", info.Channel)
+	}
+	if info.Frequency != 2462 {
+		t.Errorf("expected Frequency 2462, got %d", info.Frequency)
+	}
+	if info.Security != "WPA3-SAE" {
+		t.Errorf("expected Security WPA3-SAE, got %s", info.Security)
 	}
 }
 

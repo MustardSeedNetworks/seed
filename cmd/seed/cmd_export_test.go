@@ -27,7 +27,7 @@ func TestRedactSecrets(t *testing.T) {
 			name: "redacts vulnerability scanning API key",
 			cfg: &config.Config{
 				Security: config.SecurityConfig{
-					VulnerabilityScanning: config.VulnerabilityScanningConfig{
+					VulnerabilityScanning: config.VulnerabilityScanConfig{
 						NVDAPIKey: "nvd-api-key-12345",
 					},
 				},
@@ -212,7 +212,7 @@ func TestRedactSecretsDoesNotModifyOriginal(t *testing.T) {
 			JWTSecret:           "original-jwt",
 		},
 		Security: config.SecurityConfig{
-			VulnerabilityScanning: config.VulnerabilityScanningConfig{
+			VulnerabilityScanning: config.VulnerabilityScanConfig{
 				NVDAPIKey: "original-api-key",
 			},
 		},

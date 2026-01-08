@@ -59,54 +59,97 @@ func parseDHCPLine(line string, result *TestResult) {
 	case strings.HasPrefix(line, "siaddr = "):
 		result.ServerIP = strings.TrimPrefix(line, "siaddr = ")
 	case strings.HasPrefix(line, "subnet_mask"):
-		// Format: subnet_mask (ip): 255.255.255.0
-		if idx := strings.LastIndex(line, ": "); idx != -1 {
-			result.SubnetMask = strings.TrimSpace(line[idx+2:])
-		}
+		parseSubnetMask(line, result)
 	case strings.HasPrefix(line, "router"):
-		// Format: router (ip_mult): {192.168.1.1}
-		if idx := strings.Index(line, "{"); idx != -1 {
-			end := strings.Index(line, "}")
-			if end > idx {
-				result.Gateway = strings.TrimSpace(line[idx+1 : end])
-			}
-		}
+		parseRouter(line, result)
 	case strings.HasPrefix(line, "domain_name_server"):
-		// Format: domain_name_server (ip_mult): {8.8.8.8, 8.8.4.4}
-		if idx := strings.Index(line, "{"); idx != -1 {
-			end := strings.Index(line, "}")
-			if end > idx {
-				servers := strings.Split(line[idx+1:end], ",")
-				for _, s := range servers {
-					s = strings.TrimSpace(s)
-					if s != "" {
-						result.DNSServers = append(result.DNSServers, s)
-					}
-				}
-			}
-		}
+		parseDNSServers(line, result)
 	case strings.HasPrefix(line, "domain_name"):
-		// Format: domain_name (string): local
-		if idx := strings.LastIndex(line, ": "); idx != -1 {
-			result.DomainName = strings.TrimSpace(line[idx+2:])
-		}
+		parseDomainName(line, result)
 	case strings.HasPrefix(line, "lease_time"):
-		// Format: lease_time (uint32): 0x15180
-		if idx := strings.LastIndex(line, ": "); idx != -1 {
-			valStr := strings.TrimSpace(line[idx+2:])
-			if seconds, err := parseLeaseTime(valStr); err == nil {
-				result.LeaseTime = time.Duration(seconds) * time.Second
-				result.LeaseTimeSec = seconds
-			}
-		}
+		parseLeaseTimeLine(line, result)
 	case strings.HasPrefix(line, "server_identifier"):
-		// Format: server_identifier (ip): 192.168.1.1
-		if idx := strings.LastIndex(line, ": "); idx != -1 {
-			if result.ServerIP == "" {
-				result.ServerIP = strings.TrimSpace(line[idx+2:])
-			}
+		parseServerIdentifier(line, result)
+	}
+}
+
+// parseSubnetMask extracts subnet mask from ipconfig output line.
+func parseSubnetMask(line string, result *TestResult) {
+	// Format: subnet_mask (ip): 255.255.255.0
+	if idx := strings.LastIndex(line, ": "); idx != -1 {
+		result.SubnetMask = strings.TrimSpace(line[idx+2:])
+	}
+}
+
+// parseRouter extracts gateway from ipconfig output line.
+func parseRouter(line string, result *TestResult) {
+	// Format: router (ip_mult): {192.168.1.1}
+	result.Gateway = extractBracedValue(line)
+}
+
+// parseDNSServers extracts DNS servers from ipconfig output line.
+func parseDNSServers(line string, result *TestResult) {
+	// Format: domain_name_server (ip_mult): {8.8.8.8, 8.8.4.4}
+	bracedContent := extractBracedContent(line)
+	if bracedContent == "" {
+		return
+	}
+	servers := strings.Split(bracedContent, ",")
+	for _, s := range servers {
+		s = strings.TrimSpace(s)
+		if s != "" {
+			result.DNSServers = append(result.DNSServers, s)
 		}
 	}
+}
+
+// parseDomainName extracts domain name from ipconfig output line.
+func parseDomainName(line string, result *TestResult) {
+	// Format: domain_name (string): local
+	if idx := strings.LastIndex(line, ": "); idx != -1 {
+		result.DomainName = strings.TrimSpace(line[idx+2:])
+	}
+}
+
+// parseLeaseTimeLine extracts lease time from ipconfig output line.
+func parseLeaseTimeLine(line string, result *TestResult) {
+	// Format: lease_time (uint32): 0x15180
+	if idx := strings.LastIndex(line, ": "); idx != -1 {
+		valStr := strings.TrimSpace(line[idx+2:])
+		if seconds, err := parseLeaseTime(valStr); err == nil {
+			result.LeaseTime = time.Duration(seconds) * time.Second
+			result.LeaseTimeSec = seconds
+		}
+	}
+}
+
+// parseServerIdentifier extracts server identifier from ipconfig output line.
+func parseServerIdentifier(line string, result *TestResult) {
+	// Format: server_identifier (ip): 192.168.1.1
+	if idx := strings.LastIndex(line, ": "); idx != -1 {
+		if result.ServerIP == "" {
+			result.ServerIP = strings.TrimSpace(line[idx+2:])
+		}
+	}
+}
+
+// extractBracedValue extracts the first value from braces.
+func extractBracedValue(line string) string {
+	content := extractBracedContent(line)
+	return strings.TrimSpace(content)
+}
+
+// extractBracedContent extracts content between braces.
+func extractBracedContent(line string) string {
+	idx := strings.Index(line, "{")
+	if idx == -1 {
+		return ""
+	}
+	end := strings.Index(line, "}")
+	if end <= idx {
+		return ""
+	}
+	return line[idx+1 : end]
 }
 
 // parseLeaseTime parses a lease time value which may be hex or decimal.
@@ -129,26 +172,13 @@ func getCurrentLeasePlatform(interfaceName string) (*LeaseInfo, error) {
 	}
 
 	// Get current IP info from interface
-	iface, err := net.InterfaceByName(interfaceName)
-	if err != nil {
-		return nil, &InterfaceError{Message: "interface not found: " + err.Error()}
-	}
-
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return nil, &InterfaceError{Message: "failed to get addresses: " + err.Error()}
-	}
-
-	for _, addr := range addrs {
-		if ipnet, ok := addr.(*net.IPNet); ok && ipnet.IP.To4() != nil {
-			lease.IPAddress = ipnet.IP.String()
-			lease.SubnetMask = net.IP(ipnet.Mask).String()
-			break
-		}
+	if err := populateLeaseFromInterface(interfaceName, lease); err != nil {
+		return nil, err
 	}
 
 	// Get DHCP-specific info using ipconfig
-	cmd := exec.Command("ipconfig", "getpacket", interfaceName)
+	ctx := context.Background()
+	cmd := exec.CommandContext(ctx, "ipconfig", "getpacket", interfaceName)
 	output, err := cmd.Output()
 	if err != nil {
 		// No DHCP lease, but we might still have static IP info
@@ -158,11 +188,38 @@ func getCurrentLeasePlatform(interfaceName string) (*LeaseInfo, error) {
 		return nil, &InterfaceError{Message: "no DHCP lease: " + err.Error()}
 	}
 
-	// Parse DHCP packet info
+	// Parse DHCP packet info and copy to lease
 	result := &TestResult{}
 	parseIPConfigOutput(string(output), result)
+	copyResultToLease(result, lease)
 
-	// Copy DHCP info to lease
+	return lease, nil
+}
+
+// populateLeaseFromInterface fills lease with IP info from the network interface.
+func populateLeaseFromInterface(interfaceName string, lease *LeaseInfo) error {
+	iface, err := net.InterfaceByName(interfaceName)
+	if err != nil {
+		return &InterfaceError{Message: "interface not found: " + err.Error()}
+	}
+
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return &InterfaceError{Message: "failed to get addresses: " + err.Error()}
+	}
+
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && ipnet.IP.To4() != nil {
+			lease.IPAddress = ipnet.IP.String()
+			lease.SubnetMask = net.IP(ipnet.Mask).String()
+			break
+		}
+	}
+	return nil
+}
+
+// copyResultToLease copies relevant fields from TestResult to LeaseInfo.
+func copyResultToLease(result *TestResult, lease *LeaseInfo) {
 	if result.ServerIP != "" {
 		lease.ServerIP = result.ServerIP
 	}
@@ -179,6 +236,4 @@ func getCurrentLeasePlatform(interfaceName string) (*LeaseInfo, error) {
 		lease.LeaseTime = result.LeaseTime
 		lease.LeaseTimeSec = int(result.LeaseTime.Seconds())
 	}
-
-	return lease, nil
 }

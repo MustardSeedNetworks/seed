@@ -351,8 +351,8 @@ func TestTracerouteHop(t *testing.T) {
 
 			// Test JSON unmarshaling
 			var decoded roots.TracerouteHop
-			if err := json.Unmarshal(data, &decoded); err != nil {
-				t.Errorf("json.Unmarshal() error = %v", err)
+			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
 			}
 
@@ -439,8 +439,8 @@ func TestTracerouteResult(t *testing.T) {
 
 			// Test JSON unmarshaling
 			var decoded roots.TracerouteResult
-			if err := json.Unmarshal(data, &decoded); err != nil {
-				t.Errorf("json.Unmarshal() error = %v", err)
+			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
 			}
 
@@ -513,8 +513,8 @@ func TestTracerouteOptions(t *testing.T) {
 
 			// Test JSON unmarshaling
 			var decoded roots.TracerouteOptions
-			if err := json.Unmarshal(data, &decoded); err != nil {
-				t.Errorf("json.Unmarshal() error = %v", err)
+			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
 			}
 
@@ -594,8 +594,8 @@ func TestIPEnrichment(t *testing.T) {
 
 			// Test JSON unmarshaling
 			var decoded roots.IPEnrichment
-			if err := json.Unmarshal(data, &decoded); err != nil {
-				t.Errorf("json.Unmarshal() error = %v", err)
+			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
 			}
 
@@ -682,8 +682,8 @@ func TestPathAnalysis(t *testing.T) {
 
 			// Test JSON unmarshaling
 			var decoded roots.PathAnalysis
-			if err := json.Unmarshal(data, &decoded); err != nil {
-				t.Errorf("json.Unmarshal() error = %v", err)
+			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
 			}
 
@@ -753,8 +753,8 @@ func TestPathBottleneck(t *testing.T) {
 
 			// Test JSON unmarshaling
 			var decoded roots.PathBottleneck
-			if err := json.Unmarshal(data, &decoded); err != nil {
-				t.Errorf("json.Unmarshal() error = %v", err)
+			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
 			}
 

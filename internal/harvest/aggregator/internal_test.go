@@ -301,7 +301,7 @@ func TestStatisticalAnalysisWorkflow(t *testing.T) {
 
 	p90, err := aggregator.Percentile(values, 90)
 	assert.NoError(t, err)
-	assert.InDelta(t, 55.8, p90, 5) // Should be between high regular values and outlier
+	assert.InDelta(t, 44.2, p90, 1) // 38 + 0.1*(100-38) = 44.2
 
 	// Normalize values
 	normalized, err := aggregator.Normalize(values)

@@ -52,23 +52,23 @@ func ExportParseIperfConfig(serverAddr string, args map[string]any) (any, error)
 
 // Exported constants for testing.
 const (
-	ExportDefaultScanTimeoutSeconds        = defaultScanTimeoutSeconds
-	ExportMaxScanTimeoutSeconds            = maxScanTimeoutSeconds
-	ExportMaxTracerouteHops                = maxTracerouteHops
-	ExportDefaultTracerouteTimeoutSeconds  = defaultTracerouteTimeoutSeconds
-	ExportDefaultTCPProbeTimeoutSeconds    = defaultTCPProbeTimeoutSeconds
-	ExportDefaultPortScanTimeoutSeconds    = defaultPortScanTimeoutSeconds
-	ExportPortScanConcurrency              = portScanConcurrency
-	ExportPortRangeSplitParts              = portRangeSplitParts
-	ExportMaxPortRangeSize                 = maxPortRangeSize
-	ExportDefaultTracerouteMaxHops         = defaultTracerouteMaxHops
-	ExportSpeedtestTimeoutMinutes          = SpeedtestTimeoutMinutes
-	ExportDefaultIperfPort                 = DefaultIperfPort
-	ExportDefaultIperfDurationSeconds      = DefaultIperfDurationSeconds
-	ExportMaxIperfDurationSeconds          = MaxIperfDurationSeconds
-	ExportIperfTimeoutBufferSeconds        = IperfTimeoutBufferSeconds
-	ExportBytesPerKilobyte                 = BytesPerKilobyte
-	ExportBytesPerMegabyte                 = BytesPerMegabyte
+	ExportDefaultScanTimeoutSeconds       = defaultScanTimeoutSeconds
+	ExportMaxScanTimeoutSeconds           = maxScanTimeoutSeconds
+	ExportMaxTracerouteHops               = maxTracerouteHops
+	ExportDefaultTracerouteTimeoutSeconds = defaultTracerouteTimeoutSeconds
+	ExportDefaultTCPProbeTimeoutSeconds   = defaultTCPProbeTimeoutSeconds
+	ExportDefaultPortScanTimeoutSeconds   = defaultPortScanTimeoutSeconds
+	ExportPortScanConcurrency             = portScanConcurrency
+	ExportPortRangeSplitParts             = portRangeSplitParts
+	ExportMaxPortRangeSize                = maxPortRangeSize
+	ExportDefaultTracerouteMaxHops        = defaultTracerouteMaxHops
+	ExportSpeedtestTimeoutMinutes         = SpeedtestTimeoutMinutes
+	ExportDefaultIperfPort                = DefaultIperfPort
+	ExportDefaultIperfDurationSeconds     = DefaultIperfDurationSeconds
+	ExportMaxIperfDurationSeconds         = MaxIperfDurationSeconds
+	ExportIperfTimeoutBufferSeconds       = IperfTimeoutBufferSeconds
+	ExportBytesPerKilobyte                = BytesPerKilobyte
+	ExportBytesPerMegabyte                = BytesPerMegabyte
 )
 
 // ServerTestAccessor provides access to Server's private fields for testing.

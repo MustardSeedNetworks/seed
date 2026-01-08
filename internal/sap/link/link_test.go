@@ -347,13 +347,14 @@ func TestMonitorGetFlapCount(t *testing.T) {
 	m := link.NewMonitor("eth0")
 
 	// Add events at different times
+	// Use a fixed buffer from now to avoid timing edge cases
 	now := time.Now()
 	events := []link.Event{
-		{Interface: "eth0", Timestamp: now.Add(-25 * time.Hour)}, // Should not count for 24h
-		{Interface: "eth0", Timestamp: now.Add(-23 * time.Hour)}, // Should count for 24h
-		{Interface: "eth0", Timestamp: now.Add(-1 * time.Hour)},  // Should count for both
-		{Interface: "eth0", Timestamp: now.Add(-30 * time.Minute)},
-		{Interface: "eth0", Timestamp: now.Add(-5 * time.Minute)},
+		{Interface: "eth0", Timestamp: now.Add(-25 * time.Hour)},   // Should not count for 24h
+		{Interface: "eth0", Timestamp: now.Add(-23 * time.Hour)},   // Should count for 24h
+		{Interface: "eth0", Timestamp: now.Add(-1 * time.Hour)},    // Should count for both
+		{Interface: "eth0", Timestamp: now.Add(-30 * time.Minute)}, // In 1h window
+		{Interface: "eth0", Timestamp: now.Add(-4 * time.Minute)},  // In 5m window (with buffer)
 	}
 
 	for _, e := range events {
@@ -369,7 +370,7 @@ func TestMonitorGetFlapCount(t *testing.T) {
 		{"2 hours", 2 * time.Hour, 3},
 		{"24 hours", 24 * time.Hour, 4},
 		{"48 hours", 48 * time.Hour, 5},
-		{"5 minutes", 5 * time.Minute, 1},
+		{"6 minutes", 6 * time.Minute, 1}, // Use 6 minutes to ensure 4-minute event is captured
 		{"1 minute", 1 * time.Minute, 0},
 	}
 

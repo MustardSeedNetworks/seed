@@ -67,16 +67,16 @@ func TestErrorResponseWithoutDetails(t *testing.T) {
 // TestErrorCodes tests that all error codes are defined correctly.
 func TestErrorCodes(t *testing.T) {
 	codes := map[string]string{
-		"BAD_REQUEST":          api.ErrCodeBadRequest,
-		"UNAUTHORIZED":         api.ErrCodeUnauthorized,
-		"FORBIDDEN":            api.ErrCodeForbidden,
-		"NOT_FOUND":            api.ErrCodeNotFound,
-		"CONFLICT":             api.ErrCodeConflict,
-		"METHOD_NOT_ALLOWED":   api.ErrCodeMethodNotAllowed,
-		"INTERNAL_ERROR":       api.ErrCodeInternal,
-		"SERVICE_UNAVAILABLE":  api.ErrCodeServiceUnavail,
-		"VALIDATION_ERROR":     api.ErrCodeValidation,
-		"RATE_LIMIT_EXCEEDED":  api.ErrCodeRateLimit,
+		"BAD_REQUEST":         api.ErrCodeBadRequest,
+		"UNAUTHORIZED":        api.ErrCodeUnauthorized,
+		"FORBIDDEN":           api.ErrCodeForbidden,
+		"NOT_FOUND":           api.ErrCodeNotFound,
+		"CONFLICT":            api.ErrCodeConflict,
+		"METHOD_NOT_ALLOWED":  api.ErrCodeMethodNotAllowed,
+		"INTERNAL_ERROR":      api.ErrCodeInternal,
+		"SERVICE_UNAVAILABLE": api.ErrCodeServiceUnavail,
+		"VALIDATION_ERROR":    api.ErrCodeValidation,
+		"RATE_LIMIT_EXCEEDED": api.ErrCodeRateLimit,
 	}
 
 	for expected, actual := range codes {
@@ -136,11 +136,11 @@ func TestSendJSONResponse(t *testing.T) {
 // TestSendErrorResponseWithDetails tests the standardized error response helper.
 func TestSendErrorResponseWithDetails(t *testing.T) {
 	tests := []struct {
-		name       string
-		status     int
-		code       string
-		message    string
-		details    string
+		name    string
+		status  int
+		code    string
+		message string
+		details string
 	}{
 		{
 			name:    "bad request error",
@@ -207,11 +207,11 @@ func TestReadLastLines(t *testing.T) {
 	}
 
 	tests := []struct {
-		name         string
-		maxBytes     int64
-		maxLines     int
-		expectedLen  int
-		firstLine    string
+		name        string
+		maxBytes    int64
+		maxLines    int
+		expectedLen int
+		firstLine   string
 	}{
 		{
 			name:        "read all lines",

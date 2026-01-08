@@ -9,10 +9,10 @@ import (
 // TestExtractHostFromOrigin tests host extraction from origin URLs.
 func TestExtractHostFromOrigin(t *testing.T) {
 	tests := []struct {
-		name       string
-		origin     string
-		wantHost   string
-		wantOK     bool
+		name     string
+		origin   string
+		wantHost string
+		wantOK   bool
 	}{
 		{
 			name:     "http scheme",
@@ -206,8 +206,8 @@ func TestIsValidClassBAddress(t *testing.T) {
 		{"172.16.0.1", true},
 		{"172.31.255.255", true},
 		{"172.20.100.50", true},
-		{"172.15.0.1", false},  // Below range
-		{"172.32.0.1", false},  // Above range
+		{"172.15.0.1", false},          // Below range
+		{"172.32.0.1", false},          // Above range
 		{"172.16.0.1.evil.com", false}, // Subdomain attack
 		{"172.16.0", false},
 	}
@@ -418,52 +418,52 @@ func TestIsAllowedWSOriginWithConfigured(t *testing.T) {
 	defer api.ClearAllowedOrigins()
 
 	tests := []struct {
-		name            string
+		name              string
 		configuredOrigins []string
-		origin          string
-		expected        bool
+		origin            string
+		expected          bool
 	}{
 		{
-			name:            "default RFC 1918 - localhost",
+			name:              "default RFC 1918 - localhost",
 			configuredOrigins: nil,
-			origin:          "http://localhost:3000",
-			expected:        true,
+			origin:            "http://localhost:3000",
+			expected:          true,
 		},
 		{
-			name:            "default RFC 1918 - private IP",
+			name:              "default RFC 1918 - private IP",
 			configuredOrigins: nil,
-			origin:          "http://192.168.1.1",
-			expected:        true,
+			origin:            "http://192.168.1.1",
+			expected:          true,
 		},
 		{
-			name:            "default RFC 1918 - public IP rejected",
+			name:              "default RFC 1918 - public IP rejected",
 			configuredOrigins: nil,
-			origin:          "http://8.8.8.8",
-			expected:        false,
+			origin:            "http://8.8.8.8",
+			expected:          false,
 		},
 		{
-			name:            "configured wildcard",
+			name:              "configured wildcard",
 			configuredOrigins: []string{"*"},
-			origin:          "https://any.example.com",
-			expected:        true,
+			origin:            "https://any.example.com",
+			expected:          true,
 		},
 		{
-			name:            "configured exact match",
+			name:              "configured exact match",
 			configuredOrigins: []string{"https://example.com"},
-			origin:          "https://example.com",
-			expected:        true,
+			origin:            "https://example.com",
+			expected:          true,
 		},
 		{
-			name:            "configured prefix match",
+			name:              "configured prefix match",
 			configuredOrigins: []string{"https://192.168."},
-			origin:          "https://192.168.1.100",
-			expected:        true,
+			origin:            "https://192.168.1.100",
+			expected:          true,
 		},
 		{
-			name:            "configured - no match",
+			name:              "configured - no match",
 			configuredOrigins: []string{"https://allowed.com"},
-			origin:          "https://not-allowed.com",
-			expected:        false,
+			origin:            "https://not-allowed.com",
+			expected:          false,
 		},
 	}
 
@@ -547,7 +547,7 @@ func TestIPOctetValidation(t *testing.T) {
 		{"abc", false},
 		{"-1", false},
 		{"1000", false},
-		{"01", true},  // Leading zeros are valid octets
+		{"01", true}, // Leading zeros are valid octets
 	}
 
 	for _, tt := range tests {

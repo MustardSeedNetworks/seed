@@ -36,7 +36,7 @@ func TestScanningPhase_Name(t *testing.T) {
 
 func TestScanningPhase_RunEmptyDevices(t *testing.T) {
 	pipelineCfg := discovery.DefaultPipelineConfig()
-	phase := discovery.NewScanningPhase(pipelineCfg, nil, nil)
+	phase := discovery.NewScanningPhase(&pipelineCfg, nil, nil)
 	ctx := context.Background()
 
 	// Run with empty devices list
@@ -63,7 +63,7 @@ func TestScanningPhase_RunBothDisabled(t *testing.T) {
 	pipelineCfg.PortScan.Intensity = discovery.PortScanOff
 	pipelineCfg.SNMPCollection.Enabled = false
 
-	phase := discovery.NewScanningPhase(pipelineCfg, nil, nil)
+	phase := discovery.NewScanningPhase(&pipelineCfg, nil, nil)
 	ctx := context.Background()
 
 	devices := []*discovery.DiscoveredDevice{
@@ -313,7 +313,7 @@ func TestScanningPhase_RunWithDevices(t *testing.T) {
 	pipelineCfg.Timing.MaxConcurrentHosts = 5
 	pipelineCfg.SNMPCollection.Enabled = false
 
-	phase := discovery.NewScanningPhase(pipelineCfg, nil, nil)
+	phase := discovery.NewScanningPhase(&pipelineCfg, nil, nil)
 	ctx := context.Background()
 
 	// Create test devices with TEST-NET addresses
@@ -339,7 +339,7 @@ func TestScanningPhase_RunWithProgressChannel(t *testing.T) {
 	pipelineCfg.Timing.MaxConcurrentHosts = 5
 	pipelineCfg.SNMPCollection.Enabled = false
 
-	phase := discovery.NewScanningPhase(pipelineCfg, nil, nil)
+	phase := discovery.NewScanningPhase(&pipelineCfg, nil, nil)
 	ctx := context.Background()
 
 	devices := []*discovery.DiscoveredDevice{
@@ -367,12 +367,12 @@ func TestScanningPhase_RunWithProgressChannel(t *testing.T) {
 
 func TestScanningPhase_ContextCancellation(t *testing.T) {
 	pipelineCfg := discovery.DefaultPipelineConfig()
-	pipelineCfg.PortScan.Intensity = discovery.PortScanFull
+	pipelineCfg.PortScan.Intensity = discovery.PortScanComprehensive
 	pipelineCfg.PortScan.ConnectTimeout = 5 * time.Second
 	pipelineCfg.Timing.MaxConcurrentHosts = 1
 	pipelineCfg.SNMPCollection.Enabled = false
 
-	phase := discovery.NewScanningPhase(pipelineCfg, nil, nil)
+	phase := discovery.NewScanningPhase(&pipelineCfg, nil, nil)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	devices := []*discovery.DiscoveredDevice{
@@ -406,7 +406,7 @@ func TestScanningPhase_WithSNMP(t *testing.T) {
 		Timeout:     100 * time.Millisecond,
 	}
 
-	phase := discovery.NewScanningPhase(pipelineCfg, snmpCfg, nil)
+	phase := discovery.NewScanningPhase(&pipelineCfg, snmpCfg, nil)
 	ctx := context.Background()
 
 	devices := []*discovery.DiscoveredDevice{
@@ -429,7 +429,7 @@ func TestScanningPhase_EmptyIPDevice(t *testing.T) {
 	pipelineCfg.Timing.PhaseTimeout = 500 * time.Millisecond
 	pipelineCfg.SNMPCollection.Enabled = false
 
-	phase := discovery.NewScanningPhase(pipelineCfg, nil, nil)
+	phase := discovery.NewScanningPhase(&pipelineCfg, nil, nil)
 	ctx := context.Background()
 
 	// Device with empty IP should be skipped

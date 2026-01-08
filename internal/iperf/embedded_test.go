@@ -1,4 +1,3 @@
-// Package iperf provides tests for the embedded binary functionality.
 package iperf_test
 
 import (
@@ -346,17 +345,16 @@ func TestNotFoundErrorFormatting(t *testing.T) {
 func TestNotFoundErrorImplementsError(t *testing.T) {
 	t.Parallel()
 
-	var err error = &iperf.NotFoundError{
+	nfe := &iperf.NotFoundError{
 		SearchedPaths: []string{"/test/path"},
 	}
 
 	// Should be assignable to error interface
-	if err == nil {
-		t.Error("NotFoundError should not be nil")
-	}
+	var err error = nfe
+	_ = err // Use the variable to avoid unused variable warning
 
 	// Should have non-empty error message
-	if err.Error() == "" {
+	if nfe.Error() == "" {
 		t.Error("Error message should not be empty")
 	}
 }

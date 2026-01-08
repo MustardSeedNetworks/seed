@@ -139,7 +139,7 @@ PRETTY_NAME="Manjaro Linux"
 			},
 		},
 		{
-			name: "Empty content",
+			name:    "Empty content",
 			content: ``,
 			expected: Distro{
 				Family: "",

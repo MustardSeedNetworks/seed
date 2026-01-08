@@ -1215,8 +1215,8 @@ func TestModuleTestAccessor(t *testing.T) {
 	}
 }
 
-// TestDiscoveryServiceTestAccessor tests the DiscoveryServiceTestAccessor functionality.
-func TestDiscoveryServiceTestAccessor(t *testing.T) {
+// TestDiscoveryServiceTestAccessorWithTestutil tests the DiscoveryServiceTestAccessor using testutil builder.
+func TestDiscoveryServiceTestAccessorWithTestutil(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().
 		WithInterface("lo").
 		Build()
@@ -1234,8 +1234,8 @@ func TestDiscoveryServiceTestAccessor(t *testing.T) {
 	_ = accessor.GetDB()
 }
 
-// TestVulnerabilityServiceTestAccessor tests the VulnerabilityServiceTestAccessor functionality.
-func TestVulnerabilityServiceTestAccessor(t *testing.T) {
+// TestVulnerabilityServiceTestAccessorWithTestutil tests the VulnerabilityServiceTestAccessor using testutil builder.
+func TestVulnerabilityServiceTestAccessorWithTestutil(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().
 		WithInterface("lo").
 		Build()
@@ -1256,8 +1256,8 @@ func TestVulnerabilityServiceTestAccessor(t *testing.T) {
 	_ = accessor.GetScanner()
 }
 
-// TestPostureServiceTestAccessor tests the PostureServiceTestAccessor functionality.
-func TestPostureServiceTestAccessor(t *testing.T) {
+// TestPostureServiceTestAccessorWithTestutil tests the PostureServiceTestAccessor using testutil builder.
+func TestPostureServiceTestAccessorWithTestutil(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().
 		WithInterface("lo").
 		Build()
@@ -1285,8 +1285,8 @@ func TestPostureServiceTestAccessor(t *testing.T) {
 	}
 }
 
-// TestRogueServiceTestAccessor tests the RogueServiceTestAccessor functionality.
-func TestRogueServiceTestAccessor(t *testing.T) {
+// TestRogueServiceTestAccessorWithTestutil tests the RogueServiceTestAccessor using testutil builder.
+func TestRogueServiceTestAccessorWithTestutil(t *testing.T) {
 	cfg := testutil.NewConfigBuilder().
 		WithInterface("lo").
 		Build()

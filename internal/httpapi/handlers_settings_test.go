@@ -270,18 +270,24 @@ type settingsUpdateTestCase struct {
 func TestApplyThresholdUpdates(t *testing.T) {
 	tests := []settingsUpdateTestCase{
 		{
-			name:           "valid dns thresholds",
-			payload:        map[string]any{"thresholds": map[string]any{"dns": map[string]any{"good": 50.0, "warning": 100.0}}},
+			name: "valid dns thresholds",
+			payload: map[string]any{
+				"thresholds": map[string]any{"dns": map[string]any{"good": 50.0, "warning": 100.0}},
+			},
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name:           "valid gateway thresholds",
-			payload:        map[string]any{"thresholds": map[string]any{"gateway": map[string]any{"good": 20.0, "warning": 50.0}}},
+			name: "valid gateway thresholds",
+			payload: map[string]any{
+				"thresholds": map[string]any{"gateway": map[string]any{"good": 20.0, "warning": 50.0}},
+			},
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name:           "valid wifi thresholds",
-			payload:        map[string]any{"thresholds": map[string]any{"wifi": map[string]any{"good": -60.0, "warning": -70.0}}},
+			name: "valid wifi thresholds",
+			payload: map[string]any{
+				"thresholds": map[string]any{"wifi": map[string]any{"good": -60.0, "warning": -70.0}},
+			},
 			expectedStatus: http.StatusOK,
 		},
 		{
@@ -330,8 +336,10 @@ func TestApplyThresholdUpdates(t *testing.T) {
 func TestApplyHealthChecksUpdates(t *testing.T) {
 	tests := []settingsUpdateTestCase{
 		{
-			name:           "valid health checks",
-			payload:        map[string]any{"healthChecks": map[string]any{"runPerformance": true, "runSpeedtest": false}},
+			name: "valid health checks",
+			payload: map[string]any{
+				"healthChecks": map[string]any{"runPerformance": true, "runSpeedtest": false},
+			},
 			expectedStatus: http.StatusOK,
 		},
 		{
@@ -460,8 +468,10 @@ func TestApplyIperfUpdates(t *testing.T) {
 func TestApplyDisplayOptionsUpdates(t *testing.T) {
 	tests := []settingsUpdateTestCase{
 		{
-			name:           "valid display options",
-			payload:        map[string]any{"displayOptions": map[string]any{"showPublicIP": true, "unitSystem": "metric"}},
+			name: "valid display options",
+			payload: map[string]any{
+				"displayOptions": map[string]any{"showPublicIP": true, "unitSystem": "metric"},
+			},
 			expectedStatus: http.StatusOK,
 		},
 		{
@@ -710,11 +720,11 @@ func TestApplyFABOptionsUpdates(t *testing.T) {
 			name: "valid fab options",
 			payload: map[string]any{
 				"fabOptions": map[string]any{
-					"runLink":            true,
-					"runSwitch":          true,
-					"runVLAN":            false,
-					"autoScanOnLink":     true,
-					"runHealthChecks":    true,
+					"runLink":             true,
+					"runSwitch":           true,
+					"runVLAN":             false,
+					"autoScanOnLink":      true,
+					"runHealthChecks":     true,
 					"runNetworkDiscovery": true,
 				},
 			},

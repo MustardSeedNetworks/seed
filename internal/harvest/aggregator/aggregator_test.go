@@ -206,6 +206,7 @@ func TestCalculate(t *testing.T) {
 				Max:    5.0,
 				Avg:    3.0,
 				Median: 3.0,
+				StdDev: 1.414, // sqrt(2)
 			},
 			wantErr: false,
 		},
@@ -219,6 +220,7 @@ func TestCalculate(t *testing.T) {
 				Max:    4.0,
 				Avg:    2.5,
 				Median: 2.5,
+				StdDev: 1.118, // sqrt(1.25)
 			},
 			wantErr: false,
 		},
@@ -232,6 +234,7 @@ func TestCalculate(t *testing.T) {
 				Max:    5.0,
 				Avg:    0.0,
 				Median: 0.0,
+				StdDev: 3.162, // approx
 			},
 			wantErr: false,
 		},
@@ -398,12 +401,12 @@ func TestGroupByPeriod(t *testing.T) {
 		{
 			name: "hourly grouping",
 			points: []aggregator.DataPoint{
-				{Timestamp: baseTime, Value: 1},
-				{Timestamp: baseTime.Add(30 * time.Minute), Value: 2},
-				{Timestamp: baseTime.Add(90 * time.Minute), Value: 3},
+				{Timestamp: baseTime, Value: 1},                       // 10:30 -> hour 10
+				{Timestamp: baseTime.Add(30 * time.Minute), Value: 2}, // 11:00 -> hour 11
+				{Timestamp: baseTime.Add(90 * time.Minute), Value: 3}, // 12:00 -> hour 12
 			},
 			period:   aggregator.PeriodHourly,
-			wantKeys: []string{"2024-01-15-10", "2024-01-15-12"},
+			wantKeys: []string{"2024-01-15-10", "2024-01-15-11", "2024-01-15-12"},
 			wantErr:  false,
 		},
 		{

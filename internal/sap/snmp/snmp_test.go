@@ -3,6 +3,7 @@ package snmp_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -357,8 +358,8 @@ func TestCollectDeviceNilConfig(t *testing.T) {
 	if result.Device.Status != snmp.StatusError {
 		t.Errorf("expected StatusError, got %v", result.Device.Status)
 	}
-	if result.Error != "SNMP config is nil" {
-		t.Errorf("expected 'SNMP config is nil' error, got %q", result.Error)
+	if result.Error != snmp.ErrNilConfig.Error() {
+		t.Errorf("expected '%s' error, got %q", snmp.ErrNilConfig.Error(), result.Error)
 	}
 }
 
@@ -415,8 +416,8 @@ func TestQueryNilConfig(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for nil config")
 	}
-	if err.Error() != "SNMP config is nil" {
-		t.Errorf("expected 'SNMP config is nil' error, got %q", err.Error())
+	if !errors.Is(err, snmp.ErrNilConfig) {
+		t.Errorf("expected ErrNilConfig, got %v", err)
 	}
 }
 
@@ -721,6 +722,9 @@ func TestCollectResultWithError(t *testing.T) {
 		Error:   "connection timeout",
 	}
 
+	if result.Device.IP != "192.168.1.1" {
+		t.Errorf("expected IP '192.168.1.1', got %q", result.Device.IP)
+	}
 	if result.Success {
 		t.Error("expected Success false")
 	}
@@ -740,6 +744,9 @@ func TestDeviceInfoCollectedAt(t *testing.T) {
 	}
 	after := time.Now()
 
+	if device.IP != "192.168.1.1" {
+		t.Errorf("expected IP '192.168.1.1', got %q", device.IP)
+	}
 	if device.CollectedAt.Before(before) {
 		t.Error("CollectedAt should not be before the test started")
 	}
@@ -762,6 +769,12 @@ func TestVLANInfoEmptyPorts(t *testing.T) {
 	if vlan.ID != 10 {
 		t.Errorf("expected ID 10, got %d", vlan.ID)
 	}
+	if vlan.Name != "Empty VLAN" {
+		t.Errorf("expected Name 'Empty VLAN', got %q", vlan.Name)
+	}
+	if vlan.Status != "active" {
+		t.Errorf("expected Status 'active', got %q", vlan.Status)
+	}
 }
 
 func TestMACEntryStaticType(t *testing.T) {
@@ -772,6 +785,15 @@ func TestMACEntryStaticType(t *testing.T) {
 		Type:       "static",
 	}
 
+	if entry.MACAddress != "AA:BB:CC:DD:EE:FF" {
+		t.Errorf("expected MACAddress 'AA:BB:CC:DD:EE:FF', got %q", entry.MACAddress)
+	}
+	if entry.Port != 1 {
+		t.Errorf("expected Port 1, got %d", entry.Port)
+	}
+	if entry.VLANID != 1 {
+		t.Errorf("expected VLANID 1, got %d", entry.VLANID)
+	}
 	if entry.Type != "static" {
 		t.Errorf("expected Type 'static', got %q", entry.Type)
 	}
@@ -805,11 +827,16 @@ func TestCollectorMu(t *testing.T) {
 		t.Fatal("expected non-nil mutex")
 	}
 
-	// Verify the mutex works correctly.
+	// Verify the mutex works correctly by using it with a shared variable.
+	var counter int
 	mu.Lock()
+	counter++
 	mu.Unlock()
 
 	mu.RLock()
+	if counter != 1 {
+		t.Errorf("expected counter 1, got %d", counter)
+	}
 	mu.RUnlock()
 }
 

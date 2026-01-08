@@ -84,8 +84,8 @@ func TestTelemetryServiceWithCanceledContext(t *testing.T) {
 	service.Stop()
 }
 
-// TestTelemetrySnapshotFields verifies TelemetrySnapshot struct fields.
-func TestTelemetrySnapshotFields(t *testing.T) {
+// TestTelemetrySnapshotConstruction verifies TelemetrySnapshot can be constructed.
+func TestTelemetrySnapshotConstruction(t *testing.T) {
 	now := time.Now()
 
 	snapshot := sap.TelemetrySnapshot{
@@ -186,8 +186,8 @@ func TestTelemetrySnapshotWithData(t *testing.T) {
 	}
 }
 
-// TestBandwidthSampleFields verifies BandwidthSample struct fields.
-func TestBandwidthSampleFields(t *testing.T) {
+// TestTelemetryBandwidthSampleTableDriven tests BandwidthSample with table-driven tests.
+func TestTelemetryBandwidthSampleTableDriven(t *testing.T) {
 	tests := []struct {
 		name          string
 		sample        sap.BandwidthSample
@@ -272,8 +272,8 @@ func TestBandwidthSampleFields(t *testing.T) {
 	}
 }
 
-// TestSystemHealthFields verifies SystemHealth struct fields.
-func TestSystemHealthFields(t *testing.T) {
+// TestTelemetrySystemHealthTableDriven tests SystemHealth with table-driven tests.
+func TestTelemetrySystemHealthTableDriven(t *testing.T) {
 	tests := []struct {
 		name        string
 		health      sap.SystemHealth
@@ -390,8 +390,8 @@ func TestTelemetrySnapshotWithSystemHealth(t *testing.T) {
 	}
 }
 
-// TestLinkStatusFields verifies LinkStatus struct fields.
-func TestLinkStatusFields(t *testing.T) {
+// TestTelemetryLinkStatusTableDriven tests LinkStatus with table-driven tests.
+func TestTelemetryLinkStatusTableDriven(t *testing.T) {
 	tests := []struct {
 		name   string
 		status sap.LinkStatus
@@ -470,8 +470,8 @@ func TestLinkStatusFields(t *testing.T) {
 	}
 }
 
-// TestLinkStateConstants verifies LinkState constant values.
-func TestLinkStateConstants(t *testing.T) {
+// TestTelemetryLinkStateConstants verifies LinkState constant values.
+func TestTelemetryLinkStateConstants(t *testing.T) {
 	tests := []struct {
 		state    sap.LinkState
 		expected string
@@ -491,8 +491,8 @@ func TestLinkStateConstants(t *testing.T) {
 	}
 }
 
-// TestHealthStatusConstants verifies HealthStatus constant values.
-func TestHealthStatusConstants(t *testing.T) {
+// TestTelemetryHealthStatusConstants verifies HealthStatus constant values.
+func TestTelemetryHealthStatusConstants(t *testing.T) {
 	tests := []struct {
 		status   sap.HealthStatus
 		expected string
@@ -512,8 +512,8 @@ func TestHealthStatusConstants(t *testing.T) {
 	}
 }
 
-// TestCableStatusConstants verifies CableStatus constant values.
-func TestCableStatusConstants(t *testing.T) {
+// TestTelemetryCableStatusConstants verifies CableStatus constant values.
+func TestTelemetryCableStatusConstants(t *testing.T) {
 	tests := []struct {
 		status   sap.CableStatus
 		expected string
@@ -534,8 +534,8 @@ func TestCableStatusConstants(t *testing.T) {
 	}
 }
 
-// TestGatewayHealthFields verifies GatewayHealth struct fields.
-func TestGatewayHealthFields(t *testing.T) {
+// TestTelemetryGatewayHealthTableDriven tests GatewayHealth with table-driven tests.
+func TestTelemetryGatewayHealthTableDriven(t *testing.T) {
 	tests := []struct {
 		name   string
 		health sap.GatewayHealth
@@ -597,272 +597,8 @@ func TestGatewayHealthFields(t *testing.T) {
 	}
 }
 
-// TestDNSTestResultFields verifies DNSTestResult struct fields.
-func TestDNSTestResultFields(t *testing.T) {
-	tests := []struct {
-		name   string
-		result sap.DNSTestResult
-	}{
-		{
-			name: "successful DNS query",
-			result: sap.DNSTestResult{
-				Query:        "google.com",
-				Server:       "8.8.8.8",
-				Success:      true,
-				Answers:      []sap.DNSAnswer{{Name: "google.com", Type: "A", Value: "142.250.80.46", TTL: 300}},
-				ResponseTime: time.Millisecond * 25,
-				ResponseMs:   25.0,
-				DNSSEC:       false,
-				TestedAt:     time.Now(),
-			},
-		},
-		{
-			name: "failed DNS query",
-			result: sap.DNSTestResult{
-				Query:        "nonexistent.example.invalid",
-				Server:       "8.8.8.8",
-				Success:      false,
-				Error:        "NXDOMAIN",
-				ResponseTime: time.Millisecond * 50,
-				ResponseMs:   50.0,
-				TestedAt:     time.Now(),
-			},
-		},
-		{
-			name: "authoritative response",
-			result: sap.DNSTestResult{
-				Query:         "example.com",
-				Server:        "ns1.example.com",
-				Success:       true,
-				Answers:       []sap.DNSAnswer{{Name: "example.com", Type: "A", Value: "93.184.216.34", TTL: 3600}},
-				ResponseTime:  time.Millisecond * 10,
-				ResponseMs:    10.0,
-				DNSSEC:        true,
-				Authoritative: true,
-				TestedAt:      time.Now(),
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.result.Query == "" {
-				t.Error("expected non-empty Query")
-			}
-			if tt.result.Server == "" {
-				t.Error("expected non-empty Server")
-			}
-			if tt.result.TestedAt.IsZero() {
-				t.Error("expected non-zero TestedAt")
-			}
-		})
-	}
-}
-
-// TestDNSAnswerFields verifies DNSAnswer struct fields.
-func TestDNSAnswerFields(t *testing.T) {
-	tests := []struct {
-		name   string
-		answer sap.DNSAnswer
-	}{
-		{
-			name:   "A record",
-			answer: sap.DNSAnswer{Name: "example.com", Type: "A", Value: "93.184.216.34", TTL: 3600},
-		},
-		{
-			name: "AAAA record",
-			answer: sap.DNSAnswer{
-				Name:  "example.com",
-				Type:  "AAAA",
-				Value: "2606:2800:220:1:248:1893:25c8:1946",
-				TTL:   3600,
-			},
-		},
-		{
-			name:   "CNAME record",
-			answer: sap.DNSAnswer{Name: "www.example.com", Type: "CNAME", Value: "example.com", TTL: 1800},
-		},
-		{
-			name:   "MX record",
-			answer: sap.DNSAnswer{Name: "example.com", Type: "MX", Value: "mail.example.com", TTL: 7200},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.answer.Name == "" {
-				t.Error("expected non-empty Name")
-			}
-			if tt.answer.Type == "" {
-				t.Error("expected non-empty Type")
-			}
-			if tt.answer.Value == "" {
-				t.Error("expected non-empty Value")
-			}
-			if tt.answer.TTL < 0 {
-				t.Errorf("expected non-negative TTL, got %d", tt.answer.TTL)
-			}
-		})
-	}
-}
-
-// TestDHCPTestResultFields verifies DHCPTestResult struct fields.
-func TestDHCPTestResultFields(t *testing.T) {
-	tests := []struct {
-		name   string
-		result sap.DHCPTestResult
-	}{
-		{
-			name: "successful DHCP lease",
-			result: sap.DHCPTestResult{
-				Success:      true,
-				ServerIP:     "192.168.1.1",
-				OfferedIP:    "192.168.1.100",
-				SubnetMask:   "255.255.255.0",
-				Gateway:      "192.168.1.1",
-				DNSServers:   []string{"8.8.8.8", "8.8.4.4"},
-				LeaseTime:    time.Hour * 24,
-				LeaseTimeSec: 86400,
-				ResponseTime: time.Millisecond * 50,
-				ResponseMs:   50.0,
-				TestedAt:     time.Now(),
-			},
-		},
-		{
-			name: "failed DHCP request",
-			result: sap.DHCPTestResult{
-				Success:      false,
-				Error:        "no DHCP server responding",
-				ResponseTime: time.Second * 5,
-				ResponseMs:   5000.0,
-				TestedAt:     time.Now(),
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.result.TestedAt.IsZero() {
-				t.Error("expected non-zero TestedAt")
-			}
-			if tt.result.Success && tt.result.ServerIP == "" {
-				t.Error("expected non-empty ServerIP for successful result")
-			}
-			if !tt.result.Success && tt.result.Error == "" {
-				t.Error("expected non-empty Error for failed result")
-			}
-		})
-	}
-}
-
-// TestSpeedtestResultFields verifies SpeedtestResult struct fields.
-func TestSpeedtestResultFields(t *testing.T) {
-	tests := []struct {
-		name   string
-		result sap.SpeedtestResult
-	}{
-		{
-			name: "typical home connection",
-			result: sap.SpeedtestResult{
-				DownloadMbps: 100.5,
-				UploadMbps:   20.3,
-				PingMs:       15.0,
-				JitterMs:     2.5,
-				ServerName:   "Speedtest Server - New York",
-				ServerID:     "12345",
-				ISP:          "Example ISP",
-				TestDuration: time.Second * 30,
-				TestedAt:     time.Now(),
-			},
-		},
-		{
-			name: "gigabit fiber connection",
-			result: sap.SpeedtestResult{
-				DownloadMbps: 940.2,
-				UploadMbps:   925.8,
-				PingMs:       3.0,
-				JitterMs:     0.5,
-				ServerName:   "Fiber Server - Los Angeles",
-				ServerID:     "67890",
-				ISP:          "Fiber Provider",
-				TestDuration: time.Second * 20,
-				TestedAt:     time.Now(),
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.result.DownloadMbps < 0 {
-				t.Errorf("expected non-negative DownloadMbps, got %v", tt.result.DownloadMbps)
-			}
-			if tt.result.UploadMbps < 0 {
-				t.Errorf("expected non-negative UploadMbps, got %v", tt.result.UploadMbps)
-			}
-			if tt.result.TestedAt.IsZero() {
-				t.Error("expected non-zero TestedAt")
-			}
-		})
-	}
-}
-
-// TestIPerfResultFields verifies IPerfResult struct fields.
-func TestIPerfResultFields(t *testing.T) {
-	tests := []struct {
-		name   string
-		result sap.IPerfResult
-	}{
-		{
-			name: "TCP download test",
-			result: sap.IPerfResult{
-				Protocol:      "tcp",
-				Direction:     "receive",
-				BandwidthMbps: 940.5,
-				TransferMB:    1175.6,
-				Duration:      time.Second * 10,
-				DurationSec:   10.0,
-				Retransmits:   5,
-				ServerAddr:    "192.168.1.100",
-				TestedAt:      time.Now(),
-			},
-		},
-		{
-			name: "UDP bidirectional test",
-			result: sap.IPerfResult{
-				Protocol:      "udp",
-				Direction:     "bidirectional",
-				BandwidthMbps: 850.0,
-				TransferMB:    1062.5,
-				Duration:      time.Second * 10,
-				DurationSec:   10.0,
-				Jitter:        0.25,
-				PacketLoss:    0.1,
-				ServerAddr:    "10.0.0.50",
-				TestedAt:      time.Now(),
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.result.Protocol != "tcp" && tt.result.Protocol != "udp" {
-				t.Errorf("expected Protocol 'tcp' or 'udp', got %q", tt.result.Protocol)
-			}
-			if tt.result.BandwidthMbps < 0 {
-				t.Errorf("expected non-negative BandwidthMbps, got %v", tt.result.BandwidthMbps)
-			}
-			if tt.result.ServerAddr == "" {
-				t.Error("expected non-empty ServerAddr")
-			}
-			if tt.result.TestedAt.IsZero() {
-				t.Error("expected non-zero TestedAt")
-			}
-		})
-	}
-}
-
-// TestVLANConfigFields verifies VLANConfig struct fields.
-func TestVLANConfigFields(t *testing.T) {
+// TestTelemetryVLANConfigTableDriven tests VLANConfig with table-driven tests.
+func TestTelemetryVLANConfigTableDriven(t *testing.T) {
 	tests := []struct {
 		name   string
 		config sap.VLANConfig
@@ -903,8 +639,8 @@ func TestVLANConfigFields(t *testing.T) {
 	}
 }
 
-// TestCableTestResultFields verifies CableTestResult struct fields.
-func TestCableTestResultFields(t *testing.T) {
+// TestTelemetryCableTestResultTableDriven tests CableTestResult with table-driven tests.
+func TestTelemetryCableTestResultTableDriven(t *testing.T) {
 	tests := []struct {
 		name   string
 		result sap.CableTestResult
@@ -956,8 +692,8 @@ func TestCableTestResultFields(t *testing.T) {
 	}
 }
 
-// TestPairResultFields verifies PairResult struct fields.
-func TestPairResultFields(t *testing.T) {
+// TestTelemetryPairResultTableDriven tests PairResult with table-driven tests.
+func TestTelemetryPairResultTableDriven(t *testing.T) {
 	tests := []struct {
 		name   string
 		result sap.PairResult
@@ -988,8 +724,8 @@ func TestPairResultFields(t *testing.T) {
 	}
 }
 
-// TestSNMPDeviceFields verifies SNMPDevice struct fields.
-func TestSNMPDeviceFields(t *testing.T) {
+// TestTelemetrySNMPDeviceTableDriven tests SNMPDevice with table-driven tests.
+func TestTelemetrySNMPDeviceTableDriven(t *testing.T) {
 	tests := []struct {
 		name   string
 		device sap.SNMPDevice
@@ -1030,8 +766,8 @@ func TestSNMPDeviceFields(t *testing.T) {
 	}
 }
 
-// TestSNMPInterfaceFields verifies SNMPInterface struct fields.
-func TestSNMPInterfaceFields(t *testing.T) {
+// TestTelemetrySNMPInterfaceConstruction tests SNMPInterface struct construction.
+func TestTelemetrySNMPInterfaceConstruction(t *testing.T) {
 	iface := sap.SNMPInterface{
 		Index:       1,
 		Name:        "GigabitEthernet0/1",
@@ -1057,8 +793,8 @@ func TestSNMPInterfaceFields(t *testing.T) {
 	}
 }
 
-// TestSNMPVLANFields verifies SNMPVLAN struct fields.
-func TestSNMPVLANFields(t *testing.T) {
+// TestTelemetrySNMPVLANConstruction tests SNMPVLAN struct construction.
+func TestTelemetrySNMPVLANConstruction(t *testing.T) {
 	vlan := sap.SNMPVLAN{
 		ID:     100,
 		Name:   "Management",
@@ -1074,8 +810,8 @@ func TestSNMPVLANFields(t *testing.T) {
 	}
 }
 
-// TestMACTableEntryFields verifies MACTableEntry struct fields.
-func TestMACTableEntryFields(t *testing.T) {
+// TestTelemetryMACTableEntryTableDriven tests MACTableEntry with table-driven tests.
+func TestTelemetryMACTableEntryTableDriven(t *testing.T) {
 	tests := []struct {
 		name  string
 		entry sap.MACTableEntry
@@ -1105,8 +841,8 @@ func TestMACTableEntryFields(t *testing.T) {
 	}
 }
 
-// TestErrorConstants verifies error constant values.
-func TestErrorConstants(t *testing.T) {
+// TestTelemetryErrorConstants verifies error constant values.
+func TestTelemetryErrorConstants(t *testing.T) {
 	tests := []struct {
 		name string
 		err  error

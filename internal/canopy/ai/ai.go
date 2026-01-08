@@ -30,12 +30,12 @@ type Point struct {
 // SignalSample represents a WiFi signal measurement at a location.
 type SignalSample struct {
 	Location Point   `json:"location"`
-	RSSI     int     `json:"rssiDbm"`     // Signal strength in dBm
-	SSID     string  `json:"ssid"`        // Network SSID
-	BSSID    string  `json:"bssid"`       // Access point MAC
-	Channel  int     `json:"channel"`     // WiFi channel
-	Band     string  `json:"band"`        // "2.4GHz", "5GHz", or "6GHz"
-	Distance float64 `json:"distanceM"`   // Distance from AP in meters (if known)
+	RSSI     int     `json:"rssiDbm"`   // Signal strength in dBm
+	SSID     string  `json:"ssid"`      // Network SSID
+	BSSID    string  `json:"bssid"`     // Access point MAC
+	Channel  int     `json:"channel"`   // WiFi channel
+	Band     string  `json:"band"`      // "2.4GHz", "5GHz", or "6GHz"
+	Distance float64 `json:"distanceM"` // Distance from AP in meters (if known)
 }
 
 // FloorPlan represents the physical space being analyzed.
@@ -54,15 +54,15 @@ type AccessPoint struct {
 
 // CoverageResult contains the results of coverage analysis.
 type CoverageResult struct {
-	TotalArea         float64   `json:"totalAreaSqM"`
-	CoveredArea       float64   `json:"coveredAreaSqM"`
-	CoveragePercent   float64   `json:"coveragePercent"`
-	AverageRSSI       float64   `json:"averageRssiDbm"`
-	MinRSSI           int       `json:"minRssiDbm"`
-	MaxRSSI           int       `json:"maxRssiDbm"`
-	DeadZoneCount     int       `json:"deadZoneCount"`
-	Recommendations   []string  `json:"recommendations"`
-	PredictedHeatmap  []HeatmapPoint `json:"predictedHeatmap,omitempty"`
+	TotalArea        float64        `json:"totalAreaSqM"`
+	CoveredArea      float64        `json:"coveredAreaSqM"`
+	CoveragePercent  float64        `json:"coveragePercent"`
+	AverageRSSI      float64        `json:"averageRssiDbm"`
+	MinRSSI          int            `json:"minRssiDbm"`
+	MaxRSSI          int            `json:"maxRssiDbm"`
+	DeadZoneCount    int            `json:"deadZoneCount"`
+	Recommendations  []string       `json:"recommendations"`
+	PredictedHeatmap []HeatmapPoint `json:"predictedHeatmap,omitempty"`
 }
 
 // HeatmapPoint represents signal strength at a specific location.
@@ -73,9 +73,9 @@ type HeatmapPoint struct {
 
 // PlacementSuggestion represents a recommended AP placement.
 type PlacementSuggestion struct {
-	Location    Point   `json:"location"`
-	Priority    int     `json:"priority"`    // 1 = highest priority
-	Reason      string  `json:"reason"`
+	Location     Point   `json:"location"`
+	Priority     int     `json:"priority"` // 1 = highest priority
+	Reason       string  `json:"reason"`
 	CoverageGain float64 `json:"coverageGainPercent"` // Estimated coverage improvement
 }
 

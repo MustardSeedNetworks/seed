@@ -365,3 +365,18 @@ func ExportSendErrorResponseWithDetails(
 ) {
 	sendErrorResponseWithDetails(w, logger, status, code, message, details)
 }
+
+// ExportSecurityHeadersMiddleware exposes securityHeadersMiddleware for testing.
+func ExportSecurityHeadersMiddleware(next http.Handler) http.Handler {
+	return securityHeadersMiddleware(next)
+}
+
+// ExportRecoverMiddleware exposes recoverMiddleware for testing.
+func ExportRecoverMiddleware(next http.Handler) http.Handler {
+	return recoverMiddleware(next)
+}
+
+// ExportCORSMiddleware exposes corsMiddleware for testing.
+func ExportCORSMiddleware(next http.Handler) http.Handler {
+	return corsMiddleware(next)
+}

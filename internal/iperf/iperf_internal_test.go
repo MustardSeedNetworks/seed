@@ -1,4 +1,3 @@
-// Package iperf provides additional internal tests for iperf3 functionality.
 package iperf_test
 
 import (
@@ -6,6 +5,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -395,11 +395,11 @@ func TestManagerConcurrentOperations(t *testing.T) {
 	iterations := 100
 
 	// Concurrent reads
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+			for range iterations {
 				_ = manager.GetServerStatus()
 				_ = manager.GetClientStatus()
 				_ = manager.GetLastResult()
@@ -408,11 +408,11 @@ func TestManagerConcurrentOperations(t *testing.T) {
 	}
 
 	// Concurrent writes using test helpers
-	for i := 0; i < numGoroutines/2; i++ {
+	for range numGoroutines / 2 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+			for range iterations {
 				manager.SetManagerClientStatusRunning(true)
 				manager.SetManagerClientStatusRunning(false)
 			}
@@ -643,12 +643,7 @@ func TestManagerRunClientCancelledContext(t *testing.T) {
 	}
 }
 
-// helper function
+// contains checks if a string slice contains a specific item.
 func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, item)
 }

@@ -512,34 +512,67 @@ func TestAnalyze(t *testing.T) {
 			analyzer := channel.NewAnalyzer().WithDFS(tt.includeDFS)
 			analysis := analyzer.Analyze(tt.networks, tt.band)
 
-			if analysis == nil {
-				t.Fatal("Analyze() returned nil")
-			}
-
-			if analysis.Band != tt.band {
-				t.Errorf("analysis.Band = %q, want %q", analysis.Band, tt.band)
-			}
-
-			if len(analysis.Channels) != tt.wantChannelCount {
-				t.Errorf(
-					"len(analysis.Channels) = %d, want %d",
-					len(analysis.Channels),
-					tt.wantChannelCount,
-				)
-			}
-
-			if tt.wantRecommendedChannel > 0 && analysis.RecommendedChannel != tt.wantRecommendedChannel {
-				t.Errorf(
-					"analysis.RecommendedChannel = %d, want %d",
-					analysis.RecommendedChannel,
-					tt.wantRecommendedChannel,
-				)
-			}
-
-			if time.Since(analysis.AnalyzedAt) > time.Second {
-				t.Errorf("analysis.AnalyzedAt is too old: %v", analysis.AnalyzedAt)
-			}
+			assertAnalysisNotNil(t, analysis)
+			assertAnalysisBand(t, analysis, tt.band)
+			assertChannelCount(t, analysis, tt.wantChannelCount)
+			assertRecommendedChannel(t, analysis, tt.wantRecommendedChannel)
+			assertCongestedChannelAvoidance(t, tt.name, analysis)
+			assertAnalysisTimeRecent(t, analysis)
 		})
+	}
+}
+
+// assertAnalysisNotNil verifies that analysis is not nil.
+func assertAnalysisNotNil(t *testing.T, analysis *channel.Analysis) {
+	t.Helper()
+	if analysis == nil {
+		t.Fatal("Analyze() returned nil")
+	}
+}
+
+// assertAnalysisBand verifies the analysis band matches expected.
+func assertAnalysisBand(t *testing.T, analysis *channel.Analysis, want channel.Band) {
+	t.Helper()
+	if analysis.Band != want {
+		t.Errorf("analysis.Band = %q, want %q", analysis.Band, want)
+	}
+}
+
+// assertChannelCount verifies the number of channels in the analysis.
+func assertChannelCount(t *testing.T, analysis *channel.Analysis, want int) {
+	t.Helper()
+	if len(analysis.Channels) != want {
+		t.Errorf("len(analysis.Channels) = %d, want %d", len(analysis.Channels), want)
+	}
+}
+
+// assertRecommendedChannel verifies the recommended channel if specified.
+func assertRecommendedChannel(t *testing.T, analysis *channel.Analysis, want int) {
+	t.Helper()
+	if want > 0 && analysis.RecommendedChannel != want {
+		t.Errorf("analysis.RecommendedChannel = %d, want %d", analysis.RecommendedChannel, want)
+	}
+}
+
+// assertCongestedChannelAvoidance verifies channel recommendation avoids congested areas.
+func assertCongestedChannelAvoidance(t *testing.T, testName string, analysis *channel.Analysis) {
+	t.Helper()
+	if testName == "Multiple networks on same channel" {
+		// Recommended channel should be far from channel 1 (>= channel 6)
+		if analysis.RecommendedChannel < 6 {
+			t.Errorf(
+				"analysis.RecommendedChannel = %d, should be >= 6 to avoid congested channel 1",
+				analysis.RecommendedChannel,
+			)
+		}
+	}
+}
+
+// assertAnalysisTimeRecent verifies the analysis timestamp is recent.
+func assertAnalysisTimeRecent(t *testing.T, analysis *channel.Analysis) {
+	t.Helper()
+	if time.Since(analysis.AnalyzedAt) > time.Second {
+		t.Errorf("analysis.AnalyzedAt is too old: %v", analysis.AnalyzedAt)
 	}
 }
 

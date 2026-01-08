@@ -123,7 +123,7 @@ func TestHealthStatusValues(t *testing.T) {
 // LinkStatus Tests
 // =============================================================================
 
-func TestLinkStatusFields(t *testing.T) {
+func TestLinkStatusAllFields(t *testing.T) {
 	now := time.Now()
 	status := sap.LinkStatus{
 		Interface:  "eth0",
@@ -175,8 +175,8 @@ func TestLinkStatusFields(t *testing.T) {
 	}
 }
 
-func TestLinkStatusTestHelper(t *testing.T) {
-	status := sap.TestLinkStatus("eth0", sap.LinkStateUp, "1000", "full", 1500, "00:11:22:33:44:55")
+func TestLinkStatusMakeHelper(t *testing.T) {
+	status := sap.MakeLinkStatus("eth0", sap.LinkStateUp, "1000", "full", 1500, "00:11:22:33:44:55")
 
 	if status.Interface != "eth0" {
 		t.Errorf("expected Interface 'eth0', got %q", status.Interface)
@@ -222,8 +222,8 @@ func TestCableTestResultFields(t *testing.T) {
 	}
 }
 
-func TestCableTestResultTestHelper(t *testing.T) {
-	result := sap.TestCableTestResult("eth0", sap.CableStatusOK, 25.5)
+func TestCableTestResultMakeHelper(t *testing.T) {
+	result := sap.MakeCableTestResult("eth0", sap.CableStatusOK, 25.5)
 
 	if result.Interface != "eth0" {
 		t.Errorf("expected Interface 'eth0', got %q", result.Interface)
@@ -265,7 +265,7 @@ func TestPairResultFields(t *testing.T) {
 // DHCPTestResult Tests
 // =============================================================================
 
-func TestDHCPTestResultFields(t *testing.T) {
+func TestDHCPTestResultAllFields(t *testing.T) {
 	now := time.Now()
 	result := sap.DHCPTestResult{
 		Success:      true,
@@ -302,8 +302,8 @@ func TestDHCPTestResultFields(t *testing.T) {
 	}
 }
 
-func TestDHCPTestResultTestHelper(t *testing.T) {
-	result := sap.TestDHCPTestResult(true, "192.168.1.1", "192.168.1.100", "192.168.1.1")
+func TestDHCPTestResultMakeHelper(t *testing.T) {
+	result := sap.MakeDHCPTestResult(true, "192.168.1.1", "192.168.1.100", "192.168.1.1")
 
 	if !result.Success {
 		t.Error("expected Success true")
@@ -320,7 +320,7 @@ func TestDHCPTestResultTestHelper(t *testing.T) {
 // DNSTestResult Tests
 // =============================================================================
 
-func TestDNSTestResultFields(t *testing.T) {
+func TestDNSTestResultAllFields(t *testing.T) {
 	now := time.Now()
 	result := sap.DNSTestResult{
 		Query:   "google.com",
@@ -357,8 +357,8 @@ func TestDNSTestResultFields(t *testing.T) {
 	}
 }
 
-func TestDNSTestResultTestHelper(t *testing.T) {
-	result := sap.TestDNSTestResult("google.com", "8.8.8.8", true, 10.0)
+func TestDNSTestResultMakeHelper(t *testing.T) {
+	result := sap.MakeDNSTestResult("google.com", "8.8.8.8", true, 10.0)
 
 	if result.Query != "google.com" {
 		t.Errorf("expected Query 'google.com', got %q", result.Query)
@@ -374,7 +374,7 @@ func TestDNSTestResultTestHelper(t *testing.T) {
 	}
 }
 
-func TestDNSAnswerFields(t *testing.T) {
+func TestDNSAnswerAllFields(t *testing.T) {
 	answer := sap.DNSAnswer{
 		Name:  "google.com",
 		Type:  "A",
@@ -400,7 +400,7 @@ func TestDNSAnswerFields(t *testing.T) {
 // GatewayHealth Tests
 // =============================================================================
 
-func TestGatewayHealthFields(t *testing.T) {
+func TestGatewayHealthAllFields(t *testing.T) {
 	now := time.Now()
 	health := sap.GatewayHealth{
 		IP:         "192.168.1.1",
@@ -431,8 +431,8 @@ func TestGatewayHealthFields(t *testing.T) {
 	}
 }
 
-func TestGatewayHealthTestHelper(t *testing.T) {
-	health := sap.TestGatewayHealth("192.168.1.1", true, 5.0, 0.0, sap.HealthStatusHealthy)
+func TestGatewayHealthMakeHelper(t *testing.T) {
+	health := sap.MakeGatewayHealth("192.168.1.1", true, 5.0, 0.0, sap.HealthStatusHealthy)
 
 	if health.IP != "192.168.1.1" {
 		t.Errorf("expected IP '192.168.1.1', got %q", health.IP)
@@ -449,7 +449,7 @@ func TestGatewayHealthTestHelper(t *testing.T) {
 // SpeedtestResult Tests
 // =============================================================================
 
-func TestSpeedtestResultFields(t *testing.T) {
+func TestSpeedtestResultAllFields(t *testing.T) {
 	now := time.Now()
 	result := sap.SpeedtestResult{
 		DownloadMbps: 100.0,
@@ -477,8 +477,8 @@ func TestSpeedtestResultFields(t *testing.T) {
 	}
 }
 
-func TestSpeedtestResultTestHelper(t *testing.T) {
-	result := sap.TestSpeedtestResult(100.0, 50.0, 10.0, "Test Server")
+func TestSpeedtestResultMakeHelper(t *testing.T) {
+	result := sap.MakeSpeedtestResult(100.0, 50.0, 10.0, "Test Server")
 
 	if result.DownloadMbps != 100.0 {
 		t.Errorf("expected DownloadMbps 100.0, got %v", result.DownloadMbps)
@@ -495,7 +495,7 @@ func TestSpeedtestResultTestHelper(t *testing.T) {
 // IPerfResult Tests
 // =============================================================================
 
-func TestIPerfResultFields(t *testing.T) {
+func TestIPerfResultAllFields(t *testing.T) {
 	now := time.Now()
 	result := sap.IPerfResult{
 		Protocol:      "tcp",
@@ -534,8 +534,8 @@ func TestIPerfResultFields(t *testing.T) {
 	}
 }
 
-func TestIPerfResultTestHelper(t *testing.T) {
-	result := sap.TestIPerfResult("tcp", "download", 500.0, 625.0, 10.0, "192.168.1.100")
+func TestIPerfResultMakeHelper(t *testing.T) {
+	result := sap.MakeIPerfResult("tcp", "download", 500.0, 625.0, 10.0, "192.168.1.100")
 
 	if result.Protocol != "tcp" {
 		t.Errorf("expected Protocol 'tcp', got %q", result.Protocol)
@@ -581,8 +581,8 @@ func TestVLANConfigFields(t *testing.T) {
 	}
 }
 
-func TestVLANConfigTestHelper(t *testing.T) {
-	config := sap.TestVLANConfig(100, "Management", "eth0", true)
+func TestVLANConfigMakeHelper(t *testing.T) {
+	config := sap.MakeVLANConfig(100, "Management", "eth0", true)
 
 	if config.ID != 100 {
 		t.Errorf("expected ID 100, got %d", config.ID)
@@ -638,8 +638,8 @@ func TestSNMPDeviceFields(t *testing.T) {
 	}
 }
 
-func TestSNMPDeviceTestHelper(t *testing.T) {
-	device := sap.TestSNMPDevice("192.168.1.1", "switch-01", "Cisco IOS")
+func TestSNMPDeviceMakeHelper(t *testing.T) {
+	device := sap.MakeSNMPDevice("192.168.1.1", "switch-01", "Cisco IOS")
 
 	if device.IP != "192.168.1.1" {
 		t.Errorf("expected IP '192.168.1.1', got %q", device.IP)
@@ -729,7 +729,7 @@ func TestMACTableEntryFields(t *testing.T) {
 // BandwidthSample Tests
 // =============================================================================
 
-func TestBandwidthSampleFields(t *testing.T) {
+func TestBandwidthSampleAllFields(t *testing.T) {
 	now := time.Now()
 	sample := sap.BandwidthSample{
 		Interface:     "eth0",
@@ -755,8 +755,8 @@ func TestBandwidthSampleFields(t *testing.T) {
 	}
 }
 
-func TestBandwidthSampleTestHelper(t *testing.T) {
-	sample := sap.TestBandwidthSample("eth0", 1000.0, 500.0, 75.0)
+func TestBandwidthSampleMakeHelper(t *testing.T) {
+	sample := sap.MakeBandwidthSample("eth0", 1000.0, 500.0, 75.0)
 
 	if sample.Interface != "eth0" {
 		t.Errorf("expected Interface 'eth0', got %q", sample.Interface)
@@ -777,7 +777,7 @@ func TestBandwidthSampleTestHelper(t *testing.T) {
 // SystemHealth Tests
 // =============================================================================
 
-func TestSystemHealthFields(t *testing.T) {
+func TestSystemHealthAllFields(t *testing.T) {
 	now := time.Now()
 	health := sap.SystemHealth{
 		CPUPercent:    25.0,
@@ -806,8 +806,8 @@ func TestSystemHealthFields(t *testing.T) {
 	}
 }
 
-func TestSystemHealthTestHelper(t *testing.T) {
-	health := sap.TestSystemHealth(25.0, 50.0, 75.0)
+func TestSystemHealthMakeHelper(t *testing.T) {
+	health := sap.MakeSystemHealth(25.0, 50.0, 75.0)
 
 	if health.CPUPercent != 25.0 {
 		t.Errorf("expected CPUPercent 25.0, got %v", health.CPUPercent)
@@ -827,7 +827,7 @@ func TestSystemHealthTestHelper(t *testing.T) {
 // TelemetrySnapshot Tests
 // =============================================================================
 
-func TestTelemetrySnapshotFields(t *testing.T) {
+func TestTelemetrySnapshotAllFields(t *testing.T) {
 	now := time.Now()
 	gwHealth := &sap.GatewayHealth{IP: "192.168.1.1", Reachable: true}
 	dnsResult := &sap.DNSTestResult{Success: true}
@@ -870,8 +870,8 @@ func TestTelemetrySnapshotFields(t *testing.T) {
 	}
 }
 
-func TestTelemetrySnapshotTestHelper(t *testing.T) {
-	snapshot := sap.TestTelemetrySnapshot()
+func TestTelemetrySnapshotMakeHelper(t *testing.T) {
+	snapshot := sap.MakeTelemetrySnapshot()
 
 	if snapshot.Timestamp.IsZero() {
 		t.Error("expected Timestamp to be set")
@@ -961,7 +961,7 @@ func TestConcurrentLinkStatusAccess(_ *testing.T) {
 	for range 10 {
 		go func() {
 			for range 50 {
-				_ = sap.TestLinkStatus("eth0", sap.LinkStateUp, "1000", "full", 1500, "00:11:22:33:44:55")
+				_ = sap.MakeLinkStatus("eth0", sap.LinkStateUp, "1000", "full", 1500, "00:11:22:33:44:55")
 			}
 			done <- true
 		}()
@@ -978,7 +978,7 @@ func TestConcurrentSpeedtestResultAccess(_ *testing.T) {
 	for range 10 {
 		go func() {
 			for range 50 {
-				_ = sap.TestSpeedtestResult(100.0, 50.0, 10.0, "Test Server")
+				_ = sap.MakeSpeedtestResult(100.0, 50.0, 10.0, "Test Server")
 			}
 			done <- true
 		}()
@@ -995,12 +995,12 @@ func TestConcurrentSpeedtestResultAccess(_ *testing.T) {
 
 func TestLinkStatusTableDriven(t *testing.T) {
 	tests := []struct {
-		name      string
-		iface     string
-		state     sap.LinkState
-		speed     string
-		mtu       int
-		expectUp  bool
+		name     string
+		iface    string
+		state    sap.LinkState
+		speed    string
+		mtu      int
+		expectUp bool
 	}{
 		{"up interface", "eth0", sap.LinkStateUp, "1000", 1500, true},
 		{"down interface", "eth1", sap.LinkStateDown, "0", 1500, false},
@@ -1010,7 +1010,7 @@ func TestLinkStatusTableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			status := sap.TestLinkStatus(tt.iface, tt.state, tt.speed, "full", tt.mtu, "00:00:00:00:00:00")
+			status := sap.MakeLinkStatus(tt.iface, tt.state, tt.speed, "full", tt.mtu, "00:00:00:00:00:00")
 
 			if status.Interface != tt.iface {
 				t.Errorf("expected Interface %q, got %q", tt.iface, status.Interface)
@@ -1041,7 +1041,7 @@ func TestSpeedtestResultTableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := sap.TestSpeedtestResult(tt.download, tt.upload, tt.ping, "Test Server")
+			result := sap.MakeSpeedtestResult(tt.download, tt.upload, tt.ping, "Test Server")
 
 			if result.DownloadMbps != tt.download {
 				t.Errorf("expected DownloadMbps %v, got %v", tt.download, result.DownloadMbps)
@@ -1072,7 +1072,7 @@ func TestIPerfResultTableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := sap.TestIPerfResult(tt.protocol, tt.direction, tt.bandwidth, 125.0, 10.0, "localhost")
+			result := sap.MakeIPerfResult(tt.protocol, tt.direction, tt.bandwidth, 125.0, 10.0, "localhost")
 
 			if result.Protocol != tt.protocol {
 				t.Errorf("expected Protocol %q, got %q", tt.protocol, result.Protocol)
@@ -1104,7 +1104,7 @@ func TestGatewayHealthTableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			health := sap.TestGatewayHealth(tt.ip, tt.reachable, tt.rtt, tt.packetLoss, tt.status)
+			health := sap.MakeGatewayHealth(tt.ip, tt.reachable, tt.rtt, tt.packetLoss, tt.status)
 
 			if health.IP != tt.ip {
 				t.Errorf("expected IP %q, got %q", tt.ip, health.IP)

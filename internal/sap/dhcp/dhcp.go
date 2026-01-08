@@ -36,6 +36,12 @@ const DefaultTestTimeout = 10 * time.Second
 // microsecondsPerMillisecond is used for time conversion.
 const microsecondsPerMillisecond = 1000.0
 
+// ipv4Len is the length of an IPv4 address in bytes.
+const ipv4Len = 4
+
+// bitsPerByte is the number of bits in a byte (for shift operations).
+const bitsPerByte = 8
+
 // ValidateDHCPTimeout validates that a DHCP timeout is within acceptable bounds.
 func ValidateDHCPTimeout(timeout time.Duration) error {
 	if timeout < MinDHCPTimeout || timeout > MaxDHCPTimeout {
@@ -68,8 +74,8 @@ type LeaseInfo struct {
 	LeaseTimeSec int           `json:"leaseTimeSec,omitempty"`
 	RenewTime    time.Duration `json:"renewTime,omitempty"`
 	RebindTime   time.Duration `json:"rebindTime,omitempty"`
-	Expiry       time.Time     `json:"expiry,omitempty"`
-	ObtainedAt   time.Time     `json:"obtainedAt,omitempty"`
+	Expiry       time.Time     `json:"expiry,omitzero"`
+	ObtainedAt   time.Time     `json:"obtainedAt,omitzero"`
 }
 
 // TestResult contains the result of a DHCP test.
@@ -200,6 +206,31 @@ func (t *Tester) getStatus(duration time.Duration, hasError bool) Status {
 	return StatusSuccess
 }
 
+// storeAndReturnError stores an error result and returns it.
+func (t *Tester) storeAndReturnError(result *TestResult, errMsg string) *TestResult {
+	result.Success = false
+	result.Status = StatusError
+	result.Error = errMsg
+	t.mu.Lock()
+	t.lastResult = result
+	t.mu.Unlock()
+	return result
+}
+
+// mergePlatformResult copies fields from platform result to our result.
+func mergePlatformResult(result, platformResult *TestResult) {
+	result.Success = platformResult.Success
+	result.ServerIP = platformResult.ServerIP
+	result.OfferedIP = platformResult.OfferedIP
+	result.SubnetMask = platformResult.SubnetMask
+	result.Gateway = platformResult.Gateway
+	result.DNSServers = platformResult.DNSServers
+	result.DomainName = platformResult.DomainName
+	result.LeaseTime = platformResult.LeaseTime
+	result.LeaseTimeSec = int(platformResult.LeaseTime.Seconds())
+	result.Error = platformResult.Error
+}
+
 // Test performs a DHCP test on the configured interface.
 func (t *Tester) Test(ctx context.Context) *TestResult {
 	t.mu.RLock()
@@ -213,36 +244,18 @@ func (t *Tester) Test(ctx context.Context) *TestResult {
 	}
 
 	if iface == "" {
-		result.Success = false
-		result.Status = StatusError
-		result.Error = "no interface specified"
-		t.mu.Lock()
-		t.lastResult = result
-		t.mu.Unlock()
-		return result
+		return t.storeAndReturnError(result, "no interface specified")
 	}
 
 	// Validate interface exists
 	netIface, err := net.InterfaceByName(iface)
 	if err != nil {
-		result.Success = false
-		result.Status = StatusError
-		result.Error = "interface not found: " + err.Error()
-		t.mu.Lock()
-		t.lastResult = result
-		t.mu.Unlock()
-		return result
+		return t.storeAndReturnError(result, "interface not found: "+err.Error())
 	}
 
 	// Check if interface is up
 	if netIface.Flags&net.FlagUp == 0 {
-		result.Success = false
-		result.Status = StatusError
-		result.Error = "interface is down"
-		t.mu.Lock()
-		t.lastResult = result
-		t.mu.Unlock()
-		return result
+		return t.storeAndReturnError(result, "interface is down")
 	}
 
 	// Create context with timeout
@@ -255,16 +268,7 @@ func (t *Tester) Test(ctx context.Context) *TestResult {
 	elapsed := time.Since(start)
 
 	// Merge platform result with our result
-	result.Success = platformResult.Success
-	result.ServerIP = platformResult.ServerIP
-	result.OfferedIP = platformResult.OfferedIP
-	result.SubnetMask = platformResult.SubnetMask
-	result.Gateway = platformResult.Gateway
-	result.DNSServers = platformResult.DNSServers
-	result.DomainName = platformResult.DomainName
-	result.LeaseTime = platformResult.LeaseTime
-	result.LeaseTimeSec = int(platformResult.LeaseTime.Seconds())
-	result.Error = platformResult.Error
+	mergePlatformResult(result, platformResult)
 	result.ResponseTime = elapsed
 	result.ResponseMs = float64(elapsed.Microseconds()) / microsecondsPerMillisecond
 
@@ -355,7 +359,7 @@ func isContiguousMask(mask net.IP) bool {
 	// Convert to uint32 for bit operations
 	var m uint32
 	for _, b := range ip4 {
-		m = m<<8 | uint32(b)
+		m = m<<bitsPerByte | uint32(b)
 	}
 
 	// A valid mask has all 1s followed by all 0s
@@ -366,7 +370,7 @@ func isContiguousMask(mask net.IP) bool {
 }
 
 // ParseCIDR parses a CIDR notation and returns the IP and subnet mask.
-func ParseCIDR(cidr string) (ip string, mask string, err error) {
+func ParseCIDR(cidr string) (string, string, error) {
 	ipNet, network, parseErr := net.ParseCIDR(cidr)
 	if parseErr != nil {
 		return "", "", parseErr
@@ -392,8 +396,8 @@ func CalculateNetworkAddress(ipStr, maskStr string) (string, error) {
 		return "", &InterfaceError{Message: "IPv4 addresses required"}
 	}
 
-	network := make(net.IP, 4)
-	for i := 0; i < 4; i++ {
+	network := make(net.IP, ipv4Len)
+	for i := range ipv4Len {
 		network[i] = ip4[i] & mask4[i]
 	}
 
@@ -418,8 +422,8 @@ func CalculateBroadcastAddress(ipStr, maskStr string) (string, error) {
 		return "", &InterfaceError{Message: "IPv4 addresses required"}
 	}
 
-	broadcast := make(net.IP, 4)
-	for i := 0; i < 4; i++ {
+	broadcast := make(net.IP, ipv4Len)
+	for i := range ipv4Len {
 		broadcast[i] = ip4[i] | ^mask4[i]
 	}
 

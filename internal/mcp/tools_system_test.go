@@ -36,8 +36,8 @@ func TestSystemConstants(t *testing.T) {
 
 func TestBytesConversion(t *testing.T) {
 	tests := []struct {
-		name     string
-		bytes    int
+		name       string
+		bytes      int
 		expectedKB float64
 		expectedMB float64
 	}{

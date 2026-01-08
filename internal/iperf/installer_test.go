@@ -1,9 +1,9 @@
-// Package iperf provides tests for the installer functionality.
 package iperf_test
 
 import (
 	"errors"
 	"runtime"
+	"slices"
 	"testing"
 
 	"github.com/krisarmstrong/seed/internal/iperf"
@@ -79,14 +79,7 @@ func TestDetectLinuxPackageManager(t *testing.T) {
 			t.Error("Install command should not be empty")
 		}
 		// All Linux package managers should have iperf3 in install command
-		hasIperf3 := false
-		for _, arg := range pm.InstallCommand {
-			if arg == "iperf3" {
-				hasIperf3 = true
-				break
-			}
-		}
-		if !hasIperf3 {
+		if !slices.Contains(pm.InstallCommand, "iperf3") {
 			t.Errorf("Install command should contain 'iperf3': %v", pm.InstallCommand)
 		}
 	}
@@ -179,6 +172,9 @@ func TestInstallResultWithError(t *testing.T) {
 	}
 	if result.Error.Error() != "installation failed" {
 		t.Errorf("Error message = %q, want 'installation failed'", result.Error.Error())
+	}
+	if result.Method != iperf.InstallMethodPackageManager {
+		t.Errorf("Method = %q, want %q", result.Method, iperf.InstallMethodPackageManager)
 	}
 	if !result.NeedsSudo {
 		t.Error("NeedsSudo should be true")
@@ -363,11 +359,14 @@ func TestInstallResultSuccessfulInstall(t *testing.T) {
 	if !result.Success {
 		t.Error("Success should be true")
 	}
-	if result.Path == "" {
-		t.Error("Path should not be empty for successful install")
+	if result.Path != "/usr/local/bin/iperf3" {
+		t.Errorf("Path = %q, want '/usr/local/bin/iperf3'", result.Path)
 	}
-	if result.Version == "" {
-		t.Error("Version should not be empty for successful install")
+	if result.Version != "3.17" {
+		t.Errorf("Version = %q, want '3.17'", result.Version)
+	}
+	if result.Method != iperf.InstallMethodPackageManager {
+		t.Errorf("Method = %q, want %q", result.Method, iperf.InstallMethodPackageManager)
 	}
 	if result.Error != nil {
 		t.Errorf("Error should be nil for successful install, got %v", result.Error)
@@ -379,6 +378,8 @@ func TestInstallResultSuccessfulInstall(t *testing.T) {
 
 // TestInstallViaPackageManagerNoManager tests install when no package manager is available.
 func TestInstallViaPackageManagerNoManager(t *testing.T) {
+	t.Parallel()
+
 	// This test validates the behavior when no package manager is detected
 	// Since we can't easily mock the detection, we just verify the function signature works
 
@@ -388,9 +389,15 @@ func TestInstallViaPackageManagerNoManager(t *testing.T) {
 		Verbose: false,
 	}
 
-	// Verify the struct is properly constructed
+	// Verify all struct fields are properly set
 	if opts.Method != iperf.InstallMethodPackageManager {
 		t.Errorf("Method = %q, want %q", opts.Method, iperf.InstallMethodPackageManager)
+	}
+	if opts.UseSudo {
+		t.Error("UseSudo should be false")
+	}
+	if opts.Verbose {
+		t.Error("Verbose should be false")
 	}
 }
 
@@ -403,6 +410,14 @@ func TestPackageManagerInfoNilUpdateCommand(t *testing.T) {
 		InstallCommand: []string{"dnf", "install", "-y", "iperf3"},
 		UpdateCommand:  nil,
 		Available:      true,
+	}
+
+	// Verify all fields to avoid unused write warnings
+	if info.Name != "dnf" {
+		t.Errorf("Name = %q, want 'dnf'", info.Name)
+	}
+	if !info.Available {
+		t.Error("Available should be true")
 	}
 
 	if info.UpdateCommand != nil {
@@ -442,7 +457,7 @@ func TestInstallOptionsWithAllFields(t *testing.T) {
 	}
 }
 
-// helper function
+// containsAny checks if a string contains any of the given substrings.
 func containsAny(s string, substrs []string) bool {
 	for _, substr := range substrs {
 		if len(s) >= len(substr) {
