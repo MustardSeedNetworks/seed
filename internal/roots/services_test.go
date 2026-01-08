@@ -732,3 +732,484 @@ func TestRootsErrors(t *testing.T) {
 		})
 	}
 }
+
+// ============================================================================
+// Enrichment Service Tests
+// ============================================================================
+
+func TestNewEnrichmentService(t *testing.T) {
+	t.Parallel()
+
+	svc := roots.NewEnrichmentService(nil)
+	if svc == nil {
+		t.Fatal("NewEnrichmentService() returned nil")
+	}
+
+	if svc.Checker() == nil {
+		t.Error("Checker() should not be nil after initialization")
+	}
+}
+
+func TestEnrichmentService_GetPublicIP(t *testing.T) {
+	tests := []struct {
+		name       string
+		setupSvc   func() *roots.EnrichmentService
+		wantErr    bool
+		errContain string
+	}{
+		{
+			name: "nil checker returns error",
+			setupSvc: func() *roots.EnrichmentService {
+				return roots.NewEnrichmentServiceWithChecker(nil, nil)
+			},
+			wantErr:    true,
+			errContain: "not initialized",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			svc := tt.setupSvc()
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			defer cancel()
+
+			result, err := svc.GetPublicIP(ctx)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error, got nil")
+					return
+				}
+				if tt.errContain != "" && !containsSubstring(err.Error(), tt.errContain) {
+					t.Errorf("error %q should contain %q", err.Error(), tt.errContain)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+
+			if result == nil {
+				t.Error("result should not be nil on success")
+			}
+		})
+	}
+}
+
+func TestEnrichmentService_Enrich(t *testing.T) {
+	tests := []struct {
+		name       string
+		setupSvc   func() *roots.EnrichmentService
+		ip         string
+		wantErr    bool
+		errContain string
+	}{
+		{
+			name: "nil checker returns error",
+			setupSvc: func() *roots.EnrichmentService {
+				return roots.NewEnrichmentServiceWithChecker(nil, nil)
+			},
+			ip:         "8.8.8.8",
+			wantErr:    true,
+			errContain: "not initialized",
+		},
+		{
+			name: "arbitrary IP returns not implemented",
+			setupSvc: func() *roots.EnrichmentService {
+				return roots.NewEnrichmentService(nil)
+			},
+			ip:         "192.0.2.1",
+			wantErr:    true,
+			errContain: "not implemented",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			svc := tt.setupSvc()
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			defer cancel()
+
+			result, err := svc.Enrich(ctx, tt.ip)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error, got nil")
+					return
+				}
+				if tt.errContain != "" && !containsSubstring(err.Error(), tt.errContain) {
+					t.Errorf("error %q should contain %q", err.Error(), tt.errContain)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+
+			if result == nil {
+				t.Error("result should not be nil on success")
+			}
+		})
+	}
+}
+
+func TestIPEnrichment_StructFields(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now()
+	enrichment := roots.IPEnrichment{
+		IP:          "8.8.8.8",
+		ASN:         15169,
+		ASName:      "GOOGLE",
+		ISP:         "Google LLC",
+		Org:         "Google LLC",
+		City:        "Mountain View",
+		Region:      "California",
+		Country:     "United States",
+		CountryCode: "US",
+		Latitude:    37.386,
+		Longitude:   -122.084,
+		Timezone:    "America/Los_Angeles",
+		IsProxy:     false,
+		IsHosting:   true,
+		IsTor:       false,
+		QueryTime:   now,
+	}
+
+	if enrichment.IP != "8.8.8.8" {
+		t.Errorf("IP = %q, want %q", enrichment.IP, "8.8.8.8")
+	}
+	if enrichment.ASN != 15169 {
+		t.Errorf("ASN = %d, want %d", enrichment.ASN, 15169)
+	}
+	if enrichment.ASName != "GOOGLE" {
+		t.Errorf("ASName = %q, want %q", enrichment.ASName, "GOOGLE")
+	}
+	if enrichment.ISP != "Google LLC" {
+		t.Errorf("ISP = %q, want %q", enrichment.ISP, "Google LLC")
+	}
+	if enrichment.Org != "Google LLC" {
+		t.Errorf("Org = %q, want %q", enrichment.Org, "Google LLC")
+	}
+	if enrichment.City != "Mountain View" {
+		t.Errorf("City = %q, want %q", enrichment.City, "Mountain View")
+	}
+	if enrichment.Region != "California" {
+		t.Errorf("Region = %q, want %q", enrichment.Region, "California")
+	}
+	if enrichment.Country != "United States" {
+		t.Errorf("Country = %q, want %q", enrichment.Country, "United States")
+	}
+	if enrichment.CountryCode != "US" {
+		t.Errorf("CountryCode = %q, want %q", enrichment.CountryCode, "US")
+	}
+	if enrichment.Latitude != 37.386 {
+		t.Errorf("Latitude = %f, want %f", enrichment.Latitude, 37.386)
+	}
+	if enrichment.Longitude != -122.084 {
+		t.Errorf("Longitude = %f, want %f", enrichment.Longitude, -122.084)
+	}
+	if enrichment.Timezone != "America/Los_Angeles" {
+		t.Errorf("Timezone = %q, want %q", enrichment.Timezone, "America/Los_Angeles")
+	}
+	if enrichment.IsProxy {
+		t.Error("IsProxy should be false")
+	}
+	if !enrichment.IsHosting {
+		t.Error("IsHosting should be true")
+	}
+	if enrichment.IsTor {
+		t.Error("IsTor should be false")
+	}
+	if !enrichment.QueryTime.Equal(now) {
+		t.Errorf("QueryTime = %v, want %v", enrichment.QueryTime, now)
+	}
+}
+
+// ============================================================================
+// Traceroute Service Tests
+// ============================================================================
+
+func TestNewTracerouteService(t *testing.T) {
+	t.Parallel()
+
+	svc := roots.NewTracerouteService(nil)
+	if svc == nil {
+		t.Fatal("NewTracerouteService() returned nil")
+	}
+
+	if svc.Tracer() == nil {
+		t.Error("Tracer() should not be nil after initialization")
+	}
+}
+
+// ============================================================================
+// Topology Service Tests
+// ============================================================================
+
+func TestNewTopologyService(t *testing.T) {
+	t.Parallel()
+
+	svc := roots.NewTopologyService(nil, nil)
+	if svc == nil {
+		t.Fatal("NewTopologyService() returned nil")
+	}
+}
+
+func TestTopologyService_StartStop(t *testing.T) {
+	t.Parallel()
+
+	svc := roots.NewTopologyService(nil, nil)
+	ctx := context.Background()
+
+	// Start should not error
+	if err := svc.Start(ctx); err != nil {
+		t.Errorf("Start() unexpected error: %v", err)
+	}
+
+	// Stop should not panic
+	svc.Stop()
+}
+
+func TestTopologyService_GetTopology(t *testing.T) {
+	t.Parallel()
+
+	svc := roots.NewTopologyService(nil, nil)
+	ctx := context.Background()
+
+	_, err := svc.GetTopology(ctx)
+	if err == nil {
+		t.Error("GetTopology() should return an error for unimplemented feature")
+	}
+}
+
+func TestTopologyNodeType_Constants(t *testing.T) {
+	t.Parallel()
+
+	nodeTypes := []roots.TopologyNodeType{
+		roots.NodeTypeRouter,
+		roots.NodeTypeSwitch,
+		roots.NodeTypeHost,
+		roots.NodeTypeGateway,
+		roots.NodeTypeFirewall,
+		roots.NodeTypeAP,
+		roots.NodeTypeCloud,
+		roots.NodeTypeUnknown,
+	}
+
+	for _, nt := range nodeTypes {
+		if nt == "" {
+			t.Error("TopologyNodeType should not be empty")
+		}
+	}
+}
+
+func TestTopologyLinkType_Constants(t *testing.T) {
+	t.Parallel()
+
+	linkTypes := []roots.TopologyLinkType{
+		roots.LinkTypeEthernet,
+		roots.LinkTypeWiFi,
+		roots.LinkTypeFiber,
+		roots.LinkTypeWAN,
+		roots.LinkTypeVPN,
+		roots.LinkTypeUnknown,
+	}
+
+	for _, lt := range linkTypes {
+		if lt == "" {
+			t.Error("TopologyLinkType should not be empty")
+		}
+	}
+}
+
+func TestTopologyNode_StructFields(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now()
+	node := roots.TopologyNode{
+		ID:        "node-1",
+		Type:      roots.NodeTypeRouter,
+		Label:     "Gateway Router",
+		IP:        "192.168.1.1",
+		MAC:       "00:11:22:33:44:55",
+		Vendor:    "Cisco",
+		Metadata:  map[string]string{"model": "ISR4451"},
+		X:         100.0,
+		Y:         200.0,
+		UpdatedAt: now,
+	}
+
+	if node.ID != "node-1" {
+		t.Errorf("ID = %q, want %q", node.ID, "node-1")
+	}
+	if node.Type != roots.NodeTypeRouter {
+		t.Errorf("Type = %q, want %q", node.Type, roots.NodeTypeRouter)
+	}
+	if node.Label != "Gateway Router" {
+		t.Errorf("Label = %q, want %q", node.Label, "Gateway Router")
+	}
+	if node.IP != "192.168.1.1" {
+		t.Errorf("IP = %q, want %q", node.IP, "192.168.1.1")
+	}
+	if node.MAC != "00:11:22:33:44:55" {
+		t.Errorf("MAC = %q, want %q", node.MAC, "00:11:22:33:44:55")
+	}
+	if node.Vendor != "Cisco" {
+		t.Errorf("Vendor = %q, want %q", node.Vendor, "Cisco")
+	}
+	if node.Metadata["model"] != "ISR4451" {
+		t.Errorf("Metadata[model] = %q, want %q", node.Metadata["model"], "ISR4451")
+	}
+	if node.X != 100.0 {
+		t.Errorf("X = %f, want %f", node.X, 100.0)
+	}
+	if node.Y != 200.0 {
+		t.Errorf("Y = %f, want %f", node.Y, 200.0)
+	}
+	if !node.UpdatedAt.Equal(now) {
+		t.Errorf("UpdatedAt = %v, want %v", node.UpdatedAt, now)
+	}
+}
+
+func TestTopologyLink_StructFields(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now()
+	link := roots.TopologyLink{
+		ID:        "link-1",
+		SourceID:  "node-1",
+		TargetID:  "node-2",
+		Type:      roots.LinkTypeEthernet,
+		Label:     "Primary Link",
+		Bandwidth: "1Gbps",
+		Latency:   0.5,
+		Metadata:  map[string]string{"cable": "Cat6"},
+		UpdatedAt: now,
+	}
+
+	if link.ID != "link-1" {
+		t.Errorf("ID = %q, want %q", link.ID, "link-1")
+	}
+	if link.SourceID != "node-1" {
+		t.Errorf("SourceID = %q, want %q", link.SourceID, "node-1")
+	}
+	if link.TargetID != "node-2" {
+		t.Errorf("TargetID = %q, want %q", link.TargetID, "node-2")
+	}
+	if link.Type != roots.LinkTypeEthernet {
+		t.Errorf("Type = %q, want %q", link.Type, roots.LinkTypeEthernet)
+	}
+	if link.Label != "Primary Link" {
+		t.Errorf("Label = %q, want %q", link.Label, "Primary Link")
+	}
+	if link.Bandwidth != "1Gbps" {
+		t.Errorf("Bandwidth = %q, want %q", link.Bandwidth, "1Gbps")
+	}
+	if link.Latency != 0.5 {
+		t.Errorf("Latency = %f, want %f", link.Latency, 0.5)
+	}
+	if link.Metadata["cable"] != "Cat6" {
+		t.Errorf("Metadata[cable] = %q, want %q", link.Metadata["cable"], "Cat6")
+	}
+	if !link.UpdatedAt.Equal(now) {
+		t.Errorf("UpdatedAt = %v, want %v", link.UpdatedAt, now)
+	}
+}
+
+func TestTopology_StructFields(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now()
+	topology := roots.Topology{
+		Nodes: []roots.TopologyNode{
+			{ID: "node-1", Type: roots.NodeTypeRouter},
+			{ID: "node-2", Type: roots.NodeTypeHost},
+		},
+		Links: []roots.TopologyLink{
+			{ID: "link-1", SourceID: "node-1", TargetID: "node-2"},
+		},
+		UpdatedAt: now,
+	}
+
+	if len(topology.Nodes) != 2 {
+		t.Errorf("len(Nodes) = %d, want %d", len(topology.Nodes), 2)
+	}
+	if len(topology.Links) != 1 {
+		t.Errorf("len(Links) = %d, want %d", len(topology.Links), 1)
+	}
+	if !topology.UpdatedAt.Equal(now) {
+		t.Errorf("UpdatedAt = %v, want %v", topology.UpdatedAt, now)
+	}
+}
+
+// ============================================================================
+// Module Tests
+// ============================================================================
+
+func TestNewModule(t *testing.T) {
+	t.Parallel()
+
+	m := roots.New(nil, nil)
+	if m == nil {
+		t.Fatal("New() returned nil")
+	}
+
+	if m.Traceroute() == nil {
+		t.Error("Traceroute() should not be nil")
+	}
+	if m.Topology() == nil {
+		t.Error("Topology() should not be nil")
+	}
+	if m.Enrichment() == nil {
+		t.Error("Enrichment() should not be nil")
+	}
+	if m.Analysis() == nil {
+		t.Error("Analysis() should not be nil")
+	}
+}
+
+func TestModule_StartStop(t *testing.T) {
+	t.Parallel()
+
+	m := roots.New(nil, nil)
+	ctx := context.Background()
+
+	// Start should not error
+	if err := m.Start(ctx); err != nil {
+		t.Errorf("Start() unexpected error: %v", err)
+	}
+
+	// Stop should not error
+	if err := m.Stop(); err != nil {
+		t.Errorf("Stop() unexpected error: %v", err)
+	}
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+// containsSubstring checks if s contains substr.
+func containsSubstring(s, substr string) bool {
+	if len(substr) == 0 {
+		return true
+	}
+	if len(s) < len(substr) {
+		return false
+	}
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}

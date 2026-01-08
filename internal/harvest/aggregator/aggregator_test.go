@@ -124,10 +124,10 @@ func TestTimeRange_Contains(t *testing.T) {
 
 func TestTimeRange_Duration(t *testing.T) {
 	tests := []struct {
-		name     string
-		start    time.Time
-		end      time.Time
-		wantDur  time.Duration
+		name    string
+		start   time.Time
+		end     time.Time
+		wantDur time.Duration
 	}{
 		{
 			name:    "one hour",

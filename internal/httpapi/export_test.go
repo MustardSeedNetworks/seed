@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/auth"
@@ -348,4 +349,19 @@ func SetAllowedOrigins(origins []string) {
 // ClearAllowedOrigins clears the allowed origins for testing.
 func ClearAllowedOrigins() {
 	getWSState().setAllowedOrigins(nil)
+}
+
+// ExportSendJSONResponse exposes sendJSONResponse for testing.
+func ExportSendJSONResponse(w http.ResponseWriter, logger *slog.Logger, status int, data any) {
+	sendJSONResponse(w, logger, status, data)
+}
+
+// ExportSendErrorResponseWithDetails exposes sendErrorResponseWithDetails for testing.
+func ExportSendErrorResponseWithDetails(
+	w http.ResponseWriter,
+	logger *slog.Logger,
+	status int,
+	code, message, details string,
+) {
+	sendErrorResponseWithDetails(w, logger, status, code, message, details)
 }

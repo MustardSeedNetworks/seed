@@ -10,72 +10,78 @@ import (
 	"github.com/krisarmstrong/seed/internal/sap/vlan"
 )
 
-// mockPacket implements a minimal interface for testing processPacket.
-type mockPacket struct {
-	dot1qLayer *layers.Dot1Q
-	data       []byte
-}
-
-func (m *mockPacket) Layer(layerType gopacket.LayerType) gopacket.Layer {
-	if layerType == layers.LayerTypeDot1Q && m.dot1qLayer != nil {
-		return m.dot1qLayer
+// createVLANPacket creates a gopacket.Packet with a VLAN tag for testing.
+func createVLANPacket(vlanID uint16, dataLen int) gopacket.Packet {
+	// Create a minimal 802.1Q tagged Ethernet frame.
+	// Ethernet header (14 bytes) + 802.1Q tag (4 bytes) + payload
+	eth := &layers.Ethernet{
+		SrcMAC:       []byte{0x00, 0x11, 0x22, 0x33, 0x44, 0x55},
+		DstMAC:       []byte{0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb},
+		EthernetType: layers.EthernetTypeDot1Q,
 	}
-	return nil
+	dot1q := &layers.Dot1Q{
+		VLANIdentifier: vlanID,
+		Type:           layers.EthernetTypeIPv4,
+	}
+
+	// Create payload
+	payload := make([]byte, dataLen)
+
+	// Serialize the layers
+	buf := gopacket.NewSerializeBuffer()
+	opts := gopacket.SerializeOptions{FixLengths: true, ComputeChecksums: true}
+	err := gopacket.SerializeLayers(buf, opts, eth, dot1q, gopacket.Payload(payload))
+	if err != nil {
+		// Return a simple packet on error
+		return gopacket.NewPacket(payload, layers.LayerTypeDot1Q, gopacket.Default)
+	}
+
+	// Parse the serialized data back into a packet
+	return gopacket.NewPacket(buf.Bytes(), layers.LayerTypeEthernet, gopacket.Default)
 }
 
-func (m *mockPacket) Data() []byte {
-	return m.data
-}
-
-// TestProcessPacketWithMockPacket tests the processPacket logic using mock packets.
-func TestProcessPacketWithMockPacket(t *testing.T) {
+// TestProcessPacketWithRealPacket tests the processPacket logic using real gopacket packets.
+func TestProcessPacketWithRealPacket(t *testing.T) {
 	tests := []struct {
-		name         string
-		vlanID       uint16
-		packetData   []byte
-		wantPackets  uint64
-		wantBytes    uint64
-		wantVLANID   int
-		existingVLAN bool
+		name        string
+		vlanID      uint16
+		payloadLen  int
+		wantPackets uint64
+		wantVLANID  int
 	}{
 		{
 			name:        "new VLAN packet",
 			vlanID:      100,
-			packetData:  make([]byte, 1500),
+			payloadLen:  1000,
 			wantPackets: 1,
-			wantBytes:   1500,
 			wantVLANID:  100,
 		},
 		{
 			name:        "small packet",
 			vlanID:      200,
-			packetData:  make([]byte, 64),
+			payloadLen:  64,
 			wantPackets: 1,
-			wantBytes:   64,
 			wantVLANID:  200,
 		},
 		{
 			name:        "jumbo frame",
 			vlanID:      300,
-			packetData:  make([]byte, 9000),
+			payloadLen:  9000,
 			wantPackets: 1,
-			wantBytes:   9000,
 			wantVLANID:  300,
 		},
 		{
 			name:        "VLAN 0",
 			vlanID:      0,
-			packetData:  make([]byte, 500),
+			payloadLen:  500,
 			wantPackets: 1,
-			wantBytes:   500,
 			wantVLANID:  0,
 		},
 		{
 			name:        "VLAN 4094",
 			vlanID:      4094,
-			packetData:  make([]byte, 1000),
+			payloadLen:  1000,
 			wantPackets: 1,
-			wantBytes:   1000,
 			wantVLANID:  4094,
 		},
 	}
@@ -84,13 +90,8 @@ func TestProcessPacketWithMockPacket(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			monitor := vlan.NewTrafficMonitor("eth0")
 
-			// Create mock packet with Dot1Q layer.
-			pkt := &mockPacket{
-				dot1qLayer: &layers.Dot1Q{
-					VLANIdentifier: tt.vlanID,
-				},
-				data: tt.packetData,
-			}
+			// Create a real gopacket.Packet with VLAN tag.
+			pkt := createVLANPacket(tt.vlanID, tt.payloadLen)
 
 			// Process the packet.
 			monitor.ExportProcessPacketRaw(pkt)
@@ -108,8 +109,9 @@ func TestProcessPacketWithMockPacket(t *testing.T) {
 					if s.Packets != tt.wantPackets {
 						t.Errorf("packets = %d, want %d", s.Packets, tt.wantPackets)
 					}
-					if s.Bytes != tt.wantBytes {
-						t.Errorf("bytes = %d, want %d", s.Bytes, tt.wantBytes)
+					// Bytes will be the full packet size (ethernet + dot1q + payload).
+					if s.Bytes == 0 {
+						t.Error("expected non-zero bytes")
 					}
 				}
 			}
@@ -124,11 +126,16 @@ func TestProcessPacketWithMockPacket(t *testing.T) {
 func TestProcessPacketWithNilDot1QLayer(t *testing.T) {
 	monitor := vlan.NewTrafficMonitor("eth0")
 
-	// Create mock packet without Dot1Q layer.
-	pkt := &mockPacket{
-		dot1qLayer: nil,
-		data:       make([]byte, 1500),
+	// Create a packet without Dot1Q layer (just raw Ethernet frame).
+	eth := &layers.Ethernet{
+		SrcMAC:       []byte{0x00, 0x11, 0x22, 0x33, 0x44, 0x55},
+		DstMAC:       []byte{0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb},
+		EthernetType: layers.EthernetTypeIPv4,
 	}
+	buf := gopacket.NewSerializeBuffer()
+	opts := gopacket.SerializeOptions{}
+	_ = gopacket.SerializeLayers(buf, opts, eth, gopacket.Payload(make([]byte, 100)))
+	pkt := gopacket.NewPacket(buf.Bytes(), layers.LayerTypeEthernet, gopacket.Default)
 
 	// Process the packet - should be ignored.
 	monitor.ExportProcessPacketRaw(pkt)

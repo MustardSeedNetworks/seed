@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
 )
 
 // ManagerInterfaceName returns the interface name for testing.
@@ -76,53 +75,12 @@ func (m *TrafficMonitor) TrafficMonitorStats() map[int]*Traffic {
 }
 
 // ExportProcessPacketRaw exposes processPacket logic for testing.
-// This version works with raw gopacket.Packet.
+// This version works with raw gopacket.Packet interface.
 func (m *TrafficMonitor) ExportProcessPacketRaw(packet any) {
-	// Type assert to gopacket.Packet interface to test processPacket
-	if pkt, ok := packet.(interface {
-		Layer(gopacket.LayerType) gopacket.Layer
-		Data() []byte
-	}); ok {
-		m.processPacketInternal(pkt)
+	// Type assert to gopacket.Packet interface to call the real processPacket
+	if pkt, ok := packet.(gopacket.Packet); ok {
+		m.processPacket(pkt)
 	}
-}
-
-// processPacketInternal is the internal test helper that mirrors processPacket.
-func (m *TrafficMonitor) processPacketInternal(packet interface {
-	Layer(gopacket.LayerType) gopacket.Layer
-	Data() []byte
-}) {
-	dot1qLayer := packet.Layer(layers.LayerTypeDot1Q)
-	if dot1qLayer == nil {
-		return
-	}
-
-	dot1q, ok := dot1qLayer.(*layers.Dot1Q)
-	if !ok {
-		return
-	}
-
-	vlanID := int(dot1q.VLANIdentifier)
-	packetLen := uint64(len(packet.Data()))
-
-	m.mu.Lock()
-	if stats, exists := m.stats[vlanID]; exists {
-		stats.Packets++
-		stats.Bytes += packetLen
-		stats.LastSeen = time.Now()
-	} else {
-		if len(m.stats) >= maxTrackedVLANs {
-			m.mu.Unlock()
-			return
-		}
-		m.stats[vlanID] = &Traffic{
-			ID:       vlanID,
-			Packets:  1,
-			Bytes:    packetLen,
-			LastSeen: time.Now(),
-		}
-	}
-	m.mu.Unlock()
 }
 
 // ExportRecordVLANTraffic is a simplified test helper to simulate packet recording
