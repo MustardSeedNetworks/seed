@@ -519,6 +519,45 @@ func TestValidateConfig_SNMPRetries(t *testing.T) {
 	}
 }
 
+func TestValidateConfig_SNMPMaxRepetitions(t *testing.T) {
+	validator, err := config.NewSchemaValidator()
+	if err != nil {
+		t.Fatalf("failed to create validator: %v", err)
+	}
+
+	tests := []struct {
+		name           string
+		maxRepetitions uint32
+		want           bool // true = should have errors
+	}{
+		{"max_repetitions 1", 1, false},
+		{"max_repetitions 10", 10, false},
+		{"max_repetitions 50", 50, false},
+		{"max_repetitions 0", 0, true},
+		{"max_repetitions too high", 51, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := config.DefaultConfig()
+			cfg.SNMP.MaxRepetitions = tt.maxRepetitions
+			errors := validator.ValidateConfig(cfg)
+
+			hasErrors := len(errors) > 0
+			if hasErrors != tt.want {
+				if tt.want {
+					t.Errorf("expected validation errors for max_repetitions %d, got none", tt.maxRepetitions)
+				} else {
+					t.Errorf("expected no validation errors for max_repetitions %d, got: %+v", tt.maxRepetitions, errors)
+					for _, e := range errors {
+						t.Logf("  - Path: %s, Message: %s", e.Path, e.Message)
+					}
+				}
+			}
+		})
+	}
+}
+
 func TestValidateConfig_VulnerabilitySeverity(t *testing.T) {
 	validator, err := config.NewSchemaValidator()
 	if err != nil {

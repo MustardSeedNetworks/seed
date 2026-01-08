@@ -1,5 +1,7 @@
 package wifi
 
+import "time"
+
 // GetBand exports getBand for testing.
 func GetBand(freq int) string {
 	return getBand(freq)
@@ -40,4 +42,19 @@ func (m *Manager) InterfaceName() string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.interfaceName
+}
+
+// ScannerInterfaceName returns the interface name for a Scanner (getter for testing).
+func (s *Scanner) ScannerInterfaceName() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.interfaceName
+}
+
+// SetCachedNetworks sets cached networks directly for testing.
+func (s *Scanner) SetCachedNetworks(networks map[string]*ScannedNetwork, scanTime time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.networks = networks
+	s.lastScan = scanTime
 }

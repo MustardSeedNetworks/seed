@@ -134,3 +134,48 @@ func ExportRenderGrid(img *image.RGBA, cellSize int) {
 func CreateTestImage(width, height int) *image.RGBA {
 	return image.NewRGBA(image.Rect(0, 0, width, height))
 }
+
+// ExportTruncateString exports truncateString for testing.
+func ExportTruncateString(s string, maxLen int) string {
+	return truncateString(s, maxLen)
+}
+
+// ExportGetCoverageGrade exports getCoverageGrade for testing.
+func ExportGetCoverageGrade(score float64) string {
+	return getCoverageGrade(score)
+}
+
+// ExportGetGradeColor exports getGradeColor for testing.
+func ExportGetGradeColor(grade string) []int {
+	return getGradeColor(grade)
+}
+
+// ExportGetStatusColor exports getStatusColor for testing.
+func ExportGetStatusColor(status Status) []int {
+	return getStatusColor(status)
+}
+
+// ExportGetPriorityLabel exports getPriorityLabel for testing.
+func ExportGetPriorityLabel(p RecommendationPriority) string {
+	return getPriorityLabel(p)
+}
+
+// ExportGenerateSurveyRecommendations exports generateSurveyRecommendations for testing.
+func ExportGenerateSurveyRecommendations(stats *SurveyStats) []Recommendation {
+	return generateSurveyRecommendations(stats)
+}
+
+// ExportCalculateSurveyStats exports calculateSurveyStats for testing.
+func ExportCalculateSurveyStats(samples []*SamplePoint) SurveyStats {
+	return calculateSurveyStats(samples)
+}
+
+// ExportGetChannelUsage exports getChannelUsage for testing.
+func ExportGetChannelUsage(samples []*SamplePoint) []ChannelInfo {
+	return getChannelUsage(samples)
+}
+
+// ExportGetPassiveSampleFromPoint exports getPassiveSampleFromPoint for testing.
+func ExportGetPassiveSampleFromPoint(sp *SamplePoint) *PassiveSample {
+	return getPassiveSampleFromPoint(sp)
+}

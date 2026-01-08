@@ -364,3 +364,148 @@ func TestConcurrentLoggerAccess(t *testing.T) {
 	// Reset global logger
 	logging.ExportClearGlobalLogger()
 }
+
+func TestWithUserID(t *testing.T) {
+	tests := []struct {
+		name   string
+		userID string
+	}{
+		{"empty string", ""},
+		{"simple ID", "user123"},
+		{"UUID format", "550e8400-e29b-41d4-a716-446655440000"},
+		{"email format", "user@example.com"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			newCtx := logging.WithUserID(ctx, tt.userID)
+
+			// Verify the context is different for non-empty IDs
+			if tt.userID != "" && ctx == newCtx {
+				t.Error("WithUserID returned same context")
+			}
+
+			// Verify the user ID can be retrieved
+			result := logging.UserIDFromContext(newCtx)
+			if result != tt.userID {
+				t.Errorf("UserIDFromContext() = %q, want %q", result, tt.userID)
+			}
+		})
+	}
+}
+
+func TestUserIDFromContext(t *testing.T) {
+	t.Run("returns empty string for background context", func(t *testing.T) {
+		ctx := context.Background()
+		result := logging.UserIDFromContext(ctx)
+		if result != "" {
+			t.Errorf("UserIDFromContext(background) = %q, want empty string", result)
+		}
+	})
+
+	t.Run("returns empty string for context with wrong type", func(t *testing.T) {
+		// Create context with wrong value type
+		ctx := context.WithValue(context.Background(), logging.ExportUserIDKeyValue(), 12345)
+		result := logging.UserIDFromContext(ctx)
+		if result != "" {
+			t.Errorf("UserIDFromContext(wrong type) = %q, want empty string", result)
+		}
+	})
+
+	t.Run("returns user ID from context", func(t *testing.T) {
+		expectedID := "test-user-id"
+		ctx := logging.WithUserID(context.Background(), expectedID)
+		result := logging.UserIDFromContext(ctx)
+		if result != expectedID {
+			t.Errorf("UserIDFromContext() = %q, want %q", result, expectedID)
+		}
+	})
+}
+
+func TestFromContextWithUserID(t *testing.T) {
+	// Initialize logger for tests
+	var buf bytes.Buffer
+	err := logging.InitLogger(&logging.LoggingConfig{
+		Level:  "debug",
+		Format: "text",
+		Writer: &buf,
+	})
+	if err != nil {
+		t.Fatalf("InitLogger() failed: %v", err)
+	}
+
+	ctx := logging.WithUserID(context.Background(), "user-456")
+	logger := logging.FromContext(ctx)
+	if logger == nil {
+		t.Error("FromContext() returned nil")
+	}
+
+	// Log something to verify user_id is included
+	logger.Info("test with user id")
+	output := buf.String()
+	if !strings.Contains(output, "user-456") {
+		t.Error("Log output should contain user_id")
+	}
+
+	// Reset global logger
+	logging.ExportClearGlobalLogger()
+}
+
+func TestFromContextWithBothIDs(t *testing.T) {
+	// Initialize logger for tests
+	var buf bytes.Buffer
+	err := logging.InitLogger(&logging.LoggingConfig{
+		Level:  "debug",
+		Format: "text",
+		Writer: &buf,
+	})
+	if err != nil {
+		t.Fatalf("InitLogger() failed: %v", err)
+	}
+
+	ctx := context.Background()
+	ctx = logging.WithRequestID(ctx, "req-789")
+	ctx = logging.WithUserID(ctx, "user-123")
+
+	logger := logging.FromContext(ctx)
+	logger.Info("test with both IDs")
+
+	output := buf.String()
+	if !strings.Contains(output, "req-789") {
+		t.Error("Log output should contain request_id")
+	}
+	if !strings.Contains(output, "user-123") {
+		t.Error("Log output should contain user_id")
+	}
+
+	// Reset global logger
+	logging.ExportClearGlobalLogger()
+}
+
+func TestInitLoggerWithCustomWriter(t *testing.T) {
+	// Test that custom writer works
+	var buf bytes.Buffer
+	cfg := &logging.LoggingConfig{
+		Level:  "debug",
+		Format: "json",
+		Writer: &buf,
+	}
+
+	err := logging.InitLogger(cfg)
+	if err != nil {
+		t.Fatalf("InitLogger() error = %v", err)
+	}
+
+	logging.Info("test message", "key", "value")
+
+	output := buf.String()
+	if output == "" {
+		t.Error("Custom writer should have received log output")
+	}
+	if !strings.Contains(output, "test message") {
+		t.Error("Output should contain message")
+	}
+
+	logging.ExportClearGlobalLogger()
+}

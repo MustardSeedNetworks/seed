@@ -1432,6 +1432,13 @@
           "$ref": "#/$defs/PortNumber",
           "description": "SNMP port",
           "default": 161
+        },
+        "max_repetitions": {
+          "type": "integer",
+          "description": "Number of OID values returned per GetBulk request. Lower values reduce memory usage on slow devices.",
+          "minimum": 1,
+          "maximum": 50,
+          "default": 10
         }
       }
     },

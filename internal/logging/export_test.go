@@ -1,7 +1,9 @@
 package logging
 
 import (
+	"bufio"
 	"log/slog"
+	"net"
 	"net/http"
 )
 
@@ -98,4 +100,34 @@ func (h *RedactingHandler) RedactAttr(attr slog.Attr) slog.Attr {
 // Inner returns the inner handler for testing.
 func (h *RedactingHandler) Inner() slog.Handler {
 	return h.inner
+}
+
+// ExportIsValidRequestID exposes isValidRequestID for testing.
+func ExportIsValidRequestID(id string) bool {
+	return isValidRequestID(id)
+}
+
+// ExportUserIDKeyValue returns the userIDKey for testing.
+func ExportUserIDKeyValue() any {
+	return userIDKey
+}
+
+// TestHijackableResponseWriter wraps responseWriter for Hijack testing.
+type TestHijackableResponseWriter struct {
+	rw *responseWriter
+}
+
+// NewTestHijackableResponseWriter creates a responseWriter for Hijack testing.
+func NewTestHijackableResponseWriter(w http.ResponseWriter) *TestHijackableResponseWriter {
+	return &TestHijackableResponseWriter{
+		rw: &responseWriter{
+			ResponseWriter: w,
+			status:         http.StatusOK,
+		},
+	}
+}
+
+// Hijack exposes the Hijack method for testing.
+func (t *TestHijackableResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return t.rw.Hijack()
 }

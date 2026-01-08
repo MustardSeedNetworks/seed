@@ -4,6 +4,8 @@ package iperf_test
 import (
 	"context"
 	"os"
+	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -797,4 +799,1010 @@ func TestVersionComparison(t *testing.T) {
 			t.Errorf("CompareVersions(%q, %q) = %d; expected %d", tt.v1, tt.v2, result, tt.expected)
 		}
 	}
+}
+
+// TestValidateServer tests the server address validation.
+func TestValidateServer(t *testing.T) {
+	tests := []struct {
+		name    string
+		server  string
+		wantErr bool
+		errMsg  string
+	}{
+		// Valid IP addresses
+		{"valid IPv4", "192.168.1.100", false, ""},
+		{"valid IPv4 localhost", "127.0.0.1", false, ""},
+		{"valid IPv4 zeros", "0.0.0.0", false, ""},
+		{"valid IPv6", "::1", false, ""},
+		{"valid IPv6 full", "2001:db8::1", false, ""},
+
+		// Valid hostnames
+		{"valid hostname simple", "localhost", false, ""},
+		{"valid hostname domain", "example.com", false, ""},
+		{"valid hostname subdomain", "test.example.com", false, ""},
+		{"valid hostname with hyphen", "my-server.example.com", false, ""},
+		{"valid hostname with numbers", "server1.example.com", false, ""},
+
+		// Invalid inputs
+		{"empty string", "", true, "server address is required"},
+		{"hostname too long", string(make([]byte, 300)), true, "server hostname too long"},
+		{"invalid hostname special chars", "test@server.com", true, "invalid server address"},
+		{"invalid hostname space", "test server.com", true, "invalid server address"},
+		{"invalid hostname underscore", "test_server.com", true, "invalid server address"},
+		{"invalid hostname colon", "test:server", true, "invalid server address"},
+		{"invalid hostname semicolon", "test;server", true, "invalid server address"},
+		{"invalid command injection attempt", "localhost; rm -rf /", true, "invalid server address"},
+		{"invalid pipe injection", "localhost | cat /etc/passwd", true, "invalid server address"},
+		{"invalid backtick injection", "`whoami`", true, "invalid server address"},
+		{"invalid shell variable", "$HOME", true, "invalid server address"},
+		{"starts with hyphen", "-invalid.com", true, "invalid server address"},
+		{"ends with hyphen", "invalid-.com", true, "invalid server address"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := iperf.ValidateServer(tt.server)
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("ValidateServer(%q) expected error, got nil", tt.server)
+					return
+				}
+				if tt.errMsg != "" && !containsString(err.Error(), tt.errMsg) {
+					t.Errorf("ValidateServer(%q) error = %q, want containing %q", tt.server, err.Error(), tt.errMsg)
+				}
+			} else if err != nil {
+				t.Errorf("ValidateServer(%q) unexpected error: %v", tt.server, err)
+			}
+		})
+	}
+}
+
+// containsString checks if a string contains a substring.
+func containsString(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
+		(len(s) > 0 && len(substr) > 0 && findSubstring(s, substr)))
+}
+
+func findSubstring(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
+
+// TestSetClientDefaults tests the client configuration defaults.
+func TestSetClientDefaults(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         iperf.ClientConfig
+		expectedPort  int
+		expectedDur   int
+		expectedPar   int
+		expectedProto string
+	}{
+		{
+			name:          "all defaults",
+			input:         iperf.ClientConfig{Server: "localhost"},
+			expectedPort:  5201,
+			expectedDur:   10,
+			expectedPar:   1,
+			expectedProto: "tcp",
+		},
+		{
+			name:          "custom port preserved",
+			input:         iperf.ClientConfig{Server: "localhost", Port: 9999},
+			expectedPort:  9999,
+			expectedDur:   10,
+			expectedPar:   1,
+			expectedProto: "tcp",
+		},
+		{
+			name:          "custom duration preserved",
+			input:         iperf.ClientConfig{Server: "localhost", Duration: 30},
+			expectedPort:  5201,
+			expectedDur:   30,
+			expectedPar:   1,
+			expectedProto: "tcp",
+		},
+		{
+			name:          "custom parallel preserved",
+			input:         iperf.ClientConfig{Server: "localhost", Parallel: 4},
+			expectedPort:  5201,
+			expectedDur:   10,
+			expectedPar:   4,
+			expectedProto: "tcp",
+		},
+		{
+			name:          "custom protocol preserved",
+			input:         iperf.ClientConfig{Server: "localhost", Protocol: "udp"},
+			expectedPort:  5201,
+			expectedDur:   10,
+			expectedPar:   1,
+			expectedProto: "udp",
+		},
+		{
+			name: "all custom values preserved",
+			input: iperf.ClientConfig{
+				Server: "localhost", Port: 5555, Duration: 60, Parallel: 8, Protocol: "udp",
+			},
+			expectedPort:  5555,
+			expectedDur:   60,
+			expectedPar:   8,
+			expectedProto: "udp",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := tt.input
+			iperf.SetClientDefaults(&config)
+
+			if config.Port != tt.expectedPort {
+				t.Errorf("Port = %d, want %d", config.Port, tt.expectedPort)
+			}
+			if config.Duration != tt.expectedDur {
+				t.Errorf("Duration = %d, want %d", config.Duration, tt.expectedDur)
+			}
+			if config.Parallel != tt.expectedPar {
+				t.Errorf("Parallel = %d, want %d", config.Parallel, tt.expectedPar)
+			}
+			if config.Protocol != tt.expectedProto {
+				t.Errorf("Protocol = %q, want %q", config.Protocol, tt.expectedProto)
+			}
+		})
+	}
+}
+
+// TestNormalizeDirection tests direction normalization logic.
+func TestNormalizeDirection(t *testing.T) {
+	tests := []struct {
+		name              string
+		inputDirection    string
+		inputReverse      bool
+		expectedDirection string
+	}{
+		// Empty direction infers from Reverse flag
+		{"empty direction, reverse=false", "", false, "upload"},
+		{"empty direction, reverse=true", "", true, "download"},
+
+		// Explicit directions
+		{"explicit upload", "upload", false, "upload"},
+		{"explicit download", "download", false, "download"},
+		{"explicit bidirectional", "bidirectional", false, "bidirectional"},
+
+		// Case insensitivity
+		{"uppercase UPLOAD", "UPLOAD", false, "upload"},
+		{"uppercase DOWNLOAD", "DOWNLOAD", false, "download"},
+		{"mixed case BiDiReCtIoNaL", "BiDiReCtIoNaL", false, "bidirectional"},
+
+		// Invalid direction defaults to upload
+		{"invalid direction", "invalid", false, "upload"},
+		{"random string direction", "xyz", false, "upload"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &iperf.ClientConfig{
+				Server:    "localhost",
+				Direction: tt.inputDirection,
+				Reverse:   tt.inputReverse,
+			}
+
+			result := iperf.NormalizeDirection(config)
+
+			if result != tt.expectedDirection {
+				t.Errorf("NormalizeDirection() = %q, want %q", result, tt.expectedDirection)
+			}
+			if config.Direction != tt.expectedDirection {
+				t.Errorf("config.Direction = %q, want %q", config.Direction, tt.expectedDirection)
+			}
+		})
+	}
+}
+
+// TestBuildClientArgs tests command line argument building.
+func TestBuildClientArgs(t *testing.T) {
+	tests := []struct {
+		name          string
+		config        iperf.ClientConfig
+		direction     string
+		expectedArgs  []string
+		shouldContain []string
+		shouldNotHave []string
+	}{
+		{
+			name: "basic TCP upload",
+			config: iperf.ClientConfig{
+				Server:   "192.168.1.1",
+				Port:     5201,
+				Duration: 10,
+				Parallel: 1,
+				Protocol: "tcp",
+			},
+			direction:     "upload",
+			shouldContain: []string{"-c", "192.168.1.1", "-p", "5201", "-t", "10", "-P", "1", "-J"},
+			shouldNotHave: []string{"-R", "--bidir", "-u"},
+		},
+		{
+			name: "TCP download (reverse)",
+			config: iperf.ClientConfig{
+				Server:   "192.168.1.1",
+				Port:     5201,
+				Duration: 10,
+				Parallel: 1,
+				Protocol: "tcp",
+			},
+			direction:     "download",
+			shouldContain: []string{"-c", "192.168.1.1", "-R", "-J"},
+			shouldNotHave: []string{"--bidir", "-u"},
+		},
+		{
+			name: "bidirectional test",
+			config: iperf.ClientConfig{
+				Server:   "192.168.1.1",
+				Port:     5201,
+				Duration: 10,
+				Parallel: 1,
+				Protocol: "tcp",
+			},
+			direction:     "bidirectional",
+			shouldContain: []string{"-c", "192.168.1.1", "--bidir", "-J"},
+			shouldNotHave: []string{"-R", "-u"},
+		},
+		{
+			name: "UDP test",
+			config: iperf.ClientConfig{
+				Server:   "192.168.1.1",
+				Port:     5201,
+				Duration: 10,
+				Parallel: 1,
+				Protocol: "udp",
+			},
+			direction:     "upload",
+			shouldContain: []string{"-c", "192.168.1.1", "-u", "-b", "0", "-J"},
+			shouldNotHave: []string{"-R", "--bidir"},
+		},
+		{
+			name: "parallel streams",
+			config: iperf.ClientConfig{
+				Server:   "localhost",
+				Port:     5201,
+				Duration: 10,
+				Parallel: 4,
+				Protocol: "tcp",
+			},
+			direction:     "upload",
+			shouldContain: []string{"-P", "4"},
+		},
+		{
+			name: "custom port",
+			config: iperf.ClientConfig{
+				Server:   "localhost",
+				Port:     9999,
+				Duration: 10,
+				Parallel: 1,
+				Protocol: "tcp",
+			},
+			direction:     "upload",
+			shouldContain: []string{"-p", "9999"},
+		},
+		{
+			name: "custom duration",
+			config: iperf.ClientConfig{
+				Server:   "localhost",
+				Port:     5201,
+				Duration: 60,
+				Parallel: 1,
+				Protocol: "tcp",
+			},
+			direction:     "upload",
+			shouldContain: []string{"-t", "60"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			args := iperf.BuildClientArgs(&tt.config, tt.direction)
+
+			// Check that required args are present
+			for _, expected := range tt.shouldContain {
+				if !slices.Contains(args, expected) {
+					t.Errorf("Expected arg %q not found in %v", expected, args)
+				}
+			}
+
+			// Check that excluded args are not present
+			for _, excluded := range tt.shouldNotHave {
+				if slices.Contains(args, excluded) {
+					t.Errorf("Unexpected arg %q found in %v", excluded, args)
+				}
+			}
+		})
+	}
+}
+
+// TestParseClientResult tests result parsing from iperf3 JSON output.
+//
+//nolint:gocognit // Test functions with table-driven tests have inherent complexity
+func TestParseClientResult(t *testing.T) {
+	tests := []struct {
+		name              string
+		iperfOut          iperf.IperfJSON
+		config            iperf.ClientConfig
+		direction         string
+		expectedBandwidth float64
+		expectedDirection string
+		expectedProtocol  string
+	}{
+		{
+			name: "TCP upload result",
+			iperfOut: func() iperf.IperfJSON {
+				j := iperf.IperfJSON{}
+				j.End.SumSent.BitsPerSecond = 100_000_000 // 100 Mbps
+				j.End.SumSent.Bytes = 125_000_000         // 125 MB
+				j.End.SumSent.Seconds = 10
+				j.End.SumSent.Retransmits = 5
+				return j
+			}(),
+			config:            iperf.ClientConfig{Server: "localhost", Port: 5201, Protocol: "tcp"},
+			direction:         "upload",
+			expectedBandwidth: 100.0,
+			expectedDirection: "upload",
+			expectedProtocol:  "tcp",
+		},
+		{
+			name: "TCP download result",
+			iperfOut: func() iperf.IperfJSON {
+				j := iperf.IperfJSON{}
+				j.End.SumReceived.BitsPerSecond = 200_000_000 // 200 Mbps
+				j.End.SumReceived.Bytes = 250_000_000         // 250 MB
+				j.End.SumReceived.Seconds = 10
+				return j
+			}(),
+			config:            iperf.ClientConfig{Server: "localhost", Port: 5201, Protocol: "tcp"},
+			direction:         "download",
+			expectedBandwidth: 200.0,
+			expectedDirection: "download",
+			expectedProtocol:  "tcp",
+		},
+		{
+			name: "bidirectional result",
+			iperfOut: func() iperf.IperfJSON {
+				j := iperf.IperfJSON{}
+				j.End.SumReceived.BitsPerSecond = 150_000_000 // Download
+				j.End.SumReceived.Bytes = 187_500_000
+				j.End.SumSent.BitsPerSecond = 100_000_000 // Upload
+				j.End.SumSent.Bytes = 125_000_000
+				j.End.SumSent.Retransmits = 2
+				j.End.Sum.Seconds = 10
+				return j
+			}(),
+			config:            iperf.ClientConfig{Server: "localhost", Port: 5201, Protocol: "tcp"},
+			direction:         "bidirectional",
+			expectedBandwidth: 150.0, // Bandwidth defaults to download in bidir
+			expectedDirection: "bidirectional",
+			expectedProtocol:  "tcp",
+		},
+		{
+			name: "UDP result with jitter and loss",
+			iperfOut: func() iperf.IperfJSON {
+				j := iperf.IperfJSON{}
+				j.End.SumSent.BitsPerSecond = 50_000_000
+				j.End.SumSent.Bytes = 62_500_000
+				j.End.SumSent.Seconds = 10
+				j.End.Sum.JitterMs = 1.5
+				j.End.Sum.LostPackets = 10
+				j.End.Sum.LostPercent = 0.5
+				return j
+			}(),
+			config:            iperf.ClientConfig{Server: "localhost", Port: 5201, Protocol: "udp"},
+			direction:         "upload",
+			expectedBandwidth: 50.0,
+			expectedDirection: "upload",
+			expectedProtocol:  "udp",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := iperf.ParseClientResult(&tt.iperfOut, &tt.config, tt.direction)
+
+			if result == nil {
+				t.Fatal("ParseClientResult returned nil")
+			}
+
+			if result.Bandwidth != tt.expectedBandwidth {
+				t.Errorf("Bandwidth = %v, want %v", result.Bandwidth, tt.expectedBandwidth)
+			}
+			if result.Direction != tt.expectedDirection {
+				t.Errorf("Direction = %q, want %q", result.Direction, tt.expectedDirection)
+			}
+			if result.Protocol != tt.expectedProtocol {
+				t.Errorf("Protocol = %q, want %q", result.Protocol, tt.expectedProtocol)
+			}
+			if result.Server != tt.config.Server {
+				t.Errorf("Server = %q, want %q", result.Server, tt.config.Server)
+			}
+			if result.Port != tt.config.Port {
+				t.Errorf("Port = %d, want %d", result.Port, tt.config.Port)
+			}
+			if result.Timestamp.IsZero() {
+				t.Error("Timestamp should not be zero")
+			}
+
+			// Check UDP-specific fields
+			if tt.config.Protocol == "udp" {
+				if result.Jitter != tt.iperfOut.End.Sum.JitterMs {
+					t.Errorf("Jitter = %v, want %v", result.Jitter, tt.iperfOut.End.Sum.JitterMs)
+				}
+				if result.LostPackets != tt.iperfOut.End.Sum.LostPackets {
+					t.Errorf("LostPackets = %d, want %d", result.LostPackets, tt.iperfOut.End.Sum.LostPackets)
+				}
+				if result.LostPercent != tt.iperfOut.End.Sum.LostPercent {
+					t.Errorf("LostPercent = %v, want %v", result.LostPercent, tt.iperfOut.End.Sum.LostPercent)
+				}
+			}
+
+			// Check bidirectional fields
+			if tt.direction == "bidirectional" {
+				if result.UploadBandwidth == 0 {
+					t.Error("UploadBandwidth should not be zero for bidirectional")
+				}
+				if result.DownloadBandwidth == 0 {
+					t.Error("DownloadBandwidth should not be zero for bidirectional")
+				}
+			}
+		})
+	}
+}
+
+// TestParseClientResultRetransmits tests TCP retransmit parsing.
+func TestParseClientResultRetransmits(t *testing.T) {
+	iperfOut := iperf.IperfJSON{}
+	iperfOut.End.SumSent.BitsPerSecond = 100_000_000
+	iperfOut.End.SumSent.Bytes = 125_000_000
+	iperfOut.End.SumSent.Seconds = 10
+	iperfOut.End.SumSent.Retransmits = 42
+
+	config := &iperf.ClientConfig{
+		Server:   "localhost",
+		Port:     5201,
+		Protocol: "tcp",
+	}
+
+	result := iperf.ParseClientResult(&iperfOut, config, "upload")
+
+	if result.Retransmits != 42 {
+		t.Errorf("Retransmits = %d, want 42", result.Retransmits)
+	}
+}
+
+// TestGetLegacyPaths tests the legacy path lookup.
+func TestGetLegacyPaths(t *testing.T) {
+	paths := iperf.GetLegacyPaths()
+
+	// Should return at least some paths
+	if len(paths) == 0 {
+		t.Error("GetLegacyPaths() returned empty slice")
+	}
+
+	// All paths should be absolute
+	for _, path := range paths {
+		if !filepath.IsAbs(path) {
+			t.Errorf("Path %q is not absolute", path)
+		}
+	}
+
+	// Should contain expected path patterns
+	foundBinIperf := false
+	for _, path := range paths {
+		if filepath.Base(path) == "iperf3" {
+			foundBinIperf = true
+			break
+		}
+	}
+	if !foundBinIperf {
+		t.Error("Expected path ending in 'iperf3' not found")
+	}
+}
+
+// TestValidateBinary tests binary validation.
+func TestValidateBinary(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected bool
+	}{
+		{"non-existent path", "/non/existent/path/iperf3", false},
+		{"empty path", "", false},
+		{"directory path", "/tmp", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := iperf.ValidateBinary(tt.path)
+			if result != tt.expected {
+				t.Errorf("ValidateBinary(%q) = %v, want %v", tt.path, result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestNeedsSudo tests the sudo requirement detection.
+func TestNeedsSudo(t *testing.T) {
+	tests := []struct {
+		name           string
+		packageManager string
+		expected       bool
+	}{
+		{"homebrew", "homebrew", false},
+		{"scoop", "scoop", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := iperf.NeedsSudo(tt.packageManager)
+			if result != tt.expected {
+				t.Errorf("NeedsSudo(%q) = %v, want %v", tt.packageManager, result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestGetCacheDir tests cache directory retrieval.
+func TestGetCacheDir(t *testing.T) {
+	dir, err := iperf.GetCacheDir()
+	if err != nil {
+		t.Fatalf("GetCacheDir() error = %v", err)
+	}
+
+	if dir == "" {
+		t.Error("GetCacheDir() returned empty string")
+	}
+
+	// Should be an absolute path
+	if !filepath.IsAbs(dir) {
+		t.Errorf("GetCacheDir() returned non-absolute path: %q", dir)
+	}
+
+	// Should contain "seed" in the path
+	if !findSubstring(dir, "seed") {
+		t.Errorf("GetCacheDir() path should contain 'seed': %q", dir)
+	}
+}
+
+// TestIsValidExtractedBinary tests the extracted binary validation.
+//
+//nolint:gocognit // Test functions with multiple subtests have inherent complexity
+func TestIsValidExtractedBinary(t *testing.T) {
+	tempDir := t.TempDir()
+
+	t.Run("non-existent binary", func(t *testing.T) {
+		binaryPath := filepath.Join(tempDir, "nonexistent")
+		versionFile := filepath.Join(tempDir, "version")
+		result := iperf.IsValidExtractedBinary(binaryPath, versionFile)
+		if result {
+			t.Errorf("IsValidExtractedBinary() = %v, want false", result)
+		}
+	})
+
+	t.Run("missing version file", func(t *testing.T) {
+		binaryPath := filepath.Join(tempDir, "binary1")
+		if writeErr := os.WriteFile(binaryPath, []byte("test"), 0o755); writeErr != nil {
+			t.Fatalf("Failed to create test binary: %v", writeErr)
+		}
+		versionFile := filepath.Join(tempDir, "missing-version")
+		result := iperf.IsValidExtractedBinary(binaryPath, versionFile)
+		if result {
+			t.Errorf("IsValidExtractedBinary() = %v, want false", result)
+		}
+	})
+
+	t.Run("wrong version", func(t *testing.T) {
+		binaryPath := filepath.Join(tempDir, "binary2")
+		versionFile := filepath.Join(tempDir, "version2")
+		if writeErr := os.WriteFile(binaryPath, []byte("test"), 0o755); writeErr != nil {
+			t.Fatalf("Failed to create test binary: %v", writeErr)
+		}
+		if writeErr := os.WriteFile(versionFile, []byte("1.0.0"), 0o600); writeErr != nil {
+			t.Fatalf("Failed to create version file: %v", writeErr)
+		}
+		result := iperf.IsValidExtractedBinary(binaryPath, versionFile)
+		if result {
+			t.Errorf("IsValidExtractedBinary() = %v, want false", result)
+		}
+	})
+
+	t.Run("non-executable binary", func(t *testing.T) {
+		binaryPath := filepath.Join(tempDir, "binary3")
+		versionFile := filepath.Join(tempDir, "version3")
+		if writeErr := os.WriteFile(binaryPath, []byte("test"), 0o600); writeErr != nil {
+			t.Fatalf("Failed to create test binary: %v", writeErr)
+		}
+		if writeErr := os.WriteFile(versionFile, []byte(iperf.EmbeddedVersion), 0o600); writeErr != nil {
+			t.Fatalf("Failed to create version file: %v", writeErr)
+		}
+		result := iperf.IsValidExtractedBinary(binaryPath, versionFile)
+		if result {
+			t.Errorf("IsValidExtractedBinary() = %v, want false", result)
+		}
+	})
+
+	t.Run("valid binary and version", func(t *testing.T) {
+		binaryPath := filepath.Join(tempDir, "binary4")
+		versionFile := filepath.Join(tempDir, "version4")
+		if writeErr := os.WriteFile(binaryPath, []byte("test"), 0o755); writeErr != nil {
+			t.Fatalf("Failed to create test binary: %v", writeErr)
+		}
+		if writeErr := os.WriteFile(versionFile, []byte(iperf.EmbeddedVersion), 0o600); writeErr != nil {
+			t.Fatalf("Failed to create version file: %v", writeErr)
+		}
+		result := iperf.IsValidExtractedBinary(binaryPath, versionFile)
+		if !result {
+			t.Errorf("IsValidExtractedBinary() = %v, want true", result)
+		}
+	})
+}
+
+// TestGetPlatformBinaryMap tests the platform binary mapping.
+func TestGetPlatformBinaryMap(t *testing.T) {
+	platformMap := iperf.GetPlatformBinaryMap()
+
+	// Should have entries for major platforms
+	expectedPlatforms := []string{
+		"linux-amd64",
+		"linux-arm64",
+		"darwin-amd64",
+		"darwin-arm64",
+	}
+
+	for _, platform := range expectedPlatforms {
+		if _, ok := platformMap[platform]; !ok {
+			t.Errorf("Platform %q not found in platform binary map", platform)
+		}
+	}
+
+	// Each entry should have a valid binary name
+	for platform, binaryName := range platformMap {
+		if binaryName == "" {
+			t.Errorf("Platform %q has empty binary name", platform)
+		}
+		if !findSubstring(binaryName, "iperf3") {
+			t.Errorf("Binary name %q for platform %q should contain 'iperf3'", binaryName, platform)
+		}
+	}
+}
+
+// TestNotFoundError tests the NotFoundError type.
+func TestNotFoundError(t *testing.T) {
+	tests := []struct {
+		name          string
+		err           *iperf.NotFoundError
+		shouldContain []string
+	}{
+		{
+			name: "basic error",
+			err: &iperf.NotFoundError{
+				SearchedPaths: []string{"/usr/bin/iperf3", "/usr/local/bin/iperf3"},
+				SystemError:   nil,
+				EmbeddedError: nil,
+			},
+			shouldContain: []string{"iperf3 not found", "/usr/bin/iperf3", "/usr/local/bin/iperf3"},
+		},
+		{
+			name: "with system error",
+			err: &iperf.NotFoundError{
+				SearchedPaths: []string{"/usr/bin/iperf3"},
+				SystemError:   os.ErrNotExist,
+				EmbeddedError: nil,
+			},
+			shouldContain: []string{"iperf3 not found", "System PATH"},
+		},
+		{
+			name: "with embedded error",
+			err: &iperf.NotFoundError{
+				SearchedPaths: []string{},
+				SystemError:   nil,
+				EmbeddedError: os.ErrNotExist,
+			},
+			shouldContain: []string{"iperf3 not found", "Embedded binary"},
+		},
+		{
+			name: "with both errors",
+			err: &iperf.NotFoundError{
+				SearchedPaths: []string{"/usr/bin/iperf3"},
+				SystemError:   os.ErrNotExist,
+				EmbeddedError: os.ErrNotExist,
+			},
+			shouldContain: []string{"iperf3 not found", "System PATH", "Embedded binary"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			errMsg := tt.err.Error()
+
+			for _, substr := range tt.shouldContain {
+				if !findSubstring(errMsg, substr) {
+					t.Errorf("Error message should contain %q, got: %s", substr, errMsg)
+				}
+			}
+		})
+	}
+}
+
+// TestHasEmbeddedBinary tests the embedded binary detection.
+func TestHasEmbeddedBinary(t *testing.T) {
+	// This just tests the function doesn't panic
+	// The actual result depends on whether binaries are embedded
+	result := iperf.HasEmbeddedBinary()
+	t.Logf("HasEmbeddedBinary() = %v", result)
+}
+
+// TestGetInstallInstructions tests install instructions generation.
+func TestGetInstallInstructions(t *testing.T) {
+	instructions := iperf.GetInstallInstructions()
+
+	if instructions == "" {
+		t.Error("GetInstallInstructions() returned empty string")
+	}
+
+	// Should always contain some install guidance
+	if !findSubstring(instructions, "iperf3") {
+		t.Error("Instructions should mention iperf3")
+	}
+
+	// Should contain source build instructions
+	if !findSubstring(instructions, "github.com/esnet/iperf") {
+		t.Error("Instructions should include GitHub source")
+	}
+}
+
+// TestDetectPackageManager tests package manager detection.
+func TestDetectPackageManager(t *testing.T) {
+	pm := iperf.DetectPackageManager()
+
+	// This test is system-dependent
+	// Just verify the function doesn't panic and returns consistent type
+	if pm != nil {
+		if pm.Name == "" {
+			t.Error("Detected package manager should have a name")
+		}
+		if len(pm.InstallCommand) == 0 {
+			t.Error("Detected package manager should have install command")
+		}
+		t.Logf("Detected package manager: %s", pm.Name)
+	} else {
+		t.Log("No package manager detected (may be expected on some systems)")
+	}
+}
+
+// TestInstallOptions tests install options struct.
+func TestInstallOptions(t *testing.T) {
+	opts := iperf.InstallOptions{
+		Method:     iperf.InstallMethodPackageManager,
+		Version:    "3.17",
+		InstallDir: "/usr/local",
+		UseSudo:    true,
+		Verbose:    true,
+	}
+
+	if opts.Method != iperf.InstallMethodPackageManager {
+		t.Errorf("Method = %q, want %q", opts.Method, iperf.InstallMethodPackageManager)
+	}
+	if opts.Version != "3.17" {
+		t.Errorf("Version = %q, want %q", opts.Version, "3.17")
+	}
+	if opts.InstallDir != "/usr/local" {
+		t.Errorf("InstallDir = %q, want %q", opts.InstallDir, "/usr/local")
+	}
+	if !opts.UseSudo {
+		t.Error("UseSudo should be true")
+	}
+	if !opts.Verbose {
+		t.Error("Verbose should be true")
+	}
+}
+
+// TestInstallResult tests install result struct.
+func TestInstallResult(t *testing.T) {
+	result := iperf.InstallResult{
+		Success: true,
+		Path:    "/usr/local/bin/iperf3",
+		Version: "3.17",
+		Method:  iperf.InstallMethodGitHub,
+	}
+
+	if !result.Success {
+		t.Error("Success should be true")
+	}
+	if result.Path != "/usr/local/bin/iperf3" {
+		t.Errorf("Path = %q, want %q", result.Path, "/usr/local/bin/iperf3")
+	}
+	if result.Version != "3.17" {
+		t.Errorf("Version = %q, want %q", result.Version, "3.17")
+	}
+	if result.Method != iperf.InstallMethodGitHub {
+		t.Errorf("Method = %q, want %q", result.Method, iperf.InstallMethodGitHub)
+	}
+	if result.Error != nil {
+		t.Errorf("Error should be nil, got %v", result.Error)
+	}
+	if result.NeedsSudo {
+		t.Error("NeedsSudo should be false")
+	}
+	if result.SudoCommand != "" {
+		t.Errorf("SudoCommand should be empty, got %q", result.SudoCommand)
+	}
+}
+
+// TestInstallMethodConstants tests install method constant values.
+func TestInstallMethodConstants(t *testing.T) {
+	tests := []struct {
+		method   iperf.InstallMethod
+		expected string
+	}{
+		{iperf.InstallMethodPackageManager, "package_manager"},
+		{iperf.InstallMethodGitHub, "github"},
+		{iperf.InstallMethodManual, "manual"},
+	}
+
+	for _, tt := range tests {
+		if string(tt.method) != tt.expected {
+			t.Errorf("InstallMethod constant = %q, want %q", tt.method, tt.expected)
+		}
+	}
+}
+
+// TestPackageManagerInfo tests package manager info struct.
+func TestPackageManagerInfo(t *testing.T) {
+	info := iperf.PackageManagerInfo{
+		Name:           "apt",
+		InstallCommand: []string{"apt", "install", "-y", "iperf3"},
+		UpdateCommand:  []string{"apt", "update"},
+		Available:      true,
+	}
+
+	if info.Name != "apt" {
+		t.Errorf("Name = %q, want %q", info.Name, "apt")
+	}
+	if len(info.InstallCommand) != 4 {
+		t.Errorf("InstallCommand length = %d, want 4", len(info.InstallCommand))
+	}
+	if len(info.UpdateCommand) != 2 {
+		t.Errorf("UpdateCommand length = %d, want 2", len(info.UpdateCommand))
+	}
+	if !info.Available {
+		t.Error("Available should be true")
+	}
+}
+
+// TestCheckBuildDependencies tests build dependency checking.
+func TestCheckBuildDependencies(t *testing.T) {
+	missing := iperf.CheckBuildDependencies()
+
+	// This is system-dependent - just verify it returns a slice
+	t.Logf("Missing build dependencies: %v", missing)
+}
+
+// TestGetBuildDependencyInstallCommand tests build dependency install command.
+func TestGetBuildDependencyInstallCommand(t *testing.T) {
+	cmd := iperf.GetBuildDependencyInstallCommand()
+
+	if cmd == "" {
+		t.Error("GetBuildDependencyInstallCommand() returned empty string")
+	}
+
+	// Should mention some common build tools
+	if !findSubstring(cmd, "make") && !findSubstring(cmd, "gcc") && !findSubstring(cmd, "Install") {
+		t.Errorf("Command should mention build tools: %q", cmd)
+	}
+}
+
+// TestManagerRunClientEmptyServer tests running client with empty server.
+func TestManagerRunClientEmptyServer(t *testing.T) {
+	manager := iperf.NewManager()
+	ctx := context.Background()
+
+	_, err := manager.RunClient(ctx, &iperf.ClientConfig{Server: ""})
+	if err == nil {
+		t.Error("Expected error for empty server")
+	}
+	if !findSubstring(err.Error(), "server address is required") {
+		t.Errorf("Error should mention server address, got: %v", err)
+	}
+}
+
+// TestManagerRunClientInvalidServer tests running client with invalid server.
+func TestManagerRunClientInvalidServer(t *testing.T) {
+	manager := iperf.NewManager()
+	ctx := context.Background()
+
+	_, err := manager.RunClient(ctx, &iperf.ClientConfig{Server: "invalid;server"})
+	if err == nil {
+		t.Error("Expected error for invalid server")
+	}
+	if !findSubstring(err.Error(), "invalid server address") {
+		t.Errorf("Error should mention invalid server address, got: %v", err)
+	}
+}
+
+// TestResultBidirectionalFields tests bidirectional result fields.
+func TestResultBidirectionalFields(t *testing.T) {
+	result := iperf.Result{
+		Direction:             "bidirectional",
+		UploadBitsPerSecond:   100_000_000,
+		DownloadBitsPerSecond: 200_000_000,
+		UploadBandwidth:       100.0,
+		DownloadBandwidth:     200.0,
+		UploadTransfer:        125.0,
+		DownloadTransfer:      250.0,
+	}
+
+	if result.Direction != "bidirectional" {
+		t.Errorf("Direction = %q, want bidirectional", result.Direction)
+	}
+	if result.UploadBitsPerSecond != 100_000_000 {
+		t.Errorf("UploadBitsPerSecond = %v, want 100000000", result.UploadBitsPerSecond)
+	}
+	if result.DownloadBitsPerSecond != 200_000_000 {
+		t.Errorf("DownloadBitsPerSecond = %v, want 200000000", result.DownloadBitsPerSecond)
+	}
+	if result.UploadBandwidth != 100.0 {
+		t.Errorf("UploadBandwidth = %v, want 100.0", result.UploadBandwidth)
+	}
+	if result.DownloadBandwidth != 200.0 {
+		t.Errorf("DownloadBandwidth = %v, want 200.0", result.DownloadBandwidth)
+	}
+	if result.UploadTransfer != 125.0 {
+		t.Errorf("UploadTransfer = %v, want 125.0", result.UploadTransfer)
+	}
+	if result.DownloadTransfer != 250.0 {
+		t.Errorf("DownloadTransfer = %v, want 250.0", result.DownloadTransfer)
+	}
+}
+
+// TestManagerStartServerInvalidPort tests starting server with invalid port.
+func TestManagerStartServerInvalidPort(t *testing.T) {
+	manager := iperf.NewManager()
+
+	// Test with invalid port numbers
+	invalidPorts := []int{-1, 0, 65536, 100000}
+
+	for _, port := range invalidPorts {
+		err := manager.StartServer(port)
+		if err == nil {
+			t.Errorf("Expected error for invalid port %d", port)
+		}
+	}
+}
+
+// TestEmbeddedVersion tests the embedded version constant.
+func TestEmbeddedVersion(t *testing.T) {
+	if iperf.EmbeddedVersion == "" {
+		t.Error("EmbeddedVersion should not be empty")
+	}
+
+	// Should be a valid version format
+	parts := splitString(iperf.EmbeddedVersion, ".")
+	if len(parts) < 2 {
+		t.Errorf("EmbeddedVersion should have at least major.minor format: %q", iperf.EmbeddedVersion)
+	}
+}
+
+// splitString splits a string by a separator.
+func splitString(s, sep string) []string {
+	var parts []string
+	start := 0
+	for i := 0; i <= len(s)-len(sep); i++ {
+		if s[i:i+len(sep)] == sep {
+			parts = append(parts, s[start:i])
+			start = i + len(sep)
+			i += len(sep) - 1
+		}
+	}
+	parts = append(parts, s[start:])
+	return parts
 }

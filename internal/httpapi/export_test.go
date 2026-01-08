@@ -214,3 +214,28 @@ func (s *Server) SetupTokenManager() *SetupTokenManager {
 func (s *Server) Mux() *http.ServeMux {
 	return s.mux
 }
+
+// HandleRecoveryStatus exports handleRecoveryStatus for testing.
+func (s *Server) HandleRecoveryStatus(w http.ResponseWriter, r *http.Request) {
+	s.handleRecoveryStatus(w, r)
+}
+
+// HandleRecoveryComplete exports handleRecoveryComplete for testing.
+func (s *Server) HandleRecoveryComplete(w http.ResponseWriter, r *http.Request) {
+	s.handleRecoveryComplete(w, r)
+}
+
+// HandleRecoveryInstructions exports handleRecoveryInstructions for testing.
+func (s *Server) HandleRecoveryInstructions(w http.ResponseWriter, r *http.Request) {
+	s.handleRecoveryInstructions(w, r)
+}
+
+// RecoveryManager returns the server's recovery token manager for testing.
+func (s *Server) RecoveryManager() *auth.RecoveryTokenManager {
+	return s.recoveryManager
+}
+
+// SetRecoveryManager sets the server's recovery manager for testing.
+func (s *Server) SetRecoveryManager(rm *auth.RecoveryTokenManager) {
+	s.recoveryManager = rm
+}

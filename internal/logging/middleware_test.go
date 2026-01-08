@@ -1,13 +1,16 @@
 package logging_test
 
 import (
+	"bufio"
 	"bytes"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/krisarmstrong/seed/internal/logging"
 )
@@ -463,5 +466,187 @@ func TestMiddlewareChain(t *testing.T) {
 func TestRequestIDHeader_Constant(t *testing.T) {
 	if logging.RequestIDHeader != "X-Request-ID" {
 		t.Errorf("RequestIDHeader = %q, want %q", logging.RequestIDHeader, "X-Request-ID")
+	}
+}
+
+func TestIsValidRequestID(t *testing.T) {
+	tests := []struct {
+		name     string
+		id       string
+		expected bool
+	}{
+		{"empty string", "", false},
+		{"valid alphanumeric", "abc123XYZ", true},
+		{"valid with dash", "req-123-abc", true},
+		{"valid with underscore", "req_123_abc", true},
+		{"valid with dot", "req.123.abc", true},
+		{"valid UUID", "550e8400-e29b-41d4-a716-446655440000", true},
+		{"invalid with space", "abc 123", false},
+		{"invalid with special char", "abc@123", false},
+		{"invalid with newline", "abc\n123", false},
+		{"invalid with colon", "abc:123", false},
+		{"too long", strings.Repeat("a", 65), false},
+		{"at max length", strings.Repeat("a", 64), true},
+		{"just under max", strings.Repeat("a", 63), true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := logging.ExportIsValidRequestID(tt.id)
+			if result != tt.expected {
+				t.Errorf("isValidRequestID(%q) = %v, want %v", tt.id, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestResponseWriter_Hijack(t *testing.T) {
+	t.Run("returns error when underlying writer does not support hijack", func(t *testing.T) {
+		// httptest.ResponseRecorder does not implement http.Hijacker
+		rr := httptest.NewRecorder()
+		wrapped := logging.NewTestHijackableResponseWriter(rr)
+
+		conn, rw, err := wrapped.Hijack()
+		if err == nil {
+			t.Error("Hijack() should return error for non-hijackable writer")
+		}
+		if conn != nil {
+			t.Error("Hijack() should return nil conn for non-hijackable writer")
+		}
+		if rw != nil {
+			t.Error("Hijack() should return nil rw for non-hijackable writer")
+		}
+		if !strings.Contains(err.Error(), "does not implement http.Hijacker") {
+			t.Errorf("Error message = %q, should mention Hijacker", err.Error())
+		}
+	})
+
+	t.Run("succeeds when underlying writer supports hijack", func(t *testing.T) {
+		// Use a mock hijackable writer
+		mock := &mockHijackableWriter{}
+		wrapped := logging.NewTestHijackableResponseWriter(mock)
+
+		conn, rw, err := wrapped.Hijack()
+		if err != nil {
+			t.Errorf("Hijack() error = %v, want nil", err)
+		}
+		// Mock returns non-nil connection and readwriter
+		if conn == nil {
+			t.Error("Hijack() should return non-nil connection from underlying writer")
+		}
+		if rw == nil {
+			t.Error("Hijack() should return non-nil readwriter from underlying writer")
+		}
+	})
+}
+
+// mockHijackableWriter implements http.ResponseWriter and http.Hijacker.
+type mockHijackableWriter struct {
+	headers http.Header
+}
+
+func (m *mockHijackableWriter) Header() http.Header {
+	if m.headers == nil {
+		m.headers = make(http.Header)
+	}
+	return m.headers
+}
+
+func (m *mockHijackableWriter) Write(data []byte) (int, error) {
+	return len(data), nil
+}
+
+func (m *mockHijackableWriter) WriteHeader(_ int) {}
+
+func (m *mockHijackableWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	// Return mock connection and bufio.ReadWriter
+	mockConn := &mockNetConn{}
+	mockRW := bufio.NewReadWriter(
+		bufio.NewReader(strings.NewReader("")),
+		bufio.NewWriter(io.Discard),
+	)
+	return mockConn, mockRW, nil
+}
+
+// mockNetConn implements net.Conn for testing.
+type mockNetConn struct{}
+
+func (m *mockNetConn) Read(_ []byte) (int, error)         { return 0, io.EOF }
+func (m *mockNetConn) Write(_ []byte) (int, error)        { return 0, nil }
+func (m *mockNetConn) Close() error                       { return nil }
+func (m *mockNetConn) LocalAddr() net.Addr                { return nil }
+func (m *mockNetConn) RemoteAddr() net.Addr               { return nil }
+func (m *mockNetConn) SetDeadline(_ time.Time) error      { return nil }
+func (m *mockNetConn) SetReadDeadline(_ time.Time) error  { return nil }
+func (m *mockNetConn) SetWriteDeadline(_ time.Time) error { return nil }
+
+func TestRequestIDMiddleware_EdgeCases(t *testing.T) {
+	t.Run("handles special characters in invalid ID", func(t *testing.T) {
+		invalidIDs := []string{
+			"abc\x00def",             // null byte
+			"abc\rdef",               // carriage return
+			"<script>alert</script>", // HTML
+			"'; DROP TABLE--",        // SQL injection attempt
+		}
+
+		for _, badID := range invalidIDs {
+			var contextID string
+			handler := logging.RequestIDMiddleware(
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					contextID = logging.RequestIDFromContext(r.Context())
+					w.WriteHeader(http.StatusOK)
+				}),
+			)
+
+			req := httptest.NewRequest(http.MethodGet, "/test", http.NoBody)
+			req.Header.Set(logging.RequestIDHeader, badID)
+			rr := httptest.NewRecorder()
+
+			handler.ServeHTTP(rr, req)
+
+			if contextID == badID {
+				t.Errorf("Invalid request ID %q should be replaced", badID)
+			}
+		}
+	})
+}
+
+func TestLoggingMiddleware_DifferentMethods(t *testing.T) {
+	var buf bytes.Buffer
+	baseHandler := slog.NewTextHandler(&buf, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})
+	logging.ExportSetGlobalLogger(slog.New(baseHandler))
+	defer logging.ExportClearGlobalLogger()
+
+	methods := []string{
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodPut,
+		http.MethodDelete,
+		http.MethodPatch,
+		http.MethodOptions,
+	}
+
+	for _, method := range methods {
+		t.Run(method, func(t *testing.T) {
+			buf.Reset()
+
+			handler := logging.LoggingMiddleware(
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+				}),
+			)
+
+			req := httptest.NewRequest(method, "/api/test", http.NoBody)
+			rr := httptest.NewRecorder()
+
+			handler.ServeHTTP(rr, req)
+
+			output := buf.String()
+			if !strings.Contains(output, method) {
+				t.Errorf("Log should contain method %q", method)
+			}
+		})
 	}
 }

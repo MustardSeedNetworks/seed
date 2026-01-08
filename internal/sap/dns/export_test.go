@@ -1,6 +1,7 @@
 package dns
 
 import (
+	"net"
 	"sync"
 	"time"
 )
@@ -46,4 +47,25 @@ func (t *Tester) GetStatus(duration time.Duration, hasError bool) Status {
 // ExportGetSystemDNSPlatform is exported for testing.
 func ExportGetSystemDNSPlatform() []string {
 	return getSystemDNSPlatform()
+}
+
+// ExportIsPrivateIP is exported for testing.
+func ExportIsPrivateIP(ip net.IP) bool {
+	return isPrivateIP(ip)
+}
+
+// ExportCalculateSeverity is exported for testing.
+func ExportCalculateSeverity(result *SecurityScanResult) string {
+	scanner := NewSecurityScanner(DefaultSecurityScanConfig())
+	return scanner.calculateSeverity(result)
+}
+
+// ExportParseResolvConfDarwin is exported for testing (darwin only).
+func ExportParseResolvConfDarwin(path string) []string {
+	return parseResolvConfDarwin(path)
+}
+
+// ExportGetDNSFromInterfaces is exported for testing (darwin only).
+func ExportGetDNSFromInterfaces() []string {
+	return getDNSFromInterfaces()
 }

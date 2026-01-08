@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -852,8 +853,10 @@ func TestMiddlewareExpiredToken(t *testing.T) {
 		t.Errorf("expected status %d for expired token, got %d", http.StatusUnauthorized, rec.Code)
 	}
 
-	if rec.Body.String() != "Token expired\n" {
-		t.Errorf("expected 'Token expired' message, got %q", rec.Body.String())
+	// API returns JSON error responses
+	body := rec.Body.String()
+	if !strings.Contains(body, "Token expired") {
+		t.Errorf("expected body to contain 'Token expired', got %q", body)
 	}
 }
 

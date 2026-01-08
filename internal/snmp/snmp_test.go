@@ -228,6 +228,14 @@ func TestFormatSNMPValue(t *testing.T) {
 			want: "test string",
 		},
 		{
+			name: "OctetString non-byte value",
+			variable: gosnmp.SnmpPDU{
+				Type:  gosnmp.OctetString,
+				Value: "not a byte slice",
+			},
+			want: "not a byte slice",
+		},
+		{
 			name: "Integer",
 			variable: gosnmp.SnmpPDU{
 				Type:  gosnmp.Integer,
@@ -244,6 +252,30 @@ func TestFormatSNMPValue(t *testing.T) {
 			want: "98765",
 		},
 		{
+			name: "Gauge32",
+			variable: gosnmp.SnmpPDU{
+				Type:  gosnmp.Gauge32,
+				Value: uint(54321),
+			},
+			want: "54321",
+		},
+		{
+			name: "TimeTicks",
+			variable: gosnmp.SnmpPDU{
+				Type:  gosnmp.TimeTicks,
+				Value: uint32(100000),
+			},
+			want: "100000",
+		},
+		{
+			name: "Counter64",
+			variable: gosnmp.SnmpPDU{
+				Type:  gosnmp.Counter64,
+				Value: uint64(1234567890),
+			},
+			want: "1234567890",
+		},
+		{
 			name: "ObjectIdentifier",
 			variable: gosnmp.SnmpPDU{
 				Type:  gosnmp.ObjectIdentifier,
@@ -252,12 +284,44 @@ func TestFormatSNMPValue(t *testing.T) {
 			want: "1.3.6.1.2.1.1.1.0",
 		},
 		{
+			name: "ObjectIdentifier non-string",
+			variable: gosnmp.SnmpPDU{
+				Type:  gosnmp.ObjectIdentifier,
+				Value: 12345,
+			},
+			want: "12345",
+		},
+		{
 			name: "IPAddress",
 			variable: gosnmp.SnmpPDU{
 				Type:  gosnmp.IPAddress,
 				Value: "192.168.1.1",
 			},
 			want: "192.168.1.1",
+		},
+		{
+			name: "IPAddress non-string",
+			variable: gosnmp.SnmpPDU{
+				Type:  gosnmp.IPAddress,
+				Value: []byte{192, 168, 1, 1},
+			},
+			want: "[192 168 1 1]",
+		},
+		{
+			name: "nil value",
+			variable: gosnmp.SnmpPDU{
+				Type:  gosnmp.OctetString,
+				Value: nil,
+			},
+			want: "",
+		},
+		{
+			name: "default case",
+			variable: gosnmp.SnmpPDU{
+				Type:  gosnmp.Opaque,
+				Value: []byte{0x01, 0x02},
+			},
+			want: "[1 2]",
 		},
 	}
 
@@ -285,6 +349,7 @@ func TestGetAuthProtocol(t *testing.T) {
 		{"SHA512", "SHA512", gosnmp.SHA512},
 		{"empty", "", gosnmp.NoAuth},
 		{"unknown", "UNKNOWN", gosnmp.NoAuth},
+		{"lowercase md5", "md5", gosnmp.NoAuth},
 	}
 
 	for _, tt := range tests {
@@ -311,6 +376,7 @@ func TestGetPrivProtocol(t *testing.T) {
 		{"AES256C", "AES256C", gosnmp.AES256C},
 		{"empty", "", gosnmp.NoPriv},
 		{"unknown", "UNKNOWN", gosnmp.NoPriv},
+		{"lowercase aes", "aes", gosnmp.NoPriv},
 	}
 
 	for _, tt := range tests {
@@ -318,6 +384,64 @@ func TestGetPrivProtocol(t *testing.T) {
 			got := snmp.ExportGetPrivProtocol(tt.protocol)
 			if got != tt.want {
 				t.Errorf("GetPrivProtocol(%v) = %v, want %v", tt.protocol, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetMaxRepetitions(t *testing.T) {
+	tests := []struct {
+		name string
+		cfg  *config.SNMPConfig
+		want uint32
+	}{
+		{
+			name: "nil config returns default",
+			cfg:  nil,
+			want: 10, // defaultMaxRepetitions
+		},
+		{
+			name: "zero value returns default",
+			cfg: &config.SNMPConfig{
+				MaxRepetitions: 0,
+			},
+			want: 10, // defaultMaxRepetitions
+		},
+		{
+			name: "value within range",
+			cfg: &config.SNMPConfig{
+				MaxRepetitions: 25,
+			},
+			want: 25,
+		},
+		{
+			name: "value at max allowed",
+			cfg: &config.SNMPConfig{
+				MaxRepetitions: 50,
+			},
+			want: 50, // maxAllowedRepetitions
+		},
+		{
+			name: "value exceeds max allowed",
+			cfg: &config.SNMPConfig{
+				MaxRepetitions: 100,
+			},
+			want: 50, // maxAllowedRepetitions
+		},
+		{
+			name: "value at minimum",
+			cfg: &config.SNMPConfig{
+				MaxRepetitions: 1,
+			},
+			want: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := snmp.ExportGetMaxRepetitions(tt.cfg)
+			if got != tt.want {
+				t.Errorf("GetMaxRepetitions() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -557,5 +681,94 @@ func TestV3CredentialFields(t *testing.T) {
 	privProto := snmp.ExportGetPrivProtocol(cred.PrivProtocol)
 	if privProto != gosnmp.AES256 {
 		t.Errorf("Priv protocol = %v, want AES256", privProto)
+	}
+}
+
+func TestV3WithEmptyUsername(t *testing.T) {
+	ctx := context.Background()
+
+	cfg := &config.SNMPConfig{
+		V3Credentials: []config.SNMPv3Credential{
+			{
+				Name:         "test",
+				Username:     "", // Empty username should fail
+				AuthProtocol: "SHA",
+				AuthPassword: "authpass",
+			},
+		},
+		Port:    161,
+		Timeout: 100 * time.Millisecond,
+		Retries: 1,
+	}
+
+	_, err := snmp.Query(ctx, "192.0.2.1", snmp.OIDSysDescr, cfg)
+	if err == nil {
+		t.Error("Query() with empty v3 username should return error")
+	}
+}
+
+func TestAuthProtocolMD5Deprecation(t *testing.T) {
+	// Verify MD5 constant is defined for backward compatibility
+	if snmp.AuthProtocolMD5 != "MD5" {
+		t.Errorf("AuthProtocolMD5 = %v, want MD5", snmp.AuthProtocolMD5)
+	}
+
+	// MD5 should still work (backward compat) but logs warning
+	got := snmp.ExportGetAuthProtocol("MD5")
+	if got != gosnmp.MD5 {
+		t.Errorf("GetAuthProtocol(MD5) = %v, want gosnmp.MD5", got)
+	}
+}
+
+func TestInterfaceOIDConstants(t *testing.T) {
+	// Verify interface-related OID constants
+	if snmp.OIDIfIndex == "" {
+		t.Error("OIDIfIndex should not be empty")
+	}
+	if snmp.OIDIfDescr == "" {
+		t.Error("OIDIfDescr should not be empty")
+	}
+	if snmp.OIDIfType == "" {
+		t.Error("OIDIfType should not be empty")
+	}
+	if snmp.OIDIfSpeed == "" {
+		t.Error("OIDIfSpeed should not be empty")
+	}
+	if snmp.OIDIfPhysAddress == "" {
+		t.Error("OIDIfPhysAddress should not be empty")
+	}
+	if snmp.OIDIfAdminStatus == "" {
+		t.Error("OIDIfAdminStatus should not be empty")
+	}
+	if snmp.OIDIfOperStatus == "" {
+		t.Error("OIDIfOperStatus should not be empty")
+	}
+}
+
+func TestStatusConstants(t *testing.T) {
+	// Verify status constant values
+	if snmp.StatusUp != "up" {
+		t.Errorf("StatusUp = %v, want 'up'", snmp.StatusUp)
+	}
+	if snmp.StatusDown != "down" {
+		t.Errorf("StatusDown = %v, want 'down'", snmp.StatusDown)
+	}
+	if snmp.StatusTesting != "testing" {
+		t.Errorf("StatusTesting = %v, want 'testing'", snmp.StatusTesting)
+	}
+	if snmp.StatusUnknown != "unknown" {
+		t.Errorf("StatusUnknown = %v, want 'unknown'", snmp.StatusUnknown)
+	}
+}
+
+func TestMACTypeConstants(t *testing.T) {
+	if snmp.MACTypeLearned != "learned" {
+		t.Errorf("MACTypeLearned = %v, want 'learned'", snmp.MACTypeLearned)
+	}
+	if snmp.MACTypeStatic != "static" {
+		t.Errorf("MACTypeStatic = %v, want 'static'", snmp.MACTypeStatic)
+	}
+	if snmp.MACTypeOther != "other" {
+		t.Errorf("MACTypeOther = %v, want 'other'", snmp.MACTypeOther)
 	}
 }

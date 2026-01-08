@@ -16,3 +16,27 @@ func (t *Tester) SetStatus(phase string, progress float64) {
 func (t *Tester) SetRunning(running bool) {
 	t.setRunning(running)
 }
+
+// SetCurrentSpeeds is exported for testing.
+func (t *Tester) SetCurrentSpeeds(download, upload float64) {
+	t.setCurrentSpeeds(download, upload)
+}
+
+// SetLastResult is exported for testing.
+func (t *Tester) SetLastResult(result *Result) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.lastResult = result
+}
+
+// Exported constants for testing.
+const (
+	ProgressFindingServer   = progressFindingServer
+	ProgressTestingLatency  = progressTestingLatency
+	ProgressTestingDownload = progressTestingDownload
+	ProgressTestingUpload   = progressTestingUpload
+	ProgressComplete        = progressComplete
+	BytesToMbps             = bytesToMbps
+	SpeedPollInterval       = speedPollInterval
+	IdleResetDelay          = idleResetDelay
+)

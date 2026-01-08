@@ -1,5 +1,3 @@
-// Test suite validates gateway detection, ping testing, threshold evaluation,
-// and packet loss calculation for gateway health monitoring.
 package gateway_test
 
 import (
@@ -869,5 +867,573 @@ func TestTesterPingCount(t *testing.T) {
 
 	if count != 3 {
 		t.Errorf("expected default pingCount 3, got %d", count)
+	}
+}
+
+// Additional tests for increased coverage.
+
+func TestPingErrorMessage(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		expected string
+	}{
+		{
+			name:     "nil error",
+			err:      nil,
+			expected: "ping timeout",
+		},
+		{
+			name:     "test error",
+			err:      gateway.ErrTest,
+			expected: "test error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := gateway.PingErrorMessage(tt.err)
+			if result != tt.expected {
+				t.Errorf("PingErrorMessage() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestDetectGatewayIPv6(_ *testing.T) {
+	// Test IPv6 gateway detection - may or may not find one.
+	gw, err := gateway.DetectGatewayIPv6()
+	// Just verify it doesn't panic and returns valid types.
+	_ = gw
+	_ = err
+}
+
+func TestTesterClose(t *testing.T) {
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+	tester.SetGateway("127.0.0.1")
+
+	// Close should not panic.
+	tester.Close()
+
+	// Verify pinger is nil after close.
+	if tester.TesterGetPinger() != nil {
+		t.Error("expected pinger to be nil after Close")
+	}
+
+	// Multiple closes should not panic.
+	tester.Close()
+	tester.Close()
+}
+
+func TestTesterCloseWhileRunning(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+	tester.SetGateway("127.0.0.1")
+
+	// Start continuous testing.
+	tester.StartContinuous(100*time.Millisecond, nil)
+
+	if !tester.IsRunning() {
+		t.Error("expected IsRunning() to be true")
+	}
+
+	// Close while running - should stop and clean up.
+	tester.Close()
+
+	if tester.IsRunning() {
+		t.Error("expected IsRunning() to be false after Close")
+	}
+}
+
+func TestTesterPingInvalidGatewayAddress(t *testing.T) {
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+
+	// Set an invalid IP address format.
+	tester.SetGateway("not-an-ip-address")
+
+	result := tester.Ping()
+	if result.Success {
+		t.Error("expected failure for invalid gateway address")
+	}
+	if result.Error != "invalid gateway address" {
+		t.Errorf("expected 'invalid gateway address' error, got %q", result.Error)
+	}
+}
+
+func TestTesterPingNoPinger(t *testing.T) {
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+	tester.SetGateway("192.168.1.1")
+
+	// Set pinger to nil to simulate no CAP_NET_RAW.
+	tester.TesterSetPinger(nil)
+
+	result := tester.Ping()
+	if result.Success {
+		t.Error("expected failure when pinger is nil")
+	}
+	if result.Error != "ICMP pinger unavailable - requires CAP_NET_RAW" {
+		t.Errorf("expected CAP_NET_RAW error, got %q", result.Error)
+	}
+}
+
+func TestTesterTestAutoDetectFails(t *testing.T) {
+	// Create a tester without setting a gateway.
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+
+	// Run the test - it will try to auto-detect.
+	stats := tester.Test()
+	if stats == nil {
+		t.Fatal("expected non-nil stats")
+	}
+
+	// Either it detected a gateway or returned an error status.
+	if stats.Status == "" {
+		t.Error("expected non-empty status")
+	}
+}
+
+func TestTesterTestStatisticsCalculation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+	tester.SetGateway("127.0.0.1")
+	tester.TesterSetPingCount(2) // Reduce for faster test.
+
+	stats := tester.Test()
+	if stats == nil {
+		t.Fatal("expected non-nil stats")
+	}
+
+	// Verify sent count matches ping count.
+	if stats.Sent != 2 {
+		t.Errorf("expected Sent=2, got %d", stats.Sent)
+	}
+
+	// Verify results array length matches sent.
+	if len(stats.Results) != stats.Sent {
+		t.Errorf("expected Results length %d, got %d", stats.Sent, len(stats.Results))
+	}
+
+	// Verify loss calculation.
+	expectedLoss := float64(stats.Lost) / float64(stats.Sent) * 100
+	if stats.Sent > 0 && stats.LossPercent != expectedLoss {
+		t.Errorf("expected LossPercent %v, got %v", expectedLoss, stats.LossPercent)
+	}
+
+	// Verify LastUpdated is set.
+	if stats.LastUpdated.IsZero() {
+		t.Error("expected LastUpdated to be set")
+	}
+}
+
+func TestPingStatsIPv6Field(t *testing.T) {
+	ipv6Stats := &gateway.PingStats{
+		Gateway:   "::1",
+		Sent:      3,
+		Received:  3,
+		Status:    gateway.StatusSuccess,
+		Reachable: true,
+	}
+
+	stats := gateway.PingStats{
+		IPv6: ipv6Stats,
+	}
+
+	if stats.IPv6 == nil {
+		t.Fatal("expected non-nil IPv6 stats")
+	}
+	if stats.IPv6.Gateway != "::1" {
+		t.Errorf("expected IPv6 gateway '::1', got %q", stats.IPv6.Gateway)
+	}
+	if stats.IPv6.Sent != 3 {
+		t.Errorf("expected IPv6 Sent 3, got %d", stats.IPv6.Sent)
+	}
+	if stats.IPv6.Received != 3 {
+		t.Errorf("expected IPv6 Received 3, got %d", stats.IPv6.Received)
+	}
+	if stats.IPv6.Status != gateway.StatusSuccess {
+		t.Errorf("expected IPv6 Status success, got %v", stats.IPv6.Status)
+	}
+	if !stats.IPv6.Reachable {
+		t.Error("expected IPv6 Reachable true")
+	}
+}
+
+func TestTesterRunningState(t *testing.T) {
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+
+	// Initial state should be not running.
+	if tester.TesterRunning() {
+		t.Error("expected TesterRunning() to be false initially")
+	}
+
+	// Stop when not running should be safe.
+	tester.StopContinuous()
+	if tester.TesterRunning() {
+		t.Error("expected TesterRunning() to still be false after StopContinuous")
+	}
+}
+
+func TestStartContinuousCallback(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+	tester.SetGateway("127.0.0.1")
+	tester.TesterSetPingCount(1) // Reduce for faster test.
+
+	callCount := 0
+	var lastStats *gateway.PingStats
+	callback := func(stats *gateway.PingStats) {
+		callCount++
+		lastStats = stats
+	}
+
+	tester.StartContinuous(50*time.Millisecond, callback)
+	time.Sleep(200 * time.Millisecond)
+	tester.StopContinuous()
+
+	// Should have received at least one callback.
+	if callCount == 0 {
+		t.Log("callback was not called - may be due to timing or ICMP permission")
+	}
+
+	// If callback was called, verify stats were passed.
+	if lastStats != nil && lastStats.Gateway != "127.0.0.1" {
+		t.Errorf("expected Gateway '127.0.0.1', got %q", lastStats.Gateway)
+	}
+}
+
+func TestTesterConcurrentStartStop(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+	tester.SetGateway("127.0.0.1")
+
+	done := make(chan bool, 10)
+
+	// Concurrent start/stop operations.
+	for range 5 {
+		go func() {
+			tester.StartContinuous(50*time.Millisecond, nil)
+			time.Sleep(10 * time.Millisecond)
+			tester.StopContinuous()
+			done <- true
+		}()
+	}
+
+	for range 5 {
+		<-done
+	}
+
+	// Final state should be not running.
+	tester.StopContinuous()
+	if tester.IsRunning() {
+		t.Error("expected IsRunning() to be false after all goroutines complete")
+	}
+}
+
+func TestDetermineStatusWithVeryHighValues(t *testing.T) {
+	thresholds := gateway.Thresholds{
+		Warning:  1 * time.Hour,
+		Critical: 2 * time.Hour,
+		LossWarn: 50.0,
+		LossCrit: 90.0,
+	}
+	tester := gateway.NewTester(thresholds)
+
+	// With very high thresholds, normal values should be success.
+	stats := &gateway.PingStats{
+		Reachable:   true,
+		Received:    1,
+		LossPercent: 10.0,
+		AvgTime:     500, // 500ms is way below 1 hour warning.
+	}
+	status := tester.DetermineStatus(stats)
+	if status != gateway.StatusSuccess {
+		t.Errorf("expected StatusSuccess with high thresholds, got %v", status)
+	}
+}
+
+func TestPingResultSequenceNumbers(t *testing.T) {
+	// Test sequence numbers are correctly incremented.
+	results := []gateway.PingResult{
+		{Sequence: 1, Success: true, TimeMs: 10.0},
+		{Sequence: 2, Success: true, TimeMs: 15.0},
+		{Sequence: 3, Success: false, Error: "timeout"},
+	}
+
+	for i, r := range results {
+		expectedSeq := i + 1
+		if r.Sequence != expectedSeq {
+			t.Errorf("expected Sequence %d, got %d", expectedSeq, r.Sequence)
+		}
+	}
+}
+
+func TestGetAllRoutes(t *testing.T) {
+	// Test GetAllRoutes - should return routes or an error.
+	routes, err := gateway.GetAllRoutes()
+	if err != nil {
+		t.Logf("GetAllRoutes returned error: %v (may be expected on some systems)", err)
+		return
+	}
+
+	// If we got routes, verify they have valid fields.
+	for _, r := range routes {
+		if r.Family != "inet" && r.Family != "inet6" {
+			t.Errorf("unexpected Family %q", r.Family)
+		}
+	}
+}
+
+func TestGetDefaultGatewayInterface(t *testing.T) {
+	// Test GetDefaultGatewayInterface - should return interface name or empty.
+	iface, err := gateway.GetDefaultGatewayInterface()
+	if err != nil {
+		t.Logf("GetDefaultGatewayInterface returned error: %v", err)
+	}
+	// Just verify it doesn't panic and returns valid types.
+	_ = iface
+}
+
+func TestRouteInfoFields(t *testing.T) {
+	ri := gateway.RouteInfo{
+		Destination: "0.0.0.0/0",
+		Gateway:     "192.168.1.1",
+		Interface:   "en0",
+		Family:      "inet",
+	}
+
+	// Verify all fields are set and accessible.
+	dest := ri.Destination
+	gw := ri.Gateway
+	iface := ri.Interface
+	family := ri.Family
+
+	if dest != "0.0.0.0/0" {
+		t.Errorf("expected Destination '0.0.0.0/0', got %q", dest)
+	}
+	if gw != "192.168.1.1" {
+		t.Errorf("expected Gateway '192.168.1.1', got %q", gw)
+	}
+	if iface != "en0" {
+		t.Errorf("expected Interface 'en0', got %q", iface)
+	}
+	if family != "inet" {
+		t.Errorf("expected Family 'inet', got %q", family)
+	}
+}
+
+func TestRouteInfoIPv6(t *testing.T) {
+	ri := gateway.RouteInfo{
+		Destination: "::/0",
+		Gateway:     "fe80::1",
+		Interface:   "en0",
+		Family:      "inet6",
+	}
+
+	// Verify all fields are set and accessible.
+	dest := ri.Destination
+	gw := ri.Gateway
+	iface := ri.Interface
+	family := ri.Family
+
+	if dest != "::/0" {
+		t.Errorf("expected Destination '::/0', got %q", dest)
+	}
+	if gw != "fe80::1" {
+		t.Errorf("expected Gateway 'fe80::1', got %q", gw)
+	}
+	if iface != "en0" {
+		t.Errorf("expected Interface 'en0', got %q", iface)
+	}
+	if family != "inet6" {
+		t.Errorf("expected Family 'inet6', got %q", family)
+	}
+}
+
+func TestTesterGetStatsAfterTest(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+	tester.SetGateway("127.0.0.1")
+	tester.TesterSetPingCount(1)
+
+	// Run test.
+	testStats := tester.Test()
+
+	// GetStats should return the same values.
+	getStats := tester.GetStats()
+
+	if testStats.Gateway != getStats.Gateway {
+		t.Errorf("Gateway mismatch: Test returned %q, GetStats returned %q",
+			testStats.Gateway, getStats.Gateway)
+	}
+	if testStats.Sent != getStats.Sent {
+		t.Errorf("Sent mismatch: Test returned %d, GetStats returned %d",
+			testStats.Sent, getStats.Sent)
+	}
+}
+
+func TestThresholdsCustomValues(t *testing.T) {
+	thresholds := gateway.Thresholds{
+		Warning:  100 * time.Millisecond,
+		Critical: 500 * time.Millisecond,
+		LossWarn: 10.0,
+		LossCrit: 50.0,
+	}
+
+	if thresholds.Warning != 100*time.Millisecond {
+		t.Errorf("expected Warning 100ms, got %v", thresholds.Warning)
+	}
+	if thresholds.Critical != 500*time.Millisecond {
+		t.Errorf("expected Critical 500ms, got %v", thresholds.Critical)
+	}
+	if thresholds.LossWarn != 10.0 {
+		t.Errorf("expected LossWarn 10.0, got %v", thresholds.LossWarn)
+	}
+	if thresholds.LossCrit != 50.0 {
+		t.Errorf("expected LossCrit 50.0, got %v", thresholds.LossCrit)
+	}
+}
+
+func TestDetermineStatusJustBelowThresholds(t *testing.T) {
+	thresholds := gateway.Thresholds{
+		Warning:  50 * time.Millisecond,
+		Critical: 200 * time.Millisecond,
+		LossWarn: 5.0,
+		LossCrit: 20.0,
+	}
+	tester := gateway.NewTester(thresholds)
+
+	// Just below warning thresholds - should be success.
+	stats := &gateway.PingStats{
+		Reachable:   true,
+		Received:    1,
+		LossPercent: 4.9,
+		AvgTime:     49.9,
+	}
+	status := tester.DetermineStatus(stats)
+	if status != gateway.StatusSuccess {
+		t.Errorf("expected StatusSuccess just below thresholds, got %v", status)
+	}
+}
+
+func TestDetermineStatusJustBelowCritical(t *testing.T) {
+	thresholds := gateway.Thresholds{
+		Warning:  50 * time.Millisecond,
+		Critical: 200 * time.Millisecond,
+		LossWarn: 5.0,
+		LossCrit: 20.0,
+	}
+	tester := gateway.NewTester(thresholds)
+
+	// Just below critical threshold but above warning - should be warning.
+	stats := &gateway.PingStats{
+		Reachable:   true,
+		Received:    1,
+		LossPercent: 19.9,
+		AvgTime:     10,
+	}
+	status := tester.DetermineStatus(stats)
+	if status != gateway.StatusWarning {
+		t.Errorf("expected StatusWarning just below critical, got %v", status)
+	}
+}
+
+func TestPingStatsEmptyResults(t *testing.T) {
+	stats := gateway.PingStats{}
+
+	if stats.Results != nil {
+		t.Error("expected nil Results")
+	}
+	if stats.Sent != 0 {
+		t.Errorf("expected Sent 0, got %d", stats.Sent)
+	}
+	if stats.Gateway != "" {
+		t.Errorf("expected empty Gateway, got %q", stats.Gateway)
+	}
+	if stats.Received != 0 {
+		t.Errorf("expected Received 0, got %d", stats.Received)
+	}
+	if stats.Lost != 0 {
+		t.Errorf("expected Lost 0, got %d", stats.Lost)
+	}
+}
+
+func TestTesterSetGetGatewayIPv6(t *testing.T) {
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+
+	// Test IPv6 gateway.
+	tester.SetGateway("fe80::1")
+	if got := tester.GetGateway(); got != "fe80::1" {
+		t.Errorf("expected gateway 'fe80::1', got %q", got)
+	}
+
+	// Test IPv6 localhost.
+	tester.SetGateway("::1")
+	if got := tester.GetGateway(); got != "::1" {
+		t.Errorf("expected gateway '::1', got %q", got)
+	}
+}
+
+func TestTesterPingIPv6Localhost(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping ping test in short mode")
+	}
+
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+	tester.SetGateway("::1")
+
+	result := tester.Ping()
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+	// May or may not succeed depending on system configuration.
+	if !result.Success {
+		t.Logf("IPv6 ping to ::1 failed: %v (may be expected)", result.Error)
+	}
+}
+
+func TestStartContinuousRestartAfterStop(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+
+	tester := gateway.NewTester(gateway.DefaultThresholds())
+	tester.SetGateway("127.0.0.1")
+
+	// First start/stop cycle.
+	tester.StartContinuous(50*time.Millisecond, nil)
+	time.Sleep(60 * time.Millisecond)
+	tester.StopContinuous()
+
+	if tester.IsRunning() {
+		t.Error("expected IsRunning false after first stop")
+	}
+
+	// Second start/stop cycle - verifies stopOnce is reset.
+	tester.StartContinuous(50*time.Millisecond, nil)
+
+	if !tester.IsRunning() {
+		t.Error("expected IsRunning true after restart")
+	}
+
+	time.Sleep(60 * time.Millisecond)
+	tester.StopContinuous()
+
+	if tester.IsRunning() {
+		t.Error("expected IsRunning false after second stop")
 	}
 }

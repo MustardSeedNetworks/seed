@@ -44,6 +44,9 @@ const (
 	// defaultSNMPRetries is the default number of retries for failed SNMP queries.
 	defaultSNMPRetries = 2
 
+	// defaultSNMPMaxRepetitions is the default number of OID values per GetBulk request.
+	defaultSNMPMaxRepetitions = 10
+
 	// defaultDNSTimeoutSec is the default timeout in seconds for DNS queries.
 	defaultDNSTimeoutSec = 5
 
@@ -1058,10 +1061,11 @@ func DefaultConfig() *Config {
 		Discovery:        DiscoveryConfig{Protocol: "auto", Timeout: defaultDiscoveryTimeoutSec * time.Second},
 		NetworkDiscovery: defaultNetworkDiscoveryConfig(),
 		SNMP: SNMPConfig{
-			Communities: []string{"public"},
-			Timeout:     defaultSNMPTimeoutSec * time.Second,
-			Retries:     defaultSNMPRetries,
-			Port:        defaultSNMPPort,
+			Communities:    []string{"public"},
+			Timeout:        defaultSNMPTimeoutSec * time.Second,
+			Retries:        defaultSNMPRetries,
+			Port:           defaultSNMPPort,
+			MaxRepetitions: defaultSNMPMaxRepetitions,
 		},
 		DNS:          DNSConfig{TestHostname: "google.com", Timeout: defaultDNSTimeoutSec * time.Second},
 		HealthChecks: defaultHealthChecksConfig(),

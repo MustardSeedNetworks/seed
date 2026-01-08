@@ -7,18 +7,23 @@ import (
 	"runtime/debug"
 )
 
-// shortCommitLen is the number of characters to use for shortened commit hashes.
-const shortCommitLen = 7
+const (
+	// shortCommitLen is the number of characters to use for shortened commit hashes.
+	shortCommitLen = 7
+	// defaultVersion is the version string when no build info is available.
+	defaultVersion = "dev"
+	// unknownValue is used for commit and build time when not available.
+	unknownValue = "unknown"
+)
 
-// getVersionInfo extracts version, commit, and build time from build info.
-// The Go runtime caches ReadBuildInfo() results, so no additional caching is needed.
-func getVersionInfo() (string, string, string) {
-	ver := "dev"
-	commit := "unknown"
-	buildTime := "unknown"
+// extractVersionFromBuildInfo processes a debug.BuildInfo and extracts version information.
+// This function is separated from getVersionInfo to enable testing with mock build info.
+func extractVersionFromBuildInfo(info *debug.BuildInfo) (string, string, string) {
+	ver := defaultVersion
+	commit := unknownValue
+	buildTime := unknownValue
 
-	info, ok := debug.ReadBuildInfo()
-	if !ok {
+	if info == nil {
 		return ver, commit, buildTime
 	}
 
@@ -44,11 +49,21 @@ func getVersionInfo() (string, string, string) {
 		}
 	}
 
-	if modified && ver != "dev" {
+	if modified && ver != defaultVersion {
 		ver += "-dirty"
 	}
 
 	return ver, commit, buildTime
+}
+
+// getVersionInfo extracts version, commit, and build time from build info.
+// The Go runtime caches ReadBuildInfo() results, so no additional caching is needed.
+func getVersionInfo() (string, string, string) {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return defaultVersion, unknownValue, unknownValue
+	}
+	return extractVersionFromBuildInfo(info)
 }
 
 // GetVersion returns the semantic version from build info.

@@ -49,3 +49,58 @@ func (m *Manager) SetManagerLastResult(result *Result) {
 	defer m.mu.Unlock()
 	m.lastResult = result
 }
+
+// ValidateServer exposes the internal validateServer function for testing.
+func ValidateServer(server string) error {
+	return validateServer(server)
+}
+
+// SetClientDefaults exposes the internal setClientDefaults function for testing.
+func SetClientDefaults(config *ClientConfig) {
+	setClientDefaults(config)
+}
+
+// NormalizeDirection exposes the internal normalizeDirection function for testing.
+func NormalizeDirection(config *ClientConfig) string {
+	return normalizeDirection(config)
+}
+
+// BuildClientArgs exposes the internal buildClientArgs function for testing.
+func BuildClientArgs(config *ClientConfig, direction string) []string {
+	return buildClientArgs(config, direction)
+}
+
+// ParseClientResult exposes the internal parseClientResult function for testing.
+func ParseClientResult(iperfOut *IperfJSON, config *ClientConfig, direction string) *Result {
+	return parseClientResult(iperfOut, config, direction)
+}
+
+// GetLegacyPaths exposes the internal getLegacyPaths function for testing.
+func GetLegacyPaths() []string {
+	return getLegacyPaths()
+}
+
+// ValidateBinary exposes the internal validateBinary function for testing.
+func ValidateBinary(path string) bool {
+	return validateBinary(path)
+}
+
+// NeedsSudo exposes the internal needsSudo function for testing.
+func NeedsSudo(packageManager string) bool {
+	return needsSudo(packageManager)
+}
+
+// GetCacheDir exposes the internal getCacheDir function for testing.
+func GetCacheDir() (string, error) {
+	return getCacheDir()
+}
+
+// IsValidExtractedBinary exposes the internal isValidExtractedBinary function for testing.
+func IsValidExtractedBinary(binaryPath, versionFile string) bool {
+	return isValidExtractedBinary(binaryPath, versionFile)
+}
+
+// GetPlatformBinaryMap exposes the internal getPlatformBinaryMap function for testing.
+func GetPlatformBinaryMap() map[string]string {
+	return getPlatformBinaryMap()
+}

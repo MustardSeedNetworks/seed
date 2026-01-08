@@ -1,8 +1,11 @@
 package gateway
 
 import (
+	"errors"
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/discovery"
 )
 
 // TesterPingCount returns the ping count for testing.
@@ -56,3 +59,32 @@ func (t *Tester) TesterMu() *sync.RWMutex {
 func (t *Tester) DetermineStatus(stats *PingStats) Status {
 	return t.determineStatus(stats)
 }
+
+// TesterSetPinger sets the pinger for testing.
+func (t *Tester) TesterSetPinger(p *discovery.ICMPPinger) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.pinger = p
+}
+
+// TesterGetPinger gets the pinger for testing.
+func (t *Tester) TesterGetPinger() *discovery.ICMPPinger {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.pinger
+}
+
+// TesterRunning returns the running status for testing.
+func (t *Tester) TesterRunning() bool {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.running
+}
+
+// PingErrorMessage exposes pingErrorMessage for testing.
+func PingErrorMessage(err error) string {
+	return pingErrorMessage(err)
+}
+
+// ErrTest is a sentinel error for testing.
+var ErrTest = errors.New("test error")

@@ -1,6 +1,9 @@
 package network
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 // DetectInterfaceType exposes detectInterfaceType for testing.
 func DetectInterfaceType(name string) InterfaceType {
@@ -108,4 +111,115 @@ func CreateManagerWithInterfaces(interfaces map[string]*InterfaceInfo) *Manager 
 	return &Manager{
 		interfaces: interfaces,
 	}
+}
+
+// SetLastState sets the lastState field for testing.
+func (h *LinkMonitorTestHelper) SetLastState(state LinkState) {
+	h.M.mu.Lock()
+	defer h.M.mu.Unlock()
+	h.M.lastState = state
+}
+
+// AddHistoryEvent adds an event to history for testing.
+func (h *LinkMonitorTestHelper) AddHistoryEvent(event LinkEvent) {
+	h.M.mu.Lock()
+	defer h.M.mu.Unlock()
+	h.M.history = append(h.M.history, event)
+	if len(h.M.history) > h.M.maxHistory {
+		h.M.history = h.M.history[1:]
+	}
+}
+
+// GetHistory returns the history slice for testing.
+func (h *LinkMonitorTestHelper) GetHistory() []LinkEvent {
+	h.M.mu.RLock()
+	defer h.M.mu.RUnlock()
+	result := make([]LinkEvent, len(h.M.history))
+	copy(result, h.M.history)
+	return result
+}
+
+// SetMaxHistory sets the maxHistory field for testing.
+func (h *LinkMonitorTestHelper) SetMaxHistory(maxSize int) {
+	h.M.mu.Lock()
+	defer h.M.mu.Unlock()
+	h.M.maxHistory = maxSize
+}
+
+// GetMinCallbackGap returns the minCallbackGap field for testing.
+func (h *LinkMonitorTestHelper) GetMinCallbackGap() int64 {
+	h.M.mu.RLock()
+	defer h.M.mu.RUnlock()
+	return int64(h.M.minCallbackGap)
+}
+
+// SetMinCallbackGap sets the minCallbackGap field for testing.
+func (h *LinkMonitorTestHelper) SetMinCallbackGap(gap int64) {
+	h.M.mu.Lock()
+	defer h.M.mu.Unlock()
+	h.M.minCallbackGap = time.Duration(gap)
+}
+
+// GetLastCallbackTime returns the lastCallbackTime field for testing.
+func (h *LinkMonitorTestHelper) GetLastCallbackTime() time.Time {
+	h.M.mu.RLock()
+	defer h.M.mu.RUnlock()
+	return h.M.lastCallbackTime
+}
+
+// SetLastCallbackTime sets the lastCallbackTime field for testing.
+func (h *LinkMonitorTestHelper) SetLastCallbackTime(t time.Time) {
+	h.M.mu.Lock()
+	defer h.M.mu.Unlock()
+	h.M.lastCallbackTime = t
+}
+
+// ProcessStateChange exposes processStateChange for testing.
+func (h *LinkMonitorTestHelper) ProcessStateChange(newState LinkState) (bool, bool) {
+	result, changed := h.M.processStateChange(newState)
+	return result.shouldNotify, changed
+}
+
+// RecordEvent exposes recordEvent for testing.
+func (h *LinkMonitorTestHelper) RecordEvent(event LinkEvent) {
+	h.M.mu.Lock()
+	defer h.M.mu.Unlock()
+	h.M.recordEvent(event)
+}
+
+// SafeInvokeCallback exposes safeInvokeCallback for testing.
+func (h *LinkMonitorTestHelper) SafeInvokeCallback(callback LinkStateCallback, event LinkEvent) {
+	h.M.safeInvokeCallback(callback, event)
+}
+
+// NotifyCallbacks exposes notifyCallbacks for testing.
+func (h *LinkMonitorTestHelper) NotifyCallbacks(event LinkEvent, callbacks []LinkStateCallback) {
+	h.M.notifyCallbacks(event, callbacks)
+}
+
+// CheckAndUpdateRateLimit exposes checkAndUpdateRateLimit for testing.
+func (h *LinkMonitorTestHelper) CheckAndUpdateRateLimit() bool {
+	h.M.mu.Lock()
+	defer h.M.mu.Unlock()
+	return h.M.checkAndUpdateRateLimit()
+}
+
+// CheckLinkState exposes checkLinkState for testing.
+func (h *LinkMonitorTestHelper) CheckLinkState() LinkState {
+	return h.M.checkLinkState()
+}
+
+// CreateInterfaceCandidates creates an interfaceCandidates struct for testing.
+func CreateInterfaceCandidates(ethernetWithIP, wifiWithIP, ethernetUp, wifiUp []string) *interfaceCandidates {
+	return &interfaceCandidates{
+		ethernetWithIP: ethernetWithIP,
+		wifiWithIP:     wifiWithIP,
+		ethernetUp:     ethernetUp,
+		wifiUp:         wifiUp,
+	}
+}
+
+// SelectBest exposes selectBest for testing.
+func (c *interfaceCandidates) SelectBest() string {
+	return c.selectBest()
 }
