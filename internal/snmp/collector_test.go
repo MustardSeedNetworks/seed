@@ -499,14 +499,14 @@ func TestConfigMaxRepetitionsEdgeCases(t *testing.T) {
 // TestBridgeMIBOIDConstants tests that BRIDGE-MIB OID constants are defined.
 func TestBridgeMIBOIDConstants(t *testing.T) {
 	oids := map[string]string{
-		"OIDDot1dTpFdbAddress":            snmp.OIDDot1dTpFdbAddress,
-		"OIDDot1dTpFdbPort":               snmp.OIDDot1dTpFdbPort,
-		"OIDDot1dTpFdbStatus":             snmp.OIDDot1dTpFdbStatus,
-		"OIDDot1qTpFdbPort":               snmp.OIDDot1qTpFdbPort,
-		"OIDDot1qTpFdbStatus":             snmp.OIDDot1qTpFdbStatus,
-		"OIDDot1qVlanCurrentEgressPorts":  snmp.OIDDot1qVlanCurrentEgressPorts,
-		"OIDDot1dBasePortIfIndex":         snmp.OIDDot1dBasePortIfIndex,
-		"OIDDot3StatsDuplexStatus":        snmp.OIDDot3StatsDuplexStatus,
+		"OIDDot1dTpFdbAddress":           snmp.OIDDot1dTpFdbAddress,
+		"OIDDot1dTpFdbPort":              snmp.OIDDot1dTpFdbPort,
+		"OIDDot1dTpFdbStatus":            snmp.OIDDot1dTpFdbStatus,
+		"OIDDot1qTpFdbPort":              snmp.OIDDot1qTpFdbPort,
+		"OIDDot1qTpFdbStatus":            snmp.OIDDot1qTpFdbStatus,
+		"OIDDot1qVlanCurrentEgressPorts": snmp.OIDDot1qVlanCurrentEgressPorts,
+		"OIDDot1dBasePortIfIndex":        snmp.OIDDot1dBasePortIfIndex,
+		"OIDDot3StatsDuplexStatus":       snmp.OIDDot3StatsDuplexStatus,
 	}
 
 	for name, oid := range oids {

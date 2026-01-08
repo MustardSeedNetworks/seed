@@ -68,10 +68,14 @@ func intPtr(i int) *int {
 }
 
 // ----------------------------------------------------------------------------
-// CalculateNextRun Tests
+// Next Run Calculation Tests (via Create API)
 // ----------------------------------------------------------------------------
 
-func TestCalculateNextRun_Daily(t *testing.T) {
+func TestNextRunCalculation_Daily(t *testing.T) {
+	ss, _, cleanup := setupSchedulerService(t)
+	defer cleanup()
+
+	ctx := context.Background()
 	now := time.Now()
 
 	tests := []struct {
@@ -146,13 +150,25 @@ func TestCalculateNextRun_Daily(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			next := harvest.CalculateNextRun(&tt.schedule)
-			tt.validate(t, next)
+			sr := &harvest.ScheduledReport{
+				Name:     tt.name,
+				Template: "executive",
+				Format:   harvest.FormatPDF,
+				Schedule: tt.schedule,
+				Enabled:  true,
+			}
+			err := ss.Create(ctx, sr)
+			require.NoError(t, err)
+			tt.validate(t, sr.NextRun)
 		})
 	}
 }
 
-func TestCalculateNextRun_Weekly(t *testing.T) {
+func TestNextRunCalculation_Weekly(t *testing.T) {
+	ss, _, cleanup := setupSchedulerService(t)
+	defer cleanup()
+
+	ctx := context.Background()
 	now := time.Now()
 
 	tests := []struct {
@@ -209,7 +225,7 @@ func TestCalculateNextRun_Weekly(t *testing.T) {
 			},
 		},
 		{
-			name: "weekly with nil DayOfWeek (should use current weekday calculation)",
+			name: "weekly with nil DayOfWeek",
 			schedule: harvest.Schedule{
 				Frequency: harvest.FrequencyWeekly,
 				DayOfWeek: nil,
@@ -219,7 +235,6 @@ func TestCalculateNextRun_Weekly(t *testing.T) {
 			},
 			validate: func(t *testing.T, next *time.Time) {
 				require.NotNil(t, next)
-				// Should be at least a week from now if DayOfWeek is nil
 				assert.True(t, next.After(now))
 			},
 		},
@@ -227,13 +242,25 @@ func TestCalculateNextRun_Weekly(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			next := harvest.CalculateNextRun(&tt.schedule)
-			tt.validate(t, next)
+			sr := &harvest.ScheduledReport{
+				Name:     tt.name,
+				Template: "executive",
+				Format:   harvest.FormatPDF,
+				Schedule: tt.schedule,
+				Enabled:  true,
+			}
+			err := ss.Create(ctx, sr)
+			require.NoError(t, err)
+			tt.validate(t, sr.NextRun)
 		})
 	}
 }
 
-func TestCalculateNextRun_Monthly(t *testing.T) {
+func TestNextRunCalculation_Monthly(t *testing.T) {
+	ss, _, cleanup := setupSchedulerService(t)
+	defer cleanup()
+
+	ctx := context.Background()
 	now := time.Now()
 
 	tests := []struct {
@@ -274,7 +301,7 @@ func TestCalculateNextRun_Monthly(t *testing.T) {
 			},
 		},
 		{
-			name: "monthly on the 28th (safe for all months)",
+			name: "monthly on the 28th",
 			schedule: harvest.Schedule{
 				Frequency:  harvest.FrequencyMonthly,
 				DayOfMonth: intPtr(28),
@@ -309,39 +336,58 @@ func TestCalculateNextRun_Monthly(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			next := harvest.CalculateNextRun(&tt.schedule)
-			tt.validate(t, next)
+			sr := &harvest.ScheduledReport{
+				Name:     tt.name,
+				Template: "executive",
+				Format:   harvest.FormatPDF,
+				Schedule: tt.schedule,
+				Enabled:  true,
+			}
+			err := ss.Create(ctx, sr)
+			require.NoError(t, err)
+			tt.validate(t, sr.NextRun)
 		})
 	}
 }
 
-func TestCalculateNextRun_Timezones(t *testing.T) {
+func TestNextRunCalculation_Timezones(t *testing.T) {
+	ss, _, cleanup := setupSchedulerService(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	now := time.Now()
+
 	tests := []struct {
 		name     string
 		timezone string
-		wantErr  bool // If timezone is invalid, we expect fallback to local
 	}{
-		{name: "UTC", timezone: "UTC", wantErr: false},
-		{name: "America/New_York", timezone: "America/New_York", wantErr: false},
-		{name: "Europe/London", timezone: "Europe/London", wantErr: false},
-		{name: "Asia/Tokyo", timezone: "Asia/Tokyo", wantErr: false},
-		{name: "Australia/Sydney", timezone: "Australia/Sydney", wantErr: false},
-		{name: "Invalid timezone (fallback)", timezone: "Invalid/Timezone", wantErr: false},
-		{name: "Empty timezone (fallback)", timezone: "", wantErr: false},
+		{name: "UTC", timezone: "UTC"},
+		{name: "America/New_York", timezone: "America/New_York"},
+		{name: "Europe/London", timezone: "Europe/London"},
+		{name: "Asia/Tokyo", timezone: "Asia/Tokyo"},
+		{name: "Australia/Sydney", timezone: "Australia/Sydney"},
+		{name: "Invalid timezone (fallback)", timezone: "Invalid/Timezone"},
+		{name: "Empty timezone (fallback)", timezone: ""},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			schedule := harvest.Schedule{
-				Frequency: harvest.FrequencyDaily,
-				Hour:      9,
-				Minute:    0,
-				Timezone:  tt.timezone,
+			sr := &harvest.ScheduledReport{
+				Name:     tt.name,
+				Template: "executive",
+				Format:   harvest.FormatPDF,
+				Schedule: harvest.Schedule{
+					Frequency: harvest.FrequencyDaily,
+					Hour:      9,
+					Minute:    0,
+					Timezone:  tt.timezone,
+				},
+				Enabled: true,
 			}
-
-			next := harvest.CalculateNextRun(&schedule)
-			require.NotNil(t, next)
-			assert.True(t, next.After(time.Now()))
+			err := ss.Create(ctx, sr)
+			require.NoError(t, err)
+			require.NotNil(t, sr.NextRun)
+			assert.True(t, sr.NextRun.After(now))
 		})
 	}
 }
@@ -1012,6 +1058,11 @@ func TestSchedulerService_ConcurrentReadWrite(t *testing.T) {
 // ----------------------------------------------------------------------------
 
 func TestScheduleFrequency_EdgeCases(t *testing.T) {
+	ss, _, cleanup := setupSchedulerService(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
 	tests := []struct {
 		name     string
 		schedule harvest.Schedule
@@ -1032,7 +1083,7 @@ func TestScheduleFrequency_EdgeCases(t *testing.T) {
 			},
 		},
 		{
-			name: "monthly on 31st (may roll to next month for shorter months)",
+			name: "monthly on 31st",
 			schedule: harvest.Schedule{
 				Frequency:  harvest.FrequencyMonthly,
 				DayOfMonth: intPtr(31),
@@ -1046,7 +1097,7 @@ func TestScheduleFrequency_EdgeCases(t *testing.T) {
 			},
 		},
 		{
-			name: "daily at 23:59:59 edge",
+			name: "daily at 23:59",
 			schedule: harvest.Schedule{
 				Frequency: harvest.FrequencyDaily,
 				Hour:      23,
@@ -1063,8 +1114,16 @@ func TestScheduleFrequency_EdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			next := harvest.CalculateNextRun(&tt.schedule)
-			tt.validate(t, next)
+			sr := &harvest.ScheduledReport{
+				Name:     tt.name,
+				Template: "executive",
+				Format:   harvest.FormatPDF,
+				Schedule: tt.schedule,
+				Enabled:  true,
+			}
+			err := ss.Create(ctx, sr)
+			require.NoError(t, err)
+			tt.validate(t, sr.NextRun)
 		})
 	}
 }
@@ -1233,6 +1292,90 @@ func TestScheduledReport_Parameters(t *testing.T) {
 			retrieved, err := ss.Get(ctx, schedule.ID)
 			require.NoError(t, err)
 			assert.NotNil(t, retrieved)
+		})
+	}
+}
+
+// ----------------------------------------------------------------------------
+// All Template Formats Tests
+// ----------------------------------------------------------------------------
+
+func TestScheduledReport_AllTemplatesAndFormats(t *testing.T) {
+	ss, _, cleanup := setupSchedulerService(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	templates := []string{"executive", "vulnerability", "inventory", "performance"}
+	formats := []harvest.ExportFormat{
+		harvest.FormatPDF,
+		harvest.FormatHTML,
+		harvest.FormatCSV,
+		harvest.FormatJSON,
+	}
+
+	for _, tmpl := range templates {
+		for _, fmt := range formats {
+			t.Run(tmpl+"_"+string(fmt), func(t *testing.T) {
+				schedule := &harvest.ScheduledReport{
+					Name:     "Template Format Test",
+					Template: tmpl,
+					Format:   fmt,
+					Schedule: harvest.Schedule{
+						Frequency: harvest.FrequencyDaily,
+						Hour:      10,
+						Timezone:  "UTC",
+					},
+					Enabled: true,
+				}
+
+				err := ss.Create(ctx, schedule)
+				require.NoError(t, err)
+				assert.NotEmpty(t, schedule.ID)
+			})
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------
+// Scheduler Types Tests
+// ----------------------------------------------------------------------------
+
+func TestScheduleFrequency_Constants(t *testing.T) {
+	tests := []struct {
+		name     string
+		freq     harvest.ScheduleFrequency
+		expected string
+	}{
+		{name: "daily", freq: harvest.FrequencyDaily, expected: "daily"},
+		{name: "weekly", freq: harvest.FrequencyWeekly, expected: "weekly"},
+		{name: "monthly", freq: harvest.FrequencyMonthly, expected: "monthly"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, string(tt.freq))
+		})
+	}
+}
+
+func TestExportFormat_Constants(t *testing.T) {
+	tests := []struct {
+		name     string
+		format   harvest.ExportFormat
+		expected string
+	}{
+		{name: "PDF", format: harvest.FormatPDF, expected: "pdf"},
+		{name: "HTML", format: harvest.FormatHTML, expected: "html"},
+		{name: "CSV", format: harvest.FormatCSV, expected: "csv"},
+		{name: "JSON", format: harvest.FormatJSON, expected: "json"},
+		{name: "Excel", format: harvest.FormatExcel, expected: "xlsx"},
+		{name: "Markdown", format: harvest.FormatMarkdown, expected: "md"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, string(tt.format))
 		})
 	}
 }

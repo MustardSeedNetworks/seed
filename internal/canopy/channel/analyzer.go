@@ -380,8 +380,9 @@ func signalToInterference(signal int) float64 {
 	if signal <= -90 {
 		return 1.0
 	}
-	// Linear interpolation
-	return 1.0 + 9.0*float64(-90-signal)/60.0
+	// Linear interpolation from 1.0 (at -90 dBm) to 10.0 (at -30 dBm)
+	// For signal = -40: 1.0 + 9.0 * ((-40) - (-90)) / 60.0 = 1.0 + 9.0 * 50/60 = 8.5
+	return 1.0 + 9.0*float64(signal+90)/60.0
 }
 
 func abs(x int) int {

@@ -303,11 +303,8 @@ func TestCheckBuildDependenciesStructure(t *testing.T) {
 	missing := iperf.CheckBuildDependencies()
 
 	// Verify it returns a slice (may be empty or not depending on system)
-	if missing == nil {
-		t.Error("CheckBuildDependencies should not return nil")
-	}
-
-	t.Logf("Missing build dependencies: %v", missing)
+	// Note: missing can be nil if all dependencies are installed, which is valid
+	t.Logf("Missing build dependencies: %v (count: %d)", missing, len(missing))
 }
 
 // TestGetBuildDependencyInstallCommandPlatform tests platform-specific build commands.

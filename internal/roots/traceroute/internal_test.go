@@ -34,15 +34,26 @@ func TestExportAnalyzeHops(t *testing.T) {
 			wantBottleneckCnt: 0,
 		},
 		{
-			name: "mixed responding and lost hops",
+			name: "mixed responding and lost hops no bottleneck",
 			hops: []Hop{
 				{Number: 1, RTTMs: 5.0, Lost: false},
 				{Number: 2, Lost: true},
-				{Number: 3, RTTMs: 15.0, Lost: false},
+				{Number: 3, RTTMs: 8.0, Lost: false}, // 1.6x ratio < 2x threshold, 3ms increase < 50ms
+			},
+			wantTotalRTT:      13.0, // 5 + 8, skip lost hop
+			wantLostHops:      1,
+			wantBottleneckCnt: 0,
+		},
+		{
+			name: "mixed responding and lost hops with bottleneck",
+			hops: []Hop{
+				{Number: 1, RTTMs: 5.0, Lost: false},
+				{Number: 2, Lost: true},
+				{Number: 3, RTTMs: 15.0, Lost: false}, // 3x ratio > 2x threshold (compares to last responding hop)
 			},
 			wantTotalRTT:      20.0, // 5 + 15, skip lost hop
 			wantLostHops:      1,
-			wantBottleneckCnt: 0,
+			wantBottleneckCnt: 1, // Bottleneck detected due to 3x ratio
 		},
 		{
 			name: "with bottleneck",

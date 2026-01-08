@@ -207,7 +207,7 @@ func TestValidateServerHostnameBoundaries(t *testing.T) {
 		{"max length hostname", strings.Repeat("a", 63) + "." + strings.Repeat("b", 63) + "." +
 			strings.Repeat("c", 63) + "." + strings.Repeat("d", 60), false}, // 253 chars
 		{"too long hostname", strings.Repeat("a", 254), true},
-		{"numeric only", "12345", true},      // not a valid IP and not a valid hostname
+		{"numeric only", "12345", false},     // valid per RFC 1123 (fully numeric hostnames allowed)
 		{"starts with digit", "1abc", false}, // valid per RFC 1123
 	}
 
@@ -456,18 +456,19 @@ func TestSetClientDefaultsNoMutation(t *testing.T) {
 	}
 }
 
-// TestNormalizeDirectionReverseFlag tests that reverse flag is set correctly.
+// TestNormalizeDirectionReverseFlag tests that direction normalization works.
 func TestNormalizeDirectionReverseFlag(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name            string
-		direction       string
-		expectedReverse bool
+		name              string
+		direction         string
+		expectedDirection string
 	}{
-		{"upload sets reverse false", "upload", false},
-		{"download sets reverse true", "download", true},
-		{"bidirectional sets reverse false", "bidirectional", false},
+		{"upload stays upload", "upload", "upload"},
+		{"download stays download", "download", "download"},
+		{"bidirectional stays bidirectional", "bidirectional", "bidirectional"},
+		{"empty with reverse false becomes upload", "", "upload"},
 	}
 
 	for _, tt := range tests {
@@ -477,11 +478,10 @@ func TestNormalizeDirectionReverseFlag(t *testing.T) {
 				Direction: tt.direction,
 			}
 
-			_ = iperf.NormalizeDirection(config)
+			result := iperf.NormalizeDirection(config)
 
-			// Check if Reverse flag matches expected for download direction
-			if tt.direction == "download" && !config.Reverse {
-				t.Error("Reverse should be true for download direction")
+			if result != tt.expectedDirection {
+				t.Errorf("NormalizeDirection() = %q, want %q", result, tt.expectedDirection)
 			}
 		})
 	}

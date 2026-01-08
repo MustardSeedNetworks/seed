@@ -4,6 +4,7 @@ package snmp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -31,7 +32,17 @@ const (
 	DefaultWarningThresholdMs  = 500
 	DefaultCriticalThresholdMs = 2000
 	SNMPTimeticksPerSecond     = 100
+	defaultSNMPPort            = 161
+	hoursPerDay                = 24
+	minutesPerHour             = 60
+	secondsPerMinute           = 60
 )
+
+// ErrNilConfig is returned when SNMP config is nil.
+var ErrNilConfig = errors.New("SNMP config is nil")
+
+// ErrNoCredentials is returned when no SNMP credentials are configured.
+var ErrNoCredentials = errors.New("no SNMP communities or v3 credentials configured")
 
 // DeviceInfo contains SNMP-collected device information.
 type DeviceInfo struct {
@@ -260,7 +271,7 @@ func (c *Collector) Query(ctx context.Context, ip, oid string) (string, error) {
 	}
 
 	if cfg == nil {
-		return "", fmt.Errorf("SNMP config is nil")
+		return "", ErrNilConfig
 	}
 
 	return coresnmp.Query(ctx, ip, oid, cfg)
@@ -281,7 +292,7 @@ func (c *Collector) QueryMultiple(
 	}
 
 	if cfg == nil {
-		return nil, fmt.Errorf("SNMP config is nil")
+		return nil, ErrNilConfig
 	}
 
 	return coresnmp.QueryMultiple(ctx, ip, oids, cfg)
@@ -309,10 +320,11 @@ func isValidIP(ip string) bool {
 // ValidateConfig validates an SNMP configuration.
 func ValidateConfig(cfg *config.SNMPConfig) error {
 	if cfg == nil {
-		return fmt.Errorf("SNMP config is nil")
+		return ErrNilConfig
 	}
 
-	if cfg.Port <= 0 || cfg.Port > 65535 {
+	const maxPort = 65535
+	if cfg.Port <= 0 || cfg.Port > maxPort {
 		return fmt.Errorf("invalid SNMP port: %d", cfg.Port)
 	}
 
@@ -321,7 +333,7 @@ func ValidateConfig(cfg *config.SNMPConfig) error {
 	}
 
 	if len(cfg.Communities) == 0 && len(cfg.V3Credentials) == 0 {
-		return fmt.Errorf("no SNMP communities or v3 credentials configured")
+		return ErrNoCredentials
 	}
 
 	return nil
@@ -330,7 +342,7 @@ func ValidateConfig(cfg *config.SNMPConfig) error {
 // DefaultConfig returns a default SNMP configuration for testing.
 func DefaultConfig() *config.SNMPConfig {
 	return &config.SNMPConfig{
-		Port:        161,
+		Port:        defaultSNMPPort,
 		Timeout:     time.Duration(DefaultTimeoutSec) * time.Second,
 		Retries:     DefaultRetries,
 		Communities: []string{"public"},
@@ -343,10 +355,10 @@ func FormatUptime(d time.Duration) string {
 		return "unknown"
 	}
 
-	days := int(d.Hours()) / 24
-	hours := int(d.Hours()) % 24
-	minutes := int(d.Minutes()) % 60
-	seconds := int(d.Seconds()) % 60
+	days := int(d.Hours()) / hoursPerDay
+	hours := int(d.Hours()) % hoursPerDay
+	minutes := int(d.Minutes()) % minutesPerHour
+	seconds := int(d.Seconds()) % secondsPerMinute
 
 	if days > 0 {
 		return fmt.Sprintf("%dd %dh %dm %ds", days, hours, minutes, seconds)

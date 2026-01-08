@@ -660,6 +660,7 @@ func TestCollectorWithZeroThresholds(t *testing.T) {
 }
 
 func TestConcurrentCollectorAccess(t *testing.T) {
+	t.Parallel()
 	collector := snmp.NewCollector(snmp.DefaultConfig())
 
 	done := make(chan bool)
@@ -693,6 +694,9 @@ func TestDeviceInfoWithInterfaces(t *testing.T) {
 		Interfaces: interfaces,
 	}
 
+	if device.IP != "192.168.1.1" {
+		t.Errorf("expected IP '192.168.1.1', got %q", device.IP)
+	}
 	if len(device.Interfaces) != 2 {
 		t.Errorf("expected 2 interfaces, got %d", len(device.Interfaces))
 	}

@@ -83,8 +83,8 @@ func MakeDHCPTestResult(
 	gateway string,
 ) DHCPTestResult {
 	return DHCPTestResult{
-		Success:  success,
-		ServerIP: serverIP,
+		Success:   success,
+		ServerIP:  serverIP,
 		OfferedIP: offeredIP,
 		Gateway:   gateway,
 		TestedAt:  time.Now(),
@@ -143,8 +143,8 @@ func MakeSpeedtestResult(
 	}
 }
 
-// TestIPerfResult creates an IPerfResult for testing.
-func TestIPerfResult(
+// MakeIPerfResult creates an IPerfResult for testing.
+func MakeIPerfResult(
 	protocol string,
 	direction string,
 	bandwidthMbps float64,
@@ -164,8 +164,8 @@ func TestIPerfResult(
 	}
 }
 
-// TestVLANConfig creates a VLANConfig for testing.
-func TestVLANConfig(
+// MakeVLANConfig creates a VLANConfig for testing.
+func MakeVLANConfig(
 	id int,
 	name string,
 	iface string,
@@ -179,8 +179,8 @@ func TestVLANConfig(
 	}
 }
 
-// TestSNMPDevice creates an SNMPDevice for testing.
-func TestSNMPDevice(
+// MakeSNMPDevice creates an SNMPDevice for testing.
+func MakeSNMPDevice(
 	ip string,
 	sysName string,
 	sysDescr string,
@@ -193,8 +193,8 @@ func TestSNMPDevice(
 	}
 }
 
-// TestBandwidthSample creates a BandwidthSample for testing.
-func TestBandwidthSample(
+// MakeBandwidthSample creates a BandwidthSample for testing.
+func MakeBandwidthSample(
 	iface string,
 	txMbps float64,
 	rxMbps float64,
@@ -211,8 +211,8 @@ func TestBandwidthSample(
 	}
 }
 
-// TestSystemHealth creates a SystemHealth for testing.
-func TestSystemHealth(
+// MakeSystemHealth creates a SystemHealth for testing.
+func MakeSystemHealth(
 	cpuPercent float64,
 	memoryPercent float64,
 	diskPercent float64,
@@ -225,8 +225,8 @@ func TestSystemHealth(
 	}
 }
 
-// TestTelemetrySnapshot creates a TelemetrySnapshot for testing.
-func TestTelemetrySnapshot() TelemetrySnapshot {
+// MakeTelemetrySnapshot creates a TelemetrySnapshot for testing.
+func MakeTelemetrySnapshot() TelemetrySnapshot {
 	return TelemetrySnapshot{
 		Timestamp: time.Now(),
 	}
