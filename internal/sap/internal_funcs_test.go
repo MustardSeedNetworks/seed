@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/krisarmstrong/seed/internal/sap"
+	"github.com/krisarmstrong/seed/internal/sap/cable"
+	"github.com/krisarmstrong/seed/internal/sap/gateway"
 )
 
 // =============================================================================
@@ -91,13 +93,7 @@ func TestConvertPairResultsActualEmpty(t *testing.T) {
 // TestConvertPairResultsActualEmptySlice tests conversion of empty slice.
 func TestConvertPairResultsActualEmptySlice(t *testing.T) {
 	t.Parallel()
-	result := sap.ConvertPairResultsActual([]struct {
-		Pair       string
-		PairLetter string
-		Status     struct{}
-		LengthM    *float64
-		LengthFt   *float64
-	}{})
+	result := sap.ConvertPairResultsActual([]cable.PairResult{})
 	if result != nil {
 		t.Errorf("expected nil result for empty slice, got %v", result)
 	}
@@ -107,25 +103,11 @@ func TestConvertPairResultsActualEmptySlice(t *testing.T) {
 func TestConvertPairResultsActualSingleWithLength(t *testing.T) {
 	t.Parallel()
 	length := 25.5
-	pairs := []struct {
-		Pair       string
-		PairLetter string
-		Status     struct{}
-		LengthM    *float64
-		LengthFt   *float64
-	}{
-		{LengthM: &length},
+	pairs := []cable.PairResult{
+		sap.MakeCablePairResult(sap.CableStatusOKValue, &length),
 	}
 
-	// Create actual cable.PairResult
-	pairResult := sap.MakeCablePairResult(sap.CableStatusOKValue, &length)
-	result := sap.ConvertPairResultsActual([]struct {
-		Pair       string
-		PairLetter string
-		Status     struct{}
-		LengthM    *float64
-		LengthFt   *float64
-	}{pairResult})
+	result := sap.ConvertPairResultsActual(pairs)
 
 	if len(result) != 1 {
 		t.Fatalf("expected 1 result, got %d", len(result))
@@ -139,7 +121,6 @@ func TestConvertPairResultsActualSingleWithLength(t *testing.T) {
 	if result[0].Status != sap.CableStatusOK {
 		t.Errorf("expected status OK, got %q", result[0].Status)
 	}
-	_ = pairs // Silence unused variable warning
 }
 
 // TestConvertPairResultsActualFourPairs tests conversion of four pairs.
@@ -148,13 +129,7 @@ func TestConvertPairResultsActualFourPairs(t *testing.T) {
 	len25 := 25.0
 	len10 := 10.0
 
-	pairs := []struct {
-		Pair       string
-		PairLetter string
-		Status     struct{}
-		LengthM    *float64
-		LengthFt   *float64
-	}{
+	pairs := []cable.PairResult{
 		sap.MakeCablePairResult(sap.CableStatusOKValue, &len25),
 		sap.MakeCablePairResult(sap.CableStatusOpenValue, &len10),
 		sap.MakeCablePairResult(sap.CableStatusShortValue, nil),
@@ -252,7 +227,7 @@ func TestConvertCableStatusActualTableDriven(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name     string
-		input    interface{ String() string }
+		input    cable.Status
 		expected sap.CableStatus
 	}{
 		{"StatusOK", sap.CableStatusOKValue, sap.CableStatusOK},
@@ -267,10 +242,9 @@ func TestConvertCableStatusActualTableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			// Type assertion to get the actual cable.Status
-			switch input := tt.input.(type) {
-			case interface{ String() string }:
-				_ = input // Suppress unused variable
+			result := sap.ConvertCableStatusActual(tt.input)
+			if result != tt.expected {
+				t.Errorf("ConvertCableStatusActual(%v) = %q, want %q", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -281,7 +255,7 @@ func TestConvertGatewayStatusActualTableDriven(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name     string
-		input    interface{ String() string }
+		input    gateway.Status
 		expected sap.HealthStatus
 	}{
 		{"StatusSuccess", sap.GatewayStatusSuccessValue, sap.HealthStatusHealthy},
@@ -293,10 +267,9 @@ func TestConvertGatewayStatusActualTableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			// Type assertion to get the actual gateway.Status
-			switch input := tt.input.(type) {
-			case interface{ String() string }:
-				_ = input // Suppress unused variable
+			result := sap.ConvertGatewayStatusActual(tt.input)
+			if result != tt.expected {
+				t.Errorf("ConvertGatewayStatusActual(%v) = %q, want %q", tt.input, result, tt.expected)
 			}
 		})
 	}
@@ -394,13 +367,7 @@ func TestConvertPairResultsActualAllCases(t *testing.T) {
 
 	// Single pair with length
 	len25 := 25.5
-	singlePair := []struct {
-		Pair       string
-		PairLetter string
-		Status     struct{}
-		LengthM    *float64
-		LengthFt   *float64
-	}{
+	singlePair := []cable.PairResult{
 		sap.MakeCablePairResult(sap.CableStatusOKValue, &len25),
 	}
 	singleResult := sap.ConvertPairResultsActual(singlePair)
@@ -412,13 +379,7 @@ func TestConvertPairResultsActualAllCases(t *testing.T) {
 	}
 
 	// Single pair without length
-	noLenPair := []struct {
-		Pair       string
-		PairLetter string
-		Status     struct{}
-		LengthM    *float64
-		LengthFt   *float64
-	}{
+	noLenPair := []cable.PairResult{
 		sap.MakeCablePairResult(sap.CableStatusOKValue, nil),
 	}
 	noLenResult := sap.ConvertPairResultsActual(noLenPair)
