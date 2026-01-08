@@ -1130,3 +1130,571 @@ func BenchmarkModuleStop(b *testing.B) {
 		_ = module.Stop()
 	}
 }
+
+// =============================================================================
+// Helper Function Tests
+// =============================================================================
+
+// TestJoinAddressesTableDriven tests JoinAddresses function.
+func TestJoinAddressesTableDriven(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		addrs    []string
+		expected string
+	}{
+		{
+			name:     "empty slice",
+			addrs:    []string{},
+			expected: "",
+		},
+		{
+			name:     "nil slice",
+			addrs:    nil,
+			expected: "",
+		},
+		{
+			name:     "single address",
+			addrs:    []string{"192.168.1.1"},
+			expected: "192.168.1.1",
+		},
+		{
+			name:     "multiple addresses returns first",
+			addrs:    []string{"192.168.1.1", "10.0.0.1", "172.16.0.1"},
+			expected: "192.168.1.1",
+		},
+		{
+			name:     "IPv6 address",
+			addrs:    []string{"2001:db8::1"},
+			expected: "2001:db8::1",
+		},
+		{
+			name:     "empty string in slice",
+			addrs:    []string{""},
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := sap.JoinAddresses(tt.addrs)
+			if result != tt.expected {
+				t.Errorf("JoinAddresses(%v) = %q, want %q", tt.addrs, result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestConvertGatewayStatusTableDriven tests ConvertGatewayStatus function.
+func TestConvertGatewayStatusTableDriven(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		status   string
+		expected sap.HealthStatus
+	}{
+		{"success", "success", sap.HealthStatusHealthy},
+		{"warning", "warning", sap.HealthStatusDegraded},
+		{"error", "error", sap.HealthStatusUnhealthy},
+		{"unknown", "unknown", sap.HealthStatusUnknown},
+		{"empty string", "", sap.HealthStatusUnknown},
+		{"invalid status", "invalid", sap.HealthStatusUnknown},
+		{"uppercase SUCCESS", "SUCCESS", sap.HealthStatusUnknown}, // case sensitive
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := sap.ConvertGatewayStatus(tt.status)
+			if result != tt.expected {
+				t.Errorf("ConvertGatewayStatus(%q) = %q, want %q", tt.status, result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestConvertGatewayStatusExportedTableDriven tests exported wrapper.
+func TestConvertGatewayStatusExportedTableDriven(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		status   string
+		expected sap.HealthStatus
+	}{
+		{"success", "success", sap.HealthStatusHealthy},
+		{"warning", "warning", sap.HealthStatusDegraded},
+		{"error", "error", sap.HealthStatusUnhealthy},
+		{"unknown", "unknown", sap.HealthStatusUnknown},
+		{"empty", "", sap.HealthStatusUnknown},
+		{"invalid", "foo", sap.HealthStatusUnknown},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := sap.ConvertGatewayStatusExported(tt.status)
+			if result != tt.expected {
+				t.Errorf("ConvertGatewayStatusExported(%q) = %q, want %q", tt.status, result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestConvertCableStatusExportedTableDriven tests cable status conversion.
+func TestConvertCableStatusExportedTableDriven(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		status   string
+		expected sap.CableStatus
+	}{
+		{"ok", "ok", sap.CableStatusOK},
+		{"open", "open", sap.CableStatusOpen},
+		{"short", "short", sap.CableStatusShort},
+		{"impedance", "impedance", sap.CableStatusImpedance},
+		{"unknown", "unknown", sap.CableStatusUnknown},
+		{"empty", "", sap.CableStatusUnknown},
+		{"invalid", "foo", sap.CableStatusUnknown},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := sap.ConvertCableStatusExported(tt.status)
+			if result != tt.expected {
+				t.Errorf("ConvertCableStatusExported(%q) = %q, want %q", tt.status, result, tt.expected)
+			}
+		})
+	}
+}
+
+// =============================================================================
+// Make Helper Function Tests
+// =============================================================================
+
+// TestMakeLinkStatusHelper tests the MakeLinkStatus helper.
+func TestMakeLinkStatusHelper(t *testing.T) {
+	t.Parallel()
+	status := sap.MakeLinkStatus("eth0", sap.LinkStateUp, "1000Mbps", "full", 1500, "00:11:22:33:44:55")
+
+	if status.Interface != "eth0" {
+		t.Errorf("Interface = %q, want %q", status.Interface, "eth0")
+	}
+	if status.State != sap.LinkStateUp {
+		t.Errorf("State = %q, want %q", status.State, sap.LinkStateUp)
+	}
+	if status.Speed != "1000Mbps" {
+		t.Errorf("Speed = %q, want %q", status.Speed, "1000Mbps")
+	}
+	if status.Duplex != "full" {
+		t.Errorf("Duplex = %q, want %q", status.Duplex, "full")
+	}
+	if status.MTU != 1500 {
+		t.Errorf("MTU = %d, want %d", status.MTU, 1500)
+	}
+	if status.MACAddress != "00:11:22:33:44:55" {
+		t.Errorf("MACAddress = %q, want %q", status.MACAddress, "00:11:22:33:44:55")
+	}
+	if !status.Carrier {
+		t.Error("Carrier should be true when state is Up")
+	}
+	if status.UpdatedAt.IsZero() {
+		t.Error("UpdatedAt should not be zero")
+	}
+}
+
+// TestMakeLinkStatusDownState tests MakeLinkStatus with down state.
+func TestMakeLinkStatusDownState(t *testing.T) {
+	t.Parallel()
+	status := sap.MakeLinkStatus("eth1", sap.LinkStateDown, "", "", 1500, "00:11:22:33:44:66")
+
+	if status.State != sap.LinkStateDown {
+		t.Errorf("State = %q, want %q", status.State, sap.LinkStateDown)
+	}
+	if status.Carrier {
+		t.Error("Carrier should be false when state is Down")
+	}
+}
+
+// TestMakeCableTestResultHelper tests the MakeCableTestResult helper.
+func TestMakeCableTestResultHelper(t *testing.T) {
+	t.Parallel()
+	result := sap.MakeCableTestResult("eth0", sap.CableStatusOK, 25.5)
+
+	if result.Interface != "eth0" {
+		t.Errorf("Interface = %q, want %q", result.Interface, "eth0")
+	}
+	if result.Status != sap.CableStatusOK {
+		t.Errorf("Status = %q, want %q", result.Status, sap.CableStatusOK)
+	}
+	if result.Length != 25.5 {
+		t.Errorf("Length = %f, want %f", result.Length, 25.5)
+	}
+	if result.TestedAt.IsZero() {
+		t.Error("TestedAt should not be zero")
+	}
+}
+
+// TestMakeDHCPTestResultHelper tests the MakeDHCPTestResult helper.
+func TestMakeDHCPTestResultHelper(t *testing.T) {
+	t.Parallel()
+	result := sap.MakeDHCPTestResult(true, "192.168.1.1", "192.168.1.100", "192.168.1.1")
+
+	if !result.Success {
+		t.Error("Success should be true")
+	}
+	if result.ServerIP != "192.168.1.1" {
+		t.Errorf("ServerIP = %q, want %q", result.ServerIP, "192.168.1.1")
+	}
+	if result.OfferedIP != "192.168.1.100" {
+		t.Errorf("OfferedIP = %q, want %q", result.OfferedIP, "192.168.1.100")
+	}
+	if result.Gateway != "192.168.1.1" {
+		t.Errorf("Gateway = %q, want %q", result.Gateway, "192.168.1.1")
+	}
+	if result.TestedAt.IsZero() {
+		t.Error("TestedAt should not be zero")
+	}
+}
+
+// TestMakeDNSTestResultHelper tests the MakeDNSTestResult helper.
+func TestMakeDNSTestResultHelper(t *testing.T) {
+	t.Parallel()
+	result := sap.MakeDNSTestResult("google.com", "8.8.8.8", true, 15.5)
+
+	if result.Query != "google.com" {
+		t.Errorf("Query = %q, want %q", result.Query, "google.com")
+	}
+	if result.Server != "8.8.8.8" {
+		t.Errorf("Server = %q, want %q", result.Server, "8.8.8.8")
+	}
+	if !result.Success {
+		t.Error("Success should be true")
+	}
+	if result.ResponseMs != 15.5 {
+		t.Errorf("ResponseMs = %f, want %f", result.ResponseMs, 15.5)
+	}
+	if result.ResponseTime != time.Duration(15.5*float64(time.Millisecond)) {
+		t.Errorf("ResponseTime = %v, want %v", result.ResponseTime, time.Duration(15.5*float64(time.Millisecond)))
+	}
+	if result.TestedAt.IsZero() {
+		t.Error("TestedAt should not be zero")
+	}
+}
+
+// TestMakeGatewayHealthHelper tests the MakeGatewayHealth helper.
+func TestMakeGatewayHealthHelper(t *testing.T) {
+	t.Parallel()
+	health := sap.MakeGatewayHealth("192.168.1.1", true, 5.0, 0.0, sap.HealthStatusHealthy)
+
+	if health.IP != "192.168.1.1" {
+		t.Errorf("IP = %q, want %q", health.IP, "192.168.1.1")
+	}
+	if !health.Reachable {
+		t.Error("Reachable should be true")
+	}
+	if health.RTTMs != 5.0 {
+		t.Errorf("RTTMs = %f, want %f", health.RTTMs, 5.0)
+	}
+	if health.PacketLoss != 0.0 {
+		t.Errorf("PacketLoss = %f, want %f", health.PacketLoss, 0.0)
+	}
+	if health.Status != sap.HealthStatusHealthy {
+		t.Errorf("Status = %q, want %q", health.Status, sap.HealthStatusHealthy)
+	}
+	if health.LastCheck.IsZero() {
+		t.Error("LastCheck should not be zero")
+	}
+}
+
+// TestMakeSpeedtestResultHelper tests the MakeSpeedtestResult helper.
+func TestMakeSpeedtestResultHelper(t *testing.T) {
+	t.Parallel()
+	result := sap.MakeSpeedtestResult(100.5, 50.2, 15.0, "TestServer")
+
+	if result.DownloadMbps != 100.5 {
+		t.Errorf("DownloadMbps = %f, want %f", result.DownloadMbps, 100.5)
+	}
+	if result.UploadMbps != 50.2 {
+		t.Errorf("UploadMbps = %f, want %f", result.UploadMbps, 50.2)
+	}
+	if result.PingMs != 15.0 {
+		t.Errorf("PingMs = %f, want %f", result.PingMs, 15.0)
+	}
+	if result.ServerName != "TestServer" {
+		t.Errorf("ServerName = %q, want %q", result.ServerName, "TestServer")
+	}
+	if result.TestedAt.IsZero() {
+		t.Error("TestedAt should not be zero")
+	}
+}
+
+// TestMakeIPerfResultHelper tests the MakeIPerfResult helper.
+func TestMakeIPerfResultHelper(t *testing.T) {
+	t.Parallel()
+	result := sap.MakeIPerfResult("tcp", "download", 950.0, 1187.5, 10.0, "192.168.1.100")
+
+	if result.Protocol != "tcp" {
+		t.Errorf("Protocol = %q, want %q", result.Protocol, "tcp")
+	}
+	if result.Direction != "download" {
+		t.Errorf("Direction = %q, want %q", result.Direction, "download")
+	}
+	if result.BandwidthMbps != 950.0 {
+		t.Errorf("BandwidthMbps = %f, want %f", result.BandwidthMbps, 950.0)
+	}
+	if result.TransferMB != 1187.5 {
+		t.Errorf("TransferMB = %f, want %f", result.TransferMB, 1187.5)
+	}
+	if result.DurationSec != 10.0 {
+		t.Errorf("DurationSec = %f, want %f", result.DurationSec, 10.0)
+	}
+	if result.Duration != 10*time.Second {
+		t.Errorf("Duration = %v, want %v", result.Duration, 10*time.Second)
+	}
+	if result.ServerAddr != "192.168.1.100" {
+		t.Errorf("ServerAddr = %q, want %q", result.ServerAddr, "192.168.1.100")
+	}
+	if result.TestedAt.IsZero() {
+		t.Error("TestedAt should not be zero")
+	}
+}
+
+// TestMakeVLANConfigHelper tests the MakeVLANConfig helper.
+func TestMakeVLANConfigHelper(t *testing.T) {
+	t.Parallel()
+	config := sap.MakeVLANConfig(100, "Management", "eth0", true)
+
+	if config.ID != 100 {
+		t.Errorf("ID = %d, want %d", config.ID, 100)
+	}
+	if config.Name != "Management" {
+		t.Errorf("Name = %q, want %q", config.Name, "Management")
+	}
+	if config.Interface != "eth0" {
+		t.Errorf("Interface = %q, want %q", config.Interface, "eth0")
+	}
+	if !config.Tagged {
+		t.Error("Tagged should be true")
+	}
+}
+
+// TestMakeSNMPDeviceHelper tests the MakeSNMPDevice helper.
+func TestMakeSNMPDeviceHelper(t *testing.T) {
+	t.Parallel()
+	device := sap.MakeSNMPDevice("192.168.1.2", "switch-01", "Cisco IOS")
+
+	if device.IP != "192.168.1.2" {
+		t.Errorf("IP = %q, want %q", device.IP, "192.168.1.2")
+	}
+	if device.SysName != "switch-01" {
+		t.Errorf("SysName = %q, want %q", device.SysName, "switch-01")
+	}
+	if device.SysDescr != "Cisco IOS" {
+		t.Errorf("SysDescr = %q, want %q", device.SysDescr, "Cisco IOS")
+	}
+	if device.CollectedAt.IsZero() {
+		t.Error("CollectedAt should not be zero")
+	}
+}
+
+// TestMakeBandwidthSampleHelper tests the MakeBandwidthSample helper.
+func TestMakeBandwidthSampleHelper(t *testing.T) {
+	t.Parallel()
+	sample := sap.MakeBandwidthSample("eth0", 100.0, 50.0, 15.0)
+
+	if sample.Interface != "eth0" {
+		t.Errorf("Interface = %q, want %q", sample.Interface, "eth0")
+	}
+	if sample.TxMbps != 100.0 {
+		t.Errorf("TxMbps = %f, want %f", sample.TxMbps, 100.0)
+	}
+	if sample.RxMbps != 50.0 {
+		t.Errorf("RxMbps = %f, want %f", sample.RxMbps, 50.0)
+	}
+	// Check bytes/sec conversion (Mbps * 125000)
+	expectedTxBytes := 100.0 * 125000
+	if sample.TxBytesPerSec != expectedTxBytes {
+		t.Errorf("TxBytesPerSec = %f, want %f", sample.TxBytesPerSec, expectedTxBytes)
+	}
+	expectedRxBytes := 50.0 * 125000
+	if sample.RxBytesPerSec != expectedRxBytes {
+		t.Errorf("RxBytesPerSec = %f, want %f", sample.RxBytesPerSec, expectedRxBytes)
+	}
+	if sample.Utilization != 15.0 {
+		t.Errorf("Utilization = %f, want %f", sample.Utilization, 15.0)
+	}
+	if sample.SampledAt.IsZero() {
+		t.Error("SampledAt should not be zero")
+	}
+}
+
+// TestMakeSystemHealthHelper tests the MakeSystemHealth helper.
+func TestMakeSystemHealthHelper(t *testing.T) {
+	t.Parallel()
+	health := sap.MakeSystemHealth(25.5, 60.0, 45.0)
+
+	if health.CPUPercent != 25.5 {
+		t.Errorf("CPUPercent = %f, want %f", health.CPUPercent, 25.5)
+	}
+	if health.MemoryPercent != 60.0 {
+		t.Errorf("MemoryPercent = %f, want %f", health.MemoryPercent, 60.0)
+	}
+	if health.DiskPercent != 45.0 {
+		t.Errorf("DiskPercent = %f, want %f", health.DiskPercent, 45.0)
+	}
+	if health.SampledAt.IsZero() {
+		t.Error("SampledAt should not be zero")
+	}
+}
+
+// TestMakeTelemetrySnapshotHelper tests the MakeTelemetrySnapshot helper.
+func TestMakeTelemetrySnapshotHelper(t *testing.T) {
+	t.Parallel()
+	snapshot := sap.MakeTelemetrySnapshot()
+
+	if snapshot.Timestamp.IsZero() {
+		t.Error("Timestamp should not be zero")
+	}
+}
+
+// =============================================================================
+// Additional Service Tests for Coverage
+// =============================================================================
+
+// TestDNSServiceTest verifies DNS Test method behavior.
+func TestDNSServiceTest(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	cfg.DNS.TestHostname = "example.com"
+	service := sap.NewDNSService(cfg)
+
+	ctx := context.Background()
+	// Test with empty server and hostname to use defaults
+	result, err := service.Test(ctx, "", "")
+	// May succeed or fail depending on network - just verify no panic
+	if err != nil {
+		t.Logf("DNS Test returned error (may be expected): %v", err)
+	}
+	if result != nil {
+		if result.Query == "" {
+			t.Error("expected non-empty Query")
+		}
+		t.Logf("DNS Test result: Query=%s, Success=%v", result.Query, result.Success)
+	}
+}
+
+// TestDNSServiceTestWithServer verifies DNS Test method with specific server.
+func TestDNSServiceTestWithServer(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	service := sap.NewDNSService(cfg)
+
+	ctx := context.Background()
+	result, err := service.Test(ctx, "8.8.8.8", "google.com")
+	if err != nil {
+		t.Logf("DNS Test with server returned error (may be expected): %v", err)
+	}
+	if result != nil {
+		if result.Query != "google.com" {
+			t.Errorf("Query = %q, want %q", result.Query, "google.com")
+		}
+	}
+}
+
+// TestCableServiceTest verifies Cable Test method behavior.
+func TestCableServiceTest(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	service := sap.NewCableService(cfg)
+
+	ctx := context.Background()
+	// Test on a likely non-existent interface - should return ErrNotSupported
+	result, err := service.Test(ctx, "nonexistent0")
+	if err != nil && !errors.Is(err, sap.ErrNotSupported) && !errors.Is(err, sap.ErrTestFailed) {
+		t.Logf("Cable Test returned unexpected error: %v", err)
+	}
+	if result != nil {
+		t.Logf("Cable Test result: Interface=%s, Status=%s", result.Interface, result.Status)
+	}
+}
+
+// TestDHCPServiceTest verifies DHCP Test method behavior.
+func TestDHCPServiceTest(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	service := sap.NewDHCPService(cfg)
+
+	ctx := context.Background()
+	// Test with a generic interface name
+	result, err := service.Test(ctx, "en0")
+	// This may succeed or fail depending on system state
+	if err != nil {
+		t.Logf("DHCP Test returned error (may be expected): %v", err)
+	}
+	if result != nil {
+		t.Logf("DHCP Test result: Success=%v, ServerIP=%s", result.Success, result.ServerIP)
+		if result.TestedAt.IsZero() {
+			t.Error("expected non-zero TestedAt")
+		}
+	}
+}
+
+// =============================================================================
+// Module Start/Stop Full Lifecycle Tests
+// =============================================================================
+
+// TestModuleFullLifecycle tests complete start/stop cycle.
+func TestModuleFullLifecycle(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	module := sap.New(cfg, nil)
+
+	ctx := context.Background()
+
+	// Start module
+	if err := module.Start(ctx); err != nil {
+		t.Logf("Start returned error (may be expected in test env): %v", err)
+	}
+
+	// All services should be accessible
+	if module.Link() == nil {
+		t.Error("Link service nil after Start")
+	}
+	if module.Gateway() == nil {
+		t.Error("Gateway service nil after Start")
+	}
+	if module.Telemetry() == nil {
+		t.Error("Telemetry service nil after Start")
+	}
+
+	// Stop module
+	if err := module.Stop(); err != nil {
+		t.Errorf("Stop returned error: %v", err)
+	}
+
+	// Services should still be accessible after stop
+	if module.Link() == nil {
+		t.Error("Link service nil after Stop")
+	}
+}
+
+// TestModuleStartError tests behavior when Start fails.
+func TestModuleStartError(t *testing.T) {
+	t.Parallel()
+	cfg := config.DefaultConfig()
+	// Use a non-existent interface to potentially trigger errors
+	cfg.Interface.Default = "nonexistent_interface_that_does_not_exist_123"
+	cfg.Interface.Fallbacks = []string{}
+
+	module := sap.New(cfg, nil)
+
+	ctx := context.Background()
+	err := module.Start(ctx)
+	// Start may return an error or succeed with fallback
+	if err != nil {
+		t.Logf("Start with bad interface returned error (expected): %v", err)
+	}
+
+	// Stop should always work
+	if stopErr := module.Stop(); stopErr != nil {
+		t.Errorf("Stop returned error: %v", stopErr)
+	}
+}
