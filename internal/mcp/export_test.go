@@ -1,5 +1,11 @@
 package mcp
 
+import (
+	"context"
+
+	"github.com/mark3labs/mcp-go/mcp"
+)
+
 // This file is only compiled during testing (due to _test.go suffix)
 // and provides access to internal implementation details.
 
@@ -89,4 +95,161 @@ func (s *ServerTestAccessor) GetConfig() any {
 // GetServices returns the server's service provider.
 func (s *ServerTestAccessor) GetServices() ServiceProvider {
 	return s.Server.services
+}
+
+// ExportHandleNetworkScan exposes handleNetworkScan for testing.
+func (s *Server) ExportHandleNetworkScan(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleNetworkScan(ctx, request)
+}
+
+// ExportHandleGetDevices exposes handleGetDevices for testing.
+func (s *Server) ExportHandleGetDevices(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleGetDevices(ctx, request)
+}
+
+// ExportHandleDeviceFingerprint exposes handleDeviceFingerprint for testing.
+func (s *Server) ExportHandleDeviceFingerprint(
+	ctx context.Context,
+	request CallToolRequest,
+) (*CallToolResult, error) {
+	return s.handleDeviceFingerprint(ctx, request)
+}
+
+// ExportHandleGetNeighbors exposes handleGetNeighbors for testing.
+func (s *Server) ExportHandleGetNeighbors(
+	ctx context.Context,
+	request CallToolRequest,
+) (*CallToolResult, error) {
+	return s.handleGetNeighbors(ctx, request)
+}
+
+// ExportHandleTraceroute exposes handleTraceroute for testing.
+func (s *Server) ExportHandleTraceroute(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleTraceroute(ctx, request)
+}
+
+// ExportHandleTCPProbe exposes handleTCPProbe for testing.
+func (s *Server) ExportHandleTCPProbe(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleTCPProbe(ctx, request)
+}
+
+// ExportHandlePortScan exposes handlePortScan for testing.
+func (s *Server) ExportHandlePortScan(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handlePortScan(ctx, request)
+}
+
+// ExportHandleDNSTest exposes handleDNSTest for testing.
+func (s *Server) ExportHandleDNSTest(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleDNSTest(ctx, request)
+}
+
+// ExportHandleGatewayPing exposes handleGatewayPing for testing.
+func (s *Server) ExportHandleGatewayPing(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleGatewayPing(ctx, request)
+}
+
+// ExportHandleSpeedtest exposes handleSpeedtest for testing.
+func (s *Server) ExportHandleSpeedtest(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleSpeedtest(ctx, request)
+}
+
+// ExportHandleIperfTest exposes handleIperfTest for testing.
+func (s *Server) ExportHandleIperfTest(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleIperfTest(ctx, request)
+}
+
+// ExportHandleWiFiScan exposes handleWiFiScan for testing.
+func (s *Server) ExportHandleWiFiScan(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleWiFiScan(ctx, request)
+}
+
+// ExportHandleWiFiInfo exposes handleWiFiInfo for testing.
+func (s *Server) ExportHandleWiFiInfo(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleWiFiInfo(ctx, request)
+}
+
+// ExportHandleGetInterfaces exposes handleGetInterfaces for testing.
+func (s *Server) ExportHandleGetInterfaces(
+	ctx context.Context,
+	request CallToolRequest,
+) (*CallToolResult, error) {
+	return s.handleGetInterfaces(ctx, request)
+}
+
+// ExportHandleGetLinkStatus exposes handleGetLinkStatus for testing.
+func (s *Server) ExportHandleGetLinkStatus(
+	ctx context.Context,
+	request CallToolRequest,
+) (*CallToolResult, error) {
+	return s.handleGetLinkStatus(ctx, request)
+}
+
+// ExportHandleGetIPConfig exposes handleGetIPConfig for testing.
+func (s *Server) ExportHandleGetIPConfig(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleGetIPConfig(ctx, request)
+}
+
+// ExportHandleGetPublicIP exposes handleGetPublicIP for testing.
+func (s *Server) ExportHandleGetPublicIP(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleGetPublicIP(ctx, request)
+}
+
+// ExportHandleGetVLANInfo exposes handleGetVLANInfo for testing.
+func (s *Server) ExportHandleGetVLANInfo(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleGetVLANInfo(ctx, request)
+}
+
+// ExportHandleSystemHealth exposes handleSystemHealth for testing.
+func (s *Server) ExportHandleSystemHealth(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleSystemHealth(ctx, request)
+}
+
+// ExportHandleGetDiscoveryStatus exposes handleGetDiscoveryStatus for testing.
+func (s *Server) ExportHandleGetDiscoveryStatus(
+	ctx context.Context,
+	request CallToolRequest,
+) (*CallToolResult, error) {
+	return s.handleGetDiscoveryStatus(ctx, request)
+}
+
+// ExportHandleVulnerabilityScan exposes handleVulnerabilityScan for testing.
+func (s *Server) ExportHandleVulnerabilityScan(
+	ctx context.Context,
+	request CallToolRequest,
+) (*CallToolResult, error) {
+	return s.handleVulnerabilityScan(ctx, request)
+}
+
+// ExportHandleRogueDHCPCheck exposes handleRogueDHCPCheck for testing.
+func (s *Server) ExportHandleRogueDHCPCheck(
+	ctx context.Context,
+	request CallToolRequest,
+) (*CallToolResult, error) {
+	return s.handleRogueDHCPCheck(ctx, request)
+}
+
+// ExportHandleSNMPQuery exposes handleSNMPQuery for testing.
+func (s *Server) ExportHandleSNMPQuery(ctx context.Context, request CallToolRequest) (*CallToolResult, error) {
+	return s.handleSNMPQuery(ctx, request)
+}
+
+// CallToolRequest is a type alias for external mcp.CallToolRequest.
+type CallToolRequest = mcp.CallToolRequest
+
+// CallToolResult is a type alias for external mcp.CallToolResult.
+type CallToolResult = mcp.CallToolResult
+
+// NewCallToolRequest creates a new CallToolRequest for testing purposes.
+func NewCallToolRequest(toolName string, arguments map[string]any) CallToolRequest {
+	return mcp.CallToolRequest{
+		Params: mcp.CallToolRequestParams{
+			Name:      toolName,
+			Arguments: arguments,
+		},
+	}
+}
+
+// ExportGetArguments2 exposes getArguments properly for testing with mcp.CallToolRequest.
+func ExportGetArguments2(request mcp.CallToolRequest) map[string]any {
+	return getArguments(request)
 }

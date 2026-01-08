@@ -1,6 +1,9 @@
 package roots
 
-import "github.com/krisarmstrong/seed/internal/roots/publicip"
+import (
+	"github.com/krisarmstrong/seed/internal/discovery"
+	"github.com/krisarmstrong/seed/internal/roots/publicip"
+)
 
 // ExportScoreToDescription exports scoreToDescription for testing.
 func ExportScoreToDescription(score int) string {
@@ -35,4 +38,20 @@ func (s *AnalysisService) ExportDetectBottleneck(
 // ExportCalculateScore exports AnalysisService.calculateScore for testing.
 func (s *AnalysisService) ExportCalculateScore(analysis *PathAnalysis) int {
 	return s.calculateScore(analysis)
+}
+
+// NewTracerouteServiceWithTracer creates a TracerouteService with a custom tracer for testing.
+func NewTracerouteServiceWithTracer(tracer *discovery.Tracer) *TracerouteService {
+	return &TracerouteService{
+		cfg:    nil,
+		tracer: tracer,
+	}
+}
+
+// NewTracerouteServiceNilTracer creates a TracerouteService with nil tracer for testing errors.
+func NewTracerouteServiceNilTracer() *TracerouteService {
+	return &TracerouteService{
+		cfg:    nil,
+		tracer: nil,
+	}
 }
