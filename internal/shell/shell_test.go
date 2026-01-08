@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/shell"
 	"github.com/krisarmstrong/seed/internal/testutil"
 )
@@ -948,4 +949,623 @@ func TestDefaultInterface(t *testing.T) {
 		t.Error("DefaultInterface should not be empty")
 	}
 	t.Logf("DefaultInterface = %s", shell.DefaultInterface)
+}
+
+// TestExportedConstants tests exported constants from export_test.go.
+func TestExportedConstants(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    int
+		minValue int
+		maxValue int
+	}{
+		{"PerfectSecurityScore", shell.ExportPerfectSecurityScore, 100, 100},
+		{"VulnerabilityPenaltyMultiplier", shell.ExportVulnerabilityPenaltyMultiplier, 1, 100},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.value < tt.minValue || tt.value > tt.maxValue {
+				t.Errorf("%s = %d, want between %d and %d", tt.name, tt.value, tt.minValue, tt.maxValue)
+			}
+		})
+	}
+}
+
+// TestConvertDiscoveredDevice tests the convertDiscoveredDevice helper function.
+func TestConvertDiscoveredDevice(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          *discovery.DiscoveredDevice
+		wantMAC        string
+		wantHostname   string
+		wantVendor     string
+		wantIsGateway  bool
+		wantDeviceType shell.DeviceType
+	}{
+		{
+			name: "basic_device",
+			input: &discovery.DiscoveredDevice{
+				IP:       "192.168.1.100",
+				MAC:      "00:11:22:33:44:55",
+				Hostname: "test-host",
+				Vendor:   "Test Vendor",
+				IsRouter: false,
+				LastSeen: time.Now(),
+			},
+			wantMAC:        "00:11:22:33:44:55",
+			wantHostname:   "test-host",
+			wantVendor:     "Test Vendor",
+			wantIsGateway:  false,
+			wantDeviceType: shell.DeviceTypeUnknown,
+		},
+		{
+			name: "router_device",
+			input: &discovery.DiscoveredDevice{
+				IP:       "192.168.1.1",
+				MAC:      "aa:bb:cc:dd:ee:ff",
+				Hostname: "router",
+				Vendor:   "Cisco",
+				IsRouter: true,
+				LastSeen: time.Now(),
+			},
+			wantMAC:        "aa:bb:cc:dd:ee:ff",
+			wantHostname:   "router",
+			wantVendor:     "Cisco",
+			wantIsGateway:  true,
+			wantDeviceType: shell.DeviceTypeRouter,
+		},
+		{
+			name: "device_with_profile",
+			input: &discovery.DiscoveredDevice{
+				IP:       "192.168.1.50",
+				MAC:      "11:22:33:44:55:66",
+				Hostname: "server",
+				Vendor:   "Dell",
+				IsRouter: false,
+				LastSeen: time.Now(),
+				Profile: &discovery.DeviceProfile{
+					DeviceType: "server",
+					OpenPorts: []discovery.OpenPort{
+						{Port: 22, Protocol: "tcp", Service: "ssh", Banner: "SSH-2.0", IsOpen: true},
+						{Port: 80, Protocol: "tcp", Service: "http", IsOpen: true},
+						{Port: 443, Protocol: "tcp", Service: "https", IsOpen: true},
+					},
+				},
+			},
+			wantMAC:        "11:22:33:44:55:66",
+			wantHostname:   "server",
+			wantVendor:     "Dell",
+			wantIsGateway:  false,
+			wantDeviceType: shell.DeviceType("server"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := shell.ExportConvertDiscoveredDevice(tt.input)
+
+			if result.MACAddress != tt.wantMAC {
+				t.Errorf("MACAddress = %v, want %v", result.MACAddress, tt.wantMAC)
+			}
+			if result.Hostname != tt.wantHostname {
+				t.Errorf("Hostname = %v, want %v", result.Hostname, tt.wantHostname)
+			}
+			if result.Vendor != tt.wantVendor {
+				t.Errorf("Vendor = %v, want %v", result.Vendor, tt.wantVendor)
+			}
+			if result.IsGateway != tt.wantIsGateway {
+				t.Errorf("IsGateway = %v, want %v", result.IsGateway, tt.wantIsGateway)
+			}
+			if result.DeviceType != tt.wantDeviceType {
+				t.Errorf("DeviceType = %v, want %v", result.DeviceType, tt.wantDeviceType)
+			}
+			// All converted devices should be online
+			if !result.IsOnline {
+				t.Error("IsOnline should be true for converted devices")
+			}
+			// ID should be set to MAC
+			if result.ID != tt.wantMAC {
+				t.Errorf("ID = %v, want %v (should match MAC)", result.ID, tt.wantMAC)
+			}
+		})
+	}
+}
+
+// TestConvertVulnerability tests the convertVulnerability helper function.
+func TestConvertVulnerability(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        *discovery.Vulnerability
+		wantCVEID    string
+		wantSeverity shell.VulnSeverity
+		wantIsKEV    bool
+		wantStatus   shell.VulnStatus
+	}{
+		{
+			name: "critical_vulnerability",
+			input: &discovery.Vulnerability{
+				CVEID:             "CVE-2024-12345",
+				Description:       "Critical vulnerability",
+				Severity:          "CRITICAL",
+				Score:             9.8,
+				ActivelyExploited: true,
+				References:        []string{"https://example.com"},
+			},
+			wantCVEID:    "CVE-2024-12345",
+			wantSeverity: shell.SeverityCritical,
+			wantIsKEV:    true,
+			wantStatus:   shell.VulnStatusNew,
+		},
+		{
+			name: "high_vulnerability",
+			input: &discovery.Vulnerability{
+				CVEID:             "CVE-2024-67890",
+				Description:       "High severity issue",
+				Severity:          "HIGH",
+				Score:             7.5,
+				ActivelyExploited: false,
+			},
+			wantCVEID:    "CVE-2024-67890",
+			wantSeverity: shell.SeverityHigh,
+			wantIsKEV:    false,
+			wantStatus:   shell.VulnStatusNew,
+		},
+		{
+			name: "medium_vulnerability",
+			input: &discovery.Vulnerability{
+				CVEID:       "CVE-2024-11111",
+				Description: "Medium severity issue",
+				Severity:    "MEDIUM",
+				Score:       5.0,
+			},
+			wantCVEID:    "CVE-2024-11111",
+			wantSeverity: shell.SeverityMedium,
+			wantIsKEV:    false,
+			wantStatus:   shell.VulnStatusNew,
+		},
+		{
+			name: "low_vulnerability",
+			input: &discovery.Vulnerability{
+				CVEID:       "CVE-2024-22222",
+				Description: "Low severity issue",
+				Severity:    "LOW",
+				Score:       2.0,
+			},
+			wantCVEID:    "CVE-2024-22222",
+			wantSeverity: shell.SeverityLow,
+			wantIsKEV:    false,
+			wantStatus:   shell.VulnStatusNew,
+		},
+		{
+			name: "unknown_severity_defaults_to_info",
+			input: &discovery.Vulnerability{
+				CVEID:       "CVE-2024-33333",
+				Description: "Unknown severity",
+				Severity:    "UNKNOWN",
+				Score:       0.0,
+			},
+			wantCVEID:    "CVE-2024-33333",
+			wantSeverity: shell.SeverityInfo,
+			wantIsKEV:    false,
+			wantStatus:   shell.VulnStatusNew,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := shell.ExportConvertVulnerability(tt.input)
+
+			if result.CVEID != tt.wantCVEID {
+				t.Errorf("CVEID = %v, want %v", result.CVEID, tt.wantCVEID)
+			}
+			if result.Severity != tt.wantSeverity {
+				t.Errorf("Severity = %v, want %v", result.Severity, tt.wantSeverity)
+			}
+			if result.IsKEV != tt.wantIsKEV {
+				t.Errorf("IsKEV = %v, want %v", result.IsKEV, tt.wantIsKEV)
+			}
+			if result.IsExploited != tt.wantIsKEV {
+				t.Errorf("IsExploited = %v, want %v", result.IsExploited, tt.wantIsKEV)
+			}
+			if result.Status != tt.wantStatus {
+				t.Errorf("Status = %v, want %v", result.Status, tt.wantStatus)
+			}
+			// ID should match CVEID
+			if result.ID != tt.wantCVEID {
+				t.Errorf("ID = %v, want %v (should match CVEID)", result.ID, tt.wantCVEID)
+			}
+			// Score should be preserved
+			if result.CVSSScore != tt.input.Score {
+				t.Errorf("CVSSScore = %v, want %v", result.CVSSScore, tt.input.Score)
+			}
+		})
+	}
+}
+
+// TestModuleTestAccessor tests the ModuleTestAccessor functionality.
+func TestModuleTestAccessor(t *testing.T) {
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		Build()
+
+	module := shell.New(cfg, nil)
+	accessor := shell.ModuleTestAccessor{Module: module}
+
+	// Test config accessor
+	if accessor.GetCfg() == nil {
+		t.Error("GetCfg() returned nil")
+	}
+
+	// Test DB accessor (may be nil if not initialized)
+	_ = accessor.GetDB()
+
+	// Test service accessors
+	if accessor.GetDiscoveryService() == nil {
+		t.Error("GetDiscoveryService() returned nil")
+	}
+	if accessor.GetVulnerabilityService() == nil {
+		t.Error("GetVulnerabilityService() returned nil")
+	}
+	if accessor.GetPostureService() == nil {
+		t.Error("GetPostureService() returned nil")
+	}
+	if accessor.GetRogueService() == nil {
+		t.Error("GetRogueService() returned nil")
+	}
+}
+
+// TestDiscoveryServiceTestAccessor tests the DiscoveryServiceTestAccessor functionality.
+func TestDiscoveryServiceTestAccessor(t *testing.T) {
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		Build()
+
+	module := shell.New(cfg, nil)
+	discoveryService := module.Discovery()
+	accessor := shell.DiscoveryServiceTestAccessor{Service: discoveryService}
+
+	// Test config accessor
+	if accessor.GetCfg() == nil {
+		t.Error("GetCfg() returned nil")
+	}
+
+	// Test DB accessor (may be nil)
+	_ = accessor.GetDB()
+}
+
+// TestVulnerabilityServiceTestAccessor tests the VulnerabilityServiceTestAccessor functionality.
+func TestVulnerabilityServiceTestAccessor(t *testing.T) {
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		Build()
+
+	module := shell.New(cfg, nil)
+	vulnService := module.Vulnerability()
+	accessor := shell.VulnerabilityServiceTestAccessor{Service: vulnService}
+
+	// Test config accessor
+	if accessor.GetCfg() == nil {
+		t.Error("GetCfg() returned nil")
+	}
+
+	// Test DB accessor (may be nil)
+	_ = accessor.GetDB()
+
+	// Scanner may be nil if initialization failed
+	_ = accessor.GetScanner()
+}
+
+// TestPostureServiceTestAccessor tests the PostureServiceTestAccessor functionality.
+func TestPostureServiceTestAccessor(t *testing.T) {
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		Build()
+
+	module := shell.New(cfg, nil)
+	postureService := module.Posture()
+	accessor := shell.PostureServiceTestAccessor{Service: postureService}
+
+	// Test config accessor
+	if accessor.GetCfg() == nil {
+		t.Error("GetCfg() returned nil")
+	}
+
+	// Test DB accessor (may be nil)
+	_ = accessor.GetDB()
+
+	// Test discovery service accessor
+	if accessor.GetDiscovery() == nil {
+		t.Error("GetDiscovery() returned nil")
+	}
+
+	// Test vulnerability service accessor
+	if accessor.GetVulnerability() == nil {
+		t.Error("GetVulnerability() returned nil")
+	}
+}
+
+// TestRogueServiceTestAccessor tests the RogueServiceTestAccessor functionality.
+func TestRogueServiceTestAccessor(t *testing.T) {
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		Build()
+
+	module := shell.New(cfg, nil)
+	rogueService := module.Rogue()
+	accessor := shell.RogueServiceTestAccessor{Service: rogueService}
+
+	// Test config accessor
+	if accessor.GetCfg() == nil {
+		t.Error("GetCfg() returned nil")
+	}
+}
+
+// TestDiscoveryServiceStartStop tests DiscoveryService Start and Stop methods.
+func TestDiscoveryServiceStartStop(t *testing.T) {
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		Build()
+
+	module := shell.New(cfg, nil)
+	discoveryService := module.Discovery()
+
+	ctx := context.Background()
+
+	// Start may fail on test system without proper network interface
+	err := discoveryService.Start(ctx)
+	if err != nil {
+		t.Logf("Start returned error (may be expected on test system): %v", err)
+	}
+
+	// Stop should always succeed
+	discoveryService.Stop()
+}
+
+// TestDiscoveryServiceDiscover tests DiscoveryService.Discover method.
+func TestDiscoveryServiceDiscover(t *testing.T) {
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		Build()
+
+	module := shell.New(cfg, nil)
+	discoveryService := module.Discovery()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	opts := &shell.DiscoveryOptions{
+		Interface:   "lo",
+		EnableARP:   false, // Disable for faster testing
+		EnableICMP:  false,
+		Timeout:     1 * time.Second,
+		Concurrency: 1,
+	}
+
+	result, err := discoveryService.Discover(ctx, opts)
+	if err != nil {
+		t.Logf("Discover returned error (may be expected): %v", err)
+		return
+	}
+
+	if result == nil {
+		t.Fatal("Discover returned nil result")
+	}
+
+	// Result should have timing information
+	if result.StartedAt.IsZero() {
+		t.Error("StartedAt should not be zero")
+	}
+	if result.CompletedAt.IsZero() {
+		t.Error("CompletedAt should not be zero")
+	}
+	if result.ScanDuration <= 0 {
+		t.Error("ScanDuration should be positive")
+	}
+}
+
+// TestDiscoveryServiceGetDevice tests DiscoveryService.GetDevice method.
+func TestDiscoveryServiceGetDevice(t *testing.T) {
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		Build()
+
+	module := shell.New(cfg, nil)
+	discoveryService := module.Discovery()
+
+	ctx := context.Background()
+
+	// Test with non-existent device
+	device, err := discoveryService.GetDevice(ctx, "00:11:22:33:44:55")
+	if err == nil && device != nil {
+		t.Logf("Found device: %s", device.ID)
+	} else if err != nil {
+		// Expected - device not found
+		t.Logf("GetDevice returned expected error: %v", err)
+	}
+}
+
+// TestVulnerabilityServiceScan tests VulnerabilityService.Scan method.
+func TestVulnerabilityServiceScan(t *testing.T) {
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		Build()
+
+	module := shell.New(cfg, nil)
+	vulnService := module.Vulnerability()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	targets := []string{"127.0.0.1"}
+
+	result, err := vulnService.Scan(ctx, targets)
+	if err != nil {
+		if err == shell.ErrNotInitialized {
+			t.Log("VulnerabilityService not initialized (expected in test environment)")
+			return
+		}
+		t.Logf("Scan returned error: %v", err)
+		return
+	}
+
+	if result == nil {
+		t.Fatal("Scan returned nil result")
+	}
+
+	// Result should have an ID
+	if result.ID == "" {
+		t.Error("Scan result ID should not be empty")
+	}
+
+	// Result should have timing information
+	if result.StartedAt.IsZero() {
+		t.Error("StartedAt should not be zero")
+	}
+	if result.CompletedAt.IsZero() {
+		t.Error("CompletedAt should not be zero")
+	}
+
+	// DevicesScanned should match target count
+	if result.DevicesScanned != len(targets) {
+		t.Errorf("DevicesScanned = %d, want %d", result.DevicesScanned, len(targets))
+	}
+}
+
+// TestVulnerabilityServiceGetDeviceVulnerabilities tests GetDeviceVulnerabilities.
+func TestVulnerabilityServiceGetDeviceVulnerabilities(t *testing.T) {
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		Build()
+
+	module := shell.New(cfg, nil)
+	vulnService := module.Vulnerability()
+
+	ctx := context.Background()
+
+	vulns, err := vulnService.GetDeviceVulnerabilities(ctx, "127.0.0.1")
+	if err != nil {
+		if err == shell.ErrNotInitialized {
+			t.Log("VulnerabilityService not initialized (expected in test environment)")
+			return
+		}
+		t.Logf("GetDeviceVulnerabilities returned error: %v", err)
+		return
+	}
+
+	// May return nil or empty slice if no vulnerabilities found
+	t.Logf("Found %d vulnerabilities", len(vulns))
+}
+
+// TestRogueServiceStartStop tests RogueService Start and Stop methods.
+func TestRogueServiceStartStop(t *testing.T) {
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		Build()
+
+	module := shell.New(cfg, nil)
+	rogueService := module.Rogue()
+
+	ctx := context.Background()
+
+	// Start may fail on test system without proper network interface
+	err := rogueService.Start(ctx)
+	if err != nil {
+		t.Logf("Start returned error (may be expected on test system): %v", err)
+	}
+
+	// Stop should always succeed
+	rogueService.Stop()
+}
+
+// TestMultipleModuleInstances tests creating multiple module instances.
+func TestMultipleModuleInstances(t *testing.T) {
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		Build()
+
+	// Create multiple instances
+	module1 := shell.New(cfg, nil)
+	module2 := shell.New(cfg, nil)
+
+	if module1 == nil || module2 == nil {
+		t.Fatal("Failed to create module instances")
+	}
+
+	// Modules should be independent
+	if module1.Discovery() == module2.Discovery() {
+		t.Error("Modules should have independent Discovery services")
+	}
+	if module1.Vulnerability() == module2.Vulnerability() {
+		t.Error("Modules should have independent Vulnerability services")
+	}
+	if module1.Posture() == module2.Posture() {
+		t.Error("Modules should have independent Posture services")
+	}
+	if module1.Rogue() == module2.Rogue() {
+		t.Error("Modules should have independent Rogue services")
+	}
+}
+
+// TestConcurrentModuleAccess tests concurrent access to module methods.
+func TestConcurrentModuleAccess(t *testing.T) {
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		Build()
+
+	module := shell.New(cfg, nil)
+	ctx := context.Background()
+
+	// Start multiple goroutines accessing the module
+	done := make(chan bool, 4)
+
+	go func() {
+		_ = module.Discovery()
+		done <- true
+	}()
+
+	go func() {
+		_ = module.Vulnerability()
+		done <- true
+	}()
+
+	go func() {
+		_ = module.Posture()
+		done <- true
+	}()
+
+	go func() {
+		_ = module.Rogue()
+		done <- true
+	}()
+
+	// Wait for all goroutines
+	for i := 0; i < 4; i++ {
+		select {
+		case <-done:
+		case <-time.After(5 * time.Second):
+			t.Fatal("Timeout waiting for concurrent access")
+		}
+	}
+
+	// Test concurrent posture assessment
+	assessDone := make(chan bool, 2)
+
+	go func() {
+		_, _ = module.Posture().Assess(ctx)
+		assessDone <- true
+	}()
+
+	go func() {
+		_, _ = module.Posture().Assess(ctx)
+		assessDone <- true
+	}()
+
+	for i := 0; i < 2; i++ {
+		select {
+		case <-assessDone:
+		case <-time.After(5 * time.Second):
+			t.Fatal("Timeout waiting for concurrent assessment")
+		}
+	}
 }

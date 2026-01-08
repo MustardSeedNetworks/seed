@@ -112,8 +112,8 @@ func TestTopologyNode(t *testing.T) {
 
 			// Test JSON unmarshaling
 			var decoded roots.TopologyNode
-			if err := json.Unmarshal(data, &decoded); err != nil {
-				t.Errorf("json.Unmarshal() error = %v", err)
+			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
 			}
 
@@ -190,8 +190,8 @@ func TestTopologyLink(t *testing.T) {
 
 			// Test JSON unmarshaling
 			var decoded roots.TopologyLink
-			if err := json.Unmarshal(data, &decoded); err != nil {
-				t.Errorf("json.Unmarshal() error = %v", err)
+			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
 			}
 
@@ -276,8 +276,8 @@ func TestTopology(t *testing.T) {
 
 			// Test JSON unmarshaling
 			var decoded roots.Topology
-			if err := json.Unmarshal(data, &decoded); err != nil {
-				t.Errorf("json.Unmarshal() error = %v", err)
+			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
 			}
 

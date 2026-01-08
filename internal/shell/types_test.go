@@ -10,7 +10,7 @@ import (
 
 // ========== DeviceType Constants Tests ==========
 
-func TestDeviceTypeConstants(t *testing.T) {
+func TestDeviceTypeConstantsTypesFile(t *testing.T) {
 	tests := []struct {
 		name     string
 		constant shell.DeviceType
@@ -39,7 +39,7 @@ func TestDeviceTypeConstants(t *testing.T) {
 
 // ========== VulnSeverity Constants Tests ==========
 
-func TestVulnSeverityConstants(t *testing.T) {
+func TestVulnSeverityConstantsTypesFile(t *testing.T) {
 	tests := []struct {
 		name     string
 		constant shell.VulnSeverity
@@ -63,7 +63,7 @@ func TestVulnSeverityConstants(t *testing.T) {
 
 // ========== VulnStatus Constants Tests ==========
 
-func TestVulnStatusConstants(t *testing.T) {
+func TestVulnStatusConstantsTypesFile(t *testing.T) {
 	tests := []struct {
 		name     string
 		constant shell.VulnStatus
@@ -171,11 +171,11 @@ func TestDeviceStructure(t *testing.T) {
 
 func TestServiceStructure(t *testing.T) {
 	tests := []struct {
-		name     string
-		service  shell.Service
-		wantPort int
+		name      string
+		service   shell.Service
+		wantPort  int
 		wantProto string
-		wantName string
+		wantName  string
 		wantState string
 	}{
 		{
@@ -256,8 +256,8 @@ func TestServiceStructure(t *testing.T) {
 
 func TestDeviceInterfaceStructure(t *testing.T) {
 	tests := []struct {
-		name   string
-		iface  shell.DeviceInterface
+		name     string
+		iface    shell.DeviceInterface
 		wantType string
 	}{
 		{
@@ -476,10 +476,10 @@ func TestVulnerabilityScanStructure(t *testing.T) {
 
 func TestPostureScoreStructure(t *testing.T) {
 	tests := []struct {
-		name         string
-		score        shell.PostureScore
-		wantOverall  int
-		wantIssues   int
+		name        string
+		score       shell.PostureScore
+		wantOverall int
+		wantIssues  int
 	}{
 		{
 			name: "perfect score",
@@ -593,9 +593,9 @@ func TestRogueAlertStructure(t *testing.T) {
 	ackTime := now.Add(5 * time.Minute)
 
 	tests := []struct {
-		name          string
-		alert         shell.RogueAlert
-		wantAckNil    bool
+		name       string
+		alert      shell.RogueAlert
+		wantAckNil bool
 	}{
 		{
 			name: "unacknowledged alert",

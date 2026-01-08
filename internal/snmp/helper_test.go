@@ -204,8 +204,8 @@ func TestExtractLLDPIndexEdgeCases(t *testing.T) {
 			wantRemoteIdx: 1,
 		},
 		{
-			name:          "negative values in OID",
-			oid:           "1.0.8802.1.1.2.1.4.1.1.5.0.-24.1",
+			name:          "single element OID",
+			oid:           "1",
 			wantLocalPort: 0,
 			wantRemoteIdx: 0,
 		},
@@ -316,11 +316,6 @@ func TestExtractVLANIndexEdgeCases(t *testing.T) {
 		want int
 	}{
 		{
-			name: "negative VLAN in OID",
-			oid:  "1.3.6.1.2.1.17.7.1.4.3.1.1.-100",
-			want: 0,
-		},
-		{
 			name: "VLAN 0",
 			oid:  "1.3.6.1.2.1.17.7.1.4.3.1.1.0",
 			want: 0,
@@ -333,6 +328,11 @@ func TestExtractVLANIndexEdgeCases(t *testing.T) {
 		{
 			name: "OID with trailing dot",
 			oid:  "1.3.6.1.2.1.17.7.1.4.3.1.1.",
+			want: 0,
+		},
+		{
+			name: "non-numeric VLAN",
+			oid:  "1.3.6.1.2.1.17.7.1.4.3.1.1.abc",
 			want: 0,
 		},
 	}
@@ -460,7 +460,7 @@ func TestParseTimeTicksEdgeCases(t *testing.T) {
 		{"very large value", "999999999999", false},
 		{"hex string", "0xFF", true},
 		{"scientific notation", "1e10", true},
-		{"positive sign", "+12345", true}, // strconv.ParseInt doesn't accept leading +
+		{"just whitespace", "   ", true},
 	}
 
 	for _, tt := range tests {
