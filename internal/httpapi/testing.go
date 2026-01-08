@@ -58,6 +58,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 			cfg.Auth.DefaultUsername,
 			cfg.Auth.DefaultPasswordHash,
 		),
+		csrfManager:         auth.NewCSRFManager(),
 		loginRateLimiter:    NewRateLimiter(DefaultRateLimitConfig()),
 		endpointRateLimiter: NewEndpointRateLimiter(DefaultEndpointRateLimitConfig()),
 		linkMonitor:         network.NewLinkMonitor(cfg.Interface.Default),
@@ -68,6 +69,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 			nil,
 		), // nil profiler = use internal
 		dnsTester:          dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
+		dnsSecurityScanner: dns.NewSecurityScanner(dns.DefaultSecurityScanConfig()),
 		dhcpMonitor:        dhcp.NewMonitor(cfg.Interface.Default),
 		gatewayTester:      gateway.NewTester(gateway.DefaultThresholds()),
 		vlanManager:        vlan.NewManager(cfg.Interface.Default),

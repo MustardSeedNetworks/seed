@@ -81,7 +81,7 @@ func TestMCPCmdLongDescriptionContent(t *testing.T) {
 	expectedContent := []string{
 		"MCP",
 		"Model Context Protocol",
-		"stdio",
+		"stdin/stdout",
 		"AI",
 	}
 

@@ -809,12 +809,12 @@ func TestHandleGetLinkStatus(t *testing.T) {
 	}{
 		{
 			name:  "link up",
-			state: network.LinkState{},
+			state: network.LinkStateUnknown,
 			isUp:  true,
 		},
 		{
 			name:  "link down",
-			state: network.LinkState{},
+			state: network.LinkStateUnknown,
 			isUp:  false,
 		},
 		{

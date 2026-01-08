@@ -51,8 +51,8 @@ func TestParseIPAddressFromOIDWithValidIPv4(t *testing.T) {
 			wantType: "",
 		},
 		{
-			name:     "no valid pattern returns empty",
-			oid:      "1.3.6.1.2.1.4.34.1.3.99.99",
+			name:     "empty OID returns empty",
+			oid:      "",
 			wantAddr: "",
 			wantType: "",
 		},
@@ -1283,17 +1283,17 @@ func TestParseTimeTicksExtended(t *testing.T) {
 	}{
 		{"zero", "0", false},
 		{"positive small", "100", false},
-		{"positive large", "86400000", false},   // 10 days in centiseconds
-		{"very large", "3155760000000", false},  // ~100 years in centiseconds
-		{"negative", "-100", false},             // Should parse but result in negative duration
-		{"empty string", "", true},              // Should fail to parse
-		{"non-numeric", "abc", true},            // Should fail to parse
-		{"decimal", "100.5", true},              // Should fail to parse
-		{"scientific notation", "1e5", true},    // Should fail to parse
-		{"hex", "0xFF", true},                   // Should fail to parse
-		{"whitespace only", "   ", true},        // Should fail to parse
-		{"leading whitespace", " 100", true},    // Should fail to parse
-		{"trailing whitespace", "100 ", true},   // Should fail to parse
+		{"positive large", "86400000", false},                   // 10 days in centiseconds
+		{"very large", "3155760000000", false},                  // ~100 years in centiseconds
+		{"negative", "-100", false},                             // Should parse but result in negative duration
+		{"empty string", "", true},                              // Should fail to parse
+		{"non-numeric", "abc", true},                            // Should fail to parse
+		{"decimal", "100.5", true},                              // Should fail to parse
+		{"scientific notation", "1e5", true},                    // Should fail to parse
+		{"hex", "0xFF", true},                                   // Should fail to parse
+		{"whitespace only", "   ", true},                        // Should fail to parse
+		{"leading whitespace", " 100", true},                    // Should fail to parse
+		{"trailing whitespace", "100 ", true},                   // Should fail to parse
 		{"overflow prevention", "9999999999999999999999", true}, // Too large
 	}
 

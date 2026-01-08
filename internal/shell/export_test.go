@@ -127,3 +127,48 @@ func (a *ModuleTestAccessor) GetPostureService() *PostureService {
 func (a *ModuleTestAccessor) GetRogueService() *RogueService {
 	return a.Module.rogue
 }
+
+// DiscoveryServiceWithNilDeviceDiscovery creates a DiscoveryService with nil deviceDiscovery for testing.
+func DiscoveryServiceWithNilDeviceDiscovery() *DiscoveryService {
+	return &DiscoveryService{
+		cfg:             nil,
+		db:              nil,
+		service:         nil,
+		deviceDiscovery: nil,
+		cancel:          nil,
+	}
+}
+
+// VulnerabilityServiceWithNilScanner creates a VulnerabilityService with nil scanner for testing.
+func VulnerabilityServiceWithNilScanner() *VulnerabilityService {
+	return &VulnerabilityService{
+		cfg:     nil,
+		db:      nil,
+		scanner: nil,
+		cancel:  nil,
+	}
+}
+
+// RogueServiceWithNilDetector creates a RogueService with nil detector for testing.
+func RogueServiceWithNilDetector() *RogueService {
+	return &RogueService{
+		cfg:      nil,
+		detector: nil,
+		cancel:   nil,
+	}
+}
+
+// SetDiscoveryServiceCancel sets the cancel function for testing.
+func (a *DiscoveryServiceTestAccessor) SetCancel(cancel func()) {
+	a.Service.cancel = cancel
+}
+
+// SetVulnerabilityServiceCancel sets the cancel function for testing.
+func (a *VulnerabilityServiceTestAccessor) SetCancel(cancel func()) {
+	a.Service.cancel = cancel
+}
+
+// SetRogueServiceCancel sets the cancel function for testing.
+func (a *RogueServiceTestAccessor) SetCancel(cancel func()) {
+	a.Service.cancel = cancel
+}

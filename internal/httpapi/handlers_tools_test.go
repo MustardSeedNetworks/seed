@@ -395,7 +395,11 @@ func TestHandlePortScanMethodNotAllowed(t *testing.T) {
 func TestHandlePortScanInvalidJSON(t *testing.T) {
 	server := api.NewTestServer()
 
-	req := httptest.NewRequest(http.MethodPost, "/api/shell/discovery/portscan", bytes.NewReader([]byte("invalid json")))
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/shell/discovery/portscan",
+		bytes.NewReader([]byte("invalid json")),
+	)
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -479,7 +483,11 @@ func TestHandleAdvancedFingerprintMethodNotAllowed(t *testing.T) {
 func TestHandleAdvancedFingerprintInvalidJSON(t *testing.T) {
 	server := api.NewTestServer()
 
-	req := httptest.NewRequest(http.MethodPost, "/api/shell/discovery/fingerprint", bytes.NewReader([]byte("invalid json")))
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/shell/discovery/fingerprint",
+		bytes.NewReader([]byte("invalid json")),
+	)
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 

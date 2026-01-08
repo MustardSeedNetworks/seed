@@ -6,7 +6,6 @@ import (
 	"context"
 	"net"
 	"testing"
-	"time"
 
 	"github.com/krisarmstrong/seed/internal/roots"
 )

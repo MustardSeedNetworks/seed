@@ -432,9 +432,9 @@ func TestSNMPMIBSelection_AllFields(t *testing.T) {
 
 func TestSNMPCollectionConfig_Fields(t *testing.T) {
 	cfg := discovery.SNMPCollectionConfig{
-		Enabled:     true,
-		WalkTimeout: 45 * time.Second,
-		Concurrency: 15,
+		Enabled:           true,
+		WalkTimeout:       45 * time.Second,
+		MaxOIDsPerRequest: 15,
 		MIBs: discovery.SNMPMIBSelection{
 			System:     true,
 			Interfaces: true,
@@ -447,8 +447,8 @@ func TestSNMPCollectionConfig_Fields(t *testing.T) {
 	if cfg.WalkTimeout != 45*time.Second {
 		t.Errorf("WalkTimeout should be 45s, got %v", cfg.WalkTimeout)
 	}
-	if cfg.Concurrency != 15 {
-		t.Errorf("Concurrency should be 15, got %d", cfg.Concurrency)
+	if cfg.MaxOIDsPerRequest != 15 {
+		t.Errorf("MaxOIDsPerRequest should be 15, got %d", cfg.MaxOIDsPerRequest)
 	}
 }
 
