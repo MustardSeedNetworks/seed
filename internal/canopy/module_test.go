@@ -1432,16 +1432,16 @@ func TestScanResultStructure(t *testing.T) {
 
 func TestConnectionStatusStructure(t *testing.T) {
 	status := canopy.ConnectionStatus{
-		Connected:      true,
-		SSID:           "MyNetwork",
-		BSSID:          "00:11:22:33:44:55",
-		Channel:        11,
-		Frequency:      2462,
-		SignalStrength: -55,
-		LinkSpeed:      144,
-		Security:       "WPA2",
-		IPAddress:      "192.168.1.100",
-		Gateway:        "192.168.1.1",
+		Connected: true,
+		SSID:      "MyNetwork",
+		BSSID:     "00:11:22:33:44:55",
+		Channel:   11,
+		Frequency: 2462,
+		Signal:    -55,
+		TxRate:    144,
+		Security:  "WPA2",
+		IPAddress: "192.168.1.100",
+		Gateway:   "192.168.1.1",
 	}
 
 	if !status.Connected {
@@ -1453,8 +1453,8 @@ func TestConnectionStatusStructure(t *testing.T) {
 	if status.Channel != 11 {
 		t.Errorf("expected Channel 11, got %d", status.Channel)
 	}
-	if status.LinkSpeed != 144 {
-		t.Errorf("expected LinkSpeed 144, got %d", status.LinkSpeed)
+	if status.TxRate != 144 {
+		t.Errorf("expected TxRate 144, got %.1f", status.TxRate)
 	}
 	if status.IPAddress != "192.168.1.100" {
 		t.Errorf("expected IPAddress '192.168.1.100', got %q", status.IPAddress)
@@ -1516,46 +1516,26 @@ func TestFloorPlanStructure(t *testing.T) {
 
 func TestCoverageAnalysisStructure(t *testing.T) {
 	analysis := canopy.CoverageAnalysis{
-		Coverage:    85.5,
-		WeakSpots:   3,
-		DeadZones:   1,
-		Suggestions: []string{"Add AP near conference room", "Adjust channel on AP1"},
+		TotalArea:       1000.0,
+		CoveredArea:     855.0,
+		CoveragePercent: 85.5,
+		DeadZones: []canopy.DeadZone{
+			{X: 100, Y: 200, Radius: 5, Signal: -85},
+		},
+		Recommendations: []canopy.Recommendation{
+			{Type: "placement", Priority: "high", Description: "Add AP near conference room"},
+			{Type: "config", Priority: "medium", Description: "Adjust channel on AP1"},
+		},
 	}
 
-	if analysis.Coverage != 85.5 {
-		t.Errorf("expected Coverage 85.5, got %.1f", analysis.Coverage)
+	if analysis.CoveragePercent != 85.5 {
+		t.Errorf("expected CoveragePercent 85.5, got %.1f", analysis.CoveragePercent)
 	}
-	if analysis.WeakSpots != 3 {
-		t.Errorf("expected WeakSpots 3, got %d", analysis.WeakSpots)
+	if len(analysis.DeadZones) != 1 {
+		t.Errorf("expected 1 dead zone, got %d", len(analysis.DeadZones))
 	}
-	if analysis.DeadZones != 1 {
-		t.Errorf("expected DeadZones 1, got %d", analysis.DeadZones)
-	}
-	if len(analysis.Suggestions) != 2 {
-		t.Errorf("expected 2 suggestions, got %d", len(analysis.Suggestions))
-	}
-}
-
-func TestAPPlacementStructure(t *testing.T) {
-	placement := canopy.APPlacement{
-		X:         250.0,
-		Y:         150.0,
-		Channel:   36,
-		Power:     20,
-		Rationale: "Optimal coverage for open office area",
-	}
-
-	if placement.X != 250.0 {
-		t.Errorf("expected X 250.0, got %.1f", placement.X)
-	}
-	if placement.Y != 150.0 {
-		t.Errorf("expected Y 150.0, got %.1f", placement.Y)
-	}
-	if placement.Channel != 36 {
-		t.Errorf("expected Channel 36, got %d", placement.Channel)
-	}
-	if placement.Power != 20 {
-		t.Errorf("expected Power 20, got %d", placement.Power)
+	if len(analysis.Recommendations) != 2 {
+		t.Errorf("expected 2 recommendations, got %d", len(analysis.Recommendations))
 	}
 }
 
