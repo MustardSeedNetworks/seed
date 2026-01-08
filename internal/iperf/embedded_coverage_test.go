@@ -138,7 +138,7 @@ func TestIsValidExtractedBinaryAllScenarios(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "version with leading/trailing whitespace",
+			name: "version with whitespace padding",
 			setupBinary: func(path string) error {
 				return os.WriteFile(path, []byte("test"), 0o755)
 			},
@@ -352,10 +352,7 @@ func TestEmbeddedVersionFormatValidation(t *testing.T) {
 
 // TestFindSystemIperf3Error tests FindSystemIperf3 error handling.
 func TestFindSystemIperf3Error(t *testing.T) {
-	t.Parallel()
-
-	// Save PATH
-	originalPath := os.Getenv("PATH")
+	// Note: Cannot use t.Parallel() with t.Setenv()
 
 	// Temporarily clear PATH to force error
 	t.Setenv("PATH", "")
@@ -364,9 +361,7 @@ func TestFindSystemIperf3Error(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error with empty PATH")
 	}
-
-	// Restore PATH
-	t.Setenv("PATH", originalPath)
+	// PATH is automatically restored by t.Setenv()
 }
 
 // TestCacheDirOSSpecific tests cache directory is OS-appropriate.

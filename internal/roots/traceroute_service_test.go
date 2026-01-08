@@ -316,8 +316,8 @@ func TestTracerouteService_Trace_HopProcessing(t *testing.T) {
 	}
 }
 
-// TestTracerouteOptions_Fields validates options struct field defaults.
-func TestTracerouteOptions_Fields(t *testing.T) {
+// TestTracerouteOptions_DefaultValues validates options struct field defaults.
+func TestTracerouteOptions_DefaultValues(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

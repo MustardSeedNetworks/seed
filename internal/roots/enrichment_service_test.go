@@ -227,8 +227,8 @@ func TestEnrichmentService_GetPublicIP_ContextTimeout(t *testing.T) {
 	t.Logf("GetPublicIP with timed out context: result=%v, err=%v", result, err)
 }
 
-// TestIPEnrichment_StructFields validates IPEnrichment struct fields.
-func TestIPEnrichment_StructFields(t *testing.T) {
+// TestIPEnrichment_IndividualFields validates IPEnrichment struct fields individually.
+func TestIPEnrichment_IndividualFields(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now()

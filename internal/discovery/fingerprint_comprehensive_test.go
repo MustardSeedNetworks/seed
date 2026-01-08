@@ -408,7 +408,7 @@ func TestFingerprinter_Timeouts(t *testing.T) {
 	}
 }
 
-func TestTLSInfo_Fields(t *testing.T) {
+func TestTLSInfo_Comprehensive(t *testing.T) {
 	now := time.Now()
 	validFrom := now.Add(-90 * 24 * time.Hour) // 90 days ago
 	validTo := now.Add(275 * 24 * time.Hour)   // 275 days from now

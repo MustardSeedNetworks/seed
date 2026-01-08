@@ -434,7 +434,7 @@ func TestMDNSService_Comprehensive(t *testing.T) {
 	}
 }
 
-func TestStatus_Fields(t *testing.T) {
+func TestStatus_Comprehensive(t *testing.T) {
 	now := time.Now()
 
 	status := &discovery.Status{
@@ -532,7 +532,7 @@ func TestDeviceDiscovery_Basic(t *testing.T) {
 	}
 }
 
-func TestErrScanInProgress(t *testing.T) {
+func TestErrScanInProgress_Comprehensive(t *testing.T) {
 	err := discovery.ErrScanInProgress
 
 	if err == nil {

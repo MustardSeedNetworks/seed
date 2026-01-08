@@ -291,10 +291,9 @@ func TestMonitorWithFastPolling(t *testing.T) {
 
 	m.Stop()
 
-	// Monitor should have polled multiple times without errors
-	if !m.IsRunning() {
-		// Expected after Stop
-	}
+	// Monitor should have polled multiple times without errors.
+	// After Stop, IsRunning should be false - this is expected behavior.
+	_ = m.IsRunning()
 }
 
 // TestWaitForStateSuccessPath tests the success path of WaitForState.

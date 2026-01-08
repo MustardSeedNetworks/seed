@@ -156,37 +156,44 @@ func TestGetStatusWithDifferentInterfaceFlags(t *testing.T) {
 
 	for _, iface := range interfaces {
 		t.Run(iface.Interface, func(t *testing.T) {
-			status, err := link.GetStatus(iface.Interface)
-			if err != nil {
-				t.Fatalf("GetStatus failed for %s: %v", iface.Interface, err)
-			}
-
-			// Verify basic fields are populated
-			if status.Interface != iface.Interface {
-				t.Errorf("expected interface %q, got %q", iface.Interface, status.Interface)
-			}
-
-			if status.MTU <= 0 {
-				t.Logf("MTU is %d for %s", status.MTU, iface.Interface)
-			}
-
-			if status.UpdatedAt.IsZero() {
-				t.Error("UpdatedAt should not be zero")
-			}
-
-			// Verify state is one of the valid states
-			switch status.State {
-			case link.StateUp, link.StateDown, link.StateDormant, link.StateUnknown:
-				// Valid
-			default:
-				t.Errorf("unexpected state %v", status.State)
-			}
-
-			// Carrier should match state
-			if status.State == link.StateUp && !status.Carrier {
-				t.Logf("StateUp but Carrier=false for %s", iface.Interface)
-			}
+			verifyInterfaceStatus(t, iface.Interface)
 		})
+	}
+}
+
+// verifyInterfaceStatus is a helper to verify interface status fields.
+func verifyInterfaceStatus(t *testing.T, ifaceName string) {
+	t.Helper()
+
+	status, err := link.GetStatus(ifaceName)
+	if err != nil {
+		t.Fatalf("GetStatus failed for %s: %v", ifaceName, err)
+	}
+
+	// Verify basic fields are populated
+	if status.Interface != ifaceName {
+		t.Errorf("expected interface %q, got %q", ifaceName, status.Interface)
+	}
+
+	if status.MTU <= 0 {
+		t.Logf("MTU is %d for %s", status.MTU, ifaceName)
+	}
+
+	if status.UpdatedAt.IsZero() {
+		t.Error("UpdatedAt should not be zero")
+	}
+
+	// Verify state is one of the valid states
+	switch status.State {
+	case link.StateUp, link.StateDown, link.StateDormant, link.StateUnknown:
+		// Valid
+	default:
+		t.Errorf("unexpected state %v", status.State)
+	}
+
+	// Carrier should match state
+	if status.State == link.StateUp && !status.Carrier {
+		t.Logf("StateUp but Carrier=false for %s", ifaceName)
 	}
 }
 
@@ -317,7 +324,7 @@ func TestIsPhysicalInterfacePlatformComprehensive(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(tt.name, func(_ *testing.T) {
 				result := link.ExportIsPhysicalInterfacePlatform(tt.name)
 				// On Linux, result depends on sysfs device symlink existence
 				// For non-existent interfaces, fallback to name patterns
@@ -656,7 +663,7 @@ func TestParseStateEdgeCases(t *testing.T) {
 }
 
 // TestSpeedBpsOverflow tests Bps calculation doesn't overflow for large values.
-func TestSpeedBpsOverflow(t *testing.T) {
+func TestSpeedBpsOverflow(_ *testing.T) {
 	// Test with very large speed value
 	largeSpeed := link.Speed(9_000_000_000) // 9 billion Mbps (unrealistic but tests overflow)
 	bps := largeSpeed.Bps()
@@ -664,7 +671,7 @@ func TestSpeedBpsOverflow(t *testing.T) {
 }
 
 // TestStatusStructJSON tests that Status struct has proper JSON tags.
-func TestStatusStructJSON(t *testing.T) {
+func TestStatusStructJSON(_ *testing.T) {
 	status := link.Status{
 		Interface:  "eth0",
 		State:      link.StateUp,
@@ -690,7 +697,7 @@ func TestStatusStructJSON(t *testing.T) {
 }
 
 // TestEventStructJSON tests that Event struct has proper JSON tags.
-func TestEventStructJSON(t *testing.T) {
+func TestEventStructJSON(_ *testing.T) {
 	event := link.Event{
 		Interface: "eth0",
 		OldState:  link.StateDown,

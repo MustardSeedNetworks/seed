@@ -585,8 +585,8 @@ func TestSetInterfaceRequestValidation(t *testing.T) {
 	}
 }
 
-// TestIPSettingsRequestValidation tests IP settings request validation.
-func TestIPSettingsRequestValidation(t *testing.T) {
+// TestIPSettingsRequestModeValidation tests IP settings request mode validation.
+func TestIPSettingsRequestModeValidation(t *testing.T) {
 	tests := []struct {
 		name    string
 		request api.IPSettingsRequest

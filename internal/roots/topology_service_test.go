@@ -129,8 +129,8 @@ func TestTopologyService_StopMultiple(t *testing.T) {
 	}
 }
 
-// TestTopologyService_GetTopology validates GetTopology returns error.
-func TestTopologyService_GetTopology(t *testing.T) {
+// TestTopologyService_GetTopology_NotImplemented validates GetTopology returns error.
+func TestTopologyService_GetTopology_NotImplemented(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -297,8 +297,8 @@ func TestTopologyLinkType_Uniqueness(t *testing.T) {
 	}
 }
 
-// TestTopology_StructFields validates Topology struct fields.
-func TestTopology_StructFields(t *testing.T) {
+// TestTopology_Struct validates Topology struct fields.
+func TestTopology_Struct(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now()
@@ -361,8 +361,8 @@ func TestTopology_NilSlices(t *testing.T) {
 	}
 }
 
-// TestTopologyNode_StructFields validates TopologyNode struct fields.
-func TestTopologyNode_StructFields(t *testing.T) {
+// TestTopologyNode_Struct validates TopologyNode struct fields.
+func TestTopologyNode_Struct(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now()
@@ -411,8 +411,8 @@ func TestTopologyNode_StructFields(t *testing.T) {
 	}
 }
 
-// TestTopologyLink_StructFields validates TopologyLink struct fields.
-func TestTopologyLink_StructFields(t *testing.T) {
+// TestTopologyLink_Struct validates TopologyLink struct fields.
+func TestTopologyLink_Struct(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now()
