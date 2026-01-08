@@ -1,5 +1,7 @@
 package link
 
+import "time"
+
 // ExportCheckLinkState exposes checkLinkState for testing.
 func ExportCheckLinkState(interfaceName string) State {
 	return checkLinkState(interfaceName)

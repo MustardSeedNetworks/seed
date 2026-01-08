@@ -62,7 +62,7 @@ func TestManagerGetInfoWithLLDPConcurrent(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 			nativeVlan := id * 10
-			voiceVlan := id * 10 + 5
+			voiceVlan := id*10 + 5
 			for range 50 {
 				info := manager.GetInfoWithLLDP(&nativeVlan, &voiceVlan)
 				if info == nil {
@@ -181,10 +181,10 @@ func TestManagerStateTransitions(t *testing.T) {
 
 	// Enable -> Disable -> Enable.
 	transitions := []struct {
-		enabled    bool
-		id         int
-		wantState  bool
-		wantID     int
+		enabled   bool
+		id        int
+		wantState bool
+		wantID    int
 	}{
 		{true, 100, true, 100},
 		{false, 0, false, 0},
@@ -384,9 +384,9 @@ func TestCreateDeleteVlanInterfaceEdgeCases(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name       string
-		parentIf   string
-		vlanID     int
+		name     string
+		parentIf string
+		vlanID   int
 	}{
 		{"VLAN 0", "eth0", 0},
 		{"VLAN 1", "eth0", 1},
@@ -417,11 +417,11 @@ func TestManagerGetInfoWithLLDPVariations(t *testing.T) {
 	manager.SetConfigured(true, 100)
 
 	tests := []struct {
-		name          string
-		nativeVlan    *int
-		voiceVlan     *int
-		wantNative    bool
-		wantVoice     bool
+		name       string
+		nativeVlan *int
+		voiceVlan  *int
+		wantNative bool
+		wantVoice  bool
 	}{
 		{"both nil", nil, nil, false, false},
 		{"only native", intPtr(10), nil, true, false},

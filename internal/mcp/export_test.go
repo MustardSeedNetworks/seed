@@ -242,7 +242,7 @@ type CallToolResult = mcp.CallToolResult
 // NewCallToolRequest creates a new CallToolRequest for testing purposes.
 func NewCallToolRequest(toolName string, arguments map[string]any) CallToolRequest {
 	return mcp.CallToolRequest{
-		Params: mcp.CallToolRequestParams{
+		Params: mcp.CallToolParams{
 			Name:      toolName,
 			Arguments: arguments,
 		},

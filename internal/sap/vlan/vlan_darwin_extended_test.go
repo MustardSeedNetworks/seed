@@ -112,7 +112,10 @@ func TestGetVlanInfoNumericVLANNames(t *testing.T) {
 
 	// All valid numeric VLAN interface names.
 	for i := range 4096 {
-		ifname := "vlan" + strings.TrimPrefix("000"+string(rune('0'+i/1000%10)+rune('0'+i/100%10)+rune('0'+i/10%10)+rune('0'+i%10)), "000")
+		ifname := "vlan" + strings.TrimPrefix(
+			"000"+string(rune('0'+i/1000%10)+rune('0'+i/100%10)+rune('0'+i/10%10)+rune('0'+i%10)),
+			"000",
+		)
 		// Use strconv for proper formatting.
 		ifname = "vlan" + itoa(i)
 
@@ -156,15 +159,15 @@ func TestGetVlanInfoPrefixVariations(t *testing.T) {
 		{"vlan4094", 4094},
 
 		// Should not parse as VLAN (different prefix).
-		{"VLAN100", 0},   // Uppercase.
-		{"Vlan100", 0},   // Mixed case.
-		{"vLAN100", 0},   // Mixed case.
-		{"vlaan100", 0},  // Typo.
-		{"vla100", 0},    // Missing 'n'.
-		{"vln100", 0},    // Missing 'a'.
-		{"vlan_100", 0},  // Underscore.
+		{"VLAN100", 0},     // Uppercase.
+		{"Vlan100", 0},     // Mixed case.
+		{"vLAN100", 0},     // Mixed case.
+		{"vlaan100", 0},    // Typo.
+		{"vla100", 0},      // Missing 'n'.
+		{"vln100", 0},      // Missing 'a'.
+		{"vlan_100", 0},    // Underscore.
 		{"vlan-100", -100}, // Hyphen (strconv parses as negative).
-		{"vlan.100", 0},  // Dot.
+		{"vlan.100", 0},    // Dot.
 	}
 
 	for _, tt := range tests {
@@ -185,20 +188,20 @@ func TestDetectVlanSubinterfacesPlatformWithRealInterfaces(t *testing.T) {
 
 	// Test with interfaces that typically exist on macOS.
 	interfaces := []string{
-		"en0",      // Primary ethernet/wifi.
-		"en1",      // Secondary network.
-		"lo0",      // Loopback.
-		"bridge0",  // Bridge interface.
-		"awdl0",    // Apple Wireless Direct Link.
-		"llw0",     // Low-latency WLAN.
-		"utun0",    // User tunnel.
+		"en0",     // Primary ethernet/wifi.
+		"en1",     // Secondary network.
+		"lo0",     // Loopback.
+		"bridge0", // Bridge interface.
+		"awdl0",   // Apple Wireless Direct Link.
+		"llw0",    // Low-latency WLAN.
+		"utun0",   // User tunnel.
 		"utun1",
 		"utun2",
-		"gif0",     // Generic tunnel.
-		"stf0",     // 6to4 tunnel.
-		"XHC0",     // USB host controller.
+		"gif0", // Generic tunnel.
+		"stf0", // 6to4 tunnel.
+		"XHC0", // USB host controller.
 		"XHC1",
-		"anpi0",    // Apple network interface.
+		"anpi0", // Apple network interface.
 		"anpi1",
 	}
 
@@ -248,9 +251,9 @@ func TestGetVlanInfoWithInterfaceNameLengths(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name        string
-		ifname      string
-		wantVLANID  int
+		name       string
+		ifname     string
+		wantVLANID int
 	}{
 		{"empty", "", 0},
 		{"single char", "v", 0},
@@ -261,8 +264,8 @@ func TestGetVlanInfoWithInterfaceNameLengths(t *testing.T) {
 		{"six chars", "vlan10", 10},
 		{"seven chars", "vlan100", 100},
 		{"eight chars", "vlan1000", 1000},
-		{"sixteen chars (IFNAMSIZ limit)", "vlan123456789012", 0}, // Too long for number parsing.
-		{"exactly IFNAMSIZ", "vlan12345678901", 0},
+		{"sixteen chars (IFNAMSIZ limit)", "vlan123456789012", 123456789012}, // Parses as number.
+		{"exactly IFNAMSIZ", "vlan12345678901", 12345678901},                // Parses as number.
 		{"longer than IFNAMSIZ", "verylonginterfacenamethatexceedsifnamsizlimit", 0},
 	}
 

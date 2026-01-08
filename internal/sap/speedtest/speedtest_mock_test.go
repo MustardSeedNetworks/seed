@@ -362,7 +362,14 @@ func TestRapidStatusUpdates(t *testing.T) {
 	// Status phase updater
 	go func() {
 		defer wg.Done()
-		phases := []string{"idle", "finding_server", "testing_latency", "testing_download", "testing_upload", "complete"}
+		phases := []string{
+			"idle",
+			"finding_server",
+			"testing_latency",
+			"testing_download",
+			"testing_upload",
+			"complete",
+		}
 		for i := range iterations {
 			phase := phases[i%len(phases)]
 			progress := float64((i % 100) + 1)
