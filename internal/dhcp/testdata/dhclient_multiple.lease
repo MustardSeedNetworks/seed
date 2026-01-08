@@ -1,0 +1,11 @@
+lease {
+  interface "eth0";
+  option dhcp-server-identifier 192.168.1.1;
+  option routers 192.168.1.1;
+}
+lease {
+  interface "eth0";
+  option dhcp-server-identifier 192.168.1.2;
+  option routers 192.168.1.254;
+  option dhcp-lease-time 43200;
+}
