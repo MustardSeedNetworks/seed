@@ -336,20 +336,20 @@ func (s *devicesTestServer) assertGetEndpointOK(t *testing.T, endpoint string) {
 
 func (s *devicesTestServer) testGetDevices(t *testing.T) {
 	t.Helper()
-	s.assertGetEndpointOK(t, "/api/devices")
+	s.assertGetEndpointOK(t, "/api/shell/devices")
 }
 
 func (s *devicesTestServer) testGetDevicesStatus(t *testing.T) {
 	t.Helper()
-	s.assertGetEndpointOK(t, "/api/devices/status")
+	s.assertGetEndpointOK(t, "/api/shell/devices/status")
 }
 
 func (s *devicesTestServer) testGetDevicesSettings(t *testing.T) {
 	t.Helper()
 
-	resp, err := http.Get(s.ts.URL + "/api/devices/settings")
+	resp, err := http.Get(s.ts.URL + "/api/shell/devices/settings")
 	if err != nil {
-		t.Fatalf("GET /api/devices/settings failed: %v", err)
+		t.Fatalf("GET /api/shell/devices/settings failed: %v", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -370,12 +370,12 @@ func (s *devicesTestServer) testGetDevicesSettings(t *testing.T) {
 func (s *devicesTestServer) testScanDevices(t *testing.T) {
 	t.Helper()
 
-	req, _ := http.NewRequest(http.MethodPost, s.ts.URL+"/api/devices/scan", http.NoBody)
+	req, _ := http.NewRequest(http.MethodPost, s.ts.URL+"/api/shell/devices/scan", http.NoBody)
 	client := &http.Client{Timeout: 15 * time.Second}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("POST /api/devices/scan failed: %v", err)
+		t.Fatalf("POST /api/shell/devices/scan failed: %v", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -414,9 +414,9 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 	defer ts.Close()
 
 	t.Run("GetHealthChecksSettings", func(t *testing.T) {
-		resp, err := http.Get(ts.URL + "/api/health-checks/settings")
+		resp, err := http.Get(ts.URL + "/api/sap/health-checks/settings")
 		if err != nil {
-			t.Fatalf("GET /api/health-checks/settings failed: %v", err)
+			t.Fatalf("GET /api/sap/health-checks/settings failed: %v", err)
 		}
 		defer func() { _ = resp.Body.Close() }()
 
@@ -441,7 +441,7 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		body, _ := json.Marshal(settings)
 		req, _ := http.NewRequest(
 			http.MethodPut,
-			ts.URL+"/api/health-checks/settings",
+			ts.URL+"/api/sap/health-checks/settings",
 			bytes.NewReader(body),
 		)
 		req.Header.Set("Content-Type", "application/json")
@@ -449,7 +449,7 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		client := &http.Client{Timeout: 15 * time.Second}
 		resp, err := client.Do(req)
 		if err != nil {
-			t.Fatalf("PUT /api/health-checks/settings failed: %v", err)
+			t.Fatalf("PUT /api/sap/health-checks/settings failed: %v", err)
 		}
 		defer func() { _ = resp.Body.Close() }()
 
