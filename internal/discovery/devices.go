@@ -81,6 +81,10 @@ type DiscoveredDevice struct {
 
 	// Vulnerability assessment results from Phase 4
 	Vulnerabilities *DeviceVulnerabilities `json:"vulnerabilities,omitempty"`
+
+	// Wake-on-LAN capability
+	WoLCapable *bool  `json:"wolCapable,omitempty"` // nil=unknown, true=likely supports WoL, false=likely not
+	WoLStatus  string `json:"wolStatus,omitempty"`  // "untested", "success", "failed"
 }
 
 // LLDPDeviceInfo contains LLDP-specific device information.

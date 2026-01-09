@@ -37,18 +37,19 @@ const (
 
 // Profiler timing and buffer constants.
 const (
-	profilerQueueSize        = 100  // Size of profiling queue channel
-	profilerDefaultTimeoutS  = 10   // Default timeout for profiling operations in seconds
-	profilerBannerReadMs     = 500  // Timeout for reading service banners in milliseconds
-	profilerBannerBufferSize = 256  // Buffer size for reading service banners
-	profilerHTTPBodyLimit    = 8192 // Maximum HTTP response body to read
-	profilerLogTruncateLen   = 50   // Maximum length for log message truncation
-	profilerMinTruncateLen   = 3    // Minimum length for truncation with ellipsis
-	profilerTitleMaxLen      = 100  // Maximum length for extracted HTML titles
-	profilerTimeoutS         = 2    // Default profiler timeout in seconds
-	profilerMaxConcurrent    = 10   // Default max concurrent profiling operations
-	profilerProbeDelayMs     = 50   // Default probe delay in milliseconds
-	profilerHostDelayMs      = 20   // Default host delay in milliseconds
+	profilerQueueSize         = 100  // Size of profiling queue channel
+	profilerDefaultTimeoutS   = 10   // Default timeout for profiling operations in seconds
+	profilerBannerReadMs      = 500  // Timeout for reading service banners in milliseconds
+	profilerBannerBufferSize  = 256  // Buffer size for reading service banners
+	profilerHTTPBodyLimit     = 8192 // Maximum HTTP response body to read
+	profilerLogTruncateLen    = 50   // Maximum length for log message truncation
+	profilerMinTruncateLen    = 3    // Minimum length for truncation with ellipsis
+	profilerTitleMaxLen       = 100  // Maximum length for extracted HTML titles
+	profilerTimeoutS          = 2    // Default profiler timeout in seconds
+	profilerMaxConcurrent     = 10   // Default max concurrent profiling operations
+	profilerProbeDelayMs      = 50   // Default probe delay in milliseconds
+	profilerHostDelayMs       = 20   // Default host delay in milliseconds
+	profilerNameResolveTimeMs = 500  // Default name resolution timeout in milliseconds
 )
 
 // Common port numbers for service classification.
@@ -141,6 +142,29 @@ type ProfilerConfig struct {
 	// This is common for network devices, printers, and other internal infrastructure.
 	// Default: true (required for profiling internal network devices)
 	SkipTLSVerify bool
+
+	// EnableSNMPCollection enables automatic full SNMP MIB collection during profiling.
+	// When true and SNMP credentials are configured, the profiler will collect full
+	// interface MIB data (IF-MIB, IP-MIB, BRIDGE-MIB, etc.) from each device.
+	EnableSNMPCollection bool
+
+	// SNMPMIBs specifies which MIBs to collect. If nil, defaults to interface MIBs.
+	SNMPMIBs *SNMPMIBSelection
+
+	// EnableNameResolution enables automatic DNS, NetBIOS, and mDNS name resolution.
+	EnableNameResolution bool
+
+	// ResolveDNS enables reverse DNS PTR lookups.
+	ResolveDNS bool
+
+	// ResolveNetBIOS enables NetBIOS name queries for Windows devices.
+	ResolveNetBIOS bool
+
+	// ResolveMDNS enables mDNS queries for Apple/Linux devices.
+	ResolveMDNS bool
+
+	// NameResolutionTimeout is the timeout for each name resolution query.
+	NameResolutionTimeout time.Duration
 }
 
 // DefaultProfilerConfig returns sensible defaults.
@@ -165,6 +189,25 @@ func DefaultProfilerConfig() *ProfilerConfig {
 		HostDelay:         profilerHostDelayMs * time.Millisecond,
 		ConnectTimeout:    profilerTimeoutS * time.Second,
 		SkipTLSVerify:     false, // Set to true for internal network devices with self-signed certs
+		// Enable automatic SNMP collection when credentials are configured
+		EnableSNMPCollection: true,
+		// Default to interface MIBs for network device discovery
+		SNMPMIBs: &SNMPMIBSelection{
+			System:      true,  // sysDescr, sysName, sysLocation, etc.
+			Interfaces:  true,  // IF-MIB (interface speeds, MACs, status)
+			IPAddresses: true,  // IP-MIB (device IPs)
+			Bridge:      true,  // BRIDGE-MIB (MAC table for switches)
+			VLAN:        true,  // Q-BRIDGE-MIB (VLAN info)
+			LLDP:        true,  // LLDP-MIB (neighbor discovery)
+			Routing:     false, // IP-FORWARD-MIB (disable by default - can be large)
+			Entity:      false, // ENTITY-MIB (disable by default - not always useful)
+		},
+		// Enable automatic name resolution
+		EnableNameResolution:  true,
+		ResolveDNS:            true, // DNS PTR lookups for all IPs
+		ResolveNetBIOS:        true, // NetBIOS for Windows devices
+		ResolveMDNS:           true, // mDNS for Apple/Linux devices
+		NameResolutionTimeout: profilerNameResolveTimeMs * time.Millisecond,
 	}
 }
 
@@ -201,18 +244,31 @@ func (c *ProfilerConfig) GetPortsForIntensity() []int {
 	}
 }
 
+// ResolvedNames holds resolved names for a device.
+type ResolvedNames struct {
+	Hostname    string // DNS PTR resolved name
+	NetBIOSName string // Windows NetBIOS name
+	MDNSName    string // mDNS/Bonjour .local name
+}
+
 // DeviceProfiler automatically profiles newly discovered devices.
 type DeviceProfiler struct {
-	config     *ProfilerConfig
-	snmpConfig *config.SNMPConfig
-	httpClient *http.Client
-	transport  *http.Transport // Store transport for cleanup (fixes #825)
-	mu         sync.RWMutex
-	profiles   map[string]*DeviceProfile // key by IP
-	profiling  map[string]bool           // track in-progress profiles
-	queue      chan string               // IPs to profile
-	stopCh     chan struct{}
-	wg         sync.WaitGroup
+	config          *ProfilerConfig
+	snmpConfig      *config.SNMPConfig
+	snmpCollector   *SNMPCollector   // For full MIB collection
+	netbiosResolver *NetBIOSResolver // For NetBIOS name queries
+	mdnsResolver    *MDNSResolver    // For mDNS name queries
+	httpClient      *http.Client
+	transport       *http.Transport // Store transport for cleanup (fixes #825)
+	mu              sync.RWMutex
+	profiles        map[string]*DeviceProfile // key by IP
+	snmpData        map[string]*SNMPFullData  // Full SNMP MIB data by IP
+	resolvedNames   map[string]*ResolvedNames // Resolved names by IP
+	profiling       map[string]bool           // track in-progress profiles
+	queue           chan string               // IPs to profile
+	stopCh          chan struct{}
+	wg              sync.WaitGroup
+	interfaceName   string // For mDNS resolver
 }
 
 // newProfilerTLSConfig creates a TLS config for the device profiler.
@@ -249,7 +305,7 @@ func NewDeviceProfiler(cfg *ProfilerConfig, snmpCfg *config.SNMPConfig) *DeviceP
 		}).DialContext,
 	}
 
-	return &DeviceProfiler{
+	p := &DeviceProfiler{
 		config:     cfg,
 		snmpConfig: snmpCfg,
 		transport:  transport, // Store for cleanup (fixes #825)
@@ -260,10 +316,47 @@ func NewDeviceProfiler(cfg *ProfilerConfig, snmpCfg *config.SNMPConfig) *DeviceP
 				return http.ErrUseLastResponse // Don't follow redirects
 			},
 		},
-		profiles:  make(map[string]*DeviceProfile),
-		profiling: make(map[string]bool),
-		queue:     make(chan string, profilerQueueSize),
+		profiles:      make(map[string]*DeviceProfile),
+		snmpData:      make(map[string]*SNMPFullData),
+		resolvedNames: make(map[string]*ResolvedNames),
+		profiling:     make(map[string]bool),
+		queue:         make(chan string, profilerQueueSize),
 	}
+
+	// Initialize SNMP collector if credentials are configured and collection is enabled
+	if cfg.EnableSNMPCollection && snmpCfg != nil && p.hasSNMPCredentials() {
+		mibConfig := SNMPMIBSelection{
+			System:      true,
+			Interfaces:  true,
+			IPAddresses: true,
+			Bridge:      true,
+			VLAN:        true,
+			LLDP:        true,
+		}
+		if cfg.SNMPMIBs != nil {
+			mibConfig = *cfg.SNMPMIBs
+		}
+		p.snmpCollector = NewSNMPCollector(snmpCfg, mibConfig)
+		logging.GetLogger().Info("SNMP collector initialized for automatic MIB polling",
+			"communities", len(snmpCfg.Communities),
+			"v3creds", len(snmpCfg.V3Credentials))
+	}
+
+	// Initialize name resolvers if enabled
+	if cfg.EnableNameResolution {
+		if cfg.ResolveNetBIOS {
+			p.netbiosResolver = NewNetBIOSResolver()
+		}
+		if cfg.ResolveMDNS {
+			p.mdnsResolver = NewMDNSResolver("") // Interface set later via SetInterface
+		}
+		logging.GetLogger().Info("Name resolution initialized",
+			"dns", cfg.ResolveDNS,
+			"netbios", cfg.ResolveNetBIOS,
+			"mdns", cfg.ResolveMDNS)
+	}
+
+	return p
 }
 
 // UpdateScanConfig updates the port scanning configuration.
@@ -581,8 +674,185 @@ func (p *DeviceProfiler) profileDevice(ip string) {
 	profile.HTTPInfo = p.probeHTTPFromOpenPorts(ctx, ip, profile.OpenPorts)
 	profile.SNMPInfo = p.probeSNMPAndLog(ctx, ip)
 
+	// Collect full SNMP MIB data if SNMP collector is available
+	p.collectFullSNMPData(ctx, ip)
+
+	// Perform name resolution (DNS, NetBIOS, mDNS)
+	p.resolveDeviceNames(ctx, ip)
+
 	p.inferDeviceType(profile)
 	p.storeProfileAndLog(ctx, ip, profile)
+}
+
+// collectFullSNMPData performs full SNMP MIB collection for a device.
+// This is called automatically when SNMP credentials are configured.
+func (p *DeviceProfiler) collectFullSNMPData(ctx context.Context, ip string) {
+	if p.snmpCollector == nil {
+		return
+	}
+
+	logging.GetLogger().DebugContext(ctx, "Starting full SNMP MIB collection", "ip", ip)
+
+	data, err := p.snmpCollector.Collect(ctx, ip)
+	if err != nil {
+		logging.GetLogger().DebugContext(ctx, "SNMP MIB collection failed", "ip", ip, "error", err)
+		return
+	}
+
+	// Store the SNMP data
+	p.mu.Lock()
+	p.snmpData[ip] = data
+	p.mu.Unlock()
+
+	// Log summary of what was collected
+	ifCount := len(data.Interfaces)
+	macCount := len(data.MACTable)
+	vlanCount := len(data.VLANs)
+	lldpCount := len(data.LLDPNeighbors)
+	errCount := len(data.Errors)
+
+	if ifCount > 0 || macCount > 0 || vlanCount > 0 || lldpCount > 0 {
+		logging.GetLogger().InfoContext(ctx, "SNMP MIB data collected",
+			"ip", ip,
+			"interfaces", ifCount,
+			"macs", macCount,
+			"vlans", vlanCount,
+			"lldp", lldpCount,
+			"errors", errCount)
+	} else if errCount > 0 {
+		logging.GetLogger().DebugContext(ctx, "SNMP MIB collection had errors",
+			"ip", ip,
+			"errors", data.Errors)
+	}
+}
+
+// resolveDeviceNames performs DNS, NetBIOS, and mDNS name resolution for a device.
+func (p *DeviceProfiler) resolveDeviceNames(ctx context.Context, ip string) {
+	if !p.config.EnableNameResolution {
+		return
+	}
+
+	names := &ResolvedNames{}
+	resolved := false
+
+	// DNS PTR lookup
+	if p.config.ResolveDNS {
+		if hostname := p.resolveDNS(ctx, ip); hostname != "" {
+			names.Hostname = hostname
+			resolved = true
+		}
+	}
+
+	// NetBIOS name query
+	if p.config.ResolveNetBIOS && p.netbiosResolver != nil {
+		if nbName := p.resolveNetBIOS(ctx, ip); nbName != "" {
+			names.NetBIOSName = nbName
+			resolved = true
+		}
+	}
+
+	// mDNS name query
+	if p.config.ResolveMDNS && p.mdnsResolver != nil {
+		if mdnsName := p.resolveMDNS(ctx, ip); mdnsName != "" {
+			names.MDNSName = mdnsName
+			resolved = true
+		}
+	}
+
+	// Only store if we resolved at least one name
+	if resolved {
+		p.mu.Lock()
+		p.resolvedNames[ip] = names
+		p.mu.Unlock()
+
+		logging.GetLogger().DebugContext(ctx, "Name resolution completed",
+			"ip", ip,
+			"hostname", names.Hostname,
+			"netbios", names.NetBIOSName,
+			"mdns", names.MDNSName)
+	}
+}
+
+// resolveDNS performs reverse DNS lookup for an IP.
+func (p *DeviceProfiler) resolveDNS(ctx context.Context, ip string) string {
+	timeout := p.config.NameResolutionTimeout
+	if timeout == 0 {
+		timeout = profilerNameResolveTimeMs * time.Millisecond
+	}
+
+	lookupCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	names, err := net.DefaultResolver.LookupAddr(lookupCtx, ip)
+	if err != nil {
+		logging.GetLogger().DebugContext(ctx, "DNS lookup failed", "ip", ip, "error", err)
+		return ""
+	}
+
+	if len(names) > 0 {
+		hostname := strings.TrimSuffix(names[0], ".")
+		logging.GetLogger().DebugContext(ctx, "DNS resolved", "ip", ip, "hostname", hostname)
+		return hostname
+	}
+	return ""
+}
+
+// resolveNetBIOS performs NetBIOS name query for an IP.
+func (p *DeviceProfiler) resolveNetBIOS(ctx context.Context, ip string) string {
+	if p.netbiosResolver == nil {
+		return ""
+	}
+
+	name, err := p.netbiosResolver.ResolveIP(ctx, ip)
+	if err != nil {
+		logging.GetLogger().DebugContext(ctx, "NetBIOS lookup failed", "ip", ip, "error", err)
+		return ""
+	}
+	if name != "" {
+		logging.GetLogger().DebugContext(ctx, "NetBIOS resolved", "ip", ip, "name", name)
+	}
+	return name
+}
+
+// resolveMDNS performs mDNS name query for an IP.
+func (p *DeviceProfiler) resolveMDNS(ctx context.Context, ip string) string {
+	if p.mdnsResolver == nil {
+		return ""
+	}
+
+	name, err := p.mdnsResolver.ResolveIP(ctx, ip)
+	if err != nil {
+		logging.GetLogger().DebugContext(ctx, "mDNS lookup failed", "ip", ip, "error", err)
+		return ""
+	}
+	if name != "" {
+		logging.GetLogger().DebugContext(ctx, "mDNS resolved", "ip", ip, "name", name)
+	}
+	return name
+}
+
+// GetResolvedNames returns the resolved names for an IP address.
+func (p *DeviceProfiler) GetResolvedNames(ip string) *ResolvedNames {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.resolvedNames[ip]
+}
+
+// SetInterface sets the interface name for mDNS resolver.
+func (p *DeviceProfiler) SetInterface(interfaceName string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.interfaceName = interfaceName
+	if p.mdnsResolver != nil {
+		p.mdnsResolver = NewMDNSResolver(interfaceName)
+	}
+}
+
+// ClearResolvedNames removes all stored resolved names.
+func (p *DeviceProfiler) ClearResolvedNames() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.resolvedNames = make(map[string]*ResolvedNames)
 }
 
 // checkPortWithConfig checks if a TCP port is open using configurable settings.
@@ -946,6 +1216,38 @@ func (p *DeviceProfiler) IsProfiling(ip string) bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.profiling[ip]
+}
+
+// hasSNMPCredentials returns true if SNMP credentials are configured.
+func (p *DeviceProfiler) hasSNMPCredentials() bool {
+	if p.snmpConfig == nil {
+		return false
+	}
+	return len(p.snmpConfig.Communities) > 0 || len(p.snmpConfig.V3Credentials) > 0
+}
+
+// GetSNMPData returns the full SNMP MIB data for an IP address.
+func (p *DeviceProfiler) GetSNMPData(ip string) *SNMPFullData {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.snmpData[ip]
+}
+
+// GetAllSNMPData returns all collected SNMP MIB data.
+func (p *DeviceProfiler) GetAllSNMPData() map[string]*SNMPFullData {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	result := make(map[string]*SNMPFullData, len(p.snmpData))
+	maps.Copy(result, p.snmpData)
+	return result
+}
+
+// ClearSNMPData removes all stored SNMP data.
+func (p *DeviceProfiler) ClearSNMPData() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.snmpData = make(map[string]*SNMPFullData)
 }
 
 // ProfilingStatus represents the current state of the device profiler.

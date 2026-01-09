@@ -398,7 +398,7 @@ func (s *Service) SetInterface(name string) error {
 func (s *Service) GetDevices() []*DiscoveredDevice {
 	devices := s.deviceDiscovery.GetDevices()
 
-	// Attach profiles and queue profiling for unprofiled devices
+	// Attach profiles, SNMP data, resolved names, and queue profiling for unprofiled devices
 	for _, device := range devices {
 		if device.IP != "" {
 			if profile := s.profiler.GetProfile(device.IP); profile != nil {
@@ -406,6 +406,31 @@ func (s *Service) GetDevices() []*DiscoveredDevice {
 			} else if !s.profiler.IsProfiling(device.IP) {
 				// Queue for profiling
 				_ = s.profiler.QueueProfile(device.IP)
+			}
+			// Attach full SNMP MIB data if available
+			if snmpData := s.profiler.GetSNMPData(device.IP); snmpData != nil {
+				device.SNMPData = snmpData
+			}
+			// Attach resolved names if available (DNS, NetBIOS, mDNS)
+			if names := s.profiler.GetResolvedNames(device.IP); names != nil {
+				if names.Hostname != "" && device.Hostname == "" {
+					device.Hostname = names.Hostname
+				}
+				if names.NetBIOSName != "" && device.NetBIOSName == "" {
+					device.NetBIOSName = names.NetBIOSName
+				}
+				if names.MDNSName != "" && device.MDNSName == "" {
+					device.MDNSName = names.MDNSName
+				}
+				// Update display name if we got new names
+				device.DisplayName = device.ComputeDisplayName()
+			}
+			// Infer Wake-on-LAN capability if not already set
+			if device.WoLCapable == nil && device.Profile != nil {
+				device.WoLCapable = InferWoLCapability(device)
+				if device.WoLStatus == "" {
+					device.WoLStatus = WoLStatusUntested
+				}
 			}
 		}
 	}
@@ -541,6 +566,8 @@ func (s *Service) GetOptions() config.DiscoveryOptions {
 func (s *Service) ClearDevices() {
 	s.deviceDiscovery.ClearDevices()
 	s.profiler.ClearProfiles()
+	s.profiler.ClearSNMPData()
+	s.profiler.ClearResolvedNames()
 }
 
 // DeviceDiscovery returns the underlying DeviceDiscovery for direct access if needed.
