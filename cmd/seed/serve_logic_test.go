@@ -110,8 +110,8 @@ func TestPrintSetupBannerProtocolLogic(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name         string
-		https        bool
+		name          string
+		https         bool
 		expectedProto string
 	}{
 		{

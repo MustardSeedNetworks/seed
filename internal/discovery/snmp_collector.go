@@ -68,6 +68,15 @@ type SNMPInterface struct {
 	MAC         string `json:"mac,omitempty"`         // ifPhysAddress
 	AdminStatus string `json:"adminStatus,omitempty"` // up/down
 	OperStatus  string `json:"operStatus,omitempty"`  // up/down/dormant
+
+	// Interface counters for bandwidth monitoring (IF-MIB/IF-MIB-X)
+	InOctets    uint64 `json:"inOctets,omitempty"`    // ifHCInOctets (64-bit) or ifInOctets (32-bit)
+	OutOctets   uint64 `json:"outOctets,omitempty"`   // ifHCOutOctets (64-bit) or ifOutOctets (32-bit)
+	InErrors    uint64 `json:"inErrors,omitempty"`    // ifInErrors
+	OutErrors   uint64 `json:"outErrors,omitempty"`   // ifOutErrors
+	InDiscards  uint64 `json:"inDiscards,omitempty"`  // ifInDiscards
+	OutDiscards uint64 `json:"outDiscards,omitempty"` // ifOutDiscards
+	LastUpdated int64  `json:"lastUpdated,omitempty"` // Unix timestamp when counters were collected
 }
 
 // SNMPIPAddress represents an IP address from IP-MIB.
@@ -428,6 +437,13 @@ func (c *SNMPCollector) collectInterfaces(ctx context.Context, ip string) ([]SNM
 		return nil, fmt.Errorf("get interfaces: %w", err)
 	}
 
+	// Also collect interface counters for bandwidth monitoring
+	counters, countersErr := snmp.GetInterfaceCounters(ctx, ip, c.config)
+	if countersErr != nil {
+		logging.GetLogger().DebugContext(ctx, "Failed to get interface counters", "ip", ip, "error", countersErr)
+		// Don't fail - counters are optional enhancement
+	}
+
 	result := make([]SNMPInterface, len(interfaces))
 	for i := range interfaces {
 		iface := &interfaces[i]
@@ -444,6 +460,19 @@ func (c *SNMPCollector) collectInterfaces(ctx context.Context, ip string) ([]SNM
 			MAC:         iface.MACAddress,
 			AdminStatus: iface.AdminStatus,
 			OperStatus:  iface.OperStatus,
+		}
+
+		// Add counter data if available (for bandwidth monitoring)
+		if counters != nil {
+			if counter, ok := counters[iface.Index]; ok {
+				result[i].InOctets = counter.InOctets
+				result[i].OutOctets = counter.OutOctets
+				result[i].InErrors = counter.InErrors
+				result[i].OutErrors = counter.OutErrors
+				result[i].InDiscards = counter.InDiscards
+				result[i].OutDiscards = counter.OutDiscards
+				result[i].LastUpdated = counter.Timestamp
+			}
 		}
 	}
 
