@@ -330,6 +330,21 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if requested interface has connectivity via link monitor
+	currentIface := s.getInterfaceFromRequest(r)
+	if currentIface != "" && s.linkMonitor != nil {
+		// If link is down, return disconnected status
+		if !s.linkMonitor.IsUp() {
+			resp := GatewayResponse{
+				Gateway:   "",
+				Reachable: false,
+				Status:    "disconnected",
+			}
+			sendJSONResponse(w, logger, http.StatusOK, resp)
+			return
+		}
+	}
+
 	// Perform IPv4 gateway ping test
 	stats := s.gatewayTester.Test()
 

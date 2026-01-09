@@ -263,7 +263,12 @@ export function useNetworkFetchers({
   // Fetch DNS test data
   const fetchDnsData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/sap/dns`, {
+      // Use ref to get current interface without dependency change (#754)
+      const iface = currentInterfaceRef.current;
+      const url = iface
+        ? `${API_BASE}/api/sap/dns?interface=${encodeURIComponent(iface)}`
+        : `${API_BASE}/api/sap/dns`;
+      const response = await fetch(url, {
         credentials: "include",
       });
       if (response.ok) {
@@ -348,7 +353,12 @@ export function useNetworkFetchers({
   // Fetch Gateway ping data
   const fetchGatewayData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/sap/gateway`, {
+      // Use ref to get current interface without dependency change (#754)
+      const iface = currentInterfaceRef.current;
+      const url = iface
+        ? `${API_BASE}/api/sap/gateway?interface=${encodeURIComponent(iface)}`
+        : `${API_BASE}/api/sap/gateway`;
+      const response = await fetch(url, {
         credentials: "include",
       });
       if (response.ok) {
