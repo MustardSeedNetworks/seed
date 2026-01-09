@@ -511,14 +511,25 @@ export function useNetworkFetchers({
         const devicesData = await devicesRes.json();
         const status = await statusRes.json();
 
-        if (controller.signal.aborted || currentInterfaceRef.current !== requestedInterface) {
+        // Only abort if the request was explicitly cancelled
+        // Network discovery data is global (not interface-specific), so interface changes
+        // shouldn't invalidate the data
+        if (controller.signal.aborted) {
+          logger.debug(LogComponents.Devices, "Network discovery fetch aborted", {
+            requestedInterface,
+          });
           return;
         }
 
         // devicesData contains { devices: [...], status: {...} }
         // Extract the devices array from the response
+        const devices = devicesData.devices || [];
+        logger.debug(LogComponents.Devices, "Network discovery data received", {
+          deviceCount: devices.length,
+          scanning: status?.scanning,
+        });
         setNetworkDiscovery({
-          devices: devicesData.devices || [],
+          devices,
           status: status || {
             scanning: false,
             deviceCount: 0,
@@ -528,6 +539,12 @@ export function useNetworkFetchers({
             localIP: "",
             interface: requestedInterface,
           },
+        });
+      } else {
+        // Log error responses for debugging
+        logger.warn(LogComponents.Devices, "Network discovery API error", {
+          devicesStatus: devicesRes.status,
+          statusStatus: statusRes.status,
         });
       }
     } catch (err) {
