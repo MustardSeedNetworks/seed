@@ -90,6 +90,7 @@ class Logger {
   private sessionId: string;
   private config: LoggerConfig;
   private currentRequestId: string | undefined;
+  private authenticated = false;
 
   constructor(config: Partial<LoggerConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -107,6 +108,17 @@ class Logger {
           this.flush();
         }
       });
+    }
+  }
+
+  /**
+   * Set authentication state. When not authenticated, logs are only sent to console.
+   */
+  setAuthenticated(isAuthenticated: boolean): void {
+    this.authenticated = isAuthenticated;
+    // Flush any buffered logs when we become authenticated
+    if (isAuthenticated && this.buffer.length > 0) {
+      this.flush();
     }
   }
 
@@ -203,9 +215,20 @@ class Logger {
   /**
    * Flush buffered logs to the backend.
    * Fixes #866: Hard cap buffer at 500 entries to prevent unbounded memory growth.
+   * Only sends to backend when authenticated to avoid 401 spam.
    */
   async flush(): Promise<void> {
     if (this.buffer.length === 0) return;
+
+    // Don't send to backend if not authenticated - keep logs in buffer
+    if (!this.authenticated) {
+      // Hard cap buffer to prevent unbounded growth while waiting for auth
+      const maxBufferSize = 500;
+      if (this.buffer.length > maxBufferSize) {
+        this.buffer = this.buffer.slice(-maxBufferSize);
+      }
+      return;
+    }
 
     const entries = [...this.buffer];
     this.buffer = [];
@@ -216,6 +239,7 @@ class Logger {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // Include cookies for auth
         body: JSON.stringify({ entries }),
         // Use keepalive for page unload scenarios
         keepalive: true,
