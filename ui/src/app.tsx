@@ -41,7 +41,7 @@ import { useInterfaceState } from "./hooks/useInterfaceState";
 import { useNetworkFetchers } from "./hooks/useNetworkFetchers";
 import { useTheme } from "./hooks/useTheme";
 import { useWebSocket } from "./hooks/useWebSocket";
-import { setSessionExpiredCallback } from "./lib/api";
+import { api, setSessionExpiredCallback } from "./lib/api";
 import { LogComponents, logger } from "./lib/logger";
 
 // API base URL - configurable via environment variable
@@ -268,37 +268,31 @@ function App() {
           : null,
       );
 
-      const response = await fetch(`${API_BASE}/api/shell/devices/scan`, {
-        method: "POST",
-        credentials: "include",
-      });
+      await api.post("/api/shell/devices/scan");
 
-      if (response.ok) {
-        // Poll for completion
-        scanPollIntervalRef.current = setInterval(async () => {
-          const statusRes = await fetch(`${API_BASE}/api/shell/devices/status`, {
-            credentials: "include",
-          });
-          if (statusRes.ok) {
-            const status = await statusRes.json();
-            if (!status.scanning) {
-              if (scanPollIntervalRef.current) {
-                clearInterval(scanPollIntervalRef.current);
-                scanPollIntervalRef.current = null;
-              }
-              fetchNetworkDiscovery();
+      // Poll for completion
+      scanPollIntervalRef.current = setInterval(async () => {
+        try {
+          const status = await api.get<{ scanning: boolean }>("/api/shell/devices/status");
+          if (!status.scanning) {
+            if (scanPollIntervalRef.current) {
+              clearInterval(scanPollIntervalRef.current);
+              scanPollIntervalRef.current = null;
             }
+            fetchNetworkDiscovery();
           }
-        }, 1000);
+        } catch {
+          // Status check failed, keep polling
+        }
+      }, 1000);
 
-        // Safety timeout - stop polling after 60 seconds
-        scanTimeoutRef.current = setTimeout(() => {
-          if (scanPollIntervalRef.current) {
-            clearInterval(scanPollIntervalRef.current);
-            scanPollIntervalRef.current = null;
-          }
-        }, 60000);
-      }
+      // Safety timeout - stop polling after 60 seconds
+      scanTimeoutRef.current = setTimeout(() => {
+        if (scanPollIntervalRef.current) {
+          clearInterval(scanPollIntervalRef.current);
+          scanPollIntervalRef.current = null;
+        }
+      }, 60000);
     } catch (err) {
       logger.error(LogComponents.Devices, "Failed to trigger device scan", err);
       setNetworkDiscovery((prev) =>
@@ -875,20 +869,25 @@ function App() {
               {t("sections.testingDiscovery")}
             </h2>
             <div className={layout.grid.cards}>
-              {/* Common cards for both interface types */}
-              <HealthCheckCard loading={loading} />
-              {cardSettings.performance.enabled && (
-                <PerformanceCard
-                  loading={loading}
-                  runSpeedtestEnabled={
-                    cardSettings.performance.speedtest.enabled &&
-                    cardSettings.performance.speedtest.autoRunOnLink
-                  }
-                  runIperfEnabled={
-                    cardSettings.performance.iperf.enabled &&
-                    cardSettings.performance.iperf.autoRunOnLink
-                  }
-                />
+              {/* Test cards - only show when connected to the selected interface type */}
+              {/* Fix: Don't show test results from wired when in WiFi mode but disconnected */}
+              {(!isWifi || cards.wifi) && (
+                <>
+                  <HealthCheckCard loading={loading} />
+                  {cardSettings.performance.enabled && (
+                    <PerformanceCard
+                      loading={loading}
+                      runSpeedtestEnabled={
+                        cardSettings.performance.speedtest.enabled &&
+                        cardSettings.performance.speedtest.autoRunOnLink
+                      }
+                      runIperfEnabled={
+                        cardSettings.performance.iperf.enabled &&
+                        cardSettings.performance.iperf.autoRunOnLink
+                      }
+                    />
+                  )}
+                </>
               )}
 
               {/* Ethernet-only: Network Discovery (ARP/LLDP/SNMP) */}
@@ -900,12 +899,14 @@ function App() {
                 />
               )}
 
-              {/* Path Discovery - Traceroute visualization */}
-              <PathDiscoveryCard
-                gateway={cards.gateway?.gateway}
-                dnsServer={cards.dns?.servers?.[0]?.address}
-                onRegisterTraceHandler={registerTraceHopHandler}
-              />
+              {/* Path Discovery - only show when connected */}
+              {(!isWifi || cards.wifi) && (
+                <PathDiscoveryCard
+                  gateway={cards.gateway?.gateway}
+                  dnsServer={cards.dns?.servers?.[0]?.address}
+                  onRegisterTraceHandler={registerTraceHopHandler}
+                />
+              )}
 
               {/* WiFi-only: WiFi Survey for heatmaps and site surveys */}
               {/* Fix #572: Pass current interface to avoid hardcoded "wlan0" */}

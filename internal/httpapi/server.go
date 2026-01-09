@@ -960,6 +960,26 @@ func (s *Server) Start() error {
 			"methods", status.ActiveMethods)
 	}
 
+	// Trigger initial device discovery scan to populate subnet info immediately
+	// This ensures /api/shell/devices/status returns valid subnet info on first call
+	// without requiring a manual scan trigger from the frontend
+	if s.config.NetworkDiscovery.Enabled {
+		go func() {
+			ctx, cancel := context.WithTimeout(
+				context.Background(),
+				s.config.NetworkDiscovery.ScanTimeout,
+			)
+			defer cancel()
+			logging.GetLogger().Info("Triggering initial device discovery scan on startup")
+			if err := s.deviceDiscovery.Scan(ctx); err != nil {
+				logging.GetLogger().Warn("Initial device discovery scan failed", "error", err)
+			} else {
+				logging.GetLogger().Info("Initial device discovery scan completed",
+					"deviceCount", s.deviceDiscovery.Count())
+			}
+		}()
+	}
+
 	// Start VLAN traffic monitor (requires root/CAP_NET_RAW)
 	if err := s.vlanTrafficMonitor.Start(); err != nil {
 		logging.GetLogger().

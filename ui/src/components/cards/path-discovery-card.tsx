@@ -41,10 +41,9 @@ import type {
   TracerouteHop,
   TracerouteResult,
 } from "../../types";
+import { api } from "../../lib/api";
 import { Card, CardDivider, CardValue, type Status } from "../ui/card";
 import { ChevronDown, ChevronUp, Route } from "../ui/icons";
-
-const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 type Protocol = "icmp" | "udp" | "tcp";
 
@@ -137,25 +136,13 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
       activeTraceRef.current = traceTarget.trim(); // Set active trace target
 
       try {
-        const response = await fetch(`${API_BASE}/api/roots/path`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            source: "self",
-            destination: traceTarget.trim(),
-            method: "both", // Always do both L2+L3
-            protocol,
-            port: protocol !== "icmp" ? port : undefined,
-          }),
+        const data = await api.post<PathResponse>("/api/roots/path", {
+          source: "self",
+          destination: traceTarget.trim(),
+          method: "both", // Always do both L2+L3
+          protocol,
+          port: protocol !== "icmp" ? port : undefined,
         });
-
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.message || "Path discovery failed");
-        }
-
-        const data: PathResponse = await response.json();
         setResult(data);
         setStreamingHops([]); // Clear streaming hops now that we have full result
         activeTraceRef.current = null;

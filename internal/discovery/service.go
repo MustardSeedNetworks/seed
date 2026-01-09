@@ -140,6 +140,20 @@ func (s *Service) Start() error {
 		go s.rescanLoop()
 	}
 
+	// Trigger initial scan asynchronously to populate subnet info immediately (fixes #XXX)
+	// This ensures GetStatus() returns valid subnet info without waiting for the first
+	// scheduled rescan or manual trigger from the frontend
+	if s.shouldDoActiveScan() {
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), s.cfg.NetworkDiscovery.ScanTimeout)
+			defer cancel()
+			logging.GetLogger().Info("Triggering initial discovery scan on startup")
+			if err := s.Scan(ctx); err != nil {
+				logging.GetLogger().Warn("Initial discovery scan failed", "error", err)
+			}
+		}()
+	}
+
 	return nil
 }
 
