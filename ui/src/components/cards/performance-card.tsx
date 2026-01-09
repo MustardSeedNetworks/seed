@@ -31,8 +31,8 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { useSettings } from "../../contexts/useSettings";
+import { api } from "../../lib/api";
 import { LogComponents, logger } from "../../lib/logger";
 import { cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
 import { Card, CardDivider, CardRow, CardValue, type Status } from "../ui/card";
@@ -380,14 +380,7 @@ export const PerformanceCard = memo(function PerformanceCard({
     setSpeedtestStatus({ running: true, phase: "finding_server", progress: 0 });
 
     try {
-      const res = await fetch("/api/sap/speedtest", {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || t("performance.speedtestFailed"));
-      }
+      await api.post("/api/sap/speedtest");
     } catch (err) {
       setSpeedtestError(err instanceof Error ? err.message : t("performance.speedtestFailed"));
       setSpeedtestStatus({ running: false, phase: "idle", progress: 0 });
@@ -411,26 +404,15 @@ export const PerformanceCard = memo(function PerformanceCard({
     setIperfClientStatus({ running: true, phase: "connecting", progress: 0 });
 
     try {
-      const res = await fetch("/api/sap/iperf/client", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          server: iperfSettings.server,
-          port: iperfSettings.port,
-          protocol: iperfSettings.protocol,
-          direction: iperfSettings.direction,
-          reverse: iperfSettings.direction === "download",
-          duration: iperfSettings.duration,
-          parallel: 1,
-        }),
+      await api.post("/api/sap/iperf/client", {
+        server: iperfSettings.server,
+        port: iperfSettings.port,
+        protocol: iperfSettings.protocol,
+        direction: iperfSettings.direction,
+        reverse: iperfSettings.direction === "download",
+        duration: iperfSettings.duration,
+        parallel: 1,
       });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "iperf3 test failed");
-      }
     } catch (err) {
       setIperfError(err instanceof Error ? err.message : t("performance.iperfFailed"));
       setIperfClientStatus({ running: false, phase: "idle", progress: 0 });

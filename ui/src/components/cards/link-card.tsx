@@ -144,7 +144,7 @@ export const LinkCard = memo(function LinkCard({ data, loading }: LinkCardProps)
 
   const getLocalizedStatusText = (linkData: LinkData): string => {
     if (!linkData.carrier) return tc("status.noCarrier");
-    if (!linkData.hasIp) return tc("status.noIp");
+    if (!linkData.hasIp) return tc("status.noIP");
     return linkData.speed || tc("status.connected");
   };
 
