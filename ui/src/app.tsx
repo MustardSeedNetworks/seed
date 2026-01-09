@@ -310,16 +310,11 @@ function App() {
   const changeInterface = useCallback(
     async (interfaceName: string) => {
       try {
-        const response = await fetch(`${API_BASE}/api/interface`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ interface: interfaceName }),
+        // Use api.put() which handles CSRF tokens automatically
+        const data = await api.put<{ isWireless?: boolean }>("/api/interface", {
+          interface: interfaceName,
         });
-        if (response.ok) {
-          const data = await response.json();
+        if (data) {
           setCurrentInterface(interfaceName);
           // Update ref immediately so fetch functions use the new interface (#754)
           // React state updates are async, but fetch functions read from ref synchronously
