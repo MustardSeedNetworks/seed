@@ -847,16 +847,22 @@ function App() {
               {t("sections.network")}
             </h2>
             <div className={layout.grid.cards}>
-              <NetworkCard
-                data={cards.dhcp}
-                publicip={cards.publicip}
-                loading={loading}
-                showPublicIp={displayOptions.showPublicIp}
-              />
-              <GatewayCard data={cards.gateway} loading={loading} />
-              <DnsCard data={cards.dns} loading={loading} />
-              {/* Public IP Card - shows geolocation, ISP/ASN, and IP history */}
-              <PublicIpCard data={cards.publicip} loading={loading} />
+              {/* Network info cards - hide when in WiFi mode without WiFi connection */}
+              {/* Prevents showing wired interface data when user selected WiFi mode */}
+              {(!isWifi || cards.wifi) && (
+                <>
+                  <NetworkCard
+                    data={cards.dhcp}
+                    publicip={cards.publicip}
+                    loading={loading}
+                    showPublicIp={displayOptions.showPublicIp}
+                  />
+                  <GatewayCard data={cards.gateway} loading={loading} />
+                  <DnsCard data={cards.dns} loading={loading} />
+                  {/* Public IP Card - shows geolocation, ISP/ASN, and IP history */}
+                  <PublicIpCard data={cards.publicip} loading={loading} />
+                </>
+              )}
             </div>
           </section>
 
