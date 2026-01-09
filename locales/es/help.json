@@ -15,7 +15,10 @@
     "gateway": "Puerta de enlace",
     "dns": "Pruebas DNS",
     "performance": "Pruebas de rendimiento",
-    "discovery": "Descubrimiento de red"
+    "discovery": "Descubrimiento de red",
+    "healthChecks": "Verificaciones de salud",
+    "security": "Seguridad y administración",
+    "troubleshooting": "Solución de problemas"
   },
   "instructions": {
     "runTests": "Toque el botón de reproducir para ejecutar todas las pruebas.",
@@ -324,6 +327,257 @@
         "lldpCdp": {
           "term": "LLDP/CDP",
           "description": "Protocolo de descubrimiento de capa de enlace (estándar) o Protocolo de descubrimiento de Cisco - proporciona información sobre switches de red conectados directamente."
+        }
+      }
+    },
+    "healthChecks": {
+      "description": "Monitoree la disponibilidad de endpoints con verificaciones automáticas de ping, TCP y HTTP.",
+      "terms": {
+        "pingTest": {
+          "term": "Prueba de Ping (ICMP)",
+          "description": "Envía solicitudes de eco ICMP para verificar la alcanzabilidad del host. Devuelve métricas de latencia y pérdida de paquetes."
+        },
+        "tcpTest": {
+          "term": "Prueba de Conexión TCP",
+          "description": "Intenta establecer conexión TCP al puerto especificado. Verifica que el servicio está aceptando conexiones."
+        },
+        "httpTest": {
+          "term": "Prueba HTTP",
+          "description": "Realiza solicitud HTTP completa incluyendo DNS, TCP, TLS y mediciones de tiempo de respuesta."
+        },
+        "customTargets": {
+          "term": "Objetivos Personalizados",
+          "description": "Configure sus propios endpoints para monitorear en Configuración → Verificaciones de Salud. Agregue servidores internos, servicios en la nube o infraestructura crítica."
+        },
+        "thresholds": {
+          "term": "Umbrales",
+          "description": "Establezca umbrales de advertencia (amarillo) y críticos (rojo) para latencia. Configure en Configuración → Umbrales."
+        }
+      },
+      "commonIssues": {
+        "title": "Problemas Comunes",
+        "timeout": "Tiempo de espera agotado indica host inalcanzable, firewall bloqueando, o problema de ruta de red.",
+        "highLatency": "Alta latencia puede indicar congestión de red, problemas de enrutamiento, o servidor sobrecargado.",
+        "packetLoss": "Pérdida de paquetes sugiere congestión de red, equipo defectuoso, o interferencia inalámbrica.",
+        "connectionRefused": "Conexión rechazada significa que el servicio no está ejecutándose o no está escuchando en ese puerto."
+      }
+    },
+    "security": {
+      "description": "Funciones de seguridad incluyendo escaneo de dispositivos, detección de vulnerabilidades y gestión de contraseñas.",
+      "terms": {
+        "portScan": {
+          "term": "Escaneo de Puertos",
+          "description": "Identifica puertos de red abiertos en dispositivos descubiertos. Ayuda a detectar servicios no autorizados o riesgos de seguridad."
+        },
+        "vulnScan": {
+          "term": "Escaneo de Vulnerabilidades",
+          "description": "Verifica dispositivos por vulnerabilidades conocidas basándose en servicios detectados, versiones y bases de datos CVE."
+        },
+        "devicePosture": {
+          "term": "Postura del Dispositivo",
+          "description": "Evalúa la postura de seguridad de dispositivos de red incluyendo puertos abiertos, servicios obsoletos y configuraciones incorrectas."
+        },
+        "rogueDhcp": {
+          "term": "Detección de DHCP Malicioso",
+          "description": "Detecta servidores DHCP no autorizados en la red que podrían interceptar tráfico o asignar configuraciones maliciosas."
+        }
+      },
+      "passwordRecovery": {
+        "title": "Recuperación de Contraseña",
+        "description": "Si ha olvidado su contraseña de administrador, puede restablecerla mediante acceso al sistema de archivos (SSH).",
+        "steps": [
+          "Conéctese por SSH al servidor que ejecuta The Seed",
+          "Cree un archivo vacío llamado '.recovery' en el directorio de datos",
+          "Modo usuario: touch ~/.local/share/seed/.recovery",
+          "Modo sistema: sudo touch /var/lib/seed/.recovery",
+          "El servidor detectará el archivo y generará un token de recuperación",
+          "Lea el token desde '.recovery-token' en el mismo directorio",
+          "Ingrese el token en la página de inicio de sesión junto con su nueva contraseña",
+          "El token expira después de 15 minutos y es de un solo uso"
+        ],
+        "note": "Esto requiere acceso al sistema de archivos del servidor, demostrando que tiene acceso de nivel administrador a la máquina."
+      },
+      "portScanDetails": {
+        "title": "Intensidad del Escaneo de Puertos",
+        "description": "Configure el comportamiento del escaneo de puertos en Configuración → Descubrimiento.",
+        "levels": {
+          "off": "Sin escaneo de puertos - solo descubrimiento básico de dispositivos",
+          "light": "Escanea puertos comunes (22, 80, 443, etc.) - ~20 puertos",
+          "normal": "Escaneo extendido de puertos de servicios comunes - ~100 puertos",
+          "aggressive": "Escaneo TCP completo de los 65535 puertos - lento pero exhaustivo"
+        },
+        "commonPorts": {
+          "21": "FTP - Transferencia de archivos (inseguro, use SFTP en su lugar)",
+          "22": "SSH - Acceso seguro por shell",
+          "23": "Telnet - Terminal remota (inseguro, use SSH en su lugar)",
+          "25": "SMTP - Servidor de correo",
+          "53": "DNS - Resolución de nombres",
+          "80": "HTTP - Servidor web (sin cifrar)",
+          "443": "HTTPS - Servidor web seguro",
+          "445": "SMB - Compartición de archivos Windows",
+          "3306": "MySQL - Servidor de base de datos",
+          "3389": "RDP - Escritorio remoto de Windows",
+          "5432": "PostgreSQL - Servidor de base de datos",
+          "8080": "HTTP-Alt - Servidor web alternativo o proxy"
+        }
+      }
+    },
+    "troubleshooting": {
+      "description": "Problemas comunes y sus soluciones.",
+      "categories": {
+        "linkIssues": {
+          "title": "Problemas de Estado de Enlace",
+          "noCarrier": {
+            "symptom": "No se detecta portadora",
+            "causes": [
+              "Cable Ethernet desconectado o desenchufado",
+              "Cable conectado a switch/router sin energía",
+              "Cable Ethernet defectuoso (pruebe un reemplazo)",
+              "Interfaz de red deshabilitada en el SO",
+              "Fallo de hardware en NIC o puerto del switch"
+            ],
+            "solutions": [
+              "Verifique que el cable esté firmemente conectado en ambos extremos",
+              "Verifique que el switch/router esté encendido y el LED del puerto esté activo",
+              "Pruebe con un cable o puerto de switch diferente",
+              "Verifique que 'ip link' o 'ifconfig' muestre la interfaz como UP"
+            ]
+          },
+          "slowSpeed": {
+            "symptom": "Velocidad de enlace menor a la esperada (100Mbps en lugar de 1Gbps)",
+            "causes": [
+              "Cable Cat5 (solo soporta 100Mbps) en lugar de Cat5e/Cat6",
+              "Pares de cable dañados afectando negociación gigabit",
+              "Switch antiguo que no soporta gigabit",
+              "Desajuste de auto-negociación"
+            ],
+            "solutions": [
+              "Use cable Cat5e o Cat6 para velocidades gigabit",
+              "Ejecute prueba de cable para verificar que los 4 pares estén OK",
+              "Intente forzar configuración de velocidad si auto-neg falla"
+            ]
+          }
+        },
+        "cableIssues": {
+          "title": "Fallas en Prueba de Cable",
+          "open": {
+            "symptom": "Par de cable muestra 'Abierto'",
+            "meaning": "El cable está roto o desconectado a la distancia especificada",
+            "solutions": [
+              "Verifique terminación del cable en panel de parcheo o caja de pared",
+              "Reemplace el cable si la falla está a mitad del recorrido",
+              "Re-termine el conector RJ45"
+            ]
+          },
+          "short": {
+            "symptom": "Par de cable muestra 'Cortocircuito'",
+            "meaning": "Dos cables están tocándose (en cortocircuito)",
+            "solutions": [
+              "Inspeccione conectores RJ45 por pines doblados",
+              "Verifique daño en el cable (aplastado, pellizcado)",
+              "Reemplace el cable o re-termine"
+            ]
+          },
+          "impedanceMismatch": {
+            "symptom": "Par de cable muestra 'Desajuste de Impedancia'",
+            "meaning": "La impedancia característica del cable no coincide con los 100Ω esperados",
+            "solutions": [
+              "Evite mezclar tipos de cable en un tramo",
+              "Use técnica de ponchado apropiada",
+              "Reemplace cables de baja calidad"
+            ]
+          }
+        },
+        "dnsIssues": {
+          "title": "Problemas de DNS",
+          "slowResolution": {
+            "symptom": "Búsquedas DNS tomando >100ms",
+            "causes": [
+              "Servidor DNS distante o sobrecargado",
+              "Congestión de red hacia el servidor DNS",
+              "Servidor DNS realizando búsquedas recursivas"
+            ],
+            "solutions": [
+              "Use resolutor DNS local con caché",
+              "Pruebe DNS público más rápido (1.1.1.1, 8.8.8.8)",
+              "Verifique configuración del servidor DNS"
+            ]
+          },
+          "resolutionFailure": {
+            "symptom": "Búsqueda DNS no retorna resultados o NXDOMAIN",
+            "causes": [
+              "Servidor DNS inalcanzable",
+              "El dominio no existe",
+              "Firewall bloqueando UDP 53"
+            ],
+            "solutions": [
+              "Verifique que la IP del servidor DNS sea correcta",
+              "Pruebe servidor DNS alternativo",
+              "Verifique reglas del firewall"
+            ]
+          }
+        },
+        "gatewayIssues": {
+          "title": "Problemas de Puerta de Enlace",
+          "unreachable": {
+            "symptom": "Puerta de enlace muestra como inalcanzable",
+            "causes": [
+              "Puerta de enlace/router apagado o bloqueado",
+              "Configuración IP incorrecta",
+              "Interfaz de red no conectada",
+              "ICMP deshabilitado en puerta de enlace (raro)"
+            ],
+            "solutions": [
+              "Verifique que la IP de la puerta de enlace coincida con la IP LAN del router",
+              "Verifique conexión física a la red",
+              "Reinicie el router si no responde"
+            ]
+          },
+          "highLatency": {
+            "symptom": "Latencia de puerta de enlace >5ms",
+            "causes": [
+              "Router sobrecargado con tráfico",
+              "Conexión inalámbrica al router",
+              "Interferencia en la red"
+            ],
+            "solutions": [
+              "Use conexión cableada si es posible",
+              "Verifique aplicaciones con alto consumo de ancho de banda",
+              "Reinicie el router para limpiar buffers"
+            ]
+          }
+        },
+        "performanceIssues": {
+          "title": "Problemas de Rendimiento",
+          "slowInternet": {
+            "symptom": "Prueba de velocidad de internet por debajo de lo esperado",
+            "causes": [
+              "Limitación o congestión del ISP",
+              "Interferencia WiFi o señal débil",
+              "Problemas de router o módem",
+              "Hora del día (uso pico)"
+            ],
+            "solutions": [
+              "Pruebe con conexión cableada para aislar problemas WiFi",
+              "Ejecute pruebas en diferentes horarios",
+              "Reinicie módem y router",
+              "Contacte al ISP si es consistentemente lento"
+            ]
+          },
+          "slowLan": {
+            "symptom": "Prueba iperf3 LAN por debajo de lo esperado",
+            "causes": [
+              "Gigabit no negociado (ver estado de enlace)",
+              "Backplane del switch sobrecargado",
+              "Desajuste de dúplex",
+              "Cuello de botella en el servidor"
+            ],
+            "solutions": [
+              "Verifique que ambos extremos muestren 1Gbps dúplex completo",
+              "Pruebe conexión directa sin pasar por el switch",
+              "Verifique disco/CPU del servidor durante la prueba"
+            ]
+          }
         }
       }
     }
