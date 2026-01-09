@@ -4,6 +4,7 @@ package wifi
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -12,8 +13,10 @@ import (
 
 // Darwin platform constants.
 const (
-	infoTimeoutSeconds = 5 // Timeout for WiFi info retrieval operations
-	keyValuePairCount  = 2 // Expected number of parts when splitting key:value pairs
+	infoTimeoutSeconds       = 5  // Timeout for WiFi info retrieval operations
+	connectTimeoutSeconds    = 30 // Timeout for WiFi connection operations
+	disconnectTimeoutSeconds = 10 // Timeout for WiFi disconnect operations
+	keyValuePairCount        = 2  // Expected number of parts when splitting key:value pairs
 )
 
 // isWirelessPlatform checks if interface is wireless on macOS.
@@ -108,4 +111,94 @@ func getInfoPlatform(_ string) *Info {
 	}
 
 	return info
+}
+
+// connectPlatform connects to a WiFi network on macOS.
+// Uses networksetup command for connection management.
+func connectPlatform(iface, ssid, password string) (*ConnectionResult, error) {
+	// macOS uses networksetup to connect to networks
+	ctx, cancel := context.WithTimeout(context.Background(), connectTimeoutSeconds*time.Second)
+	defer cancel()
+
+	var cmd *exec.Cmd
+	if password != "" {
+		cmd = exec.CommandContext(ctx, "networksetup", "-setairportnetwork", iface, ssid, password)
+	} else {
+		cmd = exec.CommandContext(ctx, "networksetup", "-setairportnetwork", iface, ssid)
+	}
+
+	output, err := cmd.CombinedOutput()
+	outputStr := strings.TrimSpace(string(output))
+
+	if err != nil {
+		if strings.Contains(outputStr, "Could not find network") {
+			return &ConnectionResult{
+				Success: false,
+				Message: "Network not found. Make sure the network is in range.",
+				SSID:    ssid,
+			}, nil
+		}
+		return &ConnectionResult{
+			Success: false,
+			Message: outputStr,
+			SSID:    ssid,
+		}, nil
+	}
+
+	// Empty output usually means success on macOS
+	if outputStr == "" {
+		return &ConnectionResult{
+			Success: true,
+			Message: "Successfully connected to " + ssid,
+			SSID:    ssid,
+		}, nil
+	}
+
+	return &ConnectionResult{
+		Success: false,
+		Message: outputStr,
+		SSID:    ssid,
+	}, nil
+}
+
+// disconnectPlatform disconnects from WiFi on macOS.
+func disconnectPlatform(iface string) (*ConnectionResult, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), disconnectTimeoutSeconds*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "networksetup", "-setairportpower", iface, "off")
+	if _, err := cmd.CombinedOutput(); err != nil {
+		return &ConnectionResult{
+			Success: false,
+			Message: "Failed to disconnect",
+		}, nil
+	}
+
+	// Turn WiFi back on (just disconnected from network)
+	cmd = exec.CommandContext(ctx, "networksetup", "-setairportpower", iface, "on")
+	_, _ = cmd.CombinedOutput()
+
+	return &ConnectionResult{
+		Success: true,
+		Message: "Successfully disconnected",
+	}, nil
+}
+
+// getSavedNetworksPlatform returns saved WiFi networks on macOS.
+func getSavedNetworksPlatform() ([]SavedNetwork, error) {
+	// macOS doesn't have an easy way to list saved networks via command line
+	// Would need to use CoreWLAN framework or parse preference files
+	return []SavedNetwork{}, nil
+}
+
+// forgetNetworkPlatform removes a saved WiFi network on macOS.
+func forgetNetworkPlatform(ssid string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), disconnectTimeoutSeconds*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "networksetup", "-removepreferredwirelessnetwork", "en0", ssid)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to forget network: %s", strings.TrimSpace(string(output)))
+	}
+	return nil
 }

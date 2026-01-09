@@ -370,6 +370,239 @@ func (s *Server) handleWiFiStatus(w http.ResponseWriter, r *http.Request) {
 // WiFi Channel Graph Handler
 // ============================================================================
 
+// ============================================================================
+// WiFi Connection Handlers
+// ============================================================================
+
+// WiFiConnectRequest represents a request to connect to a WiFi network.
+type WiFiConnectRequest struct {
+	SSID     string `json:"ssid"`
+	Password string `json:"password,omitempty"`
+}
+
+// handleWiFiConnect handles WiFi connection requests.
+func (s *Server) handleWiFiConnect(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	if r.Method != http.MethodPost {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
+		return
+	}
+
+	if s.wifiManager == nil {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			"WiFi manager not available",
+			"",
+		)
+		return
+	}
+
+	// Parse request body
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
+	var req WiFiConnectRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
+		return
+	}
+
+	if req.SSID == "" {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			"SSID is required",
+			"",
+		)
+		return
+	}
+
+	// Attempt connection
+	result, err := s.wifiManager.Connect(req.SSID, req.Password)
+	if err != nil {
+		logger.Error("WiFi connection failed", "error", err, "ssid", req.SSID)
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			"Connection failed",
+			"",
+		)
+		return
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, result)
+}
+
+// handleWiFiDisconnect handles WiFi disconnection requests.
+func (s *Server) handleWiFiDisconnect(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	if r.Method != http.MethodPost {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
+		return
+	}
+
+	if s.wifiManager == nil {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			"WiFi manager not available",
+			"",
+		)
+		return
+	}
+
+	// Attempt disconnection
+	result, err := s.wifiManager.Disconnect()
+	if err != nil {
+		logger.Error("WiFi disconnection failed", "error", err)
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			"Disconnection failed",
+			"",
+		)
+		return
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, result)
+}
+
+// handleWiFiSavedNetworks returns a list of saved WiFi networks.
+func (s *Server) handleWiFiSavedNetworks(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	if r.Method != http.MethodGet {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
+		return
+	}
+
+	if s.wifiManager == nil {
+		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
+			"networks": []any{},
+		})
+		return
+	}
+
+	networks, err := s.wifiManager.GetSavedNetworks()
+	if err != nil {
+		logger.Warn("Failed to get saved networks", "error", err)
+		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
+			"networks": []any{},
+			"error":    err.Error(),
+		})
+		return
+	}
+
+	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
+		"networks": networks,
+	})
+}
+
+// handleWiFiForgetNetwork handles requests to forget a saved WiFi network.
+func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	if r.Method != http.MethodDelete {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
+		return
+	}
+
+	if s.wifiManager == nil {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			"WiFi manager not available",
+			"",
+		)
+		return
+	}
+
+	// Get SSID from query parameter
+	ssid := r.URL.Query().Get("ssid")
+	if ssid == "" {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			"SSID is required",
+			"",
+		)
+		return
+	}
+
+	if err := s.wifiManager.ForgetNetwork(ssid); err != nil {
+		logger.Error("Failed to forget network", "error", err, "ssid", ssid)
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			err.Error(),
+			"",
+		)
+		return
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
+		"status":  "success",
+		"message": "Network forgotten",
+	})
+}
+
 // handleWiFiChannelGraph returns channel overlap graph data for WiFi visualization.
 // It scans available networks and organizes them by frequency band with channel overlap information.
 func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) {

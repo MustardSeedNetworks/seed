@@ -121,3 +121,48 @@ func channelToFrequency(channel int) int {
 
 	return 0
 }
+
+// ConnectionResult represents the result of a WiFi connection attempt.
+type ConnectionResult struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	SSID    string `json:"ssid,omitempty"`
+}
+
+// SavedNetwork represents a saved/known WiFi network.
+type SavedNetwork struct {
+	SSID     string `json:"ssid"`
+	UUID     string `json:"uuid,omitempty"`
+	Type     string `json:"type,omitempty"`     // e.g., "wifi"
+	Device   string `json:"device,omitempty"`   // e.g., "wls34u2"
+	Security string `json:"security,omitempty"` // e.g., "WPA2"
+}
+
+// Connect attempts to connect to a WiFi network.
+// If password is empty, it tries to use a saved connection.
+func (m *Manager) Connect(ssid, password string) (*ConnectionResult, error) {
+	m.mu.RLock()
+	iface := m.interfaceName
+	m.mu.RUnlock()
+
+	return connectPlatform(iface, ssid, password)
+}
+
+// Disconnect disconnects from the current WiFi network.
+func (m *Manager) Disconnect() (*ConnectionResult, error) {
+	m.mu.RLock()
+	iface := m.interfaceName
+	m.mu.RUnlock()
+
+	return disconnectPlatform(iface)
+}
+
+// GetSavedNetworks returns a list of saved/known WiFi networks.
+func (m *Manager) GetSavedNetworks() ([]SavedNetwork, error) {
+	return getSavedNetworksPlatform()
+}
+
+// ForgetNetwork removes a saved WiFi network.
+func (m *Manager) ForgetNetwork(ssid string) error {
+	return forgetNetworkPlatform(ssid)
+}
