@@ -3,6 +3,7 @@
 package link
 
 import (
+	"context"
 	"net"
 	"os/exec"
 	"regexp"
@@ -34,7 +35,7 @@ func checkLinkStatePlatform(interfaceName string) State {
 func getSpeedDuplex(interfaceName string) (Speed, Duplex) {
 	// Try to get media info using networksetup or ifconfig
 	// This requires the interface name mapping (e.g., en0 -> "Wi-Fi")
-	output, err := exec.Command("ifconfig", interfaceName).Output()
+	output, err := exec.CommandContext(context.Background(), "ifconfig", interfaceName).Output()
 	if err != nil {
 		return 0, DuplexUnknown
 	}

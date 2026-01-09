@@ -4,6 +4,7 @@ package vlan
 
 import (
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -101,6 +102,11 @@ func createVlanInterfacePlatform(parentIface string, vlanID int) error {
 
 	// Bring interface up
 	return netlink.LinkSetUp(vlan)
+}
+
+// contains checks if a slice contains a value.
+func contains(slice []int, val int) bool {
+	return slices.Contains(slice, val)
 }
 
 // deleteVlanInterfacePlatform removes a VLAN interface on Linux using netlink.

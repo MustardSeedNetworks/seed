@@ -210,7 +210,7 @@ func TestTimeoutConstants(t *testing.T) {
 	}
 }
 
-// containsSubstring is a helper function to check if a string contains a substring
+// containsSubstring is a helper function to check if a string contains a substring.
 func containsSubstring(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsSubstringHelper(s, substr))
 }

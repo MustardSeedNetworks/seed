@@ -1,16 +1,9 @@
-// Package generator_test provides tests for the generator package.
-//
-// NOTE: The generator package currently contains only a doc.go file.
-// The actual report generation functionality is implemented in the parent
-// harvest package (internal/harvest/services.go) as GeneratorService.
-// These tests serve as placeholders for when functionality is migrated
-// to this subpackage.
 package generator_test
 
 import (
 	"testing"
 
-	// Import the package to ensure it compiles and is usable
+	// Import the package to ensure it compiles and is usable.
 	_ "github.com/krisarmstrong/seed/internal/harvest/generator"
 )
 

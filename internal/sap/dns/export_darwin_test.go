@@ -1,6 +1,5 @@
 //go:build darwin
 
-//nolint:testpackage // Export file intentionally in main package
 package dns
 
 // ExportParseResolvConfDarwin is exported for testing (darwin only).

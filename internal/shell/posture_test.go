@@ -1,5 +1,3 @@
-// Package shell_test provides comprehensive tests for the Shell posture assessment.
-// These tests cover security posture scoring, issue detection, and category assessment.
 package shell_test
 
 import (

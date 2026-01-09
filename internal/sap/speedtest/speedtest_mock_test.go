@@ -1,8 +1,7 @@
-// Package speedtest_test provides mock-based tests for the speedtest package.
-// These tests use mock interfaces to test internal logic without network calls.
 package speedtest_test
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -47,7 +46,7 @@ func TestRunTestInitialStatusCheck(t *testing.T) {
 			}
 
 			// If running, verify error is returned
-			result, err := tester.RunTest(nil)
+			result, err := tester.RunTest(context.TODO())
 			if tt.expectError {
 				if err == nil {
 					t.Error("expected error")
@@ -78,7 +77,7 @@ func TestConcurrentRunTestAttempts(t *testing.T) {
 	for range numGoroutines {
 		go func() {
 			defer wg.Done()
-			_, err := tester.RunTest(nil)
+			_, err := tester.RunTest(context.TODO())
 			if err != nil {
 				errorChan <- err
 			}

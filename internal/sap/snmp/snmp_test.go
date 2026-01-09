@@ -1,4 +1,3 @@
-// Package snmp_test provides tests for the SNMP data collection functionality.
 package snmp_test
 
 import (

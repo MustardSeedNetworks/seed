@@ -1,9 +1,8 @@
-// Package roots_test provides tests for the EnrichmentService.
-// Test suite validates IP enrichment, public IP lookup, and error handling.
 package roots_test
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -108,7 +107,7 @@ func TestEnrichmentService_Enrich_NilChecker(t *testing.T) {
 	if result != nil {
 		t.Errorf("Enrich() with nil checker should return nil result, got %+v", result)
 	}
-	if err != roots.ErrNotInitialized {
+	if !errors.Is(err, roots.ErrNotInitialized) {
 		t.Errorf("error = %v, want %v", err, roots.ErrNotInitialized)
 	}
 }
@@ -191,7 +190,7 @@ func TestEnrichmentService_GetPublicIP_NilChecker(t *testing.T) {
 	if result != nil {
 		t.Errorf("GetPublicIP() with nil checker should return nil result, got %+v", result)
 	}
-	if err != roots.ErrNotInitialized {
+	if !errors.Is(err, roots.ErrNotInitialized) {
 		t.Errorf("error = %v, want %v", err, roots.ErrNotInitialized)
 	}
 }

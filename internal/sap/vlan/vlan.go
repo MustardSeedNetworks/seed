@@ -1,9 +1,6 @@
 package vlan
 
-import (
-	"slices"
-	"sync"
-)
+import "sync"
 
 // Info contains VLAN information for an interface.
 type Info struct {
@@ -91,9 +88,4 @@ func CreateVlanInterface(parentIface string, vlanID int) error {
 // Implementation is platform-specific (vlan_linux.go, vlan_darwin.go).
 func DeleteVlanInterface(parentIface string, vlanID int) error {
 	return deleteVlanInterfacePlatform(parentIface, vlanID)
-}
-
-// contains checks if a slice contains a value.
-func contains(slice []int, val int) bool {
-	return slices.Contains(slice, val)
 }

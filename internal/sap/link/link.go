@@ -338,13 +338,14 @@ func GetStatus(interfaceName string) (*Status, error) {
 	}
 
 	// Determine state from flags
-	if iface.Flags&net.FlagUp != 0 && iface.Flags&net.FlagRunning != 0 {
+	switch {
+	case iface.Flags&net.FlagUp != 0 && iface.Flags&net.FlagRunning != 0:
 		status.State = StateUp
 		status.Carrier = true
-	} else if iface.Flags&net.FlagUp != 0 {
+	case iface.Flags&net.FlagUp != 0:
 		status.State = StateDown
 		status.Carrier = false
-	} else {
+	default:
 		status.State = StateUnknown
 		status.Carrier = false
 	}
@@ -377,13 +378,14 @@ func ListInterfaces() ([]Status, error) {
 			UpdatedAt:  time.Now(),
 		}
 
-		if iface.Flags&net.FlagUp != 0 && iface.Flags&net.FlagRunning != 0 {
+		switch {
+		case iface.Flags&net.FlagUp != 0 && iface.Flags&net.FlagRunning != 0:
 			status.State = StateUp
 			status.Carrier = true
-		} else if iface.Flags&net.FlagUp != 0 {
+		case iface.Flags&net.FlagUp != 0:
 			status.State = StateDown
 			status.Carrier = false
-		} else {
+		default:
 			status.State = StateUnknown
 			status.Carrier = false
 		}

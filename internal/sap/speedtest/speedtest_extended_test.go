@@ -1,5 +1,3 @@
-// Package speedtest_test provides extended tests for the speedtest package.
-// These tests focus on buildTestResult, edge cases, and integration testing stubs.
 package speedtest_test
 
 import (

@@ -1,9 +1,8 @@
-// Package roots_test provides tests for the TracerouteService.
-// Test suite validates traceroute execution, options handling, and error cases.
 package roots_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -28,9 +27,7 @@ func TestTracerouteService_Creation(t *testing.T) {
 		},
 		{
 			name: "nil tracer creation for error testing",
-			createFunc: func() *roots.TracerouteService {
-				return roots.NewTracerouteServiceNilTracer()
-			},
+			createFunc: roots.NewTracerouteServiceNilTracer,
 			wantNil: false,
 		},
 	}
@@ -65,9 +62,7 @@ func TestTracerouteService_Tracer(t *testing.T) {
 		},
 		{
 			name: "nil tracer service",
-			createFunc: func() *roots.TracerouteService {
-				return roots.NewTracerouteServiceNilTracer()
-			},
+			createFunc: roots.NewTracerouteServiceNilTracer,
 			wantNilTrace: true,
 		},
 	}
@@ -99,7 +94,7 @@ func TestTracerouteService_Trace_NilTracer(t *testing.T) {
 	if result != nil {
 		t.Errorf("Trace() with nil tracer should return nil result, got %+v", result)
 	}
-	if err != roots.ErrNotInitialized {
+	if !errors.Is(err, roots.ErrNotInitialized) {
 		t.Errorf("error = %v, want %v", err, roots.ErrNotInitialized)
 	}
 }

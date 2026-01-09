@@ -1,5 +1,3 @@
-// Package speedtest_test provides behavior tests for the speedtest package.
-// These tests document and verify the expected behavior of the package.
 package speedtest_test
 
 import (
@@ -554,7 +552,7 @@ func TestNilContextBehavior(t *testing.T) {
 		tester.SetRunning(true)
 
 		// Should not panic with nil context
-		_, err := tester.RunTest(nil)
+		_, err := tester.RunTest(context.TODO())
 		if err == nil {
 			t.Error("expected error")
 		}

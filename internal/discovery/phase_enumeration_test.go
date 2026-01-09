@@ -2,6 +2,7 @@ package discovery_test
 
 import (
 	"context"
+	"errors"
 	"net"
 	"testing"
 	"time"
@@ -298,7 +299,7 @@ func TestEnumerationError_Fields(t *testing.T) {
 	if err.Phase != "arp_scan" {
 		t.Errorf("Expected Phase='arp_scan', got %s", err.Phase)
 	}
-	if err.Error != context.DeadlineExceeded {
+	if !errors.Is(err.Error, context.DeadlineExceeded) {
 		t.Errorf("Expected Error=context.DeadlineExceeded, got %v", err.Error)
 	}
 	if !err.Time.Equal(now) {

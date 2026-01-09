@@ -1,5 +1,3 @@
-// Package shell_test provides comprehensive tests for the Shell services.
-// These tests cover DiscoveryService, VulnerabilityService, PostureService, and RogueService.
 package shell_test
 
 import (

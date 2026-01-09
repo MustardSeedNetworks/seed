@@ -1,9 +1,8 @@
-// Package canopy_test provides comprehensive tests for the Canopy module.
-// Test suite validates WiFi services, survey management, channel analysis, and AI services.
 package canopy_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -194,7 +193,7 @@ func TestWiFiServiceScanNilScanner(t *testing.T) {
 	if err == nil {
 		t.Error("expected error when scanner is nil")
 	}
-	if err != canopy.ErrNotInitialized {
+	if !errors.Is(err, canopy.ErrNotInitialized) {
 		t.Errorf("expected ErrNotInitialized, got: %v", err)
 	}
 }
@@ -209,7 +208,7 @@ func TestWiFiServiceConnect(t *testing.T) {
 	if err == nil {
 		t.Error("expected error from Connect")
 	}
-	if err != canopy.ErrNotImplemented {
+	if !errors.Is(err, canopy.ErrNotImplemented) {
 		t.Errorf("expected ErrNotImplemented, got: %v", err)
 	}
 }
@@ -239,7 +238,7 @@ func TestWiFiServiceGetStatusNilManager(t *testing.T) {
 	if err == nil {
 		t.Error("expected error when manager is nil")
 	}
-	if err != canopy.ErrNotInitialized {
+	if !errors.Is(err, canopy.ErrNotInitialized) {
 		t.Errorf("expected ErrNotInitialized, got: %v", err)
 	}
 }
@@ -559,7 +558,7 @@ func TestChannelServiceAnalyzeNilScanner(t *testing.T) {
 	if err == nil {
 		t.Error("expected error when scanner is nil")
 	}
-	if err != canopy.ErrNotInitialized {
+	if !errors.Is(err, canopy.ErrNotInitialized) {
 		t.Errorf("expected ErrNotInitialized, got: %v", err)
 	}
 }
@@ -591,7 +590,7 @@ func TestAIServiceAnalyzeCoverage(t *testing.T) {
 	if err == nil {
 		t.Error("expected error (not implemented)")
 	}
-	if err != canopy.ErrNotImplemented {
+	if !errors.Is(err, canopy.ErrNotImplemented) {
 		t.Errorf("expected ErrNotImplemented, got: %v", err)
 	}
 }
@@ -612,7 +611,7 @@ func TestAIServiceSuggestAPPlacement(t *testing.T) {
 	if err == nil {
 		t.Error("expected error (not implemented)")
 	}
-	if err != canopy.ErrNotImplemented {
+	if !errors.Is(err, canopy.ErrNotImplemented) {
 		t.Errorf("expected ErrNotImplemented, got: %v", err)
 	}
 }
@@ -1354,7 +1353,7 @@ func TestSurveyServiceCreateWithNilManager(t *testing.T) {
 	if err == nil {
 		t.Error("expected error when manager is nil")
 	}
-	if err != canopy.ErrNotInitialized {
+	if !errors.Is(err, canopy.ErrNotInitialized) {
 		t.Errorf("expected ErrNotInitialized, got: %v", err)
 	}
 }
@@ -1367,7 +1366,7 @@ func TestSurveyServiceGetWithNilManager(t *testing.T) {
 	if err == nil {
 		t.Error("expected error when manager is nil")
 	}
-	if err != canopy.ErrNotInitialized {
+	if !errors.Is(err, canopy.ErrNotInitialized) {
 		t.Errorf("expected ErrNotInitialized, got: %v", err)
 	}
 }
@@ -1380,7 +1379,7 @@ func TestSurveyServiceListWithNilManager(t *testing.T) {
 	if err == nil {
 		t.Error("expected error when manager is nil")
 	}
-	if err != canopy.ErrNotInitialized {
+	if !errors.Is(err, canopy.ErrNotInitialized) {
 		t.Errorf("expected ErrNotInitialized, got: %v", err)
 	}
 }
@@ -1393,7 +1392,7 @@ func TestSurveyServiceAddPointWithNilManager(t *testing.T) {
 	if err == nil {
 		t.Error("expected error when manager is nil")
 	}
-	if err != canopy.ErrNotInitialized {
+	if !errors.Is(err, canopy.ErrNotInitialized) {
 		t.Errorf("expected ErrNotInitialized, got: %v", err)
 	}
 }
@@ -1573,10 +1572,8 @@ func TestModuleIntegration(t *testing.T) {
 	createdSurvey, err := survey.Create(ctx, "Integration Test Survey", "Testing all services")
 	if err != nil {
 		t.Logf("Survey.Create() returned error: %v", err)
-	} else {
-		if createdSurvey.ID == "" {
-			t.Error("expected non-empty survey ID")
-		}
+	} else if createdSurvey.ID == "" {
+		t.Error("expected non-empty survey ID")
 	}
 
 	// Test channel analysis
@@ -1589,7 +1586,7 @@ func TestModuleIntegration(t *testing.T) {
 	// Test AI service (returns not implemented)
 	ai := module.AI()
 	_, err = ai.AnalyzeCoverage(ctx, &canopy.Survey{})
-	if err != canopy.ErrNotImplemented {
+	if !errors.Is(err, canopy.ErrNotImplemented) {
 		t.Errorf("expected ErrNotImplemented from AI.AnalyzeCoverage, got: %v", err)
 	}
 

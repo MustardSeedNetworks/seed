@@ -1,4 +1,3 @@
-// Package iperf_test contains additional tests for server and client operations.
 package iperf_test
 
 import (

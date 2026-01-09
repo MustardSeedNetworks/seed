@@ -1,9 +1,8 @@
-// Package roots_test provides tests for the TopologyService.
-// Test suite validates topology service lifecycle and type constants.
 package roots_test
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -157,7 +156,7 @@ func TestTopologyService_GetTopology_NotImplemented(t *testing.T) {
 			if result != nil {
 				t.Errorf("GetTopology() should return nil result, got %+v", result)
 			}
-			if err != roots.ErrNotImplemented {
+			if !errors.Is(err, roots.ErrNotImplemented) {
 				t.Errorf("error = %v, want %v", err, roots.ErrNotImplemented)
 			}
 		})

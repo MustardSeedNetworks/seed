@@ -1,4 +1,3 @@
-// Package version_test tests the version package.
 package version_test
 
 import (

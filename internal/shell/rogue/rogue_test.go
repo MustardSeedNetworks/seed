@@ -1,7 +1,3 @@
-// Package rogue_test provides tests for the shell/rogue subpackage.
-// Note: The actual rogue detection logic is implemented in the parent
-// shell package (RogueService). This subpackage exists for future
-// expansion of rogue device detection functionality.
 package rogue_test
 
 import (

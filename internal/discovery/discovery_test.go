@@ -1,6 +1,3 @@
-// Test suite validates device discovery functionality across all discovery methods,
-// settings configurations, and state management operations. Ensures device aggregation,
-// protocol-specific information, and discovery timing work correctly.
 package discovery_test
 
 import (

@@ -1,4 +1,3 @@
-// Package testutil_test tests the testutil package.
 package testutil_test
 
 import (

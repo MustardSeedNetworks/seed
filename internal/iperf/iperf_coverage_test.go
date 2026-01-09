@@ -1,11 +1,3 @@
-// Package iperf_test contains comprehensive tests to improve coverage for the iperf package.
-//
-// This file focuses on testing:
-// - Server start/stop operations
-// - Client configuration and result parsing
-// - Binary discovery and validation
-// - Installer functionality
-// - Error handling edge cases
 package iperf_test
 
 import (

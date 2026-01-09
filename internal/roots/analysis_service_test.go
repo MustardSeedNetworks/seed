@@ -1,5 +1,3 @@
-// Package roots_test provides tests for the AnalysisService.
-// Test suite validates path analysis, bottleneck detection, and scoring.
 package roots_test
 
 import (

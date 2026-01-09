@@ -1,5 +1,3 @@
-// Package sap_test provides tests for the sap module's services and types.
-// These tests cover the PerformanceService, type structures, and helper functions.
 package sap_test
 
 import (

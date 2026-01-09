@@ -701,37 +701,37 @@ func ConvertGatewayStatusActual(status gateway.Status) HealthStatus {
 }
 
 // CableStatusOKValue exposes cable.StatusOK for testing.
-var CableStatusOKValue = cable.StatusOK
+const CableStatusOKValue = cable.StatusOK
 
 // CableStatusOpenValue exposes cable.StatusOpen for testing.
-var CableStatusOpenValue = cable.StatusOpen
+const CableStatusOpenValue = cable.StatusOpen
 
 // CableStatusShortValue exposes cable.StatusShort for testing.
-var CableStatusShortValue = cable.StatusShort
+const CableStatusShortValue = cable.StatusShort
 
 // CableStatusImpedanceMismatchValue exposes cable.StatusImpedanceMismatch for testing.
-var CableStatusImpedanceMismatchValue = cable.StatusImpedanceMismatch
+const CableStatusImpedanceMismatchValue = cable.StatusImpedanceMismatch
 
 // CableStatusCrosstalkValue exposes cable.StatusCrosstalk for testing.
-var CableStatusCrosstalkValue = cable.StatusCrosstalk
+const CableStatusCrosstalkValue = cable.StatusCrosstalk
 
 // CableStatusSplitPairValue exposes cable.StatusSplitPair for testing.
-var CableStatusSplitPairValue = cable.StatusSplitPair
+const CableStatusSplitPairValue = cable.StatusSplitPair
 
 // CableStatusUnknownValue exposes cable.StatusUnknown for testing.
-var CableStatusUnknownValue = cable.StatusUnknown
+const CableStatusUnknownValue = cable.StatusUnknown
 
 // GatewayStatusSuccessValue exposes gateway.StatusSuccess for testing.
-var GatewayStatusSuccessValue = gateway.StatusSuccess
+const GatewayStatusSuccessValue = gateway.StatusSuccess
 
 // GatewayStatusWarningValue exposes gateway.StatusWarning for testing.
-var GatewayStatusWarningValue = gateway.StatusWarning
+const GatewayStatusWarningValue = gateway.StatusWarning
 
 // GatewayStatusErrorValue exposes gateway.StatusError for testing.
-var GatewayStatusErrorValue = gateway.StatusError
+const GatewayStatusErrorValue = gateway.StatusError
 
 // GatewayStatusUnknownValue exposes gateway.StatusUnknown for testing.
-var GatewayStatusUnknownValue = gateway.StatusUnknown
+const GatewayStatusUnknownValue = gateway.StatusUnknown
 
 // MakeCablePairResult creates a cable.PairResult for testing.
 func MakeCablePairResult(status cable.Status, lengthM *float64) cable.PairResult {

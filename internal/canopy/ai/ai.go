@@ -545,10 +545,11 @@ func generateRecommendations(coverage, avgRSSI float64, deadZones, sampleCount i
 	return recs
 }
 
+//nolint:gocognit // Complex scoring logic; keep in one place for clarity.
 func findOptimalPlacements(
 	floorPlan *FloorPlan,
 	existingAPs []AccessPoint,
-	targetCoverage float64,
+	_ float64,
 	threshold int,
 ) []PlacementSuggestion {
 	var suggestions []PlacementSuggestion

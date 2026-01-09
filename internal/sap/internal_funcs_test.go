@@ -1,5 +1,3 @@
-// Package sap_test provides tests for the internal helper functions.
-// These tests improve coverage by testing the actual internal conversion functions.
 package sap_test
 
 import (

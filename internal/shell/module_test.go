@@ -1,4 +1,3 @@
-// Package shell_test provides comprehensive tests for the Shell module.
 // These tests cover module initialization, service access, and lifecycle management.
 package shell_test
 

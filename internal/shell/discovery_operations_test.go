@@ -1,5 +1,3 @@
-// Package shell_test provides comprehensive tests for DiscoveryService operations.
-// These tests focus on device discovery, retrieval, and scanning operations.
 package shell_test
 
 import (

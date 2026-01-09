@@ -1,4 +1,3 @@
-// Package snmp_test tests the snmp package.
 package snmp_test
 
 import (

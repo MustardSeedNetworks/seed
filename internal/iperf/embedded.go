@@ -90,7 +90,8 @@ func extractEmbeddedBinary() (string, error) {
 	}
 
 	// Write binary.
-	if writeErr := os.WriteFile(destPath, data, 0o750); writeErr != nil { //nolint:gosec // G306: binary needs execute permission
+	//nolint:gosec // G306: binary needs execute permission.
+	if writeErr := os.WriteFile(destPath, data, 0o750); writeErr != nil {
 		return "", fmt.Errorf("failed to extract iperf3 binary: %w", writeErr)
 	}
 

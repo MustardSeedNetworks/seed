@@ -1,5 +1,3 @@
-// Package shell_test provides comprehensive tests for Shell module error handling.
-// These tests cover error constants, error propagation, and error scenarios.
 package shell_test
 
 import (
@@ -67,13 +65,13 @@ func TestErrorsAreStatic(t *testing.T) {
 	// Get errors multiple times
 	err1a := shell.ErrNotImplemented
 	err1b := shell.ErrNotImplemented
-	if err1a != err1b {
+	if !errors.Is(err1a, err1b) {
 		t.Error("ErrNotImplemented should be the same instance")
 	}
 
 	err2a := shell.ErrNotInitialized
 	err2b := shell.ErrNotInitialized
-	if err2a != err2b {
+	if !errors.Is(err2a, err2b) {
 		t.Error("ErrNotInitialized should be the same instance")
 	}
 }
@@ -212,8 +210,8 @@ func TestErrorTypeAssertions(t *testing.T) {
 	t.Parallel()
 
 	// Compile-time check that errors implement error interface
-	var _ error = shell.ErrNotImplemented
-	var _ error = shell.ErrNotInitialized
+	var _ = error(shell.ErrNotImplemented)
+	var _ = error(shell.ErrNotInitialized)
 
 	// Runtime check
 	if shell.ErrNotImplemented == nil {

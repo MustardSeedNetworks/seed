@@ -1,4 +1,3 @@
-// Package harvest_test provides comprehensive unit tests for the harvest module.
 package harvest_test
 
 import (

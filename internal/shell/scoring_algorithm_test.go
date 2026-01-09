@@ -1,5 +1,3 @@
-// Package shell_test provides comprehensive tests for the posture scoring algorithm.
-// These tests exercise all severity levels and edge cases in vulnerability scoring.
 package shell_test
 
 import (

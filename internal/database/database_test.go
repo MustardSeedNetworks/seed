@@ -1,4 +1,3 @@
-// Package database_test tests the database package.
 package database_test
 
 import (

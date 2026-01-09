@@ -332,10 +332,7 @@ func detectType(name string) string {
 func hasRoutableAddress(addresses []string) bool {
 	for _, addr := range addresses {
 		// Parse CIDR notation
-		ipStr := addr
-		if idx := strings.Index(addr, "/"); idx != -1 {
-			ipStr = addr[:idx]
-		}
+		ipStr, _, _ := strings.Cut(addr, "/")
 
 		ip := net.ParseIP(ipStr)
 		if ip == nil {

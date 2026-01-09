@@ -525,7 +525,7 @@ func TestDeviceDiscovery_Basic(t *testing.T) {
 	// Test GetStatus
 	status := dd.GetStatus()
 	if status == nil {
-		t.Error("GetStatus should not return nil")
+		t.Fatal("GetStatus should not return nil")
 	}
 	if status.Scanning {
 		t.Error("Status.Scanning should be false")

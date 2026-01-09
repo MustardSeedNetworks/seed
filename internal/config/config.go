@@ -425,7 +425,7 @@ func (c *PipelineConfig) GetPersistence() (bool, time.Duration, time.Duration) {
 // DatabaseConfig contains SQLite database configuration.
 type DatabaseConfig struct {
 	// Path to the SQLite database file. Default: data/seed.db
-	Path string `yaml:"path"            json:"path"`
+	Path string `yaml:"path" json:"path"`
 	// RetentionDays sets how many days of historical data to keep (0 = forever)
 	RetentionDays int `yaml:"retention_days"  json:"retention_days"`
 	// EnableWAL enables Write-Ahead Logging for better concurrency. Default: true

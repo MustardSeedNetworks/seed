@@ -1,4 +1,3 @@
-// Package iperf_test contains additional tests for embedded binary functionality.
 package iperf_test
 
 import (

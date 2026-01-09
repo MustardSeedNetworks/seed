@@ -1,5 +1,3 @@
-// Package scheduler_test provides comprehensive unit tests for the scheduler functionality
-// in the harvest module.
 package scheduler_test
 
 import (

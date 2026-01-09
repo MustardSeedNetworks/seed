@@ -25,6 +25,7 @@
 import type React from "react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { api } from "../../lib/api";
 import {
   button as buttonTokens,
   cn,
@@ -41,7 +42,6 @@ import type {
   TracerouteHop,
   TracerouteResult,
 } from "../../types";
-import { api } from "../../lib/api";
 import { Card, CardDivider, CardValue, type Status } from "../ui/card";
 import { ChevronDown, ChevronUp, Route } from "../ui/icons";
 

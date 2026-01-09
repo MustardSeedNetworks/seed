@@ -1,4 +1,3 @@
-// Package templates provides report template management and rendering capabilities.
 package templates
 
 import (
@@ -6,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"maps"
 	"regexp"
 	"slices"
 	"sort"
@@ -147,9 +147,7 @@ func (t *Template) Clone() *Template {
 	}
 	if t.Metadata != nil {
 		clone.Metadata = make(map[string]string, len(t.Metadata))
-		for k, v := range t.Metadata {
-			clone.Metadata[k] = v
-		}
+		maps.Copy(clone.Metadata, t.Metadata)
 	}
 	return clone
 }
@@ -322,7 +320,7 @@ func (r *Renderer) Render(tmpl *Template, data *RenderData) (string, error) {
 		compiled, err = template.New(tmpl.ID).Funcs(r.funcMap).Parse(tmpl.Content)
 		if err != nil {
 			r.mu.Unlock()
-			return "", fmt.Errorf("%w: %v", ErrRenderFailed, err)
+			return "", errors.Join(ErrRenderFailed, err)
 		}
 		r.compiled[tmpl.ID] = compiled
 	}
@@ -330,7 +328,7 @@ func (r *Renderer) Render(tmpl *Template, data *RenderData) (string, error) {
 
 	var buf bytes.Buffer
 	if err := compiled.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("%w: %v", ErrRenderFailed, err)
+		return "", errors.Join(ErrRenderFailed, err)
 	}
 
 	return buf.String(), nil
@@ -348,12 +346,12 @@ func (r *Renderer) RenderString(content string, data any) (string, error) {
 
 	tmpl, err := template.New("inline").Funcs(funcMap).Parse(content)
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", ErrRenderFailed, err)
+		return "", errors.Join(ErrRenderFailed, err)
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("%w: %v", ErrRenderFailed, err)
+	if execErr := tmpl.Execute(&buf, data); execErr != nil {
+		return "", errors.Join(ErrRenderFailed, execErr)
 	}
 
 	return buf.String(), nil

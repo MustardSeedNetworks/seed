@@ -1,5 +1,3 @@
-// Package sap_test provides extended tests for the sap module services.
-// These tests focus on improving coverage for service methods and helper functions.
 package sap_test
 
 import (

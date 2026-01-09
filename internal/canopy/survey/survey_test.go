@@ -1,5 +1,3 @@
-// Test suite validates survey persistence, floor plan handling, AP scan parsing,
-// and integration with iperf throughput measurements.
 package survey_test
 
 import (

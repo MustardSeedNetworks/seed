@@ -298,7 +298,11 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 	// This ensures backward compatibility during the transition
 	if cfg.Auth.DefaultPasswordHash != "" &&
 		cfg.Auth.DefaultPasswordHash != auth.SetupModePlaceholder {
-		if err := userStore.MigrateUserFromConfig(context.Background(), cfg.Auth.DefaultUsername, cfg.Auth.DefaultPasswordHash); err != nil {
+		if err := userStore.MigrateUserFromConfig(
+			context.Background(),
+			cfg.Auth.DefaultUsername,
+			cfg.Auth.DefaultPasswordHash,
+		); err != nil {
 			logging.GetLogger().Error("Failed to migrate user from config", "error", err)
 		} else {
 			logging.GetLogger().Info("User migrated from config to database", "username", cfg.Auth.DefaultUsername)

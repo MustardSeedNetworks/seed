@@ -624,7 +624,9 @@ func (s *Server) runTCPTests(ctx context.Context) []CustomTestResult {
 		} else {
 			testResult.Success = true
 			testResult.Latency = latency
-			testResult.TestStatus = getTestStatus(latency, threshold.Warning.Milliseconds(), threshold.Critical.Milliseconds())
+			warningMs := threshold.Warning.Milliseconds()
+			criticalMs := threshold.Critical.Milliseconds()
+			testResult.TestStatus = getTestStatus(latency, warningMs, criticalMs)
 		}
 		results = append(results, testResult)
 	}

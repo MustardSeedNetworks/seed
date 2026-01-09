@@ -1,7 +1,5 @@
 //go:build darwin
 
-// Package wifi_test provides wireless network information functionality tests.
-// Test suite validates Darwin-specific WiFi scanning and parsing functionality.
 package wifi_test
 
 import (

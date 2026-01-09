@@ -1,5 +1,3 @@
-// Package speedtest_test provides unit tests for the speedtest package.
-// These tests focus on testing the logic without making actual network calls.
 package speedtest_test
 
 import (

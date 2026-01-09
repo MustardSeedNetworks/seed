@@ -1835,11 +1835,12 @@ func TestCableServiceTestWithRealInterface(t *testing.T) {
 	// Test with lo0 which exists but won't support TDR
 	result, err := service.Test(ctx, "lo0")
 	if err != nil {
-		if errors.Is(err, sap.ErrNotSupported) {
+		switch {
+		case errors.Is(err, sap.ErrNotSupported):
 			t.Log("Cable test not supported on lo0 (expected)")
-		} else if errors.Is(err, sap.ErrTestFailed) {
+		case errors.Is(err, sap.ErrTestFailed):
 			t.Log("Cable test failed on lo0 (expected)")
-		} else {
+		default:
 			t.Logf("Cable Test returned error: %v", err)
 		}
 	}

@@ -799,7 +799,16 @@ func (s *GeneratorService) exportDevices(ctx context.Context, _ *ExportRequest) 
 	var devices []map[string]any
 	for rows.Next() {
 		var id, ip, mac, hostname, vendor, deviceType, firstSeen, lastSeen string
-		if scanErr := rows.Scan(&id, &ip, &mac, &hostname, &vendor, &deviceType, &firstSeen, &lastSeen); scanErr != nil {
+		if scanErr := rows.Scan(
+			&id,
+			&ip,
+			&mac,
+			&hostname,
+			&vendor,
+			&deviceType,
+			&firstSeen,
+			&lastSeen,
+		); scanErr != nil {
 			continue
 		}
 		devices = append(devices, map[string]any{

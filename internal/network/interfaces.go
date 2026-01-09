@@ -347,10 +347,7 @@ func (m *Manager) GetLinkStatus(name string) (*LinkStatus, error) {
 func hasRoutableAddress(addresses []string) bool {
 	for _, addr := range addresses {
 		// Parse the address (remove CIDR suffix if present)
-		ipStr := addr
-		if idx := strings.Index(addr, "/"); idx != -1 {
-			ipStr = addr[:idx]
-		}
+		ipStr, _, _ := strings.Cut(addr, "/")
 		ip := net.ParseIP(ipStr)
 		if ip == nil {
 			continue

@@ -1,5 +1,3 @@
-// Package shell_test provides additional tests for the Shell module,
-// focusing on conversion functions and internal helpers.
 package shell_test
 
 import (

@@ -1,5 +1,3 @@
-// Package shell_test provides comprehensive tests for PostureService.Assess method.
-// These tests focus on the scoring algorithm and vulnerability handling.
 package shell_test
 
 import (

@@ -631,13 +631,12 @@ func parseDarwinLeaseFile(path string) *LeaseInfo {
 // extractPlistIP extracts an IP address from a plist data field.
 func extractPlistIP(content, key string) string {
 	keyTag := "<key>" + key + "</key>"
-	idx := strings.Index(content, keyTag)
-	if idx == -1 {
+	_, remaining, found := strings.Cut(content, keyTag)
+	if !found {
 		return ""
 	}
 
 	// Look for <data> tag after the key
-	remaining := content[idx+len(keyTag):]
 	dataStart := strings.Index(remaining, "<data>")
 	if dataStart == -1 {
 		return ""
@@ -654,12 +653,11 @@ func extractPlistIP(content, key string) string {
 // extractPlistInteger extracts an integer value from a plist.
 func extractPlistInteger(content, key string) int {
 	keyTag := "<key>" + key + "</key>"
-	idx := strings.Index(content, keyTag)
-	if idx == -1 {
+	_, remaining, found := strings.Cut(content, keyTag)
+	if !found {
 		return 0
 	}
 
-	remaining := content[idx+len(keyTag):]
 	intStart := strings.Index(remaining, "<integer>")
 	if intStart == -1 {
 		return 0
@@ -719,12 +717,10 @@ func extractArrayContent(remaining string) (string, bool) {
 // extractPlistIPArray extracts array of IPs from plist.
 func extractPlistIPArray(content, key string) []string {
 	keyTag := "<key>" + key + "</key>"
-	idx := strings.Index(content, keyTag)
-	if idx == -1 {
+	_, remaining, found := strings.Cut(content, keyTag)
+	if !found {
 		return nil
 	}
-
-	remaining := content[idx+len(keyTag):]
 
 	// Try array format first
 	if arrayContent, found := extractArrayContent(remaining); found {

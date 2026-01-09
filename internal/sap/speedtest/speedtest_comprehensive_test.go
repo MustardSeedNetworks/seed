@@ -1,5 +1,3 @@
-// Package speedtest_test provides comprehensive tests to improve coverage of the speedtest package.
-// These tests focus on maximizing coverage of testable code paths without requiring network access.
 package speedtest_test
 
 import (
@@ -693,7 +691,7 @@ func TestRunTestWithNilContext(t *testing.T) {
 	tester.SetRunning(true)
 
 	// Should still check running state even with nil context
-	result, err := tester.RunTest(nil)
+	result, err := tester.RunTest(context.TODO())
 	if err == nil {
 		t.Error("expected error when test already in progress")
 	}

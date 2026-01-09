@@ -179,6 +179,8 @@ func (t *Tester) SetConfiguredServers(servers []ConfiguredServer) {
 }
 
 // getStatus determines status based on timing and thresholds.
+//
+//nolint:unused // Used by tests for export validation.
 func (t *Tester) getStatus(duration time.Duration, hasError bool) Status {
 	t.mu.RLock()
 	th := t.thresholds

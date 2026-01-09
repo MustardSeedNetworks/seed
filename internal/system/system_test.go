@@ -1,4 +1,3 @@
-// Package system_test tests the system package for health metrics collection.
 package system_test
 
 import (

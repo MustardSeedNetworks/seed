@@ -1,5 +1,3 @@
-// Package speedtest_test provides tests for the result building logic in the speedtest package.
-// These tests verify the Result struct construction and validation without network access.
 package speedtest_test
 
 import (

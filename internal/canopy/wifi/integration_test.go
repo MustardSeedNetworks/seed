@@ -1,5 +1,5 @@
-// Package wifi_test provides wireless network information functionality tests.
-// Test suite validates integration between WiFi components.
+//go:build linux
+
 package wifi_test
 
 import (

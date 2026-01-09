@@ -40,6 +40,7 @@ func ExportParsePortPart(ports []int, seen map[int]bool, part string) ([]int, er
 }
 
 // ExportGetArguments exposes getArguments for testing.
+//
 // Deprecated: Use ExportGetArguments2 instead which uses the proper mcp.CallToolRequest type.
 func ExportGetArguments(_ any) map[string]any {
 	// Need to use the mcp.CallToolRequest type here

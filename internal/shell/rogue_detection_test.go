@@ -1,5 +1,3 @@
-// Package shell_test provides comprehensive tests for rogue device detection.
-// These tests cover RogueService, RogueDevice, and RogueAlert types and behavior.
 package shell_test
 
 import (

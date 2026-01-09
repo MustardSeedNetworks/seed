@@ -1,10 +1,9 @@
-// Package topology_test provides tests for the topology package.
 package topology_test
 
 import (
 	"testing"
 
-	// Verify the package can be imported
+	// Verify the package can be imported.
 	_ "github.com/krisarmstrong/seed/internal/roots/topology"
 )
 

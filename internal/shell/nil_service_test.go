@@ -1,5 +1,3 @@
-// Package shell_test provides tests for nil/uninitialized service scenarios.
-// These tests cover error handling when services are not properly initialized.
 package shell_test
 
 import (

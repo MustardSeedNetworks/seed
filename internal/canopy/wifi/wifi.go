@@ -121,26 +121,3 @@ func channelToFrequency(channel int) int {
 
 	return 0
 }
-
-// frequencyToChannel converts a frequency in MHz to Wi-Fi channel.
-func frequencyToChannel(freq int) int {
-	// 2.4 GHz band
-	if freq >= 2412 && freq <= 2472 {
-		return (freq - freq24GHzBaseOffset) / channelSpacingMHz
-	}
-	if freq == freq24GHzChannel14 {
-		return channel14
-	}
-
-	// 5 GHz band
-	if freq >= 5180 && freq <= 5825 {
-		return (freq - freq5GHzBaseOffset) / channelSpacingMHz
-	}
-
-	// 6 GHz band
-	if freq >= 5955 && freq <= 7115 {
-		return (freq - freq6GHzBaseOffset) / channelSpacingMHz
-	}
-
-	return 0
-}

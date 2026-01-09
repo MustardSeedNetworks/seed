@@ -1,4 +1,3 @@
-// Package snmp_test contains extended tests for the snmp package.
 package snmp_test
 
 import (

@@ -2,6 +2,7 @@ package sap_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -44,7 +45,7 @@ func TestTelemetryServiceGetSnapshotNotImplemented(t *testing.T) {
 	ctx := context.Background()
 	snapshot, err := service.GetSnapshot(ctx)
 
-	if err != sap.ErrNotImplemented {
+	if !errors.Is(err, sap.ErrNotImplemented) {
 		t.Errorf("expected ErrNotImplemented, got %v", err)
 	}
 	if snapshot != nil {
@@ -60,7 +61,7 @@ func TestTelemetryServiceGetHistoryNotImplemented(t *testing.T) {
 	ctx := context.Background()
 	history, err := service.GetHistory(ctx, "", "")
 
-	if err != sap.ErrNotImplemented {
+	if !errors.Is(err, sap.ErrNotImplemented) {
 		t.Errorf("expected ErrNotImplemented, got %v", err)
 	}
 	if history != nil {

@@ -1,11 +1,5 @@
 //go:build integration
 
-// Package speedtest_test provides integration tests for the speedtest package.
-// These tests require network access and should be run manually with:
-//
-//	go test -tags=integration ./internal/sap/speedtest/...
-//
-// Note: The upstream speedtest-go library has race conditions, so do not run with -race flag.
 package speedtest_test
 
 import (

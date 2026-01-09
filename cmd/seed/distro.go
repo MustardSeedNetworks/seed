@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	distroFamilyDebian = "debian"
 	// expectedLinuxReleaseParts is the number of parts expected when splitting key=value lines
 	// in /etc/os-release (key and value).
 	expectedLinuxReleaseParts = 2
@@ -56,7 +57,7 @@ func parseOSRelease(content string) *Distro {
 	if d.Family == "" {
 		switch d.ID {
 		case "ubuntu", "debian", "linuxmint", "pop":
-			d.Family = "debian"
+			d.Family = distroFamilyDebian
 		case "fedora", "rhel", "centos", "rocky", "almalinux":
 			d.Family = "rhel"
 		case "arch", "manjaro", "endeavouros":
@@ -72,7 +73,7 @@ func parseOSRelease(content string) *Distro {
 func detectFromLegacyFiles() *Distro {
 	// Check for distro-specific files
 	if _, err := os.Stat("/etc/debian_version"); err == nil {
-		return &Distro{ID: "debian", Name: "Debian", Family: "debian"}
+		return &Distro{ID: distroFamilyDebian, Name: "Debian", Family: distroFamilyDebian}
 	}
 	if _, err := os.Stat("/etc/redhat-release"); err == nil {
 		return &Distro{ID: "rhel", Name: "Red Hat", Family: "rhel"}

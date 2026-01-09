@@ -1,7 +1,3 @@
-// Package enrichment_test provides tests for the enrichment package.
-// Currently, the enrichment package is a placeholder. The actual enrichment
-// functionality (EnrichmentService) lives in the parent roots package.
-// This test file documents that relationship and provides basic package tests.
 package enrichment_test
 
 import (

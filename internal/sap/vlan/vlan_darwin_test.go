@@ -3,6 +3,7 @@
 package vlan_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/krisarmstrong/seed/internal/sap/vlan"
@@ -226,12 +227,12 @@ func TestCreateDeleteVlanInterfaceTableDriven(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// On macOS, these return nil (not implemented).
 			err := vlan.ExportCreateVlanInterfacePlatform(tt.parentIf, tt.vlanID)
-			if err != tt.wantCreate {
+			if !errors.Is(err, tt.wantCreate) {
 				t.Errorf("CreateVlanInterfacePlatform() error = %v, want %v", err, tt.wantCreate)
 			}
 
 			err = vlan.ExportDeleteVlanInterfacePlatform(tt.parentIf, tt.vlanID)
-			if err != tt.wantDelete {
+			if !errors.Is(err, tt.wantDelete) {
 				t.Errorf("DeleteVlanInterfacePlatform() error = %v, want %v", err, tt.wantDelete)
 			}
 		})

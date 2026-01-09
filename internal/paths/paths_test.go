@@ -1,4 +1,3 @@
-// Package paths_test tests the paths package for XDG and system path resolution.
 package paths_test
 
 import (

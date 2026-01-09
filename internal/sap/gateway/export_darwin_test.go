@@ -1,6 +1,5 @@
 //go:build darwin
 
-//nolint:testpackage // This file exports internal functions for external test package.
 package gateway
 
 import (

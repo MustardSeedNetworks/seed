@@ -77,48 +77,12 @@ func TestRedactSecrets(t *testing.T) {
 	}
 
 	for _, tc := range tests {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			redacted := redactSecrets(tc.cfg)
-
-			// Verify auth secrets are redacted
-			if tc.cfg.Auth.DefaultPasswordHash != "" && redacted.Auth.DefaultPasswordHash != redactedValue {
-				t.Errorf(
-					"DefaultPasswordHash should be redacted, got %q",
-					redacted.Auth.DefaultPasswordHash,
-				)
-			}
-			if tc.cfg.Auth.JWTSecret != "" && redacted.Auth.JWTSecret != redactedValue {
-				t.Errorf("JWTSecret should be redacted, got %q", redacted.Auth.JWTSecret)
-			}
-
-			// Verify NVD API key is redacted
-			if tc.cfg.Security.VulnerabilityScanning.NVDAPIKey != "" &&
-				redacted.Security.VulnerabilityScanning.NVDAPIKey != redactedValue {
-				t.Errorf(
-					"NVDAPIKey should be redacted, got %q",
-					redacted.Security.VulnerabilityScanning.NVDAPIKey,
-				)
-			}
-
-			// Verify SNMP credentials are redacted
-			for i, cred := range tc.cfg.SNMP.V3Credentials {
-				if cred.AuthPassword != "" && redacted.SNMP.V3Credentials[i].AuthPassword != redactedValue {
-					t.Errorf(
-						"SNMP AuthPassword[%d] should be redacted, got %q",
-						i,
-						redacted.SNMP.V3Credentials[i].AuthPassword,
-					)
-				}
-				if cred.PrivPassword != "" && redacted.SNMP.V3Credentials[i].PrivPassword != redactedValue {
-					t.Errorf(
-						"SNMP PrivPassword[%d] should be redacted, got %q",
-						i,
-						redacted.SNMP.V3Credentials[i].PrivPassword,
-					)
-				}
-			}
+			assertRedactedSecrets(t, tc.cfg, redacted)
 		})
 	}
 }
@@ -155,7 +119,59 @@ func TestRedactSecretsPreservesNonSensitiveData(t *testing.T) {
 
 	redacted := redactSecrets(original)
 
-	// Non-sensitive fields should be preserved
+	assertPreservedNonSensitiveData(t, original, redacted)
+}
+
+func assertRedactedSecrets(t *testing.T, original, redacted *config.Config) {
+	t.Helper()
+	assertAuthRedacted(t, original, redacted)
+	assertSecurityRedacted(t, original, redacted)
+	assertSNMPCredentialsRedacted(t, original, redacted)
+}
+
+func assertAuthRedacted(t *testing.T, original, redacted *config.Config) {
+	t.Helper()
+	if original.Auth.DefaultPasswordHash != "" && redacted.Auth.DefaultPasswordHash != redactedValue {
+		t.Errorf("DefaultPasswordHash should be redacted, got %q", redacted.Auth.DefaultPasswordHash)
+	}
+	if original.Auth.JWTSecret != "" && redacted.Auth.JWTSecret != redactedValue {
+		t.Errorf("JWTSecret should be redacted, got %q", redacted.Auth.JWTSecret)
+	}
+}
+
+func assertSecurityRedacted(t *testing.T, original, redacted *config.Config) {
+	t.Helper()
+	if original.Security.VulnerabilityScanning.NVDAPIKey != "" &&
+		redacted.Security.VulnerabilityScanning.NVDAPIKey != redactedValue {
+		t.Errorf(
+			"NVDAPIKey should be redacted, got %q",
+			redacted.Security.VulnerabilityScanning.NVDAPIKey,
+		)
+	}
+}
+
+func assertSNMPCredentialsRedacted(t *testing.T, original, redacted *config.Config) {
+	t.Helper()
+	for i, cred := range original.SNMP.V3Credentials {
+		if cred.AuthPassword != "" && redacted.SNMP.V3Credentials[i].AuthPassword != redactedValue {
+			t.Errorf(
+				"SNMP AuthPassword[%d] should be redacted, got %q",
+				i,
+				redacted.SNMP.V3Credentials[i].AuthPassword,
+			)
+		}
+		if cred.PrivPassword != "" && redacted.SNMP.V3Credentials[i].PrivPassword != redactedValue {
+			t.Errorf(
+				"SNMP PrivPassword[%d] should be redacted, got %q",
+				i,
+				redacted.SNMP.V3Credentials[i].PrivPassword,
+			)
+		}
+	}
+}
+
+func assertPreservedNonSensitiveData(t *testing.T, original, redacted *config.Config) {
+	t.Helper()
 	if redacted.Version != original.Version {
 		t.Errorf("Version should be preserved: got %d, want %d", redacted.Version, original.Version)
 	}
@@ -172,8 +188,6 @@ func TestRedactSecretsPreservesNonSensitiveData(t *testing.T) {
 			original.Interface.Default,
 		)
 	}
-
-	// Username should be preserved (not a secret)
 	if redacted.Auth.DefaultUsername != original.Auth.DefaultUsername {
 		t.Errorf(
 			"Auth.DefaultUsername should be preserved: got %q, want %q",
@@ -181,19 +195,14 @@ func TestRedactSecretsPreservesNonSensitiveData(t *testing.T) {
 			original.Auth.DefaultUsername,
 		)
 	}
-
-	// SNMP username should be preserved
-	if len(redacted.SNMP.V3Credentials) > 0 {
-		if redacted.SNMP.V3Credentials[0].Username != original.SNMP.V3Credentials[0].Username {
-			t.Errorf(
-				"SNMP Username should be preserved: got %q, want %q",
-				redacted.SNMP.V3Credentials[0].Username,
-				original.SNMP.V3Credentials[0].Username,
-			)
-		}
+	if len(redacted.SNMP.V3Credentials) > 0 &&
+		redacted.SNMP.V3Credentials[0].Username != original.SNMP.V3Credentials[0].Username {
+		t.Errorf(
+			"SNMP Username should be preserved: got %q, want %q",
+			redacted.SNMP.V3Credentials[0].Username,
+			original.SNMP.V3Credentials[0].Username,
+		)
 	}
-
-	// SNMP communities should be preserved
 	if len(redacted.SNMP.Communities) != len(original.SNMP.Communities) {
 		t.Errorf(
 			"SNMP Communities should be preserved: got %d, want %d",

@@ -1,6 +1,3 @@
-// Package aggregator provides data aggregation utilities for the harvest module.
-// It includes functions for calculating statistics, grouping data by time periods,
-// and combining multiple data sources into unified reports.
 package aggregator
 
 import (
@@ -228,7 +225,7 @@ func periodKey(t time.Time, period Period) (string, error) {
 // padInt pads an integer with leading zeros to the specified width.
 func padInt(n, width int) string {
 	s := ""
-	for i := 0; i < width; i++ {
+	for range width {
 		s = string(rune('0'+n%10)) + s
 		n /= 10
 	}
@@ -319,7 +316,7 @@ func MovingAverage(values []float64, n int) ([]float64, error) {
 	var windowSum float64
 
 	// Initialize first window
-	for i := 0; i < n; i++ {
+	for i := range n {
 		windowSum += values[i]
 	}
 	result[0] = windowSum / float64(n)
@@ -362,17 +359,17 @@ func RateOfChange(values []float64) ([]float64, error) {
 
 	result := make([]float64, len(values)-1)
 	for i := 1; i < len(values); i++ {
-		if values[i-1] == 0 {
-			if values[i] == 0 {
-				result[i-1] = 0
-			} else {
-				result[i-1] = math.Inf(1)
-				if values[i] < 0 {
-					result[i-1] = math.Inf(-1)
-				}
-			}
-		} else {
-			result[i-1] = (values[i] - values[i-1]) / values[i-1]
+		prev := values[i-1]
+		curr := values[i]
+		switch {
+		case prev == 0 && curr == 0:
+			result[i-1] = 0
+		case prev == 0 && curr < 0:
+			result[i-1] = math.Inf(-1)
+		case prev == 0:
+			result[i-1] = math.Inf(1)
+		default:
+			result[i-1] = (curr - prev) / prev
 		}
 	}
 
@@ -449,18 +446,18 @@ func Normalize(values []float64) ([]float64, error) {
 		return nil, ErrEmptyDataset
 	}
 
-	min := values[0]
-	max := values[0]
+	minValue := values[0]
+	maxValue := values[0]
 	for _, v := range values {
-		if v < min {
-			min = v
+		if v < minValue {
+			minValue = v
 		}
-		if v > max {
-			max = v
+		if v > maxValue {
+			maxValue = v
 		}
 	}
 
-	rangeVal := max - min
+	rangeVal := maxValue - minValue
 	if rangeVal == 0 {
 		// All values are the same, return all 0.5
 		result := make([]float64, len(values))
@@ -472,7 +469,7 @@ func Normalize(values []float64) ([]float64, error) {
 
 	result := make([]float64, len(values))
 	for i, v := range values {
-		result[i] = (v - min) / rangeVal
+		result[i] = (v - minValue) / rangeVal
 	}
 
 	return result, nil

@@ -1,11 +1,3 @@
-// Package performance_test provides tests for the performance subpackage.
-// This package currently contains only documentation (doc.go). The actual
-// performance testing functionality is implemented in the parent sap package
-// via PerformanceService, which wraps speedtest.Tester and iperf.Manager.
-//
-// These tests verify:
-//  1. Package compiles and is importable
-//  2. Package documentation is correctly defined
 package performance_test
 
 import (

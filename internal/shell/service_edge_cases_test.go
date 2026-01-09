@@ -1,5 +1,3 @@
-// Package shell_test provides edge case tests for shell services.
-// These tests target specific code paths that need additional coverage.
 package shell_test
 
 import (

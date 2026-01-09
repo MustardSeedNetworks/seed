@@ -109,8 +109,8 @@ func getNetworkServiceName(iface string) (string, error) {
 			// Service name is in the previous line
 			prev := lines[i-1]
 			// Format: "(1) Service Name"
-			if idx := strings.Index(prev, ") "); idx != -1 {
-				return strings.TrimSpace(prev[idx+2:]), nil
+			if _, after, found := strings.Cut(prev, ") "); found {
+				return strings.TrimSpace(after), nil
 			}
 		}
 	}

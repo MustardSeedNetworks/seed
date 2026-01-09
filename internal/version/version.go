@@ -1,5 +1,5 @@
 // Package version provides build-time version information.
-// Uses runtime/debug.ReadBuildInfo() to extract VCS and module information
+// Uses runtime/debug.ReadBuildInfo() to extract VCS and module information.
 // embedded by the Go toolchain during build, with ldflags override support.
 package version
 
@@ -8,7 +8,9 @@ import (
 )
 
 // These variables are set via ldflags at build time.
-// Example: -ldflags "-X github.com/krisarmstrong/seed/internal/version.Version=v1.0.0"
+// Example: -ldflags "-X github.com/krisarmstrong/seed/internal/version.Version=v1.0.0".
+//
+//nolint:gochecknoglobals // Build metadata injected via ldflags.
 var (
 	Version   string // Set via -ldflags
 	Commit    string // Set via -ldflags

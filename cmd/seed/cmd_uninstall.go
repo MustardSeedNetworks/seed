@@ -17,6 +17,8 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
+const systemServicePath = "/etc/systemd/system/seed.service"
+
 // uninstallFlags holds parsed command flags for uninstall.
 type uninstallFlags struct {
 	purge      bool
@@ -147,7 +149,7 @@ func removeServiceFile(ctx context.Context, mode paths.Mode) error {
 // getServiceFilePath returns the path to the systemd service file.
 func getServiceFilePath(ctx context.Context, mode paths.Mode) string {
 	if mode == paths.ModeSystem {
-		return "/etc/systemd/system/seed.service"
+		return systemServicePath
 	}
 
 	userConfigDir, err := os.UserConfigDir()

@@ -80,7 +80,7 @@ type loggerState struct {
 // setLogger sets the global logger instance.
 // clearLogger resets the global logger to nil.
 //
-//nolint:gochecknoglobals // Intentional thread-safe singleton using closure pattern
+//nolint:gochecknoglobals,unused // Intentional thread-safe singleton; clearLogger is test-only.
 var (
 	getLogger, setLogger, clearLogger = func() (
 		func() *slog.Logger,

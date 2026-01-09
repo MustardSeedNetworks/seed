@@ -1,5 +1,3 @@
-// Package cable_test provides TDR cable testing functionality.
-// Test suite validates cable test status constants and result interpretation.
 package cable_test
 
 import (

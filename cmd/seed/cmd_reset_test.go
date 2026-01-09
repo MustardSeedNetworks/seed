@@ -166,6 +166,7 @@ func TestPreserveExistingCredentials(t *testing.T) {
 	}
 
 	for _, tc := range tests {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -179,43 +180,90 @@ func TestPreserveExistingCredentials(t *testing.T) {
 			}
 
 			preserveExistingCredentials(newCfg, tc.existingCfg, tc.flags)
-
-			if tc.wantAuth && tc.existingCfg != nil {
-				if newCfg.Auth.DefaultUsername != tc.existingCfg.Auth.DefaultUsername {
-					t.Errorf(
-						"DefaultUsername should be preserved: got %q, want %q",
-						newCfg.Auth.DefaultUsername,
-						tc.existingCfg.Auth.DefaultUsername,
-					)
-				}
-				if newCfg.Auth.DefaultPasswordHash != tc.existingCfg.Auth.DefaultPasswordHash {
-					t.Errorf(
-						"DefaultPasswordHash should be preserved: got %q, want %q",
-						newCfg.Auth.DefaultPasswordHash,
-						tc.existingCfg.Auth.DefaultPasswordHash,
-					)
-				}
-			} else if tc.existingCfg != nil {
-				if newCfg.Auth.DefaultUsername == tc.existingCfg.Auth.DefaultUsername &&
-					tc.existingCfg.Auth.DefaultUsername != "" {
-					t.Error("DefaultUsername should not be preserved")
-				}
-			}
-
-			if tc.wantJWT && tc.existingCfg != nil {
-				if newCfg.Auth.JWTSecret != tc.existingCfg.Auth.JWTSecret {
-					t.Errorf(
-						"JWTSecret should be preserved: got %q, want %q",
-						newCfg.Auth.JWTSecret,
-						tc.existingCfg.Auth.JWTSecret,
-					)
-				}
-			} else if tc.existingCfg != nil {
-				if newCfg.Auth.JWTSecret == tc.existingCfg.Auth.JWTSecret && tc.existingCfg.Auth.JWTSecret != "" {
-					t.Error("JWTSecret should not be preserved")
-				}
-			}
+			assertPreservedCredentials(t, tc, newCfg)
 		})
+	}
+}
+
+func assertPreservedCredentials(t *testing.T, tc struct {
+	name        string
+	newCfg      *config.Config
+	existingCfg *config.Config
+	flags       resetFlags
+	wantAuth    bool
+	wantJWT     bool
+}, newCfg *config.Config) {
+	t.Helper()
+
+	if tc.existingCfg == nil {
+		return
+	}
+
+	assertAuthPreservation(t, tc, newCfg)
+	assertJWTPreservation(t, tc, newCfg)
+}
+
+func assertAuthPreservation(t *testing.T, tc struct {
+	name        string
+	newCfg      *config.Config
+	existingCfg *config.Config
+	flags       resetFlags
+	wantAuth    bool
+	wantJWT     bool
+}, newCfg *config.Config) {
+	t.Helper()
+
+	if tc.wantAuth {
+		if newCfg.Auth.DefaultUsername != tc.existingCfg.Auth.DefaultUsername {
+			t.Errorf(
+				"DefaultUsername should be preserved: got %q, want %q",
+				newCfg.Auth.DefaultUsername,
+				tc.existingCfg.Auth.DefaultUsername,
+			)
+		}
+		if newCfg.Auth.DefaultPasswordHash != tc.existingCfg.Auth.DefaultPasswordHash {
+			t.Errorf(
+				"DefaultPasswordHash should be preserved: got %q, want %q",
+				newCfg.Auth.DefaultPasswordHash,
+				tc.existingCfg.Auth.DefaultPasswordHash,
+			)
+		}
+		return
+	}
+
+	if newCfg.Auth.DefaultUsername == tc.existingCfg.Auth.DefaultUsername &&
+		tc.existingCfg.Auth.DefaultUsername != "" {
+		t.Error("DefaultUsername should not be preserved")
+	}
+	if newCfg.Auth.DefaultPasswordHash == tc.existingCfg.Auth.DefaultPasswordHash &&
+		tc.existingCfg.Auth.DefaultPasswordHash != "" {
+		t.Error("DefaultPasswordHash should not be preserved")
+	}
+}
+
+func assertJWTPreservation(t *testing.T, tc struct {
+	name        string
+	newCfg      *config.Config
+	existingCfg *config.Config
+	flags       resetFlags
+	wantAuth    bool
+	wantJWT     bool
+}, newCfg *config.Config) {
+	t.Helper()
+
+	if tc.wantJWT {
+		if newCfg.Auth.JWTSecret != tc.existingCfg.Auth.JWTSecret {
+			t.Errorf(
+				"JWTSecret should be preserved: got %q, want %q",
+				newCfg.Auth.JWTSecret,
+				tc.existingCfg.Auth.JWTSecret,
+			)
+		}
+		return
+	}
+
+	if newCfg.Auth.JWTSecret == tc.existingCfg.Auth.JWTSecret && tc.existingCfg.Auth.JWTSecret != "" {
+		t.Error("JWTSecret should not be preserved")
 	}
 }
 
