@@ -191,13 +191,16 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Skip CSRF for auth endpoints that don't have a session yet, token refresh,
-		// logout (safe operation), and SSO. Refresh needs exemption because the user
-		// may not have a valid CSRF token when their access token expires.
+		// logout (safe operation), SSO, and client logging. Refresh needs exemption because
+		// the user may not have a valid CSRF token when their access token expires.
+		// Client logs endpoint is exempted because the logger runs before CSRF tokens are
+		// available and logging doesn't change security-sensitive state.
 		if r.URL.Path == "/api/auth/login" ||
 			r.URL.Path == "/api/auth/refresh" ||
 			r.URL.Path == "/api/auth/logout" ||
 			r.URL.Path == "/api/setup/status" ||
 			r.URL.Path == "/api/setup/complete" ||
+			r.URL.Path == "/api/harvest/logs/client" ||
 			strings.HasPrefix(r.URL.Path, "/api/sso/") {
 			next.ServeHTTP(w, r)
 			return

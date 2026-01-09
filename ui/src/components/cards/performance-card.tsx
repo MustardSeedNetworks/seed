@@ -181,14 +181,8 @@ export const PerformanceCard = memo(function PerformanceCard({
   const manageIperfServer = useCallback(async (shouldRun: boolean, port: number) => {
     try {
       const action = shouldRun ? "start" : "stop";
-      const res = await fetch("/api/sap/iperf/server", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ action, port }),
-      });
+      // Use api.post() for CSRF token inclusion (#CSRF-FIX)
+      const res = await api.post("/api/sap/iperf/server", { action, port });
       if (res.ok) {
         const statusRes = await fetch("/api/sap/iperf/server/status", {
           credentials: "include",
