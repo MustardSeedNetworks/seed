@@ -1,10 +1,18 @@
 // Package version provides build-time version information.
 // Uses runtime/debug.ReadBuildInfo() to extract VCS and module information
-// embedded by the Go toolchain during build.
+// embedded by the Go toolchain during build, with ldflags override support.
 package version
 
 import (
 	"runtime/debug"
+)
+
+// These variables are set via ldflags at build time.
+// Example: -ldflags "-X github.com/krisarmstrong/seed/internal/version.Version=v1.0.0"
+var (
+	Version   string // Set via -ldflags
+	Commit    string // Set via -ldflags
+	BuildTime string // Set via -ldflags
 )
 
 const (
@@ -57,8 +65,23 @@ func extractVersionFromBuildInfo(info *debug.BuildInfo) (string, string, string)
 }
 
 // getVersionInfo extracts version, commit, and build time from build info.
-// The Go runtime caches ReadBuildInfo() results, so no additional caching is needed.
+// Ldflags variables take precedence over debug.ReadBuildInfo().
 func getVersionInfo() (string, string, string) {
+	// Use ldflags values if set.
+	if Version != "" {
+		ver := Version
+		commit := Commit
+		buildTime := BuildTime
+		if commit == "" {
+			commit = unknownValue
+		}
+		if buildTime == "" {
+			buildTime = unknownValue
+		}
+		return ver, commit, buildTime
+	}
+
+	// Fall back to debug.ReadBuildInfo().
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
 		return defaultVersion, unknownValue, unknownValue
