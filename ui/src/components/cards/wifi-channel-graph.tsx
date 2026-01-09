@@ -39,13 +39,14 @@ interface ChannelNetwork {
 
 /**
  * Channel graph data organized by band
+ * Note: Keys match backend JSON naming (snake_case with numbers)
  */
 interface ChannelGraphData {
-  networks24Ghz: ChannelNetwork[];
-  networks5Ghz: ChannelNetwork[];
-  networks6Ghz: ChannelNetwork[];
-  connectedBssid?: string;
-  scanTime: string;
+  networks_2_4ghz: ChannelNetwork[];
+  networks_5ghz: ChannelNetwork[];
+  networks_6ghz: ChannelNetwork[];
+  connected_bssid?: string;
+  scan_time: string;
 }
 
 /**
@@ -326,11 +327,11 @@ export function WifiChannelGraph({ data, loading, visible = true }: WifiChannelG
     if (!data?.data) return [];
     switch (selectedBand) {
       case "2.4GHz":
-        return data.data.networks24Ghz;
+        return data.data.networks_2_4ghz;
       case "5GHz":
-        return data.data.networks5Ghz;
+        return data.data.networks_5ghz;
       case "6GHz":
-        return data.data.networks6Ghz;
+        return data.data.networks_6ghz;
     }
   }, [data, selectedBand]);
 
@@ -338,9 +339,9 @@ export function WifiChannelGraph({ data, loading, visible = true }: WifiChannelG
   const availableBands = useMemo(() => {
     if (!data?.data) return [];
     const bands: BandType[] = [];
-    if (data.data.networks24Ghz.length > 0) bands.push("2.4GHz");
-    if (data.data.networks5Ghz.length > 0) bands.push("5GHz");
-    if (data.data.networks6Ghz.length > 0) bands.push("6GHz");
+    if (data.data.networks_2_4ghz.length > 0) bands.push("2.4GHz");
+    if (data.data.networks_5ghz.length > 0) bands.push("5GHz");
+    if (data.data.networks_6ghz.length > 0) bands.push("6GHz");
     return bands;
   }, [data]);
 
@@ -393,7 +394,7 @@ export function WifiChannelGraph({ data, loading, visible = true }: WifiChannelG
           <ChannelGraph
             networks={networks}
             band={selectedBand}
-            connectedBssid={data.data?.connectedBssid}
+            connectedBssid={data.data?.connected_bssid}
           />
 
           {/* Legend */}

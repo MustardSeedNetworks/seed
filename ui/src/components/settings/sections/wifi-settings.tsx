@@ -173,12 +173,21 @@ export const WiFiSettings = memo(function WiFiSettings({
     }
   }, [loadSavedNetworks]);
 
-  // Load saved networks on mount
+  // Auto-scan networks and load saved networks on mount, refresh every 30s
   useEffect(() => {
     if (wifiSettings.isWireless) {
+      // Initial load
       loadSavedNetworks();
+      scanNetworks();
+
+      // Auto-refresh scan every 30 seconds
+      const interval = setInterval(() => {
+        scanNetworks();
+      }, 30000);
+
+      return () => clearInterval(interval);
     }
-  }, [wifiSettings.isWireless, loadSavedNetworks]);
+  }, [wifiSettings.isWireless, loadSavedNetworks, scanNetworks]);
 
   // Get signal strength indicator
   const getSignalBars = (signal: number): string => {
@@ -267,11 +276,11 @@ export const WiFiSettings = memo(function WiFiSettings({
         {/* WiFi Network Connection - only show if wireless adapter available */}
         {wifiSettings.isWireless && (
           <>
-            {/* Scan Button and Status */}
+            {/* Available Networks */}
             <div className="border-t border-surface-border pt-3">
               <div className="flex items-center justify-between">
                 <span className="body-small font-medium text-text-primary">
-                  Available Networks
+                  Available Networks {scanning && <span className="text-text-muted">(scanning...)</span>}
                 </span>
                 <button
                   type="button"
@@ -281,16 +290,26 @@ export const WiFiSettings = memo(function WiFiSettings({
                     "caption font-medium",
                     spacing.chip.md,
                     radius.default,
-                    "bg-brand-primary text-text-inverse",
-                    "hover:bg-brand-accent disabled:opacity-50",
+                    "bg-surface-hover text-text-primary border border-surface-border",
+                    "hover:bg-surface-border disabled:opacity-50",
                   )}
                 >
-                  {scanning ? "Scanning..." : "Scan"}
+                  ↻ Refresh
                 </button>
               </div>
 
               {scanError && (
                 <p className="caption text-status-error mt-1">{scanError}</p>
+              )}
+
+              {/* Loading state when no networks yet */}
+              {networks.length === 0 && scanning && (
+                <p className="caption text-text-muted mt-2">Scanning for networks...</p>
+              )}
+
+              {/* No networks found */}
+              {networks.length === 0 && !scanning && !scanError && (
+                <p className="caption text-text-muted mt-2">No networks found</p>
               )}
 
               {/* Network List */}
