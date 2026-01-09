@@ -408,7 +408,7 @@ export const HeaderBar = memo(function HeaderBar({
                   </span>
                 </div>
                 <div className="max-h-60 overflow-y-auto">
-                  {interfaces.filter((i) => !i.isWifi).length === 0 ? (
+                  {interfaces.filter((i) => i.type !== "wifi").length === 0 ? (
                     <div className={cn(spacing.pad.md, "text-center")}>
                       <span className="caption text-text-muted">
                         {t("interface.noEthernet", "No Ethernet interfaces")}
@@ -416,7 +416,7 @@ export const HeaderBar = memo(function HeaderBar({
                     </div>
                   ) : (
                     interfaces
-                      .filter((i) => !i.isWifi)
+                      .filter((i) => i.type !== "wifi")
                       .map((iface) => (
                         <button
                           type="button"
