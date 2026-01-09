@@ -192,6 +192,9 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Update WiFi manager to use the requested interface
+	s.wifiManager.SetInterface(wlanIface)
+
 	// Check if interface is wireless
 	if !s.wifiManager.IsWireless() {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{

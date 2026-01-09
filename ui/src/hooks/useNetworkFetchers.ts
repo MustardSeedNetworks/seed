@@ -401,7 +401,12 @@ export function useNetworkFetchers({
   // Fetch Wi-Fi data
   const fetchWifiData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/canopy/wifi`, {
+      // Use ref to get current interface without dependency change (#754)
+      const iface = currentInterfaceRef.current;
+      const url = iface
+        ? `${API_BASE}/api/canopy/wifi?interface=${encodeURIComponent(iface)}`
+        : `${API_BASE}/api/canopy/wifi`;
+      const response = await fetch(url, {
         credentials: "include",
       });
       if (response.ok) {
@@ -434,7 +439,7 @@ export function useNetworkFetchers({
     } catch (err) {
       logger.error(LogComponents.Wifi, "Failed to fetch Wi-Fi data", err);
     }
-  }, [setCards, setIsWifi, userSetWifiModeRef]);
+  }, [currentInterfaceRef, setCards, setIsWifi, userSetWifiModeRef]);
 
   // Fetch Cable test data
   const fetchCableData = useCallback(async () => {
