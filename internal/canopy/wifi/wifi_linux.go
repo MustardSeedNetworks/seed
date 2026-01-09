@@ -3,9 +3,13 @@
 package wifi
 
 import (
+	"bufio"
+	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/mdlayher/wifi"
 )
@@ -155,4 +159,121 @@ func frequencyToChannel(freq int) int {
 	}
 
 	return 0
+}
+
+// connectPlatform connects to a WiFi network on Linux using nmcli.
+func connectPlatform(iface, ssid, password string) (*ConnectionResult, error) {
+	var cmd *exec.Cmd
+
+	if password != "" {
+		// Connect with password - creates new connection profile
+		//nolint:gosec // ssid and password are user-provided, iface is validated
+		cmd = exec.Command("nmcli", "device", "wifi", "connect", ssid,
+			"password", password, "ifname", iface)
+	} else {
+		// Try to connect using saved connection
+		//nolint:gosec // ssid is user-provided, iface is validated
+		cmd = exec.Command("nmcli", "device", "wifi", "connect", ssid, "ifname", iface)
+	}
+
+	output, err := cmd.CombinedOutput()
+	outputStr := strings.TrimSpace(string(output))
+
+	if err != nil {
+		// Parse common error messages
+		if strings.Contains(outputStr, "Secrets were required") {
+			return &ConnectionResult{
+				Success: false,
+				Message: "Password required for this network",
+				SSID:    ssid,
+			}, nil
+		}
+		if strings.Contains(outputStr, "No network with SSID") {
+			return &ConnectionResult{
+				Success: false,
+				Message: "Network not found. Make sure the network is in range.",
+				SSID:    ssid,
+			}, nil
+		}
+		if strings.Contains(outputStr, "Error") {
+			return &ConnectionResult{
+				Success: false,
+				Message: outputStr,
+				SSID:    ssid,
+			}, nil
+		}
+		return &ConnectionResult{
+			Success: false,
+			Message: fmt.Sprintf("Connection failed: %s", outputStr),
+			SSID:    ssid,
+		}, nil
+	}
+
+	return &ConnectionResult{
+		Success: true,
+		Message: fmt.Sprintf("Successfully connected to %s", ssid),
+		SSID:    ssid,
+	}, nil
+}
+
+// disconnectPlatform disconnects from WiFi on Linux using nmcli.
+func disconnectPlatform(iface string) (*ConnectionResult, error) {
+	//nolint:gosec // iface is validated by caller
+	cmd := exec.Command("nmcli", "device", "disconnect", iface)
+	output, err := cmd.CombinedOutput()
+	outputStr := strings.TrimSpace(string(output))
+
+	if err != nil {
+		return &ConnectionResult{
+			Success: false,
+			Message: fmt.Sprintf("Disconnect failed: %s", outputStr),
+		}, nil
+	}
+
+	return &ConnectionResult{
+		Success: true,
+		Message: "Successfully disconnected",
+	}, nil
+}
+
+// getSavedNetworksPlatform returns saved WiFi networks on Linux using nmcli.
+func getSavedNetworksPlatform() ([]SavedNetwork, error) {
+	// List saved WiFi connections
+	cmd := exec.Command("nmcli", "-t", "-f", "NAME,UUID,TYPE,DEVICE", "connection", "show")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list saved networks: %w", err)
+	}
+
+	var networks []SavedNetwork
+	scanner := bufio.NewScanner(strings.NewReader(string(output)))
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.Split(line, ":")
+		if len(parts) >= 3 && parts[2] == "802-11-wireless" {
+			network := SavedNetwork{
+				SSID: parts[0],
+				UUID: parts[1],
+				Type: "wifi",
+			}
+			if len(parts) >= 4 {
+				network.Device = parts[3]
+			}
+			networks = append(networks, network)
+		}
+	}
+
+	return networks, nil
+}
+
+// forgetNetworkPlatform removes a saved WiFi network on Linux using nmcli.
+func forgetNetworkPlatform(ssid string) error {
+	//nolint:gosec // ssid is user-provided
+	cmd := exec.Command("nmcli", "connection", "delete", ssid)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to forget network: %s", strings.TrimSpace(string(output)))
+	}
+	return nil
 }
