@@ -327,6 +327,9 @@ function App() {
         if (response.ok) {
           const data = await response.json();
           setCurrentInterface(interfaceName);
+          // Update ref immediately so fetch functions use the new interface (#754)
+          // React state updates are async, but fetch functions read from ref synchronously
+          currentInterfaceRef.current = interfaceName;
           // Only auto-set WiFi mode if user hasn't manually selected via Ethernet/WiFi buttons
           if (!userSetWifiModeRef.current) {
             setIsWifi(data.isWireless === true);
@@ -357,6 +360,7 @@ function App() {
       setCurrentInterface,
       setIsWifi,
       userSetWifiModeRef,
+      currentInterfaceRef,
     ],
   );
 
