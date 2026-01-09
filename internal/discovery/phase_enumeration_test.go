@@ -195,8 +195,9 @@ func TestEnumerationProgress_MarkComplete(t *testing.T) {
 }
 
 func TestEnhancedEnumerationConfig_Fields(t *testing.T) {
+	base := discovery.DefaultEnumerationConfig()
 	cfg := &discovery.EnhancedEnumerationConfig{
-		EnumerationConfig: *discovery.DefaultEnumerationConfig(),
+		EnumerationConfig: *base,
 		MultiPassARP:      true,
 		ARPPasses:         3,
 		GratuitousARP:     true,

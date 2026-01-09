@@ -333,7 +333,11 @@ func (s *Server) initWebSocketAndLogging(db *database.DB) {
 		logging.GetLogger().
 			Info("Log broadcaster initialized with database persistence", "buffer_size", logBroadcasterBufferSize)
 	} else {
-		logging.GetLogger().Info("Log broadcaster initialized (memory-only, no database)", "buffer_size", logBroadcasterBufferSize)
+		logging.GetLogger().Info(
+			"Log broadcaster initialized (memory-only, no database)",
+			"buffer_size",
+			logBroadcasterBufferSize,
+		)
 	}
 
 	// Wire up database persistence for devices if database is available
@@ -636,6 +640,10 @@ func (s *Server) setupCanopyRoutes() {
 	s.mux.HandleFunc("/api/canopy/wifi/status", s.handleWiFiStatus)
 	s.mux.HandleFunc("/api/canopy/wifi/channel-graph", s.handleWiFiChannelGraph)
 	s.mux.HandleFunc("/api/canopy/wifi/settings", s.handleWiFiSettings)
+	s.mux.HandleFunc("/api/canopy/wifi/connect", s.handleWiFiConnect)
+	s.mux.HandleFunc("/api/canopy/wifi/disconnect", s.handleWiFiDisconnect)
+	s.mux.HandleFunc("/api/canopy/wifi/saved", s.handleWiFiSavedNetworks)
+	s.mux.HandleFunc("/api/canopy/wifi/forget", s.handleWiFiForgetNetwork)
 	s.mux.HandleFunc("/api/canopy/survey/create", s.createSurvey)
 	s.mux.HandleFunc("/api/canopy/survey/list", s.listSurveys)
 	s.mux.HandleFunc("/api/canopy/survey", s.getSurvey)
