@@ -15,7 +15,10 @@
     "gateway": "Gateway",
     "dns": "DNS Tests",
     "performance": "Performance Tests",
-    "discovery": "Network Discovery"
+    "discovery": "Network Discovery",
+    "healthChecks": "Health Checks",
+    "security": "Security & Administration",
+    "troubleshooting": "Troubleshooting"
   },
   "instructions": {
     "runTests": "Tap the play button to run all tests.",
@@ -324,6 +327,257 @@
         "lldpCdp": {
           "term": "LLDP/CDP",
           "description": "Link Layer Discovery Protocol (standard) or Cisco Discovery Protocol - provides information about directly connected network switches."
+        }
+      }
+    },
+    "healthChecks": {
+      "description": "Monitor endpoint availability with automated ping, TCP, and HTTP checks.",
+      "terms": {
+        "pingTest": {
+          "term": "Ping Test (ICMP)",
+          "description": "Sends ICMP echo requests to verify host reachability. Returns latency and packet loss metrics."
+        },
+        "tcpTest": {
+          "term": "TCP Connection Test",
+          "description": "Attempts TCP handshake to specified port. Verifies service is accepting connections."
+        },
+        "httpTest": {
+          "term": "HTTP Test",
+          "description": "Performs full HTTP request including DNS, TCP, TLS, and response time measurements."
+        },
+        "customTargets": {
+          "term": "Custom Targets",
+          "description": "Configure your own endpoints to monitor in Settings → Health Checks. Add internal servers, cloud services, or critical infrastructure."
+        },
+        "thresholds": {
+          "term": "Thresholds",
+          "description": "Set warning (yellow) and critical (red) thresholds for latency. Configure in Settings → Thresholds."
+        }
+      },
+      "commonIssues": {
+        "title": "Common Issues",
+        "timeout": "Timeout indicates host unreachable, firewall blocking, or network path issue.",
+        "highLatency": "High latency may indicate network congestion, routing issues, or overloaded server.",
+        "packetLoss": "Packet loss suggests network congestion, faulty equipment, or wireless interference.",
+        "connectionRefused": "Connection refused means the service is not running or listening on that port."
+      }
+    },
+    "security": {
+      "description": "Security features including device scanning, vulnerability detection, and password management.",
+      "terms": {
+        "portScan": {
+          "term": "Port Scanning",
+          "description": "Identifies open network ports on discovered devices. Helps detect unauthorized services or security risks."
+        },
+        "vulnScan": {
+          "term": "Vulnerability Scan",
+          "description": "Checks devices for known vulnerabilities based on detected services, versions, and CVE databases."
+        },
+        "devicePosture": {
+          "term": "Device Posture",
+          "description": "Assesses security posture of network devices including open ports, outdated services, and misconfigurations."
+        },
+        "rogueDhcp": {
+          "term": "Rogue DHCP Detection",
+          "description": "Detects unauthorized DHCP servers on the network that could intercept traffic or assign malicious configurations."
+        }
+      },
+      "passwordRecovery": {
+        "title": "Password Recovery",
+        "description": "If you've forgotten your admin password, you can reset it via filesystem access (SSH).",
+        "steps": [
+          "SSH into the server running The Seed",
+          "Create an empty file named '.recovery' in the data directory",
+          "User mode: touch ~/.local/share/seed/.recovery",
+          "System mode: sudo touch /var/lib/seed/.recovery",
+          "The server will detect the file and generate a recovery token",
+          "Read the token from '.recovery-token' in the same directory",
+          "Enter the token on the login page along with your new password",
+          "The token expires after 15 minutes and is single-use"
+        ],
+        "note": "This requires filesystem access to the server, proving you have admin-level access to the machine."
+      },
+      "portScanDetails": {
+        "title": "Port Scan Intensity",
+        "description": "Configure port scan behavior in Settings → Discovery.",
+        "levels": {
+          "off": "No port scanning - only basic device discovery",
+          "light": "Scans common ports (22, 80, 443, etc.) - ~20 ports",
+          "normal": "Extended scan of common service ports - ~100 ports",
+          "aggressive": "Full TCP scan of all 65535 ports - slow but thorough"
+        },
+        "commonPorts": {
+          "21": "FTP - File transfer (insecure, use SFTP instead)",
+          "22": "SSH - Secure shell access",
+          "23": "Telnet - Remote terminal (insecure, use SSH instead)",
+          "25": "SMTP - Email server",
+          "53": "DNS - Name resolution",
+          "80": "HTTP - Web server (unencrypted)",
+          "443": "HTTPS - Secure web server",
+          "445": "SMB - Windows file sharing",
+          "3306": "MySQL - Database server",
+          "3389": "RDP - Windows remote desktop",
+          "5432": "PostgreSQL - Database server",
+          "8080": "HTTP-Alt - Alternative web server or proxy"
+        }
+      }
+    },
+    "troubleshooting": {
+      "description": "Common issues and their solutions.",
+      "categories": {
+        "linkIssues": {
+          "title": "Link Status Problems",
+          "noCarrier": {
+            "symptom": "No carrier detected",
+            "causes": [
+              "Ethernet cable disconnected or unplugged",
+              "Cable connected to unpowered switch/router",
+              "Faulty Ethernet cable (try replacement)",
+              "Network interface disabled in OS",
+              "Hardware failure in NIC or switch port"
+            ],
+            "solutions": [
+              "Check cable is firmly seated at both ends",
+              "Verify switch/router is powered on and port LED is active",
+              "Try a different cable or switch port",
+              "Check 'ip link' or 'ifconfig' shows interface as UP"
+            ]
+          },
+          "slowSpeed": {
+            "symptom": "Link speed lower than expected (100Mbps instead of 1Gbps)",
+            "causes": [
+              "Cat5 cable (only supports 100Mbps) instead of Cat5e/Cat6",
+              "Damaged cable pairs affecting gigabit negotiation",
+              "Old switch not supporting gigabit",
+              "Auto-negotiation mismatch"
+            ],
+            "solutions": [
+              "Use Cat5e or Cat6 cable for gigabit speeds",
+              "Run cable test to check all 4 pairs are OK",
+              "Try forcing speed settings if auto-neg fails"
+            ]
+          }
+        },
+        "cableIssues": {
+          "title": "Cable Test Failures",
+          "open": {
+            "symptom": "Cable pair shows 'Open'",
+            "meaning": "Wire is broken or disconnected at specified distance",
+            "solutions": [
+              "Check cable termination at patch panel or wall jack",
+              "Replace cable if fault is mid-run",
+              "Re-terminate RJ45 connector"
+            ]
+          },
+          "short": {
+            "symptom": "Cable pair shows 'Short'",
+            "meaning": "Two wires are touching (shorted together)",
+            "solutions": [
+              "Inspect RJ45 connectors for bent pins",
+              "Check for cable damage (crushed, pinched)",
+              "Replace cable or re-terminate"
+            ]
+          },
+          "impedanceMismatch": {
+            "symptom": "Cable pair shows 'Impedance Mismatch'",
+            "meaning": "Cable characteristic impedance doesn't match expected 100Ω",
+            "solutions": [
+              "Avoid mixing cable types in a run",
+              "Use proper punch-down technique",
+              "Replace low-quality patch cables"
+            ]
+          }
+        },
+        "dnsIssues": {
+          "title": "DNS Problems",
+          "slowResolution": {
+            "symptom": "DNS lookups taking >100ms",
+            "causes": [
+              "Distant or overloaded DNS server",
+              "Network congestion to DNS server",
+              "DNS server doing recursive lookups"
+            ],
+            "solutions": [
+              "Use local caching DNS resolver",
+              "Try faster public DNS (1.1.1.1, 8.8.8.8)",
+              "Check DNS server configuration"
+            ]
+          },
+          "resolutionFailure": {
+            "symptom": "DNS lookup returns no results or NXDOMAIN",
+            "causes": [
+              "DNS server unreachable",
+              "Domain doesn't exist",
+              "Firewall blocking UDP 53"
+            ],
+            "solutions": [
+              "Verify DNS server IP is correct",
+              "Try alternative DNS server",
+              "Check firewall rules"
+            ]
+          }
+        },
+        "gatewayIssues": {
+          "title": "Gateway Problems",
+          "unreachable": {
+            "symptom": "Gateway shows as unreachable",
+            "causes": [
+              "Gateway/router powered off or crashed",
+              "IP configuration incorrect",
+              "Network interface not connected",
+              "Gateway ICMP disabled (rare)"
+            ],
+            "solutions": [
+              "Verify gateway IP matches router's LAN IP",
+              "Check physical connection to network",
+              "Restart router if unresponsive"
+            ]
+          },
+          "highLatency": {
+            "symptom": "Gateway latency >5ms",
+            "causes": [
+              "Router overloaded with traffic",
+              "Wireless connection to router",
+              "Interference on network"
+            ],
+            "solutions": [
+              "Use wired connection if possible",
+              "Check for bandwidth-heavy applications",
+              "Reboot router to clear buffers"
+            ]
+          }
+        },
+        "performanceIssues": {
+          "title": "Performance Problems",
+          "slowInternet": {
+            "symptom": "Internet speed test below expected",
+            "causes": [
+              "ISP throttling or congestion",
+              "WiFi interference or weak signal",
+              "Router or modem issues",
+              "Time of day (peak usage)"
+            ],
+            "solutions": [
+              "Test with wired connection to isolate WiFi issues",
+              "Run test at different times",
+              "Restart modem and router",
+              "Contact ISP if consistently slow"
+            ]
+          },
+          "slowLan": {
+            "symptom": "LAN iperf3 test below expected",
+            "causes": [
+              "Gigabit not negotiated (see link status)",
+              "Switch backplane overloaded",
+              "Duplex mismatch",
+              "Server bottleneck"
+            ],
+            "solutions": [
+              "Verify both ends show 1Gbps full duplex",
+              "Try direct connection bypassing switch",
+              "Check server disk/CPU during test"
+            ]
+          }
         }
       }
     }
