@@ -82,6 +82,11 @@ function App() {
   const { t } = useTranslation("common");
   const { isAuthenticated, token, login, logout, refreshToken, isLoading, error } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+
+  // Sync logger auth state to prevent 401 spam on login screen
+  useEffect(() => {
+    logger.setAuthenticated(isAuthenticated);
+  }, [isAuthenticated]);
   // Use settings from context instead of local state
   const { cardSettings, displayOptions, refreshSettings } = useSettings();
   // Profile management (#754)
