@@ -759,7 +759,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           ip,
           reasons: reasons.join(", "),
         });
-        await api.post("/api/shell/vulnerabilities/scan", { targets: [ip] });
+        await api.post("/api/v1/shell/vulnerabilities/scan", { targets: [ip] });
       } catch (error) {
         logger.debug(LogComponents.Discovery, "Failed to trigger vulnerability scan", error);
       }
@@ -772,11 +772,14 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       setScanningDevices((prev) => new Set(prev).add(ip));
 
       try {
-        const apiResponse = await api.post<PortScanApiResponse>("/api/shell/discovery/portscan", {
-          target: ip,
-          ports: COMMON_PORTS,
-          timeout: 2000,
-        });
+        const apiResponse = await api.post<PortScanApiResponse>(
+          "/api/v1/shell/discovery/portscan",
+          {
+            target: ip,
+            ports: COMMON_PORTS,
+            timeout: 2000,
+          },
+        );
 
         // Transform backend response to frontend format
         const results: PortScanResult[] = apiResponse.services.map((svc) => ({

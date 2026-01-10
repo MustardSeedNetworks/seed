@@ -495,14 +495,14 @@ export function useSurvey() {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.get<Survey[] | { surveys?: Survey[] }>("/api/canopy/survey/list");
+      const data = await api.get<Survey[] | { surveys?: Survey[] }>("/api/v1/canopy/survey/list");
       setSurveys(Array.isArray(data) ? data : (data.surveys ?? []));
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to load surveys";
       setError(errorMsg);
       // fixes #678 - added structured error logging
       logger.error(LogComponents.Survey, "Failed to list surveys", err, {
-        endpoint: "/api/canopy/survey/list",
+        endpoint: "/api/v1/canopy/survey/list",
       });
     } finally {
       setLoading(false);
@@ -514,7 +514,7 @@ export function useSurvey() {
       setLoading(true);
       setError(null);
       try {
-        const survey = await api.post<Survey>("/api/canopy/survey/create", request);
+        const survey = await api.post<Survey>("/api/v1/canopy/survey/create", request);
         await listSurveys(); // Refresh list
         logger.info(LogComponents.Survey, "Survey created successfully", {
           surveyId: survey.id,
@@ -527,7 +527,7 @@ export function useSurvey() {
         setError(errorMsg);
         // fixes #678 - added structured error logging
         logger.error(LogComponents.Survey, "Failed to create survey", err, {
-          endpoint: "/api/canopy/survey/create",
+          endpoint: "/api/v1/canopy/survey/create",
           request,
         });
         throw new Error(errorMsg);
@@ -549,7 +549,7 @@ export function useSurvey() {
       setError(errorMsg);
       // fixes #678 - added structured error logging
       logger.error(LogComponents.Survey, "Failed to get survey", err, {
-        endpoint: "/api/canopy/survey",
+        endpoint: "/api/v1/canopy/survey",
         surveyId: id,
       });
       throw new Error(errorMsg);
@@ -574,7 +574,7 @@ export function useSurvey() {
         setError(errorMsg);
         // fixes #678 - added structured error logging
         logger.error(LogComponents.Survey, "Failed to delete survey", err, {
-          endpoint: "/api/canopy/survey/delete",
+          endpoint: "/api/v1/canopy/survey/delete",
           surveyId: id,
         });
       } finally {
@@ -598,7 +598,7 @@ export function useSurvey() {
         setError(errorMsg);
         // fixes #678 - added structured error logging
         logger.error(LogComponents.Survey, "Failed to start survey", err, {
-          endpoint: "/api/canopy/survey/start",
+          endpoint: "/api/v1/canopy/survey/start",
           surveyId: id,
         });
       } finally {
@@ -622,7 +622,7 @@ export function useSurvey() {
         setError(errorMsg);
         // fixes #678 - added structured error logging
         logger.error(LogComponents.Survey, "Failed to pause survey", err, {
-          endpoint: "/api/canopy/survey/pause",
+          endpoint: "/api/v1/canopy/survey/pause",
           surveyId: id,
         });
       } finally {
@@ -646,7 +646,7 @@ export function useSurvey() {
         setError(errorMsg);
         // fixes #678 - added structured error logging
         logger.error(LogComponents.Survey, "Failed to complete survey", err, {
-          endpoint: "/api/canopy/survey/complete",
+          endpoint: "/api/v1/canopy/survey/complete",
           surveyId: id,
         });
       } finally {
@@ -682,7 +682,7 @@ export function useSurvey() {
         setError(errorMsg);
         // fixes #678 - added structured error logging
         logger.error(LogComponents.Survey, "Failed to add sample", err, {
-          endpoint: "/api/canopy/survey/sample",
+          endpoint: "/api/v1/canopy/survey/sample",
           surveyId: id,
           coordinates: { x, y },
         });
@@ -709,7 +709,7 @@ export function useSurvey() {
       setError(errorMsg);
       // fixes #678 - added structured error logging
       logger.error(LogComponents.Survey, "Failed to update floor plan", err, {
-        endpoint: "/api/canopy/survey/floorplan",
+        endpoint: "/api/v1/canopy/survey/floorplan",
         surveyId: id,
       });
     } finally {

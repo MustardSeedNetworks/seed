@@ -182,9 +182,9 @@ export const PerformanceCard = memo(function PerformanceCard({
     try {
       const action = shouldRun ? "start" : "stop";
       // Use api.post() for CSRF token inclusion (#CSRF-FIX)
-      const res = await api.post("/api/sap/iperf/server", { action, port });
+      const res = await api.post("/api/v1/sap/iperf/server", { action, port });
       if (res.ok) {
-        const statusRes = await fetch("/api/sap/iperf/server/status", {
+        const statusRes = await fetch("/api/v1/sap/iperf/server/status", {
           credentials: "include",
         });
         if (statusRes.ok) {
@@ -202,7 +202,7 @@ export const PerformanceCard = memo(function PerformanceCard({
     const fetchStatus = async () => {
       try {
         // Fetch speedtest status
-        const speedRes = await fetch("/api/sap/speedtest/status", {
+        const speedRes = await fetch("/api/v1/sap/speedtest/status", {
           credentials: "include",
         });
         if (speedRes.ok) {
@@ -215,7 +215,7 @@ export const PerformanceCard = memo(function PerformanceCard({
         }
 
         // Fetch iperf3 info
-        const iperfInfoRes = await fetch("/api/sap/iperf/info", {
+        const iperfInfoRes = await fetch("/api/v1/sap/iperf/info", {
           credentials: "include",
         });
         if (iperfInfoRes.ok) {
@@ -223,7 +223,7 @@ export const PerformanceCard = memo(function PerformanceCard({
         }
 
         // Fetch iperf3 client status
-        const iperfClientRes = await fetch("/api/sap/iperf/client/status", {
+        const iperfClientRes = await fetch("/api/v1/sap/iperf/client/status", {
           credentials: "include",
         });
         if (iperfClientRes.ok) {
@@ -236,7 +236,7 @@ export const PerformanceCard = memo(function PerformanceCard({
         }
 
         // Fetch iperf3 server status
-        const iperfServerRes = await fetch("/api/sap/iperf/server/status", {
+        const iperfServerRes = await fetch("/api/v1/sap/iperf/server/status", {
           credentials: "include",
         });
         if (iperfServerRes.ok) {
@@ -262,7 +262,7 @@ export const PerformanceCard = memo(function PerformanceCard({
       // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Server sync handles multiple states
       const syncServerState = async () => {
         try {
-          const res = await fetch("/api/sap/iperf/server/status", {
+          const res = await fetch("/api/v1/sap/iperf/server/status", {
             credentials: "include",
           });
           if (res.ok) {
@@ -303,7 +303,7 @@ export const PerformanceCard = memo(function PerformanceCard({
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("/api/sap/speedtest/status", {
+        const res = await fetch("/api/v1/sap/speedtest/status", {
           credentials: "include",
         });
         if (res.ok) {
@@ -336,7 +336,7 @@ export const PerformanceCard = memo(function PerformanceCard({
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("/api/sap/iperf/client/status", {
+        const res = await fetch("/api/v1/sap/iperf/client/status", {
           credentials: "include",
         });
         if (res.ok) {
@@ -374,7 +374,7 @@ export const PerformanceCard = memo(function PerformanceCard({
     setSpeedtestStatus({ running: true, phase: "finding_server", progress: 0 });
 
     try {
-      await api.post("/api/sap/speedtest");
+      await api.post("/api/v1/sap/speedtest");
     } catch (err) {
       setSpeedtestError(err instanceof Error ? err.message : t("performance.speedtestFailed"));
       setSpeedtestStatus({ running: false, phase: "idle", progress: 0 });
@@ -398,7 +398,7 @@ export const PerformanceCard = memo(function PerformanceCard({
     setIperfClientStatus({ running: true, phase: "connecting", progress: 0 });
 
     try {
-      await api.post("/api/sap/iperf/client", {
+      await api.post("/api/v1/sap/iperf/client", {
         server: iperfSettings.server,
         port: iperfSettings.port,
         protocol: iperfSettings.protocol,

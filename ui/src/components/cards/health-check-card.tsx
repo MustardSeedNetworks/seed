@@ -97,7 +97,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
     setIsRunning(true);
     setError(null);
     try {
-      const res = await fetch("/api/sap/health-checks/run", {
+      const res = await fetch("/api/v1/sap/health-checks/run", {
         credentials: "include",
       });
       if (res.ok) {

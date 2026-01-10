@@ -389,7 +389,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     try {
       setError(null);
       setIsLoading(true);
-      const data = await api.get<ProfileListResponse>("/api/profiles");
+      const data = await api.get<ProfileListResponse>("/api/v1/profiles");
       if (isMountedRef.current) {
         setProfiles(data.profiles || []);
       }
@@ -412,7 +412,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   const refreshActiveProfile = useCallback(async () => {
     try {
       setError(null);
-      const profile = await api.get<Profile>("/api/profiles/active");
+      const profile = await api.get<Profile>("/api/v1/profiles/active");
       if (isMountedRef.current) {
         setActiveProfile(profile);
         setIsSettingsLoaded(true);
@@ -441,7 +441,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
 
   const loadBackendDefaults = useCallback(async () => {
     try {
-      const defaults = await api.get<DefaultSettings>("/api/settings/defaults");
+      const defaults = await api.get<DefaultSettings>("/api/v1/settings/defaults");
       if (isMountedRef.current) {
         setBackendDefaults(defaults);
       }
@@ -1034,7 +1034,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     try {
       setError(null);
       setIsLoading(true);
-      const created = await api.post<Profile>("/api/profiles", profile);
+      const created = await api.post<Profile>("/api/v1/profiles", profile);
       if (isMountedRef.current) {
         setProfiles((prev) => [...prev, created]);
       }
@@ -1122,7 +1122,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     try {
       setError(null);
       setIsLoading(true);
-      const result = await api.post<ActiveProfileResponse>("/api/profiles/active", {
+      const result = await api.post<ActiveProfileResponse>("/api/v1/profiles/active", {
         profileId: profileId,
       });
       if (isMountedRef.current) {
@@ -1193,7 +1193,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
       try {
         setError(null);
         setIsLoading(true);
-        const result = await api.post<ProfileImportResponse>("/api/profiles/import", request);
+        const result = await api.post<ProfileImportResponse>("/api/v1/profiles/import", request);
         // Refresh the profile list after import
         await refreshProfiles();
         logger.info(LogComponents.Profiles, "Profiles imported", {
@@ -1221,7 +1221,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   const exportProfiles = useCallback(async (): Promise<ProfileExportResponse | null> => {
     try {
       setError(null);
-      const result = await api.get<ProfileExportResponse>("/api/profiles/export");
+      const result = await api.get<ProfileExportResponse>("/api/v1/profiles/export");
       logger.info(LogComponents.Profiles, "Profiles exported", {
         count: result.profiles.length,
       });

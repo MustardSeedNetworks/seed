@@ -94,7 +94,7 @@ describe("useAuth", () => {
 
     expect(result.current.isAuthenticated).toBe(true);
     expect(mockFetch).toHaveBeenCalledWith(
-      "/api/status",
+      "/api/v1/status",
       expect.objectContaining({ credentials: "include" }),
     );
   });
@@ -140,7 +140,7 @@ describe("useAuth", () => {
     expect(result.current.token).toBe("access-token"); // For WebSocket
     expect(result.current.username).toBe("admin");
     expect(mockFetch).toHaveBeenLastCalledWith(
-      "/api/auth/login",
+      "/api/v1/auth/login",
       expect.objectContaining({
         method: "POST",
         credentials: "include",
@@ -266,7 +266,7 @@ describe("useAuth", () => {
     // Should have called logout endpoint with credentials
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        "/api/auth/logout",
+        "/api/v1/auth/logout",
         expect.objectContaining({
           method: "POST",
           credentials: "include",

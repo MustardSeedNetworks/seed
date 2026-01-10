@@ -189,7 +189,7 @@ export const api = {
    * const status = await api.get<NetworkStatus>('/api/network/status');
    */
   async get<T>(endpoint: string, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint = endpoint.includes("/api/auth/");
+    const isAuthEndpoint = endpoint.includes("/api/v1/auth/");
     const makeRequest = () =>
       fetch(`${API_BASE}${endpoint}`, {
         ...init,
@@ -213,7 +213,7 @@ export const api = {
    * const result = await api.post<Result>('/api/network/scan', { subnet: '192.168.1.0/24' });
    */
   async post<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint = endpoint.includes("/api/auth/");
+    const isAuthEndpoint = endpoint.includes("/api/v1/auth/");
     // Get CSRF token for non-auth endpoints (state-changing requests)
     const token = !isAuthEndpoint ? await getCsrfToken() : null;
 
@@ -250,7 +250,7 @@ export const api = {
    * await api.put('/api/settings', { theme: 'dark' });
    */
   async put<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint = endpoint.includes("/api/auth/");
+    const isAuthEndpoint = endpoint.includes("/api/v1/auth/");
     // Get CSRF token for non-auth endpoints (state-changing requests)
     const token = !isAuthEndpoint ? await getCsrfToken() : null;
 
@@ -286,7 +286,7 @@ export const api = {
    * await api.delete('/api/devices/12345');
    */
   async delete<T>(endpoint: string, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint = endpoint.includes("/api/auth/");
+    const isAuthEndpoint = endpoint.includes("/api/v1/auth/");
     // Get CSRF token for non-auth endpoints (state-changing requests)
     const token = !isAuthEndpoint ? await getCsrfToken() : null;
 

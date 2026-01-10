@@ -91,6 +91,16 @@ const (
 	retentionInactiveDeviceMultiplier = 4
 )
 
+// API versioning constants (fixes #887).
+const (
+	// APIVersionPrefix is the version prefix for all API routes.
+	// Allows graceful API evolution without breaking existing clients.
+	APIVersionPrefix = "/api/v1"
+
+	// APIBasePath is the base path for non-versioned routes (WebSocket, SSE).
+	APIBasePath = "/api"
+)
+
 // Server represents the HTTP/HTTPS server.
 type Server struct {
 	config              *config.Config
@@ -544,172 +554,172 @@ func (s *Server) setupRoutes() {
 
 // setupCoreRoutes registers auth, settings, config, and setup routes.
 func (s *Server) setupCoreRoutes() {
-	s.mux.HandleFunc("/api/auth/login", s.handleLogin)
-	s.mux.HandleFunc("/api/auth/logout", s.handleLogout)
-	s.mux.HandleFunc("/api/auth/refresh", s.handleRefreshToken)
-	s.mux.HandleFunc("/api/auth/csrf", s.handleCSRFToken)
-	s.mux.HandleFunc("/api/status", s.handleStatus)
-	s.mux.HandleFunc("/api/settings", s.handleSettings)
-	s.mux.HandleFunc("/api/settings/defaults", s.handleSettingsDefaults)
-	s.mux.HandleFunc("/api/settings/link", s.handleLinkSettings)
-	s.mux.HandleFunc("/api/settings/cable", s.handleCableTestSettings)
-	s.mux.HandleFunc("/api/interfaces", s.handleInterfaces)
-	s.mux.HandleFunc("/api/interface", s.handleInterface)
-	s.mux.HandleFunc("/api/network/mtu", s.handleSetMTU)
-	s.mux.HandleFunc("/api/config/backups", s.handleConfigBackups)
-	s.mux.HandleFunc("/api/config/backup", s.handleConfigBackupCreate)
-	s.mux.HandleFunc("/api/config/backup/delete", s.handleConfigBackupDelete)
-	s.mux.HandleFunc("/api/config/restore", s.handleConfigRestore)
-	s.mux.HandleFunc("/api/config/version", s.handleConfigVersion)
-	s.mux.HandleFunc("/api/profiles", s.handleProfiles)
-	s.mux.HandleFunc("/api/profiles/active", s.handleActiveProfile)
-	s.mux.HandleFunc("/api/profiles/import", s.handleImportProfiles)
-	s.mux.HandleFunc("/api/profiles/export", s.handleExportProfiles)
-	s.mux.HandleFunc("/api/profiles/", s.handleProfiles)
-	s.mux.HandleFunc("/api/setup/status", s.handleSetupStatus)
-	s.mux.HandleFunc("/api/setup/complete", s.handleSetupComplete)
-	s.mux.HandleFunc("/api/recovery/status", s.handleRecoveryStatus)
-	s.mux.HandleFunc("/api/recovery/complete", s.handleRecoveryComplete)
-	s.mux.HandleFunc("/api/recovery/instructions", s.handleRecoveryInstructions)
-	s.mux.HandleFunc("/api/sso/providers", s.handleSSOProviders)
-	s.mux.HandleFunc("/api/sso/login", s.handleSSOLogin)
-	s.mux.HandleFunc("/api/sso/callback", s.handleSSOCallback)
-	s.mux.HandleFunc("/api/sso/settings", s.handleSSOSettings)
-	s.mux.HandleFunc("/api/sso/update", s.handleSSOUpdate)
-	s.mux.HandleFunc("/api/health", s.handleHealth)
+	s.mux.HandleFunc(APIVersionPrefix+"/auth/login", s.handleLogin)
+	s.mux.HandleFunc(APIVersionPrefix+"/auth/logout", s.handleLogout)
+	s.mux.HandleFunc(APIVersionPrefix+"/auth/refresh", s.handleRefreshToken)
+	s.mux.HandleFunc(APIVersionPrefix+"/auth/csrf", s.handleCSRFToken)
+	s.mux.HandleFunc(APIVersionPrefix+"/status", s.handleStatus)
+	s.mux.HandleFunc(APIVersionPrefix+"/settings", s.handleSettings)
+	s.mux.HandleFunc(APIVersionPrefix+"/settings/defaults", s.handleSettingsDefaults)
+	s.mux.HandleFunc(APIVersionPrefix+"/settings/link", s.handleLinkSettings)
+	s.mux.HandleFunc(APIVersionPrefix+"/settings/cable", s.handleCableTestSettings)
+	s.mux.HandleFunc(APIVersionPrefix+"/interfaces", s.handleInterfaces)
+	s.mux.HandleFunc(APIVersionPrefix+"/interface", s.handleInterface)
+	s.mux.HandleFunc(APIVersionPrefix+"/network/mtu", s.handleSetMTU)
+	s.mux.HandleFunc(APIVersionPrefix+"/config/backups", s.handleConfigBackups)
+	s.mux.HandleFunc(APIVersionPrefix+"/config/backup", s.handleConfigBackupCreate)
+	s.mux.HandleFunc(APIVersionPrefix+"/config/backup/delete", s.handleConfigBackupDelete)
+	s.mux.HandleFunc(APIVersionPrefix+"/config/restore", s.handleConfigRestore)
+	s.mux.HandleFunc(APIVersionPrefix+"/config/version", s.handleConfigVersion)
+	s.mux.HandleFunc(APIVersionPrefix+"/profiles", s.handleProfiles)
+	s.mux.HandleFunc(APIVersionPrefix+"/profiles/active", s.handleActiveProfile)
+	s.mux.HandleFunc(APIVersionPrefix+"/profiles/import", s.handleImportProfiles)
+	s.mux.HandleFunc(APIVersionPrefix+"/profiles/export", s.handleExportProfiles)
+	s.mux.HandleFunc(APIVersionPrefix+"/profiles/", s.handleProfiles)
+	s.mux.HandleFunc(APIVersionPrefix+"/setup/status", s.handleSetupStatus)
+	s.mux.HandleFunc(APIVersionPrefix+"/setup/complete", s.handleSetupComplete)
+	s.mux.HandleFunc(APIVersionPrefix+"/recovery/status", s.handleRecoveryStatus)
+	s.mux.HandleFunc(APIVersionPrefix+"/recovery/complete", s.handleRecoveryComplete)
+	s.mux.HandleFunc(APIVersionPrefix+"/recovery/instructions", s.handleRecoveryInstructions)
+	s.mux.HandleFunc(APIVersionPrefix+"/sso/providers", s.handleSSOProviders)
+	s.mux.HandleFunc(APIVersionPrefix+"/sso/login", s.handleSSOLogin)
+	s.mux.HandleFunc(APIVersionPrefix+"/sso/callback", s.handleSSOCallback)
+	s.mux.HandleFunc(APIVersionPrefix+"/sso/settings", s.handleSSOSettings)
+	s.mux.HandleFunc(APIVersionPrefix+"/sso/update", s.handleSSOUpdate)
+	s.mux.HandleFunc(APIVersionPrefix+"/health", s.handleHealth)
 }
 
 // setupSAPRoutes registers SAP module routes (live telemetry).
 func (s *Server) setupSAPRoutes() {
-	s.mux.HandleFunc("/api/sap/link", s.handleLink)
-	s.mux.HandleFunc("/api/sap/cable", s.handleCable)
-	s.mux.HandleFunc("/api/sap/dns", s.handleDNS)
-	s.mux.HandleFunc("/api/sap/dns/security", s.handleDNSSecurity)
-	s.mux.HandleFunc("/api/sap/dns/security/settings", s.handleDNSSecuritySettings)
-	s.mux.HandleFunc("/api/sap/gateway", s.handleGateway)
-	s.mux.HandleFunc("/api/sap/dhcp/rogue", s.handleRogueDHCP)
-	s.mux.HandleFunc("/api/sap/dhcp/rogue/servers", s.handleRogueDHCPServers)
-	s.mux.HandleFunc("/api/sap/dhcp/rogue/config", s.handleRogueDHCPConfig)
-	s.mux.HandleFunc("/api/sap/vlan", s.handleVLAN)
-	s.mux.HandleFunc("/api/sap/vlan/traffic", s.handleVLANTraffic)
-	s.mux.HandleFunc("/api/sap/vlan/interface", s.handleVLANInterface)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/link", s.handleLink)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/cable", s.handleCable)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/dns", s.handleDNS)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/dns/security", s.handleDNSSecurity)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/dns/security/settings", s.handleDNSSecuritySettings)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/gateway", s.handleGateway)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/dhcp/rogue", s.handleRogueDHCP)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/dhcp/rogue/servers", s.handleRogueDHCPServers)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/dhcp/rogue/config", s.handleRogueDHCPConfig)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/vlan", s.handleVLAN)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/vlan/traffic", s.handleVLANTraffic)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/vlan/interface", s.handleVLANInterface)
 	s.mux.Handle(
-		"/api/sap/speedtest",
+		APIVersionPrefix+"/sap/speedtest",
 		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleSpeedtest)),
 	)
-	s.mux.HandleFunc("/api/sap/speedtest/status", s.handleSpeedtestStatus)
-	s.mux.HandleFunc("/api/sap/iperf/info", s.handleIperfInfo)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/speedtest/status", s.handleSpeedtestStatus)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/iperf/info", s.handleIperfInfo)
 	s.mux.Handle(
-		"/api/sap/iperf/client",
+		APIVersionPrefix+"/sap/iperf/client",
 		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleIperfClient)),
 	)
-	s.mux.HandleFunc("/api/sap/iperf/client/status", s.handleIperfClientStatus)
-	s.mux.HandleFunc("/api/sap/iperf/server", s.handleIperfServer)
-	s.mux.HandleFunc("/api/sap/iperf/server/status", s.handleIperfServerStatus)
-	s.mux.HandleFunc("/api/sap/iperf/suggestions", s.handleIperfSuggestions)
-	s.mux.HandleFunc("/api/sap/health-checks/settings", s.handleHealthChecksSettings)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/iperf/client/status", s.handleIperfClientStatus)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/iperf/server", s.handleIperfServer)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/iperf/server/status", s.handleIperfServerStatus)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/iperf/suggestions", s.handleIperfSuggestions)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/settings", s.handleHealthChecksSettings)
 	s.mux.Handle(
-		"/api/sap/health-checks/run",
+		APIVersionPrefix+"/sap/health-checks/run",
 		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleHealthChecks)),
 	)
-	s.mux.HandleFunc("/api/sap/snmp/settings", s.handleSNMPSettings)
-	s.mux.HandleFunc("/api/sap/system/health", s.handleSystemHealth)
-	s.mux.HandleFunc("/api/sap/ipconfig", s.handleIPConfig)
-	s.mux.HandleFunc("/api/sap/ipconfig/settings", s.handleIPSettings)
-	s.mux.HandleFunc("/api/sap/publicip", s.handlePublicIP)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/snmp/settings", s.handleSNMPSettings)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/system/health", s.handleSystemHealth)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/ipconfig", s.handleIPConfig)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/ipconfig/settings", s.handleIPSettings)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/publicip", s.handlePublicIP)
 }
 
 // setupShellRoutes registers Shell module routes (security posture).
 func (s *Server) setupShellRoutes() {
-	s.mux.HandleFunc("/api/shell/discovery", s.handleDiscovery)
-	s.mux.HandleFunc("/api/shell/discovery/probe", s.handleTCPProbe)
-	s.mux.HandleFunc("/api/shell/discovery/portscan", s.handlePortScan)
-	s.mux.HandleFunc("/api/shell/discovery/options", s.handleDiscoveryOptions)
-	s.mux.HandleFunc("/api/shell/discovery/service/status", s.handleDiscoveryServiceStatus)
-	s.mux.HandleFunc("/api/shell/discovery/fingerprint", s.handleAdvancedFingerprint)
-	s.mux.HandleFunc("/api/shell/devices", s.handleDevices)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery", s.handleDiscovery)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/probe", s.handleTCPProbe)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/portscan", s.handlePortScan)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/options", s.handleDiscoveryOptions)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/service/status", s.handleDiscoveryServiceStatus)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/fingerprint", s.handleAdvancedFingerprint)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices", s.handleDevices)
 	s.mux.Handle(
-		"/api/shell/devices/scan",
+		APIVersionPrefix+"/shell/devices/scan",
 		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleDevicesScan)),
 	)
-	s.mux.HandleFunc("/api/shell/devices/status", s.handleDevicesStatus)
-	s.mux.HandleFunc("/api/shell/devices/settings", s.handleDevicesSettings)
-	s.mux.HandleFunc("/api/shell/devices/subnets", s.handleDevicesSubnets)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices/status", s.handleDevicesStatus)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices/settings", s.handleDevicesSettings)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices/subnets", s.handleDevicesSubnets)
 	s.mux.Handle(
-		"/api/shell/vulnerabilities/scan",
+		APIVersionPrefix+"/shell/vulnerabilities/scan",
 		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleVulnerabilityScan)),
 	)
-	s.mux.HandleFunc("/api/shell/vulnerabilities/status", s.handleVulnerabilityStatus)
-	s.mux.HandleFunc("/api/shell/vulnerabilities/results", s.handleVulnerabilityResults)
-	s.mux.HandleFunc("/api/shell/vulnerabilities/device", s.handleDeviceVulnerabilities)
-	s.mux.HandleFunc("/api/shell/vulnerabilities/settings", s.handleVulnerabilitySettings)
-	s.mux.HandleFunc("/api/shell/vulnerabilities/validate-api-key", s.handleNVDAPIKeyValidate)
-	s.mux.HandleFunc("/api/shell/pipeline/status", s.handlePipelineStatus)
-	s.mux.HandleFunc("/api/shell/pipeline/start", s.handlePipelineStart)
-	s.mux.HandleFunc("/api/shell/pipeline/cancel", s.handlePipelineCancel)
-	s.mux.HandleFunc("/api/shell/pipeline/config", s.handlePipelineConfigRoute)
-	s.mux.HandleFunc("/api/shell/pipeline/port-intensity", s.handlePipelinePortIntensityInfo)
-	s.mux.HandleFunc("/api/shell/pipeline/timing-profiles", s.handlePipelineTimingProfiles)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/status", s.handleVulnerabilityStatus)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/results", s.handleVulnerabilityResults)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/device", s.handleDeviceVulnerabilities)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/settings", s.handleVulnerabilitySettings)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/validate-api-key", s.handleNVDAPIKeyValidate)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/status", s.handlePipelineStatus)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/start", s.handlePipelineStart)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/cancel", s.handlePipelineCancel)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/config", s.handlePipelineConfigRoute)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/port-intensity", s.handlePipelinePortIntensityInfo)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/timing-profiles", s.handlePipelineTimingProfiles)
 }
 
 // setupRootsRoutes registers Roots module routes (path analysis).
 func (s *Server) setupRootsRoutes() {
 	s.mux.Handle(
-		"/api/roots/traceroute",
+		APIVersionPrefix+"/roots/traceroute",
 		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleTraceroute)),
 	)
-	s.mux.HandleFunc("/api/roots/path", s.handlePath)
+	s.mux.HandleFunc(APIVersionPrefix+"/roots/path", s.handlePath)
 }
 
 // setupCanopyRoutes registers Canopy module routes (Wi-Fi planning).
 func (s *Server) setupCanopyRoutes() {
-	s.mux.HandleFunc("/api/canopy/wifi", s.handleWiFi)
-	s.mux.HandleFunc("/api/canopy/wifi/scan", s.handleWiFiScan)
-	s.mux.HandleFunc("/api/canopy/wifi/status", s.handleWiFiStatus)
-	s.mux.HandleFunc("/api/canopy/wifi/channel-graph", s.handleWiFiChannelGraph)
-	s.mux.HandleFunc("/api/canopy/wifi/settings", s.handleWiFiSettings)
-	s.mux.HandleFunc("/api/canopy/wifi/connect", s.handleWiFiConnect)
-	s.mux.HandleFunc("/api/canopy/wifi/disconnect", s.handleWiFiDisconnect)
-	s.mux.HandleFunc("/api/canopy/wifi/saved", s.handleWiFiSavedNetworks)
-	s.mux.HandleFunc("/api/canopy/wifi/forget", s.handleWiFiForgetNetwork)
-	s.mux.HandleFunc("/api/canopy/survey/create", s.createSurvey)
-	s.mux.HandleFunc("/api/canopy/survey/list", s.listSurveys)
-	s.mux.HandleFunc("/api/canopy/survey", s.getSurvey)
-	s.mux.HandleFunc("/api/canopy/survey/delete", s.deleteSurvey)
-	s.mux.HandleFunc("/api/canopy/survey/start", s.startSurvey)
-	s.mux.HandleFunc("/api/canopy/survey/pause", s.pauseSurvey)
-	s.mux.HandleFunc("/api/canopy/survey/complete", s.completeSurvey)
-	s.mux.HandleFunc("/api/canopy/survey/sample", s.addSurveySample)
-	s.mux.HandleFunc("/api/canopy/survey/floorplan", s.updateSurveyFloorPlan)
-	s.mux.HandleFunc("/api/canopy/survey/settings", s.updateSurveySettings)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi", s.handleWiFi)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/scan", s.handleWiFiScan)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/status", s.handleWiFiStatus)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/channel-graph", s.handleWiFiChannelGraph)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/settings", s.handleWiFiSettings)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/connect", s.handleWiFiConnect)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/disconnect", s.handleWiFiDisconnect)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/saved", s.handleWiFiSavedNetworks)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/forget", s.handleWiFiForgetNetwork)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/create", s.createSurvey)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/list", s.listSurveys)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey", s.getSurvey)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/delete", s.deleteSurvey)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/start", s.startSurvey)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/pause", s.pauseSurvey)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/complete", s.completeSurvey)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/sample", s.addSurveySample)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/floorplan", s.updateSurveyFloorPlan)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/settings", s.updateSurveySettings)
 	s.mux.Handle(
-		"/api/canopy/survey/import/airmapper",
+		APIVersionPrefix+"/canopy/survey/import/airmapper",
 		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.importAirMapper)),
 	)
 	s.mux.Handle(
-		"/api/canopy/survey/heatmap",
+		APIVersionPrefix+"/canopy/survey/heatmap",
 		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.getSurveyHeatmap)),
 	)
-	s.mux.HandleFunc("/api/canopy/survey/dead-zones", s.getSurveyDeadZones)
-	s.mux.HandleFunc("/api/canopy/survey/floors", s.handleSurveyFloors)
-	s.mux.HandleFunc("/api/canopy/survey/floor", s.handleSurveyFloor)
-	s.mux.HandleFunc("/api/canopy/survey/floor/floorplan", s.updateFloorFloorPlan)
-	s.mux.HandleFunc("/api/canopy/survey/floor/sample", s.addFloorSample)
-	s.mux.HandleFunc("/api/canopy/survey/active-floor", s.setActiveFloor)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/dead-zones", s.getSurveyDeadZones)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/floors", s.handleSurveyFloors)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/floor", s.handleSurveyFloor)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/floor/floorplan", s.updateFloorFloorPlan)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/floor/sample", s.addFloorSample)
+	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/active-floor", s.setActiveFloor)
 	s.mux.Handle(
-		"/api/canopy/survey/report",
+		APIVersionPrefix+"/canopy/survey/report",
 		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.generateSurveyReport)),
 	)
 }
 
 // setupHarvestRoutes registers Harvest module routes (reporting).
 func (s *Server) setupHarvestRoutes() {
-	s.mux.HandleFunc("/api/harvest/export", s.handleExport)
-	s.mux.HandleFunc("/api/harvest/logs", s.handleLogs)
-	s.mux.HandleFunc("/api/harvest/logs/client", s.handleClientLogs)
-	s.mux.HandleFunc("/api/harvest/logs/query", s.handleLogsQuery)
-	s.mux.HandleFunc("/api/harvest/logs/stats", s.handleLogsStats)
-	s.mux.HandleFunc("/api/harvest/logs/recent", s.handleLogsRecent)
+	s.mux.HandleFunc(APIVersionPrefix+"/harvest/export", s.handleExport)
+	s.mux.HandleFunc(APIVersionPrefix+"/harvest/logs", s.handleLogs)
+	s.mux.HandleFunc(APIVersionPrefix+"/harvest/logs/client", s.handleClientLogs)
+	s.mux.HandleFunc(APIVersionPrefix+"/harvest/logs/query", s.handleLogsQuery)
+	s.mux.HandleFunc(APIVersionPrefix+"/harvest/logs/stats", s.handleLogsStats)
+	s.mux.HandleFunc(APIVersionPrefix+"/harvest/logs/recent", s.handleLogsRecent)
 }
 
 // setupWebSocketAndStatic registers WebSocket, SSE, and static file handlers.
@@ -717,7 +727,7 @@ func (s *Server) setupWebSocketAndStatic() {
 	// WebSocket endpoint (deprecated - use /api/events for SSE)
 	s.mux.HandleFunc("/ws", s.handleWebSocket)
 	// SSE endpoint for real-time updates (replaces WebSocket)
-	s.mux.HandleFunc("/api/events", s.handleSSE)
+	s.mux.HandleFunc(APIVersionPrefix+"/events", s.handleSSE)
 	frontendFS, err := ui.GetFS()
 	if err != nil {
 		logging.GetLogger().
@@ -816,15 +826,15 @@ func bodyLimitMiddleware(next http.Handler) http.Handler {
 		path := r.URL.Path
 
 		switch {
-		case strings.HasPrefix(path, "/api/auth/"):
+		case strings.HasPrefix(path, APIVersionPrefix+"/auth/"):
 			limit = MaxBodySizeAuth
-		case strings.HasPrefix(path, "/api/config/"):
+		case strings.HasPrefix(path, APIVersionPrefix+"/config/"):
 			limit = MaxBodySizeConfig
-		case path == "/api/survey/floorplan":
+		case path == APIVersionPrefix+"/canopy/survey/floorplan":
 			limit = MaxBodySizeFloorPlan
-		case path == "/api/survey/import/airmapper":
+		case path == APIVersionPrefix+"/canopy/survey/import/airmapper":
 			limit = MaxBodySizeAirMapper
-		case strings.HasPrefix(path, "/api/"):
+		case strings.HasPrefix(path, APIVersionPrefix):
 			limit = MaxBodySizeJSON
 		default:
 			limit = MaxBodySizeDefault
@@ -887,9 +897,11 @@ func normalizeSPAPath(path string) string {
 	return path
 }
 
-// isAPIOrWSRoute checks if the path is an API or WebSocket route.
+// isAPIOrWSRoute checks if the path is an API, WebSocket, or SSE route.
 func isAPIOrWSRoute(path string) bool {
-	return strings.HasPrefix(path, "/api/") || strings.HasPrefix(path, "/ws")
+	return strings.HasPrefix(path, APIVersionPrefix) ||
+		strings.HasPrefix(path, APIBasePath+"/events") || // SSE endpoint
+		strings.HasPrefix(path, "/ws")
 }
 
 // openSPAFile attempts to open a file from the filesystem, falling back to index.html for SPA routes.

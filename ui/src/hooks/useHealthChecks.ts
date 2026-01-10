@@ -110,11 +110,11 @@ export function useHealthChecks() {
    */
   const runDnsTests = useCallback(async (): Promise<DnsTestResult[]> => {
     try {
-      const data = await api.get<{ results: DnsTestResult[] }>("/api/sap/dns");
+      const data = await api.get<{ results: DnsTestResult[] }>("/api/v1/sap/dns");
       return data.results || [];
     } catch (err) {
       logger.error(LogComponents.Dns, "DNS tests failed", err, {
-        endpoint: "/api/sap/dns",
+        endpoint: "/api/v1/sap/dns",
       });
       return [];
     }
@@ -125,10 +125,10 @@ export function useHealthChecks() {
    */
   const runGatewayTest = useCallback(async (): Promise<GatewayTestResult | null> => {
     try {
-      return await api.get<GatewayTestResult>("/api/sap/gateway");
+      return await api.get<GatewayTestResult>("/api/v1/sap/gateway");
     } catch (err) {
       logger.error(LogComponents.Gateway, "Gateway test failed", err, {
-        endpoint: "/api/sap/gateway",
+        endpoint: "/api/v1/sap/gateway",
       });
       return null;
     }
@@ -140,11 +140,11 @@ export function useHealthChecks() {
   const runCustomTests = useCallback(async (): Promise<CustomTestResult[]> => {
     try {
       setIsRunning(true);
-      const data = await api.post<{ results: CustomTestResult[] }>("/api/sap/health-checks/run");
+      const data = await api.post<{ results: CustomTestResult[] }>("/api/v1/sap/health-checks/run");
       return data.results || [];
     } catch (err) {
       logger.error(LogComponents.System, "Custom tests failed", err, {
-        endpoint: "/api/sap/health-checks/run",
+        endpoint: "/api/v1/sap/health-checks/run",
       });
       return [];
     } finally {
@@ -249,10 +249,10 @@ export function useHealthChecks() {
    */
   const fetchSettings = useCallback(async (): Promise<TestsSettings | null> => {
     try {
-      return await api.get<TestsSettings>("/api/sap/health-checks/settings");
+      return await api.get<TestsSettings>("/api/v1/sap/health-checks/settings");
     } catch (err) {
       logger.error(LogComponents.Config, "Failed to fetch test settings", err, {
-        endpoint: "/api/sap/health-checks/settings",
+        endpoint: "/api/v1/sap/health-checks/settings",
       });
       return null;
     }
@@ -263,11 +263,11 @@ export function useHealthChecks() {
    */
   const updateSettings = useCallback(async (settings: Partial<TestsSettings>): Promise<boolean> => {
     try {
-      await api.put("/api/sap/health-checks/settings", settings);
+      await api.put("/api/v1/sap/health-checks/settings", settings);
       return true;
     } catch (err) {
       logger.error(LogComponents.Config, "Failed to update test settings", err, {
-        endpoint: "/api/sap/health-checks/settings",
+        endpoint: "/api/v1/sap/health-checks/settings",
         updates: settings,
       });
       return false;

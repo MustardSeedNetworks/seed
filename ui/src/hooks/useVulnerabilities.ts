@@ -145,7 +145,7 @@ export function useVulnerabilities() {
       const endpoint =
         params.size > 0
           ? `/api/shell/vulnerabilities/scan?${params.toString()}`
-          : "/api/shell/vulnerabilities/scan";
+          : "/api/v1/shell/vulnerabilities/scan";
 
       const data = await api.post<ScanResponse>(endpoint);
       return data.status === "scan started" || data.status === "scan already in progress";
@@ -160,10 +160,10 @@ export function useVulnerabilities() {
 
   const fetchStatus = useCallback(async (): Promise<VulnerabilityScannerStatus | null> => {
     try {
-      return await api.get<VulnerabilityScannerStatus>("/api/shell/vulnerabilities/status");
+      return await api.get<VulnerabilityScannerStatus>("/api/v1/shell/vulnerabilities/status");
     } catch (error) {
       logger.error(LogComponents.Vuln, "Failed to fetch vulnerability status", error, {
-        endpoint: "/api/shell/vulnerabilities/status",
+        endpoint: "/api/v1/shell/vulnerabilities/status",
       });
       return null;
     }
@@ -183,12 +183,12 @@ export function useVulnerabilities() {
       const endpoint =
         params.size > 0
           ? `/api/shell/vulnerabilities/results?${params.toString()}`
-          : "/api/shell/vulnerabilities/results";
+          : "/api/v1/shell/vulnerabilities/results";
       const data = await api.get<ResultsResponse>(endpoint);
       return data.results || [];
     } catch (error) {
       logger.error(LogComponents.Vuln, "Failed to fetch vulnerability results", error, {
-        endpoint: "/api/shell/vulnerabilities/results",
+        endpoint: "/api/v1/shell/vulnerabilities/results",
         severity,
       });
       return [];
@@ -219,10 +219,10 @@ export function useVulnerabilities() {
 
   const fetchSettings = useCallback(async (): Promise<VulnerabilityScannerConfig | null> => {
     try {
-      return await api.get<VulnerabilityScannerConfig>("/api/shell/vulnerabilities/settings");
+      return await api.get<VulnerabilityScannerConfig>("/api/v1/shell/vulnerabilities/settings");
     } catch (error) {
       logger.error(LogComponents.Vuln, "Failed to fetch vulnerability settings", error, {
-        endpoint: "/api/shell/vulnerabilities/settings",
+        endpoint: "/api/v1/shell/vulnerabilities/settings",
       });
       return null;
     }
@@ -231,11 +231,11 @@ export function useVulnerabilities() {
   const updateSettings = useCallback(
     async (settings: Partial<VulnerabilityScannerConfig>): Promise<boolean> => {
       try {
-        await api.put<{ status: string }>("/api/shell/vulnerabilities/settings", settings);
+        await api.put<{ status: string }>("/api/v1/shell/vulnerabilities/settings", settings);
         return true;
       } catch (error) {
         logger.error(LogComponents.Vuln, "Failed to update vulnerability settings", error, {
-          endpoint: "/api/shell/vulnerabilities/settings",
+          endpoint: "/api/v1/shell/vulnerabilities/settings",
           updates: settings,
         });
         return false;

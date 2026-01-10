@@ -129,14 +129,14 @@ describe("App", () => {
 
     // Default API mocks - includes profile endpoints for ProfileContext
     mockFetch.mockImplementation((url: string) => {
-      if (url.includes("/api/setup/status")) {
+      if (url.includes("/api/v1/setup/status")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
         });
       }
       // Profile endpoints (required for ProfileContext)
-      if (url.includes("/api/profiles/active")) {
+      if (url.includes("/api/v1/profiles/active")) {
         return Promise.resolve({
           ok: true,
           json: () =>
@@ -168,7 +168,7 @@ describe("App", () => {
             }),
         });
       }
-      if (url.includes("/api/profiles") && !url.includes("/active")) {
+      if (url.includes("/api/v1/profiles") && !url.includes("/active")) {
         return Promise.resolve({
           ok: true,
           json: () =>
@@ -187,7 +187,7 @@ describe("App", () => {
             }),
         });
       }
-      if (url.includes("/api/settings/defaults")) {
+      if (url.includes("/api/v1/settings/defaults")) {
         return Promise.resolve({
           ok: true,
           json: () =>
@@ -209,7 +209,7 @@ describe("App", () => {
             }),
         });
       }
-      if (url.includes("/api/settings")) {
+      if (url.includes("/api/v1/settings")) {
         return Promise.resolve({
           ok: true,
           json: () =>
@@ -223,7 +223,7 @@ describe("App", () => {
             }),
         });
       }
-      if (url.includes("/api/status")) {
+      if (url.includes("/api/v1/status")) {
         // Default to unauthenticated unless overridden in specific tests
         return Promise.resolve({
           ok: false,
@@ -231,7 +231,7 @@ describe("App", () => {
           json: () => Promise.resolve({ error: "Unauthorized" }),
         });
       }
-      if (url.includes("/api/interfaces")) {
+      if (url.includes("/api/v1/interfaces")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve([{ name: "eth0", type: "ethernet", up: true }]),
@@ -273,19 +273,19 @@ describe("App", () => {
 
     it("handles login form submission", async () => {
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes("/api/setup/status")) {
+        if (url.includes("/api/v1/setup/status")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
-        if (url.includes("/api/status")) {
+        if (url.includes("/api/v1/status")) {
           return Promise.resolve({
             ok: false,
             status: 401,
           });
         }
-        if (url.includes("/api/auth/login")) {
+        if (url.includes("/api/v1/auth/login")) {
           return Promise.resolve({
             ok: true,
             json: () =>
@@ -295,7 +295,7 @@ describe("App", () => {
               }),
           });
         }
-        if (url.includes("/api/settings")) {
+        if (url.includes("/api/v1/settings")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ thresholds: {} }),
@@ -323,7 +323,7 @@ describe("App", () => {
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
-          expect.stringContaining("/api/auth/login"),
+          expect.stringContaining("/api/v1/auth/login"),
           expect.any(Object),
         );
       });
@@ -331,24 +331,24 @@ describe("App", () => {
 
     it("shows error message on login failure", async () => {
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes("/api/setup/status")) {
+        if (url.includes("/api/v1/setup/status")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
-        if (url.includes("/api/status")) {
+        if (url.includes("/api/v1/status")) {
           return Promise.resolve({
             ok: false,
             status: 401,
           });
         }
-        if (url.includes("/api/auth/login")) {
+        if (url.includes("/api/v1/auth/login")) {
           return Promise.resolve({
             ok: false,
           });
         }
-        if (url.includes("/api/settings")) {
+        if (url.includes("/api/v1/settings")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ thresholds: {} }),
@@ -382,24 +382,24 @@ describe("App", () => {
     it("disables login button while loading", async () => {
       let resolveLogin: (value: unknown) => void;
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes("/api/setup/status")) {
+        if (url.includes("/api/v1/setup/status")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
-        if (url.includes("/api/status")) {
+        if (url.includes("/api/v1/status")) {
           return Promise.resolve({
             ok: false,
             status: 401,
           });
         }
-        if (url.includes("/api/auth/login")) {
+        if (url.includes("/api/v1/auth/login")) {
           return new Promise((resolve) => {
             resolveLogin = resolve;
           });
         }
-        if (url.includes("/api/settings")) {
+        if (url.includes("/api/v1/settings")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ thresholds: {} }),
@@ -439,13 +439,13 @@ describe("App", () => {
     beforeEach(() => {
       // Set up authenticated state by mocking /api/status to return authenticated
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes("/api/setup/status")) {
+        if (url.includes("/api/v1/setup/status")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
-        if (url.includes("/api/status")) {
+        if (url.includes("/api/v1/status")) {
           // Return authenticated status with version
           return Promise.resolve({
             ok: true,
@@ -453,7 +453,7 @@ describe("App", () => {
             json: () => Promise.resolve({ version: "test", authenticated: true }),
           });
         }
-        if (url.includes("/api/settings")) {
+        if (url.includes("/api/v1/settings")) {
           return Promise.resolve({
             ok: true,
             json: () =>
@@ -467,7 +467,7 @@ describe("App", () => {
               }),
           });
         }
-        if (url.includes("/api/interfaces")) {
+        if (url.includes("/api/v1/interfaces")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve([{ name: "eth0", type: "ethernet", up: true }]),
@@ -496,20 +496,20 @@ describe("App", () => {
 
     it("renders interface selector", async () => {
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes("/api/setup/status")) {
+        if (url.includes("/api/v1/setup/status")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
-        if (url.includes("/api/status")) {
+        if (url.includes("/api/v1/status")) {
           return Promise.resolve({
             ok: true,
             status: 200,
             json: () => Promise.resolve({ version: "test", authenticated: true }),
           });
         }
-        if (url.includes("/api/interfaces")) {
+        if (url.includes("/api/v1/interfaces")) {
           return Promise.resolve({
             ok: true,
             json: () =>
@@ -519,7 +519,7 @@ describe("App", () => {
               ]),
           });
         }
-        if (url.includes("/api/settings")) {
+        if (url.includes("/api/v1/settings")) {
           return Promise.resolve({
             ok: true,
             json: () =>
@@ -597,19 +597,19 @@ describe("LoginForm input validation", () => {
     vi.clearAllMocks();
 
     mockFetch.mockImplementation((url: string) => {
-      if (url.includes("/api/setup/status")) {
+      if (url.includes("/api/v1/setup/status")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
         });
       }
-      if (url.includes("/api/status")) {
+      if (url.includes("/api/v1/status")) {
         return Promise.resolve({
           ok: false,
           status: 401,
         });
       }
-      if (url.includes("/api/settings")) {
+      if (url.includes("/api/v1/settings")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ thresholds: {} }),

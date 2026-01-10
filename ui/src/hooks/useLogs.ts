@@ -196,7 +196,7 @@ export function useLogs({
    */
   const fetchStats = useCallback(async () => {
     try {
-      const response = await fetch("/api/harvest/logs/stats");
+      const response = await fetch("/api/v1/harvest/logs/stats");
       if (!response.ok) {
         throw new Error(`Failed to fetch stats: ${response.statusText}`);
       }

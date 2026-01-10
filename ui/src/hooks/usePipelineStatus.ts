@@ -303,7 +303,7 @@ export function usePipelineStatus(
   // Fetch pipeline status from API
   const fetchStatus = useCallback(async () => {
     try {
-      const response = await fetch("/api/shell/pipeline/status", {
+      const response = await fetch("/api/v1/shell/pipeline/status", {
         credentials: "include", // Required for httpOnly cookie auth
       });
       if (!response.ok) {
@@ -341,7 +341,7 @@ export function usePipelineStatus(
   // Fetch pipeline config from API
   const fetchConfig = useCallback(async () => {
     try {
-      const response = await fetch("/api/shell/pipeline/config", {
+      const response = await fetch("/api/v1/shell/pipeline/config", {
         credentials: "include", // Required for httpOnly cookie auth
       });
       if (!response.ok) {
@@ -358,7 +358,7 @@ export function usePipelineStatus(
   // Fetch port intensity info
   const fetchPortIntensityInfo = useCallback(async () => {
     try {
-      const response = await fetch("/api/shell/pipeline/port-intensity", {
+      const response = await fetch("/api/v1/shell/pipeline/port-intensity", {
         credentials: "include", // Required for httpOnly cookie auth
       });
       if (response.ok) {
@@ -373,7 +373,7 @@ export function usePipelineStatus(
   // Fetch timing profiles
   const fetchTimingProfiles = useCallback(async () => {
     try {
-      const response = await fetch("/api/shell/pipeline/timing-profiles", {
+      const response = await fetch("/api/v1/shell/pipeline/timing-profiles", {
         credentials: "include", // Required for httpOnly cookie auth
       });
       if (response.ok) {
@@ -391,7 +391,7 @@ export function usePipelineStatus(
       setError(null);
       const body = configOverride ? { config: configOverride } : undefined;
 
-      const response = await fetch("/api/shell/pipeline/start", {
+      const response = await fetch("/api/v1/shell/pipeline/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // Required for httpOnly cookie auth
@@ -424,7 +424,7 @@ export function usePipelineStatus(
   const cancelPipeline = useCallback(async () => {
     try {
       setError(null);
-      const response = await fetch("/api/shell/pipeline/cancel", {
+      const response = await fetch("/api/v1/shell/pipeline/cancel", {
         method: "POST",
         credentials: "include", // Required for httpOnly cookie auth
       });
@@ -457,7 +457,7 @@ export function usePipelineStatus(
           headers["X-Acknowledge-IDS-Risk"] = "true";
         }
 
-        const response = await fetch("/api/shell/pipeline/config", {
+        const response = await fetch("/api/v1/shell/pipeline/config", {
           method: "PUT",
           headers,
           credentials: "include", // Required for httpOnly cookie auth

@@ -136,7 +136,7 @@ export function useAuth(): UseAuthReturn {
         // Error checking auth, assume not authenticated
         // fixes #678 - added logging for auth check errors
         logger.error(LogComponents.Auth, "Failed to check authentication status", err, {
-          endpoint: "/api/status",
+          endpoint: "/api/v1/status",
         });
         setState({
           isAuthenticated: false,
@@ -186,7 +186,7 @@ export function useAuth(): UseAuthReturn {
       setError(errorMessage);
       // fixes #678 - added structured error logging for login failures
       logger.error(LogComponents.Auth, "Login failed", err, {
-        endpoint: "/api/auth/login",
+        endpoint: "/api/v1/auth/login",
         username,
       });
       return false;
@@ -221,7 +221,7 @@ export function useAuth(): UseAuthReturn {
       .catch((err) => {
         // fixes #678 - added error logging for logout failures
         logger.error(LogComponents.Auth, "Logout API call failed", err, {
-          endpoint: "/api/auth/logout",
+          endpoint: "/api/v1/auth/logout",
           username: currentUsername,
         });
         // Local state already cleared, so continue

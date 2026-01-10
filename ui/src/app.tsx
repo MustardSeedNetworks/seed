@@ -325,12 +325,12 @@ function App() {
           : null,
       );
 
-      await api.post("/api/shell/devices/scan");
+      await api.post("/api/v1/shell/devices/scan");
 
       // Poll for completion
       scanPollIntervalRef.current = setInterval(async () => {
         try {
-          const status = await api.get<{ scanning: boolean }>("/api/shell/devices/status");
+          const status = await api.get<{ scanning: boolean }>("/api/v1/shell/devices/status");
           if (!status.scanning) {
             if (scanPollIntervalRef.current) {
               clearInterval(scanPollIntervalRef.current);
@@ -368,7 +368,7 @@ function App() {
     async (interfaceName: string) => {
       try {
         // Use api.put() which handles CSRF tokens automatically
-        const data = await api.put<{ isWireless?: boolean }>("/api/interface", {
+        const data = await api.put<{ isWireless?: boolean }>("/api/v1/interface", {
           interface: interfaceName,
         });
         if (data) {

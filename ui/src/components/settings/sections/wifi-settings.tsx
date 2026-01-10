@@ -110,7 +110,7 @@ export const WiFiSettings = memo(function WiFiSettings({
   // Load saved networks
   const loadSavedNetworks = useCallback(async () => {
     try {
-      const response = await api.get<{ networks: SavedNetwork[] }>("/api/canopy/wifi/saved");
+      const response = await api.get<{ networks: SavedNetwork[] }>("/api/v1/canopy/wifi/saved");
       if (response?.networks) {
         setSavedNetworks(response.networks);
       }
@@ -126,7 +126,7 @@ export const WiFiSettings = memo(function WiFiSettings({
     setConnecting(true);
     setConnectionStatus(null);
     try {
-      const response = await api.post<ConnectionResult>("/api/canopy/wifi/connect", {
+      const response = await api.post<ConnectionResult>("/api/v1/canopy/wifi/connect", {
         ssid: selectedNetwork.ssid,
         password: password,
       });
@@ -150,7 +150,7 @@ export const WiFiSettings = memo(function WiFiSettings({
   const disconnectNetwork = useCallback(async () => {
     setConnecting(true);
     try {
-      const response = await api.post<ConnectionResult>("/api/canopy/wifi/disconnect", {});
+      const response = await api.post<ConnectionResult>("/api/v1/canopy/wifi/disconnect", {});
       if (response?.success) {
         setConnectionStatus("Disconnected");
       } else {

@@ -79,7 +79,7 @@ export function useDefaults(): UseDefaultsResult {
     setIsLoading(true);
     setError(null);
 
-    fetchPromise = api.get<DefaultSettings>("/api/settings/defaults");
+    fetchPromise = api.get<DefaultSettings>("/api/v1/settings/defaults");
 
     try {
       const result = await fetchPromise;

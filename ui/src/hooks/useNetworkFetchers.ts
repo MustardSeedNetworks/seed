@@ -345,7 +345,7 @@ export function useNetworkFetchers({
     } catch (err) {
       logger.error(LogComponents.Vlan, "Failed to fetch VLAN data", err);
     }
-  }, [setCards, currentInterfaceRef.current]);
+  }, [setCards]);
 
   // Fetch Gateway ping data
   const fetchGatewayData = useCallback(async () => {
@@ -393,7 +393,7 @@ export function useNetworkFetchers({
     } catch (err) {
       logger.error(LogComponents.Gateway, "Failed to fetch Gateway data", err);
     }
-  }, [setCards]);
+  }, [setCards, currentInterfaceRef.current]);
 
   // Fetch Wi-Fi data
   const fetchWifiData = useCallback(async () => {

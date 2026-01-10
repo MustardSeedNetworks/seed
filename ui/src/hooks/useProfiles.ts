@@ -57,14 +57,14 @@ export function useProfiles() {
     try {
       setError(null);
       setIsLoading(true);
-      const data = await api.get<ProfileListResponse>("/api/profiles");
+      const data = await api.get<ProfileListResponse>("/api/v1/profiles");
       setProfiles(data.profiles || []);
       return data.profiles || [];
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch profiles";
       setError(message);
       logger.error(LogComponents.Profiles, "Failed to fetch profiles", err, {
-        endpoint: "/api/profiles",
+        endpoint: "/api/v1/profiles",
       });
       return [];
     } finally {
@@ -96,14 +96,14 @@ export function useProfiles() {
   const fetchActiveProfile = useCallback(async (): Promise<Profile | null> => {
     try {
       setError(null);
-      const profile = await api.get<Profile>("/api/profiles/active");
+      const profile = await api.get<Profile>("/api/v1/profiles/active");
       setActiveProfile(profile);
       return profile;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch active profile";
       setError(message);
       logger.error(LogComponents.Profiles, "Failed to fetch active profile", err, {
-        endpoint: "/api/profiles/active",
+        endpoint: "/api/v1/profiles/active",
       });
       return null;
     }
@@ -116,7 +116,7 @@ export function useProfiles() {
     try {
       setError(null);
       setIsLoading(true);
-      const created = await api.post<Profile>("/api/profiles", profile);
+      const created = await api.post<Profile>("/api/v1/profiles", profile);
       setProfiles((prev) => [...prev, created]);
       logger.info(LogComponents.Profiles, "Profile created", {
         profileId: created.id,
@@ -127,7 +127,7 @@ export function useProfiles() {
       const message = err instanceof Error ? err.message : "Failed to create profile";
       setError(message);
       logger.error(LogComponents.Profiles, "Failed to create profile", err, {
-        endpoint: "/api/profiles",
+        endpoint: "/api/v1/profiles",
         name: profile.name,
       });
       return null;
@@ -200,7 +200,7 @@ export function useProfiles() {
     try {
       setError(null);
       setIsLoading(true);
-      const result = await api.post<ActiveProfileResponse>("/api/profiles/active", {
+      const result = await api.post<ActiveProfileResponse>("/api/v1/profiles/active", {
         profileId: profileId,
       });
       setActiveProfile(result.profile);
@@ -213,7 +213,7 @@ export function useProfiles() {
       const message = err instanceof Error ? err.message : "Failed to switch profile";
       setError(message);
       logger.error(LogComponents.Profiles, "Failed to switch profile", err, {
-        endpoint: "/api/profiles/active",
+        endpoint: "/api/v1/profiles/active",
         profileId,
       });
       return false;
@@ -263,7 +263,7 @@ export function useProfiles() {
       try {
         setError(null);
         setIsLoading(true);
-        const result = await api.post<ProfileImportResponse>("/api/profiles/import", request);
+        const result = await api.post<ProfileImportResponse>("/api/v1/profiles/import", request);
         // Refresh the profile list after import
         await fetchProfiles();
         logger.info(LogComponents.Profiles, "Profiles imported", {
@@ -276,7 +276,7 @@ export function useProfiles() {
         const message = err instanceof Error ? err.message : "Failed to import profiles";
         setError(message);
         logger.error(LogComponents.Profiles, "Failed to import profiles", err, {
-          endpoint: "/api/profiles/import",
+          endpoint: "/api/v1/profiles/import",
         });
         return null;
       } finally {
@@ -292,7 +292,7 @@ export function useProfiles() {
   const exportProfiles = useCallback(async (): Promise<ProfileExportResponse | null> => {
     try {
       setError(null);
-      const result = await api.get<ProfileExportResponse>("/api/profiles/export");
+      const result = await api.get<ProfileExportResponse>("/api/v1/profiles/export");
       logger.info(LogComponents.Profiles, "Profiles exported", {
         count: result.profiles.length,
       });
@@ -301,7 +301,7 @@ export function useProfiles() {
       const message = err instanceof Error ? err.message : "Failed to export profiles";
       setError(message);
       logger.error(LogComponents.Profiles, "Failed to export profiles", err, {
-        endpoint: "/api/profiles/export",
+        endpoint: "/api/v1/profiles/export",
       });
       return null;
     }
