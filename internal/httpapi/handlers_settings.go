@@ -286,20 +286,8 @@ func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.L
 		return nil
 	}
 
-	// Extract current settings from config
-	profileSettings := config.NewProfileSettings()
-	profileSettings.FromConfig(s.config)
-
-	// Preserve existing notes if any
-	if profile.ConfigJSON != "" {
-		existingSettings, parseErr := config.ParseProfileSettings(profile.ConfigJSON)
-		if parseErr == nil && existingSettings.Notes != "" {
-			profileSettings.Notes = existingSettings.Notes
-		}
-	}
-
-	// Serialize to JSON
-	configJSON, jsonErr := profileSettings.ToJSON()
+	// Export current settings from config using single source of truth
+	configJSON, jsonErr := s.config.ToProfileJSON()
 	if jsonErr != nil {
 		logger.WarnContext(ctx, "Failed to serialize profile settings", "error", jsonErr)
 		return nil
@@ -1003,28 +991,24 @@ func (s *Server) handleLinkSettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// getLinkSettings returns current link settings from the active profile.
+// getLinkSettings returns current link settings from config.
 func (s *Server) getLinkSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	ctx := r.Context()
 
-	// Try to get settings from active profile
-	settings := config.ProfileLinkSettings{
-		Mode:           "auto",
-		AvailableModes: []string{},
-	}
+	// Read directly from Config (single source of truth)
+	s.config.RLock()
+	settings := s.config.Link
+	s.config.RUnlock()
 
-	if s.db() != nil {
-		profileSettings, err := s.getActiveProfileSettings(ctx)
-		if err == nil && profileSettings != nil {
-			settings = profileSettings.Link
-		}
+	// Default to "auto" if not set
+	if settings.Mode == "" {
+		settings.Mode = "auto"
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, settings)
 }
 
-// updateLinkSettings updates link settings in the active profile.
+// updateLinkSettings updates link settings in config and saves to active profile.
 func (s *Server) updateLinkSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	ctx := r.Context()
@@ -1032,7 +1016,7 @@ func (s *Server) updateLinkSettings(w http.ResponseWriter, r *http.Request) {
 	// Limit request body size
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeConfig)
 
-	var updates config.ProfileLinkSettings
+	var updates config.LinkConfig
 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		logger.WarnContext(ctx, "Invalid link settings request body", "error", err)
 		sendErrorResponseWithDetails(
@@ -1063,9 +1047,14 @@ func (s *Server) updateLinkSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Save to active profile
+	// Update Config directly (single source of truth)
+	s.config.Lock()
+	s.config.Link = updates
+	s.config.Unlock()
+
+	// Save to active profile in database
 	if s.db() != nil {
-		if err := s.updateActiveProfileLinkSettings(ctx, logger, updates); err != nil {
+		if err := s.saveSettingsToActiveProfile(ctx, logger); err != nil {
 			sendErrorResponseWithDetails(
 				w,
 				logger,
@@ -1079,24 +1068,6 @@ func (s *Server) updateLinkSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
-}
-
-// updateActiveProfileLinkSettings saves link settings to the active profile.
-func (s *Server) updateActiveProfileLinkSettings(
-	ctx context.Context,
-	logger *slog.Logger,
-	settings config.ProfileLinkSettings,
-) error {
-	profileSettings, err := s.getActiveProfileSettings(ctx)
-	if err != nil {
-		logger.WarnContext(ctx, "Failed to get active profile settings", "error", err)
-		return err
-	}
-
-	// Update link settings
-	profileSettings.Link = settings
-
-	return s.saveActiveProfileSettings(ctx, logger, profileSettings)
 }
 
 // ============================================================================
@@ -1124,27 +1095,19 @@ func (s *Server) handleCableTestSettings(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// getCableTestSettings returns current cable test settings from the active profile.
+// getCableTestSettings returns current cable test settings from config.
 func (s *Server) getCableTestSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	ctx := r.Context()
 
-	// Default settings
-	settings := config.ProfileCableTestSettings{
-		Enabled: true,
-	}
-
-	if s.db() != nil {
-		profileSettings, err := s.getActiveProfileSettings(ctx)
-		if err == nil && profileSettings != nil {
-			settings = profileSettings.CableTest
-		}
-	}
+	// Read directly from Config (single source of truth)
+	s.config.RLock()
+	settings := s.config.CableTest
+	s.config.RUnlock()
 
 	sendJSONResponse(w, logger, http.StatusOK, settings)
 }
 
-// updateCableTestSettings updates cable test settings in the active profile.
+// updateCableTestSettings updates cable test settings in config and saves to active profile.
 func (s *Server) updateCableTestSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	ctx := r.Context()
@@ -1152,7 +1115,7 @@ func (s *Server) updateCableTestSettings(w http.ResponseWriter, r *http.Request)
 	// Limit request body size
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeConfig)
 
-	var updates config.ProfileCableTestSettings
+	var updates config.CableTestConfig
 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		logger.WarnContext(ctx, "Invalid cable test settings request body", "error", err)
 		sendErrorResponseWithDetails(
@@ -1166,9 +1129,14 @@ func (s *Server) updateCableTestSettings(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Save to active profile
+	// Update Config directly (single source of truth)
+	s.config.Lock()
+	s.config.CableTest = updates
+	s.config.Unlock()
+
+	// Save to active profile in database
 	if s.db() != nil {
-		if err := s.updateActiveProfileCableTestSettings(ctx, logger, updates); err != nil {
+		if err := s.saveSettingsToActiveProfile(ctx, logger); err != nil {
 			sendErrorResponseWithDetails(
 				w,
 				logger,
@@ -1182,110 +1150,4 @@ func (s *Server) updateCableTestSettings(w http.ResponseWriter, r *http.Request)
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
-}
-
-// updateActiveProfileCableTestSettings saves cable test settings to the active profile.
-func (s *Server) updateActiveProfileCableTestSettings(
-	ctx context.Context,
-	logger *slog.Logger,
-	settings config.ProfileCableTestSettings,
-) error {
-	profileSettings, err := s.getActiveProfileSettings(ctx)
-	if err != nil {
-		logger.WarnContext(ctx, "Failed to get active profile settings", "error", err)
-		return err
-	}
-
-	// Update cable test settings
-	profileSettings.CableTest = settings
-
-	return s.saveActiveProfileSettings(ctx, logger, profileSettings)
-}
-
-// ============================================================================
-// Profile Settings Helpers
-// ============================================================================
-
-// getActiveProfileSettings retrieves settings from the active profile.
-func (s *Server) getActiveProfileSettings(ctx context.Context) (*config.ProfileSettings, error) {
-	// Get active profile ID
-	activeID, err := s.db().Settings().GetValue(ctx, database.SettingKeyActiveProfile)
-	if err != nil || activeID == "" {
-		// Try to get default profile
-		defaultProfile, getErr := s.db().Profiles().GetDefault(ctx)
-		if getErr != nil {
-			return nil, getErr
-		}
-		activeID = defaultProfile.ID
-	}
-
-	// Get the profile
-	profile, err := s.db().Profiles().Get(ctx, activeID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Parse settings
-	if profile.ConfigJSON == "" {
-		return config.NewProfileSettings(), nil
-	}
-
-	return config.ParseProfileSettings(profile.ConfigJSON)
-}
-
-// saveActiveProfileSettings saves settings to the active profile.
-func (s *Server) saveActiveProfileSettings(
-	ctx context.Context,
-	logger *slog.Logger,
-	settings *config.ProfileSettings,
-) error {
-	// Get active profile ID
-	activeID, err := s.db().Settings().GetValue(ctx, database.SettingKeyActiveProfile)
-	if err != nil || activeID == "" {
-		// Try to get default profile
-		defaultProfile, getErr := s.db().Profiles().GetDefault(ctx)
-		if getErr != nil {
-			logger.DebugContext(ctx,
-				"No active or default profile to save settings to",
-				"reason",
-				getErr.Error(),
-			)
-			return nil
-		}
-		activeID = defaultProfile.ID
-	}
-
-	// Get the profile
-	profile, err := s.db().Profiles().Get(ctx, activeID)
-	if err != nil {
-		return err
-	}
-
-	// Serialize to JSON
-	configJSON, err := settings.ToJSON()
-	if err != nil {
-		return err
-	}
-
-	// Update profile
-	profile.ConfigJSON = configJSON
-	if updateErr := s.db().Profiles().Update(ctx, profile); updateErr != nil {
-		logger.ErrorContext(ctx,
-			"Failed to save settings to profile",
-			"error",
-			updateErr,
-			"profile_id",
-			profile.ID,
-		)
-		return updateErr
-	}
-
-	logger.DebugContext(ctx,
-		"Saved settings to active profile",
-		"profile_id",
-		profile.ID,
-		"profile_name",
-		profile.Name,
-	)
-	return nil
 }

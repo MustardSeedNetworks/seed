@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -279,6 +280,23 @@ type Config struct {
 	MCP              MCPConfig              `yaml:"mcp"               json:"mcp"`
 	Database         DatabaseConfig         `yaml:"database"          json:"database"`
 	Pipeline         PipelineConfig         `yaml:"pipeline"          json:"pipeline"`
+	// Profile-specific settings (not in YAML config, only stored per-profile)
+	Link      LinkConfig      `yaml:"-" json:"link,omitzero"`
+	CableTest CableTestConfig `yaml:"-" json:"cableTest,omitzero"`
+}
+
+// LinkConfig contains interface speed/duplex settings (profile-specific).
+type LinkConfig struct {
+	// Mode is the combined speed/duplex (e.g., "100/full", "1000/full") or "auto".
+	Mode string `json:"mode,omitempty"`
+	// AvailableModes lists the speed/duplex combinations supported by the interface.
+	AvailableModes []string `json:"available_modes,omitempty"`
+}
+
+// CableTestConfig contains TDR cable diagnostic settings (profile-specific).
+type CableTestConfig struct {
+	// Enabled controls whether the cable test card is shown.
+	Enabled bool `json:"enabled"`
 }
 
 // PipelineConfig controls the sequential discovery pipeline.
@@ -821,12 +839,12 @@ type RTSPEndpoint struct {
 
 // DICOMEndpoint represents a custom DICOM server test (Issue #777).
 type DICOMEndpoint struct {
-	Name      string `yaml:"name"        json:"name"`
-	Host      string `yaml:"host"        json:"host"`
-	Port      int    `yaml:"port"        json:"port"`       // Default 104
-	CalledAE  string `yaml:"called_ae"   json:"called_ae"`  // Called Application Entity title
-	CallingAE string `yaml:"calling_ae"  json:"calling_ae"` // Calling Application Entity title
-	Enabled   bool   `yaml:"enabled"     json:"enabled"`
+	Name      string `yaml:"name"       json:"name"`
+	Host      string `yaml:"host"       json:"host"`
+	Port      int    `yaml:"port"       json:"port"`       // Default 104
+	CalledAE  string `yaml:"called_ae"  json:"called_ae"`  // Called Application Entity title
+	CallingAE string `yaml:"calling_ae" json:"calling_ae"` // Calling Application Entity title
+	Enabled   bool   `yaml:"enabled"    json:"enabled"`
 }
 
 // SpeedtestConfig contains speedtest settings.
@@ -2010,4 +2028,83 @@ func detectActiveInterface() string {
 
 	// Return first candidate if no ethernet found
 	return candidates[0]
+}
+
+// ============================================================================
+// Profile Export/Import - Single Source of Truth
+// ============================================================================
+
+// ProfileExportFields defines which Config sections are stored per-profile.
+// These are the user-configurable settings that vary between deployment profiles.
+// Global settings (Server, Auth, Security, Logging, Database) are NOT included.
+type ProfileExportFields struct {
+	Thresholds       ThresholdsConfig       `json:"thresholds"`
+	HealthChecks     HealthChecksConfig     `json:"healthChecks"`
+	Speedtest        SpeedtestConfig        `json:"speedtest"`
+	Iperf            IperfConfig            `json:"iperf"`
+	FABOptions       FABOptionsConfig       `json:"fabOptions"`
+	DisplayOptions   DisplayOptionsConfig   `json:"displayOptions"`
+	DNS              DNSConfig              `json:"dns"`
+	SNMP             SNMPConfig             `json:"snmp"`
+	NetworkDiscovery NetworkDiscoveryConfig `json:"networkDiscovery"`
+	Link             LinkConfig             `json:"link,omitzero"`
+	CableTest        CableTestConfig        `json:"cableTest,omitzero"`
+}
+
+// ToProfileJSON exports profile-specific settings as JSON.
+// Only settings that vary per-profile are included.
+// Global settings (Server, Auth, Security) are excluded.
+func (c *Config) ToProfileJSON() (string, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	export := ProfileExportFields{
+		Thresholds:       c.Thresholds,
+		HealthChecks:     c.HealthChecks,
+		Speedtest:        c.Speedtest,
+		Iperf:            c.Iperf,
+		FABOptions:       c.FABOptions,
+		DisplayOptions:   c.DisplayOptions,
+		DNS:              c.DNS,
+		SNMP:             c.SNMP,
+		NetworkDiscovery: c.NetworkDiscovery,
+		Link:             c.Link,
+		CableTest:        c.CableTest,
+	}
+
+	data, err := json.Marshal(export)
+	if err != nil {
+		return "", fmt.Errorf("marshal profile settings: %w", err)
+	}
+	return string(data), nil
+}
+
+// ApplyProfileJSON applies profile settings from JSON to this config.
+// Only profile-specific fields are updated; global settings are preserved.
+func (c *Config) ApplyProfileJSON(jsonStr string) error {
+	if jsonStr == "" {
+		return nil
+	}
+
+	var imported ProfileExportFields
+	if err := json.Unmarshal([]byte(jsonStr), &imported); err != nil {
+		return fmt.Errorf("unmarshal profile settings: %w", err)
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.Thresholds = imported.Thresholds
+	c.HealthChecks = imported.HealthChecks
+	c.Speedtest = imported.Speedtest
+	c.Iperf = imported.Iperf
+	c.FABOptions = imported.FABOptions
+	c.DisplayOptions = imported.DisplayOptions
+	c.DNS = imported.DNS
+	c.SNMP = imported.SNMP
+	c.NetworkDiscovery = imported.NetworkDiscovery
+	c.Link = imported.Link
+	c.CableTest = imported.CableTest
+
+	return nil
 }

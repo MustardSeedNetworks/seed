@@ -114,6 +114,121 @@ func Open(path string) (*DB, error) {
 	return OpenWithConfig(DefaultConfig(path))
 }
 
+// OpenWithAutoRebuild opens the database, automatically recreating it if corrupted or missing.
+// If the database cannot be opened due to corruption, it backs up the corrupted file
+// and creates a fresh database. This provides resilience against accidental deletion
+// or database corruption.
+func OpenWithAutoRebuild(path string) (*DB, error) {
+	return OpenWithConfigAndAutoRebuild(DefaultConfig(path))
+}
+
+// OpenWithConfigAndAutoRebuild opens the database with auto-rebuild on corruption.
+// If opening fails, it attempts to:
+// 1. Back up the corrupted database file (if it exists)
+// 2. Remove the corrupted file and any WAL/SHM files
+// 3. Create a fresh database.
+func OpenWithConfigAndAutoRebuild(cfg Config) (*DB, error) {
+	// First attempt: try to open normally
+	db, err := OpenWithConfig(cfg)
+	if err == nil {
+		return db, nil
+	}
+
+	// Check if this is a recoverable error (corruption, malformed, etc.)
+	if !isDatabaseCorrupted(err) {
+		return nil, err
+	}
+
+	// Log the corruption and attempt recovery
+	fmt.Fprintf(os.Stderr, "Database corruption detected: %v\nAttempting auto-rebuild...\n", err)
+
+	// Back up corrupted file if it exists
+	if _, statErr := os.Stat(cfg.Path); statErr == nil {
+		backupPath := cfg.Path + ".corrupted." + time.Now().Format("20060102-150405")
+		if renameErr := os.Rename(cfg.Path, backupPath); renameErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not backup corrupted database: %v\n", renameErr)
+			// Try to remove instead
+			if removeErr := os.Remove(cfg.Path); removeErr != nil {
+				return nil, fmt.Errorf("failed to remove corrupted database: %w", removeErr)
+			}
+		} else {
+			fmt.Fprintf(os.Stderr, "Corrupted database backed up to: %s\n", backupPath)
+		}
+	}
+
+	// Remove WAL and SHM files if they exist
+	_ = os.Remove(cfg.Path + "-wal")
+	_ = os.Remove(cfg.Path + "-shm")
+
+	// Second attempt: create fresh database
+	db, err = OpenWithConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create fresh database after corruption: %w", err)
+	}
+
+	fmt.Fprintf(os.Stderr, "Database successfully rebuilt at: %s\n", cfg.Path)
+	return db, nil
+}
+
+// isDatabaseCorrupted checks if an error indicates database corruption.
+func isDatabaseCorrupted(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := err.Error()
+	corruptionIndicators := []string{
+		"database disk image is malformed",
+		"file is not a database",
+		"file is encrypted or is not a database",
+		"database or disk is full",
+		"disk I/O error",
+		"corrupt",
+		"malformed",
+		"no such table",
+		"failed to run migrations",
+	}
+
+	for _, indicator := range corruptionIndicators {
+		if errContainsIgnoreCase(errStr, indicator) {
+			return true
+		}
+	}
+	return false
+}
+
+// errContainsIgnoreCase checks if s contains substr (case-insensitive).
+func errContainsIgnoreCase(s, substr string) bool {
+	if len(substr) == 0 {
+		return true
+	}
+	if len(s) < len(substr) {
+		return false
+	}
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if matchIgnoreCase(s[i:i+len(substr)], substr) {
+			return true
+		}
+	}
+	return false
+}
+
+func matchIgnoreCase(a, b string) bool {
+	for i := range len(a) {
+		ca, cb := a[i], b[i]
+		if ca >= 'A' && ca <= 'Z' {
+			ca += 32
+		}
+		if cb >= 'A' && cb <= 'Z' {
+			cb += 32
+		}
+		if ca != cb {
+			return false
+		}
+	}
+	return true
+}
+
 // OpenWithConfig creates a new database connection with custom configuration.
 func OpenWithConfig(cfg Config) (*DB, error) {
 	if cfg.Path == "" {

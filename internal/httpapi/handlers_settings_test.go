@@ -118,7 +118,7 @@ func TestHandleLinkSettingsGET(t *testing.T) {
 		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
 	}
 
-	var resp config.ProfileLinkSettings
+	var resp config.LinkConfig
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatalf("Failed to decode response: %v", err)
 	}
@@ -153,7 +153,7 @@ func TestHandleLinkSettingsMethodNotAllowed(t *testing.T) {
 func TestHandleLinkSettingsPUTInvalidMode(t *testing.T) {
 	server := api.NewTestServer()
 
-	reqBody := config.ProfileLinkSettings{
+	reqBody := config.LinkConfig{
 		Mode: "invalid-mode",
 	}
 	body, _ := json.Marshal(reqBody)
@@ -177,7 +177,7 @@ func TestHandleLinkSettingsPUTValidModes(t *testing.T) {
 		t.Run(mode, func(t *testing.T) {
 			server := api.NewTestServer()
 
-			reqBody := config.ProfileLinkSettings{
+			reqBody := config.LinkConfig{
 				Mode: mode,
 			}
 			body, _ := json.Marshal(reqBody)
@@ -208,7 +208,7 @@ func TestHandleCableTestSettingsGET(t *testing.T) {
 		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
 	}
 
-	var resp config.ProfileCableTestSettings
+	var resp config.CableTestConfig
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatalf("Failed to decode response: %v", err)
 	}
@@ -243,7 +243,7 @@ func TestHandleCableTestSettingsMethodNotAllowed(t *testing.T) {
 func TestHandleCableTestSettingsPUT(t *testing.T) {
 	server := api.NewTestServer()
 
-	reqBody := config.ProfileCableTestSettings{
+	reqBody := config.CableTestConfig{
 		Enabled: false,
 	}
 	body, _ := json.Marshal(reqBody)
