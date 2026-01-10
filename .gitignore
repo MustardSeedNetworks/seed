@@ -120,3 +120,8 @@ docs/issues*.md
 # Root planning files (use docs/ or GitHub issues instead)
 /*_PLAN.md
 /issue*.md
+
+# Go caches
+.gocache/
+.gomodcache/
+.golangci-cache/

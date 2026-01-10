@@ -67,6 +67,7 @@ import { LogViewerCard } from "./components/cards/log-viewer-card";
 import { PerformanceCard } from "./components/cards/performance-card";
 import { SystemHealthCard } from "./components/cards/system-health-card";
 import { WiFiSurveyCard } from "./components/cards/wifi-survey-card";
+import { WifiChannelGraph } from "./components/cards/wifi-channel-graph";
 import { ProfileManagement } from "./components/profiles/profile-management";
 import { FAB } from "./components/ui/fab";
 import { useProfileContext } from "./contexts/profile-context";
@@ -126,6 +127,19 @@ function App() {
   >([]);
   const [networkDiscovery, setNetworkDiscovery] = useState<NetworkDiscoveryData | null>(null);
   const [appVersion, setAppVersion] = useState("dev");
+  // WiFi channel graph data
+  const [channelGraphData, setChannelGraphData] = useState<{
+    available: boolean;
+    error?: string;
+    data?: {
+      networks_2_4ghz: Array<{ ssid: string; bssid: string; channel: number; centerFreq: number; channelWidth: number; signal: number; band: string; isConnected: boolean }>;
+      networks_5ghz: Array<{ ssid: string; bssid: string; channel: number; centerFreq: number; channelWidth: number; signal: number; band: string; isConnected: boolean }>;
+      networks_6ghz: Array<{ ssid: string; bssid: string; channel: number; centerFreq: number; channelWidth: number; signal: number; band: string; isConnected: boolean }>;
+      connected_bssid?: string;
+      scan_time: string;
+    };
+  } | null>(null);
+  const [channelGraphLoading, setChannelGraphLoading] = useState(false);
 
   // Refs to track device scan polling interval and timeout for cleanup
   const scanPollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -617,6 +631,22 @@ function App() {
     onCardUpdate: handleCardUpdate,
   });
 
+  // Fetch channel graph data for WiFi visualization
+  const fetchChannelGraphData = useCallback(async () => {
+    if (!isWifi || !currentInterface) return;
+    setChannelGraphLoading(true);
+    try {
+      const response = await api.get<typeof channelGraphData>(
+        `/api/canopy/wifi/channel-graph?interface=${currentInterface}`
+      );
+      setChannelGraphData(response);
+    } catch {
+      setChannelGraphData({ available: false, error: "Failed to fetch channel data" });
+    } finally {
+      setChannelGraphLoading(false);
+    }
+  }, [isWifi, currentInterface]);
+
   // Fetch data on mount (initial load) and data not covered by WebSocket
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -635,6 +665,7 @@ function App() {
       fetchCableData();
       fetchPublicIp();
       fetchNetworkDiscovery();
+      fetchChannelGraphData();
       setLoading(false);
     }, 0);
   }, [
@@ -651,6 +682,7 @@ function App() {
     fetchCableData,
     fetchPublicIp,
     fetchNetworkDiscovery,
+    fetchChannelGraphData,
     setLoading,
   ]);
 
@@ -667,6 +699,7 @@ function App() {
         fetchInterfaces();
         fetchWifiData(); // WiFi details not broadcast via WS
         fetchCableData(); // Cable test not broadcast via WS
+        fetchChannelGraphData(); // Channel graph data for WiFi visualization
       }, 60000); // 60 second interval for non-WS data (increased from 30s)
 
       return () => clearInterval(slowInterval);
@@ -716,6 +749,7 @@ function App() {
     fetchVlanData,
     fetchWifiData,
     fetchCableData,
+    fetchChannelGraphData,
   ]);
 
   // Auto-scan network devices on mount (respects per-card autoRunOnLink setting)
@@ -917,6 +951,15 @@ function App() {
               {/* WiFi-only: WiFi Survey for heatmaps and site surveys */}
               {/* Fix #572: Pass current interface to avoid hardcoded "wlan0" */}
               {isWifi && <WiFiSurveyCard isWifi={isWifi} currentInterface={currentInterface} />}
+
+              {/* WiFi-only: Channel Graph for visualizing channel overlap */}
+              {isWifi && (
+                <WifiChannelGraph
+                  data={channelGraphData}
+                  loading={channelGraphLoading}
+                  visible={isWifi}
+                />
+              )}
             </div>
           </section>
 
