@@ -93,20 +93,25 @@ const (
 
 // TestsSettingsResponse represents the custom tests configuration.
 type TestsSettingsResponse struct {
-	DNSHostname    string                    `json:"dnsHostname"`
-	DNSServers     []DNSServerResponse       `json:"dnsServers"`
-	PingTargets    []PingTargetResponse      `json:"pingTargets"`
-	TCPPorts       []TCPPortResponse         `json:"tcpPorts"`
-	UDPPorts       []UDPPortResponse         `json:"udpPorts"`
-	HTTPEndpoints  []HTTPEndpointResponse    `json:"httpEndpoints"`
-	RTSPEndpoints  []RTSPEndpointResponse    `json:"rtspEndpoints"`  // Issue #778
-	DICOMEndpoints []DICOMEndpointResponse   `json:"dicomEndpoints"` // Issue #777
-	Speedtest      SpeedtestSettingsResponse `json:"speedtest"`
-	Iperf          IperfSettingsResponse     `json:"iperf"`
-	RunPerformance bool                      `json:"runPerformance"`
-	RunSpeedtest   bool                      `json:"runSpeedtest"`
-	RunIperf       bool                      `json:"runIperf"`
-	RunDiscovery   bool                      `json:"runDiscovery"`
+	DNSHostname        string                      `json:"dnsHostname"`
+	DNSServers         []DNSServerResponse         `json:"dnsServers"`
+	PingTargets        []PingTargetResponse        `json:"pingTargets"`
+	TCPPorts           []TCPPortResponse           `json:"tcpPorts"`
+	UDPPorts           []UDPPortResponse           `json:"udpPorts"`
+	HTTPEndpoints      []HTTPEndpointResponse      `json:"httpEndpoints"`
+	RTSPEndpoints      []RTSPEndpointResponse      `json:"rtspEndpoints"`      // Issue #778
+	DICOMEndpoints     []DICOMEndpointResponse     `json:"dicomEndpoints"`     // Issue #777
+	HL7Endpoints       []HL7EndpointResponse       `json:"hl7Endpoints"`       // Health Checks 100x - Medical
+	FHIREndpoints      []FHIREndpointResponse      `json:"fhirEndpoints"`      // Health Checks 100x - Medical
+	SQLEndpoints       []SQLEndpointResponse       `json:"sqlEndpoints"`       // Health Checks 100x - Enterprise
+	FileShareEndpoints []FileShareEndpointResponse `json:"fileShareEndpoints"` // Health Checks 100x - Enterprise
+	LDAPEndpoints      []LDAPEndpointResponse      `json:"ldapEndpoints"`      // Health Checks 100x - Enterprise
+	Speedtest          SpeedtestSettingsResponse   `json:"speedtest"`
+	Iperf              IperfSettingsResponse       `json:"iperf"`
+	RunPerformance     bool                        `json:"runPerformance"`
+	RunSpeedtest       bool                        `json:"runSpeedtest"`
+	RunIperf           bool                        `json:"runIperf"`
+	RunDiscovery       bool                        `json:"runDiscovery"`
 }
 
 // DNSServerResponse contains a DNS server address and its enabled state.
@@ -168,6 +173,67 @@ type DICOMEndpointResponse struct {
 	Enabled   bool   `json:"enabled"`
 }
 
+// HL7EndpointResponse contains an HL7 MLLP endpoint configuration (Health Checks 100x).
+type HL7EndpointResponse struct {
+	Name         string `json:"name"`
+	Host         string `json:"host"`
+	Port         int    `json:"port"`
+	SendingApp   string `json:"sendingApp"`
+	SendingFac   string `json:"sendingFacility"`
+	ReceivingApp string `json:"receivingApp"`
+	ReceivingFac string `json:"receivingFacility"`
+	Enabled      bool   `json:"enabled"`
+	Criticality  int    `json:"criticality"`
+}
+
+// FHIREndpointResponse contains a FHIR R4 endpoint configuration (Health Checks 100x).
+type FHIREndpointResponse struct {
+	Name        string `json:"name"`
+	BaseURL     string `json:"baseUrl"`
+	AuthType    string `json:"authType"`
+	Enabled     bool   `json:"enabled"`
+	Criticality int    `json:"criticality"`
+}
+
+// SQLEndpointResponse contains a SQL database endpoint configuration (Health Checks 100x).
+type SQLEndpointResponse struct {
+	Name        string `json:"name"`
+	Driver      string `json:"driver"`
+	Host        string `json:"host"`
+	Port        int    `json:"port"`
+	Database    string `json:"database"`
+	SSLMode     string `json:"sslMode,omitempty"`
+	Enabled     bool   `json:"enabled"`
+	Criticality int    `json:"criticality"`
+}
+
+// FileShareEndpointResponse contains a file share endpoint configuration (Health Checks 100x).
+type FileShareEndpointResponse struct {
+	Name                 string `json:"name"`
+	Protocol             string `json:"protocol"`
+	Host                 string `json:"host"`
+	Share                string `json:"share"`
+	Path                 string `json:"path,omitempty"`
+	TestReadPerformance  bool   `json:"testReadPerformance,omitempty"`
+	TestWritePerformance bool   `json:"testWritePerformance,omitempty"`
+	TestFileSizeMB       int    `json:"testFileSizeMb,omitempty"`
+	Enabled              bool   `json:"enabled"`
+	Criticality          int    `json:"criticality"`
+}
+
+// LDAPEndpointResponse contains an LDAP/AD endpoint configuration (Health Checks 100x).
+type LDAPEndpointResponse struct {
+	Name         string `json:"name"`
+	Host         string `json:"host"`
+	Port         int    `json:"port"`
+	UseTLS       bool   `json:"useTls"`
+	StartTLS     bool   `json:"startTls"`
+	BaseDN       string `json:"baseDn"`
+	SearchFilter string `json:"searchFilter,omitempty"`
+	Enabled      bool   `json:"enabled"`
+	Criticality  int    `json:"criticality"`
+}
+
 // SpeedtestSettingsResponse contains speedtest configuration options.
 type SpeedtestSettingsResponse struct {
 	ServerID      string `json:"serverId"`
@@ -208,18 +274,23 @@ func (s *Server) handleHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	resp := TestsSettingsResponse{
-		DNSHostname:    s.config.DNS.TestHostname,
-		DNSServers:     make([]DNSServerResponse, 0, len(s.config.DNS.Servers)),
-		PingTargets:    make([]PingTargetResponse, 0, len(s.config.HealthChecks.PingTargets)),
-		TCPPorts:       make([]TCPPortResponse, 0, len(s.config.HealthChecks.TCPPorts)),
-		UDPPorts:       make([]UDPPortResponse, 0, len(s.config.HealthChecks.UDPPorts)),
-		HTTPEndpoints:  make([]HTTPEndpointResponse, 0, len(s.config.HealthChecks.HTTPEndpoints)),
-		RTSPEndpoints:  make([]RTSPEndpointResponse, 0, len(s.config.HealthChecks.RTSPEndpoints)),   // Issue #778
-		DICOMEndpoints: make([]DICOMEndpointResponse, 0, len(s.config.HealthChecks.DICOMEndpoints)), // Issue #777
-		RunPerformance: s.config.HealthChecks.RunPerformance,
-		RunSpeedtest:   s.config.HealthChecks.RunSpeedtest,
-		RunIperf:       s.config.HealthChecks.RunIperf,
-		RunDiscovery:   s.config.HealthChecks.RunDiscovery,
+		DNSHostname:        s.config.DNS.TestHostname,
+		DNSServers:         make([]DNSServerResponse, 0, len(s.config.DNS.Servers)),
+		PingTargets:        make([]PingTargetResponse, 0, len(s.config.HealthChecks.PingTargets)),
+		TCPPorts:           make([]TCPPortResponse, 0, len(s.config.HealthChecks.TCPPorts)),
+		UDPPorts:           make([]UDPPortResponse, 0, len(s.config.HealthChecks.UDPPorts)),
+		HTTPEndpoints:      make([]HTTPEndpointResponse, 0, len(s.config.HealthChecks.HTTPEndpoints)),
+		RTSPEndpoints:      make([]RTSPEndpointResponse, 0, len(s.config.HealthChecks.RTSPEndpoints)),       // Issue #778
+		DICOMEndpoints:     make([]DICOMEndpointResponse, 0, len(s.config.HealthChecks.DICOMEndpoints)),     // Issue #777
+		HL7Endpoints:       make([]HL7EndpointResponse, 0, len(s.config.HealthChecks.HL7Endpoints)),         // Health Checks 100x - Medical
+		FHIREndpoints:      make([]FHIREndpointResponse, 0, len(s.config.HealthChecks.FHIREndpoints)),       // Health Checks 100x - Medical
+		SQLEndpoints:       make([]SQLEndpointResponse, 0, len(s.config.HealthChecks.SQLEndpoints)),         // Health Checks 100x - Enterprise
+		FileShareEndpoints: make([]FileShareEndpointResponse, 0, len(s.config.HealthChecks.FileShareEndpoints)), // Health Checks 100x - Enterprise
+		LDAPEndpoints:      make([]LDAPEndpointResponse, 0, len(s.config.HealthChecks.LDAPEndpoints)),       // Health Checks 100x - Enterprise
+		RunPerformance:     s.config.HealthChecks.RunPerformance,
+		RunSpeedtest:       s.config.HealthChecks.RunSpeedtest,
+		RunIperf:           s.config.HealthChecks.RunIperf,
+		RunDiscovery:       s.config.HealthChecks.RunDiscovery,
 		Speedtest: SpeedtestSettingsResponse{
 			ServerID:      s.config.Speedtest.ServerID,
 			AutoRunOnLink: s.config.Speedtest.AutoRunOnLink,
@@ -295,6 +366,77 @@ func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request)
 			CalledAE:  d.CalledAE,
 			CallingAE: d.CallingAE,
 			Enabled:   d.Enabled,
+		})
+	}
+
+	// HL7 endpoints (Health Checks 100x)
+	for _, h := range s.config.HealthChecks.HL7Endpoints {
+		resp.HL7Endpoints = append(resp.HL7Endpoints, HL7EndpointResponse{
+			Name:         h.Name,
+			Host:         h.Host,
+			Port:         h.Port,
+			SendingApp:   h.SendingApp,
+			SendingFac:   h.SendingFac,
+			ReceivingApp: h.ReceivingApp,
+			ReceivingFac: h.ReceivingFac,
+			Enabled:      h.Enabled,
+			Criticality:  h.Criticality,
+		})
+	}
+
+	// FHIR endpoints (Health Checks 100x - Medical)
+	for _, f := range s.config.HealthChecks.FHIREndpoints {
+		resp.FHIREndpoints = append(resp.FHIREndpoints, FHIREndpointResponse{
+			Name:        f.Name,
+			BaseURL:     f.BaseURL,
+			AuthType:    f.AuthType,
+			Enabled:     f.Enabled,
+			Criticality: f.Criticality,
+		})
+	}
+
+	// SQL endpoints (Health Checks 100x - Enterprise)
+	for _, sq := range s.config.HealthChecks.SQLEndpoints {
+		resp.SQLEndpoints = append(resp.SQLEndpoints, SQLEndpointResponse{
+			Name:        sq.Name,
+			Driver:      sq.Driver,
+			Host:        sq.Host,
+			Port:        sq.Port,
+			Database:    sq.Database,
+			SSLMode:     sq.SSLMode,
+			Enabled:     sq.Enabled,
+			Criticality: sq.Criticality,
+		})
+	}
+
+	// FileShare endpoints (Health Checks 100x - Enterprise)
+	for _, fs := range s.config.HealthChecks.FileShareEndpoints {
+		resp.FileShareEndpoints = append(resp.FileShareEndpoints, FileShareEndpointResponse{
+			Name:                 fs.Name,
+			Protocol:             fs.Protocol,
+			Host:                 fs.Host,
+			Share:                fs.Share,
+			Path:                 fs.Path,
+			TestReadPerformance:  fs.TestReadPerformance,
+			TestWritePerformance: fs.TestWritePerformance,
+			TestFileSizeMB:       fs.TestFileSizeMB,
+			Enabled:              fs.Enabled,
+			Criticality:          fs.Criticality,
+		})
+	}
+
+	// LDAP endpoints (Health Checks 100x - Enterprise)
+	for _, l := range s.config.HealthChecks.LDAPEndpoints {
+		resp.LDAPEndpoints = append(resp.LDAPEndpoints, LDAPEndpointResponse{
+			Name:         l.Name,
+			Host:         l.Host,
+			Port:         l.Port,
+			UseTLS:       l.UseTLS,
+			StartTLS:     l.StartTLS,
+			BaseDN:       l.BaseDN,
+			SearchFilter: l.SearchFilter,
+			Enabled:      l.Enabled,
+			Criticality:  l.Criticality,
 		})
 	}
 

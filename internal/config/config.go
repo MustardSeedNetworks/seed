@@ -281,8 +281,8 @@ type Config struct {
 	Database         DatabaseConfig         `yaml:"database"          json:"database"`
 	Pipeline         PipelineConfig         `yaml:"pipeline"          json:"pipeline"`
 	// Profile-specific settings (not in YAML config, only stored per-profile)
-	Link      LinkConfig      `yaml:"-" json:"link,omitzero"`
-	CableTest CableTestConfig `yaml:"-" json:"cableTest,omitzero"`
+	Link      LinkConfig      `yaml:"-"                 json:"link,omitzero"`
+	CableTest CableTestConfig `yaml:"-"                 json:"cableTest,omitzero"`
 }
 
 // LinkConfig contains interface speed/duplex settings (profile-specific).
@@ -787,16 +787,21 @@ type DNSServer struct {
 // HealthChecksConfig contains custom health check configurations.
 // This section corresponds to the "Health Checks" card in the UI.
 type HealthChecksConfig struct {
-	PingTargets    []PingTarget    `yaml:"ping_targets"    json:"ping_targets"`
-	TCPPorts       []TCPPortTest   `yaml:"tcp_ports"       json:"tcp_ports"`
-	UDPPorts       []UDPPortTest   `yaml:"udp_ports"       json:"udp_ports"`
-	HTTPEndpoints  []HTTPEndpoint  `yaml:"http_endpoints"  json:"http_endpoints"`
-	RTSPEndpoints  []RTSPEndpoint  `yaml:"rtsp_endpoints"  json:"rtsp_endpoints"`  // Issue #778
-	DICOMEndpoints []DICOMEndpoint `yaml:"dicom_endpoints" json:"dicom_endpoints"` // Issue #777
-	RunPerformance bool            `yaml:"run_performance" json:"run_performance"` // Master toggle for speedtest + iperf
-	RunSpeedtest   bool            `yaml:"run_speedtest"   json:"run_speedtest"`   // Toggle internet speed test
-	RunIperf       bool            `yaml:"run_iperf"       json:"run_iperf"`       // Toggle LAN iperf test
-	RunDiscovery   bool            `yaml:"run_discovery"   json:"run_discovery"`   // Toggle network discovery card
+	PingTargets        []PingTarget        `yaml:"ping_targets"    json:"ping_targets"`
+	TCPPorts           []TCPPortTest       `yaml:"tcp_ports"       json:"tcp_ports"`
+	UDPPorts           []UDPPortTest       `yaml:"udp_ports"       json:"udp_ports"`
+	HTTPEndpoints      []HTTPEndpoint      `yaml:"http_endpoints"  json:"http_endpoints"`
+	RTSPEndpoints      []RTSPEndpoint      `yaml:"rtsp_endpoints"  json:"rtsp_endpoints"`      // Issue #778
+	DICOMEndpoints     []DICOMEndpoint     `yaml:"dicom_endpoints" json:"dicom_endpoints"`     // Issue #777
+	HL7Endpoints       []HL7Endpoint       `                       json:"hl7_endpoints"`       // Health Checks 100x - Medical
+	FHIREndpoints      []FHIREndpoint      `                       json:"fhir_endpoints"`      // Health Checks 100x - Medical
+	SQLEndpoints       []SQLEndpoint       `                       json:"sql_endpoints"`       // Health Checks 100x - Enterprise
+	FileShareEndpoints []FileShareEndpoint `                       json:"fileshare_endpoints"` // Health Checks 100x - Enterprise
+	LDAPEndpoints      []LDAPEndpoint      `                       json:"ldap_endpoints"`      // Health Checks 100x - Enterprise
+	RunPerformance     bool                `yaml:"run_performance" json:"run_performance"`     // Master toggle for speedtest + iperf
+	RunSpeedtest       bool                `yaml:"run_speedtest"   json:"run_speedtest"`       // Toggle internet speed test
+	RunIperf           bool                `yaml:"run_iperf"       json:"run_iperf"`           // Toggle LAN iperf test
+	RunDiscovery       bool                `yaml:"run_discovery"   json:"run_discovery"`       // Toggle network discovery card
 }
 
 // PingTarget represents a custom ping target.
@@ -824,10 +829,10 @@ type UDPPortTest struct {
 
 // HTTPEndpoint represents a custom HTTP endpoint test.
 type HTTPEndpoint struct {
-	Name           string `yaml:"name"            json:"name"`
-	URL            string `yaml:"url"             json:"url"`
-	ExpectedStatus int    `yaml:"expected_status" json:"expected_status"`
-	Enabled        bool   `yaml:"enabled"         json:"enabled"`
+	Name           string `yaml:"name"                   json:"name"`
+	URL            string `yaml:"url"                    json:"url"`
+	ExpectedStatus int    `yaml:"expected_status"        json:"expected_status"`
+	Enabled        bool   `yaml:"enabled"                json:"enabled"`
 	// HTTP enhancements (Health Checks 100x)
 	BodyMatch            string `yaml:"body_match"             json:"body_match,omitempty"`             // Regex/substring to match in response body
 	BodyMatchIsRegex     bool   `yaml:"body_match_is_regex"    json:"body_match_is_regex,omitempty"`    // Whether body_match is a regex
@@ -851,6 +856,82 @@ type DICOMEndpoint struct {
 	CalledAE  string `yaml:"called_ae"  json:"called_ae"`  // Called Application Entity title
 	CallingAE string `yaml:"calling_ae" json:"calling_ae"` // Calling Application Entity title
 	Enabled   bool   `yaml:"enabled"    json:"enabled"`
+}
+
+// HL7Endpoint represents a custom HL7 MLLP endpoint test (Health Checks 100x).
+type HL7Endpoint struct {
+	Name         string `json:"name"`
+	Host         string `json:"host"`
+	Port         int    `json:"port"`               // Default: 2575
+	SendingApp   string `json:"sending_app"`        // Sending application name
+	SendingFac   string `json:"sending_facility"`   // Sending facility name
+	ReceivingApp string `json:"receiving_app"`      // Receiving application name
+	ReceivingFac string `json:"receiving_facility"` // Receiving facility name
+	Enabled      bool   `json:"enabled"`
+	Criticality  int    `json:"criticality"` // 1-10 scale for health scoring
+}
+
+// FHIREndpoint represents a custom FHIR R4 endpoint test (Health Checks 100x).
+type FHIREndpoint struct {
+	Name         string `json:"name"`
+	BaseURL      string `json:"base_url"`  // FHIR server base URL
+	AuthType     string `json:"auth_type"` // "none", "basic", "bearer", "oauth2"
+	Username     string `json:"username,omitempty"`
+	Password     string `json:"password,omitempty"`
+	BearerToken  string `json:"bearer_token,omitempty"`
+	ClientID     string `json:"client_id,omitempty"`
+	ClientSecret string `json:"client_secret,omitempty"`
+	TokenURL     string `json:"token_url,omitempty"` // OAuth2 token endpoint
+	Enabled      bool   `json:"enabled"`
+	Criticality  int    `json:"criticality"` // 1-10 scale for health scoring
+}
+
+// SQLEndpoint represents a custom SQL database test (Health Checks 100x).
+type SQLEndpoint struct {
+	Name        string `json:"name"`
+	Driver      string `json:"driver"` // "mysql", "postgres", "sqlserver", "oracle", "sqlite"
+	Host        string `json:"host"`
+	Port        int    `json:"port"` // Default varies by driver
+	Database    string `json:"database"`
+	Username    string `json:"username,omitempty"`
+	Password    string `json:"password,omitempty"`
+	SSLMode     string `json:"ssl_mode,omitempty"`   // "disable", "require", "verify-ca", "verify-full"
+	TestQuery   string `json:"test_query,omitempty"` // Custom query to execute (default: SELECT 1)
+	Enabled     bool   `json:"enabled"`
+	Criticality int    `json:"criticality"` // 1-10 scale for health scoring
+}
+
+// FileShareEndpoint represents a file share test (SMB/CIFS or NFS) with performance testing.
+type FileShareEndpoint struct {
+	Name     string `json:"name"`
+	Protocol string `json:"protocol"` // "smb", "nfs"
+	Host     string `json:"host"`
+	Share    string `json:"share"`              // Share name (SMB) or export path (NFS)
+	Path     string `json:"path,omitempty"`     // Optional subdirectory path
+	Username string `json:"username,omitempty"` // SMB authentication
+	Password string `json:"password,omitempty"`
+	Domain   string `json:"domain,omitempty"` // SMB domain
+	// Performance testing options
+	TestReadPerformance  bool `json:"test_read_performance,omitempty"`  // Read test file to measure speed
+	TestWritePerformance bool `json:"test_write_performance,omitempty"` // Write test file to measure speed
+	TestFileSizeMB       int  `json:"test_file_size_mb,omitempty"`      // Size of test file in MB (default: 10)
+	Enabled              bool `json:"enabled"`
+	Criticality          int  `json:"criticality"` // 1-10 scale for health scoring
+}
+
+// LDAPEndpoint represents an LDAP/Active Directory test (Health Checks 100x).
+type LDAPEndpoint struct {
+	Name         string `json:"name"`
+	Host         string `json:"host"`
+	Port         int    `json:"port"`              // Default: 389 (LDAP), 636 (LDAPS)
+	UseTLS       bool   `json:"use_tls"`           // Use LDAPS
+	StartTLS     bool   `json:"start_tls"`         // Use StartTLS
+	BaseDN       string `json:"base_dn"`           // e.g., "dc=example,dc=com"
+	BindDN       string `json:"bind_dn,omitempty"` // Bind user DN
+	BindPassword string `json:"bind_password,omitempty"`
+	SearchFilter string `json:"search_filter,omitempty"` // Test search filter
+	Enabled      bool   `json:"enabled"`
+	Criticality  int    `json:"criticality"` // 1-10 scale for health scoring
 }
 
 // SpeedtestConfig contains speedtest settings.
