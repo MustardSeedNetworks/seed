@@ -254,8 +254,13 @@ func ensureJWTSecret(cfg *config.Config, configPath string) {
 
 // migrateSNMPCredentials encrypts plaintext SNMP credentials.
 // Note: Called before logging is initialized, so uses fmt.Fprintf.
+// Security fix #884: Warn if JWT secret is missing (should never happen after ensureJWTSecret).
 func migrateSNMPCredentials(cfg *config.Config, configPath string) {
-	if cfg.Auth.JWTSecret == "" || len(cfg.SNMP.V3Credentials) == 0 {
+	if len(cfg.SNMP.V3Credentials) == 0 {
+		return
+	}
+	if cfg.Auth.JWTSecret == "" {
+		fmt.Fprintln(os.Stderr, "Warning: Cannot encrypt SNMP credentials - JWT secret is missing")
 		return
 	}
 

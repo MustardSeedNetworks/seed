@@ -28,6 +28,7 @@ import { AlertCircle, Check, Edit2, Image, Layers, Plus, Trash2, X } from "lucid
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Floor } from "../../hooks/useSurvey";
+import { logger } from "../../lib/logger";
 import { button, radius, spacing } from "../../styles/theme";
 
 interface FloorSelectorProps {
@@ -95,7 +96,7 @@ export function FloorSelector({
       await onAddFloor(newFloorName.trim(), newFloorLevel);
       handleCancelAdd();
     } catch (err) {
-      console.error("Failed to add floor:", err);
+      logger.error("survey", "Failed to add floor:", err);
     } finally {
       setLoading(false);
     }
@@ -121,7 +122,7 @@ export function FloorSelector({
       await onRenameFloor(editingFloorId, editName.trim(), editLevel);
       handleCancelEdit();
     } catch (err) {
-      console.error("Failed to rename floor:", err);
+      logger.error("survey", "Failed to rename floor:", err);
     } finally {
       setLoading(false);
     }
@@ -141,7 +142,7 @@ export function FloorSelector({
     try {
       await onDeleteFloor(floorId);
     } catch (err) {
-      console.error("Failed to delete floor:", err);
+      logger.error("survey", "Failed to delete floor:", err);
     } finally {
       setLoading(false);
     }

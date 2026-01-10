@@ -24,6 +24,7 @@
 import { CheckCircle, Download, FileText, Loader, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { logger } from "../../lib/logger";
 import { button, radius, spacing } from "../../styles/theme";
 
 // Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
@@ -104,7 +105,7 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
 
       setSuccess(true);
     } catch (err) {
-      console.error("Report generation failed:", err);
+      logger.error("survey", "Report generation failed", err);
       setError(err instanceof Error ? err.message : "Failed to generate report");
     } finally {
       setGenerating(false);

@@ -1,6 +1,7 @@
 import type React from "react";
 import { memo, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { logger } from "../../../lib/logger";
 import { icon as iconTokens, layout } from "../../../styles/theme";
 import type {
   DiscoveryServiceStatus as DiscoveryServiceStatusType,
@@ -80,11 +81,11 @@ export const DiscoverySettings = memo(function DiscoverySettings({
         setServiceStatus(data);
       } else {
         // Log non-OK responses for debugging
-        console.warn(`[DiscoverySettings] Failed to fetch service status: ${response.status}`);
+        logger.warn("discovery", "Failed to fetch service status", { status: response.status });
       }
     } catch (err) {
       // Log error for debugging - status display is informational but errors help troubleshoot
-      console.warn("[DiscoverySettings] Error fetching service status:", err);
+      logger.warn("discovery", "Error fetching service status", { error: err });
     } finally {
       setStatusLoading(false);
     }

@@ -613,7 +613,10 @@ func (s *Server) setupShellRoutes() {
 	s.mux.HandleFunc("/api/shell/devices/status", s.handleDevicesStatus)
 	s.mux.HandleFunc("/api/shell/devices/settings", s.handleDevicesSettings)
 	s.mux.HandleFunc("/api/shell/devices/subnets", s.handleDevicesSubnets)
-	s.mux.HandleFunc("/api/shell/vulnerabilities/scan", s.handleVulnerabilityScan)
+	s.mux.Handle(
+		"/api/shell/vulnerabilities/scan",
+		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleVulnerabilityScan)),
+	)
 	s.mux.HandleFunc("/api/shell/vulnerabilities/status", s.handleVulnerabilityStatus)
 	s.mux.HandleFunc("/api/shell/vulnerabilities/results", s.handleVulnerabilityResults)
 	s.mux.HandleFunc("/api/shell/vulnerabilities/device", s.handleDeviceVulnerabilities)
@@ -629,7 +632,10 @@ func (s *Server) setupShellRoutes() {
 
 // setupRootsRoutes registers Roots module routes (path analysis).
 func (s *Server) setupRootsRoutes() {
-	s.mux.HandleFunc("/api/roots/traceroute", s.handleTraceroute)
+	s.mux.Handle(
+		"/api/roots/traceroute",
+		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleTraceroute)),
+	)
 	s.mux.HandleFunc("/api/roots/path", s.handlePath)
 }
 
@@ -654,15 +660,24 @@ func (s *Server) setupCanopyRoutes() {
 	s.mux.HandleFunc("/api/canopy/survey/sample", s.addSurveySample)
 	s.mux.HandleFunc("/api/canopy/survey/floorplan", s.updateSurveyFloorPlan)
 	s.mux.HandleFunc("/api/canopy/survey/settings", s.updateSurveySettings)
-	s.mux.HandleFunc("/api/canopy/survey/import/airmapper", s.importAirMapper)
-	s.mux.HandleFunc("/api/canopy/survey/heatmap", s.getSurveyHeatmap)
+	s.mux.Handle(
+		"/api/canopy/survey/import/airmapper",
+		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.importAirMapper)),
+	)
+	s.mux.Handle(
+		"/api/canopy/survey/heatmap",
+		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.getSurveyHeatmap)),
+	)
 	s.mux.HandleFunc("/api/canopy/survey/dead-zones", s.getSurveyDeadZones)
 	s.mux.HandleFunc("/api/canopy/survey/floors", s.handleSurveyFloors)
 	s.mux.HandleFunc("/api/canopy/survey/floor", s.handleSurveyFloor)
 	s.mux.HandleFunc("/api/canopy/survey/floor/floorplan", s.updateFloorFloorPlan)
 	s.mux.HandleFunc("/api/canopy/survey/floor/sample", s.addFloorSample)
 	s.mux.HandleFunc("/api/canopy/survey/active-floor", s.setActiveFloor)
-	s.mux.HandleFunc("/api/canopy/survey/report", s.generateSurveyReport)
+	s.mux.Handle(
+		"/api/canopy/survey/report",
+		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.generateSurveyReport)),
+	)
 }
 
 // setupHarvestRoutes registers Harvest module routes (reporting).

@@ -875,7 +875,7 @@ func TestRenderer_Concurrency(t *testing.T) {
 	var wg sync.WaitGroup
 	errors := make(chan error, 100)
 
-	for i := range 100 {
+	for range 100 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

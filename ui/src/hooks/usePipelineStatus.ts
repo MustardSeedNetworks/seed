@@ -5,6 +5,7 @@
  * Used by NetworkDiscoveryCard to show multi-phase discovery progress.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { logger } from "../lib/logger";
 
 // ============================================================================
 // Pipeline Types (matching backend internal/discovery/pipeline.go)
@@ -349,7 +350,7 @@ export function usePipelineStatus(
       const cfg: PipelineConfig = await response.json();
       setConfig(cfg);
     } catch (err) {
-      console.error("Failed to fetch pipeline config:", err);
+      logger.error("discovery", "Failed to fetch pipeline config:", err);
       setConfig(defaultConfig);
     }
   }, []);
@@ -365,7 +366,7 @@ export function usePipelineStatus(
         setPortIntensityInfo(info);
       }
     } catch (err) {
-      console.error("Failed to fetch port intensity info:", err);
+      logger.error("discovery", "Failed to fetch port intensity info:", err);
     }
   }, []);
 
@@ -380,7 +381,7 @@ export function usePipelineStatus(
         setTimingProfiles(profiles);
       }
     } catch (err) {
-      console.error("Failed to fetch timing profiles:", err);
+      logger.error("discovery", "Failed to fetch timing profiles:", err);
     }
   }, []);
 

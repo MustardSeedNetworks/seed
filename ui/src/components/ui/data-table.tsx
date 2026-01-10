@@ -41,6 +41,7 @@ import { ArrowUpDown, ChevronDown, ChevronUp, Filter, Search, X } from "lucide-r
 import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { border, cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
+import { logger } from "../../lib/logger";
 
 export type SortDirection = "asc" | "desc" | null;
 
@@ -155,7 +156,7 @@ export function DataTable<T>({
     // Fixes #680: Add null checks and error handling
     try {
       if (!Array.isArray(data)) {
-        console.error("DataTable: data prop is not an array", data);
+        logger.error("ui", "DataTable: data prop is not an array", undefined, { data });
         return [];
       }
 
@@ -173,7 +174,7 @@ export function DataTable<T>({
                 const value = column.accessor(item);
                 return value?.toString().toLowerCase().includes(query);
               } catch (err) {
-                console.error("DataTable: Error accessing column value", err);
+                logger.error("ui", "DataTable: Error accessing column value", err);
                 return false;
               }
             }
@@ -193,7 +194,7 @@ export function DataTable<T>({
                 const value = column.accessor(item);
                 return value?.toString().toLowerCase().includes(filterValue.toLowerCase());
               } catch (err) {
-                console.error("DataTable: Error filtering column value", err);
+                logger.error("ui", "DataTable: Error filtering column value", err);
                 return false;
               }
             });
@@ -228,7 +229,7 @@ export function DataTable<T>({
               });
               return sortDirection === "asc" ? comparison : -comparison;
             } catch (err) {
-              console.error("DataTable: Error sorting data", err);
+              logger.error("ui", "DataTable: Error sorting data", err);
               return 0;
             }
           });
@@ -237,7 +238,7 @@ export function DataTable<T>({
 
       return result;
     } catch (err) {
-      console.error("DataTable: Error in filteredAndSortedData", err);
+      logger.error("ui", "DataTable: Error in filteredAndSortedData", err);
       setRenderError(err instanceof Error ? err : new Error(String(err)));
       return [];
     }
@@ -432,7 +433,7 @@ export function DataTable<T>({
               filteredAndSortedData.map((item) => {
                 // Fixes #680: Add null checks for safe rendering
                 if (!item) {
-                  console.warn("DataTable: Encountered null/undefined item in data");
+                  logger.warn("ui", "DataTable: Encountered null/undefined item in data");
                   return null;
                 }
 
@@ -465,7 +466,7 @@ export function DataTable<T>({
                             </td>
                           );
                         } catch (err) {
-                          console.error("DataTable: Error rendering column", column.key, err);
+                          logger.error("ui", "DataTable: Error rendering column", err, { columnKey: column.key });
                           return (
                             <td
                               key={`${key}-${column.key}`}
@@ -486,7 +487,7 @@ export function DataTable<T>({
                             try {
                               return actions(item);
                             } catch (err) {
-                              console.error("DataTable: Error rendering actions", err);
+                              logger.error("ui", "DataTable: Error rendering actions", err);
                               return null;
                             }
                           })()}
@@ -495,7 +496,7 @@ export function DataTable<T>({
                     </tr>
                   );
                 } catch (err) {
-                  console.error("DataTable: Error rendering row", err);
+                  logger.error("ui", "DataTable: Error rendering row", err);
                   return null;
                 }
               })

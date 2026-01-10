@@ -406,7 +406,7 @@ func TestConcurrentStatusAndSpeedUpdates(t *testing.T) {
 
 	// Status updaters
 	wg.Add(numGoroutines)
-	for i := range numGoroutines {
+	for range numGoroutines {
 		go func() {
 			defer wg.Done()
 			phases := []string{
