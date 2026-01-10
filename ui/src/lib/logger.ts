@@ -36,6 +36,7 @@ export enum LogComponents {
   NETWORK = "network",
   SURVEY = "survey",
   WEBSOCKET = "websocket",
+  SSE = "sse", // Server-Sent Events (replaces WebSocket)
   SPEEDTEST = "speedtest",
   IPERF = "iperf",
   VULN = "vulnerabilities",

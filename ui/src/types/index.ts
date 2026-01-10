@@ -2,8 +2,6 @@
  * The Seed Type Definitions
  */
 
-export * from "./profile";
-
 export type Status = "success" | "warning" | "error" | "unknown";
 
 export interface CardData {

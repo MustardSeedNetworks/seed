@@ -56,22 +56,20 @@ import {
 import { generateId } from "../../utils/id";
 import { CollapsibleSection } from "../ui/collapsible-section";
 import { Network } from "../ui/icons";
-import {
-  AppearanceSettings,
-  AutoSaveIndicator,
-  CableTestSettings,
-  ConfigBackupsSection,
-  DiscoverySettings,
-  DnsSettings,
-  HealthChecksSettings,
-  LinkSettings,
-  MtuControl,
-  PerformanceSettings,
-  ThresholdsSettings,
-  VlanControl,
-  VulnerabilitySettings,
-  WiFiSettings,
-} from "./sections";
+import { AppearanceSettings } from "./sections/appearance-settings";
+import { AutoSaveIndicator } from "./sections/auto-save-indicator";
+import { CableTestSettings } from "./sections/cable-test-settings";
+import { ConfigBackupsSection } from "./sections/config-backups-section";
+import { DiscoverySettings } from "./sections/discovery-settings";
+import { DnsSettings } from "./sections/dns-settings";
+import { HealthChecksSettings } from "./sections/health-checks-settings";
+import { LinkSettings } from "./sections/link-settings";
+import { MtuControl } from "./sections/mtu-control";
+import { PerformanceSettings } from "./sections/performance-settings";
+import { ThresholdsSettings } from "./sections/thresholds-settings";
+import { VlanControl } from "./sections/vlan-control";
+import { VulnerabilitySettings } from "./sections/vulnerability-settings";
+import { WiFiSettings } from "./sections/wifi-settings";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 

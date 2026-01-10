@@ -6,12 +6,10 @@
  */
 
 import type { z } from "zod";
+import { configSchema } from "./config.zod";
 
 // Re-export the generated Zod schema
-export { configSchema } from "./config.zod";
-
-// Import the schema for type inference
-import { configSchema } from "./config.zod";
+export { configSchema };
 
 // Infer TypeScript types from Zod schema
 export type Config = z.infer<typeof configSchema>;

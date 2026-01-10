@@ -22,18 +22,15 @@
 
 import type React from "react";
 import { useCallback } from "react";
-import type {
-  CableData,
-  DHCPData,
-  DNSData,
-  GatewayData,
-  LinkData,
-  NetworkDiscoveryData,
-  PublicIpData,
-  SwitchData,
-  VlanData,
-  WiFiData,
-} from "../components/cards";
+import type { CableData } from "../components/cards/cable-card";
+import type { DnsData } from "../components/cards/dns-card";
+import type { GatewayData } from "../components/cards/gateway-card";
+import type { LinkData } from "../components/cards/link-card";
+import type { DhcpData } from "../components/cards/network-card";
+import type { NetworkDiscoveryData } from "../components/cards/network-discovery-card";
+import type { PublicIpData } from "../components/cards/public-ip-card";
+import type { SwitchData, VlanData } from "../components/cards/switch-card";
+import type { WiFiData } from "../components/cards/wifi-card";
 import { LogComponents, logger } from "../lib/logger";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
@@ -44,8 +41,8 @@ interface CardState {
   vlan: VlanData | null;
   switch: SwitchData | null;
   wifi: WiFiData | null;
-  dhcp: DHCPData | null;
-  dns: DNSData | null;
+  dhcp: DhcpData | null;
+  dns: DnsData | null;
   gateway: GatewayData | null;
   publicip: PublicIpData | null;
 }
@@ -325,7 +322,7 @@ export function useNetworkFetchers({
     } catch (err) {
       logger.error(LogComponents.Dns, "Failed to fetch DNS data", err);
     }
-  }, [setCards]);
+  }, [setCards, currentInterfaceRef.current]);
 
   // Fetch VLAN data
   const fetchVlanData = useCallback(async () => {
@@ -348,7 +345,7 @@ export function useNetworkFetchers({
     } catch (err) {
       logger.error(LogComponents.Vlan, "Failed to fetch VLAN data", err);
     }
-  }, [setCards]);
+  }, [setCards, currentInterfaceRef.current]);
 
   // Fetch Gateway ping data
   const fetchGatewayData = useCallback(async () => {

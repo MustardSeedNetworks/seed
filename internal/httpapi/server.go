@@ -102,8 +102,9 @@ type Server struct {
 	setupTokenManager   *SetupTokenManager         // Setup token manager for secure initial setup (fixes #724, #758)
 	recoveryManager     *auth.RecoveryTokenManager // Password recovery for headless machines
 	loginRateLimiter    *RateLimiter
-	endpointRateLimiter *EndpointRateLimiter // Rate limiter for expensive endpoints (fixes #530)
-	wsHub               *Hub
+	endpointRateLimiter *EndpointRateLimiter    // Rate limiter for expensive endpoints (fixes #530)
+	wsHub               *Hub                    // WebSocket hub (deprecated - use sseHub)
+	sseHub              *SSEHub                 // SSE hub for real-time updates (replaces WebSocket)
 	logBroadcaster      *logging.LogBroadcaster // Log broadcaster for real-time log streaming
 	mux                 *http.ServeMux
 	netManager          *network.Manager
@@ -326,16 +327,21 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 	}
 }
 
-// initWebSocketAndLogging initializes the WebSocket hub and log broadcaster.
+// initWebSocketAndLogging initializes the WebSocket hub, SSE hub, and log broadcaster.
 func (s *Server) initWebSocketAndLogging(db *database.DB) {
-	// Initialize WebSocket hub (fixes #512)
+	// Initialize WebSocket hub (fixes #512) - kept for backwards compatibility
 	s.wsHub = NewHub()
 	// Start hub before setupRoutes to prevent race condition
 	go s.wsHub.Run()
 
+	// Initialize SSE hub (replaces WebSocket for real-time updates)
+	s.sseHub = NewSSEHub()
+	go s.sseHub.Run()
+
 	// Initialize log broadcaster for real-time log streaming
+	// Use SSE hub for broadcasting (simpler than WebSocket)
 	s.logBroadcaster = logging.InitBroadcaster(logBroadcasterBufferSize)
-	s.logBroadcaster.SetBroadcaster(&logBroadcastAdapter{hub: s.wsHub})
+	s.logBroadcaster.SetBroadcaster(&sseLogBroadcastAdapter{hub: s.sseHub})
 
 	// Wire up database persistence for logs if database is available
 	if db != nil {
@@ -478,39 +484,45 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 			logging.GetLogger().Warn("Failed to reload discovery service", "error", err)
 		}
 
-		// Notify WebSocket clients with linkState message
-		s.wsHub.Broadcast(Message{
+		// Notify clients with linkState message (SSE primary, WebSocket for backwards compat)
+		linkStateMsg := Message{
 			Type: "linkState",
 			Payload: map[string]any{
 				"interface": event.Interface,
 				"state":     "up",
 				"timestamp": event.Timestamp.Format(time.RFC3339),
 			},
-		})
+		}
+		s.sseHub.Broadcast(linkStateMsg)
+		s.wsHub.Broadcast(linkStateMsg)
 
 		// Also broadcast link card update immediately to trigger frontend auto-run tests.
 		// The frontend listens for card_update messages on the "link" card to detect
 		// link-up transitions and run speedtest/iperf tests.
 		// Multi-interface support (#754): Include interface in broadcast.
 		if linkData := s.collectLinkData(); linkData != nil {
+			s.sseHub.BroadcastCardUpdateForInterface("link", linkData, event.Interface)
 			s.wsHub.BroadcastCardUpdateForInterface("link", linkData, event.Interface)
 		}
 	case network.LinkStateDown:
 		// Link went down - notify clients
 		logging.GetLogger().Info("Link down - notifying clients")
-		s.wsHub.Broadcast(Message{
+		linkStateMsg := Message{
 			Type: "linkState",
 			Payload: map[string]any{
 				"interface": event.Interface,
 				"state":     "down",
 				"timestamp": event.Timestamp.Format(time.RFC3339),
 			},
-		})
+		}
+		s.sseHub.Broadcast(linkStateMsg)
+		s.wsHub.Broadcast(linkStateMsg)
 
 		// Also broadcast link card update for proper state tracking.
 		// Frontend uses this to track DOWN state for detecting DOWN→UP transitions.
 		// Multi-interface support (#754): Include interface in broadcast.
 		if linkData := s.collectLinkData(); linkData != nil {
+			s.sseHub.BroadcastCardUpdateForInterface("link", linkData, event.Interface)
 			s.wsHub.BroadcastCardUpdateForInterface("link", linkData, event.Interface)
 		}
 	case network.LinkStateUnknown:
@@ -700,9 +712,12 @@ func (s *Server) setupHarvestRoutes() {
 	s.mux.HandleFunc("/api/harvest/logs/recent", s.handleLogsRecent)
 }
 
-// setupWebSocketAndStatic registers WebSocket and static file handlers.
+// setupWebSocketAndStatic registers WebSocket, SSE, and static file handlers.
 func (s *Server) setupWebSocketAndStatic() {
+	// WebSocket endpoint (deprecated - use /api/events for SSE)
 	s.mux.HandleFunc("/ws", s.handleWebSocket)
+	// SSE endpoint for real-time updates (replaces WebSocket)
+	s.mux.HandleFunc("/api/events", s.handleSSE)
 	frontendFS, err := ui.GetFS()
 	if err != nil {
 		logging.GetLogger().
@@ -1305,6 +1320,9 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	// Stop all services (fixes #524 - services will complete gracefully)
 	logging.GetLogger().InfoContext(ctx, "Stopping WebSocket hub...")
 	s.wsHub.Shutdown()
+
+	logging.GetLogger().InfoContext(ctx, "Stopping SSE hub...")
+	s.sseHub.Shutdown()
 
 	logging.GetLogger().InfoContext(ctx, "Stopping link monitor...")
 	s.linkMonitor.Stop()
