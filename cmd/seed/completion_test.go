@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"slices"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -40,14 +41,7 @@ func TestCompletionCmdValidArgs(t *testing.T) {
 			continue
 		}
 
-		found := false
-		for _, arg := range state.completionCmd.ValidArgs {
-			if arg == shell {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if !slices.Contains(state.completionCmd.ValidArgs, shell) {
 			t.Errorf("completionCmd.ValidArgs should contain %q", shell)
 		}
 	}

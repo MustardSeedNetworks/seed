@@ -11,6 +11,11 @@ import (
 	"strings"
 )
 
+const (
+	mediaMatchCount = 3
+	speedMatchCount = 2
+)
+
 // checkLinkStatePlatform checks link state on macOS using net.Interface flags.
 func checkLinkStatePlatform(interfaceName string) State {
 	iface, err := net.InterfaceByName(interfaceName)
@@ -45,7 +50,7 @@ func getSpeedDuplex(interfaceName string) (Speed, Duplex) {
 	// Try to parse media line like "media: autoselect (1000baseT <full-duplex>)"
 	mediaRegex := regexp.MustCompile(`media:.*\((\d+)base[A-Z].*<(full|half)-duplex>`)
 	matches := mediaRegex.FindStringSubmatch(outputStr)
-	if len(matches) >= 3 {
+	if len(matches) >= mediaMatchCount {
 		speedVal, _ := strconv.Atoi(matches[1])
 		duplex := ParseDuplex(matches[2])
 		return Speed(speedVal), duplex
@@ -54,7 +59,7 @@ func getSpeedDuplex(interfaceName string) (Speed, Duplex) {
 	// Try parsing simpler format
 	speedRegex := regexp.MustCompile(`(\d+)base[A-Z]`)
 	speedMatches := speedRegex.FindStringSubmatch(outputStr)
-	if len(speedMatches) >= 2 {
+	if len(speedMatches) >= speedMatchCount {
 		speedVal, _ := strconv.Atoi(speedMatches[1])
 		return Speed(speedVal), DuplexUnknown
 	}
@@ -98,7 +103,7 @@ func parseSpeedPlatform(s string) Speed {
 
 	// Handle "1000baseT" style
 	baseRegex := regexp.MustCompile(`(\d+)base`)
-	if matches := baseRegex.FindStringSubmatch(s); len(matches) >= 2 {
+	if matches := baseRegex.FindStringSubmatch(s); len(matches) >= speedMatchCount {
 		if speedVal, err := strconv.Atoi(matches[1]); err == nil {
 			return Speed(speedVal)
 		}

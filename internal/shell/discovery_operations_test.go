@@ -384,14 +384,14 @@ func TestDiscoveryServiceConcurrentGetDevices(t *testing.T) {
 	const numGoroutines = 10
 	done := make(chan bool, numGoroutines)
 
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		go func() {
 			_, _ = service.GetDevices(ctx)
 			done <- true
 		}()
 	}
 
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		select {
 		case <-done:
 			// Success
@@ -418,14 +418,14 @@ func TestDiscoveryServiceConcurrentGetDevice(t *testing.T) {
 	const numGoroutines = 10
 	done := make(chan bool, numGoroutines)
 
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		go func(id int) {
 			_, _ = service.GetDevice(ctx, "192.168.1."+string(rune('0'+id)))
 			done <- true
 		}(i)
 	}
 
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		select {
 		case <-done:
 			// Success

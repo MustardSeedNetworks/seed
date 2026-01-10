@@ -203,8 +203,8 @@ func TestConfigValidationWithTestFile(t *testing.T) {
 		t.Fatalf("Failed to marshal config: %v", err)
 	}
 
-	if err := os.WriteFile(configPath, data, 0o600); err != nil {
-		t.Fatalf("Failed to write config: %v", err)
+	if writeErr := os.WriteFile(configPath, data, 0o600); writeErr != nil {
+		t.Fatalf("Failed to write config: %v", writeErr)
 	}
 
 	// Load and validate
@@ -224,11 +224,7 @@ func TestDevModeSetsHTTPFalse(t *testing.T) {
 
 	// Test the logic that --dev sets HTTPS to false
 	devMode := true
-	https := true
-
-	if devMode {
-		https = false
-	}
+	https := !devMode
 
 	if https {
 		t.Error("HTTPS should be false when devMode is true")

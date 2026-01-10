@@ -525,6 +525,8 @@ func TestLeaseInfoZeroValues(t *testing.T) {
 
 // TestMonitorConcurrentOperations tests concurrent access to monitor.
 func TestMonitorConcurrentOperations(t *testing.T) {
+	t.Parallel()
+
 	monitor := dhcp.NewMonitor("eth0")
 
 	done := make(chan bool, 100)

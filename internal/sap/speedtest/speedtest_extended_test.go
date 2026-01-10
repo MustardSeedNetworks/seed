@@ -407,7 +407,7 @@ func TestConcurrentStatusAndSpeedUpdates(t *testing.T) {
 	// Status updaters
 	wg.Add(numGoroutines)
 	for i := range numGoroutines {
-		go func(id int) {
+		go func() {
 			defer wg.Done()
 			phases := []string{
 				"idle",
@@ -422,7 +422,7 @@ func TestConcurrentStatusAndSpeedUpdates(t *testing.T) {
 				progress := float64((j % 100) + 1)
 				tester.SetStatus(phase, progress)
 			}
-		}(i)
+		}()
 	}
 
 	// Speed updaters

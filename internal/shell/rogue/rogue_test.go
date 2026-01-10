@@ -3,7 +3,7 @@ package rogue_test
 import (
 	"testing"
 
-	// Import the rogue package to ensure it compiles correctly
+	// Import the rogue package to ensure it compiles correctly.
 	_ "github.com/krisarmstrong/seed/internal/shell/rogue"
 )
 

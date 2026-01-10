@@ -13,6 +13,11 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 )
 
+const (
+	protocolHTTP  = "http"
+	protocolHTTPS = "https"
+)
+
 func initCredentialsCmd(state *cliState) {
 	credentialsCmd := &cobra.Command{
 		Use:   "credentials",
@@ -50,9 +55,9 @@ func runCredentials(cmd *cobra.Command, _ []string, state *cliState) {
 
 	// Determine setup status
 	needsSetup := errors.Is(err, config.ErrInsecureCredentials) || result.GeneratedCreds
-	protocol := "https"
+	protocol := protocolHTTPS
 	if !cfg.Server.HTTPS {
-		protocol = "http"
+		protocol = protocolHTTP
 	}
 
 	// Prepare status output

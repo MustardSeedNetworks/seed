@@ -282,10 +282,7 @@ func TestOutputCredentialsFunctionExists(t *testing.T) {
 
 	// The function signature should be:
 	// func outputCredentials(creds setupCredentials, asJSON bool) error
-	var fn func(setupCredentials, bool) error = outputCredentials
-	if fn == nil {
-		t.Error("outputCredentials function should exist")
-	}
+	var _ = outputCredentials
 
 	// Verify JSON marshaling works for the type
 	_, err := json.Marshal(creds)
@@ -305,10 +302,7 @@ func TestOutputResultFunctionExists(t *testing.T) {
 
 	// The function signature should be:
 	// func outputResult(result ValidationResult, asJSON bool)
-	var fn func(ValidationResult, bool) = outputResult
-	if fn == nil {
-		t.Error("outputResult function should exist")
-	}
+	var _ = outputResult
 
 	// Verify JSON marshaling works for the type
 	_, err := json.Marshal(result)
@@ -335,8 +329,8 @@ func TestValidationResultRoundTrip(t *testing.T) {
 
 	// Unmarshal back
 	var decoded ValidationResult
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("Failed to unmarshal: %v", err)
+	if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal: %v", unmarshalErr)
 	}
 
 	// Verify all fields match
@@ -371,8 +365,8 @@ func TestSetupCredentialsRoundTrip(t *testing.T) {
 
 	// Unmarshal back
 	var decoded setupCredentials
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("Failed to unmarshal: %v", err)
+	if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal: %v", unmarshalErr)
 	}
 
 	// Verify all fields match

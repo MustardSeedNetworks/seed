@@ -26,9 +26,9 @@ func TestTracerouteService_Creation(t *testing.T) {
 			wantNil: false,
 		},
 		{
-			name: "nil tracer creation for error testing",
+			name:       "nil tracer creation for error testing",
 			createFunc: roots.NewTracerouteServiceNilTracer,
-			wantNil: false,
+			wantNil:    false,
 		},
 	}
 
@@ -61,8 +61,8 @@ func TestTracerouteService_Tracer(t *testing.T) {
 			wantNilTrace: false,
 		},
 		{
-			name: "nil tracer service",
-			createFunc: roots.NewTracerouteServiceNilTracer,
+			name:         "nil tracer service",
+			createFunc:   roots.NewTracerouteServiceNilTracer,
 			wantNilTrace: true,
 		},
 	}
@@ -199,23 +199,24 @@ func TestTracerouteService_Trace_WithOptions(t *testing.T) {
 				return
 			}
 
-			if !tt.wantErr {
-				if result == nil {
-					t.Error("Trace() returned nil result without error")
-					return
-				}
-				if result.Target != tt.target {
-					t.Errorf("Target = %q, want %q", result.Target, tt.target)
-				}
-				if result.StartedAt.IsZero() {
-					t.Error("StartedAt should not be zero")
-				}
-				if result.CompletedAt.IsZero() {
-					t.Error("CompletedAt should not be zero")
-				}
-				if result.Duration <= 0 {
-					t.Error("Duration should be positive")
-				}
+			if tt.wantErr {
+				return
+			}
+			if result == nil {
+				t.Error("Trace() returned nil result without error")
+				return
+			}
+			if result.Target != tt.target {
+				t.Errorf("Target = %q, want %q", result.Target, tt.target)
+			}
+			if result.StartedAt.IsZero() {
+				t.Error("StartedAt should not be zero")
+			}
+			if result.CompletedAt.IsZero() {
+				t.Error("CompletedAt should not be zero")
+			}
+			if result.Duration <= 0 {
+				t.Error("Duration should be positive")
 			}
 		})
 	}

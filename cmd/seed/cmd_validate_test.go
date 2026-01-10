@@ -81,31 +81,14 @@ func TestValidationResultMarshalJSON(t *testing.T) {
 			}
 
 			var got map[string]any
-			if err := json.Unmarshal(data, &got); err != nil {
-				t.Fatalf("Failed to unmarshal JSON: %v", err)
+			if unmarshalErr := json.Unmarshal(data, &got); unmarshalErr != nil {
+				t.Fatalf("Failed to unmarshal JSON: %v", unmarshalErr)
 			}
 
-			// Check valid field
-			if got["valid"] != tc.wantJSON["valid"] {
-				t.Errorf("valid: got %v, want %v", got["valid"], tc.wantJSON["valid"])
-			}
-
-			// Check path field
-			if got["path"] != tc.wantJSON["path"] {
-				t.Errorf("path: got %v, want %v", got["path"], tc.wantJSON["path"])
-			}
-
-			// Verify omitempty works for errors
-			_, hasErrors := got["errors"]
-			if len(tc.result.Errors) == 0 && hasErrors {
-				t.Error("errors field should be omitted when empty")
-			}
-
-			// Verify omitempty works for warnings
-			_, hasWarnings := got["warnings"]
-			if len(tc.result.Warnings) == 0 && hasWarnings {
-				t.Error("warnings field should be omitted when empty")
-			}
+			assertJSONField(t, got, tc.wantJSON, "valid")
+			assertJSONField(t, got, tc.wantJSON, "path")
+			assertOmitempty(t, got, "errors", len(tc.result.Errors) == 0)
+			assertOmitempty(t, got, "warnings", len(tc.result.Warnings) == 0)
 		})
 	}
 }
@@ -227,31 +210,52 @@ func TestCheckConfigWarnings(t *testing.T) {
 			t.Parallel()
 
 			warnings := checkConfigWarnings(tc.cfg)
-
-			// Check expected warnings are present
-			for _, want := range tc.wantWarnings {
-				found := false
-				for _, w := range warnings {
-					if strings.Contains(w, want) {
-						found = true
-						break
-					}
-				}
-				if !found {
-					t.Errorf("Expected warning containing %q not found in %v", want, warnings)
-				}
-			}
-
-			// Check unwanted warnings are absent
-			for _, notWant := range tc.wantNoWarning {
-				for _, w := range warnings {
-					if strings.Contains(w, notWant) {
-						t.Errorf("Unexpected warning containing %q found: %q", notWant, w)
-					}
-				}
-			}
+			assertWarningsContain(t, warnings, tc.wantWarnings)
+			assertWarningsMissing(t, warnings, tc.wantNoWarning)
 		})
 	}
+}
+
+func assertJSONField(t *testing.T, got, want map[string]any, key string) {
+	t.Helper()
+	if got[key] != want[key] {
+		t.Errorf("%s: got %v, want %v", key, got[key], want[key])
+	}
+}
+
+func assertOmitempty(t *testing.T, got map[string]any, key string, shouldOmit bool) {
+	t.Helper()
+	_, present := got[key]
+	if shouldOmit && present {
+		t.Errorf("%s field should be omitted when empty", key)
+	}
+}
+
+func assertWarningsContain(t *testing.T, got []string, want []string) {
+	t.Helper()
+	for _, expected := range want {
+		if !sliceContainsSubstring(got, expected) {
+			t.Errorf("expected warning containing %q, but it was not found", expected)
+		}
+	}
+}
+
+func assertWarningsMissing(t *testing.T, got []string, wantMissing []string) {
+	t.Helper()
+	for _, unexpected := range wantMissing {
+		if sliceContainsSubstring(got, unexpected) {
+			t.Errorf("unexpected warning containing %q found", unexpected)
+		}
+	}
+}
+
+func sliceContainsSubstring(values []string, needle string) bool {
+	for _, value := range values {
+		if strings.Contains(value, needle) {
+			return true
+		}
+	}
+	return false
 }
 
 func TestOutputResultJSON(t *testing.T) {
@@ -298,8 +302,8 @@ func TestOutputResultJSON(t *testing.T) {
 
 			// Verify we can unmarshal it back
 			var got ValidationResult
-			if err := json.Unmarshal(data, &got); err != nil {
-				t.Fatalf("Failed to unmarshal result: %v", err)
+			if unmarshalErr := json.Unmarshal(data, &got); unmarshalErr != nil {
+				t.Fatalf("Failed to unmarshal result: %v", unmarshalErr)
 			}
 
 			if got.Valid != tc.result.Valid {
@@ -425,8 +429,8 @@ func TestValidationResultJSONRoundTrip(t *testing.T) {
 
 	// Unmarshal back
 	var decoded ValidationResult
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("Failed to unmarshal: %v", err)
+	if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal: %v", unmarshalErr)
 	}
 
 	// Verify all fields match

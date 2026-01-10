@@ -48,16 +48,21 @@ const (
 	Speed100000 Speed = 100000
 )
 
+const (
+	bpsPerMbps  = 1_000_000
+	mbpsPerGbps = 1000
+)
+
 // Bps converts speed to bits per second.
 func (s Speed) Bps() int64 {
-	return int64(s) * 1_000_000
+	return int64(s) * bpsPerMbps
 }
 
 // String returns a human-readable speed string.
 func (s Speed) String() string {
 	switch {
-	case s >= 1000:
-		return fmt.Sprintf("%d Gbps", s/1000)
+	case s >= mbpsPerGbps:
+		return fmt.Sprintf("%d Gbps", s/mbpsPerGbps)
 	default:
 		return fmt.Sprintf("%d Mbps", s)
 	}

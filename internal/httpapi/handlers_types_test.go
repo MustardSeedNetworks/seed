@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	api "github.com/krisarmstrong/seed/internal/httpapi"
@@ -26,8 +27,8 @@ func TestErrorResponseStruct(t *testing.T) {
 	}
 
 	var decoded api.ErrorResponse
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("Failed to unmarshal ErrorResponse: %v", err)
+	if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal ErrorResponse: %v", unmarshalErr)
 	}
 
 	if decoded.Error != resp.Error {
@@ -55,8 +56,8 @@ func TestErrorResponseWithoutDetails(t *testing.T) {
 
 	// Verify "details" is omitted when empty
 	var decoded map[string]string
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("Failed to unmarshal: %v", err)
+	if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal: %v", unmarshalErr)
 	}
 
 	if _, exists := decoded["details"]; exists {
@@ -313,10 +314,13 @@ func TestReadLastLinesByteLimit(t *testing.T) {
 	testFile := filepath.Join(tmpDir, "byteslimit.log")
 
 	// Write 1000 bytes of content
-	content := ""
-	for i := 0; i < 100; i++ {
-		content += "line" + string(rune('0'+(i%10))) + "\n"
+	var builder strings.Builder
+	for i := range 100 {
+		builder.WriteString("line")
+		builder.WriteByte(byte('0' + (i % 10)))
+		builder.WriteByte('\n')
 	}
+	content := builder.String()
 
 	if err := os.WriteFile(testFile, []byte(content), 0o644); err != nil {
 		t.Fatalf("Failed to write test file: %v", err)

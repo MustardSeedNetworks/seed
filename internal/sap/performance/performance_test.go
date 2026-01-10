@@ -3,7 +3,7 @@ package performance_test
 import (
 	"testing"
 
-	// Import the package to verify it compiles correctly
+	// Import the package to verify it compiles correctly.
 	_ "github.com/krisarmstrong/seed/internal/sap/performance"
 )
 

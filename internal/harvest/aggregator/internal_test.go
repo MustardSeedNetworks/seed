@@ -378,7 +378,15 @@ func TestAggregatedResultStruct(t *testing.T) {
 	}
 
 	assert.Equal(t, aggregator.PeriodDaily, result.Period)
+	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), result.StartTime)
+	assert.Equal(t, time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC), result.EndTime)
 	assert.Equal(t, 100, result.Count)
+	assert.Equal(t, 5050.0, result.Sum)
+	assert.Equal(t, 1.0, result.Min)
+	assert.Equal(t, 100.0, result.Max)
+	assert.Equal(t, 50.5, result.Avg)
+	assert.Equal(t, 50.5, result.Median)
+	assert.Equal(t, 28.87, result.StdDev)
 	assert.Equal(t, 6, len(result.Percentile))
 }
 
@@ -395,5 +403,9 @@ func TestStatisticsStruct(t *testing.T) {
 
 	assert.Equal(t, 10, stats.Count)
 	assert.Equal(t, 55.0, stats.Sum)
+	assert.Equal(t, 1.0, stats.Min)
+	assert.Equal(t, 10.0, stats.Max)
 	assert.Equal(t, 5.5, stats.Avg)
+	assert.Equal(t, 5.5, stats.Median)
+	assert.Equal(t, 2.87, stats.StdDev)
 }

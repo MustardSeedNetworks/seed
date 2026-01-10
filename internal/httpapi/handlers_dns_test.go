@@ -338,6 +338,9 @@ func TestDNSLookupResultFields(t *testing.T) {
 	if result.Status != "ok" {
 		t.Errorf("Expected Status 'ok', got %q", result.Status)
 	}
+	if result.Error != "" {
+		t.Errorf("Expected Error to be empty, got %q", result.Error)
+	}
 	if len(result.Resolved) != 2 {
 		t.Errorf("Expected 2 resolved addresses, got %d", len(result.Resolved))
 	}
@@ -354,6 +357,9 @@ func TestDNSLookupResultWithError(t *testing.T) {
 
 	if result.Status != "error" {
 		t.Errorf("Expected Status 'error', got %q", result.Status)
+	}
+	if result.TimeMs != 100 {
+		t.Errorf("Expected TimeMs 100, got %d", result.TimeMs)
 	}
 	if result.Error != "no such host" {
 		t.Errorf("Expected Error 'no such host', got %q", result.Error)
@@ -444,8 +450,8 @@ func TestDNSSecurityScanRequestValidation(t *testing.T) {
 			}
 
 			var parsed api.DNSSecurityScanRequest
-			if err := json.Unmarshal(data, &parsed); err != nil {
-				t.Fatalf("Failed to unmarshal request: %v", err)
+			if unmarshalErr := json.Unmarshal(data, &parsed); unmarshalErr != nil {
+				t.Fatalf("Failed to unmarshal request: %v", unmarshalErr)
 			}
 
 			// Verify servers match
@@ -493,8 +499,8 @@ func TestDNSResponseJSONSerialization(t *testing.T) {
 	}
 
 	var parsed api.DNSResponse
-	if err := json.Unmarshal(data, &parsed); err != nil {
-		t.Fatalf("Failed to unmarshal response: %v", err)
+	if unmarshalErr := json.Unmarshal(data, &parsed); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal response: %v", unmarshalErr)
 	}
 
 	if parsed.Interface != resp.Interface {

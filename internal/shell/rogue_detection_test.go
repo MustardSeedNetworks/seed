@@ -380,7 +380,7 @@ func TestRogueServiceConcurrentGetRogueDevices(t *testing.T) {
 	const numGoroutines = 10
 	done := make(chan bool, numGoroutines)
 
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		go func() {
 			_, _ = service.GetRogueDevices(ctx)
 			done <- true
@@ -388,7 +388,7 @@ func TestRogueServiceConcurrentGetRogueDevices(t *testing.T) {
 	}
 
 	// Wait for all goroutines
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		select {
 		case <-done:
 			// Success
@@ -414,7 +414,7 @@ func TestRogueServiceConcurrentGetAlerts(t *testing.T) {
 	const numGoroutines = 10
 	done := make(chan bool, numGoroutines)
 
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		go func() {
 			_, _ = service.GetAlerts(ctx)
 			done <- true
@@ -422,7 +422,7 @@ func TestRogueServiceConcurrentGetAlerts(t *testing.T) {
 	}
 
 	// Wait for all goroutines
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		select {
 		case <-done:
 			// Success
@@ -439,24 +439,24 @@ func TestRogueServiceWithDifferentInterfaces(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name       string
-		interface_ string
+		name  string
+		iface string
 	}{
 		{
-			name:       "loopback",
-			interface_: "lo",
+			name:  "loopback",
+			iface: "lo",
 		},
 		{
-			name:       "eth0",
-			interface_: "eth0",
+			name:  "eth0",
+			iface: "eth0",
 		},
 		{
-			name:       "en0",
-			interface_: "en0",
+			name:  "en0",
+			iface: "en0",
 		},
 		{
-			name:       "wlan0",
-			interface_: "wlan0",
+			name:  "wlan0",
+			iface: "wlan0",
 		},
 	}
 
@@ -465,7 +465,7 @@ func TestRogueServiceWithDifferentInterfaces(t *testing.T) {
 			t.Parallel()
 
 			cfg := testutil.NewConfigBuilder().
-				WithInterface(tt.interface_).
+				WithInterface(tt.iface).
 				Build()
 
 			module := shell.New(cfg, nil)

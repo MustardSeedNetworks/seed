@@ -427,9 +427,9 @@ type DatabaseConfig struct {
 	// Path to the SQLite database file. Default: data/seed.db
 	Path string `yaml:"path" json:"path"`
 	// RetentionDays sets how many days of historical data to keep (0 = forever)
-	RetentionDays int `yaml:"retention_days"  json:"retention_days"`
+	RetentionDays int `yaml:"retention_days" json:"retention_days"`
 	// EnableWAL enables Write-Ahead Logging for better concurrency. Default: true
-	EnableWAL bool `yaml:"enable_wal"      json:"enable_wal"`
+	EnableWAL bool `yaml:"enable_wal" json:"enable_wal"`
 	// MaxConnections sets the maximum number of database connections. Default: 10
 	MaxConnections int `yaml:"max_connections" json:"max_connections"`
 }
@@ -1000,18 +1000,26 @@ type SNMPConfig struct {
 
 // SNMPv3Credential contains SNMP v3 authentication credentials.
 type SNMPv3Credential struct {
-	Name     string `yaml:"name"           json:"name"`     // Friendly name for this credential set
-	Username string `yaml:"username"       json:"username"` // Security name (user)
+	// Friendly name for this credential set.
+	Name string `yaml:"name" json:"name"`
+	// Security name (user).
+	Username string `yaml:"username" json:"username"`
 	// AuthProtocol specifies the authentication protocol.
 	// Supported values: "SHA", "SHA256", "SHA512", or "" for noAuth.
 	// Note: The "MD5" value is cryptographically broken and will be removed in the next major version.
 	// Use SHA256 or SHA512 instead for secure authentication.
-	AuthProtocol  string `yaml:"auth_protocol"  json:"auth_protocol"`  // "SHA", "SHA256", "SHA512", or "" for noAuth (MD5 is deprecated)
-	AuthPassword  string `yaml:"auth_password"  json:"auth_password"`  // Authentication password
-	PrivProtocol  string `yaml:"priv_protocol"  json:"priv_protocol"`  // "DES", "AES", "AES192", "AES256", or "" for noPriv
-	PrivPassword  string `yaml:"priv_password"  json:"priv_password"`  // Privacy password
-	ContextName   string `yaml:"context_name"   json:"context_name"`   // Optional SNMP context
-	SecurityLevel string `yaml:"security_level" json:"security_level"` // "noAuthNoPriv", "authNoPriv", "authPriv"
+	// "SHA", "SHA256", "SHA512", or "" for noAuth (MD5 is deprecated).
+	AuthProtocol string `yaml:"auth_protocol" json:"auth_protocol"`
+	// Authentication password.
+	AuthPassword string `yaml:"auth_password" json:"auth_password"`
+	// "DES", "AES", "AES192", "AES256", or "" for noPriv.
+	PrivProtocol string `yaml:"priv_protocol" json:"priv_protocol"`
+	// Privacy password.
+	PrivPassword string `yaml:"priv_password" json:"priv_password"`
+	// Optional SNMP context.
+	ContextName string `yaml:"context_name" json:"context_name"`
+	// "noAuthNoPriv", "authNoPriv", "authPriv".
+	SecurityLevel string `yaml:"security_level" json:"security_level"`
 }
 
 // LoggingConfig contains structured logging settings.

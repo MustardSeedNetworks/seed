@@ -51,12 +51,12 @@ func TestGeneratePasswordAndHashVerifiable(t *testing.T) {
 	}
 
 	// Verify the password matches the hash using bcrypt
-	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
+	if compareErr := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); compareErr != nil {
 		t.Error("Password should verify against its hash")
 	}
 
 	// Wrong password should not match
-	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte("wrongpassword")); err == nil {
+	if compareErr := bcrypt.CompareHashAndPassword([]byte(hash), []byte("wrongpassword")); compareErr == nil {
 		t.Error("Wrong password should not verify against hash")
 	}
 }

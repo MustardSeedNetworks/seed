@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -598,14 +599,7 @@ func TestDetectPackageManagerReturnsValid(t *testing.T) {
 	}
 
 	// Validate install command contains iperf3
-	found := false
-	for _, arg := range pm.InstallCommand {
-		if arg == "iperf3" {
-			found = true
-			break
-		}
-	}
-	if !found {
+	if !slices.Contains(pm.InstallCommand, "iperf3") {
 		t.Errorf("Install command should contain 'iperf3': %v", pm.InstallCommand)
 	}
 }
@@ -1005,8 +999,8 @@ func TestClientConfigJSONMarshaling(t *testing.T) {
 	}
 
 	var decoded iperf.ClientConfig
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("Failed to unmarshal config: %v", err)
+	if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal config: %v", unmarshalErr)
 	}
 
 	if decoded.Server != config.Server {
@@ -1066,8 +1060,8 @@ func TestResultJSONMarshaling(t *testing.T) {
 	}
 
 	var decoded iperf.Result
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("Failed to unmarshal result: %v", err)
+	if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal result: %v", unmarshalErr)
 	}
 
 	if decoded.BitsPerSecond != result.BitsPerSecond {
@@ -1098,8 +1092,8 @@ func TestServerStatusJSONMarshaling(t *testing.T) {
 	}
 
 	var decoded iperf.ServerStatus
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("Failed to unmarshal status: %v", err)
+	if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal status: %v", unmarshalErr)
 	}
 
 	if decoded.Running != status.Running {
@@ -1132,8 +1126,8 @@ func TestClientStatusJSONMarshaling(t *testing.T) {
 	}
 
 	var decoded iperf.ClientStatus
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("Failed to unmarshal status: %v", err)
+	if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal status: %v", unmarshalErr)
 	}
 
 	if decoded.Running != status.Running {

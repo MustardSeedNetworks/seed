@@ -548,7 +548,11 @@ func TestValidateConfig_SNMPMaxRepetitions(t *testing.T) {
 				if tt.want {
 					t.Errorf("expected validation errors for max_repetitions %d, got none", tt.maxRepetitions)
 				} else {
-					t.Errorf("expected no validation errors for max_repetitions %d, got: %+v", tt.maxRepetitions, errors)
+					t.Errorf(
+						"expected no validation errors for max_repetitions %d, got: %+v",
+						tt.maxRepetitions,
+						errors,
+					)
 					for _, e := range errors {
 						t.Logf("  - Path: %s, Message: %s", e.Path, e.Message)
 					}

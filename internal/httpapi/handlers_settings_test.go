@@ -667,7 +667,7 @@ func TestBuildCardSettings(t *testing.T) {
 
 	expectedCards := []string{"link", "switch", "vlan", "network", "gateway", "dns"}
 	for _, card := range expectedCards {
-		if _, ok := cardSettings[card]; !ok {
+		if _, cardOK := cardSettings[card]; !cardOK {
 			t.Errorf("Expected card %s in cardSettings", card)
 		}
 	}
@@ -694,7 +694,7 @@ func TestBuildThresholdSettings(t *testing.T) {
 
 	expectedKeys := []string{"dns", "gateway", "wifi", "customPing", "customTcp", "customHttp", "httpTimings"}
 	for _, key := range expectedKeys {
-		if _, ok := thresholds[key]; !ok {
+		if _, thresholdOK := thresholds[key]; !thresholdOK {
 			t.Errorf("Expected threshold key %s", key)
 		}
 	}
@@ -705,10 +705,10 @@ func TestBuildThresholdSettings(t *testing.T) {
 		t.Fatal("Expected dns threshold to be an object")
 	}
 
-	if _, ok := dnsThreshold["good"]; !ok {
+	if _, goodOK := dnsThreshold["good"]; !goodOK {
 		t.Error("Expected 'good' key in dns threshold")
 	}
-	if _, ok := dnsThreshold["warning"]; !ok {
+	if _, warningOK := dnsThreshold["warning"]; !warningOK {
 		t.Error("Expected 'warning' key in dns threshold")
 	}
 }

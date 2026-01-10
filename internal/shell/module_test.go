@@ -256,7 +256,7 @@ func TestModuleStartStopCycle(t *testing.T) {
 
 	module := shell.New(cfg, nil)
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 
 		err := module.Start(ctx)
@@ -289,35 +289,35 @@ func TestModuleServiceAccessors(t *testing.T) {
 	done := make(chan bool, 4)
 
 	go func() {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			_ = module.Discovery()
 		}
 		done <- true
 	}()
 
 	go func() {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			_ = module.Vulnerability()
 		}
 		done <- true
 	}()
 
 	go func() {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			_ = module.Posture()
 		}
 		done <- true
 	}()
 
 	go func() {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			_ = module.Rogue()
 		}
 		done <- true
 	}()
 
 	// Wait for all goroutines
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		<-done
 	}
 }

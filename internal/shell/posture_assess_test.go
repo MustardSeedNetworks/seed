@@ -177,7 +177,7 @@ func TestPostureAssessScoreNeverNegative(t *testing.T) {
 	ctx := context.Background()
 
 	// Run multiple times to ensure consistency
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		score, err := service.Assess(ctx)
 		if err != nil {
 			t.Fatalf("Assess() iteration %d returned error: %v", i, err)

@@ -290,8 +290,20 @@ func TestPipelineRun_AllFields(t *testing.T) {
 	if run.ID != "run-test-123" {
 		t.Errorf("ID mismatch: got %q", run.ID)
 	}
+	if !run.StartedAt.Equal(now) {
+		t.Error("StartedAt should match now")
+	}
+	if run.CompletedAt == nil || !run.CompletedAt.Equal(completed) {
+		t.Error("CompletedAt should match completed time")
+	}
 	if run.Status != discovery.PipelineStateComplete {
 		t.Errorf("Status should be complete, got %q", run.Status)
+	}
+	if run.Trigger != "manual" {
+		t.Errorf("Trigger should be manual, got %q", run.Trigger)
+	}
+	if run.CurrentPhase != "complete" {
+		t.Errorf("CurrentPhase should be complete, got %q", run.CurrentPhase)
 	}
 	if len(run.PhaseDurations) != 3 {
 		t.Errorf("PhaseDurations should have 3 entries, got %d", len(run.PhaseDurations))
@@ -337,6 +349,12 @@ func TestPipelineEvent_Types(t *testing.T) {
 		}
 		if event.RunID != "test-run" {
 			t.Errorf("RunID should be 'test-run', got %q", event.RunID)
+		}
+		if event.Timestamp.IsZero() {
+			t.Error("Timestamp should be set")
+		}
+		if payload, ok := event.Payload.(map[string]any); !ok || payload["test"] != "data" {
+			t.Error("Payload should include test=data")
 		}
 	}
 }
@@ -493,6 +511,15 @@ func TestPipelinePortScanConfig_Fields(t *testing.T) {
 
 			if cfg.Intensity != tt.intensity {
 				t.Errorf("Intensity mismatch: expected %q, got %q", tt.intensity, cfg.Intensity)
+			}
+			if len(cfg.CustomPorts) != 3 {
+				t.Errorf("CustomPorts should have 3 entries, got %d", len(cfg.CustomPorts))
+			}
+			if !cfg.BannerGrab {
+				t.Error("BannerGrab should be true")
+			}
+			if cfg.ConnectTimeout != 3*time.Second {
+				t.Errorf("ConnectTimeout should be 3s, got %v", cfg.ConnectTimeout)
 			}
 		})
 	}

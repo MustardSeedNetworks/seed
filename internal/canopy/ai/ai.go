@@ -144,6 +144,41 @@ const (
 	MaxGridResolution = 5.0
 )
 
+const (
+	pathLossLogMultiplier       = 10.0
+	pathLossPowerBase           = 10.0
+	rssiMinimumInitialization   = -200
+	percentScale                = 100.0
+	rssiMarginBelowMinimum      = 10
+	targetCoverageDefault       = 95.0
+	coverageExcellentThreshold  = 95.0
+	coverageGoodThreshold       = 80.0
+	coverageModerateThreshold   = 60.0
+	coverageOverlapFactor       = 0.7
+	coverageNormalizationTarget = 95.0
+	minAPCount                  = 1
+	minCalibrationSamples       = 2
+	exponentMin                 = 1.5
+	exponentMax                 = 5.0
+	deadZoneClusterRadius       = 5.0
+	minSampleCountForGuidance   = 10
+	gridSizeMeters              = 2.0
+	gridHalfDivisor             = 2.0
+	rssiMarginBelowMinimumGrid  = 20
+	minSuggestionDistanceMeters = 10.0
+	maxPlacementSuggestions     = 5
+	defaultCoverageGain         = 50.0
+	baseCoverageRadiusMeters    = 15.0
+	freeSpaceMultiplier         = 2.0
+	warehouseMultiplier         = 1.5
+	residentialMultiplier       = 1.1
+	band5GHzMultiplier          = 0.7
+	band6GHzMultiplier          = 0.5
+	centerDivisor               = 2.0
+	gainMultiplier              = 2.0
+	maxGain                     = 30.0
+)
+
 // NewPathLossModel creates a path loss model for the specified environment.
 func NewPathLossModel(environment, band string) *PathLossModel {
 	model := &PathLossModel{
@@ -205,8 +240,8 @@ func (m *PathLossModel) PredictDistance(txPower, rssi int) float64 {
 	// Rearranging: d = d_0 * 10^((PL - PL_0) / (10 * n))
 	// Where PL = TxPower - RSSI
 	pathLoss := float64(txPower - rssi)
-	exponent := (pathLoss - m.ReferenceLoss) / (10 * m.PathLossExponent)
-	distance := m.ReferenceDistance * math.Pow(10, exponent)
+	exponent := (pathLoss - m.ReferenceLoss) / (pathLossLogMultiplier * m.PathLossExponent)
+	distance := m.ReferenceDistance * math.Pow(pathLossPowerBase, exponent)
 
 	return distance
 }
@@ -228,7 +263,7 @@ func AnalyzeCoverage(samples []SignalSample, floorPlan *FloorPlan, threshold int
 	// Calculate statistics
 	var totalRSSI float64
 	minRSSI := 0
-	maxRSSI := -200
+	maxRSSI := rssiMinimumInitialization
 	coveredCount := 0
 
 	for i, sample := range samples {
@@ -249,9 +284,9 @@ func AnalyzeCoverage(samples []SignalSample, floorPlan *FloorPlan, threshold int
 	}
 
 	avgRSSI := totalRSSI / float64(len(samples))
-	coveragePercent := float64(coveredCount) / float64(len(samples)) * 100
+	coveragePercent := float64(coveredCount) / float64(len(samples)) * percentScale
 	totalArea := floorPlan.Width * floorPlan.Height
-	coveredArea := totalArea * coveragePercent / 100
+	coveredArea := totalArea * coveragePercent / percentScale
 
 	// Count dead zones (clusters of weak signal)
 	deadZoneCount := countDeadZones(samples, threshold)
@@ -334,7 +369,7 @@ func PredictSignalMap(
 			point := Point{X: x, Y: y}
 
 			// Find the strongest signal at this point from any AP
-			bestRSSI := ThresholdMinimum - 10 // Start below minimum
+			bestRSSI := ThresholdMinimum - rssiMarginBelowMinimum // Start below minimum
 			for _, ap := range aps {
 				distance := calculateDistance(point, ap.Location)
 				rssi := model.PredictRSSI(ap.TxPower, distance)
@@ -363,8 +398,8 @@ func EstimateAPCount(floorPlan *FloorPlan, environment, band string, targetCover
 		return 0, ErrInvalidInput
 	}
 
-	if targetCoverage <= 0 || targetCoverage > 100 {
-		targetCoverage = 95.0
+	if targetCoverage <= 0 || targetCoverage > percentScale {
+		targetCoverage = targetCoverageDefault
 	}
 
 	totalArea := floorPlan.Width * floorPlan.Height
@@ -376,7 +411,7 @@ func EstimateAPCount(floorPlan *FloorPlan, environment, band string, targetCover
 	areaPerAP := math.Pi * coverageRadius * coverageRadius
 
 	// Account for overlap needed for good coverage
-	overlapFactor := 0.7 // 30% overlap between APs
+	overlapFactor := coverageOverlapFactor // 30% overlap between APs
 
 	effectiveAreaPerAP := areaPerAP * overlapFactor
 
@@ -384,11 +419,11 @@ func EstimateAPCount(floorPlan *FloorPlan, environment, band string, targetCover
 	apCount := math.Ceil(totalArea / effectiveAreaPerAP)
 
 	// Adjust for target coverage (higher target = more APs)
-	coverageFactor := targetCoverage / 95.0
+	coverageFactor := targetCoverage / coverageNormalizationTarget
 	apCount = math.Ceil(apCount * coverageFactor)
 
-	if apCount < 1 {
-		apCount = 1
+	if apCount < minAPCount {
+		apCount = minAPCount
 	}
 
 	return int(apCount), nil
@@ -408,7 +443,7 @@ func CalibrateModel(samples []SignalSample, ap AccessPoint) (*PathLossModel, err
 		}
 	}
 
-	if len(validSamples) < 2 {
+	if len(validSamples) < minCalibrationSamples {
 		return nil, ErrNoData
 	}
 
@@ -420,7 +455,7 @@ func CalibrateModel(samples []SignalSample, ap AccessPoint) (*PathLossModel, err
 
 	for _, s := range validSamples {
 		pathLoss := float64(ap.TxPower - s.RSSI)
-		x := 10 * math.Log10(s.Distance)
+		x := pathLossLogMultiplier * math.Log10(s.Distance)
 		y := pathLoss - referenceLoss
 
 		sumX += x
@@ -433,11 +468,11 @@ func CalibrateModel(samples []SignalSample, ap AccessPoint) (*PathLossModel, err
 	exponent := (n*sumXY - sumX*sumY) / (n*sumX2 - sumX*sumX)
 
 	// Clamp exponent to reasonable range
-	if exponent < 1.5 {
-		exponent = 1.5
+	if exponent < exponentMin {
+		exponent = exponentMin
 	}
-	if exponent > 5.0 {
-		exponent = 5.0
+	if exponent > exponentMax {
+		exponent = exponentMax
 	}
 
 	return &PathLossModel{
@@ -490,7 +525,7 @@ func countDeadZones(samples []SignalSample, threshold int) int {
 	}
 
 	// Simple clustering: count groups of weak samples within 5m of each other
-	const clusterRadius = 5.0
+	const clusterRadius = deadZoneClusterRadius
 	visited := make([]bool, len(weakSamples))
 	zones := 0
 
@@ -517,11 +552,11 @@ func generateRecommendations(coverage, avgRSSI float64, deadZones, sampleCount i
 	var recs []string
 
 	switch {
-	case coverage >= 95 && avgRSSI >= float64(ThresholdGood):
+	case coverage >= coverageExcellentThreshold && avgRSSI >= float64(ThresholdGood):
 		recs = append(recs, "Excellent coverage achieved. Network is well-optimized.")
-	case coverage >= 80:
+	case coverage >= coverageGoodThreshold:
 		recs = append(recs, "Good coverage overall. Minor improvements possible.")
-	case coverage >= 60:
+	case coverage >= coverageModerateThreshold:
 		recs = append(recs, "Moderate coverage. Consider adding access points in weak areas.")
 	default:
 		recs = append(recs, "Poor coverage detected. Significant network improvements needed.")
@@ -537,7 +572,7 @@ func generateRecommendations(coverage, avgRSSI float64, deadZones, sampleCount i
 			"Average signal strength is below optimal. Consider increasing AP density.")
 	}
 
-	if sampleCount < 10 {
+	if sampleCount < minSampleCountForGuidance {
 		recs = append(recs,
 			"Limited sample data. Collect more measurements for accurate analysis.")
 	}
@@ -555,7 +590,7 @@ func findOptimalPlacements(
 	var suggestions []PlacementSuggestion
 
 	// Grid-based analysis
-	gridSize := 2.0 // 2m grid
+	gridSize := gridSizeMeters // 2m grid
 	model := NewPathLossModel("office", "2.4GHz")
 
 	// Find areas with weakest coverage
@@ -566,10 +601,11 @@ func findOptimalPlacements(
 
 	var cells []gridCell
 
-	for x := gridSize / 2; x < floorPlan.Width; x += gridSize {
-		for y := gridSize / 2; y < floorPlan.Height; y += gridSize {
+	gridHalf := gridSize / gridHalfDivisor
+	for x := gridHalf; x < floorPlan.Width; x += gridSize {
+		for y := gridHalf; y < floorPlan.Height; y += gridSize {
 			point := Point{X: x, Y: y}
-			bestRSSI := ThresholdMinimum - 20
+			bestRSSI := ThresholdMinimum - rssiMarginBelowMinimumGrid
 
 			for _, ap := range existingAPs {
 				dist := calculateDistance(point, ap.Location)
@@ -597,7 +633,7 @@ func findOptimalPlacements(
 
 		// Check if this is far enough from other suggestions
 		tooClose := false
-		minDistance := 10.0 // Minimum 10m between suggested APs
+		minDistance := minSuggestionDistanceMeters // Minimum 10m between suggested APs
 
 		for _, s := range suggestions {
 			if calculateDistance(cell.point, s.Location) < minDistance {
@@ -618,7 +654,7 @@ func findOptimalPlacements(
 		}
 
 		// Limit suggestions
-		if len(suggestions) >= 5 {
+		if len(suggestions) >= maxPlacementSuggestions {
 			break
 		}
 	}
@@ -626,10 +662,10 @@ func findOptimalPlacements(
 	// If no existing APs and no weak spots found, suggest center placement
 	if len(existingAPs) == 0 && len(suggestions) == 0 {
 		suggestions = append(suggestions, PlacementSuggestion{
-			Location:     Point{X: floorPlan.Width / 2, Y: floorPlan.Height / 2},
+			Location:     Point{X: floorPlan.Width / centerDivisor, Y: floorPlan.Height / centerDivisor},
 			Priority:     1,
 			Reason:       "Initial central placement for baseline coverage",
-			CoverageGain: 50.0,
+			CoverageGain: defaultCoverageGain,
 		})
 	}
 
@@ -637,16 +673,16 @@ func findOptimalPlacements(
 }
 
 func estimateCoverageRadius(environment, band string) float64 {
-	baseRadius := 15.0 // Base radius in meters for 2.4 GHz office
+	baseRadius := baseCoverageRadiusMeters // Base radius in meters for 2.4 GHz office
 
 	// Adjust for environment
 	switch environment {
 	case "free_space":
-		baseRadius *= 2.0
+		baseRadius *= freeSpaceMultiplier
 	case "warehouse":
-		baseRadius *= 1.5
+		baseRadius *= warehouseMultiplier
 	case "residential":
-		baseRadius *= 1.1
+		baseRadius *= residentialMultiplier
 	case "office":
 		// Default
 	default:
@@ -656,9 +692,9 @@ func estimateCoverageRadius(environment, band string) float64 {
 	// Adjust for band (higher frequencies have shorter range)
 	switch band {
 	case "5GHz":
-		baseRadius *= 0.7
+		baseRadius *= band5GHzMultiplier
 	case "6GHz":
-		baseRadius *= 0.5
+		baseRadius *= band6GHzMultiplier
 	default:
 		// 2.4 GHz - use base
 	}
@@ -674,10 +710,10 @@ func estimateCoverageGain(currentRSSI, threshold int) float64 {
 	// Estimate gain based on how far below threshold
 	gap := float64(threshold - currentRSSI)
 	// Larger gap = bigger potential improvement
-	gain := gap * 2.0
+	gain := gap * gainMultiplier
 
-	if gain > 30 {
-		gain = 30
+	if gain > maxGain {
+		gain = maxGain
 	}
 
 	return gain

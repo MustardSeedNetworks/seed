@@ -143,8 +143,8 @@ func TestCredentialsCmdWithConfigFile(t *testing.T) {
 		t.Fatalf("Failed to marshal config: %v", err)
 	}
 
-	if err := os.WriteFile(configPath, data, 0o600); err != nil {
-		t.Fatalf("Failed to write config: %v", err)
+	if writeErr := os.WriteFile(configPath, data, 0o600); writeErr != nil {
+		t.Fatalf("Failed to write config: %v", writeErr)
 	}
 
 	// Create CLI state with config path

@@ -723,7 +723,7 @@ func extractPlistIPArray(content, key string) []string {
 	}
 
 	// Try array format first
-	if arrayContent, found := extractArrayContent(remaining); found {
+	if arrayContent, arrayFound := extractArrayContent(remaining); arrayFound {
 		if ips := parseDataTagsFromArray(arrayContent); len(ips) > 0 {
 			return ips
 		}

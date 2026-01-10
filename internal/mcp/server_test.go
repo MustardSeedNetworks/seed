@@ -2,6 +2,7 @@ package mcp_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -34,6 +35,8 @@ type mockServiceProvider struct {
 	cfg              *config.Config
 	icmpAvailable    bool
 }
+
+var errInterfaceNotFound = errors.New("interface not found")
 
 func (m *mockServiceProvider) GetDiscoveryService() mcp.DiscoveryService {
 	return m.discoveryService
@@ -143,7 +146,7 @@ func (m *mockNetworkManager) GetInterface(name string) (*network.InterfaceInfo, 
 			return iface, nil
 		}
 	}
-	return nil, nil
+	return nil, errInterfaceNotFound
 }
 
 func (m *mockNetworkManager) GetCurrentInterface() string {
@@ -530,20 +533,22 @@ func TestMockSpeedtestTester(t *testing.T) {
 				t.Errorf("expected running=%v, got running=%v", tt.status.Running, status.Running)
 			}
 
-			if !status.Running {
-				result, err := mock.Run(context.Background())
-				if tt.wantErr {
-					if err == nil {
-						t.Error("expected error, got nil")
-					}
-				} else {
-					if err != nil {
-						t.Errorf("unexpected error: %v", err)
-					}
-					if result != tt.result {
-						t.Errorf("expected result %v, got %v", tt.result, result)
-					}
+			if status.Running {
+				return
+			}
+
+			result, err := mock.Run(context.Background())
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error, got nil")
 				}
+				return
+			}
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			if result != tt.result {
+				t.Errorf("expected result %v, got %v", tt.result, result)
 			}
 		})
 	}
@@ -597,22 +602,24 @@ func TestMockIperfManager(t *testing.T) {
 				)
 			}
 
-			if !status.Running {
-				result, err := mock.RunClient(context.Background(), &iperf.ClientConfig{
-					Server: "localhost",
-				})
-				if tt.wantErr {
-					if err == nil {
-						t.Error("expected error, got nil")
-					}
-				} else {
-					if err != nil {
-						t.Errorf("unexpected error: %v", err)
-					}
-					if result != tt.result {
-						t.Errorf("expected result %v, got %v", tt.result, result)
-					}
+			if status.Running {
+				return
+			}
+
+			result, err := mock.RunClient(context.Background(), &iperf.ClientConfig{
+				Server: "localhost",
+			})
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error, got nil")
 				}
+				return
+			}
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			if result != tt.result {
+				t.Errorf("expected result %v, got %v", tt.result, result)
 			}
 		})
 	}

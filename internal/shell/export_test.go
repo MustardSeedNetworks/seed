@@ -31,12 +31,12 @@ type DiscoveryServiceTestAccessor struct {
 }
 
 // GetCfg returns the service's config.
-func (a *DiscoveryServiceTestAccessor) GetCfg() interface{} {
+func (a *DiscoveryServiceTestAccessor) GetCfg() any {
 	return a.Service.cfg
 }
 
 // GetDB returns the service's database.
-func (a *DiscoveryServiceTestAccessor) GetDB() interface{} {
+func (a *DiscoveryServiceTestAccessor) GetDB() any {
 	return a.Service.db
 }
 
@@ -46,12 +46,12 @@ type VulnerabilityServiceTestAccessor struct {
 }
 
 // GetCfg returns the service's config.
-func (a *VulnerabilityServiceTestAccessor) GetCfg() interface{} {
+func (a *VulnerabilityServiceTestAccessor) GetCfg() any {
 	return a.Service.cfg
 }
 
 // GetDB returns the service's database.
-func (a *VulnerabilityServiceTestAccessor) GetDB() interface{} {
+func (a *VulnerabilityServiceTestAccessor) GetDB() any {
 	return a.Service.db
 }
 
@@ -66,12 +66,12 @@ type PostureServiceTestAccessor struct {
 }
 
 // GetCfg returns the service's config.
-func (a *PostureServiceTestAccessor) GetCfg() interface{} {
+func (a *PostureServiceTestAccessor) GetCfg() any {
 	return a.Service.cfg
 }
 
 // GetDB returns the service's database.
-func (a *PostureServiceTestAccessor) GetDB() interface{} {
+func (a *PostureServiceTestAccessor) GetDB() any {
 	return a.Service.db
 }
 
@@ -91,7 +91,7 @@ type RogueServiceTestAccessor struct {
 }
 
 // GetCfg returns the service's config.
-func (a *RogueServiceTestAccessor) GetCfg() interface{} {
+func (a *RogueServiceTestAccessor) GetCfg() any {
 	return a.Service.cfg
 }
 
@@ -101,12 +101,12 @@ type ModuleTestAccessor struct {
 }
 
 // GetCfg returns the module's config.
-func (a *ModuleTestAccessor) GetCfg() interface{} {
+func (a *ModuleTestAccessor) GetCfg() any {
 	return a.Module.cfg
 }
 
 // GetDB returns the module's database.
-func (a *ModuleTestAccessor) GetDB() interface{} {
+func (a *ModuleTestAccessor) GetDB() any {
 	return a.Module.db
 }
 
@@ -237,20 +237,24 @@ func AssessWithMockVulns(vulns []Vulnerability) *PostureScore {
 }
 
 // CountVulnsBySeverity counts vulnerabilities by severity like the Scan method does.
-func CountVulnsBySeverity(vulns []Vulnerability) (critical, high, medium, low int) {
+func CountVulnsBySeverity(vulns []Vulnerability) (int, int, int, int) {
+	var criticalCount int
+	var highCount int
+	var mediumCount int
+	var lowCount int
 	for _, v := range vulns {
 		switch v.Severity {
 		case SeverityCritical:
-			critical++
+			criticalCount++
 		case SeverityHigh:
-			high++
+			highCount++
 		case SeverityMedium:
-			medium++
+			mediumCount++
 		case SeverityLow:
-			low++
+			lowCount++
 		case SeverityInfo:
 			// Info severity not counted
 		}
 	}
-	return
+	return criticalCount, highCount, mediumCount, lowCount
 }

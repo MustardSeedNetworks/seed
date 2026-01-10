@@ -1400,6 +1400,7 @@ func TestIncidentSummary_Struct(t *testing.T) {
 	assert.Equal(t, "Test Incident", incident.Title)
 	assert.Equal(t, "critical", incident.Severity)
 	assert.Equal(t, "resolved", incident.Status)
+	assert.True(t, incident.DetectedAt.Equal(now))
 	assert.NotNil(t, incident.ResolvedAt)
 }
 

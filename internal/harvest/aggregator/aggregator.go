@@ -18,6 +18,21 @@ const (
 	PeriodMonthly Period = "monthly"
 )
 
+const (
+	medianDivisor           = 2
+	minStdDevSamples        = 2
+	percentileMin           = 0
+	percentileMax           = 100
+	percentileScale         = 100.0
+	minRateOfChangeSamples  = 2
+	minOutlierSamples       = 4
+	firstQuartilePercent    = 25
+	thirdQuartilePercent    = 75
+	interquartileMultiplier = 1.5
+	weekPadWidth            = 2
+	yearPadWidth            = 4
+)
+
 // Common errors returned by aggregator functions.
 var (
 	ErrEmptyDataset     = errors.New("dataset is empty")
@@ -130,15 +145,15 @@ func calculateMedian(values []float64) float64 {
 	sort.Float64s(sorted)
 
 	n := len(sorted)
-	if n%2 == 0 {
-		return (sorted[n/2-1] + sorted[n/2]) / 2
+	if n%medianDivisor == 0 {
+		return (sorted[n/2-1] + sorted[n/2]) / medianDivisor
 	}
 	return sorted[n/2]
 }
 
 // calculateStdDev calculates the standard deviation given values and their mean.
 func calculateStdDev(values []float64, mean float64) float64 {
-	if len(values) < 2 {
+	if len(values) < minStdDevSamples {
 		return 0
 	}
 
@@ -158,7 +173,7 @@ func Percentile(values []float64, p int) (float64, error) {
 	if len(values) == 0 {
 		return 0, ErrEmptyDataset
 	}
-	if p < 0 || p > 100 {
+	if p < percentileMin || p > percentileMax {
 		return 0, errors.New("percentile must be between 0 and 100")
 	}
 
@@ -169,12 +184,12 @@ func Percentile(values []float64, p int) (float64, error) {
 	if p == 0 {
 		return sorted[0], nil
 	}
-	if p == 100 {
+	if p == percentileMax {
 		return sorted[len(sorted)-1], nil
 	}
 
 	// Calculate the index
-	index := float64(p) / 100.0 * float64(len(sorted)-1)
+	index := float64(p) / percentileScale * float64(len(sorted)-1)
 	lower := int(math.Floor(index))
 	upper := int(math.Ceil(index))
 
@@ -214,7 +229,7 @@ func periodKey(t time.Time, period Period) (string, error) {
 		return t.Format("2006-01-02"), nil
 	case PeriodWeekly:
 		year, week := t.ISOWeek()
-		return t.Format("2006") + "-W" + padInt(week, 2) + "-" + padInt(year, 4), nil
+		return t.Format("2006") + "-W" + padInt(week, weekPadWidth) + "-" + padInt(year, yearPadWidth), nil
 	case PeriodMonthly:
 		return t.Format("2006-01"), nil
 	default:
@@ -353,7 +368,7 @@ func ExponentialMovingAverage(values []float64, alpha float64) ([]float64, error
 // RateOfChange calculates the rate of change between consecutive values.
 // Returns a slice of length n-1 where each value represents (current - previous) / previous.
 func RateOfChange(values []float64) ([]float64, error) {
-	if len(values) < 2 {
+	if len(values) < minRateOfChangeSamples {
 		return nil, errors.New("at least 2 values required for rate of change")
 	}
 
@@ -478,22 +493,22 @@ func Normalize(values []float64) ([]float64, error) {
 // Outliers identifies outliers using the IQR method.
 // Returns indices of values that are outliers (below Q1-1.5*IQR or above Q3+1.5*IQR).
 func Outliers(values []float64) ([]int, error) {
-	if len(values) < 4 {
+	if len(values) < minOutlierSamples {
 		return nil, errors.New("at least 4 values required for outlier detection")
 	}
 
-	q1, err := Percentile(values, 25)
+	q1, err := Percentile(values, firstQuartilePercent)
 	if err != nil {
 		return nil, err
 	}
-	q3, err := Percentile(values, 75)
+	q3, err := Percentile(values, thirdQuartilePercent)
 	if err != nil {
 		return nil, err
 	}
 
 	iqr := q3 - q1
-	lowerBound := q1 - 1.5*iqr
-	upperBound := q3 + 1.5*iqr
+	lowerBound := q1 - interquartileMultiplier*iqr
+	upperBound := q3 + interquartileMultiplier*iqr
 
 	var outlierIndices []int
 	for i, v := range values {

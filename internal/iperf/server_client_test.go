@@ -54,8 +54,8 @@ func TestStartServerWithValidPort(t *testing.T) {
 	}
 
 	// Stop server
-	if err := manager.StopServer(); err != nil {
-		t.Errorf("StopServer error: %v", err)
+	if stopErr := manager.StopServer(); stopErr != nil {
+		t.Errorf("StopServer error: %v", stopErr)
 	}
 
 	// Verify server stopped

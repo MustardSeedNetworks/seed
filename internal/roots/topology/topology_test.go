@@ -11,6 +11,8 @@ import (
 // The topology package is currently a placeholder - actual topology types
 // and services are defined in the parent roots package.
 func TestPackageExists(t *testing.T) {
+	t.Parallel()
+
 	// This test simply verifies that the package compiles and can be imported.
 	// When topology functionality is implemented in this package,
 	// comprehensive tests should be added here.

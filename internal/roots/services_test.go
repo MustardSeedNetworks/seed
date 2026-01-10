@@ -17,16 +17,7 @@ func TestNewAnalysisService(t *testing.T) {
 }
 
 func TestAnalysisService_AnalyzePath(t *testing.T) {
-	tests := []struct {
-		name           string
-		result         *roots.TracerouteResult
-		wantErr        bool
-		wantHops       int
-		wantScore      int // approximate, may vary
-		wantScoreMin   int // minimum acceptable score
-		wantScoreMax   int // maximum acceptable score
-		wantAnalysisOK bool
-	}{
+	tests := []analyzePathTestCase{
 		{
 			name:    "nil result returns error",
 			result:  nil,
@@ -157,37 +148,48 @@ func TestAnalysisService_AnalyzePath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			analysis, err := svc.AnalyzePath(context.Background(), tt.result)
-
-			if (err != nil) != tt.wantErr {
-				t.Errorf("AnalyzePath() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			if tt.wantErr {
-				return
-			}
-
-			if analysis == nil {
-				t.Fatal("AnalyzePath() returned nil analysis")
-			}
-
-			if analysis.Hops != tt.wantHops {
-				t.Errorf("Hops = %d, want %d", analysis.Hops, tt.wantHops)
-			}
-
-			if analysis.Score < tt.wantScoreMin || analysis.Score > tt.wantScoreMax {
-				t.Errorf(
-					"Score = %d, want between %d and %d",
-					analysis.Score,
-					tt.wantScoreMin,
-					tt.wantScoreMax,
-				)
-			}
-
-			if tt.wantAnalysisOK && analysis.Analysis == "" {
-				t.Error("Analysis text should not be empty")
-			}
+			assertAnalyzePathResult(t, tt, analysis, err)
 		})
+	}
+}
+
+type analyzePathTestCase struct {
+	name           string
+	result         *roots.TracerouteResult
+	wantErr        bool
+	wantHops       int
+	wantScore      int // approximate, may vary
+	wantScoreMin   int // minimum acceptable score
+	wantScoreMax   int // maximum acceptable score
+	wantAnalysisOK bool
+}
+
+func assertAnalyzePathResult(t *testing.T, tc analyzePathTestCase, analysis *roots.PathAnalysis, err error) {
+	t.Helper()
+
+	if (err != nil) != tc.wantErr {
+		t.Errorf("AnalyzePath() error = %v, wantErr %v", err, tc.wantErr)
+		return
+	}
+	if tc.wantErr {
+		return
+	}
+	if analysis == nil {
+		t.Fatal("AnalyzePath() returned nil analysis")
+	}
+	if analysis.Hops != tc.wantHops {
+		t.Errorf("Hops = %d, want %d", analysis.Hops, tc.wantHops)
+	}
+	if analysis.Score < tc.wantScoreMin || analysis.Score > tc.wantScoreMax {
+		t.Errorf(
+			"Score = %d, want between %d and %d",
+			analysis.Score,
+			tc.wantScoreMin,
+			tc.wantScoreMax,
+		)
+	}
+	if tc.wantAnalysisOK && analysis.Analysis == "" {
+		t.Error("Analysis text should not be empty")
 	}
 }
 

@@ -1516,22 +1516,31 @@ func TestParseVLANAndMACExtended(t *testing.T) {
 		wantOK   bool
 	}{
 		{
-			name:     "valid VLAN 1 with MAC",
-			parts:    []string{"1", "3", "6", "1", "2", "1", "17", "7", "1", "2", "2", "1", "2", "1", "0", "26", "85", "0", "25", "96"},
+			name: "valid VLAN 1 with MAC",
+			parts: []string{
+				"1", "3", "6", "1", "2", "1", "17", "7", "1", "2",
+				"2", "1", "2", "1", "0", "26", "85", "0", "25", "96",
+			},
 			wantVLAN: 1,
 			wantMAC:  "00:1a:55:00:19:60",
 			wantOK:   true,
 		},
 		{
-			name:     "valid VLAN 100 with MAC",
-			parts:    []string{"1", "3", "6", "1", "2", "1", "17", "7", "1", "2", "2", "1", "2", "100", "170", "187", "204", "221", "238", "255"},
+			name: "valid VLAN 100 with MAC",
+			parts: []string{
+				"1", "3", "6", "1", "2", "1", "17", "7", "1", "2",
+				"2", "1", "2", "100", "170", "187", "204", "221", "238", "255",
+			},
 			wantVLAN: 100,
 			wantMAC:  "aa:bb:cc:dd:ee:ff",
 			wantOK:   true,
 		},
 		{
-			name:     "valid VLAN 4094 with broadcast MAC",
-			parts:    []string{"1", "3", "6", "1", "2", "1", "17", "7", "1", "2", "2", "1", "2", "4094", "255", "255", "255", "255", "255", "255"},
+			name: "valid VLAN 4094 with broadcast MAC",
+			parts: []string{
+				"1", "3", "6", "1", "2", "1", "17", "7", "1", "2",
+				"2", "1", "2", "4094", "255", "255", "255", "255", "255", "255",
+			},
 			wantVLAN: 4094,
 			wantMAC:  "ff:ff:ff:ff:ff:ff",
 			wantOK:   true,
@@ -1551,29 +1560,41 @@ func TestParseVLANAndMACExtended(t *testing.T) {
 			wantOK:   false,
 		},
 		{
-			name:     "invalid VLAN (non-numeric)",
-			parts:    []string{"1", "3", "6", "1", "2", "1", "17", "7", "1", "2", "2", "1", "2", "xx", "0", "0", "0", "0", "0", "0"},
+			name: "invalid VLAN (non-numeric)",
+			parts: []string{
+				"1", "3", "6", "1", "2", "1", "17", "7", "1", "2",
+				"2", "1", "2", "xx", "0", "0", "0", "0", "0", "0",
+			},
 			wantVLAN: 0,
 			wantMAC:  "",
 			wantOK:   false,
 		},
 		{
-			name:     "invalid MAC octet (non-numeric)",
-			parts:    []string{"1", "3", "6", "1", "2", "1", "17", "7", "1", "2", "2", "1", "2", "1", "xx", "0", "0", "0", "0", "0"},
+			name: "invalid MAC octet (non-numeric)",
+			parts: []string{
+				"1", "3", "6", "1", "2", "1", "17", "7", "1", "2",
+				"2", "1", "2", "1", "xx", "0", "0", "0", "0", "0",
+			},
 			wantVLAN: 0,
 			wantMAC:  "",
 			wantOK:   false,
 		},
 		{
-			name:     "MAC octet out of range (>255)",
-			parts:    []string{"1", "3", "6", "1", "2", "1", "17", "7", "1", "2", "2", "1", "2", "1", "256", "0", "0", "0", "0", "0"},
+			name: "MAC octet out of range (>255)",
+			parts: []string{
+				"1", "3", "6", "1", "2", "1", "17", "7", "1", "2",
+				"2", "1", "2", "1", "256", "0", "0", "0", "0", "0",
+			},
 			wantVLAN: 0,
 			wantMAC:  "",
 			wantOK:   false,
 		},
 		{
-			name:     "negative MAC octet",
-			parts:    []string{"1", "3", "6", "1", "2", "1", "17", "7", "1", "2", "2", "1", "2", "1", "-1", "0", "0", "0", "0", "0"},
+			name: "negative MAC octet",
+			parts: []string{
+				"1", "3", "6", "1", "2", "1", "17", "7", "1", "2",
+				"2", "1", "2", "1", "-1", "0", "0", "0", "0", "0",
+			},
 			wantVLAN: 0,
 			wantMAC:  "",
 			wantOK:   false,

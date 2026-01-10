@@ -483,6 +483,8 @@ func TestIsAllowedWSOriginWithConfigured(t *testing.T) {
 
 // TestHubBroadcastCardUpdateForInterface tests interface-scoped card updates.
 func TestHubBroadcastCardUpdateForInterface(t *testing.T) {
+	t.Parallel()
+
 	hub := api.NewHub()
 
 	// Should not panic with no clients
@@ -491,6 +493,8 @@ func TestHubBroadcastCardUpdateForInterface(t *testing.T) {
 
 // TestHubBroadcastLogEntry tests log entry broadcasting.
 func TestHubBroadcastLogEntry(t *testing.T) {
+	t.Parallel()
+
 	hub := api.NewHub()
 
 	// Should not panic with no clients

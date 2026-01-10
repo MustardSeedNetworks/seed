@@ -665,8 +665,8 @@ func TestSchedulerService_List_TableDriven(t *testing.T) {
 			totalCreated += tt.createCount
 
 			// List and verify count
-			result, err := ss.List(ctx)
-			require.NoError(t, err)
+			result, listErr := ss.List(ctx)
+			require.NoError(t, listErr)
 			assert.Len(t, result, tt.expectedCount)
 		})
 	}

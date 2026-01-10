@@ -420,8 +420,6 @@ func (s *GeneratorService) addPDFSectionHeader(pdf *fpdf.Fpdf, title string) {
 }
 
 // generateHTML creates an HTML report.
-//
-//nolint:unparam // error return kept for interface consistency with other generators
 func (s *GeneratorService) generateHTML(report *Report, data *AggregatedData) ([]byte, error) {
 	html := fmt.Sprintf(
 		`<!DOCTYPE html>

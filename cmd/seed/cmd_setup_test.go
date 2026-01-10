@@ -42,8 +42,8 @@ func TestSetupCredentialsMarshalJSON(t *testing.T) {
 	}
 
 	var decoded setupCredentials
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("Failed to unmarshal setupCredentials: %v", err)
+	if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal setupCredentials: %v", unmarshalErr)
 	}
 
 	if decoded.Username != creds.Username {
@@ -186,8 +186,8 @@ func TestOutputCredentialsJSON(t *testing.T) {
 	}
 
 	var decoded setupCredentials
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("JSON unmarshaling failed: %v", err)
+	if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+		t.Fatalf("JSON unmarshaling failed: %v", unmarshalErr)
 	}
 
 	if decoded.Username != creds.Username {
@@ -232,8 +232,8 @@ func TestSetupCredentialsWithSpecialCharacters(t *testing.T) {
 	}
 
 	var decoded setupCredentials
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("Failed to unmarshal: %v", err)
+	if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
+		t.Fatalf("Failed to unmarshal: %v", unmarshalErr)
 	}
 
 	if decoded.Username != creds.Username {

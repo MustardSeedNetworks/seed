@@ -17,7 +17,7 @@ func TestRunTestGuardBehavior(t *testing.T) {
 		tester.SetRunning(true)
 
 		// Multiple calls should all fail
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			_, err := tester.RunTest(context.Background())
 			if err == nil {
 				t.Fatalf("iteration %d: expected error", i)
@@ -128,32 +128,37 @@ func TestResultFieldBehavior(t *testing.T) {
 			if got == nil {
 				t.Fatal("expected non-nil result")
 			}
-
-			if got.Download != tt.result.Download {
-				t.Errorf("Download: got %v, want %v", got.Download, tt.result.Download)
-			}
-			if got.Upload != tt.result.Upload {
-				t.Errorf("Upload: got %v, want %v", got.Upload, tt.result.Upload)
-			}
-			if got.Latency != tt.result.Latency {
-				t.Errorf("Latency: got %v, want %v", got.Latency, tt.result.Latency)
-			}
-			if got.Server != tt.result.Server {
-				t.Errorf("Server: got %q, want %q", got.Server, tt.result.Server)
-			}
-			if got.Location != tt.result.Location {
-				t.Errorf("Location: got %q, want %q", got.Location, tt.result.Location)
-			}
-			if got.Host != tt.result.Host {
-				t.Errorf("Host: got %q, want %q", got.Host, tt.result.Host)
-			}
-			if got.Distance != tt.result.Distance {
-				t.Errorf("Distance: got %v, want %v", got.Distance, tt.result.Distance)
-			}
-			if got.TestDuration != tt.result.TestDuration {
-				t.Errorf("TestDuration: got %v, want %v", got.TestDuration, tt.result.TestDuration)
-			}
+			assertSpeedtestResultFields(t, got, tt.result)
 		})
+	}
+}
+
+func assertSpeedtestResultFields(t *testing.T, got *speedtest.Result, want speedtest.Result) {
+	t.Helper()
+
+	if got.Download != want.Download {
+		t.Errorf("Download: got %v, want %v", got.Download, want.Download)
+	}
+	if got.Upload != want.Upload {
+		t.Errorf("Upload: got %v, want %v", got.Upload, want.Upload)
+	}
+	if got.Latency != want.Latency {
+		t.Errorf("Latency: got %v, want %v", got.Latency, want.Latency)
+	}
+	if got.Server != want.Server {
+		t.Errorf("Server: got %q, want %q", got.Server, want.Server)
+	}
+	if got.Location != want.Location {
+		t.Errorf("Location: got %q, want %q", got.Location, want.Location)
+	}
+	if got.Host != want.Host {
+		t.Errorf("Host: got %q, want %q", got.Host, want.Host)
+	}
+	if got.Distance != want.Distance {
+		t.Errorf("Distance: got %v, want %v", got.Distance, want.Distance)
+	}
+	if got.TestDuration != want.TestDuration {
+		t.Errorf("TestDuration: got %v, want %v", got.TestDuration, want.TestDuration)
 	}
 }
 
@@ -274,44 +279,43 @@ func TestConstantsBehavior(t *testing.T) {
 // TestConcurrencyBehavior documents thread-safety behavior.
 func TestConcurrencyBehavior(t *testing.T) {
 	t.Run("concurrent status reads are safe", func(t *testing.T) {
+		t.Parallel()
+
 		tester := speedtest.NewTester()
 		tester.SetStatus("testing", 50)
 
 		var wg sync.WaitGroup
 		for range 100 {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				for range 100 {
 					status := tester.GetStatus()
 					_ = status.Phase
 					_ = status.Progress
 				}
-			}()
+			})
 		}
 		wg.Wait()
 	})
 
 	t.Run("concurrent writes and reads are safe", func(t *testing.T) {
+		t.Parallel()
+
 		tester := speedtest.NewTester()
 
 		var wg sync.WaitGroup
 		for range 50 {
-			wg.Add(2)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				for range 100 {
 					tester.SetStatus("testing", 50)
 					tester.SetCurrentSpeeds(100, 50)
 				}
-			}()
-			go func() {
-				defer wg.Done()
+			})
+			wg.Go(func() {
 				for range 100 {
 					_ = tester.GetStatus()
 					_ = tester.GetLastResult()
 				}
-			}()
+			})
 		}
 		wg.Wait()
 	})
@@ -419,16 +423,14 @@ func TestRunTestConcurrentAttemptsBehavior(t *testing.T) {
 		var wg sync.WaitGroup
 
 		for range 100 {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				_, err := tester.RunTest(context.Background())
 				if err == nil {
 					atomic.AddInt32(&successCount, 1)
 				} else {
 					atomic.AddInt32(&errorCount, 1)
 				}
-			}()
+			})
 		}
 
 		wg.Wait()

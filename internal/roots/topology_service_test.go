@@ -123,7 +123,7 @@ func TestTopologyService_StopMultiple(t *testing.T) {
 	_ = svc.Start(ctx)
 
 	// Multiple stops should not panic
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		svc.Stop()
 	}
 }
@@ -174,7 +174,7 @@ func TestTopologyService_ConcurrentOperations(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(goroutines * 3)
 
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
 			_ = svc.Start(ctx)

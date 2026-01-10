@@ -1248,6 +1248,8 @@ func TestEdgeCases(t *testing.T) {
 // ----------------------------------------------------------------------------
 
 func TestConcurrencySafety(t *testing.T) {
+	t.Parallel()
+
 	values := make([]float64, 1000)
 	for i := range values {
 		values[i] = float64(i)
@@ -1281,7 +1283,7 @@ func BenchmarkCalculate(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = aggregator.Calculate(values)
 	}
 }
@@ -1293,7 +1295,7 @@ func BenchmarkPercentile(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = aggregator.Percentile(values, 95)
 	}
 }
@@ -1305,7 +1307,7 @@ func BenchmarkMovingAverage(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = aggregator.MovingAverage(values, 100)
 	}
 }

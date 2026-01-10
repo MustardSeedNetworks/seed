@@ -224,6 +224,9 @@ func TestEnhancedEnumerationConfig_Fields(t *testing.T) {
 	if cfg.RetryCount != 5 {
 		t.Errorf("Expected RetryCount=5, got %d", cfg.RetryCount)
 	}
+	if cfg.EnumerationConfig.Timeout != base.Timeout {
+		t.Errorf("Expected Timeout=%v, got %v", base.Timeout, cfg.EnumerationConfig.Timeout)
+	}
 }
 
 func TestGenerateHostIPs(t *testing.T) {

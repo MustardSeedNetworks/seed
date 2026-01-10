@@ -3,7 +3,6 @@
 package vlan_test
 
 import (
-	"strings"
 	"sync"
 	"testing"
 
@@ -112,12 +111,7 @@ func TestGetVlanInfoNumericVLANNames(t *testing.T) {
 
 	// All valid numeric VLAN interface names.
 	for i := range 4096 {
-		ifname := "vlan" + strings.TrimPrefix(
-			"000"+string(rune('0'+i/1000%10)+rune('0'+i/100%10)+rune('0'+i/10%10)+rune('0'+i%10)),
-			"000",
-		)
-		// Use strconv for proper formatting.
-		ifname = "vlan" + itoa(i)
+		ifname := "vlan" + itoa(i)
 
 		_, vlanID := vlan.ExportGetVlanInfo(ifname)
 		if vlanID != i {

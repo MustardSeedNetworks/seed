@@ -110,7 +110,7 @@ func TestModule_ServicesConcurrent(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(goroutines * 4) // 4 services
 
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
 			_ = m.Traceroute()
@@ -201,14 +201,14 @@ func TestModule_StartStop_Idempotent(t *testing.T) {
 	ctx := context.Background()
 
 	// Multiple starts should not error
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if err := m.Start(ctx); err != nil {
 			t.Errorf("Start() call %d error = %v", i, err)
 		}
 	}
 
 	// Multiple stops should not error
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if err := m.Stop(); err != nil {
 			t.Errorf("Stop() call %d error = %v", i, err)
 		}
@@ -252,7 +252,7 @@ func TestModule_ConcurrentStartStop(t *testing.T) {
 
 	ctx := context.Background()
 
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		go func() {
 			defer wg.Done()
 			_ = m.Start(ctx)

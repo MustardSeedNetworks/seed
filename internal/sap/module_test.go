@@ -382,7 +382,7 @@ func TestModuleMultipleStops(t *testing.T) {
 	module := sap.New(cfg, nil)
 
 	// Multiple stops should not panic
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		err := module.Stop()
 		if err != nil {
 			t.Errorf("Stop iteration %d returned error: %v", i, err)
@@ -1979,7 +1979,7 @@ func TestPerformanceServiceStopMultiple(t *testing.T) {
 	service := sap.NewPerformanceService(cfg)
 
 	// Multiple stops should not panic
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		service.Stop()
 	}
 }
@@ -2001,7 +2001,7 @@ func TestModuleConcurrentStartStopCalls(t *testing.T) {
 	ctx := context.Background()
 
 	// Mix of Start and Stop calls
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
 			_ = module.Start(ctx)

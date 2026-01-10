@@ -78,14 +78,16 @@ func TestModuleStartStop(t *testing.T) {
 }
 
 func TestModuleServiceAccessors(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.DefaultConfig()
 	module := canopy.New(cfg, nil)
 
 	// Test that service accessors are thread-safe
 	done := make(chan bool)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		go func() {
-			for j := 0; j < 100; j++ {
+			for range 100 {
 				_ = module.WiFi()
 				_ = module.Survey()
 				_ = module.Channel()
@@ -95,7 +97,7 @@ func TestModuleServiceAccessors(t *testing.T) {
 		}()
 	}
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		<-done
 	}
 }
@@ -263,6 +265,35 @@ func TestNewSurveyService(t *testing.T) {
 	}
 }
 
+type surveyCreateTestCase struct {
+	name        string
+	surveyName  string
+	description string
+	wantErr     bool
+}
+
+func assertSurveyCreateResult(t *testing.T, tc surveyCreateTestCase, result *canopy.Survey, err error) {
+	t.Helper()
+
+	if (err != nil) != tc.wantErr {
+		t.Errorf("Create() error = %v, wantErr %v", err, tc.wantErr)
+		return
+	}
+	if tc.wantErr {
+		return
+	}
+	if result == nil {
+		t.Error("expected non-nil result")
+		return
+	}
+	if result.ID == "" {
+		t.Error("expected non-empty ID")
+	}
+	if result.Name != tc.surveyName {
+		t.Errorf("expected Name %q, got %q", tc.surveyName, result.Name)
+	}
+}
+
 func TestSurveyServiceCreate(t *testing.T) {
 	// Create a temp directory for survey storage
 	tempDir, err := os.MkdirTemp("", "canopy-test-*")
@@ -277,19 +308,9 @@ func TestSurveyServiceCreate(t *testing.T) {
 	iperfManager := iperf.NewManager()
 
 	// Create service with temp storage
-	surveyManager := survey.NewManager(tempDir, wifiScanner, wifiManager, iperfManager)
-	service := &canopy.SurveyService{}
-	// We need to use the exported interface here
+	service := canopy.NewSurveyService(cfg, nil, wifiScanner, wifiManager, iperfManager)
 
-	// Use the actual service creation
-	service = canopy.NewSurveyService(cfg, nil, wifiScanner, wifiManager, iperfManager)
-
-	tests := []struct {
-		name        string
-		surveyName  string
-		description string
-		wantErr     bool
-	}{
+	tests := []surveyCreateTestCase{
 		{
 			name:        "create valid survey",
 			surveyName:  "Test Survey",
@@ -304,33 +325,12 @@ func TestSurveyServiceCreate(t *testing.T) {
 		},
 	}
 
-	// Store the original manager
-	originalManager := surveyManager
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			// Use a properly configured manager
-			_ = originalManager // silence unused var
-
-			result, err := service.Create(ctx, tt.surveyName, tt.description)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Create() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			if !tt.wantErr && result == nil {
-				t.Error("expected non-nil result")
-			}
-			if !tt.wantErr && result != nil {
-				if result.ID == "" {
-					t.Error("expected non-empty ID")
-				}
-				if result.Name != tt.surveyName {
-					t.Errorf("expected Name %q, got %q", tt.surveyName, result.Name)
-				}
-			}
+			result, createErr := service.Create(ctx, tt.surveyName, tt.description)
+			assertSurveyCreateResult(t, tt, result, createErr)
 		})
 	}
 }
@@ -375,9 +375,9 @@ func TestSurveyServiceGet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := service.Get(ctx, tt.id)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
+			result, getErr := service.Get(ctx, tt.id)
+			if (getErr != nil) != tt.wantErr {
+				t.Errorf("Get() error = %v, wantErr %v", getErr, tt.wantErr)
 				return
 			}
 
@@ -404,10 +404,10 @@ func TestSurveyServiceList(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a few surveys
-	for i := 0; i < 3; i++ {
-		_, err := service.Create(ctx, "Survey "+string(rune('A'+i)), "Description")
-		if err != nil {
-			t.Fatalf("failed to create survey: %v", err)
+	for i := range 3 {
+		_, createErr := service.Create(ctx, "Survey "+string(rune('A'+i)), "Description")
+		if createErr != nil {
+			t.Fatalf("failed to create survey: %v", createErr)
 		}
 	}
 
@@ -445,8 +445,8 @@ func TestSurveyServiceAddPoint(t *testing.T) {
 
 	// Start the survey (required before adding points)
 	manager := service.SurveyManager()
-	if err := manager.StartSurvey(created.ID); err != nil {
-		t.Fatalf("failed to start survey: %v", err)
+	if startErr := manager.StartSurvey(created.ID); startErr != nil {
+		t.Fatalf("failed to start survey: %v", startErr)
 	}
 
 	point := &canopy.SurveyPoint{
@@ -472,6 +472,8 @@ func TestSurveyServiceAddPoint(t *testing.T) {
 }
 
 func TestSurveyServiceStop(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.DefaultConfig()
 	wifiScanner := wifi.NewScanner("en0")
 	wifiManager := wifi.NewManager("en0")
@@ -1121,9 +1123,9 @@ func TestModuleConcurrentAccess(t *testing.T) {
 	defer module.Stop()
 
 	done := make(chan bool)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		go func() {
-			for j := 0; j < 50; j++ {
+			for range 50 {
 				_ = module.WiFi()
 				_ = module.Survey()
 				_ = module.Channel()
@@ -1133,7 +1135,7 @@ func TestModuleConcurrentAccess(t *testing.T) {
 		}()
 	}
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		<-done
 	}
 }
@@ -1282,8 +1284,8 @@ func TestSurveyServiceStartAndStop(t *testing.T) {
 
 	// Start the survey via the underlying manager
 	manager := service.SurveyManager()
-	if err := manager.StartSurvey(created.ID); err != nil {
-		t.Fatalf("failed to start survey: %v", err)
+	if startErr := manager.StartSurvey(created.ID); startErr != nil {
+		t.Fatalf("failed to start survey: %v", startErr)
 	}
 
 	// Verify the survey is in progress
@@ -1334,8 +1336,8 @@ func TestSurveyServiceDeleteAndExport(t *testing.T) {
 
 	// The underlying manager has delete functionality
 	manager := service.SurveyManager()
-	if err := manager.DeleteSurvey(created.ID); err != nil {
-		t.Fatalf("failed to delete survey: %v", err)
+	if deleteErr := manager.DeleteSurvey(created.ID); deleteErr != nil {
+		t.Fatalf("failed to delete survey: %v", deleteErr)
 	}
 
 	// Verify it no longer exists
@@ -1421,8 +1423,20 @@ func TestScanResultStructure(t *testing.T) {
 	if len(result.Networks) != 1 {
 		t.Errorf("expected 1 network, got %d", len(result.Networks))
 	}
+	if result.ScanTime != 100*time.Millisecond {
+		t.Errorf("expected ScanTime 100ms, got %v", result.ScanTime)
+	}
 	if result.ScanTimeMs != 100.0 {
 		t.Errorf("expected ScanTimeMs 100.0, got %.1f", result.ScanTimeMs)
+	}
+	if result.Networks[0].BSSID != "00:11:22:33:44:55" {
+		t.Errorf("expected BSSID 00:11:22:33:44:55, got %q", result.Networks[0].BSSID)
+	}
+	if result.Networks[0].Frequency != 2437 {
+		t.Errorf("expected Frequency 2437, got %d", result.Networks[0].Frequency)
+	}
+	if result.Networks[0].SignalStrength != -65 {
+		t.Errorf("expected SignalStrength -65, got %d", result.Networks[0].SignalStrength)
 	}
 	if !result.ScannedAt.Equal(now) {
 		t.Error("expected ScannedAt to match")
@@ -1449,14 +1463,29 @@ func TestConnectionStatusStructure(t *testing.T) {
 	if status.SSID != "MyNetwork" {
 		t.Errorf("expected SSID 'MyNetwork', got %q", status.SSID)
 	}
+	if status.BSSID != "00:11:22:33:44:55" {
+		t.Errorf("expected BSSID 00:11:22:33:44:55, got %q", status.BSSID)
+	}
 	if status.Channel != 11 {
 		t.Errorf("expected Channel 11, got %d", status.Channel)
+	}
+	if status.Frequency != 2462 {
+		t.Errorf("expected Frequency 2462, got %d", status.Frequency)
+	}
+	if status.Signal != -55 {
+		t.Errorf("expected Signal -55, got %d", status.Signal)
 	}
 	if status.TxRate != 144 {
 		t.Errorf("expected TxRate 144, got %.1f", status.TxRate)
 	}
+	if status.Security != "WPA2" {
+		t.Errorf("expected Security 'WPA2', got %q", status.Security)
+	}
 	if status.IPAddress != "192.168.1.100" {
 		t.Errorf("expected IPAddress '192.168.1.100', got %q", status.IPAddress)
+	}
+	if status.Gateway != "192.168.1.1" {
+		t.Errorf("expected Gateway '192.168.1.1', got %q", status.Gateway)
 	}
 }
 
@@ -1502,6 +1531,9 @@ func TestFloorPlanStructure(t *testing.T) {
 	if floorPlan.Name != "First Floor" {
 		t.Errorf("expected Name 'First Floor', got %q", floorPlan.Name)
 	}
+	if floorPlan.ImageURL != "/images/floor1.png" {
+		t.Errorf("expected ImageURL '/images/floor1.png', got %q", floorPlan.ImageURL)
+	}
 	if floorPlan.Width != 800.0 {
 		t.Errorf("expected Width 800.0, got %.1f", floorPlan.Width)
 	}
@@ -1530,6 +1562,12 @@ func TestCoverageAnalysisStructure(t *testing.T) {
 	if analysis.CoveragePercent != 85.5 {
 		t.Errorf("expected CoveragePercent 85.5, got %.1f", analysis.CoveragePercent)
 	}
+	if analysis.TotalArea != 1000.0 {
+		t.Errorf("expected TotalArea 1000.0, got %.1f", analysis.TotalArea)
+	}
+	if analysis.CoveredArea != 855.0 {
+		t.Errorf("expected CoveredArea 855.0, got %.1f", analysis.CoveredArea)
+	}
 	if len(analysis.DeadZones) != 1 {
 		t.Errorf("expected 1 dead zone, got %d", len(analysis.DeadZones))
 	}
@@ -1548,8 +1586,8 @@ func TestModuleIntegration(t *testing.T) {
 
 	// Ensure the survey storage directory exists
 	surveyPath := filepath.Join(tempDir, "surveys")
-	if err := os.MkdirAll(surveyPath, 0o755); err != nil {
-		t.Fatalf("failed to create survey path: %v", err)
+	if mkdirErr := os.MkdirAll(surveyPath, 0o755); mkdirErr != nil {
+		t.Fatalf("failed to create survey path: %v", mkdirErr)
 	}
 
 	cfg := config.DefaultConfig()
@@ -1557,41 +1595,41 @@ func TestModuleIntegration(t *testing.T) {
 	ctx := context.Background()
 
 	// Start module
-	if err := module.Start(ctx); err != nil {
-		t.Fatalf("Start() returned error: %v", err)
+	if startErr := module.Start(ctx); startErr != nil {
+		t.Fatalf("Start() returned error: %v", startErr)
 	}
 
 	// Test WiFi service init
 	wifi := module.WiFi()
-	if err := wifi.Init(); err != nil {
-		t.Logf("WiFi.Init() returned error (expected on systems without WiFi): %v", err)
+	if initErr := wifi.Init(); initErr != nil {
+		t.Logf("WiFi.Init() returned error (expected on systems without WiFi): %v", initErr)
 	}
 
 	// Test creating a survey
 	survey := module.Survey()
-	createdSurvey, err := survey.Create(ctx, "Integration Test Survey", "Testing all services")
-	if err != nil {
-		t.Logf("Survey.Create() returned error: %v", err)
+	createdSurvey, createErr := survey.Create(ctx, "Integration Test Survey", "Testing all services")
+	if createErr != nil {
+		t.Logf("Survey.Create() returned error: %v", createErr)
 	} else if createdSurvey.ID == "" {
 		t.Error("expected non-empty survey ID")
 	}
 
 	// Test channel analysis
 	channel := module.Channel()
-	_, err = channel.Analyze(ctx, canopy.Band2_4GHz)
-	if err != nil {
-		t.Logf("Channel.Analyze() returned error (expected on systems without WiFi): %v", err)
+	_, analyzeErr := channel.Analyze(ctx, canopy.Band2_4GHz)
+	if analyzeErr != nil {
+		t.Logf("Channel.Analyze() returned error (expected on systems without WiFi): %v", analyzeErr)
 	}
 
 	// Test AI service (returns not implemented)
 	ai := module.AI()
-	_, err = ai.AnalyzeCoverage(ctx, &canopy.Survey{})
-	if !errors.Is(err, canopy.ErrNotImplemented) {
-		t.Errorf("expected ErrNotImplemented from AI.AnalyzeCoverage, got: %v", err)
+	_, analyzeCoverageErr := ai.AnalyzeCoverage(ctx, &canopy.Survey{})
+	if !errors.Is(analyzeCoverageErr, canopy.ErrNotImplemented) {
+		t.Errorf("expected ErrNotImplemented from AI.AnalyzeCoverage, got: %v", analyzeCoverageErr)
 	}
 
 	// Stop module
-	if err := module.Stop(); err != nil {
-		t.Errorf("Stop() returned error: %v", err)
+	if stopErr := module.Stop(); stopErr != nil {
+		t.Errorf("Stop() returned error: %v", stopErr)
 	}
 }

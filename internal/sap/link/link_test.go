@@ -411,6 +411,8 @@ func TestMonitorGetUptime(t *testing.T) {
 
 // TestMonitorConcurrentAccess verifies thread-safety.
 func TestMonitorConcurrentAccess(t *testing.T) {
+	t.Parallel()
+
 	m := link.NewMonitor("eth0")
 	var wg sync.WaitGroup
 	done := make(chan bool)
@@ -421,9 +423,7 @@ func TestMonitorConcurrentAccess(t *testing.T) {
 
 	// Concurrent readers
 	for range 5 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for {
 				select {
 				case <-done:
@@ -436,14 +436,12 @@ func TestMonitorConcurrentAccess(t *testing.T) {
 					_ = m.GetFlapCount(time.Hour)
 				}
 			}
-		}()
+		})
 	}
 
 	// Concurrent writers
 	for range 3 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for i := range 20 {
 				select {
 				case <-done:
@@ -453,7 +451,7 @@ func TestMonitorConcurrentAccess(t *testing.T) {
 					m.OnStateChange(func(_ link.Event) {})
 				}
 			}
-		}()
+		})
 	}
 
 	// Let it run
@@ -632,6 +630,8 @@ func TestGetSpeedDuplex(t *testing.T) {
 
 	for _, iface := range interfaces {
 		t.Run(iface, func(t *testing.T) {
+			t.Parallel()
+
 			// Just verify it doesn't panic
 			speed, duplex := link.ExportGetSpeedDuplex(iface)
 			_ = speed
@@ -686,6 +686,8 @@ func TestIsPhysicalInterfacePlatform(t *testing.T) {
 
 	for _, iface := range interfaces {
 		t.Run(iface, func(t *testing.T) {
+			t.Parallel()
+
 			// Just verify it doesn't panic
 			result := link.ExportIsPhysicalInterfacePlatform(iface)
 			_ = result
@@ -705,6 +707,8 @@ func TestParseSpeed(t *testing.T) {
 
 	for _, s := range tests {
 		t.Run(s, func(t *testing.T) {
+			t.Parallel()
+
 			speed := link.ParseSpeed(s)
 			_ = speed // Result depends on platform
 		})
@@ -845,14 +849,7 @@ func TestTimeConstants(t *testing.T) {
 // TestMonitorCallbackInvocation verifies callbacks are invoked on state change.
 func TestMonitorCallbackInvocation(t *testing.T) {
 	m := link.NewMonitor("eth0")
-
-	var callbackInvoked atomic.Int32
-	var receivedEvent link.Event
-
-	m.OnStateChange(func(e link.Event) {
-		callbackInvoked.Add(1)
-		receivedEvent = e
-	})
+	m.OnStateChange(func(_ link.Event) {})
 
 	// Simulate state change by adding an event and setting state
 	m.SetState(link.StateUp)
@@ -872,8 +869,6 @@ func TestMonitorCallbackInvocation(t *testing.T) {
 
 	// For actual callback invocation, we'd need to mock the interface state
 	// which is platform-specific
-	_ = callbackInvoked
-	_ = receivedEvent
 }
 
 // TestMonitorMultipleCallbacks verifies multiple callbacks can be registered.
@@ -936,6 +931,9 @@ func TestWaitForState(t *testing.T) {
 	result = m.WaitForState(link.StateDown, 50*time.Millisecond)
 	elapsed := time.Since(start)
 
+	if result {
+		t.Log("WaitForState returned true for a non-existent interface")
+	}
 	// Should have waited approximately the timeout duration
 	if elapsed < 40*time.Millisecond {
 		t.Errorf("WaitForState should have waited at least 40ms, waited %v", elapsed)
@@ -997,7 +995,7 @@ func BenchmarkGetState(b *testing.B) {
 	m.SetState(link.StateUp)
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		_ = m.GetState()
 	}
 }
@@ -1008,7 +1006,7 @@ func BenchmarkIsUp(b *testing.B) {
 	m.SetState(link.StateUp)
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		_ = m.IsUp()
 	}
 }
@@ -1023,7 +1021,7 @@ func BenchmarkSpeedString(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		for _, s := range speeds {
 			_ = s.String()
 		}
@@ -1043,7 +1041,7 @@ func BenchmarkGetHistory(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		_ = m.GetHistory()
 	}
 }

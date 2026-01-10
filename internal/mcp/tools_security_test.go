@@ -212,17 +212,18 @@ func TestSNMPQueryFlow(t *testing.T) {
 			if tt.expectError {
 				if errMsg == "" {
 					t.Error("expected error but got none")
+					return
 				}
 				if tt.errorContains != "" && !containsString(errMsg, tt.errorContains) {
 					t.Errorf("expected error containing %q, got %q", tt.errorContains, errMsg)
 				}
-			} else {
-				if errMsg != "" {
-					t.Errorf("unexpected error: %s", errMsg)
-				}
-				if community == "" {
-					t.Error("expected community to be set")
-				}
+				return
+			}
+			if errMsg != "" {
+				t.Errorf("unexpected error: %s", errMsg)
+			}
+			if community == "" {
+				t.Error("expected community to be set")
 			}
 		})
 	}

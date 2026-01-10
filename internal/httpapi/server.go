@@ -731,7 +731,15 @@ func corsMiddleware(next http.Handler) http.Handler {
 			} else {
 				logger := logging.FromContext(r.Context())
 				localizer := i18n.FromRequest(r)
-				sendErrorResponseWithDetails(w, logger, http.StatusForbidden, ErrCodeForbidden, localizer.T("errors.security.nullOriginForbidden"), "") // fixes #694
+				message := localizer.T("errors.security.nullOriginForbidden")
+				sendErrorResponseWithDetails(
+					w,
+					logger,
+					http.StatusForbidden,
+					ErrCodeForbidden,
+					message,
+					"",
+				) // fixes #694
 			}
 			return
 		}

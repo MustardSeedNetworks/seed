@@ -1,13 +1,10 @@
 package main
 
 import (
-	"bytes"
-	"io"
-	"os"
+	"github.com/spf13/cobra"
 
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/paths"
-	"github.com/spf13/cobra"
 )
 
 // ExportedCLIState exposes cliState for testing.
@@ -102,38 +99,6 @@ func FindCommand(state *cliState, name string) *cobra.Command {
 // hasPrefix is a helper to check if s starts with prefix.
 func hasPrefix(s, prefix string) bool {
 	return len(s) >= len(prefix) && s[:len(prefix)] == prefix
-}
-
-// CaptureStdout captures stdout output during function execution.
-func CaptureStdout(f func()) string {
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	f()
-
-	w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
-	return buf.String()
-}
-
-// CaptureStderr captures stderr output during function execution.
-func CaptureStderr(f func()) string {
-	old := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
-
-	f()
-
-	w.Close()
-	os.Stderr = old
-
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
-	return buf.String()
 }
 
 // GetLogBroadcasterBufferSize returns the log broadcaster buffer size constant.

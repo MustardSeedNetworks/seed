@@ -229,8 +229,7 @@ func TestServiceConfigTemplate(t *testing.T) {
 		t.Fatalf("Failed to parse template: %v", err)
 	}
 
-	var buf []byte
-	buf = make([]byte, 0, 4096)
+	buf := make([]byte, 0, 4096)
 	writer := &byteSliceWriter{buf: &buf}
 
 	err = tmpl.Execute(writer, cfg)
@@ -269,8 +268,7 @@ func TestUserServiceConfigTemplate(t *testing.T) {
 		t.Fatalf("Failed to parse user template: %v", err)
 	}
 
-	var buf []byte
-	buf = make([]byte, 0, 4096)
+	buf := make([]byte, 0, 4096)
 	writer := &byteSliceWriter{buf: &buf}
 
 	err = tmpl.Execute(writer, cfg)
@@ -353,7 +351,7 @@ type byteSliceWriter struct {
 	buf *[]byte
 }
 
-func (w *byteSliceWriter) Write(p []byte) (n int, err error) {
+func (w *byteSliceWriter) Write(p []byte) (int, error) {
 	*w.buf = append(*w.buf, p...)
 	return len(p), nil
 }

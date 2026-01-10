@@ -460,6 +460,9 @@ func TestLinkResponseFields(t *testing.T) {
 	}
 
 	// Verify all fields are set correctly
+	if resp.Interface != "eth0" {
+		t.Errorf("Expected Interface eth0, got %q", resp.Interface)
+	}
 	if !resp.LinkUp {
 		t.Error("Expected LinkUp to be true")
 	}
@@ -472,8 +475,26 @@ func TestLinkResponseFields(t *testing.T) {
 	if resp.Speed != "1000baseT/Full" {
 		t.Errorf("Expected Speed '1000baseT/Full', got %q", resp.Speed)
 	}
+	if resp.Duplex != "full" {
+		t.Errorf("Expected Duplex 'full', got %q", resp.Duplex)
+	}
+	if len(resp.Advertised) != 5 {
+		t.Errorf("Expected 5 advertised modes, got %d", len(resp.Advertised))
+	}
 	if resp.MTU != 1500 {
 		t.Errorf("Expected MTU 1500, got %d", resp.MTU)
+	}
+	if !resp.AutoNeg {
+		t.Error("Expected AutoNeg to be true")
+	}
+	if resp.FlapCount24h != 0 {
+		t.Errorf("Expected FlapCount24h 0, got %d", resp.FlapCount24h)
+	}
+	if resp.UptimeMs != 3600000 {
+		t.Errorf("Expected UptimeMs 3600000, got %d", resp.UptimeMs)
+	}
+	if len(resp.History) != 1 {
+		t.Errorf("Expected 1 history entry, got %d", len(resp.History))
 	}
 	if resp.PoE == nil {
 		t.Error("Expected PoE to be set")
@@ -529,6 +550,9 @@ func TestIPConfigResponseFields(t *testing.T) {
 	}
 	if resp.Mode != "dhcp" {
 		t.Errorf("Expected Mode 'dhcp', got %q", resp.Mode)
+	}
+	if resp.MAC != "00:11:22:33:44:55" {
+		t.Errorf("Expected MAC 00:11:22:33:44:55, got %q", resp.MAC)
 	}
 	if resp.IPv4 == nil {
 		t.Error("Expected IPv4 to be set")

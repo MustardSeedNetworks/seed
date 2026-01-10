@@ -219,7 +219,7 @@ func TestPostureConcurrentAssess(t *testing.T) {
 	results := make(chan *shell.PostureScore, numGoroutines)
 	errors := make(chan error, numGoroutines)
 
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		go func() {
 			score, err := service.Assess(ctx)
 			if err != nil {
@@ -231,7 +231,7 @@ func TestPostureConcurrentAssess(t *testing.T) {
 	}
 
 	// Collect results
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		select {
 		case score := <-results:
 			if score == nil {

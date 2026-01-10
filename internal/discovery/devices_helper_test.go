@@ -31,6 +31,7 @@ func TestMethod_Constants(t *testing.T) {
 }
 
 func TestDiscoveredDevice_Fields(t *testing.T) {
+	now := time.Now()
 	device := &discovery.DiscoveredDevice{
 		IP:            "192.168.1.1",
 		IPv6Address:   "fe80::1",
@@ -47,7 +48,7 @@ func TestDiscoveredDevice_Fields(t *testing.T) {
 			discovery.MethodARP,
 			discovery.MethodPING,
 		},
-		LastSeen:       time.Now(),
+		LastSeen:       now,
 		IsLocal:        true,
 		IsRouter:       false,
 		HasDuplicateIP: false,
@@ -88,6 +89,9 @@ func TestDiscoveredDevice_Fields(t *testing.T) {
 	}
 	if len(device.DiscoveryMethod) != 2 {
 		t.Errorf("Expected 2 DiscoveryMethods, got %d", len(device.DiscoveryMethod))
+	}
+	if !device.LastSeen.Equal(now) {
+		t.Error("LastSeen should match now")
 	}
 	if !device.IsLocal {
 		t.Error("Expected IsLocal=true")
@@ -371,6 +375,12 @@ func TestDiscoveredDevice_DuplicateIP(t *testing.T) {
 	if !device.HasDuplicateIP {
 		t.Error("Expected HasDuplicateIP=true")
 	}
+	if device.IP != "192.168.1.1" {
+		t.Errorf("Expected IP='192.168.1.1', got %s", device.IP)
+	}
+	if device.MAC != "00:11:22:33:44:55" {
+		t.Errorf("Expected MAC='00:11:22:33:44:55', got %s", device.MAC)
+	}
 	if len(device.DuplicateMACs) != 2 {
 		t.Errorf("Expected 2 DuplicateMACs, got %d", len(device.DuplicateMACs))
 	}
@@ -389,6 +399,8 @@ func TestDeviceDiscovery_GetInterfaceName(t *testing.T) {
 }
 
 func TestDeviceDiscovery_SetNameResolution(t *testing.T) {
+	t.Parallel()
+
 	dd := discovery.NewDeviceDiscovery("lo")
 
 	// Enable name resolution

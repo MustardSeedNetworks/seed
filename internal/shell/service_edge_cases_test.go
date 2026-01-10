@@ -9,6 +9,10 @@ import (
 	"github.com/krisarmstrong/seed/internal/testutil"
 )
 
+type testContextKey string
+
+const contextKey testContextKey = "key"
+
 // ========== GetDevice Success Path Tests ==========
 
 // TestDiscoveryServiceGetDeviceValidation tests GetDevice input validation.
@@ -65,7 +69,7 @@ func TestPostureAssessWithNilVulnerabilityInternalService(t *testing.T) {
 	ctx := context.Background()
 
 	// Multiple assessments should all succeed
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		score, err := service.Assess(ctx)
 		if err != nil {
 			t.Errorf("iteration %d: Assess() error = %v", i, err)
@@ -141,7 +145,7 @@ func TestVulnerabilityServiceScanVariousInputs(t *testing.T) {
 // makeLargeTargetList creates a list of test IPs.
 func makeLargeTargetList(count int) []string {
 	targets := make([]string, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		targets[i] = "192.168.1." + string(rune('0'+i%10))
 	}
 	return targets
@@ -274,7 +278,7 @@ func TestDiscoveryServiceStartWithContext(t *testing.T) {
 		{
 			name: "with_value_context",
 			ctxFunc: func() (context.Context, context.CancelFunc) {
-				ctx := context.WithValue(context.Background(), "key", "value") //nolint:staticcheck
+				ctx := context.WithValue(context.Background(), contextKey, "value")
 				return ctx, func() {}
 			},
 		},
@@ -346,7 +350,7 @@ func TestRogueServiceStartWithContext(t *testing.T) {
 		{
 			name: "with_value_context",
 			ctxFunc: func() (context.Context, context.CancelFunc) {
-				ctx := context.WithValue(context.Background(), "key", "value") //nolint:staticcheck
+				ctx := context.WithValue(context.Background(), contextKey, "value")
 				return ctx, func() {}
 			},
 		},

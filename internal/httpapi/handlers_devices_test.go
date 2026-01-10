@@ -529,6 +529,24 @@ func TestNetworkDiscoverySettingsResponseFields(t *testing.T) {
 	if resp.ARPScanWorkers != 10 {
 		t.Errorf("Expected ARPScanWorkers 10, got %d", resp.ARPScanWorkers)
 	}
+	if resp.PingTimeoutMs != 500 {
+		t.Errorf("Expected PingTimeoutMs 500, got %d", resp.PingTimeoutMs)
+	}
+	if resp.ScanTimeoutMs != 30000 {
+		t.Errorf("Expected ScanTimeoutMs 30000, got %d", resp.ScanTimeoutMs)
+	}
+	if !resp.AutoScan {
+		t.Error("Expected AutoScan to be true")
+	}
+	if resp.ScanIntervalMs != 60000 {
+		t.Errorf("Expected ScanIntervalMs 60000, got %d", resp.ScanIntervalMs)
+	}
+	if resp.OUIFilePath != "/var/lib/seed/oui.txt" {
+		t.Errorf("Expected OUIFilePath /var/lib/seed/oui.txt, got %q", resp.OUIFilePath)
+	}
+	if !resp.IPv6Enabled {
+		t.Error("Expected IPv6Enabled to be true")
+	}
 	if !resp.Options.PassiveProtocols.LLDP {
 		t.Error("Expected LLDP to be enabled")
 	}

@@ -589,7 +589,7 @@ func TestCacheDirPermissions(t *testing.T) {
 	grandparentDir := filepath.Dir(parentDir)
 
 	// At least the user cache directory should exist
-	if _, err := os.Stat(grandparentDir); os.IsNotExist(err) {
+	if _, statErr := os.Stat(grandparentDir); os.IsNotExist(statErr) {
 		t.Logf("Grandparent directory does not exist: %s (may be expected)", grandparentDir)
 	}
 }

@@ -533,6 +533,9 @@ func TestAdvancedProbeResult_Comprehensive(t *testing.T) {
 	if result.IP != "10.0.0.1" {
 		t.Errorf("IP mismatch: got %q", result.IP)
 	}
+	if !result.ProbedAt.Equal(now) {
+		t.Error("ProbedAt should match now")
+	}
 	if result.OSFingerprint.Confidence != 90 {
 		t.Errorf("Confidence should be 90, got %d", result.OSFingerprint.Confidence)
 	}

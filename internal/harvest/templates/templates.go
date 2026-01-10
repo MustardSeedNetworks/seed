@@ -217,9 +217,16 @@ type DateRange struct {
 	End   time.Time
 }
 
+const (
+	hoursPerDay         = 24
+	percentScale        = 100.0
+	minTemplateIDLength = 2
+	maxTemplateIDLength = 64
+)
+
 // Days returns the number of days in the range.
 func (d DateRange) Days() int {
-	return int(d.End.Sub(d.Start).Hours() / 24)
+	return int(d.End.Sub(d.Start).Hours() / hoursPerDay)
 }
 
 // IsValid checks if the date range is valid.
@@ -286,7 +293,7 @@ func defaultFuncMap() template.FuncMap {
 			if total == 0 {
 				return "0%"
 			}
-			return fmt.Sprintf("%.1f%%", (n/total)*100)
+			return fmt.Sprintf("%.1f%%", (n/total)*percentScale)
 		},
 		"default": func(def, val any) any {
 			if val == nil || val == "" {
@@ -520,7 +527,7 @@ func NewIDValidator() *IDValidator {
 
 // IsValid checks if an ID is valid.
 func (v *IDValidator) IsValid(id string) bool {
-	if len(id) < 2 || len(id) > 64 {
+	if len(id) < minTemplateIDLength || len(id) > maxTemplateIDLength {
 		return false
 	}
 	return v.pattern.MatchString(id)
@@ -543,13 +550,13 @@ func (v *IDValidator) SanitizeID(s string) string {
 	s = strings.TrimSpace(s)
 	s = regexp.MustCompile(`[^a-z0-9]+`).ReplaceAllString(s, "-")
 	s = strings.Trim(s, "-")
-	if len(s) > 64 {
-		s = s[:64]
+	if len(s) > maxTemplateIDLength {
+		s = s[:maxTemplateIDLength]
 	}
 	if len(s) > 0 && s[0] >= '0' && s[0] <= '9' {
 		s = "t-" + s
 	}
-	if len(s) < 2 {
+	if len(s) < minTemplateIDLength {
 		s = "template-" + s
 	}
 	return s

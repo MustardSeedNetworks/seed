@@ -1252,6 +1252,8 @@ func TestFindOptimalPlacements(t *testing.T) {
 			checkResult: func(t *testing.T, suggestions []ai.PlacementSuggestion) {
 				// With a strong AP in a small room, might not need more
 				// This is acceptable - no suggestions or suggestions far from center
+				t.Helper()
+				_ = suggestions
 			},
 		},
 		{
@@ -1344,7 +1346,7 @@ func BenchmarkPredictSignalMap(b *testing.B) {
 	model := ai.NewPathLossModel("office", "2.4GHz")
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		_, _ = ai.PredictSignalMap(floorPlan, aps, model, 1.0)
 	}
 }
@@ -1361,7 +1363,7 @@ func BenchmarkAnalyzeCoverage(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		_, _ = ai.AnalyzeCoverage(samples, floorPlan, ai.ThresholdFair)
 	}
 }

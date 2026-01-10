@@ -877,7 +877,7 @@ func TestRenderer_Concurrency(t *testing.T) {
 
 	for i := range 100 {
 		wg.Add(1)
-		go func(n int) {
+		go func() {
 			defer wg.Done()
 			data := &templates.RenderData{Title: "World"}
 			result, err := r.Render(tmpl, data)
@@ -888,7 +888,7 @@ func TestRenderer_Concurrency(t *testing.T) {
 			if result != "Hello, World!" {
 				errors <- err
 			}
-		}(i)
+		}()
 	}
 
 	wg.Wait()
@@ -1321,9 +1321,8 @@ func TestRegistry_Concurrency(t *testing.T) {
 
 	// Concurrent writes
 	for i := range 50 {
-		wg.Add(1)
-		go func(n int) {
-			defer wg.Done()
+		wg.Go(func() {
+			n := i
 			tmpl := &templates.Template{
 				ID:      "concurrent-" + string(rune('a'+n%26)) + "-" + string(rune('0'+n%10)),
 				Name:    "Concurrent Test",
@@ -1335,18 +1334,16 @@ func TestRegistry_Concurrency(t *testing.T) {
 					errChan <- err
 				}
 			}
-		}(i)
+		})
 	}
 
 	// Concurrent reads
 	for range 50 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			_ = r.List()
 			_ = r.Count()
 			_, _ = r.Get("nonexistent")
-		}()
+		})
 	}
 
 	wg.Wait()

@@ -396,27 +396,23 @@ func TestManagerConcurrentOperations(t *testing.T) {
 
 	// Concurrent reads
 	for range numGoroutines {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range iterations {
 				_ = manager.GetServerStatus()
 				_ = manager.GetClientStatus()
 				_ = manager.GetLastResult()
 			}
-		}()
+		})
 	}
 
 	// Concurrent writes using test helpers
 	for range numGoroutines / 2 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range iterations {
 				manager.SetManagerClientStatusRunning(true)
 				manager.SetManagerClientStatusRunning(false)
 			}
-		}()
+		})
 	}
 
 	wg.Wait()

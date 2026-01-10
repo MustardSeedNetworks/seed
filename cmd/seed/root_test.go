@@ -1,6 +1,7 @@
 package main
 
 import (
+	"slices"
 	"testing"
 )
 
@@ -123,14 +124,7 @@ func TestNewCLIStateCompletionValidArgs(t *testing.T) {
 	}
 
 	for _, shell := range expectedShells {
-		found := false
-		for _, arg := range state.completionCmd.ValidArgs {
-			if arg == shell {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if !slices.Contains(state.completionCmd.ValidArgs, shell) {
 			t.Errorf("completionCmd.ValidArgs should contain %q", shell)
 		}
 	}
