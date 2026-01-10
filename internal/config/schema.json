@@ -761,6 +761,22 @@
           },
           "default": []
         },
+        "rtsp_endpoints": {
+          "type": "array",
+          "description": "RTSP stream tests (Issue #778)",
+          "items": {
+            "$ref": "#/$defs/RTSPEndpoint"
+          },
+          "default": []
+        },
+        "dicom_endpoints": {
+          "type": "array",
+          "description": "DICOM server tests (Issue #777)",
+          "items": {
+            "$ref": "#/$defs/DICOMEndpoint"
+          },
+          "default": []
+        },
         "run_performance": {
           "type": "boolean",
           "description": "Master toggle for speedtest + iperf",
@@ -875,6 +891,62 @@
           "minimum": 100,
           "maximum": 599,
           "default": 200
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this test",
+          "default": true
+        }
+      }
+    },
+    "RTSPEndpoint": {
+      "type": "object",
+      "description": "RTSP stream test (Issue #778)",
+      "required": ["name", "url", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this RTSP stream"
+        },
+        "url": {
+          "type": "string",
+          "description": "RTSP URL (rtsp://host:port/path)"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this test",
+          "default": true
+        }
+      }
+    },
+    "DICOMEndpoint": {
+      "type": "object",
+      "description": "DICOM server test (Issue #777)",
+      "required": ["name", "host", "port", "called_ae", "calling_ae", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this DICOM server"
+        },
+        "host": {
+          "type": "string",
+          "description": "Hostname or IP address"
+        },
+        "port": {
+          "$ref": "#/$defs/PortNumber",
+          "description": "DICOM port (default: 104)"
+        },
+        "called_ae": {
+          "type": "string",
+          "description": "Called Application Entity title",
+          "default": "ANY-SCP"
+        },
+        "calling_ae": {
+          "type": "string",
+          "description": "Calling Application Entity title",
+          "default": "SEED-SCU"
         },
         "enabled": {
           "type": "boolean",

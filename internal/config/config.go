@@ -769,14 +769,16 @@ type DNSServer struct {
 // HealthChecksConfig contains custom health check configurations.
 // This section corresponds to the "Health Checks" card in the UI.
 type HealthChecksConfig struct {
-	PingTargets    []PingTarget   `yaml:"ping_targets"    json:"ping_targets"`
-	TCPPorts       []TCPPortTest  `yaml:"tcp_ports"       json:"tcp_ports"`
-	UDPPorts       []UDPPortTest  `yaml:"udp_ports"       json:"udp_ports"`
-	HTTPEndpoints  []HTTPEndpoint `yaml:"http_endpoints"  json:"http_endpoints"`
-	RunPerformance bool           `yaml:"run_performance" json:"run_performance"` // Master toggle for speedtest + iperf
-	RunSpeedtest   bool           `yaml:"run_speedtest"   json:"run_speedtest"`   // Toggle internet speed test
-	RunIperf       bool           `yaml:"run_iperf"       json:"run_iperf"`       // Toggle LAN iperf test
-	RunDiscovery   bool           `yaml:"run_discovery"   json:"run_discovery"`   // Toggle network discovery card
+	PingTargets    []PingTarget    `yaml:"ping_targets"    json:"ping_targets"`
+	TCPPorts       []TCPPortTest   `yaml:"tcp_ports"       json:"tcp_ports"`
+	UDPPorts       []UDPPortTest   `yaml:"udp_ports"       json:"udp_ports"`
+	HTTPEndpoints  []HTTPEndpoint  `yaml:"http_endpoints"  json:"http_endpoints"`
+	RTSPEndpoints  []RTSPEndpoint  `yaml:"rtsp_endpoints"  json:"rtsp_endpoints"`  // Issue #778
+	DICOMEndpoints []DICOMEndpoint `yaml:"dicom_endpoints" json:"dicom_endpoints"` // Issue #777
+	RunPerformance bool            `yaml:"run_performance" json:"run_performance"` // Master toggle for speedtest + iperf
+	RunSpeedtest   bool            `yaml:"run_speedtest"   json:"run_speedtest"`   // Toggle internet speed test
+	RunIperf       bool            `yaml:"run_iperf"       json:"run_iperf"`       // Toggle LAN iperf test
+	RunDiscovery   bool            `yaml:"run_discovery"   json:"run_discovery"`   // Toggle network discovery card
 }
 
 // PingTarget represents a custom ping target.
@@ -808,6 +810,23 @@ type HTTPEndpoint struct {
 	URL            string `yaml:"url"             json:"url"`
 	ExpectedStatus int    `yaml:"expected_status" json:"expected_status"`
 	Enabled        bool   `yaml:"enabled"         json:"enabled"`
+}
+
+// RTSPEndpoint represents a custom RTSP stream test (Issue #778).
+type RTSPEndpoint struct {
+	Name    string `yaml:"name"    json:"name"`
+	URL     string `yaml:"url"     json:"url"` // rtsp://host:port/path
+	Enabled bool   `yaml:"enabled" json:"enabled"`
+}
+
+// DICOMEndpoint represents a custom DICOM server test (Issue #777).
+type DICOMEndpoint struct {
+	Name      string `yaml:"name"        json:"name"`
+	Host      string `yaml:"host"        json:"host"`
+	Port      int    `yaml:"port"        json:"port"`       // Default 104
+	CalledAE  string `yaml:"called_ae"   json:"called_ae"`  // Called Application Entity title
+	CallingAE string `yaml:"calling_ae"  json:"calling_ae"` // Calling Application Entity title
+	Enabled   bool   `yaml:"enabled"     json:"enabled"`
 }
 
 // SpeedtestConfig contains speedtest settings.
@@ -1231,6 +1250,25 @@ func defaultHealthChecksConfig() HealthChecksConfig {
 				URL:            "http://example.com",
 				ExpectedStatus: httpStatusOK,
 				Enabled:        true,
+			},
+		},
+		// Issue #778: RTSP stream health checks
+		RTSPEndpoints: []RTSPEndpoint{
+			{
+				Name:    "Wowza Demo Stream",
+				URL:     "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4",
+				Enabled: true,
+			},
+		},
+		// Issue #777: DICOM server health checks
+		DICOMEndpoints: []DICOMEndpoint{
+			{
+				Name:      "Public DICOM Server",
+				Host:      "dicomserver.co.uk",
+				Port:      portDICOM,
+				CalledAE:  "ANY-SCP",
+				CallingAE: "SEED-SCU",
+				Enabled:   true,
 			},
 		},
 		RunPerformance: true, RunSpeedtest: true, RunIperf: true, RunDiscovery: true,

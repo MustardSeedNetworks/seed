@@ -86,14 +86,16 @@ type ProfileHTTPTimingThresholds struct {
 
 // ProfileHealthChecks contains health check test configurations.
 type ProfileHealthChecks struct {
-	PingTargets    []ProfilePingTarget   `json:"ping_targets,omitempty"`
-	TCPPorts       []ProfileTCPPort      `json:"tcp_ports,omitempty"`
-	UDPPorts       []ProfileUDPPort      `json:"udp_ports,omitempty"`
-	HTTPEndpoints  []ProfileHTTPEndpoint `json:"http_endpoints,omitempty"`
-	RunPerformance bool                  `json:"run_performance"`
-	RunSpeedtest   bool                  `json:"run_speedtest"`
-	RunIperf       bool                  `json:"run_iperf"`
-	RunDiscovery   bool                  `json:"run_discovery"`
+	PingTargets    []ProfilePingTarget    `json:"ping_targets,omitempty"`
+	TCPPorts       []ProfileTCPPort       `json:"tcp_ports,omitempty"`
+	UDPPorts       []ProfileUDPPort       `json:"udp_ports,omitempty"`
+	HTTPEndpoints  []ProfileHTTPEndpoint  `json:"http_endpoints,omitempty"`
+	RTSPEndpoints  []ProfileRTSPEndpoint  `json:"rtsp_endpoints,omitempty"`  // Issue #778
+	DICOMEndpoints []ProfileDICOMEndpoint `json:"dicom_endpoints,omitempty"` // Issue #777
+	RunPerformance bool                   `json:"run_performance"`
+	RunSpeedtest   bool                   `json:"run_speedtest"`
+	RunIperf       bool                   `json:"run_iperf"`
+	RunDiscovery   bool                   `json:"run_discovery"`
 }
 
 // ProfilePingTarget represents a ping target.
@@ -125,6 +127,23 @@ type ProfileHTTPEndpoint struct {
 	URL            string `json:"url"`
 	ExpectedStatus int    `json:"expected_status"`
 	Enabled        bool   `json:"enabled"`
+}
+
+// ProfileRTSPEndpoint represents an RTSP stream test (Issue #778).
+type ProfileRTSPEndpoint struct {
+	Name    string `json:"name"`
+	URL     string `json:"url"`
+	Enabled bool   `json:"enabled"`
+}
+
+// ProfileDICOMEndpoint represents a DICOM server test (Issue #777).
+type ProfileDICOMEndpoint struct {
+	Name      string `json:"name"`
+	Host      string `json:"host"`
+	Port      int    `json:"port"`
+	CalledAE  string `json:"called_ae"`
+	CallingAE string `json:"calling_ae"`
+	Enabled   bool   `json:"enabled"`
 }
 
 // ProfileSpeedtest contains speedtest settings.
@@ -342,6 +361,20 @@ func (ps *ProfileSettings) extractHealthChecksFrom(cfg *Config) {
 			ProfileHTTPEndpoint(he),
 		)
 	}
+	// RTSP endpoints (Issue #778)
+	for _, re := range cfg.HealthChecks.RTSPEndpoints {
+		ps.HealthChecks.RTSPEndpoints = append(
+			ps.HealthChecks.RTSPEndpoints,
+			ProfileRTSPEndpoint(re),
+		)
+	}
+	// DICOM endpoints (Issue #777)
+	for _, de := range cfg.HealthChecks.DICOMEndpoints {
+		ps.HealthChecks.DICOMEndpoints = append(
+			ps.HealthChecks.DICOMEndpoints,
+			ProfileDICOMEndpoint(de),
+		)
+	}
 }
 
 // extractTestOptionsFrom extracts speedtest, iperf, FAB, and display options from config.
@@ -484,6 +517,18 @@ func (ps *ProfileSettings) applyHealthChecksTo(cfg *Config) {
 	cfg.HealthChecks.HTTPEndpoints = make([]HTTPEndpoint, 0, len(ps.HealthChecks.HTTPEndpoints))
 	for _, he := range ps.HealthChecks.HTTPEndpoints {
 		cfg.HealthChecks.HTTPEndpoints = append(cfg.HealthChecks.HTTPEndpoints, HTTPEndpoint(he))
+	}
+
+	// RTSP endpoints (Issue #778)
+	cfg.HealthChecks.RTSPEndpoints = make([]RTSPEndpoint, 0, len(ps.HealthChecks.RTSPEndpoints))
+	for _, re := range ps.HealthChecks.RTSPEndpoints {
+		cfg.HealthChecks.RTSPEndpoints = append(cfg.HealthChecks.RTSPEndpoints, RTSPEndpoint(re))
+	}
+
+	// DICOM endpoints (Issue #777)
+	cfg.HealthChecks.DICOMEndpoints = make([]DICOMEndpoint, 0, len(ps.HealthChecks.DICOMEndpoints))
+	for _, de := range ps.HealthChecks.DICOMEndpoints {
+		cfg.HealthChecks.DICOMEndpoints = append(cfg.HealthChecks.DICOMEndpoints, DICOMEndpoint(de))
 	}
 }
 

@@ -638,6 +638,12 @@ func (db *DB) seedDefaultProfile() error {
 			"http_endpoints": [
 				{"name": "Google", "url": "https://www.google.com", "expected_status": 200, "enabled": true}
 			],
+			"rtsp_endpoints": [
+				{"name": "Wowza Demo", "url": "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4", "enabled": true}
+			],
+			"dicom_endpoints": [
+				{"name": "Public DICOM", "host": "dicomserver.co.uk", "port": 104, "called_ae": "ANY-SCP", "calling_ae": "SEED-SCU", "enabled": true}
+			],
 			"run_performance": false,
 			"run_speedtest": false,
 			"run_iperf": false,
