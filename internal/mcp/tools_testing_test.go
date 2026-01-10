@@ -206,72 +206,92 @@ func TestParseIperfConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := mcp.ExportParseIperfConfig(tt.serverAddr, tt.args)
-
-			if tt.wantErr {
-				if err == nil {
-					t.Errorf("ExportParseIperfConfig() expected error, got nil")
-					return
-				}
-				if tt.wantErrContain != "" {
-					errStr := err.Error()
-					if !containsString(errStr, tt.wantErrContain) {
-						t.Errorf(
-							"ExportParseIperfConfig() error = %q, want to contain %q",
-							errStr,
-							tt.wantErrContain,
-						)
-					}
-				}
-				return
-			}
-
-			if err != nil {
-				t.Errorf("ExportParseIperfConfig() unexpected error: %v", err)
-				return
-			}
-
-			config, ok := result.(*iperf.ClientConfig)
-			if !ok {
-				t.Fatalf("ExportParseIperfConfig() returned wrong type: %T", result)
-			}
-
-			if config.Server != tt.wantServer {
-				t.Errorf(
-					"ExportParseIperfConfig() server = %q, want %q",
-					config.Server,
-					tt.wantServer,
-				)
-			}
-
-			if tt.wantPort != 0 && config.Port != tt.wantPort {
-				t.Errorf("ExportParseIperfConfig() port = %d, want %d", config.Port, tt.wantPort)
-			}
-
-			if tt.wantDuration != 0 && config.Duration != tt.wantDuration {
-				t.Errorf(
-					"ExportParseIperfConfig() duration = %d, want %d",
-					config.Duration,
-					tt.wantDuration,
-				)
-			}
-
-			if tt.wantProtocol != "" && config.Protocol != tt.wantProtocol {
-				t.Errorf(
-					"ExportParseIperfConfig() protocol = %q, want %q",
-					config.Protocol,
-					tt.wantProtocol,
-				)
-			}
-
-			if config.Direction != tt.wantDirection {
-				t.Errorf(
-					"ExportParseIperfConfig() direction = %q, want %q",
-					config.Direction,
-					tt.wantDirection,
-				)
-			}
+			runParseIperfConfigCase(t, tt)
 		})
+	}
+}
+
+func runParseIperfConfigCase(
+	t *testing.T,
+	tt struct {
+		name           string
+		serverAddr     string
+		args           map[string]any
+		wantServer     string
+		wantPort       int
+		wantDuration   int
+		wantProtocol   string
+		wantDirection  string
+		wantErr        bool
+		wantErrContain string
+	},
+) {
+	t.Helper()
+
+	result, err := mcp.ExportParseIperfConfig(tt.serverAddr, tt.args)
+
+	if tt.wantErr {
+		if err == nil {
+			t.Errorf("ExportParseIperfConfig() expected error, got nil")
+			return
+		}
+		if tt.wantErrContain != "" {
+			errStr := err.Error()
+			if !containsString(errStr, tt.wantErrContain) {
+				t.Errorf(
+					"ExportParseIperfConfig() error = %q, want to contain %q",
+					errStr,
+					tt.wantErrContain,
+				)
+			}
+		}
+		return
+	}
+
+	if err != nil {
+		t.Errorf("ExportParseIperfConfig() unexpected error: %v", err)
+		return
+	}
+
+	config, ok := result.(*iperf.ClientConfig)
+	if !ok {
+		t.Fatalf("ExportParseIperfConfig() returned wrong type: %T", result)
+	}
+
+	if config.Server != tt.wantServer {
+		t.Errorf(
+			"ExportParseIperfConfig() server = %q, want %q",
+			config.Server,
+			tt.wantServer,
+		)
+	}
+
+	if tt.wantPort != 0 && config.Port != tt.wantPort {
+		t.Errorf("ExportParseIperfConfig() port = %d, want %d", config.Port, tt.wantPort)
+	}
+
+	if tt.wantDuration != 0 && config.Duration != tt.wantDuration {
+		t.Errorf(
+			"ExportParseIperfConfig() duration = %d, want %d",
+			config.Duration,
+			tt.wantDuration,
+		)
+	}
+
+	if tt.wantProtocol != "" && config.Protocol != tt.wantProtocol {
+		t.Errorf(
+			"ExportParseIperfConfig() protocol = %q, want %q",
+			config.Protocol,
+			tt.wantProtocol,
+		)
+	}
+
+	if config.Direction != tt.wantDirection {
+		t.Errorf(
+			"ExportParseIperfConfig() direction = %q, want %q",
+			config.Direction,
+			tt.wantDirection,
+		)
 	}
 }
 

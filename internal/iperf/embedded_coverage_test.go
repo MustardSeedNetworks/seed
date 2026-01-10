@@ -150,29 +150,45 @@ func TestIsValidExtractedBinaryAllScenarios(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.skipOnWindows && runtime.GOOS == "windows" {
-				t.Skip("Skipping permission test on Windows")
-			}
-
-			binaryPath := filepath.Join(tempDir, "binary-"+tt.name)
-			versionPath := filepath.Join(tempDir, "version-"+tt.name)
-
-			if tt.setupBinary != nil {
-				if err := tt.setupBinary(binaryPath); err != nil {
-					t.Fatalf("Failed to setup binary: %v", err)
-				}
-			}
-			if tt.setupVersion != nil {
-				if err := tt.setupVersion(versionPath); err != nil {
-					t.Fatalf("Failed to setup version: %v", err)
-				}
-			}
-
-			result := iperf.IsValidExtractedBinary(binaryPath, versionPath)
-			if result != tt.expected {
-				t.Errorf("IsValidExtractedBinary() = %v, want %v", result, tt.expected)
-			}
+			runIsValidExtractedBinaryCase(t, tempDir, tt)
 		})
+	}
+}
+
+func runIsValidExtractedBinaryCase(
+	t *testing.T,
+	tempDir string,
+	tt struct {
+		name          string
+		setupBinary   func(path string) error
+		setupVersion  func(path string) error
+		expected      bool
+		skipOnWindows bool
+	},
+) {
+	t.Helper()
+
+	if tt.skipOnWindows && runtime.GOOS == "windows" {
+		t.Skip("Skipping permission test on Windows")
+	}
+
+	binaryPath := filepath.Join(tempDir, "binary-"+tt.name)
+	versionPath := filepath.Join(tempDir, "version-"+tt.name)
+
+	if tt.setupBinary != nil {
+		if err := tt.setupBinary(binaryPath); err != nil {
+			t.Fatalf("Failed to setup binary: %v", err)
+		}
+	}
+	if tt.setupVersion != nil {
+		if err := tt.setupVersion(versionPath); err != nil {
+			t.Fatalf("Failed to setup version: %v", err)
+		}
+	}
+
+	result := iperf.IsValidExtractedBinary(binaryPath, versionPath)
+	if result != tt.expected {
+		t.Errorf("IsValidExtractedBinary() = %v, want %v", result, tt.expected)
 	}
 }
 

@@ -537,6 +537,14 @@ func TestCardUpdateStruct(t *testing.T) {
 	if update.Interface != "eth0" {
 		t.Errorf("Expected Interface 'eth0', got %q", update.Interface)
 	}
+
+	data, ok := update.Data.(map[string]any)
+	if !ok {
+		t.Fatal("Expected Data to be map[string]any")
+	}
+	if data["status"] != "up" {
+		t.Errorf("Expected status 'up', got %v", data["status"])
+	}
 }
 
 // TestIPOctetValidation tests IP octet validation.

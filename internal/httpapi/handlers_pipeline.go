@@ -47,18 +47,18 @@ const (
 
 // handlePipelineStatus returns the current pipeline status (GET /api/pipeline/status).
 func (s *Server) handlePipelineStatus(w http.ResponseWriter, _ *http.Request) {
-	if s.pipeline == nil {
+	if s.pipeline() == nil {
 		http.Error(w, "Pipeline not initialized", http.StatusServiceUnavailable)
 		return
 	}
 
-	status := s.pipeline.GetStatus()
+	status := s.pipeline().GetStatus()
 	sendJSONResponse(w, nil, http.StatusOK, status)
 }
 
 // handlePipelineStart starts a new pipeline run (POST /api/pipeline/start).
 func (s *Server) handlePipelineStart(w http.ResponseWriter, r *http.Request) {
-	if s.pipeline == nil {
+	if s.pipeline() == nil {
 		http.Error(w, "Pipeline not initialized", http.StatusServiceUnavailable)
 		return
 	}
@@ -80,7 +80,7 @@ func (s *Server) handlePipelineStart(w http.ResponseWriter, r *http.Request) {
 
 	// Update config if provided
 	if req.Config != nil {
-		if err := s.pipeline.UpdateConfig(req.Config); err != nil {
+		if err := s.pipeline().UpdateConfig(req.Config); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -89,7 +89,7 @@ func (s *Server) handlePipelineStart(w http.ResponseWriter, r *http.Request) {
 	// Fixes #908: Use background context - pipeline should outlive the HTTP request.
 	// The request context is cancelled when the HTTP response is sent, but the
 	// pipeline runs asynchronously and should continue until complete or cancelled.
-	run, err := s.pipeline.Start(context.Background(), "api")
+	run, err := s.pipeline().Start(context.Background(), "api")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
@@ -101,12 +101,12 @@ func (s *Server) handlePipelineStart(w http.ResponseWriter, r *http.Request) {
 
 // handlePipelineCancel cancels the current pipeline run (POST /api/pipeline/cancel).
 func (s *Server) handlePipelineCancel(w http.ResponseWriter, _ *http.Request) {
-	if s.pipeline == nil {
+	if s.pipeline() == nil {
 		http.Error(w, "Pipeline not initialized", http.StatusServiceUnavailable)
 		return
 	}
 
-	if err := s.pipeline.Cancel(); err != nil {
+	if err := s.pipeline().Cancel(); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -129,19 +129,19 @@ func (s *Server) handlePipelineConfigRoute(w http.ResponseWriter, r *http.Reques
 
 // handlePipelineConfig returns the current pipeline configuration (GET /api/pipeline/config).
 func (s *Server) handlePipelineConfig(w http.ResponseWriter, _ *http.Request) {
-	if s.pipeline == nil {
+	if s.pipeline() == nil {
 		http.Error(w, "Pipeline not initialized", http.StatusServiceUnavailable)
 		return
 	}
 
-	config := s.pipeline.GetConfig()
+	config := s.pipeline().GetConfig()
 	sendJSONResponse(w, nil, http.StatusOK, config)
 }
 
 // handlePipelineConfigUpdate updates the pipeline configuration (PUT /api/pipeline/config).
 // Fixes #883: Wrap pipeline update and config save in atomic transaction to prevent race.
 func (s *Server) handlePipelineConfigUpdate(w http.ResponseWriter, r *http.Request) {
-	if s.pipeline == nil {
+	if s.pipeline() == nil {
 		http.Error(w, "Pipeline not initialized", http.StatusServiceUnavailable)
 		return
 	}
@@ -170,7 +170,7 @@ func (s *Server) handlePipelineConfigUpdate(w http.ResponseWriter, r *http.Reque
 	s.config.Lock()
 
 	// Update pipeline with new config while holding the lock
-	if err := s.pipeline.UpdateConfig(&config); err != nil {
+	if err := s.pipeline().UpdateConfig(&config); err != nil {
 		s.config.Unlock()
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

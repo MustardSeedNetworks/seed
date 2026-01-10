@@ -102,54 +102,31 @@ const (
 )
 
 // Server represents the HTTP/HTTPS server.
+// Refactored to use ServiceContainer for dependency injection (#888).
 type Server struct {
-	config              *config.Config
-	configPath          string
-	logPath             string
+	// Core configuration
+	config     *config.Config
+	configPath string
+	logPath    string
+
+	// HTTP server components
 	httpServer          *http.Server
-	authManager         *auth.Manager
-	csrfManager         *auth.CSRFManager          // CSRF token manager for state-changing requests (fixes contract review)
-	setupTokenManager   *SetupTokenManager         // Setup token manager for secure initial setup (fixes #724, #758)
-	recoveryManager     *auth.RecoveryTokenManager // Password recovery for headless machines
-	loginRateLimiter    *RateLimiter
-	endpointRateLimiter *EndpointRateLimiter    // Rate limiter for expensive endpoints (fixes #530)
-	wsHub               *Hub                    // WebSocket hub (deprecated - use sseHub)
-	sseHub              *SSEHub                 // SSE hub for real-time updates (replaces WebSocket)
-	logBroadcaster      *logging.LogBroadcaster // Log broadcaster for real-time log streaming
 	mux                 *http.ServeMux
-	netManager          *network.Manager
-	linkMonitor         *network.LinkMonitor
-	deviceDiscovery     *discovery.DeviceDiscovery // Device aggregation (used by Service and Pipeline)
-	discoveryService    *discovery.Service         // Unified discovery orchestrator
-	dnsTester           *dns.Tester
-	dnsSecurityScanner  *dns.SecurityScanner
-	dhcpMonitor         *dhcp.Monitor
-	rogueDetector       *dhcp.RogueDetector
-	gatewayTester       *gateway.Tester
-	vlanManager         *vlan.Manager
-	vlanTrafficMonitor  *vlan.TrafficMonitor
-	wifiManager         *wifi.Manager
-	wifiScanner         *wifi.Scanner
-	cableTester         *cable.Tester
-	speedtestTester     *speedtest.Tester
-	iperfManager        *iperf.Manager
-	surveyManager       *survey.Manager
-	vulnScanner         *discovery.VulnerabilityScanner
-	publicipChecker     *publicip.Checker
-	oauthManager        *oauth.Manager      // OAuth SSO provider manager
-	db                  *database.DB        // SQLite database for persistence (#755)
-	icmpAvailable       bool                // Whether raw ICMP sockets are available
-	startTime           time.Time           // Application start time for uptime tracking (fixes #540)
-	redirectServer      *http.Server        // HTTP→HTTPS redirect server (fixes #515)
-	redirectServerErr   chan error          // Error channel for redirect server
-	trustedProxies      *TrustedProxies     // Trusted proxy IPs for X-Forwarded-For handling (#H4)
-	pipeline            *discovery.Pipeline // Phased discovery pipeline orchestrator
-	acmeChallengeServer *http.Server        // HTTP-01 challenge server for ACME (fixes #837)
-	retentionStopCh     chan struct{}       // Signals data retention goroutine to stop (fixes #848)
-	modules             *Modules            // Application modules (Sap, Shell, Canopy, Roots, Harvest)
-	setupModeStartTime  time.Time           // Security fix #891: Track when setup mode started
+	redirectServer      *http.Server // HTTP→HTTPS redirect server (fixes #515)
+	redirectServerErr   chan error   // Error channel for redirect server
+	acmeChallengeServer *http.Server // HTTP-01 challenge server for ACME (fixes #837)
+
+	// Service container - holds all domain services (#888)
+	services *ServiceContainer
+
+	// Runtime state
+	icmpAvailable      bool      // Whether raw ICMP sockets are available
+	startTime          time.Time // Application start time for uptime tracking (fixes #540)
+	setupModeStartTime time.Time // Security fix #891: Track when setup mode started
+	modules            *Modules  // Application modules (Sap, Shell, Canopy, Roots, Harvest)
 }
 
+// NewServer creates a new server instance.
 // NewServer creates a new server instance.
 func NewServer(
 	cfg *config.Config,
@@ -160,54 +137,70 @@ func NewServer(
 	db *database.DB,
 	modules *Modules,
 ) *Server {
+	// Create service container (#888)
+	services := NewServiceContainer()
+
+	// Initialize auth services
+	services.Auth.Manager = auth.NewManager(
+		cfg.Auth.JWTSecret,
+		cfg.Auth.SessionTimeout,
+		cfg.Auth.DefaultUsername,
+		cfg.Auth.DefaultPasswordHash,
+	)
+	services.Auth.CSRF = auth.NewCSRFManager()
+	services.Auth.SetupToken = NewSetupTokenManager()
+	services.Auth.Recovery = auth.NewRecoveryTokenManager(paths.Resolve(paths.ModeAuto).DataDir)
+	services.Auth.TrustedProxies = trustedProxies
+
+	// Initialize rate limiters
+	services.RateLimit.Login = NewRateLimiter(DefaultRateLimitConfig())
+	services.RateLimit.Endpoint = NewEndpointRateLimiter(DefaultEndpointRateLimitConfig())
+
+	// Initialize network services
+	services.Network.Manager = netMgr
+	services.Network.LinkMonitor = network.NewLinkMonitor(cfg.Interface.Default)
+
+	// Initialize discovery services
+	services.Discovery.Device = discovery.NewDeviceDiscoveryWithOUI(
+		cfg.Interface.Default,
+		cfg.NetworkDiscovery.OUIFilePath,
+		cfg.NetworkDiscovery.OUIMaxAge,
+	)
+	// Note: services.Discovery.Service is initialized after profiler is created (see below)
+
+	// Initialize SAP services
+	services.Sap.DNS = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
+	services.Sap.DNSSecurity = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
+	services.Sap.DHCP = dhcp.NewMonitor(cfg.Interface.Default)
+	services.Sap.RogueDetector = dhcp.NewRogueDetector(&dhcp.RogueDetectorConfig{
+		Interface:        cfg.Interface.Default,
+		KnownServers:     cfg.DHCP.RogueDetection.KnownServers,
+		AlertOnDetection: cfg.DHCP.RogueDetection.AlertOnDetection,
+	})
+	services.Sap.Gateway = gateway.NewTester(gateway.DefaultThresholds())
+	services.Sap.VLAN = vlan.NewManager(cfg.Interface.Default)
+	services.Sap.VLANTraffic = vlan.NewTrafficMonitor(cfg.Interface.Default)
+	services.Sap.Speedtest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
+	services.Sap.Iperf = iperf.NewManager()
+	services.Sap.Cable = cable.NewTester(cfg.Interface.Default)
+	services.Sap.PublicIP = publicip.NewChecker()
+
+	// Initialize Canopy services
+	services.Canopy.WiFi = wifi.NewManager(cfg.Interface.Default)
+	services.Canopy.Scanner = wifi.NewScanner(cfg.Interface.Default)
+
+	// Initialize database services
+	services.Database.DB = db
+
 	s := &Server{
-		config:         cfg,
-		configPath:     configPath,
-		logPath:        logPath,
-		mux:            http.NewServeMux(),
-		netManager:     netMgr,
-		icmpAvailable:  icmpAvailable,
-		trustedProxies: trustedProxies, // Trusted proxy support (#H4)
-		startTime:      time.Now(),     // Track application start time (fixes #540)
-		db:             db,             // Database passed from cmd_serve.go
-		modules:        modules,        // Modules passed from cmd_serve.go
-		authManager: auth.NewManager(
-			cfg.Auth.JWTSecret,
-			cfg.Auth.SessionTimeout,
-			cfg.Auth.DefaultUsername,
-			cfg.Auth.DefaultPasswordHash,
-		),
-		csrfManager:      auth.NewCSRFManager(), // CSRF protection for state-changing requests
-		loginRateLimiter: NewRateLimiter(DefaultRateLimitConfig()),
-		endpointRateLimiter: NewEndpointRateLimiter(
-			DefaultEndpointRateLimitConfig(),
-		), // Rate limit expensive endpoints (fixes #530)
-		setupTokenManager: NewSetupTokenManager(), // Setup token for secure initial setup (fixes #724, #758)
-		recoveryManager:   auth.NewRecoveryTokenManager(paths.Resolve(paths.ModeAuto).DataDir),
-		linkMonitor:       network.NewLinkMonitor(cfg.Interface.Default),
-		deviceDiscovery: discovery.NewDeviceDiscoveryWithOUI(
-			cfg.Interface.Default,
-			cfg.NetworkDiscovery.OUIFilePath,
-			cfg.NetworkDiscovery.OUIMaxAge,
-		),
-		// Note: discoveryService is initialized after profiler is created (see below)
-		dnsTester:          dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
-		dnsSecurityScanner: dns.NewSecurityScanner(dns.DefaultSecurityScanConfig()),
-		dhcpMonitor:        dhcp.NewMonitor(cfg.Interface.Default),
-		rogueDetector: dhcp.NewRogueDetector(&dhcp.RogueDetectorConfig{
-			Interface:        cfg.Interface.Default,
-			KnownServers:     cfg.DHCP.RogueDetection.KnownServers,
-			AlertOnDetection: cfg.DHCP.RogueDetection.AlertOnDetection,
-		}),
-		gatewayTester:      gateway.NewTester(gateway.DefaultThresholds()),
-		vlanManager:        vlan.NewManager(cfg.Interface.Default),
-		vlanTrafficMonitor: vlan.NewTrafficMonitor(cfg.Interface.Default),
-		wifiManager:        wifi.NewManager(cfg.Interface.Default),
-		wifiScanner:        wifi.NewScanner(cfg.Interface.Default),
-		cableTester:        cable.NewTester(cfg.Interface.Default),
-		speedtestTester:    speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID),
-		iperfManager:       iperf.NewManager(),
-		publicipChecker:    publicip.NewChecker(),
+		config:        cfg,
+		configPath:    configPath,
+		logPath:       logPath,
+		mux:           http.NewServeMux(),
+		icmpAvailable: icmpAvailable,
+		startTime:     time.Now(),
+		modules:       modules,
+		services:      services,
 	}
 
 	// Security fix #891: Record setup mode start time
@@ -216,7 +209,7 @@ func NewServer(
 	}
 
 	// Set up link state change callback
-	s.linkMonitor.OnStateChange(s.onLinkStateChange)
+	s.linkMonitor().OnStateChange(s.onLinkStateChange)
 
 	// Initialize network services (DNS, device discovery subnets, survey manager)
 	s.initNetworkServices(cfg)
@@ -245,6 +238,147 @@ func NewServer(
 	return s
 }
 
+// Service accessors - provide backwards-compatible access to services (#888)
+
+// AuthManager returns the authentication manager.
+func (s *Server) AuthManager() *auth.Manager { return s.services.Auth.Manager }
+
+// CSRFManager returns the CSRF token manager.
+func (s *Server) CSRFManager() *auth.CSRFManager { return s.services.Auth.CSRF }
+
+// SetupTokenManager returns the setup token manager.
+func (s *Server) SetupTokenManager() *SetupTokenManager { return s.services.Auth.SetupToken }
+
+// RecoveryManager returns the password recovery token manager.
+func (s *Server) RecoveryManager() *auth.RecoveryTokenManager { return s.services.Auth.Recovery }
+
+// OAuthManager returns the OAuth manager.
+func (s *Server) OAuthManager() *oauth.Manager { return s.services.Auth.OAuth }
+
+// TrustedProxies returns the trusted proxies configuration.
+func (s *Server) TrustedProxies() *TrustedProxies { return s.services.Auth.TrustedProxies }
+
+// LoginRateLimiter returns the login rate limiter.
+func (s *Server) LoginRateLimiter() *RateLimiter { return s.services.RateLimit.Login }
+
+// EndpointRateLimiter returns the endpoint rate limiter.
+func (s *Server) EndpointRateLimiter() *EndpointRateLimiter { return s.services.RateLimit.Endpoint }
+
+// NetManager returns the network manager.
+func (s *Server) NetManager() *network.Manager { return s.services.Network.Manager }
+
+// LinkMonitor returns the link monitor.
+func (s *Server) LinkMonitor() *network.LinkMonitor { return s.services.Network.LinkMonitor }
+
+// DeviceDiscovery returns the device discovery service.
+func (s *Server) DeviceDiscovery() *discovery.DeviceDiscovery { return s.services.Discovery.Device }
+
+// DiscoveryService returns the unified discovery service.
+func (s *Server) DiscoveryService() *discovery.Service { return s.services.Discovery.Service }
+
+// Pipeline returns the discovery pipeline.
+func (s *Server) Pipeline() *discovery.Pipeline { return s.services.Discovery.Pipeline }
+
+// VulnScanner returns the vulnerability scanner.
+func (s *Server) VulnScanner() *discovery.VulnerabilityScanner {
+	return s.services.Discovery.Vulnerability
+}
+
+// DNSTester returns the DNS tester.
+func (s *Server) DNSTester() *dns.Tester { return s.services.Sap.DNS }
+
+// DNSSecurityScanner returns the DNS security scanner.
+func (s *Server) DNSSecurityScanner() *dns.SecurityScanner { return s.services.Sap.DNSSecurity }
+
+// DHCPMonitor returns the DHCP monitor.
+func (s *Server) DHCPMonitor() *dhcp.Monitor { return s.services.Sap.DHCP }
+
+// RogueDetector returns the rogue DHCP detector.
+func (s *Server) RogueDetector() *dhcp.RogueDetector { return s.services.Sap.RogueDetector }
+
+// GatewayTester returns the gateway tester.
+func (s *Server) GatewayTester() *gateway.Tester { return s.services.Sap.Gateway }
+
+// VLANManager returns the VLAN manager.
+func (s *Server) VLANManager() *vlan.Manager { return s.services.Sap.VLAN }
+
+// VLANTrafficMonitor returns the VLAN traffic monitor.
+func (s *Server) VLANTrafficMonitor() *vlan.TrafficMonitor { return s.services.Sap.VLANTraffic }
+
+// SpeedtestTester returns the speedtest tester.
+func (s *Server) SpeedtestTester() *speedtest.Tester { return s.services.Sap.Speedtest }
+
+// IperfManager returns the iperf manager.
+func (s *Server) IperfManager() *iperf.Manager { return s.services.Sap.Iperf }
+
+// CableTester returns the cable tester.
+func (s *Server) CableTester() *cable.Tester { return s.services.Sap.Cable }
+
+// PublicIPChecker returns the public IP checker.
+func (s *Server) PublicIPChecker() *publicip.Checker { return s.services.Sap.PublicIP }
+
+// WiFiManager returns the WiFi manager.
+func (s *Server) WiFiManager() *wifi.Manager { return s.services.Canopy.WiFi }
+
+// WiFiScanner returns the WiFi scanner.
+func (s *Server) WiFiScanner() *wifi.Scanner { return s.services.Canopy.Scanner }
+
+// SurveyManager returns the survey manager.
+func (s *Server) SurveyManager() *survey.Manager { return s.services.Canopy.Survey }
+
+// WSHub returns the WebSocket hub.
+func (s *Server) WSHub() *Hub { return s.services.RealTime.WSHub }
+
+// Hub returns the WebSocket hub (alias for WSHub, for backwards compatibility).
+func (s *Server) Hub() *Hub { return s.services.RealTime.WSHub }
+
+// SSEHub returns the SSE hub.
+func (s *Server) SSEHub() *SSEHub { return s.services.RealTime.SSEHub }
+
+// LogBroadcaster returns the log broadcaster.
+func (s *Server) LogBroadcaster() *logging.LogBroadcaster { return s.services.RealTime.LogBroadcaster }
+
+// DB returns the database connection.
+func (s *Server) DB() *database.DB { return s.services.Database.DB }
+
+// Lowercase aliases for backwards compatibility with existing handler code (#888)
+// These match the original field access pattern (e.g., s.authManager vs s.AuthManager())
+
+func (s *Server) authManager() *auth.Manager                  { return s.services.Auth.Manager }
+func (s *Server) csrfManager() *auth.CSRFManager              { return s.services.Auth.CSRF }
+func (s *Server) setupTokenManager() *SetupTokenManager       { return s.services.Auth.SetupToken }
+func (s *Server) recoveryManager() *auth.RecoveryTokenManager { return s.services.Auth.Recovery }
+func (s *Server) oauthManager() *oauth.Manager                { return s.services.Auth.OAuth }
+func (s *Server) trustedProxies() *TrustedProxies             { return s.services.Auth.TrustedProxies }
+func (s *Server) loginRateLimiter() *RateLimiter              { return s.services.RateLimit.Login }
+func (s *Server) endpointRateLimiter() *EndpointRateLimiter   { return s.services.RateLimit.Endpoint }
+func (s *Server) netManager() *network.Manager                { return s.services.Network.Manager }
+func (s *Server) linkMonitor() *network.LinkMonitor           { return s.services.Network.LinkMonitor }
+func (s *Server) deviceDiscovery() *discovery.DeviceDiscovery { return s.services.Discovery.Device }
+func (s *Server) discoveryService() *discovery.Service        { return s.services.Discovery.Service }
+func (s *Server) pipeline() *discovery.Pipeline               { return s.services.Discovery.Pipeline }
+func (s *Server) vulnScanner() *discovery.VulnerabilityScanner {
+	return s.services.Discovery.Vulnerability
+}
+func (s *Server) dnsTester() *dns.Tester                   { return s.services.Sap.DNS }
+func (s *Server) dnsSecurityScanner() *dns.SecurityScanner { return s.services.Sap.DNSSecurity }
+func (s *Server) dhcpMonitor() *dhcp.Monitor               { return s.services.Sap.DHCP }
+func (s *Server) rogueDetector() *dhcp.RogueDetector       { return s.services.Sap.RogueDetector }
+func (s *Server) gatewayTester() *gateway.Tester           { return s.services.Sap.Gateway }
+func (s *Server) vlanManager() *vlan.Manager               { return s.services.Sap.VLAN }
+func (s *Server) vlanTrafficMonitor() *vlan.TrafficMonitor { return s.services.Sap.VLANTraffic }
+func (s *Server) speedtestTester() *speedtest.Tester       { return s.services.Sap.Speedtest }
+func (s *Server) iperfManager() *iperf.Manager             { return s.services.Sap.Iperf }
+func (s *Server) cableTester() *cable.Tester               { return s.services.Sap.Cable }
+func (s *Server) publicipChecker() *publicip.Checker       { return s.services.Sap.PublicIP }
+func (s *Server) wifiManager() *wifi.Manager               { return s.services.Canopy.WiFi }
+func (s *Server) wifiScanner() *wifi.Scanner               { return s.services.Canopy.Scanner }
+func (s *Server) surveyManager() *survey.Manager           { return s.services.Canopy.Survey }
+func (s *Server) wsHub() *Hub                              { return s.services.RealTime.WSHub }
+func (s *Server) sseHub() *SSEHub                          { return s.services.RealTime.SSEHub }
+func (s *Server) logBroadcaster() *logging.LogBroadcaster  { return s.services.RealTime.LogBroadcaster }
+func (s *Server) db() *database.DB                         { return s.services.Database.DB }
+
 // initNetworkServices initializes DNS servers, device discovery subnets, and survey manager.
 func (s *Server) initNetworkServices(cfg *config.Config) {
 	// Initialize DNS tester with configured servers from config
@@ -256,7 +390,7 @@ func (s *Server) initNetworkServices(cfg *config.Config) {
 				Enabled: d.Enabled,
 			})
 		}
-		s.dnsTester.SetConfiguredServers(configuredServers)
+		s.dnsTester().SetConfiguredServers(configuredServers)
 	}
 
 	// Initialize device discovery with configured additional subnets
@@ -264,13 +398,13 @@ func (s *Server) initNetworkServices(cfg *config.Config) {
 
 	// Initialize survey manager
 	surveyStoragePath := "data/surveys"
-	s.surveyManager = survey.NewManager(
+	s.services.Canopy.Survey = survey.NewManager(
 		surveyStoragePath,
-		s.wifiScanner,
-		s.wifiManager,
-		s.iperfManager,
+		s.wifiScanner(),
+		s.wifiManager(),
+		s.iperfManager(),
 	)
-	if err := s.surveyManager.LoadSurveys(); err != nil {
+	if err := s.surveyManager().LoadSurveys(); err != nil {
 		logging.GetLogger().Warn("Failed to load surveys", "error", err)
 	}
 }
@@ -286,7 +420,7 @@ func (s *Server) initAdditionalSubnets(cfg *config.Config) {
 		return
 	}
 
-	if err := s.deviceDiscovery.SetAdditionalSubnets(enabledCIDRs); err != nil {
+	if err := s.deviceDiscovery().SetAdditionalSubnets(enabledCIDRs); err != nil {
 		logging.GetLogger().Warn("Failed to set additional subnets", "error", err)
 		return
 	}
@@ -313,7 +447,7 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 
 	// Set up database-backed user store for authentication
 	userStore := database.NewUserStoreAdapter(db)
-	s.authManager.SetUserStore(userStore)
+	s.authManager().SetUserStore(userStore)
 
 	// Migrate admin user from config to database if needed
 	// This ensures backward compatibility during the transition
@@ -332,7 +466,7 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 
 	// Start data retention cleanup in background (fixes #848)
 	if cfg.Database.RetentionDays > 0 {
-		s.retentionStopCh = make(chan struct{})
+		s.services.Database.RetentionStopCh = make(chan struct{})
 		go s.startDataRetention(cfg.Database.RetentionDays)
 	}
 }
@@ -340,22 +474,22 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 // initWebSocketAndLogging initializes the WebSocket hub, SSE hub, and log broadcaster.
 func (s *Server) initWebSocketAndLogging(db *database.DB) {
 	// Initialize WebSocket hub (fixes #512) - kept for backwards compatibility
-	s.wsHub = NewHub()
+	s.services.RealTime.WSHub = NewHub()
 	// Start hub before setupRoutes to prevent race condition
-	go s.wsHub.Run()
+	go s.wsHub().Run()
 
 	// Initialize SSE hub (replaces WebSocket for real-time updates)
-	s.sseHub = NewSSEHub()
-	go s.sseHub.Run()
+	s.services.RealTime.SSEHub = NewSSEHub()
+	go s.sseHub().Run()
 
 	// Initialize log broadcaster for real-time log streaming
 	// Use SSE hub for broadcasting (simpler than WebSocket)
-	s.logBroadcaster = logging.InitBroadcaster(logBroadcasterBufferSize)
-	s.logBroadcaster.SetBroadcaster(&sseLogBroadcastAdapter{hub: s.sseHub})
+	s.services.RealTime.LogBroadcaster = logging.InitBroadcaster(logBroadcasterBufferSize)
+	s.logBroadcaster().SetBroadcaster(&sseLogBroadcastAdapter{hub: s.sseHub()})
 
 	// Wire up database persistence for logs if database is available
 	if db != nil {
-		s.logBroadcaster.SetDBWriter(&dbLogWriterAdapter{db: db})
+		s.logBroadcaster().SetDBWriter(&dbLogWriterAdapter{db: db})
 		logging.GetLogger().
 			Info("Log broadcaster initialized with database persistence", "buffer_size", logBroadcasterBufferSize)
 	} else {
@@ -368,7 +502,7 @@ func (s *Server) initWebSocketAndLogging(db *database.DB) {
 
 	// Wire up database persistence for devices if database is available
 	if db != nil {
-		s.deviceDiscovery.SetDBWriter(&dbDeviceWriterAdapter{db: db})
+		s.deviceDiscovery().SetDBWriter(&dbDeviceWriterAdapter{db: db})
 		logging.GetLogger().Info("Device discovery initialized with database persistence")
 	}
 }
@@ -380,23 +514,23 @@ func (s *Server) initDiscoveryPipeline(cfg *config.Config) {
 	sharedProfiler := discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), &cfg.SNMP)
 
 	// Initialize discovery service with the shared profiler
-	s.discoveryService = discovery.NewService(cfg, cfg.Interface.Default, sharedProfiler)
+	s.services.Discovery.Service = discovery.NewService(cfg, cfg.Interface.Default, sharedProfiler)
 	logging.GetLogger().Info("Discovery service initialized with shared profiler")
 
 	// Initialize discovery pipeline with the SAME shared profiler
 	pipelineCfg := discovery.PipelineConfigFromAdapter(&cfg.Pipeline)
-	s.pipeline = discovery.NewPipeline(
+	s.services.Discovery.Pipeline = discovery.NewPipeline(
 		&pipelineCfg,
-		s.deviceDiscovery,
+		s.deviceDiscovery(),
 		sharedProfiler, // Use the same profiler as Service
-		&pipelineBroadcastAdapter{hub: s.wsHub},
+		&pipelineBroadcastAdapter{hub: s.wsHub()},
 	)
 
 	// Link Service and Pipeline for coordination
-	s.discoveryService.SetPipeline(s.pipeline)
+	s.discoveryService().SetPipeline(s.pipeline())
 
 	// Set up pipeline completion callback to sync results back to service
-	s.discoveryService.SetOnPipelineComplete(func(devices []*discovery.DiscoveredDevice) {
+	s.discoveryService().SetOnPipelineComplete(func(devices []*discovery.DiscoveredDevice) {
 		logging.GetLogger().Info(
 			"Pipeline completed, syncing results to discovery service",
 			"device_count",
@@ -405,7 +539,7 @@ func (s *Server) initDiscoveryPipeline(cfg *config.Config) {
 	})
 
 	logging.GetLogger().Info("Discovery pipeline initialized",
-		"phases_enabled", s.pipeline.GetEnabledPhaseNames(),
+		"phases_enabled", s.pipeline().GetEnabledPhaseNames(),
 		"port_scan_intensity", cfg.Pipeline.PortScan.Intensity,
 		"shared_profiler", true)
 }
@@ -430,7 +564,7 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 		logging.GetLogger().Warn("Failed to initialize vulnerability scanner", "error", err)
 		return
 	}
-	s.vulnScanner = vulnScanner
+	s.services.Discovery.Vulnerability = vulnScanner
 	logging.GetLogger().Info("Vulnerability scanner initialized",
 		"cve_database", scannerCfg.CVEDatabase, "threshold", scannerCfg.SeverityThreshold)
 }
@@ -478,7 +612,7 @@ func (s *Server) logWildcardOriginWarning(cfg *config.Config) {
 // If trusted proxies are configured and the request comes from one, uses X-Forwarded-For.
 // Otherwise, uses RemoteAddr (the only secure option).
 func (s *Server) getClientIP(r *http.Request) string {
-	return GetClientIPWithTrustedProxies(r, s.trustedProxies)
+	return GetClientIPWithTrustedProxies(r, s.trustedProxies())
 }
 
 // onLinkStateChange handles link up/down events.
@@ -490,7 +624,7 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 	case network.LinkStateUp:
 		// Link came up - reload discovery service to restart protocol capture
 		logging.GetLogger().Info("Link up - reloading discovery service")
-		if err := s.discoveryService.Reload(); err != nil {
+		if err := s.discoveryService().Reload(); err != nil {
 			logging.GetLogger().Warn("Failed to reload discovery service", "error", err)
 		}
 
@@ -503,16 +637,16 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 				"timestamp": event.Timestamp.Format(time.RFC3339),
 			},
 		}
-		s.sseHub.Broadcast(linkStateMsg)
-		s.wsHub.Broadcast(linkStateMsg)
+		s.sseHub().Broadcast(linkStateMsg)
+		s.wsHub().Broadcast(linkStateMsg)
 
 		// Also broadcast link card update immediately to trigger frontend auto-run tests.
 		// The frontend listens for card_update messages on the "link" card to detect
 		// link-up transitions and run speedtest/iperf tests.
 		// Multi-interface support (#754): Include interface in broadcast.
 		if linkData := s.collectLinkData(); linkData != nil {
-			s.sseHub.BroadcastCardUpdateForInterface("link", linkData, event.Interface)
-			s.wsHub.BroadcastCardUpdateForInterface("link", linkData, event.Interface)
+			s.sseHub().BroadcastCardUpdateForInterface("link", linkData, event.Interface)
+			s.wsHub().BroadcastCardUpdateForInterface("link", linkData, event.Interface)
 		}
 	case network.LinkStateDown:
 		// Link went down - notify clients
@@ -525,15 +659,15 @@ func (s *Server) onLinkStateChange(event network.LinkEvent) {
 				"timestamp": event.Timestamp.Format(time.RFC3339),
 			},
 		}
-		s.sseHub.Broadcast(linkStateMsg)
-		s.wsHub.Broadcast(linkStateMsg)
+		s.sseHub().Broadcast(linkStateMsg)
+		s.wsHub().Broadcast(linkStateMsg)
 
 		// Also broadcast link card update for proper state tracking.
 		// Frontend uses this to track DOWN state for detecting DOWN→UP transitions.
 		// Multi-interface support (#754): Include interface in broadcast.
 		if linkData := s.collectLinkData(); linkData != nil {
-			s.sseHub.BroadcastCardUpdateForInterface("link", linkData, event.Interface)
-			s.wsHub.BroadcastCardUpdateForInterface("link", linkData, event.Interface)
+			s.sseHub().BroadcastCardUpdateForInterface("link", linkData, event.Interface)
+			s.wsHub().BroadcastCardUpdateForInterface("link", linkData, event.Interface)
 		}
 	case network.LinkStateUnknown:
 		// Unknown state - log but don't take action
@@ -605,13 +739,13 @@ func (s *Server) setupSAPRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/vlan/interface", s.handleVLANInterface)
 	s.mux.Handle(
 		APIVersionPrefix+"/sap/speedtest",
-		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleSpeedtest)),
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleSpeedtest)),
 	)
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/speedtest/status", s.handleSpeedtestStatus)
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/iperf/info", s.handleIperfInfo)
 	s.mux.Handle(
 		APIVersionPrefix+"/sap/iperf/client",
-		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleIperfClient)),
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleIperfClient)),
 	)
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/iperf/client/status", s.handleIperfClientStatus)
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/iperf/server", s.handleIperfServer)
@@ -620,7 +754,7 @@ func (s *Server) setupSAPRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/settings", s.handleHealthChecksSettings)
 	s.mux.Handle(
 		APIVersionPrefix+"/sap/health-checks/run",
-		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleHealthChecks)),
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleHealthChecks)),
 	)
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/snmp/settings", s.handleSNMPSettings)
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/system/health", s.handleSystemHealth)
@@ -640,14 +774,14 @@ func (s *Server) setupShellRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices", s.handleDevices)
 	s.mux.Handle(
 		APIVersionPrefix+"/shell/devices/scan",
-		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleDevicesScan)),
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleDevicesScan)),
 	)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices/status", s.handleDevicesStatus)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices/settings", s.handleDevicesSettings)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices/subnets", s.handleDevicesSubnets)
 	s.mux.Handle(
 		APIVersionPrefix+"/shell/vulnerabilities/scan",
-		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleVulnerabilityScan)),
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleVulnerabilityScan)),
 	)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/status", s.handleVulnerabilityStatus)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/results", s.handleVulnerabilityResults)
@@ -666,7 +800,7 @@ func (s *Server) setupShellRoutes() {
 func (s *Server) setupRootsRoutes() {
 	s.mux.Handle(
 		APIVersionPrefix+"/roots/traceroute",
-		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.handleTraceroute)),
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleTraceroute)),
 	)
 	s.mux.HandleFunc(APIVersionPrefix+"/roots/path", s.handlePath)
 }
@@ -694,11 +828,11 @@ func (s *Server) setupCanopyRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/settings", s.updateSurveySettings)
 	s.mux.Handle(
 		APIVersionPrefix+"/canopy/survey/import/airmapper",
-		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.importAirMapper)),
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.importAirMapper)),
 	)
 	s.mux.Handle(
 		APIVersionPrefix+"/canopy/survey/heatmap",
-		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.getSurveyHeatmap)),
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.getSurveyHeatmap)),
 	)
 	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/dead-zones", s.getSurveyDeadZones)
 	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/floors", s.handleSurveyFloors)
@@ -708,7 +842,7 @@ func (s *Server) setupCanopyRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/active-floor", s.setActiveFloor)
 	s.mux.Handle(
 		APIVersionPrefix+"/canopy/survey/report",
-		s.endpointRateLimiter.RateLimitMiddleware(http.HandlerFunc(s.generateSurveyReport)),
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.generateSurveyReport)),
 	)
 }
 
@@ -998,8 +1132,8 @@ func (s *Server) Start() error {
 					bodyLimitMiddleware(
 						corsMiddleware(
 							i18n.Middleware()(
-								s.authManager.Middleware(
-									s.csrfManager.CSRFMiddleware(s.mux)))))))))
+								s.authManager().Middleware(
+									s.csrfManager().CSRFMiddleware(s.mux)))))))))
 
 	s.httpServer = &http.Server{
 		Addr:         addr,
@@ -1014,20 +1148,20 @@ func (s *Server) Start() error {
 	s.startBroadcastLoop()
 
 	// Start link state monitor
-	if err := s.linkMonitor.Start(); err != nil {
+	if err := s.linkMonitor().Start(); err != nil {
 		logging.GetLogger().Warn("Link monitor failed to start", "error", err)
 	} else {
 		logging.GetLogger().Info("Link monitor started",
 			"interface", s.config.Interface.Default,
-			"state", s.linkMonitor.GetState())
+			"state", s.linkMonitor().GetState())
 	}
 
 	// Start unified discovery service.
-	if err := s.discoveryService.Start(); err != nil {
+	if err := s.discoveryService().Start(); err != nil {
 		logging.GetLogger().
 			Warn("Discovery service failed to start (may require root)", "error", err)
 	} else {
-		status := s.discoveryService.GetStatus()
+		status := s.discoveryService().GetStatus()
 		logging.GetLogger().Info("Discovery service started",
 			"methods", status.ActiveMethods)
 	}
@@ -1043,17 +1177,17 @@ func (s *Server) Start() error {
 			)
 			defer cancel()
 			logging.GetLogger().Info("Triggering initial device discovery scan on startup")
-			if err := s.deviceDiscovery.Scan(ctx); err != nil {
+			if err := s.deviceDiscovery().Scan(ctx); err != nil {
 				logging.GetLogger().Warn("Initial device discovery scan failed", "error", err)
 			} else {
 				logging.GetLogger().Info("Initial device discovery scan completed",
-					"deviceCount", s.deviceDiscovery.Count())
+					"deviceCount", s.deviceDiscovery().Count())
 			}
 		}()
 	}
 
 	// Start VLAN traffic monitor (requires root/CAP_NET_RAW)
-	if err := s.vlanTrafficMonitor.Start(); err != nil {
+	if err := s.vlanTrafficMonitor().Start(); err != nil {
 		logging.GetLogger().
 			Warn("VLAN traffic monitor failed to start (may require root)", "error", err)
 	} else {
@@ -1331,38 +1465,38 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 	// Stop all services (fixes #524 - services will complete gracefully)
 	logging.GetLogger().InfoContext(ctx, "Stopping WebSocket hub...")
-	s.wsHub.Shutdown()
+	s.wsHub().Shutdown()
 
 	logging.GetLogger().InfoContext(ctx, "Stopping SSE hub...")
-	s.sseHub.Shutdown()
+	s.sseHub().Shutdown()
 
 	logging.GetLogger().InfoContext(ctx, "Stopping link monitor...")
-	s.linkMonitor.Stop()
+	s.linkMonitor().Stop()
 
 	logging.GetLogger().InfoContext(ctx, "Stopping discovery service...")
-	s.discoveryService.Stop()
+	s.discoveryService().Stop()
 
 	logging.GetLogger().InfoContext(ctx, "Stopping VLAN traffic monitor...")
-	s.vlanTrafficMonitor.Stop()
+	s.vlanTrafficMonitor().Stop()
 
 	logging.GetLogger().InfoContext(ctx, "Stopping rate limiters...")
-	s.loginRateLimiter.Stop()
-	s.endpointRateLimiter.Stop()
+	s.loginRateLimiter().Stop()
+	s.endpointRateLimiter().Stop()
 
 	logging.GetLogger().InfoContext(ctx, "Stopping CSRF manager...")
-	s.csrfManager.Stop()
+	s.csrfManager().Stop()
 
 	// Stop data retention goroutine (fixes #848)
-	if s.retentionStopCh != nil {
+	if s.services.Database.RetentionStopCh != nil {
 		logging.GetLogger().InfoContext(ctx, "Stopping data retention goroutine...")
-		close(s.retentionStopCh)
-		s.retentionStopCh = nil
+		close(s.services.Database.RetentionStopCh)
+		s.services.Database.RetentionStopCh = nil
 	}
 
 	// Close database connection (#755)
-	if s.db != nil {
+	if s.db() != nil {
 		logging.GetLogger().InfoContext(ctx, "Closing database connection...")
-		if err := s.db.Close(); err != nil {
+		if err := s.db().Close(); err != nil {
 			logging.GetLogger().ErrorContext(ctx, "Error closing database", "error", err)
 		}
 	}
@@ -1375,15 +1509,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-// Hub returns the WebSocket hub.
-func (s *Server) Hub() *Hub {
-	return s.wsHub
-}
-
-// DB returns the database connection (#755).
-func (s *Server) DB() *database.DB {
-	return s.db
-}
+// These methods are now defined via accessor methods in the Server struct section above.
 
 // startDataRetention runs periodic data cleanup based on retention policy (#755).
 // The goroutine respects shutdown signals to avoid leaks (fixes #848).
@@ -1404,14 +1530,14 @@ func (s *Server) startDataRetention(retentionDays int) {
 
 	for {
 		select {
-		case <-s.retentionStopCh:
+		case <-s.services.Database.RetentionStopCh:
 			logging.GetLogger().Debug("Data retention goroutine shutting down")
 			return
 		case <-ticker.C:
-			if s.db == nil {
+			if s.db() == nil {
 				return
 			}
-			result, err := s.db.RunCleanup(context.Background(), policy)
+			result, err := s.db().RunCleanup(context.Background(), policy)
 			if err != nil {
 				logging.GetLogger().Error("Data retention cleanup failed", "error", err)
 				continue

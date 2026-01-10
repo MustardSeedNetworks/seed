@@ -241,7 +241,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Also save settings to the active profile (fixes #781)
-	if s.db != nil {
+	if s.db() != nil {
 		if err := s.saveSettingsToActiveProfile(ctx, logger); err != nil {
 			sendJSONResponse(w, logger, http.StatusInternalServerError, map[string]string{
 				"error": "Failed to save settings",
@@ -257,10 +257,10 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 // This ensures profile-specific settings are persisted (fixes #781).
 func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.Logger) error {
 	// Get active profile ID
-	activeID, err := s.db.Settings().GetValue(ctx, database.SettingKeyActiveProfile)
+	activeID, err := s.db().Settings().GetValue(ctx, database.SettingKeyActiveProfile)
 	if err != nil || activeID == "" {
 		// No active profile, try to get default
-		defaultProfile, getDefaultErr := s.db.Profiles().GetDefault(ctx)
+		defaultProfile, getDefaultErr := s.db().Profiles().GetDefault(ctx)
 		if getDefaultErr != nil {
 			// No profile exists - this is not an error, just nothing to save to
 			logger.DebugContext(ctx,
@@ -274,7 +274,7 @@ func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.L
 	}
 
 	// Get the profile
-	profile, err := s.db.Profiles().Get(ctx, activeID)
+	profile, err := s.db().Profiles().Get(ctx, activeID)
 	if err != nil {
 		logger.WarnContext(ctx,
 			"Failed to get active profile for settings save",
@@ -307,7 +307,7 @@ func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.L
 
 	// Update profile
 	profile.ConfigJSON = configJSON
-	if updateErr := s.db.Profiles().Update(ctx, profile); updateErr != nil {
+	if updateErr := s.db().Profiles().Update(ctx, profile); updateErr != nil {
 		logger.ErrorContext(ctx,
 			"Failed to save settings to profile",
 			"error",
@@ -1014,7 +1014,7 @@ func (s *Server) getLinkSettings(w http.ResponseWriter, r *http.Request) {
 		AvailableModes: []string{},
 	}
 
-	if s.db != nil {
+	if s.db() != nil {
 		profileSettings, err := s.getActiveProfileSettings(ctx)
 		if err == nil && profileSettings != nil {
 			settings = profileSettings.Link
@@ -1064,7 +1064,7 @@ func (s *Server) updateLinkSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save to active profile
-	if s.db != nil {
+	if s.db() != nil {
 		if err := s.updateActiveProfileLinkSettings(ctx, logger, updates); err != nil {
 			sendErrorResponseWithDetails(
 				w,
@@ -1134,7 +1134,7 @@ func (s *Server) getCableTestSettings(w http.ResponseWriter, r *http.Request) {
 		Enabled: true,
 	}
 
-	if s.db != nil {
+	if s.db() != nil {
 		profileSettings, err := s.getActiveProfileSettings(ctx)
 		if err == nil && profileSettings != nil {
 			settings = profileSettings.CableTest
@@ -1167,7 +1167,7 @@ func (s *Server) updateCableTestSettings(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Save to active profile
-	if s.db != nil {
+	if s.db() != nil {
 		if err := s.updateActiveProfileCableTestSettings(ctx, logger, updates); err != nil {
 			sendErrorResponseWithDetails(
 				w,
@@ -1209,10 +1209,10 @@ func (s *Server) updateActiveProfileCableTestSettings(
 // getActiveProfileSettings retrieves settings from the active profile.
 func (s *Server) getActiveProfileSettings(ctx context.Context) (*config.ProfileSettings, error) {
 	// Get active profile ID
-	activeID, err := s.db.Settings().GetValue(ctx, database.SettingKeyActiveProfile)
+	activeID, err := s.db().Settings().GetValue(ctx, database.SettingKeyActiveProfile)
 	if err != nil || activeID == "" {
 		// Try to get default profile
-		defaultProfile, getErr := s.db.Profiles().GetDefault(ctx)
+		defaultProfile, getErr := s.db().Profiles().GetDefault(ctx)
 		if getErr != nil {
 			return nil, getErr
 		}
@@ -1220,7 +1220,7 @@ func (s *Server) getActiveProfileSettings(ctx context.Context) (*config.ProfileS
 	}
 
 	// Get the profile
-	profile, err := s.db.Profiles().Get(ctx, activeID)
+	profile, err := s.db().Profiles().Get(ctx, activeID)
 	if err != nil {
 		return nil, err
 	}
@@ -1240,10 +1240,10 @@ func (s *Server) saveActiveProfileSettings(
 	settings *config.ProfileSettings,
 ) error {
 	// Get active profile ID
-	activeID, err := s.db.Settings().GetValue(ctx, database.SettingKeyActiveProfile)
+	activeID, err := s.db().Settings().GetValue(ctx, database.SettingKeyActiveProfile)
 	if err != nil || activeID == "" {
 		// Try to get default profile
-		defaultProfile, getErr := s.db.Profiles().GetDefault(ctx)
+		defaultProfile, getErr := s.db().Profiles().GetDefault(ctx)
 		if getErr != nil {
 			logger.DebugContext(ctx,
 				"No active or default profile to save settings to",
@@ -1256,7 +1256,7 @@ func (s *Server) saveActiveProfileSettings(
 	}
 
 	// Get the profile
-	profile, err := s.db.Profiles().Get(ctx, activeID)
+	profile, err := s.db().Profiles().Get(ctx, activeID)
 	if err != nil {
 		return err
 	}
@@ -1269,7 +1269,7 @@ func (s *Server) saveActiveProfileSettings(
 
 	// Update profile
 	profile.ConfigJSON = configJSON
-	if updateErr := s.db.Profiles().Update(ctx, profile); updateErr != nil {
+	if updateErr := s.db().Profiles().Update(ctx, profile); updateErr != nil {
 		logger.ErrorContext(ctx,
 			"Failed to save settings to profile",
 			"error",

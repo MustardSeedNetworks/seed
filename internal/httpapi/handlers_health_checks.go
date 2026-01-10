@@ -251,8 +251,8 @@ func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request)
 func (s *Server) applyDNSSettings(req *TestsSettingsResponse) {
 	if req.DNSHostname != "" {
 		s.config.DNS.TestHostname = req.DNSHostname
-		if s.dnsTester != nil {
-			s.dnsTester.SetTestHostname(req.DNSHostname)
+		if s.dnsTester() != nil {
+			s.dnsTester().SetTestHostname(req.DNSHostname)
 		}
 	}
 
@@ -263,7 +263,7 @@ func (s *Server) applyDNSSettings(req *TestsSettingsResponse) {
 			config.DNSServer{Address: d.Address, Enabled: d.Enabled},
 		)
 	}
-	if s.dnsTester != nil {
+	if s.dnsTester() != nil {
 		configuredServers := make([]dns.ConfiguredServer, 0, len(s.config.DNS.Servers))
 		for _, d := range s.config.DNS.Servers {
 			configuredServers = append(
@@ -271,7 +271,7 @@ func (s *Server) applyDNSSettings(req *TestsSettingsResponse) {
 				dns.ConfiguredServer{Address: d.Address, Enabled: d.Enabled},
 			)
 		}
-		s.dnsTester.SetConfiguredServers(configuredServers)
+		s.dnsTester().SetConfiguredServers(configuredServers)
 	}
 }
 
@@ -324,8 +324,8 @@ func (s *Server) applyPerformanceSettings(req *TestsSettingsResponse) {
 
 	s.config.Speedtest.ServerID = req.Speedtest.ServerID
 	s.config.Speedtest.AutoRunOnLink = req.Speedtest.AutoRunOnLink
-	if s.speedtestTester != nil {
-		s.speedtestTester.SetServerID(req.Speedtest.ServerID)
+	if s.speedtestTester() != nil {
+		s.speedtestTester().SetServerID(req.Speedtest.ServerID)
 	}
 
 	s.config.Iperf.AutoRunOnLink = req.Iperf.AutoRunOnLink

@@ -31,7 +31,7 @@ func NewTestServer() *Server {
 // GetAuthenticatedHandler returns the server's handler with auth middleware applied.
 // This is used by tests to get the full middleware stack.
 func (s *Server) GetAuthenticatedHandler() http.Handler {
-	return corsMiddleware(s.authManager.Middleware(s.mux))
+	return corsMiddleware(s.authManager().Middleware(s.mux))
 }
 
 // NewTestServerWithConfig creates a test server with a specific config.
@@ -44,46 +44,51 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 		netMgr = nil
 	}
 
-	// Create server with all required managers
+	// Create server with ServiceContainer (#888)
 	s := &Server{
 		config:        cfg,
 		configPath:    "/tmp/test-config.yaml",
 		logPath:       "/tmp/test.log",
 		mux:           http.NewServeMux(),
-		netManager:    netMgr,
 		icmpAvailable: true,
-		authManager: auth.NewManager(
-			cfg.Auth.JWTSecret,
-			cfg.Auth.SessionTimeout,
-			cfg.Auth.DefaultUsername,
-			cfg.Auth.DefaultPasswordHash,
-		),
-		csrfManager:         auth.NewCSRFManager(),
-		loginRateLimiter:    NewRateLimiter(DefaultRateLimitConfig()),
-		endpointRateLimiter: NewEndpointRateLimiter(DefaultEndpointRateLimitConfig()),
-		linkMonitor:         network.NewLinkMonitor(cfg.Interface.Default),
-		deviceDiscovery:     discovery.NewDeviceDiscovery(cfg.Interface.Default),
-		discoveryService: discovery.NewService(
-			cfg,
-			cfg.Interface.Default,
-			nil,
-		), // nil profiler = use internal
-		dnsTester:          dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds()),
-		dnsSecurityScanner: dns.NewSecurityScanner(dns.DefaultSecurityScanConfig()),
-		dhcpMonitor:        dhcp.NewMonitor(cfg.Interface.Default),
-		gatewayTester:      gateway.NewTester(gateway.DefaultThresholds()),
-		vlanManager:        vlan.NewManager(cfg.Interface.Default),
-		vlanTrafficMonitor: vlan.NewTrafficMonitor(cfg.Interface.Default),
-		wifiManager:        wifi.NewManager(cfg.Interface.Default),
-		cableTester:        cable.NewTester(cfg.Interface.Default),
-		speedtestTester:    speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID),
-		iperfManager:       iperf.NewManager(),
-		publicipChecker:    publicip.NewChecker(),
-		setupTokenManager:  NewSetupTokenManager(), // Fixes test initialization
+		services:      NewServiceContainer(),
 	}
 
+	// Initialize services in container
+	s.services.Network.Manager = netMgr
+	s.services.Network.LinkMonitor = network.NewLinkMonitor(cfg.Interface.Default)
+
+	s.services.Auth.Manager = auth.NewManager(
+		cfg.Auth.JWTSecret,
+		cfg.Auth.SessionTimeout,
+		cfg.Auth.DefaultUsername,
+		cfg.Auth.DefaultPasswordHash,
+	)
+	s.services.Auth.CSRF = auth.NewCSRFManager()
+	s.services.Auth.SetupToken = NewSetupTokenManager()
+	s.services.Auth.TrustedProxies = NewTrustedProxies("") // Empty for testing
+
+	s.services.RateLimit.Login = NewRateLimiter(DefaultRateLimitConfig())
+	s.services.RateLimit.Endpoint = NewEndpointRateLimiter(DefaultEndpointRateLimitConfig())
+
+	s.services.Discovery.Device = discovery.NewDeviceDiscovery(cfg.Interface.Default)
+	s.services.Discovery.Service = discovery.NewService(cfg, cfg.Interface.Default, nil)
+
+	s.services.Sap.DNS = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
+	s.services.Sap.DNSSecurity = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
+	s.services.Sap.DHCP = dhcp.NewMonitor(cfg.Interface.Default)
+	s.services.Sap.Gateway = gateway.NewTester(gateway.DefaultThresholds())
+	s.services.Sap.VLAN = vlan.NewManager(cfg.Interface.Default)
+	s.services.Sap.VLANTraffic = vlan.NewTrafficMonitor(cfg.Interface.Default)
+	s.services.Sap.Speedtest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
+	s.services.Sap.Iperf = iperf.NewManager()
+	s.services.Sap.Cable = cable.NewTester(cfg.Interface.Default)
+	s.services.Sap.PublicIP = publicip.NewChecker()
+
+	s.services.Canopy.WiFi = wifi.NewManager(cfg.Interface.Default)
+
 	// Initialize WebSocket hub
-	s.wsHub = NewHub()
+	s.services.RealTime.WSHub = NewHub()
 
 	// Setup routes
 	s.setupRoutes()

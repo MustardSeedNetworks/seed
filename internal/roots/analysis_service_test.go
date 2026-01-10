@@ -464,19 +464,7 @@ func TestScoreToDescription_AllBoundaries(t *testing.T) {
 func TestAnalysisService_AnalyzePath_Comprehensive(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name           string
-		result         *roots.TracerouteResult
-		wantErr        bool
-		wantScoreMin   int
-		wantScoreMax   int
-		wantHops       int
-		wantLossMin    float64
-		wantLossMax    float64
-		wantAvgRTTMin  float64
-		wantAvgRTTMax  float64
-		wantBottleneck int
-	}{
+	tests := []analyzePathCase{
 		{
 			name:    "nil result",
 			result:  nil,
@@ -555,56 +543,101 @@ func TestAnalysisService_AnalyzePath_Comprehensive(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			analysis, err := svc.AnalyzePath(context.Background(), tt.result)
-
-			if (err != nil) != tt.wantErr {
-				t.Errorf("AnalyzePath() error = %v, wantErr = %v", err, tt.wantErr)
-				return
-			}
-
-			if tt.wantErr {
-				return
-			}
-
-			if analysis == nil {
-				t.Fatal("analysis should not be nil")
-			}
-
-			if analysis.Hops != tt.wantHops {
-				t.Errorf("Hops = %d, want %d", analysis.Hops, tt.wantHops)
-			}
-
-			if analysis.Score < tt.wantScoreMin || analysis.Score > tt.wantScoreMax {
-				t.Errorf("Score = %d, want between %d and %d",
-					analysis.Score, tt.wantScoreMin, tt.wantScoreMax)
-			}
-
-			if tt.wantLossMax > 0 {
-				if analysis.PacketLoss < tt.wantLossMin || analysis.PacketLoss > tt.wantLossMax {
-					t.Errorf("PacketLoss = %.2f%%, want between %.2f%% and %.2f%%",
-						analysis.PacketLoss, tt.wantLossMin, tt.wantLossMax)
-				}
-			}
-
-			if tt.wantAvgRTTMax > 0 {
-				if analysis.AverageRTT < tt.wantAvgRTTMin || analysis.AverageRTT > tt.wantAvgRTTMax {
-					t.Errorf("AverageRTT = %.2f, want between %.2f and %.2f",
-						analysis.AverageRTT, tt.wantAvgRTTMin, tt.wantAvgRTTMax)
-				}
-			}
-
-			if tt.wantBottleneck > 0 {
-				if len(analysis.Bottlenecks) < tt.wantBottleneck {
-					t.Errorf("Bottlenecks count = %d, want at least %d",
-						len(analysis.Bottlenecks), tt.wantBottleneck)
-				}
-			}
-
-			if analysis.Analysis == "" {
-				t.Error("Analysis text should not be empty")
-			}
+			runAnalyzePathCase(t, svc, tt)
 		})
+	}
+}
+
+type analyzePathCase struct {
+	name           string
+	result         *roots.TracerouteResult
+	wantErr        bool
+	wantScoreMin   int
+	wantScoreMax   int
+	wantHops       int
+	wantLossMin    float64
+	wantLossMax    float64
+	wantAvgRTTMin  float64
+	wantAvgRTTMax  float64
+	wantBottleneck int
+}
+
+func runAnalyzePathCase(t *testing.T, svc *roots.AnalysisService, tt analyzePathCase) {
+	t.Helper()
+
+	analysis, err := svc.AnalyzePath(context.Background(), tt.result)
+	if (err != nil) != tt.wantErr {
+		t.Errorf("AnalyzePath() error = %v, wantErr = %v", err, tt.wantErr)
+		return
+	}
+
+	if tt.wantErr {
+		return
+	}
+
+	if analysis == nil {
+		t.Fatal("analysis should not be nil")
+	}
+
+	assertAnalysisValues(t, analysis, tt)
+}
+
+func assertAnalysisValues(t *testing.T, analysis *roots.PathAnalysis, tt analyzePathCase) {
+	t.Helper()
+
+	if analysis.Hops != tt.wantHops {
+		t.Errorf("Hops = %d, want %d", analysis.Hops, tt.wantHops)
+	}
+
+	if analysis.Score < tt.wantScoreMin || analysis.Score > tt.wantScoreMax {
+		t.Errorf("Score = %d, want between %d and %d", analysis.Score, tt.wantScoreMin, tt.wantScoreMax)
+	}
+
+	assertPacketLossRange(t, analysis, tt)
+	assertAverageRTTRange(t, analysis, tt)
+	assertBottlenecks(t, analysis, tt)
+
+	if analysis.Analysis == "" {
+		t.Error("Analysis text should not be empty")
+	}
+}
+
+func assertPacketLossRange(t *testing.T, analysis *roots.PathAnalysis, tt analyzePathCase) {
+	t.Helper()
+
+	if tt.wantLossMax <= 0 {
+		return
+	}
+
+	if analysis.PacketLoss < tt.wantLossMin || analysis.PacketLoss > tt.wantLossMax {
+		t.Errorf("PacketLoss = %.2f%%, want between %.2f%% and %.2f%%",
+			analysis.PacketLoss, tt.wantLossMin, tt.wantLossMax)
+	}
+}
+
+func assertAverageRTTRange(t *testing.T, analysis *roots.PathAnalysis, tt analyzePathCase) {
+	t.Helper()
+
+	if tt.wantAvgRTTMax <= 0 {
+		return
+	}
+
+	if analysis.AverageRTT < tt.wantAvgRTTMin || analysis.AverageRTT > tt.wantAvgRTTMax {
+		t.Errorf("AverageRTT = %.2f, want between %.2f and %.2f",
+			analysis.AverageRTT, tt.wantAvgRTTMin, tt.wantAvgRTTMax)
+	}
+}
+
+func assertBottlenecks(t *testing.T, analysis *roots.PathAnalysis, tt analyzePathCase) {
+	t.Helper()
+
+	if tt.wantBottleneck <= 0 {
+		return
+	}
+
+	if len(analysis.Bottlenecks) < tt.wantBottleneck {
+		t.Errorf("Bottlenecks count = %d, want at least %d",
+			len(analysis.Bottlenecks), tt.wantBottleneck)
 	}
 }
 

@@ -541,6 +541,9 @@ func TestPathAnalysis_Fields(t *testing.T) {
 	if analysis.PacketLoss != 5.0 {
 		t.Errorf("PacketLoss = %f, want %f", analysis.PacketLoss, 5.0)
 	}
+	if analysis.Analysis != "Good path quality" {
+		t.Errorf("Analysis = %q, want %q", analysis.Analysis, "Good path quality")
+	}
 	if analysis.ASNTransitions != 3 {
 		t.Errorf("ASNTransitions = %d, want %d", analysis.ASNTransitions, 3)
 	}

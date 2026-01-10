@@ -670,7 +670,8 @@ func TestGatewayResponse(t *testing.T) {
 func TestGetInterfaceFromRequest(t *testing.T) {
 	// Test with query parameter provided (should use query param regardless of netManager).
 	t.Run("query param provided", func(t *testing.T) {
-		server := &api.Server{} // nil netManager
+		server := &api.Server{}
+		server.InitServices() // nil netManager
 		req, _ := http.NewRequest(http.MethodGet, "/api/link?interface=eth0", http.NoBody)
 		result := server.GetInterfaceFromRequest(req)
 		if result != "eth0" {
@@ -681,6 +682,7 @@ func TestGetInterfaceFromRequest(t *testing.T) {
 	// Test with no query parameter and nil netManager (should return empty).
 	t.Run("no query param, nil netManager", func(t *testing.T) {
 		server := &api.Server{}
+		server.InitServices()
 		req, _ := http.NewRequest(http.MethodGet, "/api/link", http.NoBody)
 		result := server.GetInterfaceFromRequest(req)
 		if result != "" {
@@ -691,6 +693,7 @@ func TestGetInterfaceFromRequest(t *testing.T) {
 	// Test with special interface name.
 	t.Run("special interface name", func(t *testing.T) {
 		server := &api.Server{}
+		server.InitServices()
 		req, _ := http.NewRequest(http.MethodGet, "/api/link?interface=enp0s3", http.NoBody)
 		result := server.GetInterfaceFromRequest(req)
 		if result != "enp0s3" {

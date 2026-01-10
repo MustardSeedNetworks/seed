@@ -109,14 +109,14 @@ func (s *Server) handleDNS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.dnsTester == nil {
+	if s.dnsTester() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.health.dnsNotAvailable"), "")
 		return
 	}
 
 	currentIface := s.getInterfaceFromRequest(r)
-	result := s.dnsTester.Test(r.Context())
+	result := s.dnsTester().Test(r.Context())
 	resp := buildDNSResponse(result, currentIface)
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)
@@ -138,7 +138,7 @@ func (s *Server) handleDNSSecurity(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if s.dnsSecurityScanner == nil {
+	if s.dnsSecurityScanner() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.health.dnsSecurityNotAvailable"), "")
 		return
@@ -179,14 +179,14 @@ func (s *Server) handleDNSSecurity(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Check if already running
-		if s.dnsSecurityScanner.IsRunning() {
+		if s.dnsSecurityScanner().IsRunning() {
 			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 				ErrCodeConflict, localizer.T("errors.health.scanInProgress"), "")
 			return
 		}
 
 		// Run concurrent scans
-		results, err := s.dnsSecurityScanner.ScanServers(r.Context(), req.Servers, dnsSecurityConcurrentScans)
+		results, err := s.dnsSecurityScanner().ScanServers(r.Context(), req.Servers, dnsSecurityConcurrentScans)
 		if err != nil {
 			logger.Error("DNS security scan failed", "error", err)
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
@@ -198,7 +198,7 @@ func (s *Server) handleDNSSecurity(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodGet:
 		// Return cached results
-		results := s.dnsSecurityScanner.GetResults()
+		results := s.dnsSecurityScanner().GetResults()
 		sendJSONResponse(w, logger, http.StatusOK, results)
 
 	default:
@@ -214,7 +214,7 @@ func (s *Server) handleDNSSecuritySettings(w http.ResponseWriter, r *http.Reques
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if s.dnsSecurityScanner == nil {
+	if s.dnsSecurityScanner() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.health.dnsSecurityNotAvailable"), "")
 		return
@@ -222,7 +222,7 @@ func (s *Server) handleDNSSecuritySettings(w http.ResponseWriter, r *http.Reques
 
 	switch r.Method {
 	case http.MethodGet:
-		scanConfig := s.dnsSecurityScanner.GetConfig()
+		scanConfig := s.dnsSecurityScanner().GetConfig()
 		sendJSONResponse(w, logger, http.StatusOK, scanConfig)
 
 	case http.MethodPut:
@@ -234,7 +234,7 @@ func (s *Server) handleDNSSecuritySettings(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		s.dnsSecurityScanner.SetConfig(newConfig)
+		s.dnsSecurityScanner().SetConfig(newConfig)
 
 		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
 			"status":  "success",

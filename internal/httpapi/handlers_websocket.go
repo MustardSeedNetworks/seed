@@ -961,7 +961,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := s.authManager.ValidateToken(r.Context(), token)
+	claims, err := s.authManager().ValidateToken(r.Context(), token)
 	if err != nil {
 		logging.GetLogger().Warn("WebSocket auth failed", "error", err, "source", source)
 		logger := logging.FromContext(r.Context())
@@ -988,13 +988,13 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := &Client{
-		hub:     s.wsHub,
+		hub:     s.wsHub(),
 		conn:    conn,
 		send:    make(chan []byte, wsBroadcastBufferSize),
 		limiter: rate.NewLimiter(messageRateLimit, messageRateBurst),
 	}
 
-	s.wsHub.register <- client
+	s.wsHub().register <- client
 
 	// Start goroutines for reading and writing
 	go client.writePump()
@@ -1008,8 +1008,8 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 func (s *Server) sendInitialState(client *Client) {
 	// Check if current interface is wireless
 	isWireless := false
-	if s.wifiManager != nil {
-		isWireless = s.wifiManager.IsWireless()
+	if s.wifiManager() != nil {
+		isWireless = s.wifiManager().IsWireless()
 	}
 
 	// Build initial state with actual card data

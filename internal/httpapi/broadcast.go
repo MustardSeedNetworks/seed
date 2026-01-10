@@ -85,13 +85,13 @@ func (s *Server) startBroadcastLoop() {
 			select {
 			case <-ticker.C:
 				// Only broadcast if there are connected clients
-				if s.wsHub.ClientCount() == 0 {
+				if s.wsHub().ClientCount() == 0 {
 					continue
 				}
 
 				s.broadcastAllCards()
 
-			case <-s.wsHub.shutdown:
+			case <-s.wsHub().shutdown:
 				return
 			}
 		}
@@ -122,33 +122,33 @@ func (s *Server) startBroadcastLoop() {
 func (s *Server) broadcastAllCards() {
 	// Get current interface for scoped broadcasts
 	currentIface := ""
-	if s.netManager != nil {
-		currentIface = s.netManager.GetCurrentInterface()
+	if s.netManager() != nil {
+		currentIface = s.netManager().GetCurrentInterface()
 	}
 
 	// Link card (interface-specific)
 	if linkData := s.collectLinkData(); linkData != nil {
-		s.wsHub.BroadcastCardUpdateForInterface("link", linkData, currentIface)
+		s.wsHub().BroadcastCardUpdateForInterface("link", linkData, currentIface)
 	}
 
 	// Gateway card (interface-specific - routes through selected interface)
 	if gatewayData := s.collectGatewayData(); gatewayData != nil {
-		s.wsHub.BroadcastCardUpdateForInterface("gateway", gatewayData, currentIface)
+		s.wsHub().BroadcastCardUpdateForInterface("gateway", gatewayData, currentIface)
 	}
 
 	// DNS card (interface-specific - uses interface's DNS servers)
 	if dnsData := s.collectDNSData(); dnsData != nil {
-		s.wsHub.BroadcastCardUpdateForInterface("dns", dnsData, currentIface)
+		s.wsHub().BroadcastCardUpdateForInterface("dns", dnsData, currentIface)
 	}
 
 	// Discovery/Switch card (interface-specific - LLDP/CDP on selected interface)
 	if switchData := s.collectDiscoveryData(); switchData != nil {
-		s.wsHub.BroadcastCardUpdateForInterface("switch", switchData, currentIface)
+		s.wsHub().BroadcastCardUpdateForInterface("switch", switchData, currentIface)
 	}
 
 	// Public IP card (global - not interface-specific)
 	if publicIPData := s.collectPublicIPData(); publicIPData != nil {
-		s.wsHub.BroadcastCardUpdate("publicip", publicIPData)
+		s.wsHub().BroadcastCardUpdate("publicip", publicIPData)
 	}
 }
 
@@ -181,22 +181,22 @@ func (s *Server) broadcastAllCards() {
 // system calls. The 5-second broadcast interval is chosen to balance update frequency
 // with this overhead.
 func (s *Server) collectLinkData() map[string]any {
-	if s.netManager == nil {
+	if s.netManager() == nil {
 		return nil
 	}
 
-	if err := s.netManager.RefreshInterfaces(); err != nil {
+	if err := s.netManager().RefreshInterfaces(); err != nil {
 		logging.GetLogger().Warn("Failed to refresh interfaces", "error", err)
 		return nil
 	}
-	currentIface := s.netManager.GetCurrentInterface()
+	currentIface := s.netManager().GetCurrentInterface()
 
-	ifaceInfo, err := s.netManager.GetInterface(currentIface)
+	ifaceInfo, err := s.netManager().GetInterface(currentIface)
 	if err != nil {
 		return nil
 	}
 
-	linkStatus, err := s.netManager.GetLinkStatus(currentIface)
+	linkStatus, err := s.netManager().GetLinkStatus(currentIface)
 	if err != nil {
 		logging.GetLogger().
 			Warn("Failed to get link status", "interface", currentIface, "error", err)
@@ -224,11 +224,11 @@ func (s *Server) collectLinkData() map[string]any {
 
 // collectGatewayData gathers gateway ping data from cached stats.
 func (s *Server) collectGatewayData() map[string]any {
-	if s.gatewayTester == nil {
+	if s.gatewayTester() == nil {
 		return nil
 	}
 
-	stats := s.gatewayTester.GetStats()
+	stats := s.gatewayTester().GetStats()
 	if stats == nil {
 		return nil
 	}
@@ -249,7 +249,7 @@ func (s *Server) collectGatewayData() map[string]any {
 
 // collectDNSData gathers DNS test data.
 func (s *Server) collectDNSData() map[string]any {
-	if s.dnsTester == nil {
+	if s.dnsTester() == nil {
 		return nil
 	}
 
@@ -257,7 +257,7 @@ func (s *Server) collectDNSData() map[string]any {
 	ctx, cancel := context.WithTimeout(context.Background(), broadcastDNSTimeoutSec*time.Second)
 	defer cancel()
 
-	results := s.dnsTester.Test(ctx)
+	results := s.dnsTester().Test(ctx)
 	if results == nil {
 		return nil
 	}
@@ -304,12 +304,12 @@ func (s *Server) collectDNSData() map[string]any {
 // collectDiscoveryData gathers LLDP/CDP/EDP neighbor data from the unified discovery service.
 // Returns ALL discovered neighbors, not just the first one.
 func (s *Server) collectDiscoveryData() map[string]any {
-	if s.discoveryService == nil {
+	if s.discoveryService() == nil {
 		return nil
 	}
 
 	// Get all protocol neighbors from unified service
-	neighbors := s.discoveryService.GetNeighbors()
+	neighbors := s.discoveryService().GetNeighbors()
 	totalCount := len(neighbors)
 	if totalCount == 0 {
 		return nil
@@ -340,9 +340,9 @@ func (s *Server) collectDiscoveryData() map[string]any {
 	// Also get discovered devices count and status from pipeline/service
 	var deviceCount int
 	var serviceStatus *discovery.ServiceStatus
-	if s.discoveryService != nil {
-		deviceCount = len(s.discoveryService.GetDevices())
-		serviceStatus = s.discoveryService.GetStatus()
+	if s.discoveryService() != nil {
+		deviceCount = len(s.discoveryService().GetDevices())
+		serviceStatus = s.discoveryService().GetStatus()
 	}
 
 	// Return first neighbor as "primary" for backwards compatibility,
@@ -428,7 +428,7 @@ func addServiceStatusToResult(result map[string]any, status *discovery.ServiceSt
 
 // collectPublicIPData gathers public IP address information.
 func (s *Server) collectPublicIPData() map[string]any {
-	if s.publicipChecker == nil {
+	if s.publicipChecker() == nil {
 		return nil
 	}
 
@@ -436,7 +436,7 @@ func (s *Server) collectPublicIPData() map[string]any {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	result := s.publicipChecker.GetPublicIP(ctx)
+	result := s.publicipChecker().GetPublicIP(ctx)
 	if result == nil {
 		return nil
 	}

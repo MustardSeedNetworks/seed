@@ -136,13 +136,7 @@ func TestModule_ServicesConcurrent(t *testing.T) {
 func TestModule_Lifecycle(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name          string
-		startTimeout  time.Duration
-		wantStartErr  bool
-		wantStopErr   bool
-		callStopFirst bool
-	}{
+	tests := []moduleLifecycleCase{
 		{
 			name:         "normal lifecycle",
 			startTimeout: 100 * time.Millisecond,
@@ -160,32 +154,49 @@ func TestModule_Lifecycle(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			m := roots.New(nil, nil)
-			if m == nil {
-				t.Fatal("New() returned nil module")
-			}
-
-			ctx, cancel := context.WithTimeout(context.Background(), tt.startTimeout)
-			defer cancel()
-
-			if tt.callStopFirst {
-				// Stop should not panic even if Start wasn't called
-				if err := m.Stop(); (err != nil) != tt.wantStopErr {
-					t.Errorf("Stop() error = %v, wantStopErr = %v", err, tt.wantStopErr)
-				}
-			}
-
-			if err := m.Start(ctx); (err != nil) != tt.wantStartErr {
-				t.Errorf("Start() error = %v, wantStartErr = %v", err, tt.wantStartErr)
-			}
-
-			if !tt.callStopFirst {
-				if err := m.Stop(); (err != nil) != tt.wantStopErr {
-					t.Errorf("Stop() error = %v, wantStopErr = %v", err, tt.wantStopErr)
-				}
-			}
+			runModuleLifecycleCase(t, tt)
 		})
+	}
+}
+
+type moduleLifecycleCase struct {
+	name          string
+	startTimeout  time.Duration
+	wantStartErr  bool
+	wantStopErr   bool
+	callStopFirst bool
+}
+
+func runModuleLifecycleCase(t *testing.T, tt moduleLifecycleCase) {
+	t.Helper()
+
+	m := roots.New(nil, nil)
+	if m == nil {
+		t.Fatal("New() returned nil module")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), tt.startTimeout)
+	defer cancel()
+
+	if tt.callStopFirst {
+		assertStopResult(t, m, tt.wantStopErr)
+	}
+
+	if err := m.Start(ctx); (err != nil) != tt.wantStartErr {
+		t.Errorf("Start() error = %v, wantStartErr = %v", err, tt.wantStartErr)
+	}
+
+	if !tt.callStopFirst {
+		assertStopResult(t, m, tt.wantStopErr)
+	}
+}
+
+func assertStopResult(t *testing.T, m *roots.Module, wantStopErr bool) {
+	t.Helper()
+
+	// Stop should not panic even if Start wasn't called.
+	if err := m.Stop(); (err != nil) != wantStopErr {
+		t.Errorf("Stop() error = %v, wantStopErr = %v", err, wantStopErr)
 	}
 }
 

@@ -11,18 +11,7 @@ import (
 
 // TestBuildTestResultFromParams tests the result building logic with explicit parameters.
 func TestBuildTestResultFromParams(t *testing.T) {
-	tests := []struct {
-		name        string
-		dlSpeed     float64
-		ulSpeed     float64
-		latency     time.Duration
-		serverName  string
-		sponsor     string
-		country     string
-		host        string
-		distance    float64
-		wantLatency float64
-	}{
+	tests := []buildTestResultParamsCase{
 		{
 			name:        "typical fiber connection",
 			dlSpeed:     945.67,
@@ -123,60 +112,93 @@ func TestBuildTestResultFromParams(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tester := speedtest.NewTester()
-			startTime := time.Now().Add(-10 * time.Second) // Simulate 10 second test
-
-			result := tester.BuildTestResultFromParams(
-				tt.dlSpeed,
-				tt.ulSpeed,
-				tt.latency,
-				tt.serverName,
-				tt.sponsor,
-				tt.country,
-				tt.host,
-				tt.distance,
-				startTime,
-			)
-
-			if result == nil {
-				t.Fatal("expected non-nil result")
-			}
-
-			if result.Download != tt.dlSpeed {
-				t.Errorf("Download: got %v, want %v", result.Download, tt.dlSpeed)
-			}
-			if result.Upload != tt.ulSpeed {
-				t.Errorf("Upload: got %v, want %v", result.Upload, tt.ulSpeed)
-			}
-			if result.Latency != tt.wantLatency {
-				t.Errorf("Latency: got %v, want %v", result.Latency, tt.wantLatency)
-			}
-			if result.Server != tt.serverName {
-				t.Errorf("Server: got %q, want %q", result.Server, tt.serverName)
-			}
-
-			wantLocation := tt.sponsor + ", " + tt.country
-			if result.Location != wantLocation {
-				t.Errorf("Location: got %q, want %q", result.Location, wantLocation)
-			}
-
-			if result.Host != tt.host {
-				t.Errorf("Host: got %q, want %q", result.Host, tt.host)
-			}
-			if result.Distance != tt.distance {
-				t.Errorf("Distance: got %v, want %v", result.Distance, tt.distance)
-			}
-
-			// TestDuration should be approximately 10 seconds
-			if result.TestDuration < 9.9 || result.TestDuration > 10.5 {
-				t.Errorf("TestDuration: got %v, want ~10 seconds", result.TestDuration)
-			}
-
-			// Timestamp should be recent
-			if time.Since(result.Timestamp) > time.Second {
-				t.Errorf("Timestamp too old: %v", result.Timestamp)
-			}
+			runBuildTestResultParamsCase(t, tt)
 		})
+	}
+}
+
+type buildTestResultParamsCase struct {
+	name        string
+	dlSpeed     float64
+	ulSpeed     float64
+	latency     time.Duration
+	serverName  string
+	sponsor     string
+	country     string
+	host        string
+	distance    float64
+	wantLatency float64
+}
+
+func runBuildTestResultParamsCase(t *testing.T, tt buildTestResultParamsCase) {
+	t.Helper()
+
+	tester := speedtest.NewTester()
+	startTime := time.Now().Add(-10 * time.Second)
+
+	result := tester.BuildTestResultFromParams(
+		tt.dlSpeed,
+		tt.ulSpeed,
+		tt.latency,
+		tt.serverName,
+		tt.sponsor,
+		tt.country,
+		tt.host,
+		tt.distance,
+		startTime,
+	)
+
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+
+	assertBuildResultParamsFields(t, result, tt)
+	assertBuildResultDuration(t, result)
+	assertBuildResultTimestamp(t, result.Timestamp)
+}
+
+func assertBuildResultParamsFields(t *testing.T, result *speedtest.Result, tt buildTestResultParamsCase) {
+	t.Helper()
+
+	if result.Download != tt.dlSpeed {
+		t.Errorf("Download: got %v, want %v", result.Download, tt.dlSpeed)
+	}
+	if result.Upload != tt.ulSpeed {
+		t.Errorf("Upload: got %v, want %v", result.Upload, tt.ulSpeed)
+	}
+	if result.Latency != tt.wantLatency {
+		t.Errorf("Latency: got %v, want %v", result.Latency, tt.wantLatency)
+	}
+	if result.Server != tt.serverName {
+		t.Errorf("Server: got %q, want %q", result.Server, tt.serverName)
+	}
+
+	wantLocation := tt.sponsor + ", " + tt.country
+	if result.Location != wantLocation {
+		t.Errorf("Location: got %q, want %q", result.Location, wantLocation)
+	}
+
+	if result.Host != tt.host {
+		t.Errorf("Host: got %q, want %q", result.Host, tt.host)
+	}
+	if result.Distance != tt.distance {
+		t.Errorf("Distance: got %v, want %v", result.Distance, tt.distance)
+	}
+}
+
+func assertBuildResultDuration(t *testing.T, result *speedtest.Result) {
+	t.Helper()
+
+	if result.TestDuration < 9.9 || result.TestDuration > 10.5 {
+		t.Errorf("TestDuration: got %v, want ~10 seconds", result.TestDuration)
+	}
+}
+
+func assertBuildResultTimestamp(t *testing.T, timestamp time.Time) {
+	t.Helper()
+
+	if time.Since(timestamp) > time.Second {
+		t.Errorf("Timestamp too old: %v", timestamp)
 	}
 }
 
@@ -310,15 +332,7 @@ func TestStatusTransitionsDetailed(t *testing.T) {
 
 // TestCurrentSpeedsDuringPhases tests live speed updates during different phases.
 func TestCurrentSpeedsDuringPhases(t *testing.T) {
-	tests := []struct {
-		name             string
-		phase            string
-		downloadSpeeds   []float64
-		uploadSpeeds     []float64
-		wantFinalDL      float64
-		wantFinalUL      float64
-		checkProgression bool
-	}{
+	tests := []currentSpeedsCase{
 		{
 			name:             "download phase progression",
 			phase:            "testing_download",
@@ -350,49 +364,77 @@ func TestCurrentSpeedsDuringPhases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tester := speedtest.NewTester()
-			tester.SetStatus(tt.phase, 50)
-
-			var prevDL, prevUL float64
-			for i := range tt.downloadSpeeds {
-				tester.SetCurrentSpeeds(tt.downloadSpeeds[i], tt.uploadSpeeds[i])
-				status := tester.GetStatus()
-
-				if status.CurrentDownload != tt.downloadSpeeds[i] {
-					t.Errorf("step %d: CurrentDownload got %v, want %v",
-						i, status.CurrentDownload, tt.downloadSpeeds[i])
-				}
-				if status.CurrentUpload != tt.uploadSpeeds[i] {
-					t.Errorf("step %d: CurrentUpload got %v, want %v",
-						i, status.CurrentUpload, tt.uploadSpeeds[i])
-				}
-
-				if tt.checkProgression && i > 0 {
-					// Verify speeds are non-decreasing (simulating ramp-up)
-					if tt.phase == "testing_download" && status.CurrentDownload < prevDL {
-						t.Errorf("step %d: download speed decreased from %v to %v",
-							i, prevDL, status.CurrentDownload)
-					}
-					if tt.phase == "testing_upload" && status.CurrentUpload < prevUL {
-						t.Errorf("step %d: upload speed decreased from %v to %v",
-							i, prevUL, status.CurrentUpload)
-					}
-				}
-				prevDL = status.CurrentDownload
-				prevUL = status.CurrentUpload
-			}
-
-			// Check final values
-			status := tester.GetStatus()
-			if status.CurrentDownload != tt.wantFinalDL {
-				t.Errorf("final CurrentDownload got %v, want %v",
-					status.CurrentDownload, tt.wantFinalDL)
-			}
-			if status.CurrentUpload != tt.wantFinalUL {
-				t.Errorf("final CurrentUpload got %v, want %v",
-					status.CurrentUpload, tt.wantFinalUL)
-			}
+			runCurrentSpeedsCase(t, tt)
 		})
+	}
+}
+
+type currentSpeedsCase struct {
+	name             string
+	phase            string
+	downloadSpeeds   []float64
+	uploadSpeeds     []float64
+	wantFinalDL      float64
+	wantFinalUL      float64
+	checkProgression bool
+}
+
+func runCurrentSpeedsCase(t *testing.T, tt currentSpeedsCase) {
+	t.Helper()
+
+	tester := speedtest.NewTester()
+	tester.SetStatus(tt.phase, 50)
+
+	updateCurrentSpeeds(t, tester, tt)
+	assertFinalSpeeds(t, tester, tt)
+}
+
+func updateCurrentSpeeds(t *testing.T, tester *speedtest.Tester, tt currentSpeedsCase) {
+	t.Helper()
+
+	var prevDL, prevUL float64
+	for i := range tt.downloadSpeeds {
+		tester.SetCurrentSpeeds(tt.downloadSpeeds[i], tt.uploadSpeeds[i])
+		status := tester.GetStatus()
+
+		if status.CurrentDownload != tt.downloadSpeeds[i] {
+			t.Errorf("step %d: CurrentDownload got %v, want %v",
+				i, status.CurrentDownload, tt.downloadSpeeds[i])
+		}
+		if status.CurrentUpload != tt.uploadSpeeds[i] {
+			t.Errorf("step %d: CurrentUpload got %v, want %v",
+				i, status.CurrentUpload, tt.uploadSpeeds[i])
+		}
+
+		if tt.checkProgression && i > 0 {
+			assertNonDecreasingSpeeds(t, tt.phase, i, status.CurrentDownload, status.CurrentUpload, prevDL, prevUL)
+		}
+
+		prevDL = status.CurrentDownload
+		prevUL = status.CurrentUpload
+	}
+}
+
+func assertNonDecreasingSpeeds(t *testing.T, phase string, step int, currentDL, currentUL, prevDL, prevUL float64) {
+	t.Helper()
+
+	if phase == "testing_download" && currentDL < prevDL {
+		t.Errorf("step %d: download speed decreased from %v to %v", step, prevDL, currentDL)
+	}
+	if phase == "testing_upload" && currentUL < prevUL {
+		t.Errorf("step %d: upload speed decreased from %v to %v", step, prevUL, currentUL)
+	}
+}
+
+func assertFinalSpeeds(t *testing.T, tester *speedtest.Tester, tt currentSpeedsCase) {
+	t.Helper()
+
+	status := tester.GetStatus()
+	if status.CurrentDownload != tt.wantFinalDL {
+		t.Errorf("final CurrentDownload got %v, want %v", status.CurrentDownload, tt.wantFinalDL)
+	}
+	if status.CurrentUpload != tt.wantFinalUL {
+		t.Errorf("final CurrentUpload got %v, want %v", status.CurrentUpload, tt.wantFinalUL)
 	}
 }
 

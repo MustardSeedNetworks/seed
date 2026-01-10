@@ -42,7 +42,7 @@ func (s *Server) handleLoginRateLimited(
 	localizer *i18n.Localizer,
 	clientIP string,
 ) bool {
-	if !s.loginRateLimiter.IsBlocked(clientIP) {
+	if !s.loginRateLimiter().IsBlocked(clientIP) {
 		return false
 	}
 	logger.Warn(
@@ -56,7 +56,7 @@ func (s *Server) handleLoginRateLimited(
 	sendJSONResponse(w, logger, http.StatusTooManyRequests, map[string]any{
 		"error":              localizer.T("errors.auth.tooManyAttempts"),
 		"retry_after":        rateLimitRetryAfterSec,
-		"remaining_attempts": s.loginRateLimiter.RemainingAttempts(clientIP),
+		"remaining_attempts": s.loginRateLimiter().RemainingAttempts(clientIP),
 	})
 	return true
 }
@@ -71,8 +71,8 @@ func (s *Server) handleLoginFailure(
 	logger.Warn("Login failed", "username", username, "client_ip", clientIP,
 		"event", "auth.login.failed", "error", "invalid credentials")
 
-	blocked := s.loginRateLimiter.RecordAttempt(clientIP, false)
-	remaining := s.loginRateLimiter.RemainingAttempts(clientIP)
+	blocked := s.loginRateLimiter().RecordAttempt(clientIP, false)
+	remaining := s.loginRateLimiter().RemainingAttempts(clientIP)
 
 	if blocked {
 		logger.Warn("Account locked due to too many failed attempts",
@@ -97,12 +97,12 @@ func (s *Server) generateAndSetLoginTokens(
 	r *http.Request,
 	username string,
 ) (string, error) {
-	accessToken, err := s.authManager.GenerateAccessToken(r.Context(), username)
+	accessToken, err := s.authManager().GenerateAccessToken(r.Context(), username)
 	if err != nil {
 		return "", fmt.Errorf("access token: %w", err)
 	}
 
-	refreshToken, err := s.authManager.GenerateRefreshToken(r.Context(), username)
+	refreshToken, err := s.authManager().GenerateRefreshToken(r.Context(), username)
 	if err != nil {
 		return "", fmt.Errorf("refresh token: %w", err)
 	}
@@ -142,7 +142,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := s.authManager.Authenticate(r.Context(), req.Username, req.Password); err != nil {
+	if _, err := s.authManager().Authenticate(r.Context(), req.Username, req.Password); err != nil {
 		s.handleLoginFailure(w, logger, localizer, req.Username, clientIP)
 		return
 	}
@@ -156,7 +156,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		"event",
 		"auth.login.success",
 	)
-	s.loginRateLimiter.RecordAttempt(clientIP, true)
+	s.loginRateLimiter().RecordAttempt(clientIP, true)
 
 	accessToken, err := s.generateAndSetLoginTokens(w, r, req.Username)
 	if err != nil {
@@ -238,7 +238,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate new access token
-	newAccessToken, err := s.authManager.RefreshAccessToken(r.Context(), refreshToken)
+	newAccessToken, err := s.authManager().RefreshAccessToken(r.Context(), refreshToken)
 	if err != nil {
 		// Security audit log: invalid/expired refresh token (fixes #697)
 		clientIP := s.getClientIP(r)
@@ -313,7 +313,7 @@ func (s *Server) handleCSRFToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate CSRF token for this session
-	token, err := s.csrfManager.GenerateToken(sessionID)
+	token, err := s.csrfManager().GenerateToken(sessionID)
 	if err != nil {
 		logger.Error("Failed to generate CSRF token", "error", err)
 		sendErrorResponseWithDetails(
@@ -395,7 +395,7 @@ func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
 
 		// Generate one-time setup token (fixes #724, #758)
 		// This token must be provided when completing setup to prevent CSRF attacks
-		setupToken, err := s.setupTokenManager.GenerateToken()
+		setupToken, err := s.setupTokenManager().GenerateToken()
 		if err != nil {
 			logger.Error("Failed to generate setup token", "error", err)
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal,
@@ -415,25 +415,33 @@ type SetupCompleteRequest struct {
 	SetupToken string `json:"setupToken"` // Security fix #724, #758 - required one-time token
 }
 
-// handleSetupComplete completes initial setup by setting admin password (fixes #544 - split from handlers.go).
-// Security fix #758, #724: Requires valid setup token and only allows when setup is actually needed.
-func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-	clientIP := s.getClientIP(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694, #699
-		return
+func ensurePostMethod(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+) bool {
+	if r.Method == http.MethodPost {
+		return true
 	}
 
+	sendErrorResponseWithDetails(
+		w,
+		logger,
+		http.StatusMethodNotAllowed,
+		ErrCodeMethodNotAllowed,
+		localizer.T("errors.api.methodNotAllowed"),
+		"",
+	) // fixes #694, #699
+	return false
+}
+
+func (s *Server) ensureSetupCompletionAllowed(
+	w http.ResponseWriter,
+	logger *slog.Logger,
+	_ *i18n.Localizer,
+	clientIP string,
+) bool {
 	// Security: Only allow setup when password is still the default (fixes #758, #724)
 	// This prevents unauthenticated password reset after initial setup
 	if !auth.IsDefaultPasswordHash(s.config.Auth.DefaultPasswordHash) {
@@ -442,7 +450,7 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 			"event", "auth.setup.blocked")
 		sendErrorResponseWithDetails(w, logger, http.StatusForbidden, ErrCodeForbidden,
 			"Setup has already been completed. Use authenticated password change instead.", "")
-		return
+		return false
 	}
 
 	// Security fix #891: Check if setup mode has timed out
@@ -455,10 +463,19 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 				"event", "auth.setup.timeout_complete_blocked")
 			sendErrorResponseWithDetails(w, logger, http.StatusForbidden, ErrCodeSetupExpired,
 				"Setup mode has expired. Please restart the server to try again.", "")
-			return
+			return false
 		}
 	}
 
+	return true
+}
+
+func decodeSetupCompleteRequest(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+) (SetupCompleteRequest, bool) {
 	// Limit request body size to prevent memory exhaustion
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeAuth)
 
@@ -473,17 +490,53 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 			localizer.T("errors.api.invalidRequestBody"),
 			"",
 		) // fixes #694, #699
+		return SetupCompleteRequest{}, false
+	}
+
+	return req, true
+}
+
+func (s *Server) ensureValidSetupToken(
+	w http.ResponseWriter,
+	logger *slog.Logger,
+	clientIP string,
+	token string,
+) bool {
+	// Security fix #724, #758: Validate the one-time setup token
+	// This prevents CSRF attacks and ensures the request came from a legitimate setup session
+	if s.setupTokenManager().ValidateToken(token) {
+		return true
+	}
+
+	logger.Warn("Setup complete attempted with invalid or expired token",
+		"client_ip", clientIP,
+		"event", "auth.setup.invalid_token")
+	sendErrorResponseWithDetails(w, logger, http.StatusForbidden, ErrCodeForbidden,
+		"Invalid or expired setup token. Please refresh the setup page and try again.", "")
+	return false
+}
+
+// handleSetupComplete completes initial setup by setting admin password (fixes #544 - split from handlers.go).
+// Security fix #758, #724: Requires valid setup token and only allows when setup is actually needed.
+func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+	clientIP := s.getClientIP(r)
+
+	if !ensurePostMethod(w, r, logger, localizer) {
 		return
 	}
 
-	// Security fix #724, #758: Validate the one-time setup token
-	// This prevents CSRF attacks and ensures the request came from a legitimate setup session
-	if !s.setupTokenManager.ValidateToken(req.SetupToken) {
-		logger.Warn("Setup complete attempted with invalid or expired token",
-			"client_ip", clientIP,
-			"event", "auth.setup.invalid_token")
-		sendErrorResponseWithDetails(w, logger, http.StatusForbidden, ErrCodeForbidden,
-			"Invalid or expired setup token. Please refresh the setup page and try again.", "")
+	if !s.ensureSetupCompletionAllowed(w, logger, localizer, clientIP) {
+		return
+	}
+
+	req, ok := decodeSetupCompleteRequest(w, r, logger, localizer)
+	if !ok {
+		return
+	}
+
+	if !s.ensureValidSetupToken(w, logger, clientIP, req.SetupToken) {
 		return
 	}
 
@@ -512,8 +565,8 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	s.config.Unlock() // Explicit unlock before Save() to prevent deadlock
 
 	// Create or update user in database if available
-	if s.db != nil {
-		userStore := database.NewUserStoreAdapter(s.db)
+	if s.db() != nil {
+		userStore := database.NewUserStoreAdapter(s.db())
 		// Try to create user first (for new setups)
 		if createErr := userStore.CreateUser(r.Context(), username, hash, "admin"); createErr != nil {
 			// If user exists, update the password
@@ -524,7 +577,7 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update auth manager (also updates database via UserStore if set)
-	s.authManager.UpdatePasswordHash(r.Context(), hash)
+	s.authManager().UpdatePasswordHash(r.Context(), hash)
 
 	// Save config to disk
 	if saveErr := s.config.Save(s.configPath); saveErr != nil {

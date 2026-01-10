@@ -358,10 +358,7 @@ func TestVulnerabilityServiceStop(t *testing.T) {
 func TestVulnerabilityServiceScan(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name    string
-		targets []string
-	}{
+	tests := []vulnerabilityScanCase{
 		{
 			name:    "empty_targets",
 			targets: []string{},
@@ -383,44 +380,58 @@ func TestVulnerabilityServiceScan(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			cfg := testutil.NewConfigBuilder().
-				WithInterface("lo").
-				Build()
-
-			module := shell.New(cfg, nil)
-			service := module.Vulnerability()
-
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-
-			result, err := service.Scan(ctx, tt.targets)
-			if err != nil {
-				// May return ErrNotInitialized if scanner failed to initialize
-				if !errors.Is(err, shell.ErrNotInitialized) {
-					t.Logf("Scan returned error (may be expected): %v", err)
-				}
-				return
-			}
-
-			if result == nil {
-				t.Fatal("result should not be nil when no error")
-			}
-
-			// Verify result structure
-			if result.ID == "" {
-				t.Error("ID should be set")
-			}
-			if result.DevicesScanned != len(tt.targets) {
-				t.Errorf("DevicesScanned = %d, want %d", result.DevicesScanned, len(tt.targets))
-			}
-			if result.StartedAt.IsZero() {
-				t.Error("StartedAt should be set")
-			}
-			if result.CompletedAt.IsZero() {
-				t.Error("CompletedAt should be set")
-			}
+			runVulnerabilityScanCase(t, tt)
 		})
+	}
+}
+
+type vulnerabilityScanCase struct {
+	name    string
+	targets []string
+}
+
+func runVulnerabilityScanCase(t *testing.T, tt vulnerabilityScanCase) {
+	t.Helper()
+
+	cfg := testutil.NewConfigBuilder().
+		WithInterface("lo").
+		Build()
+
+	module := shell.New(cfg, nil)
+	service := module.Vulnerability()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result, err := service.Scan(ctx, tt.targets)
+	if err != nil {
+		if !errors.Is(err, shell.ErrNotInitialized) {
+			t.Logf("Scan returned error (may be expected): %v", err)
+		}
+		return
+	}
+
+	if result == nil {
+		t.Fatal("result should not be nil when no error")
+	}
+
+	assertScanResult(t, result, len(tt.targets))
+}
+
+func assertScanResult(t *testing.T, result *shell.VulnerabilityScan, targetCount int) {
+	t.Helper()
+
+	if result.ID == "" {
+		t.Error("ID should be set")
+	}
+	if result.DevicesScanned != targetCount {
+		t.Errorf("DevicesScanned = %d, want %d", result.DevicesScanned, targetCount)
+	}
+	if result.StartedAt.IsZero() {
+		t.Error("StartedAt should be set")
+	}
+	if result.CompletedAt.IsZero() {
+		t.Error("CompletedAt should be set")
 	}
 }
 

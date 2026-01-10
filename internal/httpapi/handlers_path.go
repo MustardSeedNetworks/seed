@@ -264,8 +264,8 @@ func (s *Server) performL3Trace(ctx context.Context, req PathRequest) *discovery
 
 	// Callback to broadcast each hop via WebSocket
 	onHop := func(hop discovery.TracerouteHop, result *discovery.TracerouteResult) bool {
-		if s.wsHub != nil {
-			s.wsHub.Broadcast(Message{
+		if s.wsHub() != nil {
+			s.wsHub().Broadcast(Message{
 				Type: "traceHop",
 				Payload: TraceHopMessage{
 					Target:    result.Target,
@@ -305,14 +305,14 @@ func (s *Server) performL2Trace(
 	ctx context.Context,
 	req PathRequest,
 ) (*discovery.L2PathResult, error) {
-	if s.deviceDiscovery == nil {
+	if s.deviceDiscovery() == nil {
 		return nil, errors.New("device discovery not available")
 	}
 
 	// Resolve "self" to local IP if specified
 	sourceIP := req.Source
 	if sourceIP == "self" {
-		_, localIP := s.deviceDiscovery.GetSubnetInfo()
+		_, localIP := s.deviceDiscovery().GetSubnetInfo()
 		if localIP == "" {
 			return nil, errors.New("cannot determine local IP address")
 		}
@@ -320,7 +320,7 @@ func (s *Server) performL2Trace(
 	}
 
 	// Build L2 path
-	builder := discovery.NewL2PathBuilder(s.deviceDiscovery, &s.config.SNMP)
+	builder := discovery.NewL2PathBuilder(s.deviceDiscovery(), &s.config.SNMP)
 	result, err := builder.BuildPath(ctx, sourceIP, req.Destination)
 	if err != nil {
 		return nil, err

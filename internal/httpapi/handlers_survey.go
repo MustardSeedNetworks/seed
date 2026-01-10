@@ -218,12 +218,12 @@ func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		if s.netManager != nil {
-			req.Interface = s.netManager.GetCurrentInterface()
+		if s.netManager() != nil {
+			req.Interface = s.netManager().GetCurrentInterface()
 		}
 	}
 
-	newSurvey, err := s.surveyManager.CreateSurvey(
+	newSurvey, err := s.surveyManager().CreateSurvey(
 		req.Name,
 		req.Description,
 		req.Interface,
@@ -254,7 +254,7 @@ func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) listSurveys(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	surveys := s.surveyManager.ListSurveys()
+	surveys := s.surveyManager().ListSurveys()
 	sendJSONResponse(w, logger, http.StatusOK, surveys)
 }
 
@@ -275,7 +275,7 @@ func (s *Server) getSurvey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	surveyData, err := s.surveyManager.GetSurvey(id)
+	surveyData, err := s.surveyManager().GetSurvey(id)
 	if err != nil {
 		logger.Warn("Survey not found", "error", err)
 		sendErrorResponseWithDetails(
@@ -309,7 +309,7 @@ func (s *Server) deleteSurvey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.surveyManager.DeleteSurvey(id); err != nil {
+	if err := s.surveyManager().DeleteSurvey(id); err != nil {
 		logger.Warn("Survey not found", "error", err)
 		sendErrorResponseWithDetails(
 			w,
@@ -368,7 +368,7 @@ func (s *Server) handleSurveyStateChange(
 	}
 
 	// Return the updated survey so frontend can update its state
-	updatedSurvey, err := s.surveyManager.GetSurvey(id)
+	updatedSurvey, err := s.surveyManager().GetSurvey(id)
 	if err != nil {
 		logger.Error("Failed to get survey", "error", err)
 		sendErrorResponseWithDetails(
@@ -392,17 +392,17 @@ func (s *Server) handleSurveyStateChange(
 
 func (s *Server) startSurvey(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	s.handleSurveyStateChange(w, r, logger, "start", s.surveyManager.StartSurvey)
+	s.handleSurveyStateChange(w, r, logger, "start", s.surveyManager().StartSurvey)
 }
 
 func (s *Server) pauseSurvey(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	s.handleSurveyStateChange(w, r, logger, "pause", s.surveyManager.PauseSurvey)
+	s.handleSurveyStateChange(w, r, logger, "pause", s.surveyManager().PauseSurvey)
 }
 
 func (s *Server) completeSurvey(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	s.handleSurveyStateChange(w, r, logger, "complete", s.surveyManager.CompleteSurvey)
+	s.handleSurveyStateChange(w, r, logger, "complete", s.surveyManager().CompleteSurvey)
 }
 
 // AddSampleRequest contains a WiFi signal sample measurement for a survey location.
@@ -512,7 +512,7 @@ func (s *Server) addSurveySample(w http.ResponseWriter, r *http.Request) {
 	// Process the sample data to calculate aggregations for PassiveSample
 	sampleData := processSampleData(req.SampleData, id, logger)
 
-	if err := s.surveyManager.AddSample(id, req.X, req.Y, sampleData); err != nil {
+	if err := s.surveyManager().AddSample(id, req.X, req.Y, sampleData); err != nil {
 		logger.Error("Failed to add sample to survey", "error", err, "survey_id", id)
 		sendErrorResponseWithDetails(
 			w,
@@ -573,7 +573,7 @@ func (s *Server) updateSurveyFloorPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Rate limit file uploads (fixes #696)
-	if !s.endpointRateLimiter.Allow(s.getClientIP(r)) {
+	if !s.endpointRateLimiter().Allow(s.getClientIP(r)) {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -621,7 +621,7 @@ func (s *Server) updateSurveyFloorPlan(w http.ResponseWriter, r *http.Request) {
 		ScaleM:    req.ScaleM,
 	}
 
-	if err := s.surveyManager.UpdateFloorPlan(id, floorPlan); err != nil {
+	if err := s.surveyManager().UpdateFloorPlan(id, floorPlan); err != nil {
 		logger.Warn("Survey not found", "error", err)
 		sendErrorResponseWithDetails(
 			w,
@@ -634,7 +634,7 @@ func (s *Server) updateSurveyFloorPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedSurvey, err := s.surveyManager.GetSurvey(id)
+	updatedSurvey, err := s.surveyManager().GetSurvey(id)
 	if err != nil {
 		logger.Error("Failed to get survey", "error", err)
 		sendErrorResponseWithDetails(
@@ -703,13 +703,13 @@ func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.surveyManager.UpdateSurveySettings(id, surveyType, req.IperfServer, req.TestDuration); err != nil {
+	if err := s.surveyManager().UpdateSurveySettings(id, surveyType, req.IperfServer, req.TestDuration); err != nil {
 		logger.Error("Failed to update survey", "error", err)
 		ctx.sendBadRequestError("errors.survey.updateFailed")
 		return
 	}
 
-	settingsUpdatedSurvey, err := s.surveyManager.GetSurvey(id)
+	settingsUpdatedSurvey, err := s.surveyManager().GetSurvey(id)
 	if err != nil {
 		logger.Error("Failed to get survey", "error", err)
 		ctx.sendInternalError("errors.survey.getSurveyFailed")
@@ -731,7 +731,7 @@ func (s *Server) importAirMapper(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !s.endpointRateLimiter.Allow(s.getClientIP(r)) {
+	if !s.endpointRateLimiter().Allow(s.getClientIP(r)) {
 		ctx.sendRateLimitError()
 		return
 	}
@@ -830,7 +830,7 @@ func (s *Server) getSurveyDeadZones(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	analysis, err := s.surveyManager.DetectDeadZones(id, threshold)
+	analysis, err := s.surveyManager().DetectDeadZones(id, threshold)
 	if err != nil {
 		logger.Error("Failed to detect dead zones",
 			"survey_id", id,
@@ -939,7 +939,7 @@ func (s *Server) getSurveyHeatmap(w http.ResponseWriter, r *http.Request) {
 
 	config := parseHeatmapConfig(r)
 
-	result, err := s.surveyManager.GenerateHeatmap(id, config)
+	result, err := s.surveyManager().GenerateHeatmap(id, config)
 	if err != nil {
 		logger.Error("Failed to generate heatmap",
 			"survey_id", id,
@@ -1052,7 +1052,7 @@ func (s *Server) listFloors(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	floors, err := s.surveyManager.GetFloors(surveyID)
+	floors, err := s.surveyManager().GetFloors(surveyID)
 	if err != nil {
 		logger.Warn("Survey not found", "error", err)
 		sendErrorResponseWithDetails(
@@ -1133,7 +1133,7 @@ func (s *Server) addFloor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	floor, err := s.surveyManager.AddFloor(surveyID, req.Name, req.Level)
+	floor, err := s.surveyManager().AddFloor(surveyID, req.Name, req.Level)
 	if err != nil {
 		logger.Error("Failed to add floor", "survey_id", surveyID, "error", err)
 		logger.Error("Internal error", "error", err)
@@ -1183,7 +1183,7 @@ func (s *Server) getFloor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	floor, err := s.surveyManager.GetFloor(surveyID, floorID)
+	floor, err := s.surveyManager().GetFloor(surveyID, floorID)
 	if err != nil {
 		logger.Warn("Survey not found", "error", err)
 		sendErrorResponseWithDetails(
@@ -1246,7 +1246,7 @@ func (s *Server) updateFloor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.surveyManager.UpdateFloor(surveyID, floorID, req.Name, req.Level); err != nil {
+	if err := s.surveyManager().UpdateFloor(surveyID, floorID, req.Name, req.Level); err != nil {
 		logger.Error(
 			"Failed to update floor",
 			"survey_id",
@@ -1260,7 +1260,7 @@ func (s *Server) updateFloor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	floor, err := s.surveyManager.GetFloor(surveyID, floorID)
+	floor, err := s.surveyManager().GetFloor(surveyID, floorID)
 	if err != nil {
 		logger.Error("Failed to get floor", "error", err)
 		ctx.sendInternalError("errors.survey.getSurveyFailed")
@@ -1301,7 +1301,7 @@ func (s *Server) deleteFloor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.surveyManager.DeleteFloor(surveyID, floorID); err != nil {
+	if err := s.surveyManager().DeleteFloor(surveyID, floorID); err != nil {
 		logger.Error(
 			"Failed to delete floor",
 			"survey_id",
@@ -1380,7 +1380,7 @@ func (s *Server) setActiveFloor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.surveyManager.SetActiveFloor(surveyID, req.FloorID); err != nil {
+	if err := s.surveyManager().SetActiveFloor(surveyID, req.FloorID); err != nil {
 		logger.Error(
 			"Failed to set active floor",
 			"survey_id",
@@ -1403,7 +1403,7 @@ func (s *Server) setActiveFloor(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return the updated survey
-	updatedSurvey, err := s.surveyManager.GetSurvey(surveyID)
+	updatedSurvey, err := s.surveyManager().GetSurvey(surveyID)
 	if err != nil {
 		logger.Error("Failed to get survey", "error", err)
 		sendErrorResponseWithDetails(
@@ -1441,7 +1441,7 @@ func (s *Server) updateFloorFloorPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !s.endpointRateLimiter.Allow(s.getClientIP(r)) {
+	if !s.endpointRateLimiter().Allow(s.getClientIP(r)) {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -1487,7 +1487,7 @@ func (s *Server) updateFloorFloorPlan(w http.ResponseWriter, r *http.Request) {
 		Height:    req.Height,
 		ScaleM:    req.ScaleM,
 	}
-	if err := s.surveyManager.UpdateFloorPlanByFloorID(surveyID, floorID, floorPlan); err != nil {
+	if err := s.surveyManager().UpdateFloorPlanByFloorID(surveyID, floorID, floorPlan); err != nil {
 		logger.Warn("Survey not found", "error", err)
 		sendErrorResponseWithDetails(
 			w,
@@ -1500,7 +1500,7 @@ func (s *Server) updateFloorFloorPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	floor, err := s.surveyManager.GetFloor(surveyID, floorID)
+	floor, err := s.surveyManager().GetFloor(surveyID, floorID)
 	if err != nil {
 		logger.Error("Failed to get survey", "error", err)
 		sendErrorResponseWithDetails(
@@ -1575,7 +1575,7 @@ func (s *Server) addFloorSample(w http.ResponseWriter, r *http.Request) {
 	// Process the sample data to convert to typed sample
 	sampleData := processSampleData(req.SampleData, surveyID, logger)
 
-	if err := s.surveyManager.AddSampleToFloor(surveyID, floorID, req.X, req.Y, sampleData); err != nil {
+	if err := s.surveyManager().AddSampleToFloor(surveyID, floorID, req.X, req.Y, sampleData); err != nil {
 		logger.Error(
 			"Failed to add sample to floor",
 			"error",
@@ -1691,7 +1691,7 @@ func (s *Server) generateSurveyReport(w http.ResponseWriter, r *http.Request) {
 		options = survey.DefaultReportOptions()
 	}
 
-	pdfBytes, err := s.surveyManager.GenerateReport(surveyID, options)
+	pdfBytes, err := s.surveyManager().GenerateReport(surveyID, options)
 	if err != nil {
 		logger.Error("Failed to generate report",
 			"survey_id", surveyID,

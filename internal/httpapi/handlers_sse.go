@@ -272,7 +272,7 @@ func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := s.authManager.ValidateToken(r.Context(), token)
+	claims, err := s.authManager().ValidateToken(r.Context(), token)
 	if err != nil {
 		logger.Warn("SSE auth failed", "error", err, "source", source)
 		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized,
@@ -297,13 +297,13 @@ func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Accel-Buffering", "no") // Disable nginx buffering
 
 	// Create and register client
-	client := s.sseHub.newClient()
-	s.sseHub.register <- client
+	client := s.sseHub().newClient()
+	s.sseHub().register <- client
 
 	// Ensure client is unregistered on exit
 	defer func() {
 		close(client.done)
-		s.sseHub.unregister <- client
+		s.sseHub().unregister <- client
 	}()
 
 	// Send initial state
@@ -323,8 +323,8 @@ func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 			// Client disconnected
 			return
 
-		case message, ok := <-client.messages:
-			if !ok {
+		case message, msgOK := <-client.messages:
+			if !msgOK {
 				// Channel closed, client removed
 				return
 			}
@@ -350,8 +350,8 @@ func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 func (s *Server) sendSSEInitialState(w http.ResponseWriter, flusher http.Flusher) {
 	// Check if current interface is wireless
 	isWireless := false
-	if s.wifiManager != nil {
-		isWireless = s.wifiManager.IsWireless()
+	if s.wifiManager() != nil {
+		isWireless = s.wifiManager().IsWireless()
 	}
 
 	// Build initial state with actual card data

@@ -247,10 +247,10 @@ func (s *Server) GetDiscoveryService() mcp.DiscoveryService {
 		}
 	}
 	// Fallback to direct instance for backward compatibility
-	if s.discoveryService == nil {
+	if s.discoveryService() == nil {
 		return nil
 	}
-	return &discoveryServiceAdapter{svc: s.discoveryService}
+	return &discoveryServiceAdapter{svc: s.discoveryService()}
 }
 
 // GetDeviceDiscovery returns the device discovery adapter.
@@ -262,26 +262,26 @@ func (s *Server) GetDeviceDiscovery() mcp.DeviceDiscovery {
 		}
 	}
 	// Fallback to direct instance for backward compatibility
-	if s.deviceDiscovery == nil {
+	if s.deviceDiscovery() == nil {
 		return nil
 	}
-	return &deviceDiscoveryAdapter{dd: s.deviceDiscovery}
+	return &deviceDiscoveryAdapter{dd: s.deviceDiscovery()}
 }
 
 // GetNetManager returns the network manager adapter.
 func (s *Server) GetNetManager() mcp.NetworkManager {
-	if s.netManager == nil {
+	if s.netManager() == nil {
 		return nil
 	}
-	return &networkManagerAdapter{mgr: s.netManager}
+	return &networkManagerAdapter{mgr: s.netManager()}
 }
 
 // GetLinkMonitor returns the link monitor adapter.
 func (s *Server) GetLinkMonitor() mcp.LinkMonitor {
-	if s.linkMonitor == nil {
+	if s.linkMonitor() == nil {
 		return nil
 	}
-	return &linkMonitorAdapter{mon: s.linkMonitor}
+	return &linkMonitorAdapter{mon: s.linkMonitor()}
 }
 
 // GetVLANManager returns the VLAN manager adapter.
@@ -293,10 +293,10 @@ func (s *Server) GetVLANManager() mcp.VLANManager {
 		}
 	}
 	// Fallback to direct instance for backward compatibility
-	if s.vlanManager == nil {
+	if s.vlanManager() == nil {
 		return nil
 	}
-	return &vlanManagerWrapperImpl{mgr: s.vlanManager}
+	return &vlanManagerWrapperImpl{mgr: s.vlanManager()}
 }
 
 // vlanManagerWrapperImpl wraps vlan.Manager to implement mcp.VLANManager.
@@ -317,10 +317,10 @@ func (s *Server) GetDNSTester() mcp.DNSTester {
 		}
 	}
 	// Fallback to direct instance for backward compatibility
-	if s.dnsTester == nil {
+	if s.dnsTester() == nil {
 		return nil
 	}
-	return &dnsTesterAdapter{tester: s.dnsTester}
+	return &dnsTesterAdapter{tester: s.dnsTester()}
 }
 
 // GetGatewayTester returns the gateway tester adapter.
@@ -332,10 +332,10 @@ func (s *Server) GetGatewayTester() mcp.GatewayTester {
 		}
 	}
 	// Fallback to direct instance for backward compatibility
-	if s.gatewayTester == nil {
+	if s.gatewayTester() == nil {
 		return nil
 	}
-	return &gatewayTesterAdapter{tester: s.gatewayTester}
+	return &gatewayTesterAdapter{tester: s.gatewayTester()}
 }
 
 // GetSpeedtestTester returns the speedtest tester adapter.
@@ -347,10 +347,10 @@ func (s *Server) GetSpeedtestTester() mcp.SpeedtestTester {
 		}
 	}
 	// Fallback to direct instance for backward compatibility
-	if s.speedtestTester == nil {
+	if s.speedtestTester() == nil {
 		return nil
 	}
-	return &speedtestTesterAdapter{tester: s.speedtestTester}
+	return &speedtestTesterAdapter{tester: s.speedtestTester()}
 }
 
 // GetIperfManager returns the iPerf manager adapter.
@@ -362,10 +362,10 @@ func (s *Server) GetIperfManager() mcp.IperfManager {
 		}
 	}
 	// Fallback to direct instance for backward compatibility
-	if s.iperfManager == nil {
+	if s.iperfManager() == nil {
 		return nil
 	}
-	return &iperfManagerAdapter{mgr: s.iperfManager}
+	return &iperfManagerAdapter{mgr: s.iperfManager()}
 }
 
 // GetWiFiScanner returns the WiFi scanner adapter.
@@ -377,10 +377,10 @@ func (s *Server) GetWiFiScanner() mcp.WiFiScanner {
 		}
 	}
 	// Fallback to direct instance for backward compatibility
-	if s.wifiScanner == nil {
+	if s.wifiScanner() == nil {
 		return nil
 	}
-	return &wifiScannerAdapter{scanner: s.wifiScanner}
+	return &wifiScannerAdapter{scanner: s.wifiScanner()}
 }
 
 // GetWiFiManager returns the WiFi manager adapter.
@@ -392,10 +392,10 @@ func (s *Server) GetWiFiManager() mcp.WiFiManager {
 		}
 	}
 	// Fallback to direct instance for backward compatibility
-	if s.wifiManager == nil {
+	if s.wifiManager() == nil {
 		return nil
 	}
-	return &wifiManagerAdapter{mgr: s.wifiManager}
+	return &wifiManagerAdapter{mgr: s.wifiManager()}
 }
 
 // GetRogueDetector returns the rogue DHCP detector adapter.
@@ -407,10 +407,10 @@ func (s *Server) GetRogueDetector() mcp.RogueDetector {
 		}
 	}
 	// Fallback to direct instance for backward compatibility
-	if s.rogueDetector == nil {
+	if s.rogueDetector() == nil {
 		return nil
 	}
-	return &rogueDetectorWrapperImpl{detector: s.rogueDetector}
+	return &rogueDetectorWrapperImpl{detector: s.rogueDetector()}
 }
 
 // rogueDetectorWrapperImpl wraps dhcp.RogueDetector to implement mcp.RogueDetector.
@@ -435,10 +435,10 @@ func (s *Server) GetVulnScanner() mcp.VulnScanner {
 		}
 	}
 	// Fallback to direct instance for backward compatibility
-	if s.vulnScanner == nil {
+	if s.vulnScanner() == nil {
 		return nil
 	}
-	return &vulnScannerAdapter{scanner: s.vulnScanner}
+	return &vulnScannerAdapter{scanner: s.vulnScanner()}
 }
 
 // GetPublicIPChecker returns the public IP checker adapter.
@@ -450,10 +450,10 @@ func (s *Server) GetPublicIPChecker() mcp.PublicIPChecker {
 		}
 	}
 	// Fallback to direct instance for backward compatibility
-	if s.publicipChecker == nil {
+	if s.publicipChecker() == nil {
 		return nil
 	}
-	return &publicIPCheckerWrapperImpl{checker: s.publicipChecker}
+	return &publicIPCheckerWrapperImpl{checker: s.publicipChecker()}
 }
 
 // publicIPCheckerWrapperImpl wraps publicip.Checker to implement mcp.PublicIPChecker.
