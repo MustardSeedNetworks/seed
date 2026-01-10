@@ -35,6 +35,7 @@ const (
 	ErrCodeServiceUnavail   = "SERVICE_UNAVAILABLE"
 	ErrCodeValidation       = "VALIDATION_ERROR"
 	ErrCodeRateLimit        = "RATE_LIMIT_EXCEEDED"
+	ErrCodeSetupExpired     = "SETUP_EXPIRED" // Security fix #891: Setup mode timeout
 )
 
 // Buffer size constants for log reading.

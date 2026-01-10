@@ -369,6 +369,18 @@ func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
 	// Check if using default password
 	needsSetup := auth.IsDefaultPasswordHash(s.config.Auth.DefaultPasswordHash)
 
+	// Security fix #891: Check if setup mode has timed out
+	if needsSetup && !s.setupModeStartTime.IsZero() {
+		setupDuration := time.Since(s.setupModeStartTime)
+		if setupDuration > setupModeTimeoutMin*time.Minute {
+			logger.Warn("Setup mode has expired", "event", "auth.setup.expired",
+				"elapsed_minutes", setupDuration.Minutes())
+			sendErrorResponseWithDetails(w, logger, http.StatusForbidden, ErrCodeSetupExpired,
+				"Setup mode has expired. Please restart the server to try again.", "")
+			return
+		}
+	}
+
 	resp := SetupStatusResponse{
 		NeedsSetup: needsSetup,
 		Username:   s.config.Auth.DefaultUsername, // Fixes #768 - provide username from config
@@ -431,6 +443,20 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 		sendErrorResponseWithDetails(w, logger, http.StatusForbidden, ErrCodeForbidden,
 			"Setup has already been completed. Use authenticated password change instead.", "")
 		return
+	}
+
+	// Security fix #891: Check if setup mode has timed out
+	if !s.setupModeStartTime.IsZero() {
+		setupDuration := time.Since(s.setupModeStartTime)
+		if setupDuration > setupModeTimeoutMin*time.Minute {
+			logger.Warn("Setup completion attempted after timeout",
+				"client_ip", clientIP,
+				"elapsed_minutes", setupDuration.Minutes(),
+				"event", "auth.setup.timeout_complete_blocked")
+			sendErrorResponseWithDetails(w, logger, http.StatusForbidden, ErrCodeSetupExpired,
+				"Setup mode has expired. Please restart the server to try again.", "")
+			return
+		}
 	}
 
 	// Limit request body size to prevent memory exhaustion

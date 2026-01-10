@@ -77,6 +77,10 @@ const (
 	// acmeReadHeaderTimeoutSec is the timeout for reading ACME challenge request headers.
 	acmeReadHeaderTimeoutSec = 10
 
+	// setupModeTimeoutMin is how long setup mode remains active (security fix #891).
+	// After this duration, setup is disabled and server restart is required.
+	setupModeTimeoutMin = 15
+
 	// retentionAlertsMultiplier is the multiplier for alerts retention (keep alerts longer).
 	retentionAlertsMultiplier = 2
 
@@ -132,6 +136,7 @@ type Server struct {
 	acmeChallengeServer *http.Server        // HTTP-01 challenge server for ACME (fixes #837)
 	retentionStopCh     chan struct{}       // Signals data retention goroutine to stop (fixes #848)
 	modules             *Modules            // Application modules (Sap, Shell, Canopy, Roots, Harvest)
+	setupModeStartTime  time.Time           // Security fix #891: Track when setup mode started
 }
 
 // NewServer creates a new server instance.
@@ -192,6 +197,11 @@ func NewServer(
 		speedtestTester:    speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID),
 		iperfManager:       iperf.NewManager(),
 		publicipChecker:    publicip.NewChecker(),
+	}
+
+	// Security fix #891: Record setup mode start time
+	if auth.IsDefaultPasswordHash(cfg.Auth.DefaultPasswordHash) {
+		s.setupModeStartTime = time.Now()
 	}
 
 	// Set up link state change callback
