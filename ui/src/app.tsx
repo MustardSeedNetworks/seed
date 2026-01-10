@@ -54,72 +54,22 @@ import { ImprovedHelpModal } from "./components/help/improved-help-modal";
 import { ProfileManagement } from "./components/profiles/profile-management";
 import { SettingsDrawer } from "./components/settings/settings-drawer";
 import { SetupWizard } from "./components/setup/setup-wizard";
-import { checkSetupStatus } from "./components/setup/setupApi";
 import { FAB } from "./components/ui/fab";
 import { useProfileContext } from "./contexts/profile-context";
 import { useSettings } from "./contexts/useSettings";
 // Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
+import { useAppDrawers } from "./hooks/useAppDrawers";
 import { useAuth } from "./hooks/useAuth";
 import { useCardState } from "./hooks/useCardState";
+import { useChannelGraph } from "./hooks/useChannelGraph";
 import { useInterfaceState } from "./hooks/useInterfaceState";
 import { useNetworkFetchers } from "./hooks/useNetworkFetchers";
+import { useSetupState } from "./hooks/useSetupState";
 import { useSse } from "./hooks/useSse";
 import { useTheme } from "./hooks/useTheme";
 import { api, setSessionExpiredCallback } from "./lib/api";
 import { LogComponents, logger } from "./lib/logger";
 import { cn, layout, radius, section, spacing } from "./styles/theme";
-
-type ChannelGraphNetwork = {
-  ssid: string;
-  bssid: string;
-  channel: number;
-  centerFreq: number;
-  channelWidth: number;
-  signal: number;
-  band: string;
-  isConnected: boolean;
-};
-
-type ChannelGraphData = {
-  networks24Ghz: ChannelGraphNetwork[];
-  networks5Ghz: ChannelGraphNetwork[];
-  networks6Ghz: ChannelGraphNetwork[];
-  connectedBssid?: string;
-  scanTime: string;
-};
-
-type ChannelGraphResponse = {
-  available: boolean;
-  error?: string;
-  data?: ChannelGraphData;
-};
-
-type ChannelGraphApiResponse = {
-  available: boolean;
-  error?: string;
-  data?: Record<string, unknown>;
-};
-
-const normalizeChannelGraphResponse = (response: ChannelGraphApiResponse): ChannelGraphResponse => {
-  if (!response.data) {
-    return response;
-  }
-
-  const data = response.data as Record<string, unknown>;
-  const asNetworkArray = (value: unknown): ChannelGraphNetwork[] =>
-    Array.isArray(value) ? (value as ChannelGraphNetwork[]) : [];
-
-  return {
-    ...response,
-    data: {
-      networks24Ghz: asNetworkArray(data.networks_2_4ghz),
-      networks5Ghz: asNetworkArray(data.networks_5ghz),
-      networks6Ghz: asNetworkArray(data.networks_6ghz),
-      connectedBssid: typeof data.connected_bssid === "string" ? data.connected_bssid : undefined,
-      scanTime: typeof data.scan_time === "string" ? data.scan_time : "",
-    },
-  };
-};
 
 /**
  * Main App Component
@@ -147,15 +97,25 @@ function App() {
     setEthernetInterface,
     setWifiInterface,
   } = useProfileContext();
-  const [profilesOpen, setProfilesOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
+
+  // App drawers state (extracted to hook #889)
+  const {
+    profilesOpen,
+    settingsOpen,
+    helpOpen,
+    openProfiles,
+    closeProfiles,
+    openSettings,
+    closeSettings,
+    openHelp,
+    closeHelp,
+  } = useAppDrawers();
+
   const [sessionExpired, setSessionExpired] = useState(false);
-  const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
-  const [suggestedPassword, setSuggestedPassword] = useState<string | undefined>(undefined);
-  const [setupUsername, setSetupUsername] = useState<string | undefined>(undefined);
-  // Security fix #724, #758: Store setup token for secure setup completion
-  const [setupToken, setSetupToken] = useState<string | undefined>(undefined);
+
+  // Setup wizard state (extracted to hook #889)
+  const { needsSetup, suggestedPassword, setupUsername, setupToken, completeSetup } =
+    useSetupState();
 
   // Network state
   const [interfaces, setInterfaces] = useState<
@@ -175,31 +135,11 @@ function App() {
   >([]);
   const [networkDiscovery, setNetworkDiscovery] = useState<NetworkDiscoveryData | null>(null);
   const [appVersion, setAppVersion] = useState("dev");
-  // WiFi channel graph data
-  const [channelGraphData, setChannelGraphData] = useState<ChannelGraphResponse | null>(null);
-  const [channelGraphLoading, setChannelGraphLoading] = useState(false);
 
   // Refs to track device scan polling interval and timeout for cleanup
   const scanPollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const networkDiscoveryAbortRef = useRef<AbortController | null>(null);
-
-  // Check if setup is needed on mount
-  useEffect(() => {
-    checkSetupStatus().then((status) => {
-      setNeedsSetup(status.needsSetup);
-      if (status.suggestedPassword) {
-        setSuggestedPassword(status.suggestedPassword);
-      }
-      if (status.username) {
-        setSetupUsername(status.username); // Fixes #768 - use username from config
-      }
-      // Security fix #724, #758: Capture setup token for setup completion
-      if (status.setupToken) {
-        setSetupToken(status.setupToken);
-      }
-    });
-  }, []);
 
   // Refresh settings when profile changes (fixes #781)
   const prevActiveProfileRef = useRef<string | null>(null);
@@ -282,6 +222,12 @@ function App() {
     userSetWifiModeRef,
     networkDiscoveryAbortRef,
     prevLinkUpRef,
+  });
+
+  // Channel graph data for WiFi visualization (extracted to hook #889)
+  const { channelGraphData, channelGraphLoading, fetchChannelGraphData } = useChannelGraph({
+    isWifi,
+    currentInterface,
   });
 
   // Cleanup network discovery on unmount
@@ -667,22 +613,6 @@ function App() {
     onCardUpdate: handleCardUpdate,
   });
 
-  // Fetch channel graph data for WiFi visualization
-  const fetchChannelGraphData = useCallback(async () => {
-    if (!isWifi || !currentInterface) return;
-    setChannelGraphLoading(true);
-    try {
-      const response = await api.get<ChannelGraphApiResponse>(
-        `/api/canopy/wifi/channel-graph?interface=${currentInterface}`,
-      );
-      setChannelGraphData(normalizeChannelGraphResponse(response));
-    } catch {
-      setChannelGraphData({ available: false, error: "Failed to fetch channel data" });
-    } finally {
-      setChannelGraphLoading(false);
-    }
-  }, [isWifi, currentInterface]);
-
   // Fetch data on mount (initial load) and data not covered by SSE
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -833,7 +763,7 @@ function App() {
   if (needsSetup === true) {
     return (
       <SetupWizard
-        onComplete={() => setNeedsSetup(false)}
+        onComplete={completeSetup}
         onLogin={login}
         suggestedPassword={suggestedPassword}
         username={setupUsername}
@@ -864,7 +794,7 @@ function App() {
         activeProfile={activeProfile}
         profilesLoading={profilesLoading}
         onProfileSwitch={switchProfile}
-        onProfileManage={() => setProfilesOpen(true)}
+        onProfileManage={openProfiles}
         interfaces={interfaces}
         currentInterface={currentInterface}
         isWifi={isWifi}
@@ -874,8 +804,8 @@ function App() {
         switchToInterfaceType={switchToInterfaceType}
         toggleTheme={toggleTheme}
         isDark={isDark}
-        onHelpOpen={() => setHelpOpen(true)}
-        onSettingsOpen={() => setSettingsOpen(true)}
+        onHelpOpen={openHelp}
+        onSettingsOpen={openSettings}
         logout={logout}
       />
 
@@ -1106,20 +1036,16 @@ function App() {
       {/* Settings Drawer - shows interface-specific settings (#754) */}
       <SettingsDrawer
         isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        onClose={closeSettings}
         version={appVersion}
         isWifi={isWifi}
       />
 
       {/* Help Modal - improved with TOC, About, and search */}
-      <ImprovedHelpModal
-        isOpen={helpOpen}
-        onClose={() => setHelpOpen(false)}
-        version={appVersion}
-      />
+      <ImprovedHelpModal isOpen={helpOpen} onClose={closeHelp} version={appVersion} />
 
       {/* Profile Management Modal (#754) */}
-      {profilesOpen && <ProfileManagement onClose={() => setProfilesOpen(false)} />}
+      {profilesOpen && <ProfileManagement onClose={closeProfiles} />}
 
       {/* FAB - Run All Tests - constrained to content width */}
       <div className="fixed bottom-0 left-0 right-0 pointer-events-none z-50">
