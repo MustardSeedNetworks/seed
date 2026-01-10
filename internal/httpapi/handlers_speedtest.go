@@ -66,7 +66,7 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.speedtestTester == nil {
+	if s.speedtestTester() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -79,7 +79,7 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if already running
-	status := s.speedtestTester.GetStatus()
+	status := s.speedtestTester().GetStatus()
 	if status.Running {
 		sendErrorResponseWithDetails(
 			w,
@@ -98,7 +98,7 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), speedtestTimeoutMin*time.Minute)
 		defer cancel()
 
-		_, err := s.speedtestTester.RunTest(ctx)
+		_, err := s.speedtestTester().RunTest(ctx)
 		if err != nil {
 			logger.Error("Speedtest failed", "error", err)
 		}
@@ -128,7 +128,7 @@ func (s *Server) handleSpeedtestStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.speedtestTester == nil {
+	if s.speedtestTester() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -140,7 +140,7 @@ func (s *Server) handleSpeedtestStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	status := s.speedtestTester.GetStatus()
+	status := s.speedtestTester().GetStatus()
 	resp := SpeedtestStatusResponse{
 		Running:  status.Running,
 		Phase:    status.Phase,
@@ -148,7 +148,7 @@ func (s *Server) handleSpeedtestStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Include last result if available
-	if lastResult := s.speedtestTester.GetLastResult(); lastResult != nil {
+	if lastResult := s.speedtestTester().GetLastResult(); lastResult != nil {
 		resp.Last = &SpeedtestResponse{
 			Download:     lastResult.Download,
 			Upload:       lastResult.Upload,

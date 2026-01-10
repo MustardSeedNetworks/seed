@@ -162,6 +162,12 @@ func TestLinkStatusAllFields(t *testing.T) {
 	if status.MACAddress != "00:11:22:33:44:55" {
 		t.Errorf("expected MACAddress '00:11:22:33:44:55', got %q", status.MACAddress)
 	}
+	if status.IPAddress != "192.168.1.100" {
+		t.Errorf("expected IPAddress '192.168.1.100', got %q", status.IPAddress)
+	}
+	if status.Gateway != "192.168.1.1" {
+		t.Errorf("expected Gateway '192.168.1.1', got %q", status.Gateway)
+	}
 	if !status.Carrier {
 		t.Error("expected Carrier true")
 	}
@@ -170,6 +176,27 @@ func TestLinkStatusAllFields(t *testing.T) {
 	}
 	if status.RxBytes != 2000000 {
 		t.Errorf("expected RxBytes 2000000, got %d", status.RxBytes)
+	}
+	if status.TxPackets != 1000 {
+		t.Errorf("expected TxPackets 1000, got %d", status.TxPackets)
+	}
+	if status.RxPackets != 2000 {
+		t.Errorf("expected RxPackets 2000, got %d", status.RxPackets)
+	}
+	if status.TxErrors != 0 {
+		t.Errorf("expected TxErrors 0, got %d", status.TxErrors)
+	}
+	if status.RxErrors != 0 {
+		t.Errorf("expected RxErrors 0, got %d", status.RxErrors)
+	}
+	if status.TxDropped != 0 {
+		t.Errorf("expected TxDropped 0, got %d", status.TxDropped)
+	}
+	if status.RxDropped != 0 {
+		t.Errorf("expected RxDropped 0, got %d", status.RxDropped)
+	}
+	if !status.UpdatedAt.Equal(now) {
+		t.Errorf("expected UpdatedAt %v, got %v", now, status.UpdatedAt)
 	}
 }
 
@@ -217,6 +244,9 @@ func TestCableTestResultFields(t *testing.T) {
 	}
 	if len(result.PairResults) != 4 {
 		t.Errorf("expected 4 PairResults, got %d", len(result.PairResults))
+	}
+	if !result.TestedAt.Equal(now) {
+		t.Errorf("expected TestedAt %v, got %v", now, result.TestedAt)
 	}
 }
 
@@ -289,6 +319,9 @@ func TestDHCPTestResultAllFields(t *testing.T) {
 	if result.OfferedIP != "192.168.1.100" {
 		t.Errorf("expected OfferedIP '192.168.1.100', got %q", result.OfferedIP)
 	}
+	if result.SubnetMask != "255.255.255.0" {
+		t.Errorf("expected SubnetMask '255.255.255.0', got %q", result.SubnetMask)
+	}
 	if result.Gateway != "192.168.1.1" {
 		t.Errorf("expected Gateway '192.168.1.1', got %q", result.Gateway)
 	}
@@ -297,6 +330,21 @@ func TestDHCPTestResultAllFields(t *testing.T) {
 	}
 	if result.LeaseTimeSec != 86400 {
 		t.Errorf("expected LeaseTimeSec 86400, got %d", result.LeaseTimeSec)
+	}
+	if result.LeaseTime != 86400*time.Second {
+		t.Errorf("expected LeaseTime 24h, got %v", result.LeaseTime)
+	}
+	if result.ResponseTime != 50*time.Millisecond {
+		t.Errorf("expected ResponseTime 50ms, got %v", result.ResponseTime)
+	}
+	if result.ResponseMs != 50.0 {
+		t.Errorf("expected ResponseMs 50.0, got %v", result.ResponseMs)
+	}
+	if result.Error != "" {
+		t.Errorf("expected Error empty, got %q", result.Error)
+	}
+	if !result.TestedAt.Equal(now) {
+		t.Errorf("expected TestedAt %v, got %v", now, result.TestedAt)
 	}
 }
 
@@ -344,6 +392,9 @@ func TestDNSTestResultAllFields(t *testing.T) {
 	if !result.Success {
 		t.Error("expected Success true")
 	}
+	if result.ResponseTime != 10*time.Millisecond {
+		t.Errorf("expected ResponseTime 10ms, got %v", result.ResponseTime)
+	}
 	if len(result.Answers) != 1 {
 		t.Errorf("expected 1 Answer, got %d", len(result.Answers))
 	}
@@ -352,6 +403,15 @@ func TestDNSTestResultAllFields(t *testing.T) {
 	}
 	if !result.DNSSEC {
 		t.Error("expected DNSSEC true")
+	}
+	if result.Authoritative {
+		t.Error("expected Authoritative false")
+	}
+	if result.Error != "" {
+		t.Errorf("expected Error empty, got %q", result.Error)
+	}
+	if !result.TestedAt.Equal(now) {
+		t.Errorf("expected TestedAt %v, got %v", now, result.TestedAt)
 	}
 }
 
@@ -418,14 +478,26 @@ func TestGatewayHealthAllFields(t *testing.T) {
 	if !health.Reachable {
 		t.Error("expected Reachable true")
 	}
+	if health.RTT != 5*time.Millisecond {
+		t.Errorf("expected RTT 5ms, got %v", health.RTT)
+	}
 	if health.RTTMs != 5.0 {
 		t.Errorf("expected RTTMs 5.0, got %v", health.RTTMs)
 	}
 	if health.PacketLoss != 0.0 {
 		t.Errorf("expected PacketLoss 0.0, got %v", health.PacketLoss)
 	}
+	if health.Jitter != 0.5 {
+		t.Errorf("expected Jitter 0.5, got %v", health.Jitter)
+	}
 	if health.Status != sap.HealthStatusHealthy {
 		t.Errorf("expected Status 'healthy', got %q", health.Status)
+	}
+	if health.Uptime != 86400*time.Second {
+		t.Errorf("expected Uptime 24h, got %v", health.Uptime)
+	}
+	if !health.LastCheck.Equal(now) {
+		t.Errorf("expected LastCheck %v, got %v", now, health.LastCheck)
 	}
 }
 
@@ -470,8 +542,23 @@ func TestSpeedtestResultAllFields(t *testing.T) {
 	if result.PingMs != 10.0 {
 		t.Errorf("expected PingMs 10.0, got %v", result.PingMs)
 	}
+	if result.JitterMs != 2.0 {
+		t.Errorf("expected JitterMs 2.0, got %v", result.JitterMs)
+	}
 	if result.ServerName != "Comcast Speed Test" {
 		t.Errorf("expected ServerName 'Comcast Speed Test', got %q", result.ServerName)
+	}
+	if result.ServerID != "12345" {
+		t.Errorf("expected ServerID '12345', got %q", result.ServerID)
+	}
+	if result.ISP != "Comcast" {
+		t.Errorf("expected ISP 'Comcast', got %q", result.ISP)
+	}
+	if result.TestDuration != 30*time.Second {
+		t.Errorf("expected TestDuration 30s, got %v", result.TestDuration)
+	}
+	if !result.TestedAt.Equal(now) {
+		t.Errorf("expected TestedAt %v, got %v", now, result.TestedAt)
 	}
 }
 
@@ -521,14 +608,26 @@ func TestIPerfResultAllFields(t *testing.T) {
 	if result.TransferMB != 625.0 {
 		t.Errorf("expected TransferMB 625.0, got %v", result.TransferMB)
 	}
+	if result.Duration != 10*time.Second {
+		t.Errorf("expected Duration 10s, got %v", result.Duration)
+	}
 	if result.DurationSec != 10.0 {
 		t.Errorf("expected DurationSec 10.0, got %v", result.DurationSec)
+	}
+	if result.Jitter != 1.0 {
+		t.Errorf("expected Jitter 1.0, got %v", result.Jitter)
+	}
+	if result.PacketLoss != 0.1 {
+		t.Errorf("expected PacketLoss 0.1, got %v", result.PacketLoss)
 	}
 	if result.Retransmits != 5 {
 		t.Errorf("expected Retransmits 5, got %d", result.Retransmits)
 	}
 	if result.ServerAddr != "192.168.1.100" {
 		t.Errorf("expected ServerAddr '192.168.1.100', got %q", result.ServerAddr)
+	}
+	if !result.TestedAt.Equal(now) {
+		t.Errorf("expected TestedAt %v, got %v", now, result.TestedAt)
 	}
 }
 
@@ -570,6 +669,15 @@ func TestVLANConfigFields(t *testing.T) {
 	}
 	if config.Interface != "eth0" {
 		t.Errorf("expected Interface 'eth0', got %q", config.Interface)
+	}
+	if config.IPAddress != "192.168.100.1" {
+		t.Errorf("expected IPAddress '192.168.100.1', got %q", config.IPAddress)
+	}
+	if config.SubnetMask != "255.255.255.0" {
+		t.Errorf("expected SubnetMask '255.255.255.0', got %q", config.SubnetMask)
+	}
+	if config.Gateway != "192.168.100.254" {
+		t.Errorf("expected Gateway '192.168.100.254', got %q", config.Gateway)
 	}
 	if !config.Tagged {
 		t.Error("expected Tagged true")
@@ -625,6 +733,18 @@ func TestSNMPDeviceFields(t *testing.T) {
 	if device.SysName != "switch-core-01" {
 		t.Errorf("expected SysName 'switch-core-01', got %q", device.SysName)
 	}
+	if device.SysDescr != "Cisco IOS Software" {
+		t.Errorf("expected SysDescr 'Cisco IOS Software', got %q", device.SysDescr)
+	}
+	if device.SysLocation != "Data Center Rack 1" {
+		t.Errorf("expected SysLocation 'Data Center Rack 1', got %q", device.SysLocation)
+	}
+	if device.SysContact != "admin@example.com" {
+		t.Errorf("expected SysContact 'admin@example.com', got %q", device.SysContact)
+	}
+	if device.SysUpTime != 86400*time.Second {
+		t.Errorf("expected SysUpTime 24h, got %v", device.SysUpTime)
+	}
 	if len(device.Interfaces) != 1 {
 		t.Errorf("expected 1 Interface, got %d", len(device.Interfaces))
 	}
@@ -633,6 +753,15 @@ func TestSNMPDeviceFields(t *testing.T) {
 	}
 	if len(device.MACTable) != 1 {
 		t.Errorf("expected 1 MACTableEntry, got %d", len(device.MACTable))
+	}
+	if device.Custom == nil {
+		t.Fatal("expected Custom map to be set")
+	}
+	if device.Custom["vendor"] != "Cisco" {
+		t.Errorf("expected Custom vendor 'Cisco', got %v", device.Custom["vendor"])
+	}
+	if !device.CollectedAt.Equal(now) {
+		t.Errorf("expected CollectedAt %v, got %v", now, device.CollectedAt)
 	}
 }
 
@@ -671,11 +800,32 @@ func TestSNMPInterfaceFields(t *testing.T) {
 	if iface.Name != "GigabitEthernet0/1" {
 		t.Errorf("expected Name 'GigabitEthernet0/1', got %q", iface.Name)
 	}
+	if iface.Description != "Uplink to Core" {
+		t.Errorf("expected Description 'Uplink to Core', got %q", iface.Description)
+	}
+	if iface.Type != "ethernetCsmacd" {
+		t.Errorf("expected Type 'ethernetCsmacd', got %q", iface.Type)
+	}
 	if iface.Speed != 1000000000 {
 		t.Errorf("expected Speed 1000000000, got %d", iface.Speed)
 	}
 	if iface.AdminStatus != "up" {
 		t.Errorf("expected AdminStatus 'up', got %q", iface.AdminStatus)
+	}
+	if iface.OperStatus != "up" {
+		t.Errorf("expected OperStatus 'up', got %q", iface.OperStatus)
+	}
+	if iface.InOctets != 1000000000 {
+		t.Errorf("expected InOctets 1000000000, got %d", iface.InOctets)
+	}
+	if iface.OutOctets != 500000000 {
+		t.Errorf("expected OutOctets 500000000, got %d", iface.OutOctets)
+	}
+	if iface.InErrors != 0 {
+		t.Errorf("expected InErrors 0, got %d", iface.InErrors)
+	}
+	if iface.OutErrors != 0 {
+		t.Errorf("expected OutErrors 0, got %d", iface.OutErrors)
 	}
 }
 
@@ -742,6 +892,12 @@ func TestBandwidthSampleAllFields(t *testing.T) {
 	if sample.Interface != "eth0" {
 		t.Errorf("expected Interface 'eth0', got %q", sample.Interface)
 	}
+	if sample.TxBytesPerSec != 125000000 {
+		t.Errorf("expected TxBytesPerSec 125000000, got %v", sample.TxBytesPerSec)
+	}
+	if sample.RxBytesPerSec != 62500000 {
+		t.Errorf("expected RxBytesPerSec 62500000, got %v", sample.RxBytesPerSec)
+	}
 	if sample.TxMbps != 1000.0 {
 		t.Errorf("expected TxMbps 1000.0, got %v", sample.TxMbps)
 	}
@@ -750,6 +906,9 @@ func TestBandwidthSampleAllFields(t *testing.T) {
 	}
 	if sample.Utilization != 75.0 {
 		t.Errorf("expected Utilization 75.0, got %v", sample.Utilization)
+	}
+	if !sample.SampledAt.Equal(now) {
+		t.Errorf("expected SampledAt %v, got %v", now, sample.SampledAt)
 	}
 }
 
@@ -799,8 +958,14 @@ func TestSystemHealthAllFields(t *testing.T) {
 	if health.Temperature != 45.0 {
 		t.Errorf("expected Temperature 45.0, got %v", health.Temperature)
 	}
+	if health.Uptime != 86400*time.Second {
+		t.Errorf("expected Uptime 24h, got %v", health.Uptime)
+	}
 	if len(health.LoadAverage) != 3 {
 		t.Errorf("expected 3 LoadAverage values, got %d", len(health.LoadAverage))
+	}
+	if !health.SampledAt.Equal(now) {
+		t.Errorf("expected SampledAt %v, got %v", now, health.SampledAt)
 	}
 }
 

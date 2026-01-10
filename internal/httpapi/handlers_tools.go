@@ -482,7 +482,7 @@ func (s *Server) handleAdvancedFingerprint(w http.ResponseWriter, r *http.Reques
 
 	// Get existing device profile if available
 	var existingProfile *discovery.DeviceProfile
-	if device := s.discoveryService.GetDeviceByIP(req.IP); device != nil {
+	if device := s.discoveryService().GetDeviceByIP(req.IP); device != nil {
 		existingProfile = device.Profile
 	}
 

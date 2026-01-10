@@ -697,6 +697,9 @@ func TestPortScanProfiles(t *testing.T) {
 			if req.Target == "" {
 				t.Error("Expected non-empty target")
 			}
+			if req.Profile != profile {
+				t.Errorf("Expected profile %q, got %q", profile, req.Profile)
+			}
 		})
 	}
 }
@@ -729,6 +732,12 @@ func TestTCPProbeTimeoutBounds(t *testing.T) {
 			if req.Port <= 0 {
 				t.Error("Expected valid port")
 			}
+			if req.Target == "" {
+				t.Error("Expected non-empty target")
+			}
+			if req.Timeout != tt.timeout {
+				t.Errorf("Expected timeout %d, got %d", tt.timeout, req.Timeout)
+			}
 		})
 	}
 }
@@ -759,6 +768,12 @@ func TestTracerouteMaxHopsBounds(t *testing.T) {
 			// Verify the request can be created
 			if req.Target == "" {
 				t.Error("Expected non-empty target")
+			}
+			if req.Protocol != "icmp" {
+				t.Errorf("Expected protocol 'icmp', got %q", req.Protocol)
+			}
+			if req.MaxHops != tt.maxHops {
+				t.Errorf("Expected MaxHops %d, got %d", tt.maxHops, req.MaxHops)
 			}
 		})
 	}

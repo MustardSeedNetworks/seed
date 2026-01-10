@@ -194,38 +194,54 @@ func TestSNMPQueryFlow(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Simulate the SNMP query logic
-			var community string
-			var errMsg string
-
-			switch {
-			case tt.host == "":
-				errMsg = "host parameter is required"
-			case tt.community != "":
-				community = tt.community
-			case len(tt.configuredComms) > 0:
-				community = tt.configuredComms[0]
-			default:
-				errMsg = "No SNMP community string provided and none configured"
-			}
-
-			if tt.expectError {
-				if errMsg == "" {
-					t.Error("expected error but got none")
-					return
-				}
-				if tt.errorContains != "" && !containsString(errMsg, tt.errorContains) {
-					t.Errorf("expected error containing %q, got %q", tt.errorContains, errMsg)
-				}
-				return
-			}
-			if errMsg != "" {
-				t.Errorf("unexpected error: %s", errMsg)
-			}
-			if community == "" {
-				t.Error("expected community to be set")
-			}
+			runSNMPQueryCase(t, tt)
 		})
+	}
+}
+
+func runSNMPQueryCase(
+	t *testing.T,
+	tt struct {
+		name            string
+		host            string
+		community       string
+		configuredComms []string
+		expectError     bool
+		errorContains   string
+	},
+) {
+	t.Helper()
+
+	// Simulate the SNMP query logic
+	var community string
+	var errMsg string
+
+	switch {
+	case tt.host == "":
+		errMsg = "host parameter is required"
+	case tt.community != "":
+		community = tt.community
+	case len(tt.configuredComms) > 0:
+		community = tt.configuredComms[0]
+	default:
+		errMsg = "No SNMP community string provided and none configured"
+	}
+
+	if tt.expectError {
+		if errMsg == "" {
+			t.Error("expected error but got none")
+			return
+		}
+		if tt.errorContains != "" && !containsString(errMsg, tt.errorContains) {
+			t.Errorf("expected error containing %q, got %q", tt.errorContains, errMsg)
+		}
+		return
+	}
+	if errMsg != "" {
+		t.Errorf("unexpected error: %s", errMsg)
+	}
+	if community == "" {
+		t.Error("expected community to be set")
 	}
 }
 

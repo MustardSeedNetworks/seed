@@ -154,18 +154,7 @@ func TestStatusAndSpeedsCoordination(t *testing.T) {
 func TestBuildTestResultFromParamsComprehensive(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name         string
-		dlSpeed      float64
-		ulSpeed      float64
-		latencyMs    int64
-		serverName   string
-		sponsor      string
-		country      string
-		host         string
-		distance     float64
-		durationSecs int
-	}{
+	tests := []buildTestResultCase{
 		{
 			name:         "typical residential fiber",
 			dlSpeed:      945.67,
@@ -291,63 +280,96 @@ func TestBuildTestResultFromParamsComprehensive(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			tester := speedtest.NewTester()
-			startTime := time.Now().Add(-time.Duration(tt.durationSecs) * time.Second)
-
-			result := tester.BuildTestResultFromParams(
-				tt.dlSpeed,
-				tt.ulSpeed,
-				time.Duration(tt.latencyMs)*time.Millisecond,
-				tt.serverName,
-				tt.sponsor,
-				tt.country,
-				tt.host,
-				tt.distance,
-				startTime,
-			)
-
-			if result == nil {
-				t.Fatal("expected non-nil result")
-			}
-
-			if result.Download != tt.dlSpeed {
-				t.Errorf("Download: got %v, want %v", result.Download, tt.dlSpeed)
-			}
-			if result.Upload != tt.ulSpeed {
-				t.Errorf("Upload: got %v, want %v", result.Upload, tt.ulSpeed)
-			}
-			if result.Latency != float64(tt.latencyMs) {
-				t.Errorf("Latency: got %v, want %v", result.Latency, float64(tt.latencyMs))
-			}
-			if result.Server != tt.serverName {
-				t.Errorf("Server: got %q, want %q", result.Server, tt.serverName)
-			}
-
-			expectedLocation := tt.sponsor + ", " + tt.country
-			if result.Location != expectedLocation {
-				t.Errorf("Location: got %q, want %q", result.Location, expectedLocation)
-			}
-
-			if result.Host != tt.host {
-				t.Errorf("Host: got %q, want %q", result.Host, tt.host)
-			}
-			if result.Distance != tt.distance {
-				t.Errorf("Distance: got %v, want %v", result.Distance, tt.distance)
-			}
-
-			// Allow 1 second tolerance for duration
-			minDuration := float64(tt.durationSecs) - 0.5
-			maxDuration := float64(tt.durationSecs) + 0.5
-			if result.TestDuration < minDuration || result.TestDuration > maxDuration {
-				t.Errorf("TestDuration: got %v, want between %v and %v",
-					result.TestDuration, minDuration, maxDuration)
-			}
-
-			// Timestamp should be recent
-			if time.Since(result.Timestamp) > time.Second {
-				t.Errorf("Timestamp too old: %v", result.Timestamp)
-			}
+			runBuildTestResultCase(t, tt)
 		})
+	}
+}
+
+type buildTestResultCase struct {
+	name         string
+	dlSpeed      float64
+	ulSpeed      float64
+	latencyMs    int64
+	serverName   string
+	sponsor      string
+	country      string
+	host         string
+	distance     float64
+	durationSecs int
+}
+
+func runBuildTestResultCase(t *testing.T, tt buildTestResultCase) {
+	t.Helper()
+
+	tester := speedtest.NewTester()
+	startTime := time.Now().Add(-time.Duration(tt.durationSecs) * time.Second)
+
+	result := tester.BuildTestResultFromParams(
+		tt.dlSpeed,
+		tt.ulSpeed,
+		time.Duration(tt.latencyMs)*time.Millisecond,
+		tt.serverName,
+		tt.sponsor,
+		tt.country,
+		tt.host,
+		tt.distance,
+		startTime,
+	)
+
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+
+	assertResultFields(t, result, tt)
+	assertResultDuration(t, result, tt.durationSecs)
+	assertResultTimestamp(t, result.Timestamp)
+}
+
+func assertResultFields(t *testing.T, result *speedtest.Result, tt buildTestResultCase) {
+	t.Helper()
+
+	if result.Download != tt.dlSpeed {
+		t.Errorf("Download: got %v, want %v", result.Download, tt.dlSpeed)
+	}
+	if result.Upload != tt.ulSpeed {
+		t.Errorf("Upload: got %v, want %v", result.Upload, tt.ulSpeed)
+	}
+	if result.Latency != float64(tt.latencyMs) {
+		t.Errorf("Latency: got %v, want %v", result.Latency, float64(tt.latencyMs))
+	}
+	if result.Server != tt.serverName {
+		t.Errorf("Server: got %q, want %q", result.Server, tt.serverName)
+	}
+
+	expectedLocation := tt.sponsor + ", " + tt.country
+	if result.Location != expectedLocation {
+		t.Errorf("Location: got %q, want %q", result.Location, expectedLocation)
+	}
+
+	if result.Host != tt.host {
+		t.Errorf("Host: got %q, want %q", result.Host, tt.host)
+	}
+	if result.Distance != tt.distance {
+		t.Errorf("Distance: got %v, want %v", result.Distance, tt.distance)
+	}
+}
+
+func assertResultDuration(t *testing.T, result *speedtest.Result, durationSecs int) {
+	t.Helper()
+
+	minDuration := float64(durationSecs) - 0.5
+	maxDuration := float64(durationSecs) + 0.5
+	if result.TestDuration < minDuration || result.TestDuration > maxDuration {
+		t.Errorf("TestDuration: got %v, want between %v and %v",
+			result.TestDuration, minDuration, maxDuration)
+	}
+}
+
+func assertResultTimestamp(t *testing.T, timestamp time.Time) {
+	t.Helper()
+
+	if time.Since(timestamp) > time.Second {
+		t.Errorf("Timestamp too old: %v", timestamp)
 	}
 }
 
@@ -355,10 +377,7 @@ func TestBuildTestResultFromParamsComprehensive(t *testing.T) {
 func TestResultValidation(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name   string
-		result speedtest.Result
-	}{
+	tests := []resultValidationCase{
 		{
 			name: "complete result",
 			result: speedtest.Result{
@@ -420,39 +439,56 @@ func TestResultValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			tester := speedtest.NewTester()
-			tester.SetLastResult(&tt.result)
-
-			got := tester.GetLastResult()
-			if got == nil {
-				t.Fatal("expected non-nil result")
-			}
-
-			if got.Download != tt.result.Download {
-				t.Errorf("Download: got %v, want %v", got.Download, tt.result.Download)
-			}
-			if got.Upload != tt.result.Upload {
-				t.Errorf("Upload: got %v, want %v", got.Upload, tt.result.Upload)
-			}
-			if got.Latency != tt.result.Latency {
-				t.Errorf("Latency: got %v, want %v", got.Latency, tt.result.Latency)
-			}
-			if got.Server != tt.result.Server {
-				t.Errorf("Server: got %q, want %q", got.Server, tt.result.Server)
-			}
-			if got.Location != tt.result.Location {
-				t.Errorf("Location: got %q, want %q", got.Location, tt.result.Location)
-			}
-			if got.Host != tt.result.Host {
-				t.Errorf("Host: got %q, want %q", got.Host, tt.result.Host)
-			}
-			if got.Distance != tt.result.Distance {
-				t.Errorf("Distance: got %v, want %v", got.Distance, tt.result.Distance)
-			}
-			if got.TestDuration != tt.result.TestDuration {
-				t.Errorf("TestDuration: got %v, want %v", got.TestDuration, tt.result.TestDuration)
-			}
+			runResultValidationCase(t, tt)
 		})
+	}
+}
+
+type resultValidationCase struct {
+	name   string
+	result speedtest.Result
+}
+
+func runResultValidationCase(t *testing.T, tt resultValidationCase) {
+	t.Helper()
+
+	tester := speedtest.NewTester()
+	tester.SetLastResult(&tt.result)
+
+	got := tester.GetLastResult()
+	if got == nil {
+		t.Fatal("expected non-nil result")
+	}
+
+	assertResultEquals(t, got, tt.result)
+}
+
+func assertResultEquals(t *testing.T, got *speedtest.Result, want speedtest.Result) {
+	t.Helper()
+
+	if got.Download != want.Download {
+		t.Errorf("Download: got %v, want %v", got.Download, want.Download)
+	}
+	if got.Upload != want.Upload {
+		t.Errorf("Upload: got %v, want %v", got.Upload, want.Upload)
+	}
+	if got.Latency != want.Latency {
+		t.Errorf("Latency: got %v, want %v", got.Latency, want.Latency)
+	}
+	if got.Server != want.Server {
+		t.Errorf("Server: got %q, want %q", got.Server, want.Server)
+	}
+	if got.Location != want.Location {
+		t.Errorf("Location: got %q, want %q", got.Location, want.Location)
+	}
+	if got.Host != want.Host {
+		t.Errorf("Host: got %q, want %q", got.Host, want.Host)
+	}
+	if got.Distance != want.Distance {
+		t.Errorf("Distance: got %v, want %v", got.Distance, want.Distance)
+	}
+	if got.TestDuration != want.TestDuration {
+		t.Errorf("TestDuration: got %v, want %v", got.TestDuration, want.TestDuration)
 	}
 }
 
@@ -707,7 +743,23 @@ func TestRunTestWithNilContext(t *testing.T) {
 func TestSimulatedTestWorkflow(t *testing.T) {
 	tester := speedtest.NewTester()
 
-	// Initial state
+	assertInitialIdleStatus(t, tester)
+	tester.SetRunning(true)
+
+	assertPhaseProgress(t, tester, "finding_server", float64(speedtest.ProgressFindingServer))
+	assertPhaseProgress(t, tester, "testing_latency", float64(speedtest.ProgressTestingLatency))
+
+	finalDownload := assertDownloadSpeedUpdates(t, tester, []float64{0, 100, 300, 600, 850, 945})
+	finalUpload := assertUploadSpeedUpdates(t, tester, finalDownload, []float64{0, 50, 150, 350, 600, 850})
+
+	assertPhaseProgress(t, tester, "complete", float64(speedtest.ProgressComplete))
+	storeAndVerifyResult(t, tester, finalDownload, finalUpload)
+	resetAndVerifyIdleState(t, tester)
+}
+
+func assertInitialIdleStatus(t *testing.T, tester *speedtest.Tester) {
+	t.Helper()
+
 	status := tester.GetStatus()
 	if status.Running {
 		t.Error("should not be running initially")
@@ -715,45 +767,45 @@ func TestSimulatedTestWorkflow(t *testing.T) {
 	if status.Phase != "idle" {
 		t.Errorf("initial phase should be 'idle', got %q", status.Phase)
 	}
+}
 
-	// Simulate test start
-	tester.SetRunning(true)
+func assertPhaseProgress(t *testing.T, tester *speedtest.Tester, phase string, progress float64) {
+	t.Helper()
 
-	// Phase 1: Finding server
-	tester.SetStatus("finding_server", float64(speedtest.ProgressFindingServer))
-	status = tester.GetStatus()
-	if !status.Running {
+	tester.SetStatus(phase, progress)
+	status := tester.GetStatus()
+	if status.Phase != phase {
+		t.Errorf("phase should be %q, got %q", phase, status.Phase)
+	}
+	if phase == "finding_server" && !status.Running {
 		t.Error("should be running")
 	}
-	if status.Phase != "finding_server" {
-		t.Errorf("phase should be 'finding_server', got %q", status.Phase)
+	if phase == "complete" && status.Progress != 100 {
+		t.Errorf("progress should be 100, got %v", status.Progress)
 	}
+}
 
-	// Phase 2: Testing latency
-	tester.SetStatus("testing_latency", float64(speedtest.ProgressTestingLatency))
-	status = tester.GetStatus()
-	if status.Phase != "testing_latency" {
-		t.Errorf("phase should be 'testing_latency', got %q", status.Phase)
-	}
+func assertDownloadSpeedUpdates(t *testing.T, tester *speedtest.Tester, speeds []float64) float64 {
+	t.Helper()
 
-	// Phase 3: Testing download with speed updates
 	tester.SetStatus("testing_download", float64(speedtest.ProgressTestingDownload))
-	downloadSpeeds := []float64{0, 100, 300, 600, 850, 945}
-	for _, speed := range downloadSpeeds {
+	for _, speed := range speeds {
 		tester.SetCurrentSpeeds(speed, 0)
-		status = tester.GetStatus()
+		status := tester.GetStatus()
 		if status.CurrentDownload != speed {
 			t.Errorf("CurrentDownload: got %v, want %v", status.CurrentDownload, speed)
 		}
 	}
-	finalDownload := 945.0
+	return speeds[len(speeds)-1]
+}
 
-	// Phase 4: Testing upload with speed updates
+func assertUploadSpeedUpdates(t *testing.T, tester *speedtest.Tester, finalDownload float64, speeds []float64) float64 {
+	t.Helper()
+
 	tester.SetStatus("testing_upload", float64(speedtest.ProgressTestingUpload))
-	uploadSpeeds := []float64{0, 50, 150, 350, 600, 850}
-	for _, speed := range uploadSpeeds {
+	for _, speed := range speeds {
 		tester.SetCurrentSpeeds(finalDownload, speed)
-		status = tester.GetStatus()
+		status := tester.GetStatus()
 		if status.CurrentDownload != finalDownload {
 			t.Errorf("CurrentDownload should be %v, got %v", finalDownload, status.CurrentDownload)
 		}
@@ -761,19 +813,12 @@ func TestSimulatedTestWorkflow(t *testing.T) {
 			t.Errorf("CurrentUpload: got %v, want %v", status.CurrentUpload, speed)
 		}
 	}
-	finalUpload := 850.0
+	return speeds[len(speeds)-1]
+}
 
-	// Phase 5: Complete
-	tester.SetStatus("complete", float64(speedtest.ProgressComplete))
-	status = tester.GetStatus()
-	if status.Phase != "complete" {
-		t.Errorf("phase should be 'complete', got %q", status.Phase)
-	}
-	if status.Progress != 100 {
-		t.Errorf("progress should be 100, got %v", status.Progress)
-	}
+func storeAndVerifyResult(t *testing.T, tester *speedtest.Tester, finalDownload, finalUpload float64) {
+	t.Helper()
 
-	// Store result
 	startTime := time.Now().Add(-20 * time.Second)
 	result := tester.BuildTestResultFromParams(
 		finalDownload,
@@ -788,7 +833,6 @@ func TestSimulatedTestWorkflow(t *testing.T) {
 	)
 	tester.SetLastResult(result)
 
-	// Verify result stored
 	lastResult := tester.GetLastResult()
 	if lastResult == nil {
 		t.Fatal("expected non-nil result")
@@ -799,13 +843,16 @@ func TestSimulatedTestWorkflow(t *testing.T) {
 	if lastResult.Upload != finalUpload {
 		t.Errorf("result Upload: got %v, want %v", lastResult.Upload, finalUpload)
 	}
+}
 
-	// Reset to idle
+func resetAndVerifyIdleState(t *testing.T, tester *speedtest.Tester) {
+	t.Helper()
+
 	tester.SetRunning(false)
 	tester.SetStatus("idle", 0)
 	tester.SetCurrentSpeeds(0, 0)
 
-	status = tester.GetStatus()
+	status := tester.GetStatus()
 	if status.Running {
 		t.Error("should not be running after reset")
 	}
@@ -819,8 +866,7 @@ func TestSimulatedTestWorkflow(t *testing.T) {
 		t.Errorf("CurrentUpload should be 0, got %v", status.CurrentUpload)
 	}
 
-	// Result should still be available after reset
-	lastResult = tester.GetLastResult()
+	lastResult := tester.GetLastResult()
 	if lastResult == nil {
 		t.Error("result should persist after reset")
 	}

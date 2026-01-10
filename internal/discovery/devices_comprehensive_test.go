@@ -51,80 +51,9 @@ func TestDiscoveredDevice_AllFields(t *testing.T) {
 		},
 	}
 
-	// Test basic fields
-	if device.IP != "192.168.1.100" {
-		t.Errorf("IP mismatch: got %q", device.IP)
-	}
-	if device.IPv6Address != "fe80::1" {
-		t.Errorf("IPv6Address mismatch: got %q", device.IPv6Address)
-	}
-	if device.MAC != "00:11:22:33:44:55" {
-		t.Errorf("MAC mismatch: got %q", device.MAC)
-	}
-	if device.Hostname != "server.example.com" {
-		t.Errorf("Hostname mismatch: got %q", device.Hostname)
-	}
-	if device.NetBIOSName != "SERVER01" {
-		t.Errorf("NetBIOSName mismatch: got %q", device.NetBIOSName)
-	}
-	if device.MDNSName != "server.local" {
-		t.Errorf("MDNSName mismatch: got %q", device.MDNSName)
-	}
-	if device.DisplayName != "Server 01" {
-		t.Errorf("DisplayName mismatch: got %q", device.DisplayName)
-	}
-	if device.Vendor != "Dell Inc." {
-		t.Errorf("Vendor mismatch: got %q", device.Vendor)
-	}
-	if device.OSGuess != "Linux" {
-		t.Errorf("OSGuess mismatch: got %q", device.OSGuess)
-	}
-	if device.TTL != 64 {
-		t.Errorf("TTL mismatch: got %d", device.TTL)
-	}
-	if len(device.IPv6Addresses) != 3 {
-		t.Errorf("IPv6Addresses should have 3 entries, got %d", len(device.IPv6Addresses))
-	}
-	if len(device.DiscoveryMethod) != 3 {
-		t.Errorf("DiscoveryMethod should have 3 entries, got %d", len(device.DiscoveryMethod))
-	}
-	if !device.LastSeen.Equal(now) {
-		t.Error("LastSeen should match now")
-	}
-	if !device.IsLocal {
-		t.Error("IsLocal should be true")
-	}
-	if device.IsRouter {
-		t.Error("IsRouter should be false")
-	}
-	if device.HasDuplicateIP {
-		t.Error("HasDuplicateIP should be false")
-	}
-	if device.DuplicateMACs != nil {
-		t.Error("DuplicateMACs should be nil")
-	}
-
-	// Test protocol info
-	if device.LLDPInfo == nil {
-		t.Error("LLDPInfo should not be nil")
-	}
-	if device.NDPInfo == nil {
-		t.Error("NDPInfo should not be nil")
-	}
-	if device.CDPInfo != nil {
-		t.Error("CDPInfo should be nil")
-	}
-	if device.EDPInfo != nil {
-		t.Error("EDPInfo should be nil")
-	}
-
-	// Test profile
-	if device.Profile == nil {
-		t.Error("Profile should not be nil")
-	}
-	if len(device.Profile.OpenPorts) != 2 {
-		t.Errorf("Profile.OpenPorts should have 2 entries, got %d", len(device.Profile.OpenPorts))
-	}
+	assertDiscoveredDeviceBasicFields(t, device, now)
+	assertDiscoveredDeviceProtocolInfo(t, device)
+	assertDiscoveredDeviceProfile(t, device)
 }
 
 func TestComputeDisplayName_AllPriorities(t *testing.T) {
@@ -258,6 +187,96 @@ func TestComputeDisplayName_AllPriorities(t *testing.T) {
 	}
 }
 
+func assertDiscoveredDeviceBasicFields(
+	t *testing.T,
+	device *discovery.DiscoveredDevice,
+	now time.Time,
+) {
+	t.Helper()
+
+	if device.IP != "192.168.1.100" {
+		t.Errorf("IP mismatch: got %q", device.IP)
+	}
+	if device.IPv6Address != "fe80::1" {
+		t.Errorf("IPv6Address mismatch: got %q", device.IPv6Address)
+	}
+	if device.MAC != "00:11:22:33:44:55" {
+		t.Errorf("MAC mismatch: got %q", device.MAC)
+	}
+	if device.Hostname != "server.example.com" {
+		t.Errorf("Hostname mismatch: got %q", device.Hostname)
+	}
+	if device.NetBIOSName != "SERVER01" {
+		t.Errorf("NetBIOSName mismatch: got %q", device.NetBIOSName)
+	}
+	if device.MDNSName != "server.local" {
+		t.Errorf("MDNSName mismatch: got %q", device.MDNSName)
+	}
+	if device.DisplayName != "Server 01" {
+		t.Errorf("DisplayName mismatch: got %q", device.DisplayName)
+	}
+	if device.Vendor != "Dell Inc." {
+		t.Errorf("Vendor mismatch: got %q", device.Vendor)
+	}
+	if device.OSGuess != "Linux" {
+		t.Errorf("OSGuess mismatch: got %q", device.OSGuess)
+	}
+	if device.TTL != 64 {
+		t.Errorf("TTL mismatch: got %d", device.TTL)
+	}
+	if len(device.IPv6Addresses) != 3 {
+		t.Errorf("IPv6Addresses should have 3 entries, got %d", len(device.IPv6Addresses))
+	}
+	if len(device.DiscoveryMethod) != 3 {
+		t.Errorf("DiscoveryMethod should have 3 entries, got %d", len(device.DiscoveryMethod))
+	}
+	if !device.LastSeen.Equal(now) {
+		t.Error("LastSeen should match now")
+	}
+	if !device.IsLocal {
+		t.Error("IsLocal should be true")
+	}
+	if device.IsRouter {
+		t.Error("IsRouter should be false")
+	}
+	if device.HasDuplicateIP {
+		t.Error("HasDuplicateIP should be false")
+	}
+	if device.DuplicateMACs != nil {
+		t.Error("DuplicateMACs should be nil")
+	}
+}
+
+func assertDiscoveredDeviceProtocolInfo(t *testing.T, device *discovery.DiscoveredDevice) {
+	t.Helper()
+
+	// Test protocol info
+	if device.LLDPInfo == nil {
+		t.Error("LLDPInfo should not be nil")
+	}
+	if device.NDPInfo == nil {
+		t.Error("NDPInfo should not be nil")
+	}
+	if device.CDPInfo != nil {
+		t.Error("CDPInfo should be nil")
+	}
+	if device.EDPInfo != nil {
+		t.Error("EDPInfo should be nil")
+	}
+}
+
+func assertDiscoveredDeviceProfile(t *testing.T, device *discovery.DiscoveredDevice) {
+	t.Helper()
+
+	// Test profile
+	if device.Profile == nil {
+		t.Error("Profile should not be nil")
+	}
+	if len(device.Profile.OpenPorts) != 2 {
+		t.Errorf("Profile.OpenPorts should have 2 entries, got %d", len(device.Profile.OpenPorts))
+	}
+}
+
 func TestProtocolDeviceInfo_Fields(t *testing.T) {
 	t.Run("lldp_info", func(t *testing.T) {
 		info := &discovery.LLDPDeviceInfo{
@@ -270,27 +289,7 @@ func TestProtocolDeviceInfo_Fields(t *testing.T) {
 			ManagementAddress: "10.0.0.10",
 		}
 
-		if info.ChassisID != "00:11:22:33:44:55" {
-			t.Errorf("ChassisID mismatch: got %q", info.ChassisID)
-		}
-		if info.PortID != "GigabitEthernet0/1" {
-			t.Errorf("PortID mismatch: got %q", info.PortID)
-		}
-		if info.PortDescription != "Uplink to Core" {
-			t.Errorf("PortDescription mismatch: got %q", info.PortDescription)
-		}
-		if info.SystemName != "access-switch-01" {
-			t.Errorf("SystemName mismatch: got %q", info.SystemName)
-		}
-		if info.SystemDescription != "Cisco IOS Software, C2960 Software" {
-			t.Errorf("SystemDescription mismatch: got %q", info.SystemDescription)
-		}
-		if len(info.Capabilities) != 2 {
-			t.Errorf("Capabilities should have 2 entries, got %d", len(info.Capabilities))
-		}
-		if info.ManagementAddress != "10.0.0.10" {
-			t.Errorf("ManagementAddress mismatch: got %q", info.ManagementAddress)
-		}
+		assertLLDPInfoFields(t, info)
 	})
 
 	t.Run("cdp_info", func(t *testing.T) {
@@ -305,30 +304,7 @@ func TestProtocolDeviceInfo_Fields(t *testing.T) {
 			VoiceVLAN:         100,
 		}
 
-		if info.DeviceID != "core-router.example.com" {
-			t.Errorf("DeviceID mismatch: got %q", info.DeviceID)
-		}
-		if info.PortID != "TenGigabitEthernet0/0/0" {
-			t.Errorf("PortID mismatch: got %q", info.PortID)
-		}
-		if info.Platform != "Cisco Nexus9000 C9300" {
-			t.Errorf("Platform mismatch: got %q", info.Platform)
-		}
-		if info.SoftwareVersion != "16.12.4" {
-			t.Errorf("SoftwareVersion mismatch: got %q", info.SoftwareVersion)
-		}
-		if len(info.Capabilities) != 3 {
-			t.Errorf("Capabilities should have 3 entries, got %d", len(info.Capabilities))
-		}
-		if info.ManagementAddress != "10.0.0.1" {
-			t.Errorf("ManagementAddress mismatch: got %q", info.ManagementAddress)
-		}
-		if info.NativeVLAN != 1 {
-			t.Errorf("NativeVLAN should be 1, got %d", info.NativeVLAN)
-		}
-		if info.VoiceVLAN != 100 {
-			t.Errorf("VoiceVLAN should be 100, got %d", info.VoiceVLAN)
-		}
+		assertCDPInfoFields(t, info)
 	})
 
 	t.Run("edp_info", func(t *testing.T) {
@@ -341,24 +317,7 @@ func TestProtocolDeviceInfo_Fields(t *testing.T) {
 			VLAN:            10,
 		}
 
-		if info.DeviceID != "extreme-switch-01" {
-			t.Errorf("DeviceID mismatch: got %q", info.DeviceID)
-		}
-		if info.DisplayName != "Extreme Networks Switch" {
-			t.Errorf("DisplayName mismatch: got %q", info.DisplayName)
-		}
-		if info.PortID != "1:25" {
-			t.Errorf("PortID mismatch: got %q", info.PortID)
-		}
-		if info.Platform != "Summit X460" {
-			t.Errorf("Platform mismatch: got %q", info.Platform)
-		}
-		if info.SoftwareVersion != "31.7.1.4" {
-			t.Errorf("SoftwareVersion mismatch: got %q", info.SoftwareVersion)
-		}
-		if info.VLAN != 10 {
-			t.Errorf("VLAN should be 10, got %d", info.VLAN)
-		}
+		assertEDPInfoFields(t, info)
 	})
 
 	t.Run("ndp_info", func(t *testing.T) {
@@ -372,25 +331,109 @@ func TestProtocolDeviceInfo_Fields(t *testing.T) {
 			LastAdvertisement: now,
 		}
 
-		if !info.IsRouter {
-			t.Error("IsRouter should be true")
-		}
-		if info.LinkLayerAddress != "00:11:22:33:44:55" {
-			t.Errorf("LinkLayerAddress mismatch: got %q", info.LinkLayerAddress)
-		}
-		if info.ReachableTime != 30000 {
-			t.Errorf("ReachableTime should be 30000, got %d", info.ReachableTime)
-		}
-		if info.RetransTimer != 1000 {
-			t.Errorf("RetransTimer should be 1000, got %d", info.RetransTimer)
-		}
-		if info.Flags != 0x80 {
-			t.Errorf("Flags should be 0x80, got %d", info.Flags)
-		}
-		if !info.LastAdvertisement.Equal(now) {
-			t.Error("LastAdvertisement should match now")
-		}
+		assertNDPInfoFields(t, info, now)
 	})
+}
+
+func assertLLDPInfoFields(t *testing.T, info *discovery.LLDPDeviceInfo) {
+	t.Helper()
+
+	if info.ChassisID != "00:11:22:33:44:55" {
+		t.Errorf("ChassisID mismatch: got %q", info.ChassisID)
+	}
+	if info.PortID != "GigabitEthernet0/1" {
+		t.Errorf("PortID mismatch: got %q", info.PortID)
+	}
+	if info.PortDescription != "Uplink to Core" {
+		t.Errorf("PortDescription mismatch: got %q", info.PortDescription)
+	}
+	if info.SystemName != "access-switch-01" {
+		t.Errorf("SystemName mismatch: got %q", info.SystemName)
+	}
+	if info.SystemDescription != "Cisco IOS Software, C2960 Software" {
+		t.Errorf("SystemDescription mismatch: got %q", info.SystemDescription)
+	}
+	if len(info.Capabilities) != 2 {
+		t.Errorf("Capabilities should have 2 entries, got %d", len(info.Capabilities))
+	}
+	if info.ManagementAddress != "10.0.0.10" {
+		t.Errorf("ManagementAddress mismatch: got %q", info.ManagementAddress)
+	}
+}
+
+func assertCDPInfoFields(t *testing.T, info *discovery.CDPDeviceInfo) {
+	t.Helper()
+
+	if info.DeviceID != "core-router.example.com" {
+		t.Errorf("DeviceID mismatch: got %q", info.DeviceID)
+	}
+	if info.PortID != "TenGigabitEthernet0/0/0" {
+		t.Errorf("PortID mismatch: got %q", info.PortID)
+	}
+	if info.Platform != "Cisco Nexus9000 C9300" {
+		t.Errorf("Platform mismatch: got %q", info.Platform)
+	}
+	if info.SoftwareVersion != "16.12.4" {
+		t.Errorf("SoftwareVersion mismatch: got %q", info.SoftwareVersion)
+	}
+	if len(info.Capabilities) != 3 {
+		t.Errorf("Capabilities should have 3 entries, got %d", len(info.Capabilities))
+	}
+	if info.ManagementAddress != "10.0.0.1" {
+		t.Errorf("ManagementAddress mismatch: got %q", info.ManagementAddress)
+	}
+	if info.NativeVLAN != 1 {
+		t.Errorf("NativeVLAN should be 1, got %d", info.NativeVLAN)
+	}
+	if info.VoiceVLAN != 100 {
+		t.Errorf("VoiceVLAN should be 100, got %d", info.VoiceVLAN)
+	}
+}
+
+func assertEDPInfoFields(t *testing.T, info *discovery.EDPDeviceInfo) {
+	t.Helper()
+
+	if info.DeviceID != "extreme-switch-01" {
+		t.Errorf("DeviceID mismatch: got %q", info.DeviceID)
+	}
+	if info.DisplayName != "Extreme Networks Switch" {
+		t.Errorf("DisplayName mismatch: got %q", info.DisplayName)
+	}
+	if info.PortID != "1:25" {
+		t.Errorf("PortID mismatch: got %q", info.PortID)
+	}
+	if info.Platform != "Summit X460" {
+		t.Errorf("Platform mismatch: got %q", info.Platform)
+	}
+	if info.SoftwareVersion != "31.7.1.4" {
+		t.Errorf("SoftwareVersion mismatch: got %q", info.SoftwareVersion)
+	}
+	if info.VLAN != 10 {
+		t.Errorf("VLAN should be 10, got %d", info.VLAN)
+	}
+}
+
+func assertNDPInfoFields(t *testing.T, info *discovery.NDPDeviceInfo, now time.Time) {
+	t.Helper()
+
+	if !info.IsRouter {
+		t.Error("IsRouter should be true")
+	}
+	if info.LinkLayerAddress != "00:11:22:33:44:55" {
+		t.Errorf("LinkLayerAddress mismatch: got %q", info.LinkLayerAddress)
+	}
+	if info.ReachableTime != 30000 {
+		t.Errorf("ReachableTime should be 30000, got %d", info.ReachableTime)
+	}
+	if info.RetransTimer != 1000 {
+		t.Errorf("RetransTimer should be 1000, got %d", info.RetransTimer)
+	}
+	if info.Flags != 0x80 {
+		t.Errorf("Flags should be 0x80, got %d", info.Flags)
+	}
+	if !info.LastAdvertisement.Equal(now) {
+		t.Error("LastAdvertisement should match now")
+	}
 }
 
 func TestDiscoveredDevice_DuplicateIP_Comprehensive(t *testing.T) {

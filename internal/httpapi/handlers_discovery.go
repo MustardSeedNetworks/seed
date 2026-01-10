@@ -83,7 +83,7 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.discoveryService == nil {
+	if s.discoveryService() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -98,10 +98,10 @@ func (s *Server) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 	// Get interface from query param or use current
 	currentIface := s.getInterfaceFromRequest(r)
 
-	neighbors := s.discoveryService.GetNeighbors()
+	neighbors := s.discoveryService().GetNeighbors()
 	resp := DiscoveryResponse{
 		Interface: currentIface,
-		Running:   s.discoveryService.IsRunning(),
+		Running:   s.discoveryService().IsRunning(),
 		Neighbors: make([]DiscoveryNeighborInfo, 0, len(neighbors)),
 	}
 
@@ -148,7 +148,7 @@ func (s *Server) handleDiscoveryOptions(w http.ResponseWriter, r *http.Request) 
 
 func (s *Server) getDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	opts := s.discoveryService.GetOptions()
+	opts := s.discoveryService().GetOptions()
 	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		"options": opts,
 	})
@@ -183,7 +183,7 @@ func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	s.config.Unlock()
 
 	// Apply the options change to the running service
-	if err := s.discoveryService.Reload(); err != nil {
+	if err := s.discoveryService().Reload(); err != nil {
 		logger.Error("Failed to reload discovery options", "error", err)
 		sendErrorResponseWithDetails(
 			w,
@@ -233,6 +233,6 @@ func (s *Server) handleDiscoveryServiceStatus(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	status := s.discoveryService.GetStatus()
+	status := s.discoveryService().GetStatus()
 	sendJSONResponse(w, logger, http.StatusOK, status)
 }

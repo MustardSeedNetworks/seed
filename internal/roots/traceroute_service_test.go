@@ -103,12 +103,7 @@ func TestTracerouteService_Trace_NilTracer(t *testing.T) {
 func TestTracerouteService_Trace_WithOptions(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name    string
-		target  string
-		opts    *roots.TracerouteOptions
-		wantErr bool
-	}{
+	tests := []tracerouteCase{
 		{
 			name:    "nil options uses defaults",
 			target:  "127.0.0.1",
@@ -189,36 +184,55 @@ func TestTracerouteService_Trace_WithOptions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-
-			result, err := svc.Trace(ctx, tt.target, tt.opts)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Trace() error = %v, wantErr = %v", err, tt.wantErr)
-				return
-			}
-
-			if tt.wantErr {
-				return
-			}
-			if result == nil {
-				t.Error("Trace() returned nil result without error")
-				return
-			}
-			if result.Target != tt.target {
-				t.Errorf("Target = %q, want %q", result.Target, tt.target)
-			}
-			if result.StartedAt.IsZero() {
-				t.Error("StartedAt should not be zero")
-			}
-			if result.CompletedAt.IsZero() {
-				t.Error("CompletedAt should not be zero")
-			}
-			if result.Duration <= 0 {
-				t.Error("Duration should be positive")
-			}
+			runTracerouteCase(t, svc, tt)
 		})
+	}
+}
+
+type tracerouteCase struct {
+	name    string
+	target  string
+	opts    *roots.TracerouteOptions
+	wantErr bool
+}
+
+func runTracerouteCase(t *testing.T, svc *roots.TracerouteService, tt tracerouteCase) {
+	t.Helper()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result, err := svc.Trace(ctx, tt.target, tt.opts)
+	if (err != nil) != tt.wantErr {
+		t.Errorf("Trace() error = %v, wantErr = %v", err, tt.wantErr)
+		return
+	}
+
+	if tt.wantErr {
+		return
+	}
+
+	assertTracerouteResult(t, result, tt.target)
+}
+
+func assertTracerouteResult(t *testing.T, result *roots.TracerouteResult, target string) {
+	t.Helper()
+
+	if result == nil {
+		t.Error("Trace() returned nil result without error")
+		return
+	}
+	if result.Target != target {
+		t.Errorf("Target = %q, want %q", result.Target, target)
+	}
+	if result.StartedAt.IsZero() {
+		t.Error("StartedAt should not be zero")
+	}
+	if result.CompletedAt.IsZero() {
+		t.Error("CompletedAt should not be zero")
+	}
+	if result.Duration <= 0 {
+		t.Error("Duration should be positive")
 	}
 }
 

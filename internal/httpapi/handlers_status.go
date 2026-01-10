@@ -61,8 +61,8 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 
 	// Check if current interface is wireless
 	isWireless := false
-	if s.wifiManager != nil {
-		isWireless = s.wifiManager.IsWireless()
+	if s.wifiManager() != nil {
+		isWireless = s.wifiManager().IsWireless()
 	}
 
 	resp := StatusResponse{
@@ -94,7 +94,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 
 	// Get interface from query param or fallback to current.
 	currentIface := s.getInterfaceFromRequest(r)
-	if err := s.netManager.RefreshInterfaces(); err != nil {
+	if err := s.netManager().RefreshInterfaces(); err != nil {
 		logger.Error("Failed to refresh interfaces", "error", err)
 		sendErrorResponseWithDetails(
 			w,
@@ -108,7 +108,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var mac string
-	if ifaceInfo, err := s.netManager.GetInterface(currentIface); err == nil {
+	if ifaceInfo, err := s.netManager().GetInterface(currentIface); err == nil {
 		mac = ifaceInfo.HardwareAddr
 	}
 
@@ -144,7 +144,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) exportLinkCard(iface string, cards map[string]any) {
-	if linkStatus, err := s.netManager.GetLinkStatus(iface); err == nil {
+	if linkStatus, err := s.netManager().GetLinkStatus(iface); err == nil {
 		cards["link"] = map[string]any{
 			"linkUp": linkStatus.LinkUp, "speed": linkStatus.Speed,
 			"duplex": linkStatus.Duplex, "autoNeg": linkStatus.AutoNeg,
@@ -153,7 +153,7 @@ func (s *Server) exportLinkCard(iface string, cards map[string]any) {
 }
 
 func (s *Server) exportIPConfigCard(iface string, cards map[string]any) {
-	ifaceInfo, err := s.netManager.GetInterface(iface)
+	ifaceInfo, err := s.netManager().GetInterface(iface)
 	if err != nil {
 		return
 	}
@@ -168,10 +168,10 @@ func (s *Server) exportIPConfigCard(iface string, cards map[string]any) {
 }
 
 func (s *Server) exportDiscoveryCard(cards map[string]any) {
-	if s.discoveryService == nil {
+	if s.discoveryService() == nil {
 		return
 	}
-	neighbors := s.discoveryService.GetNeighbors()
+	neighbors := s.discoveryService().GetNeighbors()
 	neighborList := make([]map[string]any, 0, len(neighbors))
 	for _, n := range neighbors {
 		neighborList = append(neighborList, map[string]any{
@@ -180,16 +180,16 @@ func (s *Server) exportDiscoveryCard(cards map[string]any) {
 		})
 	}
 	cards["switch"] = map[string]any{
-		"running":   s.discoveryService.IsRunning(),
+		"running":   s.discoveryService().IsRunning(),
 		"neighbors": neighborList,
 	}
 }
 
 func (s *Server) exportDNSCard(ctx context.Context, cards map[string]any) {
-	if s.dnsTester == nil {
+	if s.dnsTester() == nil {
 		return
 	}
-	result := s.dnsTester.Test(ctx)
+	result := s.dnsTester().Test(ctx)
 	dnsData := map[string]any{"server": result.Server, "testHostname": result.TestHostname}
 	if result.Forward != nil {
 		dnsData["forward"] = map[string]any{
@@ -207,10 +207,10 @@ func (s *Server) exportDNSCard(ctx context.Context, cards map[string]any) {
 }
 
 func (s *Server) exportGatewayCard(cards map[string]any) {
-	if s.gatewayTester == nil {
+	if s.gatewayTester() == nil {
 		return
 	}
-	stats := s.gatewayTester.GetStats()
+	stats := s.gatewayTester().GetStats()
 	cards["gateway"] = map[string]any{
 		"gateway": stats.Gateway, "reachable": stats.Reachable, "sent": stats.Sent,
 		"received": stats.Received, "lossPercent": stats.LossPercent,
@@ -219,10 +219,10 @@ func (s *Server) exportGatewayCard(cards map[string]any) {
 }
 
 func (s *Server) exportVLANCard(cards map[string]any) {
-	if s.vlanManager == nil {
+	if s.vlanManager() == nil {
 		return
 	}
-	vlanInfo := s.vlanManager.GetInfo()
+	vlanInfo := s.vlanManager().GetInfo()
 	cards["vlan"] = map[string]any{
 		"nativeVlan": vlanInfo.NativeVlan, "taggedVlans": vlanInfo.TaggedVlans,
 		"voiceVlan": vlanInfo.VoiceVlan, "configured": vlanInfo.Configured,
@@ -230,10 +230,10 @@ func (s *Server) exportVLANCard(cards map[string]any) {
 }
 
 func (s *Server) exportWiFiCard(iface string, cards map[string]any) {
-	if !s.netManager.IsWireless(iface) || s.wifiManager == nil {
+	if !s.netManager().IsWireless(iface) || s.wifiManager() == nil {
 		return
 	}
-	wifiInfo := s.wifiManager.GetInfo()
+	wifiInfo := s.wifiManager().GetInfo()
 	if wifiInfo.SSID != "" {
 		cards["wifi"] = map[string]any{
 			"ssid": wifiInfo.SSID, "bssid": wifiInfo.BSSID, "signal": wifiInfo.Signal,
@@ -243,10 +243,10 @@ func (s *Server) exportWiFiCard(iface string, cards map[string]any) {
 }
 
 func (s *Server) exportCableCard(cards map[string]any) {
-	if s.cableTester == nil {
+	if s.cableTester() == nil {
 		return
 	}
-	cableResult := s.cableTester.Test()
+	cableResult := s.cableTester().Test()
 	cards["cable"] = map[string]any{
 		"supported": cableResult.Supported, "length": cableResult.Length,
 		"status": cableResult.Status, "faults": cableResult.Faults,
@@ -254,10 +254,10 @@ func (s *Server) exportCableCard(cards map[string]any) {
 }
 
 func (s *Server) exportSpeedtestCard(cards map[string]any) {
-	if s.speedtestTester == nil {
+	if s.speedtestTester() == nil {
 		return
 	}
-	result := s.speedtestTester.GetLastResult()
+	result := s.speedtestTester().GetLastResult()
 	if result == nil {
 		return
 	}
@@ -269,10 +269,10 @@ func (s *Server) exportSpeedtestCard(cards map[string]any) {
 }
 
 func (s *Server) exportIperfCard(cards map[string]any) {
-	if s.iperfManager == nil {
+	if s.iperfManager() == nil {
 		return
 	}
-	result := s.iperfManager.GetLastResult()
+	result := s.iperfManager().GetLastResult()
 	if result == nil {
 		return
 	}
@@ -406,10 +406,10 @@ func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 			"uptime_text": time.Since(s.startTime).String(),
 		},
 		"services": map[string]any{
-			"discovery_service": s.discoveryService != nil && s.discoveryService.IsRunning(),
-			"link_monitor":      s.linkMonitor != nil,
-			"websocket_hub":     s.wsHub != nil,
-			"vlan_monitor":      s.vlanTrafficMonitor != nil,
+			"discovery_service": s.discoveryService() != nil && s.discoveryService().IsRunning(),
+			"link_monitor":      s.linkMonitor() != nil,
+			"websocket_hub":     s.wsHub() != nil,
+			"vlan_monitor":      s.vlanTrafficMonitor() != nil,
 		},
 	}
 

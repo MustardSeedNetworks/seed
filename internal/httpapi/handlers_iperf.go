@@ -243,7 +243,7 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 			time.Duration(req.Duration+iperfTimeoutPaddingSec)*time.Second,
 		)
 		defer cancel()
-		if _, err := s.iperfManager.RunClient(ctx, &iperfConfig); err != nil {
+		if _, err := s.iperfManager().RunClient(ctx, &iperfConfig); err != nil {
 			logger.Error("iperf client failed", "error", err)
 		}
 	}(logger)
@@ -270,14 +270,14 @@ func (s *Server) handleIperfClientStatus(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	status := s.iperfManager.GetClientStatus()
+	status := s.iperfManager().GetClientStatus()
 	resp := IperfClientStatusResponse{
 		Running:  status.Running,
 		Phase:    status.Phase,
 		Progress: status.Progress,
 	}
 
-	if lastResult := s.iperfManager.GetLastResult(); lastResult != nil {
+	if lastResult := s.iperfManager().GetLastResult(); lastResult != nil {
 		resp.Last = &IperfResultResponse{
 			Bandwidth:         lastResult.Bandwidth,
 			Transfer:          lastResult.Transfer,
@@ -341,7 +341,7 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 		if port == 0 {
 			port = 5201
 		}
-		if err := s.iperfManager.StartServer(port); err != nil {
+		if err := s.iperfManager().StartServer(port); err != nil {
 			logger.Error("Failed to start iPerf server", "error", err)
 			sendErrorResponseWithDetails(
 				w,
@@ -358,7 +358,7 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 			"port":    port,
 		})
 	case "stop":
-		if err := s.iperfManager.StopServer(); err != nil {
+		if err := s.iperfManager().StopServer(); err != nil {
 			logger.Error("Failed to stop iPerf server", "error", err)
 			sendErrorResponseWithDetails(
 				w,
@@ -402,7 +402,7 @@ func (s *Server) handleIperfServerStatus(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	status := s.iperfManager.GetServerStatus()
+	status := s.iperfManager().GetServerStatus()
 	sendJSONResponse(w, logger, http.StatusOK, status)
 }
 
@@ -423,7 +423,7 @@ func (s *Server) handleIperfSuggestions(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if s.deviceDiscovery == nil {
+	if s.deviceDiscovery() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -442,7 +442,7 @@ func (s *Server) handleIperfSuggestions(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	devices := s.deviceDiscovery.GetDevices()
+	devices := s.deviceDiscovery().GetDevices()
 	suggestions := make([]IperfSuggestion, 0, len(devices))
 
 	for _, d := range devices {

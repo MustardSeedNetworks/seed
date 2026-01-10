@@ -262,13 +262,7 @@ func TestModuleServiceGettersTableDriven(t *testing.T) {
 	cfg := config.DefaultConfig()
 	module := sap.New(cfg, nil)
 
-	tests := []struct {
-		name       string
-		getterFn   func() any
-		wantNil    bool
-		wantSame   bool
-		iterations int
-	}{
+	tests := []serviceGetterCase{
 		{
 			name:       "Link",
 			getterFn:   func() any { return module.Link() },
@@ -336,24 +330,7 @@ func TestModuleServiceGettersTableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			first := tt.getterFn()
-
-			if tt.wantNil && first != nil {
-				t.Errorf("%s: expected nil service, got non-nil", tt.name)
-			}
-			if !tt.wantNil && first == nil {
-				t.Errorf("%s: expected non-nil service, got nil", tt.name)
-				return
-			}
-
-			if tt.wantSame {
-				for i := 1; i < tt.iterations; i++ {
-					next := tt.getterFn()
-					if first != next {
-						t.Errorf("%s: iteration %d returned different instance", tt.name, i)
-					}
-				}
-			}
+			runServiceGetterCase(t, tt)
 		})
 	}
 }
@@ -448,65 +425,67 @@ func TestModuleConcurrentServiceAccess(t *testing.T) {
 	const goroutines = 10
 	const iterations = 50
 
-	var wg sync.WaitGroup
-	wg.Add(goroutines * 9) // 9 services
+	runConcurrentServiceAccess(t, module, goroutines, iterations)
+}
 
-	// Test concurrent access to all services
+type serviceGetterCase struct {
+	name       string
+	getterFn   func() any
+	wantNil    bool
+	wantSame   bool
+	iterations int
+}
+
+func runServiceGetterCase(t *testing.T, tt serviceGetterCase) {
+	t.Helper()
+
+	first := tt.getterFn()
+
+	if tt.wantNil && first != nil {
+		t.Errorf("%s: expected nil service, got non-nil", tt.name)
+	}
+	if !tt.wantNil && first == nil {
+		t.Errorf("%s: expected non-nil service, got nil", tt.name)
+		return
+	}
+
+	if tt.wantSame {
+		for i := 1; i < tt.iterations; i++ {
+			next := tt.getterFn()
+			if first != next {
+				t.Errorf("%s: iteration %d returned different instance", tt.name, i)
+			}
+		}
+	}
+}
+
+func runConcurrentServiceAccess(t *testing.T, module *sap.Module, goroutines, iterations int) {
+	t.Helper()
+
+	getters := []func() any{
+		func() any { return module.Link() },
+		func() any { return module.Cable() },
+		func() any { return module.DHCP() },
+		func() any { return module.DNS() },
+		func() any { return module.Gateway() },
+		func() any { return module.SNMP() },
+		func() any { return module.Performance() },
+		func() any { return module.VLAN() },
+		func() any { return module.Telemetry() },
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(goroutines * len(getters))
+
 	for range goroutines {
-		go func() {
-			defer wg.Done()
-			for range iterations {
-				_ = module.Link()
-			}
-		}()
-		go func() {
-			defer wg.Done()
-			for range iterations {
-				_ = module.Cable()
-			}
-		}()
-		go func() {
-			defer wg.Done()
-			for range iterations {
-				_ = module.DHCP()
-			}
-		}()
-		go func() {
-			defer wg.Done()
-			for range iterations {
-				_ = module.DNS()
-			}
-		}()
-		go func() {
-			defer wg.Done()
-			for range iterations {
-				_ = module.Gateway()
-			}
-		}()
-		go func() {
-			defer wg.Done()
-			for range iterations {
-				_ = module.SNMP()
-			}
-		}()
-		go func() {
-			defer wg.Done()
-			for range iterations {
-				_ = module.Performance()
-			}
-		}()
-		go func() {
-			defer wg.Done()
-			for range iterations {
-				_ = module.VLAN()
-			}
-		}()
-		go func() {
-			defer wg.Done()
-			for range iterations {
-				_ = module.Telemetry()
-			}
-		}()
+		for _, getter := range getters {
+			go func(getter func() any) {
+				defer wg.Done()
+				for range iterations {
+					_ = getter()
+				}
+			}(getter)
+		}
 	}
 
 	wg.Wait()

@@ -193,7 +193,7 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.netManager == nil {
+	if s.netManager() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -208,7 +208,7 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.netManager.RefreshInterfaces(); err != nil {
+	if err := s.netManager().RefreshInterfaces(); err != nil {
 		logger.Error("Failed to refresh interfaces", "error", err)
 		sendErrorResponseWithDetails(
 			w,
@@ -221,7 +221,7 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Return only physical interfaces (ethernet and wifi) - excludes loopback, docker, veth, etc.
-	interfaces := s.netManager.GetPhysicalInterfaces()
+	interfaces := s.netManager().GetPhysicalInterfaces()
 
 	sendJSONResponse(w, nil, http.StatusOK, interfaces)
 }
@@ -231,7 +231,7 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if s.netManager == nil {
+	if s.netManager() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -249,7 +249,7 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		sendJSONResponse(w, nil, http.StatusOK, map[string]string{
-			"interface": s.netManager.GetCurrentInterface(),
+			"interface": s.netManager().GetCurrentInterface(),
 		})
 	case http.MethodPut:
 		// Limit request body size to prevent DoS attacks (fixes #693)
@@ -269,7 +269,7 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := s.netManager.SetCurrentInterface(req.Interface); err != nil {
+		if err := s.netManager().SetCurrentInterface(req.Interface); err != nil {
 			logger.Warn("Invalid interface", "error", err, "interface", req.Interface)
 			sendErrorResponseWithDetails(
 				w,
@@ -283,27 +283,27 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Update unified discovery service to use new interface (handles protocol restarts)
-		if s.discoveryService != nil {
-			if err := s.discoveryService.SetInterface(req.Interface); err != nil {
+		if s.discoveryService() != nil {
+			if err := s.discoveryService().SetInterface(req.Interface); err != nil {
 				// Log but don't fail - discovery may not work without root
 				logging.GetLogger().Warn("Failed to set discovery interface", "error", err)
 			}
 		}
 
 		// Update WiFi manager interface and check if wireless
-		if s.wifiManager != nil {
-			s.wifiManager.SetInterface(req.Interface)
+		if s.wifiManager() != nil {
+			s.wifiManager().SetInterface(req.Interface)
 		}
 
 		// Update link monitor interface
-		if s.linkMonitor != nil {
-			s.linkMonitor.SetInterface(req.Interface)
+		if s.linkMonitor() != nil {
+			s.linkMonitor().SetInterface(req.Interface)
 		}
 
 		// Check if new interface is wireless
 		isWireless := false
-		if s.wifiManager != nil {
-			isWireless = s.wifiManager.IsWireless()
+		if s.wifiManager() != nil {
+			isWireless = s.wifiManager().IsWireless()
 		}
 
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
@@ -325,13 +325,13 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 
 // addLinkHistory adds link flap history from monitor to response.
 func (s *Server) addLinkHistory(resp *LinkResponse) {
-	if s.linkMonitor == nil {
+	if s.linkMonitor() == nil {
 		return
 	}
-	resp.FlapCount24h = s.linkMonitor.GetFlapCount24h()
-	resp.UptimeMs = s.linkMonitor.GetUptime().Milliseconds()
+	resp.FlapCount24h = s.linkMonitor().GetFlapCount24h()
+	resp.UptimeMs = s.linkMonitor().GetUptime().Milliseconds()
 
-	history := s.linkMonitor.GetHistory()
+	history := s.linkMonitor().GetHistory()
 	if len(history) > 0 {
 		resp.History = make([]LinkHistoryEvent, len(history))
 		for i, event := range history {
@@ -385,7 +385,7 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.netManager == nil {
+	if s.netManager() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -400,7 +400,7 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.netManager.RefreshInterfaces(); err != nil {
+	if err := s.netManager().RefreshInterfaces(); err != nil {
 		logger.Error("Failed to refresh interfaces", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.network.refreshFailed"), "")
@@ -408,7 +408,7 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentIface := s.getInterfaceFromRequest(r)
-	ifaceInfo, err := s.netManager.GetInterface(currentIface)
+	ifaceInfo, err := s.netManager().GetInterface(currentIface)
 	if err != nil {
 		logger.Warn("Interface not found", "error", err, "interface", currentIface)
 		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
@@ -416,7 +416,7 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	linkStatus, err := s.netManager.GetLinkStatus(currentIface)
+	linkStatus, err := s.netManager().GetLinkStatus(currentIface)
 	if err != nil {
 		logging.GetLogger().
 			Warn("Failed to get link status", "interface", currentIface, "error", err)
@@ -457,7 +457,7 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.netManager == nil {
+	if s.netManager() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -472,7 +472,7 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.netManager.RefreshInterfaces(); err != nil {
+	if err := s.netManager().RefreshInterfaces(); err != nil {
 		logger.Error("Failed to refresh interfaces", "error", err)
 		sendErrorResponseWithDetails(
 			w,
@@ -488,7 +488,7 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 	// Get interface from query param or fallback to current.
 	currentIface := s.getInterfaceFromRequest(r)
 
-	ifaceInfo, err := s.netManager.GetInterface(currentIface)
+	ifaceInfo, err := s.netManager().GetInterface(currentIface)
 	if err != nil {
 		logger.Warn("Interface not found", "error", err, "interface", currentIface)
 		sendErrorResponseWithDetails(
@@ -584,7 +584,7 @@ func (s *Server) applyStaticIPConfig(
 	cfg := &network.StaticIPConfig{
 		Address: req.Address, Netmask: req.Netmask, Gateway: req.Gateway, DNS: req.DNS,
 	}
-	if err := s.netManager.ConfigureStaticIP(iface, cfg); err != nil {
+	if err := s.netManager().ConfigureStaticIP(iface, cfg); err != nil {
 		logger.Error("Failed to configure static IP", "error", err, "interface", iface)
 		return err
 	}
@@ -597,7 +597,7 @@ func (s *Server) applyStaticIPConfig(
 
 // applyDHCPConfig applies DHCP configuration, returns error on failure.
 func (s *Server) applyDHCPConfig(iface string, logger *slog.Logger) error {
-	if err := s.netManager.ConfigureDHCP(iface); err != nil {
+	if err := s.netManager().ConfigureDHCP(iface); err != nil {
 		logger.Error("Failed to configure DHCP", "error", err, "interface", iface)
 		return err
 	}
@@ -683,7 +683,7 @@ func (s *Server) handleIPSettingsPut(
 		return
 	}
 
-	if err := s.netManager.RefreshInterfaces(); err != nil {
+	if err := s.netManager().RefreshInterfaces(); err != nil {
 		logger.Error("Failed to refresh interfaces", "error", err)
 		sendErrorResponseWithDetails(
 			w,
@@ -755,11 +755,11 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 	// Use current interface if not specified
 	iface := req.Interface
 	if iface == "" {
-		iface = s.netManager.GetCurrentInterface()
+		iface = s.netManager().GetCurrentInterface()
 	}
 
 	// Set the MTU
-	if err := s.netManager.SetMTU(iface, req.MTU); err != nil {
+	if err := s.netManager().SetMTU(iface, req.MTU); err != nil {
 		logger.Error("Failed to set MTU", "error", err, "interface", iface, "mtu", req.MTU)
 		sendErrorResponseWithDetails(
 			w,
@@ -773,7 +773,7 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Refresh interface data
-	if err := s.netManager.RefreshInterfaces(); err != nil {
+	if err := s.netManager().RefreshInterfaces(); err != nil {
 		logging.GetLogger().Warn("Failed to refresh interfaces after MTU change", "error", err)
 	}
 
@@ -799,15 +799,15 @@ func (s *Server) getInterfaceFromRequest(r *http.Request) string {
 			logging.GetLogger().
 				Warn("Invalid interface name in request", "interface", iface, "error", err)
 			// Fall back to current interface instead of returning invalid input
-			if s.netManager != nil {
-				return s.netManager.GetCurrentInterface()
+			if s.netManager() != nil {
+				return s.netManager().GetCurrentInterface()
 			}
 			return ""
 		}
 		return iface
 	}
-	if s.netManager != nil {
-		return s.netManager.GetCurrentInterface()
+	if s.netManager() != nil {
+		return s.netManager().GetCurrentInterface()
 	}
 	return ""
 }
@@ -844,10 +844,10 @@ func applyDHCPLeaseInfo(resp *IPConfigResponse, currentIface string) {
 
 // applyDHCPTiming adds DHCP timing information to the response.
 func (s *Server) applyDHCPTiming(resp *IPConfigResponse) {
-	if s.dhcpMonitor == nil {
+	if s.dhcpMonitor() == nil {
 		return
 	}
-	timing := s.dhcpMonitor.GetLastTiming()
+	timing := s.dhcpMonitor().GetLastTiming()
 	if timing == nil {
 		return
 	}

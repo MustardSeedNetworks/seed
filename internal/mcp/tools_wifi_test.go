@@ -125,33 +125,46 @@ func TestWiFiInfoFlow(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mock := &mockWiFiManager{
-				currentNetwork: tt.currentNet,
-				getNetworkErr:  tt.getNetworkErr,
-			}
-
-			info, err := mock.GetCurrentNetwork()
-
-			if tt.expectError {
-				if err == nil {
-					t.Error("expected error, got nil")
-				}
-			} else {
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				}
-			}
-
-			if tt.expectNil {
-				if info != nil {
-					t.Error("expected nil info")
-				}
-			} else {
-				if info == nil {
-					t.Error("expected non-nil info")
-				}
-			}
+			runWiFiInfoCase(t, tt)
 		})
+	}
+}
+
+func runWiFiInfoCase(
+	t *testing.T,
+	tt struct {
+		name          string
+		currentNet    *mcp.WiFiConnectionInfo
+		getNetworkErr error
+		expectError   bool
+		expectNil     bool
+	},
+) {
+	t.Helper()
+
+	mock := &mockWiFiManager{
+		currentNetwork: tt.currentNet,
+		getNetworkErr:  tt.getNetworkErr,
+	}
+
+	info, err := mock.GetCurrentNetwork()
+
+	if tt.expectError {
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+	} else {
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	}
+
+	if tt.expectNil {
+		if info != nil {
+			t.Error("expected nil info")
+		}
+	} else if info == nil {
+		t.Error("expected non-nil info")
 	}
 }
 
@@ -171,14 +184,7 @@ func TestWiFiNetworkFields(t *testing.T) {
 				Frequency: 2437,
 				Security:  "WPA2-PSK",
 			},
-			checkFunc: func(t *testing.T, n mcp.WiFiNetwork) {
-				if n.Frequency < 2400 || n.Frequency > 2500 {
-					t.Errorf("expected 2.4GHz frequency, got %d", n.Frequency)
-				}
-				if n.Channel < 1 || n.Channel > 14 {
-					t.Errorf("expected 2.4GHz channel (1-14), got %d", n.Channel)
-				}
-			},
+			checkFunc: checkWiFi24GHz,
 		},
 		{
 			name: "5GHz network",
@@ -190,14 +196,7 @@ func TestWiFiNetworkFields(t *testing.T) {
 				Frequency: 5180,
 				Security:  "WPA3-SAE",
 			},
-			checkFunc: func(t *testing.T, n mcp.WiFiNetwork) {
-				if n.Frequency < 5000 || n.Frequency > 6000 {
-					t.Errorf("expected 5GHz frequency, got %d", n.Frequency)
-				}
-				if n.Channel < 36 {
-					t.Errorf("expected 5GHz channel (>= 36), got %d", n.Channel)
-				}
-			},
+			checkFunc: checkWiFi5GHz,
 		},
 		{
 			name: "strong signal",
@@ -205,11 +204,7 @@ func TestWiFiNetworkFields(t *testing.T) {
 				SSID:   "StrongSignal",
 				Signal: -30,
 			},
-			checkFunc: func(t *testing.T, n mcp.WiFiNetwork) {
-				if n.Signal < -50 {
-					t.Errorf("expected strong signal (> -50 dBm), got %d", n.Signal)
-				}
-			},
+			checkFunc: checkWiFiStrongSignal,
 		},
 		{
 			name: "weak signal",
@@ -217,11 +212,7 @@ func TestWiFiNetworkFields(t *testing.T) {
 				SSID:   "WeakSignal",
 				Signal: -85,
 			},
-			checkFunc: func(t *testing.T, n mcp.WiFiNetwork) {
-				if n.Signal > -80 {
-					t.Errorf("expected weak signal (< -80 dBm), got %d", n.Signal)
-				}
-			},
+			checkFunc: checkWiFiWeakSignal,
 		},
 		{
 			name: "WPA2 security",
@@ -229,11 +220,7 @@ func TestWiFiNetworkFields(t *testing.T) {
 				SSID:     "SecureNet",
 				Security: "WPA2-PSK",
 			},
-			checkFunc: func(t *testing.T, n mcp.WiFiNetwork) {
-				if n.Security != "WPA2-PSK" {
-					t.Errorf("expected WPA2-PSK security, got %s", n.Security)
-				}
-			},
+			checkFunc: checkWiFiSecurityWPA2,
 		},
 		{
 			name: "WPA3 security",
@@ -241,11 +228,7 @@ func TestWiFiNetworkFields(t *testing.T) {
 				SSID:     "VerySecureNet",
 				Security: "WPA3-SAE",
 			},
-			checkFunc: func(t *testing.T, n mcp.WiFiNetwork) {
-				if n.Security != "WPA3-SAE" {
-					t.Errorf("expected WPA3-SAE security, got %s", n.Security)
-				}
-			},
+			checkFunc: checkWiFiSecurityWPA3,
 		},
 		{
 			name: "open network",
@@ -253,11 +236,7 @@ func TestWiFiNetworkFields(t *testing.T) {
 				SSID:     "OpenNet",
 				Security: "Open",
 			},
-			checkFunc: func(t *testing.T, n mcp.WiFiNetwork) {
-				if n.Security != "Open" {
-					t.Errorf("expected Open security, got %s", n.Security)
-				}
-			},
+			checkFunc: checkWiFiSecurityOpen,
 		},
 	}
 
@@ -265,6 +244,68 @@ func TestWiFiNetworkFields(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.checkFunc(t, tt.network)
 		})
+	}
+}
+
+func checkWiFi24GHz(t *testing.T, n mcp.WiFiNetwork) {
+	t.Helper()
+
+	if n.Frequency < 2400 || n.Frequency > 2500 {
+		t.Errorf("expected 2.4GHz frequency, got %d", n.Frequency)
+	}
+	if n.Channel < 1 || n.Channel > 14 {
+		t.Errorf("expected 2.4GHz channel (1-14), got %d", n.Channel)
+	}
+}
+
+func checkWiFi5GHz(t *testing.T, n mcp.WiFiNetwork) {
+	t.Helper()
+
+	if n.Frequency < 5000 || n.Frequency > 6000 {
+		t.Errorf("expected 5GHz frequency, got %d", n.Frequency)
+	}
+	if n.Channel < 36 {
+		t.Errorf("expected 5GHz channel (>= 36), got %d", n.Channel)
+	}
+}
+
+func checkWiFiStrongSignal(t *testing.T, n mcp.WiFiNetwork) {
+	t.Helper()
+
+	if n.Signal < -50 {
+		t.Errorf("expected strong signal (> -50 dBm), got %d", n.Signal)
+	}
+}
+
+func checkWiFiWeakSignal(t *testing.T, n mcp.WiFiNetwork) {
+	t.Helper()
+
+	if n.Signal > -80 {
+		t.Errorf("expected weak signal (< -80 dBm), got %d", n.Signal)
+	}
+}
+
+func checkWiFiSecurityWPA2(t *testing.T, n mcp.WiFiNetwork) {
+	t.Helper()
+
+	if n.Security != "WPA2-PSK" {
+		t.Errorf("expected WPA2-PSK security, got %s", n.Security)
+	}
+}
+
+func checkWiFiSecurityWPA3(t *testing.T, n mcp.WiFiNetwork) {
+	t.Helper()
+
+	if n.Security != "WPA3-SAE" {
+		t.Errorf("expected WPA3-SAE security, got %s", n.Security)
+	}
+}
+
+func checkWiFiSecurityOpen(t *testing.T, n mcp.WiFiNetwork) {
+	t.Helper()
+
+	if n.Security != "Open" {
+		t.Errorf("expected Open security, got %s", n.Security)
 	}
 }
 
