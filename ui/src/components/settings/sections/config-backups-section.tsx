@@ -23,6 +23,7 @@
 
 import { memo, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { formatBytes } from "../../../lib/format";
 // Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { button, cn, icon as iconTokens, layout, radius, spacing } from "../../../styles/theme";
 import { CollapsibleSection } from "../../ui/collapsible-section";
@@ -161,12 +162,6 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
     }
   };
 
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
   return (
     <CollapsibleSection
       title={
@@ -280,7 +275,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
                       {formatDate(backup.createdAt)}
                     </p>
                     <p className="caption text-text-muted">
-                      {formatSize(backup.size)} • v{backup.version || "?"}
+                      {formatBytes(backup.size)} • v{backup.version || "?"}
                     </p>
                   </div>
                   <div className={cn("flex", spacing.gap.compact)}>

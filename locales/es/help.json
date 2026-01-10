@@ -8,17 +8,23 @@
   "sections": {
     "about": "Acerca de The Seed",
     "gettingStarted": "Primeros pasos",
+    "profiles": "Perfiles",
     "link": "Estado del enlace",
     "cable": "Prueba de cable",
     "wifi": "Estado WiFi",
+    "wifiSurvey": "Estudio de sitio WiFi",
     "network": "Red y DHCP",
     "gateway": "Puerta de enlace",
     "dns": "Pruebas DNS",
     "performance": "Pruebas de rendimiento",
     "discovery": "Descubrimiento de red",
     "healthChecks": "Verificaciones de salud",
+    "rtspChecks": "Monitoreo RTSP",
+    "dicomChecks": "Verificaciones DICOM",
     "security": "Seguridad y administración",
-    "troubleshooting": "Solución de problemas"
+    "troubleshooting": "Solución de problemas",
+    "howTo": "Guías prácticas",
+    "glossary": "Glosario"
   },
   "instructions": {
     "runTests": "Toque el botón de reproducir para ejecutar todas las pruebas.",
@@ -578,6 +584,458 @@
               "Verifique disco/CPU del servidor durante la prueba"
             ]
           }
+        }
+      }
+    },
+    "profiles": {
+      "description": "Los perfiles permiten guardar y cambiar entre diferentes conjuntos de configuración para diferentes clientes, ubicaciones o escenarios de prueba.",
+      "overview": {
+        "title": "¿Qué son los perfiles?",
+        "description": "Los perfiles son configuraciones guardadas que almacenan todos sus ajustes, umbrales, objetivos de verificación de salud y preferencias de interfaz. Son ideales para MSPs que gestionan múltiples clientes o técnicos que trabajan en diferentes sitios."
+      },
+      "features": {
+        "clientSpecific": {
+          "title": "Configuración específica por cliente",
+          "description": "Cada perfil puede tener umbrales únicos, objetivos de verificación de salud, credenciales SNMP y configuraciones de descubrimiento adaptadas a ese entorno."
+        },
+        "quickSwitch": {
+          "title": "Cambio rápido de perfil",
+          "description": "Cambie entre perfiles instantáneamente desde el menú desplegable del encabezado. Todas las configuraciones se aplican inmediatamente sin reiniciar."
+        },
+        "exportImport": {
+          "title": "Exportar e importar",
+          "description": "Exporte perfiles como archivos JSON para compartir entre dispositivos o respaldar configuraciones. Importe perfiles de otras instalaciones de Seed."
+        },
+        "defaultProfile": {
+          "title": "Perfil predeterminado",
+          "description": "Un perfil puede marcarse como predeterminado y se cargará automáticamente al iniciar."
+        }
+      },
+      "usage": {
+        "title": "Gestión de perfiles",
+        "steps": [
+          "Haga clic en el menú desplegable de perfiles en el encabezado para ver los perfiles disponibles",
+          "Seleccione 'Gestionar perfiles' para crear, editar o eliminar perfiles",
+          "Cree un nuevo perfil con un nombre descriptivo (ej., 'Acme Corp - Oficina principal')",
+          "Configure todos los ajustes para ese cliente/ubicación",
+          "Los ajustes se guardan automáticamente en el perfil activo"
+        ]
+      },
+      "bestPractices": {
+        "title": "Mejores prácticas",
+        "tips": [
+          "Use nombres de perfil descriptivos que identifiquen al cliente y la ubicación",
+          "Cree un perfil 'Predeterminado' base con configuraciones estándar",
+          "Exporte perfiles antes de cambios importantes como respaldo",
+          "Documente cualquier objetivo de verificación de salud específico del cliente en la descripción del perfil"
+        ]
+      }
+    },
+    "wifiSurvey": {
+      "description": "El estudio de sitio WiFi proporciona análisis detallado de la cobertura de red inalámbrica e interferencias.",
+      "overview": {
+        "title": "Descripción del estudio de sitio",
+        "description": "El estudio de sitio WiFi escanea todas las redes inalámbricas disponibles, mide la intensidad de la señal, identifica la utilización de canales y ayuda a optimizar el despliegue WiFi."
+      },
+      "terms": {
+        "coverage": {
+          "term": "Análisis de cobertura",
+          "description": "Mapea la intensidad de la señal en el área. Verde indica señal fuerte (-50 dBm o mejor), amarillo es regular (-70 dBm), rojo es débil (-80 dBm o peor)."
+        },
+        "channelUtilization": {
+          "term": "Utilización de canal",
+          "description": "Muestra qué tan ocupado está cada canal WiFi. Alta utilización (>50%) indica congestión e interferencia potencial."
+        },
+        "coChannelInterference": {
+          "term": "Interferencia co-canal",
+          "description": "Cuando múltiples puntos de acceso usan el mismo canal, deben compartir tiempo de aire, reduciendo el rendimiento. El estudio identifica redes superpuestas."
+        },
+        "adjacentChannelInterference": {
+          "term": "Interferencia de canal adyacente",
+          "description": "En 2.4 GHz, solo los canales 1, 6 y 11 no se superponen. Usar otros canales causa interferencia con vecinos."
+        },
+        "noiseFloor": {
+          "term": "Piso de ruido",
+          "description": "Nivel de ruido de radio de fondo. Mayor ruido reduce la calidad efectiva de la señal (SNR). Los valores típicos son -90 a -100 dBm."
+        }
+      },
+      "bands": {
+        "title": "Bandas de frecuencia",
+        "2.4GHz": {
+          "name": "Banda 2.4 GHz",
+          "pros": "Mejor penetración de paredes, mayor alcance, soporte universal de dispositivos",
+          "cons": "Solo 3 canales sin superposición, más congestionada, velocidades más lentas",
+          "bestFor": "Dispositivos IoT, cobertura en áreas grandes, dispositivos antiguos"
+        },
+        "5GHz": {
+          "name": "Banda 5 GHz",
+          "pros": "Muchos canales sin superposición, menos interferencia, velocidades más rápidas",
+          "cons": "Menor alcance, más afectada por paredes, no todos los dispositivos la soportan",
+          "bestFor": "Aplicaciones de alto ancho de banda, despliegues densos, dispositivos modernos"
+        },
+        "6GHz": {
+          "name": "Banda 6 GHz (WiFi 6E/7)",
+          "pros": "Completamente sin congestión, canales más anchos (hasta 320 MHz), menor latencia",
+          "cons": "Menor alcance, requiere dispositivos WiFi 6E/7, penetración limitada",
+          "bestFor": "Aplicaciones de alto rendimiento, AR/VR, despliegues empresariales"
+        }
+      },
+      "recommendations": {
+        "title": "Recomendaciones de canal",
+        "description": "Basándose en los resultados del estudio, The Seed recomienda asignaciones óptimas de canal para minimizar interferencias.",
+        "2.4GHzTip": "En 2.4 GHz, siempre use canales 1, 6 u 11. Nunca use canales 2-5 o 7-10 ya que se superponen con canales adyacentes.",
+        "5GHzTip": "En 5 GHz, prefiera canales DFS (52-144) cuando estén disponibles - están menos congestionados. Evite canales cerca de radar meteorológico si se detecta interferencia.",
+        "widthTip": "Use ancho de canal de 80 MHz para el mejor equilibrio entre velocidad y confiabilidad. 160 MHz ofrece velocidades más altas pero es más propenso a interferencias."
+      }
+    },
+    "rtspChecks": {
+      "description": "Monitoree endpoints RTSP (Real Time Streaming Protocol) para cámaras IP y sistemas de videovigilancia.",
+      "overview": {
+        "title": "Monitoreo RTSP",
+        "description": "Las verificaciones de salud RTSP verifican la conectividad a cámaras IP, NVRs y sistemas de gestión de video. Esencial para mantener el tiempo de actividad de cámaras de seguridad en entornos empresariales y de salud."
+      },
+      "terms": {
+        "rtspUrl": {
+          "term": "URL RTSP",
+          "description": "La dirección del stream RTSP, típicamente en formato rtsp://host:puerto/ruta. El puerto 554 es el puerto RTSP estándar."
+        },
+        "options": {
+          "term": "Solicitud OPTIONS",
+          "description": "Un comando RTSP que consulta al servidor por los métodos soportados. Usado como una verificación de conectividad ligera."
+        },
+        "describe": {
+          "term": "Solicitud DESCRIBE",
+          "description": "Solicita descripción de medios (SDP) del servidor. Verifica que el stream existe y es accesible."
+        },
+        "authentication": {
+          "term": "Autenticación",
+          "description": "Los servidores RTSP típicamente requieren usuario/contraseña. Soporta métodos de autenticación Basic y Digest."
+        }
+      },
+      "configuration": {
+        "title": "Configuración de endpoints RTSP",
+        "steps": [
+          "Vaya a Configuración → Verificaciones de salud → Endpoints RTSP",
+          "Haga clic en 'Agregar endpoint RTSP'",
+          "Ingrese un nombre descriptivo (ej., 'Cámara lobby 1')",
+          "Ingrese la URL RTSP (ej., rtsp://192.168.1.100:554/stream1)",
+          "Agregue credenciales si es requerido (usuario/contraseña)",
+          "Establezca el intervalo de verificación (predeterminado: 60 segundos)",
+          "Habilite el endpoint para comenzar el monitoreo"
+        ]
+      },
+      "commonIssues": {
+        "title": "Solución de problemas RTSP",
+        "connectionRefused": {
+          "symptom": "Conexión rechazada",
+          "causes": ["Cámara apagada", "Servicio RTSP no ejecutándose", "Número de puerto incorrecto"],
+          "solutions": ["Verifique que la cámara esté encendida y en línea", "Verifique que RTSP esté habilitado en la configuración de la cámara", "Confirme puerto 554 o puerto personalizado"]
+        },
+        "authFailed": {
+          "symptom": "401 No autorizado",
+          "causes": ["Credenciales incorrectas", "Cuenta bloqueada", "IP no en lista permitida"],
+          "solutions": ["Verifique usuario y contraseña", "Revise la gestión de usuarios de la cámara", "Agregue la IP de The Seed a la lista blanca de la cámara"]
+        },
+        "streamNotFound": {
+          "symptom": "404 Stream no encontrado",
+          "causes": ["Ruta de stream incorrecta", "Stream deshabilitado", "Canal no configurado"],
+          "solutions": ["Revise la documentación de la cámara para el formato correcto de URL", "Verifique que el stream esté habilitado", "Pruebe rutas /live, /stream1 o /h264"]
+        },
+        "timeout": {
+          "symptom": "Tiempo de conexión agotado",
+          "causes": ["Problema de conectividad de red", "Firewall bloqueando", "Cámara sobrecargada"],
+          "solutions": ["Pruebe la ruta de red a la cámara", "Revise reglas de firewall para puerto 554", "Reduzca conexiones concurrentes a la cámara"]
+        }
+      },
+      "useCases": {
+        "title": "Casos de uso",
+        "security": "Monitoree disponibilidad de cámaras de seguridad para asegurar cobertura continua de vigilancia",
+        "healthcare": "Verifique cámaras de monitoreo de pacientes en entornos clínicos",
+        "retail": "Rastree tiempo de actividad de cámaras de punto de venta para prevención de pérdidas",
+        "industrial": "Monitoree cámaras de proceso en manufactura y logística"
+      }
+    },
+    "dicomChecks": {
+      "description": "Monitoree sistemas de imágenes médicas DICOM incluyendo CT, MRI, ultrasonido y servidores PACS.",
+      "overview": {
+        "title": "Verificaciones de salud DICOM",
+        "description": "DICOM (Digital Imaging and Communications in Medicine) las verificaciones de salud verifican la conectividad entre dispositivos de imágenes médicas. Usa C-ECHO para probar asociaciones DICOM, similar a ping pero para sistemas médicos."
+      },
+      "terms": {
+        "aeTitle": {
+          "term": "AE Title",
+          "description": "Application Entity Title - un identificador único (hasta 16 caracteres) que identifica un nodo DICOM. Tanto el AE Title llamante (local) como el llamado (remoto) deben configurarse correctamente."
+        },
+        "cEcho": {
+          "term": "C-ECHO",
+          "description": "Servicio de verificación DICOM. Envía un 'ping' para verificar que el nodo DICOM remoto es alcanzable y responde. Retorna estado de éxito/fallo."
+        },
+        "association": {
+          "term": "Asociación",
+          "description": "Una conexión DICOM entre dos nodos. Ambos AE Titles deben estar registrados en la configuración del otro para que las asociaciones tengan éxito."
+        },
+        "scp": {
+          "term": "SCP (Service Class Provider)",
+          "description": "El servidor DICOM que proporciona servicios (ej., PACS, lista de trabajo de modalidad). El objetivo de su verificación de salud."
+        },
+        "scu": {
+          "term": "SCU (Service Class User)",
+          "description": "El cliente DICOM que solicita servicios. The Seed actúa como SCU cuando realiza pruebas C-ECHO."
+        },
+        "port": {
+          "term": "Puerto DICOM",
+          "description": "El puerto DICOM estándar es 104, pero muchos sistemas usan 11112 o puertos personalizados. Verifique con su administrador PACS."
+        }
+      },
+      "configuration": {
+        "title": "Configuración de endpoints DICOM",
+        "steps": [
+          "Vaya a Configuración → Verificaciones de salud → Endpoints DICOM",
+          "Haga clic en 'Agregar endpoint DICOM'",
+          "Ingrese un nombre descriptivo (ej., 'Servidor PACS principal')",
+          "Ingrese la dirección IP o hostname del host",
+          "Ingrese el puerto (típicamente 104 o 11112)",
+          "Ingrese el Called AE Title (el AE Title del sistema remoto)",
+          "Ingrese el Calling AE Title (el AE Title de The Seed - debe estar registrado en el sistema remoto)",
+          "Establezca el intervalo de verificación y habilite el endpoint"
+        ]
+      },
+      "aeTitleSetup": {
+        "title": "Configuración de AE Title",
+        "description": "Los sistemas DICOM requieren registro bilateral de AE Title. Debe:",
+        "steps": [
+          "Registrar el AE Title de The Seed en el sistema DICOM remoto (PACS, modalidad, etc.)",
+          "Configurar el Called AE Title correcto en The Seed para coincidir con el AE del sistema remoto",
+          "Usar un Calling AE Title consistente para todos los endpoints (ej., 'THESEED')",
+          "Nota: Los AE Titles distinguen mayúsculas/minúsculas en algunos sistemas"
+        ]
+      },
+      "commonIssues": {
+        "title": "Solución de problemas DICOM",
+        "associationRejected": {
+          "symptom": "Asociación rechazada",
+          "causes": ["AE Title no registrado en sistema remoto", "Desajuste de Calling AE Title", "IP no en lista permitida"],
+          "solutions": ["Registre el AE Title de The Seed en PACS/modalidad", "Verifique ortografía exacta y mayúsculas/minúsculas del AE Title", "Agregue la IP de The Seed a hosts DICOM permitidos"]
+        },
+        "connectionRefused": {
+          "symptom": "Conexión rechazada",
+          "causes": ["Puerto incorrecto", "Servicio DICOM no ejecutándose", "Firewall bloqueando"],
+          "solutions": ["Verifique puerto DICOM con admin de PACS", "Revise estado del servicio DICOM", "Permita puerto 104/11112 en firewall"]
+        },
+        "timeout": {
+          "symptom": "Tiempo de conexión agotado",
+          "causes": ["Problema de ruta de red", "Sistema remoto sobrecargado", "Dirección IP incorrecta"],
+          "solutions": ["Pruebe conectividad de red básica con ping", "Revise carga del sistema en PACS", "Verifique que la dirección IP sea correcta"]
+        },
+        "cEchoFailed": {
+          "symptom": "C-ECHO falló (asociación exitosa)",
+          "causes": ["SCP no soporta verificación", "Clase de servicio no configurada", "Error interno en remoto"],
+          "solutions": ["Verifique que remoto soporte Verification SOP Class", "Revise logs de PACS para detalles", "Contacte soporte del proveedor PACS"]
+        }
+      },
+      "useCases": {
+        "title": "Casos de uso en salud",
+        "pacs": "Monitoree disponibilidad del servidor PACS para continuidad del flujo de trabajo de radiología",
+        "modalities": "Verifique que sistemas CT, MRI, rayos X y ultrasonido sean accesibles por red",
+        "ris": "Revise conectividad del Sistema de Información de Radiología",
+        "worklist": "Monitoree servidores de lista de trabajo de modalidad para enrutamiento adecuado de estudios",
+        "archive": "Verifique que sistemas de archivo a largo plazo estén en línea"
+      },
+      "compliance": {
+        "title": "Consideraciones de cumplimiento",
+        "description": "Al monitorear sistemas DICOM en entornos de salud:",
+        "points": [
+          "C-ECHO es una verificación no destructiva - no accede a datos de pacientes",
+          "Asegure que The Seed esté desplegado en un segmento de red seguro y compatible con HIPAA",
+          "Documente el monitoreo DICOM en el plan de seguridad de red de su instalación",
+          "Coordine el registro de AE Title con su equipo biomédico/IT"
+        ]
+      }
+    },
+    "howTo": {
+      "description": "Guías paso a paso para tareas comunes y escenarios de solución de problemas.",
+      "guides": {
+        "diagnoseSlowNetwork": {
+          "title": "Cómo diagnosticar velocidades de red lentas",
+          "steps": [
+            {
+              "step": "Verificar estado del enlace",
+              "description": "Verifique que la tarjeta de Estado del enlace muestre la velocidad esperada (1 Gbps para gigabit). Si muestra 100 Mbps, revise calidad del cable o puerto del switch."
+            },
+            {
+              "step": "Probar latencia de gateway",
+              "description": "La latencia del gateway debe ser <1ms para conexiones cableadas. Alta latencia aquí indica problemas de red local."
+            },
+            {
+              "step": "Ejecutar prueba de velocidad de internet",
+              "description": "Compare resultados con las velocidades anunciadas por su ISP. Si es significativamente menor, el problema puede estar relacionado con el ISP."
+            },
+            {
+              "step": "Ejecutar prueba iPerf LAN",
+              "description": "Pruebe rendimiento de red local para aislar si el problema es local o hacia internet. Debe alcanzar velocidad cercana al cable."
+            },
+            {
+              "step": "Verificar interferencias",
+              "description": "Para WiFi, ejecute un Estudio de sitio para verificar congestión de canal e interferencias."
+            },
+            {
+              "step": "Revisar resultados de descubrimiento",
+              "description": "Verifique si otros dispositivos están consumiendo ancho de banda. Busque dispositivos de alto tráfico inesperados."
+            }
+          ]
+        },
+        "setupHealthChecks": {
+          "title": "Cómo configurar verificaciones de salud para servicios críticos",
+          "steps": [
+            {
+              "step": "Identificar servicios críticos",
+              "description": "Liste todos los servicios que necesitan monitoreo: servidores, bases de datos, servicios en la nube, cámaras, equipo médico."
+            },
+            {
+              "step": "Elegir tipo de verificación",
+              "description": "Use Ping para alcanzabilidad básica, TCP para puertos de servicio, HTTP para servicios web, RTSP para cámaras, DICOM para imágenes médicas."
+            },
+            {
+              "step": "Agregar endpoints",
+              "description": "Vaya a Configuración → Verificaciones de salud y agregue cada endpoint con los parámetros apropiados."
+            },
+            {
+              "step": "Establecer umbrales",
+              "description": "Configure umbrales de latencia de advertencia (amarillo) y crítico (rojo) basados en requisitos del servicio."
+            },
+            {
+              "step": "Probar configuración",
+              "description": "Ejecute pruebas manualmente primero para verificar conectividad antes de habilitar monitoreo continuo."
+            },
+            {
+              "step": "Guardar en perfil",
+              "description": "Asegure que los ajustes se guarden en el perfil de cliente apropiado para persistencia."
+            }
+          ]
+        },
+        "setupDicom": {
+          "title": "Cómo configurar monitoreo DICOM para salud",
+          "steps": [
+            {
+              "step": "Recopilar información DICOM",
+              "description": "Recopile direcciones IP, puertos y AE Titles para todos los dispositivos DICOM: PACS, modalidades, RIS, archivos."
+            },
+            {
+              "step": "Registrar AE Title de The Seed",
+              "description": "En cada sistema DICOM, agregue el AE Title de The Seed (ej., 'THESEED') a la lista de AE remotos permitidos."
+            },
+            {
+              "step": "Configurar endpoints",
+              "description": "En Configuración → Verificaciones de salud → DICOM, agregue cada dispositivo con su Called AE Title, IP y puerto."
+            },
+            {
+              "step": "Probar C-ECHO",
+              "description": "Ejecute pruebas manuales C-ECHO para verificar establecimiento de asociación antes de habilitar monitoreo continuo."
+            },
+            {
+              "step": "Establecer intervalos de verificación",
+              "description": "Recomendado: 60 segundos para PACS crítico, 5 minutos para modalidades, basado en necesidades del flujo de trabajo clínico."
+            },
+            {
+              "step": "Configurar alertas",
+              "description": "Configure umbrales de notificación para alertar cuando sistemas DICOM se vuelvan inalcanzables."
+            }
+          ]
+        },
+        "setupRtsp": {
+          "title": "Cómo configurar monitoreo de cámaras RTSP",
+          "steps": [
+            {
+              "step": "Identificar URLs de cámaras",
+              "description": "Localice URLs RTSP de la documentación de la cámara o NVR. Formatos comunes: rtsp://ip:554/stream1, rtsp://ip/live/ch1"
+            },
+            {
+              "step": "Recopilar credenciales",
+              "description": "Recopile usuarios y contraseñas de cámaras. Considere crear una cuenta de monitoreo dedicada con acceso solo de visualización."
+            },
+            {
+              "step": "Agregar endpoints RTSP",
+              "description": "En Configuración → Verificaciones de salud → RTSP, agregue cada cámara con URL y credenciales."
+            },
+            {
+              "step": "Probar conectividad",
+              "description": "Ejecute pruebas manuales OPTIONS/DESCRIBE para verificar que URLs y credenciales sean correctas."
+            },
+            {
+              "step": "Establecer intervalos de verificación",
+              "description": "Recomendado: 60 segundos para cámaras críticas, 5 minutos para vigilancia general."
+            },
+            {
+              "step": "Agrupar por ubicación",
+              "description": "Use nombres descriptivos (ej., 'Edificio A - Entrada') para fácil identificación durante alertas."
+            }
+          ]
+        },
+        "createMspProfile": {
+          "title": "Cómo crear perfiles específicos de cliente para MSPs",
+          "steps": [
+            {
+              "step": "Crear nuevo perfil",
+              "description": "Haga clic en menú de perfil → Gestionar perfiles → Crear nuevo. Use formato: 'NombreCliente - Ubicación' (ej., 'Acme Corp - HQ')."
+            },
+            {
+              "step": "Configurar interfaces",
+              "description": "Seleccione las interfaces de red usadas en este sitio del cliente. Establezca interfaces Ethernet y WiFi preferidas."
+            },
+            {
+              "step": "Establecer umbrales del cliente",
+              "description": "Ajuste umbrales basados en requisitos de SLA del cliente. Más estrictos para entornos críticos, más flexibles para monitoreo básico."
+            },
+            {
+              "step": "Agregar objetivos de verificación de salud",
+              "description": "Agregue servidores específicos del cliente, aplicaciones, impresoras, cámaras e infraestructura crítica."
+            },
+            {
+              "step": "Configurar ajustes de descubrimiento",
+              "description": "Establezca rangos de subred, intensidad de escaneo y credenciales SNMP específicas para este entorno del cliente."
+            },
+            {
+              "step": "Documentar en descripción",
+              "description": "Agregue notas sobre especificidades del cliente: información de contacto, topología de red, consideraciones especiales."
+            },
+            {
+              "step": "Exportar respaldo",
+              "description": "Exporte el perfil como respaldo antes de dejar el sitio del cliente."
+            }
+          ]
+        },
+        "runWifiSurvey": {
+          "title": "Cómo realizar un estudio de sitio WiFi",
+          "steps": [
+            {
+              "step": "Seleccionar interfaz WiFi",
+              "description": "Asegure que un adaptador WiFi esté seleccionado en el menú de interfaz. WiFi interno de laptop o adaptador USB ambos funcionan."
+            },
+            {
+              "step": "Navegar al estudio",
+              "description": "Abra la tarjeta de Estudio de sitio WiFi o vaya a Herramientas → Estudio WiFi."
+            },
+            {
+              "step": "Iniciar escaneo",
+              "description": "Haga clic en 'Iniciar estudio' para comenzar a capturar todas las redes WiFi visibles. Camine a diferentes ubicaciones mientras escanea."
+            },
+            {
+              "step": "Analizar banda 2.4 GHz",
+              "description": "Revise gráfico de canal para redes superpuestas. Asegure que su red use solo canal 1, 6 u 11."
+            },
+            {
+              "step": "Analizar banda 5 GHz",
+              "description": "Verifique cobertura adecuada. Revise disponibilidad de canal DFS. Note cualquier indicador de interferencia de radar."
+            },
+            {
+              "step": "Revisar recomendaciones",
+              "description": "Revise la pestaña de Recomendaciones para cambios de canal sugeridos y ajustes de puntos de acceso."
+            },
+            {
+              "step": "Exportar informe",
+              "description": "Exporte resultados del estudio para documentación o presentación al cliente."
+            }
+          ]
         }
       }
     }

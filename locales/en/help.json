@@ -8,17 +8,23 @@
   "sections": {
     "about": "About The Seed",
     "gettingStarted": "Getting Started",
+    "profiles": "Profiles",
     "link": "Link Status",
     "cable": "Cable Test",
     "wifi": "WiFi Status",
+    "wifiSurvey": "WiFi Site Survey",
     "network": "Network & DHCP",
     "gateway": "Gateway",
     "dns": "DNS Tests",
     "performance": "Performance Tests",
     "discovery": "Network Discovery",
     "healthChecks": "Health Checks",
+    "rtspChecks": "RTSP Monitoring",
+    "dicomChecks": "DICOM Health Checks",
     "security": "Security & Administration",
-    "troubleshooting": "Troubleshooting"
+    "troubleshooting": "Troubleshooting",
+    "howTo": "How-To Guides",
+    "glossary": "Glossary"
   },
   "instructions": {
     "runTests": "Tap the play button to run all tests.",
@@ -578,6 +584,458 @@
               "Check server disk/CPU during test"
             ]
           }
+        }
+      }
+    },
+    "profiles": {
+      "description": "Profiles allow you to save and switch between different configuration sets for different clients, locations, or testing scenarios.",
+      "overview": {
+        "title": "What are Profiles?",
+        "description": "Profiles are saved configurations that store all your settings, thresholds, health check targets, and interface preferences. They're ideal for MSPs managing multiple clients or technicians working at different sites."
+      },
+      "features": {
+        "clientSpecific": {
+          "title": "Client-Specific Settings",
+          "description": "Each profile can have unique thresholds, health check targets, SNMP credentials, and discovery settings tailored to that environment."
+        },
+        "quickSwitch": {
+          "title": "Quick Profile Switching",
+          "description": "Switch between profiles instantly from the header dropdown. All settings are applied immediately without restart."
+        },
+        "exportImport": {
+          "title": "Export & Import",
+          "description": "Export profiles as JSON files to share between devices or backup configurations. Import profiles from other Seed installations."
+        },
+        "defaultProfile": {
+          "title": "Default Profile",
+          "description": "One profile can be marked as default and will be automatically loaded on startup."
+        }
+      },
+      "usage": {
+        "title": "Managing Profiles",
+        "steps": [
+          "Click the profile dropdown in the header to see available profiles",
+          "Select 'Manage Profiles' to create, edit, or delete profiles",
+          "Create a new profile with a descriptive name (e.g., 'Acme Corp - Main Office')",
+          "Configure all settings for that client/location",
+          "Settings are automatically saved to the active profile"
+        ]
+      },
+      "bestPractices": {
+        "title": "Best Practices",
+        "tips": [
+          "Use descriptive profile names that identify the client and location",
+          "Create a baseline 'Default' profile with standard settings",
+          "Export profiles before major changes as a backup",
+          "Document any client-specific health check targets in the profile description"
+        ]
+      }
+    },
+    "wifiSurvey": {
+      "description": "WiFi Site Survey provides detailed analysis of wireless network coverage and interference.",
+      "overview": {
+        "title": "Site Survey Overview",
+        "description": "The WiFi Site Survey scans all available wireless networks, measures signal strength, identifies channel utilization, and helps optimize WiFi deployment."
+      },
+      "terms": {
+        "coverage": {
+          "term": "Coverage Analysis",
+          "description": "Maps signal strength across the area. Green indicates strong signal (-50 dBm or better), yellow is fair (-70 dBm), red is weak (-80 dBm or worse)."
+        },
+        "channelUtilization": {
+          "term": "Channel Utilization",
+          "description": "Shows how busy each WiFi channel is. High utilization (>50%) indicates congestion and potential interference."
+        },
+        "coChannelInterference": {
+          "term": "Co-Channel Interference",
+          "description": "When multiple access points use the same channel, they must share airtime, reducing throughput. Survey identifies overlapping networks."
+        },
+        "adjacentChannelInterference": {
+          "term": "Adjacent Channel Interference",
+          "description": "In 2.4 GHz, only channels 1, 6, and 11 are non-overlapping. Using other channels causes interference with neighbors."
+        },
+        "noiseFloor": {
+          "term": "Noise Floor",
+          "description": "Background radio noise level. Higher noise reduces effective signal quality (SNR). Typical values are -90 to -100 dBm."
+        }
+      },
+      "bands": {
+        "title": "Frequency Bands",
+        "2.4GHz": {
+          "name": "2.4 GHz Band",
+          "pros": "Better wall penetration, longer range, universal device support",
+          "cons": "Only 3 non-overlapping channels, more congested, slower speeds",
+          "bestFor": "IoT devices, coverage in large areas, older devices"
+        },
+        "5GHz": {
+          "name": "5 GHz Band",
+          "pros": "Many non-overlapping channels, less interference, faster speeds",
+          "cons": "Shorter range, more affected by walls, not all devices support",
+          "bestFor": "High-bandwidth applications, dense deployments, modern devices"
+        },
+        "6GHz": {
+          "name": "6 GHz Band (WiFi 6E/7)",
+          "pros": "Completely uncongested, widest channels (up to 320 MHz), lowest latency",
+          "cons": "Shortest range, requires WiFi 6E/7 devices, limited penetration",
+          "bestFor": "High-performance applications, AR/VR, enterprise deployments"
+        }
+      },
+      "recommendations": {
+        "title": "Channel Recommendations",
+        "description": "Based on the survey results, The Seed recommends optimal channel assignments to minimize interference.",
+        "2.4GHzTip": "In 2.4 GHz, always use channels 1, 6, or 11. Never use channels 2-5 or 7-10 as they overlap with adjacent channels.",
+        "5GHzTip": "In 5 GHz, prefer DFS channels (52-144) when available - they're less congested. Avoid channels near weather radar if interference is detected.",
+        "widthTip": "Use 80 MHz channel width for best balance of speed and reliability. 160 MHz offers higher speeds but more prone to interference."
+      }
+    },
+    "rtspChecks": {
+      "description": "Monitor RTSP (Real Time Streaming Protocol) endpoints for IP camera and video surveillance systems.",
+      "overview": {
+        "title": "RTSP Monitoring",
+        "description": "RTSP health checks verify connectivity to IP cameras, NVRs, and video management systems. Essential for maintaining security camera uptime in enterprise and healthcare environments."
+      },
+      "terms": {
+        "rtspUrl": {
+          "term": "RTSP URL",
+          "description": "The address of the RTSP stream, typically in format rtsp://host:port/path. Port 554 is the standard RTSP port."
+        },
+        "options": {
+          "term": "OPTIONS Request",
+          "description": "An RTSP command that queries the server for supported methods. Used as a lightweight connectivity check."
+        },
+        "describe": {
+          "term": "DESCRIBE Request",
+          "description": "Requests media description (SDP) from the server. Verifies the stream exists and is accessible."
+        },
+        "authentication": {
+          "term": "Authentication",
+          "description": "RTSP servers typically require username/password. Supports Basic and Digest authentication methods."
+        }
+      },
+      "configuration": {
+        "title": "Configuring RTSP Endpoints",
+        "steps": [
+          "Go to Settings → Health Checks → RTSP Endpoints",
+          "Click 'Add RTSP Endpoint'",
+          "Enter a descriptive name (e.g., 'Lobby Camera 1')",
+          "Enter the RTSP URL (e.g., rtsp://192.168.1.100:554/stream1)",
+          "Add credentials if required (username/password)",
+          "Set the check interval (default: 60 seconds)",
+          "Enable the endpoint to start monitoring"
+        ]
+      },
+      "commonIssues": {
+        "title": "Troubleshooting RTSP",
+        "connectionRefused": {
+          "symptom": "Connection refused",
+          "causes": ["Camera powered off", "RTSP service not running", "Wrong port number"],
+          "solutions": ["Verify camera is powered and online", "Check RTSP is enabled in camera settings", "Confirm port 554 or custom port"]
+        },
+        "authFailed": {
+          "symptom": "401 Unauthorized",
+          "causes": ["Incorrect credentials", "Account locked", "IP not in allowed list"],
+          "solutions": ["Verify username and password", "Check camera's user management", "Add The Seed's IP to camera whitelist"]
+        },
+        "streamNotFound": {
+          "symptom": "404 Stream Not Found",
+          "causes": ["Incorrect stream path", "Stream disabled", "Channel not configured"],
+          "solutions": ["Check camera documentation for correct URL format", "Verify stream is enabled", "Try /live, /stream1, or /h264 paths"]
+        },
+        "timeout": {
+          "symptom": "Connection timeout",
+          "causes": ["Network connectivity issue", "Firewall blocking", "Camera overloaded"],
+          "solutions": ["Test network path to camera", "Check firewall rules for port 554", "Reduce concurrent connections to camera"]
+        }
+      },
+      "useCases": {
+        "title": "Use Cases",
+        "security": "Monitor security camera availability to ensure continuous surveillance coverage",
+        "healthcare": "Verify patient monitoring cameras in clinical environments",
+        "retail": "Track point-of-sale camera uptime for loss prevention",
+        "industrial": "Monitor process cameras in manufacturing and logistics"
+      }
+    },
+    "dicomChecks": {
+      "description": "Monitor DICOM medical imaging systems including CT, MRI, ultrasound, and PACS servers.",
+      "overview": {
+        "title": "DICOM Health Checks",
+        "description": "DICOM (Digital Imaging and Communications in Medicine) health checks verify connectivity between medical imaging devices. Uses C-ECHO to test DICOM associations, similar to ping but for medical systems."
+      },
+      "terms": {
+        "aeTitle": {
+          "term": "AE Title",
+          "description": "Application Entity Title - a unique identifier (up to 16 characters) that identifies a DICOM node. Both calling (local) and called (remote) AE Titles must be configured correctly."
+        },
+        "cEcho": {
+          "term": "C-ECHO",
+          "description": "DICOM verification service. Sends a 'ping' to verify the remote DICOM node is reachable and responding. Returns success/failure status."
+        },
+        "association": {
+          "term": "Association",
+          "description": "A DICOM connection between two nodes. Both AE Titles must be registered in each other's configuration for associations to succeed."
+        },
+        "scp": {
+          "term": "SCP (Service Class Provider)",
+          "description": "The DICOM server that provides services (e.g., PACS, modality worklist). The target of your health check."
+        },
+        "scu": {
+          "term": "SCU (Service Class User)",
+          "description": "The DICOM client requesting services. The Seed acts as an SCU when performing C-ECHO tests."
+        },
+        "port": {
+          "term": "DICOM Port",
+          "description": "Standard DICOM port is 104, but many systems use 11112 or custom ports. Verify with your PACS administrator."
+        }
+      },
+      "configuration": {
+        "title": "Configuring DICOM Endpoints",
+        "steps": [
+          "Go to Settings → Health Checks → DICOM Endpoints",
+          "Click 'Add DICOM Endpoint'",
+          "Enter a descriptive name (e.g., 'Main PACS Server')",
+          "Enter the host IP address or hostname",
+          "Enter the port (typically 104 or 11112)",
+          "Enter the Called AE Title (the remote system's AE Title)",
+          "Enter the Calling AE Title (The Seed's AE Title - must be registered on remote system)",
+          "Set the check interval and enable the endpoint"
+        ]
+      },
+      "aeTitleSetup": {
+        "title": "AE Title Configuration",
+        "description": "DICOM systems require bilateral AE Title registration. You must:",
+        "steps": [
+          "Register The Seed's AE Title on the remote DICOM system (PACS, modality, etc.)",
+          "Configure the correct Called AE Title in The Seed to match the remote system's AE",
+          "Use a consistent Calling AE Title for all endpoints (e.g., 'THESEED')",
+          "Note: AE Titles are case-sensitive on some systems"
+        ]
+      },
+      "commonIssues": {
+        "title": "Troubleshooting DICOM",
+        "associationRejected": {
+          "symptom": "Association Rejected",
+          "causes": ["AE Title not registered on remote system", "Calling AE Title mismatch", "IP not in allowed list"],
+          "solutions": ["Register The Seed's AE Title on PACS/modality", "Verify exact AE Title spelling and case", "Add The Seed's IP to DICOM allowed hosts"]
+        },
+        "connectionRefused": {
+          "symptom": "Connection Refused",
+          "causes": ["Wrong port", "DICOM service not running", "Firewall blocking"],
+          "solutions": ["Verify DICOM port with PACS admin", "Check DICOM service status", "Allow port 104/11112 in firewall"]
+        },
+        "timeout": {
+          "symptom": "Connection Timeout",
+          "causes": ["Network path issue", "Remote system overloaded", "Wrong IP address"],
+          "solutions": ["Test basic network connectivity with ping", "Check system load on PACS", "Verify IP address is correct"]
+        },
+        "cEchoFailed": {
+          "symptom": "C-ECHO Failed (association succeeded)",
+          "causes": ["SCP not supporting verification", "Service class not configured", "Internal error on remote"],
+          "solutions": ["Verify remote supports Verification SOP Class", "Check PACS logs for details", "Contact PACS vendor support"]
+        }
+      },
+      "useCases": {
+        "title": "Healthcare Use Cases",
+        "pacs": "Monitor PACS server availability for radiology workflow continuity",
+        "modalities": "Verify CT, MRI, X-ray, and ultrasound systems are network-accessible",
+        "ris": "Check Radiology Information System connectivity",
+        "worklist": "Monitor modality worklist servers for proper study routing",
+        "archive": "Verify long-term archive systems are online"
+      },
+      "compliance": {
+        "title": "Compliance Considerations",
+        "description": "When monitoring DICOM systems in healthcare environments:",
+        "points": [
+          "C-ECHO is a non-destructive verification - it doesn't access patient data",
+          "Ensure The Seed is deployed on a secured, HIPAA-compliant network segment",
+          "Document DICOM monitoring in your facility's network security plan",
+          "Coordinate AE Title registration with your biomedical/IT team"
+        ]
+      }
+    },
+    "howTo": {
+      "description": "Step-by-step guides for common tasks and troubleshooting scenarios.",
+      "guides": {
+        "diagnoseSlowNetwork": {
+          "title": "How to Diagnose Slow Network Speeds",
+          "steps": [
+            {
+              "step": "Check Link Status",
+              "description": "Verify the Link Status card shows expected speed (1 Gbps for gigabit). If showing 100 Mbps, check cable quality or switch port."
+            },
+            {
+              "step": "Test Gateway Latency",
+              "description": "Gateway latency should be <1ms for wired connections. High latency here indicates local network issues."
+            },
+            {
+              "step": "Run Internet Speed Test",
+              "description": "Compare results to your ISP's advertised speeds. If significantly lower, the issue may be ISP-related."
+            },
+            {
+              "step": "Run LAN iPerf Test",
+              "description": "Test local network throughput to isolate whether the issue is local or internet-bound. Should achieve near wire speed."
+            },
+            {
+              "step": "Check for Interference",
+              "description": "For WiFi, run a Site Survey to check for channel congestion and interference."
+            },
+            {
+              "step": "Review Discovery Results",
+              "description": "Check if other devices are consuming bandwidth. Look for unexpected high-traffic devices."
+            }
+          ]
+        },
+        "setupHealthChecks": {
+          "title": "How to Configure Health Checks for Critical Services",
+          "steps": [
+            {
+              "step": "Identify Critical Services",
+              "description": "List all services that need monitoring: servers, databases, cloud services, cameras, medical equipment."
+            },
+            {
+              "step": "Choose Check Type",
+              "description": "Use Ping for basic reachability, TCP for service ports, HTTP for web services, RTSP for cameras, DICOM for medical imaging."
+            },
+            {
+              "step": "Add Endpoints",
+              "description": "Go to Settings → Health Checks and add each endpoint with appropriate parameters."
+            },
+            {
+              "step": "Set Thresholds",
+              "description": "Configure warning (yellow) and critical (red) latency thresholds based on service requirements."
+            },
+            {
+              "step": "Test Configuration",
+              "description": "Run tests manually first to verify connectivity before enabling continuous monitoring."
+            },
+            {
+              "step": "Save to Profile",
+              "description": "Ensure settings are saved to the appropriate client profile for persistence."
+            }
+          ]
+        },
+        "setupDicom": {
+          "title": "How to Set Up DICOM Monitoring for Healthcare",
+          "steps": [
+            {
+              "step": "Gather DICOM Information",
+              "description": "Collect IP addresses, ports, and AE Titles for all DICOM devices: PACS, modalities, RIS, archives."
+            },
+            {
+              "step": "Register The Seed's AE Title",
+              "description": "On each DICOM system, add The Seed's AE Title (e.g., 'THESEED') to the allowed remote AE list."
+            },
+            {
+              "step": "Configure Endpoints",
+              "description": "In Settings → Health Checks → DICOM, add each device with its Called AE Title, IP, and port."
+            },
+            {
+              "step": "Test C-ECHO",
+              "description": "Run manual C-ECHO tests to verify association establishment before enabling continuous monitoring."
+            },
+            {
+              "step": "Set Check Intervals",
+              "description": "Recommended: 60 seconds for critical PACS, 5 minutes for modalities, based on clinical workflow needs."
+            },
+            {
+              "step": "Configure Alerts",
+              "description": "Set up notification thresholds to alert when DICOM systems become unreachable."
+            }
+          ]
+        },
+        "setupRtsp": {
+          "title": "How to Set Up RTSP Camera Monitoring",
+          "steps": [
+            {
+              "step": "Identify Camera URLs",
+              "description": "Locate RTSP URLs from camera documentation or NVR. Common formats: rtsp://ip:554/stream1, rtsp://ip/live/ch1"
+            },
+            {
+              "step": "Gather Credentials",
+              "description": "Collect camera usernames and passwords. Consider creating a dedicated monitoring account with view-only access."
+            },
+            {
+              "step": "Add RTSP Endpoints",
+              "description": "In Settings → Health Checks → RTSP, add each camera with URL and credentials."
+            },
+            {
+              "step": "Test Connectivity",
+              "description": "Run manual OPTIONS/DESCRIBE tests to verify URLs and credentials are correct."
+            },
+            {
+              "step": "Set Check Intervals",
+              "description": "Recommended: 60 seconds for critical cameras, 5 minutes for general surveillance."
+            },
+            {
+              "step": "Group by Location",
+              "description": "Use descriptive names (e.g., 'Building A - Entrance') for easy identification during alerts."
+            }
+          ]
+        },
+        "createMspProfile": {
+          "title": "How to Create Client-Specific Profiles for MSPs",
+          "steps": [
+            {
+              "step": "Create New Profile",
+              "description": "Click profile dropdown → Manage Profiles → Create New. Use format: 'ClientName - Location' (e.g., 'Acme Corp - HQ')."
+            },
+            {
+              "step": "Configure Interfaces",
+              "description": "Select the network interfaces used at this client site. Set preferred Ethernet and WiFi interfaces."
+            },
+            {
+              "step": "Set Client Thresholds",
+              "description": "Adjust thresholds based on client SLA requirements. Stricter for critical environments, looser for basic monitoring."
+            },
+            {
+              "step": "Add Health Check Targets",
+              "description": "Add client-specific servers, applications, printers, cameras, and critical infrastructure."
+            },
+            {
+              "step": "Configure Discovery Settings",
+              "description": "Set subnet ranges, scan intensity, and SNMP credentials specific to this client environment."
+            },
+            {
+              "step": "Document in Description",
+              "description": "Add notes about client specifics: contact info, network topology, special considerations."
+            },
+            {
+              "step": "Export Backup",
+              "description": "Export the profile as backup before leaving the client site."
+            }
+          ]
+        },
+        "runWifiSurvey": {
+          "title": "How to Perform a WiFi Site Survey",
+          "steps": [
+            {
+              "step": "Select WiFi Interface",
+              "description": "Ensure a WiFi adapter is selected in the interface dropdown. Internal laptop WiFi or USB adapter both work."
+            },
+            {
+              "step": "Navigate to Survey",
+              "description": "Open the WiFi Site Survey card or go to Tools → WiFi Survey."
+            },
+            {
+              "step": "Start Scanning",
+              "description": "Click 'Start Survey' to begin capturing all visible WiFi networks. Walk to different locations while scanning."
+            },
+            {
+              "step": "Analyze 2.4 GHz Band",
+              "description": "Check channel graph for overlapping networks. Ensure your network uses channel 1, 6, or 11 only."
+            },
+            {
+              "step": "Analyze 5 GHz Band",
+              "description": "Verify adequate coverage. Check for DFS channel availability. Note any radar interference indicators."
+            },
+            {
+              "step": "Review Recommendations",
+              "description": "Check the Recommendations tab for suggested channel changes and access point adjustments."
+            },
+            {
+              "step": "Export Report",
+              "description": "Export survey results for documentation or client presentation."
+            }
+          ]
         }
       }
     }

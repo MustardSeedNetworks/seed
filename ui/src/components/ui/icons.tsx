@@ -37,6 +37,7 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowUpDown,
+  BookOpen,
   Cable,
   Calendar,
   Check,
@@ -69,6 +70,7 @@ import {
   Key,
   Laptop,
   LayoutDashboard,
+  Lightbulb,
   List,
   Loader2,
   Lock,
@@ -128,6 +130,8 @@ export {
   AlertCircle,
   AlertTriangle,
   ArrowUpDown,
+  // Help/documentation icons
+  BookOpen,
   Cable,
   Calendar,
   Check,
@@ -167,6 +171,7 @@ export {
   Laptop,
   // Layout
   LayoutDashboard,
+  Lightbulb,
   List,
   Loader2 as Loader,
   Lock,

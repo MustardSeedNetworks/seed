@@ -29,6 +29,7 @@
 import { Server } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { formatBytes } from "../../lib/format";
 import { cn, icon as iconTokens, radius, spacing } from "../../styles/theme";
 import { CardDivider, CardRow } from "../ui/card";
 import type { Status } from "../ui/status-badge";
@@ -63,34 +64,6 @@ interface SystemHealth {
   numCpu: number;
   topCpuProcesses?: ProcessInfo[];
   topMemoryProcesses?: ProcessInfo[];
-}
-
-/**
- * Type-safe getter for byte size units
- */
-function getSizeUnit(index: number): string {
-  switch (index) {
-    case 0:
-      return "B";
-    case 1:
-      return "KB";
-    case 2:
-      return "MB";
-    case 3:
-      return "GB";
-    case 4:
-      return "TB";
-    default:
-      return index < 0 ? "B" : "TB";
-  }
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const unit = getSizeUnit(i);
-  return `${Number.parseFloat((bytes / k ** i).toFixed(1))} ${unit}`;
 }
 
 function formatUptime(seconds: number): string {

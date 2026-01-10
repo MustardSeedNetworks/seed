@@ -1,0 +1,259 @@
+{
+  "title": "Glossary of Terms",
+  "description": "Technical terms and definitions used throughout The Seed",
+  "categories": {
+    "wifi": "WiFi & Wireless",
+    "network": "Network & Protocol",
+    "medical": "Medical Protocols",
+    "performance": "Performance & Testing",
+    "security": "Security"
+  },
+  "terms": {
+    "ssid": {
+      "term": "SSID",
+      "fullName": "Service Set Identifier",
+      "definition": "The name of a wireless network that devices use to identify and connect to it. Each WiFi network broadcasts its SSID so devices can find it.",
+      "category": "wifi"
+    },
+    "bssid": {
+      "term": "BSSID",
+      "fullName": "Basic Service Set Identifier",
+      "definition": "The MAC address of the access point's radio. Used to uniquely identify a specific access point when multiple APs share the same SSID.",
+      "category": "wifi"
+    },
+    "rssi": {
+      "term": "RSSI",
+      "fullName": "Received Signal Strength Indicator",
+      "definition": "A measurement of the power level of a received wireless signal, typically expressed in dBm. Higher values (closer to 0) indicate stronger signals.",
+      "category": "wifi"
+    },
+    "snr": {
+      "term": "SNR",
+      "fullName": "Signal-to-Noise Ratio",
+      "definition": "The ratio between the desired signal strength and background noise, measured in dB. Higher SNR values indicate cleaner, more reliable connections.",
+      "category": "wifi"
+    },
+    "channel": {
+      "term": "Channel",
+      "fullName": "WiFi Channel",
+      "definition": "A specific frequency range within the 2.4 GHz or 5 GHz band used for wireless communication. Proper channel selection reduces interference.",
+      "category": "wifi"
+    },
+    "channelWidth": {
+      "term": "Channel Width",
+      "fullName": "Channel Bandwidth",
+      "definition": "The frequency range used by a WiFi channel (20, 40, 80, or 160 MHz). Wider channels provide higher throughput but are more susceptible to interference.",
+      "category": "wifi"
+    },
+    "802.11ax": {
+      "term": "802.11ax",
+      "fullName": "WiFi 6",
+      "definition": "The IEEE standard for high-efficiency wireless LANs, offering improved performance in dense environments through OFDMA and MU-MIMO technologies.",
+      "category": "wifi"
+    },
+    "802.11be": {
+      "term": "802.11be",
+      "fullName": "WiFi 7",
+      "definition": "The latest IEEE wireless standard featuring 320 MHz channels, 4096-QAM modulation, and multi-link operation for extremely high throughput.",
+      "category": "wifi"
+    },
+    "mcs": {
+      "term": "MCS",
+      "fullName": "Modulation and Coding Scheme",
+      "definition": "An index value that defines the modulation type, coding rate, and number of spatial streams used in a WiFi transmission. Higher MCS values indicate faster potential speeds.",
+      "category": "wifi"
+    },
+    "phy": {
+      "term": "PHY",
+      "fullName": "Physical Layer",
+      "definition": "The lowest layer of the network stack that handles the actual transmission and reception of raw data bits over the wireless medium.",
+      "category": "wifi"
+    },
+    "wpa2": {
+      "term": "WPA2",
+      "fullName": "WiFi Protected Access 2",
+      "definition": "A security protocol using AES encryption to protect wireless networks. The standard security method for most WiFi networks.",
+      "category": "wifi"
+    },
+    "wpa3": {
+      "term": "WPA3",
+      "fullName": "WiFi Protected Access 3",
+      "definition": "The latest WiFi security standard offering stronger encryption, protection against offline dictionary attacks, and improved security for open networks.",
+      "category": "wifi"
+    },
+    "dfs": {
+      "term": "DFS",
+      "fullName": "Dynamic Frequency Selection",
+      "definition": "A mechanism that allows WiFi devices to use 5 GHz channels shared with radar systems by detecting and avoiding radar signals.",
+      "category": "wifi"
+    },
+    "tdr": {
+      "term": "TDR",
+      "fullName": "Time Domain Reflectometry",
+      "definition": "A diagnostic technique that sends electrical pulses through a cable and analyzes reflections to detect faults, opens, shorts, and cable length.",
+      "category": "network"
+    },
+    "dhcp": {
+      "term": "DHCP",
+      "fullName": "Dynamic Host Configuration Protocol",
+      "definition": "A network protocol that automatically assigns IP addresses and other network configuration parameters to devices on a network.",
+      "category": "network"
+    },
+    "dns": {
+      "term": "DNS",
+      "fullName": "Domain Name System",
+      "definition": "The system that translates human-readable domain names (like example.com) into IP addresses that computers use to identify each other.",
+      "category": "network"
+    },
+    "mtu": {
+      "term": "MTU",
+      "fullName": "Maximum Transmission Unit",
+      "definition": "The largest packet size that can be transmitted over a network without fragmentation. Standard Ethernet MTU is 1500 bytes.",
+      "category": "network"
+    },
+    "cidr": {
+      "term": "CIDR",
+      "fullName": "Classless Inter-Domain Routing",
+      "definition": "A method for allocating IP addresses and routing using variable-length subnet masking (e.g., 192.168.1.0/24).",
+      "category": "network"
+    },
+    "vlan": {
+      "term": "VLAN",
+      "fullName": "Virtual Local Area Network",
+      "definition": "A logical grouping of network devices that can communicate as if on the same physical network, regardless of their physical location.",
+      "category": "network"
+    },
+    "arp": {
+      "term": "ARP",
+      "fullName": "Address Resolution Protocol",
+      "definition": "A protocol used to map IP addresses to MAC addresses on a local network, enabling devices to find each other.",
+      "category": "network"
+    },
+    "icmp": {
+      "term": "ICMP",
+      "fullName": "Internet Control Message Protocol",
+      "definition": "A network protocol used for diagnostic and error reporting, including ping and traceroute functionality.",
+      "category": "network"
+    },
+    "ttl": {
+      "term": "TTL",
+      "fullName": "Time To Live",
+      "definition": "A value in IP packets that limits their lifespan, decremented at each router hop. Prevents packets from circulating indefinitely.",
+      "category": "network"
+    },
+    "oui": {
+      "term": "OUI",
+      "fullName": "Organizationally Unique Identifier",
+      "definition": "The first three bytes of a MAC address that identify the manufacturer of a network device.",
+      "category": "network"
+    },
+    "mac": {
+      "term": "MAC",
+      "fullName": "Media Access Control",
+      "definition": "A unique hardware identifier assigned to network interfaces. Also refers to the data link layer protocol that controls access to the network medium.",
+      "category": "network"
+    },
+    "lldp": {
+      "term": "LLDP",
+      "fullName": "Link Layer Discovery Protocol",
+      "definition": "A vendor-neutral protocol used by network devices to advertise their identity, capabilities, and neighbors on a local network.",
+      "category": "network"
+    },
+    "cdp": {
+      "term": "CDP",
+      "fullName": "Cisco Discovery Protocol",
+      "definition": "A Cisco proprietary protocol for discovering information about directly connected Cisco devices, including model, IP address, and capabilities.",
+      "category": "network"
+    },
+    "edp": {
+      "term": "EDP",
+      "fullName": "Extreme Discovery Protocol",
+      "definition": "A protocol used by Extreme Networks devices to discover neighboring network equipment and share device information.",
+      "category": "network"
+    },
+    "ndp": {
+      "term": "NDP",
+      "fullName": "Neighbor Discovery Protocol",
+      "definition": "An IPv6 protocol that performs functions similar to ARP, including address resolution and router discovery.",
+      "category": "network"
+    },
+    "snmp": {
+      "term": "SNMP",
+      "fullName": "Simple Network Management Protocol",
+      "definition": "A protocol for collecting and organizing information about managed devices on IP networks and modifying that information to change device behavior.",
+      "category": "network"
+    },
+    "dicom": {
+      "term": "DICOM",
+      "fullName": "Digital Imaging and Communications in Medicine",
+      "definition": "The international standard for transmitting, storing, and sharing medical imaging information. Used by CT scanners, MRI machines, and PACS systems.",
+      "category": "medical"
+    },
+    "aeTitle": {
+      "term": "AE Title",
+      "fullName": "Application Entity Title",
+      "definition": "A unique identifier for a DICOM application or device on a network. Used to establish associations between DICOM systems.",
+      "category": "medical"
+    },
+    "cEcho": {
+      "term": "C-ECHO",
+      "fullName": "DICOM Echo",
+      "definition": "A DICOM verification service that tests connectivity between two DICOM nodes. Similar to a network ping for DICOM systems.",
+      "category": "medical"
+    },
+    "pacs": {
+      "term": "PACS",
+      "fullName": "Picture Archiving and Communication System",
+      "definition": "A medical imaging system that provides storage and access to medical images from multiple modalities.",
+      "category": "medical"
+    },
+    "rtsp": {
+      "term": "RTSP",
+      "fullName": "Real Time Streaming Protocol",
+      "definition": "A network protocol used to control streaming media servers, commonly used for IP security cameras and video surveillance systems.",
+      "category": "medical"
+    },
+    "iperf": {
+      "term": "iPerf",
+      "fullName": "iPerf3",
+      "definition": "A widely-used tool for measuring network throughput between two endpoints. Supports TCP and UDP testing with various configuration options.",
+      "category": "performance"
+    },
+    "speedtest": {
+      "term": "Speedtest",
+      "fullName": "Internet Speed Test",
+      "definition": "A test that measures download speed, upload speed, and latency to determine internet connection performance.",
+      "category": "performance"
+    },
+    "latency": {
+      "term": "Latency",
+      "fullName": "Network Latency",
+      "definition": "The time delay between sending a request and receiving a response, typically measured in milliseconds (ms). Lower is better.",
+      "category": "performance"
+    },
+    "jitter": {
+      "term": "Jitter",
+      "fullName": "Packet Delay Variation",
+      "definition": "The variation in latency over time. High jitter causes problems for real-time applications like VoIP and video conferencing.",
+      "category": "performance"
+    },
+    "throughput": {
+      "term": "Throughput",
+      "fullName": "Network Throughput",
+      "definition": "The actual rate of successful data transfer over a network, measured in bits per second (bps, Mbps, Gbps).",
+      "category": "performance"
+    },
+    "packetLoss": {
+      "term": "Packet Loss",
+      "fullName": "Network Packet Loss",
+      "definition": "The percentage of packets that fail to reach their destination. Even small amounts can significantly impact application performance.",
+      "category": "performance"
+    },
+    "ttfb": {
+      "term": "TTFB",
+      "fullName": "Time To First Byte",
+      "definition": "The time from when a request is made until the first byte of the response is received. Indicates server responsiveness.",
+      "category": "performance"
+    }
+  }
+}

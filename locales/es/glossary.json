@@ -1,0 +1,259 @@
+{
+  "title": "Glosario de Términos",
+  "description": "Términos técnicos y definiciones utilizados en The Seed",
+  "categories": {
+    "wifi": "WiFi e Inalámbrico",
+    "network": "Red y Protocolo",
+    "medical": "Protocolos Médicos",
+    "performance": "Rendimiento y Pruebas",
+    "security": "Seguridad"
+  },
+  "terms": {
+    "ssid": {
+      "term": "SSID",
+      "fullName": "Service Set Identifier",
+      "definition": "El nombre de una red inalámbrica que los dispositivos usan para identificarla y conectarse. Cada red WiFi transmite su SSID para que los dispositivos puedan encontrarla.",
+      "category": "wifi"
+    },
+    "bssid": {
+      "term": "BSSID",
+      "fullName": "Basic Service Set Identifier",
+      "definition": "La dirección MAC del radio del punto de acceso. Se usa para identificar de manera única un punto de acceso específico cuando múltiples APs comparten el mismo SSID.",
+      "category": "wifi"
+    },
+    "rssi": {
+      "term": "RSSI",
+      "fullName": "Received Signal Strength Indicator",
+      "definition": "Una medida del nivel de potencia de una señal inalámbrica recibida, típicamente expresada en dBm. Valores más altos (más cercanos a 0) indican señales más fuertes.",
+      "category": "wifi"
+    },
+    "snr": {
+      "term": "SNR",
+      "fullName": "Signal-to-Noise Ratio",
+      "definition": "La relación entre la intensidad de la señal deseada y el ruido de fondo, medida en dB. Valores más altos de SNR indican conexiones más limpias y confiables.",
+      "category": "wifi"
+    },
+    "channel": {
+      "term": "Channel",
+      "fullName": "Canal WiFi",
+      "definition": "Un rango de frecuencia específico dentro de la banda de 2.4 GHz o 5 GHz usado para comunicación inalámbrica. La selección adecuada del canal reduce la interferencia.",
+      "category": "wifi"
+    },
+    "channelWidth": {
+      "term": "Channel Width",
+      "fullName": "Ancho de Banda del Canal",
+      "definition": "El rango de frecuencia usado por un canal WiFi (20, 40, 80 o 160 MHz). Canales más anchos proporcionan mayor rendimiento pero son más susceptibles a interferencia.",
+      "category": "wifi"
+    },
+    "802.11ax": {
+      "term": "802.11ax",
+      "fullName": "WiFi 6",
+      "definition": "El estándar IEEE para LANs inalámbricas de alta eficiencia, que ofrece mejor rendimiento en entornos densos mediante tecnologías OFDMA y MU-MIMO.",
+      "category": "wifi"
+    },
+    "802.11be": {
+      "term": "802.11be",
+      "fullName": "WiFi 7",
+      "definition": "El último estándar IEEE inalámbrico con canales de 320 MHz, modulación 4096-QAM y operación multi-enlace para rendimiento extremadamente alto.",
+      "category": "wifi"
+    },
+    "mcs": {
+      "term": "MCS",
+      "fullName": "Modulation and Coding Scheme",
+      "definition": "Un valor de índice que define el tipo de modulación, tasa de codificación y número de flujos espaciales usados en una transmisión WiFi. Valores MCS más altos indican velocidades potenciales más rápidas.",
+      "category": "wifi"
+    },
+    "phy": {
+      "term": "PHY",
+      "fullName": "Physical Layer",
+      "definition": "La capa más baja de la pila de red que maneja la transmisión y recepción real de bits de datos crudos sobre el medio inalámbrico.",
+      "category": "wifi"
+    },
+    "wpa2": {
+      "term": "WPA2",
+      "fullName": "WiFi Protected Access 2",
+      "definition": "Un protocolo de seguridad que usa encriptación AES para proteger redes inalámbricas. El método de seguridad estándar para la mayoría de las redes WiFi.",
+      "category": "wifi"
+    },
+    "wpa3": {
+      "term": "WPA3",
+      "fullName": "WiFi Protected Access 3",
+      "definition": "El último estándar de seguridad WiFi que ofrece encriptación más fuerte, protección contra ataques de diccionario offline y mejor seguridad para redes abiertas.",
+      "category": "wifi"
+    },
+    "dfs": {
+      "term": "DFS",
+      "fullName": "Dynamic Frequency Selection",
+      "definition": "Un mecanismo que permite a los dispositivos WiFi usar canales de 5 GHz compartidos con sistemas de radar detectando y evitando señales de radar.",
+      "category": "wifi"
+    },
+    "tdr": {
+      "term": "TDR",
+      "fullName": "Time Domain Reflectometry",
+      "definition": "Una técnica de diagnóstico que envía pulsos eléctricos a través de un cable y analiza las reflexiones para detectar fallas, aperturas, cortocircuitos y longitud del cable.",
+      "category": "network"
+    },
+    "dhcp": {
+      "term": "DHCP",
+      "fullName": "Dynamic Host Configuration Protocol",
+      "definition": "Un protocolo de red que asigna automáticamente direcciones IP y otros parámetros de configuración de red a los dispositivos en una red.",
+      "category": "network"
+    },
+    "dns": {
+      "term": "DNS",
+      "fullName": "Domain Name System",
+      "definition": "El sistema que traduce nombres de dominio legibles por humanos (como example.com) en direcciones IP que las computadoras usan para identificarse entre sí.",
+      "category": "network"
+    },
+    "mtu": {
+      "term": "MTU",
+      "fullName": "Maximum Transmission Unit",
+      "definition": "El tamaño de paquete más grande que puede transmitirse sobre una red sin fragmentación. El MTU estándar de Ethernet es 1500 bytes.",
+      "category": "network"
+    },
+    "cidr": {
+      "term": "CIDR",
+      "fullName": "Classless Inter-Domain Routing",
+      "definition": "Un método para asignar direcciones IP y enrutamiento usando máscara de subred de longitud variable (ej., 192.168.1.0/24).",
+      "category": "network"
+    },
+    "vlan": {
+      "term": "VLAN",
+      "fullName": "Virtual Local Area Network",
+      "definition": "Una agrupación lógica de dispositivos de red que pueden comunicarse como si estuvieran en la misma red física, independientemente de su ubicación física.",
+      "category": "network"
+    },
+    "arp": {
+      "term": "ARP",
+      "fullName": "Address Resolution Protocol",
+      "definition": "Un protocolo usado para mapear direcciones IP a direcciones MAC en una red local, permitiendo que los dispositivos se encuentren entre sí.",
+      "category": "network"
+    },
+    "icmp": {
+      "term": "ICMP",
+      "fullName": "Internet Control Message Protocol",
+      "definition": "Un protocolo de red usado para diagnóstico y reporte de errores, incluyendo funcionalidad de ping y traceroute.",
+      "category": "network"
+    },
+    "ttl": {
+      "term": "TTL",
+      "fullName": "Time To Live",
+      "definition": "Un valor en paquetes IP que limita su vida útil, decrementado en cada salto de router. Evita que los paquetes circulen indefinidamente.",
+      "category": "network"
+    },
+    "oui": {
+      "term": "OUI",
+      "fullName": "Organizationally Unique Identifier",
+      "definition": "Los primeros tres bytes de una dirección MAC que identifican al fabricante de un dispositivo de red.",
+      "category": "network"
+    },
+    "mac": {
+      "term": "MAC",
+      "fullName": "Media Access Control",
+      "definition": "Un identificador de hardware único asignado a interfaces de red. También se refiere al protocolo de capa de enlace de datos que controla el acceso al medio de red.",
+      "category": "network"
+    },
+    "lldp": {
+      "term": "LLDP",
+      "fullName": "Link Layer Discovery Protocol",
+      "definition": "Un protocolo neutral de proveedor usado por dispositivos de red para anunciar su identidad, capacidades y vecinos en una red local.",
+      "category": "network"
+    },
+    "cdp": {
+      "term": "CDP",
+      "fullName": "Cisco Discovery Protocol",
+      "definition": "Un protocolo propietario de Cisco para descubrir información sobre dispositivos Cisco directamente conectados, incluyendo modelo, dirección IP y capacidades.",
+      "category": "network"
+    },
+    "edp": {
+      "term": "EDP",
+      "fullName": "Extreme Discovery Protocol",
+      "definition": "Un protocolo usado por dispositivos de Extreme Networks para descubrir equipos de red vecinos y compartir información del dispositivo.",
+      "category": "network"
+    },
+    "ndp": {
+      "term": "NDP",
+      "fullName": "Neighbor Discovery Protocol",
+      "definition": "Un protocolo IPv6 que realiza funciones similares a ARP, incluyendo resolución de direcciones y descubrimiento de routers.",
+      "category": "network"
+    },
+    "snmp": {
+      "term": "SNMP",
+      "fullName": "Simple Network Management Protocol",
+      "definition": "Un protocolo para recopilar y organizar información sobre dispositivos gestionados en redes IP y modificar esa información para cambiar el comportamiento del dispositivo.",
+      "category": "network"
+    },
+    "dicom": {
+      "term": "DICOM",
+      "fullName": "Digital Imaging and Communications in Medicine",
+      "definition": "El estándar internacional para transmitir, almacenar y compartir información de imágenes médicas. Usado por escáneres CT, máquinas de MRI y sistemas PACS.",
+      "category": "medical"
+    },
+    "aeTitle": {
+      "term": "AE Title",
+      "fullName": "Application Entity Title",
+      "definition": "Un identificador único para una aplicación o dispositivo DICOM en una red. Usado para establecer asociaciones entre sistemas DICOM.",
+      "category": "medical"
+    },
+    "cEcho": {
+      "term": "C-ECHO",
+      "fullName": "DICOM Echo",
+      "definition": "Un servicio de verificación DICOM que prueba la conectividad entre dos nodos DICOM. Similar a un ping de red para sistemas DICOM.",
+      "category": "medical"
+    },
+    "pacs": {
+      "term": "PACS",
+      "fullName": "Picture Archiving and Communication System",
+      "definition": "Un sistema de imágenes médicas que proporciona almacenamiento y acceso a imágenes médicas desde múltiples modalidades.",
+      "category": "medical"
+    },
+    "rtsp": {
+      "term": "RTSP",
+      "fullName": "Real Time Streaming Protocol",
+      "definition": "Un protocolo de red usado para controlar servidores de streaming de medios, comúnmente usado para cámaras de seguridad IP y sistemas de videovigilancia.",
+      "category": "medical"
+    },
+    "iperf": {
+      "term": "iPerf",
+      "fullName": "iPerf3",
+      "definition": "Una herramienta ampliamente usada para medir el rendimiento de red entre dos puntos finales. Soporta pruebas TCP y UDP con varias opciones de configuración.",
+      "category": "performance"
+    },
+    "speedtest": {
+      "term": "Speedtest",
+      "fullName": "Prueba de Velocidad de Internet",
+      "definition": "Una prueba que mide la velocidad de descarga, velocidad de subida y latencia para determinar el rendimiento de la conexión a internet.",
+      "category": "performance"
+    },
+    "latency": {
+      "term": "Latency",
+      "fullName": "Latencia de Red",
+      "definition": "El retraso de tiempo entre enviar una solicitud y recibir una respuesta, típicamente medido en milisegundos (ms). Menor es mejor.",
+      "category": "performance"
+    },
+    "jitter": {
+      "term": "Jitter",
+      "fullName": "Variación de Retardo de Paquetes",
+      "definition": "La variación en la latencia a lo largo del tiempo. Alto jitter causa problemas para aplicaciones en tiempo real como VoIP y videoconferencia.",
+      "category": "performance"
+    },
+    "throughput": {
+      "term": "Throughput",
+      "fullName": "Rendimiento de Red",
+      "definition": "La tasa real de transferencia exitosa de datos sobre una red, medida en bits por segundo (bps, Mbps, Gbps).",
+      "category": "performance"
+    },
+    "packetLoss": {
+      "term": "Packet Loss",
+      "fullName": "Pérdida de Paquetes de Red",
+      "definition": "El porcentaje de paquetes que no llegan a su destino. Incluso pequeñas cantidades pueden impactar significativamente el rendimiento de las aplicaciones.",
+      "category": "performance"
+    },
+    "ttfb": {
+      "term": "TTFB",
+      "fullName": "Time To First Byte",
+      "definition": "El tiempo desde que se hace una solicitud hasta que se recibe el primer byte de la respuesta. Indica la capacidad de respuesta del servidor.",
+      "category": "performance"
+    }
+  }
+}
