@@ -13,14 +13,12 @@ import type {
 import { CollapsibleSection } from "../../ui/collapsible-section";
 import { ScanSearch } from "../../ui/icons";
 import { AutoSaveIndicator } from "./auto-save-indicator";
-import {
-  DiscoveryCustomOptions,
-  DiscoveryServiceStatus,
-  DiscoveryTimingSettings,
-  DiscoveryToggles,
-  SnmpSettingsSection,
-  SubnetManager,
-} from "./discovery";
+import { DiscoveryCustomOptions } from "./discovery/discovery-custom-options";
+import { DiscoveryServiceStatus } from "./discovery/discovery-service-status";
+import { DiscoveryTimingSettings } from "./discovery/discovery-timing-settings";
+import { DiscoveryToggles } from "./discovery/discovery-toggles";
+import { SnmpSettingsSection } from "./discovery/snmp-settings-section";
+import { SubnetManager } from "./discovery/subnet-manager";
 
 interface DiscoverySettingsProps {
   networkDiscoverySettings: NetworkDiscoverySettingsType;

@@ -40,8 +40,8 @@
 import { ArrowUpDown, ChevronDown, ChevronUp, Filter, Search, X } from "lucide-react";
 import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { border, cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
 import { logger } from "../../lib/logger";
+import { border, cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
 
 export type SortDirection = "asc" | "desc" | null;
 
@@ -466,7 +466,9 @@ export function DataTable<T>({
                             </td>
                           );
                         } catch (err) {
-                          logger.error("ui", "DataTable: Error rendering column", err, { columnKey: column.key });
+                          logger.error("ui", "DataTable: Error rendering column", err, {
+                            columnKey: column.key,
+                          });
                           return (
                             <td
                               key={`${key}-${column.key}`}

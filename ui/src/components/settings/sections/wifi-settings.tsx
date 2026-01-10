@@ -88,7 +88,7 @@ export const WiFiSettings = memo(function WiFiSettings({
     setScanError(null);
     try {
       const response = await api.get<{ networks: ScannedNetwork[]; error?: string }>(
-        `/api/canopy/wifi/scan?interface=${wifiSettings.interface}`
+        `/api/canopy/wifi/scan?interface=${wifiSettings.interface}`,
       );
       if (response?.networks) {
         // Filter out hidden networks (empty SSID) and sort by signal strength
@@ -100,7 +100,7 @@ export const WiFiSettings = memo(function WiFiSettings({
       if (response?.error) {
         setScanError(response.error);
       }
-    } catch (err) {
+    } catch {
       setScanError("Failed to scan networks");
     } finally {
       setScanning(false);
@@ -164,14 +164,17 @@ export const WiFiSettings = memo(function WiFiSettings({
   }, []);
 
   // Forget a saved network
-  const forgetNetwork = useCallback(async (ssid: string) => {
-    try {
-      await api.delete(`/api/canopy/wifi/forget?ssid=${encodeURIComponent(ssid)}`);
-      loadSavedNetworks();
-    } catch {
-      // Ignore errors
-    }
-  }, [loadSavedNetworks]);
+  const forgetNetwork = useCallback(
+    async (ssid: string) => {
+      try {
+        await api.delete(`/api/canopy/wifi/forget?ssid=${encodeURIComponent(ssid)}`);
+        loadSavedNetworks();
+      } catch {
+        // Ignore errors
+      }
+    },
+    [loadSavedNetworks],
+  );
 
   // Auto-scan networks and load saved networks on mount, refresh every 30s
   useEffect(() => {
@@ -280,7 +283,8 @@ export const WiFiSettings = memo(function WiFiSettings({
             <div className="border-t border-surface-border pt-3">
               <div className="flex items-center justify-between">
                 <span className="body-small font-medium text-text-primary">
-                  Available Networks {scanning && <span className="text-text-muted">(scanning...)</span>}
+                  Available Networks{" "}
+                  {scanning && <span className="text-text-muted">(scanning...)</span>}
                 </span>
                 <button
                   type="button"
@@ -298,9 +302,7 @@ export const WiFiSettings = memo(function WiFiSettings({
                 </button>
               </div>
 
-              {scanError && (
-                <p className="caption text-status-error mt-1">{scanError}</p>
-              )}
+              {scanError && <p className="caption text-status-error mt-1">{scanError}</p>}
 
               {/* Loading state when no networks yet */}
               {networks.length === 0 && scanning && (
@@ -314,12 +316,14 @@ export const WiFiSettings = memo(function WiFiSettings({
 
               {/* Network List */}
               {networks.length > 0 && (
-                <div className={cn(
-                  "mt-2 max-h-48 overflow-y-auto",
-                  "border border-surface-border",
-                  radius.default,
-                  "bg-surface-base",
-                )}>
+                <div
+                  className={cn(
+                    "mt-2 max-h-48 overflow-y-auto",
+                    "border border-surface-border",
+                    radius.default,
+                    "bg-surface-base",
+                  )}
+                >
                   {networks.map((network) => (
                     <button
                       type="button"
@@ -338,17 +342,11 @@ export const WiFiSettings = memo(function WiFiSettings({
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="body-small text-text-primary">
-                            {network.ssid}
-                          </span>
-                          <span className="caption text-text-muted ml-2">
-                            {network.security}
-                          </span>
+                          <span className="body-small text-text-primary">{network.ssid}</span>
+                          <span className="caption text-text-muted ml-2">{network.security}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="caption text-text-muted">
-                            Ch {network.channel}
-                          </span>
+                          <span className="caption text-text-muted">Ch {network.channel}</span>
                           <span className={cn("font-mono caption", getSignalColor(network.signal))}>
                             {getSignalBars(network.signal)}
                           </span>
@@ -361,12 +359,14 @@ export const WiFiSettings = memo(function WiFiSettings({
 
               {/* Connection Dialog */}
               {selectedNetwork && (
-                <div className={cn(
-                  "mt-3 p-3",
-                  "border border-surface-border",
-                  radius.default,
-                  "bg-surface-sunken",
-                )}>
+                <div
+                  className={cn(
+                    "mt-3 p-3",
+                    "border border-surface-border",
+                    radius.default,
+                    "bg-surface-sunken",
+                  )}
+                >
                   <div className="flex items-center justify-between mb-2">
                     <span className="body-small font-medium text-text-primary">
                       Connect to {selectedNetwork.ssid}
@@ -433,10 +433,14 @@ export const WiFiSettings = memo(function WiFiSettings({
 
               {/* Connection Status */}
               {connectionStatus && (
-                <p className={cn(
-                  "caption mt-2",
-                  connectionStatus.includes("Connected") ? "text-status-success" : "text-status-error",
-                )}>
+                <p
+                  className={cn(
+                    "caption mt-2",
+                    connectionStatus.includes("Connected")
+                      ? "text-status-success"
+                      : "text-status-error",
+                  )}
+                >
                   {connectionStatus}
                 </p>
               )}
@@ -445,9 +449,7 @@ export const WiFiSettings = memo(function WiFiSettings({
             {/* Current Connection / Disconnect */}
             <div className="border-t border-surface-border pt-3">
               <div className="flex items-center justify-between">
-                <span className="body-small font-medium text-text-primary">
-                  Connection
-                </span>
+                <span className="body-small font-medium text-text-primary">Connection</span>
                 <button
                   type="button"
                   onClick={disconnectNetwork}
@@ -471,12 +473,14 @@ export const WiFiSettings = memo(function WiFiSettings({
                 <span className="body-small font-medium text-text-primary block mb-2">
                   Saved Networks
                 </span>
-                <div className={cn(
-                  "max-h-32 overflow-y-auto",
-                  "border border-surface-border",
-                  radius.default,
-                  "bg-surface-base",
-                )}>
+                <div
+                  className={cn(
+                    "max-h-32 overflow-y-auto",
+                    "border border-surface-border",
+                    radius.default,
+                    "bg-surface-base",
+                  )}
+                >
                   {savedNetworks.map((network) => (
                     <div
                       key={network.uuid || network.ssid}
@@ -485,9 +489,7 @@ export const WiFiSettings = memo(function WiFiSettings({
                         "border-b border-surface-border last:border-b-0",
                       )}
                     >
-                      <span className="body-small text-text-primary">
-                        {network.ssid}
-                      </span>
+                      <span className="body-small text-text-primary">{network.ssid}</span>
                       <button
                         type="button"
                         onClick={() => forgetNetwork(network.ssid)}

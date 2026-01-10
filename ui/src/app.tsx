@@ -5,7 +5,7 @@
  *
  * Responsibilities:
  * - Authentication management and session handling
- * - WebSocket connection for real-time data updates
+ * - SSE (Server-Sent Events) connection for real-time data updates
  * - Network interface monitoring and status tracking
  * - Card-based dashboard state management
  * - User settings and theme management
@@ -13,7 +13,7 @@
  * - Floating Action Button (FAB) for quick actions
  *
  * Architecture:
- * - Uses WebSocket for real-time updates from backend
+ * - Uses SSE for real-time updates from backend (simpler than WebSocket)
  * - Card-based UI with independent data components
  * - Persistent settings stored in localStorage via SettingsContext
  * - JWT authentication with automatic session expiration
@@ -21,7 +21,7 @@
  * State Management:
  * - Local state for cards, interface selection, and UI
  * - Context-based settings (SettingsContext)
- * - Custom hooks for auth, WebSocket, and theme
+ * - Custom hooks for auth, SSE, and theme
  *
  * The component supports both initial setup flow and normal operation,
  * automatically detecting if the system needs configuration.
@@ -29,49 +29,97 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { LoginForm } from "./app/login-form";
+import { HeaderBar } from "./components/app/header-bar";
+import { CableCard } from "./components/cards/cable-card";
+import { DnsCard } from "./components/cards/dns-card";
+import { GatewayCard } from "./components/cards/gateway-card";
+import { HealthCheckCard } from "./components/cards/health-check-card";
+import { LinkCard } from "./components/cards/link-card";
+import { LogViewerCard } from "./components/cards/log-viewer-card";
+import { NetworkCard } from "./components/cards/network-card";
+import {
+  NetworkDiscoveryCard,
+  type NetworkDiscoveryData,
+} from "./components/cards/network-discovery-card";
+import { PathDiscoveryCard } from "./components/cards/path-discovery-card";
+import { PerformanceCard } from "./components/cards/performance-card";
+import { PublicIpCard } from "./components/cards/public-ip-card";
+import { SwitchCard } from "./components/cards/switch-card";
+import { SystemHealthCard } from "./components/cards/system-health-card";
+import { WiFiCard } from "./components/cards/wifi-card";
+import { WifiChannelGraph } from "./components/cards/wifi-channel-graph";
+import { WiFiSurveyCard } from "./components/cards/wifi-survey-card";
 import { ImprovedHelpModal } from "./components/help/improved-help-modal";
+import { ProfileManagement } from "./components/profiles/profile-management";
 import { SettingsDrawer } from "./components/settings/settings-drawer";
 import { SetupWizard } from "./components/setup/setup-wizard";
 import { checkSetupStatus } from "./components/setup/setupApi";
+import { FAB } from "./components/ui/fab";
+import { useProfileContext } from "./contexts/profile-context";
 import { useSettings } from "./contexts/useSettings";
 // Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { useAuth } from "./hooks/useAuth";
 import { useCardState } from "./hooks/useCardState";
 import { useInterfaceState } from "./hooks/useInterfaceState";
 import { useNetworkFetchers } from "./hooks/useNetworkFetchers";
+import { useSse } from "./hooks/useSse";
 import { useTheme } from "./hooks/useTheme";
-import { useWebSocket } from "./hooks/useWebSocket";
 import { api, setSessionExpiredCallback } from "./lib/api";
 import { LogComponents, logger } from "./lib/logger";
-
-// API base URL - configurable via environment variable
-const API_BASE = import.meta.env.VITE_API_BASE || "";
-
-import { LoginForm } from "./app/login-form";
-import { HeaderBar } from "./components/app/header-bar";
-import {
-  CableCard,
-  DnsCard,
-  GatewayCard,
-  LinkCard,
-  NetworkCard,
-  NetworkDiscoveryCard,
-  type NetworkDiscoveryData,
-  PathDiscoveryCard,
-  PublicIpCard,
-  SwitchCard,
-  WiFiCard,
-} from "./components/cards";
-import { HealthCheckCard } from "./components/cards/health-check-card";
-import { LogViewerCard } from "./components/cards/log-viewer-card";
-import { PerformanceCard } from "./components/cards/performance-card";
-import { SystemHealthCard } from "./components/cards/system-health-card";
-import { WiFiSurveyCard } from "./components/cards/wifi-survey-card";
-import { WifiChannelGraph } from "./components/cards/wifi-channel-graph";
-import { ProfileManagement } from "./components/profiles/profile-management";
-import { FAB } from "./components/ui/fab";
-import { useProfileContext } from "./contexts/profile-context";
 import { cn, layout, radius, section, spacing } from "./styles/theme";
+
+type ChannelGraphNetwork = {
+  ssid: string;
+  bssid: string;
+  channel: number;
+  centerFreq: number;
+  channelWidth: number;
+  signal: number;
+  band: string;
+  isConnected: boolean;
+};
+
+type ChannelGraphData = {
+  networks24Ghz: ChannelGraphNetwork[];
+  networks5Ghz: ChannelGraphNetwork[];
+  networks6Ghz: ChannelGraphNetwork[];
+  connectedBssid?: string;
+  scanTime: string;
+};
+
+type ChannelGraphResponse = {
+  available: boolean;
+  error?: string;
+  data?: ChannelGraphData;
+};
+
+type ChannelGraphApiResponse = {
+  available: boolean;
+  error?: string;
+  data?: Record<string, unknown>;
+};
+
+const normalizeChannelGraphResponse = (response: ChannelGraphApiResponse): ChannelGraphResponse => {
+  if (!response.data) {
+    return response;
+  }
+
+  const data = response.data as Record<string, unknown>;
+  const asNetworkArray = (value: unknown): ChannelGraphNetwork[] =>
+    Array.isArray(value) ? (value as ChannelGraphNetwork[]) : [];
+
+  return {
+    ...response,
+    data: {
+      networks24Ghz: asNetworkArray(data.networks_2_4ghz),
+      networks5Ghz: asNetworkArray(data.networks_5ghz),
+      networks6Ghz: asNetworkArray(data.networks_6ghz),
+      connectedBssid: typeof data.connected_bssid === "string" ? data.connected_bssid : undefined,
+      scanTime: typeof data.scan_time === "string" ? data.scan_time : "",
+    },
+  };
+};
 
 /**
  * Main App Component
@@ -81,7 +129,7 @@ import { cn, layout, radius, section, spacing } from "./styles/theme";
  */
 function App() {
   const { t } = useTranslation("common");
-  const { isAuthenticated, token, login, logout, refreshToken, isLoading, error } = useAuth();
+  const { isAuthenticated, login, logout, isLoading, error } = useAuth();
   const { isDark, toggleTheme } = useTheme();
 
   // Sync logger auth state to prevent 401 spam on login screen
@@ -128,17 +176,7 @@ function App() {
   const [networkDiscovery, setNetworkDiscovery] = useState<NetworkDiscoveryData | null>(null);
   const [appVersion, setAppVersion] = useState("dev");
   // WiFi channel graph data
-  const [channelGraphData, setChannelGraphData] = useState<{
-    available: boolean;
-    error?: string;
-    data?: {
-      networks_2_4ghz: Array<{ ssid: string; bssid: string; channel: number; centerFreq: number; channelWidth: number; signal: number; band: string; isConnected: boolean }>;
-      networks_5ghz: Array<{ ssid: string; bssid: string; channel: number; centerFreq: number; channelWidth: number; signal: number; band: string; isConnected: boolean }>;
-      networks_6ghz: Array<{ ssid: string; bssid: string; channel: number; centerFreq: number; channelWidth: number; signal: number; band: string; isConnected: boolean }>;
-      connected_bssid?: string;
-      scan_time: string;
-    };
-  } | null>(null);
+  const [channelGraphData, setChannelGraphData] = useState<ChannelGraphResponse | null>(null);
   const [channelGraphLoading, setChannelGraphLoading] = useState(false);
 
   // Refs to track device scan polling interval and timeout for cleanup
@@ -621,12 +659,10 @@ function App() {
     runOpts,
   ]);
 
-  // WebSocket connection for real-time updates
-  const { status: wsStatus, reconnect } = useWebSocket({
-    url: "/ws",
-    token,
+  // SSE connection for real-time updates (simpler than WebSocket)
+  const { status: sseStatus, reconnect } = useSse({
+    url: "/api/events",
     isAuthenticated,
-    onRefreshToken: refreshToken,
     onMessage: handleMessage,
     onCardUpdate: handleCardUpdate,
   });
@@ -636,10 +672,10 @@ function App() {
     if (!isWifi || !currentInterface) return;
     setChannelGraphLoading(true);
     try {
-      const response = await api.get<typeof channelGraphData>(
-        `/api/canopy/wifi/channel-graph?interface=${currentInterface}`
+      const response = await api.get<ChannelGraphApiResponse>(
+        `/api/canopy/wifi/channel-graph?interface=${currentInterface}`,
       );
-      setChannelGraphData(response);
+      setChannelGraphData(normalizeChannelGraphResponse(response));
     } catch {
       setChannelGraphData({ available: false, error: "Failed to fetch channel data" });
     } finally {
@@ -692,7 +728,7 @@ function App() {
     if (!isAuthenticated) return;
 
     // Only poll if WebSocket is not connected
-    if (wsStatus === "connected") {
+    if (sseStatus === "connected") {
       // WebSocket provides real-time updates, no need for aggressive polling
       // Still poll some endpoints that aren't broadcast (interfaces, wifi details)
       const slowInterval = setInterval(() => {
@@ -739,7 +775,7 @@ function App() {
     };
   }, [
     isAuthenticated,
-    wsStatus,
+    sseStatus,
     fetchLinkData,
     fetchIpConfig,
     fetchInterfaces,
@@ -822,7 +858,7 @@ function App() {
   return (
     <div className="min-h-screen text-text-primary font-body">
       <HeaderBar
-        wsStatus={wsStatus}
+        wsStatus={sseStatus}
         onReconnect={reconnect}
         profiles={profiles}
         activeProfile={activeProfile}

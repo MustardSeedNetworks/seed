@@ -7,28 +7,25 @@
  *
  * Handles:
  * - Card data state initialization
- * - WebSocket message handling for initial state
- * - Card update handling via WebSocket
+ * - SSE message handling for initial state
+ * - Card update handling via SSE
  * - Link-up detection for auto-run tests
  */
 
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type {
-  CableData,
-  DHCPData,
-  DNSData,
-  GatewayData,
-  LinkData,
-  PublicIpData,
-  SwitchData,
-  VlanData,
-  WiFiData,
-} from "../components/cards";
+import type { CableData } from "../components/cards/cable-card";
+import type { DnsData } from "../components/cards/dns-card";
+import type { GatewayData } from "../components/cards/gateway-card";
+import type { LinkData } from "../components/cards/link-card";
+import type { DhcpData } from "../components/cards/network-card";
 import type { TraceHopMessage } from "../components/cards/path-discovery-card";
+import type { PublicIpData } from "../components/cards/public-ip-card";
+import type { SwitchData, VlanData } from "../components/cards/switch-card";
+import type { WiFiData } from "../components/cards/wifi-card";
 import { LogComponents, logger } from "../lib/logger";
 import type { PipelineEvent, PipelineEventType } from "./usePipelineStatus";
-import type { CardUpdate, Message } from "./useWebSocket";
+import type { SseCardUpdate as CardUpdate, SseMessage as Message } from "./useSSE";
 
 // Pipeline event types for routing WebSocket messages
 const PIPELINE_EVENT_TYPES: PipelineEventType[] = [
@@ -58,8 +55,8 @@ export interface CardState {
   vlan: VlanData | null;
   switch: SwitchData | null;
   wifi: WiFiData | null;
-  dhcp: DHCPData | null;
-  dns: DNSData | null;
+  dhcp: DhcpData | null;
+  dns: DnsData | null;
   gateway: GatewayData | null;
   publicip: PublicIpData | null;
 }
