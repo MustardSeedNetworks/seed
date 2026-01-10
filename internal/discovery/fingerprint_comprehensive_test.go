@@ -108,170 +108,184 @@ func TestFingerprinter_ServiceVersionDetection(t *testing.T) {
 	fp := discovery.NewFingerprinter(100 * time.Millisecond)
 
 	t.Run("ssh_versions", func(t *testing.T) {
-		tests := []struct {
-			name    string
-			banner  string
-			product string
-			version string
-		}{
+		tests := []serviceVersionCase{
 			{
-				"openssh_8_4",
-				"SSH-2.0-OpenSSH_8.4p1 Ubuntu",
-				"OpenSSH",
-				"8.4p1",
+				name:    "openssh_8_4",
+				port:    22,
+				service: "ssh",
+				banner:  "SSH-2.0-OpenSSH_8.4p1 Ubuntu",
+				product: "OpenSSH",
+				version: "8.4p1",
 			},
 			{
-				"openssh_7_9",
-				"SSH-2.0-OpenSSH_7.9p1 Debian-10",
-				"OpenSSH",
-				"7.9p1",
+				name:    "openssh_7_9",
+				port:    22,
+				service: "ssh",
+				banner:  "SSH-2.0-OpenSSH_7.9p1 Debian-10",
+				product: "OpenSSH",
+				version: "7.9p1",
 			},
 			{
-				"openssh_underscore",
-				"SSH-2.0-OpenSSH_9.0",
-				"OpenSSH",
-				"9.0",
+				name:    "openssh_underscore",
+				port:    22,
+				service: "ssh",
+				banner:  "SSH-2.0-OpenSSH_9.0",
+				product: "OpenSSH",
+				version: "9.0",
 			},
 			{
-				"generic_ssh",
-				"SSH-2.0-dropbear_2022.83",
-				"SSH",
-				"2.0",
+				name:    "generic_ssh",
+				port:    22,
+				service: "ssh",
+				banner:  "SSH-2.0-dropbear_2022.83",
+				product: "SSH",
+				version: "2.0",
 			},
 		}
 
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				profile := &discovery.DeviceProfile{
-					OpenPorts: []discovery.OpenPort{
-						{Port: 22, Service: "ssh", Banner: tt.banner},
-					},
-				}
-
-				ctx := context.Background()
-				result := fp.ProbeDevice(ctx, "192.0.2.1", profile)
-
-				if len(result.ServiceVersions) == 0 {
-					t.Fatal("Expected service versions")
-				}
-
-				sv := result.ServiceVersions[0]
-				if sv.Product != tt.product {
-					t.Errorf("Product should be %q, got %q", tt.product, sv.Product)
-				}
-				if sv.Version != tt.version {
-					t.Errorf("Version should be %q, got %q", tt.version, sv.Version)
-				}
-			})
-		}
+		runServiceVersionCases(t, fp, tests)
 	})
 
 	t.Run("ftp_versions", func(t *testing.T) {
-		tests := []struct {
-			name    string
-			banner  string
-			product string
-		}{
-			{"vsftpd", "220 (vsFTPd 3.0.3)", "vsftpd"},
-			{"proftpd", "220 ProFTPD 1.3.6 Server ready", "ProFTPD"},
-			{"pureftpd", "220 Welcome to Pure-FTPd Server", "Pure-FTPd"},
-			{"msftp", "220 Microsoft FTP Service Ready", "Microsoft FTP"},
+		tests := []serviceVersionCase{
+			{
+				name:            "vsftpd",
+				port:            21,
+				service:         "ftp",
+				banner:          "220 (vsFTPd 3.0.3)",
+				product:         "vsftpd",
+				expectedService: "ftp",
+			},
+			{
+				name:            "proftpd",
+				port:            21,
+				service:         "ftp",
+				banner:          "220 ProFTPD 1.3.6 Server ready",
+				product:         "ProFTPD",
+				expectedService: "ftp",
+			},
+			{
+				name:            "pureftpd",
+				port:            21,
+				service:         "ftp",
+				banner:          "220 Welcome to Pure-FTPd Server",
+				product:         "Pure-FTPd",
+				expectedService: "ftp",
+			},
+			{
+				name:            "msftp",
+				port:            21,
+				service:         "ftp",
+				banner:          "220 Microsoft FTP Service Ready",
+				product:         "Microsoft FTP",
+				expectedService: "ftp",
+			},
 		}
 
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				profile := &discovery.DeviceProfile{
-					OpenPorts: []discovery.OpenPort{
-						{Port: 21, Service: "ftp", Banner: tt.banner},
-					},
-				}
-
-				ctx := context.Background()
-				result := fp.ProbeDevice(ctx, "192.0.2.1", profile)
-
-				if len(result.ServiceVersions) == 0 {
-					t.Fatal("Expected service versions")
-				}
-
-				sv := result.ServiceVersions[0]
-				if sv.Product != tt.product {
-					t.Errorf("Product should be %q, got %q", tt.product, sv.Product)
-				}
-				if sv.Service != "ftp" {
-					t.Errorf("Service should be 'ftp', got %q", sv.Service)
-				}
-			})
-		}
+		runServiceVersionCases(t, fp, tests)
 	})
 
 	t.Run("smtp_versions", func(t *testing.T) {
-		tests := []struct {
-			name    string
-			port    int
-			banner  string
-			product string
-		}{
-			{"postfix_25", 25, "220 mail.example.com ESMTP Postfix (Ubuntu)", "Postfix"},
-			{"sendmail_25", 25, "220 mail.example.com ESMTP Sendmail 8.15.2", "Sendmail"},
-			{"exim_25", 25, "220 mail.example.com ESMTP Exim 4.93 #1", "Exim"},
-			{"exchange_587", 587, "220 exchange.example.com Microsoft ESMTP MAIL Service", "Microsoft Exchange"},
+		tests := []serviceVersionCase{
+			{
+				name:    "postfix_25",
+				port:    25,
+				service: "smtp",
+				banner:  "220 mail.example.com ESMTP Postfix (Ubuntu)",
+				product: "Postfix",
+			},
+			{
+				name:    "sendmail_25",
+				port:    25,
+				service: "smtp",
+				banner:  "220 mail.example.com ESMTP Sendmail 8.15.2",
+				product: "Sendmail",
+			},
+			{
+				name:    "exim_25",
+				port:    25,
+				service: "smtp",
+				banner:  "220 mail.example.com ESMTP Exim 4.93 #1",
+				product: "Exim",
+			},
+			{
+				name:    "exchange_587",
+				port:    587,
+				service: "smtp",
+				banner:  "220 exchange.example.com Microsoft ESMTP MAIL Service",
+				product: "Microsoft Exchange",
+			},
 		}
 
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				profile := &discovery.DeviceProfile{
-					OpenPorts: []discovery.OpenPort{
-						{Port: tt.port, Service: "smtp", Banner: tt.banner},
-					},
-				}
-
-				ctx := context.Background()
-				result := fp.ProbeDevice(ctx, "192.0.2.1", profile)
-
-				if len(result.ServiceVersions) == 0 {
-					t.Fatal("Expected service versions")
-				}
-
-				sv := result.ServiceVersions[0]
-				if sv.Product != tt.product {
-					t.Errorf("Product should be %q, got %q", tt.product, sv.Product)
-				}
-			})
-		}
+		runServiceVersionCases(t, fp, tests)
 	})
 
 	t.Run("telnet_versions", func(t *testing.T) {
-		tests := []struct {
-			name    string
-			banner  string
-			product string
-		}{
-			{"cisco_telnet", "User Access Verification\n\nUsername: cisco", "Cisco IOS"},
-			{"linux_telnet", "Debian GNU/Linux telnetd", "Linux telnetd"},
+		tests := []serviceVersionCase{
+			{
+				name:    "cisco_telnet",
+				port:    23,
+				service: "telnet",
+				banner:  "User Access Verification\n\nUsername: cisco",
+				product: "Cisco IOS",
+			},
+			{
+				name:    "linux_telnet",
+				port:    23,
+				service: "telnet",
+				banner:  "Debian GNU/Linux telnetd",
+				product: "Linux telnetd",
+			},
 		}
 
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				profile := &discovery.DeviceProfile{
-					OpenPorts: []discovery.OpenPort{
-						{Port: 23, Service: "telnet", Banner: tt.banner},
-					},
-				}
-
-				ctx := context.Background()
-				result := fp.ProbeDevice(ctx, "192.0.2.1", profile)
-
-				if len(result.ServiceVersions) == 0 {
-					t.Fatal("Expected service versions")
-				}
-
-				sv := result.ServiceVersions[0]
-				if sv.Product != tt.product {
-					t.Errorf("Product should be %q, got %q", tt.product, sv.Product)
-				}
-			})
-		}
+		runServiceVersionCases(t, fp, tests)
 	})
+}
+
+type serviceVersionCase struct {
+	name            string
+	port            int
+	service         string
+	banner          string
+	product         string
+	version         string
+	expectedService string
+}
+
+func runServiceVersionCases(
+	t *testing.T,
+	fp *discovery.Fingerprinter,
+	tests []serviceVersionCase,
+) {
+	t.Helper()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			profile := &discovery.DeviceProfile{
+				OpenPorts: []discovery.OpenPort{
+					{Port: tt.port, Service: tt.service, Banner: tt.banner},
+				},
+			}
+
+			ctx := context.Background()
+			result := fp.ProbeDevice(ctx, "192.0.2.1", profile)
+
+			if len(result.ServiceVersions) == 0 {
+				t.Fatal("Expected service versions")
+			}
+
+			sv := result.ServiceVersions[0]
+			if sv.Product != tt.product {
+				t.Errorf("Product should be %q, got %q", tt.product, sv.Product)
+			}
+			if tt.version != "" && sv.Version != tt.version {
+				t.Errorf("Version should be %q, got %q", tt.version, sv.Version)
+			}
+			if tt.expectedService != "" && sv.Service != tt.expectedService {
+				t.Errorf("Service should be %q, got %q", tt.expectedService, sv.Service)
+			}
+		})
+	}
 }
 
 func TestFingerprinter_EdgeCases(t *testing.T) {

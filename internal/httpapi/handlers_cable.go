@@ -67,7 +67,7 @@ func (s *Server) handleCable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.cableTester == nil {
+	if s.cableTester() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -82,7 +82,7 @@ func (s *Server) handleCable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := s.cableTester.Test()
+	result := s.cableTester().Test()
 
 	// Allow wiring standard override via query param
 	wiringStd := cable.Wiring568B // Default to 568B (most common)

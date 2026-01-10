@@ -69,7 +69,7 @@ func (s *Server) handleVLAN(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.vlanManager == nil {
+	if s.vlanManager() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -85,7 +85,7 @@ func (s *Server) handleVLAN(w http.ResponseWriter, r *http.Request) {
 	nativeVlan, voiceVlan := s.getVLANsFromDiscovery()
 
 	// Get VLAN info (including detected subinterfaces)
-	info := s.vlanManager.GetInfoWithLLDP(nativeVlan, voiceVlan)
+	info := s.vlanManager().GetInfoWithLLDP(nativeVlan, voiceVlan)
 
 	resp := VLANResponse{
 		NativeVlan:  info.NativeVlan,
@@ -100,11 +100,11 @@ func (s *Server) handleVLAN(w http.ResponseWriter, r *http.Request) {
 
 // getVLANsFromDiscovery extracts VLAN information from LLDP/CDP neighbors.
 func (s *Server) getVLANsFromDiscovery() (*int, *int) {
-	if s.discoveryService == nil {
+	if s.discoveryService() == nil {
 		return nil, nil
 	}
 
-	neighbors := s.discoveryService.GetNeighbors()
+	neighbors := s.discoveryService().GetNeighbors()
 	if len(neighbors) == 0 {
 		return nil, nil
 	}
@@ -143,7 +143,7 @@ func (s *Server) handleVLANTraffic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.vlanTrafficMonitor == nil {
+	if s.vlanTrafficMonitor() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -158,7 +158,7 @@ func (s *Server) handleVLANTraffic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stats := s.vlanTrafficMonitor.GetStats()
+	stats := s.vlanTrafficMonitor().GetStats()
 	entries := make([]VLANTrafficEntry, 0, len(stats))
 	for _, stat := range stats {
 		entries = append(entries, VLANTrafficEntry{
@@ -171,7 +171,7 @@ func (s *Server) handleVLANTraffic(w http.ResponseWriter, r *http.Request) {
 
 	resp := VLANTrafficResponse{
 		VLANs:   entries,
-		Running: s.vlanTrafficMonitor.IsRunning(),
+		Running: s.vlanTrafficMonitor().IsRunning(),
 	}
 
 	sendJSONResponse(w, nil, http.StatusOK, resp)
@@ -245,7 +245,7 @@ func (s *Server) parseVLANRequest(
 	// Use current interface if not specified
 	iface := req.Interface
 	if iface == "" {
-		iface = s.netManager.GetCurrentInterface()
+		iface = s.netManager().GetCurrentInterface()
 	}
 
 	// Validate interface name

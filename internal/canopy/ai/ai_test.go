@@ -261,18 +261,41 @@ func TestPathLossModelRoundTrip(t *testing.T) {
 	}
 }
 
+type analyzeCoverageTestCase struct {
+	name        string
+	samples     []ai.SignalSample
+	floorPlan   *ai.FloorPlan
+	threshold   int
+	wantErr     error
+	checkResult func(*testing.T, *ai.CoverageResult)
+}
+
+func runAnalyzeCoverageCase(t *testing.T, tt analyzeCoverageTestCase) {
+	t.Helper()
+
+	result, err := ai.AnalyzeCoverage(tt.samples, tt.floorPlan, tt.threshold)
+
+	if tt.wantErr != nil {
+		if !errors.Is(err, tt.wantErr) {
+			t.Errorf("AnalyzeCoverage error = %v, want %v", err, tt.wantErr)
+		}
+		return
+	}
+
+	if err != nil {
+		t.Fatalf("AnalyzeCoverage unexpected error: %v", err)
+	}
+
+	if tt.checkResult != nil {
+		tt.checkResult(t, result)
+	}
+}
+
 // TestAnalyzeCoverage tests coverage analysis with various inputs.
 func TestAnalyzeCoverage(t *testing.T) {
 	validFloorPlan := &ai.FloorPlan{Width: 20, Height: 20}
 
-	tests := []struct {
-		name        string
-		samples     []ai.SignalSample
-		floorPlan   *ai.FloorPlan
-		threshold   int
-		wantErr     error
-		checkResult func(*testing.T, *ai.CoverageResult)
-	}{
+	tests := []analyzeCoverageTestCase{
 		{
 			name:      "No samples",
 			samples:   []ai.SignalSample{},
@@ -369,37 +392,91 @@ func TestAnalyzeCoverage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := ai.AnalyzeCoverage(tt.samples, tt.floorPlan, tt.threshold)
-
-			if tt.wantErr != nil {
-				if !errors.Is(err, tt.wantErr) {
-					t.Errorf("AnalyzeCoverage error = %v, want %v", err, tt.wantErr)
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("AnalyzeCoverage unexpected error: %v", err)
-			}
-
-			if tt.checkResult != nil {
-				tt.checkResult(t, result)
-			}
+			runAnalyzeCoverageCase(t, tt)
 		})
+	}
+}
+
+type suggestAPTestCase struct {
+	name           string
+	floorPlan      *ai.FloorPlan
+	existingAPs    []ai.AccessPoint
+	targetCoverage float64
+	threshold      int
+	wantErr        error
+	checkResult    func(*testing.T, []ai.PlacementSuggestion)
+}
+
+func runSuggestAPPlacementCase(t *testing.T, tt suggestAPTestCase) {
+	t.Helper()
+
+	suggestions, err := ai.SuggestAPPlacements(
+		tt.floorPlan, tt.existingAPs, tt.targetCoverage, tt.threshold,
+	)
+
+	if tt.wantErr != nil {
+		if !errors.Is(err, tt.wantErr) {
+			t.Errorf("SuggestAPPlacements error = %v, want %v", err, tt.wantErr)
+		}
+		return
+	}
+
+	if err != nil {
+		t.Fatalf("SuggestAPPlacements unexpected error: %v", err)
+	}
+
+	if tt.checkResult != nil {
+		tt.checkResult(t, suggestions)
+	}
+}
+
+func assertSuggestionsNonEmpty(t *testing.T, suggestions []ai.PlacementSuggestion) {
+	t.Helper()
+
+	if len(suggestions) == 0 {
+		t.Error("Expected at least one suggestion")
+	}
+}
+
+func assertSuggestionPriorityAndBounds20(t *testing.T, suggestions []ai.PlacementSuggestion) {
+	t.Helper()
+
+	if len(suggestions) == 0 {
+		t.Error("Expected at least one suggestion for empty space")
+		return
+	}
+
+	// First suggestion should have priority 1
+	s := suggestions[0]
+	if s.Priority != 1 {
+		t.Errorf("Expected first suggestion to have priority 1, got %d", s.Priority)
+	}
+	// Suggestion should be within floor plan bounds
+	if s.Location.X < 0 || s.Location.X > 20 || s.Location.Y < 0 || s.Location.Y > 20 {
+		t.Errorf("Suggestion outside floor plan bounds: X=%v, Y=%v", s.Location.X, s.Location.Y)
+	}
+}
+
+func assertSuggestionsNotTooCloseToCornerAP(t *testing.T, suggestions []ai.PlacementSuggestion) {
+	t.Helper()
+
+	// Should suggest placements away from the corner AP
+	for _, s := range suggestions {
+		if s.Location.X < 10 && s.Location.Y < 10 {
+			// Within 10m of existing AP is too close
+			dist := math.Sqrt(
+				(s.Location.X-5)*(s.Location.X-5) + (s.Location.Y-5)*(s.Location.Y-5),
+			)
+			if dist < 5 {
+				t.Errorf("Suggestion too close to existing AP at distance %v", dist)
+			}
+		}
 	}
 }
 
 // TestSuggestAPPlacements tests AP placement suggestions.
 func TestSuggestAPPlacements(t *testing.T) {
-	tests := []struct {
-		name           string
-		floorPlan      *ai.FloorPlan
-		existingAPs    []ai.AccessPoint
-		targetCoverage float64
-		threshold      int
-		wantErr        error
-		checkResult    func(*testing.T, []ai.PlacementSuggestion)
-	}{
+	tests := []suggestAPTestCase{
 		{
 			name:           "Nil floor plan",
 			floorPlan:      nil,
@@ -422,21 +499,7 @@ func TestSuggestAPPlacements(t *testing.T) {
 			existingAPs:    []ai.AccessPoint{},
 			targetCoverage: 95,
 			threshold:      ai.ThresholdFair,
-			checkResult: func(t *testing.T, suggestions []ai.PlacementSuggestion) {
-				if len(suggestions) == 0 {
-					t.Error("Expected at least one suggestion for empty space")
-					return
-				}
-				// First suggestion should have priority 1
-				s := suggestions[0]
-				if s.Priority != 1 {
-					t.Errorf("Expected first suggestion to have priority 1, got %d", s.Priority)
-				}
-				// Suggestion should be within floor plan bounds
-				if s.Location.X < 0 || s.Location.X > 20 || s.Location.Y < 0 || s.Location.Y > 20 {
-					t.Errorf("Suggestion outside floor plan bounds: X=%v, Y=%v", s.Location.X, s.Location.Y)
-				}
-			},
+			checkResult:    assertSuggestionPriorityAndBounds20,
 		},
 		{
 			name:      "With existing AP in corner",
@@ -446,20 +509,7 @@ func TestSuggestAPPlacements(t *testing.T) {
 			},
 			targetCoverage: 95,
 			threshold:      ai.ThresholdFair,
-			checkResult: func(t *testing.T, suggestions []ai.PlacementSuggestion) {
-				// Should suggest placements away from the corner AP
-				for _, s := range suggestions {
-					if s.Location.X < 10 && s.Location.Y < 10 {
-						// Within 10m of existing AP is too close
-						dist := math.Sqrt(
-							(s.Location.X-5)*(s.Location.X-5) + (s.Location.Y-5)*(s.Location.Y-5),
-						)
-						if dist < 5 {
-							t.Errorf("Suggestion too close to existing AP at distance %v", dist)
-						}
-					}
-				}
-			},
+			checkResult:    assertSuggestionsNotTooCloseToCornerAP,
 		},
 		{
 			name:           "Invalid target coverage defaults to 95",
@@ -467,11 +517,7 @@ func TestSuggestAPPlacements(t *testing.T) {
 			existingAPs:    []ai.AccessPoint{},
 			targetCoverage: 150, // Invalid
 			threshold:      ai.ThresholdFair,
-			checkResult: func(t *testing.T, suggestions []ai.PlacementSuggestion) {
-				if len(suggestions) == 0 {
-					t.Error("Expected suggestions even with invalid target coverage")
-				}
-			},
+			checkResult:    assertSuggestionsNonEmpty,
 		},
 		{
 			name:           "Zero target coverage defaults to 95",
@@ -479,49 +525,93 @@ func TestSuggestAPPlacements(t *testing.T) {
 			existingAPs:    []ai.AccessPoint{},
 			targetCoverage: 0,
 			threshold:      ai.ThresholdFair,
-			checkResult: func(t *testing.T, suggestions []ai.PlacementSuggestion) {
-				if len(suggestions) == 0 {
-					t.Error("Expected suggestions even with zero target coverage")
-				}
-			},
+			checkResult:    assertSuggestionsNonEmpty,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			suggestions, err := ai.SuggestAPPlacements(
-				tt.floorPlan, tt.existingAPs, tt.targetCoverage, tt.threshold,
-			)
-
-			if tt.wantErr != nil {
-				if !errors.Is(err, tt.wantErr) {
-					t.Errorf("SuggestAPPlacements error = %v, want %v", err, tt.wantErr)
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("SuggestAPPlacements unexpected error: %v", err)
-			}
-
-			if tt.checkResult != nil {
-				tt.checkResult(t, suggestions)
-			}
+			runSuggestAPPlacementCase(t, tt)
 		})
+	}
+}
+
+type predictSignalMapTestCase struct {
+	name        string
+	floorPlan   *ai.FloorPlan
+	aps         []ai.AccessPoint
+	model       *ai.PathLossModel
+	resolution  float64
+	wantErr     error
+	checkResult func(*testing.T, []ai.HeatmapPoint)
+}
+
+func runPredictSignalMapCase(t *testing.T, tt predictSignalMapTestCase) {
+	t.Helper()
+
+	heatmap, err := ai.PredictSignalMap(tt.floorPlan, tt.aps, tt.model, tt.resolution)
+
+	if tt.wantErr != nil {
+		if !errors.Is(err, tt.wantErr) {
+			t.Errorf("PredictSignalMap error = %v, want %v", err, tt.wantErr)
+		}
+		return
+	}
+
+	if err != nil {
+		t.Fatalf("PredictSignalMap unexpected error: %v", err)
+	}
+
+	if tt.checkResult != nil {
+		tt.checkResult(t, heatmap)
+	}
+}
+
+func assertHeatmapNonEmpty(t *testing.T, heatmap []ai.HeatmapPoint) {
+	t.Helper()
+
+	if len(heatmap) == 0 {
+		t.Error("Expected non-empty heatmap")
+	}
+}
+
+func assertHeatmapCenterStronger(t *testing.T, heatmap []ai.HeatmapPoint) {
+	t.Helper()
+
+	// Check that points near AP have stronger signal
+	var centerRSSI, cornerRSSI int
+	for _, p := range heatmap {
+		if p.Location.X >= 4 && p.Location.X <= 6 &&
+			p.Location.Y >= 4 && p.Location.Y <= 6 {
+			centerRSSI = p.RSSI
+		}
+		if p.Location.X == 0 && p.Location.Y == 0 {
+			cornerRSSI = p.RSSI
+		}
+	}
+	if centerRSSI <= cornerRSSI {
+		t.Errorf("Center RSSI (%d) should be stronger than corner (%d)",
+			centerRSSI, cornerRSSI)
+	}
+}
+
+func assertHeatmapMidpointFair(t *testing.T, heatmap []ai.HeatmapPoint) {
+	t.Helper()
+
+	// Middle point should have reasonable signal from both APs
+	for _, p := range heatmap {
+		if p.Location.X >= 9 && p.Location.X <= 11 {
+			// Middle point should have at least fair signal
+			if p.RSSI < ai.ThresholdPoor {
+				t.Errorf("Middle point RSSI (%d) worse than expected", p.RSSI)
+			}
+		}
 	}
 }
 
 // TestPredictSignalMap tests signal heatmap generation.
 func TestPredictSignalMap(t *testing.T) {
-	tests := []struct {
-		name        string
-		floorPlan   *ai.FloorPlan
-		aps         []ai.AccessPoint
-		model       *ai.PathLossModel
-		resolution  float64
-		wantErr     error
-		checkResult func(*testing.T, []ai.HeatmapPoint)
-	}{
+	tests := []predictSignalMapTestCase{
 		{
 			name:       "Nil floor plan",
 			floorPlan:  nil,
@@ -544,29 +634,9 @@ func TestPredictSignalMap(t *testing.T) {
 			aps: []ai.AccessPoint{
 				{Location: ai.Point{X: 5, Y: 5}, TxPower: 20, Band: "2.4GHz"},
 			},
-			model:      nil,
-			resolution: 2.0,
-			checkResult: func(t *testing.T, heatmap []ai.HeatmapPoint) {
-				if len(heatmap) == 0 {
-					t.Error("Expected non-empty heatmap")
-					return
-				}
-				// Check that points near AP have stronger signal
-				var centerRSSI, cornerRSSI int
-				for _, p := range heatmap {
-					if p.Location.X >= 4 && p.Location.X <= 6 &&
-						p.Location.Y >= 4 && p.Location.Y <= 6 {
-						centerRSSI = p.RSSI
-					}
-					if p.Location.X == 0 && p.Location.Y == 0 {
-						cornerRSSI = p.RSSI
-					}
-				}
-				if centerRSSI <= cornerRSSI {
-					t.Errorf("Center RSSI (%d) should be stronger than corner (%d)",
-						centerRSSI, cornerRSSI)
-				}
-			},
+			model:       nil,
+			resolution:  2.0,
+			checkResult: assertHeatmapCenterStronger,
 		},
 		{
 			name:      "Resolution below minimum is clamped",
@@ -574,14 +644,9 @@ func TestPredictSignalMap(t *testing.T) {
 			aps: []ai.AccessPoint{
 				{Location: ai.Point{X: 2.5, Y: 2.5}, TxPower: 20},
 			},
-			model:      nil,
-			resolution: 0.1, // Below minimum
-			checkResult: func(t *testing.T, heatmap []ai.HeatmapPoint) {
-				// Should still generate heatmap with clamped resolution
-				if len(heatmap) == 0 {
-					t.Error("Expected non-empty heatmap even with sub-minimum resolution")
-				}
-			},
+			model:       nil,
+			resolution:  0.1, // Below minimum
+			checkResult: assertHeatmapNonEmpty,
 		},
 		{
 			name:      "Resolution above maximum is clamped",
@@ -589,14 +654,9 @@ func TestPredictSignalMap(t *testing.T) {
 			aps: []ai.AccessPoint{
 				{Location: ai.Point{X: 10, Y: 10}, TxPower: 20},
 			},
-			model:      nil,
-			resolution: 10.0, // Above maximum
-			checkResult: func(t *testing.T, heatmap []ai.HeatmapPoint) {
-				// Should still generate heatmap with clamped resolution
-				if len(heatmap) == 0 {
-					t.Error("Expected non-empty heatmap even with above-maximum resolution")
-				}
-			},
+			model:       nil,
+			resolution:  10.0, // Above maximum
+			checkResult: assertHeatmapNonEmpty,
 		},
 		{
 			name:      "Multiple APs - best signal selected",
@@ -605,40 +665,15 @@ func TestPredictSignalMap(t *testing.T) {
 				{Location: ai.Point{X: 5, Y: 5}, TxPower: 20, Band: "2.4GHz"},
 				{Location: ai.Point{X: 15, Y: 5}, TxPower: 20, Band: "2.4GHz"},
 			},
-			model:      nil,
-			resolution: 5.0,
-			checkResult: func(t *testing.T, heatmap []ai.HeatmapPoint) {
-				// Middle point should have reasonable signal from both APs
-				for _, p := range heatmap {
-					if p.Location.X >= 9 && p.Location.X <= 11 {
-						// Middle point should have at least fair signal
-						if p.RSSI < ai.ThresholdPoor {
-							t.Errorf("Middle point RSSI (%d) worse than expected", p.RSSI)
-						}
-					}
-				}
-			},
+			model:       nil,
+			resolution:  5.0,
+			checkResult: assertHeatmapMidpointFair,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			heatmap, err := ai.PredictSignalMap(tt.floorPlan, tt.aps, tt.model, tt.resolution)
-
-			if tt.wantErr != nil {
-				if !errors.Is(err, tt.wantErr) {
-					t.Errorf("PredictSignalMap error = %v, want %v", err, tt.wantErr)
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("PredictSignalMap unexpected error: %v", err)
-			}
-
-			if tt.checkResult != nil {
-				tt.checkResult(t, heatmap)
-			}
+			runPredictSignalMapCase(t, tt)
 		})
 	}
 }
@@ -750,15 +785,38 @@ func TestEstimateAPCount(t *testing.T) {
 	}
 }
 
+type calibrateModelTestCase struct {
+	name       string
+	samples    []ai.SignalSample
+	ap         ai.AccessPoint
+	wantErr    error
+	checkModel func(*testing.T, *ai.PathLossModel)
+}
+
+func runCalibrateModelCase(t *testing.T, tt calibrateModelTestCase) {
+	t.Helper()
+
+	model, err := ai.CalibrateModel(tt.samples, tt.ap)
+
+	if tt.wantErr != nil {
+		if !errors.Is(err, tt.wantErr) {
+			t.Errorf("CalibrateModel error = %v, want %v", err, tt.wantErr)
+		}
+		return
+	}
+
+	if err != nil {
+		t.Fatalf("CalibrateModel unexpected error: %v", err)
+	}
+
+	if tt.checkModel != nil {
+		tt.checkModel(t, model)
+	}
+}
+
 // TestCalibrateModel tests model calibration from measurements.
 func TestCalibrateModel(t *testing.T) {
-	tests := []struct {
-		name       string
-		samples    []ai.SignalSample
-		ap         ai.AccessPoint
-		wantErr    error
-		checkModel func(*testing.T, *ai.PathLossModel)
-	}{
+	tests := []calibrateModelTestCase{
 		{
 			name:    "No samples",
 			samples: []ai.SignalSample{},
@@ -819,22 +877,7 @@ func TestCalibrateModel(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			model, err := ai.CalibrateModel(tt.samples, tt.ap)
-
-			if tt.wantErr != nil {
-				if !errors.Is(err, tt.wantErr) {
-					t.Errorf("CalibrateModel error = %v, want %v", err, tt.wantErr)
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("CalibrateModel unexpected error: %v", err)
-			}
-
-			if tt.checkModel != nil {
-				tt.checkModel(t, model)
-			}
+			runCalibrateModelCase(t, tt)
 		})
 	}
 }

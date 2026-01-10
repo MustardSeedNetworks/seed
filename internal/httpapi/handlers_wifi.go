@@ -70,9 +70,9 @@ func (s *Server) getWiFiSettings(w http.ResponseWriter, _ *http.Request) {
 
 	// Get list of available wireless interfaces
 	availableWLAN := []string{}
-	if s.netManager != nil {
-		for _, iface := range s.netManager.GetInterfaces() {
-			if s.netManager.IsWireless(iface.Name) {
+	if s.netManager() != nil {
+		for _, iface := range s.netManager().GetInterfaces() {
+			if s.netManager().IsWireless(iface.Name) {
 				availableWLAN = append(availableWLAN, iface.Name)
 			}
 		}
@@ -81,7 +81,7 @@ func (s *Server) getWiFiSettings(w http.ResponseWriter, _ *http.Request) {
 	resp := WiFiSettingsResponse{
 		Interface:     wlanIface,
 		AvailableWiFi: availableWLAN,
-		IsWireless:    s.wifiManager != nil && s.wifiManager.IsWireless(),
+		IsWireless:    s.wifiManager() != nil && s.wifiManager().IsWireless(),
 	}
 
 	sendJSONResponse(w, nil, http.StatusOK, resp)
@@ -120,8 +120,8 @@ func (s *Server) updateWiFiSettings(
 	s.config.Interface.WiFi = req.Interface
 
 	// Update WiFi manager to use new interface
-	if s.wifiManager != nil && req.Interface != "" {
-		s.wifiManager.SetInterface(req.Interface)
+	if s.wifiManager() != nil && req.Interface != "" {
+		s.wifiManager().SetInterface(req.Interface)
 	}
 
 	// Unlock before Save() to avoid deadlock - Save() acquires RLock internally
@@ -168,7 +168,7 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.wifiManager == nil {
+	if s.wifiManager() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -193,10 +193,10 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update WiFi manager to use the requested interface
-	s.wifiManager.SetInterface(wlanIface)
+	s.wifiManager().SetInterface(wlanIface)
 
 	// Check if interface is wireless
-	if !s.wifiManager.IsWireless() {
+	if !s.wifiManager().IsWireless() {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
 			"interface": wlanIface,
 			"wireless":  false,
@@ -205,7 +205,7 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	info := s.wifiManager.GetInfo()
+	info := s.wifiManager().GetInfo()
 	if info == nil {
 		w.Header().Set("Content-Type", "application/json")
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
@@ -260,7 +260,7 @@ func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if s.wifiScanner == nil {
+	if s.wifiScanner() == nil {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
 			"interface": wlanIface,
 			"available": false,
@@ -271,7 +271,7 @@ func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if interface is wireless
-	if s.wifiManager == nil || !s.wifiManager.IsWireless() {
+	if s.wifiManager() == nil || !s.wifiManager().IsWireless() {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
 			"interface": wlanIface,
 			"available": false,
@@ -282,7 +282,7 @@ func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Perform scan
-	networks, err := s.wifiScanner.Scan()
+	networks, err := s.wifiScanner().Scan()
 	if err != nil {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
 			"interface": wlanIface,
@@ -319,9 +319,9 @@ func (s *Server) handleWiFiStatus(w http.ResponseWriter, r *http.Request) {
 
 	// Get list of available wireless interfaces
 	availableAdapters := []string{}
-	if s.netManager != nil {
-		for _, iface := range s.netManager.GetInterfaces() {
-			if s.netManager.IsWireless(iface.Name) {
+	if s.netManager() != nil {
+		for _, iface := range s.netManager().GetInterfaces() {
+			if s.netManager().IsWireless(iface.Name) {
 				availableAdapters = append(availableAdapters, iface.Name)
 			}
 		}
@@ -338,8 +338,8 @@ func (s *Server) handleWiFiStatus(w http.ResponseWriter, r *http.Request) {
 
 	// Check if current interface is wireless
 	isWireless := false
-	if s.wifiManager != nil {
-		isWireless = s.wifiManager.IsWireless()
+	if s.wifiManager() != nil {
+		isWireless = s.wifiManager().IsWireless()
 	}
 
 	// Determine status message
@@ -397,7 +397,7 @@ func (s *Server) handleWiFiConnect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.wifiManager == nil {
+	if s.wifiManager() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -438,7 +438,7 @@ func (s *Server) handleWiFiConnect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Attempt connection
-	result, err := s.wifiManager.Connect(req.SSID, req.Password)
+	result, err := s.wifiManager().Connect(req.SSID, req.Password)
 	if err != nil {
 		logger.Error("WiFi connection failed", "error", err, "ssid", req.SSID)
 		sendErrorResponseWithDetails(
@@ -472,7 +472,7 @@ func (s *Server) handleWiFiDisconnect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.wifiManager == nil {
+	if s.wifiManager() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -485,7 +485,7 @@ func (s *Server) handleWiFiDisconnect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Attempt disconnection
-	result, err := s.wifiManager.Disconnect()
+	result, err := s.wifiManager().Disconnect()
 	if err != nil {
 		logger.Error("WiFi disconnection failed", "error", err)
 		sendErrorResponseWithDetails(
@@ -519,14 +519,14 @@ func (s *Server) handleWiFiSavedNetworks(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if s.wifiManager == nil {
+	if s.wifiManager() == nil {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
 			"networks": []any{},
 		})
 		return
 	}
 
-	networks, err := s.wifiManager.GetSavedNetworks()
+	networks, err := s.wifiManager().GetSavedNetworks()
 	if err != nil {
 		logger.Warn("Failed to get saved networks", "error", err)
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
@@ -558,7 +558,7 @@ func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if s.wifiManager == nil {
+	if s.wifiManager() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -584,7 +584,7 @@ func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := s.wifiManager.ForgetNetwork(ssid); err != nil {
+	if err := s.wifiManager().ForgetNetwork(ssid); err != nil {
 		logger.Error("Failed to forget network", "error", err, "ssid", ssid)
 		sendErrorResponseWithDetails(
 			w,
@@ -630,7 +630,7 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	if s.wifiScanner == nil {
+	if s.wifiScanner() == nil {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
 			"interface": wlanIface,
 			"available": false,
@@ -641,7 +641,7 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Check if interface is wireless
-	if s.wifiManager == nil || !s.wifiManager.IsWireless() {
+	if s.wifiManager() == nil || !s.wifiManager().IsWireless() {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
 			"interface": wlanIface,
 			"available": false,
@@ -652,7 +652,7 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Perform scan
-	networks, err := s.wifiScanner.Scan()
+	networks, err := s.wifiScanner().Scan()
 	if err != nil {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
 			"interface": wlanIface,
@@ -665,7 +665,7 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 
 	// Get connected network BSSID
 	connectedBSSID := ""
-	if info := s.wifiManager.GetInfo(); info != nil {
+	if info := s.wifiManager().GetInfo(); info != nil {
 		connectedBSSID = info.BSSID
 	}
 

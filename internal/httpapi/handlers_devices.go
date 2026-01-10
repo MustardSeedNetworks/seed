@@ -41,7 +41,7 @@ func (s *Server) handleDevices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.deviceDiscovery == nil {
+	if s.deviceDiscovery() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -53,8 +53,8 @@ func (s *Server) handleDevices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	devices := s.deviceDiscovery.GetDevices()
-	status := s.deviceDiscovery.GetStatus()
+	devices := s.deviceDiscovery().GetDevices()
+	status := s.deviceDiscovery().GetStatus()
 
 	resp := map[string]any{
 		"devices": devices,
@@ -79,7 +79,7 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.deviceDiscovery == nil {
+	if s.deviceDiscovery() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -92,7 +92,7 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if scan is already in progress
-	if s.deviceDiscovery.IsScanning() {
+	if s.deviceDiscovery().IsScanning() {
 		sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 			"message":  "Scan already in progress",
 			"scanning": true,
@@ -117,7 +117,7 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 			)
 		}()
 
-		if err := s.deviceDiscovery.Scan(ctx); err != nil {
+		if err := s.deviceDiscovery().Scan(ctx); err != nil {
 			bgLogger.Error("Device scan error", "error", err)
 		}
 
@@ -125,10 +125,10 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 		s.postScanVulnerabilityCheck(bgLogger)
 
 		// Notify WebSocket clients when scan completes
-		s.wsHub.Broadcast(Message{
+		s.wsHub().Broadcast(Message{
 			Type: "deviceScanComplete",
 			Payload: map[string]any{
-				"deviceCount": s.deviceDiscovery.Count(),
+				"deviceCount": s.deviceDiscovery().Count(),
 				"timestamp":   time.Now().Format(time.RFC3339),
 			},
 		})
@@ -143,7 +143,7 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 // postScanVulnerabilityCheck runs vulnerability scans after device discovery if auto-scan is enabled.
 // This method extracts business logic from the handler for better separation of concerns.
 func (s *Server) postScanVulnerabilityCheck(logger *slog.Logger) {
-	if s.vulnScanner == nil || !s.config.Security.VulnerabilityScanning.Enabled ||
+	if s.vulnScanner() == nil || !s.config.Security.VulnerabilityScanning.Enabled ||
 		!s.config.Security.VulnerabilityScanning.AutoScan {
 		return
 	}
@@ -151,22 +151,22 @@ func (s *Server) postScanVulnerabilityCheck(logger *slog.Logger) {
 	logger.Info(
 		"Auto-scan: triggering vulnerability scan",
 		"device_count",
-		s.deviceDiscovery.Count(),
+		s.deviceDiscovery().Count(),
 	)
-	devices := s.deviceDiscovery.GetDevices()
+	devices := s.deviceDiscovery().GetDevices()
 
 	vulnCtx, vulnCancel := context.WithTimeout(context.Background(), vulnScanTimeoutMin*time.Minute)
 	defer vulnCancel()
 
 	for _, device := range devices {
-		if _, err := s.vulnScanner.ScanDevice(vulnCtx, device); err != nil {
+		if _, err := s.vulnScanner().ScanDevice(vulnCtx, device); err != nil {
 			logger.Warn("Auto vulnerability scan failed", "device_ip", device.IP, "error", err)
 		}
 	}
 
 	// Broadcast vulnerability results
-	results := s.vulnScanner.GetAllVulnerabilities()
-	s.wsHub.BroadcastCardUpdate("vulnerabilities", map[string]any{
+	results := s.vulnScanner().GetAllVulnerabilities()
+	s.wsHub().BroadcastCardUpdate("vulnerabilities", map[string]any{
 		"results": results,
 		"count":   len(results),
 	})
@@ -188,7 +188,7 @@ func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.deviceDiscovery == nil {
+	if s.deviceDiscovery() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -200,7 +200,7 @@ func (s *Server) handleDevicesStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	status := s.deviceDiscovery.GetStatus()
+	status := s.deviceDiscovery().GetStatus()
 	sendJSONResponse(w, logger, http.StatusOK, status)
 }
 
@@ -775,7 +775,7 @@ func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 // syncDeviceDiscoverySubnets synchronizes enabled subnets from config to the device discovery scanner.
 // This helper method eliminates DRY violation across add/update/delete subnet handlers.
 func (s *Server) syncDeviceDiscoverySubnets(logger *slog.Logger) {
-	if s.deviceDiscovery == nil {
+	if s.deviceDiscovery() == nil {
 		return
 	}
 
@@ -786,7 +786,7 @@ func (s *Server) syncDeviceDiscoverySubnets(logger *slog.Logger) {
 		}
 	}
 
-	if err := s.deviceDiscovery.SetAdditionalSubnets(enabledCIDRs); err != nil {
+	if err := s.deviceDiscovery().SetAdditionalSubnets(enabledCIDRs); err != nil {
 		logger.Warn("Failed to update scanner subnets", "error", err)
 	}
 }
@@ -794,7 +794,7 @@ func (s *Server) syncDeviceDiscoverySubnets(logger *slog.Logger) {
 // handlePublicIP returns the public IPv4 and IPv6 addresses (fixes #702 - uses r.Context() for service calls).
 func (s *Server) handlePublicIP(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	if s.publicipChecker == nil {
+	if s.publicipChecker() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -809,12 +809,12 @@ func (s *Server) handlePublicIP(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		// Return cached result or fetch if cache expired (fixes #702 - passes context)
-		result := s.publicipChecker.GetPublicIP(r.Context())
+		result := s.publicipChecker().GetPublicIP(r.Context())
 		sendJSONResponse(w, logger, http.StatusOK, result)
 
 	case http.MethodPost:
 		// Force refresh (fixes #702 - passes context)
-		result := s.publicipChecker.Refresh(r.Context())
+		result := s.publicipChecker().Refresh(r.Context())
 		sendJSONResponse(w, logger, http.StatusOK, result)
 
 	default:

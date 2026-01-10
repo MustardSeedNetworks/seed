@@ -925,22 +925,32 @@ func TestConvertSurvey(t *testing.T) {
 				t.Errorf("expected Description %q, got %q", tt.survey.Description, result.Description)
 			}
 
-			// Verify status mapping
-			switch tt.survey.Status {
-			case survey.StatusCreated:
-				if result.Status != canopy.SurveyStatusDraft {
-					t.Errorf("expected Status draft, got %v", result.Status)
-				}
-			case survey.StatusInProgress, survey.StatusPaused:
-				if result.Status != canopy.SurveyStatusInProgress {
-					t.Errorf("expected Status in_progress, got %v", result.Status)
-				}
-			case survey.StatusCompleted:
-				if result.Status != canopy.SurveyStatusComplete {
-					t.Errorf("expected Status complete, got %v", result.Status)
-				}
-			}
+			assertSurveyStatusMapping(t, tt.survey.Status, result.Status)
 		})
+	}
+}
+
+func assertSurveyStatusMapping(
+	t *testing.T,
+	source survey.Status,
+	mapped canopy.SurveyStatus,
+) {
+	t.Helper()
+
+	// Verify status mapping
+	switch source {
+	case survey.StatusCreated:
+		if mapped != canopy.SurveyStatusDraft {
+			t.Errorf("expected Status draft, got %v", mapped)
+		}
+	case survey.StatusInProgress, survey.StatusPaused:
+		if mapped != canopy.SurveyStatusInProgress {
+			t.Errorf("expected Status in_progress, got %v", mapped)
+		}
+	case survey.StatusCompleted:
+		if mapped != canopy.SurveyStatusComplete {
+			t.Errorf("expected Status complete, got %v", mapped)
+		}
 	}
 }
 

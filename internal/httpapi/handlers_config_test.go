@@ -26,6 +26,7 @@ func TestHandleConfigVersion(t *testing.T) {
 
 	// Create server with minimal setup
 	s := &api.Server{}
+	s.InitServices()
 	s.SetConfig(cfg)
 	s.SetConfigPath(configPath)
 
@@ -71,6 +72,7 @@ func TestHandleConfigBackups(t *testing.T) {
 	}
 
 	s := &api.Server{}
+	s.InitServices()
 	s.SetConfig(cfg)
 	s.SetConfigPath(configPath)
 
@@ -104,6 +106,7 @@ func TestHandleConfigBackupCreate(t *testing.T) {
 	}
 
 	s := &api.Server{}
+	s.InitServices()
 	s.SetConfig(cfg)
 	s.SetConfigPath(configPath)
 
@@ -158,6 +161,7 @@ func TestHandleConfigRestore(t *testing.T) {
 	}
 
 	s := &api.Server{}
+	s.InitServices()
 	s.SetConfig(cfg)
 	s.SetConfigPath(configPath)
 
@@ -197,6 +201,7 @@ func TestHandleConfigBackupDelete(t *testing.T) {
 	}
 
 	s := &api.Server{}
+	s.InitServices()
 	s.SetConfig(cfg)
 	s.SetConfigPath(configPath)
 
@@ -223,6 +228,7 @@ func TestHandleConfigBackupDelete(t *testing.T) {
 func TestHandleConfigVersion_MethodNotAllowed(t *testing.T) {
 	// Use testutil for consistent test configuration
 	s := &api.Server{}
+	s.InitServices()
 	s.SetConfig(testutil.NewConfigBuilder().Build())
 	s.SetConfigPath("/tmp/config.yaml")
 
@@ -242,6 +248,7 @@ func TestHandleConfigVersion_MethodNotAllowed(t *testing.T) {
 func TestHandleConfigRestore_MissingBackupName(t *testing.T) {
 	// Use testutil for consistent test configuration
 	s := &api.Server{}
+	s.InitServices()
 	s.SetConfig(testutil.NewConfigBuilder().Build())
 	s.SetConfigPath("/tmp/config.yaml")
 

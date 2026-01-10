@@ -22,7 +22,7 @@ func TestWaitForPortReady(t *testing.T) {
 		name      string
 		port      int
 		timeout   time.Duration
-		setup     func() (cleanup func())
+		setup     func(t *testing.T) (int, func())
 		wantError bool
 		errorMsg  string
 	}{
@@ -45,12 +45,9 @@ func TestWaitForPortReady(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name:    "port not listening timeout",
-			port:    59999, // unlikely to be in use
-			timeout: 100 * time.Millisecond,
-			setup: func() func() {
-				return func() {}
-			},
+			name:      "port not listening timeout",
+			port:      59999, // unlikely to be in use
+			timeout:   100 * time.Millisecond,
 			wantError: true,
 			errorMsg:  "not ready",
 		},
@@ -58,15 +55,16 @@ func TestWaitForPortReady(t *testing.T) {
 			name:    "port listening success",
 			port:    0, // will be assigned dynamically
 			timeout: 2 * time.Second,
-			setup: func() func() {
+			setup: func(t *testing.T) (int, func()) {
 				// Start a TCP listener on a random port
 				listener, err := net.Listen("tcp", "127.0.0.1:0")
 				if err != nil {
-					return func() {}
+					t.Skipf("Could not create listener: %v", err)
 				}
-				return func() {
+				cleanup := func() {
 					_ = listener.Close()
 				}
+				return listener.Addr().(*net.TCPAddr).Port, cleanup
 			},
 			wantError: false,
 		},
@@ -74,36 +72,52 @@ func TestWaitForPortReady(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var cleanup func()
-			port := tt.port
-
-			if tt.setup != nil {
-				cleanup = tt.setup()
-				defer cleanup()
-
-				// For dynamic port test, we need to get the actual port
-				if tt.name == "port listening success" {
-					listener, err := net.Listen("tcp", "127.0.0.1:0")
-					if err != nil {
-						t.Skipf("Could not create listener: %v", err)
-					}
-					defer func() { _ = listener.Close() }()
-					port = listener.Addr().(*net.TCPAddr).Port
-				}
-			}
-
-			err := iperf.WaitForPortReady(port, tt.timeout)
-
-			if tt.wantError {
-				if err == nil {
-					t.Error("Expected error, got nil")
-				} else if tt.errorMsg != "" && !strings.Contains(err.Error(), tt.errorMsg) {
-					t.Errorf("Error should contain %q, got: %v", tt.errorMsg, err)
-				}
-			} else if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
+			runWaitForPortReadyCase(t, tt)
 		})
+	}
+}
+
+func runWaitForPortReadyCase(
+	t *testing.T,
+	tt struct {
+		name      string
+		port      int
+		timeout   time.Duration
+		setup     func(t *testing.T) (int, func())
+		wantError bool
+		errorMsg  string
+	},
+) {
+	t.Helper()
+
+	port := tt.port
+	var cleanup func()
+	if tt.setup != nil {
+		var setupPort int
+		setupPort, cleanup = tt.setup(t)
+		if cleanup != nil {
+			defer cleanup()
+		}
+		if setupPort != 0 {
+			port = setupPort
+		}
+	}
+
+	err := iperf.WaitForPortReady(port, tt.timeout)
+
+	if tt.wantError {
+		if err == nil {
+			t.Error("Expected error, got nil")
+			return
+		}
+		if tt.errorMsg != "" && !strings.Contains(err.Error(), tt.errorMsg) {
+			t.Errorf("Error should contain %q, got: %v", tt.errorMsg, err)
+		}
+		return
+	}
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
 	}
 }
 
@@ -243,17 +257,7 @@ func TestBuildClientArgsAllCombinations(t *testing.T) {
 				Protocol: "udp",
 			},
 			direction: "download",
-			check: func(t *testing.T, args []string) {
-				t.Helper()
-				hasU := contains(args, "-u")
-				hasR := contains(args, "-R")
-				if !hasU {
-					t.Error("UDP test should have -u flag")
-				}
-				if !hasR {
-					t.Error("Download direction should have -R flag")
-				}
-			},
+			check:     assertArgsHasUDPAndReverse,
 		},
 		{
 			name: "UDP with bidirectional",
@@ -265,17 +269,7 @@ func TestBuildClientArgsAllCombinations(t *testing.T) {
 				Protocol: "udp",
 			},
 			direction: "bidirectional",
-			check: func(t *testing.T, args []string) {
-				t.Helper()
-				hasU := contains(args, "-u")
-				hasBidir := contains(args, "--bidir")
-				if !hasU {
-					t.Error("UDP test should have -u flag")
-				}
-				if !hasBidir {
-					t.Error("Bidirectional direction should have --bidir flag")
-				}
-			},
+			check:     assertArgsHasUDPAndBidir,
 		},
 		{
 			name: "high parallel streams",
@@ -287,19 +281,7 @@ func TestBuildClientArgsAllCombinations(t *testing.T) {
 				Protocol: "tcp",
 			},
 			direction: "upload",
-			check: func(t *testing.T, args []string) {
-				t.Helper()
-				found := false
-				for i, arg := range args {
-					if arg == "-P" && i+1 < len(args) && args[i+1] == "16" {
-						found = true
-						break
-					}
-				}
-				if !found {
-					t.Errorf("Expected -P 16 in args: %v", args)
-				}
-			},
+			check:     assertArgsHasParallel16,
 		},
 		{
 			name: "long duration",
@@ -311,19 +293,7 @@ func TestBuildClientArgsAllCombinations(t *testing.T) {
 				Protocol: "tcp",
 			},
 			direction: "upload",
-			check: func(t *testing.T, args []string) {
-				t.Helper()
-				found := false
-				for i, arg := range args {
-					if arg == "-t" && i+1 < len(args) && args[i+1] == "3600" {
-						found = true
-						break
-					}
-				}
-				if !found {
-					t.Errorf("Expected -t 3600 in args: %v", args)
-				}
-			},
+			check:     assertArgsHasDuration3600,
 		},
 	}
 
@@ -332,6 +302,62 @@ func TestBuildClientArgsAllCombinations(t *testing.T) {
 			args := iperf.BuildClientArgs(&tt.config, tt.direction)
 			tt.check(t, args)
 		})
+	}
+}
+
+func assertArgsHasUDPAndReverse(t *testing.T, args []string) {
+	t.Helper()
+
+	hasU := contains(args, "-u")
+	hasR := contains(args, "-R")
+	if !hasU {
+		t.Error("UDP test should have -u flag")
+	}
+	if !hasR {
+		t.Error("Download direction should have -R flag")
+	}
+}
+
+func assertArgsHasUDPAndBidir(t *testing.T, args []string) {
+	t.Helper()
+
+	hasU := contains(args, "-u")
+	hasBidir := contains(args, "--bidir")
+	if !hasU {
+		t.Error("UDP test should have -u flag")
+	}
+	if !hasBidir {
+		t.Error("Bidirectional direction should have --bidir flag")
+	}
+}
+
+func assertArgsHasParallel16(t *testing.T, args []string) {
+	t.Helper()
+
+	found := false
+	for i, arg := range args {
+		if arg == "-P" && i+1 < len(args) && args[i+1] == "16" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected -P 16 in args: %v", args)
+	}
+}
+
+func assertArgsHasDuration3600(t *testing.T, args []string) {
+	t.Helper()
+
+	found := false
+	for i, arg := range args {
+		if arg == "-t" && i+1 < len(args) && args[i+1] == "3600" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected -t 3600 in args: %v", args)
 	}
 }
 

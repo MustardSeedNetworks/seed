@@ -54,7 +54,7 @@ func (s *Server) handleRogueDHCP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		resp := RogueDHCPResponse{
 			Enabled: s.config.DHCP.RogueDetection.Enabled,
-			Running: s.rogueDetector.IsRunning(),
+			Running: s.rogueDetector().IsRunning(),
 		}
 		sendJSONResponse(w, logger, http.StatusOK, resp)
 
@@ -116,13 +116,13 @@ func (s *Server) handleRogueDHCPStart(
 		sendJSONResponse(w, logger, http.StatusBadRequest, *resp)
 		return
 	}
-	if s.rogueDetector.IsRunning() {
+	if s.rogueDetector().IsRunning() {
 		resp.Running = true
 		resp.Message = "Rogue DHCP detector already running"
 		sendJSONResponse(w, logger, http.StatusOK, *resp)
 		return
 	}
-	if err := s.rogueDetector.Start(); err != nil {
+	if err := s.rogueDetector().Start(); err != nil {
 		logger.Error("Failed to start rogue DHCP detector", "error", err)
 		resp.Error = "internal server error"
 		sendJSONResponse(w, logger, http.StatusInternalServerError, *resp)
@@ -139,13 +139,13 @@ func (s *Server) handleRogueDHCPStop(
 	logger *slog.Logger,
 	resp *RogueDHCPResponse,
 ) {
-	if !s.rogueDetector.IsRunning() {
+	if !s.rogueDetector().IsRunning() {
 		resp.Running = false
 		resp.Message = "Rogue DHCP detector not running"
 		sendJSONResponse(w, logger, http.StatusOK, *resp)
 		return
 	}
-	if err := s.rogueDetector.Stop(); err != nil {
+	if err := s.rogueDetector().Stop(); err != nil {
 		logger.Error("Failed to stop rogue DHCP detector", "error", err)
 		resp.Error = "internal server error"
 		sendJSONResponse(w, logger, http.StatusInternalServerError, *resp)
@@ -164,8 +164,8 @@ func (s *Server) handleRogueDHCPServers(w http.ResponseWriter, r *http.Request) 
 	switch r.Method {
 	case http.MethodGet:
 		// Get all detected servers
-		servers := s.rogueDetector.GetDetectedServers()
-		rogues := s.rogueDetector.GetRogueServers()
+		servers := s.rogueDetector().GetDetectedServers()
+		rogues := s.rogueDetector().GetRogueServers()
 
 		resp := RogueServersResponse{
 			Servers:         servers,
@@ -176,7 +176,7 @@ func (s *Server) handleRogueDHCPServers(w http.ResponseWriter, r *http.Request) 
 
 	case http.MethodDelete:
 		// Clear detected servers list
-		s.rogueDetector.ClearDetectedServers()
+		s.rogueDetector().ClearDetectedServers()
 		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
 			"message": "Detected servers list cleared",
 		})
@@ -201,7 +201,7 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		// Get current configuration
-		rogueConfig := s.rogueDetector.GetConfig()
+		rogueConfig := s.rogueDetector().GetConfig()
 		resp := RogueDHCPConfigResponse{
 			Enabled:          s.config.DHCP.RogueDetection.Enabled,
 			KnownServers:     rogueConfig.KnownServers,
@@ -242,7 +242,7 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 		if req.KnownServers != nil {
 			s.config.DHCP.RogueDetection.KnownServers = req.KnownServers
 			// Update detector's known servers
-			s.rogueDetector.UpdateKnownServers(req.KnownServers)
+			s.rogueDetector().UpdateKnownServers(req.KnownServers)
 		}
 		if req.AlertOnDetection != nil {
 			s.config.DHCP.RogueDetection.AlertOnDetection = *req.AlertOnDetection
@@ -265,7 +265,7 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Return updated config
-		rogueConfig := s.rogueDetector.GetConfig()
+		rogueConfig := s.rogueDetector().GetConfig()
 		resp := RogueDHCPConfigResponse{
 			Enabled:          s.config.DHCP.RogueDetection.Enabled,
 			KnownServers:     rogueConfig.KnownServers,
@@ -318,7 +318,7 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.gatewayTester == nil {
+	if s.gatewayTester() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -332,9 +332,9 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 
 	// Check if requested interface has connectivity via link monitor
 	currentIface := s.getInterfaceFromRequest(r)
-	if currentIface != "" && s.linkMonitor != nil {
+	if currentIface != "" && s.linkMonitor() != nil {
 		// If link is down, return disconnected status
-		if !s.linkMonitor.IsUp() {
+		if !s.linkMonitor().IsUp() {
 			resp := GatewayResponse{
 				Gateway:   "",
 				Reachable: false,
@@ -346,7 +346,7 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Perform IPv4 gateway ping test
-	stats := s.gatewayTester.Test()
+	stats := s.gatewayTester().Test()
 
 	resp := GatewayResponse{
 		Gateway:     stats.Gateway,

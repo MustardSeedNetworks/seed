@@ -70,7 +70,7 @@ func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 
 	// Check if database is available
-	if s.db == nil {
+	if s.db() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
@@ -111,7 +111,7 @@ func (s *Server) handleListProfiles(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 	ctx := r.Context()
 
-	profiles, err := s.db.Profiles().List(ctx)
+	profiles, err := s.db().Profiles().List(ctx)
 	if err != nil {
 		logger.Error("Failed to list profiles", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
@@ -161,7 +161,7 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 		IsDefault:   req.IsDefault,
 	}
 
-	if err := s.db.Profiles().Create(ctx, profile); err != nil {
+	if err := s.db().Profiles().Create(ctx, profile); err != nil {
 		if errors.Is(err, database.ErrProfileNameExists) {
 			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 				ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
@@ -183,7 +183,7 @@ func (s *Server) handleGetProfile(w http.ResponseWriter, r *http.Request, id str
 	localizer := i18n.FromRequest(r)
 	ctx := r.Context()
 
-	profile, err := s.db.Profiles().Get(ctx, id)
+	profile, err := s.db().Profiles().Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, database.ErrProfileNotFound) {
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
@@ -213,7 +213,7 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 	}
 
 	// Get existing profile
-	profile, err := s.db.Profiles().Get(ctx, id)
+	profile, err := s.db().Profiles().Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, database.ErrProfileNotFound) {
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
@@ -235,7 +235,7 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 	}
 	profile.IsDefault = req.IsDefault
 
-	if updateErr := s.db.Profiles().Update(ctx, profile); updateErr != nil {
+	if updateErr := s.db().Profiles().Update(ctx, profile); updateErr != nil {
 		if errors.Is(updateErr, database.ErrProfileNameExists) {
 			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 				ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
@@ -256,7 +256,7 @@ func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request, id 
 	ctx := r.Context()
 
 	// Check if profile exists
-	profile, err := s.db.Profiles().Get(ctx, id)
+	profile, err := s.db().Profiles().Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, database.ErrProfileNotFound) {
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
@@ -276,7 +276,7 @@ func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request, id 
 	}
 
 	// Check if this is the active profile
-	activeID, _ := s.db.Settings().
+	activeID, _ := s.db().Settings().
 		GetValue(ctx, database.SettingKeyActiveProfile)
 
 	if activeID == id {
@@ -285,7 +285,7 @@ func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request, id 
 		return
 	}
 
-	if deleteErr := s.db.Profiles().Delete(ctx, id); deleteErr != nil {
+	if deleteErr := s.db().Profiles().Delete(ctx, id); deleteErr != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.profile.deleteFailed"), "") // fixes #694, #H7
 		return
@@ -301,7 +301,7 @@ func (s *Server) handleActiveProfile(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if s.db == nil {
+	if s.db() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
@@ -331,7 +331,7 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	ctx := r.Context()
 
 	// Get active profile ID from settings
-	activeID, err := s.db.Settings().GetValue(ctx, database.SettingKeyActiveProfile)
+	activeID, err := s.db().Settings().GetValue(ctx, database.SettingKeyActiveProfile)
 	if err != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.profile.getActiveFailed"), "") // fixes #694, #H7
@@ -340,7 +340,7 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 
 	// If no active profile set, return the default profile
 	if activeID == "" {
-		profile, defaultErr := s.db.Profiles().GetDefault(ctx)
+		profile, defaultErr := s.db().Profiles().GetDefault(ctx)
 		if defaultErr != nil {
 			if errors.Is(defaultErr, database.ErrProfileNotFound) {
 				sendErrorResponseWithDetails(
@@ -368,18 +368,18 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Get the active profile
-	profile, err := s.db.Profiles().Get(ctx, activeID)
+	profile, err := s.db().Profiles().Get(ctx, activeID)
 	if err != nil {
 		if errors.Is(err, database.ErrProfileNotFound) {
 			// Active profile was deleted, fall back to default
-			profile, err = s.db.Profiles().GetDefault(ctx)
+			profile, err = s.db().Profiles().GetDefault(ctx)
 			if err != nil {
 				sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 					ErrCodeNotFound, localizer.T("errors.profile.activeNotFound"), "") // fixes #694
 				return
 			}
 			// Update setting to use default
-			_ = s.db.Settings().
+			_ = s.db().Settings().
 				Set(ctx, database.SettingKeyActiveProfile, profile.ID)
 		} else {
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
@@ -413,7 +413,7 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Verify profile exists
-	profile, err := s.db.Profiles().Get(ctx, req.ProfileID)
+	profile, err := s.db().Profiles().Get(ctx, req.ProfileID)
 	if err != nil {
 		if errors.Is(err, database.ErrProfileNotFound) {
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
@@ -426,7 +426,7 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Set active profile in settings
-	if setErr := s.db.Settings().Set(ctx, database.SettingKeyActiveProfile, req.ProfileID); setErr != nil {
+	if setErr := s.db().Settings().Set(ctx, database.SettingKeyActiveProfile, req.ProfileID); setErr != nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.profile.setActiveFailed"), "") // fixes #694, #H7
 		return
@@ -462,7 +462,7 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Broadcast profile change via WebSocket
-	s.wsHub.Broadcast(Message{
+	s.wsHub().Broadcast(Message{
 		Type: "profileChanged",
 		Payload: map[string]any{
 			"profile_id":   profile.ID,
@@ -481,7 +481,7 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if s.db == nil {
+	if s.db() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
@@ -507,7 +507,7 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 	id := path
 
 	// Get source profile
-	source, err := s.db.Profiles().Get(ctx, id)
+	source, err := s.db().Profiles().Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, database.ErrProfileNotFound) {
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
@@ -539,7 +539,7 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 		IsDefault:   false, // Duplicates are never default
 	}
 
-	if createErr := s.db.Profiles().Create(ctx, duplicate); createErr != nil {
+	if createErr := s.db().Profiles().Create(ctx, duplicate); createErr != nil {
 		if errors.Is(createErr, database.ErrProfileNameExists) {
 			// Try with timestamp suffix
 			duplicate.Name = fmt.Sprintf(
@@ -547,7 +547,7 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 				source.Name,
 				time.Now().Format("2006-01-02 15:04"),
 			)
-			if retryErr := s.db.Profiles().Create(ctx, duplicate); retryErr != nil {
+			if retryErr := s.db().Profiles().Create(ctx, duplicate); retryErr != nil {
 				sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 					ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
 				return
@@ -567,7 +567,7 @@ func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if s.db == nil {
+	if s.db() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
@@ -606,7 +606,7 @@ func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Check if profile with this name exists
-		existing, _ := s.db.Profiles().GetByName(ctx, p.Name)
+		existing, _ := s.db().Profiles().GetByName(ctx, p.Name)
 		if existing != nil {
 			s.handleExistingProfileImport(ctx, existing, &p, req.Overwrite, &result)
 			continue
@@ -621,7 +621,7 @@ func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 			IsDefault:   false, // Never import as default
 		}
 
-		if err := s.db.Profiles().Create(ctx, profile); err != nil {
+		if err := s.db().Profiles().Create(ctx, profile); err != nil {
 			result.Errors = append(
 				result.Errors,
 				fmt.Sprintf("Profile '%s': failed to create - %v", p.Name, err),
@@ -655,7 +655,7 @@ func (s *Server) handleExistingProfileImport(
 	// Update existing profile
 	existing.Description = p.Description
 	existing.ConfigJSON = string(p.Config)
-	if err := s.db.Profiles().Update(ctx, existing); err != nil {
+	if err := s.db().Profiles().Update(ctx, existing); err != nil {
 		result.Errors = append(
 			result.Errors,
 			fmt.Sprintf("Profile '%s': failed to update - %v", p.Name, err),
@@ -671,7 +671,7 @@ func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if s.db == nil {
+	if s.db() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
 		return
@@ -691,7 +691,7 @@ func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	profiles, err := s.db.Profiles().List(ctx)
+	profiles, err := s.db().Profiles().List(ctx)
 	if err != nil {
 		logger.Error("Failed to list profiles", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,

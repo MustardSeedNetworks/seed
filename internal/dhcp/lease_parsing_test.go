@@ -8,17 +8,54 @@ import (
 	"github.com/krisarmstrong/seed/internal/dhcp"
 )
 
+type darwinLeaseFixtureCase struct {
+	name           string
+	fixture        string
+	wantNil        bool
+	expectedServer string
+	expectedRouter string
+	expectedLease  int
+	expectedDNS    int
+}
+
+func runDarwinLeaseFixtureCase(t *testing.T, tt darwinLeaseFixtureCase) {
+	t.Helper()
+
+	path := filepath.Join(".", tt.fixture)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Skipf("fixture not found: %s", path)
+	}
+
+	result := dhcp.ParseDarwinLeaseFile(path)
+
+	if tt.wantNil {
+		if result != nil {
+			t.Errorf("expected nil result, got %+v", result)
+		}
+		return
+	}
+
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+
+	if result.DHCPServer != tt.expectedServer {
+		t.Errorf("DHCPServer = %q, want %q", result.DHCPServer, tt.expectedServer)
+	}
+	if result.Gateway != tt.expectedRouter {
+		t.Errorf("Gateway = %q, want %q", result.Gateway, tt.expectedRouter)
+	}
+	if result.LeaseTime != tt.expectedLease {
+		t.Errorf("LeaseTime = %d, want %d", result.LeaseTime, tt.expectedLease)
+	}
+	if len(result.DNS) != tt.expectedDNS {
+		t.Errorf("DNS count = %d, want %d", len(result.DNS), tt.expectedDNS)
+	}
+}
+
 // TestParseDarwinLeaseFileWithFixtures tests Darwin lease file parsing using test fixtures.
 func TestParseDarwinLeaseFileWithFixtures(t *testing.T) {
-	tests := []struct {
-		name           string
-		fixture        string
-		wantNil        bool
-		expectedServer string
-		expectedRouter string
-		expectedLease  int
-		expectedDNS    int
-	}{
+	tests := []darwinLeaseFixtureCase{
 		{
 			name:           "full darwin lease with all fields",
 			fixture:        "testdata/darwin_full.plist",
@@ -55,50 +92,55 @@ func TestParseDarwinLeaseFileWithFixtures(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := filepath.Join(".", tt.fixture)
-			if _, err := os.Stat(path); os.IsNotExist(err) {
-				t.Skipf("fixture not found: %s", path)
-			}
-
-			result := dhcp.ParseDarwinLeaseFile(path)
-
-			if tt.wantNil {
-				if result != nil {
-					t.Errorf("expected nil result, got %+v", result)
-				}
-				return
-			}
-
-			if result == nil {
-				t.Fatal("expected non-nil result")
-			}
-
-			if result.DHCPServer != tt.expectedServer {
-				t.Errorf("DHCPServer = %q, want %q", result.DHCPServer, tt.expectedServer)
-			}
-			if result.Gateway != tt.expectedRouter {
-				t.Errorf("Gateway = %q, want %q", result.Gateway, tt.expectedRouter)
-			}
-			if result.LeaseTime != tt.expectedLease {
-				t.Errorf("LeaseTime = %d, want %d", result.LeaseTime, tt.expectedLease)
-			}
-			if len(result.DNS) != tt.expectedDNS {
-				t.Errorf("DNS count = %d, want %d", len(result.DNS), tt.expectedDNS)
-			}
+			runDarwinLeaseFixtureCase(t, tt)
 		})
+	}
+}
+
+type dhclientLeaseFixtureCase struct {
+	name           string
+	fixture        string
+	wantNil        bool
+	expectedServer string
+	expectedRouter string
+	expectedLease  int
+}
+
+func runDHClientLeaseFixtureCase(t *testing.T, tt dhclientLeaseFixtureCase) {
+	t.Helper()
+
+	path := filepath.Join(".", tt.fixture)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Skipf("fixture not found: %s", path)
+	}
+
+	result := dhcp.ParseDHClientLeaseFile(path, "eth0")
+
+	if tt.wantNil {
+		if result != nil {
+			t.Errorf("expected nil result, got %+v", result)
+		}
+		return
+	}
+
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+
+	if result.DHCPServer != tt.expectedServer {
+		t.Errorf("DHCPServer = %q, want %q", result.DHCPServer, tt.expectedServer)
+	}
+	if result.Gateway != tt.expectedRouter {
+		t.Errorf("Gateway = %q, want %q", result.Gateway, tt.expectedRouter)
+	}
+	if result.LeaseTime != tt.expectedLease {
+		t.Errorf("LeaseTime = %d, want %d", result.LeaseTime, tt.expectedLease)
 	}
 }
 
 // TestParseDHClientLeaseFileWithFixtures tests dhclient lease file parsing using test fixtures.
 func TestParseDHClientLeaseFileWithFixtures(t *testing.T) {
-	tests := []struct {
-		name           string
-		fixture        string
-		wantNil        bool
-		expectedServer string
-		expectedRouter string
-		expectedLease  int
-	}{
+	tests := []dhclientLeaseFixtureCase{
 		{
 			name:           "single lease block",
 			fixture:        "testdata/dhclient_single.lease",
@@ -119,33 +161,7 @@ func TestParseDHClientLeaseFileWithFixtures(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := filepath.Join(".", tt.fixture)
-			if _, err := os.Stat(path); os.IsNotExist(err) {
-				t.Skipf("fixture not found: %s", path)
-			}
-
-			result := dhcp.ParseDHClientLeaseFile(path, "eth0")
-
-			if tt.wantNil {
-				if result != nil {
-					t.Errorf("expected nil result, got %+v", result)
-				}
-				return
-			}
-
-			if result == nil {
-				t.Fatal("expected non-nil result")
-			}
-
-			if result.DHCPServer != tt.expectedServer {
-				t.Errorf("DHCPServer = %q, want %q", result.DHCPServer, tt.expectedServer)
-			}
-			if result.Gateway != tt.expectedRouter {
-				t.Errorf("Gateway = %q, want %q", result.Gateway, tt.expectedRouter)
-			}
-			if result.LeaseTime != tt.expectedLease {
-				t.Errorf("LeaseTime = %d, want %d", result.LeaseTime, tt.expectedLease)
-			}
+			runDHClientLeaseFixtureCase(t, tt)
 		})
 	}
 }

@@ -220,7 +220,7 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 	params := parseLogQueryParams(r)
 
 	// Try database first if available (for persisted logs)
-	if s.db != nil {
+	if s.db() != nil {
 		dbLogs, err := s.queryLogsFromDB(r.Context(), params)
 		if err == nil {
 			sendJSONResponse(w, logger, http.StatusOK, LogQueryResponse{
@@ -291,7 +291,7 @@ func (s *Server) queryLogsFromDB(
 		opts.Component = params.components[0]
 	}
 
-	dbEntries, err := s.db.Logs().List(ctx, opts)
+	dbEntries, err := s.db().Logs().List(ctx, opts)
 	if err != nil {
 		return nil, err
 	}

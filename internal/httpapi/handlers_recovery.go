@@ -51,7 +51,7 @@ func (s *Server) handleRecoveryStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if recovery manager is configured
-	if s.recoveryManager == nil {
+	if s.recoveryManager() == nil {
 		sendJSONResponse(w, logger, http.StatusOK, RecoveryStatusResponse{
 			Active: false,
 		})
@@ -59,16 +59,16 @@ func (s *Server) handleRecoveryStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if recovery mode is active (this also generates token if trigger file exists)
-	active := s.recoveryManager.CheckRecoveryMode()
+	active := s.recoveryManager().CheckRecoveryMode()
 
 	resp := RecoveryStatusResponse{
 		Active: active,
 	}
 
 	if active {
-		remaining := s.recoveryManager.RemainingTime()
+		remaining := s.recoveryManager().RemainingTime()
 		resp.RemainingTime = int(remaining.Seconds())
-		resp.Instructions = "Enter the recovery token from " + s.recoveryManager.TokenFilePath()
+		resp.Instructions = "Enter the recovery token from " + s.recoveryManager().TokenFilePath()
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)
@@ -84,8 +84,8 @@ func (s *Server) updatePasswordHash(ctx context.Context, hash string) (string, e
 	s.config.Unlock()
 
 	// Update user in database if available
-	if s.db != nil {
-		userStore := database.NewUserStoreAdapter(s.db)
+	if s.db() != nil {
+		userStore := database.NewUserStoreAdapter(s.db())
 		if updateErr := userStore.UpdatePassword(ctx, username, hash); updateErr != nil {
 			logging.FromContext(ctx).
 				WarnContext(ctx, "Failed to update user in database during recovery", "error", updateErr)
@@ -95,7 +95,7 @@ func (s *Server) updatePasswordHash(ctx context.Context, hash string) (string, e
 	}
 
 	// Update auth manager (invalidates all existing tokens)
-	s.authManager.UpdatePasswordHash(ctx, hash)
+	s.authManager().UpdatePasswordHash(ctx, hash)
 
 	// Save config to disk
 	if saveErr := s.config.Save(s.configPath); saveErr != nil {
@@ -125,7 +125,7 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Check if recovery manager is configured
-	if s.recoveryManager == nil {
+	if s.recoveryManager() == nil {
 		logger.Warn("Recovery attempt but recovery manager not configured",
 			"client_ip", clientIP,
 			"event", "auth.recovery.not_configured")
@@ -135,7 +135,7 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Check rate limiting for recovery attempts
-	if s.loginRateLimiter.IsBlocked(clientIP) {
+	if s.loginRateLimiter().IsBlocked(clientIP) {
 		logger.Warn("Recovery blocked due to rate limiting",
 			"client_ip", clientIP,
 			"event", "auth.recovery.blocked")
@@ -157,13 +157,13 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Validate the recovery token
-	if !s.recoveryManager.ValidateAndConsume(req.Token) {
+	if !s.recoveryManager().ValidateAndConsume(req.Token) {
 		logger.Warn("Recovery failed - invalid or expired token",
 			"client_ip", clientIP,
 			"event", "auth.recovery.invalid_token")
 
 		// Record failed attempt for rate limiting
-		s.loginRateLimiter.RecordAttempt(clientIP, false)
+		s.loginRateLimiter().RecordAttempt(clientIP, false)
 
 		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized,
 			"Invalid or expired recovery token", "")
@@ -202,10 +202,10 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Cleanup recovery files
-	s.recoveryManager.Cleanup()
+	s.recoveryManager().Cleanup()
 
 	// Reset rate limiter for this IP after successful recovery
-	s.loginRateLimiter.RecordAttempt(clientIP, true)
+	s.loginRateLimiter().RecordAttempt(clientIP, true)
 
 	// Security audit log
 	logger.Info("Password recovery completed successfully",
@@ -245,21 +245,21 @@ func (s *Server) handleRecoveryInstructions(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if s.recoveryManager == nil {
+	if s.recoveryManager() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeInternal,
 			"Password recovery is not configured", "")
 		return
 	}
 
-	expiryDuration := s.recoveryManager.TokenExpiryDuration()
+	expiryDuration := s.recoveryManager().TokenExpiryDuration()
 	resp := RecoveryInstructionsResponse{
-		TriggerFile: s.recoveryManager.TriggerFilePath(),
-		TokenFile:   s.recoveryManager.TokenFilePath(),
+		TriggerFile: s.recoveryManager().TriggerFilePath(),
+		TokenFile:   s.recoveryManager().TokenFilePath(),
 		ExpiryTime:  expiryDuration.String(),
 		Steps: []string{
 			"1. SSH into the server",
-			"2. Create the trigger file: touch " + s.recoveryManager.TriggerFilePath(),
-			"3. Wait a moment, then read the token: cat " + s.recoveryManager.TokenFilePath(),
+			"2. Create the trigger file: touch " + s.recoveryManager().TriggerFilePath(),
+			"3. Wait a moment, then read the token: cat " + s.recoveryManager().TokenFilePath(),
 			"4. Return to this page and enter the token with your new password",
 			"5. The token expires after " + expiryDuration.String(),
 		},

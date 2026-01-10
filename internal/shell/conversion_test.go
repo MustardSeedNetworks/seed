@@ -37,15 +37,7 @@ func TestExportedConstants(t *testing.T) {
 
 // TestConvertDiscoveredDevice tests the convertDiscoveredDevice helper function.
 func TestConvertDiscoveredDevice(t *testing.T) {
-	tests := []struct {
-		name           string
-		input          *discovery.DiscoveredDevice
-		wantMAC        string
-		wantHostname   string
-		wantVendor     string
-		wantIsGateway  bool
-		wantDeviceType shell.DeviceType
-	}{
+	tests := []convertDeviceCase{
 		{
 			name: "basic_device",
 			input: &discovery.DiscoveredDevice{
@@ -132,36 +124,54 @@ func TestConvertDiscoveredDevice(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := shell.ExportConvertDiscoveredDevice(tt.input)
-
-			if result.MACAddress != tt.wantMAC {
-				t.Errorf("MACAddress = %v, want %v", result.MACAddress, tt.wantMAC)
-			}
-			if result.Hostname != tt.wantHostname {
-				t.Errorf("Hostname = %v, want %v", result.Hostname, tt.wantHostname)
-			}
-			if result.Vendor != tt.wantVendor {
-				t.Errorf("Vendor = %v, want %v", result.Vendor, tt.wantVendor)
-			}
-			if result.IsGateway != tt.wantIsGateway {
-				t.Errorf("IsGateway = %v, want %v", result.IsGateway, tt.wantIsGateway)
-			}
-			if result.DeviceType != tt.wantDeviceType {
-				t.Errorf("DeviceType = %v, want %v", result.DeviceType, tt.wantDeviceType)
-			}
-			// All converted devices should be online
-			if !result.IsOnline {
-				t.Error("IsOnline should be true for converted devices")
-			}
-			// ID should be set to MAC
-			if result.ID != tt.wantMAC {
-				t.Errorf("ID = %v, want %v (should match MAC)", result.ID, tt.wantMAC)
-			}
-			// Metadata should be initialized
-			if result.Metadata == nil {
-				t.Error("Metadata should be initialized")
-			}
+			runConvertDiscoveredDeviceCase(t, tt)
 		})
+	}
+}
+
+type convertDeviceCase struct {
+	name           string
+	input          *discovery.DiscoveredDevice
+	wantMAC        string
+	wantHostname   string
+	wantVendor     string
+	wantIsGateway  bool
+	wantDeviceType shell.DeviceType
+}
+
+func runConvertDiscoveredDeviceCase(t *testing.T, tt convertDeviceCase) {
+	t.Helper()
+
+	result := shell.ExportConvertDiscoveredDevice(tt.input)
+	assertConvertedDevice(t, result, tt)
+}
+
+func assertConvertedDevice(t *testing.T, result shell.Device, tt convertDeviceCase) {
+	t.Helper()
+
+	if result.MACAddress != tt.wantMAC {
+		t.Errorf("MACAddress = %v, want %v", result.MACAddress, tt.wantMAC)
+	}
+	if result.Hostname != tt.wantHostname {
+		t.Errorf("Hostname = %v, want %v", result.Hostname, tt.wantHostname)
+	}
+	if result.Vendor != tt.wantVendor {
+		t.Errorf("Vendor = %v, want %v", result.Vendor, tt.wantVendor)
+	}
+	if result.IsGateway != tt.wantIsGateway {
+		t.Errorf("IsGateway = %v, want %v", result.IsGateway, tt.wantIsGateway)
+	}
+	if result.DeviceType != tt.wantDeviceType {
+		t.Errorf("DeviceType = %v, want %v", result.DeviceType, tt.wantDeviceType)
+	}
+	if !result.IsOnline {
+		t.Error("IsOnline should be true for converted devices")
+	}
+	if result.ID != tt.wantMAC {
+		t.Errorf("ID = %v, want %v (should match MAC)", result.ID, tt.wantMAC)
+	}
+	if result.Metadata == nil {
+		t.Error("Metadata should be initialized")
 	}
 }
 
@@ -207,14 +217,7 @@ func TestConvertDiscoveredDeviceServices(t *testing.T) {
 
 // TestConvertVulnerability tests the convertVulnerability helper function.
 func TestConvertVulnerability(t *testing.T) {
-	tests := []struct {
-		name         string
-		input        *discovery.Vulnerability
-		wantCVEID    string
-		wantSeverity shell.VulnSeverity
-		wantIsKEV    bool
-		wantStatus   shell.VulnStatus
-	}{
+	tests := []convertVulnerabilityCase{
 		{
 			name: "critical_vulnerability",
 			input: &discovery.Vulnerability{
@@ -300,39 +303,56 @@ func TestConvertVulnerability(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := shell.ExportConvertVulnerability(tt.input)
-
-			if result.CVEID != tt.wantCVEID {
-				t.Errorf("CVEID = %v, want %v", result.CVEID, tt.wantCVEID)
-			}
-			if result.Severity != tt.wantSeverity {
-				t.Errorf("Severity = %v, want %v", result.Severity, tt.wantSeverity)
-			}
-			if result.IsKEV != tt.wantIsKEV {
-				t.Errorf("IsKEV = %v, want %v", result.IsKEV, tt.wantIsKEV)
-			}
-			if result.IsExploited != tt.wantIsKEV {
-				t.Errorf("IsExploited = %v, want %v", result.IsExploited, tt.wantIsKEV)
-			}
-			if result.Status != tt.wantStatus {
-				t.Errorf("Status = %v, want %v", result.Status, tt.wantStatus)
-			}
-			// ID should match CVEID
-			if result.ID != tt.wantCVEID {
-				t.Errorf("ID = %v, want %v (should match CVEID)", result.ID, tt.wantCVEID)
-			}
-			// Score should be preserved
-			if result.CVSSScore != tt.input.Score {
-				t.Errorf("CVSSScore = %v, want %v", result.CVSSScore, tt.input.Score)
-			}
-			// Description should be used for both Title and Description
-			if result.Title != tt.input.Description {
-				t.Errorf("Title = %v, want %v", result.Title, tt.input.Description)
-			}
-			if result.Description != tt.input.Description {
-				t.Errorf("Description = %v, want %v", result.Description, tt.input.Description)
-			}
+			runConvertVulnerabilityCase(t, tt)
 		})
+	}
+}
+
+type convertVulnerabilityCase struct {
+	name         string
+	input        *discovery.Vulnerability
+	wantCVEID    string
+	wantSeverity shell.VulnSeverity
+	wantIsKEV    bool
+	wantStatus   shell.VulnStatus
+}
+
+func runConvertVulnerabilityCase(t *testing.T, tt convertVulnerabilityCase) {
+	t.Helper()
+
+	result := shell.ExportConvertVulnerability(tt.input)
+	assertConvertedVulnerability(t, result, tt)
+}
+
+func assertConvertedVulnerability(t *testing.T, result shell.Vulnerability, tt convertVulnerabilityCase) {
+	t.Helper()
+
+	if result.CVEID != tt.wantCVEID {
+		t.Errorf("CVEID = %v, want %v", result.CVEID, tt.wantCVEID)
+	}
+	if result.Severity != tt.wantSeverity {
+		t.Errorf("Severity = %v, want %v", result.Severity, tt.wantSeverity)
+	}
+	if result.IsKEV != tt.wantIsKEV {
+		t.Errorf("IsKEV = %v, want %v", result.IsKEV, tt.wantIsKEV)
+	}
+	if result.IsExploited != tt.wantIsKEV {
+		t.Errorf("IsExploited = %v, want %v", result.IsExploited, tt.wantIsKEV)
+	}
+	if result.Status != tt.wantStatus {
+		t.Errorf("Status = %v, want %v", result.Status, tt.wantStatus)
+	}
+	if result.ID != tt.wantCVEID {
+		t.Errorf("ID = %v, want %v (should match CVEID)", result.ID, tt.wantCVEID)
+	}
+	if result.CVSSScore != tt.input.Score {
+		t.Errorf("CVSSScore = %v, want %v", result.CVSSScore, tt.input.Score)
+	}
+	if result.Title != tt.input.Description {
+		t.Errorf("Title = %v, want %v", result.Title, tt.input.Description)
+	}
+	if result.Description != tt.input.Description {
+		t.Errorf("Description = %v, want %v", result.Description, tt.input.Description)
 	}
 }
 

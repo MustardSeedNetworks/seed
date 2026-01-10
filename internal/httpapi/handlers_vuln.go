@@ -45,7 +45,7 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if s.vulnScanner == nil {
+	if s.vulnScanner() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -73,7 +73,7 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Check if scan is already in progress
-	if s.vulnScanner.IsRunning() {
+	if s.vulnScanner().IsRunning() {
 		sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 			"status":  "scan already in progress",
 			"running": true,
@@ -92,25 +92,25 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 
 		if targetIP != "" {
 			// Scan specific device
-			device := s.deviceDiscovery.GetDeviceByIP(targetIP)
+			device := s.deviceDiscovery().GetDeviceByIP(targetIP)
 			if device != nil {
 				devices = append(devices, device)
 			}
 		} else {
 			// Scan all discovered devices
-			devices = s.deviceDiscovery.GetDevices()
+			devices = s.deviceDiscovery().GetDevices()
 		}
 
 		// Scan each device
 		for _, device := range devices {
-			if _, err := s.vulnScanner.ScanDevice(ctx, device); err != nil {
+			if _, err := s.vulnScanner().ScanDevice(ctx, device); err != nil {
 				bgLogger.Warn("Vulnerability scan failed", "device_ip", device.IP, "error", err)
 			}
 		}
 
 		// Broadcast results via WebSocket
-		results := s.vulnScanner.GetAllVulnerabilities()
-		s.wsHub.BroadcastCardUpdate("vulnerabilities", map[string]any{
+		results := s.vulnScanner().GetAllVulnerabilities()
+		s.wsHub().BroadcastCardUpdate("vulnerabilities", map[string]any{
 			"results": results,
 			"count":   len(results),
 		})
@@ -139,18 +139,18 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if s.vulnScanner == nil {
+	if s.vulnScanner() == nil {
 		sendJSONResponse(w, logger, http.StatusServiceUnavailable, map[string]any{
 			"enabled": false,
 		})
 		return
 	}
 
-	stats := s.vulnScanner.GetStats()
+	stats := s.vulnScanner().GetStats()
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
 		"enabled":        true,
-		"scanning":       s.vulnScanner.IsRunning(),
+		"scanning":       s.vulnScanner().IsRunning(),
 		"stats":          stats,
 		"severityFilter": s.config.Security.VulnerabilityScanning.SeverityThreshold,
 	})
@@ -174,14 +174,14 @@ func (s *Server) handleVulnerabilityResults(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if s.vulnScanner == nil {
+	if s.vulnScanner() == nil {
 		sendJSONResponse(w, logger, http.StatusServiceUnavailable, map[string]string{
 			"error": "Vulnerability scanner not enabled",
 		})
 		return
 	}
 
-	results := s.vulnScanner.GetAllVulnerabilities()
+	results := s.vulnScanner().GetAllVulnerabilities()
 
 	// Optional severity filter
 	if severityFilter := r.URL.Query().Get("severity"); severityFilter != "" {
@@ -221,7 +221,7 @@ func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if s.vulnScanner == nil {
+	if s.vulnScanner() == nil {
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -259,7 +259,7 @@ func (s *Server) handleDeviceVulnerabilities(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	result := s.vulnScanner.GetDeviceVulnerabilities(ip)
+	result := s.vulnScanner().GetDeviceVulnerabilities(ip)
 	if result == nil {
 		sendJSONResponse(w, logger, http.StatusNotFound, map[string]string{
 			"error": "No vulnerability data for device",

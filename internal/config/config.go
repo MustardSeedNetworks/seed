@@ -419,17 +419,21 @@ func (c *PipelineConfig) GetSNMP() (bool, bool, bool, bool, bool, bool, bool, bo
 
 // GetPersistence implements discovery.ConfigPipelineAdapter.
 func (c *PipelineConfig) GetPersistence() (bool, time.Duration, time.Duration) {
-	return c.Persistence.StoreHistory, c.Persistence.StalenessThreshold, c.Persistence.PurgeAfter
+	return c.Persistence.StoreHistory,
+		c.Persistence.StalenessThreshold,
+		c.Persistence.PurgeAfter
 }
 
 // DatabaseConfig contains SQLite database configuration.
 type DatabaseConfig struct {
 	// Path to the SQLite database file. Default: data/seed.db
-	Path string `yaml:"path" json:"path"`
-	// RetentionDays sets how many days of historical data to keep (0 = forever)
-	RetentionDays int `yaml:"retention_days" json:"retention_days"`
-	// EnableWAL enables Write-Ahead Logging for better concurrency. Default: true
-	EnableWAL bool `yaml:"enable_wal" json:"enable_wal"`
+	Path string `yaml:"path"            json:"path"`
+	// RetentionDays sets how many days of historical data to keep.
+	// 0 means keep forever.
+	RetentionDays int `yaml:"retention_days"  json:"retention_days"`
+	// EnableWAL enables Write-Ahead Logging for better concurrency.
+	// Default: true.
+	EnableWAL bool `yaml:"enable_wal"      json:"enable_wal"`
 	// MaxConnections sets the maximum number of database connections. Default: 10
 	MaxConnections int `yaml:"max_connections" json:"max_connections"`
 }
@@ -1001,23 +1005,23 @@ type SNMPConfig struct {
 // SNMPv3Credential contains SNMP v3 authentication credentials.
 type SNMPv3Credential struct {
 	// Friendly name for this credential set.
-	Name string `yaml:"name" json:"name"`
+	Name string `yaml:"name"           json:"name"`
 	// Security name (user).
-	Username string `yaml:"username" json:"username"`
+	Username string `yaml:"username"       json:"username"`
 	// AuthProtocol specifies the authentication protocol.
 	// Supported values: "SHA", "SHA256", "SHA512", or "" for noAuth.
 	// Note: The "MD5" value is cryptographically broken and will be removed in the next major version.
 	// Use SHA256 or SHA512 instead for secure authentication.
 	// "SHA", "SHA256", "SHA512", or "" for noAuth (MD5 is deprecated).
-	AuthProtocol string `yaml:"auth_protocol" json:"auth_protocol"`
+	AuthProtocol string `yaml:"auth_protocol"  json:"auth_protocol"`
 	// Authentication password.
-	AuthPassword string `yaml:"auth_password" json:"auth_password"`
+	AuthPassword string `yaml:"auth_password"  json:"auth_password"`
 	// "DES", "AES", "AES192", "AES256", or "" for noPriv.
-	PrivProtocol string `yaml:"priv_protocol" json:"priv_protocol"`
+	PrivProtocol string `yaml:"priv_protocol"  json:"priv_protocol"`
 	// Privacy password.
-	PrivPassword string `yaml:"priv_password" json:"priv_password"`
+	PrivPassword string `yaml:"priv_password"  json:"priv_password"`
 	// Optional SNMP context.
-	ContextName string `yaml:"context_name" json:"context_name"`
+	ContextName string `yaml:"context_name"   json:"context_name"`
 	// "noAuthNoPriv", "authNoPriv", "authPriv".
 	SecurityLevel string `yaml:"security_level" json:"security_level"`
 }
@@ -1064,9 +1068,12 @@ func DefaultConfig() *Config {
 			StartupRetries:   defaultStartupRetries,
 			StartupRetryWait: defaultStartupRetryWaitSec * time.Second,
 		},
-		VLAN:             VLANConfig{Enabled: false, ID: 0},
-		IP:               IPConfig{Mode: ipModeDHCP},
-		Discovery:        DiscoveryConfig{Protocol: "auto", Timeout: defaultDiscoveryTimeoutSec * time.Second},
+		VLAN: VLANConfig{Enabled: false, ID: 0},
+		IP:   IPConfig{Mode: ipModeDHCP},
+		Discovery: DiscoveryConfig{
+			Protocol: "auto",
+			Timeout:  defaultDiscoveryTimeoutSec * time.Second,
+		},
 		NetworkDiscovery: defaultNetworkDiscoveryConfig(),
 		SNMP: SNMPConfig{
 			Communities:    []string{"public"},
@@ -1075,7 +1082,10 @@ func DefaultConfig() *Config {
 			Port:           defaultSNMPPort,
 			MaxRepetitions: defaultSNMPMaxRepetitions,
 		},
-		DNS:          DNSConfig{TestHostname: "google.com", Timeout: defaultDNSTimeoutSec * time.Second},
+		DNS: DNSConfig{
+			TestHostname: "google.com",
+			Timeout:      defaultDNSTimeoutSec * time.Second,
+		},
 		HealthChecks: defaultHealthChecksConfig(),
 		Speedtest:    SpeedtestConfig{ServerID: "", AutoRunOnLink: true},
 		Thresholds:   defaultThresholdsConfig(),
@@ -1216,7 +1226,12 @@ func defaultHealthChecksConfig() HealthChecksConfig {
 				ExpectedStatus: httpStatusOK,
 				Enabled:        true,
 			},
-			{Name: "Example HTTP", URL: "http://example.com", ExpectedStatus: httpStatusOK, Enabled: true},
+			{
+				Name:           "Example HTTP",
+				URL:            "http://example.com",
+				ExpectedStatus: httpStatusOK,
+				Enabled:        true,
+			},
 		},
 		RunPerformance: true, RunSpeedtest: true, RunIperf: true, RunDiscovery: true,
 	}
@@ -1230,7 +1245,10 @@ func defaultThresholdsConfig() ThresholdsConfig {
 				Warning:  thresholdDHCPTotalWarningMs * time.Millisecond,
 				Critical: defaultBannerTimeoutSec * time.Second,
 			},
-			PerPhase: Threshold{Warning: thresholdDHCPPhaseWarningMs * time.Millisecond, Critical: 1 * time.Second},
+			PerPhase: Threshold{
+				Warning:  thresholdDHCPPhaseWarningMs * time.Millisecond,
+				Critical: 1 * time.Second,
+			},
 		},
 		DNS: Threshold{
 			Warning:  thresholdDNSWarningMs * time.Millisecond,
@@ -1241,10 +1259,16 @@ func defaultThresholdsConfig() ThresholdsConfig {
 			Critical: thresholdPingCriticalMs * time.Millisecond,
 		},
 		WiFi: WiFiThresholds{
-			Signal: SignalThreshold{Warning: thresholdWiFiSignalWarningDBm, Critical: thresholdWiFiSignalCriticalDBm},
+			Signal: SignalThreshold{
+				Warning:  thresholdWiFiSignalWarningDBm,
+				Critical: thresholdWiFiSignalCriticalDBm,
+			},
 		},
 		Link: LinkThresholds{
-			FlapCount24h: IntThreshold{Warning: thresholdLinkFlapWarning, Critical: thresholdLinkFlapCritical},
+			FlapCount24h: IntThreshold{
+				Warning:  thresholdLinkFlapWarning,
+				Critical: thresholdLinkFlapCritical,
+			},
 		},
 		CustomTests: CustomThresholds{
 			Ping: Threshold{

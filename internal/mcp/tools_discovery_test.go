@@ -7,13 +7,45 @@ import (
 	"github.com/krisarmstrong/seed/internal/mcp"
 )
 
+type parsePortsCase struct {
+	name     string
+	spec     string
+	expected []int
+	wantErr  bool
+}
+
+func runParsePortsCase(t *testing.T, tt parsePortsCase) {
+	t.Helper()
+
+	result, err := mcp.ExportParsePorts(tt.spec)
+
+	if tt.wantErr {
+		if err == nil {
+			t.Errorf("ExportParsePorts(%q) expected error, got nil", tt.spec)
+		}
+		return
+	}
+
+	if err != nil {
+		t.Errorf("ExportParsePorts(%q) unexpected error: %v", tt.spec, err)
+		return
+	}
+
+	// For max range size test, just check length
+	if tt.name == "max valid range size" {
+		if len(result) != 1000 {
+			t.Errorf("ExportParsePorts(%q) expected 1000 ports, got %d", tt.spec, len(result))
+		}
+		return
+	}
+
+	if !slices.Equal(result, tt.expected) {
+		t.Errorf("ExportParsePorts(%q) = %v, want %v", tt.spec, result, tt.expected)
+	}
+}
+
 func TestParsePorts(t *testing.T) {
-	tests := []struct {
-		name     string
-		spec     string
-		expected []int
-		wantErr  bool
-	}{
+	tests := []parsePortsCase{
 		{
 			name:     "single port",
 			spec:     "80",
@@ -126,31 +158,7 @@ func TestParsePorts(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := mcp.ExportParsePorts(tt.spec)
-
-			if tt.wantErr {
-				if err == nil {
-					t.Errorf("ExportParsePorts(%q) expected error, got nil", tt.spec)
-				}
-				return
-			}
-
-			if err != nil {
-				t.Errorf("ExportParsePorts(%q) unexpected error: %v", tt.spec, err)
-				return
-			}
-
-			// For max range size test, just check length
-			if tt.name == "max valid range size" {
-				if len(result) != 1000 {
-					t.Errorf("ExportParsePorts(%q) expected 1000 ports, got %d", tt.spec, len(result))
-				}
-				return
-			}
-
-			if !slices.Equal(result, tt.expected) {
-				t.Errorf("ExportParsePorts(%q) = %v, want %v", tt.spec, result, tt.expected)
-			}
+			runParsePortsCase(t, tt)
 		})
 	}
 }

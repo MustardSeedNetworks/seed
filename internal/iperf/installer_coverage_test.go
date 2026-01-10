@@ -150,6 +150,12 @@ func TestInstallViaPackageManagerWithNoManager(t *testing.T) {
 	if opts.Method != iperf.InstallMethodPackageManager {
 		t.Errorf("Method = %q, want package_manager", opts.Method)
 	}
+	if opts.UseSudo {
+		t.Error("UseSudo should be false for this test")
+	}
+	if opts.Verbose {
+		t.Error("Verbose should be false for this test")
+	}
 
 	// Check if a package manager is available
 	pm := iperf.DetectPackageManager()
@@ -409,6 +415,9 @@ func TestInstallResultSuccessAndFailure(t *testing.T) {
 	if successResult.Version == "" {
 		t.Error("Success result should have non-empty Version")
 	}
+	if successResult.Method != iperf.InstallMethodPackageManager {
+		t.Errorf("Success Method = %q, want package_manager", successResult.Method)
+	}
 	if successResult.Error != nil {
 		t.Error("Success result should have nil Error")
 	}
@@ -419,6 +428,12 @@ func TestInstallResultSuccessAndFailure(t *testing.T) {
 	}
 	if failureResult.Path != "" {
 		t.Error("Failure result should have empty Path")
+	}
+	if failureResult.Version != "" {
+		t.Errorf("Failure result should have empty Version, got %q", failureResult.Version)
+	}
+	if failureResult.Method != iperf.InstallMethodPackageManager {
+		t.Errorf("Failure Method = %q, want package_manager", failureResult.Method)
 	}
 	if failureResult.Error == nil {
 		t.Error("Failure result should have non-nil Error")

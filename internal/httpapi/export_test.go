@@ -156,6 +156,16 @@ func (s *Server) SetConfigPath(path string) {
 	s.configPath = path
 }
 
+// InitServices initializes the ServiceContainer for testing.
+// This should be called before using a bare &Server{} in tests.
+func (s *Server) InitServices() {
+	if s.services == nil {
+		s.services = NewServiceContainer()
+		// Initialize minimal services needed for most tests
+		s.services.Auth.TrustedProxies = NewTrustedProxies("")
+	}
+}
+
 // HandleConfigVersion exports handleConfigVersion for testing.
 func (s *Server) HandleConfigVersion(w http.ResponseWriter, r *http.Request) {
 	s.handleConfigVersion(w, r)
@@ -201,16 +211,6 @@ func (s *Server) HandleSetupStatus(w http.ResponseWriter, r *http.Request) {
 	s.handleSetupStatus(w, r)
 }
 
-// AuthManager returns the server's auth manager for testing.
-func (s *Server) AuthManager() *auth.Manager {
-	return s.authManager
-}
-
-// SetupTokenManager returns the server's setup token manager for testing.
-func (s *Server) SetupTokenManager() *SetupTokenManager {
-	return s.setupTokenManager
-}
-
 // Mux returns the server's HTTP mux for testing.
 func (s *Server) Mux() *http.ServeMux {
 	return s.mux
@@ -231,14 +231,9 @@ func (s *Server) HandleRecoveryInstructions(w http.ResponseWriter, r *http.Reque
 	s.handleRecoveryInstructions(w, r)
 }
 
-// RecoveryManager returns the server's recovery token manager for testing.
-func (s *Server) RecoveryManager() *auth.RecoveryTokenManager {
-	return s.recoveryManager
-}
-
 // SetRecoveryManager sets the server's recovery manager for testing.
 func (s *Server) SetRecoveryManager(rm *auth.RecoveryTokenManager) {
-	s.recoveryManager = rm
+	s.services.Auth.Recovery = rm
 }
 
 // HandleSettings exports handleSettings for testing.

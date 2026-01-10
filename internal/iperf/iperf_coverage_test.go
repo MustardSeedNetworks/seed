@@ -293,37 +293,52 @@ func TestBuildClientArgsReverseFlagSetting(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config := &iperf.ClientConfig{
-				Server:   "localhost",
-				Port:     5201,
-				Duration: 10,
-				Parallel: 1,
-				Protocol: "tcp",
-			}
-
-			args := iperf.BuildClientArgs(config, tt.direction)
-
-			hasRFlag := false
-			hasBidirFlag := false
-			for _, arg := range args {
-				if arg == "-R" {
-					hasRFlag = true
-				}
-				if arg == "--bidir" {
-					hasBidirFlag = true
-				}
-			}
-
-			if hasRFlag != tt.expectRFlag {
-				t.Errorf("-R flag presence = %v, want %v", hasRFlag, tt.expectRFlag)
-			}
-			if hasBidirFlag != tt.expectBidirDir {
-				t.Errorf("--bidir flag presence = %v, want %v", hasBidirFlag, tt.expectBidirDir)
-			}
-			if config.Reverse != tt.expectReverse {
-				t.Errorf("config.Reverse = %v, want %v", config.Reverse, tt.expectReverse)
-			}
+			runReverseFlagCase(t, tt)
 		})
+	}
+}
+
+func runReverseFlagCase(
+	t *testing.T,
+	tt struct {
+		name           string
+		direction      string
+		expectReverse  bool
+		expectRFlag    bool
+		expectBidirDir bool
+	},
+) {
+	t.Helper()
+
+	config := &iperf.ClientConfig{
+		Server:   "localhost",
+		Port:     5201,
+		Duration: 10,
+		Parallel: 1,
+		Protocol: "tcp",
+	}
+
+	args := iperf.BuildClientArgs(config, tt.direction)
+
+	hasRFlag := false
+	hasBidirFlag := false
+	for _, arg := range args {
+		if arg == "-R" {
+			hasRFlag = true
+		}
+		if arg == "--bidir" {
+			hasBidirFlag = true
+		}
+	}
+
+	if hasRFlag != tt.expectRFlag {
+		t.Errorf("-R flag presence = %v, want %v", hasRFlag, tt.expectRFlag)
+	}
+	if hasBidirFlag != tt.expectBidirDir {
+		t.Errorf("--bidir flag presence = %v, want %v", hasBidirFlag, tt.expectBidirDir)
+	}
+	if config.Reverse != tt.expectReverse {
+		t.Errorf("config.Reverse = %v, want %v", config.Reverse, tt.expectReverse)
 	}
 }
 
@@ -759,6 +774,12 @@ func TestPackageManagerInfoNilFields(t *testing.T) {
 
 	if info.UpdateCommand != nil {
 		t.Error("UpdateCommand should be nil for dnf")
+	}
+	if info.Name != "dnf" {
+		t.Errorf("Name = %q, want \"dnf\"", info.Name)
+	}
+	if !info.Available {
+		t.Error("Available should be true")
 	}
 	if len(info.InstallCommand) != 4 {
 		t.Errorf("InstallCommand length = %d, want 4", len(info.InstallCommand))

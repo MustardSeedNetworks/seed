@@ -12,81 +12,117 @@ func TestDefaultPipelineConfig_AllFields(t *testing.T) {
 
 	// Test all phase defaults
 	t.Run("phases", func(t *testing.T) {
-		if !cfg.Phases.Enumeration {
-			t.Error("Enumeration should be enabled by default")
-		}
-		if !cfg.Phases.NameResolution {
-			t.Error("NameResolution should be enabled by default")
-		}
-		if cfg.Phases.ServiceDiscovery {
-			t.Error("ServiceDiscovery should be disabled by default")
-		}
-		if cfg.Phases.VulnAssessment {
-			t.Error("VulnAssessment should be disabled by default")
-		}
+		assertDefaultPhaseConfig(t, cfg)
 	})
 
 	// Test timing defaults
 	t.Run("timing", func(t *testing.T) {
-		if cfg.Timing.ProbeDelay <= 0 {
-			t.Error("ProbeDelay should be positive")
-		}
-		if cfg.Timing.HostDelay <= 0 {
-			t.Error("HostDelay should be positive")
-		}
-		if cfg.Timing.MaxConcurrentHosts <= 0 {
-			t.Error("MaxConcurrentHosts should be positive")
-		}
-		if cfg.Timing.PhaseTimeout <= 0 {
-			t.Error("PhaseTimeout should be positive")
-		}
+		assertDefaultTimingConfig(t, cfg)
 	})
 
 	// Test port scan defaults
 	t.Run("portScan", func(t *testing.T) {
-		if cfg.PortScan.Intensity != discovery.PortScanOff {
-			t.Errorf("PortScan.Intensity should be off by default, got %q", cfg.PortScan.Intensity)
-		}
-		if cfg.PortScan.ConnectTimeout <= 0 {
-			t.Error("PortScan.ConnectTimeout should be positive")
-		}
+		assertDefaultPortScanConfig(t, cfg)
 	})
 
 	// Test SNMP defaults
 	t.Run("snmpCollection", func(t *testing.T) {
-		if !cfg.SNMPCollection.Enabled {
-			t.Error("SNMPCollection should be enabled by default")
-		}
-		if !cfg.SNMPCollection.MIBs.System {
-			t.Error("System MIB should be enabled by default")
-		}
-		if !cfg.SNMPCollection.MIBs.Interfaces {
-			t.Error("Interfaces MIB should be enabled by default")
-		}
+		assertDefaultSNMPConfig(t, cfg)
 	})
 
 	// Test resolution defaults
 	t.Run("resolution", func(t *testing.T) {
-		if !cfg.Resolution.DNS {
-			t.Error("DNS resolution should be enabled by default")
-		}
-		if !cfg.Resolution.NetBIOS {
-			t.Error("NetBIOS resolution should be enabled by default")
-		}
-		if !cfg.Resolution.MDNS {
-			t.Error("MDNS resolution should be enabled by default")
-		}
+		assertDefaultResolutionConfig(t, cfg)
 	})
 
 	// Test persistence defaults
 	t.Run("persistence", func(t *testing.T) {
-		if !cfg.Persistence.StoreHistory {
-			t.Error("StoreHistory should be enabled by default")
-		}
-		if cfg.Persistence.StalenessThreshold <= 0 {
-			t.Error("StalenessThreshold should be positive")
-		}
+		assertDefaultPersistenceConfig(t, cfg)
 	})
+}
+
+func assertDefaultPhaseConfig(t *testing.T, cfg discovery.PipelineConfig) {
+	t.Helper()
+
+	if !cfg.Phases.Enumeration {
+		t.Error("Enumeration should be enabled by default")
+	}
+	if !cfg.Phases.NameResolution {
+		t.Error("NameResolution should be enabled by default")
+	}
+	if cfg.Phases.ServiceDiscovery {
+		t.Error("ServiceDiscovery should be disabled by default")
+	}
+	if cfg.Phases.VulnAssessment {
+		t.Error("VulnAssessment should be disabled by default")
+	}
+}
+
+func assertDefaultTimingConfig(t *testing.T, cfg discovery.PipelineConfig) {
+	t.Helper()
+
+	if cfg.Timing.ProbeDelay <= 0 {
+		t.Error("ProbeDelay should be positive")
+	}
+	if cfg.Timing.HostDelay <= 0 {
+		t.Error("HostDelay should be positive")
+	}
+	if cfg.Timing.MaxConcurrentHosts <= 0 {
+		t.Error("MaxConcurrentHosts should be positive")
+	}
+	if cfg.Timing.PhaseTimeout <= 0 {
+		t.Error("PhaseTimeout should be positive")
+	}
+}
+
+func assertDefaultPortScanConfig(t *testing.T, cfg discovery.PipelineConfig) {
+	t.Helper()
+
+	if cfg.PortScan.Intensity != discovery.PortScanOff {
+		t.Errorf("PortScan.Intensity should be off by default, got %q", cfg.PortScan.Intensity)
+	}
+	if cfg.PortScan.ConnectTimeout <= 0 {
+		t.Error("PortScan.ConnectTimeout should be positive")
+	}
+}
+
+func assertDefaultSNMPConfig(t *testing.T, cfg discovery.PipelineConfig) {
+	t.Helper()
+
+	if !cfg.SNMPCollection.Enabled {
+		t.Error("SNMPCollection should be enabled by default")
+	}
+	if !cfg.SNMPCollection.MIBs.System {
+		t.Error("System MIB should be enabled by default")
+	}
+	if !cfg.SNMPCollection.MIBs.Interfaces {
+		t.Error("Interfaces MIB should be enabled by default")
+	}
+}
+
+func assertDefaultResolutionConfig(t *testing.T, cfg discovery.PipelineConfig) {
+	t.Helper()
+
+	if !cfg.Resolution.DNS {
+		t.Error("DNS resolution should be enabled by default")
+	}
+	if !cfg.Resolution.NetBIOS {
+		t.Error("NetBIOS resolution should be enabled by default")
+	}
+	if !cfg.Resolution.MDNS {
+		t.Error("MDNS resolution should be enabled by default")
+	}
+}
+
+func assertDefaultPersistenceConfig(t *testing.T, cfg discovery.PipelineConfig) {
+	t.Helper()
+
+	if !cfg.Persistence.StoreHistory {
+		t.Error("StoreHistory should be enabled by default")
+	}
+	if cfg.Persistence.StalenessThreshold <= 0 {
+		t.Error("StalenessThreshold should be positive")
+	}
 }
 
 func TestPipelineConfig_CustomValues(t *testing.T) {
