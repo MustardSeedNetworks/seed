@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -29,21 +30,36 @@ const (
 
 	// HL7Timeout is the default timeout for HL7 connections.
 	HL7Timeout = 10 * time.Second
+
+	// mlllpWrapperOverhead is the number of bytes added by MLLP framing (start + end bytes).
+	mllpWrapperOverhead = 3
+
+	// mllpReadBufferSize is the size of the buffer for reading MLLP messages.
+	mllpReadBufferSize = 4096
+
+	// minHL7ACKFieldsForError is the minimum field count to access error code (index 3).
+	minHL7ACKFieldsForError = 4
+
+	// fhirHTTPTimeout is the timeout for FHIR HTTP requests.
+	fhirHTTPTimeout = 30 * time.Second
+
+	// fhirMaxResponseBody is the maximum response body size for FHIR requests (1MB).
+	fhirMaxResponseBody = 1 << 20
 )
 
 // HL7TestResult contains the result of an HL7 MLLP health check.
 type HL7TestResult struct {
-	Name          string  `json:"name"`
-	Host          string  `json:"host"`
-	Port          int     `json:"port"`
-	Success       bool    `json:"success"`
-	ConnectTimeMs float64 `json:"connectTimeMs"`
+	Name           string  `json:"name"`
+	Host           string  `json:"host"`
+	Port           int     `json:"port"`
+	Success        bool    `json:"success"`
+	ConnectTimeMs  float64 `json:"connectTimeMs"`
 	ResponseTimeMs float64 `json:"responseTimeMs,omitempty"`
-	TotalTimeMs   float64 `json:"totalTimeMs"`
-	ACKCode       string  `json:"ackCode,omitempty"`    // AA (Accept), AE (Error), AR (Reject)
-	ErrorCode     string  `json:"errorCode,omitempty"`  // HL7 error code if any
-	Error         string  `json:"error,omitempty"`
-	Timestamp     string  `json:"timestamp"`
+	TotalTimeMs    float64 `json:"totalTimeMs"`
+	ACKCode        string  `json:"ackCode,omitempty"`   // AA (Accept), AE (Error), AR (Reject)
+	ErrorCode      string  `json:"errorCode,omitempty"` // HL7 error code if any
+	Error          string  `json:"error,omitempty"`
+	Timestamp      string  `json:"timestamp"`
 }
 
 // FHIRTestResult contains the result of a FHIR R4 health check.
@@ -53,15 +69,17 @@ type FHIRTestResult struct {
 	Success        bool     `json:"success"`
 	ResponseTimeMs float64  `json:"responseTimeMs"`
 	StatusCode     int      `json:"statusCode,omitempty"`
-	FHIRVersion    string   `json:"fhirVersion,omitempty"`    // e.g., "4.0.1"
-	ServerName     string   `json:"serverName,omitempty"`     // From CapabilityStatement
-	Resources      []string `json:"resources,omitempty"`      // Supported resource types
+	FHIRVersion    string   `json:"fhirVersion,omitempty"` // e.g., "4.0.1"
+	ServerName     string   `json:"serverName,omitempty"`  // From CapabilityStatement
+	Resources      []string `json:"resources,omitempty"`   // Supported resource types
 	ResourceCount  int      `json:"resourceCount,omitempty"`
 	Error          string   `json:"error,omitempty"`
 	Timestamp      string   `json:"timestamp"`
 }
 
 // testHL7Endpoint tests an HL7 MLLP endpoint.
+//
+//nolint:funlen // HL7 endpoint testing requires multiple steps: connection, message building, MLLP framing, and ACK parsing.
 func (s *Server) testHL7Endpoint(ctx context.Context, endpoint config.HL7Endpoint) HL7TestResult {
 	result := HL7TestResult{
 		Name:      endpoint.Name,
@@ -90,8 +108,8 @@ func (s *Server) testHL7Endpoint(ctx context.Context, endpoint config.HL7Endpoin
 	result.ConnectTimeMs = float64(time.Since(connectStart).Milliseconds())
 
 	// Set read/write deadline
-	if err := conn.SetDeadline(time.Now().Add(HL7Timeout)); err != nil {
-		result.Error = fmt.Sprintf("Failed to set deadline: %v", err)
+	if deadlineErr := conn.SetDeadline(time.Now().Add(HL7Timeout)); deadlineErr != nil {
+		result.Error = fmt.Sprintf("Failed to set deadline: %v", deadlineErr)
 		result.TotalTimeMs = float64(time.Since(connectStart).Milliseconds())
 		return result
 	}
@@ -154,18 +172,19 @@ func (s *Server) testHL7Endpoint(ctx context.Context, endpoint config.HL7Endpoin
 	result.ErrorCode = errorCode
 
 	// AA = Application Accept, CA = Commit Accept (success codes)
-	if ackCode == "AA" || ackCode == "CA" {
+	switch ackCode {
+	case "AA", "CA":
 		result.Success = true
-	} else if ackCode == "AE" || ackCode == "CE" {
+	case "AE", "CE":
 		result.Error = "Application error"
-	} else if ackCode == "AR" || ackCode == "CR" {
+	case "AR", "CR":
 		result.Error = "Application reject"
-	} else if ackCode != "" {
-		result.Error = fmt.Sprintf("Unexpected ACK code: %s", ackCode)
-	} else {
+	case "":
 		// No ACK code found but we got a response - connection works
 		result.Success = true
 		result.ACKCode = "OK"
+	default:
+		result.Error = fmt.Sprintf("Unexpected ACK code: %s", ackCode)
 	}
 
 	return result
@@ -173,7 +192,7 @@ func (s *Server) testHL7Endpoint(ctx context.Context, endpoint config.HL7Endpoin
 
 // wrapMLLP wraps a message in MLLP framing.
 func wrapMLLP(msg []byte) []byte {
-	result := make([]byte, 0, len(msg)+3)
+	result := make([]byte, 0, len(msg)+mllpWrapperOverhead)
 	result = append(result, MLLPStartByte)
 	result = append(result, msg...)
 	result = append(result, MLLPEndByte1, MLLPEndByte2)
@@ -181,21 +200,23 @@ func wrapMLLP(msg []byte) []byte {
 }
 
 // readMLLPMessage reads an MLLP-framed message from a connection.
+//
+//nolint:gocognit // MLLP framing requires byte-by-byte parsing with state machine logic.
 func readMLLPMessage(conn net.Conn) ([]byte, error) {
 	var buf bytes.Buffer
-	readBuf := make([]byte, 4096)
+	readBuf := make([]byte, mllpReadBufferSize)
 	foundStart := false
 
 	for {
 		n, err := conn.Read(readBuf)
 		if err != nil {
-			if err == io.EOF && buf.Len() > 0 {
+			if errors.Is(err, io.EOF) && buf.Len() > 0 {
 				break
 			}
 			return nil, err
 		}
 
-		for i := 0; i < n; i++ {
+		for i := range n {
 			b := readBuf[i]
 			if !foundStart {
 				if b == MLLPStartByte {
@@ -221,26 +242,30 @@ func readMLLPMessage(conn net.Conn) ([]byte, error) {
 }
 
 // parseHL7ACK extracts the acknowledgment code from an HL7 ACK message.
+//
+//nolint:nonamedreturns // Named returns improve readability for this HL7 parsing function.
 func parseHL7ACK(msg string) (ackCode, errorCode string) {
 	// Look for MSA segment: MSA|AA|original_msg_id|...
-	lines := strings.Split(msg, "\r")
-	for _, line := range lines {
+	for line := range strings.SplitSeq(msg, "\r") {
 		if strings.HasPrefix(line, "MSA|") {
 			fields := strings.Split(line, "|")
 			if len(fields) > 1 {
 				ackCode = fields[1]
 			}
-			if len(fields) > 3 {
+			if len(fields) >= minHL7ACKFieldsForError {
 				errorCode = fields[3]
 			}
-			return
+			return ackCode, errorCode
 		}
 	}
 	return "", ""
 }
 
 // testFHIREndpoint tests a FHIR R4 endpoint by checking its metadata.
-func (s *Server) testFHIREndpoint(ctx context.Context, endpoint config.FHIREndpoint) FHIRTestResult {
+func (s *Server) testFHIREndpoint(
+	ctx context.Context,
+	endpoint config.FHIREndpoint,
+) FHIRTestResult {
 	result := FHIRTestResult{
 		Name:      endpoint.Name,
 		BaseURL:   endpoint.BaseURL,
@@ -261,17 +286,17 @@ func (s *Server) testFHIREndpoint(ctx context.Context, endpoint config.FHIREndpo
 	req.Header.Set("Accept", "application/fhir+json")
 
 	// Apply authentication
-	if err := applyFHIRAuth(req, endpoint); err != nil {
-		result.Error = fmt.Sprintf("Authentication failed: %v", err)
+	if authErr := applyFHIRAuth(req, endpoint); authErr != nil {
+		result.Error = fmt.Sprintf("Authentication failed: %v", authErr)
 		return result
 	}
 
 	// Make request
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: fhirHTTPTimeout}
 	start := time.Now()
-	resp, err := client.Do(req)
-	if err != nil {
-		result.Error = fmt.Sprintf("Request failed: %v", err)
+	resp, reqErr := client.Do(req)
+	if reqErr != nil {
+		result.Error = fmt.Sprintf("Request failed: %v", reqErr)
 		result.ResponseTimeMs = float64(time.Since(start).Milliseconds())
 		return result
 	}
@@ -286,16 +311,16 @@ func (s *Server) testFHIREndpoint(ctx context.Context, endpoint config.FHIREndpo
 	}
 
 	// Read and parse CapabilityStatement
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20)) // 1MB limit
-	if err != nil {
-		result.Error = fmt.Sprintf("Failed to read response: %v", err)
+	body, readErr := io.ReadAll(io.LimitReader(resp.Body, fhirMaxResponseBody))
+	if readErr != nil {
+		result.Error = fmt.Sprintf("Failed to read response: %v", readErr)
 		return result
 	}
 
 	// Parse CapabilityStatement
 	var capStmt FHIRCapabilityStatement
-	if err := json.Unmarshal(body, &capStmt); err != nil {
-		result.Error = fmt.Sprintf("Failed to parse CapabilityStatement: %v", err)
+	if parseErr := json.Unmarshal(body, &capStmt); parseErr != nil {
+		result.Error = fmt.Sprintf("Failed to parse CapabilityStatement: %v", parseErr)
 		return result
 	}
 
@@ -345,14 +370,16 @@ func applyFHIRAuth(req *http.Request, endpoint config.FHIREndpoint) error {
 
 	case "basic":
 		if endpoint.Username == "" {
-			return fmt.Errorf("basic auth requires username")
+			return errors.New("basic auth requires username")
 		}
-		auth := base64.StdEncoding.EncodeToString([]byte(endpoint.Username + ":" + endpoint.Password))
+		auth := base64.StdEncoding.EncodeToString(
+			[]byte(endpoint.Username + ":" + endpoint.Password),
+		)
 		req.Header.Set("Authorization", "Basic "+auth)
 
 	case "bearer":
 		if endpoint.BearerToken == "" {
-			return fmt.Errorf("bearer auth requires token")
+			return errors.New("bearer auth requires token")
 		}
 		req.Header.Set("Authorization", "Bearer "+endpoint.BearerToken)
 
@@ -362,7 +389,7 @@ func applyFHIRAuth(req *http.Request, endpoint config.FHIREndpoint) error {
 		if endpoint.BearerToken != "" {
 			req.Header.Set("Authorization", "Bearer "+endpoint.BearerToken)
 		} else {
-			return fmt.Errorf("oauth2 auth requires token_url and credentials (not yet implemented)")
+			return errors.New("oauth2 auth requires token_url and credentials (not yet implemented)")
 		}
 
 	default:

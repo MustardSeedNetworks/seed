@@ -3,10 +3,12 @@ package httpapi
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,10 +17,10 @@ import (
 
 // LTI protocol constants.
 const (
-	LTIVersion11      = "1.1"
-	LTIVersion13      = "1.3"
+	LTIVersion11        = "1.1"
+	LTIVersion13        = "1.3"
 	LTIVersionAdvantage = "advantage"
-	LTITimeout        = 10 * time.Second
+	LTITimeout          = 10 * time.Second
 )
 
 // OPC-UA protocol constants.
@@ -26,9 +28,11 @@ const (
 	DefaultOPCUAPort = 4840
 	OPCUATimeout     = 10 * time.Second
 
-	// OPC-UA Security Modes.
-	SecurityModeNone           = "None"
-	SecurityModeSign           = "Sign"
+	// SecurityModeNone indicates no security for OPC-UA.
+	SecurityModeNone = "None"
+	// SecurityModeSign indicates signing for OPC-UA.
+	SecurityModeSign = "Sign"
+	// SecurityModeSignAndEncrypt indicates signing and encryption for OPC-UA.
 	SecurityModeSignAndEncrypt = "SignAndEncrypt"
 )
 
@@ -37,17 +41,50 @@ const (
 	DefaultModbusPort = 502
 	ModbusTimeout     = 5 * time.Second
 
-	// Modbus function codes.
-	ModbusFCReadCoils            = 0x01
-	ModbusFCReadDiscreteInputs   = 0x02
+	// ModbusFCReadCoils is the function code for reading coils.
+	ModbusFCReadCoils = 0x01
+	// ModbusFCReadDiscreteInputs is the function code for reading discrete inputs.
+	ModbusFCReadDiscreteInputs = 0x02
+	// ModbusFCReadHoldingRegisters is the function code for reading holding registers.
 	ModbusFCReadHoldingRegisters = 0x03
-	ModbusFCReadInputRegisters   = 0x04
+	// ModbusFCReadInputRegisters is the function code for reading input registers.
+	ModbusFCReadInputRegisters = 0x04
 
-	// Modbus register types.
-	ModbusRegisterHolding  = "holding"
-	ModbusRegisterInput    = "input"
-	ModbusRegisterCoil     = "coil"
+	// ModbusRegisterHolding identifies holding register type.
+	ModbusRegisterHolding = "holding"
+	// ModbusRegisterInput identifies input register type.
+	ModbusRegisterInput = "input"
+	// ModbusRegisterCoil identifies coil register type.
+	ModbusRegisterCoil = "coil"
+	// ModbusRegisterDiscrete identifies discrete input register type.
 	ModbusRegisterDiscrete = "discrete"
+
+	// modbusResponseBufferSize is the buffer size for reading Modbus responses.
+	modbusResponseBufferSize = 256
+	// modbusMinResponseLen is the minimum valid Modbus TCP response length.
+	modbusMinResponseLen = 9
+	// modbusDataOffset is the offset where register data begins in response.
+	modbusDataOffset = 11
+	// modbusRequestSize is the size of a Modbus TCP read request.
+	modbusRequestSize = 12
+	// modbusPDULength is the length of the PDU portion (unit ID + function code + data).
+	modbusPDULength = 6
+)
+
+// OPC-UA testing constants.
+const (
+	// opcuaResponseBufferSize is the buffer size for OPC-UA responses.
+	opcuaResponseBufferSize = 256
+	// opcuaReadDeadline is the read timeout for OPC-UA handshake responses.
+	opcuaReadDeadline = 2 * time.Second
+	// opcuaMinResponseLen is the minimum bytes for a valid OPC-UA response.
+	opcuaMinResponseLen = 4
+)
+
+// LTI testing constants.
+const (
+	// ltiMaxRedirects is the maximum number of HTTP redirects to follow.
+	ltiMaxRedirects = 10
 )
 
 // LTITestResult contains the result of an LTI/LMS health check.
@@ -112,9 +149,9 @@ func (s *Server) testLTIEndpoint(ctx context.Context, endpoint config.LTIEndpoin
 	// Create HTTP client with timeout
 	client := &http.Client{
 		Timeout: LTITimeout,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			if len(via) >= 10 {
-				return fmt.Errorf("too many redirects")
+		CheckRedirect: func(_ *http.Request, via []*http.Request) error {
+			if len(via) >= ltiMaxRedirects {
+				return errors.New("too many redirects")
 			}
 			return nil
 		},
@@ -156,7 +193,10 @@ func (s *Server) testLTIEndpoint(ctx context.Context, endpoint config.LTIEndpoin
 }
 
 // testOPCUAEndpoint tests an OPC-UA endpoint.
-func (s *Server) testOPCUAEndpoint(ctx context.Context, endpoint config.OPCUAEndpoint) OPCUATestResult {
+func (s *Server) testOPCUAEndpoint(
+	ctx context.Context,
+	endpoint config.OPCUAEndpoint,
+) OPCUATestResult {
 	result := OPCUATestResult{
 		Name:         endpoint.Name,
 		EndpointURL:  endpoint.EndpointURL,
@@ -174,13 +214,13 @@ func (s *Server) testOPCUAEndpoint(ctx context.Context, endpoint config.OPCUAEnd
 	host := parsedURL.Hostname()
 	port := parsedURL.Port()
 	if port == "" {
-		port = fmt.Sprintf("%d", DefaultOPCUAPort)
+		port = strconv.Itoa(DefaultOPCUAPort)
 	}
 
 	connectStart := time.Now()
 
 	// Test TCP connectivity
-	addr := fmt.Sprintf("%s:%s", host, port)
+	addr := net.JoinHostPort(host, port)
 	dialer := net.Dialer{Timeout: OPCUATimeout}
 	conn, connErr := dialer.DialContext(ctx, "tcp", addr)
 	if connErr != nil {
@@ -220,20 +260,21 @@ func (s *Server) testOPCUAEndpoint(ctx context.Context, endpoint config.OPCUAEnd
 	}
 
 	// Try to read response (OPC-UA server should respond with ACK or error)
-	respBuf := make([]byte, 256)
-	_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	respBuf := make([]byte, opcuaResponseBufferSize)
+	_ = conn.SetReadDeadline(time.Now().Add(opcuaReadDeadline))
 	n, readErr := conn.Read(respBuf)
 	if readErr != nil {
 		// Connection closed or timeout - still consider TCP working
 		result.ServerInfo = "TCP connection successful, server may require full handshake"
-	} else if n >= 4 {
+	} else if n >= opcuaMinResponseLen {
 		// Check if we got an ACK or ERR response
 		msgType := string(respBuf[:3])
-		if msgType == "ACK" {
+		switch msgType {
+		case "ACK":
 			result.ServerInfo = "OPC-UA server acknowledged connection"
-		} else if msgType == "ERR" {
+		case "ERR":
 			result.ServerInfo = "OPC-UA server returned error (authentication may be required)"
-		} else {
+		default:
 			result.ServerInfo = fmt.Sprintf("Server responded with: %s", msgType)
 		}
 	}
@@ -246,7 +287,12 @@ func (s *Server) testOPCUAEndpoint(ctx context.Context, endpoint config.OPCUAEnd
 }
 
 // testModbusEndpoint tests a Modbus TCP endpoint.
-func (s *Server) testModbusEndpoint(ctx context.Context, endpoint config.ModbusEndpoint) ModbusTestResult {
+//
+//nolint:funlen // Modbus testing requires multiple steps: validation, TCP connection, request building, and response parsing.
+func (s *Server) testModbusEndpoint(
+	ctx context.Context,
+	endpoint config.ModbusEndpoint,
+) ModbusTestResult {
 	result := ModbusTestResult{
 		Name:      endpoint.Name,
 		Host:      endpoint.Host,
@@ -263,6 +309,12 @@ func (s *Server) testModbusEndpoint(ctx context.Context, endpoint config.ModbusE
 	// Validate unit ID (1-247 for standard Modbus, 0 for broadcast)
 	if endpoint.UnitID < 0 || endpoint.UnitID > 247 {
 		result.Error = fmt.Sprintf("Invalid unit ID: %d (must be 0-247)", endpoint.UnitID)
+		return result
+	}
+
+	// Validate test register address (0-65535 for uint16)
+	if endpoint.TestRegister < 0 || endpoint.TestRegister > 65535 {
+		result.Error = fmt.Sprintf("Invalid test register: %d (must be 0-65535)", endpoint.TestRegister)
 		return result
 	}
 
@@ -290,11 +342,12 @@ func (s *Server) testModbusEndpoint(ctx context.Context, endpoint config.ModbusE
 
 	// Build Modbus TCP request
 	functionCode := getModbusFunctionCode(endpoint.RegisterType)
+	// UnitID and TestRegister are validated above; safe to convert
 	request := buildModbusTCPRequest(
-		uint8(endpoint.UnitID),
+		uint8(endpoint.UnitID), // #nosec G115 -- validated 0-247 range above
 		functionCode,
-		uint16(endpoint.TestRegister),
-		1, // Read 1 register
+		uint16(endpoint.TestRegister), // #nosec G115 -- validated 0-65535 range above
+		1,                             // Read 1 register
 	)
 
 	// Send request
@@ -307,7 +360,7 @@ func (s *Server) testModbusEndpoint(ctx context.Context, endpoint config.ModbusE
 	}
 
 	// Read response
-	respBuf := make([]byte, 256)
+	respBuf := make([]byte, modbusResponseBufferSize)
 	n, readErr := conn.Read(respBuf)
 	if readErr != nil {
 		result.Error = fmt.Sprintf("Failed to read response: %v", readErr)
@@ -319,12 +372,12 @@ func (s *Server) testModbusEndpoint(ctx context.Context, endpoint config.ModbusE
 	result.TotalTimeMs = float64(time.Since(connectStart).Milliseconds())
 
 	// Parse Modbus TCP response
-	if n < 9 {
+	if n < modbusMinResponseLen {
 		result.Error = "Response too short"
 		return result
 	}
 
-	// Check for exception response
+	// Check for exception response (function code has high bit set)
 	if respBuf[7]&0x80 != 0 {
 		exceptionCode := respBuf[8]
 		result.Error = fmt.Sprintf("Modbus exception: %s", getModbusExceptionString(exceptionCode))
@@ -333,8 +386,8 @@ func (s *Server) testModbusEndpoint(ctx context.Context, endpoint config.ModbusE
 
 	// Extract register value (for holding/input registers)
 	if functionCode == ModbusFCReadHoldingRegisters || functionCode == ModbusFCReadInputRegisters {
-		if n >= 11 {
-			result.RegisterValue = int(binary.BigEndian.Uint16(respBuf[9:11]))
+		if n >= modbusDataOffset {
+			result.RegisterValue = int(binary.BigEndian.Uint16(respBuf[9:modbusDataOffset]))
 		}
 	}
 
@@ -362,7 +415,7 @@ func buildModbusTCPRequest(unitID, functionCode uint8, startAddr, quantity uint1
 	// Transaction ID (2 bytes) + Protocol ID (2 bytes) + Length (2 bytes) + Unit ID (1 byte) + PDU
 	// PDU: Function Code (1 byte) + Start Address (2 bytes) + Quantity (2 bytes)
 
-	request := make([]byte, 12)
+	request := make([]byte, modbusRequestSize)
 
 	// Transaction ID (can be any value, we use 1)
 	binary.BigEndian.PutUint16(request[0:2], 1)
@@ -371,7 +424,7 @@ func buildModbusTCPRequest(unitID, functionCode uint8, startAddr, quantity uint1
 	binary.BigEndian.PutUint16(request[2:4], 0)
 
 	// Length (Unit ID + PDU = 6 bytes)
-	binary.BigEndian.PutUint16(request[4:6], 6)
+	binary.BigEndian.PutUint16(request[4:6], modbusPDULength)
 
 	// Unit ID
 	request[6] = unitID

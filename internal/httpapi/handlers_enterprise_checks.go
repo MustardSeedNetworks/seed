@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -53,60 +54,77 @@ const (
 
 	// BytesPerMB is the number of bytes in a megabyte.
 	BytesPerMB = 1024 * 1024
+
+	// fileShareTimeout is the timeout for file share connections.
+	fileShareTimeout = 10 * time.Second
+)
+
+// SQL testing constants.
+const (
+	// sqlConnectTimeout is the timeout for SQL TCP connections.
+	sqlConnectTimeout = 10 * time.Second
+
+	// sqlMaxVersionLen is the maximum length for SQL version strings.
+	sqlMaxVersionLen = 100
+
+	// defaultSQLTestQuery is the default query for testing SQL connectivity.
+	defaultSQLTestQuery = "SELECT 1"
 )
 
 // SQLTestResult contains the result of a SQL database health check.
 type SQLTestResult struct {
-	Name           string  `json:"name"`
-	Driver         string  `json:"driver"`
-	Host           string  `json:"host"`
-	Port           int     `json:"port"`
-	Database       string  `json:"database"`
-	Success        bool    `json:"success"`
-	ConnectTimeMs  float64 `json:"connectTimeMs"`
-	QueryTimeMs    float64 `json:"queryTimeMs,omitempty"`
-	TotalTimeMs    float64 `json:"totalTimeMs"`
-	ServerVersion  string  `json:"serverVersion,omitempty"`
-	Error          string  `json:"error,omitempty"`
-	Timestamp      string  `json:"timestamp"`
+	Name          string  `json:"name"`
+	Driver        string  `json:"driver"`
+	Host          string  `json:"host"`
+	Port          int     `json:"port"`
+	Database      string  `json:"database"`
+	Success       bool    `json:"success"`
+	ConnectTimeMs float64 `json:"connectTimeMs"`
+	QueryTimeMs   float64 `json:"queryTimeMs,omitempty"`
+	TotalTimeMs   float64 `json:"totalTimeMs"`
+	ServerVersion string  `json:"serverVersion,omitempty"`
+	Error         string  `json:"error,omitempty"`
+	Timestamp     string  `json:"timestamp"`
 }
 
 // FileShareTestResult contains the result of a file share health check.
 type FileShareTestResult struct {
-	Name              string  `json:"name"`
-	Protocol          string  `json:"protocol"`
-	Host              string  `json:"host"`
-	Share             string  `json:"share"`
-	Success           bool    `json:"success"`
-	ConnectTimeMs     float64 `json:"connectTimeMs"`
-	ReadSpeedMBps     float64 `json:"readSpeedMBps,omitempty"`
-	WriteSpeedMBps    float64 `json:"writeSpeedMBps,omitempty"`
-	ReadLatencyMs     float64 `json:"readLatencyMs,omitempty"`
-	WriteLatencyMs    float64 `json:"writeLatencyMs,omitempty"`
-	TestFileSizeMB    int     `json:"testFileSizeMB,omitempty"`
-	TotalTimeMs       float64 `json:"totalTimeMs"`
-	Error             string  `json:"error,omitempty"`
-	Timestamp         string  `json:"timestamp"`
-}
-
-// LDAPTestResult contains the result of an LDAP health check.
-type LDAPTestResult struct {
 	Name           string  `json:"name"`
+	Protocol       string  `json:"protocol"`
 	Host           string  `json:"host"`
-	Port           int     `json:"port"`
-	UseTLS         bool    `json:"useTls"`
+	Share          string  `json:"share"`
 	Success        bool    `json:"success"`
 	ConnectTimeMs  float64 `json:"connectTimeMs"`
-	BindTimeMs     float64 `json:"bindTimeMs,omitempty"`
-	SearchTimeMs   float64 `json:"searchTimeMs,omitempty"`
+	ReadSpeedMBps  float64 `json:"readSpeedMBps,omitempty"`
+	WriteSpeedMBps float64 `json:"writeSpeedMBps,omitempty"`
+	ReadLatencyMs  float64 `json:"readLatencyMs,omitempty"`
+	WriteLatencyMs float64 `json:"writeLatencyMs,omitempty"`
+	TestFileSizeMB int     `json:"testFileSizeMB,omitempty"`
 	TotalTimeMs    float64 `json:"totalTimeMs"`
-	EntriesFound   int     `json:"entriesFound,omitempty"`
-	ServerInfo     string  `json:"serverInfo,omitempty"`
 	Error          string  `json:"error,omitempty"`
 	Timestamp      string  `json:"timestamp"`
 }
 
+// LDAPTestResult contains the result of an LDAP health check.
+type LDAPTestResult struct {
+	Name          string  `json:"name"`
+	Host          string  `json:"host"`
+	Port          int     `json:"port"`
+	UseTLS        bool    `json:"useTls"`
+	Success       bool    `json:"success"`
+	ConnectTimeMs float64 `json:"connectTimeMs"`
+	BindTimeMs    float64 `json:"bindTimeMs,omitempty"`
+	SearchTimeMs  float64 `json:"searchTimeMs,omitempty"`
+	TotalTimeMs   float64 `json:"totalTimeMs"`
+	EntriesFound  int     `json:"entriesFound,omitempty"`
+	ServerInfo    string  `json:"serverInfo,omitempty"`
+	Error         string  `json:"error,omitempty"`
+	Timestamp     string  `json:"timestamp"`
+}
+
 // testSQLEndpoint tests a SQL database endpoint.
+//
+//nolint:funlen // SQL connection testing requires multiple validation steps: TCP, DB open, ping, query, version.
 func (s *Server) testSQLEndpoint(ctx context.Context, endpoint config.SQLEndpoint) SQLTestResult {
 	result := SQLTestResult{
 		Name:      endpoint.Name,
@@ -148,7 +166,7 @@ func (s *Server) testSQLEndpoint(ctx context.Context, endpoint config.SQLEndpoin
 
 	// Test TCP connectivity first
 	addr := fmt.Sprintf("%s:%d", endpoint.Host, result.Port)
-	dialer := net.Dialer{Timeout: 10 * time.Second}
+	dialer := net.Dialer{Timeout: sqlConnectTimeout}
 	conn, connErr := dialer.DialContext(ctx, "tcp", addr)
 	if connErr != nil {
 		result.Error = fmt.Sprintf("Connection failed: %v", connErr)
@@ -168,12 +186,12 @@ func (s *Server) testSQLEndpoint(ctx context.Context, endpoint config.SQLEndpoin
 	defer func() { _ = db.Close() }()
 
 	// Set connection timeout
-	db.SetConnMaxLifetime(10 * time.Second)
+	db.SetConnMaxLifetime(sqlConnectTimeout)
 	db.SetMaxOpenConns(1)
 	db.SetMaxIdleConns(1)
 
 	// Test connection with ping
-	pingCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	pingCtx, cancel := context.WithTimeout(ctx, sqlConnectTimeout)
 	defer cancel()
 
 	queryStart := time.Now()
@@ -208,7 +226,12 @@ func (s *Server) testSQLEndpoint(ctx context.Context, endpoint config.SQLEndpoin
 }
 
 // testSQLiteEndpoint tests a SQLite database file.
-func (s *Server) testSQLiteEndpoint(_ context.Context, endpoint config.SQLEndpoint, result SQLTestResult, connectStart time.Time) SQLTestResult {
+func (s *Server) testSQLiteEndpoint(
+	_ context.Context,
+	endpoint config.SQLEndpoint,
+	result SQLTestResult,
+	connectStart time.Time,
+) SQLTestResult {
 	// For SQLite, just check if the file exists and is readable
 	dbPath := endpoint.Host // Host field contains the file path for SQLite
 	if endpoint.Database != "" {
@@ -255,9 +278,10 @@ func buildSQLDSN(endpoint config.SQLEndpoint, port int) (string, error) {
 
 	case DriverPostgres:
 		// postgres://user:password@host:port/dbname?sslmode=disable
-		dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
+		hostPort := net.JoinHostPort(endpoint.Host, strconv.Itoa(port))
+		dsn := fmt.Sprintf("postgres://%s:%s@%s/%s",
 			endpoint.Username, endpoint.Password,
-			endpoint.Host, port, endpoint.Database)
+			hostPort, endpoint.Database)
 		if endpoint.SSLMode != "" {
 			dsn += "?sslmode=" + endpoint.SSLMode
 		}
@@ -265,16 +289,18 @@ func buildSQLDSN(endpoint config.SQLEndpoint, port int) (string, error) {
 
 	case DriverSQLServer:
 		// sqlserver://user:password@host:port?database=dbname
-		dsn := fmt.Sprintf("sqlserver://%s:%s@%s:%d?database=%s",
+		hostPort := net.JoinHostPort(endpoint.Host, strconv.Itoa(port))
+		dsn := fmt.Sprintf("sqlserver://%s:%s@%s?database=%s",
 			endpoint.Username, endpoint.Password,
-			endpoint.Host, port, endpoint.Database)
+			hostPort, endpoint.Database)
 		return dsn, nil
 
 	case DriverOracle:
 		// oracle://user:password@host:port/service_name
-		dsn := fmt.Sprintf("oracle://%s:%s@%s:%d/%s",
+		hostPort := net.JoinHostPort(endpoint.Host, strconv.Itoa(port))
+		dsn := fmt.Sprintf("oracle://%s:%s@%s/%s",
 			endpoint.Username, endpoint.Password,
-			endpoint.Host, port, endpoint.Database)
+			hostPort, endpoint.Database)
 		return dsn, nil
 
 	case DriverSQLite:
@@ -287,18 +313,11 @@ func buildSQLDSN(endpoint config.SQLEndpoint, port int) (string, error) {
 
 // getDefaultTestQuery returns a simple test query for the driver.
 func getDefaultTestQuery(driver string) string {
-	switch driver {
-	case DriverMySQL, DriverSQLite:
-		return "SELECT 1"
-	case DriverPostgres:
-		return "SELECT 1"
-	case DriverSQLServer:
-		return "SELECT 1"
-	case DriverOracle:
+	// Oracle requires FROM DUAL for SELECT; others use standard query.
+	if driver == DriverOracle {
 		return "SELECT 1 FROM DUAL"
-	default:
-		return "SELECT 1"
 	}
+	return defaultSQLTestQuery
 }
 
 // getSQLServerVersion attempts to retrieve the server version.
@@ -312,22 +331,27 @@ func getSQLServerVersion(db *sql.DB, driver string) string {
 	case DriverSQLServer:
 		versionQuery = "SELECT @@VERSION"
 	case DriverOracle:
-		versionQuery = "SELECT * FROM V$VERSION WHERE ROWNUM = 1"
+		versionQuery = "SELECT BANNER FROM V$VERSION WHERE ROWNUM = 1"
 	default:
 		return ""
 	}
 
 	var version string
-	_ = db.QueryRow(versionQuery).Scan(&version)
+	_ = db.QueryRow(versionQuery).Scan(&version) //nolint:noctx // Simple query without context
 	// Truncate long version strings
-	if len(version) > 100 {
-		version = version[:100] + "..."
+	if len(version) > sqlMaxVersionLen {
+		version = version[:sqlMaxVersionLen] + "..."
 	}
 	return version
 }
 
 // testFileShareEndpoint tests a file share endpoint with optional performance testing.
-func (s *Server) testFileShareEndpoint(ctx context.Context, endpoint config.FileShareEndpoint) FileShareTestResult {
+//
+//nolint:gocognit // File share testing has inherent complexity: protocol detection, TCP test, and optional performance tests.
+func (s *Server) testFileShareEndpoint(
+	ctx context.Context,
+	endpoint config.FileShareEndpoint,
+) FileShareTestResult {
 	result := FileShareTestResult{
 		Name:      endpoint.Name,
 		Protocol:  endpoint.Protocol,
@@ -353,7 +377,7 @@ func (s *Server) testFileShareEndpoint(ctx context.Context, endpoint config.File
 
 	// Test TCP connectivity
 	addr := fmt.Sprintf("%s:%d", endpoint.Host, port)
-	dialer := net.Dialer{Timeout: 10 * time.Second}
+	dialer := net.Dialer{Timeout: fileShareTimeout}
 	conn, connErr := dialer.DialContext(ctx, "tcp", addr)
 	if connErr != nil {
 		result.Error = fmt.Sprintf("Connection failed: %v", connErr)
@@ -365,6 +389,7 @@ func (s *Server) testFileShareEndpoint(ctx context.Context, endpoint config.File
 	result.ConnectTimeMs = float64(time.Since(connectStart).Milliseconds())
 
 	// If performance testing is requested, run actual file operations
+	//nolint:nestif // Performance testing requires sequential operations with error handling.
 	if endpoint.TestReadPerformance || endpoint.TestWritePerformance {
 		testSize := endpoint.TestFileSizeMB
 		if testSize <= 0 {
@@ -430,7 +455,13 @@ func buildSharePath(endpoint config.FileShareEndpoint) string {
 }
 
 // performWriteTest performs a write performance test.
-func (s *Server) performWriteTest(_ context.Context, sharePath string, sizeMB int) (speedMBps, latencyMs float64, err error) {
+//
+//nolint:nonamedreturns // Named returns clarify the multiple return values for performance metrics.
+func (s *Server) performWriteTest(
+	_ context.Context,
+	sharePath string,
+	sizeMB int,
+) (speedMBps, latencyMs float64, err error) {
 	// Generate random test data
 	testData := make([]byte, sizeMB*BytesPerMB)
 	if _, randErr := rand.Read(testData); randErr != nil {
@@ -468,7 +499,13 @@ func (s *Server) performWriteTest(_ context.Context, sharePath string, sizeMB in
 }
 
 // performReadTest performs a read performance test.
-func (s *Server) performReadTest(_ context.Context, sharePath string, sizeMB int) (speedMBps, latencyMs float64, err error) {
+//
+//nolint:nonamedreturns // Named returns clarify the multiple return values for performance metrics.
+func (s *Server) performReadTest(
+	_ context.Context,
+	sharePath string,
+	sizeMB int,
+) (speedMBps, latencyMs float64, err error) {
 	// First, create a test file to read
 	testData := make([]byte, sizeMB*BytesPerMB)
 	if _, randErr := rand.Read(testData); randErr != nil {
@@ -506,7 +543,10 @@ func (s *Server) performReadTest(_ context.Context, sharePath string, sizeMB int
 }
 
 // testLDAPEndpoint tests an LDAP/Active Directory endpoint.
-func (s *Server) testLDAPEndpoint(ctx context.Context, endpoint config.LDAPEndpoint) LDAPTestResult {
+func (s *Server) testLDAPEndpoint(
+	ctx context.Context,
+	endpoint config.LDAPEndpoint,
+) LDAPTestResult {
 	result := LDAPTestResult{
 		Name:      endpoint.Name,
 		Host:      endpoint.Host,
@@ -537,7 +577,8 @@ func (s *Server) testLDAPEndpoint(ctx context.Context, endpoint config.LDAPEndpo
 		// LDAPS - TLS from the start
 		tlsConfig := &tls.Config{
 			ServerName:         endpoint.Host,
-			InsecureSkipVerify: false, // Validate certificates
+			InsecureSkipVerify: false,            // Validate certificates
+			MinVersion:         tls.VersionTLS12, // Minimum TLS 1.2 for security
 		}
 		tlsDialer := tls.Dialer{
 			NetDialer: &dialer,

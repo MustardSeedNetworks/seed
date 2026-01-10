@@ -96,12 +96,12 @@ if [ -n "$STAGED_GO_FILES" ]; then
     echo "⚠ golangci-lint not installed, skipping"
   fi
 
-  # Go security check (gosec)
+  # Go security check (gosec) - only scan staged files
   if command -v gosec >/dev/null 2>&1; then
     echo "Running gosec security scan..."
-    # Exclude cache directories from scan
-    if ! gosec -quiet -exclude-dir=.gomodcache -exclude-dir=.gocache -exclude-dir=.golangci-cache ./... 2>/dev/null; then
-      echo "❌ Security issues found!"
+    # Only scan staged Go files, not entire codebase (golangci-lint already covers full gosec)
+    if ! gosec -quiet $STAGED_GO_FILES 2>/dev/null; then
+      echo "❌ Security issues found in staged files!"
       FAILED=1
     else
       echo "✓ Security scan passed"

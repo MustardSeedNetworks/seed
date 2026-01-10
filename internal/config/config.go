@@ -793,15 +793,15 @@ type HealthChecksConfig struct {
 	HTTPEndpoints      []HTTPEndpoint      `yaml:"http_endpoints"  json:"http_endpoints"`
 	RTSPEndpoints      []RTSPEndpoint      `yaml:"rtsp_endpoints"  json:"rtsp_endpoints"`      // Issue #778
 	DICOMEndpoints     []DICOMEndpoint     `yaml:"dicom_endpoints" json:"dicom_endpoints"`     // Issue #777
-	HL7Endpoints       []HL7Endpoint       `json:"hl7_endpoints"`       // Health Checks 100x - Medical
-	FHIREndpoints      []FHIREndpoint      `json:"fhir_endpoints"`      // Health Checks 100x - Medical
-	SQLEndpoints       []SQLEndpoint       `json:"sql_endpoints"`       // Health Checks 100x - Enterprise
-	FileShareEndpoints []FileShareEndpoint `json:"fileshare_endpoints"` // Health Checks 100x - Enterprise
-	LDAPEndpoints      []LDAPEndpoint      `json:"ldap_endpoints"`      // Health Checks 100x - Enterprise
-	LTIEndpoints       []LTIEndpoint       `json:"lti_endpoints"`       // Health Checks 100x - Education
-	OPCUAEndpoints     []OPCUAEndpoint     `json:"opcua_endpoints"`     // Health Checks 100x - Manufacturing
-	ModbusEndpoints    []ModbusEndpoint    `json:"modbus_endpoints"`    // Health Checks 100x - Manufacturing
-	RunPerformance     bool                `yaml:"run_performance" json:"run_performance"` // Master toggle for speedtest + iperf
+	HL7Endpoints       []HL7Endpoint       `                       json:"hl7_endpoints"`       // Health Checks 100x - Medical
+	FHIREndpoints      []FHIREndpoint      `                       json:"fhir_endpoints"`      // Health Checks 100x - Medical
+	SQLEndpoints       []SQLEndpoint       `                       json:"sql_endpoints"`       // Health Checks 100x - Enterprise
+	FileShareEndpoints []FileShareEndpoint `                       json:"fileshare_endpoints"` // Health Checks 100x - Enterprise
+	LDAPEndpoints      []LDAPEndpoint      `                       json:"ldap_endpoints"`      // Health Checks 100x - Enterprise
+	LTIEndpoints       []LTIEndpoint       `                       json:"lti_endpoints"`       // Health Checks 100x - Education
+	OPCUAEndpoints     []OPCUAEndpoint     `                       json:"opcua_endpoints"`     // Health Checks 100x - Manufacturing
+	ModbusEndpoints    []ModbusEndpoint    `                       json:"modbus_endpoints"`    // Health Checks 100x - Manufacturing
+	RunPerformance     bool                `yaml:"run_performance" json:"run_performance"`     // Master toggle for speedtest + iperf
 	RunSpeedtest       bool                `yaml:"run_speedtest"   json:"run_speedtest"`       // Toggle internet speed test
 	RunIperf           bool                `yaml:"run_iperf"       json:"run_iperf"`           // Toggle LAN iperf test
 	RunDiscovery       bool                `yaml:"run_discovery"   json:"run_discovery"`       // Toggle network discovery card
@@ -940,39 +940,39 @@ type LDAPEndpoint struct {
 // LTIEndpoint represents an LTI/LMS endpoint test (Health Checks 100x - Education).
 type LTIEndpoint struct {
 	Name           string `json:"name"`
-	LaunchURL      string `json:"launch_url"`                    // LTI tool launch URL
-	ConsumerKey    string `json:"consumer_key,omitempty"`        // OAuth consumer key
-	ConsumerSecret string `json:"consumer_secret,omitempty"`     // OAuth consumer secret (for LTI 1.x)
-	LTIVersion     string `json:"lti_version,omitempty"`         // "1.1", "1.3", or "advantage"
-	ClientID       string `json:"client_id,omitempty"`           // LTI 1.3 client ID
-	DeploymentID   string `json:"deployment_id,omitempty"`       // LTI 1.3 deployment ID
-	PlatformURL    string `json:"platform_url,omitempty"`        // LTI 1.3 platform issuer URL
+	LaunchURL      string `json:"launch_url"`                // LTI tool launch URL
+	ConsumerKey    string `json:"consumer_key,omitempty"`    // OAuth consumer key
+	ConsumerSecret string `json:"consumer_secret,omitempty"` // OAuth consumer secret (for LTI 1.x)
+	LTIVersion     string `json:"lti_version,omitempty"`     // "1.1", "1.3", or "advantage"
+	ClientID       string `json:"client_id,omitempty"`       // LTI 1.3 client ID
+	DeploymentID   string `json:"deployment_id,omitempty"`   // LTI 1.3 deployment ID
+	PlatformURL    string `json:"platform_url,omitempty"`    // LTI 1.3 platform issuer URL
 	Enabled        bool   `json:"enabled"`
 	Criticality    int    `json:"criticality"` // 1-10 scale for health scoring
 }
 
 // OPCUAEndpoint represents an OPC-UA endpoint test (Health Checks 100x - Manufacturing).
 type OPCUAEndpoint struct {
-	Name          string `json:"name"`
-	EndpointURL   string `json:"endpoint_url"`              // opc.tcp://host:4840/path
-	SecurityMode  string `json:"security_mode,omitempty"`   // "None", "Sign", "SignAndEncrypt"
+	Name           string `json:"name"`
+	EndpointURL    string `json:"endpoint_url"`              // opc.tcp://host:4840/path
+	SecurityMode   string `json:"security_mode,omitempty"`   // "None", "Sign", "SignAndEncrypt"
 	SecurityPolicy string `json:"security_policy,omitempty"` // "None", "Basic128Rsa15", "Basic256", "Basic256Sha256"
-	Username      string `json:"username,omitempty"`
-	Password      string `json:"password,omitempty"`
-	CertPath      string `json:"cert_path,omitempty"`       // Client certificate path
-	KeyPath       string `json:"key_path,omitempty"`        // Client private key path
-	Enabled       bool   `json:"enabled"`
-	Criticality   int    `json:"criticality"` // 1-10 scale for health scoring
+	Username       string `json:"username,omitempty"`
+	Password       string `json:"password,omitempty"`
+	CertPath       string `json:"cert_path,omitempty"` // Client certificate path
+	KeyPath        string `json:"key_path,omitempty"`  // Client private key path
+	Enabled        bool   `json:"enabled"`
+	Criticality    int    `json:"criticality"` // 1-10 scale for health scoring
 }
 
 // ModbusEndpoint represents a Modbus TCP endpoint test (Health Checks 100x - Manufacturing).
 type ModbusEndpoint struct {
 	Name         string `json:"name"`
 	Host         string `json:"host"`
-	Port         int    `json:"port"`                         // Default: 502
-	UnitID       int    `json:"unit_id"`                      // Modbus unit/slave ID (1-247)
-	TestRegister int    `json:"test_register"`                // Register address to read for testing
-	RegisterType string `json:"register_type,omitempty"`      // "holding", "input", "coil", "discrete"
+	Port         int    `json:"port"`                    // Default: 502
+	UnitID       int    `json:"unit_id"`                 // Modbus unit/slave ID (1-247)
+	TestRegister int    `json:"test_register"`           // Register address to read for testing
+	RegisterType string `json:"register_type,omitempty"` // "holding", "input", "coil", "discrete"
 	Enabled      bool   `json:"enabled"`
 	Criticality  int    `json:"criticality"` // 1-10 scale for health scoring
 }
