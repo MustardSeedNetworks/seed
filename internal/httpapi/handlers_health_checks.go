@@ -106,6 +106,9 @@ type TestsSettingsResponse struct {
 	SQLEndpoints       []SQLEndpointResponse       `json:"sqlEndpoints"`       // Health Checks 100x - Enterprise
 	FileShareEndpoints []FileShareEndpointResponse `json:"fileShareEndpoints"` // Health Checks 100x - Enterprise
 	LDAPEndpoints      []LDAPEndpointResponse      `json:"ldapEndpoints"`      // Health Checks 100x - Enterprise
+	LTIEndpoints       []LTIEndpointResponse       `json:"ltiEndpoints"`       // Health Checks 100x - Education
+	OPCUAEndpoints     []OPCUAEndpointResponse     `json:"opcuaEndpoints"`     // Health Checks 100x - Manufacturing
+	ModbusEndpoints    []ModbusEndpointResponse    `json:"modbusEndpoints"`    // Health Checks 100x - Manufacturing
 	Speedtest          SpeedtestSettingsResponse   `json:"speedtest"`
 	Iperf              IperfSettingsResponse       `json:"iperf"`
 	RunPerformance     bool                        `json:"runPerformance"`
@@ -234,6 +237,37 @@ type LDAPEndpointResponse struct {
 	Criticality  int    `json:"criticality"`
 }
 
+// LTIEndpointResponse contains an LTI/LMS endpoint configuration (Health Checks 100x - Education).
+type LTIEndpointResponse struct {
+	Name        string `json:"name"`
+	LaunchURL   string `json:"launchUrl"`
+	LTIVersion  string `json:"ltiVersion,omitempty"`
+	Enabled     bool   `json:"enabled"`
+	Criticality int    `json:"criticality"`
+}
+
+// OPCUAEndpointResponse contains an OPC-UA endpoint configuration (Health Checks 100x - Manufacturing).
+type OPCUAEndpointResponse struct {
+	Name           string `json:"name"`
+	EndpointURL    string `json:"endpointUrl"`
+	SecurityMode   string `json:"securityMode,omitempty"`
+	SecurityPolicy string `json:"securityPolicy,omitempty"`
+	Enabled        bool   `json:"enabled"`
+	Criticality    int    `json:"criticality"`
+}
+
+// ModbusEndpointResponse contains a Modbus TCP endpoint configuration (Health Checks 100x - Manufacturing).
+type ModbusEndpointResponse struct {
+	Name         string `json:"name"`
+	Host         string `json:"host"`
+	Port         int    `json:"port"`
+	UnitID       int    `json:"unitId"`
+	TestRegister int    `json:"testRegister"`
+	RegisterType string `json:"registerType,omitempty"`
+	Enabled      bool   `json:"enabled"`
+	Criticality  int    `json:"criticality"`
+}
+
 // SpeedtestSettingsResponse contains speedtest configuration options.
 type SpeedtestSettingsResponse struct {
 	ServerID      string `json:"serverId"`
@@ -287,6 +321,9 @@ func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request)
 		SQLEndpoints:       make([]SQLEndpointResponse, 0, len(s.config.HealthChecks.SQLEndpoints)),         // Health Checks 100x - Enterprise
 		FileShareEndpoints: make([]FileShareEndpointResponse, 0, len(s.config.HealthChecks.FileShareEndpoints)), // Health Checks 100x - Enterprise
 		LDAPEndpoints:      make([]LDAPEndpointResponse, 0, len(s.config.HealthChecks.LDAPEndpoints)),       // Health Checks 100x - Enterprise
+		LTIEndpoints:       make([]LTIEndpointResponse, 0, len(s.config.HealthChecks.LTIEndpoints)),         // Health Checks 100x - Education
+		OPCUAEndpoints:     make([]OPCUAEndpointResponse, 0, len(s.config.HealthChecks.OPCUAEndpoints)),     // Health Checks 100x - Manufacturing
+		ModbusEndpoints:    make([]ModbusEndpointResponse, 0, len(s.config.HealthChecks.ModbusEndpoints)),   // Health Checks 100x - Manufacturing
 		RunPerformance:     s.config.HealthChecks.RunPerformance,
 		RunSpeedtest:       s.config.HealthChecks.RunSpeedtest,
 		RunIperf:           s.config.HealthChecks.RunIperf,
@@ -437,6 +474,43 @@ func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request)
 			SearchFilter: l.SearchFilter,
 			Enabled:      l.Enabled,
 			Criticality:  l.Criticality,
+		})
+	}
+
+	// LTI endpoints (Health Checks 100x - Education)
+	for _, lt := range s.config.HealthChecks.LTIEndpoints {
+		resp.LTIEndpoints = append(resp.LTIEndpoints, LTIEndpointResponse{
+			Name:        lt.Name,
+			LaunchURL:   lt.LaunchURL,
+			LTIVersion:  lt.LTIVersion,
+			Enabled:     lt.Enabled,
+			Criticality: lt.Criticality,
+		})
+	}
+
+	// OPC-UA endpoints (Health Checks 100x - Manufacturing)
+	for _, opc := range s.config.HealthChecks.OPCUAEndpoints {
+		resp.OPCUAEndpoints = append(resp.OPCUAEndpoints, OPCUAEndpointResponse{
+			Name:           opc.Name,
+			EndpointURL:    opc.EndpointURL,
+			SecurityMode:   opc.SecurityMode,
+			SecurityPolicy: opc.SecurityPolicy,
+			Enabled:        opc.Enabled,
+			Criticality:    opc.Criticality,
+		})
+	}
+
+	// Modbus endpoints (Health Checks 100x - Manufacturing)
+	for _, mb := range s.config.HealthChecks.ModbusEndpoints {
+		resp.ModbusEndpoints = append(resp.ModbusEndpoints, ModbusEndpointResponse{
+			Name:         mb.Name,
+			Host:         mb.Host,
+			Port:         mb.Port,
+			UnitID:       mb.UnitID,
+			TestRegister: mb.TestRegister,
+			RegisterType: mb.RegisterType,
+			Enabled:      mb.Enabled,
+			Criticality:  mb.Criticality,
 		})
 	}
 
