@@ -177,6 +177,17 @@ type SetMTURequest struct {
 // Handler Functions
 // ============================================================================
 
+// CategorizedInterfacesResponse groups interfaces by type for UI display.
+// #756: Interfaces are categorized so WiFi only shows under WiFi, Ethernet under Ethernet.
+type CategorizedInterfacesResponse struct {
+	Ethernet            []*network.InterfaceInfo `json:"ethernet"`
+	WiFi                []*network.InterfaceInfo `json:"wifi"`
+	RecommendedEthernet string                   `json:"recommendedEthernet,omitempty"`
+	RecommendedWiFi     string                   `json:"recommendedWifi,omitempty"`
+	CurrentInterface    string                   `json:"currentInterface"`
+	CurrentType         string                   `json:"currentType"`
+}
+
 func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -220,13 +231,72 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
+
+	// #756: Check if categorized response is requested
+	if r.URL.Query().Get("categorized") == "true" {
+		s.handleCategorizedInterfaces(w, r)
+		return
+	}
+
 	// Return only physical interfaces (ethernet and wifi) - excludes loopback, docker, veth, etc.
 	interfaces := s.netManager().GetPhysicalInterfaces()
 
 	sendJSONResponse(w, nil, http.StatusOK, interfaces)
 }
 
+// handleCategorizedInterfaces returns interfaces grouped by type (ethernet vs WiFi).
+// #756: Helps UI show ethernet interfaces under Ethernet dropdown, WiFi under WiFi dropdown.
+func (s *Server) handleCategorizedInterfaces(w http.ResponseWriter, _ *http.Request) {
+	interfaces := s.netManager().GetPhysicalInterfaces()
+
+	resp := CategorizedInterfacesResponse{
+		Ethernet:         make([]*network.InterfaceInfo, 0),
+		WiFi:             make([]*network.InterfaceInfo, 0),
+		CurrentInterface: s.netManager().GetCurrentInterface(),
+	}
+
+	// Categorize interfaces and find best in each category
+	var bestEthernet, bestWiFi *network.InterfaceInfo
+
+	for _, iface := range interfaces {
+		switch iface.Type {
+		case network.InterfaceTypeEthernet:
+			resp.Ethernet = append(resp.Ethernet, iface)
+			// Track best ethernet: prefer up with IP, highest score
+			if bestEthernet == nil ||
+				(iface.Up && !bestEthernet.Up) ||
+				(iface.Up && bestEthernet.Up && iface.Score > bestEthernet.Score) {
+				bestEthernet = iface
+			}
+		case network.InterfaceTypeWiFi:
+			resp.WiFi = append(resp.WiFi, iface)
+			// Track best WiFi: prefer up with IP, highest score
+			if bestWiFi == nil ||
+				(iface.Up && !bestWiFi.Up) ||
+				(iface.Up && bestWiFi.Up && iface.Score > bestWiFi.Score) {
+				bestWiFi = iface
+			}
+		}
+	}
+
+	// Set recommended interfaces
+	if bestEthernet != nil {
+		resp.RecommendedEthernet = bestEthernet.Name
+	}
+	if bestWiFi != nil {
+		resp.RecommendedWiFi = bestWiFi.Name
+	}
+
+	// Determine current interface type
+	if currentInfo, err := s.netManager().GetInterface(resp.CurrentInterface); err == nil && currentInfo != nil {
+		resp.CurrentType = string(currentInfo.Type)
+	}
+
+	sendJSONResponse(w, nil, http.StatusOK, resp)
+}
+
 // handleInterface handles GET/PUT for current interface.
+// #756: Interfaces are auto-detected and categorized; user can select from available options.
 func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -248,9 +318,44 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		sendJSONResponse(w, nil, http.StatusOK, map[string]string{
-			"interface": s.netManager().GetCurrentInterface(),
-		})
+		currentIface := s.netManager().GetCurrentInterface()
+		ifaceInfo, _ := s.netManager().GetInterface(currentIface)
+
+		// Check if current interface is wireless
+		isWireless := false
+		if s.wifiManager() != nil && currentIface != "" {
+			isWireless = s.wifiManager().IsWireless()
+		}
+
+		// #756: Check if the configured interface is still available
+		interfaceAvailable := ifaceInfo != nil && ifaceInfo.Up
+
+		resp := map[string]any{
+			"interface":  currentIface,
+			"isWireless": isWireless,
+			"available":  interfaceAvailable,
+		}
+
+		// Add interface details if available
+		if ifaceInfo != nil {
+			resp["type"] = string(ifaceInfo.Type)
+			resp["up"] = ifaceInfo.Up
+			if ifaceInfo.FriendlyName != "" {
+				resp["friendlyName"] = ifaceInfo.FriendlyName
+			}
+		}
+
+		// #756: If interface is unavailable, suggest alternatives
+		if !interfaceAvailable && currentIface != "" {
+			resp["warning"] = "Selected interface is no longer available"
+			// Find best alternative
+			if suggested := s.netManager().FindFirstAvailable(nil); suggested != "" {
+				resp["suggestedInterface"] = suggested
+			}
+		}
+
+		sendJSONResponse(w, nil, http.StatusOK, resp)
+
 	case http.MethodPut:
 		// Limit request body size to prevent DoS attacks (fixes #693)
 		r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
@@ -269,8 +374,29 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := s.netManager().SetCurrentInterface(req.Interface); err != nil {
+		// #756: Validate interface exists and is available
+		ifaceInfo, err := s.netManager().GetInterface(req.Interface)
+		if err != nil {
 			logger.Warn("Invalid interface", "error", err, "interface", req.Interface)
+			sendErrorResponseWithDetails(
+				w,
+				logger,
+				http.StatusBadRequest,
+				ErrCodeBadRequest,
+				localizer.T("errors.network.invalidInterface"),
+				"",
+			)
+			return
+		}
+
+		// Warn if interface is down but allow selection (user may be preparing)
+		warning := ""
+		if !ifaceInfo.Up {
+			warning = "Selected interface is currently down"
+		}
+
+		if err := s.netManager().SetCurrentInterface(req.Interface); err != nil {
+			logger.Warn("Failed to set interface", "error", err, "interface", req.Interface)
 			sendErrorResponseWithDetails(
 				w,
 				logger,
@@ -306,11 +432,18 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 			isWireless = s.wifiManager().IsWireless()
 		}
 
-		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
+		resp := map[string]any{
 			"status":     "ok",
 			"interface":  req.Interface,
 			"isWireless": isWireless,
-		})
+			"type":       string(ifaceInfo.Type),
+		}
+		if warning != "" {
+			resp["warning"] = warning
+		}
+
+		sendJSONResponse(w, nil, http.StatusOK, resp)
+
 	default:
 		sendErrorResponseWithDetails(
 			w,

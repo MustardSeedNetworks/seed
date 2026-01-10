@@ -212,6 +212,74 @@ func (m *Manager) SetCurrentInterface(name string) error {
 	return nil
 }
 
+// InterfaceChangeCallback is called when the active interface changes.
+// #756: Used to notify modules to rebind when auto-detection switches interfaces.
+type InterfaceChangeCallback func(oldInterface, newInterface string)
+
+// interfaceChangeCallbacks stores registered callbacks for interface changes.
+var interfaceChangeCallbacks []InterfaceChangeCallback
+var interfaceCallbackMu sync.RWMutex
+
+// OnInterfaceChange registers a callback to be notified when the active interface changes.
+// #756: Modules use this to rebind when auto-detection switches interfaces.
+func OnInterfaceChange(callback InterfaceChangeCallback) {
+	interfaceCallbackMu.Lock()
+	defer interfaceCallbackMu.Unlock()
+	interfaceChangeCallbacks = append(interfaceChangeCallbacks, callback)
+}
+
+// notifyInterfaceChange notifies all registered callbacks of an interface change.
+func notifyInterfaceChange(oldInterface, newInterface string) {
+	interfaceCallbackMu.RLock()
+	callbacks := make([]InterfaceChangeCallback, len(interfaceChangeCallbacks))
+	copy(callbacks, interfaceChangeCallbacks)
+	interfaceCallbackMu.RUnlock()
+
+	for _, cb := range callbacks {
+		go cb(oldInterface, newInterface)
+	}
+}
+
+// AutoRedetect refreshes interfaces and auto-detects the best available interface.
+// Returns the new interface name and whether it changed from the previous one.
+// #756: Called when link state changes to automatically switch to a working interface.
+func (m *Manager) AutoRedetect() (string, bool) {
+	// Refresh the interface list first
+	if err := m.RefreshInterfaces(); err != nil {
+		logging.GetLogger().Warn("Failed to refresh interfaces during auto-redetect", "error", err)
+	}
+
+	m.mu.Lock()
+	oldInterface := m.currentInterface
+
+	// Find the best available interface (no preferred list - pure auto-detection)
+	candidates := m.collectCandidates()
+	newInterface := candidates.selectBest()
+
+	if newInterface == "" {
+		m.mu.Unlock()
+		logging.GetLogger().Warn("Auto-redetect found no suitable interface")
+		return oldInterface, false
+	}
+
+	changed := newInterface != oldInterface
+	if changed {
+		m.currentInterface = newInterface
+		logging.GetLogger().Info("Auto-redetect switched interface (#756)",
+			"old", oldInterface,
+			"new", newInterface,
+			"reason", "link state change or better interface available")
+	}
+	m.mu.Unlock()
+
+	// Notify callbacks if interface changed
+	if changed {
+		notifyInterfaceChange(oldInterface, newInterface)
+	}
+
+	return newInterface, changed
+}
+
 // interfaceCandidates holds categorized interface names for selection.
 type interfaceCandidates struct {
 	ethernetWithIP, wifiWithIP, ethernetUp, wifiUp []string

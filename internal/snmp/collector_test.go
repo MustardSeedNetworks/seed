@@ -445,6 +445,15 @@ func TestMACEntryTypeStatic(t *testing.T) {
 	if entry.Type != snmp.MACTypeStatic {
 		t.Errorf("Type = %v, want %v", entry.Type, snmp.MACTypeStatic)
 	}
+	if entry.MAC != "ff:ff:ff:ff:ff:ff" {
+		t.Errorf("MAC = %v, want ff:ff:ff:ff:ff:ff", entry.MAC)
+	}
+	if entry.VLAN != 1 {
+		t.Errorf("VLAN = %v, want 1", entry.VLAN)
+	}
+	if entry.IfIndex != 1 {
+		t.Errorf("IfIndex = %v, want 1", entry.IfIndex)
+	}
 }
 
 // TestMACEntryTypeOther tests MACEntry with other type.
@@ -458,6 +467,15 @@ func TestMACEntryTypeOther(t *testing.T) {
 
 	if entry.Type != snmp.MACTypeOther {
 		t.Errorf("Type = %v, want %v", entry.Type, snmp.MACTypeOther)
+	}
+	if entry.MAC != "00:00:00:00:00:00" {
+		t.Errorf("MAC = %v, want 00:00:00:00:00:00", entry.MAC)
+	}
+	if entry.VLAN != 0 {
+		t.Errorf("VLAN = %v, want 0", entry.VLAN)
+	}
+	if entry.IfIndex != 0 {
+		t.Errorf("IfIndex = %v, want 0", entry.IfIndex)
 	}
 }
 

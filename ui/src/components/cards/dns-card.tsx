@@ -26,6 +26,7 @@
 
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
+import { formatTime } from "../../lib/format";
 import { cn, icon as iconTokens, layout, spacing } from "../../styles/theme";
 import { Card, CardDivider, CardValue, type Status } from "../ui/card";
 import { CollapsibleSection } from "../ui/collapsible-section";
@@ -63,13 +64,6 @@ export interface DnsData {
 interface DnsCardProps {
   data: DnsData | null;
   loading?: boolean;
-}
-
-function formatTime(ms: number): string {
-  if (ms >= 1000) {
-    return `${(ms / 1000).toFixed(1)}s`;
-  }
-  return `${Math.round(ms)}ms`;
 }
 
 function LookupRow({ label, lookup }: { label: string; lookup: LookupResult | null | undefined }) {

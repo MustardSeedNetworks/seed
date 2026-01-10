@@ -333,7 +333,7 @@ func TestGeneratePDF_Internal(t *testing.T) {
 			require.NoError(t, err)
 			assert.NotEmpty(t, content)
 			// PDF magic bytes
-			assert.True(t, len(content) > 4, "PDF should have content")
+			assert.Greater(t, len(content), 4, "PDF should have content")
 			assert.Equal(t, byte('%'), content[0], "PDF should start with %")
 		})
 	}
@@ -395,7 +395,7 @@ func TestDataToCSV_Internal(t *testing.T) {
 
 			if tt.wantEmpty {
 				// Empty or very small output for empty/invalid data
-				assert.True(t, len(content) <= 2, "expected empty or minimal output")
+				assert.LessOrEqual(t, len(content), 2, "expected empty or minimal output")
 			} else {
 				assert.NotEmpty(t, content)
 				csv := string(content)
@@ -660,7 +660,7 @@ func TestLoadSchedules_Internal(t *testing.T) {
 	schedules, err := ss2.List(ctx)
 	require.NoError(t, err)
 	// The schedules are loaded from database into the new service's map
-	assert.GreaterOrEqual(t, len(schedules), 0) // May be 0 if DB doesn't persist properly in test
+	assert.NotNil(t, schedules) // May be empty if DB doesn't persist properly in test
 }
 
 func TestSaveSchedule_Internal(t *testing.T) {
@@ -1367,7 +1367,7 @@ func TestDataPoint_Struct(t *testing.T) {
 	}
 
 	assert.Equal(t, now, dp.Timestamp)
-	assert.Equal(t, 123.45, dp.Value)
+	assert.InDelta(t, 123.45, dp.Value, 0.000001)
 }
 
 func TestIssueSummary_Struct(t *testing.T) {
@@ -1412,10 +1412,10 @@ func TestPerformanceMetrics_Struct(t *testing.T) {
 		UptimePercent:    99.9,
 	}
 
-	assert.Equal(t, 15.5, metrics.AvgLatencyMs)
-	assert.Equal(t, 0.5, metrics.AvgPacketLoss)
-	assert.Equal(t, 100.0, metrics.AvgBandwidthMbps)
-	assert.Equal(t, 99.9, metrics.UptimePercent)
+	assert.InDelta(t, 15.5, metrics.AvgLatencyMs, 0.000001)
+	assert.InDelta(t, 0.5, metrics.AvgPacketLoss, 0.000001)
+	assert.InDelta(t, 100.0, metrics.AvgBandwidthMbps, 0.000001)
+	assert.InDelta(t, 99.9, metrics.UptimePercent, 0.000001)
 }
 
 func TestVulnCounts_Struct(t *testing.T) {

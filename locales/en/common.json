@@ -147,5 +147,15 @@
   "dataTable": {
     "clearAll": "Clear all",
     "showingResults": "Showing {{shown}} of {{total}} results"
+  },
+  "capabilities": {
+    "warning": {
+      "title": "Limited Network Capabilities",
+      "summary": "Some features may not work. Click to see details and how to fix.",
+      "issue": "issue",
+      "issues": "issues",
+      "howToFix": "How to fix:",
+      "dismiss": "Dismiss warning"
+    }
   }
 }

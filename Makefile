@@ -51,7 +51,7 @@
         build-linux-amd64 build-linux-arm64 build-linux-docker \
         docker docker-build docker-test docker-push \
         clean clean-all \
-        deb rpm packages packages-all deb-amd64 deb-arm64 rpm-amd64 rpm-arm64 \
+        deb rpm pkg packages packages-all deb-amd64 deb-arm64 rpm-amd64 rpm-arm64 \
         test test-all test-backend test-frontend test-coverage test-integration \
         test-e2e test-e2e-ui test-e2e-install \
         lint lint-backend lint-frontend lint-md \
@@ -1171,7 +1171,17 @@ rpm: build ## Build RPM package (.rpm)
 	@mv dist/rpm/RPMS/$(RPM_ARCH)/*.rpm dist/ 2>/dev/null || true
 	@printf "$(GREEN)✓ RPM package: dist/seed-$(PKG_VERSION)-1.*.$(RPM_ARCH).rpm$(RESET)\n"
 
-# Build both packages for native architecture
+# Build macOS .pkg package (requires macOS)
+pkg: build-darwin ## Build macOS installer package (.pkg)
+	@if [ "$$(uname -s)" != "Darwin" ]; then \
+		printf "$(RED)ERROR: macOS .pkg can only be built on macOS$(RESET)\n"; \
+		exit 1; \
+	fi
+	@printf "$(BOLD)📦 Building macOS .pkg package...$(RESET)\n"
+	@./packaging/macos/build-pkg.sh ./$(BINARY_NAME)-darwin-$$(uname -m) $(PKG_VERSION)
+	@printf "$(GREEN)✓ macOS package: dist/seed-$(PKG_VERSION)-$$(uname -m | sed 's/x86_64/amd64/').pkg$(RESET)\n"
+
+# Build both Linux packages for native architecture
 packages: deb rpm ## Build both .deb and .rpm packages
 	@printf "$(GREEN)✓ All packages built in dist/$(RESET)\n"
 	@ls -la dist/*.deb dist/*.rpm 2>/dev/null || true

@@ -876,9 +876,7 @@ func TestRenderer_Concurrency(t *testing.T) {
 	errors := make(chan error, 100)
 
 	for range 100 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			data := &templates.RenderData{Title: "World"}
 			result, err := r.Render(tmpl, data)
 			if err != nil {
@@ -888,7 +886,7 @@ func TestRenderer_Concurrency(t *testing.T) {
 			if result != "Hello, World!" {
 				errors <- err
 			}
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -1472,7 +1470,7 @@ func TestErrors(t *testing.T) {
 	}
 
 	for _, err := range errors {
-		require.NotNil(t, err)
+		require.Error(t, err)
 		assert.NotEmpty(t, err.Error())
 	}
 }

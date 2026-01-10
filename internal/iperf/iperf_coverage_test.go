@@ -35,6 +35,8 @@ func TestStartServerInvalidPorts(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			manager := iperf.NewManager()
 			err := manager.StartServer(tt.port)
 			if tt.wantError && err == nil {
@@ -73,6 +75,8 @@ func TestStopServerVariousStates(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			manager := iperf.NewManager()
 
 			if tt.setupRunning {
@@ -148,6 +152,8 @@ func TestRunClientValidationErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			manager := iperf.NewManager()
 			ctx := context.Background()
 
@@ -205,6 +211,8 @@ func TestParseClientResultUDPMetrics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			iperfOut := &iperf.IperfJSON{}
 			iperfOut.End.SumSent.BitsPerSecond = 100_000_000
 			iperfOut.End.SumSent.Bytes = 125_000_000
@@ -293,6 +301,8 @@ func TestBuildClientArgsReverseFlagSetting(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			runReverseFlagCase(t, tt)
 		})
 	}
@@ -493,6 +503,8 @@ func TestWaitForPortReadyValidPorts(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			port := tt.port
 			var cleanup func()
 
@@ -640,6 +652,8 @@ func TestNeedsSudoByPackageManager(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := iperf.NeedsSudo(tt.packageManager)
 			expected := tt.onLinux
 			if runtime.GOOS != "linux" {
@@ -828,6 +842,8 @@ func TestVersionComparisonExtensive(t *testing.T) {
 	for _, tt := range tests {
 		name := tt.v1 + "_vs_" + tt.v2
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			result := iperf.CompareVersions(tt.v1, tt.v2)
 			if result != tt.expected {
 				t.Errorf("CompareVersions(%q, %q) = %d, want %d", tt.v1, tt.v2, result, tt.expected)
@@ -870,6 +886,8 @@ func TestValidateServerValidAddresses(t *testing.T) {
 
 	for _, addr := range validAddresses {
 		t.Run(addr, func(t *testing.T) {
+			t.Parallel()
+
 			if err := iperf.ValidateServer(addr); err != nil {
 				t.Errorf("ValidateServer(%q) unexpected error: %v", addr, err)
 			}
@@ -908,6 +926,8 @@ func TestValidateServerInvalidAddresses(t *testing.T) {
 		name = strings.ReplaceAll(name, "\t", "\\t")
 
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			if err := iperf.ValidateServer(addr); err == nil {
 				t.Errorf("ValidateServer(%q) expected error, got nil", addr)
 			}

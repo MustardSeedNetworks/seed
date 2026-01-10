@@ -179,6 +179,87 @@ type TimeRange struct {
 	End   time.Time
 }
 
+// HealthCheckResult represents a single health check result.
+type HealthCheckResult struct {
+	ID             int64     `json:"id"`
+	CheckType      string    `json:"checkType"`      // PING, TCP, UDP, HTTP, RTSP, DICOM, HL7, FHIR, etc.
+	EndpointName   string    `json:"endpointName"`   // User-friendly name
+	EndpointTarget string    `json:"endpointTarget"` // Actual target (IP, URL, etc.)
+	Success        bool      `json:"success"`
+	LatencyMs      float64   `json:"latencyMs,omitempty"`
+	StatusCode     *int      `json:"statusCode,omitempty"` // HTTP status code if applicable
+	ErrorMessage   string    `json:"errorMessage,omitempty"`
+	Metadata       string    `json:"metadata,omitempty"` // JSON string for protocol-specific data
+	RecordedAt     time.Time `json:"recordedAt"`
+}
+
+// HealthCheckType constants for health check types.
+const (
+	HealthCheckTypePing   = "PING"
+	HealthCheckTypeTCP    = "TCP"
+	HealthCheckTypeUDP    = "UDP"
+	HealthCheckTypeHTTP   = "HTTP"
+	HealthCheckTypeHTTPS  = "HTTPS"
+	HealthCheckTypeRTSP   = "RTSP"
+	HealthCheckTypeDICOM  = "DICOM"
+	HealthCheckTypeHL7    = "HL7"
+	HealthCheckTypeFHIR   = "FHIR"
+	HealthCheckTypeLTI    = "LTI"
+	HealthCheckTypeLDAP   = "LDAP"
+	HealthCheckTypeOPCUA  = "OPCUA"
+	HealthCheckTypeModbus = "MODBUS"
+)
+
+// HealthCheckHourlyRollup represents hourly aggregated health check data.
+type HealthCheckHourlyRollup struct {
+	ID               int64     `json:"id"`
+	CheckType        string    `json:"checkType"`
+	EndpointName     string    `json:"endpointName"`
+	HourBucket       time.Time `json:"hourBucket"` // Truncated to hour
+	TotalChecks      int       `json:"totalChecks"`
+	SuccessfulChecks int       `json:"successfulChecks"`
+	AvgLatencyMs     float64   `json:"avgLatencyMs"`
+	MinLatencyMs     float64   `json:"minLatencyMs"`
+	MaxLatencyMs     float64   `json:"maxLatencyMs"`
+	P95LatencyMs     float64   `json:"p95LatencyMs"`
+}
+
+// HealthCheckDailyRollup represents daily aggregated health check data.
+type HealthCheckDailyRollup struct {
+	ID                  int64     `json:"id"`
+	CheckType           string    `json:"checkType"`
+	EndpointName        string    `json:"endpointName"`
+	DayBucket           time.Time `json:"dayBucket"` // Truncated to day
+	TotalChecks         int       `json:"totalChecks"`
+	SuccessfulChecks    int       `json:"successfulChecks"`
+	AvgLatencyMs        float64   `json:"avgLatencyMs"`
+	MinLatencyMs        float64   `json:"minLatencyMs"`
+	MaxLatencyMs        float64   `json:"maxLatencyMs"`
+	P95LatencyMs        float64   `json:"p95LatencyMs"`
+	AvailabilityPercent float64   `json:"availabilityPercent"`
+}
+
+// HealthCheckQueryOptions specifies criteria for querying health check results.
+type HealthCheckQueryOptions struct {
+	CheckType    string
+	EndpointName string
+	TimeRange    TimeRange
+	Limit        int
+	Offset       int
+}
+
+// EndpointHealthScore represents the computed health score for an endpoint.
+type EndpointHealthScore struct {
+	EndpointName     string    `json:"endpointName"`
+	CheckType        string    `json:"checkType"`
+	AvailabilityPct  float64   `json:"availabilityPct"`  // Last 24h uptime percentage
+	LatencyScore     float64   `json:"latencyScore"`     // 0-100 based on P95 vs threshold
+	CriticalityScore float64   `json:"criticalityScore"` // User-defined 1-10 scale (normalized to 0-100)
+	CompositeScore   float64   `json:"compositeScore"`   // 0.4*Avail + 0.3*Latency + 0.3*Criticality
+	Status           string    `json:"status"`           // healthy, degraded, critical
+	LastCheck        time.Time `json:"lastCheck"`
+}
+
 // Pagination represents pagination parameters.
 type Pagination struct {
 	Offset int

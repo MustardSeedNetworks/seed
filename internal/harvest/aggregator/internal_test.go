@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/krisarmstrong/seed/internal/harvest/aggregator"
 )
@@ -177,7 +178,7 @@ func TestPeriodKey_Internal(t *testing.T) {
 				assert.Error(t, err)
 				return
 			}
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -260,24 +261,24 @@ func TestAggregationWorkflow(t *testing.T) {
 		End:   baseTime.Add(48 * time.Hour),
 	}
 	filtered, err := aggregator.FilterByRange(points, tr)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, filtered, 48)
 
 	// Group by period
 	grouped, err := aggregator.GroupByPeriod(filtered, aggregator.PeriodDaily)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, grouped, 2) // 2 days
 
 	// Aggregate the entire filtered set
 	result, err := aggregator.AggregatePoints(filtered, aggregator.PeriodDaily)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 48, result.Count)
-	assert.Equal(t, float64(48*(48+1)/2), result.Sum) // Sum of 1 to 48
+	assert.InDelta(t, float64(48*(48+1)/2), result.Sum, 0.000001) // Sum of 1 to 48
 
 	// Get top values
 	top5 := aggregator.TopN(filtered, 5)
 	assert.Len(t, top5, 5)
-	assert.Equal(t, float64(48), top5[0].Value)
+	assert.InDelta(t, float64(48), top5[0].Value, 0.000001)
 }
 
 func TestStatisticalAnalysisWorkflow(t *testing.T) {
@@ -286,26 +287,26 @@ func TestStatisticalAnalysisWorkflow(t *testing.T) {
 
 	// Calculate basic statistics
 	stats, err := aggregator.Calculate(values)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 10, stats.Count)
 
 	// Find outliers
 	outlierIndices, err := aggregator.Outliers(values)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Contains(t, outlierIndices, 9) // 100 should be identified as outlier
 
 	// Calculate percentiles
 	p50, err := aggregator.Percentile(values, 50)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.InDelta(t, 26.5, p50, 0.5)
 
 	p90, err := aggregator.Percentile(values, 90)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.InDelta(t, 44.2, p90, 1) // 38 + 0.1*(100-38) = 44.2
 
 	// Normalize values
 	normalized, err := aggregator.Normalize(values)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, normalized, len(values))
 	assert.InDelta(t, 0, normalized[0], 0.01) // Min should normalize to 0
 	assert.InDelta(t, 1, normalized[9], 0.01) // Max should normalize to 1
@@ -320,17 +321,17 @@ func TestTimeSeriesAnalysisWorkflow(t *testing.T) {
 
 	// Calculate moving average
 	ma, err := aggregator.MovingAverage(values, 5)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, ma, 46)
 
 	// Calculate EMA
 	ema, err := aggregator.ExponentialMovingAverage(values, 0.3)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, ema, 50)
 
 	// Calculate rate of change
 	roc, err := aggregator.RateOfChange(values)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, roc, 49)
 
 	// Rate of change should be positive for upward trend
@@ -351,7 +352,7 @@ func TestDataPointStruct(t *testing.T) {
 	}
 
 	assert.Equal(t, 2024, dp.Timestamp.Year())
-	assert.Equal(t, 42.5, dp.Value)
+	assert.InDelta(t, 42.5, dp.Value, 0.000001)
 	assert.Equal(t, "test", dp.Label)
 }
 
@@ -381,13 +382,13 @@ func TestAggregatedResultStruct(t *testing.T) {
 	assert.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), result.StartTime)
 	assert.Equal(t, time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC), result.EndTime)
 	assert.Equal(t, 100, result.Count)
-	assert.Equal(t, 5050.0, result.Sum)
-	assert.Equal(t, 1.0, result.Min)
-	assert.Equal(t, 100.0, result.Max)
-	assert.Equal(t, 50.5, result.Avg)
-	assert.Equal(t, 50.5, result.Median)
-	assert.Equal(t, 28.87, result.StdDev)
-	assert.Equal(t, 6, len(result.Percentile))
+	assert.InDelta(t, 5050.0, result.Sum, 0.000001)
+	assert.InDelta(t, 1.0, result.Min, 0.000001)
+	assert.InDelta(t, 100.0, result.Max, 0.000001)
+	assert.InDelta(t, 50.5, result.Avg, 0.000001)
+	assert.InDelta(t, 50.5, result.Median, 0.000001)
+	assert.InDelta(t, 28.87, result.StdDev, 0.000001)
+	assert.Len(t, result.Percentile, 6)
 }
 
 func TestStatisticsStruct(t *testing.T) {
@@ -402,10 +403,10 @@ func TestStatisticsStruct(t *testing.T) {
 	}
 
 	assert.Equal(t, 10, stats.Count)
-	assert.Equal(t, 55.0, stats.Sum)
-	assert.Equal(t, 1.0, stats.Min)
-	assert.Equal(t, 10.0, stats.Max)
-	assert.Equal(t, 5.5, stats.Avg)
-	assert.Equal(t, 5.5, stats.Median)
-	assert.Equal(t, 2.87, stats.StdDev)
+	assert.InDelta(t, 55.0, stats.Sum, 0.000001)
+	assert.InDelta(t, 1.0, stats.Min, 0.000001)
+	assert.InDelta(t, 10.0, stats.Max, 0.000001)
+	assert.InDelta(t, 5.5, stats.Avg, 0.000001)
+	assert.InDelta(t, 5.5, stats.Median, 0.000001)
+	assert.InDelta(t, 2.87, stats.StdDev, 0.000001)
 }

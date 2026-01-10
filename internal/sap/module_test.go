@@ -79,6 +79,8 @@ func TestNewModuleServicesNotNil(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			if tt.service == nil {
 				t.Errorf("expected non-nil %s service", tt.name)
 			}
@@ -330,6 +332,8 @@ func TestModuleServiceGettersTableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			runServiceGetterCase(t, tt)
 		})
 	}
@@ -661,6 +665,8 @@ func TestServiceConstructorsTableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			service := tt.constructor(cfg)
 
 			if tt.wantNil && service != nil {
@@ -1020,6 +1026,8 @@ func TestErrorsHaveMessages(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			if tt.err.Error() == "" {
 				t.Errorf("%s should have non-empty message", tt.name)
 			}
@@ -1048,6 +1056,8 @@ func TestConstantsValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			if tt.got != tt.expected {
 				t.Errorf("%s: got %v, expected %v", tt.name, tt.got, tt.expected)
 			}
@@ -1156,6 +1166,8 @@ func TestJoinAddressesTableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := sap.JoinAddresses(tt.addrs)
 			if result != tt.expected {
 				t.Errorf("JoinAddresses(%v) = %q, want %q", tt.addrs, result, tt.expected)
@@ -1183,6 +1195,8 @@ func TestConvertGatewayStatusTableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := sap.ConvertGatewayStatus(tt.status)
 			if result != tt.expected {
 				t.Errorf("ConvertGatewayStatus(%q) = %q, want %q", tt.status, result, tt.expected)
@@ -1209,6 +1223,8 @@ func TestConvertGatewayStatusExportedTableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := sap.ConvertGatewayStatusExported(tt.status)
 			if result != tt.expected {
 				t.Errorf("ConvertGatewayStatusExported(%q) = %q, want %q", tt.status, result, tt.expected)
@@ -1236,6 +1252,8 @@ func TestConvertCableStatusExportedTableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := sap.ConvertCableStatusExported(tt.status)
 			if result != tt.expected {
 				t.Errorf("ConvertCableStatusExported(%q) = %q, want %q", tt.status, result, tt.expected)

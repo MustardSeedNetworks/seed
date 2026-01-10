@@ -30,6 +30,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LoginForm } from "./app/login-form";
+import { CapabilityWarnings } from "./components/app/capability-warnings";
 import { HeaderBar } from "./components/app/header-bar";
 import { CableCard } from "./components/cards/cable-card";
 import { DnsCard } from "./components/cards/dns-card";
@@ -60,12 +61,14 @@ import { useSettings } from "./contexts/useSettings";
 // Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { useAppDrawers } from "./hooks/useAppDrawers";
 import { useAuth } from "./hooks/useAuth";
+import { useCapabilities } from "./hooks/useCapabilities";
 import { useCardState } from "./hooks/useCardState";
 import { useChannelGraph } from "./hooks/useChannelGraph";
 import { useInterfaceState } from "./hooks/useInterfaceState";
 import { useNetworkFetchers } from "./hooks/useNetworkFetchers";
 import { useSetupState } from "./hooks/useSetupState";
 import { useSse } from "./hooks/useSse";
+import { useSsePolling } from "./hooks/useSsePolling";
 import { useTheme } from "./hooks/useTheme";
 import { api, setSessionExpiredCallback } from "./lib/api";
 import { LogComponents, logger } from "./lib/logger";
@@ -81,6 +84,8 @@ function App() {
   const { t } = useTranslation("common");
   const { isAuthenticated, login, logout, isLoading, error } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  // Issue #803: Track network capabilities for warning display
+  const { capabilities } = useCapabilities();
 
   // Sync logger auth state to prevent 401 spam on login screen
   useEffect(() => {
@@ -135,6 +140,9 @@ function App() {
   >([]);
   const [networkDiscovery, setNetworkDiscovery] = useState<NetworkDiscoveryData | null>(null);
   const [appVersion, setAppVersion] = useState("dev");
+  // #756: Auto-detected recommended interfaces (most capable)
+  const [recommendedEthernet, setRecommendedEthernet] = useState<string | undefined>();
+  const [recommendedWifi, setRecommendedWifi] = useState<string | undefined>();
 
   // Refs to track device scan polling interval and timeout for cleanup
   const scanPollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -222,6 +230,9 @@ function App() {
     userSetWifiModeRef,
     networkDiscoveryAbortRef,
     prevLinkUpRef,
+    // #756: Pass setters for recommended interfaces
+    setRecommendedEthernet,
+    setRecommendedWifi,
   });
 
   // Channel graph data for WiFi visualization (extracted to hook #889)
@@ -652,71 +663,24 @@ function App() {
     setLoading,
   ]);
 
-  // Fallback REST polling when SSE is not connected (fixes #672)
-  // When SSE is connected, backend pushes updates every 5 seconds via card_update messages
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    // Only poll if SSE is not connected
-    if (sseStatus === "connected") {
-      // SSE provides real-time updates, no need for aggressive polling
-      // Still poll some endpoints that aren't broadcast (interfaces, wifi details)
-      const slowInterval = setInterval(() => {
-        fetchInterfaces();
-        fetchWifiData(); // WiFi details not broadcast via SSE
-        fetchCableData(); // Cable test not broadcast via SSE
-        fetchChannelGraphData(); // Channel graph data for WiFi visualization
-      }, 60000); // 60 second interval for non-SSE data (increased from 30s)
-
-      return () => clearInterval(slowInterval);
-    }
-
-    // Fallback: Poll when SSE disconnected with exponential backoff
-    let attempts = 0;
-    const maxAttempts = 5;
-
-    const scheduleNextPoll = () => {
-      // Exponential backoff: 15s, 30s, 60s, 120s, 240s (capped)
-      const baseDelay = 15000;
-      const delay = Math.min(baseDelay * 2 ** attempts, 240000);
-
-      return setTimeout(() => {
-        fetchLinkData();
-        fetchIpConfig();
-        fetchDiscoveryData();
-        fetchDnsData();
-        fetchGatewayData();
-        fetchVlanData();
-        fetchWifiData();
-
-        // Increase attempts up to max, then reset for continuous polling
-        attempts = (attempts + 1) % (maxAttempts + 1);
-      }, delay);
-    };
-
-    const timeoutId = scheduleNextPoll();
-    const interval = setInterval(() => {
-      scheduleNextPoll();
-    }, 240000); // Maximum interval of 4 minutes
-
-    return () => {
-      clearTimeout(timeoutId);
-      clearInterval(interval);
-    };
-  }, [
+  // SSE polling: fallback REST polling when SSE disconnected + supplementary data polling
+  // Extracted to useSsePolling hook (#892) - see hook for interval details
+  useSsePolling({
     isAuthenticated,
     sseStatus,
-    fetchLinkData,
-    fetchIpConfig,
-    fetchInterfaces,
-    fetchDiscoveryData,
-    fetchDnsData,
-    fetchGatewayData,
-    fetchVlanData,
-    fetchWifiData,
-    fetchCableData,
-    fetchChannelGraphData,
-  ]);
+    fetchers: {
+      fetchLinkData,
+      fetchIpConfig,
+      fetchInterfaces,
+      fetchDiscoveryData,
+      fetchDnsData,
+      fetchGatewayData,
+      fetchVlanData,
+      fetchWifiData,
+      fetchCableData,
+      fetchChannelGraphData,
+    },
+  });
 
   // Auto-scan network devices on mount (respects per-card autoRunOnLink setting)
   useEffect(() => {
@@ -807,11 +771,17 @@ function App() {
         onHelpOpen={openHelp}
         onSettingsOpen={openSettings}
         logout={logout}
+        // #756: Recommended (most capable) interfaces
+        recommendedEthernet={recommendedEthernet}
+        recommendedWifi={recommendedWifi}
       />
 
       {/* Main content - pb-24 adds bottom padding for fixed FAB */}
       <main className={cn(spacing.mainPadding.y, "pb-24")}>
         <div className={cn(section.width.xl, "mx-auto", spacing.mainPadding.x)}>
+          {/* Issue #803: Show warning banner when network capabilities are missing */}
+          <CapabilityWarnings capabilities={capabilities} />
+
           {/* Section: Primary Connectivity - cards differ by interface type */}
           <section aria-labelledby="connectivity-heading" className={spacing.margin.bottom.section}>
             <h2

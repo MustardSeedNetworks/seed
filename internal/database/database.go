@@ -64,12 +64,13 @@ type DB struct {
 	closed bool
 
 	// Repositories - lazily initialized
-	profiles *ProfileRepository
-	metrics  *MetricsRepository
-	devices  *DeviceRepository
-	alerts   *AlertRepository
-	settings *SettingsRepository
-	logs     *LogRepository
+	profiles     *ProfileRepository
+	metrics      *MetricsRepository
+	devices      *DeviceRepository
+	alerts       *AlertRepository
+	settings     *SettingsRepository
+	logs         *LogRepository
+	healthChecks *HealthCheckRepository
 }
 
 // Config holds database configuration options.
@@ -414,6 +415,17 @@ func (db *DB) Logs() *LogRepository {
 		db.logs = &LogRepository{db: db}
 	}
 	return db.logs
+}
+
+// HealthChecks returns the health checks repository.
+func (db *DB) HealthChecks() *HealthCheckRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.healthChecks == nil {
+		db.healthChecks = &HealthCheckRepository{db: db}
+	}
+	return db.healthChecks
 }
 
 // Exec executes a query without returning any rows.

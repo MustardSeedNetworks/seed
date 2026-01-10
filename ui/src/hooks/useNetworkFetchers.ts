@@ -59,6 +59,17 @@ interface NetworkInterface {
   hasTdr?: boolean;
   hasDom?: boolean;
   score?: number;
+  signalStrength?: number; // dBm for WiFi interfaces
+}
+
+/** #756: Categorized interfaces response from backend */
+interface CategorizedInterfacesResponse {
+  ethernet: NetworkInterface[];
+  wifi: NetworkInterface[];
+  recommendedEthernet?: string;
+  recommendedWifi?: string;
+  currentInterface: string;
+  currentType: string;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -76,6 +87,10 @@ interface UseNetworkFetchersProps {
   userSetWifiModeRef: React.MutableRefObject<boolean>;
   networkDiscoveryAbortRef: React.MutableRefObject<AbortController | null>;
   prevLinkUpRef: React.MutableRefObject<boolean | null>;
+  /** #756: Set recommended ethernet interface (most capable) */
+  setRecommendedEthernet?: React.Dispatch<React.SetStateAction<string | undefined>>;
+  /** #756: Set recommended WiFi interface (most capable) */
+  setRecommendedWifi?: React.Dispatch<React.SetStateAction<string | undefined>>;
 }
 
 export function useNetworkFetchers({
@@ -89,6 +104,8 @@ export function useNetworkFetchers({
   userSetWifiModeRef,
   networkDiscoveryAbortRef,
   prevLinkUpRef,
+  setRecommendedEthernet,
+  setRecommendedWifi,
 }: UseNetworkFetchersProps) {
   // Fetch link data (Layer 2 only)
   const fetchLinkData = useCallback(async () => {
@@ -172,20 +189,29 @@ export function useNetworkFetchers({
     }
   }, [currentInterfaceRef, setCards]);
 
-  // Fetch interfaces
+  // Fetch interfaces (#756: Use categorized endpoint for recommendations)
   const fetchInterfaces = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/interfaces`, {
+      const response = await fetch(`${API_BASE}/api/interfaces?categorized=true`, {
         credentials: "include",
       });
       if (response.ok) {
-        const data = await response.json();
-        setInterfaces(data);
+        const data: CategorizedInterfacesResponse = await response.json();
+        // Combine ethernet and wifi interfaces for flat list compatibility
+        const allInterfaces = [...(data.ethernet || []), ...(data.wifi || [])];
+        setInterfaces(allInterfaces);
+        // Update recommended interfaces if setters are provided
+        if (setRecommendedEthernet && data.recommendedEthernet) {
+          setRecommendedEthernet(data.recommendedEthernet);
+        }
+        if (setRecommendedWifi && data.recommendedWifi) {
+          setRecommendedWifi(data.recommendedWifi);
+        }
       }
     } catch (err) {
       logger.error(LogComponents.Network, "Failed to fetch interfaces", err);
     }
-  }, [setInterfaces]);
+  }, [setInterfaces, setRecommendedEthernet, setRecommendedWifi]);
 
   // Fetch app version from status endpoint
   const fetchVersion = useCallback(async () => {

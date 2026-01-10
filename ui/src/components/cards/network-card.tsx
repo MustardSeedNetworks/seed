@@ -22,6 +22,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { formatTime, isValidNumber } from "../../lib/format";
 import { border, cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
 import { CardDivider, CardRow, CardValue, type Status } from "../ui/card";
 import { Network } from "../ui/icons";
@@ -103,17 +104,14 @@ interface DhcpCardProps {
  * @param thresholds - Warning and critical thresholds in ms
  * @returns Status color ('success', 'warning', 'error')
  */
-function getTimingStatus(value: number, thresholds: { warning: number; critical: number }): Status {
+function getTimingStatus(
+  value: number | undefined | null,
+  thresholds: { warning: number; critical: number },
+): Status {
+  if (!isValidNumber(value)) return "unknown";
   if (value >= thresholds.critical) return "error";
   if (value >= thresholds.warning) return "warning";
   return "success";
-}
-
-function formatTime(ms: number): string {
-  if (ms >= 1000) {
-    return `${(ms / 1000).toFixed(1)}s`;
-  }
-  return `${Math.round(ms)}ms`;
 }
 
 function formatLeaseTime(seconds: number): string {

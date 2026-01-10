@@ -140,6 +140,12 @@ func TestDeviceStructure(t *testing.T) {
 	if device.Hostname != "test-host" {
 		t.Errorf("expected hostname 'test-host', got %q", device.Hostname)
 	}
+	if device.Vendor != "Test Vendor" {
+		t.Errorf("expected vendor 'Test Vendor', got %q", device.Vendor)
+	}
+	if device.OS != "Linux" {
+		t.Errorf("expected OS 'Linux', got %q", device.OS)
+	}
 
 	// Verify DeviceType
 	if device.DeviceType != shell.DeviceTypeServer {
@@ -159,6 +165,15 @@ func TestDeviceStructure(t *testing.T) {
 	// Verify IsOnline
 	if !device.IsOnline {
 		t.Error("expected IsOnline to be true")
+	}
+	if device.IsGateway {
+		t.Error("expected IsGateway to be false")
+	}
+	if !device.FirstSeen.Equal(now.Add(-time.Hour)) {
+		t.Errorf("expected FirstSeen %v, got %v", now.Add(-time.Hour), device.FirstSeen)
+	}
+	if !device.LastSeen.Equal(now) {
+		t.Errorf("expected LastSeen %v, got %v", now, device.LastSeen)
 	}
 
 	// Verify Metadata
@@ -344,6 +359,16 @@ func TestDiscoveryResultStructure(t *testing.T) {
 	if result.ScanDuration != duration {
 		t.Errorf("expected scan duration %v, got %v", duration, result.ScanDuration)
 	}
+	if result.ScanDurationMs != float64(duration.Milliseconds()) {
+		t.Errorf("expected scan duration ms %v, got %v",
+			float64(duration.Milliseconds()), result.ScanDurationMs)
+	}
+	if !result.StartedAt.Equal(now.Add(-duration)) {
+		t.Errorf("expected StartedAt %v, got %v", now.Add(-duration), result.StartedAt)
+	}
+	if !result.CompletedAt.Equal(now) {
+		t.Errorf("expected CompletedAt %v, got %v", now, result.CompletedAt)
+	}
 }
 
 // ========== DiscoveryOptions Structure Tests ==========
@@ -373,14 +398,32 @@ func TestDiscoveryOptionsStructure(t *testing.T) {
 	if !opts.EnableARP {
 		t.Error("expected EnableARP to be true")
 	}
+	if !opts.EnableICMP {
+		t.Error("expected EnableICMP to be true")
+	}
+	if !opts.EnableNDP {
+		t.Error("expected EnableNDP to be true")
+	}
+	if !opts.EnableLLDP {
+		t.Error("expected EnableLLDP to be true")
+	}
 	if opts.EnableCDP {
 		t.Error("expected EnableCDP to be false")
+	}
+	if !opts.EnableSNMP {
+		t.Error("expected EnableSNMP to be true")
 	}
 	if len(opts.PortScanPorts) != 4 {
 		t.Errorf("expected 4 port scan ports, got %d", len(opts.PortScanPorts))
 	}
+	if !opts.PortScan {
+		t.Error("expected PortScan to be true")
+	}
 	if opts.Timeout != 30*time.Second {
 		t.Errorf("expected timeout 30s, got %v", opts.Timeout)
+	}
+	if opts.Concurrency != 10 {
+		t.Errorf("expected Concurrency 10, got %d", opts.Concurrency)
 	}
 }
 
@@ -388,20 +431,23 @@ func TestDiscoveryOptionsStructure(t *testing.T) {
 
 func TestVulnerabilityStructure(t *testing.T) {
 	now := time.Now()
+	wantDescription := "A critical vulnerability allowing remote code execution"
+	wantCVSSVector := "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+	wantReferences := []string{"https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-12345"}
 
 	vuln := shell.Vulnerability{
 		ID:              "vuln-001",
 		DeviceID:        "device-001",
 		CVEID:           "CVE-2024-12345",
 		Title:           "Critical Remote Code Execution",
-		Description:     "A critical vulnerability allowing remote code execution",
+		Description:     wantDescription,
 		Severity:        shell.SeverityCritical,
 		CVSSScore:       9.8,
-		CVSSVector:      "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+		CVSSVector:      wantCVSSVector,
 		AffectedPort:    443,
 		AffectedService: "https",
 		Remediation:     "Update to version 2.0.0 or later",
-		References:      []string{"https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-12345"},
+		References:      wantReferences,
 		IsKEV:           true,
 		IsExploited:     true,
 		DiscoveredAt:    now,
@@ -411,14 +457,47 @@ func TestVulnerabilityStructure(t *testing.T) {
 	if vuln.ID != "vuln-001" {
 		t.Errorf("expected ID 'vuln-001', got %q", vuln.ID)
 	}
+	if vuln.DeviceID != "device-001" {
+		t.Errorf("expected DeviceID 'device-001', got %q", vuln.DeviceID)
+	}
 	if vuln.CVEID != "CVE-2024-12345" {
 		t.Errorf("expected CVEID 'CVE-2024-12345', got %q", vuln.CVEID)
+	}
+	if vuln.Title != "Critical Remote Code Execution" {
+		t.Errorf("expected Title 'Critical Remote Code Execution', got %q", vuln.Title)
+	}
+	if vuln.Description != wantDescription {
+		t.Errorf("expected Description %q, got %q", wantDescription, vuln.Description)
 	}
 	if vuln.Severity != shell.SeverityCritical {
 		t.Errorf("expected severity critical, got %v", vuln.Severity)
 	}
 	if vuln.CVSSScore != 9.8 {
 		t.Errorf("expected CVSS score 9.8, got %f", vuln.CVSSScore)
+	}
+	if vuln.CVSSVector != wantCVSSVector {
+		t.Errorf("expected CVSSVector %q, got %q", wantCVSSVector, vuln.CVSSVector)
+	}
+	if vuln.AffectedPort != 443 {
+		t.Errorf("expected AffectedPort 443, got %d", vuln.AffectedPort)
+	}
+	if vuln.AffectedService != "https" {
+		t.Errorf("expected AffectedService 'https', got %q", vuln.AffectedService)
+	}
+	if vuln.Remediation != "Update to version 2.0.0 or later" {
+		t.Errorf(
+			"expected Remediation 'Update to version 2.0.0 or later', got %q",
+			vuln.Remediation,
+		)
+	}
+	if len(vuln.References) != len(wantReferences) {
+		t.Fatalf("expected %d references, got %d", len(wantReferences), len(vuln.References))
+	}
+	if vuln.References[0] != wantReferences[0] {
+		t.Errorf("expected References[0] %q, got %q", wantReferences[0], vuln.References[0])
+	}
+	if !vuln.DiscoveredAt.Equal(now) {
+		t.Errorf("expected DiscoveredAt %v, got %v", now, vuln.DiscoveredAt)
 	}
 	if !vuln.IsKEV {
 		t.Error("expected IsKEV to be true")
@@ -470,6 +549,25 @@ func TestVulnerabilityScanStructure(t *testing.T) {
 	if scan.TotalHigh != 1 {
 		t.Errorf("expected 1 high, got %d", scan.TotalHigh)
 	}
+	if scan.TotalMedium != 1 {
+		t.Errorf("expected 1 medium, got %d", scan.TotalMedium)
+	}
+	if scan.TotalLow != 0 {
+		t.Errorf("expected 0 low, got %d", scan.TotalLow)
+	}
+	if scan.ScanDuration != duration {
+		t.Errorf("expected ScanDuration %v, got %v", duration, scan.ScanDuration)
+	}
+	if scan.ScanDurationMs != float64(duration.Milliseconds()) {
+		t.Errorf("expected ScanDurationMs %v, got %v",
+			float64(duration.Milliseconds()), scan.ScanDurationMs)
+	}
+	if !scan.StartedAt.Equal(now.Add(-duration)) {
+		t.Errorf("expected StartedAt %v, got %v", now.Add(-duration), scan.StartedAt)
+	}
+	if !scan.CompletedAt.Equal(now) {
+		t.Errorf("expected CompletedAt %v, got %v", now, scan.CompletedAt)
+	}
 }
 
 // ========== PostureScore Structure Tests ==========
@@ -498,8 +596,16 @@ func TestPostureScoreStructure(t *testing.T) {
 				Overall:    75,
 				Categories: map[string]int{"vulnerabilities": 60, "configuration": 90},
 				Issues: []shell.PostureIssue{
-					{Category: "vulnerabilities", Severity: "high", Description: "Critical vuln found"},
-					{Category: "configuration", Severity: "medium", Description: "Weak password policy"},
+					{
+						Category:    "vulnerabilities",
+						Severity:    "high",
+						Description: "Critical vuln found",
+					},
+					{
+						Category:    "configuration",
+						Severity:    "medium",
+						Description: "Weak password policy",
+					},
 				},
 				Improvements: []string{"Patch critical vulnerabilities", "Enable MFA"},
 				AssessedAt:   time.Now(),
@@ -513,7 +619,11 @@ func TestPostureScoreStructure(t *testing.T) {
 				Overall:    0,
 				Categories: map[string]int{"vulnerabilities": 0, "configuration": 0},
 				Issues: []shell.PostureIssue{
-					{Category: "critical", Severity: "critical", Description: "Major breach detected"},
+					{
+						Category:    "critical",
+						Severity:    "critical",
+						Description: "Major breach detected",
+					},
 				},
 				AssessedAt: time.Now(),
 			},
@@ -550,6 +660,9 @@ func TestPostureIssueStructure(t *testing.T) {
 	if issue.Severity != "critical" {
 		t.Errorf("expected severity 'critical', got %q", issue.Severity)
 	}
+	if issue.Description != "Critical vulnerability CVE-2024-12345 detected" {
+		t.Errorf("expected description to match, got %q", issue.Description)
+	}
 	if issue.Remediation == "" {
 		t.Error("expected remediation to be set")
 	}
@@ -583,6 +696,9 @@ func TestRogueDeviceStructure(t *testing.T) {
 	}
 	if rogue.Reason == "" {
 		t.Error("expected reason to be set")
+	}
+	if !rogue.DetectedAt.Equal(now) {
+		t.Errorf("expected DetectedAt %v, got %v", now, rogue.DetectedAt)
 	}
 }
 
@@ -639,6 +755,9 @@ func TestRogueAlertStructure(t *testing.T) {
 			}
 			if tt.alert.AlertType == "" {
 				t.Error("expected alert type to be set")
+			}
+			if tt.alert.Device.DetectedAt.IsZero() {
+				t.Error("expected device DetectedAt to be set")
 			}
 			isAckNil := tt.alert.AcknowledgedAt == nil
 			if isAckNil != tt.wantAckNil {

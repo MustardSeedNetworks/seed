@@ -125,6 +125,8 @@ func TestIsValidExtractedBinaryEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			if tt.skipReason != "" {
 				if runtime.GOOS == "windows" {
 					t.Skip(tt.skipReason)
@@ -330,6 +332,8 @@ func TestNotFoundErrorFormatting(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			errMsg := tt.err.Error()
 
 			for _, expected := range tt.shouldContain {
@@ -496,6 +500,8 @@ func TestIsValidExtractedBinaryPermissions(t *testing.T) {
 
 	for _, tt := range permissions {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			binaryPath := filepath.Join(tempDir, "binary-"+tt.name)
 			versionFile := filepath.Join(tempDir, "version-"+tt.name)
 

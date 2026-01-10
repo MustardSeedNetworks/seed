@@ -9,11 +9,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"math"
 	"net"
 	"net/http"
 	"net/http/httptrace"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -138,10 +140,15 @@ type UDPPortResponse struct {
 
 // HTTPEndpointResponse contains an HTTP endpoint test configuration.
 type HTTPEndpointResponse struct {
-	Name           string `json:"name"`
-	URL            string `json:"url"`
-	ExpectedStatus int    `json:"expectedStatus"`
-	Enabled        bool   `json:"enabled"`
+	Name                 string `json:"name"`
+	URL                  string `json:"url"`
+	ExpectedStatus       int    `json:"expectedStatus"`
+	Enabled              bool   `json:"enabled"`
+	BodyMatch            string `json:"bodyMatch,omitempty"`
+	BodyMatchIsRegex     bool   `json:"bodyMatchIsRegex,omitempty"`
+	CheckSecurityHeaders bool   `json:"checkSecurityHeaders,omitempty"`
+	FollowRedirects      bool   `json:"followRedirects,omitempty"`
+	MaxRedirects         int    `json:"maxRedirects,omitempty"`
 }
 
 // RTSPEndpointResponse contains an RTSP stream test configuration (Issue #778).
@@ -258,10 +265,15 @@ func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request)
 
 	for _, h := range s.config.HealthChecks.HTTPEndpoints {
 		resp.HTTPEndpoints = append(resp.HTTPEndpoints, HTTPEndpointResponse{
-			Name:           h.Name,
-			URL:            h.URL,
-			ExpectedStatus: h.ExpectedStatus,
-			Enabled:        h.Enabled,
+			Name:                 h.Name,
+			URL:                  h.URL,
+			ExpectedStatus:       h.ExpectedStatus,
+			Enabled:              h.Enabled,
+			BodyMatch:            h.BodyMatch,
+			BodyMatchIsRegex:     h.BodyMatchIsRegex,
+			CheckSecurityHeaders: h.CheckSecurityHeaders,
+			FollowRedirects:      h.FollowRedirects,
+			MaxRedirects:         h.MaxRedirects,
 		})
 	}
 
@@ -348,10 +360,15 @@ func (s *Server) applyTestTargets(req *TestsSettingsResponse) {
 		s.config.HealthChecks.HTTPEndpoints = append(
 			s.config.HealthChecks.HTTPEndpoints,
 			config.HTTPEndpoint{
-				Name:           h.Name,
-				URL:            h.URL,
-				ExpectedStatus: h.ExpectedStatus,
-				Enabled:        h.Enabled,
+				Name:                 h.Name,
+				URL:                  h.URL,
+				ExpectedStatus:       h.ExpectedStatus,
+				Enabled:              h.Enabled,
+				BodyMatch:            h.BodyMatch,
+				BodyMatchIsRegex:     h.BodyMatchIsRegex,
+				CheckSecurityHeaders: h.CheckSecurityHeaders,
+				FollowRedirects:      h.FollowRedirects,
+				MaxRedirects:         h.MaxRedirects,
 			},
 		)
 	}
@@ -478,6 +495,41 @@ type CustomTestResult struct {
 	CertCommonName string `json:"certCommonName,omitempty"` // Certificate CN
 	TLSVersion     string `json:"tlsVersion,omitempty"`     // TLS 1.2, TLS 1.3, etc.
 	CertIssuer     string `json:"certIssuer,omitempty"`     // Certificate issuer
+	// HTTP enhancements (Health Checks 100x)
+	BodyMatchSuccess bool             `json:"bodyMatchSuccess,omitempty"` // True if body matched pattern
+	BodyMatchStatus  string           `json:"bodyMatchStatus,omitempty"`  // success, error
+	ResponseSize     int64            `json:"responseSize,omitempty"`     // Response body size in bytes
+	HTTPVersion      string           `json:"httpVersion,omitempty"`      // HTTP/1.1, HTTP/2, HTTP/3
+	SecurityHeaders  *SecurityHeaders `json:"securityHeaders,omitempty"`  // Security headers check results
+	RedirectChain    []RedirectHop    `json:"redirectChain,omitempty"`    // Redirect chain details
+}
+
+// SecurityHeaders contains results of security header checks.
+type SecurityHeaders struct {
+	HSTS              *HeaderCheck `json:"hsts,omitempty"`              // Strict-Transport-Security
+	CSP               *HeaderCheck `json:"csp,omitempty"`               // Content-Security-Policy
+	XFrameOptions     *HeaderCheck `json:"xFrameOptions,omitempty"`     // X-Frame-Options
+	XContentType      *HeaderCheck `json:"xContentType,omitempty"`      // X-Content-Type-Options
+	XSSProtection     *HeaderCheck `json:"xssProtection,omitempty"`     // X-XSS-Protection
+	ReferrerPolicy    *HeaderCheck `json:"referrerPolicy,omitempty"`    // Referrer-Policy
+	PermissionsPolicy *HeaderCheck `json:"permissionsPolicy,omitempty"` // Permissions-Policy
+	OverallStatus     string       `json:"overallStatus"`               // success, warning, error
+	Score             int          `json:"score"`                       // 0-100 security score
+}
+
+// HeaderCheck represents the check result for a single security header.
+type HeaderCheck struct {
+	Present bool   `json:"present"`           // Whether header is present
+	Value   string `json:"value,omitempty"`   // Header value if present
+	Status  string `json:"status"`            // success, warning, error
+	Message string `json:"message,omitempty"` // Recommendation/warning message
+}
+
+// RedirectHop represents a single hop in a redirect chain.
+type RedirectHop struct {
+	URL        string  `json:"url"`
+	StatusCode int     `json:"statusCode"`
+	LatencyMs  float64 `json:"latencyMs"` // Time taken for this hop
 }
 
 // CustomTestsResult represents results from all custom tests.
@@ -873,33 +925,113 @@ func (s *Server) runSingleHTTPTest(
 	}
 
 	testResult := CustomTestResult{Name: name, URL: url}
-	statusCode, timings, err := runHTTPTest(ctx, url, endpoint.ExpectedStatus)
 
-	// Try HTTP fallback if HTTPS failed
-	if err != nil && tryHTTPFallback {
-		httpURL := "http://" + endpoint.URL
-		if httpStatus, httpTimings, httpErr := runHTTPTest(ctx, httpURL, endpoint.ExpectedStatus); httpErr == nil ||
-			httpStatus > 0 {
-			url = httpURL
-			testResult.URL = httpURL
-			statusCode, timings, err = httpStatus, httpTimings, httpErr
+	// Determine if we need enhanced testing (body match, security headers, or redirects)
+	needsEnhanced := endpoint.BodyMatch != "" || endpoint.CheckSecurityHeaders || endpoint.FollowRedirects
+
+	if needsEnhanced {
+		// Use enhanced HTTP test with body reading and redirect following
+		resp, err := runHTTPTestEnhanced(
+			ctx,
+			url,
+			endpoint.ExpectedStatus,
+			endpoint.FollowRedirects,
+			endpoint.MaxRedirects,
+		)
+
+		// Try HTTP fallback if HTTPS failed
+		if err != nil && tryHTTPFallback {
+			httpURL := "http://" + endpoint.URL
+			if httpResp, httpErr := runHTTPTestEnhanced(ctx, httpURL, endpoint.ExpectedStatus, endpoint.FollowRedirects, endpoint.MaxRedirects); httpErr == nil ||
+				(httpResp != nil && httpResp.StatusCode > 0) {
+				url = httpURL
+				testResult.URL = httpURL
+				resp, err = httpResp, httpErr
+			}
 		}
-	}
 
-	testResult.Status = statusCode
-	testResult.Latency = timings.Total
-	testResult.DNSLatency = timings.DNS
-	testResult.TCPConnect = timings.Connect
-	testResult.TLSLatency = timings.TLS
-	testResult.TTFBLatency = timings.TTFB
+		if resp != nil {
+			testResult.Status = resp.StatusCode
+			testResult.Latency = resp.Timings.Total
+			testResult.DNSLatency = resp.Timings.DNS
+			testResult.TCPConnect = resp.Timings.Connect
+			testResult.TLSLatency = resp.Timings.TLS
+			testResult.TTFBLatency = resp.Timings.TTFB
+			testResult.ResponseSize = resp.BodySize
+			testResult.HTTPVersion = resp.HTTPVersion
 
-	if err != nil {
-		testResult.Success = false
-		testResult.Error = "HTTP request failed"
-		testResult.TestStatus = statusError
+			if len(resp.RedirectHops) > 0 {
+				testResult.RedirectChain = resp.RedirectHops
+			}
+
+			if err == nil {
+				testResult.Success = true
+				s.evaluateHTTPTimings(&testResult, resp.Timings, &thresholds)
+
+				// Check body match if configured
+				if endpoint.BodyMatch != "" {
+					matched, matchErr := checkBodyMatch(resp.Body, endpoint.BodyMatch, endpoint.BodyMatchIsRegex)
+					testResult.BodyMatchSuccess = matched
+					if matchErr != nil {
+						testResult.BodyMatchStatus = statusError
+						testResult.Error = matchErr.Error()
+						testResult.Success = false
+						testResult.TestStatus = statusError
+					} else if !matched {
+						testResult.BodyMatchStatus = statusError
+						testResult.Success = false
+						testResult.TestStatus = statusError
+						testResult.Error = "Body content did not match expected pattern"
+					} else {
+						testResult.BodyMatchStatus = statusSuccess
+					}
+				}
+
+				// Check security headers if configured
+				if endpoint.CheckSecurityHeaders && testResult.Success {
+					isHTTPS := strings.HasPrefix(url, "https://")
+					testResult.SecurityHeaders = checkSecurityHeaders(resp.Headers, isHTTPS)
+				}
+			} else {
+				testResult.Success = false
+				testResult.Error = "HTTP request failed"
+				testResult.TestStatus = statusError
+			}
+		} else if err != nil {
+			testResult.Success = false
+			testResult.Error = "HTTP request failed"
+			testResult.TestStatus = statusError
+		}
 	} else {
-		testResult.Success = true
-		s.evaluateHTTPTimings(&testResult, timings, &thresholds)
+		// Use standard HTTP test (faster, no body reading)
+		statusCode, timings, err := runHTTPTest(ctx, url, endpoint.ExpectedStatus)
+
+		// Try HTTP fallback if HTTPS failed
+		if err != nil && tryHTTPFallback {
+			httpURL := "http://" + endpoint.URL
+			if httpStatus, httpTimings, httpErr := runHTTPTest(ctx, httpURL, endpoint.ExpectedStatus); httpErr == nil ||
+				httpStatus > 0 {
+				url = httpURL
+				testResult.URL = httpURL
+				statusCode, timings, err = httpStatus, httpTimings, httpErr
+			}
+		}
+
+		testResult.Status = statusCode
+		testResult.Latency = timings.Total
+		testResult.DNSLatency = timings.DNS
+		testResult.TCPConnect = timings.Connect
+		testResult.TLSLatency = timings.TLS
+		testResult.TTFBLatency = timings.TTFB
+
+		if err != nil {
+			testResult.Success = false
+			testResult.Error = "HTTP request failed"
+			testResult.TestStatus = statusError
+		} else {
+			testResult.Success = true
+			s.evaluateHTTPTimings(&testResult, timings, &thresholds)
+		}
 	}
 
 	// Check certificate expiry for HTTPS URLs
@@ -928,6 +1060,23 @@ type httpTimings struct {
 	TTFB    float64 // Time to first byte (from request sent to first response byte)
 	Total   float64
 }
+
+// httpResponse contains extended HTTP response data for enhanced checks.
+type httpResponse struct {
+	StatusCode   int
+	Headers      http.Header
+	Body         []byte // Limited to maxBodyReadBytes
+	BodySize     int64  // Total content length (may be larger than Body)
+	HTTPVersion  string // HTTP/1.1, HTTP/2, etc.
+	Timings      httpTimings
+	RedirectHops []RedirectHop
+}
+
+// Maximum bytes to read from response body for pattern matching.
+const maxBodyReadBytes = 64 * 1024 // 64KB
+
+// Default max redirects if not specified.
+const defaultMaxRedirects = 10
 
 // runHTTPTest runs an HTTP test and returns status code and timings in ms.
 // Uses SafeTransport to prevent DNS rebinding SSRF attacks.
@@ -1005,6 +1154,430 @@ func runHTTPTest(ctx context.Context, url string, expectedStatus int) (int, http
 	}
 
 	return statusCode, timing, nil
+}
+
+// runHTTPTestEnhanced runs an HTTP test with body reading and redirect following.
+// Returns full response details for body matching and security header checks.
+func runHTTPTestEnhanced(
+	ctx context.Context,
+	url string,
+	expectedStatus int,
+	followRedirects bool,
+	maxRedirects int,
+) (*httpResponse, error) {
+	result := &httpResponse{
+		RedirectHops: make([]RedirectHop, 0),
+	}
+
+	if maxRedirects <= 0 {
+		maxRedirects = defaultMaxRedirects
+	}
+
+	transport := validation.SafeTransport()
+
+	currentURL := url
+	var lastTiming httpTimings
+
+	for i := 0; i <= maxRedirects; i++ {
+		hopStart := time.Now()
+		resp, timing, err := runSingleHTTPRequest(ctx, currentURL, transport)
+		if err != nil {
+			return nil, err
+		}
+
+		lastTiming = timing
+
+		// Check if this is a redirect
+		if resp.StatusCode >= 300 && resp.StatusCode < 400 {
+			location := resp.Header.Get("Location")
+			_ = resp.Body.Close()
+
+			hop := RedirectHop{
+				URL:        currentURL,
+				StatusCode: resp.StatusCode,
+				LatencyMs:  time.Since(hopStart).Seconds() * millisecondsPerSecond,
+			}
+			result.RedirectHops = append(result.RedirectHops, hop)
+
+			if !followRedirects || location == "" {
+				// Return the redirect response without following
+				result.StatusCode = resp.StatusCode
+				result.Headers = resp.Header
+				result.HTTPVersion = formatHTTPVersion(resp.Proto)
+				result.Timings = lastTiming
+				return result, nil
+			}
+
+			// Resolve relative URLs
+			if !strings.HasPrefix(location, "http://") && !strings.HasPrefix(location, "https://") {
+				// Relative URL - resolve against current URL
+				if strings.HasPrefix(location, "/") {
+					// Absolute path
+					idx := strings.Index(currentURL, "//")
+					if idx >= 0 {
+						hostEnd := strings.Index(currentURL[idx+2:], "/")
+						if hostEnd >= 0 {
+							currentURL = currentURL[:idx+2+hostEnd] + location
+						} else {
+							currentURL += location
+						}
+					}
+				} else {
+					// Relative path
+					lastSlash := strings.LastIndex(currentURL, "/")
+					if lastSlash > 8 { // After "https://"
+						currentURL = currentURL[:lastSlash+1] + location
+					}
+				}
+			} else {
+				currentURL = location
+			}
+			continue
+		}
+
+		// Non-redirect response - read body and return
+		result.StatusCode = resp.StatusCode
+		result.Headers = resp.Header
+		result.HTTPVersion = formatHTTPVersion(resp.Proto)
+		result.Timings = lastTiming
+
+		// Read body (limited)
+		body, size := readLimitedBody(resp.Body)
+		_ = resp.Body.Close()
+		result.Body = body
+		result.BodySize = size
+
+		// Check expected status
+		if expectedStatus > 0 && result.StatusCode != expectedStatus {
+			return result, fmt.Errorf("expected %d, got %d", expectedStatus, result.StatusCode)
+		}
+
+		return result, nil
+	}
+
+	return nil, fmt.Errorf("too many redirects (max %d)", maxRedirects)
+}
+
+// runSingleHTTPRequest performs a single HTTP request without following redirects.
+func runSingleHTTPRequest(
+	ctx context.Context,
+	url string,
+	transport http.RoundTripper,
+) (*http.Response, httpTimings, error) {
+	var timing httpTimings
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   httpClientTimeoutSec * time.Second,
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, client.Timeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
+	if err != nil {
+		return nil, timing, err
+	}
+
+	var dnsStart, connStart, tlsStart, wroteRequest time.Time
+	trace := &httptrace.ClientTrace{
+		DNSStart: func(httptrace.DNSStartInfo) { dnsStart = time.Now() },
+		DNSDone: func(httptrace.DNSDoneInfo) {
+			if !dnsStart.IsZero() {
+				timing.DNS += time.Since(dnsStart).Seconds() * millisecondsPerSecond
+			}
+		},
+		ConnectStart: func(_, _ string) { connStart = time.Now() },
+		ConnectDone: func(_, _ string, _ error) {
+			if !connStart.IsZero() {
+				timing.Connect += time.Since(connStart).Seconds() * millisecondsPerSecond
+			}
+		},
+		TLSHandshakeStart: func() { tlsStart = time.Now() },
+		TLSHandshakeDone: func(tls.ConnectionState, error) {
+			if !tlsStart.IsZero() {
+				timing.TLS += time.Since(tlsStart).Seconds() * millisecondsPerSecond
+			}
+		},
+		WroteRequest: func(httptrace.WroteRequestInfo) { wroteRequest = time.Now() },
+		GotFirstResponseByte: func() {
+			if !wroteRequest.IsZero() {
+				timing.TTFB = time.Since(wroteRequest).Seconds() * millisecondsPerSecond
+			}
+		},
+	}
+
+	req = req.WithContext(httptrace.WithClientTrace(ctx, trace))
+
+	start := time.Now()
+	resp, err := client.Do(req)
+	timing.Total = time.Since(start).Seconds() * millisecondsPerSecond
+
+	return resp, timing, err
+}
+
+// formatHTTPVersion formats the HTTP protocol version.
+func formatHTTPVersion(proto string) string {
+	switch proto {
+	case "HTTP/2.0":
+		return "HTTP/2"
+	case "HTTP/3":
+		return "HTTP/3"
+	default:
+		return proto
+	}
+}
+
+// readLimitedBody reads up to maxBodyReadBytes from body and returns total size.
+func readLimitedBody(body io.ReadCloser) ([]byte, int64) {
+	limitedReader := io.LimitReader(body, maxBodyReadBytes)
+	data, err := io.ReadAll(limitedReader)
+	if err != nil {
+		return nil, 0
+	}
+
+	// Try to determine total size
+	size := int64(len(data))
+
+	// Read and discard remaining bytes to get total size
+	remaining, _ := io.Copy(io.Discard, body)
+	size += remaining
+
+	return data, size
+}
+
+// checkBodyMatch checks if response body matches the expected pattern.
+func checkBodyMatch(body []byte, pattern string, isRegex bool) (bool, error) {
+	if pattern == "" {
+		return true, nil
+	}
+
+	bodyStr := string(body)
+
+	if isRegex {
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return false, fmt.Errorf("invalid regex pattern: %w", err)
+		}
+		return re.MatchString(bodyStr), nil
+	}
+
+	// Substring match
+	return strings.Contains(bodyStr, pattern), nil
+}
+
+// checkSecurityHeaders evaluates security headers in the response.
+func checkSecurityHeaders(headers http.Header, isHTTPS bool) *SecurityHeaders {
+	result := &SecurityHeaders{}
+	score := 0
+	maxScore := 0
+
+	// HSTS (Strict-Transport-Security) - only for HTTPS
+	if isHTTPS {
+		maxScore += 20
+		result.HSTS = checkHSTSHeader(headers.Get("Strict-Transport-Security"))
+		if result.HSTS.Present && result.HSTS.Status == statusSuccess {
+			score += 20
+		}
+	}
+
+	// Content-Security-Policy
+	maxScore += 20
+	result.CSP = checkCSPHeader(headers.Get("Content-Security-Policy"))
+	if result.CSP.Present && result.CSP.Status == statusSuccess {
+		score += 20
+	}
+
+	// X-Frame-Options
+	maxScore += 15
+	result.XFrameOptions = checkXFrameOptionsHeader(headers.Get("X-Frame-Options"))
+	if result.XFrameOptions.Present && result.XFrameOptions.Status == statusSuccess {
+		score += 15
+	}
+
+	// X-Content-Type-Options
+	maxScore += 15
+	result.XContentType = checkXContentTypeHeader(headers.Get("X-Content-Type-Options"))
+	if result.XContentType.Present && result.XContentType.Status == statusSuccess {
+		score += 15
+	}
+
+	// X-XSS-Protection (deprecated but still checked)
+	maxScore += 10
+	result.XSSProtection = checkXSSProtectionHeader(headers.Get("X-XSS-Protection"))
+	if result.XSSProtection.Present {
+		score += 10
+	}
+
+	// Referrer-Policy
+	maxScore += 10
+	result.ReferrerPolicy = checkReferrerPolicyHeader(headers.Get("Referrer-Policy"))
+	if result.ReferrerPolicy.Present && result.ReferrerPolicy.Status == statusSuccess {
+		score += 10
+	}
+
+	// Permissions-Policy
+	maxScore += 10
+	result.PermissionsPolicy = checkPermissionsPolicyHeader(headers.Get("Permissions-Policy"))
+	if result.PermissionsPolicy.Present {
+		score += 10
+	}
+
+	// Calculate overall score and status
+	if maxScore > 0 {
+		result.Score = (score * 100) / maxScore
+	}
+
+	switch {
+	case result.Score >= 80:
+		result.OverallStatus = statusSuccess
+	case result.Score >= 50:
+		result.OverallStatus = statusWarning
+	default:
+		result.OverallStatus = statusError
+	}
+
+	return result
+}
+
+func checkHSTSHeader(value string) *HeaderCheck {
+	check := &HeaderCheck{Value: value}
+	if value == "" {
+		check.Present = false
+		check.Status = statusError
+		check.Message = "Missing: Add Strict-Transport-Security header"
+		return check
+	}
+	check.Present = true
+	// Check for max-age directive
+	if strings.Contains(strings.ToLower(value), "max-age=") {
+		check.Status = statusSuccess
+		if strings.Contains(strings.ToLower(value), "includesubdomains") {
+			check.Message = "Good: HSTS enabled with includeSubDomains"
+		} else {
+			check.Message = "OK: Consider adding includeSubDomains"
+		}
+	} else {
+		check.Status = statusWarning
+		check.Message = "Warning: max-age directive not found"
+	}
+	return check
+}
+
+func checkCSPHeader(value string) *HeaderCheck {
+	check := &HeaderCheck{Value: value}
+	if value == "" {
+		check.Present = false
+		check.Status = statusError
+		check.Message = "Missing: Add Content-Security-Policy header"
+		return check
+	}
+	check.Present = true
+	// Check for unsafe directives
+	lowerVal := strings.ToLower(value)
+	if strings.Contains(lowerVal, "'unsafe-inline'") || strings.Contains(lowerVal, "'unsafe-eval'") {
+		check.Status = statusWarning
+		check.Message = "Warning: Contains unsafe directives"
+	} else if strings.Contains(lowerVal, "default-src") || strings.Contains(lowerVal, "script-src") {
+		check.Status = statusSuccess
+		check.Message = "Good: CSP policy defined"
+	} else {
+		check.Status = statusWarning
+		check.Message = "Warning: Consider adding script-src directive"
+	}
+	return check
+}
+
+func checkXFrameOptionsHeader(value string) *HeaderCheck {
+	check := &HeaderCheck{Value: value}
+	if value == "" {
+		check.Present = false
+		check.Status = statusError
+		check.Message = "Missing: Add X-Frame-Options (DENY or SAMEORIGIN)"
+		return check
+	}
+	check.Present = true
+	upperVal := strings.ToUpper(value)
+	if upperVal == "DENY" || upperVal == "SAMEORIGIN" {
+		check.Status = statusSuccess
+		check.Message = "Good: Clickjacking protection enabled"
+	} else {
+		check.Status = statusWarning
+		check.Message = "Warning: Use DENY or SAMEORIGIN"
+	}
+	return check
+}
+
+func checkXContentTypeHeader(value string) *HeaderCheck {
+	check := &HeaderCheck{Value: value}
+	if value == "" {
+		check.Present = false
+		check.Status = statusError
+		check.Message = "Missing: Add X-Content-Type-Options: nosniff"
+		return check
+	}
+	check.Present = true
+	if strings.EqualFold(value, "nosniff") {
+		check.Status = statusSuccess
+		check.Message = "Good: MIME type sniffing protection enabled"
+	} else {
+		check.Status = statusWarning
+		check.Message = "Warning: Value should be 'nosniff'"
+	}
+	return check
+}
+
+func checkXSSProtectionHeader(value string) *HeaderCheck {
+	check := &HeaderCheck{Value: value}
+	if value == "" {
+		check.Present = false
+		check.Status = statusWarning
+		check.Message = "Not present (deprecated header, CSP preferred)"
+		return check
+	}
+	check.Present = true
+	check.Status = statusSuccess
+	check.Message = "Present (deprecated, rely on CSP instead)"
+	return check
+}
+
+func checkReferrerPolicyHeader(value string) *HeaderCheck {
+	check := &HeaderCheck{Value: value}
+	if value == "" {
+		check.Present = false
+		check.Status = statusWarning
+		check.Message = "Missing: Consider adding Referrer-Policy"
+		return check
+	}
+	check.Present = true
+	lowerVal := strings.ToLower(value)
+	goodPolicies := []string{"strict-origin", "strict-origin-when-cross-origin", "no-referrer", "same-origin"}
+	for _, policy := range goodPolicies {
+		if strings.Contains(lowerVal, policy) {
+			check.Status = statusSuccess
+			check.Message = "Good: Secure referrer policy"
+			return check
+		}
+	}
+	check.Status = statusWarning
+	check.Message = "Warning: Consider stricter referrer policy"
+	return check
+}
+
+func checkPermissionsPolicyHeader(value string) *HeaderCheck {
+	check := &HeaderCheck{Value: value}
+	if value == "" {
+		check.Present = false
+		check.Status = statusWarning
+		check.Message = "Missing: Consider adding Permissions-Policy"
+		return check
+	}
+	check.Present = true
+	check.Status = statusSuccess
+	check.Message = "Good: Feature policy defined"
+	return check
 }
 
 // evaluateHTTPTimings sets timing statuses and overall test status.

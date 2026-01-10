@@ -1175,7 +1175,7 @@ func TestScheduledReport_Recipients(t *testing.T) {
 			// Retrieve and verify
 			retrieved, err := ss.Get(ctx, schedule.ID)
 			require.NoError(t, err)
-			assert.Equal(t, len(tt.recipients), len(retrieved.Recipients))
+			assert.Len(t, retrieved.Recipients, len(tt.recipients))
 		})
 	}
 }

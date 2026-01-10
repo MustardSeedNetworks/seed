@@ -626,6 +626,8 @@ func TestCheckLinkStatePlatform(t *testing.T) {
 
 // TestGetSpeedDuplex verifies the platform-specific speed/duplex detection.
 func TestGetSpeedDuplex(t *testing.T) {
+	t.Parallel()
+
 	interfaces := []string{"lo0", "lo", "eth0", "en0"}
 
 	for _, iface := range interfaces {
@@ -682,6 +684,8 @@ func TestIsPhysicalInterface(t *testing.T) {
 
 // TestIsPhysicalInterfacePlatform verifies the platform-specific physical interface detection.
 func TestIsPhysicalInterfacePlatform(t *testing.T) {
+	t.Parallel()
+
 	interfaces := []string{"lo0", "lo", "eth0", "en0", "docker0", "veth123"}
 
 	for _, iface := range interfaces {
@@ -697,6 +701,8 @@ func TestIsPhysicalInterfacePlatform(t *testing.T) {
 
 // TestParseSpeed verifies speed parsing.
 func TestParseSpeed(t *testing.T) {
+	t.Parallel()
+
 	// Just verify the platform-specific function doesn't panic
 	tests := []string{
 		"1000", "100", "10", "10000",

@@ -46,6 +46,16 @@ interface InterfaceSelectorProps {
   isWifi: boolean;
   onChange: (interfaceName: string) => void;
   disabled?: boolean;
+  /** #756: Recommended ethernet interface (most capable) */
+  recommendedEthernet?: string;
+  /** #756: Recommended WiFi interface (most capable) */
+  recommendedWifi?: string;
+  /** #756: Warning message when current interface is unavailable */
+  warning?: string;
+  /** #756: Suggested alternative when current is unavailable */
+  suggestedInterface?: string;
+  /** #756: Callback when user accepts the suggested interface */
+  onAcceptSuggestion?: () => void;
 }
 
 export const InterfaceSelector = memo(function InterfaceSelector({
@@ -54,11 +64,24 @@ export const InterfaceSelector = memo(function InterfaceSelector({
   isWifi,
   onChange,
   disabled = false,
+  recommendedEthernet,
+  recommendedWifi,
+  warning,
+  suggestedInterface,
+  onAcceptSuggestion,
 }: InterfaceSelectorProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [showWarning, setShowWarning] = useState(!!warning);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Show warning when it changes
+  useEffect(() => {
+    if (warning) {
+      setShowWarning(true);
+    }
+  }, [warning]);
 
   // Group interfaces by type
   const ethernetInterfaces = interfaces.filter((i) => i.type === "ethernet");
@@ -161,9 +184,65 @@ export const InterfaceSelector = memo(function InterfaceSelector({
     );
   };
 
+  // Helper to check if an interface is recommended
+  const isRecommended = (name: string, type: string) => {
+    if (type === "ethernet") return name === recommendedEthernet;
+    if (type === "wifi") return name === recommendedWifi;
+    return false;
+  };
+
   return (
     // biome-ignore lint/a11y/useSemanticElements: Group role is semantically correct for dropdown container
     <div ref={dropdownRef} className="relative" onKeyDown={handleKeyDown} role="group">
+      {/* #756: Warning banner when interface is unavailable */}
+      {showWarning && warning && (
+        <div
+          className={cn(
+            "absolute bottom-full left-0 right-0 mb-2 p-2",
+            radius.md,
+            "bg-status-warning/10 border border-status-warning/30 text-status-warning",
+            "flex items-center gap-2",
+          )}
+        >
+          <svg
+            className={iconTokens.size.sm}
+            fill="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+          </svg>
+          <span className="caption flex-1">{warning}</span>
+          {suggestedInterface && onAcceptSuggestion && (
+            <button
+              type="button"
+              onClick={() => {
+                onAcceptSuggestion();
+                setShowWarning(false);
+              }}
+              className="caption font-medium text-status-warning hover:underline"
+            >
+              {t("interface.switchTo", "Switch to {{name}}", { name: suggestedInterface })}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowWarning(false)}
+            className="text-status-warning hover:opacity-70"
+            aria-label={t("accessibility.dismiss", "Dismiss")}
+          >
+            <svg
+              className={iconTokens.size.sm}
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Trigger button */}
       <button
         ref={buttonRef}
@@ -176,6 +255,7 @@ export const InterfaceSelector = memo(function InterfaceSelector({
           spacing.pad.sm,
           radius.md,
           "border border-surface-border bg-surface-base hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed",
+          warning && "border-status-warning/50",
         )}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
@@ -267,12 +347,32 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                     )}
                   </div>
 
-                  {/* Status */}
-                  <span
-                    className={cn("caption", iface.up ? "text-text-secondary" : "text-text-muted")}
-                  >
-                    {getStatusText(iface)}
-                  </span>
+                  {/* Status and recommended indicator */}
+                  <div className="flex items-center gap-1">
+                    {isRecommended(iface.name, "ethernet") && (
+                      <span
+                        className="text-status-success"
+                        title={t("interface.recommended", "Recommended")}
+                      >
+                        <svg
+                          className={iconTokens.size.xs}
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                        </svg>
+                      </span>
+                    )}
+                    <span
+                      className={cn(
+                        "caption",
+                        iface.up ? "text-text-secondary" : "text-text-muted",
+                      )}
+                    >
+                      {getStatusText(iface)}
+                    </span>
+                  </div>
                 </button>
               ))}
             </div>
@@ -329,12 +429,32 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                     )}
                   </div>
 
-                  {/* Status */}
-                  <span
-                    className={cn("caption", iface.up ? "text-text-secondary" : "text-text-muted")}
-                  >
-                    {getStatusText(iface)}
-                  </span>
+                  {/* Status and recommended indicator */}
+                  <div className="flex items-center gap-1">
+                    {isRecommended(iface.name, "wifi") && (
+                      <span
+                        className="text-status-success"
+                        title={t("interface.recommended", "Recommended")}
+                      >
+                        <svg
+                          className={iconTokens.size.xs}
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                        </svg>
+                      </span>
+                    )}
+                    <span
+                      className={cn(
+                        "caption",
+                        iface.up ? "text-text-secondary" : "text-text-muted",
+                      )}
+                    >
+                      {getStatusText(iface)}
+                    </span>
+                  </div>
                 </button>
               ))}
             </div>

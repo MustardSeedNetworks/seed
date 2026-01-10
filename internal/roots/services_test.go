@@ -754,6 +754,8 @@ func TestNewEnrichmentService(t *testing.T) {
 }
 
 func TestEnrichmentService_GetPublicIP(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		setupSvc   func() *roots.EnrichmentService
@@ -804,6 +806,8 @@ func TestEnrichmentService_GetPublicIP(t *testing.T) {
 }
 
 func TestEnrichmentService_Enrich(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		setupSvc   func() *roots.EnrichmentService

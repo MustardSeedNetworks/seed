@@ -769,6 +769,8 @@ func TestMonitorStateTransitions(t *testing.T) {
 
 // TestLeaseInfoFields tests LeaseInfo struct fields.
 func TestLeaseInfoFieldsComprehensive(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name string
 		info dhcp.LeaseInfo

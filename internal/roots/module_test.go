@@ -89,6 +89,8 @@ func TestModule_Services(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			svc := tt.svcFunc()
 			if svc == nil {
 				t.Errorf("%s should not be nil", tt.name)

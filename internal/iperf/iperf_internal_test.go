@@ -72,6 +72,8 @@ func TestWaitForPortReady(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			runWaitForPortReadyCase(t, tt)
 		})
 	}
@@ -168,6 +170,8 @@ func TestCompareVersionsEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := iperf.CompareVersions(tt.v1, tt.v2)
 			if result != tt.expected {
 				t.Errorf("CompareVersions(%q, %q) = %d, want %d", tt.v1, tt.v2, result, tt.expected)
@@ -195,6 +199,8 @@ func TestValidateServerIPv6(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			err := iperf.ValidateServer(tt.server)
 			if tt.wantErr && err == nil {
 				t.Errorf("ValidateServer(%q) expected error, got nil", tt.server)
@@ -227,6 +233,8 @@ func TestValidateServerHostnameBoundaries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			err := iperf.ValidateServer(tt.server)
 			if tt.wantErr && err == nil {
 				t.Errorf("ValidateServer(%q) expected error, got nil", tt.server)
@@ -299,6 +307,8 @@ func TestBuildClientArgsAllCombinations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			args := iperf.BuildClientArgs(&tt.config, tt.direction)
 			tt.check(t, args)
 		})
@@ -495,6 +505,8 @@ func TestNormalizeDirectionReverseFlag(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			config := &iperf.ClientConfig{
 				Server:    "localhost",
 				Direction: tt.direction,

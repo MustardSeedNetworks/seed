@@ -147,5 +147,15 @@
   "dataTable": {
     "clearAll": "Limpiar todo",
     "showingResults": "Mostrando {{shown}} de {{total}} resultados"
+  },
+  "capabilities": {
+    "warning": {
+      "title": "Capacidades de Red Limitadas",
+      "summary": "Algunas funciones pueden no funcionar. Haz clic para ver detalles y cómo solucionarlo.",
+      "issue": "problema",
+      "issues": "problemas",
+      "howToFix": "Cómo solucionarlo:",
+      "dismiss": "Descartar advertencia"
+    }
   }
 }

@@ -218,6 +218,8 @@ func TestSubcommandHelpOutput(t *testing.T) {
 	// Test help for each subcommand
 	for _, cmd := range state.rootCmd.Commands() {
 		t.Run(cmd.Use, func(t *testing.T) {
+			t.Parallel()
+
 			buf := new(bytes.Buffer)
 			cmd.SetOut(buf)
 			cmd.SetErr(buf)
@@ -256,6 +258,8 @@ func TestCompletionCommandIsUsable(t *testing.T) {
 	shells := []string{"bash", "zsh", "fish", "powershell"}
 	for _, shell := range shells {
 		t.Run(shell, func(t *testing.T) {
+			t.Parallel()
+
 			buf := new(bytes.Buffer)
 
 			var err error

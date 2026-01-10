@@ -455,7 +455,7 @@ func TestGroupByPeriod(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				if tt.errTarget != nil {
-					assert.ErrorIs(t, err, tt.errTarget)
+					require.ErrorIs(t, err, tt.errTarget)
 				}
 				return
 			}
@@ -540,7 +540,7 @@ func TestFilterByRange(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				if tt.errTarget != nil {
-					assert.ErrorIs(t, err, tt.errTarget)
+					require.ErrorIs(t, err, tt.errTarget)
 				}
 				return
 			}
@@ -762,12 +762,12 @@ func TestExponentialMovingAverage(t *testing.T) {
 			assert.Len(t, got, len(tt.values))
 
 			// First value should equal input
-			assert.Equal(t, tt.values[0], got[0])
+			assert.InDelta(t, tt.values[0], got[0], 0.000001)
 
 			// Alpha 1.0 should return original values
 			if tt.alpha == 1.0 {
 				for i := range tt.values {
-					assert.Equal(t, tt.values[i], got[i])
+					assert.InDelta(t, tt.values[i], got[i], 0.000001)
 				}
 			}
 		})
@@ -1188,10 +1188,10 @@ func TestOutliers(t *testing.T) {
 
 func TestPeriodConstants(t *testing.T) {
 	// Verify period constants are properly defined
-	assert.Equal(t, aggregator.Period("hourly"), aggregator.PeriodHourly)
-	assert.Equal(t, aggregator.Period("daily"), aggregator.PeriodDaily)
-	assert.Equal(t, aggregator.Period("weekly"), aggregator.PeriodWeekly)
-	assert.Equal(t, aggregator.Period("monthly"), aggregator.PeriodMonthly)
+	assert.Equal(t, aggregator.PeriodHourly, aggregator.Period("hourly"))
+	assert.Equal(t, aggregator.PeriodDaily, aggregator.Period("daily"))
+	assert.Equal(t, aggregator.PeriodWeekly, aggregator.Period("weekly"))
+	assert.Equal(t, aggregator.PeriodMonthly, aggregator.Period("monthly"))
 }
 
 // ----------------------------------------------------------------------------
@@ -1229,16 +1229,16 @@ func TestEdgeCases(t *testing.T) {
 		values := []float64{-100, -50, 0, 50, 100}
 		stats, err := aggregator.Calculate(values)
 		require.NoError(t, err)
-		assert.Equal(t, 0.0, stats.Avg)
-		assert.Equal(t, -100.0, stats.Min)
-		assert.Equal(t, 100.0, stats.Max)
+		assert.InDelta(t, 0.0, stats.Avg, 0.000001)
+		assert.InDelta(t, -100.0, stats.Min, 0.000001)
+		assert.InDelta(t, 100.0, stats.Max, 0.000001)
 	})
 
 	t.Run("single element percentiles", func(t *testing.T) {
 		for p := 0; p <= 100; p += 25 {
 			val, err := aggregator.Percentile([]float64{42}, p)
 			require.NoError(t, err)
-			assert.Equal(t, 42.0, val)
+			assert.InDelta(t, 42.0, val, 0.000001)
 		}
 	})
 }

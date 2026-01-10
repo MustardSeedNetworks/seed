@@ -185,6 +185,9 @@ func TestTelemetrySnapshotWithData(t *testing.T) {
 	if snapshot.Bandwidth.RxMbps != 40.0 {
 		t.Errorf("expected RxMbps 40.0, got %v", snapshot.Bandwidth.RxMbps)
 	}
+	if !snapshot.Timestamp.Equal(now) {
+		t.Errorf("expected Timestamp %v, got %v", now, snapshot.Timestamp)
+	}
 }
 
 // TestTelemetryBandwidthSampleTableDriven tests BandwidthSample with table-driven tests.
@@ -388,6 +391,9 @@ func TestTelemetrySnapshotWithSystemHealth(t *testing.T) {
 	}
 	if len(snapshot.SystemHealth.LoadAverage) != 3 {
 		t.Errorf("expected 3 LoadAverage values, got %d", len(snapshot.SystemHealth.LoadAverage))
+	}
+	if !snapshot.Timestamp.Equal(now) {
+		t.Errorf("expected Timestamp %v, got %v", now, snapshot.Timestamp)
 	}
 }
 
@@ -789,8 +795,32 @@ func TestTelemetrySNMPInterfaceConstruction(t *testing.T) {
 	if iface.Name == "" {
 		t.Error("expected non-empty Name")
 	}
+	if iface.Description != "Uplink to Router" {
+		t.Errorf("expected Description 'Uplink to Router', got %q", iface.Description)
+	}
 	if iface.Type == "" {
 		t.Error("expected non-empty Type")
+	}
+	if iface.Speed != 1000000000 {
+		t.Errorf("expected Speed 1000000000, got %d", iface.Speed)
+	}
+	if iface.AdminStatus != "up" {
+		t.Errorf("expected AdminStatus 'up', got %q", iface.AdminStatus)
+	}
+	if iface.OperStatus != "up" {
+		t.Errorf("expected OperStatus 'up', got %q", iface.OperStatus)
+	}
+	if iface.InOctets != 1000000000 {
+		t.Errorf("expected InOctets 1000000000, got %d", iface.InOctets)
+	}
+	if iface.OutOctets != 500000000 {
+		t.Errorf("expected OutOctets 500000000, got %d", iface.OutOctets)
+	}
+	if iface.InErrors != 0 {
+		t.Errorf("expected InErrors 0, got %d", iface.InErrors)
+	}
+	if iface.OutErrors != 0 {
+		t.Errorf("expected OutErrors 0, got %d", iface.OutErrors)
 	}
 }
 
@@ -808,6 +838,12 @@ func TestTelemetrySNMPVLANConstruction(t *testing.T) {
 	}
 	if vlan.Name == "" {
 		t.Error("expected non-empty Name")
+	}
+	if vlan.Status != "active" {
+		t.Errorf("expected Status 'active', got %q", vlan.Status)
+	}
+	if len(vlan.Ports) != 4 {
+		t.Errorf("expected 4 Ports, got %d", len(vlan.Ports))
 	}
 }
 

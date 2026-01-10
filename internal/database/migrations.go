@@ -415,6 +415,70 @@ func getMigrationDefs() []migrationDef {
 			CREATE INDEX IF NOT EXISTS idx_scheduled_reports_next_run ON scheduled_reports(next_run);
 		`,
 		},
+		{
+			Description: "Create health check results table for historical tracking",
+			Up: `
+			CREATE TABLE IF NOT EXISTS health_check_results (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				check_type TEXT NOT NULL,
+				endpoint_name TEXT NOT NULL,
+				endpoint_target TEXT NOT NULL,
+				success INTEGER NOT NULL,
+				latency_ms REAL,
+				status_code INTEGER,
+				error_message TEXT,
+				metadata_json TEXT,
+				recorded_at TEXT NOT NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_health_check_type_time ON health_check_results(check_type, recorded_at);
+			CREATE INDEX IF NOT EXISTS idx_health_check_endpoint_time ON health_check_results(endpoint_name, recorded_at);
+			CREATE INDEX IF NOT EXISTS idx_health_check_recorded ON health_check_results(recorded_at);
+		`,
+		},
+		{
+			Description: "Create health check hourly rollups table",
+			Up: `
+			CREATE TABLE IF NOT EXISTS health_check_rollups_hourly (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				check_type TEXT NOT NULL,
+				endpoint_name TEXT NOT NULL,
+				hour_bucket TEXT NOT NULL,
+				total_checks INTEGER NOT NULL,
+				successful_checks INTEGER NOT NULL,
+				avg_latency_ms REAL,
+				min_latency_ms REAL,
+				max_latency_ms REAL,
+				p95_latency_ms REAL
+			);
+
+			CREATE UNIQUE INDEX IF NOT EXISTS idx_health_hourly_unique
+				ON health_check_rollups_hourly(check_type, endpoint_name, hour_bucket);
+			CREATE INDEX IF NOT EXISTS idx_health_hourly_bucket ON health_check_rollups_hourly(hour_bucket);
+		`,
+		},
+		{
+			Description: "Create health check daily rollups table",
+			Up: `
+			CREATE TABLE IF NOT EXISTS health_check_rollups_daily (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				check_type TEXT NOT NULL,
+				endpoint_name TEXT NOT NULL,
+				day_bucket TEXT NOT NULL,
+				total_checks INTEGER NOT NULL,
+				successful_checks INTEGER NOT NULL,
+				avg_latency_ms REAL,
+				min_latency_ms REAL,
+				max_latency_ms REAL,
+				p95_latency_ms REAL,
+				availability_percent REAL
+			);
+
+			CREATE UNIQUE INDEX IF NOT EXISTS idx_health_daily_unique
+				ON health_check_rollups_daily(check_type, endpoint_name, day_bucket);
+			CREATE INDEX IF NOT EXISTS idx_health_daily_bucket ON health_check_rollups_daily(day_bucket);
+		`,
+		},
 	}
 }
 

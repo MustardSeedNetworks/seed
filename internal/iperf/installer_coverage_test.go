@@ -219,6 +219,8 @@ func TestInstallFromGitHubOptions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			if !tt.checkField(tt.opts) {
 				t.Errorf("Option check failed for %s", tt.name)
 			}
@@ -246,6 +248,8 @@ func TestAutoInstallOptions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			// Just verify the options can be constructed
 			opts := iperf.InstallOptions{
 				UseSudo: tt.useSudo,
@@ -364,6 +368,8 @@ func TestPackageManagerInfoCompleteStructure(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			// Verify all fields are accessible
 			if tt.info.Name == "" {
 				t.Error("Name should not be empty")
@@ -461,6 +467,8 @@ func TestInstallMethodValues(t *testing.T) {
 
 	for _, m := range methods {
 		t.Run(string(m.method), func(t *testing.T) {
+			t.Parallel()
+
 			if string(m.method) != m.expected {
 				t.Errorf("InstallMethod value = %q, want %q", string(m.method), m.expected)
 			}
@@ -477,6 +485,8 @@ func TestNeedsSudoAllPackageManagers(t *testing.T) {
 
 	for _, pm := range noSudoManagers {
 		t.Run(pm, func(t *testing.T) {
+			t.Parallel()
+
 			if iperf.NeedsSudo(pm) {
 				t.Errorf("NeedsSudo(%q) = true, want false", pm)
 			}
@@ -489,6 +499,8 @@ func TestNeedsSudoAllPackageManagers(t *testing.T) {
 
 		for _, pm := range sudoManagers {
 			t.Run(pm+"_linux", func(t *testing.T) {
+				t.Parallel()
+
 				if !iperf.NeedsSudo(pm) {
 					t.Errorf("NeedsSudo(%q) = false, want true on Linux", pm)
 				}

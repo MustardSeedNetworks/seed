@@ -828,6 +828,12 @@ type HTTPEndpoint struct {
 	URL            string `yaml:"url"             json:"url"`
 	ExpectedStatus int    `yaml:"expected_status" json:"expected_status"`
 	Enabled        bool   `yaml:"enabled"         json:"enabled"`
+	// HTTP enhancements (Health Checks 100x)
+	BodyMatch            string `yaml:"body_match"             json:"body_match,omitempty"`             // Regex/substring to match in response body
+	BodyMatchIsRegex     bool   `yaml:"body_match_is_regex"    json:"body_match_is_regex,omitempty"`    // Whether body_match is a regex
+	CheckSecurityHeaders bool   `yaml:"check_security_headers" json:"check_security_headers,omitempty"` // Check HSTS, CSP, etc.
+	FollowRedirects      bool   `yaml:"follow_redirects"       json:"follow_redirects,omitempty"`       // Track redirect chain
+	MaxRedirects         int    `yaml:"max_redirects"          json:"max_redirects,omitempty"`          // Max redirect hops (default 10)
 }
 
 // RTSPEndpoint represents a custom RTSP stream test (Issue #778).

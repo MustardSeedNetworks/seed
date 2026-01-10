@@ -687,6 +687,9 @@ func TestResultJSONTags(t *testing.T) {
 	if result.Distance != 25.0 {
 		t.Errorf("Distance: got %v, want 25.0", result.Distance)
 	}
+	if result.Timestamp.IsZero() {
+		t.Error("Timestamp should not be zero")
+	}
 	if result.TestDuration != 15.0 {
 		t.Errorf("TestDuration: got %v, want 15.0", result.TestDuration)
 	}

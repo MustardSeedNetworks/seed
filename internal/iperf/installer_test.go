@@ -200,6 +200,8 @@ func TestNeedsSudoPackageManagers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := iperf.NeedsSudo(tt.packageManager)
 			if result != tt.expected {
 				t.Errorf("NeedsSudo(%q) = %v, want %v", tt.packageManager, result, tt.expected)
@@ -220,6 +222,8 @@ func TestNeedsSudoLinuxPackageManagers(t *testing.T) {
 
 	for _, pm := range linuxManagers {
 		t.Run(pm, func(t *testing.T) {
+			t.Parallel()
+
 			result := iperf.NeedsSudo(pm)
 			if !result {
 				t.Errorf("NeedsSudo(%q) = %v, expected true on Linux", pm, result)
@@ -267,6 +271,8 @@ func TestPackageManagerInfoStructure(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			if tt.info.Name == "" {
 				t.Error("Name should not be empty")
 			}

@@ -150,6 +150,8 @@ func TestIsValidExtractedBinaryAllScenarios(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			runIsValidExtractedBinaryCase(t, tempDir, tt)
 		})
 	}
@@ -211,6 +213,8 @@ func TestGetPlatformBinaryMapContent(t *testing.T) {
 
 	for _, ep := range expectedPlatforms {
 		t.Run(ep.platform, func(t *testing.T) {
+			t.Parallel()
+
 			binaryName, ok := platformMap[ep.platform]
 			if !ok {
 				t.Errorf("Platform %s should be in map", ep.platform)
@@ -296,6 +300,8 @@ func TestNotFoundErrorComponents(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			errMsg := tt.err.Error()
 
 			for _, expected := range tt.shouldContain {
@@ -427,6 +433,8 @@ func TestValidateBinaryEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := iperf.ValidateBinary(tt.path)
 			if result != tt.expected {
 				t.Errorf("ValidateBinary(%q) = %v, want %v", tt.path, result, tt.expected)

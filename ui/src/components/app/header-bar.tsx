@@ -53,6 +53,10 @@ interface HeaderBarProps {
   onHelpOpen: () => void;
   onSettingsOpen: () => void;
   logout: () => void;
+  /** #756: Recommended ethernet interface (most capable) */
+  recommendedEthernet?: string;
+  /** #756: Recommended WiFi interface (most capable) */
+  recommendedWifi?: string;
 }
 
 /**
@@ -80,6 +84,8 @@ export const HeaderBar = memo(function HeaderBar({
   onHelpOpen,
   onSettingsOpen,
   logout,
+  recommendedEthernet,
+  recommendedWifi: _recommendedWifi,
 }: HeaderBarProps) {
   const { t } = useTranslation();
   const { setEthernetInterface, setWifiInterface } = useProfileContext();
@@ -431,9 +437,26 @@ export const HeaderBar = memo(function HeaderBar({
                         >
                           <div className="flex items-center justify-between">
                             <div className="stack-xs">
-                              <span className="body-small text-text-primary font-medium">
-                                {getFriendlyInterfaceName(iface.name, false)}
-                              </span>
+                              <div className="flex items-center gap-1">
+                                <span className="body-small text-text-primary font-medium">
+                                  {getFriendlyInterfaceName(iface.name, false)}
+                                </span>
+                                {/* #756: Show star for recommended (most capable) interface */}
+                                {iface.name === recommendedEthernet && (
+                                  <svg
+                                    className={cn(
+                                      iconTokens.size.xs,
+                                      "text-status-success shrink-0",
+                                    )}
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                    aria-hidden="true"
+                                    title={t("interface.recommended", "Recommended")}
+                                  >
+                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                  </svg>
+                                )}
+                              </div>
                               <span
                                 className={cn(
                                   "caption text-text-muted",

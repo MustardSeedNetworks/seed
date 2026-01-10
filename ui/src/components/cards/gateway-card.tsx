@@ -27,6 +27,7 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../../contexts/useSettings";
+import { formatTime, isValidNumber } from "../../lib/format";
 import { cn, icon as iconTokens, layout, spacing } from "../../styles/theme";
 import { Card, CardDivider, CardRow, CardValue, type Status } from "../ui/card";
 import { Router } from "../ui/icons";
@@ -52,18 +53,13 @@ interface GatewayCardProps {
 }
 
 function getLatencyStatus(
-  value: number,
+  value: number | undefined | null,
   thresholds: { warning: number; critical: number },
 ): Status {
+  if (!isValidNumber(value)) return "unknown";
   if (value >= thresholds.critical) return "error";
   if (value >= thresholds.warning) return "warning";
   return "success";
-}
-
-function formatTime(ms: number): string {
-  if (ms < 1) return "<1ms";
-  if (ms >= 1000) return `${(ms / 1000).toFixed(1)}s`;
-  return `${Math.round(ms * 10) / 10}ms`;
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Gateway card handles IPv4/IPv6 with multiple status conditions
