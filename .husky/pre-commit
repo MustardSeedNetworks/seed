@@ -99,7 +99,8 @@ if [ -n "$STAGED_GO_FILES" ]; then
   # Go security check (gosec)
   if command -v gosec >/dev/null 2>&1; then
     echo "Running gosec security scan..."
-    if ! gosec -quiet ./... 2>/dev/null; then
+    # Exclude cache directories from scan
+    if ! gosec -quiet -exclude-dir=.gomodcache -exclude-dir=.gocache -exclude-dir=.golangci-cache ./... 2>/dev/null; then
       echo "❌ Security issues found!"
       FAILED=1
     else
