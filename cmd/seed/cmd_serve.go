@@ -92,7 +92,7 @@ func initializeDatabase(cfg *config.Config) *database.DB {
 		dbPath = "data/seed.db"
 	}
 
-	db, err := database.Open(dbPath)
+	db, err := database.OpenWithAutoRebuild(dbPath)
 	if err != nil {
 		logging.GetLogger().Error("Failed to open database", "path", dbPath, "error", err)
 		return nil
@@ -289,9 +289,9 @@ func migrateSNMPCredentials(cfg *config.Config, configPath string) {
 }
 
 // setupNetworkInterface initializes the network manager and finds an active interface.
-// Fix #571: Use auto-detection when no default interface is configured.
+// #756: Auto-detects available interfaces; uses config default if valid, otherwise selects best available.
 func setupNetworkInterface(cfg *config.Config, configPath string) *network.Manager {
-	// Fix #571: Auto-detect interface if none specified
+	// #756: Try configured default first, but fall back to auto-detection if invalid
 	initialInterface := cfg.Interface.Default
 	if initialInterface == "" {
 		// Use config's GetActiveInterface which does auto-detection
@@ -373,7 +373,8 @@ func logAvailableInterfaces(netMgr *network.Manager) {
 	}
 }
 
-// applyActiveInterface sets the active interface as the default.
+// applyActiveInterface sets the active interface and optionally saves to config.
+// #756: Interface selection persists to profile, not global config.
 func applyActiveInterface(
 	cfg *config.Config,
 	netMgr *network.Manager,

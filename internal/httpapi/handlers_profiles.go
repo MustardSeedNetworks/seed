@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
@@ -433,23 +432,17 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Apply profile settings to the active config (fixes #781)
+	// Uses Config.ApplyProfileJSON() - single source of truth, no ProfileSettings intermediate
 	if profile.ConfigJSON != "" {
-		profileSettings, parseErr := config.ParseProfileSettings(profile.ConfigJSON)
-		if parseErr != nil {
+		if applyErr := s.config.ApplyProfileJSON(profile.ConfigJSON); applyErr != nil {
 			logger.Warn(
 				"Failed to parse profile settings, using defaults",
 				"error",
-				parseErr,
+				applyErr,
 				"profile_id",
 				profile.ID,
 			)
 		} else {
-			// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
-			s.config.Lock()
-			profileSettings.ApplyTo(s.config)
-			// Unlock before Save() to avoid deadlock
-			s.config.Unlock()
-
 			// Save updated config to file (fixes #782 - return error instead of silent warning)
 			if saveErr := s.config.Save(s.configPath); saveErr != nil {
 				logger.Error("Failed to save config after profile switch", "error", saveErr)
