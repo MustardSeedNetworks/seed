@@ -24,7 +24,7 @@
 
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getAuthHeaders, useAuth } from "./useAuth";
+import { useAuth } from "./useAuth";
 
 // Mock localStorage
 const mockLocalStorage = (() => {
@@ -291,12 +291,5 @@ describe("useAuth", () => {
 
     // Should still clear local state
     expect(result.current.isAuthenticated).toBe(false);
-  });
-});
-
-describe("getAuthHeaders", () => {
-  it("returns empty object (deprecated for cookie auth)", () => {
-    const headers = getAuthHeaders();
-    expect(headers).toEqual({});
   });
 });
