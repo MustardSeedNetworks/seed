@@ -567,6 +567,88 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 	s.services.Discovery.Vulnerability = vulnScanner
 	logging.GetLogger().Info("Vulnerability scanner initialized",
 		"cve_database", scannerCfg.CVEDatabase, "threshold", scannerCfg.SeverityThreshold)
+
+	// Initialize problem detector for network issue detection
+	s.services.Discovery.ProblemDetector = discovery.NewProblemDetector()
+	logging.GetLogger().Info("Problem detector initialized")
+
+	// Initialize Bluetooth scanner
+	btConfig := discovery.DefaultBluetoothScanConfig()
+	var ouiDB *discovery.OUIDatabase
+	if s.services.Discovery.Device != nil {
+		ouiDB = s.services.Discovery.Device.GetOUIDatabase()
+	}
+	s.services.Discovery.BluetoothScanner = discovery.NewBluetoothScanner("", btConfig, ouiDB)
+	logging.GetLogger().Info("Bluetooth scanner initialized")
+
+	// Initialize WiFi bridge connecting canopy/wifi to discovery
+	if s.services.Canopy.Scanner != nil {
+		wifiBridgeConfig := discovery.DefaultWiFiBridgeConfig()
+		s.services.Discovery.WiFiBridge = discovery.NewWiFiBridge(
+			s.services.Canopy.Scanner,
+			s.services.Canopy.WiFi,
+			ouiDB,
+			wifiBridgeConfig,
+		)
+		logging.GetLogger().Info("WiFi bridge initialized")
+	}
+
+	// Initialize unified discovery service that correlates wired/WiFi/Bluetooth
+	unifiedConfig := discovery.DefaultUnifiedDiscoveryConfig()
+	unifiedConfig.EnableWiFi = s.services.Discovery.WiFiBridge != nil
+	unifiedConfig.EnableBluetooth = s.services.Discovery.BluetoothScanner != nil
+	unifiedConfig.EnableSNMP = s.services.Discovery.Pipeline != nil
+	unifiedConfig.EnablePortScan = s.services.Discovery.Pipeline != nil
+	unifiedConfig.EnableProfiling = s.services.Discovery.Pipeline != nil
+	unifiedConfig.EnableVulnScan = s.services.Discovery.Vulnerability != nil
+	s.services.Discovery.Unified = discovery.NewUnifiedDiscoveryService(
+		s.services.Discovery.Device,
+		s.services.Discovery.WiFiBridge,
+		s.services.Discovery.BluetoothScanner,
+		unifiedConfig,
+	)
+	// Wire in Pipeline and VulnerabilityScanner for full scans
+	if s.services.Discovery.Pipeline != nil {
+		s.services.Discovery.Unified.SetPipeline(s.services.Discovery.Pipeline)
+	}
+	if s.services.Discovery.Vulnerability != nil {
+		s.services.Discovery.Unified.SetVulnerabilityScanner(s.services.Discovery.Vulnerability)
+	}
+	logging.GetLogger().Info("Unified discovery service initialized",
+		"wired", unifiedConfig.EnableWired,
+		"wifi", unifiedConfig.EnableWiFi,
+		"bluetooth", unifiedConfig.EnableBluetooth,
+		"snmp", unifiedConfig.EnableSNMP,
+		"portScan", unifiedConfig.EnablePortScan,
+		"vulnScan", unifiedConfig.EnableVulnScan,
+	)
+
+	// Initialize new Discovery Engine (replaces UnifiedDiscoveryService)
+	engineConfig := discovery.DefaultEngineConfig()
+	s.services.Discovery.Engine = discovery.NewDiscoveryEngine(engineConfig)
+
+	// Wire in collectors
+	if s.services.Discovery.Device != nil {
+		s.services.Discovery.Engine.SetWiredCollector(s.services.Discovery.Device)
+	}
+	if s.services.Discovery.WiFiBridge != nil {
+		s.services.Discovery.Engine.SetWiFiCollector(s.services.Discovery.WiFiBridge)
+	}
+	if s.services.Discovery.BluetoothScanner != nil {
+		s.services.Discovery.Engine.SetBluetoothCollector(s.services.Discovery.BluetoothScanner)
+	}
+	if s.services.Discovery.Vulnerability != nil {
+		s.services.Discovery.Engine.SetVulnScanner(s.services.Discovery.Vulnerability)
+	}
+
+	// Start the engine
+	if err := s.services.Discovery.Engine.Start(context.Background()); err != nil {
+		logging.GetLogger().Error("Failed to start discovery engine", "error", err)
+	} else {
+		logging.GetLogger().Info("Discovery engine started",
+			"capabilities", s.services.Discovery.Engine.GetCapabilities(),
+		)
+	}
 }
 
 // initSecurityOrigins configures allowed origins for CORS/WebSocket.
@@ -801,6 +883,37 @@ func (s *Server) setupShellRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/config", s.handlePipelineConfigRoute)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/port-intensity", s.handlePipelinePortIntensityInfo)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/timing-profiles", s.handlePipelineTimingProfiles)
+
+	// Network problem detection routes
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/problems", s.handleNetworkProblems)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/problems/scan", s.handleProblemScan)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/problems/thresholds", s.handleProblemThresholds)
+
+	// Bluetooth discovery routes
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/bluetooth/scan", s.handleBluetoothScan)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/bluetooth/devices", s.handleBluetoothDevices)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/bluetooth/stats", s.handleBluetoothStats)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/bluetooth/status", s.handleBluetoothStatus)
+
+	// Enhanced WiFi discovery routes (unified discovery)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/wifi/discovery/scan", s.handleWiFiDiscoveryScan)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/wifi/discovery/networks", s.handleWiFiDiscoveryNetworks)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/wifi/discovery/aps", s.handleWiFiDiscoveryAPs)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/wifi/discovery/stats", s.handleWiFiDiscoveryStats)
+
+	// Unified discovery routes (correlates wired/WiFi/Bluetooth)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/unified", s.handleUnifiedDiscovery)
+	s.mux.Handle(
+		APIVersionPrefix+"/shell/discovery/unified/scan",
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleUnifiedDiscoveryScan)),
+	)
+	s.mux.Handle(
+		APIVersionPrefix+"/shell/discovery/unified/full",
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleUnifiedDiscoveryFullScan)),
+	)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/unified/stats", s.handleUnifiedDiscoveryStats)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/unified/capabilities", s.handleUnifiedDiscoveryCapabilities)
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/unified/device/{mac}", s.handleUnifiedDiscoveryDevice)
 }
 
 // setupRootsRoutes registers Roots module routes (path analysis).
