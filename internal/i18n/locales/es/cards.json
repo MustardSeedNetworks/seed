@@ -108,7 +108,37 @@
     "unknownSubnet": "Subred desconocida",
     "clearSearch": "Limpiar búsqueda",
     "filteredCount": "{{filtered}} de {{total}}",
-    "clickViewVulnerabilities": "Haga clic para ver detalles de vulnerabilidades"
+    "clickViewVulnerabilities": "Haga clic para ver detalles de vulnerabilidades",
+    "fullScreen": "Pantalla Completa",
+    "modalSubtitle": "{{total}} dispositivos ({{local}} locales)",
+    "rescan": "Reescanear",
+    "localOnly": "Solo Locales",
+    "noResults": "No hay dispositivos que coincidan con sus filtros",
+    "tableIp": "Dirección IP",
+    "tableHostname": "Nombre de Host",
+    "tableMac": "MAC",
+    "tableVendor": "Fabricante",
+    "tableDiscovery": "Descubrimiento",
+    "tablePorts": "Puertos",
+    "tableVulns": "CVEs",
+    "tableLastSeen": "Última Vez",
+    "tableActions": "Acciones",
+    "viewAllDevices": "Ver Todos los Dispositivos"
+  },
+  "pipeline": {
+    "phaseProgress": "Fase {{current}} de {{total}}",
+    "phases": {
+      "enumeration": "Enumeración",
+      "resolution": "Resolución",
+      "scanning": "Escaneo",
+      "assessment": "Evaluación"
+    },
+    "devices": "dispositivos",
+    "scanning": "Escaneando",
+    "elapsed": "Transcurrido",
+    "remaining": "Restante",
+    "cancel": "Cancelar",
+    "errors": "Errores"
   },
   "gateway": {
     "title": "Puerta de enlace",
@@ -133,12 +163,15 @@
     "location": "Ubicación",
     "isp": "ISP",
     "asn": "ASN",
+    "ispAsn": "ISP/ASN",
     "ipv4": "IPv4",
     "ipv6": "IPv6",
     "notAvailable": "No disponible",
     "lastChecked": "Última verificación",
     "checking": "Verificando...",
-    "unableToDetect": "No se puede detectar la IP pública"
+    "unableToDetect": "No se puede detectar la IP pública",
+    "history": "Historial de IP",
+    "noHistory": "No hay historial de IP disponible"
   },
   "dns": {
     "title": "DNS",
@@ -198,7 +231,7 @@
     "download": "Descarga",
     "upload": "Subida",
     "latency": "Latencia",
-    "jitter": "Fluctuación",
+    "jitter": "Jitter",
     "packetLoss": "Pérdida de paquetes",
     "runTest": "Ejecutar prueba",
     "testInProgress": "Prueba en progreso...",
@@ -247,7 +280,7 @@
     "fail": "fallo",
     "loss": "pérdida",
     "packetLoss": "{{percent}}% pérdida",
-    "jitter": "{{ms}}ms fluctuación",
+    "jitter": "{{ms}}ms jitter",
     "timingDns": "DNS",
     "timingTcp": "TCP",
     "timingTls": "TLS",

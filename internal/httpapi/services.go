@@ -1,12 +1,14 @@
 package httpapi
 
 import (
+	"github.com/krisarmstrong/seed/internal/alerts"
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/canopy/survey"
 	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/dhcp"
 	"github.com/krisarmstrong/seed/internal/discovery"
+	"github.com/krisarmstrong/seed/internal/health"
 	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/network"
@@ -33,6 +35,7 @@ type ServiceContainer struct {
 	Roots     *RootsServices
 	RealTime  *RealTimeServices
 	Database  *DatabaseServices
+	Health    *HealthServices
 	Update    *update.Service
 }
 
@@ -113,6 +116,16 @@ type DatabaseServices struct {
 	RetentionStopCh chan struct{}
 }
 
+// HealthServices groups health check monitoring services.
+type HealthServices struct {
+	Repository      *database.HealthCheckRepository
+	Scorer          *health.ScoringService
+	SLATracker      *health.SLATracker
+	AnomalyDetector *health.AnomalyDetector
+	DependencyMgr   *health.DependencyManager
+	AlertManager    *alerts.AlertManager
+}
+
 // NewServiceContainer creates a new empty ServiceContainer.
 func NewServiceContainer() *ServiceContainer {
 	return &ServiceContainer{
@@ -125,6 +138,7 @@ func NewServiceContainer() *ServiceContainer {
 		Roots:     &RootsServices{},
 		RealTime:  &RealTimeServices{},
 		Database:  &DatabaseServices{},
+		Health:    &HealthServices{},
 	}
 }
 

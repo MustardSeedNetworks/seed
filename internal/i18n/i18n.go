@@ -254,3 +254,121 @@ func IsSupported(lang string) bool {
 	lang = normalizeLanguage(lang)
 	return slices.Contains(GetSupportedLanguages(), lang)
 }
+
+// TranslationEntry represents a single translation key with all language values.
+// Used for exporting translations for translator review.
+type TranslationEntry struct {
+	Key     string            `json:"key"`
+	Values  map[string]string `json:"values"`
+	Missing []string          `json:"missing,omitempty"`
+}
+
+// getAllFlatMessages loads and flattens all messages for a language.
+func getAllFlatMessages(lang string) map[string]string {
+	result := make(map[string]string)
+	for _, ns := range getNamespaces() {
+		messages, ok := loadLocaleFile(lang, ns)
+		if !ok {
+			continue
+		}
+		flatMessages := flattenMessages(messages, ns)
+		for k, v := range flatMessages {
+			if strVal, isString := v.(string); isString {
+				result[k] = strVal
+			}
+		}
+	}
+	return result
+}
+
+// ExportTranslations returns all translations in a format suitable for review.
+// This is useful for handing off to translators to review/improve translations.
+func ExportTranslations() []TranslationEntry {
+	// Load all messages for each language
+	allLangMessages := make(map[string]map[string]string)
+	for _, lang := range GetSupportedLanguages() {
+		allLangMessages[lang] = getAllFlatMessages(lang)
+	}
+
+	// Collect all unique keys across all languages
+	allKeys := make(map[string]bool)
+	for _, msgs := range allLangMessages {
+		for key := range msgs {
+			allKeys[key] = true
+		}
+	}
+
+	// Build entries
+	entries := make([]TranslationEntry, 0, len(allKeys))
+	for key := range allKeys {
+		entry := TranslationEntry{
+			Key:    key,
+			Values: make(map[string]string),
+		}
+
+		for _, lang := range GetSupportedLanguages() {
+			if val, ok := allLangMessages[lang][key]; ok {
+				entry.Values[lang] = val
+			} else {
+				entry.Missing = append(entry.Missing, lang)
+			}
+		}
+
+		entries = append(entries, entry)
+	}
+
+	return entries
+}
+
+// FindMissingTranslations returns keys that are missing in a specific language.
+// Compares against English (the base language).
+func FindMissingTranslations(targetLang string) []string {
+	targetLang = normalizeLanguage(targetLang)
+
+	englishMsgs := getAllFlatMessages(DefaultLanguage)
+	targetMsgs := getAllFlatMessages(targetLang)
+
+	missing := make([]string, 0)
+	for key := range englishMsgs {
+		if _, ok := targetMsgs[key]; !ok {
+			missing = append(missing, key)
+		}
+	}
+
+	return missing
+}
+
+// CompareTranslations returns side-by-side comparison for translator review.
+// Each entry contains: key, english value, target value, and status.
+// Status is one of: "translated", "needs_review" (identical to English), or "missing".
+func CompareTranslations(targetLang string) []map[string]string {
+	targetLang = normalizeLanguage(targetLang)
+
+	englishMsgs := getAllFlatMessages(DefaultLanguage)
+	targetMsgs := getAllFlatMessages(targetLang)
+
+	result := make([]map[string]string, 0, len(englishMsgs))
+	for key, enVal := range englishMsgs {
+		entry := map[string]string{
+			"key":     key,
+			"english": enVal,
+		}
+
+		if targetVal, ok := targetMsgs[key]; ok {
+			entry["target"] = targetVal
+			// Flag if English and target are identical (might need translation)
+			if enVal == targetVal {
+				entry["status"] = "needs_review"
+			} else {
+				entry["status"] = "translated"
+			}
+		} else {
+			entry["target"] = ""
+			entry["status"] = "missing"
+		}
+
+		result = append(result, entry)
+	}
+
+	return result
+}

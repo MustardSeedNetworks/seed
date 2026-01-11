@@ -757,6 +757,12 @@ func (s *Server) setupSAPRoutes() {
 		APIVersionPrefix+"/sap/health-checks/run",
 		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleHealthChecks)),
 	)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/results", s.handleHealthCheckResults)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/history", s.handleHealthCheckHistory)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/scores", s.handleHealthCheckScores)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/sla", s.handleHealthCheckSLA)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/alerts", s.handleHealthCheckAlerts)
+	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/anomalies", s.handleHealthCheckAnomalies)
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/snmp/settings", s.handleSNMPSettings)
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/system/health", s.handleSystemHealth)
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/ipconfig", s.handleIPConfig)
