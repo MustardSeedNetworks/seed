@@ -4,8 +4,10 @@ package auth
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -126,8 +128,9 @@ type Manager struct {
 	sessionTimeout time.Duration
 	passwordHash   string
 	username       string
-	tokenVersion   int       // Token version for revocation support (fixes #525)
-	userStore      UserStore // Optional database-backed user store
+	tokenVersion   int             // Token version for revocation support (fixes #525)
+	userStore      UserStore       // Optional database-backed user store
+	blacklist      *TokenBlacklist // Token blacklist for immediate revocation
 }
 
 // NewManager creates a new authentication manager.
@@ -147,6 +150,7 @@ func NewManager(
 		sessionTimeout: sessionTimeout,
 		passwordHash:   passwordHash,
 		username:       username,
+		blacklist:      NewTokenBlacklist(),
 	}
 }
 
@@ -372,8 +376,16 @@ func (m *Manager) generateTokenWithType(
 
 // ValidateToken validates a JWT token and returns the claims.
 // Checks token version to support revocation (fixes #525).
+// Also checks the token blacklist for immediate revocation (ported from Stem).
 // If UserStore is set, queries database for current token version.
 func (m *Manager) ValidateToken(ctx context.Context, tokenString string) (*Claims, error) {
+	// Check blacklist first (fast path for revoked tokens)
+	tokenID := tokenFingerprint(tokenString)
+	if m.blacklist != nil && m.blacklist.IsBlacklisted(tokenID) {
+		logging.GetLogger().InfoContext(ctx, "Token is blacklisted", "token_id", tokenID[:8]+"...")
+		return nil, ErrInvalidToken
+	}
+
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidToken
@@ -828,4 +840,46 @@ func IsDefaultPasswordHash(hash string) bool {
 	}
 
 	return false
+}
+
+// tokenFingerprint generates a short, unique identifier for a JWT token.
+// Uses SHA-256 hash of the token string for efficient blacklist storage.
+func tokenFingerprint(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:])
+}
+
+// RevokeToken adds a token to the blacklist for immediate revocation.
+// The token remains blacklisted until its natural expiration time.
+// This is used on logout to ensure the token cannot be reused.
+func (m *Manager) RevokeToken(tokenString string) {
+	if m.blacklist == nil || tokenString == "" {
+		return
+	}
+
+	// Parse the token to get its expiration time
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(_ *jwt.Token) (any, error) {
+		return m.jwtSecret, nil
+	})
+	if err != nil {
+		// Even if parsing fails, blacklist with a default expiration
+		m.blacklist.Add(tokenFingerprint(tokenString), time.Now().Add(AccessTokenDuration))
+		return
+	}
+
+	claims, ok := token.Claims.(*Claims)
+	if !ok || claims.ExpiresAt == nil {
+		m.blacklist.Add(tokenFingerprint(tokenString), time.Now().Add(AccessTokenDuration))
+		return
+	}
+
+	// Add to blacklist with the token's actual expiration time
+	m.blacklist.Add(tokenFingerprint(tokenString), claims.ExpiresAt.Time)
+}
+
+// Stop gracefully shuts down the auth manager and its cleanup goroutines.
+func (m *Manager) Stop() {
+	if m.blacklist != nil {
+		m.blacklist.Stop()
+	}
 }

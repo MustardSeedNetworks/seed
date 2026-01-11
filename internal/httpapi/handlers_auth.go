@@ -189,6 +189,15 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Revoke tokens to prevent reuse (ported from Stem)
+	// Extract and blacklist both access and refresh tokens
+	if accessToken, err := auth.GetAccessTokenFromCookie(r); err == nil && accessToken != "" {
+		s.authManager().RevokeToken(accessToken)
+	}
+	if refreshToken, err := auth.GetRefreshTokenFromCookie(r); err == nil && refreshToken != "" {
+		s.authManager().RevokeToken(refreshToken)
+	}
+
 	// Security audit log: user logout (fixes #697)
 	clientIP := s.getClientIP(r)
 	logger.Info("User logout",

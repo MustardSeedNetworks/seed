@@ -1493,6 +1493,9 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	logging.GetLogger().InfoContext(ctx, "Stopping CSRF manager...")
 	s.csrfManager().Stop()
 
+	logging.GetLogger().InfoContext(ctx, "Stopping auth manager (token blacklist)...")
+	s.authManager().Stop()
+
 	// Stop data retention goroutine (fixes #848)
 	if s.services.Database.RetentionStopCh != nil {
 		logging.GetLogger().InfoContext(ctx, "Stopping data retention goroutine...")
