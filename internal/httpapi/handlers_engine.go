@@ -54,7 +54,7 @@ type EngineScanRequest struct {
 // - Available capabilities
 //
 // Authentication: Required
-// Rate limiting: None (read-only operation)
+// Rate limiting: None (read-only operation).
 func (s *Server) handleEngineDiscovery(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -117,7 +117,7 @@ func (s *Server) handleEngineDiscovery(w http.ResponseWriter, r *http.Request) {
 //	}
 //
 // Authentication: Required
-// Rate limiting: Yes (scans can be resource intensive)
+// Rate limiting: Yes (scans can be resource intensive).
 func (s *Server) handleEngineScan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -215,14 +215,16 @@ func (s *Server) handleEngineScan(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
-// handleEngineQuickScan triggers a quick discovery scan.
-//
-// POST /api/v1/discovery/engine/quick triggers a quick scan.
-// Uses cached data and performs correlation only.
-//
-// Authentication: Required
-// Rate limiting: Yes
-func (s *Server) handleEngineQuickScan(w http.ResponseWriter, r *http.Request) {
+// scanType indicates the type of scan to perform.
+type scanType int
+
+const (
+	scanTypeQuick scanType = iota
+	scanTypeFull
+)
+
+// executeScan is a helper that handles common scan logic.
+func (s *Server) executeScan(w http.ResponseWriter, r *http.Request, st scanType) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
@@ -260,13 +262,25 @@ func (s *Server) handleEngineQuickScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := engine.QuickScan(r.Context())
+	var result *discovery.ScanResult
+	var err error
+	var scanName string
+
+	switch st {
+	case scanTypeQuick:
+		scanName = "Quick scan"
+		result, err = engine.QuickScan(r.Context())
+	case scanTypeFull:
+		scanName = "Full scan"
+		result, err = engine.FullScan(r.Context())
+	}
+
 	if err != nil {
 		sendErrorResponseWithDetails(
 			w, logger,
 			http.StatusInternalServerError,
 			ErrCodeInternal,
-			"Quick scan failed",
+			scanName+" failed",
 			err.Error(),
 		)
 		return
@@ -280,6 +294,17 @@ func (s *Server) handleEngineQuickScan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)
+}
+
+// handleEngineQuickScan triggers a quick discovery scan.
+//
+// POST /api/v1/discovery/engine/quick triggers a quick scan.
+// Uses cached data and performs correlation only.
+//
+// Authentication: Required
+// Rate limiting: Yes.
+func (s *Server) handleEngineQuickScan(w http.ResponseWriter, r *http.Request) {
+	s.executeScan(w, r, scanTypeQuick)
 }
 
 // handleEngineFullScan triggers a comprehensive full scan.
@@ -294,65 +319,9 @@ func (s *Server) handleEngineQuickScan(w http.ResponseWriter, r *http.Request) {
 // This can take several minutes depending on network size.
 //
 // Authentication: Required
-// Rate limiting: Yes (resource intensive)
+// Rate limiting: Yes (resource intensive).
 func (s *Server) handleEngineFullScan(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
-
-	engine := s.services.Discovery.Engine
-	if engine == nil {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"Discovery engine not available",
-			"",
-		)
-		return
-	}
-
-	if engine.IsScanning() {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusConflict,
-			ErrCodeConflict,
-			"A scan is already in progress",
-			"",
-		)
-		return
-	}
-
-	result, err := engine.FullScan(r.Context())
-	if err != nil {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			"Full scan failed",
-			err.Error(),
-		)
-		return
-	}
-
-	resp := EngineDiscoveryResponse{
-		Devices:      engine.GetDevices(),
-		Stats:        engine.GetStats(),
-		ScanResult:   result,
-		Capabilities: engine.GetCapabilities(),
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, resp)
+	s.executeScan(w, r, scanTypeFull)
 }
 
 // handleEngineStats returns discovery engine statistics.
@@ -360,7 +329,7 @@ func (s *Server) handleEngineFullScan(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/discovery/engine/stats returns engine metrics.
 //
 // Authentication: Required
-// Rate limiting: None (read-only)
+// Rate limiting: None (read-only).
 func (s *Server) handleEngineStats(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -397,7 +366,7 @@ func (s *Server) handleEngineStats(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/discovery/engine/capabilities returns what the engine can do.
 //
 // Authentication: Required
-// Rate limiting: None (read-only)
+// Rate limiting: None (read-only).
 func (s *Server) handleEngineCapabilities(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -437,7 +406,7 @@ func (s *Server) handleEngineCapabilities(w http.ResponseWriter, r *http.Request
 //   - mac: Device MAC address (any format: AA:BB:CC:DD:EE:FF or aa-bb-cc-dd-ee-ff)
 //
 // Authentication: Required
-// Rate limiting: None (read-only)
+// Rate limiting: None (read-only).
 func (s *Server) handleEngineDevice(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -518,7 +487,7 @@ func (s *Server) handleEngineDevice(w http.ResponseWriter, r *http.Request) {
 // - scan.completed: Scan finished
 //
 // Authentication: Required
-// Rate limiting: None (streaming endpoint)
+// Rate limiting: None (streaming endpoint).
 func (s *Server) handleEngineEvents(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)

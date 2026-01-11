@@ -75,8 +75,9 @@ type DiscoveryServices struct {
 	ProblemDetector  *discovery.ProblemDetector
 	BluetoothScanner *discovery.BluetoothScanner
 	WiFiBridge       *discovery.WiFiBridge
-	Unified          *discovery.UnifiedDiscoveryService // Correlates wired/WiFi/Bluetooth (deprecated)
-	Engine           *discovery.DiscoveryEngine         // New unified discovery engine
+	Profiler         *discovery.DeviceProfiler  // Shared profiler for SNMP/ports/fingerprinting
+	PortScanner      *discovery.PortScanner     // TCP port scanner
+	Engine           *discovery.DiscoveryEngine // Unified discovery engine (primary)
 }
 
 // SapServices groups SAP module services (live telemetry).

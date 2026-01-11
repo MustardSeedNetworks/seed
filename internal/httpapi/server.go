@@ -509,9 +509,18 @@ func (s *Server) initWebSocketAndLogging(db *database.DB) {
 
 // initDiscoveryPipeline initializes the discovery service and pipeline.
 func (s *Server) initDiscoveryPipeline(cfg *config.Config) {
-	// Create SHARED DeviceProfiler - used by both Service and Pipeline
+	// Create SHARED DeviceProfiler - used by Service, Pipeline, and Engine
 	// This ensures port scan results and SNMP data are consistent across the system
 	sharedProfiler := discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), &cfg.SNMP)
+	s.services.Discovery.Profiler = sharedProfiler
+
+	// Create PortScanner for Engine
+	portScanner, err := discovery.NewPortScanner(5 * time.Second)
+	if err != nil {
+		logging.GetLogger().Warn("Failed to create port scanner", "error", err)
+	} else {
+		s.services.Discovery.PortScanner = portScanner
+	}
 
 	// Initialize discovery service with the shared profiler
 	s.services.Discovery.Service = discovery.NewService(cfg, cfg.Interface.Default, sharedProfiler)
@@ -593,41 +602,11 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 		logging.GetLogger().Info("WiFi bridge initialized")
 	}
 
-	// Initialize unified discovery service that correlates wired/WiFi/Bluetooth
-	unifiedConfig := discovery.DefaultUnifiedDiscoveryConfig()
-	unifiedConfig.EnableWiFi = s.services.Discovery.WiFiBridge != nil
-	unifiedConfig.EnableBluetooth = s.services.Discovery.BluetoothScanner != nil
-	unifiedConfig.EnableSNMP = s.services.Discovery.Pipeline != nil
-	unifiedConfig.EnablePortScan = s.services.Discovery.Pipeline != nil
-	unifiedConfig.EnableProfiling = s.services.Discovery.Pipeline != nil
-	unifiedConfig.EnableVulnScan = s.services.Discovery.Vulnerability != nil
-	s.services.Discovery.Unified = discovery.NewUnifiedDiscoveryService(
-		s.services.Discovery.Device,
-		s.services.Discovery.WiFiBridge,
-		s.services.Discovery.BluetoothScanner,
-		unifiedConfig,
-	)
-	// Wire in Pipeline and VulnerabilityScanner for full scans
-	if s.services.Discovery.Pipeline != nil {
-		s.services.Discovery.Unified.SetPipeline(s.services.Discovery.Pipeline)
-	}
-	if s.services.Discovery.Vulnerability != nil {
-		s.services.Discovery.Unified.SetVulnerabilityScanner(s.services.Discovery.Vulnerability)
-	}
-	logging.GetLogger().Info("Unified discovery service initialized",
-		"wired", unifiedConfig.EnableWired,
-		"wifi", unifiedConfig.EnableWiFi,
-		"bluetooth", unifiedConfig.EnableBluetooth,
-		"snmp", unifiedConfig.EnableSNMP,
-		"portScan", unifiedConfig.EnablePortScan,
-		"vulnScan", unifiedConfig.EnableVulnScan,
-	)
-
-	// Initialize new Discovery Engine (replaces UnifiedDiscoveryService)
+	// Initialize Discovery Engine (primary unified discovery system)
 	engineConfig := discovery.DefaultEngineConfig()
 	s.services.Discovery.Engine = discovery.NewDiscoveryEngine(engineConfig)
 
-	// Wire in collectors
+	// Wire in all collectors
 	if s.services.Discovery.Device != nil {
 		s.services.Discovery.Engine.SetWiredCollector(s.services.Discovery.Device)
 	}
@@ -636,6 +615,12 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 	}
 	if s.services.Discovery.BluetoothScanner != nil {
 		s.services.Discovery.Engine.SetBluetoothCollector(s.services.Discovery.BluetoothScanner)
+	}
+	if s.services.Discovery.Profiler != nil {
+		s.services.Discovery.Engine.SetProfiler(s.services.Discovery.Profiler)
+	}
+	if s.services.Discovery.PortScanner != nil {
+		s.services.Discovery.Engine.SetPortScanner(s.services.Discovery.PortScanner)
 	}
 	if s.services.Discovery.Vulnerability != nil {
 		s.services.Discovery.Engine.SetVulnScanner(s.services.Discovery.Vulnerability)
@@ -901,21 +886,7 @@ func (s *Server) setupShellRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/wifi/discovery/aps", s.handleWiFiDiscoveryAPs)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/wifi/discovery/stats", s.handleWiFiDiscoveryStats)
 
-	// Unified discovery routes (correlates wired/WiFi/Bluetooth)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/unified", s.handleUnifiedDiscovery)
-	s.mux.Handle(
-		APIVersionPrefix+"/shell/discovery/unified/scan",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleUnifiedDiscoveryScan)),
-	)
-	s.mux.Handle(
-		APIVersionPrefix+"/shell/discovery/unified/full",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleUnifiedDiscoveryFullScan)),
-	)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/unified/stats", s.handleUnifiedDiscoveryStats)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/unified/capabilities", s.handleUnifiedDiscoveryCapabilities)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/unified/device/{mac}", s.handleUnifiedDiscoveryDevice)
-
-	// Discovery Engine routes (new unified discovery system)
+	// Discovery Engine routes (primary unified discovery system)
 	s.mux.HandleFunc(APIVersionPrefix+"/discovery/engine", s.handleEngineDiscovery)
 	s.mux.Handle(
 		APIVersionPrefix+"/discovery/engine/scan",

@@ -375,3 +375,49 @@ func ExportRecoverMiddleware(next http.Handler) http.Handler {
 func ExportCORSMiddleware(next http.Handler) http.Handler {
 	return corsMiddleware(next)
 }
+
+// HandleEngineDiscovery exports handleEngineDiscovery for testing.
+func (s *Server) HandleEngineDiscovery(w http.ResponseWriter, r *http.Request) {
+	s.handleEngineDiscovery(w, r)
+}
+
+// HandleEngineScan exports handleEngineScan for testing.
+func (s *Server) HandleEngineScan(w http.ResponseWriter, r *http.Request) {
+	s.handleEngineScan(w, r)
+}
+
+// HandleEngineQuickScan exports handleEngineQuickScan for testing.
+func (s *Server) HandleEngineQuickScan(w http.ResponseWriter, r *http.Request) {
+	s.handleEngineQuickScan(w, r)
+}
+
+// HandleEngineFullScan exports handleEngineFullScan for testing.
+func (s *Server) HandleEngineFullScan(w http.ResponseWriter, r *http.Request) {
+	s.handleEngineFullScan(w, r)
+}
+
+// HandleEngineStats exports handleEngineStats for testing.
+func (s *Server) HandleEngineStats(w http.ResponseWriter, r *http.Request) {
+	s.handleEngineStats(w, r)
+}
+
+// HandleEngineCapabilities exports handleEngineCapabilities for testing.
+func (s *Server) HandleEngineCapabilities(w http.ResponseWriter, r *http.Request) {
+	s.handleEngineCapabilities(w, r)
+}
+
+// HandleEngineDevice exports handleEngineDevice for testing.
+func (s *Server) HandleEngineDevice(w http.ResponseWriter, r *http.Request) {
+	s.handleEngineDevice(w, r)
+}
+
+// ExportAPIVersionPrefix exposes the API version prefix for testing.
+const ExportAPIVersionPrefix = APIVersionPrefix
+
+// ExportEngineDiscoveryResponse exposes EngineDiscoveryResponse for testing.
+type ExportEngineDiscoveryResponse = EngineDiscoveryResponse
+
+// GetDiscoveryEngine returns the discovery engine for testing.
+func (s *Server) GetDiscoveryEngine() any {
+	return s.services.Discovery.Engine
+}
