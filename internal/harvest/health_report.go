@@ -115,100 +115,128 @@ func NewHealthReportBuilder(
 }
 
 // BuildHealthReportData generates health report data for the specified time range.
-func (b *HealthReportBuilder) BuildHealthReportData(ctx context.Context, start, end time.Time) (*HealthReportData, error) {
+func (b *HealthReportBuilder) BuildHealthReportData(
+	ctx context.Context,
+	start, end time.Time,
+) (*HealthReportData, error) {
 	data := &HealthReportData{
 		PeriodStart: start,
 		PeriodEnd:   end,
 		GeneratedAt: time.Now().UTC(),
 	}
 
-	// Get health scores if scorer is available
-	if b.scorer != nil {
-		scores, err := b.scorer.CalculateAllScores(ctx)
-		if err == nil {
-			data.TotalEndpoints = len(scores)
-			for _, score := range scores {
-				// Convert criticality score (0-100) back to 1-10 scale
-				criticality := int(score.CriticalityScore / criticalityScale)
-				if criticality < 1 {
-					criticality = 1
-				}
-				if criticality > maxCriticality {
-					criticality = maxCriticality
-				}
-
-				entry := EndpointScoreEntry{
-					Name:             score.EndpointName,
-					CheckType:        score.CheckType,
-					AvailabilityPct:  score.AvailabilityPct,
-					LatencyAvgMs:     score.P95LatencyMs, // Use actual P95 from score
-					LatencyP95Ms:     score.P95LatencyMs,
-					CompositeScore:   score.CompositeScore,
-					Status:           score.Status,
-					Criticality:      criticality,
-					ChecksTotal:      int(score.TotalChecks),
-					ChecksSuccessful: int(score.SuccessfulChecks),
-				}
-
-				switch score.Status {
-				case statusHealthy:
-					data.HealthyCount++
-				case statusDegraded:
-					data.DegradedCount++
-				case statusCritical:
-					data.CriticalCount++
-				}
-
-				data.EndpointScores = append(data.EndpointScores, entry)
-			}
-		}
-	}
-
-	// Get SLA compliance if SLA tracker is available
-	if b.slaTracker != nil {
-		summary, err := b.slaTracker.GenerateSummary(ctx, "daily")
-		if err == nil && summary != nil {
-			data.SLACompliance = summary.ComplianceRate
-			data.EndpointsMet = summary.EndpointsMet
-			data.EndpointsMissed = summary.EndpointsMissed
-		}
-	}
-
-	// Calculate aggregate statistics from repository
-	if b.repository != nil {
-		timeRange := database.TimeRange{Start: start, End: end}
-
-		// Get all results in the time range
-		results, err := b.repository.Query(ctx, database.HealthCheckQueryOptions{
-			TimeRange: timeRange,
-			Limit:     queryLimitLarge,
-		})
-		if err == nil && len(results) > 0 {
-			var totalLatency float64
-			var successCount int
-			latencies := make([]float64, 0, len(results))
-
-			for _, r := range results {
-				if r.Success {
-					successCount++
-				}
-				if r.LatencyMs > 0 {
-					totalLatency += r.LatencyMs
-					latencies = append(latencies, r.LatencyMs)
-				}
-			}
-
-			if len(results) > 0 {
-				data.OverallUptime = float64(successCount) / float64(len(results)) * percentUptime
-			}
-			if len(latencies) > 0 {
-				data.AvgLatencyMs = totalLatency / float64(len(latencies))
-				data.AvgLatencyP95Ms = calculateP95(latencies)
-			}
-		}
-	}
+	b.populateHealthScores(ctx, data)
+	b.populateSLACompliance(ctx, data)
+	b.populateAggregateStats(ctx, data, start, end)
 
 	return data, nil
+}
+
+// populateHealthScores fills in endpoint health scores from the scoring service.
+func (b *HealthReportBuilder) populateHealthScores(ctx context.Context, data *HealthReportData) {
+	if b.scorer == nil {
+		return
+	}
+
+	scores, err := b.scorer.CalculateAllScores(ctx)
+	if err != nil {
+		return
+	}
+
+	data.TotalEndpoints = len(scores)
+	for _, score := range scores {
+		entry := b.buildEndpointScoreEntry(score)
+		b.updateStatusCounts(data, score.Status)
+		data.EndpointScores = append(data.EndpointScores, entry)
+	}
+}
+
+// buildEndpointScoreEntry creates an EndpointScoreEntry from a health score.
+func (b *HealthReportBuilder) buildEndpointScoreEntry(
+	score *health.EndpointHealthScore,
+) EndpointScoreEntry {
+	// Convert criticality score (0-100) back to 1-10 scale, clamped to valid range
+	criticality := max(1, min(maxCriticality, int(score.CriticalityScore/criticalityScale)))
+
+	return EndpointScoreEntry{
+		Name:             score.EndpointName,
+		CheckType:        score.CheckType,
+		AvailabilityPct:  score.AvailabilityPct,
+		LatencyAvgMs:     score.P95LatencyMs,
+		LatencyP95Ms:     score.P95LatencyMs,
+		CompositeScore:   score.CompositeScore,
+		Status:           score.Status,
+		Criticality:      criticality,
+		ChecksTotal:      int(score.TotalChecks),
+		ChecksSuccessful: int(score.SuccessfulChecks),
+	}
+}
+
+// updateStatusCounts increments the appropriate status counter.
+func (b *HealthReportBuilder) updateStatusCounts(data *HealthReportData, status string) {
+	switch status {
+	case statusHealthy:
+		data.HealthyCount++
+	case statusDegraded:
+		data.DegradedCount++
+	case statusCritical:
+		data.CriticalCount++
+	}
+}
+
+// populateSLACompliance fills in SLA compliance data from the SLA tracker.
+func (b *HealthReportBuilder) populateSLACompliance(ctx context.Context, data *HealthReportData) {
+	if b.slaTracker == nil {
+		return
+	}
+
+	summary, err := b.slaTracker.GenerateSummary(ctx, "daily")
+	if err != nil || summary == nil {
+		return
+	}
+
+	data.SLACompliance = summary.ComplianceRate
+	data.EndpointsMet = summary.EndpointsMet
+	data.EndpointsMissed = summary.EndpointsMissed
+}
+
+// populateAggregateStats calculates aggregate statistics from the health check repository.
+func (b *HealthReportBuilder) populateAggregateStats(
+	ctx context.Context,
+	data *HealthReportData,
+	start, end time.Time,
+) {
+	if b.repository == nil {
+		return
+	}
+
+	results, err := b.repository.Query(ctx, database.HealthCheckQueryOptions{
+		TimeRange: database.TimeRange{Start: start, End: end},
+		Limit:     queryLimitLarge,
+	})
+	if err != nil || len(results) == 0 {
+		return
+	}
+
+	var totalLatency float64
+	var successCount int
+	latencies := make([]float64, 0, len(results))
+
+	for _, r := range results {
+		if r.Success {
+			successCount++
+		}
+		if r.LatencyMs > 0 {
+			totalLatency += r.LatencyMs
+			latencies = append(latencies, r.LatencyMs)
+		}
+	}
+
+	data.OverallUptime = float64(successCount) / float64(len(results)) * percentUptime
+	if len(latencies) > 0 {
+		data.AvgLatencyMs = totalLatency / float64(len(latencies))
+		data.AvgLatencyP95Ms = calculateP95(latencies)
+	}
 }
 
 // calculateP95 calculates the 95th percentile of a slice of values.
@@ -311,23 +339,43 @@ func (d *HealthReportData) GetRecommendations() []string {
 	recommendations := make([]string, 0)
 
 	if d.CriticalCount > 0 {
-		recommendations = append(recommendations,
-			fmt.Sprintf("CRITICAL: %d endpoint(s) in critical state require immediate attention", d.CriticalCount))
+		recommendations = append(
+			recommendations,
+			fmt.Sprintf(
+				"CRITICAL: %d endpoint(s) in critical state require immediate attention",
+				d.CriticalCount,
+			),
+		)
 	}
 
 	if d.SLACompliance < slaComplianceTarget {
-		recommendations = append(recommendations,
-			fmt.Sprintf("SLA compliance (%.2f%%) is below target. Review failing endpoints.", d.SLACompliance))
+		recommendations = append(
+			recommendations,
+			fmt.Sprintf(
+				"SLA compliance (%.2f%%) is below target. Review failing endpoints.",
+				d.SLACompliance,
+			),
+		)
 	}
 
 	if d.AvgLatencyMs > latencyThreshold {
-		recommendations = append(recommendations,
-			fmt.Sprintf("Average latency (%.2fms) is elevated. Consider infrastructure optimization.", d.AvgLatencyMs))
+		recommendations = append(
+			recommendations,
+			fmt.Sprintf(
+				"Average latency (%.2fms) is elevated. Consider infrastructure optimization.",
+				d.AvgLatencyMs,
+			),
+		)
 	}
 
 	if d.AlertsCritical > 0 {
-		recommendations = append(recommendations,
-			fmt.Sprintf("%d critical alert(s) active. Review alert dashboard for details.", d.AlertsCritical))
+		recommendations = append(
+			recommendations,
+			fmt.Sprintf(
+				"%d critical alert(s) active. Review alert dashboard for details.",
+				d.AlertsCritical,
+			),
+		)
 	}
 
 	if d.Anomalies > 0 {
