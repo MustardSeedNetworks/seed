@@ -714,9 +714,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               variant="compact"
               defaultOpen={true}
               status={
-                data.enterpriseResults.sqlResults.some((r) => !r.success)
-                  ? "error"
-                  : "success"
+                data.enterpriseResults.sqlResults.some((r) => !r.success) ? "error" : "success"
               }
             >
               {data.enterpriseResults.sqlResults.map((r) => (
@@ -738,18 +736,12 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
                       </span>
                     </div>
                     {r.success && r.serverVersion && (
-                      <span className="caption text-text-muted ml-6">
-                        {r.serverVersion}
-                      </span>
+                      <span className="caption text-text-muted ml-6">{r.serverVersion}</span>
                     )}
-                    {r.error && (
-                      <span className="caption text-status-error ml-6">{r.error}</span>
-                    )}
+                    {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
                   </div>
                   <div className="text-right">
-                    <div className="body-small font-mono">
-                      {r.totalTimeMs.toFixed(1)}ms
-                    </div>
+                    <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                     {r.success && (
                       <div className="caption text-text-muted">
                         Connect: {r.connectTimeMs.toFixed(1)}ms
@@ -763,57 +755,59 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
           )}
 
           {/* File Share Results (SMB/NFS) */}
-          {data.enterpriseResults?.fileShareResults && data.enterpriseResults.fileShareResults.length > 0 && (
-            <CollapsibleSection
-              title={t("health.fileShares")}
-              count={data.enterpriseResults.fileShareResults.length}
-              variant="compact"
-              defaultOpen={true}
-              status={
-                data.enterpriseResults.fileShareResults.some((r) => !r.success)
-                  ? "error"
-                  : "success"
-              }
-            >
-              {data.enterpriseResults.fileShareResults.map((r) => (
-                <div
-                  key={`fileshare-${r.name}`}
-                  className={cn(
-                    layout.flex.between,
-                    spacing.pad.xs,
-                    radius.default,
-                    !r.success ? "bg-status-error/10" : "bg-surface-raised",
-                  )}
-                >
-                  <div className={layout.stack.compact}>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={r.success ? "success" : "error"} />
-                      <span className="body-small font-medium">{r.name}</span>
-                      <span className="caption text-text-muted">
-                        {r.protocol.toUpperCase()} • {"//"}
-                        {r.host}/{r.share}
-                      </span>
-                    </div>
-                    {r.error && (
-                      <span className="caption text-status-error ml-6">{r.error}</span>
+          {data.enterpriseResults?.fileShareResults &&
+            data.enterpriseResults.fileShareResults.length > 0 && (
+              <CollapsibleSection
+                title={t("health.fileShares")}
+                count={data.enterpriseResults.fileShareResults.length}
+                variant="compact"
+                defaultOpen={true}
+                status={
+                  data.enterpriseResults.fileShareResults.some((r) => !r.success)
+                    ? "error"
+                    : "success"
+                }
+              >
+                {data.enterpriseResults.fileShareResults.map((r) => (
+                  <div
+                    key={`fileshare-${r.name}`}
+                    className={cn(
+                      layout.flex.between,
+                      spacing.pad.xs,
+                      radius.default,
+                      !r.success ? "bg-status-error/10" : "bg-surface-raised",
                     )}
-                  </div>
-                  <div className="text-right">
-                    <div className="body-small font-mono">
-                      {r.connectTimeMs.toFixed(1)}ms
-                    </div>
-                    {r.success && (r.readSpeedMBps !== undefined || r.writeSpeedMBps !== undefined) && (
-                      <div className="caption text-text-muted">
-                        {r.readSpeedMBps !== undefined && `R: ${r.readSpeedMBps.toFixed(1)} MB/s`}
-                        {r.readSpeedMBps !== undefined && r.writeSpeedMBps !== undefined && " • "}
-                        {r.writeSpeedMBps !== undefined && `W: ${r.writeSpeedMBps.toFixed(1)} MB/s`}
+                  >
+                    <div className={layout.stack.compact}>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={r.success ? "success" : "error"} />
+                        <span className="body-small font-medium">{r.name}</span>
+                        <span className="caption text-text-muted">
+                          {r.protocol.toUpperCase()} • {"//"}
+                          {r.host}/{r.share}
+                        </span>
                       </div>
-                    )}
+                      {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
+                    </div>
+                    <div className="text-right">
+                      <div className="body-small font-mono">{r.connectTimeMs.toFixed(1)}ms</div>
+                      {r.success &&
+                        (r.readSpeedMBps !== undefined || r.writeSpeedMBps !== undefined) && (
+                          <div className="caption text-text-muted">
+                            {r.readSpeedMBps !== undefined &&
+                              `R: ${r.readSpeedMBps.toFixed(1)} MB/s`}
+                            {r.readSpeedMBps !== undefined &&
+                              r.writeSpeedMBps !== undefined &&
+                              " • "}
+                            {r.writeSpeedMBps !== undefined &&
+                              `W: ${r.writeSpeedMBps.toFixed(1)} MB/s`}
+                          </div>
+                        )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </CollapsibleSection>
-          )}
+                ))}
+              </CollapsibleSection>
+            )}
 
           {/* LDAP Results */}
           {data.enterpriseResults?.ldapResults && data.enterpriseResults.ldapResults.length > 0 && (
@@ -823,9 +817,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               variant="compact"
               defaultOpen={true}
               status={
-                data.enterpriseResults.ldapResults.some((r) => !r.success)
-                  ? "error"
-                  : "success"
+                data.enterpriseResults.ldapResults.some((r) => !r.success) ? "error" : "success"
               }
             >
               {data.enterpriseResults.ldapResults.map((r) => (
@@ -847,18 +839,12 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
                       </span>
                     </div>
                     {r.success && r.serverInfo && (
-                      <span className="caption text-text-muted ml-6">
-                        {r.serverInfo}
-                      </span>
+                      <span className="caption text-text-muted ml-6">{r.serverInfo}</span>
                     )}
-                    {r.error && (
-                      <span className="caption text-status-error ml-6">{r.error}</span>
-                    )}
+                    {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
                   </div>
                   <div className="text-right">
-                    <div className="body-small font-mono">
-                      {r.totalTimeMs.toFixed(1)}ms
-                    </div>
+                    <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                     {r.success && (
                       <div className="caption text-text-muted">
                         Connect: {r.connectTimeMs.toFixed(1)}ms
@@ -878,11 +864,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               count={data.videoResults.rtspResults.length}
               variant="compact"
               defaultOpen={true}
-              status={
-                data.videoResults.rtspResults.some((r) => !r.success)
-                  ? "error"
-                  : "success"
-              }
+              status={data.videoResults.rtspResults.some((r) => !r.success) ? "error" : "success"}
             >
               {data.videoResults.rtspResults.map((r) => (
                 <div
@@ -909,14 +891,10 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
                         {r.resolution && r.resolution}
                       </span>
                     )}
-                    {r.error && (
-                      <span className="caption text-status-error ml-6">{r.error}</span>
-                    )}
+                    {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
                   </div>
                   <div className="text-right">
-                    <div className="body-small font-mono">
-                      {r.connectTimeMs.toFixed(1)}ms
-                    </div>
+                    <div className="body-small font-mono">{r.connectTimeMs.toFixed(1)}ms</div>
                   </div>
                 </div>
               ))}
@@ -931,9 +909,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               variant="compact"
               defaultOpen={true}
               status={
-                data.medicalResults.dicomResults.some((r) => !r.success)
-                  ? "error"
-                  : "success"
+                data.medicalResults.dicomResults.some((r) => !r.success) ? "error" : "success"
               }
             >
               {data.medicalResults.dicomResults.map((r) => (
@@ -959,14 +935,10 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
                         Server AE: {r.serverAeTitle}
                       </span>
                     )}
-                    {r.error && (
-                      <span className="caption text-status-error ml-6">{r.error}</span>
-                    )}
+                    {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
                   </div>
                   <div className="text-right">
-                    <div className="body-small font-mono">
-                      {r.totalTimeMs.toFixed(1)}ms
-                    </div>
+                    <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                     {r.success && r.echoTimeMs !== undefined && (
                       <div className="caption text-text-muted">
                         C-ECHO: {r.echoTimeMs.toFixed(1)}ms
@@ -985,11 +957,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               count={data.medicalResults.hl7Results.length}
               variant="compact"
               defaultOpen={true}
-              status={
-                data.medicalResults.hl7Results.some((r) => !r.success)
-                  ? "error"
-                  : "success"
-              }
+              status={data.medicalResults.hl7Results.some((r) => !r.success) ? "error" : "success"}
             >
               {data.medicalResults.hl7Results.map((r) => (
                 <div
@@ -1016,14 +984,10 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
                         {r.serverVersion && r.serverVersion}
                       </span>
                     )}
-                    {r.error && (
-                      <span className="caption text-status-error ml-6">{r.error}</span>
-                    )}
+                    {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
                   </div>
                   <div className="text-right">
-                    <div className="body-small font-mono">
-                      {r.totalTimeMs.toFixed(1)}ms
-                    </div>
+                    <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                     {r.success && r.responseTimeMs !== undefined && (
                       <div className="caption text-text-muted">
                         Response: {r.responseTimeMs.toFixed(1)}ms
@@ -1042,11 +1006,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               count={data.medicalResults.fhirResults.length}
               variant="compact"
               defaultOpen={true}
-              status={
-                data.medicalResults.fhirResults.some((r) => !r.success)
-                  ? "error"
-                  : "success"
-              }
+              status={data.medicalResults.fhirResults.some((r) => !r.success) ? "error" : "success"}
             >
               {data.medicalResults.fhirResults.map((r) => (
                 <div
@@ -1073,18 +1033,12 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
                         {r.serverName && r.serverName}
                       </span>
                     )}
-                    {r.error && (
-                      <span className="caption text-status-error ml-6">{r.error}</span>
-                    )}
+                    {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
                   </div>
                   <div className="text-right">
-                    <div className="body-small font-mono">
-                      {r.totalTimeMs.toFixed(1)}ms
-                    </div>
+                    <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                     {r.success && r.resourceCount !== undefined && (
-                      <div className="caption text-text-muted">
-                        {r.resourceCount} resources
-                      </div>
+                      <div className="caption text-text-muted">{r.resourceCount} resources</div>
                     )}
                   </div>
                 </div>
@@ -1100,9 +1054,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               variant="compact"
               defaultOpen={true}
               status={
-                data.educationResults.ltiResults.some((r) => !r.success)
-                  ? "error"
-                  : "success"
+                data.educationResults.ltiResults.some((r) => !r.success) ? "error" : "success"
               }
             >
               {data.educationResults.ltiResults.map((r) => (
@@ -1119,23 +1071,20 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
                     <div className="flex items-center gap-2">
                       <StatusBadge status={r.success ? "success" : "error"} />
                       <span className="body-small font-medium">{r.name}</span>
-                      <span className="caption text-text-muted truncate max-w-48" title={r.launchUrl}>
+                      <span
+                        className="caption text-text-muted truncate max-w-48"
+                        title={r.launchUrl}
+                      >
                         {r.launchUrl}
                       </span>
                     </div>
                     {r.success && r.ltiVersion && (
-                      <span className="caption text-text-muted ml-6">
-                        LTI {r.ltiVersion}
-                      </span>
+                      <span className="caption text-text-muted ml-6">LTI {r.ltiVersion}</span>
                     )}
-                    {r.error && (
-                      <span className="caption text-status-error ml-6">{r.error}</span>
-                    )}
+                    {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
                   </div>
                   <div className="text-right">
-                    <div className="body-small font-mono">
-                      {r.totalTimeMs.toFixed(1)}ms
-                    </div>
+                    <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                   </div>
                 </div>
               ))}
@@ -1143,111 +1092,102 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
           )}
 
           {/* OPC-UA Results */}
-          {data.industrialResults?.opcuaResults && data.industrialResults.opcuaResults.length > 0 && (
-            <CollapsibleSection
-              title="OPC-UA"
-              count={data.industrialResults.opcuaResults.length}
-              variant="compact"
-              defaultOpen={true}
-              status={
-                data.industrialResults.opcuaResults.some((r) => !r.success)
-                  ? "error"
-                  : "success"
-              }
-            >
-              {data.industrialResults.opcuaResults.map((r) => (
-                <div
-                  key={`opcua-${r.name}`}
-                  className={cn(
-                    layout.flex.between,
-                    spacing.pad.xs,
-                    radius.default,
-                    !r.success ? "bg-status-error/10" : "bg-surface-raised",
-                  )}
-                >
-                  <div className={layout.stack.compact}>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={r.success ? "success" : "error"} />
-                      <span className="body-small font-medium">{r.name}</span>
-                      <span className="caption text-text-muted truncate max-w-48" title={r.endpointUrl}>
-                        {r.endpointUrl}
-                      </span>
-                    </div>
-                    {r.success && (r.securityMode || r.productName) && (
-                      <span className="caption text-text-muted ml-6">
-                        {r.securityMode && r.securityMode}
-                        {r.securityMode && r.productName && " • "}
-                        {r.productName && r.productName}
-                      </span>
+          {data.industrialResults?.opcuaResults &&
+            data.industrialResults.opcuaResults.length > 0 && (
+              <CollapsibleSection
+                title="OPC-UA"
+                count={data.industrialResults.opcuaResults.length}
+                variant="compact"
+                defaultOpen={true}
+                status={
+                  data.industrialResults.opcuaResults.some((r) => !r.success) ? "error" : "success"
+                }
+              >
+                {data.industrialResults.opcuaResults.map((r) => (
+                  <div
+                    key={`opcua-${r.name}`}
+                    className={cn(
+                      layout.flex.between,
+                      spacing.pad.xs,
+                      radius.default,
+                      !r.success ? "bg-status-error/10" : "bg-surface-raised",
                     )}
-                    {r.error && (
-                      <span className="caption text-status-error ml-6">{r.error}</span>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <div className="body-small font-mono">
-                      {r.totalTimeMs.toFixed(1)}ms
-                    </div>
-                    {r.success && r.serverState && (
-                      <div className="caption text-text-muted">
-                        {r.serverState}
+                  >
+                    <div className={layout.stack.compact}>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={r.success ? "success" : "error"} />
+                        <span className="body-small font-medium">{r.name}</span>
+                        <span
+                          className="caption text-text-muted truncate max-w-48"
+                          title={r.endpointUrl}
+                        >
+                          {r.endpointUrl}
+                        </span>
                       </div>
-                    )}
+                      {r.success && (r.securityMode || r.productName) && (
+                        <span className="caption text-text-muted ml-6">
+                          {r.securityMode && r.securityMode}
+                          {r.securityMode && r.productName && " • "}
+                          {r.productName && r.productName}
+                        </span>
+                      )}
+                      {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
+                    </div>
+                    <div className="text-right">
+                      <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+                      {r.success && r.serverState && (
+                        <div className="caption text-text-muted">{r.serverState}</div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </CollapsibleSection>
-          )}
+                ))}
+              </CollapsibleSection>
+            )}
 
           {/* Modbus TCP Results */}
-          {data.industrialResults?.modbusResults && data.industrialResults.modbusResults.length > 0 && (
-            <CollapsibleSection
-              title="Modbus TCP"
-              count={data.industrialResults.modbusResults.length}
-              variant="compact"
-              defaultOpen={true}
-              status={
-                data.industrialResults.modbusResults.some((r) => !r.success)
-                  ? "error"
-                  : "success"
-              }
-            >
-              {data.industrialResults.modbusResults.map((r) => (
-                <div
-                  key={`modbus-${r.name}`}
-                  className={cn(
-                    layout.flex.between,
-                    spacing.pad.xs,
-                    radius.default,
-                    !r.success ? "bg-status-error/10" : "bg-surface-raised",
-                  )}
-                >
-                  <div className={layout.stack.compact}>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={r.success ? "success" : "error"} />
-                      <span className="body-small font-medium">{r.name}</span>
-                      <span className="caption text-text-muted">
-                        {r.host}:{r.port} • Unit {r.unitId}
-                      </span>
-                    </div>
-                    {r.error && (
-                      <span className="caption text-status-error ml-6">{r.error}</span>
+          {data.industrialResults?.modbusResults &&
+            data.industrialResults.modbusResults.length > 0 && (
+              <CollapsibleSection
+                title="Modbus TCP"
+                count={data.industrialResults.modbusResults.length}
+                variant="compact"
+                defaultOpen={true}
+                status={
+                  data.industrialResults.modbusResults.some((r) => !r.success) ? "error" : "success"
+                }
+              >
+                {data.industrialResults.modbusResults.map((r) => (
+                  <div
+                    key={`modbus-${r.name}`}
+                    className={cn(
+                      layout.flex.between,
+                      spacing.pad.xs,
+                      radius.default,
+                      !r.success ? "bg-status-error/10" : "bg-surface-raised",
                     )}
-                  </div>
-                  <div className="text-right">
-                    <div className="body-small font-mono">
-                      {r.totalTimeMs.toFixed(1)}ms
-                    </div>
-                    {r.success && r.registerValue !== undefined && (
-                      <div className="caption text-text-muted">
-                        Reg: 0x{r.registerValue.toString(16).toUpperCase().padStart(4, '0')}
+                  >
+                    <div className={layout.stack.compact}>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={r.success ? "success" : "error"} />
+                        <span className="body-small font-medium">{r.name}</span>
+                        <span className="caption text-text-muted">
+                          {r.host}:{r.port} • Unit {r.unitId}
+                        </span>
                       </div>
-                    )}
+                      {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
+                    </div>
+                    <div className="text-right">
+                      <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+                      {r.success && r.registerValue !== undefined && (
+                        <div className="caption text-text-muted">
+                          Reg: 0x{r.registerValue.toString(16).toUpperCase().padStart(4, "0")}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </CollapsibleSection>
-          )}
+                ))}
+              </CollapsibleSection>
+            )}
         </>
       )}
 

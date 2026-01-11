@@ -84,15 +84,22 @@ function ComplianceRing({ rate, size = 80 }: { rate: number; size?: number }) {
   const strokeDashoffset = circumference - (rate / 100) * circumference;
 
   const status = getComplianceStatus(rate);
-  const strokeColor = status === "success"
-    ? "var(--color-status-success)"
-    : status === "warning"
-    ? "var(--color-status-warning)"
-    : "var(--color-status-error)";
+  const strokeColor =
+    status === "success"
+      ? "var(--color-status-success)"
+      : status === "warning"
+        ? "var(--color-status-warning)"
+        : "var(--color-status-error)";
 
   return (
     <div className="relative inline-flex items-center justify-center">
-      <svg height={size} width={size} className="-rotate-90" role="img" aria-labelledby="compliance-title">
+      <svg
+        height={size}
+        width={size}
+        className="-rotate-90"
+        role="img"
+        aria-labelledby="compliance-title"
+      >
         <title id="compliance-title">SLA Compliance {rate.toFixed(1)}%</title>
         <circle
           stroke="var(--color-border)"
@@ -137,15 +144,17 @@ function StatBlock({
 }) {
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <div className={cn(
-        "flex items-center justify-center rounded-md",
-        radius.md,
-        spacing.p2,
-        status === "success" && "bg-status-success/10 text-status-success",
-        status === "warning" && "bg-status-warning/10 text-status-warning",
-        status === "error" && "bg-status-error/10 text-status-error",
-        !status && "bg-surface-secondary text-text-muted"
-      )}>
+      <div
+        className={cn(
+          "flex items-center justify-center rounded-md",
+          radius.md,
+          spacing.p2,
+          status === "success" && "bg-status-success/10 text-status-success",
+          status === "warning" && "bg-status-warning/10 text-status-warning",
+          status === "error" && "bg-status-error/10 text-status-error",
+          !status && "bg-surface-secondary text-text-muted",
+        )}
+      >
         <Icon className={iconTokens.sm} />
       </div>
       <div className="flex flex-col">
@@ -157,7 +166,9 @@ function StatBlock({
 }
 
 // biome-ignore lint/style/useNamingConvention: SLA is a standard acronym
-export const SLADashboardCard = memo(function SLADashboardCard({ className }: SLADashboardCardProps) {
+export const SLADashboardCard = memo(function SLADashboardCard({
+  className,
+}: SLADashboardCardProps) {
   const { t } = useTranslation("cards");
   const [data, setData] = useState<DashboardData>({
     sla: null,
@@ -246,11 +257,7 @@ export const SLADashboardCard = memo(function SLADashboardCard({ className }: SL
         </div>
       )}
 
-      {error && (
-        <div className={cn("text-center text-status-error", spacing.p4)}>
-          {error}
-        </div>
-      )}
+      {error && <div className={cn("text-center text-status-error", spacing.p4)}>{error}</div>}
 
       {!loading && !error && (
         <div className={cn("space-y-4", spacing.p4)}>
@@ -265,7 +272,7 @@ export const SLADashboardCard = memo(function SLADashboardCard({ className }: SL
                   "px-2 py-1 text-xs rounded transition-colors",
                   period === p
                     ? "bg-accent text-white"
-                    : "bg-surface-secondary text-text-muted hover:text-text-primary"
+                    : "bg-surface-secondary text-text-muted hover:text-text-primary",
                 )}
               >
                 {t(`slaDashboard.period.${p}`, p.charAt(0).toUpperCase() + p.slice(1))}
@@ -281,11 +288,13 @@ export const SLADashboardCard = memo(function SLADashboardCard({ className }: SL
                   {t("slaDashboard.compliance", "SLA Compliance")}
                 </h4>
                 <p className="text-xs text-text-muted">
-                  {data.sla.endpointsMet} / {data.sla.totalEndpoints} {t("slaDashboard.endpointsMet", "endpoints meeting SLA")}
+                  {data.sla.endpointsMet} / {data.sla.totalEndpoints}{" "}
+                  {t("slaDashboard.endpointsMet", "endpoints meeting SLA")}
                 </p>
                 {data.sla.endpointsMissed > 0 && (
                   <p className="text-xs text-status-error mt-1">
-                    {data.sla.endpointsMissed} {t("slaDashboard.endpointsMissed", "endpoints missing SLA")}
+                    {data.sla.endpointsMissed}{" "}
+                    {t("slaDashboard.endpointsMissed", "endpoints missing SLA")}
                   </p>
                 )}
               </div>
@@ -339,10 +348,12 @@ export const SLADashboardCard = memo(function SLADashboardCard({ className }: SL
                   {t("slaDashboard.activeAlerts", "Active Alerts")}
                 </h4>
                 <div className="flex items-center gap-2">
-                  <span className={cn(
-                    "text-2xl font-bold",
-                    data.alerts.active > 0 ? "text-status-error" : "text-text-primary"
-                  )}>
+                  <span
+                    className={cn(
+                      "text-2xl font-bold",
+                      data.alerts.active > 0 ? "text-status-error" : "text-text-primary",
+                    )}
+                  >
                     {data.alerts.active}
                   </span>
                   {data.alerts.critical > 0 && (
@@ -359,10 +370,12 @@ export const SLADashboardCard = memo(function SLADashboardCard({ className }: SL
                 {t("slaDashboard.anomalies", "Anomalies")}
               </h4>
               <div className="flex items-center gap-2">
-                <span className={cn(
-                  "text-2xl font-bold",
-                  data.anomalyCount > 0 ? "text-status-warning" : "text-text-primary"
-                )}>
+                <span
+                  className={cn(
+                    "text-2xl font-bold",
+                    data.anomalyCount > 0 ? "text-status-warning" : "text-text-primary",
+                  )}
+                >
                   {data.anomalyCount}
                 </span>
                 {data.anomalyCount > 0 && (

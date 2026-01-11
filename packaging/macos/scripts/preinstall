@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# Pre-install script for The Seed macOS .pkg
+#
+# This script runs before the package payload is installed.
+# It stops any existing service to allow clean upgrade.
+#
+# Exit codes:
+#   0 - Success
+#   Non-zero - Failure (installer will abort)
+#
+
+set -e
+
+# Configuration
+PLIST_DEST="/Library/LaunchDaemons/com.seed.plist"
+
+# Logging
+log() {
+    /usr/bin/logger -t "seed-installer" "$1"
+    echo "$1"
+}
+
+log "Starting pre-install for The Seed..."
+
+# Stop existing service if running
+if launchctl list 2>/dev/null | grep -q "com.seed"; then
+    log "Stopping existing service for upgrade..."
+    launchctl unload "$PLIST_DEST" 2>/dev/null || true
+    sleep 2
+fi
+
+# Kill any orphaned processes
+pkill -f "/usr/local/seed/seed" 2>/dev/null || true
+sleep 1
+
+log "Pre-install complete"
+exit 0
