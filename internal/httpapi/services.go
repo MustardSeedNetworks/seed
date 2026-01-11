@@ -68,10 +68,15 @@ type NetworkServices struct {
 
 // DiscoveryServices groups device and network discovery services.
 type DiscoveryServices struct {
-	Device        *discovery.DeviceDiscovery
-	Service       *discovery.Service
-	Pipeline      *discovery.Pipeline
-	Vulnerability *discovery.VulnerabilityScanner
+	Device           *discovery.DeviceDiscovery
+	Service          *discovery.Service
+	Pipeline         *discovery.Pipeline
+	Vulnerability    *discovery.VulnerabilityScanner
+	ProblemDetector  *discovery.ProblemDetector
+	BluetoothScanner *discovery.BluetoothScanner
+	WiFiBridge       *discovery.WiFiBridge
+	Unified          *discovery.UnifiedDiscoveryService // Correlates wired/WiFi/Bluetooth (deprecated)
+	Engine           *discovery.DiscoveryEngine         // New unified discovery engine
 }
 
 // SapServices groups SAP module services (live telemetry).
@@ -171,6 +176,9 @@ func (sc *ServiceContainer) Stop() {
 	}
 
 	// Stop discovery services
+	if sc.Discovery.Engine != nil {
+		sc.Discovery.Engine.Stop()
+	}
 	if sc.Discovery.Service != nil {
 		sc.Discovery.Service.Stop()
 	}
