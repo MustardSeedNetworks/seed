@@ -36,10 +36,13 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
-      "@locales": fileURLToPath(new URL("../internal/i18n/locales", import.meta.url)),
-    },
+    alias: [
+      { find: /^@\//, replacement: fileURLToPath(new URL("./src/", import.meta.url)) },
+      {
+        find: /^@locales\//,
+        replacement: fileURLToPath(new URL("../internal/i18n/locales/", import.meta.url)),
+      },
+    ],
   },
   server: {
     port: 3000,

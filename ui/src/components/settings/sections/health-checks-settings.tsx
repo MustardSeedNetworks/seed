@@ -36,12 +36,15 @@ import { memo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { cn, icon as iconTokens, input, layout, radius, spacing } from "../../../styles/theme";
 import type {
-  HTTPEndpoint,
+  AlertConfig,
+  AnomalyConfig,
+  HttpEndpoint,
   PingTarget,
   SaveStatus,
-  TCPPort,
+  SlaConfig,
+  TcpPort,
   TestsSettings,
-  UDPPort,
+  UdpPort,
 } from "../../../types/settings";
 import { generateId } from "../../../utils/id";
 import { CollapsibleSection } from "../../ui/collapsible-section";
@@ -114,7 +117,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
   );
 
   const updateTcpPort = useCallback(
-    (id: string, field: keyof TCPPort, value: string | boolean | number) => {
+    (id: string, field: keyof TcpPort, value: string | boolean | number) => {
       setTestsSettings((prev) => ({
         ...prev,
         tcpPorts: prev.tcpPorts.map((p) => (p.id === id ? { ...p, [field]: value } : p)),
@@ -145,7 +148,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
   );
 
   const updateUdpPort = useCallback(
-    (id: string, field: keyof UDPPort, value: string | boolean | number) => {
+    (id: string, field: keyof UdpPort, value: string | boolean | number) => {
       setTestsSettings((prev) => ({
         ...prev,
         udpPorts: prev.udpPorts.map((p) => (p.id === id ? { ...p, [field]: value } : p)),
@@ -182,7 +185,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
   );
 
   const updateHttpEndpoint = useCallback(
-    (id: string, field: keyof HTTPEndpoint, value: string | boolean | number) => {
+    (id: string, field: keyof HttpEndpoint, value: string | boolean | number) => {
       setTestsSettings((prev) => ({
         ...prev,
         httpEndpoints: prev.httpEndpoints.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
@@ -470,6 +473,232 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               />
             </div>
           ))}
+        </div>
+
+        {/* Alert Configuration */}
+        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span className="caption text-text-muted font-medium">{t("health.alertConfig")}</span>
+          </div>
+          <div className={spacing.stack.xs}>
+            <label
+              className={cn(
+                layout.flex.between,
+                spacing.pad.xs,
+                "bg-surface-base border border-surface-border",
+                radius.default,
+              )}
+            >
+              <div>
+                <span className="body-small text-text-primary font-medium">
+                  {t("health.enableAlerts")}
+                </span>
+                <p className="caption text-text-muted">{t("health.alertsDescription")}</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={testsSettings.alertConfig?.enabled ?? true}
+                onChange={(e) =>
+                  setTestsSettings((prev) => ({
+                    ...prev,
+                    alertConfig: {
+                      ...(prev.alertConfig ?? {
+                        enabled: true,
+                        consecutiveFailures: 3,
+                        cooldownMinutes: 5,
+                        digestMode: false,
+                      }),
+                      enabled: e.target.checked,
+                    },
+                  }))
+                }
+                className={iconTokens.size.sm}
+              />
+            </label>
+
+            <div className={cn("flex items-center", spacing.gap.compact)}>
+              <label className="caption text-text-muted flex-1">
+                {t("health.consecutiveFailures")}
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={10}
+                value={testsSettings.alertConfig?.consecutiveFailures ?? 3}
+                onChange={(e) =>
+                  setTestsSettings((prev) => ({
+                    ...prev,
+                    alertConfig: {
+                      ...(prev.alertConfig ?? {
+                        enabled: true,
+                        consecutiveFailures: 3,
+                        cooldownMinutes: 5,
+                        digestMode: false,
+                      }),
+                      consecutiveFailures: Number.parseInt(e.target.value, 10) || 3,
+                    },
+                  }))
+                }
+                className={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
+              />
+            </div>
+
+            <div className={cn("flex items-center", spacing.gap.compact)}>
+              <label className="caption text-text-muted flex-1">
+                {t("health.cooldownMinutes")}
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={60}
+                value={testsSettings.alertConfig?.cooldownMinutes ?? 5}
+                onChange={(e) =>
+                  setTestsSettings((prev) => ({
+                    ...prev,
+                    alertConfig: {
+                      ...(prev.alertConfig ?? {
+                        enabled: true,
+                        consecutiveFailures: 3,
+                        cooldownMinutes: 5,
+                        digestMode: false,
+                      }),
+                      cooldownMinutes: Number.parseInt(e.target.value, 10) || 5,
+                    },
+                  }))
+                }
+                className={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
+              />
+            </div>
+
+            <label
+              className={cn(
+                layout.flex.between,
+                spacing.pad.xs,
+                "bg-surface-base border border-surface-border",
+                radius.default,
+              )}
+            >
+              <div>
+                <span className="body-small text-text-primary font-medium">
+                  {t("health.digestMode")}
+                </span>
+                <p className="caption text-text-muted">{t("health.digestDescription")}</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={testsSettings.alertConfig?.digestMode ?? false}
+                onChange={(e) =>
+                  setTestsSettings((prev) => ({
+                    ...prev,
+                    alertConfig: {
+                      ...(prev.alertConfig ?? {
+                        enabled: true,
+                        consecutiveFailures: 3,
+                        cooldownMinutes: 5,
+                        digestMode: false,
+                      }),
+                      digestMode: e.target.checked,
+                    },
+                  }))
+                }
+                className={iconTokens.size.sm}
+              />
+            </label>
+          </div>
+        </div>
+
+        {/* Anomaly Detection Configuration */}
+        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span className="caption text-text-muted font-medium">{t("health.anomalyConfig")}</span>
+          </div>
+          <div className={spacing.stack.xs}>
+            <label
+              className={cn(
+                layout.flex.between,
+                spacing.pad.xs,
+                "bg-surface-base border border-surface-border",
+                radius.default,
+              )}
+            >
+              <div>
+                <span className="body-small text-text-primary font-medium">
+                  {t("health.enableAnomaly")}
+                </span>
+                <p className="caption text-text-muted">{t("health.anomalyDescription")}</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={testsSettings.anomalyConfig?.enabled ?? true}
+                onChange={(e) =>
+                  setTestsSettings((prev) => ({
+                    ...prev,
+                    anomalyConfig: {
+                      ...(prev.anomalyConfig ?? {
+                        enabled: true,
+                        stdDevThreshold: 2,
+                        maxSamples: 100,
+                      }),
+                      enabled: e.target.checked,
+                    },
+                  }))
+                }
+                className={iconTokens.size.sm}
+              />
+            </label>
+
+            <div className={cn("flex items-center", spacing.gap.compact)}>
+              <label className="caption text-text-muted flex-1">
+                {t("health.stdDevThreshold")}
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={5}
+                step={0.5}
+                value={testsSettings.anomalyConfig?.stdDevThreshold ?? 2}
+                onChange={(e) =>
+                  setTestsSettings((prev) => ({
+                    ...prev,
+                    anomalyConfig: {
+                      ...(prev.anomalyConfig ?? {
+                        enabled: true,
+                        stdDevThreshold: 2,
+                        maxSamples: 100,
+                      }),
+                      stdDevThreshold: Number.parseFloat(e.target.value) || 2,
+                    },
+                  }))
+                }
+                className={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
+              />
+            </div>
+
+            <div className={cn("flex items-center", spacing.gap.compact)}>
+              <label className="caption text-text-muted flex-1">{t("health.maxSamples")}</label>
+              <input
+                type="number"
+                min={10}
+                max={500}
+                step={10}
+                value={testsSettings.anomalyConfig?.maxSamples ?? 100}
+                onChange={(e) =>
+                  setTestsSettings((prev) => ({
+                    ...prev,
+                    anomalyConfig: {
+                      ...(prev.anomalyConfig ?? {
+                        enabled: true,
+                        stdDevThreshold: 2,
+                        maxSamples: 100,
+                      }),
+                      maxSamples: Number.parseInt(e.target.value, 10) || 100,
+                    },
+                  }))
+                }
+                className={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </CollapsibleSection>
