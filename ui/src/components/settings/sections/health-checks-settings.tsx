@@ -32,31 +32,11 @@
  */
 
 import type React from "react";
-import { memo, useCallback } from "react";
+import { memo } from "react";
 import { useTranslation } from "react-i18next";
+import { useArrayItem } from "../../../hooks/useArrayItem";
 import { cn, icon as iconTokens, input, layout, radius, spacing } from "../../../styles/theme";
-import type {
-  AlertConfig,
-  AnomalyConfig,
-  DicomEndpoint,
-  FileShareEndpoint,
-  FhirEndpoint,
-  Hl7Endpoint,
-  HttpEndpoint,
-  LdapEndpoint,
-  LtiEndpoint,
-  ModbusEndpoint,
-  OpcuaEndpoint,
-  PingTarget,
-  RtspEndpoint,
-  SaveStatus,
-  SlaConfig,
-  SqlEndpoint,
-  TcpPort,
-  TestsSettings,
-  UdpPort,
-} from "../../../types/settings";
-import { generateId } from "../../../utils/id";
+import type { SaveStatus, TestsSettings } from "../../../types/settings";
 import { CollapsibleSection } from "../../ui/collapsible-section";
 import { HeartPulse } from "../../ui/icons";
 import { AutoSaveIndicator } from "./auto-save-indicator";
@@ -74,533 +54,195 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
 }: HealthChecksSettingsProps) {
   const { t } = useTranslation("settings");
 
-  // Ping target helpers
-  const addPingTarget = useCallback(() => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      pingTargets: [
-        ...prev.pingTargets,
-        { id: generateId(), name: "", host: "", enabled: true, count: 3 },
-      ],
-    }));
-  }, [setTestsSettings]);
+  // Ping target CRUD helpers
+  const {
+    add: addPingTarget,
+    remove: removePingTarget,
+    update: updatePingTarget,
+  } = useArrayItem(setTestsSettings, "pingTargets", () => ({
+    name: "",
+    host: "",
+    enabled: true,
+    count: 3,
+  }));
 
-  const removePingTarget = useCallback(
-    (id: string) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        pingTargets: prev.pingTargets.filter((t) => t.id !== id),
-      }));
-    },
-    [setTestsSettings],
-  );
+  // TCP port CRUD helpers
+  const {
+    add: addTcpPort,
+    remove: removeTcpPort,
+    update: updateTcpPort,
+  } = useArrayItem(setTestsSettings, "tcpPorts", () => ({
+    name: "",
+    host: "",
+    port: 80,
+    enabled: true,
+  }));
 
-  const updatePingTarget = useCallback(
-    (id: string, field: keyof PingTarget, value: string | boolean | number) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        pingTargets: prev.pingTargets.map((t) => (t.id === id ? { ...t, [field]: value } : t)),
-      }));
-    },
-    [setTestsSettings],
-  );
+  // UDP port CRUD helpers
+  const {
+    add: addUdpPort,
+    remove: removeUdpPort,
+    update: updateUdpPort,
+  } = useArrayItem(setTestsSettings, "udpPorts", () => ({
+    name: "",
+    host: "",
+    port: 53,
+    enabled: true,
+  }));
 
-  // TCP port helpers
-  const addTcpPort = useCallback(() => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      tcpPorts: [
-        ...prev.tcpPorts,
-        { id: generateId(), name: "", host: "", port: 80, enabled: true },
-      ],
-    }));
-  }, [setTestsSettings]);
+  // HTTP endpoint CRUD helpers
+  const {
+    add: addHttpEndpoint,
+    remove: removeHttpEndpoint,
+    update: updateHttpEndpoint,
+  } = useArrayItem(setTestsSettings, "httpEndpoints", () => ({
+    name: "",
+    url: "",
+    expectedStatus: 200,
+    enabled: true,
+  }));
 
-  const removeTcpPort = useCallback(
-    (id: string) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        tcpPorts: prev.tcpPorts.filter((p) => p.id !== id),
-      }));
-    },
-    [setTestsSettings],
-  );
+  // RTSP endpoint CRUD helpers
+  const {
+    add: addRtspEndpoint,
+    remove: removeRtspEndpoint,
+    update: updateRtspEndpoint,
+  } = useArrayItem(setTestsSettings, "rtspEndpoints", () => ({
+    name: "",
+    url: "rtsp://",
+    enabled: true,
+    criticality: 5,
+  }));
 
-  const updateTcpPort = useCallback(
-    (id: string, field: keyof TcpPort, value: string | boolean | number) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        tcpPorts: prev.tcpPorts.map((p) => (p.id === id ? { ...p, [field]: value } : p)),
-      }));
-    },
-    [setTestsSettings],
-  );
+  // DICOM endpoint CRUD helpers
+  const {
+    add: addDicomEndpoint,
+    remove: removeDicomEndpoint,
+    update: updateDicomEndpoint,
+  } = useArrayItem(setTestsSettings, "dicomEndpoints", () => ({
+    name: "",
+    host: "",
+    port: 104,
+    aeTitle: "",
+    enabled: true,
+    criticality: 8,
+  }));
 
-  // UDP port helpers
-  const addUdpPort = useCallback(() => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      udpPorts: [
-        ...prev.udpPorts,
-        { id: generateId(), name: "", host: "", port: 53, enabled: true },
-      ],
-    }));
-  }, [setTestsSettings]);
+  // SQL endpoint CRUD helpers
+  const {
+    add: addSqlEndpoint,
+    remove: removeSqlEndpoint,
+    update: updateSqlEndpoint,
+  } = useArrayItem(setTestsSettings, "sqlEndpoints", () => ({
+    name: "",
+    driver: "postgres" as const,
+    host: "",
+    port: 5432,
+    database: "",
+    username: "",
+    enabled: true,
+    criticality: 7,
+  }));
 
-  const removeUdpPort = useCallback(
-    (id: string) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        udpPorts: prev.udpPorts.filter((p) => p.id !== id),
-      }));
-    },
-    [setTestsSettings],
-  );
+  // File share endpoint CRUD helpers
+  const {
+    add: addFileShareEndpoint,
+    remove: removeFileShareEndpoint,
+    update: updateFileShareEndpoint,
+  } = useArrayItem(setTestsSettings, "fileShareEndpoints", () => ({
+    name: "",
+    protocol: "smb" as const,
+    host: "",
+    sharePath: "",
+    enabled: true,
+    criticality: 5,
+  }));
 
-  const updateUdpPort = useCallback(
-    (id: string, field: keyof UdpPort, value: string | boolean | number) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        udpPorts: prev.udpPorts.map((p) => (p.id === id ? { ...p, [field]: value } : p)),
-      }));
-    },
-    [setTestsSettings],
-  );
+  // LDAP endpoint CRUD helpers
+  const {
+    add: addLdapEndpoint,
+    remove: removeLdapEndpoint,
+    update: updateLdapEndpoint,
+  } = useArrayItem(setTestsSettings, "ldapEndpoints", () => ({
+    name: "",
+    host: "",
+    port: 389,
+    useTls: false,
+    baseDn: "",
+    enabled: true,
+    criticality: 7,
+  }));
 
-  // HTTP endpoint helpers
-  const addHttpEndpoint = useCallback(() => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      httpEndpoints: [
-        ...prev.httpEndpoints,
-        {
-          id: generateId(),
-          name: "",
-          url: "",
-          expectedStatus: 200,
-          enabled: true,
-        },
-      ],
-    }));
-  }, [setTestsSettings]);
+  // HL7 endpoint CRUD helpers
+  const {
+    add: addHl7Endpoint,
+    remove: removeHl7Endpoint,
+    update: updateHl7Endpoint,
+  } = useArrayItem(setTestsSettings, "hl7Endpoints", () => ({
+    name: "",
+    host: "",
+    port: 2575,
+    sendingApp: "",
+    sendingFacility: "",
+    receivingApp: "",
+    receivingFacility: "",
+    enabled: true,
+    criticality: 9,
+  }));
 
-  const removeHttpEndpoint = useCallback(
-    (id: string) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        httpEndpoints: prev.httpEndpoints.filter((e) => e.id !== id),
-      }));
-    },
-    [setTestsSettings],
-  );
+  // FHIR endpoint CRUD helpers
+  const {
+    add: addFhirEndpoint,
+    remove: removeFhirEndpoint,
+    update: updateFhirEndpoint,
+  } = useArrayItem(setTestsSettings, "fhirEndpoints", () => ({
+    name: "",
+    baseUrl: "https://",
+    authType: "none" as const,
+    enabled: true,
+    criticality: 8,
+  }));
 
-  const updateHttpEndpoint = useCallback(
-    (id: string, field: keyof HttpEndpoint, value: string | boolean | number) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        httpEndpoints: prev.httpEndpoints.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
-      }));
-    },
-    [setTestsSettings],
-  );
+  // LTI endpoint CRUD helpers
+  const {
+    add: addLtiEndpoint,
+    remove: removeLtiEndpoint,
+    update: updateLtiEndpoint,
+  } = useArrayItem(setTestsSettings, "ltiEndpoints", () => ({
+    name: "",
+    launchUrl: "https://",
+    consumerKey: "",
+    enabled: true,
+    criticality: 6,
+  }));
 
-  // RTSP endpoint helpers
-  const addRtspEndpoint = useCallback(() => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      rtspEndpoints: [
-        ...(prev.rtspEndpoints ?? []),
-        { id: generateId(), name: "", url: "rtsp://", enabled: true, criticality: 5 },
-      ],
-    }));
-  }, [setTestsSettings]);
+  // OPC-UA endpoint CRUD helpers
+  const {
+    add: addOpcuaEndpoint,
+    remove: removeOpcuaEndpoint,
+    update: updateOpcuaEndpoint,
+  } = useArrayItem(setTestsSettings, "opcuaEndpoints", () => ({
+    name: "",
+    endpointUrl: "opc.tcp://",
+    securityMode: "None" as const,
+    enabled: true,
+    criticality: 8,
+  }));
 
-  const removeRtspEndpoint = useCallback(
-    (id: string) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        rtspEndpoints: (prev.rtspEndpoints ?? []).filter((e) => e.id !== id),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  const updateRtspEndpoint = useCallback(
-    (id: string, field: keyof RtspEndpoint, value: string | boolean | number) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        rtspEndpoints: (prev.rtspEndpoints ?? []).map((e) =>
-          e.id === id ? { ...e, [field]: value } : e,
-        ),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  // DICOM endpoint helpers
-  const addDicomEndpoint = useCallback(() => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      dicomEndpoints: [
-        ...(prev.dicomEndpoints ?? []),
-        { id: generateId(), name: "", host: "", port: 104, aeTitle: "", enabled: true, criticality: 8 },
-      ],
-    }));
-  }, [setTestsSettings]);
-
-  const removeDicomEndpoint = useCallback(
-    (id: string) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        dicomEndpoints: (prev.dicomEndpoints ?? []).filter((e) => e.id !== id),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  const updateDicomEndpoint = useCallback(
-    (id: string, field: keyof DicomEndpoint, value: string | boolean | number) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        dicomEndpoints: (prev.dicomEndpoints ?? []).map((e) =>
-          e.id === id ? { ...e, [field]: value } : e,
-        ),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  // SQL endpoint helpers
-  const addSqlEndpoint = useCallback(() => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      sqlEndpoints: [
-        ...(prev.sqlEndpoints ?? []),
-        {
-          id: generateId(),
-          name: "",
-          driver: "postgres" as const,
-          host: "",
-          port: 5432,
-          database: "",
-          username: "",
-          enabled: true,
-          criticality: 7,
-        },
-      ],
-    }));
-  }, [setTestsSettings]);
-
-  const removeSqlEndpoint = useCallback(
-    (id: string) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        sqlEndpoints: (prev.sqlEndpoints ?? []).filter((e) => e.id !== id),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  const updateSqlEndpoint = useCallback(
-    (id: string, field: keyof SqlEndpoint, value: string | boolean | number) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        sqlEndpoints: (prev.sqlEndpoints ?? []).map((e) =>
-          e.id === id ? { ...e, [field]: value } : e,
-        ),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  // File share endpoint helpers
-  const addFileShareEndpoint = useCallback(() => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      fileShareEndpoints: [
-        ...(prev.fileShareEndpoints ?? []),
-        {
-          id: generateId(),
-          name: "",
-          protocol: "smb" as const,
-          host: "",
-          sharePath: "",
-          enabled: true,
-          criticality: 5,
-        },
-      ],
-    }));
-  }, [setTestsSettings]);
-
-  const removeFileShareEndpoint = useCallback(
-    (id: string) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        fileShareEndpoints: (prev.fileShareEndpoints ?? []).filter((e) => e.id !== id),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  const updateFileShareEndpoint = useCallback(
-    (id: string, field: keyof FileShareEndpoint, value: string | boolean | number) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        fileShareEndpoints: (prev.fileShareEndpoints ?? []).map((e) =>
-          e.id === id ? { ...e, [field]: value } : e,
-        ),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  // LDAP endpoint helpers
-  const addLdapEndpoint = useCallback(() => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      ldapEndpoints: [
-        ...(prev.ldapEndpoints ?? []),
-        {
-          id: generateId(),
-          name: "",
-          host: "",
-          port: 389,
-          useTls: false,
-          baseDn: "",
-          enabled: true,
-          criticality: 7,
-        },
-      ],
-    }));
-  }, [setTestsSettings]);
-
-  const removeLdapEndpoint = useCallback(
-    (id: string) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        ldapEndpoints: (prev.ldapEndpoints ?? []).filter((e) => e.id !== id),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  const updateLdapEndpoint = useCallback(
-    (id: string, field: keyof LdapEndpoint, value: string | boolean | number) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        ldapEndpoints: (prev.ldapEndpoints ?? []).map((e) =>
-          e.id === id ? { ...e, [field]: value } : e,
-        ),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  // HL7 endpoint helpers
-  const addHl7Endpoint = useCallback(() => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      hl7Endpoints: [
-        ...(prev.hl7Endpoints ?? []),
-        {
-          id: generateId(),
-          name: "",
-          host: "",
-          port: 2575,
-          sendingApp: "",
-          sendingFacility: "",
-          receivingApp: "",
-          receivingFacility: "",
-          enabled: true,
-          criticality: 9,
-        },
-      ],
-    }));
-  }, [setTestsSettings]);
-
-  const removeHl7Endpoint = useCallback(
-    (id: string) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        hl7Endpoints: (prev.hl7Endpoints ?? []).filter((e) => e.id !== id),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  const updateHl7Endpoint = useCallback(
-    (id: string, field: keyof Hl7Endpoint, value: string | boolean | number) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        hl7Endpoints: (prev.hl7Endpoints ?? []).map((e) =>
-          e.id === id ? { ...e, [field]: value } : e,
-        ),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  // FHIR endpoint helpers
-  const addFhirEndpoint = useCallback(() => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      fhirEndpoints: [
-        ...(prev.fhirEndpoints ?? []),
-        {
-          id: generateId(),
-          name: "",
-          baseUrl: "https://",
-          authType: "none" as const,
-          enabled: true,
-          criticality: 8,
-        },
-      ],
-    }));
-  }, [setTestsSettings]);
-
-  const removeFhirEndpoint = useCallback(
-    (id: string) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        fhirEndpoints: (prev.fhirEndpoints ?? []).filter((e) => e.id !== id),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  const updateFhirEndpoint = useCallback(
-    (id: string, field: keyof FhirEndpoint, value: string | boolean | number) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        fhirEndpoints: (prev.fhirEndpoints ?? []).map((e) =>
-          e.id === id ? { ...e, [field]: value } : e,
-        ),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  // LTI endpoint helpers
-  const addLtiEndpoint = useCallback(() => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      ltiEndpoints: [
-        ...(prev.ltiEndpoints ?? []),
-        {
-          id: generateId(),
-          name: "",
-          launchUrl: "https://",
-          consumerKey: "",
-          enabled: true,
-          criticality: 6,
-        },
-      ],
-    }));
-  }, [setTestsSettings]);
-
-  const removeLtiEndpoint = useCallback(
-    (id: string) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        ltiEndpoints: (prev.ltiEndpoints ?? []).filter((e) => e.id !== id),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  const updateLtiEndpoint = useCallback(
-    (id: string, field: keyof LtiEndpoint, value: string | boolean | number) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        ltiEndpoints: (prev.ltiEndpoints ?? []).map((e) =>
-          e.id === id ? { ...e, [field]: value } : e,
-        ),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  // OPC-UA endpoint helpers
-  const addOpcuaEndpoint = useCallback(() => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      opcuaEndpoints: [
-        ...(prev.opcuaEndpoints ?? []),
-        {
-          id: generateId(),
-          name: "",
-          endpointUrl: "opc.tcp://",
-          securityMode: "None" as const,
-          enabled: true,
-          criticality: 8,
-        },
-      ],
-    }));
-  }, [setTestsSettings]);
-
-  const removeOpcuaEndpoint = useCallback(
-    (id: string) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        opcuaEndpoints: (prev.opcuaEndpoints ?? []).filter((e) => e.id !== id),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  const updateOpcuaEndpoint = useCallback(
-    (id: string, field: keyof OpcuaEndpoint, value: string | boolean | number) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        opcuaEndpoints: (prev.opcuaEndpoints ?? []).map((e) =>
-          e.id === id ? { ...e, [field]: value } : e,
-        ),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  // Modbus endpoint helpers
-  const addModbusEndpoint = useCallback(() => {
-    setTestsSettings((prev) => ({
-      ...prev,
-      modbusEndpoints: [
-        ...(prev.modbusEndpoints ?? []),
-        {
-          id: generateId(),
-          name: "",
-          host: "",
-          port: 502,
-          unitId: 1,
-          testRegister: 0,
-          enabled: true,
-          criticality: 8,
-        },
-      ],
-    }));
-  }, [setTestsSettings]);
-
-  const removeModbusEndpoint = useCallback(
-    (id: string) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        modbusEndpoints: (prev.modbusEndpoints ?? []).filter((e) => e.id !== id),
-      }));
-    },
-    [setTestsSettings],
-  );
-
-  const updateModbusEndpoint = useCallback(
-    (id: string, field: keyof ModbusEndpoint, value: string | boolean | number) => {
-      setTestsSettings((prev) => ({
-        ...prev,
-        modbusEndpoints: (prev.modbusEndpoints ?? []).map((e) =>
-          e.id === id ? { ...e, [field]: value } : e,
-        ),
-      }));
-    },
-    [setTestsSettings],
-  );
+  // Modbus endpoint CRUD helpers
+  const {
+    add: addModbusEndpoint,
+    remove: removeModbusEndpoint,
+    update: updateModbusEndpoint,
+  } = useArrayItem(setTestsSettings, "modbusEndpoints", () => ({
+    name: "",
+    host: "",
+    port: 502,
+    unitId: 1,
+    testRegister: 0,
+    enabled: true,
+    criticality: 8,
+  }));
 
   return (
     <CollapsibleSection
@@ -936,12 +578,22 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   value={endpoint.name}
                   onChange={(e) => updateSqlEndpoint(endpoint.id ?? "", "name", e.target.value)}
                   placeholder={t("common.name")}
-                  className={cn(input.base, input.state.default, input.size.md, "flex-1 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "flex-1 bg-surface-raised",
+                  )}
                 />
                 <select
                   value={endpoint.driver}
                   onChange={(e) => updateSqlEndpoint(endpoint.id ?? "", "driver", e.target.value)}
-                  className={cn(input.base, input.state.default, input.size.md, "w-28 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "w-28 bg-surface-raised",
+                  )}
                 >
                   <option value="postgres">PostgreSQL</option>
                   <option value="mysql">MySQL</option>
@@ -962,14 +614,30 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   value={endpoint.host}
                   onChange={(e) => updateSqlEndpoint(endpoint.id ?? "", "host", e.target.value)}
                   placeholder={t("common.host")}
-                  className={cn(input.base, input.state.default, input.size.md, "flex-1 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "flex-1 bg-surface-raised",
+                  )}
                 />
                 <input
                   type="number"
                   value={endpoint.port}
-                  onChange={(e) => updateSqlEndpoint(endpoint.id ?? "", "port", Number.parseInt(e.target.value, 10))}
+                  onChange={(e) =>
+                    updateSqlEndpoint(
+                      endpoint.id ?? "",
+                      "port",
+                      Number.parseInt(e.target.value, 10),
+                    )
+                  }
                   placeholder={t("common.port")}
-                  className={cn(input.base, input.state.default, input.size.md, "w-20 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "w-20 bg-surface-raised",
+                  )}
                 />
               </div>
               <div className={cn("flex", spacing.gap.compact)}>
@@ -978,14 +646,24 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   value={endpoint.database}
                   onChange={(e) => updateSqlEndpoint(endpoint.id ?? "", "database", e.target.value)}
                   placeholder={t("health.database")}
-                  className={cn(input.base, input.state.default, input.size.md, "flex-1 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "flex-1 bg-surface-raised",
+                  )}
                 />
                 <input
                   type="text"
                   value={endpoint.username}
                   onChange={(e) => updateSqlEndpoint(endpoint.id ?? "", "username", e.target.value)}
                   placeholder={t("health.username")}
-                  className={cn(input.base, input.state.default, input.size.md, "flex-1 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "flex-1 bg-surface-raised",
+                  )}
                 />
               </div>
             </div>
@@ -995,7 +673,9 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         {/* File Share Endpoints (SMB/NFS) */}
         <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
           <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.fileShareEndpoints")}</span>
+            <span className="caption text-text-muted font-medium">
+              {t("health.fileShareEndpoints")}
+            </span>
             <button
               type="button"
               onClick={addFileShareEndpoint}
@@ -1021,7 +701,9 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               />
               <select
                 value={endpoint.protocol}
-                onChange={(e) => updateFileShareEndpoint(endpoint.id ?? "", "protocol", e.target.value)}
+                onChange={(e) =>
+                  updateFileShareEndpoint(endpoint.id ?? "", "protocol", e.target.value)
+                }
                 className={cn(input.base, input.state.default, input.size.md, "w-20")}
               >
                 <option value="smb">SMB</option>
@@ -1037,7 +719,9 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               <input
                 type="text"
                 value={endpoint.sharePath}
-                onChange={(e) => updateFileShareEndpoint(endpoint.id ?? "", "sharePath", e.target.value)}
+                onChange={(e) =>
+                  updateFileShareEndpoint(endpoint.id ?? "", "sharePath", e.target.value)
+                }
                 placeholder={t("health.sharePath")}
                 className={cn(input.base, input.state.default, input.size.md, "flex-1")}
               />
@@ -1084,21 +768,42 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   value={endpoint.name}
                   onChange={(e) => updateLdapEndpoint(endpoint.id ?? "", "name", e.target.value)}
                   placeholder={t("common.name")}
-                  className={cn(input.base, input.state.default, input.size.md, "w-32 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "w-32 bg-surface-raised",
+                  )}
                 />
                 <input
                   type="text"
                   value={endpoint.host}
                   onChange={(e) => updateLdapEndpoint(endpoint.id ?? "", "host", e.target.value)}
                   placeholder={t("common.host")}
-                  className={cn(input.base, input.state.default, input.size.md, "flex-1 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "flex-1 bg-surface-raised",
+                  )}
                 />
                 <input
                   type="number"
                   value={endpoint.port}
-                  onChange={(e) => updateLdapEndpoint(endpoint.id ?? "", "port", Number.parseInt(e.target.value, 10))}
+                  onChange={(e) =>
+                    updateLdapEndpoint(
+                      endpoint.id ?? "",
+                      "port",
+                      Number.parseInt(e.target.value, 10),
+                    )
+                  }
                   placeholder={t("common.port")}
-                  className={cn(input.base, input.state.default, input.size.md, "w-20 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "w-20 bg-surface-raised",
+                  )}
                 />
                 <button
                   type="button"
@@ -1114,13 +819,26 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   value={endpoint.baseDn}
                   onChange={(e) => updateLdapEndpoint(endpoint.id ?? "", "baseDn", e.target.value)}
                   placeholder={t("health.baseDn")}
-                  className={cn(input.base, input.state.default, input.size.md, "flex-1 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "flex-1 bg-surface-raised",
+                  )}
                 />
-                <label className={cn("flex items-center", spacing.gap.compact, "caption text-text-muted")}>
+                <label
+                  className={cn(
+                    "flex items-center",
+                    spacing.gap.compact,
+                    "caption text-text-muted",
+                  )}
+                >
                   <input
                     type="checkbox"
                     checked={endpoint.useTls}
-                    onChange={(e) => updateLdapEndpoint(endpoint.id ?? "", "useTls", e.target.checked)}
+                    onChange={(e) =>
+                      updateLdapEndpoint(endpoint.id ?? "", "useTls", e.target.checked)
+                    }
                   />
                   TLS
                 </label>
@@ -1177,7 +895,9 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         {/* DICOM Medical Imaging Endpoints */}
         <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
           <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.dicomEndpoints")}</span>
+            <span className="caption text-text-muted font-medium">
+              {t("health.dicomEndpoints")}
+            </span>
             <button
               type="button"
               onClick={addDicomEndpoint}
@@ -1211,7 +931,13 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               <input
                 type="number"
                 value={endpoint.port}
-                onChange={(e) => updateDicomEndpoint(endpoint.id ?? "", "port", Number.parseInt(e.target.value, 10))}
+                onChange={(e) =>
+                  updateDicomEndpoint(
+                    endpoint.id ?? "",
+                    "port",
+                    Number.parseInt(e.target.value, 10),
+                  )
+                }
                 placeholder="104"
                 className={cn(input.base, input.state.default, input.size.md, "w-20")}
               />
@@ -1265,21 +991,42 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   value={endpoint.name}
                   onChange={(e) => updateHl7Endpoint(endpoint.id ?? "", "name", e.target.value)}
                   placeholder={t("common.name")}
-                  className={cn(input.base, input.state.default, input.size.md, "w-32 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "w-32 bg-surface-raised",
+                  )}
                 />
                 <input
                   type="text"
                   value={endpoint.host}
                   onChange={(e) => updateHl7Endpoint(endpoint.id ?? "", "host", e.target.value)}
                   placeholder={t("common.host")}
-                  className={cn(input.base, input.state.default, input.size.md, "flex-1 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "flex-1 bg-surface-raised",
+                  )}
                 />
                 <input
                   type="number"
                   value={endpoint.port}
-                  onChange={(e) => updateHl7Endpoint(endpoint.id ?? "", "port", Number.parseInt(e.target.value, 10))}
+                  onChange={(e) =>
+                    updateHl7Endpoint(
+                      endpoint.id ?? "",
+                      "port",
+                      Number.parseInt(e.target.value, 10),
+                    )
+                  }
                   placeholder="2575"
-                  className={cn(input.base, input.state.default, input.size.md, "w-20 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "w-20 bg-surface-raised",
+                  )}
                 />
                 <button
                   type="button"
@@ -1293,32 +1040,60 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 <input
                   type="text"
                   value={endpoint.sendingApp}
-                  onChange={(e) => updateHl7Endpoint(endpoint.id ?? "", "sendingApp", e.target.value)}
+                  onChange={(e) =>
+                    updateHl7Endpoint(endpoint.id ?? "", "sendingApp", e.target.value)
+                  }
                   placeholder={t("health.sendingApp")}
-                  className={cn(input.base, input.state.default, input.size.md, "flex-1 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "flex-1 bg-surface-raised",
+                  )}
                 />
                 <input
                   type="text"
                   value={endpoint.sendingFacility}
-                  onChange={(e) => updateHl7Endpoint(endpoint.id ?? "", "sendingFacility", e.target.value)}
+                  onChange={(e) =>
+                    updateHl7Endpoint(endpoint.id ?? "", "sendingFacility", e.target.value)
+                  }
                   placeholder={t("health.sendingFacility")}
-                  className={cn(input.base, input.state.default, input.size.md, "flex-1 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "flex-1 bg-surface-raised",
+                  )}
                 />
               </div>
               <div className={cn("flex", spacing.gap.compact)}>
                 <input
                   type="text"
                   value={endpoint.receivingApp}
-                  onChange={(e) => updateHl7Endpoint(endpoint.id ?? "", "receivingApp", e.target.value)}
+                  onChange={(e) =>
+                    updateHl7Endpoint(endpoint.id ?? "", "receivingApp", e.target.value)
+                  }
                   placeholder={t("health.receivingApp")}
-                  className={cn(input.base, input.state.default, input.size.md, "flex-1 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "flex-1 bg-surface-raised",
+                  )}
                 />
                 <input
                   type="text"
                   value={endpoint.receivingFacility}
-                  onChange={(e) => updateHl7Endpoint(endpoint.id ?? "", "receivingFacility", e.target.value)}
+                  onChange={(e) =>
+                    updateHl7Endpoint(endpoint.id ?? "", "receivingFacility", e.target.value)
+                  }
                   placeholder={t("health.receivingFacility")}
-                  className={cn(input.base, input.state.default, input.size.md, "flex-1 bg-surface-raised")}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    "flex-1 bg-surface-raised",
+                  )}
                 />
               </div>
             </div>
@@ -1416,7 +1191,9 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               <input
                 type="text"
                 value={endpoint.consumerKey}
-                onChange={(e) => updateLtiEndpoint(endpoint.id ?? "", "consumerKey", e.target.value)}
+                onChange={(e) =>
+                  updateLtiEndpoint(endpoint.id ?? "", "consumerKey", e.target.value)
+                }
                 placeholder={t("health.consumerKey")}
                 className={cn(input.base, input.state.default, input.size.md, "w-32")}
               />
@@ -1434,7 +1211,9 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         {/* OPC-UA Industrial Endpoints */}
         <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
           <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.opcuaEndpoints")}</span>
+            <span className="caption text-text-muted font-medium">
+              {t("health.opcuaEndpoints")}
+            </span>
             <button
               type="button"
               onClick={addOpcuaEndpoint}
@@ -1461,13 +1240,17 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               <input
                 type="text"
                 value={endpoint.endpointUrl}
-                onChange={(e) => updateOpcuaEndpoint(endpoint.id ?? "", "endpointUrl", e.target.value)}
+                onChange={(e) =>
+                  updateOpcuaEndpoint(endpoint.id ?? "", "endpointUrl", e.target.value)
+                }
                 placeholder="opc.tcp://host:4840"
                 className={cn(input.base, input.state.default, input.size.md, "flex-1")}
               />
               <select
                 value={endpoint.securityMode}
-                onChange={(e) => updateOpcuaEndpoint(endpoint.id ?? "", "securityMode", e.target.value)}
+                onChange={(e) =>
+                  updateOpcuaEndpoint(endpoint.id ?? "", "securityMode", e.target.value)
+                }
                 className={cn(input.base, input.state.default, input.size.md, "w-32")}
               >
                 <option value="None">None</option>
@@ -1488,7 +1271,9 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         {/* Modbus TCP Industrial Endpoints */}
         <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
           <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.modbusEndpoints")}</span>
+            <span className="caption text-text-muted font-medium">
+              {t("health.modbusEndpoints")}
+            </span>
             <button
               type="button"
               onClick={addModbusEndpoint}
@@ -1522,14 +1307,26 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               <input
                 type="number"
                 value={endpoint.port}
-                onChange={(e) => updateModbusEndpoint(endpoint.id ?? "", "port", Number.parseInt(e.target.value, 10))}
+                onChange={(e) =>
+                  updateModbusEndpoint(
+                    endpoint.id ?? "",
+                    "port",
+                    Number.parseInt(e.target.value, 10),
+                  )
+                }
                 placeholder="502"
                 className={cn(input.base, input.state.default, input.size.md, "w-20")}
               />
               <input
                 type="number"
                 value={endpoint.unitId}
-                onChange={(e) => updateModbusEndpoint(endpoint.id ?? "", "unitId", Number.parseInt(e.target.value, 10))}
+                onChange={(e) =>
+                  updateModbusEndpoint(
+                    endpoint.id ?? "",
+                    "unitId",
+                    Number.parseInt(e.target.value, 10),
+                  )
+                }
                 placeholder="Unit"
                 title={t("health.unitId")}
                 className={cn(input.base, input.state.default, input.size.md, "w-16")}
@@ -1537,7 +1334,13 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               <input
                 type="number"
                 value={endpoint.testRegister}
-                onChange={(e) => updateModbusEndpoint(endpoint.id ?? "", "testRegister", Number.parseInt(e.target.value, 10))}
+                onChange={(e) =>
+                  updateModbusEndpoint(
+                    endpoint.id ?? "",
+                    "testRegister",
+                    Number.parseInt(e.target.value, 10),
+                  )
+                }
                 placeholder="Reg"
                 title={t("health.testRegister")}
                 className={cn(input.base, input.state.default, input.size.md, "w-16")}
