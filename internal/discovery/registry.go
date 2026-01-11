@@ -1,0 +1,606 @@
+package discovery
+
+// registry.go implements the unified device registry.
+//
+// The DeviceRegistry is the single source of truth for all discovered devices.
+// It provides:
+// - Thread-safe device storage indexed by MAC address
+// - Secondary indexes for fast lookup by IP and hostname
+// - Event emission when devices are added, updated, or removed
+// - Automatic correlation across discovery sources
+
+import (
+	"strings"
+	"sync"
+	"time"
+)
+
+// DeviceRegistry stores and manages all discovered devices.
+// It serves as the single source of truth for the discovery system.
+type DeviceRegistry struct {
+	// Primary index: normalized MAC -> device
+	devices map[string]*DiscoveredDevice
+
+	// Secondary indexes for fast lookup
+	byIP       map[string]*DiscoveredDevice   // IP -> device
+	byHostname map[string]*DiscoveredDevice   // hostname -> device
+	byVendor   map[string][]*DiscoveredDevice // vendor -> devices
+
+	// Event bus for change notifications
+	eventBus *EventBus
+
+	// Configuration
+	config *RegistryConfig
+
+	// Statistics
+	stats RegistryStats
+
+	mu sync.RWMutex
+}
+
+// RegistryConfig configures the device registry behavior.
+type RegistryConfig struct {
+	// DeviceTTL is how long before a device is considered stale
+	DeviceTTL time.Duration
+
+	// EmitEvents controls whether the registry emits events
+	EmitEvents bool
+
+	// MaxDevices limits the number of devices (0 = unlimited)
+	MaxDevices int
+
+	// AutoExpire enables automatic device expiration
+	AutoExpire bool
+
+	// ExpireInterval is how often to check for stale devices
+	ExpireInterval time.Duration
+}
+
+// DefaultRegistryConfig returns sensible defaults.
+func DefaultRegistryConfig() *RegistryConfig {
+	return &RegistryConfig{
+		DeviceTTL:      24 * time.Hour,
+		EmitEvents:     true,
+		MaxDevices:     0, // unlimited
+		AutoExpire:     false,
+		ExpireInterval: 5 * time.Minute,
+	}
+}
+
+// RegistryStats contains registry metrics.
+type RegistryStats struct {
+	TotalDevices   int       `json:"totalDevices"`
+	WiredDevices   int       `json:"wiredDevices"`
+	WiFiDevices    int       `json:"wifiDevices"`
+	BTDevices      int       `json:"btDevices"`
+	MultiConnected int       `json:"multiConnected"` // devices seen on 2+ connections
+	AddCount       int64     `json:"addCount"`
+	UpdateCount    int64     `json:"updateCount"`
+	RemoveCount    int64     `json:"removeCount"`
+	LastUpdate     time.Time `json:"lastUpdate"`
+}
+
+// NewDeviceRegistry creates a new device registry.
+func NewDeviceRegistry(eventBus *EventBus, config *RegistryConfig) *DeviceRegistry {
+	if config == nil {
+		config = DefaultRegistryConfig()
+	}
+
+	return &DeviceRegistry{
+		devices:    make(map[string]*DiscoveredDevice),
+		byIP:       make(map[string]*DiscoveredDevice),
+		byHostname: make(map[string]*DiscoveredDevice),
+		byVendor:   make(map[string][]*DiscoveredDevice),
+		eventBus:   eventBus,
+		config:     config,
+	}
+}
+
+// AddOrUpdate adds a new device or updates an existing one.
+// Returns the device and whether it was newly created.
+func (r *DeviceRegistry) AddOrUpdate(device *DiscoveredDevice) (*DiscoveredDevice, bool) {
+	if device == nil || device.MAC == "" {
+		return nil, false
+	}
+
+	mac := normalizeMAC(device.MAC)
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	existing, exists := r.devices[mac]
+	if exists {
+		// Update existing device
+		changes := r.mergeDevice(existing, device)
+		existing.LastSeen = time.Now()
+		r.stats.UpdateCount++
+		r.stats.LastUpdate = time.Now()
+
+		// Update indexes
+		r.updateIndexes(existing)
+
+		// Emit update event
+		if r.config.EmitEvents && r.eventBus != nil && len(changes) > 0 {
+			r.eventBus.Publish(NewDeviceUpdatedEvent(SourceEngine, existing, changes))
+		}
+
+		return existing, false
+	}
+
+	// Add new device
+	device.MAC = mac // ensure normalized
+	if device.LastSeen.IsZero() {
+		device.LastSeen = time.Now()
+	}
+
+	r.devices[mac] = device
+	r.stats.TotalDevices++
+	r.stats.AddCount++
+	r.stats.LastUpdate = time.Now()
+
+	// Update statistics by connection type
+	r.updateConnectionStats(device, true)
+
+	// Build indexes
+	r.updateIndexes(device)
+
+	// Emit discovery event
+	if r.config.EmitEvents && r.eventBus != nil {
+		r.eventBus.Publish(NewDeviceDiscoveredEvent(SourceEngine, device))
+	}
+
+	return device, true
+}
+
+// mergeDevice merges new data into an existing device.
+// Returns a map of field names to their new values (for event changes).
+func (r *DeviceRegistry) mergeDevice(existing, incoming *DiscoveredDevice) map[string]any {
+	changes := make(map[string]any)
+
+	// Update IP if new one provided
+	if incoming.IP != "" && incoming.IP != existing.IP {
+		// Remove old IP from index
+		if existing.IP != "" {
+			delete(r.byIP, existing.IP)
+		}
+		changes["ip"] = incoming.IP
+		existing.IP = incoming.IP
+	}
+
+	// Add IPv6 addresses (don't replace, merge)
+	for _, addr := range incoming.IPv6Addresses {
+		if !containsIPv6(existing.IPv6Addresses, addr) {
+			existing.IPv6Addresses = append(existing.IPv6Addresses, addr)
+			changes["ipv6Addresses"] = existing.IPv6Addresses
+		}
+	}
+
+	// Update hostname if provided
+	if incoming.Hostname != "" && incoming.Hostname != existing.Hostname {
+		changes["hostname"] = incoming.Hostname
+		existing.Hostname = incoming.Hostname
+	}
+
+	// Update NetBIOS name if provided
+	if incoming.NetBIOSName != "" && incoming.NetBIOSName != existing.NetBIOSName {
+		changes["netbiosName"] = incoming.NetBIOSName
+		existing.NetBIOSName = incoming.NetBIOSName
+	}
+
+	// Update mDNS name if provided
+	if incoming.MDNSName != "" && incoming.MDNSName != existing.MDNSName {
+		changes["mdnsName"] = incoming.MDNSName
+		existing.MDNSName = incoming.MDNSName
+	}
+
+	// Update vendor if provided
+	if incoming.Vendor != "" && incoming.Vendor != existing.Vendor {
+		// Remove from old vendor index
+		r.removeFromVendorIndex(existing)
+		changes["vendor"] = incoming.Vendor
+		existing.Vendor = incoming.Vendor
+	}
+
+	// Update OS guess if provided
+	if incoming.OSGuess != "" && incoming.OSGuess != existing.OSGuess {
+		changes["osGuess"] = incoming.OSGuess
+		existing.OSGuess = incoming.OSGuess
+	}
+
+	// Merge discovery methods
+	for _, method := range incoming.DiscoveryMethod {
+		if !containsMethod(existing.DiscoveryMethod, method) {
+			existing.DiscoveryMethod = append(existing.DiscoveryMethod, method)
+			changes["discoveryMethod"] = existing.DiscoveryMethod
+		}
+	}
+
+	// Merge connection types
+	oldConnCount := len(existing.ConnectionTypes)
+	for _, connType := range incoming.ConnectionTypes {
+		if !containsConnectionType(existing.ConnectionTypes, connType) {
+			existing.ConnectionTypes = append(existing.ConnectionTypes, connType)
+		}
+	}
+	if len(existing.ConnectionTypes) != oldConnCount {
+		changes["connectionTypes"] = existing.ConnectionTypes
+		// Update multi-connected stats
+		if len(existing.ConnectionTypes) >= 2 && oldConnCount < 2 {
+			r.stats.MultiConnected++
+		}
+	}
+
+	// Update WiFi presence
+	if incoming.WiFiPresence != nil {
+		if existing.WiFiPresence == nil {
+			existing.WiFiPresence = incoming.WiFiPresence
+			changes["wifiPresence"] = existing.WiFiPresence
+		} else {
+			// Merge WiFi data
+			if incoming.WiFiPresence.SSID != "" {
+				existing.WiFiPresence.SSID = incoming.WiFiPresence.SSID
+			}
+			if incoming.WiFiPresence.SignalDBm != 0 {
+				existing.WiFiPresence.SignalDBm = incoming.WiFiPresence.SignalDBm
+			}
+			existing.WiFiPresence.LastSeen = incoming.WiFiPresence.LastSeen
+			changes["wifiPresence"] = existing.WiFiPresence
+		}
+	}
+
+	// Update Bluetooth presence
+	if incoming.BluetoothPresence != nil {
+		if existing.BluetoothPresence == nil {
+			existing.BluetoothPresence = incoming.BluetoothPresence
+			changes["bluetoothPresence"] = existing.BluetoothPresence
+		} else {
+			// Merge Bluetooth data
+			if incoming.BluetoothPresence.Name != "" {
+				existing.BluetoothPresence.Name = incoming.BluetoothPresence.Name
+			}
+			if incoming.BluetoothPresence.RSSI != 0 {
+				existing.BluetoothPresence.RSSI = incoming.BluetoothPresence.RSSI
+			}
+			existing.BluetoothPresence.LastSeen = incoming.BluetoothPresence.LastSeen
+			changes["bluetoothPresence"] = existing.BluetoothPresence
+		}
+	}
+
+	// Update LLDP info
+	if incoming.LLDPInfo != nil {
+		existing.LLDPInfo = incoming.LLDPInfo
+		changes["lldpInfo"] = existing.LLDPInfo
+	}
+
+	// Update CDP info
+	if incoming.CDPInfo != nil {
+		existing.CDPInfo = incoming.CDPInfo
+		changes["cdpInfo"] = existing.CDPInfo
+	}
+
+	// Update EDP info
+	if incoming.EDPInfo != nil {
+		existing.EDPInfo = incoming.EDPInfo
+		changes["edpInfo"] = existing.EDPInfo
+	}
+
+	// Update NDP info
+	if incoming.NDPInfo != nil {
+		existing.NDPInfo = incoming.NDPInfo
+		changes["ndpInfo"] = existing.NDPInfo
+	}
+
+	// Update profile if provided
+	if incoming.Profile != nil {
+		existing.Profile = incoming.Profile
+		changes["profile"] = existing.Profile
+	}
+
+	// Update SNMP data
+	if incoming.SNMPData != nil {
+		existing.SNMPData = incoming.SNMPData
+		changes["snmpData"] = existing.SNMPData
+	}
+
+	// Update vulnerabilities
+	if incoming.Vulnerabilities != nil {
+		if existing.Vulnerabilities == nil {
+			existing.Vulnerabilities = incoming.Vulnerabilities
+			changes["vulnerabilities"] = existing.Vulnerabilities
+		} else {
+			// Merge vulnerability lists
+			for _, vuln := range incoming.Vulnerabilities.Vulnerabilities {
+				if !containsVuln(existing.Vulnerabilities.Vulnerabilities, vuln) {
+					existing.Vulnerabilities.Vulnerabilities = append(existing.Vulnerabilities.Vulnerabilities, vuln)
+				}
+			}
+			changes["vulnerabilities"] = existing.Vulnerabilities
+		}
+	}
+
+	// Update flags
+	if incoming.IsLocal {
+		existing.IsLocal = true
+	}
+	if incoming.IsRouter {
+		existing.IsRouter = true
+		changes["isRouter"] = true
+	}
+	if incoming.WoLCapable != nil && *incoming.WoLCapable {
+		trueVal := true
+		existing.WoLCapable = &trueVal
+	}
+
+	return changes
+}
+
+// GetDevice returns a device by MAC address.
+func (r *DeviceRegistry) GetDevice(mac string) *DiscoveredDevice {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return r.devices[normalizeMAC(mac)]
+}
+
+// GetDeviceByIP returns a device by IP address.
+func (r *DeviceRegistry) GetDeviceByIP(ip string) *DiscoveredDevice {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return r.byIP[ip]
+}
+
+// GetDeviceByHostname returns a device by hostname.
+func (r *DeviceRegistry) GetDeviceByHostname(hostname string) *DiscoveredDevice {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return r.byHostname[strings.ToLower(hostname)]
+}
+
+// GetDevices returns all devices.
+func (r *DeviceRegistry) GetDevices() []*DiscoveredDevice {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	devices := make([]*DiscoveredDevice, 0, len(r.devices))
+	for _, device := range r.devices {
+		devices = append(devices, device)
+	}
+	return devices
+}
+
+// GetDevicesByVendor returns all devices from a specific vendor.
+func (r *DeviceRegistry) GetDevicesByVendor(vendor string) []*DiscoveredDevice {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return r.byVendor[strings.ToLower(vendor)]
+}
+
+// GetDevicesByConnectionType returns devices seen on a specific connection type.
+func (r *DeviceRegistry) GetDevicesByConnectionType(connType ConnectionType) []*DiscoveredDevice {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var result []*DiscoveredDevice
+	for _, device := range r.devices {
+		for _, ct := range device.ConnectionTypes {
+			if ct == connType {
+				result = append(result, device)
+				break
+			}
+		}
+	}
+	return result
+}
+
+// GetMultiConnectedDevices returns devices seen on multiple connection types.
+func (r *DeviceRegistry) GetMultiConnectedDevices() []*DiscoveredDevice {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var result []*DiscoveredDevice
+	for _, device := range r.devices {
+		if len(device.ConnectionTypes) >= 2 {
+			result = append(result, device)
+		}
+	}
+	return result
+}
+
+// Remove removes a device by MAC address.
+func (r *DeviceRegistry) Remove(mac string) bool {
+	mac = normalizeMAC(mac)
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	device, exists := r.devices[mac]
+	if !exists {
+		return false
+	}
+
+	// Update stats
+	r.updateConnectionStats(device, false)
+	r.stats.TotalDevices--
+	r.stats.RemoveCount++
+	r.stats.LastUpdate = time.Now()
+
+	// Remove from indexes
+	r.removeFromIndexes(device)
+
+	// Remove from primary store
+	delete(r.devices, mac)
+
+	// Emit lost event
+	if r.config.EmitEvents && r.eventBus != nil {
+		r.eventBus.Publish(NewDeviceLostEvent(SourceEngine, mac))
+	}
+
+	return true
+}
+
+// Clear removes all devices from the registry.
+func (r *DeviceRegistry) Clear() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.devices = make(map[string]*DiscoveredDevice)
+	r.byIP = make(map[string]*DiscoveredDevice)
+	r.byHostname = make(map[string]*DiscoveredDevice)
+	r.byVendor = make(map[string][]*DiscoveredDevice)
+	r.stats = RegistryStats{}
+}
+
+// Count returns the number of devices.
+func (r *DeviceRegistry) Count() int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return len(r.devices)
+}
+
+// Stats returns registry statistics.
+func (r *DeviceRegistry) Stats() RegistryStats {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return r.stats
+}
+
+// ExpireStale removes devices not seen within the TTL.
+func (r *DeviceRegistry) ExpireStale() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	cutoff := time.Now().Add(-r.config.DeviceTTL)
+	var expired []string
+
+	for mac, device := range r.devices {
+		if device.LastSeen.Before(cutoff) {
+			expired = append(expired, mac)
+		}
+	}
+
+	for _, mac := range expired {
+		device := r.devices[mac]
+		r.updateConnectionStats(device, false)
+		r.stats.TotalDevices--
+		r.stats.RemoveCount++
+		r.removeFromIndexes(device)
+		delete(r.devices, mac)
+
+		if r.config.EmitEvents && r.eventBus != nil {
+			r.eventBus.Publish(NewDeviceLostEvent(SourceEngine, mac))
+		}
+	}
+
+	if len(expired) > 0 {
+		r.stats.LastUpdate = time.Now()
+	}
+
+	return len(expired)
+}
+
+// updateIndexes updates secondary indexes for a device.
+func (r *DeviceRegistry) updateIndexes(device *DiscoveredDevice) {
+	// IP index
+	if device.IP != "" {
+		r.byIP[device.IP] = device
+	}
+
+	// Hostname index
+	if device.Hostname != "" {
+		r.byHostname[strings.ToLower(device.Hostname)] = device
+	}
+
+	// Vendor index
+	if device.Vendor != "" {
+		vendorKey := strings.ToLower(device.Vendor)
+		// Check if already in list
+		for _, d := range r.byVendor[vendorKey] {
+			if d.MAC == device.MAC {
+				return // already indexed
+			}
+		}
+		r.byVendor[vendorKey] = append(r.byVendor[vendorKey], device)
+	}
+}
+
+// removeFromIndexes removes a device from all secondary indexes.
+func (r *DeviceRegistry) removeFromIndexes(device *DiscoveredDevice) {
+	// IP index
+	if device.IP != "" {
+		delete(r.byIP, device.IP)
+	}
+
+	// Hostname index
+	if device.Hostname != "" {
+		delete(r.byHostname, strings.ToLower(device.Hostname))
+	}
+
+	// Vendor index
+	r.removeFromVendorIndex(device)
+}
+
+// removeFromVendorIndex removes a device from the vendor index.
+func (r *DeviceRegistry) removeFromVendorIndex(device *DiscoveredDevice) {
+	if device.Vendor == "" {
+		return
+	}
+
+	vendorKey := strings.ToLower(device.Vendor)
+	devices := r.byVendor[vendorKey]
+	for i, d := range devices {
+		if d.MAC == device.MAC {
+			r.byVendor[vendorKey] = append(devices[:i], devices[i+1:]...)
+			break
+		}
+	}
+}
+
+// updateConnectionStats updates statistics based on connection types.
+func (r *DeviceRegistry) updateConnectionStats(device *DiscoveredDevice, adding bool) {
+	delta := 1
+	if !adding {
+		delta = -1
+	}
+
+	for _, ct := range device.ConnectionTypes {
+		switch ct {
+		case ConnectionWired:
+			r.stats.WiredDevices += delta
+		case ConnectionWiFi:
+			r.stats.WiFiDevices += delta
+		case ConnectionBluetooth:
+			r.stats.BTDevices += delta
+		}
+	}
+
+	if len(device.ConnectionTypes) >= 2 {
+		r.stats.MultiConnected += delta
+	}
+}
+
+// Helper functions
+
+// containsConnectionType checks if a connection type is in the slice.
+func containsConnectionType(types []ConnectionType, t ConnectionType) bool {
+	for _, ct := range types {
+		if ct == t {
+			return true
+		}
+	}
+	return false
+}
+
+// containsVuln checks if a vulnerability is already in the slice.
+func containsVuln(vulns []Vulnerability, v Vulnerability) bool {
+	for _, existing := range vulns {
+		if existing.CVEID == v.CVEID {
+			return true
+		}
+	}
+	return false
+}
