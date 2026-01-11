@@ -131,11 +131,6 @@ type Tracer interface {
 // PortScanResult represents the result of a port scan.
 type PortScanResult = discovery.PortScanResult
 
-// PortScanner provides port scanning functionality.
-type PortScanner interface {
-	Scan(ctx context.Context, host string, ports []int) (*PortScanResult, error)
-}
-
 // TCPProbeResult represents the result of a TCP probe.
 type TCPProbeResult struct {
 	Host    string        `json:"host"`
@@ -143,14 +138,4 @@ type TCPProbeResult struct {
 	Open    bool          `json:"open"`
 	Latency time.Duration `json:"latency"`
 	Error   string        `json:"error,omitempty"`
-}
-
-// TCPProber provides TCP port probing.
-type TCPProber interface {
-	Probe(
-		ctx context.Context,
-		host string,
-		port int,
-		timeout time.Duration,
-	) (*TCPProbeResult, error)
 }
