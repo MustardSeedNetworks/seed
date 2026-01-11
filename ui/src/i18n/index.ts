@@ -19,18 +19,20 @@
  * ```
  */
 
-import enCards from "@locales/en/cards.json";
 // Import English locale files
+import enCards from "@locales/en/cards.json";
 import enCommon from "@locales/en/common.json";
 import enErrors from "@locales/en/errors.json";
+import enGlossary from "@locales/en/glossary.json";
 import enHelp from "@locales/en/help.json";
 import enSettings from "@locales/en/settings.json";
 import enSetup from "@locales/en/setup.json";
 import enSurvey from "@locales/en/survey.json";
-import esCards from "@locales/es/cards.json";
 // Import Spanish locale files
+import esCards from "@locales/es/cards.json";
 import esCommon from "@locales/es/common.json";
 import esErrors from "@locales/es/errors.json";
+import esGlossary from "@locales/es/glossary.json";
 import esHelp from "@locales/es/help.json";
 import esSettings from "@locales/es/settings.json";
 import esSetup from "@locales/es/setup.json";
@@ -57,6 +59,7 @@ export const namespaces = [
   "cards",
   "settings",
   "errors",
+  "glossary",
   "help",
   "setup",
   "survey",
@@ -78,6 +81,7 @@ const resources = {
     cards: enCards,
     settings: enSettings,
     errors: enErrors,
+    glossary: enGlossary,
     help: enHelp,
     setup: enSetup,
     survey: enSurvey,
@@ -87,6 +91,7 @@ const resources = {
     cards: esCards,
     settings: esSettings,
     errors: esErrors,
+    glossary: esGlossary,
     help: esHelp,
     setup: esSetup,
     survey: esSurvey,

@@ -18,10 +18,10 @@
     "types": ["vite/client"],
     "paths": {
       "@/*": ["./src/*"],
-      "@locales/*": ["../locales/*"]
+      "@locales/*": ["../internal/i18n/locales/*"]
     }
   },
-  "include": ["src", "../locales"],
+  "include": ["src", "../internal/i18n/locales"],
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test/**/*"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
