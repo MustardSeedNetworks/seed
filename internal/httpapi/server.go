@@ -914,6 +914,25 @@ func (s *Server) setupShellRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/unified/stats", s.handleUnifiedDiscoveryStats)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/unified/capabilities", s.handleUnifiedDiscoveryCapabilities)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/unified/device/{mac}", s.handleUnifiedDiscoveryDevice)
+
+	// Discovery Engine routes (new unified discovery system)
+	s.mux.HandleFunc(APIVersionPrefix+"/discovery/engine", s.handleEngineDiscovery)
+	s.mux.Handle(
+		APIVersionPrefix+"/discovery/engine/scan",
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleEngineScan)),
+	)
+	s.mux.Handle(
+		APIVersionPrefix+"/discovery/engine/quick",
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleEngineQuickScan)),
+	)
+	s.mux.Handle(
+		APIVersionPrefix+"/discovery/engine/full",
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleEngineFullScan)),
+	)
+	s.mux.HandleFunc(APIVersionPrefix+"/discovery/engine/stats", s.handleEngineStats)
+	s.mux.HandleFunc(APIVersionPrefix+"/discovery/engine/capabilities", s.handleEngineCapabilities)
+	s.mux.HandleFunc(APIVersionPrefix+"/discovery/engine/device/", s.handleEngineDevice)
+	s.mux.HandleFunc(APIVersionPrefix+"/discovery/engine/events", s.handleEngineEvents)
 }
 
 // setupRootsRoutes registers Roots module routes (path analysis).
