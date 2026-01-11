@@ -97,6 +97,7 @@ export interface PingTarget {
   host: string;
   enabled: boolean;
   count?: number;
+  criticality?: number; // 1-10 scale for health scoring
 }
 
 export interface DnsServer {
@@ -111,6 +112,7 @@ export interface TcpPort {
   host: string;
   port: number;
   enabled: boolean;
+  criticality?: number; // 1-10 scale for health scoring
 }
 
 export interface UdpPort {
@@ -119,6 +121,7 @@ export interface UdpPort {
   host: string;
   port: number;
   enabled: boolean;
+  criticality?: number; // 1-10 scale for health scoring
 }
 
 export interface HttpEndpoint {
@@ -127,6 +130,31 @@ export interface HttpEndpoint {
   url: string;
   expectedStatus: number;
   enabled: boolean;
+  criticality?: number; // 1-10 scale for health scoring
+}
+
+/** SLA configuration for an endpoint */
+export interface SlaConfig {
+  endpointName: string;
+  targetUptime: number; // Percentage (e.g., 99.9)
+  targetLatencyP95: number; // Milliseconds
+  reportingPeriod: "daily" | "weekly" | "monthly";
+  enabled: boolean;
+}
+
+/** Alert configuration settings */
+export interface AlertConfig {
+  enabled: boolean;
+  consecutiveFailures: number; // Number of failures before alerting
+  cooldownMinutes: number; // Minutes between alerts for same endpoint
+  digestMode: boolean; // Batch alerts instead of immediate
+}
+
+/** Anomaly detection configuration */
+export interface AnomalyConfig {
+  enabled: boolean;
+  stdDevThreshold: number; // Number of standard deviations (default: 2)
+  maxSamples: number; // Rolling window size (default: 100)
 }
 
 export interface TestsSettings {
@@ -147,6 +175,10 @@ export interface TestsSettings {
   iperf: {
     autoRunOnLink: boolean;
   };
+  // SLA and health monitoring configuration
+  slaConfigs?: SlaConfig[];
+  alertConfig?: AlertConfig;
+  anomalyConfig?: AnomalyConfig;
 }
 
 // ============================================================================
