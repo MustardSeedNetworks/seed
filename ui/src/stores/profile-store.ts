@@ -11,7 +11,7 @@
  */
 
 import { create } from "zustand";
-import { devtools, subscribeWithSelector } from "zustand/middleware";
+import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import type { DefaultSettings } from "../types/defaults";
 import type {
@@ -194,66 +194,75 @@ const initialState: ProfileState = {
 
 export const useProfileStore = create<ProfileState & ProfileActions>()(
   devtools(
-    subscribeWithSelector(
-      immer((set) => ({
-        ...initialState,
+    persist(
+      subscribeWithSelector(
+        immer((set) => ({
+          ...initialState,
 
-        setProfiles: (profiles) =>
-          set((state) => {
-            state.profiles = profiles;
-          }),
+          setProfiles: (profiles) =>
+            set((state) => {
+              state.profiles = profiles;
+            }),
 
-        setActiveProfile: (profile) =>
-          set((state) => {
-            state.activeProfile = profile;
-          }),
+          setActiveProfile: (profile) =>
+            set((state) => {
+              state.activeProfile = profile;
+            }),
 
-        setBackendDefaults: (defaults) =>
-          set((state) => {
-            state.backendDefaults = defaults;
-          }),
+          setBackendDefaults: (defaults) =>
+            set((state) => {
+              state.backendDefaults = defaults;
+            }),
 
-        setIsLoading: (loading) =>
-          set((state) => {
-            state.isLoading = loading;
-          }),
+          setIsLoading: (loading) =>
+            set((state) => {
+              state.isLoading = loading;
+            }),
 
-        setError: (error) =>
-          set((state) => {
-            state.error = error;
-          }),
+          setError: (error) =>
+            set((state) => {
+              state.error = error;
+            }),
 
-        setSettingsStatus: (status) =>
-          set((state) => {
-            state.settingsStatus = status;
-          }),
+          setSettingsStatus: (status) =>
+            set((state) => {
+              state.settingsStatus = status;
+            }),
 
-        setIsSettingsLoaded: (loaded) =>
-          set((state) => {
-            state.isSettingsLoaded = loaded;
-          }),
+          setIsSettingsLoaded: (loaded) =>
+            set((state) => {
+              state.isSettingsLoaded = loaded;
+            }),
 
-        // Batch update for profile switch - single state update instead of multiple
-        batchProfileSwitch: (profile, profiles) =>
-          set((state) => {
-            state.activeProfile = profile;
-            state.profiles = profiles;
-            state.isSettingsLoaded = true;
-            state.error = null;
-          }),
+          // Batch update for profile switch - single state update instead of multiple
+          batchProfileSwitch: (profile, profiles) =>
+            set((state) => {
+              state.activeProfile = profile;
+              state.profiles = profiles;
+              state.isSettingsLoaded = true;
+              state.error = null;
+            }),
 
-        updateActiveProfileSettings: (settings) =>
-          set((state) => {
-            if (state.activeProfile) {
-              state.activeProfile.settings = {
-                ...state.activeProfile.settings,
-                ...settings,
-              };
-            }
-          }),
+          updateActiveProfileSettings: (settings) =>
+            set((state) => {
+              if (state.activeProfile) {
+                state.activeProfile.settings = {
+                  ...state.activeProfile.settings,
+                  ...settings,
+                };
+              }
+            }),
 
-        reset: () => set(initialState),
-      })),
+          reset: () => set(initialState),
+        })),
+      ),
+      {
+        name: "seed-profile-store",
+        // Only persist the active profile ID, not the full data
+        partialize: (state) => ({
+          activeProfileId: state.activeProfile?.id,
+        }),
+      },
     ),
     { name: "profile-store" },
   ),
