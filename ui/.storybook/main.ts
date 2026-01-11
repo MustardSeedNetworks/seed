@@ -23,7 +23,7 @@ const config: StorybookConfig = {
         alias: {
           ...config.resolve?.alias,
           "@": resolve(__dirname, "../src"),
-          "@locales": resolve(__dirname, "../../locales"),
+          "@locales": resolve(__dirname, "../../internal/i18n/locales"),
         },
       },
     };
