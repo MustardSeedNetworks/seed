@@ -9,6 +9,8 @@
  * - Login/logout functionality
  * - Loading and error state management
  * - Automatic session restoration on mount
+ * - Session expiration with cleanup callback
+ * - Connected state tracking
  *
  * Security:
  * - Tokens stored in httpOnly cookies (not accessible to JavaScript)
@@ -23,7 +25,7 @@
  *
  * Usage:
  * ```typescript
- * const { isAuthenticated, login, logout, token } = useAuth();
+ * const { isAuthenticated, login, logout, expireSession, clearError } = useAuth();
  *
  * const handleLogin = async () => {
  *   const success = await login(username, password);
@@ -34,7 +36,7 @@
  * ```
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { clearCSRFToken } from "../lib/api";
 import { LogComponents, logger } from "../lib/logger";
 
@@ -56,16 +58,26 @@ interface UseAuthReturn {
   isAuthenticated: boolean;
   token: string | null;
   username: string | null;
+  /** Whether connected to the backend */
+  connected: boolean;
   /** Attempt to login with credentials. Returns true on success. */
   login: (username: string, password: string) => Promise<boolean>;
   /** Logout and clear authentication state */
   logout: () => void;
-  /** Refresh the access token (for WebSocket reconnection). Returns new token or null. */
+  /** Expire the session with an optional message (clears state, shows error) */
+  expireSession: (message?: string) => void;
+  /** Refresh the access token (for SSE/WebSocket reconnection). Returns new token or null. */
   refreshToken: () => Promise<string | null>;
   /** True while login request is in progress */
   isLoading: boolean;
   /** Error message from failed login attempt */
   error: string | null;
+  /** Clear the login error */
+  clearError: () => void;
+  /** Set connected state */
+  setConnected: (connected: boolean) => void;
+  /** Polling interval ref (for cleanup on session expire) */
+  pollingIntervalRef: React.MutableRefObject<number | null>;
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
@@ -100,6 +112,36 @@ export function useAuth(): UseAuthReturn {
   });
   const [isLoading, setIsLoading] = useState(true); // Start as loading while checking session
   const [error, setError] = useState<string | null>(null);
+  const [connected, setConnected] = useState(false);
+  const pollingIntervalRef = useRef<number | null>(null);
+
+  // Expire session handler - clears state and shows error message
+  const expireSession = useCallback((message = "Session expired. Please sign in again.") => {
+    // Clear any polling intervals
+    if (pollingIntervalRef.current !== null) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+
+    // Clear CSRF token
+    clearCSRFToken();
+
+    // Reset authentication state
+    setState({
+      isAuthenticated: false,
+      token: null,
+      username: null,
+    });
+    setConnected(false);
+    setError(message);
+
+    logger.warn(LogComponents.Auth, "Session expired", { message });
+  }, []);
+
+  // Clear error handler
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
 
   /**
    * Effect: Check authentication status on mount
@@ -120,9 +162,10 @@ export function useAuth(): UseAuthReturn {
           // Authenticated - we don't have username from /api/status, will be set on login
           setState({
             isAuthenticated: true,
-            token: null, // Will be set on login for WebSocket
+            token: null, // Will be set on login for SSE
             username: null,
           });
+          setConnected(true);
         } else {
           // Not authenticated
           setState({
@@ -130,6 +173,7 @@ export function useAuth(): UseAuthReturn {
             token: null,
             username: null,
           });
+          setConnected(false);
         }
       })
       .catch((err) => {
@@ -143,6 +187,7 @@ export function useAuth(): UseAuthReturn {
           token: null,
           username: null,
         });
+        setConnected(false);
       })
       .finally(() => {
         setIsLoading(false);
@@ -170,12 +215,13 @@ export function useAuth(): UseAuthReturn {
       const data: LoginResponse = await response.json();
 
       // Backend sets httpOnly cookies automatically
-      // Store access token in memory ONLY for WebSocket connections
+      // Store access token in memory ONLY for SSE/WebSocket connections
       setState({
         isAuthenticated: true,
-        token: data.token, // Access token for WebSocket (short-lived, 15min)
+        token: data.token, // Access token for SSE (short-lived, 15min)
         username,
       });
+      setConnected(true);
 
       logger.info(LogComponents.Auth, "User logged in successfully", {
         username,
@@ -198,12 +244,19 @@ export function useAuth(): UseAuthReturn {
   const logout = useCallback(() => {
     const currentUsername = state.username;
 
+    // Clear any polling intervals
+    if (pollingIntervalRef.current !== null) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+
     // Clear in-memory state immediately
     setState({
       isAuthenticated: false,
       token: null,
       username: null,
     });
+    setConnected(false);
 
     // Clear cached CSRF token
     clearCSRFToken();
@@ -267,11 +320,16 @@ export function useAuth(): UseAuthReturn {
     isAuthenticated: state.isAuthenticated,
     token: state.token,
     username: state.username,
+    connected,
     login,
     logout,
+    expireSession,
     refreshToken,
     isLoading,
     error,
+    clearError,
+    setConnected,
+    pollingIntervalRef,
   };
 }
 

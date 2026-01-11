@@ -2,6 +2,10 @@
 /**
  * WebSocket Connection Hook
  *
+ * @deprecated Use useSse hook instead. SSE provides simpler, more reliable
+ * server-to-client streaming with built-in browser reconnection.
+ * This hook is kept for backward compatibility but will be removed in a future release.
+ *
  * Manages WebSocket connections to the The Seed backend for real-time updates.
  *
  * Features:
@@ -17,14 +21,14 @@
  * - Connection loss recovery
  * - Message parsing and routing
  *
- * Usage:
+ * Migration:
+ * Replace useWebSocket with useSse for all new code:
  * ```typescript
- * const { status, send, reconnect } = useWebSocket({
- *   url: '/api/ws',
- *   token: authToken,
- *   onMessage: handleMessage,
- *   onCardUpdate: handleCardUpdate
- * });
+ * // Old (deprecated)
+ * const { status, send, reconnect } = useWebSocket({ url: '/api/ws', ... });
+ *
+ * // New (recommended)
+ * const { status, reconnect } = useSse({ url: '/api/events', ... });
  * ```
  */
 
@@ -146,6 +150,7 @@ interface UseWebSocketReturn {
 /**
  * Custom hook for managing WebSocket connections with automatic reconnection.
  *
+ * @deprecated Use useSse hook instead for simpler, more reliable real-time updates.
  * @param options - WebSocket configuration options
  * @returns Object containing connection status, send function, and reconnect function
  */
