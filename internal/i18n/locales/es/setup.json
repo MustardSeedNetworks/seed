@@ -20,7 +20,7 @@
       "saveWarning": "¡Guarde esta contraseña en un lugar seguro antes de continuar!"
     },
     "label": "Contraseña",
-    "minLength": "Mínimo 8 caracteres",
+    "minLength": "Mínimo 12 caracteres, incluyendo mayúsculas, minúsculas, números y caracteres especiales.",
     "placeholder": "Ingrese la contraseña de administrador",
     "confirm": {
       "label": "Confirmar Contraseña",
@@ -33,7 +33,7 @@
     "completeSetup": "Completar Configuración"
   },
   "errors": {
-    "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
+    "passwordTooShort": "La contraseña debe tener al menos 12 caracteres y contener mayúsculas, minúsculas, números y caracteres especiales.",
     "passwordMismatch": "Las contraseñas no coinciden",
     "setupFailed": "Error al completar la configuración",
     "loginFailed": "Configuración completada pero el inicio de sesión falló. Por favor, inicie sesión manualmente.",
