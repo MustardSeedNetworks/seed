@@ -108,7 +108,37 @@
     "unknownSubnet": "Unknown subnet",
     "clearSearch": "Clear search",
     "filteredCount": "{{filtered}} of {{total}}",
-    "clickViewVulnerabilities": "Click to view vulnerability details"
+    "clickViewVulnerabilities": "Click to view vulnerability details",
+    "fullScreen": "Full Screen",
+    "modalSubtitle": "{{total}} devices ({{local}} local)",
+    "rescan": "Rescan",
+    "localOnly": "Local Only",
+    "noResults": "No devices match your filters",
+    "tableIp": "IP Address",
+    "tableHostname": "Hostname",
+    "tableMac": "MAC",
+    "tableVendor": "Vendor",
+    "tableDiscovery": "Discovery",
+    "tablePorts": "Ports",
+    "tableVulns": "CVEs",
+    "tableLastSeen": "Last Seen",
+    "tableActions": "Actions",
+    "viewAllDevices": "View All Devices"
+  },
+  "pipeline": {
+    "phaseProgress": "Phase {{current}} of {{total}}",
+    "phases": {
+      "enumeration": "Enumeration",
+      "resolution": "Resolution",
+      "scanning": "Scanning",
+      "assessment": "Assessment"
+    },
+    "devices": "devices",
+    "scanning": "Scanning",
+    "elapsed": "Elapsed",
+    "remaining": "Remaining",
+    "cancel": "Cancel",
+    "errors": "Errors"
   },
   "gateway": {
     "title": "Gateway",
@@ -133,12 +163,15 @@
     "location": "Location",
     "isp": "ISP",
     "asn": "ASN",
+    "ispAsn": "ISP/ASN",
     "ipv4": "IPv4",
     "ipv6": "IPv6",
     "notAvailable": "Not available",
     "lastChecked": "Last checked",
     "checking": "Checking...",
-    "unableToDetect": "Unable to detect public IP"
+    "unableToDetect": "Unable to detect public IP",
+    "history": "IP History",
+    "noHistory": "No IP history available"
   },
   "dns": {
     "title": "DNS",
@@ -168,7 +201,13 @@
     "security": "Security",
     "txRate": "TX Rate",
     "rxRate": "RX Rate",
-    "band": "Band"
+    "band": "Band",
+    "channelGraph": {
+      "title": "WiFi Channel Graph",
+      "otherNetworks": "Other Networks",
+      "noNetworksDetected": "No networks detected in {{band}} band",
+      "tooltipChannel": "Channel {{channel}}"
+    }
   },
   "cable": {
     "title": "Cable Test",
@@ -346,5 +385,26 @@
     "cvss": "CVSS: {{score}}",
     "published": "Published: {{date}}",
     "viewDetails": "View Details"
+  },
+  "slaDashboard": {
+    "title": "SLA Dashboard",
+    "subtitle": "Service health and compliance",
+    "compliance": "SLA Compliance",
+    "endpointsMet": "endpoints meeting SLA",
+    "endpointsMissed": "endpoints missing SLA",
+    "healthScores": "Health Scores",
+    "healthy": "Healthy",
+    "degraded": "Degraded",
+    "critical": "Critical",
+    "total": "Total",
+    "activeAlerts": "Active Alerts",
+    "criticalLabel": "critical",
+    "anomalies": "Anomalies",
+    "detected": "detected",
+    "period": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    }
   }
 }

@@ -37,6 +37,8 @@ import { DnsCard } from "./components/cards/dns-card";
 import { GatewayCard } from "./components/cards/gateway-card";
 import { HealthCheckCard } from "./components/cards/health-check-card";
 import { LinkCard } from "./components/cards/link-card";
+// biome-ignore lint/style/useNamingConvention: SLA is a standard acronym
+import { SLADashboardCard } from "./components/cards/sla-dashboard-card";
 import { LogViewerCard } from "./components/cards/log-viewer-card";
 import { NetworkCard } from "./components/cards/network-card";
 import {
@@ -850,6 +852,8 @@ function App() {
               {(!isWifi || cards.wifi) && (
                 <>
                   <HealthCheckCard loading={loading} />
+                  {/* SLA Dashboard - aggregates health scores, SLA compliance, and alerts */}
+                  <SLADashboardCard />
                   {cardSettings.performance.enabled && (
                     <PerformanceCard
                       loading={loading}
