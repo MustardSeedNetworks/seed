@@ -20,7 +20,7 @@
       "saveWarning": "Save this password somewhere safe before continuing!"
     },
     "label": "Password",
-    "minLength": "Minimum 8 characters",
+    "minLength": "Minimum 12 characters, including uppercase, lowercase, numbers, and special characters.",
     "placeholder": "Enter admin password",
     "confirm": {
       "label": "Confirm Password",
@@ -33,7 +33,7 @@
     "completeSetup": "Complete Setup"
   },
   "errors": {
-    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordTooShort": "Password must be at least 12 characters and contain uppercase, lowercase, numbers, and special characters.",
     "passwordMismatch": "Passwords do not match",
     "setupFailed": "Failed to complete setup",
     "loginFailed": "Setup complete but login failed. Please log in manually.",

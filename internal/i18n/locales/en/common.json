@@ -25,7 +25,10 @@
     "hide": "Hide",
     "clear": "Clear",
     "reconnect": "Reconnect",
-    "runAllTests": "Run All Tests"
+    "runAllTests": "Run All Tests",
+    "signInWithGoogle": "Sign in with Google",
+    "signInWithMicrosoft": "Sign in with Microsoft",
+    "signInWithGitHub": "Sign in with GitHub"
   },
   "status": {
     "connected": "Connected",
@@ -98,6 +101,37 @@
     "testingDiscovery": "Testing & Discovery",
     "system": "System"
   },
+  "logs": {
+    "title": "System Logs",
+    "subtitle": "Real-time application logs with filtering",
+    "searchPlaceholder": "Search logs...",
+    "clearFilters": "Clear filters",
+    "level": "Level",
+    "layer": "Layer",
+    "component": "Component",
+    "totalLogs": "logs",
+    "errors": "errors",
+    "warnings": "warnings",
+    "lastHour": "last hour",
+    "errorsLastHour": "errors last hour",
+    "streaming": "Live",
+    "paused": "Paused",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "pause": "Pause",
+    "resume": "Resume",
+    "clear": "Clear",
+    "exportJson": "Export JSON",
+    "exportCsv": "Export CSV",
+    "collapsed": "Log viewer collapsed",
+    "loading": "Loading logs...",
+    "noMatchingLogs": "No logs match the current filters",
+    "noLogs": "No logs yet",
+    "scrollToBottom": "Scroll to latest",
+    "fullScreen": "Full Screen",
+    "close": "Close log viewer",
+    "viewLogs": "View Logs"
+  },
   "login": {
     "defaultCredentials": "Default: admin / seed"
   },
@@ -113,5 +147,15 @@
   "dataTable": {
     "clearAll": "Clear all",
     "showingResults": "Showing {{shown}} of {{total}} results"
+  },
+  "capabilities": {
+    "warning": {
+      "title": "Limited Network Capabilities",
+      "summary": "Some features may not work. Click to see details and how to fix.",
+      "issue": "issue",
+      "issues": "issues",
+      "howToFix": "How to fix:",
+      "dismiss": "Dismiss warning"
+    }
   }
 }
