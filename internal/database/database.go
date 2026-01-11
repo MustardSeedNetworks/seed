@@ -71,6 +71,7 @@ type DB struct {
 	settings     *SettingsRepository
 	logs         *LogRepository
 	healthChecks *HealthCheckRepository
+	discovery    *DiscoveryRepository
 }
 
 // Config holds database configuration options.
@@ -351,6 +352,12 @@ func (db *DB) Stats() sql.DBStats {
 	return db.conn.Stats()
 }
 
+// Conn returns the underlying *sql.DB connection.
+// This is useful for packages that need direct database access (e.g., mibdb).
+func (db *DB) Conn() *sql.DB {
+	return db.conn
+}
+
 // Profiles returns the profile repository.
 func (db *DB) Profiles() *ProfileRepository {
 	db.mu.Lock()
@@ -426,6 +433,17 @@ func (db *DB) HealthChecks() *HealthCheckRepository {
 		db.healthChecks = &HealthCheckRepository{db: db}
 	}
 	return db.healthChecks
+}
+
+// Discovery returns the discovery repository for WiFi, problems, and OUI data.
+func (db *DB) Discovery() *DiscoveryRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.discovery == nil {
+		db.discovery = &DiscoveryRepository{db: db}
+	}
+	return db.discovery
 }
 
 // Exec executes a query without returning any rows.

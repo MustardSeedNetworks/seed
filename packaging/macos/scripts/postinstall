@@ -1,0 +1,117 @@
+#!/bin/bash
+#
+# Post-install script for The Seed macOS .pkg
+#
+# This script runs after the package payload has been installed to /usr/local/seed.
+# It sets up the launchd service and starts The Seed.
+#
+# Exit codes:
+#   0 - Success
+#   Non-zero - Failure (installer will show error)
+#
+
+set -e
+
+# Configuration
+INSTALL_DIR="/usr/local/seed"
+BINARY_NAME="seed"
+PLIST_NAME="com.seed.plist"
+PLIST_DEST="/Library/LaunchDaemons/$PLIST_NAME"
+PLIST_SOURCE="$INSTALL_DIR/launchd/$PLIST_NAME"
+
+# Logging
+log() {
+    /usr/bin/logger -t "seed-installer" "$1"
+    echo "$1"
+}
+
+log "Starting post-install for The Seed..."
+
+# Ensure directories exist
+mkdir -p "$INSTALL_DIR/configs"
+mkdir -p "$INSTALL_DIR/logs"
+mkdir -p "$INSTALL_DIR/data"
+
+# Set proper ownership
+chown -R root:wheel "$INSTALL_DIR"
+
+# Make binary executable
+chmod 755 "$INSTALL_DIR/$BINARY_NAME"
+
+# Stop existing service if running
+if launchctl list 2>/dev/null | grep -q "com.seed"; then
+    log "Stopping existing service..."
+    launchctl unload "$PLIST_DEST" 2>/dev/null || true
+    sleep 2
+fi
+
+# Install launchd plist
+if [[ -f "$PLIST_SOURCE" ]]; then
+    cp "$PLIST_SOURCE" "$PLIST_DEST"
+    log "Installed launchd plist from package"
+else
+    # Create plist inline as fallback
+    cat > "$PLIST_DEST" << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.seed</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/seed/seed</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/usr/local/seed</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/usr/local/seed/logs/seed.log</string>
+    <key>StandardErrorPath</key>
+    <string>/usr/local/seed/logs/seed.error.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>/usr/local/seed</string>
+    </dict>
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+    <key>ProcessType</key>
+    <string>Standard</string>
+</dict>
+</plist>
+EOF
+    log "Created launchd plist from template"
+fi
+
+# Set plist permissions
+chmod 644 "$PLIST_DEST"
+chown root:wheel "$PLIST_DEST"
+
+# Load and start service
+log "Loading launchd service..."
+launchctl load "$PLIST_DEST"
+
+# Wait for startup
+sleep 3
+
+# Verify
+if launchctl list 2>/dev/null | grep -q "com.seed"; then
+    if pgrep -f "/usr/local/seed/seed" > /dev/null; then
+        log "The Seed installation successful - service is running"
+    else
+        log "Warning: Service loaded but process may not be running"
+        log "Check logs: /usr/local/seed/logs/seed.error.log"
+    fi
+else
+    log "Warning: Failed to load launchd service"
+fi
+
+log "Post-install complete"
+exit 0

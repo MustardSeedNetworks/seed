@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            margin: 20px;
+        }
+        h1 { font-size: 18px; margin-bottom: 10px; color: #28a745; }
+        h2 { font-size: 14px; margin-top: 15px; margin-bottom: 5px; }
+        code { background: #f0f0f0; padding: 2px 5px; border-radius: 3px; }
+        .success { color: #28a745; }
+        .command {
+            background: #2d2d2d;
+            color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 5px 0;
+        }
+        .note { background: #fff3cd; padding: 10px; border-radius: 5px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <h1 class="success">Installation Complete!</h1>
+    <p>The Seed has been installed and the service is starting.</p>
+
+    <h2>Next Steps:</h2>
+    <ol>
+        <li>Open your browser and navigate to:<br>
+            <div class="command">https://localhost:8443</div>
+        </li>
+        <li>If this is a fresh install, you'll be prompted to set up your admin password.</li>
+        <li>Accept the self-signed certificate warning to access the web interface.</li>
+    </ol>
+
+    <h2>Useful Commands:</h2>
+    <p><strong>View logs:</strong></p>
+    <div class="command">tail -f /usr/local/seed/logs/seed.log</div>
+
+    <p><strong>Stop service:</strong></p>
+    <div class="command">sudo launchctl unload /Library/LaunchDaemons/com.seed.plist</div>
+
+    <p><strong>Start service:</strong></p>
+    <div class="command">sudo launchctl load /Library/LaunchDaemons/com.seed.plist</div>
+
+    <div class="note">
+        <strong>Note:</strong> The Seed runs as a background service and will start automatically
+        at system boot.
+    </div>
+</body>
+</html>

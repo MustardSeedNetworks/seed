@@ -36,6 +36,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/krisarmstrong/seed/internal/mibdb"
 	"github.com/krisarmstrong/seed/internal/network"
 	"github.com/krisarmstrong/seed/internal/oauth"
 	"github.com/krisarmstrong/seed/internal/paths"
@@ -341,6 +342,9 @@ func (s *Server) LogBroadcaster() *logging.LogBroadcaster { return s.services.Re
 // DB returns the database connection.
 func (s *Server) DB() *database.DB { return s.services.Database.DB }
 
+// MibDB returns the MIB database for SNMP OID resolution.
+func (s *Server) MibDB() *mibdb.DB { return s.services.Database.MibDB }
+
 // Lowercase aliases for backwards compatibility with existing handler code (#888)
 // These match the original field access pattern (e.g., s.authManager vs s.AuthManager())
 
@@ -464,11 +468,37 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 		}
 	}
 
+	// Initialize MIB database for SNMP OID resolution
+	s.initMibDatabase(db)
+
 	// Start data retention cleanup in background (fixes #848)
 	if cfg.Database.RetentionDays > 0 {
 		s.services.Database.RetentionStopCh = make(chan struct{})
 		go s.startDataRetention(cfg.Database.RetentionDays)
 	}
+}
+
+// initMibDatabase initializes the MIB database and loads built-in OID definitions.
+func (s *Server) initMibDatabase(db *database.DB) {
+	// Create MIB database interface using the underlying SQL connection
+	mibDB := mibdb.New(db.Conn())
+	s.services.Database.MibDB = mibDB
+
+	// Load built-in OID definitions (918+ standard OIDs from RFC MIBs)
+	if err := mibDB.LoadBuiltinOIDs(); err != nil {
+		logging.GetLogger().Error("Failed to load built-in MIB OIDs", "error", err)
+		return
+	}
+
+	// Log statistics
+	stats, err := mibDB.Stats()
+	if err != nil {
+		logging.GetLogger().Warn("Failed to get MIB database stats", "error", err)
+		return
+	}
+	logging.GetLogger().Info("MIB database initialized",
+		"oid_entries", stats["oid_entries"],
+		"mib_count", stats["mib_count"])
 }
 
 // initWebSocketAndLogging initializes the WebSocket hub, SSE hub, and log broadcaster.

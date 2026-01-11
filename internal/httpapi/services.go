@@ -11,6 +11,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/health"
 	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/krisarmstrong/seed/internal/mibdb"
 	"github.com/krisarmstrong/seed/internal/network"
 	"github.com/krisarmstrong/seed/internal/oauth"
 	"github.com/krisarmstrong/seed/internal/roots/publicip"
@@ -119,6 +120,7 @@ type RealTimeServices struct {
 // DatabaseServices groups database-related services.
 type DatabaseServices struct {
 	DB              *database.DB
+	MibDB           *mibdb.DB // MIB database for SNMP OID resolution
 	RetentionStopCh chan struct{}
 }
 

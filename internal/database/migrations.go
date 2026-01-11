@@ -479,6 +479,334 @@ func getMigrationDefs() []migrationDef {
 			CREATE INDEX IF NOT EXISTS idx_health_daily_bucket ON health_check_rollups_daily(day_bucket);
 		`,
 		},
+		// ============================================================
+		// UNIFIED DISCOVERY ENGINE MIGRATIONS (19-26)
+		// ============================================================
+		{
+			Description: "Create unified discovered_devices table",
+			Up: `
+			-- Core device table with unified identity across wired/wifi/bluetooth
+			CREATE TABLE IF NOT EXISTS discovered_devices (
+				id TEXT PRIMARY KEY,
+				primary_mac TEXT NOT NULL UNIQUE,
+				hostname TEXT,
+				vendor TEXT,
+				device_type TEXT DEFAULT 'unknown',
+				device_model TEXT,
+				authorization_status TEXT DEFAULT 'unknown',
+				criticality INTEGER DEFAULT 5,
+				first_seen TEXT NOT NULL,
+				last_seen TEXT NOT NULL,
+				is_online INTEGER DEFAULT 1,
+				notes TEXT,
+				tags TEXT,
+				metadata_json TEXT,
+				created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+				updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_disc_devices_mac ON discovered_devices(primary_mac);
+			CREATE INDEX IF NOT EXISTS idx_disc_devices_type ON discovered_devices(device_type);
+			CREATE INDEX IF NOT EXISTS idx_disc_devices_vendor ON discovered_devices(vendor);
+			CREATE INDEX IF NOT EXISTS idx_disc_devices_last_seen ON discovered_devices(last_seen);
+			CREATE INDEX IF NOT EXISTS idx_disc_devices_online ON discovered_devices(is_online);
+			CREATE INDEX IF NOT EXISTS idx_disc_devices_auth ON discovered_devices(authorization_status);
+		`,
+		},
+		{
+			Description: "Create discovery_interfaces table for multiple interfaces per device",
+			Up: `
+			-- Device interfaces (wired, wifi, bluetooth) - supports multiple per device
+			CREATE TABLE IF NOT EXISTS discovery_interfaces (
+				id TEXT PRIMARY KEY,
+				device_id TEXT NOT NULL,
+				interface_type TEXT NOT NULL,
+				mac_address TEXT NOT NULL,
+				ip_addresses TEXT,
+				interface_name TEXT,
+				is_primary INTEGER DEFAULT 0,
+
+				-- Wired-specific
+				switch_port TEXT,
+				switch_name TEXT,
+				vlan_id INTEGER,
+				duplex TEXT,
+				speed_mbps INTEGER,
+				poe_status TEXT,
+
+				-- WiFi-specific
+				ssid TEXT,
+				bssid TEXT,
+				signal_dbm INTEGER,
+				noise_dbm INTEGER,
+				channel INTEGER,
+				channel_width INTEGER,
+				frequency_mhz INTEGER,
+				wifi_standards TEXT,
+				security_type TEXT,
+
+				-- Bluetooth-specific
+				bt_class TEXT,
+				bt_version TEXT,
+				bt_signal INTEGER,
+
+				last_seen TEXT NOT NULL,
+				created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+				updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE CASCADE,
+				UNIQUE(device_id, mac_address)
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_disc_iface_device ON discovery_interfaces(device_id);
+			CREATE INDEX IF NOT EXISTS idx_disc_iface_mac ON discovery_interfaces(mac_address);
+			CREATE INDEX IF NOT EXISTS idx_disc_iface_type ON discovery_interfaces(interface_type);
+			CREATE INDEX IF NOT EXISTS idx_disc_iface_ssid ON discovery_interfaces(ssid);
+			CREATE INDEX IF NOT EXISTS idx_disc_iface_bssid ON discovery_interfaces(bssid);
+		`,
+		},
+		{
+			Description: "Create wifi_networks table for SSID tracking",
+			Up: `
+			-- WiFi networks (SSIDs) discovered
+			CREATE TABLE IF NOT EXISTS wifi_networks (
+				id TEXT PRIMARY KEY,
+				ssid TEXT NOT NULL,
+				is_hidden INTEGER DEFAULT 0,
+				security_type TEXT,
+				authorization_status TEXT DEFAULT 'unknown',
+				first_seen TEXT NOT NULL,
+				last_seen TEXT NOT NULL,
+				metadata_json TEXT,
+				UNIQUE(ssid, security_type)
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_wifi_networks_ssid ON wifi_networks(ssid);
+			CREATE INDEX IF NOT EXISTS idx_wifi_networks_auth ON wifi_networks(authorization_status);
+		`,
+		},
+		{
+			Description: "Create wifi_access_points table for BSSID tracking",
+			Up: `
+			-- WiFi access points (BSSIDs)
+			CREATE TABLE IF NOT EXISTS wifi_access_points (
+				id TEXT PRIMARY KEY,
+				device_id TEXT,
+				bssid TEXT NOT NULL UNIQUE,
+				ssid_id TEXT,
+				ap_name TEXT,
+				vendor TEXT,
+
+				-- Radio info
+				channel INTEGER,
+				channel_width INTEGER,
+				frequency_mhz INTEGER,
+				band TEXT,
+				wifi_standards TEXT,
+
+				-- Signal
+				signal_dbm INTEGER,
+				noise_dbm INTEGER,
+
+				-- Status
+				client_count INTEGER DEFAULT 0,
+				max_clients INTEGER,
+				is_authorized INTEGER DEFAULT 1,
+
+				first_seen TEXT NOT NULL,
+				last_seen TEXT NOT NULL,
+				metadata_json TEXT,
+
+				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE SET NULL,
+				FOREIGN KEY (ssid_id) REFERENCES wifi_networks(id) ON DELETE SET NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_wifi_aps_bssid ON wifi_access_points(bssid);
+			CREATE INDEX IF NOT EXISTS idx_wifi_aps_ssid ON wifi_access_points(ssid_id);
+			CREATE INDEX IF NOT EXISTS idx_wifi_aps_device ON wifi_access_points(device_id);
+			CREATE INDEX IF NOT EXISTS idx_wifi_aps_channel ON wifi_access_points(channel);
+			CREATE INDEX IF NOT EXISTS idx_wifi_aps_band ON wifi_access_points(band);
+		`,
+		},
+		{
+			Description: "Create channel_utilization table for WiFi spectrum analysis",
+			Up: `
+			-- Channel utilization metrics for spectrum analysis
+			CREATE TABLE IF NOT EXISTS channel_utilization (
+				id TEXT PRIMARY KEY,
+				channel INTEGER NOT NULL,
+				band TEXT NOT NULL,
+				frequency_mhz INTEGER NOT NULL,
+
+				-- Utilization metrics
+				utilization_percent REAL,
+				non_wifi_percent REAL,
+				retry_percent REAL,
+				ap_count INTEGER,
+				client_count INTEGER,
+
+				recorded_at TEXT NOT NULL,
+
+				UNIQUE(channel, band, recorded_at)
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_channel_util_time ON channel_utilization(recorded_at);
+			CREATE INDEX IF NOT EXISTS idx_channel_util_channel ON channel_utilization(channel, band);
+		`,
+		},
+		{
+			Description: "Create discovery_history table for device event timeline",
+			Up: `
+			-- Discovery event history for device timeline
+			CREATE TABLE IF NOT EXISTS discovery_history (
+				id TEXT PRIMARY KEY,
+				device_id TEXT NOT NULL,
+				event_type TEXT NOT NULL,
+				event_data TEXT,
+				recorded_at TEXT NOT NULL,
+
+				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE CASCADE
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_disc_history_device ON discovery_history(device_id);
+			CREATE INDEX IF NOT EXISTS idx_disc_history_time ON discovery_history(recorded_at);
+			CREATE INDEX IF NOT EXISTS idx_disc_history_type ON discovery_history(event_type);
+		`,
+		},
+		{
+			Description: "Create oui_vendors table for MAC vendor lookup",
+			Up: `
+			-- OUI vendor database for MAC address lookup
+			CREATE TABLE IF NOT EXISTS oui_vendors (
+				oui TEXT PRIMARY KEY,
+				vendor_name TEXT NOT NULL,
+				vendor_short TEXT,
+				is_private INTEGER DEFAULT 0,
+				device_category TEXT,
+				updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_oui_vendor_name ON oui_vendors(vendor_name);
+			CREATE INDEX IF NOT EXISTS idx_oui_category ON oui_vendors(device_category);
+		`,
+		},
+		{
+			Description: "Create network_problems table for problem detection",
+			Up: `
+			-- Network problems detected by discovery engine
+			CREATE TABLE IF NOT EXISTS network_problems (
+				id TEXT PRIMARY KEY,
+				problem_type TEXT NOT NULL,
+				severity TEXT NOT NULL,
+				device_id TEXT,
+				interface_id TEXT,
+				description TEXT NOT NULL,
+				details_json TEXT,
+				is_resolved INTEGER DEFAULT 0,
+				detected_at TEXT NOT NULL,
+				resolved_at TEXT,
+				acknowledged_at TEXT,
+				acknowledged_by TEXT,
+
+				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE CASCADE,
+				FOREIGN KEY (interface_id) REFERENCES discovery_interfaces(id) ON DELETE CASCADE
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_net_problems_type ON network_problems(problem_type);
+			CREATE INDEX IF NOT EXISTS idx_net_problems_device ON network_problems(device_id);
+			CREATE INDEX IF NOT EXISTS idx_net_problems_severity ON network_problems(severity);
+			CREATE INDEX IF NOT EXISTS idx_net_problems_resolved ON network_problems(is_resolved);
+			CREATE INDEX IF NOT EXISTS idx_net_problems_detected ON network_problems(detected_at);
+		`,
+		},
+		{
+			Description: "Create bluetooth_devices table for Bluetooth discovery",
+			Up: `
+			-- Bluetooth devices discovered via BLE/Classic scanning
+			CREATE TABLE IF NOT EXISTS bluetooth_devices (
+				id TEXT PRIMARY KEY,
+				device_id TEXT,
+				address TEXT NOT NULL UNIQUE,
+				name TEXT,
+				alias TEXT,
+				vendor TEXT,
+				bluetooth_type TEXT NOT NULL,
+				device_class TEXT,
+				appearance INTEGER DEFAULT 0,
+				class_of_device INTEGER DEFAULT 0,
+				rssi INTEGER,
+				tx_power INTEGER,
+				is_connected INTEGER DEFAULT 0,
+				is_connectable INTEGER DEFAULT 0,
+				is_authorized INTEGER DEFAULT 0,
+				is_trusted INTEGER DEFAULT 0,
+				is_paired INTEGER DEFAULT 0,
+				is_blocked INTEGER DEFAULT 0,
+				service_uuids_json TEXT,
+				manufacturer_id INTEGER,
+				first_seen TEXT NOT NULL,
+				last_seen TEXT NOT NULL,
+				metadata_json TEXT,
+
+				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE SET NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_bt_devices_address ON bluetooth_devices(address);
+			CREATE INDEX IF NOT EXISTS idx_bt_devices_name ON bluetooth_devices(name);
+			CREATE INDEX IF NOT EXISTS idx_bt_devices_type ON bluetooth_devices(bluetooth_type);
+			CREATE INDEX IF NOT EXISTS idx_bt_devices_class ON bluetooth_devices(device_class);
+			CREATE INDEX IF NOT EXISTS idx_bt_devices_vendor ON bluetooth_devices(vendor);
+			CREATE INDEX IF NOT EXISTS idx_bt_devices_connected ON bluetooth_devices(is_connected);
+			CREATE INDEX IF NOT EXISTS idx_bt_devices_authorized ON bluetooth_devices(is_authorized);
+			CREATE INDEX IF NOT EXISTS idx_bt_devices_last_seen ON bluetooth_devices(last_seen);
+		`,
+		},
+		{
+			Description: "Create bluetooth_scan_history table for scan records",
+			Up: `
+			-- Historical Bluetooth scan results
+			CREATE TABLE IF NOT EXISTS bluetooth_scan_history (
+				id TEXT PRIMARY KEY,
+				adapter_name TEXT,
+				scan_type TEXT NOT NULL,
+				devices_found INTEGER NOT NULL,
+				classic_count INTEGER DEFAULT 0,
+				ble_count INTEGER DEFAULT 0,
+				scan_duration_ms INTEGER,
+				scan_time TEXT NOT NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_bt_scan_time ON bluetooth_scan_history(scan_time);
+			CREATE INDEX IF NOT EXISTS idx_bt_scan_type ON bluetooth_scan_history(scan_type);
+		`,
+		},
+		{
+			Description: "Create MIB database tables for SNMP OID resolution",
+			Up: `
+			-- OID name-to-numeric mappings for SNMP operations
+			-- Stores 918+ standard OID definitions from RFC MIBs
+			CREATE TABLE IF NOT EXISTS mib_oid_names (
+				name TEXT PRIMARY KEY,           -- Human-readable name (e.g., "sysDescr")
+				oid TEXT NOT NULL,               -- Numeric OID (e.g., "1.3.6.1.2.1.1.1")
+				full_path TEXT,                  -- Full descriptive path (optional)
+				mib_name TEXT,                   -- Source MIB name (e.g., "SNMPv2-MIB")
+				created_at TEXT DEFAULT (datetime('now'))
+			);
+
+			-- Index for OID prefix searches and lookups
+			CREATE INDEX IF NOT EXISTS idx_mib_oid_names_oid ON mib_oid_names(oid);
+			CREATE INDEX IF NOT EXISTS idx_mib_oid_names_mib ON mib_oid_names(mib_name);
+
+			-- MIB source tracking for documentation
+			CREATE TABLE IF NOT EXISTS mib_sources (
+				mib_name TEXT PRIMARY KEY,
+				description TEXT,
+				vendor TEXT,
+				rfc_reference TEXT,
+				loaded_at TEXT DEFAULT (datetime('now'))
+			);
+		`,
+		},
 	}
 }
 

@@ -65,11 +65,7 @@ const sizeConfigs = {
 };
 
 // Get color based on value and type
-function getSparklineColor(
-  value: number,
-  type: SparklineType,
-  threshold?: number,
-): string {
+function getSparklineColor(value: number, type: SparklineType, threshold?: number): string {
   if (type === "availability" || type === "score") {
     // Higher is better
     if (value >= 99) return "var(--color-status-success)";
@@ -155,81 +151,70 @@ export const Sparkline = memo(function Sparkline({
   const padding = 2;
 
   // Calculate min/max for scaling
-  const { minValue, maxValue, avgValue, currentValue, trendDirection } =
-    useMemo(() => {
-      if (data.length === 0) {
-        return {
-          minValue: 0,
-          maxValue: 100,
-          avgValue: 0,
-          currentValue: 0,
-          trendDirection: "stable" as const,
-        };
-      }
-
-      let min = data[0];
-      let max = data[0];
-      let sum = 0;
-
-      for (const value of data) {
-        if (value < min) min = value;
-        if (value > max) max = value;
-        sum += value;
-      }
-
-      // For availability/score, use fixed 0-100 range for consistency
-      if (type === "availability" || type === "score") {
-        min = Math.min(min, 0);
-        max = Math.max(max, 100);
-      } else {
-        // Add some padding to the range for latency
-        const range = max - min;
-        min = Math.max(0, min - range * 0.1);
-        max = max + range * 0.1;
-      }
-
-      const avg = sum / data.length;
-      const current = data[data.length - 1];
-
-      // Determine trend direction
-      let trend: "up" | "down" | "stable" = "stable";
-      if (data.length >= 2) {
-        const recentAvg =
-          data.slice(-Math.min(3, data.length)).reduce((a, b) => a + b, 0) /
-          Math.min(3, data.length);
-        const olderAvg =
-          data.slice(0, -Math.min(3, data.length)).reduce((a, b) => a + b, 0) /
-          Math.max(1, data.length - Math.min(3, data.length));
-
-        const diff = recentAvg - olderAvg;
-        const thresholdPct = avg * 0.05; // 5% change threshold
-
-        if (diff > thresholdPct) trend = "up";
-        else if (diff < -thresholdPct) trend = "down";
-      }
-
+  const { minValue, maxValue, avgValue, currentValue, trendDirection } = useMemo(() => {
+    if (data.length === 0) {
       return {
-        minValue: min,
-        maxValue: max,
-        avgValue: avg,
-        currentValue: current,
-        trendDirection: trend,
+        minValue: 0,
+        maxValue: 100,
+        avgValue: 0,
+        currentValue: 0,
+        trendDirection: "stable" as const,
       };
-    }, [data, type]);
+    }
+
+    let min = data[0];
+    let max = data[0];
+    let sum = 0;
+
+    for (const value of data) {
+      if (value < min) min = value;
+      if (value > max) max = value;
+      sum += value;
+    }
+
+    // For availability/score, use fixed 0-100 range for consistency
+    if (type === "availability" || type === "score") {
+      min = Math.min(min, 0);
+      max = Math.max(max, 100);
+    } else {
+      // Add some padding to the range for latency
+      const range = max - min;
+      min = Math.max(0, min - range * 0.1);
+      max = max + range * 0.1;
+    }
+
+    const avg = sum / data.length;
+    const current = data[data.length - 1];
+
+    // Determine trend direction
+    let trend: "up" | "down" | "stable" = "stable";
+    if (data.length >= 2) {
+      const recentAvg =
+        data.slice(-Math.min(3, data.length)).reduce((a, b) => a + b, 0) / Math.min(3, data.length);
+      const olderAvg =
+        data.slice(0, -Math.min(3, data.length)).reduce((a, b) => a + b, 0) /
+        Math.max(1, data.length - Math.min(3, data.length));
+
+      const diff = recentAvg - olderAvg;
+      const thresholdPct = avg * 0.05; // 5% change threshold
+
+      if (diff > thresholdPct) trend = "up";
+      else if (diff < -thresholdPct) trend = "down";
+    }
+
+    return {
+      minValue: min,
+      maxValue: max,
+      avgValue: avg,
+      currentValue: current,
+      trendDirection: trend,
+    };
+  }, [data, type]);
 
   // Generate paths
   const { linePath, areaPath } = useMemo(() => {
-    const line = generatePath(
-      data,
-      config.width,
-      config.height,
-      padding,
-      minValue,
-      maxValue,
-    );
-    const area = showArea
-      ? generateAreaPath(line, config.width, config.height, padding)
-      : "";
+    const line = generatePath(data, config.width, config.height, padding, minValue, maxValue);
+    const area = showArea ? generateAreaPath(line, config.width, config.height, padding) : "";
     return { linePath: line, areaPath: area };
   }, [data, config, padding, minValue, maxValue, showArea]);
 
@@ -240,10 +225,7 @@ export const Sparkline = memo(function Sparkline({
   if (data.length < 2) {
     return (
       <div
-        className={cn(
-          "flex items-center justify-center text-text-muted",
-          className,
-        )}
+        className={cn("flex items-center justify-center text-text-muted", className)}
         style={{ width: config.width, height: config.height }}
         aria-label={label || "No data available"}
       >
@@ -271,23 +253,9 @@ export const Sparkline = memo(function Sparkline({
         {showArea && areaPath && (
           <>
             <defs>
-              <linearGradient
-                id={`sparkline-gradient-${type}`}
-                x1="0%"
-                y1="0%"
-                x2="0%"
-                y2="100%"
-              >
-                <stop
-                  offset="0%"
-                  stopColor={strokeColor}
-                  stopOpacity="0.3"
-                />
-                <stop
-                  offset="100%"
-                  stopColor={strokeColor}
-                  stopOpacity="0.05"
-                />
+              <linearGradient id={`sparkline-gradient-${type}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor={strokeColor} stopOpacity="0.3" />
+                <stop offset="100%" stopColor={strokeColor} stopOpacity="0.05" />
               </linearGradient>
             </defs>
             <path
@@ -315,8 +283,7 @@ export const Sparkline = memo(function Sparkline({
           cy={
             config.height -
             padding -
-            ((currentValue - minValue) / (maxValue - minValue || 1)) *
-              (config.height - padding * 2)
+            ((currentValue - minValue) / (maxValue - minValue || 1)) * (config.height - padding * 2)
           }
           r={config.strokeWidth + 1}
           fill={strokeColor}
@@ -364,9 +331,7 @@ export const SparklineWithLabel = memo(function SparklineWithLabel({
 
   return (
     <div className="inline-flex items-center gap-2">
-      {labelText && (
-        <span className="caption text-text-muted">{labelText}</span>
-      )}
+      {labelText && <span className="caption text-text-muted">{labelText}</span>}
       <Sparkline data={data} type={type} {...props} />
       {showValue && (
         <span className="caption font-medium text-text-primary tabular-nums">

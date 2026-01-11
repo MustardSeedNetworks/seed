@@ -37,8 +37,6 @@ import { DnsCard } from "./components/cards/dns-card";
 import { GatewayCard } from "./components/cards/gateway-card";
 import { HealthCheckCard } from "./components/cards/health-check-card";
 import { LinkCard } from "./components/cards/link-card";
-// biome-ignore lint/style/useNamingConvention: SLA is a standard acronym
-import { SLADashboardCard } from "./components/cards/sla-dashboard-card";
 import { LogViewerCard } from "./components/cards/log-viewer-card";
 import { NetworkCard } from "./components/cards/network-card";
 import {
@@ -48,6 +46,8 @@ import {
 import { PathDiscoveryCard } from "./components/cards/path-discovery-card";
 import { PerformanceCard } from "./components/cards/performance-card";
 import { PublicIpCard } from "./components/cards/public-ip-card";
+// biome-ignore lint/style/useNamingConvention: SLA is a standard acronym
+import { SLADashboardCard } from "./components/cards/sla-dashboard-card";
 import { SwitchCard } from "./components/cards/switch-card";
 import { SystemHealthCard } from "./components/cards/system-health-card";
 import { WiFiCard } from "./components/cards/wifi-card";

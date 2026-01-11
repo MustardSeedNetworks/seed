@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/canopy/wifi"
+	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
@@ -676,5 +677,233 @@ func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) 
 		"interface": wlanIface,
 		"available": true,
 		"data":      data,
+	})
+}
+
+// ============================================================================
+// Enhanced WiFi Discovery Handlers (using WiFiBridge)
+// ============================================================================
+
+// wifiBridge returns the WiFi bridge from the service container.
+func (s *Server) wifiBridge() *discovery.WiFiBridge {
+	if s.services == nil || s.services.Discovery == nil {
+		return nil
+	}
+	return s.services.Discovery.WiFiBridge
+}
+
+// WiFiDiscoveryScanResponse contains enhanced WiFi scan results.
+type WiFiDiscoveryScanResponse struct {
+	Networks    []discovery.WiFiNetwork         `json:"networks"`
+	APs         []discovery.WiFiAccessPoint     `json:"accessPoints"`
+	Utilization []discovery.ChannelUtilization  `json:"channelUtilization"`
+	ScanTime    string                          `json:"scanTime"`
+	Interface   string                          `json:"interface"`
+}
+
+// WiFiDiscoveryNetworksResponse contains discovered WiFi networks.
+type WiFiDiscoveryNetworksResponse struct {
+	Networks []discovery.WiFiNetwork `json:"networks"`
+	Total    int                     `json:"total"`
+}
+
+// WiFiDiscoveryAPsResponse contains discovered access points.
+type WiFiDiscoveryAPsResponse struct {
+	AccessPoints []discovery.WiFiAccessPoint `json:"accessPoints"`
+	Total        int                         `json:"total"`
+}
+
+// WiFiDiscoveryStatsResponse contains WiFi discovery statistics.
+type WiFiDiscoveryStatsResponse struct {
+	Stats *discovery.WiFiDiscoveryStats `json:"stats"`
+}
+
+// handleWiFiDiscoveryScan performs an enhanced WiFi scan using the WiFiBridge.
+//
+// POST /api/v1/shell/wifi/discovery/scan
+//
+// Triggers a WiFi scan with enhanced metadata including vendor lookup,
+// authorization status, and channel utilization.
+//
+// Response: 200 OK with WiFiDiscoveryScanResponse.
+func (s *Server) handleWiFiDiscoveryScan(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	if r.Method != http.MethodPost {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
+		return
+	}
+
+	bridge := s.wifiBridge()
+	if bridge == nil {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			"WiFi discovery bridge not available",
+			"",
+		)
+		return
+	}
+
+	result, err := bridge.Scan(r.Context())
+	if err != nil {
+		logger.Error("WiFi discovery scan failed", "error", err)
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			"WiFi discovery scan failed: "+err.Error(),
+			"",
+		)
+		return
+	}
+
+	resp := WiFiDiscoveryScanResponse{
+		Networks:    result.Networks,
+		APs:         result.APs,
+		Utilization: result.Utilization,
+		ScanTime:    result.ScanTime.Format("2006-01-02T15:04:05Z07:00"),
+		Interface:   result.Interface,
+	}
+
+	sendJSONResponse(w, logger, http.StatusOK, resp)
+}
+
+// handleWiFiDiscoveryNetworks returns discovered WiFi networks.
+//
+// GET /api/v1/shell/wifi/discovery/networks
+//
+// Returns the list of WiFi networks from the most recent enhanced scan.
+//
+// Response: 200 OK with WiFiDiscoveryNetworksResponse.
+func (s *Server) handleWiFiDiscoveryNetworks(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	if r.Method != http.MethodGet {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
+		return
+	}
+
+	bridge := s.wifiBridge()
+	if bridge == nil {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			"WiFi discovery bridge not available",
+			"",
+		)
+		return
+	}
+
+	networks := bridge.GetNetworks()
+	sendJSONResponse(w, logger, http.StatusOK, WiFiDiscoveryNetworksResponse{
+		Networks: networks,
+		Total:    len(networks),
+	})
+}
+
+// handleWiFiDiscoveryAPs returns discovered WiFi access points.
+//
+// GET /api/v1/shell/wifi/discovery/aps
+//
+// Returns the list of WiFi access points with extended metadata.
+//
+// Response: 200 OK with WiFiDiscoveryAPsResponse.
+func (s *Server) handleWiFiDiscoveryAPs(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	if r.Method != http.MethodGet {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
+		return
+	}
+
+	bridge := s.wifiBridge()
+	if bridge == nil {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			"WiFi discovery bridge not available",
+			"",
+		)
+		return
+	}
+
+	aps := bridge.GetAccessPoints()
+	sendJSONResponse(w, logger, http.StatusOK, WiFiDiscoveryAPsResponse{
+		AccessPoints: aps,
+		Total:        len(aps),
+	})
+}
+
+// handleWiFiDiscoveryStats returns WiFi discovery statistics.
+//
+// GET /api/v1/shell/wifi/discovery/stats
+//
+// Returns aggregated statistics from WiFi discovery.
+//
+// Response: 200 OK with WiFiDiscoveryStatsResponse.
+func (s *Server) handleWiFiDiscoveryStats(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	localizer := i18n.FromRequest(r)
+
+	if r.Method != http.MethodGet {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusMethodNotAllowed,
+			ErrCodeMethodNotAllowed,
+			localizer.T("errors.api.methodNotAllowed"),
+			"",
+		)
+		return
+	}
+
+	bridge := s.wifiBridge()
+	if bridge == nil {
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			"WiFi discovery bridge not available",
+			"",
+		)
+		return
+	}
+
+	stats := bridge.GetStats()
+	sendJSONResponse(w, logger, http.StatusOK, WiFiDiscoveryStatsResponse{
+		Stats: stats,
 	})
 }

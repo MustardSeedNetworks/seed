@@ -1350,7 +1350,9 @@ function ProfilesSection() {
             "list-disc",
           )}
         >
-          {capabilities?.map((cap) => <li key={cap}>{cap}</li>)}
+          {capabilities?.map((cap) => (
+            <li key={cap}>{cap}</li>
+          ))}
         </ul>
       </div>
 
@@ -1452,7 +1454,9 @@ function WiFiSurveySection() {
             "list-disc",
           )}
         >
-          {bestPractices?.map((practice) => <li key={practice}>{practice}</li>)}
+          {bestPractices?.map((practice) => (
+            <li key={practice}>{practice}</li>
+          ))}
         </ul>
       </div>
     </HelpContentSection>
@@ -1687,10 +1691,7 @@ function GlossarySection() {
         <div className="flex-1 min-w-[200px]">
           <div className="relative">
             <Search
-              className={cn(
-                "absolute left-3 top-1/2 -translate-y-1/2",
-                "w-4 h-4 text-text-muted",
-              )}
+              className={cn("absolute left-3 top-1/2 -translate-y-1/2", "w-4 h-4 text-text-muted")}
             />
             <input
               type="text"

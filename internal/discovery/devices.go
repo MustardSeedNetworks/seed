@@ -30,6 +30,46 @@ const (
 	MethodPING Method = "ping"
 )
 
+// ConnectionType indicates how a device connects to the network.
+type ConnectionType string
+
+// Connection type constants for unified discovery.
+const (
+	ConnectionWired     ConnectionType = "wired"     // Discovered via ARP/LLDP/CDP/EDP
+	ConnectionWiFi      ConnectionType = "wifi"      // Discovered as WiFi AP or client
+	ConnectionBluetooth ConnectionType = "bluetooth" // Discovered via Bluetooth/BLE
+)
+
+// WiFiPresence contains WiFi-specific discovery information for a device.
+// This is populated when a device's MAC matches a WiFi AP BSSID.
+type WiFiPresence struct {
+	SSID          string    `json:"ssid,omitempty"`
+	Channel       int       `json:"channel,omitempty"`
+	ChannelWidth  int       `json:"channelWidth,omitempty"`
+	FrequencyMHz  int       `json:"frequencyMHz,omitempty"`
+	SignalDBm     int       `json:"signalDbm,omitempty"`
+	IsAccessPoint bool      `json:"isAccessPoint"`
+	IsAuthorized  bool      `json:"isAuthorized"`
+	SecurityType  string    `json:"securityType,omitempty"`
+	Band          string    `json:"band,omitempty"` // "2.4GHz", "5GHz", "6GHz"
+	LastSeen      time.Time `json:"lastSeen"`
+}
+
+// BluetoothPresence contains Bluetooth-specific discovery information for a device.
+// This is populated when a device's MAC matches a Bluetooth device address.
+type BluetoothPresence struct {
+	Name         string               `json:"name,omitempty"`
+	Type         BluetoothType        `json:"type"`                   // classic, ble, dual
+	DeviceClass  BluetoothDeviceClass `json:"deviceClass,omitempty"`  // computer, phone, etc.
+	RSSI         int                  `json:"rssi,omitempty"`         // Signal strength
+	TxPower      int                  `json:"txPower,omitempty"`      // Transmit power for distance calc
+	IsPaired     bool                 `json:"isPaired"`               // Currently paired
+	IsConnected  bool                 `json:"isConnected"`            // Currently connected
+	IsAuthorized bool                 `json:"isAuthorized"`           // In authorized list
+	Services     []string             `json:"services,omitempty"`     // Discovered services/UUIDs
+	LastSeen     time.Time            `json:"lastSeen"`
+}
+
 // Time constants for device discovery operations.
 const (
 	ouiUpdateTimeoutMinutes = 2  // Timeout for OUI database updates
@@ -85,6 +125,13 @@ type DiscoveredDevice struct {
 	// Wake-on-LAN capability
 	WoLCapable *bool  `json:"wolCapable,omitempty"` // nil=unknown, true=likely supports WoL, false=likely not
 	WoLStatus  string `json:"wolStatus,omitempty"`  // "untested", "success", "failed"
+
+	// Unified discovery: connection types and cross-system presence
+	// These fields are populated by UnifiedDiscoveryService when correlating
+	// devices across wired, WiFi, and Bluetooth discovery.
+	ConnectionTypes   []ConnectionType   `json:"connectionTypes,omitempty"`   // wired, wifi, bluetooth
+	WiFiPresence      *WiFiPresence      `json:"wifiPresence,omitempty"`      // WiFi AP/client info if MAC matches
+	BluetoothPresence *BluetoothPresence `json:"bluetoothPresence,omitempty"` // Bluetooth info if MAC matches
 }
 
 // LLDPDeviceInfo contains LLDP-specific device information.
@@ -836,7 +883,33 @@ func copyDevice(device *DiscoveredDevice) *DiscoveredDevice {
 	deviceCopy.SNMPData = copySNMPData(device.SNMPData)
 	deviceCopy.Vulnerabilities = copyVulnerabilities(device.Vulnerabilities)
 
+	// Deep copy unified discovery presence info
+	deviceCopy.WiFiPresence = copyWiFiPresence(device.WiFiPresence)
+	deviceCopy.BluetoothPresence = copyBluetoothPresence(device.BluetoothPresence)
+
 	return &deviceCopy
+}
+
+// copyWiFiPresence creates a deep copy of WiFiPresence.
+func copyWiFiPresence(presence *WiFiPresence) *WiFiPresence {
+	if presence == nil {
+		return nil
+	}
+	presenceCopy := *presence
+	return &presenceCopy
+}
+
+// copyBluetoothPresence creates a deep copy of BluetoothPresence.
+func copyBluetoothPresence(presence *BluetoothPresence) *BluetoothPresence {
+	if presence == nil {
+		return nil
+	}
+	presenceCopy := *presence
+	if presence.Services != nil {
+		presenceCopy.Services = make([]string, len(presence.Services))
+		copy(presenceCopy.Services, presence.Services)
+	}
+	return &presenceCopy
 }
 
 // copyDeviceSlices deep copies the top-level slices of a device.
@@ -852,6 +925,10 @@ func copyDeviceSlices(dst *DiscoveredDevice, src *DiscoveredDevice) {
 	if src.DuplicateMACs != nil {
 		dst.DuplicateMACs = make([]string, len(src.DuplicateMACs))
 		copy(dst.DuplicateMACs, src.DuplicateMACs)
+	}
+	if src.ConnectionTypes != nil {
+		dst.ConnectionTypes = make([]ConnectionType, len(src.ConnectionTypes))
+		copy(dst.ConnectionTypes, src.ConnectionTypes)
 	}
 }
 
@@ -1047,6 +1124,12 @@ func (d *DeviceDiscovery) SetNameResolution(enabled bool) {
 	d.mu.Lock()
 	d.nameResolution = enabled
 	d.mu.Unlock()
+}
+
+// GetOUIDatabase returns the OUI database for vendor lookups.
+// This allows other discovery components (Bluetooth, WiFi) to share the same OUI data.
+func (d *DeviceDiscovery) GetOUIDatabase() *OUIDatabase {
+	return d.oui
 }
 
 // ResolveNetBIOSNames triggers active NetBIOS name resolution for discovered devices.
