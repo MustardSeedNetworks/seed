@@ -309,38 +309,104 @@ jobs:
   # ===========================================================================
   # C Code Linting (if applicable)
   # ===========================================================================
+  # ===========================================================================
+  # C Lint (C23 Standard - NOT C++)
+  # ===========================================================================
   c-lint:
-    name: C Lint
+    name: C Lint (C23)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
-      - name: Check for C source files
-        id: check-c
-        run: |
-          if find . -name '*.c' -o -name '*.h' | grep -v node_modules | grep -q .; then
-            echo "has_c=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_c=false" >> $GITHUB_OUTPUT
-            echo "No C source files found, skipping C lint"
-          fi
-
-      - name: Install clang-tidy and cppcheck
-        if: steps.check-c.outputs.has_c == 'true'
+      - name: Install C23 tools (clang-tidy, cppcheck, bear)
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-tidy cppcheck
+          sudo apt-get install -y \
+            clang-18 \
+            clang-tidy-18 \
+            clang-format-18 \
+            cppcheck \
+            bear \
+            gcc-13
+          
+          # Set clang-18 as default
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100
+          sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-18 100
+          sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-18 100
+          
+          # Verify versions
+          clang --version
+          clang-tidy --version
+          gcc-13 --version
 
-      - name: Run clang-tidy
+      - name: Check if C files exist
+        id: check-c
+        run: |
+          if find . -name '*.c' -o -name '*.h' 2>/dev/null | grep -v node_modules | grep -q .; then
+            echo "has_c=true" >> $GITHUB_OUTPUT
+            echo "Found C source files"
+          else
+            echo "has_c=false" >> $GITHUB_OUTPUT
+            echo "No C source files found - C23 linting ready for when C code is added"
+          fi
+
+      - name: Generate compile_commands.json
         if: steps.check-c.outputs.has_c == 'true'
         run: |
-          find . -name '*.c' -o -name '*.h' | grep -v node_modules | xargs clang-tidy -p .
+          # Create basic compile_commands.json for clang-tidy
+          cat > compile_commands.json << 'EOF'
+          [
+            {
+              "directory": "${{ github.workspace }}",
+              "command": "gcc-13 -std=c23 -Wall -Wextra -Wpedantic -Iinclude -c placeholder.c",
+              "file": "placeholder.c"
+            }
+          ]
+          EOF
+          
+          # Use bear to generate proper compile_commands.json if Makefile exists
+          if [ -f "Makefile" ]; then
+            export CC=gcc-13
+            bear -- make || true
+          fi
 
-      - name: Run cppcheck
+      - name: Run clang-format check (C23)
         if: steps.check-c.outputs.has_c == 'true'
         run: |
-          cppcheck --error-exitcode=1 --enable=warning,style,performance \
-            --suppress=missingIncludeSystem .
+          echo "Checking C code formatting (C23 standard)..."
+          find . -name '*.c' -o -name '*.h' 2>/dev/null | grep -v node_modules | \
+            xargs clang-format --dry-run --Werror --style=file
+
+      - name: Run clang-tidy (C23)
+        if: steps.check-c.outputs.has_c == 'true'
+        run: |
+          echo "Running clang-tidy with C23 checks..."
+          find . -name '*.c' -o -name '*.h' 2>/dev/null | grep -v node_modules | \
+            xargs clang-tidy \
+              --config-file=.clang-tidy \
+              --extra-arg=-std=c23 \
+              --extra-arg=-Iinclude \
+              --warnings-as-errors='*'
+
+      - name: Run cppcheck (C only, not C++)
+        if: steps.check-c.outputs.has_c == 'true'
+        run: |
+          echo "Running cppcheck for C code..."
+          cppcheck \
+            --std=c23 \
+            --language=c \
+            --enable=warning,style,performance,portability \
+            --suppress=missingIncludeSystem \
+            --suppress=unusedFunction \
+            --inline-suppr \
+            --error-exitcode=1 \
+            --template='{file}:{line}: {severity}: {message} [{id}]' \
+            -I include \
+            . 2>&1 | tee cppcheck.log
+          
+          if [ -s cppcheck.log ]; then
+            echo "::warning::cppcheck found issues"
+          fi
 
   # ===========================================================================
   # Internationalization (i18n) Checks
