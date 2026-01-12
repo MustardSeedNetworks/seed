@@ -144,7 +144,7 @@ export function useVulnerabilities() {
 
       const endpoint =
         params.size > 0
-          ? `/api/shell/vulnerabilities/scan?${params.toString()}`
+          ? `/api/v1/shell/vulnerabilities/scan?${params.toString()}`
           : "/api/v1/shell/vulnerabilities/scan";
 
       const data = await api.post<ScanResponse>(endpoint);
@@ -182,7 +182,7 @@ export function useVulnerabilities() {
 
       const endpoint =
         params.size > 0
-          ? `/api/shell/vulnerabilities/results?${params.toString()}`
+          ? `/api/v1/shell/vulnerabilities/results?${params.toString()}`
           : "/api/v1/shell/vulnerabilities/results";
       const data = await api.get<ResultsResponse>(endpoint);
       return data.results || [];
@@ -205,7 +205,7 @@ export function useVulnerabilities() {
 
         const params = new URLSearchParams({ ip: trimmed });
         return await api.get<DeviceVulnerabilities>(
-          `/api/shell/vulnerabilities/device?${params.toString()}`,
+          `/api/v1/shell/vulnerabilities/device?${params.toString()}`,
         );
       } catch (error) {
         logger.error(LogComponents.Vuln, "Failed to fetch vulnerabilities for device", error, {

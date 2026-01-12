@@ -151,12 +151,11 @@ export const Sparkline = memo(function Sparkline({
   const padding = 2;
 
   // Calculate min/max for scaling
-  const { minValue, maxValue, avgValue, currentValue, trendDirection } = useMemo(() => {
+  const { minValue, maxValue, currentValue, trendDirection } = useMemo(() => {
     if (data.length === 0) {
       return {
         minValue: 0,
         maxValue: 100,
-        avgValue: 0,
         currentValue: 0,
         trendDirection: "stable" as const,
       };
@@ -205,7 +204,6 @@ export const Sparkline = memo(function Sparkline({
     return {
       minValue: min,
       maxValue: max,
-      avgValue: avg,
       currentValue: current,
       trendDirection: trend,
     };
@@ -216,7 +214,7 @@ export const Sparkline = memo(function Sparkline({
     const line = generatePath(data, config.width, config.height, padding, minValue, maxValue);
     const area = showArea ? generateAreaPath(line, config.width, config.height, padding) : "";
     return { linePath: line, areaPath: area };
-  }, [data, config, padding, minValue, maxValue, showArea]);
+  }, [data, config, minValue, maxValue, showArea]);
 
   // Get stroke color based on current value
   const strokeColor = getSparklineColor(currentValue, type, threshold);
@@ -225,6 +223,7 @@ export const Sparkline = memo(function Sparkline({
   if (data.length < 2) {
     return (
       <div
+        role="img"
         className={cn("flex items-center justify-center text-text-muted", className)}
         style={{ width: config.width, height: config.height }}
         aria-label={label || "No data available"}

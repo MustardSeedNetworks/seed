@@ -625,7 +625,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       const apiBase = import.meta.env.VITE_API_BASE || "";
       try {
         // Fetch discovery options from correct endpoint
-        const discoveryResponse = await fetch(`${apiBase}/api/shell/discovery/options`, {
+        const discoveryResponse = await fetch(`${apiBase}/api/v1/shell/discovery/options`, {
           credentials: "include",
         });
         if (discoveryResponse.ok) {
@@ -634,7 +634,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           const portScanEnabled = discoveryData?.options?.PortScan?.Enabled ?? false;
 
           // Fetch vulnerability settings from correct endpoint
-          const vulnResponse = await fetch(`${apiBase}/api/shell/vulnerabilities/settings`, {
+          const vulnResponse = await fetch(`${apiBase}/api/v1/shell/vulnerabilities/settings`, {
             credentials: "include",
           });
           let vulnEnabled = false;

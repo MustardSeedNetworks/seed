@@ -34,7 +34,6 @@
 import { Activity, Clock, FileArchive, Gauge, Hash, Radio, Ruler, Waves, Wifi } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { useSettings } from "../../contexts/useSettings";
 import type {
   ActiveSample,

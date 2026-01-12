@@ -24,7 +24,6 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { formatBytes } from "../../../lib/format";
-// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { button, cn, icon as iconTokens, layout, radius, spacing } from "../../../styles/theme";
 import { CollapsibleSection } from "../../ui/collapsible-section";
 

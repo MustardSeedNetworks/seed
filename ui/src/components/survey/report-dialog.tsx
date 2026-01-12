@@ -27,8 +27,6 @@ import { useTranslation } from "react-i18next";
 import { logger } from "../../lib/logger";
 import { button, radius, spacing } from "../../styles/theme";
 
-// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
-
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 interface ReportOptions {

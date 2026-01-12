@@ -48,6 +48,7 @@ import {
   spacing,
 } from "../../../styles/theme";
 import type {
+  CardSettings,
   IperfSettings,
   IperfSuggestion,
   SaveStatus,
@@ -67,6 +68,10 @@ interface PerformanceSettingsProps {
   iperfSuggestionsStatus: "idle" | "loading" | "error";
   iperfSuggestionsError: string | null;
   fetchIperfSuggestions: () => void;
+  /** Card settings for FAB auto-run configuration */
+  cardSettings: CardSettings;
+  /** Update card settings (triggers auto-save to profile) */
+  updateCardSettings: (updates: Partial<CardSettings>) => void;
 }
 
 /**
@@ -83,6 +88,8 @@ export const PerformanceSettings = memo(function PerformanceSettings({
   iperfSuggestionsStatus,
   iperfSuggestionsError,
   fetchIperfSuggestions,
+  cardSettings,
+  updateCardSettings,
 }: PerformanceSettingsProps) {
   const { t } = useTranslation("settings");
 
@@ -170,11 +177,17 @@ export const PerformanceSettings = memo(function PerformanceSettings({
           </label>
         </div>
 
-        {/* Auto-Run on Link Up */}
+        {/* Auto-Run on Link Up (FAB button) */}
         <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
           <span className="caption text-text-muted font-medium">
             {t("performance.autoRunOnLink")}
           </span>
+          <p className="caption text-text-muted mt-1">
+            {t(
+              "performance.autoRunOnLinkDesc",
+              "Controls which tests run when FAB button is clicked",
+            )}
+          </p>
           <div className={cn(spacing.margin.top.inline, "stack-sm")}>
             <label
               className={cn(
@@ -188,15 +201,17 @@ export const PerformanceSettings = memo(function PerformanceSettings({
               <span className="body-small text-text-primary">{t("performance.speedtest")}</span>
               <input
                 type="checkbox"
-                checked={testsSettings.speedtest.autoRunOnLink}
+                checked={cardSettings.performance.speedtest.autoRunOnLink}
                 onChange={(e) =>
-                  setTestsSettings((prev) => ({
-                    ...prev,
-                    speedtest: {
-                      ...prev.speedtest,
-                      autoRunOnLink: e.target.checked,
+                  updateCardSettings({
+                    performance: {
+                      ...cardSettings.performance,
+                      speedtest: {
+                        ...cardSettings.performance.speedtest,
+                        autoRunOnLink: e.target.checked,
+                      },
                     },
-                  }))
+                  })
                 }
                 className={iconTokens.size.sm}
               />
@@ -213,15 +228,17 @@ export const PerformanceSettings = memo(function PerformanceSettings({
               <span className="body-small text-text-primary">{t("performance.iperf")}</span>
               <input
                 type="checkbox"
-                checked={testsSettings.iperf.autoRunOnLink}
+                checked={cardSettings.performance.iperf.autoRunOnLink}
                 onChange={(e) =>
-                  setTestsSettings((prev) => ({
-                    ...prev,
-                    iperf: {
-                      ...prev.iperf,
-                      autoRunOnLink: e.target.checked,
+                  updateCardSettings({
+                    performance: {
+                      ...cardSettings.performance,
+                      iperf: {
+                        ...cardSettings.performance.iperf,
+                        autoRunOnLink: e.target.checked,
+                      },
                     },
-                  }))
+                  })
                 }
                 className={iconTokens.size.sm}
               />

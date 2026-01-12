@@ -46,7 +46,6 @@ import {
 import { PathDiscoveryCard } from "./components/cards/path-discovery-card";
 import { PerformanceCard } from "./components/cards/performance-card";
 import { PublicIpCard } from "./components/cards/public-ip-card";
-// biome-ignore lint/style/useNamingConvention: SLA is a standard acronym
 import { SLADashboardCard } from "./components/cards/sla-dashboard-card";
 import { SwitchCard } from "./components/cards/switch-card";
 import { SystemHealthCard } from "./components/cards/system-health-card";
@@ -60,7 +59,6 @@ import { SetupWizard } from "./components/setup/setup-wizard";
 import { FAB } from "./components/ui/fab";
 import { useProfileContext } from "./contexts/profile-context";
 import { useSettings } from "./contexts/useSettings";
-// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { useAppDrawers } from "./hooks/useAppDrawers";
 import { useAuth } from "./hooks/useAuth";
 import { useCapabilities } from "./hooks/useCapabilities";
@@ -1021,10 +1019,10 @@ function App() {
       {/* Profile Management Modal (#754) */}
       {profilesOpen && <ProfileManagement onClose={closeProfiles} />}
 
-      {/* FAB - Run All Tests - constrained to content width */}
+      {/* FAB - Run All Tests - positioned inline with card grid */}
       <div className="fixed bottom-0 left-0 right-0 pointer-events-none z-50">
         <div className={cn(section.width.xl, "mx-auto", spacing.mainPadding.x, "relative")}>
-          <FAB className="pointer-events-auto absolute bottom-6 right-0" />
+          <FAB className="pointer-events-auto absolute bottom-20 -right-2" />
         </div>
       </div>
     </div>

@@ -30,7 +30,6 @@ import { memo, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../../contexts/useSettings";
 import { cn, icon as iconTokens, layout, radius, spacing, timing } from "../../styles/theme";
-// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { HTTP_TIMING_HELP } from "../help/help-content";
 import { Card, type Status } from "../ui/card";
 import { CollapsibleSection } from "../ui/collapsible-section";
@@ -94,11 +93,11 @@ interface FileShareTestResult {
   share: string;
   success: boolean;
   connectTimeMs: number;
-  readSpeedMBps?: number;
-  writeSpeedMBps?: number;
+  readSpeedMbps?: number;
+  writeSpeedMbps?: number;
   readLatencyMs?: number;
   writeLatencyMs?: number;
-  testFileSizeMB?: number;
+  testFileSizeMb?: number;
   totalTimeMs: number;
   error?: string;
 }
@@ -792,15 +791,15 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
                     <div className="text-right">
                       <div className="body-small font-mono">{r.connectTimeMs.toFixed(1)}ms</div>
                       {r.success &&
-                        (r.readSpeedMBps !== undefined || r.writeSpeedMBps !== undefined) && (
+                        (r.readSpeedMbps !== undefined || r.writeSpeedMbps !== undefined) && (
                           <div className="caption text-text-muted">
-                            {r.readSpeedMBps !== undefined &&
-                              `R: ${r.readSpeedMBps.toFixed(1)} MB/s`}
-                            {r.readSpeedMBps !== undefined &&
-                              r.writeSpeedMBps !== undefined &&
+                            {r.readSpeedMbps !== undefined &&
+                              `R: ${r.readSpeedMbps.toFixed(1)} MB/s`}
+                            {r.readSpeedMbps !== undefined &&
+                              r.writeSpeedMbps !== undefined &&
                               " • "}
-                            {r.writeSpeedMBps !== undefined &&
-                              `W: ${r.writeSpeedMBps.toFixed(1)} MB/s`}
+                            {r.writeSpeedMbps !== undefined &&
+                              `W: ${r.writeSpeedMbps.toFixed(1)} MB/s`}
                           </div>
                         )}
                     </div>

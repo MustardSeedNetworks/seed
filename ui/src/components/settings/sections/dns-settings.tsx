@@ -35,9 +35,10 @@ import {
   icon as iconTokens,
   input as inputTokens,
   layout,
+  radius,
   spacing,
 } from "../../../styles/theme";
-import type { DnsServer, SaveStatus, TestsSettings } from "../../../types/settings";
+import type { CardSettings, DnsServer, SaveStatus, TestsSettings } from "../../../types/settings";
 import { generateId } from "../../../utils/id";
 import { CollapsibleSection } from "../../ui/collapsible-section";
 import { Globe } from "../../ui/icons";
@@ -47,12 +48,18 @@ interface DnsSettingsProps {
   testsSettings: TestsSettings;
   setTestsSettings: React.Dispatch<React.SetStateAction<TestsSettings>>;
   testsStatus: SaveStatus;
+  /** Card settings for visibility and FAB configuration */
+  cardSettings: CardSettings;
+  /** Update card settings (triggers auto-save to profile) */
+  updateCardSettings: (updates: Partial<CardSettings>) => void;
 }
 
 export const DnsSettings = memo(function DnsSettings({
   testsSettings,
   setTestsSettings,
   testsStatus,
+  cardSettings,
+  updateCardSettings,
 }: DnsSettingsProps) {
   const { t } = useTranslation("settings");
 
@@ -94,6 +101,66 @@ export const DnsSettings = memo(function DnsSettings({
       }
     >
       <div className="stack">
+        {/* Card Visibility & FAB Controls */}
+        <div className="stack-sm">
+          <label
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              "bg-surface-base",
+              radius.default,
+              "border border-surface-border",
+            )}
+          >
+            <div>
+              <span className="body-small text-text-primary font-medium">
+                {t("common.showCard", "Show Card")}
+              </span>
+              <p className="caption text-text-muted">
+                {t("common.showCardDesc", "Display this card on the dashboard")}
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={cardSettings.dns.enabled}
+              onChange={(e) =>
+                updateCardSettings({
+                  dns: { ...cardSettings.dns, enabled: e.target.checked },
+                })
+              }
+              className={iconTokens.size.sm}
+            />
+          </label>
+          <label
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              "bg-surface-base",
+              radius.default,
+              "border border-surface-border",
+            )}
+          >
+            <div>
+              <span className="body-small text-text-primary font-medium">
+                {t("common.runOnFab", "Include in Run All")}
+              </span>
+              <p className="caption text-text-muted">
+                {t("common.runOnFabDesc", "Run when FAB button is clicked")}
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={cardSettings.dns.autoRunOnLink}
+              onChange={(e) =>
+                updateCardSettings({
+                  dns: { ...cardSettings.dns, autoRunOnLink: e.target.checked },
+                })
+              }
+              className={iconTokens.size.sm}
+            />
+          </label>
+        </div>
+
         {/* DNS Hostname */}
         <div>
           <label htmlFor="dns-test-hostname" className="caption text-text-muted">
