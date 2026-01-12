@@ -61,7 +61,7 @@
         storybook build-storybook test-storybook \
         run dev dev-frontend \
         install uninstall status \
-        deploy smoke-test smoke-test-local \
+        deploy deploy-preflight smoke-test smoke-test-local \
         deps update update-go update-npm outdated \
         tools tools-go tools-frontend version version-check \
         logs logs-100 help \
@@ -92,6 +92,28 @@ GOFLAGS=$(GO_BUILD_FLAGS)
 
 # Linker flags (uses GO_LDFLAGS from Makefile.common)
 LDFLAGS=$(GO_LDFLAGS)
+
+# =============================================================================
+# CGO Configuration
+# =============================================================================
+# CGO_ENABLED controls whether C code can be compiled and linked.
+#
+# CGO_ENABLED=1 (default on native builds):
+#   - Required for libpcap (packet capture functionality)
+#   - Used for: build, build-darwin, build-backend
+#   - Binaries are dynamically linked to system libraries
+#
+# CGO_ENABLED=0 (for static/portable builds):
+#   - Creates fully static binaries (no external dependencies)
+#   - Used for: build-linux-docker, containers, cross-compilation
+#   - Disables libpcap (packet capture won't work)
+#
+# When to use each:
+#   - Local development: CGO_ENABLED=1 (default)
+#   - Docker/containers: CGO_ENABLED=0
+#   - Cross-compiling for different arch: CGO_ENABLED=0
+#   - Raspberry Pi deployment: CGO_ENABLED=0 (via Docker build)
+# =============================================================================
 
 # =============================================================================
 # Deployment Configuration
@@ -136,7 +158,21 @@ build: ## Build everything (frontend embedded in binary)
 	@printf "$(GREEN)✓ Build complete: $(BINARY_NAME) ($(VERSION))$(RESET)\n"
 
 # -----------------------------------------------------------------------------
-# iperf3 Builds - Network performance testing tool
+# iperf3 Builds - Network Performance Testing Tool
+# -----------------------------------------------------------------------------
+# iperf3 is bundled for consistent network throughput testing.
+#
+# Build Targets:
+#   build-iperf3           Build for current platform (auto-detected)
+#   build-iperf3-linux     Build for Linux (amd64 + arm64 via Docker)
+#   build-iperf3-all       Build for all supported platforms
+#
+# The build uses scripts/build-iperf3.sh which:
+#   - Downloads iperf3 source if not cached
+#   - Compiles with static linking where possible
+#   - Outputs to bin/iperf3-{os}-{arch}
+#
+# Note: Linux builds require Docker for cross-compilation.
 # -----------------------------------------------------------------------------
 
 build-iperf3: ## Build iperf3 from source (native platform)
@@ -173,12 +209,14 @@ build-iperf3-all: build-iperf3 build-iperf3-linux ## Build iperf3 for all platfo
 # CGO is required for libpcap (packet capture) and ethtool bindings
 build-backend: ## Build Go backend with embedded frontend
 	@printf "$(BOLD)🔨 Building backend...$(RESET)\n"
+	# CGO_ENABLED=1: Required for libpcap packet capture support
 	@CGO_ENABLED=1 go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/seed
 	@printf "$(GREEN)✓ Backend build complete: $(BINARY_NAME)$(RESET)\n"
 
 # Backend build (quiet mode)
 build-backend-quiet:
 	@printf "   Compiling Go binary...\n"
+	# CGO_ENABLED=1: Required for libpcap packet capture support
 	@CGO_ENABLED=1 go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/seed
 	@SIZE=$$(ls -lh $(BINARY_NAME) | awk '{print $$5}'); \
 	printf "   Output: $(BINARY_NAME) ($$SIZE)\n"
@@ -186,6 +224,7 @@ build-backend-quiet:
 # Development build that reads frontend from disk instead of embedding
 # Allows frontend hot-reload without rebuilding Go binary
 build-backend-dev: ## Build Go backend in dev mode (reads frontend from disk)
+	# CGO_ENABLED=1: Required for libpcap packet capture support
 	CGO_ENABLED=1 go build -tags dev $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/seed
 
 # -----------------------------------------------------------------------------
@@ -233,17 +272,20 @@ build-frontend-quiet: frontend-deps
 build-linux-amd64: build-frontend ## Build for Linux AMD64 (requires cross-compiler)
 	@echo "Building for Linux AMD64..."
 	@echo "Note: Requires CGO. Run on Linux or use 'make build-linux-docker'"
+	# CGO_ENABLED=1: Cross-compiling with libpcap support via Linux cross-compiler
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-linux-gnu-gcc \
 		go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME)-linux-amd64 ./cmd/seed
 
 # ARM64 build for Raspberry Pi and ARM servers
 build-linux-arm64: build-frontend ## Build for Linux ARM64 (Raspberry Pi, ARM servers)
 	@echo "Building for Linux ARM64..."
+	# CGO_ENABLED=1: Cross-compiling with libpcap support via Linux cross-compiler
 	GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc \
 		go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME)-linux-arm64 ./cmd/seed
 
 # Docker-based cross-compilation (works from any platform)
 # Uses official Go image with libpcap installed
+# CGO_ENABLED=1 (default in container): libpcap-dev installed for packet capture support
 build-linux-docker: build-frontend ## Build for Linux AMD64 using Docker (cross-platform)
 	@echo "Building for Linux AMD64 using Docker..."
 	docker run --rm -v "$(PWD):/build" -w /build golang:1.25.5 bash -c "\
@@ -258,6 +300,7 @@ build-linux-docker: build-frontend ## Build for Linux AMD64 using Docker (cross-
 # Build for macOS (native, current architecture)
 build-darwin: build-frontend ## Build for macOS (native architecture)
 	@echo "Building for macOS ($(shell uname -m))..."
+	# CGO_ENABLED=1: Required for libpcap packet capture support on macOS
 	@CGO_ENABLED=1 go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME)-darwin-$(shell uname -m) ./cmd/seed
 	@echo "Built: $(BINARY_NAME)-darwin-$(shell uname -m)"
 
@@ -271,10 +314,12 @@ build-all: build-frontend ## Build for all platforms (native + Linux via Docker)
 	@printf "$(BOLD)$(CYAN)┌─ Building All Platforms ────────────────────────────────────────────────────┐$(RESET)\n"
 	@printf "$(CYAN)│$(RESET) $(BOLD)[1/3]$(RESET) macOS (native)                                                       $(CYAN)│$(RESET)\n"
 	$(call timer-start,build-darwin)
+	# CGO_ENABLED=1: Required for libpcap packet capture support on macOS
 	@CGO_ENABLED=1 go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME)-darwin-$(shell uname -m) ./cmd/seed
 	$(call timer-end,build-darwin,macOS build)
 	@printf "$(CYAN)│$(RESET) $(BOLD)[2/3]$(RESET) Linux AMD64 (Docker)                                                 $(CYAN)│$(RESET)\n"
 	$(call timer-start,build-linux-amd64)
+	# CGO_ENABLED=1 (default in container): libpcap-dev installed for packet capture support
 	@if command -v docker > /dev/null 2>&1 && docker info > /dev/null 2>&1; then \
 		docker run --rm -v "$(PWD):/build" -w /build golang:1.25.5 bash -c "\
 			apt-get update -qq && apt-get install -y -qq libpcap-dev > /dev/null && \
@@ -285,6 +330,7 @@ build-all: build-frontend ## Build for all platforms (native + Linux via Docker)
 	$(call timer-end,build-linux-amd64,Linux AMD64 build)
 	@printf "$(CYAN)│$(RESET) $(BOLD)[3/3]$(RESET) Linux ARM64 (Docker)                                                 $(CYAN)│$(RESET)\n"
 	$(call timer-start,build-linux-arm64)
+	# CGO_ENABLED=1 (default in container): libpcap-dev installed for packet capture support
 	@if command -v docker > /dev/null 2>&1 && docker info > /dev/null 2>&1; then \
 		docker run --rm -v "$(PWD):/build" -w /build --platform linux/arm64 golang:1.25.5 bash -c "\
 			apt-get update -qq && apt-get install -y -qq libpcap-dev > /dev/null && \
@@ -356,16 +402,25 @@ docker-push: docker-build ## Push Docker image to registry
 
 DEPLOY_SYSTEMD?=1
 
+# Pre-flight check for deployment
+deploy-preflight:
+	@echo "Validating SSH connection to $(DEPLOY_HOST)..."
+	@ssh -o ConnectTimeout=5 -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+		$(DEPLOY_USER)@$(DEPLOY_HOST) exit 0 2>/dev/null || \
+		(echo "$(RED)ERROR: Cannot connect to $(DEPLOY_HOST)$(RESET)"; \
+		 echo "Check that:"; \
+		 echo "  1. SSH key is configured for $(DEPLOY_USER)@$(DEPLOY_HOST)"; \
+		 echo "  2. Host is reachable"; \
+		 echo "  3. DEPLOY_HOST and DEPLOY_USER are correct"; \
+		 exit 1)
+	@echo "$(GREEN)✓ SSH connection verified$(RESET)"
+
 # Full deployment pipeline:
 # 1. Build Linux binary (native or Docker)
 # 2. Rsync binary, iperf3, and configs to remote
 # 3. Restart service via systemd (or manual fallback)
 # 4. Run smoke tests to verify deployment
-deploy: ## Deploy to Ubuntu server (builds via Docker if needed)
-	@# Verify SSH connectivity first
-	@echo "Verifying SSH connectivity to $(DEPLOY_HOST)..."
-	@ssh -o BatchMode=yes -o ConnectTimeout=5 $(DEPLOY_USER)@$(DEPLOY_HOST) "echo 'SSH OK'" || \
-		(echo "ERROR: Cannot connect to $(DEPLOY_HOST). Check SSH configuration." && exit 1)
+deploy: deploy-preflight ## Deploy to remote server
 	@# Build Linux binary - try direct first, fallback to Docker
 	@if [ ! -f $(BINARY_NAME)-linux-amd64 ] || [ "$(REBUILD)" = "1" ]; then \
 		if command -v x86_64-linux-gnu-gcc > /dev/null 2>&1; then \
@@ -1374,7 +1429,7 @@ help: ## Show this help
 	@echo ""
 	@echo "Usage: make [target]"
 	@echo ""
-	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Examples:"
 	@echo "  make build                    Build production binary"
