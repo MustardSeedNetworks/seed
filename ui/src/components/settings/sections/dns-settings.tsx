@@ -54,7 +54,7 @@ interface DnsSettingsProps {
   updateCardSettings: (updates: Partial<CardSettings>) => void;
 }
 
-export const DnsSettings = memo(function DnsSettings({
+export const DnsSettings = memo(function dnsSettings({
   testsSettings,
   setTestsSettings,
   testsStatus,
@@ -93,18 +93,18 @@ export const DnsSettings = memo(function DnsSettings({
   return (
     <CollapsibleSection
       title={
-        <div className={layout.inline.default}>
-          <Globe className={iconTokens.size.sm} />
+        <div class={layout.inline.default}>
+          <Globe class={iconTokens.size.sm} />
           <span>{t("sections.dns")}</span>
           <AutoSaveIndicator status={testsStatus} />
         </div>
       }
     >
-      <div className="stack">
+      <div class="stack">
         {/* Card Visibility & FAB Controls */}
-        <div className="stack-sm">
+        <div class="stack-sm">
           <label
-            className={cn(
+            class={cn(
               layout.flex.between,
               spacing.pad.sm,
               "bg-surface-base",
@@ -113,10 +113,10 @@ export const DnsSettings = memo(function DnsSettings({
             )}
           >
             <div>
-              <span className="body-small text-text-primary font-medium">
+              <span class="body-small text-text-primary font-medium">
                 {t("common.showCard", "Show Card")}
               </span>
-              <p className="caption text-text-muted">
+              <p class="caption text-text-muted">
                 {t("common.showCardDesc", "Display this card on the dashboard")}
               </p>
             </div>
@@ -128,11 +128,11 @@ export const DnsSettings = memo(function DnsSettings({
                   dns: { ...cardSettings.dns, enabled: e.target.checked },
                 })
               }
-              className={iconTokens.size.sm}
+              class={iconTokens.size.sm}
             />
           </label>
           <label
-            className={cn(
+            class={cn(
               layout.flex.between,
               spacing.pad.sm,
               "bg-surface-base",
@@ -141,10 +141,10 @@ export const DnsSettings = memo(function DnsSettings({
             )}
           >
             <div>
-              <span className="body-small text-text-primary font-medium">
+              <span class="body-small text-text-primary font-medium">
                 {t("common.runOnFab", "Include in Run All")}
               </span>
-              <p className="caption text-text-muted">
+              <p class="caption text-text-muted">
                 {t("common.runOnFabDesc", "Run when FAB button is clicked")}
               </p>
             </div>
@@ -156,14 +156,14 @@ export const DnsSettings = memo(function DnsSettings({
                   dns: { ...cardSettings.dns, autoRunOnLink: e.target.checked },
                 })
               }
-              className={iconTokens.size.sm}
+              class={iconTokens.size.sm}
             />
           </label>
         </div>
 
         {/* DNS Hostname */}
         <div>
-          <label htmlFor="dns-test-hostname" className="caption text-text-muted">
+          <label for="dns-test-hostname" class="caption text-text-muted">
             {t("dns.testHostname")}
           </label>
           <input
@@ -177,7 +177,7 @@ export const DnsSettings = memo(function DnsSettings({
               }))
             }
             placeholder="google.com"
-            className={cn(
+            class={cn(
               inputTokens.base,
               inputTokens.state.default,
               inputTokens.size.md,
@@ -186,39 +186,37 @@ export const DnsSettings = memo(function DnsSettings({
               "body-small",
             )}
           />
-          <p className={cn("caption", "text-text-muted", spacing.margin.top.tight)}>
+          <p class={cn("caption", "text-text-muted", spacing.margin.top.tight)}>
             {t("dns.testHostnameDesc")}
           </p>
         </div>
 
         {/* DNS Servers for per-server testing */}
-        <div className={cn("border-t", "border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">
-              {t("dns.additionalServers")}
-            </span>
+        <div class={cn("border-t", "border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("dns.additionalServers")}</span>
             <button
               type="button"
               onClick={addDnsServer}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption", "text-text-muted", spacing.margin.bottom.inline)}>
+          <p class={cn("caption", "text-text-muted", spacing.margin.bottom.inline)}>
             {t("dns.serversDescription")}
           </p>
           {testsSettings.dnsServers.map((server) => (
             <div
               key={server.id || server.address}
-              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
             >
               <input
                 type="text"
                 value={server.address}
                 onChange={(e) => updateDnsServer(server.id ?? "", "address", e.target.value)}
                 placeholder={t("dns.serverIp")}
-                className={cn(
+                class={cn(
                   inputTokens.base,
                   inputTokens.state.default,
                   inputTokens.size.md,
@@ -229,7 +227,7 @@ export const DnsSettings = memo(function DnsSettings({
               <button
                 type="button"
                 onClick={() => removeDnsServer(server.id ?? "")}
-                className={cn("text-status-error", "hover:text-status-error/80", spacing.actionBtn)}
+                class={cn("text-status-error", "hover:text-status-error/80", spacing.actionBtn)}
                 aria-label={t("common.remove")}
               >
                 {t("common.remove")}

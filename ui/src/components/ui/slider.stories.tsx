@@ -73,7 +73,7 @@ type Story = StoryObj<typeof meta>;
 /**
  * Interactive wrapper for stories
  */
-function SliderWrapper(props: Omit<React.ComponentProps<typeof Slider>, "value" | "onChange">) {
+function _sliderWrapper(props: Omit<React.ComponentProps<typeof Slider>, "value" | "onChange">) {
   const [value, setValue] = useState(props.min + (props.max - props.min) / 2);
   return <Slider {...props} value={value} onChange={setValue} />;
 }
@@ -82,7 +82,7 @@ function SliderWrapper(props: Omit<React.ComponentProps<typeof Slider>, "value" 
  * Default slider - simple numeric range
  */
 export const Default: Story = {
-  render: () => <SliderWrapper min={0} max={100} step={1} label="Volume" />,
+  render: () => <sliderWrapper min={0} max={100} step={1} label="Volume" />,
 };
 
 /**
@@ -91,7 +91,7 @@ export const Default: Story = {
  */
 export const ProbeInterval: Story = {
   render: () => (
-    <SliderWrapper
+    <sliderWrapper
       min={25}
       max={500}
       step={25}
@@ -109,7 +109,7 @@ export const ProbeInterval: Story = {
  */
 export const ScanTimeout: Story = {
   render: () => (
-    <SliderWrapper
+    <sliderWrapper
       min={500}
       max={10000}
       step={500}
@@ -127,7 +127,7 @@ export const ScanTimeout: Story = {
  */
 export const Workers: Story = {
   render: () => (
-    <SliderWrapper
+    <sliderWrapper
       min={5}
       max={100}
       step={5}
@@ -145,7 +145,7 @@ export const Workers: Story = {
  */
 export const RescanInterval: Story = {
   render: () => (
-    <SliderWrapper
+    <sliderWrapper
       min={1}
       max={60}
       step={1}
@@ -163,7 +163,7 @@ export const RescanInterval: Story = {
  */
 export const BannerTimeout: Story = {
   render: () => (
-    <SliderWrapper
+    <sliderWrapper
       min={500}
       max={10000}
       step={500}
@@ -177,7 +177,7 @@ export const BannerTimeout: Story = {
  * Without labels - minimal slider
  */
 export const NoLabels: Story = {
-  render: () => <SliderWrapper min={0} max={100} step={10} />,
+  render: () => <sliderWrapper min={0} max={100} step={10} />,
 };
 
 /**
@@ -185,7 +185,7 @@ export const NoLabels: Story = {
  */
 export const LabelOnly: Story = {
   render: () => (
-    <SliderWrapper min={0} max={100} step={5} label="Brightness" formatValue={(v) => `${v}%`} />
+    <sliderWrapper min={0} max={100} step={5} label="Brightness" formatValue={(v) => `${v}%`} />
   ),
 };
 
@@ -194,7 +194,7 @@ export const LabelOnly: Story = {
  */
 export const EndLabelsOnly: Story = {
   render: () => (
-    <SliderWrapper min={0} max={100} step={10} leftLabel="Gentler" rightLabel="Aggressive" />
+    <sliderWrapper min={0} max={100} step={10} leftLabel="Gentler" rightLabel="Aggressive" />
   ),
 };
 
@@ -203,14 +203,14 @@ export const EndLabelsOnly: Story = {
  */
 export const Disabled: Story = {
   render: () => (
-    <SliderWrapper
+    <sliderWrapper
       min={0}
       max={100}
       step={10}
       label="Disabled Slider"
       leftLabel="Min"
       rightLabel="Max"
-      disabled
+      disabled={true}
     />
   ),
 };
@@ -220,7 +220,7 @@ export const Disabled: Story = {
  */
 export const FineGrained: Story = {
   render: () => (
-    <SliderWrapper
+    <sliderWrapper
       min={0}
       max={10}
       step={0.1}
@@ -235,7 +235,7 @@ export const FineGrained: Story = {
  */
 export const LargeRange: Story = {
   render: () => (
-    <SliderWrapper
+    <sliderWrapper
       min={0}
       max={10000}
       step={100}
@@ -257,8 +257,8 @@ export const ScannerSettings: Story = {
     const [bannerTimeout, setBannerTimeout] = useState(2000);
 
     return (
-      <div className="space-y-6 max-w-2xl">
-        <h3 className="heading-3">Network Scanner Settings</h3>
+      <div class="space-y-6 max-w-2xl">
+        <h3 class="heading-3">Network Scanner Settings</h3>
 
         <Slider
           value={probeInterval}
@@ -320,9 +320,9 @@ export const ScannerSettings: Story = {
           formatValue={(v) => `${v}ms`}
         />
 
-        <div className="mt-8 p-4 bg-surface-raised rounded-lg border border-surface-border">
-          <h4 className="heading-4 mb-2">Current Configuration</h4>
-          <div className="body-small space-y-1 font-mono">
+        <div class="mt-8 p-4 bg-surface-raised rounded-lg border border-surface-border">
+          <h4 class="heading-4 mb-2">Current Configuration</h4>
+          <div class="body-small space-y-1 font-mono">
             <div>Probe Interval: {probeInterval}ms</div>
             <div>Scan Timeout: {scanTimeout}ms</div>
             <div>Workers: {workers}</div>

@@ -80,7 +80,7 @@ import { cn, layout, radius, section, spacing } from "./styles/theme";
  * Orchestrates the entire application, managing authentication,
  * real-time data updates, and the dashboard interface.
  */
-function App() {
+function App(): JSX.Element {
   const { t } = useTranslation("common");
   const { isAuthenticated, login, logout, isLoading, error } = useAuth();
   const { isDark, toggleTheme } = useTheme();
@@ -242,11 +242,12 @@ function App() {
   });
 
   // Cleanup network discovery on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    (): (() => void) => (): void => {
       networkDiscoveryAbortRef.current?.abort();
-    };
-  }, []);
+    },
+    [],
+  );
 
   // Handle session expiration via API client callback
   useEffect(() => {
@@ -254,7 +255,7 @@ function App() {
       setSessionExpired(true);
       logout();
     });
-    return () => {
+    return (): void => {
       setSessionExpiredCallback(null);
     };
   }, [logout]);
@@ -381,7 +382,7 @@ function App() {
       if (storedInterface) {
         // We already have an interface stored, just switch mode
         // Backend notification happens via changeInterface
-        changeInterface(storedInterface);
+        await changeInterface(storedInterface);
         return;
       }
 
@@ -521,7 +522,7 @@ function App() {
   // Listen for FAB "run all tests" event with per-card autoRunOnLink settings
   useEffect(() => {
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Main test orchestration requires handling multiple card types
-    const handleRunAllTests = async () => {
+    const handleRunAllTests = async (): Promise<void> => {
       // Use per-card autoRunOnLink settings to determine which tests to run
 
       // Build array of fetch promises based on card settings
@@ -560,9 +561,15 @@ function App() {
 
       // Determine how many card-managed tests we need to wait for
       const cardTestsToWait: string[] = [];
-      if (runOpts.runPerformance && runOpts.runSpeedtest) cardTestsToWait.push("speedtest");
-      if (runOpts.runPerformance && runOpts.runIperf) cardTestsToWait.push("iperf");
-      if (runOpts.runHealthChecks) cardTestsToWait.push("healthchecks");
+      if (runOpts.runPerformance && runOpts.runSpeedtest) {
+        cardTestsToWait.push("speedtest");
+      }
+      if (runOpts.runPerformance && runOpts.runIperf) {
+        cardTestsToWait.push("iperf");
+      }
+      if (runOpts.runHealthChecks) {
+        cardTestsToWait.push("healthchecks");
+      }
 
       // If no card-managed tests, signal completion immediately
       if (cardTestsToWait.length === 0) {
@@ -626,7 +633,9 @@ function App() {
 
   // Fetch data on mount (initial load) and data not covered by SSE
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      return;
+    }
 
     // Initial fetch of all data
     setTimeout(() => {
@@ -684,7 +693,9 @@ function App() {
 
   // Auto-scan network devices on mount (respects per-card autoRunOnLink setting)
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      return;
+    }
 
     const shouldAutoScan = runOpts.runNetworkDiscovery;
 
@@ -698,16 +709,17 @@ function App() {
   }, [isAuthenticated, triggerDeviceScan, runOpts.runNetworkDiscovery]);
 
   // Cleanup device scan polling on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (scanPollIntervalRef.current) {
         clearInterval(scanPollIntervalRef.current);
       }
       if (scanTimeoutRef.current) {
         clearTimeout(scanTimeoutRef.current);
       }
-    };
-  }, []);
+    },
+    [],
+  );
 
   // Login form
   const authError = sessionExpired ? "Session expired. Please log in again." : error;
@@ -739,8 +751,8 @@ function App() {
   // Show loading while checking setup status
   if (needsSetup === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-text-muted">{t("status.loading")}</div>
+      <div class="min-h-screen flex items-center justify-center">
+        <div class="text-text-muted">{t("status.loading")}</div>
       </div>
     );
   }
@@ -750,7 +762,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen text-text-primary font-body">
+    <div class="min-h-screen text-text-primary font-body">
       <HeaderBar
         wsStatus={sseStatus}
         onReconnect={reconnect}
@@ -777,20 +789,20 @@ function App() {
       />
 
       {/* Main content - pb-24 adds bottom padding for fixed FAB */}
-      <main className={cn(spacing.mainPadding.y, "pb-24")}>
-        <div className={cn(section.width.xl, "mx-auto", spacing.mainPadding.x)}>
+      <main class={cn(spacing.mainPadding.y, "pb-24")}>
+        <div class={cn(section.width.xl, "mx-auto", spacing.mainPadding.x)}>
           {/* Issue #803: Show warning banner when network capabilities are missing */}
           <CapabilityWarnings capabilities={capabilities} />
 
           {/* Section: Primary Connectivity - cards differ by interface type */}
-          <section aria-labelledby="connectivity-heading" className={spacing.margin.bottom.section}>
+          <section aria-labelledby="connectivity-heading" class={spacing.margin.bottom.section}>
             <h2
               id="connectivity-heading"
-              className={cn("section-title", spacing.margin.bottom.heading)}
+              class={cn("section-title", spacing.margin.bottom.heading)}
             >
               {t("sections.connectivity")}
             </h2>
-            <div className={layout.grid.cards}>
+            <div class={layout.grid.cards}>
               {/* WiFi-only cards */}
               {isWifi && <WiFiCard data={cards.wifi} loading={loading} visible={true} />}
 
@@ -812,11 +824,11 @@ function App() {
           </section>
 
           {/* Section: Network Services */}
-          <section aria-labelledby="network-heading" className={spacing.margin.bottom.section}>
-            <h2 id="network-heading" className={cn("section-title", spacing.margin.bottom.heading)}>
+          <section aria-labelledby="network-heading" class={spacing.margin.bottom.section}>
+            <h2 id="network-heading" class={cn("section-title", spacing.margin.bottom.heading)}>
               {t("sections.network")}
             </h2>
-            <div className={layout.grid.cards}>
+            <div class={layout.grid.cards}>
               {/* Network info cards - hide when in WiFi mode without WiFi connection */}
               {/* Prevents showing wired interface data when user selected WiFi mode */}
               {(!isWifi || cards.wifi) && (
@@ -837,14 +849,11 @@ function App() {
           </section>
 
           {/* Section: Testing & Discovery - cards differ by interface type */}
-          <section aria-labelledby="performance-heading" className={spacing.margin.bottom.section}>
-            <h2
-              id="performance-heading"
-              className={cn("section-title", spacing.margin.bottom.heading)}
-            >
+          <section aria-labelledby="performance-heading" class={spacing.margin.bottom.section}>
+            <h2 id="performance-heading" class={cn("section-title", spacing.margin.bottom.heading)}>
               {t("sections.testingDiscovery")}
             </h2>
-            <div className={layout.grid.cards}>
+            <div class={layout.grid.cards}>
               {/* Test cards - only show when connected to the selected interface type */}
               {/* Fix: Don't show test results from wired when in WiFi mode but disconnected */}
               {(!isWifi || cards.wifi) && (
@@ -902,11 +911,11 @@ function App() {
           </section>
 
           {/* Section: System */}
-          <section aria-labelledby="system-heading" className={spacing.margin.bottom.section}>
-            <h2 id="system-heading" className={cn("section-title", spacing.margin.bottom.heading)}>
+          <section aria-labelledby="system-heading" class={spacing.margin.bottom.section}>
+            <h2 id="system-heading" class={cn("section-title", spacing.margin.bottom.heading)}>
               {t("sections.system")}
             </h2>
-            <div className={layout.grid.cards}>
+            <div class={layout.grid.cards}>
               <SystemHealthCard />
               <LogViewerCard maxHeight="400px" />
             </div>
@@ -914,40 +923,40 @@ function App() {
 
           {/* Footer */}
           <footer
-            className={cn(
+            class={cn(
               spacing.margin.top.section,
               radius.lg,
               "border border-surface-border bg-surface-raised",
               spacing.pad.lg,
             )}
           >
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {/* Product Info */}
               <div>
-                <h3 className="heading-4 text-text-primary mb-2">{t("app.title")}</h3>
-                <p className="body-small text-text-muted mb-1">
+                <h3 class="heading-4 text-text-primary mb-2">{t("app.title")}</h3>
+                <p class="body-small text-text-muted mb-1">
                   {t("footer.byCompany", "by Mustard Seed Networks")}
                 </p>
-                <p className="caption text-text-muted">
+                <p class="caption text-text-muted">
                   {t("footer.version", "Version")} {appVersion}
                 </p>
               </div>
 
               {/* Contact */}
               <div>
-                <h4 className="body-small font-medium text-text-primary mb-2">
+                <h4 class="body-small font-medium text-text-primary mb-2">
                   {t("footer.contact", "Contact")}
                 </h4>
-                <div className="space-y-1">
+                <div class="space-y-1">
                   <a
                     href="mailto:support@mustardseednetworks.com"
-                    className="body-small text-brand-primary hover:underline block"
+                    class="body-small text-brand-primary hover:underline block"
                   >
                     support@mustardseednetworks.com
                   </a>
                   <a
                     href="tel:+17194403079"
-                    className="body-small text-text-muted hover:text-text-primary block"
+                    class="body-small text-text-muted hover:text-text-primary block"
                   >
                     719.440.3079
                   </a>
@@ -956,14 +965,14 @@ function App() {
 
               {/* Website */}
               <div>
-                <h4 className="body-small font-medium text-text-primary mb-2">
+                <h4 class="body-small font-medium text-text-primary mb-2">
                   {t("footer.website", "Website")}
                 </h4>
                 <a
                   href="https://www.mustardseednetworks.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="body-small text-brand-primary hover:underline"
+                  class="body-small text-brand-primary hover:underline"
                 >
                   www.mustardseednetworks.com
                 </a>
@@ -971,23 +980,17 @@ function App() {
 
               {/* Legal */}
               <div>
-                <h4 className="body-small font-medium text-text-primary mb-2">
+                <h4 class="body-small font-medium text-text-primary mb-2">
                   {t("footer.legal", "Legal")}
                 </h4>
-                <div className="flex flex-wrap gap-x-3 gap-y-1">
-                  <a href="/terms" className="body-small text-text-muted hover:text-brand-primary">
+                <div class="flex flex-wrap gap-x-3 gap-y-1">
+                  <a href="/terms" class="body-small text-text-muted hover:text-brand-primary">
                     {t("footer.tos", "Terms of Service")}
                   </a>
-                  <a
-                    href="/privacy"
-                    className="body-small text-text-muted hover:text-brand-primary"
-                  >
+                  <a href="/privacy" class="body-small text-text-muted hover:text-brand-primary">
                     {t("footer.privacy", "Privacy")}
                   </a>
-                  <a
-                    href="/license"
-                    className="body-small text-text-muted hover:text-brand-primary"
-                  >
+                  <a href="/license" class="body-small text-text-muted hover:text-brand-primary">
                     {t("footer.license", "License")}
                   </a>
                 </div>
@@ -995,8 +998,8 @@ function App() {
             </div>
 
             {/* Copyright */}
-            <div className="mt-6 pt-4 border-t border-surface-border text-center">
-              <p className="caption text-text-muted">
+            <div class="mt-6 pt-4 border-t border-surface-border text-center">
+              <p class="caption text-text-muted">
                 &copy; {new Date().getFullYear()}{" "}
                 {t("footer.copyright", "Mustard Seed Networks. All rights reserved.")}
               </p>
@@ -1020,9 +1023,9 @@ function App() {
       {profilesOpen && <ProfileManagement onClose={closeProfiles} />}
 
       {/* FAB - Run All Tests - positioned inline with card grid */}
-      <div className="fixed bottom-0 left-0 right-0 pointer-events-none z-50">
-        <div className={cn(section.width.xl, "mx-auto", spacing.mainPadding.x, "relative")}>
-          <FAB className="pointer-events-auto absolute bottom-20 -right-2" />
+      <div class="fixed bottom-0 left-0 right-0 pointer-events-none z-50">
+        <div class={cn(section.width.xl, "mx-auto", spacing.mainPadding.x, "relative")}>
+          <FAB class="pointer-events-auto absolute bottom-20 -right-2" />
         </div>
       </div>
     </div>

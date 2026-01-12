@@ -17,9 +17,9 @@ const meta: Meta = {
   },
   tags: ["autodocs"],
   decorators: [
-    (Story) => (
-      <div className="w-80">
-        <Story />
+    (StoryComponent: React.ComponentType): JSX.Element => (
+      <div class="w-80">
+        <StoryComponent />
       </div>
     ),
   ],
@@ -51,9 +51,9 @@ const linkDataNoIp = {
 
 export const Online: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="success">
+    <Card title="Link" subtitle="en0" icon={<Cable class="w-4 h-4" />} status="success">
       <CardValue value="Connected" size="lg" status="success" />
-      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
+      <div class={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Speed" value={linkDataOnline.speed} />
         <CardRow label="Duplex" value={linkDataOnline.duplex} />
         <CardRow label="MTU" value={String(linkDataOnline.mtu)} />
@@ -68,14 +68,14 @@ export const Online: StoryObj = {
 
 export const NoIpAddress: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="warning">
+    <Card title="Link" subtitle="en0" icon={<Cable class="w-4 h-4" />} status="warning">
       <CardValue value="No IP" size="lg" status="warning" />
-      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
+      <div class={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Speed" value={linkDataNoIp.speed} />
         <CardRow label="Duplex" value={linkDataNoIp.duplex} />
         <CardRow label="Carrier" value="Detected" />
         <CardDivider />
-        <p className="caption text-status-warning">
+        <p class="caption text-status-warning">
           Physical link present but no IP address assigned. Check DHCP or static IP configuration.
         </p>
       </div>
@@ -85,14 +85,14 @@ export const NoIpAddress: StoryObj = {
 
 export const Disconnected: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="error">
+    <Card title="Link" subtitle="en0" icon={<Cable class="w-4 h-4" />} status="error">
       <CardValue value="No Carrier" size="lg" status="error" />
-      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
+      <div class={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Speed" value="—" />
         <CardRow label="Duplex" value="—" />
         <CardRow label="Carrier" value="Not Detected" status="error" />
         <CardDivider />
-        <p className="caption text-status-danger">
+        <p class="caption text-status-danger">
           No physical connection detected. Check cable or wireless adapter.
         </p>
       </div>
@@ -102,20 +102,20 @@ export const Disconnected: StoryObj = {
 
 export const Loading: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="loading">
-      <Skeleton className={cn("h-8 w-32", spacing.margin.bottom.content)} />
-      <div className={cn(spacing.stack.sm, spacing.margin.top.content)}>
-        <div className="flex justify-between">
-          <Skeleton className="h-3 w-16" />
-          <Skeleton className="h-3 w-20" />
+    <Card title="Link" subtitle="en0" icon={<Cable class="w-4 h-4" />} status="loading">
+      <Skeleton class={cn("h-8 w-32", spacing.margin.bottom.content)} />
+      <div class={cn(spacing.stack.sm, spacing.margin.top.content)}>
+        <div class="flex justify-between">
+          <Skeleton class="h-3 w-16" />
+          <Skeleton class="h-3 w-20" />
         </div>
-        <div className="flex justify-between">
-          <Skeleton className="h-3 w-12" />
-          <Skeleton className="h-3 w-16" />
+        <div class="flex justify-between">
+          <Skeleton class="h-3 w-12" />
+          <Skeleton class="h-3 w-16" />
         </div>
-        <div className="flex justify-between">
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="h-3 w-12" />
+        <div class="flex justify-between">
+          <Skeleton class="h-3 w-20" />
+          <Skeleton class="h-3 w-12" />
         </div>
       </div>
     </Card>
@@ -124,14 +124,14 @@ export const Loading: StoryObj = {
 
 export const WithLinkFlaps: StoryObj = {
   render: () => (
-    <Card title="Link" subtitle="en0" icon={<Cable className="w-4 h-4" />} status="warning">
+    <Card title="Link" subtitle="en0" icon={<Cable class="w-4 h-4" />} status="warning">
       <CardValue value="Unstable" size="lg" status="warning" />
-      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
+      <div class={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Speed" value="1000Mb/s" />
         <CardRow label="Duplex" value="Full" />
         <CardRow label="Link Flaps (24h)" value="12" status="warning" />
         <CardDivider />
-        <p className="caption text-status-warning">
+        <p class="caption text-status-warning">
           High number of link state changes detected. Check cable integrity.
         </p>
       </div>

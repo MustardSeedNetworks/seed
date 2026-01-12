@@ -22,7 +22,7 @@ import { button, cn, input, layout, radius } from "../../../styles/theme";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
-export const MtuControl = memo(function MtuControl() {
+export const MtuControl = memo(function mtuControl() {
   const { t } = useTranslation("settings");
   const [mtu, setMtu] = useState("1500");
   const [loading, setLoading] = useState(false);
@@ -67,8 +67,8 @@ export const MtuControl = memo(function MtuControl() {
   };
 
   return (
-    <div className="stack-sm">
-      <div className={layout.inline.default}>
+    <div class="stack-sm">
+      <div class={layout.inline.default}>
         <input
           type="number"
           min="68"
@@ -76,7 +76,7 @@ export const MtuControl = memo(function MtuControl() {
           value={mtu}
           onChange={(e) => setMtu(e.target.value)}
           placeholder={t("network.mtuControl.placeholder")}
-          className={cn(
+          class={cn(
             "flex-1",
             input.size.sm,
             "bg-surface-base border border-surface-border",
@@ -89,7 +89,7 @@ export const MtuControl = memo(function MtuControl() {
           type="button"
           onClick={handleApply}
           disabled={loading}
-          className={cn(
+          class={cn(
             button.size.md,
             "bg-brand-primary text-text-inverse",
             radius.md,
@@ -100,11 +100,11 @@ export const MtuControl = memo(function MtuControl() {
         </button>
       </div>
       {message && (
-        <p className={cn("caption", message.isError ? "text-status-error" : "text-status-success")}>
+        <p class={cn("caption", message.isError ? "text-status-error" : "text-status-success")}>
           {message.text}
         </p>
       )}
-      <p className="caption">{t("network.mtuControl.description")}</p>
+      <p class="caption">{t("network.mtuControl.description")}</p>
     </div>
   );
 });

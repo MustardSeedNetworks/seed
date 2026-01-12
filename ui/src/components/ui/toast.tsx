@@ -77,7 +77,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
   return (
     <ToastContext.Provider value={{ addToast, removeToast }}>
       {children}
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <toastContainer toasts={toasts} removeToast={removeToast} />
     </ToastContext.Provider>
   );
 }
@@ -87,17 +87,17 @@ interface ToastContainerProps {
   removeToast: (id: string) => void;
 }
 
-function ToastContainer({ toasts, removeToast }: ToastContainerProps) {
+function _toastContainer({ toasts, removeToast }: ToastContainerProps) {
   return (
     // biome-ignore lint/a11y/useSemanticElements: Region role with aria-live is the correct pattern for toast notifications
     <div
       role="region"
       aria-live="polite"
       aria-label="Notifications"
-      className={cn("fixed bottom-20 right-4 z-50 max-w-sm", layout.stack.default)}
+      class={cn("fixed bottom-20 right-4 z-50 max-w-sm", layout.stack.default)}
     >
       {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
+        <toastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
       ))}
     </div>
   );
@@ -108,7 +108,7 @@ interface ToastItemProps {
   onClose: () => void;
 }
 
-function ToastItem({ toast, onClose }: ToastItemProps) {
+function _toastItem({ toast, onClose }: ToastItemProps) {
   useEffect(() => {
     if (toast.duration && toast.duration > 0) {
       const timer = setTimeout(onClose, toast.duration);
@@ -119,7 +119,7 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
   return (
     <div
       role="alert"
-      className={cn(
+      class={cn(
         layout.inline.comfortable,
         toastTokens.container,
         toastTokens.animation,
@@ -129,23 +129,18 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
       aria-label={`Notification: ${toast.type}`}
     >
       {icons[toast.type]}
-      <p className="body-small font-medium flex-1">{toast.message}</p>
+      <p class="body-small font-medium flex-1">{toast.message}</p>
       <button
         type="button"
         onClick={onClose}
-        className={cn(
+        class={cn(
           spacing.iconBtn.sm,
           "hover:bg-surface-hover/50 focus:outline-none focus:ring-2 focus:ring-surface-border",
           radius.default,
         )}
         aria-label="Dismiss notification"
       >
-        <svg
-          className={iconTokens.size.sm}
-          fill="currentColor"
-          viewBox="0 0 20 20"
-          aria-hidden="true"
-        >
+        <svg class={iconTokens.size.sm} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
           <path
             fillRule="evenodd"
             d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"

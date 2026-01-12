@@ -144,7 +144,9 @@ export function useSettingsOptional(): SettingsContextValue | null {
 
   // Create the backward-compatible status object
   const status = useMemo(() => {
-    if (!context) return null;
+    if (!context) {
+      return null;
+    }
     const saveStatus = convertSaveStatus(context.settingsStatus);
     return {
       cards: saveStatus,
@@ -156,7 +158,9 @@ export function useSettingsOptional(): SettingsContextValue | null {
 
   // Create adapter that maps new types to old types
   return useMemo(() => {
-    if (!context || !status) return null;
+    if (!(context && status)) {
+      return null;
+    }
     return {
       cardSettings: context.cardSettings as CardSettings,
       displayOptions: context.displayOptions as DisplayOptions,

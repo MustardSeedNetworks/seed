@@ -80,9 +80,9 @@ export function useTheme() {
     return "dark";
   });
 
-  const [effectiveTheme, setEffectiveTheme] = useState<"light" | "dark">(() => {
-    return theme === "system" ? getSystemTheme() : theme;
-  });
+  const [effectiveTheme, setEffectiveTheme] = useState<"light" | "dark">(() =>
+    theme === "system" ? getSystemTheme() : theme,
+  );
 
   const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);

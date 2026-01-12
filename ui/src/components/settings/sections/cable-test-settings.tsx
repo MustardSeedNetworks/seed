@@ -82,18 +82,18 @@ export const CableTestSettings = memo(function CableTestSettings({
   return (
     <CollapsibleSection
       title={
-        <div className={layout.inline.default}>
-          <Cable className={iconTokens.size.sm} />
+        <div class={layout.inline.default}>
+          <Cable class={iconTokens.size.sm} />
           <span>{t("sections.cableTest", "Cable Test")}</span>
           <AutoSaveIndicator status={cableTestStatus} />
         </div>
       }
       defaultOpen={false}
     >
-      <div className="stack">
+      <div class="stack">
         {/* TDR Support Status */}
         <div
-          className={cn(
+          class={cn(
             spacing.pad.sm,
             radius.lg,
             "border",
@@ -102,10 +102,10 @@ export const CableTestSettings = memo(function CableTestSettings({
               : "bg-surface-base border-surface-border",
           )}
         >
-          <div className={layout.flex.between}>
-            <div className={layout.inline.default}>
+          <div class={layout.flex.between}>
+            <div class={layout.inline.default}>
               <div
-                className={cn(
+                class={cn(
                   "w-2 h-2",
                   radius.full,
                   checkingSupport
@@ -115,7 +115,7 @@ export const CableTestSettings = memo(function CableTestSettings({
                       : "bg-text-muted",
                 )}
               />
-              <span className="body-small font-medium text-text-primary">
+              <span class="body-small font-medium text-text-primary">
                 {checkingSupport
                   ? t("cableTest.checkingSupport", "Checking TDR support...")
                   : tdrSupport?.supported
@@ -127,18 +127,18 @@ export const CableTestSettings = memo(function CableTestSettings({
               type="button"
               onClick={checkTdrSupport}
               disabled={checkingSupport}
-              className="caption text-text-muted hover:text-text-primary"
+              class="caption text-text-muted hover:text-text-primary"
             >
               {checkingSupport ? "..." : t("common.refresh", "Refresh")}
             </button>
           </div>
           {tdrSupport?.driver && (
-            <p className={cn("caption text-text-muted", spacing.margin.top.tight)}>
+            <p class={cn("caption text-text-muted", spacing.margin.top.tight)}>
               {t("cableTest.driver", "Driver")}: {tdrSupport.driver}
             </p>
           )}
           {!tdrSupport?.supported && tdrSupport?.message && (
-            <p className={cn("caption text-text-muted", spacing.margin.top.tight)}>
+            <p class={cn("caption text-text-muted", spacing.margin.top.tight)}>
               {tdrSupport.message}
             </p>
           )}
@@ -146,7 +146,7 @@ export const CableTestSettings = memo(function CableTestSettings({
 
         {/* Enable Cable Test Card */}
         <label
-          className={cn(
+          class={cn(
             layout.flex.between,
             spacing.pad.sm,
             "bg-surface-base",
@@ -155,10 +155,10 @@ export const CableTestSettings = memo(function CableTestSettings({
           )}
         >
           <div>
-            <span className="body-small text-text-primary font-medium">
+            <span class="body-small text-text-primary font-medium">
               {t("cableTest.enableCard", "Show Cable Test Card")}
             </span>
-            <p className="caption text-text-muted">
+            <p class="caption text-text-muted">
               {t("cableTest.enableCardDesc", "Display cable test card on dashboard")}
             </p>
           </div>
@@ -171,13 +171,13 @@ export const CableTestSettings = memo(function CableTestSettings({
                 enabled: e.target.checked,
               }))
             }
-            className={iconTokens.size.sm}
+            class={iconTokens.size.sm}
           />
         </label>
 
         {/* Auto-Run on Link Down */}
         {/* Note: Auto-run is automatic when link down + PHY supports TDR - no toggle needed */}
-        <p className={cn("caption text-text-muted", spacing.margin.top.inline)}>
+        <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
           {t(
             "cableTest.tdrNote",
             "TDR cable testing requires compatible network hardware and drivers. Cable test runs automatically when link is down and PHY supports TDR. Length units are controlled by global Display Options.",

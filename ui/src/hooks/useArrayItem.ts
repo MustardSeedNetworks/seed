@@ -50,7 +50,7 @@ interface ItemWithId {
  * Only properties that are arrays of objects with optional id fields are valid.
  */
 type ArrayKeys<TSettings> = {
-  [K in keyof TSettings]: TSettings[K] extends Array<ItemWithId> | undefined ? K : never;
+  [K in keyof TSettings]: TSettings[K] extends ItemWithId[] | undefined ? K : never;
 }[keyof TSettings];
 
 /**

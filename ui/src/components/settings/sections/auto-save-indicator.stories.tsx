@@ -37,9 +37,9 @@ const meta: Meta<typeof AutoSaveIndicator> = {
   },
   decorators: [
     (Story) => (
-      <div className={cn(spacing.pad.default, "bg-surface-base")}>
-        <div className={cn("flex items-center", spacing.gap.compact)}>
-          <span className="body-small font-medium">Setting Name</span>
+      <div class={cn(spacing.pad.default, "bg-surface-base")}>
+        <div class={cn("flex items-center", spacing.gap.compact)}>
+          <span class="body-small font-medium">Setting Name</span>
           <Story />
         </div>
       </div>
@@ -91,21 +91,21 @@ export const ErrorState: Story = {
  */
 export const AllStates: Story = {
   render: () => (
-    <div className={cn("stack", spacing.pad.default, "bg-surface-base")}>
-      <div className={cn("flex items-center", spacing.gap.compact)}>
-        <span className="body-small">Idle (hidden):</span>
+    <div class={cn("stack", spacing.pad.default, "bg-surface-base")}>
+      <div class={cn("flex items-center", spacing.gap.compact)}>
+        <span class="body-small">Idle (hidden):</span>
         <AutoSaveIndicator status="idle" />
       </div>
-      <div className={cn("flex items-center", spacing.gap.compact)}>
-        <span className="body-small">Saving:</span>
+      <div class={cn("flex items-center", spacing.gap.compact)}>
+        <span class="body-small">Saving:</span>
         <AutoSaveIndicator status="saving" />
       </div>
-      <div className={cn("flex items-center", spacing.gap.compact)}>
-        <span className="body-small">Saved:</span>
+      <div class={cn("flex items-center", spacing.gap.compact)}>
+        <span class="body-small">Saved:</span>
         <AutoSaveIndicator status="saved" />
       </div>
-      <div className={cn("flex items-center", spacing.gap.compact)}>
-        <span className="body-small">Error:</span>
+      <div class={cn("flex items-center", spacing.gap.compact)}>
+        <span class="body-small">Error:</span>
         <AutoSaveIndicator status="error" />
       </div>
     </div>
@@ -117,49 +117,49 @@ export const AllStates: Story = {
  */
 export const InContext: Story = {
   render: () => (
-    <div className={cn("w-[400px]", spacing.pad.default, "bg-surface-raised")}>
-      <div className="stack">
+    <div class={cn("w-[400px]", spacing.pad.default, "bg-surface-raised")}>
+      <div class="stack">
         <label
-          className={cn(
+          class={cn(
             "flex items-center justify-between",
             spacing.pad.sm,
             "bg-surface-base border border-surface-border",
             radius.lg,
           )}
         >
-          <div className={cn("flex items-center", spacing.gap.compact)}>
-            <span className="body-small text-text-primary font-medium">Enable Feature</span>
+          <div class={cn("flex items-center", spacing.gap.compact)}>
+            <span class="body-small text-text-primary font-medium">Enable Feature</span>
             <AutoSaveIndicator status="saved" />
           </div>
-          <input type="checkbox" checked readOnly className="w-4 h-4" />
+          <input type="checkbox" checked={true} readOnly={true} class="w-4 h-4" />
         </label>
         <label
-          className={cn(
+          class={cn(
             "flex items-center justify-between",
             spacing.pad.sm,
             "bg-surface-base border border-surface-border",
             radius.lg,
           )}
         >
-          <div className={cn("flex items-center", spacing.gap.compact)}>
-            <span className="body-small text-text-primary font-medium">Auto-refresh</span>
+          <div class={cn("flex items-center", spacing.gap.compact)}>
+            <span class="body-small text-text-primary font-medium">Auto-refresh</span>
             <AutoSaveIndicator status="saving" />
           </div>
-          <input type="checkbox" checked readOnly className="w-4 h-4" />
+          <input type="checkbox" checked={true} readOnly={true} class="w-4 h-4" />
         </label>
         <label
-          className={cn(
+          class={cn(
             "flex items-center justify-between",
             spacing.pad.sm,
             "bg-surface-base border border-surface-border",
             radius.lg,
           )}
         >
-          <div className={cn("flex items-center", spacing.gap.compact)}>
-            <span className="body-small text-text-primary font-medium">Failed Setting</span>
+          <div class={cn("flex items-center", spacing.gap.compact)}>
+            <span class="body-small text-text-primary font-medium">Failed Setting</span>
             <AutoSaveIndicator status="error" />
           </div>
-          <input type="checkbox" checked readOnly className="w-4 h-4" />
+          <input type="checkbox" checked={true} readOnly={true} class="w-4 h-4" />
         </label>
       </div>
     </div>

@@ -74,7 +74,7 @@ interface SliderProps {
  * Range slider component for numeric input with visual feedback.
  * Supports keyboard navigation and custom value formatting.
  */
-export const Slider = memo(function Slider({
+export const Slider = memo(function slider({
   value,
   onChange,
   min,
@@ -145,18 +145,18 @@ export const Slider = memo(function Slider({
   );
 
   return (
-    <div className={cn("w-full", className)}>
+    <div class={cn("w-full", className)}>
       {/* Label and current value */}
       {label && (
-        <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
+        <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
           <label
-            htmlFor={`slider-${label.replace(/\s+/g, "-").toLowerCase()}`}
-            className="label text-text-primary"
+            for={`slider-${label.replace(/\s+/g, "-").toLowerCase()}`}
+            class="label text-text-primary"
           >
             {label}
           </label>
           <span
-            className="body-small font-medium text-brand-primary font-mono tabular-nums"
+            class="body-small font-medium text-brand-primary font-mono tabular-nums"
             aria-live="polite"
           >
             {displayValue}
@@ -165,11 +165,11 @@ export const Slider = memo(function Slider({
       )}
 
       {/* Slider container with track and thumb */}
-      <div className={spacing.margin.bottom.inline}>
-        <div className="relative">
+      <div class={spacing.margin.bottom.inline}>
+        <div class="relative">
           {/* Background track */}
           <div
-            className={cn(
+            class={cn(
               "absolute inset-0 h-2 top-1/2 -translate-y-1/2",
               radius.full,
               "bg-surface-hover",
@@ -179,7 +179,7 @@ export const Slider = memo(function Slider({
 
           {/* Filled portion (progress) */}
           <div
-            className={cn(
+            class={cn(
               "absolute h-2 top-1/2 -translate-y-1/2",
               radius.full,
               "bg-brand-primary transition-all",
@@ -206,7 +206,7 @@ export const Slider = memo(function Slider({
             onTouchStart={() => setIsDragging(true)}
             onTouchEnd={() => setIsDragging(false)}
             disabled={disabled}
-            className={cn(
+            class={cn(
               "relative w-full h-2 appearance-none bg-transparent cursor-pointer",
               "focus:outline-none",
               // Thumb styling - webkit browsers
@@ -265,7 +265,7 @@ export const Slider = memo(function Slider({
 
       {/* End labels (e.g., "Slower ◄────► Faster") */}
       {(leftLabel || rightLabel) && (
-        <div className={cn(layout.flex.between, "caption text-text-muted")}>
+        <div class={cn(layout.flex.between, "caption text-text-muted")}>
           <span>{leftLabel || ""}</span>
           <span>{rightLabel || ""}</span>
         </div>

@@ -118,7 +118,7 @@ type SpeedtestPhase =
 type IperfPhase = "idle" | "connecting" | "testing" | "complete";
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Performance card manages speedtest and iperf state machines
-export const PerformanceCard = memo(function PerformanceCard({
+export const PerformanceCard = memo(function performanceCard({
   loading,
   runSpeedtestEnabled = true,
   runIperfEnabled = true,
@@ -254,7 +254,9 @@ export const PerformanceCard = memo(function PerformanceCard({
 
   // Sync iperf server state on initial load and when settings change
   useEffect(() => {
-    if (!iperfInfo?.installed) return;
+    if (!iperfInfo?.installed) {
+      return;
+    }
 
     // On initial load or settings change, ensure server state matches settings
     if (!initialServerSyncDone.current || iperfSettings.enableServer) {
@@ -272,9 +274,9 @@ export const PerformanceCard = memo(function PerformanceCard({
 
             // If state doesn't match settings, fix it
             if (shouldBeRunning && !serverRunning) {
-              manageIperfServer(true, iperfSettings.serverPort);
+              await manageIperfServer(true, iperfSettings.serverPort);
             } else if (!shouldBeRunning && serverRunning) {
-              manageIperfServer(false, iperfSettings.serverPort);
+              await manageIperfServer(false, iperfSettings.serverPort);
             }
           }
         } catch {
@@ -299,7 +301,9 @@ export const PerformanceCard = memo(function PerformanceCard({
 
   // Poll speedtest status while running (300ms for smooth gauge updates)
   useEffect(() => {
-    if (!speedtestRunning) return;
+    if (!speedtestRunning) {
+      return;
+    }
 
     const interval = setInterval(async () => {
       try {
@@ -332,7 +336,9 @@ export const PerformanceCard = memo(function PerformanceCard({
 
   // Poll iperf3 client status while running
   useEffect(() => {
-    if (!iperfClientRunning) return;
+    if (!iperfClientRunning) {
+      return;
+    }
 
     const interval = setInterval(async () => {
       try {
@@ -451,10 +457,18 @@ export const PerformanceCard = memo(function PerformanceCard({
   };
 
   const getStatus = (): Status => {
-    if (!runSpeedtestEnabled && !runIperfEnabled) return "unknown";
-    if (loading || speedtestRunning || iperfClientRunning) return "loading";
-    if (speedtestError || iperfError) return "error";
-    if (speedtestResult || iperfResult) return "success";
+    if (!(runSpeedtestEnabled || runIperfEnabled)) {
+      return "unknown";
+    }
+    if (loading || speedtestRunning || iperfClientRunning) {
+      return "loading";
+    }
+    if (speedtestError || iperfError) {
+      return "error";
+    }
+    if (speedtestResult || iperfResult) {
+      return "success";
+    }
     return "unknown";
   };
 
@@ -462,23 +476,19 @@ export const PerformanceCard = memo(function PerformanceCard({
     <Card
       title={t("performance.title")}
       subtitle={t("performance.subtitle")}
-      icon={<Gauge className={iconTokens.size.md} />}
+      icon={<Gauge class={iconTokens.size.md} />}
       status={getStatus()}
     >
       <div>
         {/* Internet Speed Section */}
-        <p className={cn("caption font-medium", spacing.margin.bottom.inline)}>
+        <p class={cn("caption font-medium", spacing.margin.bottom.inline)}>
           {t("performance.internetSpeed")}
         </p>
 
         {speedtestRunning && speedtestStatus && (
-          <div className={spacing.margin.bottom.heading}>
+          <div class={spacing.margin.bottom.heading}>
             <div
-              className={cn(
-                layout.flex.center,
-                spacing.gap.spacious,
-                spacing.padding.bottom.inline,
-              )}
+              class={cn(layout.flex.center, spacing.gap.spacious, spacing.padding.bottom.inline)}
             >
               <SpeedGauge
                 value={speedtestStatus.currentDownload || 0}
@@ -493,14 +503,12 @@ export const PerformanceCard = memo(function PerformanceCard({
                 isRunning={speedtestStatus.phase === "testing_upload"}
               />
             </div>
-            <div
-              className={cn(layout.inline.default, spacing.pad.xs, "bg-surface-hover", radius.md)}
-            >
+            <div class={cn(layout.inline.default, spacing.pad.xs, "bg-surface-hover", radius.md)}>
               <PulsingDot color="primary" size="sm" />
-              <span className="body-small font-medium">
+              <span class="body-small font-medium">
                 {getSpeedtestPhaseLabel(speedtestStatus.phase)}
               </span>
-              <span className="body-small text-text-muted ml-auto">
+              <span class="body-small text-text-muted ml-auto">
                 {Math.round(speedtestStatus.progress)}%
               </span>
             </div>
@@ -508,13 +516,9 @@ export const PerformanceCard = memo(function PerformanceCard({
         )}
 
         {!speedtestRunning && speedtestResult && (
-          <div className={spacing.margin.bottom.heading}>
+          <div class={spacing.margin.bottom.heading}>
             <div
-              className={cn(
-                layout.flex.center,
-                spacing.gap.spacious,
-                spacing.padding.bottom.inline,
-              )}
+              class={cn(layout.flex.center, spacing.gap.spacious, spacing.padding.bottom.inline)}
             >
               <SpeedGauge
                 value={speedtestResult.download}
@@ -535,34 +539,28 @@ export const PerformanceCard = memo(function PerformanceCard({
           </div>
         )}
 
-        {!speedtestRunning && !speedtestResult && !speedtestError && (
-          <p className={cn("body-small", spacing.margin.bottom.inline)}>
-            {t("performance.noResults")}
-          </p>
+        {!(speedtestRunning || speedtestResult || speedtestError) && (
+          <p class={cn("body-small", spacing.margin.bottom.inline)}>{t("performance.noResults")}</p>
         )}
 
-        {speedtestError && <p className="body-small text-status-error">{speedtestError}</p>}
+        {speedtestError && <p class="body-small text-status-error">{speedtestError}</p>}
 
         <CardDivider />
 
         {/* LAN Speed (iperf3) Section */}
         <p
-          className={cn(
-            "caption font-medium",
-            spacing.margin.bottom.inline,
-            spacing.margin.top.inline,
-          )}
+          class={cn("caption font-medium", spacing.margin.bottom.inline, spacing.margin.top.inline)}
         >
           {t("performance.lanSpeed")}
           {iperfInfo?.version && (
-            <span className={cn("text-text-muted font-normal", spacing.margin.left.inline)}>
+            <span class={cn("text-text-muted font-normal", spacing.margin.left.inline)}>
               {iperfInfo.version}
             </span>
           )}
         </p>
 
         {!iperfInfo?.installed && (
-          <p className={cn("body-small text-status-warning", spacing.margin.bottom.heading)}>
+          <p class={cn("body-small text-status-warning", spacing.margin.bottom.heading)}>
             {t("performance.iperfNotInstalled")}
           </p>
         )}
@@ -572,7 +570,7 @@ export const PerformanceCard = memo(function PerformanceCard({
             {/* Config Summary */}
             {iperfSettings.server ? (
               <div
-                className={cn(
+                class={cn(
                   "caption",
                   spacing.margin.bottom.heading,
                   spacing.pad.sm,
@@ -580,15 +578,15 @@ export const PerformanceCard = memo(function PerformanceCard({
                   radius.default,
                 )}
               >
-                <div className={layout.flex.between}>
+                <div class={layout.flex.between}>
                   <span>{t("performance.server")}:</span>
-                  <span className="text-text-primary">
+                  <span class="text-text-primary">
                     {iperfSettings.server}:{iperfSettings.port}
                   </span>
                 </div>
-                <div className={layout.flex.between}>
+                <div class={layout.flex.between}>
                   <span>{t("performance.test")}:</span>
-                  <span className="text-text-primary">
+                  <span class="text-text-primary">
                     {iperfSettings.protocol.toUpperCase()}{" "}
                     {iperfSettings.direction === "bidirectional"
                       ? t("performance.both")
@@ -597,7 +595,7 @@ export const PerformanceCard = memo(function PerformanceCard({
                 </div>
               </div>
             ) : (
-              <p className={cn("caption", spacing.margin.bottom.heading)}>
+              <p class={cn("caption", spacing.margin.bottom.heading)}>
                 {t("performance.configureServer")}
               </p>
             )}
@@ -605,7 +603,7 @@ export const PerformanceCard = memo(function PerformanceCard({
             {/* Client Status/Results */}
             {iperfClientRunning && iperfClientStatus && (
               <div
-                className={cn(
+                class={cn(
                   layout.inline.spacious,
                   spacing.margin.bottom.heading,
                   spacing.pad.sm,
@@ -614,10 +612,10 @@ export const PerformanceCard = memo(function PerformanceCard({
                 )}
               >
                 <ProgressRing progress={iperfClientStatus.progress} size={56} strokeWidth={5} />
-                <div className="flex-1">
-                  <div className={layout.inline.default}>
+                <div class="flex-1">
+                  <div class={layout.inline.default}>
                     <PulsingDot color="primary" size="sm" />
-                    <span className="body-small font-medium">
+                    <span class="body-small font-medium">
                       {getIperfPhaseLabel(iperfClientStatus.phase)}
                     </span>
                   </div>
@@ -628,7 +626,7 @@ export const PerformanceCard = memo(function PerformanceCard({
                         value={pp}
                         max={100}
                         aria-label="iPerf progress"
-                        className={cn(spacing.margin.top.inline, "w-full", radius.full)}
+                        class={cn(spacing.margin.top.inline, "w-full", radius.full)}
                       />
                     );
                   })()}
@@ -637,9 +635,9 @@ export const PerformanceCard = memo(function PerformanceCard({
             )}
 
             {!iperfClientRunning && iperfResult && (
-              <div className={cn(spacing.margin.bottom.heading, "stack-sm")}>
+              <div class={cn(spacing.margin.bottom.heading, "stack-sm")}>
                 {iperfResult.direction === "bidirectional" ? (
-                  <div className={cn("grid grid-cols-1 sm:grid-cols-2", spacing.gap.default)}>
+                  <div class={cn("grid grid-cols-1 sm:grid-cols-2", spacing.gap.default)}>
                     <CardValue
                       label={t("performance.download")}
                       value={formatSpeed(iperfResult.downloadBandwidth ?? iperfResult.bandwidth)}
@@ -667,7 +665,7 @@ export const PerformanceCard = memo(function PerformanceCard({
                 )}
 
                 {iperfResult.direction === "bidirectional" ? (
-                  <div className={cn("grid grid-cols-1 sm:grid-cols-2", spacing.gap.default)}>
+                  <div class={cn("grid grid-cols-1 sm:grid-cols-2", spacing.gap.default)}>
                     {iperfResult.downloadTransfer !== undefined && (
                       <CardRow
                         label={t("performance.downloadTransfer")}
@@ -709,12 +707,12 @@ export const PerformanceCard = memo(function PerformanceCard({
               </div>
             )}
 
-            {iperfError && <p className="body-small text-status-error">{iperfError}</p>}
+            {iperfError && <p class="body-small text-status-error">{iperfError}</p>}
 
             {/* Server status indicator (if enabled) */}
             {iperfSettings.enableServer && (
               <div
-                className={cn(
+                class={cn(
                   "caption",
                   layout.flex.between,
                   "pad-sm bg-surface-hover",
@@ -723,7 +721,7 @@ export const PerformanceCard = memo(function PerformanceCard({
               >
                 <span>{t("performance.serverMode")}</span>
                 <span
-                  className={iperfServerStatus?.running ? "text-status-success" : "text-text-muted"}
+                  class={iperfServerStatus?.running ? "text-status-success" : "text-text-muted"}
                 >
                   {iperfServerStatus?.running
                     ? t("performance.listening", {

@@ -65,7 +65,9 @@ export function ApPlacementPanel({
 
   // Save edits
   const handleSave = () => {
-    if (!editingApId || !editForm.label) return;
+    if (!(editingApId && editForm.label)) {
+      return;
+    }
 
     const updatedLocations = apLocations.map((ap) =>
       ap.id === editingApId ? { ...ap, ...editForm } : ap,
@@ -96,19 +98,17 @@ export function ApPlacementPanel({
   };
 
   return (
-    <div
-      className={cn("bg-surface-raised", radius.md, "border border-surface-border", spacing.pad.sm)}
-    >
+    <div class={cn("bg-surface-raised", radius.md, "border border-surface-border", spacing.pad.sm)}>
       {/* Header */}
-      <div className={cn(layout.inline.default, "justify-between", spacing.margin.bottom.content)}>
-        <div className={cn(layout.inline.default)}>
-          <Radio className={iconTokens.size.sm} />
-          <h4 className="body-small font-medium">{t("apPlacement.title")}</h4>
+      <div class={cn(layout.inline.default, "justify-between", spacing.margin.bottom.content)}>
+        <div class={cn(layout.inline.default)}>
+          <Radio class={iconTokens.size.sm} />
+          <h4 class="body-small font-medium">{t("apPlacement.title")}</h4>
         </div>
         <button
           type="button"
           onClick={togglePlacementMode}
-          className={cn(
+          class={cn(
             button.size.xs,
             radius.md,
             layout.inline.default,
@@ -118,7 +118,7 @@ export function ApPlacementPanel({
               : "bg-surface-base border border-surface-border hover:bg-surface-hover",
           )}
         >
-          <Plus className={iconTokens.size.xs} />
+          <Plus class={iconTokens.size.xs} />
           <span>{t("apPlacement.addAp")}</span>
         </button>
       </div>
@@ -126,15 +126,15 @@ export function ApPlacementPanel({
       {/* Placement mode instructions */}
       {placementMode && (
         <div
-          className={cn(
+          class={cn(
             "bg-purple-500/10 border border-purple-500/20",
             radius.md,
             spacing.pad.sm,
             spacing.margin.bottom.content,
           )}
         >
-          <p className="caption text-purple-600 dark:text-purple-400">
-            <MapPin className="w-3 h-3 inline mr-1" />
+          <p class="caption text-purple-600 dark:text-purple-400">
+            <MapPin class="w-3 h-3 inline mr-1" />
             {t("apPlacement.placementMode")}
           </p>
         </div>
@@ -142,14 +142,14 @@ export function ApPlacementPanel({
 
       {/* AP List */}
       {apLocations.length === 0 ? (
-        <p className="caption text-text-muted text-center py-4">{t("apPlacement.noAps")}</p>
+        <p class="caption text-text-muted text-center py-4">{t("apPlacement.noAps")}</p>
       ) : (
-        <div className={cn(layout.stack.tight, "max-h-64 overflow-y-auto")}>
+        <div class={cn(layout.stack.tight, "max-h-64 overflow-y-auto")}>
           {apLocations.map((ap) => (
             // biome-ignore lint/a11y/useSemanticElements: Complex card with nested interactive elements
             <div
               key={ap.id}
-              className={cn(
+              class={cn(
                 spacing.pad.sm,
                 radius.md,
                 "border transition-colors cursor-pointer",
@@ -161,7 +161,9 @@ export function ApPlacementPanel({
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  if (editingApId !== ap.id) onApSelect(ap.id);
+                  if (editingApId !== ap.id) {
+                    onApSelect(ap.id);
+                  }
                 }
               }}
               role="button"
@@ -169,7 +171,7 @@ export function ApPlacementPanel({
             >
               {editingApId === ap.id ? (
                 <div
-                  className={cn(layout.stack.tight)}
+                  class={cn(layout.stack.tight)}
                   onClick={(e) => e.stopPropagation()}
                   aria-hidden="true"
                 >
@@ -179,7 +181,7 @@ export function ApPlacementPanel({
                     value={editForm.label || ""}
                     onChange={(e) => setEditForm({ ...editForm, label: e.target.value })}
                     placeholder={t("apPlacement.label")}
-                    className={cn(
+                    class={cn(
                       "w-full",
                       spacing.pad.sm,
                       radius.md,
@@ -193,7 +195,7 @@ export function ApPlacementPanel({
                     value={editForm.bssid || ""}
                     onChange={(e) => setEditForm({ ...editForm, bssid: e.target.value })}
                     placeholder={t("apPlacement.bssid")}
-                    className={cn(
+                    class={cn(
                       "w-full",
                       spacing.pad.sm,
                       radius.md,
@@ -202,7 +204,7 @@ export function ApPlacementPanel({
                   />
 
                   {/* Band and Channel */}
-                  <div className={cn(layout.inline.default)}>
+                  <div class={cn(layout.inline.default)}>
                     <select
                       value={editForm.band || ""}
                       onChange={(e) =>
@@ -211,7 +213,7 @@ export function ApPlacementPanel({
                           band: e.target.value as WiFiBand | undefined,
                         })
                       }
-                      className={cn(
+                      class={cn(
                         "flex-1",
                         spacing.pad.sm,
                         radius.md,
@@ -233,7 +235,7 @@ export function ApPlacementPanel({
                         })
                       }
                       placeholder={t("apPlacement.channel")}
-                      className={cn(
+                      class={cn(
                         "w-20",
                         spacing.pad.sm,
                         radius.md,
@@ -248,7 +250,7 @@ export function ApPlacementPanel({
                     value={editForm.model || ""}
                     onChange={(e) => setEditForm({ ...editForm, model: e.target.value })}
                     placeholder={t("apPlacement.model")}
-                    className={cn(
+                    class={cn(
                       "w-full",
                       spacing.pad.sm,
                       radius.md,
@@ -257,49 +259,49 @@ export function ApPlacementPanel({
                   />
 
                   {/* Actions */}
-                  <div className={cn(layout.inline.default, "justify-end")}>
+                  <div class={cn(layout.inline.default, "justify-end")}>
                     <button
                       type="button"
                       onClick={handleCancel}
-                      className={cn(
+                      class={cn(
                         button.size.xs,
                         radius.md,
                         "border border-surface-border hover:bg-surface-hover",
                         layout.inline.default,
                       )}
                     >
-                      <X className={iconTokens.size.xs} />
+                      <X class={iconTokens.size.xs} />
                     </button>
                     <button
                       type="button"
                       onClick={handleSave}
-                      className={cn(
+                      class={cn(
                         button.size.xs,
                         radius.md,
                         "bg-brand-primary text-text-inverse",
                         layout.inline.default,
                       )}
                     >
-                      <Check className={iconTokens.size.xs} />
+                      <Check class={iconTokens.size.xs} />
                     </button>
                   </div>
                 </div>
               ) : (
                 // Display mode
-                <div className={cn(layout.inline.default, "justify-between")}>
+                <div class={cn(layout.inline.default, "justify-between")}>
                   <div>
-                    <div className={cn(layout.inline.default)}>
+                    <div class={cn(layout.inline.default)}>
                       <Radio
-                        className={cn(
+                        class={cn(
                           "w-3 h-3",
                           selectedApId === ap.id ? "text-purple-500" : "text-text-muted",
                         )}
                       />
-                      <span className="body-small font-medium">{ap.label}</span>
+                      <span class="body-small font-medium">{ap.label}</span>
                     </div>
-                    {ap.bssid && <p className="caption text-text-muted font-mono">{ap.bssid}</p>}
+                    {ap.bssid && <p class="caption text-text-muted font-mono">{ap.bssid}</p>}
                     {(ap.band || ap.channel) && (
-                      <p className="caption text-text-muted">
+                      <p class="caption text-text-muted">
                         {ap.band && `${ap.band} GHz`}
                         {ap.band && ap.channel && " · "}
                         {ap.channel && `Ch ${ap.channel}`}
@@ -308,27 +310,27 @@ export function ApPlacementPanel({
                   </div>
                   {/* biome-ignore lint/a11y/noStaticElementInteractions: Used to stop propagation to parent button */}
                   <div
-                    className={cn(layout.inline.tight)}
+                    class={cn(layout.inline.tight)}
                     onClick={(e) => e.stopPropagation()}
                     onKeyDown={(e) => e.stopPropagation()}
                   >
                     <button
                       type="button"
                       onClick={() => handleEdit(ap)}
-                      className={cn(button.size.xs, radius.md, "hover:bg-surface-hover")}
+                      class={cn(button.size.xs, radius.md, "hover:bg-surface-hover")}
                     >
-                      <Edit2 className={iconTokens.size.xs} />
+                      <Edit2 class={iconTokens.size.xs} />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(ap.id)}
-                      className={cn(
+                      class={cn(
                         button.size.xs,
                         radius.md,
                         "hover:bg-status-error/10 text-status-error",
                       )}
                     >
-                      <Trash2 className={iconTokens.size.xs} />
+                      <Trash2 class={iconTokens.size.xs} />
                     </button>
                   </div>
                 </div>

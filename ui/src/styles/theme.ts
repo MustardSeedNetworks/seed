@@ -659,9 +659,15 @@ export const brand = {
  */
 export const gauge = {
   getColor: (percentage: number): string => {
-    if (percentage < 25) return "var(--color-status-error)";
-    if (percentage < 50) return "var(--color-status-warning)";
-    if (percentage < 75) return "var(--gauge-amber, #eab308)";
+    if (percentage < 25) {
+      return "var(--color-status-error)";
+    }
+    if (percentage < 50) {
+      return "var(--color-status-warning)";
+    }
+    if (percentage < 75) {
+      return "var(--gauge-amber, #eab308)";
+    }
     return "var(--color-status-success)";
   },
   // Tailwind class equivalents for non-SVG usage

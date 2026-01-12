@@ -328,7 +328,9 @@ function buildApInventory(samples: SamplePoint[]): ApInventoryEntry[] {
           });
         }
         const entry = apMap.get(key);
-        if (!entry) continue;
+        if (!entry) {
+          continue;
+        }
         if (network.channel && !entry.channels.includes(network.channel)) {
           entry.channels.push(network.channel);
         }

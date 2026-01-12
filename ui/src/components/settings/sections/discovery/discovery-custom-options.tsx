@@ -50,7 +50,7 @@ const PORT_PRESETS: Record<PortPreset, { tcp: string; udp: string; description: 
 /**
  * Discovery scan method options.
  */
-export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
+export const DiscoveryCustomOptions = memo(function discoveryCustomOptions({
   settings,
   onSettingsChange,
 }: DiscoveryCustomOptionsProps) {
@@ -80,18 +80,18 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
   }, [settings.options?.portScan?.preset, onSettingsChange]);
 
   return (
-    <div className={cn("border-t border-surface-border", spacing.pad.sm)}>
-      <span className="caption text-text-muted font-medium">
+    <div class={cn("border-t border-surface-border", spacing.pad.sm)}>
+      <span class="caption text-text-muted font-medium">
         {t("discovery.scanMethods", "Scan Methods")}
       </span>
-      <div className={cn(spacing.margin.top.inline, "stack-sm")}>
+      <div class={cn(spacing.margin.top.inline, "stack-sm")}>
         {/* Passive Protocol Details */}
         <div>
-          <span className="body-small text-text-primary font-medium">
+          <span class="body-small text-text-primary font-medium">
             {t("discovery.passiveProtocols", "Passive Protocols")}
           </span>
           <div
-            className={cn(
+            class={cn(
               "ml-6",
               spacing.pad.xs,
               spacing.margin.top.tight,
@@ -100,8 +100,8 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
               "border border-surface-border",
             )}
           >
-            <div className={cn("flex flex-wrap", spacing.gap.compact)}>
-              <label className={layout.inline.default}>
+            <div class={cn("flex flex-wrap", spacing.gap.compact)}>
+              <label class={layout.inline.default}>
                 <input
                   type="checkbox"
                   checked={settings.options?.passiveProtocols?.lldp ?? true}
@@ -120,11 +120,11 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                       },
                     }))
                   }
-                  className={iconTokens.size.xs}
+                  class={iconTokens.size.xs}
                 />
-                <span className="caption text-text-primary">LLDP</span>
+                <span class="caption text-text-primary">LLDP</span>
               </label>
-              <label className={layout.inline.default}>
+              <label class={layout.inline.default}>
                 <input
                   type="checkbox"
                   checked={settings.options?.passiveProtocols?.cdp ?? true}
@@ -143,11 +143,11 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                       },
                     }))
                   }
-                  className={iconTokens.size.xs}
+                  class={iconTokens.size.xs}
                 />
-                <span className="caption text-text-primary">CDP</span>
+                <span class="caption text-text-primary">CDP</span>
               </label>
-              <label className={layout.inline.default}>
+              <label class={layout.inline.default}>
                 <input
                   type="checkbox"
                   checked={settings.options?.passiveProtocols?.edp ?? true}
@@ -166,11 +166,11 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                       },
                     }))
                   }
-                  className={iconTokens.size.xs}
+                  class={iconTokens.size.xs}
                 />
-                <span className="caption text-text-primary">EDP</span>
+                <span class="caption text-text-primary">EDP</span>
               </label>
-              <label className={layout.inline.default}>
+              <label class={layout.inline.default}>
                 <input
                   type="checkbox"
                   checked={settings.options?.passiveProtocols?.ndp ?? true}
@@ -189,16 +189,16 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                       },
                     }))
                   }
-                  className={iconTokens.size.xs}
+                  class={iconTokens.size.xs}
                 />
-                <span className="caption text-text-primary">NDP</span>
+                <span class="caption text-text-primary">NDP</span>
               </label>
             </div>
           </div>
         </div>
 
         {/* ARP Scanning */}
-        <label className={layout.inline.default}>
+        <label class={layout.inline.default}>
           <input
             type="checkbox"
             checked={settings.options?.arpScan ?? true}
@@ -211,13 +211,13 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                 },
               }))
             }
-            className={iconTokens.size.sm}
+            class={iconTokens.size.sm}
           />
-          <span className="body-small text-text-primary">{t("discovery.arpScanning")}</span>
+          <span class="body-small text-text-primary">{t("discovery.arpScanning")}</span>
         </label>
 
         {/* ICMP Ping Sweep */}
-        <label className={layout.inline.default}>
+        <label class={layout.inline.default}>
           <input
             type="checkbox"
             checked={settings.options?.icmpScan ?? true}
@@ -230,13 +230,13 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                 },
               }))
             }
-            className={iconTokens.size.sm}
+            class={iconTokens.size.sm}
           />
-          <span className="body-small text-text-primary">{t("discovery.icmpPingSweep")}</span>
+          <span class="body-small text-text-primary">{t("discovery.icmpPingSweep")}</span>
         </label>
 
         {/* Port Scanning */}
-        <label className={layout.inline.default}>
+        <label class={layout.inline.default}>
           <input
             type="checkbox"
             checked={settings.options?.portScan?.enabled ?? false}
@@ -256,15 +256,15 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                 },
               }))
             }
-            className={iconTokens.size.sm}
+            class={iconTokens.size.sm}
           />
-          <span className="body-small text-text-primary">{t("discovery.portScanning")}</span>
+          <span class="body-small text-text-primary">{t("discovery.portScanning")}</span>
         </label>
 
         {/* Port Scan Details (shown when enabled) */}
         {settings.options?.portScan?.enabled && (
           <div
-            className={cn(
+            class={cn(
               "ml-6 stack-sm",
               spacing.pad.sm,
               "bg-surface-base",
@@ -273,7 +273,7 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
             )}
           >
             <div>
-              <label className="caption text-text-muted" htmlFor="port-scan-preset">
+              <label class="caption text-text-muted" for="port-scan-preset">
                 {t("discovery.portScanPreset", "Port Preset")}
               </label>
               <select
@@ -304,7 +304,7 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                     },
                   }));
                 }}
-                className={cn(
+                class={cn(
                   "w-full",
                   spacing.margin.top.tight,
                   inputTokens.base,
@@ -321,15 +321,15 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                 <option value="custom">{t("discovery.portPresetCustom", "Custom")}</option>
               </select>
               {/* Description for selected preset */}
-              <p className={cn("caption text-text-muted", spacing.margin.top.tight)}>
+              <p class={cn("caption text-text-muted", spacing.margin.top.tight)}>
                 {PORT_PRESETS[settings.options?.portScan?.preset ?? "common"].description}
               </p>
             </div>
             <div>
-              <label className="caption text-text-muted" htmlFor="port-scan-tcp">
+              <label class="caption text-text-muted" for="port-scan-tcp">
                 {t("discovery.portScanTcpPorts", "TCP Ports")}
                 {(settings.options?.portScan?.preset ?? "common") !== "custom" && (
-                  <span className="ml-2 text-text-muted italic">
+                  <span class="ml-2 text-text-muted italic">
                     {t("discovery.portPresetReadOnly", "(read-only, select Custom to edit)")}
                   </span>
                 )}
@@ -357,7 +357,7 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                 placeholder="22,80,443,8080-8100"
                 readOnly={(settings.options?.portScan?.preset ?? "common") !== "custom"}
                 disabled={(settings.options?.portScan?.preset ?? "common") !== "custom"}
-                className={cn(
+                class={cn(
                   "w-full",
                   spacing.margin.top.tight,
                   inputTokens.base,
@@ -370,10 +370,10 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
               />
             </div>
             <div>
-              <label className="caption text-text-muted" htmlFor="port-scan-udp">
+              <label class="caption text-text-muted" for="port-scan-udp">
                 {t("discovery.portScanUdpPorts", "UDP Ports")}
                 {(settings.options?.portScan?.preset ?? "common") !== "custom" && (
-                  <span className="ml-2 text-text-muted italic">
+                  <span class="ml-2 text-text-muted italic">
                     {t("discovery.portPresetReadOnly", "(read-only, select Custom to edit)")}
                   </span>
                 )}
@@ -401,7 +401,7 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                 placeholder="53,123,161"
                 readOnly={(settings.options?.portScan?.preset ?? "common") !== "custom"}
                 disabled={(settings.options?.portScan?.preset ?? "common") !== "custom"}
-                className={cn(
+                class={cn(
                   "w-full",
                   spacing.margin.top.tight,
                   inputTokens.base,
@@ -414,7 +414,7 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
               />
             </div>
             <div>
-              <label className="caption text-text-muted" htmlFor="port-scan-banner">
+              <label class="caption text-text-muted" for="port-scan-banner">
                 {t("discovery.portScanBannerTimeout", "Banner Timeout (ms)")}
               </label>
               <input
@@ -439,7 +439,7 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                 }
                 min={100}
                 max={10000}
-                className={cn(
+                class={cn(
                   "w-24",
                   spacing.margin.top.tight,
                   inputTokens.base,
@@ -454,24 +454,20 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
 
         {/* TCP Probe Settings */}
         <div
-          className={cn(
-            "border-t border-surface-border",
-            spacing.pad.sm,
-            spacing.margin.top.inline,
-          )}
+          class={cn("border-t border-surface-border", spacing.pad.sm, spacing.margin.top.inline)}
         >
-          <span className="caption text-text-muted font-medium">
+          <span class="caption text-text-muted font-medium">
             {t("discovery.tcpProbeSettings", "TCP Probe Settings")}
           </span>
-          <p className="caption text-text-muted">
+          <p class="caption text-text-muted">
             {t(
               "discovery.tcpProbeDesc",
               "Configure TCP connection probing for device detection and service discovery",
             )}
           </p>
-          <div className={cn("grid grid-cols-2", spacing.gap.compact, spacing.margin.top.inline)}>
+          <div class={cn("grid grid-cols-2", spacing.gap.compact, spacing.margin.top.inline)}>
             <div>
-              <label className="caption text-text-muted" htmlFor="tcp-probe-timeout">
+              <label class="caption text-text-muted" for="tcp-probe-timeout">
                 {t("discovery.tcpProbeTimeout", "Timeout (ms)")}
               </label>
               <input
@@ -493,7 +489,7 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                 }
                 min={100}
                 max={10000}
-                className={cn(
+                class={cn(
                   "w-full",
                   spacing.margin.top.tight,
                   inputTokens.base,
@@ -504,7 +500,7 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
               />
             </div>
             <div>
-              <label className="caption text-text-muted" htmlFor="tcp-probe-workers">
+              <label class="caption text-text-muted" for="tcp-probe-workers">
                 {t("discovery.tcpProbeWorkers", "Workers")}
               </label>
               <input
@@ -526,7 +522,7 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                 }
                 min={1}
                 max={100}
-                className={cn(
+                class={cn(
                   "w-full",
                   spacing.margin.top.tight,
                   inputTokens.base,
@@ -540,7 +536,7 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
         </div>
 
         {/* Traceroute */}
-        <label className={layout.inline.default}>
+        <label class={layout.inline.default}>
           <input
             type="checkbox"
             checked={settings.options?.traceroute ?? false}
@@ -553,13 +549,13 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                 },
               }))
             }
-            className={iconTokens.size.sm}
+            class={iconTokens.size.sm}
           />
-          <span className="body-small text-text-primary">{t("discovery.traceroute")}</span>
+          <span class="body-small text-text-primary">{t("discovery.traceroute")}</span>
         </label>
 
         {/* SNMP Queries */}
-        <label className={layout.inline.default}>
+        <label class={layout.inline.default}>
           <input
             type="checkbox"
             checked={settings.options?.snmpQuery ?? false}
@@ -572,33 +568,29 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                 },
               }))
             }
-            className={iconTokens.size.sm}
+            class={iconTokens.size.sm}
           />
-          <span className="body-small text-text-primary">{t("discovery.snmpQueries")}</span>
+          <span class="body-small text-text-primary">{t("discovery.snmpQueries")}</span>
         </label>
 
         {/* Performance & Timing Section */}
         <div
-          className={cn(
-            "border-t border-surface-border",
-            spacing.pad.sm,
-            spacing.margin.top.inline,
-          )}
+          class={cn("border-t border-surface-border", spacing.pad.sm, spacing.margin.top.inline)}
         >
-          <span className="caption text-text-muted font-medium">
+          <span class="caption text-text-muted font-medium">
             {t("discovery.performanceTiming", "Performance & Timing")}
           </span>
-          <p className="caption text-text-muted">
+          <p class="caption text-text-muted">
             {t("discovery.performanceTimingDesc", "Adjust discovery speed and resource usage")}
           </p>
-          <div className={cn("stack-sm", spacing.margin.top.inline)}>
+          <div class={cn("stack-sm", spacing.margin.top.inline)}>
             {/* Probe Interval Slider */}
             <div>
-              <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
-                <label htmlFor="probe-interval-slider" className="caption text-text-muted">
+              <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
+                <label for="probe-interval-slider" class="caption text-text-muted">
                   {t("discovery.probeInterval", "Probe Interval")}
                 </label>
-                <span className="caption text-text-primary font-medium">
+                <span class="caption text-text-primary font-medium">
                   {settings.timing?.probeIntervalMs ?? 75}ms
                 </span>
               </div>
@@ -620,14 +612,10 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                     },
                   }))
                 }
-                className="w-full"
+                class="w-full"
               />
               <div
-                className={cn(
-                  layout.flex.between,
-                  "caption text-text-muted",
-                  spacing.margin.top.tight,
-                )}
+                class={cn(layout.flex.between, "caption text-text-muted", spacing.margin.top.tight)}
               >
                 <span>{t("discovery.slower", "Slower")}</span>
                 <span>{t("discovery.faster", "Faster")}</span>
@@ -636,11 +624,11 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
 
             {/* Scan Timeout Slider */}
             <div>
-              <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
-                <label htmlFor="scan-timeout-slider" className="caption text-text-muted">
+              <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
+                <label for="scan-timeout-slider" class="caption text-text-muted">
                   {t("discovery.scanTimeout", "Scan Timeout")}
                 </label>
-                <span className="caption text-text-primary font-medium">
+                <span class="caption text-text-primary font-medium">
                   {settings.scanTimeoutMs ?? 2000}ms
                 </span>
               </div>
@@ -657,14 +645,10 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                     scanTimeoutMs: Number.parseInt(e.target.value, 10),
                   }))
                 }
-                className="w-full"
+                class="w-full"
               />
               <div
-                className={cn(
-                  layout.flex.between,
-                  "caption text-text-muted",
-                  spacing.margin.top.tight,
-                )}
+                class={cn(layout.flex.between, "caption text-text-muted", spacing.margin.top.tight)}
               >
                 <span>500ms</span>
                 <span>10s</span>
@@ -673,11 +657,11 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
 
             {/* Workers Slider */}
             <div>
-              <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
-                <label htmlFor="workers-slider" className="caption text-text-muted">
+              <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
+                <label for="workers-slider" class="caption text-text-muted">
                   {t("discovery.workers", "Workers")}
                 </label>
-                <span className="caption text-text-primary font-medium">
+                <span class="caption text-text-primary font-medium">
                   {settings.timing?.workers ?? 20}
                 </span>
               </div>
@@ -699,14 +683,10 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                     },
                   }))
                 }
-                className="w-full"
+                class="w-full"
               />
               <div
-                className={cn(
-                  layout.flex.between,
-                  "caption text-text-muted",
-                  spacing.margin.top.tight,
-                )}
+                class={cn(layout.flex.between, "caption text-text-muted", spacing.margin.top.tight)}
               >
                 <span>{t("discovery.gentler", "Gentler")}</span>
                 <span>{t("discovery.aggressive", "Aggressive")}</span>
@@ -715,11 +695,11 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
 
             {/* Rescan Interval Slider */}
             <div>
-              <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
-                <label htmlFor="rescan-interval-slider" className="caption text-text-muted">
+              <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
+                <label for="rescan-interval-slider" class="caption text-text-muted">
                   {t("discovery.rescanInterval", "Rescan Interval")}
                 </label>
-                <span className="caption text-text-primary font-medium">
+                <span class="caption text-text-primary font-medium">
                   {Math.round((settings.timing?.rescanIntervalMs ?? 600000) / 60000)}m
                 </span>
               </div>
@@ -741,14 +721,10 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                     },
                   }))
                 }
-                className="w-full"
+                class="w-full"
               />
               <div
-                className={cn(
-                  layout.flex.between,
-                  "caption text-text-muted",
-                  spacing.margin.top.tight,
-                )}
+                class={cn(layout.flex.between, "caption text-text-muted", spacing.margin.top.tight)}
               >
                 <span>1m</span>
                 <span>60m</span>
@@ -758,11 +734,11 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
             {/* Banner Timeout Slider (only shown when port scanning is enabled) */}
             {settings.options?.portScan?.enabled && (
               <div>
-                <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
-                  <label htmlFor="banner-timeout-slider" className="caption text-text-muted">
+                <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
+                  <label for="banner-timeout-slider" class="caption text-text-muted">
                     {t("discovery.bannerTimeout", "Banner Timeout")}
                   </label>
-                  <span className="caption text-text-primary font-medium">
+                  <span class="caption text-text-primary font-medium">
                     {settings.options?.portScan?.bannerTimeoutMs ?? 2000}ms
                   </span>
                 </div>
@@ -789,10 +765,10 @@ export const DiscoveryCustomOptions = memo(function DiscoveryCustomOptions({
                       },
                     }))
                   }
-                  className="w-full"
+                  class="w-full"
                 />
                 <div
-                  className={cn(
+                  class={cn(
                     layout.flex.between,
                     "caption text-text-muted",
                     spacing.margin.top.tight,

@@ -14,7 +14,7 @@ import { CableCard } from "./cable-card";
  *
  * This story demonstrates various cable test results.
  */
-const meta = {
+const meta: Meta<typeof CableCard> = {
   title: "Cards/cable-card",
   component: CableCard,
   parameters: {
@@ -22,13 +22,13 @@ const meta = {
   },
   tags: ["autodocs"],
   decorators: [
-    (Story) => (
+    (StoryComponent: React.ComponentType): JSX.Element => (
       <div style={{ width: "380px" }}>
-        <Story />
+        <StoryComponent />
       </div>
     ),
   ],
-} satisfies Meta<typeof CableCard>;
+};
 
 export default meta;
 type Story = StoryObj<typeof meta>;

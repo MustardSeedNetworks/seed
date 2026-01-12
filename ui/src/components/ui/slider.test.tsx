@@ -151,7 +151,7 @@ describe("Slider", () => {
 
   it("is disabled when disabled prop is true", () => {
     const onChange = vi.fn();
-    render(<Slider value={50} onChange={onChange} min={0} max={100} step={10} disabled />);
+    render(<Slider value={50} onChange={onChange} min={0} max={100} step={10} disabled={true} />);
 
     const slider = screen.getByRole("slider");
     expect(slider).toBeDisabled();
@@ -216,14 +216,7 @@ describe("Slider", () => {
   it("applies custom className", () => {
     const onChange = vi.fn();
     const { container } = render(
-      <Slider
-        value={50}
-        onChange={onChange}
-        min={0}
-        max={100}
-        step={10}
-        className="custom-class"
-      />,
+      <Slider value={50} onChange={onChange} min={0} max={100} step={10} class="custom-class" />,
     );
 
     const wrapper = container.querySelector(".custom-class");

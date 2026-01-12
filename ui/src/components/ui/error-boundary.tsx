@@ -121,12 +121,12 @@ export class ErrorBoundary extends Component<Props, State> {
           {(t) => (
             <div
               role="alert"
-              className={cn("pad bg-status-error/10 border border-status-error/20", radius.lg)}
+              class={cn("pad bg-status-error/10 border border-status-error/20", radius.lg)}
             >
-              <div className={cn("flex items-start", spacing.gap.default)}>
+              <div class={cn("flex items-start", spacing.gap.default)}>
                 {/* Error icon SVG */}
                 <svg
-                  className={cn(iconTokens.size.md, "text-status-error shrink-0", spacing.micro.mt)}
+                  class={cn(iconTokens.size.md, "text-status-error shrink-0", spacing.micro.mt)}
                   fill="currentColor"
                   viewBox="0 0 20 20"
                   aria-hidden="true"
@@ -138,11 +138,11 @@ export class ErrorBoundary extends Component<Props, State> {
                   />
                 </svg>
                 {/* Error content: heading, message, and retry button */}
-                <div className={cn("flex-1", layout.stack.tight)}>
-                  <h3 className="body-small font-medium text-status-error">
+                <div class={cn("flex-1", layout.stack.tight)}>
+                  <h3 class="body-small font-medium text-status-error">
                     {t("errorBoundary.title")}
                   </h3>
-                  <p className="body-small text-text-muted">
+                  <p class="body-small text-text-muted">
                     {/* Display caught error message or generic fallback message */}
                     {this.state.error?.message || t("errorBoundary.defaultMessage")}
                   </p>
@@ -150,7 +150,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   <button
                     type="button"
                     onClick={this.handleRetry}
-                    className={cn(
+                    class={cn(
                       button.size.sm,
                       "font-medium text-text-inverse bg-status-error",
                       radius.default,

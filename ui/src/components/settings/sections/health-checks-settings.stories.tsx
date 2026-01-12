@@ -55,7 +55,7 @@ const meta: Meta<typeof HealthChecksSettings> = {
   },
   decorators: [
     (Story) => (
-      <div className="w-[500px] max-h-[700px] overflow-y-auto">
+      <div class="w-[500px] max-h-[700px] overflow-y-auto">
         <Story />
       </div>
     ),
@@ -398,7 +398,7 @@ export const Saving: Story = {
  * Interactive health checks - fully functional CRUD
  */
 export const Interactive: Story = {
-  render: function InteractiveStory() {
+  render: function interactiveStory() {
     const [testsSettings, setTestsSettings] = useState<TestsSettings>({
       ...emptySettings,
       pingTargets: [

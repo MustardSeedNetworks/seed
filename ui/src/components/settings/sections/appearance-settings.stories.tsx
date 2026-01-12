@@ -42,7 +42,7 @@ const meta: Meta<typeof AppearanceSettings> = {
   },
   decorators: [
     (Story) => (
-      <div className="w-[400px]">
+      <div class="w-[400px]">
         <Story />
       </div>
     ),
@@ -108,7 +108,7 @@ export const SystemThemeDark: Story = {
  * Interactive theme selector - fully functional
  */
 export const Interactive: Story = {
-  render: function InteractiveStory() {
+  render: function interactiveStory() {
     const [theme, setTheme] = useState<"light" | "dark" | "system">("light");
     const [isDark, setIsDark] = useState(false);
 
@@ -136,17 +136,17 @@ const noopSetTheme = () => {
 
 export const Comparison: Story = {
   render: () => (
-    <div className="stack-lg">
+    <div class="stack-lg">
       <div>
-        <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Light Theme</p>
+        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Light Theme</p>
         <AppearanceSettings theme="light" setTheme={noopSetTheme} isDark={false} />
       </div>
       <div>
-        <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Dark Theme</p>
+        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Dark Theme</p>
         <AppearanceSettings theme="dark" setTheme={noopSetTheme} isDark={true} />
       </div>
       <div>
-        <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>System Theme</p>
+        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>System Theme</p>
         <AppearanceSettings theme="system" setTheme={noopSetTheme} isDark={false} />
       </div>
     </div>

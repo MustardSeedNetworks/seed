@@ -137,7 +137,7 @@ function generateNetworkPath(
 /**
  * Render the channel graph for a specific band
  */
-function ChannelGraph({
+function _channelGraph({
   networks,
   band,
   connectedBssid,
@@ -173,8 +173,8 @@ function ChannelGraph({
 
   if (networks.length === 0) {
     return (
-      <div className={layout.flex.center} style={{ height: `${height}px` }}>
-        <p className="body-small text-text-muted">
+      <div class={layout.flex.center} style={{ height: `${height}px` }}>
+        <p class="body-small text-text-muted">
           {tCards("wifi.channelGraph.noNetworksDetected", { band })}
         </p>
       </div>
@@ -182,17 +182,17 @@ function ChannelGraph({
   }
 
   return (
-    <div className="relative">
+    <div class="relative">
       <svg
         width={width}
         height={height}
-        className="w-full"
+        class="w-full"
         viewBox={`0 0 ${width} ${height}`}
         role="img"
         aria-label="WiFi channel signal graph"
       >
         {/* Background grid */}
-        <g className="opacity-10">
+        <g class="opacity-10">
           {/* Horizontal lines (signal strength) */}
           {signalMarkers.map((signal) => {
             const y = padding.top + signalToY(signal, graphHeight);
@@ -223,7 +223,7 @@ function ChannelGraph({
         </g>
 
         {/* Y-axis labels (signal strength) */}
-        <g className="text-text-muted" style={{ fontSize: "10px" }}>
+        <g class="text-text-muted" style={{ fontSize: "10px" }}>
           {signalMarkers.map((signal) => {
             const y = padding.top + signalToY(signal, graphHeight);
             return (
@@ -235,7 +235,7 @@ function ChannelGraph({
         </g>
 
         {/* X-axis labels (channels) */}
-        <g className="text-text-muted" style={{ fontSize: "10px" }}>
+        <g class="text-text-muted" style={{ fontSize: "10px" }}>
           {channelMarkers.map(({ channel, x }) => (
             <text key={channel} x={x} y={height - padding.bottom + 15} textAnchor="middle">
               {channel}
@@ -249,16 +249,11 @@ function ChannelGraph({
           y={height / 2}
           textAnchor="middle"
           transform={`rotate(-90, ${padding.left / 2}, ${height / 2})`}
-          className="body-small text-text-muted"
+          class="body-small text-text-muted"
         >
           Signal (dBm)
         </text>
-        <text
-          x={width / 2}
-          y={height - 5}
-          textAnchor="middle"
-          className="body-small text-text-muted"
-        >
+        <text x={width / 2} y={height - 5} textAnchor="middle" class="body-small text-text-muted">
           Channel
         </text>
 
@@ -278,7 +273,7 @@ function ChannelGraph({
                 opacity={isHovered ? 0.9 : isConnected ? 0.7 : 0.4}
                 stroke={isConnected ? "var(--color-brand-primary)" : "var(--color-status-info)"}
                 strokeWidth={isHovered ? 2 : isConnected ? 2 : 1}
-                className="transition-all cursor-pointer"
+                class="transition-all cursor-pointer"
                 onMouseEnter={() => setHoveredNetwork(network)}
                 onMouseLeave={() => setHoveredNetwork(null)}
                 aria-label={`Network ${network.ssid || network.bssid} on channel ${network.channel}`}
@@ -291,19 +286,19 @@ function ChannelGraph({
       {/* Hover tooltip */}
       {hoveredNetwork && (
         <div
-          className="absolute bg-surface-raised border border-surface-border rounded shadow-lg p-2 z-10"
+          class="absolute bg-surface-raised border border-surface-border rounded shadow-lg p-2 z-10"
           style={{ top: "10px", right: "10px" }}
         >
-          <p className="body-small font-semibold">{hoveredNetwork.ssid || "(Hidden)"}</p>
-          <p className="caption text-text-muted">
+          <p class="body-small font-semibold">{hoveredNetwork.ssid || "(Hidden)"}</p>
+          <p class="caption text-text-muted">
             {tCards("wifi.channelGraph.tooltipChannel", {
               channel: hoveredNetwork.channel,
             })}
           </p>
-          <p className="caption text-text-muted">{hoveredNetwork.signal} dBm</p>
-          <p className="caption text-text-muted">{hoveredNetwork.channelWidth} MHz</p>
+          <p class="caption text-text-muted">{hoveredNetwork.signal} dBm</p>
+          <p class="caption text-text-muted">{hoveredNetwork.channelWidth} MHz</p>
           {hoveredNetwork.isConnected && (
-            <p className="caption text-brand-primary font-medium">{tCommon("status.connected")}</p>
+            <p class="caption text-brand-primary font-medium">{tCommon("status.connected")}</p>
           )}
         </div>
       )}
@@ -323,7 +318,9 @@ export function WifiChannelGraph({ data, loading, visible = true }: WifiChannelG
   // Get networks for selected band
   // Note: All hooks must be called before any early returns to follow React rules
   const networks = useMemo(() => {
-    if (!data?.data) return [];
+    if (!data?.data) {
+      return [];
+    }
     switch (selectedBand) {
       case "2.4GHz":
         return data.data.networks24Ghz;
@@ -336,11 +333,19 @@ export function WifiChannelGraph({ data, loading, visible = true }: WifiChannelG
 
   // Determine which bands have networks
   const availableBands = useMemo(() => {
-    if (!data?.data) return [];
+    if (!data?.data) {
+      return [];
+    }
     const bands: BandType[] = [];
-    if (data.data.networks24Ghz.length > 0) bands.push("2.4GHz");
-    if (data.data.networks5Ghz.length > 0) bands.push("5GHz");
-    if (data.data.networks6Ghz.length > 0) bands.push("6GHz");
+    if (data.data.networks24Ghz.length > 0) {
+      bands.push("2.4GHz");
+    }
+    if (data.data.networks5Ghz.length > 0) {
+      bands.push("5GHz");
+    }
+    if (data.data.networks6Ghz.length > 0) {
+      bands.push("6GHz");
+    }
     return bands;
   }, [data]);
 
@@ -357,24 +362,22 @@ export function WifiChannelGraph({ data, loading, visible = true }: WifiChannelG
   return (
     <SimpleBaseCard
       title={tr("wifi.channelGraph.title")}
-      icon={<Wifi className={iconTokens.size.md} />}
+      icon={<Wifi class={iconTokens.size.md} />}
       status={loading ? "loading" : data?.available ? "success" : "error"}
       loading={loading}
       loadingContent={<CardValue value={tc("status.scanning")} size="lg" />}
     >
-      {!data?.available ? (
-        <CardValue value={data?.error || tc("status.unavailable")} size="md" status="error" />
-      ) : (
+      {data?.available ? (
         <>
           {/* Band selection tabs */}
           {availableBands.length > 1 && (
-            <div className={cn(layout.inline.default, spacing.margin.bottom.inline)}>
+            <div class={cn(layout.inline.default, spacing.margin.bottom.inline)}>
               {availableBands.map((band) => (
                 <button
                   type="button"
                   key={band}
                   onClick={() => setSelectedBand(band)}
-                  className={cn(
+                  class={cn(
                     spacing.chip.md,
                     "rounded",
                     "transition-colors",
@@ -390,26 +393,26 @@ export function WifiChannelGraph({ data, loading, visible = true }: WifiChannelG
           )}
 
           {/* Channel graph */}
-          <ChannelGraph
+          <channelGraph
             networks={networks}
             band={selectedBand}
             connectedBssid={data.data?.connectedBssid}
           />
 
           {/* Legend */}
-          <div className={cn(layout.inline.default, spacing.margin.top.inline)}>
-            <div className={layout.inline.tight}>
-              <div className="w-4 h-4 bg-brand-primary opacity-70 rounded" />
-              <span className="caption text-text-muted">{tc("status.connected")}</span>
+          <div class={cn(layout.inline.default, spacing.margin.top.inline)}>
+            <div class={layout.inline.tight}>
+              <div class="w-4 h-4 bg-brand-primary opacity-70 rounded" />
+              <span class="caption text-text-muted">{tc("status.connected")}</span>
             </div>
-            <div className={layout.inline.tight}>
-              <div className="w-4 h-4 bg-status-info opacity-40 rounded" />
-              <span className="caption text-text-muted">
-                {tr("wifi.channelGraph.otherNetworks")}
-              </span>
+            <div class={layout.inline.tight}>
+              <div class="w-4 h-4 bg-status-info opacity-40 rounded" />
+              <span class="caption text-text-muted">{tr("wifi.channelGraph.otherNetworks")}</span>
             </div>
           </div>
         </>
+      ) : (
+        <CardValue value={data?.error || tc("status.unavailable")} size="md" status="error" />
       )}
     </SimpleBaseCard>
   );

@@ -70,7 +70,7 @@ export function CollapsibleSection({
 
   return (
     <section
-      className={cn(
+      class={cn(
         !isCompact && border.card,
         !isCompact && radius.lg,
         !isCompact && "overflow-hidden",
@@ -79,7 +79,7 @@ export function CollapsibleSection({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={cn(
+        class={cn(
           "w-full transition-colors",
           layout.flex.between,
           isCompact
@@ -87,9 +87,9 @@ export function CollapsibleSection({
             : cn(spacing.pad.sm, "bg-surface-base hover:bg-surface-hover"),
         )}
       >
-        <div className={layout.inline.default}>
+        <div class={layout.inline.default}>
           <svg
-            className={cn(
+            class={cn(
               iconTokens.size.xs,
               "text-text-muted transition-transform duration-200",
               isOpen && "rotate-90",
@@ -102,19 +102,17 @@ export function CollapsibleSection({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
           {status && <StatusBadge status={status} size="sm" />}
-          <span
-            className={cn("font-medium text-text-primary", isCompact ? "caption" : "body-small")}
-          >
+          <span class={cn("font-medium text-text-primary", isCompact ? "caption" : "body-small")}>
             {title}
             {count !== undefined && (
-              <span className={cn("text-text-muted", spacing.margin.left.tight)}>({count})</span>
+              <span class={cn("text-text-muted", spacing.margin.left.tight)}>({count})</span>
             )}
           </span>
         </div>
       </button>
       {isOpen && (
         <div
-          className={cn(
+          class={cn(
             isCompact
               ? cn(spacing.indent, spacing.padding.bottom.inline, "stack-xs")
               : cn(spacing.pad.sm, "border-t border-surface-border bg-surface-raised stack"),

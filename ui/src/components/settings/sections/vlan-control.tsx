@@ -21,7 +21,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../../lib/api";
 import { button, cn, input, layout, radius } from "../../../styles/theme";
 
-export const VlanControl = memo(function VlanControl() {
+export const VlanControl = memo(function vlanControl() {
   const { t } = useTranslation("settings");
   const [vlanId, setVlanId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -74,8 +74,8 @@ export const VlanControl = memo(function VlanControl() {
   };
 
   return (
-    <div className="stack-sm">
-      <div className={layout.inline.default}>
+    <div class="stack-sm">
+      <div class={layout.inline.default}>
         <input
           type="number"
           min="1"
@@ -83,7 +83,7 @@ export const VlanControl = memo(function VlanControl() {
           value={vlanId}
           onChange={(e) => setVlanId(e.target.value)}
           placeholder={t("network.vlan.placeholder")}
-          className={cn(
+          class={cn(
             "flex-1",
             input.size.sm,
             "bg-surface-base border border-surface-border",
@@ -96,7 +96,7 @@ export const VlanControl = memo(function VlanControl() {
           type="button"
           onClick={handleCreate}
           disabled={loading || !vlanId}
-          className={cn(
+          class={cn(
             button.size.sm,
             "bg-brand-primary text-text-inverse",
             radius.md,
@@ -109,7 +109,7 @@ export const VlanControl = memo(function VlanControl() {
           type="button"
           onClick={handleDelete}
           disabled={loading || !vlanId}
-          className={cn(
+          class={cn(
             button.size.sm,
             "bg-status-error text-text-inverse",
             radius.md,
@@ -120,11 +120,11 @@ export const VlanControl = memo(function VlanControl() {
         </button>
       </div>
       {message && (
-        <p className={cn("caption", message.isError ? "text-status-error" : "text-status-success")}>
+        <p class={cn("caption", message.isError ? "text-status-error" : "text-status-success")}>
           {message.text}
         </p>
       )}
-      <p className="caption">{t("network.vlan.description")}</p>
+      <p class="caption">{t("network.vlan.description")}</p>
     </div>
   );
 });

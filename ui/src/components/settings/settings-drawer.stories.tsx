@@ -44,7 +44,7 @@ const meta: Meta<typeof SettingsDrawer> = {
   },
   decorators: [
     (Story) => (
-      <div className="h-screen bg-surface-base">
+      <div class="h-screen bg-surface-base">
         <Story />
       </div>
     ),
@@ -110,15 +110,15 @@ export const ProductionVersion: Story = {
  * Interactive drawer - can be opened and closed
  */
 export const Interactive: Story = {
-  render: function InteractiveStory() {
+  render: function interactiveStory() {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div className={cn("h-screen bg-surface-base", spacing.pad.default)}>
+      <div class={cn("h-screen bg-surface-base", spacing.pad.default)}>
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className={cn(
+          class={cn(
             button.size.md,
             "bg-brand-primary text-text-inverse",
             radius.lg,
@@ -191,7 +191,7 @@ export const DesktopViewport: Story = {
  * With backdrop click - demonstrates close behavior
  */
 export const WithBackdrop: Story = {
-  render: function BackdropStory() {
+  render: function backdropStory() {
     const [isOpen, setIsOpen] = useState(true);
     const [clickCount, setClickCount] = useState(0);
 
@@ -203,19 +203,17 @@ export const WithBackdrop: Story = {
     };
 
     return (
-      <div className={cn("h-screen bg-surface-base", spacing.pad.default)}>
+      <div class={cn("h-screen bg-surface-base", spacing.pad.default)}>
         <div
-          className={cn(
+          class={cn(
             spacing.margin.bottom.content,
             spacing.pad.default,
             "bg-surface-raised",
             radius.lg,
           )}
         >
-          <p className="body-small text-text-primary">
-            Click the dark backdrop to close the drawer.
-          </p>
-          <p className={cn("caption text-text-muted", spacing.margin.top.inline)}>
+          <p class="body-small text-text-primary">Click the dark backdrop to close the drawer.</p>
+          <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
             Backdrop clicks: {clickCount}
           </p>
         </div>
@@ -243,32 +241,32 @@ export const DarkTheme: Story = {
  * With sample content behind drawer
  */
 export const WithContent: Story = {
-  render: function ContentStory() {
+  render: function contentStory() {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div className="h-screen bg-surface-base">
+      <div class="h-screen bg-surface-base">
         {/* Sample page content */}
-        <div className={spacing.pad.xl}>
-          <h1 className={cn("heading-1", spacing.margin.bottom.content)}>Network Dashboard</h1>
-          <div className={cn("grid grid-cols-3", spacing.gap.comfortable)}>
-            <div className={cn(spacing.pad.lg, "bg-surface-raised", radius.lg)}>
-              <h2 className={cn("heading-3", spacing.margin.bottom.inline)}>Network Status</h2>
-              <p className="body-small text-text-muted">Connected</p>
+        <div class={spacing.pad.xl}>
+          <h1 class={cn("heading-1", spacing.margin.bottom.content)}>Network Dashboard</h1>
+          <div class={cn("grid grid-cols-3", spacing.gap.comfortable)}>
+            <div class={cn(spacing.pad.lg, "bg-surface-raised", radius.lg)}>
+              <h2 class={cn("heading-3", spacing.margin.bottom.inline)}>Network Status</h2>
+              <p class="body-small text-text-muted">Connected</p>
             </div>
-            <div className={cn(spacing.pad.lg, "bg-surface-raised", radius.lg)}>
-              <h2 className={cn("heading-3", spacing.margin.bottom.inline)}>Speed Test</h2>
-              <p className="body-small text-text-muted">150 Mbps</p>
+            <div class={cn(spacing.pad.lg, "bg-surface-raised", radius.lg)}>
+              <h2 class={cn("heading-3", spacing.margin.bottom.inline)}>Speed Test</h2>
+              <p class="body-small text-text-muted">150 Mbps</p>
             </div>
-            <div className={cn(spacing.pad.lg, "bg-surface-raised", radius.lg)}>
-              <h2 className={cn("heading-3", spacing.margin.bottom.inline)}>Devices</h2>
-              <p className="body-small text-text-muted">12 found</p>
+            <div class={cn(spacing.pad.lg, "bg-surface-raised", radius.lg)}>
+              <h2 class={cn("heading-3", spacing.margin.bottom.inline)}>Devices</h2>
+              <p class="body-small text-text-muted">12 found</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className={cn(
+            class={cn(
               spacing.margin.top.content,
               button.size.md,
               "bg-brand-primary text-text-inverse",

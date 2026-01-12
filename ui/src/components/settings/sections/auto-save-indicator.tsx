@@ -37,10 +37,12 @@ interface AutoSaveIndicatorProps {
 export function AutoSaveIndicator({ status }: AutoSaveIndicatorProps) {
   const { t } = useTranslation("settings");
 
-  if (status === "idle") return null;
+  if (status === "idle") {
+    return null;
+  }
   return (
     <span
-      className={cn(
+      class={cn(
         "caption",
         spacing.margin.left.inline,
         status === "saving"

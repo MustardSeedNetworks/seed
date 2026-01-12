@@ -13,7 +13,7 @@ import { PublicIpCard } from "./public-ip-card";
  *
  * This story demonstrates various public IP detection states.
  */
-const meta = {
+const meta: Meta<(typeof meta)["component"]> = {
   title: "Cards/PublicIpCard",
   component: PublicIpCard,
   parameters: {
@@ -21,9 +21,9 @@ const meta = {
   },
   tags: ["autodocs"],
   decorators: [
-    (Story) => (
+    (StoryComponent: React.ComponentType): JSX.Element => (
       <div style={{ width: "380px" }}>
-        <Story />
+        <StoryComponent />
       </div>
     ),
   ],

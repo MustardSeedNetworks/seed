@@ -251,7 +251,7 @@ interface HealthCheckCardProps {
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Health check orchestrates multiple test types
-export const HealthCheckCard = memo(function HealthCheckCard({ loading }: HealthCheckCardProps) {
+export const HealthCheckCard = memo(function healthCheckCard({ loading }: HealthCheckCardProps) {
   const { t } = useTranslation("cards");
   const { cardSettings } = useSettings();
   const [data, setData] = useState<HealthCheckData | null>(null);
@@ -320,7 +320,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
   }, [fetchTests, isRunning, cardSettings.healthChecks.autoRunOnLink]);
 
   // Don't render card if no tests are configured
-  if (!data?.hasTests && !loading && !isRunning) {
+  if (!(data?.hasTests || loading || isRunning)) {
     return null;
   }
 
@@ -391,28 +391,28 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
       : null;
 
     return (
-      <div key={`${type}-${result.name}`} className={spacing.compact.py}>
-        <div className={layout.flex.between}>
-          <span className="body-small text-text-muted truncate flex-1" title={displayName}>
+      <div key={`${type}-${result.name}`} class={spacing.compact.py}>
+        <div class={layout.flex.between}>
+          <span class="body-small text-text-muted truncate flex-1" title={displayName}>
             {displayName}
             {details}
           </span>
-          <span className={cn("inline-flex items-center", spacing.gap.compact)}>
+          <span class={cn("inline-flex items-center", spacing.gap.compact)}>
             <StatusBadge status={statusLabel} size="sm" />
-            <span className={cn("body-small font-medium", statusColor)}>
+            <span class={cn("body-small font-medium", statusColor)}>
               {result.success ? formatLatency(result.latency) : "fail"}
             </span>
           </span>
         </div>
         {extendedInfo && (
-          <div className={cn("caption text-text-muted", spacing.micro.mt)}>{extendedInfo}</div>
+          <div class={cn("caption text-text-muted", spacing.micro.mt)}>{extendedInfo}</div>
         )}
       </div>
     );
   };
 
   // Timing bar component for HTTP requests
-  const TimingBar = ({ result }: { result: TestResult }) => {
+  const TIMING_BAR = ({ result }: { result: TestResult }) => {
     // Prefer total latency; fall back to sum of phases so we can still render on failures
     const safeNum = (v: number | undefined) => (v !== undefined && Number.isFinite(v) ? v : 0);
     const dns = safeNum(result.dnsLatency);
@@ -425,7 +425,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
         : dns + tcp + tls + ttfb;
 
     // Guard against NaN, Infinity, and zero/negative values
-    if (!total || !Number.isFinite(total) || total <= 0) return null;
+    if (!(total && Number.isFinite(total)) || total <= 0) return null;
 
     // Download time is what's left after subtracting known phases
     const download = Math.max(0, total - dns - tcp - tls - ttfb);
@@ -478,15 +478,15 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
     const fmt = (ms: number) => (ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`);
 
     return (
-      <div className={spacing.micro.mtCompactMd}>
+      <div class={spacing.micro.mtCompactMd}>
         {/* Stacked bar */}
-        <div className={cn("h-2", radius.full, "overflow-hidden flex bg-bg-tertiary")}>
+        <div class={cn("h-2", radius.full, "overflow-hidden flex bg-bg-tertiary")}>
           {segments.map((seg, i) => {
             const widthPercent = Math.min(100, Math.max(0, (seg.value / total) * 100));
             return (
               <div
                 key={seg.label}
-                className={cn(
+                class={cn(
                   "h-full",
                   seg.color,
                   i === 0 ? "rounded-l-full" : "",
@@ -500,7 +500,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
         </div>
         {/* Legend with tooltips */}
         <div
-          className={cn(
+          class={cn(
             "flex flex-wrap gap-x-3",
             spacing.margin.top.tight,
             "caption",
@@ -514,13 +514,13 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               position="bottom"
             >
               <span
-                className={cn(
+                class={cn(
                   "inline-flex items-center",
                   spacing.gap.tight,
                   getStatusTextColor(seg.status),
                 )}
               >
-                <span className={cn("inline-block w-2 h-2", radius.full, seg.color)} />
+                <span class={cn("inline-block w-2 h-2", radius.full, seg.color)} />
                 {seg.label} {fmt(seg.value)}
               </span>
             </Tooltip>
@@ -576,35 +576,35 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
       result.ttfbLatency !== undefined;
 
     return (
-      <div key={`http-${result.name}`} className={spacing.compact.pyMd}>
-        <div className={layout.flex.between}>
-          <span className="body-small text-text-muted truncate flex-1" title={result.name}>
+      <div key={`http-${result.name}`} class={spacing.compact.pyMd}>
+        <div class={layout.flex.between}>
+          <span class="body-small text-text-muted truncate flex-1" title={result.name}>
             {result.name}
             {result.status ? ` (${result.status})` : ""}
           </span>
-          <span className={cn("body-small font-medium", statusColor)}>
+          <span class={cn("body-small font-medium", statusColor)}>
             {result.success ? formatLatency(result.latency) : "fail"}
           </span>
         </div>
-        {hasTimingData && <TimingBar result={result} />}
+        {hasTimingData && <TIMING_BAR result={result} />}
         {!result.success && result.error && (
-          <div className={cn("caption text-status-error", spacing.margin.top.tight)}>
+          <div class={cn("caption text-status-error", spacing.margin.top.tight)}>
             {result.error}
           </div>
         )}
         {(hasTls || hasCertInfo) && (
-          <div className={cn("caption", spacing.margin.top.tight, layout.inline.default)}>
-            {hasTls && <span className="text-text-muted">{result.tlsVersion}</span>}
-            {hasTls && hasCertInfo && <span className="text-text-muted">·</span>}
+          <div class={cn("caption", spacing.margin.top.tight, layout.inline.default)}>
+            {hasTls && <span class="text-text-muted">{result.tlsVersion}</span>}
+            {hasTls && hasCertInfo && <span class="text-text-muted">·</span>}
             {hasCertInfo && (
-              <span className={certColor} title={`Expires: ${result.certExpiry}`}>
+              <span class={certColor} title={`Expires: ${result.certExpiry}`}>
                 {formatCertExpiry()}
               </span>
             )}
             {result.certIssuer && (
               <>
-                <span className="text-text-muted">·</span>
-                <span className="text-text-muted truncate" title={result.certIssuer}>
+                <span class="text-text-muted">·</span>
+                <span class="text-text-muted truncate" title={result.certIssuer}>
                   {result.certIssuer}
                 </span>
               </>
@@ -618,10 +618,10 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
   return (
     <Card
       title={t("health.title")}
-      icon={<HeartPulse className={iconTokens.size.md} />}
+      icon={<HeartPulse class={iconTokens.size.md} />}
       status={getStatus()}
     >
-      {isRunning && <p className="body-small text-text-muted">{t("health.runningTests")}</p>}
+      {isRunning && <p class="body-small text-text-muted">{t("health.runningTests")}</p>}
 
       {!isRunning && data && (
         <>
@@ -719,30 +719,30 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               {data.enterpriseResults.sqlResults.map((r) => (
                 <div
                   key={`sql-${r.name}`}
-                  className={cn(
+                  class={cn(
                     layout.flex.between,
                     spacing.pad.xs,
                     radius.default,
-                    !r.success ? "bg-status-error/10" : "bg-surface-raised",
+                    r.success ? "bg-surface-raised" : "bg-status-error/10",
                   )}
                 >
-                  <div className={layout.stack.compact}>
-                    <div className="flex items-center gap-2">
+                  <div class={layout.stack.compact}>
+                    <div class="flex items-center gap-2">
                       <StatusBadge status={r.success ? "success" : "error"} />
-                      <span className="body-small font-medium">{r.name}</span>
-                      <span className="caption text-text-muted">
+                      <span class="body-small font-medium">{r.name}</span>
+                      <span class="caption text-text-muted">
                         {r.driver} • {r.host}:{r.port}
                       </span>
                     </div>
                     {r.success && r.serverVersion && (
-                      <span className="caption text-text-muted ml-6">{r.serverVersion}</span>
+                      <span class="caption text-text-muted ml-6">{r.serverVersion}</span>
                     )}
-                    {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
+                    {r.error && <span class="caption text-status-error ml-6">{r.error}</span>}
                   </div>
-                  <div className="text-right">
-                    <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+                  <div class="text-right">
+                    <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                     {r.success && (
-                      <div className="caption text-text-muted">
+                      <div class="caption text-text-muted">
                         Connect: {r.connectTimeMs.toFixed(1)}ms
                         {r.queryTimeMs !== undefined && ` • Query: ${r.queryTimeMs.toFixed(1)}ms`}
                       </div>
@@ -770,29 +770,29 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
                 {data.enterpriseResults.fileShareResults.map((r) => (
                   <div
                     key={`fileshare-${r.name}`}
-                    className={cn(
+                    class={cn(
                       layout.flex.between,
                       spacing.pad.xs,
                       radius.default,
-                      !r.success ? "bg-status-error/10" : "bg-surface-raised",
+                      r.success ? "bg-surface-raised" : "bg-status-error/10",
                     )}
                   >
-                    <div className={layout.stack.compact}>
-                      <div className="flex items-center gap-2">
+                    <div class={layout.stack.compact}>
+                      <div class="flex items-center gap-2">
                         <StatusBadge status={r.success ? "success" : "error"} />
-                        <span className="body-small font-medium">{r.name}</span>
-                        <span className="caption text-text-muted">
+                        <span class="body-small font-medium">{r.name}</span>
+                        <span class="caption text-text-muted">
                           {r.protocol.toUpperCase()} • {"//"}
                           {r.host}/{r.share}
                         </span>
                       </div>
-                      {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
+                      {r.error && <span class="caption text-status-error ml-6">{r.error}</span>}
                     </div>
-                    <div className="text-right">
-                      <div className="body-small font-mono">{r.connectTimeMs.toFixed(1)}ms</div>
+                    <div class="text-right">
+                      <div class="body-small font-mono">{r.connectTimeMs.toFixed(1)}ms</div>
                       {r.success &&
                         (r.readSpeedMbps !== undefined || r.writeSpeedMbps !== undefined) && (
-                          <div className="caption text-text-muted">
+                          <div class="caption text-text-muted">
                             {r.readSpeedMbps !== undefined &&
                               `R: ${r.readSpeedMbps.toFixed(1)} MB/s`}
                             {r.readSpeedMbps !== undefined &&
@@ -822,30 +822,30 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               {data.enterpriseResults.ldapResults.map((r) => (
                 <div
                   key={`ldap-${r.name}`}
-                  className={cn(
+                  class={cn(
                     layout.flex.between,
                     spacing.pad.xs,
                     radius.default,
-                    !r.success ? "bg-status-error/10" : "bg-surface-raised",
+                    r.success ? "bg-surface-raised" : "bg-status-error/10",
                   )}
                 >
-                  <div className={layout.stack.compact}>
-                    <div className="flex items-center gap-2">
+                  <div class={layout.stack.compact}>
+                    <div class="flex items-center gap-2">
                       <StatusBadge status={r.success ? "success" : "error"} />
-                      <span className="body-small font-medium">{r.name}</span>
-                      <span className="caption text-text-muted">
+                      <span class="body-small font-medium">{r.name}</span>
+                      <span class="caption text-text-muted">
                         {r.useTls ? "LDAPS" : "LDAP"} • {r.host}:{r.port}
                       </span>
                     </div>
                     {r.success && r.serverInfo && (
-                      <span className="caption text-text-muted ml-6">{r.serverInfo}</span>
+                      <span class="caption text-text-muted ml-6">{r.serverInfo}</span>
                     )}
-                    {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
+                    {r.error && <span class="caption text-status-error ml-6">{r.error}</span>}
                   </div>
-                  <div className="text-right">
-                    <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+                  <div class="text-right">
+                    <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                     {r.success && (
-                      <div className="caption text-text-muted">
+                      <div class="caption text-text-muted">
                         Connect: {r.connectTimeMs.toFixed(1)}ms
                         {r.bindTimeMs !== undefined && ` • Bind: ${r.bindTimeMs.toFixed(1)}ms`}
                       </div>
@@ -868,32 +868,32 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               {data.videoResults.rtspResults.map((r) => (
                 <div
                   key={`rtsp-${r.name}`}
-                  className={cn(
+                  class={cn(
                     layout.flex.between,
                     spacing.pad.xs,
                     radius.default,
-                    !r.success ? "bg-status-error/10" : "bg-surface-raised",
+                    r.success ? "bg-surface-raised" : "bg-status-error/10",
                   )}
                 >
-                  <div className={layout.stack.compact}>
-                    <div className="flex items-center gap-2">
+                  <div class={layout.stack.compact}>
+                    <div class="flex items-center gap-2">
                       <StatusBadge status={r.success ? "success" : "error"} />
-                      <span className="body-small font-medium">{r.name}</span>
-                      <span className="caption text-text-muted truncate max-w-48" title={r.url}>
+                      <span class="body-small font-medium">{r.name}</span>
+                      <span class="caption text-text-muted truncate max-w-48" title={r.url}>
                         {r.url}
                       </span>
                     </div>
                     {r.success && (r.codec || r.resolution) && (
-                      <span className="caption text-text-muted ml-6">
+                      <span class="caption text-text-muted ml-6">
                         {r.codec && r.codec}
                         {r.codec && r.resolution && " • "}
                         {r.resolution && r.resolution}
                       </span>
                     )}
-                    {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
+                    {r.error && <span class="caption text-status-error ml-6">{r.error}</span>}
                   </div>
-                  <div className="text-right">
-                    <div className="body-small font-mono">{r.connectTimeMs.toFixed(1)}ms</div>
+                  <div class="text-right">
+                    <div class="body-small font-mono">{r.connectTimeMs.toFixed(1)}ms</div>
                   </div>
                 </div>
               ))}
@@ -914,34 +914,30 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               {data.medicalResults.dicomResults.map((r) => (
                 <div
                   key={`dicom-${r.name}`}
-                  className={cn(
+                  class={cn(
                     layout.flex.between,
                     spacing.pad.xs,
                     radius.default,
-                    !r.success ? "bg-status-error/10" : "bg-surface-raised",
+                    r.success ? "bg-surface-raised" : "bg-status-error/10",
                   )}
                 >
-                  <div className={layout.stack.compact}>
-                    <div className="flex items-center gap-2">
+                  <div class={layout.stack.compact}>
+                    <div class="flex items-center gap-2">
                       <StatusBadge status={r.success ? "success" : "error"} />
-                      <span className="body-small font-medium">{r.name}</span>
-                      <span className="caption text-text-muted">
+                      <span class="body-small font-medium">{r.name}</span>
+                      <span class="caption text-text-muted">
                         {r.host}:{r.port} • AE: {r.aeTitle}
                       </span>
                     </div>
                     {r.success && r.serverAeTitle && (
-                      <span className="caption text-text-muted ml-6">
-                        Server AE: {r.serverAeTitle}
-                      </span>
+                      <span class="caption text-text-muted ml-6">Server AE: {r.serverAeTitle}</span>
                     )}
-                    {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
+                    {r.error && <span class="caption text-status-error ml-6">{r.error}</span>}
                   </div>
-                  <div className="text-right">
-                    <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+                  <div class="text-right">
+                    <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                     {r.success && r.echoTimeMs !== undefined && (
-                      <div className="caption text-text-muted">
-                        C-ECHO: {r.echoTimeMs.toFixed(1)}ms
-                      </div>
+                      <div class="caption text-text-muted">C-ECHO: {r.echoTimeMs.toFixed(1)}ms</div>
                     )}
                   </div>
                 </div>
@@ -961,34 +957,34 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               {data.medicalResults.hl7Results.map((r) => (
                 <div
                   key={`hl7-${r.name}`}
-                  className={cn(
+                  class={cn(
                     layout.flex.between,
                     spacing.pad.xs,
                     radius.default,
-                    !r.success ? "bg-status-error/10" : "bg-surface-raised",
+                    r.success ? "bg-surface-raised" : "bg-status-error/10",
                   )}
                 >
-                  <div className={layout.stack.compact}>
-                    <div className="flex items-center gap-2">
+                  <div class={layout.stack.compact}>
+                    <div class="flex items-center gap-2">
                       <StatusBadge status={r.success ? "success" : "error"} />
-                      <span className="body-small font-medium">{r.name}</span>
-                      <span className="caption text-text-muted">
+                      <span class="body-small font-medium">{r.name}</span>
+                      <span class="caption text-text-muted">
                         {r.host}:{r.port}
                       </span>
                     </div>
                     {r.success && (r.ackCode || r.serverVersion) && (
-                      <span className="caption text-text-muted ml-6">
+                      <span class="caption text-text-muted ml-6">
                         {r.ackCode && `ACK: ${r.ackCode}`}
                         {r.ackCode && r.serverVersion && " • "}
                         {r.serverVersion && r.serverVersion}
                       </span>
                     )}
-                    {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
+                    {r.error && <span class="caption text-status-error ml-6">{r.error}</span>}
                   </div>
-                  <div className="text-right">
-                    <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+                  <div class="text-right">
+                    <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                     {r.success && r.responseTimeMs !== undefined && (
-                      <div className="caption text-text-muted">
+                      <div class="caption text-text-muted">
                         Response: {r.responseTimeMs.toFixed(1)}ms
                       </div>
                     )}
@@ -1010,34 +1006,34 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               {data.medicalResults.fhirResults.map((r) => (
                 <div
                   key={`fhir-${r.name}`}
-                  className={cn(
+                  class={cn(
                     layout.flex.between,
                     spacing.pad.xs,
                     radius.default,
-                    !r.success ? "bg-status-error/10" : "bg-surface-raised",
+                    r.success ? "bg-surface-raised" : "bg-status-error/10",
                   )}
                 >
-                  <div className={layout.stack.compact}>
-                    <div className="flex items-center gap-2">
+                  <div class={layout.stack.compact}>
+                    <div class="flex items-center gap-2">
                       <StatusBadge status={r.success ? "success" : "error"} />
-                      <span className="body-small font-medium">{r.name}</span>
-                      <span className="caption text-text-muted truncate max-w-48" title={r.baseUrl}>
+                      <span class="body-small font-medium">{r.name}</span>
+                      <span class="caption text-text-muted truncate max-w-48" title={r.baseUrl}>
                         {r.baseUrl}
                       </span>
                     </div>
                     {r.success && (r.fhirVersion || r.serverName) && (
-                      <span className="caption text-text-muted ml-6">
+                      <span class="caption text-text-muted ml-6">
                         {r.fhirVersion && `v${r.fhirVersion}`}
                         {r.fhirVersion && r.serverName && " • "}
                         {r.serverName && r.serverName}
                       </span>
                     )}
-                    {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
+                    {r.error && <span class="caption text-status-error ml-6">{r.error}</span>}
                   </div>
-                  <div className="text-right">
-                    <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+                  <div class="text-right">
+                    <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                     {r.success && r.resourceCount !== undefined && (
-                      <div className="caption text-text-muted">{r.resourceCount} resources</div>
+                      <div class="caption text-text-muted">{r.resourceCount} resources</div>
                     )}
                   </div>
                 </div>
@@ -1059,31 +1055,28 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
               {data.educationResults.ltiResults.map((r) => (
                 <div
                   key={`lti-${r.name}`}
-                  className={cn(
+                  class={cn(
                     layout.flex.between,
                     spacing.pad.xs,
                     radius.default,
-                    !r.success ? "bg-status-error/10" : "bg-surface-raised",
+                    r.success ? "bg-surface-raised" : "bg-status-error/10",
                   )}
                 >
-                  <div className={layout.stack.compact}>
-                    <div className="flex items-center gap-2">
+                  <div class={layout.stack.compact}>
+                    <div class="flex items-center gap-2">
                       <StatusBadge status={r.success ? "success" : "error"} />
-                      <span className="body-small font-medium">{r.name}</span>
-                      <span
-                        className="caption text-text-muted truncate max-w-48"
-                        title={r.launchUrl}
-                      >
+                      <span class="body-small font-medium">{r.name}</span>
+                      <span class="caption text-text-muted truncate max-w-48" title={r.launchUrl}>
                         {r.launchUrl}
                       </span>
                     </div>
                     {r.success && r.ltiVersion && (
-                      <span className="caption text-text-muted ml-6">LTI {r.ltiVersion}</span>
+                      <span class="caption text-text-muted ml-6">LTI {r.ltiVersion}</span>
                     )}
-                    {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
+                    {r.error && <span class="caption text-status-error ml-6">{r.error}</span>}
                   </div>
-                  <div className="text-right">
-                    <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+                  <div class="text-right">
+                    <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                   </div>
                 </div>
               ))}
@@ -1105,37 +1098,37 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
                 {data.industrialResults.opcuaResults.map((r) => (
                   <div
                     key={`opcua-${r.name}`}
-                    className={cn(
+                    class={cn(
                       layout.flex.between,
                       spacing.pad.xs,
                       radius.default,
-                      !r.success ? "bg-status-error/10" : "bg-surface-raised",
+                      r.success ? "bg-surface-raised" : "bg-status-error/10",
                     )}
                   >
-                    <div className={layout.stack.compact}>
-                      <div className="flex items-center gap-2">
+                    <div class={layout.stack.compact}>
+                      <div class="flex items-center gap-2">
                         <StatusBadge status={r.success ? "success" : "error"} />
-                        <span className="body-small font-medium">{r.name}</span>
+                        <span class="body-small font-medium">{r.name}</span>
                         <span
-                          className="caption text-text-muted truncate max-w-48"
+                          class="caption text-text-muted truncate max-w-48"
                           title={r.endpointUrl}
                         >
                           {r.endpointUrl}
                         </span>
                       </div>
                       {r.success && (r.securityMode || r.productName) && (
-                        <span className="caption text-text-muted ml-6">
+                        <span class="caption text-text-muted ml-6">
                           {r.securityMode && r.securityMode}
                           {r.securityMode && r.productName && " • "}
                           {r.productName && r.productName}
                         </span>
                       )}
-                      {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
+                      {r.error && <span class="caption text-status-error ml-6">{r.error}</span>}
                     </div>
-                    <div className="text-right">
-                      <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+                    <div class="text-right">
+                      <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                       {r.success && r.serverState && (
-                        <div className="caption text-text-muted">{r.serverState}</div>
+                        <div class="caption text-text-muted">{r.serverState}</div>
                       )}
                     </div>
                   </div>
@@ -1158,27 +1151,27 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
                 {data.industrialResults.modbusResults.map((r) => (
                   <div
                     key={`modbus-${r.name}`}
-                    className={cn(
+                    class={cn(
                       layout.flex.between,
                       spacing.pad.xs,
                       radius.default,
-                      !r.success ? "bg-status-error/10" : "bg-surface-raised",
+                      r.success ? "bg-surface-raised" : "bg-status-error/10",
                     )}
                   >
-                    <div className={layout.stack.compact}>
-                      <div className="flex items-center gap-2">
+                    <div class={layout.stack.compact}>
+                      <div class="flex items-center gap-2">
                         <StatusBadge status={r.success ? "success" : "error"} />
-                        <span className="body-small font-medium">{r.name}</span>
-                        <span className="caption text-text-muted">
+                        <span class="body-small font-medium">{r.name}</span>
+                        <span class="caption text-text-muted">
                           {r.host}:{r.port} • Unit {r.unitId}
                         </span>
                       </div>
-                      {r.error && <span className="caption text-status-error ml-6">{r.error}</span>}
+                      {r.error && <span class="caption text-status-error ml-6">{r.error}</span>}
                     </div>
-                    <div className="text-right">
-                      <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+                    <div class="text-right">
+                      <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                       {r.success && r.registerValue !== undefined && (
-                        <div className="caption text-text-muted">
+                        <div class="caption text-text-muted">
                           Reg: 0x{r.registerValue.toString(16).toUpperCase().padStart(4, "0")}
                         </div>
                       )}
@@ -1190,7 +1183,7 @@ export const HealthCheckCard = memo(function HealthCheckCard({ loading }: Health
         </>
       )}
 
-      {error && <p className="body-small text-status-error">{error}</p>}
+      {error && <p class="body-small text-status-error">{error}</p>}
     </Card>
   );
 });

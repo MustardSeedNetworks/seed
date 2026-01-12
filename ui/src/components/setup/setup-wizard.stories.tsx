@@ -43,9 +43,7 @@ export const CustomPasswordMode: Story = {
     onComplete: () => {
       // Handle setup completion
     },
-    onLogin: async (_username: string, _password: string) => {
-      return true;
-    },
+    onLogin: async (_username: string, _password: string) => true,
   },
 };
 
@@ -58,9 +56,7 @@ export const WithSuggestedPassword: Story = {
     onComplete: () => {
       // Handle setup completion
     },
-    onLogin: async (_username: string, _password: string) => {
-      return true;
-    },
+    onLogin: async (_username: string, _password: string) => true,
     suggestedPassword: "Xk9mP#2vL@q7Tn4w",
   },
 };
@@ -72,7 +68,7 @@ export const WithSuggestedPassword: Story = {
 export const GeneratedPasswordSelected: Story = {
   render: () => {
     return (
-      <div className="relative min-h-screen">
+      <div class="relative min-h-screen">
         <SetupWizard
           onComplete={() => {
             // Handle setup completion
@@ -91,7 +87,7 @@ export const GeneratedPasswordSelected: Story = {
  */
 export const ValidationErrorTooShort: Story = {
   render: () => {
-    const WizardWithError = () => {
+    const WIZARD_WITH_ERROR = () => {
       return (
         <SetupWizard
           onComplete={() => {
@@ -102,7 +98,7 @@ export const ValidationErrorTooShort: Story = {
       );
     };
 
-    return <WizardWithError />;
+    return <WIZARD_WITH_ERROR />;
   },
 };
 
@@ -112,7 +108,7 @@ export const ValidationErrorTooShort: Story = {
  */
 export const ValidationErrorMismatch: Story = {
   render: () => {
-    const WizardWithError = () => {
+    const WIZARD_WITH_ERROR = () => {
       return (
         <SetupWizard
           onComplete={() => {
@@ -123,7 +119,7 @@ export const ValidationErrorMismatch: Story = {
       );
     };
 
-    return <WizardWithError />;
+    return <WIZARD_WITH_ERROR />;
   },
   parameters: {
     docs: {
@@ -141,22 +137,22 @@ export const ValidationErrorMismatch: Story = {
  */
 export const SubmittingSetup: Story = {
   render: () => {
-    const WizardSubmitting = () => {
+    const WIZARD_SUBMITTING = () => {
       return (
         <SetupWizard
           onComplete={() => {
             // Handle setup completion
           }}
-          onLogin={async () => {
-            return new Promise((resolve) => {
+          onLogin={async () =>
+            new Promise((resolve) => {
               setTimeout(() => resolve(true), 3000);
-            });
-          }}
+            })
+          }
         />
       );
     };
 
-    return <WizardSubmitting />;
+    return <WIZARD_SUBMITTING />;
   },
 };
 
@@ -180,9 +176,7 @@ export const NetworkError: Story = {
 export const SetupCompleteLoginFailed: Story = {
   args: {
     onComplete: noop,
-    onLogin: async () => {
-      return false;
-    },
+    onLogin: async () => false,
   },
 };
 
@@ -192,7 +186,7 @@ export const SetupCompleteLoginFailed: Story = {
  */
 export const PasswordVisible: Story = {
   render: () => {
-    const WizardPasswordVisible = () => {
+    const WIZARD_PASSWORD_VISIBLE = () => {
       return (
         <SetupWizard
           onComplete={() => {
@@ -203,7 +197,7 @@ export const PasswordVisible: Story = {
       );
     };
 
-    return <WizardPasswordVisible />;
+    return <WIZARD_PASSWORD_VISIBLE />;
   },
   parameters: {
     docs: {
@@ -262,17 +256,17 @@ export const InteractiveSetupFlow: Story = {
 
     if (setupComplete) {
       return (
-        <div className="min-h-screen bg-surface-base flex items-center justify-center">
-          <div className="text-center">
+        <div class="min-h-screen bg-surface-base flex items-center justify-center">
+          <div class="text-center">
             <div
-              className={cn(
+              class={cn(
                 spacing.margin.bottom.content,
                 radius.full,
                 "w-16 h-16 mx-auto bg-status-success/20 flex items-center justify-center",
               )}
             >
               <svg
-                className="w-8 h-8 text-status-success"
+                class="w-8 h-8 text-status-success"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -286,8 +280,8 @@ export const InteractiveSetupFlow: Story = {
                 />
               </svg>
             </div>
-            <h2 className={cn(spacing.margin.bottom.inline, "heading-2")}>Setup Complete!</h2>
-            <p className="body-small text-text-muted">You are now logged in.</p>
+            <h2 class={cn(spacing.margin.bottom.inline, "heading-2")}>Setup Complete!</h2>
+            <p class="body-small text-text-muted">You are now logged in.</p>
           </div>
         </div>
       );

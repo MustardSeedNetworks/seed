@@ -115,47 +115,55 @@ interface LinkCardProps {
  * @returns Status indicator ('success', 'warning', 'error')
  */
 function getStatus(data: LinkData): Status {
-  if (!data.carrier) return "error"; // No physical link
-  if (!data.hasIp) return "warning"; // Carrier but no IP
+  if (!data.carrier) {
+    return "error"; // No physical link
+  }
+  if (!data.hasIp) {
+    return "warning"; // Carrier but no IP
+  }
   return "success"; // Fully connected
 }
 
-function LinkLoadingSkeleton() {
+function _linkLoadingSkeleton() {
   return (
     <>
-      <Skeleton className={cn("h-8 w-32", spacing.margin.bottom.heading)} />
-      <div className={cn("stack-sm", spacing.margin.top.content)}>
-        <div className={layout.flex.between}>
-          <Skeleton className="h-3 w-16" />
-          <Skeleton className="h-3 w-20" />
+      <Skeleton class={cn("h-8 w-32", spacing.margin.bottom.heading)} />
+      <div class={cn("stack-sm", spacing.margin.top.content)}>
+        <div class={layout.flex.between}>
+          <Skeleton class="h-3 w-16" />
+          <Skeleton class="h-3 w-20" />
         </div>
-        <div className={layout.flex.between}>
-          <Skeleton className="h-3 w-12" />
-          <Skeleton className="h-3 w-8" />
+        <div class={layout.flex.between}>
+          <Skeleton class="h-3 w-12" />
+          <Skeleton class="h-3 w-8" />
         </div>
       </div>
     </>
   );
 }
 
-export const LinkCard = memo(function LinkCard({ data, loading }: LinkCardProps) {
+export const LinkCard = memo(function linkCard({ data, loading }: LinkCardProps) {
   const { t } = useTranslation("cards");
   const { t: tc } = useTranslation("common");
 
   const getLocalizedStatusText = (linkData: LinkData): string => {
-    if (!linkData.carrier) return tc("status.noCarrier");
-    if (!linkData.hasIp) return tc("status.noIP");
+    if (!linkData.carrier) {
+      return tc("status.noCarrier");
+    }
+    if (!linkData.hasIp) {
+      return tc("status.noIP");
+    }
     return linkData.speed || tc("status.connected");
   };
 
   return (
     <BaseCard
       title={t("link.title")}
-      icon={<Cable className={iconTokens.size.md} />}
+      icon={<Cable class={iconTokens.size.md} />}
       data={data}
       loading={loading}
       getStatus={getStatus}
-      loadingContent={<LinkLoadingSkeleton />}
+      loadingContent={<linkLoadingSkeleton />}
       emptyMessage={tc("status.noData")}
     >
       {
@@ -189,19 +197,15 @@ export const LinkCard = memo(function LinkCard({ data, loading }: LinkCardProps)
                     <CardRow label={t("link.flaps24h")} value={linkData.flapCount24h.toString()} />
                   )}
                   {linkData.advertisedSpeeds && linkData.advertisedSpeeds.length > 0 && (
-                    <div className={spacing.margin.top.inline}>
-                      <p className={cn("caption", spacing.margin.bottom.inline)}>
+                    <div class={spacing.margin.top.inline}>
+                      <p class={cn("caption", spacing.margin.bottom.inline)}>
                         {t("link.advertisedSpeeds")}
                       </p>
-                      <div className={layout.inline.wrap}>
+                      <div class={layout.inline.wrap}>
                         {linkData.advertisedSpeeds.map((speed) => (
                           <span
                             key={speed}
-                            className={cn(
-                              "caption bg-surface-hover",
-                              spacing.chip.sm,
-                              radius.default,
-                            )}
+                            class={cn("caption bg-surface-hover", spacing.chip.sm, radius.default)}
                           >
                             {speed}
                           </span>
@@ -215,7 +219,7 @@ export const LinkCard = memo(function LinkCard({ data, loading }: LinkCardProps)
                     <>
                       <CardDivider />
                       <p
-                        className={cn(
+                        class={cn(
                           "caption font-medium text-text-muted",
                           spacing.margin.bottom.tight,
                         )}
@@ -252,7 +256,7 @@ export const LinkCard = memo(function LinkCard({ data, loading }: LinkCardProps)
                     <>
                       <CardDivider />
                       <p
-                        className={cn(
+                        class={cn(
                           "caption font-medium text-text-muted",
                           spacing.margin.bottom.tight,
                         )}
@@ -283,9 +287,9 @@ export const LinkCard = memo(function LinkCard({ data, loading }: LinkCardProps)
 
                       {/* SFP DDM Readings */}
                       {linkData.sfp.ddmSupport && linkData.sfp.ddm && (
-                        <div className={spacing.margin.top.inline}>
+                        <div class={spacing.margin.top.inline}>
                           <p
-                            className={cn(
+                            class={cn(
                               "caption font-medium text-text-muted",
                               spacing.margin.bottom.tight,
                             )}
@@ -309,9 +313,7 @@ export const LinkCard = memo(function LinkCard({ data, loading }: LinkCardProps)
                             value={`${linkData.sfp.ddm.rxPowerDbm.toFixed(1)} dBm`}
                           />
                           {linkData.sfp.ddm.alarms && linkData.sfp.ddm.alarms.length > 0 && (
-                            <div
-                              className={cn("caption text-status-error", spacing.margin.top.tight)}
-                            >
+                            <div class={cn("caption text-status-error", spacing.margin.top.tight)}>
                               {linkData.sfp.ddm.alarms.map((alarm) => (
                                 <p key={alarm}>{alarm}</p>
                               ))}
@@ -319,10 +321,7 @@ export const LinkCard = memo(function LinkCard({ data, loading }: LinkCardProps)
                           )}
                           {linkData.sfp.ddm.warnings && linkData.sfp.ddm.warnings.length > 0 && (
                             <div
-                              className={cn(
-                                "caption text-status-warning",
-                                spacing.margin.top.tight,
-                              )}
+                              class={cn("caption text-status-warning", spacing.margin.top.tight)}
                             >
                               {linkData.sfp.ddm.warnings.map((warning) => (
                                 <p key={warning}>{warning}</p>

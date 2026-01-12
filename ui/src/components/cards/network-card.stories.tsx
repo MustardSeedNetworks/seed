@@ -17,7 +17,7 @@ import { NetworkCard } from "./network-card";
  *
  * This story demonstrates various network configuration states.
  */
-const meta = {
+const meta: Meta<(typeof meta)["component"]> = {
   title: "Cards/network-card",
   component: NetworkCard,
   parameters: {
@@ -25,9 +25,9 @@ const meta = {
   },
   tags: ["autodocs"],
   decorators: [
-    (Story) => (
+    (StoryComponent: React.ComponentType): JSX.Element => (
       <div style={{ width: "400px" }}>
-        <Story />
+        <StoryComponent />
       </div>
     ),
   ],

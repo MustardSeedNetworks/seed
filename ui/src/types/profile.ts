@@ -446,7 +446,9 @@ export interface ProfileInterfaceSelection {
 export function getActiveEthernetInterface(
   configs?: ProfileInterfaceConfigs,
 ): ProfileInterfaceSelection | undefined {
-  if (!configs?.activeEthernet || !configs.ethernet) return undefined;
+  if (!(configs?.activeEthernet && configs.ethernet)) {
+    return;
+  }
   return configs.ethernet.find((i) => i.name === configs.activeEthernet);
 }
 
@@ -456,7 +458,9 @@ export function getActiveEthernetInterface(
 export function getActiveWiFiInterface(
   configs?: ProfileInterfaceConfigs,
 ): ProfileInterfaceSelection | undefined {
-  if (!configs?.activeWifi || !configs.wifi) return undefined;
+  if (!(configs?.activeWifi && configs.wifi)) {
+    return;
+  }
   return configs.wifi.find((i) => i.name === configs.activeWifi);
 }
 

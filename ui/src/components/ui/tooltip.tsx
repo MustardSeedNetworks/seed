@@ -49,14 +49,14 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       : cn("top-full left-1/2 -translate-x-1/2", spacing.margin.top.inline);
 
   return (
-    <div className="relative inline-flex items-center">
+    <div class="relative inline-flex items-center">
       {/* biome-ignore lint/a11y/useSemanticElements: Tooltip trigger wraps arbitrary content - cannot use semantic button */}
       <div
         onMouseEnter={() => setShow(true)}
         onMouseLeave={() => setShow(false)}
         onFocus={() => setShow(true)}
         onBlur={() => setShow(false)}
-        className="cursor-help"
+        class="cursor-help"
         tabIndex={0}
         role="button"
         aria-describedby={show ? "tooltip-content" : undefined}
@@ -66,7 +66,7 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       {show && (
         <div
           id="tooltip-content"
-          className={cn(
+          class={cn(
             "absolute z-50 shadow-lg max-w-xs",
             spacing.cell.px,
             spacing.compact.pyMd,

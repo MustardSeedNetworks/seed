@@ -41,7 +41,7 @@ const meta: Meta<typeof WiFiSettings> = {
   },
   decorators: [
     (Story) => (
-      <div className="w-[400px]">
+      <div class="w-[400px]">
         <Story />
       </div>
     ),
@@ -191,7 +191,7 @@ export const Saved: Story = {
  * Interactive WiFi settings - fully functional
  */
 export const Interactive: Story = {
-  render: function InteractiveStory() {
+  render: function interactiveStory() {
     const [wifiSettings, setWifiSettings] = useState<WiFiSettingsType>({
       interface: "wlan0",
       availableWifi: ["wlan0", "wlan1", "wlp2s0"],
@@ -226,9 +226,9 @@ export const Interactive: Story = {
  */
 export const Comparison: Story = {
   render: () => (
-    <div className={cn("stack-lg", spacing.pad.default)}>
+    <div class={cn("stack-lg", spacing.pad.default)}>
       <div>
-        <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
           Multiple interfaces available
         </p>
         <WiFiSettings
@@ -244,7 +244,7 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
           No interfaces (manual entry)
         </p>
         <WiFiSettings
@@ -260,7 +260,7 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Saving state</p>
+        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Saving state</p>
         <WiFiSettings
           wifiSettings={{
             interface: "wlan0",

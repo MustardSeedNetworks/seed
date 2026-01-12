@@ -25,7 +25,7 @@ import { RecoveryForm } from "../components/login/recovery-form";
 import { button, cn, input, layout, radius, spacing } from "../styles/theme";
 
 // API base URL - configurable via environment variable
-const API_BASE = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || "";
 
 export interface LoginFormProps {
   onLogin: (username: string, password: string) => Promise<boolean>;
@@ -58,7 +58,7 @@ interface RecoveryStatus {
   instructions?: string;
 }
 
-export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
+export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.Element {
   const { t } = useTranslation("common");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -93,24 +93,24 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
   }, []);
 
   // Helper to check if a provider is enabled
-  const isProviderEnabled = (name: string) =>
+  const isProviderEnabled = (name: string): boolean =>
     ssoProviders.some((p) => p.name.toLowerCase() === name.toLowerCase() && p.enabled);
 
   // Check if any SSO provider is enabled
   const hasEnabledSso = ssoProviders.some((p) => p.enabled);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     await onLogin(username, password);
   };
 
   // Handle recovery completion - reload to get fresh login state
-  const handleRecoveryComplete = () => {
+  const handleRecoveryComplete = (): void => {
     window.location.reload();
   };
 
   // Handle back to login from recovery form
-  const handleBackToLogin = () => {
+  const handleBackToLogin = (): void => {
     setShowRecoveryForm(false);
   };
 
@@ -127,11 +127,11 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
   }
 
   return (
-    <div className={cn("min-h-screen", layout.flex.center, "pad")}>
-      <div className="w-full max-w-sm">
-        <div className={cn("text-center", spacing.margin.bottom.sectionLg)}>
-          <div className="w-16 h-16 mx-auto text-brand-primary">
-            <svg viewBox="0 0 48 48" fill="none" className="w-full h-full" aria-hidden="true">
+    <div class={cn("min-h-screen", layout.flex.center, "pad")}>
+      <div class="w-full max-w-sm">
+        <div class={cn("text-center", spacing.margin.bottom.sectionLg)}>
+          <div class="w-16 h-16 mx-auto text-brand-primary">
+            <svg viewBox="0 0 48 48" fill="none" class="w-full h-full" aria-hidden="true">
               <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2" opacity="0.3" />
               <circle cx="24" cy="24" r="14" stroke="currentColor" strokeWidth="2" opacity="0.5" />
               <circle cx="24" cy="24" r="4" fill="currentColor" />
@@ -217,69 +217,59 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
               <circle cx="12.3" cy="35.7" r="2.5" fill="currentColor" />
             </svg>
           </div>
-          <h1 className={cn("heading-1", spacing.margin.top.heading)}>{t("app.title")}</h1>
-          <p className={cn("body-small", spacing.margin.top.inline)}>{t("app.tagline")}</p>
+          <h1 class={cn("heading-1", spacing.margin.top.heading)}>{t("app.title")}</h1>
+          <p class={cn("body-small", spacing.margin.top.inline)}>{t("app.tagline")}</p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className={cn(
-            "bg-surface-raised",
-            radius.md,
-            "border border-surface-border pad-lg stack-lg",
-          )}
+          class={cn("bg-surface-raised", radius.md, "border border-surface-border pad-lg stack-lg")}
         >
           <div>
-            <label
-              htmlFor="login-username"
-              className={cn("label block", spacing.margin.bottom.inline)}
-            >
+            <label for="login-username" class={cn("label block", spacing.margin.bottom.inline)}>
               {t("labels.username")}
             </label>
             <input
               id="login-username"
               type="text"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className={cn(
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+              class={cn(
                 "w-full",
                 input.size.md,
                 radius.md,
                 "border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary",
               )}
               placeholder="admin"
-              required
+              required={true}
             />
           </div>
 
           <div>
-            <label
-              htmlFor="login-password"
-              className={cn("label block", spacing.margin.bottom.inline)}
-            >
+            <label for="login-password" class={cn("label block", spacing.margin.bottom.inline)}>
               {t("labels.password")}
             </label>
             <input
               id="login-password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={cn(
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+              class={cn(
                 "w-full",
                 input.size.md,
                 radius.md,
                 "border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary",
               )}
               placeholder="••••••••"
-              required
+              required={true}
             />
           </div>
 
-          {(error || ssoError) && (
+          {error || ssoError ? (
             <div
               role="alert"
               aria-live="assertive"
-              className={cn(
+              class={cn(
                 "pad-sm bg-status-error/10 border border-status-error/20",
                 radius.md,
                 "text-status-error body-small",
@@ -287,12 +277,12 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
             >
               {error || ssoError}
             </div>
-          )}
+          ) : null}
 
           <button
             type="submit"
             disabled={isLoading}
-            className={cn(
+            class={cn(
               "w-full",
               button.size.md,
               "bg-brand-primary text-text-inverse",
@@ -303,18 +293,18 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
             {isLoading ? t("status.loggingIn") : t("buttons.login")}
           </button>
 
-          <p className="caption text-text-muted text-center">{t("login.defaultCredentials")}</p>
+          <p class="caption text-text-muted text-center">{t("login.defaultCredentials")}</p>
 
           {/* SSO Options - only show if any provider is enabled (fixes #769) */}
-          {hasEnabledSso && (
-            <div className="flex flex-col space-y-3">
+          {hasEnabledSso ? (
+            <div class="flex flex-col space-y-3">
               {isProviderEnabled("google") && (
                 <button
                   type="button"
                   onClick={() => {
                     window.location.href = `${API_BASE}/api/sso/login?provider=google`;
                   }}
-                  className={cn(
+                  class={cn(
                     "w-full",
                     button.size.md,
                     "bg-status-info text-text-inverse",
@@ -331,7 +321,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
                   onClick={() => {
                     window.location.href = `${API_BASE}/api/sso/login?provider=microsoft`;
                   }}
-                  className={cn(
+                  class={cn(
                     "w-full",
                     button.size.md,
                     "bg-brand-secondary text-text-inverse",
@@ -348,7 +338,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
                   onClick={() => {
                     window.location.href = `${API_BASE}/api/sso/login?provider=github`;
                   }}
-                  className={cn(
+                  class={cn(
                     "w-full",
                     button.size.md,
                     "bg-surface-sunken text-text-primary",
@@ -360,7 +350,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
                 </button>
               )}
             </div>
-          )}
+          ) : null}
         </form>
       </div>
     </div>

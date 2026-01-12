@@ -48,7 +48,7 @@ const meta: Meta<typeof SNMPSettings> = {
   },
   decorators: [
     (Story) => (
-      <div className="w-[500px] max-h-[700px] overflow-y-auto">
+      <div class="w-[500px] max-h-[700px] overflow-y-auto">
         <Story />
       </div>
     ),
@@ -309,7 +309,7 @@ export const Saving: Story = {
  * Interactive SNMP settings - fully functional CRUD
  */
 export const Interactive: Story = {
-  render: function InteractiveStory() {
+  render: function interactiveStory() {
     const [snmpSettings, setSnmpSettings] = useState<SnmpSettingsType>(defaultSettings);
     const [status, setStatus] = useState<SaveStatus>("idle");
 

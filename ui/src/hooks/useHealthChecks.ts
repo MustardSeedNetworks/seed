@@ -222,7 +222,7 @@ export function useHealthChecks() {
         const gatewayOk = healthResults.gateway?.reachable ?? true;
         const customOk = healthResults.custom.every((c) => c.success);
 
-        if (!dnsOk || !gatewayOk) {
+        if (!(dnsOk && gatewayOk)) {
           healthResults.overall = "unhealthy";
         } else if (!customOk) {
           healthResults.overall = "degraded";

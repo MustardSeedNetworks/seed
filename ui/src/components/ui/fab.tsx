@@ -65,7 +65,9 @@ export function FAB({ className = "" }: FabProps) {
   }, []);
 
   const handleClick = useCallback(() => {
-    if (isRunning) return;
+    if (isRunning) {
+      return;
+    }
     setIsRunning(true);
 
     window.dispatchEvent(new CustomEvent("runAllTests"));
@@ -81,7 +83,7 @@ export function FAB({ className = "" }: FabProps) {
       type="button"
       onClick={handleClick}
       disabled={isRunning}
-      className={cn(
+      class={cn(
         "w-14 h-14 bg-brand-primary text-text-inverse shadow-lg hover:bg-brand-accent active:scale-95 transition-all touch-manipulation focus:outline-none focus:ring-4 focus:ring-brand-primary/50 focus:ring-offset-2 focus:ring-offset-surface-base",
         layout.flex.center,
         radius.full,
@@ -93,32 +95,20 @@ export function FAB({ className = "" }: FabProps) {
     >
       {isRunning ? (
         <svg
-          className={cn(iconTokens.size.lg, "animate-spin")}
+          class={cn(iconTokens.size.lg, "animate-spin")}
           fill="none"
           viewBox="0 0 24 24"
           aria-hidden="true"
         >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          />
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path
-            className="opacity-75"
+            class="opacity-75"
             fill="currentColor"
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           />
         </svg>
       ) : (
-        <svg
-          className={iconTokens.size.lg}
-          fill="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
+        <svg class={iconTokens.size.lg} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M8 5v14l11-7z" />
         </svg>
       )}

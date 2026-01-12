@@ -21,8 +21,8 @@ export function ScannerConfigExample() {
   const [bannerTimeout, setBannerTimeout] = useState(2000);
 
   return (
-    <div className="space-y-6 max-w-2xl p-6 bg-surface-raised rounded-lg border border-surface-border">
-      <h3 className="heading-3">Network Scanner Settings</h3>
+    <div class="space-y-6 max-w-2xl p-6 bg-surface-raised rounded-lg border border-surface-border">
+      <h3 class="heading-3">Network Scanner Settings</h3>
 
       {/* Probe Interval: 25ms - 500ms */}
       <Slider
@@ -90,24 +90,24 @@ export function ScannerConfigExample() {
       />
 
       {/* Configuration Summary */}
-      <div className="mt-8 p-4 bg-surface-base rounded border border-surface-border">
-        <h4 className="heading-4 mb-2">Current Configuration</h4>
-        <div className="body-small space-y-1 font-mono">
+      <div class="mt-8 p-4 bg-surface-base rounded border border-surface-border">
+        <h4 class="heading-4 mb-2">Current Configuration</h4>
+        <div class="body-small space-y-1 font-mono">
           <div>
-            <span className="text-text-muted">Probe Interval:</span> {probeInterval}ms
+            <span class="text-text-muted">Probe Interval:</span> {probeInterval}ms
           </div>
           <div>
-            <span className="text-text-muted">Scan Timeout:</span> {scanTimeout}
+            <span class="text-text-muted">Scan Timeout:</span> {scanTimeout}
             ms
           </div>
           <div>
-            <span className="text-text-muted">Workers:</span> {workers}
+            <span class="text-text-muted">Workers:</span> {workers}
           </div>
           <div>
-            <span className="text-text-muted">Rescan Interval:</span> {rescanInterval} min
+            <span class="text-text-muted">Rescan Interval:</span> {rescanInterval} min
           </div>
           <div>
-            <span className="text-text-muted">Banner Timeout:</span> {bannerTimeout}ms
+            <span class="text-text-muted">Banner Timeout:</span> {bannerTimeout}ms
           </div>
         </div>
       </div>
@@ -123,7 +123,7 @@ export function TimeoutSettingExample() {
   const [timeout, setTimeout] = useState(2000);
 
   return (
-    <div className="max-w-md p-4 bg-surface-raised rounded-lg">
+    <div class="max-w-md p-4 bg-surface-raised rounded-lg">
       <Slider
         value={timeout}
         onChange={setTimeout}
@@ -145,7 +145,7 @@ export function WorkerConfigExample() {
   const [workers, setWorkers] = useState(20);
 
   return (
-    <div className="max-w-md p-4 bg-surface-raised rounded-lg">
+    <div class="max-w-md p-4 bg-surface-raised rounded-lg">
       <Slider
         value={workers}
         onChange={setWorkers}
@@ -157,7 +157,7 @@ export function WorkerConfigExample() {
         rightLabel="Aggressive"
         formatValue={(v) => `${v} workers`}
       />
-      <p className="mt-2 caption text-text-muted">
+      <p class="mt-2 caption text-text-muted">
         More workers = faster scanning, but higher CPU usage
       </p>
     </div>
@@ -172,7 +172,7 @@ export function PercentageSliderExample() {
   const [volume, setVolume] = useState(75);
 
   return (
-    <div className="max-w-md p-4 bg-surface-raised rounded-lg">
+    <div class="max-w-md p-4 bg-surface-raised rounded-lg">
       <Slider
         value={volume}
         onChange={setVolume}
@@ -197,15 +197,15 @@ export function DisabledSliderExample() {
   const [interval, setInterval] = useState(10);
 
   return (
-    <div className="max-w-md p-4 bg-surface-raised rounded-lg space-y-4">
-      <label className="flex items-center gap-2 cursor-pointer">
+    <div class="max-w-md p-4 bg-surface-raised rounded-lg space-y-4">
+      <label class="flex items-center gap-2 cursor-pointer">
         <input
           type="checkbox"
           checked={autoScan}
           onChange={(e) => setAutoScan(e.target.checked)}
-          className="w-4 h-4"
+          class="w-4 h-4"
         />
-        <span className="body">Enable Auto-Scan</span>
+        <span class="body">Enable Auto-Scan</span>
       </label>
 
       <Slider
@@ -232,13 +232,17 @@ export function SmartDurationExample() {
   const [duration, setDuration] = useState(30000);
 
   const formatDuration = (ms: number): string => {
-    if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    if (ms < 1000) {
+      return `${ms}ms`;
+    }
+    if (ms < 60000) {
+      return `${(ms / 1000).toFixed(1)}s`;
+    }
     return `${(ms / 60000).toFixed(1)}min`;
   };
 
   return (
-    <div className="max-w-md p-4 bg-surface-raised rounded-lg">
+    <div class="max-w-md p-4 bg-surface-raised rounded-lg">
       <Slider
         value={duration}
         onChange={setDuration}
@@ -275,9 +279,9 @@ export function FormIntegrationExample() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-md p-6 bg-surface-raised rounded-lg border border-surface-border space-y-6"
+      class="max-w-md p-6 bg-surface-raised rounded-lg border border-surface-border space-y-6"
     >
-      <h3 className="heading-3">Network Settings</h3>
+      <h3 class="heading-3">Network Settings</h3>
 
       <Slider
         value={config.timeout}
@@ -311,7 +315,7 @@ export function FormIntegrationExample() {
 
       <button
         type="submit"
-        className="w-full px-4 py-2 bg-brand-primary text-text-inverse rounded-md hover:bg-brand-accent transition-colors"
+        class="w-full px-4 py-2 bg-brand-primary text-text-inverse rounded-md hover:bg-brand-accent transition-colors"
       >
         Save Settings
       </button>

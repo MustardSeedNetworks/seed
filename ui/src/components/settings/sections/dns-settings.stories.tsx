@@ -60,7 +60,7 @@ const meta: Meta<typeof DNSSettings> = {
   },
   decorators: [
     (Story) => (
-      <div className="w-[450px]">
+      <div class="w-[450px]">
         <Story />
       </div>
     ),
@@ -227,7 +227,7 @@ export const Saved: Story = {
  * Interactive DNS settings - fully functional CRUD operations
  */
 export const Interactive: Story = {
-  render: function InteractiveStory() {
+  render: function interactiveStory() {
     const [testsSettings, setTestsSettings] = useState<TestsSettings>({
       ...baseSettings,
       dnsHostname: "google.com",
@@ -265,9 +265,9 @@ export const Interactive: Story = {
  */
 export const Comparison: Story = {
   render: () => (
-    <div className={cn("stack-lg", spacing.pad.default)}>
+    <div class={cn("stack-lg", spacing.pad.default)}>
       <div>
-        <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
           Default (no servers)
         </p>
         <DNSSettings
@@ -283,9 +283,7 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-          With DNS servers
-        </p>
+        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>With DNS servers</p>
         <DNSSettings
           testsSettings={{
             ...baseSettings,
@@ -302,7 +300,7 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Saving state</p>
+        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Saving state</p>
         <DNSSettings
           testsSettings={{
             ...baseSettings,

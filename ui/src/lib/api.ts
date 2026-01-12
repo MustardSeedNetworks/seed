@@ -215,7 +215,7 @@ export const api = {
   async post<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/v1/auth/");
     // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token = !isAuthEndpoint ? await getCsrfToken() : null;
+    const token = isAuthEndpoint ? null : await getCsrfToken();
 
     const makeRequest = () => {
       const headers = new Headers({ "Content-Type": "application/json" });
@@ -252,7 +252,7 @@ export const api = {
   async put<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/v1/auth/");
     // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token = !isAuthEndpoint ? await getCsrfToken() : null;
+    const token = isAuthEndpoint ? null : await getCsrfToken();
 
     const makeRequest = () => {
       const headers = new Headers({ "Content-Type": "application/json" });
@@ -289,7 +289,7 @@ export const api = {
   async patch<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/v1/auth/");
     // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token = !isAuthEndpoint ? await getCsrfToken() : null;
+    const token = isAuthEndpoint ? null : await getCsrfToken();
 
     const makeRequest = () => {
       const headers = new Headers({ "Content-Type": "application/json" });
@@ -325,7 +325,7 @@ export const api = {
   async delete<T>(endpoint: string, init?: RequestInit): Promise<T> {
     const isAuthEndpoint = endpoint.includes("/api/v1/auth/");
     // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token = !isAuthEndpoint ? await getCsrfToken() : null;
+    const token = isAuthEndpoint ? null : await getCsrfToken();
 
     const makeRequest = () => {
       const headers = new Headers(init?.headers);

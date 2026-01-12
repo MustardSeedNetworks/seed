@@ -169,7 +169,9 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
     let surveyResultFile: JsZip.JSZipObject | null = null;
 
     for (const [filename, file] of Object.entries(zip.files)) {
-      if (file.dir) continue;
+      if (file.dir) {
+        continue;
+      }
 
       const lowerName = filename.toLowerCase();
       if (lowerName.endsWith(".serial")) {
@@ -237,7 +239,7 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
       unitName: serialJson.unitName || "Unknown Device",
       unitType: serialJson.unitType || "Unknown",
       unitSerial: serialJson.unitSerial || "",
-      hasActiveData: serialJson.surveyActive1x1 || false,
+      hasActiveData: serialJson.surveyActive1x1,
       labels: serialJson.labels || [],
     };
 

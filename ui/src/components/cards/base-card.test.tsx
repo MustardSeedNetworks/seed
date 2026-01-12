@@ -134,7 +134,9 @@ describe("BaseCard", () => {
         <BaseCard
           {...defaultProps}
           data={{ value: 0, isHealthy: false }}
-          getStatus={(data) => (data.isHealthy ? "success" : "error")}
+          getStatus={(data: { value: number; isHealthy: boolean }): "success" | "error" =>
+            data.isHealthy ? "success" : "error"
+          }
         />,
       );
 
@@ -178,7 +180,7 @@ describe("BaseCard", () => {
 
   describe("className prop", () => {
     it("applies custom className", () => {
-      render(<BaseCard {...defaultProps} className="custom-class" />);
+      render(<BaseCard {...defaultProps} class="custom-class" />);
 
       // Find the card element that has the custom class
       const card = document.querySelector(".custom-class");
@@ -275,7 +277,7 @@ describe("SimpleBaseCard", () => {
 
   describe("className prop", () => {
     it("applies custom className", () => {
-      render(<SimpleBaseCard {...defaultProps} className="my-custom-class" />);
+      render(<SimpleBaseCard {...defaultProps} class="my-custom-class" />);
 
       const card = document.querySelector(".my-custom-class");
       expect(card).toBeInTheDocument();
@@ -289,11 +291,11 @@ describe("state priority", () => {
       <BaseCard
         title="Priority Test"
         data={{ value: 1, isHealthy: true }}
-        getStatus={() => "success"}
+        getStatus={(): "success" => "success"}
         loading={true}
         error="Should not show"
       >
-        {() => <div>Content</div>}
+        {(): JSX.Element => <div>Content</div>}
       </BaseCard>,
     );
 
@@ -320,11 +322,11 @@ describe("state priority", () => {
       <BaseCard
         title="Error Priority"
         data={null}
-        getStatus={() => "success"}
+        getStatus={(): "success" => "success"}
         error="Error message"
         emptyMessage="No data"
       >
-        {() => <div>Content</div>}
+        {(): JSX.Element => <div>Content</div>}
       </BaseCard>,
     );
 

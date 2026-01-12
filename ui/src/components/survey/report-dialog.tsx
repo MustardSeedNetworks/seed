@@ -60,7 +60,9 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  if (!open) return null;
+  if (!open) {
+    return null;
+  }
 
   const handleOptionChange = (key: keyof ReportOptions, value: boolean | string) => {
     setOptions((prev) => ({ ...prev, [key]: value }));
@@ -123,10 +125,14 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
         backdropFilter: "blur(4px)",
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
       }}
       onKeyDown={(e) => {
-        if (e.key === "Escape") onClose();
+        if (e.key === "Escape") {
+          onClose();
+        }
       }}
       role="dialog"
       aria-modal="true"
@@ -193,7 +199,7 @@ export function ReportDialog({ surveyId, surveyName, open, onClose }: ReportDial
             {/* Company Name */}
             <div>
               <label
-                htmlFor="companyName"
+                for="companyName"
                 style={{
                   display: "block",
                   marginBottom: spacing.xs,

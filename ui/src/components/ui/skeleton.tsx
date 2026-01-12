@@ -65,7 +65,7 @@ export function Skeleton({ className = "", variant = "text", width, height }: Sk
 
   return (
     <div
-      className={cn(baseClasses, getVariantClass(variant), sizeClasses, className)}
+      class={cn(baseClasses, getVariantClass(variant), sizeClasses, className)}
       aria-hidden="true"
     />
   );
@@ -76,20 +76,20 @@ export function Skeleton({ className = "", variant = "text", width, height }: Sk
  */
 export function CardSkeleton() {
   return (
-    <div className={cn(card.base, card.variant.default, card.padding.md)}>
-      <div className={cn(layout.flex.between, spacing.margin.bottom.heading)}>
-        <Skeleton className="h-4 w-24" />
-        <Skeleton variant="circular" className="h-3 w-3" />
+    <div class={cn(card.base, card.variant.default, card.padding.md)}>
+      <div class={cn(layout.flex.between, spacing.margin.bottom.heading)}>
+        <Skeleton class="h-4 w-24" />
+        <Skeleton variant="circular" class="h-3 w-3" />
       </div>
-      <Skeleton className={cn("h-8 w-32", spacing.margin.bottom.inline)} />
-      <div className={cn("stack-sm", spacing.margin.top.content)}>
-        <div className={layout.flex.between}>
-          <Skeleton className="h-3 w-16" />
-          <Skeleton className="h-3 w-20" />
+      <Skeleton class={cn("h-8 w-32", spacing.margin.bottom.inline)} />
+      <div class={cn("stack-sm", spacing.margin.top.content)}>
+        <div class={layout.flex.between}>
+          <Skeleton class="h-3 w-16" />
+          <Skeleton class="h-3 w-20" />
         </div>
-        <div className={layout.flex.between}>
-          <Skeleton className="h-3 w-12" />
-          <Skeleton className="h-3 w-16" />
+        <div class={layout.flex.between}>
+          <Skeleton class="h-3 w-12" />
+          <Skeleton class="h-3 w-16" />
         </div>
       </div>
     </div>
@@ -109,9 +109,9 @@ export function TextSkeleton({ lines = 3 }: { lines?: number }) {
   }));
 
   return (
-    <div className="stack-sm">
+    <div class="stack-sm">
       {lineConfigs.map((config) => (
-        <Skeleton key={config.id} className="h-4" width={config.width} />
+        <Skeleton key={config.id} class="h-4" width={config.width} />
       ))}
     </div>
   );
