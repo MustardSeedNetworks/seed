@@ -35,8 +35,6 @@ import { CardDivider, CardRow } from "../ui/card";
 import type { Status } from "../ui/status-badge";
 import { BaseCard } from "./base-card";
 
-// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
-
 interface ProcessInfo {
   name: string;
   pid: number;

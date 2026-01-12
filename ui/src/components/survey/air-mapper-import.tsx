@@ -23,7 +23,6 @@ import { AlertTriangle, Check, FileArchive, MapPin, Radio, Upload, Users, X } fr
 import type React from "react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { LogComponents, logger } from "../../lib/logger";
 import { button, cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
 import {

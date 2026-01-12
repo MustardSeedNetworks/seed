@@ -2,8 +2,9 @@ import type React from "react";
 import { memo, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "../../../lib/logger";
-import { icon as iconTokens, layout } from "../../../styles/theme";
+import { cn, icon as iconTokens, layout, radius, spacing } from "../../../styles/theme";
 import type {
+  CardSettings,
   DiscoveryServiceStatus as DiscoveryServiceStatusType,
   NetworkDiscoverySettings as NetworkDiscoverySettingsType,
   SaveStatus,
@@ -39,6 +40,10 @@ interface DiscoverySettingsProps {
   snmpSettings: SnmpSettingsType;
   setSnmpSettings: React.Dispatch<React.SetStateAction<SnmpSettingsType>>;
   snmpStatus: SaveStatus;
+  /** Card settings for visibility and FAB configuration */
+  cardSettings: CardSettings;
+  /** Update card settings (triggers auto-save to profile) */
+  updateCardSettings: (updates: Partial<CardSettings>) => void;
 }
 
 /**
@@ -63,6 +68,8 @@ export const DiscoverySettings = memo(function DiscoverySettings({
   snmpSettings,
   setSnmpSettings,
   snmpStatus,
+  cardSettings,
+  updateCardSettings,
 }: DiscoverySettingsProps) {
   const { t } = useTranslation("settings");
   const [serviceStatus, setServiceStatus] = useState<DiscoveryServiceStatusType | null>(null);
@@ -108,6 +115,69 @@ export const DiscoverySettings = memo(function DiscoverySettings({
       defaultOpen={false}
     >
       <div className="stack">
+        {/* Card Visibility & FAB Controls */}
+        <div className="stack-sm">
+          <label
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              "bg-surface-base",
+              radius.default,
+              "border border-surface-border",
+            )}
+          >
+            <div>
+              <span className="body-small text-text-primary font-medium">
+                {t("common.showCard", "Show Card")}
+              </span>
+              <p className="caption text-text-muted">
+                {t("common.showCardDesc", "Display this card on the dashboard")}
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={cardSettings.networkDiscovery.enabled}
+              onChange={(e) =>
+                updateCardSettings({
+                  networkDiscovery: { ...cardSettings.networkDiscovery, enabled: e.target.checked },
+                })
+              }
+              className={iconTokens.size.sm}
+            />
+          </label>
+          <label
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              "bg-surface-base",
+              radius.default,
+              "border border-surface-border",
+            )}
+          >
+            <div>
+              <span className="body-small text-text-primary font-medium">
+                {t("common.runOnFab", "Include in Run All")}
+              </span>
+              <p className="caption text-text-muted">
+                {t("common.runOnFabDesc", "Run when FAB button is clicked")}
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={cardSettings.networkDiscovery.autoRunOnLink}
+              onChange={(e) =>
+                updateCardSettings({
+                  networkDiscovery: {
+                    ...cardSettings.networkDiscovery,
+                    autoRunOnLink: e.target.checked,
+                  },
+                })
+              }
+              className={iconTokens.size.sm}
+            />
+          </label>
+        </div>
+
         {/* Enable/Auto-scan Toggles */}
         <DiscoveryToggles
           settings={networkDiscoverySettings}

@@ -657,46 +657,50 @@ func (r *DiscoveryRepository) GetProblemSummary(ctx context.Context) (*ProblemSu
 	if err != nil {
 		return nil, fmt.Errorf("failed to count by severity: %w", err)
 	}
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var severity string
 		var count int
 		if scanErr := rows.Scan(&severity, &count); scanErr != nil {
-			_ = rows.Close()
 			return nil, scanErr
 		}
 		summary.BySeverity[severity] = count
 	}
-	_ = rows.Close()
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating severity counts: %w", err)
+	}
 
 	// Count by category
-	rows, err = r.db.Query(ctx, `
+	rowsCat, err := r.db.Query(ctx, `
 		SELECT category, COUNT(*) FROM network_problems WHERE status = 'active' GROUP BY category
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to count by category: %w", err)
 	}
-	for rows.Next() {
+	defer func() { _ = rowsCat.Close() }()
+	for rowsCat.Next() {
 		var category string
 		var count int
-		if scanErr := rows.Scan(&category, &count); scanErr != nil {
-			_ = rows.Close()
+		if scanErr := rowsCat.Scan(&category, &count); scanErr != nil {
 			return nil, scanErr
 		}
 		summary.ByCategory[category] = count
 	}
-	_ = rows.Close()
+	if err = rowsCat.Err(); err != nil {
+		return nil, fmt.Errorf("iterating category counts: %w", err)
+	}
 
 	// Recent count (last hour)
 	oneHourAgo := time.Now().UTC().Add(-time.Hour).Format(time.RFC3339)
 	row = r.db.QueryRow(ctx, `SELECT COUNT(*) FROM network_problems WHERE first_seen >= ?`, oneHourAgo)
-	if err := row.Scan(&summary.RecentCount); err != nil {
+	if err = row.Scan(&summary.RecentCount); err != nil {
 		return nil, fmt.Errorf("failed to count recent problems: %w", err)
 	}
 
 	// Resolved today
 	startOfDay := time.Now().UTC().Truncate(24 * time.Hour).Format(time.RFC3339)
 	row = r.db.QueryRow(ctx, `SELECT COUNT(*) FROM network_problems WHERE resolved_at >= ?`, startOfDay)
-	if err := row.Scan(&summary.ResolvedToday); err != nil {
+	if err = row.Scan(&summary.ResolvedToday); err != nil {
 		return nil, fmt.Errorf("failed to count resolved today: %w", err)
 	}
 
@@ -1045,32 +1049,36 @@ func (r *DiscoveryRepository) GetWiFiStats(ctx context.Context) (*WiFiStatsDB, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to get security breakdown: %w", err)
 	}
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var secType string
 		var count int
 		if scanErr := rows.Scan(&secType, &count); scanErr != nil {
-			_ = rows.Close()
 			return nil, scanErr
 		}
 		stats.SecurityBreakdown[secType] = count
 	}
-	_ = rows.Close()
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating security breakdown: %w", err)
+	}
 
 	// Band breakdown
-	rows, err = r.db.Query(ctx, `SELECT band, COUNT(*) FROM wifi_access_points GROUP BY band`)
+	rowsBand, err := r.db.Query(ctx, `SELECT band, COUNT(*) FROM wifi_access_points GROUP BY band`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get band breakdown: %w", err)
 	}
-	for rows.Next() {
+	defer func() { _ = rowsBand.Close() }()
+	for rowsBand.Next() {
 		var band string
 		var count int
-		if scanErr := rows.Scan(&band, &count); scanErr != nil {
-			_ = rows.Close()
+		if scanErr := rowsBand.Scan(&band, &count); scanErr != nil {
 			return nil, scanErr
 		}
 		stats.BandBreakdown[band] = count
 	}
-	_ = rows.Close()
+	if err = rowsBand.Err(); err != nil {
+		return nil, fmt.Errorf("iterating band breakdown: %w", err)
+	}
 
 	return stats, nil
 }

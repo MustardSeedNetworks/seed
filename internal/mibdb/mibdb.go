@@ -4,11 +4,16 @@
 package mibdb
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
 )
+
+// ErrNotFound is returned when an OID entry is not found.
+var ErrNotFound = errors.New("OID entry not found")
 
 // DB represents the MIB database interface.
 type DB struct {
@@ -41,7 +46,8 @@ func (d *DB) AddOID(entry OIDEntry) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	_, err := d.db.Exec(`
+	ctx := context.Background()
+	_, err := d.db.ExecContext(ctx, `
 		INSERT OR REPLACE INTO mib_oid_names (name, oid, full_path, mib_name)
 		VALUES (?, ?, ?, ?)
 	`, entry.Name, entry.OID, entry.FullPath, entry.MIBName)
@@ -54,13 +60,14 @@ func (d *DB) AddOIDs(entries []OIDEntry) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	tx, err := d.db.Begin()
+	ctx := context.Background()
+	tx, err := d.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	stmt, err := tx.Prepare(`
+	stmt, err := tx.PrepareContext(ctx, `
 		INSERT OR REPLACE INTO mib_oid_names (name, oid, full_path, mib_name)
 		VALUES (?, ?, ?, ?)
 	`)
@@ -70,8 +77,7 @@ func (d *DB) AddOIDs(entries []OIDEntry) error {
 	defer stmt.Close()
 
 	for _, entry := range entries {
-		_, err := stmt.Exec(entry.Name, entry.OID, entry.FullPath, entry.MIBName)
-		if err != nil {
+		if _, err = stmt.ExecContext(ctx, entry.Name, entry.OID, entry.FullPath, entry.MIBName); err != nil {
 			return err
 		}
 	}
@@ -80,7 +86,7 @@ func (d *DB) AddOIDs(entries []OIDEntry) error {
 }
 
 // ResolveOIDName converts a name-based OID to numeric form.
-// e.g., "sysDescr.0" -> "1.3.6.1.2.1.1.1.0"
+// Example: "sysDescr.0" -> "1.3.6.1.2.1.1.1.0".
 func (d *DB) ResolveOIDName(oid string) (string, error) {
 	// If already numeric, return as-is
 	if strings.HasPrefix(oid, ".") || (len(oid) > 0 && oid[0] >= '0' && oid[0] <= '9') {
@@ -98,10 +104,11 @@ func (d *DB) ResolveOIDName(oid string) (string, error) {
 		suffix = oid[idx:]
 	}
 
+	ctx := context.Background()
 	var numericOID string
-	err := d.db.QueryRow(`SELECT oid FROM mib_oid_names WHERE name = ?`, name).Scan(&numericOID)
+	err := d.db.QueryRowContext(ctx, `SELECT oid FROM mib_oid_names WHERE name = ?`, name).Scan(&numericOID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return "", fmt.Errorf("unknown OID name: %s", name)
 		}
 		return "", err
@@ -115,15 +122,16 @@ func (d *DB) GetOIDByName(name string) (*OIDEntry, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
+	ctx := context.Background()
 	var entry OIDEntry
-	err := d.db.QueryRow(`
+	err := d.db.QueryRowContext(ctx, `
 		SELECT name, oid, COALESCE(full_path, ''), COALESCE(mib_name, '')
 		FROM mib_oid_names WHERE name = ?
 	`, name).Scan(&entry.Name, &entry.OID, &entry.FullPath, &entry.MIBName)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
 		}
 		return nil, err
 	}
@@ -139,15 +147,16 @@ func (d *DB) GetOIDByNumeric(oid string) (*OIDEntry, error) {
 	// Strip leading dot if present
 	oid = strings.TrimPrefix(oid, ".")
 
+	ctx := context.Background()
 	var entry OIDEntry
-	err := d.db.QueryRow(`
+	err := d.db.QueryRowContext(ctx, `
 		SELECT name, oid, COALESCE(full_path, ''), COALESCE(mib_name, '')
 		FROM mib_oid_names WHERE oid = ?
 	`, oid).Scan(&entry.Name, &entry.OID, &entry.FullPath, &entry.MIBName)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
 		}
 		return nil, err
 	}
@@ -160,7 +169,8 @@ func (d *DB) GetOIDsByPrefix(prefix string) ([]OIDEntry, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
-	rows, err := d.db.Query(`
+	ctx := context.Background()
+	rows, err := d.db.QueryContext(ctx, `
 		SELECT name, oid, COALESCE(full_path, ''), COALESCE(mib_name, '')
 		FROM mib_oid_names WHERE oid LIKE ? || '%'
 		ORDER BY oid
@@ -173,7 +183,7 @@ func (d *DB) GetOIDsByPrefix(prefix string) ([]OIDEntry, error) {
 	var entries []OIDEntry
 	for rows.Next() {
 		var entry OIDEntry
-		if err := rows.Scan(&entry.Name, &entry.OID, &entry.FullPath, &entry.MIBName); err != nil {
+		if err = rows.Scan(&entry.Name, &entry.OID, &entry.FullPath, &entry.MIBName); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)
@@ -187,7 +197,8 @@ func (d *DB) GetOIDsByMIB(mibName string) ([]OIDEntry, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
-	rows, err := d.db.Query(`
+	ctx := context.Background()
+	rows, err := d.db.QueryContext(ctx, `
 		SELECT name, oid, COALESCE(full_path, ''), COALESCE(mib_name, '')
 		FROM mib_oid_names WHERE mib_name = ?
 		ORDER BY oid
@@ -200,7 +211,7 @@ func (d *DB) GetOIDsByMIB(mibName string) ([]OIDEntry, error) {
 	var entries []OIDEntry
 	for rows.Next() {
 		var entry OIDEntry
-		if err := rows.Scan(&entry.Name, &entry.OID, &entry.FullPath, &entry.MIBName); err != nil {
+		if err = rows.Scan(&entry.Name, &entry.OID, &entry.FullPath, &entry.MIBName); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)
@@ -214,7 +225,8 @@ func (d *DB) SearchOIDs(pattern string) ([]OIDEntry, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
-	rows, err := d.db.Query(`
+	ctx := context.Background()
+	rows, err := d.db.QueryContext(ctx, `
 		SELECT name, oid, COALESCE(full_path, ''), COALESCE(mib_name, '')
 		FROM mib_oid_names WHERE name LIKE ?
 		ORDER BY name
@@ -228,7 +240,7 @@ func (d *DB) SearchOIDs(pattern string) ([]OIDEntry, error) {
 	var entries []OIDEntry
 	for rows.Next() {
 		var entry OIDEntry
-		if err := rows.Scan(&entry.Name, &entry.OID, &entry.FullPath, &entry.MIBName); err != nil {
+		if err = rows.Scan(&entry.Name, &entry.OID, &entry.FullPath, &entry.MIBName); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)
@@ -242,16 +254,17 @@ func (d *DB) Stats() (map[string]int, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
+	ctx := context.Background()
 	stats := make(map[string]int)
 
 	var count int
-	if err := d.db.QueryRow(`SELECT COUNT(*) FROM mib_oid_names`).Scan(&count); err != nil {
+	if err := d.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM mib_oid_names`).Scan(&count); err != nil {
 		return nil, err
 	}
 	stats["oid_entries"] = count
 
 	// Count by MIB
-	rows, err := d.db.Query(`
+	rows, err := d.db.QueryContext(ctx, `
 		SELECT mib_name, COUNT(*) as cnt
 		FROM mib_oid_names
 		WHERE mib_name != ''
@@ -266,7 +279,7 @@ func (d *DB) Stats() (map[string]int, error) {
 	for rows.Next() {
 		var mibName string
 		var cnt int
-		if err := rows.Scan(&mibName, &cnt); err != nil {
+		if err = rows.Scan(&mibName, &cnt); err != nil {
 			return nil, err
 		}
 		mibCount++
@@ -282,6 +295,7 @@ func (d *DB) Clear() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	_, err := d.db.Exec(`DELETE FROM mib_oid_names`)
+	ctx := context.Background()
+	_, err := d.db.ExecContext(ctx, `DELETE FROM mib_oid_names`)
 	return err
 }

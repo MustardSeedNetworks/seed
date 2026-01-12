@@ -29,7 +29,6 @@
 import type React from "react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-// Fix #669: Removed deprecated getAuthHeaders - using credentials: 'include' for cookie auth
 import { useSettings } from "../../contexts/useSettings";
 import { useTheme } from "../../hooks/useTheme";
 import { LogComponents, logger } from "../../lib/logger";
@@ -169,9 +168,11 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const {
     displayOptions,
     iperfSettings,
+    cardSettings,
     status: settingsStatus,
     updateDisplayOptions,
     updateIperfSettings,
+    updateCardSettings,
   } = useSettings();
 
   // Create setter wrappers that use context update methods
@@ -522,7 +523,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   // Fetch Network Discovery settings from API
   const fetchNetworkDiscoverySettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/shell/devices/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/shell/devices/settings`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -642,7 +643,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   // Fetch configured subnets from API
   const fetchSubnets = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/shell/devices/subnets`, {
+      const response = await fetch(`${API_BASE}/api/v1/shell/devices/subnets`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -694,7 +695,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     setSubnetsStatus("saving");
 
     try {
-      const response = await fetch(`${API_BASE}/api/shell/devices/subnets`, {
+      const response = await fetch(`${API_BASE}/api/v1/shell/devices/subnets`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -735,7 +736,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const toggleSubnet = async (cidr: string, enabled: boolean) => {
     setSubnetsStatus("saving");
     try {
-      const response = await fetch(`${API_BASE}/api/shell/devices/subnets`, {
+      const response = await fetch(`${API_BASE}/api/v1/shell/devices/subnets`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -762,7 +763,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     try {
       // Backend expects CIDR as query parameter, not in body
       const response = await fetch(
-        `${API_BASE}/api/shell/devices/subnets?cidr=${encodeURIComponent(cidr)}`,
+        `${API_BASE}/api/v1/shell/devices/subnets?cidr=${encodeURIComponent(cidr)}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -785,7 +786,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const saveNetworkDiscoverySettings = useCallback(async () => {
     setNetworkDiscoveryStatus("saving");
     try {
-      const response = await fetch(`${API_BASE}/api/shell/devices/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/shell/devices/settings`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -829,7 +830,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   // Fetch vulnerability scanner settings from API
   const fetchVulnSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/shell/vulnerabilities/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/shell/vulnerabilities/settings`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -852,7 +853,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
   const saveVulnSettings = useCallback(async () => {
     setVulnStatus("saving");
     try {
-      const response = await fetch(`${API_BASE}/api/shell/vulnerabilities/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/shell/vulnerabilities/settings`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -1310,6 +1311,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             linkSettings={linkSettings}
             setLinkSettings={setLinkSettings}
             linkStatus={linkStatus}
+            cardSettings={cardSettings}
+            updateCardSettings={updateCardSettings}
           />
 
           {/* Cable Test Settings - always visible for cable diagnostics */}
@@ -1594,12 +1597,16 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             testsSettings={testsSettings}
             setTestsSettings={setTestsSettings}
             testsStatus={testsStatus}
+            cardSettings={cardSettings}
+            updateCardSettings={updateCardSettings}
           />
 
           <HealthChecksSettings
             testsSettings={testsSettings}
             setTestsSettings={setTestsSettings}
             testsStatus={testsStatus}
+            cardSettings={cardSettings}
+            updateCardSettings={updateCardSettings}
           />
 
           <PerformanceSettings
@@ -1612,6 +1619,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             iperfSuggestionsStatus={iperfSuggestionsStatus}
             iperfSuggestionsError={iperfSuggestionsError}
             fetchIperfSuggestions={fetchIperfSuggestions}
+            cardSettings={cardSettings}
+            updateCardSettings={updateCardSettings}
           />
 
           <DiscoverySettings
@@ -1632,6 +1641,8 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             snmpSettings={snmpSettings}
             setSnmpSettings={setSnmpSettings}
             snmpStatus={snmpStatus}
+            cardSettings={cardSettings}
+            updateCardSettings={updateCardSettings}
           />
 
           <VulnerabilitySettings

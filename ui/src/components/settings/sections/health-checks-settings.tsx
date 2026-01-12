@@ -36,7 +36,7 @@ import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { useArrayItem } from "../../../hooks/useArrayItem";
 import { cn, icon as iconTokens, input, layout, radius, spacing } from "../../../styles/theme";
-import type { SaveStatus, TestsSettings } from "../../../types/settings";
+import type { CardSettings, SaveStatus, TestsSettings } from "../../../types/settings";
 import { CollapsibleSection } from "../../ui/collapsible-section";
 import { HeartPulse } from "../../ui/icons";
 import { AutoSaveIndicator } from "./auto-save-indicator";
@@ -45,12 +45,18 @@ interface HealthChecksSettingsProps {
   testsSettings: TestsSettings;
   setTestsSettings: React.Dispatch<React.SetStateAction<TestsSettings>>;
   testsStatus: SaveStatus;
+  /** Card settings for visibility and FAB configuration */
+  cardSettings: CardSettings;
+  /** Update card settings (triggers auto-save to profile) */
+  updateCardSettings: (updates: Partial<CardSettings>) => void;
 }
 
 export const HealthChecksSettings = memo(function HealthChecksSettings({
   testsSettings,
   setTestsSettings,
   testsStatus,
+  cardSettings,
+  updateCardSettings,
 }: HealthChecksSettingsProps) {
   const { t } = useTranslation("settings");
 
@@ -255,6 +261,66 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
       }
     >
       <div className={spacing.stack.default}>
+        {/* Card Visibility & FAB Controls */}
+        <div className="stack-sm">
+          <label
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              "bg-surface-base",
+              radius.default,
+              "border border-surface-border",
+            )}
+          >
+            <div>
+              <span className="body-small text-text-primary font-medium">
+                {t("common.showCard", "Show Card")}
+              </span>
+              <p className="caption text-text-muted">
+                {t("common.showCardDesc", "Display this card on the dashboard")}
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={cardSettings.healthChecks.enabled}
+              onChange={(e) =>
+                updateCardSettings({
+                  healthChecks: { ...cardSettings.healthChecks, enabled: e.target.checked },
+                })
+              }
+              className={iconTokens.size.sm}
+            />
+          </label>
+          <label
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              "bg-surface-base",
+              radius.default,
+              "border border-surface-border",
+            )}
+          >
+            <div>
+              <span className="body-small text-text-primary font-medium">
+                {t("common.runOnFab", "Include in Run All")}
+              </span>
+              <p className="caption text-text-muted">
+                {t("common.runOnFabDesc", "Run when FAB button is clicked")}
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={cardSettings.healthChecks.autoRunOnLink}
+              onChange={(e) =>
+                updateCardSettings({
+                  healthChecks: { ...cardSettings.healthChecks, autoRunOnLink: e.target.checked },
+                })
+              }
+              className={iconTokens.size.sm}
+            />
+          </label>
+        </div>
+
         {/* Enable Toggle */}
         <label
           className={cn(
@@ -523,8 +589,14 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               />
               {/* Criticality Slider */}
               <div className={cn("flex items-center", spacing.gap.compact)}>
-                <label className="caption text-text-muted w-28">{t("health.criticality")}</label>
+                <label
+                  htmlFor={`http-criticality-${endpoint.id}`}
+                  className="caption text-text-muted w-28"
+                >
+                  {t("health.criticality")}
+                </label>
                 <input
+                  id={`http-criticality-${endpoint.id}`}
                   type="range"
                   min={1}
                   max={10}
@@ -1399,8 +1471,11 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               />
             </label>
             <div className={cn("flex items-center", spacing.gap.compact)}>
-              <label className="caption text-text-muted w-32">{t("health.targetUptime")}</label>
+              <label htmlFor="sla-target-uptime" className="caption text-text-muted w-32">
+                {t("health.targetUptime")}
+              </label>
               <input
+                id="sla-target-uptime"
                 type="number"
                 min={90}
                 max={100}
@@ -1427,8 +1502,11 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               <span className="caption text-text-muted">%</span>
             </div>
             <div className={cn("flex items-center", spacing.gap.compact)}>
-              <label className="caption text-text-muted w-32">{t("health.targetLatency")}</label>
+              <label htmlFor="sla-target-latency" className="caption text-text-muted w-32">
+                {t("health.targetLatency")}
+              </label>
               <input
+                id="sla-target-latency"
                 type="number"
                 min={10}
                 max={10000}
@@ -1499,10 +1577,14 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
             </label>
 
             <div className={cn("flex items-center", spacing.gap.compact)}>
-              <label className="caption text-text-muted flex-1">
+              <label
+                htmlFor="alert-consecutive-failures"
+                className="caption text-text-muted flex-1"
+              >
                 {t("health.consecutiveFailures")}
               </label>
               <input
+                id="alert-consecutive-failures"
                 type="number"
                 min={1}
                 max={10}
@@ -1526,10 +1608,11 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
             </div>
 
             <div className={cn("flex items-center", spacing.gap.compact)}>
-              <label className="caption text-text-muted flex-1">
+              <label htmlFor="alert-cooldown-minutes" className="caption text-text-muted flex-1">
                 {t("health.cooldownMinutes")}
               </label>
               <input
+                id="alert-cooldown-minutes"
                 type="number"
                 min={1}
                 max={60}
@@ -1630,10 +1713,11 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
             </label>
 
             <div className={cn("flex items-center", spacing.gap.compact)}>
-              <label className="caption text-text-muted flex-1">
+              <label htmlFor="anomaly-std-dev-threshold" className="caption text-text-muted flex-1">
                 {t("health.stdDevThreshold")}
               </label>
               <input
+                id="anomaly-std-dev-threshold"
                 type="number"
                 min={1}
                 max={5}
@@ -1657,8 +1741,11 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
             </div>
 
             <div className={cn("flex items-center", spacing.gap.compact)}>
-              <label className="caption text-text-muted flex-1">{t("health.maxSamples")}</label>
+              <label htmlFor="anomaly-max-samples" className="caption text-text-muted flex-1">
+                {t("health.maxSamples")}
+              </label>
               <input
+                id="anomaly-max-samples"
                 type="number"
                 min={10}
                 max={500}

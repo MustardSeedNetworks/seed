@@ -19,7 +19,11 @@ import type React from "react";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { cn, icon as iconTokens, layout, radius, spacing } from "../../../styles/theme";
-import type { LinkSettings as LinkSettingsType, SaveStatus } from "../../../types/settings";
+import type {
+  CardSettings,
+  LinkSettings as LinkSettingsType,
+  SaveStatus,
+} from "../../../types/settings";
 import { CollapsibleSection } from "../../ui/collapsible-section";
 import { PlugZap } from "../../ui/icons";
 import { AutoSaveIndicator } from "./auto-save-indicator";
@@ -28,6 +32,10 @@ interface LinkSettingsProps {
   linkSettings: LinkSettingsType;
   setLinkSettings: React.Dispatch<React.SetStateAction<LinkSettingsType>>;
   linkStatus: SaveStatus;
+  /** Card settings for visibility and FAB configuration */
+  cardSettings: CardSettings;
+  /** Update card settings (triggers auto-save to profile) */
+  updateCardSettings: (updates: Partial<CardSettings>) => void;
 }
 
 // Combined speed/duplex mode options matching ethtool output format
@@ -60,6 +68,8 @@ export const LinkSettings = memo(function LinkSettings({
   linkSettings,
   setLinkSettings,
   linkStatus,
+  cardSettings,
+  updateCardSettings,
 }: LinkSettingsProps) {
   const { t } = useTranslation("settings");
 
@@ -86,6 +96,66 @@ export const LinkSettings = memo(function LinkSettings({
       defaultOpen={false}
     >
       <div className="stack">
+        {/* Card Visibility & FAB Controls */}
+        <div className="stack-sm">
+          <label
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              "bg-surface-base",
+              radius.default,
+              "border border-surface-border",
+            )}
+          >
+            <div>
+              <span className="body-small text-text-primary font-medium">
+                {t("common.showCard", "Show Card")}
+              </span>
+              <p className="caption text-text-muted">
+                {t("common.showCardDesc", "Display this card on the dashboard")}
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={cardSettings.link.enabled}
+              onChange={(e) =>
+                updateCardSettings({
+                  link: { ...cardSettings.link, enabled: e.target.checked },
+                })
+              }
+              className={iconTokens.size.sm}
+            />
+          </label>
+          <label
+            className={cn(
+              layout.flex.between,
+              spacing.pad.sm,
+              "bg-surface-base",
+              radius.default,
+              "border border-surface-border",
+            )}
+          >
+            <div>
+              <span className="body-small text-text-primary font-medium">
+                {t("common.runOnFab", "Include in Run All")}
+              </span>
+              <p className="caption text-text-muted">
+                {t("common.runOnFabDesc", "Run when FAB button is clicked")}
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={cardSettings.link.autoRunOnLink}
+              onChange={(e) =>
+                updateCardSettings({
+                  link: { ...cardSettings.link, autoRunOnLink: e.target.checked },
+                })
+              }
+              className={iconTokens.size.sm}
+            />
+          </label>
+        </div>
+
         {/* Combined Speed/Duplex Dropdown */}
         <div>
           <label className="caption text-text-muted font-medium" htmlFor="link-mode">

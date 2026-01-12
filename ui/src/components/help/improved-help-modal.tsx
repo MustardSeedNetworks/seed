@@ -1637,8 +1637,8 @@ function HowToSection() {
                   "list-decimal",
                 )}
               >
-                {guide.steps.map((step, index) => (
-                  <li key={`${key}-step-${index}`}>{step}</li>
+                {guide.steps.map((step) => (
+                  <li key={`${key}-${step.slice(0, 50)}`}>{step}</li>
                 ))}
               </ol>
             </div>

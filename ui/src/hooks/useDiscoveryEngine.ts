@@ -170,7 +170,7 @@ export function useDiscoveryEngine() {
     try {
       const response = await api.post<EngineResponse>(
         "/api/v1/discovery/engine/scan",
-        options || {}
+        options || {},
       );
       setState((prev) => ({
         ...prev,
@@ -256,7 +256,9 @@ export function useDiscoveryEngine() {
    */
   const getDevice = useCallback(async (mac: string): Promise<EngineDevice | null> => {
     try {
-      const device = await api.get<EngineDevice>(`/api/v1/discovery/engine/device/${encodeURIComponent(mac)}`);
+      const device = await api.get<EngineDevice>(
+        `/api/v1/discovery/engine/device/${encodeURIComponent(mac)}`,
+      );
       return device;
     } catch (err) {
       log.error(`Failed to get device ${mac}`, err);

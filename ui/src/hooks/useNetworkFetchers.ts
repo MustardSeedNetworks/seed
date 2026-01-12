@@ -233,7 +233,7 @@ export function useNetworkFetchers({
   // Fetch discovery data (LLDP/CDP/EDP neighbors)
   const fetchDiscoveryData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/shell/discovery`, {
+      const response = await fetch(`${API_BASE}/api/v1/shell/discovery`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -520,11 +520,11 @@ export function useNetworkFetchers({
       const requestedInterface = currentInterfaceRef.current;
 
       const [devicesRes, statusRes] = await Promise.all([
-        fetch(`${API_BASE}/api/shell/devices`, {
+        fetch(`${API_BASE}/api/v1/shell/devices`, {
           credentials: "include",
           signal: controller.signal,
         }),
-        fetch(`${API_BASE}/api/shell/devices/status`, {
+        fetch(`${API_BASE}/api/v1/shell/devices/status`, {
           credentials: "include",
           signal: controller.signal,
         }),

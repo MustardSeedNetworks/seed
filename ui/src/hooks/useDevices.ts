@@ -339,7 +339,7 @@ export function useDevices() {
    */
   const deleteSubnet = useCallback(async (cidr: string): Promise<boolean> => {
     try {
-      await api.delete(`/api/shell/devices/subnets?cidr=${encodeURIComponent(cidr)}`);
+      await api.delete(`/api/v1/shell/devices/subnets?cidr=${encodeURIComponent(cidr)}`);
       return true;
     } catch (err) {
       logger.error(LogComponents.Devices, "Failed to delete subnet", err, {
