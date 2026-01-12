@@ -210,8 +210,8 @@ func TestErrorTypeAssertions(t *testing.T) {
 	t.Parallel()
 
 	// Compile-time check that errors implement error interface
-	var _ = error(shell.ErrNotImplemented)
-	var _ = error(shell.ErrNotInitialized)
+	var _ error = shell.ErrNotImplemented //nolint:staticcheck // explicit type for interface check
+	var _ error = shell.ErrNotInitialized //nolint:staticcheck // explicit type for interface check
 
 	// Runtime check
 	if shell.ErrNotImplemented == nil {

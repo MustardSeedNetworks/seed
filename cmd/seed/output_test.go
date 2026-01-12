@@ -282,7 +282,7 @@ func TestOutputCredentialsFunctionExists(t *testing.T) {
 
 	// The function signature should be:
 	// func outputCredentials(creds setupCredentials, asJSON bool) error
-	var _ = outputCredentials
+	_ = outputCredentials
 
 	// Verify JSON marshaling works for the type
 	_, err := json.Marshal(creds)
@@ -302,7 +302,7 @@ func TestOutputResultFunctionExists(t *testing.T) {
 
 	// The function signature should be:
 	// func outputResult(result ValidationResult, asJSON bool)
-	var _ = outputResult
+	_ = outputResult
 
 	// Verify JSON marshaling works for the type
 	_, err := json.Marshal(result)

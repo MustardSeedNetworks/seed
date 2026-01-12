@@ -147,7 +147,7 @@ func (s *Server) handleProblemScan(w http.ResponseWriter, r *http.Request) {
 // handleProblemThresholds handles GET/PUT for problem detection thresholds.
 //
 // GET /api/v1/discovery/problems/thresholds - Get current thresholds
-// PUT /api/v1/discovery/problems/thresholds - Update thresholds
+// PUT /api/v1/discovery/problems/thresholds - Update thresholds.
 func (s *Server) handleProblemThresholds(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)

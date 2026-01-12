@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
@@ -56,7 +57,12 @@ func DefaultWiFiBridgeConfig() *WiFiBridgeConfig {
 }
 
 // NewWiFiBridge creates a new WiFi bridge.
-func NewWiFiBridge(scanner *wifi.Scanner, manager *wifi.Manager, oui *OUIDatabase, config *WiFiBridgeConfig) *WiFiBridge {
+func NewWiFiBridge(
+	scanner *wifi.Scanner,
+	manager *wifi.Manager,
+	oui *OUIDatabase,
+	config *WiFiBridgeConfig,
+) *WiFiBridge {
 	if config == nil {
 		config = DefaultWiFiBridgeConfig()
 	}
@@ -501,7 +507,7 @@ func mapSecurityString(sec string) WiFiSecurityType {
 // toLower is a simple ASCII lowercase function.
 func toLower(s string) string {
 	b := make([]byte, len(s))
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		c := s[i]
 		if c >= 'A' && c <= 'Z' {
 			c += 'a' - 'A'

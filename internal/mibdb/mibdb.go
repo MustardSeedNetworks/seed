@@ -128,7 +128,6 @@ func (d *DB) GetOIDByName(name string) (*OIDEntry, error) {
 		SELECT name, oid, COALESCE(full_path, ''), COALESCE(mib_name, '')
 		FROM mib_oid_names WHERE name = ?
 	`, name).Scan(&entry.Name, &entry.OID, &entry.FullPath, &entry.MIBName)
-
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
@@ -153,7 +152,6 @@ func (d *DB) GetOIDByNumeric(oid string) (*OIDEntry, error) {
 		SELECT name, oid, COALESCE(full_path, ''), COALESCE(mib_name, '')
 		FROM mib_oid_names WHERE oid = ?
 	`, oid).Scan(&entry.Name, &entry.OID, &entry.FullPath, &entry.MIBName)
-
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound

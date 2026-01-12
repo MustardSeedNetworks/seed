@@ -169,7 +169,12 @@ func (am *AlertManager) RegisterHandler(handler AlertHandler) {
 }
 
 // RecordFailure records a health check failure and potentially triggers an alert.
-func (am *AlertManager) RecordFailure(ctx context.Context, endpointName, checkType string, errorMsg string, criticality int) *HealthAlert {
+func (am *AlertManager) RecordFailure(
+	ctx context.Context,
+	endpointName, checkType string,
+	errorMsg string,
+	criticality int,
+) *HealthAlert {
 	am.mu.Lock()
 	defer am.mu.Unlock()
 
@@ -254,7 +259,12 @@ func (am *AlertManager) RecordSuccess(_ context.Context, endpointName, checkType
 }
 
 // CreateSLAAlert creates an alert for an SLA violation.
-func (am *AlertManager) CreateSLAAlert(_ context.Context, endpointName, violationType string, target, actual float64, criticality int) *HealthAlert {
+func (am *AlertManager) CreateSLAAlert(
+	_ context.Context,
+	endpointName, violationType string,
+	target, actual float64,
+	criticality int,
+) *HealthAlert {
 	am.mu.Lock()
 	defer am.mu.Unlock()
 
@@ -286,7 +296,11 @@ func (am *AlertManager) CreateSLAAlert(_ context.Context, endpointName, violatio
 }
 
 // CreateAnomalyAlert creates an alert for a detected anomaly.
-func (am *AlertManager) CreateAnomalyAlert(_ context.Context, endpointName, anomalyType string, value, expected, deviation float64) *HealthAlert {
+func (am *AlertManager) CreateAnomalyAlert(
+	_ context.Context,
+	endpointName, anomalyType string,
+	value, expected, deviation float64,
+) *HealthAlert {
 	am.mu.Lock()
 	defer am.mu.Unlock()
 
@@ -304,10 +318,16 @@ func (am *AlertManager) CreateAnomalyAlert(_ context.Context, endpointName, anom
 		Severity:     severity,
 		EndpointName: endpointName,
 		Title:        fmt.Sprintf("Anomaly Detected: %s", endpointName),
-		Message:      fmt.Sprintf("%s: value %.2f (expected %.2f, %.1f stddev)", anomalyType, value, expected, deviation),
-		State:        AlertStateActive,
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		Message: fmt.Sprintf(
+			"%s: value %.2f (expected %.2f, %.1f stddev)",
+			anomalyType,
+			value,
+			expected,
+			deviation,
+		),
+		State:     AlertStateActive,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 		Metadata: map[string]any{
 			"anomalyType": anomalyType,
 			"value":       value,
@@ -459,7 +479,12 @@ func (am *AlertManager) getOrCreateState(endpointName string) *EndpointState {
 }
 
 // createAlert creates a new alert.
-func (am *AlertManager) createAlert(_ context.Context, alertType, endpointName, checkType string, criticality int, message string) *HealthAlert {
+func (am *AlertManager) createAlert(
+	_ context.Context,
+	alertType, endpointName, checkType string,
+	criticality int,
+	message string,
+) *HealthAlert {
 	severity := SeverityWarning
 	if criticality >= CriticalityCriticalThreshold {
 		severity = SeverityCritical

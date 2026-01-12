@@ -163,11 +163,16 @@ func (ad *AnomalyDetector) checkLatencyAnomaly(endpointName string, latencyMs fl
 			EndpointName: endpointName,
 			Type:         AnomalyTypeLatencySpike,
 			Severity:     ad.getSeverity(deviation),
-			Message:      fmt.Sprintf("Latency %.0fms exceeds normal range (mean: %.0fms, stddev: %.0fms)", latencyMs, stats.Mean, stats.StdDev),
-			Value:        latencyMs,
-			Expected:     stats.Mean,
-			Deviation:    deviation,
-			DetectedAt:   time.Now(),
+			Message: fmt.Sprintf(
+				"Latency %.0fms exceeds normal range (mean: %.0fms, stddev: %.0fms)",
+				latencyMs,
+				stats.Mean,
+				stats.StdDev,
+			),
+			Value:      latencyMs,
+			Expected:   stats.Mean,
+			Deviation:  deviation,
+			DetectedAt: time.Now(),
 		}
 
 		ad.activeAnomalies[anomaly.ID] = anomaly
@@ -185,11 +190,15 @@ func (ad *AnomalyDetector) checkLatencyAnomaly(endpointName string, latencyMs fl
 			EndpointName: endpointName,
 			Type:         AnomalyTypeLatencyDrop,
 			Severity:     SeverityInfo,
-			Message:      fmt.Sprintf("Latency %.0fms significantly below normal (mean: %.0fms)", latencyMs, stats.Mean),
-			Value:        latencyMs,
-			Expected:     stats.Mean,
-			Deviation:    deviation,
-			DetectedAt:   time.Now(),
+			Message: fmt.Sprintf(
+				"Latency %.0fms significantly below normal (mean: %.0fms)",
+				latencyMs,
+				stats.Mean,
+			),
+			Value:      latencyMs,
+			Expected:   stats.Mean,
+			Deviation:  deviation,
+			DetectedAt: time.Now(),
 		}
 
 		// Don't track positive anomalies as active
@@ -220,7 +229,11 @@ func (ad *AnomalyDetector) RecordAvailability(endpointName string, successRate f
 }
 
 // checkAvailabilityAnomaly checks if availability is anomalously low.
-func (ad *AnomalyDetector) checkAvailabilityAnomaly(endpointName string, successRate float64, stats *EndpointStats) *Anomaly {
+func (ad *AnomalyDetector) checkAvailabilityAnomaly(
+	endpointName string,
+	successRate float64,
+	stats *EndpointStats,
+) *Anomaly {
 	if stats.StdDev == 0 {
 		return nil
 	}
@@ -234,11 +247,15 @@ func (ad *AnomalyDetector) checkAvailabilityAnomaly(endpointName string, success
 			EndpointName: endpointName,
 			Type:         AnomalyTypeAvailabilityDip,
 			Severity:     ad.getSeverity(math.Abs(deviation)),
-			Message:      fmt.Sprintf("Availability %.1f%% below normal (mean: %.1f%%)", successRate*100, stats.Mean*100),
-			Value:        successRate,
-			Expected:     stats.Mean,
-			Deviation:    deviation,
-			DetectedAt:   time.Now(),
+			Message: fmt.Sprintf(
+				"Availability %.1f%% below normal (mean: %.1f%%)",
+				successRate*100,
+				stats.Mean*100,
+			),
+			Value:      successRate,
+			Expected:   stats.Mean,
+			Deviation:  deviation,
+			DetectedAt: time.Now(),
 		}
 
 		ad.activeAnomalies[anomaly.ID] = anomaly

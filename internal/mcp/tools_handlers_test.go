@@ -37,7 +37,6 @@ func TestHandleGetDevices_Success(t *testing.T) {
 	request := mcp.NewCallToolRequest("get_devices", nil)
 
 	result, err := server.ExportHandleGetDevices(context.Background(), request)
-
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -55,7 +54,6 @@ func TestHandleGetDevices_ServiceUnavailable(t *testing.T) {
 	request := mcp.NewCallToolRequest("get_devices", nil)
 
 	result, err := server.ExportHandleGetDevices(context.Background(), request)
-
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -125,7 +123,6 @@ func TestHandleNetworkScan(t *testing.T) {
 			request := mcp.NewCallToolRequest("network_scan", tt.args)
 
 			result, err := server.ExportHandleNetworkScan(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -198,7 +195,6 @@ func TestHandleDeviceFingerprint(t *testing.T) {
 			request := mcp.NewCallToolRequest("device_fingerprint", tt.args)
 
 			result, err := server.ExportHandleDeviceFingerprint(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -272,7 +268,6 @@ func TestHandleGetNeighbors(t *testing.T) {
 			request := mcp.NewCallToolRequest("get_neighbors", tt.args)
 
 			result, err := server.ExportHandleGetNeighbors(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -332,7 +327,6 @@ func TestHandleTraceroute(t *testing.T) {
 			request := mcp.NewCallToolRequest("traceroute", tt.args)
 
 			result, err := server.ExportHandleTraceroute(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -382,7 +376,6 @@ func TestHandleDNSTest(t *testing.T) {
 			request := mcp.NewCallToolRequest("dns_test", nil)
 
 			result, err := server.ExportHandleDNSTest(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -452,7 +445,6 @@ func TestHandleGatewayPing(t *testing.T) {
 			request := mcp.NewCallToolRequest("gateway_ping", nil)
 
 			result, err := server.ExportHandleGatewayPing(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -515,7 +507,6 @@ func TestHandleSpeedtest(t *testing.T) {
 			request := mcp.NewCallToolRequest("speedtest", nil)
 
 			result, err := server.ExportHandleSpeedtest(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -612,7 +603,6 @@ func TestHandleIperfTest(t *testing.T) {
 			request := mcp.NewCallToolRequest("iperf_test", tt.args)
 
 			result, err := server.ExportHandleIperfTest(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -676,7 +666,6 @@ func TestHandleWiFiScan(t *testing.T) {
 			request := mcp.NewCallToolRequest("wifi_scan", nil)
 
 			result, err := server.ExportHandleWiFiScan(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -738,7 +727,6 @@ func TestHandleWiFiInfo(t *testing.T) {
 			request := mcp.NewCallToolRequest("wifi_info", nil)
 
 			result, err := server.ExportHandleWiFiInfo(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -788,7 +776,6 @@ func TestHandleGetInterfaces(t *testing.T) {
 			request := mcp.NewCallToolRequest("get_interfaces", nil)
 
 			result, err := server.ExportHandleGetInterfaces(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -841,7 +828,6 @@ func TestHandleGetLinkStatus(t *testing.T) {
 			request := mcp.NewCallToolRequest("get_link_status", nil)
 
 			result, err := server.ExportHandleGetLinkStatus(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -904,7 +890,6 @@ func TestHandleGetIPConfig(t *testing.T) {
 			request := mcp.NewCallToolRequest("get_ip_config", nil)
 
 			result, err := server.ExportHandleGetIPConfig(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -951,7 +936,6 @@ func TestHandleGetPublicIP(t *testing.T) {
 			request := mcp.NewCallToolRequest("get_public_ip", nil)
 
 			result, err := server.ExportHandleGetPublicIP(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -999,7 +983,6 @@ func TestHandleGetVLANInfo(t *testing.T) {
 			request := mcp.NewCallToolRequest("get_vlan_info", nil)
 
 			result, err := server.ExportHandleGetVLANInfo(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -1047,7 +1030,6 @@ func TestHandleSystemHealth(t *testing.T) {
 			request := mcp.NewCallToolRequest("system_health", nil)
 
 			result, err := server.ExportHandleSystemHealth(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -1100,7 +1082,6 @@ func TestHandleGetDiscoveryStatus(t *testing.T) {
 			request := mcp.NewCallToolRequest("get_discovery_status", nil)
 
 			result, err := server.ExportHandleGetDiscoveryStatus(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -1192,7 +1173,6 @@ func TestHandleVulnerabilityScan(t *testing.T) {
 			request := mcp.NewCallToolRequest("vulnerability_scan", tt.args)
 
 			result, err := server.ExportHandleVulnerabilityScan(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -1247,7 +1227,6 @@ func TestHandleRogueDHCPCheck(t *testing.T) {
 			request := mcp.NewCallToolRequest("rogue_dhcp_check", nil)
 
 			result, err := server.ExportHandleRogueDHCPCheck(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -1315,7 +1294,6 @@ func TestHandleSNMPQuery(t *testing.T) {
 			request := mcp.NewCallToolRequest("snmp_query", tt.args)
 
 			result, err := server.ExportHandleSNMPQuery(context.Background(), request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -1547,7 +1525,6 @@ func TestHandlerErrorMessages(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := createTestServer(tt.provider)
 			result, err := tt.handler(server, context.Background(), tt.request)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

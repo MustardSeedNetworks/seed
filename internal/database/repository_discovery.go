@@ -81,7 +81,10 @@ func (r *DiscoveryRepository) GetWiFiNetworkBySSID(ctx context.Context, ssid str
 }
 
 // ListWiFiNetworks retrieves all WiFi networks.
-func (r *DiscoveryRepository) ListWiFiNetworks(ctx context.Context, opts WiFiNetworkListOptions) ([]*WiFiNetworkDB, error) {
+func (r *DiscoveryRepository) ListWiFiNetworks(
+	ctx context.Context,
+	opts WiFiNetworkListOptions,
+) ([]*WiFiNetworkDB, error) {
 	query := `
 		SELECT id, ssid, is_hidden, security_type, authorization_status, first_seen, last_seen, metadata_json
 		FROM wifi_networks WHERE 1=1
@@ -284,7 +287,10 @@ func (r *DiscoveryRepository) GetWiFiAccessPointByBSSID(ctx context.Context, bss
 }
 
 // ListWiFiAccessPoints retrieves WiFi access points with filters.
-func (r *DiscoveryRepository) ListWiFiAccessPoints(ctx context.Context, opts WiFiAPListOptions) ([]*WiFiAccessPointDB, error) {
+func (r *DiscoveryRepository) ListWiFiAccessPoints(
+	ctx context.Context,
+	opts WiFiAPListOptions,
+) ([]*WiFiAccessPointDB, error) {
 	query := `
 		SELECT id, bssid, ssid_id, ssid_name, ap_name, vendor, channel, channel_width, frequency_mhz, band,
 		       signal_dbm, noise_dbm, client_count, is_authorized, first_seen, last_seen, metadata_json
@@ -523,7 +529,10 @@ func (r *DiscoveryRepository) GetNetworkProblem(ctx context.Context, id string) 
 }
 
 // ListNetworkProblems retrieves network problems with filters.
-func (r *DiscoveryRepository) ListNetworkProblems(ctx context.Context, opts ProblemListOptions) ([]*NetworkProblemDB, error) {
+func (r *DiscoveryRepository) ListNetworkProblems(
+	ctx context.Context,
+	opts ProblemListOptions,
+) ([]*NetworkProblemDB, error) {
 	query := `
 		SELECT id, category, type, severity, status, title, description, device_id, device_mac,
 		       interface_name, ip_address, affected_macs, ssid, bssid, channel, current_value,
@@ -932,7 +941,11 @@ func (r *DiscoveryRepository) CreateChannelUtilization(ctx context.Context, util
 }
 
 // GetChannelUtilization retrieves the latest utilization for a channel.
-func (r *DiscoveryRepository) GetChannelUtilization(ctx context.Context, channel int, band string) (*ChannelUtilizationDB, error) {
+func (r *DiscoveryRepository) GetChannelUtilization(
+	ctx context.Context,
+	channel int,
+	band string,
+) (*ChannelUtilizationDB, error) {
 	row := r.db.QueryRow(ctx, `
 		SELECT id, channel, band, frequency_mhz, utilization_percent, non_wifi_percent, retry_percent,
 		       ap_count, client_count, recorded_at
@@ -961,7 +974,10 @@ func (r *DiscoveryRepository) GetChannelUtilization(ctx context.Context, channel
 }
 
 // ListChannelUtilization retrieves channel utilization for all channels.
-func (r *DiscoveryRepository) ListChannelUtilization(ctx context.Context, band string) ([]*ChannelUtilizationDB, error) {
+func (r *DiscoveryRepository) ListChannelUtilization(
+	ctx context.Context,
+	band string,
+) ([]*ChannelUtilizationDB, error) {
 	query := `
 		SELECT id, channel, band, frequency_mhz, utilization_percent, non_wifi_percent, retry_percent,
 		       ap_count, client_count, recorded_at

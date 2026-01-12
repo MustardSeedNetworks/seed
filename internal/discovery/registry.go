@@ -10,6 +10,7 @@ package discovery
 // - Automatic correlation across discovery sources
 
 import (
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -385,11 +386,8 @@ func (r *DeviceRegistry) GetDevicesByConnectionType(connType ConnectionType) []*
 
 	var result []*DiscoveredDevice
 	for _, device := range r.devices {
-		for _, ct := range device.ConnectionTypes {
-			if ct == connType {
-				result = append(result, device)
-				break
-			}
+		if slices.Contains(device.ConnectionTypes, connType) {
+			result = append(result, device)
 		}
 	}
 	return result
@@ -587,12 +585,7 @@ func (r *DeviceRegistry) updateConnectionStats(device *DiscoveredDevice, adding 
 
 // containsConnectionType checks if a connection type is in the slice.
 func containsConnectionType(types []ConnectionType, t ConnectionType) bool {
-	for _, ct := range types {
-		if ct == t {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(types, t)
 }
 
 // containsVuln checks if a vulnerability is already in the slice.

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -350,7 +351,7 @@ func estimateDistance(txPower, rssi int) float64 {
 	}
 	ratio := float64(txPower-rssi) / (10 * pathLossExponent)
 	distance := 1.0
-	for i := 0; i < int(ratio); i++ {
+	for range int(ratio) {
 		distance *= 10
 	}
 	// Interpolate for fractional part
@@ -390,63 +391,41 @@ func ClassOfDeviceToClass(cod uint32) BluetoothDeviceClass {
 	}
 }
 
+// bleAppearanceCategoryMap maps BLE appearance categories to device classes.
+var bleAppearanceCategoryMap = map[uint16]BluetoothDeviceClass{
+	0:  BluetoothClassMisc,       // Generic
+	1:  BluetoothClassPhone,      // Phone
+	2:  BluetoothClassComputer,   // Computer
+	3:  BluetoothClassWearable,   // Watch
+	4:  BluetoothClassWearable,   // Clock
+	5:  BluetoothClassMisc,       // Display
+	6:  BluetoothClassMisc,       // Remote Control
+	7:  BluetoothClassMisc,       // Eye-glasses
+	8:  BluetoothClassMisc,       // Tag
+	9:  BluetoothClassPeripheral, // Keyring
+	10: BluetoothClassMisc,       // Media player
+	11: BluetoothClassMisc,       // Barcode scanner
+	12: BluetoothClassHealth,     // Thermometer
+	13: BluetoothClassHealth,     // Heart rate
+	14: BluetoothClassHealth,     // Blood pressure
+	15: BluetoothClassHealth,     // HID
+	16: BluetoothClassHealth,     // Glucose
+	17: BluetoothClassHealth,     // Running/walking
+	18: BluetoothClassHealth,     // Cycling
+	49: BluetoothClassHealth,     // Pulse oximeter
+	50: BluetoothClassHealth,     // Weight scale
+	51: BluetoothClassHealth,     // Personal mobility
+	52: BluetoothClassHealth,     // Continuous glucose
+	53: BluetoothClassHealth,     // Insulin pump
+	54: BluetoothClassHealth,     // Medication delivery
+	81: BluetoothClassMisc,       // Outdoor sports
+}
+
 // BLEAppearanceToClass converts BLE appearance value to our class enum.
 func BLEAppearanceToClass(appearance uint16) BluetoothDeviceClass {
 	category := appearance >> 6 // High 10 bits are category
-	switch category {
-	case 0:
-		return BluetoothClassMisc
-	case 1:
-		return BluetoothClassPhone
-	case 2:
-		return BluetoothClassComputer
-	case 3:
-		return BluetoothClassWearable // Watch
-	case 4:
-		return BluetoothClassWearable // Clock
-	case 5:
-		return BluetoothClassMisc // Display
-	case 6:
-		return BluetoothClassMisc // Remote Control
-	case 7:
-		return BluetoothClassMisc // Eye-glasses
-	case 8:
-		return BluetoothClassMisc // Tag
-	case 9:
-		return BluetoothClassPeripheral // Keyring
-	case 10:
-		return BluetoothClassMisc // Media player
-	case 11:
-		return BluetoothClassMisc // Barcode scanner
-	case 12:
-		return BluetoothClassHealth // Thermometer
-	case 13:
-		return BluetoothClassHealth // Heart rate
-	case 14:
-		return BluetoothClassHealth // Blood pressure
-	case 15:
-		return BluetoothClassHealth // HID
-	case 16:
-		return BluetoothClassHealth // Glucose
-	case 17:
-		return BluetoothClassHealth // Running/walking
-	case 18:
-		return BluetoothClassHealth // Cycling
-	case 49:
-		return BluetoothClassHealth // Pulse oximeter
-	case 50:
-		return BluetoothClassHealth // Weight scale
-	case 51:
-		return BluetoothClassHealth // Personal mobility
-	case 52:
-		return BluetoothClassHealth // Continuous glucose
-	case 53:
-		return BluetoothClassHealth // Insulin pump
-	case 54:
-		return BluetoothClassHealth // Medication delivery
-	case 81:
-		return BluetoothClassMisc // Outdoor sports
-	default:
-		return BluetoothClassUncategorized
+	if class, ok := bleAppearanceCategoryMap[category]; ok {
+		return class
 	}
+	return BluetoothClassUncategorized
 }

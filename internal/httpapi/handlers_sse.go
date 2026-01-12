@@ -56,9 +56,6 @@ const (
 	// sseClientBufferSize is the buffer size for each client's message channel.
 	sseClientBufferSize = 64
 
-	// sseWriteTimeout is the maximum time allowed for a write operation.
-	sseWriteTimeout = 10 * time.Second
-
 	// sseBroadcastTimeoutMs is the timeout in milliseconds for broadcast operations.
 	sseBroadcastTimeoutMs = 100
 )
@@ -404,20 +401,5 @@ type sseLogBroadcastAdapter struct {
 func (a *sseLogBroadcastAdapter) BroadcastLogEntry(entry *logging.LogEntry) {
 	if a.hub != nil {
 		a.hub.BroadcastLogEntry(entry)
-	}
-}
-
-// ssePipelineBroadcastAdapter wraps the SSEHub for pipeline events.
-type ssePipelineBroadcastAdapter struct {
-	hub *SSEHub
-}
-
-// BroadcastPipelineEvent implements discovery.EventBroadcaster interface.
-func (a *ssePipelineBroadcastAdapter) BroadcastPipelineEvent(event any) {
-	if a.hub != nil {
-		a.hub.Broadcast(Message{
-			Type:    "pipeline",
-			Payload: event,
-		})
 	}
 }

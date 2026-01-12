@@ -396,7 +396,6 @@ func TestFindSystemIperf3Available(t *testing.T) {
 	}
 
 	path, err := iperf.FindSystemIperf3()
-
 	if err != nil {
 		// This is expected if iperf3 is not installed
 		t.Logf("iperf3 not found in system PATH: %v", err)

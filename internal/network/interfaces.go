@@ -217,8 +217,10 @@ func (m *Manager) SetCurrentInterface(name string) error {
 type InterfaceChangeCallback func(oldInterface, newInterface string)
 
 // interfaceChangeCallbacks stores registered callbacks for interface changes.
-var interfaceChangeCallbacks []InterfaceChangeCallback
-var interfaceCallbackMu sync.RWMutex
+var (
+	interfaceChangeCallbacks []InterfaceChangeCallback
+	interfaceCallbackMu      sync.RWMutex
+)
 
 // OnInterfaceChange registers a callback to be notified when the active interface changes.
 // #756: Modules use this to rebind when auto-detection switches interfaces.

@@ -206,7 +206,7 @@ func parseIWScanOutput(output string) []*ScannedNetwork {
 			current = &ScannedNetwork{
 				BSSID:        strings.ToUpper(matches[1]),
 				LastSeen:     time.Now(),
-				ChannelWidth: 20, // Default
+				ChannelWidth: 20,  // Default
 				NoiseFloor:   -95, // Default noise floor
 			}
 			inRSN = false

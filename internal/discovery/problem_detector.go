@@ -7,13 +7,32 @@ package discovery
 import (
 	"context"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/krisarmstrong/seed/internal/logging"
 )
+
+// safeUint64ToInt64 safely converts uint64 to int64, clamping at MaxInt64.
+func safeUint64ToInt64(v uint64) int64 {
+	if v > math.MaxInt64 {
+		return math.MaxInt64
+	}
+	return int64(v)
+}
+
+// titleCase converts a string to title case (first letter uppercase).
+// Replacement for deprecated strings.Title.
+func titleCase(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + strings.ToLower(s[1:])
+}
 
 // ProblemDetector scans for network problems and issues.
 type ProblemDetector struct {
@@ -111,7 +130,11 @@ func (d *ProblemDetector) Scan(ctx context.Context, devices []*DiscoveredDevice)
 }
 
 // ScanWiFi runs WiFi-specific problem detection.
-func (d *ProblemDetector) ScanWiFi(ctx context.Context, scanResult *WiFiScanResult, authorizedSSIDs, authorizedBSSIDs []string) []WiFiProblem {
+func (d *ProblemDetector) ScanWiFi(
+	_ context.Context,
+	scanResult *WiFiScanResult,
+	authorizedSSIDs, authorizedBSSIDs []string,
+) []WiFiProblem {
 	if scanResult == nil {
 		return nil
 	}
@@ -120,45 +143,54 @@ func (d *ProblemDetector) ScanWiFi(ctx context.Context, scanResult *WiFiScanResu
 	thresholds := d.thresholds
 	d.mu.RUnlock()
 
-	var problems []WiFiProblem
-
-	// Build authorized lookups
-	authSSIDs := make(map[string]bool)
-	for _, ssid := range authorizedSSIDs {
-		authSSIDs[ssid] = true
-	}
-	authBSSIDs := make(map[string]bool)
-	for _, bssid := range authorizedBSSIDs {
-		authBSSIDs[strings.ToUpper(bssid)] = true
-	}
-
+	authSSIDs := buildSSIDLookup(authorizedSSIDs)
+	authBSSIDs := buildBSSIDLookup(authorizedBSSIDs)
 	now := time.Now()
 
-	// Check for rogue/unauthorized APs
-	for _, ap := range scanResult.APs {
+	var problems []WiFiProblem
+	problems = append(problems, d.checkRogueAPs(scanResult.APs, authSSIDs, authBSSIDs, thresholds, now)...)
+	problems = append(problems, d.checkChannelInterference(scanResult.APs, thresholds, now)...)
+	problems = append(problems, d.checkUtilization(scanResult.Utilization, thresholds, now)...)
+
+	return problems
+}
+
+func buildSSIDLookup(ssids []string) map[string]bool {
+	lookup := make(map[string]bool)
+	for _, ssid := range ssids {
+		lookup[ssid] = true
+	}
+	return lookup
+}
+
+func buildBSSIDLookup(bssids []string) map[string]bool {
+	lookup := make(map[string]bool)
+	for _, bssid := range bssids {
+		lookup[strings.ToUpper(bssid)] = true
+	}
+	return lookup
+}
+
+func (d *ProblemDetector) checkRogueAPs(aps []WiFiAP, authSSIDs, authBSSIDs map[string]bool, thresholds ProblemThresholds, now time.Time) []WiFiProblem {
+	var problems []WiFiProblem
+	for _, ap := range aps {
 		normalizedBSSID := strings.ToUpper(ap.BSSID)
 
-		// Check if AP is unauthorized
-		if !authBSSIDs[normalizedBSSID] && !authSSIDs[ap.SSIDName] {
-			// Only flag if the SSID matches an authorized one but BSSID doesn't
-			// This could be a rogue AP impersonating a legit network
-			if authSSIDs[ap.SSIDName] {
-				problems = append(problems, WiFiProblem{
-					ProblemType:    "rogue_ap",
-					SSID:           ap.SSIDName,
-					BSSID:          ap.BSSID,
-					Channel:        ap.Channel,
-					Band:           ap.Band,
-					SignalDBm:      ap.SignalDBm,
-					IsRogue:        true,
-					IsUnauthorized: true,
-					FirstSeen:      now,
-					LastSeen:       now,
-				})
-			}
+		if !authBSSIDs[normalizedBSSID] && !authSSIDs[ap.SSIDName] && authSSIDs[ap.SSIDName] {
+			problems = append(problems, WiFiProblem{
+				ProblemType:    "rogue_ap",
+				SSID:           ap.SSIDName,
+				BSSID:          ap.BSSID,
+				Channel:        ap.Channel,
+				Band:           ap.Band,
+				SignalDBm:      ap.SignalDBm,
+				IsRogue:        true,
+				IsUnauthorized: true,
+				FirstSeen:      now,
+				LastSeen:       now,
+			})
 		}
 
-		// Check for weak signal
 		if ap.SignalDBm < thresholds.MinSignalDBm {
 			problems = append(problems, WiFiProblem{
 				ProblemType: "weak_signal",
@@ -172,14 +204,17 @@ func (d *ProblemDetector) ScanWiFi(ctx context.Context, scanResult *WiFiScanResu
 			})
 		}
 	}
+	return problems
+}
 
-	// Check for channel interference
-	channelAPCounts := make(map[string]int) // key: "band-channel"
-	for _, ap := range scanResult.APs {
+func (d *ProblemDetector) checkChannelInterference(aps []WiFiAP, thresholds ProblemThresholds, now time.Time) []WiFiProblem {
+	channelAPCounts := make(map[string]int)
+	for _, ap := range aps {
 		key := fmt.Sprintf("%s-%d", ap.Band, ap.Channel)
 		channelAPCounts[key]++
 	}
 
+	var problems []WiFiProblem
 	for key, count := range channelAPCounts {
 		if count > thresholds.MaxCoChannelAPs {
 			parts := strings.SplitN(key, "-", 2)
@@ -188,7 +223,9 @@ func (d *ProblemDetector) ScanWiFi(ctx context.Context, scanResult *WiFiScanResu
 			}
 			band := WiFiBand(parts[0])
 			var channel int
-			fmt.Sscanf(parts[1], "%d", &channel)
+			if _, err := fmt.Sscanf(parts[1], "%d", &channel); err != nil {
+				continue
+			}
 
 			problems = append(problems, WiFiProblem{
 				ProblemType:  "channel_interference",
@@ -200,9 +237,12 @@ func (d *ProblemDetector) ScanWiFi(ctx context.Context, scanResult *WiFiScanResu
 			})
 		}
 	}
+	return problems
+}
 
-	// Check channel utilization
-	for _, util := range scanResult.Utilization {
+func (d *ProblemDetector) checkUtilization(utilization []WiFiChannelUtilization, thresholds ProblemThresholds, now time.Time) []WiFiProblem {
+	var problems []WiFiProblem
+	for _, util := range utilization {
 		if util.UtilizationPercent > thresholds.MaxChannelUtil {
 			problems = append(problems, WiFiProblem{
 				ProblemType:        "high_utilization",
@@ -214,13 +254,16 @@ func (d *ProblemDetector) ScanWiFi(ctx context.Context, scanResult *WiFiScanResu
 			})
 		}
 	}
-
 	return problems
 }
 
 // detectIPConflicts finds duplicate IP addresses.
 // Uses the HasDuplicateIP and DuplicateMACs fields already populated by discovery.
-func (d *ProblemDetector) detectIPConflicts(ctx context.Context, devices []*DiscoveredDevice, result *ProblemDetectionResult) {
+func (d *ProblemDetector) detectIPConflicts(
+	_ context.Context,
+	devices []*DiscoveredDevice,
+	result *ProblemDetectionResult,
+) {
 	now := time.Now()
 
 	for _, dev := range devices {
@@ -244,7 +287,12 @@ func (d *ProblemDetector) detectIPConflicts(ctx context.Context, devices []*Disc
 
 // detectDuplexMismatches finds speed/duplex negotiation issues.
 // Uses SNMP interface data when available.
-func (d *ProblemDetector) detectDuplexMismatches(ctx context.Context, devices []*DiscoveredDevice, result *ProblemDetectionResult, thresholds ProblemThresholds) {
+func (d *ProblemDetector) detectDuplexMismatches(
+	_ context.Context,
+	_ []*DiscoveredDevice,
+	_ *ProblemDetectionResult,
+	_ ProblemThresholds,
+) {
 	// Currently SNMP interfaces don't have duplex info in the standard MIBs
 	// This would require vendor-specific MIBs or LLDP/CDP data
 	// For now, we detect issues via high error rates in detectInterfaceErrors
@@ -253,13 +301,23 @@ func (d *ProblemDetector) detectDuplexMismatches(ctx context.Context, devices []
 // detectResourceThresholds checks device resources against thresholds.
 // Note: SNMPFullData doesn't currently have CPU/Memory fields - this is a placeholder
 // for when those MIBs are implemented in the SNMP collector.
-func (d *ProblemDetector) detectResourceThresholds(ctx context.Context, devices []*DiscoveredDevice, result *ProblemDetectionResult, thresholds ProblemThresholds) {
+func (d *ProblemDetector) detectResourceThresholds(
+	_ context.Context,
+	_ []*DiscoveredDevice,
+	_ *ProblemDetectionResult,
+	_ ProblemThresholds,
+) {
 	// Resource thresholds will be checked when CPU/Memory SNMP MIBs are collected
 	// (HOST-RESOURCES-MIB, UCD-SNMP-MIB, etc.)
 }
 
 // detectInterfaceErrors checks for high error rates on interfaces.
-func (d *ProblemDetector) detectInterfaceErrors(ctx context.Context, devices []*DiscoveredDevice, result *ProblemDetectionResult, thresholds ProblemThresholds) {
+func (d *ProblemDetector) detectInterfaceErrors(
+	_ context.Context,
+	devices []*DiscoveredDevice,
+	result *ProblemDetectionResult,
+	thresholds ProblemThresholds,
+) {
 	now := time.Now()
 
 	for _, dev := range devices {
@@ -272,15 +330,15 @@ func (d *ProblemDetector) detectInterfaceErrors(ctx context.Context, devices []*
 			stats := InterfaceErrorStats{
 				DeviceID:      dev.MAC, // Use MAC as device identifier
 				InterfaceName: iface.Name,
-				InputErrors:   int64(iface.InErrors),
-				OutputErrors:  int64(iface.OutErrors),
+				InputErrors:   safeUint64ToInt64(iface.InErrors),
+				OutputErrors:  safeUint64ToInt64(iface.OutErrors),
 				RecordedAt:    now,
 			}
 
-			if int64(iface.InErrors) > thresholds.InputErrorsPerMin {
+			if safeUint64ToInt64(iface.InErrors) > thresholds.InputErrorsPerMin {
 				hasErrors = true
 			}
-			if int64(iface.OutErrors) > thresholds.OutputErrorsPerMin {
+			if safeUint64ToInt64(iface.OutErrors) > thresholds.OutputErrorsPerMin {
 				hasErrors = true
 			}
 
@@ -298,13 +356,18 @@ func (d *ProblemDetector) aggregateProblems(result *ProblemDetectionResult) {
 	// IP Conflicts
 	for _, conflict := range result.IPConflicts {
 		result.Problems = append(result.Problems, NetworkProblem{
-			ID:              uuid.New().String(),
-			Category:        ProblemCategoryIPConflict,
-			Type:            "duplicate_ip",
-			Severity:        ProblemSeverityCritical,
-			Status:          ProblemStatusActive,
-			Title:           fmt.Sprintf("Duplicate IP: %s", conflict.IPAddress),
-			Description:     fmt.Sprintf("IP address %s is claimed by %d devices: %s", conflict.IPAddress, len(conflict.MACs), strings.Join(conflict.MACs, ", ")),
+			ID:       uuid.New().String(),
+			Category: ProblemCategoryIPConflict,
+			Type:     "duplicate_ip",
+			Severity: ProblemSeverityCritical,
+			Status:   ProblemStatusActive,
+			Title:    fmt.Sprintf("Duplicate IP: %s", conflict.IPAddress),
+			Description: fmt.Sprintf(
+				"IP address %s is claimed by %d devices: %s",
+				conflict.IPAddress,
+				len(conflict.MACs),
+				strings.Join(conflict.MACs, ", "),
+			),
 			IPAddress:       conflict.IPAddress,
 			AffectedMACs:    strings.Join(conflict.MACs, ","),
 			FirstSeen:       conflict.FirstSeen,
@@ -316,13 +379,18 @@ func (d *ProblemDetector) aggregateProblems(result *ProblemDetectionResult) {
 	// Duplex Mismatches
 	for _, mismatch := range result.DuplexMismatches {
 		result.Problems = append(result.Problems, NetworkProblem{
-			ID:              uuid.New().String(),
-			Category:        ProblemCategoryDuplexMismatch,
-			Type:            "duplex_mismatch",
-			Severity:        ProblemSeverityWarning,
-			Status:          ProblemStatusActive,
-			Title:           fmt.Sprintf("Duplex Mismatch: %s", mismatch.InterfaceName),
-			Description:     fmt.Sprintf("Interface %s is running in %s duplex mode with %d collisions", mismatch.InterfaceName, mismatch.LocalDuplex, mismatch.CollisionCount),
+			ID:       uuid.New().String(),
+			Category: ProblemCategoryDuplexMismatch,
+			Type:     "duplex_mismatch",
+			Severity: ProblemSeverityWarning,
+			Status:   ProblemStatusActive,
+			Title:    fmt.Sprintf("Duplex Mismatch: %s", mismatch.InterfaceName),
+			Description: fmt.Sprintf(
+				"Interface %s is running in %s duplex mode with %d collisions",
+				mismatch.InterfaceName,
+				mismatch.LocalDuplex,
+				mismatch.CollisionCount,
+			),
 			DeviceID:        mismatch.DeviceID,
 			InterfaceName:   mismatch.InterfaceName,
 			FirstSeen:       mismatch.FirstSeen,
@@ -334,13 +402,18 @@ func (d *ProblemDetector) aggregateProblems(result *ProblemDetectionResult) {
 	// Resource Alerts
 	for _, alert := range result.ResourceAlerts {
 		result.Problems = append(result.Problems, NetworkProblem{
-			ID:              uuid.New().String(),
-			Category:        ProblemCategoryResourceUsage,
-			Type:            fmt.Sprintf("high_%s", alert.ResourceType),
-			Severity:        SeverityForResourceUsage(alert.CurrentValue, alert.Threshold),
-			Status:          ProblemStatusActive,
-			Title:           fmt.Sprintf("High %s Usage", strings.Title(alert.ResourceType)),
-			Description:     fmt.Sprintf("%s usage at %.1f%% (threshold: %.1f%%)", strings.Title(alert.ResourceType), alert.CurrentValue, alert.Threshold),
+			ID:       uuid.New().String(),
+			Category: ProblemCategoryResourceUsage,
+			Type:     fmt.Sprintf("high_%s", alert.ResourceType),
+			Severity: SeverityForResourceUsage(alert.CurrentValue, alert.Threshold),
+			Status:   ProblemStatusActive,
+			Title:    fmt.Sprintf("High %s Usage", titleCase(alert.ResourceType)),
+			Description: fmt.Sprintf(
+				"%s usage at %.1f%% (threshold: %.1f%%)",
+				titleCase(alert.ResourceType),
+				alert.CurrentValue,
+				alert.Threshold,
+			),
 			DeviceID:        alert.DeviceID,
 			CurrentValue:    alert.CurrentValue,
 			ThresholdValue:  alert.Threshold,
@@ -354,13 +427,19 @@ func (d *ProblemDetector) aggregateProblems(result *ProblemDetectionResult) {
 	// Interface Errors
 	for _, errStats := range result.InterfaceErrors {
 		result.Problems = append(result.Problems, NetworkProblem{
-			ID:              uuid.New().String(),
-			Category:        ProblemCategoryInterfaceErrors,
-			Type:            "interface_errors",
-			Severity:        ProblemSeverityWarning,
-			Status:          ProblemStatusActive,
-			Title:           fmt.Sprintf("Interface Errors: %s", errStats.InterfaceName),
-			Description:     fmt.Sprintf("Interface %s has input errors: %d, output errors: %d, collisions: %d", errStats.InterfaceName, errStats.InputErrors, errStats.OutputErrors, errStats.Collisions),
+			ID:       uuid.New().String(),
+			Category: ProblemCategoryInterfaceErrors,
+			Type:     "interface_errors",
+			Severity: ProblemSeverityWarning,
+			Status:   ProblemStatusActive,
+			Title:    fmt.Sprintf("Interface Errors: %s", errStats.InterfaceName),
+			Description: fmt.Sprintf(
+				"Interface %s has input errors: %d, output errors: %d, collisions: %d",
+				errStats.InterfaceName,
+				errStats.InputErrors,
+				errStats.OutputErrors,
+				errStats.Collisions,
+			),
 			DeviceID:        errStats.DeviceID,
 			InterfaceName:   errStats.InterfaceName,
 			FirstSeen:       now,

@@ -29,11 +29,11 @@ const (
 
 // SLAConfig defines the SLA targets for an endpoint.
 type SLAConfig struct {
-	EndpointName     string  `json:"name" yaml:"name"`
-	TargetUptime     float64 `json:"targetUptime" yaml:"target_uptime"`          // e.g., 99.9 for 99.9%
+	EndpointName     string  `json:"name"             yaml:"name"`
+	TargetUptime     float64 `json:"targetUptime"     yaml:"target_uptime"`      // e.g., 99.9 for 99.9%
 	TargetLatencyP95 float64 `json:"targetLatencyP95" yaml:"target_latency_p95"` // ms
-	ReportingPeriod  string  `json:"reportingPeriod" yaml:"reporting_period"`    // daily, weekly, monthly
-	Enabled          bool    `json:"enabled" yaml:"enabled"`
+	ReportingPeriod  string  `json:"reportingPeriod"  yaml:"reporting_period"`   // daily, weekly, monthly
+	Enabled          bool    `json:"enabled"          yaml:"enabled"`
 }
 
 // SLAViolation represents a single SLA violation event.
@@ -142,7 +142,11 @@ func (st *SLATracker) GetAllConfigs() []SLAConfig {
 }
 
 // GenerateReport generates an SLA report for an endpoint over a time period.
-func (st *SLATracker) GenerateReport(ctx context.Context, endpointName string, start, end time.Time) (*SLAReport, error) {
+func (st *SLATracker) GenerateReport(
+	ctx context.Context,
+	endpointName string,
+	start, end time.Time,
+) (*SLAReport, error) {
 	st.mu.RLock()
 	cfg, exists := st.configs[endpointName]
 	if !exists {

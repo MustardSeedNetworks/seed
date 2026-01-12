@@ -193,20 +193,20 @@ type WiFiProblem struct {
 // ProblemThresholds defines when to trigger problem detection.
 type ProblemThresholds struct {
 	// Resource thresholds
-	CPUPercent    float64 `json:"cpu_percent" yaml:"cpu_percent"`       // Default: 90
+	CPUPercent    float64 `json:"cpu_percent"    yaml:"cpu_percent"`    // Default: 90
 	MemoryPercent float64 `json:"memory_percent" yaml:"memory_percent"` // Default: 90
-	DiskPercent   float64 `json:"disk_percent" yaml:"disk_percent"`     // Default: 90
-	TempCelsius   float64 `json:"temp_celsius" yaml:"temp_celsius"`     // Default: 85
+	DiskPercent   float64 `json:"disk_percent"   yaml:"disk_percent"`   // Default: 90
+	TempCelsius   float64 `json:"temp_celsius"   yaml:"temp_celsius"`   // Default: 85
 
 	// Interface error thresholds (errors per minute)
-	InputErrorsPerMin  int64 `json:"input_errors_per_min" yaml:"input_errors_per_min"`   // Default: 10
+	InputErrorsPerMin  int64 `json:"input_errors_per_min"  yaml:"input_errors_per_min"`  // Default: 10
 	OutputErrorsPerMin int64 `json:"output_errors_per_min" yaml:"output_errors_per_min"` // Default: 10
-	CollisionsPerMin   int64 `json:"collisions_per_min" yaml:"collisions_per_min"`       // Default: 100
+	CollisionsPerMin   int64 `json:"collisions_per_min"    yaml:"collisions_per_min"`    // Default: 100
 
 	// WiFi thresholds
-	MinSignalDBm    int     `json:"min_signal_dbm" yaml:"min_signal_dbm"`         // Default: -75
-	MaxRetryPercent float64 `json:"max_retry_percent" yaml:"max_retry_percent"`   // Default: 15
-	MaxChannelUtil  float64 `json:"max_channel_util" yaml:"max_channel_util"`     // Default: 80
+	MinSignalDBm    int     `json:"min_signal_dbm"     yaml:"min_signal_dbm"`     // Default: -75
+	MaxRetryPercent float64 `json:"max_retry_percent"  yaml:"max_retry_percent"`  // Default: 15
+	MaxChannelUtil  float64 `json:"max_channel_util"   yaml:"max_channel_util"`   // Default: 80
 	MaxCoChannelAPs int     `json:"max_co_channel_aps" yaml:"max_co_channel_aps"` // Default: 3
 }
 

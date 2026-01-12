@@ -191,7 +191,8 @@ func assertPreservedCredentials(t *testing.T, tc struct {
 	flags       resetFlags
 	wantAuth    bool
 	wantJWT     bool
-}, newCfg *config.Config) {
+}, newCfg *config.Config,
+) {
 	t.Helper()
 
 	if tc.existingCfg == nil {
@@ -209,7 +210,8 @@ func assertAuthPreservation(t *testing.T, tc struct {
 	flags       resetFlags
 	wantAuth    bool
 	wantJWT     bool
-}, newCfg *config.Config) {
+}, newCfg *config.Config,
+) {
 	t.Helper()
 
 	if tc.wantAuth {
@@ -247,7 +249,8 @@ func assertJWTPreservation(t *testing.T, tc struct {
 	flags       resetFlags
 	wantAuth    bool
 	wantJWT     bool
-}, newCfg *config.Config) {
+}, newCfg *config.Config,
+) {
 	t.Helper()
 
 	if tc.wantJWT {

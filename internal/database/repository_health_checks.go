@@ -301,15 +301,15 @@ func (r *HealthCheckRepository) GetLatencyStats(
 	}
 
 	var stats LatencyStats
-	var avg, min, max sql.NullFloat64
+	var avgVal, minVal, maxVal sql.NullFloat64
 	row := r.db.QueryRow(ctx, query, args...)
-	if err := row.Scan(&avg, &min, &max, &stats.Count); err != nil {
+	if err := row.Scan(&avgVal, &minVal, &maxVal, &stats.Count); err != nil {
 		return nil, fmt.Errorf("failed to get latency stats: %w", err)
 	}
 
-	stats.AvgMs = avg.Float64
-	stats.MinMs = min.Float64
-	stats.MaxMs = max.Float64
+	stats.AvgMs = avgVal.Float64
+	stats.MinMs = minVal.Float64
+	stats.MaxMs = maxVal.Float64
 
 	// Calculate P95 - need to fetch all latencies and compute
 	if stats.Count > 0 {
@@ -474,7 +474,14 @@ func (r *HealthCheckRepository) CreateDailyRollup(
 
 	var totalChecks, successfulChecks int64
 	var avgLatency, minLatency, maxLatency, p95Latency sql.NullFloat64
-	if scanErr := row.Scan(&totalChecks, &successfulChecks, &avgLatency, &minLatency, &maxLatency, &p95Latency); scanErr != nil {
+	if scanErr := row.Scan(
+		&totalChecks,
+		&successfulChecks,
+		&avgLatency,
+		&minLatency,
+		&maxLatency,
+		&p95Latency,
+	); scanErr != nil {
 		return fmt.Errorf("failed to aggregate hourly rollups: %w", scanErr)
 	}
 

@@ -59,14 +59,14 @@ type WiFiPresence struct {
 // This is populated when a device's MAC matches a Bluetooth device address.
 type BluetoothPresence struct {
 	Name         string               `json:"name,omitempty"`
-	Type         BluetoothType        `json:"type"`                   // classic, ble, dual
-	DeviceClass  BluetoothDeviceClass `json:"deviceClass,omitempty"`  // computer, phone, etc.
-	RSSI         int                  `json:"rssi,omitempty"`         // Signal strength
-	TxPower      int                  `json:"txPower,omitempty"`      // Transmit power for distance calc
-	IsPaired     bool                 `json:"isPaired"`               // Currently paired
-	IsConnected  bool                 `json:"isConnected"`            // Currently connected
-	IsAuthorized bool                 `json:"isAuthorized"`           // In authorized list
-	Services     []string             `json:"services,omitempty"`     // Discovered services/UUIDs
+	Type         BluetoothType        `json:"type"`                  // classic, ble, dual
+	DeviceClass  BluetoothDeviceClass `json:"deviceClass,omitempty"` // computer, phone, etc.
+	RSSI         int                  `json:"rssi,omitempty"`        // Signal strength
+	TxPower      int                  `json:"txPower,omitempty"`     // Transmit power for distance calc
+	IsPaired     bool                 `json:"isPaired"`              // Currently paired
+	IsConnected  bool                 `json:"isConnected"`           // Currently connected
+	IsAuthorized bool                 `json:"isAuthorized"`          // In authorized list
+	Services     []string             `json:"services,omitempty"`    // Discovered services/UUIDs
 	LastSeen     time.Time            `json:"lastSeen"`
 }
 

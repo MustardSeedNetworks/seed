@@ -657,8 +657,8 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 	}
 
 	// Start the engine
-	if err := s.services.Discovery.Engine.Start(context.Background()); err != nil {
-		logging.GetLogger().Error("Failed to start discovery engine", "error", err)
+	if startErr := s.services.Discovery.Engine.Start(context.Background()); startErr != nil {
+		logging.GetLogger().Error("Failed to start discovery engine", "error", startErr)
 	} else {
 		logging.GetLogger().Info("Discovery engine started",
 			"capabilities", s.services.Discovery.Engine.GetCapabilities(),
@@ -1573,7 +1573,10 @@ func (s *Server) ensureSelfSignedCert() (string, string, error) {
 		return "", "", fmt.Errorf("create key file: %w", err)
 	}
 	defer func() { _ = keyOut.Close() }()
-	if keyEncodeErr := pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}); keyEncodeErr != nil {
+	if keyEncodeErr := pem.Encode(
+		keyOut,
+		&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)},
+	); keyEncodeErr != nil {
 		return "", "", fmt.Errorf("encode private key PEM: %w", keyEncodeErr)
 	}
 
