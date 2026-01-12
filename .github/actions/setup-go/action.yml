@@ -1,0 +1,19 @@
+name: 'Setup Go'
+description: 'Set up Go with caching and module download'
+inputs:
+  go-version-file:
+    description: 'Path to go.mod file'
+    required: false
+    default: 'go.mod'
+runs:
+  using: composite
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version-file: ${{ inputs.go-version-file }}
+        cache: true
+
+    - name: Download Go modules
+      shell: bash
+      run: go mod download

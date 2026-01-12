@@ -1,0 +1,20 @@
+name: 'Setup Node.js'
+description: 'Set up Node.js with npm caching'
+inputs:
+  node-version:
+    description: 'Node.js version'
+    required: false
+    default: '25.2.1'
+  working-directory:
+    description: 'Working directory for npm'
+    required: false
+    default: 'ui'
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+        cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
