@@ -57,7 +57,7 @@ jobs:
           cache: true
 
       - name: Install libpcap-dev
-        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+        uses: ./.github/actions/setup-libpcap
 
       - name: Download Go modules
         run: go mod download
@@ -324,6 +324,42 @@ jobs:
           echo "✅ No unsafe logging patterns detected"
 
   # ===========================================================================
+  # C Code Linting (if applicable)
+  # ===========================================================================
+  c-lint:
+    name: C Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check for C source files
+        id: check-c
+        run: |
+          if find . -name '*.c' -o -name '*.h' | grep -v node_modules | grep -q .; then
+            echo "has_c=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_c=false" >> $GITHUB_OUTPUT
+            echo "No C source files found, skipping C lint"
+          fi
+
+      - name: Install clang-tidy and cppcheck
+        if: steps.check-c.outputs.has_c == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-tidy cppcheck
+
+      - name: Run clang-tidy
+        if: steps.check-c.outputs.has_c == 'true'
+        run: |
+          find . -name '*.c' -o -name '*.h' | grep -v node_modules | xargs clang-tidy -p .
+
+      - name: Run cppcheck
+        if: steps.check-c.outputs.has_c == 'true'
+        run: |
+          cppcheck --error-exitcode=1 --enable=warning,style,performance \
+            --suppress=missingIncludeSystem .
+
+  # ===========================================================================
   # Internationalization (i18n) Checks
   # ===========================================================================
   i18n:
@@ -469,7 +505,7 @@ jobs:
           path: ui/dist/
 
       - name: Install libpcap-dev
-        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+        uses: ./.github/actions/setup-libpcap
 
       - name: Build Go binary (amd64)
         run: |
@@ -523,7 +559,7 @@ jobs:
           cache-dependency-path: ui/package-lock.json
 
       - name: Install libpcap-dev
-        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+        uses: ./.github/actions/setup-libpcap
 
       - name: Download frontend build
         uses: actions/download-artifact@v6
@@ -602,7 +638,7 @@ jobs:
           cache: true
 
       - name: Install libpcap-dev
-        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+        uses: ./.github/actions/setup-libpcap
 
       - name: Download frontend build
         uses: actions/download-artifact@v6

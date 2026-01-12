@@ -1,0 +1,22 @@
+name: 'Setup libpcap'
+description: 'Install libpcap-dev with caching'
+runs:
+  using: composite
+  steps:
+    - name: Cache apt packages
+      uses: actions/cache@v6
+      id: cache-apt
+      with:
+        path: |
+          /var/cache/apt/archives/*.deb
+        key: apt-libpcap-${{ runner.os }}-${{ runner.arch }}
+        restore-keys: |
+          apt-libpcap-${{ runner.os }}-
+
+    - name: Install libpcap-dev
+      shell: bash
+      run: |
+        if [ "${{ steps.cache-apt.outputs.cache-hit }}" != "true" ]; then
+          sudo apt-get update
+        fi
+        sudo apt-get install -y libpcap-dev
