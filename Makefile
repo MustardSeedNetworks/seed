@@ -375,7 +375,7 @@ dev: ## Run backend in development mode (reads frontend from disk)
 # Vite dev server with hot module replacement
 # Proxies API requests to backend on :8443
 dev-frontend: ## Run frontend in development mode
-	cd web && npm run dev
+	cd ui && npm run dev
 
 # Show version information
 version: ## Show version info (current build and installed)
@@ -736,7 +736,7 @@ license-check: ## Check license compliance (Go + npm)
 		printf "$(YELLOW)SKIP: go-licenses not installed$(RESET)\n"; \
 	fi
 	@printf "\n$(BOLD)=== npm Dependencies ===$(RESET)\n"
-	@cd web && npx license-checker --production --excludePrivatePackages --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;0BSD;BlueOak-1.0.0;Unlicense;MPL-2.0" --summary
+	@cd ui && npx license-checker --production --excludePrivatePackages --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;0BSD;BlueOak-1.0.0;Unlicense;MPL-2.0" --summary
 	@printf "\n$(GREEN)✓ License compliance check complete$(RESET)\n"
 
 license-report: ## Generate license compliance reports
@@ -746,7 +746,7 @@ license-report: ## Generate license compliance reports
 		go-licenses report ./... > build/reports/go-licenses.csv; \
 		printf "Go licenses: build/reports/go-licenses.csv\n"; \
 	fi
-	@cd web && npx license-checker --production --csv > ../build/reports/npm-licenses.csv
+	@cd ui && npx license-checker --production --csv > ../build/reports/npm-licenses.csv
 	@printf "npm licenses: build/reports/npm-licenses.csv\n"
 	@printf "$(GREEN)✓ License reports generated$(RESET)\n"
 
@@ -773,13 +773,13 @@ security-backend-quiet:
 # Frontend security scanning (npm audit)
 security-frontend: ## Run frontend security scan (npm audit)
 	@printf "$(BOLD)🔒 Running npm audit...$(RESET)\n"
-	@cd web && npm audit --audit-level=high
+	@cd ui && npm audit --audit-level=high
 	@printf "$(GREEN)✓ npm audit complete$(RESET)\n"
 
 # Frontend security (quiet mode)
 security-frontend-quiet:
 	@printf "   Auditing npm packages...\n"
-	@cd web && npm audit --audit-level=high 2>&1 | grep -E "(found|vulnerabilities)" | head -3 || printf "   No vulnerabilities found\n"
+	@cd ui && npm audit --audit-level=high 2>&1 | grep -E "(found|vulnerabilities)" | head -3 || printf "   No vulnerabilities found\n"
 
 # Secret scanning (gitleaks)
 # Auto-installs if not found, uses full path for portability
@@ -970,7 +970,7 @@ _rpm-arch:
 # Install all dependencies (Go modules + npm packages)
 deps: ## Install dependencies
 	go mod download
-	cd web && npm ci
+	cd ui && npm ci
 	npm ci
 
 # =============================================================================
@@ -990,7 +990,7 @@ update: ## Update ALL dependencies and tools to latest versions
 	$(call timer-end,update-npm-root,npm root)
 	@printf "$(CYAN)│$(RESET) $(BOLD)[3/5]$(RESET) npm packages (web)                                                    $(CYAN)│$(RESET)\n"
 	$(call timer-start,update-npm-web)
-	@cd web && npm update 2>&1 | tail -3 || true
+	@cd ui && npm update 2>&1 | tail -3 || true
 	$(call timer-end,update-npm-web,npm web)
 	@printf "$(CYAN)│$(RESET) $(BOLD)[4/5]$(RESET) Go development tools                                                  $(CYAN)│$(RESET)\n"
 	$(call timer-start,update-tools)
@@ -998,7 +998,7 @@ update: ## Update ALL dependencies and tools to latest versions
 	$(call timer-end,update-tools,Go tools)
 	@printf "$(CYAN)│$(RESET) $(BOLD)[5/5]$(RESET) Playwright browsers                                                   $(CYAN)│$(RESET)\n"
 	$(call timer-start,update-playwright)
-	@cd web && npx playwright install chromium 2>&1 | tail -2 || true
+	@cd ui && npx playwright install chromium 2>&1 | tail -2 || true
 	$(call timer-end,update-playwright,Playwright)
 	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 	@printf "\n$(GREEN)✓ All dependencies updated!$(RESET)\n"
@@ -1023,7 +1023,7 @@ update-go-quiet:
 update-npm: ## Update npm dependencies
 	@printf "$(BOLD)📦 Updating npm packages...$(RESET)\n"
 	@npm update
-	@cd web && npm update
+	@cd ui && npm update
 	@printf "$(GREEN)✓ npm packages updated$(RESET)\n"
 
 # Show version information for all tools and dependencies
@@ -1043,11 +1043,11 @@ version-check: ## Show versions of all tools and dependencies
 	@printf "\n$(BOLD)Project Dependencies:$(RESET)\n"
 	@printf "  Go modules:    %s packages\n" "$$(go list -m all 2>/dev/null | wc -l | tr -d ' ')"
 	@printf "  npm (root):    %s packages\n" "$$(npm ls --depth=0 2>/dev/null | wc -l | tr -d ' ')"
-	@printf "  npm (web):     %s packages\n" "$$(cd web && npm ls --depth=0 2>/dev/null | wc -l | tr -d ' ')"
+	@printf "  npm (web):     %s packages\n" "$$(cd ui && npm ls --depth=0 2>/dev/null | wc -l | tr -d ' ')"
 	@printf "\n$(BOLD)Outdated Packages:$(RESET)\n"
 	@GO_OUTDATED=$$(go list -u -m all 2>/dev/null | grep '\[' | wc -l | tr -d ' '); \
 	printf "  Go:            %s can be updated\n" "$$GO_OUTDATED"
-	@NPM_OUTDATED=$$(cd web && npm outdated 2>/dev/null | wc -l | tr -d ' '); \
+	@NPM_OUTDATED=$$(cd ui && npm outdated 2>/dev/null | wc -l | tr -d ' '); \
 	printf "  npm:           %s can be updated\n" "$$NPM_OUTDATED"
 	@printf "\n$(CYAN)═══════════════════════════════════════════════════════════════════════════════$(RESET)\n"
 
@@ -1057,7 +1057,7 @@ outdated: ## Show outdated packages (Go + npm)
 	@go list -u -m all 2>/dev/null | grep '\[' | head -20 || printf "   All Go modules are up to date\n"
 	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 	@printf "\n$(BOLD)$(CYAN)┌─ Outdated npm Packages (web) ───────────────────────────────────────────────┐$(RESET)\n"
-	@cd web && npm outdated 2>/dev/null || printf "   All npm packages are up to date\n"
+	@cd ui && npm outdated 2>/dev/null || printf "   All npm packages are up to date\n"
 	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 
 # =============================================================================
@@ -1109,10 +1109,10 @@ tools-frontend: ## Install frontend development tools
 	@printf "\n$(BOLD)=== Installing Frontend Development Tools ===$(RESET)\n"
 	@printf "Installing root npm dependencies (prettier, husky)...\n"
 	@npm ci
-	@printf "Installing web dependencies...\n"
-	@cd web && npm ci
+	@printf "Installing ui dependencies...\n"
+	@cd ui && npm ci
 	@printf "Installing Playwright browsers...\n"
-	@cd web && npx playwright install --with-deps chromium 2>/dev/null || printf "Playwright install skipped (run 'make test-e2e-install' manually)\n"
+	@cd ui && npx playwright install --with-deps chromium 2>/dev/null || printf "Playwright install skipped (run 'make test-e2e-install' manually)\n"
 	@echo "✅ Frontend tools installed"
 
 # =============================================================================
