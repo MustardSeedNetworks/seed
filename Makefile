@@ -47,9 +47,7 @@
         fmt fmt-frontend fmt-all fmt-md fmt-check \
         fix fix-backend fix-frontend fix-md fix-all \
         security security-backend security-frontend security-secrets security-trivy \
-        storybook build-storybook test-storybook \
         run dev dev-frontend \
-        install uninstall status \
         deps update update-go update-npm outdated \
         tools tools-go tools-frontend version version-check \
         help \
@@ -379,84 +377,6 @@ dev: ## Run backend in development mode (reads frontend from disk)
 dev-frontend: ## Run frontend in development mode
 	cd web && npm run dev
 
-# =============================================================================
-# Local Installation
-# =============================================================================
-#
-# Install/uninstall Seed as a system service on the current machine.
-# Automatically detects platform and uses appropriate service manager.
-#
-# =============================================================================
-
-# Install on current system (macOS via launchd, Linux via systemd)
-install: build ## Install as system service on current machine
-	@printf "$(BOLD)Installing Seed on $$(uname -s)...$(RESET)\n"
-	@if [ "$$(uname -s)" = "Darwin" ]; then \
-		if [ ! -f deploy/launchd/install.sh ]; then \
-			echo "ERROR: deploy/launchd/install.sh not found"; \
-			exit 1; \
-		fi; \
-		sudo ./deploy/launchd/install.sh ./$(BINARY_NAME); \
-	elif [ "$$(uname -s)" = "Linux" ]; then \
-		if [ ! -f deploy/systemd/install.sh ]; then \
-			echo "ERROR: deploy/systemd/install.sh not found"; \
-			exit 1; \
-		fi; \
-		sudo ./deploy/systemd/install.sh ./$(BINARY_NAME); \
-	else \
-		echo "ERROR: Unsupported platform: $$(uname -s)"; \
-		exit 1; \
-	fi
-
-# Uninstall from current system
-uninstall: ## Uninstall system service from current machine
-	@printf "$(BOLD)Uninstalling Seed from $$(uname -s)...$(RESET)\n"
-	@if [ "$$(uname -s)" = "Darwin" ]; then \
-		if [ -f deploy/launchd/uninstall.sh ]; then \
-			sudo ./deploy/launchd/uninstall.sh; \
-		else \
-			echo "Removing launchd service manually..."; \
-			sudo launchctl unload /Library/LaunchDaemons/com.seed.plist 2>/dev/null || true; \
-			sudo rm -f /Library/LaunchDaemons/com.seed.plist; \
-		fi; \
-	elif [ "$$(uname -s)" = "Linux" ]; then \
-		if [ -f deploy/systemd/uninstall.sh ]; then \
-			sudo ./deploy/systemd/uninstall.sh; \
-		else \
-			echo "Removing systemd service manually..."; \
-			sudo systemctl stop seed 2>/dev/null || true; \
-			sudo systemctl disable seed 2>/dev/null || true; \
-			sudo rm -f /etc/systemd/system/seed.service; \
-			sudo systemctl daemon-reload; \
-		fi; \
-	else \
-		echo "ERROR: Unsupported platform: $$(uname -s)"; \
-		exit 1; \
-	fi
-	@printf "$(GREEN)✓ Uninstall complete$(RESET)\n"
-
-# Show service status on current system
-status: ## Show service status (local)
-	@printf "$(BOLD)Seed Service Status$(RESET)\n\n"
-	@if [ "$$(uname -s)" = "Darwin" ]; then \
-		if launchctl list 2>/dev/null | grep -q com.seed; then \
-			printf "$(GREEN)●$(RESET) Service: loaded\n"; \
-			if pgrep -f "/usr/local/seed/seed" > /dev/null 2>&1; then \
-				printf "$(GREEN)●$(RESET) Process: running (PID: $$(pgrep -f '/usr/local/seed/seed'))\n"; \
-			else \
-				printf "$(RED)●$(RESET) Process: not running\n"; \
-			fi; \
-		else \
-			printf "$(YELLOW)●$(RESET) Service: not installed\n"; \
-		fi; \
-	elif [ "$$(uname -s)" = "Linux" ]; then \
-		if systemctl is-enabled seed > /dev/null 2>&1; then \
-			systemctl status seed --no-pager || true; \
-		else \
-			printf "$(YELLOW)●$(RESET) Service: not installed\n"; \
-		fi; \
-	fi
-
 # Show version information
 version: ## Show version info (current build and installed)
 	@printf "$(BOLD)Seed Version Information$(RESET)\n\n"
@@ -492,25 +412,21 @@ test: ## Run unit tests (backend + frontend)
 	$(call timer-end,test-frontend,Frontend tests)
 	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 
-# Run ALL tests including E2E and Storybook
-test-all: ## Run ALL tests (unit + E2E + Storybook)
+# Run ALL tests including E2E
+test-all: ## Run ALL tests (unit + E2E)
 	@printf "$(BOLD)$(CYAN)┌─ Full Test Suite ────────────────────────────────────────────────────────────┐$(RESET)\n"
-	@printf "$(CYAN)│$(RESET) $(BOLD)[1/4]$(RESET) Backend unit tests                                                    $(CYAN)│$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[1/3]$(RESET) Backend unit tests                                                    $(CYAN)│$(RESET)\n"
 	$(call timer-start,test-backend)
 	@$(MAKE) --no-print-directory test-backend-quiet
 	$(call timer-end,test-backend,Backend tests)
-	@printf "$(CYAN)│$(RESET) $(BOLD)[2/4]$(RESET) Frontend unit tests                                                   $(CYAN)│$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[2/3]$(RESET) Frontend unit tests                                                   $(CYAN)│$(RESET)\n"
 	$(call timer-start,test-frontend)
 	@$(MAKE) --no-print-directory test-frontend-quiet
 	$(call timer-end,test-frontend,Frontend tests)
-	@printf "$(CYAN)│$(RESET) $(BOLD)[3/4]$(RESET) E2E tests (Playwright)                                                $(CYAN)│$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[3/3]$(RESET) E2E tests (Playwright)                                                $(CYAN)│$(RESET)\n"
 	$(call timer-start,test-e2e)
 	@$(MAKE) --no-print-directory test-e2e
 	$(call timer-end,test-e2e,E2E tests)
-	@printf "$(CYAN)│$(RESET) $(BOLD)[4/4]$(RESET) Storybook build                                                       $(CYAN)│$(RESET)\n"
-	$(call timer-start,test-storybook)
-	@$(MAKE) --no-print-directory test-storybook
-	$(call timer-end,test-storybook,Storybook)
 	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 
 # Go tests with race detection and coverage (verbose output)
@@ -584,25 +500,6 @@ test-coverage: ## Generate coverage report
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report: coverage.html"
 
-# -----------------------------------------------------------------------------
-# Storybook - Component Documentation & Visual Testing
-# -----------------------------------------------------------------------------
-
-# Run Storybook development server
-storybook: ## Run Storybook development server (port 6006)
-	@echo "📚 Starting Storybook..."
-	cd ui && npm run storybook
-
-# Build static Storybook for deployment
-build-storybook: ## Build static Storybook
-	@echo "📚 Building Storybook..."
-	@cd ui && npm run build-storybook
-	@echo "✅ Storybook built to ui/storybook-static/"
-
-# Test Storybook stories compile (useful in CI)
-test-storybook: build-storybook ## Verify Storybook builds successfully
-	@echo "✅ Storybook compilation test passed"
-
 # Full integration test: install as systemd service and run tests
 # Usage: TEST_HOST=user@host make test-integration
 test-integration: build-linux-docker ## Full integration test on Ubuntu server via systemd
@@ -646,7 +543,7 @@ lint: ## Run all linters
 	$(call timer-start,lint-backend)
 	@$(MAKE) --no-print-directory lint-backend-quiet
 	$(call timer-end,lint-backend,Backend lint)
-	@printf "$(CYAN)│$(RESET) $(BOLD)[2/2]$(RESET) Frontend (ESLint)                                                     $(CYAN)│$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[2/2]$(RESET) Frontend (Biome)                                                      $(CYAN)│$(RESET)\n"
 	$(call timer-start,lint-frontend)
 	@$(MAKE) --no-print-directory lint-frontend-quiet
 	$(call timer-end,lint-frontend,Frontend lint)
@@ -675,17 +572,17 @@ lint-backend-quiet:
 	printf "   Running $$LINTER_COUNT linters...\n"; \
 	$$GOLANGCI_LINT run 2>&1 | head -20 || true
 
-# ESLint with TypeScript rules
-lint-frontend: ## Run frontend linter
-	@printf "$(BOLD)🔍 Running frontend linter...$(RESET)\n"
-	@cd ui && npm run lint
+# Biome with TypeScript rules
+lint-frontend: ## Run frontend linter (Biome)
+	@printf "$(BOLD)🔍 Running frontend linter (Biome)...$(RESET)\n"
+	@cd ui && npx @biomejs/biome check src/
 	@printf "$(GREEN)✓ Frontend lint complete$(RESET)\n"
 
 # Frontend lint (quiet mode for pipelines)
 lint-frontend-quiet:
 	@FILE_COUNT=$$(find ui/src -name "*.ts" -o -name "*.tsx" 2>/dev/null | wc -l | tr -d ' '); \
 	printf "   Checking $$FILE_COUNT files...\n"
-	@cd ui && npm run lint 2>&1 | tail -5 || true
+	@cd ui && npx @biomejs/biome check src/ 2>&1 | tail -5 || true
 
 # -----------------------------------------------------------------------------
 # Auto-Fix - Automatically fix linting and formatting issues
@@ -698,7 +595,7 @@ fix: ## Auto-fix all linting issues (Go + Frontend)
 	$(call timer-start,fix-backend)
 	@$(MAKE) --no-print-directory fix-backend-quiet
 	$(call timer-end,fix-backend,Backend fix)
-	@printf "$(CYAN)│$(RESET) $(BOLD)[2/2]$(RESET) Frontend (eslint --fix + prettier)                                    $(CYAN)│$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[2/2]$(RESET) Frontend (biome check --fix)                                          $(CYAN)│$(RESET)\n"
 	$(call timer-start,fix-frontend)
 	@$(MAKE) --no-print-directory fix-frontend-quiet
 	$(call timer-end,fix-frontend,Frontend fix)
@@ -725,17 +622,15 @@ fix-backend-quiet:
 	$$GOLANGCI_LINT run --fix 2>&1 | grep -E "^[0-9]+ issues" || printf "   No issues found\n"
 	@gofmt -w -s .
 
-# Auto-fix frontend linting issues
+# Auto-fix frontend linting issues (Biome)
 fix-frontend: ## Auto-fix frontend linting issues
 	@printf "$(BOLD)🔧 Auto-fixing frontend code...$(RESET)\n"
-	@cd ui && npm run lint:fix
-	@cd ui && npx prettier --write .
+	@cd ui && npx @biomejs/biome check --write .
 	@printf "$(GREEN)✓ Frontend auto-fix complete$(RESET)\n"
 
 # Frontend fix (quiet mode for pipelines)
 fix-frontend-quiet:
-	@cd ui && npm run lint:fix 2>&1 | tail -3 || true
-	@cd ui && npx prettier --write . 2>&1 | tail -1 || true
+	@cd ui && npx @biomejs/biome check --write . 2>&1 | tail -3 || true
 
 # Auto-fix markdown formatting
 fix-md: fmt-md ## Auto-fix markdown formatting
@@ -753,8 +648,8 @@ fmt: ## Format Go code with gofumpt
 	@echo "✅ Go code formatted"
 
 # Format frontend code
-fmt-frontend: ## Format frontend code with Prettier
-	@cd web && npx prettier --write .
+fmt-frontend: ## Format frontend code with Biome
+	@cd ui && npx @biomejs/biome format --write src/
 	@echo "✅ Frontend code formatted"
 
 # Format markdown files
@@ -777,8 +672,8 @@ fmt-check: ## Check all formatting (Go + frontend + markdown) without fixing
 	else \
 		echo "✅ Go formatting OK"; \
 	fi; \
-	echo "Checking frontend formatting..."; \
-	if ! (cd web && npx prettier --check . 2>/dev/null); then \
+	echo "Checking frontend formatting (Biome)..."; \
+	if ! (cd ui && npx @biomejs/biome format --check src/ 2>/dev/null); then \
 		echo "❌ Frontend files need formatting"; \
 		FAILED=1; \
 	else \
