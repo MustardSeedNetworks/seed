@@ -16,9 +16,9 @@ const meta: Meta<typeof FAB> = {
   tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <div className="relative h-96 bg-surface-base">
-        <div className={cn(spacing.pad.default)}>
-          <p className="text-text-secondary">
+      <div class="relative h-96 bg-surface-base">
+        <div class={cn(spacing.pad.default)}>
+          <p class="text-text-secondary">
             The FAB is fixed in the bottom-right corner. Click to trigger tests.
           </p>
         </div>

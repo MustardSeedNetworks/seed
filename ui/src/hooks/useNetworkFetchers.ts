@@ -390,7 +390,7 @@ export function useNetworkFetchers({
           ...prev,
           gateway: {
             gateway: data.gateway || "",
-            reachable: data.reachable || false,
+            reachable: data.reachable,
             sent: data.sent || 0,
             received: data.received || 0,
             lossPercent: data.lossPercent || 0,
@@ -402,7 +402,7 @@ export function useNetworkFetchers({
             ipv6: data.ipv6
               ? {
                   gateway: data.ipv6.gateway || "",
-                  reachable: data.ipv6.reachable || false,
+                  reachable: data.ipv6.reachable,
                   sent: data.ipv6.sent || 0,
                   received: data.ipv6.received || 0,
                   lossPercent: data.ipv6.lossPercent || 0,
@@ -475,7 +475,7 @@ export function useNetworkFetchers({
         setCards((prev) => ({
           ...prev,
           cable: {
-            supported: data.supported || false,
+            supported: data.supported,
             // biome-ignore lint/style/useExplicitLengthCheck: data.length is cable length property, not array
             length: data.length || null,
             status: data.status || "unknown",

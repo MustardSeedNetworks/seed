@@ -41,9 +41,13 @@ const PHASE_DISPLAY_NAMES: Record<string, string> = {
 function formatDuration(ms: number): string {
   // Fixes #957: Handle negative values from clock skew
   const safeMs = Math.max(0, ms);
-  if (safeMs < 1000) return `${safeMs}ms`;
+  if (safeMs < 1000) {
+    return `${safeMs}ms`;
+  }
   const seconds = Math.floor(safeMs / 1000);
-  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
   return `${minutes}m ${remainingSeconds}s`;
@@ -55,12 +59,12 @@ function simpleHash(str: string): string {
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32bit integer
+    hash &= hash; // Convert to 32bit integer
   }
   return hash.toString(36);
 }
 
-export const PipelineProgress = memo(function PipelineProgress({
+export const PipelineProgress = memo(function pipelineProgress({
   status,
   onCancel,
 }: PipelineProgressProps) {
@@ -78,14 +82,14 @@ export const PipelineProgress = memo(function PipelineProgress({
   const currentPhaseIndex = rawPhaseIndex >= 0 ? rawPhaseIndex : 0;
 
   return (
-    <div className={cn("space-y-3", spacing.pad.sm)}>
+    <div class={cn("space-y-3", spacing.pad.sm)}>
       {/* Current phase header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
           {isRunning && (
-            <Loader2 className={cn(iconTokens.size.sm, "text-brand-primary animate-spin")} />
+            <Loader2 class={cn(iconTokens.size.sm, "text-brand-primary animate-spin")} />
           )}
-          <span className="body-small font-medium text-text-primary">
+          <span class="body-small font-medium text-text-primary">
             {t("pipeline.phaseProgress", {
               current: status.phaseNumber,
               total: status.totalPhases,
@@ -98,7 +102,7 @@ export const PipelineProgress = memo(function PipelineProgress({
           <button
             type="button"
             onClick={onCancel}
-            className={cn(
+            class={cn(
               button.base,
               button.size.sm,
               button.variant.secondary,
@@ -106,23 +110,21 @@ export const PipelineProgress = memo(function PipelineProgress({
             )}
             aria-label={t("pipeline.cancel", { defaultValue: "Cancel" })}
           >
-            <X className={iconTokens.size.xs} />
-            <span className="hidden sm:inline">
-              {t("pipeline.cancel", { defaultValue: "Cancel" })}
-            </span>
+            <X class={iconTokens.size.xs} />
+            <span class="hidden sm:inline">{t("pipeline.cancel", { defaultValue: "Cancel" })}</span>
           </button>
         )}
       </div>
 
       {/* Progress bar */}
-      <div className="space-y-1">
-        <div className={cn("h-2 bg-surface-sunken overflow-hidden", radius.default)}>
+      <div class="space-y-1">
+        <div class={cn("h-2 bg-surface-sunken overflow-hidden", radius.default)}>
           <div
-            className={cn("h-full bg-brand-primary transition-all duration-300", radius.default)}
+            class={cn("h-full bg-brand-primary transition-all duration-300", radius.default)}
             style={{ width: `${Math.min(status.percentComplete, 100)}%` }}
           />
         </div>
-        <div className="flex justify-between caption text-text-muted">
+        <div class="flex justify-between caption text-text-muted">
           <span>
             {status.processedCount} / {status.totalCount}{" "}
             {t("pipeline.devices", { defaultValue: "devices" })}
@@ -132,11 +134,11 @@ export const PipelineProgress = memo(function PipelineProgress({
       </div>
 
       {/* Current target and timing */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 caption text-text-muted">
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 caption text-text-muted">
         {status.currentTarget && (
           <span>
             {t("pipeline.scanning", { defaultValue: "Scanning" })}:{" "}
-            <span className="font-mono text-text-secondary">{status.currentTarget}</span>
+            <span class="font-mono text-text-secondary">{status.currentTarget}</span>
           </span>
         )}
         <span>
@@ -151,10 +153,10 @@ export const PipelineProgress = memo(function PipelineProgress({
       </div>
 
       {/* Phase stepper */}
-      <div className="flex items-center justify-between gap-1 pt-2 border-t border-surface-border">
+      <div class="flex items-center justify-between gap-1 pt-2 border-t border-surface-border">
         {status.enabledPhases.map((phase, index) => {
           const config = PHASE_CONFIG[phase];
-          const Icon = config?.icon || Circle;
+          const ICON = config?.icon || Circle;
           const isComplete = index < currentPhaseIndex;
           const isCurrent = index === currentPhaseIndex;
           const isPending = index > currentPhaseIndex;
@@ -165,11 +167,11 @@ export const PipelineProgress = memo(function PipelineProgress({
           return (
             <div
               key={phase}
-              className={cn("flex flex-col items-center gap-1 flex-1", isPending && "opacity-50")}
+              class={cn("flex flex-col items-center gap-1 flex-1", isPending && "opacity-50")}
             >
               {/* Icon with status indicator */}
               <div
-                className={cn(
+                class={cn(
                   "flex items-center justify-center w-8 h-8",
                   radius.full,
                   isComplete && "bg-status-success text-text-inverse",
@@ -178,17 +180,17 @@ export const PipelineProgress = memo(function PipelineProgress({
                 )}
               >
                 {isComplete ? (
-                  <Check className={iconTokens.size.sm} />
+                  <Check class={iconTokens.size.sm} />
                 ) : isCurrent && isRunning ? (
-                  <Loader2 className={cn(iconTokens.size.sm, "animate-spin")} />
+                  <Loader2 class={cn(iconTokens.size.sm, "animate-spin")} />
                 ) : (
-                  <Icon className={iconTokens.size.sm} />
+                  <ICON class={iconTokens.size.sm} />
                 )}
               </div>
 
               {/* Phase name */}
               <span
-                className={cn(
+                class={cn(
                   "caption text-center",
                   isCurrent ? "text-text-primary font-medium" : "text-text-muted",
                 )}
@@ -198,7 +200,7 @@ export const PipelineProgress = memo(function PipelineProgress({
 
               {/* Duration if complete */}
               {duration !== undefined && (
-                <span className="caption text-text-muted">{formatDuration(duration)}</span>
+                <span class="caption text-text-muted">{formatDuration(duration)}</span>
               )}
             </div>
           );
@@ -207,14 +209,14 @@ export const PipelineProgress = memo(function PipelineProgress({
 
       {/* Errors if any */}
       {status.errors.length > 0 && (
-        <div className={cn("p-2 bg-status-error/10 border border-status-error/30", radius.default)}>
-          <span className="caption text-status-error font-medium">
+        <div class={cn("p-2 bg-status-error/10 border border-status-error/30", radius.default)}>
+          <span class="caption text-status-error font-medium">
             {t("pipeline.errors", { defaultValue: "Errors" })}:
           </span>
-          <ul className="mt-1 space-y-0.5">
+          <ul class="mt-1 space-y-0.5">
             {/* Fixes #926, #939: Use error content hash for stable keys */}
             {status.errors.map((error, i) => (
-              <li key={`${i}-${simpleHash(error)}`} className="caption text-status-error">
+              <li key={`${i}-${simpleHash(error)}`} class="caption text-status-error">
                 {error}
               </li>
             ))}

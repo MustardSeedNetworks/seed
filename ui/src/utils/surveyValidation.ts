@@ -47,7 +47,9 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
   // Handle passive samples (array of networks)
   if ("networks" in data && Array.isArray(data.networks)) {
     const networks = data.networks as ScannedNetwork[];
-    if (networks.length === 0) return null;
+    if (networks.length === 0) {
+      return null;
+    }
 
     // Sort networks by RSSI (strongest first)
     const sortedNetworks = [...networks].sort((a, b) => b.rssi - a.rssi);
@@ -57,7 +59,9 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
         // For apIndex, get the nth strongest AP
         const apIndex = criterion.apIndex ?? 0;
         const network = sortedNetworks.at(apIndex);
-        if (!network) return null;
+        if (!network) {
+          return null;
+        }
         return network.rssi;
       }
 
@@ -65,8 +69,12 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
         // Use the strongest AP's SNR, or calculate from RSSI and noise
         const apIndex = criterion.apIndex ?? 0;
         const network = sortedNetworks.at(apIndex);
-        if (!network) return null;
-        if (network.snr !== undefined) return network.snr;
+        if (!network) {
+          return null;
+        }
+        if (network.snr !== undefined) {
+          return network.snr;
+        }
         if (network.noiseFloor !== undefined) {
           return network.rssi - network.noiseFloor;
         }
@@ -84,7 +92,9 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
       case "cochannel": {
         // Count APs on the same channel as the strongest AP
         const primaryChannel = sortedNetworks[0]?.channel;
-        if (!primaryChannel) return 0;
+        if (!primaryChannel) {
+          return 0;
+        }
         // Count APs with strong signal on same channel (exclude the primary)
         return networks.filter((n) => n.channel === primaryChannel && n.rssi >= -85).length;
       }
@@ -92,7 +102,9 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
       case "adjacent": {
         // Count APs on adjacent channels (within 4 channels for 2.4GHz)
         const primaryChannel = sortedNetworks[0]?.channel;
-        if (!primaryChannel) return 0;
+        if (!primaryChannel) {
+          return 0;
+        }
         return networks.filter(
           (n) =>
             n.channel !== primaryChannel &&
@@ -315,7 +327,9 @@ export function calculateMetricStatistics(
   median: number;
   sampleCount: number;
 } | null {
-  if (!metric) return null;
+  if (!metric) {
+    return null;
+  }
 
   // Create a dummy criterion to extract values
   const dummyCriterion: PassFailCriterion = {
@@ -338,12 +352,14 @@ export function calculateMetricStatistics(
     }
   }
 
-  if (values.length === 0) return null;
+  if (values.length === 0) {
+    return null;
+  }
 
   values.sort((a, b) => a - b);
 
-  const min = values[0];
-  const max = values[values.length - 1];
+  const [min] = values;
+  const max = values.at(-1);
   const average = values.reduce((a, b) => a + b, 0) / values.length;
   const median =
     values.length % 2 === 0
@@ -368,7 +384,9 @@ export function getPercentageMeetingThreshold(
   threshold: number,
   comparison: ComparisonOperator = "gte",
 ): number {
-  if (!metric) return 0;
+  if (!metric) {
+    return 0;
+  }
 
   const dummyCriterion: PassFailCriterion = {
     id: "threshold",

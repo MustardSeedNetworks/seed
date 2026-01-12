@@ -87,19 +87,19 @@ export const LinkSettings = memo(function LinkSettings({
   return (
     <CollapsibleSection
       title={
-        <div className={layout.inline.default}>
-          <PlugZap className={iconTokens.size.sm} />
+        <div class={layout.inline.default}>
+          <PlugZap class={iconTokens.size.sm} />
           <span>{t("sections.link", "Link")}</span>
           <AutoSaveIndicator status={linkStatus} />
         </div>
       }
       defaultOpen={false}
     >
-      <div className="stack">
+      <div class="stack">
         {/* Card Visibility & FAB Controls */}
-        <div className="stack-sm">
+        <div class="stack-sm">
           <label
-            className={cn(
+            class={cn(
               layout.flex.between,
               spacing.pad.sm,
               "bg-surface-base",
@@ -108,10 +108,10 @@ export const LinkSettings = memo(function LinkSettings({
             )}
           >
             <div>
-              <span className="body-small text-text-primary font-medium">
+              <span class="body-small text-text-primary font-medium">
                 {t("common.showCard", "Show Card")}
               </span>
-              <p className="caption text-text-muted">
+              <p class="caption text-text-muted">
                 {t("common.showCardDesc", "Display this card on the dashboard")}
               </p>
             </div>
@@ -123,11 +123,11 @@ export const LinkSettings = memo(function LinkSettings({
                   link: { ...cardSettings.link, enabled: e.target.checked },
                 })
               }
-              className={iconTokens.size.sm}
+              class={iconTokens.size.sm}
             />
           </label>
           <label
-            className={cn(
+            class={cn(
               layout.flex.between,
               spacing.pad.sm,
               "bg-surface-base",
@@ -136,10 +136,10 @@ export const LinkSettings = memo(function LinkSettings({
             )}
           >
             <div>
-              <span className="body-small text-text-primary font-medium">
+              <span class="body-small text-text-primary font-medium">
                 {t("common.runOnFab", "Include in Run All")}
               </span>
-              <p className="caption text-text-muted">
+              <p class="caption text-text-muted">
                 {t("common.runOnFabDesc", "Run when FAB button is clicked")}
               </p>
             </div>
@@ -151,21 +151,21 @@ export const LinkSettings = memo(function LinkSettings({
                   link: { ...cardSettings.link, autoRunOnLink: e.target.checked },
                 })
               }
-              className={iconTokens.size.sm}
+              class={iconTokens.size.sm}
             />
           </label>
         </div>
 
         {/* Combined Speed/Duplex Dropdown */}
         <div>
-          <label className="caption text-text-muted font-medium" htmlFor="link-mode">
+          <label class="caption text-text-muted font-medium" for="link-mode">
             {t("link.speedDuplex", "Speed / Duplex")}
           </label>
           <select
             id="link-mode"
             value={linkSettings.mode}
             onChange={(e) => handleModeChange(e.target.value)}
-            className={cn(
+            class={cn(
               "w-full",
               spacing.margin.top.tight,
               spacing.chip.lg,
@@ -184,7 +184,7 @@ export const LinkSettings = memo(function LinkSettings({
 
         {/* Warning for manual settings */}
         {isManualMode && (
-          <p className={cn("caption text-status-warning", spacing.margin.top.inline)}>
+          <p class={cn("caption text-status-warning", spacing.margin.top.inline)}>
             {t(
               "link.manualWarning",
               "Manual speed/duplex may cause link issues if mismatched with switch",
@@ -194,15 +194,15 @@ export const LinkSettings = memo(function LinkSettings({
 
         {/* Available Modes Display */}
         {linkSettings.availableModes.length > 0 && (
-          <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-            <span className="caption text-text-muted font-medium">
+          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+            <span class="caption text-text-muted font-medium">
               {t("link.availableModes", "Supported Modes")}
             </span>
-            <div className={cn("flex flex-wrap", spacing.gap.tight, spacing.margin.top.inline)}>
+            <div class={cn("flex flex-wrap", spacing.gap.tight, spacing.margin.top.inline)}>
               {linkSettings.availableModes.map((mode) => (
                 <span
                   key={mode}
-                  className={cn(
+                  class={cn(
                     spacing.chip.sm,
                     "bg-surface-base border border-surface-border",
                     radius.default,
@@ -216,7 +216,7 @@ export const LinkSettings = memo(function LinkSettings({
           </div>
         )}
 
-        <p className={cn("caption text-text-muted", spacing.margin.top.inline)}>
+        <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
           {t("link.requiresRoot", "Changing link settings requires root privileges")}
         </p>
       </div>

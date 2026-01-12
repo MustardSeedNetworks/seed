@@ -76,7 +76,7 @@ const deviceColumns: Column<Device>[] = [
     sortable: true,
     render: (d) => (
       <span
-        className={cn(
+        class={cn(
           spacing.badge.padXs,
           "rounded-full text-xs",
           d.status === "online"
@@ -194,7 +194,7 @@ export const WithActions: Story = {
           e.stopPropagation();
           alert(`Action on ${device.hostname}`);
         }}
-        className={cn(
+        class={cn(
           spacing.chip.sm,
           "text-xs bg-brand-primary/20 text-brand-primary rounded hover:bg-brand-primary/30",
         )}

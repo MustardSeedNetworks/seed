@@ -175,7 +175,7 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      className={cn(
+      class={cn(
         "border-2 border-dashed",
         isDragging ? "border-brand-primary bg-brand-primary/10" : "border-surface-border",
         radius.lg,
@@ -186,21 +186,21 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
       aria-label={t("import.dropZone", "File drop zone")}
     >
       {isLoading ? (
-        <div className={cn(layout.stack.default, "items-center")}>
-          <div className="animate-spin">
-            <FileArchive className={cn(iconTokens.size.lg, "text-text-muted")} />
+        <div class={cn(layout.stack.default, "items-center")}>
+          <div class="animate-spin">
+            <FileArchive class={cn(iconTokens.size.lg, "text-text-muted")} />
           </div>
-          <p className="body-small text-text-muted">{t("import.parsing")}</p>
+          <p class="body-small text-text-muted">{t("import.parsing")}</p>
         </div>
       ) : (
-        <div className={cn(layout.stack.default, "items-center")}>
-          <Upload className={cn(iconTokens.size.lg, "text-text-muted")} />
+        <div class={cn(layout.stack.default, "items-center")}>
+          <Upload class={cn(iconTokens.size.lg, "text-text-muted")} />
           <div>
-            <p className="body-small font-medium">{t("import.dropPrompt")}</p>
-            <p className="caption text-text-muted">{t("import.orClick")}</p>
+            <p class="body-small font-medium">{t("import.dropPrompt")}</p>
+            <p class="caption text-text-muted">{t("import.orClick")}</p>
           </div>
           <label
-            className={cn(
+            class={cn(
               button.size.sm,
               "bg-brand-primary text-text-inverse",
               radius.md,
@@ -208,9 +208,9 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
             )}
           >
             {t("import.selectFile")}
-            <input type="file" accept=".amp" onChange={handleFileInput} className="hidden" />
+            <input type="file" accept=".amp" onChange={handleFileInput} class="hidden" />
           </label>
-          <p className="caption text-text-muted">{t("import.supportedFormat")}</p>
+          <p class="caption text-text-muted">{t("import.supportedFormat")}</p>
         </div>
       )}
     </div>
@@ -218,27 +218,27 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
 
   // Render error state
   const renderError = () => (
-    <div className={layout.stack.default}>
+    <div class={layout.stack.default}>
       <div
-        className={cn(
+        class={cn(
           "bg-status-error/10 border border-status-error/20",
           radius.md,
           spacing.pad.default,
         )}
       >
-        <div className={cn(layout.inline.default, "text-status-error")}>
-          <AlertTriangle className={iconTokens.size.sm} />
-          <span className="body-small font-medium">{t("import.error")}</span>
+        <div class={cn(layout.inline.default, "text-status-error")}>
+          <AlertTriangle class={iconTokens.size.sm} />
+          <span class="body-small font-medium">{t("import.error")}</span>
         </div>
-        <p className={cn("body-small text-text-primary", spacing.margin.top.tight)}>
+        <p class={cn("body-small text-text-primary", spacing.margin.top.tight)}>
           {parseResult?.error}
         </p>
       </div>
-      <div className={cn(layout.inline.default, "justify-end")}>
+      <div class={cn(layout.inline.default, "justify-end")}>
         <button
           type="button"
           onClick={handleReset}
-          className={cn(
+          class={cn(
             button.size.sm,
             "border border-surface-border",
             radius.md,
@@ -250,7 +250,7 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
         <button
           type="button"
           onClick={onCancel}
-          className={cn(
+          class={cn(
             button.size.sm,
             "border border-surface-border",
             radius.md,
@@ -265,27 +265,29 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
 
   // Render preview
   const renderPreview = () => {
-    if (!parseResult?.data) return null;
+    if (!parseResult?.data) {
+      return null;
+    }
 
     const summary = getAirMapperSummary(parseResult.data);
 
     return (
-      <div className={layout.stack.default}>
+      <div class={layout.stack.default}>
         {/* Warnings */}
         {parseResult.warnings.length > 0 && (
           <div
-            className={cn(
+            class={cn(
               "bg-status-warning/10 border border-status-warning/20",
               radius.md,
               spacing.pad.sm,
             )}
           >
-            <div className={cn(layout.inline.default, "text-status-warning")}>
-              <AlertTriangle className={iconTokens.size.sm} />
-              <span className="caption font-medium">{t("import.warnings")}</span>
+            <div class={cn(layout.inline.default, "text-status-warning")}>
+              <AlertTriangle class={iconTokens.size.sm} />
+              <span class="caption font-medium">{t("import.warnings")}</span>
             </div>
             <ul
-              className={cn(
+              class={cn(
                 "caption text-text-muted",
                 spacing.margin.top.tight,
                 "list-disc list-inside",
@@ -299,40 +301,40 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
         )}
 
         {/* Preview info */}
-        <div className={cn("bg-surface-base", radius.md, spacing.pad.default)}>
-          <h4 className={cn("body-small font-medium", spacing.margin.bottom.content)}>
+        <div class={cn("bg-surface-base", radius.md, spacing.pad.default)}>
+          <h4 class={cn("body-small font-medium", spacing.margin.bottom.content)}>
             {summary.surveyName}
           </h4>
 
-          <div className="grid grid-cols-2 gap-2 caption">
-            <div className="text-text-muted">{t("import.device")}:</div>
+          <div class="grid grid-cols-2 gap-2 caption">
+            <div class="text-text-muted">{t("import.device")}:</div>
             <div>{summary.deviceInfo}</div>
 
-            <div className="text-text-muted">{t("import.surveyPoints")}:</div>
+            <div class="text-text-muted">{t("import.surveyPoints")}:</div>
             <div>{summary.pointCount}</div>
 
-            <div className="text-text-muted">{t("import.facilitySize")}:</div>
+            <div class="text-text-muted">{t("import.facilitySize")}:</div>
             <div>{summary.facilitySize}</div>
 
-            <div className="text-text-muted">{t("import.propagation")}:</div>
+            <div class="text-text-muted">{t("import.propagation")}:</div>
             <div>{summary.propagation}</div>
           </div>
 
           {/* Location counts */}
-          <div className={cn(layout.inline.default, spacing.margin.top.content, "flex-wrap")}>
-            <div className={cn(layout.inline.default, "caption")}>
-              <MapPin className="w-3 h-3 text-green-500" />
+          <div class={cn(layout.inline.default, spacing.margin.top.content, "flex-wrap")}>
+            <div class={cn(layout.inline.default, "caption")}>
+              <MapPin class="w-3 h-3 text-green-500" />
               <span>{summary.apCount} APs</span>
             </div>
-            <div className={cn(layout.inline.default, "caption")}>
-              <Users className="w-3 h-3 text-blue-500" />
+            <div class={cn(layout.inline.default, "caption")}>
+              <Users class="w-3 h-3 text-blue-500" />
               <span>
                 {summary.clientCount} {t("import.clients")}
               </span>
             </div>
             {summary.hasBothModes && (
-              <div className={cn(layout.inline.default, "caption")}>
-                <Radio className="w-3 h-3 text-purple-500" />
+              <div class={cn(layout.inline.default, "caption")}>
+                <Radio class="w-3 h-3 text-purple-500" />
                 <span>{t("import.passiveAndActive")}</span>
               </div>
             )}
@@ -340,23 +342,23 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
 
           {/* Floor plan preview */}
           {parseResult.data.floorPlanImage && (
-            <div className={spacing.margin.top.content}>
+            <div class={spacing.margin.top.content}>
               <img
                 src={parseResult.data.floorPlanImage}
                 alt="Floor plan preview"
-                className={cn("max-h-40", radius.md, "border border-surface-border")}
+                class={cn("max-h-40", radius.md, "border border-surface-border")}
               />
             </div>
           )}
         </div>
 
         {/* Import options */}
-        <div className={cn("border border-surface-border", radius.md, spacing.pad.sm)}>
-          <h4 className={cn("caption font-medium", spacing.margin.bottom.inline)}>
+        <div class={cn("border border-surface-border", radius.md, spacing.pad.sm)}>
+          <h4 class={cn("caption font-medium", spacing.margin.bottom.inline)}>
             {t("import.options")}
           </h4>
-          <div className={layout.stack.default}>
-            <label className={cn(layout.inline.default, "cursor-pointer")}>
+          <div class={layout.stack.default}>
+            <label class={cn(layout.inline.default, "cursor-pointer")}>
               <input
                 type="checkbox"
                 checked={importOptions.importFloorPlan}
@@ -366,12 +368,12 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
                     importFloorPlan: e.target.checked,
                   }))
                 }
-                className="w-4 h-4 accent-brand-primary"
+                class="w-4 h-4 accent-brand-primary"
                 disabled={!parseResult.data.floorPlanImage}
               />
-              <span className="body-small">{t("import.optionFloorPlan")}</span>
+              <span class="body-small">{t("import.optionFloorPlan")}</span>
             </label>
-            <label className={cn(layout.inline.default, "cursor-pointer")}>
+            <label class={cn(layout.inline.default, "cursor-pointer")}>
               <input
                 type="checkbox"
                 checked={importOptions.importCalibration}
@@ -381,11 +383,11 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
                     importCalibration: e.target.checked,
                   }))
                 }
-                className="w-4 h-4 accent-brand-primary"
+                class="w-4 h-4 accent-brand-primary"
               />
-              <span className="body-small">{t("import.optionCalibration")}</span>
+              <span class="body-small">{t("import.optionCalibration")}</span>
             </label>
-            <label className={cn(layout.inline.default, "cursor-pointer")}>
+            <label class={cn(layout.inline.default, "cursor-pointer")}>
               <input
                 type="checkbox"
                 checked={importOptions.importLocations}
@@ -395,19 +397,19 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
                     importLocations: e.target.checked,
                   }))
                 }
-                className="w-4 h-4 accent-brand-primary"
+                class="w-4 h-4 accent-brand-primary"
               />
-              <span className="body-small">{t("import.optionLocations")}</span>
+              <span class="body-small">{t("import.optionLocations")}</span>
             </label>
           </div>
         </div>
 
         {/* Actions */}
-        <div className={cn(layout.inline.default, "justify-end")}>
+        <div class={cn(layout.inline.default, "justify-end")}>
           <button
             type="button"
             onClick={handleReset}
-            className={cn(
+            class={cn(
               button.size.sm,
               "border border-surface-border",
               radius.md,
@@ -415,13 +417,13 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
               layout.inline.default,
             )}
           >
-            <X className={iconTokens.size.sm} />
+            <X class={iconTokens.size.sm} />
             {t("import.tryAnother")}
           </button>
           <button
             type="button"
             onClick={onCancel}
-            className={cn(
+            class={cn(
               button.size.sm,
               "border border-surface-border",
               radius.md,
@@ -433,7 +435,7 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
           <button
             type="button"
             onClick={handleConfirmImport}
-            className={cn(
+            class={cn(
               button.size.sm,
               "bg-brand-primary text-text-inverse",
               radius.md,
@@ -441,7 +443,7 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
               layout.inline.default,
             )}
           >
-            <Check className={iconTokens.size.sm} />
+            <Check class={iconTokens.size.sm} />
             {t("import.confirm")}
           </button>
         </div>
@@ -451,19 +453,19 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps) {
 
   return (
     <div
-      className={cn(
+      class={cn(
         "bg-surface-raised",
         radius.md,
         "border border-surface-border",
         spacing.pad.default,
       )}
     >
-      <div className={cn(layout.inline.default, spacing.margin.bottom.content)}>
-        <FileArchive className={iconTokens.size.sm} />
-        <h3 className="heading-3">{t("import.title")}</h3>
+      <div class={cn(layout.inline.default, spacing.margin.bottom.content)}>
+        <FileArchive class={iconTokens.size.sm} />
+        <h3 class="heading-3">{t("import.title")}</h3>
       </div>
 
-      <p className={cn("body-small text-text-muted", spacing.margin.bottom.content)}>
+      <p class={cn("body-small text-text-muted", spacing.margin.bottom.content)}>
         {t("import.description")}
       </p>
 

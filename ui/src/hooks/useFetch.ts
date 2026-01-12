@@ -211,9 +211,7 @@ export function useFetch<T>(options: UseFetchOptions<T>): UseFetchResult<T> {
   /**
    * Re-executes the last fetch operation.
    */
-  const refetch = useCallback((): Promise<T | null> => {
-    return executeFetch();
-  }, [executeFetch]);
+  const refetch = useCallback((): Promise<T | null> => executeFetch(), [executeFetch]);
 
   /**
    * Resets data and error state to initial values.

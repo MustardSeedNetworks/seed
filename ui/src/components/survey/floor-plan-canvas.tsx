@@ -103,7 +103,9 @@ export function FloorPlanCanvas({
 
   // Calculate canvas dimensions maintaining aspect ratio
   useEffect(() => {
-    if (!containerRef.current || !floorPlan) return;
+    if (!(containerRef.current && floorPlan)) {
+      return;
+    }
 
     const container = containerRef.current;
     const containerWidth = container.clientWidth;
@@ -120,12 +122,16 @@ export function FloorPlanCanvas({
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       // Only track mouse when in calibration mode with exactly one point set
       if (!calibrationMode || calibrationPoints.length !== 1) {
-        if (mousePos !== null) setMousePos(null);
+        if (mousePos !== null) {
+          setMousePos(null);
+        }
         return;
       }
 
       const canvas = canvasRef.current;
-      if (!canvas || !floorPlan) return;
+      if (!(canvas && floorPlan)) {
+        return;
+      }
 
       const rect = canvas.getBoundingClientRect();
       // Convert to floor plan coordinates
@@ -142,11 +148,15 @@ export function FloorPlanCanvas({
 
   // Draw floor plan and samples
   useEffect(() => {
-    if (!canvasRef.current || !floorPlan || dimensions.width === 0) return;
+    if (!(canvasRef.current && floorPlan) || dimensions.width === 0) {
+      return;
+    }
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) {
+      return;
+    }
 
     // Set canvas size
     canvas.width = dimensions.width;
@@ -158,7 +168,9 @@ export function FloorPlanCanvas({
     const img = new Image();
     img.onload = () => {
       // Skip render if component unmounted or effect re-ran (fixes #853)
-      if (!isMounted) return;
+      if (!isMounted) {
+        return;
+      }
       ctx.drawImage(img, 0, 0, dimensions.width, dimensions.height);
 
       // Calculate scale factor
@@ -368,7 +380,9 @@ export function FloorPlanCanvas({
 
   // Handle canvas click
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || !floorPlan) return;
+    if (!(canvasRef.current && floorPlan)) {
+      return;
+    }
 
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -401,12 +415,12 @@ export function FloorPlanCanvas({
   };
 
   return (
-    <div ref={containerRef} className="w-full">
+    <div ref={containerRef} class="w-full">
       <canvas
         ref={canvasRef}
         onClick={handleCanvasClick}
         onMouseMove={handleMouseMove}
-        className={cn(
+        class={cn(
           "border border-surface-border",
           radius.md,
           interactive || calibrationMode || apPlacementMode ? "cursor-crosshair" : "",
@@ -448,9 +462,15 @@ function filterSampleData(sample: SamplePoint, filter?: HeatmapFilter): ScannedN
       }
       if (filter.band) {
         networks = networks.filter((n) => {
-          if (filter.band === "2.4") return n.frequency >= 2400 && n.frequency < 2500;
-          if (filter.band === "5") return n.frequency >= 5000 && n.frequency < 6000;
-          if (filter.band === "6") return n.frequency >= 5925 && n.frequency < 7125;
+          if (filter.band === "2.4") {
+            return n.frequency >= 2400 && n.frequency < 2500;
+          }
+          if (filter.band === "5") {
+            return n.frequency >= 5000 && n.frequency < 6000;
+          }
+          if (filter.band === "6") {
+            return n.frequency >= 5925 && n.frequency < 7125;
+          }
           return true;
         });
       }
@@ -491,14 +511,27 @@ function filterSampleData(sample: SamplePoint, filter?: HeatmapFilter): ScannedN
 
     // Apply filter for active surveys
     if (filter) {
-      if (filter.ssid && !network.ssid.includes(filter.ssid)) return [];
-      if (filter.bssid && !network.bssid.toLowerCase().includes(filter.bssid.toLowerCase()))
+      if (filter.ssid && !network.ssid.includes(filter.ssid)) {
         return [];
-      if (filter.minRssi !== undefined && network.rssi < filter.minRssi) return [];
-      if (filter.channelWidth && network.channelWidth !== filter.channelWidth) return [];
-      if (filter.phyType && network.phyType !== filter.phyType) return [];
-      if (filter.security && network.security !== filter.security) return [];
-      if (filter.vendor && network.vendor !== filter.vendor) return [];
+      }
+      if (filter.bssid && !network.bssid.toLowerCase().includes(filter.bssid.toLowerCase())) {
+        return [];
+      }
+      if (filter.minRssi !== undefined && network.rssi < filter.minRssi) {
+        return [];
+      }
+      if (filter.channelWidth && network.channelWidth !== filter.channelWidth) {
+        return [];
+      }
+      if (filter.phyType && network.phyType !== filter.phyType) {
+        return [];
+      }
+      if (filter.security && network.security !== filter.security) {
+        return [];
+      }
+      if (filter.vendor && network.vendor !== filter.vendor) {
+        return [];
+      }
     }
 
     return [network];
@@ -551,14 +584,18 @@ function extractMetricValue(
       return data.noiseFloor || -95;
     case "cochannel": {
       // Count networks on same channel (co-channel interference)
-      if (filteredNetworks.length === 0) return 0;
+      if (filteredNetworks.length === 0) {
+        return 0;
+      }
       const primaryChannel = filteredNetworks[0].channel;
       const allNetworks = (data.networks || []) as ScannedNetwork[];
       return allNetworks.filter((n) => n.channel === primaryChannel).length - 1;
     }
     case "adjacent": {
       // Count networks on adjacent channels
-      if (filteredNetworks.length === 0) return 0;
+      if (filteredNetworks.length === 0) {
+        return 0;
+      }
       const primaryChannel = filteredNetworks[0].channel;
       const allNetworks = (data.networks || []) as ScannedNetwork[];
       return allNetworks.filter(
@@ -601,14 +638,18 @@ function drawHeatmap(
   scaleY: number,
   filter?: HeatmapFilter,
 ) {
-  if (samples.length === 0 || !metric) return;
+  if (samples.length === 0 || !metric) {
+    return;
+  }
 
   // Extract metric values with filter applied
   const values = samples.map((s) => extractMetricValue(s, metric, filter));
 
   // Filter out invalid values
   const validValues = values.filter((v) => v !== null && !Number.isNaN(v));
-  if (validValues.length === 0) return;
+  if (validValues.length === 0) {
+    return;
+  }
 
   const minValue = Math.min(...validValues);
   const maxValue = Math.max(...validValues);

@@ -171,7 +171,12 @@ func buildBSSIDLookup(bssids []string) map[string]bool {
 	return lookup
 }
 
-func (d *ProblemDetector) checkRogueAPs(aps []WiFiAP, authSSIDs, authBSSIDs map[string]bool, thresholds ProblemThresholds, now time.Time) []WiFiProblem {
+func (d *ProblemDetector) checkRogueAPs(
+	aps []WiFiAccessPoint,
+	authSSIDs, authBSSIDs map[string]bool,
+	thresholds ProblemThresholds,
+	now time.Time,
+) []WiFiProblem {
 	var problems []WiFiProblem
 	for _, ap := range aps {
 		normalizedBSSID := strings.ToUpper(ap.BSSID)
@@ -207,7 +212,11 @@ func (d *ProblemDetector) checkRogueAPs(aps []WiFiAP, authSSIDs, authBSSIDs map[
 	return problems
 }
 
-func (d *ProblemDetector) checkChannelInterference(aps []WiFiAP, thresholds ProblemThresholds, now time.Time) []WiFiProblem {
+func (d *ProblemDetector) checkChannelInterference(
+	aps []WiFiAccessPoint,
+	thresholds ProblemThresholds,
+	now time.Time,
+) []WiFiProblem {
 	channelAPCounts := make(map[string]int)
 	for _, ap := range aps {
 		key := fmt.Sprintf("%s-%d", ap.Band, ap.Channel)
@@ -240,7 +249,11 @@ func (d *ProblemDetector) checkChannelInterference(aps []WiFiAP, thresholds Prob
 	return problems
 }
 
-func (d *ProblemDetector) checkUtilization(utilization []WiFiChannelUtilization, thresholds ProblemThresholds, now time.Time) []WiFiProblem {
+func (d *ProblemDetector) checkUtilization(
+	utilization []ChannelUtilization,
+	thresholds ProblemThresholds,
+	now time.Time,
+) []WiFiProblem {
 	var problems []WiFiProblem
 	for _, util := range utilization {
 		if util.UtilizationPercent > thresholds.MaxChannelUtil {

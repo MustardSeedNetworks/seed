@@ -65,10 +65,16 @@ interface PathDiscoveryCardProps {
 
 // Format RTT from nanoseconds to readable string
 function formatRtt(ns: number): string {
-  if (ns <= 0) return "---";
+  if (ns <= 0) {
+    return "---";
+  }
   const ms = ns / 1_000_000;
-  if (ms < 1) return "<1ms";
-  if (ms >= 1000) return `${(ms / 1000).toFixed(1)}s`;
+  if (ms < 1) {
+    return "<1ms";
+  }
+  if (ms >= 1000) {
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
   return `${ms.toFixed(1)}ms`;
 }
 
@@ -78,7 +84,7 @@ function getMaxRtt(hops: TracerouteHop[]): number {
   return max > 0 ? max : 1;
 }
 
-export const PathDiscoveryCard = memo(function PathDiscoveryCard({
+export const PathDiscoveryCard = memo(function pathDiscoveryCard({
   gateway,
   dnsServer,
   onRegisterTraceHandler,
@@ -101,11 +107,15 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
   // Handle WebSocket trace hop messages for real-time updates
   const handleTraceHop = useCallback((msg: TraceHopMessage) => {
     // Only process if this is for our active trace
-    if (activeTraceRef.current !== msg.target) return;
+    if (activeTraceRef.current !== msg.target) {
+      return;
+    }
 
     setStreamingHops((prev) => {
       // Avoid duplicates by checking TTL
-      if (prev.some((h) => h.ttl === msg.hop.ttl)) return prev;
+      if (prev.some((h) => h.ttl === msg.hop.ttl)) {
+        return prev;
+      }
       return [...prev, msg.hop].sort((a, b) => a.ttl - b.ttl);
     });
     setStreamingTarget(msg.target);
@@ -118,14 +128,18 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
 
   // Register for WebSocket trace hop messages
   useEffect(() => {
-    if (!onRegisterTraceHandler) return;
+    if (!onRegisterTraceHandler) {
+      return;
+    }
     return onRegisterTraceHandler(handleTraceHop);
   }, [onRegisterTraceHandler, handleTraceHop]);
 
   // Run path discovery (always L2+L3 combined)
   const runTrace = useCallback(
     async (traceTarget: string) => {
-      if (!traceTarget.trim()) return;
+      if (!traceTarget.trim()) {
+        return;
+      }
 
       setLoading(true);
       setError(null);
@@ -187,7 +201,9 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
 
   // Export as JSON
   const exportJson = useCallback(() => {
-    if (!result) return;
+    if (!result) {
+      return;
+    }
     const blob = new Blob([JSON.stringify(result, null, 2)], {
       type: "application/json",
     });
@@ -201,7 +217,9 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
 
   // Export as CSV
   const exportCsv = useCallback(() => {
-    if (!result) return;
+    if (!result) {
+      return;
+    }
 
     let csvContent = "";
 
@@ -219,7 +237,9 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
 
     // L2 path section
     if (result.l2Path) {
-      if (csvContent) csvContent += "\n\n";
+      if (csvContent) {
+        csvContent += "\n\n";
+      }
       csvContent += "L2 Path\n";
       csvContent += "Device,Device IP,Ingress Port,Egress Port,Source\n";
       csvContent += result.l2Path.hops
@@ -241,15 +261,23 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
 
   // Copy to clipboard
   const copyToClipboard = useCallback(() => {
-    if (!result) return;
+    if (!result) {
+      return;
+    }
     navigator.clipboard.writeText(JSON.stringify(result, null, 2));
   }, [result]);
 
   // Determine card status based on worst hop result
   const cardStatus: Status = useMemo(() => {
-    if (loading) return "loading";
-    if (error) return "error";
-    if (!result) return "unknown";
+    if (loading) {
+      return "loading";
+    }
+    if (error) {
+      return "error";
+    }
+    if (!result) {
+      return "unknown";
+    }
 
     // Check L3 path for issues
     const l3Hops = result.l3Path?.hops || [];
@@ -257,9 +285,15 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
     const hasTimeouts = l3Hops.some((h) => h.state === "timeout");
     const hasHighLatency = l3Hops.some((h) => h.rtt > 100000000); // > 100ms
 
-    if (hasErrors) return "error";
-    if (hasTimeouts || hasHighLatency) return "warning";
-    if (result.l3Path?.completed || result.l2Path) return "success";
+    if (hasErrors) {
+      return "error";
+    }
+    if (hasTimeouts || hasHighLatency) {
+      return "warning";
+    }
+    if (result.l3Path?.completed || result.l2Path) {
+      return "success";
+    }
     return "warning";
   }, [loading, error, result]);
 
@@ -268,13 +302,13 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
   return (
     <Card
       title={t("pathDiscovery.title", "Path Discovery")}
-      icon={<Route className={iconTokens.size.md} />}
+      icon={<Route class={iconTokens.size.md} />}
       status={cardStatus}
     >
       {/* Target Input Form - Responsive layout for various screen sizes */}
-      <form onSubmit={handleSubmit} className={cn("stack-sm", spacing.margin.bottom.content)}>
+      <form onSubmit={handleSubmit} class={cn("stack-sm", spacing.margin.bottom.content)}>
         {/* Target Input Row - Stack on mobile, inline on larger screens */}
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div class="flex flex-col sm:flex-row gap-2">
           {/* Target input - full width on mobile */}
           <input
             type="text"
@@ -282,7 +316,7 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
             onChange={(e) => setTarget(e.target.value)}
             placeholder={t("pathDiscovery.enterTarget", "Enter IP or hostname...")}
             disabled={loading}
-            className={cn(
+            class={cn(
               "flex-1 min-w-0",
               inputTokens.base,
               inputTokens.state.default,
@@ -298,13 +332,13 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
           />
 
           {/* Protocol and Trace button group - inline always */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div class="flex items-center gap-2 shrink-0">
             {/* Protocol selector - styled to match design system */}
             <select
               value={protocol}
               onChange={(e) => setProtocol(e.target.value as Protocol)}
               disabled={loading}
-              className={cn(
+              class={cn(
                 inputTokens.base,
                 inputTokens.state.default,
                 inputTokens.size.sm,
@@ -327,7 +361,7 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
                 min={1}
                 max={65535}
                 disabled={loading}
-                className={cn(
+                class={cn(
                   "w-16",
                   inputTokens.base,
                   inputTokens.state.default,
@@ -340,7 +374,7 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
             <button
               type="submit"
               disabled={loading || !target.trim()}
-              className={cn(
+              class={cn(
                 buttonTokens.base,
                 buttonTokens.variant.primary,
                 buttonTokens.size.sm,
@@ -353,16 +387,14 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
         </div>
 
         {/* Quick Targets - Wrap on small screens */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="caption text-text-muted shrink-0">
-            {t("pathDiscovery.quick", "Quick")}:
-          </span>
-          <div className="flex items-center gap-1.5 flex-wrap">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="caption text-text-muted shrink-0">{t("pathDiscovery.quick", "Quick")}:</span>
+          <div class="flex items-center gap-1.5 flex-wrap">
             <button
               type="button"
               onClick={traceGateway}
               disabled={loading || !gateway}
-              className={cn(
+              class={cn(
                 buttonTokens.base,
                 buttonTokens.variant.ghost,
                 buttonTokens.size.xs,
@@ -375,7 +407,7 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
               type="button"
               onClick={traceDns}
               disabled={loading}
-              className={cn(
+              class={cn(
                 buttonTokens.base,
                 buttonTokens.variant.ghost,
                 buttonTokens.size.xs,
@@ -388,7 +420,7 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
               type="button"
               onClick={traceInternet}
               disabled={loading}
-              className={cn(
+              class={cn(
                 buttonTokens.base,
                 buttonTokens.variant.ghost,
                 buttonTokens.size.xs,
@@ -405,7 +437,7 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
 
       {/* Loading State with Streaming Hops */}
       {loading && (
-        <div className="stack-sm">
+        <div class="stack-sm">
           <CardValue
             value={
               streamingHops.length > 0
@@ -418,28 +450,26 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
           />
           {/* Show streaming hops in real-time */}
           {streamingHops.length > 0 && (
-            <div className="stack-xs">
+            <div class="stack-xs">
               {streamingHops.map((hop) => (
                 <div
                   key={hop.ttl}
-                  className={cn(
+                  class={cn(
                     "flex items-center gap-2 py-1",
                     hop.state === "timeout" && "opacity-50",
                   )}
                 >
-                  <span className="w-6 text-xs text-text-muted font-mono">{hop.ttl}</span>
-                  <span className="flex-1 text-sm font-mono text-text-primary">
-                    {hop.ip || "*"}
-                  </span>
-                  <span className="text-xs text-text-muted">{formatRtt(hop.rtt)}</span>
+                  <span class="w-6 text-xs text-text-muted font-mono">{hop.ttl}</span>
+                  <span class="flex-1 text-sm font-mono text-text-primary">{hop.ip || "*"}</span>
+                  <span class="text-xs text-text-muted">{formatRtt(hop.rtt)}</span>
                 </div>
               ))}
               {/* Pulsing indicator for next hop */}
-              <div className="flex items-center gap-2 py-1 animate-pulse">
-                <span className="w-6 text-xs text-text-muted font-mono">
+              <div class="flex items-center gap-2 py-1 animate-pulse">
+                <span class="w-6 text-xs text-text-muted font-mono">
                   {streamingHops.length + 1}
                 </span>
-                <span className="text-sm text-text-muted">...</span>
+                <span class="text-sm text-text-muted">...</span>
               </div>
             </div>
           )}
@@ -448,20 +478,20 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
 
       {/* Error State */}
       {error && !loading && (
-        <div className={cn(spacing.pad.sm, "bg-status-error/10", radius.default)}>
-          <span className="body-small text-status-error">{error}</span>
+        <div class={cn(spacing.pad.sm, "bg-status-error/10", radius.default)}>
+          <span class="body-small text-status-error">{error}</span>
         </div>
       )}
 
       {/* Results */}
       {result && !loading && (
-        <div className="stack-md">
+        <div class="stack-md">
           {/* L3 Path Results */}
-          {result.l3Path && <L3PathDisplay result={result.l3Path} maxRtt={maxRtt} t={t} />}
+          {result.l3Path && <L3_PATH_DISPLAY result={result.l3Path} maxRtt={maxRtt} t={t} />}
 
           {/* L2 Path Results */}
           {result.l2Path && (
-            <L2PathDisplay
+            <L2_PATH_DISPLAY
               result={result.l2Path}
               expandedHop={expandedL2Hop}
               onToggleHop={setExpandedL2Hop}
@@ -470,13 +500,11 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
           )}
 
           {/* Export Actions */}
-          <div
-            className={cn(layout.inline.default, spacing.gap.compact, spacing.margin.top.inline)}
-          >
+          <div class={cn(layout.inline.default, spacing.gap.compact, spacing.margin.top.inline)}>
             <button
               type="button"
               onClick={exportJson}
-              className={cn(
+              class={cn(
                 buttonTokens.base,
                 buttonTokens.variant.ghost,
                 buttonTokens.size.xs,
@@ -488,7 +516,7 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
             <button
               type="button"
               onClick={exportCsv}
-              className={cn(
+              class={cn(
                 buttonTokens.base,
                 buttonTokens.variant.ghost,
                 buttonTokens.size.xs,
@@ -500,7 +528,7 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
             <button
               type="button"
               onClick={copyToClipboard}
-              className={cn(
+              class={cn(
                 buttonTokens.base,
                 buttonTokens.variant.ghost,
                 buttonTokens.size.xs,
@@ -513,7 +541,7 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
               type="button"
               onClick={() => runTrace(target)}
               disabled={loading}
-              className={cn(
+              class={cn(
                 buttonTokens.base,
                 buttonTokens.variant.ghost,
                 buttonTokens.size.xs,
@@ -527,9 +555,9 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
       )}
 
       {/* Empty State - improved visual design */}
-      {!result && !loading && !error && (
+      {!(result || loading || error) && (
         <div
-          className={cn(
+          class={cn(
             spacing.pad.md,
             "text-center",
             "bg-surface-base/50",
@@ -537,13 +565,13 @@ export const PathDiscoveryCard = memo(function PathDiscoveryCard({
             "border border-dashed border-surface-border",
           )}
         >
-          <div className="text-text-muted mb-2">
-            <Route className={cn(iconTokens.size.lg, "mx-auto opacity-40")} />
+          <div class="text-text-muted mb-2">
+            <Route class={cn(iconTokens.size.lg, "mx-auto opacity-40")} />
           </div>
-          <p className="body-small text-text-muted">
+          <p class="body-small text-text-muted">
             {t("pathDiscovery.enterTarget", "Select a target to trace")}
           </p>
-          <p className="caption text-text-muted mt-1">
+          <p class="caption text-text-muted mt-1">
             {t(
               "pathDiscovery.emptyHint",
               "Enter an IP address or hostname, or use the quick buttons above",
@@ -562,35 +590,35 @@ interface L3PathDisplayProps {
   t: (key: string, fallback: string) => string;
 }
 
-const L3PathDisplay = memo(function L3PathDisplay({ result, maxRtt, t }: L3PathDisplayProps) {
+const L3_PATH_DISPLAY = memo(function l3PathDisplay({ result, maxRtt, t }: L3PathDisplayProps) {
   return (
-    <div className="stack-sm">
+    <div class="stack-sm">
       {/* L3 Header */}
-      <div className={cn(layout.flex.between, "items-center")}>
+      <div class={cn(layout.flex.between, "items-center")}>
         <div>
-          <span className="body-small font-semibold text-brand-primary">
+          <span class="body-small font-semibold text-brand-primary">
             L3 {t("pathDiscovery.path", "Path")}
           </span>
-          <span className="body-small font-medium text-text-primary ml-2">
+          <span class="body-small font-medium text-text-primary ml-2">
             {t("pathDiscovery.to", "to")} {result.target}
           </span>
-          <span className="caption text-text-muted ml-2">
+          <span class="caption text-text-muted ml-2">
             ({result.hops.length} {t("pathDiscovery.hops", "hops")})
           </span>
         </div>
         {result.completed && (
-          <span className="caption text-status-success">
+          <span class="caption text-status-success">
             {t("pathDiscovery.completed", "Completed")}
           </span>
         )}
       </div>
 
       {/* Hop List */}
-      <div className={cn("stack-xs", spacing.margin.top.inline)}>
+      <div class={cn("stack-xs", spacing.margin.top.inline)}>
         {result.hops.map((hop) => (
           <div
             key={hop.ttl}
-            className={cn(
+            class={cn(
               layout.inline.default,
               spacing.gap.compact,
               spacing.pad.xs,
@@ -600,19 +628,19 @@ const L3PathDisplay = memo(function L3PathDisplay({ result, maxRtt, t }: L3PathD
             )}
           >
             {/* TTL */}
-            <span className="w-6 caption font-mono text-text-muted">{hop.ttl}</span>
+            <span class="w-6 caption font-mono text-text-muted">{hop.ttl}</span>
 
             {/* IP and Hostname */}
-            <div className="flex-1 min-w-0">
+            <div class="flex-1 min-w-0">
               {hop.state === "timeout" ? (
-                <span className="caption text-text-muted">* * *</span>
+                <span class="caption text-text-muted">* * *</span>
               ) : (
                 <>
-                  <span className="body-small font-mono text-text-primary truncate">
+                  <span class="body-small font-mono text-text-primary truncate">
                     {hop.ip || "?"}
                   </span>
                   {hop.hostname && hop.hostname !== hop.ip && (
-                    <span className="caption text-text-muted ml-2 truncate">{hop.hostname}</span>
+                    <span class="caption text-text-muted ml-2 truncate">{hop.hostname}</span>
                   )}
                 </>
               )}
@@ -620,7 +648,7 @@ const L3PathDisplay = memo(function L3PathDisplay({ result, maxRtt, t }: L3PathD
 
             {/* RTT */}
             <span
-              className={cn(
+              class={cn(
                 "w-16 text-right caption font-mono",
                 hop.state === "timeout" ? "text-text-muted" : "text-text-primary",
               )}
@@ -629,10 +657,10 @@ const L3PathDisplay = memo(function L3PathDisplay({ result, maxRtt, t }: L3PathD
             </span>
 
             {/* RTT Bar */}
-            <div className={cn("w-20 h-2", radius.full, "bg-surface-border overflow-hidden")}>
+            <div class={cn("w-20 h-2", radius.full, "bg-surface-border overflow-hidden")}>
               {hop.rtt > 0 && (
                 <div
-                  className={cn(
+                  class={cn(
                     "h-full",
                     radius.full,
                     hop.state === "error"
@@ -662,7 +690,7 @@ interface L2PathDisplayProps {
   t: (key: string, fallback: string) => string;
 }
 
-const L2PathDisplay = memo(function L2PathDisplay({
+const L2_PATH_DISPLAY = memo(function l2PathDisplay({
   result,
   expandedHop,
   onToggleHop,
@@ -677,12 +705,12 @@ const L2PathDisplay = memo(function L2PathDisplay({
 
   if (result.hops.length === 0) {
     return (
-      <div className="stack-sm">
-        <div className="body-small font-semibold text-brand-primary">
+      <div class="stack-sm">
+        <div class="body-small font-semibold text-brand-primary">
           L2 {t("pathDiscovery.path", "Path")}
         </div>
-        <div className={cn(spacing.pad.sm, "bg-surface-base", radius.default)}>
-          <span className="caption text-text-muted">
+        <div class={cn(spacing.pad.sm, "bg-surface-base", radius.default)}>
+          <span class="caption text-text-muted">
             {t("pathDiscovery.noL2Path", "No L2 path information available")}
           </span>
         </div>
@@ -691,23 +719,23 @@ const L2PathDisplay = memo(function L2PathDisplay({
   }
 
   return (
-    <div className="stack-sm">
+    <div class="stack-sm">
       {/* L2 Header */}
-      <div className={cn(layout.flex.between, "items-center")}>
+      <div class={cn(layout.flex.between, "items-center")}>
         <div>
-          <span className="body-small font-semibold text-brand-primary">
+          <span class="body-small font-semibold text-brand-primary">
             L2 {t("pathDiscovery.path", "Path")}
           </span>
-          <span className="caption text-text-muted ml-2">(via LLDP/CDP/SNMP)</span>
+          <span class="caption text-text-muted ml-2">(via LLDP/CDP/SNMP)</span>
         </div>
-        <span className="caption text-text-muted">
+        <span class="caption text-text-muted">
           {result.hops.length} {t("pathDiscovery.switches", "switches")}
         </span>
       </div>
 
       {/* Visual Path Diagram */}
       <div
-        className={cn(
+        class={cn(
           "flex items-center overflow-x-auto",
           spacing.pad.sm,
           "bg-surface-base",
@@ -718,11 +746,11 @@ const L2PathDisplay = memo(function L2PathDisplay({
         {result.hops.map((hop, hopIndex) => (
           <div
             key={`${hop.deviceIp}-${hop.ingressPort?.name || "start"}`}
-            className="flex items-center shrink-0"
+            class="flex items-center shrink-0"
           >
             {/* Switch Box */}
             <div
-              className={cn(
+              class={cn(
                 "flex flex-col items-center",
                 spacing.pad.sm,
                 "bg-surface-raised",
@@ -731,12 +759,12 @@ const L2PathDisplay = memo(function L2PathDisplay({
                 "min-w-28",
               )}
             >
-              <span className="caption font-semibold text-text-primary truncate max-w-24">
+              <span class="caption font-semibold text-text-primary truncate max-w-24">
                 {hop.device || hop.deviceIp}
               </span>
-              <span className="caption text-text-muted">{hop.deviceIp}</span>
+              <span class="caption text-text-muted">{hop.deviceIp}</span>
               <span
-                className={cn(
+                class={cn(
                   "caption",
                   hop.source === "lldp"
                     ? "text-brand-primary"
@@ -751,15 +779,15 @@ const L2PathDisplay = memo(function L2PathDisplay({
 
             {/* Arrow with port names */}
             {hopIndex < result.hops.length - 1 && (
-              <div className="flex items-center mx-2">
-                <div className="flex flex-col items-end mr-1">
+              <div class="flex items-center mx-2">
+                <div class="flex flex-col items-end mr-1">
                   {hop.egressPort && (
-                    <span className="caption text-text-muted">{hop.egressPort.name}</span>
+                    <span class="caption text-text-muted">{hop.egressPort.name}</span>
                   )}
                 </div>
-                <div className="w-8 h-0.5 bg-brand-primary relative">
+                <div class="w-8 h-0.5 bg-brand-primary relative">
                   <div
-                    className="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0"
+                    class="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0"
                     style={{
                       borderTop: "4px solid transparent",
                       borderBottom: "4px solid transparent",
@@ -767,9 +795,9 @@ const L2PathDisplay = memo(function L2PathDisplay({
                     }}
                   />
                 </div>
-                <div className="flex flex-col items-start ml-1">
+                <div class="flex flex-col items-start ml-1">
                   {result.hops[hopIndex + 1]?.ingressPort && (
-                    <span className="caption text-text-muted">
+                    <span class="caption text-text-muted">
                       {result.hops[hopIndex + 1]?.ingressPort?.name}
                     </span>
                   )}
@@ -781,9 +809,9 @@ const L2PathDisplay = memo(function L2PathDisplay({
       </div>
 
       {/* Detailed Port Information */}
-      <div className="stack-xs">
+      <div class="stack-xs">
         {result.hops.map((hop, index) => (
-          <L2HopDetail
+          <L2_HOP_DETAIL
             key={`${hop.deviceIp}-${hop.ingressPort?.name || "start"}-detail`}
             hop={hop}
             index={index}
@@ -806,58 +834,61 @@ interface L2HopDetailProps {
   t: (key: string, fallback: string) => string;
 }
 
-const L2HopDetail = memo(function L2HopDetail({ hop, isExpanded, onToggle, t }: L2HopDetailProps) {
+const L2_HOP_DETAIL = memo(function l2HopDetail({
+  hop,
+  isExpanded,
+  onToggle,
+  t,
+}: L2HopDetailProps) {
   return (
-    <div className={cn("border border-surface-border", radius.default, "overflow-hidden")}>
+    <div class={cn("border border-surface-border", radius.default, "overflow-hidden")}>
       {/* Header */}
       <button
         type="button"
         onClick={onToggle}
-        className={cn(
+        class={cn(
           "w-full flex items-center justify-between",
           spacing.pad.sm,
           "bg-surface-raised hover:bg-surface-hover transition-colors",
           "text-left",
         )}
       >
-        <div className="flex items-center gap-2">
-          <span className="body-small font-medium text-text-primary">
-            {hop.device || hop.deviceIp}
-          </span>
-          <span className="caption text-text-muted">({hop.deviceIp})</span>
+        <div class="flex items-center gap-2">
+          <span class="body-small font-medium text-text-primary">{hop.device || hop.deviceIp}</span>
+          <span class="caption text-text-muted">({hop.deviceIp})</span>
         </div>
         {isExpanded ? (
-          <ChevronUp className={cn(iconTokens.size.sm, "text-text-muted")} />
+          <ChevronUp class={cn(iconTokens.size.sm, "text-text-muted")} />
         ) : (
-          <ChevronDown className={cn(iconTokens.size.sm, "text-text-muted")} />
+          <ChevronDown class={cn(iconTokens.size.sm, "text-text-muted")} />
         )}
       </button>
 
       {/* Expanded Details */}
       {isExpanded && (
-        <div className={cn(spacing.pad.sm, "bg-surface-base border-t border-surface-border")}>
-          <div className="grid grid-cols-2 gap-4">
+        <div class={cn(spacing.pad.sm, "bg-surface-base border-t border-surface-border")}>
+          <div class="grid grid-cols-2 gap-4">
             {/* Ingress Port */}
             <div>
-              <div className="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
+              <div class="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
                 {t("pathDiscovery.ingressPort", "Ingress Port")}
               </div>
               {hop.ingressPort ? (
-                <PortDetails port={hop.ingressPort} t={t} />
+                <PORT_DETAILS port={hop.ingressPort} t={t} />
               ) : (
-                <span className="caption text-text-muted">---</span>
+                <span class="caption text-text-muted">---</span>
               )}
             </div>
 
             {/* Egress Port */}
             <div>
-              <div className="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
+              <div class="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
                 {t("pathDiscovery.egressPort", "Egress Port")}
               </div>
               {hop.egressPort ? (
-                <PortDetails port={hop.egressPort} t={t} />
+                <PORT_DETAILS port={hop.egressPort} t={t} />
               ) : (
-                <span className="caption text-text-muted">---</span>
+                <span class="caption text-text-muted">---</span>
               )}
             </div>
           </div>
@@ -873,26 +904,28 @@ interface PortDetailsProps {
   t: (key: string, fallback: string) => string;
 }
 
-const PortDetails = memo(function PortDetails({ port, t }: PortDetailsProps) {
-  if (!port) return null;
+const PORT_DETAILS = memo(function portDetails({ port, t }: PortDetailsProps) {
+  if (!port) {
+    return null;
+  }
 
   return (
-    <div className="stack-xs">
-      <div className="body-small font-mono text-text-primary">{port.name}</div>
-      <div className="flex flex-wrap gap-2">
-        {port.speed && <span className="caption text-text-secondary">{port.speed}</span>}
-        {port.duplex && <span className="caption text-text-muted">{port.duplex}</span>}
+    <div class="stack-xs">
+      <div class="body-small font-mono text-text-primary">{port.name}</div>
+      <div class="flex flex-wrap gap-2">
+        {port.speed && <span class="caption text-text-secondary">{port.speed}</span>}
+        {port.duplex && <span class="caption text-text-muted">{port.duplex}</span>}
         {port.isTrunk && (
-          <span className="caption text-brand-primary">{t("pathDiscovery.trunk", "Trunk")}</span>
+          <span class="caption text-brand-primary">{t("pathDiscovery.trunk", "Trunk")}</span>
         )}
       </div>
       {port.vlans && port.vlans.length > 0 && (
-        <div className="caption text-text-muted">
+        <div class="caption text-text-muted">
           VLANs: {port.vlans.slice(0, 5).join(", ")}
           {port.vlans.length > 5 && ` +${port.vlans.length - 5}`}
         </div>
       )}
-      {port.connectedTo && <div className="caption text-text-secondary">→ {port.connectedTo}</div>}
+      {port.connectedTo && <div class="caption text-text-secondary">→ {port.connectedTo}</div>}
     </div>
   );
 });

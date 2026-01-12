@@ -178,7 +178,7 @@ export interface ProfileContextValue {
 }
 
 // Create context with undefined default to enforce provider requirement
-const ProfileContext = createContext<ProfileContextValue | undefined>(undefined);
+const PROFILE_CONTEXT = createContext<ProfileContextValue | undefined>(undefined);
 
 // ============================================================================
 // Provider Component
@@ -353,7 +353,9 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   const downloadProfiles = useCallback(async (): Promise<boolean> => {
     try {
       const result = await exportProfiles();
-      if (!result) return false;
+      if (!result) {
+        return false;
+      }
 
       // Create and trigger download
       const blob = new Blob([JSON.stringify(result, null, 2)], {
@@ -526,23 +528,29 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
 
   const getEthernetInterface = useCallback((): ProfileInterfaceSelection | null => {
     const interfaces = activeProfileRef.current?.config?.interfaces;
-    if (!interfaces?.activeEthernet || !interfaces.ethernet) return null;
+    if (!(interfaces?.activeEthernet && interfaces.ethernet)) {
+      return null;
+    }
     return interfaces.ethernet.find((i) => i.name === interfaces.activeEthernet) ?? null;
   }, []);
 
   const getWifiInterface = useCallback((): ProfileInterfaceSelection | null => {
     const interfaces = activeProfileRef.current?.config?.interfaces;
-    if (!interfaces?.activeWifi || !interfaces.wifi) return null;
+    if (!(interfaces?.activeWifi && interfaces.wifi)) {
+      return null;
+    }
     return interfaces.wifi.find((i) => i.name === interfaces.activeWifi) ?? null;
   }, []);
 
-  const getAllEthernetInterfaces = useCallback((): ProfileInterfaceSelection[] => {
-    return activeProfileRef.current?.config?.interfaces?.ethernet ?? [];
-  }, []);
+  const getAllEthernetInterfaces = useCallback(
+    (): ProfileInterfaceSelection[] => activeProfileRef.current?.config?.interfaces?.ethernet ?? [],
+    [],
+  );
 
-  const getAllWifiInterfaces = useCallback((): ProfileInterfaceSelection[] => {
-    return activeProfileRef.current?.config?.interfaces?.wifi ?? [];
-  }, []);
+  const getAllWifiInterfaces = useCallback(
+    (): ProfileInterfaceSelection[] => activeProfileRef.current?.config?.interfaces?.wifi ?? [],
+    [],
+  );
 
   /**
    * Helper to update interface config on the backend.
@@ -862,7 +870,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
     setActiveWifiInterface,
   };
 
-  return <ProfileContext.Provider value={contextValue}>{children}</ProfileContext.Provider>;
+  return <PROFILE_CONTEXT.Provider value={contextValue}>{children}</PROFILE_CONTEXT.Provider>;
 }
 
 // ============================================================================
@@ -874,7 +882,7 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
  * Must be used within a ProfileProvider.
  */
 export function useProfileContext(): ProfileContextValue {
-  const context = useContext(ProfileContext);
+  const context = useContext(PROFILE_CONTEXT);
   if (context === undefined) {
     throw new Error("useProfileContext must be used within a ProfileProvider");
   }
@@ -886,7 +894,7 @@ export function useProfileContext(): ProfileContextValue {
  * Returns null if used outside ProfileProvider (for non-critical usage).
  */
 export function useProfileContextOptional(): ProfileContextValue | null {
-  const context = useContext(ProfileContext);
+  const context = useContext(PROFILE_CONTEXT);
   return context === undefined ? null : context;
 }
 

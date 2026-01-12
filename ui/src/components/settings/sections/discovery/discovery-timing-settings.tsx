@@ -13,19 +13,19 @@ interface DiscoveryTimingSettingsProps {
  * Timing and performance settings for discovery.
  * Includes workers, timeouts, and rescan intervals.
  */
-export const DiscoveryTimingSettings = memo(function DiscoveryTimingSettings({
+export const DiscoveryTimingSettings = memo(function discoveryTimingSettings({
   settings,
   onSettingsChange,
 }: DiscoveryTimingSettingsProps) {
   const { t } = useTranslation("settings");
 
   return (
-    <div className={cn("border-t border-surface-border", spacing.pad.sm)}>
-      <span className="caption text-text-muted font-medium">{t("discovery.timingSettings")}</span>
+    <div class={cn("border-t border-surface-border", spacing.pad.sm)}>
+      <span class="caption text-text-muted font-medium">{t("discovery.timingSettings")}</span>
 
       {/* Scan Workers */}
-      <div className={spacing.margin.top.inline}>
-        <label className="caption text-text-muted" htmlFor="discovery-workers">
+      <div class={spacing.margin.top.inline}>
+        <label class="caption text-text-muted" for="discovery-workers">
           {t("discovery.concurrentWorkers")}
         </label>
         <input
@@ -40,7 +40,7 @@ export const DiscoveryTimingSettings = memo(function DiscoveryTimingSettings({
           }
           min={1}
           max={100}
-          className={cn(
+          class={cn(
             "w-full",
             spacing.margin.top.tight,
             spacing.chip.lg,
@@ -49,14 +49,14 @@ export const DiscoveryTimingSettings = memo(function DiscoveryTimingSettings({
             "body-small text-text-primary",
           )}
         />
-        <p className={cn("caption text-text-muted", spacing.margin.top.tight)}>
+        <p class={cn("caption text-text-muted", spacing.margin.top.tight)}>
           {t("discovery.workersDesc")}
         </p>
       </div>
 
       {/* Ping Timeout */}
-      <div className={spacing.margin.top.content}>
-        <label className="caption text-text-muted" htmlFor="discovery-ping-timeout">
+      <div class={spacing.margin.top.content}>
+        <label class="caption text-text-muted" for="discovery-ping-timeout">
           {t("discovery.pingTimeout")}
         </label>
         <input
@@ -71,7 +71,7 @@ export const DiscoveryTimingSettings = memo(function DiscoveryTimingSettings({
           }
           min={100}
           max={5000}
-          className={cn(
+          class={cn(
             "w-full",
             spacing.margin.top.tight,
             spacing.chip.lg,
@@ -83,8 +83,8 @@ export const DiscoveryTimingSettings = memo(function DiscoveryTimingSettings({
       </div>
 
       {/* Scan Timeout */}
-      <div className={spacing.margin.top.content}>
-        <label className="caption text-text-muted" htmlFor="discovery-scan-timeout">
+      <div class={spacing.margin.top.content}>
+        <label class="caption text-text-muted" for="discovery-scan-timeout">
           {t("discovery.scanTimeout")}
         </label>
         <input
@@ -99,7 +99,7 @@ export const DiscoveryTimingSettings = memo(function DiscoveryTimingSettings({
           }
           min={5000}
           max={120000}
-          className={cn(
+          class={cn(
             "w-full",
             spacing.margin.top.tight,
             spacing.chip.lg,
@@ -111,8 +111,8 @@ export const DiscoveryTimingSettings = memo(function DiscoveryTimingSettings({
       </div>
 
       {/* Rescan Interval */}
-      <div className={spacing.margin.top.content}>
-        <label className="caption text-text-muted" htmlFor="discovery-rescan-interval">
+      <div class={spacing.margin.top.content}>
+        <label class="caption text-text-muted" for="discovery-rescan-interval">
           {t("discovery.rescanInterval")}
         </label>
         <input
@@ -126,7 +126,7 @@ export const DiscoveryTimingSettings = memo(function DiscoveryTimingSettings({
             }))
           }
           min={0}
-          className={cn(
+          class={cn(
             "w-full",
             spacing.margin.top.tight,
             spacing.chip.lg,
@@ -135,7 +135,7 @@ export const DiscoveryTimingSettings = memo(function DiscoveryTimingSettings({
             "body-small text-text-primary",
           )}
         />
-        <p className={cn("caption text-text-muted", spacing.margin.top.tight)}>
+        <p class={cn("caption text-text-muted", spacing.margin.top.tight)}>
           {t("discovery.rescanIntervalDesc")}
         </p>
       </div>

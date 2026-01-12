@@ -70,7 +70,9 @@ export function FloorSelector({
 
   // Suggest next level based on existing floors
   const suggestNextLevel = (): number => {
-    if (floors.length === 0) return 1;
+    if (floors.length === 0) {
+      return 1;
+    }
     const maxLevel = Math.max(...floors.map((f) => f.level));
     return maxLevel + 1;
   };
@@ -89,7 +91,9 @@ export function FloorSelector({
   };
 
   const handleConfirmAdd = async () => {
-    if (!newFloorName.trim()) return;
+    if (!newFloorName.trim()) {
+      return;
+    }
 
     setLoading(true);
     try {
@@ -115,7 +119,9 @@ export function FloorSelector({
   };
 
   const handleConfirmEdit = async () => {
-    if (!editingFloorId || !editName.trim() || !onRenameFloor) return;
+    if (!(editingFloorId && editName.trim() && onRenameFloor)) {
+      return;
+    }
 
     setLoading(true);
     try {
@@ -371,7 +377,9 @@ export function FloorSelector({
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  if (!disabled) onSelectFloor(floor.id);
+                  if (!disabled) {
+                    onSelectFloor(floor.id);
+                  }
                 }
               }}
               role="button"

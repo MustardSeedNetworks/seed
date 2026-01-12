@@ -72,11 +72,17 @@ function formatLastChecked(isoDate: string): string {
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
 
-    if (diffMins < 1) return "just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffMins < 1) {
+      return "just now";
+    }
+    if (diffMins < 60) {
+      return `${diffMins}m ago`;
+    }
 
     const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    }
 
     return date.toLocaleDateString();
   } catch {
@@ -133,18 +139,22 @@ function formatLocation(city?: string, region?: string, country?: string): strin
 }
 
 function getStatus(data: PublicIpData): Status {
-  if (data.error && !data.ipv4 && !data.ipv6) return "error";
-  if (data.ipv4 || data.ipv6) return "success";
+  if (data.error && !data.ipv4 && !data.ipv6) {
+    return "error";
+  }
+  if (data.ipv4 || data.ipv6) {
+    return "success";
+  }
   return "unknown";
 }
 
-export const PublicIpCard = memo(function PublicIpCard({ data, loading }: PublicIpCardProps) {
+export const PublicIpCard = memo(function publicIpCard({ data, loading }: PublicIpCardProps) {
   const { t } = useTranslation("cards");
 
   return (
     <BaseCard
       title={t("publicIp.title")}
-      icon={<Globe className={iconTokens.size.md} />}
+      icon={<Globe class={iconTokens.size.md} />}
       data={data}
       loading={loading}
       getStatus={getStatus}
@@ -161,13 +171,13 @@ export const PublicIpCard = memo(function PublicIpCard({ data, loading }: Public
             {/* IPv4 Address */}
             {ipData.ipv4 ? (
               <>
-                <p className="caption font-medium">{t("publicIp.ipv4")}</p>
+                <p class="caption font-medium">{t("publicIp.ipv4")}</p>
                 <CardValue value={ipData.ipv4} size="lg" />
               </>
             ) : (
               <>
-                <p className="caption font-medium">{t("publicIp.ipv4")}</p>
-                <p className="body-small text-text-muted">{t("publicIp.notAvailable")}</p>
+                <p class="caption font-medium">{t("publicIp.ipv4")}</p>
+                <p class="body-small text-text-muted">{t("publicIp.notAvailable")}</p>
               </>
             )}
 
@@ -176,13 +186,13 @@ export const PublicIpCard = memo(function PublicIpCard({ data, loading }: Public
             {/* IPv6 Address */}
             {ipData.ipv6 ? (
               <>
-                <p className="caption font-medium">{t("publicIp.ipv6")}</p>
-                <p className="body-small font-mono break-all text-text-primary">{ipData.ipv6}</p>
+                <p class="caption font-medium">{t("publicIp.ipv6")}</p>
+                <p class="body-small font-mono break-all text-text-primary">{ipData.ipv6}</p>
               </>
             ) : (
               <>
-                <p className="caption font-medium">{t("publicIp.ipv6")}</p>
-                <p className="body-small text-text-muted">{t("publicIp.notAvailable")}</p>
+                <p class="caption font-medium">{t("publicIp.ipv6")}</p>
+                <p class="body-small text-text-muted">{t("publicIp.notAvailable")}</p>
               </>
             )}
 
@@ -217,7 +227,7 @@ export const PublicIpCard = memo(function PublicIpCard({ data, loading }: Public
             {ipData.error && (
               <>
                 <CardDivider />
-                <p className="caption text-status-error">{ipData.error}</p>
+                <p class="caption text-status-error">{ipData.error}</p>
               </>
             )}
 
@@ -231,21 +241,19 @@ export const PublicIpCard = memo(function PublicIpCard({ data, loading }: Public
                   variant="compact"
                   defaultOpen={false}
                 >
-                  <div className="space-y-2">
+                  <div class="space-y-2">
                     {ipData.history?.map((entry, index) => {
                       const entryLocation = formatLocation(entry.city, undefined, entry.country);
                       return (
-                        <div key={`${entry.ip}-${index}`} className="flex flex-col gap-0.5">
-                          <div className="flex justify-between items-center">
-                            <span className="body-small font-mono text-text-primary">
-                              {entry.ip}
-                            </span>
-                            <span className="caption text-text-muted">
+                        <div key={`${entry.ip}-${index}`} class="flex flex-col gap-0.5">
+                          <div class="flex justify-between items-center">
+                            <span class="body-small font-mono text-text-primary">{entry.ip}</span>
+                            <span class="caption text-text-muted">
                               {formatDateRange(entry.firstSeen, entry.lastSeen)}
                             </span>
                           </div>
                           {entryLocation && (
-                            <span className="caption text-text-muted">{entryLocation}</span>
+                            <span class="caption text-text-muted">{entryLocation}</span>
                           )}
                         </div>
                       );

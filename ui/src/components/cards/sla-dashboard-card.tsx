@@ -72,12 +72,16 @@ interface SLADashboardCardProps {
 }
 
 function getComplianceStatus(rate: number): Status {
-  if (rate >= 99) return "success";
-  if (rate >= 95) return "warning";
+  if (rate >= 99) {
+    return "success";
+  }
+  if (rate >= 95) {
+    return "warning";
+  }
   return "error";
 }
 
-function ComplianceRing({ rate, size = 80 }: { rate: number; size?: number }) {
+function _complianceRing({ rate, size = 80 }: { rate: number; size?: number }) {
   const strokeWidth = 8;
   const normalizedRadius = (size - strokeWidth) / 2;
   const circumference = normalizedRadius * 2 * Math.PI;
@@ -92,11 +96,11 @@ function ComplianceRing({ rate, size = 80 }: { rate: number; size?: number }) {
         : "var(--color-status-error)";
 
   return (
-    <div className="relative inline-flex items-center justify-center">
+    <div class="relative inline-flex items-center justify-center">
       <svg
         height={size}
         width={size}
-        className="-rotate-90"
+        class="-rotate-90"
         role="img"
         aria-labelledby="compliance-title"
       >
@@ -119,18 +123,18 @@ function ComplianceRing({ rate, size = 80 }: { rate: number; size?: number }) {
           r={normalizedRadius}
           cx={size / 2}
           cy={size / 2}
-          className="transition-all duration-500"
+          class="transition-all duration-500"
         />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-lg font-bold text-text-primary">{rate.toFixed(1)}%</span>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <span class="text-lg font-bold text-text-primary">{rate.toFixed(1)}%</span>
       </div>
     </div>
   );
 }
 
-function StatBlock({
-  icon: Icon,
+function _statBlock({
+  icon: ICON,
   label,
   value,
   status,
@@ -143,9 +147,9 @@ function StatBlock({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div class={cn("flex items-center gap-2", className)}>
       <div
-        className={cn(
+        class={cn(
           "flex items-center justify-center rounded-md",
           radius.md,
           spacing.p2,
@@ -155,11 +159,11 @@ function StatBlock({
           !status && "bg-surface-secondary text-text-muted",
         )}
       >
-        <Icon className={iconTokens.sm} />
+        <ICON class={iconTokens.sm} />
       </div>
-      <div className="flex flex-col">
-        <span className="text-xs text-text-muted">{label}</span>
-        <span className="text-sm font-medium text-text-primary">{value}</span>
+      <div class="flex flex-col">
+        <span class="text-xs text-text-muted">{label}</span>
+        <span class="text-sm font-medium text-text-primary">{value}</span>
       </div>
     </div>
   );
@@ -231,14 +235,26 @@ export const SLADashboardCard = memo(function SLADashboardCard({
   }, [fetchData]);
 
   const overallStatus = (): Status => {
-    if (loading) return "loading";
-    if (error) return "error";
-    if (!data.scores) return "unknown";
+    if (loading) {
+      return "loading";
+    }
+    if (error) {
+      return "error";
+    }
+    if (!data.scores) {
+      return "unknown";
+    }
 
     const { healthy, degraded, critical, totalEndpoints } = data.scores;
-    if (critical > 0) return "error";
-    if (degraded > 0) return "warning";
-    if (healthy === totalEndpoints && totalEndpoints > 0) return "success";
+    if (critical > 0) {
+      return "error";
+    }
+    if (degraded > 0) {
+      return "warning";
+    }
+    if (healthy === totalEndpoints && totalEndpoints > 0) {
+      return "success";
+    }
     return "unknown";
   };
 
@@ -246,29 +262,29 @@ export const SLADashboardCard = memo(function SLADashboardCard({
     <Card
       title={t("slaDashboard.title", "SLA Dashboard")}
       subtitle={t("slaDashboard.subtitle", "Service health and compliance")}
-      icon={<Shield className={iconTokens.md} />}
+      icon={<Shield class={iconTokens.md} />}
       status={overallStatus()}
-      className={className}
+      class={className}
     >
       {loading && (
-        <div className={cn("animate-pulse space-y-4", spacing.p4)}>
-          <div className="h-20 bg-surface-secondary rounded-lg" />
-          <div className="h-16 bg-surface-secondary rounded-lg" />
+        <div class={cn("animate-pulse space-y-4", spacing.p4)}>
+          <div class="h-20 bg-surface-secondary rounded-lg" />
+          <div class="h-16 bg-surface-secondary rounded-lg" />
         </div>
       )}
 
-      {error && <div className={cn("text-center text-status-error", spacing.p4)}>{error}</div>}
+      {error && <div class={cn("text-center text-status-error", spacing.p4)}>{error}</div>}
 
-      {!loading && !error && (
-        <div className={cn("space-y-4", spacing.p4)}>
+      {!(loading || error) && (
+        <div class={cn("space-y-4", spacing.p4)}>
           {/* Period selector */}
-          <div className="flex justify-end gap-1">
+          <div class="flex justify-end gap-1">
             {(["daily", "weekly", "monthly"] as const).map((p) => (
               <button
                 type="button"
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={cn(
+                class={cn(
                   "px-2 py-1 text-xs rounded transition-colors",
                   period === p
                     ? "bg-accent text-white"
@@ -282,23 +298,23 @@ export const SLADashboardCard = memo(function SLADashboardCard({
 
           {/* SLA Compliance */}
           {data.sla && (
-            <div className="flex items-center justify-between">
+            <div class="flex items-center justify-between">
               <div>
-                <h4 className="text-sm font-medium text-text-primary mb-1">
+                <h4 class="text-sm font-medium text-text-primary mb-1">
                   {t("slaDashboard.compliance", "SLA Compliance")}
                 </h4>
-                <p className="text-xs text-text-muted">
+                <p class="text-xs text-text-muted">
                   {data.sla.endpointsMet} / {data.sla.totalEndpoints}{" "}
                   {t("slaDashboard.endpointsMet", "endpoints meeting SLA")}
                 </p>
                 {data.sla.endpointsMissed > 0 && (
-                  <p className="text-xs text-status-error mt-1">
+                  <p class="text-xs text-status-error mt-1">
                     {data.sla.endpointsMissed}{" "}
                     {t("slaDashboard.endpointsMissed", "endpoints missing SLA")}
                   </p>
                 )}
               </div>
-              <ComplianceRing rate={data.sla.complianceRate} />
+              <complianceRing rate={data.sla.complianceRate} />
             </div>
           )}
 
@@ -307,29 +323,29 @@ export const SLADashboardCard = memo(function SLADashboardCard({
           {/* Health Score Distribution */}
           {data.scores && (
             <div>
-              <h4 className="text-sm font-medium text-text-primary mb-3">
+              <h4 class="text-sm font-medium text-text-primary mb-3">
                 {t("slaDashboard.healthScores", "Health Scores")}
               </h4>
-              <div className="grid grid-cols-2 gap-3">
-                <StatBlock
+              <div class="grid grid-cols-2 gap-3">
+                <statBlock
                   icon={CheckCircle2}
                   label={t("slaDashboard.healthy", "Healthy")}
                   value={data.scores.healthy}
                   status="success"
                 />
-                <StatBlock
+                <statBlock
                   icon={AlertTriangle}
                   label={t("slaDashboard.degraded", "Degraded")}
                   value={data.scores.degraded}
                   status={data.scores.degraded > 0 ? "warning" : undefined}
                 />
-                <StatBlock
+                <statBlock
                   icon={XCircle}
                   label={t("slaDashboard.critical", "Critical")}
                   value={data.scores.critical}
                   status={data.scores.critical > 0 ? "error" : undefined}
                 />
-                <StatBlock
+                <statBlock
                   icon={TrendingUp}
                   label={t("slaDashboard.total", "Total")}
                   value={data.scores.totalEndpoints}
@@ -341,15 +357,15 @@ export const SLADashboardCard = memo(function SLADashboardCard({
           <CardDivider />
 
           {/* Alerts and Anomalies */}
-          <div className="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-4">
             {data.alerts && (
               <div>
-                <h4 className="text-xs text-text-muted mb-2">
+                <h4 class="text-xs text-text-muted mb-2">
                   {t("slaDashboard.activeAlerts", "Active Alerts")}
                 </h4>
-                <div className="flex items-center gap-2">
+                <div class="flex items-center gap-2">
                   <span
-                    className={cn(
+                    class={cn(
                       "text-2xl font-bold",
                       data.alerts.active > 0 ? "text-status-error" : "text-text-primary",
                     )}
@@ -366,12 +382,12 @@ export const SLADashboardCard = memo(function SLADashboardCard({
             )}
 
             <div>
-              <h4 className="text-xs text-text-muted mb-2">
+              <h4 class="text-xs text-text-muted mb-2">
                 {t("slaDashboard.anomalies", "Anomalies")}
               </h4>
-              <div className="flex items-center gap-2">
+              <div class="flex items-center gap-2">
                 <span
-                  className={cn(
+                  class={cn(
                     "text-2xl font-bold",
                     data.anomalyCount > 0 ? "text-status-warning" : "text-text-primary",
                   )}

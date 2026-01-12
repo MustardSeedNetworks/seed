@@ -13,7 +13,7 @@ interface DiscoveryTogglesProps {
  * Enable/disable toggles for discovery service.
  * Includes main enable toggle and auto-scan on link up option.
  */
-export const DiscoveryToggles = memo(function DiscoveryToggles({
+export const DiscoveryToggles = memo(function discoveryToggles({
   settings,
   onSettingsChange,
 }: DiscoveryTogglesProps) {
@@ -23,7 +23,7 @@ export const DiscoveryToggles = memo(function DiscoveryToggles({
     <>
       {/* Enable Toggle */}
       <label
-        className={cn(
+        class={cn(
           layout.flex.between,
           spacing.pad.xs,
           "bg-surface-base",
@@ -32,10 +32,10 @@ export const DiscoveryToggles = memo(function DiscoveryToggles({
         )}
       >
         <div>
-          <span className="body-small text-text-primary font-medium">
+          <span class="body-small text-text-primary font-medium">
             {t("discovery.enableDiscovery")}
           </span>
-          <p className="caption text-text-muted">{t("discovery.scanForDevices")}</p>
+          <p class="caption text-text-muted">{t("discovery.scanForDevices")}</p>
         </div>
         <input
           type="checkbox"
@@ -46,13 +46,13 @@ export const DiscoveryToggles = memo(function DiscoveryToggles({
               enabled: e.target.checked,
             }))
           }
-          className={iconTokens.size.sm}
+          class={iconTokens.size.sm}
         />
       </label>
 
       {/* Auto-Scan on Link Up */}
       <label
-        className={cn(
+        class={cn(
           layout.flex.between,
           spacing.pad.xs,
           "bg-surface-base",
@@ -61,10 +61,10 @@ export const DiscoveryToggles = memo(function DiscoveryToggles({
         )}
       >
         <div>
-          <span className="body-small text-text-primary font-medium">
+          <span class="body-small text-text-primary font-medium">
             {t("discovery.autoScanOnLink")}
           </span>
-          <p className="caption text-text-muted">{t("discovery.autoScanDesc")}</p>
+          <p class="caption text-text-muted">{t("discovery.autoScanDesc")}</p>
         </div>
         <input
           type="checkbox"
@@ -75,7 +75,7 @@ export const DiscoveryToggles = memo(function DiscoveryToggles({
               autoScan: e.target.checked,
             }))
           }
-          className={iconTokens.size.sm}
+          class={iconTokens.size.sm}
         />
       </label>
     </>

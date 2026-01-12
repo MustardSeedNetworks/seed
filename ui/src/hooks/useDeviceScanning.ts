@@ -45,8 +45,8 @@ export function useDeviceScanning({
   const networkDiscoveryAbortRef = useRef<AbortController | null>(null);
 
   // Cleanup on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       networkDiscoveryAbortRef.current?.abort();
       if (scanPollIntervalRef.current) {
         clearInterval(scanPollIntervalRef.current);
@@ -54,8 +54,9 @@ export function useDeviceScanning({
       if (scanTimeoutRef.current) {
         clearTimeout(scanTimeoutRef.current);
       }
-    };
-  }, []);
+    },
+    [],
+  );
 
   // Trigger network device scan
   const triggerDeviceScan = useCallback(async () => {
@@ -91,7 +92,7 @@ export function useDeviceScanning({
               clearInterval(scanPollIntervalRef.current);
               scanPollIntervalRef.current = null;
             }
-            fetchNetworkDiscovery();
+            await fetchNetworkDiscovery();
           }
         } catch {
           // Status check failed, keep polling

@@ -99,7 +99,9 @@ export function Card({
    * Provides accessibility for keyboard navigation.
    */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!isInteractive) return;
+    if (!isInteractive) {
+      return;
+    }
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       onClick?.();
@@ -118,7 +120,7 @@ export function Card({
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Interactive role is conditionally applied based on onClick presence
     <div
-      className={cn(
+      class={cn(
         card.base,
         card.variant.default,
         spacing.pad.sm,
@@ -135,30 +137,30 @@ export function Card({
       tabIndex={isInteractive ? 0 : undefined}
       {...ariaProps}
     >
-      <div className={layout.flex.between}>
-        <div className={layout.inline.default}>
+      <div class={layout.flex.between}>
+        <div class={layout.inline.default}>
           {icon && (
-            <span className={cn("text-text-muted shrink-0", iconTokens.size.md)} aria-hidden="true">
+            <span class={cn("text-text-muted shrink-0", iconTokens.size.md)} aria-hidden="true">
               {icon}
             </span>
           )}
-          <div className={layout.flex.col}>
+          <div class={layout.flex.col}>
             <h3
-              className="heading-4 font-display"
+              class="heading-4 font-display"
               id={`card-title-${title.replace(/\s+/g, "-").toLowerCase()}`}
             >
               {title}
             </h3>
-            {subtitle && <p className="caption leading-tight">{subtitle}</p>}
+            {subtitle && <p class="caption leading-tight">{subtitle}</p>}
           </div>
         </div>
-        <div className={layout.inline.default}>
+        <div class={layout.inline.default}>
           {headerAction}
           <StatusBadge status={status} size="md" />
         </div>
       </div>
       <div
-        className={cn(spacing.margin.top.inline, `sm:${spacing.margin.top.content}`)}
+        class={cn(spacing.margin.top.inline, `sm:${spacing.margin.top.content}`)}
         aria-describedby={`card-title-${title.replace(/\s+/g, "-").toLowerCase()}`}
       >
         {children}
@@ -202,16 +204,16 @@ export function CardValue({
 
   return (
     <div>
-      {label && <p className={cn("caption", spacing.margin.bottom.tight)}>{label}</p>}
-      <p className={cn(getSizeClass(size), textMods, layout.inline.tight)} data-testid="card-value">
+      {label && <p class={cn("caption", spacing.margin.bottom.tight)}>{label}</p>}
+      <p class={cn(getSizeClass(size), textMods, layout.inline.tight)} data-testid="card-value">
         {statusIcon && (
-          <span className={cn(layout.flex.center, iconTokens.size.xs, "shrink-0 text-current")}>
+          <span class={cn(layout.flex.center, iconTokens.size.xs, "shrink-0 text-current")}>
             {statusIcon}
           </span>
         )}
-        <span className={cn(layout.inline.tight, "items-baseline")}>
+        <span class={cn(layout.inline.tight, "items-baseline")}>
           <span>{value}</span>
-          {unit && <span className="body-small font-normal text-text-muted">{unit}</span>}
+          {unit && <span class="body-small font-normal text-text-muted">{unit}</span>}
         </span>
       </p>
     </div>
@@ -244,16 +246,16 @@ export function CardRow({
 
   return (
     <div
-      className={cn(
+      class={cn(
         "flex justify-between",
         spacing.compact.py,
         layout.inline.default,
         wrap ? "items-start" : "items-center",
       )}
     >
-      <span className="body-small shrink-0">{label}</span>
+      <span class="body-small shrink-0">{label}</span>
       <span
-        className={cn(
+        class={cn(
           "body-small font-medium",
           layout.inline.tight,
           justifyClass,
@@ -266,7 +268,7 @@ export function CardRow({
         data-testid="card-row-value"
       >
         {statusIcon && (
-          <span className={cn(iconTokens.size.xs, "shrink-0 text-current")}>{statusIcon}</span>
+          <span class={cn(iconTokens.size.xs, "shrink-0 text-current")}>{statusIcon}</span>
         )}
         <span>{value}</span>
       </span>
@@ -282,5 +284,5 @@ interface CardDividerProps {
  * Horizontal divider line for separating card sections.
  */
 export function CardDivider({ className = "" }: CardDividerProps) {
-  return <hr className={cn("border-surface-border", spacing.margin.top.content, className)} />;
+  return <hr class={cn("border-surface-border", spacing.margin.top.content, className)} />;
 }

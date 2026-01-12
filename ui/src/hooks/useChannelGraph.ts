@@ -101,7 +101,9 @@ export function useChannelGraph({
 
   // Fetch channel graph data for WiFi visualization
   const fetchChannelGraphData = useCallback(async () => {
-    if (!isWifi || !currentInterface) return;
+    if (!(isWifi && currentInterface)) {
+      return;
+    }
     setChannelGraphLoading(true);
     try {
       const response = await api.get<ChannelGraphApiResponse>(

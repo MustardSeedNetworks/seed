@@ -78,7 +78,7 @@ interface PerformanceSettingsProps {
  * Settings section for speed test and iPerf performance testing configuration.
  * Memoized to prevent unnecessary re-renders when parent state changes.
  */
-export const PerformanceSettings = memo(function PerformanceSettings({
+export const PerformanceSettings = memo(function performanceSettings({
   testsSettings,
   setTestsSettings,
   iperfSettings,
@@ -110,19 +110,19 @@ export const PerformanceSettings = memo(function PerformanceSettings({
   return (
     <CollapsibleSection
       title={
-        <div className={layout.inline.default}>
-          <Gauge className={iconTokens.size.sm} />
+        <div class={layout.inline.default}>
+          <Gauge class={iconTokens.size.sm} />
           <span>{t("sections.performance")}</span>
           <AutoSaveIndicator status={iperfStatus} />
         </div>
       }
       defaultOpen={false}
     >
-      <div className="stack">
+      <div class="stack">
         {/* Enable/Disable Toggles */}
-        <div className="stack-sm">
+        <div class="stack-sm">
           <label
-            className={cn(
+            class={cn(
               layout.flex.between,
               spacing.pad.sm,
               "bg-surface-base",
@@ -131,10 +131,10 @@ export const PerformanceSettings = memo(function PerformanceSettings({
             )}
           >
             <div>
-              <span className="body-small text-text-primary font-medium">
+              <span class="body-small text-text-primary font-medium">
                 {t("performance.enableSpeedtest")}
               </span>
-              <p className="caption text-text-muted">{t("performance.speedtestDesc")}</p>
+              <p class="caption text-text-muted">{t("performance.speedtestDesc")}</p>
             </div>
             <input
               type="checkbox"
@@ -145,11 +145,11 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                   runSpeedtest: e.target.checked,
                 }))
               }
-              className={iconTokens.size.sm}
+              class={iconTokens.size.sm}
             />
           </label>
           <label
-            className={cn(
+            class={cn(
               layout.flex.between,
               spacing.pad.sm,
               "bg-surface-base",
@@ -158,10 +158,10 @@ export const PerformanceSettings = memo(function PerformanceSettings({
             )}
           >
             <div>
-              <span className="body-small text-text-primary font-medium">
+              <span class="body-small text-text-primary font-medium">
                 {t("performance.enableIperf")}
               </span>
-              <p className="caption text-text-muted">{t("performance.iperfDesc")}</p>
+              <p class="caption text-text-muted">{t("performance.iperfDesc")}</p>
             </div>
             <input
               type="checkbox"
@@ -172,25 +172,23 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                   runIperf: e.target.checked,
                 }))
               }
-              className={iconTokens.size.sm}
+              class={iconTokens.size.sm}
             />
           </label>
         </div>
 
         {/* Auto-Run on Link Up (FAB button) */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <span className="caption text-text-muted font-medium">
-            {t("performance.autoRunOnLink")}
-          </span>
-          <p className="caption text-text-muted mt-1">
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <span class="caption text-text-muted font-medium">{t("performance.autoRunOnLink")}</span>
+          <p class="caption text-text-muted mt-1">
             {t(
               "performance.autoRunOnLinkDesc",
               "Controls which tests run when FAB button is clicked",
             )}
           </p>
-          <div className={cn(spacing.margin.top.inline, "stack-sm")}>
+          <div class={cn(spacing.margin.top.inline, "stack-sm")}>
             <label
-              className={cn(
+              class={cn(
                 layout.flex.between,
                 spacing.pad.sm,
                 "bg-surface-base",
@@ -198,7 +196,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                 "border border-surface-border",
               )}
             >
-              <span className="body-small text-text-primary">{t("performance.speedtest")}</span>
+              <span class="body-small text-text-primary">{t("performance.speedtest")}</span>
               <input
                 type="checkbox"
                 checked={cardSettings.performance.speedtest.autoRunOnLink}
@@ -213,11 +211,11 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                     },
                   })
                 }
-                className={iconTokens.size.sm}
+                class={iconTokens.size.sm}
               />
             </label>
             <label
-              className={cn(
+              class={cn(
                 layout.flex.between,
                 spacing.pad.sm,
                 "bg-surface-base",
@@ -225,7 +223,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                 "border border-surface-border",
               )}
             >
-              <span className="body-small text-text-primary">{t("performance.iperf")}</span>
+              <span class="body-small text-text-primary">{t("performance.iperf")}</span>
               <input
                 type="checkbox"
                 checked={cardSettings.performance.iperf.autoRunOnLink}
@@ -240,16 +238,16 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                     },
                   })
                 }
-                className={iconTokens.size.sm}
+                class={iconTokens.size.sm}
               />
             </label>
           </div>
         </div>
 
         {/* Internet Speed (Speedtest) Subsection */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
           <h4
-            className={cn(
+            class={cn(
               "body-small font-semibold text-text-primary",
               spacing.margin.bottom.inline,
               "uppercase tracking-wide",
@@ -257,9 +255,9 @@ export const PerformanceSettings = memo(function PerformanceSettings({
           >
             {t("performance.internetSpeed")}
           </h4>
-          <div className="stack">
+          <div class="stack">
             <div>
-              <label htmlFor="speedtest-server-id" className="caption text-text-muted font-medium">
+              <label for="speedtest-server-id" class="caption text-text-muted font-medium">
                 {t("performance.serverId")}
               </label>
               <input
@@ -276,7 +274,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                   }))
                 }
                 placeholder={t("performance.autoClosestServer")}
-                className={cn(
+                class={cn(
                   inputTokens.base,
                   inputTokens.state.default,
                   inputTokens.size.md,
@@ -285,8 +283,8 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                   "body-small",
                 )}
               />
-              <div className={cn(layout.flex.between, spacing.margin.top.tight)}>
-                <p className="caption text-text-muted">{t("performance.autoSelectDesc")}</p>
+              <div class={cn(layout.flex.between, spacing.margin.top.tight)}>
+                <p class="caption text-text-muted">{t("performance.autoSelectDesc")}</p>
                 <button
                   type="button"
                   onClick={() =>
@@ -295,7 +293,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                       speedtest: { ...prev.speedtest, serverId: "" },
                     }))
                   }
-                  className="caption text-brand-primary hover:underline"
+                  class="caption text-brand-primary hover:underline"
                 >
                   {t("performance.resetToAuto")}
                 </button>
@@ -307,7 +305,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
         {/* LAN Speed (iperf3) Subsection */}
         <div>
           <h4
-            className={cn(
+            class={cn(
               "body-small font-semibold text-text-primary",
               spacing.margin.bottom.inline,
               "uppercase tracking-wide",
@@ -315,12 +313,12 @@ export const PerformanceSettings = memo(function PerformanceSettings({
           >
             {t("performance.lanSpeed")}
           </h4>
-          <div className="stack">
-            <p className="caption text-text-muted">{t("performance.lanSpeedDesc")}</p>
+          <div class="stack">
+            <p class="caption text-text-muted">{t("performance.lanSpeedDesc")}</p>
 
             {/* Server Address */}
             <div>
-              <label htmlFor="iperf-server-address" className="caption text-text-muted font-medium">
+              <label for="iperf-server-address" class="caption text-text-muted font-medium">
                 {t("performance.serverAddress")}
               </label>
               <input
@@ -334,7 +332,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                   }))
                 }
                 placeholder="192.168.1.100"
-                className={cn(
+                class={cn(
                   inputTokens.base,
                   inputTokens.state.default,
                   inputTokens.size.md,
@@ -343,12 +341,12 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                   "body-small disabled:opacity-60",
                 )}
               />
-              <div className={cn(layout.flex.between, spacing.margin.top.inline)}>
+              <div class={cn(layout.flex.between, spacing.margin.top.inline)}>
                 <button
                   type="button"
                   disabled={iperfSuggestionsStatus === "loading"}
                   onClick={fetchIperfSuggestions}
-                  className="caption text-brand-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+                  class="caption text-brand-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {iperfSuggestionsStatus === "loading"
                     ? t("performance.scanning")
@@ -356,13 +354,13 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                 </button>
                 {iperfSuggestionsStatus === "loading" && (
                   <svg
-                    className={cn(iconTokens.size.sm, "animate-spin text-text-muted")}
+                    class={cn(iconTokens.size.sm, "animate-spin text-text-muted")}
                     viewBox="0 0 24 24"
                     fill="none"
                     aria-hidden="true"
                   >
                     <circle
-                      className="opacity-25"
+                      class="opacity-25"
                       cx="12"
                       cy="12"
                       r="10"
@@ -370,7 +368,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                       strokeWidth="4"
                     />
                     <path
-                      className="opacity-75"
+                      class="opacity-75"
                       fill="currentColor"
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
@@ -378,19 +376,17 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                 )}
               </div>
               {iperfSuggestionsStatus === "error" && (
-                <p className={cn("caption text-status-warning", spacing.margin.top.tight)}>
+                <p class={cn("caption text-status-warning", spacing.margin.top.tight)}>
                   {iperfSuggestionsError || t("performance.noIperfHosts")}
                 </p>
               )}
               {iperfSuggestions.length > 0 && (
-                <div
-                  className={cn("flex flex-wrap", spacing.gap.compact, spacing.margin.top.inline)}
-                >
+                <div class={cn("flex flex-wrap", spacing.gap.compact, spacing.margin.top.inline)}>
                   {iperfSuggestions.map((sugg) => (
                     <button
                       type="button"
                       key={`${sugg.host}-${sugg.hostname || ""}`}
-                      className={cn(
+                      class={cn(
                         spacing.chip.sm,
                         radius.full,
                         "border border-surface-border bg-surface-base caption text-text-primary hover:bg-surface-hover",
@@ -402,8 +398,8 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                         }))
                       }
                     >
-                      <span className="font-medium">{sugg.hostname || sugg.host}</span>
-                      <span className={cn("text-text-muted", spacing.margin.left.tight)}>
+                      <span class="font-medium">{sugg.hostname || sugg.host}</span>
+                      <span class={cn("text-text-muted", spacing.margin.left.tight)}>
                         {sugg.hostname ? `(${sugg.host})` : ""}
                         {sugg.latencyMs !== undefined ? ` · ${Math.round(sugg.latencyMs)}ms` : ""}
                       </span>
@@ -415,7 +411,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
 
             {/* Port */}
             <div>
-              <label className="caption text-text-muted font-medium" htmlFor="iperf-port">
+              <label class="caption text-text-muted font-medium" for="iperf-port">
                 {t("performance.port")}
               </label>
               <input
@@ -428,7 +424,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                     port: Number.parseInt(e.target.value, 10) || 5201,
                   }))
                 }
-                className={cn(
+                class={cn(
                   inputTokens.base,
                   inputTokens.state.default,
                   inputTokens.size.md,
@@ -442,7 +438,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
             {/* Protocol Toggle */}
             <div>
               <span
-                className={cn(
+                class={cn(
                   "caption text-text-muted font-medium block",
                   spacing.margin.bottom.inline,
                 )}
@@ -450,7 +446,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                 {t("performance.protocol")}
               </span>
               <div
-                className={cn("flex flex-wrap", spacing.gap.compact)}
+                class={cn("flex flex-wrap", spacing.gap.compact)}
                 role="radiogroup"
                 aria-label="Protocol selection"
               >
@@ -459,7 +455,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                   return (
                     <label
                       key={proto}
-                      className={cn(
+                      class={cn(
                         "cursor-pointer",
                         spacing.chip.md,
                         radius.full,
@@ -480,7 +476,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                             protocol: proto,
                           }))
                         }
-                        className="sr-only"
+                        class="sr-only"
                         aria-label={`${proto.toUpperCase()} protocol`}
                       />
                       {proto.toUpperCase()}
@@ -493,7 +489,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
             {/* Direction Toggle */}
             <div>
               <span
-                className={cn(
+                class={cn(
                   "caption text-text-muted font-medium block",
                   spacing.margin.bottom.inline,
                 )}
@@ -501,7 +497,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                 {t("performance.direction")}
               </span>
               <div
-                className={cn("flex flex-wrap", spacing.gap.compact)}
+                class={cn("flex flex-wrap", spacing.gap.compact)}
                 role="radiogroup"
                 aria-label="Direction selection"
               >
@@ -510,7 +506,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                   return (
                     <label
                       key={direction}
-                      className={cn(
+                      class={cn(
                         "cursor-pointer",
                         spacing.chip.md,
                         radius.full,
@@ -531,7 +527,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                             direction: direction,
                           }))
                         }
-                        className="sr-only"
+                        class="sr-only"
                         aria-label={`${getDirectionLabel(direction)} direction`}
                       />
                       {getDirectionLabel(direction)}
@@ -543,7 +539,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
 
             {/* Duration */}
             <div>
-              <label className="caption text-text-muted font-medium" htmlFor="iperf-duration">
+              <label class="caption text-text-muted font-medium" for="iperf-duration">
                 {t("performance.duration")}
               </label>
               <input
@@ -558,7 +554,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                 }
                 min={1}
                 max={60}
-                className={cn(
+                class={cn(
                   inputTokens.base,
                   inputTokens.state.default,
                   inputTokens.size.md,
@@ -570,9 +566,9 @@ export const PerformanceSettings = memo(function PerformanceSettings({
             </div>
 
             {/* Server Mode */}
-            <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+            <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
               <label
-                className={cn(
+                class={cn(
                   layout.flex.between,
                   spacing.pad.sm,
                   "bg-surface-base",
@@ -581,9 +577,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                   spacing.margin.bottom.inline,
                 )}
               >
-                <span className="body-small text-text-primary">
-                  {t("performance.enableServer")}
-                </span>
+                <span class="body-small text-text-primary">{t("performance.enableServer")}</span>
                 <input
                   type="checkbox"
                   checked={iperfSettings.enableServer}
@@ -593,11 +587,11 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                       enableServer: e.target.checked,
                     }))
                   }
-                  className={iconTokens.size.sm}
+                  class={iconTokens.size.sm}
                 />
               </label>
               <div>
-                <label className="caption text-text-muted font-medium" htmlFor="iperf-server-port">
+                <label class="caption text-text-muted font-medium" for="iperf-server-port">
                   {t("performance.serverPort")}
                 </label>
                 <input
@@ -610,7 +604,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                       serverPort: Number.parseInt(e.target.value, 10) || 5201,
                     }))
                   }
-                  className={cn(
+                  class={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.md,
@@ -620,7 +614,7 @@ export const PerformanceSettings = memo(function PerformanceSettings({
                   )}
                 />
               </div>
-              <p className={cn("caption text-text-muted", spacing.margin.top.tight)}>
+              <p class={cn("caption text-text-muted", spacing.margin.top.tight)}>
                 {t("performance.serverAutoStart")}
               </p>
             </div>

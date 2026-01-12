@@ -27,7 +27,7 @@ import { formatBytes } from "../../../lib/format";
 import { button, cn, icon as iconTokens, layout, radius, spacing } from "../../../styles/theme";
 import { CollapsibleSection } from "../../ui/collapsible-section";
 
-const ApiBase = import.meta.env.VITE_API_BASE || "";
+const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 interface BackupInfo {
   name: string;
@@ -46,7 +46,7 @@ interface ConfigVersion {
 /**
  * Settings section for configuration backup and restore.
  */
-export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
+export const ConfigBackupsSection = memo(function configBackupsSection() {
   const { t } = useTranslation("settings");
   const [backups, setBackups] = useState<BackupInfo[]>([]);
   const [version, setVersion] = useState<ConfigVersion | null>(null);
@@ -60,8 +60,8 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
     setError(null);
     try {
       const [backupsRes, versionRes] = await Promise.all([
-        fetch(`${ApiBase}/api/config/backups`, { credentials: "include" }),
-        fetch(`${ApiBase}/api/config/version`, { credentials: "include" }),
+        fetch(`${API_BASE}/api/config/backups`, { credentials: "include" }),
+        fetch(`${API_BASE}/api/config/version`, { credentials: "include" }),
       ]);
 
       if (backupsRes.ok) {
@@ -89,7 +89,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
     setActionLoading("create");
     setError(null);
     try {
-      const response = await fetch(`${ApiBase}/api/config/backup`, {
+      const response = await fetch(`${API_BASE}/api/config/backup`, {
         method: "POST",
         credentials: "include",
       });
@@ -109,7 +109,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
     setActionLoading(backupName);
     setError(null);
     try {
-      const response = await fetch(`${ApiBase}/api/config/restore`, {
+      const response = await fetch(`${API_BASE}/api/config/restore`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -135,7 +135,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
     setError(null);
     try {
       const response = await fetch(
-        `${ApiBase}/api/config/backup/delete?name=${encodeURIComponent(backupName)}`,
+        `${API_BASE}/api/config/backup/delete?name=${encodeURIComponent(backupName)}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -164,9 +164,9 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
   return (
     <CollapsibleSection
       title={
-        <div className={layout.inline.default}>
+        <div class={layout.inline.default}>
           <svg
-            className={iconTokens.size.sm}
+            class={iconTokens.size.sm}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -183,11 +183,11 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
         </div>
       }
     >
-      <div className="stack-sm">
+      <div class="stack-sm">
         {/* Version Info */}
         {version && (
           <div
-            className={cn(
+            class={cn(
               layout.flex.between,
               spacing.pad.sm,
               "bg-surface-base",
@@ -195,13 +195,11 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
               "border border-surface-border",
             )}
           >
-            <span className="body-small text-text-muted">{t("configBackups.version")}</span>
-            <span className="body-small text-text-primary">
+            <span class="body-small text-text-muted">{t("configBackups.version")}</span>
+            <span class="body-small text-text-primary">
               v{version.current}
               {version.needsMigration && (
-                <span className="ml-2 text-status-warning">
-                  ({t("configBackups.needsMigration")})
-                </span>
+                <span class="ml-2 text-status-warning">({t("configBackups.needsMigration")})</span>
               )}
             </span>
           </div>
@@ -212,7 +210,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
           type="button"
           onClick={createBackup}
           disabled={actionLoading === "create"}
-          className={cn(
+          class={cn(
             "w-full",
             button.size.md,
             "bg-brand-primary text-text-inverse",
@@ -227,7 +225,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
           ) : (
             <>
               <svg
-                className={iconTokens.size.sm}
+                class={iconTokens.size.sm}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -246,45 +244,45 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
         </button>
 
         {/* Error Message */}
-        {error && <p className="caption text-status-error">{error}</p>}
+        {error && <p class="caption text-status-error">{error}</p>}
 
         {/* Backups List */}
         {loading ? (
-          <p className="caption text-text-muted">{t("configBackups.loading")}</p>
+          <p class="caption text-text-muted">{t("configBackups.loading")}</p>
         ) : backups.length === 0 ? (
-          <p className="caption text-text-muted">{t("configBackups.noBackups")}</p>
+          <p class="caption text-text-muted">{t("configBackups.noBackups")}</p>
         ) : (
-          <div className="stack-xs">
-            <p className="caption text-text-muted">
+          <div class="stack-xs">
+            <p class="caption text-text-muted">
               {t("configBackups.available", { count: backups.length })}
             </p>
             {backups.map((backup) => (
               <div
                 key={backup.name}
-                className={cn(
+                class={cn(
                   spacing.pad.sm,
                   "bg-surface-base",
                   radius.default,
                   "border border-surface-border",
                 )}
               >
-                <div className={layout.flex.between}>
+                <div class={layout.flex.between}>
                   <div>
-                    <p className="body-small text-text-primary font-medium">
+                    <p class="body-small text-text-primary font-medium">
                       {formatDate(backup.createdAt)}
                     </p>
-                    <p className="caption text-text-muted">
+                    <p class="caption text-text-muted">
                       {formatBytes(backup.size)} • v{backup.version || "?"}
                     </p>
                   </div>
-                  <div className={cn("flex", spacing.gap.compact)}>
+                  <div class={cn("flex", spacing.gap.compact)}>
                     {restoreConfirm === backup.name ? (
                       <>
                         <button
                           type="button"
                           onClick={() => restoreBackup(backup.name)}
                           disabled={!!actionLoading}
-                          className={cn(
+                          class={cn(
                             spacing.chip.sm,
                             radius.md,
                             "bg-status-warning text-text-inverse caption hover:opacity-90 disabled:opacity-50",
@@ -298,7 +296,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
                           type="button"
                           onClick={() => setRestoreConfirm(null)}
                           disabled={!!actionLoading}
-                          className={cn(
+                          class={cn(
                             spacing.chip.sm,
                             radius.md,
                             "border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50",
@@ -313,7 +311,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
                           type="button"
                           onClick={() => setRestoreConfirm(backup.name)}
                           disabled={!!actionLoading}
-                          className={cn(
+                          class={cn(
                             spacing.chip.sm,
                             radius.md,
                             "border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50",
@@ -326,7 +324,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
                           type="button"
                           onClick={() => deleteBackup(backup.name)}
                           disabled={!!actionLoading}
-                          className={cn(
+                          class={cn(
                             spacing.chip.sm,
                             radius.md,
                             "border border-status-error caption text-status-error hover:bg-status-error hover:text-text-inverse disabled:opacity-50",
@@ -344,7 +342,7 @@ export const ConfigBackupsSection = memo(function ConfigBackupsSection() {
           </div>
         )}
 
-        <p className={cn("caption text-text-muted", spacing.margin.top.inline)}>
+        <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
           {t("configBackups.description")}
         </p>
       </div>

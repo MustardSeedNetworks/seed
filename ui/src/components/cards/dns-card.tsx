@@ -66,8 +66,10 @@ interface DnsCardProps {
   loading?: boolean;
 }
 
-function LookupRow({ label, lookup }: { label: string; lookup: LookupResult | null | undefined }) {
-  if (!lookup) return null;
+function _lookupRow({ label, lookup }: { label: string; lookup: LookupResult | null | undefined }) {
+  if (!lookup) {
+    return null;
+  }
 
   const statusBadge = lookup.status;
   const statusColor =
@@ -78,29 +80,29 @@ function LookupRow({ label, lookup }: { label: string; lookup: LookupResult | nu
         : "text-status-error";
 
   return (
-    <div className={spacing.margin.bottom.inline}>
-      <div className={layout.flex.between}>
-        <span className="caption">{label}</span>
-        <span className={layout.inline.default}>
+    <div class={spacing.margin.bottom.inline}>
+      <div class={layout.flex.between}>
+        <span class="caption">{label}</span>
+        <span class={layout.inline.default}>
           <StatusBadge status={statusBadge} size="sm" />
-          <span className={cn("caption font-medium", statusColor)}>
+          <span class={cn("caption font-medium", statusColor)}>
             {formatTime(lookup.timeMs || lookup.time)}
           </span>
         </span>
       </div>
-      <p className="body-small truncate" title={lookup.result}>
+      <p class="body-small truncate" title={lookup.result}>
         {lookup.result}
       </p>
     </div>
   );
 }
 
-export const DnsCard = memo(function DnsCard({ data, loading }: DnsCardProps) {
+export const DnsCard = memo(function dnsCard({ data, loading }: DnsCardProps) {
   const { t } = useTranslation("cards");
 
   if (loading) {
     return (
-      <Card title={t("dns.title")} icon={<Globe className={iconTokens.size.md} />} status="loading">
+      <Card title={t("dns.title")} icon={<Globe class={iconTokens.size.md} />} status="loading">
         <CardValue value={t("dns.testing")} size="lg" />
       </Card>
     );
@@ -108,7 +110,7 @@ export const DnsCard = memo(function DnsCard({ data, loading }: DnsCardProps) {
 
   if (!data) {
     return (
-      <Card title={t("dns.title")} icon={<Globe className={iconTokens.size.md} />} status="unknown">
+      <Card title={t("dns.title")} icon={<Globe class={iconTokens.size.md} />} status="unknown">
         <CardValue value={t("dns.noData")} size="md" />
       </Card>
     );
@@ -127,32 +129,28 @@ export const DnsCard = memo(function DnsCard({ data, loading }: DnsCardProps) {
   const servers = data.servers && data.servers.length > 0 ? data.servers : [data.server];
 
   return (
-    <Card
-      title={t("dns.title")}
-      icon={<Globe className={iconTokens.size.md} />}
-      status={overallStatus}
-    >
+    <Card title={t("dns.title")} icon={<Globe class={iconTokens.size.md} />} status={overallStatus}>
       {/* DNS Servers */}
-      <div className={spacing.margin.bottom.inline}>
-        <p className={cn("caption", spacing.margin.bottom.tight)}>{t("dns.dnsServers")}</p>
-        <div className="stack-xs">
+      <div class={spacing.margin.bottom.inline}>
+        <p class={cn("caption", spacing.margin.bottom.tight)}>{t("dns.dnsServers")}</p>
+        <div class="stack-xs">
           {servers.map((server) => (
-            <p key={server} className="body-small font-mono break-all" title={server}>
+            <p key={server} class="body-small font-mono break-all" title={server}>
               {server}
             </p>
           ))}
         </div>
       </div>
 
-      <p className="caption">{t("dns.testingHost", { hostname: data.testHostname })}</p>
+      <p class="caption">{t("dns.testingHost", { hostname: data.testHostname })}</p>
       <CardDivider />
 
       {/* IPv4 Lookups */}
       {(data.forward || data.reverse) && (
-        <div className={spacing.margin.bottom.inline}>
-          <p className={cn("caption font-medium", spacing.margin.bottom.tight)}>IPv4</p>
-          <LookupRow label={t("dns.forwardA")} lookup={data.forward} />
-          <LookupRow label={t("dns.reversePTR")} lookup={data.reverse} />
+        <div class={spacing.margin.bottom.inline}>
+          <p class={cn("caption font-medium", spacing.margin.bottom.tight)}>IPv4</p>
+          <lookupRow label={t("dns.forwardA")} lookup={data.forward} />
+          <lookupRow label={t("dns.reversePTR")} lookup={data.reverse} />
         </div>
       )}
 
@@ -161,9 +159,9 @@ export const DnsCard = memo(function DnsCard({ data, loading }: DnsCardProps) {
         <>
           <CardDivider />
           <div>
-            <p className={cn("caption font-medium", spacing.margin.bottom.tight)}>IPv6</p>
-            <LookupRow label={t("dns.forwardAAAA")} lookup={data.forwardIpv6} />
-            <LookupRow label={t("dns.reversePTR")} lookup={data.reverseIpv6} />
+            <p class={cn("caption font-medium", spacing.margin.bottom.tight)}>IPv6</p>
+            <lookupRow label={t("dns.forwardAAAA")} lookup={data.forwardIpv6} />
+            <lookupRow label={t("dns.reversePTR")} lookup={data.reverseIpv6} />
           </div>
         </>
       )}
@@ -187,11 +185,11 @@ export const DnsCard = memo(function DnsCard({ data, loading }: DnsCardProps) {
             {data.perServerResults.map(
               // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Renders multiple DNS result states
               (server) => (
-                <div key={server.server} className={spacing.chip.sm}>
-                  <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
-                    <span className="caption font-mono">{server.server}</span>
+                <div key={server.server} class={spacing.chip.sm}>
+                  <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
+                    <span class="caption font-mono">{server.server}</span>
                     <span
-                      className={cn(
+                      class={cn(
                         "caption font-medium",
                         server.status === "success"
                           ? "text-status-success"
@@ -204,12 +202,12 @@ export const DnsCard = memo(function DnsCard({ data, loading }: DnsCardProps) {
                     </span>
                   </div>
                   {server.forward && (
-                    <div className={cn(layout.flex.between, "caption")}>
+                    <div class={cn(layout.flex.between, "caption")}>
                       <span>A</span>
-                      <span className={layout.inline.default}>
+                      <span class={layout.inline.default}>
                         <StatusBadge status={server.forward.status} size="sm" />
                         <span
-                          className={
+                          class={
                             server.forward.status === "success"
                               ? "text-status-success"
                               : server.forward.status === "warning"
@@ -225,12 +223,12 @@ export const DnsCard = memo(function DnsCard({ data, loading }: DnsCardProps) {
                     </div>
                   )}
                   {server.forwardIpv6 && (
-                    <div className={cn(layout.flex.between, "caption")}>
+                    <div class={cn(layout.flex.between, "caption")}>
                       <span>AAAA</span>
-                      <span className={layout.inline.default}>
+                      <span class={layout.inline.default}>
                         <StatusBadge status={server.forwardIpv6.status} size="sm" />
                         <span
-                          className={
+                          class={
                             server.forwardIpv6.status === "success"
                               ? "text-status-success"
                               : server.forwardIpv6.status === "warning"

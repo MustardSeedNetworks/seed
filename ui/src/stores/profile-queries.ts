@@ -356,7 +356,7 @@ export function useImportProfilesMutation() {
 /**
  * Export all profiles to JSON.
  */
-export function useExportProfilesQuery(enabled: boolean = false) {
+export function useExportProfilesQuery(enabled = false) {
   return useQuery({
     queryKey: [...profileKeys.all, "export"],
     queryFn: async () => {

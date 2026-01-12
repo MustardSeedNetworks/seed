@@ -83,18 +83,13 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
   return (
     <SimpleBaseCard
       title={t("switch.title")}
-      icon={<Network className={iconTokens.size.md} />}
+      icon={<Network class={iconTokens.size.md} />}
       status={status}
       loading={loading}
       loadingContent={<CardValue value={t("switch.listening")} size="lg" />}
     >
       {/* Switch Info Section */}
-      {!hasSwitch ? (
-        <>
-          <CardValue value={t("switch.noDiscoveryFrames")} size="md" />
-          <p className={cn("caption", spacing.margin.top.inline)}>{t("switch.waitingFrames")}</p>
-        </>
-      ) : (
+      {hasSwitch ? (
         <>
           <CardValue value={data?.switchName ?? ""} size="lg" />
           <CardDivider />
@@ -105,9 +100,9 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
           {data?.managementIp && (
             <CardRow label={t("switch.managementIp")} value={data?.managementIp} />
           )}
-          <div className={spacing.margin.top.inline}>
+          <div class={spacing.margin.top.inline}>
             <span
-              className={cn(
+              class={cn(
                 "caption",
                 spacing.chip.sm,
                 "bg-brand-primary/20",
@@ -119,13 +114,18 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
             </span>
           </div>
         </>
+      ) : (
+        <>
+          <CardValue value={t("switch.noDiscoveryFrames")} size="md" />
+          <p class={cn("caption", spacing.margin.top.inline)}>{t("switch.waitingFrames")}</p>
+        </>
       )}
 
       {/* VLAN Section */}
       {vlanData && (
         <>
           <CardDivider />
-          <p className={cn("section-title", spacing.margin.bottom.inline)}>{t("switch.vlans")}</p>
+          <p class={cn("section-title", spacing.margin.bottom.inline)}>{t("switch.vlans")}</p>
           {vlanData.nativeVlan !== null ? (
             <CardRow label={t("switch.nativeVlan")} value={vlanData.nativeVlan.toString()} />
           ) : (
@@ -135,15 +135,13 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
             <CardRow label={t("switch.voiceVlan")} value={vlanData.voiceVlan.toString()} />
           )}
           {vlanData.taggedVlans.length > 0 && (
-            <div className={spacing.margin.top.inline}>
-              <p className={cn("caption", spacing.margin.bottom.inline)}>
-                {t("switch.taggedVlans")}
-              </p>
-              <div className={layout.inline.wrap}>
+            <div class={spacing.margin.top.inline}>
+              <p class={cn("caption", spacing.margin.bottom.inline)}>{t("switch.taggedVlans")}</p>
+              <div class={layout.inline.wrap}>
                 {vlanData.taggedVlans.map((vlan) => (
                   <span
                     key={vlan}
-                    className={cn("caption", spacing.chip.sm, "bg-surface-hover", radius.default)}
+                    class={cn("caption", spacing.chip.sm, "bg-surface-hover", radius.default)}
                   >
                     {vlan}
                   </span>
@@ -153,11 +151,7 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps) {
           )}
           {vlanData.configured.enabled && (
             <div
-              className={cn(
-                spacing.margin.top.heading,
-                spacing.padding.top.heading,
-                border.divider,
-              )}
+              class={cn(spacing.margin.top.heading, spacing.padding.top.heading, border.divider)}
             >
               <CardRow
                 label={t("switch.configuredTag")}

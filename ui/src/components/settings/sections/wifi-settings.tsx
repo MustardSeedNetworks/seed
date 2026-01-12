@@ -64,7 +64,7 @@ interface WiFiSettingsProps {
 /**
  * Settings section for WiFi scanning configuration, adapter selection, and connection management.
  */
-export const WiFiSettings = memo(function WiFiSettings({
+export const WiFiSettings = memo(function wiFiSettings({
   wifiSettings,
   setWifiSettings,
   wifiStatus,
@@ -121,7 +121,9 @@ export const WiFiSettings = memo(function WiFiSettings({
 
   // Connect to a network
   const connectToNetwork = useCallback(async () => {
-    if (!selectedNetwork) return;
+    if (!selectedNetwork) {
+      return;
+    }
 
     setConnecting(true);
     setConnectionStatus(null);
@@ -135,7 +137,7 @@ export const WiFiSettings = memo(function WiFiSettings({
         setSelectedNetwork(null);
         setPassword("");
         // Refresh saved networks
-        loadSavedNetworks();
+        await loadSavedNetworks();
       } else {
         setConnectionStatus(response?.message || "Connection failed");
       }
@@ -168,7 +170,7 @@ export const WiFiSettings = memo(function WiFiSettings({
     async (ssid: string) => {
       try {
         await api.delete(`/api/canopy/wifi/forget?ssid=${encodeURIComponent(ssid)}`);
-        loadSavedNetworks();
+        await loadSavedNetworks();
       } catch {
         // Ignore errors
       }
@@ -194,34 +196,48 @@ export const WiFiSettings = memo(function WiFiSettings({
 
   // Get signal strength indicator
   const getSignalBars = (signal: number): string => {
-    if (signal >= -50) return "████";
-    if (signal >= -60) return "███░";
-    if (signal >= -70) return "██░░";
-    if (signal >= -80) return "█░░░";
+    if (signal >= -50) {
+      return "████";
+    }
+    if (signal >= -60) {
+      return "███░";
+    }
+    if (signal >= -70) {
+      return "██░░";
+    }
+    if (signal >= -80) {
+      return "█░░░";
+    }
     return "░░░░";
   };
 
   const getSignalColor = (signal: number): string => {
-    if (signal >= -50) return "text-status-success";
-    if (signal >= -60) return "text-status-success";
-    if (signal >= -70) return "text-status-warning";
+    if (signal >= -50) {
+      return "text-status-success";
+    }
+    if (signal >= -60) {
+      return "text-status-success";
+    }
+    if (signal >= -70) {
+      return "text-status-warning";
+    }
     return "text-status-error";
   };
 
   return (
     <CollapsibleSection
       title={
-        <div className={layout.inline.default}>
-          <Wifi className={iconTokens.size.sm} />
+        <div class={layout.inline.default}>
+          <Wifi class={iconTokens.size.sm} />
           <span>{t("sections.wifi")}</span>
           <AutoSaveIndicator status={wifiStatus} />
         </div>
       }
     >
-      <div className="stack-md">
+      <div class="stack-md">
         {/* Interface Selection */}
         <div>
-          <label className="caption text-text-muted" htmlFor="wifi-interface">
+          <label class="caption text-text-muted" for="wifi-interface">
             {t("wifi.title")}
           </label>
           {wifiSettings.availableWifi.length > 0 ? (
@@ -234,7 +250,7 @@ export const WiFiSettings = memo(function WiFiSettings({
                   interface: e.target.value,
                 }))
               }
-              className={cn(
+              class={cn(
                 "w-full",
                 spacing.margin.top.tight,
                 spacing.chip.lg,
@@ -261,7 +277,7 @@ export const WiFiSettings = memo(function WiFiSettings({
                 }))
               }
               placeholder="wlan0 or en0"
-              className={cn(
+              class={cn(
                 "w-full",
                 spacing.margin.top.tight,
                 spacing.chip.lg,
@@ -271,7 +287,7 @@ export const WiFiSettings = memo(function WiFiSettings({
               )}
             />
           )}
-          <p className={cn("caption text-text-muted", spacing.margin.top.tight)}>
+          <p class={cn("caption text-text-muted", spacing.margin.top.tight)}>
             {wifiSettings.isWireless ? t("wifi.wirelessMonitoring") : t("wifi.noWireless")}
           </p>
         </div>
@@ -280,17 +296,17 @@ export const WiFiSettings = memo(function WiFiSettings({
         {wifiSettings.isWireless && (
           <>
             {/* Available Networks */}
-            <div className="border-t border-surface-border pt-3">
-              <div className="flex items-center justify-between">
-                <span className="body-small font-medium text-text-primary">
+            <div class="border-t border-surface-border pt-3">
+              <div class="flex items-center justify-between">
+                <span class="body-small font-medium text-text-primary">
                   Available Networks{" "}
-                  {scanning && <span className="text-text-muted">(scanning...)</span>}
+                  {scanning && <span class="text-text-muted">(scanning...)</span>}
                 </span>
                 <button
                   type="button"
                   onClick={scanNetworks}
                   disabled={scanning}
-                  className={cn(
+                  class={cn(
                     "caption font-medium",
                     spacing.chip.md,
                     radius.default,
@@ -302,22 +318,22 @@ export const WiFiSettings = memo(function WiFiSettings({
                 </button>
               </div>
 
-              {scanError && <p className="caption text-status-error mt-1">{scanError}</p>}
+              {scanError && <p class="caption text-status-error mt-1">{scanError}</p>}
 
               {/* Loading state when no networks yet */}
               {networks.length === 0 && scanning && (
-                <p className="caption text-text-muted mt-2">Scanning for networks...</p>
+                <p class="caption text-text-muted mt-2">Scanning for networks...</p>
               )}
 
               {/* No networks found */}
               {networks.length === 0 && !scanning && !scanError && (
-                <p className="caption text-text-muted mt-2">No networks found</p>
+                <p class="caption text-text-muted mt-2">No networks found</p>
               )}
 
               {/* Network List */}
               {networks.length > 0 && (
                 <div
-                  className={cn(
+                  class={cn(
                     "mt-2 max-h-48 overflow-y-auto",
                     "border border-surface-border",
                     radius.default,
@@ -333,21 +349,21 @@ export const WiFiSettings = memo(function WiFiSettings({
                         setPassword("");
                         setConnectionStatus(null);
                       }}
-                      className={cn(
+                      class={cn(
                         "w-full text-left px-3 py-2",
                         "border-b border-surface-border last:border-b-0",
                         "hover:bg-surface-hover",
                         selectedNetwork?.bssid === network.bssid && "bg-brand-primary/10",
                       )}
                     >
-                      <div className="flex items-center justify-between">
+                      <div class="flex items-center justify-between">
                         <div>
-                          <span className="body-small text-text-primary">{network.ssid}</span>
-                          <span className="caption text-text-muted ml-2">{network.security}</span>
+                          <span class="body-small text-text-primary">{network.ssid}</span>
+                          <span class="caption text-text-muted ml-2">{network.security}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="caption text-text-muted">Ch {network.channel}</span>
-                          <span className={cn("font-mono caption", getSignalColor(network.signal))}>
+                        <div class="flex items-center gap-2">
+                          <span class="caption text-text-muted">Ch {network.channel}</span>
+                          <span class={cn("font-mono caption", getSignalColor(network.signal))}>
                             {getSignalBars(network.signal)}
                           </span>
                         </div>
@@ -360,15 +376,15 @@ export const WiFiSettings = memo(function WiFiSettings({
               {/* Connection Dialog */}
               {selectedNetwork && (
                 <div
-                  className={cn(
+                  class={cn(
                     "mt-3 p-3",
                     "border border-surface-border",
                     radius.default,
                     "bg-surface-sunken",
                   )}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="body-small font-medium text-text-primary">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="body-small font-medium text-text-primary">
                       Connect to {selectedNetwork.ssid}
                     </span>
                     <button
@@ -377,20 +393,20 @@ export const WiFiSettings = memo(function WiFiSettings({
                         setSelectedNetwork(null);
                         setPassword("");
                       }}
-                      className="caption text-text-muted hover:text-text-primary"
+                      class="caption text-text-muted hover:text-text-primary"
                     >
                       Cancel
                     </button>
                   </div>
 
                   {selectedNetwork.security !== "Open" && (
-                    <div className="relative mb-2">
+                    <div class="relative mb-2">
                       <input
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Password"
-                        className={cn(
+                        class={cn(
                           "w-full pr-16",
                           spacing.chip.lg,
                           "bg-surface-base border border-surface-border",
@@ -406,7 +422,7 @@ export const WiFiSettings = memo(function WiFiSettings({
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 caption text-text-muted hover:text-text-primary"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 caption text-text-muted hover:text-text-primary"
                       >
                         {showPassword ? "Hide" : "Show"}
                       </button>
@@ -417,7 +433,7 @@ export const WiFiSettings = memo(function WiFiSettings({
                     type="button"
                     onClick={connectToNetwork}
                     disabled={connecting || (selectedNetwork.security !== "Open" && !password)}
-                    className={cn(
+                    class={cn(
                       "w-full",
                       "body-small font-medium",
                       spacing.chip.lg,
@@ -434,7 +450,7 @@ export const WiFiSettings = memo(function WiFiSettings({
               {/* Connection Status */}
               {connectionStatus && (
                 <p
-                  className={cn(
+                  class={cn(
                     "caption mt-2",
                     connectionStatus.includes("Connected")
                       ? "text-status-success"
@@ -447,14 +463,14 @@ export const WiFiSettings = memo(function WiFiSettings({
             </div>
 
             {/* Current Connection / Disconnect */}
-            <div className="border-t border-surface-border pt-3">
-              <div className="flex items-center justify-between">
-                <span className="body-small font-medium text-text-primary">Connection</span>
+            <div class="border-t border-surface-border pt-3">
+              <div class="flex items-center justify-between">
+                <span class="body-small font-medium text-text-primary">Connection</span>
                 <button
                   type="button"
                   onClick={disconnectNetwork}
                   disabled={connecting}
-                  className={cn(
+                  class={cn(
                     "caption font-medium",
                     spacing.chip.md,
                     radius.default,
@@ -469,12 +485,12 @@ export const WiFiSettings = memo(function WiFiSettings({
 
             {/* Saved Networks */}
             {savedNetworks.length > 0 && (
-              <div className="border-t border-surface-border pt-3">
-                <span className="body-small font-medium text-text-primary block mb-2">
+              <div class="border-t border-surface-border pt-3">
+                <span class="body-small font-medium text-text-primary block mb-2">
                   Saved Networks
                 </span>
                 <div
-                  className={cn(
+                  class={cn(
                     "max-h-32 overflow-y-auto",
                     "border border-surface-border",
                     radius.default,
@@ -484,16 +500,16 @@ export const WiFiSettings = memo(function WiFiSettings({
                   {savedNetworks.map((network) => (
                     <div
                       key={network.uuid || network.ssid}
-                      className={cn(
+                      class={cn(
                         "flex items-center justify-between px-3 py-2",
                         "border-b border-surface-border last:border-b-0",
                       )}
                     >
-                      <span className="body-small text-text-primary">{network.ssid}</span>
+                      <span class="body-small text-text-primary">{network.ssid}</span>
                       <button
                         type="button"
                         onClick={() => forgetNetwork(network.ssid)}
-                        className="caption text-status-error hover:underline"
+                        class="caption text-status-error hover:underline"
                       >
                         Forget
                       </button>

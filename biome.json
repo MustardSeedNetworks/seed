@@ -160,11 +160,11 @@
               },
               {
                 "selector": { "kind": "function" },
-                "formats": ["camelCase"]
+                "formats": ["camelCase", "PascalCase"]
               },
               {
                 "selector": { "kind": "variable" },
-                "formats": ["camelCase", "CONSTANT_CASE"]
+                "formats": ["camelCase", "CONSTANT_CASE", "PascalCase"]
               }
             ]
           }

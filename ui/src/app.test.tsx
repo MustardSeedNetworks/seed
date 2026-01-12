@@ -31,7 +31,7 @@ import App from "./app";
 import { ProfileProvider } from "./contexts/profile-context";
 
 // Mock localStorage
-const mockLocalStorage = (() => {
+const mockLocalStorage: Storage = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: vi.fn((key: string) => store[key] || null),
@@ -45,6 +45,13 @@ const mockLocalStorage = (() => {
       store = {};
     },
     _getStore: () => store,
+    get length(): number {
+      return Object.keys(store).length;
+    },
+    key: (index: number): string | null => {
+      const keys = Object.keys(store);
+      return keys[index] || null;
+    },
   };
 })();
 
@@ -53,7 +60,7 @@ Object.defineProperty(window, "localStorage", {
 });
 
 // Mock fetch
-const mockFetch = vi.fn();
+const mockFetch: typeof fetch = vi.fn();
 global.fetch = mockFetch;
 
 // Mock WebSocket
@@ -76,30 +83,30 @@ class MockWebSocket {
     MockWebSocket.instances.push(this);
   }
 
-  send(data: string) {
+  send(data: string): void {
     this.sentMessages.push(data);
   }
 
-  close() {
+  close(): void {
     this.closeWasCalled = true;
     this.readyState = MockWebSocket.CLOSED;
   }
 
-  simulateOpen() {
+  simulateOpen(): void {
     this.readyState = MockWebSocket.OPEN;
     if (this.onopen) {
       this.onopen(new Event("open"));
     }
   }
 
-  simulateClose() {
+  simulateClose(): void {
     this.readyState = MockWebSocket.CLOSED;
     if (this.onclose) {
       this.onclose({ code: 1000, reason: "", wasClean: true } as CloseEvent);
     }
   }
 
-  simulateMessage(data: object) {
+  simulateMessage(data: object): void {
     if (this.onmessage) {
       this.onmessage({ data: JSON.stringify(data) } as MessageEvent);
     }
@@ -107,13 +114,13 @@ class MockWebSocket {
 }
 
 // Wrapper with ProfileProvider (settings now managed within ProfileContext)
-function createWrapper() {
-  return function Wrapper({ children }: { children: ReactNode }) {
+function createWrapper(): React.FC<{ children: ReactNode }> {
+  return function wrapper({ children }: { children: ReactNode }): JSX.Element {
     return <ProfileProvider>{children}</ProfileProvider>;
   };
 }
 
-function renderWithProviders(ui: React.ReactElement) {
+function renderWithProviders(ui: React.ReactElement): ReturnType<typeof render> {
   return render(ui, { wrapper: createWrapper() });
 }
 

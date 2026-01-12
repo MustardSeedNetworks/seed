@@ -66,8 +66,12 @@ function getSignalStatus(
   signal: number,
   thresholds: { warning: number; critical: number },
 ): Status {
-  if (signal <= thresholds.critical) return "error";
-  if (signal <= thresholds.warning) return "warning";
+  if (signal <= thresholds.critical) {
+    return "error";
+  }
+  if (signal <= thresholds.warning) {
+    return "warning";
+  }
   return "success";
 }
 
@@ -79,9 +83,15 @@ function signalToPercentage(signal: number): number {
 
 function getSignalBars(signal: number): string {
   const percent = signalToPercentage(signal);
-  if (percent >= 75) return "▂▄▆█";
-  if (percent >= 50) return "▂▄▆░";
-  if (percent >= 25) return "▂▄░░";
+  if (percent >= 75) {
+    return "▂▄▆█";
+  }
+  if (percent >= 50) {
+    return "▂▄▆░";
+  }
+  if (percent >= 25) {
+    return "▂▄░░";
+  }
   return "▂░░░";
 }
 
@@ -110,19 +120,17 @@ export function WiFiCard({ data, loading, visible = true }: WiFiCardProps) {
   return (
     <SimpleBaseCard
       title={tr("wifi.title")}
-      icon={<Wifi className={iconTokens.size.md} />}
+      icon={<Wifi class={iconTokens.size.md} />}
       status={loading ? "loading" : status}
       loading={loading}
       loadingContent={<CardValue value={tc("status.scanning")} size="lg" />}
     >
-      {!data ? (
-        <CardValue value={tc("status.disconnected")} size="md" />
-      ) : (
+      {data ? (
         <>
           <CardValue value={data.ssid} size="lg" />
-          <div className={cn(layout.inline.default, spacing.margin.top.tight)}>
-            <span className="body-large font-mono">{getSignalBars(data.signal)}</span>
-            <span className="body-small text-text-muted">
+          <div class={cn(layout.inline.default, spacing.margin.top.tight)}>
+            <span class="body-large font-mono">{getSignalBars(data.signal)}</span>
+            <span class="body-small text-text-muted">
               {data.signal} dBm ({signalToPercentage(data.signal)}%)
             </span>
           </div>
@@ -132,6 +140,8 @@ export function WiFiCard({ data, loading, visible = true }: WiFiCardProps) {
           <CardRow label={tr("wifi.frequency")} value={`${data.frequency} MHz`} />
           <CardRow label={tr("wifi.security")} value={data.security} />
         </>
+      ) : (
+        <CardValue value={tc("status.disconnected")} size="md" />
       )}
     </SimpleBaseCard>
   );

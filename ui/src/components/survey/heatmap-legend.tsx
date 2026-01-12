@@ -91,7 +91,9 @@ function getMetricInfo(metric: HeatmapMetric, t: (key: string) => string) {
 export function HeatmapLegend({ metric, minValue, maxValue }: HeatmapLegendProps) {
   const { t } = useTranslation("survey");
 
-  if (!metric) return null;
+  if (!metric) {
+    return null;
+  }
 
   const info = getMetricInfo(metric, t);
 
@@ -113,24 +115,17 @@ export function HeatmapLegend({ metric, minValue, maxValue }: HeatmapLegendProps
   }
 
   return (
-    <div
-      className={cn("bg-surface-raised border border-surface-border", radius.md, spacing.pad.sm)}
-    >
-      <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
-        <span className="body-small font-medium">{info.name}</span>
+    <div class={cn("bg-surface-raised border border-surface-border", radius.md, spacing.pad.sm)}>
+      <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
+        <span class="body-small font-medium">{info.name}</span>
       </div>
 
       {/* Color gradient bar */}
       <div
-        className={cn(
-          "relative h-6",
-          radius.default,
-          "overflow-hidden",
-          spacing.margin.bottom.tight,
-        )}
+        class={cn("relative h-6", radius.default, "overflow-hidden", spacing.margin.bottom.tight)}
       >
         <div
-          className="absolute inset-0"
+          class="absolute inset-0"
           style={{
             background: gradient,
           }}
@@ -138,11 +133,11 @@ export function HeatmapLegend({ metric, minValue, maxValue }: HeatmapLegendProps
       </div>
 
       {/* Min/max labels */}
-      <div className={layout.flex.between}>
-        <span className="caption text-text-muted">
+      <div class={layout.flex.between}>
+        <span class="caption text-text-muted">
           {minValue.toFixed(1)} {info.unit}
         </span>
-        <span className="caption text-text-muted">
+        <span class="caption text-text-muted">
           {maxValue.toFixed(1)} {info.unit}
         </span>
       </div>

@@ -84,7 +84,7 @@ const meta: Meta<typeof PerformanceSettings> = {
   },
   decorators: [
     (Story) => (
-      <div className="w-[550px] max-h-[700px] overflow-y-auto">
+      <div class="w-[550px] max-h-[700px] overflow-y-auto">
         <Story />
       </div>
     ),
@@ -490,7 +490,7 @@ export const Saving: Story = {
  * Interactive performance settings - fully functional
  */
 export const Interactive: Story = {
-  render: function InteractiveStory() {
+  render: function interactiveStory() {
     const [testsSettings, setTestsSettings] = useState<TestsSettings>(baseTestsSettings);
     const [iperfSettings, setIperfSettings] = useState<IperfSettings>(defaultIperfSettings);
     const [status, setStatus] = useState<SaveStatus>("idle");

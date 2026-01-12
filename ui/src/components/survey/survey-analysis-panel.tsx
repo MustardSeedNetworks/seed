@@ -439,7 +439,7 @@ export function SurveyAnalysisPanel({
 
   // Render single finding card
   const renderFinding = (finding: AnalysisFinding) => {
-    const Icon = getFindingIcon(finding.category, finding.severity);
+    const ICON = getFindingIcon(finding.category, finding.severity);
     const colorClass = getSeverityColor(finding.severity);
     const bgClass = getSeverityBg(finding.severity);
 
@@ -456,7 +456,7 @@ export function SurveyAnalysisPanel({
         }}
         role="button"
         tabIndex={0}
-        className={cn(
+        class={cn(
           spacing.pad.sm,
           radius.md,
           "border",
@@ -464,13 +464,11 @@ export function SurveyAnalysisPanel({
           "cursor-pointer hover:opacity-80 transition-opacity",
         )}
       >
-        <div className={cn(layout.inline.default)}>
-          <Icon className={cn(iconTokens.size.sm, colorClass, "flex-shrink-0")} />
-          <div className="flex-1 min-w-0">
-            <h4 className={cn("body-small font-medium", colorClass)}>
-              {t(finding.titleKey as never)}
-            </h4>
-            <p className="caption text-text-muted">
+        <div class={cn(layout.inline.default)}>
+          <ICON class={cn(iconTokens.size.sm, colorClass, "flex-shrink-0")} />
+          <div class="flex-1 min-w-0">
+            <h4 class={cn("body-small font-medium", colorClass)}>{t(finding.titleKey as never)}</h4>
+            <p class="caption text-text-muted">
               {t(finding.descriptionKey as never, {
                 value: finding.value,
                 threshold: finding.threshold,
@@ -478,20 +476,20 @@ export function SurveyAnalysisPanel({
               })}
             </p>
             {finding.recommendationKey && (
-              <p className="caption text-text-primary mt-1">
-                <Lightbulb className="w-3 h-3 inline mr-1" />
+              <p class="caption text-text-primary mt-1">
+                <Lightbulb class="w-3 h-3 inline mr-1" />
                 {t(finding.recommendationKey as never)}
               </p>
             )}
             {finding.affectedSsids && finding.affectedSsids.length > 0 && (
-              <p className="caption text-text-muted mt-1 truncate">
+              <p class="caption text-text-muted mt-1 truncate">
                 {t("analysis.affectedSsids")}: {finding.affectedSsids.slice(0, 3).join(", ")}
                 {finding.affectedSsids.length > 3 && ` +${finding.affectedSsids.length - 3}`}
               </p>
             )}
             {finding.location && (
-              <p className="caption text-brand-primary mt-1">
-                <MapPin className="w-3 h-3 inline mr-1" />
+              <p class="caption text-brand-primary mt-1">
+                <MapPin class="w-3 h-3 inline mr-1" />
                 {t("analysis.clickToView")}
               </p>
             )}
@@ -502,23 +500,21 @@ export function SurveyAnalysisPanel({
   };
 
   return (
-    <div
-      className={cn("bg-surface-raised", radius.md, "border border-surface-border", spacing.pad.sm)}
-    >
+    <div class={cn("bg-surface-raised", radius.md, "border border-surface-border", spacing.pad.sm)}>
       {/* Header */}
-      <div className={cn(layout.inline.default, "justify-between", spacing.margin.bottom.content)}>
-        <div className={cn(layout.inline.default)}>
-          <Activity className={iconTokens.size.sm} />
-          <h4 className="body-small font-medium">{t("analysis.title")}</h4>
+      <div class={cn(layout.inline.default, "justify-between", spacing.margin.bottom.content)}>
+        <div class={cn(layout.inline.default)}>
+          <Activity class={iconTokens.size.sm} />
+          <h4 class="body-small font-medium">{t("analysis.title")}</h4>
         </div>
-        <div className={cn(layout.inline.default)}>
+        <div class={cn(layout.inline.default)}>
           {criticalFindings.length > 0 && (
-            <span className="px-2 py-0.5 text-xs bg-status-error text-text-inverse rounded-full">
+            <span class="px-2 py-0.5 text-xs bg-status-error text-text-inverse rounded-full">
               {criticalFindings.length}
             </span>
           )}
           {warningFindings.length > 0 && (
-            <span className="px-2 py-0.5 text-xs bg-status-warning text-text-inverse rounded-full">
+            <span class="px-2 py-0.5 text-xs bg-status-warning text-text-inverse rounded-full">
               {warningFindings.length}
             </span>
           )}
@@ -526,7 +522,7 @@ export function SurveyAnalysisPanel({
             <button
               type="button"
               onClick={() => onGenerateReport(findings)}
-              className={cn(
+              class={cn(
                 button.size.sm,
                 "bg-brand-primary text-text-inverse",
                 radius.md,
@@ -534,7 +530,7 @@ export function SurveyAnalysisPanel({
                 layout.inline.tight,
               )}
             >
-              <FileText className="w-3 h-3" />
+              <FileText class="w-3 h-3" />
               <span>{t("criteria.generateReport")}</span>
             </button>
           )}
@@ -542,36 +538,36 @@ export function SurveyAnalysisPanel({
       </div>
 
       {/* Summary */}
-      <div className={cn(layout.inline.default, spacing.margin.bottom.content)}>
+      <div class={cn(layout.inline.default, spacing.margin.bottom.content)}>
         {criticalFindings.length > 0 && (
-          <div className={cn(layout.inline.tight, "text-status-error")}>
-            <AlertOctagon className="w-4 h-4" />
-            <span className="caption">
+          <div class={cn(layout.inline.tight, "text-status-error")}>
+            <AlertOctagon class="w-4 h-4" />
+            <span class="caption">
               {criticalFindings.length} {t("analysis.critical")}
             </span>
           </div>
         )}
         {warningFindings.length > 0 && (
-          <div className={cn(layout.inline.tight, "text-status-warning")}>
-            <AlertTriangle className="w-4 h-4" />
-            <span className="caption">
+          <div class={cn(layout.inline.tight, "text-status-warning")}>
+            <AlertTriangle class="w-4 h-4" />
+            <span class="caption">
               {warningFindings.length} {t("analysis.warnings")}
             </span>
           </div>
         )}
         {criticalFindings.length === 0 && warningFindings.length === 0 && (
-          <div className={cn(layout.inline.tight, "text-status-success")}>
-            <CheckCircle2 className="w-4 h-4" />
-            <span className="caption">{t("analysis.noIssues")}</span>
+          <div class={cn(layout.inline.tight, "text-status-success")}>
+            <CheckCircle2 class="w-4 h-4" />
+            <span class="caption">{t("analysis.noIssues")}</span>
           </div>
         )}
       </div>
 
       {/* Findings list */}
       {findings.length === 0 ? (
-        <p className="caption text-text-muted text-center py-4">{t("analysis.noData")}</p>
+        <p class="caption text-text-muted text-center py-4">{t("analysis.noData")}</p>
       ) : (
-        <div className={cn(layout.stack.tight, "max-h-80 overflow-y-auto")}>
+        <div class={cn(layout.stack.tight, "max-h-80 overflow-y-auto")}>
           {/* Critical first */}
           {criticalFindings.map(renderFinding)}
           {/* Then warnings */}

@@ -71,7 +71,9 @@ export function WiFiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCard
 
   // Fixes #737: Use "success" for no surveys (ready state) instead of confusing "?" badge
   const getCardStatus = (): Status => {
-    if (activeSurveys.length > 0) return "warning"; // Active work needs attention
+    if (activeSurveys.length > 0) {
+      return "warning"; // Active work needs attention
+    }
     return "success"; // Ready or completed - system is healthy
   };
 
@@ -129,7 +131,7 @@ export function WiFiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCard
       <Card
         title={t("survey.title")}
         status={getCardStatus()}
-        icon={<Activity className={iconTokens.size.md} />}
+        icon={<Activity class={iconTokens.size.md} />}
         headerAction={
           <button
             type="button"
@@ -137,7 +139,7 @@ export function WiFiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCard
               e.stopPropagation();
               setShowCreateDialog(true);
             }}
-            className="caption font-medium text-brand-primary hover:underline"
+            class="caption font-medium text-brand-primary hover:underline"
           >
             {t("survey.new")}
           </button>
@@ -145,7 +147,7 @@ export function WiFiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCard
       >
         {!isWifi && (
           <div
-            className={cn(
+            class={cn(
               "bg-status-warning/10 border border-status-warning/20 text-status-warning",
               spacing.pad.sm,
               radius.md,
@@ -159,7 +161,7 @@ export function WiFiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCard
 
         {error && (
           <div
-            className={cn(
+            class={cn(
               "bg-status-error/10 border border-status-error/20 text-status-error",
               spacing.pad.sm,
               radius.md,
@@ -172,47 +174,43 @@ export function WiFiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCard
         )}
 
         {loading && surveys.length === 0 ? (
-          <div className={cn("text-center", spacing.pad.lg, "text-text-muted body-small")}>
+          <div class={cn("text-center", spacing.pad.lg, "text-text-muted body-small")}>
             {t("survey.loading")}
           </div>
         ) : surveys.length === 0 ? (
-          <div className={cn("text-center", spacing.pad.lg, "text-text-muted")}>
-            <p className={cn("body-small", spacing.margin.bottom.inline)}>
-              {t("survey.noSurveys")}
-            </p>
+          <div class={cn("text-center", spacing.pad.lg, "text-text-muted")}>
+            <p class={cn("body-small", spacing.margin.bottom.inline)}>{t("survey.noSurveys")}</p>
             <button
               type="button"
               onClick={() => setShowCreateDialog(true)}
-              className="body-small text-brand-primary hover:underline"
+              class="body-small text-brand-primary hover:underline"
             >
               {t("survey.createFirst")}
             </button>
           </div>
         ) : (
-          <div className="stack-sm">
+          <div class="stack-sm">
             {surveys.slice(0, 3).map((survey) => (
               <div
                 key={survey.id}
-                className={cn(
+                class={cn(
                   "border border-surface-border",
                   radius.md,
                   "pad-sm hover:bg-surface-hover transition-colors",
                 )}
               >
-                <div className={layout.flex.between}>
+                <div class={layout.flex.between}>
                   <button
                     type="button"
-                    className="flex-1 min-w-0 text-left cursor-pointer bg-transparent border-none p-0"
+                    class="flex-1 min-w-0 text-left cursor-pointer bg-transparent border-none p-0"
                     onClick={() => setSelectedSurvey(survey)}
                   >
-                    <div className={layout.inline.default}>
-                      <h4 className="font-medium body-small truncate">{survey.name}</h4>
-                      <span className="caption text-text-muted">
-                        {getStatusLabel(survey.status)}
-                      </span>
+                    <div class={layout.inline.default}>
+                      <h4 class="font-medium body-small truncate">{survey.name}</h4>
+                      <span class="caption text-text-muted">{getStatusLabel(survey.status)}</span>
                     </div>
                     <div
-                      className={cn(
+                      class={cn(
                         layout.inline.comfortable,
                         spacing.margin.top.inline,
                         "caption text-text-muted",
@@ -224,12 +222,12 @@ export function WiFiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCard
                       </span>
                     </div>
                   </button>
-                  <div className={cn(layout.inline.tight, spacing.margin.left.inline)}>
+                  <div class={cn(layout.inline.tight, spacing.margin.left.inline)}>
                     {survey.status === "created" && (
                       <button
                         type="button"
                         onClick={() => startSurvey(survey.id)}
-                        className={cn(
+                        class={cn(
                           button.size.xs,
                           "caption border border-surface-border",
                           radius.md,
@@ -244,7 +242,7 @@ export function WiFiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCard
                       <button
                         type="button"
                         onClick={() => pauseSurvey(survey.id)}
-                        className={cn(
+                        class={cn(
                           button.size.xs,
                           "caption border border-surface-border",
                           radius.md,
@@ -260,7 +258,7 @@ export function WiFiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCard
                         <button
                           type="button"
                           onClick={() => startSurvey(survey.id)}
-                          className={cn(
+                          class={cn(
                             button.size.xs,
                             "caption border border-surface-border",
                             radius.md,
@@ -273,7 +271,7 @@ export function WiFiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCard
                         <button
                           type="button"
                           onClick={() => completeSurvey(survey.id)}
-                          className={cn(
+                          class={cn(
                             button.size.xs,
                             "caption border border-surface-border",
                             radius.md,
@@ -288,7 +286,7 @@ export function WiFiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCard
                     <button
                       type="button"
                       onClick={() => handleDelete(survey.id)}
-                      className={cn(
+                      class={cn(
                         button.size.xs,
                         "caption border border-surface-border",
                         radius.md,
@@ -303,7 +301,7 @@ export function WiFiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCard
               </div>
             ))}
             {surveys.length > 3 && (
-              <div className={cn("text-center caption text-text-muted", spacing.padding.top.tight)}>
+              <div class={cn("text-center caption text-text-muted", spacing.padding.top.tight)}>
                 {t("survey.more", { count: surveys.length - 3 })}
               </div>
             )}
@@ -312,7 +310,7 @@ export function WiFiSurveyCard({ isWifi, currentInterface = "" }: WifiSurveyCard
       </Card>
 
       {showCreateDialog && (
-        <CreateSurveyDialog
+        <createSurveyDialog
           onClose={() => setShowCreateDialog(false)}
           onCreate={handleCreateSurvey}
           t={t}
@@ -342,7 +340,7 @@ interface CreateSurveyDialogProps {
   currentInterface?: string;
 }
 
-function CreateSurveyDialog({
+function _createSurveyDialog({
   onClose,
   onCreate,
   t,
@@ -360,9 +358,9 @@ function CreateSurveyDialog({
   };
 
   return (
-    <div className={modal.overlay}>
+    <div class={modal.overlay}>
       <div
-        className={cn(
+        class={cn(
           "bg-surface-raised",
           radius.md,
           spacing.pad.lg,
@@ -370,16 +368,13 @@ function CreateSurveyDialog({
           spacing.pad.default,
         )}
       >
-        <h2 className={cn("heading-2", spacing.margin.bottom.content)}>
+        <h2 class={cn("heading-2", spacing.margin.bottom.content)}>
           {t("survey.createNewSurvey")}
         </h2>
         <form onSubmit={handleSubmit}>
-          <div className="stack">
+          <div class="stack">
             <div>
-              <label
-                htmlFor="survey-name"
-                className={cn("label block", spacing.margin.bottom.tight)}
-              >
+              <label for="survey-name" class={cn("label block", spacing.margin.bottom.tight)}>
                 {t("survey.surveyName")}
               </label>
               <input
@@ -387,23 +382,20 @@ function CreateSurveyDialog({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={cn(inputTokens.base, inputTokens.state.default, inputTokens.size.md)}
+                class={cn(inputTokens.base, inputTokens.state.default, inputTokens.size.md)}
                 placeholder={t("survey.namePlaceholder")}
-                required
+                required={true}
               />
             </div>
             <div>
-              <label
-                className={cn("label block", spacing.margin.bottom.tight)}
-                htmlFor="survey-type"
-              >
+              <label class={cn("label block", spacing.margin.bottom.tight)} for="survey-type">
                 {t("survey.surveyType")}
               </label>
               <select
                 id="survey-type"
                 value={surveyType}
                 onChange={(e) => setSurveyType(e.target.value as SurveyType)}
-                className={cn(inputTokens.base, inputTokens.state.default, inputTokens.size.md)}
+                class={cn(inputTokens.base, inputTokens.state.default, inputTokens.size.md)}
               >
                 <option value="passive">{t("survey.typePassive")}</option>
                 <option value="active">{t("survey.typeActive")}</option>
@@ -411,11 +403,11 @@ function CreateSurveyDialog({
               </select>
             </div>
           </div>
-          <div className={cn(layout.inline.default, spacing.margin.top.section)}>
+          <div class={cn(layout.inline.default, spacing.margin.top.section)}>
             <button
               type="button"
               onClick={onClose}
-              className={cn(
+              class={cn(
                 "flex-1",
                 button.size.md,
                 "border border-surface-border",
@@ -427,7 +419,7 @@ function CreateSurveyDialog({
             </button>
             <button
               type="submit"
-              className={cn(
+              class={cn(
                 "flex-1",
                 button.size.md,
                 "bg-brand-primary text-text-inverse",

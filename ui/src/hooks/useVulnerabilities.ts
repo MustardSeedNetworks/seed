@@ -55,26 +55,36 @@ interface ResultsResponse {
 
 function isValidIpv4(ip: string): boolean {
   const parts = ip.split(".");
-  if (parts.length !== 4) return false;
+  if (parts.length !== 4) {
+    return false;
+  }
   return parts.every((part) => {
-    if (!/^\d{1,3}$/.test(part)) return false;
+    if (!/^\d{1,3}$/.test(part)) {
+      return false;
+    }
     const value = Number(part);
     return value >= 0 && value <= 255;
   });
 }
 
 function isValidIpv6(ip: string): boolean {
-  if (ip === "") return false;
+  if (ip === "") {
+    return false;
+  }
 
   const [head, ...rest] = ip.split("::");
-  if (rest.length > 1) return false;
+  if (rest.length > 1) {
+    return false;
+  }
 
   const headParts = head ? head.split(":") : [];
   const tailParts = rest.length === 1 && rest[0] ? rest[0].split(":") : [];
   const hasCompression = rest.length === 1;
 
   const allParts = hasCompression ? [...headParts, ...tailParts] : headParts;
-  if (allParts.some((p) => p === "")) return false;
+  if (allParts.some((p) => p === "")) {
+    return false;
+  }
 
   const lastPart = allParts.at(-1);
   const hasIpv4Tail = lastPart ? lastPart.includes(".") : false;
@@ -82,9 +92,13 @@ function isValidIpv6(ip: string): boolean {
   const validateHextet = (part: string): boolean => /^[0-9a-fA-F]{1,4}$/.test(part);
 
   if (hasIpv4Tail) {
-    if (!lastPart || !isValidIpv4(lastPart)) return false;
+    if (!(lastPart && isValidIpv4(lastPart))) {
+      return false;
+    }
     const hextets = allParts.slice(0, -1);
-    if (!hextets.every(validateHextet)) return false;
+    if (!hextets.every(validateHextet)) {
+      return false;
+    }
 
     if (hasCompression) {
       return hextets.length <= 6;
@@ -92,7 +106,9 @@ function isValidIpv6(ip: string): boolean {
     return hextets.length === 6;
   }
 
-  if (!allParts.every(validateHextet)) return false;
+  if (!allParts.every(validateHextet)) {
+    return false;
+  }
 
   if (hasCompression) {
     return allParts.length < 8;

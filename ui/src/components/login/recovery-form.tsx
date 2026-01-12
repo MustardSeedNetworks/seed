@@ -79,7 +79,9 @@ export function RecoveryForm({
 
   // Countdown timer for token expiry
   useEffect(() => {
-    if (remainingTime <= 0) return;
+    if (remainingTime <= 0) {
+      return;
+    }
 
     const interval = setInterval(() => {
       setRemainingTime((prev) => {
@@ -149,17 +151,17 @@ export function RecoveryForm({
   };
 
   return (
-    <div className={cn("min-h-screen", layout.flex.center, "pad")}>
-      <div className="w-full max-w-md">
+    <div class={cn("min-h-screen", layout.flex.center, "pad")}>
+      <div class="w-full max-w-md">
         {/* Header */}
-        <div className={cn("text-center", spacing.margin.bottom.section)}>
-          <div className={cn("w-16 h-16 mx-auto text-status-warning", layout.flex.center)}>
-            <KeyRound className={icon.size["2xl"]} />
+        <div class={cn("text-center", spacing.margin.bottom.section)}>
+          <div class={cn("w-16 h-16 mx-auto text-status-warning", layout.flex.center)}>
+            <KeyRound class={icon.size["2xl"]} />
           </div>
-          <h1 className={cn("heading-1", spacing.margin.top.heading)}>
+          <h1 class={cn("heading-1", spacing.margin.top.heading)}>
             {t("recovery.title", "Password Recovery")}
           </h1>
-          <p className={cn("body-small", spacing.margin.top.inline)}>
+          <p class={cn("body-small", spacing.margin.top.inline)}>
             {t("recovery.subtitle", "Reset your password using filesystem access")}
           </p>
         </div>
@@ -167,15 +169,15 @@ export function RecoveryForm({
         {/* Timer Warning */}
         {remainingTime > 0 && (
           <div
-            className={cn(
+            class={cn(
               alert.base,
               remainingTime < 120 ? alert.variant.warning : alert.variant.info,
               spacing.margin.bottom.section,
               layout.flex.center,
             )}
           >
-            <Timer className={icon.size.sm} />
-            <span className="ml-2">
+            <Timer class={icon.size.sm} />
+            <span class="ml-2">
               {t("recovery.timeRemaining", "Time remaining")}: {formatTime(remainingTime)}
             </span>
           </div>
@@ -184,25 +186,25 @@ export function RecoveryForm({
         {/* Instructions Panel */}
         {instructions && (
           <div
-            className={cn(
+            class={cn(
               "bg-surface-sunken",
               radius.md,
               "border border-surface-border pad",
               spacing.margin.bottom.section,
             )}
           >
-            <h3 className={cn("heading-4", spacing.margin.bottom.inline)}>
+            <h3 class={cn("heading-4", spacing.margin.bottom.inline)}>
               {t("recovery.instructions.title", "Recovery Instructions")}
             </h3>
-            <ol className="body-small text-text-secondary space-y-1 list-decimal list-inside">
+            <ol class="body-small text-text-secondary space-y-1 list-decimal list-inside">
               {instructions.steps.map((step) => (
                 <li key={step}>{step}</li>
               ))}
             </ol>
             {tokenFilePath && (
-              <p className={cn("caption text-text-muted", spacing.margin.top.inline)}>
+              <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
                 {t("recovery.tokenLocation", "Token file")}:{" "}
-                <code className="code">{tokenFilePath}</code>
+                <code class="code">{tokenFilePath}</code>
               </p>
             )}
           </div>
@@ -211,33 +213,23 @@ export function RecoveryForm({
         {/* Recovery Form */}
         <form
           onSubmit={handleSubmit}
-          className={cn(
-            "bg-surface-raised",
-            radius.md,
-            "border border-surface-border pad-lg stack-lg",
-          )}
+          class={cn("bg-surface-raised", radius.md, "border border-surface-border pad-lg stack-lg")}
         >
           {/* Token Input */}
           <div>
-            <label
-              htmlFor="recovery-token"
-              className={cn("label block", spacing.margin.bottom.inline)}
-            >
+            <label for="recovery-token" class={cn("label block", spacing.margin.bottom.inline)}>
               {t("recovery.tokenLabel", "Recovery Token")}
             </label>
-            <div className="relative">
+            <div class="relative">
               <KeyRound
-                className={cn(
-                  icon.size.sm,
-                  "absolute left-3 top-1/2 -translate-y-1/2 text-text-muted",
-                )}
+                class={cn(icon.size.sm, "absolute left-3 top-1/2 -translate-y-1/2 text-text-muted")}
               />
               <input
                 id="recovery-token"
                 type="text"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                className={cn(
+                class={cn(
                   "w-full pl-10",
                   input.size.md,
                   radius.md,
@@ -250,32 +242,26 @@ export function RecoveryForm({
                 )}
                 autoComplete="off"
                 spellCheck={false}
-                required
+                required={true}
               />
             </div>
           </div>
 
           {/* New Password Input */}
           <div>
-            <label
-              htmlFor="recovery-password"
-              className={cn("label block", spacing.margin.bottom.inline)}
-            >
+            <label for="recovery-password" class={cn("label block", spacing.margin.bottom.inline)}>
               {t("recovery.newPasswordLabel", "New Password")}
             </label>
-            <div className="relative">
+            <div class="relative">
               <Lock
-                className={cn(
-                  icon.size.sm,
-                  "absolute left-3 top-1/2 -translate-y-1/2 text-text-muted",
-                )}
+                class={cn(icon.size.sm, "absolute left-3 top-1/2 -translate-y-1/2 text-text-muted")}
               />
               <input
                 id="recovery-password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={cn(
+                class={cn(
                   "w-full pl-10 pr-10",
                   input.size.md,
                   radius.md,
@@ -284,26 +270,22 @@ export function RecoveryForm({
                   "focus:outline-none focus:border-brand-primary",
                 )}
                 placeholder="••••••••••••"
-                required
+                required={true}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className={cn(
+                class={cn(
                   "absolute right-3 top-1/2 -translate-y-1/2 text-text-muted",
                   "hover:text-text-primary focus:outline-none",
                 )}
                 aria-label={showPassword ? t("buttons.hidePassword") : t("buttons.showPassword")}
               >
-                {showPassword ? (
-                  <EyeOff className={icon.size.sm} />
-                ) : (
-                  <Eye className={icon.size.sm} />
-                )}
+                {showPassword ? <EyeOff class={icon.size.sm} /> : <Eye class={icon.size.sm} />}
               </button>
             </div>
             <p
-              className={cn(
+              class={cn(
                 "caption mt-1",
                 password && !passwordValid ? "text-status-error" : "text-text-muted",
               )}
@@ -317,24 +299,21 @@ export function RecoveryForm({
           {/* Confirm Password Input */}
           <div>
             <label
-              htmlFor="recovery-confirm-password"
-              className={cn("label block", spacing.margin.bottom.inline)}
+              for="recovery-confirm-password"
+              class={cn("label block", spacing.margin.bottom.inline)}
             >
               {t("recovery.confirmPasswordLabel", "Confirm Password")}
             </label>
-            <div className="relative">
+            <div class="relative">
               <Lock
-                className={cn(
-                  icon.size.sm,
-                  "absolute left-3 top-1/2 -translate-y-1/2 text-text-muted",
-                )}
+                class={cn(icon.size.sm, "absolute left-3 top-1/2 -translate-y-1/2 text-text-muted")}
               />
               <input
                 id="recovery-confirm-password"
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className={cn(
+                class={cn(
                   "w-full pl-10 pr-10",
                   input.size.md,
                   radius.md,
@@ -345,12 +324,12 @@ export function RecoveryForm({
                   "focus:outline-none focus:border-brand-primary",
                 )}
                 placeholder="••••••••••••"
-                required
+                required={true}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className={cn(
+                class={cn(
                   "absolute right-3 top-1/2 -translate-y-1/2 text-text-muted",
                   "hover:text-text-primary focus:outline-none",
                 )}
@@ -359,14 +338,14 @@ export function RecoveryForm({
                 }
               >
                 {showConfirmPassword ? (
-                  <EyeOff className={icon.size.sm} />
+                  <EyeOff class={icon.size.sm} />
                 ) : (
-                  <Eye className={icon.size.sm} />
+                  <Eye class={icon.size.sm} />
                 )}
               </button>
             </div>
             {confirmPassword && !passwordsMatch && (
-              <p className="caption mt-1 text-status-error">
+              <p class="caption mt-1 text-status-error">
                 {t("errors.password.mismatch", "Passwords do not match")}
               </p>
             )}
@@ -374,7 +353,7 @@ export function RecoveryForm({
 
           {/* Error Display */}
           {error && (
-            <div role="alert" aria-live="assertive" className={cn(alert.base, alert.variant.error)}>
+            <div role="alert" aria-live="assertive" class={cn(alert.base, alert.variant.error)}>
               {error}
             </div>
           )}
@@ -383,7 +362,7 @@ export function RecoveryForm({
           <button
             type="submit"
             disabled={!canSubmit}
-            className={cn(
+            class={cn(
               "w-full",
               button.size.md,
               "bg-brand-primary text-text-inverse",
@@ -403,7 +382,7 @@ export function RecoveryForm({
           <button
             type="button"
             onClick={onBackToLogin}
-            className={cn(
+            class={cn(
               "w-full",
               button.size.sm,
               "text-text-secondary hover:text-text-primary",
@@ -415,7 +394,7 @@ export function RecoveryForm({
         </form>
 
         {/* Security Note */}
-        <p className={cn("caption text-text-muted text-center", spacing.margin.top.section)}>
+        <p class={cn("caption text-text-muted text-center", spacing.margin.top.section)}>
           {t(
             "recovery.securityNote",
             "Recovery tokens are single-use and expire after 15 minutes.",
