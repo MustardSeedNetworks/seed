@@ -24,9 +24,9 @@ formatters:
     - golines # checks if code is formatted, and fixes long lines
 
     ## you may want to enable
-    #- gci # checks if code and import statements are formatted, with additional rules
+    - gci # checks if code and import statements are formatted, with additional rules
     #- gofmt # checks if the code is formatted according to 'gofmt' command
-    #- gofumpt # enforces a stricter format than 'gofmt', while being backwards compatible
+    - gofumpt # enforces a stricter format than 'gofmt', while being backwards compatible
     #- swaggo # formats swaggo comments
 
   # All settings can be found here https://github.com/golangci/golangci-lint/blob/HEAD/.golangci.reference.yml
@@ -36,7 +36,7 @@ formatters:
       # with the given prefixes are grouped after 3rd-party packages.
       # Default: []
       local-prefixes:
-        - github.com/krisarmstrong
+        - github.com/krisarmstrong/seed
 
     golines:
       # Target maximum line length.
@@ -124,21 +124,21 @@ linters:
     - whitespace # detects leading and trailing whitespace
 
     ## you may want to enable
-    #- arangolint # opinionated best practices for arangodb client
-    #- decorder # checks declaration order and count of types, constants, variables and functions
-    #- exhaustruct # [highly recommend to enable] checks if all structure fields are initialized
-    #- ginkgolinter # [if you use ginkgo/gomega] enforces standards of using ginkgo and gomega
-    #- godox # detects usage of FIXME, TODO and other keywords inside comments
-    #- goheader # checks is file header matches to pattern
+    - arangolint # opinionated best practices for arangodb client
+    - decorder # checks declaration order and count of types, constants, variables and functions
+    - exhaustruct # [highly recommend to enable] checks if all structure fields are initialized
+    - ginkgolinter # [if you use ginkgo/gomega] enforces standards of using ginkgo and gomega
+    - godox # detects usage of FIXME, TODO and other keywords inside comments
+    - goheader # checks is file header matches to pattern
     #- inamedparam # [great idea, but too strict, need to ignore a lot of cases by default] reports interfaces with unnamed method parameters
-    #- interfacebloat # checks the number of methods inside an interface
-    #- ireturn # accept interfaces, return concrete types
-    #- noinlineerr # disallows inline error handling `if err := ...; err != nil {`
+    - interfacebloat # checks the number of methods inside an interface
+    - ireturn # accept interfaces, return concrete types
+    - noinlineerr # disallows inline error handling `if err := ...; err != nil {`
     #- prealloc # [premature optimization, but can be used in some cases] finds slice declarations that could potentially be preallocated
-    #- tagalign # checks that struct tags are well aligned
+    - tagalign # checks that struct tags are well aligned
     #- varnamelen # [great idea, but too many false positives] checks that the length of a variable's name matches its scope
-    #- wrapcheck # checks that errors returned from external packages are wrapped
-    #- zerologlint # detects the wrong usage of zerolog that a user forgets to dispatch zerolog.Event
+    - wrapcheck # checks that errors returned from external packages are wrapped
+    - zerologlint # detects the wrong usage of zerolog that a user forgets to dispatch zerolog.Event
 
     ## disabled
     #- containedctx # detects struct contained context.Context field
@@ -167,7 +167,7 @@ linters:
     cyclop:
       # The maximal code complexity to report.
       # Default: 10
-      max-complexity: 30
+      max-complexity: 20
       # The maximal average package complexity.
       # If it's higher than 0.0 (float) the check is enabled.
       # Default: 0.0
@@ -271,6 +271,8 @@ linters:
         - ^golang.org/x/tools/go/analysis.Analyzer$
         - ^google.golang.org/protobuf/.+Options$
         - ^gopkg.in/yaml.v3.Node$
+        # Local types with optional fields
+        - ^github.com/krisarmstrong/seed/internal/help\.ConfigOption$
       # Allows empty structures in return statements.
       # Default: false
       allow-empty-returns: true
@@ -278,7 +280,7 @@ linters:
     funcorder:
       # Checks if the exported methods of a structure are placed before the non-exported ones.
       # Default: true
-      struct-method: false
+      struct-method: true
 
     funlen:
       # Checks the number of lines in a function.
@@ -342,6 +344,17 @@ linters:
       # Skips check for interface methods with only a single parameter.
       # Default: false
       skip-single-param: true
+
+    ireturn:
+      # Allow returning these interfaces - legitimate polymorphism patterns
+      # Default: []
+      allow:
+        - anon
+        - error
+        - empty
+        - stdlib
+        # Module system uses interface-based polymorphism by design
+        - github.com/krisarmstrong/seed/internal/modules.Module
 
     mnd:
       # List of function patterns to exclude from analysis.
@@ -469,3 +482,7 @@ linters:
           - gosec
           - noctx
           - wrapcheck
+      # i18n message files have intentionally similar structure
+      - path: 'internal/i18n/messages_.*\.go'
+        linters:
+          - dupl
