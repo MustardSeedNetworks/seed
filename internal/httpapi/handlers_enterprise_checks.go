@@ -516,7 +516,7 @@ func (s *Server) performReadTest(
 	testPath := filepath.Join(sharePath, testFileName)
 
 	// Write the test file first
-	if writeErr := os.WriteFile(testPath, testData, 0600); writeErr != nil {
+	if writeErr := os.WriteFile(testPath, testData, 0o600); writeErr != nil {
 		return 0, 0, fmt.Errorf("failed to create test file: %w", writeErr)
 	}
 	defer func() { _ = os.Remove(testPath) }()

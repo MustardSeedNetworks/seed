@@ -147,7 +147,6 @@ func TestLogRepositoryBatchCreate(t *testing.T) {
 	})
 }
 
-//nolint:gocognit // test function with many subtests
 func TestLogRepositoryList(t *testing.T) {
 	db, cleanup := testDB(t)
 	defer cleanup()

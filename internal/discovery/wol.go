@@ -204,77 +204,73 @@ func sendUDPBroadcast(ctx context.Context, broadcast string, port int, data []by
 	return nil
 }
 
+// wolDeviceTypeSupport maps device types to WoL support (true=yes, false=no).
+var wolDeviceTypeSupport = map[string]bool{
+	"switch": false, "router": false, "firewall": false,
+	"access-point": false, "network-device": false,
+	"printer": false, "print-server": false,
+	"ip-camera": false, "camera": false,
+	"computer": true, "desktop": true, "workstation": true, "server": true,
+}
+
 // InferWoLCapability guesses whether a device likely supports Wake-on-LAN
 // based on its device type and characteristics.
 func InferWoLCapability(device *DiscoveredDevice) *bool {
 	if device == nil {
 		return nil
 	}
-
-	// Check device profile for device type
-	if device.Profile != nil {
-		deviceType := strings.ToLower(device.Profile.DeviceType)
-
-		// Network devices generally don't support WoL
-		switch deviceType {
-		case "switch", "router", "firewall", "access-point", "network-device":
-			f := false
-			return &f
-		case "printer", "print-server":
-			f := false
-			return &f
-		case "ip-camera", "camera":
-			f := false
-			return &f
-		case "computer", "desktop", "workstation", "server":
-			t := true
-			return &t
-		case "laptop", "notebook":
-			// Laptops might support WoL but often it's disabled
-			return nil // Unknown
-		}
+	if result := inferWoLFromProfile(device); result != nil {
+		return result
 	}
-
-	// Check SNMP system description for hints
-	if device.Profile != nil && device.Profile.SNMPInfo != nil {
-		sysDescr := strings.ToLower(device.Profile.SNMPInfo.SysDescr)
-
-		// Network equipment keywords
-		if strings.Contains(sysDescr, "switch") ||
-			strings.Contains(sysDescr, "router") ||
-			strings.Contains(sysDescr, "cisco") ||
-			strings.Contains(sysDescr, "juniper") ||
-			strings.Contains(sysDescr, "ubiquiti") ||
-			strings.Contains(sysDescr, "mikrotik") {
-			f := false
-			return &f
-		}
-
-		// Windows/Linux systems likely support WoL
-		if strings.Contains(sysDescr, "windows") ||
-			strings.Contains(sysDescr, "linux") {
-			t := true
-			return &t
-		}
+	if result := inferWoLFromSNMP(device); result != nil {
+		return result
 	}
+	return inferWoLFromOS(device)
+}
 
-	// Check OS guess
-	if device.OSGuess != "" {
-		osGuess := strings.ToLower(device.OSGuess)
-		if strings.Contains(osGuess, "windows") ||
-			strings.Contains(osGuess, "linux") ||
-			strings.Contains(osGuess, "macos") {
-			t := true
-			return &t
-		}
-		if strings.Contains(osGuess, "ios") ||
-			strings.Contains(osGuess, "switch") {
-			f := false
-			return &f
-		}
+func inferWoLFromProfile(device *DiscoveredDevice) *bool {
+	if device.Profile == nil {
+		return nil
 	}
+	deviceType := strings.ToLower(device.Profile.DeviceType)
+	if deviceType == "laptop" || deviceType == "notebook" {
+		return nil // Unknown - often disabled on laptops
+	}
+	if supported, ok := wolDeviceTypeSupport[deviceType]; ok {
+		return &supported
+	}
+	return nil
+}
 
-	// Can't determine
+func inferWoLFromSNMP(device *DiscoveredDevice) *bool {
+	if device.Profile == nil || device.Profile.SNMPInfo == nil {
+		return nil
+	}
+	sysDescr := strings.ToLower(device.Profile.SNMPInfo.SysDescr)
+	if containsAny(sysDescr, "switch", "router", "cisco", "juniper", "ubiquiti", "mikrotik") {
+		f := false
+		return &f
+	}
+	if containsAny(sysDescr, "windows", "linux") {
+		t := true
+		return &t
+	}
+	return nil
+}
+
+func inferWoLFromOS(device *DiscoveredDevice) *bool {
+	if device.OSGuess == "" {
+		return nil
+	}
+	osGuess := strings.ToLower(device.OSGuess)
+	if containsAny(osGuess, "windows", "linux", "macos") {
+		t := true
+		return &t
+	}
+	if containsAny(osGuess, "ios", "switch") {
+		f := false
+		return &f
+	}
 	return nil
 }
 

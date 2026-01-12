@@ -11,14 +11,14 @@ import (
 
 // Health check API constants.
 const (
-	healthQueryLimitDefault  = 100
-	healthQueryLimitHistory  = 1000
-	queryParamValueTrue      = "true"
-	period1h                 = "1h"
-	period6h                 = "6h"
-	period24h                = "24h"
-	period7d                 = "7d"
-	period30d                = "30d"
+	healthQueryLimitDefault = 100
+	healthQueryLimitHistory = 1000
+	queryParamValueTrue     = "true"
+	period1h                = "1h"
+	period6h                = "6h"
+	period24h               = "24h"
+	period7d                = "7d"
+	period30d               = "30d"
 )
 
 // handleHealthCheckResults returns the latest health check results.

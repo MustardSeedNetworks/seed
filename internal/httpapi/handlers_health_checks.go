@@ -308,26 +308,66 @@ func (s *Server) handleHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	resp := TestsSettingsResponse{
-		DNSHostname:        s.config.DNS.TestHostname,
-		DNSServers:         make([]DNSServerResponse, 0, len(s.config.DNS.Servers)),
-		PingTargets:        make([]PingTargetResponse, 0, len(s.config.HealthChecks.PingTargets)),
-		TCPPorts:           make([]TCPPortResponse, 0, len(s.config.HealthChecks.TCPPorts)),
-		UDPPorts:           make([]UDPPortResponse, 0, len(s.config.HealthChecks.UDPPorts)),
-		HTTPEndpoints:      make([]HTTPEndpointResponse, 0, len(s.config.HealthChecks.HTTPEndpoints)),
-		RTSPEndpoints:      make([]RTSPEndpointResponse, 0, len(s.config.HealthChecks.RTSPEndpoints)),           // Issue #778
-		DICOMEndpoints:     make([]DICOMEndpointResponse, 0, len(s.config.HealthChecks.DICOMEndpoints)),         // Issue #777
-		HL7Endpoints:       make([]HL7EndpointResponse, 0, len(s.config.HealthChecks.HL7Endpoints)),             // Health Checks 100x - Medical
-		FHIREndpoints:      make([]FHIREndpointResponse, 0, len(s.config.HealthChecks.FHIREndpoints)),           // Health Checks 100x - Medical
-		SQLEndpoints:       make([]SQLEndpointResponse, 0, len(s.config.HealthChecks.SQLEndpoints)),             // Health Checks 100x - Enterprise
-		FileShareEndpoints: make([]FileShareEndpointResponse, 0, len(s.config.HealthChecks.FileShareEndpoints)), // Health Checks 100x - Enterprise
-		LDAPEndpoints:      make([]LDAPEndpointResponse, 0, len(s.config.HealthChecks.LDAPEndpoints)),           // Health Checks 100x - Enterprise
-		LTIEndpoints:       make([]LTIEndpointResponse, 0, len(s.config.HealthChecks.LTIEndpoints)),             // Health Checks 100x - Education
-		OPCUAEndpoints:     make([]OPCUAEndpointResponse, 0, len(s.config.HealthChecks.OPCUAEndpoints)),         // Health Checks 100x - Manufacturing
-		ModbusEndpoints:    make([]ModbusEndpointResponse, 0, len(s.config.HealthChecks.ModbusEndpoints)),       // Health Checks 100x - Manufacturing
-		RunPerformance:     s.config.HealthChecks.RunPerformance,
-		RunSpeedtest:       s.config.HealthChecks.RunSpeedtest,
-		RunIperf:           s.config.HealthChecks.RunIperf,
-		RunDiscovery:       s.config.HealthChecks.RunDiscovery,
+		DNSHostname:   s.config.DNS.TestHostname,
+		DNSServers:    make([]DNSServerResponse, 0, len(s.config.DNS.Servers)),
+		PingTargets:   make([]PingTargetResponse, 0, len(s.config.HealthChecks.PingTargets)),
+		TCPPorts:      make([]TCPPortResponse, 0, len(s.config.HealthChecks.TCPPorts)),
+		UDPPorts:      make([]UDPPortResponse, 0, len(s.config.HealthChecks.UDPPorts)),
+		HTTPEndpoints: make([]HTTPEndpointResponse, 0, len(s.config.HealthChecks.HTTPEndpoints)),
+		RTSPEndpoints: make(
+			[]RTSPEndpointResponse,
+			0,
+			len(s.config.HealthChecks.RTSPEndpoints),
+		), // Issue #778
+		DICOMEndpoints: make(
+			[]DICOMEndpointResponse,
+			0,
+			len(s.config.HealthChecks.DICOMEndpoints),
+		), // Issue #777
+		HL7Endpoints: make(
+			[]HL7EndpointResponse,
+			0,
+			len(s.config.HealthChecks.HL7Endpoints),
+		), // Health Checks 100x - Medical
+		FHIREndpoints: make(
+			[]FHIREndpointResponse,
+			0,
+			len(s.config.HealthChecks.FHIREndpoints),
+		), // Health Checks 100x - Medical
+		SQLEndpoints: make(
+			[]SQLEndpointResponse,
+			0,
+			len(s.config.HealthChecks.SQLEndpoints),
+		), // Health Checks 100x - Enterprise
+		FileShareEndpoints: make(
+			[]FileShareEndpointResponse,
+			0,
+			len(s.config.HealthChecks.FileShareEndpoints),
+		), // Health Checks 100x - Enterprise
+		LDAPEndpoints: make(
+			[]LDAPEndpointResponse,
+			0,
+			len(s.config.HealthChecks.LDAPEndpoints),
+		), // Health Checks 100x - Enterprise
+		LTIEndpoints: make(
+			[]LTIEndpointResponse,
+			0,
+			len(s.config.HealthChecks.LTIEndpoints),
+		), // Health Checks 100x - Education
+		OPCUAEndpoints: make(
+			[]OPCUAEndpointResponse,
+			0,
+			len(s.config.HealthChecks.OPCUAEndpoints),
+		), // Health Checks 100x - Manufacturing
+		ModbusEndpoints: make(
+			[]ModbusEndpointResponse,
+			0,
+			len(s.config.HealthChecks.ModbusEndpoints),
+		), // Health Checks 100x - Manufacturing
+		RunPerformance: s.config.HealthChecks.RunPerformance,
+		RunSpeedtest:   s.config.HealthChecks.RunSpeedtest,
+		RunIperf:       s.config.HealthChecks.RunIperf,
+		RunDiscovery:   s.config.HealthChecks.RunDiscovery,
 		Speedtest: SpeedtestSettingsResponse{
 			ServerID:      s.config.Speedtest.ServerID,
 			AutoRunOnLink: s.config.Speedtest.AutoRunOnLink,
@@ -1174,7 +1214,13 @@ func (s *Server) runSingleHTTPTest(
 		// Try HTTP fallback if HTTPS failed
 		if err != nil && tryHTTPFallback {
 			httpURL := "http://" + endpoint.URL
-			if httpResp, httpErr := runHTTPTestEnhanced(ctx, httpURL, endpoint.ExpectedStatus, endpoint.FollowRedirects, endpoint.MaxRedirects); httpErr == nil ||
+			if httpResp, httpErr := runHTTPTestEnhanced(
+				ctx,
+				httpURL,
+				endpoint.ExpectedStatus,
+				endpoint.FollowRedirects,
+				endpoint.MaxRedirects,
+			); httpErr == nil ||
 				(httpResp != nil && httpResp.StatusCode > 0) {
 				url = httpURL
 				testResult.URL = httpURL
@@ -1293,6 +1339,45 @@ type httpTimings struct {
 	Total   float64
 }
 
+// newHTTPTimingTrace creates an httptrace.ClientTrace that records timings to the provided httpTimings struct.
+func newHTTPTimingTrace(timing *httpTimings) *httptrace.ClientTrace {
+	var dnsStart, connStart, tlsStart, wroteRequest time.Time
+	return &httptrace.ClientTrace{
+		DNSStart: func(httptrace.DNSStartInfo) {
+			dnsStart = time.Now()
+		},
+		DNSDone: func(httptrace.DNSDoneInfo) {
+			if !dnsStart.IsZero() {
+				timing.DNS += time.Since(dnsStart).Seconds() * millisecondsPerSecond
+			}
+		},
+		ConnectStart: func(_, _ string) {
+			connStart = time.Now()
+		},
+		ConnectDone: func(_, _ string, _ error) {
+			if !connStart.IsZero() {
+				timing.Connect += time.Since(connStart).Seconds() * millisecondsPerSecond
+			}
+		},
+		TLSHandshakeStart: func() {
+			tlsStart = time.Now()
+		},
+		TLSHandshakeDone: func(tls.ConnectionState, error) {
+			if !tlsStart.IsZero() {
+				timing.TLS += time.Since(tlsStart).Seconds() * millisecondsPerSecond
+			}
+		},
+		WroteRequest: func(httptrace.WroteRequestInfo) {
+			wroteRequest = time.Now()
+		},
+		GotFirstResponseByte: func() {
+			if !wroteRequest.IsZero() {
+				timing.TTFB = time.Since(wroteRequest).Seconds() * millisecondsPerSecond
+			}
+		},
+	}
+}
+
 // httpResponse contains extended HTTP response data for enhanced checks.
 type httpResponse struct {
 	StatusCode   int
@@ -1332,43 +1417,7 @@ func runHTTPTest(ctx context.Context, url string, expectedStatus int) (int, http
 		return 0, timing, err
 	}
 
-	var dnsStart, connStart, tlsStart, wroteRequest time.Time
-
-	trace := &httptrace.ClientTrace{
-		DNSStart: func(httptrace.DNSStartInfo) {
-			dnsStart = time.Now()
-		},
-		DNSDone: func(httptrace.DNSDoneInfo) {
-			if !dnsStart.IsZero() {
-				timing.DNS += time.Since(dnsStart).Seconds() * millisecondsPerSecond
-			}
-		},
-		ConnectStart: func(_, _ string) {
-			connStart = time.Now()
-		},
-		ConnectDone: func(_, _ string, _ error) {
-			if !connStart.IsZero() {
-				timing.Connect += time.Since(connStart).Seconds() * millisecondsPerSecond
-			}
-		},
-		TLSHandshakeStart: func() {
-			tlsStart = time.Now()
-		},
-		TLSHandshakeDone: func(tls.ConnectionState, error) {
-			if !tlsStart.IsZero() {
-				timing.TLS += time.Since(tlsStart).Seconds() * millisecondsPerSecond
-			}
-		},
-		WroteRequest: func(httptrace.WroteRequestInfo) {
-			wroteRequest = time.Now()
-		},
-		GotFirstResponseByte: func() {
-			if !wroteRequest.IsZero() {
-				timing.TTFB = time.Since(wroteRequest).Seconds() * millisecondsPerSecond
-			}
-		},
-	}
-
+	trace := newHTTPTimingTrace(&timing)
 	req = req.WithContext(httptrace.WithClientTrace(ctx, trace))
 
 	start := time.Now()
@@ -1513,34 +1562,7 @@ func runSingleHTTPRequest(
 		return nil, timing, err
 	}
 
-	var dnsStart, connStart, tlsStart, wroteRequest time.Time
-	trace := &httptrace.ClientTrace{
-		DNSStart: func(httptrace.DNSStartInfo) { dnsStart = time.Now() },
-		DNSDone: func(httptrace.DNSDoneInfo) {
-			if !dnsStart.IsZero() {
-				timing.DNS += time.Since(dnsStart).Seconds() * millisecondsPerSecond
-			}
-		},
-		ConnectStart: func(_, _ string) { connStart = time.Now() },
-		ConnectDone: func(_, _ string, _ error) {
-			if !connStart.IsZero() {
-				timing.Connect += time.Since(connStart).Seconds() * millisecondsPerSecond
-			}
-		},
-		TLSHandshakeStart: func() { tlsStart = time.Now() },
-		TLSHandshakeDone: func(tls.ConnectionState, error) {
-			if !tlsStart.IsZero() {
-				timing.TLS += time.Since(tlsStart).Seconds() * millisecondsPerSecond
-			}
-		},
-		WroteRequest: func(httptrace.WroteRequestInfo) { wroteRequest = time.Now() },
-		GotFirstResponseByte: func() {
-			if !wroteRequest.IsZero() {
-				timing.TTFB = time.Since(wroteRequest).Seconds() * millisecondsPerSecond
-			}
-		},
-	}
-
+	trace := newHTTPTimingTrace(&timing)
 	req = req.WithContext(httptrace.WithClientTrace(ctx, trace))
 
 	start := time.Now()

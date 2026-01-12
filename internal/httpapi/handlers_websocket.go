@@ -788,19 +788,6 @@ func (h *Hub) BroadcastLogEntry(entry any) {
 	})
 }
 
-// logBroadcastAdapter wraps the Hub to implement logging.Broadcaster interface.
-// This adapter allows the logging package to broadcast logs without importing the api package.
-type logBroadcastAdapter struct {
-	hub *Hub
-}
-
-// BroadcastLogEntry implements logging.Broadcaster interface.
-func (a *logBroadcastAdapter) BroadcastLogEntry(entry *logging.LogEntry) {
-	if a.hub != nil {
-		a.hub.BroadcastLogEntry(entry)
-	}
-}
-
 // dbLogWriterAdapter implements logging.DBLogWriter interface for database persistence.
 // This adapter connects the logging package to the database package.
 type dbLogWriterAdapter struct {

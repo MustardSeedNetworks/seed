@@ -364,7 +364,6 @@ func TestVulnerabilityResult(t *testing.T) {
 			result, err := mock.ScanDevice(context.Background(), &discovery.DiscoveredDevice{
 				IP: "192.168.1.100",
 			})
-
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 				return

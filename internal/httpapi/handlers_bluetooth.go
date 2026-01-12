@@ -16,11 +16,11 @@ import (
 
 // BluetoothScanResponse contains Bluetooth scan results.
 type BluetoothScanResponse struct {
-	Devices      []discovery.BluetoothDevice `json:"devices"`
-	AdapterName  string                      `json:"adapterName"`
-	ScanType     string                      `json:"scanType"`
-	ScanTime     string                      `json:"scanTime"`
-	ScanDuration int64                       `json:"scanDurationMs"`
+	Devices      []discovery.BluetoothDevice        `json:"devices"`
+	AdapterName  string                             `json:"adapterName"`
+	ScanType     string                             `json:"scanType"`
+	ScanTime     string                             `json:"scanTime"`
+	ScanDuration int64                              `json:"scanDurationMs"`
 	Stats        *discovery.BluetoothDiscoveryStats `json:"stats,omitempty"`
 }
 

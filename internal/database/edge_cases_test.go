@@ -134,7 +134,6 @@ func TestProfileRepositoryEdgeCases(t *testing.T) {
 	})
 }
 
-//nolint:gocognit // test function with many subtests
 func TestAlertRepositoryEdgeCases(t *testing.T) {
 	db, cleanup := testDB(t)
 	defer cleanup()
@@ -571,7 +570,6 @@ func TestRetentionEdgeCases(t *testing.T) {
 	})
 }
 
-//nolint:gocognit // test function with many subtests
 func TestClosedDatabaseOperations(t *testing.T) {
 	db, cleanup := testDB(t)
 	// Close immediately

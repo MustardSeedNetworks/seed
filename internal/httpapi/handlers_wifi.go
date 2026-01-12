@@ -694,11 +694,11 @@ func (s *Server) wifiBridge() *discovery.WiFiBridge {
 
 // WiFiDiscoveryScanResponse contains enhanced WiFi scan results.
 type WiFiDiscoveryScanResponse struct {
-	Networks    []discovery.WiFiNetwork         `json:"networks"`
-	APs         []discovery.WiFiAccessPoint     `json:"accessPoints"`
-	Utilization []discovery.ChannelUtilization  `json:"channelUtilization"`
-	ScanTime    string                          `json:"scanTime"`
-	Interface   string                          `json:"interface"`
+	Networks    []discovery.WiFiNetwork        `json:"networks"`
+	APs         []discovery.WiFiAccessPoint    `json:"accessPoints"`
+	Utilization []discovery.ChannelUtilization `json:"channelUtilization"`
+	ScanTime    string                         `json:"scanTime"`
+	Interface   string                         `json:"interface"`
 }
 
 // WiFiDiscoveryNetworksResponse contains discovered WiFi networks.

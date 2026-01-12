@@ -281,8 +281,8 @@ type Config struct {
 	Database         DatabaseConfig         `yaml:"database"          json:"database"`
 	Pipeline         PipelineConfig         `yaml:"pipeline"          json:"pipeline"`
 	// Profile-specific settings (not in YAML config, only stored per-profile)
-	Link      LinkConfig      `yaml:"-"                 json:"link,omitzero"`
-	CableTest CableTestConfig `yaml:"-"                 json:"cableTest,omitzero"`
+	Link      LinkConfig      `yaml:"-" json:"link,omitzero"`
+	CableTest CableTestConfig `yaml:"-" json:"cableTest,omitzero"`
 }
 
 // LinkConfig contains interface speed/duplex settings (profile-specific).
@@ -445,13 +445,13 @@ func (c *PipelineConfig) GetPersistence() (bool, time.Duration, time.Duration) {
 // DatabaseConfig contains SQLite database configuration.
 type DatabaseConfig struct {
 	// Path to the SQLite database file. Default: data/seed.db
-	Path string `yaml:"path"            json:"path"`
+	Path string `yaml:"path" json:"path"`
 	// RetentionDays sets how many days of historical data to keep.
 	// 0 means keep forever.
-	RetentionDays int `yaml:"retention_days"  json:"retention_days"`
+	RetentionDays int `yaml:"retention_days" json:"retention_days"`
 	// EnableWAL enables Write-Ahead Logging for better concurrency.
 	// Default: true.
-	EnableWAL bool `yaml:"enable_wal"      json:"enable_wal"`
+	EnableWAL bool `yaml:"enable_wal" json:"enable_wal"`
 	// MaxConnections sets the maximum number of database connections. Default: 10
 	MaxConnections int `yaml:"max_connections" json:"max_connections"`
 }
@@ -832,10 +832,10 @@ type UDPPortTest struct {
 
 // HTTPEndpoint represents a custom HTTP endpoint test.
 type HTTPEndpoint struct {
-	Name           string `yaml:"name"                   json:"name"`
-	URL            string `yaml:"url"                    json:"url"`
-	ExpectedStatus int    `yaml:"expected_status"        json:"expected_status"`
-	Enabled        bool   `yaml:"enabled"                json:"enabled"`
+	Name           string `yaml:"name"            json:"name"`
+	URL            string `yaml:"url"             json:"url"`
+	ExpectedStatus int    `yaml:"expected_status" json:"expected_status"`
+	Enabled        bool   `yaml:"enabled"         json:"enabled"`
 	// HTTP enhancements (Health Checks 100x)
 	BodyMatch            string `yaml:"body_match"             json:"body_match,omitempty"`             // Regex/substring to match in response body
 	BodyMatchIsRegex     bool   `yaml:"body_match_is_regex"    json:"body_match_is_regex,omitempty"`    // Whether body_match is a regex
@@ -1172,23 +1172,23 @@ type SNMPConfig struct {
 // SNMPv3Credential contains SNMP v3 authentication credentials.
 type SNMPv3Credential struct {
 	// Friendly name for this credential set.
-	Name string `yaml:"name"           json:"name"`
+	Name string `yaml:"name" json:"name"`
 	// Security name (user).
-	Username string `yaml:"username"       json:"username"`
+	Username string `yaml:"username" json:"username"`
 	// AuthProtocol specifies the authentication protocol.
 	// Supported values: "SHA", "SHA256", "SHA512", or "" for noAuth.
 	// Note: The "MD5" value is cryptographically broken and will be removed in the next major version.
 	// Use SHA256 or SHA512 instead for secure authentication.
 	// "SHA", "SHA256", "SHA512", or "" for noAuth (MD5 is deprecated).
-	AuthProtocol string `yaml:"auth_protocol"  json:"auth_protocol"`
+	AuthProtocol string `yaml:"auth_protocol" json:"auth_protocol"`
 	// Authentication password.
-	AuthPassword string `yaml:"auth_password"  json:"auth_password"`
+	AuthPassword string `yaml:"auth_password" json:"auth_password"`
 	// "DES", "AES", "AES192", "AES256", or "" for noPriv.
-	PrivProtocol string `yaml:"priv_protocol"  json:"priv_protocol"`
+	PrivProtocol string `yaml:"priv_protocol" json:"priv_protocol"`
 	// Privacy password.
-	PrivPassword string `yaml:"priv_password"  json:"priv_password"`
+	PrivPassword string `yaml:"priv_password" json:"priv_password"`
 	// Optional SNMP context.
-	ContextName string `yaml:"context_name"   json:"context_name"`
+	ContextName string `yaml:"context_name" json:"context_name"`
 	// "noAuthNoPriv", "authNoPriv", "authPriv".
 	SecurityLevel string `yaml:"security_level" json:"security_level"`
 }
@@ -1361,19 +1361,22 @@ func defaultHealthChecksConfig() HealthChecksConfig {
 				Host:    "www.google.com",
 				Port:    portHTTPS,
 				Enabled: true,
-			}, {Name: "DICOM", Host: "dicomserver.co.uk", Port: portDICOM, Enabled: true},
+			},
+			{Name: "DICOM", Host: "dicomserver.co.uk", Port: portDICOM, Enabled: true},
 			{
 				Name:    "FTP",
 				Host:    "ftp.debian.org",
 				Port:    portFTP,
 				Enabled: true,
-			}, {Name: "SMB", Host: "files.example.com", Port: portSMB, Enabled: false},
+			},
+			{Name: "SMB", Host: "files.example.com", Port: portSMB, Enabled: false},
 			{
 				Name:    "RTSP",
 				Host:    "wowzaec2demo.streamlock.net",
 				Port:    portRTSP,
 				Enabled: true,
-			}, {Name: "PostgreSQL", Host: "db.example.com", Port: portPostgreSQL, Enabled: false},
+			},
+			{Name: "PostgreSQL", Host: "db.example.com", Port: portPostgreSQL, Enabled: false},
 			{Name: "SFTP", Host: "sftp.example.com", Port: portSSH, Enabled: false},
 		},
 		UDPPorts: []UDPPortTest{

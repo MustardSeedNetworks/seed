@@ -826,7 +826,7 @@ func TestMonitorDefaultValues(t *testing.T) {
 	m := link.NewMonitor("eth0")
 
 	// Check poll interval
-	expectedInterval := int64(link.DefaultPollInterval.Milliseconds())
+	expectedInterval := link.DefaultPollInterval.Milliseconds()
 	if m.MonitorPollInterval() != expectedInterval {
 		t.Errorf("expected poll interval %d ms, got %d ms", expectedInterval, m.MonitorPollInterval())
 	}

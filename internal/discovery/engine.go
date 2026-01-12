@@ -16,6 +16,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -438,9 +439,7 @@ func (e *DiscoveryEngine) runDiscoveryPhase(ctx context.Context, opts *ScanOptio
 
 	// Wired discovery
 	if opts.IncludeWired && e.wiredCollector != nil && e.config.EnableWired {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if opts.FreshWiredScan {
 				if err := e.wiredCollector.Scan(ctx); err != nil {
 					errCh <- fmt.Errorf("wired scan: %w", err)
@@ -452,14 +451,12 @@ func (e *DiscoveryEngine) runDiscoveryPhase(ctx context.Context, opts *ScanOptio
 				device.ConnectionTypes = ensureConnectionType(device.ConnectionTypes, ConnectionWired)
 				e.registry.AddOrUpdate(device)
 			}
-		}()
+		})
 	}
 
 	// WiFi discovery
 	if opts.IncludeWiFi && e.wifiCollector != nil && e.config.EnableWiFi {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if opts.FreshWiFiScan {
 				if _, err := e.wifiCollector.Scan(ctx); err != nil {
 					errCh <- fmt.Errorf("wifi scan: %w", err)
@@ -472,14 +469,12 @@ func (e *DiscoveryEngine) runDiscoveryPhase(ctx context.Context, opts *ScanOptio
 				device := e.wifiAPToDevice(&aps[i])
 				e.registry.AddOrUpdate(device)
 			}
-		}()
+		})
 	}
 
 	// Bluetooth discovery
 	if opts.IncludeBluetooth && e.bluetoothCollector != nil && e.config.EnableBluetooth {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if opts.FreshBluetoothScan {
 				if _, err := e.bluetoothCollector.Scan(ctx); err != nil {
 					errCh <- fmt.Errorf("bluetooth scan: %w", err)
@@ -494,7 +489,7 @@ func (e *DiscoveryEngine) runDiscoveryPhase(ctx context.Context, opts *ScanOptio
 					e.registry.AddOrUpdate(device)
 				}
 			}
-		}()
+		})
 	}
 
 	// Wait for all collectors
@@ -816,10 +811,8 @@ func (e *DiscoveryEngine) EventBus() *EventBus {
 
 // ensureConnectionType ensures a connection type is in the slice.
 func ensureConnectionType(types []ConnectionType, t ConnectionType) []ConnectionType {
-	for _, ct := range types {
-		if ct == t {
-			return types
-		}
+	if slices.Contains(types, t) {
+		return types
 	}
 	return append(types, t)
 }

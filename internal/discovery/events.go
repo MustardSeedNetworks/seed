@@ -10,6 +10,7 @@ package discovery
 
 import (
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 )
@@ -20,47 +21,68 @@ type EventType string
 // Discovery event types.
 // Note: Using "Evt" prefix to avoid conflict with pipeline.go's PipelineEventType constants.
 const (
-	// Device lifecycle events
-	EvtDeviceDiscovered EventType = "device.discovered" // New device found
-	EvtDeviceUpdated    EventType = "device.updated"    // Existing device changed
-	EvtDeviceLost       EventType = "device.lost"       // Device went offline
-	EvtDeviceMerged     EventType = "device.merged"     // Two devices merged (same physical device)
+	// EvtDeviceDiscovered indicates a new device was found.
+	EvtDeviceDiscovered EventType = "device.discovered"
+	// EvtDeviceUpdated indicates an existing device changed.
+	EvtDeviceUpdated EventType = "device.updated"
+	// EvtDeviceLost indicates a device went offline.
+	EvtDeviceLost EventType = "device.lost"
+	// EvtDeviceMerged indicates two devices were merged (same physical device).
+	EvtDeviceMerged EventType = "device.merged"
 
-	// Wired discovery events
-	EventARPDiscovery  EventType = "wired.arp"  // ARP response received
-	EventNDPDiscovery  EventType = "wired.ndp"  // NDP neighbor discovered
-	EventLLDPDiscovery EventType = "wired.lldp" // LLDP neighbor discovered
-	EventCDPDiscovery  EventType = "wired.cdp"  // CDP neighbor discovered
-	EventMDNSDiscovery EventType = "wired.mdns" // mDNS service discovered
+	// EventARPDiscovery indicates an ARP response was received.
+	EventARPDiscovery EventType = "wired.arp"
+	// EventNDPDiscovery indicates an NDP neighbor was discovered.
+	EventNDPDiscovery EventType = "wired.ndp"
+	// EventLLDPDiscovery indicates an LLDP neighbor was discovered.
+	EventLLDPDiscovery EventType = "wired.lldp"
+	// EventCDPDiscovery indicates a CDP neighbor was discovered.
+	EventCDPDiscovery EventType = "wired.cdp"
+	// EventMDNSDiscovery indicates an mDNS service was discovered.
+	EventMDNSDiscovery EventType = "wired.mdns"
 
-	// WiFi discovery events
-	EventWiFiAPDiscovered     EventType = "wifi.ap.discovered"     // New AP found
-	EventWiFiAPUpdated        EventType = "wifi.ap.updated"        // AP signal/channel changed
-	EventWiFiAPLost           EventType = "wifi.ap.lost"           // AP no longer visible
-	EventWiFiClientDiscovered EventType = "wifi.client.discovered" // New WiFi client
-	EventWiFiClientLost       EventType = "wifi.client.lost"       // WiFi client disconnected
+	// EventWiFiAPDiscovered indicates a new AP was found.
+	EventWiFiAPDiscovered EventType = "wifi.ap.discovered"
+	// EventWiFiAPUpdated indicates an AP signal/channel changed.
+	EventWiFiAPUpdated EventType = "wifi.ap.updated"
+	// EventWiFiAPLost indicates an AP is no longer visible.
+	EventWiFiAPLost EventType = "wifi.ap.lost"
+	// EventWiFiClientDiscovered indicates a new WiFi client was found.
+	EventWiFiClientDiscovered EventType = "wifi.client.discovered"
+	// EventWiFiClientLost indicates a WiFi client disconnected.
+	EventWiFiClientLost EventType = "wifi.client.lost"
 
-	// Bluetooth discovery events
-	EventBTDeviceDiscovered EventType = "bt.device.discovered" // New BT device found
-	EventBTDeviceUpdated    EventType = "bt.device.updated"    // BT device changed
-	EventBTDeviceLost       EventType = "bt.device.lost"       // BT device out of range
+	// EventBTDeviceDiscovered indicates a new BT device was found.
+	EventBTDeviceDiscovered EventType = "bt.device.discovered"
+	// EventBTDeviceUpdated indicates a BT device changed.
+	EventBTDeviceUpdated EventType = "bt.device.updated"
+	// EventBTDeviceLost indicates a BT device is out of range.
+	EventBTDeviceLost EventType = "bt.device.lost"
 
-	// Enrichment events
-	EventPortDiscovered    EventType = "enrichment.port"    // Open port found
-	EventSNMPDataCollected EventType = "enrichment.snmp"    // SNMP data collected
-	EventProfileCompleted  EventType = "enrichment.profile" // Device profiling done
-	EventNameResolved      EventType = "enrichment.name"    // Hostname resolved
+	// EventPortDiscovered indicates an open port was found.
+	EventPortDiscovered EventType = "enrichment.port"
+	// EventSNMPDataCollected indicates SNMP data was collected.
+	EventSNMPDataCollected EventType = "enrichment.snmp"
+	// EventProfileCompleted indicates device profiling is done.
+	EventProfileCompleted EventType = "enrichment.profile"
+	// EventNameResolved indicates a hostname was resolved.
+	EventNameResolved EventType = "enrichment.name"
 
-	// Assessment events
-	EventVulnDiscovered EventType = "assessment.vuln"     // Vulnerability found
-	EventVulnResolved   EventType = "assessment.resolved" // Vulnerability fixed
+	// EventVulnDiscovered indicates a vulnerability was found.
+	EventVulnDiscovered EventType = "assessment.vuln"
+	// EventVulnResolved indicates a vulnerability was fixed.
+	EventVulnResolved EventType = "assessment.resolved"
 
-	// Scan lifecycle events
-	EventScanStarted   EventType = "scan.started"   // Scan began
-	EventScanProgress  EventType = "scan.progress"  // Scan progress update
-	EventScanCompleted EventType = "scan.completed" // Scan finished
-	EventScanFailed    EventType = "scan.failed"    // Scan errored
-	EventScanCanceled  EventType = "scan.canceled"  // Scan was canceled
+	// EventScanStarted indicates a scan began.
+	EventScanStarted EventType = "scan.started"
+	// EventScanProgress indicates a scan progress update.
+	EventScanProgress EventType = "scan.progress"
+	// EventScanCompleted indicates a scan finished.
+	EventScanCompleted EventType = "scan.completed"
+	// EventScanFailed indicates a scan errored.
+	EventScanFailed EventType = "scan.failed"
+	// EventScanCanceled indicates a scan was canceled.
+	EventScanCanceled EventType = "scan.canceled"
 )
 
 // EventSource identifies where an event originated.
@@ -171,13 +193,7 @@ type EventFilter struct {
 func (f *EventFilter) Matches(event *Event) bool {
 	// Check type filter
 	if len(f.Types) > 0 {
-		matched := false
-		for _, t := range f.Types {
-			if t == event.Type {
-				matched = true
-				break
-			}
-		}
+		matched := slices.Contains(f.Types, event.Type)
 		if !matched {
 			return false
 		}
@@ -185,13 +201,7 @@ func (f *EventFilter) Matches(event *Event) bool {
 
 	// Check source filter
 	if len(f.Sources) > 0 {
-		matched := false
-		for _, s := range f.Sources {
-			if s == event.Source {
-				matched = true
-				break
-			}
-		}
+		matched := slices.Contains(f.Sources, event.Source)
 		if !matched {
 			return false
 		}
@@ -402,7 +412,8 @@ func (eb *EventBus) deliver(event *Event) {
 			go func(s *Subscription, e *Event) {
 				defer func() {
 					if r := recover(); r != nil {
-						// Handler panicked - log but don't crash
+						// Handler panicked - suppress and don't crash
+						_ = r // Intentionally ignoring panic details
 					}
 				}()
 				s.handler(e)

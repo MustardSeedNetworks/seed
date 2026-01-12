@@ -38,6 +38,18 @@ formatters:
       local-prefixes:
         - github.com/krisarmstrong/seed
 
+    gci:
+      # Section configuration to compare against.
+      # Section names are case-insensitive and may contain parameters in ().
+      # Default: ["standard", "default"]
+      sections:
+        - standard
+        - default
+        - prefix(github.com/krisarmstrong/seed)
+      # Skip generated files.
+      # Default: true
+      skip-generated: true
+
     golines:
       # Target maximum line length.
       # Default: 100
@@ -63,10 +75,10 @@ linters:
     - exptostd # detects functions from golang.org/x/exp/ that can be replaced by std functions
     - fatcontext # detects nested contexts in loops
     - forbidigo # forbids identifiers
-    - funcorder # checks the order of functions, methods, and constructors
+    #- funcorder # [too pedantic] checks the order of functions, methods, and constructors
     - funlen # tool for detection of long functions
     - gocheckcompilerdirectives # validates go compiler directive comments (//go:)
-    - gochecknoglobals # checks that no global variables exist
+    #- gochecknoglobals # [globals for constants/config are acceptable] checks that no global variables exist
     - gochecknoinits # checks that no init functions are present in Go code
     - gochecksumtype # checks exhaustiveness on Go "sum types"
     - gocognit # computes and checks the cognitive complexity of functions
@@ -86,7 +98,7 @@ linters:
     - loggercheck # checks key value pairs for common logger libraries (kitlog,klog,logr,zap)
     - makezero # finds slice declarations with non-zero initial length
     - mirror # reports wrong mirror patterns of bytes/strings usage
-    - mnd # detects magic numbers
+    #- mnd # [too strict - contextual magic numbers are acceptable] detects magic numbers
     - modernize # suggests simplifications to Go code, using modern language and library features
     - musttag # enforces field tags in (un)marshaled structs
     - nakedret # finds naked returns in functions greater than a specified function length
@@ -112,7 +124,7 @@ linters:
     - staticcheck # is a go vet on steroids, applying a ton of static analysis checks
     - testableexamples # checks if examples are testable (have an expected output)
     - testifylint # checks usage of github.com/stretchr/testify
-    - testpackage # makes you use a separate _test package
+    #- testpackage # [too strict] makes you use a separate _test package
     - tparallel # detects inappropriate usage of t.Parallel() method in your Go test codes
     - unconvert # removes unnecessary type conversions
     - unparam # reports unused function parameters
@@ -124,21 +136,21 @@ linters:
     - whitespace # detects leading and trailing whitespace
 
     ## you may want to enable
-    - arangolint # opinionated best practices for arangodb client
+    #- arangolint # opinionated best practices for arangodb client
     - decorder # checks declaration order and count of types, constants, variables and functions
-    - exhaustruct # [highly recommend to enable] checks if all structure fields are initialized
-    - ginkgolinter # [if you use ginkgo/gomega] enforces standards of using ginkgo and gomega
-    - godox # detects usage of FIXME, TODO and other keywords inside comments
-    - goheader # checks is file header matches to pattern
+    #- exhaustruct # [too strict for this codebase] checks if all structure fields are initialized
+    #- ginkgolinter # [if you use ginkgo/gomega] enforces standards of using ginkgo and gomega
+    #- godox # [TODO comments are acceptable during development] detects usage of FIXME, TODO
+    #- goheader # checks is file header matches to pattern
     #- inamedparam # [great idea, but too strict, need to ignore a lot of cases by default] reports interfaces with unnamed method parameters
     - interfacebloat # checks the number of methods inside an interface
-    - ireturn # accept interfaces, return concrete types
-    - noinlineerr # disallows inline error handling `if err := ...; err != nil {`
+    #- ireturn # [returning interfaces is often intentional for polymorphism] accept interfaces, return concrete types
+    #- noinlineerr # [inline error handling is idiomatic Go] disallows inline error handling
     #- prealloc # [premature optimization, but can be used in some cases] finds slice declarations that could potentially be preallocated
-    - tagalign # checks that struct tags are well aligned
+    #- tagalign # [purely cosmetic] checks that struct tags are well aligned
     #- varnamelen # [great idea, but too many false positives] checks that the length of a variable's name matches its scope
-    - wrapcheck # checks that errors returned from external packages are wrapped
-    - zerologlint # detects the wrong usage of zerolog that a user forgets to dispatch zerolog.Event
+    #- wrapcheck # [too strict - not all errors need wrapping] checks that errors returned from external packages are wrapped
+    #- zerologlint # detects the wrong usage of zerolog that a user forgets to dispatch zerolog.Event
 
     ## disabled
     #- containedctx # detects struct contained context.Context field
@@ -369,12 +381,30 @@ linters:
         - flag.Float.*
         - flag.Int.*
         - flag.Uint.*
+        - math.Pow
         - os.Chmod
         - os.Mkdir.*
         - os.OpenFile
         - os.WriteFile
         - prometheus.ExponentialBuckets.*
         - prometheus.LinearBuckets
+        - time.Sleep
+        - time.Duration
+        - make
+        - cap
+      # List of numbers to exclude from analysis.
+      # Default: []
+      ignored-numbers:
+        - "0"
+        - "1"
+        - "2"
+        - "10"
+        - "100"
+        - "1000"
+        - "1024"
+        - "0.0"
+        - "1.0"
+        - "0.5"
 
     nakedret:
       # Make an issue if func has more lines of code than this setting, and it has naked returns.
@@ -478,9 +508,13 @@ linters:
           - dupl
           - errcheck
           - funlen
+          - gocognit
           - goconst
           - gosec
+          - mnd
           - noctx
+          - tparallel
+          - usetesting
           - wrapcheck
       # i18n message files have intentionally similar structure
       - path: 'internal/i18n/messages_.*\.go'

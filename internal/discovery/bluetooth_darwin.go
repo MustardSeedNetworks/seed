@@ -13,6 +13,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -28,7 +29,11 @@ const (
 )
 
 // scanPlatform performs Bluetooth scanning on macOS.
-func (s *BluetoothScanner) scanPlatform(ctx context.Context, adapter string, config *BluetoothScanConfig) ([]BluetoothDevice, error) {
+func (s *BluetoothScanner) scanPlatform(
+	ctx context.Context,
+	_ string,
+	_ *BluetoothScanConfig,
+) ([]BluetoothDevice, error) {
 	ctx, cancel := context.WithTimeout(ctx, darwinBTScanTimeoutSecs*time.Second)
 	defer cancel()
 
@@ -239,7 +244,7 @@ func (s *BluetoothScanner) scanBlueutil(ctx context.Context) ([]BluetoothDevice,
 	// Check if blueutil is available
 	cmd := exec.CommandContext(ctx, "which", "blueutil")
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("blueutil not installed")
+		return nil, errors.New("blueutil not installed")
 	}
 
 	// Get paired devices
@@ -257,8 +262,8 @@ func parseBleutilOutput(output string) ([]BluetoothDevice, error) {
 	now := time.Now()
 
 	// blueutil output format: address, name, ...
-	lines := strings.Split(output, "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(output, "\n")
+	for line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue

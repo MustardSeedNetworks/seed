@@ -158,7 +158,6 @@ type analyzePathTestCase struct {
 	result         *roots.TracerouteResult
 	wantErr        bool
 	wantHops       int
-	wantScore      int // approximate, may vary
 	wantScoreMin   int // minimum acceptable score
 	wantScoreMax   int // maximum acceptable score
 	wantAnalysisOK bool

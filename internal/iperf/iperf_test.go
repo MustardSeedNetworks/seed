@@ -1125,7 +1125,7 @@ func TestBuildClientArgs(t *testing.T) {
 
 // TestParseClientResult tests result parsing from iperf3 JSON output.
 //
-//nolint:gocognit // Test functions with table-driven tests have inherent complexity
+
 func TestParseClientResult(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -1375,7 +1375,7 @@ func TestGetCacheDir(t *testing.T) {
 
 // TestIsValidExtractedBinary tests the extracted binary validation.
 //
-//nolint:gocognit // Test functions with multiple subtests have inherent complexity
+
 func TestIsValidExtractedBinary(t *testing.T) {
 	tempDir := t.TempDir()
 

@@ -395,7 +395,7 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 			warning = "Selected interface is currently down"
 		}
 
-		if err := s.netManager().SetCurrentInterface(req.Interface); err != nil {
+		if setErr := s.netManager().SetCurrentInterface(req.Interface); setErr != nil {
 			logger.Warn("Failed to set interface", "error", err, "interface", req.Interface)
 			sendErrorResponseWithDetails(
 				w,
@@ -410,9 +410,9 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 
 		// Update unified discovery service to use new interface (handles protocol restarts)
 		if s.discoveryService() != nil {
-			if err := s.discoveryService().SetInterface(req.Interface); err != nil {
+			if discErr := s.discoveryService().SetInterface(req.Interface); discErr != nil {
 				// Log but don't fail - discovery may not work without root
-				logging.GetLogger().Warn("Failed to set discovery interface", "error", err)
+				logging.GetLogger().Warn("Failed to set discovery interface", "error", discErr)
 			}
 		}
 
