@@ -10,9 +10,11 @@
 # These files define code quality, security, and build standards.
 # Changes MUST be approved to prevent degradation of platinum standards.
 
-# Linting configurations (124 Go linters, 200+ JS/TS rules)
+# Linting configurations (124 Go linters, 200+ JS/TS rules, C23 checks)
 /.golangci.yml @krisarmstrong
 /biome.json @krisarmstrong
+/.clang-format @krisarmstrong
+/.clang-tidy @krisarmstrong
 
 # CI/CD workflows (enforce all quality checks)
 /.github/workflows/*.yml @krisarmstrong
@@ -24,6 +26,10 @@
 /package-lock.json @krisarmstrong
 /ui/package.json @krisarmstrong
 /ui/package-lock.json @krisarmstrong
+
+# Build configuration
+/Makefile @krisarmstrong
+/Makefile.common @krisarmstrong
 
 # Version pinning
 /.node-version @krisarmstrong
