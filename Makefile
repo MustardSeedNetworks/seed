@@ -2,7 +2,7 @@
 # Seed Makefile
 # =============================================================================
 #
-# Build, test, and deploy automation for Seed network diagnostics tool.
+# Build, test, and package automation for Seed network diagnostics tool.
 #
 # QUICK START
 # -----------
@@ -10,7 +10,6 @@
 #   make test           Run all unit tests (backend + frontend)
 #   make verify         Full CI pipeline (lint, test, security, build)
 #   make dev            Run backend in dev mode (hot reload frontend)
-#   make deploy         Deploy to remote Ubuntu server
 #   make install        Install on current system (macOS/Linux)
 #   make help           Show all available targets
 #
@@ -20,6 +19,7 @@
 #   Before commit:      make verify
 #   Release:            make release VERSION=v1.0.0
 #   Cross-compile:      make build-all
+#   Package:            make packages (deb + rpm)
 #
 # REQUIREMENTS
 # ------------
@@ -30,18 +30,7 @@
 #
 # ENVIRONMENT VARIABLES
 # ---------------------
-#   DEPLOY_HOST     Target server IP (default: 192.168.64.7)
-#   DEPLOY_USER     SSH user (default: krisarmstrong)
-#   DEPLOY_PATH     Remote path (default: /home/$USER/seed)
-#   DEPLOY_PORT     HTTPS port for smoke tests (default: 443, fallback: 8443)
-#   REBUILD         Set to 1 to force rebuild during deploy
 #   DOCKER_REGISTRY Container registry for docker-push
-#
-# PORT CONFIGURATION
-# ------------------
-#   The application prefers port 443 (standard HTTPS) if available.
-#   If 443 requires root/elevated permissions, it falls back to 8443.
-#   Set DEPLOY_PORT to override for smoke tests.
 #
 # =============================================================================
 
@@ -61,10 +50,9 @@
         storybook build-storybook test-storybook \
         run dev dev-frontend \
         install uninstall status \
-        deploy deploy-preflight smoke-test smoke-test-local \
         deps update update-go update-npm outdated \
         tools tools-go tools-frontend version version-check \
-        logs logs-100 help \
+        help \
         verify release release-check pre-commit pre-commit-install \
         license-check license-report \
         i18n-sync i18n-check i18n-list \
@@ -116,14 +104,8 @@ LDFLAGS=$(GO_LDFLAGS)
 # =============================================================================
 
 # =============================================================================
-# Deployment Configuration
+# Docker Configuration
 # =============================================================================
-
-# Remote server settings (override with environment variables)
-DEPLOY_HOST?=192.168.64.7
-DEPLOY_USER?=krisarmstrong
-DEPLOY_PATH?=/home/$(DEPLOY_USER)/seed
-DEPLOY_PORT?=443
 
 # Docker image settings
 DOCKER_IMAGE?=seed
@@ -380,174 +362,6 @@ docker-push: docker-build ## Push Docker image to registry
 	docker push $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):latest
 
 # =============================================================================
-# Deployment (closes #468)
-# =============================================================================
-#
-# Deployment uses systemd for service management (recommended) or falls back
-# to manual process management. Configure via environment variables:
-#
-#   DEPLOY_HOST     - Target server IP (default: 192.168.64.7)
-#   DEPLOY_USER     - SSH user (default: krisarmstrong)
-#   DEPLOY_PATH     - Remote installation path (default: /home/$USER/seed)
-#   DEPLOY_PORT     - HTTPS port for smoke tests (default: 8443)
-#   DEPLOY_SYSTEMD  - Use systemd (default: 1, set to 0 for manual mode)
-#   REBUILD         - Force rebuild (default: 0)
-#
-# Prerequisites:
-#   - SSH key authentication configured
-#   - sudo access on remote host (for setcap and systemd)
-#   - systemd service installed (run: sudo ./deploy/systemd/install.sh)
-#
-# =============================================================================
-
-DEPLOY_SYSTEMD?=1
-
-# Pre-flight check for deployment
-deploy-preflight:
-	@echo "Validating SSH connection to $(DEPLOY_HOST)..."
-	@ssh -o ConnectTimeout=5 -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
-		$(DEPLOY_USER)@$(DEPLOY_HOST) exit 0 2>/dev/null || \
-		(echo "$(RED)ERROR: Cannot connect to $(DEPLOY_HOST)$(RESET)"; \
-		 echo "Check that:"; \
-		 echo "  1. SSH key is configured for $(DEPLOY_USER)@$(DEPLOY_HOST)"; \
-		 echo "  2. Host is reachable"; \
-		 echo "  3. DEPLOY_HOST and DEPLOY_USER are correct"; \
-		 exit 1)
-	@echo "$(GREEN)✓ SSH connection verified$(RESET)"
-
-# Full deployment pipeline:
-# 1. Build Linux binary (native or Docker)
-# 2. Rsync binary, iperf3, and configs to remote
-# 3. Restart service via systemd (or manual fallback)
-# 4. Run smoke tests to verify deployment
-deploy: deploy-preflight ## Deploy to remote server
-	@# Build Linux binary - try direct first, fallback to Docker
-	@if [ ! -f $(BINARY_NAME)-linux-amd64 ] || [ "$(REBUILD)" = "1" ]; then \
-		if command -v x86_64-linux-gnu-gcc > /dev/null 2>&1; then \
-			$(MAKE) build-linux-amd64; \
-		else \
-			echo "Cross-compiler not found, using Docker..."; \
-			$(MAKE) build-linux-docker; \
-		fi; \
-	fi
-	@echo ""
-	@echo "Deploying to $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)..."
-	@# Check for iperf3-linux-amd64
-	@if [ ! -f bin/iperf3-linux-amd64 ]; then \
-		echo "Warning: bin/iperf3-linux-amd64 not found."; \
-		echo "Run 'make build-iperf3-linux' first for iperf3 support."; \
-	fi
-	@# Create remote directory if needed
-	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "mkdir -p $(DEPLOY_PATH)/bin"
-	@# Rsync binary
-	rsync -avz --progress $(BINARY_NAME)-linux-amd64 $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/$(BINARY_NAME)
-	@# Rsync iperf3 if it exists
-	@if [ -f bin/iperf3-linux-amd64 ]; then \
-		rsync -avz --progress bin/iperf3-linux-amd64 $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/bin/iperf3; \
-	fi
-	@# Rsync configs if they exist
-	@if [ -d configs ]; then \
-		rsync -avz --progress configs/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/configs/; \
-	fi
-	@# Set permissions and capabilities
-	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "\
-		cd $(DEPLOY_PATH) && \
-		chmod +x $(BINARY_NAME) && \
-		if [ -f bin/iperf3 ]; then chmod +x bin/iperf3; fi && \
-		sudo setcap cap_net_raw=+ep ./$(BINARY_NAME)"
-	@# Restart service
-	@if [ "$(DEPLOY_SYSTEMD)" = "1" ]; then \
-		echo "Restarting via systemd..."; \
-		ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "\
-			if systemctl is-active --quiet $(BINARY_NAME) 2>/dev/null; then \
-				sudo systemctl restart $(BINARY_NAME) && \
-				sleep 2 && \
-				sudo systemctl is-active --quiet $(BINARY_NAME) && \
-				echo 'Service restarted successfully'; \
-			else \
-				echo 'systemd service not installed. Installing...'; \
-				cd $(DEPLOY_PATH) && \
-				if [ -f deploy/systemd/install.sh ]; then \
-					sudo ./deploy/systemd/install.sh && \
-					sudo systemctl start $(BINARY_NAME); \
-				else \
-					echo 'ERROR: Service not installed. Run: sudo ./deploy/systemd/install.sh'; \
-					exit 1; \
-				fi; \
-			fi"; \
-	else \
-		echo "Restarting manually (DEPLOY_SYSTEMD=0)..."; \
-		ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "\
-			cd $(DEPLOY_PATH) && \
-			pkill $(BINARY_NAME) 2>/dev/null || true && \
-			sleep 2 && \
-			nohup ./$(BINARY_NAME) > $(BINARY_NAME).log 2>&1 & \
-			sleep 3 && \
-			pgrep -x $(BINARY_NAME) > /dev/null && echo 'Server started' || echo 'WARNING: Server may not have started'"; \
-	fi
-	@echo ""
-	@echo "Deployment complete. Running smoke tests..."
-	@$(MAKE) smoke-test
-
-# -----------------------------------------------------------------------------
-# Smoke Tests - Quick verification of deployed application
-# -----------------------------------------------------------------------------
-
-# Verify deployed server is operational
-# Tries port 443 first, falls back to 8443 if not responding
-smoke-test: ## Run smoke tests against deployed server
-	@echo ""
-	@# Determine which port is responding
-	@PORT=$(DEPLOY_PORT); \
-	if ! curl -sf -k --connect-timeout 2 "https://$(DEPLOY_HOST):$$PORT/api/health" > /dev/null 2>&1; then \
-		if [ "$$PORT" = "443" ]; then \
-			PORT=8443; \
-			echo "Port 443 not responding, trying 8443..."; \
-		fi; \
-	fi; \
-	echo "=== Smoke Tests for $(DEPLOY_HOST):$$PORT ==="; \
-	echo ""; \
-	echo "1. Checking server process..."; \
-	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "pgrep -x $(BINARY_NAME) > /dev/null" && \
-		echo "   PASS: Server process running" || \
-		(echo "   FAIL: Server process not found" && exit 1); \
-	echo ""; \
-	echo "2. Checking API /api/status..."; \
-	curl -sf -k "https://$(DEPLOY_HOST):$$PORT/api/status" > /dev/null && \
-		echo "   PASS: API responding on port $$PORT" || \
-		(echo "   FAIL: API not responding" && exit 1); \
-	echo ""; \
-	echo "3. Checking frontend loads..."; \
-	curl -sf -k "https://$(DEPLOY_HOST):$$PORT/" | grep -q "<!DOCTYPE" && \
-		echo "   PASS: Frontend HTML served" || \
-		(echo "   FAIL: Frontend not loading" && exit 1); \
-	echo ""; \
-	echo "4. Checking iperf3 availability..."; \
-	curl -sf -k "https://$(DEPLOY_HOST):$$PORT/api/iperf/info" | grep -q '"installed":true' && \
-		echo "   PASS: iperf3 available" || \
-		echo "   WARN: iperf3 not available (optional)"; \
-	echo ""; \
-	echo "=== All smoke tests passed! ==="; \
-	echo "Server running at: https://$(DEPLOY_HOST):$$PORT"
-
-# Local smoke tests for development
-# Tries port 443 first, falls back to 8443
-smoke-test-local: ## Run smoke tests against local server
-	@echo "Running local smoke tests..."
-	@PORT=443; \
-	if ! curl -sf -k --connect-timeout 2 "https://localhost:$$PORT/api/health" > /dev/null 2>&1; then \
-		PORT=8443; \
-	fi; \
-	echo "Testing on port $$PORT..."; \
-	echo "1. API /api/status..."; \
-	curl -sf -k "https://localhost:$$PORT/api/status" > /dev/null && \
-		echo "   PASS" || (echo "   FAIL" && exit 1); \
-	echo "2. Frontend loads..."; \
-	curl -sf -k "https://localhost:$$PORT/" | grep -q "<!DOCTYPE" && \
-		echo "   PASS" || (echo "   FAIL" && exit 1); \
-	echo "All local tests passed! (port $$PORT)"
-
-# =============================================================================
 # Development
 # =============================================================================
 
@@ -622,7 +436,7 @@ uninstall: ## Uninstall system service from current machine
 	@printf "$(GREEN)✓ Uninstall complete$(RESET)\n"
 
 # Show service status on current system
-status: ## Show service status (local or remote)
+status: ## Show service status (local)
 	@printf "$(BOLD)Seed Service Status$(RESET)\n\n"
 	@if [ "$$(uname -s)" = "Darwin" ]; then \
 		if launchctl list 2>/dev/null | grep -q com.seed; then \
@@ -641,12 +455,6 @@ status: ## Show service status (local or remote)
 		else \
 			printf "$(YELLOW)●$(RESET) Service: not installed\n"; \
 		fi; \
-	fi
-	@printf "\n$(BOLD)Remote Server ($(DEPLOY_HOST))$(RESET)\n"
-	@if ssh -o BatchMode=yes -o ConnectTimeout=3 $(DEPLOY_USER)@$(DEPLOY_HOST) "true" 2>/dev/null; then \
-		ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "systemctl is-active seed 2>/dev/null && echo 'Remote: running' || echo 'Remote: not running'"; \
-	else \
-		printf "$(YELLOW)●$(RESET) Remote: unreachable\n"; \
 	fi
 
 # Show version information
@@ -795,11 +603,16 @@ build-storybook: ## Build static Storybook
 test-storybook: build-storybook ## Verify Storybook builds successfully
 	@echo "✅ Storybook compilation test passed"
 
-# Full integration test: deploy, install as systemd service, run tests
+# Full integration test: install as systemd service and run tests
+# Usage: TEST_HOST=user@host make test-integration
 test-integration: build-linux-docker ## Full integration test on Ubuntu server via systemd
-	@echo "Running integration tests on $(DEPLOY_HOST)..."
-	rsync -avz $(BINARY_NAME)-linux-amd64 $(DEPLOY_USER)@$(DEPLOY_HOST):/tmp/seed-test
-	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "\
+	@if [ -z "$(TEST_HOST)" ]; then \
+		echo "ERROR: TEST_HOST not set. Usage: TEST_HOST=user@host make test-integration"; \
+		exit 1; \
+	fi
+	@echo "Running integration tests on $(TEST_HOST)..."
+	rsync -avz $(BINARY_NAME)-linux-amd64 $(TEST_HOST):/tmp/seed-test
+	ssh $(TEST_HOST) "\
 		sudo systemctl stop seed-test 2>/dev/null || true && \
 		sudo cp /tmp/seed-test /usr/local/bin/seed-test && \
 		sudo chmod +x /usr/local/bin/seed-test && \
@@ -1408,18 +1221,6 @@ tools-frontend: ## Install frontend development tools
 	@echo "✅ Frontend tools installed"
 
 # =============================================================================
-# Remote Logs
-# =============================================================================
-
-# Stream live logs from deployed server
-logs: ## Tail server logs on remote
-	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "tail -f $(DEPLOY_PATH)/$(BINARY_NAME).log"
-
-# View recent log entries
-logs-100: ## Show last 100 lines of remote server logs
-	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "tail -100 $(DEPLOY_PATH)/$(BINARY_NAME).log"
-
-# =============================================================================
 # Help
 # =============================================================================
 
@@ -1434,8 +1235,8 @@ help: ## Show this help
 	@echo "Examples:"
 	@echo "  make build                    Build production binary"
 	@echo "  make dev & make dev-frontend  Full development environment"
-	@echo "  make deploy REBUILD=1         Force rebuild and deploy"
-	@echo "  make deploy DEPLOY_HOST=x.x.x.x  Deploy to different server"
+	@echo "  make packages                 Build deb and rpm packages"
+	@echo "  make build-all                Build for all platforms"
 
 # =============================================================================
 # Verification & Release Checks
@@ -1482,7 +1283,7 @@ verify: ## Full verification (lint, test, security, build, docker if available)
 	@printf "  $(BOLD)Commit:$(RESET)      $(COMMIT)\n"
 	@printf "  $(BOLD)Binary:$(RESET)      $(BINARY_NAME)\n"
 	@printf "  $(BOLD)Docker:$(RESET)      $(DOCKER_IMAGE):$(DOCKER_TAG)\n\n"
-	@printf "$(GREEN)Ready for deployment. Run 'make deploy' to deploy.$(RESET)\n\n"
+	@printf "$(GREEN)Ready for release! Run 'make packages' to build packages.$(RESET)\n\n"
 
 # Pre-commit hook setup and manual run
 pre-commit: ## Run pre-commit hooks manually
