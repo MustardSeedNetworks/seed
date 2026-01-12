@@ -71,31 +71,27 @@
         iso-info
 
 # =============================================================================
+# Include Shared Infrastructure
+# =============================================================================
+
+# Provides: VERSION, COMMIT, BUILD_TIME, colors, timers, GO_BUILD_FLAGS
+include Makefile.common
+
+# =============================================================================
 # Configuration Variables
 # =============================================================================
 
 # Application name - used for binary output and process management
 BINARY_NAME=seed
 
-# Version information extracted from git
-# Falls back to "dev" if not in a git repository
-VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
-COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-BUILD_TIME?=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+# Version package path for ldflags injection
+VERSION_PKG=github.com/krisarmstrong/seed/internal/version
 
-# Go build flags for reproducibility (closes #465, #550)
-# -trimpath: Remove file system paths from compiled binary
-# -buildvcs=false: Disable VCS stamping for deterministic builds
-GOFLAGS=-trimpath -buildvcs=false
+# Go build flags for reproducibility (from Makefile.common)
+GOFLAGS=$(GO_BUILD_FLAGS)
 
-# Linker flags to embed version info and strip debug symbols
-# -s: Omit symbol table and debug info
-# -w: Omit DWARF symbol table
-# -X: Set package variables at link time
-LDFLAGS=-s -w \
-    -X github.com/krisarmstrong/seed/internal/version.Version=$(VERSION) \
-    -X github.com/krisarmstrong/seed/internal/version.Commit=$(COMMIT) \
-    -X github.com/krisarmstrong/seed/internal/version.BuildTime=$(BUILD_TIME)
+# Linker flags (uses GO_LDFLAGS from Makefile.common)
+LDFLAGS=$(GO_LDFLAGS)
 
 # =============================================================================
 # Deployment Configuration
@@ -110,54 +106,6 @@ DEPLOY_PORT?=443
 # Docker image settings
 DOCKER_IMAGE?=seed
 DOCKER_TAG?=$(VERSION)
-
-# =============================================================================
-# Progress Display Helpers
-# =============================================================================
-
-# ANSI color codes for terminal output
-CYAN := \033[36m
-GREEN := \033[32m
-YELLOW := \033[33m
-RED := \033[31m
-BOLD := \033[1m
-RESET := \033[0m
-
-# Progress step display: $(call step,current,total,message)
-define step
-	@printf "\n$(BOLD)$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)\n"
-	@printf "$(BOLD)$(CYAN)[$(1)/$(2)]$(RESET) $(BOLD)$(3)$(RESET)\n"
-	@printf "$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)\n"
-endef
-
-# Success message
-define success
-	@printf "$(GREEN)✓ $(1) complete$(RESET)\n"
-endef
-
-# Timer: Start a named timer
-# Usage: $(call timer-start,name)
-define timer-start
-	@date +%s > /tmp/make-timer-$(1)
-endef
-
-# Timer: Show elapsed time for a named timer
-# Usage: $(call timer-end,name,description)
-define timer-end
-	@if [ -f /tmp/make-timer-$(1) ]; then \
-		START=$$(cat /tmp/make-timer-$(1)); \
-		END=$$(date +%s); \
-		ELAPSED=$$((END - START)); \
-		MINS=$$((ELAPSED / 60)); \
-		SECS=$$((ELAPSED % 60)); \
-		if [ $$MINS -gt 0 ]; then \
-			printf "$(GREEN)✓ $(2) complete $(YELLOW)($$MINS min $$SECS sec)$(RESET)\n"; \
-		else \
-			printf "$(GREEN)✓ $(2) complete $(YELLOW)($$SECS sec)$(RESET)\n"; \
-		fi; \
-		rm -f /tmp/make-timer-$(1); \
-	fi
-endef
 
 # =============================================================================
 # Default Target

@@ -1,0 +1,157 @@
+# =============================================================================
+# Makefile.common - Shared Build Patterns
+# =============================================================================
+# Mustard Seed Networks - Common Makefile Infrastructure
+#
+# Usage: Include at the top of project Makefile
+#   include ../Makefile.common
+#
+# This file provides:
+#   - Version information extraction from git
+#   - Platform and architecture detection
+#   - ANSI color codes for terminal output
+#   - Progress display helpers (step, success, warn, error)
+#   - Timer functions for measuring build times
+#   - Go build settings for reproducible builds
+# =============================================================================
+
+# Version information (can be overridden)
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_TIME ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+
+# Platform detection
+UNAME := $(shell uname -s)
+ifeq ($(UNAME),Darwin)
+    PLATFORM := darwin
+    PLATFORM_PRETTY := macOS
+else ifeq ($(UNAME),Linux)
+    PLATFORM := linux
+    PLATFORM_PRETTY := Linux
+else
+    PLATFORM := unknown
+    PLATFORM_PRETTY := Unknown
+endif
+
+# Architecture detection
+ARCH := $(shell uname -m)
+ifeq ($(ARCH),x86_64)
+    GOARCH := amd64
+else ifeq ($(ARCH),arm64)
+    GOARCH := arm64
+else ifeq ($(ARCH),aarch64)
+    GOARCH := arm64
+endif
+
+# =============================================================================
+# ANSI Color Codes
+# =============================================================================
+
+BOLD := \033[1m
+RESET := \033[0m
+RED := \033[31m
+GREEN := \033[32m
+YELLOW := \033[33m
+BLUE := \033[34m
+MAGENTA := \033[35m
+CYAN := \033[36m
+WHITE := \033[37m
+
+# =============================================================================
+# Display Helpers
+# =============================================================================
+
+# Print a section header
+# Usage: $(call section,Section Title)
+define section
+	@printf "\n$(BOLD)$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)\n"
+	@printf "$(BOLD)$(CYAN)  $(1)$(RESET)\n"
+	@printf "$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)\n\n"
+endef
+
+# Print a step in a multi-step process
+# Usage: $(call step,current,total,description)
+define step
+	@printf "$(BOLD)[$(1)/$(2)]$(RESET) $(3)\n"
+endef
+
+# Print a success message
+# Usage: $(call success,message)
+define success
+	@printf "$(GREEN)✓ $(1)$(RESET)\n"
+endef
+
+# Print a warning message
+# Usage: $(call warn,message)
+define warn
+	@printf "$(YELLOW)⚠ $(1)$(RESET)\n"
+endef
+
+# Print an error message
+# Usage: $(call error,message)
+define error
+	@printf "$(RED)✗ $(1)$(RESET)\n"
+endef
+
+# =============================================================================
+# Timer Functions
+# =============================================================================
+
+# Start a named timer
+# Usage: $(call timer-start,timer-name)
+define timer-start
+	@date +%s > /tmp/make-timer-$(1)
+endef
+
+# End a timer and display elapsed time
+# Usage: $(call timer-end,timer-name,description)
+define timer-end
+	@if [ -f /tmp/make-timer-$(1) ]; then \
+		START=$$(cat /tmp/make-timer-$(1)); \
+		END=$$(date +%s); \
+		ELAPSED=$$((END - START)); \
+		MINS=$$((ELAPSED / 60)); \
+		SECS=$$((ELAPSED % 60)); \
+		if [ $$MINS -gt 0 ]; then \
+			printf "$(GREEN)✓ $(2) $(YELLOW)($$MINS min $$SECS sec)$(RESET)\n"; \
+		else \
+			printf "$(GREEN)✓ $(2) $(YELLOW)($$SECS sec)$(RESET)\n"; \
+		fi; \
+		rm -f /tmp/make-timer-$(1); \
+	fi
+endef
+
+# =============================================================================
+# Go Build Settings
+# =============================================================================
+
+# Standard Go flags for reproducible builds
+GO_BUILD_FLAGS := -trimpath -buildvcs=false
+
+# Standard linker flags (projects should override VERSION_PKG)
+# VERSION_PKG should be set in the including Makefile
+GO_LDFLAGS = -s -w \
+	-X $(VERSION_PKG).Version=$(VERSION) \
+	-X $(VERSION_PKG).Commit=$(COMMIT) \
+	-X $(VERSION_PKG).BuildTime=$(BUILD_TIME)
+
+# =============================================================================
+# Common Targets
+# =============================================================================
+
+.PHONY: common-info common-clean-timers
+
+# Show common build info
+common-info:
+	@printf "$(BOLD)Build Environment$(RESET)\n"
+	@printf "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+	@printf "  Platform:    $(PLATFORM_PRETTY) ($(PLATFORM)/$(GOARCH))\n"
+	@printf "  Version:     $(VERSION)\n"
+	@printf "  Commit:      $(COMMIT)\n"
+	@printf "  Build Time:  $(BUILD_TIME)\n"
+	@printf "  Go:          $$(go version 2>/dev/null | awk '{print $$3}' || echo 'not installed')\n"
+	@printf "  Node:        $$(node --version 2>/dev/null || echo 'not installed')\n"
+
+# Clean up timer files
+common-clean-timers:
+	@rm -f /tmp/make-timer-* 2>/dev/null || true
