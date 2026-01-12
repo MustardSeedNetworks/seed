@@ -463,7 +463,7 @@ jobs:
           cache: true
 
       - name: Download frontend build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: frontend-dist
           path: ui/dist/
@@ -526,7 +526,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libpcap-dev
 
       - name: Download frontend build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: frontend-dist
           path: ui/dist/
@@ -549,8 +549,18 @@ jobs:
         run: |
           sudo setcap cap_net_raw=+ep ./seed || true
           nohup ./seed > server.log 2>&1 &
-          sleep 10
-          curl -sf -k https://localhost:8443/api/health || (cat server.log && exit 1)
+          echo "Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -sf -k https://localhost:8443/api/health 2>/dev/null; then
+              echo "Server ready after $i attempts"
+              exit 0
+            fi
+            echo "Attempt $i: Server not ready, waiting..."
+            sleep $((i < 5 ? 1 : 2))
+          done
+          echo "Server failed to start after 30 attempts"
+          cat server.log
+          exit 1
 
       - name: Run Playwright E2E tests
         working-directory: ui
@@ -595,7 +605,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libpcap-dev
 
       - name: Download frontend build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: frontend-dist
           path: ui/dist/
@@ -610,8 +620,18 @@ jobs:
         run: |
           sudo setcap cap_net_raw=+ep ./seed || true
           nohup ./seed > server.log 2>&1 &
-          sleep 10
-          curl -sf -k https://localhost:8443/api/health || (cat server.log && exit 1)
+          echo "Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -sf -k https://localhost:8443/api/health 2>/dev/null; then
+              echo "Server ready after $i attempts"
+              exit 0
+            fi
+            echo "Attempt $i: Server not ready, waiting..."
+            sleep $((i < 5 ? 1 : 2))
+          done
+          echo "Server failed to start after 30 attempts"
+          cat server.log
+          exit 1
 
       - name: Run Lighthouse CI
         uses: treosh/lighthouse-ci-action@v12
