@@ -717,9 +717,15 @@ export function usePipelineStatus(
 
 function getEnabledPhases(config: PipelineConfig): string[] {
   const phases: string[] = ["enumeration"];
-  if (config.phases.nameResolution) phases.push("resolution");
-  if (config.phases.serviceDiscovery) phases.push("scanning");
-  if (config.phases.vulnAssessment) phases.push("assessment");
+  if (config.phases.nameResolution) {
+    phases.push("resolution");
+  }
+  if (config.phases.serviceDiscovery) {
+    phases.push("scanning");
+  }
+  if (config.phases.vulnAssessment) {
+    phases.push("assessment");
+  }
   return phases;
 }
 

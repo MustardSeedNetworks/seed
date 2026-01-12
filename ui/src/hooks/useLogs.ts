@@ -154,7 +154,9 @@ export function useLogs({
    */
   const addLog = useCallback(
     (entry: LogEntry) => {
-      if (!isStreaming) return;
+      if (!isStreaming) {
+        return;
+      }
 
       setAllLogs((prev) => {
         const newLogs = [...prev, entry];

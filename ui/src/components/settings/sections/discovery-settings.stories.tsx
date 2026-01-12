@@ -114,7 +114,7 @@ const meta: Meta<typeof DiscoverySettings> = {
   },
   decorators: [
     (Story) => (
-      <div className="w-[550px] max-h-[700px] overflow-y-auto">
+      <div class="w-[550px] max-h-[700px] overflow-y-auto">
         <Story />
       </div>
     ),
@@ -927,7 +927,7 @@ export const WithSnmpSettings: Story = {
  * Interactive discovery settings - fully functional
  */
 export const Interactive: Story = {
-  render: function InteractiveStory() {
+  render: function interactiveStory() {
     const [settings, setSettings] = useState<NetworkDiscoverySettings>(defaultSettings);
     const [status, setStatus] = useState<SaveStatus>("idle");
     const [snmpSettings, setSnmpSettings] = useState<SNMPSettings>(defaultSnmpSettings);

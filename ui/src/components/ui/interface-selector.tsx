@@ -58,7 +58,7 @@ interface InterfaceSelectorProps {
   onAcceptSuggestion?: () => void;
 }
 
-export const InterfaceSelector = memo(function InterfaceSelector({
+export const InterfaceSelector = memo(function interfaceSelector({
   interfaces,
   currentInterface,
   isWifi,
@@ -144,7 +144,9 @@ export const InterfaceSelector = memo(function InterfaceSelector({
 
   // Get status text for an interface
   const getStatusText = (iface: NetworkInterface) => {
-    if (!iface.up) return t("interface.noLink", "No link");
+    if (!iface.up) {
+      return t("interface.noLink", "No link");
+    }
     if (iface.type === "wifi" && iface.signalStrength !== undefined) {
       return `${iface.signalStrength} dBm`;
     }
@@ -152,9 +154,13 @@ export const InterfaceSelector = memo(function InterfaceSelector({
   };
 
   const getDetailText = (iface: NetworkInterface) => {
-    if (iface.description) return iface.description;
+    if (iface.description) {
+      return iface.description;
+    }
     const vendorModel = [iface.chipsetVendor, iface.chipsetModel].filter(Boolean).join(" ");
-    if (vendorModel) return vendorModel;
+    if (vendorModel) {
+      return vendorModel;
+    }
     return "";
   };
 
@@ -163,7 +169,7 @@ export const InterfaceSelector = memo(function InterfaceSelector({
     if (type === "wifi") {
       return (
         <svg
-          className={cn(iconTokens.size.sm, up ? "text-status-success" : "text-text-muted")}
+          class={cn(iconTokens.size.sm, up ? "text-status-success" : "text-text-muted")}
           fill="currentColor"
           viewBox="0 0 24 24"
           aria-hidden="true"
@@ -174,7 +180,7 @@ export const InterfaceSelector = memo(function InterfaceSelector({
     }
     return (
       <svg
-        className={cn(iconTokens.size.sm, up ? "text-status-success" : "text-text-muted")}
+        class={cn(iconTokens.size.sm, up ? "text-status-success" : "text-text-muted")}
         fill="currentColor"
         viewBox="0 0 24 24"
         aria-hidden="true"
@@ -186,18 +192,22 @@ export const InterfaceSelector = memo(function InterfaceSelector({
 
   // Helper to check if an interface is recommended
   const isRecommended = (name: string, type: string) => {
-    if (type === "ethernet") return name === recommendedEthernet;
-    if (type === "wifi") return name === recommendedWifi;
+    if (type === "ethernet") {
+      return name === recommendedEthernet;
+    }
+    if (type === "wifi") {
+      return name === recommendedWifi;
+    }
     return false;
   };
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: Group role is semantically correct for dropdown container
-    <div ref={dropdownRef} className="relative" onKeyDown={handleKeyDown} role="group">
+    <div ref={dropdownRef} class="relative" onKeyDown={handleKeyDown} role="group">
       {/* #756: Warning banner when interface is unavailable */}
       {showWarning && warning && (
         <div
-          className={cn(
+          class={cn(
             "absolute bottom-full left-0 right-0 mb-2 p-2",
             radius.md,
             "bg-status-warning/10 border border-status-warning/30 text-status-warning",
@@ -205,14 +215,14 @@ export const InterfaceSelector = memo(function InterfaceSelector({
           )}
         >
           <svg
-            className={iconTokens.size.sm}
+            class={iconTokens.size.sm}
             fill="currentColor"
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
             <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
           </svg>
-          <span className="caption flex-1">{warning}</span>
+          <span class="caption flex-1">{warning}</span>
           {suggestedInterface && onAcceptSuggestion && (
             <button
               type="button"
@@ -220,7 +230,7 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                 onAcceptSuggestion();
                 setShowWarning(false);
               }}
-              className="caption font-medium text-status-warning hover:underline"
+              class="caption font-medium text-status-warning hover:underline"
             >
               {t("interface.switchTo", "Switch to {{name}}", { name: suggestedInterface })}
             </button>
@@ -228,11 +238,11 @@ export const InterfaceSelector = memo(function InterfaceSelector({
           <button
             type="button"
             onClick={() => setShowWarning(false)}
-            className="text-status-warning hover:opacity-70"
+            class="text-status-warning hover:opacity-70"
             aria-label={t("accessibility.dismiss", "Dismiss")}
           >
             <svg
-              className={iconTokens.size.sm}
+              class={iconTokens.size.sm}
               fill="currentColor"
               viewBox="0 0 24 24"
               aria-hidden="true"
@@ -249,7 +259,7 @@ export const InterfaceSelector = memo(function InterfaceSelector({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={cn(
+        class={cn(
           "flex items-center",
           spacing.gap.tight,
           spacing.pad.sm,
@@ -265,20 +275,18 @@ export const InterfaceSelector = memo(function InterfaceSelector({
         {getTypeIcon(isWifi ? "wifi" : "ethernet", currentInfo?.up ?? true)}
 
         {/* Current interface name */}
-        <span className="body-small font-medium text-text-primary truncate max-w-24 sm:max-w-32">
+        <span class="body-small font-medium text-text-primary truncate max-w-24 sm:max-w-32">
           {currentInfo ? getDisplayName(currentInfo) : currentInterface}
         </span>
 
         {/* Status indicator */}
         {currentInfo && (
-          <span className="caption text-text-muted hidden sm:inline">
-            {getStatusText(currentInfo)}
-          </span>
+          <span class="caption text-text-muted hidden sm:inline">{getStatusText(currentInfo)}</span>
         )}
 
         {/* Dropdown arrow */}
         <svg
-          className={cn(
+          class={cn(
             iconTokens.size.sm,
             "text-text-muted transition-transform",
             isOpen ? "rotate-180" : "",
@@ -295,7 +303,7 @@ export const InterfaceSelector = memo(function InterfaceSelector({
       {/* Dropdown menu */}
       {isOpen && (
         <div
-          className={cn(
+          class={cn(
             "absolute top-full left-0 mt-1 w-64",
             radius.md,
             "border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden",
@@ -306,8 +314,8 @@ export const InterfaceSelector = memo(function InterfaceSelector({
           {/* Ethernet section */}
           {ethernetInterfaces.length > 0 && (
             <div>
-              <div className={cn(spacing.pad.sm, "bg-surface-base border-b border-surface-border")}>
-                <span className="caption font-semibold text-text-muted uppercase tracking-wide">
+              <div class={cn(spacing.pad.sm, "bg-surface-base border-b border-surface-border")}>
+                <span class="caption font-semibold text-text-muted uppercase tracking-wide">
                   {t("interface.ethernet", "Ethernet")}
                 </span>
               </div>
@@ -316,7 +324,7 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                   type="button"
                   key={iface.name}
                   onClick={() => selectInterface(iface.name)}
-                  className={cn(
+                  class={cn(
                     "w-full flex items-center",
                     spacing.gap.tight,
                     spacing.pad.sm,
@@ -328,7 +336,7 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                 >
                   {/* Selection indicator */}
                   <span
-                    className={cn(
+                    class={cn(
                       "w-2 h-2 rounded-full",
                       iface.name === currentInterface ? "bg-brand-primary" : "bg-transparent",
                     )}
@@ -338,24 +346,24 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                   {getTypeIcon("ethernet", iface.up)}
 
                   {/* Name and status */}
-                  <div className="flex-1 min-w-0 text-left">
-                    <div className="body-small font-medium text-text-primary truncate">
+                  <div class="flex-1 min-w-0 text-left">
+                    <div class="body-small font-medium text-text-primary truncate">
                       {getDisplayName(iface)}
                     </div>
                     {getDetailText(iface) && (
-                      <div className="caption text-text-muted truncate">{getDetailText(iface)}</div>
+                      <div class="caption text-text-muted truncate">{getDetailText(iface)}</div>
                     )}
                   </div>
 
                   {/* Status and recommended indicator */}
-                  <div className="flex items-center gap-1">
+                  <div class="flex items-center gap-1">
                     {isRecommended(iface.name, "ethernet") && (
                       <span
-                        className="text-status-success"
+                        class="text-status-success"
                         title={t("interface.recommended", "Recommended")}
                       >
                         <svg
-                          className={iconTokens.size.xs}
+                          class={iconTokens.size.xs}
                           fill="currentColor"
                           viewBox="0 0 24 24"
                           aria-hidden="true"
@@ -365,10 +373,7 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                       </span>
                     )}
                     <span
-                      className={cn(
-                        "caption",
-                        iface.up ? "text-text-secondary" : "text-text-muted",
-                      )}
+                      class={cn("caption", iface.up ? "text-text-secondary" : "text-text-muted")}
                     >
                       {getStatusText(iface)}
                     </span>
@@ -382,14 +387,14 @@ export const InterfaceSelector = memo(function InterfaceSelector({
           {wifiInterfaces.length > 0 && (
             <div>
               <div
-                className={cn(
+                class={cn(
                   spacing.pad.sm,
                   "bg-surface-base",
                   ethernetInterfaces.length > 0 ? "border-t" : "",
                   "border-b border-surface-border",
                 )}
               >
-                <span className="caption font-semibold text-text-muted uppercase tracking-wide">
+                <span class="caption font-semibold text-text-muted uppercase tracking-wide">
                   {t("interface.wifi", "WiFi")}
                 </span>
               </div>
@@ -398,7 +403,7 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                   type="button"
                   key={iface.name}
                   onClick={() => selectInterface(iface.name)}
-                  className={cn(
+                  class={cn(
                     "w-full flex items-center",
                     spacing.gap.tight,
                     spacing.pad.sm,
@@ -410,7 +415,7 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                 >
                   {/* Selection indicator */}
                   <span
-                    className={cn(
+                    class={cn(
                       "w-2 h-2 rounded-full",
                       iface.name === currentInterface ? "bg-brand-primary" : "bg-transparent",
                     )}
@@ -420,24 +425,24 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                   {getTypeIcon("wifi", iface.up)}
 
                   {/* Name */}
-                  <div className="flex-1 min-w-0 text-left">
-                    <div className="body-small font-medium text-text-primary truncate">
+                  <div class="flex-1 min-w-0 text-left">
+                    <div class="body-small font-medium text-text-primary truncate">
                       {getDisplayName(iface)}
                     </div>
                     {getDetailText(iface) && (
-                      <div className="caption text-text-muted truncate">{getDetailText(iface)}</div>
+                      <div class="caption text-text-muted truncate">{getDetailText(iface)}</div>
                     )}
                   </div>
 
                   {/* Status and recommended indicator */}
-                  <div className="flex items-center gap-1">
+                  <div class="flex items-center gap-1">
                     {isRecommended(iface.name, "wifi") && (
                       <span
-                        className="text-status-success"
+                        class="text-status-success"
                         title={t("interface.recommended", "Recommended")}
                       >
                         <svg
-                          className={iconTokens.size.xs}
+                          class={iconTokens.size.xs}
                           fill="currentColor"
                           viewBox="0 0 24 24"
                           aria-hidden="true"
@@ -447,10 +452,7 @@ export const InterfaceSelector = memo(function InterfaceSelector({
                       </span>
                     )}
                     <span
-                      className={cn(
-                        "caption",
-                        iface.up ? "text-text-secondary" : "text-text-muted",
-                      )}
+                      class={cn("caption", iface.up ? "text-text-secondary" : "text-text-muted")}
                     >
                       {getStatusText(iface)}
                     </span>
@@ -462,8 +464,8 @@ export const InterfaceSelector = memo(function InterfaceSelector({
 
           {/* Empty state */}
           {ethernetInterfaces.length === 0 && wifiInterfaces.length === 0 && (
-            <div className={cn(spacing.pad.md, "text-center")}>
-              <span className="caption text-text-muted">
+            <div class={cn(spacing.pad.md, "text-center")}>
+              <span class="caption text-text-muted">
                 {t("interface.noInterfaces", "No network interfaces found")}
               </span>
             </div>

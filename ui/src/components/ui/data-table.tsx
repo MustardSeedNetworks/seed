@@ -78,14 +78,14 @@ export interface DataTableProps<T> {
   loading?: boolean;
 }
 
-function SortIcon({ direction, active }: { direction: SortDirection; active: boolean }) {
-  if (!active || !direction) {
-    return <ArrowUpDown className={cn(iconTokens.size.xs, "opacity-40")} />;
+function _sortIcon({ direction, active }: { direction: SortDirection; active: boolean }) {
+  if (!(active && direction)) {
+    return <ArrowUpDown class={cn(iconTokens.size.xs, "opacity-40")} />;
   }
   return direction === "asc" ? (
-    <ChevronUp className={iconTokens.size.xs} />
+    <ChevronUp class={iconTokens.size.xs} />
   ) : (
-    <ChevronDown className={iconTokens.size.xs} />
+    <ChevronDown class={iconTokens.size.xs} />
   );
 }
 
@@ -100,7 +100,7 @@ export function DataTable<T>({
   searchPlaceholder = "Search...",
   searchKeys,
   onRowClick,
-  expandedContent: ExpandedContent,
+  expandedContent: EXPANDED_CONTENT,
   isExpanded,
   emptyMessage = "No data found",
   maxHeight = "max-h-80",
@@ -111,7 +111,7 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const { t } = useTranslation("common");
   // Note: _expandedContent is available for future row expansion feature (prefixed to suppress unused warning)
-  const _expandedContent = ExpandedContent;
+  const _expandedContent = EXPANDED_CONTENT;
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -166,7 +166,9 @@ export function DataTable<T>({
       if (searchQuery && searchKeys && searchKeys.length > 0) {
         const query = searchQuery.toLowerCase();
         result = result.filter((item) => {
-          if (!item) return false; // Null check
+          if (!item) {
+            return false; // Null check
+          }
           return searchKeys.some((key) => {
             const column = columns.find((c) => c.key === key);
             if (column) {
@@ -189,7 +191,9 @@ export function DataTable<T>({
           const column = columns.find((c) => c.key === key);
           if (column) {
             result = result.filter((item) => {
-              if (!item) return false; // Null check
+              if (!item) {
+                return false; // Null check
+              }
               try {
                 const value = column.accessor(item);
                 return value?.toString().toLowerCase().includes(filterValue.toLowerCase());
@@ -207,15 +211,23 @@ export function DataTable<T>({
         const column = columns.find((c) => c.key === sortKey);
         if (column) {
           result.sort((a, b) => {
-            if (!a || !b) return 0; // Null checks
+            if (!(a && b)) {
+              return 0; // Null checks
+            }
             try {
               const aVal = column.accessor(a);
               const bVal = column.accessor(b);
 
               // Handle nulls
-              if (aVal == null && bVal == null) return 0;
-              if (aVal == null) return sortDirection === "asc" ? 1 : -1;
-              if (bVal == null) return sortDirection === "asc" ? -1 : 1;
+              if (aVal === null && bVal === null) {
+                return 0;
+              }
+              if (aVal === null) {
+                return sortDirection === "asc" ? 1 : -1;
+              }
+              if (bVal === null) {
+                return sortDirection === "asc" ? -1 : 1;
+              }
 
               // Compare values
               if (typeof aVal === "number" && typeof bVal === "number") {
@@ -250,11 +262,11 @@ export function DataTable<T>({
   const displayError = error || renderError?.message;
 
   return (
-    <div className="stack-sm">
+    <div class="stack-sm">
       {/* Error state (fixes #680) */}
       {displayError && (
         <div
-          className={cn(
+          class={cn(
             spacing.pad.sm,
             radius.md,
             "bg-status-error/10 border border-status-error/20 text-status-error body-small",
@@ -262,7 +274,7 @@ export function DataTable<T>({
           )}
           role="alert"
         >
-          <span className={iconTokens.size.sm}>⚠</span>
+          <span class={iconTokens.size.sm}>⚠</span>
           <span>{displayError}</span>
         </div>
       )}
@@ -271,7 +283,7 @@ export function DataTable<T>({
       {loading && (
         // biome-ignore lint/a11y/useSemanticElements: Status role is semantically correct for loading indicator
         <div
-          className={cn(
+          class={cn(
             spacing.pad.sm,
             radius.md,
             "bg-surface-hover text-text-muted body-small text-center",
@@ -279,15 +291,15 @@ export function DataTable<T>({
           role="status"
           aria-label="Loading data"
         >
-          <span className="inline-block animate-spin mr-2">◐</span>
+          <span class="inline-block animate-spin mr-2">◐</span>
           Loading data...
         </div>
       )}
       {/* Search and Filter Bar */}
-      <div className={layout.inline.default}>
-        <div className="relative flex-1">
+      <div class={layout.inline.default}>
+        <div class="relative flex-1">
           <Search
-            className={cn(
+            class={cn(
               iconTokens.size.sm,
               "absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none",
             )}
@@ -297,7 +309,7 @@ export function DataTable<T>({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={searchPlaceholder}
-            className={cn(
+            class={cn(
               "w-full pl-9 pr-8",
               spacing.compact.pyMd,
               "body-small bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-brand-primary",
@@ -309,10 +321,10 @@ export function DataTable<T>({
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
               aria-label="Clear search"
             >
-              <X className={iconTokens.size.sm} />
+              <X class={iconTokens.size.sm} />
             </button>
           )}
         </div>
@@ -320,7 +332,7 @@ export function DataTable<T>({
           <button
             type="button"
             onClick={() => setShowFilters(!showFilters)}
-            className={cn(
+            class={cn(
               spacing.iconBtn.md,
               "transition-colors",
               radius.lg,
@@ -331,20 +343,20 @@ export function DataTable<T>({
             )}
             title="Toggle filters"
           >
-            <Filter className={iconTokens.size.sm} />
+            <Filter class={iconTokens.size.sm} />
           </button>
         )}
       </div>
 
       {/* Filter Dropdowns */}
       {showFilters && filterOptions && (
-        <div className={cn(layout.inline.wrap, spacing.pad.xs, "bg-surface-hover", radius.lg)}>
+        <div class={cn(layout.inline.wrap, spacing.pad.xs, "bg-surface-hover", radius.lg)}>
           {filterOptions.map((filter) => (
             <select
               key={filter.key}
               value={activeFilters[filter.key] || ""}
               onChange={(e) => handleFilterChange(filter.key, e.target.value)}
-              className={cn(
+              class={cn(
                 spacing.cell.px,
                 spacing.compact.py,
                 "caption bg-surface-base text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-primary",
@@ -365,7 +377,7 @@ export function DataTable<T>({
             <button
               type="button"
               onClick={clearFilters}
-              className={cn(
+              class={cn(
                 spacing.cell.px,
                 spacing.compact.py,
                 "caption text-text-muted hover:text-text-primary",
@@ -379,7 +391,7 @@ export function DataTable<T>({
 
       {/* Results count */}
       {hasActiveFilters && (
-        <p className="caption">
+        <p class="caption">
           {t("dataTable.showingResults", {
             shown: filteredAndSortedData.length,
             total: data.length,
@@ -388,14 +400,14 @@ export function DataTable<T>({
       )}
 
       {/* Table */}
-      <div className={cn("overflow-y-auto", maxHeight)}>
-        <table className="w-full body-small">
-          <thead className="sticky top-0 bg-surface-raised z-10">
-            <tr className={border.divider}>
+      <div class={cn("overflow-y-auto", maxHeight)}>
+        <table class="w-full body-small">
+          <thead class="sticky top-0 bg-surface-raised z-10">
+            <tr class={border.divider}>
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={cn(
+                  class={cn(
                     spacing.cell.px,
                     spacing.compact.pyMd,
                     "text-left section-title",
@@ -405,10 +417,10 @@ export function DataTable<T>({
                   )}
                   onClick={column.sortable ? () => handleSort(column.key) : undefined}
                 >
-                  <span className={layout.inline.tight}>
+                  <span class={layout.inline.tight}>
                     {column.header}
                     {column.sortable && (
-                      <SortIcon
+                      <sortIcon
                         direction={sortKey === column.key ? sortDirection : null}
                         active={sortKey === column.key}
                       />
@@ -416,7 +428,7 @@ export function DataTable<T>({
                   </span>
                 </th>
               ))}
-              {actions && <th className={cn(spacing.cell.px, spacing.compact.pyMd, "w-16")} />}
+              {actions && <th class={cn(spacing.cell.px, spacing.compact.pyMd, "w-16")} />}
             </tr>
           </thead>
           <tbody>
@@ -424,7 +436,7 @@ export function DataTable<T>({
               <tr>
                 <td
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  className={cn(spacing.tableCell.empty, "text-center text-text-muted")}
+                  class={cn(spacing.tableCell.empty, "text-center text-text-muted")}
                 >
                   {emptyMessage}
                 </td>
@@ -444,7 +456,7 @@ export function DataTable<T>({
                   return (
                     <tr
                       key={key}
-                      className={cn(
+                      class={cn(
                         "border-b border-surface-border/50",
                         onRowClick && "cursor-pointer hover:bg-surface-hover",
                         expanded && "bg-surface-hover/50",
@@ -456,7 +468,7 @@ export function DataTable<T>({
                           return (
                             <td
                               key={`${key}-${column.key}`}
-                              className={cn(
+                              class={cn(
                                 spacing.cell.px,
                                 spacing.row.py,
                                 column.hiddenOnMobile && "hidden sm:table-cell",
@@ -472,19 +484,19 @@ export function DataTable<T>({
                           return (
                             <td
                               key={`${key}-${column.key}`}
-                              className={cn(
+                              class={cn(
                                 spacing.cell.px,
                                 spacing.row.py,
                                 column.hiddenOnMobile && "hidden sm:table-cell",
                               )}
                             >
-                              <span className="text-status-error">{t("status.error")}</span>
+                              <span class="text-status-error">{t("status.error")}</span>
                             </td>
                           );
                         }
                       })}
                       {actions && (
-                        <td className={cn(spacing.cell.px, spacing.row.py, "text-right")}>
+                        <td class={cn(spacing.cell.px, spacing.row.py, "text-right")}>
                           {(() => {
                             try {
                               return actions(item);

@@ -46,9 +46,9 @@ export const Success: Story = {
     title: "Link Status",
     subtitle: "eth0",
     status: "success",
-    icon: <Cable className="w-5 h-5" />,
+    icon: <Cable class="w-5 h-5" />,
     children: (
-      <div className="stack-sm">
+      <div class="stack-sm">
         <CardRow label="Speed" value="1000 Mbps" />
         <CardDivider />
         <CardRow label="Duplex" value="Full" />
@@ -64,9 +64,9 @@ export const Warning: Story = {
     title: "WiFi Signal",
     subtitle: "wlan0",
     status: "warning",
-    icon: <Wifi className="w-5 h-5" />,
+    icon: <Wifi class="w-5 h-5" />,
     children: (
-      <div className="stack-sm">
+      <div class="stack-sm">
         <CardValue label="Signal Strength" value="-72" unit="dBm" status="warning" />
         <CardRow label="SSID" value="Office-5G" />
         <CardRow label="Channel" value="36" />
@@ -81,9 +81,9 @@ export const ErrorStatus: Story = {
     title: "Gateway",
     subtitle: "192.168.1.1",
     status: "error",
-    icon: <Server className="w-5 h-5" />,
+    icon: <Server class="w-5 h-5" />,
     children: (
-      <div className="stack-sm">
+      <div class="stack-sm">
         <CardValue label="Status" value="Unreachable" status="error" />
         <CardRow label="Last Seen" value="5 min ago" />
         <CardRow label="Packet Loss" value="100%" status="error" />
@@ -99,7 +99,7 @@ export const Loading: Story = {
     subtitle: "Running...",
     status: "loading",
     children: (
-      <div className="stack-sm">
+      <div class="stack-sm">
         <CardValue value="Testing download speed..." size="sm" />
       </div>
     ),
@@ -112,9 +112,9 @@ export const Unknown: Story = {
     title: "Cable Test",
     subtitle: "No data",
     status: "unknown",
-    icon: <Cable className="w-5 h-5" />,
+    icon: <Cable class="w-5 h-5" />,
     children: (
-      <div className="stack-sm">
+      <div class="stack-sm">
         <CardValue value="No data available" size="sm" />
       </div>
     ),
@@ -127,10 +127,10 @@ export const Interactive: Story = {
     title: "Network Discovery",
     subtitle: "Click to view details",
     status: "success",
-    icon: <Server className="w-5 h-5" />,
+    icon: <Server class="w-5 h-5" />,
     onClick: () => alert("Card clicked!"),
     children: (
-      <div className="stack-sm">
+      <div class="stack-sm">
         <CardRow label="Devices Found" value="12" />
         <CardRow label="Last Scan" value="2 min ago" />
       </div>
@@ -147,7 +147,7 @@ export const WithHeaderAction: Story = {
     headerAction: (
       <button
         type="button"
-        className={cn(
+        class={cn(
           spacing.chip.sm,
           "caption bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90",
         )}
@@ -156,7 +156,7 @@ export const WithHeaderAction: Story = {
       </button>
     ),
     children: (
-      <div className="stack-sm">
+      <div class="stack-sm">
         <CardRow label="Server" value="8.8.8.8" />
         <CardRow label="Latency" value="12ms" status="success" />
       </div>

@@ -160,8 +160,12 @@ function groupDevicesByType(devices: DiscoveredDevice[]): GroupedDevices {
  * Gets a display name for a device, prioritizing hostname over IP.
  */
 export function getDeviceDisplayName(device: DiscoveredDevice): string {
-  if (device.displayName) return device.displayName;
-  if (device.hostname) return device.hostname;
+  if (device.displayName) {
+    return device.displayName;
+  }
+  if (device.hostname) {
+    return device.hostname;
+  }
   return device.ip;
 }
 
@@ -211,7 +215,9 @@ export function useDiscoveredDevices(autoRefresh = false) {
 
   // Auto-refresh if enabled
   useEffect(() => {
-    if (!autoRefresh) return;
+    if (!autoRefresh) {
+      return;
+    }
 
     const interval = setInterval(() => {
       fetchDevices();

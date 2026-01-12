@@ -68,16 +68,24 @@ const sizeConfigs = {
 function getSparklineColor(value: number, type: SparklineType, threshold?: number): string {
   if (type === "availability" || type === "score") {
     // Higher is better
-    if (value >= 99) return "var(--color-status-success)";
-    if (value >= 90) return "var(--color-status-warning)";
+    if (value >= 99) {
+      return "var(--color-status-success)";
+    }
+    if (value >= 90) {
+      return "var(--color-status-warning)";
+    }
     return "var(--color-status-error)";
   }
 
   // Latency - lower is better
   const effectiveThreshold = threshold ?? 100;
   const ratio = value / effectiveThreshold;
-  if (ratio <= 0.5) return "var(--color-status-success)";
-  if (ratio <= 1.0) return "var(--color-status-warning)";
+  if (ratio <= 0.5) {
+    return "var(--color-status-success)";
+  }
+  if (ratio <= 1.0) {
+    return "var(--color-status-warning)";
+  }
   return "var(--color-status-error)";
 }
 
@@ -90,7 +98,9 @@ function generatePath(
   minValue: number,
   maxValue: number,
 ): string {
-  if (data.length < 2) return "";
+  if (data.length < 2) {
+    return "";
+  }
 
   const effectiveWidth = width - padding * 2;
   const effectiveHeight = height - padding * 2;
@@ -116,7 +126,7 @@ function generatePath(
   }
 
   // Connect to last point
-  const last = points[points.length - 1];
+  const last = points.at(-1);
   path += ` L ${last.x} ${last.y}`;
 
   return path;
@@ -129,7 +139,9 @@ function generateAreaPath(
   height: number,
   padding: number,
 ): string {
-  if (!linePath) return "";
+  if (!linePath) {
+    return "";
+  }
 
   const baseY = height - padding;
   const startX = padding;
@@ -138,7 +150,7 @@ function generateAreaPath(
   return `${linePath} L ${endX} ${baseY} L ${startX} ${baseY} Z`;
 }
 
-export const Sparkline = memo(function Sparkline({
+export const Sparkline = memo(function sparkline({
   data,
   type = "availability",
   size = "md",
@@ -166,8 +178,12 @@ export const Sparkline = memo(function Sparkline({
     let sum = 0;
 
     for (const value of data) {
-      if (value < min) min = value;
-      if (value > max) max = value;
+      if (value < min) {
+        min = value;
+      }
+      if (value > max) {
+        max = value;
+      }
       sum += value;
     }
 
@@ -179,11 +195,11 @@ export const Sparkline = memo(function Sparkline({
       // Add some padding to the range for latency
       const range = max - min;
       min = Math.max(0, min - range * 0.1);
-      max = max + range * 0.1;
+      max += range * 0.1;
     }
 
     const avg = sum / data.length;
-    const current = data[data.length - 1];
+    const current = data.at(-1);
 
     // Determine trend direction
     let trend: "up" | "down" | "stable" = "stable";
@@ -197,8 +213,11 @@ export const Sparkline = memo(function Sparkline({
       const diff = recentAvg - olderAvg;
       const thresholdPct = avg * 0.05; // 5% change threshold
 
-      if (diff > thresholdPct) trend = "up";
-      else if (diff < -thresholdPct) trend = "down";
+      if (diff > thresholdPct) {
+        trend = "up";
+      } else if (diff < -thresholdPct) {
+        trend = "down";
+      }
     }
 
     return {
@@ -224,11 +243,11 @@ export const Sparkline = memo(function Sparkline({
     return (
       <div
         role="img"
-        className={cn("flex items-center justify-center text-text-muted", className)}
+        class={cn("flex items-center justify-center text-text-muted", className)}
         style={{ width: config.width, height: config.height }}
         aria-label={label || "No data available"}
       >
-        <span className="caption">—</span>
+        <span class="caption">—</span>
       </div>
     );
   }
@@ -239,14 +258,14 @@ export const Sparkline = memo(function Sparkline({
     `${type} sparkline: current ${currentValue.toFixed(1)}${type === "latency" ? "ms" : "%"}, trend ${trendDirection}`;
 
   return (
-    <div className={cn("relative inline-flex", className)}>
+    <div class={cn("relative inline-flex", className)}>
       <svg
         width={config.width}
         height={config.height}
         viewBox={`0 0 ${config.width} ${config.height}`}
         role="img"
         aria-label={accessibilityLabel}
-        className="overflow-visible"
+        class="overflow-visible"
       >
         {/* Area fill (gradient from line color to transparent) */}
         {showArea && areaPath && (
@@ -260,7 +279,7 @@ export const Sparkline = memo(function Sparkline({
             <path
               d={areaPath}
               fill={`url(#sparkline-gradient-${type})`}
-              className="transition-all duration-500 ease-out"
+              class="transition-all duration-500 ease-out"
             />
           </>
         )}
@@ -273,7 +292,7 @@ export const Sparkline = memo(function Sparkline({
           strokeWidth={config.strokeWidth}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="transition-all duration-500 ease-out"
+          class="transition-all duration-500 ease-out"
         />
 
         {/* Current value indicator dot */}
@@ -286,7 +305,7 @@ export const Sparkline = memo(function Sparkline({
           }
           r={config.strokeWidth + 1}
           fill={strokeColor}
-          className="transition-all duration-300 ease-out"
+          class="transition-all duration-300 ease-out"
         />
       </svg>
     </div>
@@ -305,7 +324,7 @@ interface SparklineWithLabelProps extends SparklineProps {
   unit?: string;
 }
 
-export const SparklineWithLabel = memo(function SparklineWithLabel({
+export const SparklineWithLabel = memo(function sparklineWithLabel({
   labelText,
   showValue = true,
   unit,
@@ -313,7 +332,7 @@ export const SparklineWithLabel = memo(function SparklineWithLabel({
   type = "availability",
   ...props
 }: SparklineWithLabelProps) {
-  const currentValue = data.length > 0 ? data[data.length - 1] : 0;
+  const currentValue = data.length > 0 ? data.at(-1) : 0;
 
   // Format value based on type
   const formattedValue = useMemo(() => {
@@ -329,11 +348,11 @@ export const SparklineWithLabel = memo(function SparklineWithLabel({
   const displayUnit = unit ?? (type === "latency" ? "" : "");
 
   return (
-    <div className="inline-flex items-center gap-2">
-      {labelText && <span className="caption text-text-muted">{labelText}</span>}
+    <div class="inline-flex items-center gap-2">
+      {labelText && <span class="caption text-text-muted">{labelText}</span>}
       <Sparkline data={data} type={type} {...props} />
       {showValue && (
-        <span className="caption font-medium text-text-primary tabular-nums">
+        <span class="caption font-medium text-text-primary tabular-nums">
           {formattedValue}
           {displayUnit}
         </span>
@@ -356,7 +375,7 @@ interface HealthScoreBadgeProps {
   className?: string;
 }
 
-export const HealthScoreBadge = memo(function HealthScoreBadge({
+export const HealthScoreBadge = memo(function healthScoreBadge({
   score,
   size = "md",
   showValue = true,
@@ -364,14 +383,22 @@ export const HealthScoreBadge = memo(function HealthScoreBadge({
 }: HealthScoreBadgeProps) {
   // Determine status color
   const getStatusColor = () => {
-    if (score >= 80) return "bg-status-success/15 text-status-success border-status-success/30";
-    if (score >= 50) return "bg-status-warning/15 text-status-warning border-status-warning/30";
+    if (score >= 80) {
+      return "bg-status-success/15 text-status-success border-status-success/30";
+    }
+    if (score >= 50) {
+      return "bg-status-warning/15 text-status-warning border-status-warning/30";
+    }
     return "bg-status-error/15 text-status-error border-status-error/30";
   };
 
   const getStatusLabel = () => {
-    if (score >= 80) return "Healthy";
-    if (score >= 50) return "Degraded";
+    if (score >= 80) {
+      return "Healthy";
+    }
+    if (score >= 50) {
+      return "Degraded";
+    }
     return "Critical";
   };
 
@@ -383,7 +410,7 @@ export const HealthScoreBadge = memo(function HealthScoreBadge({
 
   return (
     <span
-      className={cn(
+      class={cn(
         "inline-flex items-center gap-1 font-medium border",
         radius.md,
         sizeClasses[size],
@@ -392,8 +419,8 @@ export const HealthScoreBadge = memo(function HealthScoreBadge({
       )}
       title={`Health Score: ${score.toFixed(0)}% - ${getStatusLabel()}`}
     >
-      {showValue && <span className="tabular-nums">{Math.round(score)}</span>}
-      <span className={showValue ? "hidden sm:inline" : ""}>{getStatusLabel()}</span>
+      {showValue && <span class="tabular-nums">{Math.round(score)}</span>}
+      <span class={showValue ? "hidden sm:inline" : ""}>{getStatusLabel()}</span>
     </span>
   );
 });

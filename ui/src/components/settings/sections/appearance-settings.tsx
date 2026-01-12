@@ -44,7 +44,7 @@ interface AppearanceSettingsProps {
  * Settings section for theme selection and language preferences.
  * Memoized to prevent unnecessary re-renders when parent state changes.
  */
-export const AppearanceSettings = memo(function AppearanceSettings({
+export const AppearanceSettings = memo(function appearanceSettings({
   theme,
   setTheme,
   isDark,
@@ -68,16 +68,16 @@ export const AppearanceSettings = memo(function AppearanceSettings({
   return (
     <CollapsibleSection
       title={
-        <div className={layout.inline.default}>
-          <Palette className={iconTokens.size.sm} />
+        <div class={layout.inline.default}>
+          <Palette class={iconTokens.size.sm} />
           <span>{t("sections.appearance")}</span>
         </div>
       }
       defaultOpen={false}
     >
-      <div className="stack-sm">
+      <div class="stack-sm">
         <label
-          className={cn(
+          class={cn(
             layout.flex.between,
             spacing.pad.sm,
             "bg-surface-base",
@@ -85,11 +85,11 @@ export const AppearanceSettings = memo(function AppearanceSettings({
             "border border-surface-border",
           )}
         >
-          <span className="body-small text-text-primary">{t("appearance.theme")}</span>
+          <span class="body-small text-text-primary">{t("appearance.theme")}</span>
           <select
             value={theme}
             onChange={(e) => setTheme(e.target.value as "light" | "dark" | "system")}
-            className={cn(
+            class={cn(
               "bg-surface-raised border border-surface-border",
               radius.default,
               spacing.chip.sm,
@@ -103,7 +103,7 @@ export const AppearanceSettings = memo(function AppearanceSettings({
         </label>
 
         <label
-          className={cn(
+          class={cn(
             layout.flex.between,
             spacing.pad.sm,
             "bg-surface-base",
@@ -111,11 +111,11 @@ export const AppearanceSettings = memo(function AppearanceSettings({
             "border border-surface-border",
           )}
         >
-          <span className="body-small text-text-primary">{t("appearance.language")}</span>
+          <span class="body-small text-text-primary">{t("appearance.language")}</span>
           <select
             value={currentLanguage}
             onChange={(e) => handleLanguageChange(e.target.value)}
-            className={cn(
+            class={cn(
               "bg-surface-raised border border-surface-border",
               radius.default,
               spacing.chip.sm,
@@ -131,7 +131,7 @@ export const AppearanceSettings = memo(function AppearanceSettings({
         </label>
 
         <label
-          className={cn(
+          class={cn(
             layout.flex.between,
             spacing.pad.sm,
             "bg-surface-base",
@@ -139,11 +139,11 @@ export const AppearanceSettings = memo(function AppearanceSettings({
             "border border-surface-border",
           )}
         >
-          <span className="body-small text-text-primary">{t("appearance.measurementUnits")}</span>
+          <span class="body-small text-text-primary">{t("appearance.measurementUnits")}</span>
           <select
             value={unitSystem}
             onChange={(e) => setUnitSystem(e.target.value as "sae" | "metric")}
-            className={cn(
+            class={cn(
               "bg-surface-raised border border-surface-border",
               radius.default,
               spacing.chip.sm,
@@ -158,7 +158,7 @@ export const AppearanceSettings = memo(function AppearanceSettings({
         <button
           type="button"
           onClick={() => setTheme(isDark ? "light" : "dark")}
-          className={cn(
+          class={cn(
             "w-full",
             layout.flex.between,
             spacing.pad.sm,
@@ -167,8 +167,8 @@ export const AppearanceSettings = memo(function AppearanceSettings({
             "border border-surface-border hover:bg-surface-hover transition-colors",
           )}
         >
-          <span className="body-small text-text-primary">{t("appearance.quickToggle")}</span>
-          <span className="text-xl">{isDark ? "\u{1F319}" : "\u2600\uFE0F"}</span>
+          <span class="body-small text-text-primary">{t("appearance.quickToggle")}</span>
+          <span class="text-xl">{isDark ? "\u{1F319}" : "\u2600\uFE0F"}</span>
         </button>
       </div>
     </CollapsibleSection>

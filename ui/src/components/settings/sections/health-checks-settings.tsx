@@ -51,7 +51,7 @@ interface HealthChecksSettingsProps {
   updateCardSettings: (updates: Partial<CardSettings>) => void;
 }
 
-export const HealthChecksSettings = memo(function HealthChecksSettings({
+export const HealthChecksSettings = memo(function healthChecksSettings({
   testsSettings,
   setTestsSettings,
   testsStatus,
@@ -253,18 +253,18 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
   return (
     <CollapsibleSection
       title={
-        <div className={layout.inline.default}>
-          <HeartPulse className={iconTokens.size.sm} />
+        <div class={layout.inline.default}>
+          <HeartPulse class={iconTokens.size.sm} />
           <span>{t("sections.health")}</span>
           <AutoSaveIndicator status={testsStatus} />
         </div>
       }
     >
-      <div className={spacing.stack.default}>
+      <div class={spacing.stack.default}>
         {/* Card Visibility & FAB Controls */}
-        <div className="stack-sm">
+        <div class="stack-sm">
           <label
-            className={cn(
+            class={cn(
               layout.flex.between,
               spacing.pad.sm,
               "bg-surface-base",
@@ -273,10 +273,10 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
             )}
           >
             <div>
-              <span className="body-small text-text-primary font-medium">
+              <span class="body-small text-text-primary font-medium">
                 {t("common.showCard", "Show Card")}
               </span>
-              <p className="caption text-text-muted">
+              <p class="caption text-text-muted">
                 {t("common.showCardDesc", "Display this card on the dashboard")}
               </p>
             </div>
@@ -288,11 +288,11 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   healthChecks: { ...cardSettings.healthChecks, enabled: e.target.checked },
                 })
               }
-              className={iconTokens.size.sm}
+              class={iconTokens.size.sm}
             />
           </label>
           <label
-            className={cn(
+            class={cn(
               layout.flex.between,
               spacing.pad.sm,
               "bg-surface-base",
@@ -301,10 +301,10 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
             )}
           >
             <div>
-              <span className="body-small text-text-primary font-medium">
+              <span class="body-small text-text-primary font-medium">
                 {t("common.runOnFab", "Include in Run All")}
               </span>
-              <p className="caption text-text-muted">
+              <p class="caption text-text-muted">
                 {t("common.runOnFabDesc", "Run when FAB button is clicked")}
               </p>
             </div>
@@ -316,14 +316,14 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   healthChecks: { ...cardSettings.healthChecks, autoRunOnLink: e.target.checked },
                 })
               }
-              className={iconTokens.size.sm}
+              class={iconTokens.size.sm}
             />
           </label>
         </div>
 
         {/* Enable Toggle */}
         <label
-          className={cn(
+          class={cn(
             layout.flex.between,
             spacing.pad.sm,
             "bg-surface-base border border-surface-border",
@@ -331,10 +331,10 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
           )}
         >
           <div>
-            <span className="body-small text-text-primary font-medium">
+            <span class="body-small text-text-primary font-medium">
               {t("health.enableHealthChecks")}
             </span>
-            <p className="caption text-text-muted">{t("health.enableDescription")}</p>
+            <p class="caption text-text-muted">{t("health.enableDescription")}</p>
           </div>
           <input
             type="checkbox"
@@ -345,43 +345,43 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 runPerformance: e.target.checked,
               }))
             }
-            className={iconTokens.size.sm}
+            class={iconTokens.size.sm}
           />
         </label>
 
         {/* Ping Targets */}
         <div>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.pingTargets")}</span>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.pingTargets")}</span>
             <button
               type="button"
               onClick={addPingTarget}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+          <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
             {t("health.pingDefault")}
           </p>
           {testsSettings.pingTargets.map((target) => (
             <div
               key={target.id || target.host}
-              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
             >
               <input
                 type="text"
                 value={target.name}
                 onChange={(e) => updatePingTarget(target.id ?? "", "name", e.target.value)}
                 placeholder={t("common.name")}
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                class={cn(input.base, input.state.default, input.size.md, "w-24")}
               />
               <input
                 type="text"
                 value={target.host}
                 onChange={(e) => updatePingTarget(target.id ?? "", "host", e.target.value)}
                 placeholder={t("common.hostIp")}
-                className={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                class={cn(input.base, input.state.default, input.size.md, "flex-1")}
               />
               <input
                 type="number"
@@ -396,12 +396,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 min={1}
                 max={10}
                 title={t("health.numberOfPings")}
-                className={cn(input.base, input.state.default, input.size.md, "w-14 text-center")}
+                class={cn(input.base, input.state.default, input.size.md, "w-14 text-center")}
               />
               <button
                 type="button"
                 onClick={() => removePingTarget(target.id ?? "")}
-                className={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
                 aria-label={t("common.remove")}
               >
                 {t("common.remove")}
@@ -411,13 +411,13 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* TCP Ports */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.tcpPortTests")}</span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.tcpPortTests")}</span>
             <button
               type="button"
               onClick={addTcpPort}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
@@ -425,21 +425,21 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
           {testsSettings.tcpPorts.map((port) => (
             <div
               key={port.id || `${port.host}:${port.port}`}
-              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
             >
               <input
                 type="text"
                 value={port.name}
                 onChange={(e) => updateTcpPort(port.id ?? "", "name", e.target.value)}
                 placeholder={t("common.name")}
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                class={cn(input.base, input.state.default, input.size.md, "w-24")}
               />
               <input
                 type="text"
                 value={port.host}
                 onChange={(e) => updateTcpPort(port.id ?? "", "host", e.target.value)}
                 placeholder={t("common.host")}
-                className={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                class={cn(input.base, input.state.default, input.size.md, "flex-1")}
               />
               <input
                 type="number"
@@ -448,12 +448,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   updateTcpPort(port.id ?? "", "port", Number.parseInt(e.target.value, 10) || 80)
                 }
                 placeholder={t("common.port")}
-                className={cn(input.base, input.state.default, input.size.md, "w-20")}
+                class={cn(input.base, input.state.default, input.size.md, "w-20")}
               />
               <button
                 type="button"
                 onClick={() => removeTcpPort(port.id ?? "")}
-                className={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
                 aria-label={t("common.remove")}
               >
                 {t("common.remove")}
@@ -463,38 +463,38 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* UDP Ports */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.udpPortTests")}</span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.udpPortTests")}</span>
             <button
               type="button"
               onClick={addUdpPort}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+          <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
             {t("health.udpDescription")}
           </p>
           {testsSettings.udpPorts.map((port) => (
             <div
               key={port.id || `${port.host}:${port.port}`}
-              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
             >
               <input
                 type="text"
                 value={port.name}
                 onChange={(e) => updateUdpPort(port.id ?? "", "name", e.target.value)}
                 placeholder={t("common.name")}
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                class={cn(input.base, input.state.default, input.size.md, "w-24")}
               />
               <input
                 type="text"
                 value={port.host}
                 onChange={(e) => updateUdpPort(port.id ?? "", "host", e.target.value)}
                 placeholder={t("common.host")}
-                className={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                class={cn(input.base, input.state.default, input.size.md, "flex-1")}
               />
               <input
                 type="number"
@@ -503,12 +503,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   updateUdpPort(port.id ?? "", "port", Number.parseInt(e.target.value, 10) || 53)
                 }
                 placeholder={t("common.port")}
-                className={cn(input.base, input.state.default, input.size.md, "w-20")}
+                class={cn(input.base, input.state.default, input.size.md, "w-20")}
               />
               <button
                 type="button"
                 onClick={() => removeUdpPort(port.id ?? "")}
-                className={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
                 aria-label={t("common.remove")}
               >
                 {t("common.remove")}
@@ -518,13 +518,13 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* HTTP Endpoints */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.httpEndpoints")}</span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.httpEndpoints")}</span>
             <button
               type="button"
               onClick={addHttpEndpoint}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
@@ -532,7 +532,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
           {testsSettings.httpEndpoints.map((endpoint) => (
             <div
               key={endpoint.id || endpoint.url}
-              className={cn(
+              class={cn(
                 spacing.stack.xs,
                 spacing.margin.bottom.heading,
                 spacing.pad.xs,
@@ -540,13 +540,13 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 radius.default,
               )}
             >
-              <div className={cn("flex", spacing.gap.compact)}>
+              <div class={cn("flex", spacing.gap.compact)}>
                 <input
                   type="text"
                   value={endpoint.name}
                   onChange={(e) => updateHttpEndpoint(endpoint.id ?? "", "name", e.target.value)}
                   placeholder={t("common.name")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -564,7 +564,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     )
                   }
                   placeholder={t("health.status")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -574,7 +574,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 <button
                   type="button"
                   onClick={() => removeHttpEndpoint(endpoint.id ?? "")}
-                  className={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                  class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
                   aria-label={t("common.remove")}
                 >
                   {t("common.remove")}
@@ -585,14 +585,11 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 value={endpoint.url}
                 onChange={(e) => updateHttpEndpoint(endpoint.id ?? "", "url", e.target.value)}
                 placeholder="https://example.com/health"
-                className={cn(input.base, input.state.default, input.size.md, "bg-surface-raised")}
+                class={cn(input.base, input.state.default, input.size.md, "bg-surface-raised")}
               />
               {/* Criticality Slider */}
-              <div className={cn("flex items-center", spacing.gap.compact)}>
-                <label
-                  htmlFor={`http-criticality-${endpoint.id}`}
-                  className="caption text-text-muted w-28"
-                >
+              <div class={cn("flex items-center", spacing.gap.compact)}>
+                <label for={`http-criticality-${endpoint.id}`} class="caption text-text-muted w-28">
                   {t("health.criticality")}
                 </label>
                 <input
@@ -608,9 +605,9 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                       Number.parseInt(e.target.value, 10),
                     )
                   }
-                  className="flex-1 h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-brand-primary"
+                  class="flex-1 h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-brand-primary"
                 />
-                <span className="caption text-text-muted w-6 text-center">
+                <span class="caption text-text-muted w-6 text-center">
                   {endpoint.criticality ?? 5}
                 </span>
               </div>
@@ -619,24 +616,24 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* SQL Database Endpoints */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.sqlEndpoints")}</span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.sqlEndpoints")}</span>
             <button
               type="button"
               onClick={addSqlEndpoint}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+          <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
             {t("health.sqlDescription")}
           </p>
           {(testsSettings.sqlEndpoints ?? []).map((endpoint) => (
             <div
               key={endpoint.id}
-              className={cn(
+              class={cn(
                 spacing.stack.xs,
                 spacing.margin.bottom.heading,
                 spacing.pad.xs,
@@ -644,13 +641,13 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 radius.default,
               )}
             >
-              <div className={cn("flex", spacing.gap.compact)}>
+              <div class={cn("flex", spacing.gap.compact)}>
                 <input
                   type="text"
                   value={endpoint.name}
                   onChange={(e) => updateSqlEndpoint(endpoint.id ?? "", "name", e.target.value)}
                   placeholder={t("common.name")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -660,7 +657,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 <select
                   value={endpoint.driver}
                   onChange={(e) => updateSqlEndpoint(endpoint.id ?? "", "driver", e.target.value)}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -675,18 +672,18 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 <button
                   type="button"
                   onClick={() => removeSqlEndpoint(endpoint.id ?? "")}
-                  className={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                  class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
                 >
                   {t("common.remove")}
                 </button>
               </div>
-              <div className={cn("flex", spacing.gap.compact)}>
+              <div class={cn("flex", spacing.gap.compact)}>
                 <input
                   type="text"
                   value={endpoint.host}
                   onChange={(e) => updateSqlEndpoint(endpoint.id ?? "", "host", e.target.value)}
                   placeholder={t("common.host")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -704,7 +701,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     )
                   }
                   placeholder={t("common.port")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -712,13 +709,13 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   )}
                 />
               </div>
-              <div className={cn("flex", spacing.gap.compact)}>
+              <div class={cn("flex", spacing.gap.compact)}>
                 <input
                   type="text"
                   value={endpoint.database}
                   onChange={(e) => updateSqlEndpoint(endpoint.id ?? "", "database", e.target.value)}
                   placeholder={t("health.database")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -730,7 +727,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   value={endpoint.username}
                   onChange={(e) => updateSqlEndpoint(endpoint.id ?? "", "username", e.target.value)}
                   placeholder={t("health.username")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -743,40 +740,40 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* File Share Endpoints (SMB/NFS) */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">
               {t("health.fileShareEndpoints")}
             </span>
             <button
               type="button"
               onClick={addFileShareEndpoint}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+          <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
             {t("health.fileShareDescription")}
           </p>
           {(testsSettings.fileShareEndpoints ?? []).map((endpoint) => (
             <div
               key={endpoint.id}
-              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
             >
               <input
                 type="text"
                 value={endpoint.name}
                 onChange={(e) => updateFileShareEndpoint(endpoint.id ?? "", "name", e.target.value)}
                 placeholder={t("common.name")}
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                class={cn(input.base, input.state.default, input.size.md, "w-24")}
               />
               <select
                 value={endpoint.protocol}
                 onChange={(e) =>
                   updateFileShareEndpoint(endpoint.id ?? "", "protocol", e.target.value)
                 }
-                className={cn(input.base, input.state.default, input.size.md, "w-20")}
+                class={cn(input.base, input.state.default, input.size.md, "w-20")}
               >
                 <option value="smb">SMB</option>
                 <option value="nfs">NFS</option>
@@ -786,7 +783,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 value={endpoint.host}
                 onChange={(e) => updateFileShareEndpoint(endpoint.id ?? "", "host", e.target.value)}
                 placeholder={t("common.host")}
-                className={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                class={cn(input.base, input.state.default, input.size.md, "flex-1")}
               />
               <input
                 type="text"
@@ -795,12 +792,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   updateFileShareEndpoint(endpoint.id ?? "", "sharePath", e.target.value)
                 }
                 placeholder={t("health.sharePath")}
-                className={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                class={cn(input.base, input.state.default, input.size.md, "flex-1")}
               />
               <button
                 type="button"
                 onClick={() => removeFileShareEndpoint(endpoint.id ?? "")}
-                className={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
               >
                 {t("common.remove")}
               </button>
@@ -809,24 +806,24 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* LDAP Endpoints */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.ldapEndpoints")}</span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.ldapEndpoints")}</span>
             <button
               type="button"
               onClick={addLdapEndpoint}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+          <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
             {t("health.ldapDescription")}
           </p>
           {(testsSettings.ldapEndpoints ?? []).map((endpoint) => (
             <div
               key={endpoint.id}
-              className={cn(
+              class={cn(
                 spacing.stack.xs,
                 spacing.margin.bottom.heading,
                 spacing.pad.xs,
@@ -834,13 +831,13 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 radius.default,
               )}
             >
-              <div className={cn("flex", spacing.gap.compact)}>
+              <div class={cn("flex", spacing.gap.compact)}>
                 <input
                   type="text"
                   value={endpoint.name}
                   onChange={(e) => updateLdapEndpoint(endpoint.id ?? "", "name", e.target.value)}
                   placeholder={t("common.name")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -852,7 +849,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   value={endpoint.host}
                   onChange={(e) => updateLdapEndpoint(endpoint.id ?? "", "host", e.target.value)}
                   placeholder={t("common.host")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -870,7 +867,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     )
                   }
                   placeholder={t("common.port")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -880,18 +877,18 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 <button
                   type="button"
                   onClick={() => removeLdapEndpoint(endpoint.id ?? "")}
-                  className={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                  class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
                 >
                   {t("common.remove")}
                 </button>
               </div>
-              <div className={cn("flex items-center", spacing.gap.compact)}>
+              <div class={cn("flex items-center", spacing.gap.compact)}>
                 <input
                   type="text"
                   value={endpoint.baseDn}
                   onChange={(e) => updateLdapEndpoint(endpoint.id ?? "", "baseDn", e.target.value)}
                   placeholder={t("health.baseDn")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -899,11 +896,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   )}
                 />
                 <label
-                  className={cn(
-                    "flex items-center",
-                    spacing.gap.compact,
-                    "caption text-text-muted",
-                  )}
+                  class={cn("flex items-center", spacing.gap.compact, "caption text-text-muted")}
                 >
                   <input
                     type="checkbox"
@@ -920,43 +913,43 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* RTSP Video Endpoints */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.rtspEndpoints")}</span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.rtspEndpoints")}</span>
             <button
               type="button"
               onClick={addRtspEndpoint}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+          <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
             {t("health.rtspDescription")}
           </p>
           {(testsSettings.rtspEndpoints ?? []).map((endpoint) => (
             <div
               key={endpoint.id}
-              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
             >
               <input
                 type="text"
                 value={endpoint.name}
                 onChange={(e) => updateRtspEndpoint(endpoint.id ?? "", "name", e.target.value)}
                 placeholder={t("common.name")}
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                class={cn(input.base, input.state.default, input.size.md, "w-24")}
               />
               <input
                 type="text"
                 value={endpoint.url}
                 onChange={(e) => updateRtspEndpoint(endpoint.id ?? "", "url", e.target.value)}
                 placeholder="rtsp://host:554/stream"
-                className={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                class={cn(input.base, input.state.default, input.size.md, "flex-1")}
               />
               <button
                 type="button"
                 onClick={() => removeRtspEndpoint(endpoint.id ?? "")}
-                className={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
               >
                 {t("common.remove")}
               </button>
@@ -965,40 +958,38 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* DICOM Medical Imaging Endpoints */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">
-              {t("health.dicomEndpoints")}
-            </span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.dicomEndpoints")}</span>
             <button
               type="button"
               onClick={addDicomEndpoint}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+          <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
             {t("health.dicomDescription")}
           </p>
           {(testsSettings.dicomEndpoints ?? []).map((endpoint) => (
             <div
               key={endpoint.id}
-              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
             >
               <input
                 type="text"
                 value={endpoint.name}
                 onChange={(e) => updateDicomEndpoint(endpoint.id ?? "", "name", e.target.value)}
                 placeholder={t("common.name")}
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                class={cn(input.base, input.state.default, input.size.md, "w-24")}
               />
               <input
                 type="text"
                 value={endpoint.host}
                 onChange={(e) => updateDicomEndpoint(endpoint.id ?? "", "host", e.target.value)}
                 placeholder={t("common.host")}
-                className={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                class={cn(input.base, input.state.default, input.size.md, "flex-1")}
               />
               <input
                 type="number"
@@ -1011,19 +1002,19 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   )
                 }
                 placeholder="104"
-                className={cn(input.base, input.state.default, input.size.md, "w-20")}
+                class={cn(input.base, input.state.default, input.size.md, "w-20")}
               />
               <input
                 type="text"
                 value={endpoint.aeTitle}
                 onChange={(e) => updateDicomEndpoint(endpoint.id ?? "", "aeTitle", e.target.value)}
                 placeholder="AE Title"
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                class={cn(input.base, input.state.default, input.size.md, "w-24")}
               />
               <button
                 type="button"
                 onClick={() => removeDicomEndpoint(endpoint.id ?? "")}
-                className={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
               >
                 {t("common.remove")}
               </button>
@@ -1032,24 +1023,24 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* HL7 MLLP Endpoints */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.hl7Endpoints")}</span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.hl7Endpoints")}</span>
             <button
               type="button"
               onClick={addHl7Endpoint}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+          <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
             {t("health.hl7Description")}
           </p>
           {(testsSettings.hl7Endpoints ?? []).map((endpoint) => (
             <div
               key={endpoint.id}
-              className={cn(
+              class={cn(
                 spacing.stack.xs,
                 spacing.margin.bottom.heading,
                 spacing.pad.xs,
@@ -1057,13 +1048,13 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 radius.default,
               )}
             >
-              <div className={cn("flex", spacing.gap.compact)}>
+              <div class={cn("flex", spacing.gap.compact)}>
                 <input
                   type="text"
                   value={endpoint.name}
                   onChange={(e) => updateHl7Endpoint(endpoint.id ?? "", "name", e.target.value)}
                   placeholder={t("common.name")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -1075,7 +1066,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   value={endpoint.host}
                   onChange={(e) => updateHl7Endpoint(endpoint.id ?? "", "host", e.target.value)}
                   placeholder={t("common.host")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -1093,7 +1084,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     )
                   }
                   placeholder="2575"
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -1103,12 +1094,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 <button
                   type="button"
                   onClick={() => removeHl7Endpoint(endpoint.id ?? "")}
-                  className={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                  class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
                 >
                   {t("common.remove")}
                 </button>
               </div>
-              <div className={cn("flex", spacing.gap.compact)}>
+              <div class={cn("flex", spacing.gap.compact)}>
                 <input
                   type="text"
                   value={endpoint.sendingApp}
@@ -1116,7 +1107,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     updateHl7Endpoint(endpoint.id ?? "", "sendingApp", e.target.value)
                   }
                   placeholder={t("health.sendingApp")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -1130,7 +1121,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     updateHl7Endpoint(endpoint.id ?? "", "sendingFacility", e.target.value)
                   }
                   placeholder={t("health.sendingFacility")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -1138,7 +1129,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   )}
                 />
               </div>
-              <div className={cn("flex", spacing.gap.compact)}>
+              <div class={cn("flex", spacing.gap.compact)}>
                 <input
                   type="text"
                   value={endpoint.receivingApp}
@@ -1146,7 +1137,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     updateHl7Endpoint(endpoint.id ?? "", "receivingApp", e.target.value)
                   }
                   placeholder={t("health.receivingApp")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -1160,7 +1151,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     updateHl7Endpoint(endpoint.id ?? "", "receivingFacility", e.target.value)
                   }
                   placeholder={t("health.receivingFacility")}
-                  className={cn(
+                  class={cn(
                     input.base,
                     input.state.default,
                     input.size.md,
@@ -1173,43 +1164,43 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* FHIR R4 Endpoints */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.fhirEndpoints")}</span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.fhirEndpoints")}</span>
             <button
               type="button"
               onClick={addFhirEndpoint}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+          <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
             {t("health.fhirDescription")}
           </p>
           {(testsSettings.fhirEndpoints ?? []).map((endpoint) => (
             <div
               key={endpoint.id}
-              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
             >
               <input
                 type="text"
                 value={endpoint.name}
                 onChange={(e) => updateFhirEndpoint(endpoint.id ?? "", "name", e.target.value)}
                 placeholder={t("common.name")}
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                class={cn(input.base, input.state.default, input.size.md, "w-24")}
               />
               <input
                 type="text"
                 value={endpoint.baseUrl}
                 onChange={(e) => updateFhirEndpoint(endpoint.id ?? "", "baseUrl", e.target.value)}
                 placeholder="https://fhir.example.com/r4"
-                className={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                class={cn(input.base, input.state.default, input.size.md, "flex-1")}
               />
               <select
                 value={endpoint.authType}
                 onChange={(e) => updateFhirEndpoint(endpoint.id ?? "", "authType", e.target.value)}
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                class={cn(input.base, input.state.default, input.size.md, "w-24")}
               >
                 <option value="none">None</option>
                 <option value="basic">Basic</option>
@@ -1218,7 +1209,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               <button
                 type="button"
                 onClick={() => removeFhirEndpoint(endpoint.id ?? "")}
-                className={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
               >
                 {t("common.remove")}
               </button>
@@ -1227,38 +1218,38 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* LTI/LMS Education Endpoints */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.ltiEndpoints")}</span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.ltiEndpoints")}</span>
             <button
               type="button"
               onClick={addLtiEndpoint}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+          <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
             {t("health.ltiDescription")}
           </p>
           {(testsSettings.ltiEndpoints ?? []).map((endpoint) => (
             <div
               key={endpoint.id}
-              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
             >
               <input
                 type="text"
                 value={endpoint.name}
                 onChange={(e) => updateLtiEndpoint(endpoint.id ?? "", "name", e.target.value)}
                 placeholder={t("common.name")}
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                class={cn(input.base, input.state.default, input.size.md, "w-24")}
               />
               <input
                 type="text"
                 value={endpoint.launchUrl}
                 onChange={(e) => updateLtiEndpoint(endpoint.id ?? "", "launchUrl", e.target.value)}
                 placeholder="https://lms.example.com/lti/launch"
-                className={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                class={cn(input.base, input.state.default, input.size.md, "flex-1")}
               />
               <input
                 type="text"
@@ -1267,12 +1258,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   updateLtiEndpoint(endpoint.id ?? "", "consumerKey", e.target.value)
                 }
                 placeholder={t("health.consumerKey")}
-                className={cn(input.base, input.state.default, input.size.md, "w-32")}
+                class={cn(input.base, input.state.default, input.size.md, "w-32")}
               />
               <button
                 type="button"
                 onClick={() => removeLtiEndpoint(endpoint.id ?? "")}
-                className={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
               >
                 {t("common.remove")}
               </button>
@@ -1281,33 +1272,31 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* OPC-UA Industrial Endpoints */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">
-              {t("health.opcuaEndpoints")}
-            </span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.opcuaEndpoints")}</span>
             <button
               type="button"
               onClick={addOpcuaEndpoint}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+          <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
             {t("health.opcuaDescription")}
           </p>
           {(testsSettings.opcuaEndpoints ?? []).map((endpoint) => (
             <div
               key={endpoint.id}
-              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
             >
               <input
                 type="text"
                 value={endpoint.name}
                 onChange={(e) => updateOpcuaEndpoint(endpoint.id ?? "", "name", e.target.value)}
                 placeholder={t("common.name")}
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                class={cn(input.base, input.state.default, input.size.md, "w-24")}
               />
               <input
                 type="text"
@@ -1316,14 +1305,14 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   updateOpcuaEndpoint(endpoint.id ?? "", "endpointUrl", e.target.value)
                 }
                 placeholder="opc.tcp://host:4840"
-                className={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                class={cn(input.base, input.state.default, input.size.md, "flex-1")}
               />
               <select
                 value={endpoint.securityMode}
                 onChange={(e) =>
                   updateOpcuaEndpoint(endpoint.id ?? "", "securityMode", e.target.value)
                 }
-                className={cn(input.base, input.state.default, input.size.md, "w-32")}
+                class={cn(input.base, input.state.default, input.size.md, "w-32")}
               >
                 <option value="None">None</option>
                 <option value="Sign">Sign</option>
@@ -1332,7 +1321,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               <button
                 type="button"
                 onClick={() => removeOpcuaEndpoint(endpoint.id ?? "")}
-                className={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
               >
                 {t("common.remove")}
               </button>
@@ -1341,40 +1330,38 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* Modbus TCP Industrial Endpoints */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">
-              {t("health.modbusEndpoints")}
-            </span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.modbusEndpoints")}</span>
             <button
               type="button"
               onClick={addModbusEndpoint}
-              className="caption text-brand-primary hover:text-brand-accent"
+              class="caption text-brand-primary hover:text-brand-accent"
             >
               {t("common.add")}
             </button>
           </div>
-          <p className={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+          <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
             {t("health.modbusDescription")}
           </p>
           {(testsSettings.modbusEndpoints ?? []).map((endpoint) => (
             <div
               key={endpoint.id}
-              className={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
             >
               <input
                 type="text"
                 value={endpoint.name}
                 onChange={(e) => updateModbusEndpoint(endpoint.id ?? "", "name", e.target.value)}
                 placeholder={t("common.name")}
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                class={cn(input.base, input.state.default, input.size.md, "w-24")}
               />
               <input
                 type="text"
                 value={endpoint.host}
                 onChange={(e) => updateModbusEndpoint(endpoint.id ?? "", "host", e.target.value)}
                 placeholder={t("common.host")}
-                className={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                class={cn(input.base, input.state.default, input.size.md, "flex-1")}
               />
               <input
                 type="number"
@@ -1387,7 +1374,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                   )
                 }
                 placeholder="502"
-                className={cn(input.base, input.state.default, input.size.md, "w-20")}
+                class={cn(input.base, input.state.default, input.size.md, "w-20")}
               />
               <input
                 type="number"
@@ -1401,7 +1388,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 }
                 placeholder="Unit"
                 title={t("health.unitId")}
-                className={cn(input.base, input.state.default, input.size.md, "w-16")}
+                class={cn(input.base, input.state.default, input.size.md, "w-16")}
               />
               <input
                 type="number"
@@ -1415,12 +1402,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                 }
                 placeholder="Reg"
                 title={t("health.testRegister")}
-                className={cn(input.base, input.state.default, input.size.md, "w-16")}
+                class={cn(input.base, input.state.default, input.size.md, "w-16")}
               />
               <button
                 type="button"
                 onClick={() => removeModbusEndpoint(endpoint.id ?? "")}
-                className={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
               >
                 {t("common.remove")}
               </button>
@@ -1429,13 +1416,13 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
         </div>
 
         {/* SLA Configuration */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.slaConfig")}</span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.slaConfig")}</span>
           </div>
-          <div className={spacing.stack.xs}>
+          <div class={spacing.stack.xs}>
             <label
-              className={cn(
+              class={cn(
                 layout.flex.between,
                 spacing.pad.sm,
                 "bg-surface-base border border-surface-border",
@@ -1443,10 +1430,10 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               )}
             >
               <div>
-                <span className="body-small text-text-primary font-medium">
+                <span class="body-small text-text-primary font-medium">
                   {t("health.enableSla")}
                 </span>
-                <p className="caption text-text-muted">{t("health.slaDescription")}</p>
+                <p class="caption text-text-muted">{t("health.slaDescription")}</p>
               </div>
               <input
                 type="checkbox"
@@ -1467,11 +1454,11 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     ],
                   }))
                 }
-                className={iconTokens.size.sm}
+                class={iconTokens.size.sm}
               />
             </label>
-            <div className={cn("flex items-center", spacing.gap.compact)}>
-              <label htmlFor="sla-target-uptime" className="caption text-text-muted w-32">
+            <div class={cn("flex items-center", spacing.gap.compact)}>
+              <label for="sla-target-uptime" class="caption text-text-muted w-32">
                 {t("health.targetUptime")}
               </label>
               <input
@@ -1497,12 +1484,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     ],
                   }))
                 }
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                class={cn(input.base, input.state.default, input.size.md, "w-24")}
               />
-              <span className="caption text-text-muted">%</span>
+              <span class="caption text-text-muted">%</span>
             </div>
-            <div className={cn("flex items-center", spacing.gap.compact)}>
-              <label htmlFor="sla-target-latency" className="caption text-text-muted w-32">
+            <div class={cn("flex items-center", spacing.gap.compact)}>
+              <label for="sla-target-latency" class="caption text-text-muted w-32">
                 {t("health.targetLatency")}
               </label>
               <input
@@ -1528,21 +1515,21 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     ],
                   }))
                 }
-                className={cn(input.base, input.state.default, input.size.md, "w-24")}
+                class={cn(input.base, input.state.default, input.size.md, "w-24")}
               />
-              <span className="caption text-text-muted">ms (P95)</span>
+              <span class="caption text-text-muted">ms (P95)</span>
             </div>
           </div>
         </div>
 
         {/* Alert Configuration */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.alertConfig")}</span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.alertConfig")}</span>
           </div>
-          <div className={spacing.stack.xs}>
+          <div class={spacing.stack.xs}>
             <label
-              className={cn(
+              class={cn(
                 layout.flex.between,
                 spacing.pad.xs,
                 "bg-surface-base border border-surface-border",
@@ -1550,10 +1537,10 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               )}
             >
               <div>
-                <span className="body-small text-text-primary font-medium">
+                <span class="body-small text-text-primary font-medium">
                   {t("health.enableAlerts")}
                 </span>
-                <p className="caption text-text-muted">{t("health.alertsDescription")}</p>
+                <p class="caption text-text-muted">{t("health.alertsDescription")}</p>
               </div>
               <input
                 type="checkbox"
@@ -1572,15 +1559,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     },
                   }))
                 }
-                className={iconTokens.size.sm}
+                class={iconTokens.size.sm}
               />
             </label>
 
-            <div className={cn("flex items-center", spacing.gap.compact)}>
-              <label
-                htmlFor="alert-consecutive-failures"
-                className="caption text-text-muted flex-1"
-              >
+            <div class={cn("flex items-center", spacing.gap.compact)}>
+              <label for="alert-consecutive-failures" class="caption text-text-muted flex-1">
                 {t("health.consecutiveFailures")}
               </label>
               <input
@@ -1603,12 +1587,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     },
                   }))
                 }
-                className={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
+                class={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
               />
             </div>
 
-            <div className={cn("flex items-center", spacing.gap.compact)}>
-              <label htmlFor="alert-cooldown-minutes" className="caption text-text-muted flex-1">
+            <div class={cn("flex items-center", spacing.gap.compact)}>
+              <label for="alert-cooldown-minutes" class="caption text-text-muted flex-1">
                 {t("health.cooldownMinutes")}
               </label>
               <input
@@ -1631,12 +1615,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     },
                   }))
                 }
-                className={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
+                class={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
               />
             </div>
 
             <label
-              className={cn(
+              class={cn(
                 layout.flex.between,
                 spacing.pad.xs,
                 "bg-surface-base border border-surface-border",
@@ -1644,10 +1628,10 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               )}
             >
               <div>
-                <span className="body-small text-text-primary font-medium">
+                <span class="body-small text-text-primary font-medium">
                   {t("health.digestMode")}
                 </span>
-                <p className="caption text-text-muted">{t("health.digestDescription")}</p>
+                <p class="caption text-text-muted">{t("health.digestDescription")}</p>
               </div>
               <input
                 type="checkbox"
@@ -1666,20 +1650,20 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     },
                   }))
                 }
-                className={iconTokens.size.sm}
+                class={iconTokens.size.sm}
               />
             </label>
           </div>
         </div>
 
         {/* Anomaly Detection Configuration */}
-        <div className={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <span className="caption text-text-muted font-medium">{t("health.anomalyConfig")}</span>
+        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t("health.anomalyConfig")}</span>
           </div>
-          <div className={spacing.stack.xs}>
+          <div class={spacing.stack.xs}>
             <label
-              className={cn(
+              class={cn(
                 layout.flex.between,
                 spacing.pad.xs,
                 "bg-surface-base border border-surface-border",
@@ -1687,10 +1671,10 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
               )}
             >
               <div>
-                <span className="body-small text-text-primary font-medium">
+                <span class="body-small text-text-primary font-medium">
                   {t("health.enableAnomaly")}
                 </span>
-                <p className="caption text-text-muted">{t("health.anomalyDescription")}</p>
+                <p class="caption text-text-muted">{t("health.anomalyDescription")}</p>
               </div>
               <input
                 type="checkbox"
@@ -1708,12 +1692,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     },
                   }))
                 }
-                className={iconTokens.size.sm}
+                class={iconTokens.size.sm}
               />
             </label>
 
-            <div className={cn("flex items-center", spacing.gap.compact)}>
-              <label htmlFor="anomaly-std-dev-threshold" className="caption text-text-muted flex-1">
+            <div class={cn("flex items-center", spacing.gap.compact)}>
+              <label for="anomaly-std-dev-threshold" class="caption text-text-muted flex-1">
                 {t("health.stdDevThreshold")}
               </label>
               <input
@@ -1736,12 +1720,12 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     },
                   }))
                 }
-                className={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
+                class={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
               />
             </div>
 
-            <div className={cn("flex items-center", spacing.gap.compact)}>
-              <label htmlFor="anomaly-max-samples" className="caption text-text-muted flex-1">
+            <div class={cn("flex items-center", spacing.gap.compact)}>
+              <label for="anomaly-max-samples" class="caption text-text-muted flex-1">
                 {t("health.maxSamples")}
               </label>
               <input
@@ -1764,7 +1748,7 @@ export const HealthChecksSettings = memo(function HealthChecksSettings({
                     },
                   }))
                 }
-                className={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
+                class={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
               />
             </div>
           </div>

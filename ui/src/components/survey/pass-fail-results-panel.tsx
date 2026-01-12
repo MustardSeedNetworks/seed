@@ -73,7 +73,7 @@ function getResultStatus(result: PassFailResult): {
 }
 
 /** Render comparison operator symbol */
-function ComparisonDisplay({
+function _comparisonDisplay({
   comparison,
   threshold,
   suffix,
@@ -84,7 +84,7 @@ function ComparisonDisplay({
 }) {
   const symbol = comparison === "gte" ? "\u2265" : "\u2264";
   return (
-    <span className="text-text-muted">
+    <span class="text-text-muted">
       ({symbol}
       {threshold}
       {suffix ? ` ${suffix}` : ""})
@@ -93,34 +93,34 @@ function ComparisonDisplay({
 }
 
 /** Render trend indicator based on comparison type and values */
-function TrendIndicator({ result }: { result: PassFailResult }) {
+function _trendIndicator({ result }: { result: PassFailResult }) {
   const { averageValue, threshold, comparison } = result;
   const diff = averageValue - threshold;
   const isGood = comparison === "gte" ? diff >= 0 : diff <= 0;
   const margin = Math.abs(diff);
 
   if (margin < 0.1) {
-    return <Minus className="w-3 h-3 text-text-muted" />;
+    return <Minus class="w-3 h-3 text-text-muted" />;
   }
 
   if (isGood) {
-    return <TrendUp className="w-3 h-3 text-status-success" />;
+    return <trendUp class="w-3 h-3 text-status-success" />;
   }
-  return <TrendDown className="w-3 h-3 text-status-error" />;
+  return <trendDown class="w-3 h-3 text-status-error" />;
 }
 
-function TrendUp({ className }: { className?: string }) {
-  return <TrendingUp className={className} />;
+function _trendUp({ className }: { className?: string }) {
+  return <TrendingUp class={className} />;
 }
 
-function TrendDown({ className }: { className?: string }) {
-  return <TrendingDown className={className} />;
+function _trendDown({ className }: { className?: string }) {
+  return <TrendingDown class={className} />;
 }
 
 /**
  * A single result row showing criterion pass/fail status
  */
-function ResultRow({
+function _resultRow({
   result,
   onShowLocations,
   t,
@@ -129,11 +129,11 @@ function ResultRow({
   onShowLocations?: () => void;
   t: (key: string, options?: Record<string, unknown>) => string;
 }) {
-  const { icon: Icon, colorClass, bgClass } = getResultStatus(result);
+  const { icon: ICON, colorClass, bgClass } = getResultStatus(result);
 
   return (
     <div
-      className={cn(
+      class={cn(
         spacing.pad.sm,
         radius.md,
         bgClass,
@@ -141,18 +141,18 @@ function ResultRow({
       )}
     >
       {/* Header row */}
-      <div className={cn(layout.inline.default, "justify-between")}>
-        <div className={layout.inline.tight}>
-          <Icon className={cn(iconTokens.size.sm, colorClass)} />
-          <span className="body-small font-medium">
+      <div class={cn(layout.inline.default, "justify-between")}>
+        <div class={layout.inline.tight}>
+          <ICON class={cn(iconTokens.size.sm, colorClass)} />
+          <span class="body-small font-medium">
             {t(`criteria.${result.criterionName}` as never)}
           </span>
         </div>
-        <div className={layout.inline.tight}>
-          <span className={cn("body-small font-medium", colorClass)}>
+        <div class={layout.inline.tight}>
+          <span class={cn("body-small font-medium", colorClass)}>
             {result.averageValue.toFixed(1)} {result.suffix}
           </span>
-          <ComparisonDisplay
+          <comparisonDisplay
             comparison={result.comparison}
             threshold={result.threshold}
             suffix={result.suffix}
@@ -161,18 +161,18 @@ function ResultRow({
       </div>
 
       {/* Statistics row */}
-      <div className={cn(layout.inline.default, "justify-between mt-1 text-text-muted")}>
-        <div className={layout.inline.tight}>
-          <span className="caption">
+      <div class={cn(layout.inline.default, "justify-between mt-1 text-text-muted")}>
+        <div class={layout.inline.tight}>
+          <span class="caption">
             {t("criteria.passRate")}: {result.percentage.toFixed(1)}%
           </span>
-          <span className="caption">
+          <span class="caption">
             ({result.totalSampleCount - result.failedSampleCount}/{result.totalSampleCount})
           </span>
         </div>
-        <div className={layout.inline.tight}>
-          <TrendIndicator result={result} />
-          <span className="caption">
+        <div class={layout.inline.tight}>
+          <trendIndicator result={result} />
+          <span class="caption">
             {t("criteria.range")}: {result.worstValue.toFixed(1)} - {result.bestValue.toFixed(1)}
           </span>
         </div>
@@ -183,15 +183,15 @@ function ResultRow({
         <button
           type="button"
           onClick={onShowLocations}
-          className={cn(layout.inline.tight, "mt-1 caption text-brand-primary hover:underline")}
+          class={cn(layout.inline.tight, "mt-1 caption text-brand-primary hover:underline")}
         >
-          <MapPin className="w-3 h-3" />
+          <MapPin class="w-3 h-3" />
           <span>
             {t("criteria.failedLocations", {
               count: result.failedSampleCount,
             })}
           </span>
-          <ChevronRight className="w-3 h-3" />
+          <ChevronRight class="w-3 h-3" />
         </button>
       )}
     </div>
@@ -201,7 +201,7 @@ function ResultRow({
 /**
  * Overall status banner
  */
-function StatusBanner({
+function _statusBanner({
   validation,
   t,
 }: {
@@ -225,11 +225,11 @@ function StatusBanner({
         label: t("criteria.statusFail"),
       };
 
-  const Icon = statusConfig.icon;
+  const ICON = statusConfig.icon;
 
   return (
     <div
-      className={cn(
+      class={cn(
         spacing.pad.default,
         radius.md,
         statusConfig.bgClass,
@@ -237,14 +237,14 @@ function StatusBanner({
         spacing.margin.bottom.content,
       )}
     >
-      <div className={cn(layout.inline.default, "justify-between")}>
-        <div className={layout.inline.default}>
-          <Icon className={cn(iconTokens.size.md, statusConfig.colorClass)} />
+      <div class={cn(layout.inline.default, "justify-between")}>
+        <div class={layout.inline.default}>
+          <ICON class={cn(iconTokens.size.md, statusConfig.colorClass)} />
           <div>
-            <h3 className={cn("body-default font-semibold", statusConfig.colorClass)}>
+            <h3 class={cn("body-default font-semibold", statusConfig.colorClass)}>
               {statusConfig.label}
             </h3>
-            <p className="caption text-text-muted">
+            <p class="caption text-text-muted">
               {t("criteria.summary", {
                 passed: passedCount,
                 total: totalCount,
@@ -253,11 +253,11 @@ function StatusBanner({
             </p>
           </div>
         </div>
-        <div className="text-right">
-          <span className={cn("heading-3", statusConfig.colorClass)}>
+        <div class="text-right">
+          <span class={cn("heading-3", statusConfig.colorClass)}>
             {overallPercentage.toFixed(0)}%
           </span>
-          <p className="caption text-text-muted">
+          <p class="caption text-text-muted">
             {passedCount}/{totalCount} {t("criteria.criteriaPassed")}
           </p>
         </div>
@@ -297,21 +297,19 @@ export function PassFailResultsPanel({
   };
 
   return (
-    <div
-      className={cn("bg-surface-raised", radius.md, "border border-surface-border", spacing.pad.sm)}
-    >
+    <div class={cn("bg-surface-raised", radius.md, "border border-surface-border", spacing.pad.sm)}>
       {/* Status banner */}
-      <StatusBanner validation={validation} t={t} />
+      <statusBanner validation={validation} t={t} />
 
       {/* Failed criteria (show first) */}
       {failed.length > 0 && (
-        <div className={spacing.margin.bottom.content}>
-          <h4 className="caption font-medium text-status-error mb-2">
+        <div class={spacing.margin.bottom.content}>
+          <h4 class="caption font-medium text-status-error mb-2">
             {t("criteria.failedCriteria")} ({failed.length})
           </h4>
-          <div className={layout.stack.tight}>
+          <div class={layout.stack.tight}>
             {failed.map((result) => (
-              <ResultRow
+              <resultRow
                 key={result.criterionId}
                 result={result}
                 onShowLocations={() => handleShowLocations(result)}
@@ -324,34 +322,32 @@ export function PassFailResultsPanel({
 
       {/* Passed criteria */}
       {passed.length > 0 && (
-        <div className={spacing.margin.bottom.content}>
-          <h4 className="caption font-medium text-status-success mb-2">
+        <div class={spacing.margin.bottom.content}>
+          <h4 class="caption font-medium text-status-success mb-2">
             {t("criteria.passedCriteria")} ({passed.length})
           </h4>
-          <div className={layout.stack.tight}>
+          <div class={layout.stack.tight}>
             {passed.map((result) => (
-              <ResultRow key={result.criterionId} result={result} t={t} />
+              <resultRow key={result.criterionId} result={result} t={t} />
             ))}
           </div>
         </div>
       )}
 
       {/* Timestamp */}
-      <p className="caption text-text-muted text-center mb-3">
+      <p class="caption text-text-muted text-center mb-3">
         {t("criteria.validatedAt", {
           time: new Date(validation.timestamp).toLocaleString(),
         })}
       </p>
 
       {/* Actions */}
-      <div
-        className={cn(layout.inline.default, "justify-center pt-2 border-t border-surface-border")}
-      >
+      <div class={cn(layout.inline.default, "justify-center pt-2 border-t border-surface-border")}>
         {onGenerateReport && (
           <button
             type="button"
             onClick={onGenerateReport}
-            className={cn(
+            class={cn(
               button.size.sm,
               "bg-brand-primary text-text-inverse",
               radius.md,
@@ -359,7 +355,7 @@ export function PassFailResultsPanel({
               layout.inline.tight,
             )}
           >
-            <FileText className="w-3 h-3" />
+            <FileText class="w-3 h-3" />
             <span>{t("criteria.generateReport")}</span>
           </button>
         )}
@@ -367,7 +363,7 @@ export function PassFailResultsPanel({
           <button
             type="button"
             onClick={onExportCsv}
-            className={cn(
+            class={cn(
               button.size.sm,
               "bg-surface-default border border-surface-border",
               radius.md,
@@ -375,7 +371,7 @@ export function PassFailResultsPanel({
               layout.inline.tight,
             )}
           >
-            <Download className="w-3 h-3" />
+            <Download class="w-3 h-3" />
             <span>{t("criteria.exportCsv")}</span>
           </button>
         )}

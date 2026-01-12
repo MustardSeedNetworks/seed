@@ -53,7 +53,9 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
 
   // Filter profiles by search
   const filteredProfiles = useMemo(() => {
-    if (!searchQuery.trim()) return profiles;
+    if (!searchQuery.trim()) {
+      return profiles;
+    }
     const query = searchQuery.toLowerCase();
     return profiles.filter(
       (p) => p.name.toLowerCase().includes(query) || p.description?.toLowerCase().includes(query),
@@ -137,9 +139,9 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
   return (
     <>
       {/* Modal overlay */}
-      <div className={modal.overlay}>
+      <div class={modal.overlay}>
         {/* Backdrop */}
-        <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
+        <div class={modal.backdrop} onClick={onClose} aria-hidden="true" />
 
         {/* Modal content */}
         <div
@@ -147,22 +149,22 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
           role="dialog"
           aria-modal="true"
           aria-labelledby="profile-modal-title"
-          className={cn("relative", modal.content, modal.size.lg, "flex flex-col")}
+          class={cn("relative", modal.content, modal.size.lg, "flex flex-col")}
           style={{ maxHeight: "85vh" }}
         >
           {/* Header */}
           <div
-            className={cn(
+            class={cn(
               layout.flex.between,
               spacing.pad.lg,
               "border-b border-surface-border shrink-0",
             )}
           >
             <div>
-              <h2 id="profile-modal-title" className="heading-2">
+              <h2 id="profile-modal-title" class="heading-2">
                 {t("profile.management", "Profile Management")}
               </h2>
-              <p className="body-small text-text-muted mt-1">
+              <p class="body-small text-text-muted mt-1">
                 {t("profile.managementDesc", "Create and manage client-specific configurations")}
               </p>
             </div>
@@ -170,7 +172,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
               type="button"
               ref={closeButtonRef}
               onClick={onClose}
-              className={cn(
+              class={cn(
                 "p-2",
                 radius.md,
                 "hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary",
@@ -178,7 +180,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
               aria-label={t("common.close", "Close")}
             >
               <svg
-                className={iconTokens.size.lg}
+                class={iconTokens.size.lg}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -196,7 +198,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
 
           {/* Actions bar */}
           <div
-            className={cn(
+            class={cn(
               spacing.pad.default,
               "border-b border-surface-border bg-surface-base flex items-center gap-2 shrink-0",
             )}
@@ -204,7 +206,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
             <button
               type="button"
               onClick={handleCreate}
-              className={cn(
+              class={cn(
                 spacing.pad.sm,
                 "px-4",
                 radius.md,
@@ -212,7 +214,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
               )}
             >
               <svg
-                className="w-4 h-4"
+                class="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -230,7 +232,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
             <button
               type="button"
               onClick={handleExport}
-              className={cn(
+              class={cn(
                 spacing.pad.sm,
                 "px-4",
                 radius.md,
@@ -239,7 +241,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
               title={t("profile.export", "Export All")}
             >
               <svg
-                className="w-4 h-4"
+                class="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -256,9 +258,9 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
             </button>
 
             {/* Search bar */}
-            <div className="relative flex-1 ml-4">
+            <div class="relative flex-1 ml-4">
               <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
+                class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -276,7 +278,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
                 placeholder={t("profile.searchPlaceholder", "Search profiles...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={cn(
+                class={cn(
                   "w-full pl-9 pr-4 py-2",
                   radius.md,
                   "border border-surface-border bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary body-small",
@@ -288,7 +290,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
           {/* Error message */}
           {error && (
             <div
-              className={cn(
+              class={cn(
                 "mx-4 mt-4",
                 spacing.pad.sm,
                 radius.md,
@@ -300,22 +302,20 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
           )}
 
           {/* Scrollable content */}
-          <div className={cn(spacing.pad.lg, "overflow-y-auto flex-1")}>
+          <div class={cn(spacing.pad.lg, "overflow-y-auto flex-1")}>
             {/* Loading state */}
             {isLoading && profiles.length === 0 && (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary" />
-                <p className="mt-3 body-small text-text-muted">
-                  {t("common.loading", "Loading...")}
-                </p>
+              <div class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary" />
+                <p class="mt-3 body-small text-text-muted">{t("common.loading", "Loading...")}</p>
               </div>
             )}
 
             {/* Profile grid */}
             {!isLoading && filteredProfiles.length === 0 ? (
-              <div className="text-center py-12">
+              <div class="text-center py-12">
                 <svg
-                  className="mx-auto w-16 h-16 text-text-muted mb-4"
+                  class="mx-auto w-16 h-16 text-text-muted mb-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -328,12 +328,12 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
                     d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
                   />
                 </svg>
-                <h3 className="body font-medium text-text-primary mb-2">
+                <h3 class="body font-medium text-text-primary mb-2">
                   {searchQuery
                     ? t("profile.noResults", "No profiles found")
                     : t("profile.noProfiles", "No profiles yet")}
                 </h3>
-                <p className="body-small text-text-muted mb-6">
+                <p class="body-small text-text-muted mb-6">
                   {searchQuery
                     ? t("profile.noResultsDesc", "Try adjusting your search criteria")
                     : t("profile.noProfilesDesc", "Create your first profile to get started")}
@@ -342,7 +342,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
                   <button
                     type="button"
                     onClick={handleCreate}
-                    className={cn(
+                    class={cn(
                       spacing.pad.sm,
                       "px-4",
                       radius.md,
@@ -354,9 +354,9 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredProfiles.map((profile) => (
-                  <ProfileCard
+                  <profileCard
                     key={profile.id}
                     profile={profile}
                     isActive={profile.id === activeProfile?.id}
@@ -384,7 +384,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps) {
 
       {/* Delete confirmation modal */}
       {deleteConfirm && (
-        <DeleteConfirmModal
+        <deleteConfirmModal
           profileName={profiles.find((p) => p.id === deleteConfirm)?.name || ""}
           onConfirm={() => handleDelete(deleteConfirm)}
           onCancel={() => setDeleteConfirm(null)}
@@ -408,7 +408,7 @@ interface ProfileCardProps {
   onSetActive: () => void;
 }
 
-function ProfileCard({
+function _profileCard({
   profile,
   isActive,
   onEdit,
@@ -420,7 +420,7 @@ function ProfileCard({
 
   return (
     <div
-      className={cn(
+      class={cn(
         radius.lg,
         "border",
         isActive ? "border-brand-primary ring-2 ring-brand-primary/20" : "border-surface-border",
@@ -428,40 +428,40 @@ function ProfileCard({
       )}
     >
       {/* Card content */}
-      <div className={cn(spacing.pad.default)}>
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="body-small font-medium text-text-primary truncate">{profile.name}</h3>
+      <div class={cn(spacing.pad.default)}>
+        <div class="flex items-start justify-between mb-2">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="body-small font-medium text-text-primary truncate">{profile.name}</h3>
               {profile.is_default && (
-                <span className="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary font-medium">
+                <span class="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary font-medium">
                   {t("profile.default", "Default")}
                 </span>
               )}
               {isActive && (
-                <span className="caption px-1.5 py-0.5 rounded bg-status-success/10 text-status-success font-medium">
+                <span class="caption px-1.5 py-0.5 rounded bg-status-success/10 text-status-success font-medium">
                   {t("profile.active", "Active")}
                 </span>
               )}
             </div>
             {profile.description && (
-              <p className="caption text-text-muted mt-1 line-clamp-2">{profile.description}</p>
+              <p class="caption text-text-muted mt-1 line-clamp-2">{profile.description}</p>
             )}
           </div>
         </div>
 
         {/* Updated date */}
-        <p className="caption text-text-muted mb-3">
+        <p class="caption text-text-muted mb-3">
           {t("profile.updated", "Updated")} {new Date(profile.updated_at).toLocaleDateString()}
         </p>
 
         {/* Action buttons - always visible */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div class="flex items-center gap-2 flex-wrap">
           {/* Edit button */}
           <button
             type="button"
             onClick={onEdit}
-            className={cn(
+            class={cn(
               spacing.chip.sm,
               radius.md,
               "border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5",
@@ -469,7 +469,7 @@ function ProfileCard({
             title={t("common.edit", "Edit")}
           >
             <svg
-              className="w-3.5 h-3.5"
+              class="w-3.5 h-3.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -489,7 +489,7 @@ function ProfileCard({
           <button
             type="button"
             onClick={onDuplicate}
-            className={cn(
+            class={cn(
               spacing.chip.sm,
               radius.md,
               "border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5",
@@ -497,7 +497,7 @@ function ProfileCard({
             title={t("common.clone", "Clone")}
           >
             <svg
-              className="w-3.5 h-3.5"
+              class="w-3.5 h-3.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -514,11 +514,11 @@ function ProfileCard({
           </button>
 
           {/* Delete button - only if not default and not active */}
-          {!profile.is_default && !isActive && (
+          {!(profile.is_default || isActive) && (
             <button
               type="button"
               onClick={onDelete}
-              className={cn(
+              class={cn(
                 spacing.chip.sm,
                 radius.md,
                 "border border-status-error/30 bg-status-error/5 hover:bg-status-error/10 text-status-error caption font-medium flex items-center gap-1.5",
@@ -526,7 +526,7 @@ function ProfileCard({
               title={t("common.delete", "Delete")}
             >
               <svg
-                className="w-3.5 h-3.5"
+                class="w-3.5 h-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -548,7 +548,7 @@ function ProfileCard({
             <button
               type="button"
               onClick={onSetActive}
-              className={cn(
+              class={cn(
                 spacing.chip.sm,
                 radius.md,
                 "bg-brand-primary hover:bg-brand-primary-hover text-text-inverse caption font-medium flex items-center gap-1.5 ml-auto",
@@ -556,7 +556,7 @@ function ProfileCard({
               title={t("profile.activate", "Activate")}
             >
               <svg
-                className="w-3.5 h-3.5"
+                class="w-3.5 h-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -589,7 +589,7 @@ interface DeleteConfirmModalProps {
   isLoading: boolean;
 }
 
-function DeleteConfirmModal({
+function _deleteConfirmModal({
   profileName,
   onConfirm,
   onCancel,
@@ -599,25 +599,25 @@ function DeleteConfirmModal({
 
   return (
     // z-60 required: nested modal must appear above parent modal (z-50)
-    <div className={cn(modal.overlay, "z-60")}>
-      <div className={modal.backdrop} onClick={onCancel} aria-hidden="true" />
-      <div className={cn("relative", modal.content, modal.size.sm, modal.padding.md)}>
-        <h3 className="heading-2 text-text-primary mb-2">
+    <div class={cn(modal.overlay, "z-60")}>
+      <div class={modal.backdrop} onClick={onCancel} aria-hidden="true" />
+      <div class={cn("relative", modal.content, modal.size.sm, modal.padding.md)}>
+        <h3 class="heading-2 text-text-primary mb-2">
           {t("profile.deleteConfirm", "Delete Profile?")}
         </h3>
-        <p className="body-small text-text-secondary mb-6">
+        <p class="body-small text-text-secondary mb-6">
           {t(
             "profile.deleteConfirmDesc",
             'Are you sure you want to delete "{{name}}"? This action cannot be undone.',
             { name: profileName },
           )}
         </p>
-        <div className="flex justify-end gap-3">
+        <div class="flex justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className={cn(
+            class={cn(
               spacing.pad.sm,
               "px-4",
               radius.md,
@@ -630,7 +630,7 @@ function DeleteConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={cn(
+            class={cn(
               spacing.pad.sm,
               "px-4",
               radius.md,

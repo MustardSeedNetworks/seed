@@ -218,10 +218,14 @@ export function useCardState({
         if (isPlainObject(payload.cards)) {
           const updates: Partial<CardState> = {};
           for (const [key, value] of Object.entries(payload.cards)) {
-            if (!isCardId(key)) continue;
+            if (!isCardId(key)) {
+              continue;
+            }
 
             const normalized = value === null ? null : isPlainObject(value) ? value : undefined;
-            if (normalized === undefined) continue;
+            if (normalized === undefined) {
+              continue;
+            }
 
             switch (key) {
               case "link":

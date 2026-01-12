@@ -73,7 +73,7 @@ function getDeviceIcon(type: string): LucideIcon {
   }
 }
 
-export const DeviceSelector = memo(function DeviceSelector({
+export const DeviceSelector = memo(function deviceSelector({
   value,
   onChange,
   placeholder = "Select device",
@@ -250,22 +250,26 @@ export const DeviceSelector = memo(function DeviceSelector({
   // Get secondary text for button (vendor or device type)
   const getSecondaryText = () => {
     if (selectedDevice) {
-      if (selectedDevice.vendor) return selectedDevice.vendor;
-      if (selectedDevice.profile?.deviceType) return selectedDevice.profile.deviceType;
+      if (selectedDevice.vendor) {
+        return selectedDevice.vendor;
+      }
+      if (selectedDevice.profile?.deviceType) {
+        return selectedDevice.profile.deviceType;
+      }
     }
     return null;
   };
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: Group role is semantically correct for dropdown container
-    <div ref={dropdownRef} className="relative" onKeyDown={handleKeyDown} role="group">
+    <div ref={dropdownRef} class="relative" onKeyDown={handleKeyDown} role="group">
       {/* Trigger button */}
       <button
         ref={buttonRef}
         type="button"
         disabled={disabled || isLoading}
         onClick={() => setIsOpen(!isOpen)}
-        className={cn(
+        class={cn(
           "w-full flex items-center",
           spacing.gap.tight,
           spacing.pad.sm,
@@ -278,22 +282,22 @@ export const DeviceSelector = memo(function DeviceSelector({
       >
         {/* Device icon or search icon */}
         {isLoading ? (
-          <RefreshCw className={cn(iconTokens.size.sm, "text-text-muted animate-spin")} />
+          <RefreshCw class={cn(iconTokens.size.sm, "text-text-muted animate-spin")} />
         ) : selectedDevice ? (
           (() => {
-            const IconComponent = getDeviceIcon(
+            const ICON_COMPONENT = getDeviceIcon(
               selectedDevice.profile?.deviceType?.toLowerCase() || "other",
             );
-            return <IconComponent className={cn(iconTokens.size.sm, "text-brand-primary")} />;
+            return <ICON_COMPONENT class={cn(iconTokens.size.sm, "text-brand-primary")} />;
           })()
         ) : (
-          <Search className={cn(iconTokens.size.sm, "text-text-muted")} />
+          <Search class={cn(iconTokens.size.sm, "text-text-muted")} />
         )}
 
         {/* Device name and info */}
-        <div className="flex-1 min-w-0 text-left">
+        <div class="flex-1 min-w-0 text-left">
           <div
-            className={cn(
+            class={cn(
               "body-small font-medium truncate",
               value ? "text-text-primary" : "text-text-muted",
             )}
@@ -301,18 +305,18 @@ export const DeviceSelector = memo(function DeviceSelector({
             {getButtonText()}
           </div>
           {getSecondaryText() && (
-            <div className="caption text-text-muted truncate">{getSecondaryText()}</div>
+            <div class="caption text-text-muted truncate">{getSecondaryText()}</div>
           )}
         </div>
 
         {/* Show IP if device is selected */}
         {selectedDevice && selectedDevice.ip !== value && (
-          <span className="caption text-text-muted hidden sm:inline">{selectedDevice.ip}</span>
+          <span class="caption text-text-muted hidden sm:inline">{selectedDevice.ip}</span>
         )}
 
         {/* Dropdown arrow */}
         <ChevronDown
-          className={cn(
+          class={cn(
             iconTokens.size.sm,
             "text-text-muted transition-transform shrink-0",
             isOpen ? "rotate-180" : "",
@@ -323,7 +327,7 @@ export const DeviceSelector = memo(function DeviceSelector({
       {/* Dropdown menu */}
       {isOpen && (
         <div
-          className={cn(
+          class={cn(
             "absolute top-full left-0 mt-1 w-full min-w-80",
             radius.md,
             "border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden",
@@ -333,10 +337,10 @@ export const DeviceSelector = memo(function DeviceSelector({
         >
           {/* Search box */}
           {!manualEntry && (
-            <div className={cn(spacing.pad.sm, "bg-surface-base border-b border-surface-border")}>
-              <div className="relative">
+            <div class={cn(spacing.pad.sm, "bg-surface-base border-b border-surface-border")}>
+              <div class="relative">
                 <Search
-                  className={cn(
+                  class={cn(
                     iconTokens.size.sm,
                     "absolute left-2 top-1/2 -translate-y-1/2 text-text-muted",
                   )}
@@ -347,7 +351,7 @@ export const DeviceSelector = memo(function DeviceSelector({
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder={t("device.search", "Search by IP, name, or vendor")}
-                  className={cn(
+                  class={cn(
                     "w-full pl-8 pr-3 py-1.5",
                     "body-small text-text-primary placeholder-text-muted",
                     "bg-surface-base border border-surface-border",
@@ -361,8 +365,8 @@ export const DeviceSelector = memo(function DeviceSelector({
 
           {/* Manual entry mode */}
           {manualEntry && (
-            <div className={cn(spacing.pad.sm, "bg-surface-base border-b border-surface-border")}>
-              <div className="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
+            <div class={cn(spacing.pad.sm, "bg-surface-base border-b border-surface-border")}>
+              <div class="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
                 {t("device.manualEntry", "Manual IP Entry")}
               </div>
               <input
@@ -375,7 +379,7 @@ export const DeviceSelector = memo(function DeviceSelector({
                     submitManualIp(e.currentTarget.value);
                   }
                 }}
-                className={cn(
+                class={cn(
                   "w-full px-3 py-1.5",
                   "body-small text-text-primary placeholder-text-muted",
                   "bg-surface-base border border-surface-border",
@@ -383,11 +387,11 @@ export const DeviceSelector = memo(function DeviceSelector({
                   "focus:outline-none focus:ring-2 focus:ring-brand-primary",
                 )}
               />
-              <div className="flex gap-2 mt-2">
+              <div class="flex gap-2 mt-2">
                 <button
                   type="button"
                   onClick={() => submitManualIp(manualInputRef.current?.value || "")}
-                  className={cn(
+                  class={cn(
                     "flex-1 px-3 py-1.5",
                     "body-small font-medium",
                     "bg-brand-primary text-text-inverse",
@@ -400,7 +404,7 @@ export const DeviceSelector = memo(function DeviceSelector({
                 <button
                   type="button"
                   onClick={() => setManualEntry(false)}
-                  className={cn(
+                  class={cn(
                     "px-3 py-1.5",
                     "body-small font-medium",
                     "border border-surface-border bg-surface-base",
@@ -416,16 +420,16 @@ export const DeviceSelector = memo(function DeviceSelector({
 
           {/* Device groups */}
           {!manualEntry && (
-            <div className="max-h-96 overflow-y-auto">
+            <div class="max-h-96 overflow-y-auto">
               {error && (
-                <div className={cn(spacing.pad.md, "text-center text-status-error")}>
-                  <span className="caption">{error}</span>
+                <div class={cn(spacing.pad.md, "text-center text-status-error")}>
+                  <span class="caption">{error}</span>
                 </div>
               )}
 
               {!error && filteredGroups.length === 0 && !isLoading && (
-                <div className={cn(spacing.pad.md, "text-center")}>
-                  <span className="caption text-text-muted">
+                <div class={cn(spacing.pad.md, "text-center")}>
+                  <span class="caption text-text-muted">
                     {searchTerm
                       ? t("device.noResults", "No devices found")
                       : t("device.noDevices", "No devices discovered")}
@@ -435,19 +439,17 @@ export const DeviceSelector = memo(function DeviceSelector({
 
               {filteredGroups.map((group) => (
                 <div key={group.label}>
-                  <div
-                    className={cn(spacing.pad.sm, "bg-surface-base border-b border-surface-border")}
-                  >
-                    <div className="flex items-center gap-2">
-                      <group.icon className={cn(iconTokens.size.sm, "text-text-muted")} />
-                      <span className="caption font-semibold text-text-muted uppercase tracking-wide">
+                  <div class={cn(spacing.pad.sm, "bg-surface-base border-b border-surface-border")}>
+                    <div class="flex items-center gap-2">
+                      <group.icon class={cn(iconTokens.size.sm, "text-text-muted")} />
+                      <span class="caption font-semibold text-text-muted uppercase tracking-wide">
                         {group.label}
                       </span>
-                      <span className="caption text-text-muted">({group.devices.length})</span>
+                      <span class="caption text-text-muted">({group.devices.length})</span>
                     </div>
                   </div>
                   {group.devices.map((device) => {
-                    const Icon = getDeviceIcon(
+                    const ICON = getDeviceIcon(
                       device.profile?.deviceType?.toLowerCase() || "other",
                     );
                     const isSelected = device.ip === value;
@@ -457,7 +459,7 @@ export const DeviceSelector = memo(function DeviceSelector({
                         type="button"
                         key={device.ip}
                         onClick={() => selectDevice(device)}
-                        className={cn(
+                        class={cn(
                           "w-full flex items-center",
                           spacing.gap.tight,
                           spacing.pad.sm,
@@ -469,32 +471,32 @@ export const DeviceSelector = memo(function DeviceSelector({
                       >
                         {/* Selection indicator */}
                         <span
-                          className={cn(
+                          class={cn(
                             "w-2 h-2 rounded-full shrink-0",
                             isSelected ? "bg-brand-primary" : "bg-transparent",
                           )}
                         />
 
                         {/* Icon */}
-                        <Icon
-                          className={cn(
+                        <ICON
+                          class={cn(
                             iconTokens.size.sm,
                             isSelected ? "text-brand-primary" : "text-text-secondary",
                           )}
                         />
 
                         {/* Device info */}
-                        <div className="flex-1 min-w-0 text-left">
-                          <div className="body-small font-medium text-text-primary truncate">
+                        <div class="flex-1 min-w-0 text-left">
+                          <div class="body-small font-medium text-text-primary truncate">
                             {getDeviceDisplayName(device)}
                           </div>
-                          <div className="caption text-text-muted truncate">
+                          <div class="caption text-text-muted truncate">
                             {device.vendor || device.profile?.deviceType || "Unknown"}
                           </div>
                         </div>
 
                         {/* IP address */}
-                        <span className="caption text-text-secondary shrink-0">{device.ip}</span>
+                        <span class="caption text-text-secondary shrink-0">{device.ip}</span>
                       </button>
                     );
                   })}
@@ -505,19 +507,19 @@ export const DeviceSelector = memo(function DeviceSelector({
 
           {/* Manual IP entry button */}
           {!manualEntry && (
-            <div className="border-t border-surface-border">
+            <div class="border-t border-surface-border">
               <button
                 type="button"
                 onClick={handleManualEntry}
-                className={cn(
+                class={cn(
                   "w-full flex items-center justify-center",
                   spacing.gap.tight,
                   spacing.pad.sm,
                   "hover:bg-surface-hover focus:bg-surface-hover focus:outline-none text-brand-primary",
                 )}
               >
-                <Edit className={iconTokens.size.sm} />
-                <span className="body-small font-medium">
+                <Edit class={iconTokens.size.sm} />
+                <span class="body-small font-medium">
                   {t("device.manualIpEntry", "Manual IP Entry")}
                 </span>
               </button>

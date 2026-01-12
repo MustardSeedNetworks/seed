@@ -52,7 +52,7 @@ interface SettingsSectionHeaderProps {
  * translated title, and optional save status indicator.
  */
 export function SettingsSectionHeader({
-  icon: Icon,
+  icon: ICON,
   titleKey,
   namespace = "settings",
   status,
@@ -60,8 +60,8 @@ export function SettingsSectionHeader({
   const { t } = useTranslation(namespace);
 
   return (
-    <div className={layout.inline.default}>
-      <Icon className={iconTokens.size.sm} />
+    <div class={layout.inline.default}>
+      <ICON class={iconTokens.size.sm} />
       <span>{t(titleKey)}</span>
       {status !== undefined && <AutoSaveIndicator status={status} />}
     </div>

@@ -49,9 +49,15 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps) {
 
   // Determine card status based on errors
   const getCardStatus = (): Status => {
-    if (isLoading) return "loading";
-    if (error) return "error";
-    if (errorCount > 0) return "warning";
+    if (isLoading) {
+      return "loading";
+    }
+    if (error) {
+      return "error";
+    }
+    if (errorCount > 0) {
+      return "warning";
+    }
     return "success";
   };
 
@@ -59,9 +65,9 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps) {
     return (
       <Card
         title={t("logs.title", "System Logs")}
-        icon={<FileText className={iconTokens.size.md} />}
+        icon={<FileText class={iconTokens.size.md} />}
         status="loading"
-        className={className}
+        class={className}
       >
         <CardValue value={t("logs.loading", "Loading logs...")} size="md" />
       </Card>
@@ -72,9 +78,9 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps) {
     return (
       <Card
         title={t("logs.title", "System Logs")}
-        icon={<FileText className={iconTokens.size.md} />}
+        icon={<FileText class={iconTokens.size.md} />}
         status="error"
-        className={className}
+        class={className}
       >
         <CardValue value={error} size="md" />
       </Card>
@@ -84,14 +90,14 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps) {
   return (
     <Card
       title={t("logs.title", "System Logs")}
-      icon={<FileText className={iconTokens.size.md} />}
+      icon={<FileText class={iconTokens.size.md} />}
       status={getCardStatus()}
-      className={className}
+      class={className}
       headerAction={
-        <div className="flex items-center gap-2">
+        <div class="flex items-center gap-2">
           {/* Streaming indicator */}
           <span
-            className={cn(
+            class={cn(
               spacing.chip.sm,
               radius.md,
               "text-xs font-medium",
@@ -107,7 +113,7 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps) {
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className={cn(
+            class={cn(
               "p-1.5",
               "bg-surface-hover text-text-secondary",
               radius.md,
@@ -116,7 +122,7 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps) {
             aria-label={t("logs.fullScreen", "Full Screen")}
             title={t("logs.fullScreen", "Full Screen")}
           >
-            <Maximize2 className={iconTokens.size.sm} aria-hidden="true" />
+            <Maximize2 class={iconTokens.size.sm} aria-hidden="true" />
           </button>
         </div>
       }
@@ -128,13 +134,13 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps) {
       <CardDivider />
 
       {/* Error count */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <AlertCircle className={cn(iconTokens.size.sm, "text-status-error")} />
-          <span className="text-sm text-text-secondary">{t("logs.errors", "Errors")}</span>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <AlertCircle class={cn(iconTokens.size.sm, "text-status-error")} />
+          <span class="text-sm text-text-secondary">{t("logs.errors", "Errors")}</span>
         </div>
         <span
-          className={cn(
+          class={cn(
             "text-sm font-medium",
             errorCount > 0 ? "text-status-error" : "text-text-muted",
           )}
@@ -144,13 +150,13 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps) {
       </div>
 
       {/* Warning count */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <AlertTriangle className={cn(iconTokens.size.sm, "text-status-warning")} />
-          <span className="text-sm text-text-secondary">{t("logs.warnings", "Warnings")}</span>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <AlertTriangle class={cn(iconTokens.size.sm, "text-status-warning")} />
+          <span class="text-sm text-text-secondary">{t("logs.warnings", "Warnings")}</span>
         </div>
         <span
-          className={cn(
+          class={cn(
             "text-sm font-medium",
             warnCount > 0 ? "text-status-warning" : "text-text-muted",
           )}

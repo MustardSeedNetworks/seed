@@ -19,7 +19,7 @@ import { NetworkDiscoveryCard } from "./network-discovery-card";
  *
  * This story demonstrates various discovery states and device types.
  */
-const meta = {
+const meta: Meta<(typeof meta)["component"]> = {
   title: "Cards/network-discovery-card",
   component: NetworkDiscoveryCard,
   parameters: {
@@ -27,9 +27,9 @@ const meta = {
   },
   tags: ["autodocs"],
   decorators: [
-    (Story) => (
+    (StoryComponent: React.ComponentType): JSX.Element => (
       <div style={{ width: "480px", maxHeight: "600px" }}>
-        <Story />
+        <StoryComponent />
       </div>
     ),
   ],

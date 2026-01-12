@@ -285,16 +285,16 @@ export const Interactive: Story = {
     };
 
     return (
-      <div className={cn(spacing.pad.default, "w-full max-w-4xl bg-surface-base")}>
-        <div className={spacing.margin.bottom.content}>
-          <p className={cn(spacing.margin.bottom.inline, "body-small text-text-muted")}>
+      <div class={cn(spacing.pad.default, "w-full max-w-4xl bg-surface-base")}>
+        <div class={spacing.margin.bottom.content}>
+          <p class={cn(spacing.margin.bottom.inline, "body-small text-text-muted")}>
             Click on the floor plan to add sample points. {samples.length} points added.
           </p>
           {samples.length > 0 && (
             <button
               type="button"
               onClick={() => setSamples([])}
-              className={cn(
+              class={cn(
                 spacing.chip.sm,
                 "bg-status-error/10 text-status-error rounded text-sm hover:bg-status-error/20",
               )}
@@ -433,12 +433,12 @@ export const MetricToggle: Story = {
     const [metric, setMetric] = useState<"rssi" | "throughput" | "latency" | null>("rssi");
 
     return (
-      <div className={cn(spacing.pad.default, "w-full max-w-4xl bg-surface-base")}>
-        <div className={cn(spacing.margin.bottom.content, spacing.gap.compact, "flex")}>
+      <div class={cn(spacing.pad.default, "w-full max-w-4xl bg-surface-base")}>
+        <div class={cn(spacing.margin.bottom.content, spacing.gap.compact, "flex")}>
           <button
             type="button"
             onClick={() => setMetric(null)}
-            className={cn(
+            class={cn(
               spacing.chip.sm,
               "rounded text-sm",
               metric === null
@@ -451,7 +451,7 @@ export const MetricToggle: Story = {
           <button
             type="button"
             onClick={() => setMetric("rssi")}
-            className={cn(
+            class={cn(
               spacing.chip.sm,
               "rounded text-sm",
               metric === "rssi"
@@ -464,7 +464,7 @@ export const MetricToggle: Story = {
           <button
             type="button"
             onClick={() => setMetric("throughput")}
-            className={cn(
+            class={cn(
               spacing.chip.sm,
               "rounded text-sm",
               metric === "throughput"
@@ -477,7 +477,7 @@ export const MetricToggle: Story = {
           <button
             type="button"
             onClick={() => setMetric("latency")}
-            className={cn(
+            class={cn(
               spacing.chip.sm,
               "rounded text-sm",
               metric === "latency"

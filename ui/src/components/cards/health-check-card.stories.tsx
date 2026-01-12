@@ -17,7 +17,7 @@ import { HealthCheckCard } from "./health-check-card";
  * Note: SettingsProvider and I18nextProvider are provided by global decorators
  * in .storybook/preview.tsx.
  */
-const meta = {
+const meta: Meta<(typeof meta)["component"]> = {
   title: "Cards/health-check-card",
   component: HealthCheckCard,
   parameters: {
@@ -25,9 +25,9 @@ const meta = {
   },
   tags: ["autodocs"],
   decorators: [
-    (Story) => (
+    (StoryComponent: React.ComponentType): JSX.Element => (
       <div style={{ width: "420px" }}>
-        <Story />
+        <StoryComponent />
       </div>
     ),
   ],

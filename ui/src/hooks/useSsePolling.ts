@@ -102,7 +102,9 @@ export function useSsePolling({
   const attemptsRef = useRef(0);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      return;
+    }
 
     // Only poll if SSE is not connected
     if (sseStatus === "connected") {

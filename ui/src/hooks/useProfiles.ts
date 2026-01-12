@@ -313,7 +313,9 @@ export function useProfiles() {
   const downloadProfiles = useCallback(async (): Promise<boolean> => {
     try {
       const result = await exportProfiles();
-      if (!result) return false;
+      if (!result) {
+        return false;
+      }
 
       // Create and trigger download
       const blob = new Blob([JSON.stringify(result, null, 2)], {

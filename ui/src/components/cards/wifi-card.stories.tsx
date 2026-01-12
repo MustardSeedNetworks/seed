@@ -17,9 +17,9 @@ const meta: Meta = {
   },
   tags: ["autodocs"],
   decorators: [
-    (Story) => (
-      <div className="w-80">
-        <Story />
+    (StoryComponent: React.ComponentType): JSX.Element => (
+      <div class="w-80">
+        <StoryComponent />
       </div>
     ),
   ],
@@ -29,14 +29,9 @@ export default meta;
 
 export const Connected: StoryObj = {
   render: () => (
-    <Card
-      title="WiFi"
-      subtitle="Wireless Network"
-      icon={<Wifi className="w-4 h-4" />}
-      status="success"
-    >
+    <Card title="WiFi" subtitle="Wireless Network" icon={<Wifi class="w-4 h-4" />} status="success">
       <CardValue value="HomeNetwork" size="lg" />
-      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
+      <div class={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Signal" value="-45 dBm" status="success" />
         <CardRow label="Quality" value="Excellent" status="success" />
         <CardDivider />
@@ -51,21 +46,16 @@ export const Connected: StoryObj = {
 
 export const WeakSignal: StoryObj = {
   render: () => (
-    <Card
-      title="WiFi"
-      subtitle="Wireless Network"
-      icon={<Wifi className="w-4 h-4" />}
-      status="warning"
-    >
+    <Card title="WiFi" subtitle="Wireless Network" icon={<Wifi class="w-4 h-4" />} status="warning">
       <CardValue value="OfficeWiFi" size="lg" />
-      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
+      <div class={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Signal" value="-75 dBm" status="warning" />
         <CardRow label="Quality" value="Fair" status="warning" />
         <CardDivider />
         <CardRow label="Channel" value="36 (5 GHz)" />
         <CardRow label="Security" value="WPA2" />
         <CardRow label="Speed" value="72 Mbps" />
-        <p className={cn("caption text-status-warning", spacing.margin.top.inline)}>
+        <p class={cn("caption text-status-warning", spacing.margin.top.inline)}>
           Weak signal. Move closer to the access point or check for interference.
         </p>
       </div>
@@ -75,19 +65,14 @@ export const WeakSignal: StoryObj = {
 
 export const VeryWeakSignal: StoryObj = {
   render: () => (
-    <Card
-      title="WiFi"
-      subtitle="Wireless Network"
-      icon={<Wifi className="w-4 h-4" />}
-      status="error"
-    >
+    <Card title="WiFi" subtitle="Wireless Network" icon={<Wifi class="w-4 h-4" />} status="error">
       <CardValue value="GuestNetwork" size="lg" />
-      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
+      <div class={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Signal" value="-85 dBm" status="error" />
         <CardRow label="Quality" value="Poor" status="error" />
         <CardDivider />
         <CardRow label="Channel" value="11 (2.4 GHz)" />
-        <p className={cn("caption text-status-danger", spacing.margin.top.inline)}>
+        <p class={cn("caption text-status-danger", spacing.margin.top.inline)}>
           Very weak signal. Connection may be unstable or drop frequently.
         </p>
       </div>
@@ -100,14 +85,14 @@ export const Disconnected: StoryObj = {
     <Card
       title="WiFi"
       subtitle="Wireless Network"
-      icon={<WifiOff className="w-4 h-4" />}
+      icon={<WifiOff class="w-4 h-4" />}
       status="error"
     >
       <CardValue value="Not Connected" size="lg" status="error" />
-      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
+      <div class={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Status" value="Disconnected" status="error" />
         <CardDivider />
-        <p className="caption text-text-muted">
+        <p class="caption text-text-muted">
           No wireless network connection. Check WiFi adapter and available networks.
         </p>
       </div>
@@ -120,22 +105,22 @@ export const Scanning: StoryObj = {
     <Card
       title="WiFi"
       subtitle="Scanning Networks"
-      icon={<Wifi className="w-4 h-4" />}
+      icon={<Wifi class="w-4 h-4" />}
       status="loading"
     >
-      <Skeleton className={cn("h-8 w-40", spacing.margin.bottom.content)} />
-      <div className={cn(spacing.stack.sm, spacing.margin.top.content)}>
-        <div className="flex justify-between">
-          <Skeleton className="h-3 w-16" />
-          <Skeleton className="h-3 w-20" />
+      <Skeleton class={cn("h-8 w-40", spacing.margin.bottom.content)} />
+      <div class={cn(spacing.stack.sm, spacing.margin.top.content)}>
+        <div class="flex justify-between">
+          <Skeleton class="h-3 w-16" />
+          <Skeleton class="h-3 w-20" />
         </div>
-        <div className="flex justify-between">
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="h-3 w-16" />
+        <div class="flex justify-between">
+          <Skeleton class="h-3 w-20" />
+          <Skeleton class="h-3 w-16" />
         </div>
-        <div className="flex justify-between">
-          <Skeleton className="h-3 w-12" />
-          <Skeleton className="h-3 w-24" />
+        <div class="flex justify-between">
+          <Skeleton class="h-3 w-12" />
+          <Skeleton class="h-3 w-24" />
         </div>
       </div>
     </Card>
@@ -147,46 +132,46 @@ export const MultipleNetworks: StoryObj = {
     <Card
       title="WiFi"
       subtitle="Available Networks"
-      icon={<Signal className="w-4 h-4" />}
+      icon={<Signal class="w-4 h-4" />}
       status="success"
     >
       <CardValue value="5 Networks Found" size="md" />
-      <div className={cn(spacing.margin.top.content, spacing.stack.sm)}>
+      <div class={cn(spacing.margin.top.content, spacing.stack.sm)}>
         <div
-          className={cn(
+          class={cn(
             "flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */",
             spacing.compact.py,
           )}
         >
-          <span className="body-small">HomeNetwork</span>
-          <span className="caption text-status-success">-45 dBm</span>
+          <span class="body-small">HomeNetwork</span>
+          <span class="caption text-status-success">-45 dBm</span>
         </div>
         <div
-          className={cn(
+          class={cn(
             "flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */",
             spacing.compact.py,
           )}
         >
-          <span className="body-small">Neighbor_5G</span>
-          <span className="caption text-status-warning">-65 dBm</span>
+          <span class="body-small">Neighbor_5G</span>
+          <span class="caption text-status-warning">-65 dBm</span>
         </div>
         <div
-          className={cn(
+          class={cn(
             "flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */",
             spacing.compact.py,
           )}
         >
-          <span className="body-small">Guest</span>
-          <span className="caption text-status-warning">-70 dBm</span>
+          <span class="body-small">Guest</span>
+          <span class="caption text-status-warning">-70 dBm</span>
         </div>
         <div
-          className={cn(
+          class={cn(
             "flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */",
             spacing.compact.py,
           )}
         >
-          <span className="body-small text-text-muted">Hidden Network</span>
-          <span className="caption text-status-danger">-82 dBm</span>
+          <span class="body-small text-text-muted">Hidden Network</span>
+          <span class="caption text-status-danger">-82 dBm</span>
         </div>
       </div>
     </Card>
@@ -198,11 +183,11 @@ export const NoAdapter: StoryObj = {
     <Card
       title="WiFi"
       subtitle="Wireless Network"
-      icon={<WifiOff className="w-4 h-4" />}
+      icon={<WifiOff class="w-4 h-4" />}
       status="unknown"
     >
       <CardValue value="Not Available" size="md" />
-      <p className={cn("caption text-text-muted", spacing.margin.top.inline)}>
+      <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
         No wireless adapter detected on this system.
       </p>
     </Card>

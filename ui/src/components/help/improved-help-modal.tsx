@@ -72,122 +72,124 @@ export function ImprovedHelpModal({ isOpen, onClose, version = "dev" }: HelpModa
   // Track search query for filtering help content
   const [searchQuery, setSearchQuery] = useState("");
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   const sections: HelpSection[] = [
     {
       id: "about",
       title: t("sections.about"),
-      icon: <Info className={iconTokens.size.sm} />,
-      content: <AboutSection version={version} />,
+      icon: <Info class={iconTokens.size.sm} />,
+      content: <aboutSection version={version} />,
     },
     {
       id: "getting-started",
       title: t("sections.gettingStarted"),
-      icon: <LayoutDashboard className={iconTokens.size.sm} />,
-      content: <GettingStartedSection />,
+      icon: <LayoutDashboard class={iconTokens.size.sm} />,
+      content: <gettingStartedSection />,
     },
     {
       id: "link",
       title: t("sections.link"),
-      icon: <Activity className={iconTokens.size.sm} />,
-      content: <LinkStatusSection />,
+      icon: <Activity class={iconTokens.size.sm} />,
+      content: <linkStatusSection />,
     },
     {
       id: "cable",
       title: t("sections.cable"),
-      icon: <Cable className={iconTokens.size.sm} />,
-      content: <CableTestSection />,
+      icon: <Cable class={iconTokens.size.sm} />,
+      content: <cableTestSection />,
     },
     {
       id: "wifi",
       title: t("sections.wifi"),
-      icon: <Wifi className={iconTokens.size.sm} />,
-      content: <WiFiStatusSection />,
+      icon: <Wifi class={iconTokens.size.sm} />,
+      content: <wiFiStatusSection />,
     },
     {
       id: "network",
       title: t("sections.network"),
-      icon: <Network className={iconTokens.size.sm} />,
-      content: <NetworkSection />,
+      icon: <Network class={iconTokens.size.sm} />,
+      content: <networkSection />,
     },
     {
       id: "gateway",
       title: t("sections.gateway"),
-      icon: <Server className={iconTokens.size.sm} />,
-      content: <GatewaySection />,
+      icon: <Server class={iconTokens.size.sm} />,
+      content: <gatewaySection />,
     },
     {
       id: "dns",
       title: t("sections.dns"),
-      icon: <Search className={iconTokens.size.sm} />,
-      content: <DnsSection />,
+      icon: <Search class={iconTokens.size.sm} />,
+      content: <dnsSection />,
     },
     {
       id: "performance",
       title: t("sections.performance"),
-      icon: <Zap className={iconTokens.size.sm} />,
-      content: <PerformanceSection />,
+      icon: <Zap class={iconTokens.size.sm} />,
+      content: <performanceSection />,
     },
     {
       id: "discovery",
       title: t("sections.discovery"),
-      icon: <Search className={iconTokens.size.sm} />,
-      content: <DiscoverySection />,
+      icon: <Search class={iconTokens.size.sm} />,
+      content: <discoverySection />,
     },
     {
       id: "healthChecks",
       title: t("sections.healthChecks"),
-      icon: <Heart className={iconTokens.size.sm} />,
-      content: <HealthChecksSection />,
+      icon: <Heart class={iconTokens.size.sm} />,
+      content: <healthChecksSection />,
     },
     {
       id: "security",
       title: t("sections.security"),
-      icon: <Shield className={iconTokens.size.sm} />,
-      content: <SecuritySection />,
+      icon: <Shield class={iconTokens.size.sm} />,
+      content: <securitySection />,
     },
     {
       id: "troubleshooting",
       title: t("sections.troubleshooting"),
-      icon: <AlertTriangle className={iconTokens.size.sm} />,
-      content: <TroubleshootingSection />,
+      icon: <AlertTriangle class={iconTokens.size.sm} />,
+      content: <troubleshootingSection />,
     },
     {
       id: "profiles",
       title: t("sections.profiles"),
-      icon: <SlidersHorizontal className={iconTokens.size.sm} />,
-      content: <ProfilesSection />,
+      icon: <SlidersHorizontal class={iconTokens.size.sm} />,
+      content: <profilesSection />,
     },
     {
       id: "wifiSurvey",
       title: t("sections.wifiSurvey"),
-      icon: <Signal className={iconTokens.size.sm} />,
-      content: <WiFiSurveySection />,
+      icon: <Signal class={iconTokens.size.sm} />,
+      content: <wiFiSurveySection />,
     },
     {
       id: "rtspChecks",
       title: t("sections.rtspChecks"),
-      icon: <Monitor className={iconTokens.size.sm} />,
-      content: <RtspChecksSection />,
+      icon: <Monitor class={iconTokens.size.sm} />,
+      content: <rtspChecksSection />,
     },
     {
       id: "dicomChecks",
       title: t("sections.dicomChecks"),
-      icon: <HeartPulse className={iconTokens.size.sm} />,
-      content: <DicomChecksSection />,
+      icon: <HeartPulse class={iconTokens.size.sm} />,
+      content: <dicomChecksSection />,
     },
     {
       id: "howTo",
       title: t("sections.howTo"),
-      icon: <Lightbulb className={iconTokens.size.sm} />,
-      content: <HowToSection />,
+      icon: <Lightbulb class={iconTokens.size.sm} />,
+      content: <howToSection />,
     },
     {
       id: "glossary",
       title: t("sections.glossary"),
-      icon: <BookOpen className={iconTokens.size.sm} />,
-      content: <GlossarySection />,
+      icon: <BookOpen class={iconTokens.size.sm} />,
+      content: <glossarySection />,
     },
   ];
 
@@ -200,13 +202,13 @@ export function ImprovedHelpModal({ isOpen, onClose, version = "dev" }: HelpModa
   const currentSection = sections.find((s) => s.id === activeSection);
 
   return (
-    <div className={modal.overlay}>
+    <div class={modal.overlay}>
       {/* Backdrop */}
-      <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
+      <div class={modal.backdrop} onClick={onClose} aria-hidden="true" />
 
       {/* Modal */}
       <div
-        className={cn(
+        class={cn(
           "relative",
           modal.content,
           modal.size.xl,
@@ -219,19 +221,19 @@ export function ImprovedHelpModal({ isOpen, onClose, version = "dev" }: HelpModa
       >
         {/* Header */}
         <div
-          className={cn(
+          class={cn(
             layout.flex.between,
             spacing.pad.default,
             "border-b border-surface-border shrink-0",
           )}
         >
-          <h2 id="help-modal-title" className="heading-3">
+          <h2 id="help-modal-title" class="heading-3">
             {t("modal.title")}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className={cn(
+            class={cn(
               spacing.pad.xs,
               "text-text-muted hover:text-text-primary transition-colors",
               radius.default,
@@ -240,7 +242,7 @@ export function ImprovedHelpModal({ isOpen, onClose, version = "dev" }: HelpModa
             aria-label={t("modal.closeHelp")}
           >
             <svg
-              className={iconTokens.size.md}
+              class={iconTokens.size.md}
               viewBox="0 0 20 20"
               fill="currentColor"
               aria-hidden="true"
@@ -255,14 +257,14 @@ export function ImprovedHelpModal({ isOpen, onClose, version = "dev" }: HelpModa
         </div>
 
         {/* Content area with sidebar */}
-        <div className="flex flex-1 overflow-hidden">
+        <div class="flex flex-1 overflow-hidden">
           {/* Sidebar / TOC */}
-          <aside className="w-64 border-r border-surface-border bg-surface-base overflow-y-auto shrink-0">
+          <aside class="w-64 border-r border-surface-border bg-surface-base overflow-y-auto shrink-0">
             {/* Search */}
-            <div className={cn(spacing.pad.sm, "border-b border-surface-border")}>
-              <div className="relative">
+            <div class={cn(spacing.pad.sm, "border-b border-surface-border")}>
+              <div class="relative">
                 <Search
-                  className={cn(
+                  class={cn(
                     "absolute left-3 top-1/2 -translate-y-1/2",
                     iconTokens.size.sm,
                     "text-text-muted",
@@ -273,7 +275,7 @@ export function ImprovedHelpModal({ isOpen, onClose, version = "dev" }: HelpModa
                   placeholder={t("modal.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={cn(
+                  class={cn(
                     "w-full pl-9",
                     spacing.chip.lg,
                     "body-small",
@@ -285,8 +287,8 @@ export function ImprovedHelpModal({ isOpen, onClose, version = "dev" }: HelpModa
             </div>
 
             {/* Table of Contents */}
-            <nav className={cn(spacing.pad.xs, "stack-xs")}>
-              <p className={cn("caption", spacing.chip.lg, "uppercase tracking-wider")}>
+            <nav class={cn(spacing.pad.xs, "stack-xs")}>
+              <p class={cn("caption", spacing.chip.lg, "uppercase tracking-wider")}>
                 {t("modal.contents")}
               </p>
               {filteredSections.map((section) => (
@@ -294,7 +296,7 @@ export function ImprovedHelpModal({ isOpen, onClose, version = "dev" }: HelpModa
                   type="button"
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
-                  className={cn(
+                  class={cn(
                     "w-full flex items-center",
                     spacing.gap.default,
                     spacing.tab,
@@ -313,7 +315,7 @@ export function ImprovedHelpModal({ isOpen, onClose, version = "dev" }: HelpModa
           </aside>
 
           {/* Main content */}
-          <main className={cn("flex-1 overflow-y-auto", spacing.pad.lg)}>
+          <main class={cn("flex-1 overflow-y-auto", spacing.pad.lg)}>
             {currentSection && <div>{currentSection.content}</div>}
           </main>
         </div>
@@ -330,49 +332,47 @@ interface AboutSectionProps {
   version: string;
 }
 
-function AboutSection({ version }: AboutSectionProps) {
+function _aboutSection({ version }: AboutSectionProps) {
   const { t } = useTranslation("help");
   return (
-    <div className="section-gap max-w-3xl">
+    <div class="section-gap max-w-3xl">
       <div>
-        <h3 className={cn("heading-2", spacing.margin.bottom.heading)}>
-          {t("content.about.welcome")}
-        </h3>
-        <p className={cn("body leading-relaxed", spacing.margin.bottom.content)}>
+        <h3 class={cn("heading-2", spacing.margin.bottom.heading)}>{t("content.about.welcome")}</h3>
+        <p class={cn("body leading-relaxed", spacing.margin.bottom.content)}>
           {t("content.about.description")}
         </p>
       </div>
 
-      <div className={cn("grid md:grid-cols-2", spacing.gap.comfortable)}>
-        <FeatureCard
+      <div class={cn("grid md:grid-cols-2", spacing.gap.comfortable)}>
+        <featureCard
           title={t("content.about.features.realTimeMonitoring.title")}
           description={t("content.about.features.realTimeMonitoring.description")}
         />
-        <FeatureCard
+        <featureCard
           title={t("content.about.features.networkDiscovery.title")}
           description={t("content.about.features.networkDiscovery.description")}
         />
-        <FeatureCard
+        <featureCard
           title={t("content.about.features.performanceTesting.title")}
           description={t("content.about.features.performanceTesting.description")}
         />
-        <FeatureCard
+        <featureCard
           title={t("content.about.features.cableDiagnostics.title")}
           description={t("content.about.features.cableDiagnostics.description")}
         />
       </div>
 
       <div
-        className={cn(
+        class={cn(
           "border-l-4 border-brand-primary bg-brand-primary/5",
           spacing.pad.default,
           radius.default,
         )}
       >
-        <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
+        <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
           {t("content.about.licensing.title", "Commercial Software")}
         </h4>
-        <p className="body-small text-text-secondary">
+        <p class="body-small text-text-secondary">
           {t(
             "content.about.licensing.description",
             "SEED is commercial software developed by Mustard Seed Networks. All rights reserved. Unauthorized distribution or modification is prohibited.",
@@ -381,57 +381,57 @@ function AboutSection({ version }: AboutSectionProps) {
       </div>
 
       <div>
-        <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.heading)}>
+        <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.heading)}>
           {t("content.about.versionInfo.title")}
         </h4>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 body-small">
-          <dt className="text-text-muted">{t("content.about.versionInfo.currentVersion")}</dt>
-          <dd className="font-mono text-text-primary">{version}</dd>
-          <dt className="text-text-muted">{t("content.about.versionInfo.backend")}</dt>
-          <dd className="text-text-primary">Go 1.25.5+</dd>
-          <dt className="text-text-muted">{t("content.about.versionInfo.frontend")}</dt>
-          <dd className="text-text-primary">React 19.2 + TypeScript</dd>
-          <dt className="text-text-muted">{t("content.about.versionInfo.runtime", "Runtime")}</dt>
-          <dd className="text-text-primary">Node.js 25.2</dd>
+        <dl class="grid grid-cols-2 gap-x-4 gap-y-2 body-small">
+          <dt class="text-text-muted">{t("content.about.versionInfo.currentVersion")}</dt>
+          <dd class="font-mono text-text-primary">{version}</dd>
+          <dt class="text-text-muted">{t("content.about.versionInfo.backend")}</dt>
+          <dd class="text-text-primary">Go 1.25.5+</dd>
+          <dt class="text-text-muted">{t("content.about.versionInfo.frontend")}</dt>
+          <dd class="text-text-primary">React 19.2 + TypeScript</dd>
+          <dt class="text-text-muted">{t("content.about.versionInfo.runtime", "Runtime")}</dt>
+          <dd class="text-text-primary">Node.js 25.2</dd>
         </dl>
       </div>
     </div>
   );
 }
 
-function GettingStartedSection() {
+function _gettingStartedSection() {
   const { t } = useTranslation("help");
   const tips = t("content.gettingStarted.proTips.tips", {
     returnObjects: true,
   }) as string[];
   return (
-    <div className="section-gap max-w-3xl">
-      <h3 className={cn("heading-2", spacing.margin.bottom.heading)}>
+    <div class="section-gap max-w-3xl">
+      <h3 class={cn("heading-2", spacing.margin.bottom.heading)}>
         {t("content.gettingStarted.title")}
       </h3>
 
-      <div className="stack-lg">
-        <StepCard
+      <div class="stack-lg">
+        <stepCard
           number={1}
           title={t("content.gettingStarted.steps.dashboard.title")}
           description={t("content.gettingStarted.steps.dashboard.description")}
         />
-        <StepCard
+        <stepCard
           number={2}
           title={t("content.gettingStarted.steps.interface.title")}
           description={t("content.gettingStarted.steps.interface.description")}
         />
-        <StepCard
+        <stepCard
           number={3}
           title={t("content.gettingStarted.steps.thresholds.title")}
           description={t("content.gettingStarted.steps.thresholds.description")}
         />
-        <StepCard
+        <stepCard
           number={4}
           title={t("content.gettingStarted.steps.runTests.title")}
           description={t("content.gettingStarted.steps.runTests.description")}
         />
-        <StepCard
+        <stepCard
           number={5}
           title={t("content.gettingStarted.steps.exploreCards.title")}
           description={t("content.gettingStarted.steps.exploreCards.description")}
@@ -439,7 +439,7 @@ function GettingStartedSection() {
       </div>
 
       <div
-        className={cn(
+        class={cn(
           "bg-surface-hover border border-surface-border",
           radius.default,
           spacing.pad.default,
@@ -447,17 +447,17 @@ function GettingStartedSection() {
         )}
       >
         <h4
-          className={cn(
+          class={cn(
             "font-semibold text-text-primary",
             spacing.margin.bottom.inline,
             "flex items-center",
             spacing.gap.compact,
           )}
         >
-          <span className="text-status-info">💡</span>
+          <span class="text-status-info">💡</span>
           {t("content.gettingStarted.proTips.title")}
         </h4>
-        <ul className={cn("body-small stack-sm", spacing.margin.left.spacious, "list-disc")}>
+        <ul class={cn("body-small stack-sm", spacing.margin.left.spacious, "list-disc")}>
           {tips.map((tip) => (
             <li key={tip}>{tip}</li>
           ))}
@@ -467,14 +467,14 @@ function GettingStartedSection() {
   );
 }
 
-function LinkStatusSection() {
+function _linkStatusSection() {
   const { t } = useTranslation("help");
   return (
-    <HelpContentSection title={t("sections.link")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.link")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.linkStatus.description")}
       </p>
-      <HelpTermList
+      <helpTermList
         items={[
           {
             term: t("content.linkStatus.terms.carrier.term"),
@@ -498,18 +498,18 @@ function LinkStatusSection() {
           },
         ]}
       />
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function CableTestSection() {
+function _cableTestSection() {
   const { t } = useTranslation("help");
   return (
-    <HelpContentSection title={t("sections.cable")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.cable")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.cableTest.description")}
       </p>
-      <HelpTermList
+      <helpTermList
         items={[
           {
             term: t("content.cableTest.terms.tdrTest.term"),
@@ -530,29 +530,29 @@ function CableTestSection() {
         ]}
       />
       <div
-        className={cn(
+        class={cn(
           spacing.margin.top.content,
           "bg-status-warning/10 border border-status-warning/20",
           radius.default,
           spacing.pad.sm,
         )}
       >
-        <p className="caption text-status-warning">
+        <p class="caption text-status-warning">
           <strong>{t("common:labels.note", "Note")}:</strong> {t("content.cableTest.note")}
         </p>
       </div>
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function WiFiStatusSection() {
+function _wiFiStatusSection() {
   const { t } = useTranslation("help");
   return (
-    <HelpContentSection title={t("sections.wifi")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.wifi")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.wifiStatus.description")}
       </p>
-      <HelpTermList
+      <helpTermList
         items={[
           {
             term: "SSID",
@@ -585,18 +585,18 @@ function WiFiStatusSection() {
           },
         ]}
       />
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function NetworkSection() {
+function _networkSection() {
   const { t } = useTranslation("help");
   return (
-    <HelpContentSection title={t("sections.network")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.network")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.networkDhcp.description")}
       </p>
-      <HelpTermList
+      <helpTermList
         items={[
           {
             term: "Lease Time",
@@ -621,18 +621,18 @@ function NetworkSection() {
           },
         ]}
       />
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function GatewaySection() {
+function _gatewaySection() {
   const { t } = useTranslation("help");
   return (
-    <HelpContentSection title={t("sections.gateway")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.gateway")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.gatewayHelp.description")}
       </p>
-      <HelpTermList
+      <helpTermList
         items={[
           {
             term: "IPv4 Gateway",
@@ -656,18 +656,18 @@ function GatewaySection() {
           },
         ]}
       />
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function DnsSection() {
+function _dnsSection() {
   const { t } = useTranslation("help");
   return (
-    <HelpContentSection title={t("sections.dns")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.dns")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.dnsTests.description")}
       </p>
-      <HelpTermList
+      <helpTermList
         items={[
           {
             term: "Forward Lookup",
@@ -687,18 +687,18 @@ function DnsSection() {
           },
         ]}
       />
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function PerformanceSection() {
+function _performanceSection() {
   const { t } = useTranslation("help");
   return (
-    <HelpContentSection title={t("sections.performance")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.performance")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.performanceTests.description")}
       </p>
-      <HelpTermList
+      <helpTermList
         items={[
           {
             term: "Internet Speed Test",
@@ -729,18 +729,18 @@ function PerformanceSection() {
           },
         ]}
       />
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function DiscoverySection() {
+function _discoverySection() {
   const { t } = useTranslation("help");
   return (
-    <HelpContentSection title={t("sections.discovery")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.discovery")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.networkDiscovery.description")}
       </p>
-      <HelpTermList
+      <helpTermList
         items={[
           {
             term: "Network Scan",
@@ -767,11 +767,11 @@ function DiscoverySection() {
           },
         ]}
       />
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function HealthChecksSection() {
+function _healthChecksSection() {
   const { t } = useTranslation("help");
   const commonIssues = t("content.healthChecks.commonIssues", { returnObjects: true }) as {
     title: string;
@@ -781,11 +781,11 @@ function HealthChecksSection() {
     connectionRefused: string;
   };
   return (
-    <HelpContentSection title={t("sections.healthChecks")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.healthChecks")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.healthChecks.description")}
       </p>
-      <HelpTermList
+      <helpTermList
         items={[
           {
             term: t("content.healthChecks.terms.pingTest.term"),
@@ -810,18 +810,18 @@ function HealthChecksSection() {
         ]}
       />
       <div
-        className={cn(
+        class={cn(
           spacing.margin.top.content,
           "bg-status-info/10 border border-status-info/20",
           radius.default,
           spacing.pad.default,
         )}
       >
-        <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
+        <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
           {commonIssues.title}
         </h4>
         <ul
-          className={cn(
+          class={cn(
             "body-small text-text-secondary stack-sm",
             spacing.margin.left.spacious,
             "list-disc",
@@ -841,11 +841,11 @@ function HealthChecksSection() {
           </li>
         </ul>
       </div>
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function SecuritySection() {
+function _securitySection() {
   const { t } = useTranslation("help");
   const recovery = t("content.security.passwordRecovery", { returnObjects: true }) as {
     title: string;
@@ -860,11 +860,11 @@ function SecuritySection() {
     commonPorts: Record<string, string>;
   };
   return (
-    <HelpContentSection title={t("sections.security")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.security")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.security.description")}
       </p>
-      <HelpTermList
+      <helpTermList
         items={[
           {
             term: t("content.security.terms.portScan.term"),
@@ -887,21 +887,21 @@ function SecuritySection() {
 
       {/* Password Recovery Section */}
       <div
-        className={cn(
+        class={cn(
           spacing.margin.top.section,
           "bg-status-warning/10 border border-status-warning/20",
           radius.default,
           spacing.pad.default,
         )}
       >
-        <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
+        <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
           {recovery.title}
         </h4>
-        <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+        <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
           {recovery.description}
         </p>
         <ol
-          className={cn(
+          class={cn(
             "body-small text-text-secondary stack-sm",
             spacing.margin.left.spacious,
             "list-decimal",
@@ -910,7 +910,7 @@ function SecuritySection() {
           {recovery.steps.map((step) => (
             <li
               key={step}
-              className={
+              class={
                 step.startsWith("User mode:") || step.startsWith("System mode:")
                   ? "font-mono text-xs bg-surface-base px-2 py-1 rounded"
                   : ""
@@ -920,48 +920,48 @@ function SecuritySection() {
             </li>
           ))}
         </ol>
-        <p className={cn("caption text-status-warning", spacing.margin.top.content)}>
+        <p class={cn("caption text-status-warning", spacing.margin.top.content)}>
           <strong>Note:</strong> {recovery.note}
         </p>
       </div>
 
       {/* Port Scan Details */}
-      <div className={cn(spacing.margin.top.section)}>
-        <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
+      <div class={cn(spacing.margin.top.section)}>
+        <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
           {portDetails.title}
         </h4>
-        <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+        <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
           {portDetails.description}
         </p>
-        <div className="grid grid-cols-2 gap-2 body-small">
+        <div class="grid grid-cols-2 gap-2 body-small">
           {Object.entries(portDetails.levels).map(([level, desc]) => (
-            <div key={level} className={cn("border-l-2 border-surface-border", spacing.pad.sm)}>
-              <dt className="font-semibold text-text-primary capitalize">{level}</dt>
-              <dd className="text-text-secondary">{desc}</dd>
+            <div key={level} class={cn("border-l-2 border-surface-border", spacing.pad.sm)}>
+              <dt class="font-semibold text-text-primary capitalize">{level}</dt>
+              <dd class="text-text-secondary">{desc}</dd>
             </div>
           ))}
         </div>
       </div>
 
       {/* Common Ports Reference */}
-      <div className={cn(spacing.margin.top.content)}>
-        <h5 className={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
+      <div class={cn(spacing.margin.top.content)}>
+        <h5 class={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
           Common Ports Reference
         </h5>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 body-small font-mono">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 body-small font-mono">
           {Object.entries(portDetails.commonPorts).map(([port, desc]) => (
-            <div key={port} className="flex items-baseline gap-2">
-              <span className="text-brand-primary font-bold">{port}</span>
-              <span className="text-text-muted">{desc}</span>
+            <div key={port} class="flex items-baseline gap-2">
+              <span class="text-brand-primary font-bold">{port}</span>
+              <span class="text-text-muted">{desc}</span>
             </div>
           ))}
         </div>
       </div>
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function TroubleshootingSection() {
+function _troubleshootingSection() {
   const { t } = useTranslation("help");
   const categories = t("content.troubleshooting.categories", { returnObjects: true }) as Record<
     string,
@@ -972,13 +972,13 @@ function TroubleshootingSection() {
   >;
 
   return (
-    <HelpContentSection title={t("sections.troubleshooting")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.troubleshooting")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.troubleshooting.description")}
       </p>
 
       {/* Link Issues */}
-      <TroubleshootingCategory
+      <troubleshootingCategory
         title={categories.linkIssues.title}
         issues={[
           {
@@ -1019,7 +1019,7 @@ function TroubleshootingSection() {
       />
 
       {/* Cable Issues */}
-      <TroubleshootingCategory
+      <troubleshootingCategory
         title={categories.cableIssues.title}
         issues={[
           {
@@ -1064,7 +1064,7 @@ function TroubleshootingSection() {
       />
 
       {/* DNS Issues */}
-      <TroubleshootingCategory
+      <troubleshootingCategory
         title={categories.dnsIssues.title}
         issues={[
           {
@@ -1088,7 +1088,7 @@ function TroubleshootingSection() {
       />
 
       {/* Gateway Issues */}
-      <TroubleshootingCategory
+      <troubleshootingCategory
         title={categories.gatewayIssues.title}
         issues={[
           {
@@ -1129,7 +1129,7 @@ function TroubleshootingSection() {
       />
 
       {/* Performance Issues */}
-      <TroubleshootingCategory
+      <troubleshootingCategory
         title={categories.performanceIssues.title}
         issues={[
           {
@@ -1168,7 +1168,7 @@ function TroubleshootingSection() {
           },
         ]}
       />
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
@@ -1178,7 +1178,7 @@ interface TroubleshootingIssue {
   solutions: string[];
 }
 
-function TroubleshootingCategory({
+function _troubleshootingCategory({
   title,
   issues,
 }: {
@@ -1186,43 +1186,29 @@ function TroubleshootingCategory({
   issues: TroubleshootingIssue[];
 }) {
   return (
-    <div className={cn(spacing.margin.top.section)}>
-      <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
-        {title}
-      </h4>
-      <div className="stack-lg">
+    <div class={cn(spacing.margin.top.section)}>
+      <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>{title}</h4>
+      <div class="stack-lg">
         {issues.map((issue) => (
           <div
             key={issue.symptom}
-            className={cn("border border-surface-border", radius.default, spacing.pad.default)}
+            class={cn("border border-surface-border", radius.default, spacing.pad.default)}
           >
-            <h5 className={cn("font-semibold text-status-warning", spacing.margin.bottom.inline)}>
+            <h5 class={cn("font-semibold text-status-warning", spacing.margin.bottom.inline)}>
               {issue.symptom}
             </h5>
-            <div className="grid md:grid-cols-2 gap-4 body-small">
+            <div class="grid md:grid-cols-2 gap-4 body-small">
               <div>
-                <p className="font-semibold text-text-primary mb-1">Possible Causes:</p>
-                <ul
-                  className={cn(
-                    "text-text-secondary",
-                    spacing.margin.left.comfortable,
-                    "list-disc",
-                  )}
-                >
+                <p class="font-semibold text-text-primary mb-1">Possible Causes:</p>
+                <ul class={cn("text-text-secondary", spacing.margin.left.comfortable, "list-disc")}>
                   {issue.causes.map((cause) => (
                     <li key={cause}>{cause}</li>
                   ))}
                 </ul>
               </div>
               <div>
-                <p className="font-semibold text-text-primary mb-1">Solutions:</p>
-                <ul
-                  className={cn(
-                    "text-text-secondary",
-                    spacing.margin.left.comfortable,
-                    "list-disc",
-                  )}
-                >
+                <p class="font-semibold text-text-primary mb-1">Solutions:</p>
+                <ul class={cn("text-text-secondary", spacing.margin.left.comfortable, "list-disc")}>
                   {issue.solutions.map((solution) => (
                     <li key={solution}>{solution}</li>
                   ))}
@@ -1240,24 +1226,18 @@ function TroubleshootingCategory({
 // HELPER COMPONENTS
 // ============================================================================
 
-function FeatureCard({ title, description }: { title: string; description: string }) {
+function _featureCard({ title, description }: { title: string; description: string }) {
   return (
     <div
-      className={cn(
-        "bg-surface-hover border border-surface-border",
-        radius.lg,
-        spacing.pad.default,
-      )}
+      class={cn("bg-surface-hover border border-surface-border", radius.lg, spacing.pad.default)}
     >
-      <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
-        {title}
-      </h4>
-      <p className="body-small text-text-secondary">{description}</p>
+      <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>{title}</h4>
+      <p class="body-small text-text-secondary">{description}</p>
     </div>
   );
 }
 
-function StepCard({
+function _stepCard({
   number,
   title,
   description,
@@ -1267,9 +1247,9 @@ function StepCard({
   description: string;
 }) {
   return (
-    <div className={cn("flex", spacing.gap.comfortable)}>
+    <div class={cn("flex", spacing.gap.comfortable)}>
       <div
-        className={cn(
+        class={cn(
           "shrink-0 w-8 h-8",
           radius.full,
           "bg-brand-primary text-text-inverse",
@@ -1279,35 +1259,32 @@ function StepCard({
       >
         {number}
       </div>
-      <div className="flex-1">
-        <h4 className={cn("font-semibold", spacing.margin.bottom.inline)}>{title}</h4>
-        <p className="body-small">{description}</p>
+      <div class="flex-1">
+        <h4 class={cn("font-semibold", spacing.margin.bottom.inline)}>{title}</h4>
+        <p class="body-small">{description}</p>
       </div>
     </div>
   );
 }
 
-function HelpContentSection({ title, children }: { title: string; children: ReactNode }) {
+function _helpContentSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="max-w-3xl">
-      <h3 className={cn("heading-2", spacing.margin.bottom.content)}>{title}</h3>
+    <div class="max-w-3xl">
+      <h3 class={cn("heading-2", spacing.margin.bottom.content)}>{title}</h3>
       {children}
     </div>
   );
 }
 
-function HelpTermList({ items }: { items: Array<{ term: string; description: string }> }) {
+function _helpTermList({ items }: { items: Array<{ term: string; description: string }> }) {
   return (
-    <dl className="stack-lg">
+    <dl class="stack-lg">
       {items.map((item) => (
-        <div
-          key={item.term}
-          className={cn("border-l-2 border-surface-border", spacing.pad.default)}
-        >
-          <dt className={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
+        <div key={item.term} class={cn("border-l-2 border-surface-border", spacing.pad.default)}>
+          <dt class={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
             {item.term}
           </dt>
-          <dd className="body-small text-text-secondary">{item.description}</dd>
+          <dd class="body-small text-text-secondary">{item.description}</dd>
         </div>
       ))}
     </dl>
@@ -1318,7 +1295,7 @@ function HelpTermList({ items }: { items: Array<{ term: string; description: str
 // NEW FEATURE SECTIONS
 // ============================================================================
 
-function ProfilesSection() {
+function _profilesSection() {
   const { t } = useTranslation("help");
   const capabilities = t("content.profiles.capabilities", { returnObjects: true }) as string[];
   const useCases = t("content.profiles.useCases.items", { returnObjects: true }) as Array<{
@@ -1327,24 +1304,24 @@ function ProfilesSection() {
   }>;
 
   return (
-    <HelpContentSection title={t("sections.profiles")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.profiles")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.profiles.description")}
       </p>
 
-      <div className={spacing.margin.bottom.section}>
-        <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
+      <div class={spacing.margin.bottom.section}>
+        <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
           {t("content.profiles.overview.title")}
         </h4>
-        <p className="body-small text-text-secondary">{t("content.profiles.overview.content")}</p>
+        <p class="body-small text-text-secondary">{t("content.profiles.overview.content")}</p>
       </div>
 
-      <div className={spacing.margin.bottom.section}>
-        <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
+      <div class={spacing.margin.bottom.section}>
+        <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
           {t("content.profiles.capabilities_title", "Profile Capabilities")}
         </h4>
         <ul
-          className={cn(
+          class={cn(
             "body-small text-text-secondary stack-sm",
             spacing.margin.left.spacious,
             "list-disc",
@@ -1357,28 +1334,28 @@ function ProfilesSection() {
       </div>
 
       <div>
-        <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
+        <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
           {t("content.profiles.useCases.title")}
         </h4>
-        <div className="stack-lg">
+        <div class="stack-lg">
           {useCases?.map((useCase) => (
             <div
               key={useCase.name}
-              className={cn("border-l-2 border-brand-primary", spacing.pad.default)}
+              class={cn("border-l-2 border-brand-primary", spacing.pad.default)}
             >
-              <dt className={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
+              <dt class={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
                 {useCase.name}
               </dt>
-              <dd className="body-small text-text-secondary">{useCase.description}</dd>
+              <dd class="body-small text-text-secondary">{useCase.description}</dd>
             </div>
           ))}
         </div>
       </div>
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function WiFiSurveySection() {
+function _wiFiSurveySection() {
   const { t } = useTranslation("help");
   const visualizations = t("content.wifiSurvey.visualizations", { returnObjects: true }) as Array<{
     type: string;
@@ -1389,12 +1366,12 @@ function WiFiSurveySection() {
   }) as string[];
 
   return (
-    <HelpContentSection title={t("sections.wifiSurvey")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.wifiSurvey")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.wifiSurvey.description")}
       </p>
 
-      <HelpTermList
+      <helpTermList
         items={[
           {
             term: t("content.wifiSurvey.terms.floorPlan.term"),
@@ -1415,40 +1392,40 @@ function WiFiSurveySection() {
         ]}
       />
 
-      <div className={spacing.margin.top.section}>
-        <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
+      <div class={spacing.margin.top.section}>
+        <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
           {t("content.wifiSurvey.visualizationsTitle", "Visualization Modes")}
         </h4>
-        <div className="grid md:grid-cols-2 gap-4">
+        <div class="grid md:grid-cols-2 gap-4">
           {visualizations?.map((viz) => (
             <div
               key={viz.type}
-              className={cn(
+              class={cn(
                 "bg-surface-hover border border-surface-border",
                 radius.default,
                 spacing.pad.sm,
               )}
             >
-              <h5 className="font-semibold text-text-primary">{viz.type}</h5>
-              <p className="body-small text-text-secondary">{viz.description}</p>
+              <h5 class="font-semibold text-text-primary">{viz.type}</h5>
+              <p class="body-small text-text-secondary">{viz.description}</p>
             </div>
           ))}
         </div>
       </div>
 
       <div
-        className={cn(
+        class={cn(
           spacing.margin.top.section,
           "bg-status-info/10 border border-status-info/20",
           radius.default,
           spacing.pad.default,
         )}
       >
-        <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
+        <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
           {t("content.wifiSurvey.bestPractices.title")}
         </h4>
         <ul
-          className={cn(
+          class={cn(
             "body-small text-text-secondary stack-sm",
             spacing.margin.left.spacious,
             "list-disc",
@@ -1459,11 +1436,11 @@ function WiFiSurveySection() {
           ))}
         </ul>
       </div>
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function RtspChecksSection() {
+function _rtspChecksSection() {
   const { t } = useTranslation("help");
   const configuration = t("content.rtspChecks.configuration", { returnObjects: true }) as Array<{
     field: string;
@@ -1471,12 +1448,12 @@ function RtspChecksSection() {
   }>;
 
   return (
-    <HelpContentSection title={t("sections.rtspChecks")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.rtspChecks")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.rtspChecks.description")}
       </p>
 
-      <HelpTermList
+      <helpTermList
         items={[
           {
             term: t("content.rtspChecks.terms.rtsp.term"),
@@ -1497,27 +1474,24 @@ function RtspChecksSection() {
         ]}
       />
 
-      <div className={spacing.margin.top.section}>
-        <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
+      <div class={spacing.margin.top.section}>
+        <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
           {t("content.rtspChecks.configurationTitle", "Configuration Options")}
         </h4>
-        <div className="stack-sm">
+        <div class="stack-sm">
           {configuration?.map((config) => (
-            <div
-              key={config.field}
-              className={cn("border-l-2 border-surface-border", spacing.pad.sm)}
-            >
-              <span className="font-mono text-brand-primary">{config.field}</span>
-              <span className="body-small text-text-secondary ml-2">{config.description}</span>
+            <div key={config.field} class={cn("border-l-2 border-surface-border", spacing.pad.sm)}>
+              <span class="font-mono text-brand-primary">{config.field}</span>
+              <span class="body-small text-text-secondary ml-2">{config.description}</span>
             </div>
           ))}
         </div>
       </div>
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function DicomChecksSection() {
+function _dicomChecksSection() {
   const { t } = useTranslation("help");
   const configuration = t("content.dicomChecks.configuration", { returnObjects: true }) as Array<{
     field: string;
@@ -1529,12 +1503,12 @@ function DicomChecksSection() {
   }>;
 
   return (
-    <HelpContentSection title={t("sections.dicomChecks")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.dicomChecks")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.dicomChecks.description")}
       </p>
 
-      <HelpTermList
+      <helpTermList
         items={[
           {
             term: t("content.dicomChecks.terms.dicom.term"),
@@ -1559,48 +1533,45 @@ function DicomChecksSection() {
         ]}
       />
 
-      <div className={spacing.margin.top.section}>
-        <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
+      <div class={spacing.margin.top.section}>
+        <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
           {t("content.dicomChecks.configurationTitle", "Configuration")}
         </h4>
-        <div className="stack-sm">
+        <div class="stack-sm">
           {configuration?.map((config) => (
-            <div
-              key={config.field}
-              className={cn("border-l-2 border-surface-border", spacing.pad.sm)}
-            >
-              <span className="font-mono text-brand-primary">{config.field}</span>
-              <span className="body-small text-text-secondary ml-2">{config.description}</span>
+            <div key={config.field} class={cn("border-l-2 border-surface-border", spacing.pad.sm)}>
+              <span class="font-mono text-brand-primary">{config.field}</span>
+              <span class="body-small text-text-secondary ml-2">{config.description}</span>
             </div>
           ))}
         </div>
       </div>
 
       <div
-        className={cn(
+        class={cn(
           spacing.margin.top.section,
           "bg-status-warning/10 border border-status-warning/20",
           radius.default,
           spacing.pad.default,
         )}
       >
-        <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
+        <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.content)}>
           {t("content.dicomChecks.commonIssuesTitle", "Common Issues")}
         </h4>
-        <div className="stack-lg">
+        <div class="stack-lg">
           {commonIssues?.map((item) => (
             <div key={item.issue}>
-              <p className="font-semibold text-status-warning">{item.issue}</p>
-              <p className="body-small text-text-secondary">{item.solution}</p>
+              <p class="font-semibold text-status-warning">{item.issue}</p>
+              <p class="body-small text-text-secondary">{item.solution}</p>
             </div>
           ))}
         </div>
       </div>
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function HowToSection() {
+function _howToSection() {
   const { t } = useTranslation("help");
   const guides = t("content.howTo.guides", { returnObjects: true }) as Record<
     string,
@@ -1612,26 +1583,26 @@ function HowToSection() {
   >;
 
   return (
-    <HelpContentSection title={t("sections.howTo")}>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <helpContentSection title={t("sections.howTo")}>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("content.howTo.description")}
       </p>
 
-      <div className="stack-xl">
+      <div class="stack-xl">
         {guides &&
           Object.entries(guides).map(([key, guide]) => (
             <div
               key={key}
-              className={cn("border border-surface-border", radius.lg, spacing.pad.default)}
+              class={cn("border border-surface-border", radius.lg, spacing.pad.default)}
             >
-              <h4 className={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
+              <h4 class={cn("font-semibold text-text-primary", spacing.margin.bottom.inline)}>
                 {guide.title}
               </h4>
-              <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+              <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
                 {guide.description}
               </p>
               <ol
-                className={cn(
+                class={cn(
                   "body-small text-text-secondary stack-sm",
                   spacing.margin.left.spacious,
                   "list-decimal",
@@ -1644,11 +1615,11 @@ function HowToSection() {
             </div>
           ))}
       </div>
-    </HelpContentSection>
+    </helpContentSection>
   );
 }
 
-function GlossarySection() {
+function _glossarySection() {
   const { t } = useTranslation("glossary");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -1680,25 +1651,25 @@ function GlossarySection() {
     : [];
 
   return (
-    <div className="max-w-3xl">
-      <h3 className={cn("heading-2", spacing.margin.bottom.content)}>{t("title")}</h3>
-      <p className={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+    <div class="max-w-3xl">
+      <h3 class={cn("heading-2", spacing.margin.bottom.content)}>{t("title")}</h3>
+      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
         {t("description")}
       </p>
 
       {/* Search and Filter */}
-      <div className={cn("flex flex-wrap gap-4", spacing.margin.bottom.section)}>
-        <div className="flex-1 min-w-[200px]">
-          <div className="relative">
+      <div class={cn("flex flex-wrap gap-4", spacing.margin.bottom.section)}>
+        <div class="flex-1 min-w-[200px]">
+          <div class="relative">
             <Search
-              className={cn("absolute left-3 top-1/2 -translate-y-1/2", "w-4 h-4 text-text-muted")}
+              class={cn("absolute left-3 top-1/2 -translate-y-1/2", "w-4 h-4 text-text-muted")}
             />
             <input
               type="text"
               placeholder="Search terms..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className={cn(
+              class={cn(
                 "w-full pl-9 pr-3 py-2",
                 "body-small",
                 radius.default,
@@ -1711,7 +1682,7 @@ function GlossarySection() {
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className={cn(
+          class={cn(
             "px-3 py-2",
             "body-small",
             radius.default,
@@ -1730,27 +1701,27 @@ function GlossarySection() {
       </div>
 
       {/* Terms List */}
-      <div className="stack-lg">
+      <div class="stack-lg">
         {filteredTerms.map(([key, termData]) => (
           <div
             key={key}
-            className={cn(
+            class={cn(
               "border border-surface-border",
               radius.default,
               spacing.pad.default,
               "hover:border-brand-primary/50 transition-colors",
             )}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="font-bold text-brand-primary">{termData.term}</span>
-                  <span className="body-small text-text-muted">({termData.fullName})</span>
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-baseline gap-2 mb-1">
+                  <span class="font-bold text-brand-primary">{termData.term}</span>
+                  <span class="body-small text-text-muted">({termData.fullName})</span>
                 </div>
-                <p className="body-small text-text-secondary">{termData.definition}</p>
+                <p class="body-small text-text-secondary">{termData.definition}</p>
               </div>
               <span
-                className={cn(
+                class={cn(
                   "px-2 py-0.5 text-xs font-medium",
                   radius.default,
                   "bg-surface-hover text-text-muted capitalize",
@@ -1763,9 +1734,7 @@ function GlossarySection() {
         ))}
 
         {filteredTerms.length === 0 && (
-          <div className="text-center py-8 text-text-muted">
-            No terms found matching your search.
-          </div>
+          <div class="text-center py-8 text-text-muted">No terms found matching your search.</div>
         )}
       </div>
     </div>

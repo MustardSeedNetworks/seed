@@ -15,7 +15,7 @@ import { PerformanceCard } from "./performance-card";
  * Note: SettingsProvider and I18nextProvider are provided by global decorators
  * in .storybook/preview.tsx.
  */
-const meta = {
+const meta: Meta<(typeof meta)["component"]> = {
   title: "Cards/performance-card",
   component: PerformanceCard,
   parameters: {
@@ -23,9 +23,9 @@ const meta = {
   },
   tags: ["autodocs"],
   decorators: [
-    (Story) => (
+    (StoryComponent: React.ComponentType): JSX.Element => (
       <div style={{ width: "400px" }}>
-        <Story />
+        <StoryComponent />
       </div>
     ),
   ],

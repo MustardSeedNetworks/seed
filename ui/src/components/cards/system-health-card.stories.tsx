@@ -17,7 +17,7 @@ import { SystemHealthCard } from "./system-health-card";
  *
  * This story demonstrates various system health states.
  */
-const meta = {
+const meta: Meta<(typeof meta)["component"]> = {
   title: "Cards/system-health-card",
   component: SystemHealthCard,
   parameters: {
@@ -51,9 +51,9 @@ const meta = {
   },
   tags: ["autodocs"],
   decorators: [
-    (Story) => (
+    (StoryComponent: React.ComponentType): JSX.Element => (
       <div style={{ width: "400px" }}>
-        <Story />
+        <StoryComponent />
       </div>
     ),
   ],

@@ -71,12 +71,16 @@ function getMetricUnit(metric: HeatmapMetric): string {
  */
 function extractMetricValue(sample: SamplePoint, metric: HeatmapMetric): number | null {
   const data = sample.sampleData;
-  if (!data) return null;
+  if (!data) {
+    return null;
+  }
 
   // Handle passive samples (networks array)
   if ("networks" in data && data.networks) {
     const networks = data.networks;
-    if (networks.length === 0) return null;
+    if (networks.length === 0) {
+      return null;
+    }
 
     switch (metric) {
       case "rssi": {
@@ -105,7 +109,9 @@ function extractMetricValue(sample: SamplePoint, metric: HeatmapMetric): number 
           (best, n) => (n.rssi > (best?.rssi ?? -999) ? n : best),
           networks[0],
         );
-        if (!strongest) return null;
+        if (!strongest) {
+          return null;
+        }
         return networks.filter(
           (n) => n.channel === strongest.channel && n.bssid !== strongest.bssid,
         ).length;
@@ -116,7 +122,9 @@ function extractMetricValue(sample: SamplePoint, metric: HeatmapMetric): number 
           (best, n) => (n.rssi > (best?.rssi ?? -999) ? n : best),
           networks[0],
         );
-        if (!strongest) return null;
+        if (!strongest) {
+          return null;
+        }
         const ch = strongest.channel;
         return networks.filter((n) => {
           const diff = Math.abs(n.channel - ch);
@@ -213,46 +221,50 @@ export function HeatmapStats({ samples, metric }: HeatmapStatsProps) {
       }
     }
 
-    if (values.length === 0) return null;
+    if (values.length === 0) {
+      return null;
+    }
 
     return calculateStats(values);
   }, [samples, metric]);
 
-  if (!stats || stats.count === 0) return null;
+  if (!stats || stats.count === 0) {
+    return null;
+  }
 
   const unit = getMetricUnit(metric);
 
   return (
     <div
-      className={cn(
+      class={cn(
         "bg-surface-raised border border-surface-border",
         radius.md,
         spacing.pad.sm,
         spacing.margin.top.tight,
       )}
     >
-      <div className={cn("grid grid-cols-2 gap-x-4 gap-y-1")}>
-        <div className="flex justify-between">
-          <span className="caption text-text-muted">{t("heatmapStats.average")}</span>
-          <span className="caption font-medium">
+      <div class={cn("grid grid-cols-2 gap-x-4 gap-y-1")}>
+        <div class="flex justify-between">
+          <span class="caption text-text-muted">{t("heatmapStats.average")}</span>
+          <span class="caption font-medium">
             {stats.average.toFixed(1)} {unit}
           </span>
         </div>
-        <div className="flex justify-between">
-          <span className="caption text-text-muted">{t("heatmapStats.median")}</span>
-          <span className="caption font-medium">
+        <div class="flex justify-between">
+          <span class="caption text-text-muted">{t("heatmapStats.median")}</span>
+          <span class="caption font-medium">
             {stats.median.toFixed(1)} {unit}
           </span>
         </div>
-        <div className="flex justify-between">
-          <span className="caption text-text-muted">{t("heatmapStats.stdDev")}</span>
-          <span className="caption font-medium">
+        <div class="flex justify-between">
+          <span class="caption text-text-muted">{t("heatmapStats.stdDev")}</span>
+          <span class="caption font-medium">
             {stats.stdDev.toFixed(1)} {unit}
           </span>
         </div>
-        <div className="flex justify-between">
-          <span className="caption text-text-muted">{t("heatmapStats.samples")}</span>
-          <span className="caption font-medium">{stats.count}</span>
+        <div class="flex justify-between">
+          <span class="caption text-text-muted">{t("heatmapStats.samples")}</span>
+          <span class="caption font-medium">{stats.count}</span>
         </div>
       </div>
     </div>

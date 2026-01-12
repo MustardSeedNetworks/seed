@@ -155,7 +155,7 @@ interface SettingsDrawerProps {
   isWifi?: boolean;
 }
 
-export const SettingsDrawer = memo(function SettingsDrawer({
+export const SettingsDrawer = memo(function settingsDrawer({
   isOpen,
   onClose,
   version = "dev",
@@ -468,7 +468,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             autoRunOnLink: data.speedtest?.autoRunOnLink ?? true, // Default to true
           },
           iperf: {
-            autoRunOnLink: data.iperf?.autoRunOnLink || false,
+            autoRunOnLink: data.iperf?.autoRunOnLink,
           },
         });
       }
@@ -509,7 +509,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         setWifiSettings({
           interface: data.interface || "",
           availableWifi: data.availableWifi || [],
-          isWireless: data.isWireless || false,
+          isWireless: data.isWireless,
         });
       }
     } catch (err) {
@@ -713,7 +713,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         setNewSubnetName("");
         setSubnetsStatus("saved");
         setTimeout(() => setSubnetsStatus("idle"), 2000);
-        fetchSubnets();
+        await fetchSubnets();
       } else {
         // Handle both JSON and plain text error responses
         const contentType = response.headers.get("content-type");
@@ -748,7 +748,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       if (response.ok) {
         setSubnetsStatus("saved");
         setTimeout(() => setSubnetsStatus("idle"), 2000);
-        fetchSubnets();
+        await fetchSubnets();
       } else {
         setSubnetsStatus("error");
       }
@@ -773,7 +773,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
       if (response.ok) {
         setSubnetsStatus("saved");
         setTimeout(() => setSubnetsStatus("idle"), 2000);
-        fetchSubnets();
+        await fetchSubnets();
       } else {
         setSubnetsStatus("error");
       }
@@ -1092,61 +1092,91 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
   // Auto-save thresholds with debounce
   useEffect(() => {
-    if (thresholdsInitRef.current) return;
-    if (thresholdsTimerRef.current) clearTimeout(thresholdsTimerRef.current);
+    if (thresholdsInitRef.current) {
+      return;
+    }
+    if (thresholdsTimerRef.current) {
+      clearTimeout(thresholdsTimerRef.current);
+    }
     thresholdsTimerRef.current = setTimeout(() => {
       saveThresholds();
     }, 800);
     return () => {
-      if (thresholdsTimerRef.current) clearTimeout(thresholdsTimerRef.current);
+      if (thresholdsTimerRef.current) {
+        clearTimeout(thresholdsTimerRef.current);
+      }
     };
   }, [saveThresholds]);
 
   // Auto-save tests settings with debounce
   useEffect(() => {
-    if (testsInitRef.current) return;
-    if (testsTimerRef.current) clearTimeout(testsTimerRef.current);
+    if (testsInitRef.current) {
+      return;
+    }
+    if (testsTimerRef.current) {
+      clearTimeout(testsTimerRef.current);
+    }
     testsTimerRef.current = setTimeout(() => {
       saveTestsSettings();
     }, 800);
     return () => {
-      if (testsTimerRef.current) clearTimeout(testsTimerRef.current);
+      if (testsTimerRef.current) {
+        clearTimeout(testsTimerRef.current);
+      }
     };
   }, [saveTestsSettings]);
 
   // Auto-save wifi settings with debounce
   useEffect(() => {
-    if (wifiInitRef.current) return;
-    if (wifiTimerRef.current) clearTimeout(wifiTimerRef.current);
+    if (wifiInitRef.current) {
+      return;
+    }
+    if (wifiTimerRef.current) {
+      clearTimeout(wifiTimerRef.current);
+    }
     wifiTimerRef.current = setTimeout(() => {
       saveWifiSettings();
     }, 800);
     return () => {
-      if (wifiTimerRef.current) clearTimeout(wifiTimerRef.current);
+      if (wifiTimerRef.current) {
+        clearTimeout(wifiTimerRef.current);
+      }
     };
   }, [saveWifiSettings]);
 
   // Auto-save link settings with debounce (fixes #734)
   useEffect(() => {
-    if (linkInitRef.current) return;
-    if (linkTimerRef.current) clearTimeout(linkTimerRef.current);
+    if (linkInitRef.current) {
+      return;
+    }
+    if (linkTimerRef.current) {
+      clearTimeout(linkTimerRef.current);
+    }
     linkTimerRef.current = setTimeout(() => {
       saveLinkSettings();
     }, 800);
     return () => {
-      if (linkTimerRef.current) clearTimeout(linkTimerRef.current);
+      if (linkTimerRef.current) {
+        clearTimeout(linkTimerRef.current);
+      }
     };
   }, [saveLinkSettings]);
 
   // Auto-save cable test settings with debounce (fixes #740)
   useEffect(() => {
-    if (cableTestInitRef.current) return;
-    if (cableTestTimerRef.current) clearTimeout(cableTestTimerRef.current);
+    if (cableTestInitRef.current) {
+      return;
+    }
+    if (cableTestTimerRef.current) {
+      clearTimeout(cableTestTimerRef.current);
+    }
     cableTestTimerRef.current = setTimeout(() => {
       saveCableTestSettings();
     }, 800);
     return () => {
-      if (cableTestTimerRef.current) clearTimeout(cableTestTimerRef.current);
+      if (cableTestTimerRef.current) {
+        clearTimeout(cableTestTimerRef.current);
+      }
     };
   }, [saveCableTestSettings]);
 
@@ -1154,60 +1184,99 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
   // Auto-save Network Discovery settings with debounce
   useEffect(() => {
-    if (networkDiscoveryInitRef.current) return;
-    if (networkDiscoveryTimerRef.current) clearTimeout(networkDiscoveryTimerRef.current);
+    if (networkDiscoveryInitRef.current) {
+      return;
+    }
+    if (networkDiscoveryTimerRef.current) {
+      clearTimeout(networkDiscoveryTimerRef.current);
+    }
     networkDiscoveryTimerRef.current = setTimeout(() => {
       saveNetworkDiscoverySettings();
     }, 800);
     return () => {
-      if (networkDiscoveryTimerRef.current) clearTimeout(networkDiscoveryTimerRef.current);
+      if (networkDiscoveryTimerRef.current) {
+        clearTimeout(networkDiscoveryTimerRef.current);
+      }
     };
   }, [saveNetworkDiscoverySettings]);
 
   // Auto-save SNMP settings with debounce
   useEffect(() => {
-    if (snmpInitRef.current) return;
-    if (snmpTimerRef.current) clearTimeout(snmpTimerRef.current);
+    if (snmpInitRef.current) {
+      return;
+    }
+    if (snmpTimerRef.current) {
+      clearTimeout(snmpTimerRef.current);
+    }
     snmpTimerRef.current = setTimeout(() => {
       saveSnmpSettings();
     }, 800);
     return () => {
-      if (snmpTimerRef.current) clearTimeout(snmpTimerRef.current);
+      if (snmpTimerRef.current) {
+        clearTimeout(snmpTimerRef.current);
+      }
     };
   }, [saveSnmpSettings]);
 
   // Auto-save vulnerability settings with debounce
   useEffect(() => {
-    if (vulnInitRef.current) return;
-    if (vulnTimerRef.current) clearTimeout(vulnTimerRef.current);
+    if (vulnInitRef.current) {
+      return;
+    }
+    if (vulnTimerRef.current) {
+      clearTimeout(vulnTimerRef.current);
+    }
     vulnTimerRef.current = setTimeout(() => {
       saveVulnSettings();
     }, 800);
     return () => {
-      if (vulnTimerRef.current) clearTimeout(vulnTimerRef.current);
+      if (vulnTimerRef.current) {
+        clearTimeout(vulnTimerRef.current);
+      }
     };
   }, [saveVulnSettings]);
 
   // Fixes #917: Master cleanup effect for all timer refs on unmount
   // Individual useEffects clean up on re-render, but this ensures cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (thresholdsTimerRef.current) clearTimeout(thresholdsTimerRef.current);
-      if (testsTimerRef.current) clearTimeout(testsTimerRef.current);
-      if (wifiTimerRef.current) clearTimeout(wifiTimerRef.current);
-      if (linkTimerRef.current) clearTimeout(linkTimerRef.current);
-      if (cableTestTimerRef.current) clearTimeout(cableTestTimerRef.current);
-      if (networkDiscoveryTimerRef.current) clearTimeout(networkDiscoveryTimerRef.current);
-      if (snmpTimerRef.current) clearTimeout(snmpTimerRef.current);
-      if (vulnTimerRef.current) clearTimeout(vulnTimerRef.current);
-    };
-  }, []);
+  useEffect(
+    () => () => {
+      if (thresholdsTimerRef.current) {
+        clearTimeout(thresholdsTimerRef.current);
+      }
+      if (testsTimerRef.current) {
+        clearTimeout(testsTimerRef.current);
+      }
+      if (wifiTimerRef.current) {
+        clearTimeout(wifiTimerRef.current);
+      }
+      if (linkTimerRef.current) {
+        clearTimeout(linkTimerRef.current);
+      }
+      if (cableTestTimerRef.current) {
+        clearTimeout(cableTestTimerRef.current);
+      }
+      if (networkDiscoveryTimerRef.current) {
+        clearTimeout(networkDiscoveryTimerRef.current);
+      }
+      if (snmpTimerRef.current) {
+        clearTimeout(snmpTimerRef.current);
+      }
+      if (vulnTimerRef.current) {
+        clearTimeout(vulnTimerRef.current);
+      }
+    },
+    [],
+  );
 
   // Validate IP address format
   const isValidIp = (ip: string): boolean => {
-    if (!ip) return true; // Empty is OK for optional fields
+    if (!ip) {
+      return true; // Empty is OK for optional fields
+    }
     const parts = ip.split(".");
-    if (parts.length !== 4) return false;
+    if (parts.length !== 4) {
+      return false;
+    }
     return parts.every((p) => {
       const n = Number.parseInt(p, 10);
       return !Number.isNaN(n) && n >= 0 && n <= 255 && p === String(n);
@@ -1219,7 +1288,9 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
   // Handle ESC key to close drawer
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      return;
+    }
 
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -1239,13 +1310,15 @@ export const SettingsDrawer = memo(function SettingsDrawer({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -1258,26 +1331,26 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         aria-labelledby="settings-drawer-title"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        className="fixed right-0 top-0 h-full w-full sm:w-96 lg:w-lg bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl"
+        class="fixed right-0 top-0 h-full w-full sm:w-96 lg:w-lg bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl"
       >
         {/* Header */}
         <div
-          className={cn(
+          class={cn(
             layout.flex.between,
             "pad sm:pad-lg border-b border-surface-border sticky top-0 bg-surface-raised z-10",
           )}
         >
-          <div className="stack-xs">
-            <h2 id="settings-drawer-title" className="heading-3">
+          <div class="stack-xs">
+            <h2 id="settings-drawer-title" class="heading-3">
               {t("title")}
             </h2>
-            <p className="body-small">{t("subtitle")}</p>
+            <p class="body-small">{t("subtitle")}</p>
           </div>
           <button
             type="button"
             ref={closeButtonRef}
             onClick={onClose}
-            className={cn(
+            class={cn(
               button.size.md,
               radius.md,
               "hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-raised",
@@ -1285,7 +1358,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
             aria-label={t("network.closeSettings")}
           >
             <svg
-              className={iconTokens.size.lg}
+              class={iconTokens.size.lg}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1302,7 +1375,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
         </div>
 
         <div
-          className={cn(spacing.drawerPad, "section-gap body-small leading-relaxed")}
+          class={cn(spacing.drawerPad, "section-gap body-small leading-relaxed")}
           ref={scrollRef}
         >
           {/* Settings sections ordered to match dashboard card order */}
@@ -1325,21 +1398,21 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           {/* Network Section - IP/DHCP config (third) */}
           <CollapsibleSection
             title={
-              <div className={layout.inline.default}>
-                <Network className={iconTokens.size.sm} />
+              <div class={layout.inline.default}>
+                <Network class={iconTokens.size.sm} />
                 <span>{t("sections.network")}</span>
               </div>
             }
           >
             {/* Network Configuration */}
-            <div className="stack">
-              <p className="section-title">{t("network.title")}</p>
+            <div class="stack">
+              <p class="section-title">{t("network.title")}</p>
               {/* Mode Toggle */}
-              <div className={cn("grid grid-cols-2", spacing.gap.compact)}>
+              <div class={cn("grid grid-cols-2", spacing.gap.compact)}>
                 <button
                   type="button"
                   onClick={() => setIpSettings((prev) => ({ ...prev, mode: "dhcp" }))}
-                  className={cn(
+                  class={cn(
                     spacing.tab,
                     radius.md,
                     "body-small font-medium transition-colors",
@@ -1353,7 +1426,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                 <button
                   type="button"
                   onClick={() => setIpSettings((prev) => ({ ...prev, mode: "static" }))}
-                  className={cn(
+                  class={cn(
                     spacing.tab,
                     radius.md,
                     "body-small font-medium transition-colors",
@@ -1369,14 +1442,10 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               {/* Static IP Fields */}
               {ipSettings.mode === "static" && (
                 <div
-                  className={cn(
-                    "stack",
-                    spacing.padding.top.heading,
-                    "border-t border-surface-border",
-                  )}
+                  class={cn("stack", spacing.padding.top.heading, "border-t border-surface-border")}
                 >
                   <div>
-                    <label htmlFor="static-ip-address" className="caption font-medium">
+                    <label for="static-ip-address" class="caption font-medium">
                       {t("network.ipAddress")} *
                     </label>
                     <input
@@ -1390,7 +1459,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                         }))
                       }
                       placeholder="192.168.1.100"
-                      className={cn(
+                      class={cn(
                         "w-full",
                         spacing.margin.top.tight,
                         spacing.chip.sm,
@@ -1404,7 +1473,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     />
                   </div>
                   <div>
-                    <label htmlFor="static-subnet-mask" className="caption font-medium">
+                    <label for="static-subnet-mask" class="caption font-medium">
                       {t("network.subnetMask")} *
                     </label>
                     <input
@@ -1418,7 +1487,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                         }))
                       }
                       placeholder="24 or 255.255.255.0"
-                      className={cn(
+                      class={cn(
                         "w-full",
                         spacing.margin.top.tight,
                         spacing.chip.lg,
@@ -1429,7 +1498,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     />
                   </div>
                   <div>
-                    <label htmlFor="static-gateway" className="caption font-medium">
+                    <label for="static-gateway" class="caption font-medium">
                       {t("network.gateway")}
                     </label>
                     <input
@@ -1443,7 +1512,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                         }))
                       }
                       placeholder="192.168.1.1"
-                      className={cn(
+                      class={cn(
                         "w-full",
                         spacing.margin.top.tight,
                         spacing.chip.sm,
@@ -1457,7 +1526,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                     />
                   </div>
                   <div>
-                    <label htmlFor="static-dns-servers" className="caption font-medium">
+                    <label for="static-dns-servers" class="caption font-medium">
                       {t("network.dnsServers")}
                     </label>
                     <input
@@ -1466,7 +1535,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                       value={dnsInput}
                       onChange={(e) => setDnsInput(e.target.value)}
                       placeholder="8.8.8.8, 8.8.4.4"
-                      className={cn(
+                      class={cn(
                         "w-full",
                         spacing.margin.top.tight,
                         spacing.chip.lg,
@@ -1484,7 +1553,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                 type="button"
                 onClick={saveIpSettings}
                 disabled={savingIp || (ipSettings.mode === "static" && !ipSettings.address)}
-                className={cn(
+                class={cn(
                   "w-full",
                   button.size.md,
                   "bg-brand-primary text-text-inverse",
@@ -1497,7 +1566,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
               {ipMessage && (
                 <p
-                  className={cn(
+                  class={cn(
                     "caption text-center",
                     ipMessage.includes("Failed") || ipMessage.includes("Error")
                       ? "text-status-error"
@@ -1508,24 +1577,24 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                 </p>
               )}
 
-              <p className="caption">{t("network.requiresRoot")}</p>
+              <p class="caption">{t("network.requiresRoot")}</p>
             </div>
 
             {/* Display Options */}
             <div
-              className={cn(
+              class={cn(
                 "border-t border-surface-border",
                 spacing.padding.top.heading,
                 spacing.margin.top.heading,
               )}
             >
-              <p className={cn("caption font-medium", spacing.margin.bottom.inline)}>
+              <p class={cn("caption font-medium", spacing.margin.bottom.inline)}>
                 {t("network.displayOptions")} <AutoSaveIndicator status={displayStatus} />
               </p>
-              <div className="stack-sm">
+              <div class="stack-sm">
                 {/* Show Public IP */}
                 <label
-                  className={cn(
+                  class={cn(
                     "flex items-center justify-between",
                     spacing.pad.xs,
                     "bg-surface-base",
@@ -1534,10 +1603,10 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                   )}
                 >
                   <div>
-                    <span className="body-small text-text-primary font-medium">
+                    <span class="body-small text-text-primary font-medium">
                       {t("network.showPublicIp")}
                     </span>
-                    <p className="caption text-text-muted">{t("network.displayInNetworkCard")}</p>
+                    <p class="caption text-text-muted">{t("network.displayInNetworkCard")}</p>
                   </div>
                   <input
                     type="checkbox"
@@ -1548,7 +1617,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
                         showPublicIp: e.target.checked,
                       }))
                     }
-                    className={iconTokens.size.sm}
+                    class={iconTokens.size.sm}
                   />
                 </label>
               </div>
@@ -1556,13 +1625,13 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
             {/* VLAN Configuration */}
             <div
-              className={cn(
+              class={cn(
                 "border-t border-surface-border",
                 spacing.padding.top.heading,
                 spacing.margin.top.heading,
               )}
             >
-              <p className={cn("section-title", spacing.margin.bottom.inline)}>
+              <p class={cn("section-title", spacing.margin.bottom.inline)}>
                 {t("network.vlanTag")}
               </p>
               <VlanControl />
@@ -1570,13 +1639,13 @@ export const SettingsDrawer = memo(function SettingsDrawer({
 
             {/* MTU Configuration */}
             <div
-              className={cn(
+              class={cn(
                 "border-t border-surface-border",
                 spacing.padding.top.heading,
                 spacing.margin.top.heading,
               )}
             >
-              <p className={cn("section-title", spacing.margin.bottom.inline)}>
+              <p class={cn("section-title", spacing.margin.bottom.inline)}>
                 {t("network.mtuSetting")}
               </p>
               <MtuControl />
@@ -1673,16 +1742,16 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           <UpdateSettings currentVersion={version} />
 
           {/* Logs (debug) */}
-          <section className={cn(spacing.padding.top.section, "border-t border-surface-border")}>
-            <div className="flex items-start justify-between">
+          <section class={cn(spacing.padding.top.section, "border-t border-surface-border")}>
+            <div class="flex items-start justify-between">
               <div>
-                <h3 className="body-small font-medium text-text-muted">{t("logs.title")}</h3>
-                <p className="caption text-text-muted">{t("logs.description")}</p>
+                <h3 class="body-small font-medium text-text-muted">{t("logs.title")}</h3>
+                <p class="caption text-text-muted">{t("logs.description")}</p>
               </div>
               <button
                 type="button"
                 onClick={fetchLogPreview}
-                className={cn(
+                class={cn(
                   "caption",
                   spacing.chip.sm,
                   "border border-surface-border",
@@ -1694,13 +1763,11 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               </button>
             </div>
             {logError && (
-              <p className={cn("caption text-status-error", spacing.margin.top.inline)}>
-                {logError}
-              </p>
+              <p class={cn("caption text-status-error", spacing.margin.top.inline)}>{logError}</p>
             )}
             {!logError && logPreview.length > 0 && (
               <pre
-                className={cn(
+                class={cn(
                   spacing.margin.top.inline,
                   "max-h-48 overflow-y-auto text-2xs leading-5 bg-surface-base border border-surface-border",
                   radius.md,
@@ -1714,19 +1781,14 @@ export const SettingsDrawer = memo(function SettingsDrawer({
           </section>
 
           {/* Export Section */}
-          <section className={cn(spacing.padding.top.section, "border-t border-surface-border")}>
-            <h3
-              className={cn(
-                "body-small font-medium text-text-muted",
-                spacing.margin.bottom.heading,
-              )}
-            >
+          <section class={cn(spacing.padding.top.section, "border-t border-surface-border")}>
+            <h3 class={cn("body-small font-medium text-text-muted", spacing.margin.bottom.heading)}>
               {t("export.title")}
             </h3>
             <a
               href={`${API_BASE}/api/harvest/export`}
               download="seed-export.json"
-              className={cn(
+              class={cn(
                 "w-full",
                 button.size.md,
                 "bg-surface-base border border-surface-border text-text-primary",
@@ -1737,7 +1799,7 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               )}
             >
               <svg
-                className={iconTokens.size.sm}
+                class={iconTokens.size.sm}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1752,19 +1814,17 @@ export const SettingsDrawer = memo(function SettingsDrawer({
               </svg>
               {t("export.download")}
             </a>
-            <p className={cn("caption text-text-muted", spacing.margin.top.inline)}>
+            <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
               {t("export.description")}
             </p>
           </section>
 
           {/* About Section */}
-          <section className={cn(spacing.padding.top.section, "border-t border-surface-border")}>
-            <h3
-              className={cn("body-small font-medium text-text-muted", spacing.margin.bottom.inline)}
-            >
+          <section class={cn(spacing.padding.top.section, "border-t border-surface-border")}>
+            <h3 class={cn("body-small font-medium text-text-muted", spacing.margin.bottom.inline)}>
               {t("about.title")}
             </h3>
-            <p className="caption text-text-muted">
+            <p class="caption text-text-muted">
               {t("about.appName")} {version}
               <br />
               {t("about.description")}

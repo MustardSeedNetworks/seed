@@ -50,7 +50,7 @@ interface DiscoverySettingsProps {
  * Settings section for network discovery options and subnet management.
  * Refactored into sub-components for better maintainability.
  */
-export const DiscoverySettings = memo(function DiscoverySettings({
+export const DiscoverySettings = memo(function discoverySettings({
   networkDiscoverySettings,
   setNetworkDiscoverySettings,
   networkDiscoveryStatus,
@@ -106,19 +106,19 @@ export const DiscoverySettings = memo(function DiscoverySettings({
   return (
     <CollapsibleSection
       title={
-        <div className={layout.inline.default}>
-          <ScanSearch className={iconTokens.size.sm} />
+        <div class={layout.inline.default}>
+          <ScanSearch class={iconTokens.size.sm} />
           <span>{t("sections.discovery")}</span>
           <AutoSaveIndicator status={networkDiscoveryStatus} />
         </div>
       }
       defaultOpen={false}
     >
-      <div className="stack">
+      <div class="stack">
         {/* Card Visibility & FAB Controls */}
-        <div className="stack-sm">
+        <div class="stack-sm">
           <label
-            className={cn(
+            class={cn(
               layout.flex.between,
               spacing.pad.sm,
               "bg-surface-base",
@@ -127,10 +127,10 @@ export const DiscoverySettings = memo(function DiscoverySettings({
             )}
           >
             <div>
-              <span className="body-small text-text-primary font-medium">
+              <span class="body-small text-text-primary font-medium">
                 {t("common.showCard", "Show Card")}
               </span>
-              <p className="caption text-text-muted">
+              <p class="caption text-text-muted">
                 {t("common.showCardDesc", "Display this card on the dashboard")}
               </p>
             </div>
@@ -142,11 +142,11 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                   networkDiscovery: { ...cardSettings.networkDiscovery, enabled: e.target.checked },
                 })
               }
-              className={iconTokens.size.sm}
+              class={iconTokens.size.sm}
             />
           </label>
           <label
-            className={cn(
+            class={cn(
               layout.flex.between,
               spacing.pad.sm,
               "bg-surface-base",
@@ -155,10 +155,10 @@ export const DiscoverySettings = memo(function DiscoverySettings({
             )}
           >
             <div>
-              <span className="body-small text-text-primary font-medium">
+              <span class="body-small text-text-primary font-medium">
                 {t("common.runOnFab", "Include in Run All")}
               </span>
-              <p className="caption text-text-muted">
+              <p class="caption text-text-muted">
                 {t("common.runOnFabDesc", "Run when FAB button is clicked")}
               </p>
             </div>
@@ -173,7 +173,7 @@ export const DiscoverySettings = memo(function DiscoverySettings({
                   },
                 })
               }
-              className={iconTokens.size.sm}
+              class={iconTokens.size.sm}
             />
           </label>
         </div>

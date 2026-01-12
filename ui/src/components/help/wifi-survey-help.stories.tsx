@@ -37,16 +37,16 @@ type Story = StoryObj;
  */
 export const AllSections: Story = {
   render: () => (
-    <div className={cn("max-w-3xl mx-auto", spacing.pad.default, section.spacing.comfortable)}>
-      <h1 className={cn("heading-1 text-text-primary", spacing.margin.bottom.section)}>
+    <div class={cn("max-w-3xl mx-auto", spacing.pad.default, section.spacing.comfortable)}>
+      <h1 class={cn("heading-1 text-text-primary", spacing.margin.bottom.section)}>
         WiFi Survey Help
       </h1>
       {WIFI_SURVEY_HELP.map((section) => (
-        <HelpSection key={section.title} title={section.title}>
+        <helpSection key={section.title} title={section.title}>
           {section.items.map((item) => (
-            <HelpItem key={item.question} question={item.question} answer={item.answer} />
+            <helpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </HelpSection>
+        </helpSection>
       ))}
     </div>
   ),
@@ -58,15 +58,17 @@ export const AllSections: Story = {
 export const Overview: Story = {
   render: () => {
     const overviewSection = WIFI_SURVEY_HELP.find((s) => s.title === "Overview");
-    if (!overviewSection) return <div>Section not found</div>;
+    if (!overviewSection) {
+      return <div>Section not found</div>;
+    }
 
     return (
-      <div className={cn("max-w-3xl mx-auto", spacing.pad.default)}>
-        <HelpSection title={overviewSection.title}>
+      <div class={cn("max-w-3xl mx-auto", spacing.pad.default)}>
+        <helpSection title={overviewSection.title}>
           {overviewSection.items.map((item) => (
-            <HelpItem key={item.question} question={item.question} answer={item.answer} />
+            <helpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </HelpSection>
+        </helpSection>
       </div>
     );
   },
@@ -85,15 +87,17 @@ export const Overview: Story = {
 export const SurveyModes: Story = {
   render: () => {
     const modesSection = WIFI_SURVEY_HELP.find((s) => s.title === "Survey Modes");
-    if (!modesSection) return <div>Section not found</div>;
+    if (!modesSection) {
+      return <div>Section not found</div>;
+    }
 
     return (
-      <div className={cn("max-w-3xl mx-auto", spacing.pad.default)}>
-        <HelpSection title={modesSection.title}>
+      <div class={cn("max-w-3xl mx-auto", spacing.pad.default)}>
+        <helpSection title={modesSection.title}>
           {modesSection.items.map((item) => (
-            <HelpItem key={item.question} question={item.question} answer={item.answer} />
+            <helpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </HelpSection>
+        </helpSection>
       </div>
     );
   },
@@ -113,15 +117,17 @@ export const SurveyModes: Story = {
 export const CreatingSurvey: Story = {
   render: () => {
     const createSection = WIFI_SURVEY_HELP.find((s) => s.title === "Creating a Survey");
-    if (!createSection) return <div>Section not found</div>;
+    if (!createSection) {
+      return <div>Section not found</div>;
+    }
 
     return (
-      <div className={cn("max-w-3xl mx-auto", spacing.pad.default)}>
-        <HelpSection title={createSection.title}>
+      <div class={cn("max-w-3xl mx-auto", spacing.pad.default)}>
+        <helpSection title={createSection.title}>
           {createSection.items.map((item) => (
-            <HelpItem key={item.question} question={item.question} answer={item.answer} />
+            <helpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </HelpSection>
+        </helpSection>
       </div>
     );
   },
@@ -141,15 +147,17 @@ export const CreatingSurvey: Story = {
 export const ConductingSurvey: Story = {
   render: () => {
     const conductSection = WIFI_SURVEY_HELP.find((s) => s.title === "Conducting a Survey");
-    if (!conductSection) return <div>Section not found</div>;
+    if (!conductSection) {
+      return <div>Section not found</div>;
+    }
 
     return (
-      <div className={cn("max-w-3xl mx-auto", spacing.pad.default)}>
-        <HelpSection title={conductSection.title}>
+      <div class={cn("max-w-3xl mx-auto", spacing.pad.default)}>
+        <helpSection title={conductSection.title}>
           {conductSection.items.map((item) => (
-            <HelpItem key={item.question} question={item.question} answer={item.answer} />
+            <helpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </HelpSection>
+        </helpSection>
       </div>
     );
   },
@@ -168,15 +176,17 @@ export const ConductingSurvey: Story = {
 export const ViewingResults: Story = {
   render: () => {
     const resultsSection = WIFI_SURVEY_HELP.find((s) => s.title === "Viewing Results");
-    if (!resultsSection) return <div>Section not found</div>;
+    if (!resultsSection) {
+      return <div>Section not found</div>;
+    }
 
     return (
-      <div className={cn("max-w-3xl mx-auto", spacing.pad.default)}>
-        <HelpSection title={resultsSection.title}>
+      <div class={cn("max-w-3xl mx-auto", spacing.pad.default)}>
+        <helpSection title={resultsSection.title}>
           {resultsSection.items.map((item) => (
-            <HelpItem key={item.question} question={item.question} answer={item.answer} />
+            <helpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </HelpSection>
+        </helpSection>
       </div>
     );
   },
@@ -195,15 +205,17 @@ export const ViewingResults: Story = {
 export const Troubleshooting: Story = {
   render: () => {
     const troubleSection = WIFI_SURVEY_HELP.find((s) => s.title === "Troubleshooting");
-    if (!troubleSection) return <div>Section not found</div>;
+    if (!troubleSection) {
+      return <div>Section not found</div>;
+    }
 
     return (
-      <div className={cn("max-w-3xl mx-auto", spacing.pad.default)}>
-        <HelpSection title={troubleSection.title}>
+      <div class={cn("max-w-3xl mx-auto", spacing.pad.default)}>
+        <helpSection title={troubleSection.title}>
           {troubleSection.items.map((item) => (
-            <HelpItem key={item.question} question={item.question} answer={item.answer} />
+            <helpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </HelpSection>
+        </helpSection>
       </div>
     );
   },
@@ -223,15 +235,17 @@ export const Troubleshooting: Story = {
 export const BestPractices: Story = {
   render: () => {
     const bestSection = WIFI_SURVEY_HELP.find((s) => s.title === "Best Practices");
-    if (!bestSection) return <div>Section not found</div>;
+    if (!bestSection) {
+      return <div>Section not found</div>;
+    }
 
     return (
-      <div className={cn("max-w-3xl mx-auto", spacing.pad.default)}>
-        <HelpSection title={bestSection.title}>
+      <div class={cn("max-w-3xl mx-auto", spacing.pad.default)}>
+        <helpSection title={bestSection.title}>
           {bestSection.items.map((item) => (
-            <HelpItem key={item.question} question={item.question} answer={item.answer} />
+            <helpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </HelpSection>
+        </helpSection>
       </div>
     );
   },
@@ -249,36 +263,36 @@ export const BestPractices: Story = {
  */
 export const SignalStrengthLegend: Story = {
   render: () => (
-    <div className={cn("max-w-xl mx-auto", spacing.pad.default)}>
-      <h2 className={cn("heading-2 text-text-primary", spacing.margin.bottom.content)}>
+    <div class={cn("max-w-xl mx-auto", spacing.pad.default)}>
+      <h2 class={cn("heading-2 text-text-primary", spacing.margin.bottom.content)}>
         Signal Strength Heatmap Legend
       </h2>
-      <div className="stack-sm">
-        <SignalLevel
+      <div class="stack-sm">
+        <signalLevel
           color="bg-status-success"
           range="-30 to -50 dBm"
           label="Excellent"
           description="Maximum signal strength, ideal for all applications"
         />
-        <SignalLevel
+        <signalLevel
           color="bg-lime-500"
           range="-50 to -60 dBm"
           label="Very Good"
           description="Strong signal, excellent for streaming and VoIP"
         />
-        <SignalLevel
+        <signalLevel
           color="bg-status-warning"
           range="-60 to -70 dBm"
           label="Good"
           description="Reliable connection for most activities"
         />
-        <SignalLevel
+        <signalLevel
           color="bg-orange-500"
           range="-70 to -80 dBm"
           label="Fair"
           description="Adequate for basic browsing, may have issues"
         />
-        <SignalLevel
+        <signalLevel
           color="bg-status-error"
           range="Below -80 dBm"
           label="Weak/Dead Zone"
@@ -301,36 +315,36 @@ export const SignalStrengthLegend: Story = {
  */
 export const ThroughputLegend: Story = {
   render: () => (
-    <div className={cn("max-w-xl mx-auto", spacing.pad.default)}>
-      <h2 className={cn("heading-2 text-text-primary", spacing.margin.bottom.content)}>
+    <div class={cn("max-w-xl mx-auto", spacing.pad.default)}>
+      <h2 class={cn("heading-2 text-text-primary", spacing.margin.bottom.content)}>
         Throughput Heatmap Legend
       </h2>
-      <div className="stack-sm">
-        <SignalLevel
+      <div class="stack-sm">
+        <signalLevel
           color="bg-status-success"
           range="80-100%+ of expected"
           label="Excellent"
           description="Full speed, meeting or exceeding expectations"
         />
-        <SignalLevel
+        <signalLevel
           color="bg-lime-500"
           range="60-80% of expected"
           label="Good"
           description="Strong performance for most applications"
         />
-        <SignalLevel
+        <signalLevel
           color="bg-status-warning"
           range="40-60% of expected"
           label="Fair"
           description="Usable but may impact some activities"
         />
-        <SignalLevel
+        <signalLevel
           color="bg-orange-500"
           range="20-40% of expected"
           label="Poor"
           description="Significantly degraded performance"
         />
-        <SignalLevel
+        <signalLevel
           color="bg-status-error"
           range="Below 20% of expected"
           label="Critical"
@@ -353,12 +367,12 @@ export const ThroughputLegend: Story = {
  */
 export const ModesComparison: Story = {
   render: () => (
-    <div className={cn("max-w-4xl mx-auto", spacing.pad.default)}>
-      <h2 className={cn("heading-2 text-text-primary", spacing.margin.bottom.content)}>
+    <div class={cn("max-w-4xl mx-auto", spacing.pad.default)}>
+      <h2 class={cn("heading-2 text-text-primary", spacing.margin.bottom.content)}>
         Survey Modes Comparison
       </h2>
-      <div className={cn("grid md:grid-cols-3", spacing.gap.comfortable)}>
-        <ModeCard
+      <div class={cn("grid md:grid-cols-3", spacing.gap.comfortable)}>
+        <modeCard
           title="Passive Scan"
           icon="📡"
           description="Scans all visible networks"
@@ -366,7 +380,7 @@ export const ModesComparison: Story = {
           cons={["Doesn't test actual speed", "No roaming detection"]}
           bestFor="Initial site assessment"
         />
-        <ModeCard
+        <modeCard
           title="Active Monitoring"
           icon="📶"
           description="Monitors current connection"
@@ -374,7 +388,7 @@ export const ModesComparison: Story = {
           cons={["Single network only", "Requires connection"]}
           bestFor="Coverage validation"
         />
-        <ModeCard
+        <modeCard
           title="Throughput Testing"
           icon="⚡"
           description="Measures actual speeds"
@@ -396,34 +410,34 @@ export const ModesComparison: Story = {
 
 // Helper Components
 
-function HelpSection({ title, children }: { title: string; children: React.ReactNode }) {
+function _helpSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-surface-raised border border-surface-border rounded-lg overflow-hidden">
+    <div class="bg-surface-raised border border-surface-border rounded-lg overflow-hidden">
       <h2
-        className={cn(
+        class={cn(
           "heading-3 text-text-primary bg-surface-base border-b border-surface-border",
           spacing.pad.default,
         )}
       >
         {title}
       </h2>
-      <div className="divide-y divide-surface-border">{children}</div>
+      <div class="divide-y divide-surface-border">{children}</div>
     </div>
   );
 }
 
-function HelpItem({ question, answer }: { question: string; answer: string }) {
+function _helpItem({ question, answer }: { question: string; answer: string }) {
   return (
-    <div className={spacing.pad.default}>
-      <h3 className={cn("body font-semibold text-text-primary", spacing.margin.bottom.inline)}>
+    <div class={spacing.pad.default}>
+      <h3 class={cn("body font-semibold text-text-primary", spacing.margin.bottom.inline)}>
         {question}
       </h3>
-      <div className="body-small text-text-secondary whitespace-pre-line">{answer}</div>
+      <div class="body-small text-text-secondary whitespace-pre-line">{answer}</div>
     </div>
   );
 }
 
-function SignalLevel({
+function _signalLevel({
   color,
   range,
   label,
@@ -436,25 +450,25 @@ function SignalLevel({
 }) {
   return (
     <div
-      className={cn(
+      class={cn(
         "flex items-center bg-surface-raised border border-surface-border rounded-lg",
         spacing.gap.default,
         spacing.pad.sm,
       )}
     >
-      <div className={cn("w-8 h-8 rounded", color)} />
-      <div className="flex-1">
-        <div className={cn("flex items-baseline", spacing.gap.compact)}>
-          <span className="body font-semibold text-text-primary">{label}</span>
-          <span className="body-small text-text-muted">({range})</span>
+      <div class={cn("w-8 h-8 rounded", color)} />
+      <div class="flex-1">
+        <div class={cn("flex items-baseline", spacing.gap.compact)}>
+          <span class="body font-semibold text-text-primary">{label}</span>
+          <span class="body-small text-text-muted">({range})</span>
         </div>
-        <p className="caption text-text-secondary">{description}</p>
+        <p class="caption text-text-secondary">{description}</p>
       </div>
     </div>
   );
 }
 
-function ModeCard({
+function _modeCard({
   title,
   icon,
   description,
@@ -471,45 +485,36 @@ function ModeCard({
 }) {
   return (
     <div
-      className={cn(
-        "bg-surface-raised border border-surface-border rounded-lg",
-        spacing.pad.default,
-      )}
+      class={cn("bg-surface-raised border border-surface-border rounded-lg", spacing.pad.default)}
     >
-      <div className={cn("text-3xl", spacing.margin.bottom.inline)}>{icon}</div>
-      <h3 className={cn("heading-4 text-text-primary", spacing.margin.bottom.tight)}>{title}</h3>
-      <p className={cn("body-small text-text-muted", spacing.margin.bottom.content)}>
-        {description}
-      </p>
+      <div class={cn("text-3xl", spacing.margin.bottom.inline)}>{icon}</div>
+      <h3 class={cn("heading-4 text-text-primary", spacing.margin.bottom.tight)}>{title}</h3>
+      <p class={cn("body-small text-text-muted", spacing.margin.bottom.content)}>{description}</p>
 
-      <div className="stack-sm">
+      <div class="stack-sm">
         <div>
-          <h4
-            className={cn("caption font-semibold text-status-success", spacing.margin.bottom.tight)}
-          >
+          <h4 class={cn("caption font-semibold text-status-success", spacing.margin.bottom.tight)}>
             Pros
           </h4>
-          <ul className="list-disc list-inside caption text-text-secondary">
+          <ul class="list-disc list-inside caption text-text-secondary">
             {pros.map((p) => (
               <li key={p}>{p}</li>
             ))}
           </ul>
         </div>
         <div>
-          <h4
-            className={cn("caption font-semibold text-status-warning", spacing.margin.bottom.tight)}
-          >
+          <h4 class={cn("caption font-semibold text-status-warning", spacing.margin.bottom.tight)}>
             Cons
           </h4>
-          <ul className="list-disc list-inside caption text-text-secondary">
+          <ul class="list-disc list-inside caption text-text-secondary">
             {cons.map((c) => (
               <li key={c}>{c}</li>
             ))}
           </ul>
         </div>
-        <div className={cn("border-t border-surface-border", spacing.padding.bottom.inline)}>
-          <span className="caption text-text-muted">Best for: </span>
-          <span className="caption text-text-primary font-medium">{bestFor}</span>
+        <div class={cn("border-t border-surface-border", spacing.padding.bottom.inline)}>
+          <span class="caption text-text-muted">Best for: </span>
+          <span class="caption text-text-primary font-medium">{bestFor}</span>
         </div>
       </div>
     </div>

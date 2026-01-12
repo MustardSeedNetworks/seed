@@ -26,7 +26,7 @@ const meta: Meta = {
 
 export default meta;
 
-function ToastDemo({
+function _toastDemo({
   type,
   message,
 }: {
@@ -39,7 +39,7 @@ function ToastDemo({
     <button
       type="button"
       onClick={() => addToast(message, type)}
-      className={cn(
+      class={cn(
         button.size.md,
         "bg-surface-raised hover:bg-surface-hover border border-surface-border text-text-primary",
         radius.lg,
@@ -51,26 +51,26 @@ function ToastDemo({
 }
 
 export const Success: StoryObj = {
-  render: () => <ToastDemo type="success" message="Operation completed successfully!" />,
+  render: () => <toastDemo type="success" message="Operation completed successfully!" />,
 };
 
 export const ErrorToast: StoryObj = {
-  render: () => <ToastDemo type="error" message="An error occurred. Please try again." />,
+  render: () => <toastDemo type="error" message="An error occurred. Please try again." />,
 };
 
 export const Warning: StoryObj = {
-  render: () => <ToastDemo type="warning" message="This action cannot be undone." />,
+  render: () => <toastDemo type="warning" message="This action cannot be undone." />,
 };
 
 export const Info: StoryObj = {
-  render: () => <ToastDemo type="info" message="Network scan is in progress..." />,
+  render: () => <toastDemo type="info" message="Network scan is in progress..." />,
 };
 
-function AllToastsDemo() {
+function _allToastsDemo() {
   const { addToast } = useToast();
 
   return (
-    <div className={layout.stack.default}>
+    <div class={layout.stack.default}>
       <button
         type="button"
         onClick={() => {
@@ -79,7 +79,7 @@ function AllToastsDemo() {
           setTimeout(() => addToast("Warning message", "warning", 3000), 1000);
           setTimeout(() => addToast("Info message", "info", 3000), 1500);
         }}
-        className={cn(
+        class={cn(
           button.size.md,
           "bg-status-info hover:bg-status-info/80 text-text-inverse",
           radius.lg,
@@ -92,7 +92,7 @@ function AllToastsDemo() {
 }
 
 export const AllTypes: StoryObj = {
-  render: () => <AllToastsDemo />,
+  render: () => <allToastsDemo />,
   parameters: {
     docs: {
       description: {

@@ -14,7 +14,7 @@ type WsStatus = "connecting" | "connected" | "disconnected" | "error";
 function getFriendlyInterfaceName(name: string, isWifi: boolean): string {
   if (isWifi) {
     // wlan0, wlan1, wlp2s0, etc.
-    const match = name.match(/\d+/);
+    const match = /\d+/.exec(name);
     if (match && Number.parseInt(match[0], 10) > 0) {
       return `Wi-Fi ${Number.parseInt(match[0], 10) + 1}`;
     }
@@ -23,7 +23,7 @@ function getFriendlyInterfaceName(name: string, isWifi: boolean): string {
 
   // Ethernet interfaces: eth0, enp0s1, ens33, etc.
   // Extract any trailing number for multi-interface systems
-  const numMatch = name.match(/(\d+)$/);
+  const numMatch = /(\d+)$/.exec(name);
   if (numMatch) {
     const num = Number.parseInt(numMatch[1], 10);
     if (num > 0) {
@@ -64,7 +64,7 @@ interface HeaderBarProps {
  * Seed logo changes color based on connection status.
  */
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI component with multiple status conditions
-export const HeaderBar = memo(function HeaderBar({
+export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
   wsStatus,
   onReconnect,
   profiles,
@@ -98,7 +98,7 @@ export const HeaderBar = memo(function HeaderBar({
 
   // Close dropdowns when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       if (
         profileDropdownRef.current &&
         !profileDropdownRef.current.contains(event.target as Node)
@@ -114,11 +114,11 @@ export const HeaderBar = memo(function HeaderBar({
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return (): void => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Get seed icon color based on connection status
-  const getSeedColor = () => {
+  const getSeedColor = (): string => {
     switch (wsStatus) {
       case "connected":
         return "text-status-success";
@@ -127,11 +127,13 @@ export const HeaderBar = memo(function HeaderBar({
       case "disconnected":
       case "error":
         return "text-status-error";
+      default:
+        return "text-status-error";
     }
   };
 
   // Get connection status tooltip
-  const getStatusTooltip = () => {
+  const getStatusTooltip = (): string => {
     switch (wsStatus) {
       case "connected":
         return t("status.connected", "Connected");
@@ -140,6 +142,8 @@ export const HeaderBar = memo(function HeaderBar({
       case "disconnected":
         return t("status.disconnected", "Disconnected");
       case "error":
+        return t("status.error", "Connection Error");
+      default:
         return t("status.error", "Connection Error");
     }
   };
@@ -179,9 +183,9 @@ export const HeaderBar = memo(function HeaderBar({
   );
 
   return (
-    <header className="border-b border-surface-border bg-surface-raised">
+    <header class="border-b border-surface-border bg-surface-raised">
       <div
-        className={cn(
+        class={cn(
           section.width.xl,
           "mx-auto",
           spacing.mainPadding.x,
@@ -193,7 +197,7 @@ export const HeaderBar = memo(function HeaderBar({
         {/* Logo and title */}
         <button
           type="button"
-          className={cn(
+          class={cn(
             layout.inline.default,
             "min-w-0 group",
             wsStatus !== "connected" && "cursor-pointer",
@@ -208,7 +212,7 @@ export const HeaderBar = memo(function HeaderBar({
         >
           {/* Seed icon - color indicates connection status */}
           <svg
-            className={cn(
+            class={cn(
               "w-7 h-7 shrink-0 transition-colors",
               getSeedColor(),
               wsStatus === "connecting" && "animate-pulse",
@@ -220,19 +224,19 @@ export const HeaderBar = memo(function HeaderBar({
           >
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93s3.05-7.44 7-7.93v15.86zm2-15.86c1.03.13 2 .45 2.87.93H13v-.93zM13 7h5.24c.25.31.48.65.68 1H13V7zm0 3h6.74c.08.33.15.66.19 1H13v-1zm0 9.93V19h2.87c-.87.48-1.84.8-2.87.93zM18.24 17H13v-1h5.92c-.2.35-.43.69-.68 1zm1.5-3H13v-1h6.93c-.04.34-.11.67-.19 1z" />
           </svg>
-          <h1 className="heading-4 hidden xs:block sm:block truncate text-text-primary">
+          <h1 class="heading-4 hidden xs:block sm:block truncate text-text-primary">
             {t("app.title")}
           </h1>
         </button>
 
         {/* Icon toolbar - all icons, no boxed dropdowns */}
-        <div className={cn("flex items-center", spacing.gap.tight)}>
+        <div class={cn("flex items-center", spacing.gap.tight)}>
           {/* Profile icon with dropdown */}
-          <div ref={profileDropdownRef} className="relative">
+          <div ref={profileDropdownRef} class="relative">
             <button
               type="button"
-              className={iconButtonClass}
-              onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+              class={iconButtonClass}
+              onClick={(): void => setProfileDropdownOpen(!profileDropdownOpen)}
               aria-label={t("accessibility.selectProfile", "Select profile")}
               title={
                 activeProfile
@@ -242,13 +246,13 @@ export const HeaderBar = memo(function HeaderBar({
             >
               {profilesLoading ? (
                 <svg
-                  className={cn(iconTokens.size.md, "animate-spin")}
+                  class={cn(iconTokens.size.md, "animate-spin")}
                   fill="none"
                   viewBox="0 0 24 24"
                   aria-hidden="true"
                 >
                   <circle
-                    className="opacity-25"
+                    class="opacity-25"
                     cx="12"
                     cy="12"
                     r="10"
@@ -256,14 +260,14 @@ export const HeaderBar = memo(function HeaderBar({
                     strokeWidth="4"
                   />
                   <path
-                    className="opacity-75"
+                    class="opacity-75"
                     fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                   />
                 </svg>
               ) : (
                 <svg
-                  className={iconTokens.size.md}
+                  class={iconTokens.size.md}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -280,18 +284,18 @@ export const HeaderBar = memo(function HeaderBar({
             </button>
 
             {/* Profile dropdown */}
-            {profileDropdownOpen && (
+            {profileDropdownOpen ? (
               <div
-                className={cn(
+                class={cn(
                   "absolute top-full right-0 mt-1 w-56",
                   radius.lg,
                   "border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden",
                 )}
               >
-                <div className="max-h-60 overflow-y-auto">
+                <div class="max-h-60 overflow-y-auto">
                   {profiles.length === 0 ? (
-                    <div className={cn(spacing.pad.md, "text-center")}>
-                      <span className="caption text-text-muted">
+                    <div class={cn(spacing.pad.md, "text-center")}>
+                      <span class="caption text-text-muted">
                         {t("profile.noProfiles", "No profiles")}
                       </span>
                     </div>
@@ -300,21 +304,21 @@ export const HeaderBar = memo(function HeaderBar({
                       <button
                         type="button"
                         key={profile.id}
-                        onClick={() => handleProfileSelect(profile.id)}
-                        className={cn(
+                        onClick={(): void => {
+                          handleProfileSelect(profile.id).catch(console.error);
+                        }}
+                        class={cn(
                           "w-full text-left",
                           spacing.pad.sm,
                           "hover:bg-surface-hover focus:bg-surface-hover focus:outline-none",
                           profile.id === activeProfile?.id && "bg-brand-primary/10",
                         )}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="body-small text-text-primary truncate">
-                            {profile.name}
-                          </span>
+                        <div class="flex items-center justify-between">
+                          <span class="body-small text-text-primary truncate">{profile.name}</span>
                           {profile.id === activeProfile?.id && (
                             <svg
-                              className={cn(iconTokens.size.sm, "text-brand-primary")}
+                              class={cn(iconTokens.size.sm, "text-brand-primary")}
                               fill="currentColor"
                               viewBox="0 0 24 24"
                               aria-hidden="true"
@@ -327,14 +331,14 @@ export const HeaderBar = memo(function HeaderBar({
                     ))
                   )}
                 </div>
-                <div className="border-t border-surface-border">
+                <div class="border-t border-surface-border">
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(): void => {
                       setProfileDropdownOpen(false);
                       onProfileManage();
                     }}
-                    className={cn(
+                    class={cn(
                       "w-full flex items-center justify-center",
                       spacing.gap.tight,
                       spacing.pad.sm,
@@ -342,7 +346,7 @@ export const HeaderBar = memo(function HeaderBar({
                     )}
                   >
                     <svg
-                      className={iconTokens.size.sm}
+                      class={iconTokens.size.sm}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -361,28 +365,28 @@ export const HeaderBar = memo(function HeaderBar({
                         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                       />
                     </svg>
-                    <span className="body-small font-medium">{t("profile.manage", "Manage")}</span>
+                    <span class="body-small font-medium">{t("profile.manage", "Manage")}</span>
                   </button>
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* Ethernet interface selector - RJ45 jack icon */}
-          <div ref={interfaceDropdownRef} className="relative">
+          <div ref={interfaceDropdownRef} class="relative">
             <button
               type="button"
-              className={cn(
+              class={cn(
                 iconButtonClass,
                 !isWifi && "ring-2 ring-brand-primary ring-offset-1 ring-offset-surface-raised",
               )}
-              onClick={() => setInterfaceDropdownOpen(!interfaceDropdownOpen)}
+              onClick={(): void => setInterfaceDropdownOpen(!interfaceDropdownOpen)}
               aria-label={t("accessibility.selectEthernet", "Select Ethernet interface")}
               title={t("interface.ethernet", "Ethernet")}
             >
               {/* RJ45 Ethernet jack icon */}
               <svg
-                className={iconTokens.size.md}
+                class={iconTokens.size.md}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -398,25 +402,23 @@ export const HeaderBar = memo(function HeaderBar({
             </button>
 
             {/* Ethernet interface dropdown */}
-            {interfaceDropdownOpen && (
+            {interfaceDropdownOpen ? (
               <div
-                className={cn(
+                class={cn(
                   "absolute top-full right-0 mt-1 w-64",
                   radius.lg,
                   "border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden",
                 )}
               >
-                <div
-                  className={cn(spacing.pad.sm, "border-b border-surface-border bg-surface-base")}
-                >
-                  <span className="caption font-medium text-text-muted uppercase tracking-wide">
+                <div class={cn(spacing.pad.sm, "border-b border-surface-border bg-surface-base")}>
+                  <span class="caption font-medium text-text-muted uppercase tracking-wide">
                     {t("interface.ethernetInterfaces", "Ethernet Interfaces")}
                   </span>
                 </div>
-                <div className="max-h-60 overflow-y-auto">
+                <div class="max-h-60 overflow-y-auto">
                   {interfaces.filter((i) => i.type !== "wifi").length === 0 ? (
-                    <div className={cn(spacing.pad.md, "text-center")}>
-                      <span className="caption text-text-muted">
+                    <div class={cn(spacing.pad.md, "text-center")}>
+                      <span class="caption text-text-muted">
                         {t("interface.noEthernet", "No Ethernet interfaces")}
                       </span>
                     </div>
@@ -427,27 +429,26 @@ export const HeaderBar = memo(function HeaderBar({
                         <button
                           type="button"
                           key={iface.name}
-                          onClick={() => handleInterfaceSelect(iface.name, false)}
-                          className={cn(
+                          onClick={(): void => {
+                            handleInterfaceSelect(iface.name, false).catch(console.error);
+                          }}
+                          class={cn(
                             "w-full text-left",
                             spacing.pad.sm,
                             "hover:bg-surface-hover focus:bg-surface-hover focus:outline-none",
                             iface.name === currentInterface && "bg-brand-primary/10",
                           )}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="stack-xs">
-                              <div className="flex items-center gap-1">
-                                <span className="body-small text-text-primary font-medium">
+                          <div class="flex items-center justify-between">
+                            <div class="stack-xs">
+                              <div class="flex items-center gap-1">
+                                <span class="body-small text-text-primary font-medium">
                                   {getFriendlyInterfaceName(iface.name, false)}
                                 </span>
                                 {/* #756: Show star for recommended (most capable) interface */}
                                 {iface.name === recommendedEthernet && (
                                   <svg
-                                    className={cn(
-                                      iconTokens.size.xs,
-                                      "text-status-success shrink-0",
-                                    )}
+                                    class={cn(iconTokens.size.xs, "text-status-success shrink-0")}
                                     fill="currentColor"
                                     viewBox="0 0 24 24"
                                     aria-hidden="true"
@@ -458,7 +459,7 @@ export const HeaderBar = memo(function HeaderBar({
                                 )}
                               </div>
                               <span
-                                className={cn(
+                                class={cn(
                                   "caption text-text-muted",
                                   spacing.chip.sm,
                                   radius.default,
@@ -470,7 +471,7 @@ export const HeaderBar = memo(function HeaderBar({
                             </div>
                             {iface.name === currentInterface && (
                               <svg
-                                className={cn(iconTokens.size.sm, "text-brand-primary shrink-0")}
+                                class={cn(iconTokens.size.sm, "text-brand-primary shrink-0")}
                                 fill="currentColor"
                                 viewBox="0 0 24 24"
                                 aria-hidden="true"
@@ -484,18 +485,18 @@ export const HeaderBar = memo(function HeaderBar({
                   )}
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* WiFi interface selector - always visible for survey/planning */}
-          <div className="relative">
+          <div class="relative">
             <button
               type="button"
-              className={cn(
+              class={cn(
                 iconButtonClass,
                 isWifi && "ring-2 ring-brand-primary ring-offset-1 ring-offset-surface-raised",
               )}
-              onClick={() => {
+              onClick={(): void => {
                 // Always use switchToInterfaceType to properly set WiFi mode
                 // This handles both real WiFi interfaces and planning mode
                 switchToInterfaceType("wifi");
@@ -509,7 +510,7 @@ export const HeaderBar = memo(function HeaderBar({
             >
               {/* WiFi signal icon */}
               <svg
-                className={cn(iconTokens.size.md, !hasWifiInterface && "opacity-60")}
+                class={cn(iconTokens.size.md, !hasWifiInterface && "opacity-60")}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -525,7 +526,7 @@ export const HeaderBar = memo(function HeaderBar({
               {/* Small indicator when no WiFi hardware */}
               {!hasWifiInterface && (
                 <span
-                  className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-status-warning rounded-full"
+                  class="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-status-warning rounded-full"
                   title={t("interface.noWifiHardware", "No WiFi hardware - Planning mode")}
                 />
               )}
@@ -535,7 +536,7 @@ export const HeaderBar = memo(function HeaderBar({
           {/* Theme toggle */}
           <button
             type="button"
-            className={iconButtonClass}
+            class={iconButtonClass}
             onClick={toggleTheme}
             aria-label={
               isDark ? t("accessibility.switchToLightMode") : t("accessibility.switchToDarkMode")
@@ -548,7 +549,7 @@ export const HeaderBar = memo(function HeaderBar({
           >
             {isDark ? (
               <svg
-                className={iconTokens.size.md}
+                class={iconTokens.size.md}
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 aria-hidden="true"
@@ -557,7 +558,7 @@ export const HeaderBar = memo(function HeaderBar({
               </svg>
             ) : (
               <svg
-                className={iconTokens.size.md}
+                class={iconTokens.size.md}
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 aria-hidden="true"
@@ -574,13 +575,13 @@ export const HeaderBar = memo(function HeaderBar({
           {/* Settings */}
           <button
             type="button"
-            className={iconButtonClass}
+            class={iconButtonClass}
             onClick={onSettingsOpen}
             aria-label={t("accessibility.openSettings")}
             title={t("settings.title", "Settings")}
           >
             <svg
-              className={iconTokens.size.md}
+              class={iconTokens.size.md}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -604,13 +605,13 @@ export const HeaderBar = memo(function HeaderBar({
           {/* Help */}
           <button
             type="button"
-            className={iconButtonClass}
+            class={iconButtonClass}
             onClick={onHelpOpen}
             aria-label={t("accessibility.openHelp")}
             title={t("help.title", "Help")}
           >
             <svg
-              className={iconTokens.size.md}
+              class={iconTokens.size.md}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -628,13 +629,13 @@ export const HeaderBar = memo(function HeaderBar({
           {/* Logout */}
           <button
             type="button"
-            className={iconButtonClass}
+            class={iconButtonClass}
             onClick={logout}
             aria-label={t("buttons.logout")}
             title={t("buttons.logout", "Logout")}
           >
             <svg
-              className={iconTokens.size.md}
+              class={iconTokens.size.md}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -654,7 +655,7 @@ export const HeaderBar = memo(function HeaderBar({
       {/* Mobile connection status - visible on small screens when disconnected */}
       {wsStatus !== "connected" && (
         <div
-          className={cn(
+          class={cn(
             "sm:hidden",
             spacing.mainPadding.x,
             spacing.padding.bottom.inline,
@@ -664,7 +665,7 @@ export const HeaderBar = memo(function HeaderBar({
           <button
             type="button"
             onClick={onReconnect}
-            className={cn(
+            class={cn(
               "caption flex items-center gap-1.5",
               wsStatus === "connecting" ? "text-status-warning" : "text-status-error",
             )}
@@ -672,13 +673,13 @@ export const HeaderBar = memo(function HeaderBar({
             {wsStatus === "connecting" ? (
               <>
                 <svg
-                  className={cn(iconTokens.size.sm, "animate-spin")}
+                  class={cn(iconTokens.size.sm, "animate-spin")}
                   fill="none"
                   viewBox="0 0 24 24"
                   aria-hidden="true"
                 >
                   <circle
-                    className="opacity-25"
+                    class="opacity-25"
                     cx="12"
                     cy="12"
                     r="10"
@@ -686,7 +687,7 @@ export const HeaderBar = memo(function HeaderBar({
                     strokeWidth="4"
                   />
                   <path
-                    className="opacity-75"
+                    class="opacity-75"
                     fill="currentColor"
                     d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
                   />

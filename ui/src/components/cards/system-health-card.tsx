@@ -79,8 +79,12 @@ function formatUptime(seconds: number): string {
 }
 
 function getResourceStatus(percent: number): Status {
-  if (percent >= 90) return "error";
-  if (percent >= 75) return "warning";
+  if (percent >= 90) {
+    return "error";
+  }
+  if (percent >= 75) {
+    return "warning";
+  }
   return "success";
 }
 
@@ -112,7 +116,7 @@ function getSuggestion(type: "cpu" | "memory" | "disk", usage: number): string {
   return "";
 }
 
-function ResourceBar({
+function _resourceBar({
   label,
   percent,
   used,
@@ -145,35 +149,35 @@ function ResourceBar({
   const showConsumers = topProcesses && topProcesses.length > 0 && percent >= 75;
 
   return (
-    <div className="stack-xs">
-      <div className="flex justify-between caption">
+    <div class="stack-xs">
+      <div class="flex justify-between caption">
         <span>{label}</span>
-        <span className="text-text-primary font-medium">{percent.toFixed(0)}%</span>
+        <span class="text-text-primary font-medium">{percent.toFixed(0)}%</span>
       </div>
-      <div className={cn("h-2 bg-surface-border overflow-hidden", radius.md)}>
+      <div class={cn("h-2 bg-surface-border overflow-hidden", radius.md)}>
         <div
-          className={cn("h-full transition-all duration-300", barColor)}
+          class={cn("h-full transition-all duration-300", barColor)}
           style={{ width: `${Math.min(percent, 100)}%` }}
         />
       </div>
       {used > 0 && total > 0 && (
-        <div className="caption">
+        <div class="caption">
           {formatBytes(used)} / {formatBytes(total)}
         </div>
       )}
       {showConsumers && (
-        <div className="caption text-text-muted pl-3 mt-1">
+        <div class="caption text-text-muted pl-3 mt-1">
           <div>Top consumers:</div>
           {topProcesses.slice(0, 3).map((proc) => (
-            <div key={proc.pid} className="pl-2">
+            <div key={proc.pid} class="pl-2">
               - {proc.name} ({Math.round(proc.memoryMb)} MB)
             </div>
           ))}
         </div>
       )}
       {percent >= 75 && (
-        <div className="mt-2 text-xs text-text-muted">
-          <span className="font-medium">Tip:</span> {getSuggestion(type, percent)}
+        <div class="mt-2 text-xs text-text-muted">
+          <span class="font-medium">Tip:</span> {getSuggestion(type, percent)}
         </div>
       )}
     </div>
@@ -231,15 +235,15 @@ export function SystemHealthCard() {
     <BaseCard
       title={t("system.title")}
       subtitle={data?.hostname}
-      icon={<Server className={iconTokens.size.md} />}
+      icon={<Server class={iconTokens.size.md} />}
       data={data}
       loading={loading}
       error={error}
       getStatus={getStatus}
     >
       {(health) => (
-        <div className="stack">
-          <ResourceBar
+        <div class="stack">
+          <resourceBar
             label={t("system.cpu")}
             percent={health.cpuPercent ?? 0}
             used={0}
@@ -247,7 +251,7 @@ export function SystemHealthCard() {
             topProcesses={health.topCpuProcesses}
             type="cpu"
           />
-          <ResourceBar
+          <resourceBar
             label={t("system.memory")}
             percent={health.memoryPercent ?? 0}
             used={health.memoryUsed ?? 0}
@@ -255,7 +259,7 @@ export function SystemHealthCard() {
             topProcesses={health.topMemoryProcesses}
             type="memory"
           />
-          <ResourceBar
+          <resourceBar
             label={t("system.disk")}
             percent={health.diskPercent ?? 0}
             used={health.diskUsed ?? 0}
@@ -265,7 +269,7 @@ export function SystemHealthCard() {
 
           <CardDivider />
 
-          <div className={cn("grid grid-cols-2", spacing.gap.compact)}>
+          <div class={cn("grid grid-cols-2", spacing.gap.compact)}>
             <CardRow
               label={t("system.uptime")}
               value={formatUptime(health.uptime ?? 0)}
@@ -285,7 +289,7 @@ export function SystemHealthCard() {
             />
           </div>
 
-          <div className={cn("caption text-center", spacing.padding.top.tight)}>
+          <div class={cn("caption text-center", spacing.padding.top.tight)}>
             {health.os ?? "Unknown"}/{health.arch ?? "Unknown"} - {health.numCpu ?? 0} CPUs
           </div>
         </div>

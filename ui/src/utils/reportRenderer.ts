@@ -656,7 +656,7 @@ export function openReportForPrint(report: SurveyReport, t: TranslateFunction): 
   const printWindow = window.open(url, "_blank");
   // Clean up the Blob URL after window loads
   if (printWindow) {
-    printWindow.onload = () => {
+    printWindow.onload = (): void => {
       URL.revokeObjectURL(url);
     };
   } else {

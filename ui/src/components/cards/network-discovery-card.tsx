@@ -258,18 +258,30 @@ function formatLastSeen(
   dateStr: string,
   t: ReturnType<typeof useTranslation<"cards">>["t"],
 ): string {
-  if (!dateStr) return t("discovery.never");
+  if (!dateStr) {
+    return t("discovery.never");
+  }
   const date = new Date(dateStr);
   // Check for invalid date or Go's zero time (year 1 or epoch)
-  if (Number.isNaN(date.getTime()) || date.getFullYear() < 2000) return t("discovery.never");
+  if (Number.isNaN(date.getTime()) || date.getFullYear() < 2000) {
+    return t("discovery.never");
+  }
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffSec = Math.floor(diffMs / 1000);
 
-  if (diffSec < 0) return t("discovery.never"); // Future date = invalid
-  if (diffSec < 60) return t("discovery.justNow");
-  if (diffSec < 3600) return t("discovery.mAgo", { min: Math.floor(diffSec / 60) });
-  if (diffSec < 86400) return t("discovery.hAgo", { hour: Math.floor(diffSec / 3600) });
+  if (diffSec < 0) {
+    return t("discovery.never"); // Future date = invalid
+  }
+  if (diffSec < 60) {
+    return t("discovery.justNow");
+  }
+  if (diffSec < 3600) {
+    return t("discovery.mAgo", { min: Math.floor(diffSec / 60) });
+  }
+  if (diffSec < 86400) {
+    return t("discovery.hAgo", { hour: Math.floor(diffSec / 3600) });
+  }
   return t("discovery.dAgo", { day: Math.floor(diffSec / 86400) });
 }
 
@@ -279,13 +291,19 @@ function formatLastSeen(
  */
 function calculateNetworkAddress(cidr: string): string {
   const [ip, maskStr] = cidr.split("/");
-  if (!ip || !maskStr) return cidr;
+  if (!(ip && maskStr)) {
+    return cidr;
+  }
 
   const mask = Number.parseInt(maskStr, 10);
-  if (Number.isNaN(mask) || mask < 0 || mask > 32) return cidr;
+  if (Number.isNaN(mask) || mask < 0 || mask > 32) {
+    return cidr;
+  }
 
   const octets = ip.split(".").map(Number);
-  if (octets.length !== 4 || octets.some(Number.isNaN)) return cidr;
+  if (octets.length !== 4 || octets.some(Number.isNaN)) {
+    return cidr;
+  }
 
   // Calculate network mask and apply to IP
   const netmask = (0xffffffff << (32 - mask)) >>> 0;
@@ -307,7 +325,7 @@ function calculateNetworkAddress(cidr: string): string {
  * - Inline display for ≤5 subnets
  * - Expandable dropdown for >5 subnets
  */
-function SubnetList({
+function _subnetList({
   subnets,
   fallbackSubnet,
   unknownLabel,
@@ -330,17 +348,17 @@ function SubnetList({
   }, [subnets, fallbackSubnet]);
 
   if (allSubnets.length === 0) {
-    return <span className="font-mono">{unknownLabel}</span>;
+    return <span class="font-mono">{unknownLabel}</span>;
   }
 
   // Single subnet - simple display
   if (allSubnets.length === 1) {
-    return <span className="font-mono">{allSubnets[0]}</span>;
+    return <span class="font-mono">{allSubnets[0]}</span>;
   }
 
   // ≤5 subnets - inline display
   if (allSubnets.length <= 5) {
-    return <span className="font-mono">{allSubnets.join(", ")}</span>;
+    return <span class="font-mono">{allSubnets.join(", ")}</span>;
   }
 
   // >5 subnets - collapsible display
@@ -349,27 +367,27 @@ function SubnetList({
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="font-mono text-text-muted hover:text-text-primary flex items-center gap-1"
+        class="font-mono text-text-muted hover:text-text-primary flex items-center gap-1"
       >
         <span>{allSubnets.length} subnets</span>
-        <ChevronDown className={iconTokens.size.xs} />
+        <ChevronDown class={iconTokens.size.xs} />
       </button>
     );
   }
 
   return (
-    <div className="flex flex-col gap-1">
+    <div class="flex flex-col gap-1">
       <button
         type="button"
         onClick={() => setExpanded(false)}
-        className="font-mono text-text-muted hover:text-text-primary flex items-center gap-1"
+        class="font-mono text-text-muted hover:text-text-primary flex items-center gap-1"
       >
         <span>{allSubnets.length} subnets</span>
-        <ChevronUp className={iconTokens.size.xs} />
+        <ChevronUp class={iconTokens.size.xs} />
       </button>
-      <div className="flex flex-wrap gap-1">
+      <div class="flex flex-wrap gap-1">
         {allSubnets.map((subnet) => (
-          <span key={subnet} className="font-mono text-xs">
+          <span key={subnet} class="font-mono text-xs">
             {subnet}
           </span>
         ))}
@@ -440,7 +458,7 @@ function categorizeDevices(devices: DiscoveredDevice[]) {
 }
 
 // Summary bar component
-function DiscoverySummary({
+function _discoverySummary({
   status,
   deviceCount,
   categories,
@@ -466,7 +484,7 @@ function DiscoverySummary({
   // Show pipeline progress when running
   if (isPipelineRunning && pipelineStatus) {
     return (
-      <div className="stack-sm">
+      <div class="stack-sm">
         <PipelineProgress status={pipelineStatus} onCancel={onCancelPipeline} />
       </div>
     );
@@ -514,31 +532,31 @@ function DiscoverySummary({
   ].filter((s) => s.count > 0);
 
   return (
-    <div className="stack-sm">
+    <div class="stack-sm">
       {/* Status row */}
-      <div className="flex items-center justify-between body-small">
-        <div className={cn("flex items-center", spacing.gap.compact)}>
+      <div class="flex items-center justify-between body-small">
+        <div class={cn("flex items-center", spacing.gap.compact)}>
           {status.scanning ? (
             <>
-              <RefreshCw className={cn(iconTokens.size.sm, "text-status-info animate-spin")} />
-              <span className="text-status-info font-medium">{t("discovery.scanning")}</span>
+              <RefreshCw class={cn(iconTokens.size.sm, "text-status-info animate-spin")} />
+              <span class="text-status-info font-medium">{t("discovery.scanning")}</span>
             </>
           ) : (
             <>
-              <CheckCircle className={cn(iconTokens.size.sm, "text-status-success")} />
-              <span className="text-status-success font-medium">{t("discovery.complete")}</span>
+              <CheckCircle class={cn(iconTokens.size.sm, "text-status-success")} />
+              <span class="text-status-success font-medium">{t("discovery.complete")}</span>
             </>
           )}
         </div>
-        <div className={cn("flex items-center", spacing.inline.sm, "text-text-muted")}>
-          <Clock className={iconTokens.size.sm} />
-          <span className="caption">{formatLastSeen(status.lastScan, t)}</span>
+        <div class={cn("flex items-center", spacing.inline.sm, "text-text-muted")}>
+          <Clock class={iconTokens.size.sm} />
+          <span class="caption">{formatLastSeen(status.lastScan, t)}</span>
         </div>
       </div>
 
       {/* Simplified network info row - I3: Uses SubnetList for multi-subnet display */}
-      <div className="flex items-center justify-between caption text-text-muted">
-        <SubnetList
+      <div class="flex items-center justify-between caption text-text-muted">
+        <subnetList
           subnets={status.subnets}
           fallbackSubnet={status.subnet}
           unknownLabel={t("discovery.unknownSubnet")}
@@ -553,21 +571,21 @@ function DiscoverySummary({
       {/* Category stats row */}
       {stats.length > 0 && (
         <div
-          className={cn(
+          class={cn(
             "flex items-center",
             spacing.gap.default,
             "flex-wrap",
             spacing.padding.top.heading,
           )}
         >
-          {stats.map(({ icon: Icon, label, count, color }) => (
+          {stats.map(({ icon: ICON, label, count, color }) => (
             <div
               key={label}
-              className={cn("flex items-center", spacing.gap.tight)}
+              class={cn("flex items-center", spacing.gap.tight)}
               title={`${count} ${label}`}
             >
-              <Icon className={cn(iconTokens.size.sm, color)} />
-              <span className="caption text-text-secondary">{count}</span>
+              <ICON class={cn(iconTokens.size.sm, color)} />
+              <span class="caption text-text-secondary">{count}</span>
             </div>
           ))}
         </div>
@@ -582,13 +600,13 @@ const COMMON_PORTS = [
   27017,
 ];
 
-export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
+export const NetworkDiscoveryCard = memo(function networkDiscoveryCard({
   data,
   loading,
   onScan,
 }: NetworkDiscoveryCardProps) {
   const { t } = useTranslation("cards");
-  const [_expandedDevices, _setExpandedDevices] = useState<Set<string>>(new Set());
+  const [_expandedDevices, SET_EXPANDED_DEVICES] = useState<Set<string>>(new Set());
   const [scanningDevices, setScanningDevices] = useState<Set<string>>(new Set());
   const [scanResults, setScanResults] = useState<Map<string, DeepScanResult>>(new Map());
   // Search and sort state (kept for modal use)
@@ -680,7 +698,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   );
 
   const _toggleDevice = (mac: string) => {
-    _setExpandedDevices((prev) => {
+    SET_EXPANDED_DEVICES((prev) => {
       const next = new Set(prev);
       if (next.has(mac)) {
         next.delete(mac);
@@ -694,7 +712,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   // Trigger vulnerability scan for a device based on any good info we have
   const triggerVulnScan = useCallback(
     async (ip: string, device?: DiscoveredDevice, services?: ServiceInfo[]) => {
-      if (!autoScanSettings.vulnScanEnabled || !autoScanSettings.vulnAutoScan) {
+      if (!(autoScanSettings.vulnScanEnabled && autoScanSettings.vulnAutoScan)) {
         return;
       }
 
@@ -752,7 +770,9 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         }
       }
 
-      if (!hasGoodInfo) return;
+      if (!hasGoodInfo) {
+        return;
+      }
 
       try {
         logger.info(LogComponents.Discovery, "Triggering auto vulnerability scan", {
@@ -798,15 +818,17 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
             scannedAt: new Date(),
           });
           // Fixes #904: Limit stored scan results to prevent unbounded memory growth
-          const MaxScanResults = 100;
-          if (next.size > MaxScanResults) {
+          const MAX_SCAN_RESULTS = 100;
+          if (next.size > MAX_SCAN_RESULTS) {
             // Remove oldest entries
             const entries = [...next.entries()].sort(
               (a, b) => a[1].scannedAt.getTime() - b[1].scannedAt.getTime(),
             );
-            while (next.size > MaxScanResults && entries.length > 0) {
+            while (next.size > MAX_SCAN_RESULTS && entries.length > 0) {
               const oldest = entries.shift();
-              if (oldest) next.delete(oldest[0]);
+              if (oldest) {
+                next.delete(oldest[0]);
+              }
             }
           }
           return next;
@@ -816,7 +838,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
         // Find the device from data to pass additional info
         const device = data?.devices.find((d) => d.ip === ip);
         if (apiResponse.services && apiResponse.services.length > 0) {
-          triggerVulnScan(ip, device, apiResponse.services);
+          await triggerVulnScan(ip, device, apiResponse.services);
         }
       } catch (error) {
         logger.error(LogComponents.Discovery, "Deep scan failed", error);
@@ -845,23 +867,39 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   // Triggers when new devices appear and discovery is not actively scanning
   useEffect(() => {
     // Only auto-scan if port scanning is enabled in settings
-    if (!autoScanSettings.portScanEnabled) return;
+    if (!autoScanSettings.portScanEnabled) {
+      return;
+    }
 
     // Don't auto-scan while discovery is still in progress
-    if (!data?.status || data.status.scanning) return;
-    if (!data.devices || data.devices.length === 0) return;
+    if (!data?.status || data.status.scanning) {
+      return;
+    }
+    if (!data.devices || data.devices.length === 0) {
+      return;
+    }
 
     // Find devices we haven't auto-scanned yet
     const devicesToScan = data.devices.filter((device) => {
-      if (!device.ip) return false;
+      if (!device.ip) {
+        return false;
+      }
       // Skip if already scanned or currently scanning
-      if (autoScannedDevices.current.has(device.ip)) return false;
-      if (scanningDevices.has(device.ip)) return false;
-      if (scanResults.has(device.ip)) return false;
+      if (autoScannedDevices.current.has(device.ip)) {
+        return false;
+      }
+      if (scanningDevices.has(device.ip)) {
+        return false;
+      }
+      if (scanResults.has(device.ip)) {
+        return false;
+      }
       return true;
     });
 
-    if (devicesToScan.length === 0) return;
+    if (devicesToScan.length === 0) {
+      return;
+    }
 
     // Mark these devices as queued for auto-scan
     for (const device of devicesToScan) {
@@ -878,18 +916,20 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
 
     // Scan devices with a small delay between each to avoid overwhelming the network
     // Limit concurrent scans to 3 at a time
-    const MaxConcurrentScans = 3;
+    const MAX_CONCURRENT_SCANS = 3;
     let scanIndex = 0;
 
     const scanNextBatch = () => {
-      const batch = devicesToScan.slice(scanIndex, scanIndex + MaxConcurrentScans);
-      if (batch.length === 0) return;
+      const batch = devicesToScan.slice(scanIndex, scanIndex + MAX_CONCURRENT_SCANS);
+      if (batch.length === 0) {
+        return;
+      }
 
       for (const device of batch) {
         handleDeepScan(device.ip);
       }
 
-      scanIndex += MaxConcurrentScans;
+      scanIndex += MAX_CONCURRENT_SCANS;
 
       // Schedule next batch after a delay
       if (scanIndex < devicesToScan.length) {
@@ -931,17 +971,27 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   // This runs independently of port scanning - any device with good info gets vuln scanned
   useEffect(() => {
     // Only run if vuln scanning is enabled with auto-scan
-    if (!autoScanSettings.vulnScanEnabled || !autoScanSettings.vulnAutoScan) return;
+    if (!(autoScanSettings.vulnScanEnabled && autoScanSettings.vulnAutoScan)) {
+      return;
+    }
 
     // Don't run while discovery is still in progress
-    if (!data?.status || data.status.scanning) return;
-    if (!data.devices || data.devices.length === 0) return;
+    if (!data?.status || data.status.scanning) {
+      return;
+    }
+    if (!data.devices || data.devices.length === 0) {
+      return;
+    }
 
     // Find devices with good info that we haven't vuln-scanned yet
     const devicesToVulnScan = data.devices.filter((device) => {
-      if (!device.ip) return false;
+      if (!device.ip) {
+        return false;
+      }
       // Skip if already queued for vuln scan
-      if (vulnScannedDevices.current.has(device.ip)) return false;
+      if (vulnScannedDevices.current.has(device.ip)) {
+        return false;
+      }
 
       // Check if device has any good info for vulnerability scanning
       const hasGoodInfo =
@@ -955,7 +1005,9 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       return hasGoodInfo;
     });
 
-    if (devicesToVulnScan.length === 0) return;
+    if (devicesToVulnScan.length === 0) {
+      return;
+    }
 
     // Mark devices as queued
     for (const device of devicesToVulnScan) {
@@ -976,7 +1028,9 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
     let index = 0;
 
     const triggerNext = () => {
-      if (index >= devicesToVulnScan.length) return;
+      if (index >= devicesToVulnScan.length) {
+        return;
+      }
       const device = devicesToVulnScan[index];
       triggerVulnScan(device.ip, device);
       index++;
@@ -1022,15 +1076,14 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter((device) => {
-        return (
+      result = result.filter(
+        (device) =>
           device.ip?.toLowerCase().includes(query) ||
           device.hostname?.toLowerCase().includes(query) ||
           device.vendor?.toLowerCase().includes(query) ||
           device.mac?.toLowerCase().includes(query) ||
-          device.osGuess?.toLowerCase().includes(query)
-        );
-      });
+          device.osGuess?.toLowerCase().includes(query),
+      );
     }
 
     // Apply sorting
@@ -1059,9 +1112,15 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
             break;
         }
 
-        if (aVal === null && bVal === null) return 0;
-        if (aVal === null) return 1;
-        if (bVal === null) return -1;
+        if (aVal === null && bVal === null) {
+          return 0;
+        }
+        if (aVal === null) {
+          return 1;
+        }
+        if (bVal === null) {
+          return -1;
+        }
 
         let comparison = 0;
         if (typeof aVal === "number" && typeof bVal === "number") {
@@ -1104,8 +1163,10 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       const ipIterB = ipB[Symbol.iterator]();
       let resultA = ipIterA.next();
       let resultB = ipIterB.next();
-      while (!resultA.done && !resultB.done) {
-        if (resultA.value !== resultB.value) return resultA.value - resultB.value;
+      while (!(resultA.done || resultB.done)) {
+        if (resultA.value !== resultB.value) {
+          return resultA.value - resultB.value;
+        }
         resultA = ipIterA.next();
         resultB = ipIterB.next();
       }
@@ -1119,7 +1180,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
     return (
       <Card
         title={t("discovery.title")}
-        icon={<ScanSearch className={iconTokens.size.md} />}
+        icon={<ScanSearch class={iconTokens.size.md} />}
         status="loading"
         enableLiveRegion={true}
         ariaLabel="Network discovery scanning in progress"
@@ -1129,11 +1190,11 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
     );
   }
 
-  if (!data || !status) {
+  if (!(data && status)) {
     return (
       <Card
         title={t("discovery.title")}
-        icon={<ScanSearch className={iconTokens.size.md} />}
+        icon={<ScanSearch class={iconTokens.size.md} />}
         status="unknown"
         enableLiveRegion={true}
         ariaLabel="Network discovery - no data available"
@@ -1143,7 +1204,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
           <button
             type="button"
             onClick={onScan}
-            className={cn(
+            class={cn(
               spacing.margin.top.heading,
               "w-full",
               button.size.md,
@@ -1164,8 +1225,12 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   const categories = categorizeDevices(devices);
 
   const getOverallStatus = (): Status => {
-    if (status.scanning || isPipelineRunning) return "loading";
-    if (deviceCount === 0) return "warning";
+    if (status.scanning || isPipelineRunning) {
+      return "loading";
+    }
+    if (deviceCount === 0) {
+      return "warning";
+    }
     return "success";
   };
 
@@ -1178,17 +1243,17 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
   return (
     <Card
       title={t("discovery.title")}
-      icon={<ScanSearch className={iconTokens.size.md} />}
+      icon={<ScanSearch class={iconTokens.size.md} />}
       status={cardStatus}
       enableLiveRegion={true}
       ariaLabel={`Network discovery - ${deviceCount} devices found`}
       headerAction={
-        <div className="flex items-center gap-2">
+        <div class="flex items-center gap-2">
           {/* Full Screen button */}
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className={cn(
+            class={cn(
               "p-1.5",
               "bg-surface-hover text-text-secondary",
               radius.md,
@@ -1197,7 +1262,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
             aria-label="Open full screen view"
             title={t("discovery.fullScreen", "Full Screen")}
           >
-            <Maximize2 className={iconTokens.size.sm} aria-hidden="true" />
+            <Maximize2 class={iconTokens.size.sm} aria-hidden="true" />
           </button>
 
           {/* Scan button */}
@@ -1224,7 +1289,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
                 onScan?.();
               }}
               disabled={status.scanning || isPipelineRunning}
-              className={cn(
+              class={cn(
                 spacing.chip.sm,
                 "bg-brand-primary text-text-inverse",
                 radius.md,
@@ -1237,10 +1302,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
             >
               {status.scanning || isPipelineRunning ? (
                 <>
-                  <RefreshCw
-                    className={cn(iconTokens.size.xs, "animate-spin")}
-                    aria-hidden="true"
-                  />
+                  <RefreshCw class={cn(iconTokens.size.xs, "animate-spin")} aria-hidden="true" />
                   {t("discovery.scan")}
                 </>
               ) : (
@@ -1252,7 +1314,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       }
     >
       {/* Discovery Summary - Minimal view showing status, subnet, device count, and categories */}
-      <DiscoverySummary
+      <discoverySummary
         status={status}
         deviceCount={deviceCount}
         categories={categories}
@@ -1262,7 +1324,7 @@ export const NetworkDiscoveryCard = memo(function NetworkDiscoveryCard({
       />
 
       {deviceCount === 0 && !status.scanning && !isPipelineRunning && (
-        <p className={cn("body-small text-text-muted text-center", spacing.pad.default)}>
+        <p class={cn("body-small text-text-muted text-center", spacing.pad.default)}>
           {t("discovery.noDevices")}
         </p>
       )}

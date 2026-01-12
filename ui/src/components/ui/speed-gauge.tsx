@@ -54,7 +54,7 @@ function getGaugeColor(percentage: number): string {
   return gauge.getColor(percentage);
 }
 
-export const SpeedGauge = memo(function SpeedGauge({
+export const SpeedGauge = memo(function speedGauge({
   value,
   maxValue = 1000,
   label,
@@ -124,10 +124,10 @@ export const SpeedGauge = memo(function SpeedGauge({
   const ticks = [0, 25, 50, 75, 100];
 
   return (
-    <div className="flex flex-col items-center">
+    <div class="flex flex-col items-center">
       {label && (
         <p
-          className={cn(
+          class={cn(
             "caption text-text-muted",
             spacing.margin.bottom.tight,
             "uppercase tracking-wider",
@@ -136,12 +136,12 @@ export const SpeedGauge = memo(function SpeedGauge({
           {label}
         </p>
       )}
-      <div className="relative">
+      <div class="relative">
         <svg
           width={sizeConfig.width}
           height={sizeConfig.height}
           viewBox={`0 0 ${sizeConfig.width} ${sizeConfig.height}`}
-          className={isRunning ? "animate-pulse" : ""}
+          class={isRunning ? "animate-pulse" : ""}
           role="img"
           aria-label={`Speed gauge showing ${value} ${unit}`}
         >
@@ -152,7 +152,7 @@ export const SpeedGauge = memo(function SpeedGauge({
             stroke="currentColor"
             strokeWidth={sizeConfig.strokeWidth}
             strokeLinecap="round"
-            className="text-surface-border"
+            class="text-surface-border"
           />
 
           {/* Value arc with gradient */}
@@ -163,7 +163,7 @@ export const SpeedGauge = memo(function SpeedGauge({
               stroke={gaugeColor}
               strokeWidth={sizeConfig.strokeWidth}
               strokeLinecap="round"
-              className="transition-all duration-500 ease-out"
+              class="transition-all duration-500 ease-out"
             />
           )}
 
@@ -185,7 +185,7 @@ export const SpeedGauge = memo(function SpeedGauge({
                 y2={tickEndY}
                 stroke="currentColor"
                 strokeWidth={1.5}
-                className="text-text-muted/50"
+                class="text-text-muted/50"
               />
             );
           })}
@@ -197,14 +197,14 @@ export const SpeedGauge = memo(function SpeedGauge({
               cy={currentY}
               r={4}
               fill={gaugeColor}
-              className="transition-all duration-500 ease-out"
+              class="transition-all duration-500 ease-out"
             />
           )}
         </svg>
 
         {/* Center value display */}
         <div
-          className={cn(
+          class={cn(
             "absolute inset-0 flex flex-col items-center justify-end",
             size === "sm"
               ? spacing.micro.pb
@@ -214,14 +214,14 @@ export const SpeedGauge = memo(function SpeedGauge({
           )}
         >
           <span
-            className={cn(
+            class={cn(
               "font-mono font-bold text-text-primary tabular-nums",
               size === "sm" ? "text-[12px]" : size === "md" ? "text-[14px]" : "text-[16px]",
             )}
           >
             {isRunning && value === 0 ? "—" : displayValue.value}
           </span>
-          <span className={cn("caption text-text-muted", spacing.micro.mtNeg)}>
+          <span class={cn("caption text-text-muted", spacing.micro.mtNeg)}>
             {displayValue.unit}
           </span>{" "}
           {/* Negative margin for tight visual alignment between value and unit */}
@@ -239,7 +239,7 @@ interface ProgressRingProps {
   label?: string;
 }
 
-export const ProgressRing = memo(function ProgressRing({
+export const ProgressRing = memo(function progressRing({
   progress,
   size = 48,
   strokeWidth = 4,
@@ -250,9 +250,9 @@ export const ProgressRing = memo(function ProgressRing({
   const offset = circumference - (progress / 100) * circumference;
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative">
-        <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
+    <div class="flex flex-col items-center">
+      <div class="relative">
+        <svg width={size} height={size} class="-rotate-90" aria-hidden="true">
           {/* Background circle */}
           <circle
             cx={size / 2}
@@ -261,7 +261,7 @@ export const ProgressRing = memo(function ProgressRing({
             fill="none"
             stroke="currentColor"
             strokeWidth={strokeWidth}
-            className="text-surface-border"
+            class="text-surface-border"
           />
           {/* Progress circle */}
           <circle
@@ -274,18 +274,18 @@ export const ProgressRing = memo(function ProgressRing({
             strokeDasharray={circumference}
             strokeDashoffset={offset}
             strokeLinecap="round"
-            className="text-brand-primary transition-all duration-300 ease-out"
+            class="text-brand-primary transition-all duration-300 ease-out"
           />
         </svg>
         {/* Center percentage */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="caption font-medium text-text-primary tabular-nums">
+        <div class="absolute inset-0 flex items-center justify-center">
+          <span class="caption font-medium text-text-primary tabular-nums">
             {Math.round(progress)}%
           </span>
         </div>
       </div>
       {label && (
-        <span className={cn("caption text-text-muted", spacing.margin.top.tight, "text-center")}>
+        <span class={cn("caption text-text-muted", spacing.margin.top.tight, "text-center")}>
           {label}
         </span>
       )}
@@ -299,7 +299,7 @@ interface PulsingDotProps {
   size?: "sm" | "md";
 }
 
-export const PulsingDot = memo(function PulsingDot({
+export const PulsingDot = memo(function pulsingDot({
   color = "primary",
   size = "md",
 }: PulsingDotProps) {
@@ -328,16 +328,16 @@ export const PulsingDot = memo(function PulsingDot({
   const sizeClass = getSizeClass(size);
 
   return (
-    <span className="relative flex">
+    <span class="relative flex">
       <span
-        className={cn(
+        class={cn(
           "animate-ping absolute inline-flex h-full w-full",
           radius.full,
           "opacity-75",
           colorClass,
         )}
       />
-      <span className={cn("relative inline-flex", radius.full, sizeClass, colorClass)} />
+      <span class={cn("relative inline-flex", radius.full, sizeClass, colorClass)} />
     </span>
   );
 });

@@ -205,7 +205,7 @@ export function useDevices() {
       const data = await api.get<DevicesResponse>("/api/v1/shell/devices");
       setDevices(data.devices || []);
       setStatus(data.status);
-      setIsScanning(data.status?.scanning || false);
+      setIsScanning(data.status?.scanning);
       return data.devices || [];
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch devices";

@@ -13,18 +13,20 @@ interface DiscoveryServiceStatusProps {
  * Displays the current discovery service status.
  * Shows running/scanning state, device count, and active methods.
  */
-export const DiscoveryServiceStatus = memo(function DiscoveryServiceStatus({
+export const DiscoveryServiceStatus = memo(function discoveryServiceStatus({
   status,
   loading,
   onRefresh,
 }: DiscoveryServiceStatusProps) {
   const { t } = useTranslation("settings");
 
-  if (!status) return null;
+  if (!status) {
+    return null;
+  }
 
   return (
     <div
-      className={cn(
+      class={cn(
         spacing.pad.sm,
         radius.lg,
         "border",
@@ -33,10 +35,10 @@ export const DiscoveryServiceStatus = memo(function DiscoveryServiceStatus({
           : "bg-status-error/10 border-status-error/30",
       )}
     >
-      <div className={layout.flex.between}>
-        <div className={layout.inline.default}>
+      <div class={layout.flex.between}>
+        <div class={layout.inline.default}>
           <div
-            className={cn(
+            class={cn(
               "w-2 h-2",
               radius.full,
               status.running
@@ -46,7 +48,7 @@ export const DiscoveryServiceStatus = memo(function DiscoveryServiceStatus({
                 : "bg-status-error",
             )}
           />
-          <span className="body-small font-medium text-text-primary">
+          <span class="body-small font-medium text-text-primary">
             {status.running
               ? status.scanning
                 ? t("discovery.serviceStatus.scanning")
@@ -58,14 +60,14 @@ export const DiscoveryServiceStatus = memo(function DiscoveryServiceStatus({
           type="button"
           onClick={onRefresh}
           disabled={loading}
-          className="caption text-text-muted hover:text-text-primary"
+          class="caption text-text-muted hover:text-text-primary"
         >
           {loading ? "..." : t("discovery.serviceStatus.refresh")}
         </button>
       </div>
       {status.running && (
         <div
-          className={cn(
+          class={cn(
             spacing.margin.top.inline,
             "grid grid-cols-2",
             spacing.gap.compact,
@@ -73,29 +75,29 @@ export const DiscoveryServiceStatus = memo(function DiscoveryServiceStatus({
           )}
         >
           <div>
-            <span className="font-medium">{t("discovery.serviceStatus.devices")}:</span>{" "}
+            <span class="font-medium">{t("discovery.serviceStatus.devices")}:</span>{" "}
             {status.deviceCount}
           </div>
           <div>
-            <span className="font-medium">{t("discovery.serviceStatus.interface")}:</span>{" "}
+            <span class="font-medium">{t("discovery.serviceStatus.interface")}:</span>{" "}
             {status.interface || "auto"}
           </div>
           <div>
-            <span className="font-medium">{t("discovery.serviceStatus.subnet")}:</span>{" "}
+            <span class="font-medium">{t("discovery.serviceStatus.subnet")}:</span>{" "}
             {status.subnet || "..."}
           </div>
           <div>
-            <span className="font-medium">{t("discovery.serviceStatus.localIP")}:</span>{" "}
+            <span class="font-medium">{t("discovery.serviceStatus.localIP")}:</span>{" "}
             {status.localIP || "..."}
           </div>
         </div>
       )}
       {status.activeMethods && status.activeMethods.length > 0 && (
-        <div className={cn(spacing.margin.top.inline, "flex flex-wrap", spacing.gap.tight)}>
+        <div class={cn(spacing.margin.top.inline, "flex flex-wrap", spacing.gap.tight)}>
           {status.activeMethods.map((method) => (
             <span
               key={method}
-              className={cn(
+              class={cn(
                 spacing.chip.sm,
                 "bg-surface-base",
                 radius.default,

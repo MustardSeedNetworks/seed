@@ -22,9 +22,15 @@ export function isValidNumber(value: unknown): value is number {
  * @param fallback - Value to return if ms is invalid (default: "-")
  */
 export function formatTime(ms: number | undefined | null, fallback = "-"): string {
-  if (!isValidNumber(ms) || ms <= 0) return fallback;
-  if (ms < 1) return "<1ms";
-  if (ms >= 1000) return `${(ms / 1000).toFixed(1)}s`;
+  if (!isValidNumber(ms) || ms <= 0) {
+    return fallback;
+  }
+  if (ms < 1) {
+    return "<1ms";
+  }
+  if (ms >= 1000) {
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
   return `${Math.round(ms * 10) / 10}ms`;
 }
 
@@ -46,7 +52,9 @@ export function formatFixed(
   decimals = 1,
   fallback = "-",
 ): string {
-  if (!isValidNumber(value)) return fallback;
+  if (!isValidNumber(value)) {
+    return fallback;
+  }
   return value.toFixed(decimals);
 }
 
@@ -63,7 +71,9 @@ export function formatPercent(
   decimals = 0,
   fallback = "-",
 ): string {
-  if (!isValidNumber(value)) return fallback;
+  if (!isValidNumber(value)) {
+    return fallback;
+  }
   return `${value.toFixed(decimals)}%`;
 }
 
@@ -80,13 +90,17 @@ export function formatBytes(
   decimals = 1,
   fallback = "-",
 ): string {
-  if (!isValidNumber(bytes) || bytes < 0) return fallback;
-  if (bytes === 0) return "0 B";
+  if (!isValidNumber(bytes) || bytes < 0) {
+    return fallback;
+  }
+  if (bytes === 0) {
+    return "0 B";
+  }
 
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const size = i < sizes.length ? sizes[i] : sizes[sizes.length - 1];
+  const size = i < sizes.length ? sizes[i] : sizes.at(-1);
 
   return `${Number.parseFloat((bytes / k ** i).toFixed(decimals))} ${size}`;
 }
@@ -100,13 +114,17 @@ export function formatBytes(
  * @param fallback - Value to return if invalid (default: "-")
  */
 export function formatBps(bps: number | undefined | null, decimals = 1, fallback = "-"): string {
-  if (!isValidNumber(bps) || bps < 0) return fallback;
-  if (bps === 0) return "0 bps";
+  if (!isValidNumber(bps) || bps < 0) {
+    return fallback;
+  }
+  if (bps === 0) {
+    return "0 bps";
+  }
 
   const k = 1000;
   const sizes = ["bps", "Kbps", "Mbps", "Gbps", "Tbps"];
   const i = Math.floor(Math.log(bps) / Math.log(k));
-  const size = i < sizes.length ? sizes[i] : sizes[sizes.length - 1];
+  const size = i < sizes.length ? sizes[i] : sizes.at(-1);
 
   return `${Number.parseFloat((bps / k ** i).toFixed(decimals))} ${size}`;
 }
@@ -124,7 +142,9 @@ export function formatNumber(
   options?: Intl.NumberFormatOptions,
   fallback = "-",
 ): string {
-  if (!isValidNumber(value)) return fallback;
+  if (!isValidNumber(value)) {
+    return fallback;
+  }
   return value.toLocaleString(undefined, options);
 }
 
@@ -136,10 +156,16 @@ export function formatNumber(
  * @param fallback - Value to return if invalid (default: "-")
  */
 export function formatNanoseconds(ns: number | undefined | null, fallback = "-"): string {
-  if (!isValidNumber(ns) || ns <= 0) return fallback;
+  if (!isValidNumber(ns) || ns <= 0) {
+    return fallback;
+  }
   const ms = ns / 1_000_000;
-  if (ms < 1) return "<1ms";
-  if (ms >= 1000) return `${(ms / 1000).toFixed(1)}s`;
+  if (ms < 1) {
+    return "<1ms";
+  }
+  if (ms >= 1000) {
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
   return `${ms.toFixed(1)}ms`;
 }
 
@@ -151,7 +177,9 @@ export function formatNanoseconds(ns: number | undefined | null, fallback = "-")
  * @param fallback - Value to return if invalid (default: "-")
  */
 export function formatSignalStrength(dbm: number | undefined | null, fallback = "-"): string {
-  if (!isValidNumber(dbm)) return fallback;
+  if (!isValidNumber(dbm)) {
+    return fallback;
+  }
   return `${dbm} dBm`;
 }
 
@@ -168,7 +196,7 @@ export function safeDivide(
   denominator: number | undefined | null,
   fallback = 0,
 ): number {
-  if (!isValidNumber(numerator) || !isValidNumber(denominator) || denominator === 0) {
+  if (!(isValidNumber(numerator) && isValidNumber(denominator)) || denominator === 0) {
     return fallback;
   }
   const result = numerator / denominator;

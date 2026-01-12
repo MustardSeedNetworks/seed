@@ -168,7 +168,9 @@ class Logger {
   }
 
   private logToConsole(entry: LogEntry): void {
-    if (!this.config.consoleOutput) return;
+    if (!this.config.consoleOutput) {
+      return;
+    }
 
     const style = logColors.get(entry.level) ?? "";
     const prefix = `%c[${entry.level}][${entry.component}]`;
@@ -202,7 +204,9 @@ class Logger {
   }
 
   private startFlushTimer(): void {
-    if (this.flushTimer) return;
+    if (this.flushTimer) {
+      return;
+    }
     this.flushTimer = setInterval(() => this.flush(), this.config.flushInterval);
   }
 
@@ -219,7 +223,9 @@ class Logger {
    * Only sends to backend when authenticated to avoid 401 spam.
    */
   async flush(): Promise<void> {
-    if (this.buffer.length === 0) return;
+    if (this.buffer.length === 0) {
+      return;
+    }
 
     // Don't send to backend if not authenticated - keep logs in buffer
     if (!this.authenticated) {
@@ -286,7 +292,9 @@ class Logger {
    * Log a debug message.
    */
   debug(component: string, message: string, metadata?: Record<string, unknown>): void {
-    if (!this.shouldLog("DEBUG")) return;
+    if (!this.shouldLog("DEBUG")) {
+      return;
+    }
     const entry = this.createEntry("DEBUG", component, message, metadata);
     this.addToBuffer(entry);
   }
@@ -295,7 +303,9 @@ class Logger {
    * Log an info message.
    */
   info(component: string, message: string, metadata?: Record<string, unknown>): void {
-    if (!this.shouldLog("INFO")) return;
+    if (!this.shouldLog("INFO")) {
+      return;
+    }
     const entry = this.createEntry("INFO", component, message, metadata);
     this.addToBuffer(entry);
   }
@@ -304,7 +314,9 @@ class Logger {
    * Log a warning message.
    */
   warn(component: string, message: string, metadata?: Record<string, unknown>): void {
-    if (!this.shouldLog("WARN")) return;
+    if (!this.shouldLog("WARN")) {
+      return;
+    }
     const entry = this.createEntry("WARN", component, message, metadata);
     this.addToBuffer(entry);
   }
@@ -318,7 +330,9 @@ class Logger {
     error?: Error | unknown,
     metadata?: Record<string, unknown>,
   ): void {
-    if (!this.shouldLog("ERROR")) return;
+    if (!this.shouldLog("ERROR")) {
+      return;
+    }
 
     let stack: string | undefined;
     let errorMeta = metadata || {};

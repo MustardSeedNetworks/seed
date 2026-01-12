@@ -113,7 +113,7 @@ describe("Card", () => {
 
   it("applies custom className", () => {
     const { container } = render(
-      <Card title="Custom Class Card" status="success" className="custom-class">
+      <Card title="Custom Class Card" status="success" class="custom-class">
         <span>Content</span>
       </Card>,
     );
@@ -193,7 +193,7 @@ describe("CardDivider", () => {
   });
 
   it("applies custom className", () => {
-    const { container } = render(<CardDivider className="my-custom-class" />);
+    const { container } = render(<CardDivider class="my-custom-class" />);
     const hr = container.querySelector("hr");
     expect(hr).toHaveClass("my-custom-class");
   });

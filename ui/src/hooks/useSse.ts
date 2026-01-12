@@ -75,7 +75,9 @@ interface UseSseReturn {
  * Defined outside component to be stable across renders.
  */
 function isValidMessage(message: unknown): message is SseMessage {
-  if (!message || typeof message !== "object") return false;
+  if (!message || typeof message !== "object") {
+    return false;
+  }
   const msg = message as Record<string, unknown>;
   return typeof msg.type === "string";
 }
@@ -85,7 +87,9 @@ function isValidMessage(message: unknown): message is SseMessage {
  * Defined outside component to be stable across renders.
  */
 function isValidCardUpdate(payload: unknown): payload is SseCardUpdate {
-  if (!payload || typeof payload !== "object") return false;
+  if (!payload || typeof payload !== "object") {
+    return false;
+  }
   const update = payload as Record<string, unknown>;
   return typeof update.cardId === "string";
 }
@@ -125,7 +129,9 @@ export function useSse({
   const handleSseMessage = useCallback(
     (data: string, connectionId: number) => {
       // Ignore messages from stale connections
-      if (connectionId !== connectionIdRef.current) return;
+      if (connectionId !== connectionIdRef.current) {
+        return;
+      }
 
       try {
         const message: unknown = JSON.parse(data);
@@ -201,20 +207,26 @@ export function useSse({
 
       // Connection opened successfully
       eventSource.onopen = () => {
-        if (connectionId !== connectionIdRef.current) return;
+        if (connectionId !== connectionIdRef.current) {
+          return;
+        }
         setStatus("connected");
         logger.info(LogComponents.SSE, "SSE connected", { url: fullUrl });
       };
 
       // Handle incoming messages
       eventSource.onmessage = (event) => {
-        if (connectionId !== connectionIdRef.current) return;
+        if (connectionId !== connectionIdRef.current) {
+          return;
+        }
         handleSseMessage(event.data, connectionId);
       };
 
       // Handle connection errors
       eventSource.onerror = (event) => {
-        if (connectionId !== connectionIdRef.current) return;
+        if (connectionId !== connectionIdRef.current) {
+          return;
+        }
 
         // EventSource reconnects automatically, but we track status
         if (eventSource.readyState === EventSource.CLOSED) {
