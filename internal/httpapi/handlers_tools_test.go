@@ -69,6 +69,7 @@ func TestHandleTCPProbe(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
+			defer server.Close()
 
 			body, _ := json.Marshal(tt.request)
 			req := httptest.NewRequest(http.MethodPost, "/api/shell/discovery/probe", bytes.NewReader(body))
@@ -97,6 +98,7 @@ func TestHandleTCPProbe(t *testing.T) {
 // TestHandleTCPProbeMethodNotAllowed tests non-POST methods on TCP probe endpoint.
 func TestHandleTCPProbeMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -116,6 +118,7 @@ func TestHandleTCPProbeMethodNotAllowed(t *testing.T) {
 // TestHandleTCPProbeInvalidJSON tests TCP probe with invalid JSON.
 func TestHandleTCPProbeInvalidJSON(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodPost, "/api/shell/discovery/probe", bytes.NewReader([]byte("invalid json")))
 	req.Header.Set("Content-Type", "application/json")
@@ -131,6 +134,7 @@ func TestHandleTCPProbeInvalidJSON(t *testing.T) {
 // TestHandleTCPProbeTooManyPorts tests TCP probe with too many ports.
 func TestHandleTCPProbeTooManyPorts(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	// Create a list of 101 ports (exceeds 100 limit)
 	ports := make([]int, 101)
@@ -159,6 +163,7 @@ func TestHandleTCPProbeTooManyPorts(t *testing.T) {
 // TestHandleTCPProbeInvalidTarget tests TCP probe with invalid target.
 func TestHandleTCPProbeInvalidTarget(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	reqBody := api.TCPProbeRequest{
 		Target:  "invalid..hostname",
@@ -260,6 +265,7 @@ func TestHandleTraceroute(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
+			defer server.Close()
 
 			body, _ := json.Marshal(tt.request)
 			req := httptest.NewRequest(http.MethodPost, "/api/roots/traceroute", bytes.NewReader(body))
@@ -278,6 +284,7 @@ func TestHandleTraceroute(t *testing.T) {
 // TestHandleTracerouteMethodNotAllowed tests non-POST methods on traceroute endpoint.
 func TestHandleTracerouteMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -297,6 +304,7 @@ func TestHandleTracerouteMethodNotAllowed(t *testing.T) {
 // TestHandleTracerouteInvalidJSON tests traceroute with invalid JSON.
 func TestHandleTracerouteInvalidJSON(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodPost, "/api/roots/traceroute", bytes.NewReader([]byte("invalid json")))
 	req.Header.Set("Content-Type", "application/json")
@@ -357,6 +365,7 @@ func TestHandlePortScan(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
+			defer server.Close()
 
 			body, _ := json.Marshal(tt.request)
 			req := httptest.NewRequest(http.MethodPost, "/api/shell/discovery/portscan", bytes.NewReader(body))
@@ -375,6 +384,7 @@ func TestHandlePortScan(t *testing.T) {
 // TestHandlePortScanMethodNotAllowed tests non-POST methods on port scan endpoint.
 func TestHandlePortScanMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -394,6 +404,7 @@ func TestHandlePortScanMethodNotAllowed(t *testing.T) {
 // TestHandlePortScanInvalidJSON tests port scan with invalid JSON.
 func TestHandlePortScanInvalidJSON(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(
 		http.MethodPost,
@@ -445,6 +456,7 @@ func TestHandleAdvancedFingerprint(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
+			defer server.Close()
 
 			body, _ := json.Marshal(tt.request)
 			req := httptest.NewRequest(http.MethodPost, "/api/shell/discovery/fingerprint", bytes.NewReader(body))
@@ -463,6 +475,7 @@ func TestHandleAdvancedFingerprint(t *testing.T) {
 // TestHandleAdvancedFingerprintMethodNotAllowed tests non-POST methods.
 func TestHandleAdvancedFingerprintMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -482,6 +495,7 @@ func TestHandleAdvancedFingerprintMethodNotAllowed(t *testing.T) {
 // TestHandleAdvancedFingerprintInvalidJSON tests fingerprint with invalid JSON.
 func TestHandleAdvancedFingerprintInvalidJSON(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(
 		http.MethodPost,

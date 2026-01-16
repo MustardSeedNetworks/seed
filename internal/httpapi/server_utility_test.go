@@ -351,6 +351,7 @@ func TestTrustedProxies(t *testing.T) {
 // TestNewTestServer tests the test server creation.
 func TestNewTestServer(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	if server == nil {
 		t.Fatal("NewTestServer returned nil")
@@ -368,6 +369,7 @@ func TestNewTestServer(t *testing.T) {
 // TestGetAuthenticatedHandler tests getting the authenticated handler.
 func TestGetAuthenticatedHandler(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	handler := server.GetAuthenticatedHandler()
 	if handler == nil {
@@ -389,6 +391,7 @@ func TestGetAuthenticatedHandler(t *testing.T) {
 // TestServerHub tests the Hub accessor.
 func TestServerHub(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	// Hub might be nil in test server, but accessor should not panic
 	hub := server.Hub()
@@ -400,6 +403,7 @@ func TestServerHub(t *testing.T) {
 // TestServerDB tests the DB accessor.
 func TestServerDB(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	// DB is nil in test server, but accessor should not panic
 	db := server.DB()

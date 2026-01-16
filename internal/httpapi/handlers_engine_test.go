@@ -13,6 +13,7 @@ import (
 
 func TestHandleEngineDiscovery(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 	defer server.GetEngine().(*discovery.Engine).Stop()
 
 	tests := []struct {
@@ -58,6 +59,7 @@ func TestHandleEngineDiscovery(t *testing.T) {
 
 func TestHandleEngineStats(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 	defer server.GetEngine().(*discovery.Engine).Stop()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/discovery/engine/stats", nil)
@@ -77,6 +79,7 @@ func TestHandleEngineStats(t *testing.T) {
 
 func TestHandleEngineCapabilities(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 	defer server.GetEngine().(*discovery.Engine).Stop()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/discovery/engine/capabilities", nil)
@@ -101,6 +104,7 @@ func TestHandleEngineCapabilities(t *testing.T) {
 
 func TestHandleEngineScan(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 	defer server.GetEngine().(*discovery.Engine).Stop()
 
 	tests := []struct {
@@ -150,6 +154,7 @@ func TestHandleEngineScan(t *testing.T) {
 
 func TestHandleEngineQuickScan(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 	defer server.GetEngine().(*discovery.Engine).Stop()
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/discovery/engine/quick", nil)
@@ -173,6 +178,7 @@ func TestHandleEngineQuickScan(t *testing.T) {
 
 func TestHandleEngineFullScan(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 	defer server.GetEngine().(*discovery.Engine).Stop()
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/discovery/engine/full", nil)
@@ -199,6 +205,7 @@ func TestHandleEngineFullScan(t *testing.T) {
 
 func TestHandleEngineDevice(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 	engine := server.GetEngine().(*discovery.Engine)
 	defer engine.Stop()
 
@@ -259,6 +266,7 @@ func TestHandleEngineDevice(t *testing.T) {
 func TestHandleEngineNoEngine(t *testing.T) {
 	// Create server and then remove the engine.
 	server := api.NewTestServer()
+	defer server.Close()
 	engine := server.GetEngine().(*discovery.Engine)
 	engine.Stop()
 

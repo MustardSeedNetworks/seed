@@ -17,6 +17,7 @@ func TestHandleDNSGET(t *testing.T) {
 	}
 
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/sap/dns", http.NoBody)
 	w := httptest.NewRecorder()
@@ -45,6 +46,7 @@ func TestHandleDNSGETWithInterface(t *testing.T) {
 	}
 
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/sap/dns?interface=lo", http.NoBody)
 	w := httptest.NewRecorder()
@@ -60,6 +62,7 @@ func TestHandleDNSGETWithInterface(t *testing.T) {
 // TestHandleDNSMethodNotAllowed tests non-GET methods on DNS endpoint.
 func TestHandleDNSMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -79,6 +82,7 @@ func TestHandleDNSMethodNotAllowed(t *testing.T) {
 // TestHandleDNSSecurityGET tests the DNS security GET endpoint.
 func TestHandleDNSSecurityGET(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/sap/dns/security", http.NoBody)
 	w := httptest.NewRecorder()
@@ -97,6 +101,7 @@ func TestHandleDNSSecurityPOST(t *testing.T) {
 	}
 
 	server := api.NewTestServer()
+	defer server.Close()
 
 	reqBody := api.DNSSecurityScanRequest{
 		Servers: []string{"8.8.8.8", "8.8.4.4"},
@@ -119,6 +124,7 @@ func TestHandleDNSSecurityPOST(t *testing.T) {
 // TestHandleDNSSecurityPOSTNoServers tests DNS security POST with no servers.
 func TestHandleDNSSecurityPOSTNoServers(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	// Empty servers list - should use configured servers or return error
 	reqBody := api.DNSSecurityScanRequest{
@@ -142,6 +148,7 @@ func TestHandleDNSSecurityPOSTNoServers(t *testing.T) {
 // TestHandleDNSSecurityPOSTInvalidJSON tests DNS security POST with invalid JSON.
 func TestHandleDNSSecurityPOSTInvalidJSON(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodPost, "/api/sap/dns/security", bytes.NewReader([]byte("invalid json")))
 	req.Header.Set("Content-Type", "application/json")
@@ -157,6 +164,7 @@ func TestHandleDNSSecurityPOSTInvalidJSON(t *testing.T) {
 // TestHandleDNSSecurityMethodNotAllowed tests non-GET/POST methods.
 func TestHandleDNSSecurityMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodPut, http.MethodDelete, http.MethodPatch}
 	for _, method := range methods {
@@ -176,6 +184,7 @@ func TestHandleDNSSecurityMethodNotAllowed(t *testing.T) {
 // TestHandleDNSSecuritySettingsGET tests DNS security settings GET endpoint.
 func TestHandleDNSSecuritySettingsGET(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/sap/dns/security/settings", http.NoBody)
 	w := httptest.NewRecorder()
@@ -195,6 +204,7 @@ func TestHandleDNSSecuritySettingsGET(t *testing.T) {
 // TestHandleDNSSecuritySettingsPUT tests DNS security settings PUT endpoint.
 func TestHandleDNSSecuritySettingsPUT(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	reqBody := map[string]any{
 		"timeout":     5000,
@@ -225,6 +235,7 @@ func TestHandleDNSSecuritySettingsPUT(t *testing.T) {
 // TestHandleDNSSecuritySettingsMethodNotAllowed tests non-GET/PUT methods.
 func TestHandleDNSSecuritySettingsMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodPost, http.MethodDelete, http.MethodPatch}
 	for _, method := range methods {

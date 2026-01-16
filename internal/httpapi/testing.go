@@ -21,11 +21,54 @@ import (
 
 // NewTestServer creates a minimal server instance for testing.
 // This is used by integration tests to verify auth and routing behavior.
+// IMPORTANT: Call defer server.Close() after creating the server to avoid goroutine leaks.
 func NewTestServer() *Server {
 	// Use testutil for consistent test configuration
 	testConfig := testutil.NewConfigBuilder().Build()
 
 	return NewTestServerWithConfig(testConfig)
+}
+
+// Close cleans up test server resources to prevent goroutine leaks.
+// This should be called with defer after creating a test server.
+func (s *Server) Close() {
+	// Stop rate limiters
+	if s.services.RateLimit.Login != nil {
+		s.services.RateLimit.Login.Stop()
+	}
+	if s.services.RateLimit.Endpoint != nil {
+		s.services.RateLimit.Endpoint.Stop()
+	}
+
+	// Stop CSRF manager
+	if s.services.Auth.CSRF != nil {
+		s.services.Auth.CSRF.Stop()
+	}
+
+	// Stop auth manager (token blacklist cleanup)
+	if s.services.Auth.Manager != nil {
+		s.services.Auth.Manager.Stop()
+	}
+
+	// Stop link monitor
+	if s.services.Network.LinkMonitor != nil {
+		s.services.Network.LinkMonitor.Stop()
+	}
+
+	// Stop discovery service
+	if s.services.Discovery.Service != nil {
+		s.services.Discovery.Service.Stop()
+	}
+
+	// Stop discovery engine (fixes EventBus goroutine leak)
+	if s.services.Discovery.Engine != nil {
+		s.services.Discovery.Engine.Stop()
+	}
+
+	// Stop WebSocket hub (fixes Hub.Run goroutine leak)
+	if s.services.RealTime.WSHub != nil {
+		s.services.RealTime.WSHub.Shutdown()
+	}
 }
 
 // GetAuthenticatedHandler returns the server's handler with auth middleware applied.

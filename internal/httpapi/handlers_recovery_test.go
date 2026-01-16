@@ -16,6 +16,7 @@ import (
 // TestHandleRecoveryStatusNoManager tests recovery status when manager is not configured.
 func TestHandleRecoveryStatusNoManager(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/recovery/status", http.NoBody)
 	w := httptest.NewRecorder()
@@ -39,6 +40,7 @@ func TestHandleRecoveryStatusNoManager(t *testing.T) {
 // TestHandleRecoveryStatusMethodNotAllowed tests non-GET methods.
 func TestHandleRecoveryStatusMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -59,6 +61,7 @@ func TestHandleRecoveryStatusMethodNotAllowed(t *testing.T) {
 // TestHandleRecoveryStatusWithManager tests recovery status with a configured manager.
 func TestHandleRecoveryStatusWithManager(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	// Create a temp directory for recovery files
 	tmpDir := t.TempDir()
@@ -122,6 +125,7 @@ func TestHandleRecoveryStatusWithManager(t *testing.T) {
 // TestHandleRecoveryCompleteNoManager tests recovery complete when manager is not configured.
 func TestHandleRecoveryCompleteNoManager(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	reqBody := map[string]string{
 		"token":    "some-token",
@@ -143,6 +147,7 @@ func TestHandleRecoveryCompleteNoManager(t *testing.T) {
 // TestHandleRecoveryCompleteMethodNotAllowed tests non-POST methods.
 func TestHandleRecoveryCompleteMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -163,6 +168,7 @@ func TestHandleRecoveryCompleteMethodNotAllowed(t *testing.T) {
 // TestHandleRecoveryCompleteInvalidToken tests recovery with invalid token.
 func TestHandleRecoveryCompleteInvalidToken(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	// Create a temp directory for recovery files
 	tmpDir := t.TempDir()
@@ -198,6 +204,7 @@ func TestHandleRecoveryCompleteInvalidToken(t *testing.T) {
 // TestHandleRecoveryInstructionsNoManager tests recovery instructions when manager is not configured.
 func TestHandleRecoveryInstructionsNoManager(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/recovery/instructions", http.NoBody)
 	w := httptest.NewRecorder()
@@ -212,6 +219,7 @@ func TestHandleRecoveryInstructionsNoManager(t *testing.T) {
 // TestHandleRecoveryInstructionsMethodNotAllowed tests non-GET methods.
 func TestHandleRecoveryInstructionsMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -232,6 +240,7 @@ func TestHandleRecoveryInstructionsMethodNotAllowed(t *testing.T) {
 // TestHandleRecoveryInstructionsWithManager tests recovery instructions with a configured manager.
 func TestHandleRecoveryInstructionsWithManager(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	// Create a temp directory for recovery files
 	tmpDir := t.TempDir()
@@ -272,6 +281,7 @@ func TestHandleRecoveryInstructionsWithManager(t *testing.T) {
 // TestHandleRecoveryCompleteInvalidJSON tests recovery with invalid JSON body.
 func TestHandleRecoveryCompleteInvalidJSON(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	// Create a temp directory for recovery files
 	tmpDir := t.TempDir()

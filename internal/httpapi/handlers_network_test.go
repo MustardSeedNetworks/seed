@@ -13,6 +13,7 @@ import (
 // TestHandleInterfacesGET tests the interfaces list endpoint.
 func TestHandleInterfacesGET(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/interfaces", http.NoBody)
 	w := httptest.NewRecorder()
@@ -33,6 +34,7 @@ func TestHandleInterfacesGET(t *testing.T) {
 // TestHandleInterfacesMethodNotAllowed tests non-GET methods on interfaces endpoint.
 func TestHandleInterfacesMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -52,6 +54,7 @@ func TestHandleInterfacesMethodNotAllowed(t *testing.T) {
 // TestHandleInterfaceGET tests the current interface GET endpoint.
 func TestHandleInterfaceGET(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/interface", http.NoBody)
 	w := httptest.NewRecorder()
@@ -75,6 +78,7 @@ func TestHandleInterfaceGET(t *testing.T) {
 // TestHandleInterfacePUT tests the current interface PUT endpoint.
 func TestHandleInterfacePUT(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	reqBody := api.SetInterfaceRequest{
 		Interface: "eth0",
@@ -97,6 +101,7 @@ func TestHandleInterfacePUT(t *testing.T) {
 // TestHandleInterfacePUTInvalidJSON tests interface update with invalid JSON.
 func TestHandleInterfacePUTInvalidJSON(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodPut, "/api/interface", bytes.NewReader([]byte("invalid json")))
 	req.Header.Set("Content-Type", "application/json")
@@ -112,6 +117,7 @@ func TestHandleInterfacePUTInvalidJSON(t *testing.T) {
 // TestHandleInterfaceMethodNotAllowed tests non-GET/PUT methods.
 func TestHandleInterfaceMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodPost, http.MethodDelete, http.MethodPatch}
 	for _, method := range methods {
@@ -131,6 +137,7 @@ func TestHandleInterfaceMethodNotAllowed(t *testing.T) {
 // TestHandleLinkGET tests the link status endpoint.
 func TestHandleLinkGET(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/sap/link", http.NoBody)
 	w := httptest.NewRecorder()
@@ -153,6 +160,7 @@ func TestHandleLinkGET(t *testing.T) {
 // TestHandleLinkGETWithInterface tests the link status endpoint with interface parameter.
 func TestHandleLinkGETWithInterface(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/sap/link?interface=lo", http.NoBody)
 	w := httptest.NewRecorder()
@@ -169,6 +177,7 @@ func TestHandleLinkGETWithInterface(t *testing.T) {
 // TestHandleLinkMethodNotAllowed tests non-GET methods on link endpoint.
 func TestHandleLinkMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -188,6 +197,7 @@ func TestHandleLinkMethodNotAllowed(t *testing.T) {
 // TestHandleIPConfigGET tests the IP config endpoint.
 func TestHandleIPConfigGET(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/sap/ipconfig", http.NoBody)
 	w := httptest.NewRecorder()
@@ -215,6 +225,7 @@ func TestHandleIPConfigGET(t *testing.T) {
 // TestHandleIPConfigMethodNotAllowed tests non-GET methods on IP config endpoint.
 func TestHandleIPConfigMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -234,6 +245,7 @@ func TestHandleIPConfigMethodNotAllowed(t *testing.T) {
 // TestHandleIPSettingsGET tests the IP settings endpoint.
 func TestHandleIPSettingsGET(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/sap/ipconfig/settings", http.NoBody)
 	w := httptest.NewRecorder()
@@ -281,6 +293,7 @@ func TestHandleIPSettingsPUT(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
+			defer server.Close()
 			server.SetConfigPath("/tmp/test-config.yaml")
 
 			body, _ := json.Marshal(tt.request)
@@ -306,6 +319,7 @@ func TestHandleIPSettingsPUT(t *testing.T) {
 // TestHandleIPSettingsMethodNotAllowed tests non-GET/PUT methods.
 func TestHandleIPSettingsMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodPost, http.MethodDelete, http.MethodPatch}
 	for _, method := range methods {
@@ -358,6 +372,7 @@ func TestHandleSetMTU(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
+			defer server.Close()
 
 			body, _ := json.Marshal(tt.request)
 			req := httptest.NewRequest(http.MethodPost, "/api/network/mtu", bytes.NewReader(body))
@@ -382,6 +397,7 @@ func TestHandleSetMTU(t *testing.T) {
 // TestHandleSetMTUMethodNotAllowed tests non-POST methods on MTU endpoint.
 func TestHandleSetMTUMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -401,6 +417,7 @@ func TestHandleSetMTUMethodNotAllowed(t *testing.T) {
 // TestHandleSetMTUInvalidJSON tests MTU endpoint with invalid JSON.
 func TestHandleSetMTUInvalidJSON(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodPost, "/api/network/mtu", bytes.NewReader([]byte("invalid json")))
 	req.Header.Set("Content-Type", "application/json")
