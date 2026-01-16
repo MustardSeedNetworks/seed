@@ -13,6 +13,9 @@ import (
 // TestHandleTCPProbe tests the TCP probe endpoint.
 func TestHandleTCPProbe(t *testing.T) {
 	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	if testing.Short() {
 		t.Skip("skipping network test in short mode")
 	}
 
@@ -97,6 +100,9 @@ func TestHandleTCPProbe(t *testing.T) {
 
 // TestHandleTCPProbeMethodNotAllowed tests non-POST methods on TCP probe endpoint.
 func TestHandleTCPProbeMethodNotAllowed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -117,6 +123,9 @@ func TestHandleTCPProbeMethodNotAllowed(t *testing.T) {
 
 // TestHandleTCPProbeInvalidJSON tests TCP probe with invalid JSON.
 func TestHandleTCPProbeInvalidJSON(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -133,6 +142,9 @@ func TestHandleTCPProbeInvalidJSON(t *testing.T) {
 
 // TestHandleTCPProbeTooManyPorts tests TCP probe with too many ports.
 func TestHandleTCPProbeTooManyPorts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -162,6 +174,9 @@ func TestHandleTCPProbeTooManyPorts(t *testing.T) {
 
 // TestHandleTCPProbeInvalidTarget tests TCP probe with invalid target.
 func TestHandleTCPProbeInvalidTarget(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -185,6 +200,9 @@ func TestHandleTCPProbeInvalidTarget(t *testing.T) {
 
 // TestHandleTraceroute tests the traceroute endpoint.
 func TestHandleTraceroute(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	if testing.Short() {
 		t.Skip("skipping network test in short mode")
 	}
@@ -283,6 +301,9 @@ func TestHandleTraceroute(t *testing.T) {
 
 // TestHandleTracerouteMethodNotAllowed tests non-POST methods on traceroute endpoint.
 func TestHandleTracerouteMethodNotAllowed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -303,6 +324,9 @@ func TestHandleTracerouteMethodNotAllowed(t *testing.T) {
 
 // TestHandleTracerouteInvalidJSON tests traceroute with invalid JSON.
 func TestHandleTracerouteInvalidJSON(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -319,6 +343,9 @@ func TestHandleTracerouteInvalidJSON(t *testing.T) {
 
 // TestHandlePortScan tests the port scan endpoint.
 func TestHandlePortScan(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	if testing.Short() {
 		t.Skip("skipping network test in short mode")
 	}
@@ -383,6 +410,9 @@ func TestHandlePortScan(t *testing.T) {
 
 // TestHandlePortScanMethodNotAllowed tests non-POST methods on port scan endpoint.
 func TestHandlePortScanMethodNotAllowed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -403,6 +433,9 @@ func TestHandlePortScanMethodNotAllowed(t *testing.T) {
 
 // TestHandlePortScanInvalidJSON tests port scan with invalid JSON.
 func TestHandlePortScanInvalidJSON(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -423,6 +456,9 @@ func TestHandlePortScanInvalidJSON(t *testing.T) {
 
 // TestHandleAdvancedFingerprint tests the advanced fingerprint endpoint.
 func TestHandleAdvancedFingerprint(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	if testing.Short() {
 		t.Skip("skipping network test in short mode")
 	}
@@ -474,6 +510,9 @@ func TestHandleAdvancedFingerprint(t *testing.T) {
 
 // TestHandleAdvancedFingerprintMethodNotAllowed tests non-POST methods.
 func TestHandleAdvancedFingerprintMethodNotAllowed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -494,6 +533,9 @@ func TestHandleAdvancedFingerprintMethodNotAllowed(t *testing.T) {
 
 // TestHandleAdvancedFingerprintInvalidJSON tests fingerprint with invalid JSON.
 func TestHandleAdvancedFingerprintInvalidJSON(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 

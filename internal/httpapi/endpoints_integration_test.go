@@ -215,7 +215,11 @@ func (s *testEndpointServer) testSystemHealthEndpoint(t *testing.T) {
 }
 
 // TestAPIEndpoints provides comprehensive integration tests for all major API endpoints.
+// Skipped in fast test mode - uses full server with OUI database loading.
 func TestAPIEndpoints(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
 	srv := newTestEndpointServer(t)
 	defer srv.close()
 
@@ -229,6 +233,9 @@ func TestAPIEndpoints(t *testing.T) {
 }
 
 func TestWebSocketHub(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "test-config.yaml")
 
@@ -392,6 +399,9 @@ func (s *devicesTestServer) testScanDevices(t *testing.T) {
 }
 
 func TestDevicesEndpoints(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
 	srv := newDevicesTestServer(t)
 	defer srv.close()
 
@@ -402,6 +412,9 @@ func TestDevicesEndpoints(t *testing.T) {
 }
 
 func TestTestsSettingsEndpoints(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "test-config.yaml")
 

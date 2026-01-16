@@ -123,7 +123,7 @@ func TestEngineScanWithoutCollectors(t *testing.T) {
 		t.Fatal("expected non-nil result")
 	}
 
-	if result.ScanType != "ScanTypeQuick" {
+	if result.ScanType != discovery.ScanTypeQuick {
 		t.Errorf("expected scan type 'ScanTypeQuick', got %s", result.ScanType)
 	}
 	if len(result.Phases) < 2 {
@@ -172,7 +172,7 @@ func TestEngineQuickScan(t *testing.T) {
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}
-	if result.ScanType != "ScanTypeQuick" {
+	if result.ScanType != discovery.ScanTypeQuick {
 		t.Errorf("expected scan type 'ScanTypeQuick', got %s", result.ScanType)
 	}
 }
@@ -190,7 +190,7 @@ func TestEngineFullScan(t *testing.T) {
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}
-	if result.ScanType != "ScanTypeFull" {
+	if result.ScanType != discovery.ScanTypeFull {
 		t.Errorf("expected scan type 'ScanTypeFull', got %s", result.ScanType)
 	}
 }

@@ -12,6 +12,9 @@ import (
 
 // TestHandleInterfacesGET tests the interfaces list endpoint.
 func TestHandleInterfacesGET(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -33,6 +36,9 @@ func TestHandleInterfacesGET(t *testing.T) {
 
 // TestHandleInterfacesMethodNotAllowed tests non-GET methods on interfaces endpoint.
 func TestHandleInterfacesMethodNotAllowed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -53,6 +59,9 @@ func TestHandleInterfacesMethodNotAllowed(t *testing.T) {
 
 // TestHandleInterfaceGET tests the current interface GET endpoint.
 func TestHandleInterfaceGET(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -77,6 +86,9 @@ func TestHandleInterfaceGET(t *testing.T) {
 
 // TestHandleInterfacePUT tests the current interface PUT endpoint.
 func TestHandleInterfacePUT(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -100,6 +112,9 @@ func TestHandleInterfacePUT(t *testing.T) {
 
 // TestHandleInterfacePUTInvalidJSON tests interface update with invalid JSON.
 func TestHandleInterfacePUTInvalidJSON(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -116,6 +131,9 @@ func TestHandleInterfacePUTInvalidJSON(t *testing.T) {
 
 // TestHandleInterfaceMethodNotAllowed tests non-GET/PUT methods.
 func TestHandleInterfaceMethodNotAllowed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -136,6 +154,9 @@ func TestHandleInterfaceMethodNotAllowed(t *testing.T) {
 
 // TestHandleLinkGET tests the link status endpoint.
 func TestHandleLinkGET(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -159,6 +180,9 @@ func TestHandleLinkGET(t *testing.T) {
 
 // TestHandleLinkGETWithInterface tests the link status endpoint with interface parameter.
 func TestHandleLinkGETWithInterface(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -176,6 +200,9 @@ func TestHandleLinkGETWithInterface(t *testing.T) {
 
 // TestHandleLinkMethodNotAllowed tests non-GET methods on link endpoint.
 func TestHandleLinkMethodNotAllowed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -196,6 +223,9 @@ func TestHandleLinkMethodNotAllowed(t *testing.T) {
 
 // TestHandleIPConfigGET tests the IP config endpoint.
 func TestHandleIPConfigGET(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -224,6 +254,9 @@ func TestHandleIPConfigGET(t *testing.T) {
 
 // TestHandleIPConfigMethodNotAllowed tests non-GET methods on IP config endpoint.
 func TestHandleIPConfigMethodNotAllowed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -244,6 +277,9 @@ func TestHandleIPConfigMethodNotAllowed(t *testing.T) {
 
 // TestHandleIPSettingsGET tests the IP settings endpoint.
 func TestHandleIPSettingsGET(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -269,6 +305,9 @@ func TestHandleIPSettingsGET(t *testing.T) {
 
 // TestHandleIPSettingsPUT tests the IP settings PUT endpoint with valid data.
 func TestHandleIPSettingsPUT(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []struct {
 		name           string
 		request        api.IPSettingsRequest
@@ -318,6 +357,9 @@ func TestHandleIPSettingsPUT(t *testing.T) {
 
 // TestHandleIPSettingsMethodNotAllowed tests non-GET/PUT methods.
 func TestHandleIPSettingsMethodNotAllowed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -338,6 +380,9 @@ func TestHandleIPSettingsMethodNotAllowed(t *testing.T) {
 
 // TestHandleSetMTU tests the MTU set endpoint.
 func TestHandleSetMTU(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []struct {
 		name           string
 		request        api.SetMTURequest
@@ -396,6 +441,9 @@ func TestHandleSetMTU(t *testing.T) {
 
 // TestHandleSetMTUMethodNotAllowed tests non-POST methods on MTU endpoint.
 func TestHandleSetMTUMethodNotAllowed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -416,6 +464,9 @@ func TestHandleSetMTUMethodNotAllowed(t *testing.T) {
 
 // TestHandleSetMTUInvalidJSON tests MTU endpoint with invalid JSON.
 func TestHandleSetMTUInvalidJSON(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 

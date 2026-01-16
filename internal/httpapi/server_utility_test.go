@@ -38,11 +38,13 @@ func TestIsAPIOrWSRoute(t *testing.T) {
 		path     string
 		expected bool
 	}{
-		{"/api/status", true},
-		{"/api/auth/login", true},
-		{"/api/settings", true},
+		{"/api/v1/status", true},     // APIVersionPrefix matches
+		{"/api/v1/auth/login", true}, // APIVersionPrefix matches
+		{"/api/v1/settings", true},   // APIVersionPrefix matches
+		{"/api/events", true},        // APIBasePath+"/events" for SSE
 		{"/ws", true},
 		{"/ws/", true},
+		{"/api/status", false}, // Doesn't match /api/v1
 		{"/websocket", false},
 		{"/dashboard", false},
 		{"/", false},

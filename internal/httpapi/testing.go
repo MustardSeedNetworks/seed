@@ -7,7 +7,6 @@ import (
 	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/dhcp"
-	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/network"
 	"github.com/krisarmstrong/seed/internal/roots/publicip"
@@ -79,13 +78,11 @@ func (s *Server) GetAuthenticatedHandler() http.Handler {
 
 // NewTestServerWithConfig creates a test server with a specific config.
 // This allows tests to customize the server configuration.
+// NOTE: Uses nil network manager to avoid slow hardware detection in tests.
 func NewTestServerWithConfig(cfg *config.Config) *Server {
-	// Create test network manager (minimal)
-	netMgr, err := network.NewManager(cfg.Interface.Default)
-	if err != nil {
-		// Use a nil manager for testing - handlers should handle this gracefully
-		netMgr = nil
-	}
+	// Skip network.NewManager() - it does slow hardware detection via networksetup.
+	// Most tests don't need a real network manager; handlers handle nil gracefully.
+	var netMgr *network.Manager // nil by default
 
 	// Create server with ServiceContainer (#888)
 	s := &Server{
@@ -114,9 +111,11 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	s.services.RateLimit.Login = NewRateLimiter(DefaultRateLimitConfig())
 	s.services.RateLimit.Endpoint = NewEndpointRateLimiter(DefaultEndpointRateLimitConfig())
 
-	s.services.Discovery.Device = discovery.NewDeviceDiscovery(cfg.Interface.Default)
-	s.services.Discovery.Service = discovery.NewService(cfg, cfg.Interface.Default, nil)
+	// Skip slow discovery initialization (OUI database loading, EventBus goroutines)
+	// Discovery.Device, Discovery.Service, Discovery.Engine are nil by default.
+	// Handlers check for nil and return appropriate errors.
 
+	// Initialize lightweight Sap services (no slow I/O)
 	s.services.Sap.DNS = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
 	s.services.Sap.DNSSecurity = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
 	s.services.Sap.DHCP = dhcp.NewMonitor(cfg.Interface.Default)
@@ -129,9 +128,6 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	s.services.Sap.PublicIP = publicip.NewChecker()
 
 	s.services.Canopy.WiFi = wifi.NewManager(cfg.Interface.Default)
-
-	// Initialize Discovery Engine for unified discovery
-	s.services.Discovery.Engine = discovery.NewEngine(nil)
 
 	// Initialize WebSocket hub
 	s.services.RealTime.WSHub = NewHub()

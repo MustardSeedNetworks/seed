@@ -42,6 +42,9 @@ func TestHandleDNSGET(t *testing.T) {
 // TestHandleDNSGETWithInterface tests the DNS endpoint with interface parameter.
 func TestHandleDNSGETWithInterface(t *testing.T) {
 	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	if testing.Short() {
 		t.Skip("skipping network test in short mode")
 	}
 
@@ -61,6 +64,9 @@ func TestHandleDNSGETWithInterface(t *testing.T) {
 
 // TestHandleDNSMethodNotAllowed tests non-GET methods on DNS endpoint.
 func TestHandleDNSMethodNotAllowed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -81,6 +87,9 @@ func TestHandleDNSMethodNotAllowed(t *testing.T) {
 
 // TestHandleDNSSecurityGET tests the DNS security GET endpoint.
 func TestHandleDNSSecurityGET(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -96,6 +105,9 @@ func TestHandleDNSSecurityGET(t *testing.T) {
 
 // TestHandleDNSSecurityPOST tests the DNS security POST endpoint.
 func TestHandleDNSSecurityPOST(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	if testing.Short() {
 		t.Skip("skipping network test in short mode")
 	}
@@ -123,6 +135,9 @@ func TestHandleDNSSecurityPOST(t *testing.T) {
 
 // TestHandleDNSSecurityPOSTNoServers tests DNS security POST with no servers.
 func TestHandleDNSSecurityPOSTNoServers(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -147,6 +162,9 @@ func TestHandleDNSSecurityPOSTNoServers(t *testing.T) {
 
 // TestHandleDNSSecurityPOSTInvalidJSON tests DNS security POST with invalid JSON.
 func TestHandleDNSSecurityPOSTInvalidJSON(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -163,6 +181,9 @@ func TestHandleDNSSecurityPOSTInvalidJSON(t *testing.T) {
 
 // TestHandleDNSSecurityMethodNotAllowed tests non-GET/POST methods.
 func TestHandleDNSSecurityMethodNotAllowed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -183,6 +204,9 @@ func TestHandleDNSSecurityMethodNotAllowed(t *testing.T) {
 
 // TestHandleDNSSecuritySettingsGET tests DNS security settings GET endpoint.
 func TestHandleDNSSecuritySettingsGET(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -203,6 +227,9 @@ func TestHandleDNSSecuritySettingsGET(t *testing.T) {
 
 // TestHandleDNSSecuritySettingsPUT tests DNS security settings PUT endpoint.
 func TestHandleDNSSecuritySettingsPUT(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
@@ -234,6 +261,9 @@ func TestHandleDNSSecuritySettingsPUT(t *testing.T) {
 
 // TestHandleDNSSecuritySettingsMethodNotAllowed tests non-GET/PUT methods.
 func TestHandleDNSSecuritySettingsMethodNotAllowed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	server := api.NewTestServer()
 	defer server.Close()
 
