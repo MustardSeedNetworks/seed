@@ -178,6 +178,8 @@ export function useFetch<T>(options: UseFetchOptions<T>): UseFetchResult<T> {
           case "DELETE":
             response = await api.delete<unknown>(url, headers ? { headers } : undefined);
             break;
+          default:
+            throw new Error(`Unsupported HTTP method: ${method}`);
         }
 
         // Apply transform if provided, otherwise cast directly
@@ -228,10 +230,10 @@ export function useFetch<T>(options: UseFetchOptions<T>): UseFetchResult<T> {
     isMountedRef.current = true;
 
     if (autoFetch) {
-      executeFetch();
+      executeFetch().catch(() => undefined);
     }
 
-    return () => {
+    return (): void => {
       isMountedRef.current = false;
     };
   }, [autoFetch, executeFetch]);

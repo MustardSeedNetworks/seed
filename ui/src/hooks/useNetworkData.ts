@@ -138,7 +138,15 @@ interface UseNetworkDataOptions {
  * @param options - Configuration options
  * @returns Network data state and control functions
  */
-export function useNetworkData(options: UseNetworkDataOptions = {}) {
+export function useNetworkData(options: UseNetworkDataOptions = {}): {
+  networkData: NetworkData;
+  isLoading: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+  updateLinkStatus: (data: LinkStatus) => void;
+  runDnsTest: () => Promise<DnsTestResult | null>;
+  runGatewayPing: () => Promise<GatewayStatus | null>;
+} {
   const { refreshInterval = 30000, autoRefresh = true } = options;
 
   const [networkData, setNetworkData] = useState<NetworkData>({
@@ -288,13 +296,17 @@ export function useNetworkData(options: UseNetworkDataOptions = {}) {
     let isMounted = true;
 
     if (autoRefresh && refreshInterval > 0) {
-      refresh().finally(() => {
-        if (isMounted) {
-          intervalRef.current = setInterval(refresh, refreshInterval);
-        }
-      });
+      refresh()
+        .finally(() => {
+          if (isMounted) {
+            intervalRef.current = setInterval(() => {
+              refresh().catch(() => undefined);
+            }, refreshInterval);
+          }
+        })
+        .catch(() => undefined);
 
-      return () => {
+      return (): void => {
         isMounted = false;
         if (intervalRef.current) {
           clearInterval(intervalRef.current);

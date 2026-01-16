@@ -223,9 +223,7 @@ test.describe("Settings CRUD Operations", () => {
     expect(updatedValue).toBe(newValue);
 
     // Settings should be persisted to localStorage
-    const localStorage = await page.evaluate(() => {
-      return window.localStorage.getItem("seed-settings");
-    });
+    const localStorage = await page.evaluate(() => window.localStorage.getItem("seed-settings"));
     expect(localStorage).toBeTruthy();
 
     // Restore original value
@@ -392,9 +390,7 @@ test.describe("Settings CRUD Operations", () => {
 
   test("should persist settings after page reload", async ({ page }) => {
     // Get current localStorage settings
-    const beforeSettings = await page.evaluate(() => {
-      return window.localStorage.getItem("seed-settings");
-    });
+    const beforeSettings = await page.evaluate(() => window.localStorage.getItem("seed-settings"));
 
     // Make a change
     const checkboxes = page.locator('input[type="checkbox"]');
@@ -408,9 +404,7 @@ test.describe("Settings CRUD Operations", () => {
       await page.waitForTimeout(1000);
 
       // Get settings after change
-      const afterSettings = await page.evaluate(() => {
-        return window.localStorage.getItem("seed-settings");
-      });
+      const afterSettings = await page.evaluate(() => window.localStorage.getItem("seed-settings"));
 
       // Settings should have changed
       expect(afterSettings).not.toBe(beforeSettings);
@@ -431,9 +425,9 @@ test.describe("Settings CRUD Operations", () => {
       await page.waitForTimeout(1000);
 
       // Get settings after reload
-      const reloadedSettings = await page.evaluate(() => {
-        return window.localStorage.getItem("seed-settings");
-      });
+      const reloadedSettings = await page.evaluate(() =>
+        window.localStorage.getItem("seed-settings"),
+      );
 
       // Settings should persist
       expect(reloadedSettings).toBe(afterSettings);
@@ -499,9 +493,7 @@ test.describe("Settings CRUD Operations", () => {
       await page.waitForTimeout(1000);
 
       // Settings should be reset (verify via localStorage or UI state)
-      const settings = await page.evaluate(() => {
-        return window.localStorage.getItem("seed-settings");
-      });
+      const settings = await page.evaluate(() => window.localStorage.getItem("seed-settings"));
 
       expect(settings).toBeTruthy();
     }

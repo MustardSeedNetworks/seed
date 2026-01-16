@@ -295,13 +295,6 @@ func assertSurveyCreateResult(t *testing.T, tc surveyCreateTestCase, result *can
 }
 
 func TestSurveyServiceCreate(t *testing.T) {
-	// Create a temp directory for survey storage
-	tempDir, err := os.MkdirTemp("", "canopy-test-*")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
-
 	cfg := config.DefaultConfig()
 	wifiScanner := wifi.NewScanner("en0")
 	wifiManager := wifi.NewManager("en0")
@@ -336,12 +329,6 @@ func TestSurveyServiceCreate(t *testing.T) {
 }
 
 func TestSurveyServiceGet(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "canopy-test-*")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
-
 	cfg := config.DefaultConfig()
 	wifiScanner := wifi.NewScanner("en0")
 	wifiManager := wifi.NewManager("en0")
@@ -389,12 +376,6 @@ func TestSurveyServiceGet(t *testing.T) {
 }
 
 func TestSurveyServiceList(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "canopy-test-*")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
-
 	cfg := config.DefaultConfig()
 	wifiScanner := wifi.NewScanner("en0")
 	wifiManager := wifi.NewManager("en0")
@@ -423,12 +404,6 @@ func TestSurveyServiceList(t *testing.T) {
 }
 
 func TestSurveyServiceAddPoint(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "canopy-test-*")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
-
 	cfg := config.DefaultConfig()
 	wifiScanner := wifi.NewScanner("en0")
 	wifiManager := wifi.NewManager("en0")
@@ -1272,12 +1247,6 @@ func TestWiFiServiceScanWithCachedNetworks(t *testing.T) {
 }
 
 func TestSurveyServiceStartAndStop(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "canopy-test-*")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
-
 	cfg := config.DefaultConfig()
 	wifiScanner := wifi.NewScanner("en0")
 	wifiManager := wifi.NewManager("en0")
@@ -1318,12 +1287,6 @@ func TestSurveyServiceStartAndStop(t *testing.T) {
 }
 
 func TestSurveyServiceDeleteAndExport(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "canopy-test-*")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
-
 	cfg := config.DefaultConfig()
 	wifiScanner := wifi.NewScanner("en0")
 	wifiManager := wifi.NewManager("en0")
@@ -1588,11 +1551,7 @@ func TestCoverageAnalysisStructure(t *testing.T) {
 
 func TestModuleIntegration(t *testing.T) {
 	// Create temp directory for survey storage
-	tempDir, err := os.MkdirTemp("", "canopy-integration-*")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
+	tempDir := t.TempDir()
 
 	// Ensure the survey storage directory exists
 	surveyPath := filepath.Join(tempDir, "surveys")

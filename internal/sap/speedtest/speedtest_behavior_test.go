@@ -278,6 +278,7 @@ func TestConstantsBehavior(t *testing.T) {
 
 // TestConcurrencyBehavior documents thread-safety behavior.
 func TestConcurrencyBehavior(t *testing.T) {
+	t.Parallel()
 	t.Run("concurrent status reads are safe", func(t *testing.T) {
 		t.Parallel()
 

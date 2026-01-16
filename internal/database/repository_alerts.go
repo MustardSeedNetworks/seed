@@ -77,7 +77,7 @@ func (r *AlertRepository) List(ctx context.Context, opts AlertListOptions) ([]*A
 	}
 
 	if opts.DeviceID != "" {
-		query += " AND device_id = ?"
+		query += sqlAndDeviceID
 		args = append(args, opts.DeviceID)
 	}
 
@@ -187,7 +187,7 @@ func (r *AlertRepository) AcknowledgeAll(
 	}
 
 	if opts.DeviceID != "" {
-		query += " AND device_id = ?"
+		query += sqlAndDeviceID
 		args = append(args, opts.DeviceID)
 	}
 

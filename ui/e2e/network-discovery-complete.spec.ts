@@ -19,7 +19,7 @@ import { expect, type Page, test } from "@playwright/test";
 /**
  * Helper function to login and navigate to dashboard
  */
-async function loginAndNavigate(page: Page) {
+async function loginAndNavigate(page: Page): Promise<void> {
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
@@ -38,7 +38,7 @@ async function loginAndNavigate(page: Page) {
 /**
  * Mock network discovery API responses
  */
-async function mockDiscoveryApis(page: Page) {
+async function mockDiscoveryApis(page: Page): Promise<void> {
   // Mock initial status - no scan running
   await page.route("**/api/devices/status", async (route) => {
     await route.fulfill({

@@ -28,7 +28,7 @@
  */
 
 // API base URL - can be overridden via VITE_API_BASE environment variable
-const API_BASE = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || "";
 
 /** Callback function invoked when session expires (401 response after refresh attempt) */
 type SessionExpiredCallback = () => void;
@@ -65,12 +65,14 @@ export function setSessionExpiredCallback(callback: SessionExpiredCallback | nul
  */
 async function refreshAccessToken(): Promise<boolean> {
   // If refresh is already in progress, wait for it to complete
-  if (refreshPromise) {
-    return refreshPromise;
+  const existingPromise: Promise<boolean> | null = refreshPromise;
+  // biome-ignore lint/nursery/noMisusedPromises: checking if promise exists, not its resolved value
+  if (existingPromise) {
+    return existingPromise;
   }
 
   // Start new refresh attempt
-  refreshPromise = (async () => {
+  const newPromise: Promise<boolean> = (async (): Promise<boolean> => {
     try {
       const response = await fetch(`${API_BASE}/api/auth/refresh`, {
         method: "POST",
@@ -81,9 +83,10 @@ async function refreshAccessToken(): Promise<boolean> {
       return false;
     }
   })();
+  refreshPromise = newPromise;
 
   // Clear the promise when done (success or failure)
-  const result = await refreshPromise;
+  const result: boolean = await newPromise;
   refreshPromise = null;
   return result;
 }
@@ -102,7 +105,7 @@ async function fetchCsrfToken(): Promise<string | null> {
       credentials: "include", // Send auth cookies
     });
     if (response.ok) {
-      const data = (await response.json()) as { token: string };
+      const data: { token: string } = await (response.json() as Promise<{ token: string }>);
       csrfToken = data.token;
       return csrfToken;
     }
@@ -116,9 +119,9 @@ async function fetchCsrfToken(): Promise<string | null> {
  * Gets the current CSRF token, fetching if needed.
  * Returns null if user is not authenticated.
  */
-async function getCsrfToken(): Promise<string | null> {
+function getCsrfToken(): Promise<string | null> {
   if (csrfToken) {
-    return csrfToken;
+    return Promise.resolve(csrfToken);
   }
   return fetchCsrfToken();
 }
@@ -189,8 +192,8 @@ export const api = {
    * const status = await api.get<NetworkStatus>('/api/network/status');
    */
   async get<T>(endpoint: string, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint = endpoint.includes("/api/v1/auth/");
-    const makeRequest = () =>
+    const isAuthEndpoint: boolean = endpoint.includes("/api/v1/auth/");
+    const makeRequest = (): Promise<Response> =>
       fetch(`${API_BASE}${endpoint}`, {
         ...init,
         method: "GET",
@@ -213,12 +216,12 @@ export const api = {
    * const result = await api.post<Result>('/api/network/scan', { subnet: '192.168.1.0/24' });
    */
   async post<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint = endpoint.includes("/api/v1/auth/");
+    const isAuthEndpoint: boolean = endpoint.includes("/api/v1/auth/");
     // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token = isAuthEndpoint ? null : await getCsrfToken();
+    const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
 
-    const makeRequest = () => {
-      const headers = new Headers({ "Content-Type": "application/json" });
+    const makeRequest = (): Promise<Response> => {
+      const headers: Headers = new Headers({ "Content-Type": "application/json" });
       if (token) {
         headers.set(CSRF_HEADER_NAME, token);
       }
@@ -250,12 +253,12 @@ export const api = {
    * await api.put('/api/settings', { theme: 'dark' });
    */
   async put<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint = endpoint.includes("/api/v1/auth/");
+    const isAuthEndpoint: boolean = endpoint.includes("/api/v1/auth/");
     // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token = isAuthEndpoint ? null : await getCsrfToken();
+    const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
 
-    const makeRequest = () => {
-      const headers = new Headers({ "Content-Type": "application/json" });
+    const makeRequest = (): Promise<Response> => {
+      const headers: Headers = new Headers({ "Content-Type": "application/json" });
       if (token) {
         headers.set(CSRF_HEADER_NAME, token);
       }
@@ -287,12 +290,12 @@ export const api = {
    * await api.patch('/api/settings', { theme: 'dark' });
    */
   async patch<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint = endpoint.includes("/api/v1/auth/");
+    const isAuthEndpoint: boolean = endpoint.includes("/api/v1/auth/");
     // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token = isAuthEndpoint ? null : await getCsrfToken();
+    const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
 
-    const makeRequest = () => {
-      const headers = new Headers({ "Content-Type": "application/json" });
+    const makeRequest = (): Promise<Response> => {
+      const headers: Headers = new Headers({ "Content-Type": "application/json" });
       if (token) {
         headers.set(CSRF_HEADER_NAME, token);
       }
@@ -323,12 +326,12 @@ export const api = {
    * await api.delete('/api/devices/12345');
    */
   async delete<T>(endpoint: string, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint = endpoint.includes("/api/v1/auth/");
+    const isAuthEndpoint: boolean = endpoint.includes("/api/v1/auth/");
     // Get CSRF token for non-auth endpoints (state-changing requests)
-    const token = isAuthEndpoint ? null : await getCsrfToken();
+    const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
 
-    const makeRequest = () => {
-      const headers = new Headers(init?.headers);
+    const makeRequest = (): Promise<Response> => {
+      const headers: Headers = new Headers(init?.headers);
       if (token) {
         headers.set(CSRF_HEADER_NAME, token);
       }
@@ -353,7 +356,7 @@ export const api = {
    * @param init - Optional fetch configuration
    * @returns Promise resolving to Fetch API Response object
    */
-  async fetch(endpoint: string, init?: RequestInit): Promise<Response> {
+  fetch(endpoint: string, init?: RequestInit): Promise<Response> {
     return fetch(`${API_BASE}${endpoint}`, {
       ...init,
       credentials: "include", // Send httpOnly cookies

@@ -4,11 +4,11 @@
  * Manages state for the initial setup wizard flow including
  * setup status, suggested password, and setup token.
  *
- * Extracted from app.tsx to reduce component complexity (#889).
+ * Extracted from App.tsx to reduce component complexity (#889).
  */
 
 import { useEffect, useState } from "react";
-import { checkSetupStatus } from "../components/setup/setupApi";
+import { checkSetupStatus } from "../components/setup/setup-api";
 
 interface UseSetupStateReturn {
   /** Whether the system needs initial setup (null = loading) */
@@ -37,23 +37,25 @@ export function useSetupState(): UseSetupStateReturn {
 
   // Check if setup is needed on mount
   useEffect(() => {
-    checkSetupStatus().then((status) => {
-      setNeedsSetup(status.needsSetup);
-      if (status.suggestedPassword) {
-        setSuggestedPassword(status.suggestedPassword);
-      }
-      if (status.username) {
-        setSetupUsername(status.username);
-      }
-      // Security fix #724, #758: Capture setup token for setup completion
-      if (status.setupToken) {
-        setSetupToken(status.setupToken);
-      }
-    });
+    checkSetupStatus()
+      .then((status) => {
+        setNeedsSetup(status.needsSetup);
+        if (status.suggestedPassword) {
+          setSuggestedPassword(status.suggestedPassword);
+        }
+        if (status.username) {
+          setSetupUsername(status.username);
+        }
+        // Security fix #724, #758: Capture setup token for setup completion
+        if (status.setupToken) {
+          setSetupToken(status.setupToken);
+        }
+      })
+      .catch(() => undefined);
   }, []);
 
   // Mark setup as complete
-  const completeSetup = () => {
+  const completeSetup = (): void => {
     setNeedsSetup(false);
     setSuggestedPassword(undefined);
     setSetupToken(undefined);

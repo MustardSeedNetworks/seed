@@ -16,6 +16,16 @@ import (
 	"time"
 )
 
+// Registry configuration defaults.
+const (
+	// registryDeviceTTLHours is the default device TTL in hours.
+	registryDeviceTTLHours = 24
+	// registryExpireIntervalMinutes is the default expire check interval in minutes.
+	registryExpireIntervalMinutes = 5
+	// multiConnectionThreshold is the minimum number of connection types for multi-connected.
+	multiConnectionThreshold = 2
+)
+
 // DeviceRegistry stores and manages all discovered devices.
 // It serves as the single source of truth for the discovery system.
 type DeviceRegistry struct {
@@ -60,11 +70,11 @@ type RegistryConfig struct {
 // DefaultRegistryConfig returns sensible defaults.
 func DefaultRegistryConfig() *RegistryConfig {
 	return &RegistryConfig{
-		DeviceTTL:      24 * time.Hour,
+		DeviceTTL:      registryDeviceTTLHours * time.Hour,
 		EmitEvents:     true,
 		MaxDevices:     0, // unlimited
 		AutoExpire:     false,
-		ExpireInterval: 5 * time.Minute,
+		ExpireInterval: registryExpireIntervalMinutes * time.Minute,
 	}
 }
 
@@ -153,14 +163,61 @@ func (r *DeviceRegistry) AddOrUpdate(device *DiscoveredDevice) (*DiscoveredDevic
 	return device, true
 }
 
-// mergeDevice merges new data into an existing device.
-// Returns a map of field names to their new values (for event changes).
-func (r *DeviceRegistry) mergeDevice(existing, incoming *DiscoveredDevice) map[string]any {
-	changes := make(map[string]any)
+// mergeWiFiPresence merges incoming WiFi presence data into existing device.
+func mergeWiFiPresence(existing, incoming *DiscoveredDevice, changes map[string]any) {
+	if incoming.WiFiPresence == nil {
+		return
+	}
+	if existing.WiFiPresence == nil {
+		existing.WiFiPresence = incoming.WiFiPresence
+		changes["wifiPresence"] = existing.WiFiPresence
+		return
+	}
+	if incoming.WiFiPresence.SSID != "" {
+		existing.WiFiPresence.SSID = incoming.WiFiPresence.SSID
+	}
+	if incoming.WiFiPresence.SignalDBm != 0 {
+		existing.WiFiPresence.SignalDBm = incoming.WiFiPresence.SignalDBm
+	}
+	existing.WiFiPresence.LastSeen = incoming.WiFiPresence.LastSeen
+	changes["wifiPresence"] = existing.WiFiPresence
+}
 
+// mergeBluetoothPresence merges incoming Bluetooth presence data into existing device.
+func mergeBluetoothPresence(existing, incoming *DiscoveredDevice, changes map[string]any) {
+	if incoming.BluetoothPresence == nil {
+		return
+	}
+	if existing.BluetoothPresence == nil {
+		existing.BluetoothPresence = incoming.BluetoothPresence
+		changes["bluetoothPresence"] = existing.BluetoothPresence
+		return
+	}
+	if incoming.BluetoothPresence.Name != "" {
+		existing.BluetoothPresence.Name = incoming.BluetoothPresence.Name
+	}
+	if incoming.BluetoothPresence.RSSI != 0 {
+		existing.BluetoothPresence.RSSI = incoming.BluetoothPresence.RSSI
+	}
+	existing.BluetoothPresence.LastSeen = incoming.BluetoothPresence.LastSeen
+	changes["bluetoothPresence"] = existing.BluetoothPresence
+}
+
+// mergeStringField updates a string field if incoming has a non-empty different value.
+func mergeStringField(existing, incoming *string, key string, changes map[string]any) {
+	if *incoming != "" && *incoming != *existing {
+		*existing = *incoming
+		changes[key] = *incoming
+	}
+}
+
+// mergeNetworkIdentifiers merges IP, hostname, and name fields.
+func (r *DeviceRegistry) mergeNetworkIdentifiers(
+	existing, incoming *DiscoveredDevice,
+	changes map[string]any,
+) {
 	// Update IP if new one provided
 	if incoming.IP != "" && incoming.IP != existing.IP {
-		// Remove old IP from index
 		if existing.IP != "" {
 			delete(r.byIP, existing.IP)
 		}
@@ -168,7 +225,7 @@ func (r *DeviceRegistry) mergeDevice(existing, incoming *DiscoveredDevice) map[s
 		existing.IP = incoming.IP
 	}
 
-	// Add IPv6 addresses (don't replace, merge)
+	// Add IPv6 addresses (merge, don't replace)
 	for _, addr := range incoming.IPv6Addresses {
 		if !containsIPv6(existing.IPv6Addresses, addr) {
 			existing.IPv6Addresses = append(existing.IPv6Addresses, addr)
@@ -176,37 +233,24 @@ func (r *DeviceRegistry) mergeDevice(existing, incoming *DiscoveredDevice) map[s
 		}
 	}
 
-	// Update hostname if provided
-	if incoming.Hostname != "" && incoming.Hostname != existing.Hostname {
-		changes["hostname"] = incoming.Hostname
-		existing.Hostname = incoming.Hostname
-	}
+	mergeStringField(&existing.Hostname, &incoming.Hostname, "hostname", changes)
+	mergeStringField(&existing.NetBIOSName, &incoming.NetBIOSName, "netbiosName", changes)
+	mergeStringField(&existing.MDNSName, &incoming.MDNSName, "mdnsName", changes)
+}
 
-	// Update NetBIOS name if provided
-	if incoming.NetBIOSName != "" && incoming.NetBIOSName != existing.NetBIOSName {
-		changes["netbiosName"] = incoming.NetBIOSName
-		existing.NetBIOSName = incoming.NetBIOSName
-	}
-
-	// Update mDNS name if provided
-	if incoming.MDNSName != "" && incoming.MDNSName != existing.MDNSName {
-		changes["mdnsName"] = incoming.MDNSName
-		existing.MDNSName = incoming.MDNSName
-	}
-
+// mergeDeviceMetadata merges vendor, OS, and discovery information.
+func (r *DeviceRegistry) mergeDeviceMetadata(
+	existing, incoming *DiscoveredDevice,
+	changes map[string]any,
+) {
 	// Update vendor if provided
 	if incoming.Vendor != "" && incoming.Vendor != existing.Vendor {
-		// Remove from old vendor index
 		r.removeFromVendorIndex(existing)
 		changes["vendor"] = incoming.Vendor
 		existing.Vendor = incoming.Vendor
 	}
 
-	// Update OS guess if provided
-	if incoming.OSGuess != "" && incoming.OSGuess != existing.OSGuess {
-		changes["osGuess"] = incoming.OSGuess
-		existing.OSGuess = incoming.OSGuess
-	}
+	mergeStringField(&existing.OSGuess, &incoming.OSGuess, "osGuess", changes)
 
 	// Merge discovery methods
 	for _, method := range incoming.DiscoveryMethod {
@@ -225,101 +269,60 @@ func (r *DeviceRegistry) mergeDevice(existing, incoming *DiscoveredDevice) map[s
 	}
 	if len(existing.ConnectionTypes) != oldConnCount {
 		changes["connectionTypes"] = existing.ConnectionTypes
-		// Update multi-connected stats
-		if len(existing.ConnectionTypes) >= 2 && oldConnCount < 2 {
+		if len(existing.ConnectionTypes) >= multiConnectionThreshold && oldConnCount < multiConnectionThreshold {
 			r.stats.MultiConnected++
 		}
 	}
+}
 
-	// Update WiFi presence
-	if incoming.WiFiPresence != nil {
-		if existing.WiFiPresence == nil {
-			existing.WiFiPresence = incoming.WiFiPresence
-			changes["wifiPresence"] = existing.WiFiPresence
-		} else {
-			// Merge WiFi data
-			if incoming.WiFiPresence.SSID != "" {
-				existing.WiFiPresence.SSID = incoming.WiFiPresence.SSID
-			}
-			if incoming.WiFiPresence.SignalDBm != 0 {
-				existing.WiFiPresence.SignalDBm = incoming.WiFiPresence.SignalDBm
-			}
-			existing.WiFiPresence.LastSeen = incoming.WiFiPresence.LastSeen
-			changes["wifiPresence"] = existing.WiFiPresence
-		}
-	}
-
-	// Update Bluetooth presence
-	if incoming.BluetoothPresence != nil {
-		if existing.BluetoothPresence == nil {
-			existing.BluetoothPresence = incoming.BluetoothPresence
-			changes["bluetoothPresence"] = existing.BluetoothPresence
-		} else {
-			// Merge Bluetooth data
-			if incoming.BluetoothPresence.Name != "" {
-				existing.BluetoothPresence.Name = incoming.BluetoothPresence.Name
-			}
-			if incoming.BluetoothPresence.RSSI != 0 {
-				existing.BluetoothPresence.RSSI = incoming.BluetoothPresence.RSSI
-			}
-			existing.BluetoothPresence.LastSeen = incoming.BluetoothPresence.LastSeen
-			changes["bluetoothPresence"] = existing.BluetoothPresence
-		}
-	}
-
-	// Update LLDP info
+// mergeProtocolInfo merges LLDP, CDP, EDP, NDP, profile, and SNMP data.
+func mergeProtocolInfo(existing, incoming *DiscoveredDevice, changes map[string]any) {
 	if incoming.LLDPInfo != nil {
 		existing.LLDPInfo = incoming.LLDPInfo
 		changes["lldpInfo"] = existing.LLDPInfo
 	}
-
-	// Update CDP info
 	if incoming.CDPInfo != nil {
 		existing.CDPInfo = incoming.CDPInfo
 		changes["cdpInfo"] = existing.CDPInfo
 	}
-
-	// Update EDP info
 	if incoming.EDPInfo != nil {
 		existing.EDPInfo = incoming.EDPInfo
 		changes["edpInfo"] = existing.EDPInfo
 	}
-
-	// Update NDP info
 	if incoming.NDPInfo != nil {
 		existing.NDPInfo = incoming.NDPInfo
 		changes["ndpInfo"] = existing.NDPInfo
 	}
-
-	// Update profile if provided
 	if incoming.Profile != nil {
 		existing.Profile = incoming.Profile
 		changes["profile"] = existing.Profile
 	}
-
-	// Update SNMP data
 	if incoming.SNMPData != nil {
 		existing.SNMPData = incoming.SNMPData
 		changes["snmpData"] = existing.SNMPData
 	}
+}
 
-	// Update vulnerabilities
-	if incoming.Vulnerabilities != nil {
-		if existing.Vulnerabilities == nil {
-			existing.Vulnerabilities = incoming.Vulnerabilities
-			changes["vulnerabilities"] = existing.Vulnerabilities
-		} else {
-			// Merge vulnerability lists
-			for _, vuln := range incoming.Vulnerabilities.Vulnerabilities {
-				if !containsVuln(existing.Vulnerabilities.Vulnerabilities, vuln) {
-					existing.Vulnerabilities.Vulnerabilities = append(existing.Vulnerabilities.Vulnerabilities, vuln)
-				}
-			}
-			changes["vulnerabilities"] = existing.Vulnerabilities
+// mergeVulnerabilities merges vulnerability data.
+func mergeVulnerabilities(existing, incoming *DiscoveredDevice, changes map[string]any) {
+	if incoming.Vulnerabilities == nil {
+		return
+	}
+	if existing.Vulnerabilities == nil {
+		existing.Vulnerabilities = incoming.Vulnerabilities
+		changes["vulnerabilities"] = existing.Vulnerabilities
+		return
+	}
+	for _, vuln := range incoming.Vulnerabilities.Vulnerabilities {
+		if !containsVuln(existing.Vulnerabilities.Vulnerabilities, vuln) {
+			existing.Vulnerabilities.Vulnerabilities = append(existing.Vulnerabilities.Vulnerabilities, vuln)
 		}
 	}
+	changes["vulnerabilities"] = existing.Vulnerabilities
+}
 
-	// Update flags
+// mergeDeviceFlags merges boolean flags.
+func mergeDeviceFlags(existing, incoming *DiscoveredDevice, changes map[string]any) {
 	if incoming.IsLocal {
 		existing.IsLocal = true
 	}
@@ -331,6 +334,20 @@ func (r *DeviceRegistry) mergeDevice(existing, incoming *DiscoveredDevice) map[s
 		trueVal := true
 		existing.WoLCapable = &trueVal
 	}
+}
+
+// mergeDevice merges new data into an existing device.
+// Returns a map of field names to their new values (for event changes).
+func (r *DeviceRegistry) mergeDevice(existing, incoming *DiscoveredDevice) map[string]any {
+	changes := make(map[string]any)
+
+	r.mergeNetworkIdentifiers(existing, incoming, changes)
+	r.mergeDeviceMetadata(existing, incoming, changes)
+	mergeWiFiPresence(existing, incoming, changes)
+	mergeBluetoothPresence(existing, incoming, changes)
+	mergeProtocolInfo(existing, incoming, changes)
+	mergeVulnerabilities(existing, incoming, changes)
+	mergeDeviceFlags(existing, incoming, changes)
 
 	return changes
 }
@@ -400,7 +417,7 @@ func (r *DeviceRegistry) GetMultiConnectedDevices() []*DiscoveredDevice {
 
 	var result []*DiscoveredDevice
 	for _, device := range r.devices {
-		if len(device.ConnectionTypes) >= 2 {
+		if len(device.ConnectionTypes) >= multiConnectionThreshold {
 			result = append(result, device)
 		}
 	}
@@ -576,7 +593,7 @@ func (r *DeviceRegistry) updateConnectionStats(device *DiscoveredDevice, adding 
 		}
 	}
 
-	if len(device.ConnectionTypes) >= 2 {
+	if len(device.ConnectionTypes) >= multiConnectionThreshold {
 		r.stats.MultiConnected += delta
 	}
 }

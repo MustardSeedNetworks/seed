@@ -13,7 +13,7 @@ const (
 	defaultBroadcasterBufferSize = 1000
 )
 
-// StreamingHandler wraps an slog.Handler and broadcasts log entries to connected clients.
+// StreamingHandler wraps an [slog.Handler] and broadcasts log entries to connected clients.
 // It extracts context values (request_id, layer, component) and creates LogEntry objects
 // for real-time streaming to the frontend log viewer.
 type StreamingHandler struct {
@@ -172,7 +172,7 @@ func (h *StreamingHandler) addAttrToEntry(entry *LogEntry, attr slog.Attr) {
 	}
 }
 
-// levelToString converts slog.Level to a string.
+// levelToString converts [slog.Level] to a string.
 func levelToString(level slog.Level) string {
 	switch {
 	case level >= slog.LevelError:

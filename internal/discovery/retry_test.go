@@ -131,7 +131,7 @@ func TestRetryWithBackoff_SuccessAfterRetries(t *testing.T) {
 	}
 }
 
-func TestRetryWithBackoff_AllRetrysFail(t *testing.T) {
+func TestRetryWithBackoff_AllRetriesFail(t *testing.T) {
 	ctx := context.Background()
 	cfg := discovery.RetryConfig{
 		MaxRetries:   2,

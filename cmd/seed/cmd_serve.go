@@ -130,7 +130,7 @@ func initializeModules(cfg *config.Config, db *database.DB) *api.Modules {
 }
 
 // checkICMPCapabilities checks for ICMP privileges and returns availability status.
-// Note: Called before logging is initialized, so uses fmt.Fprintf.
+// Note: Called before logging is initialized, so uses [fmt.Fprintf].
 func checkICMPCapabilities() bool {
 	if err := discovery.CheckICMPPrivilegesWithMessage(); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: ICMP features disabled - %v\n", err)
@@ -201,7 +201,7 @@ func setupLogging(cfg *config.Config) string {
 }
 
 // loadAndConfigureConfig loads configuration and applies necessary modifications.
-// Note: Called before logging is initialized, so uses fmt.Fprintf for errors.
+// Note: Called before logging is initialized, so uses [fmt.Fprintf] for errors.
 func loadAndConfigureConfig(configPath string, devMode bool) *config.Config {
 	cfg, _, err := config.EnsureConfig(configPath, auth.IsDefaultPasswordHash)
 	if err != nil && !errors.Is(err, config.ErrInsecureCredentials) {
@@ -239,7 +239,7 @@ func loadAndConfigureConfig(configPath string, devMode bool) *config.Config {
 }
 
 // ensureJWTSecret generates and persists a JWT secret if not present.
-// Note: Called before logging is initialized, so uses fmt.Fprintf.
+// Note: Called before logging is initialized, so uses [fmt.Fprintf].
 func ensureJWTSecret(cfg *config.Config, configPath string) {
 	if cfg.Auth.JWTSecret != "" {
 		return
@@ -253,7 +253,7 @@ func ensureJWTSecret(cfg *config.Config, configPath string) {
 }
 
 // migrateSNMPCredentials encrypts plaintext SNMP credentials.
-// Note: Called before logging is initialized, so uses fmt.Fprintf.
+// Note: Called before logging is initialized, so uses [fmt.Fprintf].
 // Security fix #884: Warn if JWT secret is missing (should never happen after ensureJWTSecret).
 func migrateSNMPCredentials(cfg *config.Config, configPath string) {
 	if len(cfg.SNMP.V3Credentials) == 0 {

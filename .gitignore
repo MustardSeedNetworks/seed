@@ -1,4 +1,11 @@
-# Binaries
+# ╔═══════════════════════════════════════════════════════════════════════════╗
+# ║ Seed - .gitignore                                                         ║
+# ╠═══════════════════════════════════════════════════════════════════════════╣
+# ║ Network testing and automation platform                                   ║
+# ║ Stack: Go (backend), TypeScript/React (UI), Storybook                    ║
+# ╚═══════════════════════════════════════════════════════════════════════════╝
+
+# ─── Go Binaries ─────────────────────────────────────────────────────────────
 /seed
 /seed-*
 *.exe
@@ -6,37 +13,55 @@
 *.dll
 *.so
 *.dylib
+
+# ─── Build Directories ───────────────────────────────────────────────────────
 /dist/
 /bin/
+/build/
 
-# Test binary
+# ─── Go Testing & Coverage ───────────────────────────────────────────────────
 *.test
-
-# Output of go coverage
 *.out
 coverage.html
 coverage.txt
 
-# Go workspace
+# ─── Go Workspace & Dependencies ─────────────────────────────────────────────
 go.work
 go.work.sum
-
-# Dependency directories
 vendor/
 
-# IDE
-.idea/
-.vscode/
-.claude/settings.local.json
-*.swp
-*.swo
-*~
+# Go build caches
+.gocache/
+.gomodcache/
+.golangci-cache/
 
-# OS
-.DS_Store
-Thumbs.db
+# ─── Frontend (UI) ───────────────────────────────────────────────────────────
+# Dependencies
+ui/node_modules/
+node_modules/
 
-# Environment
+# Build outputs
+ui/dist/
+ui/.vite/
+ui/coverage/
+
+# Storybook
+*storybook.log
+storybook-static/
+
+# Playwright test results
+ui/playwright-report/
+ui/test-results/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+*.log
+
+# ─── Environment & Secrets ───────────────────────────────────────────────────
 .env
 .env.local
 .env.*.local
@@ -44,72 +69,60 @@ Thumbs.db
 *.key
 *.crt
 
-# Frontend
-ui/node_modules/
-ui/dist/
-ui/.vite/
-ui/coverage/
-*.log
-npm-debug.log*
-
-# Build artifacts
-*.tar.gz
-*.zip
-/build/
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Config overrides (keep defaults)
-configs/*.local.yaml
-configs/*.local.json
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-.tmp_*
-
-# Certificates (generated)
+# Certificates (generated at runtime)
 certs/
 !certs/.gitkeep
 ui/certs/
 
-# Local files
-*.png
+# ─── Configuration Overrides ─────────────────────────────────────────────────
+# Local config overrides (defaults should be tracked)
+configs/*.local.yaml
+configs/*.local.json
 config.yaml
-CLAUDE.md
 
-*storybook.log
-storybook-static
+# ─── Database & Runtime Data ─────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
 
-# Playwright reports
-ui/playwright-report/
-ui/test-results/
-
-# TypeScript build info
-*.tsbuildinfo
-
-# Root dependencies
-node_modules/
-
-# Logs
-logs/
-
-# Data (auto-generated/downloaded)
+# Auto-generated or downloaded data
 data/
 
-# Debug images
+# ─── Logs ────────────────────────────────────────────────────────────────────
+logs/
+
+# ─── Temporary Files ─────────────────────────────────────────────────────────
+tmp/
+temp/
+*.tmp
+.tmp_*
+*~
+
+# ─── Build & Package Artifacts ───────────────────────────────────────────────
+*.tar.gz
+*.zip
+*.deb
+*.rpm
+
+# ─── Debug & Development ─────────────────────────────────────────────────────
+# Debug output images
 DebugImages/
 
-# Agent artifacts
-.gemini/
-.ignore
-*.code-workspace
+# Screenshot artifacts
+*.png
 
-# Internal/planning docs (keep in separate private location)
+# ─── AI/Agent Artifacts ──────────────────────────────────────────────────────
+# Claude, Gemini, and other AI tool artifacts
+.claude/settings.local.json
+.gemini/
+CLAUDE.md
+
+# Workspace files
+*.code-workspace
+.ignore
+
+# ─── Documentation Exclusions ────────────────────────────────────────────────
+# Internal planning docs (use GitHub issues/projects instead)
 docs/internal/
 docs/AI_*.md
 docs/*_PLAN.md
@@ -117,11 +130,6 @@ docs/WIKI_CONTENT.md
 docs/DOCUMENTATION_STRUCTURE.md
 docs/issues*.md
 
-# Root planning files (use docs/ or GitHub issues instead)
+# Root-level planning files
 /*_PLAN.md
 /issue*.md
-
-# Go caches
-.gocache/
-.gomodcache/
-.golangci-cache/

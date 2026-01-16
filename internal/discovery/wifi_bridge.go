@@ -15,6 +15,12 @@ import (
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
+// Constants for WiFi utilization estimation.
+const (
+	utilizationPerAP  = 10  // Estimated utilization percentage per access point
+	maxUtilizationPct = 100 // Maximum utilization percentage
+)
+
 // WiFiBridge connects the canopy/wifi scanner to unified discovery.
 // It converts wifi.ScannedNetwork results into extended WiFi types.
 type WiFiBridge struct {
@@ -417,9 +423,9 @@ func (b *WiFiBridge) calculateChannelUtilization(aps []WiFiAccessPoint) []Channe
 
 	// Estimate utilization based on AP count
 	for _, util := range channelMap {
-		util.UtilizationPercent = float64(util.APCount) * 10
-		if util.UtilizationPercent > 100 {
-			util.UtilizationPercent = 100
+		util.UtilizationPercent = float64(util.APCount) * utilizationPerAP
+		if util.UtilizationPercent > maxUtilizationPct {
+			util.UtilizationPercent = maxUtilizationPct
 		}
 	}
 

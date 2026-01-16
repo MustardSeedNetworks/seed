@@ -35,6 +35,7 @@ func TestConvertCableStatusWithType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result := sap.ConvertCableStatusWithType(tt.input)
 			if result != tt.expected {
 				t.Errorf("ConvertCableStatusWithType(%q) = %q, want %q", tt.input, result, tt.expected)
@@ -96,6 +97,7 @@ func TestConvertPairResultsExported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result := sap.ConvertPairResultsExported(tt.pairs)
 
 			if tt.wantNil {
@@ -178,6 +180,7 @@ func TestConvertGatewayStatusWithType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result := sap.ConvertGatewayStatusWithType(tt.input)
 			if result != tt.expected {
 				t.Errorf("ConvertGatewayStatusWithType(%q) = %q, want %q", tt.input, result, tt.expected)
@@ -282,6 +285,7 @@ func TestCableServiceTestTableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			ctx := context.Background()
 			result, err := service.Test(ctx, tt.iface)
 			if err != nil {
@@ -380,6 +384,7 @@ func TestPerformanceServiceIPerfWithOptions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
 

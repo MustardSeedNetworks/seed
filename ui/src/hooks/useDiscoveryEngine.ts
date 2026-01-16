@@ -20,7 +20,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { LogComponents, logger } from "../lib/logger";
 
-const log = logger(LogComponents.API);
+const log: ReturnType<typeof logger> = logger(LogComponents.API);
 
 /** Device from Discovery Engine */
 export interface EngineDevice {
@@ -131,7 +131,22 @@ const initialState: UseDiscoveryEngineState = {
 /**
  * Hook for interacting with the Discovery Engine.
  */
-export function useDiscoveryEngine() {
+export function useDiscoveryEngine(): {
+  devices: EngineDevice[];
+  stats: EngineStats | null;
+  capabilities: EngineCapabilities | null;
+  lastScanResult: EngineScanResult | null;
+  isLoading: boolean;
+  isScanning: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+  scan: (options?: EngineScanOptions) => Promise<EngineScanResult | undefined>;
+  quickScan: () => Promise<EngineScanResult | undefined>;
+  fullScan: () => Promise<EngineScanResult | undefined>;
+  getDevice: (mac: string) => Promise<EngineDevice | null>;
+  fetchCapabilities: () => Promise<EngineCapabilities | null>;
+  fetchStats: () => Promise<EngineStats | null>;
+} {
   const [state, setState] = useState<UseDiscoveryEngineState>(initialState);
 
   /**
@@ -296,7 +311,7 @@ export function useDiscoveryEngine() {
 
   // Initial fetch on mount
   useEffect(() => {
-    fetchDevices();
+    fetchDevices().catch(() => undefined);
   }, [fetchDevices]);
 
   return {

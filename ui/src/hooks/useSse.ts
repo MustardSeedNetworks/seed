@@ -127,6 +127,7 @@ export function useSse({
    * Processes an SSE message and routes it to appropriate handlers.
    */
   const handleSseMessage = useCallback(
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex message routing logic
     (data: string, connectionId: number) => {
       // Ignore messages from stale connections
       if (connectionId !== connectionIdRef.current) {
@@ -206,7 +207,7 @@ export function useSse({
       eventSourceRef.current = eventSource;
 
       // Connection opened successfully
-      eventSource.onopen = () => {
+      eventSource.onopen = (): void => {
         if (connectionId !== connectionIdRef.current) {
           return;
         }
@@ -215,7 +216,7 @@ export function useSse({
       };
 
       // Handle incoming messages
-      eventSource.onmessage = (event) => {
+      eventSource.onmessage = (event: MessageEvent): void => {
         if (connectionId !== connectionIdRef.current) {
           return;
         }
@@ -223,7 +224,7 @@ export function useSse({
       };
 
       // Handle connection errors
-      eventSource.onerror = (event) => {
+      eventSource.onerror = (event: Event): void => {
         if (connectionId !== connectionIdRef.current) {
           return;
         }

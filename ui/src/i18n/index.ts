@@ -75,7 +75,7 @@ export const defaultNs: Namespace = "common";
 /**
  * Resources organized by language and namespace.
  */
-const resources = {
+const resources: { en: Record<string, unknown>; es: Record<string, unknown> } = {
   en: {
     common: enCommon,
     cards: enCards,

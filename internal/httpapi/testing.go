@@ -88,7 +88,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	s.services.Canopy.WiFi = wifi.NewManager(cfg.Interface.Default)
 
 	// Initialize Discovery Engine for unified discovery
-	s.services.Discovery.Engine = discovery.NewDiscoveryEngine(nil)
+	s.services.Discovery.Engine = discovery.NewEngine(nil)
 
 	// Initialize WebSocket hub
 	s.services.RealTime.WSHub = NewHub()

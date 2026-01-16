@@ -204,7 +204,7 @@ export interface SurveyConfig {
 }
 
 /** Default channels for each band */
-export const DEFAULT_CHANNELS = {
+export const DEFAULT_CHANNELS: Record<string, number[]> = {
   "2.4": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
   "5": [
     36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149,
@@ -486,7 +486,20 @@ export interface CreateSurveyRequest {
  *
  * @returns Survey state and control functions
  */
-export function useSurvey() {
+export function useSurvey(): {
+  surveys: Survey[];
+  loading: boolean;
+  error: string | null;
+  listSurveys: () => Promise<void>;
+  createSurvey: (params: CreateSurveyParams) => Promise<Survey | null>;
+  getSurvey: (id: string) => Promise<Survey | null>;
+  deleteSurvey: (id: string) => Promise<boolean>;
+  startSurvey: (id: string) => Promise<boolean>;
+  pauseSurvey: (id: string) => Promise<boolean>;
+  completeSurvey: (id: string) => Promise<boolean>;
+  addSample: (surveyId: string, sample: SurveySample) => Promise<boolean>;
+  updateFloorPlan: (surveyId: string, floorPlan: FloorPlan) => Promise<boolean>;
+} {
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -718,7 +731,7 @@ export function useSurvey() {
   }, []);
 
   useEffect(() => {
-    listSurveys();
+    listSurveys().catch(() => undefined);
   }, [listSurveys]);
 
   return {

@@ -45,6 +45,32 @@ const (
 
 	// AcceptableLatencyRatio is the ratio below which latency is considered acceptable.
 	AcceptableLatencyRatio = 1.0 // 100% of threshold
+
+	// PoorLatencyRatio is the ratio above which latency is considered poor.
+	PoorLatencyRatio = 2.0
+
+	// VeryPoorLatencyRatio is the ratio above which latency score becomes zero.
+	VeryPoorLatencyRatio = 4.0
+)
+
+// Criticality range constants.
+const (
+	minCriticality        = 1
+	maxCriticality        = 10
+	criticalityToScoreMul = 10.0
+)
+
+// Score tier boundaries for latency calculation.
+const (
+	scoreMax       = 100.0
+	scoreExcellent = 90.0
+	scoreGood      = 70.0
+	scoreAccept    = 50.0
+	scorePoor      = 25.0
+	scoreTierGap   = 20.0
+	scoreSmallGap  = 10.0
+	scorePoorGap   = 25.0
+	percentageMul  = 100.0
 )
 
 // DefaultCriticality is the default criticality for endpoints without explicit configuration.
@@ -112,11 +138,11 @@ func (s *ScoringService) SetCriticality(config CriticalityConfig) {
 	defer s.mu.Unlock()
 
 	// Clamp criticality to valid range
-	if config.Criticality < 1 {
-		config.Criticality = 1
+	if config.Criticality < minCriticality {
+		config.Criticality = minCriticality
 	}
-	if config.Criticality > 10 {
-		config.Criticality = 10
+	if config.Criticality > maxCriticality {
+		config.Criticality = maxCriticality
 	}
 
 	key := s.criticalityKey(config.CheckType, config.EndpointName)
@@ -130,11 +156,11 @@ func (s *ScoringService) SetCriticalityBatch(configs []CriticalityConfig) {
 
 	for _, config := range configs {
 		// Clamp criticality to valid range
-		if config.Criticality < 1 {
-			config.Criticality = 1
+		if config.Criticality < minCriticality {
+			config.Criticality = minCriticality
 		}
-		if config.Criticality > 10 {
-			config.Criticality = 10
+		if config.Criticality > maxCriticality {
+			config.Criticality = maxCriticality
 		}
 
 		key := s.criticalityKey(config.CheckType, config.EndpointName)
@@ -231,7 +257,7 @@ func (s *ScoringService) CalculateScore(
 	latencyScore := s.calculateLatencyScore(stats.P95Ms, latencyThreshold)
 
 	// Convert criticality (1-10) to score (0-100)
-	criticalityScore := float64(critConfig.Criticality) * 10.0
+	criticalityScore := float64(critConfig.Criticality) * criticalityToScoreMul
 
 	// Calculate composite score
 	compositeScore := (availability * AvailabilityWeight) +
@@ -252,7 +278,7 @@ func (s *ScoringService) CalculateScore(
 		LastCheck:        lastCheck,
 		P95LatencyMs:     stats.P95Ms,
 		TotalChecks:      stats.Count,
-		SuccessfulChecks: int64(float64(stats.Count) * availability / 100.0),
+		SuccessfulChecks: int64(float64(stats.Count) * availability / percentageMul),
 	}, nil
 }
 
@@ -383,26 +409,26 @@ func (s *ScoringService) calculateLatencyScore(p95Ms, threshold float64) float64
 	switch {
 	case ratio <= ExcellentLatencyRatio:
 		// Excellent: 90-100
-		return 100.0 - (ratio/ExcellentLatencyRatio)*10.0
+		return scoreMax - (ratio/ExcellentLatencyRatio)*scoreSmallGap
 	case ratio <= GoodLatencyRatio:
 		// Good: 70-90
 		normalized := (ratio - ExcellentLatencyRatio) / (GoodLatencyRatio - ExcellentLatencyRatio)
-		return 90.0 - normalized*20.0
+		return scoreExcellent - normalized*scoreTierGap
 	case ratio <= AcceptableLatencyRatio:
 		// Acceptable: 50-70
 		normalized := (ratio - GoodLatencyRatio) / (AcceptableLatencyRatio - GoodLatencyRatio)
-		return 70.0 - normalized*20.0
-	case ratio <= 2.0:
+		return scoreGood - normalized*scoreTierGap
+	case ratio <= PoorLatencyRatio:
 		// Poor: 25-50
 		normalized := (ratio - AcceptableLatencyRatio)
-		return 50.0 - normalized*25.0
+		return scoreAccept - normalized*scorePoorGap
 	default:
 		// Very poor: 0-25
-		if ratio >= 4.0 {
+		if ratio >= VeryPoorLatencyRatio {
 			return 0.0
 		}
-		normalized := (ratio - 2.0) / 2.0
-		return 25.0 - normalized*25.0
+		normalized := (ratio - PoorLatencyRatio) / PoorLatencyRatio
+		return scorePoor - normalized*scorePoorGap
 	}
 }
 

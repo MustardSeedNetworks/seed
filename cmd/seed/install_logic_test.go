@@ -314,7 +314,7 @@ func TestCreateDefaultConfigLogic(t *testing.T) {
 	createDefaultConfig(tmpDir)
 
 	// Verify config file was created
-	configPath := filepath.Join(tmpDir, "seed.yaml")
+	configPath := filepath.Join(tmpDir, "seed.json")
 	if _, err := os.Stat(configPath); err != nil {
 		t.Errorf("Config file should be created: %v", err)
 	}
@@ -324,7 +324,7 @@ func TestCreateDefaultConfigExisting(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "seed.yaml")
+	configPath := filepath.Join(tmpDir, "seed.json")
 
 	// Create existing config with specific content
 	originalContent := []byte("# existing config\nversion: 1\n")
@@ -346,7 +346,7 @@ func TestCreateDefaultConfigExisting(t *testing.T) {
 	}
 }
 
-// byteSliceWriter is a simple io.Writer for testing templates.
+// byteSliceWriter is a simple [io.Writer] for testing templates.
 type byteSliceWriter struct {
 	buf *[]byte
 }

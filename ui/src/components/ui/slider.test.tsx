@@ -24,7 +24,7 @@
 
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { Slider } from "./slider";
+import { Slider } from "./Slider";
 
 describe("Slider", () => {
   it("renders with basic props", () => {
@@ -49,7 +49,7 @@ describe("Slider", () => {
         max={1000}
         step={100}
         label="Timeout"
-        formatValue={(v) => `${v}ms`}
+        formatValue={(v: number): string => `${v}ms`}
       />,
     );
 
@@ -167,7 +167,7 @@ describe("Slider", () => {
         max={1000}
         step={100}
         label="Timeout"
-        formatValue={(v) => `${v}ms`}
+        formatValue={(v: number): string => `${v}ms`}
       />,
     );
 
@@ -189,7 +189,7 @@ describe("Slider", () => {
         max={10000}
         step={500}
         label="Duration"
-        formatValue={(v) => (v >= 1000 ? `${v / 1000}s` : `${v}ms`)}
+        formatValue={(v: number): string => (v >= 1000 ? `${v / 1000}s` : `${v}ms`)}
       />,
     );
 
@@ -205,7 +205,7 @@ describe("Slider", () => {
         max={10000}
         step={500}
         label="Duration"
-        formatValue={(v) => (v >= 1000 ? `${v / 1000}s` : `${v}ms`)}
+        formatValue={(v: number): string => (v >= 1000 ? `${v / 1000}s` : `${v}ms`)}
       />,
     );
 

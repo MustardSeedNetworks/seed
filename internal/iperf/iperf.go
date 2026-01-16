@@ -311,7 +311,7 @@ func NewManager() *Manager {
 
 // findIperf3Binary locates the iperf3 binary using a robust detection strategy:
 //  1. Try embedded binary (extracted to user cache directory).
-//  2. Search system PATH using exec.LookPath (the proper way).
+//  2. Search system PATH using [exec.LookPath] (the proper way).
 //  3. Return detailed error with OS-specific install instructions if not found.
 func findIperf3Binary() (string, error) {
 	// Return cached path if already found

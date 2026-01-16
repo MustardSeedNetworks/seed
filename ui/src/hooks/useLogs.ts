@@ -1,3 +1,4 @@
+// biome-ignore-all lint/nursery/useAwaitThenable: response.json() returns a Promise
 /**
  * Log Viewer Hook
  *
@@ -273,8 +274,8 @@ export function useLogs({
 
   // Fetch initial logs and stats on mount
   useEffect(() => {
-    fetchLogs();
-    fetchStats();
+    fetchLogs().catch(() => undefined);
+    fetchStats().catch(() => undefined);
   }, [fetchLogs, fetchStats]);
 
   // Refresh stats periodically

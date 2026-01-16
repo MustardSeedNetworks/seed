@@ -14,15 +14,15 @@
 
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CableData } from "../components/cards/cable-card";
-import type { DnsData } from "../components/cards/dns-card";
-import type { GatewayData } from "../components/cards/gateway-card";
-import type { LinkData } from "../components/cards/link-card";
-import type { DhcpData } from "../components/cards/network-card";
-import type { TraceHopMessage } from "../components/cards/path-discovery-card";
-import type { PublicIpData } from "../components/cards/public-ip-card";
-import type { SwitchData, VlanData } from "../components/cards/switch-card";
-import type { WiFiData } from "../components/cards/wifi-card";
+import type { CableData } from "../components/cards/CableCard";
+import type { DnsData } from "../components/cards/DnsCard";
+import type { GatewayData } from "../components/cards/GatewayCard";
+import type { LinkData } from "../components/cards/LinkCard";
+import type { DhcpData } from "../components/cards/NetworkCard";
+import type { TraceHopMessage } from "../components/cards/PathDiscoveryCard";
+import type { PublicIpData } from "../components/cards/PublicIpCard";
+import type { SwitchData, VlanData } from "../components/cards/SwitchCard";
+import type { WiFiData } from "../components/cards/WiFiCard";
 import { LogComponents, logger } from "../lib/logger";
 import type { PipelineEvent, PipelineEventType } from "./usePipelineStatus";
 import type { SseCardUpdate as CardUpdate, SseMessage as Message } from "./useSSE";
@@ -95,7 +95,16 @@ export function useCardState({
   setCurrentInterface,
   setIsWifi,
   userSetWifiModeRef,
-}: UseCardStateProps) {
+}: UseCardStateProps): {
+  cards: CardState;
+  loading: boolean;
+  setCards: React.Dispatch<React.SetStateAction<CardState>>;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  handleMessage: (message: Message) => void;
+  handleCardUpdate: (update: CardUpdate) => void;
+  prevLinkUpRef: React.MutableRefObject<boolean | null>;
+  registerTraceHopHandler: (handler: (msg: TraceHopMessage) => void) => () => void;
+} {
   const [cards, setCards] = useState<CardState>({
     link: null,
     cable: null,
@@ -205,24 +214,32 @@ export function useCardState({
           return;
         }
 
-        const payload = message.payload;
-        if (typeof payload.interface === "string" && payload.interface) {
-          setCurrentInterface(payload.interface);
+        const { interface: iface, isWireless, cards: payloadCards } = message.payload;
+        if (typeof iface === "string" && iface) {
+          setCurrentInterface(iface);
         }
 
         // Only auto-set WiFi mode if user hasn't manually selected
-        if (typeof payload.isWireless === "boolean" && !userSetWifiModeRef.current) {
-          setIsWifi(payload.isWireless);
+        if (typeof isWireless === "boolean" && !userSetWifiModeRef.current) {
+          setIsWifi(isWireless);
         }
 
-        if (isPlainObject(payload.cards)) {
+        if (isPlainObject(payloadCards)) {
           const updates: Partial<CardState> = {};
-          for (const [key, value] of Object.entries(payload.cards)) {
+          for (const [key, value] of Object.entries(payloadCards)) {
             if (!isCardId(key)) {
               continue;
             }
 
-            const normalized = value === null ? null : isPlainObject(value) ? value : undefined;
+            // Normalize value: null stays null, plain objects stay, others become undefined
+            let normalized: Record<string, unknown> | null | undefined;
+            if (value === null) {
+              normalized = null;
+            } else if (isPlainObject(value)) {
+              normalized = value;
+            } else {
+              normalized = undefined;
+            }
             if (normalized === undefined) {
               continue;
             }
@@ -235,7 +252,7 @@ export function useCardState({
                   normalized &&
                   typeof (normalized as { linkUp?: boolean }).linkUp === "boolean"
                 ) {
-                  const linkUp = (normalized as { linkUp: boolean }).linkUp;
+                  const { linkUp } = normalized as { linkUp: boolean };
                   prevLinkUpRef.current = linkUp;
 
                   // Trigger initial auto-run if link is up on page load
@@ -277,6 +294,9 @@ export function useCardState({
                 break;
               case "publicip":
                 updates.publicip = normalized as CardState["publicip"];
+                break;
+              default:
+                // Unknown card ID - log for debugging
                 break;
             }
           }
@@ -344,7 +364,7 @@ export function useCardState({
   useEffect(() => {
     // Copy ref value for cleanup function (fixes react-hooks/exhaustive-deps warning)
     const timeoutIds = timeoutIdsRef.current;
-    return () => {
+    return (): void => {
       for (const id of timeoutIds) {
         clearTimeout(id);
       }

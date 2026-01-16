@@ -1,15 +1,17 @@
-package discovery
+package discovery_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/discovery"
 )
 
 func TestNewDeviceRegistry(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, nil)
+	registry := discovery.NewDeviceRegistry(eb, nil)
 	if registry == nil {
 		t.Fatal("expected non-nil registry")
 	}
@@ -20,12 +22,12 @@ func TestNewDeviceRegistry(t *testing.T) {
 }
 
 func TestRegistryAddOrUpdate(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, &RegistryConfig{EmitEvents: false})
+	registry := discovery.NewDeviceRegistry(eb, &discovery.RegistryConfig{EmitEvents: false})
 
-	device := &DiscoveredDevice{
+	device := &discovery.DiscoveredDevice{
 		MAC:      "AA:BB:CC:DD:EE:FF",
 		IP:       "192.168.1.100",
 		Hostname: "test.local",
@@ -45,7 +47,7 @@ func TestRegistryAddOrUpdate(t *testing.T) {
 	}
 
 	// Update existing device
-	device2 := &DiscoveredDevice{
+	device2 := &discovery.DiscoveredDevice{
 		MAC:      "aa:bb:cc:dd:ee:ff", // same MAC, different case
 		IP:       "192.168.1.200",     // new IP
 		Hostname: "updated.local",
@@ -66,10 +68,10 @@ func TestRegistryAddOrUpdate(t *testing.T) {
 }
 
 func TestRegistryAddOrUpdateNil(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, nil)
+	registry := discovery.NewDeviceRegistry(eb, nil)
 
 	// Add nil device
 	result, isNew := registry.AddOrUpdate(nil)
@@ -78,19 +80,19 @@ func TestRegistryAddOrUpdateNil(t *testing.T) {
 	}
 
 	// Add device with empty MAC
-	result, isNew = registry.AddOrUpdate(&DiscoveredDevice{IP: "192.168.1.1"})
+	result, isNew = registry.AddOrUpdate(&discovery.DiscoveredDevice{IP: "192.168.1.1"})
 	if result != nil || isNew {
 		t.Error("expected nil result for device without MAC")
 	}
 }
 
 func TestRegistryGetDevice(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, &RegistryConfig{EmitEvents: false})
+	registry := discovery.NewDeviceRegistry(eb, &discovery.RegistryConfig{EmitEvents: false})
 
-	device := &DiscoveredDevice{
+	device := &discovery.DiscoveredDevice{
 		MAC: "AA:BB:CC:DD:EE:FF",
 		IP:  "192.168.1.100",
 	}
@@ -110,12 +112,12 @@ func TestRegistryGetDevice(t *testing.T) {
 }
 
 func TestRegistryGetDeviceByIP(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, &RegistryConfig{EmitEvents: false})
+	registry := discovery.NewDeviceRegistry(eb, &discovery.RegistryConfig{EmitEvents: false})
 
-	device := &DiscoveredDevice{
+	device := &discovery.DiscoveredDevice{
 		MAC: "AA:BB:CC:DD:EE:FF",
 		IP:  "192.168.1.100",
 	}
@@ -135,12 +137,12 @@ func TestRegistryGetDeviceByIP(t *testing.T) {
 }
 
 func TestRegistryGetDeviceByHostname(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, &RegistryConfig{EmitEvents: false})
+	registry := discovery.NewDeviceRegistry(eb, &discovery.RegistryConfig{EmitEvents: false})
 
-	device := &DiscoveredDevice{
+	device := &discovery.DiscoveredDevice{
 		MAC:      "AA:BB:CC:DD:EE:FF",
 		Hostname: "Test.Local",
 	}
@@ -154,14 +156,14 @@ func TestRegistryGetDeviceByHostname(t *testing.T) {
 }
 
 func TestRegistryGetDevices(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, &RegistryConfig{EmitEvents: false})
+	registry := discovery.NewDeviceRegistry(eb, &discovery.RegistryConfig{EmitEvents: false})
 
-	registry.AddOrUpdate(&DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:01"})
-	registry.AddOrUpdate(&DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:02"})
-	registry.AddOrUpdate(&DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:03"})
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:01"})
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:02"})
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:03"})
 
 	devices := registry.GetDevices()
 	if len(devices) != 3 {
@@ -170,14 +172,14 @@ func TestRegistryGetDevices(t *testing.T) {
 }
 
 func TestRegistryGetDevicesByVendor(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, &RegistryConfig{EmitEvents: false})
+	registry := discovery.NewDeviceRegistry(eb, &discovery.RegistryConfig{EmitEvents: false})
 
-	registry.AddOrUpdate(&DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:01", Vendor: "Apple"})
-	registry.AddOrUpdate(&DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:02", Vendor: "Apple"})
-	registry.AddOrUpdate(&DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:03", Vendor: "Samsung"})
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:01", Vendor: "Apple"})
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:02", Vendor: "Apple"})
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:03", Vendor: "Samsung"})
 
 	appleDevices := registry.GetDevicesByVendor("apple")
 	if len(appleDevices) != 2 {
@@ -191,52 +193,62 @@ func TestRegistryGetDevicesByVendor(t *testing.T) {
 }
 
 func TestRegistryGetDevicesByConnectionType(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, &RegistryConfig{EmitEvents: false})
+	registry := discovery.NewDeviceRegistry(eb, &discovery.RegistryConfig{EmitEvents: false})
 
-	registry.AddOrUpdate(&DiscoveredDevice{
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{
 		MAC:             "AA:BB:CC:DD:EE:01",
-		ConnectionTypes: []ConnectionType{ConnectionWired},
+		ConnectionTypes: []discovery.ConnectionType{discovery.ConnectionWired},
 	})
-	registry.AddOrUpdate(&DiscoveredDevice{
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{
 		MAC:             "AA:BB:CC:DD:EE:02",
-		ConnectionTypes: []ConnectionType{ConnectionWiFi},
+		ConnectionTypes: []discovery.ConnectionType{discovery.ConnectionWiFi},
 	})
-	registry.AddOrUpdate(&DiscoveredDevice{
-		MAC:             "AA:BB:CC:DD:EE:03",
-		ConnectionTypes: []ConnectionType{ConnectionWired, ConnectionBluetooth},
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{
+		MAC: "AA:BB:CC:DD:EE:03",
+		ConnectionTypes: []discovery.ConnectionType{
+			discovery.ConnectionWired,
+			discovery.ConnectionBluetooth,
+		},
 	})
 
-	wiredDevices := registry.GetDevicesByConnectionType(ConnectionWired)
+	wiredDevices := registry.GetDevicesByConnectionType(discovery.ConnectionWired)
 	if len(wiredDevices) != 2 {
 		t.Errorf("expected 2 wired devices, got %d", len(wiredDevices))
 	}
 
-	wifiDevices := registry.GetDevicesByConnectionType(ConnectionWiFi)
+	wifiDevices := registry.GetDevicesByConnectionType(discovery.ConnectionWiFi)
 	if len(wifiDevices) != 1 {
 		t.Errorf("expected 1 WiFi device, got %d", len(wifiDevices))
 	}
 }
 
 func TestRegistryGetMultiConnectedDevices(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, &RegistryConfig{EmitEvents: false})
+	registry := discovery.NewDeviceRegistry(eb, &discovery.RegistryConfig{EmitEvents: false})
 
-	registry.AddOrUpdate(&DiscoveredDevice{
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{
 		MAC:             "AA:BB:CC:DD:EE:01",
-		ConnectionTypes: []ConnectionType{ConnectionWired},
+		ConnectionTypes: []discovery.ConnectionType{discovery.ConnectionWired},
 	})
-	registry.AddOrUpdate(&DiscoveredDevice{
-		MAC:             "AA:BB:CC:DD:EE:02",
-		ConnectionTypes: []ConnectionType{ConnectionWired, ConnectionBluetooth},
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{
+		MAC: "AA:BB:CC:DD:EE:02",
+		ConnectionTypes: []discovery.ConnectionType{
+			discovery.ConnectionWired,
+			discovery.ConnectionBluetooth,
+		},
 	})
-	registry.AddOrUpdate(&DiscoveredDevice{
-		MAC:             "AA:BB:CC:DD:EE:03",
-		ConnectionTypes: []ConnectionType{ConnectionWired, ConnectionWiFi, ConnectionBluetooth},
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{
+		MAC: "AA:BB:CC:DD:EE:03",
+		ConnectionTypes: []discovery.ConnectionType{
+			discovery.ConnectionWired,
+			discovery.ConnectionWiFi,
+			discovery.ConnectionBluetooth,
+		},
 	})
 
 	multiConnected := registry.GetMultiConnectedDevices()
@@ -246,12 +258,12 @@ func TestRegistryGetMultiConnectedDevices(t *testing.T) {
 }
 
 func TestRegistryRemove(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, &RegistryConfig{EmitEvents: false})
+	registry := discovery.NewDeviceRegistry(eb, &discovery.RegistryConfig{EmitEvents: false})
 
-	device := &DiscoveredDevice{
+	device := &discovery.DiscoveredDevice{
 		MAC:      "AA:BB:CC:DD:EE:FF",
 		IP:       "192.168.1.100",
 		Hostname: "test.local",
@@ -280,13 +292,13 @@ func TestRegistryRemove(t *testing.T) {
 }
 
 func TestRegistryClear(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, &RegistryConfig{EmitEvents: false})
+	registry := discovery.NewDeviceRegistry(eb, &discovery.RegistryConfig{EmitEvents: false})
 
-	registry.AddOrUpdate(&DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:01"})
-	registry.AddOrUpdate(&DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:02"})
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:01"})
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{MAC: "AA:BB:CC:DD:EE:02"})
 
 	registry.Clear()
 
@@ -296,16 +308,16 @@ func TestRegistryClear(t *testing.T) {
 }
 
 func TestRegistryExpireStale(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, &RegistryConfig{
+	registry := discovery.NewDeviceRegistry(eb, &discovery.RegistryConfig{
 		EmitEvents: false,
 		DeviceTTL:  100 * time.Millisecond,
 	})
 
 	// Add a device
-	registry.AddOrUpdate(&DiscoveredDevice{
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{
 		MAC:      "AA:BB:CC:DD:EE:FF",
 		LastSeen: time.Now().Add(-200 * time.Millisecond), // already stale
 	})
@@ -320,22 +332,25 @@ func TestRegistryExpireStale(t *testing.T) {
 }
 
 func TestRegistryStats(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, &RegistryConfig{EmitEvents: false})
+	registry := discovery.NewDeviceRegistry(eb, &discovery.RegistryConfig{EmitEvents: false})
 
-	registry.AddOrUpdate(&DiscoveredDevice{
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{
 		MAC:             "AA:BB:CC:DD:EE:01",
-		ConnectionTypes: []ConnectionType{ConnectionWired},
+		ConnectionTypes: []discovery.ConnectionType{discovery.ConnectionWired},
 	})
-	registry.AddOrUpdate(&DiscoveredDevice{
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{
 		MAC:             "AA:BB:CC:DD:EE:02",
-		ConnectionTypes: []ConnectionType{ConnectionWiFi},
+		ConnectionTypes: []discovery.ConnectionType{discovery.ConnectionWiFi},
 	})
-	registry.AddOrUpdate(&DiscoveredDevice{
-		MAC:             "AA:BB:CC:DD:EE:03",
-		ConnectionTypes: []ConnectionType{ConnectionWired, ConnectionBluetooth},
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{
+		MAC: "AA:BB:CC:DD:EE:03",
+		ConnectionTypes: []discovery.ConnectionType{
+			discovery.ConnectionWired,
+			discovery.ConnectionBluetooth,
+		},
 	})
 
 	stats := registry.Stats()
@@ -357,26 +372,26 @@ func TestRegistryStats(t *testing.T) {
 }
 
 func TestRegistryMergeDevice(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, &RegistryConfig{EmitEvents: false})
+	registry := discovery.NewDeviceRegistry(eb, &discovery.RegistryConfig{EmitEvents: false})
 
 	// Add initial device
-	registry.AddOrUpdate(&DiscoveredDevice{
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{
 		MAC:             "AA:BB:CC:DD:EE:FF",
 		IP:              "192.168.1.100",
-		DiscoveryMethod: []Method{MethodARP},
-		ConnectionTypes: []ConnectionType{ConnectionWired},
+		DiscoveryMethod: []discovery.Method{discovery.MethodARP},
+		ConnectionTypes: []discovery.ConnectionType{discovery.ConnectionWired},
 	})
 
 	// Update with additional data
-	registry.AddOrUpdate(&DiscoveredDevice{
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{
 		MAC:             "AA:BB:CC:DD:EE:FF",
 		Hostname:        "merged.local",
-		DiscoveryMethod: []Method{MethodLLDP},
-		ConnectionTypes: []ConnectionType{ConnectionBluetooth},
-		BluetoothPresence: &BluetoothPresence{
+		DiscoveryMethod: []discovery.Method{discovery.MethodLLDP},
+		ConnectionTypes: []discovery.ConnectionType{discovery.ConnectionBluetooth},
+		BluetoothPresence: &discovery.BluetoothPresence{
 			Name: "Test Device",
 		},
 	})
@@ -413,21 +428,21 @@ func TestRegistryMergeDevice(t *testing.T) {
 }
 
 func TestRegistryEventsEmitted(t *testing.T) {
-	eb := NewEventBus(&EventBusConfig{BufferSize: 0})
+	eb := discovery.NewEventBus(&discovery.EventBusConfig{BufferSize: 0})
 	defer eb.Stop()
 
-	registry := NewDeviceRegistry(eb, &RegistryConfig{EmitEvents: true})
+	registry := discovery.NewDeviceRegistry(eb, &discovery.RegistryConfig{EmitEvents: true})
 
-	var events []*Event
+	var events []*discovery.Event
 	done := make(chan struct{}, 3)
 
-	eb.SubscribeAll(func(e *Event) {
+	eb.SubscribeAll(func(e *discovery.Event) {
 		events = append(events, e)
 		done <- struct{}{}
 	})
 
 	// Add device - should emit discovered event
-	registry.AddOrUpdate(&DiscoveredDevice{
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{
 		MAC: "AA:BB:CC:DD:EE:FF",
 		IP:  "192.168.1.100",
 	})
@@ -440,7 +455,7 @@ func TestRegistryEventsEmitted(t *testing.T) {
 	}
 
 	// Update device - should emit updated event
-	registry.AddOrUpdate(&DiscoveredDevice{
+	registry.AddOrUpdate(&discovery.DiscoveredDevice{
 		MAC:      "AA:BB:CC:DD:EE:FF",
 		Hostname: "updated.local",
 	})

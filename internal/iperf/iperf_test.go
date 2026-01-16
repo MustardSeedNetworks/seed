@@ -831,7 +831,12 @@ func TestValidateServer(t *testing.T) {
 		{"invalid hostname underscore", "test_server.com", true, "invalid server address"},
 		{"invalid hostname colon", "test:server", true, "invalid server address"},
 		{"invalid hostname semicolon", "test;server", true, "invalid server address"},
-		{"invalid command injection attempt", "localhost; rm -rf /", true, "invalid server address"},
+		{
+			"invalid command injection attempt",
+			"localhost; rm -rf /",
+			true,
+			"invalid server address",
+		},
 		{"invalid pipe injection", "localhost | cat /etc/passwd", true, "invalid server address"},
 		{"invalid backtick injection", "`whoami`", true, "invalid server address"},
 		{"invalid shell variable", "$HOME", true, "invalid server address"},
@@ -848,7 +853,12 @@ func TestValidateServer(t *testing.T) {
 					return
 				}
 				if tt.errMsg != "" && !containsString(err.Error(), tt.errMsg) {
-					t.Errorf("ValidateServer(%q) error = %q, want containing %q", tt.server, err.Error(), tt.errMsg)
+					t.Errorf(
+						"ValidateServer(%q) error = %q, want containing %q",
+						tt.server,
+						err.Error(),
+						tt.errMsg,
+					)
 				}
 			} else if err != nil {
 				t.Errorf("ValidateServer(%q) unexpected error: %v", tt.server, err)
@@ -1123,29 +1133,114 @@ func TestBuildClientArgs(t *testing.T) {
 	}
 }
 
-// TestParseClientResult tests result parsing from iperf3 JSON output.
-//
+// parseResultTestCase defines a test case for ParseClientResult.
+type parseResultTestCase struct {
+	name              string
+	iperfOut          iperf.IperfJSON
+	config            iperf.ClientConfig
+	direction         string
+	expectedBandwidth float64
+	expectedDirection string
+	expectedProtocol  string
+}
 
+// buildTCPUploadJSON creates iperf JSON for TCP upload test.
+func buildTCPUploadJSON() iperf.IperfJSON {
+	j := iperf.IperfJSON{}
+	j.End.SumSent.BitsPerSecond = 100_000_000
+	j.End.SumSent.Bytes = 125_000_000
+	j.End.SumSent.Seconds = 10
+	j.End.SumSent.Retransmits = 5
+	return j
+}
+
+// buildTCPDownloadJSON creates iperf JSON for TCP download test.
+func buildTCPDownloadJSON() iperf.IperfJSON {
+	j := iperf.IperfJSON{}
+	j.End.SumReceived.BitsPerSecond = 200_000_000
+	j.End.SumReceived.Bytes = 250_000_000
+	j.End.SumReceived.Seconds = 10
+	return j
+}
+
+// buildBidirectionalJSON creates iperf JSON for bidirectional test.
+func buildBidirectionalJSON() iperf.IperfJSON {
+	j := iperf.IperfJSON{}
+	j.End.SumReceived.BitsPerSecond = 150_000_000
+	j.End.SumReceived.Bytes = 187_500_000
+	j.End.SumSent.BitsPerSecond = 100_000_000
+	j.End.SumSent.Bytes = 125_000_000
+	j.End.SumSent.Retransmits = 2
+	j.End.Sum.Seconds = 10
+	return j
+}
+
+// buildUDPJSON creates iperf JSON for UDP test with jitter and loss.
+func buildUDPJSON() iperf.IperfJSON {
+	j := iperf.IperfJSON{}
+	j.End.SumSent.BitsPerSecond = 50_000_000
+	j.End.SumSent.Bytes = 62_500_000
+	j.End.SumSent.Seconds = 10
+	j.End.Sum.JitterMs = 1.5
+	j.End.Sum.LostPackets = 10
+	j.End.Sum.LostPercent = 0.5
+	return j
+}
+
+// validateParseResultBasic validates basic result fields.
+func validateParseResultBasic(t *testing.T, result *iperf.Result, tc *parseResultTestCase) {
+	t.Helper()
+	if result.Bandwidth != tc.expectedBandwidth {
+		t.Errorf("Bandwidth = %v, want %v", result.Bandwidth, tc.expectedBandwidth)
+	}
+	if result.Direction != tc.expectedDirection {
+		t.Errorf("Direction = %q, want %q", result.Direction, tc.expectedDirection)
+	}
+	if result.Protocol != tc.expectedProtocol {
+		t.Errorf("Protocol = %q, want %q", result.Protocol, tc.expectedProtocol)
+	}
+	if result.Server != tc.config.Server {
+		t.Errorf("Server = %q, want %q", result.Server, tc.config.Server)
+	}
+	if result.Port != tc.config.Port {
+		t.Errorf("Port = %d, want %d", result.Port, tc.config.Port)
+	}
+	if result.Timestamp.IsZero() {
+		t.Error("Timestamp should not be zero")
+	}
+}
+
+// validateUDPFields validates UDP-specific result fields.
+func validateUDPFields(t *testing.T, result *iperf.Result, iperfOut *iperf.IperfJSON) {
+	t.Helper()
+	if result.Jitter != iperfOut.End.Sum.JitterMs {
+		t.Errorf("Jitter = %v, want %v", result.Jitter, iperfOut.End.Sum.JitterMs)
+	}
+	if result.LostPackets != iperfOut.End.Sum.LostPackets {
+		t.Errorf("LostPackets = %d, want %d", result.LostPackets, iperfOut.End.Sum.LostPackets)
+	}
+	if result.LostPercent != iperfOut.End.Sum.LostPercent {
+		t.Errorf("LostPercent = %v, want %v", result.LostPercent, iperfOut.End.Sum.LostPercent)
+	}
+}
+
+// validateBidirectionalFields validates bidirectional result fields.
+func validateBidirectionalFields(t *testing.T, result *iperf.Result) {
+	t.Helper()
+	if result.UploadBandwidth == 0 {
+		t.Error("UploadBandwidth should not be zero for bidirectional")
+	}
+	if result.DownloadBandwidth == 0 {
+		t.Error("DownloadBandwidth should not be zero for bidirectional")
+	}
+}
+
+// TestParseClientResult tests result parsing from iperf3 JSON output.
 func TestParseClientResult(t *testing.T) {
-	tests := []struct {
-		name              string
-		iperfOut          iperf.IperfJSON
-		config            iperf.ClientConfig
-		direction         string
-		expectedBandwidth float64
-		expectedDirection string
-		expectedProtocol  string
-	}{
+	tests := []parseResultTestCase{
 		{
-			name: "TCP upload result",
-			iperfOut: func() iperf.IperfJSON {
-				j := iperf.IperfJSON{}
-				j.End.SumSent.BitsPerSecond = 100_000_000 // 100 Mbps
-				j.End.SumSent.Bytes = 125_000_000         // 125 MB
-				j.End.SumSent.Seconds = 10
-				j.End.SumSent.Retransmits = 5
-				return j
-			}(),
+			name:              "TCP upload result",
+			iperfOut:          buildTCPUploadJSON(),
 			config:            iperf.ClientConfig{Server: "localhost", Port: 5201, Protocol: "tcp"},
 			direction:         "upload",
 			expectedBandwidth: 100.0,
@@ -1153,14 +1248,8 @@ func TestParseClientResult(t *testing.T) {
 			expectedProtocol:  "tcp",
 		},
 		{
-			name: "TCP download result",
-			iperfOut: func() iperf.IperfJSON {
-				j := iperf.IperfJSON{}
-				j.End.SumReceived.BitsPerSecond = 200_000_000 // 200 Mbps
-				j.End.SumReceived.Bytes = 250_000_000         // 250 MB
-				j.End.SumReceived.Seconds = 10
-				return j
-			}(),
+			name:              "TCP download result",
+			iperfOut:          buildTCPDownloadJSON(),
 			config:            iperf.ClientConfig{Server: "localhost", Port: 5201, Protocol: "tcp"},
 			direction:         "download",
 			expectedBandwidth: 200.0,
@@ -1168,35 +1257,17 @@ func TestParseClientResult(t *testing.T) {
 			expectedProtocol:  "tcp",
 		},
 		{
-			name: "bidirectional result",
-			iperfOut: func() iperf.IperfJSON {
-				j := iperf.IperfJSON{}
-				j.End.SumReceived.BitsPerSecond = 150_000_000 // Download
-				j.End.SumReceived.Bytes = 187_500_000
-				j.End.SumSent.BitsPerSecond = 100_000_000 // Upload
-				j.End.SumSent.Bytes = 125_000_000
-				j.End.SumSent.Retransmits = 2
-				j.End.Sum.Seconds = 10
-				return j
-			}(),
+			name:              "bidirectional result",
+			iperfOut:          buildBidirectionalJSON(),
 			config:            iperf.ClientConfig{Server: "localhost", Port: 5201, Protocol: "tcp"},
 			direction:         "bidirectional",
-			expectedBandwidth: 150.0, // Bandwidth defaults to download in bidir
+			expectedBandwidth: 150.0,
 			expectedDirection: "bidirectional",
 			expectedProtocol:  "tcp",
 		},
 		{
-			name: "UDP result with jitter and loss",
-			iperfOut: func() iperf.IperfJSON {
-				j := iperf.IperfJSON{}
-				j.End.SumSent.BitsPerSecond = 50_000_000
-				j.End.SumSent.Bytes = 62_500_000
-				j.End.SumSent.Seconds = 10
-				j.End.Sum.JitterMs = 1.5
-				j.End.Sum.LostPackets = 10
-				j.End.Sum.LostPercent = 0.5
-				return j
-			}(),
+			name:              "UDP result with jitter and loss",
+			iperfOut:          buildUDPJSON(),
 			config:            iperf.ClientConfig{Server: "localhost", Port: 5201, Protocol: "udp"},
 			direction:         "upload",
 			expectedBandwidth: 50.0,
@@ -1208,51 +1279,15 @@ func TestParseClientResult(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := iperf.ParseClientResult(&tt.iperfOut, &tt.config, tt.direction)
-
 			if result == nil {
 				t.Fatal("ParseClientResult returned nil")
 			}
-
-			if result.Bandwidth != tt.expectedBandwidth {
-				t.Errorf("Bandwidth = %v, want %v", result.Bandwidth, tt.expectedBandwidth)
-			}
-			if result.Direction != tt.expectedDirection {
-				t.Errorf("Direction = %q, want %q", result.Direction, tt.expectedDirection)
-			}
-			if result.Protocol != tt.expectedProtocol {
-				t.Errorf("Protocol = %q, want %q", result.Protocol, tt.expectedProtocol)
-			}
-			if result.Server != tt.config.Server {
-				t.Errorf("Server = %q, want %q", result.Server, tt.config.Server)
-			}
-			if result.Port != tt.config.Port {
-				t.Errorf("Port = %d, want %d", result.Port, tt.config.Port)
-			}
-			if result.Timestamp.IsZero() {
-				t.Error("Timestamp should not be zero")
-			}
-
-			// Check UDP-specific fields
+			validateParseResultBasic(t, result, &tt)
 			if tt.config.Protocol == "udp" {
-				if result.Jitter != tt.iperfOut.End.Sum.JitterMs {
-					t.Errorf("Jitter = %v, want %v", result.Jitter, tt.iperfOut.End.Sum.JitterMs)
-				}
-				if result.LostPackets != tt.iperfOut.End.Sum.LostPackets {
-					t.Errorf("LostPackets = %d, want %d", result.LostPackets, tt.iperfOut.End.Sum.LostPackets)
-				}
-				if result.LostPercent != tt.iperfOut.End.Sum.LostPercent {
-					t.Errorf("LostPercent = %v, want %v", result.LostPercent, tt.iperfOut.End.Sum.LostPercent)
-				}
+				validateUDPFields(t, result, &tt.iperfOut)
 			}
-
-			// Check bidirectional fields
 			if tt.direction == "bidirectional" {
-				if result.UploadBandwidth == 0 {
-					t.Error("UploadBandwidth should not be zero for bidirectional")
-				}
-				if result.DownloadBandwidth == 0 {
-					t.Error("DownloadBandwidth should not be zero for bidirectional")
-				}
+				validateBidirectionalFields(t, result)
 			}
 		})
 	}
@@ -1373,77 +1408,74 @@ func TestGetCacheDir(t *testing.T) {
 	}
 }
 
+// binaryTestCase defines a test case for binary validation.
+type binaryTestCase struct {
+	name        string
+	binaryPerm  os.FileMode // 0 means don't create binary
+	versionPerm os.FileMode // 0 means don't create version file
+	version     string
+	expected    bool
+}
+
+// getBinaryTestCases returns test cases for IsValidExtractedBinary.
+func getBinaryTestCases() []binaryTestCase {
+	return []binaryTestCase{
+		{name: "non-existent binary", expected: false},
+		{name: "missing version file", binaryPerm: 0o755, expected: false},
+		{
+			name:        "wrong version",
+			binaryPerm:  0o755,
+			versionPerm: 0o600,
+			version:     "1.0.0",
+			expected:    false,
+		},
+		{
+			name:        "non-executable binary",
+			binaryPerm:  0o600,
+			versionPerm: 0o600,
+			version:     iperf.EmbeddedVersion,
+			expected:    false,
+		},
+		{
+			name:        "valid binary and version",
+			binaryPerm:  0o755,
+			versionPerm: 0o600,
+			version:     iperf.EmbeddedVersion,
+			expected:    true,
+		},
+	}
+}
+
 // TestIsValidExtractedBinary tests the extracted binary validation.
-//
-
 func TestIsValidExtractedBinary(t *testing.T) {
-	tempDir := t.TempDir()
+	for i, tc := range getBinaryTestCases() {
+		t.Run(tc.name, func(t *testing.T) {
+			tempDir := t.TempDir()
+			binaryPath := filepath.Join(tempDir, "binary")
+			versionFile := filepath.Join(tempDir, "version")
 
-	t.Run("non-existent binary", func(t *testing.T) {
-		binaryPath := filepath.Join(tempDir, "nonexistent")
-		versionFile := filepath.Join(tempDir, "version")
-		result := iperf.IsValidExtractedBinary(binaryPath, versionFile)
-		if result {
-			t.Errorf("IsValidExtractedBinary() = %v, want false", result)
-		}
-	})
+			if tc.binaryPerm != 0 {
+				if err := os.WriteFile(binaryPath, []byte("test"), tc.binaryPerm); err != nil {
+					t.Fatalf("Failed to create test binary: %v", err)
+				}
+			}
+			if tc.versionPerm != 0 {
+				if err := os.WriteFile(versionFile, []byte(tc.version), tc.versionPerm); err != nil {
+					t.Fatalf("Failed to create version file: %v", err)
+				}
+			}
 
-	t.Run("missing version file", func(t *testing.T) {
-		binaryPath := filepath.Join(tempDir, "binary1")
-		if writeErr := os.WriteFile(binaryPath, []byte("test"), 0o755); writeErr != nil {
-			t.Fatalf("Failed to create test binary: %v", writeErr)
-		}
-		versionFile := filepath.Join(tempDir, "missing-version")
-		result := iperf.IsValidExtractedBinary(binaryPath, versionFile)
-		if result {
-			t.Errorf("IsValidExtractedBinary() = %v, want false", result)
-		}
-	})
-
-	t.Run("wrong version", func(t *testing.T) {
-		binaryPath := filepath.Join(tempDir, "binary2")
-		versionFile := filepath.Join(tempDir, "version2")
-		if writeErr := os.WriteFile(binaryPath, []byte("test"), 0o755); writeErr != nil {
-			t.Fatalf("Failed to create test binary: %v", writeErr)
-		}
-		if writeErr := os.WriteFile(versionFile, []byte("1.0.0"), 0o600); writeErr != nil {
-			t.Fatalf("Failed to create version file: %v", writeErr)
-		}
-		result := iperf.IsValidExtractedBinary(binaryPath, versionFile)
-		if result {
-			t.Errorf("IsValidExtractedBinary() = %v, want false", result)
-		}
-	})
-
-	t.Run("non-executable binary", func(t *testing.T) {
-		binaryPath := filepath.Join(tempDir, "binary3")
-		versionFile := filepath.Join(tempDir, "version3")
-		if writeErr := os.WriteFile(binaryPath, []byte("test"), 0o600); writeErr != nil {
-			t.Fatalf("Failed to create test binary: %v", writeErr)
-		}
-		if writeErr := os.WriteFile(versionFile, []byte(iperf.EmbeddedVersion), 0o600); writeErr != nil {
-			t.Fatalf("Failed to create version file: %v", writeErr)
-		}
-		result := iperf.IsValidExtractedBinary(binaryPath, versionFile)
-		if result {
-			t.Errorf("IsValidExtractedBinary() = %v, want false", result)
-		}
-	})
-
-	t.Run("valid binary and version", func(t *testing.T) {
-		binaryPath := filepath.Join(tempDir, "binary4")
-		versionFile := filepath.Join(tempDir, "version4")
-		if writeErr := os.WriteFile(binaryPath, []byte("test"), 0o755); writeErr != nil {
-			t.Fatalf("Failed to create test binary: %v", writeErr)
-		}
-		if writeErr := os.WriteFile(versionFile, []byte(iperf.EmbeddedVersion), 0o600); writeErr != nil {
-			t.Fatalf("Failed to create version file: %v", writeErr)
-		}
-		result := iperf.IsValidExtractedBinary(binaryPath, versionFile)
-		if !result {
-			t.Errorf("IsValidExtractedBinary() = %v, want true", result)
-		}
-	})
+			result := iperf.IsValidExtractedBinary(binaryPath, versionFile)
+			if result != tc.expected {
+				t.Errorf(
+					"test case %d: IsValidExtractedBinary() = %v, want %v",
+					i,
+					result,
+					tc.expected,
+				)
+			}
+		})
+	}
 }
 
 // TestGetPlatformBinaryMap tests the platform binary mapping.
@@ -1788,7 +1820,10 @@ func TestEmbeddedVersion(t *testing.T) {
 	// Should be a valid version format
 	parts := splitString(iperf.EmbeddedVersion, ".")
 	if len(parts) < 2 {
-		t.Errorf("EmbeddedVersion should have at least major.minor format: %q", iperf.EmbeddedVersion)
+		t.Errorf(
+			"EmbeddedVersion should have at least major.minor format: %q",
+			iperf.EmbeddedVersion,
+		)
 	}
 }
 

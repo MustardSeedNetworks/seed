@@ -26,7 +26,7 @@ const (
 // Time conversion and threshold constants.
 const (
 	// microsecondsPerMillisecond is the number of microseconds in one millisecond,
-	// used for converting time.Duration.Microseconds() to milliseconds.
+	// used for converting [time.Duration.Microseconds]() to milliseconds.
 	microsecondsPerMillisecond = 1000.0
 
 	// pingIntervalDelay is the delay between consecutive ping packets
@@ -378,7 +378,7 @@ func (t *Tester) StartContinuous(interval time.Duration, callback func(*PingStat
 }
 
 // StopContinuous stops continuous ping testing.
-// Uses sync.Once to prevent double-close panic (fixes #854).
+// Uses [sync.Once] to prevent double-close panic (fixes #854).
 func (t *Tester) StopContinuous() {
 	t.mu.Lock()
 	defer t.mu.Unlock()

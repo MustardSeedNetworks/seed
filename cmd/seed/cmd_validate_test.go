@@ -21,23 +21,23 @@ func TestValidationResultMarshalJSON(t *testing.T) {
 			name: "valid result with no errors or warnings",
 			result: ValidationResult{
 				Valid: true,
-				Path:  "/etc/seed/config.yaml",
+				Path:  "/etc/seed/config.json",
 			},
 			wantJSON: map[string]any{
 				"valid": true,
-				"path":  "/etc/seed/config.yaml",
+				"path":  "/etc/seed/config.json",
 			},
 		},
 		{
 			name: "invalid result with errors",
 			result: ValidationResult{
 				Valid:  false,
-				Path:   "/etc/seed/config.yaml",
+				Path:   "/etc/seed/config.json",
 				Errors: []string{"missing required field: server.port", "invalid interface name"},
 			},
 			wantJSON: map[string]any{
 				"valid":  false,
-				"path":   "/etc/seed/config.yaml",
+				"path":   "/etc/seed/config.json",
 				"errors": []any{"missing required field: server.port", "invalid interface name"},
 			},
 		},
@@ -45,12 +45,12 @@ func TestValidationResultMarshalJSON(t *testing.T) {
 			name: "valid result with warnings",
 			result: ValidationResult{
 				Valid:    true,
-				Path:     "/home/user/.config/seed/seed.yaml",
+				Path:     "/home/user/.config/seed/seed.json",
 				Warnings: []string{"no default interface configured", "JWT secret not set"},
 			},
 			wantJSON: map[string]any{
 				"valid":    true,
-				"path":     "/home/user/.config/seed/seed.yaml",
+				"path":     "/home/user/.config/seed/seed.json",
 				"warnings": []any{"no default interface configured", "JWT secret not set"},
 			},
 		},
@@ -58,14 +58,14 @@ func TestValidationResultMarshalJSON(t *testing.T) {
 			name: "invalid result with both errors and warnings",
 			result: ValidationResult{
 				Valid:    false,
-				Path:     "/var/lib/seed/config.yaml",
-				Errors:   []string{"parse error: invalid yaml"},
+				Path:     "/var/lib/seed/config.json",
+				Errors:   []string{"parse error: invalid json"},
 				Warnings: []string{"deprecated field used"},
 			},
 			wantJSON: map[string]any{
 				"valid":    false,
-				"path":     "/var/lib/seed/config.yaml",
-				"errors":   []any{"parse error: invalid yaml"},
+				"path":     "/var/lib/seed/config.json",
+				"errors":   []any{"parse error: invalid json"},
 				"warnings": []any{"deprecated field used"},
 			},
 		},
@@ -269,14 +269,14 @@ func TestOutputResultJSON(t *testing.T) {
 			name: "valid result",
 			result: ValidationResult{
 				Valid: true,
-				Path:  "/etc/seed/config.yaml",
+				Path:  "/etc/seed/config.json",
 			},
 		},
 		{
 			name: "invalid result with errors",
 			result: ValidationResult{
 				Valid:  false,
-				Path:   "/etc/seed/config.yaml",
+				Path:   "/etc/seed/config.json",
 				Errors: []string{"config error 1", "config error 2"},
 			},
 		},
@@ -284,7 +284,7 @@ func TestOutputResultJSON(t *testing.T) {
 			name: "result with warnings",
 			result: ValidationResult{
 				Valid:    true,
-				Path:     "/home/user/.config/seed/seed.yaml",
+				Path:     "/home/user/.config/seed/seed.json",
 				Warnings: []string{"warning 1"},
 			},
 		},
@@ -328,10 +328,10 @@ func TestOutputResultHumanReadable(t *testing.T) {
 			name: "valid result",
 			result: ValidationResult{
 				Valid: true,
-				Path:  "/etc/seed/config.yaml",
+				Path:  "/etc/seed/config.json",
 			},
 			wantSubstrings: []string{
-				"Config: /etc/seed/config.yaml",
+				"Config: /etc/seed/config.json",
 				"Status: VALID",
 			},
 		},
@@ -339,11 +339,11 @@ func TestOutputResultHumanReadable(t *testing.T) {
 			name: "invalid result",
 			result: ValidationResult{
 				Valid:  false,
-				Path:   "/etc/seed/config.yaml",
+				Path:   "/etc/seed/config.json",
 				Errors: []string{"test error"},
 			},
 			wantSubstrings: []string{
-				"Config: /etc/seed/config.yaml",
+				"Config: /etc/seed/config.json",
 				"Status: INVALID",
 				"ERROR: test error",
 			},
@@ -352,7 +352,7 @@ func TestOutputResultHumanReadable(t *testing.T) {
 			name: "result with warnings",
 			result: ValidationResult{
 				Valid:    true,
-				Path:     "/home/user/.config/seed/seed.yaml",
+				Path:     "/home/user/.config/seed/seed.json",
 				Warnings: []string{"test warning"},
 			},
 			wantSubstrings: []string{
@@ -418,7 +418,7 @@ func TestValidationResultJSONRoundTrip(t *testing.T) {
 		Valid:    false,
 		Errors:   []string{"error 1", "error 2"},
 		Warnings: []string{"warning 1", "warning 2", "warning 3"},
-		Path:     "/var/lib/seed/config.yaml",
+		Path:     "/var/lib/seed/config.json",
 	}
 
 	// Marshal to JSON
@@ -453,7 +453,7 @@ func TestValidationResultJSONOutput(t *testing.T) {
 
 	result := ValidationResult{
 		Valid:    true,
-		Path:     "/test/config.yaml",
+		Path:     "/test/config.json",
 		Errors:   nil,
 		Warnings: []string{"test warning"},
 	}
@@ -470,7 +470,7 @@ func TestValidationResultJSONOutput(t *testing.T) {
 	if !strings.Contains(output, `"valid": true`) {
 		t.Error("JSON output should contain valid field")
 	}
-	if !strings.Contains(output, `"path": "/test/config.yaml"`) {
+	if !strings.Contains(output, `"path": "/test/config.json"`) {
 		t.Error("JSON output should contain path field")
 	}
 	if !strings.Contains(output, `"warnings"`) {

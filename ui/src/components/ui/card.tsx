@@ -31,14 +31,14 @@
 import type React from "react";
 import type { ReactNode } from "react";
 import { card, cn, icon as iconTokens, layout, spacing } from "../../styles/theme";
-import { StatusBadge } from "./status-badge";
-import { getStatusConfig, type Status } from "./statusConfig";
+import { StatusBadge } from "./StatusBadge";
+import { getStatusConfig, type Status } from "./StatusConfig";
 
 // Re-export Status type for convenience (types don't affect react-refresh)
 export type { Status };
 
 // Type-safe size class getter
-function getSizeClass(size: "sm" | "md" | "lg") {
+function getSizeClass(size: "sm" | "md" | "lg"): string {
   switch (size) {
     case "sm":
       return "body-small";
@@ -46,6 +46,10 @@ function getSizeClass(size: "sm" | "md" | "lg") {
       return "body font-medium leading-snug";
     case "lg":
       return "body-large font-semibold leading-snug";
+    default: {
+      const _exhaustive: never = size;
+      return "body font-medium leading-snug";
+    }
   }
 }
 
@@ -62,7 +66,7 @@ interface CardProps {
   /** Card content */
   children: ReactNode;
   /** Additional CSS classes */
-  className?: string;
+  class?: string;
   /** Callback when card is clicked */
   onClick?: () => void;
   /** Optional icon displayed in header */
@@ -84,13 +88,13 @@ export function Card({
   subtitle,
   status,
   children,
-  className = "",
+  class: className = "",
   onClick,
   icon,
   headerAction,
   enableLiveRegion = false,
   ariaLabel,
-}: CardProps) {
+}: CardProps): React.JSX.Element {
   // Card is interactive if click handler is provided
   const isInteractive = typeof onClick === "function";
 
@@ -98,7 +102,7 @@ export function Card({
    * Handle keyboard activation (Enter/Space) for interactive cards.
    * Provides accessibility for keyboard navigation.
    */
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>): void => {
     if (!isInteractive) {
       return;
     }
@@ -139,11 +143,12 @@ export function Card({
     >
       <div class={layout.flex.between}>
         <div class={layout.inline.default}>
-          {icon && (
+          {/* biome-ignore lint/nursery/noMisusedPromises: icon is ReactNode, not a Promise - false positive */}
+          {icon ? (
             <span class={cn("text-text-muted shrink-0", iconTokens.size.md)} aria-hidden="true">
               {icon}
             </span>
-          )}
+          ) : null}
           <div class={layout.flex.col}>
             <h3
               class="heading-4 font-display"
@@ -151,7 +156,7 @@ export function Card({
             >
               {title}
             </h3>
-            {subtitle && <p class="caption leading-tight">{subtitle}</p>}
+            {subtitle ? <p class="caption leading-tight">{subtitle}</p> : null}
           </div>
         </div>
         <div class={layout.inline.default}>
@@ -190,7 +195,7 @@ export function CardValue({
   status,
   mono = false,
   allowWrap = false,
-}: CardValueProps) {
+}: CardValueProps): React.JSX.Element {
   const statusColorClass = status ? getStatusConfig(status).color : "text-text-primary";
   const textMods = [
     statusColorClass,
@@ -204,16 +209,16 @@ export function CardValue({
 
   return (
     <div>
-      {label && <p class={cn("caption", spacing.margin.bottom.tight)}>{label}</p>}
+      {label ? <p class={cn("caption", spacing.margin.bottom.tight)}>{label}</p> : null}
       <p class={cn(getSizeClass(size), textMods, layout.inline.tight)} data-testid="card-value">
-        {statusIcon && (
+        {statusIcon ? (
           <span class={cn(layout.flex.center, iconTokens.size.xs, "shrink-0 text-current")}>
             {statusIcon}
           </span>
-        )}
+        ) : null}
         <span class={cn(layout.inline.tight, "items-baseline")}>
           <span>{value}</span>
-          {unit && <span class="body-small font-normal text-text-muted">{unit}</span>}
+          {unit ? <span class="body-small font-normal text-text-muted">{unit}</span> : null}
         </span>
       </p>
     </div>
@@ -239,7 +244,7 @@ export function CardRow({
   wrap = false,
   mono = false,
   align = "right",
-}: CardRowProps) {
+}: CardRowProps): React.JSX.Element {
   const resolvedStatus = status ? getStatusConfig(status) : null;
   const statusIcon = resolvedStatus?.icon ?? null;
   const justifyClass = align === "right" ? "justify-end" : "justify-start";
@@ -267,9 +272,9 @@ export function CardRow({
         title={String(value)}
         data-testid="card-row-value"
       >
-        {statusIcon && (
+        {statusIcon ? (
           <span class={cn(iconTokens.size.xs, "shrink-0 text-current")}>{statusIcon}</span>
-        )}
+        ) : null}
         <span>{value}</span>
       </span>
     </div>
@@ -277,12 +282,12 @@ export function CardRow({
 }
 
 interface CardDividerProps {
-  className?: string;
+  class?: string;
 }
 
 /**
  * Horizontal divider line for separating card sections.
  */
-export function CardDivider({ className = "" }: CardDividerProps) {
+export function CardDivider({ class: className = "" }: CardDividerProps): React.JSX.Element {
   return <hr class={cn("border-surface-border", spacing.margin.top.content, className)} />;
 }

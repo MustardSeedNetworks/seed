@@ -11,12 +11,21 @@ import (
 	"github.com/google/uuid"
 )
 
+// Constants for discovery repository.
+const (
+	// ouiPrefixLength is the length of an OUI (Organizationally Unique Identifier) prefix in hex chars.
+	ouiPrefixLength = 6
+	// hoursPerDay is the number of hours in a day.
+	hoursPerDay = 24
+)
+
 // Error definitions for discovery repository.
 var (
-	ErrWiFiNetworkNotFound     = errors.New("wifi network not found")
-	ErrWiFiAccessPointNotFound = errors.New("wifi access point not found")
-	ErrNetworkProblemNotFound  = errors.New("network problem not found")
-	ErrOUIVendorNotFound       = errors.New("oui vendor not found")
+	ErrWiFiNetworkNotFound        = errors.New("wifi network not found")
+	ErrWiFiAccessPointNotFound    = errors.New("wifi access point not found")
+	ErrNetworkProblemNotFound     = errors.New("network problem not found")
+	ErrOUIVendorNotFound          = errors.New("oui vendor not found")
+	ErrChannelUtilizationNotFound = errors.New("channel utilization not found")
 )
 
 // DiscoveryRepository provides operations for unified discovery data.
@@ -106,7 +115,7 @@ func (r *DiscoveryRepository) ListWiFiNetworks(
 	query += " ORDER BY last_seen DESC"
 
 	if opts.Limit > 0 {
-		query += " LIMIT ?"
+		query += sqlLimit
 		args = append(args, opts.Limit)
 	}
 
@@ -324,7 +333,7 @@ func (r *DiscoveryRepository) ListWiFiAccessPoints(
 	query += " ORDER BY signal_dbm DESC"
 
 	if opts.Limit > 0 {
-		query += " LIMIT ?"
+		query += sqlLimit
 		args = append(args, opts.Limit)
 	}
 
@@ -565,7 +574,7 @@ func (r *DiscoveryRepository) ListNetworkProblems(
 	query += " ORDER BY CASE severity WHEN 'critical' THEN 1 WHEN 'warning' THEN 2 ELSE 3 END, last_seen DESC"
 
 	if opts.Limit > 0 {
-		query += " LIMIT ?"
+		query += sqlLimit
 		args = append(args, opts.Limit)
 	}
 
@@ -707,7 +716,7 @@ func (r *DiscoveryRepository) GetProblemSummary(ctx context.Context) (*ProblemSu
 	}
 
 	// Resolved today
-	startOfDay := time.Now().UTC().Truncate(24 * time.Hour).Format(time.RFC3339)
+	startOfDay := time.Now().UTC().Truncate(hoursPerDay * time.Hour).Format(time.RFC3339)
 	row = r.db.QueryRow(ctx, `SELECT COUNT(*) FROM network_problems WHERE resolved_at >= ?`, startOfDay)
 	if err = row.Scan(&summary.ResolvedToday); err != nil {
 		return nil, fmt.Errorf("failed to count resolved today: %w", err)
@@ -962,7 +971,7 @@ func (r *DiscoveryRepository) GetChannelUtilization(
 		&u.NonWiFiPercent, &u.RetryPercent, &u.APCount, &u.ClientCount, &recordedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
+			return nil, ErrChannelUtilizationNotFound
 		}
 		return nil, fmt.Errorf("failed to scan channel utilization: %w", err)
 	}
@@ -1028,7 +1037,7 @@ func (r *DiscoveryRepository) ListChannelUtilization(
 
 // Discovery Statistics
 
-// WiFiDiscoveryStats returns WiFi discovery statistics.
+// GetWiFiStats returns WiFi discovery statistics.
 func (r *DiscoveryRepository) GetWiFiStats(ctx context.Context) (*WiFiStatsDB, error) {
 	stats := &WiFiStatsDB{
 		SecurityBreakdown: make(map[string]int),
@@ -1120,7 +1129,7 @@ func normalizeOUI(oui string) string {
 	oui = strings.ReplaceAll(oui, ".", "")
 
 	// Take first 6 hex chars and format with colons
-	if len(oui) >= 6 {
+	if len(oui) >= ouiPrefixLength {
 		return oui[0:2] + ":" + oui[2:4] + ":" + oui[4:6]
 	}
 	return oui
@@ -1134,7 +1143,7 @@ func extractOUIPrefix(mac string) string {
 	mac = strings.ReplaceAll(mac, ".", "")
 
 	// Extract first 6 hex chars (OUI)
-	if len(mac) >= 6 {
+	if len(mac) >= ouiPrefixLength {
 		return mac[0:2] + ":" + mac[2:4] + ":" + mac[4:6]
 	}
 	return ""

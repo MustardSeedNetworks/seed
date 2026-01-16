@@ -111,7 +111,7 @@ var (
 	}()
 )
 
-// parseLevel converts a string level to slog.Level.
+// parseLevel converts a string level to [slog.Level].
 func parseLevel(level string) slog.Level {
 	switch strings.ToLower(level) {
 	case "debug":
@@ -193,7 +193,7 @@ func InitLogger(cfg *LoggingConfig) error {
 }
 
 // GetLogger returns the global logger instance.
-// If InitLogger hasn't been called, returns slog.Default().
+// If InitLogger hasn't been called, returns [slog.Default]().
 func GetLogger() *slog.Logger {
 	if logger := getLogger(); logger != nil {
 		return logger

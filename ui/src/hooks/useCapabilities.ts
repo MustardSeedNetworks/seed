@@ -52,7 +52,9 @@ export function useCapabilities(): UseCapabilitiesResult {
         throw new Error(`HTTP ${response.status}`);
       }
 
-      const data = await response.json();
+      const data: { icmpAvailable?: boolean } = await (response.json() as Promise<{
+        icmpAvailable?: boolean;
+      }>);
 
       setCapabilities({
         icmpAvailable: data.icmpAvailable === true,
@@ -68,7 +70,7 @@ export function useCapabilities(): UseCapabilitiesResult {
   }, []);
 
   useEffect(() => {
-    fetchCapabilities();
+    fetchCapabilities().catch(() => undefined);
   }, [fetchCapabilities]);
 
   return {

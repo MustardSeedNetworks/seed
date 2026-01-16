@@ -65,7 +65,7 @@ func TestEnsureConfigDirCreatesNestedDirectories(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	nestedPath := filepath.Join(tmpDir, "a", "b", "c", "config.yaml")
+	nestedPath := filepath.Join(tmpDir, "a", "b", "c", "config.json")
 
 	err := ensureConfigDir(nestedPath)
 	if err != nil {
@@ -83,7 +83,7 @@ func TestEnsureConfigDirWithExistingParent(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 
 	// Should not error for existing directory
 	err := ensureConfigDir(configPath)
@@ -96,7 +96,7 @@ func TestEnsureConfigDirCurrentDirectory(t *testing.T) {
 	t.Parallel()
 
 	// Test with just a filename (current directory)
-	err := ensureConfigDir("config.yaml")
+	err := ensureConfigDir("config.json")
 	if err != nil {
 		t.Errorf("ensureConfigDir should not error for current directory: %v", err)
 	}
@@ -105,7 +105,7 @@ func TestEnsureConfigDirCurrentDirectory(t *testing.T) {
 func TestEnsureConfigDirDotPath(t *testing.T) {
 	t.Parallel()
 
-	err := ensureConfigDir("./config.yaml")
+	err := ensureConfigDir("./config.json")
 	if err != nil {
 		t.Errorf("ensureConfigDir should not error for dot path: %v", err)
 	}

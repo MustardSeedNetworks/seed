@@ -453,7 +453,7 @@ func ValidateImageDataURL(dataURL string, maxSizeBytes int) error {
 // ErrPrivateIPBlocked is returned when a connection attempt to a private IP is blocked.
 var ErrPrivateIPBlocked = errors.New("connection to private/internal IP address blocked")
 
-// SafeTransport returns an http.Transport that blocks connections to private IP addresses.
+// SafeTransport returns an [http.Transport] that blocks connections to private IP addresses.
 // This prevents DNS rebinding attacks where a hostname resolves to a public IP during
 // validation but a private IP at connection time.
 func SafeTransport() *http.Transport {
@@ -500,7 +500,7 @@ func SafeTransport() *http.Transport {
 	}
 }
 
-// SafeHTTPClient returns an http.Client using SafeTransport.
+// SafeHTTPClient returns an [http.Client] using SafeTransport.
 func SafeHTTPClient(timeout time.Duration) *http.Client {
 	return &http.Client{
 		Transport: SafeTransport(),

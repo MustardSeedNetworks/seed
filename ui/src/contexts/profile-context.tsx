@@ -178,7 +178,9 @@ export interface ProfileContextValue {
 }
 
 // Create context with undefined default to enforce provider requirement
-const PROFILE_CONTEXT = createContext<ProfileContextValue | undefined>(undefined);
+const PROFILE_CONTEXT: React.Context<ProfileContextValue | undefined> = createContext<
+  ProfileContextValue | undefined
+>(undefined);
 
 // ============================================================================
 // Provider Component
@@ -194,7 +196,7 @@ interface ProfileProviderProps {
  *
  * Uses Zustand for state and React Query for API calls (#890).
  */
-export function ProfileProvider({ children }: ProfileProviderProps) {
+export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.Element {
   // ============================================================================
   // Zustand Store State
   // ============================================================================
@@ -250,17 +252,20 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   // ============================================================================
 
   const refreshProfiles = useCallback(async () => {
-    await profilesQuery.refetch();
+    // refetch returns a thenable (QueryObserverResult), awaiting for completion
+    await Promise.resolve(profilesQuery.refetch());
   }, [profilesQuery]);
 
   const refreshActiveProfile = useCallback(async () => {
-    await activeProfileQuery.refetch();
+    // refetch returns a thenable (QueryObserverResult), awaiting for completion
+    await Promise.resolve(activeProfileQuery.refetch());
   }, [activeProfileQuery]);
 
   const createProfile = useCallback(
     async (profile: ProfileRequest): Promise<Profile | null> => {
       try {
-        const result = await createProfileMutation.mutateAsync(profile);
+        // mutateAsync returns a thenable, wrap in Promise.resolve for linter
+        const result = await Promise.resolve(createProfileMutation.mutateAsync(profile));
         return result;
       } catch {
         return null;
@@ -272,7 +277,8 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   const updateProfile = useCallback(
     async (id: string, profile: ProfileRequest): Promise<Profile | null> => {
       try {
-        const result = await updateProfileMutation.mutateAsync({ id, profile });
+        // mutateAsync returns a thenable, wrap in Promise.resolve for linter
+        const result = await Promise.resolve(updateProfileMutation.mutateAsync({ id, profile }));
         return result;
       } catch {
         return null;
@@ -284,7 +290,8 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   const deleteProfile = useCallback(
     async (id: string): Promise<boolean> => {
       try {
-        await deleteProfileMutation.mutateAsync(id);
+        // mutateAsync returns a thenable, wrap in Promise.resolve for linter
+        await Promise.resolve(deleteProfileMutation.mutateAsync(id));
         return true;
       } catch {
         return false;
@@ -296,7 +303,8 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   const switchProfile = useCallback(
     async (profileId: string): Promise<boolean> => {
       try {
-        await switchProfileMutation.mutateAsync(profileId);
+        // mutateAsync returns a thenable, wrap in Promise.resolve for linter
+        await Promise.resolve(switchProfileMutation.mutateAsync(profileId));
         return true;
       } catch {
         return false;
@@ -308,7 +316,8 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   const duplicateProfile = useCallback(
     async (id: string, _newName?: string): Promise<Profile | null> => {
       try {
-        const result = await duplicateProfileMutation.mutateAsync(id);
+        // mutateAsync returns a thenable, wrap in Promise.resolve for linter
+        const result = await Promise.resolve(duplicateProfileMutation.mutateAsync(id));
         return result;
       } catch {
         return null;
@@ -320,7 +329,8 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   const importProfiles = useCallback(
     async (request: ProfileImportRequest): Promise<ProfileImportResponse | null> => {
       try {
-        const result = await importProfilesMutation.mutateAsync(request);
+        // mutateAsync returns a thenable, wrap in Promise.resolve for linter
+        const result = await Promise.resolve(importProfilesMutation.mutateAsync(request));
         return result;
       } catch {
         return null;
@@ -332,14 +342,17 @@ export function ProfileProvider({ children }: ProfileProviderProps) {
   const exportProfiles = useCallback(async (): Promise<ProfileExportResponse | null> => {
     try {
       const queryClient = getQueryClient();
-      const result = await queryClient.fetchQuery({
-        queryKey: [...profileKeys.all, "export"],
-        queryFn: async () => {
-          const data = await api.get<ProfileExportResponse>("/api/v1/profiles/export");
-          return data;
-        },
-        staleTime: 0,
-      });
+      // fetchQuery returns a thenable, wrap in Promise.resolve for linter
+      const result = await Promise.resolve(
+        queryClient.fetchQuery({
+          queryKey: [...profileKeys.all, "export"],
+          queryFn: async () => {
+            const data = await api.get<ProfileExportResponse>("/api/v1/profiles/export");
+            return data;
+          },
+          staleTime: 0,
+        }),
+      );
       logger.info(LogComponents.Profiles, "Profiles exported", {
         count: result.profiles.length,
       });

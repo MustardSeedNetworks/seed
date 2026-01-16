@@ -147,107 +147,114 @@ func TestLogRepositoryBatchCreate(t *testing.T) {
 	})
 }
 
+// logListTestCase defines a test case for log list filtering.
+type logListTestCase struct {
+	name      string
+	opts      database.LogListOptions
+	validate  func(t *testing.T, entries []*database.LogEntry)
+	minCount  int
+	exactSize int
+}
+
+// getLogListTestCases returns all filter test cases for log repository.
+func getLogListTestCases() []logListTestCase {
+	now := time.Now().UTC()
+	return []logListTestCase{
+		{
+			name:     "List all",
+			opts:     database.LogListOptions{},
+			minCount: 5,
+		},
+		{
+			name: "List with level filter",
+			opts: database.LogListOptions{Level: "ERROR"},
+			validate: func(t *testing.T, entries []*database.LogEntry) {
+				t.Helper()
+				for _, e := range entries {
+					if e.Level != "ERROR" {
+						t.Errorf("expected level ERROR, got %s", e.Level)
+					}
+				}
+			},
+		},
+		{
+			name: "List with layer filter",
+			opts: database.LogListOptions{Layer: "backend"},
+			validate: func(t *testing.T, entries []*database.LogEntry) {
+				t.Helper()
+				for _, e := range entries {
+					if e.Layer != "backend" {
+						t.Errorf("expected layer backend, got %s", e.Layer)
+					}
+				}
+			},
+		},
+		{
+			name: "List with component filter",
+			opts: database.LogListOptions{Component: "test"},
+			validate: func(t *testing.T, entries []*database.LogEntry) {
+				t.Helper()
+				for _, e := range entries {
+					if e.Component != "test" {
+						t.Errorf("expected component test, got %s", e.Component)
+					}
+				}
+			},
+		},
+		{
+			name: "List with request ID filter",
+			opts: database.LogListOptions{RequestID: "req-123"},
+			validate: func(t *testing.T, entries []*database.LogEntry) {
+				t.Helper()
+				for _, e := range entries {
+					if e.RequestID != "req-123" {
+						t.Errorf("expected requestID req-123, got %s", e.RequestID)
+					}
+				}
+			},
+		},
+		{
+			name:     "List with time range",
+			opts:     database.LogListOptions{Since: now.Add(-time.Hour), Until: now.Add(time.Hour)},
+			minCount: 1,
+		},
+		{
+			name:     "List with search",
+			opts:     database.LogListOptions{Search: "Batch log"},
+			minCount: 1,
+		},
+		{
+			name:      "List with pagination",
+			opts:      database.LogListOptions{Limit: 2, Offset: 1},
+			exactSize: 2,
+		},
+	}
+}
+
 func TestLogRepositoryList(t *testing.T) {
 	db, cleanup := testDB(t)
 	defer cleanup()
 
 	ctx := context.Background()
 	repo := db.Logs()
-
-	// Create test data
 	createTestLogEntries(ctx, t, repo)
 
-	t.Run("List all", func(t *testing.T) {
-		entries, err := repo.List(ctx, database.LogListOptions{})
-		require.NoError(t, err)
-		if len(entries) < 5 {
-			t.Errorf("expected at least 5 entries, got %d", len(entries))
-		}
-	})
+	for _, tc := range getLogListTestCases() {
+		t.Run(tc.name, func(t *testing.T) {
+			entries, err := repo.List(ctx, tc.opts)
+			require.NoError(t, err)
 
-	t.Run("List with level filter", func(t *testing.T) {
-		entries, err := repo.List(ctx, database.LogListOptions{
-			Level: "ERROR",
-		})
-		require.NoError(t, err)
-		for _, e := range entries {
-			if e.Level != "ERROR" {
-				t.Errorf("expected level ERROR, got %s", e.Level)
+			if tc.minCount > 0 && len(entries) < tc.minCount {
+				t.Errorf("expected at least %d entries, got %d", tc.minCount, len(entries))
 			}
-		}
-	})
-
-	t.Run("List with layer filter", func(t *testing.T) {
-		entries, err := repo.List(ctx, database.LogListOptions{
-			Layer: "backend",
-		})
-		require.NoError(t, err)
-		for _, e := range entries {
-			if e.Layer != "backend" {
-				t.Errorf("expected layer backend, got %s", e.Layer)
+			if tc.exactSize > 0 && len(entries) != tc.exactSize {
+				t.Errorf("expected exactly %d entries, got %d", tc.exactSize, len(entries))
 			}
-		}
-	})
-
-	t.Run("List with component filter", func(t *testing.T) {
-		entries, err := repo.List(ctx, database.LogListOptions{
-			Component: "test",
-		})
-		require.NoError(t, err)
-		for _, e := range entries {
-			if e.Component != "test" {
-				t.Errorf("expected component test, got %s", e.Component)
+			if tc.validate != nil {
+				tc.validate(t, entries)
 			}
-		}
-	})
-
-	t.Run("List with request ID filter", func(t *testing.T) {
-		entries, err := repo.List(ctx, database.LogListOptions{
-			RequestID: "req-123",
 		})
-		require.NoError(t, err)
-		for _, e := range entries {
-			if e.RequestID != "req-123" {
-				t.Errorf("expected requestID req-123, got %s", e.RequestID)
-			}
-		}
-	})
-
-	t.Run("List with time range", func(t *testing.T) {
-		now := time.Now().UTC()
-		since := now.Add(-time.Hour)
-		until := now.Add(time.Hour)
-
-		entries, err := repo.List(ctx, database.LogListOptions{
-			Since: since,
-			Until: until,
-		})
-		require.NoError(t, err)
-		if len(entries) < 1 {
-			t.Error("expected at least 1 entry in time range")
-		}
-	})
-
-	t.Run("List with search", func(t *testing.T) {
-		entries, err := repo.List(ctx, database.LogListOptions{
-			Search: "Batch log",
-		})
-		require.NoError(t, err)
-		if len(entries) < 1 {
-			t.Error("expected at least 1 entry matching search")
-		}
-	})
-
-	t.Run("List with pagination", func(t *testing.T) {
-		entries, err := repo.List(ctx, database.LogListOptions{
-			Limit:  2,
-			Offset: 1,
-		})
-		require.NoError(t, err)
-		if len(entries) != 2 {
-			t.Errorf("expected 2 entries with limit, got %d", len(entries))
-		}
-	})
+	}
 }
 
 func TestLogRepositoryGetRecent(t *testing.T) {

@@ -4,7 +4,7 @@
  * Manages WiFi channel graph data fetching and state
  * for the WiFi channel visualization component.
  *
- * Extracted from app.tsx to reduce component complexity (#889).
+ * Extracted from App.tsx to reduce component complexity (#889).
  */
 
 import { useCallback, useState } from "react";

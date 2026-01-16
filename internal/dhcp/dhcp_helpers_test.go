@@ -1375,7 +1375,7 @@ func TestUpdateExistingServerMACNotOverwritten(t *testing.T) {
 }
 
 // TestGetLeaseInfoUnsupportedPlatform tests that GetLeaseInfo returns nil for unsupported platforms.
-// This test verifies the behavior when the function is called - the actual return depends on runtime.GOOS.
+// This test verifies the behavior when the function is called - the actual return depends on [runtime.GOOS].
 func TestGetLeaseInfoUnsupportedPlatform(_ *testing.T) {
 	// This test just ensures no panic - return value depends on platform
 	info, err := dhcp.GetLeaseInfo("nonexistent999")

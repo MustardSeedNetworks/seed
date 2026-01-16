@@ -1,3 +1,4 @@
+// biome-ignore-all lint/nursery/useExplicitType: Generated Zod schemas - types are inferred by Zod
 import { z } from "zod";
 
 // Server configuration schema

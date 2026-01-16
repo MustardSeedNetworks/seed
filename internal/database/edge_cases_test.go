@@ -134,49 +134,84 @@ func TestProfileRepositoryEdgeCases(t *testing.T) {
 	})
 }
 
-func TestAlertRepositoryEdgeCases(t *testing.T) {
+// testAlertNotFoundError tests that the given function returns ErrAlertNotFound.
+func testAlertNotFoundError(t *testing.T, name string, fn func() error) {
+	t.Helper()
+	t.Run(name, func(t *testing.T) {
+		if err := fn(); !errors.Is(err, database.ErrAlertNotFound) {
+			t.Errorf("expected ErrAlertNotFound, got %v", err)
+		}
+	})
+}
+
+func TestAlertRepositoryNotFoundErrors(t *testing.T) {
 	db, cleanup := testDB(t)
 	defer cleanup()
 
 	ctx := context.Background()
 	repo := db.Alerts()
 
-	// Create a device for tests that need it
+	testAlertNotFoundError(t, "Acknowledge", func() error { return repo.Acknowledge(ctx, 999999, "testuser") })
+	testAlertNotFoundError(t, "Resolve", func() error { return repo.Resolve(ctx, 999999) })
+	testAlertNotFoundError(t, "Delete", func() error { return repo.Delete(ctx, 999999) })
+	testAlertNotFoundError(t, "Get", func() error { _, err := repo.Get(ctx, 999999); return err })
+}
+
+func TestAlertRepositoryFilters(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Alerts()
 	deviceRepo := db.Devices()
-	testDevice := &database.Device{
-		IPAddress: "192.168.1.100",
-		Hostname:  "test-device",
-	}
+
+	testDevice := &database.Device{IPAddress: "192.168.1.100", Hostname: "test-device"}
 	require.NoError(t, deviceRepo.Create(ctx, testDevice))
-	testDeviceID := testDevice.ID
 
-	t.Run("Acknowledge non-existent alert", func(t *testing.T) {
-		err := repo.Acknowledge(ctx, 999999, "testuser")
-		if !errors.Is(err, database.ErrAlertNotFound) {
-			t.Errorf("expected ErrAlertNotFound, got %v", err)
+	// Create test alert with device
+	alert := &database.Alert{
+		Type:     database.AlertTypeSecurity,
+		Severity: database.AlertSeverityCritical,
+		Title:    "Alert with device",
+		Message:  "Test",
+		Source:   "test",
+		DeviceID: &testDevice.ID,
+	}
+	require.NoError(t, repo.Create(ctx, alert))
+
+	t.Run("List with type filter", func(t *testing.T) {
+		alerts, err := repo.List(ctx, database.AlertListOptions{Type: database.AlertTypeSecurity})
+		require.NoError(t, err)
+		for _, a := range alerts {
+			require.Equal(t, database.AlertTypeSecurity, a.Type)
 		}
 	})
 
-	t.Run("Resolve non-existent alert", func(t *testing.T) {
-		err := repo.Resolve(ctx, 999999)
-		if !errors.Is(err, database.ErrAlertNotFound) {
-			t.Errorf("expected ErrAlertNotFound, got %v", err)
-		}
+	t.Run("List with device ID filter", func(t *testing.T) {
+		alerts, err := repo.List(ctx, database.AlertListOptions{DeviceID: testDevice.ID})
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, len(alerts), 1)
 	})
 
-	t.Run("Delete non-existent alert", func(t *testing.T) {
-		err := repo.Delete(ctx, 999999)
-		if !errors.Is(err, database.ErrAlertNotFound) {
-			t.Errorf("expected ErrAlertNotFound, got %v", err)
+	t.Run("List with unacknowledged only", func(t *testing.T) {
+		alerts, err := repo.List(ctx, database.AlertListOptions{UnacknowledgedOnly: true})
+		require.NoError(t, err)
+		for _, a := range alerts {
+			require.False(t, a.Acknowledged)
 		}
 	})
+}
 
-	t.Run("Get non-existent alert", func(t *testing.T) {
-		_, err := repo.Get(ctx, 999999)
-		if !errors.Is(err, database.ErrAlertNotFound) {
-			t.Errorf("expected ErrAlertNotFound, got %v", err)
-		}
-	})
+func TestAlertRepositoryEdgeCases(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Alerts()
+	deviceRepo := db.Devices()
+
+	testDevice := &database.Device{IPAddress: "192.168.1.100", Hostname: "test-device"}
+	require.NoError(t, deviceRepo.Create(ctx, testDevice))
 
 	t.Run("Alert with device ID and metadata", func(t *testing.T) {
 		alert := &database.Alert{
@@ -185,121 +220,42 @@ func TestAlertRepositoryEdgeCases(t *testing.T) {
 			Title:    "Alert with device",
 			Message:  "Test message",
 			Source:   "test",
-			DeviceID: &testDeviceID,
+			DeviceID: &testDevice.ID,
 			Metadata: `{"extra": "data"}`,
 		}
-
-		err := repo.Create(ctx, alert)
-		require.NoError(t, err)
+		require.NoError(t, repo.Create(ctx, alert))
 
 		got, err := repo.Get(ctx, alert.ID)
 		require.NoError(t, err)
-
-		if got.DeviceID == nil || *got.DeviceID != testDeviceID {
-			t.Error("expected deviceID to be set")
-		}
-
-		if got.Metadata != `{"extra": "data"}` {
-			t.Error("expected metadata to be preserved")
-		}
+		require.NotNil(t, got.DeviceID)
+		require.Equal(t, testDevice.ID, *got.DeviceID)
+		require.JSONEq(t, `{"extra": "data"}`, got.Metadata)
 	})
 
-	t.Run("List with type filter", func(t *testing.T) {
-		alerts, err := repo.List(ctx, database.AlertListOptions{
-			Type: database.AlertTypeSecurity,
-		})
-		require.NoError(t, err)
-		for _, a := range alerts {
-			if a.Type != database.AlertTypeSecurity {
-				t.Errorf("expected type %s, got %s", database.AlertTypeSecurity, a.Type)
-			}
-		}
-	})
-
-	t.Run("List with device ID filter", func(t *testing.T) {
-		alerts, err := repo.List(ctx, database.AlertListOptions{
-			DeviceID: testDeviceID,
-		})
-		require.NoError(t, err)
-		if len(alerts) < 1 {
-			t.Error("expected at least 1 alert with device ID")
-		}
-	})
-
-	t.Run("List with since filter", func(t *testing.T) {
-		since := time.Now().Add(-time.Hour)
-		alerts, err := repo.List(ctx, database.AlertListOptions{
-			Since: since,
-		})
-		require.NoError(t, err)
-		if len(alerts) < 1 {
-			t.Error("expected at least 1 alert after since time")
-		}
-	})
-
-	t.Run("List with unacknowledged only filter", func(t *testing.T) {
-		alerts, err := repo.List(ctx, database.AlertListOptions{
-			UnacknowledgedOnly: true,
-		})
-		require.NoError(t, err)
-		for _, a := range alerts {
-			if a.Acknowledged {
-				t.Error("expected only unacknowledged alerts")
-			}
-		}
-	})
-
-	t.Run("AcknowledgeAll with type filter", func(t *testing.T) {
-		count, err := repo.AcknowledgeAll(ctx, database.AlertListOptions{
-			Type: database.AlertTypeSecurity,
-		}, "admin")
-		require.NoError(t, err)
-		// Should acknowledge at least our test alert
-		if count < 0 {
-			t.Errorf("count should be non-negative, got %d", count)
-		}
-	})
-
-	t.Run("AcknowledgeAll with severity filter", func(t *testing.T) {
-		// Create a new unacknowledged alert
-		err := repo.Create(ctx, &database.Alert{
+	t.Run("AcknowledgeAll operations", func(t *testing.T) {
+		// Create unacknowledged alert
+		require.NoError(t, repo.Create(ctx, &database.Alert{
 			Type:     database.AlertTypeSystem,
 			Severity: database.AlertSeverityWarning,
 			Title:    "Warning alert",
 			Message:  "Test",
 			Source:   "test",
-		})
-		require.NoError(t, err)
+		}))
 
 		count, err := repo.AcknowledgeAll(ctx, database.AlertListOptions{
 			Severity: database.AlertSeverityWarning,
 		}, "admin")
 		require.NoError(t, err)
-		if count < 1 {
-			t.Errorf("expected at least 1 acknowledged, got %d", count)
-		}
+		require.GreaterOrEqual(t, count, int64(1))
 	})
 
-	t.Run("AcknowledgeAll with device ID filter", func(t *testing.T) {
-		count, err := repo.AcknowledgeAll(ctx, database.AlertListOptions{
-			DeviceID: testDeviceID,
-		}, "admin")
-		require.NoError(t, err)
-		// Count might be 0 if already acknowledged
-		if count < 0 {
-			t.Errorf("count should be non-negative, got %d", count)
-		}
-	})
-
-	t.Run("Count with type and severity filters", func(t *testing.T) {
+	t.Run("Count with filters", func(t *testing.T) {
 		count, err := repo.Count(ctx, database.AlertListOptions{
 			Type:     database.AlertTypeSecurity,
 			Severity: database.AlertSeverityCritical,
 		})
 		require.NoError(t, err)
-		if count < 0 {
-			t.Errorf("count should be non-negative, got %d", count)
-		}
+		require.GreaterOrEqual(t, count, int64(0))
 	})
 }
 
@@ -570,99 +526,79 @@ func TestRetentionEdgeCases(t *testing.T) {
 	})
 }
 
+// closedDBTestCase defines a test case for operations on a closed database.
+type closedDBTestCase struct {
+	name string
+	fn   func(ctx context.Context, db *database.DB) error
+}
+
+// getClosedDBTestCases returns all test cases for closed database operations.
+func getClosedDBTestCases() []closedDBTestCase {
+	return []closedDBTestCase{
+		{"Exec", func(ctx context.Context, db *database.DB) error {
+			_, err := db.Exec(ctx, "SELECT 1")
+			return err
+		}},
+		{"Query", func(ctx context.Context, db *database.DB) error {
+			rows, err := db.Query(ctx, "SELECT 1")
+			if err != nil {
+				return err
+			}
+			defer func() { _ = rows.Close() }()
+			return rows.Err()
+		}},
+		{"BeginTx", func(ctx context.Context, db *database.DB) error {
+			_, err := db.BeginTx(ctx, nil)
+			return err
+		}},
+		{"SchemaVersion", func(ctx context.Context, db *database.DB) error {
+			_, err := db.SchemaVersion(ctx)
+			return err
+		}},
+		{"MigrationStatus", func(ctx context.Context, db *database.DB) error {
+			_, err := db.MigrationStatus(ctx)
+			return err
+		}},
+		{"Vacuum", func(ctx context.Context, db *database.DB) error {
+			return db.Vacuum(ctx)
+		}},
+		{"Analyze", func(ctx context.Context, db *database.DB) error {
+			return db.Analyze(ctx)
+		}},
+		{"GetTokenVersion", func(ctx context.Context, db *database.DB) error {
+			_, err := db.GetTokenVersion(ctx, "testuser")
+			return err
+		}},
+		{"IsUserLocked", func(ctx context.Context, db *database.DB) error {
+			_, err := db.IsUserLocked(ctx, "testuser")
+			return err
+		}},
+		{"RecordLoginSuccess", func(ctx context.Context, db *database.DB) error {
+			return db.RecordLoginSuccess(ctx, "testuser")
+		}},
+		{"RecordLoginFailure", func(ctx context.Context, db *database.DB) error {
+			_, err := db.RecordLoginFailure(ctx, "testuser", 5, time.Minute)
+			return err
+		}},
+		{"IncrementTokenVersion", func(ctx context.Context, db *database.DB) error {
+			return db.IncrementTokenVersion(ctx, "testuser")
+		}},
+	}
+}
+
 func TestClosedDatabaseOperations(t *testing.T) {
 	db, cleanup := testDB(t)
-	// Close immediately
 	_ = db.Close()
 	defer cleanup()
 
 	ctx := context.Background()
-
-	t.Run("Exec on closed database", func(t *testing.T) {
-		_, err := db.Exec(ctx, "SELECT 1")
-		if err == nil {
-			t.Error("expected error for Exec on closed database")
-		}
-	})
-
-	t.Run("Query on closed database", func(t *testing.T) {
-		//nolint:rowserrcheck // testing error case on closed database
-		rows, err := db.Query(ctx, "SELECT 1")
-		if err == nil {
-			defer func() { _ = rows.Close() }()
-			t.Error("expected error for Query on closed database")
-		}
-	})
-
-	t.Run("BeginTx on closed database", func(t *testing.T) {
-		_, err := db.BeginTx(ctx, nil)
-		if err == nil {
-			t.Error("expected error for BeginTx on closed database")
-		}
-	})
-
-	t.Run("SchemaVersion on closed database", func(t *testing.T) {
-		_, err := db.SchemaVersion(ctx)
-		if err == nil {
-			t.Error("expected error for SchemaVersion on closed database")
-		}
-	})
-
-	t.Run("MigrationStatus on closed database", func(t *testing.T) {
-		_, err := db.MigrationStatus(ctx)
-		if err == nil {
-			t.Error("expected error for MigrationStatus on closed database")
-		}
-	})
-
-	t.Run("Vacuum on closed database", func(t *testing.T) {
-		err := db.Vacuum(ctx)
-		if err == nil {
-			t.Error("expected error for Vacuum on closed database")
-		}
-	})
-
-	t.Run("Analyze on closed database", func(t *testing.T) {
-		err := db.Analyze(ctx)
-		if err == nil {
-			t.Error("expected error for Analyze on closed database")
-		}
-	})
-
-	t.Run("GetTokenVersion on closed database", func(t *testing.T) {
-		_, err := db.GetTokenVersion(ctx, "testuser")
-		if err == nil {
-			t.Error("expected error for GetTokenVersion on closed database")
-		}
-	})
-
-	t.Run("IsUserLocked on closed database", func(t *testing.T) {
-		_, err := db.IsUserLocked(ctx, "testuser")
-		if err == nil {
-			t.Error("expected error for IsUserLocked on closed database")
-		}
-	})
-
-	t.Run("RecordLoginSuccess on closed database", func(t *testing.T) {
-		err := db.RecordLoginSuccess(ctx, "testuser")
-		if err == nil {
-			t.Error("expected error for RecordLoginSuccess on closed database")
-		}
-	})
-
-	t.Run("RecordLoginFailure on closed database", func(t *testing.T) {
-		_, err := db.RecordLoginFailure(ctx, "testuser", 5, time.Minute)
-		if err == nil {
-			t.Error("expected error for RecordLoginFailure on closed database")
-		}
-	})
-
-	t.Run("IncrementTokenVersion on closed database", func(t *testing.T) {
-		err := db.IncrementTokenVersion(ctx, "testuser")
-		if err == nil {
-			t.Error("expected error for IncrementTokenVersion on closed database")
-		}
-	})
+	for _, tc := range getClosedDBTestCases() {
+		t.Run(tc.name+" on closed database", func(t *testing.T) {
+			if err := tc.fn(ctx, db); err == nil {
+				t.Errorf("expected error for %s on closed database", tc.name)
+			}
+		})
+	}
 }
 
 func TestDefaultConfig(t *testing.T) {

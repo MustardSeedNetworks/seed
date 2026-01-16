@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -257,32 +255,32 @@ var ErrInsecureCredentials = errors.New("insecure default credentials detected")
 // All API handlers must use Lock/Unlock for writes or RLock/RUnlock for reads
 // to prevent concurrent config update race conditions.
 type Config struct {
-	mu               sync.RWMutex           `yaml:"-"                 json:"-"`       // Protects access
-	Version          int                    `yaml:"version"           json:"version"` // Schema version
-	Server           ServerConfig           `yaml:"server"            json:"server"`
-	Interface        InterfaceConfig        `yaml:"interface"         json:"interface"`
-	VLAN             VLANConfig             `yaml:"vlan"              json:"vlan"`
-	IP               IPConfig               `yaml:"ip"                json:"ip"`
-	Discovery        DiscoveryConfig        `yaml:"discovery"         json:"discovery"`
-	NetworkDiscovery NetworkDiscoveryConfig `yaml:"network_discovery" json:"networkDiscovery"`
-	DNS              DNSConfig              `yaml:"dns"               json:"dns"`
-	HealthChecks     HealthChecksConfig     `yaml:"health_checks"     json:"healthChecks"`
-	Speedtest        SpeedtestConfig        `yaml:"speedtest"         json:"speedtest"`
-	Iperf            IperfConfig            `yaml:"iperf"             json:"iperf"`
-	Thresholds       ThresholdsConfig       `yaml:"thresholds"        json:"thresholds"`
-	Auth             AuthConfig             `yaml:"auth"              json:"auth"`
-	Security         SecurityConfig         `yaml:"security"          json:"security"`
-	DHCP             DHCPConfig             `yaml:"dhcp"              json:"dhcp"`
-	SNMP             SNMPConfig             `yaml:"snmp"              json:"snmp"`
-	FABOptions       FABOptionsConfig       `yaml:"fab_options"       json:"fabOptions"`
-	DisplayOptions   DisplayOptionsConfig   `yaml:"display_options"   json:"displayOptions"`
-	Logging          LoggingConfig          `yaml:"logging"           json:"logging"`
-	MCP              MCPConfig              `yaml:"mcp"               json:"mcp"`
-	Database         DatabaseConfig         `yaml:"database"          json:"database"`
-	Pipeline         PipelineConfig         `yaml:"pipeline"          json:"pipeline"`
+	mu               sync.RWMutex           `json:"-"`       // Protects access
+	Version          int                    `json:"version"` // Schema version
+	Server           ServerConfig           `json:"server"`
+	Interface        InterfaceConfig        `json:"interface"`
+	VLAN             VLANConfig             `json:"vlan"`
+	IP               IPConfig               `json:"ip"`
+	Discovery        DiscoveryConfig        `json:"discovery"`
+	NetworkDiscovery NetworkDiscoveryConfig `json:"networkDiscovery"`
+	DNS              DNSConfig              `json:"dns"`
+	HealthChecks     HealthChecksConfig     `json:"healthChecks"`
+	Speedtest        SpeedtestConfig        `json:"speedtest"`
+	Iperf            IperfConfig            `json:"iperf"`
+	Thresholds       ThresholdsConfig       `json:"thresholds"`
+	Auth             AuthConfig             `json:"auth"`
+	Security         SecurityConfig         `json:"security"`
+	DHCP             DHCPConfig             `json:"dhcp"`
+	SNMP             SNMPConfig             `json:"snmp"`
+	FABOptions       FABOptionsConfig       `json:"fabOptions"`
+	DisplayOptions   DisplayOptionsConfig   `json:"displayOptions"`
+	Logging          LoggingConfig          `json:"logging"`
+	MCP              MCPConfig              `json:"mcp"`
+	Database         DatabaseConfig         `json:"database"`
+	Pipeline         PipelineConfig         `json:"pipeline"`
 	// Profile-specific settings (not in YAML config, only stored per-profile)
-	Link      LinkConfig      `yaml:"-" json:"link,omitzero"`
-	CableTest CableTestConfig `yaml:"-" json:"cableTest,omitzero"`
+	Link      LinkConfig      `json:"link,omitzero"`
+	CableTest CableTestConfig `json:"cableTest,omitzero"`
 }
 
 // LinkConfig contains interface speed/duplex settings (profile-specific).
@@ -302,99 +300,99 @@ type CableTestConfig struct {
 // PipelineConfig controls the sequential discovery pipeline.
 type PipelineConfig struct {
 	// Phases controls which pipeline phases are enabled.
-	Phases PipelinePhaseConfig `yaml:"phases" json:"phases"`
+	Phases PipelinePhaseConfig `json:"phases"`
 
 	// Timing controls rate limiting and delays.
-	Timing PipelineTimingConfig `yaml:"timing" json:"timing"`
+	Timing PipelineTimingConfig `json:"timing"`
 
 	// PortScan controls port scanning behavior and intensity.
-	PortScan PipelinePortScanConfig `yaml:"port_scan" json:"port_scan"`
+	PortScan PipelinePortScanConfig `json:"port_scan"`
 
 	// SNMPCollection controls extended SNMP MIB collection.
-	SNMPCollection PipelineSNMPConfig `yaml:"snmp_collection" json:"snmp_collection"`
+	SNMPCollection PipelineSNMPConfig `json:"snmp_collection"`
 
 	// Persistence controls how results are stored.
-	Persistence PipelinePersistenceConfig `yaml:"persistence" json:"persistence"`
+	Persistence PipelinePersistenceConfig `json:"persistence"`
 }
 
 // PipelinePhaseConfig controls which phases are executed.
 type PipelinePhaseConfig struct {
-	Enumeration      bool `yaml:"enumeration"       json:"enumeration"`       // Always true - core functionality
-	NameResolution   bool `yaml:"name_resolution"   json:"name_resolution"`   // Default: true
-	ServiceDiscovery bool `yaml:"service_discovery" json:"service_discovery"` // Default: false (passive only)
-	VulnAssessment   bool `yaml:"vuln_assessment"   json:"vuln_assessment"`   // Default: false
+	Enumeration      bool `json:"enumeration"`       // Always true - core functionality
+	NameResolution   bool `json:"name_resolution"`   // Default: true
+	ServiceDiscovery bool `json:"service_discovery"` // Default: false (passive only)
+	VulnAssessment   bool `json:"vuln_assessment"`   // Default: false
 }
 
 // PipelineTimingConfig controls scan rate limiting.
 type PipelineTimingConfig struct {
 	// ProbeDelay is the minimum time between probes to a single host.
-	ProbeDelay time.Duration `yaml:"probe_delay" json:"probe_delay"`
+	ProbeDelay time.Duration `json:"probe_delay"`
 
 	// HostDelay is the minimum time between starting scans of different hosts.
-	HostDelay time.Duration `yaml:"host_delay" json:"host_delay"`
+	HostDelay time.Duration `json:"host_delay"`
 
 	// MaxConcurrentHosts limits parallel host scanning.
-	MaxConcurrentHosts int `yaml:"max_concurrent_hosts" json:"max_concurrent_hosts"`
+	MaxConcurrentHosts int `json:"max_concurrent_hosts"`
 
 	// PhaseTimeout is the max duration for any single phase.
-	PhaseTimeout time.Duration `yaml:"phase_timeout" json:"phase_timeout"`
+	PhaseTimeout time.Duration `json:"phase_timeout"`
 
 	// Profile selects a pre-defined timing profile: polite, normal, aggressive.
-	Profile string `yaml:"profile" json:"profile"`
+	Profile string `json:"profile"`
 }
 
 // PipelinePortScanConfig controls port scanning intensity.
 type PipelinePortScanConfig struct {
 	// Intensity controls which ports are scanned: off, quick, standard, comprehensive, custom.
-	Intensity string `yaml:"intensity" json:"intensity"`
+	Intensity string `json:"intensity"`
 
 	// CustomPorts for Intensity="custom".
-	CustomPorts []int `yaml:"custom_ports,omitempty" json:"custom_ports,omitempty"`
+	CustomPorts []int `json:"custom_ports,omitempty"`
 
 	// BannerGrab enables service banner reading.
-	BannerGrab bool `yaml:"banner_grab" json:"banner_grab"`
+	BannerGrab bool `json:"banner_grab"`
 
 	// ConnectTimeout for port connections.
-	ConnectTimeout time.Duration `yaml:"connect_timeout" json:"connect_timeout"`
+	ConnectTimeout time.Duration `json:"connect_timeout"`
 }
 
 // PipelineSNMPConfig controls extended SNMP data collection.
 type PipelineSNMPConfig struct {
 	// Enabled turns on extended SNMP collection in Phase 3.
-	Enabled bool `yaml:"enabled" json:"enabled"`
+	Enabled bool `json:"enabled"`
 
 	// MIBs specifies which MIB groups to collect.
-	MIBs PipelineSNMPMIBs `yaml:"mibs" json:"mibs"`
+	MIBs PipelineSNMPMIBs `json:"mibs"`
 
 	// WalkTimeout per MIB walk operation.
-	WalkTimeout time.Duration `yaml:"walk_timeout" json:"walk_timeout"`
+	WalkTimeout time.Duration `json:"walk_timeout"`
 
 	// MaxOIDsPerRequest for bulk requests.
-	MaxOIDsPerRequest int `yaml:"max_oids_per_request" json:"max_oids_per_request"`
+	MaxOIDsPerRequest int `json:"max_oids_per_request"`
 }
 
 // PipelineSNMPMIBs controls which MIBs are collected.
 type PipelineSNMPMIBs struct {
-	System      bool `yaml:"system"       json:"system"`       // SNMPv2-MIB::system (always on)
-	Interfaces  bool `yaml:"interfaces"   json:"interfaces"`   // IF-MIB (ifTable, ifXTable)
-	IPAddresses bool `yaml:"ip_addresses" json:"ip_addresses"` // IP-MIB (ipAddrTable)
-	Routing     bool `yaml:"routing"      json:"routing"`      // IP-FORWARD-MIB
-	Bridge      bool `yaml:"bridge"       json:"bridge"`       // BRIDGE-MIB (MAC table)
-	Entity      bool `yaml:"entity"       json:"entity"`       // ENTITY-MIB (physical inventory)
-	LLDP        bool `yaml:"lldp"         json:"lldp"`         // LLDP-MIB
-	VLAN        bool `yaml:"vlan"         json:"vlan"`         // Q-BRIDGE-MIB
+	System      bool `json:"system"`       // SNMPv2-MIB::system (always on)
+	Interfaces  bool `json:"interfaces"`   // IF-MIB (ifTable, ifXTable)
+	IPAddresses bool `json:"ip_addresses"` // IP-MIB (ipAddrTable)
+	Routing     bool `json:"routing"`      // IP-FORWARD-MIB
+	Bridge      bool `json:"bridge"`       // BRIDGE-MIB (MAC table)
+	Entity      bool `json:"entity"`       // ENTITY-MIB (physical inventory)
+	LLDP        bool `json:"lldp"`         // LLDP-MIB
+	VLAN        bool `json:"vlan"`         // Q-BRIDGE-MIB
 }
 
 // PipelinePersistenceConfig controls database storage.
 type PipelinePersistenceConfig struct {
 	// StoreHistory keeps historical device state.
-	StoreHistory bool `yaml:"store_history" json:"store_history"`
+	StoreHistory bool `json:"store_history"`
 
 	// StalenessThreshold marks devices inactive after this duration.
-	StalenessThreshold time.Duration `yaml:"staleness_threshold" json:"staleness_threshold"`
+	StalenessThreshold time.Duration `json:"staleness_threshold"`
 
 	// PurgeAfter removes inactive devices after this duration.
-	PurgeAfter time.Duration `yaml:"purge_after" json:"purge_after"`
+	PurgeAfter time.Duration `json:"purge_after"`
 }
 
 // GetPhases implements discovery.ConfigPipelineAdapter.
@@ -445,15 +443,15 @@ func (c *PipelineConfig) GetPersistence() (bool, time.Duration, time.Duration) {
 // DatabaseConfig contains SQLite database configuration.
 type DatabaseConfig struct {
 	// Path to the SQLite database file. Default: data/seed.db
-	Path string `yaml:"path" json:"path"`
+	Path string `json:"path"`
 	// RetentionDays sets how many days of historical data to keep.
 	// 0 means keep forever.
-	RetentionDays int `yaml:"retention_days" json:"retention_days"`
+	RetentionDays int `json:"retention_days"`
 	// EnableWAL enables Write-Ahead Logging for better concurrency.
 	// Default: true.
-	EnableWAL bool `yaml:"enable_wal" json:"enable_wal"`
+	EnableWAL bool `json:"enable_wal"`
 	// MaxConnections sets the maximum number of database connections. Default: 10
-	MaxConnections int `yaml:"max_connections" json:"max_connections"`
+	MaxConnections int `json:"max_connections"`
 }
 
 // Lock acquires a write lock on the config.
@@ -565,59 +563,59 @@ func (c *Config) CopyFieldsFrom(src *Config) {
 
 // ServerConfig contains HTTP server settings.
 type ServerConfig struct {
-	Port             int    `yaml:"port"                         json:"port"`
-	HTTPS            bool   `yaml:"https"                        json:"https"`
-	HTTPRedirectPort int    `yaml:"http_redirect_port,omitempty" json:"http_redirect_port,omitempty"` // Port for HTTP→HTTPS redirect (0 = disabled, typically 80)
-	CertFile         string `yaml:"cert_file"                    json:"cert_file"`
-	KeyFile          string `yaml:"key_file"                     json:"key_file"`
+	Port             int    `json:"port"`
+	HTTPS            bool   `json:"https"`
+	HTTPRedirectPort int    `json:"http_redirect_port,omitempty"` // Port for HTTP→HTTPS redirect (0 = disabled, typically 80)
+	CertFile         string `json:"cert_file"`
+	KeyFile          string `json:"key_file"`
 	// Security fix #301: Removed LogAccessToken/LogAccessHeader - JWT authentication is sufficient
 
 	// ACME/Let's Encrypt automatic certificate management
-	ACME ACMEConfig `yaml:"acme,omitempty" json:"acme,omitzero"`
+	ACME ACMEConfig `json:"acme,omitzero"`
 }
 
 // ACMEConfig contains ACME/Let's Encrypt certificate settings.
 type ACMEConfig struct {
-	Enabled  bool   `yaml:"enabled"             json:"enabled"`             // Enable automatic certificate management
-	Domain   string `yaml:"domain"              json:"domain"`              // Domain name for the certificate (e.g., "seed.example.com")
-	Email    string `yaml:"email"               json:"email"`               // Contact email for Let's Encrypt notifications
-	CacheDir string `yaml:"cache_dir,omitempty" json:"cache_dir,omitempty"` // Directory to cache certificates (default: "certs/acme")
-	Staging  bool   `yaml:"staging,omitempty"   json:"staging,omitempty"`   // Use Let's Encrypt staging server (for testing)
+	Enabled  bool   `json:"enabled"`             // Enable automatic certificate management
+	Domain   string `json:"domain"`              // Domain name for the certificate (e.g., "seed.example.com")
+	Email    string `json:"email"`               // Contact email for Let's Encrypt notifications
+	CacheDir string `json:"cache_dir,omitempty"` // Directory to cache certificates (default: "certs/acme")
+	Staging  bool   `json:"staging,omitempty"`   // Use Let's Encrypt staging server (for testing)
 }
 
 // InterfaceConfig contains network interface settings.
 type InterfaceConfig struct {
-	Default          string        `yaml:"default"            json:"default"`
-	Fallbacks        []string      `yaml:"fallbacks"          json:"fallbacks"`
-	WiFi             string        `yaml:"wifi,omitempty"     json:"wifi,omitempty"`     // Separate WiFi interface (optional)
-	StartupRetries   int           `yaml:"startup_retries"    json:"startup_retries"`    // Number of retries when finding interface at startup (fixes #528)
-	StartupRetryWait time.Duration `yaml:"startup_retry_wait" json:"startup_retry_wait"` // Delay between startup retries (fixes #528)
+	Default          string        `json:"default"`
+	Fallbacks        []string      `json:"fallbacks"`
+	WiFi             string        `json:"wifi,omitempty"`     // Separate WiFi interface (optional)
+	StartupRetries   int           `json:"startup_retries"`    // Number of retries when finding interface at startup (fixes #528)
+	StartupRetryWait time.Duration `json:"startup_retry_wait"` // Delay between startup retries (fixes #528)
 }
 
 // VLANConfig contains VLAN settings.
 type VLANConfig struct {
-	Enabled bool `yaml:"enabled" json:"enabled"`
-	ID      int  `yaml:"id"      json:"id"`
+	Enabled bool `json:"enabled"`
+	ID      int  `json:"id"`
 }
 
 // IPConfig contains IP configuration settings.
 type IPConfig struct {
-	Mode   string    `yaml:"mode"             json:"mode"` // "dhcp" or "static"
-	Static *StaticIP `yaml:"static,omitempty" json:"static,omitempty"`
+	Mode   string    `json:"mode"` // "dhcp" or "static"
+	Static *StaticIP `json:"static,omitempty"`
 }
 
 // StaticIP contains static IP configuration.
 type StaticIP struct {
-	Address string   `yaml:"address" json:"address"`
-	Netmask string   `yaml:"netmask" json:"netmask"`
-	Gateway string   `yaml:"gateway" json:"gateway"`
-	DNS     []string `yaml:"dns"     json:"dns"`
+	Address string   `json:"address"`
+	Netmask string   `json:"netmask"`
+	Gateway string   `json:"gateway"`
+	DNS     []string `json:"dns"`
 }
 
 // DiscoveryConfig contains switch discovery settings.
 type DiscoveryConfig struct {
-	Protocol string        `yaml:"protocol" json:"protocol"` // "auto", "lldp", "cdp", "edp", "fdp"
-	Timeout  time.Duration `yaml:"timeout"  json:"timeout"`
+	Protocol string        `json:"protocol"` // "auto", "lldp", "cdp", "edp", "fdp"
+	Timeout  time.Duration `json:"timeout"`
 }
 
 // PortPreset defines commonly used port scanning presets.
@@ -646,52 +644,52 @@ const (
 // NetworkDiscoveryConfig contains network device discovery settings.
 type NetworkDiscoveryConfig struct {
 	// Options controls all discovery methods (no profile system).
-	Options DiscoveryOptions `yaml:"options" json:"options"`
+	Options DiscoveryOptions `json:"options"`
 
 	// Timing controls the "chattiness" of active scans.
-	Timing DiscoveryTiming `yaml:"timing" json:"timing"`
+	Timing DiscoveryTiming `json:"timing"`
 
 	// AdditionalSubnets to scan in full_scan or custom mode.
-	AdditionalSubnets []SubnetConfig `yaml:"additional_subnets" json:"additional_subnets"`
+	AdditionalSubnets []SubnetConfig `json:"additional_subnets"`
 
 	// Legacy fields (kept for backward compatibility, will be deprecated)
-	Enabled        bool          `yaml:"enabled"          json:"enabled"`          // Enable network discovery
-	ARPScanWorkers int           `yaml:"arp_scan_workers" json:"arp_scan_workers"` // Number of concurrent workers
-	PingTimeout    time.Duration `yaml:"ping_timeout"     json:"ping_timeout"`     // Timeout for each ping
-	ScanTimeout    time.Duration `yaml:"scan_timeout"     json:"scan_timeout"`     // Total scan timeout
-	AutoScan       bool          `yaml:"auto_scan"        json:"auto_scan"`        // Auto-scan on startup
-	ScanInterval   time.Duration `yaml:"scan_interval"    json:"scan_interval"`    // Interval for auto-scan
-	OUIFilePath    string        `yaml:"oui_file_path"    json:"oui_file_path"`    // Path to IEEE OUI file
-	OUIMaxAge      time.Duration `yaml:"oui_max_age"      json:"oui_max_age"`      // Max age before auto-download (0 = never auto-update)
+	Enabled        bool          `json:"enabled"`          // Enable network discovery
+	ARPScanWorkers int           `json:"arp_scan_workers"` // Number of concurrent workers
+	PingTimeout    time.Duration `json:"ping_timeout"`     // Timeout for each ping
+	ScanTimeout    time.Duration `json:"scan_timeout"`     // Total scan timeout
+	AutoScan       bool          `json:"auto_scan"`        // Auto-scan on startup
+	ScanInterval   time.Duration `json:"scan_interval"`    // Interval for auto-scan
+	OUIFilePath    string        `json:"oui_file_path"`    // Path to IEEE OUI file
+	OUIMaxAge      time.Duration `json:"oui_max_age"`      // Max age before auto-download (0 = never auto-update)
 
 	// Fingerprinting enables OS/service detection.
-	Fingerprinting FingerprintingConfig `yaml:"fingerprinting,omitempty" json:"fingerprinting,omitzero"`
+	Fingerprinting FingerprintingConfig `json:"fingerprinting,omitzero"`
 
 	// Profiler controls automatic device profiling.
-	Profiler DeviceProfilerConfig `yaml:"profiler,omitempty" json:"profiler,omitzero"`
+	Profiler DeviceProfilerConfig `json:"profiler,omitzero"`
 
 	// IPv6Enabled enables IPv6 Neighbor Discovery Protocol (NDP) scanning.
-	IPv6Enabled bool `yaml:"ipv6_enabled" json:"ipv6_enabled"`
+	IPv6Enabled bool `json:"ipv6_enabled"`
 }
 
 // DiscoveryOptions provides control over all discovery methods.
 type DiscoveryOptions struct {
-	PassiveProtocols PassiveProtocolConfig `yaml:"passive_protocols" json:"passiveProtocols"` // Granular passive protocol control
-	ARPScan          bool                  `yaml:"arp_scan"          json:"arpScan"`          // ARP-based host discovery
-	ICMPScan         bool                  `yaml:"icmp_scan"         json:"icmpScan"`         // ICMP ping sweep
-	PortScan         PortScanConfig        `yaml:"port_scan"         json:"portScan"`         // TCP/UDP port scanning
-	TCPProbe         TCPProbeConfig        `yaml:"tcp_probe"         json:"tcpProbe"`         // TCP probe settings
-	Traceroute       bool                  `yaml:"traceroute"        json:"traceroute"`       // Path discovery
-	SNMPQuery        bool                  `yaml:"snmp_query"        json:"snmpQuery"`        // SNMP device interrogation
+	PassiveProtocols PassiveProtocolConfig `json:"passiveProtocols"` // Granular passive protocol control
+	ARPScan          bool                  `json:"arpScan"`          // ARP-based host discovery
+	ICMPScan         bool                  `json:"icmpScan"`         // ICMP ping sweep
+	PortScan         PortScanConfig        `json:"portScan"`         // TCP/UDP port scanning
+	TCPProbe         TCPProbeConfig        `json:"tcpProbe"`         // TCP probe settings
+	Traceroute       bool                  `json:"traceroute"`       // Path discovery
+	SNMPQuery        bool                  `json:"snmpQuery"`        // SNMP device interrogation
 }
 
 // PortScanConfig controls port scanning behavior.
 type PortScanConfig struct {
-	Enabled       bool          `yaml:"enabled"        json:"enabled"`
-	Preset        PortPreset    `yaml:"preset"         json:"preset"`        // Port preset: common, secure, insecure, custom
-	TCPPorts      string        `yaml:"tcp_ports"      json:"tcpPorts"`      // Comma-separated ports or ranges (used when preset is "custom")
-	UDPPorts      string        `yaml:"udp_ports"      json:"udpPorts"`      // Comma-separated ports or ranges (used when preset is "custom")
-	BannerTimeout time.Duration `yaml:"banner_timeout" json:"bannerTimeout"` // Timeout for banner grabbing (default 2s)
+	Enabled       bool          `json:"enabled"`
+	Preset        PortPreset    `json:"preset"`        // Port preset: common, secure, insecure, custom
+	TCPPorts      string        `json:"tcpPorts"`      // Comma-separated ports or ranges (used when preset is "custom")
+	UDPPorts      string        `json:"udpPorts"`      // Comma-separated ports or ranges (used when preset is "custom")
+	BannerTimeout time.Duration `json:"bannerTimeout"` // Timeout for banner grabbing (default 2s)
 }
 
 // GetEffectivePorts returns the TCP and UDP ports based on the preset or custom settings.
@@ -730,135 +728,135 @@ const (
 
 // PassiveProtocolConfig provides granular control over passive discovery protocols.
 type PassiveProtocolConfig struct {
-	LLDP bool `yaml:"lldp" json:"lldp"` // IEEE 802.1AB Link Layer Discovery Protocol
-	CDP  bool `yaml:"cdp"  json:"cdp"`  // Cisco Discovery Protocol
-	EDP  bool `yaml:"edp"  json:"edp"`  // Extreme Discovery Protocol
-	NDP  bool `yaml:"ndp"  json:"ndp"`  // IPv6 Neighbor Discovery Protocol
+	LLDP bool `json:"lldp"` // IEEE 802.1AB Link Layer Discovery Protocol
+	CDP  bool `json:"cdp"`  // Cisco Discovery Protocol
+	EDP  bool `json:"edp"`  // Extreme Discovery Protocol
+	NDP  bool `json:"ndp"`  // IPv6 Neighbor Discovery Protocol
 }
 
 // TCPProbeConfig controls TCP connection probing behavior.
 type TCPProbeConfig struct {
-	Timeout time.Duration `yaml:"timeout" json:"timeout"` // Connection timeout (default 2s)
-	Workers int           `yaml:"workers" json:"workers"` // Concurrent probe workers (default 20)
+	Timeout time.Duration `json:"timeout"` // Connection timeout (default 2s)
+	Workers int           `json:"workers"` // Concurrent probe workers (default 20)
 }
 
 // DeviceProfilerConfig controls automatic device profiling.
 type DeviceProfilerConfig struct {
-	Enabled       bool          `yaml:"enabled"        json:"enabled"`        // Enable automatic profiling
-	Timeout       time.Duration `yaml:"timeout"        json:"timeout"`        // Profile operation timeout (default 2s)
-	MaxConcurrent int           `yaml:"max_concurrent" json:"max_concurrent"` // Max concurrent profile operations (default 5)
-	QuickPorts    []int         `yaml:"quick_ports"    json:"quick_ports"`    // Quick scan ports for profiling (default: 22,80,443,8080)
+	Enabled       bool          `json:"enabled"`        // Enable automatic profiling
+	Timeout       time.Duration `json:"timeout"`        // Profile operation timeout (default 2s)
+	MaxConcurrent int           `json:"max_concurrent"` // Max concurrent profile operations (default 5)
+	QuickPorts    []int         `json:"quick_ports"`    // Quick scan ports for profiling (default: 22,80,443,8080)
 }
 
 // DiscoveryTiming controls scan frequency and probe intervals.
 type DiscoveryTiming struct {
-	ProbeInterval  time.Duration `yaml:"probe_interval"  json:"probe_interval"`  // Time between sending probes (default 75ms)
-	RescanInterval time.Duration `yaml:"rescan_interval" json:"rescan_interval"` // Time between full rescans (default 10m)
-	Workers        int           `yaml:"workers"         json:"workers"`         // Concurrent scan workers (default 50)
+	ProbeInterval  time.Duration `json:"probe_interval"`  // Time between sending probes (default 75ms)
+	RescanInterval time.Duration `json:"rescan_interval"` // Time between full rescans (default 10m)
+	Workers        int           `json:"workers"`         // Concurrent scan workers (default 50)
 }
 
 // FingerprintingConfig controls OS and service detection.
 type FingerprintingConfig struct {
-	Enabled       bool `yaml:"enabled"        json:"enabled"`        // Enable fingerprinting
-	OSDetection   bool `yaml:"os_detection"   json:"os_detection"`   // TCP stack analysis for OS detection
-	ServiceProbes bool `yaml:"service_probes" json:"service_probes"` // Banner grabbing and service version detection
+	Enabled       bool `json:"enabled"`        // Enable fingerprinting
+	OSDetection   bool `json:"os_detection"`   // TCP stack analysis for OS detection
+	ServiceProbes bool `json:"service_probes"` // Banner grabbing and service version detection
 }
 
 // SubnetConfig represents a configured subnet for network discovery.
 type SubnetConfig struct {
-	CIDR    string `yaml:"cidr"    json:"cidr"`    // CIDR notation (e.g., "10.0.0.0/24")
-	Name    string `yaml:"name"    json:"name"`    // Friendly name (e.g., "Server VLAN")
-	Enabled bool   `yaml:"enabled" json:"enabled"` // Whether to scan this subnet
+	CIDR    string `json:"cidr"`    // CIDR notation (e.g., "10.0.0.0/24")
+	Name    string `json:"name"`    // Friendly name (e.g., "Server VLAN")
+	Enabled bool   `json:"enabled"` // Whether to scan this subnet
 }
 
 // DNSConfig contains DNS testing settings.
 type DNSConfig struct {
-	TestHostname string        `yaml:"test_hostname"     json:"test_hostname"`
-	Timeout      time.Duration `yaml:"timeout"           json:"timeout"`
-	Servers      []DNSServer   `yaml:"servers,omitempty" json:"servers,omitempty"` // Additional DNS servers to test
+	TestHostname string        `json:"test_hostname"`
+	Timeout      time.Duration `json:"timeout"`
+	Servers      []DNSServer   `json:"servers,omitempty"` // Additional DNS servers to test
 }
 
 // DNSServer represents a DNS server configuration.
 type DNSServer struct {
-	Address string `yaml:"address" json:"address"`
-	Enabled bool   `yaml:"enabled" json:"enabled"`
+	Address string `json:"address"`
+	Enabled bool   `json:"enabled"`
 }
 
 // HealthChecksConfig contains custom health check configurations.
 // This section corresponds to the "Health Checks" card in the UI.
 type HealthChecksConfig struct {
-	PingTargets        []PingTarget        `yaml:"ping_targets"    json:"ping_targets"`
-	TCPPorts           []TCPPortTest       `yaml:"tcp_ports"       json:"tcp_ports"`
-	UDPPorts           []UDPPortTest       `yaml:"udp_ports"       json:"udp_ports"`
-	HTTPEndpoints      []HTTPEndpoint      `yaml:"http_endpoints"  json:"http_endpoints"`
-	RTSPEndpoints      []RTSPEndpoint      `yaml:"rtsp_endpoints"  json:"rtsp_endpoints"`      // Issue #778
-	DICOMEndpoints     []DICOMEndpoint     `yaml:"dicom_endpoints" json:"dicom_endpoints"`     // Issue #777
-	HL7Endpoints       []HL7Endpoint       `                       json:"hl7_endpoints"`       // Health Checks 100x - Medical
-	FHIREndpoints      []FHIREndpoint      `                       json:"fhir_endpoints"`      // Health Checks 100x - Medical
-	SQLEndpoints       []SQLEndpoint       `                       json:"sql_endpoints"`       // Health Checks 100x - Enterprise
-	FileShareEndpoints []FileShareEndpoint `                       json:"fileshare_endpoints"` // Health Checks 100x - Enterprise
-	LDAPEndpoints      []LDAPEndpoint      `                       json:"ldap_endpoints"`      // Health Checks 100x - Enterprise
-	LTIEndpoints       []LTIEndpoint       `                       json:"lti_endpoints"`       // Health Checks 100x - Education
-	OPCUAEndpoints     []OPCUAEndpoint     `                       json:"opcua_endpoints"`     // Health Checks 100x - Manufacturing
-	ModbusEndpoints    []ModbusEndpoint    `                       json:"modbus_endpoints"`    // Health Checks 100x - Manufacturing
-	RunPerformance     bool                `yaml:"run_performance" json:"run_performance"`     // Master toggle for speedtest + iperf
-	RunSpeedtest       bool                `yaml:"run_speedtest"   json:"run_speedtest"`       // Toggle internet speed test
-	RunIperf           bool                `yaml:"run_iperf"       json:"run_iperf"`           // Toggle LAN iperf test
-	RunDiscovery       bool                `yaml:"run_discovery"   json:"run_discovery"`       // Toggle network discovery card
+	PingTargets        []PingTarget        `json:"ping_targets"`
+	TCPPorts           []TCPPortTest       `json:"tcp_ports"`
+	UDPPorts           []UDPPortTest       `json:"udp_ports"`
+	HTTPEndpoints      []HTTPEndpoint      `json:"http_endpoints"`
+	RTSPEndpoints      []RTSPEndpoint      `json:"rtsp_endpoints"`      // Issue #778
+	DICOMEndpoints     []DICOMEndpoint     `json:"dicom_endpoints"`     // Issue #777
+	HL7Endpoints       []HL7Endpoint       `json:"hl7_endpoints"`       // Health Checks 100x - Medical
+	FHIREndpoints      []FHIREndpoint      `json:"fhir_endpoints"`      // Health Checks 100x - Medical
+	SQLEndpoints       []SQLEndpoint       `json:"sql_endpoints"`       // Health Checks 100x - Enterprise
+	FileShareEndpoints []FileShareEndpoint `json:"fileshare_endpoints"` // Health Checks 100x - Enterprise
+	LDAPEndpoints      []LDAPEndpoint      `json:"ldap_endpoints"`      // Health Checks 100x - Enterprise
+	LTIEndpoints       []LTIEndpoint       `json:"lti_endpoints"`       // Health Checks 100x - Education
+	OPCUAEndpoints     []OPCUAEndpoint     `json:"opcua_endpoints"`     // Health Checks 100x - Manufacturing
+	ModbusEndpoints    []ModbusEndpoint    `json:"modbus_endpoints"`    // Health Checks 100x - Manufacturing
+	RunPerformance     bool                `json:"run_performance"`     // Master toggle for speedtest + iperf
+	RunSpeedtest       bool                `json:"run_speedtest"`       // Toggle internet speed test
+	RunIperf           bool                `json:"run_iperf"`           // Toggle LAN iperf test
+	RunDiscovery       bool                `json:"run_discovery"`       // Toggle network discovery card
 }
 
 // PingTarget represents a custom ping target.
 type PingTarget struct {
-	Name    string `yaml:"name"    json:"name"`
-	Host    string `yaml:"host"    json:"host"`
-	Enabled bool   `yaml:"enabled" json:"enabled"`
+	Name    string `json:"name"`
+	Host    string `json:"host"`
+	Enabled bool   `json:"enabled"`
 }
 
 // TCPPortTest represents a custom TCP port test.
 type TCPPortTest struct {
-	Name    string `yaml:"name"    json:"name"`
-	Host    string `yaml:"host"    json:"host"`
-	Port    int    `yaml:"port"    json:"port"`
-	Enabled bool   `yaml:"enabled" json:"enabled"`
+	Name    string `json:"name"`
+	Host    string `json:"host"`
+	Port    int    `json:"port"`
+	Enabled bool   `json:"enabled"`
 }
 
 // UDPPortTest represents a custom UDP port test.
 type UDPPortTest struct {
-	Name    string `yaml:"name"    json:"name"`
-	Host    string `yaml:"host"    json:"host"`
-	Port    int    `yaml:"port"    json:"port"`
-	Enabled bool   `yaml:"enabled" json:"enabled"`
+	Name    string `json:"name"`
+	Host    string `json:"host"`
+	Port    int    `json:"port"`
+	Enabled bool   `json:"enabled"`
 }
 
 // HTTPEndpoint represents a custom HTTP endpoint test.
 type HTTPEndpoint struct {
-	Name           string `yaml:"name"            json:"name"`
-	URL            string `yaml:"url"             json:"url"`
-	ExpectedStatus int    `yaml:"expected_status" json:"expected_status"`
-	Enabled        bool   `yaml:"enabled"         json:"enabled"`
+	Name           string `json:"name"`
+	URL            string `json:"url"`
+	ExpectedStatus int    `json:"expected_status"`
+	Enabled        bool   `json:"enabled"`
 	// HTTP enhancements (Health Checks 100x)
-	BodyMatch            string `yaml:"body_match"             json:"body_match,omitempty"`             // Regex/substring to match in response body
-	BodyMatchIsRegex     bool   `yaml:"body_match_is_regex"    json:"body_match_is_regex,omitempty"`    // Whether body_match is a regex
-	CheckSecurityHeaders bool   `yaml:"check_security_headers" json:"check_security_headers,omitempty"` // Check HSTS, CSP, etc.
-	FollowRedirects      bool   `yaml:"follow_redirects"       json:"follow_redirects,omitempty"`       // Track redirect chain
-	MaxRedirects         int    `yaml:"max_redirects"          json:"max_redirects,omitempty"`          // Max redirect hops (default 10)
+	BodyMatch            string `json:"body_match,omitempty"`             // Regex/substring to match in response body
+	BodyMatchIsRegex     bool   `json:"body_match_is_regex,omitempty"`    // Whether body_match is a regex
+	CheckSecurityHeaders bool   `json:"check_security_headers,omitempty"` // Check HSTS, CSP, etc.
+	FollowRedirects      bool   `json:"follow_redirects,omitempty"`       // Track redirect chain
+	MaxRedirects         int    `json:"max_redirects,omitempty"`          // Max redirect hops (default 10)
 }
 
 // RTSPEndpoint represents a custom RTSP stream test (Issue #778).
 type RTSPEndpoint struct {
-	Name    string `yaml:"name"    json:"name"`
-	URL     string `yaml:"url"     json:"url"` // rtsp://host:port/path
-	Enabled bool   `yaml:"enabled" json:"enabled"`
+	Name    string `json:"name"`
+	URL     string `json:"url"` // rtsp://host:port/path
+	Enabled bool   `json:"enabled"`
 }
 
 // DICOMEndpoint represents a custom DICOM server test (Issue #777).
 type DICOMEndpoint struct {
-	Name      string `yaml:"name"       json:"name"`
-	Host      string `yaml:"host"       json:"host"`
-	Port      int    `yaml:"port"       json:"port"`       // Default 104
-	CalledAE  string `yaml:"called_ae"  json:"called_ae"`  // Called Application Entity title
-	CallingAE string `yaml:"calling_ae" json:"calling_ae"` // Calling Application Entity title
-	Enabled   bool   `yaml:"enabled"    json:"enabled"`
+	Name      string `json:"name"`
+	Host      string `json:"host"`
+	Port      int    `json:"port"`       // Default 104
+	CalledAE  string `json:"called_ae"`  // Called Application Entity title
+	CallingAE string `json:"calling_ae"` // Calling Application Entity title
+	Enabled   bool   `json:"enabled"`
 }
 
 // HL7Endpoint represents a custom HL7 MLLP endpoint test (Health Checks 100x).
@@ -979,135 +977,135 @@ type ModbusEndpoint struct {
 
 // SpeedtestConfig contains speedtest settings.
 type SpeedtestConfig struct {
-	ServerID      string `yaml:"server_id"        json:"server_id"`        // Specific server ID (empty = auto)
-	AutoRunOnLink bool   `yaml:"auto_run_on_link" json:"auto_run_on_link"` // Run automatically when link comes up
+	ServerID      string `json:"server_id"`        // Specific server ID (empty = auto)
+	AutoRunOnLink bool   `json:"auto_run_on_link"` // Run automatically when link comes up
 }
 
 // IperfConfig contains iperf3 settings.
 type IperfConfig struct {
-	AutoRunOnLink bool   `yaml:"auto_run_on_link" json:"auto_run_on_link"` // Run automatically when link comes up
-	Server        string `yaml:"server"           json:"server"`           // iperf3 server address
-	Port          int    `yaml:"port"             json:"port"`             // iperf3 server port (default 5201)
-	Protocol      string `yaml:"protocol"         json:"protocol"`         // "tcp" or "udp"
-	Direction     string `yaml:"direction"        json:"direction"`        // "upload", "download", or "bidirectional"
-	Duration      int    `yaml:"duration"         json:"duration"`         // Test duration in seconds
-	ServerPort    int    `yaml:"server_port"      json:"server_port"`      // Port for local iperf server mode
-	EnableServer  bool   `yaml:"enable_server"    json:"enable_server"`    // Enable local iperf server mode
+	AutoRunOnLink bool   `json:"auto_run_on_link"` // Run automatically when link comes up
+	Server        string `json:"server"`           // iperf3 server address
+	Port          int    `json:"port"`             // iperf3 server port (default 5201)
+	Protocol      string `json:"protocol"`         // "tcp" or "udp"
+	Direction     string `json:"direction"`        // "upload", "download", or "bidirectional"
+	Duration      int    `json:"duration"`         // Test duration in seconds
+	ServerPort    int    `json:"server_port"`      // Port for local iperf server mode
+	EnableServer  bool   `json:"enable_server"`    // Enable local iperf server mode
 }
 
 // FABOptionsConfig contains FAB (Floating Action Button) settings.
 type FABOptionsConfig struct {
-	RunLink             bool `yaml:"run_link"              json:"run_link"`
-	RunSwitch           bool `yaml:"run_switch"            json:"run_switch"`
-	RunVLAN             bool `yaml:"run_vlan"              json:"run_vlan"`
-	RunIPConfig         bool `yaml:"run_ip_config"         json:"run_ip_config"`
-	RunGateway          bool `yaml:"run_gateway"           json:"run_gateway"`
-	RunDNS              bool `yaml:"run_dns"               json:"run_dns"`
-	RunHealthChecks     bool `yaml:"run_health_checks"     json:"run_health_checks"`
-	RunNetworkDiscovery bool `yaml:"run_network_discovery" json:"run_network_discovery"`
-	RunSpeedtest        bool `yaml:"run_speedtest"         json:"run_speedtest"`
-	RunIperf            bool `yaml:"run_iperf"             json:"run_iperf"`
-	RunPerformance      bool `yaml:"run_performance"       json:"run_performance"`
-	AutoScanOnLink      bool `yaml:"auto_scan_on_link"     json:"auto_scan_on_link"`
+	RunLink             bool `json:"run_link"`
+	RunSwitch           bool `json:"run_switch"`
+	RunVLAN             bool `json:"run_vlan"`
+	RunIPConfig         bool `json:"run_ip_config"`
+	RunGateway          bool `json:"run_gateway"`
+	RunDNS              bool `json:"run_dns"`
+	RunHealthChecks     bool `json:"run_health_checks"`
+	RunNetworkDiscovery bool `json:"run_network_discovery"`
+	RunSpeedtest        bool `json:"run_speedtest"`
+	RunIperf            bool `json:"run_iperf"`
+	RunPerformance      bool `json:"run_performance"`
+	AutoScanOnLink      bool `json:"auto_scan_on_link"`
 }
 
 // DisplayOptionsConfig contains display/UI settings.
 type DisplayOptionsConfig struct {
-	ShowPublicIP bool   `yaml:"show_public_ip" json:"show_public_ip"`
-	UnitSystem   string `yaml:"unit_system"    json:"unit_system"` // "sae" (feet) or "metric" (meters)
+	ShowPublicIP bool   `json:"show_public_ip"`
+	UnitSystem   string `json:"unit_system"` // "sae" (feet) or "metric" (meters)
 }
 
 // ThresholdsConfig contains all threshold settings.
 type ThresholdsConfig struct {
-	DHCP        DHCPThresholds   `yaml:"dhcp"         json:"dhcp"`
-	DNS         Threshold        `yaml:"dns"          json:"dns"`
-	Ping        Threshold        `yaml:"ping"         json:"ping"`
-	WiFi        WiFiThresholds   `yaml:"wifi"         json:"wifi"`
-	Link        LinkThresholds   `yaml:"link"         json:"link"`
-	CustomTests CustomThresholds `yaml:"custom_tests" json:"custom_tests"`
+	DHCP        DHCPThresholds   `json:"dhcp"`
+	DNS         Threshold        `json:"dns"`
+	Ping        Threshold        `json:"ping"`
+	WiFi        WiFiThresholds   `json:"wifi"`
+	Link        LinkThresholds   `json:"link"`
+	CustomTests CustomThresholds `json:"custom_tests"`
 }
 
 // LinkThresholds contains thresholds for link stability.
 type LinkThresholds struct {
-	FlapCount24h IntThreshold `yaml:"flap_count_24h" json:"flap_count_24h"` // Number of link flaps in 24h
+	FlapCount24h IntThreshold `json:"flap_count_24h"` // Number of link flaps in 24h
 }
 
 // IntThreshold contains warning and critical thresholds for integer values.
 type IntThreshold struct {
-	Warning  int `yaml:"warning"  json:"warning"`
-	Critical int `yaml:"critical" json:"critical"`
+	Warning  int `json:"warning"`
+	Critical int `json:"critical"`
 }
 
 // CustomThresholds contains thresholds for custom tests.
 type CustomThresholds struct {
-	Ping        Threshold            `yaml:"ping"         json:"ping"`         // Custom ping targets
-	TCP         Threshold            `yaml:"tcp"          json:"tcp"`          // TCP port tests
-	UDP         Threshold            `yaml:"udp"          json:"udp"`          // UDP port tests
-	HTTP        Threshold            `yaml:"http"         json:"http"`         // HTTP endpoint tests (total time)
-	HTTPTimings HTTPTimingThresholds `yaml:"http_timings" json:"http_timings"` // Per-phase HTTP timing thresholds
-	CertExpiry  CertExpiryThreshold  `yaml:"cert_expiry"  json:"cert_expiry"`  // Certificate expiry (days)
+	Ping        Threshold            `json:"ping"`         // Custom ping targets
+	TCP         Threshold            `json:"tcp"`          // TCP port tests
+	UDP         Threshold            `json:"udp"`          // UDP port tests
+	HTTP        Threshold            `json:"http"`         // HTTP endpoint tests (total time)
+	HTTPTimings HTTPTimingThresholds `json:"http_timings"` // Per-phase HTTP timing thresholds
+	CertExpiry  CertExpiryThreshold  `json:"cert_expiry"`  // Certificate expiry (days)
 }
 
 // HTTPTimingThresholds contains per-phase thresholds for HTTP requests.
 type HTTPTimingThresholds struct {
-	DNS  Threshold `yaml:"dns"  json:"dns"`  // DNS resolution time
-	TCP  Threshold `yaml:"tcp"  json:"tcp"`  // TCP connection time
-	TLS  Threshold `yaml:"tls"  json:"tls"`  // TLS handshake time
-	TTFB Threshold `yaml:"ttfb" json:"ttfb"` // Time to first byte (server response)
+	DNS  Threshold `json:"dns"`  // DNS resolution time
+	TCP  Threshold `json:"tcp"`  // TCP connection time
+	TLS  Threshold `json:"tls"`  // TLS handshake time
+	TTFB Threshold `json:"ttfb"` // Time to first byte (server response)
 }
 
 // CertExpiryThreshold contains certificate expiry thresholds in days.
 type CertExpiryThreshold struct {
-	Warning  int `yaml:"warning"  json:"warning"`  // Days until warning (e.g., 30)
-	Critical int `yaml:"critical" json:"critical"` // Days until critical (e.g., 7)
+	Warning  int `json:"warning"`  // Days until warning (e.g., 30)
+	Critical int `json:"critical"` // Days until critical (e.g., 7)
 }
 
 // DHCPThresholds contains DHCP-specific thresholds.
 type DHCPThresholds struct {
-	Total    Threshold `yaml:"total"     json:"total"`
-	PerPhase Threshold `yaml:"per_phase" json:"per_phase"`
+	Total    Threshold `json:"total"`
+	PerPhase Threshold `json:"per_phase"`
 }
 
 // Threshold contains warning and critical values.
 type Threshold struct {
-	Warning  time.Duration `yaml:"warning"  json:"warning"`
-	Critical time.Duration `yaml:"critical" json:"critical"`
+	Warning  time.Duration `json:"warning"`
+	Critical time.Duration `json:"critical"`
 }
 
 // WiFiThresholds contains WiFi signal thresholds.
 type WiFiThresholds struct {
-	Signal SignalThreshold `yaml:"signal" json:"signal"`
+	Signal SignalThreshold `json:"signal"`
 }
 
 // SignalThreshold contains signal strength thresholds in dBm.
 type SignalThreshold struct {
-	Warning  int `yaml:"warning"  json:"warning"`
-	Critical int `yaml:"critical" json:"critical"`
+	Warning  int `json:"warning"`
+	Critical int `json:"critical"`
 }
 
 // AuthConfig contains authentication settings.
 type AuthConfig struct {
-	DefaultUsername     string        `yaml:"default_username"      json:"default_username"`
-	DefaultPasswordHash string        `yaml:"default_password_hash" json:"default_password_hash"`
-	SessionTimeout      time.Duration `yaml:"session_timeout"       json:"session_timeout"`
-	JWTSecret           string        `yaml:"jwt_secret,omitempty"  json:"jwt_secret,omitempty"`
-	SSO                 SSOConfig     `yaml:"sso,omitempty"         json:"sso,omitzero"`
+	DefaultUsername     string        `json:"default_username"`
+	DefaultPasswordHash string        `json:"default_password_hash"`
+	SessionTimeout      time.Duration `json:"session_timeout"`
+	JWTSecret           string        `json:"jwt_secret,omitempty"`
+	SSO                 SSOConfig     `json:"sso,omitzero"`
 }
 
 // SSOConfig contains settings for all SSO providers.
 type SSOConfig struct {
-	Providers []SSOProviderConfig `yaml:"providers" json:"providers"`
+	Providers []SSOProviderConfig `json:"providers"`
 }
 
 // SSOProviderConfig contains settings for a single SSO provider.
 type SSOProviderConfig struct {
-	Enabled      bool     `yaml:"enabled"             json:"enabled"`
-	Name         string   `yaml:"name"                json:"name"`
-	ClientID     string   `yaml:"client_id"           json:"client_id"`
-	ClientSecret string   `yaml:"client_secret"       json:"client_secret"`
-	RedirectURL  string   `yaml:"redirect_url"        json:"redirect_url"`
-	Scopes       []string `yaml:"scopes,omitempty"    json:"scopes,omitempty"`    // Custom OAuth scopes (uses defaults if empty)
-	TenantID     string   `yaml:"tenant_id,omitempty" json:"tenant_id,omitempty"` // Microsoft only: "common", "organizations", "consumers", or specific tenant
+	Enabled      bool     `json:"enabled"`
+	Name         string   `json:"name"`
+	ClientID     string   `json:"client_id"`
+	ClientSecret string   `json:"client_secret"`
+	RedirectURL  string   `json:"redirect_url"`
+	Scopes       []string `json:"scopes,omitempty"`    // Custom OAuth scopes (uses defaults if empty)
+	TenantID     string   `json:"tenant_id,omitempty"` // Microsoft only: "common", "organizations", "consumers", or specific tenant
 }
 
 // SecurityConfig contains security settings for CORS and WebSocket origins.
@@ -1116,112 +1114,112 @@ type SecurityConfig struct {
 	// If empty, defaults to RFC 1918 private network ranges (192.168.x.x, 10.x.x.x, 172.16-31.x.x).
 	// Use "*" to allow all origins (not recommended for production).
 	// Examples: ["http://192.168.1.100:8080", "https://seed.local"]
-	AllowedOrigins []string `yaml:"allowed_origins" json:"allowed_origins"`
+	AllowedOrigins []string `json:"allowed_origins"`
 
 	// VulnerabilityScanning configures CVE vulnerability scanning for discovered devices.
-	VulnerabilityScanning VulnerabilityScanConfig `yaml:"vulnerability_scanning" json:"vulnerability_scanning"`
+	VulnerabilityScanning VulnerabilityScanConfig `json:"vulnerability_scanning"`
 }
 
 // DHCPConfig contains DHCP monitoring and security settings.
 type DHCPConfig struct {
 	// RogueDetection configures rogue DHCP server detection.
-	RogueDetection RogueDetectionConfig `yaml:"rogue_detection" json:"rogue_detection"`
+	RogueDetection RogueDetectionConfig `json:"rogue_detection"`
 }
 
 // RogueDetectionConfig contains settings for rogue DHCP server detection.
 type RogueDetectionConfig struct {
-	Enabled          bool     `yaml:"enabled"            json:"enabled"`
-	KnownServers     []string `yaml:"known_servers"      json:"known_servers"`
-	AlertOnDetection bool     `yaml:"alert_on_detection" json:"alert_on_detection"`
+	Enabled          bool     `json:"enabled"`
+	KnownServers     []string `json:"known_servers"`
+	AlertOnDetection bool     `json:"alert_on_detection"`
 }
 
 // VulnerabilityScanConfig contains settings for CVE vulnerability scanning.
 type VulnerabilityScanConfig struct {
-	Enabled           bool   `yaml:"enabled"            json:"enabled"`
-	CVEDatabase       string `yaml:"cve_database"       json:"cve_database"`       // "nvd" or "local"
-	NVDAPIKey         string `yaml:"nvd_api_key"        json:"nvd_api_key"`        // Optional NVD API key
-	UpdateInterval    int    `yaml:"update_interval"    json:"update_interval"`    // Seconds between updates
-	SeverityThreshold string `yaml:"severity_threshold" json:"severity_threshold"` // "low", "medium", "high", "critical"
-	MaxConcurrent     int    `yaml:"max_concurrent"     json:"max_concurrent"`     // Max concurrent vulnerability checks
-	AutoScan          bool   `yaml:"auto_scan"          json:"auto_scan"`          // Auto-scan after device discovery
+	Enabled           bool   `json:"enabled"`
+	CVEDatabase       string `json:"cve_database"`       // "nvd" or "local"
+	NVDAPIKey         string `json:"nvd_api_key"`        // Optional NVD API key
+	UpdateInterval    int    `json:"update_interval"`    // Seconds between updates
+	SeverityThreshold string `json:"severity_threshold"` // "low", "medium", "high", "critical"
+	MaxConcurrent     int    `json:"max_concurrent"`     // Max concurrent vulnerability checks
+	AutoScan          bool   `json:"auto_scan"`          // Auto-scan after device discovery
 }
 
 // SNMPConfig contains SNMP settings for device interrogation.
 type SNMPConfig struct {
 	// Communities is a list of SNMP v1/v2c community strings to try (read-only).
-	Communities []string `yaml:"communities" json:"communities"`
+	Communities []string `json:"communities"`
 
 	// V3Credentials for SNMP v3 authentication.
-	V3Credentials []SNMPv3Credential `yaml:"v3_credentials,omitempty" json:"v3_credentials,omitempty"`
+	V3Credentials []SNMPv3Credential `json:"v3_credentials,omitempty"`
 
 	// Timeout for SNMP queries.
-	Timeout time.Duration `yaml:"timeout" json:"timeout"`
+	Timeout time.Duration `json:"timeout"`
 
 	// Retries for failed SNMP queries.
-	Retries int `yaml:"retries" json:"retries"`
+	Retries int `json:"retries"`
 
 	// Port for SNMP queries (default 161).
-	Port int `yaml:"port" json:"port"`
+	Port int `json:"port"`
 
 	// MaxRepetitions controls how many OID values are returned per GetBulk request.
 	// Lower values reduce memory usage and network load on slow devices.
 	// Default: 10. Range: 1-50.
-	MaxRepetitions uint32 `yaml:"max_repetitions" json:"max_repetitions"`
+	MaxRepetitions uint32 `json:"max_repetitions"`
 }
 
 // SNMPv3Credential contains SNMP v3 authentication credentials.
 type SNMPv3Credential struct {
 	// Friendly name for this credential set.
-	Name string `yaml:"name" json:"name"`
+	Name string `json:"name"`
 	// Security name (user).
-	Username string `yaml:"username" json:"username"`
+	Username string `json:"username"`
 	// AuthProtocol specifies the authentication protocol.
 	// Supported values: "SHA", "SHA256", "SHA512", or "" for noAuth.
 	// Note: The "MD5" value is cryptographically broken and will be removed in the next major version.
 	// Use SHA256 or SHA512 instead for secure authentication.
 	// "SHA", "SHA256", "SHA512", or "" for noAuth (MD5 is deprecated).
-	AuthProtocol string `yaml:"auth_protocol" json:"auth_protocol"`
+	AuthProtocol string `json:"auth_protocol"`
 	// Authentication password.
-	AuthPassword string `yaml:"auth_password" json:"auth_password"`
+	AuthPassword string `json:"auth_password"`
 	// "DES", "AES", "AES192", "AES256", or "" for noPriv.
-	PrivProtocol string `yaml:"priv_protocol" json:"priv_protocol"`
+	PrivProtocol string `json:"priv_protocol"`
 	// Privacy password.
-	PrivPassword string `yaml:"priv_password" json:"priv_password"`
+	PrivPassword string `json:"priv_password"`
 	// Optional SNMP context.
-	ContextName string `yaml:"context_name" json:"context_name"`
+	ContextName string `json:"context_name"`
 	// "noAuthNoPriv", "authNoPriv", "authPriv".
-	SecurityLevel string `yaml:"security_level" json:"security_level"`
+	SecurityLevel string `json:"security_level"`
 }
 
 // LoggingConfig contains structured logging settings.
 type LoggingConfig struct {
-	Level      string `yaml:"level"       json:"level"`       // DEBUG, INFO, WARN, ERROR (default: INFO)
-	Format     string `yaml:"format"      json:"format"`      // text or json (default: text)
-	AddSource  bool   `yaml:"add_source"  json:"add_source"`  // Include file:line in logs
-	File       string `yaml:"file"        json:"file"`        // Log file path (empty = stdout only)
-	MaxSize    int    `yaml:"max_size"    json:"max_size"`    // Max MB per log file before rotation
-	MaxBackups int    `yaml:"max_backups" json:"max_backups"` // Number of old files to keep
-	MaxAge     int    `yaml:"max_age"     json:"max_age"`     // Days to keep old files
-	Compress   bool   `yaml:"compress"    json:"compress"`    // Compress rotated files
+	Level      string `json:"level"`       // DEBUG, INFO, WARN, ERROR (default: INFO)
+	Format     string `json:"format"`      // text or json (default: text)
+	AddSource  bool   `json:"add_source"`  // Include file:line in logs
+	File       string `json:"file"`        // Log file path (empty = stdout only)
+	MaxSize    int    `json:"max_size"`    // Max MB per log file before rotation
+	MaxBackups int    `json:"max_backups"` // Number of old files to keep
+	MaxAge     int    `json:"max_age"`     // Days to keep old files
+	Compress   bool   `json:"compress"`    // Compress rotated files
 }
 
 // MCPConfig contains MCP (Model Context Protocol) server settings.
 // MCP enables AI assistants like Claude to interact with the network diagnostics tools.
 type MCPConfig struct {
 	// Enabled enables the MCP server endpoint.
-	Enabled bool `yaml:"enabled" json:"enabled"`
+	Enabled bool `json:"enabled"`
 
 	// RequireAuth requires JWT authentication for MCP connections.
 	// When true, MCP requests must include a valid Bearer token.
-	RequireAuth bool `yaml:"require_auth" json:"require_auth"`
+	RequireAuth bool `json:"require_auth"`
 
 	// RateLimitPerMinute limits requests per minute per client.
 	// Set to 0 for unlimited (not recommended).
-	RateLimitPerMinute int `yaml:"rate_limit_per_minute" json:"rate_limit_per_minute"`
+	RateLimitPerMinute int `json:"rate_limit_per_minute"`
 
 	// AllowedTools lists specific tools to expose via MCP.
 	// Empty list means all tools are available.
-	AllowedTools []string `yaml:"allowed_tools,omitempty" json:"allowed_tools,omitempty"`
+	AllowedTools []string `json:"allowed_tools,omitempty"`
 }
 
 // DefaultConfig returns the default configuration.
@@ -1575,7 +1573,7 @@ func defaultPipelineConfig() PipelineConfig {
 	}
 }
 
-// Load reads configuration from a YAML file.
+// Load reads configuration from a JSON file.
 // If the config has no version or an older version, it will be updated.
 func Load(path string) (*Config, error) {
 	cfg := DefaultConfig()
@@ -1588,8 +1586,8 @@ func Load(path string) (*Config, error) {
 		return nil, fmt.Errorf("read config file: %w", err)
 	}
 
-	if unmarshalErr := yaml.Unmarshal(data, cfg); unmarshalErr != nil {
-		return nil, fmt.Errorf("parse config yaml: %w", unmarshalErr)
+	if unmarshalErr := json.Unmarshal(data, cfg); unmarshalErr != nil {
+		return nil, fmt.Errorf("parse config JSON: %w", unmarshalErr)
 	}
 
 	// Handle unversioned configs (version 0 means unversioned)
@@ -1602,7 +1600,7 @@ func Load(path string) (*Config, error) {
 	return cfg, nil
 }
 
-// LoadWithMigration reads configuration from a YAML file and applies any necessary migrations.
+// LoadWithMigration reads configuration from a JSON file and applies any necessary migrations.
 // It creates a backup before applying migrations.
 func LoadWithMigration(path string, migrator *MigrationManager) (*Config, bool, error) {
 	cfg := DefaultConfig()
@@ -1617,9 +1615,9 @@ func LoadWithMigration(path string, migrator *MigrationManager) (*Config, bool, 
 
 	// Check current version in file
 	var partial struct {
-		Version int `yaml:"version" json:"version"`
+		Version int `json:"version"`
 	}
-	if partialErr := yaml.Unmarshal(data, &partial); partialErr != nil {
+	if partialErr := json.Unmarshal(data, &partial); partialErr != nil {
 		return nil, false, fmt.Errorf("failed to parse config version: %w", partialErr)
 	}
 
@@ -1643,8 +1641,8 @@ func LoadWithMigration(path string, migrator *MigrationManager) (*Config, bool, 
 			Info("Migrated config", "from_version", partial.Version, "to_version", ConfigVersion)
 	}
 
-	if unmarshalErr := yaml.Unmarshal(data, cfg); unmarshalErr != nil {
-		return nil, false, fmt.Errorf("parse config yaml: %w", unmarshalErr)
+	if unmarshalErr := json.Unmarshal(data, cfg); unmarshalErr != nil {
+		return nil, false, fmt.Errorf("parse config JSON: %w", unmarshalErr)
 	}
 
 	// Ensure version is set
@@ -1907,14 +1905,14 @@ func (c *Config) validateLoggingConfig() []string {
 	return errs
 }
 
-// Save writes the configuration to a YAML file at the specified path.
+// Save writes the configuration to a JSON file at the specified path.
 // This method acquires a read lock to prevent data races during marshaling.
 func (c *Config) Save(path string) error {
 	c.mu.RLock()
-	data, err := yaml.Marshal(c)
+	data, err := json.MarshalIndent(c, "", "  ")
 	c.mu.RUnlock()
 	if err != nil {
-		return fmt.Errorf("marshal config yaml: %w", err)
+		return fmt.Errorf("marshal config JSON: %w", err)
 	}
 	if writeErr := os.WriteFile(path, data, 0o600); writeErr != nil {
 		return fmt.Errorf("write config file: %w", writeErr)
@@ -1922,7 +1920,7 @@ func (c *Config) Save(path string) error {
 	return nil
 }
 
-// SaveWithBackup writes the configuration to a YAML file, creating a backup first.
+// SaveWithBackup writes the configuration to a JSON file, creating a backup first.
 // This method acquires a read lock to prevent data races during marshaling.
 // Returns the backup info if a backup was created, or nil if the file didn't exist.
 func (c *Config) SaveWithBackup(path, backupDir string, maxBackups int) (*BackupInfo, error) {

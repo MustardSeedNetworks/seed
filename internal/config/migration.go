@@ -1,10 +1,9 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
-
-	"gopkg.in/yaml.v3"
 )
 
 // Migration represents a single config schema migration.
@@ -112,16 +111,16 @@ func (m *MigrationManager) ListMigrations() []Migration {
 	return m.migrations
 }
 
-// updateVersion updates the version field in YAML data without other changes.
+// updateVersion updates the version field in JSON data without other changes.
 func (m *MigrationManager) updateVersion(data []byte, newVersion int) ([]byte, error) {
 	// Parse, update version, and re-marshal
 	cfg := DefaultConfig()
-	if err := yaml.Unmarshal(data, cfg); err != nil {
+	if err := json.Unmarshal(data, cfg); err != nil {
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
 	cfg.Version = newVersion
 
-	newData, err := yaml.Marshal(cfg)
+	newData, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal updated config: %w", err)
 	}

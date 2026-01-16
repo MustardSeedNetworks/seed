@@ -479,7 +479,7 @@ func TestExportCmdFlagsRegistration(t *testing.T) {
 		t.Fatal("export-config command not found")
 	}
 
-	expectedFlags := []string{"output", "format", "no-redact"}
+	expectedFlags := []string{"output", "no-redact"}
 	for _, flag := range expectedFlags {
 		f := exportCmd.Flags().Lookup(flag)
 		if f == nil {
@@ -493,20 +493,10 @@ func TestExportCmdFlagsRegistration(t *testing.T) {
 		t.Error("export-config command should have -o shorthand for --output")
 	}
 
-	formatFlag := exportCmd.Flags().ShorthandLookup("f")
-	if formatFlag == nil {
-		t.Error("export-config command should have -f shorthand for --format")
-	}
-
 	// Verify defaults
 	outFlag := exportCmd.Flags().Lookup("output")
 	if outFlag != nil && outFlag.DefValue != "-" {
 		t.Error("--output flag should default to '-'")
-	}
-
-	fmtFlag := exportCmd.Flags().Lookup("format")
-	if fmtFlag != nil && fmtFlag.DefValue != "yaml" {
-		t.Error("--format flag should default to 'yaml'")
 	}
 }
 

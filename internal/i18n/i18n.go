@@ -35,7 +35,7 @@ var localesFS embed.FS
 // Bundle accessor functions use closure-encapsulated state for thread-safe singleton access.
 // getBundle returns the global i18n bundle instance.
 // setBundle sets the global i18n bundle instance.
-// getBundleOnce returns the sync.Once for lazy bundle initialization.
+// getBundleOnce returns the [sync.Once] for lazy bundle initialization.
 //
 //nolint:gochecknoglobals // Intentional thread-safe singleton using closure pattern
 var (

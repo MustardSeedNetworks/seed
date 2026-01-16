@@ -19,7 +19,29 @@ const (
 	period24h               = "24h"
 	period7d                = "7d"
 	period30d               = "30d"
+	defaultHistoryPeriod    = 24 * time.Hour
+	hoursIn6h               = 6
+	daysIn7d                = 7
+	daysIn30d               = 30
 )
+
+// parsePeriodDuration returns the duration for a period string.
+func parsePeriodDuration(period string) time.Duration {
+	switch period {
+	case period1h:
+		return time.Hour
+	case period6h:
+		return hoursIn6h * time.Hour
+	case period24h:
+		return defaultHistoryPeriod
+	case period7d:
+		return daysIn7d * defaultHistoryPeriod
+	case period30d:
+		return daysIn30d * defaultHistoryPeriod
+	default:
+		return defaultHistoryPeriod
+	}
+}
 
 // handleHealthCheckResults returns the latest health check results.
 func (s *Server) handleHealthCheckResults(w http.ResponseWriter, r *http.Request) {
@@ -86,23 +108,9 @@ func (s *Server) handleHealthCheckHistory(w http.ResponseWriter, r *http.Request
 	checkType := r.URL.Query().Get("type")
 	period := r.URL.Query().Get("period") // 1h, 6h, 24h, 7d, 30d
 
-	// Parse time range
+	// Parse time range using helper
 	end := time.Now()
-	start := end.Add(-24 * time.Hour) // Default to 24h
-
-	switch period {
-	case period1h:
-		start = end.Add(-1 * time.Hour)
-	case period6h:
-		start = end.Add(-6 * time.Hour)
-	case period24h:
-		start = end.Add(-24 * time.Hour)
-	case period7d:
-		start = end.Add(-7 * 24 * time.Hour)
-	case period30d:
-		start = end.Add(-30 * 24 * time.Hour)
-	}
-
+	start := end.Add(-parsePeriodDuration(period))
 	timeRange := database.TimeRange{Start: start, End: end}
 
 	// Decide whether to use raw data or rollups

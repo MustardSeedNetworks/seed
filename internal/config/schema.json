@@ -11,9 +11,9 @@
     "vlan",
     "ip",
     "discovery",
-    "network_discovery",
+    "networkDiscovery",
     "dns",
-    "health_checks",
+    "healthChecks",
     "speedtest",
     "iperf",
     "thresholds",
@@ -21,8 +21,8 @@
     "security",
     "dhcp",
     "snmp",
-    "fab_options",
-    "display_options",
+    "fabOptions",
+    "displayOptions",
     "logging",
     "mcp",
     "database",
@@ -51,13 +51,13 @@
     "discovery": {
       "$ref": "#/$defs/DiscoveryConfig"
     },
-    "network_discovery": {
+    "networkDiscovery": {
       "$ref": "#/$defs/NetworkDiscoveryConfig"
     },
     "dns": {
       "$ref": "#/$defs/DNSConfig"
     },
-    "health_checks": {
+    "healthChecks": {
       "$ref": "#/$defs/HealthChecksConfig"
     },
     "speedtest": {
@@ -81,10 +81,10 @@
     "snmp": {
       "$ref": "#/$defs/SNMPConfig"
     },
-    "fab_options": {
+    "fabOptions": {
       "$ref": "#/$defs/FABOptionsConfig"
     },
-    "display_options": {
+    "displayOptions": {
       "$ref": "#/$defs/DisplayOptionsConfig"
     },
     "logging": {
@@ -102,10 +102,18 @@
   },
   "$defs": {
     "Duration": {
-      "type": "string",
-      "description": "Go duration string (e.g., '5s', '100ms', '1h', '24h')",
-      "pattern": "^(-?\\d+(\\.\\d+)?(ns|us|µs|ms|s|m|h))+$",
-      "examples": ["5s", "100ms", "1h", "24h", "500ms", "30s"]
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Go duration string (e.g., '5s', '100ms', '1h', '24h')",
+          "pattern": "^(-?\\d+(\\.\\d+)?(ns|us|µs|ms|s|m|h))+$",
+          "examples": ["5s", "100ms", "1h", "24h", "500ms", "30s"]
+        },
+        {
+          "type": "integer",
+          "description": "Duration in nanoseconds (Go's default JSON serialization for time.Duration)"
+        }
+      ]
     },
     "PortNumber": {
       "type": "integer",
@@ -452,26 +460,26 @@
     "DiscoveryOptions": {
       "type": "object",
       "description": "Discovery options configuration (replaces profile-based selection).",
-      "required": ["arp_scan", "icmp_scan", "port_scan", "traceroute", "snmp_query"],
+      "required": ["arpScan", "icmpScan", "portScan", "traceroute", "snmpQuery"],
       "additionalProperties": false,
       "properties": {
-        "passive_protocols": {
+        "passiveProtocols": {
           "$ref": "#/$defs/PassiveProtocolConfig"
         },
-        "arp_scan": {
+        "arpScan": {
           "type": "boolean",
           "description": "ARP-based host discovery",
           "default": true
         },
-        "icmp_scan": {
+        "icmpScan": {
           "type": "boolean",
           "description": "ICMP ping sweep",
           "default": true
         },
-        "port_scan": {
+        "portScan": {
           "$ref": "#/$defs/PortScanConfig"
         },
-        "tcp_probe": {
+        "tcpProbe": {
           "$ref": "#/$defs/TCPProbeConfig"
         },
         "traceroute": {
@@ -479,7 +487,7 @@
           "description": "Path discovery",
           "default": false
         },
-        "snmp_query": {
+        "snmpQuery": {
           "type": "boolean",
           "description": "SNMP device interrogation",
           "default": false
@@ -569,7 +577,7 @@
     "PortScanConfig": {
       "type": "object",
       "description": "Port scanning configuration",
-      "required": ["enabled", "preset", "tcp_ports", "udp_ports"],
+      "required": ["enabled", "preset", "tcpPorts", "udpPorts"],
       "additionalProperties": false,
       "properties": {
         "enabled": {
@@ -583,17 +591,17 @@
           "enum": ["common", "secure", "insecure", "custom"],
           "default": "common"
         },
-        "tcp_ports": {
+        "tcpPorts": {
           "type": "string",
           "description": "Comma-separated TCP ports or ranges (used when preset is 'custom')",
           "default": ""
         },
-        "udp_ports": {
+        "udpPorts": {
           "type": "string",
           "description": "Comma-separated UDP ports or ranges (used when preset is 'custom')",
           "default": ""
         },
-        "banner_timeout": {
+        "bannerTimeout": {
           "$ref": "#/$defs/Duration",
           "description": "Timeout for banner grabbing",
           "default": "2s"
@@ -777,6 +785,70 @@
           },
           "default": []
         },
+        "hl7_endpoints": {
+          "type": ["array", "null"],
+          "description": "HL7 endpoint tests (Health Checks 100x - Medical)",
+          "items": {
+            "$ref": "#/$defs/HL7Endpoint"
+          },
+          "default": []
+        },
+        "fhir_endpoints": {
+          "type": ["array", "null"],
+          "description": "FHIR R4 endpoint tests (Health Checks 100x - Medical)",
+          "items": {
+            "$ref": "#/$defs/FHIREndpoint"
+          },
+          "default": []
+        },
+        "sql_endpoints": {
+          "type": ["array", "null"],
+          "description": "SQL database tests (Health Checks 100x - Enterprise)",
+          "items": {
+            "$ref": "#/$defs/SQLEndpoint"
+          },
+          "default": []
+        },
+        "fileshare_endpoints": {
+          "type": ["array", "null"],
+          "description": "File share tests (Health Checks 100x - Enterprise)",
+          "items": {
+            "$ref": "#/$defs/FileShareEndpoint"
+          },
+          "default": []
+        },
+        "ldap_endpoints": {
+          "type": ["array", "null"],
+          "description": "LDAP endpoint tests (Health Checks 100x - Enterprise)",
+          "items": {
+            "$ref": "#/$defs/LDAPEndpoint"
+          },
+          "default": []
+        },
+        "lti_endpoints": {
+          "type": ["array", "null"],
+          "description": "LTI/LMS endpoint tests (Health Checks 100x - Education)",
+          "items": {
+            "$ref": "#/$defs/LTIEndpoint"
+          },
+          "default": []
+        },
+        "opcua_endpoints": {
+          "type": ["array", "null"],
+          "description": "OPC-UA endpoint tests (Health Checks 100x - Manufacturing)",
+          "items": {
+            "$ref": "#/$defs/OPCUAEndpoint"
+          },
+          "default": []
+        },
+        "modbus_endpoints": {
+          "type": ["array", "null"],
+          "description": "Modbus TCP endpoint tests (Health Checks 100x - Manufacturing)",
+          "items": {
+            "$ref": "#/$defs/ModbusEndpoint"
+          },
+          "default": []
+        },
         "run_performance": {
           "type": "boolean",
           "description": "Master toggle for speedtest + iperf",
@@ -952,6 +1024,442 @@
           "type": "boolean",
           "description": "Enable this test",
           "default": true
+        }
+      }
+    },
+    "HL7Endpoint": {
+      "type": "object",
+      "description": "HL7 endpoint test (Health Checks 100x - Medical)",
+      "required": ["name", "host", "port", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this HL7 endpoint"
+        },
+        "host": {
+          "type": "string",
+          "description": "Hostname or IP address"
+        },
+        "port": {
+          "$ref": "#/$defs/PortNumber",
+          "description": "HL7 port (default: 2575)"
+        },
+        "sending_app": {
+          "type": "string",
+          "description": "Sending application name"
+        },
+        "sending_facility": {
+          "type": "string",
+          "description": "Sending facility name"
+        },
+        "receiving_app": {
+          "type": "string",
+          "description": "Receiving application name"
+        },
+        "receiving_facility": {
+          "type": "string",
+          "description": "Receiving facility name"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this test",
+          "default": true
+        },
+        "criticality": {
+          "type": "integer",
+          "description": "1-10 scale for health scoring",
+          "minimum": 1,
+          "maximum": 10
+        }
+      }
+    },
+    "FHIREndpoint": {
+      "type": "object",
+      "description": "FHIR R4 endpoint test (Health Checks 100x - Medical)",
+      "required": ["name", "base_url", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this FHIR endpoint"
+        },
+        "base_url": {
+          "type": "string",
+          "description": "FHIR server base URL",
+          "format": "uri"
+        },
+        "auth_type": {
+          "type": "string",
+          "description": "Authentication type",
+          "enum": ["none", "basic", "bearer", "oauth2"],
+          "default": "none"
+        },
+        "username": {
+          "type": "string",
+          "description": "Username for basic auth"
+        },
+        "password": {
+          "type": "string",
+          "description": "Password for basic auth"
+        },
+        "bearer_token": {
+          "type": "string",
+          "description": "Bearer token"
+        },
+        "client_id": {
+          "type": "string",
+          "description": "OAuth2 client ID"
+        },
+        "client_secret": {
+          "type": "string",
+          "description": "OAuth2 client secret"
+        },
+        "token_url": {
+          "type": "string",
+          "description": "OAuth2 token endpoint",
+          "format": "uri"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this test",
+          "default": true
+        },
+        "criticality": {
+          "type": "integer",
+          "description": "1-10 scale for health scoring",
+          "minimum": 1,
+          "maximum": 10
+        }
+      }
+    },
+    "SQLEndpoint": {
+      "type": "object",
+      "description": "SQL database test (Health Checks 100x - Enterprise)",
+      "required": ["name", "driver", "host", "port", "database", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this SQL endpoint"
+        },
+        "driver": {
+          "type": "string",
+          "description": "Database driver",
+          "enum": ["mysql", "postgres", "sqlserver", "oracle", "sqlite"]
+        },
+        "host": {
+          "type": "string",
+          "description": "Hostname or IP address"
+        },
+        "port": {
+          "$ref": "#/$defs/PortNumber",
+          "description": "Database port"
+        },
+        "database": {
+          "type": "string",
+          "description": "Database name"
+        },
+        "username": {
+          "type": "string",
+          "description": "Username"
+        },
+        "password": {
+          "type": "string",
+          "description": "Password"
+        },
+        "ssl_mode": {
+          "type": "string",
+          "description": "SSL mode",
+          "enum": ["disable", "require", "verify-ca", "verify-full"]
+        },
+        "test_query": {
+          "type": "string",
+          "description": "Custom query to execute (default: SELECT 1)"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this test",
+          "default": true
+        },
+        "criticality": {
+          "type": "integer",
+          "description": "1-10 scale for health scoring",
+          "minimum": 1,
+          "maximum": 10
+        }
+      }
+    },
+    "FileShareEndpoint": {
+      "type": "object",
+      "description": "File share test (SMB/CIFS or NFS)",
+      "required": ["name", "protocol", "host", "share", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this file share"
+        },
+        "protocol": {
+          "type": "string",
+          "description": "File share protocol",
+          "enum": ["smb", "nfs"]
+        },
+        "host": {
+          "type": "string",
+          "description": "Hostname or IP address"
+        },
+        "share": {
+          "type": "string",
+          "description": "Share name (SMB) or export path (NFS)"
+        },
+        "path": {
+          "type": "string",
+          "description": "Optional subdirectory path"
+        },
+        "username": {
+          "type": "string",
+          "description": "SMB authentication username"
+        },
+        "password": {
+          "type": "string",
+          "description": "SMB authentication password"
+        },
+        "domain": {
+          "type": "string",
+          "description": "SMB domain"
+        },
+        "test_read_performance": {
+          "type": "boolean",
+          "description": "Read test file to measure speed"
+        },
+        "test_write_performance": {
+          "type": "boolean",
+          "description": "Write test file to measure speed"
+        },
+        "test_file_size_mb": {
+          "type": "integer",
+          "description": "Size of test file in MB (default: 10)",
+          "minimum": 1
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this test",
+          "default": true
+        },
+        "criticality": {
+          "type": "integer",
+          "description": "1-10 scale for health scoring",
+          "minimum": 1,
+          "maximum": 10
+        }
+      }
+    },
+    "LDAPEndpoint": {
+      "type": "object",
+      "description": "LDAP endpoint test (Health Checks 100x - Enterprise)",
+      "required": ["name", "host", "port", "base_dn", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this LDAP endpoint"
+        },
+        "host": {
+          "type": "string",
+          "description": "Hostname or IP address"
+        },
+        "port": {
+          "$ref": "#/$defs/PortNumber",
+          "description": "LDAP port (389 for LDAP, 636 for LDAPS)"
+        },
+        "use_tls": {
+          "type": "boolean",
+          "description": "Use LDAPS"
+        },
+        "start_tls": {
+          "type": "boolean",
+          "description": "Use StartTLS"
+        },
+        "base_dn": {
+          "type": "string",
+          "description": "Base DN (e.g., dc=example,dc=com)"
+        },
+        "bind_dn": {
+          "type": "string",
+          "description": "Bind user DN"
+        },
+        "bind_password": {
+          "type": "string",
+          "description": "Bind password"
+        },
+        "search_filter": {
+          "type": "string",
+          "description": "Test search filter"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this test",
+          "default": true
+        },
+        "criticality": {
+          "type": "integer",
+          "description": "1-10 scale for health scoring",
+          "minimum": 1,
+          "maximum": 10
+        }
+      }
+    },
+    "LTIEndpoint": {
+      "type": "object",
+      "description": "LTI/LMS endpoint test (Health Checks 100x - Education)",
+      "required": ["name", "launch_url", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this LTI endpoint"
+        },
+        "launch_url": {
+          "type": "string",
+          "description": "LTI tool launch URL",
+          "format": "uri"
+        },
+        "consumer_key": {
+          "type": "string",
+          "description": "OAuth consumer key"
+        },
+        "consumer_secret": {
+          "type": "string",
+          "description": "OAuth consumer secret (for LTI 1.x)"
+        },
+        "lti_version": {
+          "type": "string",
+          "description": "LTI version",
+          "enum": ["1.1", "1.3", "advantage"]
+        },
+        "client_id": {
+          "type": "string",
+          "description": "LTI 1.3 client ID"
+        },
+        "deployment_id": {
+          "type": "string",
+          "description": "LTI 1.3 deployment ID"
+        },
+        "platform_url": {
+          "type": "string",
+          "description": "LTI 1.3 platform issuer URL",
+          "format": "uri"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this test",
+          "default": true
+        },
+        "criticality": {
+          "type": "integer",
+          "description": "1-10 scale for health scoring",
+          "minimum": 1,
+          "maximum": 10
+        }
+      }
+    },
+    "OPCUAEndpoint": {
+      "type": "object",
+      "description": "OPC-UA endpoint test (Health Checks 100x - Manufacturing)",
+      "required": ["name", "endpoint_url", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this OPC-UA endpoint"
+        },
+        "endpoint_url": {
+          "type": "string",
+          "description": "OPC-UA endpoint URL (opc.tcp://host:4840/path)"
+        },
+        "security_mode": {
+          "type": "string",
+          "description": "Security mode",
+          "enum": ["None", "Sign", "SignAndEncrypt"]
+        },
+        "security_policy": {
+          "type": "string",
+          "description": "Security policy",
+          "enum": ["None", "Basic128Rsa15", "Basic256", "Basic256Sha256"]
+        },
+        "username": {
+          "type": "string",
+          "description": "Username"
+        },
+        "password": {
+          "type": "string",
+          "description": "Password"
+        },
+        "cert_path": {
+          "type": "string",
+          "description": "Client certificate path"
+        },
+        "key_path": {
+          "type": "string",
+          "description": "Client private key path"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this test",
+          "default": true
+        },
+        "criticality": {
+          "type": "integer",
+          "description": "1-10 scale for health scoring",
+          "minimum": 1,
+          "maximum": 10
+        }
+      }
+    },
+    "ModbusEndpoint": {
+      "type": "object",
+      "description": "Modbus TCP endpoint test (Health Checks 100x - Manufacturing)",
+      "required": ["name", "host", "port", "unit_id", "test_register", "enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Friendly name for this Modbus endpoint"
+        },
+        "host": {
+          "type": "string",
+          "description": "Hostname or IP address"
+        },
+        "port": {
+          "$ref": "#/$defs/PortNumber",
+          "description": "Modbus port (default: 502)"
+        },
+        "unit_id": {
+          "type": "integer",
+          "description": "Modbus unit/slave ID (1-247)",
+          "minimum": 1,
+          "maximum": 247
+        },
+        "test_register": {
+          "type": "integer",
+          "description": "Register address to read for testing"
+        },
+        "register_type": {
+          "type": "string",
+          "description": "Register type",
+          "enum": ["holding", "input", "coil", "discrete"]
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable this test",
+          "default": true
+        },
+        "criticality": {
+          "type": "integer",
+          "description": "1-10 scale for health scoring",
+          "minimum": 1,
+          "maximum": 10
         }
       }
     },
@@ -1451,7 +1959,7 @@
           "default": false
         },
         "known_servers": {
-          "type": "array",
+          "type": ["array", "null"],
           "description": "List of known/authorized DHCP server IP addresses",
           "items": {
             "type": "string",

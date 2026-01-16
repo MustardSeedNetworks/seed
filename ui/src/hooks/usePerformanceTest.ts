@@ -102,7 +102,22 @@ export interface IperfServerSuggestion {
  *
  * @returns Performance test state and control functions
  */
-export function usePerformanceTest() {
+export function usePerformanceTest(): {
+  speedtestRunning: boolean;
+  speedtestResult: SpeedtestResult | null;
+  speedtestError: string | null;
+  iperfRunning: boolean;
+  iperfResult: IperfResult | null;
+  iperfError: string | null;
+  runSpeedtest: () => Promise<SpeedtestResult | null>;
+  fetchSpeedtestStatus: () => Promise<SpeedtestStatus | null>;
+  runIperfClient: (config: IperfClientConfig) => Promise<IperfResult | null>;
+  fetchIperfClientStatus: () => Promise<IperfClientStatus | null>;
+  startIperfServer: (port?: number) => Promise<boolean>;
+  fetchIperfServerStatus: () => Promise<IperfServerStatus | null>;
+  fetchIperfSuggestions: () => Promise<IperfServerSuggestion[]>;
+  fetchIperfInfo: () => Promise<Record<string, unknown> | null>;
+} {
   const [speedtestRunning, setSpeedtestRunning] = useState(false);
   const [speedtestResult, setSpeedtestResult] = useState<SpeedtestResult | null>(null);
   const [speedtestError, setSpeedtestError] = useState<string | null>(null);

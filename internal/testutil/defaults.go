@@ -54,7 +54,7 @@ type NetworkDiscoveryDefaults struct {
 // Test defaults accessor functions use closure-encapsulated state for thread-safe singleton access.
 // getTestDefaults returns the cached test defaults instance.
 // setTestDefaults sets the cached test defaults instance.
-// getTestDefaultsOnce returns the sync.Once for lazy initialization.
+// getTestDefaultsOnce returns the [sync.Once] for lazy initialization.
 //
 //nolint:gochecknoglobals // Intentional thread-safe singleton using closure pattern
 var (

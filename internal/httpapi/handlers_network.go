@@ -244,6 +244,18 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, nil, http.StatusOK, interfaces)
 }
 
+// isBetterInterface returns true if candidate is better than current best.
+// Prefers: interfaces that are up, then higher score.
+func isBetterInterface(candidate, best *network.InterfaceInfo) bool {
+	if best == nil {
+		return true
+	}
+	if candidate.Up && !best.Up {
+		return true
+	}
+	return candidate.Up && best.Up && candidate.Score > best.Score
+}
+
 // handleCategorizedInterfaces returns interfaces grouped by type (ethernet vs WiFi).
 // #756: Helps UI show ethernet interfaces under Ethernet dropdown, WiFi under WiFi dropdown.
 func (s *Server) handleCategorizedInterfaces(w http.ResponseWriter, _ *http.Request) {
@@ -262,20 +274,17 @@ func (s *Server) handleCategorizedInterfaces(w http.ResponseWriter, _ *http.Requ
 		switch iface.Type {
 		case network.InterfaceTypeEthernet:
 			resp.Ethernet = append(resp.Ethernet, iface)
-			// Track best ethernet: prefer up with IP, highest score
-			if bestEthernet == nil ||
-				(iface.Up && !bestEthernet.Up) ||
-				(iface.Up && bestEthernet.Up && iface.Score > bestEthernet.Score) {
+			if isBetterInterface(iface, bestEthernet) {
 				bestEthernet = iface
 			}
 		case network.InterfaceTypeWiFi:
 			resp.WiFi = append(resp.WiFi, iface)
-			// Track best WiFi: prefer up with IP, highest score
-			if bestWiFi == nil ||
-				(iface.Up && !bestWiFi.Up) ||
-				(iface.Up && bestWiFi.Up && iface.Score > bestWiFi.Score) {
+			if isBetterInterface(iface, bestWiFi) {
 				bestWiFi = iface
 			}
+		case network.InterfaceTypeLoopback, network.InterfaceTypeVirtual, network.InterfaceTypeOther:
+			// Skip non-physical interfaces for categorization
+			continue
 		}
 	}
 
@@ -318,132 +327,9 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		currentIface := s.netManager().GetCurrentInterface()
-		ifaceInfo, _ := s.netManager().GetInterface(currentIface)
-
-		// Check if current interface is wireless
-		isWireless := false
-		if s.wifiManager() != nil && currentIface != "" {
-			isWireless = s.wifiManager().IsWireless()
-		}
-
-		// #756: Check if the configured interface is still available
-		interfaceAvailable := ifaceInfo != nil && ifaceInfo.Up
-
-		resp := map[string]any{
-			"interface":  currentIface,
-			"isWireless": isWireless,
-			"available":  interfaceAvailable,
-		}
-
-		// Add interface details if available
-		if ifaceInfo != nil {
-			resp["type"] = string(ifaceInfo.Type)
-			resp["up"] = ifaceInfo.Up
-			if ifaceInfo.FriendlyName != "" {
-				resp["friendlyName"] = ifaceInfo.FriendlyName
-			}
-		}
-
-		// #756: If interface is unavailable, suggest alternatives
-		if !interfaceAvailable && currentIface != "" {
-			resp["warning"] = "Selected interface is no longer available"
-			// Find best alternative
-			if suggested := s.netManager().FindFirstAvailable(nil); suggested != "" {
-				resp["suggestedInterface"] = suggested
-			}
-		}
-
-		sendJSONResponse(w, nil, http.StatusOK, resp)
-
+		s.handleGetInterface(w)
 	case http.MethodPut:
-		// Limit request body size to prevent DoS attacks (fixes #693)
-		r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
-		var req SetInterfaceRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			logger.Warn("Invalid request body", "error", err)
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusBadRequest,
-				ErrCodeBadRequest,
-				localizer.T("errors.api.invalidRequestBody"),
-				"",
-			)
-			return
-		}
-
-		// #756: Validate interface exists and is available
-		ifaceInfo, err := s.netManager().GetInterface(req.Interface)
-		if err != nil {
-			logger.Warn("Invalid interface", "error", err, "interface", req.Interface)
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusBadRequest,
-				ErrCodeBadRequest,
-				localizer.T("errors.network.invalidInterface"),
-				"",
-			)
-			return
-		}
-
-		// Warn if interface is down but allow selection (user may be preparing)
-		warning := ""
-		if !ifaceInfo.Up {
-			warning = "Selected interface is currently down"
-		}
-
-		if setErr := s.netManager().SetCurrentInterface(req.Interface); setErr != nil {
-			logger.Warn("Failed to set interface", "error", err, "interface", req.Interface)
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusBadRequest,
-				ErrCodeBadRequest,
-				localizer.T("errors.network.invalidInterface"),
-				"",
-			)
-			return
-		}
-
-		// Update unified discovery service to use new interface (handles protocol restarts)
-		if s.discoveryService() != nil {
-			if discErr := s.discoveryService().SetInterface(req.Interface); discErr != nil {
-				// Log but don't fail - discovery may not work without root
-				logging.GetLogger().Warn("Failed to set discovery interface", "error", discErr)
-			}
-		}
-
-		// Update WiFi manager interface and check if wireless
-		if s.wifiManager() != nil {
-			s.wifiManager().SetInterface(req.Interface)
-		}
-
-		// Update link monitor interface
-		if s.linkMonitor() != nil {
-			s.linkMonitor().SetInterface(req.Interface)
-		}
-
-		// Check if new interface is wireless
-		isWireless := false
-		if s.wifiManager() != nil {
-			isWireless = s.wifiManager().IsWireless()
-		}
-
-		resp := map[string]any{
-			"status":     "ok",
-			"interface":  req.Interface,
-			"isWireless": isWireless,
-			"type":       string(ifaceInfo.Type),
-		}
-		if warning != "" {
-			resp["warning"] = warning
-		}
-
-		sendJSONResponse(w, nil, http.StatusOK, resp)
-
+		s.handlePutInterface(w, r, logger, localizer)
 	default:
 		sendErrorResponseWithDetails(
 			w,
@@ -454,6 +340,142 @@ func (s *Server) handleInterface(w http.ResponseWriter, r *http.Request) {
 			"",
 		) // fixes #694
 	}
+}
+
+// handleGetInterface returns current interface information.
+func (s *Server) handleGetInterface(w http.ResponseWriter) {
+	currentIface := s.netManager().GetCurrentInterface()
+	ifaceInfo, _ := s.netManager().GetInterface(currentIface)
+
+	// Check if current interface is wireless
+	isWireless := false
+	if s.wifiManager() != nil && currentIface != "" {
+		isWireless = s.wifiManager().IsWireless()
+	}
+
+	// #756: Check if the configured interface is still available
+	interfaceAvailable := ifaceInfo != nil && ifaceInfo.Up
+
+	resp := map[string]any{
+		"interface":  currentIface,
+		"isWireless": isWireless,
+		"available":  interfaceAvailable,
+	}
+
+	// Add interface details if available
+	if ifaceInfo != nil {
+		resp["type"] = string(ifaceInfo.Type)
+		resp["up"] = ifaceInfo.Up
+		if ifaceInfo.FriendlyName != "" {
+			resp["friendlyName"] = ifaceInfo.FriendlyName
+		}
+	}
+
+	// #756: If interface is unavailable, suggest alternatives
+	if !interfaceAvailable && currentIface != "" {
+		resp["warning"] = "Selected interface is no longer available"
+		// Find best alternative
+		if suggested := s.netManager().FindFirstAvailable(nil); suggested != "" {
+			resp["suggestedInterface"] = suggested
+		}
+	}
+
+	sendJSONResponse(w, nil, http.StatusOK, resp)
+}
+
+// handlePutInterface sets the current interface.
+func (s *Server) handlePutInterface(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+) {
+	// Limit request body size to prevent DoS attacks (fixes #693)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+
+	var req SetInterfaceRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Warn("Invalid request body", "error", err)
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.api.invalidRequestBody"),
+			"",
+		)
+		return
+	}
+
+	// #756: Validate interface exists and is available
+	ifaceInfo, err := s.netManager().GetInterface(req.Interface)
+	if err != nil {
+		logger.Warn("Invalid interface", "error", err, "interface", req.Interface)
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.network.invalidInterface"),
+			"",
+		)
+		return
+	}
+
+	// Warn if interface is down but allow selection (user may be preparing)
+	warning := ""
+	if !ifaceInfo.Up {
+		warning = "Selected interface is currently down"
+	}
+
+	if setErr := s.netManager().SetCurrentInterface(req.Interface); setErr != nil {
+		logger.Warn("Failed to set interface", "error", setErr, "interface", req.Interface)
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusBadRequest,
+			ErrCodeBadRequest,
+			localizer.T("errors.network.invalidInterface"),
+			"",
+		)
+		return
+	}
+
+	// Update unified discovery service to use new interface (handles protocol restarts)
+	if s.discoveryService() != nil {
+		if discErr := s.discoveryService().SetInterface(req.Interface); discErr != nil {
+			// Log but don't fail - discovery may not work without root
+			logging.GetLogger().Warn("Failed to set discovery interface", "error", discErr)
+		}
+	}
+
+	// Update WiFi manager interface and check if wireless
+	if s.wifiManager() != nil {
+		s.wifiManager().SetInterface(req.Interface)
+	}
+
+	// Update link monitor interface
+	if s.linkMonitor() != nil {
+		s.linkMonitor().SetInterface(req.Interface)
+	}
+
+	// Check if new interface is wireless
+	isWireless := false
+	if s.wifiManager() != nil {
+		isWireless = s.wifiManager().IsWireless()
+	}
+
+	resp := map[string]any{
+		"status":     "ok",
+		"interface":  req.Interface,
+		"isWireless": isWireless,
+		"type":       string(ifaceInfo.Type),
+	}
+	if warning != "" {
+		resp["warning"] = warning
+	}
+
+	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
 // addLinkHistory adds link flap history from monitor to response.

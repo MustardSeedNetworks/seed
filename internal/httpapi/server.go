@@ -60,6 +60,9 @@ const (
 	// httpsDefaultPort is the standard HTTPS port number.
 	httpsDefaultPort = 443
 
+	// portScannerTimeout is the timeout for the port scanner.
+	portScannerTimeout = 5 * time.Second
+
 	// rsaKeyBits is the RSA key size in bits for self-signed certificates.
 	rsaKeyBits = 4096
 
@@ -545,7 +548,7 @@ func (s *Server) initDiscoveryPipeline(cfg *config.Config) {
 	s.services.Discovery.Profiler = sharedProfiler
 
 	// Create PortScanner for Engine
-	portScanner, err := discovery.NewPortScanner(5 * time.Second)
+	portScanner, err := discovery.NewPortScanner(portScannerTimeout)
 	if err != nil {
 		logging.GetLogger().Warn("Failed to create port scanner", "error", err)
 	} else {
@@ -634,7 +637,7 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 
 	// Initialize Discovery Engine (primary unified discovery system)
 	engineConfig := discovery.DefaultEngineConfig()
-	s.services.Discovery.Engine = discovery.NewDiscoveryEngine(engineConfig)
+	s.services.Discovery.Engine = discovery.NewEngine(engineConfig)
 
 	// Wire in all collectors
 	if s.services.Discovery.Device != nil {

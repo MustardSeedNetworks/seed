@@ -40,6 +40,22 @@ type ServiceContainer struct {
 	Update    *update.Service
 }
 
+// NewServiceContainer creates a new empty ServiceContainer.
+func NewServiceContainer() *ServiceContainer {
+	return &ServiceContainer{
+		Auth:      &AuthServices{},
+		RateLimit: &RateLimitServices{},
+		Network:   &NetworkServices{},
+		Discovery: &DiscoveryServices{},
+		Sap:       &SapServices{},
+		Canopy:    &CanopyServices{},
+		Roots:     &RootsServices{},
+		RealTime:  &RealTimeServices{},
+		Database:  &DatabaseServices{},
+		Health:    &HealthServices{},
+	}
+}
+
 // GetUpdateService returns the update service.
 func (sc *ServiceContainer) GetUpdateService() *update.Service {
 	return sc.Update
@@ -76,9 +92,9 @@ type DiscoveryServices struct {
 	ProblemDetector  *discovery.ProblemDetector
 	BluetoothScanner *discovery.BluetoothScanner
 	WiFiBridge       *discovery.WiFiBridge
-	Profiler         *discovery.DeviceProfiler  // Shared profiler for SNMP/ports/fingerprinting
-	PortScanner      *discovery.PortScanner     // TCP port scanner
-	Engine           *discovery.DiscoveryEngine // Unified discovery engine (primary)
+	Profiler         *discovery.DeviceProfiler // Shared profiler for SNMP/ports/fingerprinting
+	PortScanner      *discovery.PortScanner    // TCP port scanner
+	Engine           *discovery.Engine         // Unified discovery engine (primary)
 }
 
 // SapServices groups SAP module services (live telemetry).
@@ -132,22 +148,6 @@ type HealthServices struct {
 	AnomalyDetector *health.AnomalyDetector
 	DependencyMgr   *health.DependencyManager
 	AlertManager    *alerts.AlertManager
-}
-
-// NewServiceContainer creates a new empty ServiceContainer.
-func NewServiceContainer() *ServiceContainer {
-	return &ServiceContainer{
-		Auth:      &AuthServices{},
-		RateLimit: &RateLimitServices{},
-		Network:   &NetworkServices{},
-		Discovery: &DiscoveryServices{},
-		Sap:       &SapServices{},
-		Canopy:    &CanopyServices{},
-		Roots:     &RootsServices{},
-		RealTime:  &RealTimeServices{},
-		Database:  &DatabaseServices{},
-		Health:    &HealthServices{},
-	}
 }
 
 // Stop gracefully stops all services in the container.

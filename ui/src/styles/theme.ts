@@ -809,12 +809,14 @@ export function cn(...classes: (string | boolean | undefined | null)[]): string 
 }
 
 // Type-safe Maps for dynamic lookups
-const buttonVariantMap = new Map<keyof typeof button.variant, string>(
-  Object.entries(button.variant) as [keyof typeof button.variant, string][],
-);
-const buttonSizeMap = new Map<keyof typeof button.size, string>(
-  Object.entries(button.size) as [keyof typeof button.size, string][],
-);
+const buttonVariantMap: Map<keyof typeof button.variant, string> = new Map<
+  keyof typeof button.variant,
+  string
+>(Object.entries(button.variant) as [keyof typeof button.variant, string][]);
+const buttonSizeMap: Map<keyof typeof button.size, string> = new Map<
+  keyof typeof button.size,
+  string
+>(Object.entries(button.size) as [keyof typeof button.size, string][]);
 
 /**
  * Build a button class string
@@ -828,10 +830,11 @@ export function buttonClass(
 }
 
 // Type-safe Maps for input lookups
-const inputStateMap = new Map<keyof typeof input.state, string>(
-  Object.entries(input.state) as [keyof typeof input.state, string][],
-);
-const inputSizeMap = new Map<keyof typeof input.size, string>(
+const inputStateMap: Map<keyof typeof input.state, string> = new Map<
+  keyof typeof input.state,
+  string
+>(Object.entries(input.state) as [keyof typeof input.state, string][]);
+const inputSizeMap: Map<keyof typeof input.size, string> = new Map<keyof typeof input.size, string>(
   Object.entries(input.size) as [keyof typeof input.size, string][],
 );
 
@@ -847,12 +850,14 @@ export function inputClass(
 }
 
 // Type-safe Maps for card lookups
-const cardVariantMap = new Map<keyof typeof card.variant, string>(
-  Object.entries(card.variant) as [keyof typeof card.variant, string][],
-);
-const cardPaddingMap = new Map<keyof typeof card.padding, string>(
-  Object.entries(card.padding) as [keyof typeof card.padding, string][],
-);
+const cardVariantMap: Map<keyof typeof card.variant, string> = new Map<
+  keyof typeof card.variant,
+  string
+>(Object.entries(card.variant) as [keyof typeof card.variant, string][]);
+const cardPaddingMap: Map<keyof typeof card.padding, string> = new Map<
+  keyof typeof card.padding,
+  string
+>(Object.entries(card.padding) as [keyof typeof card.padding, string][]);
 
 /**
  * Build a card class string
@@ -866,9 +871,10 @@ export function cardClass(
 }
 
 // Type-safe Map for badge lookups
-const badgeVariantMap = new Map<keyof typeof badge.variant, string>(
-  Object.entries(badge.variant) as [keyof typeof badge.variant, string][],
-);
+const badgeVariantMap: Map<keyof typeof badge.variant, string> = new Map<
+  keyof typeof badge.variant,
+  string
+>(Object.entries(badge.variant) as [keyof typeof badge.variant, string][]);
 
 /**
  * Build a badge class string
@@ -881,12 +887,13 @@ export function badgeClass(
 }
 
 // Type-safe Maps for modal lookups
-const modalSizeMap = new Map<keyof typeof modal.size, string>(
+const modalSizeMap: Map<keyof typeof modal.size, string> = new Map<keyof typeof modal.size, string>(
   Object.entries(modal.size) as [keyof typeof modal.size, string][],
 );
-const modalPaddingMap = new Map<keyof typeof modal.padding, string>(
-  Object.entries(modal.padding) as [keyof typeof modal.padding, string][],
-);
+const modalPaddingMap: Map<keyof typeof modal.padding, string> = new Map<
+  keyof typeof modal.padding,
+  string
+>(Object.entries(modal.padding) as [keyof typeof modal.padding, string][]);
 
 /**
  * Build a modal class string

@@ -729,22 +729,38 @@
         "connectionRefused": {
           "symptom": "Connection refused",
           "causes": ["Camera powered off", "RTSP service not running", "Wrong port number"],
-          "solutions": ["Verify camera is powered and online", "Check RTSP is enabled in camera settings", "Confirm port 554 or custom port"]
+          "solutions": [
+            "Verify camera is powered and online",
+            "Check RTSP is enabled in camera settings",
+            "Confirm port 554 or custom port"
+          ]
         },
         "authFailed": {
           "symptom": "401 Unauthorized",
           "causes": ["Incorrect credentials", "Account locked", "IP not in allowed list"],
-          "solutions": ["Verify username and password", "Check camera's user management", "Add The Seed's IP to camera whitelist"]
+          "solutions": [
+            "Verify username and password",
+            "Check camera's user management",
+            "Add The Seed's IP to camera whitelist"
+          ]
         },
         "streamNotFound": {
           "symptom": "404 Stream Not Found",
           "causes": ["Incorrect stream path", "Stream disabled", "Channel not configured"],
-          "solutions": ["Check camera documentation for correct URL format", "Verify stream is enabled", "Try /live, /stream1, or /h264 paths"]
+          "solutions": [
+            "Check camera documentation for correct URL format",
+            "Verify stream is enabled",
+            "Try /live, /stream1, or /h264 paths"
+          ]
         },
         "timeout": {
           "symptom": "Connection timeout",
           "causes": ["Network connectivity issue", "Firewall blocking", "Camera overloaded"],
-          "solutions": ["Test network path to camera", "Check firewall rules for port 554", "Reduce concurrent connections to camera"]
+          "solutions": [
+            "Test network path to camera",
+            "Check firewall rules for port 554",
+            "Reduce concurrent connections to camera"
+          ]
         }
       },
       "useCases": {
@@ -814,23 +830,47 @@
         "title": "Troubleshooting DICOM",
         "associationRejected": {
           "symptom": "Association Rejected",
-          "causes": ["AE Title not registered on remote system", "Calling AE Title mismatch", "IP not in allowed list"],
-          "solutions": ["Register The Seed's AE Title on PACS/modality", "Verify exact AE Title spelling and case", "Add The Seed's IP to DICOM allowed hosts"]
+          "causes": [
+            "AE Title not registered on remote system",
+            "Calling AE Title mismatch",
+            "IP not in allowed list"
+          ],
+          "solutions": [
+            "Register The Seed's AE Title on PACS/modality",
+            "Verify exact AE Title spelling and case",
+            "Add The Seed's IP to DICOM allowed hosts"
+          ]
         },
         "connectionRefused": {
           "symptom": "Connection Refused",
           "causes": ["Wrong port", "DICOM service not running", "Firewall blocking"],
-          "solutions": ["Verify DICOM port with PACS admin", "Check DICOM service status", "Allow port 104/11112 in firewall"]
+          "solutions": [
+            "Verify DICOM port with PACS admin",
+            "Check DICOM service status",
+            "Allow port 104/11112 in firewall"
+          ]
         },
         "timeout": {
           "symptom": "Connection Timeout",
           "causes": ["Network path issue", "Remote system overloaded", "Wrong IP address"],
-          "solutions": ["Test basic network connectivity with ping", "Check system load on PACS", "Verify IP address is correct"]
+          "solutions": [
+            "Test basic network connectivity with ping",
+            "Check system load on PACS",
+            "Verify IP address is correct"
+          ]
         },
         "cEchoFailed": {
           "symptom": "C-ECHO Failed (association succeeded)",
-          "causes": ["SCP not supporting verification", "Service class not configured", "Internal error on remote"],
-          "solutions": ["Verify remote supports Verification SOP Class", "Check PACS logs for details", "Contact PACS vendor support"]
+          "causes": [
+            "SCP not supporting verification",
+            "Service class not configured",
+            "Internal error on remote"
+          ],
+          "solutions": [
+            "Verify remote supports Verification SOP Class",
+            "Check PACS logs for details",
+            "Contact PACS vendor support"
+          ]
         }
       },
       "useCases": {

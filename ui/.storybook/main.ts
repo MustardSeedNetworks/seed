@@ -1,8 +1,9 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { StorybookConfig } from "@storybook/react-vite";
+import type { UserConfig } from "vite";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const currentDir: string = dirname(fileURLToPath(import.meta.url));
 
 const config: StorybookConfig = {
   stories: ["../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
@@ -14,16 +15,16 @@ const config: StorybookConfig = {
     "@storybook/addon-onboarding",
   ],
   framework: "@storybook/react-vite",
-  viteFinal: async (config) => {
+  viteFinal: (viteConfig: UserConfig): UserConfig => {
     // Ensure CSS imports and path aliases resolve correctly
     return {
-      ...config,
+      ...viteConfig,
       resolve: {
-        ...config.resolve,
+        ...viteConfig.resolve,
         alias: {
-          ...config.resolve?.alias,
-          "@": resolve(__dirname, "../src"),
-          "@locales": resolve(__dirname, "../../internal/i18n/locales"),
+          ...viteConfig.resolve?.alias,
+          "@": resolve(currentDir, "../src"),
+          "@locales": resolve(currentDir, "../../internal/i18n/locales"),
         },
       },
     };

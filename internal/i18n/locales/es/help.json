@@ -728,23 +728,47 @@
         "title": "Solución de problemas RTSP",
         "connectionRefused": {
           "symptom": "Conexión rechazada",
-          "causes": ["Cámara apagada", "Servicio RTSP no ejecutándose", "Número de puerto incorrecto"],
-          "solutions": ["Verifique que la cámara esté encendida y en línea", "Verifique que RTSP esté habilitado en la configuración de la cámara", "Confirme puerto 554 o puerto personalizado"]
+          "causes": [
+            "Cámara apagada",
+            "Servicio RTSP no ejecutándose",
+            "Número de puerto incorrecto"
+          ],
+          "solutions": [
+            "Verifique que la cámara esté encendida y en línea",
+            "Verifique que RTSP esté habilitado en la configuración de la cámara",
+            "Confirme puerto 554 o puerto personalizado"
+          ]
         },
         "authFailed": {
           "symptom": "401 No autorizado",
           "causes": ["Credenciales incorrectas", "Cuenta bloqueada", "IP no en lista permitida"],
-          "solutions": ["Verifique usuario y contraseña", "Revise la gestión de usuarios de la cámara", "Agregue la IP de The Seed a la lista blanca de la cámara"]
+          "solutions": [
+            "Verifique usuario y contraseña",
+            "Revise la gestión de usuarios de la cámara",
+            "Agregue la IP de The Seed a la lista blanca de la cámara"
+          ]
         },
         "streamNotFound": {
           "symptom": "404 Stream no encontrado",
           "causes": ["Ruta de stream incorrecta", "Stream deshabilitado", "Canal no configurado"],
-          "solutions": ["Revise la documentación de la cámara para el formato correcto de URL", "Verifique que el stream esté habilitado", "Pruebe rutas /live, /stream1 o /h264"]
+          "solutions": [
+            "Revise la documentación de la cámara para el formato correcto de URL",
+            "Verifique que el stream esté habilitado",
+            "Pruebe rutas /live, /stream1 o /h264"
+          ]
         },
         "timeout": {
           "symptom": "Tiempo de conexión agotado",
-          "causes": ["Problema de conectividad de red", "Firewall bloqueando", "Cámara sobrecargada"],
-          "solutions": ["Pruebe la ruta de red a la cámara", "Revise reglas de firewall para puerto 554", "Reduzca conexiones concurrentes a la cámara"]
+          "causes": [
+            "Problema de conectividad de red",
+            "Firewall bloqueando",
+            "Cámara sobrecargada"
+          ],
+          "solutions": [
+            "Pruebe la ruta de red a la cámara",
+            "Revise reglas de firewall para puerto 554",
+            "Reduzca conexiones concurrentes a la cámara"
+          ]
         }
       },
       "useCases": {
@@ -814,23 +838,51 @@
         "title": "Solución de problemas DICOM",
         "associationRejected": {
           "symptom": "Asociación rechazada",
-          "causes": ["AE Title no registrado en sistema remoto", "Desajuste de Calling AE Title", "IP no en lista permitida"],
-          "solutions": ["Registre el AE Title de The Seed en PACS/modalidad", "Verifique ortografía exacta y mayúsculas/minúsculas del AE Title", "Agregue la IP de The Seed a hosts DICOM permitidos"]
+          "causes": [
+            "AE Title no registrado en sistema remoto",
+            "Desajuste de Calling AE Title",
+            "IP no en lista permitida"
+          ],
+          "solutions": [
+            "Registre el AE Title de The Seed en PACS/modalidad",
+            "Verifique ortografía exacta y mayúsculas/minúsculas del AE Title",
+            "Agregue la IP de The Seed a hosts DICOM permitidos"
+          ]
         },
         "connectionRefused": {
           "symptom": "Conexión rechazada",
           "causes": ["Puerto incorrecto", "Servicio DICOM no ejecutándose", "Firewall bloqueando"],
-          "solutions": ["Verifique puerto DICOM con admin de PACS", "Revise estado del servicio DICOM", "Permita puerto 104/11112 en firewall"]
+          "solutions": [
+            "Verifique puerto DICOM con admin de PACS",
+            "Revise estado del servicio DICOM",
+            "Permita puerto 104/11112 en firewall"
+          ]
         },
         "timeout": {
           "symptom": "Tiempo de conexión agotado",
-          "causes": ["Problema de ruta de red", "Sistema remoto sobrecargado", "Dirección IP incorrecta"],
-          "solutions": ["Pruebe conectividad de red básica con ping", "Revise carga del sistema en PACS", "Verifique que la dirección IP sea correcta"]
+          "causes": [
+            "Problema de ruta de red",
+            "Sistema remoto sobrecargado",
+            "Dirección IP incorrecta"
+          ],
+          "solutions": [
+            "Pruebe conectividad de red básica con ping",
+            "Revise carga del sistema en PACS",
+            "Verifique que la dirección IP sea correcta"
+          ]
         },
         "cEchoFailed": {
           "symptom": "C-ECHO falló (asociación exitosa)",
-          "causes": ["SCP no soporta verificación", "Clase de servicio no configurada", "Error interno en remoto"],
-          "solutions": ["Verifique que remoto soporte Verification SOP Class", "Revise logs de PACS para detalles", "Contacte soporte del proveedor PACS"]
+          "causes": [
+            "SCP no soporta verificación",
+            "Clase de servicio no configurada",
+            "Error interno en remoto"
+          ],
+          "solutions": [
+            "Verifique que remoto soporte Verification SOP Class",
+            "Revise logs de PACS para detalles",
+            "Contacte soporte del proveedor PACS"
+          ]
         }
       },
       "useCases": {

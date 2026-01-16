@@ -7,13 +7,13 @@
 
 import type React from "react";
 import { useState } from "react";
-import { Slider } from "./slider";
+import { Slider } from "./Slider";
 
 /**
  * Example 1: Scanner Configuration Panel
  * Shows how to use multiple sliders together for complex settings
  */
-export function ScannerConfigExample() {
+export function ScannerConfigExample(): React.JSX.Element {
   const [probeInterval, setProbeInterval] = useState(75);
   const [scanTimeout, setScanTimeout] = useState(2000);
   const [workers, setWorkers] = useState(20);
@@ -34,7 +34,7 @@ export function ScannerConfigExample() {
         label="Probe Interval"
         leftLabel="Faster"
         rightLabel="Slower"
-        formatValue={(v) => `${v}ms`}
+        formatValue={(v: number): string => `${v}ms`}
       />
 
       {/* Scan Timeout: 500ms - 10s */}
@@ -47,7 +47,7 @@ export function ScannerConfigExample() {
         label="Scan Timeout"
         leftLabel="Quick"
         rightLabel="Patient"
-        formatValue={(v) => (v >= 1000 ? `${v / 1000}s` : `${v}ms`)}
+        formatValue={(v: number): string => (v >= 1000 ? `${v / 1000}s` : `${v}ms`)}
       />
 
       {/* Workers: 5 - 100 */}
@@ -60,7 +60,7 @@ export function ScannerConfigExample() {
         label="Worker Threads"
         leftLabel="Conservative"
         rightLabel="Aggressive"
-        formatValue={(v) => `${v} workers`}
+        formatValue={(v: number): string => `${v} workers`}
       />
 
       {/* Rescan Interval: 1min - 60min */}
@@ -73,7 +73,7 @@ export function ScannerConfigExample() {
         label="Rescan Interval"
         leftLabel="Frequent"
         rightLabel="Rare"
-        formatValue={(v) => `${v} min`}
+        formatValue={(v: number): string => `${v} min`}
       />
 
       {/* Banner Timeout: 500ms - 10s */}
@@ -86,7 +86,7 @@ export function ScannerConfigExample() {
         label="Banner Timeout"
         leftLabel="Quick"
         rightLabel="Patient"
-        formatValue={(v) => `${v}ms`}
+        formatValue={(v: number): string => `${v}ms`}
       />
 
       {/* Configuration Summary */}
@@ -119,7 +119,7 @@ export function ScannerConfigExample() {
  * Example 2: Simple Timeout Setting
  * Basic usage with millisecond formatting
  */
-export function TimeoutSettingExample() {
+export function TimeoutSettingExample(): React.JSX.Element {
   const [timeout, setTimeout] = useState(2000);
 
   return (
@@ -131,7 +131,7 @@ export function TimeoutSettingExample() {
         max={10000}
         step={500}
         label="Request Timeout"
-        formatValue={(v) => `${v}ms`}
+        formatValue={(v: number): string => `${v}ms`}
       />
     </div>
   );
@@ -141,7 +141,7 @@ export function TimeoutSettingExample() {
  * Example 3: Worker Thread Configuration
  * Shows count-based slider with labels
  */
-export function WorkerConfigExample() {
+export function WorkerConfigExample(): React.JSX.Element {
   const [workers, setWorkers] = useState(20);
 
   return (
@@ -155,7 +155,7 @@ export function WorkerConfigExample() {
         label="Concurrent Workers"
         leftLabel="Conservative"
         rightLabel="Aggressive"
-        formatValue={(v) => `${v} workers`}
+        formatValue={(v: number): string => `${v} workers`}
       />
       <p class="mt-2 caption text-text-muted">
         More workers = faster scanning, but higher CPU usage
@@ -168,7 +168,7 @@ export function WorkerConfigExample() {
  * Example 4: Percentage Slider
  * Common pattern for volume, brightness, etc.
  */
-export function PercentageSliderExample() {
+export function PercentageSliderExample(): React.JSX.Element {
   const [volume, setVolume] = useState(75);
 
   return (
@@ -182,7 +182,7 @@ export function PercentageSliderExample() {
         label="Alert Volume"
         leftLabel="Quiet"
         rightLabel="Loud"
-        formatValue={(v) => `${v}%`}
+        formatValue={(v: number): string => `${v}%`}
       />
     </div>
   );
@@ -192,7 +192,7 @@ export function PercentageSliderExample() {
  * Example 5: Disabled State
  * Shows how to disable a slider based on conditions
  */
-export function DisabledSliderExample() {
+export function DisabledSliderExample(): React.JSX.Element {
   const [autoScan, setAutoScan] = useState(false);
   const [interval, setInterval] = useState(10);
 
@@ -202,7 +202,7 @@ export function DisabledSliderExample() {
         <input
           type="checkbox"
           checked={autoScan}
-          onChange={(e) => setAutoScan(e.target.checked)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setAutoScan(e.target.checked)}
           class="w-4 h-4"
         />
         <span class="body">Enable Auto-Scan</span>
@@ -217,7 +217,7 @@ export function DisabledSliderExample() {
         label="Auto-Scan Interval"
         leftLabel="Frequent"
         rightLabel="Rare"
-        formatValue={(v) => `${v} min`}
+        formatValue={(v: number): string => `${v} min`}
         disabled={!autoScan}
       />
     </div>
@@ -228,7 +228,7 @@ export function DisabledSliderExample() {
  * Example 6: Time Duration with Smart Formatting
  * Automatically switches between ms/s/min based on value
  */
-export function SmartDurationExample() {
+export function SmartDurationExample(): React.JSX.Element {
   const [duration, setDuration] = useState(30000);
 
   const formatDuration = (ms: number): string => {
@@ -260,18 +260,18 @@ export function SmartDurationExample() {
  * Example 7: Integration with Form State
  * Shows how to integrate with form libraries or state management
  */
-export function FormIntegrationExample() {
+export function FormIntegrationExample(): React.JSX.Element {
   const [config, setConfig] = useState({
     timeout: 2000,
     retries: 3,
     workers: 20,
   });
 
-  const updateConfig = (key: keyof typeof config, value: number) => {
+  const updateConfig = (key: keyof typeof config, value: number): void => {
     setConfig((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     // Here you would send config to backend or save to settings
   };
@@ -285,32 +285,32 @@ export function FormIntegrationExample() {
 
       <Slider
         value={config.timeout}
-        onChange={(v) => updateConfig("timeout", v)}
+        onChange={(v: number): void => updateConfig("timeout", v)}
         min={500}
         max={10000}
         step={500}
         label="Request Timeout"
-        formatValue={(v) => `${v}ms`}
+        formatValue={(v: number): string => `${v}ms`}
       />
 
       <Slider
         value={config.retries}
-        onChange={(v) => updateConfig("retries", v)}
+        onChange={(v: number): void => updateConfig("retries", v)}
         min={0}
         max={10}
         step={1}
         label="Max Retries"
-        formatValue={(v) => `${v} attempts`}
+        formatValue={(v: number): string => `${v} attempts`}
       />
 
       <Slider
         value={config.workers}
-        onChange={(v) => updateConfig("workers", v)}
+        onChange={(v: number): void => updateConfig("workers", v)}
         min={5}
         max={100}
         step={5}
         label="Worker Threads"
-        formatValue={(v) => `${v} workers`}
+        formatValue={(v: number): string => `${v} workers`}
       />
 
       <button

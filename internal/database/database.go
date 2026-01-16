@@ -352,7 +352,7 @@ func (db *DB) Stats() sql.DBStats {
 	return db.conn.Stats()
 }
 
-// Conn returns the underlying *sql.DB connection.
+// Conn returns the underlying *[sql.DB] connection.
 // This is useful for packages that need direct database access (e.g., mibdb).
 func (db *DB) Conn() *sql.DB {
 	return db.conn

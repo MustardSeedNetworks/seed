@@ -40,7 +40,23 @@ import type {
  *
  * @returns Update state and control functions
  */
-export function useUpdates() {
+export function useUpdates(): {
+  updateInfo: UpdateCheckResponse | null;
+  status: UpdateStatusResponse | null;
+  config: UpdateConfig | null;
+  isChecking: boolean;
+  isDownloading: boolean;
+  isApplying: boolean;
+  error: string | null;
+  checkForUpdate: () => Promise<UpdateCheckResponse | null>;
+  getStatus: () => Promise<UpdateStatusResponse | null>;
+  getUpdateInfo: () => Promise<UpdateCheckResponse | null>;
+  downloadUpdate: () => Promise<boolean>;
+  applyUpdate: () => Promise<boolean>;
+  rollback: () => Promise<boolean>;
+  getConfig: () => Promise<UpdateConfig | null>;
+  updateConfig: (config: Partial<UpdateConfig>) => Promise<boolean>;
+} {
   const [updateInfo, setUpdateInfo] = useState<UpdateCheckResponse | null>(null);
   const [status, setStatus] = useState<UpdateStatusResponse | null>(null);
   const [config, setConfig] = useState<UpdateConfig | null>(null);

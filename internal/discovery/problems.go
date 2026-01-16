@@ -48,6 +48,29 @@ const (
 	ProblemCategorySecurity        ProblemCategory = "security"
 )
 
+// Problem threshold defaults.
+const (
+	defaultCPUPercent         = 90
+	defaultMemoryPercent      = 90
+	defaultDiskPercent        = 90
+	defaultTempCelsius        = 85
+	defaultInputErrorsPerMin  = 10
+	defaultOutputErrorsPerMin = 10
+	defaultCollisionsPerMin   = 100
+	defaultMinSignalDBm       = -75
+	defaultMaxRetryPercent    = 15
+	defaultMaxChannelUtil     = 80
+	defaultMaxCoChannelAPs    = 3
+)
+
+// Severity threshold ratios.
+const (
+	severityWarningRatio  = 0.9
+	severityCriticalRatio = 1.0
+	errorRateCritical     = 10.0
+	errorRateWarning      = 2.0
+)
+
 // NetworkProblem represents a detected issue in the network.
 // Problems are linked to devices/interfaces for correlation.
 type NetworkProblem struct {
@@ -213,17 +236,17 @@ type ProblemThresholds struct {
 // DefaultProblemThresholds returns sensible default thresholds.
 func DefaultProblemThresholds() ProblemThresholds {
 	return ProblemThresholds{
-		CPUPercent:         90,
-		MemoryPercent:      90,
-		DiskPercent:        90,
-		TempCelsius:        85,
-		InputErrorsPerMin:  10,
-		OutputErrorsPerMin: 10,
-		CollisionsPerMin:   100,
-		MinSignalDBm:       -75,
-		MaxRetryPercent:    15,
-		MaxChannelUtil:     80,
-		MaxCoChannelAPs:    3,
+		CPUPercent:         defaultCPUPercent,
+		MemoryPercent:      defaultMemoryPercent,
+		DiskPercent:        defaultDiskPercent,
+		TempCelsius:        defaultTempCelsius,
+		InputErrorsPerMin:  defaultInputErrorsPerMin,
+		OutputErrorsPerMin: defaultOutputErrorsPerMin,
+		CollisionsPerMin:   defaultCollisionsPerMin,
+		MinSignalDBm:       defaultMinSignalDBm,
+		MaxRetryPercent:    defaultMaxRetryPercent,
+		MaxChannelUtil:     defaultMaxChannelUtil,
+		MaxCoChannelAPs:    defaultMaxCoChannelAPs,
 	}
 }
 
@@ -254,9 +277,9 @@ type ProblemDetectionResult struct {
 func SeverityForResourceUsage(current, threshold float64) ProblemSeverity {
 	ratio := current / threshold
 	switch {
-	case ratio >= 1.0:
+	case ratio >= severityCriticalRatio:
 		return ProblemSeverityCritical
-	case ratio >= 0.9:
+	case ratio >= severityWarningRatio:
 		return ProblemSeverityWarning
 	default:
 		return ProblemSeverityInfo
@@ -284,9 +307,9 @@ func SeverityForErrorRate(errorsPerMin, thresholdPerMin int64) ProblemSeverity {
 	}
 	ratio := float64(errorsPerMin) / float64(thresholdPerMin)
 	switch {
-	case ratio >= 10.0:
+	case ratio >= errorRateCritical:
 		return ProblemSeverityCritical
-	case ratio >= 2.0:
+	case ratio >= errorRateWarning:
 		return ProblemSeverityWarning
 	default:
 		return ProblemSeverityInfo

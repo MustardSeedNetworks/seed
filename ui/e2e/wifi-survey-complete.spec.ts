@@ -19,9 +19,47 @@ import { expect, type Page, test } from "@playwright/test";
  */
 
 /**
+ * WiFi sample type definition
+ */
+interface WiFiSample {
+  x: number;
+  y: number;
+  timestamp: string;
+  sampleData: {
+    networks: Array<{
+      ssid: string;
+      bssid: string;
+      rssi: number;
+      channel: number;
+      frequency: number;
+    }>;
+  };
+}
+
+/**
+ * Survey type definition
+ */
+interface Survey {
+  id: string;
+  name: string;
+  surveyType: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  samples: WiFiSample[];
+  interface: string;
+  floorPlan?: {
+    imageData: string;
+    width: number;
+    height: number;
+    scaleM: number;
+  };
+}
+
+/**
  * Helper: Mock survey API responses
  */
-async function mockSurveyApis(page: Page) {
+async function mockSurveyApis(page: Page): Promise<void> {
   // Mock survey list endpoint
   await page.route("**/api/survey/list", async (route) => {
     await route.fulfill({
@@ -66,8 +104,8 @@ function createMockSurveyWithSamples(
   name: string,
   status: string,
   sampleCount: number,
-) {
-  const samples = [];
+): Survey {
+  const samples: WiFiSample[] = [];
   for (let i = 0; i < sampleCount; i++) {
     samples.push({
       x: 100 + i * 50,
@@ -761,7 +799,7 @@ test.describe("WiFi Survey - Complete User Journey", () => {
   });
 
   test("should limit display to 3 surveys and show count", async ({ page }) => {
-    const surveys = [];
+    const surveys: Survey[] = [];
     for (let i = 1; i <= 5; i++) {
       surveys.push(createMockSurveyWithSamples(`survey-${i}`, `Survey ${i}`, "completed", i));
     }

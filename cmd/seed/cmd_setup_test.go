@@ -13,7 +13,7 @@ func TestSetupCredentialsStruct(t *testing.T) {
 	creds := setupCredentials{
 		Username: "admin",
 		Password: "super-secret-password",
-		Config:   "/etc/seed/seed.yaml",
+		Config:   "/etc/seed/seed.json",
 	}
 
 	if creds.Username != "admin" {
@@ -22,8 +22,8 @@ func TestSetupCredentialsStruct(t *testing.T) {
 	if creds.Password != "super-secret-password" {
 		t.Errorf("Password should be 'super-secret-password', got %q", creds.Password)
 	}
-	if creds.Config != "/etc/seed/seed.yaml" {
-		t.Errorf("Config should be '/etc/seed/seed.yaml', got %q", creds.Config)
+	if creds.Config != "/etc/seed/seed.json" {
+		t.Errorf("Config should be '/etc/seed/seed.json', got %q", creds.Config)
 	}
 }
 
@@ -33,7 +33,7 @@ func TestSetupCredentialsMarshalJSON(t *testing.T) {
 	creds := setupCredentials{
 		Username: "admin",
 		Password: "test-password",
-		Config:   "/var/lib/seed/config.yaml",
+		Config:   "/var/lib/seed/config.json",
 	}
 
 	data, err := json.MarshalIndent(creds, "", "  ")
@@ -92,12 +92,12 @@ func TestEnsureConfigDir(t *testing.T) {
 	}{
 		{
 			name:       "current directory",
-			configPath: "seed.yaml",
+			configPath: "seed.json",
 			wantErr:    false,
 		},
 		{
 			name:       "dot directory",
-			configPath: "./seed.yaml",
+			configPath: "./seed.json",
 			wantErr:    false,
 		},
 	}
@@ -119,7 +119,7 @@ func TestEnsureConfigDirCreatesDirectory(t *testing.T) {
 	// Create a temporary directory
 	tmpDir := t.TempDir()
 	newDir := filepath.Join(tmpDir, "subdir", "config")
-	configPath := filepath.Join(newDir, "seed.yaml")
+	configPath := filepath.Join(newDir, "seed.json")
 
 	err := ensureConfigDir(configPath)
 	if err != nil {
@@ -141,7 +141,7 @@ func TestEnsureConfigDirExistingDirectory(t *testing.T) {
 
 	// Create a temporary directory that already exists
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "seed.yaml")
+	configPath := filepath.Join(tmpDir, "seed.json")
 
 	err := ensureConfigDir(configPath)
 	if err != nil {
@@ -175,7 +175,7 @@ func TestOutputCredentialsJSON(t *testing.T) {
 	creds := setupCredentials{
 		Username: "admin",
 		Password: "generated-password",
-		Config:   "/etc/seed/seed.yaml",
+		Config:   "/etc/seed/seed.json",
 	}
 
 	// Test that outputCredentials with asJSON=true produces valid JSON
@@ -223,7 +223,7 @@ func TestSetupCredentialsWithSpecialCharacters(t *testing.T) {
 	creds := setupCredentials{
 		Username: "admin@example.com",
 		Password: "p@ss!word#123$%^&*()",
-		Config:   "/path/with spaces/and-dashes/config.yaml",
+		Config:   "/path/with spaces/and-dashes/config.json",
 	}
 
 	data, err := json.Marshal(creds)

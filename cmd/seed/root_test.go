@@ -9,13 +9,13 @@ func TestCLIStateStruct(t *testing.T) {
 	t.Parallel()
 
 	state := &cliState{
-		cfgFile:        "/etc/seed/config.yaml",
+		cfgFile:        "/etc/seed/config.json",
 		devMode:        true,
 		trustedProxies: "10.0.0.0/8,172.16.0.0/12",
 	}
 
-	if state.cfgFile != "/etc/seed/config.yaml" {
-		t.Errorf("cfgFile should be '/etc/seed/config.yaml', got %q", state.cfgFile)
+	if state.cfgFile != "/etc/seed/config.json" {
+		t.Errorf("cfgFile should be '/etc/seed/config.json', got %q", state.cfgFile)
 	}
 	if !state.devMode {
 		t.Error("devMode should be true")

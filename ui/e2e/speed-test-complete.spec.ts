@@ -67,10 +67,9 @@ test.describe("Performance Testing - Complete Flow", () => {
 
       // Setup request interception to verify API call
       const requestPromise = page
-        .waitForRequest(
-          (request) => request.url().includes("/api/speedtest") && request.method() === "POST",
-          { timeout: 5000 },
-        )
+        .waitForRequest((req) => req.url().includes("/api/speedtest") && req.method() === "POST", {
+          timeout: 5000,
+        })
         .catch(() => null);
 
       await testButton.click();
@@ -104,15 +103,15 @@ test.describe("Performance Testing - Complete Flow", () => {
       }
 
       // Progress indicator might be brief, so we check for either progress or completion
-      if (!foundProgress) {
+      if (foundProgress) {
+        expect(foundProgress).toBeTruthy();
+      } else {
         // Check if test completed very quickly
         const hasResults = await page
           .getByText(/download|upload|mbps|latency|ms/i)
           .isVisible({ timeout: 3000 })
           .catch(() => false);
         expect(hasResults).toBeTruthy();
-      } else {
-        expect(foundProgress).toBeTruthy();
       }
     });
 
@@ -393,7 +392,7 @@ test.describe("Performance Testing - Complete Flow", () => {
       // Setup request interception
       const requestPromise = page
         .waitForRequest(
-          (request) => request.url().includes("/api/iperf/client") && request.method() === "POST",
+          (req) => req.url().includes("/api/iperf/client") && req.method() === "POST",
           { timeout: 5000 },
         )
         .catch(() => null);

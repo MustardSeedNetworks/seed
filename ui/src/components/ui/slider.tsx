@@ -67,14 +67,17 @@ interface SliderProps {
   /** Disable slider interaction */
   disabled?: boolean;
   /** Additional CSS classes */
-  className?: string;
+  class?: string;
 }
 
 /**
  * Range slider component for numeric input with visual feedback.
  * Supports keyboard navigation and custom value formatting.
  */
-export const Slider = memo(function slider({
+export const Slider: React.MemoExoticComponent<typeof SliderComponent> = memo(SliderComponent);
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex component with slider track styling and keyboard handling
+function SliderComponent({
   value,
   onChange,
   min,
@@ -85,8 +88,8 @@ export const Slider = memo(function slider({
   rightLabel,
   formatValue,
   disabled = false,
-  className,
-}: SliderProps) {
+  class: className,
+}: SliderProps): React.JSX.Element {
   const sliderRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -147,7 +150,7 @@ export const Slider = memo(function slider({
   return (
     <div class={cn("w-full", className)}>
       {/* Label and current value */}
-      {label && (
+      {label ? (
         <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
           <label
             for={`slider-${label.replace(/\s+/g, "-").toLowerCase()}`}
@@ -162,7 +165,7 @@ export const Slider = memo(function slider({
             {displayValue}
           </span>
         </div>
-      )}
+      ) : null}
 
       {/* Slider container with track and thumb */}
       <div class={spacing.margin.bottom.inline}>
@@ -201,10 +204,10 @@ export const Slider = memo(function slider({
             value={value}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            onMouseDown={() => setIsDragging(true)}
-            onMouseUp={() => setIsDragging(false)}
-            onTouchStart={() => setIsDragging(true)}
-            onTouchEnd={() => setIsDragging(false)}
+            onMouseDown={(): void => setIsDragging(true)}
+            onMouseUp={(): void => setIsDragging(false)}
+            onTouchStart={(): void => setIsDragging(true)}
+            onTouchEnd={(): void => setIsDragging(false)}
             disabled={disabled}
             class={cn(
               "relative w-full h-2 appearance-none bg-transparent cursor-pointer",
@@ -264,12 +267,12 @@ export const Slider = memo(function slider({
       </div>
 
       {/* End labels (e.g., "Slower ◄────► Faster") */}
-      {(leftLabel || rightLabel) && (
+      {leftLabel || rightLabel ? (
         <div class={cn(layout.flex.between, "caption text-text-muted")}>
           <span>{leftLabel || ""}</span>
           <span>{rightLabel || ""}</span>
         </div>
-      )}
+      ) : null}
     </div>
   );
-});
+}

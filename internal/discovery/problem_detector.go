@@ -17,6 +17,9 @@ import (
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
+// keyValueParts is the number of parts when splitting key-value strings.
+const keyValueParts = 2
+
 // safeUint64ToInt64 safely converts uint64 to int64, clamping at MaxInt64.
 func safeUint64ToInt64(v uint64) int64 {
 	if v > math.MaxInt64 {
@@ -26,7 +29,7 @@ func safeUint64ToInt64(v uint64) int64 {
 }
 
 // titleCase converts a string to title case (first letter uppercase).
-// Replacement for deprecated strings.Title.
+// Replacement for deprecated [strings.Title].
 func titleCase(s string) string {
 	if s == "" {
 		return s
@@ -226,8 +229,8 @@ func (d *ProblemDetector) checkChannelInterference(
 	var problems []WiFiProblem
 	for key, count := range channelAPCounts {
 		if count > thresholds.MaxCoChannelAPs {
-			parts := strings.SplitN(key, "-", 2)
-			if len(parts) != 2 {
+			parts := strings.SplitN(key, "-", keyValueParts)
+			if len(parts) != keyValueParts {
 				continue
 			}
 			band := WiFiBand(parts[0])
@@ -362,130 +365,128 @@ func (d *ProblemDetector) detectInterfaceErrors(
 	}
 }
 
+// createIPConflictProblem creates a NetworkProblem from an IPConflict.
+func createIPConflictProblem(conflict IPConflict) NetworkProblem {
+	return NetworkProblem{
+		ID:       uuid.New().String(),
+		Category: ProblemCategoryIPConflict,
+		Type:     "duplicate_ip",
+		Severity: ProblemSeverityCritical,
+		Status:   ProblemStatusActive,
+		Title:    fmt.Sprintf("Duplicate IP: %s", conflict.IPAddress),
+		Description: fmt.Sprintf("IP address %s is claimed by %d devices: %s",
+			conflict.IPAddress, len(conflict.MACs), strings.Join(conflict.MACs, ", ")),
+		IPAddress:       conflict.IPAddress,
+		AffectedMACs:    strings.Join(conflict.MACs, ","),
+		FirstSeen:       conflict.FirstSeen,
+		LastSeen:        conflict.LastSeen,
+		OccurrenceCount: 1,
+	}
+}
+
+// createDuplexMismatchProblem creates a NetworkProblem from a DuplexMismatch.
+func createDuplexMismatchProblem(mismatch DuplexMismatch) NetworkProblem {
+	return NetworkProblem{
+		ID:       uuid.New().String(),
+		Category: ProblemCategoryDuplexMismatch,
+		Type:     "duplex_mismatch",
+		Severity: ProblemSeverityWarning,
+		Status:   ProblemStatusActive,
+		Title:    fmt.Sprintf("Duplex Mismatch: %s", mismatch.InterfaceName),
+		Description: fmt.Sprintf("Interface %s is running in %s duplex mode with %d collisions",
+			mismatch.InterfaceName, mismatch.LocalDuplex, mismatch.CollisionCount),
+		DeviceID:        mismatch.DeviceID,
+		InterfaceName:   mismatch.InterfaceName,
+		FirstSeen:       mismatch.FirstSeen,
+		LastSeen:        mismatch.LastSeen,
+		OccurrenceCount: 1,
+	}
+}
+
+// createResourceAlertProblem creates a NetworkProblem from a ResourceThreshold.
+func createResourceAlertProblem(alert ResourceThreshold, now time.Time) NetworkProblem {
+	return NetworkProblem{
+		ID:       uuid.New().String(),
+		Category: ProblemCategoryResourceUsage,
+		Type:     fmt.Sprintf("high_%s", alert.ResourceType),
+		Severity: SeverityForResourceUsage(alert.CurrentValue, alert.Threshold),
+		Status:   ProblemStatusActive,
+		Title:    fmt.Sprintf("High %s Usage", titleCase(alert.ResourceType)),
+		Description: fmt.Sprintf("%s usage at %.1f%% (threshold: %.1f%%)",
+			titleCase(alert.ResourceType), alert.CurrentValue, alert.Threshold),
+		DeviceID:        alert.DeviceID,
+		CurrentValue:    alert.CurrentValue,
+		ThresholdValue:  alert.Threshold,
+		Unit:            alert.Unit,
+		FirstSeen:       now,
+		LastSeen:        now,
+		OccurrenceCount: 1,
+	}
+}
+
+// createInterfaceErrorProblem creates a NetworkProblem from InterfaceErrorStats.
+func createInterfaceErrorProblem(errStats InterfaceErrorStats, now time.Time) NetworkProblem {
+	return NetworkProblem{
+		ID:       uuid.New().String(),
+		Category: ProblemCategoryInterfaceErrors,
+		Type:     "interface_errors",
+		Severity: ProblemSeverityWarning,
+		Status:   ProblemStatusActive,
+		Title:    fmt.Sprintf("Interface Errors: %s", errStats.InterfaceName),
+		Description: fmt.Sprintf("Interface %s has input errors: %d, output errors: %d, collisions: %d",
+			errStats.InterfaceName, errStats.InputErrors, errStats.OutputErrors, errStats.Collisions),
+		DeviceID:        errStats.DeviceID,
+		InterfaceName:   errStats.InterfaceName,
+		FirstSeen:       now,
+		LastSeen:        now,
+		OccurrenceCount: 1,
+	}
+}
+
+// createWiFiProblem creates a NetworkProblem from a WiFiProblem.
+func createWiFiProblem(wifiProb WiFiProblem) NetworkProblem {
+	severity := ProblemSeverityInfo
+	if wifiProb.IsRogue {
+		severity = ProblemSeverityCritical
+	} else if wifiProb.ProblemType == "weak_signal" {
+		severity = ProblemSeverityWarning
+	}
+	return NetworkProblem{
+		ID:              uuid.New().String(),
+		Category:        ProblemCategoryWiFi,
+		Type:            wifiProb.ProblemType,
+		Severity:        severity,
+		Status:          ProblemStatusActive,
+		Title:           fmt.Sprintf("WiFi Issue: %s", wifiProb.ProblemType),
+		Description:     formatWiFiProblemDescription(wifiProb),
+		SSID:            wifiProb.SSID,
+		BSSID:           wifiProb.BSSID,
+		Channel:         wifiProb.Channel,
+		CurrentValue:    float64(wifiProb.SignalDBm),
+		FirstSeen:       wifiProb.FirstSeen,
+		LastSeen:        wifiProb.LastSeen,
+		OccurrenceCount: 1,
+	}
+}
+
 // aggregateProblems converts specific issues into generic NetworkProblem entries.
 func (d *ProblemDetector) aggregateProblems(result *ProblemDetectionResult) {
 	now := time.Now()
 
-	// IP Conflicts
 	for _, conflict := range result.IPConflicts {
-		result.Problems = append(result.Problems, NetworkProblem{
-			ID:       uuid.New().String(),
-			Category: ProblemCategoryIPConflict,
-			Type:     "duplicate_ip",
-			Severity: ProblemSeverityCritical,
-			Status:   ProblemStatusActive,
-			Title:    fmt.Sprintf("Duplicate IP: %s", conflict.IPAddress),
-			Description: fmt.Sprintf(
-				"IP address %s is claimed by %d devices: %s",
-				conflict.IPAddress,
-				len(conflict.MACs),
-				strings.Join(conflict.MACs, ", "),
-			),
-			IPAddress:       conflict.IPAddress,
-			AffectedMACs:    strings.Join(conflict.MACs, ","),
-			FirstSeen:       conflict.FirstSeen,
-			LastSeen:        conflict.LastSeen,
-			OccurrenceCount: 1,
-		})
+		result.Problems = append(result.Problems, createIPConflictProblem(conflict))
 	}
-
-	// Duplex Mismatches
 	for _, mismatch := range result.DuplexMismatches {
-		result.Problems = append(result.Problems, NetworkProblem{
-			ID:       uuid.New().String(),
-			Category: ProblemCategoryDuplexMismatch,
-			Type:     "duplex_mismatch",
-			Severity: ProblemSeverityWarning,
-			Status:   ProblemStatusActive,
-			Title:    fmt.Sprintf("Duplex Mismatch: %s", mismatch.InterfaceName),
-			Description: fmt.Sprintf(
-				"Interface %s is running in %s duplex mode with %d collisions",
-				mismatch.InterfaceName,
-				mismatch.LocalDuplex,
-				mismatch.CollisionCount,
-			),
-			DeviceID:        mismatch.DeviceID,
-			InterfaceName:   mismatch.InterfaceName,
-			FirstSeen:       mismatch.FirstSeen,
-			LastSeen:        mismatch.LastSeen,
-			OccurrenceCount: 1,
-		})
+		result.Problems = append(result.Problems, createDuplexMismatchProblem(mismatch))
 	}
-
-	// Resource Alerts
 	for _, alert := range result.ResourceAlerts {
-		result.Problems = append(result.Problems, NetworkProblem{
-			ID:       uuid.New().String(),
-			Category: ProblemCategoryResourceUsage,
-			Type:     fmt.Sprintf("high_%s", alert.ResourceType),
-			Severity: SeverityForResourceUsage(alert.CurrentValue, alert.Threshold),
-			Status:   ProblemStatusActive,
-			Title:    fmt.Sprintf("High %s Usage", titleCase(alert.ResourceType)),
-			Description: fmt.Sprintf(
-				"%s usage at %.1f%% (threshold: %.1f%%)",
-				titleCase(alert.ResourceType),
-				alert.CurrentValue,
-				alert.Threshold,
-			),
-			DeviceID:        alert.DeviceID,
-			CurrentValue:    alert.CurrentValue,
-			ThresholdValue:  alert.Threshold,
-			Unit:            alert.Unit,
-			FirstSeen:       now,
-			LastSeen:        now,
-			OccurrenceCount: 1,
-		})
+		result.Problems = append(result.Problems, createResourceAlertProblem(alert, now))
 	}
-
-	// Interface Errors
 	for _, errStats := range result.InterfaceErrors {
-		result.Problems = append(result.Problems, NetworkProblem{
-			ID:       uuid.New().String(),
-			Category: ProblemCategoryInterfaceErrors,
-			Type:     "interface_errors",
-			Severity: ProblemSeverityWarning,
-			Status:   ProblemStatusActive,
-			Title:    fmt.Sprintf("Interface Errors: %s", errStats.InterfaceName),
-			Description: fmt.Sprintf(
-				"Interface %s has input errors: %d, output errors: %d, collisions: %d",
-				errStats.InterfaceName,
-				errStats.InputErrors,
-				errStats.OutputErrors,
-				errStats.Collisions,
-			),
-			DeviceID:        errStats.DeviceID,
-			InterfaceName:   errStats.InterfaceName,
-			FirstSeen:       now,
-			LastSeen:        now,
-			OccurrenceCount: 1,
-		})
+		result.Problems = append(result.Problems, createInterfaceErrorProblem(errStats, now))
 	}
-
-	// WiFi Problems
 	for _, wifiProb := range result.WiFiProblems {
-		severity := ProblemSeverityInfo
-		if wifiProb.IsRogue {
-			severity = ProblemSeverityCritical
-		} else if wifiProb.ProblemType == "weak_signal" {
-			severity = ProblemSeverityWarning
-		}
-
-		result.Problems = append(result.Problems, NetworkProblem{
-			ID:              uuid.New().String(),
-			Category:        ProblemCategoryWiFi,
-			Type:            wifiProb.ProblemType,
-			Severity:        severity,
-			Status:          ProblemStatusActive,
-			Title:           fmt.Sprintf("WiFi Issue: %s", wifiProb.ProblemType),
-			Description:     formatWiFiProblemDescription(wifiProb),
-			SSID:            wifiProb.SSID,
-			BSSID:           wifiProb.BSSID,
-			Channel:         wifiProb.Channel,
-			CurrentValue:    float64(wifiProb.SignalDBm),
-			FirstSeen:       wifiProb.FirstSeen,
-			LastSeen:        wifiProb.LastSeen,
-			OccurrenceCount: 1,
-		})
+		result.Problems = append(result.Problems, createWiFiProblem(wifiProb))
 	}
 }
 

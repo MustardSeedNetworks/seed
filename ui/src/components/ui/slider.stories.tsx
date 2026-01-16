@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type React from "react";
 import { useState } from "react";
-import { Slider } from "./slider";
+import { Slider } from "./Slider";
 
 /**
  * Slider component for numeric input with visual feedback.
@@ -18,8 +18,8 @@ import { Slider } from "./slider";
  * - Keyboard accessible (arrows, Page Up/Down, Home/End)
  * - Touch-friendly for mobile devices
  */
-const meta = {
-  title: "UI/slider",
+const meta: Meta<typeof Slider> = {
+  title: "UI/Slider",
   component: Slider,
   parameters: {
     layout: "padded",
@@ -65,7 +65,7 @@ const meta = {
       description: "Disable slider interaction",
     },
   },
-} satisfies Meta<typeof Slider>;
+};
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -73,7 +73,9 @@ type Story = StoryObj<typeof meta>;
 /**
  * Interactive wrapper for stories
  */
-function _sliderWrapper(props: Omit<React.ComponentProps<typeof Slider>, "value" | "onChange">) {
+function _sliderWrapper(
+  props: Omit<React.ComponentProps<typeof Slider>, "value" | "onChange">,
+): React.JSX.Element {
   const [value, setValue] = useState(props.min + (props.max - props.min) / 2);
   return <Slider {...props} value={value} onChange={setValue} />;
 }
@@ -98,7 +100,7 @@ export const ProbeInterval: Story = {
       label="Probe Interval"
       leftLabel="Faster"
       rightLabel="Slower"
-      formatValue={(v) => `${v}ms`}
+      formatValue={(v: number): string => `${v}ms`}
     />
   ),
 };
@@ -116,7 +118,7 @@ export const ScanTimeout: Story = {
       label="Scan Timeout"
       leftLabel="Quick"
       rightLabel="Patient"
-      formatValue={(v) => (v >= 1000 ? `${v / 1000}s` : `${v}ms`)}
+      formatValue={(v: number): string => (v >= 1000 ? `${v / 1000}s` : `${v}ms`)}
     />
   ),
 };
@@ -134,7 +136,7 @@ export const Workers: Story = {
       label="Worker Threads"
       leftLabel="Conservative"
       rightLabel="Aggressive"
-      formatValue={(v) => `${v} workers`}
+      formatValue={(v: number): string => `${v} workers`}
     />
   ),
 };
@@ -152,7 +154,7 @@ export const RescanInterval: Story = {
       label="Rescan Interval"
       leftLabel="Frequent"
       rightLabel="Rare"
-      formatValue={(v) => `${v} min`}
+      formatValue={(v: number): string => `${v} min`}
     />
   ),
 };
@@ -168,7 +170,7 @@ export const BannerTimeout: Story = {
       max={10000}
       step={500}
       label="Banner Timeout"
-      formatValue={(v) => `${v}ms`}
+      formatValue={(v: number): string => `${v}ms`}
     />
   ),
 };
@@ -185,7 +187,13 @@ export const NoLabels: Story = {
  */
 export const LabelOnly: Story = {
   render: () => (
-    <sliderWrapper min={0} max={100} step={5} label="Brightness" formatValue={(v) => `${v}%`} />
+    <sliderWrapper
+      min={0}
+      max={100}
+      step={5}
+      label="Brightness"
+      formatValue={(v: number): string => `${v}%`}
+    />
   ),
 };
 
@@ -225,7 +233,7 @@ export const FineGrained: Story = {
       max={10}
       step={0.1}
       label="Precision"
-      formatValue={(v) => v.toFixed(1)}
+      formatValue={(v: number): string => v.toFixed(1)}
     />
   ),
 };
@@ -240,7 +248,7 @@ export const LargeRange: Story = {
       max={10000}
       step={100}
       label="Buffer Size"
-      formatValue={(v) => `${(v / 1000).toFixed(1)}KB`}
+      formatValue={(v: number): string => `${(v / 1000).toFixed(1)}KB`}
     />
   ),
 };
@@ -269,7 +277,7 @@ export const ScannerSettings: Story = {
           label="Probe Interval"
           leftLabel="Faster"
           rightLabel="Slower"
-          formatValue={(v) => `${v}ms`}
+          formatValue={(v: number): string => `${v}ms`}
         />
 
         <Slider
@@ -281,7 +289,7 @@ export const ScannerSettings: Story = {
           label="Scan Timeout"
           leftLabel="Quick"
           rightLabel="Patient"
-          formatValue={(v) => (v >= 1000 ? `${v / 1000}s` : `${v}ms`)}
+          formatValue={(v: number): string => (v >= 1000 ? `${v / 1000}s` : `${v}ms`)}
         />
 
         <Slider
@@ -293,7 +301,7 @@ export const ScannerSettings: Story = {
           label="Worker Threads"
           leftLabel="Conservative"
           rightLabel="Aggressive"
-          formatValue={(v) => `${v} workers`}
+          formatValue={(v: number): string => `${v} workers`}
         />
 
         <Slider
@@ -305,7 +313,7 @@ export const ScannerSettings: Story = {
           label="Rescan Interval"
           leftLabel="Frequent"
           rightLabel="Rare"
-          formatValue={(v) => `${v} min`}
+          formatValue={(v: number): string => `${v} min`}
         />
 
         <Slider
@@ -317,7 +325,7 @@ export const ScannerSettings: Story = {
           label="Banner Timeout"
           leftLabel="Quick"
           rightLabel="Patient"
-          formatValue={(v) => `${v}ms`}
+          formatValue={(v: number): string => `${v}ms`}
         />
 
         <div class="mt-8 p-4 bg-surface-raised rounded-lg border border-surface-border">

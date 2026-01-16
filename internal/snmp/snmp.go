@@ -47,12 +47,12 @@ const (
 
 // SystemInfo contains standard SNMP system information.
 type SystemInfo struct {
-	SysDescr    string
-	SysObjectID string
-	SysName     string
-	SysContact  string
-	SysLocation string
-	SysUpTime   uint32
+	SysDescr    string `json:"sysDescr"`
+	SysObjectID string `json:"sysObjectId"`
+	SysName     string `json:"sysName"`
+	SysContact  string `json:"sysContact"`
+	SysLocation string `json:"sysLocation"`
+	SysUpTime   uint32 `json:"sysUpTime"`
 }
 
 // Query performs a single SNMP GET query.

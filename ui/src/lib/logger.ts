@@ -75,7 +75,7 @@ const DEFAULT_CONFIG: LoggerConfig = {
 };
 
 // Color styles for console output using a Map with LogLevel keys
-const logColors = new Map<LogLevel, string>([
+const logColors: Map<LogLevel, string> = new Map<LogLevel, string>([
   ["DEBUG", "color: #6B7280"], // Gray
   ["INFO", "color: #3B82F6"], // Blue
   ["WARN", "color: #EAB308"], // Yellow
@@ -103,10 +103,12 @@ class Logger {
 
     // Flush on page unload
     if (typeof window !== "undefined") {
-      window.addEventListener("beforeunload", () => this.flush());
+      window.addEventListener("beforeunload", () => {
+        this.flush().catch(() => undefined);
+      });
       window.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "hidden") {
-          this.flush();
+          this.flush().catch(() => undefined);
         }
       });
     }
@@ -119,7 +121,7 @@ class Logger {
     this.authenticated = isAuthenticated;
     // Flush any buffered logs when we become authenticated
     if (isAuthenticated && this.buffer.length > 0) {
-      this.flush();
+      this.flush().catch(() => undefined);
     }
   }
 
@@ -199,7 +201,7 @@ class Logger {
     this.logToConsole(entry);
 
     if (this.buffer.length >= this.config.batchSize) {
-      this.flush();
+      this.flush().catch(() => undefined);
     }
   }
 
@@ -207,7 +209,9 @@ class Logger {
     if (this.flushTimer) {
       return;
     }
-    this.flushTimer = setInterval(() => this.flush(), this.config.flushInterval);
+    this.flushTimer = setInterval(() => {
+      this.flush().catch(() => undefined);
+    }, this.config.flushInterval);
   }
 
   private stopFlushTimer(): void {
@@ -338,11 +342,12 @@ class Logger {
     let errorMeta = metadata || {};
 
     if (error instanceof Error) {
-      stack = error.stack;
+      const { stack: errorStack, name: errorName, message: errorMessage } = error;
+      stack = errorStack;
       errorMeta = {
         ...errorMeta,
-        errorName: error.name,
-        errorMessage: error.message,
+        errorName,
+        errorMessage,
       };
     } else if (error !== undefined) {
       errorMeta = {
@@ -359,11 +364,11 @@ class Logger {
    * Log the start of a timed operation. Returns a function to call when done.
    */
   timedOperation(component: string, operation: string): () => void {
-    const startTime = performance.now();
+    const startTime: number = performance.now();
     this.debug(component, `${operation} started`);
 
-    return () => {
-      const duration = Math.round(performance.now() - startTime);
+    return (): void => {
+      const duration: number = Math.round(performance.now() - startTime);
       this.debug(component, `${operation} completed`, {
         durationMs: duration,
       });
@@ -396,7 +401,7 @@ class Logger {
   disable(): void {
     this.config.enabled = false;
     this.stopFlushTimer();
-    this.flush();
+    this.flush().catch(() => undefined);
   }
 }
 
@@ -431,7 +436,7 @@ class ComponentLogger {
 }
 
 // Export singleton instance
-export const logger = new Logger();
+export const logger: Logger = new Logger();
 
 // Export class for testing or custom instances
 export { Logger, ComponentLogger };

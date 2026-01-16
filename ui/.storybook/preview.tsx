@@ -10,8 +10,9 @@
  * needing to manually wrap each story with providers.
  */
 
-import type { Preview } from "@storybook/react-vite";
-import { type ReactNode, Suspense, useEffect } from "react";
+import type { DecoratorFunction, StoryContext } from "@storybook/csf";
+import type { Preview, ReactRenderer } from "@storybook/react-vite";
+import { type JSX, type ReactNode, Suspense, useEffect } from "react";
 import { I18nextProvider } from "react-i18next";
 import { ProfileProvider } from "../src/contexts/ProfileContext";
 import i18n from "../src/i18n";
@@ -22,14 +23,20 @@ import "../src/index.css";
  * Storybook background parameter controls the visual background,
  * while this applies the Tailwind theme class.
  */
-function ThemeWrapper({ children, dark = true }: { children: ReactNode; dark?: boolean }) {
-  useEffect(() => {
+function ThemeWrapper({
+  children,
+  dark = true,
+}: {
+  children: ReactNode;
+  dark?: boolean;
+}): JSX.Element {
+  useEffect((): (() => void) => {
     if (dark) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-    return () => {
+    return (): void => {
       document.documentElement.classList.remove("dark");
     };
   }, [dark]);
@@ -39,8 +46,8 @@ function ThemeWrapper({ children, dark = true }: { children: ReactNode; dark?: b
 /**
  * Loading fallback for Suspense during i18n initialization
  */
-function LoadingFallback() {
-  return <div className="flex items-center justify-center p-4 text-text-muted">Loading...</div>;
+function LoadingFallback(): JSX.Element {
+  return <div class="flex items-center justify-center p-4 text-text-muted">Loading...</div>;
 }
 
 const preview: Preview = {
@@ -62,7 +69,7 @@ const preview: Preview = {
   },
   decorators: [
     // Global decorator: wraps all stories with providers
-    (_story, context) => {
+    ((_story: () => ReactNode, context: StoryContext<ReactRenderer>): JSX.Element => {
       // Determine theme from background parameter
       const isDark =
         context.globals.backgrounds?.value !== "var(--color-surface-base-light, #f8fafc)";
@@ -72,7 +79,7 @@ const preview: Preview = {
           <Suspense fallback={<LoadingFallback />}>
             <ProfileProvider>
               <ThemeWrapper dark={isDark}>
-                <div className="p-4">
+                <div class="p-4">
                   <story />
                 </div>
               </ThemeWrapper>
@@ -80,7 +87,7 @@ const preview: Preview = {
           </Suspense>
         </I18nextProvider>
       );
-    },
+    }) as DecoratorFunction<ReactRenderer>,
   ],
 };
 
