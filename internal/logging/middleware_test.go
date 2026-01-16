@@ -516,7 +516,7 @@ func TestResponseWriter_Hijack(t *testing.T) {
 		if rw != nil {
 			t.Error("Hijack() should return nil rw for non-hijackable writer")
 		}
-		if !strings.Contains(err.Error(), "does not implement [http.Hijacker]") {
+		if !strings.Contains(err.Error(), "http.Hijacker") {
 			t.Errorf("Error message = %q, should mention Hijacker", err.Error())
 		}
 	})

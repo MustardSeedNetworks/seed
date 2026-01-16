@@ -12,6 +12,7 @@ import (
 // TestHandleStatus tests the status endpoint.
 func TestHandleStatus(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/status", http.NoBody)
 	w := httptest.NewRecorder()
@@ -41,6 +42,7 @@ func TestHandleStatus(t *testing.T) {
 // TestHandleStatusMethodNotAllowed tests non-GET methods for status endpoint.
 func TestHandleStatusMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -61,6 +63,7 @@ func TestHandleStatusMethodNotAllowed(t *testing.T) {
 // TestHandleExportMethodNotAllowed tests non-GET methods for export endpoint.
 func TestHandleExportMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {

@@ -101,6 +101,7 @@ func TestHandleRefreshToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
+			defer server.Close()
 			refreshToken := prepareRefreshToken(t, server, tt)
 
 			req := httptest.NewRequest(http.MethodPost, "/api/auth/refresh", http.NoBody)
@@ -128,6 +129,7 @@ func TestHandleRefreshToken(t *testing.T) {
 // TestHandleRefreshTokenMethodNotAllowed tests non-POST methods.
 func TestHandleRefreshTokenMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
@@ -148,6 +150,7 @@ func TestHandleRefreshTokenMethodNotAllowed(t *testing.T) {
 // TestHandleLogout tests the logout endpoint.
 func TestHandleLogout(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	// Create authenticated request
 	token, err := server.AuthManager().GenerateToken(context.Background(), "admin")
@@ -192,6 +195,7 @@ func TestHandleLogout(t *testing.T) {
 // TestHandleLogoutMethodNotAllowed tests non-POST methods for logout.
 func TestHandleLogoutMethodNotAllowed(t *testing.T) {
 	server := api.NewTestServer()
+	defer server.Close()
 
 	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {

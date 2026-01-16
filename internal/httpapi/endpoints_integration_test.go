@@ -19,7 +19,8 @@ import (
 
 // testEndpointServer holds shared test server state.
 type testEndpointServer struct {
-	ts *httptest.Server
+	ts     *httptest.Server
+	server *api.Server
 }
 
 func newTestEndpointServer(t *testing.T) *testEndpointServer {
@@ -50,11 +51,12 @@ func newTestEndpointServer(t *testing.T) *testEndpointServer {
 	ts := httptest.NewUnstartedServer(server.Mux())
 	ts.Listener = ln
 	ts.Start()
-	return &testEndpointServer{ts: ts}
+	return &testEndpointServer{ts: ts, server: server}
 }
 
 func (s *testEndpointServer) close() {
 	s.ts.Close()
+	s.server.Close() // Stop goroutines (rate limiters, WebSocket hub, etc.)
 }
 
 func (s *testEndpointServer) testStatusEndpoint(t *testing.T) {
@@ -239,6 +241,7 @@ func TestWebSocketHub(t *testing.T) {
 
 	netMgr, _ := network.NewManager("")
 	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, nil, nil)
+	defer server.Close()
 
 	// Test hub exists
 	hub := server.Hub()
@@ -292,7 +295,8 @@ func TestWebSocketHub(t *testing.T) {
 
 // devicesTestServer wraps test server state for device endpoint tests.
 type devicesTestServer struct {
-	ts *httptest.Server
+	ts     *httptest.Server
+	server *api.Server
 }
 
 // newDevicesTestServer creates a test server configured for device endpoints.
@@ -312,11 +316,12 @@ func newDevicesTestServer(t *testing.T) *devicesTestServer {
 	netMgr, _ := network.NewManager("")
 	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, nil, nil)
 
-	return &devicesTestServer{ts: httptest.NewServer(server.Mux())}
+	return &devicesTestServer{ts: httptest.NewServer(server.Mux()), server: server}
 }
 
 func (s *devicesTestServer) close() {
 	s.ts.Close()
+	s.server.Close() // Stop goroutines (rate limiters, WebSocket hub, etc.)
 }
 
 // assertGetEndpointOK performs a GET request and asserts HTTP 200 response.
@@ -409,6 +414,7 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 
 	netMgr, _ := network.NewManager("")
 	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, nil, nil)
+	defer server.Close()
 
 	ts := httptest.NewServer(server.Mux())
 	defer ts.Close()

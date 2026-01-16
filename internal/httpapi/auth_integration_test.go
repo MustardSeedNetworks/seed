@@ -446,6 +446,7 @@ func (ts *authTestServer) cleanup() {
 
 func createAuthTestServer(_ *testing.T) *authTestServer {
 	server := api.NewTestServer()
+	defer server.Close()
 	handler := server.GetAuthenticatedHandler()
 
 	return &authTestServer{
