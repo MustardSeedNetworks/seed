@@ -40,7 +40,7 @@ type cpuCacheState struct {
 	stop    chan struct{}
 }
 
-// cpuCacheSingleton holds the singleton CPU cache state using sync.OnceValue.
+// cpuCacheSingleton holds the singleton CPU cache state using [sync.OnceValue].
 // This pattern satisfies gochecknoglobals by using a function rather than a variable.
 func cpuCacheSingleton() *cpuCacheState {
 	return sync.OnceValue(func() *cpuCacheState {
@@ -102,7 +102,7 @@ type processCacheState struct {
 	updateInFly bool
 }
 
-// processCacheSingleton holds the singleton process cache state using sync.OnceValue.
+// processCacheSingleton holds the singleton process cache state using [sync.OnceValue].
 func processCacheSingleton() *processCacheState {
 	return sync.OnceValue(func() *processCacheState {
 		return &processCacheState{}

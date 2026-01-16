@@ -22,11 +22,12 @@
  * Exported Types: ToastType ('success' | 'error' | 'warning' | 'info')
  */
 
+import type { JSX } from "react";
 import { icon } from "../../styles/theme";
 
 export type ToastType = "success" | "error" | "warning" | "info";
 
-export const typeStyles = {
+export const typeStyles: Record<ToastType, string> = {
   success: "bg-status-success text-text-inverse",
   error: "bg-status-error text-text-inverse",
   warning: "bg-status-warning text-text-inverse",
@@ -34,9 +35,9 @@ export const typeStyles = {
 };
 
 // Icon size for toast notifications
-const toastIconSize = icon.size.md; // w-5 h-5
+const toastIconSize: string = icon.size.md; // w-5 h-5
 
-export const icons = {
+export const icons: Record<ToastType, JSX.Element> = {
   success: (
     <svg class={toastIconSize} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
       <path

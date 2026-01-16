@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noInferrableTypes: useExplicitType requires types on default params
 /**
  * useDiscoveredDevices Hook
  *
@@ -172,7 +173,14 @@ export function getDeviceDisplayName(device: DiscoveredDevice): string {
 /**
  * Custom hook for fetching and managing discovered network devices.
  */
-export function useDiscoveredDevices(autoRefresh = false) {
+export function useDiscoveredDevices(autoRefresh: boolean = false): {
+  devices: DiscoveredDevice[];
+  groupedDevices: GroupedDevices;
+  status: DiscoveryStatus | null;
+  isLoading: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+} {
   const [devices, setDevices] = useState<DiscoveredDevice[]>([]);
   const [status, setStatus] = useState<DiscoveryStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -210,7 +218,7 @@ export function useDiscoveredDevices(autoRefresh = false) {
 
   // Initial fetch
   useEffect(() => {
-    fetchDevices();
+    fetchDevices().catch(() => undefined);
   }, [fetchDevices]);
 
   // Auto-refresh if enabled
@@ -219,11 +227,11 @@ export function useDiscoveredDevices(autoRefresh = false) {
       return;
     }
 
-    const interval = setInterval(() => {
-      fetchDevices();
+    const interval: ReturnType<typeof setInterval> = setInterval(() => {
+      fetchDevices().catch(() => undefined);
     }, 10000); // Refresh every 10 seconds
 
-    return () => clearInterval(interval);
+    return (): void => clearInterval(interval);
   }, [autoRefresh, fetchDevices]);
 
   // Group devices by type

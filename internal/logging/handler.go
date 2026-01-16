@@ -12,7 +12,7 @@ const (
 	sliceCapacityMultiplier = 2
 )
 
-// RedactingHandler is a slog.Handler that automatically redacts sensitive data
+// RedactingHandler is a [slog.Handler] that automatically redacts sensitive data
 // from log messages and attributes before passing them to the underlying handler.
 //
 // It uses the existing redaction functions (RedactString, RedactMap, RedactHeaders)

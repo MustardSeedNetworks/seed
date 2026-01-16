@@ -67,6 +67,7 @@ function isValidIpv4(ip: string): boolean {
   });
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: IPv6 validation is inherently complex
 function isValidIpv6(ip: string): boolean {
   if (ip === "") {
     return false;
@@ -140,7 +141,16 @@ function normalizeSeverityFilter(severity: string): SeverityFilter | null {
  *
  * @returns Vulnerability scanning state and control functions
  */
-export function useVulnerabilities() {
+export function useVulnerabilities(): {
+  triggerScan: (ip?: string) => Promise<boolean>;
+  fetchStatus: () => Promise<VulnerabilityScanStatus | null>;
+  fetchResults: (severity?: string) => Promise<VulnerabilityResult[]>;
+  fetchDeviceVulnerabilities: (ip: string) => Promise<DeviceVulnerabilities | null>;
+  fetchSettings: () => Promise<VulnerabilitySettings | null>;
+  updateSettings: (settings: Partial<VulnerabilitySettings>) => Promise<boolean>;
+  isScanning: boolean;
+  scanError: string | null;
+} {
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
 

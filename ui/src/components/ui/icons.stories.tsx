@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type React from "react";
 import { button, cn, icon as iconTheme, layout, section, spacing } from "../../styles/theme";
-import { ICON_SIZES } from "./iconConfig";
 import {
   // Card header icons
   Activity,
@@ -92,7 +91,8 @@ import {
   X,
   XCircle,
   Zap,
-} from "./icons";
+} from "./Icons";
+import { ICON_SIZES } from "./icon-config";
 
 /**
  * Icon Library showcases all available icons re-exported from lucide-react.
@@ -106,7 +106,7 @@ import {
  * Always import icons from this module instead of directly from lucide-react.
  */
 const meta: Meta = {
-  title: "UI/icons",
+  title: "UI/Icons",
   parameters: {
     layout: "padded",
     docs: {
@@ -475,7 +475,13 @@ export const CardHeaders: Story = {
 };
 
 // Helper components for stories
-function _iconCategory({ title, children }: { title: string; children: React.ReactNode }) {
+function _iconCategory({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}): React.JSX.Element {
   return (
     <div>
       <h4
@@ -494,7 +500,7 @@ function _iconCategory({ title, children }: { title: string; children: React.Rea
   );
 }
 
-function _iconItem({ icon, name }: { icon: React.ReactNode; name: string }) {
+function _iconItem({ icon, name }: { icon: React.ReactNode; name: string }): React.JSX.Element {
   return (
     <div
       class={cn(
@@ -518,7 +524,7 @@ function _statusExample({
   icon: React.ReactNode;
   label: string;
   description: string;
-}) {
+}): React.JSX.Element {
   return (
     <div
       class={cn(
@@ -536,7 +542,13 @@ function _statusExample({
   );
 }
 
-function _deviceExample({ icon, name }: { icon: React.ReactNode; name: string }) {
+function _deviceExample({
+  icon,
+  name,
+}: {
+  icon: React.ReactNode;
+  name: string;
+}): React.JSX.Element {
   return (
     <div
       class={cn(
@@ -550,7 +562,13 @@ function _deviceExample({ icon, name }: { icon: React.ReactNode; name: string })
   );
 }
 
-function _cardHeaderExample({ icon, title }: { icon: React.ReactNode; title: string }) {
+function _cardHeaderExample({
+  icon,
+  title,
+}: {
+  icon: React.ReactNode;
+  title: string;
+}): React.JSX.Element {
   return (
     <div
       class={cn("rounded-lg bg-surface-raised border border-surface-border", spacing.pad.default)}

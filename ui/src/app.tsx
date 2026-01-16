@@ -29,34 +29,35 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LoginForm } from "./app/login-form";
-import { CapabilityWarnings } from "./components/app/capability-warnings";
-import { HeaderBar } from "./components/app/header-bar";
-import { CableCard } from "./components/cards/cable-card";
-import { DnsCard } from "./components/cards/dns-card";
-import { GatewayCard } from "./components/cards/gateway-card";
-import { HealthCheckCard } from "./components/cards/health-check-card";
-import { LinkCard } from "./components/cards/link-card";
-import { LogViewerCard } from "./components/cards/log-viewer-card";
-import { NetworkCard } from "./components/cards/network-card";
+
+import { LoginForm } from "./app/LoginForm";
+import { CapabilityWarnings } from "./components/app/CapabilityWarnings";
+import { HeaderBar } from "./components/app/HeaderBar";
+import { CableCard } from "./components/cards/CableCard";
+import { DnsCard } from "./components/cards/DnsCard";
+import { GatewayCard } from "./components/cards/GatewayCard";
+import { HealthCheckCard } from "./components/cards/HealthCheckCard";
+import { LinkCard } from "./components/cards/LinkCard";
+import { LogViewerCard } from "./components/cards/LogViewerCard";
+import { NetworkCard } from "./components/cards/NetworkCard";
 import {
   NetworkDiscoveryCard,
   type NetworkDiscoveryData,
-} from "./components/cards/network-discovery-card";
-import { PathDiscoveryCard } from "./components/cards/path-discovery-card";
-import { PerformanceCard } from "./components/cards/performance-card";
-import { PublicIpCard } from "./components/cards/public-ip-card";
-import { SLADashboardCard } from "./components/cards/sla-dashboard-card";
-import { SwitchCard } from "./components/cards/switch-card";
-import { SystemHealthCard } from "./components/cards/system-health-card";
-import { WiFiCard } from "./components/cards/wifi-card";
-import { WifiChannelGraph } from "./components/cards/wifi-channel-graph";
-import { WiFiSurveyCard } from "./components/cards/wifi-survey-card";
-import { ImprovedHelpModal } from "./components/help/improved-help-modal";
-import { ProfileManagement } from "./components/profiles/profile-management";
-import { SettingsDrawer } from "./components/settings/settings-drawer";
-import { SetupWizard } from "./components/setup/setup-wizard";
-import { FAB } from "./components/ui/fab";
+} from "./components/cards/NetworkDiscoveryCard";
+import { PathDiscoveryCard } from "./components/cards/PathDiscoveryCard";
+import { PerformanceCard } from "./components/cards/PerformanceCard";
+import { PublicIpCard } from "./components/cards/PublicIpCard";
+import { SLADashboardCard } from "./components/cards/SlaDashboardCard";
+import { SwitchCard } from "./components/cards/SwitchCard";
+import { SystemHealthCard } from "./components/cards/SystemHealthCard";
+import { WiFiCard } from "./components/cards/WiFiCard";
+import { WifiChannelGraph } from "./components/cards/WiFiChannelGraph";
+import { WiFiSurveyCard } from "./components/cards/WiFiSurveyCard";
+import { ImprovedHelpModal } from "./components/help/ImprovedHelpModal";
+import { ProfileManagement } from "./components/profiles/ProfileManagement";
+import { SettingsDrawer } from "./components/settings/SettingsDrawer";
+import { SetupWizard } from "./components/setup/SetupWizard";
+import { Fab } from "./components/ui/Fab";
 import { useProfileContext } from "./contexts/profile-context";
 import { useSettings } from "./contexts/useSettings";
 import { useAppDrawers } from "./hooks/useAppDrawers";
@@ -74,12 +75,134 @@ import { api, setSessionExpiredCallback } from "./lib/api";
 import { LogComponents, logger } from "./lib/logger";
 import { cn, layout, radius, section, spacing } from "./styles/theme";
 
+// ============================================================================
+// Helper types for interface management
+// ============================================================================
+
+interface InterfaceInfo {
+  name: string;
+  type: string;
+  up: boolean;
+}
+
+/** Profile interface config from backend (uses snake_case) */
+interface ProfileInterfacesConfig {
+  // biome-ignore lint/style/useNamingConvention: Backend API uses snake_case
+  active_ethernet?: string;
+  // biome-ignore lint/style/useNamingConvention: Backend API uses snake_case
+  active_wifi?: string;
+}
+
+interface InterfaceRestorationResult {
+  restoredEthernet: boolean;
+  restoredWifi: boolean;
+  savedEthernetName: string;
+  savedWifiName: string;
+}
+
+// ============================================================================
+// Helper functions for interface management (extracted to reduce complexity)
+// ============================================================================
+
+/**
+ * Find the best interface of a given type from available interfaces.
+ * Prefers link-up interfaces, otherwise returns the first one.
+ */
+function findBestInterface(
+  interfaces: InterfaceInfo[],
+  type: "ethernet" | "wifi",
+): InterfaceInfo | null {
+  const candidates = interfaces.filter((iface) => iface.type === type);
+  if (candidates.length === 0) {
+    return null;
+  }
+  return candidates.find((iface) => iface.up) ?? candidates[0];
+}
+
+/**
+ * Check if a saved interface exists in the available interfaces.
+ */
+function interfaceExistsWithType(interfaces: InterfaceInfo[], name: string, type: string): boolean {
+  return interfaces.some((i) => i.name === name && i.type === type);
+}
+
+/**
+ * Parse profile interfaces config and determine which interfaces can be restored.
+ */
+function parseProfileInterfaces(
+  profileInterfaces: ProfileInterfacesConfig | undefined,
+  interfaces: InterfaceInfo[],
+): InterfaceRestorationResult {
+  const result: InterfaceRestorationResult = {
+    restoredEthernet: false,
+    restoredWifi: false,
+    savedEthernetName: "",
+    savedWifiName: "",
+  };
+
+  if (!profileInterfaces) {
+    return result;
+  }
+
+  // Check ethernet interface
+  if (profileInterfaces.active_ethernet) {
+    result.savedEthernetName = profileInterfaces.active_ethernet;
+    if (interfaceExistsWithType(interfaces, result.savedEthernetName, "ethernet")) {
+      result.restoredEthernet = true;
+    }
+  }
+
+  // Check wifi interface
+  if (profileInterfaces.active_wifi) {
+    result.savedWifiName = profileInterfaces.active_wifi;
+    if (interfaceExistsWithType(interfaces, result.savedWifiName, "wifi")) {
+      result.restoredWifi = true;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Apply interface state updates for restoration.
+ * Handles setting local state and notifying backend.
+ */
+function applyInterfaceRestoration(
+  restoration: InterfaceRestorationResult,
+  setEthernetInterfaceState: (name: string) => void,
+  setWifiInterfaceState: (name: string) => void,
+  changeInterface: (name: string) => Promise<void>,
+  setActiveMode: (mode: "ethernet" | "wifi") => void,
+): void {
+  // Update local state
+  if (restoration.restoredEthernet) {
+    setEthernetInterfaceState(restoration.savedEthernetName);
+  }
+  if (restoration.restoredWifi) {
+    setWifiInterfaceState(restoration.savedWifiName);
+  }
+
+  // Set active interface on backend (prefer ethernet if both exist)
+  if (restoration.restoredEthernet) {
+    changeInterface(restoration.savedEthernetName).catch((err: unknown) => {
+      logger.error(LogComponents.Network, "Failed to change interface", { error: err });
+    });
+    setActiveMode("ethernet");
+  } else if (restoration.restoredWifi) {
+    changeInterface(restoration.savedWifiName).catch((err: unknown) => {
+      logger.error(LogComponents.Network, "Failed to change interface", { error: err });
+    });
+    setActiveMode("wifi");
+  }
+}
+
 /**
  * Main App Component
  *
  * Orchestrates the entire application, managing authentication,
  * real-time data updates, and the dashboard interface.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Main App component with necessary orchestration logic
 function App(): JSX.Element {
   const { t } = useTranslation("common");
   const { isAuthenticated, login, logout, isLoading, error } = useAuth();
@@ -162,7 +285,9 @@ function App(): JSX.Element {
         from: prevActiveProfileRef.current,
         to: currentProfileId,
       });
-      refreshSettings();
+      refreshSettings().catch((err: unknown) => {
+        logger.error(LogComponents.Config, "Failed to refresh settings", { error: err });
+      });
     }
     prevActiveProfileRef.current = currentProfileId;
   }, [activeProfile?.id, refreshSettings]);
@@ -294,7 +419,7 @@ function App(): JSX.Element {
               clearInterval(scanPollIntervalRef.current);
               scanPollIntervalRef.current = null;
             }
-            fetchNetworkDiscovery();
+            await fetchNetworkDiscovery();
           }
         } catch {
           // Status check failed, keep polling
@@ -339,14 +464,30 @@ function App(): JSX.Element {
             setIsWifi(data.isWireless === true);
           }
           // Refresh data for new interface
-          fetchLinkData();
-          fetchIpConfig();
-          fetchDiscoveryData();
-          fetchDnsData();
-          fetchGatewayData();
-          fetchVlanData();
-          fetchWifiData();
-          fetchCableData();
+          fetchLinkData().catch((): void => {
+            /* handled */
+          });
+          fetchIpConfig().catch((): void => {
+            /* handled */
+          });
+          fetchDiscoveryData().catch((): void => {
+            /* handled */
+          });
+          fetchDnsData().catch((): void => {
+            /* handled */
+          });
+          fetchGatewayData().catch((): void => {
+            /* handled */
+          });
+          fetchVlanData().catch((): void => {
+            /* handled */
+          });
+          fetchWifiData().catch((): void => {
+            /* handled */
+          });
+          fetchCableData().catch((): void => {
+            /* handled */
+          });
         }
       } catch (err) {
         logger.error(LogComponents.Network, "Failed to change interface", err);
@@ -373,43 +514,31 @@ function App(): JSX.Element {
     async (type: "ethernet" | "wifi") => {
       // Mark that user explicitly selected this mode - prevents API responses from flipping back
       userSetWifiModeRef.current = true;
-
-      // Set the mode immediately for responsive UI
       setActiveMode(type);
 
       // Check if we already have a stored interface for this mode
       const storedInterface = type === "wifi" ? wifiInterface : ethernetInterface;
       if (storedInterface) {
-        // We already have an interface stored, just switch mode
-        // Backend notification happens via changeInterface
         await changeInterface(storedInterface);
         return;
       }
 
-      // No stored interface - find one from available interfaces
-      const candidates = interfaces.filter((iface) => iface.type === type);
-      if (candidates.length === 0) {
+      // No stored interface - find one from available interfaces using helper
+      const target = findBestInterface(interfaces, type);
+      if (!target) {
         // No interfaces of this type available, just show the view anyway
-        // for planning/survey purposes (Fix #572 extension)
         return;
       }
 
-      // Prefer a link-up interface, otherwise first in list
-      const target = candidates.find((iface) => iface.up) ?? candidates[0];
-      if (target) {
-        // Update the appropriate interface state directly
-        if (type === "wifi") {
-          setWifiInterfaceState(target.name);
-        } else {
-          setEthernetInterfaceState(target.name);
-        }
-        changeInterface(target.name);
-        // Persist the interface selection to the active profile (#754 multi-interface support)
-        if (type === "wifi") {
-          await setWifiInterface(target.name, true);
-        } else {
-          await setEthernetInterface(target.name, true);
-        }
+      // Update state and persist selection
+      const setInterfaceState = type === "wifi" ? setWifiInterfaceState : setEthernetInterfaceState;
+      setInterfaceState(target.name);
+      await changeInterface(target.name);
+      // Persist interface selection - use Promise.resolve to satisfy linter
+      if (type === "wifi") {
+        await Promise.resolve(setWifiInterface(target.name, true));
+      } else {
+        await Promise.resolve(setEthernetInterface(target.name, true));
       }
     },
     [
@@ -438,55 +567,34 @@ function App(): JSX.Element {
       return;
     }
 
-    const profileInterfaces = activeProfile.config?.interfaces;
-    let restoredEthernet = false;
-    let restoredWifi = false;
-    let savedEthernetName = "";
-    let savedWifiName = "";
+    // Use helper function to parse profile interfaces
+    const profileInterfaces = activeProfile.config?.interfaces as
+      | ProfileInterfacesConfig
+      | undefined;
+    const restoration = parseProfileInterfaces(profileInterfaces, interfaces);
 
-    if (profileInterfaces) {
-      // Load ethernet interface if saved in profile (using active_ethernet from array)
-      if (profileInterfaces.active_ethernet) {
-        savedEthernetName = profileInterfaces.active_ethernet;
-        const exists = interfaces.some(
-          (i) => i.name === savedEthernetName && i.type === "ethernet",
-        );
-        if (exists) {
-          logger.info(LogComponents.Config, "Restoring ethernet interface from profile", {
-            interface: savedEthernetName,
-          });
-          restoredEthernet = true;
-        }
-      }
+    // Log restoration if applicable
+    if (restoration.restoredEthernet) {
+      logger.info(LogComponents.Config, "Restoring ethernet interface from profile", {
+        interface: restoration.savedEthernetName,
+      });
+    }
+    if (restoration.restoredWifi) {
+      logger.info(LogComponents.Config, "Restoring WiFi interface from profile", {
+        interface: restoration.savedWifiName,
+      });
+    }
 
-      // Load wifi interface if saved in profile (using active_wifi from array)
-      if (profileInterfaces.active_wifi) {
-        savedWifiName = profileInterfaces.active_wifi;
-        const exists = interfaces.some((i) => i.name === savedWifiName && i.type === "wifi");
-        if (exists) {
-          logger.info(LogComponents.Config, "Restoring WiFi interface from profile", {
-            interface: savedWifiName,
-          });
-          restoredWifi = true;
-        }
-      }
-
-      // Batch all state updates in a single setTimeout to avoid cascading renders
+    // Apply restoration in batched update using helper function
+    if (restoration.restoredEthernet || restoration.restoredWifi) {
       setTimeout(() => {
-        if (restoredEthernet && savedEthernetName) {
-          setEthernetInterfaceState(savedEthernetName);
-        }
-        if (restoredWifi && savedWifiName) {
-          setWifiInterfaceState(savedWifiName);
-        }
-        // Set the active interface on the backend
-        if (restoredEthernet) {
-          changeInterface(savedEthernetName);
-          setActiveMode("ethernet");
-        } else if (restoredWifi) {
-          changeInterface(savedWifiName);
-          setActiveMode("wifi");
-        }
+        applyInterfaceRestoration(
+          restoration,
+          setEthernetInterfaceState,
+          setWifiInterfaceState,
+          changeInterface,
+          setActiveMode,
+        );
       }, 0);
     }
     profileInterfaceLoadedRef.current = activeProfile.id;
@@ -551,7 +659,9 @@ function App(): JSX.Element {
 
       // Trigger network discovery if enabled
       if (runOpts.runNetworkDiscovery) {
-        triggerDeviceScan();
+        triggerDeviceScan().catch((err: unknown) => {
+          logger.error(LogComponents.Network, "Failed to trigger device scan", { error: err });
+        });
       }
 
       // Wait for all fetches to complete
@@ -579,7 +689,7 @@ function App(): JSX.Element {
 
       // Wait for all card-managed tests to complete
       const completed = new Set<string>();
-      const handleCardComplete = (event: CustomEvent) => {
+      const handleCardComplete = (event: CustomEvent): void => {
         const testName = event.detail?.test;
         if (testName && cardTestsToWait.includes(testName)) {
           completed.add(testName);
@@ -638,20 +748,46 @@ function App(): JSX.Element {
     }
 
     // Initial fetch of all data
-    setTimeout(() => {
-      fetchLinkData();
-      fetchIpConfig();
-      fetchInterfaces();
-      fetchVersion();
-      fetchDiscoveryData();
-      fetchDnsData();
-      fetchGatewayData();
-      fetchVlanData();
-      fetchWifiData();
-      fetchCableData();
-      fetchPublicIp();
-      fetchNetworkDiscovery();
-      fetchChannelGraphData();
+    setTimeout((): void => {
+      fetchLinkData().catch((): void => {
+        /* handled */
+      });
+      fetchIpConfig().catch((): void => {
+        /* handled */
+      });
+      fetchInterfaces().catch((): void => {
+        /* handled */
+      });
+      fetchVersion().catch((): void => {
+        /* handled */
+      });
+      fetchDiscoveryData().catch((): void => {
+        /* handled */
+      });
+      fetchDnsData().catch((): void => {
+        /* handled */
+      });
+      fetchGatewayData().catch((): void => {
+        /* handled */
+      });
+      fetchVlanData().catch((): void => {
+        /* handled */
+      });
+      fetchWifiData().catch((): void => {
+        /* handled */
+      });
+      fetchCableData().catch((): void => {
+        /* handled */
+      });
+      fetchPublicIp().catch((): void => {
+        /* handled */
+      });
+      fetchNetworkDiscovery().catch((): void => {
+        /* handled */
+      });
+      fetchChannelGraphData().catch((err: unknown) => {
+        logger.error(LogComponents.Network, "Failed to fetch channel graph data", { error: err });
+      });
       setLoading(false);
     }, 0);
   }, [
@@ -702,7 +838,9 @@ function App(): JSX.Element {
     if (shouldAutoScan) {
       // Small delay to let other data load first
       const timer = setTimeout(() => {
-        triggerDeviceScan();
+        triggerDeviceScan().catch((err: unknown) => {
+          logger.error(LogComponents.Network, "Failed to trigger device scan", { error: err });
+        });
       }, 2000);
       return () => clearTimeout(timer);
     }
@@ -710,7 +848,7 @@ function App(): JSX.Element {
 
   // Cleanup device scan polling on unmount
   useEffect(
-    () => () => {
+    () => (): void => {
       if (scanPollIntervalRef.current) {
         clearInterval(scanPollIntervalRef.current);
       }
@@ -804,19 +942,19 @@ function App(): JSX.Element {
             </h2>
             <div class={layout.grid.cards}>
               {/* WiFi-only cards */}
-              {isWifi && <WiFiCard data={cards.wifi} loading={loading} visible={true} />}
+              {isWifi ? <WiFiCard data={cards.wifi} loading={loading} visible={true} /> : null}
 
               {/* Ethernet-only cards */}
               {!isWifi && (
                 <>
                   <LinkCard data={cards.link} loading={loading} />
-                  {cards.cable?.supported && (
+                  {cards.cable?.supported ? (
                     <CableCard
                       data={cards.cable}
                       loading={loading}
                       unitSystem={displayOptions.unitSystem}
                     />
-                  )}
+                  ) : null}
                   <SwitchCard data={cards.switch} vlanData={cards.vlan} loading={loading} />
                 </>
               )}
@@ -861,7 +999,7 @@ function App(): JSX.Element {
                   <HealthCheckCard loading={loading} />
                   {/* SLA Dashboard - aggregates health scores, SLA compliance, and alerts */}
                   <SLADashboardCard />
-                  {cardSettings.performance.enabled && (
+                  {cardSettings.performance.enabled ? (
                     <PerformanceCard
                       loading={loading}
                       runSpeedtestEnabled={
@@ -873,7 +1011,7 @@ function App(): JSX.Element {
                         cardSettings.performance.iperf.autoRunOnLink
                       }
                     />
-                  )}
+                  ) : null}
                 </>
               )}
 
@@ -897,16 +1035,18 @@ function App(): JSX.Element {
 
               {/* WiFi-only: WiFi Survey for heatmaps and site surveys */}
               {/* Fix #572: Pass current interface to avoid hardcoded "wlan0" */}
-              {isWifi && <WiFiSurveyCard isWifi={isWifi} currentInterface={currentInterface} />}
+              {isWifi ? (
+                <WiFiSurveyCard isWifi={isWifi} currentInterface={currentInterface} />
+              ) : null}
 
               {/* WiFi-only: Channel Graph for visualizing channel overlap */}
-              {isWifi && (
+              {isWifi ? (
                 <WifiChannelGraph
                   data={channelGraphData}
                   loading={channelGraphLoading}
                   visible={isWifi}
                 />
-              )}
+              ) : null}
             </div>
           </section>
 
@@ -1020,12 +1160,12 @@ function App(): JSX.Element {
       <ImprovedHelpModal isOpen={helpOpen} onClose={closeHelp} version={appVersion} />
 
       {/* Profile Management Modal (#754) */}
-      {profilesOpen && <ProfileManagement onClose={closeProfiles} />}
+      {profilesOpen ? <ProfileManagement onClose={closeProfiles} /> : null}
 
       {/* FAB - Run All Tests - positioned inline with card grid */}
       <div class="fixed bottom-0 left-0 right-0 pointer-events-none z-50">
         <div class={cn(section.width.xl, "mx-auto", spacing.mainPadding.x, "relative")}>
-          <FAB class="pointer-events-auto absolute bottom-20 -right-2" />
+          <Fab class="pointer-events-auto absolute bottom-20 -right-2" />
         </div>
       </div>
     </div>

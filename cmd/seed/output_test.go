@@ -11,7 +11,7 @@ func TestOutputCredentialsJSONMarshaling(t *testing.T) {
 	creds := setupCredentials{
 		Username: "admin",
 		Password: "testpassword123",
-		Config:   "/etc/seed/seed.yaml",
+		Config:   "/etc/seed/seed.json",
 	}
 
 	// Test that credentials can be marshaled to JSON
@@ -68,7 +68,7 @@ func TestOutputResultJSONMarshaling(t *testing.T) {
 
 	result := ValidationResult{
 		Valid:    true,
-		Path:     "/etc/seed/seed.yaml",
+		Path:     "/etc/seed/seed.json",
 		Errors:   nil,
 		Warnings: []string{"test warning"},
 	}
@@ -99,7 +99,7 @@ func TestOutputResultJSONFieldNames(t *testing.T) {
 
 	result := ValidationResult{
 		Valid:    false,
-		Path:     "/test/config.yaml",
+		Path:     "/test/config.json",
 		Errors:   []string{"error1"},
 		Warnings: []string{"warning1"},
 	}
@@ -125,7 +125,7 @@ func TestValidationResultJSONOmitEmpty(t *testing.T) {
 
 	result := ValidationResult{
 		Valid:    true,
-		Path:     "/test/config.yaml",
+		Path:     "/test/config.json",
 		Errors:   nil,
 		Warnings: nil,
 	}
@@ -230,7 +230,7 @@ func TestSetupCredentialsStructure(t *testing.T) {
 			name:     "standard values",
 			username: "admin",
 			password: "securepassword123",
-			config:   "/etc/seed/seed.yaml",
+			config:   "/etc/seed/seed.json",
 		},
 		{
 			name:     "empty values",
@@ -242,7 +242,7 @@ func TestSetupCredentialsStructure(t *testing.T) {
 			name:     "special characters",
 			username: "admin@example.com",
 			password: "p@ss!word#123",
-			config:   "/path/with spaces/config.yaml",
+			config:   "/path/with spaces/config.json",
 		},
 	}
 
@@ -316,7 +316,7 @@ func TestValidationResultRoundTrip(t *testing.T) {
 
 	original := ValidationResult{
 		Valid:    false,
-		Path:     "/var/lib/seed/config.yaml",
+		Path:     "/var/lib/seed/config.json",
 		Errors:   []string{"error 1", "error 2"},
 		Warnings: []string{"warning 1", "warning 2", "warning 3"},
 	}
@@ -354,7 +354,7 @@ func TestSetupCredentialsRoundTrip(t *testing.T) {
 	original := setupCredentials{
 		Username: "admin",
 		Password: "supersecret",
-		Config:   "/etc/seed/seed.yaml",
+		Config:   "/etc/seed/seed.json",
 	}
 
 	// Marshal to JSON

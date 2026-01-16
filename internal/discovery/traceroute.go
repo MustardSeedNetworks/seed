@@ -672,7 +672,7 @@ type tcpProbeResult struct {
 	peer    net.Addr // For ICMP responses
 }
 
-// createTCPDialer creates a net.Dialer configured with the specified TTL.
+// createTCPDialer creates a [net.Dialer] configured with the specified TTL.
 func (t *Tracer) createTCPDialer(ttl int) net.Dialer {
 	return net.Dialer{
 		Timeout: t.timeout,

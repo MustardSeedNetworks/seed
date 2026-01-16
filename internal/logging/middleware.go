@@ -130,7 +130,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// responseWriter wraps http.ResponseWriter to capture the status code.
+// responseWriter wraps [http.ResponseWriter] to capture the status code.
 type responseWriter struct {
 	http.ResponseWriter
 
@@ -155,12 +155,12 @@ func (w *responseWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-// Unwrap returns the underlying ResponseWriter, supporting http.ResponseController.
+// Unwrap returns the underlying ResponseWriter, supporting [http.ResponseController].
 func (w *responseWriter) Unwrap() http.ResponseWriter {
 	return w.ResponseWriter
 }
 
-// Hijack implements http.Hijacker for WebSocket support (fixes #ws-hijacker).
+// Hijack implements [http.Hijacker] for WebSocket support (fixes #ws-hijacker).
 // This allows the logging middleware to be used with WebSocket endpoints.
 func (w *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if h, ok := w.ResponseWriter.(http.Hijacker); ok {

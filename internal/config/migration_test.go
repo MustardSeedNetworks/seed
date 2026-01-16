@@ -2,10 +2,9 @@ package config_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"testing"
-
-	"gopkg.in/yaml.v3"
 
 	"github.com/krisarmstrong/seed/internal/config"
 )
@@ -13,7 +12,7 @@ import (
 func TestMigrationManager_Migrate_NoMigrationsNeeded(t *testing.T) {
 	mgr := config.NewMigrationManager()
 
-	data := []byte("version: 1\nserver:\n  port: 8080\n")
+	data := []byte(`{"version": 1, "server": {"port": 8080}}`)
 
 	// Same version - no migration needed
 	result, err := mgr.Migrate(data, 1, 1)
@@ -29,7 +28,7 @@ func TestMigrationManager_Migrate_NoMigrationsNeeded(t *testing.T) {
 func TestMigrationManager_Migrate_UnversionedConfig(t *testing.T) {
 	mgr := config.NewMigrationManager()
 
-	data := []byte("version: 0\nserver:\n  port: 8080\n")
+	data := []byte(`{"version": 0, "server": {"port": 8080}}`)
 
 	// Version 0 (unversioned) should be allowed and migrate to target version
 	result, err := mgr.Migrate(data, 0, 1)
@@ -39,9 +38,9 @@ func TestMigrationManager_Migrate_UnversionedConfig(t *testing.T) {
 
 	// Verify version was updated
 	var partial struct {
-		Version int `yaml:"version"`
+		Version int `json:"version"`
 	}
-	if unmarshalErr := yaml.Unmarshal(result, &partial); unmarshalErr != nil {
+	if unmarshalErr := json.Unmarshal(result, &partial); unmarshalErr != nil {
 		t.Fatalf("Failed to unmarshal result: %v", unmarshalErr)
 	}
 
@@ -53,7 +52,7 @@ func TestMigrationManager_Migrate_UnversionedConfig(t *testing.T) {
 func TestMigrationManager_Migrate_UpdateVersionOnly(t *testing.T) {
 	mgr := config.NewMigrationManager()
 
-	data := []byte("version: 1\nserver:\n  port: 8080\n")
+	data := []byte(`{"version": 1, "server": {"port": 8080}}`)
 
 	// No migrations registered, but version should be updated
 	result, err := mgr.Migrate(data, 1, 2)
@@ -63,9 +62,9 @@ func TestMigrationManager_Migrate_UpdateVersionOnly(t *testing.T) {
 
 	// Parse result and check version
 	var partial struct {
-		Version int `yaml:"version"`
+		Version int `json:"version"`
 	}
-	if unmarshalErr := yaml.Unmarshal(result, &partial); unmarshalErr != nil {
+	if unmarshalErr := json.Unmarshal(result, &partial); unmarshalErr != nil {
 		t.Fatalf("Failed to unmarshal result: %v", unmarshalErr)
 	}
 
@@ -208,12 +207,12 @@ func TestMigrationManager_Migrate_ChainedMigrations(t *testing.T) {
 		Description: "Add field_a",
 		Migrate: func(data []byte) ([]byte, error) {
 			var raw map[string]any
-			if err := yaml.Unmarshal(data, &raw); err != nil {
+			if err := json.Unmarshal(data, &raw); err != nil {
 				return nil, err
 			}
 			raw["field_a"] = "added_in_v2"
 			raw["version"] = 2
-			return yaml.Marshal(raw)
+			return json.Marshal(raw)
 		},
 	})
 	mgr.RegisterMigration(config.Migration{
@@ -222,16 +221,16 @@ func TestMigrationManager_Migrate_ChainedMigrations(t *testing.T) {
 		Description: "Add field_b",
 		Migrate: func(data []byte) ([]byte, error) {
 			var raw map[string]any
-			if err := yaml.Unmarshal(data, &raw); err != nil {
+			if err := json.Unmarshal(data, &raw); err != nil {
 				return nil, err
 			}
 			raw["field_b"] = "added_in_v3"
 			raw["version"] = 3
-			return yaml.Marshal(raw)
+			return json.Marshal(raw)
 		},
 	})
 
-	data := []byte("version: 1\noriginal: value\n")
+	data := []byte(`{"version": 1, "original": "value"}`)
 
 	result, err := mgr.Migrate(data, 1, 3)
 	if err != nil {
@@ -239,7 +238,7 @@ func TestMigrationManager_Migrate_ChainedMigrations(t *testing.T) {
 	}
 
 	var final map[string]any
-	if unmarshalErr := yaml.Unmarshal(result, &final); unmarshalErr != nil {
+	if unmarshalErr := json.Unmarshal(result, &final); unmarshalErr != nil {
 		t.Fatalf("Failed to unmarshal result: %v", unmarshalErr)
 	}
 
@@ -253,7 +252,8 @@ func TestMigrationManager_Migrate_ChainedMigrations(t *testing.T) {
 	if final["field_b"] != "added_in_v3" {
 		t.Error("field_b not added by v2->v3 migration")
 	}
-	if final["version"] != 3 {
+	// JSON unmarshals numbers as float64
+	if final["version"] != float64(3) {
 		t.Errorf("Final version = %v, want 3", final["version"])
 	}
 }
@@ -278,10 +278,10 @@ func TestMigrationManager_HasMigrations(t *testing.T) {
 
 func TestLoadWithMigration(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := tmpDir + "/config.yaml"
+	configPath := tmpDir + "/config.json"
 
-	// Create unversioned config
-	data := []byte("server:\n  port: 9999\n")
+	// Create unversioned config (JSON format)
+	data := []byte(`{"server": {"port": 9999}}`)
 	if err := os.WriteFile(configPath, data, 0o600); err != nil {
 		t.Fatalf("Failed to write config: %v", err)
 	}

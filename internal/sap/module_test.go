@@ -1957,6 +1957,7 @@ func TestConvertGatewayStatusAllCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
+			t.Parallel()
 			result := sap.ConvertGatewayStatus(tt.input)
 			if result != tt.expected {
 				t.Errorf("ConvertGatewayStatus(%q) = %q, want %q", tt.input, result, tt.expected)
@@ -2094,6 +2095,7 @@ func TestConvertCableStatusWithTypeTableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result := sap.ConvertCableStatusWithType(tt.input)
 			if result != tt.expected {
 				t.Errorf("ConvertCableStatusWithType(%q) = %q, want %q", tt.input, result, tt.expected)
@@ -2118,6 +2120,7 @@ func TestConvertGatewayStatusWithTypeTableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result := sap.ConvertGatewayStatusWithType(tt.input)
 			if result != tt.expected {
 				t.Errorf("ConvertGatewayStatusWithType(%q) = %q, want %q", tt.input, result, tt.expected)

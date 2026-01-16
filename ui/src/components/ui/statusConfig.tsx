@@ -102,7 +102,12 @@ type SizeKey = keyof typeof sizeConfig;
  * @param status - The status type to get configuration for
  * @returns The status configuration object with icon, color, bgColor, and label
  */
-export function getStatusConfig(status: Status) {
+export function getStatusConfig(status: Status): {
+  icon: ReactNode;
+  color: string;
+  bgColor: string;
+  label: string;
+} {
   switch (status) {
     case "success":
       return statusConfig.success;
@@ -114,6 +119,10 @@ export function getStatusConfig(status: Status) {
       return statusConfig.unknown;
     case "loading":
       return statusConfig.loading;
+    default: {
+      const _exhaustive: never = status;
+      return statusConfig.unknown;
+    }
   }
 }
 
@@ -122,7 +131,7 @@ export function getStatusConfig(status: Status) {
  * @param size - The size key ("sm" or "md")
  * @returns The size configuration object with icon, dot, and padding values
  */
-export function getSizeConfig(size: SizeKey) {
+export function getSizeConfig(size: SizeKey): { icon: string; dot: string; padding: string } {
   if (size === "sm") {
     return sizeConfig.sm;
   }

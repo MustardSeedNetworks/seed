@@ -13,38 +13,56 @@ import (
 	"github.com/krisarmstrong/seed/internal/version"
 )
 
-// ServiceProvider defines the interface for accessing Seed services.
-// This is implemented by api.Server to provide access to all service managers.
-type ServiceProvider interface {
-	// Discovery services
+// DiscoveryServiceProvider provides access to discovery-related services.
+type DiscoveryServiceProvider interface {
 	GetDiscoveryService() DiscoveryService
 	GetDeviceDiscovery() DeviceDiscovery
+}
 
-	// Network services
+// NetworkServiceProvider provides access to network-related services.
+type NetworkServiceProvider interface {
 	GetNetManager() NetworkManager
 	GetLinkMonitor() LinkMonitor
 	GetVLANManager() VLANManager
+}
 
-	// Testing services
+// TestingServiceProvider provides access to testing-related services.
+type TestingServiceProvider interface {
 	GetDNSTester() DNSTester
 	GetGatewayTester() GatewayTester
 	GetSpeedtestTester() SpeedtestTester
 	GetIperfManager() IperfManager
+}
 
-	// WiFi services
+// WiFiServiceProvider provides access to WiFi-related services.
+type WiFiServiceProvider interface {
 	GetWiFiScanner() WiFiScanner
 	GetWiFiManager() WiFiManager
+}
 
-	// Security services
+// SecurityServiceProvider provides access to security-related services.
+type SecurityServiceProvider interface {
 	GetRogueDetector() RogueDetector
 	GetVulnScanner() VulnScanner
+}
 
-	// System services
+// SystemServiceProvider provides access to system-related services.
+type SystemServiceProvider interface {
 	GetPublicIPChecker() PublicIPChecker
 	GetConfig() *config.Config
-
-	// Capabilities
 	IsICMPAvailable() bool
+}
+
+// ServiceProvider defines the interface for accessing Seed services.
+// This is implemented by api.Server to provide access to all service managers.
+// It composes smaller, focused interfaces for better maintainability.
+type ServiceProvider interface {
+	DiscoveryServiceProvider
+	NetworkServiceProvider
+	TestingServiceProvider
+	WiFiServiceProvider
+	SecurityServiceProvider
+	SystemServiceProvider
 }
 
 // Server wraps the MCP server and provides tool registration.

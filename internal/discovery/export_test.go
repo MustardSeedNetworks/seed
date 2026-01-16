@@ -180,3 +180,23 @@ func ExportMethodsToStrings(methods []Method) []string {
 func ExportIsLocallyAdministeredMAC(mac string) bool {
 	return isLocallyAdministeredMAC(mac)
 }
+
+// ExportEnsureConnectionType exposes ensureConnectionType for testing.
+func ExportEnsureConnectionType(types []ConnectionType, add ConnectionType) []ConnectionType {
+	return ensureConnectionType(types, add)
+}
+
+// EngineTestAccessor provides access to Engine's private fields for testing.
+type EngineTestAccessor struct {
+	Engine *Engine
+}
+
+// GetRegistry returns the engine's registry.
+func (e *EngineTestAccessor) GetRegistry() *DeviceRegistry {
+	return e.Engine.registry
+}
+
+// GetEventBus returns the engine's eventBus.
+func (e *EngineTestAccessor) GetEventBus() *EventBus {
+	return e.Engine.eventBus
+}

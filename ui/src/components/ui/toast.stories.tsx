@@ -1,6 +1,7 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
+import type { Meta, StoryFn, StoryObj } from "@storybook/react-vite";
+import type React from "react";
 import { button, cn, layout, radius } from "../../styles/theme";
-import { ToastProvider } from "./toast";
+import { ToastProvider } from "./Toast";
 import { useToast } from "./useToast";
 
 /**
@@ -10,11 +11,11 @@ import { useToast } from "./useToast";
  * Toasts appear in the bottom-right corner and auto-dismiss after 5 seconds by default.
  */
 const meta: Meta = {
-  title: "UI/toast",
+  title: "UI/Toast",
   decorators: [
-    (Story) => (
+    (StoryComponent: StoryFn): React.ReactElement => (
       <ToastProvider>
-        <Story />
+        <StoryComponent />
       </ToastProvider>
     ),
   ],
@@ -32,7 +33,7 @@ function _toastDemo({
 }: {
   type: "success" | "error" | "warning" | "info";
   message: string;
-}) {
+}): React.JSX.Element {
   const { addToast } = useToast();
 
   return (
@@ -66,7 +67,7 @@ export const Info: StoryObj = {
   render: () => <toastDemo type="info" message="Network scan is in progress..." />,
 };
 
-function _allToastsDemo() {
+function _allToastsDemo(): React.JSX.Element {
   const { addToast } = useToast();
 
   return (

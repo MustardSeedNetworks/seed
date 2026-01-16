@@ -29,6 +29,7 @@
  * dismiss after the specified duration.
  */
 
+import type React from "react";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import {
   cn,
@@ -39,7 +40,7 @@ import {
   toast as toastTokens,
 } from "../../styles/theme";
 import { icons, typeStyles } from "./Toast.constants.tsx";
-import { ToastContext, type ToastType } from "./toastContext";
+import { ToastContext, type ToastType } from "./toast-context";
 
 /**
  * Individual toast notification
@@ -62,7 +63,7 @@ interface ToastProviderProps {
 /**
  * Toast Provider - wraps app to provide toast notifications globally
  */
-export function ToastProvider({ children }: ToastProviderProps) {
+export function ToastProvider({ children }: ToastProviderProps): React.JSX.Element {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = useCallback((message: string, type: ToastType = "info", duration = 5000) => {
@@ -87,7 +88,8 @@ interface ToastContainerProps {
   removeToast: (id: string) => void;
 }
 
-function _toastContainer({ toasts, removeToast }: ToastContainerProps) {
+function _toastContainer({ toasts, removeToast }: ToastContainerProps): React.JSX.Element {
+  const handleClose = (id: string): void => removeToast(id);
   return (
     // biome-ignore lint/a11y/useSemanticElements: Region role with aria-live is the correct pattern for toast notifications
     <div
@@ -97,7 +99,7 @@ function _toastContainer({ toasts, removeToast }: ToastContainerProps) {
       class={cn("fixed bottom-20 right-4 z-50 max-w-sm", layout.stack.default)}
     >
       {toasts.map((toast) => (
-        <toastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
+        <toastItem key={toast.id} toast={toast} onClose={handleClose.bind(null, toast.id)} />
       ))}
     </div>
   );
@@ -108,11 +110,13 @@ interface ToastItemProps {
   onClose: () => void;
 }
 
-function _toastItem({ toast, onClose }: ToastItemProps) {
-  useEffect(() => {
+function _toastItem({ toast, onClose }: ToastItemProps): React.JSX.Element {
+  useEffect((): undefined | (() => void) => {
     if (toast.duration && toast.duration > 0) {
       const timer = setTimeout(onClose, toast.duration);
-      return () => clearTimeout(timer);
+      return (): void => {
+        clearTimeout(timer);
+      };
     }
   }, [toast.duration, onClose]);
 

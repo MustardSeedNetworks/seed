@@ -1,35 +1,36 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
+import type { Meta, StoryFn, StoryObj } from "@storybook/react-vite";
+import type React from "react";
 import { useEffect } from "react";
 import { cn, spacing } from "../../styles/theme";
-import { FAB } from "./fab";
+import { Fab } from "./Fab";
 
 /**
  * The Floating Action Button (FAB) provides quick access to running all diagnostic tests.
  * It's positioned in the bottom-right corner and shows a loading spinner during execution.
  */
-const meta: Meta<typeof FAB> = {
-  title: "UI/fab",
-  component: FAB,
+const meta: Meta<typeof Fab> = {
+  title: "UI/FAB",
+  component: Fab,
   parameters: {
     layout: "fullscreen",
   },
   tags: ["autodocs"],
   decorators: [
-    (Story) => (
+    (StoryComponent: StoryFn): React.ReactElement => (
       <div class="relative h-96 bg-surface-base">
         <div class={cn(spacing.pad.default)}>
           <p class="text-text-secondary">
             The FAB is fixed in the bottom-right corner. Click to trigger tests.
           </p>
         </div>
-        <Story />
+        <StoryComponent />
       </div>
     ),
   ],
 };
 
 export default meta;
-type Story = StoryObj<typeof FAB>;
+type Story = StoryObj<typeof Fab>;
 
 export const Default: Story = {};
 
@@ -47,7 +48,7 @@ export const WithSimulatedTest: Story = {
       return () => window.removeEventListener("runAllTests", handleRunTests);
     }, []);
 
-    return <FAB />;
+    return <Fab />;
   },
   parameters: {
     docs: {

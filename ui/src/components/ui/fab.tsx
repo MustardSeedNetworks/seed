@@ -15,7 +15,7 @@
  * Usage:
  * ```tsx
  * // In app layout:
- * <FAB />
+ * <Fab />
  *
  * // Listen for test completion:
  * window.addEventListener('testsComplete', () => {
@@ -27,6 +27,7 @@
  * to running all network diagnostics without opening settings.
  */
 
+import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn, icon as iconTokens, layout, radius } from "../../styles/theme";
 
@@ -35,19 +36,19 @@ import { cn, icon as iconTokens, layout, radius } from "../../styles/theme";
  */
 interface FabProps {
   /** Additional CSS classes */
-  className?: string;
+  class?: string;
 }
 
 /**
  * Floating Action Button - triggers all diagnostic tests
  */
-export function FAB({ className = "" }: FabProps) {
+export function Fab({ class: className = "" }: FabProps): React.JSX.Element {
   const [isRunning, setIsRunning] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Stop spinner when testsComplete fires
   useEffect(() => {
-    const handleTestsComplete = () => {
+    const handleTestsComplete = (): void => {
       setIsRunning(false);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -56,7 +57,7 @@ export function FAB({ className = "" }: FabProps) {
     };
 
     window.addEventListener("testsComplete", handleTestsComplete);
-    return () => {
+    return (): void => {
       window.removeEventListener("testsComplete", handleTestsComplete);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -64,7 +65,7 @@ export function FAB({ className = "" }: FabProps) {
     };
   }, []);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback((): void => {
     if (isRunning) {
       return;
     }

@@ -25,9 +25,9 @@
 
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { FAB } from "./fab";
+import { Fab } from "./Fab";
 
-describe("FAB", () => {
+describe("Fab", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -37,7 +37,7 @@ describe("FAB", () => {
   });
 
   it("renders the FAB button", () => {
-    render(<FAB />);
+    render(<Fab />);
 
     const button = screen.getByRole("button");
     expect(button).toBeInTheDocument();
@@ -47,7 +47,7 @@ describe("FAB", () => {
   it("dispatches runAllTests event when clicked", () => {
     const dispatchEventSpy = vi.spyOn(window, "dispatchEvent");
 
-    render(<FAB />);
+    render(<Fab />);
 
     const button = screen.getByRole("button");
     fireEvent.click(button);
@@ -62,7 +62,7 @@ describe("FAB", () => {
   });
 
   it("shows spinner when running", () => {
-    render(<FAB />);
+    render(<Fab />);
 
     const button = screen.getByRole("button");
 
@@ -81,7 +81,7 @@ describe("FAB", () => {
   });
 
   it("resets after timeout", () => {
-    render(<FAB />);
+    render(<Fab />);
 
     const button = screen.getByRole("button");
     fireEvent.click(button);
@@ -99,7 +99,7 @@ describe("FAB", () => {
   it("does not dispatch multiple events while running", () => {
     const dispatchEventSpy = vi.spyOn(window, "dispatchEvent");
 
-    render(<FAB />);
+    render(<Fab />);
 
     const button = screen.getByRole("button");
 
@@ -115,7 +115,7 @@ describe("FAB", () => {
   });
 
   it("has correct accessibility attributes", () => {
-    render(<FAB />);
+    render(<Fab />);
 
     const button = screen.getByRole("button");
     expect(button).toHaveAttribute("title", "Run All Tests");
@@ -123,7 +123,7 @@ describe("FAB", () => {
   });
 
   it("renders with correct styling", () => {
-    render(<FAB />);
+    render(<Fab />);
 
     const button = screen.getByRole("button");
     // FAB uses radius.full for rounded corners and has shadow
@@ -132,7 +132,7 @@ describe("FAB", () => {
   });
 
   it("accepts custom className", () => {
-    render(<FAB class="custom-class" />);
+    render(<Fab class="custom-class" />);
 
     const button = screen.getByRole("button");
     expect(button).toHaveClass("custom-class");

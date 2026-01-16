@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
-	"gopkg.in/yaml.v3"
 )
 
 // Schema validation constants.
@@ -58,18 +57,17 @@ type ValidationError struct {
 // ValidateConfig validates a Config struct against the JSON schema.
 // It returns a slice of validation errors, or nil if the config is valid.
 func (v *SchemaValidator) ValidateConfig(cfg *Config) []ValidationError {
-	// First marshal to YAML (which respects the yaml tags)
-	yamlBytes, err := cfg.marshalForValidation()
+	// Marshal config to JSON
+	jsonBytes, err := cfg.marshalForValidation()
 	if err != nil {
 		return []ValidationError{
 			{Path: "", Message: fmt.Sprintf("failed to marshal config: %v", err)},
 		}
 	}
 
-	// Then unmarshal the YAML as JSON-compatible data
-	// YAML is a superset of JSON, so this works
+	// Unmarshal JSON for validation
 	var data any
-	if unmarshalErr := json.Unmarshal(yamlBytes, &data); unmarshalErr != nil {
+	if unmarshalErr := json.Unmarshal(jsonBytes, &data); unmarshalErr != nil {
 		return []ValidationError{
 			{Path: "", Message: fmt.Sprintf("failed to unmarshal config: %v", unmarshalErr)},
 		}
@@ -95,28 +93,14 @@ func (v *SchemaValidator) ValidateConfig(cfg *Config) []ValidationError {
 	return validationErrs
 }
 
-// marshalForValidation marshals the config using YAML tags (which are compatible with JSON schema).
-// We use YAML marshaling because the Config struct uses yaml tags, not json tags.
-// The YAML is then converted to JSON for schema validation.
+// marshalForValidation marshals the config to JSON for schema validation.
 func (cfg *Config) marshalForValidation() ([]byte, error) {
 	// Lock for reading
 	cfg.RLock()
 	defer cfg.RUnlock()
 
-	// First marshal to YAML (respects yaml struct tags)
-	yamlBytes, err := yaml.Marshal(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal to YAML: %w", err)
-	}
-
-	// Convert YAML to JSON-compatible map
-	var yamlData any
-	if unmarshalErr := yaml.Unmarshal(yamlBytes, &yamlData); unmarshalErr != nil {
-		return nil, fmt.Errorf("failed to unmarshal YAML: %w", unmarshalErr)
-	}
-
-	// Marshal to JSON (this converts the YAML representation to JSON)
-	jsonBytes, err := json.Marshal(yamlData)
+	// Marshal directly to JSON
+	jsonBytes, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal to JSON: %w", err)
 	}

@@ -69,7 +69,8 @@ test.describe("FAB - Run All Tests Flow", () => {
     page.on("request", (request) => {
       const url = request.url();
       if (url.includes("/api/")) {
-        const endpoint = url.split("/api/")[1].split("?")[0];
+        const [, apiPath] = url.split("/api/");
+        const [endpoint] = apiPath.split("?");
         apiCalls.add(endpoint);
       }
     });
@@ -101,7 +102,7 @@ test.describe("FAB - Run All Tests Flow", () => {
 
     // Track if any card updates occur
     let cardUpdated = false;
-    page.on("response", async (response) => {
+    page.on("response", (response) => {
       if (response.url().includes("/api/link") && response.ok()) {
         cardUpdated = true;
       }
@@ -177,9 +178,9 @@ test.describe("FAB - Run All Tests Flow", () => {
 
     // Should still only have one test run
     await page.waitForTimeout(1000);
-    const finalCount = await page.evaluate(() => {
-      return (window as unknown as { runAllTestsCount?: number }).runAllTestsCount || 0;
-    });
+    const finalCount = await page.evaluate(
+      () => (window as unknown as { runAllTestsCount?: number }).runAllTestsCount || 0,
+    );
 
     // Event should not have fired multiple times
     expect(finalCount).toBeLessThanOrEqual(1);

@@ -6,7 +6,7 @@
  */
 
 import { useContext } from "react";
-import { ToastContext } from "./toastContext";
+import { ToastContext, type ToastContextType } from "./toast-context";
 
 /**
  * Hook to access toast functions in any component.
@@ -14,7 +14,7 @@ import { ToastContext } from "./toastContext";
  * @returns Toast context value with addToast and removeToast
  * @throws Error if used outside ToastProvider
  */
-export function useToast() {
+export function useToast(): ToastContextType {
   const context = useContext(ToastContext);
   if (!context) {
     throw new Error("useToast must be used within a ToastProvider");

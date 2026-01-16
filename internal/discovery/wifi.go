@@ -44,6 +44,24 @@ const (
 	WiFiAuthUnknown      WiFiAuthorizationStatus = "unknown"
 )
 
+// WiFi frequency constants for channel/frequency conversion.
+const (
+	// freq24GHzBase is the base frequency for 2.4 GHz channels.
+	freq24GHzBase = 2407
+	// freq24GHzChannel14 is the special frequency for channel 14 (Japan).
+	freq24GHzChannel14 = 2484
+	// freq5GHzBase is the base frequency for 5 GHz channels.
+	freq5GHzBase = 5000
+	// freq6GHzBase is the base frequency for 6 GHz channels.
+	freq6GHzBase = 5950
+	// channelSpacing is the spacing between WiFi channels in MHz.
+	channelSpacing = 5
+	// channel14 is the special 2.4 GHz channel number.
+	channel14 = 14
+	// maxChannel24GHz is the maximum standard 2.4 GHz channel.
+	maxChannel24GHz = 13
+)
+
 // WiFiNetwork represents a discovered WiFi network (SSID).
 // Multiple access points can broadcast the same SSID.
 type WiFiNetwork struct {
@@ -171,16 +189,16 @@ func ChannelToBand(channel int) WiFiBand {
 func ChannelToFrequency(channel int, band WiFiBand) int {
 	switch band {
 	case WiFiBand24GHz:
-		if channel >= 1 && channel <= 13 {
-			return 2407 + (channel * 5)
+		if channel >= 1 && channel <= maxChannel24GHz {
+			return freq24GHzBase + (channel * channelSpacing)
 		}
-		if channel == 14 {
-			return 2484
+		if channel == channel14 {
+			return freq24GHzChannel14
 		}
 	case WiFiBand5GHz:
-		return 5000 + (channel * 5)
+		return freq5GHzBase + (channel * channelSpacing)
 	case WiFiBand6GHz:
-		return 5950 + (channel * 5)
+		return freq6GHzBase + (channel * channelSpacing)
 	}
 	return 0
 }
@@ -188,15 +206,15 @@ func ChannelToFrequency(channel int, band WiFiBand) int {
 // FrequencyToChannel returns the channel number for a given frequency.
 func FrequencyToChannel(freqMHz int) (int, WiFiBand) {
 	switch {
-	case freqMHz >= 2412 && freqMHz <= 2484:
-		if freqMHz == 2484 {
-			return 14, WiFiBand24GHz
+	case freqMHz >= 2412 && freqMHz <= freq24GHzChannel14:
+		if freqMHz == freq24GHzChannel14 {
+			return channel14, WiFiBand24GHz
 		}
-		return (freqMHz - 2407) / 5, WiFiBand24GHz
+		return (freqMHz - freq24GHzBase) / channelSpacing, WiFiBand24GHz
 	case freqMHz >= 5170 && freqMHz <= 5885:
-		return (freqMHz - 5000) / 5, WiFiBand5GHz
+		return (freqMHz - freq5GHzBase) / channelSpacing, WiFiBand5GHz
 	case freqMHz >= 5955 && freqMHz <= 7115:
-		return (freqMHz - 5950) / 5, WiFiBand6GHz
+		return (freqMHz - freq6GHzBase) / channelSpacing, WiFiBand6GHz
 	}
 	return 0, WiFiBand24GHz
 }

@@ -46,7 +46,7 @@ const (
 	// makeInstallTimeoutMinutes is the timeout for make install operations.
 	makeInstallTimeoutMinutes = 2
 
-	// OS constants for runtime.GOOS checks.
+	// OS constants for [runtime.GOOS] checks.
 	osLinux   = "linux"
 	osDarwin  = "darwin"
 	osWindows = "windows"

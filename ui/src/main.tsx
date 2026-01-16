@@ -15,8 +15,8 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./app";
-import { ErrorBoundary } from "./components/error-boundary";
+import App from "./App";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProfileProvider } from "./contexts/profile-context";
 import { getQueryClient } from "./lib/query-client";
 import "./index.css";
@@ -24,7 +24,7 @@ import "./index.css";
 // Mount the React application to the root DOM element
 // QueryClientProvider enables React Query for API caching and deduplication
 // ProfileProvider now manages both profiles AND all user settings
-const rootElement = document.getElementById("root");
+const rootElement: HTMLElement | null = document.getElementById("root");
 if (!rootElement) {
   throw new Error("Root element not found");
 }

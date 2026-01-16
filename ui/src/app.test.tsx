@@ -23,11 +23,12 @@
  * Dependencies: vitest, @testing-library/react, @testing-library/user-event
  */
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type React from "react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import App from "./app";
+import App from "./App";
 import { ProfileProvider } from "./contexts/profile-context";
 
 // Mock localStorage
@@ -113,10 +114,78 @@ class MockWebSocket {
   }
 }
 
-// Wrapper with ProfileProvider (settings now managed within ProfileContext)
+// Mock EventSource for SSE connections
+class MockEventSource {
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSED = 2;
+  static instances: MockEventSource[] = [];
+
+  url: string;
+  readyState = MockEventSource.CONNECTING;
+  onopen: ((event: Event) => void) | null = null;
+  onclose: (() => void) | null = null;
+  onerror: ((event: Event) => void) | null = null;
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  withCredentials = false;
+
+  constructor(url: string, options?: { withCredentials?: boolean }) {
+    this.url = url;
+    this.withCredentials = options?.withCredentials ?? false;
+    MockEventSource.instances.push(this);
+    // Auto-open after construction
+    setTimeout(() => {
+      this.readyState = MockEventSource.OPEN;
+      this.onopen?.(new Event("open"));
+    }, 0);
+  }
+
+  close(): void {
+    this.readyState = MockEventSource.CLOSED;
+    this.onclose?.();
+  }
+
+  addEventListener(): void {
+    // No-op for tests
+  }
+
+  removeEventListener(): void {
+    // No-op for tests
+  }
+
+  dispatchEvent(): boolean {
+    return true;
+  }
+}
+
+// Set up EventSource mock globally
+Object.defineProperty(global, "EventSource", {
+  value: MockEventSource,
+  writable: true,
+});
+
+// Create a fresh QueryClient for each test to avoid state leakage
+function createTestQueryClient(): QueryClient {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+        staleTime: 0,
+      },
+    },
+  });
+}
+
+// Wrapper with QueryClientProvider and ProfileProvider
 function createWrapper(): React.FC<{ children: ReactNode }> {
+  const testQueryClient = createTestQueryClient();
   return function wrapper({ children }: { children: ReactNode }): JSX.Element {
-    return <ProfileProvider>{children}</ProfileProvider>;
+    return (
+      <QueryClientProvider client={testQueryClient}>
+        <ProfileProvider>{children}</ProfileProvider>
+      </QueryClientProvider>
+    );
   };
 }
 
@@ -136,7 +205,7 @@ describe("App", () => {
 
     // Default API mocks - includes profile endpoints for ProfileContext
     mockFetch.mockImplementation((url: string) => {
-      if (url.includes("/api/v1/setup/status")) {
+      if (url.includes("/api/setup/status")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
@@ -152,22 +221,40 @@ describe("App", () => {
               name: "Default",
               description: "Default profile",
               isDefault: true,
-              config: {
-                settings: {
-                  thresholds: {
+              settings: {
+                thresholds: {
+                  dns: { good: 50, warning: 100 },
+                  gateway: { good: 20, warning: 50 },
+                  wifi: { good: -50, warning: -70 },
+                  customPing: { good: 50, warning: 100 },
+                  customTcp: { good: 100, warning: 200 },
+                  customHttp: { good: 500, warning: 1000 },
+                  httpTimings: {
                     dns: { good: 50, warning: 100 },
-                    gateway: { good: 20, warning: 50 },
-                    wifi: { good: -50, warning: -70 },
-                    customPing: { good: 50, warning: 100 },
-                    customTcp: { good: 100, warning: 200 },
-                    customHttp: { good: 500, warning: 1000 },
-                    httpTimings: {
-                      dns: { good: 50, warning: 100 },
-                      tcp: { good: 50, warning: 100 },
-                      tls: { good: 100, warning: 200 },
-                      ttfb: { good: 200, warning: 500 },
-                    },
+                    tcp: { good: 50, warning: 100 },
+                    tls: { good: 100, warning: 200 },
+                    ttfb: { good: 200, warning: 500 },
                   },
+                },
+                cardSettings: {
+                  link: { enabled: true, autoRunOnLink: true },
+                  switch: { enabled: true, autoRunOnLink: true },
+                  vlan: { enabled: true, autoRunOnLink: true },
+                  network: { enabled: true, autoRunOnLink: true },
+                  gateway: { enabled: true, autoRunOnLink: true },
+                  dns: { enabled: true, autoRunOnLink: true },
+                  healthChecks: { enabled: true, autoRunOnLink: true },
+                  networkDiscovery: { enabled: true, autoRunOnLink: true },
+                  performance: {
+                    enabled: true,
+                    autoRunOnLink: true,
+                    speedtest: { enabled: true, autoRunOnLink: true },
+                    iperf: { enabled: false, autoRunOnLink: false },
+                  },
+                },
+                displayOptions: {
+                  showPublicIp: true,
+                  unitSystem: "sae",
                 },
               },
               createdAt: "2025-01-01T00:00:00Z",
@@ -213,6 +300,26 @@ describe("App", () => {
                   ttfb: { good: 200, warning: 500 },
                 },
               },
+              cardSettings: {
+                link: { enabled: true, autoRunOnLink: true },
+                switch: { enabled: true, autoRunOnLink: true },
+                vlan: { enabled: true, autoRunOnLink: true },
+                network: { enabled: true, autoRunOnLink: true },
+                gateway: { enabled: true, autoRunOnLink: true },
+                dns: { enabled: true, autoRunOnLink: true },
+                healthChecks: { enabled: true, autoRunOnLink: true },
+                networkDiscovery: { enabled: true, autoRunOnLink: true },
+                performance: {
+                  enabled: true,
+                  autoRunOnLink: true,
+                  speedtest: { enabled: true, autoRunOnLink: true },
+                  iperf: { enabled: false, autoRunOnLink: false },
+                },
+              },
+              displayOptions: {
+                showPublicIp: true,
+                unitSystem: "sae",
+              },
             }),
         });
       }
@@ -230,7 +337,8 @@ describe("App", () => {
             }),
         });
       }
-      if (url.includes("/api/v1/status")) {
+      // Handle both /api/status and /api/v1/status for auth check
+      if (url.endsWith("/api/status") || url.includes("/api/v1/status")) {
         // Default to unauthenticated unless overridden in specific tests
         return Promise.resolve({
           ok: false,
@@ -280,19 +388,20 @@ describe("App", () => {
 
     it("handles login form submission", async () => {
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes("/api/v1/setup/status")) {
+        if (url.includes("/api/setup/status")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
-        if (url.includes("/api/v1/status")) {
+        // Handle both /api/status and /api/v1/status for auth check
+        if (url.endsWith("/api/status") || url.includes("/api/v1/status")) {
           return Promise.resolve({
             ok: false,
             status: 401,
           });
         }
-        if (url.includes("/api/v1/auth/login")) {
+        if (url.includes("/api/auth/login") || url.includes("/api/v1/auth/login")) {
           return Promise.resolve({
             ok: true,
             json: () =>
@@ -330,7 +439,7 @@ describe("App", () => {
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
-          expect.stringContaining("/api/v1/auth/login"),
+          expect.stringMatching(/\/api(\/v1)?\/auth\/login/),
           expect.any(Object),
         );
       });
@@ -338,19 +447,20 @@ describe("App", () => {
 
     it("shows error message on login failure", async () => {
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes("/api/v1/setup/status")) {
+        if (url.includes("/api/setup/status")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
-        if (url.includes("/api/v1/status")) {
+        // Handle both /api/status and /api/v1/status for auth check
+        if (url.endsWith("/api/status") || url.includes("/api/v1/status")) {
           return Promise.resolve({
             ok: false,
             status: 401,
           });
         }
-        if (url.includes("/api/v1/auth/login")) {
+        if (url.includes("/api/auth/login") || url.includes("/api/v1/auth/login")) {
           return Promise.resolve({
             ok: false,
           });
@@ -389,19 +499,20 @@ describe("App", () => {
     it("disables login button while loading", async () => {
       let resolveLogin: (value: unknown) => void;
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes("/api/v1/setup/status")) {
+        if (url.includes("/api/setup/status")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
-        if (url.includes("/api/v1/status")) {
+        // Handle both /api/status and /api/v1/status for auth check
+        if (url.endsWith("/api/status") || url.includes("/api/v1/status")) {
           return Promise.resolve({
             ok: false,
             status: 401,
           });
         }
-        if (url.includes("/api/v1/auth/login")) {
+        if (url.includes("/api/v1/auth/login") || url.includes("/api/auth/login")) {
           return new Promise((resolve) => {
             resolveLogin = resolve;
           });
@@ -446,13 +557,14 @@ describe("App", () => {
     beforeEach(() => {
       // Set up authenticated state by mocking /api/status to return authenticated
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes("/api/v1/setup/status")) {
+        if (url.includes("/api/setup/status")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
-        if (url.includes("/api/v1/status")) {
+        // Handle both /api/status and /api/v1/status for auth check
+        if (url.endsWith("/api/status") || url.includes("/api/v1/status")) {
           // Return authenticated status with version
           return Promise.resolve({
             ok: true,
@@ -503,13 +615,14 @@ describe("App", () => {
 
     it("renders interface selector", async () => {
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes("/api/v1/setup/status")) {
+        if (url.includes("/api/setup/status")) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
           });
         }
-        if (url.includes("/api/v1/status")) {
+        // Handle both /api/status and /api/v1/status for auth check
+        if (url.endsWith("/api/status") || url.includes("/api/v1/status")) {
           return Promise.resolve({
             ok: true,
             status: 200,
@@ -604,13 +717,14 @@ describe("LoginForm input validation", () => {
     vi.clearAllMocks();
 
     mockFetch.mockImplementation((url: string) => {
-      if (url.includes("/api/v1/setup/status")) {
+      if (url.includes("/api/setup/status")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ needsSetup: false, username: "admin" }),
         });
       }
-      if (url.includes("/api/v1/status")) {
+      // Handle both /api/status and /api/v1/status for auth check
+      if (url.endsWith("/api/status") || url.includes("/api/v1/status")) {
         return Promise.resolve({
           ok: false,
           status: 401,

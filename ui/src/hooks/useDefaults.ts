@@ -59,9 +59,12 @@ export function useDefaults(): UseDefaultsResult {
     }
 
     // If already fetching, wait for that promise
-    if (fetchPromise) {
+    const existingPromise: Promise<DefaultSettings> | null = fetchPromise;
+    // biome-ignore lint/nursery/noMisusedPromises: checking if promise exists, not its resolved value
+    if (existingPromise) {
       try {
-        const result = await fetchPromise;
+        // biome-ignore lint/nursery/useAwaitThenable: existingPromise is a Promise<DefaultSettings>
+        const result: DefaultSettings = await existingPromise;
         if (isMountedRef.current) {
           setDefaults(result);
           setIsLoading(false);
@@ -79,10 +82,13 @@ export function useDefaults(): UseDefaultsResult {
     setIsLoading(true);
     setError(null);
 
-    fetchPromise = api.get<DefaultSettings>("/api/v1/settings/defaults");
+    const newPromise: Promise<DefaultSettings> = api.get<DefaultSettings>(
+      "/api/v1/settings/defaults",
+    );
+    fetchPromise = newPromise;
 
     try {
-      const result = await fetchPromise;
+      const result: DefaultSettings = await newPromise;
       cachedDefaults = result;
       if (isMountedRef.current) {
         setDefaults(result);
@@ -108,8 +114,8 @@ export function useDefaults(): UseDefaultsResult {
 
   useEffect(() => {
     isMountedRef.current = true;
-    fetchDefaults();
-    return () => {
+    fetchDefaults().catch(() => undefined);
+    return (): void => {
       isMountedRef.current = false;
     };
   }, [fetchDefaults]);

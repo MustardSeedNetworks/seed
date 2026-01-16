@@ -100,7 +100,17 @@ interface RunTestsOptions {
  *
  * @returns Health check state and control functions
  */
-export function useHealthChecks() {
+export function useHealthChecks(): {
+  results: HealthCheckResults | null;
+  isRunning: boolean;
+  error: string | null;
+  runTests: (options?: RunTestsOptions) => Promise<HealthCheckResults | null>;
+  runDnsTests: () => Promise<DnsTestResult[]>;
+  runGatewayTest: () => Promise<GatewayTestResult | null>;
+  runCustomTests: () => Promise<CustomTestResult[]>;
+  fetchSettings: () => Promise<TestsSettings | null>;
+  updateSettings: (settings: Partial<TestsSettings>) => Promise<boolean>;
+} {
   const [results, setResults] = useState<HealthCheckResults | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -180,7 +190,7 @@ export function useHealthChecks() {
           testTypes.push("custom");
         }
 
-        const results = await Promise.allSettled(testPromises);
+        const settledResults = await Promise.allSettled(testPromises);
 
         // Organize results
         const healthResults: HealthCheckResults = {
@@ -195,7 +205,7 @@ export function useHealthChecks() {
         // Using forEach index which is safe as we control both arrays
         const resultMap = new Map<string, PromiseSettledResult<unknown>>();
         for (const [idx, type] of testTypes.entries()) {
-          const result = results[idx];
+          const result = settledResults[idx];
           if (result) {
             resultMap.set(type, result);
           }

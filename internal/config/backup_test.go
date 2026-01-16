@@ -1,12 +1,11 @@
 package config_test
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
-
-	"gopkg.in/yaml.v3"
 
 	"github.com/krisarmstrong/seed/internal/config"
 )
@@ -14,7 +13,7 @@ import (
 func TestBackupManager_CreateBackup(t *testing.T) {
 	// Create temp directory
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 
 	// Create initial config file
 	cfg := config.DefaultConfig()
@@ -44,7 +43,7 @@ func TestBackupManager_CreateBackup(t *testing.T) {
 	}
 
 	var loadedCfg config.Config
-	if unmarshalErr := yaml.Unmarshal(data, &loadedCfg); unmarshalErr != nil {
+	if unmarshalErr := json.Unmarshal(data, &loadedCfg); unmarshalErr != nil {
 		t.Fatalf("Failed to unmarshal backup: %v", unmarshalErr)
 	}
 
@@ -55,7 +54,7 @@ func TestBackupManager_CreateBackup(t *testing.T) {
 
 func TestBackupManager_ListBackups(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 
 	// Create config file
 	cfg := config.DefaultConfig()
@@ -94,7 +93,7 @@ func TestBackupManager_ListBackups(t *testing.T) {
 
 func TestBackupManager_RestoreBackup(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 
 	// Create and save original config
 	cfg := config.DefaultConfig()
@@ -135,7 +134,7 @@ func TestBackupManager_RestoreBackup(t *testing.T) {
 
 func TestBackupManager_PruneOldBackups(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 
 	// Create config file
 	cfg := config.DefaultConfig()
@@ -167,7 +166,7 @@ func TestBackupManager_PruneOldBackups(t *testing.T) {
 
 func TestBackupManager_DeleteBackup(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 
 	// Create config file
 	cfg := config.DefaultConfig()
@@ -196,7 +195,7 @@ func TestBackupManager_DeleteBackup(t *testing.T) {
 
 func TestBackupManager_DeleteBackup_InvalidPath(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 
 	// Create config file
 	cfg := config.DefaultConfig()
@@ -213,7 +212,7 @@ func TestBackupManager_DeleteBackup_InvalidPath(t *testing.T) {
 	}
 
 	// Try to delete non-backup file
-	err = backupMgr.DeleteBackup("config.yaml")
+	err = backupMgr.DeleteBackup("config.json")
 	if err == nil {
 		t.Error("DeleteBackup() should reject non-backup files")
 	}
@@ -221,7 +220,7 @@ func TestBackupManager_DeleteBackup_InvalidPath(t *testing.T) {
 
 func TestBackupManager_RestoreBackup_InvalidPath(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 
 	cfg := config.DefaultConfig()
 	if err := cfg.Save(configPath); err != nil {
@@ -239,7 +238,7 @@ func TestBackupManager_RestoreBackup_InvalidPath(t *testing.T) {
 
 func TestBackupManager_CreateBackup_NoConfigFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "nonexistent.yaml")
+	configPath := filepath.Join(tmpDir, "nonexistent.json")
 
 	backupMgr := config.NewBackupManager(configPath, "", 10)
 
@@ -251,7 +250,7 @@ func TestBackupManager_CreateBackup_NoConfigFile(t *testing.T) {
 
 func TestBackupManager_ExtractVersion(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 
 	backupMgr := config.NewBackupManager(configPath, "", 10)
 
@@ -262,17 +261,17 @@ func TestBackupManager_ExtractVersion(t *testing.T) {
 	}{
 		{
 			name: "versioned config",
-			data: "version: 5\nserver:\n  port: 8080\n",
+			data: `{"version": 5, "server": {"port": 8080}}`,
 			want: 5,
 		},
 		{
 			name: "unversioned config",
-			data: "server:\n  port: 8080\n",
+			data: `{"server": {"port": 8080}}`,
 			want: 0,
 		},
 		{
-			name: "invalid yaml",
-			data: "not: valid: yaml:",
+			name: "invalid json",
+			data: "not valid json",
 			want: 0,
 		},
 	}

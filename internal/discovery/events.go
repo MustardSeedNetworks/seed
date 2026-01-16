@@ -136,6 +136,49 @@ func NewEvent(eventType EventType, source EventSource) *Event {
 	}
 }
 
+// NewDeviceDiscoveredEvent creates a device discovered event.
+func NewDeviceDiscoveredEvent(source EventSource, device *DiscoveredDevice) *Event {
+	return NewEvent(EvtDeviceDiscovered, source).WithDevice(device)
+}
+
+// NewDeviceUpdatedEvent creates a device updated event.
+func NewDeviceUpdatedEvent(source EventSource, device *DiscoveredDevice, changes map[string]any) *Event {
+	e := NewEvent(EvtDeviceUpdated, source).WithDevice(device)
+	e.Changes = changes
+	return e
+}
+
+// NewDeviceLostEvent creates a device lost event.
+func NewDeviceLostEvent(source EventSource, mac string) *Event {
+	return NewEvent(EvtDeviceLost, source).WithMAC(mac)
+}
+
+// NewScanStartedEvent creates a scan started event.
+func NewScanStartedEvent(scanType string) *Event {
+	return NewEvent(EventScanStarted, SourceEngine).WithPayload(map[string]string{
+		"scanType": scanType,
+	})
+}
+
+// NewScanCompletedEvent creates a scan completed event.
+func NewScanCompletedEvent(scanType string, deviceCount int, duration time.Duration) *Event {
+	return NewEvent(EventScanCompleted, SourceEngine).WithPayload(map[string]any{
+		"scanType":    scanType,
+		"deviceCount": deviceCount,
+		"durationMs":  duration.Milliseconds(),
+	})
+}
+
+// NewVulnDiscoveredEvent creates a vulnerability discovered event.
+func NewVulnDiscoveredEvent(device *DiscoveredDevice, cveID string, severity string) *Event {
+	return NewEvent(EventVulnDiscovered, SourceAssessment).
+		WithDevice(device).
+		WithPayload(map[string]string{
+			"cveId":    cveID,
+			"severity": severity,
+		})
+}
+
 // WithDevice attaches device information to the event.
 func (e *Event) WithDevice(device *DiscoveredDevice) *Event {
 	e.Device = device
@@ -262,6 +305,9 @@ type EventBus struct {
 	eventCount      int64
 	subscriberCount int64
 
+	// Subscription ID counter
+	subscriptionIDCounter int64
+
 	// Buffer for async delivery (optional)
 	buffer     chan *Event
 	bufferSize int
@@ -284,7 +330,7 @@ type EventBusConfig struct {
 // DefaultEventBusConfig returns default configuration.
 func DefaultEventBusConfig() *EventBusConfig {
 	return &EventBusConfig{
-		BufferSize: 1000,
+		BufferSize: defaultEventBufferSize,
 		DropOnFull: false,
 	}
 }
@@ -319,7 +365,8 @@ func (eb *EventBus) Subscribe(filter *EventFilter, handler EventHandler) *Subscr
 	eb.mu.Lock()
 	defer eb.mu.Unlock()
 
-	id := generateSubscriptionID()
+	eb.subscriptionIDCounter++
+	id := fmt.Sprintf("sub_%d_%d", time.Now().UnixNano(), eb.subscriptionIDCounter)
 	sub := &Subscription{
 		id:      id,
 		filter:  filter,
@@ -483,69 +530,4 @@ type EventBusStats struct {
 	SubscriberCount int64 `json:"subscriberCount"`
 	BufferedEvents  int   `json:"bufferedEvents"`
 	BufferSize      int   `json:"bufferSize"`
-}
-
-// generateSubscriptionID creates a unique subscription ID.
-func generateSubscriptionID() string {
-	return fmt.Sprintf("sub_%d_%d", time.Now().UnixNano(), subscriptionCounter.Add(1))
-}
-
-var subscriptionCounter atomicInt64
-
-// atomicInt64 is a simple atomic counter.
-type atomicInt64 struct {
-	value int64
-	mu    sync.Mutex
-}
-
-func (a *atomicInt64) Add(delta int64) int64 {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.value += delta
-	return a.value
-}
-
-// Convenience functions for creating common events
-
-// NewDeviceDiscoveredEvent creates a device discovered event.
-func NewDeviceDiscoveredEvent(source EventSource, device *DiscoveredDevice) *Event {
-	return NewEvent(EvtDeviceDiscovered, source).WithDevice(device)
-}
-
-// NewDeviceUpdatedEvent creates a device updated event.
-func NewDeviceUpdatedEvent(source EventSource, device *DiscoveredDevice, changes map[string]any) *Event {
-	e := NewEvent(EvtDeviceUpdated, source).WithDevice(device)
-	e.Changes = changes
-	return e
-}
-
-// NewDeviceLostEvent creates a device lost event.
-func NewDeviceLostEvent(source EventSource, mac string) *Event {
-	return NewEvent(EvtDeviceLost, source).WithMAC(mac)
-}
-
-// NewScanStartedEvent creates a scan started event.
-func NewScanStartedEvent(scanType string) *Event {
-	return NewEvent(EventScanStarted, SourceEngine).WithPayload(map[string]string{
-		"scanType": scanType,
-	})
-}
-
-// NewScanCompletedEvent creates a scan completed event.
-func NewScanCompletedEvent(scanType string, deviceCount int, duration time.Duration) *Event {
-	return NewEvent(EventScanCompleted, SourceEngine).WithPayload(map[string]any{
-		"scanType":    scanType,
-		"deviceCount": deviceCount,
-		"durationMs":  duration.Milliseconds(),
-	})
-}
-
-// NewVulnDiscoveredEvent creates a vulnerability discovered event.
-func NewVulnDiscoveredEvent(device *DiscoveredDevice, cveID string, severity string) *Event {
-	return NewEvent(EventVulnDiscovered, SourceAssessment).
-		WithDevice(device).
-		WithPayload(map[string]string{
-			"cveId":    cveID,
-			"severity": severity,
-		})
 }

@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noInferrableTypes: useExplicitType requires types on default params
 /**
  * Profile Queries - React Query Hooks for Profile API
  *
@@ -16,6 +17,7 @@
  * Related: #890
  */
 
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { api } from "../lib/api";
@@ -53,7 +55,7 @@ export const profileKeys = {
  * Fetch all profiles with caching.
  * Stale time: 30 seconds (profiles don't change often).
  */
-export function useProfilesQuery() {
+export function useProfilesQuery(): UseQueryResult<Profile[], Error> {
   const setProfiles = useProfileStore((s) => s.setProfiles);
   const setError = useProfileStore((s) => s.setError);
   const setIsLoading = useProfileStore((s) => s.setIsLoading);
@@ -99,7 +101,7 @@ export function useProfilesQuery() {
  * Fetch active profile with caching.
  * Stale time: 10 seconds (active profile may change more often).
  */
-export function useActiveProfileQuery() {
+export function useActiveProfileQuery(): UseQueryResult<Profile, Error> {
   const setActiveProfile = useProfileStore((s) => s.setActiveProfile);
   const setIsSettingsLoaded = useProfileStore((s) => s.setIsSettingsLoaded);
   const setError = useProfileStore((s) => s.setError);
@@ -111,7 +113,7 @@ export function useActiveProfileQuery() {
       return profile;
     },
     staleTime: 10 * 1000, // 10 seconds
-    retry: (failureCount, error) => {
+    retry: (failureCount: number, error: Error) => {
       // Don't retry on 404 - profile may not exist yet
       if (error instanceof Error && error.message.includes("404")) {
         return false;
@@ -153,7 +155,7 @@ export function useActiveProfileQuery() {
  * Fetch backend defaults with longer cache.
  * Stale time: 5 minutes (defaults rarely change).
  */
-export function useBackendDefaultsQuery() {
+export function useBackendDefaultsQuery(): UseQueryResult<DefaultSettings, Error> {
   const setBackendDefaults = useProfileStore((s) => s.setBackendDefaults);
 
   const query = useQuery({
@@ -192,7 +194,7 @@ export function useBackendDefaultsQuery() {
 /**
  * Create a new profile.
  */
-export function useCreateProfileMutation() {
+export function useCreateProfileMutation(): UseMutationResult<Profile, Error, ProfileRequest> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -208,7 +210,7 @@ export function useCreateProfileMutation() {
       // Invalidate profile list to refetch
       queryClient.invalidateQueries({ queryKey: profileKeys.list() });
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       logger.error(LogComponents.Profiles, "Failed to create profile", err);
     },
   });
@@ -217,7 +219,11 @@ export function useCreateProfileMutation() {
 /**
  * Update an existing profile.
  */
-export function useUpdateProfileMutation() {
+export function useUpdateProfileMutation(): UseMutationResult<
+  Profile,
+  Error,
+  { id: string; profile: ProfileRequest }
+> {
   const queryClient = useQueryClient();
   const setActiveProfile = useProfileStore((s) => s.setActiveProfile);
   const activeProfile = useProfileStore((s) => s.activeProfile);
@@ -231,7 +237,7 @@ export function useUpdateProfileMutation() {
       });
       return updated;
     },
-    onSuccess: (updated) => {
+    onSuccess: (updated: Profile) => {
       // Update active profile if it was the one updated
       if (activeProfile?.id === updated.id) {
         setActiveProfile(updated);
@@ -240,7 +246,7 @@ export function useUpdateProfileMutation() {
       queryClient.invalidateQueries({ queryKey: profileKeys.list() });
       queryClient.invalidateQueries({ queryKey: profileKeys.detail(updated.id) });
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       logger.error(LogComponents.Profiles, "Failed to update profile", err);
     },
   });
@@ -249,7 +255,7 @@ export function useUpdateProfileMutation() {
 /**
  * Delete a profile.
  */
-export function useDeleteProfileMutation() {
+export function useDeleteProfileMutation(): UseMutationResult<string, Error, string> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -262,7 +268,7 @@ export function useDeleteProfileMutation() {
       queryClient.invalidateQueries({ queryKey: profileKeys.list() });
       queryClient.invalidateQueries({ queryKey: profileKeys.active() });
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       logger.error(LogComponents.Profiles, "Failed to delete profile", err);
     },
   });
@@ -271,7 +277,11 @@ export function useDeleteProfileMutation() {
 /**
  * Switch active profile - batched update to reduce API thrashing.
  */
-export function useSwitchProfileMutation() {
+export function useSwitchProfileMutation(): UseMutationResult<
+  { activeProfile: Profile; profiles: Profile[] },
+  Error,
+  string
+> {
   const queryClient = useQueryClient();
   const batchProfileSwitch = useProfileStore((s) => s.batchProfileSwitch);
 
@@ -288,7 +298,7 @@ export function useSwitchProfileMutation() {
 
       return { activeProfile, profiles: profileList.profiles || [] };
     },
-    onSuccess: ({ activeProfile, profiles }) => {
+    onSuccess: ({ activeProfile, profiles }: { activeProfile: Profile; profiles: Profile[] }) => {
       // Single batched state update instead of multiple
       batchProfileSwitch(activeProfile, profiles);
       logger.info(LogComponents.Profiles, "Profile switched", {
@@ -299,7 +309,7 @@ export function useSwitchProfileMutation() {
       // Invalidate queries to ensure fresh data on next access
       queryClient.invalidateQueries({ queryKey: profileKeys.all });
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       logger.error(LogComponents.Profiles, "Failed to switch profile", err);
     },
   });
@@ -308,7 +318,7 @@ export function useSwitchProfileMutation() {
 /**
  * Duplicate a profile.
  */
-export function useDuplicateProfileMutation() {
+export function useDuplicateProfileMutation(): UseMutationResult<Profile, Error, string> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -323,7 +333,7 @@ export function useDuplicateProfileMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: profileKeys.list() });
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       logger.error(LogComponents.Profiles, "Failed to duplicate profile", err);
     },
   });
@@ -332,7 +342,11 @@ export function useDuplicateProfileMutation() {
 /**
  * Import profiles from JSON.
  */
-export function useImportProfilesMutation() {
+export function useImportProfilesMutation(): UseMutationResult<
+  ProfileImportResponse,
+  Error,
+  ProfileImportRequest
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -347,7 +361,7 @@ export function useImportProfilesMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: profileKeys.list() });
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       logger.error(LogComponents.Profiles, "Failed to import profiles", err);
     },
   });
@@ -356,7 +370,9 @@ export function useImportProfilesMutation() {
 /**
  * Export all profiles to JSON.
  */
-export function useExportProfilesQuery(enabled = false) {
+export function useExportProfilesQuery(
+  enabled: boolean = false,
+): UseQueryResult<ProfileExportResponse, Error> {
   return useQuery({
     queryKey: [...profileKeys.all, "export"],
     queryFn: async () => {
@@ -371,7 +387,11 @@ export function useExportProfilesQuery(enabled = false) {
 /**
  * Save settings to profile with debouncing handled by caller.
  */
-export function useSaveSettingsMutation() {
+export function useSaveSettingsMutation(): UseMutationResult<
+  Profile,
+  Error,
+  { profileId: string; settings: Record<string, unknown> }
+> {
   const queryClient = useQueryClient();
   const setSettingsStatus = useProfileStore((s) => s.setSettingsStatus);
   const updateActiveProfileSettings = useProfileStore((s) => s.updateActiveProfileSettings);
@@ -388,7 +408,7 @@ export function useSaveSettingsMutation() {
       const updated = await api.patch<Profile>(`/api/v1/profiles/${profileId}/settings`, settings);
       return updated;
     },
-    onSuccess: (updated) => {
+    onSuccess: (updated: Profile) => {
       updateActiveProfileSettings(updated.settings);
       setSettingsStatus("saved");
 
@@ -398,7 +418,7 @@ export function useSaveSettingsMutation() {
       // Invalidate to ensure consistency
       queryClient.invalidateQueries({ queryKey: profileKeys.active() });
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       setSettingsStatus("error");
       logger.error(LogComponents.Profiles, "Failed to save settings", err);
 

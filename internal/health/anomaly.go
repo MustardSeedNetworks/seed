@@ -24,6 +24,9 @@ const (
 	AnomalyTypePatternChange   = "pattern_change"
 )
 
+// pctMultiplier converts decimal to percentage.
+const pctMultiplier = 100
+
 // Statistical thresholds for anomaly detection.
 const (
 	// DefaultStdDevThreshold is the number of standard deviations for anomaly detection.
@@ -249,8 +252,8 @@ func (ad *AnomalyDetector) checkAvailabilityAnomaly(
 			Severity:     ad.getSeverity(math.Abs(deviation)),
 			Message: fmt.Sprintf(
 				"Availability %.1f%% below normal (mean: %.1f%%)",
-				successRate*100,
-				stats.Mean*100,
+				successRate*pctMultiplier,
+				stats.Mean*pctMultiplier,
 			),
 			Value:      successRate,
 			Expected:   stats.Mean,

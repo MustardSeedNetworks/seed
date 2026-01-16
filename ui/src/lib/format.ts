@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noInferrableTypes: useExplicitType requires types on default params
 /**
  * Number and Time Formatting Utilities
  *
@@ -21,7 +22,7 @@ export function isValidNumber(value: unknown): value is number {
  * @param ms - Time in milliseconds
  * @param fallback - Value to return if ms is invalid (default: "-")
  */
-export function formatTime(ms: number | undefined | null, fallback = "-"): string {
+export function formatTime(ms: number | undefined | null, fallback: string = "-"): string {
   if (!isValidNumber(ms) || ms <= 0) {
     return fallback;
   }
@@ -37,7 +38,7 @@ export function formatTime(ms: number | undefined | null, fallback = "-"): strin
 /**
  * Safely formats a latency value (alias for formatTime).
  */
-export const formatLatency = formatTime;
+export const formatLatency: typeof formatTime = formatTime;
 
 /**
  * Safely formats a number with fixed decimal places.
@@ -49,8 +50,8 @@ export const formatLatency = formatTime;
  */
 export function formatFixed(
   value: number | undefined | null,
-  decimals = 1,
-  fallback = "-",
+  decimals: number = 1,
+  fallback: string = "-",
 ): string {
   if (!isValidNumber(value)) {
     return fallback;
@@ -68,8 +69,8 @@ export function formatFixed(
  */
 export function formatPercent(
   value: number | undefined | null,
-  decimals = 0,
-  fallback = "-",
+  decimals: number = 0,
+  fallback: string = "-",
 ): string {
   if (!isValidNumber(value)) {
     return fallback;
@@ -87,8 +88,8 @@ export function formatPercent(
  */
 export function formatBytes(
   bytes: number | undefined | null,
-  decimals = 1,
-  fallback = "-",
+  decimals: number = 1,
+  fallback: string = "-",
 ): string {
   if (!isValidNumber(bytes) || bytes < 0) {
     return fallback;
@@ -113,7 +114,11 @@ export function formatBytes(
  * @param decimals - Number of decimal places (default: 1)
  * @param fallback - Value to return if invalid (default: "-")
  */
-export function formatBps(bps: number | undefined | null, decimals = 1, fallback = "-"): string {
+export function formatBps(
+  bps: number | undefined | null,
+  decimals: number = 1,
+  fallback: string = "-",
+): string {
   if (!isValidNumber(bps) || bps < 0) {
     return fallback;
   }
@@ -140,7 +145,7 @@ export function formatBps(bps: number | undefined | null, decimals = 1, fallback
 export function formatNumber(
   value: number | undefined | null,
   options?: Intl.NumberFormatOptions,
-  fallback = "-",
+  fallback: string = "-",
 ): string {
   if (!isValidNumber(value)) {
     return fallback;
@@ -155,7 +160,7 @@ export function formatNumber(
  * @param ns - Duration in nanoseconds
  * @param fallback - Value to return if invalid (default: "-")
  */
-export function formatNanoseconds(ns: number | undefined | null, fallback = "-"): string {
+export function formatNanoseconds(ns: number | undefined | null, fallback: string = "-"): string {
   if (!isValidNumber(ns) || ns <= 0) {
     return fallback;
   }
@@ -176,7 +181,10 @@ export function formatNanoseconds(ns: number | undefined | null, fallback = "-")
  * @param dbm - Signal strength in dBm
  * @param fallback - Value to return if invalid (default: "-")
  */
-export function formatSignalStrength(dbm: number | undefined | null, fallback = "-"): string {
+export function formatSignalStrength(
+  dbm: number | undefined | null,
+  fallback: string = "-",
+): string {
   if (!isValidNumber(dbm)) {
     return fallback;
   }
@@ -194,7 +202,7 @@ export function formatSignalStrength(dbm: number | undefined | null, fallback = 
 export function safeDivide(
   numerator: number | undefined | null,
   denominator: number | undefined | null,
-  fallback = 0,
+  fallback: number = 0,
 ): number {
   if (!(isValidNumber(numerator) && isValidNumber(denominator)) || denominator === 0) {
     return fallback;

@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { HelpCircle, Info, Settings } from "lucide-react";
 import { cn, spacing } from "../../styles/theme";
-import { Tooltip } from "./tooltip";
+import { Tooltip } from "./Tooltip";
 
 /**
  * Tooltips provide contextual help text on hover or focus.
  * Use them to explain icons, abbreviations, or UI elements.
  */
 const meta: Meta<typeof Tooltip> = {
-  title: "UI/tooltip",
+  title: "UI/Tooltip",
   component: Tooltip,
   parameters: {
     layout: "centered",

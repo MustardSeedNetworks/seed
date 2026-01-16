@@ -11,7 +11,7 @@
  * - Uses exponential backoff polling (15s, 30s, 60s, 120s, 240s capped)
  * - Polls all card data to maintain dashboard updates
  *
- * This hook was extracted from app.tsx (#892) to:
+ * This hook was extracted from App.tsx (#892) to:
  * - Simplify the main App component
  * - Make polling logic more maintainable and testable
  * - Centralize polling interval configuration
@@ -110,14 +110,14 @@ export function useSsePolling({
     if (sseStatus === "connected") {
       // SSE provides real-time updates, no need for aggressive polling
       // Still poll some endpoints that aren't broadcast via SSE
-      const slowInterval = setInterval(() => {
-        fetchInterfaces();
-        fetchWifiData(); // WiFi details not broadcast via SSE
-        fetchCableData(); // Cable test not broadcast via SSE
-        fetchChannelGraphData(); // Channel graph data for WiFi visualization
+      const slowInterval: ReturnType<typeof setInterval> = setInterval(() => {
+        fetchInterfaces().catch(() => undefined);
+        fetchWifiData().catch(() => undefined); // WiFi details not broadcast via SSE
+        fetchCableData().catch(() => undefined); // Cable test not broadcast via SSE
+        fetchChannelGraphData().catch(() => undefined); // Channel graph data for WiFi visualization
       }, pollingIntervals.sseConnectedInterval);
 
-      return () => clearInterval(slowInterval);
+      return (): void => clearInterval(slowInterval);
     }
 
     // Fallback: Poll when SSE disconnected with exponential backoff
@@ -125,14 +125,14 @@ export function useSsePolling({
     attemptsRef.current = 0;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    const poll = () => {
-      fetchLinkData();
-      fetchIpConfig();
-      fetchDiscoveryData();
-      fetchDnsData();
-      fetchGatewayData();
-      fetchVlanData();
-      fetchWifiData();
+    const poll = (): void => {
+      fetchLinkData().catch(() => undefined);
+      fetchIpConfig().catch(() => undefined);
+      fetchDiscoveryData().catch(() => undefined);
+      fetchDnsData().catch(() => undefined);
+      fetchGatewayData().catch(() => undefined);
+      fetchVlanData().catch(() => undefined);
+      fetchWifiData().catch(() => undefined);
 
       // Schedule next poll with exponential backoff
       const delay = Math.min(

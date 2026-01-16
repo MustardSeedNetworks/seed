@@ -417,7 +417,7 @@ const ExportAPIVersionPrefix = APIVersionPrefix
 // ExportEngineDiscoveryResponse exposes EngineDiscoveryResponse for testing.
 type ExportEngineDiscoveryResponse = EngineDiscoveryResponse
 
-// GetDiscoveryEngine returns the discovery engine for testing.
-func (s *Server) GetDiscoveryEngine() any {
+// GetEngine returns the discovery engine for testing.
+func (s *Server) GetEngine() any {
 	return s.services.Discovery.Engine
 }

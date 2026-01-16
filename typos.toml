@@ -1,0 +1,74 @@
+[files]
+extend-exclude = [
+    "node_modules/",
+    "dist/",
+    "build/",
+    "coverage/",
+    "*.lock",
+    "storybook-static/",
+    "ui/dist/",
+    "ui/coverage/",
+    "go.sum",
+    "oui.txt",
+    # Exclude i18n - Spanish/other languages aren't typos
+    "internal/i18n/locales/es/",
+    "internal/i18n/locales/de/",
+    "internal/i18n/locales/fr/",
+    # SNMP MIB data - standard OID names
+    "internal/mibdb/",
+]
+
+[default.extend-words]
+# Network/protocol terms
+dhcp = "dhcp"
+iperf = "iperf"
+vlan = "vlan"
+wlan = "wlan"
+snmp = "snmp"
+
+# False positives from patterns
+ba = "ba"           # IEEE 802.3ba, MAC OUIs
+dbe = "dbe"         # Git commit hashes
+inferrable = "inferrable"  # Biome spelling
+vulnerabilit = "vulnerabilit"  # Regex patterns in tests
+
+# Protocol message types
+hel = "hel"         # OPC-UA Hello message
+evn = "evn"         # HL7 event segment
+pn = "pn"           # Vendor Part Number (SFP)
+
+# SNMP standard terms
+routeros = "routeros"  # MikroTik RouterOS
+
+[default.extend-identifiers]
+krisarmstrong = "krisarmstrong"
+golangci = "golangci"
+gofumpt = "gofumpt"
+gocyclo = "gocyclo"
+gopacket = "gopacket"
+gopsutil = "gopsutil"
+commitlint = "commitlint"
+gitleaks = "gitleaks"
+trufflehog = "trufflehog"
+errcheck = "errcheck"
+funlen = "funlen"
+maintidx = "maintidx"
+prealloc = "prealloc"
+predeclared = "predeclared"
+testify = "testify"
+omitempty = "omitempty"
+nolint = "nolint"
+sysfs = "sysfs"
+urandom = "urandom"
+journalctl = "journalctl"
+pkill = "pkill"
+linkmon = "linkmon"
+lucide = "lucide"
+i18next = "i18next"
+Vitest = "Vitest"
+Vite = "Vite"
+Storybook = "Storybook"
+Playwright = "Playwright"
+ESLint = "ESLint"
+Prettier = "Prettier"
+Subresource = "Subresource"

@@ -51,9 +51,9 @@ function getSystemTheme(): "light" | "dark" {
  *
  * @param theme - Theme to apply ('light', 'dark', or 'system')
  */
-function applyTheme(theme: Theme) {
-  const root = document.documentElement;
-  const effectiveTheme = theme === "system" ? getSystemTheme() : theme;
+function applyTheme(theme: Theme): void {
+  const root: HTMLElement = document.documentElement;
+  const effectiveTheme: "light" | "dark" = theme === "system" ? getSystemTheme() : theme;
 
   // Tailwind dark mode uses the 'dark' class on root element
   if (effectiveTheme === "dark") {
@@ -71,7 +71,13 @@ function applyTheme(theme: Theme) {
  *
  * @returns Theme state and control functions
  */
-export function useTheme() {
+export function useTheme(): {
+  theme: Theme;
+  effectiveTheme: "light" | "dark";
+  setTheme: (newTheme: Theme) => void;
+  toggleTheme: () => void;
+  isDark: boolean;
+} {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
@@ -101,13 +107,13 @@ export function useTheme() {
     applyTheme(theme);
 
     if (theme === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const handler = (e: MediaQueryListEvent) => {
+      const mediaQuery: MediaQueryList = window.matchMedia("(prefers-color-scheme: dark)");
+      const handler = (e: MediaQueryListEvent): void => {
         setEffectiveTheme(e.matches ? "dark" : "light");
         applyTheme("system");
       };
       mediaQuery.addEventListener("change", handler);
-      return () => mediaQuery.removeEventListener("change", handler);
+      return (): void => mediaQuery.removeEventListener("change", handler);
     }
   }, [theme]);
 

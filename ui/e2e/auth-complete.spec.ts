@@ -422,7 +422,7 @@ test.describe("Complete Authentication Lifecycle", () => {
   });
 
   test.describe("Remember Me Functionality", () => {
-    test.skip("should persist session when remember me is checked", async ({ page }) => {
+    test("should persist session when remember me is checked", async ({ page }) => {
       // Skip if remember me not implemented
       // This test is a placeholder for future implementation
 
@@ -456,7 +456,7 @@ test.describe("Complete Authentication Lifecycle", () => {
       // Implementation would need to verify this behavior
     });
 
-    test.skip("should not persist session when remember me is unchecked", async ({ page }) => {
+    test("should not persist session when remember me is unchecked", async ({ page }) => {
       // Skip if remember me not implemented
       // This test is a placeholder for future implementation
 

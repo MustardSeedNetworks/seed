@@ -4,11 +4,12 @@
  * Manages device scanning state and the trigger/polling logic
  * for network device discovery.
  *
- * Extracted from app.tsx to reduce component complexity (#889).
+ * Extracted from App.tsx to reduce component complexity (#889).
  */
 
+import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { NetworkDiscoveryData } from "../components/cards/network-discovery-card";
+import type { NetworkDiscoveryData } from "../components/cards/NetworkDiscoveryCard";
 import { api } from "../lib/api";
 import { LogComponents, logger } from "../lib/logger";
 
@@ -40,13 +41,14 @@ export function useDeviceScanning({
   const [networkDiscovery, setNetworkDiscovery] = useState<NetworkDiscoveryData | null>(null);
 
   // Refs for polling cleanup
-  const scanPollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const networkDiscoveryAbortRef = useRef<AbortController | null>(null);
+  const scanPollIntervalRef: React.MutableRefObject<ReturnType<typeof setInterval> | null> =
+    useRef(null);
+  const scanTimeoutRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null> = useRef(null);
+  const networkDiscoveryAbortRef: React.MutableRefObject<AbortController | null> = useRef(null);
 
   // Cleanup on unmount
   useEffect(
-    () => () => {
+    (): (() => void) => (): void => {
       networkDiscoveryAbortRef.current?.abort();
       if (scanPollIntervalRef.current) {
         clearInterval(scanPollIntervalRef.current);

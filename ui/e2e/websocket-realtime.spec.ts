@@ -139,7 +139,7 @@ test.describe("WebSocket Real-Time Updates", () => {
 
       // Should have received link updates
       if (cardUpdates.length > 0) {
-        const update = cardUpdates[0];
+        const [update] = cardUpdates;
         expect(update.payload).toHaveProperty("cardId", "link");
         expect(update.payload).toHaveProperty("data");
       }
@@ -372,7 +372,7 @@ test.describe("WebSocket Real-Time Updates", () => {
 
       // Should have received scan progress updates
       if (scanMessages.length > 0) {
-        const msg = scanMessages[0];
+        const [msg] = scanMessages;
         expect(msg.payload).toBeDefined();
       }
     });

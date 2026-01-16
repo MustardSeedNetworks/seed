@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -8,8 +9,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-
-	"gopkg.in/yaml.v3"
 
 	"github.com/krisarmstrong/seed/internal/logging"
 )
@@ -81,7 +80,7 @@ func (m *BackupManager) CreateBackup() (*BackupInfo, error) {
 	}
 
 	// Extract version from backup if possible
-	version := m.extractVersion(data)
+	version := m.ExtractVersion(data)
 
 	backup := &BackupInfo{
 		Name:      backupName,
@@ -139,7 +138,7 @@ func (m *BackupManager) ListBackups() ([]BackupInfo, error) {
 		version := 0
 
 		if data, readErr := os.ReadFile(backupPath); readErr == nil {
-			version = m.extractVersion(data)
+			version = m.ExtractVersion(data)
 		}
 
 		backups = append(backups, BackupInfo{
@@ -177,9 +176,9 @@ func (m *BackupManager) RestoreBackup(backupName string) error {
 		return fmt.Errorf("failed to read backup file: %w", err)
 	}
 
-	// Validate the backup is valid YAML config
+	// Validate the backup is valid JSON config
 	cfg := DefaultConfig()
-	if unmarshalErr := yaml.Unmarshal(data, cfg); unmarshalErr != nil {
+	if unmarshalErr := json.Unmarshal(data, cfg); unmarshalErr != nil {
 		return fmt.Errorf("backup file contains invalid configuration: %w", unmarshalErr)
 	}
 
@@ -250,14 +249,14 @@ func (m *BackupManager) GetBackupDir() string {
 	return m.backupDir
 }
 
-// extractVersion attempts to extract the version number from config YAML data.
+// ExtractVersion attempts to extract the version number from config JSON data.
 // Returns 0 if version cannot be determined.
-func (m *BackupManager) extractVersion(data []byte) int {
+func (m *BackupManager) ExtractVersion(data []byte) int {
 	// Quick parse to extract just the version
 	var partial struct {
-		Version int `yaml:"version"`
+		Version int `json:"version"`
 	}
-	if err := yaml.Unmarshal(data, &partial); err != nil {
+	if err := json.Unmarshal(data, &partial); err != nil {
 		return 0
 	}
 	return partial.Version

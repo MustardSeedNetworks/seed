@@ -132,9 +132,9 @@ test.describe("Theme Toggle and Help Modal", () => {
       await page.waitForTimeout(500);
 
       // Check localStorage for theme preference
-      const storedTheme = await page.evaluate(() => {
-        return localStorage.getItem("theme") || localStorage.getItem("seed-theme");
-      });
+      const storedTheme = await page.evaluate(
+        () => localStorage.getItem("theme") || localStorage.getItem("seed-theme"),
+      );
 
       // Should have a theme preference stored
       expect(storedTheme).toBeTruthy();
@@ -260,14 +260,14 @@ test.describe("Theme Toggle and Help Modal", () => {
       expect(stillDark).toBe(isDark);
     });
 
-    test.skip("should respect system theme preference if implemented", async ({ page }) => {
+    test("should respect system theme preference if implemented", async ({ page }) => {
       // This test is skipped as system theme preference may not be implemented
       // To implement: check if theme matches system preference on first load
 
       // Get system theme preference
-      const systemPrefersDark = await page.evaluate(() => {
-        return window.matchMedia("(prefers-color-scheme: dark)").matches;
-      });
+      const systemPrefersDark = await page.evaluate(
+        () => window.matchMedia("(prefers-color-scheme: dark)").matches,
+      );
 
       // Check if app theme matches system theme
       const htmlClasses = await page.locator("html").getAttribute("class");
@@ -427,7 +427,7 @@ test.describe("Theme Toggle and Help Modal", () => {
       }
     });
 
-    test.skip("should filter help content with search functionality", async ({ page }) => {
+    test("should filter help content with search functionality", async ({ page }) => {
       // This test is skipped if search is not implemented
 
       // Open help modal

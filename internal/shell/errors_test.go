@@ -76,7 +76,7 @@ func TestErrorsAreStatic(t *testing.T) {
 	}
 }
 
-// TestErrorsWithIs tests error matching with errors.Is.
+// TestErrorsWithIs tests error matching with [errors.Is].
 func TestErrorsWithIs(t *testing.T) {
 	t.Parallel()
 

@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/paths"
@@ -18,13 +17,12 @@ func initExportCmd(state *cliState) {
 	exportCmd := &cobra.Command{
 		Use:   "export-config",
 		Short: "Export configuration",
-		Long:  "Export configuration with secrets redacted (safe for sharing)",
+		Long:  "Export configuration as JSON with secrets redacted (safe for sharing)",
 		Run: func(cmd *cobra.Command, args []string) {
 			runExport(cmd, args, state)
 		},
 	}
 	exportCmd.Flags().StringP("output", "o", "-", "Output file (- for stdout)")
-	exportCmd.Flags().StringP("format", "f", "yaml", "Output format (yaml or json)")
 	exportCmd.Flags().Bool("no-redact", false, "Do not redact secrets (DANGEROUS)")
 	state.rootCmd.AddCommand(exportCmd)
 }
@@ -33,11 +31,6 @@ func runExport(cmd *cobra.Command, _ []string, state *cliState) {
 	output, err := cmd.Flags().GetString("output")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting output flag: %v\n", err)
-		os.Exit(1)
-	}
-	format, err := cmd.Flags().GetString("format")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error getting format flag: %v\n", err)
 		os.Exit(1)
 	}
 	noRedact, err := cmd.Flags().GetBool("no-redact")
@@ -61,17 +54,8 @@ func runExport(cmd *cobra.Command, _ []string, state *cliState) {
 		cfg = redactSecrets(cfg)
 	}
 
-	// Marshal to requested format
-	var data []byte
-	switch format {
-	case "json":
-		data, err = json.MarshalIndent(cfg, "", "  ")
-	case "yaml":
-		data, err = yaml.Marshal(cfg)
-	default:
-		fmt.Fprintf(os.Stderr, "Unknown format: %s (use yaml or json)\n", format)
-		os.Exit(1)
-	}
+	// Marshal to JSON
+	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error marshaling config: %v\n", err)
 		os.Exit(1)

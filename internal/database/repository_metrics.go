@@ -100,12 +100,12 @@ func (r *MetricsRepository) Query(ctx context.Context, opts MetricQueryOptions) 
 	query += " ORDER BY timestamp DESC"
 
 	if opts.Limit > 0 {
-		query += " LIMIT ?"
+		query += sqlLimit
 		args = append(args, opts.Limit)
 	}
 
 	if opts.Offset > 0 {
-		query += " OFFSET ?"
+		query += sqlOffset
 		args = append(args, opts.Offset)
 	}
 

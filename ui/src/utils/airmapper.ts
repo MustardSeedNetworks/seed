@@ -161,6 +161,7 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
 
   try {
     // Load ZIP archive
+    // biome-ignore lint/nursery/useAwaitThenable: JsZip.loadAsync returns a Promise-like thenable
     const zip = await JsZip.loadAsync(data);
 
     // Find files by extension
@@ -201,6 +202,7 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
     }
 
     // Parse .serial JSON
+    // biome-ignore lint/nursery/useAwaitThenable: JSZipObject.async returns a Promise-like thenable
     const serialContent = await serialFile.async("text");
     let serialJson: SerialJson;
     try {
@@ -269,6 +271,7 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
     let floorPlanFilename = serialJson.floorPlanFilename || "floorplan.jpg";
 
     if (jpgFile) {
+      // biome-ignore lint/nursery/useAwaitThenable: JSZipObject.async returns a Promise-like thenable
       const imageData = await jpgFile.async("base64");
       floorPlanImage = `data:image/jpeg;base64,${imageData}`;
       floorPlanFilename = jpgFile.name.split("/").pop() || floorPlanFilename;
@@ -334,7 +337,7 @@ export function locationsToSamplePoints(
   return points;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || "";
 
 /** Result from backend AirMapper import API */
 export interface BackendImportResult {
@@ -388,6 +391,7 @@ export async function importAirMapperViaBackend(
     });
 
     if (!response.ok) {
+      // biome-ignore lint/nursery/useAwaitThenable: Response.text() returns a Promise
       const errorText = await response.text();
       return {
         success: false,
@@ -396,6 +400,7 @@ export async function importAirMapperViaBackend(
       };
     }
 
+    // biome-ignore lint/nursery/useAwaitThenable: Response.json() returns a Promise
     const result: BackendImportResult = await response.json();
 
     // Convert backend result to AirMapperData format

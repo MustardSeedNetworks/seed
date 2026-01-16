@@ -10,6 +10,7 @@
  * Related: #890
  */
 
+import type { StoreApi, UseBoundStore } from "zustand";
 import { create } from "zustand";
 import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
@@ -77,19 +78,26 @@ interface ProfileActions {
 // ============================================================================
 
 const DEFAULT_CARD_SETTINGS: CardSettingsConfig = {
-  visibleCards: ["network-status", "speed-test", "gateway-test", "dns-test", "network-discovery"],
-  cardOrder: [
-    "network-status",
-    "speed-test",
-    "gateway-test",
-    "dns-test",
-    "network-discovery",
-    "wifi-channel-graph",
-    "path-analysis",
-    "iperf3-test",
-    "cable-test",
-  ],
-  expandedCards: ["network-status"],
+  link: { enabled: true, autoRunOnLink: true },
+  cable: { enabled: true, autoRunOnLink: true },
+  switch: { enabled: true, autoRunOnLink: true },
+  vlan: { enabled: true, autoRunOnLink: true },
+  network: { enabled: true, autoRunOnLink: true },
+  gateway: { enabled: true, autoRunOnLink: true },
+  dns: { enabled: true, autoRunOnLink: true },
+  publicIp: { enabled: true, autoRunOnLink: true },
+  wifi: { enabled: true, autoRunOnLink: true },
+  wifiSurvey: { enabled: true, autoRunOnLink: true },
+  healthChecks: { enabled: true, autoRunOnLink: true },
+  networkDiscovery: { enabled: true, autoRunOnLink: true },
+  pathDiscovery: { enabled: true, autoRunOnLink: true },
+  systemHealth: { enabled: true, autoRunOnLink: true },
+  performance: {
+    enabled: true,
+    autoRunOnLink: true,
+    speedtest: { enabled: true, autoRunOnLink: true },
+    iperf: { enabled: false, autoRunOnLink: false },
+  },
 };
 
 const DEFAULT_DISPLAY_OPTIONS: DisplayOptionsConfig = {
@@ -192,59 +200,61 @@ const initialState: ProfileState = {
 // Store Creation
 // ============================================================================
 
-export const useProfileStore = create<ProfileState & ProfileActions>()(
+export const useProfileStore: UseBoundStore<StoreApi<ProfileState & ProfileActions>> = create<
+  ProfileState & ProfileActions
+>()(
   devtools(
     persist(
       subscribeWithSelector(
         immer((set) => ({
           ...initialState,
 
-          setProfiles: (profiles) =>
-            set((state) => {
+          setProfiles: (profiles: Profile[]) =>
+            set((state: ProfileState) => {
               state.profiles = profiles;
             }),
 
-          setActiveProfile: (profile) =>
-            set((state) => {
+          setActiveProfile: (profile: Profile | null) =>
+            set((state: ProfileState) => {
               state.activeProfile = profile;
             }),
 
-          setBackendDefaults: (defaults) =>
-            set((state) => {
+          setBackendDefaults: (defaults: DefaultSettings | null) =>
+            set((state: ProfileState) => {
               state.backendDefaults = defaults;
             }),
 
-          setIsLoading: (loading) =>
-            set((state) => {
+          setIsLoading: (loading: boolean) =>
+            set((state: ProfileState) => {
               state.isLoading = loading;
             }),
 
-          setError: (error) =>
-            set((state) => {
+          setError: (error: string | null) =>
+            set((state: ProfileState) => {
               state.error = error;
             }),
 
-          setSettingsStatus: (status) =>
-            set((state) => {
+          setSettingsStatus: (status: SettingsSaveStatus) =>
+            set((state: ProfileState) => {
               state.settingsStatus = status;
             }),
 
-          setIsSettingsLoaded: (loaded) =>
-            set((state) => {
+          setIsSettingsLoaded: (loaded: boolean) =>
+            set((state: ProfileState) => {
               state.isSettingsLoaded = loaded;
             }),
 
           // Batch update for profile switch - single state update instead of multiple
-          batchProfileSwitch: (profile, profiles) =>
-            set((state) => {
+          batchProfileSwitch: (profile: Profile, profiles: Profile[]) =>
+            set((state: ProfileState) => {
               state.activeProfile = profile;
               state.profiles = profiles;
               state.isSettingsLoaded = true;
               state.error = null;
             }),
 
-          updateActiveProfileSettings: (settings) =>
-            set((state) => {
+          updateActiveProfileSettings: (settings: Partial<ProfileSettings>) =>
+            set((state: ProfileState) => {
               if (state.activeProfile) {
                 state.activeProfile.settings = {
                   ...state.activeProfile.settings,
@@ -259,7 +269,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
       {
         name: "seed-profile-store",
         // Only persist the active profile ID, not the full data
-        partialize: (state) => ({
+        partialize: (state: ProfileState) => ({
           activeProfileId: state.activeProfile?.id,
         }),
       },

@@ -47,7 +47,22 @@ export function useInterfaceState({
   activeProfile: _activeProfile,
   setEthernetInterface: _setEthernetInterface,
   setWifiInterface: _setWifiInterface,
-}: UseInterfaceStateProps) {
+}: UseInterfaceStateProps): {
+  ethernetInterface: string;
+  wifiInterface: string;
+  activeMode: "ethernet" | "wifi";
+  currentInterface: string;
+  isWifi: boolean;
+  setCurrentInterface: (name: string) => void;
+  setIsWifi: (wifi: boolean) => void;
+  userSetWifiModeRef: React.MutableRefObject<boolean>;
+  currentInterfaceRef: React.MutableRefObject<string>;
+  hasEthernet: boolean;
+  hasWifiInterface: boolean;
+  setEthernetInterfaceState: React.Dispatch<React.SetStateAction<string>>;
+  setWifiInterfaceState: React.Dispatch<React.SetStateAction<string>>;
+  setActiveMode: React.Dispatch<React.SetStateAction<"ethernet" | "wifi">>;
+} {
   // Dual interface state: track both ethernet and WiFi interfaces separately (#754 enhancement)
   // This allows seamless switching between modes without losing the previously selected interface
   const [ethernetInterface, setEthernetInterfaceState] = useState("");

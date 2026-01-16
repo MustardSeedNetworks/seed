@@ -190,7 +190,21 @@ interface ScanResponse {
  *
  * @returns Device discovery state and control functions
  */
-export function useDevices() {
+export function useDevices(): {
+  devices: Device[];
+  status: DeviceDiscoveryStatus | null;
+  isScanning: boolean;
+  error: string | null;
+  fetchDevices: () => Promise<Device[]>;
+  triggerScan: () => Promise<boolean>;
+  fetchStatus: () => Promise<DeviceDiscoveryStatus | null>;
+  fetchSettings: () => Promise<DeviceDiscoverySettings | null>;
+  updateSettings: (settings: Partial<DeviceDiscoverySettings>) => Promise<boolean>;
+  fetchSubnets: () => Promise<SubnetConfig[]>;
+  addSubnet: (subnet: SubnetConfig) => Promise<boolean>;
+  updateSubnet: (subnet: SubnetConfig) => Promise<boolean>;
+  deleteSubnet: (cidr: string) => Promise<boolean>;
+} {
   const [devices, setDevices] = useState<Device[]>([]);
   const [status, setStatus] = useState<DeviceDiscoveryStatus | null>(null);
   const [isScanning, setIsScanning] = useState(false);

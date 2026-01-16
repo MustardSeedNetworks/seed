@@ -129,7 +129,7 @@ func initCommands(state *cliState) {
 
 	// Persistent flags are available to all subcommands
 	state.rootCmd.PersistentFlags().
-		StringVar(&state.cfgFile, "config", "", "config file path (default: XDG config paths or configs/seed.yaml)")
+		StringVar(&state.cfgFile, "config", "", "config file path (default: XDG config paths or configs/seed.json)")
 	state.rootCmd.PersistentFlags().
 		BoolVar(&state.devMode, "dev", false, "run in development mode (HTTP instead of HTTPS)")
 	state.rootCmd.PersistentFlags().

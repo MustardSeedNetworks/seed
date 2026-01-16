@@ -26,6 +26,8 @@ import (
 const (
 	darwinBTScanTimeoutSecs = 30
 	systemProfilerPath      = "/usr/sbin/system_profiler"
+	// keyValueSplitParts is the number of parts for key:value splits.
+	keyValueSplitParts = 2
 )
 
 // scanPlatform performs Bluetooth scanning on macOS.
@@ -65,6 +67,18 @@ func (s *BluetoothScanner) scanSystemProfiler(ctx context.Context) ([]BluetoothD
 	return parseSystemProfilerOutput(output)
 }
 
+// btDeviceInfo represents a Bluetooth device from system_profiler JSON.
+type btDeviceInfo struct {
+	Address      string `json:"device_address"`
+	MinorType    string `json:"device_minorType"`
+	MajorType    string `json:"device_majorType"`
+	Connected    string `json:"device_isconnected"`
+	Paired       string `json:"device_ispaired"`
+	RSSI         any    `json:"device_rssi"`
+	Services     string `json:"device_services"`
+	Manufacturer string `json:"device_manufacturer"`
+}
+
 // systemProfilerBluetooth represents the JSON structure from system_profiler.
 type systemProfilerBluetooth struct {
 	SPBluetoothDataType []struct {
@@ -72,33 +86,49 @@ type systemProfilerBluetooth struct {
 			Address string `json:"controller_address"`
 			State   string `json:"controller_state"`
 		} `json:"controller_properties"`
-		DevicesConnected []map[string]struct {
-			Address      string `json:"device_address"`
-			MinorType    string `json:"device_minorType"`
-			MajorType    string `json:"device_majorType"`
-			Connected    string `json:"device_isconnected"`
-			Paired       string `json:"device_ispaired"`
-			RSSI         any    `json:"device_rssi"`
-			Services     string `json:"device_services"`
-			Manufacturer string `json:"device_manufacturer"`
-		} `json:"device_connected,omitempty"`
-		DevicesPaired []map[string]struct {
-			Address      string `json:"device_address"`
-			MinorType    string `json:"device_minorType"`
-			MajorType    string `json:"device_majorType"`
-			Connected    string `json:"device_isconnected"`
-			Paired       string `json:"device_ispaired"`
-			RSSI         any    `json:"device_rssi"`
-			Services     string `json:"device_services"`
-			Manufacturer string `json:"device_manufacturer"`
-		} `json:"devices_not_connected,omitempty"`
+		DevicesConnected []map[string]*btDeviceInfo `json:"device_connected,omitempty"`
+		DevicesPaired    []map[string]*btDeviceInfo `json:"devices_not_connected,omitempty"`
 	} `json:"SPBluetoothDataType"`
+}
+
+// parseRSSI extracts RSSI value from various types.
+func parseRSSI(rssi any) int {
+	switch v := rssi.(type) {
+	case float64:
+		return int(v)
+	case string:
+		if val, err := strconv.Atoi(v); err == nil {
+			return val
+		}
+	}
+	return 0
+}
+
+// createBluetoothDevice creates a BluetoothDevice from system_profiler device info.
+// The forceNotConnected flag is used for paired-but-not-connected device lists.
+func createBluetoothDevice(name string, info *btDeviceInfo, now time.Time, forceNotConnected bool) BluetoothDevice {
+	isConnected := !forceNotConnected && (info.Connected == "Yes" || info.Connected == "attrib_Yes")
+	dev := BluetoothDevice{
+		Name:        name,
+		Address:     info.Address,
+		IsConnected: isConnected,
+		IsPaired:    info.Paired == "Yes" || info.Paired == "attrib_Yes" || forceNotConnected,
+		Type:        BluetoothTypeClassic,
+		DeviceClass: mapMajorTypeToClass(info.MajorType),
+		FirstSeen:   now,
+		LastSeen:    now,
+		Metadata:    make(map[string]any),
+		RSSI:        parseRSSI(info.RSSI),
+	}
+	if info.Manufacturer != "" {
+		dev.Vendor = info.Manufacturer
+	}
+	return dev
 }
 
 func parseSystemProfilerOutput(output []byte) ([]BluetoothDevice, error) {
 	var data systemProfilerBluetooth
 	if err := json.Unmarshal(output, &data); err != nil {
-		// Fall back to text parsing if JSON fails
 		return parseSystemProfilerText(string(output))
 	}
 
@@ -106,64 +136,58 @@ func parseSystemProfilerOutput(output []byte) ([]BluetoothDevice, error) {
 	now := time.Now()
 
 	for _, bt := range data.SPBluetoothDataType {
-		// Parse connected devices
 		for _, devMap := range bt.DevicesConnected {
 			for name, info := range devMap {
-				dev := BluetoothDevice{
-					Name:        name,
-					Address:     info.Address,
-					IsConnected: info.Connected == "Yes" || info.Connected == "attrib_Yes",
-					IsPaired:    info.Paired == "Yes" || info.Paired == "attrib_Yes",
-					Type:        BluetoothTypeClassic,
-					DeviceClass: mapMajorTypeToClass(info.MajorType),
-					FirstSeen:   now,
-					LastSeen:    now,
-					Metadata:    make(map[string]any),
-				}
-
-				if info.Manufacturer != "" {
-					dev.Vendor = info.Manufacturer
-				}
-
-				// Parse RSSI if available
-				switch v := info.RSSI.(type) {
-				case float64:
-					dev.RSSI = int(v)
-				case string:
-					if rssi, err := strconv.Atoi(v); err == nil {
-						dev.RSSI = rssi
-					}
-				}
-
-				devices = append(devices, dev)
+				devices = append(devices, createBluetoothDevice(name, info, now, false))
 			}
 		}
-
-		// Parse paired (not connected) devices
 		for _, devMap := range bt.DevicesPaired {
 			for name, info := range devMap {
-				dev := BluetoothDevice{
-					Name:        name,
-					Address:     info.Address,
-					IsConnected: false,
-					IsPaired:    true,
-					Type:        BluetoothTypeClassic,
-					DeviceClass: mapMajorTypeToClass(info.MajorType),
-					FirstSeen:   now,
-					LastSeen:    now,
-					Metadata:    make(map[string]any),
-				}
-
-				if info.Manufacturer != "" {
-					dev.Vendor = info.Manufacturer
-				}
-
-				devices = append(devices, dev)
+				devices = append(devices, createBluetoothDevice(name, info, now, true))
 			}
 		}
 	}
 
 	return devices, nil
+}
+
+// Regex patterns for text parsing (compiled once).
+var (
+	btAddrRegex = regexp.MustCompile(`Address:\s*([0-9A-Fa-f:-]+)`)
+	btRSSIRegex = regexp.MustCompile(`RSSI:\s*(-?\d+)`)
+)
+
+// parseDeviceLine parses a line from system_profiler text output and updates the device.
+func parseDeviceLine(line string, dev *BluetoothDevice) {
+	if matches := btAddrRegex.FindStringSubmatch(line); len(matches) > 1 {
+		dev.Address = matches[1]
+		return
+	}
+	if matches := btRSSIRegex.FindStringSubmatch(line); len(matches) > 1 {
+		if rssi, err := strconv.Atoi(matches[1]); err == nil {
+			dev.RSSI = rssi
+		}
+		return
+	}
+	if strings.Contains(line, "Connected: Yes") {
+		dev.IsConnected = true
+		return
+	}
+	if strings.Contains(line, "Paired: Yes") {
+		dev.IsPaired = true
+		return
+	}
+	if strings.Contains(line, "Major Type:") {
+		parts := strings.SplitN(line, ":", keyValueSplitParts)
+		if len(parts) > 1 {
+			dev.DeviceClass = mapMajorTypeToClass(strings.TrimSpace(parts[1]))
+		}
+	}
+}
+
+// isNewDeviceEntry checks if a line starts a new device entry.
+func isNewDeviceEntry(line string) bool {
+	return strings.HasSuffix(line, ":") && !strings.Contains(line, "Bluetooth")
 }
 
 // parseSystemProfilerText parses text output when JSON parsing fails.
@@ -172,21 +196,16 @@ func parseSystemProfilerText(output string) ([]BluetoothDevice, error) {
 	var currentDevice *BluetoothDevice
 	now := time.Now()
 
-	addrRegex := regexp.MustCompile(`Address:\s*([0-9A-Fa-f:-]+)`)
-	rssiRegex := regexp.MustCompile(`RSSI:\s*(-?\d+)`)
-
 	scanner := bufio.NewScanner(strings.NewReader(output))
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 
-		// New device entry (indented device name followed by colon)
-		if strings.HasSuffix(line, ":") && !strings.Contains(line, "Bluetooth") {
+		if isNewDeviceEntry(line) {
 			if currentDevice != nil && currentDevice.Address != "" {
 				devices = append(devices, *currentDevice)
 			}
-			name := strings.TrimSuffix(line, ":")
 			currentDevice = &BluetoothDevice{
-				Name:        name,
+				Name:        strings.TrimSuffix(line, ":"),
 				Type:        BluetoothTypeClassic,
 				DeviceClass: BluetoothClassUncategorized,
 				FirstSeen:   now,
@@ -196,42 +215,11 @@ func parseSystemProfilerText(output string) ([]BluetoothDevice, error) {
 			continue
 		}
 
-		if currentDevice == nil {
-			continue
-		}
-
-		// Parse address
-		if matches := addrRegex.FindStringSubmatch(line); len(matches) > 1 {
-			currentDevice.Address = matches[1]
-		}
-
-		// Parse RSSI
-		if matches := rssiRegex.FindStringSubmatch(line); len(matches) > 1 {
-			if rssi, err := strconv.Atoi(matches[1]); err == nil {
-				currentDevice.RSSI = rssi
-			}
-		}
-
-		// Parse connected status
-		if strings.Contains(line, "Connected: Yes") {
-			currentDevice.IsConnected = true
-		}
-
-		// Parse paired status
-		if strings.Contains(line, "Paired: Yes") {
-			currentDevice.IsPaired = true
-		}
-
-		// Parse major type
-		if strings.Contains(line, "Major Type:") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) > 1 {
-				currentDevice.DeviceClass = mapMajorTypeToClass(strings.TrimSpace(parts[1]))
-			}
+		if currentDevice != nil {
+			parseDeviceLine(line, currentDevice)
 		}
 	}
 
-	// Don't forget the last device
 	if currentDevice != nil && currentDevice.Address != "" {
 		devices = append(devices, *currentDevice)
 	}
@@ -269,7 +257,7 @@ func parseBleutilOutput(output string) ([]BluetoothDevice, error) {
 			continue
 		}
 
-		parts := strings.SplitN(line, ",", 2)
+		parts := strings.SplitN(line, ",", keyValueSplitParts)
 		if len(parts) < 1 {
 			continue
 		}

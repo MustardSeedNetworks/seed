@@ -1,3 +1,4 @@
+// biome-ignore-all lint/nursery/useAwaitThenable: response.json() returns a Promise
 /**
  * Pipeline Status Hook
  *
@@ -601,6 +602,10 @@ export function usePipelineStatus(
         case "device_updated":
           // These are handled by NetworkDiscoveryCard directly
           break;
+
+        default:
+          // Unknown event type - log for debugging
+          break;
       }
     },
     [onMessage],
@@ -622,7 +627,7 @@ export function usePipelineStatus(
     const win = window as WindowWithHandlers;
 
     // Create stable wrapper that delegates to ref (fixes #849)
-    const stableHandler = (event: PipelineEvent) => {
+    const stableHandler = (event: PipelineEvent): void => {
       handlePipelineEventRef.current?.(event);
     };
 
@@ -631,7 +636,7 @@ export function usePipelineStatus(
     if (!win.__pipelineEventHandlers) {
       win.__pipelineEventHandlers = new Set();
       // Create dispatcher only once at initialization
-      win.__pipelineEventHandler = (event: PipelineEvent) => {
+      win.__pipelineEventHandler = (event: PipelineEvent): void => {
         if (win.__pipelineEventHandlers) {
           for (const h of win.__pipelineEventHandlers) {
             h(event);
@@ -681,7 +686,7 @@ export function usePipelineStatus(
   // Initial fetch
   // Fixes #931: Use try/finally to ensure loading state is always cleared
   useEffect(() => {
-    const init = async () => {
+    const init = async (): Promise<void> => {
       setIsLoading(true);
       try {
         await Promise.all([
@@ -694,7 +699,7 @@ export function usePipelineStatus(
         setIsLoading(false);
       }
     };
-    init();
+    init().catch(() => undefined);
   }, [fetchStatus, fetchConfig, fetchPortIntensityInfo, fetchTimingProfiles]);
 
   return {

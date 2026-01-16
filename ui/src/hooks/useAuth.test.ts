@@ -1,3 +1,5 @@
+// biome-ignore-all lint/nursery/useAwaitThenable: act() returns Promise when given async callback
+// biome-ignore-all lint/suspicious/useAwait: async callbacks in act() are required for React Testing Library even without await
 /**
  * useAuth.test.ts - Authentication Hook Tests
  *
@@ -27,7 +29,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuth } from "./useAuth";
 
 // Mock localStorage
-const mockLocalStorage = (() => {
+interface MockLocalStorage {
+  getItem: ReturnType<typeof vi.fn>;
+  setItem: ReturnType<typeof vi.fn>;
+  removeItem: ReturnType<typeof vi.fn>;
+  clear: () => void;
+}
+
+const mockLocalStorage: MockLocalStorage = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: vi.fn((key: string) => store[key] || null),
@@ -37,7 +46,7 @@ const mockLocalStorage = (() => {
     removeItem: vi.fn((key: string) => {
       delete store[key];
     }),
-    clear: () => {
+    clear: (): void => {
       store = {};
     },
   };
@@ -48,7 +57,7 @@ Object.defineProperty(window, "localStorage", {
 });
 
 // Mock fetch
-const mockFetch = vi.fn();
+const mockFetch: ReturnType<typeof vi.fn> = vi.fn();
 global.fetch = mockFetch;
 
 describe("useAuth", () => {
@@ -94,7 +103,7 @@ describe("useAuth", () => {
 
     expect(result.current.isAuthenticated).toBe(true);
     expect(mockFetch).toHaveBeenCalledWith(
-      "/api/v1/status",
+      "/api/status",
       expect.objectContaining({ credentials: "include" }),
     );
   });
@@ -140,7 +149,7 @@ describe("useAuth", () => {
     expect(result.current.token).toBe("access-token"); // For WebSocket
     expect(result.current.username).toBe("admin");
     expect(mockFetch).toHaveBeenLastCalledWith(
-      "/api/v1/auth/login",
+      "/api/auth/login",
       expect.objectContaining({
         method: "POST",
         credentials: "include",
@@ -266,7 +275,7 @@ describe("useAuth", () => {
     // Should have called logout endpoint with credentials
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        "/api/v1/auth/logout",
+        "/api/auth/logout",
         expect.objectContaining({
           method: "POST",
           credentials: "include",

@@ -44,7 +44,22 @@ import type {
  *
  * @returns Profile state and control functions
  */
-export function useProfiles() {
+export function useProfiles(): {
+  profiles: Profile[];
+  activeProfile: Profile | null;
+  isLoading: boolean;
+  error: string | null;
+  fetchProfiles: () => Promise<Profile[]>;
+  fetchActiveProfile: () => Promise<Profile | null>;
+  createProfile: (profile: ProfileCreateRequest) => Promise<Profile | null>;
+  updateProfile: (id: string, profile: ProfileUpdateRequest) => Promise<Profile | null>;
+  deleteProfile: (id: string) => Promise<boolean>;
+  switchProfile: (profileId: string) => Promise<boolean>;
+  duplicateProfile: (id: string) => Promise<Profile | null>;
+  importProfiles: (request: ProfileImportRequest) => Promise<ProfileImportResponse | null>;
+  exportProfiles: () => Promise<ProfileExportResponse | null>;
+  downloadProfiles: () => Promise<boolean>;
+} {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [activeProfile, setActiveProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(false);

@@ -80,10 +80,10 @@ interface UseAuthReturn {
   pollingIntervalRef: React.MutableRefObject<number | null>;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || "";
 
 // localStorage keys to clear on mount (migrated to httpOnly cookies)
-const LEGACY_KEYS = ["seed-token", "seed-token-expiry", "seed-username"];
+const LEGACY_KEYS: string[] = ["seed-token", "seed-token-expiry", "seed-username"];
 
 /**
  * Clears old localStorage keys from cookie migration.
@@ -212,7 +212,7 @@ export function useAuth(): UseAuthReturn {
         throw new Error("Invalid credentials");
       }
 
-      const data: LoginResponse = await response.json();
+      const data: LoginResponse = await (response.json() as Promise<LoginResponse>);
 
       // Backend sets httpOnly cookies automatically
       // Store access token in memory ONLY for SSE/WebSocket connections
@@ -300,7 +300,7 @@ export function useAuth(): UseAuthReturn {
         return null;
       }
 
-      const data: LoginResponse = await response.json();
+      const data: LoginResponse = await (response.json() as Promise<LoginResponse>);
 
       // Update state with new token
       setState((prev) => ({

@@ -13,11 +13,6 @@ func ExportDetectActiveInterface() string {
 	return detectActiveInterface()
 }
 
-// ExtractVersion wraps the unexported extractVersion method for testing.
-func (b *BackupManager) ExtractVersion(data []byte) int {
-	return b.extractVersion(data)
-}
-
 // Schema returns the schema field for testing.
 func (v *SchemaValidator) Schema() any {
 	return v.schema

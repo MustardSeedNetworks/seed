@@ -42,7 +42,6 @@ func testConfig() *config.Config {
 // setupSchedulerService creates all required services for scheduler testing.
 func setupSchedulerService(t *testing.T) (
 	*harvest.SchedulerService,
-	*database.DB,
 	func(),
 ) {
 	t.Helper()
@@ -57,7 +56,7 @@ func setupSchedulerService(t *testing.T) (
 	gs := harvest.NewGeneratorService(cfg, db, ts, as)
 	ss := harvest.NewSchedulerService(cfg, db, gs)
 
-	return ss, db, cleanup
+	return ss, cleanup
 }
 
 // intPtr is a helper to create int pointers.
@@ -70,7 +69,7 @@ func intPtr(i int) *int {
 // ----------------------------------------------------------------------------
 
 func TestNextRunCalculation_Daily(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -158,7 +157,7 @@ func TestNextRunCalculation_Daily(t *testing.T) {
 }
 
 func TestNextRunCalculation_Weekly(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -248,7 +247,7 @@ func TestNextRunCalculation_Weekly(t *testing.T) {
 }
 
 func TestNextRunCalculation_Monthly(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -337,7 +336,7 @@ func TestNextRunCalculation_Monthly(t *testing.T) {
 }
 
 func TestNextRunCalculation_Timezones(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -384,7 +383,7 @@ func TestNextRunCalculation_Timezones(t *testing.T) {
 // ----------------------------------------------------------------------------
 
 func TestSchedulerService_Create_TableDriven(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -540,7 +539,7 @@ func TestSchedulerService_Create_TableDriven(t *testing.T) {
 // ----------------------------------------------------------------------------
 
 func TestSchedulerService_Get_TableDriven(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -612,7 +611,7 @@ func TestSchedulerService_Get_TableDriven(t *testing.T) {
 // ----------------------------------------------------------------------------
 
 func TestSchedulerService_List_TableDriven(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -677,7 +676,7 @@ func TestSchedulerService_List_TableDriven(t *testing.T) {
 // ----------------------------------------------------------------------------
 
 func TestSchedulerService_Update_TableDriven(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -796,7 +795,7 @@ func TestSchedulerService_Update_TableDriven(t *testing.T) {
 // ----------------------------------------------------------------------------
 
 func TestSchedulerService_Delete_TableDriven(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -895,7 +894,7 @@ func TestSchedulerService_StartStop_TableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ss, _, cleanup := setupSchedulerService(t)
+			ss, cleanup := setupSchedulerService(t)
 			defer cleanup()
 
 			ctx, cancel := context.WithTimeout(context.Background(), tt.contextTimeout)
@@ -918,7 +917,7 @@ func TestSchedulerService_StartStop_TableDriven(t *testing.T) {
 }
 
 func TestSchedulerService_MultipleStops(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -931,7 +930,7 @@ func TestSchedulerService_MultipleStops(t *testing.T) {
 }
 
 func TestSchedulerService_StopWithoutStart(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	// Stop without Start should not panic
@@ -943,7 +942,7 @@ func TestSchedulerService_StopWithoutStart(t *testing.T) {
 // ----------------------------------------------------------------------------
 
 func TestSchedulerService_ConcurrentCreate(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -986,7 +985,7 @@ func TestSchedulerService_ConcurrentCreate(t *testing.T) {
 }
 
 func TestSchedulerService_ConcurrentReadWrite(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -1044,7 +1043,7 @@ func TestSchedulerService_ConcurrentReadWrite(t *testing.T) {
 // ----------------------------------------------------------------------------
 
 func TestScheduleFrequency_EdgeCases(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -1119,7 +1118,7 @@ func TestScheduleFrequency_EdgeCases(t *testing.T) {
 // ----------------------------------------------------------------------------
 
 func TestScheduledReport_Recipients(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -1185,7 +1184,7 @@ func TestScheduledReport_Recipients(t *testing.T) {
 // ----------------------------------------------------------------------------
 
 func TestScheduledReport_Parameters(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -1287,7 +1286,7 @@ func TestScheduledReport_Parameters(t *testing.T) {
 // ----------------------------------------------------------------------------
 
 func TestScheduledReport_AllTemplatesAndFormats(t *testing.T) {
-	ss, _, cleanup := setupSchedulerService(t)
+	ss, cleanup := setupSchedulerService(t)
 	defer cleanup()
 
 	ctx := context.Background()

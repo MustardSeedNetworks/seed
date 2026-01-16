@@ -35,6 +35,7 @@
  * State: Memoized calculations for path generation and scaling
  */
 
+import type React from "react";
 import { memo, useMemo } from "react";
 import { cn, radius } from "../../styles/theme";
 
@@ -150,7 +151,10 @@ function generateAreaPath(
   return `${linePath} L ${endX} ${baseY} L ${startX} ${baseY} Z`;
 }
 
-export const Sparkline = memo(function sparkline({
+export const Sparkline: React.MemoExoticComponent<typeof SparklineComponent> =
+  memo(SparklineComponent);
+
+function SparklineComponent({
   data,
   type = "availability",
   size = "md",
@@ -158,11 +162,12 @@ export const Sparkline = memo(function sparkline({
   showArea = true,
   className,
   label,
-}: SparklineProps) {
+}: SparklineProps): React.JSX.Element {
   const config = sizeConfigs[size];
   const padding = 2;
 
   // Calculate min/max for scaling
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex calculation with trend analysis
   const { minValue, maxValue, currentValue, trendDirection } = useMemo(() => {
     if (data.length === 0) {
       return {
@@ -173,8 +178,9 @@ export const Sparkline = memo(function sparkline({
       };
     }
 
-    let min = data[0];
-    let max = data[0];
+    const [first] = data;
+    let min = first;
+    let max = first;
     let sum = 0;
 
     for (const value of data) {
@@ -268,7 +274,7 @@ export const Sparkline = memo(function sparkline({
         class="overflow-visible"
       >
         {/* Area fill (gradient from line color to transparent) */}
-        {showArea && areaPath && (
+        {showArea && areaPath ? (
           <>
             <defs>
               <linearGradient id={`sparkline-gradient-${type}`} x1="0%" y1="0%" x2="0%" y2="100%">
@@ -282,7 +288,7 @@ export const Sparkline = memo(function sparkline({
               class="transition-all duration-500 ease-out"
             />
           </>
-        )}
+        ) : null}
 
         {/* Line */}
         <path
@@ -310,7 +316,7 @@ export const Sparkline = memo(function sparkline({
       </svg>
     </div>
   );
-});
+}
 
 /**
  * SparklineWithLabel - Sparkline with inline label and current value
@@ -324,18 +330,21 @@ interface SparklineWithLabelProps extends SparklineProps {
   unit?: string;
 }
 
-export const SparklineWithLabel = memo(function sparklineWithLabel({
+export const SparklineWithLabel: React.MemoExoticComponent<typeof SparklineWithLabelComponent> =
+  memo(SparklineWithLabelComponent);
+
+function SparklineWithLabelComponent({
   labelText,
   showValue = true,
   unit,
   data,
   type = "availability",
   ...props
-}: SparklineWithLabelProps) {
+}: SparklineWithLabelProps): React.JSX.Element {
   const currentValue = data.length > 0 ? data.at(-1) : 0;
 
   // Format value based on type
-  const formattedValue = useMemo(() => {
+  const formattedValue = useMemo((): string => {
     if (type === "latency") {
       if (currentValue >= 1000) {
         return `${(currentValue / 1000).toFixed(1)}s`;
@@ -349,17 +358,17 @@ export const SparklineWithLabel = memo(function sparklineWithLabel({
 
   return (
     <div class="inline-flex items-center gap-2">
-      {labelText && <span class="caption text-text-muted">{labelText}</span>}
+      {labelText ? <span class="caption text-text-muted">{labelText}</span> : null}
       <Sparkline data={data} type={type} {...props} />
-      {showValue && (
+      {showValue ? (
         <span class="caption font-medium text-text-primary tabular-nums">
           {formattedValue}
           {displayUnit}
         </span>
-      )}
+      ) : null}
     </div>
   );
-});
+}
 
 /**
  * HealthScoreBadge - Compact badge showing health score with color coding
@@ -375,14 +384,17 @@ interface HealthScoreBadgeProps {
   className?: string;
 }
 
-export const HealthScoreBadge = memo(function healthScoreBadge({
+export const HealthScoreBadge: React.MemoExoticComponent<typeof HealthScoreBadgeComponent> =
+  memo(HealthScoreBadgeComponent);
+
+function HealthScoreBadgeComponent({
   score,
   size = "md",
   showValue = true,
   className,
-}: HealthScoreBadgeProps) {
+}: HealthScoreBadgeProps): React.JSX.Element {
   // Determine status color
-  const getStatusColor = () => {
+  const getStatusColor = (): string => {
     if (score >= 80) {
       return "bg-status-success/15 text-status-success border-status-success/30";
     }
@@ -392,7 +404,7 @@ export const HealthScoreBadge = memo(function healthScoreBadge({
     return "bg-status-error/15 text-status-error border-status-error/30";
   };
 
-  const getStatusLabel = () => {
+  const getStatusLabel = (): string => {
     if (score >= 80) {
       return "Healthy";
     }
@@ -419,8 +431,8 @@ export const HealthScoreBadge = memo(function healthScoreBadge({
       )}
       title={`Health Score: ${score.toFixed(0)}% - ${getStatusLabel()}`}
     >
-      {showValue && <span class="tabular-nums">{Math.round(score)}</span>}
+      {showValue ? <span class="tabular-nums">{Math.round(score)}</span> : null}
       <span class={showValue ? "hidden sm:inline" : ""}>{getStatusLabel()}</span>
     </span>
   );
-});
+}

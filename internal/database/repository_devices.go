@@ -113,12 +113,12 @@ func (r *DeviceRepository) List(ctx context.Context, opts DeviceListOptions) ([]
 	query += " ORDER BY last_seen DESC"
 
 	if opts.Limit > 0 {
-		query += " LIMIT ?"
+		query += sqlLimit
 		args = append(args, opts.Limit)
 	}
 
 	if opts.Offset > 0 {
-		query += " OFFSET ?"
+		query += sqlOffset
 		args = append(args, opts.Offset)
 	}
 

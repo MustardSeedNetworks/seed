@@ -8,10 +8,15 @@ import (
 	"time"
 )
 
-// SQL clause constants to avoid repetition.
+// SQL clause constants and other magic number constants.
 const (
 	sqlRecordedAtGTE = " AND recorded_at >= ?"
 	sqlRecordedAtLTE = " AND recorded_at <= ?"
+
+	// percentageMultiplier is used to convert decimal to percentage.
+	percentageMultiplier = 100.0
+	// p95Percentile is the 95th percentile value for latency calculation.
+	p95Percentile = 0.95
 )
 
 // HealthCheckRepository provides operations for health check data.
@@ -266,10 +271,72 @@ func (r *HealthCheckRepository) GetAvailability(
 	}
 
 	if total == 0 {
-		return 100.0, nil // No data = 100% available (or should we return 0?)
+		return percentageMultiplier, nil // No data = 100% available (or should we return 0?)
 	}
 
-	return float64(successful) / float64(total) * 100.0, nil
+	return float64(successful) / float64(total) * percentageMultiplier, nil
+}
+
+// appendTimeRangeFilters adds time range filters to a query.
+func appendTimeRangeFilters(query string, args []any, tr TimeRange) (string, []any) {
+	if !tr.Start.IsZero() {
+		query += sqlRecordedAtGTE
+		args = append(args, tr.Start.UTC().Format(time.RFC3339))
+	}
+	if !tr.End.IsZero() {
+		query += sqlRecordedAtLTE
+		args = append(args, tr.End.UTC().Format(time.RFC3339))
+	}
+	return query, args
+}
+
+// calculateP95 calculates the P95 latency from a sorted slice of latencies.
+func calculateP95(latencies []float64) float64 {
+	if len(latencies) == 0 {
+		return 0
+	}
+	sort.Float64s(latencies)
+	p95Index := int(float64(len(latencies)) * p95Percentile)
+	if p95Index >= len(latencies) {
+		p95Index = len(latencies) - 1
+	}
+	return latencies[p95Index]
+}
+
+// fetchLatenciesForP95 fetches all latencies for P95 calculation.
+func (r *HealthCheckRepository) fetchLatenciesForP95(
+	ctx context.Context,
+	checkType, endpointName string,
+	timeRange TimeRange,
+) ([]float64, error) {
+	query := `
+		SELECT latency_ms
+		FROM health_check_results
+		WHERE check_type = ? AND endpoint_name = ? AND success = 1
+	`
+	args := []any{checkType, endpointName}
+	query, args = appendTimeRangeFilters(query, args, timeRange)
+	query += " ORDER BY latency_ms ASC"
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query latencies for P95: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var latencies []float64
+	for rows.Next() {
+		var lat float64
+		if scanErr := rows.Scan(&lat); scanErr != nil {
+			return nil, fmt.Errorf("failed to scan latency: %w", scanErr)
+		}
+		latencies = append(latencies, lat)
+	}
+	if rowErr := rows.Err(); rowErr != nil {
+		return nil, fmt.Errorf("failed to iterate latencies: %w", rowErr)
+	}
+
+	return latencies, nil
 }
 
 // GetLatencyStats calculates latency statistics for an endpoint over a time range.
@@ -289,16 +356,7 @@ func (r *HealthCheckRepository) GetLatencyStats(
 		WHERE check_type = ? AND endpoint_name = ? AND success = 1
 	`
 	args := []any{checkType, endpointName}
-
-	if !timeRange.Start.IsZero() {
-		query += sqlRecordedAtGTE
-		args = append(args, timeRange.Start.UTC().Format(time.RFC3339))
-	}
-
-	if !timeRange.End.IsZero() {
-		query += sqlRecordedAtLTE
-		args = append(args, timeRange.End.UTC().Format(time.RFC3339))
-	}
+	query, args = appendTimeRangeFilters(query, args, timeRange)
 
 	var stats LatencyStats
 	var avgVal, minVal, maxVal sql.NullFloat64
@@ -311,53 +369,13 @@ func (r *HealthCheckRepository) GetLatencyStats(
 	stats.MinMs = minVal.Float64
 	stats.MaxMs = maxVal.Float64
 
-	// Calculate P95 - need to fetch all latencies and compute
+	// Calculate P95 if we have data
 	if stats.Count > 0 {
-		p95Query := `
-			SELECT latency_ms
-			FROM health_check_results
-			WHERE check_type = ? AND endpoint_name = ? AND success = 1
-		`
-		p95Args := []any{checkType, endpointName}
-
-		if !timeRange.Start.IsZero() {
-			p95Query += "sqlRecordedAtGTE"
-			p95Args = append(p95Args, timeRange.Start.UTC().Format(time.RFC3339))
-		}
-
-		if !timeRange.End.IsZero() {
-			p95Query += sqlRecordedAtLTE
-			p95Args = append(p95Args, timeRange.End.UTC().Format(time.RFC3339))
-		}
-
-		p95Query += " ORDER BY latency_ms ASC"
-
-		rows, err := r.db.Query(ctx, p95Query, p95Args...)
+		latencies, err := r.fetchLatenciesForP95(ctx, checkType, endpointName, timeRange)
 		if err != nil {
-			return nil, fmt.Errorf("failed to query latencies for P95: %w", err)
+			return nil, err
 		}
-		defer func() { _ = rows.Close() }()
-
-		var latencies []float64
-		for rows.Next() {
-			var lat float64
-			if scanErr := rows.Scan(&lat); scanErr != nil {
-				return nil, fmt.Errorf("failed to scan latency: %w", scanErr)
-			}
-			latencies = append(latencies, lat)
-		}
-		if rowErr := rows.Err(); rowErr != nil {
-			return nil, fmt.Errorf("failed to iterate latencies: %w", rowErr)
-		}
-
-		if len(latencies) > 0 {
-			sort.Float64s(latencies)
-			p95Index := int(float64(len(latencies)) * 0.95)
-			if p95Index >= len(latencies) {
-				p95Index = len(latencies) - 1
-			}
-			stats.P95Ms = latencies[p95Index]
-		}
+		stats.P95Ms = calculateP95(latencies)
 	}
 
 	return &stats, nil
@@ -514,7 +532,7 @@ func (r *HealthCheckRepository) CreateDailyRollup(
 	// Calculate availability
 	availabilityPct := float64(0)
 	if totalChecks > 0 {
-		availabilityPct = float64(successfulChecks) / float64(totalChecks) * 100.0
+		availabilityPct = float64(successfulChecks) / float64(totalChecks) * percentageMultiplier
 	}
 
 	// Upsert the rollup

@@ -2,13 +2,13 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"gopkg.in/yaml.v3"
 
 	"github.com/krisarmstrong/seed/internal/config"
 )
@@ -60,14 +60,14 @@ func TestCLIStateWithCustomConfig(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "seed.yaml")
+	configPath := filepath.Join(tmpDir, "seed.json")
 
 	// Create config file
 	cfg := config.DefaultConfig()
 	cfg.Server.Port = 9999
 	cfg.Auth.DefaultUsername = "customuser"
 
-	data, err := yaml.Marshal(cfg)
+	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		t.Fatalf("Failed to marshal config: %v", err)
 	}

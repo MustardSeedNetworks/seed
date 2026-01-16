@@ -304,7 +304,7 @@ func (m *LinkMonitor) checkLinkStateLinux() LinkState {
 	return LinkStateDown
 }
 
-// checkLinkStateDarwin checks link state on macOS using net.Interface.
+// checkLinkStateDarwin checks link state on macOS using [net.Interface].
 func (m *LinkMonitor) checkLinkStateDarwin() LinkState {
 	iface, err := net.InterfaceByName(m.interfaceName)
 	if err != nil {

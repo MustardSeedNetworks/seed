@@ -117,7 +117,7 @@ test.describe("Network Interface Selection", () => {
 
     // Set up API call monitoring
     const interfaceChangeRequest = page.waitForRequest(
-      (request) => request.url().includes("/api/interface") && request.method() === "PUT",
+      (req) => req.url().includes("/api/interface") && req.method() === "PUT",
       { timeout: 5000 },
     );
 
@@ -166,10 +166,11 @@ test.describe("Network Interface Selection", () => {
     }
 
     // Monitor API calls after selection
-    page.on("request", (request) => {
-      const url = request.url();
+    page.on("request", (req) => {
+      const url = req.url();
       if (url.includes("/api/")) {
-        const endpoint = url.split("/api/")[1].split("?")[0];
+        const [, apiPath] = url.split("/api/");
+        const [endpoint] = apiPath.split("?");
         apiCalls.add(endpoint);
       }
     });

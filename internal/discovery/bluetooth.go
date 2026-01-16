@@ -47,6 +47,36 @@ const (
 	BluetoothClassUncategorized BluetoothDeviceClass = "uncategorized"
 )
 
+// Bluetooth configuration constants.
+const (
+	// defaultScanDurationSec is the default Bluetooth scan duration in seconds.
+	defaultScanDurationSec = 10
+	// defaultMinRSSI is the default minimum RSSI threshold for device detection.
+	defaultMinRSSI = -90
+	// closeProximityDistance is the distance returned when device is very close.
+	closeProximityDistance = 0.1
+	// pathLossMultiplier is the multiplier for path loss calculation (10 * n).
+	pathLossMultiplier = 10
+	// codMajorClassMask is the mask for extracting major class from Class of Device.
+	codMajorClassMask = 0x1F
+	// codMajorClassShift is the bit shift for major class in Class of Device.
+	codMajorClassShift = 8
+)
+
+// Bluetooth major device class constants per Bluetooth spec.
+const (
+	btMajorClassMisc       = 0
+	btMajorClassComputer   = 1
+	btMajorClassPhone      = 2
+	btMajorClassLAN        = 3
+	btMajorClassAudioVideo = 4
+	btMajorClassPeripheral = 5
+	btMajorClassImaging    = 6
+	btMajorClassWearable   = 7
+	btMajorClassToy        = 8
+	btMajorClassHealth     = 9
+)
+
 // BluetoothDevice represents a discovered Bluetooth device.
 type BluetoothDevice struct {
 	ID       string `json:"id"`
@@ -136,11 +166,11 @@ type BluetoothScanConfig struct {
 // DefaultBluetoothScanConfig returns sensible defaults for Bluetooth scanning.
 func DefaultBluetoothScanConfig() *BluetoothScanConfig {
 	return &BluetoothScanConfig{
-		ScanDurationSec:     10,
+		ScanDurationSec:     defaultScanDurationSec,
 		ScanType:            "active",
 		IncludeClassic:      true,
 		IncludeBLE:          true,
-		MinRSSI:             -90,
+		MinRSSI:             defaultMinRSSI,
 		AuthorizedAddresses: []string{},
 	}
 }
@@ -347,9 +377,9 @@ func (s *BluetoothScanner) enrichDevices(devices []BluetoothDevice) {
 func estimateDistance(txPower, rssi int) float64 {
 	const pathLossExponent = 2.5 // Indoor environment estimate
 	if rssi >= txPower {
-		return 0.1 // Very close
+		return closeProximityDistance // Very close
 	}
-	ratio := float64(txPower-rssi) / (10 * pathLossExponent)
+	ratio := float64(txPower-rssi) / (pathLossMultiplier * pathLossExponent)
 	distance := 1.0
 	for range int(ratio) {
 		distance *= 10
@@ -364,67 +394,72 @@ func estimateDistance(txPower, rssi int) float64 {
 
 // ClassOfDeviceToClass converts Bluetooth Class of Device to our class enum.
 func ClassOfDeviceToClass(cod uint32) BluetoothDeviceClass {
-	majorClass := (cod >> 8) & 0x1F
+	majorClass := (cod >> codMajorClassShift) & codMajorClassMask
 	switch majorClass {
-	case 0:
+	case btMajorClassMisc:
 		return BluetoothClassMisc
-	case 1:
+	case btMajorClassComputer:
 		return BluetoothClassComputer
-	case 2:
+	case btMajorClassPhone:
 		return BluetoothClassPhone
-	case 3:
+	case btMajorClassLAN:
 		return BluetoothClassLAN
-	case 4:
+	case btMajorClassAudioVideo:
 		return BluetoothClassAudioVideo
-	case 5:
+	case btMajorClassPeripheral:
 		return BluetoothClassPeripheral
-	case 6:
+	case btMajorClassImaging:
 		return BluetoothClassImaging
-	case 7:
+	case btMajorClassWearable:
 		return BluetoothClassWearable
-	case 8:
+	case btMajorClassToy:
 		return BluetoothClassToy
-	case 9:
+	case btMajorClassHealth:
 		return BluetoothClassHealth
 	default:
 		return BluetoothClassUncategorized
 	}
 }
 
-// bleAppearanceCategoryMap maps BLE appearance categories to device classes.
-var bleAppearanceCategoryMap = map[uint16]BluetoothDeviceClass{
-	0:  BluetoothClassMisc,       // Generic
-	1:  BluetoothClassPhone,      // Phone
-	2:  BluetoothClassComputer,   // Computer
-	3:  BluetoothClassWearable,   // Watch
-	4:  BluetoothClassWearable,   // Clock
-	5:  BluetoothClassMisc,       // Display
-	6:  BluetoothClassMisc,       // Remote Control
-	7:  BluetoothClassMisc,       // Eye-glasses
-	8:  BluetoothClassMisc,       // Tag
-	9:  BluetoothClassPeripheral, // Keyring
-	10: BluetoothClassMisc,       // Media player
-	11: BluetoothClassMisc,       // Barcode scanner
-	12: BluetoothClassHealth,     // Thermometer
-	13: BluetoothClassHealth,     // Heart rate
-	14: BluetoothClassHealth,     // Blood pressure
-	15: BluetoothClassHealth,     // HID
-	16: BluetoothClassHealth,     // Glucose
-	17: BluetoothClassHealth,     // Running/walking
-	18: BluetoothClassHealth,     // Cycling
-	49: BluetoothClassHealth,     // Pulse oximeter
-	50: BluetoothClassHealth,     // Weight scale
-	51: BluetoothClassHealth,     // Personal mobility
-	52: BluetoothClassHealth,     // Continuous glucose
-	53: BluetoothClassHealth,     // Insulin pump
-	54: BluetoothClassHealth,     // Medication delivery
-	81: BluetoothClassMisc,       // Outdoor sports
+// getBLEAppearanceCategoryMap returns the BLE appearance categories to device classes mapping.
+func getBLEAppearanceCategoryMap() map[uint16]BluetoothDeviceClass {
+	return map[uint16]BluetoothDeviceClass{
+		0:  BluetoothClassMisc,       // Generic
+		1:  BluetoothClassPhone,      // Phone
+		2:  BluetoothClassComputer,   // Computer
+		3:  BluetoothClassWearable,   // Watch
+		4:  BluetoothClassWearable,   // Clock
+		5:  BluetoothClassMisc,       // Display
+		6:  BluetoothClassMisc,       // Remote Control
+		7:  BluetoothClassMisc,       // Eye-glasses
+		8:  BluetoothClassMisc,       // Tag
+		9:  BluetoothClassPeripheral, // Keyring
+		10: BluetoothClassMisc,       // Media player
+		11: BluetoothClassMisc,       // Barcode scanner
+		12: BluetoothClassHealth,     // Thermometer
+		13: BluetoothClassHealth,     // Heart rate
+		14: BluetoothClassHealth,     // Blood pressure
+		15: BluetoothClassHealth,     // HID
+		16: BluetoothClassHealth,     // Glucose
+		17: BluetoothClassHealth,     // Running/walking
+		18: BluetoothClassHealth,     // Cycling
+		49: BluetoothClassHealth,     // Pulse oximeter
+		50: BluetoothClassHealth,     // Weight scale
+		51: BluetoothClassHealth,     // Personal mobility
+		52: BluetoothClassHealth,     // Continuous glucose
+		53: BluetoothClassHealth,     // Insulin pump
+		54: BluetoothClassHealth,     // Medication delivery
+		81: BluetoothClassMisc,       // Outdoor sports
+	}
 }
+
+// bleAppearanceCategoryBits is the number of bits to shift for BLE appearance category.
+const bleAppearanceCategoryBits = 6
 
 // BLEAppearanceToClass converts BLE appearance value to our class enum.
 func BLEAppearanceToClass(appearance uint16) BluetoothDeviceClass {
-	category := appearance >> 6 // High 10 bits are category
-	if class, ok := bleAppearanceCategoryMap[category]; ok {
+	category := appearance >> bleAppearanceCategoryBits // High 10 bits are category
+	if class, ok := getBLEAppearanceCategoryMap()[category]; ok {
 		return class
 	}
 	return BluetoothClassUncategorized

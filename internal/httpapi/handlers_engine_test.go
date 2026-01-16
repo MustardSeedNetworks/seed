@@ -13,7 +13,7 @@ import (
 
 func TestHandleEngineDiscovery(t *testing.T) {
 	server := api.NewTestServer()
-	defer server.GetDiscoveryEngine().(*discovery.DiscoveryEngine).Stop()
+	defer server.GetEngine().(*discovery.Engine).Stop()
 
 	tests := []struct {
 		name           string
@@ -58,7 +58,7 @@ func TestHandleEngineDiscovery(t *testing.T) {
 
 func TestHandleEngineStats(t *testing.T) {
 	server := api.NewTestServer()
-	defer server.GetDiscoveryEngine().(*discovery.DiscoveryEngine).Stop()
+	defer server.GetEngine().(*discovery.Engine).Stop()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/discovery/engine/stats", nil)
 	rec := httptest.NewRecorder()
@@ -77,7 +77,7 @@ func TestHandleEngineStats(t *testing.T) {
 
 func TestHandleEngineCapabilities(t *testing.T) {
 	server := api.NewTestServer()
-	defer server.GetDiscoveryEngine().(*discovery.DiscoveryEngine).Stop()
+	defer server.GetEngine().(*discovery.Engine).Stop()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/discovery/engine/capabilities", nil)
 	rec := httptest.NewRecorder()
@@ -101,7 +101,7 @@ func TestHandleEngineCapabilities(t *testing.T) {
 
 func TestHandleEngineScan(t *testing.T) {
 	server := api.NewTestServer()
-	defer server.GetDiscoveryEngine().(*discovery.DiscoveryEngine).Stop()
+	defer server.GetEngine().(*discovery.Engine).Stop()
 
 	tests := []struct {
 		name           string
@@ -150,7 +150,7 @@ func TestHandleEngineScan(t *testing.T) {
 
 func TestHandleEngineQuickScan(t *testing.T) {
 	server := api.NewTestServer()
-	defer server.GetDiscoveryEngine().(*discovery.DiscoveryEngine).Stop()
+	defer server.GetEngine().(*discovery.Engine).Stop()
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/discovery/engine/quick", nil)
 	rec := httptest.NewRecorder()
@@ -173,7 +173,7 @@ func TestHandleEngineQuickScan(t *testing.T) {
 
 func TestHandleEngineFullScan(t *testing.T) {
 	server := api.NewTestServer()
-	defer server.GetDiscoveryEngine().(*discovery.DiscoveryEngine).Stop()
+	defer server.GetEngine().(*discovery.Engine).Stop()
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/discovery/engine/full", nil)
 	rec := httptest.NewRecorder()
@@ -199,7 +199,7 @@ func TestHandleEngineFullScan(t *testing.T) {
 
 func TestHandleEngineDevice(t *testing.T) {
 	server := api.NewTestServer()
-	engine := server.GetDiscoveryEngine().(*discovery.DiscoveryEngine)
+	engine := server.GetEngine().(*discovery.Engine)
 	defer engine.Stop()
 
 	// Add a device to the engine's registry.
@@ -259,7 +259,7 @@ func TestHandleEngineDevice(t *testing.T) {
 func TestHandleEngineNoEngine(t *testing.T) {
 	// Create server and then remove the engine.
 	server := api.NewTestServer()
-	engine := server.GetDiscoveryEngine().(*discovery.DiscoveryEngine)
+	engine := server.GetEngine().(*discovery.Engine)
 	engine.Stop()
 
 	// We can't easily remove the engine, so instead test the existing

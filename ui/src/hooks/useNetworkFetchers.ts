@@ -1,4 +1,5 @@
 // biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Complex component
+// biome-ignore-all lint/nursery/useAwaitThenable: response.json() returns a Promise
 /**
  * Network Data Fetchers Hook
  *
@@ -22,18 +23,18 @@
 
 import type React from "react";
 import { useCallback } from "react";
-import type { CableData } from "../components/cards/cable-card";
-import type { DnsData } from "../components/cards/dns-card";
-import type { GatewayData } from "../components/cards/gateway-card";
-import type { LinkData } from "../components/cards/link-card";
-import type { DhcpData } from "../components/cards/network-card";
-import type { NetworkDiscoveryData } from "../components/cards/network-discovery-card";
-import type { PublicIpData } from "../components/cards/public-ip-card";
-import type { SwitchData, VlanData } from "../components/cards/switch-card";
-import type { WiFiData } from "../components/cards/wifi-card";
+import type { CableData } from "../components/cards/CableCard";
+import type { DnsData } from "../components/cards/DnsCard";
+import type { GatewayData } from "../components/cards/GatewayCard";
+import type { LinkData } from "../components/cards/LinkCard";
+import type { DhcpData } from "../components/cards/NetworkCard";
+import type { NetworkDiscoveryData } from "../components/cards/NetworkDiscoveryCard";
+import type { PublicIpData } from "../components/cards/PublicIpCard";
+import type { SwitchData, VlanData } from "../components/cards/SwitchCard";
+import type { WiFiData } from "../components/cards/WiFiCard";
 import { LogComponents, logger } from "../lib/logger";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || "";
 
 interface CardState {
   link: LinkData | null;
@@ -106,7 +107,20 @@ export function useNetworkFetchers({
   prevLinkUpRef,
   setRecommendedEthernet,
   setRecommendedWifi,
-}: UseNetworkFetchersProps) {
+}: UseNetworkFetchersProps): {
+  fetchLinkData: () => Promise<void>;
+  fetchIpConfig: () => Promise<void>;
+  fetchInterfaces: () => Promise<void>;
+  fetchVersion: () => Promise<void>;
+  fetchDiscoveryData: () => Promise<void>;
+  fetchDnsData: () => Promise<void>;
+  fetchVlanData: () => Promise<void>;
+  fetchGatewayData: () => Promise<void>;
+  fetchWifiData: () => Promise<void>;
+  fetchCableData: () => Promise<void>;
+  fetchPublicIp: () => Promise<void>;
+  fetchNetworkDiscovery: () => Promise<void>;
+} {
   // Fetch link data (Layer 2 only)
   const fetchLinkData = useCallback(async () => {
     try {
@@ -243,7 +257,7 @@ export function useNetworkFetchers({
 
         // Use the first neighbor as the "nearest switch"
         if (neighbors.length > 0 && isPlainObject(neighbors[0])) {
-          const neighbor = neighbors[0];
+          const [neighbor] = neighbors;
           const rawProtocol =
             typeof neighbor.protocol === "string" ? neighbor.protocol.toLowerCase() : "unknown";
           const protocol: SwitchData["protocol"] =

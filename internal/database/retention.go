@@ -46,6 +46,7 @@ const (
 	sqlAndTimestampLte  = " AND timestamp <= ?"
 	sqlAndType          = " AND type = ?"
 	sqlAndSeverity      = " AND severity = ?"
+	sqlAndDeviceID      = " AND device_id = ?"
 	sqlOrderByTimestamp = " ORDER BY timestamp DESC"
 	sqlLimit            = " LIMIT ?"
 	sqlOffset           = " OFFSET ?"

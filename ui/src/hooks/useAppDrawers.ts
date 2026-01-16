@@ -4,7 +4,7 @@
  * Manages the open/close state for all drawer and modal components
  * in the application (profiles, settings, help).
  *
- * Extracted from app.tsx to reduce component complexity (#889).
+ * Extracted from App.tsx to reduce component complexity (#889).
  */
 
 import { useCallback, useState } from "react";

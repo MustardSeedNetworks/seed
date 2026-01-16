@@ -516,7 +516,7 @@ func TestResponseWriter_Hijack(t *testing.T) {
 		if rw != nil {
 			t.Error("Hijack() should return nil rw for non-hijackable writer")
 		}
-		if !strings.Contains(err.Error(), "does not implement http.Hijacker") {
+		if !strings.Contains(err.Error(), "does not implement [http.Hijacker]") {
 			t.Errorf("Error message = %q, should mention Hijacker", err.Error())
 		}
 	})
@@ -540,7 +540,7 @@ func TestResponseWriter_Hijack(t *testing.T) {
 	})
 }
 
-// mockHijackableWriter implements http.ResponseWriter and http.Hijacker.
+// mockHijackableWriter implements [http.ResponseWriter] and [http.Hijacker].
 type mockHijackableWriter struct {
 	headers http.Header
 }
@@ -568,7 +568,7 @@ func (m *mockHijackableWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return mockConn, mockRW, nil
 }
 
-// mockNetConn implements net.Conn for testing.
+// mockNetConn implements [net.Conn] for testing.
 type mockNetConn struct{}
 
 func (m *mockNetConn) Read(_ []byte) (int, error)         { return 0, io.EOF }

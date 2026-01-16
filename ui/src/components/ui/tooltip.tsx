@@ -28,6 +28,7 @@
  * State: Manages show/hide state on hover and focus
  */
 
+import type React from "react";
 import { type ReactNode, useState } from "react";
 import { border, cn, radius, spacing } from "../../styles/theme";
 
@@ -40,7 +41,7 @@ interface TooltipProps {
 /**
  * Hover-triggered tooltip that displays additional information for an element.
  */
-export function Tooltip({ content, children, position = "top" }: TooltipProps) {
+export function Tooltip({ content, children, position = "top" }: TooltipProps): React.JSX.Element {
   const [show, setShow] = useState(false);
 
   const positionClasses =
@@ -48,14 +49,19 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       ? cn("bottom-full left-1/2 -translate-x-1/2", spacing.margin.bottom.inline)
       : cn("top-full left-1/2 -translate-x-1/2", spacing.margin.top.inline);
 
+  const handleMouseEnter = (): void => setShow(true);
+  const handleMouseLeave = (): void => setShow(false);
+  const handleFocus = (): void => setShow(true);
+  const handleBlur = (): void => setShow(false);
+
   return (
     <div class="relative inline-flex items-center">
       {/* biome-ignore lint/a11y/useSemanticElements: Tooltip trigger wraps arbitrary content - cannot use semantic button */}
       <div
-        onMouseEnter={() => setShow(true)}
-        onMouseLeave={() => setShow(false)}
-        onFocus={() => setShow(true)}
-        onBlur={() => setShow(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         class="cursor-help"
         tabIndex={0}
         role="button"
@@ -63,7 +69,7 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       >
         {children}
       </div>
-      {show && (
+      {show ? (
         <div
           id="tooltip-content"
           class={cn(
@@ -79,7 +85,7 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
         >
           {content}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

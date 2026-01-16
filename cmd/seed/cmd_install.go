@@ -232,7 +232,7 @@ func setSystemCapabilities(destBinary string) {
 
 // createDefaultConfig creates a default configuration file if one does not exist.
 func createDefaultConfig(configDir string) {
-	configFile := filepath.Join(configDir, "seed.yaml")
+	configFile := filepath.Join(configDir, "seed.json")
 	_, statErr := os.Stat(configFile)
 	if os.IsNotExist(statErr) {
 		fmt.Fprintf(os.Stdout, "\nCreating default config at %s...\n", configFile)

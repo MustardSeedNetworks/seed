@@ -6,23 +6,29 @@
  */
 
 import type { Meta, StoryObj } from "@storybook/react";
-import { HealthScoreBadge, Sparkline, SparklineWithLabel } from "./sparkline";
+import { HealthScoreBadge, Sparkline, SparklineWithLabel } from "./Sparkline";
 
 // Generate sample data with variations
-const generateAvailabilityData = (count: number, baseValue = 99): number[] =>
-  Array.from({ length: count }, () => baseValue + (Math.random() - 0.3) * 2);
+const generateAvailabilityData = (
+  count: number,
+  // biome-ignore lint/style/noInferrableTypes: Type annotation required by useExplicitType
+  baseValue: number = 99,
+): number[] => Array.from({ length: count }, () => baseValue + (Math.random() - 0.3) * 2);
 
-const generateLatencyData = (count: number, baseValue = 50): number[] =>
-  Array.from({ length: count }, () => baseValue + (Math.random() - 0.5) * 30);
+const generateLatencyData = (
+  count: number,
+  // biome-ignore lint/style/noInferrableTypes: Type annotation required by useExplicitType
+  baseValue: number = 50,
+): number[] => Array.from({ length: count }, () => baseValue + (Math.random() - 0.5) * 30);
 
 // Sample data sets
-const healthyAvailability = generateAvailabilityData(24, 99.5);
-const degradedAvailability = generateAvailabilityData(24, 95);
-const criticalAvailability = [98, 97, 95, 92, 88, 85, 82, 79, 75, 78, 80, 82];
+const healthyAvailability: number[] = generateAvailabilityData(24, 99.5);
+const degradedAvailability: number[] = generateAvailabilityData(24, 95);
+const criticalAvailability: number[] = [98, 97, 95, 92, 88, 85, 82, 79, 75, 78, 80, 82];
 
-const goodLatency = generateLatencyData(24, 40);
-const warningLatency = generateLatencyData(24, 80);
-const criticalLatency = generateLatencyData(24, 150);
+const goodLatency: number[] = generateLatencyData(24, 40);
+const warningLatency: number[] = generateLatencyData(24, 80);
+const criticalLatency: number[] = generateLatencyData(24, 150);
 
 // Sparkline Meta
 const meta: Meta<typeof Sparkline> = {

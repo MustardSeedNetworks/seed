@@ -69,6 +69,10 @@ type Manager struct {
 	currentInterface string
 	interfaces       map[string]*InterfaceInfo
 	detector         *detection.Detector
+
+	// Callback management for interface change notifications
+	callbackMu sync.RWMutex
+	callbacks  []InterfaceChangeCallback
 }
 
 // NewManager creates a new network manager.
@@ -216,26 +220,20 @@ func (m *Manager) SetCurrentInterface(name string) error {
 // #756: Used to notify modules to rebind when auto-detection switches interfaces.
 type InterfaceChangeCallback func(oldInterface, newInterface string)
 
-// interfaceChangeCallbacks stores registered callbacks for interface changes.
-var (
-	interfaceChangeCallbacks []InterfaceChangeCallback
-	interfaceCallbackMu      sync.RWMutex
-)
-
 // OnInterfaceChange registers a callback to be notified when the active interface changes.
 // #756: Modules use this to rebind when auto-detection switches interfaces.
-func OnInterfaceChange(callback InterfaceChangeCallback) {
-	interfaceCallbackMu.Lock()
-	defer interfaceCallbackMu.Unlock()
-	interfaceChangeCallbacks = append(interfaceChangeCallbacks, callback)
+func (m *Manager) OnInterfaceChange(callback InterfaceChangeCallback) {
+	m.callbackMu.Lock()
+	defer m.callbackMu.Unlock()
+	m.callbacks = append(m.callbacks, callback)
 }
 
 // notifyInterfaceChange notifies all registered callbacks of an interface change.
-func notifyInterfaceChange(oldInterface, newInterface string) {
-	interfaceCallbackMu.RLock()
-	callbacks := make([]InterfaceChangeCallback, len(interfaceChangeCallbacks))
-	copy(callbacks, interfaceChangeCallbacks)
-	interfaceCallbackMu.RUnlock()
+func (m *Manager) notifyInterfaceChange(oldInterface, newInterface string) {
+	m.callbackMu.RLock()
+	callbacks := make([]InterfaceChangeCallback, len(m.callbacks))
+	copy(callbacks, m.callbacks)
+	m.callbackMu.RUnlock()
 
 	for _, cb := range callbacks {
 		go cb(oldInterface, newInterface)
@@ -276,7 +274,7 @@ func (m *Manager) AutoRedetect() (string, bool) {
 
 	// Notify callbacks if interface changed
 	if changed {
-		notifyInterfaceChange(oldInterface, newInterface)
+		m.notifyInterfaceChange(oldInterface, newInterface)
 	}
 
 	return newInterface, changed

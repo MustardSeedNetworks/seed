@@ -29,6 +29,7 @@
  * State: None - purely presentational component
  */
 
+import type React from "react";
 import { card, cn, layout, radius, spacing } from "../../styles/theme";
 
 interface SkeletonProps {
@@ -41,11 +42,32 @@ interface SkeletonProps {
 /**
  * Animated placeholder component for loading states with configurable shape.
  */
-export function Skeleton({ className = "", variant = "text", width, height }: SkeletonProps) {
+/** Helper to get width class from width prop */
+function getWidthClass(width: string | number | undefined): string {
+  if (!width) {
+    return "";
+  }
+  return typeof width === "number" ? `w-[${width}px]` : `w-[${width}]`;
+}
+
+/** Helper to get height class from height prop */
+function getHeightClass(height: string | number | undefined): string {
+  if (!height) {
+    return "";
+  }
+  return typeof height === "number" ? `h-[${height}px]` : `h-[${height}]`;
+}
+
+export function Skeleton({
+  className = "",
+  variant = "text",
+  width,
+  height,
+}: SkeletonProps): React.JSX.Element {
   const baseClasses = "animate-pulse bg-surface-hover";
 
   // Type-safe variant class getter
-  function getVariantClass(v: typeof variant) {
+  function getVariantClass(v: typeof variant): string {
     switch (v) {
       case "text":
         return radius.default;
@@ -53,15 +75,14 @@ export function Skeleton({ className = "", variant = "text", width, height }: Sk
         return radius.full;
       case "rectangular":
         return radius.lg;
+      default: {
+        const _exhaustive: never = v;
+        return radius.default;
+      }
     }
   }
 
-  const sizeClasses = [
-    width ? (typeof width === "number" ? `w-[${width}px]` : `w-[${width}]`) : "",
-    height ? (typeof height === "number" ? `h-[${height}px]` : `h-[${height}]`) : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const sizeClasses = [getWidthClass(width), getHeightClass(height)].filter(Boolean).join(" ");
 
   return (
     <div
@@ -74,7 +95,7 @@ export function Skeleton({ className = "", variant = "text", width, height }: Sk
 /**
  * Pre-configured skeleton matching the Card component layout.
  */
-export function CardSkeleton() {
+export function CardSkeleton(): React.JSX.Element {
   return (
     <div class={cn(card.base, card.variant.default, card.padding.md)}>
       <div class={cn(layout.flex.between, spacing.margin.bottom.heading)}>
@@ -99,7 +120,7 @@ export function CardSkeleton() {
 /**
  * Multi-line text placeholder for paragraph loading states.
  */
-export function TextSkeleton({ lines = 3 }: { lines?: number }) {
+export function TextSkeleton({ lines = 3 }: { lines?: number }): React.JSX.Element {
   // Generate stable unique IDs for skeleton lines
   // Each line has a unique ID based on its position descriptor (line-1-of-3, line-2-of-3, etc.)
   // This avoids using array index directly as key while maintaining stable identity

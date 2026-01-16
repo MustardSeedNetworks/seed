@@ -230,4 +230,4 @@ export {
   Zap,
 };
 
-// Icon size presets are in iconConfig.ts - import from there for non-component needs
+// Icon size presets are in icon-config.ts - import from there for non-component needs

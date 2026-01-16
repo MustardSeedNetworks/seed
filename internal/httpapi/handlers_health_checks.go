@@ -29,11 +29,24 @@ import (
 
 // Test status and protocol constants.
 const (
-	statusError   = "error"
-	statusWarning = "warning"
-	statusSuccess = "success"
-	protoTCP      = "tcp"
-	protoUDP      = "udp"
+	statusError      = "error"
+	statusWarning    = "warning"
+	statusSuccess    = "success"
+	protoTCP         = "tcp"
+	protoUDP         = "udp"
+	errHTTPReqFailed = "HTTP request failed"
+)
+
+// URL and score constants.
+const (
+	// httpsSchemeLen is the minimum length to check for "https://" in URL.
+	httpsSchemeLen = 8
+	// percentMultiplier converts score ratio to percentage.
+	percentMultiplier = 100
+	// scoreThresholdGood is the minimum score for "success" status.
+	scoreThresholdGood = 80
+	// scoreThresholdWarn is the minimum score for "warning" status.
+	scoreThresholdWarn = 50
 )
 
 // Health check timing and configuration constants.
@@ -305,114 +318,47 @@ func (s *Server) handleHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	resp := TestsSettingsResponse{
-		DNSHostname:   s.config.DNS.TestHostname,
-		DNSServers:    make([]DNSServerResponse, 0, len(s.config.DNS.Servers)),
-		PingTargets:   make([]PingTargetResponse, 0, len(s.config.HealthChecks.PingTargets)),
-		TCPPorts:      make([]TCPPortResponse, 0, len(s.config.HealthChecks.TCPPorts)),
-		UDPPorts:      make([]UDPPortResponse, 0, len(s.config.HealthChecks.UDPPorts)),
-		HTTPEndpoints: make([]HTTPEndpointResponse, 0, len(s.config.HealthChecks.HTTPEndpoints)),
-		RTSPEndpoints: make(
-			[]RTSPEndpointResponse,
-			0,
-			len(s.config.HealthChecks.RTSPEndpoints),
-		), // Issue #778
-		DICOMEndpoints: make(
-			[]DICOMEndpointResponse,
-			0,
-			len(s.config.HealthChecks.DICOMEndpoints),
-		), // Issue #777
-		HL7Endpoints: make(
-			[]HL7EndpointResponse,
-			0,
-			len(s.config.HealthChecks.HL7Endpoints),
-		), // Health Checks 100x - Medical
-		FHIREndpoints: make(
-			[]FHIREndpointResponse,
-			0,
-			len(s.config.HealthChecks.FHIREndpoints),
-		), // Health Checks 100x - Medical
-		SQLEndpoints: make(
-			[]SQLEndpointResponse,
-			0,
-			len(s.config.HealthChecks.SQLEndpoints),
-		), // Health Checks 100x - Enterprise
-		FileShareEndpoints: make(
-			[]FileShareEndpointResponse,
-			0,
-			len(s.config.HealthChecks.FileShareEndpoints),
-		), // Health Checks 100x - Enterprise
-		LDAPEndpoints: make(
-			[]LDAPEndpointResponse,
-			0,
-			len(s.config.HealthChecks.LDAPEndpoints),
-		), // Health Checks 100x - Enterprise
-		LTIEndpoints: make(
-			[]LTIEndpointResponse,
-			0,
-			len(s.config.HealthChecks.LTIEndpoints),
-		), // Health Checks 100x - Education
-		OPCUAEndpoints: make(
-			[]OPCUAEndpointResponse,
-			0,
-			len(s.config.HealthChecks.OPCUAEndpoints),
-		), // Health Checks 100x - Manufacturing
-		ModbusEndpoints: make(
-			[]ModbusEndpointResponse,
-			0,
-			len(s.config.HealthChecks.ModbusEndpoints),
-		), // Health Checks 100x - Manufacturing
-		RunPerformance: s.config.HealthChecks.RunPerformance,
-		RunSpeedtest:   s.config.HealthChecks.RunSpeedtest,
-		RunIperf:       s.config.HealthChecks.RunIperf,
-		RunDiscovery:   s.config.HealthChecks.RunDiscovery,
-		Speedtest: SpeedtestSettingsResponse{
-			ServerID:      s.config.Speedtest.ServerID,
-			AutoRunOnLink: s.config.Speedtest.AutoRunOnLink,
-		},
-		Iperf: IperfSettingsResponse{
-			AutoRunOnLink: s.config.Iperf.AutoRunOnLink,
-		},
-	}
-
-	// DNS servers
+// buildDNSServersResponse converts config DNS servers to response format.
+func (s *Server) buildDNSServersResponse() []DNSServerResponse {
+	resp := make([]DNSServerResponse, 0, len(s.config.DNS.Servers))
 	for _, d := range s.config.DNS.Servers {
-		resp.DNSServers = append(resp.DNSServers, DNSServerResponse{
-			Address: d.Address,
-			Enabled: d.Enabled,
-		})
+		resp = append(resp, DNSServerResponse{Address: d.Address, Enabled: d.Enabled})
 	}
+	return resp
+}
 
+// buildPingTargetsResponse converts config ping targets to response format.
+func (s *Server) buildPingTargetsResponse() []PingTargetResponse {
+	resp := make([]PingTargetResponse, 0, len(s.config.HealthChecks.PingTargets))
 	for _, p := range s.config.HealthChecks.PingTargets {
-		resp.PingTargets = append(resp.PingTargets, PingTargetResponse{
-			Name:    p.Name,
-			Host:    p.Host,
-			Enabled: p.Enabled,
-		})
+		resp = append(resp, PingTargetResponse{Name: p.Name, Host: p.Host, Enabled: p.Enabled})
 	}
+	return resp
+}
 
+// buildTCPPortsResponse converts config TCP ports to response format.
+func (s *Server) buildTCPPortsResponse() []TCPPortResponse {
+	resp := make([]TCPPortResponse, 0, len(s.config.HealthChecks.TCPPorts))
 	for _, t := range s.config.HealthChecks.TCPPorts {
-		resp.TCPPorts = append(resp.TCPPorts, TCPPortResponse{
-			Name:    t.Name,
-			Host:    t.Host,
-			Port:    t.Port,
-			Enabled: t.Enabled,
-		})
+		resp = append(resp, TCPPortResponse{Name: t.Name, Host: t.Host, Port: t.Port, Enabled: t.Enabled})
 	}
+	return resp
+}
 
+// buildUDPPortsResponse converts config UDP ports to response format.
+func (s *Server) buildUDPPortsResponse() []UDPPortResponse {
+	resp := make([]UDPPortResponse, 0, len(s.config.HealthChecks.UDPPorts))
 	for _, u := range s.config.HealthChecks.UDPPorts {
-		resp.UDPPorts = append(resp.UDPPorts, UDPPortResponse{
-			Name:    u.Name,
-			Host:    u.Host,
-			Port:    u.Port,
-			Enabled: u.Enabled,
-		})
+		resp = append(resp, UDPPortResponse{Name: u.Name, Host: u.Host, Port: u.Port, Enabled: u.Enabled})
 	}
+	return resp
+}
 
+// buildHTTPEndpointsResponse converts config HTTP endpoints to response format.
+func (s *Server) buildHTTPEndpointsResponse() []HTTPEndpointResponse {
+	resp := make([]HTTPEndpointResponse, 0, len(s.config.HealthChecks.HTTPEndpoints))
 	for _, h := range s.config.HealthChecks.HTTPEndpoints {
-		resp.HTTPEndpoints = append(resp.HTTPEndpoints, HTTPEndpointResponse{
+		resp = append(resp, HTTPEndpointResponse{
 			Name:                 h.Name,
 			URL:                  h.URL,
 			ExpectedStatus:       h.ExpectedStatus,
@@ -424,136 +370,163 @@ func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request)
 			MaxRedirects:         h.MaxRedirects,
 		})
 	}
+	return resp
+}
 
-	// RTSP endpoints (Issue #778)
+// buildRTSPEndpointsResponse converts config RTSP endpoints to response format.
+func (s *Server) buildRTSPEndpointsResponse() []RTSPEndpointResponse {
+	resp := make([]RTSPEndpointResponse, 0, len(s.config.HealthChecks.RTSPEndpoints))
 	for _, r := range s.config.HealthChecks.RTSPEndpoints {
-		resp.RTSPEndpoints = append(resp.RTSPEndpoints, RTSPEndpointResponse{
-			Name:    r.Name,
-			URL:     r.URL,
-			Enabled: r.Enabled,
-		})
+		resp = append(resp, RTSPEndpointResponse{Name: r.Name, URL: r.URL, Enabled: r.Enabled})
 	}
+	return resp
+}
 
-	// DICOM endpoints (Issue #777)
+// buildDICOMEndpointsResponse converts config DICOM endpoints to response format.
+func (s *Server) buildDICOMEndpointsResponse() []DICOMEndpointResponse {
+	resp := make([]DICOMEndpointResponse, 0, len(s.config.HealthChecks.DICOMEndpoints))
 	for _, d := range s.config.HealthChecks.DICOMEndpoints {
-		resp.DICOMEndpoints = append(resp.DICOMEndpoints, DICOMEndpointResponse{
-			Name:      d.Name,
-			Host:      d.Host,
-			Port:      d.Port,
-			CalledAE:  d.CalledAE,
-			CallingAE: d.CallingAE,
-			Enabled:   d.Enabled,
+		resp = append(resp, DICOMEndpointResponse{
+			Name: d.Name, Host: d.Host, Port: d.Port,
+			CalledAE: d.CalledAE, CallingAE: d.CallingAE, Enabled: d.Enabled,
 		})
 	}
+	return resp
+}
 
-	// HL7 endpoints (Health Checks 100x)
+// buildHL7EndpointsResponse converts config HL7 endpoints to response format.
+func (s *Server) buildHL7EndpointsResponse() []HL7EndpointResponse {
+	resp := make([]HL7EndpointResponse, 0, len(s.config.HealthChecks.HL7Endpoints))
 	for _, h := range s.config.HealthChecks.HL7Endpoints {
-		resp.HL7Endpoints = append(resp.HL7Endpoints, HL7EndpointResponse{
-			Name:         h.Name,
-			Host:         h.Host,
-			Port:         h.Port,
-			SendingApp:   h.SendingApp,
-			SendingFac:   h.SendingFac,
-			ReceivingApp: h.ReceivingApp,
-			ReceivingFac: h.ReceivingFac,
-			Enabled:      h.Enabled,
-			Criticality:  h.Criticality,
+		resp = append(resp, HL7EndpointResponse{
+			Name: h.Name, Host: h.Host, Port: h.Port,
+			SendingApp: h.SendingApp, SendingFac: h.SendingFac,
+			ReceivingApp: h.ReceivingApp, ReceivingFac: h.ReceivingFac,
+			Enabled: h.Enabled, Criticality: h.Criticality,
 		})
 	}
+	return resp
+}
 
-	// FHIR endpoints (Health Checks 100x - Medical)
+// buildFHIREndpointsResponse converts config FHIR endpoints to response format.
+func (s *Server) buildFHIREndpointsResponse() []FHIREndpointResponse {
+	resp := make([]FHIREndpointResponse, 0, len(s.config.HealthChecks.FHIREndpoints))
 	for _, f := range s.config.HealthChecks.FHIREndpoints {
-		resp.FHIREndpoints = append(resp.FHIREndpoints, FHIREndpointResponse{
-			Name:        f.Name,
-			BaseURL:     f.BaseURL,
-			AuthType:    f.AuthType,
-			Enabled:     f.Enabled,
-			Criticality: f.Criticality,
+		resp = append(resp, FHIREndpointResponse{
+			Name: f.Name, BaseURL: f.BaseURL, AuthType: f.AuthType,
+			Enabled: f.Enabled, Criticality: f.Criticality,
 		})
 	}
+	return resp
+}
 
-	// SQL endpoints (Health Checks 100x - Enterprise)
+// buildSQLEndpointsResponse converts config SQL endpoints to response format.
+func (s *Server) buildSQLEndpointsResponse() []SQLEndpointResponse {
+	resp := make([]SQLEndpointResponse, 0, len(s.config.HealthChecks.SQLEndpoints))
 	for _, sq := range s.config.HealthChecks.SQLEndpoints {
-		resp.SQLEndpoints = append(resp.SQLEndpoints, SQLEndpointResponse{
-			Name:        sq.Name,
-			Driver:      sq.Driver,
-			Host:        sq.Host,
-			Port:        sq.Port,
-			Database:    sq.Database,
-			SSLMode:     sq.SSLMode,
-			Enabled:     sq.Enabled,
-			Criticality: sq.Criticality,
+		resp = append(resp, SQLEndpointResponse{
+			Name: sq.Name, Driver: sq.Driver, Host: sq.Host, Port: sq.Port,
+			Database: sq.Database, SSLMode: sq.SSLMode,
+			Enabled: sq.Enabled, Criticality: sq.Criticality,
 		})
 	}
+	return resp
+}
 
-	// FileShare endpoints (Health Checks 100x - Enterprise)
+// buildFileShareEndpointsResponse converts config file share endpoints to response format.
+func (s *Server) buildFileShareEndpointsResponse() []FileShareEndpointResponse {
+	resp := make([]FileShareEndpointResponse, 0, len(s.config.HealthChecks.FileShareEndpoints))
 	for _, fs := range s.config.HealthChecks.FileShareEndpoints {
-		resp.FileShareEndpoints = append(resp.FileShareEndpoints, FileShareEndpointResponse{
-			Name:                 fs.Name,
-			Protocol:             fs.Protocol,
-			Host:                 fs.Host,
-			Share:                fs.Share,
-			Path:                 fs.Path,
-			TestReadPerformance:  fs.TestReadPerformance,
-			TestWritePerformance: fs.TestWritePerformance,
-			TestFileSizeMB:       fs.TestFileSizeMB,
-			Enabled:              fs.Enabled,
-			Criticality:          fs.Criticality,
+		resp = append(resp, FileShareEndpointResponse{
+			Name: fs.Name, Protocol: fs.Protocol, Host: fs.Host, Share: fs.Share, Path: fs.Path,
+			TestReadPerformance: fs.TestReadPerformance, TestWritePerformance: fs.TestWritePerformance,
+			TestFileSizeMB: fs.TestFileSizeMB, Enabled: fs.Enabled, Criticality: fs.Criticality,
 		})
 	}
+	return resp
+}
 
-	// LDAP endpoints (Health Checks 100x - Enterprise)
+// buildLDAPEndpointsResponse converts config LDAP endpoints to response format.
+func (s *Server) buildLDAPEndpointsResponse() []LDAPEndpointResponse {
+	resp := make([]LDAPEndpointResponse, 0, len(s.config.HealthChecks.LDAPEndpoints))
 	for _, l := range s.config.HealthChecks.LDAPEndpoints {
-		resp.LDAPEndpoints = append(resp.LDAPEndpoints, LDAPEndpointResponse{
-			Name:         l.Name,
-			Host:         l.Host,
-			Port:         l.Port,
-			UseTLS:       l.UseTLS,
-			StartTLS:     l.StartTLS,
-			BaseDN:       l.BaseDN,
-			SearchFilter: l.SearchFilter,
-			Enabled:      l.Enabled,
-			Criticality:  l.Criticality,
+		resp = append(resp, LDAPEndpointResponse{
+			Name: l.Name, Host: l.Host, Port: l.Port, UseTLS: l.UseTLS, StartTLS: l.StartTLS,
+			BaseDN: l.BaseDN, SearchFilter: l.SearchFilter, Enabled: l.Enabled, Criticality: l.Criticality,
 		})
 	}
+	return resp
+}
 
-	// LTI endpoints (Health Checks 100x - Education)
+// buildLTIEndpointsResponse converts config LTI endpoints to response format.
+func (s *Server) buildLTIEndpointsResponse() []LTIEndpointResponse {
+	resp := make([]LTIEndpointResponse, 0, len(s.config.HealthChecks.LTIEndpoints))
 	for _, lt := range s.config.HealthChecks.LTIEndpoints {
-		resp.LTIEndpoints = append(resp.LTIEndpoints, LTIEndpointResponse{
-			Name:        lt.Name,
-			LaunchURL:   lt.LaunchURL,
-			LTIVersion:  lt.LTIVersion,
-			Enabled:     lt.Enabled,
-			Criticality: lt.Criticality,
+		resp = append(resp, LTIEndpointResponse{
+			Name: lt.Name, LaunchURL: lt.LaunchURL, LTIVersion: lt.LTIVersion,
+			Enabled: lt.Enabled, Criticality: lt.Criticality,
 		})
 	}
+	return resp
+}
 
-	// OPC-UA endpoints (Health Checks 100x - Manufacturing)
+// buildOPCUAEndpointsResponse converts config OPC-UA endpoints to response format.
+func (s *Server) buildOPCUAEndpointsResponse() []OPCUAEndpointResponse {
+	resp := make([]OPCUAEndpointResponse, 0, len(s.config.HealthChecks.OPCUAEndpoints))
 	for _, opc := range s.config.HealthChecks.OPCUAEndpoints {
-		resp.OPCUAEndpoints = append(resp.OPCUAEndpoints, OPCUAEndpointResponse{
-			Name:           opc.Name,
-			EndpointURL:    opc.EndpointURL,
-			SecurityMode:   opc.SecurityMode,
-			SecurityPolicy: opc.SecurityPolicy,
-			Enabled:        opc.Enabled,
-			Criticality:    opc.Criticality,
+		resp = append(resp, OPCUAEndpointResponse{
+			Name: opc.Name, EndpointURL: opc.EndpointURL,
+			SecurityMode: opc.SecurityMode, SecurityPolicy: opc.SecurityPolicy,
+			Enabled: opc.Enabled, Criticality: opc.Criticality,
 		})
 	}
+	return resp
+}
 
-	// Modbus endpoints (Health Checks 100x - Manufacturing)
+// buildModbusEndpointsResponse converts config Modbus endpoints to response format.
+func (s *Server) buildModbusEndpointsResponse() []ModbusEndpointResponse {
+	resp := make([]ModbusEndpointResponse, 0, len(s.config.HealthChecks.ModbusEndpoints))
 	for _, mb := range s.config.HealthChecks.ModbusEndpoints {
-		resp.ModbusEndpoints = append(resp.ModbusEndpoints, ModbusEndpointResponse{
-			Name:         mb.Name,
-			Host:         mb.Host,
-			Port:         mb.Port,
-			UnitID:       mb.UnitID,
-			TestRegister: mb.TestRegister,
-			RegisterType: mb.RegisterType,
-			Enabled:      mb.Enabled,
-			Criticality:  mb.Criticality,
+		resp = append(resp, ModbusEndpointResponse{
+			Name: mb.Name, Host: mb.Host, Port: mb.Port, UnitID: mb.UnitID,
+			TestRegister: mb.TestRegister, RegisterType: mb.RegisterType,
+			Enabled: mb.Enabled, Criticality: mb.Criticality,
 		})
 	}
+	return resp
+}
 
+func (s *Server) getHealthChecksSettings(w http.ResponseWriter, r *http.Request) {
+	logger := logging.FromContext(r.Context())
+	resp := TestsSettingsResponse{
+		DNSHostname:        s.config.DNS.TestHostname,
+		DNSServers:         s.buildDNSServersResponse(),
+		PingTargets:        s.buildPingTargetsResponse(),
+		TCPPorts:           s.buildTCPPortsResponse(),
+		UDPPorts:           s.buildUDPPortsResponse(),
+		HTTPEndpoints:      s.buildHTTPEndpointsResponse(),
+		RTSPEndpoints:      s.buildRTSPEndpointsResponse(),
+		DICOMEndpoints:     s.buildDICOMEndpointsResponse(),
+		HL7Endpoints:       s.buildHL7EndpointsResponse(),
+		FHIREndpoints:      s.buildFHIREndpointsResponse(),
+		SQLEndpoints:       s.buildSQLEndpointsResponse(),
+		FileShareEndpoints: s.buildFileShareEndpointsResponse(),
+		LDAPEndpoints:      s.buildLDAPEndpointsResponse(),
+		LTIEndpoints:       s.buildLTIEndpointsResponse(),
+		OPCUAEndpoints:     s.buildOPCUAEndpointsResponse(),
+		ModbusEndpoints:    s.buildModbusEndpointsResponse(),
+		RunPerformance:     s.config.HealthChecks.RunPerformance,
+		RunSpeedtest:       s.config.HealthChecks.RunSpeedtest,
+		RunIperf:           s.config.HealthChecks.RunIperf,
+		RunDiscovery:       s.config.HealthChecks.RunDiscovery,
+		Speedtest: SpeedtestSettingsResponse{
+			ServerID:      s.config.Speedtest.ServerID,
+			AutoRunOnLink: s.config.Speedtest.AutoRunOnLink,
+		},
+		Iperf: IperfSettingsResponse{
+			AutoRunOnLink: s.config.Iperf.AutoRunOnLink,
+		},
+	}
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
@@ -1183,6 +1156,151 @@ func (s *Server) runHTTPTests(ctx context.Context, logger *slog.Logger) []Custom
 	return results
 }
 
+// populateEnhancedTimings copies timing data from enhanced response to test result.
+func populateEnhancedTimings(result *CustomTestResult, resp *httpResponse) {
+	result.Status = resp.StatusCode
+	result.Latency = resp.Timings.Total
+	result.DNSLatency = resp.Timings.DNS
+	result.TCPConnect = resp.Timings.Connect
+	result.TLSLatency = resp.Timings.TLS
+	result.TTFBLatency = resp.Timings.TTFB
+	result.ResponseSize = resp.BodySize
+	result.HTTPVersion = resp.HTTPVersion
+	if len(resp.RedirectHops) > 0 {
+		result.RedirectChain = resp.RedirectHops
+	}
+}
+
+// evaluateBodyMatch checks body content against expected pattern and updates test result.
+func evaluateBodyMatch(result *CustomTestResult, body []byte, pattern string, isRegex bool) {
+	matched, matchErr := checkBodyMatch(body, pattern, isRegex)
+	result.BodyMatchSuccess = matched
+
+	switch {
+	case matchErr != nil:
+		result.BodyMatchStatus = statusError
+		result.Error = matchErr.Error()
+		result.Success = false
+		result.TestStatus = statusError
+	case !matched:
+		result.BodyMatchStatus = statusError
+		result.Success = false
+		result.TestStatus = statusError
+		result.Error = "Body content did not match expected pattern"
+	default:
+		result.BodyMatchStatus = statusSuccess
+	}
+}
+
+// runEnhancedHTTPPath runs the enhanced HTTP test path with body reading and redirect following.
+// Returns the final URL (after any fallback) for certificate checking.
+func (s *Server) runEnhancedHTTPPath(
+	ctx context.Context,
+	endpoint config.HTTPEndpoint,
+	url string,
+	tryHTTPFallback bool,
+	result *CustomTestResult,
+	thresholds *config.CustomThresholds,
+) string {
+	resp, err := runHTTPTestEnhanced(
+		ctx, url, endpoint.ExpectedStatus, endpoint.FollowRedirects, endpoint.MaxRedirects,
+	)
+
+	// Try HTTP fallback if HTTPS failed
+	if err != nil && tryHTTPFallback {
+		httpURL := "http://" + endpoint.URL
+		httpResp, httpErr := runHTTPTestEnhanced(
+			ctx, httpURL, endpoint.ExpectedStatus, endpoint.FollowRedirects, endpoint.MaxRedirects,
+		)
+		if httpErr == nil || (httpResp != nil && httpResp.StatusCode > 0) {
+			url = httpURL
+			result.URL = httpURL
+			resp, err = httpResp, httpErr
+		}
+	}
+
+	// Handle nil response with error
+	if resp == nil {
+		if err != nil {
+			result.Success = false
+			result.Error = errHTTPReqFailed
+			result.TestStatus = statusError
+		}
+		return url
+	}
+
+	// Populate timing data
+	populateEnhancedTimings(result, resp)
+
+	// Handle request error
+	if err != nil {
+		result.Success = false
+		result.Error = errHTTPReqFailed
+		result.TestStatus = statusError
+		return url
+	}
+
+	// Success path
+	result.Success = true
+	s.evaluateHTTPTimings(result, resp.Timings, thresholds)
+
+	// Check body match if configured
+	if endpoint.BodyMatch != "" {
+		evaluateBodyMatch(result, resp.Body, endpoint.BodyMatch, endpoint.BodyMatchIsRegex)
+	}
+
+	// Check security headers if configured
+	if endpoint.CheckSecurityHeaders && result.Success {
+		isHTTPS := strings.HasPrefix(url, "https://")
+		result.SecurityHeaders = checkSecurityHeaders(resp.Headers, isHTTPS)
+	}
+
+	return url
+}
+
+// runStandardHTTPPath runs the standard HTTP test path (faster, no body reading).
+// Returns the final URL (after any fallback) for certificate checking.
+func (s *Server) runStandardHTTPPath(
+	ctx context.Context,
+	endpoint config.HTTPEndpoint,
+	url string,
+	tryHTTPFallback bool,
+	result *CustomTestResult,
+	thresholds *config.CustomThresholds,
+) string {
+	statusCode, timings, err := runHTTPTest(ctx, url, endpoint.ExpectedStatus)
+
+	// Try HTTP fallback if HTTPS failed
+	if err != nil && tryHTTPFallback {
+		httpURL := "http://" + endpoint.URL
+		httpStatus, httpTimings, httpErr := runHTTPTest(ctx, httpURL, endpoint.ExpectedStatus)
+		if httpErr == nil || httpStatus > 0 {
+			url = httpURL
+			result.URL = httpURL
+			statusCode, timings, err = httpStatus, httpTimings, httpErr
+		}
+	}
+
+	// Populate timing data
+	result.Status = statusCode
+	result.Latency = timings.Total
+	result.DNSLatency = timings.DNS
+	result.TCPConnect = timings.Connect
+	result.TLSLatency = timings.TLS
+	result.TTFBLatency = timings.TTFB
+
+	if err != nil {
+		result.Success = false
+		result.Error = errHTTPReqFailed
+		result.TestStatus = statusError
+	} else {
+		result.Success = true
+		s.evaluateHTTPTimings(result, timings, thresholds)
+	}
+
+	return url
+}
+
 // runSingleHTTPTest runs a single HTTP endpoint test.
 func (s *Server) runSingleHTTPTest(
 	ctx context.Context,
@@ -1202,114 +1320,9 @@ func (s *Server) runSingleHTTPTest(
 	needsEnhanced := endpoint.BodyMatch != "" || endpoint.CheckSecurityHeaders || endpoint.FollowRedirects
 
 	if needsEnhanced {
-		// Use enhanced HTTP test with body reading and redirect following
-		resp, err := runHTTPTestEnhanced(
-			ctx,
-			url,
-			endpoint.ExpectedStatus,
-			endpoint.FollowRedirects,
-			endpoint.MaxRedirects,
-		)
-
-		// Try HTTP fallback if HTTPS failed
-		if err != nil && tryHTTPFallback {
-			httpURL := "http://" + endpoint.URL
-			if httpResp, httpErr := runHTTPTestEnhanced(
-				ctx,
-				httpURL,
-				endpoint.ExpectedStatus,
-				endpoint.FollowRedirects,
-				endpoint.MaxRedirects,
-			); httpErr == nil ||
-				(httpResp != nil && httpResp.StatusCode > 0) {
-				url = httpURL
-				testResult.URL = httpURL
-				resp, err = httpResp, httpErr
-			}
-		}
-
-		if resp != nil {
-			testResult.Status = resp.StatusCode
-			testResult.Latency = resp.Timings.Total
-			testResult.DNSLatency = resp.Timings.DNS
-			testResult.TCPConnect = resp.Timings.Connect
-			testResult.TLSLatency = resp.Timings.TLS
-			testResult.TTFBLatency = resp.Timings.TTFB
-			testResult.ResponseSize = resp.BodySize
-			testResult.HTTPVersion = resp.HTTPVersion
-
-			if len(resp.RedirectHops) > 0 {
-				testResult.RedirectChain = resp.RedirectHops
-			}
-
-			if err == nil {
-				testResult.Success = true
-				s.evaluateHTTPTimings(&testResult, resp.Timings, &thresholds)
-
-				// Check body match if configured
-				if endpoint.BodyMatch != "" {
-					matched, matchErr := checkBodyMatch(resp.Body, endpoint.BodyMatch, endpoint.BodyMatchIsRegex)
-					testResult.BodyMatchSuccess = matched
-					if matchErr != nil {
-						testResult.BodyMatchStatus = statusError
-						testResult.Error = matchErr.Error()
-						testResult.Success = false
-						testResult.TestStatus = statusError
-					} else if !matched {
-						testResult.BodyMatchStatus = statusError
-						testResult.Success = false
-						testResult.TestStatus = statusError
-						testResult.Error = "Body content did not match expected pattern"
-					} else {
-						testResult.BodyMatchStatus = statusSuccess
-					}
-				}
-
-				// Check security headers if configured
-				if endpoint.CheckSecurityHeaders && testResult.Success {
-					isHTTPS := strings.HasPrefix(url, "https://")
-					testResult.SecurityHeaders = checkSecurityHeaders(resp.Headers, isHTTPS)
-				}
-			} else {
-				testResult.Success = false
-				testResult.Error = "HTTP request failed"
-				testResult.TestStatus = statusError
-			}
-		} else if err != nil {
-			testResult.Success = false
-			testResult.Error = "HTTP request failed"
-			testResult.TestStatus = statusError
-		}
+		url = s.runEnhancedHTTPPath(ctx, endpoint, url, tryHTTPFallback, &testResult, &thresholds)
 	} else {
-		// Use standard HTTP test (faster, no body reading)
-		statusCode, timings, err := runHTTPTest(ctx, url, endpoint.ExpectedStatus)
-
-		// Try HTTP fallback if HTTPS failed
-		if err != nil && tryHTTPFallback {
-			httpURL := "http://" + endpoint.URL
-			if httpStatus, httpTimings, httpErr := runHTTPTest(ctx, httpURL, endpoint.ExpectedStatus); httpErr == nil ||
-				httpStatus > 0 {
-				url = httpURL
-				testResult.URL = httpURL
-				statusCode, timings, err = httpStatus, httpTimings, httpErr
-			}
-		}
-
-		testResult.Status = statusCode
-		testResult.Latency = timings.Total
-		testResult.DNSLatency = timings.DNS
-		testResult.TCPConnect = timings.Connect
-		testResult.TLSLatency = timings.TLS
-		testResult.TTFBLatency = timings.TTFB
-
-		if err != nil {
-			testResult.Success = false
-			testResult.Error = "HTTP request failed"
-			testResult.TestStatus = statusError
-		} else {
-			testResult.Success = true
-			s.evaluateHTTPTimings(&testResult, timings, &thresholds)
-		}
+		url = s.runStandardHTTPPath(ctx, endpoint, url, tryHTTPFallback, &testResult, &thresholds)
 	}
 
 	// Check certificate expiry for HTTPS URLs
@@ -1339,7 +1352,7 @@ type httpTimings struct {
 	Total   float64
 }
 
-// newHTTPTimingTrace creates an httptrace.ClientTrace that records timings to the provided httpTimings struct.
+// newHTTPTimingTrace creates an [httptrace.ClientTrace] that records timings to the provided httpTimings struct.
 func newHTTPTimingTrace(timing *httpTimings) *httptrace.ClientTrace {
 	var dnsStart, connStart, tlsStart, wroteRequest time.Time
 	return &httptrace.ClientTrace{
@@ -1489,30 +1502,8 @@ func runHTTPTestEnhanced(
 				return result, nil
 			}
 
-			// Resolve relative URLs
-			if !strings.HasPrefix(location, "http://") && !strings.HasPrefix(location, "https://") {
-				// Relative URL - resolve against current URL
-				if strings.HasPrefix(location, "/") {
-					// Absolute path
-					idx := strings.Index(currentURL, "//")
-					if idx >= 0 {
-						hostEnd := strings.Index(currentURL[idx+2:], "/")
-						if hostEnd >= 0 {
-							currentURL = currentURL[:idx+2+hostEnd] + location
-						} else {
-							currentURL += location
-						}
-					}
-				} else {
-					// Relative path
-					lastSlash := strings.LastIndex(currentURL, "/")
-					if lastSlash > 8 { // After "https://"
-						currentURL = currentURL[:lastSlash+1] + location
-					}
-				}
-			} else {
-				currentURL = location
-			}
+			// Resolve redirect URL (handles both absolute and relative URLs)
+			currentURL = resolveRedirectURL(currentURL, location)
 			continue
 		}
 
@@ -1537,6 +1528,38 @@ func runHTTPTestEnhanced(
 	}
 
 	return nil, fmt.Errorf("too many redirects (max %d)", maxRedirects)
+}
+
+// resolveRedirectURL resolves a Location header value against the current URL.
+// Handles both absolute URLs and relative paths.
+func resolveRedirectURL(currentURL, location string) string {
+	// Already absolute
+	if strings.HasPrefix(location, "http://") || strings.HasPrefix(location, "https://") {
+		return location
+	}
+
+	// Find the scheme separator
+	schemeEnd := strings.Index(currentURL, "//")
+	if schemeEnd < 0 {
+		return location
+	}
+
+	// Absolute path (starts with /)
+	if strings.HasPrefix(location, "/") {
+		hostEnd := strings.Index(currentURL[schemeEnd+2:], "/")
+		if hostEnd >= 0 {
+			return currentURL[:schemeEnd+2+hostEnd] + location
+		}
+		return currentURL + location
+	}
+
+	// Relative path
+	lastSlash := strings.LastIndex(currentURL, "/")
+	if lastSlash > httpsSchemeLen { // After "https://"
+		return currentURL[:lastSlash+1] + location
+	}
+
+	return location
 }
 
 // runSingleHTTPRequest performs a single HTTP request without following redirects.
@@ -1681,13 +1704,13 @@ func checkSecurityHeaders(headers http.Header, isHTTPS bool) *SecurityHeaders {
 
 	// Calculate overall score and status
 	if maxScore > 0 {
-		result.Score = (score * 100) / maxScore
+		result.Score = (score * percentMultiplier) / maxScore
 	}
 
 	switch {
-	case result.Score >= 80:
+	case result.Score >= scoreThresholdGood:
 		result.OverallStatus = statusSuccess
-	case result.Score >= 50:
+	case result.Score >= scoreThresholdWarn:
 		result.OverallStatus = statusWarning
 	default:
 		result.OverallStatus = statusError
@@ -1731,13 +1754,14 @@ func checkCSPHeader(value string) *HeaderCheck {
 	check.Present = true
 	// Check for unsafe directives
 	lowerVal := strings.ToLower(value)
-	if strings.Contains(lowerVal, "'unsafe-inline'") || strings.Contains(lowerVal, "'unsafe-eval'") {
+	switch {
+	case strings.Contains(lowerVal, "'unsafe-inline'") || strings.Contains(lowerVal, "'unsafe-eval'"):
 		check.Status = statusWarning
 		check.Message = "Warning: Contains unsafe directives"
-	} else if strings.Contains(lowerVal, "default-src") || strings.Contains(lowerVal, "script-src") {
+	case strings.Contains(lowerVal, "default-src") || strings.Contains(lowerVal, "script-src"):
 		check.Status = statusSuccess
 		check.Message = "Good: CSP policy defined"
-	} else {
+	default:
 		check.Status = statusWarning
 		check.Message = "Warning: Consider adding script-src directive"
 	}

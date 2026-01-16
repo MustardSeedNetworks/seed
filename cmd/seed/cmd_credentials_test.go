@@ -1,12 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 
 	"github.com/krisarmstrong/seed/internal/config"
 )
@@ -130,7 +130,7 @@ func TestCredentialsCmdWithConfigFile(t *testing.T) {
 
 	// Create a temp directory for config
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "seed.yaml")
+	configPath := filepath.Join(tmpDir, "seed.json")
 
 	// Create a valid config file
 	cfg := config.DefaultConfig()
@@ -138,7 +138,7 @@ func TestCredentialsCmdWithConfigFile(t *testing.T) {
 	cfg.Auth.DefaultPasswordHash = "somehash"
 	cfg.Auth.JWTSecret = "somesecret"
 
-	data, err := yaml.Marshal(cfg)
+	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		t.Fatalf("Failed to marshal config: %v", err)
 	}

@@ -204,13 +204,15 @@ func sendUDPBroadcast(ctx context.Context, broadcast string, port int, data []by
 	return nil
 }
 
-// wolDeviceTypeSupport maps device types to WoL support (true=yes, false=no).
-var wolDeviceTypeSupport = map[string]bool{
-	"switch": false, "router": false, "firewall": false,
-	"access-point": false, "network-device": false,
-	"printer": false, "print-server": false,
-	"ip-camera": false, "camera": false,
-	"computer": true, "desktop": true, "workstation": true, "server": true,
+// getWoLDeviceTypeSupport returns a map of device types to WoL support (true=yes, false=no).
+func getWoLDeviceTypeSupport() map[string]bool {
+	return map[string]bool{
+		"switch": false, "router": false, "firewall": false,
+		"access-point": false, "network-device": false,
+		"printer": false, "print-server": false,
+		"ip-camera": false, "camera": false,
+		"computer": true, "desktop": true, "workstation": true, "server": true,
+	}
 }
 
 // InferWoLCapability guesses whether a device likely supports Wake-on-LAN
@@ -236,7 +238,7 @@ func inferWoLFromProfile(device *DiscoveredDevice) *bool {
 	if deviceType == "laptop" || deviceType == "notebook" {
 		return nil // Unknown - often disabled on laptops
 	}
-	if supported, ok := wolDeviceTypeSupport[deviceType]; ok {
+	if supported, ok := getWoLDeviceTypeSupport()[deviceType]; ok {
 		return &supported
 	}
 	return nil

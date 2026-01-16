@@ -16,7 +16,7 @@ const (
 	speedMatchCount = 2
 )
 
-// checkLinkStatePlatform checks link state on macOS using net.Interface flags.
+// checkLinkStatePlatform checks link state on macOS using [net.Interface] flags.
 func checkLinkStatePlatform(interfaceName string) State {
 	iface, err := net.InterfaceByName(interfaceName)
 	if err != nil {
