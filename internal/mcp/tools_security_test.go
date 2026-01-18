@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/mcp"
+	"github.com/krisarmstrong/seed/internal/services/discovery"
 )
 
 func TestVulnerabilityScanFlow(t *testing.T) {

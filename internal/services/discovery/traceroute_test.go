@@ -1,0 +1,152 @@
+package discovery_test
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/krisarmstrong/seed/internal/services/discovery"
+)
+
+func TestNewTracer(t *testing.T) {
+	// Test with default values
+	tracer := discovery.NewTracer(0, 0)
+	accessor := &discovery.TracerTestAccessor{Tracer: tracer}
+
+	if accessor.GetTimeout() != 1*time.Second {
+		t.Errorf("expected default timeout 1s, got %v", accessor.GetTimeout())
+	}
+	if accessor.GetMaxHops() != 30 {
+		t.Errorf("expected default maxHops 30, got %d", accessor.GetMaxHops())
+	}
+
+	// Test with custom values
+	tracer = discovery.NewTracer(5*time.Second, 20)
+	accessor = &discovery.TracerTestAccessor{Tracer: tracer}
+
+	if accessor.GetTimeout() != 5*time.Second {
+		t.Errorf("expected timeout 5s, got %v", accessor.GetTimeout())
+	}
+	if accessor.GetMaxHops() != 20 {
+		t.Errorf("expected maxHops 20, got %d", accessor.GetMaxHops())
+	}
+}
+
+func TestTracer_TraceICMP_InvalidTarget(t *testing.T) {
+	tracer := discovery.NewTracer(1*time.Second, 5)
+	ctx := context.Background()
+
+	// Test with invalid hostname
+	result := tracer.TraceICMP(ctx, "invalid.hostname.that.does.not.exist.example")
+	if result.Error == "" {
+		t.Error("expected error for invalid hostname")
+	}
+	if result.Completed {
+		t.Error("should not be completed for invalid target")
+	}
+}
+
+func TestTracer_TraceUDP_InvalidTarget(t *testing.T) {
+	tracer := discovery.NewTracer(1*time.Second, 5)
+	ctx := context.Background()
+
+	result := tracer.TraceUDP(ctx, "invalid.hostname.that.does.not.exist.example", 33434)
+	if result.Error == "" {
+		t.Error("expected error for invalid hostname")
+	}
+}
+
+func TestTracer_TraceTCP_InvalidTarget(t *testing.T) {
+	tracer := discovery.NewTracer(1*time.Second, 5)
+	ctx := context.Background()
+
+	result := tracer.TraceTCP(ctx, "invalid.hostname.that.does.not.exist.example", 80)
+	if result.Error == "" {
+		t.Error("expected error for invalid hostname")
+	}
+}
+
+func TestTracer_TraceICMP_Localhost(t *testing.T) {
+	tracer := discovery.NewTracer(2*time.Second, 5)
+	ctx := context.Background()
+
+	result := tracer.TraceICMP(ctx, "127.0.0.1")
+
+	if result.Target != "127.0.0.1" {
+		t.Errorf("expected target 127.0.0.1, got %s", result.Target)
+	}
+	if result.TargetIP != "127.0.0.1" {
+		t.Errorf("expected targetIP 127.0.0.1, got %s", result.TargetIP)
+	}
+	if result.Protocol != "icmp" {
+		t.Errorf("expected protocol icmp, got %s", result.Protocol)
+	}
+	// Localhost trace may or may not complete depending on system config
+	t.Logf("Localhost trace result: completed=%v, hops=%d, error=%s",
+		result.Completed, len(result.Hops), result.Error)
+}
+
+func TestTracer_ContextCancellation(t *testing.T) {
+	tracer := discovery.NewTracer(5*time.Second, 30)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Cancel immediately
+	cancel()
+
+	result := tracer.TraceICMP(ctx, "8.8.8.8")
+	if result.Error != "traceroute canceled" {
+		t.Logf("trace result: %+v", result)
+	}
+}
+
+func TestTracerouteResult_Structure(t *testing.T) {
+	result := &discovery.TracerouteResult{
+		Target:    "example.com",
+		TargetIP:  "93.184.216.34",
+		Protocol:  "icmp",
+		Hops:      make([]discovery.TracerouteHop, 0),
+		Completed: false,
+	}
+
+	if result.Target != "example.com" {
+		t.Errorf("unexpected target: %s", result.Target)
+	}
+	if result.TargetIP != "93.184.216.34" {
+		t.Errorf("unexpected targetIP: %s", result.TargetIP)
+	}
+	if result.Protocol != "icmp" {
+		t.Errorf("unexpected protocol: %s", result.Protocol)
+	}
+	if len(result.Hops) != 0 {
+		t.Errorf("unexpected hops length: %d", len(result.Hops))
+	}
+	if result.Completed {
+		t.Error("expected Completed to be false")
+	}
+}
+
+func TestTracerouteHop_Structure(t *testing.T) {
+	hop := discovery.TracerouteHop{
+		TTL:      5,
+		IP:       "192.168.1.1",
+		Hostname: "router.local",
+		RTT:      10 * time.Millisecond,
+		State:    "reply",
+	}
+
+	if hop.TTL != 5 {
+		t.Errorf("unexpected TTL: %d", hop.TTL)
+	}
+	if hop.IP != "192.168.1.1" {
+		t.Errorf("unexpected IP: %s", hop.IP)
+	}
+	if hop.Hostname != "router.local" {
+		t.Errorf("unexpected hostname: %s", hop.Hostname)
+	}
+	if hop.RTT != 10*time.Millisecond {
+		t.Errorf("unexpected RTT: %v", hop.RTT)
+	}
+	if hop.State != "reply" {
+		t.Errorf("unexpected state: %s", hop.State)
+	}
+}

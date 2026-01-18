@@ -9,7 +9,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/iperf"
+	"github.com/krisarmstrong/seed/internal/services/iperf"
 )
 
 // DefaultInterface is the default network interface to use when none is configured.

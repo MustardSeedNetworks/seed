@@ -6,7 +6,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 
-	"github.com/krisarmstrong/seed/internal/discovery"
+	"github.com/krisarmstrong/seed/internal/services/discovery"
 )
 
 // registerSecurityTools registers all security-related MCP tools.
