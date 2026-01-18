@@ -469,6 +469,9 @@ linters:
       - text: 'comment on exported \S+ \S+ should be of the form ".+"'
         source: '// ?(nolint|TODO)'
         linters: [ revive, staticcheck ]
+      - text: 'avoid meaningless package names'
+        path: 'internal/api/'
+        linters: [ revive ]
       - path: '_test\.go'
         linters:
           - bodyclose

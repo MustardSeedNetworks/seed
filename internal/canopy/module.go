@@ -8,7 +8,7 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/iperf"
+	"github.com/krisarmstrong/seed/internal/services/iperf"
 )
 
 // Module is the main Canopy module providing WiFi services.

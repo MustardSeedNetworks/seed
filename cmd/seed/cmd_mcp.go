@@ -10,13 +10,13 @@ import (
 
 	"github.com/spf13/cobra"
 
+	api "github.com/krisarmstrong/seed/internal/api"
 	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/discovery"
-	api "github.com/krisarmstrong/seed/internal/httpapi"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/mcp"
-	"github.com/krisarmstrong/seed/internal/network"
+	"github.com/krisarmstrong/seed/internal/netif"
 	"github.com/krisarmstrong/seed/internal/paths"
+	"github.com/krisarmstrong/seed/internal/services/discovery"
 )
 
 func initMCPCmd(state *cliState) {
@@ -63,11 +63,11 @@ func runMCP(_ *cobra.Command, _ []string, state *cliState) {
 	}
 
 	// Initialize minimal network manager for MCP tools
-	var netMgr *network.Manager
+	var netMgr *netif.Manager
 	activeIface, _ := cfg.GetActiveInterface()
 	if activeIface != "" {
 		var netErr error
-		netMgr, netErr = network.NewManager(activeIface)
+		netMgr, netErr = netif.NewManager(activeIface)
 		if netErr != nil {
 			logging.GetLogger().Warn("Failed to initialize network manager", "error", netErr)
 		}

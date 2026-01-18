@@ -12,19 +12,19 @@ import (
 
 	"github.com/spf13/cobra"
 
+	api "github.com/krisarmstrong/seed/internal/api"
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/canopy"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/harvest"
-	api "github.com/krisarmstrong/seed/internal/httpapi"
 	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/network"
+	"github.com/krisarmstrong/seed/internal/netif"
 	"github.com/krisarmstrong/seed/internal/paths"
-	"github.com/krisarmstrong/seed/internal/roots"
-	"github.com/krisarmstrong/seed/internal/sap"
-	"github.com/krisarmstrong/seed/internal/shell"
+	"github.com/krisarmstrong/seed/internal/pipeline"
+	"github.com/krisarmstrong/seed/internal/services"
+	"github.com/krisarmstrong/seed/internal/services/discovery"
+	"github.com/krisarmstrong/seed/internal/services/shell"
 	"github.com/krisarmstrong/seed/internal/version"
 )
 
@@ -107,7 +107,7 @@ func initializeModules(cfg *config.Config, db *database.DB) *api.Modules {
 	modules := &api.Modules{}
 
 	// Sap: Live telemetry (gateway, DNS, speedtest, iperf monitoring)
-	modules.Sap = sap.New(cfg, db)
+	modules.Sap = services.New(cfg, db)
 	logging.GetLogger().Info("Sap module initialized")
 
 	// Shell: Security posture (DHCP monitoring, vulnerability scanning)
@@ -119,7 +119,7 @@ func initializeModules(cfg *config.Config, db *database.DB) *api.Modules {
 	logging.GetLogger().Info("Canopy module initialized")
 
 	// Roots: Path analysis (traceroute, topology, IP enrichment)
-	modules.Roots = roots.New(cfg, db)
+	modules.Roots = pipeline.New(cfg, db)
 	logging.GetLogger().Info("Roots module initialized")
 
 	// Harvest: Reporting (report generation, templates, scheduling)
@@ -290,7 +290,7 @@ func migrateSNMPCredentials(cfg *config.Config, configPath string) {
 
 // setupNetworkInterface initializes the network manager and finds an active interface.
 // #756: Auto-detects available interfaces; uses config default if valid, otherwise selects best available.
-func setupNetworkInterface(cfg *config.Config, configPath string) *network.Manager {
+func setupNetworkInterface(cfg *config.Config, configPath string) *netif.Manager {
 	// #756: Try configured default first, but fall back to auto-detection if invalid
 	initialInterface := cfg.Interface.Default
 	if initialInterface == "" {
@@ -311,7 +311,7 @@ func setupNetworkInterface(cfg *config.Config, configPath string) *network.Manag
 		os.Exit(1)
 	}
 
-	netMgr, err := network.NewManager(initialInterface)
+	netMgr, err := netif.NewManager(initialInterface)
 	if err != nil {
 		logging.GetLogger().Error("Failed to initialize network manager", "error", err)
 		os.Exit(1)
@@ -336,7 +336,7 @@ func setupNetworkInterface(cfg *config.Config, configPath string) *network.Manag
 
 // findActiveInterface attempts to find an active network interface with retries.
 func findActiveInterface(
-	netMgr *network.Manager,
+	netMgr *netif.Manager,
 	preferred []string,
 	maxRetries int,
 	retryWait time.Duration,
@@ -352,7 +352,7 @@ func findActiveInterface(
 }
 
 // logAvailableInterfaces logs available interfaces grouped by type and status.
-func logAvailableInterfaces(netMgr *network.Manager) {
+func logAvailableInterfaces(netMgr *netif.Manager) {
 	logging.GetLogger().Error("No active network interface found after multiple attempts")
 	logging.GetLogger().
 		Info("Please check your network configuration and ensure at least one interface is up")
@@ -377,7 +377,7 @@ func logAvailableInterfaces(netMgr *network.Manager) {
 // #756: Interface selection persists to profile, not global config.
 func applyActiveInterface(
 	cfg *config.Config,
-	netMgr *network.Manager,
+	netMgr *netif.Manager,
 	activeInterface, configPath string,
 ) {
 	if activeInterface != cfg.Interface.Default {
