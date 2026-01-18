@@ -5,15 +5,15 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/iperf"
-	"github.com/krisarmstrong/seed/internal/network"
-	"github.com/krisarmstrong/seed/internal/sap/dns"
-	"github.com/krisarmstrong/seed/internal/sap/gateway"
-	"github.com/krisarmstrong/seed/internal/sap/speedtest"
+	"github.com/krisarmstrong/seed/internal/netif"
+	"github.com/krisarmstrong/seed/internal/services/discovery"
+	"github.com/krisarmstrong/seed/internal/services/dns"
+	"github.com/krisarmstrong/seed/internal/services/gateway"
+	"github.com/krisarmstrong/seed/internal/services/iperf"
+	"github.com/krisarmstrong/seed/internal/services/speedtest"
 )
 
-// WiFiNetwork represents a discovered WiFi network.
+// WiFiNetwork represents a discovered WiFi netif.
 type WiFiNetwork struct {
 	SSID      string `json:"ssid"`
 	BSSID     string `json:"bssid"`
@@ -50,14 +50,14 @@ type DeviceDiscovery interface {
 
 // NetworkManager provides network interface management.
 type NetworkManager interface {
-	GetInterfaces() []*network.InterfaceInfo
-	GetInterface(name string) (*network.InterfaceInfo, error)
+	GetInterfaces() []*netif.InterfaceInfo
+	GetInterface(name string) (*netif.InterfaceInfo, error)
 	GetCurrentInterface() string
 }
 
 // LinkMonitor provides link status monitoring.
 type LinkMonitor interface {
-	GetState() network.LinkState
+	GetState() netif.LinkState
 	IsUp() bool
 }
 

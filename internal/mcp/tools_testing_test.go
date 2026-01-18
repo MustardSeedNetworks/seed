@@ -3,8 +3,8 @@ package mcp_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/mcp"
+	"github.com/krisarmstrong/seed/internal/services/iperf"
 )
 
 func TestParseIperfConfig(t *testing.T) {

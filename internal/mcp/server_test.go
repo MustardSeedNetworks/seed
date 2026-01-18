@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/mcp"
-	"github.com/krisarmstrong/seed/internal/network"
-	"github.com/krisarmstrong/seed/internal/sap/dns"
-	"github.com/krisarmstrong/seed/internal/sap/gateway"
-	"github.com/krisarmstrong/seed/internal/sap/speedtest"
+	"github.com/krisarmstrong/seed/internal/netif"
+	"github.com/krisarmstrong/seed/internal/services/discovery"
+	"github.com/krisarmstrong/seed/internal/services/dns"
+	"github.com/krisarmstrong/seed/internal/services/gateway"
+	"github.com/krisarmstrong/seed/internal/services/iperf"
+	"github.com/krisarmstrong/seed/internal/services/speedtest"
 )
 
 // mockServiceProvider implements mcp.ServiceProvider for testing.
@@ -128,16 +128,16 @@ func (m *mockDiscoveryService) GetOptions() config.DiscoveryOptions {
 
 // mockNetworkManager implements mcp.NetworkManager for testing.
 type mockNetworkManager struct {
-	interfaces       []*network.InterfaceInfo
+	interfaces       []*netif.InterfaceInfo
 	currentInterface string
 	getInterfaceErr  error
 }
 
-func (m *mockNetworkManager) GetInterfaces() []*network.InterfaceInfo {
+func (m *mockNetworkManager) GetInterfaces() []*netif.InterfaceInfo {
 	return m.interfaces
 }
 
-func (m *mockNetworkManager) GetInterface(name string) (*network.InterfaceInfo, error) {
+func (m *mockNetworkManager) GetInterface(name string) (*netif.InterfaceInfo, error) {
 	if m.getInterfaceErr != nil {
 		return nil, m.getInterfaceErr
 	}
@@ -155,11 +155,11 @@ func (m *mockNetworkManager) GetCurrentInterface() string {
 
 // mockLinkMonitor implements mcp.LinkMonitor for testing.
 type mockLinkMonitor struct {
-	state network.LinkState
+	state netif.LinkState
 	isUp  bool
 }
 
-func (m *mockLinkMonitor) GetState() network.LinkState {
+func (m *mockLinkMonitor) GetState() netif.LinkState {
 	return m.state
 }
 
@@ -386,7 +386,7 @@ func TestMockServiceProvider(t *testing.T) {
 	}
 
 	mockNet := &mockNetworkManager{
-		interfaces: []*network.InterfaceInfo{
+		interfaces: []*netif.InterfaceInfo{
 			{Name: "eth0"},
 			{Name: "wlan0"},
 		},

@@ -6,13 +6,13 @@ import (
 	"testing"
 
 	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/iperf"
 	"github.com/krisarmstrong/seed/internal/mcp"
-	"github.com/krisarmstrong/seed/internal/network"
-	"github.com/krisarmstrong/seed/internal/sap/dns"
-	"github.com/krisarmstrong/seed/internal/sap/gateway"
-	"github.com/krisarmstrong/seed/internal/sap/speedtest"
+	"github.com/krisarmstrong/seed/internal/netif"
+	"github.com/krisarmstrong/seed/internal/services/discovery"
+	"github.com/krisarmstrong/seed/internal/services/dns"
+	"github.com/krisarmstrong/seed/internal/services/gateway"
+	"github.com/krisarmstrong/seed/internal/services/iperf"
+	"github.com/krisarmstrong/seed/internal/services/speedtest"
 )
 
 // createTestServer creates a test server with the given service provider.
@@ -741,19 +741,19 @@ func TestHandleWiFiInfo(t *testing.T) {
 func TestHandleGetInterfaces(t *testing.T) {
 	tests := []struct {
 		name       string
-		interfaces []*network.InterfaceInfo
+		interfaces []*netif.InterfaceInfo
 		managerNil bool
 	}{
 		{
 			name: "multiple interfaces",
-			interfaces: []*network.InterfaceInfo{
+			interfaces: []*netif.InterfaceInfo{
 				{Name: "eth0"},
 				{Name: "wlan0"},
 			},
 		},
 		{
 			name:       "no interfaces",
-			interfaces: []*network.InterfaceInfo{},
+			interfaces: []*netif.InterfaceInfo{},
 		},
 		{
 			name:       "manager unavailable",
@@ -790,18 +790,18 @@ func TestHandleGetInterfaces(t *testing.T) {
 func TestHandleGetLinkStatus(t *testing.T) {
 	tests := []struct {
 		name       string
-		state      network.LinkState
+		state      netif.LinkState
 		isUp       bool
 		monitorNil bool
 	}{
 		{
 			name:  "link up",
-			state: network.LinkStateUnknown,
+			state: netif.LinkStateUnknown,
 			isUp:  true,
 		},
 		{
 			name:  "link down",
-			state: network.LinkStateUnknown,
+			state: netif.LinkStateUnknown,
 			isUp:  false,
 		},
 		{
@@ -843,26 +843,26 @@ func TestHandleGetIPConfig(t *testing.T) {
 	tests := []struct {
 		name             string
 		currentInterface string
-		interfaces       []*network.InterfaceInfo
+		interfaces       []*netif.InterfaceInfo
 		getInterfaceErr  error
 		managerNil       bool
 	}{
 		{
 			name:             "successful",
 			currentInterface: "eth0",
-			interfaces: []*network.InterfaceInfo{
+			interfaces: []*netif.InterfaceInfo{
 				{Name: "eth0"},
 			},
 		},
 		{
 			name:             "no current interface",
 			currentInterface: "",
-			interfaces:       []*network.InterfaceInfo{},
+			interfaces:       []*netif.InterfaceInfo{},
 		},
 		{
 			name:             "interface error",
 			currentInterface: "eth0",
-			interfaces:       []*network.InterfaceInfo{},
+			interfaces:       []*netif.InterfaceInfo{},
 			getInterfaceErr:  errors.New("interface not found"),
 		},
 		{
@@ -1437,7 +1437,7 @@ func TestServerWithFullServiceProvider(t *testing.T) {
 			devices: []*discovery.DiscoveredDevice{},
 			status:  &discovery.ServiceStatus{Running: true},
 		},
-		netManager:      &mockNetworkManager{interfaces: []*network.InterfaceInfo{}},
+		netManager:      &mockNetworkManager{interfaces: []*netif.InterfaceInfo{}},
 		linkMonitor:     &mockLinkMonitor{isUp: true},
 		vlanManager:     &mockVLANManager{},
 		dnsTester:       &mockDNSTester{result: &dns.TestResult{}},

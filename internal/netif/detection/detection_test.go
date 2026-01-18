@@ -1,0 +1,606 @@
+package detection_test
+
+// Test suite validates interface scoring, chipset identification, and capability detection.
+
+import (
+	"net"
+	"testing"
+
+	"github.com/krisarmstrong/seed/internal/netif/detection"
+)
+
+func TestNewDetector(t *testing.T) {
+	d := detection.NewDetector()
+	if d == nil {
+		t.Fatal("NewDetector() returned nil")
+	}
+
+	if d.ChipsetDBNil() {
+		t.Error("chipsetDB should not be nil")
+	}
+}
+
+func TestDetectAll(t *testing.T) {
+	d := detection.NewDetector()
+
+	scores, err := d.DetectAll()
+	if err != nil {
+		t.Fatalf("DetectAll() error: %v", err)
+	}
+
+	// Should return some interfaces (at least loopback excluded).
+	// Note: actual count depends on system.
+	t.Logf("Detected %d interfaces", len(scores))
+
+	// Verify sorting (highest score first).
+	for i := 1; i < len(scores); i++ {
+		if scores[i].Score > scores[i-1].Score {
+			t.Errorf("Interfaces not sorted: %s(%d) > %s(%d)",
+				scores[i].Name, scores[i].Score,
+				scores[i-1].Name, scores[i-1].Score)
+		}
+	}
+
+	// Verify no loopback interfaces.
+	for _, score := range scores {
+		if score.Name == "lo" || score.Name == "lo0" {
+			t.Errorf("Loopback interface should be excluded: %s", score.Name)
+		}
+	}
+}
+
+func TestDetectBest(t *testing.T) {
+	d := detection.NewDetector()
+
+	best, err := d.DetectBest()
+	if err != nil {
+		t.Fatalf("DetectBest() error: %v", err)
+	}
+
+	// May be nil if no interfaces exist (unlikely).
+	if best != nil {
+		t.Logf("Best interface: %s (score=%d)", best.Name, best.Score)
+	}
+}
+
+func TestScoreInterface(t *testing.T) {
+	d := detection.NewDetector()
+
+	// Get an actual interface for testing.
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		t.Fatalf("net.Interfaces() error: %v", err)
+	}
+
+	for _, iface := range ifaces {
+		// Skip loopback.
+		if iface.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+
+		score := d.ScoreInterface(iface)
+
+		// Basic validation.
+		if score.Name != iface.Name {
+			t.Errorf("Name mismatch: got %s, want %s", score.Name, iface.Name)
+		}
+
+		// Virtual interfaces should have negative score.
+		if score.Type == "virtual" && score.Score >= 0 {
+			t.Errorf(
+				"Virtual interface %s should have negative score, got %d",
+				score.Name,
+				score.Score,
+			)
+		}
+
+		t.Logf("Interface %s: type=%s, score=%d, link=%v, ip=%v",
+			score.Name, score.Type, score.Score, score.LinkStatus, score.HasIP)
+	}
+}
+
+func TestDetectType(t *testing.T) {
+	tests := []struct {
+		name     string
+		wantType string
+	}{
+		{"eth0", "ethernet"},
+		{"eth1", "ethernet"},
+		{"enp3s0", "ethernet"},
+		{"ens192", "ethernet"},
+		{"eno1", "ethernet"},
+		{"em1", "ethernet"},
+		{"en0", "ethernet"},
+
+		{"wlan0", "wifi"},
+		{"wlp2s0", "wifi"},
+		{"wifi0", "wifi"},
+		{"ath0", "wifi"},
+
+		{"docker0", "virtual"},
+		{"br-12345", "virtual"},
+		{"veth123abc", "virtual"},
+		{"virbr0", "virtual"},
+		{"tun0", "virtual"},
+		{"tap0", "virtual"},
+		{"vmnet1", "virtual"},
+		{"vboxnet0", "virtual"},
+		{"utun0", "virtual"},
+
+		{"sfp0", "fiber"},
+		{"xfp0", "fiber"},
+
+		{"unknown", "other"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := detection.DetectType(tt.name)
+			if got != tt.wantType {
+				t.Errorf("DetectType(%q) = %q, want %q", tt.name, got, tt.wantType)
+			}
+		})
+	}
+}
+
+func TestHasRoutableAddress(t *testing.T) {
+	tests := []struct {
+		name      string
+		addresses []string
+		want      bool
+	}{
+		{
+			name:      "routable IPv4",
+			addresses: []string{"192.168.1.100/24"},
+			want:      true,
+		},
+		{
+			name:      "routable IPv6",
+			addresses: []string{"2001:db8::1/64"},
+			want:      true,
+		},
+		{
+			name:      "link-local IPv4 only",
+			addresses: []string{"169.254.1.1/16"},
+			want:      false,
+		},
+		{
+			name:      "link-local IPv6 only",
+			addresses: []string{"fe80::1/64"},
+			want:      false,
+		},
+		{
+			name:      "loopback only",
+			addresses: []string{"127.0.0.1/8"},
+			want:      false,
+		},
+		{
+			name:      "mixed with routable",
+			addresses: []string{"fe80::1/64", "192.168.1.100/24"},
+			want:      true,
+		},
+		{
+			name:      "empty",
+			addresses: []string{},
+			want:      false,
+		},
+		{
+			name:      "invalid address",
+			addresses: []string{"not-an-ip"},
+			want:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := detection.HasRoutableAddress(tt.addresses)
+			if got != tt.want {
+				t.Errorf("HasRoutableAddress(%v) = %v, want %v", tt.addresses, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFormatSpeed(t *testing.T) {
+	tests := []struct {
+		bps  int64
+		want string
+	}{
+		{100_000_000_000, "100 Gbps"},
+		{40_000_000_000, "40 Gbps"},
+		{25_000_000_000, "25 Gbps"},
+		{10_000_000_000, "10 Gbps"},
+		{5_000_000_000, "5 Gbps"},
+		{2_500_000_000, "2.5 Gbps"},
+		{1_000_000_000, "1 Gbps"},
+		{100_000_000, "100 Mbps"},
+		{10_000_000, "10 Mbps"},
+		{1_000_000, "< 10 Mbps"},
+		{0, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.want, func(t *testing.T) {
+			got := detection.FormatSpeed(tt.bps)
+			if got != tt.want {
+				t.Errorf("FormatSpeed(%d) = %q, want %q", tt.bps, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCalculateScore(t *testing.T) {
+	d := detection.NewDetector()
+
+	tests := []struct {
+		name     string
+		score    detection.InterfaceScore
+		wantMin  int
+		wantMax  int
+		wantSign int // 1 = positive, -1 = negative, 0 = any
+	}{
+		{
+			name: "virtual interface",
+			score: detection.InterfaceScore{
+				Type: "virtual",
+			},
+			wantSign: -1,
+		},
+		{
+			name: "linked ethernet with IP",
+			score: detection.InterfaceScore{
+				Type:       "ethernet",
+				LinkStatus: true,
+				HasIP:      true,
+				Speed:      1_000_000_000,
+			},
+			wantMin: 1500, // 1000 (link) + 500 (IP) + ...
+		},
+		{
+			name: "linked ethernet with TDR",
+			score: detection.InterfaceScore{
+				Type:       "ethernet",
+				LinkStatus: true,
+				HasTDR:     true,
+				Speed:      1_000_000_000,
+			},
+			wantMin: 2000, // 1000 (link) + 1000 (TDR) + ...
+		},
+		{
+			name: "unlinked ethernet",
+			score: detection.InterfaceScore{
+				Type:       "ethernet",
+				LinkStatus: false,
+				Speed:      1_000_000_000,
+			},
+			wantMax: 500, // No link bonus
+		},
+		{
+			name: "10G with DOM",
+			score: detection.InterfaceScore{
+				Type:       "fiber",
+				LinkStatus: true,
+				HasDOM:     true,
+				Speed:      10_000_000_000,
+			},
+			wantMin: 1900, // 1000 + 500 (DOM) + 400 (10G) + ...
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := d.CalculateScore(&tt.score)
+
+			if tt.wantSign < 0 && got >= 0 {
+				t.Errorf("CalculateScore() = %d, want negative", got)
+			}
+			if tt.wantSign > 0 && got <= 0 {
+				t.Errorf("CalculateScore() = %d, want positive", got)
+			}
+			if tt.wantMin > 0 && got < tt.wantMin {
+				t.Errorf("CalculateScore() = %d, want >= %d", got, tt.wantMin)
+			}
+			if tt.wantMax > 0 && got > tt.wantMax {
+				t.Errorf("CalculateScore() = %d, want <= %d", got, tt.wantMax)
+			}
+		})
+	}
+}
+
+func TestGenerateFriendlyName(t *testing.T) {
+	d := detection.NewDetector()
+
+	tests := []struct {
+		name  string
+		score detection.InterfaceScore
+		want  string
+	}{
+		{
+			name: "with chipset info",
+			score: detection.InterfaceScore{
+				ChipsetVendor: "Intel",
+				ChipsetModel:  "I225-V",
+			},
+			want: "Intel I225-V",
+		},
+		{
+			name: "ethernet with speed",
+			score: detection.InterfaceScore{
+				Type:         "ethernet",
+				SpeedDisplay: "2.5 Gbps",
+			},
+			want: "2.5 Gbps Ethernet",
+		},
+		{
+			name: "ethernet no speed",
+			score: detection.InterfaceScore{
+				Type: "ethernet",
+			},
+			want: "Ethernet Adapter",
+		},
+		{
+			name: "wifi",
+			score: detection.InterfaceScore{
+				Type: "wifi",
+			},
+			want: "WiFi Adapter",
+		},
+		{
+			name: "fallback to name",
+			score: detection.InterfaceScore{
+				Name: "eth0",
+				Type: "other",
+			},
+			want: "eth0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := d.GenerateFriendlyName(&tt.score)
+			if got != tt.want {
+				t.Errorf("GenerateFriendlyName() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGenerateDescription(t *testing.T) {
+	d := detection.NewDetector()
+
+	tests := []struct {
+		name  string
+		score detection.InterfaceScore
+		want  string
+	}{
+		{
+			name: "full description",
+			score: detection.InterfaceScore{
+				Type:         "ethernet",
+				SpeedDisplay: "1 Gbps",
+				HasTDR:       true,
+			},
+			want: "1 Gbps Ethernet with TDR",
+		},
+		{
+			name: "wifi no TDR",
+			score: detection.InterfaceScore{
+				Type:         "wifi",
+				SpeedDisplay: "WiFi6",
+			},
+			want: "WiFi6 WiFi",
+		},
+		{
+			name:  "no info",
+			score: detection.InterfaceScore{},
+			want:  "Network Interface",
+		},
+		{
+			name: "fiber type",
+			score: detection.InterfaceScore{
+				Type:         "fiber",
+				SpeedDisplay: "10 Gbps",
+			},
+			want: "10 Gbps Fiber",
+		},
+		{
+			name: "speed only no type",
+			score: detection.InterfaceScore{
+				Type:         "other",
+				SpeedDisplay: "5 Gbps",
+			},
+			want: "5 Gbps",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := d.GenerateDescription(&tt.score)
+			if got != tt.want {
+				t.Errorf("GenerateDescription() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGenerateFriendlyNameFiber(t *testing.T) {
+	d := detection.NewDetector()
+
+	score := detection.InterfaceScore{
+		Type: "fiber",
+	}
+
+	got := d.GenerateFriendlyName(&score)
+	if got != "Fiber Adapter" {
+		t.Errorf("GenerateFriendlyName() for fiber = %q, want %q", got, "Fiber Adapter")
+	}
+}
+
+func TestCalculateScoreWifi(t *testing.T) {
+	d := detection.NewDetector()
+
+	score := detection.InterfaceScore{
+		Type:       "wifi",
+		LinkStatus: true,
+		HasIP:      true,
+	}
+
+	got := d.CalculateScore(&score)
+	// 1000 (link) + 500 (IP) + 50 (wifi type bonus) = 1550
+	if got < 1550 {
+		t.Errorf("CalculateScore() for wifi = %d, want >= 1550", got)
+	}
+}
+
+func TestInterfaceScoreStruct(t *testing.T) {
+	// Test that InterfaceScore struct can be created with all fields.
+	score := detection.InterfaceScore{
+		Name:           "eth0",
+		FriendlyName:   "Intel I225-V",
+		Description:    "2.5 Gbps Ethernet",
+		Score:          2500,
+		LinkStatus:     true,
+		Speed:          2_500_000_000,
+		SpeedDisplay:   "2.5 Gbps",
+		ChipsetVendor:  "Intel",
+		ChipsetModel:   "I225-V",
+		ChipsetQuality: 85,
+		HasTDR:         true,
+		HasDOM:         false,
+		Type:           "ethernet",
+		HasIP:          true,
+		Addresses:      []string{"192.168.1.100/24", "fe80::1/64"},
+	}
+
+	// Verify all fields are correctly set.
+	if score.Name != "eth0" {
+		t.Errorf("Name = %q, want eth0", score.Name)
+	}
+	if score.FriendlyName != "Intel I225-V" {
+		t.Errorf("FriendlyName = %q, want Intel I225-V", score.FriendlyName)
+	}
+	if score.Description != "2.5 Gbps Ethernet" {
+		t.Errorf("Description = %q, want 2.5 Gbps Ethernet", score.Description)
+	}
+	if score.Score != 2500 {
+		t.Errorf("Score = %d, want 2500", score.Score)
+	}
+	if !score.LinkStatus {
+		t.Error("LinkStatus should be true")
+	}
+	if score.Speed != 2_500_000_000 {
+		t.Errorf("Speed = %d, want 2500000000", score.Speed)
+	}
+	if score.SpeedDisplay != "2.5 Gbps" {
+		t.Errorf("SpeedDisplay = %q, want 2.5 Gbps", score.SpeedDisplay)
+	}
+	if score.ChipsetVendor != "Intel" {
+		t.Errorf("ChipsetVendor = %q, want Intel", score.ChipsetVendor)
+	}
+	if score.ChipsetModel != "I225-V" {
+		t.Errorf("ChipsetModel = %q, want I225-V", score.ChipsetModel)
+	}
+	if score.ChipsetQuality != 85 {
+		t.Errorf("ChipsetQuality = %d, want 85", score.ChipsetQuality)
+	}
+	if !score.HasTDR {
+		t.Error("HasTDR should be true")
+	}
+	if score.HasDOM {
+		t.Error("HasDOM should be false")
+	}
+	if score.Type != "ethernet" {
+		t.Errorf("Type = %q, want ethernet", score.Type)
+	}
+	if !score.HasIP {
+		t.Error("HasIP should be true")
+	}
+	if len(score.Addresses) != 2 {
+		t.Errorf("Addresses length = %d, want 2", len(score.Addresses))
+	}
+}
+
+func TestDetectTypeAdditionalPrefixes(t *testing.T) {
+	tests := []struct {
+		name     string
+		wantType string
+	}{
+		// Additional wifi prefixes
+		{"ra0", "wifi"},
+		{"ra1", "wifi"},
+		{"wl0", "wifi"},
+
+		// Additional virtual prefixes
+		{"vnet0", "virtual"},
+		{"vnet1", "virtual"},
+
+		// Fiber patterns
+		{"eth0sfp", "fiber"},
+		{"enp3s0xfp", "fiber"},
+
+		// Edge cases
+		{"", "other"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := detection.DetectType(tt.name)
+			if got != tt.wantType {
+				t.Errorf("DetectType(%q) = %q, want %q", tt.name, got, tt.wantType)
+			}
+		})
+	}
+}
+
+func TestHasRoutableAddressEdgeCases(t *testing.T) {
+	tests := []struct {
+		name      string
+		addresses []string
+		want      bool
+	}{
+		{
+			name:      "multicast IPv6",
+			addresses: []string{"ff02::1/64"},
+			want:      false,
+		},
+		{
+			name:      "public IPv4",
+			addresses: []string{"8.8.8.8/32"},
+			want:      true,
+		},
+		{
+			name:      "private IPv4 class A",
+			addresses: []string{"10.0.0.1/8"},
+			want:      true,
+		},
+		{
+			name:      "private IPv4 class B",
+			addresses: []string{"172.16.0.1/12"},
+			want:      true,
+		},
+		{
+			name:      "IPv6 global unicast",
+			addresses: []string{"2001:4860:4860::8888/128"},
+			want:      true,
+		},
+		{
+			name:      "address without CIDR",
+			addresses: []string{"192.168.1.1"},
+			want:      true,
+		},
+		{
+			name:      "IPv6 loopback",
+			addresses: []string{"::1/128"},
+			want:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := detection.HasRoutableAddress(tt.addresses)
+			if got != tt.want {
+				t.Errorf("HasRoutableAddress(%v) = %v, want %v", tt.addresses, got, tt.want)
+			}
+		})
+	}
+}
