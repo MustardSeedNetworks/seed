@@ -11,7 +11,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "../lib/api";
+import { api } from "../api";
 import { LogComponents, logger } from "../lib/logger";
 import type { DefaultSettings } from "../types/defaults";
 

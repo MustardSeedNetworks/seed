@@ -36,7 +36,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "../lib/api";
+import { api } from "../api";
 import { type LogComponent, LogComponents, logger } from "../lib/logger";
 
 /** HTTP methods supported by the hook */

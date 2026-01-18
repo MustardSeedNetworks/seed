@@ -3,7 +3,7 @@ import type React from "react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { usePipelineStatus } from "../../hooks/usePipelineStatus";
-import { api } from "../../lib/api";
+import { api } from "../../api";
 import { LogComponents, logger } from "../../lib/logger";
 import {
   button,

@@ -20,7 +20,7 @@
 import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { api } from "../lib/api";
+import { api } from "../api";
 import { LogComponents, logger } from "../lib/logger";
 import type { DefaultSettings } from "../types/defaults";
 import type {

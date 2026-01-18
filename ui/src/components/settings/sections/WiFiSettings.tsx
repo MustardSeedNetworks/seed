@@ -24,7 +24,7 @@
 import type React from "react";
 import { memo, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "../../../lib/api";
+import { api } from "../../../api";
 import { cn, icon as iconTokens, layout, radius, spacing } from "../../../styles/theme";
 import type { SaveStatus, WiFiSettings as WiFiSettingsType } from "../../../types/settings";
 import { CollapsibleSection } from "../../ui/CollapsibleSection";

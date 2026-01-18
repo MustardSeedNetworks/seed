@@ -18,7 +18,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api } from "../lib/api";
+import { api } from "../api";
 import { LogComponents, logger } from "../lib/logger";
 
 /** Network device from discovery API with display fields */

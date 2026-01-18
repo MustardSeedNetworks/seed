@@ -23,7 +23,7 @@
  */
 
 import { useCallback, useState } from "react";
-import { api } from "../lib/api";
+import { api } from "../api";
 import { LogComponents, logger } from "../lib/logger";
 
 /** Network device discovered by the scanner */

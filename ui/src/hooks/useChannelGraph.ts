@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useState } from "react";
-import { api } from "../lib/api";
+import { api } from "../api";
 
 /** Network data for channel graph visualization */
 export type ChannelGraphNetwork = {

@@ -37,7 +37,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { clearCSRFToken } from "../lib/api";
+import { clearCSRFToken } from "../api";
 import { LogComponents, logger } from "../lib/logger";
 
 /** Internal authentication state */

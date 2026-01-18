@@ -33,7 +33,7 @@ import type React from "react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../../contexts/useSettings";
-import { api } from "../../lib/api";
+import { api } from "../../api";
 import { LogComponents, logger } from "../../lib/logger";
 import { cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
 import { Card, CardDivider, CardRow, CardValue, type Status } from "../ui/Card";

@@ -18,7 +18,7 @@
 
 import { memo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "../../../lib/api";
+import { api } from "../../../api";
 import { button, cn, input, layout, radius } from "../../../styles/theme";
 
 export const VlanControl: React.NamedExoticComponent<Record<string, never>> = memo(

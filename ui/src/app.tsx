@@ -71,7 +71,7 @@ import { useSetupState } from "./hooks/useSetupState";
 import { useSse } from "./hooks/useSse";
 import { useSsePolling } from "./hooks/useSsePolling";
 import { useTheme } from "./hooks/useTheme";
-import { api, setSessionExpiredCallback } from "./lib/api";
+import { api, setSessionExpiredCallback } from "./api";
 import { LogComponents, logger } from "./lib/logger";
 import { cn, layout, radius, section, spacing } from "./styles/theme";
 

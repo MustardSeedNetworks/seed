@@ -24,7 +24,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "../lib/api";
+import { api } from "../api";
 import { LogComponents, logger } from "../lib/logger";
 
 function isFulfilled<T>(result: PromiseSettledResult<T>): result is PromiseFulfilledResult<T> {

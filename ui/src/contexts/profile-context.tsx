@@ -18,7 +18,7 @@
  */
 
 import { createContext, type ReactNode, useCallback, useContext, useRef } from "react";
-import { api } from "../lib/api";
+import { api } from "../api";
 import { LogComponents, logger } from "../lib/logger";
 import { getQueryClient } from "../lib/query-client";
 import {

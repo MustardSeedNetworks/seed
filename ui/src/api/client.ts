@@ -13,7 +13,7 @@
  *
  * Usage:
  * ```typescript
- * import { api } from './lib/api';
+ * import { api } from './api';
  *
  * // GET request
  * const data = await api.get<MyType>('/api/endpoint');

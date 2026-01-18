@@ -25,7 +25,7 @@
  */
 
 import { useCallback, useState } from "react";
-import { api } from "../lib/api";
+import { api } from "../api";
 import { LogComponents, logger } from "../lib/logger";
 import type {
   UpdateActionResponse,

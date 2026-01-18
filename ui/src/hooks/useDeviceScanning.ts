@@ -10,7 +10,7 @@
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { NetworkDiscoveryData } from "../components/cards/NetworkDiscoveryCard";
-import { api } from "../lib/api";
+import { api } from "../api";
 import { LogComponents, logger } from "../lib/logger";
 
 interface UseDeviceScanningProps {
