@@ -32,8 +32,8 @@ func TestNormalizeSPAPath(t *testing.T) {
 	}
 }
 
-// TestIsAPIOrWSRoute tests API and WebSocket route detection.
-func TestIsAPIOrWSRoute(t *testing.T) {
+// TestIsAPIRoute tests API and SSE route detection.
+func TestIsAPIRoute(t *testing.T) {
 	tests := []struct {
 		path     string
 		expected bool
@@ -42,10 +42,8 @@ func TestIsAPIOrWSRoute(t *testing.T) {
 		{"/api/v1/auth/login", true}, // APIVersionPrefix matches
 		{"/api/v1/settings", true},   // APIVersionPrefix matches
 		{"/api/v1/events", true},     // APIBasePath+"/events" for SSE
-		{"/ws", true},
-		{"/ws/", true},
-		{"/api/status", false}, // Doesn't match /api/v1 (missing version)
-		{"/websocket", false},
+		{"/api/v1/sse/", true},       // SSE routes
+		{"/api/status", false},       // Doesn't match /api/v1 (missing version)
 		{"/dashboard", false},
 		{"/", false},
 		{"/index.html", false},
@@ -54,9 +52,9 @@ func TestIsAPIOrWSRoute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.path, func(t *testing.T) {
-			result := api.ExportIsAPIOrWSRoute(tt.path)
+			result := api.ExportIsAPIRoute(tt.path)
 			if result != tt.expected {
-				t.Errorf("IsAPIOrWSRoute(%q) = %v, want %v", tt.path, result, tt.expected)
+				t.Errorf("IsAPIRoute(%q) = %v, want %v", tt.path, result, tt.expected)
 			}
 		})
 	}
@@ -390,15 +388,15 @@ func TestGetAuthenticatedHandler(t *testing.T) {
 	}
 }
 
-// TestServerHub tests the Hub accessor.
-func TestServerHub(t *testing.T) {
+// TestServerSSEHub tests the SSEHub accessor.
+func TestServerSSEHub(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	// Hub might be nil in test server, but accessor should not panic
-	hub := server.Hub()
+	// SSEHub might be nil in test server, but accessor should not panic
+	hub := server.SSEHub()
 	if hub == nil {
-		t.Skip("Hub not initialized in test server")
+		t.Skip("SSEHub not initialized in test server")
 	}
 }
 

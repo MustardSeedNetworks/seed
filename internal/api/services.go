@@ -128,7 +128,6 @@ type RootsServices struct {
 
 // RealTimeServices groups real-time communication services.
 type RealTimeServices struct {
-	WSHub          *Hub                    // WebSocket hub (deprecated)
 	SSEHub         *SSEHub                 // SSE hub for real-time updates
 	LogBroadcaster *logging.LogBroadcaster // Log streaming
 }
@@ -166,9 +165,6 @@ func (sc *ServiceContainer) Stop() {
 	}
 
 	// Stop real-time services
-	if sc.RealTime.WSHub != nil {
-		sc.RealTime.WSHub.Shutdown()
-	}
 	if sc.RealTime.SSEHub != nil {
 		sc.RealTime.SSEHub.Shutdown()
 	}

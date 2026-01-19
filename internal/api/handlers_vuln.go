@@ -108,9 +108,9 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 			}
 		}
 
-		// Broadcast results via WebSocket
+		// Broadcast results via SSE
 		results := s.vulnScanner().GetAllVulnerabilities()
-		s.wsHub().BroadcastCardUpdate("vulnerabilities", map[string]any{
+		s.sseHub().BroadcastCardUpdate("vulnerabilities", map[string]any{
 			"results": results,
 			"count":   len(results),
 		})

@@ -118,9 +118,9 @@ func ExportContainsIgnoreCase(slice []string, target string) bool {
 	return containsIgnoreCase(slice, target)
 }
 
-// ExportIsValidIPOctet exposes isValidIPOctet for testing.
-func ExportIsValidIPOctet(s string) bool {
-	return isValidIPOctet(s)
+// ExportIsValidOctet exposes isValidOctet for testing.
+func ExportIsValidOctet(s string) bool {
+	return isValidOctet(s)
 }
 
 // LogQueryParams is a type alias for logQueryParams for testing.
@@ -261,9 +261,9 @@ func (s *Server) Config() *config.Config {
 	return s.config
 }
 
-// ExportIsAllowedWSOrigin exposes isAllowedWSOrigin for testing.
-func ExportIsAllowedWSOrigin(origin string) bool {
-	return isAllowedWSOrigin(origin)
+// ExportIsAllowedOrigin exposes isAllowedOrigin for testing.
+func ExportIsAllowedOrigin(origin string) bool {
+	return isAllowedOrigin(origin)
 }
 
 // ExportIsRFC1918Origin exposes isRFC1918Origin for testing.
@@ -301,26 +301,6 @@ func ExportIsValidClassBAddress(host string) bool {
 	return isValidClassBAddress(host)
 }
 
-// ExportMatchesAllowedOrigin exposes matchesAllowedOrigin for testing.
-func ExportMatchesAllowedOrigin(origin, allowed string) bool {
-	return matchesAllowedOrigin(origin, allowed)
-}
-
-// ExportMatchesOriginPrefix exposes matchesOriginPrefix for testing.
-func ExportMatchesOriginPrefix(origin, allowed string) bool {
-	return matchesOriginPrefix(origin, allowed)
-}
-
-// ExportFindOctetEnd exposes findOctetEnd for testing.
-func ExportFindOctetEnd(s string) int {
-	return findOctetEnd(s)
-}
-
-// ExportIsValidOctetBoundary exposes isValidOctetBoundary for testing.
-func ExportIsValidOctetBoundary(c byte) bool {
-	return isValidOctetBoundary(c)
-}
-
 // ExportReadLastLines exposes readLastLines for testing.
 func ExportReadLastLines(path string, maxBytes int64, maxLines int) ([]string, error) {
 	return readLastLines(path, maxBytes, maxLines)
@@ -331,19 +311,19 @@ func ExportNormalizeSPAPath(path string) string {
 	return normalizeSPAPath(path)
 }
 
-// ExportIsAPIOrWSRoute exposes isAPIOrWSRoute for testing.
-func ExportIsAPIOrWSRoute(path string) bool {
-	return isAPIOrWSRoute(path)
+// ExportIsAPIRoute exposes isAPIRoute for testing.
+func ExportIsAPIRoute(path string) bool {
+	return isAPIRoute(path)
 }
 
-// SetAllowedOrigins sets the allowed origins for WebSocket connections in testing.
+// SetAllowedOrigins sets the allowed origins for CORS in testing.
 func SetAllowedOrigins(origins []string) {
-	getWSState().setAllowedOrigins(origins)
+	getOriginState().setAllowedOrigins(origins)
 }
 
 // ClearAllowedOrigins clears the allowed origins for testing.
 func ClearAllowedOrigins() {
-	getWSState().setAllowedOrigins(nil)
+	getOriginState().setAllowedOrigins(nil)
 }
 
 // ExportSendJSONResponse exposes sendJSONResponse for testing.
