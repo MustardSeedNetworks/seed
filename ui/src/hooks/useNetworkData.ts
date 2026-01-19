@@ -223,7 +223,7 @@ export function useNetworkData(options: UseNetworkDataOptions = {}): {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch network data';
       setError(message);
-      logger.error(LogComponents.Network, 'Failed to refresh network data', err, {
+      logger.error(LogComponents.NETWORK, 'Failed to refresh network data', err, {
         endpoints: [
           '/api/v1/sap/link',
           '/api/v1/interfaces',
@@ -251,7 +251,7 @@ export function useNetworkData(options: UseNetworkDataOptions = {}): {
       setNetworkData((prev) => ({ ...prev, linkStatus: data }));
       return data;
     } catch (err) {
-      logger.error(LogComponents.Network, 'Failed to refresh link status', err, {
+      logger.error(LogComponents.NETWORK, 'Failed to refresh link status', err, {
         endpoint: '/api/v1/sap/link',
       });
       return null;

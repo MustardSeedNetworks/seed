@@ -184,12 +184,12 @@ function applyInterfaceRestoration(
   // Set active interface on backend (prefer ethernet if both exist)
   if (restoration.restoredEthernet) {
     changeInterface(restoration.savedEthernetName).catch((err: unknown) => {
-      logger.error(LogComponents.Network, 'Failed to change interface', { error: err });
+      logger.error(LogComponents.NETWORK, 'Failed to change interface', { error: err });
     });
     setActiveMode('ethernet');
   } else if (restoration.restoredWifi) {
     changeInterface(restoration.savedWifiName).catch((err: unknown) => {
-      logger.error(LogComponents.Network, 'Failed to change interface', { error: err });
+      logger.error(LogComponents.NETWORK, 'Failed to change interface', { error: err });
     });
     setActiveMode('wifi');
   }
@@ -280,12 +280,12 @@ function App(): JSX.Element {
       prevActiveProfileRef.current !== null &&
       prevActiveProfileRef.current !== currentProfileId
     ) {
-      logger.info(LogComponents.Config, 'Profile changed, refreshing settings', {
+      logger.info(LogComponents.CONFIG, 'Profile changed, refreshing settings', {
         from: prevActiveProfileRef.current,
         to: currentProfileId,
       });
       refreshSettings().catch((err: unknown) => {
-        logger.error(LogComponents.Config, 'Failed to refresh settings', { error: err });
+        logger.error(LogComponents.CONFIG, 'Failed to refresh settings', { error: err });
       });
     }
     prevActiveProfileRef.current = currentProfileId;
@@ -489,7 +489,7 @@ function App(): JSX.Element {
           });
         }
       } catch (err) {
-        logger.error(LogComponents.Network, 'Failed to change interface', err);
+        logger.error(LogComponents.NETWORK, 'Failed to change interface', err);
       }
     },
     [
@@ -574,12 +574,12 @@ function App(): JSX.Element {
 
     // Log restoration if applicable
     if (restoration.restoredEthernet) {
-      logger.info(LogComponents.Config, 'Restoring ethernet interface from profile', {
+      logger.info(LogComponents.CONFIG, 'Restoring ethernet interface from profile', {
         interface: restoration.savedEthernetName,
       });
     }
     if (restoration.restoredWifi) {
-      logger.info(LogComponents.Config, 'Restoring WiFi interface from profile', {
+      logger.info(LogComponents.CONFIG, 'Restoring WiFi interface from profile', {
         interface: restoration.savedWifiName,
       });
     }
@@ -659,7 +659,7 @@ function App(): JSX.Element {
       // Trigger network discovery if enabled
       if (runOpts.runNetworkDiscovery) {
         triggerDeviceScan().catch((err: unknown) => {
-          logger.error(LogComponents.Network, 'Failed to trigger device scan', { error: err });
+          logger.error(LogComponents.NETWORK, 'Failed to trigger device scan', { error: err });
         });
       }
 
@@ -785,7 +785,7 @@ function App(): JSX.Element {
         /* handled */
       });
       fetchChannelGraphData().catch((err: unknown) => {
-        logger.error(LogComponents.Network, 'Failed to fetch channel graph data', { error: err });
+        logger.error(LogComponents.NETWORK, 'Failed to fetch channel graph data', { error: err });
       });
       setLoading(false);
     }, 0);
@@ -838,7 +838,7 @@ function App(): JSX.Element {
       // Small delay to let other data load first
       const timer = setTimeout(() => {
         triggerDeviceScan().catch((err: unknown) => {
-          logger.error(LogComponents.Network, 'Failed to trigger device scan', { error: err });
+          logger.error(LogComponents.NETWORK, 'Failed to trigger device scan', { error: err });
         });
       }, 2000);
       return () => clearTimeout(timer);

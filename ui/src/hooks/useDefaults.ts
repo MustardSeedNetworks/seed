@@ -95,7 +95,7 @@ export function useDefaults(): UseDefaultsResult {
         setIsLoading(false);
       }
     } catch (err) {
-      logger.warn(LogComponents.Config, 'Failed to fetch defaults from backend', err);
+      logger.warn(LogComponents.CONFIG, 'Failed to fetch defaults from backend', err);
       if (isMountedRef.current) {
         setError(err instanceof Error ? err : new Error(String(err)));
         // Don't set fallback - let caller handle missing defaults

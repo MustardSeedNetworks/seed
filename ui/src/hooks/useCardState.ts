@@ -259,7 +259,7 @@ export function useCardState({
                   if (linkUp && !initialAutoRunDoneRef.current) {
                     initialAutoRunDoneRef.current = true;
                     logger.info(
-                      LogComponents.Network,
+                      LogComponents.NETWORK,
                       'Link up on initial load, triggering auto-run tests',
                     );
                     // Track timeout for cleanup on unmount (fixes #851)
@@ -343,7 +343,7 @@ export function useCardState({
 
       // Trigger auto-run when link transitions from down to up
       if (newLinkUp && wasDown) {
-        logger.info(LogComponents.Network, 'Link up detected, triggering auto-run tests');
+        logger.info(LogComponents.NETWORK, 'Link up detected, triggering auto-run tests');
         // Small delay to let link stabilize before running tests
         // Track timeout for cleanup on unmount (fixes #851)
         const timeoutId = setTimeout(() => {

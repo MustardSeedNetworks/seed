@@ -261,7 +261,7 @@ export function useHealthChecks(): {
     try {
       return await api.get<TestsSettings>('/api/v1/sap/health-checks/settings');
     } catch (err) {
-      logger.error(LogComponents.Config, 'Failed to fetch test settings', err, {
+      logger.error(LogComponents.CONFIG, 'Failed to fetch test settings', err, {
         endpoint: '/api/v1/sap/health-checks/settings',
       });
       return null;
@@ -276,7 +276,7 @@ export function useHealthChecks(): {
       await api.put('/api/v1/sap/health-checks/settings', settings);
       return true;
     } catch (err) {
-      logger.error(LogComponents.Config, 'Failed to update test settings', err, {
+      logger.error(LogComponents.CONFIG, 'Failed to update test settings', err, {
         endpoint: '/api/v1/sap/health-checks/settings',
         updates: settings,
       });

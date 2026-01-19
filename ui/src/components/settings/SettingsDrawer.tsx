@@ -433,7 +433,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         }
       }
     } catch (err) {
-      logger.error(LogComponents.Config, 'Failed to fetch thresholds', err);
+      logger.error(LogComponents.CONFIG, 'Failed to fetch thresholds', err);
     }
   }, []);
 
@@ -455,7 +455,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         setDnsInput((data.dns || []).join(', '));
       }
     } catch (err) {
-      logger.error(LogComponents.Config, 'Failed to fetch IP settings', err);
+      logger.error(LogComponents.CONFIG, 'Failed to fetch IP settings', err);
     }
   }, []);
 
@@ -506,7 +506,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         });
       }
     } catch (err) {
-      logger.error(LogComponents.Config, 'Failed to fetch tests settings', err);
+      logger.error(LogComponents.CONFIG, 'Failed to fetch tests settings', err);
     }
   }, []);
 
@@ -632,7 +632,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         });
       }
     } catch (err) {
-      logger.error(LogComponents.Config, 'Failed to fetch SNMP settings', err);
+      logger.error(LogComponents.CONFIG, 'Failed to fetch SNMP settings', err);
     }
   }, []);
 
@@ -652,7 +652,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         });
       }
     } catch (err) {
-      logger.error(LogComponents.Config, 'Failed to fetch link settings', err);
+      logger.error(LogComponents.CONFIG, 'Failed to fetch link settings', err);
     }
   }, []);
 
@@ -669,7 +669,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         });
       }
     } catch (err) {
-      logger.error(LogComponents.Config, 'Failed to fetch cable test settings', err);
+      logger.error(LogComponents.CONFIG, 'Failed to fetch cable test settings', err);
     }
   }, []);
 
@@ -879,7 +879,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         });
       }
     } catch (err) {
-      logger.error(LogComponents.Config, 'Failed to fetch vulnerability settings', err);
+      logger.error(LogComponents.CONFIG, 'Failed to fetch vulnerability settings', err);
     }
   }, []);
 
