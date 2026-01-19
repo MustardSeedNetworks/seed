@@ -2,7 +2,7 @@
   "name": "seed",
   "version": "0.165.34",
   "private": true,
-  "description": "The Seed - Mustard Seed Networks",
+  "description": "The Seed - Network Diagnostics - Mustard Seed Networks",
   "type": "module",
   "engines": {
     "node": ">=25.2.1",
@@ -10,29 +10,30 @@
   },
   "scripts": {
     "prepare": "husky",
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write --no-errors-on-unmatched .",
-    "format": "biome format --write .",
-    "test": "vitest",
-    "security:scan": "npm audit && npx trufflehog filesystem . --fail",
-    "release:patch": "npm version patch && git push --follow-tags"
+    "dev": "cd ui && npm run dev",
+    "build": "cd ui && npm run build",
+    "preview": "cd ui && npm run preview",
+    "lint": "cd ui && npm run lint",
+    "lint:fix": "cd ui && npm run lint:fix",
+    "format": "cd ui && npm run format",
+    "test": "cd ui && npm run test",
+    "test:watch": "cd ui && npm run test:watch",
+    "test:coverage": "cd ui && npm run test:coverage",
+    "test:e2e": "cd ui && npm run test:e2e",
+    "storybook": "cd ui && npm run storybook",
+    "build-storybook": "cd ui && npm run build-storybook"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.3.11",
-    "@commitlint/cli": "^20.2.0",
-    "@commitlint/config-conventional": "^20.2.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.7",
-    "vite": "^7.3.0"
+    "@commitlint/cli": "20.2.0",
+    "@commitlint/config-conventional": "20.2.0",
+    "husky": "9.1.7",
+    "lint-staged": "16.2.7"
   },
   "lint-staged": {
-    "*.{js,ts,tsx,md,json,css}": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
+    "ui/src/**/*.{ts,tsx}": "cd ui && npx biome check --write",
+    "*.{json,md,yml,yaml}": "cd ui && npx biome format --write"
   },
   "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
+    "extends": ["@commitlint/config-conventional"]
   }
 }

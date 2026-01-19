@@ -25,7 +25,7 @@ import type { SwitchData, VlanData } from '../components/cards/SwitchCard';
 import type { WiFiData } from '../components/cards/WiFiCard';
 import { LogComponents, logger } from '../lib/logger';
 import type { PipelineEvent, PipelineEventType } from './usePipelineStatus';
-import type { SseCardUpdate as CardUpdate, SseMessage as Message } from './useSSE';
+import type { SseCardUpdate as CardUpdate, SseMessage as Message } from './useSse';
 
 // Pipeline event types for routing WebSocket messages
 const PIPELINE_EVENT_TYPES: PipelineEventType[] = [
