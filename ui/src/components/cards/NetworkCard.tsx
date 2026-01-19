@@ -20,14 +20,14 @@
  * insight into network layer 3 configuration and DHCP performance.
  */
 
-import type React from "react";
-import { useCallback, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { formatTime, isValidNumber } from "../../lib/format";
-import { border, cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
-import { CardDivider, CardRow, CardValue, type Status } from "../ui/Card";
-import { Network } from "../ui/Icons";
-import { SimpleBaseCard } from "./BaseCard";
+import type React from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatTime, isValidNumber } from '../../lib/format';
+import { border, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
+import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
+import { Network } from '../ui/Icons';
+import { SimpleBaseCard } from './BaseCard';
 
 /**
  * DHCP timing information for each phase of address assignment
@@ -57,8 +57,8 @@ export interface Ipv4Info {
 export interface Ipv6Info {
   address: string; // IPv6 address
   prefix: number; // Prefix length (0-128)
-  scope: "global" | "link-local" | "unique-local"; // Address scope
-  source: "slaac" | "dhcpv6" | "static" | "temporary"; // How address was configured
+  scope: 'global' | 'link-local' | 'unique-local'; // Address scope
+  source: 'slaac' | 'dhcpv6' | 'static' | 'temporary'; // How address was configured
 }
 
 /**
@@ -66,7 +66,7 @@ export interface Ipv6Info {
  */
 export interface DhcpData {
   mac: string; // MAC address of interface
-  mode: "dhcp" | "static" | "auto"; // Address assignment mode
+  mode: 'dhcp' | 'static' | 'auto'; // Address assignment mode
   ipv4: Ipv4Info | null; // IPv4 configuration (or null if not configured)
   ipv6: Ipv6Info[]; // Array of IPv6 addresses
   dns: string[]; // DNS servers in use
@@ -110,15 +110,15 @@ function getTimingStatus(
   thresholds: { warning: number; critical: number },
 ): Status {
   if (!isValidNumber(value)) {
-    return "unknown";
+    return 'unknown';
   }
   if (value >= thresholds.critical) {
-    return "error";
+    return 'error';
   }
   if (value >= thresholds.warning) {
-    return "warning";
+    return 'warning';
   }
-  return "success";
+  return 'success';
 }
 
 function formatLeaseTime(seconds: number): string {
@@ -154,19 +154,19 @@ function formatLeaseTime(seconds: number): string {
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: IPv6 compression algorithm requires multiple steps
 function compressIpv6(address: string): string {
   // Already compressed or not a valid IPv6
-  if (address.includes("::") || !address.includes(":")) {
+  if (address.includes('::') || !address.includes(':')) {
     return address;
   }
 
   // Split into groups and find longest run of zeros
-  const groups = address.split(":");
+  const groups = address.split(':');
   let longestStart = -1;
   let longestLength = 0;
   let currentStart = -1;
   let currentLength = 0;
 
   for (const [i, group] of groups.entries()) {
-    if (group === "0" || group === "0000") {
+    if (group === '0' || group === '0000') {
       if (currentStart === -1) {
         currentStart = i;
       }
@@ -188,23 +188,23 @@ function compressIpv6(address: string): string {
   // Only compress if we have at least 2 consecutive zero groups
   if (longestLength < 2) {
     // Just remove leading zeros from each group
-    return groups.map((g) => g.replace(/^0+/, "") || "0").join(":");
+    return groups.map((g) => g.replace(/^0+/, '') || '0').join(':');
   }
 
   // Build compressed address
-  const before = groups.slice(0, longestStart).map((g) => g.replace(/^0+/, "") || "0");
-  const after = groups.slice(longestStart + longestLength).map((g) => g.replace(/^0+/, "") || "0");
+  const before = groups.slice(0, longestStart).map((g) => g.replace(/^0+/, '') || '0');
+  const after = groups.slice(longestStart + longestLength).map((g) => g.replace(/^0+/, '') || '0');
 
   if (before.length === 0 && after.length === 0) {
-    return "::";
+    return '::';
   }
   if (before.length === 0) {
-    return `::${after.join(":")}`;
+    return `::${after.join(':')}`;
   }
   if (after.length === 0) {
-    return `${before.join(":")}::`;
+    return `${before.join(':')}::`;
   }
-  return `${before.join(":")}::${after.join(":")}`;
+  return `${before.join(':')}::${after.join(':')}`;
 }
 
 /**
@@ -217,12 +217,12 @@ function getFallbackIpDisplay(
   tr: (key: string) => string,
 ): string {
   if (loading) {
-    return tc("status.loading");
+    return tc('status.loading');
   }
   if (hasData) {
-    return tr("network.noIp");
+    return tr('network.noIp');
   }
-  return tr("network.noData");
+  return tr('network.noData');
 }
 
 /**
@@ -236,8 +236,8 @@ export function NetworkCard({
   showPublicIp = true,
   thresholds,
 }: DhcpCardProps): React.ReactElement {
-  const { t: tr } = useTranslation("cards");
-  const { t: tc } = useTranslation("common");
+  const { t: tr } = useTranslation('cards');
+  const { t: tc } = useTranslation('common');
 
   const defaultThresholds = {
     total: { warning: 500, critical: 2000 },
@@ -253,17 +253,17 @@ export function NetworkCard({
   const timing = data?.timing ?? null;
   const hasIpv4 = ipv4 !== null;
   const hasIpv6 = ipv6List.length > 0;
-  const globalIpv6 = ipv6List.filter((ip) => ip.scope === "global");
+  const globalIpv6 = ipv6List.filter((ip) => ip.scope === 'global');
 
   const getScopeLabel = useCallback(
-    (scope: Ipv6Info["scope"]): string => {
+    (scope: Ipv6Info['scope']): string => {
       switch (scope) {
-        case "global":
-          return tr("network.global");
-        case "link-local":
-          return tr("network.linkLocal");
-        case "unique-local":
-          return tr("network.ula");
+        case 'global':
+          return tr('network.global');
+        case 'link-local':
+          return tr('network.linkLocal');
+        case 'unique-local':
+          return tr('network.ula');
         default:
           return scope;
       }
@@ -272,7 +272,7 @@ export function NetworkCard({
   );
 
   const groupedIpv6 = useMemo(() => {
-    const order: Ipv6Info["scope"][] = ["global", "unique-local", "link-local"];
+    const order: Ipv6Info['scope'][] = ['global', 'unique-local', 'link-local'];
     return order
       .map((scope) => ({
         scope,
@@ -285,15 +285,15 @@ export function NetworkCard({
   // Determine overall status using priority: error > warning > success
   const getOverallStatus = (): Status => {
     if (loading) {
-      return "loading";
+      return 'loading';
     }
     if (!hasData) {
-      return "unknown";
+      return 'unknown';
     }
 
     // No IP at all is a warning (might be in progress)
     if (!hasIpv4 && globalIpv6.length === 0) {
-      return "warning";
+      return 'warning';
     }
 
     // If we have timing data, check for errors/warnings
@@ -307,18 +307,18 @@ export function NetworkCard({
       ];
 
       // Any error = card is error
-      if (timingStatuses.some((s) => s === "error")) {
-        return "error";
+      if (timingStatuses.some((s) => s === 'error')) {
+        return 'error';
       }
 
       // Any warning = card is warning
-      if (timingStatuses.some((s) => s === "warning")) {
-        return "warning";
+      if (timingStatuses.some((s) => s === 'warning')) {
+        return 'warning';
       }
     }
 
     // All good
-    return "success";
+    return 'success';
   };
 
   const status: Status = getOverallStatus();
@@ -326,11 +326,11 @@ export function NetworkCard({
   // Primary display value
   const primaryIpRaw =
     ipv4?.address || globalIpv6[0]?.address || getFallbackIpDisplay(loading, hasData, tc, tr);
-  const primaryIp = primaryIpRaw?.includes(":") ? compressIpv6(primaryIpRaw) : primaryIpRaw;
+  const primaryIp = primaryIpRaw?.includes(':') ? compressIpv6(primaryIpRaw) : primaryIpRaw;
 
   return (
     <SimpleBaseCard
-      title={tr("network.title")}
+      title={tr('network.title')}
       icon={<Network class={iconTokens.size.md} />}
       status={status}
       loading={loading}
@@ -339,30 +339,30 @@ export function NetworkCard({
 
       <CardDivider />
 
-      {!hasData && <CardValue value={tr("network.noDataAvailable")} size="md" />}
+      {!hasData && <CardValue value={tr('network.noDataAvailable')} size="md" />}
 
       {hasData ? (
         <>
           {/* MAC Address */}
-          <CardRow label={tr("network.mac")} value={data?.mac} />
-          <CardRow label={tr("network.mode")} value={data?.mode.toUpperCase()} />
+          <CardRow label={tr('network.mac')} value={data?.mac} />
+          <CardRow label={tr('network.mode')} value={data?.mode.toUpperCase()} />
 
           {/* IPv4 Section */}
           {hasIpv4 && ipv4 ? (
             <>
               <CardDivider />
-              <p class={cn("caption font-medium", spacing.margin.bottom.tight)}>
-                {tr("network.ipv4")}
+              <p class={cn('caption font-medium', spacing.margin.bottom.tight)}>
+                {tr('network.ipv4')}
               </p>
               <CardRow
-                label={tr("network.address")}
+                label={tr('network.address')}
                 value={`${ipv4.address}/${ipv4.subnet}`}
                 wrap={true}
                 mono={true}
               />
               {ipv4.gateway ? (
                 <CardRow
-                  label={tr("network.gateway")}
+                  label={tr('network.gateway')}
                   value={ipv4.gateway}
                   wrap={true}
                   mono={true}
@@ -370,14 +370,14 @@ export function NetworkCard({
               ) : null}
               {ipv4.dhcpServer ? (
                 <CardRow
-                  label={tr("network.dhcpServer")}
+                  label={tr('network.dhcpServer')}
                   value={ipv4.dhcpServer}
                   wrap={true}
                   mono={true}
                 />
               ) : null}
               {ipv4.leaseTime ? (
-                <CardRow label={tr("network.lease")} value={formatLeaseTime(ipv4.leaseTime)} />
+                <CardRow label={tr('network.lease')} value={formatLeaseTime(ipv4.leaseTime)} />
               ) : null}
             </>
           ) : null}
@@ -386,8 +386,8 @@ export function NetworkCard({
           {hasIpv6 ? (
             <>
               <CardDivider />
-              <p class={cn("caption font-medium", spacing.margin.bottom.tight)}>
-                {tr("network.ipv6")}
+              <p class={cn('caption font-medium', spacing.margin.bottom.tight)}>
+                {tr('network.ipv6')}
               </p>
               <div class="stack-sm">
                 {groupedIpv6.map((group) => (
@@ -398,12 +398,12 @@ export function NetworkCard({
                     {group.entries.map((ip) => (
                       <CardRow
                         key={`${ip.address}-${ip.prefix}`}
-                        label={tr("network.address")}
+                        label={tr('network.address')}
                         value={`${compressIpv6(ip.address)}/${ip.prefix}`}
                         wrap={true}
                         mono={true}
                         align="right"
-                        status={ip.scope === "global" ? "success" : undefined}
+                        status={ip.scope === 'global' ? 'success' : undefined}
                       />
                     ))}
                   </div>
@@ -417,55 +417,55 @@ export function NetworkCard({
             <>
               <CardDivider />
               <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
-                <p class="caption font-medium">{tr("network.dhcpTiming")}</p>
+                <p class="caption font-medium">{tr('network.dhcpTiming')}</p>
                 {showTiming ? (
                   <button
                     type="button"
                     class={cn(
-                      "caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary",
+                      'caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary',
                       spacing.actionBtn,
                       radius.default,
                     )}
                     onClick={(): void => setShowTiming(false)}
                     aria-expanded="true"
                   >
-                    {tc("buttons.hide")}
+                    {tc('buttons.hide')}
                   </button>
                 ) : (
                   <button
                     type="button"
                     class={cn(
-                      "caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary",
+                      'caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary',
                       spacing.actionBtn,
                       radius.default,
                     )}
                     onClick={(): void => setShowTiming(true)}
                     aria-expanded="false"
                   >
-                    {tc("buttons.show")}
+                    {tc('buttons.show')}
                   </button>
                 )}
               </div>
               {showTiming ? (
                 <div class="stack-xs">
                   <CardRow
-                    label={tr("network.discoverOffer")}
+                    label={tr('network.discoverOffer')}
                     value={formatTime(timing.discover)}
                     status={getTimingStatus(timing.discover, th.perPhase)}
                   />
                   <CardRow
-                    label={tr("network.offerRequest")}
+                    label={tr('network.offerRequest')}
                     value={formatTime(timing.offer)}
                     status={getTimingStatus(timing.offer, th.perPhase)}
                   />
                   <CardRow
-                    label={tr("network.requestAck")}
+                    label={tr('network.requestAck')}
                     value={formatTime(timing.request)}
                     status={getTimingStatus(timing.request, th.perPhase)}
                   />
                   <div class={cn(spacing.padding.top.tight, border.divider)}>
                     <CardRow
-                      label={tr("network.total")}
+                      label={tr('network.total')}
                       value={formatTime(timing.total)}
                       status={getTimingStatus(timing.total, th.total)}
                     />
@@ -478,7 +478,7 @@ export function NetworkCard({
           {hasData && !timing ? (
             <>
               <CardDivider />
-              <p class="caption">{tr("network.notRecorded")}</p>
+              <p class="caption">{tr('network.notRecorded')}</p>
             </>
           ) : null}
 
@@ -486,13 +486,13 @@ export function NetworkCard({
           {showPublicIp && publicIp && (publicIp.ipv4 || publicIp.ipv6) ? (
             <>
               <CardDivider />
-              <p class={cn("caption font-medium", spacing.margin.bottom.tight)}>
-                {tr("network.publicIp")}
+              <p class={cn('caption font-medium', spacing.margin.bottom.tight)}>
+                {tr('network.publicIp')}
               </p>
-              {publicIp.ipv4 ? <CardRow label={tr("network.ipv4")} value={publicIp.ipv4} /> : null}
+              {publicIp.ipv4 ? <CardRow label={tr('network.ipv4')} value={publicIp.ipv4} /> : null}
               {publicIp.ipv6 ? (
                 <CardRow
-                  label={tr("network.ipv6")}
+                  label={tr('network.ipv6')}
                   value={compressIpv6(publicIp.ipv6)}
                   wrap={true}
                   mono={true}
@@ -500,7 +500,7 @@ export function NetworkCard({
                 />
               ) : null}
               {publicIp.error ? (
-                <p class={cn("caption text-status-error", spacing.margin.top.tight)}>
+                <p class={cn('caption text-status-error', spacing.margin.top.tight)}>
                   {publicIp.error}
                 </p>
               ) : null}

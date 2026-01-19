@@ -15,18 +15,18 @@
  * Dependencies: CollapsibleSection, AutoSaveIndicator, theme utilities
  */
 
-import type React from "react";
-import { memo } from "react";
-import { useTranslation } from "react-i18next";
-import { cn, icon as iconTokens, layout, radius, spacing } from "../../../styles/theme";
+import type React from 'react';
+import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import type {
   CardSettings,
   LinkSettings as LinkSettingsType,
   SaveStatus,
-} from "../../../types/settings";
-import { CollapsibleSection } from "../../ui/CollapsibleSection";
-import { PlugZap } from "../../ui/Icons";
-import { AutoSaveIndicator } from "./AutoSaveIndicator";
+} from '../../../types/settings';
+import { CollapsibleSection } from '../../ui/CollapsibleSection';
+import { PlugZap } from '../../ui/Icons';
+import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 interface LinkSettingsProps {
   linkSettings: LinkSettingsType;
@@ -42,22 +42,22 @@ interface LinkSettingsProps {
 // Format: "speed/duplex" (e.g., "10/half", "100/full", "1000/full")
 // Note: Half duplex only available at 10/100 Mbps per IEEE standards
 const LINK_MODE_OPTIONS: { value: string; label: string }[] = [
-  { value: "auto", label: "Auto-Negotiate" },
+  { value: 'auto', label: 'Auto-Negotiate' },
   // 10 Mbps - supports half and full duplex
-  { value: "10/half", label: "10 Mbps Half Duplex" },
-  { value: "10/full", label: "10 Mbps Full Duplex" },
+  { value: '10/half', label: '10 Mbps Half Duplex' },
+  { value: '10/full', label: '10 Mbps Full Duplex' },
   // 100 Mbps - supports half and full duplex
-  { value: "100/half", label: "100 Mbps Half Duplex" },
-  { value: "100/full", label: "100 Mbps Full Duplex" },
+  { value: '100/half', label: '100 Mbps Half Duplex' },
+  { value: '100/full', label: '100 Mbps Full Duplex' },
   // 1 Gbps+ - full duplex only (IEEE 802.3)
-  { value: "1000/full", label: "1 Gbps Full Duplex" },
-  { value: "2500/full", label: "2.5 Gbps Full Duplex" },
-  { value: "5000/full", label: "5 Gbps Full Duplex" },
-  { value: "10000/full", label: "10 Gbps Full Duplex" },
+  { value: '1000/full', label: '1 Gbps Full Duplex' },
+  { value: '2500/full', label: '2.5 Gbps Full Duplex' },
+  { value: '5000/full', label: '5 Gbps Full Duplex' },
+  { value: '10000/full', label: '10 Gbps Full Duplex' },
   // Fiber speeds
-  { value: "25000/full", label: "25 Gbps Full Duplex" },
-  { value: "40000/full", label: "40 Gbps Full Duplex" },
-  { value: "100000/full", label: "100 Gbps Full Duplex" },
+  { value: '25000/full', label: '25 Gbps Full Duplex' },
+  { value: '40000/full', label: '40 Gbps Full Duplex' },
+  { value: '100000/full', label: '100 Gbps Full Duplex' },
 ];
 
 /**
@@ -72,7 +72,7 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
     cardSettings,
     updateCardSettings,
   }: LinkSettingsProps): React.ReactElement {
-    const { t } = useTranslation("settings");
+    const { t } = useTranslation('settings');
 
     // Handle mode change
     const handleModeChange = (mode: string): void => {
@@ -83,14 +83,14 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
     };
 
     // Check if current mode is manual (not auto)
-    const isManualMode = linkSettings.mode !== "auto";
+    const isManualMode = linkSettings.mode !== 'auto';
 
     return (
       <CollapsibleSection
         title={
           <div class={layout.inline.default}>
             <PlugZap class={iconTokens.size.sm} />
-            <span>{t("sections.link", "Link")}</span>
+            <span>{t('sections.link', 'Link')}</span>
             <AutoSaveIndicator status={linkStatus} />
           </div>
         }
@@ -103,17 +103,17 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
               class={cn(
                 layout.flex.between,
                 spacing.pad.sm,
-                "bg-surface-base",
+                'bg-surface-base',
                 radius.default,
-                "border border-surface-border",
+                'border border-surface-border',
               )}
             >
               <div>
                 <span class="body-small text-text-primary font-medium">
-                  {t("common.showCard", "Show Card")}
+                  {t('common.showCard', 'Show Card')}
                 </span>
                 <p class="caption text-text-muted">
-                  {t("common.showCardDesc", "Display this card on the dashboard")}
+                  {t('common.showCardDesc', 'Display this card on the dashboard')}
                 </p>
               </div>
               <input
@@ -131,17 +131,17 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
               class={cn(
                 layout.flex.between,
                 spacing.pad.sm,
-                "bg-surface-base",
+                'bg-surface-base',
                 radius.default,
-                "border border-surface-border",
+                'border border-surface-border',
               )}
             >
               <div>
                 <span class="body-small text-text-primary font-medium">
-                  {t("common.runOnFab", "Include in Run All")}
+                  {t('common.runOnFab', 'Include in Run All')}
                 </span>
                 <p class="caption text-text-muted">
-                  {t("common.runOnFabDesc", "Run when FAB button is clicked")}
+                  {t('common.runOnFabDesc', 'Run when FAB button is clicked')}
                 </p>
               </div>
               <input
@@ -160,7 +160,7 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
           {/* Combined Speed/Duplex Dropdown */}
           <div>
             <label class="caption text-text-muted font-medium" for="link-mode">
-              {t("link.speedDuplex", "Speed / Duplex")}
+              {t('link.speedDuplex', 'Speed / Duplex')}
             </label>
             <select
               id="link-mode"
@@ -169,12 +169,12 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
                 handleModeChange(e.target.value)
               }
               class={cn(
-                "w-full",
+                'w-full',
                 spacing.margin.top.tight,
                 spacing.chip.lg,
-                "bg-surface-base border border-surface-border",
+                'bg-surface-base border border-surface-border',
                 radius.default,
-                "body-small text-text-primary",
+                'body-small text-text-primary',
               )}
             >
               {LINK_MODE_OPTIONS.map((option) => (
@@ -187,29 +187,29 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
 
           {/* Warning for manual settings */}
           {isManualMode ? (
-            <p class={cn("caption text-status-warning", spacing.margin.top.inline)}>
+            <p class={cn('caption text-status-warning', spacing.margin.top.inline)}>
               {t(
-                "link.manualWarning",
-                "Manual speed/duplex may cause link issues if mismatched with switch",
+                'link.manualWarning',
+                'Manual speed/duplex may cause link issues if mismatched with switch',
               )}
             </p>
           ) : null}
 
           {/* Available Modes Display */}
           {linkSettings.availableModes.length > 0 ? (
-            <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+            <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
               <span class="caption text-text-muted font-medium">
-                {t("link.availableModes", "Supported Modes")}
+                {t('link.availableModes', 'Supported Modes')}
               </span>
-              <div class={cn("flex flex-wrap", spacing.gap.tight, spacing.margin.top.inline)}>
+              <div class={cn('flex flex-wrap', spacing.gap.tight, spacing.margin.top.inline)}>
                 {linkSettings.availableModes.map((mode) => (
                   <span
                     key={mode}
                     class={cn(
                       spacing.chip.sm,
-                      "bg-surface-base border border-surface-border",
+                      'bg-surface-base border border-surface-border',
                       radius.default,
-                      "caption text-text-muted",
+                      'caption text-text-muted',
                     )}
                   >
                     {mode}
@@ -219,8 +219,8 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
             </div>
           ) : null}
 
-          <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
-            {t("link.requiresRoot", "Changing link settings requires root privileges")}
+          <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
+            {t('link.requiresRoot', 'Changing link settings requires root privileges')}
           </p>
         </div>
       </CollapsibleSection>

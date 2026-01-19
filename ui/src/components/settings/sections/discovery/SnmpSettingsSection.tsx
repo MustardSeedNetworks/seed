@@ -1,10 +1,10 @@
-import type React from "react";
-import { memo, useCallback, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { cn, input as inputTokens, layout, radius, spacing } from "../../../../styles/theme";
-import type { SaveStatus, SnmpSettings, SnmpV3Credential } from "../../../../types/settings";
-import { generateId } from "../../../../utils/id";
-import { AutoSaveIndicator } from "../AutoSaveIndicator";
+import type React from 'react';
+import { memo, useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { cn, input as inputTokens, layout, radius, spacing } from '../../../../styles/theme';
+import type { SaveStatus, SnmpSettings, SnmpV3Credential } from '../../../../types/settings';
+import { generateId } from '../../../../utils/id';
+import { AutoSaveIndicator } from '../AutoSaveIndicator';
 
 interface SnmpSettingsSectionProps {
   snmpSettings: SnmpSettings;
@@ -13,9 +13,9 @@ interface SnmpSettingsSectionProps {
 }
 
 // SNMP protocol values
-const AUTH_PROTOCOL_VALUES: string[] = ["", "MD5", "SHA", "SHA224", "SHA256", "SHA384", "SHA512"];
-const PRIV_PROTOCOL_VALUES: string[] = ["", "DES", "AES", "AES192", "AES256", "AES192C", "AES256C"];
-const SECURITY_LEVEL_VALUES = ["noAuthNoPriv", "authNoPriv", "authPriv"] as const;
+const AUTH_PROTOCOL_VALUES: string[] = ['', 'MD5', 'SHA', 'SHA224', 'SHA256', 'SHA384', 'SHA512'];
+const PRIV_PROTOCOL_VALUES: string[] = ['', 'DES', 'AES', 'AES192', 'AES256', 'AES192C', 'AES256C'];
+const SECURITY_LEVEL_VALUES = ['noAuthNoPriv', 'authNoPriv', 'authPriv'] as const;
 
 /**
  * SNMP configuration section within Discovery Settings.
@@ -27,15 +27,15 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
     setSnmpSettings,
     snmpStatus,
   }: SnmpSettingsSectionProps): React.ReactElement {
-    const { t } = useTranslation("settings");
-    const [newCommunity, setNewCommunity] = useState("");
+    const { t } = useTranslation('settings');
+    const [newCommunity, setNewCommunity] = useState('');
     const [expandedCredential, setExpandedCredential] = useState<string | null>(null);
 
     // Get translated label for auth protocol
     const getAuthProtocolLabel = useCallback(
       (value: string): string => {
-        if (value === "") {
-          return t("snmp.noAuth");
+        if (value === '') {
+          return t('snmp.noAuth');
         }
         return value;
       },
@@ -45,8 +45,8 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
     // Get translated label for privacy protocol
     const getPrivProtocolLabel = useCallback(
       (value: string): string => {
-        if (value === "") {
-          return t("snmp.noPrivacy");
+        if (value === '') {
+          return t('snmp.noPrivacy');
         }
         return value;
       },
@@ -57,12 +57,12 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
     const getSecurityLevelLabel = useCallback(
       (value: string): string => {
         switch (value) {
-          case "noAuthNoPriv":
-            return t("snmp.noAuthNoPriv");
-          case "authNoPriv":
-            return t("snmp.authNoPriv");
-          case "authPriv":
-            return t("snmp.authPriv");
+          case 'noAuthNoPriv':
+            return t('snmp.noAuthNoPriv');
+          case 'authNoPriv':
+            return t('snmp.authNoPriv');
+          case 'authPriv':
+            return t('snmp.authPriv');
           default:
             return value;
         }
@@ -71,18 +71,18 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
     );
 
     const addCommunity = useCallback((): void => {
-      if (newCommunity.trim() === "") {
+      if (newCommunity.trim() === '') {
         return;
       }
       if (snmpSettings.communities.includes(newCommunity.trim())) {
-        setNewCommunity("");
+        setNewCommunity('');
         return;
       }
       setSnmpSettings((prev) => ({
         ...prev,
         communities: [...prev.communities, newCommunity.trim()],
       }));
-      setNewCommunity("");
+      setNewCommunity('');
     }, [newCommunity, setSnmpSettings, snmpSettings.communities]);
 
     const removeCommunity = useCallback(
@@ -98,20 +98,20 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
     const addV3Credential = useCallback((): void => {
       const newCred: SnmpV3Credential = {
         id: generateId(),
-        name: t("snmp.newCredential"),
-        username: "",
-        authProtocol: "",
-        authPassword: "",
-        privProtocol: "",
-        privPassword: "",
-        contextName: "",
-        securityLevel: "noAuthNoPriv",
+        name: t('snmp.newCredential'),
+        username: '',
+        authProtocol: '',
+        authPassword: '',
+        privProtocol: '',
+        privPassword: '',
+        contextName: '',
+        securityLevel: 'noAuthNoPriv',
       };
       setSnmpSettings((prev) => ({
         ...prev,
         v3Credentials: [...prev.v3Credentials, newCred],
       }));
-      setExpandedCredential(newCred.id ?? "");
+      setExpandedCredential(newCred.id ?? '');
     }, [setSnmpSettings, t]);
 
     const removeV3Credential = useCallback(
@@ -140,20 +140,20 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
     );
 
     return (
-      <div class={cn("border-t border-surface-border", spacing.pad.sm)}>
+      <div class={cn('border-t border-surface-border', spacing.pad.sm)}>
         <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
           <span class="body-small text-text-primary font-medium">
-            {t("sections.snmp")} <AutoSaveIndicator status={snmpStatus} />
+            {t('sections.snmp')} <AutoSaveIndicator status={snmpStatus} />
           </span>
         </div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-          {t("snmp.description", "Configure SNMP credentials for enhanced device discovery")}
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+          {t('snmp.description', 'Configure SNMP credentials for enhanced device discovery')}
         </p>
 
         {/* SNMP Port */}
         <div class={spacing.margin.bottom.inline}>
           <label class="caption text-text-muted" for="snmp-port">
-            {t("snmp.port")}
+            {t('snmp.port')}
           </label>
           <input
             id="snmp-port"
@@ -172,7 +172,7 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
               inputTokens.state.default,
               inputTokens.size.md,
               spacing.margin.top.tight,
-              "body-small",
+              'body-small',
             )}
           />
         </div>
@@ -180,7 +180,7 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
         {/* Timeout */}
         <div class={spacing.margin.bottom.inline}>
           <label class="caption text-text-muted" for="snmp-timeout">
-            {t("snmp.timeout")}
+            {t('snmp.timeout')}
           </label>
           <input
             id="snmp-timeout"
@@ -200,7 +200,7 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
               inputTokens.state.default,
               inputTokens.size.md,
               spacing.margin.top.tight,
-              "body-small",
+              'body-small',
             )}
           />
         </div>
@@ -208,25 +208,25 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
         {/* Community Strings (v1/v2c) */}
         <div
           class={cn(
-            "border-t border-surface-border",
+            'border-t border-surface-border',
             spacing.padding.top.heading,
             spacing.margin.top.inline,
           )}
         >
-          <div class={cn("flex items-center justify-between", spacing.margin.bottom.inline)}>
-            <span class="caption text-text-muted font-medium">{t("snmp.communityStrings")}</span>
+          <div class={cn('flex items-center justify-between', spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t('snmp.communityStrings')}</span>
             <button
               type="button"
               onClick={addCommunity}
               class="caption text-brand-primary hover:text-brand-accent"
               aria-label="Add community string"
             >
-              {t("common.add")}
+              {t('common.add')}
             </button>
           </div>
-          <div class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}>
+          <div class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}>
             <label class="sr-only" for="snmp-community-new">
-              {t("snmp.communityString")}
+              {t('snmp.communityString')}
             </label>
             <input
               id="snmp-community-new"
@@ -236,23 +236,23 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
                 setNewCommunity(e.target.value)
               }
               onKeyDown={(e: React.KeyboardEvent): void => {
-                if (e.key === "Enter") {
+                if (e.key === 'Enter') {
                   addCommunity();
                 }
               }}
-              placeholder={t("snmp.communityString")}
+              placeholder={t('snmp.communityString')}
               class={cn(
                 inputTokens.base,
                 inputTokens.state.default,
                 inputTokens.size.md,
-                "flex-1 caption",
+                'flex-1 caption',
               )}
             />
           </div>
           {snmpSettings.communities.map((community) => (
             <div
               key={community}
-              class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+              class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
             >
               <input
                 aria-label={`Community string ${community}`}
@@ -263,31 +263,31 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
                   inputTokens.base,
                   inputTokens.state.default,
                   inputTokens.size.md,
-                  "flex-1 bg-surface-hover caption",
+                  'flex-1 bg-surface-hover caption',
                 )}
               />
               <button
                 type="button"
                 onClick={(): void => removeCommunity(community)}
-                class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
-                aria-label={t("common.remove")}
+                class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                aria-label={t('common.remove')}
               >
-                {t("common.remove")}
+                {t('common.remove')}
               </button>
             </div>
           ))}
         </div>
 
         {/* SNMPv3 Credentials */}
-        <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
-          <div class={cn("flex items-center justify-between", spacing.margin.bottom.inline)}>
-            <span class="caption text-text-muted font-medium">{t("snmp.v3Credentials")}</span>
+        <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+          <div class={cn('flex items-center justify-between', spacing.margin.bottom.inline)}>
+            <span class="caption text-text-muted font-medium">{t('snmp.v3Credentials')}</span>
             <button
               type="button"
               onClick={addV3Credential}
               class="caption text-brand-primary hover:text-brand-accent"
             >
-              {t("common.add")}
+              {t('common.add')}
             </button>
           </div>
           {snmpSettings.v3Credentials.map((cred) => (
@@ -295,56 +295,56 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
               key={cred.id}
               class={cn(
                 spacing.margin.bottom.inline,
-                "border border-surface-border",
+                'border border-surface-border',
                 radius.default,
-                "overflow-hidden",
+                'overflow-hidden',
               )}
             >
               {/* biome-ignore lint/a11y/useSemanticElements: Accordion header pattern with nested interactive elements */}
               <div
                 class={cn(
-                  "flex items-center justify-between",
+                  'flex items-center justify-between',
                   spacing.pad.xs,
-                  "bg-surface-base cursor-pointer hover:bg-surface-hover",
+                  'bg-surface-base cursor-pointer hover:bg-surface-hover',
                 )}
                 onClick={(): void =>
-                  setExpandedCredential(expandedCredential === cred.id ? null : (cred.id ?? ""))
+                  setExpandedCredential(expandedCredential === cred.id ? null : (cred.id ?? ''))
                 }
                 onKeyDown={(e: React.KeyboardEvent): void => {
-                  if (e.key === "Enter" || e.key === " ") {
+                  if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    setExpandedCredential(expandedCredential === cred.id ? null : (cred.id ?? ""));
+                    setExpandedCredential(expandedCredential === cred.id ? null : (cred.id ?? ''));
                   }
                 }}
                 role="button"
                 tabIndex={0}
               >
                 <span class="body-small text-text-primary">
-                  {cred.name || t("snmp.unnamedCredential")}
+                  {cred.name || t('snmp.unnamedCredential')}
                 </span>
-                <div class={cn("flex items-center", spacing.gap.compact)}>
+                <div class={cn('flex items-center', spacing.gap.compact)}>
                   <span class="caption text-text-muted">
-                    {cred.username || t("snmp.noUsername")}
+                    {cred.username || t('snmp.noUsername')}
                   </span>
                   <button
                     type="button"
                     onClick={(e: React.MouseEvent): void => {
                       e.stopPropagation();
-                      removeV3Credential(cred.id ?? "");
+                      removeV3Credential(cred.id ?? '');
                     }}
-                    class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
-                    aria-label={t("common.remove")}
+                    class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                    aria-label={t('common.remove')}
                   >
-                    {t("common.remove")}
+                    {t('common.remove')}
                   </button>
                 </div>
               </div>
               {expandedCredential === cred.id && (
-                <div class={cn(spacing.pad.sm, "bg-surface-hover stack-sm")}>
+                <div class={cn(spacing.pad.sm, 'bg-surface-hover stack-sm')}>
                   {/* Name */}
                   <div>
                     <label class="caption text-text-muted" for={`cred-name-${cred.id}`}>
-                      {t("common.name")}
+                      {t('common.name')}
                     </label>
                     <input
                       id={`cred-name-${cred.id}`}
@@ -352,14 +352,14 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
                       value={cred.name}
                       onChange={(
                         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                      ): void => updateV3Credential(cred.id ?? "", "name", e.target.value)}
-                      placeholder={t("snmp.credentialName")}
+                      ): void => updateV3Credential(cred.id ?? '', 'name', e.target.value)}
+                      placeholder={t('snmp.credentialName')}
                       class={cn(
                         inputTokens.base,
                         inputTokens.state.default,
                         inputTokens.size.sm,
                         spacing.margin.top.tight,
-                        "caption",
+                        'caption',
                       )}
                     />
                   </div>
@@ -367,7 +367,7 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
                   {/* Username */}
                   <div>
                     <label class="caption text-text-muted" for={`cred-username-${cred.id}`}>
-                      {t("snmp.username")}
+                      {t('snmp.username')}
                     </label>
                     <input
                       id={`cred-username-${cred.id}`}
@@ -375,14 +375,14 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
                       value={cred.username}
                       onChange={(
                         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                      ): void => updateV3Credential(cred.id ?? "", "username", e.target.value)}
-                      placeholder={t("snmp.snmpv3Username")}
+                      ): void => updateV3Credential(cred.id ?? '', 'username', e.target.value)}
+                      placeholder={t('snmp.snmpv3Username')}
                       class={cn(
                         inputTokens.base,
                         inputTokens.state.default,
                         inputTokens.size.sm,
                         spacing.margin.top.tight,
-                        "caption",
+                        'caption',
                       )}
                     />
                   </div>
@@ -390,20 +390,20 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
                   {/* Security Level */}
                   <div>
                     <label class="caption text-text-muted" for={`sec-level-${cred.id}`}>
-                      {t("snmp.securityLevel")}
+                      {t('snmp.securityLevel')}
                     </label>
                     <select
                       id={`sec-level-${cred.id}`}
                       value={cred.securityLevel}
                       onChange={(
                         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                      ): void => updateV3Credential(cred.id ?? "", "securityLevel", e.target.value)}
+                      ): void => updateV3Credential(cred.id ?? '', 'securityLevel', e.target.value)}
                       class={cn(
                         inputTokens.base,
                         inputTokens.state.default,
                         inputTokens.size.sm,
                         spacing.margin.top.tight,
-                        "caption",
+                        'caption',
                       )}
                     >
                       {SECURITY_LEVEL_VALUES.map((value) => (
@@ -417,20 +417,20 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
                   {/* Authentication Protocol */}
                   <div>
                     <label class="caption text-text-muted" for={`auth-proto-${cred.id}`}>
-                      {t("snmp.authProtocol")}
+                      {t('snmp.authProtocol')}
                     </label>
                     <select
                       id={`auth-proto-${cred.id}`}
                       value={cred.authProtocol}
                       onChange={(
                         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                      ): void => updateV3Credential(cred.id ?? "", "authProtocol", e.target.value)}
+                      ): void => updateV3Credential(cred.id ?? '', 'authProtocol', e.target.value)}
                       class={cn(
                         inputTokens.base,
                         inputTokens.state.default,
                         inputTokens.size.sm,
                         spacing.margin.top.tight,
-                        "caption",
+                        'caption',
                       )}
                     >
                       {AUTH_PROTOCOL_VALUES.map((value) => (
@@ -442,10 +442,10 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
                   </div>
 
                   {/* Authentication Password */}
-                  {cred.authProtocol !== "" && (
+                  {cred.authProtocol !== '' && (
                     <div>
                       <label class="caption text-text-muted" for={`auth-pass-${cred.id}`}>
-                        {t("snmp.authPassword")}
+                        {t('snmp.authPassword')}
                       </label>
                       <input
                         id={`auth-pass-${cred.id}`}
@@ -454,15 +454,15 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
                         onChange={(
                           e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
                         ): void =>
-                          updateV3Credential(cred.id ?? "", "authPassword", e.target.value)
+                          updateV3Credential(cred.id ?? '', 'authPassword', e.target.value)
                         }
-                        placeholder={t("snmp.authPasswordPlaceholder")}
+                        placeholder={t('snmp.authPasswordPlaceholder')}
                         class={cn(
                           inputTokens.base,
                           inputTokens.state.default,
                           inputTokens.size.sm,
                           spacing.margin.top.tight,
-                          "caption",
+                          'caption',
                         )}
                       />
                     </div>
@@ -471,20 +471,20 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
                   {/* Privacy Protocol */}
                   <div>
                     <label class="caption text-text-muted" for={`priv-proto-${cred.id}`}>
-                      {t("snmp.privProtocol")}
+                      {t('snmp.privProtocol')}
                     </label>
                     <select
                       id={`priv-proto-${cred.id}`}
                       value={cred.privProtocol}
                       onChange={(
                         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                      ): void => updateV3Credential(cred.id ?? "", "privProtocol", e.target.value)}
+                      ): void => updateV3Credential(cred.id ?? '', 'privProtocol', e.target.value)}
                       class={cn(
                         inputTokens.base,
                         inputTokens.state.default,
                         inputTokens.size.sm,
                         spacing.margin.top.tight,
-                        "caption",
+                        'caption',
                       )}
                     >
                       {PRIV_PROTOCOL_VALUES.map((value) => (
@@ -496,10 +496,10 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
                   </div>
 
                   {/* Privacy Password */}
-                  {cred.privProtocol !== "" && (
+                  {cred.privProtocol !== '' && (
                     <div>
                       <label class="caption text-text-muted" for={`priv-pass-${cred.id}`}>
-                        {t("snmp.privPassword")}
+                        {t('snmp.privPassword')}
                       </label>
                       <input
                         id={`priv-pass-${cred.id}`}
@@ -508,15 +508,15 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
                         onChange={(
                           e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
                         ): void =>
-                          updateV3Credential(cred.id ?? "", "privPassword", e.target.value)
+                          updateV3Credential(cred.id ?? '', 'privPassword', e.target.value)
                         }
-                        placeholder={t("snmp.privPasswordPlaceholder")}
+                        placeholder={t('snmp.privPasswordPlaceholder')}
                         class={cn(
                           inputTokens.base,
                           inputTokens.state.default,
                           inputTokens.size.sm,
                           spacing.margin.top.tight,
-                          "caption",
+                          'caption',
                         )}
                       />
                     </div>
@@ -525,7 +525,7 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
                   {/* Context Name */}
                   <div>
                     <label class="caption text-text-muted" for={`context-name-${cred.id}`}>
-                      {t("snmp.contextName")}
+                      {t('snmp.contextName')}
                     </label>
                     <input
                       id={`context-name-${cred.id}`}
@@ -533,14 +533,14 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
                       value={cred.contextName}
                       onChange={(
                         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                      ): void => updateV3Credential(cred.id ?? "", "contextName", e.target.value)}
-                      placeholder={t("snmp.snmpContext")}
+                      ): void => updateV3Credential(cred.id ?? '', 'contextName', e.target.value)}
+                      placeholder={t('snmp.snmpContext')}
                       class={cn(
                         inputTokens.base,
                         inputTokens.state.default,
                         inputTokens.size.sm,
                         spacing.margin.top.tight,
-                        "caption",
+                        'caption',
                       )}
                     />
                   </div>

@@ -11,35 +11,35 @@
  * - Error: Shows "Error" with error color
  */
 
-import type { Meta, StoryFn, StoryObj } from "@storybook/react-vite";
-import type React from "react";
-import { cn, radius, spacing } from "../../../styles/theme";
-import { AutoSaveIndicator } from "./AutoSaveIndicator";
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type React from 'react';
+import { cn, radius, spacing } from '../../../styles/theme';
+import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 const meta: Meta<typeof AutoSaveIndicator> = {
-  title: "Settings/AutoSaveIndicator",
+  title: 'Settings/AutoSaveIndicator',
   component: AutoSaveIndicator,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "Small inline indicator showing the auto-save status of settings changes. Hidden when idle, displays status messages with color-coded feedback.",
+          'Small inline indicator showing the auto-save status of settings changes. Hidden when idle, displays status messages with color-coded feedback.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     status: {
-      control: "select",
-      options: ["idle", "saving", "saved", "error"],
-      description: "Current save status",
+      control: 'select',
+      options: ['idle', 'saving', 'saved', 'error'],
+      description: 'Current save status',
     },
   },
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class={cn(spacing.pad.default, "bg-surface-base")}>
-        <div class={cn("flex items-center", spacing.gap.compact)}>
+      <div class={cn(spacing.pad.default, 'bg-surface-base')}>
+        <div class={cn('flex items-center', spacing.gap.compact)}>
           <span class="body-small font-medium">Setting Name</span>
           <StoryComponent />
         </div>
@@ -56,7 +56,7 @@ type Story = StoryObj<typeof meta>;
  */
 export const Idle: Story = {
   args: {
-    status: "idle",
+    status: 'idle',
   },
 };
 
@@ -65,7 +65,7 @@ export const Idle: Story = {
  */
 export const Saving: Story = {
   args: {
-    status: "saving",
+    status: 'saving',
   },
 };
 
@@ -74,7 +74,7 @@ export const Saving: Story = {
  */
 export const Saved: Story = {
   args: {
-    status: "saved",
+    status: 'saved',
   },
 };
 
@@ -83,7 +83,7 @@ export const Saved: Story = {
  */
 export const ErrorState: Story = {
   args: {
-    status: "error",
+    status: 'error',
   },
 };
 
@@ -92,20 +92,20 @@ export const ErrorState: Story = {
  */
 export const AllStates: Story = {
   render: () => (
-    <div class={cn("stack", spacing.pad.default, "bg-surface-base")}>
-      <div class={cn("flex items-center", spacing.gap.compact)}>
+    <div class={cn('stack', spacing.pad.default, 'bg-surface-base')}>
+      <div class={cn('flex items-center', spacing.gap.compact)}>
         <span class="body-small">Idle (hidden):</span>
         <AutoSaveIndicator status="idle" />
       </div>
-      <div class={cn("flex items-center", spacing.gap.compact)}>
+      <div class={cn('flex items-center', spacing.gap.compact)}>
         <span class="body-small">Saving:</span>
         <AutoSaveIndicator status="saving" />
       </div>
-      <div class={cn("flex items-center", spacing.gap.compact)}>
+      <div class={cn('flex items-center', spacing.gap.compact)}>
         <span class="body-small">Saved:</span>
         <AutoSaveIndicator status="saved" />
       </div>
-      <div class={cn("flex items-center", spacing.gap.compact)}>
+      <div class={cn('flex items-center', spacing.gap.compact)}>
         <span class="body-small">Error:</span>
         <AutoSaveIndicator status="error" />
       </div>
@@ -118,17 +118,17 @@ export const AllStates: Story = {
  */
 export const InContext: Story = {
   render: () => (
-    <div class={cn("w-[400px]", spacing.pad.default, "bg-surface-raised")}>
+    <div class={cn('w-[400px]', spacing.pad.default, 'bg-surface-raised')}>
       <div class="stack">
         <label
           class={cn(
-            "flex items-center justify-between",
+            'flex items-center justify-between',
             spacing.pad.sm,
-            "bg-surface-base border border-surface-border",
+            'bg-surface-base border border-surface-border',
             radius.lg,
           )}
         >
-          <div class={cn("flex items-center", spacing.gap.compact)}>
+          <div class={cn('flex items-center', spacing.gap.compact)}>
             <span class="body-small text-text-primary font-medium">Enable Feature</span>
             <AutoSaveIndicator status="saved" />
           </div>
@@ -136,13 +136,13 @@ export const InContext: Story = {
         </label>
         <label
           class={cn(
-            "flex items-center justify-between",
+            'flex items-center justify-between',
             spacing.pad.sm,
-            "bg-surface-base border border-surface-border",
+            'bg-surface-base border border-surface-border',
             radius.lg,
           )}
         >
-          <div class={cn("flex items-center", spacing.gap.compact)}>
+          <div class={cn('flex items-center', spacing.gap.compact)}>
             <span class="body-small text-text-primary font-medium">Auto-refresh</span>
             <AutoSaveIndicator status="saving" />
           </div>
@@ -150,13 +150,13 @@ export const InContext: Story = {
         </label>
         <label
           class={cn(
-            "flex items-center justify-between",
+            'flex items-center justify-between',
             spacing.pad.sm,
-            "bg-surface-base border border-surface-border",
+            'bg-surface-base border border-surface-border',
             radius.lg,
           )}
         >
-          <div class={cn("flex items-center", spacing.gap.compact)}>
+          <div class={cn('flex items-center', spacing.gap.compact)}>
             <span class="body-small text-text-primary font-medium">Failed Setting</span>
             <AutoSaveIndicator status="error" />
           </div>

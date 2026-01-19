@@ -29,8 +29,8 @@
  * dismiss after the specified duration.
  */
 
-import type React from "react";
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import type React from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import {
   cn,
   icon as iconTokens,
@@ -38,9 +38,9 @@ import {
   radius,
   spacing,
   toast as toastTokens,
-} from "../../styles/theme";
-import { icons, typeStyles } from "./Toast.constants.tsx";
-import { ToastContext, type ToastType } from "./toast-context";
+} from '../../styles/theme';
+import { icons, typeStyles } from './Toast.constants.tsx';
+import { ToastContext, type ToastType } from './toast-context';
 
 /**
  * Individual toast notification
@@ -66,7 +66,7 @@ interface ToastProviderProps {
 export function ToastProvider({ children }: ToastProviderProps): React.JSX.Element {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = useCallback((message: string, type: ToastType = "info", duration = 5000) => {
+  const addToast = useCallback((message: string, type: ToastType = 'info', duration = 5000) => {
     const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     setToasts((prev) => [...prev, { id, message, type, duration }]);
   }, []);
@@ -96,7 +96,7 @@ function _toastContainer({ toasts, removeToast }: ToastContainerProps): React.JS
       role="region"
       aria-live="polite"
       aria-label="Notifications"
-      class={cn("fixed bottom-20 right-4 z-50 max-w-sm", layout.stack.default)}
+      class={cn('fixed bottom-20 right-4 z-50 max-w-sm', layout.stack.default)}
     >
       {toasts.map((toast) => (
         <toastItem key={toast.id} toast={toast} onClose={handleClose.bind(null, toast.id)} />
@@ -139,7 +139,7 @@ function _toastItem({ toast, onClose }: ToastItemProps): React.JSX.Element {
         onClick={onClose}
         class={cn(
           spacing.iconBtn.sm,
-          "hover:bg-surface-hover/50 focus:outline-none focus:ring-2 focus:ring-surface-border",
+          'hover:bg-surface-hover/50 focus:outline-none focus:ring-2 focus:ring-surface-border',
           radius.default,
         )}
         aria-label="Dismiss notification"

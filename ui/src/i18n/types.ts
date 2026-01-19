@@ -17,14 +17,14 @@
  * ```
  */
 
-import type enCards from "@locales/en/cards.json";
-import type enCommon from "@locales/en/common.json";
-import type enErrors from "@locales/en/errors.json";
-import type enGlossary from "@locales/en/glossary.json";
-import type enHelp from "@locales/en/help.json";
-import type enSettings from "@locales/en/settings.json";
-import type enSetup from "@locales/en/setup.json";
-import type enSurvey from "@locales/en/survey.json";
+import type enCards from '@locales/en/cards.json';
+import type enCommon from '@locales/en/common.json';
+import type enErrors from '@locales/en/errors.json';
+import type enGlossary from '@locales/en/glossary.json';
+import type enHelp from '@locales/en/help.json';
+import type enSettings from '@locales/en/settings.json';
+import type enSetup from '@locales/en/setup.json';
+import type enSurvey from '@locales/en/survey.json';
 
 /**
  * Type definitions for each namespace.
@@ -56,12 +56,12 @@ export interface Translations {
  * Helper type to get nested keys from an object type.
  * Example: NestedKeys<{a: {b: string}}> = 'a.b'
  */
-type NestedKeys<T, Prefix extends string = ""> = T extends object
+type NestedKeys<T, Prefix extends string = ''> = T extends object
   ? {
       [K in keyof T]: K extends string
         ? T[K] extends object
-          ? NestedKeys<T[K], Prefix extends "" ? K : `${Prefix}.${K}`>
-          : Prefix extends ""
+          ? NestedKeys<T[K], Prefix extends '' ? K : `${Prefix}.${K}`>
+          : Prefix extends ''
             ? K
             : `${Prefix}.${K}`
         : never;
@@ -84,10 +84,10 @@ export type SurveyKeys = NestedKeys<SurveyTranslations>;
  * Declaration merging for react-i18next.
  * This enables autocomplete for translation keys.
  */
-declare module "i18next" {
+declare module 'i18next' {
   interface CustomTypeOptions {
     // biome-ignore lint/style/useNamingConvention: i18next API
-    defaultNS: "common";
+    defaultNS: 'common';
     resources: Translations;
   }
 }

@@ -23,18 +23,18 @@
  * ```
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "../api";
-import { LogComponents, logger } from "../lib/logger";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { api } from '../api';
+import { LogComponents, logger } from '../lib/logger';
 
 function isFulfilled<T>(result: PromiseSettledResult<T>): result is PromiseFulfilledResult<T> {
-  return result.status === "fulfilled";
+  return result.status === 'fulfilled';
 }
 
 /** Network interface link status */
 export interface LinkStatus {
   interface: string;
-  state: "up" | "down" | "unknown";
+  state: 'up' | 'down' | 'unknown';
   speed: number;
   duplex: string;
   mtu: number;
@@ -61,7 +61,7 @@ export interface GatewayInfo {
 export interface DnsResult {
   server: string;
   responseTime: number;
-  status: "success" | "timeout" | "error";
+  status: 'success' | 'timeout' | 'error';
   resolvedIp?: string;
 }
 
@@ -86,14 +86,14 @@ export interface PublicIpInfo {
 
 /** System health status */
 export interface SystemHealth {
-  status: "healthy" | "degraded" | "unhealthy";
+  status: 'healthy' | 'degraded' | 'unhealthy';
   uptime: number;
   cpuUsage: number;
   memoryUsage: number;
   diskUsage: number;
   services: Array<{
     name: string;
-    status: "running" | "stopped" | "error";
+    status: 'running' | 'stopped' | 'error';
   }>;
 }
 
@@ -152,7 +152,7 @@ export function useNetworkData(options: UseNetworkDataOptions = {}): {
   const [networkData, setNetworkData] = useState<NetworkData>({
     linkStatus: null,
     interfaces: [],
-    currentInterface: "",
+    currentInterface: '',
     ipConfig: null,
     gateway: null,
     dnsResults: [],
@@ -175,16 +175,16 @@ export function useNetworkData(options: UseNetworkDataOptions = {}): {
     try {
       // Fetch all data in parallel for efficiency
       const promises = [
-        api.get<LinkStatus>("/api/v1/sap/link"),
-        api.get<{ interfaces: string[] }>("/api/v1/interfaces"),
-        api.get<{ interface: string }>("/api/v1/interface"),
-        api.get<IpConfig>("/api/v1/sap/ipconfig"),
-        api.get<GatewayInfo>("/api/v1/sap/gateway"),
-        api.get<{ results: DnsResult[] }>("/api/v1/sap/dns"),
-        api.get<{ vlans: VlanInfo[] }>("/api/v1/sap/vlan"),
-        api.get<PublicIpInfo>("/api/v1/sap/publicip"),
-        api.get<SystemHealth>("/api/v1/sap/system/health"),
-        api.get<{ neighbors: DiscoveryNeighbor[] }>("/api/v1/shell/discovery"),
+        api.get<LinkStatus>('/api/v1/sap/link'),
+        api.get<{ interfaces: string[] }>('/api/v1/interfaces'),
+        api.get<{ interface: string }>('/api/v1/interface'),
+        api.get<IpConfig>('/api/v1/sap/ipconfig'),
+        api.get<GatewayInfo>('/api/v1/sap/gateway'),
+        api.get<{ results: DnsResult[] }>('/api/v1/sap/dns'),
+        api.get<{ vlans: VlanInfo[] }>('/api/v1/sap/vlan'),
+        api.get<PublicIpInfo>('/api/v1/sap/publicip'),
+        api.get<SystemHealth>('/api/v1/sap/system/health'),
+        api.get<{ neighbors: DiscoveryNeighbor[] }>('/api/v1/shell/discovery'),
       ] as const;
 
       const [
@@ -209,8 +209,8 @@ export function useNetworkData(options: UseNetworkDataOptions = {}): {
             : [],
         currentInterface:
           isFulfilled(currentInterfaceRes) && currentInterfaceRes.value
-            ? currentInterfaceRes.value.interface || ""
-            : "",
+            ? currentInterfaceRes.value.interface || ''
+            : '',
         ipConfig: isFulfilled(ipConfigRes) ? ipConfigRes.value : null,
         gateway: isFulfilled(gatewayRes) ? gatewayRes.value : null,
         dnsResults: isFulfilled(dnsRes) && dnsRes.value ? dnsRes.value.results || [] : [],
@@ -221,20 +221,20 @@ export function useNetworkData(options: UseNetworkDataOptions = {}): {
           isFulfilled(discoveryRes) && discoveryRes.value ? discoveryRes.value.neighbors || [] : [],
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to fetch network data";
+      const message = err instanceof Error ? err.message : 'Failed to fetch network data';
       setError(message);
-      logger.error(LogComponents.Network, "Failed to refresh network data", err, {
+      logger.error(LogComponents.Network, 'Failed to refresh network data', err, {
         endpoints: [
-          "/api/v1/sap/link",
-          "/api/v1/interfaces",
-          "/api/v1/interface",
-          "/api/v1/sap/ipconfig",
-          "/api/v1/sap/gateway",
-          "/api/v1/sap/dns",
-          "/api/v1/sap/vlan",
-          "/api/v1/sap/publicip",
-          "/api/v1/sap/system/health",
-          "/api/v1/shell/discovery",
+          '/api/v1/sap/link',
+          '/api/v1/interfaces',
+          '/api/v1/interface',
+          '/api/v1/sap/ipconfig',
+          '/api/v1/sap/gateway',
+          '/api/v1/sap/dns',
+          '/api/v1/sap/vlan',
+          '/api/v1/sap/publicip',
+          '/api/v1/sap/system/health',
+          '/api/v1/shell/discovery',
         ],
       });
     } finally {
@@ -247,12 +247,12 @@ export function useNetworkData(options: UseNetworkDataOptions = {}): {
    */
   const refreshLinkStatus = useCallback(async (): Promise<LinkStatus | null> => {
     try {
-      const data = await api.get<LinkStatus>("/api/v1/sap/link");
+      const data = await api.get<LinkStatus>('/api/v1/sap/link');
       setNetworkData((prev) => ({ ...prev, linkStatus: data }));
       return data;
     } catch (err) {
-      logger.error(LogComponents.Network, "Failed to refresh link status", err, {
-        endpoint: "/api/v1/sap/link",
+      logger.error(LogComponents.Network, 'Failed to refresh link status', err, {
+        endpoint: '/api/v1/sap/link',
       });
       return null;
     }
@@ -263,12 +263,12 @@ export function useNetworkData(options: UseNetworkDataOptions = {}): {
    */
   const refreshGateway = useCallback(async (): Promise<GatewayInfo | null> => {
     try {
-      const data = await api.get<GatewayInfo>("/api/v1/sap/gateway");
+      const data = await api.get<GatewayInfo>('/api/v1/sap/gateway');
       setNetworkData((prev) => ({ ...prev, gateway: data }));
       return data;
     } catch (err) {
-      logger.error(LogComponents.Gateway, "Failed to refresh gateway", err, {
-        endpoint: "/api/v1/sap/gateway",
+      logger.error(LogComponents.Gateway, 'Failed to refresh gateway', err, {
+        endpoint: '/api/v1/sap/gateway',
       });
       return null;
     }
@@ -279,12 +279,12 @@ export function useNetworkData(options: UseNetworkDataOptions = {}): {
    */
   const refreshPublicIp = useCallback(async (): Promise<PublicIpInfo | null> => {
     try {
-      const data = await api.post<PublicIpInfo>("/api/v1/sap/publicip");
+      const data = await api.post<PublicIpInfo>('/api/v1/sap/publicip');
       setNetworkData((prev) => ({ ...prev, publicIp: data }));
       return data;
     } catch (err) {
-      logger.error(LogComponents.Publicip, "Failed to refresh public IP", err, {
-        endpoint: "/api/v1/sap/publicip",
+      logger.error(LogComponents.Publicip, 'Failed to refresh public IP', err, {
+        endpoint: '/api/v1/sap/publicip',
       });
       return null;
     }

@@ -22,16 +22,16 @@
  * Exported Types: ToastType ('success' | 'error' | 'warning' | 'info')
  */
 
-import type { JSX } from "react";
-import { icon } from "../../styles/theme";
+import type { JSX } from 'react';
+import { icon } from '../../styles/theme';
 
-export type ToastType = "success" | "error" | "warning" | "info";
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 export const typeStyles: Record<ToastType, string> = {
-  success: "bg-status-success text-text-inverse",
-  error: "bg-status-error text-text-inverse",
-  warning: "bg-status-warning text-text-inverse",
-  info: "bg-brand-primary text-text-inverse",
+  success: 'bg-status-success text-text-inverse',
+  error: 'bg-status-error text-text-inverse',
+  warning: 'bg-status-warning text-text-inverse',
+  info: 'bg-brand-primary text-text-inverse',
 };
 
 // Icon size for toast notifications

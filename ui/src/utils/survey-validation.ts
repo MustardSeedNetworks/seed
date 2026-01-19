@@ -35,7 +35,7 @@ import type {
   Survey,
   SurveyValidation,
   ThroughputSample,
-} from "../hooks/useSurvey";
+} from '../hooks/useSurvey';
 
 /**
  * Extract metric value from a sample based on the criterion
@@ -45,7 +45,7 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
   const data = sample.sampleData;
 
   // Handle passive samples (array of networks)
-  if ("networks" in data && Array.isArray(data.networks)) {
+  if ('networks' in data && Array.isArray(data.networks)) {
     const networks = data.networks as ScannedNetwork[];
     if (networks.length === 0) {
       return null;
@@ -55,7 +55,7 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
     const sortedNetworks = [...networks].sort((a, b) => b.rssi - a.rssi);
 
     switch (criterion.metric) {
-      case "rssi": {
+      case 'rssi': {
         // For apIndex, get the nth strongest AP
         const apIndex = criterion.apIndex ?? 0;
         const network = sortedNetworks.at(apIndex);
@@ -65,7 +65,7 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
         return network.rssi;
       }
 
-      case "snr": {
+      case 'snr': {
         // Use the strongest AP's SNR, or calculate from RSSI and noise
         const apIndex = criterion.apIndex ?? 0;
         const network = sortedNetworks.at(apIndex);
@@ -84,12 +84,12 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
         return network.rssi - noiseFloor;
       }
 
-      case "noise": {
+      case 'noise': {
         const passiveData = data as PassiveSample;
         return passiveData.noiseFloor ?? sortedNetworks[0]?.noiseFloor ?? null;
       }
 
-      case "cochannel": {
+      case 'cochannel': {
         // Count APs on the same channel as the strongest AP
         const primaryChannel = sortedNetworks[0]?.channel;
         if (!primaryChannel) {
@@ -99,7 +99,7 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
         return networks.filter((n) => n.channel === primaryChannel && n.rssi >= -85).length;
       }
 
-      case "adjacent": {
+      case 'adjacent': {
         // Count APs on adjacent channels (within 4 channels for 2.4GHz)
         const primaryChannel = sortedNetworks[0]?.channel;
         if (!primaryChannel) {
@@ -113,12 +113,12 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
         ).length;
       }
 
-      case "channelUtil": {
+      case 'channelUtil': {
         // Not typically available from passive scan
         return null;
       }
 
-      case "throughput": {
+      case 'throughput': {
         // Passive scans don't have throughput, use max TX rate
         const maxRate = Math.max(...networks.map((n) => n.txRate ?? 0));
         return maxRate > 0 ? maxRate : null;
@@ -130,13 +130,13 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
   }
 
   // Handle active samples
-  if ("dataRate" in data) {
+  if ('dataRate' in data) {
     const activeData = data as ActiveSample;
 
     switch (criterion.metric) {
-      case "rssi":
+      case 'rssi':
         return activeData.rssi;
-      case "throughput":
+      case 'throughput':
         return activeData.dataRate;
       default:
         return null;
@@ -144,18 +144,18 @@ function extractMetricValue(sample: SamplePoint, criterion: PassFailCriterion): 
   }
 
   // Handle throughput samples
-  if ("downloadMbps" in data) {
+  if ('downloadMbps' in data) {
     const throughputData = data as ThroughputSample;
 
     switch (criterion.metric) {
-      case "rssi":
+      case 'rssi':
         return throughputData.rssi;
-      case "throughput":
+      case 'throughput':
         // Use download speed as the primary throughput metric
         return throughputData.downloadMbps;
-      case "latency":
+      case 'latency':
         // Check if this is the latency or jitter criterion
-        if (criterion.name === "jitter") {
+        if (criterion.name === 'jitter') {
           return throughputData.jitter;
         }
         return throughputData.latency;
@@ -175,7 +175,7 @@ function passesThreshold(
   threshold: number,
   comparison: ComparisonOperator,
 ): boolean {
-  if (comparison === "gte") {
+  if (comparison === 'gte') {
     return value >= threshold;
   }
   return value <= threshold;
@@ -214,12 +214,12 @@ export function validateCriterion(
 
   // For "gte" comparisons, worst is minimum; for "lte", worst is maximum
   const worstValue =
-    criterion.comparison === "gte"
+    criterion.comparison === 'gte'
       ? Math.min(...allValues, Number.POSITIVE_INFINITY)
       : Math.max(...allValues, Number.NEGATIVE_INFINITY);
 
   const bestValue =
-    criterion.comparison === "gte"
+    criterion.comparison === 'gte'
       ? Math.max(...allValues, Number.NEGATIVE_INFINITY)
       : Math.min(...allValues, Number.POSITIVE_INFINITY);
 
@@ -250,7 +250,7 @@ export function validateCriterion(
 export function validateSurvey(survey: Survey, criteria: PassFailCriterion[]): SurveyValidation {
   // Filter to enabled criteria that match the survey type
   const applicableCriteria = criteria.filter(
-    (c) => c.enabled && (c.mode === "all" || c.mode === survey.surveyType),
+    (c) => c.enabled && (c.mode === 'all' || c.mode === survey.surveyType),
   );
 
   // Validate each criterion
@@ -280,7 +280,7 @@ export function validateSurvey(survey: Survey, criteria: PassFailCriterion[]): S
  * Get a summary of validation results suitable for display
  */
 export function getValidationSummary(validation: SurveyValidation): {
-  status: "pass" | "fail" | "warning";
+  status: 'pass' | 'fail' | 'warning';
   message: string;
   passedCount: number;
   totalCount: number;
@@ -290,7 +290,7 @@ export function getValidationSummary(validation: SurveyValidation): {
 
   if (failedCount === 0) {
     return {
-      status: "pass",
+      status: 'pass',
       message: `All ${totalCount} criteria passed`,
       passedCount,
       totalCount,
@@ -299,7 +299,7 @@ export function getValidationSummary(validation: SurveyValidation): {
 
   if (passedCount === 0) {
     return {
-      status: "fail",
+      status: 'fail',
       message: `All ${totalCount} criteria failed`,
       passedCount,
       totalCount,
@@ -307,7 +307,7 @@ export function getValidationSummary(validation: SurveyValidation): {
   }
 
   return {
-    status: "warning",
+    status: 'warning',
     message: `${passedCount} of ${totalCount} criteria passed`,
     passedCount,
     totalCount,
@@ -333,15 +333,15 @@ export function calculateMetricStatistics(
 
   // Create a dummy criterion to extract values
   const dummyCriterion: PassFailCriterion = {
-    id: "stats",
-    name: "stats",
-    displayKey: "stats",
+    id: 'stats',
+    name: 'stats',
+    displayKey: 'stats',
     metric,
-    comparison: "gte",
+    comparison: 'gte',
     threshold: 0,
-    suffix: "",
+    suffix: '',
     enabled: true,
-    mode: "all",
+    mode: 'all',
   };
 
   const values: number[] = [];
@@ -382,22 +382,22 @@ export function getPercentageMeetingThreshold(
   samples: SamplePoint[],
   metric: HeatmapMetric,
   threshold: number,
-  comparison: ComparisonOperator = "gte",
+  comparison: ComparisonOperator = 'gte',
 ): number {
   if (!metric) {
     return 0;
   }
 
   const dummyCriterion: PassFailCriterion = {
-    id: "threshold",
-    name: "threshold",
-    displayKey: "threshold",
+    id: 'threshold',
+    name: 'threshold',
+    displayKey: 'threshold',
     metric,
     comparison,
     threshold,
-    suffix: "",
+    suffix: '',
     enabled: true,
-    mode: "all",
+    mode: 'all',
   };
 
   let passing = 0;
@@ -420,7 +420,7 @@ export function getPercentageMeetingThreshold(
  * Format a criterion result for display
  */
 export function formatCriterionResult(result: PassFailResult): string {
-  const comparison = result.comparison === "gte" ? "\u2265" : "\u2264";
-  const status = result.passed ? "\u2713" : "\u2717";
+  const comparison = result.comparison === 'gte' ? '\u2265' : '\u2264';
+  const status = result.passed ? '\u2713' : '\u2717';
   return `${status} ${result.criterionName}: ${result.averageValue.toFixed(1)} ${result.suffix} (${comparison}${result.threshold})`;
 }

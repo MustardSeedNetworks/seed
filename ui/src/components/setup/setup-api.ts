@@ -5,7 +5,7 @@
  */
 
 // API base URL for setup endpoints
-const API_BASE: string = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 /**
  * Response from /api/setup/status endpoint

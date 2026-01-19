@@ -1,8 +1,8 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { cn, spacing } from "../../styles/theme";
-import { Card, CardDivider, CardRow, CardValue } from "../ui/Card";
-import { Router } from "../ui/Icons";
-import { Skeleton } from "../ui/Skeleton";
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { cn, spacing } from '../../styles/theme';
+import { Card, CardDivider, CardRow, CardValue } from '../ui/Card';
+import { Router } from '../ui/Icons';
+import { Skeleton } from '../ui/Skeleton';
 
 /**
  * GatewayCard monitors network gateway (default router) reachability via ICMP ping.
@@ -11,11 +11,11 @@ import { Skeleton } from "../ui/Skeleton";
  * This story demonstrates the card's visual states without context dependencies.
  */
 const meta: Meta = {
-  title: "Cards/GatewayCard",
+  title: 'Cards/GatewayCard',
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   decorators: [
     (StoryComponent: React.ComponentType): JSX.Element => (
       <div class="w-80">
@@ -97,14 +97,14 @@ export const DualStack: StoryObj = {
     <Card title="Gateway" subtitle="IPv4 + IPv6" icon={<Router class="w-4 h-4" />} status="success">
       <div class={spacing.stack.default}>
         <div>
-          <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>IPv4</p>
+          <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>IPv4</p>
           <CardValue value="192.168.1.1" size="md" />
           <CardRow label="Latency" value="2.3ms" status="success" />
           <CardRow label="Loss" value="0%" />
         </div>
         <CardDivider />
         <div>
-          <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>IPv6</p>
+          <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>IPv6</p>
           <CardValue value="fe80::1" size="md" />
           <CardRow label="Latency" value="1.8ms" status="success" />
           <CardRow label="Loss" value="0%" />
@@ -122,7 +122,7 @@ export const Loading: StoryObj = {
       icon={<Router class="w-4 h-4" />}
       status="loading"
     >
-      <Skeleton class={cn("h-8 w-32", spacing.margin.bottom.content)} />
+      <Skeleton class={cn('h-8 w-32', spacing.margin.bottom.content)} />
       <div class={cn(spacing.stack.sm, spacing.margin.top.content)}>
         <div class="flex justify-between">
           <Skeleton class="h-3 w-16" />
@@ -150,7 +150,7 @@ export const NoGateway: StoryObj = {
       status="unknown"
     >
       <CardValue value="Not Configured" size="md" />
-      <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
+      <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
         No default gateway configured on this interface.
       </p>
     </Card>

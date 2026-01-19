@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import type { Survey } from "../../hooks/useSurvey";
-import { WiFiSurveyCard } from "./WiFiSurveyCard";
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Survey } from '../../hooks/useSurvey';
+import { WiFiSurveyCard } from './WiFiSurveyCard';
 
 /**
  * WiFiSurveyCard displays WiFi site survey management with floor plan-based signal mapping.
@@ -15,12 +15,12 @@ import { WiFiSurveyCard } from "./WiFiSurveyCard";
  * This story demonstrates all survey states and interactions.
  */
 const meta: Meta<typeof WiFiSurveyCard> = {
-  title: "Cards/WiFiSurveyCard",
+  title: 'Cards/WiFiSurveyCard',
   component: WiFiSurveyCard,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   decorators: [
     (StoryComponent: React.ComponentType): JSX.Element => (
       <div class="w-96">
@@ -77,7 +77,7 @@ export const ErrorState: Story = {
     mockData: {
       surveys: [],
       loading: false,
-      error: "Failed to load surveys: Network error",
+      error: 'Failed to load surveys: Network error',
     },
   },
 };
@@ -111,15 +111,15 @@ export const SurveyCreated: Story = {
     mockData: {
       surveys: [
         {
-          id: "survey-1",
-          name: "Office Floor 1",
-          description: "Main office coverage mapping",
-          surveyType: "passive",
-          status: "created",
-          createdAt: "2025-12-15T10:00:00Z",
-          updatedAt: "2025-12-15T10:00:00Z",
+          id: 'survey-1',
+          name: 'Office Floor 1',
+          description: 'Main office coverage mapping',
+          surveyType: 'passive',
+          status: 'created',
+          createdAt: '2025-12-15T10:00:00Z',
+          updatedAt: '2025-12-15T10:00:00Z',
           samples: [],
-          interface: "wlan0",
+          interface: 'wlan0',
         },
       ] as Survey[],
       loading: false,
@@ -140,13 +140,13 @@ export const SurveyInProgress: Story = {
     mockData: {
       surveys: [
         {
-          id: "survey-2",
-          name: "Warehouse Coverage",
-          description: "Warehouse WiFi signal mapping",
-          surveyType: "passive",
-          status: "in_progress",
-          createdAt: "2025-12-15T09:00:00Z",
-          updatedAt: "2025-12-15T11:30:00Z",
+          id: 'survey-2',
+          name: 'Warehouse Coverage',
+          description: 'Warehouse WiFi signal mapping',
+          surveyType: 'passive',
+          status: 'in_progress',
+          createdAt: '2025-12-15T09:00:00Z',
+          updatedAt: '2025-12-15T11:30:00Z',
           samples: Array.from({ length: 12 }, (_, i) => ({
             x: 100 + i * 50,
             y: 100 + i * 30,
@@ -154,8 +154,8 @@ export const SurveyInProgress: Story = {
             sampleData: {
               networks: [
                 {
-                  ssid: "WarehouseWiFi",
-                  bssid: "AA:BB:CC:DD:EE:FF",
+                  ssid: 'WarehouseWiFi',
+                  bssid: 'AA:BB:CC:DD:EE:FF',
                   rssi: -45 - i * 2,
                   channel: 6,
                   frequency: 2437,
@@ -163,7 +163,7 @@ export const SurveyInProgress: Story = {
               ],
             },
           })),
-          interface: "wlan0",
+          interface: 'wlan0',
         },
       ] as Survey[],
       loading: false,
@@ -184,26 +184,26 @@ export const SurveyPaused: Story = {
     mockData: {
       surveys: [
         {
-          id: "survey-3",
-          name: "Conference Room",
-          description: "Meeting space coverage test",
-          surveyType: "active",
-          status: "paused",
-          createdAt: "2025-12-14T14:00:00Z",
-          updatedAt: "2025-12-15T10:45:00Z",
+          id: 'survey-3',
+          name: 'Conference Room',
+          description: 'Meeting space coverage test',
+          surveyType: 'active',
+          status: 'paused',
+          createdAt: '2025-12-14T14:00:00Z',
+          updatedAt: '2025-12-15T10:45:00Z',
           samples: Array.from({ length: 8 }, (_, i) => ({
             x: 150 + i * 40,
             y: 200 + i * 25,
             timestamp: new Date(Date.now() - (8 - i) * 120000).toISOString(),
             sampleData: {
-              ssid: "ConfRoom-5G",
-              bssid: "11:22:33:44:55:66",
+              ssid: 'ConfRoom-5G',
+              bssid: '11:22:33:44:55:66',
               rssi: -50 - i * 3,
               dataRate: 866 - i * 50,
               roamingEvent: i === 4,
             },
           })),
-          interface: "wlan0",
+          interface: 'wlan0',
         },
       ] as Survey[],
       loading: false,
@@ -224,20 +224,20 @@ export const SurveyCompleted: Story = {
     mockData: {
       surveys: [
         {
-          id: "survey-4",
-          name: "Retail Store Coverage",
-          description: "Customer area signal quality",
-          surveyType: "throughput",
-          status: "completed",
-          createdAt: "2025-12-10T08:00:00Z",
-          updatedAt: "2025-12-10T12:30:00Z",
+          id: 'survey-4',
+          name: 'Retail Store Coverage',
+          description: 'Customer area signal quality',
+          surveyType: 'throughput',
+          status: 'completed',
+          createdAt: '2025-12-10T08:00:00Z',
+          updatedAt: '2025-12-10T12:30:00Z',
           samples: Array.from({ length: 25 }, (_, i) => ({
             x: 50 + (i % 5) * 80,
             y: 50 + Math.floor(i / 5) * 60,
             timestamp: new Date(Date.now() - (25 - i) * 300000).toISOString(),
             sampleData: {
-              ssid: "RetailGuest",
-              bssid: "AA:11:BB:22:CC:33",
+              ssid: 'RetailGuest',
+              bssid: 'AA:11:BB:22:CC:33',
               rssi: -40 - Math.random() * 30,
               downloadMbps: 100 + Math.random() * 400,
               uploadMbps: 50 + Math.random() * 200,
@@ -246,8 +246,8 @@ export const SurveyCompleted: Story = {
               packetLoss: Math.random() * 2,
             },
           })),
-          interface: "wlan0",
-          iperfServer: "192.168.1.100:5201",
+          interface: 'wlan0',
+          iperfServer: '192.168.1.100:5201',
           testDuration: 5,
         },
       ] as Survey[],
@@ -269,70 +269,70 @@ export const MultipleSurveys: Story = {
     mockData: {
       surveys: [
         {
-          id: "survey-5",
-          name: "Office Floor 2",
-          surveyType: "passive",
-          status: "in_progress",
-          createdAt: "2025-12-15T14:00:00Z",
-          updatedAt: "2025-12-15T14:45:00Z",
+          id: 'survey-5',
+          name: 'Office Floor 2',
+          surveyType: 'passive',
+          status: 'in_progress',
+          createdAt: '2025-12-15T14:00:00Z',
+          updatedAt: '2025-12-15T14:45:00Z',
           samples: Array.from({ length: 6 }, () => ({
             x: 100,
             y: 100,
             timestamp: new Date().toISOString(),
             sampleData: { networks: [] },
           })),
-          interface: "wlan0",
+          interface: 'wlan0',
         },
         {
-          id: "survey-6",
-          name: "Lobby Area",
-          surveyType: "active",
-          status: "paused",
-          createdAt: "2025-12-15T13:00:00Z",
-          updatedAt: "2025-12-15T13:30:00Z",
+          id: 'survey-6',
+          name: 'Lobby Area',
+          surveyType: 'active',
+          status: 'paused',
+          createdAt: '2025-12-15T13:00:00Z',
+          updatedAt: '2025-12-15T13:30:00Z',
           samples: Array.from({ length: 4 }, () => ({
             x: 100,
             y: 100,
             timestamp: new Date().toISOString(),
             sampleData: {
-              ssid: "Lobby",
-              bssid: "AA:BB:CC:DD:EE:FF",
+              ssid: 'Lobby',
+              bssid: 'AA:BB:CC:DD:EE:FF',
               rssi: -50,
               dataRate: 300,
               roamingEvent: false,
             },
           })),
-          interface: "wlan0",
+          interface: 'wlan0',
         },
         {
-          id: "survey-7",
-          name: "Parking Lot",
-          surveyType: "passive",
-          status: "completed",
-          createdAt: "2025-12-14T10:00:00Z",
-          updatedAt: "2025-12-14T11:00:00Z",
+          id: 'survey-7',
+          name: 'Parking Lot',
+          surveyType: 'passive',
+          status: 'completed',
+          createdAt: '2025-12-14T10:00:00Z',
+          updatedAt: '2025-12-14T11:00:00Z',
           samples: Array.from({ length: 15 }, () => ({
             x: 100,
             y: 100,
             timestamp: new Date().toISOString(),
             sampleData: { networks: [] },
           })),
-          interface: "wlan0",
+          interface: 'wlan0',
         },
         {
-          id: "survey-8",
-          name: "Cafeteria",
-          surveyType: "throughput",
-          status: "completed",
-          createdAt: "2025-12-13T09:00:00Z",
-          updatedAt: "2025-12-13T10:30:00Z",
+          id: 'survey-8',
+          name: 'Cafeteria',
+          surveyType: 'throughput',
+          status: 'completed',
+          createdAt: '2025-12-13T09:00:00Z',
+          updatedAt: '2025-12-13T10:30:00Z',
           samples: Array.from({ length: 20 }, () => ({
             x: 100,
             y: 100,
             timestamp: new Date().toISOString(),
             sampleData: {
-              ssid: "Cafe",
-              bssid: "11:22:33:44:55:66",
+              ssid: 'Cafe',
+              bssid: '11:22:33:44:55:66',
               rssi: -55,
               downloadMbps: 250,
               uploadMbps: 100,
@@ -341,7 +341,7 @@ export const MultipleSurveys: Story = {
               packetLoss: 0.5,
             },
           })),
-          interface: "wlan0",
+          interface: 'wlan0',
         },
       ] as Survey[],
       loading: false,
@@ -362,23 +362,23 @@ export const SurveyWithFloorPlan: Story = {
     mockData: {
       surveys: [
         {
-          id: "survey-9",
-          name: "Data Center",
-          description: "Server room coverage analysis",
-          surveyType: "passive",
-          status: "in_progress",
-          createdAt: "2025-12-15T08:00:00Z",
-          updatedAt: "2025-12-15T12:00:00Z",
+          id: 'survey-9',
+          name: 'Data Center',
+          description: 'Server room coverage analysis',
+          surveyType: 'passive',
+          status: 'in_progress',
+          createdAt: '2025-12-15T08:00:00Z',
+          updatedAt: '2025-12-15T12:00:00Z',
           samples: Array.from({ length: 18 }, () => ({
             x: 100,
             y: 100,
             timestamp: new Date().toISOString(),
             sampleData: { networks: [] },
           })),
-          interface: "wlan0",
+          interface: 'wlan0',
           floorPlan: {
             imageData:
-              "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZjVmNSIvPjxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzMyIgc3Ryb2tlLXdpZHRoPSIyIi8+PHRleHQgeD0iMjAwIiB5PSIxNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM2NjYiPkRhdGEgQ2VudGVyPC90ZXh0Pjwvc3ZnPg==",
+              'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZjVmNSIvPjxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzMyIgc3Ryb2tlLXdpZHRoPSIyIi8+PHRleHQgeD0iMjAwIiB5PSIxNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM2NjYiPkRhdGEgQ2VudGVyPC90ZXh0Pjwvc3ZnPg==',
             width: 400,
             height: 300,
             scaleM: 0.1,

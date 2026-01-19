@@ -1,22 +1,22 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { cn, layout, spacing } from "../../styles/theme";
-import { CardSkeleton, Skeleton, TextSkeleton } from "./Skeleton";
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { cn, layout, spacing } from '../../styles/theme';
+import { CardSkeleton, Skeleton, TextSkeleton } from './Skeleton';
 
 /**
  * Skeleton components provide visual loading placeholders while content is being fetched.
  * They improve perceived performance by showing the expected layout structure.
  */
 const meta: Meta<typeof Skeleton> = {
-  title: "UI/Skeleton",
+  title: 'UI/Skeleton',
   component: Skeleton,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     variant: {
-      control: "radio",
-      options: ["text", "circular", "rectangular"],
+      control: 'radio',
+      options: ['text', 'circular', 'rectangular'],
     },
   },
 };
@@ -26,22 +26,22 @@ type Story = StoryObj<typeof Skeleton>;
 
 export const Text: Story = {
   args: {
-    variant: "text",
-    className: "h-4 w-48",
+    variant: 'text',
+    className: 'h-4 w-48',
   },
 };
 
 export const Circular: Story = {
   args: {
-    variant: "circular",
-    className: "h-12 w-12",
+    variant: 'circular',
+    className: 'h-12 w-12',
   },
 };
 
 export const Rectangular: Story = {
   args: {
-    variant: "rectangular",
-    className: "h-24 w-48",
+    variant: 'rectangular',
+    className: 'h-24 w-48',
   },
 };
 
@@ -50,7 +50,7 @@ export const TextLines: StoryObj<typeof TextSkeleton> = {
   parameters: {
     docs: {
       description: {
-        story: "Multiple text lines with the last line shorter, simulating a paragraph.",
+        story: 'Multiple text lines with the last line shorter, simulating a paragraph.',
       },
     },
   },
@@ -61,7 +61,7 @@ export const Card: StoryObj<typeof CardSkeleton> = {
   parameters: {
     docs: {
       description: {
-        story: "Pre-configured card skeleton matching the dashboard card layout.",
+        story: 'Pre-configured card skeleton matching the dashboard card layout.',
       },
     },
   },
@@ -69,7 +69,7 @@ export const Card: StoryObj<typeof CardSkeleton> = {
 
 export const DashboardGrid: Story = {
   render: () => (
-    <div class={cn("grid grid-cols-2 w-[600px]", spacing.gap.comfortable)}>
+    <div class={cn('grid grid-cols-2 w-[600px]', spacing.gap.comfortable)}>
       <CardSkeleton />
       <CardSkeleton />
       <CardSkeleton />
@@ -79,7 +79,7 @@ export const DashboardGrid: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Grid of card skeletons matching the dashboard layout during initial load.",
+        story: 'Grid of card skeletons matching the dashboard layout during initial load.',
       },
     },
   },
@@ -87,7 +87,7 @@ export const DashboardGrid: Story = {
 
 export const UserProfile: Story = {
   render: () => (
-    <div class={cn(layout.inline.spacious, spacing.pad.default, "bg-surface-base rounded-lg")}>
+    <div class={cn(layout.inline.spacious, spacing.pad.default, 'bg-surface-base rounded-lg')}>
       <Skeleton variant="circular" class="h-16 w-16" />
       <div class={layout.stack.default}>
         <Skeleton variant="text" class="h-5 w-32" />
@@ -99,7 +99,7 @@ export const UserProfile: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Example of a user profile loading state with avatar and text.",
+        story: 'Example of a user profile loading state with avatar and text.',
       },
     },
   },
@@ -107,7 +107,7 @@ export const UserProfile: Story = {
 
 export const TableRows: Story = {
   render: () => (
-    <div class={cn("w-[500px] bg-surface-base rounded-lg", spacing.pad.default)}>
+    <div class={cn('w-[500px] bg-surface-base rounded-lg', spacing.pad.default)}>
       <div class={cn(layout.flex.between, spacing.margin.bottom.content)}>
         <Skeleton variant="text" class="h-5 w-20" />
         <Skeleton variant="text" class="h-5 w-24" />
@@ -116,9 +116,9 @@ export const TableRows: Story = {
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          class={cn(layout.flex.between, spacing.row.pyLg, "border-t border-surface-border")}
+          class={cn(layout.flex.between, spacing.row.pyLg, 'border-t border-surface-border')}
         >
-          {" "}
+          {' '}
           {/* spacing.row.pyLg for table row spacing */}
           <Skeleton variant="text" class="h-4 w-24" />
           <Skeleton variant="text" class="h-4 w-32" />
@@ -130,7 +130,7 @@ export const TableRows: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Table loading state with header and row skeletons.",
+        story: 'Table loading state with header and row skeletons.',
       },
     },
   },

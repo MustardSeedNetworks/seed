@@ -1,8 +1,8 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { cn, spacing } from "../../styles/theme";
-import { Card, CardDivider, CardRow, CardValue } from "../ui/Card";
-import { Cable } from "../ui/Icons";
-import { Skeleton } from "../ui/Skeleton";
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { cn, spacing } from '../../styles/theme';
+import { Card, CardDivider, CardRow, CardValue } from '../ui/Card';
+import { Cable } from '../ui/Icons';
+import { Skeleton } from '../ui/Skeleton';
 
 /**
  * LinkCard displays physical link layer (L2) and network layer (L3) status.
@@ -11,11 +11,11 @@ import { Skeleton } from "../ui/Skeleton";
  * LinkCard component to avoid context dependencies.
  */
 const meta: Meta = {
-  title: "Cards/LinkCard",
+  title: 'Cards/LinkCard',
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   decorators: [
     (StoryComponent: React.ComponentType): JSX.Element => (
       <div class="w-80">
@@ -32,8 +32,8 @@ const linkDataOnline = {
   linkUp: true,
   carrier: true,
   hasIp: true,
-  speed: "1000Mb/s",
-  duplex: "Full",
+  speed: '1000Mb/s',
+  duplex: 'Full',
   mtu: 1500,
   autoNeg: true,
   flapCount24h: 0,
@@ -44,8 +44,8 @@ const linkDataNoIp = {
   linkUp: true,
   carrier: true,
   hasIp: false,
-  speed: "100Mb/s",
-  duplex: "Full",
+  speed: '100Mb/s',
+  duplex: 'Full',
   mtu: 1500,
 };
 
@@ -103,7 +103,7 @@ export const Disconnected: StoryObj = {
 export const Loading: StoryObj = {
   render: () => (
     <Card title="Link" subtitle="en0" icon={<Cable class="w-4 h-4" />} status="loading">
-      <Skeleton class={cn("h-8 w-32", spacing.margin.bottom.content)} />
+      <Skeleton class={cn('h-8 w-32', spacing.margin.bottom.content)} />
       <div class={cn(spacing.stack.sm, spacing.margin.top.content)}>
         <div class="flex justify-between">
           <Skeleton class="h-3 w-16" />

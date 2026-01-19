@@ -2,11 +2,11 @@
  * ProfileEditor Component - Modal for creating/editing profiles
  */
 
-import type React from "react";
-import { useCallback, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { cn, radius, spacing } from "../../styles/theme";
-import type { Profile, ProfileRequest } from "../../types/profile";
+import type React from 'react';
+import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { cn, radius, spacing } from '../../styles/theme';
+import type { Profile, ProfileRequest } from '../../types/profile';
 
 interface ProfileEditorProps {
   profile: Profile | null;
@@ -27,10 +27,10 @@ export function ProfileEditor({
   const { t } = useTranslation();
   const isEditing = profile !== null;
 
-  const [name, setName] = useState(profile?.name || "");
-  const [description, setDescription] = useState(profile?.description || "");
+  const [name, setName] = useState(profile?.name || '');
+  const [description, setDescription] = useState(profile?.description || '');
   const [isDefault, setIsDefault] = useState(profile?.is_default);
-  const [notes, setNotes] = useState((profile?.config as { notes?: string })?.notes || "");
+  const [notes, setNotes] = useState((profile?.config as { notes?: string })?.notes || '');
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -49,12 +49,12 @@ export function ProfileEditor({
   // Helper to get button label (avoids nested ternary)
   const getButtonLabel = (): string => {
     if (isLoading) {
-      return t("common.saving", "Saving...");
+      return t('common.saving', 'Saving...');
     }
     if (isEditing) {
-      return t("common.save", "Save");
+      return t('common.save', 'Save');
     }
-    return t("common.create", "Create");
+    return t('common.create', 'Create');
   };
 
   return (
@@ -62,25 +62,25 @@ export function ProfileEditor({
       <div class="fixed inset-0 bg-black/50" onClick={onCancel} aria-hidden="true" />
       <div
         class={cn(
-          "relative w-full max-w-lg",
+          'relative w-full max-w-lg',
           radius.lg,
-          "bg-surface-raised shadow-xl overflow-hidden",
+          'bg-surface-raised shadow-xl overflow-hidden',
         )}
       >
         {/* Header */}
-        <div class={cn(spacing.pad.md, "border-b border-surface-border")}>
+        <div class={cn(spacing.pad.md, 'border-b border-surface-border')}>
           <h2 class="heading-2 text-text-primary">
-            {isEditing ? t("profile.edit", "Edit Profile") : t("profile.create", "Create Profile")}
+            {isEditing ? t('profile.edit', 'Edit Profile') : t('profile.create', 'Create Profile')}
           </h2>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <div class={cn(spacing.pad.md, "space-y-4")}>
+          <div class={cn(spacing.pad.md, 'space-y-4')}>
             {/* Name */}
             <div>
               <label for="profile-name" class="block body-small font-medium text-text-primary mb-1">
-                {t("profile.name", "Name")} *
+                {t('profile.name', 'Name')} *
               </label>
               <input
                 id="profile-name"
@@ -91,12 +91,12 @@ export function ProfileEditor({
                 }
                 required={true}
                 class={cn(
-                  "w-full",
+                  'w-full',
                   spacing.pad.sm,
                   radius.md,
-                  "border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary",
+                  'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary',
                 )}
-                placeholder={t("profile.namePlaceholder", "e.g., Client A")}
+                placeholder={t('profile.namePlaceholder', 'e.g., Client A')}
               />
             </div>
 
@@ -106,7 +106,7 @@ export function ProfileEditor({
                 for="profile-description"
                 class="block body-small font-medium text-text-primary mb-1"
               >
-                {t("profile.description", "Description")}
+                {t('profile.description', 'Description')}
               </label>
               <input
                 id="profile-description"
@@ -116,12 +116,12 @@ export function ProfileEditor({
                   setDescription(e.target.value)
                 }
                 class={cn(
-                  "w-full",
+                  'w-full',
                   spacing.pad.sm,
                   radius.md,
-                  "border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary",
+                  'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary',
                 )}
-                placeholder={t("profile.descriptionPlaceholder", "Brief description")}
+                placeholder={t('profile.descriptionPlaceholder', 'Brief description')}
               />
             </div>
 
@@ -131,7 +131,7 @@ export function ProfileEditor({
                 for="profile-notes"
                 class="block body-small font-medium text-text-primary mb-1"
               >
-                {t("profile.notes", "Notes")}
+                {t('profile.notes', 'Notes')}
               </label>
               <textarea
                 id="profile-notes"
@@ -141,12 +141,12 @@ export function ProfileEditor({
                 }
                 rows={3}
                 class={cn(
-                  "w-full",
+                  'w-full',
                   spacing.pad.sm,
                   radius.md,
-                  "border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none",
+                  'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none',
                 )}
-                placeholder={t("profile.notesPlaceholder", "Contact info, VPN requirements, etc.")}
+                placeholder={t('profile.notesPlaceholder', 'Contact info, VPN requirements, etc.')}
               />
             </div>
 
@@ -161,34 +161,34 @@ export function ProfileEditor({
                 class="w-4 h-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary"
               />
               <span class="body-small text-text-primary">
-                {t("profile.setAsDefault", "Set as default profile")}
+                {t('profile.setAsDefault', 'Set as default profile')}
               </span>
             </label>
           </div>
 
           {/* Footer */}
-          <div class={cn(spacing.pad.md, "border-t border-surface-border flex justify-end gap-3")}>
+          <div class={cn(spacing.pad.md, 'border-t border-surface-border flex justify-end gap-3')}>
             <button
               type="button"
               onClick={onCancel}
               disabled={isLoading}
               class={cn(
                 spacing.pad.sm,
-                "px-4",
+                'px-4',
                 radius.md,
-                "border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary body-small font-medium disabled:opacity-50",
+                'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary body-small font-medium disabled:opacity-50',
               )}
             >
-              {t("common.cancel", "Cancel")}
+              {t('common.cancel', 'Cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading || !name.trim()}
               class={cn(
                 spacing.pad.sm,
-                "px-4",
+                'px-4',
                 radius.md,
-                "bg-brand-primary hover:bg-brand-primary-hover text-text-inverse body-small font-medium disabled:opacity-50",
+                'bg-brand-primary hover:bg-brand-primary-hover text-text-inverse body-small font-medium disabled:opacity-50',
               )}
             >
               {getButtonLabel()}

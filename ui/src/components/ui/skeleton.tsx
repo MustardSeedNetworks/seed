@@ -29,12 +29,12 @@
  * State: None - purely presentational component
  */
 
-import type React from "react";
-import { card, cn, layout, radius, spacing } from "../../styles/theme";
+import type React from 'react';
+import { card, cn, layout, radius, spacing } from '../../styles/theme';
 
 interface SkeletonProps {
   className?: string;
-  variant?: "text" | "circular" | "rectangular";
+  variant?: 'text' | 'circular' | 'rectangular';
   width?: string | number;
   height?: string | number;
 }
@@ -45,35 +45,35 @@ interface SkeletonProps {
 /** Helper to get width class from width prop */
 function getWidthClass(width: string | number | undefined): string {
   if (!width) {
-    return "";
+    return '';
   }
-  return typeof width === "number" ? `w-[${width}px]` : `w-[${width}]`;
+  return typeof width === 'number' ? `w-[${width}px]` : `w-[${width}]`;
 }
 
 /** Helper to get height class from height prop */
 function getHeightClass(height: string | number | undefined): string {
   if (!height) {
-    return "";
+    return '';
   }
-  return typeof height === "number" ? `h-[${height}px]` : `h-[${height}]`;
+  return typeof height === 'number' ? `h-[${height}px]` : `h-[${height}]`;
 }
 
 export function Skeleton({
-  className = "",
-  variant = "text",
+  className = '',
+  variant = 'text',
   width,
   height,
 }: SkeletonProps): React.JSX.Element {
-  const baseClasses = "animate-pulse bg-surface-hover";
+  const baseClasses = 'animate-pulse bg-surface-hover';
 
   // Type-safe variant class getter
   function getVariantClass(v: typeof variant): string {
     switch (v) {
-      case "text":
+      case 'text':
         return radius.default;
-      case "circular":
+      case 'circular':
         return radius.full;
-      case "rectangular":
+      case 'rectangular':
         return radius.lg;
       default: {
         const _exhaustive: never = v;
@@ -82,7 +82,7 @@ export function Skeleton({
     }
   }
 
-  const sizeClasses = [getWidthClass(width), getHeightClass(height)].filter(Boolean).join(" ");
+  const sizeClasses = [getWidthClass(width), getHeightClass(height)].filter(Boolean).join(' ');
 
   return (
     <div
@@ -102,8 +102,8 @@ export function CardSkeleton(): React.JSX.Element {
         <Skeleton class="h-4 w-24" />
         <Skeleton variant="circular" class="h-3 w-3" />
       </div>
-      <Skeleton class={cn("h-8 w-32", spacing.margin.bottom.inline)} />
-      <div class={cn("stack-sm", spacing.margin.top.content)}>
+      <Skeleton class={cn('h-8 w-32', spacing.margin.bottom.inline)} />
+      <div class={cn('stack-sm', spacing.margin.top.content)}>
         <div class={layout.flex.between}>
           <Skeleton class="h-3 w-16" />
           <Skeleton class="h-3 w-20" />
@@ -126,7 +126,7 @@ export function TextSkeleton({ lines = 3 }: { lines?: number }): React.JSX.Eleme
   // This avoids using array index directly as key while maintaining stable identity
   const lineConfigs = Array.from({ length: lines }, (_, i) => ({
     id: `line-${i + 1}-of-${lines}`,
-    width: i === lines - 1 ? "60%" : "100%",
+    width: i === lines - 1 ? '60%' : '100%',
   }));
 
   return (

@@ -26,15 +26,15 @@
  * State: Receives data from parent component via props
  */
 
-import type React from "react";
-import { useTranslation } from "react-i18next";
-import { border, cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
-import { CardDivider, CardRow, CardValue } from "../ui/Card";
-import { Network } from "../ui/Icons";
-import { SimpleBaseCard } from "./BaseCard";
+import type React from 'react';
+import { useTranslation } from 'react-i18next';
+import { border, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
+import { CardDivider, CardRow, CardValue } from '../ui/Card';
+import { Network } from '../ui/Icons';
+import { SimpleBaseCard } from './BaseCard';
 
 export interface SwitchData {
-  protocol: "lldp" | "cdp" | "edp" | "fdp" | "unknown";
+  protocol: 'lldp' | 'cdp' | 'edp' | 'fdp' | 'unknown';
   switchName: string | null;
   portId: string | null;
   portDescription: string | null;
@@ -59,11 +59,11 @@ interface SwitchCardProps {
 }
 
 const protocolLabels: Record<string, string> = {
-  lldp: "LLDP",
-  cdp: "CDP",
-  edp: "EDP",
-  fdp: "FDP",
-  unknown: "Unknown",
+  lldp: 'LLDP',
+  cdp: 'CDP',
+  edp: 'EDP',
+  fdp: 'FDP',
+  unknown: 'Unknown',
 };
 
 /**
@@ -71,7 +71,7 @@ const protocolLabels: Record<string, string> = {
  */
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Switch card requires multiple conditional VLAN sections
 export function SwitchCard({ data, vlanData, loading }: SwitchCardProps): React.ReactElement {
-  const { t } = useTranslation("cards");
+  const { t } = useTranslation('cards');
 
   // Determine status based on whether we have switch name or VLAN info
   const hasSwitch = data?.switchName;
@@ -80,44 +80,44 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps): React.
     (vlanData.nativeVlan !== null ||
       vlanData.taggedVlans.length > 0 ||
       vlanData.voiceVlan !== null);
-  const getStatus = (): "loading" | "success" | "unknown" => {
+  const getStatus = (): 'loading' | 'success' | 'unknown' => {
     if (loading) {
-      return "loading";
+      return 'loading';
     }
     if (hasSwitch || hasVlanInfo) {
-      return "success";
+      return 'success';
     }
-    return "unknown";
+    return 'unknown';
   };
   const status = getStatus();
 
   return (
     <SimpleBaseCard
-      title={t("switch.title")}
+      title={t('switch.title')}
       icon={<Network class={iconTokens.size.md} />}
       status={status}
       loading={loading}
-      loadingContent={<CardValue value={t("switch.listening")} size="lg" />}
+      loadingContent={<CardValue value={t('switch.listening')} size="lg" />}
     >
       {/* Switch Info Section */}
       {hasSwitch ? (
         <>
-          <CardValue value={data?.switchName ?? ""} size="lg" />
+          <CardValue value={data?.switchName ?? ''} size="lg" />
           <CardDivider />
-          {data?.portId ? <CardRow label={t("switch.port")} value={data?.portId} /> : null}
+          {data?.portId ? <CardRow label={t('switch.port')} value={data?.portId} /> : null}
           {data?.portDescription ? (
-            <CardRow label={t("switch.description")} value={data?.portDescription} />
+            <CardRow label={t('switch.description')} value={data?.portDescription} />
           ) : null}
           {data?.managementIp ? (
-            <CardRow label={t("switch.managementIp")} value={data?.managementIp} />
+            <CardRow label={t('switch.managementIp')} value={data?.managementIp} />
           ) : null}
           <div class={spacing.margin.top.inline}>
             <span
               class={cn(
-                "caption",
+                'caption',
                 spacing.chip.sm,
-                "bg-brand-primary/20",
-                "text-brand-primary",
+                'bg-brand-primary/20',
+                'text-brand-primary',
                 radius.default,
               )}
             >
@@ -127,8 +127,8 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps): React.
         </>
       ) : (
         <>
-          <CardValue value={t("switch.noDiscoveryFrames")} size="md" />
-          <p class={cn("caption", spacing.margin.top.inline)}>{t("switch.waitingFrames")}</p>
+          <CardValue value={t('switch.noDiscoveryFrames')} size="md" />
+          <p class={cn('caption', spacing.margin.top.inline)}>{t('switch.waitingFrames')}</p>
         </>
       )}
 
@@ -136,23 +136,23 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps): React.
       {vlanData ? (
         <>
           <CardDivider />
-          <p class={cn("section-title", spacing.margin.bottom.inline)}>{t("switch.vlans")}</p>
+          <p class={cn('section-title', spacing.margin.bottom.inline)}>{t('switch.vlans')}</p>
           {vlanData.nativeVlan !== null ? (
-            <CardRow label={t("switch.nativeVlan")} value={vlanData.nativeVlan.toString()} />
+            <CardRow label={t('switch.nativeVlan')} value={vlanData.nativeVlan.toString()} />
           ) : (
-            <CardRow label={t("switch.nativeVlan")} value={t("switch.untagged")} />
+            <CardRow label={t('switch.nativeVlan')} value={t('switch.untagged')} />
           )}
           {vlanData.voiceVlan !== null ? (
-            <CardRow label={t("switch.voiceVlan")} value={vlanData.voiceVlan.toString()} />
+            <CardRow label={t('switch.voiceVlan')} value={vlanData.voiceVlan.toString()} />
           ) : null}
           {vlanData.taggedVlans.length > 0 ? (
             <div class={spacing.margin.top.inline}>
-              <p class={cn("caption", spacing.margin.bottom.inline)}>{t("switch.taggedVlans")}</p>
+              <p class={cn('caption', spacing.margin.bottom.inline)}>{t('switch.taggedVlans')}</p>
               <div class={layout.inline.wrap}>
                 {vlanData.taggedVlans.map((vlan) => (
                   <span
                     key={vlan}
-                    class={cn("caption", spacing.chip.sm, "bg-surface-hover", radius.default)}
+                    class={cn('caption', spacing.chip.sm, 'bg-surface-hover', radius.default)}
                   >
                     {vlan}
                   </span>
@@ -165,7 +165,7 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps): React.
               class={cn(spacing.margin.top.heading, spacing.padding.top.heading, border.divider)}
             >
               <CardRow
-                label={t("switch.configuredTag")}
+                label={t('switch.configuredTag')}
                 value={`VLAN ${vlanData.configured.id}`}
                 status="success"
               />

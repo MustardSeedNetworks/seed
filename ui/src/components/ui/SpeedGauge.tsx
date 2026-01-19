@@ -37,9 +37,9 @@
  * State: Memoized calculations for display values and size configurations
  */
 
-import type React from "react";
-import { memo, useMemo } from "react";
-import { cn, gauge, radius as radiusTokens, spacing } from "../../styles/theme";
+import type React from 'react';
+import { memo, useMemo } from 'react';
+import { cn, gauge, radius as radiusTokens, spacing } from '../../styles/theme';
 
 interface SpeedGaugeProps {
   value: number; // Current speed in Mbps
@@ -47,7 +47,7 @@ interface SpeedGaugeProps {
   label?: string; // "Download" or "Upload"
   unit?: string; // "Mbps" or "Gbps"
   isRunning?: boolean; // Show animated pulsing when test is running
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg';
 }
 
 // Calculate gauge color based on speed percentage using CSS variables
@@ -56,13 +56,13 @@ function getGaugeColor(percentage: number): string {
 }
 
 // Helper for gauge padding bottom class
-function getPaddingBottomClass(size: "sm" | "md" | "lg"): string {
+function getPaddingBottomClass(size: 'sm' | 'md' | 'lg'): string {
   switch (size) {
-    case "sm":
+    case 'sm':
       return spacing.micro.pb;
-    case "md":
+    case 'md':
       return spacing.micro.pbCompact;
-    case "lg":
+    case 'lg':
       return spacing.micro.pbCompactMd;
     default: {
       const _exhaustive: never = size;
@@ -72,17 +72,17 @@ function getPaddingBottomClass(size: "sm" | "md" | "lg"): string {
 }
 
 // Helper for gauge font size class
-function getFontSizeClass(size: "sm" | "md" | "lg"): string {
+function getFontSizeClass(size: 'sm' | 'md' | 'lg'): string {
   switch (size) {
-    case "sm":
-      return "text-[12px]";
-    case "md":
-      return "text-[14px]";
-    case "lg":
-      return "text-[16px]";
+    case 'sm':
+      return 'text-[12px]';
+    case 'md':
+      return 'text-[14px]';
+    case 'lg':
+      return 'text-[16px]';
     default: {
       const _exhaustive: never = size;
-      return "text-[14px]";
+      return 'text-[14px]';
     }
   }
 }
@@ -94,16 +94,16 @@ function SpeedGaugeComponent({
   value,
   maxValue = 1000,
   label,
-  unit = "Mbps",
+  unit = 'Mbps',
   isRunning = false,
-  size = "md",
+  size = 'md',
 }: SpeedGaugeProps): React.JSX.Element {
   // Calculate display value (auto-convert to Gbps if > 1000 Mbps)
   const displayValue: { value: string; unit: string } = useMemo(() => {
     if (value >= 1000) {
       return {
         value: (value / 1000).toFixed(2),
-        unit: "Gbps",
+        unit: 'Gbps',
       };
     }
     return {
@@ -115,9 +115,9 @@ function SpeedGaugeComponent({
   // Size configurations
   const sizeConfig = useMemo(() => {
     switch (size) {
-      case "sm":
+      case 'sm':
         return { width: 100, height: 60, strokeWidth: 8, fontSize: 14 };
-      case "lg":
+      case 'lg':
         return { width: 180, height: 110, strokeWidth: 14, fontSize: 24 };
       default:
         return { width: 140, height: 85, strokeWidth: 12, fontSize: 18 };
@@ -164,9 +164,9 @@ function SpeedGaugeComponent({
       {label ? (
         <p
           class={cn(
-            "caption text-text-muted",
+            'caption text-text-muted',
             spacing.margin.bottom.tight,
-            "uppercase tracking-wider",
+            'uppercase tracking-wider',
           )}
         >
           {label}
@@ -177,7 +177,7 @@ function SpeedGaugeComponent({
           width={sizeConfig.width}
           height={sizeConfig.height}
           viewBox={`0 0 ${sizeConfig.width} ${sizeConfig.height}`}
-          class={isRunning ? "animate-pulse" : ""}
+          class={isRunning ? 'animate-pulse' : ''}
           role="img"
           aria-label={`Speed gauge showing ${value} ${unit}`}
         >
@@ -241,18 +241,18 @@ function SpeedGaugeComponent({
         {/* Center value display */}
         <div
           class={cn(
-            "absolute inset-0 flex flex-col items-center justify-end",
+            'absolute inset-0 flex flex-col items-center justify-end',
             getPaddingBottomClass(size),
           )}
         >
           <span
-            class={cn("font-mono font-bold text-text-primary tabular-nums", getFontSizeClass(size))}
+            class={cn('font-mono font-bold text-text-primary tabular-nums', getFontSizeClass(size))}
           >
-            {isRunning && value === 0 ? "—" : displayValue.value}
+            {isRunning && value === 0 ? '—' : displayValue.value}
           </span>
-          <span class={cn("caption text-text-muted", spacing.micro.mtNeg)}>
+          <span class={cn('caption text-text-muted', spacing.micro.mtNeg)}>
             {displayValue.unit}
-          </span>{" "}
+          </span>{' '}
           {/* Negative margin for tight visual alignment between value and unit */}
         </div>
       </div>
@@ -317,7 +317,7 @@ function ProgressRingComponent({
         </div>
       </div>
       {label ? (
-        <span class={cn("caption text-text-muted", spacing.margin.top.tight, "text-center")}>
+        <span class={cn('caption text-text-muted', spacing.margin.top.tight, 'text-center')}>
           {label}
         </span>
       ) : null}
@@ -327,36 +327,36 @@ function ProgressRingComponent({
 
 // Animated pulsing dot for "in progress" indicator
 interface PulsingDotProps {
-  color?: "primary" | "success" | "warning" | "error";
-  size?: "sm" | "md";
+  color?: 'primary' | 'success' | 'warning' | 'error';
+  size?: 'sm' | 'md';
 }
 
 export const PulsingDot: React.MemoExoticComponent<typeof PulsingDotComponent> =
   memo(PulsingDotComponent);
 
 function PulsingDotComponent({
-  color = "primary",
-  size = "md",
+  color = 'primary',
+  size = 'md',
 }: PulsingDotProps): React.JSX.Element {
   // Type-safe color class getter
-  function getColorClass(c: PulsingDotProps["color"]): string {
+  function getColorClass(c: PulsingDotProps['color']): string {
     switch (c) {
-      case "primary":
-        return "bg-brand-primary";
-      case "success":
-        return "bg-status-success";
-      case "warning":
-        return "bg-status-warning";
-      case "error":
-        return "bg-status-error";
+      case 'primary':
+        return 'bg-brand-primary';
+      case 'success':
+        return 'bg-status-success';
+      case 'warning':
+        return 'bg-status-warning';
+      case 'error':
+        return 'bg-status-error';
       default:
-        return "bg-brand-primary";
+        return 'bg-brand-primary';
     }
   }
 
   // Type-safe size class getter
-  function getDotSizeClass(s: PulsingDotProps["size"]): string {
-    return s === "sm" ? "w-2 h-2" : "w-3 h-3";
+  function getDotSizeClass(s: PulsingDotProps['size']): string {
+    return s === 'sm' ? 'w-2 h-2' : 'w-3 h-3';
   }
 
   const colorClass = getColorClass(color);
@@ -366,13 +366,13 @@ function PulsingDotComponent({
     <span class="relative flex">
       <span
         class={cn(
-          "animate-ping absolute inline-flex h-full w-full",
+          'animate-ping absolute inline-flex h-full w-full',
           radiusTokens.full,
-          "opacity-75",
+          'opacity-75',
           colorClass,
         )}
       />
-      <span class={cn("relative inline-flex", radiusTokens.full, sizeClass, colorClass)} />
+      <span class={cn('relative inline-flex', radiusTokens.full, sizeClass, colorClass)} />
     </span>
   );
 }

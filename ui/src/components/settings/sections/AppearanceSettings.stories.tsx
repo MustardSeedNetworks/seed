@@ -11,34 +11,34 @@
  * - Interactive theme toggle
  */
 
-import type { Meta, StoryFn, StoryObj } from "@storybook/react-vite";
-import type React from "react";
-import { useState } from "react";
-import { cn, spacing } from "../../../styles/theme";
-import { AppearanceSettings } from "./AppearanceSettings";
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type React from 'react';
+import { useState } from 'react';
+import { cn, spacing } from '../../../styles/theme';
+import { AppearanceSettings } from './AppearanceSettings';
 
 const meta: Meta<typeof AppearanceSettings> = {
-  title: "Settings/AppearanceSettings",
+  title: 'Settings/AppearanceSettings',
   component: AppearanceSettings,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "Theme selection settings allowing users to choose between light, dark, or system-preferred themes. Includes a quick toggle button for easy switching.",
+          'Theme selection settings allowing users to choose between light, dark, or system-preferred themes. Includes a quick toggle button for easy switching.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     theme: {
-      control: "select",
-      options: ["light", "dark", "system"],
-      description: "Current theme selection",
+      control: 'select',
+      options: ['light', 'dark', 'system'],
+      description: 'Current theme selection',
     },
     isDark: {
-      control: "boolean",
-      description: "Whether dark mode is currently active",
+      control: 'boolean',
+      description: 'Whether dark mode is currently active',
     },
   },
   decorators: [
@@ -58,7 +58,7 @@ type Story = StoryObj<typeof meta>;
  */
 export const LightTheme: Story = {
   args: {
-    theme: "light",
+    theme: 'light',
     isDark: false,
     setTheme: () => {
       // intentionally empty - story placeholder callback
@@ -71,7 +71,7 @@ export const LightTheme: Story = {
  */
 export const DarkTheme: Story = {
   args: {
-    theme: "dark",
+    theme: 'dark',
     isDark: true,
     setTheme: () => {
       // intentionally empty - story placeholder callback
@@ -84,7 +84,7 @@ export const DarkTheme: Story = {
  */
 export const SystemTheme: Story = {
   args: {
-    theme: "system",
+    theme: 'system',
     isDark: false,
     setTheme: () => {
       // intentionally empty - story placeholder callback
@@ -97,7 +97,7 @@ export const SystemTheme: Story = {
  */
 export const SystemThemeDark: Story = {
   args: {
-    theme: "system",
+    theme: 'system',
     isDark: true,
     setTheme: () => {
       // intentionally empty - story placeholder callback
@@ -110,14 +110,14 @@ export const SystemThemeDark: Story = {
  */
 export const Interactive: Story = {
   render: function interactiveStory() {
-    const [theme, setTheme] = useState<"light" | "dark" | "system">("light");
+    const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
     const [isDark, setIsDark] = useState(false);
 
-    const handleSetTheme = (newTheme: "light" | "dark" | "system") => {
+    const handleSetTheme = (newTheme: 'light' | 'dark' | 'system') => {
       setTheme(newTheme);
-      if (newTheme === "light") {
+      if (newTheme === 'light') {
         setIsDark(false);
-      } else if (newTheme === "dark") {
+      } else if (newTheme === 'dark') {
         setIsDark(true);
       }
       // For "system", we'd normally detect OS preference
@@ -139,15 +139,15 @@ export const Comparison: Story = {
   render: () => (
     <div class="stack-lg">
       <div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Light Theme</p>
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Light Theme</p>
         <AppearanceSettings theme="light" setTheme={noopSetTheme} isDark={false} />
       </div>
       <div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Dark Theme</p>
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Dark Theme</p>
         <AppearanceSettings theme="dark" setTheme={noopSetTheme} isDark={true} />
       </div>
       <div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>System Theme</p>
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>System Theme</p>
         <AppearanceSettings theme="system" setTheme={noopSetTheme} isDark={false} />
       </div>
     </div>

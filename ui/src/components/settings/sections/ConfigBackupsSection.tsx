@@ -21,14 +21,14 @@
  * State: backups list, loading states, error messages
  */
 
-import type React from "react";
-import { memo, useCallback, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { formatBytes } from "../../../lib/format";
-import { button, cn, icon as iconTokens, layout, radius, spacing } from "../../../styles/theme";
-import { CollapsibleSection } from "../../ui/CollapsibleSection";
+import type React from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatBytes } from '../../../lib/format';
+import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
+import { CollapsibleSection } from '../../ui/CollapsibleSection';
 
-const API_BASE: string = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 interface BackupInfo {
   name: string;
@@ -49,7 +49,7 @@ interface ConfigVersion {
  */
 export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, never>> = memo(
   function ConfigBackupsSectionComponent(): React.ReactElement {
-    const { t } = useTranslation("settings");
+    const { t } = useTranslation('settings');
     const [backups, setBackups] = useState<BackupInfo[]>([]);
     const [version, setVersion] = useState<ConfigVersion | null>(null);
     const [loading, setLoading] = useState(false);
@@ -62,8 +62,8 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
       setError(null);
       try {
         const [backupsRes, versionRes] = await Promise.all([
-          fetch(`${API_BASE}/api/config/backups`, { credentials: "include" }),
-          fetch(`${API_BASE}/api/config/version`, { credentials: "include" }),
+          fetch(`${API_BASE}/api/config/backups`, { credentials: 'include' }),
+          fetch(`${API_BASE}/api/config/version`, { credentials: 'include' }),
         ]);
 
         if (backupsRes.ok) {
@@ -71,7 +71,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
           const data = await backupsRes.json();
           setBackups(data.backups || []);
         } else {
-          setError(t("configBackups.fetchError"));
+          setError(t('configBackups.fetchError'));
         }
 
         if (versionRes.ok) {
@@ -79,7 +79,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
           setVersion(await versionRes.json());
         }
       } catch {
-        setError(t("configBackups.networkError"));
+        setError(t('configBackups.networkError'));
       } finally {
         setLoading(false);
       }
@@ -90,20 +90,20 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
     }, [fetchBackups]);
 
     const createBackup = async (): Promise<void> => {
-      setActionLoading("create");
+      setActionLoading('create');
       setError(null);
       try {
         const response = await fetch(`${API_BASE}/api/config/backup`, {
-          method: "POST",
-          credentials: "include",
+          method: 'POST',
+          credentials: 'include',
         });
         if (response.ok) {
           await fetchBackups();
         } else {
-          setError(t("configBackups.createError"));
+          setError(t('configBackups.createError'));
         }
       } catch {
-        setError(t("configBackups.networkError"));
+        setError(t('configBackups.networkError'));
       } finally {
         setActionLoading(null);
       }
@@ -114,9 +114,9 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
       setError(null);
       try {
         const response = await fetch(`${API_BASE}/api/config/restore`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ backupName }),
         });
         if (response.ok) {
@@ -126,10 +126,10 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
         } else {
           // biome-ignore lint/nursery/useAwaitThenable: response.text() is a Promise
           const text = await response.text();
-          setError(text || t("configBackups.restoreError"));
+          setError(text || t('configBackups.restoreError'));
         }
       } catch {
-        setError(t("configBackups.networkError"));
+        setError(t('configBackups.networkError'));
       } finally {
         setActionLoading(null);
       }
@@ -142,17 +142,17 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
         const response = await fetch(
           `${API_BASE}/api/config/backup/delete?name=${encodeURIComponent(backupName)}`,
           {
-            method: "DELETE",
-            credentials: "include",
+            method: 'DELETE',
+            credentials: 'include',
           },
         );
         if (response.ok) {
           await fetchBackups();
         } else {
-          setError(t("configBackups.deleteError"));
+          setError(t('configBackups.deleteError'));
         }
       } catch {
-        setError(t("configBackups.networkError"));
+        setError(t('configBackups.networkError'));
       } finally {
         setActionLoading(null);
       }
@@ -169,24 +169,24 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
     // Helper function to render backups list content based on loading/data state
     const renderBackupsContent = (): React.ReactElement => {
       if (loading) {
-        return <p class="caption text-text-muted">{t("configBackups.loading")}</p>;
+        return <p class="caption text-text-muted">{t('configBackups.loading')}</p>;
       }
       if (backups.length === 0) {
-        return <p class="caption text-text-muted">{t("configBackups.noBackups")}</p>;
+        return <p class="caption text-text-muted">{t('configBackups.noBackups')}</p>;
       }
       return (
         <div class="stack-xs">
           <p class="caption text-text-muted">
-            {t("configBackups.available", { count: backups.length })}
+            {t('configBackups.available', { count: backups.length })}
           </p>
           {backups.map((backup) => (
             <div
               key={backup.name}
               class={cn(
                 spacing.pad.sm,
-                "bg-surface-base",
+                'bg-surface-base',
                 radius.default,
-                "border border-surface-border",
+                'border border-surface-border',
               )}
             >
               <div class={layout.flex.between}>
@@ -195,10 +195,10 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
                     {formatDate(backup.createdAt)}
                   </p>
                   <p class="caption text-text-muted">
-                    {formatBytes(backup.size)} • v{backup.version || "?"}
+                    {formatBytes(backup.size)} • v{backup.version || '?'}
                   </p>
                 </div>
-                <div class={cn("flex", spacing.gap.compact)}>
+                <div class={cn('flex', spacing.gap.compact)}>
                   {restoreConfirm === backup.name ? (
                     <>
                       <button
@@ -210,12 +210,12 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
                         class={cn(
                           spacing.chip.sm,
                           radius.md,
-                          "bg-status-warning text-text-inverse caption hover:opacity-90 disabled:opacity-50",
+                          'bg-status-warning text-text-inverse caption hover:opacity-90 disabled:opacity-50',
                         )}
                       >
                         {actionLoading === backup.name
-                          ? t("configBackups.restoring")
-                          : t("configBackups.confirm")}
+                          ? t('configBackups.restoring')
+                          : t('configBackups.confirm')}
                       </button>
                       <button
                         type="button"
@@ -224,10 +224,10 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
                         class={cn(
                           spacing.chip.sm,
                           radius.md,
-                          "border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50",
+                          'border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50',
                         )}
                       >
-                        {t("configBackups.cancel")}
+                        {t('configBackups.cancel')}
                       </button>
                     </>
                   ) : (
@@ -239,11 +239,11 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
                         class={cn(
                           spacing.chip.sm,
                           radius.md,
-                          "border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50",
+                          'border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50',
                         )}
-                        title={t("configBackups.restoreTooltip")}
+                        title={t('configBackups.restoreTooltip')}
                       >
-                        {t("configBackups.restore")}
+                        {t('configBackups.restore')}
                       </button>
                       <button
                         type="button"
@@ -254,11 +254,11 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
                         class={cn(
                           spacing.chip.sm,
                           radius.md,
-                          "border border-status-error caption text-status-error hover:bg-status-error hover:text-text-inverse disabled:opacity-50",
+                          'border border-status-error caption text-status-error hover:bg-status-error hover:text-text-inverse disabled:opacity-50',
                         )}
-                        title={t("configBackups.deleteTooltip")}
+                        title={t('configBackups.deleteTooltip')}
                       >
-                        {actionLoading === backup.name ? "..." : t("configBackups.delete")}
+                        {actionLoading === backup.name ? '...' : t('configBackups.delete')}
                       </button>
                     </>
                   )}
@@ -288,7 +288,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
                 d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
               />
             </svg>
-            <span>{t("configBackups.title")}</span>
+            <span>{t('configBackups.title')}</span>
           </div>
         }
       >
@@ -299,17 +299,17 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
               class={cn(
                 layout.flex.between,
                 spacing.pad.sm,
-                "bg-surface-base",
+                'bg-surface-base',
                 radius.default,
-                "border border-surface-border",
+                'border border-surface-border',
               )}
             >
-              <span class="body-small text-text-muted">{t("configBackups.version")}</span>
+              <span class="body-small text-text-muted">{t('configBackups.version')}</span>
               <span class="body-small text-text-primary">
                 v{version.current}
                 {version.needsMigration ? (
                   <span class="ml-2 text-status-warning">
-                    ({t("configBackups.needsMigration")})
+                    ({t('configBackups.needsMigration')})
                   </span>
                 ) : null}
               </span>
@@ -322,19 +322,19 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
             onClick={(): void => {
               createBackup().catch(() => undefined);
             }}
-            disabled={actionLoading === "create"}
+            disabled={actionLoading === 'create'}
             class={cn(
-              "w-full",
+              'w-full',
               button.size.md,
-              "bg-brand-primary text-text-inverse",
+              'bg-brand-primary text-text-inverse',
               radius.md,
-              "font-medium hover:bg-brand-primary-hover transition-colors flex items-center justify-center",
+              'font-medium hover:bg-brand-primary-hover transition-colors flex items-center justify-center',
               spacing.gap.compact,
-              "touch-manipulation disabled:opacity-50",
+              'touch-manipulation disabled:opacity-50',
             )}
           >
-            {actionLoading === "create" ? (
-              t("configBackups.creating")
+            {actionLoading === 'create' ? (
+              t('configBackups.creating')
             ) : (
               <>
                 <svg
@@ -351,7 +351,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                {t("configBackups.createBackup")}
+                {t('configBackups.createBackup')}
               </>
             )}
           </button>
@@ -362,8 +362,8 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
           {/* Backups List */}
           {renderBackupsContent()}
 
-          <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
-            {t("configBackups.description")}
+          <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
+            {t('configBackups.description')}
           </p>
         </div>
       </CollapsibleSection>

@@ -11,7 +11,7 @@
  * - Profile-based interface restoration
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface NetworkInterface {
   name: string;
@@ -50,7 +50,7 @@ export function useInterfaceState({
 }: UseInterfaceStateProps): {
   ethernetInterface: string;
   wifiInterface: string;
-  activeMode: "ethernet" | "wifi";
+  activeMode: 'ethernet' | 'wifi';
   currentInterface: string;
   isWifi: boolean;
   setCurrentInterface: (name: string) => void;
@@ -61,22 +61,22 @@ export function useInterfaceState({
   hasWifiInterface: boolean;
   setEthernetInterfaceState: React.Dispatch<React.SetStateAction<string>>;
   setWifiInterfaceState: React.Dispatch<React.SetStateAction<string>>;
-  setActiveMode: React.Dispatch<React.SetStateAction<"ethernet" | "wifi">>;
+  setActiveMode: React.Dispatch<React.SetStateAction<'ethernet' | 'wifi'>>;
 } {
   // Dual interface state: track both ethernet and WiFi interfaces separately (#754 enhancement)
   // This allows seamless switching between modes without losing the previously selected interface
-  const [ethernetInterface, setEthernetInterfaceState] = useState("");
-  const [wifiInterface, setWifiInterfaceState] = useState("");
-  const [activeMode, setActiveMode] = useState<"ethernet" | "wifi">("ethernet");
+  const [ethernetInterface, setEthernetInterfaceState] = useState('');
+  const [wifiInterface, setWifiInterfaceState] = useState('');
+  const [activeMode, setActiveMode] = useState<'ethernet' | 'wifi'>('ethernet');
 
   // Computed values for backwards compatibility with existing components
-  const currentInterface = activeMode === "wifi" ? wifiInterface : ethernetInterface;
-  const isWifi = activeMode === "wifi";
+  const currentInterface = activeMode === 'wifi' ? wifiInterface : ethernetInterface;
+  const isWifi = activeMode === 'wifi';
 
   // Helper to set the appropriate interface based on mode
   const setCurrentInterface = useCallback(
     (name: string) => {
-      if (activeMode === "wifi") {
+      if (activeMode === 'wifi') {
         setWifiInterfaceState(name);
       } else {
         setEthernetInterfaceState(name);
@@ -87,7 +87,7 @@ export function useInterfaceState({
 
   // Helper to set isWifi (actually sets activeMode)
   const setIsWifi = useCallback((wifi: boolean) => {
-    setActiveMode(wifi ? "wifi" : "ethernet");
+    setActiveMode(wifi ? 'wifi' : 'ethernet');
   }, []);
 
   // Track if user manually selected Wi-Fi/Ethernet mode - prevents auto-switching from API responses
@@ -100,11 +100,11 @@ export function useInterfaceState({
 
   // Quick helpers for interface groups
   const hasEthernet = useMemo(
-    () => interfaces.some((iface) => iface.type === "ethernet"),
+    () => interfaces.some((iface) => iface.type === 'ethernet'),
     [interfaces],
   );
   const hasWifiInterface = useMemo(
-    () => interfaces.some((iface) => iface.type === "wifi"),
+    () => interfaces.some((iface) => iface.type === 'wifi'),
     [interfaces],
   );
 

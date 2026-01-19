@@ -21,15 +21,15 @@
  * ```
  */
 
-import type React from "react";
-import { memo, useCallback, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { api } from "../../../api";
-import { cn, icon as iconTokens, layout, radius, spacing } from "../../../styles/theme";
-import type { SaveStatus, WiFiSettings as WiFiSettingsType } from "../../../types/settings";
-import { CollapsibleSection } from "../../ui/CollapsibleSection";
-import { Wifi } from "../../ui/Icons";
-import { AutoSaveIndicator } from "./AutoSaveIndicator";
+import type React from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { api } from '../../../api';
+import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
+import type { SaveStatus, WiFiSettings as WiFiSettingsType } from '../../../types/settings';
+import { CollapsibleSection } from '../../ui/CollapsibleSection';
+import { Wifi } from '../../ui/Icons';
+import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 // Types for WiFi scanning and connection
 interface ScannedNetwork {
@@ -67,7 +67,7 @@ interface WiFiSettingsProps {
 export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex WiFi management component
   function wiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFiSettingsProps) {
-    const { t } = useTranslation("settings");
+    const { t } = useTranslation('settings');
 
     // State for network scanning and connection
     const [networks, setNetworks] = useState<ScannedNetwork[]>([]);
@@ -76,7 +76,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
     const [connecting, setConnecting] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState<string | null>(null);
     const [selectedNetwork, setSelectedNetwork] = useState<ScannedNetwork | null>(null);
-    const [password, setPassword] = useState("");
+    const [password, setPassword] = useState('');
     const [savedNetworks, setSavedNetworks] = useState<SavedNetwork[]>([]);
     const [showPassword, setShowPassword] = useState(false);
 
@@ -91,7 +91,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
         if (response?.networks) {
           // Filter out hidden networks (empty SSID) and sort by signal strength
           const visibleNetworks = response.networks
-            .filter((n) => n.ssid && n.ssid.trim() !== "")
+            .filter((n) => n.ssid && n.ssid.trim() !== '')
             .sort((a, b) => b.signal - a.signal);
           setNetworks(visibleNetworks);
         }
@@ -99,7 +99,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
           setScanError(response.error);
         }
       } catch {
-        setScanError("Failed to scan networks");
+        setScanError('Failed to scan networks');
       } finally {
         setScanning(false);
       }
@@ -108,7 +108,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
     // Load saved networks
     const loadSavedNetworks = useCallback(async () => {
       try {
-        const response = await api.get<{ networks: SavedNetwork[] }>("/api/v1/canopy/wifi/saved");
+        const response = await api.get<{ networks: SavedNetwork[] }>('/api/v1/canopy/wifi/saved');
         if (response?.networks) {
           setSavedNetworks(response.networks);
         }
@@ -126,21 +126,21 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
       setConnecting(true);
       setConnectionStatus(null);
       try {
-        const response = await api.post<ConnectionResult>("/api/v1/canopy/wifi/connect", {
+        const response = await api.post<ConnectionResult>('/api/v1/canopy/wifi/connect', {
           ssid: selectedNetwork.ssid,
           password: password,
         });
         if (response?.success) {
           setConnectionStatus(`Connected to ${selectedNetwork.ssid}`);
           setSelectedNetwork(null);
-          setPassword("");
+          setPassword('');
           // Refresh saved networks
           await loadSavedNetworks();
         } else {
-          setConnectionStatus(response?.message || "Connection failed");
+          setConnectionStatus(response?.message || 'Connection failed');
         }
       } catch {
-        setConnectionStatus("Connection failed");
+        setConnectionStatus('Connection failed');
       } finally {
         setConnecting(false);
       }
@@ -150,14 +150,14 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
     const disconnectNetwork = useCallback(async () => {
       setConnecting(true);
       try {
-        const response = await api.post<ConnectionResult>("/api/v1/canopy/wifi/disconnect", {});
+        const response = await api.post<ConnectionResult>('/api/v1/canopy/wifi/disconnect', {});
         if (response?.success) {
-          setConnectionStatus("Disconnected");
+          setConnectionStatus('Disconnected');
         } else {
-          setConnectionStatus(response?.message || "Disconnect failed");
+          setConnectionStatus(response?.message || 'Disconnect failed');
         }
       } catch {
-        setConnectionStatus("Disconnect failed");
+        setConnectionStatus('Disconnect failed');
       } finally {
         setConnecting(false);
       }
@@ -195,31 +195,31 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
     // Get signal strength indicator
     const getSignalBars = (signal: number): string => {
       if (signal >= -50) {
-        return "████";
+        return '████';
       }
       if (signal >= -60) {
-        return "███░";
+        return '███░';
       }
       if (signal >= -70) {
-        return "██░░";
+        return '██░░';
       }
       if (signal >= -80) {
-        return "█░░░";
+        return '█░░░';
       }
-      return "░░░░";
+      return '░░░░';
     };
 
     const getSignalColor = (signal: number): string => {
       if (signal >= -50) {
-        return "text-status-success";
+        return 'text-status-success';
       }
       if (signal >= -60) {
-        return "text-status-success";
+        return 'text-status-success';
       }
       if (signal >= -70) {
-        return "text-status-warning";
+        return 'text-status-warning';
       }
-      return "text-status-error";
+      return 'text-status-error';
     };
 
     return (
@@ -227,7 +227,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
         title={
           <div class={layout.inline.default}>
             <Wifi class={iconTokens.size.sm} />
-            <span>{t("sections.wifi")}</span>
+            <span>{t('sections.wifi')}</span>
             <AutoSaveIndicator status={wifiStatus} />
           </div>
         }
@@ -236,7 +236,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
           {/* Interface Selection */}
           <div>
             <label class="caption text-text-muted" for="wifi-interface">
-              {t("wifi.title")}
+              {t('wifi.title')}
             </label>
             {wifiSettings.availableWifi.length > 0 ? (
               <select
@@ -249,12 +249,12 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                   }))
                 }
                 class={cn(
-                  "w-full",
+                  'w-full',
                   spacing.margin.top.tight,
                   spacing.chip.lg,
-                  "bg-surface-base border border-surface-border",
+                  'bg-surface-base border border-surface-border',
                   radius.default,
-                  "body-small text-text-primary",
+                  'body-small text-text-primary',
                 )}
               >
                 {wifiSettings.availableWifi.map((iface) => (
@@ -276,17 +276,17 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                 }
                 placeholder="wlan0 or en0"
                 class={cn(
-                  "w-full",
+                  'w-full',
                   spacing.margin.top.tight,
                   spacing.chip.lg,
-                  "bg-surface-base border border-surface-border",
+                  'bg-surface-base border border-surface-border',
                   radius.default,
-                  "body-small text-text-primary",
+                  'body-small text-text-primary',
                 )}
               />
             )}
-            <p class={cn("caption text-text-muted", spacing.margin.top.tight)}>
-              {wifiSettings.isWireless ? t("wifi.wirelessMonitoring") : t("wifi.noWireless")}
+            <p class={cn('caption text-text-muted', spacing.margin.top.tight)}>
+              {wifiSettings.isWireless ? t('wifi.wirelessMonitoring') : t('wifi.noWireless')}
             </p>
           </div>
 
@@ -297,7 +297,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
               <div class="border-t border-surface-border pt-3">
                 <div class="flex items-center justify-between">
                   <span class="body-small font-medium text-text-primary">
-                    Available Networks{" "}
+                    Available Networks{' '}
                     {scanning ? <span class="text-text-muted">(scanning...)</span> : null}
                   </span>
                   <button
@@ -305,11 +305,11 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                     onClick={scanNetworks}
                     disabled={scanning}
                     class={cn(
-                      "caption font-medium",
+                      'caption font-medium',
                       spacing.chip.md,
                       radius.default,
-                      "bg-surface-hover text-text-primary border border-surface-border",
-                      "hover:bg-surface-border disabled:opacity-50",
+                      'bg-surface-hover text-text-primary border border-surface-border',
+                      'hover:bg-surface-border disabled:opacity-50',
                     )}
                   >
                     ↻ Refresh
@@ -332,10 +332,10 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                 {networks.length > 0 && (
                   <div
                     class={cn(
-                      "mt-2 max-h-48 overflow-y-auto",
-                      "border border-surface-border",
+                      'mt-2 max-h-48 overflow-y-auto',
+                      'border border-surface-border',
                       radius.default,
-                      "bg-surface-base",
+                      'bg-surface-base',
                     )}
                   >
                     {networks.map((network) => (
@@ -344,14 +344,14 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                         key={network.bssid}
                         onClick={(): void => {
                           setSelectedNetwork(network);
-                          setPassword("");
+                          setPassword('');
                           setConnectionStatus(null);
                         }}
                         class={cn(
-                          "w-full text-left px-3 py-2",
-                          "border-b border-surface-border last:border-b-0",
-                          "hover:bg-surface-hover",
-                          selectedNetwork?.bssid === network.bssid && "bg-brand-primary/10",
+                          'w-full text-left px-3 py-2',
+                          'border-b border-surface-border last:border-b-0',
+                          'hover:bg-surface-hover',
+                          selectedNetwork?.bssid === network.bssid && 'bg-brand-primary/10',
                         )}
                       >
                         <div class="flex items-center justify-between">
@@ -361,7 +361,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                           </div>
                           <div class="flex items-center gap-2">
                             <span class="caption text-text-muted">Ch {network.channel}</span>
-                            <span class={cn("font-mono caption", getSignalColor(network.signal))}>
+                            <span class={cn('font-mono caption', getSignalColor(network.signal))}>
                               {getSignalBars(network.signal)}
                             </span>
                           </div>
@@ -375,10 +375,10 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                 {selectedNetwork ? (
                   <div
                     class={cn(
-                      "mt-3 p-3",
-                      "border border-surface-border",
+                      'mt-3 p-3',
+                      'border border-surface-border',
                       radius.default,
-                      "bg-surface-sunken",
+                      'bg-surface-sunken',
                     )}
                   >
                     <div class="flex items-center justify-between mb-2">
@@ -389,7 +389,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                         type="button"
                         onClick={(): void => {
                           setSelectedNetwork(null);
-                          setPassword("");
+                          setPassword('');
                         }}
                         class="caption text-text-muted hover:text-text-primary"
                       >
@@ -397,24 +397,24 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                       </button>
                     </div>
 
-                    {selectedNetwork.security !== "Open" ? (
+                    {selectedNetwork.security !== 'Open' ? (
                       <div class="relative mb-2">
                         <input
-                          type={showPassword ? "text" : "password"}
+                          type={showPassword ? 'text' : 'password'}
                           value={password}
                           onChange={(
                             e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
                           ): void => setPassword(e.target.value)}
                           placeholder="Password"
                           class={cn(
-                            "w-full pr-16",
+                            'w-full pr-16',
                             spacing.chip.lg,
-                            "bg-surface-base border border-surface-border",
+                            'bg-surface-base border border-surface-border',
                             radius.default,
-                            "body-small text-text-primary",
+                            'body-small text-text-primary',
                           )}
                           onKeyDown={(e: React.KeyboardEvent): void => {
-                            if (e.key === "Enter" && password) {
+                            if (e.key === 'Enter' && password) {
                               connectToNetwork().catch(() => undefined);
                             }
                           }}
@@ -424,7 +424,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                           onClick={(): void => setShowPassword(!showPassword)}
                           class="absolute right-2 top-1/2 -translate-y-1/2 caption text-text-muted hover:text-text-primary"
                         >
-                          {showPassword ? "Hide" : "Show"}
+                          {showPassword ? 'Hide' : 'Show'}
                         </button>
                       </div>
                     ) : null}
@@ -432,17 +432,17 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                     <button
                       type="button"
                       onClick={connectToNetwork}
-                      disabled={connecting || (selectedNetwork.security !== "Open" && !password)}
+                      disabled={connecting || (selectedNetwork.security !== 'Open' && !password)}
                       class={cn(
-                        "w-full",
-                        "body-small font-medium",
+                        'w-full',
+                        'body-small font-medium',
                         spacing.chip.lg,
                         radius.default,
-                        "bg-brand-primary text-text-inverse",
-                        "hover:bg-brand-accent disabled:opacity-50",
+                        'bg-brand-primary text-text-inverse',
+                        'hover:bg-brand-accent disabled:opacity-50',
                       )}
                     >
-                      {connecting ? "Connecting..." : "Connect"}
+                      {connecting ? 'Connecting...' : 'Connect'}
                     </button>
                   </div>
                 ) : null}
@@ -451,10 +451,10 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                 {connectionStatus ? (
                   <p
                     class={cn(
-                      "caption mt-2",
-                      connectionStatus.includes("Connected")
-                        ? "text-status-success"
-                        : "text-status-error",
+                      'caption mt-2',
+                      connectionStatus.includes('Connected')
+                        ? 'text-status-success'
+                        : 'text-status-error',
                     )}
                   >
                     {connectionStatus}
@@ -471,11 +471,11 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                     onClick={disconnectNetwork}
                     disabled={connecting}
                     class={cn(
-                      "caption font-medium",
+                      'caption font-medium',
                       spacing.chip.md,
                       radius.default,
-                      "bg-status-error/10 text-status-error border border-status-error/20",
-                      "hover:bg-status-error/20 disabled:opacity-50",
+                      'bg-status-error/10 text-status-error border border-status-error/20',
+                      'hover:bg-status-error/20 disabled:opacity-50',
                     )}
                   >
                     Disconnect
@@ -491,18 +491,18 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                   </span>
                   <div
                     class={cn(
-                      "max-h-32 overflow-y-auto",
-                      "border border-surface-border",
+                      'max-h-32 overflow-y-auto',
+                      'border border-surface-border',
                       radius.default,
-                      "bg-surface-base",
+                      'bg-surface-base',
                     )}
                   >
                     {savedNetworks.map((network) => (
                       <div
                         key={network.uuid || network.ssid}
                         class={cn(
-                          "flex items-center justify-between px-3 py-2",
-                          "border-b border-surface-border last:border-b-0",
+                          'flex items-center justify-between px-3 py-2',
+                          'border-b border-surface-border last:border-b-0',
                         )}
                       >
                         <span class="body-small text-text-primary">{network.ssid}</span>

@@ -29,16 +29,16 @@
  * State: Manages test state, results history, current phase, progress tracking
  */
 
-import type React from "react";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useSettings } from "../../contexts/useSettings";
-import { api } from "../../api";
-import { LogComponents, logger } from "../../lib/logger";
-import { cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
-import { Card, CardDivider, CardRow, CardValue, type Status } from "../ui/Card";
-import { Gauge } from "../ui/Icons";
-import { ProgressRing, PulsingDot, SpeedGauge } from "../ui/SpeedGauge";
+import type React from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { api } from '../../api';
+import { useSettings } from '../../contexts/useSettings';
+import { LogComponents, logger } from '../../lib/logger';
+import { cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
+import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
+import { Gauge } from '../ui/Icons';
+import { ProgressRing, PulsingDot, SpeedGauge } from '../ui/SpeedGauge';
 
 // Speedtest types
 interface SpeedtestData {
@@ -110,13 +110,13 @@ interface PerformanceCardProps {
 
 // Phase label translation keys
 type SpeedtestPhase =
-  | "idle"
-  | "finding_server"
-  | "testing_latency"
-  | "testing_download"
-  | "testing_upload"
-  | "complete";
-type IperfPhase = "idle" | "connecting" | "testing" | "complete";
+  | 'idle'
+  | 'finding_server'
+  | 'testing_latency'
+  | 'testing_download'
+  | 'testing_upload'
+  | 'complete';
+type IperfPhase = 'idle' | 'connecting' | 'testing' | 'complete';
 
 export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> = memo(
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Performance card manages speedtest and iperf state machines with multiple polling effects and UI states
@@ -125,25 +125,25 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
     runSpeedtestEnabled = true,
     runIperfEnabled = true,
   }: PerformanceCardProps): React.ReactElement {
-    const { t } = useTranslation("cards");
+    const { t } = useTranslation('cards');
     // Get iperf settings from context
     const { iperfSettings } = useSettings();
 
     // Helper to get speedtest phase label
     const getSpeedtestPhaseLabel = (phase: string): string => {
       switch (phase as SpeedtestPhase) {
-        case "idle":
-          return t("performance.phaseReady");
-        case "finding_server":
-          return t("performance.phaseFindingServer");
-        case "testing_latency":
-          return t("performance.phaseTestingLatency");
-        case "testing_download":
-          return t("performance.phaseTestingDownload");
-        case "testing_upload":
-          return t("performance.phaseTestingUpload");
-        case "complete":
-          return t("performance.phaseComplete");
+        case 'idle':
+          return t('performance.phaseReady');
+        case 'finding_server':
+          return t('performance.phaseFindingServer');
+        case 'testing_latency':
+          return t('performance.phaseTestingLatency');
+        case 'testing_download':
+          return t('performance.phaseTestingDownload');
+        case 'testing_upload':
+          return t('performance.phaseTestingUpload');
+        case 'complete':
+          return t('performance.phaseComplete');
         default:
           return phase;
       }
@@ -152,14 +152,14 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
     // Helper to get iperf phase label
     const getIperfPhaseLabel = (phase: string): string => {
       switch (phase as IperfPhase) {
-        case "idle":
-          return t("performance.phaseReady");
-        case "connecting":
-          return t("performance.phaseConnecting");
-        case "testing":
-          return t("performance.phaseTesting");
-        case "complete":
-          return t("performance.phaseComplete");
+        case 'idle':
+          return t('performance.phaseReady');
+        case 'connecting':
+          return t('performance.phaseConnecting');
+        case 'testing':
+          return t('performance.phaseTesting');
+        case 'complete':
+          return t('performance.phaseComplete');
         default:
           return phase;
       }
@@ -182,12 +182,12 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
     // Start/stop iperf server based on settings
     const manageIperfServer = useCallback(async (shouldRun: boolean, port: number) => {
       try {
-        const action = shouldRun ? "start" : "stop";
+        const action = shouldRun ? 'start' : 'stop';
         // Use api.post() for CSRF token inclusion (#CSRF-FIX)
-        const res = await api.post("/api/v1/sap/iperf/server", { action, port });
+        const res = await api.post('/api/v1/sap/iperf/server', { action, port });
         if (res.ok) {
-          const statusRes = await fetch("/api/v1/sap/iperf/server/status", {
-            credentials: "include",
+          const statusRes = await fetch('/api/v1/sap/iperf/server/status', {
+            credentials: 'include',
           });
           if (statusRes.ok) {
             // biome-ignore lint/nursery/useAwaitThenable: Response.json() returns a Promise
@@ -195,7 +195,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
           }
         }
       } catch (err) {
-        logger.error(LogComponents.Iperf, "Failed to manage iperf server", err);
+        logger.error(LogComponents.Iperf, 'Failed to manage iperf server', err);
       }
     }, []);
 
@@ -205,8 +205,8 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
       const fetchStatus = async (): Promise<void> => {
         try {
           // Fetch speedtest status
-          const speedRes = await fetch("/api/v1/sap/speedtest/status", {
-            credentials: "include",
+          const speedRes = await fetch('/api/v1/sap/speedtest/status', {
+            credentials: 'include',
           });
           if (speedRes.ok) {
             // biome-ignore lint/nursery/useAwaitThenable: Response.json() returns a Promise
@@ -219,8 +219,8 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
           }
 
           // Fetch iperf3 info
-          const iperfInfoRes = await fetch("/api/v1/sap/iperf/info", {
-            credentials: "include",
+          const iperfInfoRes = await fetch('/api/v1/sap/iperf/info', {
+            credentials: 'include',
           });
           if (iperfInfoRes.ok) {
             // biome-ignore lint/nursery/useAwaitThenable: Response.json() returns a Promise
@@ -228,8 +228,8 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
           }
 
           // Fetch iperf3 client status
-          const iperfClientRes = await fetch("/api/v1/sap/iperf/client/status", {
-            credentials: "include",
+          const iperfClientRes = await fetch('/api/v1/sap/iperf/client/status', {
+            credentials: 'include',
           });
           if (iperfClientRes.ok) {
             // biome-ignore lint/nursery/useAwaitThenable: Response.json() returns a Promise
@@ -242,15 +242,15 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
           }
 
           // Fetch iperf3 server status
-          const iperfServerRes = await fetch("/api/v1/sap/iperf/server/status", {
-            credentials: "include",
+          const iperfServerRes = await fetch('/api/v1/sap/iperf/server/status', {
+            credentials: 'include',
           });
           if (iperfServerRes.ok) {
             // biome-ignore lint/nursery/useAwaitThenable: Response.json() returns a Promise
             setIperfServerStatus(await iperfServerRes.json());
           }
         } catch (err) {
-          logger.error(LogComponents.Speedtest, "Failed to fetch performance status", err);
+          logger.error(LogComponents.Speedtest, 'Failed to fetch performance status', err);
         }
       };
       fetchStatus().catch(() => {
@@ -273,8 +273,8 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Server sync requires checking status and conditionally starting/stopping
         const syncServerState = async (): Promise<void> => {
           try {
-            const res = await fetch("/api/v1/sap/iperf/server/status", {
-              credentials: "include",
+            const res = await fetch('/api/v1/sap/iperf/server/status', {
+              credentials: 'include',
             });
             if (res.ok) {
               // biome-ignore lint/nursery/useAwaitThenable: Response.json() returns a Promise
@@ -325,8 +325,8 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Speedtest poll handles status update and completion signaling
         (async (): Promise<void> => {
           try {
-            const res = await fetch("/api/v1/sap/speedtest/status", {
-              credentials: "include",
+            const res = await fetch('/api/v1/sap/speedtest/status', {
+              credentials: 'include',
             });
             if (res.ok) {
               // biome-ignore lint/nursery/useAwaitThenable: Response.json() returns a Promise
@@ -339,14 +339,14 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                 }
                 // Signal FAB that speedtest is complete
                 window.dispatchEvent(
-                  new CustomEvent("cardTestComplete", {
-                    detail: { test: "speedtest" },
+                  new CustomEvent('cardTestComplete', {
+                    detail: { test: 'speedtest' },
                   }),
                 );
               }
             }
           } catch (err) {
-            logger.error(LogComponents.Speedtest, "Failed to poll speedtest status", err);
+            logger.error(LogComponents.Speedtest, 'Failed to poll speedtest status', err);
           }
         })().catch(() => {
           // Error already logged
@@ -366,8 +366,8 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: iPerf poll handles status update and completion signaling
         (async (): Promise<void> => {
           try {
-            const res = await fetch("/api/v1/sap/iperf/client/status", {
-              credentials: "include",
+            const res = await fetch('/api/v1/sap/iperf/client/status', {
+              credentials: 'include',
             });
             if (res.ok) {
               // biome-ignore lint/nursery/useAwaitThenable: Response.json() returns a Promise
@@ -380,14 +380,14 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                 }
                 // Signal FAB that iperf is complete
                 window.dispatchEvent(
-                  new CustomEvent("cardTestComplete", {
-                    detail: { test: "iperf" },
+                  new CustomEvent('cardTestComplete', {
+                    detail: { test: 'iperf' },
                   }),
                 );
               }
             }
           } catch (err) {
-            logger.error(LogComponents.Iperf, "Failed to poll iperf status", err);
+            logger.error(LogComponents.Iperf, 'Failed to poll iperf status', err);
           }
         })().catch(() => {
           // Error already logged
@@ -399,51 +399,51 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
 
     const runSpeedtest = useCallback(async () => {
       if (!runSpeedtestEnabled) {
-        setSpeedtestError(t("performance.testsDisabled"));
+        setSpeedtestError(t('performance.testsDisabled'));
         return;
       }
 
       setSpeedtestError(null);
       setSpeedtestRunning(true);
-      setSpeedtestStatus({ running: true, phase: "finding_server", progress: 0 });
+      setSpeedtestStatus({ running: true, phase: 'finding_server', progress: 0 });
 
       try {
-        await api.post("/api/v1/sap/speedtest");
+        await api.post('/api/v1/sap/speedtest');
       } catch (err) {
-        setSpeedtestError(err instanceof Error ? err.message : t("performance.speedtestFailed"));
-        setSpeedtestStatus({ running: false, phase: "idle", progress: 0 });
+        setSpeedtestError(err instanceof Error ? err.message : t('performance.speedtestFailed'));
+        setSpeedtestStatus({ running: false, phase: 'idle', progress: 0 });
         setSpeedtestRunning(false);
       }
     }, [runSpeedtestEnabled, t]);
 
     const runIperfClient = useCallback(async () => {
       if (!runIperfEnabled) {
-        setIperfError(t("performance.testsDisabled"));
+        setIperfError(t('performance.testsDisabled'));
         return;
       }
 
       if (!iperfSettings.server) {
-        setIperfError(t("performance.serverNotConfigured"));
+        setIperfError(t('performance.serverNotConfigured'));
         return;
       }
 
       setIperfError(null);
       setIperfClientRunning(true);
-      setIperfClientStatus({ running: true, phase: "connecting", progress: 0 });
+      setIperfClientStatus({ running: true, phase: 'connecting', progress: 0 });
 
       try {
-        await api.post("/api/v1/sap/iperf/client", {
+        await api.post('/api/v1/sap/iperf/client', {
           server: iperfSettings.server,
           port: iperfSettings.port,
           protocol: iperfSettings.protocol,
           direction: iperfSettings.direction,
-          reverse: iperfSettings.direction === "download",
+          reverse: iperfSettings.direction === 'download',
           duration: iperfSettings.duration,
           parallel: 1,
         });
       } catch (err) {
-        setIperfError(err instanceof Error ? err.message : t("performance.iperfFailed"));
-        setIperfClientStatus({ running: false, phase: "idle", progress: 0 });
+        setIperfError(err instanceof Error ? err.message : t('performance.iperfFailed'));
+        setIperfClientStatus({ running: false, phase: 'idle', progress: 0 });
         setIperfClientRunning(false);
       }
     }, [iperfSettings, runIperfEnabled, t]);
@@ -473,9 +473,9 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
         }
       };
 
-      window.addEventListener("runAllTests", handleRunAllTests);
+      window.addEventListener('runAllTests', handleRunAllTests);
       return (): void => {
-        window.removeEventListener("runAllTests", handleRunAllTests);
+        window.removeEventListener('runAllTests', handleRunAllTests);
       };
     }, [
       runSpeedtest,
@@ -490,38 +490,38 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
 
     const formatSpeed = (mbps: number): string => {
       if (mbps >= 1000) {
-        return `${(mbps / 1000).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Gbps`;
+        return `${(mbps / 1000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Gbps`;
       }
-      return `${mbps.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Mbps`;
+      return `${mbps.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Mbps`;
     };
 
     const getStatus = (): Status => {
       if (!(runSpeedtestEnabled || runIperfEnabled)) {
-        return "unknown";
+        return 'unknown';
       }
       if (loading || speedtestRunning || iperfClientRunning) {
-        return "loading";
+        return 'loading';
       }
       if (speedtestError || iperfError) {
-        return "error";
+        return 'error';
       }
       if (speedtestResult || iperfResult) {
-        return "success";
+        return 'success';
       }
-      return "unknown";
+      return 'unknown';
     };
 
     return (
       <Card
-        title={t("performance.title")}
-        subtitle={t("performance.subtitle")}
+        title={t('performance.title')}
+        subtitle={t('performance.subtitle')}
         icon={<Gauge class={iconTokens.size.md} />}
         status={getStatus()}
       >
         <div>
           {/* Internet Speed Section */}
-          <p class={cn("caption font-medium", spacing.margin.bottom.inline)}>
-            {t("performance.internetSpeed")}
+          <p class={cn('caption font-medium', spacing.margin.bottom.inline)}>
+            {t('performance.internetSpeed')}
           </p>
 
           {speedtestRunning && speedtestStatus ? (
@@ -531,18 +531,18 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
               >
                 <SpeedGauge
                   value={speedtestStatus.currentDownload || 0}
-                  label={t("performance.download")}
+                  label={t('performance.download')}
                   size="md"
-                  isRunning={speedtestStatus.phase === "testing_download"}
+                  isRunning={speedtestStatus.phase === 'testing_download'}
                 />
                 <SpeedGauge
                   value={speedtestStatus.currentUpload || 0}
-                  label={t("performance.upload")}
+                  label={t('performance.upload')}
                   size="md"
-                  isRunning={speedtestStatus.phase === "testing_upload"}
+                  isRunning={speedtestStatus.phase === 'testing_upload'}
                 />
               </div>
-              <div class={cn(layout.inline.default, spacing.pad.xs, "bg-surface-hover", radius.md)}>
+              <div class={cn(layout.inline.default, spacing.pad.xs, 'bg-surface-hover', radius.md)}>
                 <PulsingDot color="primary" size="sm" />
                 <span class="body-small font-medium">
                   {getSpeedtestPhaseLabel(speedtestStatus.phase)}
@@ -561,26 +561,26 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
               >
                 <SpeedGauge
                   value={speedtestResult.download}
-                  label={t("performance.download")}
+                  label={t('performance.download')}
                   size="md"
                 />
                 <SpeedGauge
                   value={speedtestResult.upload}
-                  label={t("performance.upload")}
+                  label={t('performance.upload')}
                   size="md"
                 />
               </div>
               <CardRow
-                label={t("performance.latency")}
+                label={t('performance.latency')}
                 value={`${speedtestResult.latency.toFixed(0)} ms`}
               />
-              <CardRow label={t("performance.server")} value={speedtestResult.location} />
+              <CardRow label={t('performance.server')} value={speedtestResult.location} />
             </div>
           ) : null}
 
           {speedtestRunning || speedtestResult || speedtestError ? null : (
-            <p class={cn("body-small", spacing.margin.bottom.inline)}>
-              {t("performance.noResults")}
+            <p class={cn('body-small', spacing.margin.bottom.inline)}>
+              {t('performance.noResults')}
             </p>
           )}
 
@@ -591,22 +591,22 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
           {/* LAN Speed (iperf3) Section */}
           <p
             class={cn(
-              "caption font-medium",
+              'caption font-medium',
               spacing.margin.bottom.inline,
               spacing.margin.top.inline,
             )}
           >
-            {t("performance.lanSpeed")}
+            {t('performance.lanSpeed')}
             {iperfInfo?.version ? (
-              <span class={cn("text-text-muted font-normal", spacing.margin.left.inline)}>
+              <span class={cn('text-text-muted font-normal', spacing.margin.left.inline)}>
                 {iperfInfo.version}
               </span>
             ) : null}
           </p>
 
           {iperfInfo?.installed ? null : (
-            <p class={cn("body-small text-status-warning", spacing.margin.bottom.heading)}>
-              {t("performance.iperfNotInstalled")}
+            <p class={cn('body-small text-status-warning', spacing.margin.bottom.heading)}>
+              {t('performance.iperfNotInstalled')}
             </p>
           )}
 
@@ -616,32 +616,32 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
               {iperfSettings.server ? (
                 <div
                   class={cn(
-                    "caption",
+                    'caption',
                     spacing.margin.bottom.heading,
                     spacing.pad.sm,
-                    "bg-surface-hover",
+                    'bg-surface-hover',
                     radius.default,
                   )}
                 >
                   <div class={layout.flex.between}>
-                    <span>{t("performance.server")}:</span>
+                    <span>{t('performance.server')}:</span>
                     <span class="text-text-primary">
                       {iperfSettings.server}:{iperfSettings.port}
                     </span>
                   </div>
                   <div class={layout.flex.between}>
-                    <span>{t("performance.test")}:</span>
+                    <span>{t('performance.test')}:</span>
                     <span class="text-text-primary">
-                      {iperfSettings.protocol.toUpperCase()}{" "}
-                      {iperfSettings.direction === "bidirectional"
-                        ? t("performance.both")
+                      {iperfSettings.protocol.toUpperCase()}{' '}
+                      {iperfSettings.direction === 'bidirectional'
+                        ? t('performance.both')
                         : iperfSettings.direction}
                     </span>
                   </div>
                 </div>
               ) : (
-                <p class={cn("caption", spacing.margin.bottom.heading)}>
-                  {t("performance.configureServer")}
+                <p class={cn('caption', spacing.margin.bottom.heading)}>
+                  {t('performance.configureServer')}
                 </p>
               )}
 
@@ -652,7 +652,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                     layout.inline.spacious,
                     spacing.margin.bottom.heading,
                     spacing.pad.sm,
-                    "bg-surface-hover",
+                    'bg-surface-hover',
                     radius.lg,
                   )}
                 >
@@ -671,7 +671,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                           value={pp}
                           max={100}
                           aria-label="iPerf progress"
-                          class={cn(spacing.margin.top.inline, "w-full", radius.full)}
+                          class={cn(spacing.margin.top.inline, 'w-full', radius.full)}
                         />
                       );
                     })()}
@@ -680,17 +680,17 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
               ) : null}
 
               {!iperfClientRunning && iperfResult ? (
-                <div class={cn(spacing.margin.bottom.heading, "stack-sm")}>
-                  {iperfResult.direction === "bidirectional" ? (
-                    <div class={cn("grid grid-cols-1 sm:grid-cols-2", spacing.gap.default)}>
+                <div class={cn(spacing.margin.bottom.heading, 'stack-sm')}>
+                  {iperfResult.direction === 'bidirectional' ? (
+                    <div class={cn('grid grid-cols-1 sm:grid-cols-2', spacing.gap.default)}>
                       <CardValue
-                        label={t("performance.download")}
+                        label={t('performance.download')}
                         value={formatSpeed(iperfResult.downloadBandwidth ?? iperfResult.bandwidth)}
                         size="md"
                         status="success"
                       />
                       <CardValue
-                        label={t("performance.upload")}
+                        label={t('performance.upload')}
                         value={formatSpeed(iperfResult.uploadBandwidth ?? iperfResult.bandwidth)}
                         size="md"
                         status="success"
@@ -699,9 +699,9 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                   ) : (
                     <CardValue
                       label={
-                        iperfResult.direction === "download"
-                          ? t("performance.download")
-                          : t("performance.upload")
+                        iperfResult.direction === 'download'
+                          ? t('performance.download')
+                          : t('performance.upload')
                       }
                       value={formatSpeed(iperfResult.bandwidth)}
                       size="md"
@@ -709,42 +709,42 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                     />
                   )}
 
-                  {iperfResult.direction === "bidirectional" ? (
-                    <div class={cn("grid grid-cols-1 sm:grid-cols-2", spacing.gap.default)}>
+                  {iperfResult.direction === 'bidirectional' ? (
+                    <div class={cn('grid grid-cols-1 sm:grid-cols-2', spacing.gap.default)}>
                       {iperfResult.downloadTransfer !== undefined ? (
                         <CardRow
-                          label={t("performance.downloadTransfer")}
+                          label={t('performance.downloadTransfer')}
                           value={`${iperfResult.downloadTransfer.toFixed(1)} MB`}
                         />
                       ) : null}
                       {iperfResult.uploadTransfer !== undefined ? (
                         <CardRow
-                          label={t("performance.uploadTransfer")}
+                          label={t('performance.uploadTransfer')}
                           value={`${iperfResult.uploadTransfer.toFixed(1)} MB`}
                         />
                       ) : null}
                     </div>
                   ) : (
                     <CardRow
-                      label={t("performance.transfer")}
+                      label={t('performance.transfer')}
                       value={`${iperfResult.transfer.toFixed(1)} MB`}
                     />
                   )}
 
-                  {iperfResult.protocol === "tcp" && iperfResult.retransmits > 0 ? (
+                  {iperfResult.protocol === 'tcp' && iperfResult.retransmits > 0 ? (
                     <CardRow
-                      label={t("performance.retransmits")}
+                      label={t('performance.retransmits')}
                       value={iperfResult.retransmits.toString()}
                     />
                   ) : null}
-                  {iperfResult.protocol === "udp" ? (
+                  {iperfResult.protocol === 'udp' ? (
                     <>
                       <CardRow
-                        label={t("performance.jitter")}
+                        label={t('performance.jitter')}
                         value={`${iperfResult.jitter.toFixed(2)} ms`}
                       />
                       <CardRow
-                        label={t("performance.packetLoss")}
+                        label={t('performance.packetLoss')}
                         value={`${iperfResult.lostPercent.toFixed(2)}%`}
                       />
                     </>
@@ -758,21 +758,21 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
               {iperfSettings.enableServer ? (
                 <div
                   class={cn(
-                    "caption",
+                    'caption',
                     layout.flex.between,
-                    "pad-sm bg-surface-hover",
+                    'pad-sm bg-surface-hover',
                     radius.default,
                   )}
                 >
-                  <span>{t("performance.serverMode")}</span>
+                  <span>{t('performance.serverMode')}</span>
                   <span
-                    class={iperfServerStatus?.running ? "text-status-success" : "text-text-muted"}
+                    class={iperfServerStatus?.running ? 'text-status-success' : 'text-text-muted'}
                   >
                     {iperfServerStatus?.running
-                      ? t("performance.listening", {
+                      ? t('performance.listening', {
                           port: iperfServerStatus.port,
                         })
-                      : t("performance.stopped")}
+                      : t('performance.stopped')}
                   </span>
                 </div>
               ) : null}

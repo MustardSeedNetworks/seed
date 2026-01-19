@@ -12,31 +12,31 @@
  * - Interactive selection
  */
 
-import type { Meta, StoryFn, StoryObj } from "@storybook/react-vite";
-import type React from "react";
-import { useState } from "react";
-import { cn, spacing } from "../../../styles/theme";
-import type { SaveStatus, WiFiSettings as WiFiSettingsType } from "../../../types/settings";
-import { WiFiSettings } from "./WiFiSettings";
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type React from 'react';
+import { useState } from 'react';
+import { cn, spacing } from '../../../styles/theme';
+import type { SaveStatus, WiFiSettings as WiFiSettingsType } from '../../../types/settings';
+import { WiFiSettings } from './WiFiSettings';
 
 const meta: Meta<typeof WiFiSettings> = {
-  title: "Settings/WiFiSettings",
+  title: 'Settings/WiFiSettings',
   component: WiFiSettings,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "WiFi interface configuration panel. Displays available wireless interfaces as a dropdown or provides a text input if no interfaces are detected.",
+          'WiFi interface configuration panel. Displays available wireless interfaces as a dropdown or provides a text input if no interfaces are detected.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     wifiStatus: {
-      control: "select",
-      options: ["idle", "saving", "saved", "error"],
-      description: "Auto-save status indicator",
+      control: 'select',
+      options: ['idle', 'saving', 'saved', 'error'],
+      description: 'Auto-save status indicator',
     },
   },
   decorators: [
@@ -57,14 +57,14 @@ type Story = StoryObj<typeof meta>;
 export const WithAvailableInterfaces: Story = {
   args: {
     wifiSettings: {
-      interface: "wlan0",
-      availableWifi: ["wlan0", "wlan1", "wlp2s0"],
+      interface: 'wlan0',
+      availableWifi: ['wlan0', 'wlan1', 'wlp2s0'],
       isWireless: true,
     },
     setWifiSettings: () => {
       // intentionally empty
     },
-    wifiStatus: "idle",
+    wifiStatus: 'idle',
   },
 };
 
@@ -74,14 +74,14 @@ export const WithAvailableInterfaces: Story = {
 export const MacosInterface: Story = {
   args: {
     wifiSettings: {
-      interface: "en0",
-      availableWifi: ["en0", "en1"],
+      interface: 'en0',
+      availableWifi: ['en0', 'en1'],
       isWireless: true,
     },
     setWifiSettings: () => {
       // intentionally empty
     },
-    wifiStatus: "idle",
+    wifiStatus: 'idle',
   },
 };
 
@@ -91,14 +91,14 @@ export const MacosInterface: Story = {
 export const NoAvailableInterfaces: Story = {
   args: {
     wifiSettings: {
-      interface: "",
+      interface: '',
       availableWifi: [],
       isWireless: false,
     },
     setWifiSettings: () => {
       // intentionally empty
     },
-    wifiStatus: "idle",
+    wifiStatus: 'idle',
   },
 };
 
@@ -108,14 +108,14 @@ export const NoAvailableInterfaces: Story = {
 export const ManualEntry: Story = {
   args: {
     wifiSettings: {
-      interface: "wlan0",
+      interface: 'wlan0',
       availableWifi: [],
       isWireless: false,
     },
     setWifiSettings: () => {
       // intentionally empty
     },
-    wifiStatus: "idle",
+    wifiStatus: 'idle',
   },
 };
 
@@ -125,14 +125,14 @@ export const ManualEntry: Story = {
 export const SingleInterface: Story = {
   args: {
     wifiSettings: {
-      interface: "wlan0",
-      availableWifi: ["wlan0"],
+      interface: 'wlan0',
+      availableWifi: ['wlan0'],
       isWireless: true,
     },
     setWifiSettings: () => {
       // intentionally empty
     },
-    wifiStatus: "idle",
+    wifiStatus: 'idle',
   },
 };
 
@@ -142,14 +142,14 @@ export const SingleInterface: Story = {
 export const NoWirelessDetected: Story = {
   args: {
     wifiSettings: {
-      interface: "eth0",
-      availableWifi: ["eth0", "eth1"],
+      interface: 'eth0',
+      availableWifi: ['eth0', 'eth1'],
       isWireless: false,
     },
     setWifiSettings: () => {
       // intentionally empty
     },
-    wifiStatus: "idle",
+    wifiStatus: 'idle',
   },
 };
 
@@ -159,14 +159,14 @@ export const NoWirelessDetected: Story = {
 export const Saving: Story = {
   args: {
     wifiSettings: {
-      interface: "wlan0",
-      availableWifi: ["wlan0", "wlan1"],
+      interface: 'wlan0',
+      availableWifi: ['wlan0', 'wlan1'],
       isWireless: true,
     },
     setWifiSettings: () => {
       // intentionally empty
     },
-    wifiStatus: "saving",
+    wifiStatus: 'saving',
   },
 };
 
@@ -176,14 +176,14 @@ export const Saving: Story = {
 export const Saved: Story = {
   args: {
     wifiSettings: {
-      interface: "wlan0",
-      availableWifi: ["wlan0", "wlan1"],
+      interface: 'wlan0',
+      availableWifi: ['wlan0', 'wlan1'],
       isWireless: true,
     },
     setWifiSettings: () => {
       // intentionally empty
     },
-    wifiStatus: "saved",
+    wifiStatus: 'saved',
   },
 };
 
@@ -193,20 +193,20 @@ export const Saved: Story = {
 export const Interactive: Story = {
   render: function interactiveStory() {
     const [wifiSettings, setWifiSettings] = useState<WiFiSettingsType>({
-      interface: "wlan0",
-      availableWifi: ["wlan0", "wlan1", "wlp2s0"],
+      interface: 'wlan0',
+      availableWifi: ['wlan0', 'wlan1', 'wlp2s0'],
       isWireless: true,
     });
-    const [status, setStatus] = useState<SaveStatus>("idle");
+    const [status, setStatus] = useState<SaveStatus>('idle');
 
     const handleSetWifiSettings = (updater: React.SetStateAction<WiFiSettingsType>) => {
       setWifiSettings(updater);
-      setStatus("saving");
+      setStatus('saving');
 
       setTimeout(() => {
-        setStatus("saved");
+        setStatus('saved');
         setTimeout(() => {
-          setStatus("idle");
+          setStatus('idle');
         }, 2000);
       }, 800);
     };
@@ -226,15 +226,15 @@ export const Interactive: Story = {
  */
 export const Comparison: Story = {
   render: () => (
-    <div class={cn("stack-lg", spacing.pad.default)}>
+    <div class={cn('stack-lg', spacing.pad.default)}>
       <div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           Multiple interfaces available
         </p>
         <WiFiSettings
           wifiSettings={{
-            interface: "wlan0",
-            availableWifi: ["wlan0", "wlan1", "wlp2s0"],
+            interface: 'wlan0',
+            availableWifi: ['wlan0', 'wlan1', 'wlp2s0'],
             isWireless: true,
           }}
           setWifiSettings={() => {
@@ -244,12 +244,12 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           No interfaces (manual entry)
         </p>
         <WiFiSettings
           wifiSettings={{
-            interface: "wlan0",
+            interface: 'wlan0',
             availableWifi: [],
             isWireless: false,
           }}
@@ -260,11 +260,11 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Saving state</p>
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Saving state</p>
         <WiFiSettings
           wifiSettings={{
-            interface: "wlan0",
-            availableWifi: ["wlan0"],
+            interface: 'wlan0',
+            availableWifi: ['wlan0'],
             isWireless: true,
           }}
           setWifiSettings={() => {

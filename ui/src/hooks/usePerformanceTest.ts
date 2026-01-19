@@ -22,9 +22,9 @@
  * ```
  */
 
-import { useCallback, useState } from "react";
-import { api } from "../api";
-import { LogComponents, logger } from "../lib/logger";
+import { useCallback, useState } from 'react';
+import { api } from '../api';
+import { LogComponents, logger } from '../lib/logger';
 
 /** Speedtest result from public servers */
 export interface SpeedtestResult {
@@ -48,7 +48,7 @@ export interface IperfResult {
   lostPackets?: number;
   totalPackets?: number;
   duration: number; // seconds
-  protocol: "tcp" | "udp";
+  protocol: 'tcp' | 'udp';
   server: string;
   timestamp: string;
 }
@@ -60,7 +60,7 @@ export interface IperfClientConfig {
   duration?: number;
   parallel?: number;
   reverse?: boolean;
-  protocol?: "tcp" | "udp";
+  protocol?: 'tcp' | 'udp';
   bandwidth?: string;
 }
 
@@ -74,7 +74,7 @@ export interface IperfServerStatus {
 /** Speedtest status */
 export interface SpeedtestStatus {
   running: boolean;
-  phase: "idle" | "download" | "upload" | "complete";
+  phase: 'idle' | 'download' | 'upload' | 'complete';
   progress: number;
 }
 
@@ -135,14 +135,14 @@ export function usePerformanceTest(): {
       setSpeedtestRunning(true);
       setSpeedtestResult(null);
 
-      const result = await api.post<SpeedtestResult>("/api/v1/sap/speedtest");
+      const result = await api.post<SpeedtestResult>('/api/v1/sap/speedtest');
       setSpeedtestResult(result);
       return result;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Speedtest failed";
+      const message = err instanceof Error ? err.message : 'Speedtest failed';
       setSpeedtestError(message);
-      logger.error(LogComponents.Speedtest, "Speedtest failed", err, {
-        endpoint: "/api/v1/sap/speedtest",
+      logger.error(LogComponents.Speedtest, 'Speedtest failed', err, {
+        endpoint: '/api/v1/sap/speedtest',
       });
       return null;
     } finally {
@@ -155,10 +155,10 @@ export function usePerformanceTest(): {
    */
   const fetchSpeedtestStatus = useCallback(async (): Promise<SpeedtestStatus | null> => {
     try {
-      return await api.get<SpeedtestStatus>("/api/v1/sap/speedtest/status");
+      return await api.get<SpeedtestStatus>('/api/v1/sap/speedtest/status');
     } catch (err) {
-      logger.error(LogComponents.Speedtest, "Failed to fetch speedtest status", err, {
-        endpoint: "/api/v1/sap/speedtest/status",
+      logger.error(LogComponents.Speedtest, 'Failed to fetch speedtest status', err, {
+        endpoint: '/api/v1/sap/speedtest/status',
       });
       return null;
     }
@@ -174,14 +174,14 @@ export function usePerformanceTest(): {
         setIperfRunning(true);
         setIperfResult(null);
 
-        const result = await api.post<IperfResult>("/api/v1/sap/iperf/client", config);
+        const result = await api.post<IperfResult>('/api/v1/sap/iperf/client', config);
         setIperfResult(result);
         return result;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "iPerf test failed";
+        const message = err instanceof Error ? err.message : 'iPerf test failed';
         setIperfError(message);
-        logger.error(LogComponents.Iperf, "iPerf client test failed", err, {
-          endpoint: "/api/v1/sap/iperf/client",
+        logger.error(LogComponents.Iperf, 'iPerf client test failed', err, {
+          endpoint: '/api/v1/sap/iperf/client',
           server: config.server,
           port: config.port,
           protocol: config.protocol,
@@ -202,10 +202,10 @@ export function usePerformanceTest(): {
    */
   const fetchIperfClientStatus = useCallback(async (): Promise<IperfClientStatus | null> => {
     try {
-      return await api.get<IperfClientStatus>("/api/v1/sap/iperf/client/status");
+      return await api.get<IperfClientStatus>('/api/v1/sap/iperf/client/status');
     } catch (err) {
-      logger.error(LogComponents.Iperf, "Failed to fetch iPerf client status", err, {
-        endpoint: "/api/v1/sap/iperf/client/status",
+      logger.error(LogComponents.Iperf, 'Failed to fetch iPerf client status', err, {
+        endpoint: '/api/v1/sap/iperf/client/status',
       });
       return null;
     }
@@ -216,11 +216,11 @@ export function usePerformanceTest(): {
    */
   const startIperfServer = useCallback(async (port?: number): Promise<boolean> => {
     try {
-      await api.post("/api/v1/sap/iperf/server", { port });
+      await api.post('/api/v1/sap/iperf/server', { port });
       return true;
     } catch (err) {
-      logger.error(LogComponents.Iperf, "Failed to start iPerf server", err, {
-        endpoint: "/api/v1/sap/iperf/server",
+      logger.error(LogComponents.Iperf, 'Failed to start iPerf server', err, {
+        endpoint: '/api/v1/sap/iperf/server',
         port,
       });
       return false;
@@ -232,10 +232,10 @@ export function usePerformanceTest(): {
    */
   const fetchIperfServerStatus = useCallback(async (): Promise<IperfServerStatus | null> => {
     try {
-      return await api.get<IperfServerStatus>("/api/v1/sap/iperf/server/status");
+      return await api.get<IperfServerStatus>('/api/v1/sap/iperf/server/status');
     } catch (err) {
-      logger.error(LogComponents.Iperf, "Failed to fetch iPerf server status", err, {
-        endpoint: "/api/v1/sap/iperf/server/status",
+      logger.error(LogComponents.Iperf, 'Failed to fetch iPerf server status', err, {
+        endpoint: '/api/v1/sap/iperf/server/status',
       });
       return null;
     }
@@ -247,12 +247,12 @@ export function usePerformanceTest(): {
   const fetchIperfSuggestions = useCallback(async (): Promise<IperfServerSuggestion[]> => {
     try {
       const data = await api.get<{ suggestions: IperfServerSuggestion[] }>(
-        "/api/v1/sap/iperf/suggestions",
+        '/api/v1/sap/iperf/suggestions',
       );
       return data.suggestions || [];
     } catch (err) {
-      logger.error(LogComponents.Iperf, "Failed to fetch iPerf suggestions", err, {
-        endpoint: "/api/v1/sap/iperf/suggestions",
+      logger.error(LogComponents.Iperf, 'Failed to fetch iPerf suggestions', err, {
+        endpoint: '/api/v1/sap/iperf/suggestions',
       });
       return [];
     }
@@ -263,10 +263,10 @@ export function usePerformanceTest(): {
    */
   const fetchIperfInfo = useCallback(async (): Promise<Record<string, unknown> | null> => {
     try {
-      return await api.get<Record<string, unknown>>("/api/v1/sap/iperf/info");
+      return await api.get<Record<string, unknown>>('/api/v1/sap/iperf/info');
     } catch (err) {
-      logger.error(LogComponents.Iperf, "Failed to fetch iPerf info", err, {
-        endpoint: "/api/v1/sap/iperf/info",
+      logger.error(LogComponents.Iperf, 'Failed to fetch iPerf info', err, {
+        endpoint: '/api/v1/sap/iperf/info',
       });
       return null;
     }

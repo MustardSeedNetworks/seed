@@ -1,8 +1,8 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Globe } from "lucide-react";
-import { cn, spacing } from "../../styles/theme";
-import { Card, CardDivider, CardRow, CardValue } from "../ui/Card";
-import { Skeleton } from "../ui/Skeleton";
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { Globe } from 'lucide-react';
+import { cn, spacing } from '../../styles/theme';
+import { Card, CardDivider, CardRow, CardValue } from '../ui/Card';
+import { Skeleton } from '../ui/Skeleton';
 
 /**
  * DNSCard displays DNS resolver status and resolution times.
@@ -11,11 +11,11 @@ import { Skeleton } from "../ui/Skeleton";
  * This story demonstrates the card's visual states without context dependencies.
  */
 const meta: Meta = {
-  title: "Cards/DnsCard",
+  title: 'Cards/DnsCard',
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   decorators: [
     (StoryComponent: React.ComponentType): JSX.Element => (
       <div class="w-80">
@@ -53,7 +53,7 @@ export const SlowResolution: StoryObj = {
         <CardDivider />
         <CardRow label="Primary DNS" value="192.168.1.1" />
         <CardRow label="Test Domain" value="google.com" />
-        <p class={cn("caption text-status-warning", spacing.margin.top.inline)}>
+        <p class={cn('caption text-status-warning', spacing.margin.top.inline)}>
           DNS resolution is slower than expected. Consider using a faster DNS server.
         </p>
       </div>
@@ -99,7 +99,7 @@ export const MultipleDns: StoryObj = {
 export const Loading: StoryObj = {
   render: () => (
     <Card title="DNS" subtitle="Name Resolution" icon={<Globe class="w-4 h-4" />} status="loading">
-      <Skeleton class={cn("h-8 w-32", spacing.margin.bottom.content)} />
+      <Skeleton class={cn('h-8 w-32', spacing.margin.bottom.content)} />
       <div class={cn(spacing.stack.sm, spacing.margin.top.content)}>
         <div class="flex justify-between">
           <Skeleton class="h-3 w-16" />
@@ -118,7 +118,7 @@ export const NoDns: StoryObj = {
   render: () => (
     <Card title="DNS" subtitle="Name Resolution" icon={<Globe class="w-4 h-4" />} status="unknown">
       <CardValue value="Not Configured" size="md" />
-      <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
+      <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
         No DNS servers configured. Network may not resolve domain names.
       </p>
     </Card>

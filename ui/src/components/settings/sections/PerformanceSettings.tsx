@@ -36,9 +36,9 @@
  * State: Manages speedtest, iperf, and suggestion configurations
  */
 
-import type React from "react";
-import { memo } from "react";
-import { useTranslation } from "react-i18next";
+import type React from 'react';
+import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   cn,
   icon as iconTokens,
@@ -46,17 +46,17 @@ import {
   layout,
   radius,
   spacing,
-} from "../../../styles/theme";
+} from '../../../styles/theme';
 import type {
   CardSettings,
   IperfSettings,
   IperfSuggestion,
   SaveStatus,
   TestsSettings,
-} from "../../../types/settings";
-import { CollapsibleSection } from "../../ui/CollapsibleSection";
-import { Gauge } from "../../ui/Icons";
-import { AutoSaveIndicator } from "./AutoSaveIndicator";
+} from '../../../types/settings';
+import { CollapsibleSection } from '../../ui/CollapsibleSection';
+import { Gauge } from '../../ui/Icons';
+import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 interface PerformanceSettingsProps {
   testsSettings: TestsSettings;
@@ -65,7 +65,7 @@ interface PerformanceSettingsProps {
   setIperfSettings: React.Dispatch<React.SetStateAction<IperfSettings>>;
   iperfStatus: SaveStatus;
   iperfSuggestions: IperfSuggestion[];
-  iperfSuggestionsStatus: "idle" | "loading" | "error";
+  iperfSuggestionsStatus: 'idle' | 'loading' | 'error';
   iperfSuggestionsError: string | null;
   fetchIperfSuggestions: () => void;
   /** Card settings for FAB auto-run configuration */
@@ -92,17 +92,17 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
     cardSettings,
     updateCardSettings,
   }: PerformanceSettingsProps) {
-    const { t } = useTranslation("settings");
+    const { t } = useTranslation('settings');
 
     // Get translated direction label
     const getDirectionLabel = (direction: string): string => {
       switch (direction) {
-        case "download":
-          return t("performance.download");
-        case "upload":
-          return t("performance.upload");
-        case "bidirectional":
-          return t("performance.both");
+        case 'download':
+          return t('performance.download');
+        case 'upload':
+          return t('performance.upload');
+        case 'bidirectional':
+          return t('performance.both');
         default:
           return direction;
       }
@@ -113,7 +113,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
         title={
           <div class={layout.inline.default}>
             <Gauge class={iconTokens.size.sm} />
-            <span>{t("sections.performance")}</span>
+            <span>{t('sections.performance')}</span>
             <AutoSaveIndicator status={iperfStatus} />
           </div>
         }
@@ -126,16 +126,16 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
               class={cn(
                 layout.flex.between,
                 spacing.pad.sm,
-                "bg-surface-base",
+                'bg-surface-base',
                 radius.default,
-                "border border-surface-border",
+                'border border-surface-border',
               )}
             >
               <div>
                 <span class="body-small text-text-primary font-medium">
-                  {t("performance.enableSpeedtest")}
+                  {t('performance.enableSpeedtest')}
                 </span>
-                <p class="caption text-text-muted">{t("performance.speedtestDesc")}</p>
+                <p class="caption text-text-muted">{t('performance.speedtestDesc')}</p>
               </div>
               <input
                 type="checkbox"
@@ -153,16 +153,16 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
               class={cn(
                 layout.flex.between,
                 spacing.pad.sm,
-                "bg-surface-base",
+                'bg-surface-base',
                 radius.default,
-                "border border-surface-border",
+                'border border-surface-border',
               )}
             >
               <div>
                 <span class="body-small text-text-primary font-medium">
-                  {t("performance.enableIperf")}
+                  {t('performance.enableIperf')}
                 </span>
-                <p class="caption text-text-muted">{t("performance.iperfDesc")}</p>
+                <p class="caption text-text-muted">{t('performance.iperfDesc')}</p>
               </div>
               <input
                 type="checkbox"
@@ -179,27 +179,27 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
           </div>
 
           {/* Auto-Run on Link Up (FAB button) */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <span class="caption text-text-muted font-medium">
-              {t("performance.autoRunOnLink")}
+              {t('performance.autoRunOnLink')}
             </span>
             <p class="caption text-text-muted mt-1">
               {t(
-                "performance.autoRunOnLinkDesc",
-                "Controls which tests run when FAB button is clicked",
+                'performance.autoRunOnLinkDesc',
+                'Controls which tests run when FAB button is clicked',
               )}
             </p>
-            <div class={cn(spacing.margin.top.inline, "stack-sm")}>
+            <div class={cn(spacing.margin.top.inline, 'stack-sm')}>
               <label
                 class={cn(
                   layout.flex.between,
                   spacing.pad.sm,
-                  "bg-surface-base",
+                  'bg-surface-base',
                   radius.default,
-                  "border border-surface-border",
+                  'border border-surface-border',
                 )}
               >
-                <span class="body-small text-text-primary">{t("performance.speedtest")}</span>
+                <span class="body-small text-text-primary">{t('performance.speedtest')}</span>
                 <input
                   type="checkbox"
                   checked={cardSettings.performance.speedtest.autoRunOnLink}
@@ -221,12 +221,12 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                 class={cn(
                   layout.flex.between,
                   spacing.pad.sm,
-                  "bg-surface-base",
+                  'bg-surface-base',
                   radius.default,
-                  "border border-surface-border",
+                  'border border-surface-border',
                 )}
               >
-                <span class="body-small text-text-primary">{t("performance.iperf")}</span>
+                <span class="body-small text-text-primary">{t('performance.iperf')}</span>
                 <input
                   type="checkbox"
                   checked={cardSettings.performance.iperf.autoRunOnLink}
@@ -248,20 +248,20 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
           </div>
 
           {/* Internet Speed (Speedtest) Subsection */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <h4
               class={cn(
-                "body-small font-semibold text-text-primary",
+                'body-small font-semibold text-text-primary',
                 spacing.margin.bottom.inline,
-                "uppercase tracking-wide",
+                'uppercase tracking-wide',
               )}
             >
-              {t("performance.internetSpeed")}
+              {t('performance.internetSpeed')}
             </h4>
             <div class="stack">
               <div>
                 <label for="speedtest-server-id" class="caption text-text-muted font-medium">
-                  {t("performance.serverId")}
+                  {t('performance.serverId')}
                 </label>
                 <input
                   id="speedtest-server-id"
@@ -276,29 +276,29 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                       },
                     }))
                   }
-                  placeholder={t("performance.autoClosestServer")}
+                  placeholder={t('performance.autoClosestServer')}
                   class={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.md,
-                    "w-full",
+                    'w-full',
                     spacing.margin.top.tight,
-                    "body-small",
+                    'body-small',
                   )}
                 />
                 <div class={cn(layout.flex.between, spacing.margin.top.tight)}>
-                  <p class="caption text-text-muted">{t("performance.autoSelectDesc")}</p>
+                  <p class="caption text-text-muted">{t('performance.autoSelectDesc')}</p>
                   <button
                     type="button"
                     onClick={(): void =>
                       setTestsSettings((prev) => ({
                         ...prev,
-                        speedtest: { ...prev.speedtest, serverId: "" },
+                        speedtest: { ...prev.speedtest, serverId: '' },
                       }))
                     }
                     class="caption text-brand-primary hover:underline"
                   >
-                    {t("performance.resetToAuto")}
+                    {t('performance.resetToAuto')}
                   </button>
                 </div>
               </div>
@@ -309,20 +309,20 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
           <div>
             <h4
               class={cn(
-                "body-small font-semibold text-text-primary",
+                'body-small font-semibold text-text-primary',
                 spacing.margin.bottom.inline,
-                "uppercase tracking-wide",
+                'uppercase tracking-wide',
               )}
             >
-              {t("performance.lanSpeed")}
+              {t('performance.lanSpeed')}
             </h4>
             <div class="stack">
-              <p class="caption text-text-muted">{t("performance.lanSpeedDesc")}</p>
+              <p class="caption text-text-muted">{t('performance.lanSpeedDesc')}</p>
 
               {/* Server Address */}
               <div>
                 <label for="iperf-server-address" class="caption text-text-muted font-medium">
-                  {t("performance.serverAddress")}
+                  {t('performance.serverAddress')}
                 </label>
                 <input
                   id="iperf-server-address"
@@ -339,25 +339,25 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.md,
-                    "w-full",
+                    'w-full',
                     spacing.margin.top.tight,
-                    "body-small disabled:opacity-60",
+                    'body-small disabled:opacity-60',
                   )}
                 />
                 <div class={cn(layout.flex.between, spacing.margin.top.inline)}>
                   <button
                     type="button"
-                    disabled={iperfSuggestionsStatus === "loading"}
+                    disabled={iperfSuggestionsStatus === 'loading'}
                     onClick={fetchIperfSuggestions}
                     class="caption text-brand-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {iperfSuggestionsStatus === "loading"
-                      ? t("performance.scanning")
-                      : t("performance.findIperfHosts")}
+                    {iperfSuggestionsStatus === 'loading'
+                      ? t('performance.scanning')
+                      : t('performance.findIperfHosts')}
                   </button>
-                  {iperfSuggestionsStatus === "loading" && (
+                  {iperfSuggestionsStatus === 'loading' && (
                     <svg
-                      class={cn(iconTokens.size.sm, "animate-spin text-text-muted")}
+                      class={cn(iconTokens.size.sm, 'animate-spin text-text-muted')}
                       viewBox="0 0 24 24"
                       fill="none"
                       aria-hidden="true"
@@ -378,21 +378,21 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     </svg>
                   )}
                 </div>
-                {iperfSuggestionsStatus === "error" && (
-                  <p class={cn("caption text-status-warning", spacing.margin.top.tight)}>
-                    {iperfSuggestionsError || t("performance.noIperfHosts")}
+                {iperfSuggestionsStatus === 'error' && (
+                  <p class={cn('caption text-status-warning', spacing.margin.top.tight)}>
+                    {iperfSuggestionsError || t('performance.noIperfHosts')}
                   </p>
                 )}
                 {iperfSuggestions.length > 0 && (
-                  <div class={cn("flex flex-wrap", spacing.gap.compact, spacing.margin.top.inline)}>
+                  <div class={cn('flex flex-wrap', spacing.gap.compact, spacing.margin.top.inline)}>
                     {iperfSuggestions.map((sugg) => (
                       <button
                         type="button"
-                        key={`${sugg.host}-${sugg.hostname || ""}`}
+                        key={`${sugg.host}-${sugg.hostname || ''}`}
                         class={cn(
                           spacing.chip.sm,
                           radius.full,
-                          "border border-surface-border bg-surface-base caption text-text-primary hover:bg-surface-hover",
+                          'border border-surface-border bg-surface-base caption text-text-primary hover:bg-surface-hover',
                         )}
                         onClick={(): void =>
                           setIperfSettings((prev) => ({
@@ -402,9 +402,9 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                         }
                       >
                         <span class="font-medium">{sugg.hostname || sugg.host}</span>
-                        <span class={cn("text-text-muted", spacing.margin.left.tight)}>
-                          {sugg.hostname ? `(${sugg.host})` : ""}
-                          {sugg.latencyMs !== undefined ? ` · ${Math.round(sugg.latencyMs)}ms` : ""}
+                        <span class={cn('text-text-muted', spacing.margin.left.tight)}>
+                          {sugg.hostname ? `(${sugg.host})` : ''}
+                          {sugg.latencyMs !== undefined ? ` · ${Math.round(sugg.latencyMs)}ms` : ''}
                         </span>
                       </button>
                     ))}
@@ -415,7 +415,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
               {/* Port */}
               <div>
                 <label class="caption text-text-muted font-medium" for="iperf-port">
-                  {t("performance.port")}
+                  {t('performance.port')}
                 </label>
                 <input
                   id="iperf-port"
@@ -431,9 +431,9 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.md,
-                    "w-full",
+                    'w-full',
                     spacing.margin.top.tight,
-                    "body-small disabled:opacity-60",
+                    'body-small disabled:opacity-60',
                   )}
                 />
               </div>
@@ -442,30 +442,30 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
               <div>
                 <span
                   class={cn(
-                    "caption text-text-muted font-medium block",
+                    'caption text-text-muted font-medium block',
                     spacing.margin.bottom.inline,
                   )}
                 >
-                  {t("performance.protocol")}
+                  {t('performance.protocol')}
                 </span>
                 <div
-                  class={cn("flex flex-wrap", spacing.gap.compact)}
+                  class={cn('flex flex-wrap', spacing.gap.compact)}
                   role="radiogroup"
                   aria-label="Protocol selection"
                 >
-                  {(["tcp", "udp"] as const).map((proto) => {
+                  {(['tcp', 'udp'] as const).map((proto) => {
                     const checked = iperfSettings.protocol === proto;
                     return (
                       <label
                         key={proto}
                         class={cn(
-                          "cursor-pointer",
+                          'cursor-pointer',
                           spacing.chip.md,
                           radius.full,
-                          "border body-small font-medium transition-colors",
+                          'border body-small font-medium transition-colors',
                           checked
-                            ? "bg-brand-primary text-text-inverse border-brand-primary"
-                            : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover",
+                            ? 'bg-brand-primary text-text-inverse border-brand-primary'
+                            : 'bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover',
                         )}
                       >
                         <input
@@ -493,30 +493,30 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
               <div>
                 <span
                   class={cn(
-                    "caption text-text-muted font-medium block",
+                    'caption text-text-muted font-medium block',
                     spacing.margin.bottom.inline,
                   )}
                 >
-                  {t("performance.direction")}
+                  {t('performance.direction')}
                 </span>
                 <div
-                  class={cn("flex flex-wrap", spacing.gap.compact)}
+                  class={cn('flex flex-wrap', spacing.gap.compact)}
                   role="radiogroup"
                   aria-label="Direction selection"
                 >
-                  {(["download", "upload", "bidirectional"] as const).map((direction) => {
+                  {(['download', 'upload', 'bidirectional'] as const).map((direction) => {
                     const checked = iperfSettings.direction === direction;
                     return (
                       <label
                         key={direction}
                         class={cn(
-                          "cursor-pointer",
+                          'cursor-pointer',
                           spacing.chip.md,
                           radius.full,
-                          "border body-small font-medium transition-colors",
+                          'border body-small font-medium transition-colors',
                           checked
-                            ? "bg-brand-primary text-text-inverse border-brand-primary"
-                            : "bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover",
+                            ? 'bg-brand-primary text-text-inverse border-brand-primary'
+                            : 'bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover',
                         )}
                       >
                         <input
@@ -543,7 +543,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
               {/* Duration */}
               <div>
                 <label class="caption text-text-muted font-medium" for="iperf-duration">
-                  {t("performance.duration")}
+                  {t('performance.duration')}
                 </label>
                 <input
                   id="iperf-duration"
@@ -561,26 +561,26 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.md,
-                    "w-full",
+                    'w-full',
                     spacing.margin.top.tight,
-                    "body-small disabled:opacity-60",
+                    'body-small disabled:opacity-60',
                   )}
                 />
               </div>
 
               {/* Server Mode */}
-              <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+              <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
                 <label
                   class={cn(
                     layout.flex.between,
                     spacing.pad.sm,
-                    "bg-surface-base",
+                    'bg-surface-base',
                     radius.default,
-                    "border border-surface-border",
+                    'border border-surface-border',
                     spacing.margin.bottom.inline,
                   )}
                 >
-                  <span class="body-small text-text-primary">{t("performance.enableServer")}</span>
+                  <span class="body-small text-text-primary">{t('performance.enableServer')}</span>
                   <input
                     type="checkbox"
                     checked={iperfSettings.enableServer}
@@ -595,7 +595,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                 </label>
                 <div>
                   <label class="caption text-text-muted font-medium" for="iperf-server-port">
-                    {t("performance.serverPort")}
+                    {t('performance.serverPort')}
                   </label>
                   <input
                     id="iperf-server-port"
@@ -611,14 +611,14 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                       inputTokens.base,
                       inputTokens.state.default,
                       inputTokens.size.md,
-                      "w-full",
+                      'w-full',
                       spacing.margin.top.tight,
-                      "body-small disabled:opacity-60",
+                      'body-small disabled:opacity-60',
                     )}
                   />
                 </div>
-                <p class={cn("caption text-text-muted", spacing.margin.top.tight)}>
-                  {t("performance.serverAutoStart")}
+                <p class={cn('caption text-text-muted', spacing.margin.top.tight)}>
+                  {t('performance.serverAutoStart')}
                 </p>
               </div>
             </div>

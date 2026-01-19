@@ -20,11 +20,11 @@
  * ```
  */
 
-import type React from "react";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import type { HeatmapMetric, SamplePoint } from "../../hooks/useSurvey";
-import { cn, radius, spacing } from "../../styles/theme";
+import type React from 'react';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { HeatmapMetric, SamplePoint } from '../../hooks/useSurvey';
+import { cn, radius, spacing } from '../../styles/theme';
 
 interface HeatmapStatsProps {
   samples: SamplePoint[];
@@ -45,25 +45,25 @@ interface MetricStats {
  */
 function getMetricUnit(metric: HeatmapMetric): string {
   switch (metric) {
-    case "rssi":
-    case "noise":
-      return "dBm";
-    case "snr":
-      return "dB";
-    case "cochannel":
-    case "adjacent":
-    case "apDensity":
-      return "APs";
-    case "throughput":
-      return "Mbps";
-    case "latency":
-      return "ms";
-    case "channelUtil":
-      return "%";
-    case "ssidCount":
-      return "SSIDs";
+    case 'rssi':
+    case 'noise':
+      return 'dBm';
+    case 'snr':
+      return 'dB';
+    case 'cochannel':
+    case 'adjacent':
+    case 'apDensity':
+      return 'APs';
+    case 'throughput':
+      return 'Mbps';
+    case 'latency':
+      return 'ms';
+    case 'channelUtil':
+      return '%';
+    case 'ssidCount':
+      return 'SSIDs';
     default:
-      return "";
+      return '';
   }
 }
 
@@ -77,26 +77,26 @@ function extractMetricValue(sample: SamplePoint, metric: HeatmapMetric): number 
   }
 
   // Handle passive samples (networks array)
-  if ("networks" in data && data.networks) {
+  if ('networks' in data && data.networks) {
     const { networks } = data;
     if (networks.length === 0) {
       return null;
     }
 
     switch (metric) {
-      case "rssi": {
+      case 'rssi': {
         // Best RSSI from all networks
         const rssiValues = networks.map((n) => n.rssi).filter((r) => r !== undefined);
         return rssiValues.length > 0 ? Math.max(...rssiValues) : null;
       }
-      case "snr": {
+      case 'snr': {
         // Best SNR from all networks
         const snrValues = networks.map((n) => n.snr).filter((s): s is number => s !== undefined);
         return snrValues.length > 0 ? Math.max(...snrValues) : null;
       }
-      case "noise": {
+      case 'noise': {
         // Noise floor (use from sample or first network)
-        if ("noiseFloor" in data && data.noiseFloor !== undefined) {
+        if ('noiseFloor' in data && data.noiseFloor !== undefined) {
           return data.noiseFloor;
         }
         const noiseValues = networks
@@ -104,7 +104,7 @@ function extractMetricValue(sample: SamplePoint, metric: HeatmapMetric): number 
           .filter((n): n is number => n !== undefined);
         return noiseValues.length > 0 ? noiseValues[0] : null;
       }
-      case "cochannel": {
+      case 'cochannel': {
         // Count networks on same channel as strongest
         const strongest = networks.reduce(
           (best, n) => (n.rssi > (best?.rssi ?? -999) ? n : best),
@@ -117,7 +117,7 @@ function extractMetricValue(sample: SamplePoint, metric: HeatmapMetric): number 
           (n) => n.channel === strongest.channel && n.bssid !== strongest.bssid,
         ).length;
       }
-      case "adjacent": {
+      case 'adjacent': {
         // Count networks on adjacent channels
         const strongest = networks.reduce(
           (best, n) => (n.rssi > (best?.rssi ?? -999) ? n : best),
@@ -132,10 +132,10 @@ function extractMetricValue(sample: SamplePoint, metric: HeatmapMetric): number 
           return diff > 0 && diff <= 2 && n.bssid !== strongest.bssid;
         }).length;
       }
-      case "apDensity":
+      case 'apDensity':
         return networks.length;
-      case "ssidCount": {
-        const uniqueSsiDs = new Set(networks.map((n) => n.ssid).filter((s) => s && s !== ""));
+      case 'ssidCount': {
+        const uniqueSsiDs = new Set(networks.map((n) => n.ssid).filter((s) => s && s !== ''));
         return uniqueSsiDs.size;
       }
       default:
@@ -144,11 +144,11 @@ function extractMetricValue(sample: SamplePoint, metric: HeatmapMetric): number 
   }
 
   // Handle active samples
-  if ("rssi" in data && "dataRate" in data) {
+  if ('rssi' in data && 'dataRate' in data) {
     switch (metric) {
-      case "rssi":
+      case 'rssi':
         return data.rssi;
-      case "throughput":
+      case 'throughput':
         return data.dataRate;
       default:
         return null;
@@ -156,13 +156,13 @@ function extractMetricValue(sample: SamplePoint, metric: HeatmapMetric): number 
   }
 
   // Handle throughput samples
-  if ("downloadMbps" in data) {
+  if ('downloadMbps' in data) {
     switch (metric) {
-      case "rssi":
+      case 'rssi':
         return data.rssi;
-      case "throughput":
+      case 'throughput':
         return (data.downloadMbps + data.uploadMbps) / 2;
-      case "latency":
+      case 'latency':
         return data.latency;
       default:
         return null;
@@ -207,7 +207,7 @@ function calculateStats(values: number[]): MetricStats {
  * Displays statistical analysis of heatmap data
  */
 export function HeatmapStats({ samples, metric }: HeatmapStatsProps): React.ReactElement | null {
-  const { t } = useTranslation("survey");
+  const { t } = useTranslation('survey');
 
   const stats = useMemo(() => {
     if (!metric || samples.length === 0) {
@@ -238,33 +238,33 @@ export function HeatmapStats({ samples, metric }: HeatmapStatsProps): React.Reac
   return (
     <div
       class={cn(
-        "bg-surface-raised border border-surface-border",
+        'bg-surface-raised border border-surface-border',
         radius.md,
         spacing.pad.sm,
         spacing.margin.top.tight,
       )}
     >
-      <div class={cn("grid grid-cols-2 gap-x-4 gap-y-1")}>
+      <div class={cn('grid grid-cols-2 gap-x-4 gap-y-1')}>
         <div class="flex justify-between">
-          <span class="caption text-text-muted">{t("heatmapStats.average")}</span>
+          <span class="caption text-text-muted">{t('heatmapStats.average')}</span>
           <span class="caption font-medium">
             {stats.average.toFixed(1)} {unit}
           </span>
         </div>
         <div class="flex justify-between">
-          <span class="caption text-text-muted">{t("heatmapStats.median")}</span>
+          <span class="caption text-text-muted">{t('heatmapStats.median')}</span>
           <span class="caption font-medium">
             {stats.median.toFixed(1)} {unit}
           </span>
         </div>
         <div class="flex justify-between">
-          <span class="caption text-text-muted">{t("heatmapStats.stdDev")}</span>
+          <span class="caption text-text-muted">{t('heatmapStats.stdDev')}</span>
           <span class="caption font-medium">
             {stats.stdDev.toFixed(1)} {unit}
           </span>
         </div>
         <div class="flex justify-between">
-          <span class="caption text-text-muted">{t("heatmapStats.samples")}</span>
+          <span class="caption text-text-muted">{t('heatmapStats.samples')}</span>
           <span class="caption font-medium">{stats.count}</span>
         </div>
       </div>

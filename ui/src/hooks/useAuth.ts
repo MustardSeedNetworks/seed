@@ -36,9 +36,9 @@
  * ```
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { clearCSRFToken } from "../api";
-import { LogComponents, logger } from "../lib/logger";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { clearCSRFToken } from '../api';
+import { LogComponents, logger } from '../lib/logger';
 
 /** Internal authentication state */
 interface AuthState {
@@ -80,10 +80,10 @@ interface UseAuthReturn {
   pollingIntervalRef: React.MutableRefObject<number | null>;
 }
 
-const API_BASE: string = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 // localStorage keys to clear on mount (migrated to httpOnly cookies)
-const LEGACY_KEYS: string[] = ["seed-token", "seed-token-expiry", "seed-username"];
+const LEGACY_KEYS: string[] = ['seed-token', 'seed-token-expiry', 'seed-username'];
 
 /**
  * Clears old localStorage keys from cookie migration.
@@ -116,7 +116,7 @@ export function useAuth(): UseAuthReturn {
   const pollingIntervalRef = useRef<number | null>(null);
 
   // Expire session handler - clears state and shows error message
-  const expireSession = useCallback((message = "Session expired. Please sign in again.") => {
+  const expireSession = useCallback((message = 'Session expired. Please sign in again.') => {
     // Clear any polling intervals
     if (pollingIntervalRef.current !== null) {
       clearInterval(pollingIntervalRef.current);
@@ -135,7 +135,7 @@ export function useAuth(): UseAuthReturn {
     setConnected(false);
     setError(message);
 
-    logger.warn(LogComponents.Auth, "Session expired", { message });
+    logger.warn(LogComponents.Auth, 'Session expired', { message });
   }, []);
 
   // Clear error handler
@@ -155,7 +155,7 @@ export function useAuth(): UseAuthReturn {
 
     // Check if we're authenticated by calling a protected endpoint
     fetch(`${API_BASE}/api/status`, {
-      credentials: "include", // Send cookies
+      credentials: 'include', // Send cookies
     })
       .then((response) => {
         if (response.ok) {
@@ -179,8 +179,8 @@ export function useAuth(): UseAuthReturn {
       .catch((err) => {
         // Error checking auth, assume not authenticated
         // fixes #678 - added logging for auth check errors
-        logger.error(LogComponents.Auth, "Failed to check authentication status", err, {
-          endpoint: "/api/v1/status",
+        logger.error(LogComponents.Auth, 'Failed to check authentication status', err, {
+          endpoint: '/api/v1/status',
         });
         setState({
           isAuthenticated: false,
@@ -200,16 +200,16 @@ export function useAuth(): UseAuthReturn {
 
     try {
       const response = await fetch(`${API_BASE}/api/auth/login`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include", // Receive httpOnly cookies
+        credentials: 'include', // Receive httpOnly cookies
         body: JSON.stringify({ username, password }),
       });
 
       if (!response.ok) {
-        throw new Error("Invalid credentials");
+        throw new Error('Invalid credentials');
       }
 
       const data: LoginResponse = await (response.json() as Promise<LoginResponse>);
@@ -223,16 +223,16 @@ export function useAuth(): UseAuthReturn {
       });
       setConnected(true);
 
-      logger.info(LogComponents.Auth, "User logged in successfully", {
+      logger.info(LogComponents.Auth, 'User logged in successfully', {
         username,
       });
       return true;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Login failed";
+      const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
       // fixes #678 - added structured error logging for login failures
-      logger.error(LogComponents.Auth, "Login failed", err, {
-        endpoint: "/api/v1/auth/login",
+      logger.error(LogComponents.Auth, 'Login failed', err, {
+        endpoint: '/api/v1/auth/login',
         username,
       });
       return false;
@@ -263,18 +263,18 @@ export function useAuth(): UseAuthReturn {
 
     // Call logout endpoint to clear httpOnly cookies
     fetch(`${API_BASE}/api/auth/logout`, {
-      method: "POST",
-      credentials: "include", // Send cookies to be cleared
+      method: 'POST',
+      credentials: 'include', // Send cookies to be cleared
     })
       .then(() => {
-        logger.info(LogComponents.Auth, "User logged out successfully", {
+        logger.info(LogComponents.Auth, 'User logged out successfully', {
           username: currentUsername,
         });
       })
       .catch((err) => {
         // fixes #678 - added error logging for logout failures
-        logger.error(LogComponents.Auth, "Logout API call failed", err, {
-          endpoint: "/api/v1/auth/logout",
+        logger.error(LogComponents.Auth, 'Logout API call failed', err, {
+          endpoint: '/api/v1/auth/logout',
           username: currentUsername,
         });
         // Local state already cleared, so continue
@@ -289,12 +289,12 @@ export function useAuth(): UseAuthReturn {
   const refreshToken = useCallback(async (): Promise<string | null> => {
     try {
       const response = await fetch(`${API_BASE}/api/auth/refresh`, {
-        method: "POST",
-        credentials: "include", // Send refresh token cookie
+        method: 'POST',
+        credentials: 'include', // Send refresh token cookie
       });
 
       if (!response.ok) {
-        logger.warn(LogComponents.Auth, "Token refresh failed", {
+        logger.warn(LogComponents.Auth, 'Token refresh failed', {
           status: response.status,
         });
         return null;
@@ -308,10 +308,10 @@ export function useAuth(): UseAuthReturn {
         token: data.token,
       }));
 
-      logger.info(LogComponents.Auth, "Token refreshed successfully");
+      logger.info(LogComponents.Auth, 'Token refreshed successfully');
       return data.token;
     } catch (err) {
-      logger.error(LogComponents.Auth, "Token refresh error", err);
+      logger.error(LogComponents.Auth, 'Token refresh error', err);
       return null;
     }
   }, []);

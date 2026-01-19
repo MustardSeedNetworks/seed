@@ -153,12 +153,12 @@ export interface CardSettingsConfig {
 /** Display options configuration. */
 export interface DisplayOptionsConfig {
   showPublicIp?: boolean;
-  unitSystem?: "sae" | "metric";
+  unitSystem?: 'sae' | 'metric';
 }
 
 /** Appearance configuration (theme and language). */
 export interface AppearanceConfig {
-  theme?: "light" | "dark" | "system";
+  theme?: 'light' | 'dark' | 'system';
   language?: string;
 }
 
@@ -173,9 +173,9 @@ export interface IperfConfig {
   /** iPerf server port (default: 5201) */
   port?: number;
   /** Protocol for testing */
-  protocol?: "tcp" | "udp";
+  protocol?: 'tcp' | 'udp';
   /** Test direction */
-  direction?: "upload" | "download" | "bidirectional";
+  direction?: 'upload' | 'download' | 'bidirectional';
   /** Test duration in seconds */
   duration?: number;
   /** Local server port when running as server */
@@ -593,7 +593,7 @@ export interface ActiveProfileResponse {
  * ProfileChangedEvent is broadcast via WebSocket when the active profile changes.
  */
 export interface ProfileChangedEvent {
-  type: "profileChanged";
+  type: 'profileChanged';
   payload: {
     profileId: string;
     profileName: string;

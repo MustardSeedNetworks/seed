@@ -7,8 +7,8 @@
  * Extracted from App.tsx to reduce component complexity (#889).
  */
 
-import { useEffect, useState } from "react";
-import { checkSetupStatus } from "../components/setup/setup-api";
+import { useEffect, useState } from 'react';
+import { checkSetupStatus } from '../components/setup/setup-api';
 
 interface UseSetupStateReturn {
   /** Whether the system needs initial setup (null = loading) */

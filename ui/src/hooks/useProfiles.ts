@@ -23,9 +23,9 @@
  * ```
  */
 
-import { useCallback, useState } from "react";
-import { api } from "../api";
-import { LogComponents, logger } from "../lib/logger";
+import { useCallback, useState } from 'react';
+import { api } from '../api';
+import { LogComponents, logger } from '../lib/logger';
 import type {
   ActiveProfileResponse,
   Profile,
@@ -34,7 +34,7 @@ import type {
   ProfileImportResponse,
   ProfileListResponse,
   ProfileRequest,
-} from "../types/profile";
+} from '../types/profile';
 
 /**
  * Custom hook for managing profile operations.
@@ -72,14 +72,14 @@ export function useProfiles(): {
     try {
       setError(null);
       setIsLoading(true);
-      const data = await api.get<ProfileListResponse>("/api/v1/profiles");
+      const data = await api.get<ProfileListResponse>('/api/v1/profiles');
       setProfiles(data.profiles || []);
       return data.profiles || [];
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to fetch profiles";
+      const message = err instanceof Error ? err.message : 'Failed to fetch profiles';
       setError(message);
-      logger.error(LogComponents.Profiles, "Failed to fetch profiles", err, {
-        endpoint: "/api/v1/profiles",
+      logger.error(LogComponents.Profiles, 'Failed to fetch profiles', err, {
+        endpoint: '/api/v1/profiles',
       });
       return [];
     } finally {
@@ -95,9 +95,9 @@ export function useProfiles(): {
       setError(null);
       return await api.get<Profile>(`/api/profiles/${id}`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to fetch profile";
+      const message = err instanceof Error ? err.message : 'Failed to fetch profile';
       setError(message);
-      logger.error(LogComponents.Profiles, "Failed to fetch profile", err, {
+      logger.error(LogComponents.Profiles, 'Failed to fetch profile', err, {
         endpoint: `/api/profiles/${id}`,
         profileId: id,
       });
@@ -111,14 +111,14 @@ export function useProfiles(): {
   const fetchActiveProfile = useCallback(async (): Promise<Profile | null> => {
     try {
       setError(null);
-      const profile = await api.get<Profile>("/api/v1/profiles/active");
+      const profile = await api.get<Profile>('/api/v1/profiles/active');
       setActiveProfile(profile);
       return profile;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to fetch active profile";
+      const message = err instanceof Error ? err.message : 'Failed to fetch active profile';
       setError(message);
-      logger.error(LogComponents.Profiles, "Failed to fetch active profile", err, {
-        endpoint: "/api/v1/profiles/active",
+      logger.error(LogComponents.Profiles, 'Failed to fetch active profile', err, {
+        endpoint: '/api/v1/profiles/active',
       });
       return null;
     }
@@ -131,18 +131,18 @@ export function useProfiles(): {
     try {
       setError(null);
       setIsLoading(true);
-      const created = await api.post<Profile>("/api/v1/profiles", profile);
+      const created = await api.post<Profile>('/api/v1/profiles', profile);
       setProfiles((prev) => [...prev, created]);
-      logger.info(LogComponents.Profiles, "Profile created", {
+      logger.info(LogComponents.Profiles, 'Profile created', {
         profileId: created.id,
         name: created.name,
       });
       return created;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to create profile";
+      const message = err instanceof Error ? err.message : 'Failed to create profile';
       setError(message);
-      logger.error(LogComponents.Profiles, "Failed to create profile", err, {
-        endpoint: "/api/v1/profiles",
+      logger.error(LogComponents.Profiles, 'Failed to create profile', err, {
+        endpoint: '/api/v1/profiles',
         name: profile.name,
       });
       return null;
@@ -164,15 +164,15 @@ export function useProfiles(): {
         if (activeProfile?.id === id) {
           setActiveProfile(updated);
         }
-        logger.info(LogComponents.Profiles, "Profile updated", {
+        logger.info(LogComponents.Profiles, 'Profile updated', {
           profileId: id,
           name: updated.name,
         });
         return updated;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to update profile";
+        const message = err instanceof Error ? err.message : 'Failed to update profile';
         setError(message);
-        logger.error(LogComponents.Profiles, "Failed to update profile", err, {
+        logger.error(LogComponents.Profiles, 'Failed to update profile', err, {
           endpoint: `/api/profiles/${id}`,
           profileId: id,
         });
@@ -193,12 +193,12 @@ export function useProfiles(): {
       setIsLoading(true);
       await api.delete(`/api/profiles/${id}`);
       setProfiles((prev) => prev.filter((p) => p.id !== id));
-      logger.info(LogComponents.Profiles, "Profile deleted", { profileId: id });
+      logger.info(LogComponents.Profiles, 'Profile deleted', { profileId: id });
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to delete profile";
+      const message = err instanceof Error ? err.message : 'Failed to delete profile';
       setError(message);
-      logger.error(LogComponents.Profiles, "Failed to delete profile", err, {
+      logger.error(LogComponents.Profiles, 'Failed to delete profile', err, {
         endpoint: `/api/profiles/${id}`,
         profileId: id,
       });
@@ -215,20 +215,20 @@ export function useProfiles(): {
     try {
       setError(null);
       setIsLoading(true);
-      const result = await api.post<ActiveProfileResponse>("/api/v1/profiles/active", {
+      const result = await api.post<ActiveProfileResponse>('/api/v1/profiles/active', {
         profileId: profileId,
       });
       setActiveProfile(result.profile);
-      logger.info(LogComponents.Profiles, "Profile switched", {
+      logger.info(LogComponents.Profiles, 'Profile switched', {
         profileId,
         name: result.profile.name,
       });
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to switch profile";
+      const message = err instanceof Error ? err.message : 'Failed to switch profile';
       setError(message);
-      logger.error(LogComponents.Profiles, "Failed to switch profile", err, {
-        endpoint: "/api/v1/profiles/active",
+      logger.error(LogComponents.Profiles, 'Failed to switch profile', err, {
+        endpoint: '/api/v1/profiles/active',
         profileId,
       });
       return false;
@@ -249,16 +249,16 @@ export function useProfiles(): {
           name: newName,
         });
         setProfiles((prev) => [...prev, duplicated]);
-        logger.info(LogComponents.Profiles, "Profile duplicated", {
+        logger.info(LogComponents.Profiles, 'Profile duplicated', {
           sourceId: id,
           newId: duplicated.id,
           name: duplicated.name,
         });
         return duplicated;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to duplicate profile";
+        const message = err instanceof Error ? err.message : 'Failed to duplicate profile';
         setError(message);
-        logger.error(LogComponents.Profiles, "Failed to duplicate profile", err, {
+        logger.error(LogComponents.Profiles, 'Failed to duplicate profile', err, {
           endpoint: `/api/profiles/${id}/duplicate`,
           profileId: id,
         });
@@ -278,20 +278,20 @@ export function useProfiles(): {
       try {
         setError(null);
         setIsLoading(true);
-        const result = await api.post<ProfileImportResponse>("/api/v1/profiles/import", request);
+        const result = await api.post<ProfileImportResponse>('/api/v1/profiles/import', request);
         // Refresh the profile list after import
         await fetchProfiles();
-        logger.info(LogComponents.Profiles, "Profiles imported", {
+        logger.info(LogComponents.Profiles, 'Profiles imported', {
           created: result.created,
           updated: result.updated,
           skipped: result.skipped,
         });
         return result;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to import profiles";
+        const message = err instanceof Error ? err.message : 'Failed to import profiles';
         setError(message);
-        logger.error(LogComponents.Profiles, "Failed to import profiles", err, {
-          endpoint: "/api/v1/profiles/import",
+        logger.error(LogComponents.Profiles, 'Failed to import profiles', err, {
+          endpoint: '/api/v1/profiles/import',
         });
         return null;
       } finally {
@@ -307,16 +307,16 @@ export function useProfiles(): {
   const exportProfiles = useCallback(async (): Promise<ProfileExportResponse | null> => {
     try {
       setError(null);
-      const result = await api.get<ProfileExportResponse>("/api/v1/profiles/export");
-      logger.info(LogComponents.Profiles, "Profiles exported", {
+      const result = await api.get<ProfileExportResponse>('/api/v1/profiles/export');
+      logger.info(LogComponents.Profiles, 'Profiles exported', {
         count: result.profiles.length,
       });
       return result;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to export profiles";
+      const message = err instanceof Error ? err.message : 'Failed to export profiles';
       setError(message);
-      logger.error(LogComponents.Profiles, "Failed to export profiles", err, {
-        endpoint: "/api/v1/profiles/export",
+      logger.error(LogComponents.Profiles, 'Failed to export profiles', err, {
+        endpoint: '/api/v1/profiles/export',
       });
       return null;
     }
@@ -334,12 +334,12 @@ export function useProfiles(): {
 
       // Create and trigger download
       const blob = new Blob([JSON.stringify(result, null, 2)], {
-        type: "application/json",
+        type: 'application/json',
       });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
-      link.download = `seed-profiles-${new Date().toISOString().split("T")[0]}.json`;
+      link.download = `seed-profiles-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -347,7 +347,7 @@ export function useProfiles(): {
 
       return true;
     } catch (err) {
-      logger.error(LogComponents.Profiles, "Failed to download profiles", err);
+      logger.error(LogComponents.Profiles, 'Failed to download profiles', err);
       return false;
     }
   }, [exportProfiles]);

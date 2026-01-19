@@ -5,12 +5,12 @@
  * Separated from Toast.tsx for react-refresh compliance.
  */
 
-import { type Context, createContext } from "react";
+import { type Context, createContext } from 'react';
 
 /**
  * Toast notification type variants
  */
-export type ToastType = "success" | "error" | "warning" | "info";
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 /**
  * Context API value for toast management

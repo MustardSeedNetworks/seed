@@ -122,7 +122,7 @@ import {
   X,
   XCircle,
   Zap,
-} from "lucide-react";
+} from 'lucide-react';
 
 export {
   // Card header icons

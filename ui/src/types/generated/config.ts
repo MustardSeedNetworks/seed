@@ -5,8 +5,8 @@
  * To regenerate: make generate-types
  */
 
-import type { z } from "zod";
-import { configSchema } from "./config.zod";
+import type { z } from 'zod';
+import { configSchema } from './config.zod';
 
 // Re-export the generated Zod schema
 export { configSchema };

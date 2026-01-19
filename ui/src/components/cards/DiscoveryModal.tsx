@@ -13,9 +13,9 @@
  * - Keyboard support (Escape to close)
  */
 
-import type React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   button,
   cn,
@@ -24,7 +24,7 @@ import {
   modal,
   radius,
   severity as severityTheme,
-} from "../../styles/theme";
+} from '../../styles/theme';
 import {
   AlertTriangle,
   ArrowUpDown,
@@ -34,14 +34,14 @@ import {
   RefreshCw,
   Search,
   X,
-} from "../ui/Icons";
-import { Tooltip } from "../ui/Tooltip";
+} from '../ui/Icons';
+import { Tooltip } from '../ui/Tooltip';
 import type {
   DiscoveredDevice,
   DiscoveryMethod,
   NetworkDiscoveryData,
   OpenPort,
-} from "./NetworkDiscoveryCard";
+} from './NetworkDiscoveryCard';
 
 interface DiscoveryModalProps {
   isOpen: boolean;
@@ -51,15 +51,15 @@ interface DiscoveryModalProps {
   onDeepScan?: (ip: string) => Promise<void>;
 }
 
-type SortField = "ip" | "hostname" | "vendor" | "mac" | "lastSeen";
-type SortDirection = "asc" | "desc";
+type SortField = 'ip' | 'hostname' | 'vendor' | 'mac' | 'lastSeen';
+type SortDirection = 'asc' | 'desc';
 
 // Discovery method badge
 function _methodBadge({ method }: { method: DiscoveryMethod }): JSX.Element {
   const theme = discoveryMethodTheme[method] || discoveryMethodTheme.arp;
   return (
     <span
-      class={cn("px-1.5 py-0.5 text-xs font-medium uppercase", radius.md, theme.bg, theme.text)}
+      class={cn('px-1.5 py-0.5 text-xs font-medium uppercase', radius.md, theme.bg, theme.text)}
     >
       {method}
     </span>
@@ -93,7 +93,7 @@ function formatLastSeen(timestamp: string): string {
   const diffDays = Math.floor(diffHours / 24);
 
   if (diffSecs < 60) {
-    return "Just now";
+    return 'Just now';
   }
   if (diffMins < 60) {
     return `${diffMins}m ago`;
@@ -117,10 +117,10 @@ function compareDevices(
 ): number {
   let cmp = 0;
   switch (field) {
-    case "ip": {
+    case 'ip': {
       // Sort IPs numerically
-      const aParts = (a.ip || "").split(".").map(Number);
-      const bParts = (b.ip || "").split(".").map(Number);
+      const aParts = (a.ip || '').split('.').map(Number);
+      const bParts = (b.ip || '').split('.').map(Number);
       for (let i = 0; i < 4; i++) {
         if ((aParts[i] || 0) !== (bParts[i] || 0)) {
           cmp = (aParts[i] || 0) - (bParts[i] || 0);
@@ -129,46 +129,46 @@ function compareDevices(
       }
       break;
     }
-    case "hostname":
-      cmp = (a.displayName || a.mdnsName || a.netbiosName || a.hostname || "").localeCompare(
-        b.displayName || b.mdnsName || b.netbiosName || b.hostname || "",
+    case 'hostname':
+      cmp = (a.displayName || a.mdnsName || a.netbiosName || a.hostname || '').localeCompare(
+        b.displayName || b.mdnsName || b.netbiosName || b.hostname || '',
       );
       break;
-    case "vendor":
-      cmp = (a.vendor || "").localeCompare(b.vendor || "");
+    case 'vendor':
+      cmp = (a.vendor || '').localeCompare(b.vendor || '');
       break;
-    case "mac":
-      cmp = (a.mac || "").localeCompare(b.mac || "");
+    case 'mac':
+      cmp = (a.mac || '').localeCompare(b.mac || '');
       break;
-    case "lastSeen":
+    case 'lastSeen':
       cmp = new Date(a.lastSeen).getTime() - new Date(b.lastSeen).getTime();
       break;
     default:
       break;
   }
-  return direction === "asc" ? cmp : -cmp;
+  return direction === 'asc' ? cmp : -cmp;
 }
 
 // Helper function to get expand icon (avoids nested ternary)
 function getExpandIcon(hasDetails: boolean, isExpanded: boolean): string {
   if (!hasDetails) {
-    return "";
+    return '';
   }
   if (isExpanded) {
-    return "▲";
+    return '▲';
   }
-  return "▼";
+  return '▼';
 }
 
 // Helper function to get severity theme classes (avoids nested ternary)
 function getSeverityClasses(severity: string): string {
-  if (severity === "CRITICAL") {
+  if (severity === 'CRITICAL') {
     return `${severityTheme.critical.bg} ${severityTheme.critical.text}`;
   }
-  if (severity === "HIGH") {
+  if (severity === 'HIGH') {
     return `${severityTheme.high.bg} ${severityTheme.high.text}`;
   }
-  if (severity === "MEDIUM") {
+  if (severity === 'MEDIUM') {
     return `${severityTheme.medium.bg} ${severityTheme.medium.text}`;
   }
   return `${severityTheme.low.bg} ${severityTheme.low.text}`;
@@ -179,7 +179,7 @@ function getSortIcon(isActive: boolean, direction: SortDirection): JSX.Element {
   if (!isActive) {
     return <ArrowUpDown class="w-3 h-3 opacity-30" />;
   }
-  if (direction === "asc") {
+  if (direction === 'asc') {
     return <ChevronUp class="w-3 h-3" />;
   }
   return <ChevronDown class="w-3 h-3" />;
@@ -205,7 +205,7 @@ function _sortableHeader({
   return (
     <th
       class={cn(
-        "px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:bg-surface-hover transition-colors select-none",
+        'px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:bg-surface-hover transition-colors select-none',
         className,
       )}
       onClick={() => onSort(field)}
@@ -233,7 +233,7 @@ function _deviceRow({
   onDeepScan?: (ip: string) => Promise<void>;
   isScanning: boolean;
 }): JSX.Element {
-  const { t } = useTranslation("cards");
+  const { t } = useTranslation('cards');
   const openPorts = device.profile?.openPorts?.filter((p) => p.isOpen) || [];
   const hasDetails =
     device.lldpInfo ||
@@ -255,8 +255,8 @@ function _deviceRow({
     <>
       <tr
         class={cn(
-          "border-b border-surface-border hover:bg-surface-hover cursor-pointer transition-colors",
-          isExpanded && "bg-surface-hover",
+          'border-b border-surface-border hover:bg-surface-hover cursor-pointer transition-colors',
+          isExpanded && 'bg-surface-hover',
         )}
         onClick={onToggle}
       >
@@ -264,7 +264,7 @@ function _deviceRow({
         <td class="px-3 py-2">
           <div class="flex flex-col">
             <span class="font-mono text-sm font-medium text-text-primary">
-              {device.ip || t("network.noIP")}
+              {device.ip || t('network.noIP')}
             </span>
             {device.ipv6 ? (
               <span class="font-mono text-xs text-text-muted truncate max-w-40" title={device.ipv6}>
@@ -280,18 +280,18 @@ function _deviceRow({
             class="text-sm text-text-secondary truncate block max-w-40"
             title={device.displayName || device.mdnsName || device.netbiosName || device.hostname}
           >
-            {device.displayName || device.mdnsName || device.netbiosName || device.hostname || "-"}
+            {device.displayName || device.mdnsName || device.netbiosName || device.hostname || '-'}
           </span>
         </td>
 
         {/* MAC Address */}
         <td class="px-3 py-2">
-          <span class="font-mono text-xs text-text-muted">{device.mac || "-"}</span>
+          <span class="font-mono text-xs text-text-muted">{device.mac || '-'}</span>
         </td>
 
         {/* Vendor */}
         <td class="px-3 py-2">
-          {device.vendor === "LAA" ? (
+          {device.vendor === 'LAA' ? (
             <Tooltip
               content="Locally Administered Address - MAC assigned locally rather than by manufacturer"
               position="bottom"
@@ -302,7 +302,7 @@ function _deviceRow({
             </Tooltip>
           ) : (
             <span class="text-xs text-text-muted truncate block max-w-28" title={device.vendor}>
-              {device.vendor || "-"}
+              {device.vendor || '-'}
             </span>
           )}
         </td>
@@ -321,7 +321,7 @@ function _deviceRow({
           {openPorts.length > 0 ? (
             <span
               class={cn(
-                "text-xs px-1.5 py-0.5 bg-status-success/20 text-status-success",
+                'text-xs px-1.5 py-0.5 bg-status-success/20 text-status-success',
                 radius.md,
               )}
             >
@@ -337,7 +337,7 @@ function _deviceRow({
           {device.vulnerabilities && device.vulnerabilities.count > 0 ? (
             <span
               class={cn(
-                "inline-flex items-center gap-1 text-xs px-1.5 py-0.5",
+                'inline-flex items-center gap-1 text-xs px-1.5 py-0.5',
                 radius.md,
                 getSeverityClasses(device.vulnerabilities.highestSeverity),
               )}
@@ -364,12 +364,12 @@ function _deviceRow({
                 onClick={handleScan}
                 disabled={isScanning}
                 class={cn(
-                  "text-xs px-2 py-1 bg-brand-primary/20 text-brand-primary",
+                  'text-xs px-2 py-1 bg-brand-primary/20 text-brand-primary',
                   radius.md,
-                  "hover:bg-brand-primary/30 transition-colors disabled:opacity-50",
+                  'hover:bg-brand-primary/30 transition-colors disabled:opacity-50',
                 )}
               >
-                {isScanning ? "..." : t("discovery.scan")}
+                {isScanning ? '...' : t('discovery.scan')}
               </button>
             ) : null}
             <span class="text-xs text-text-muted">{getExpandIcon(hasDetails, isExpanded)}</span>
@@ -391,12 +391,12 @@ function _deviceRow({
                       <span
                         key={port.port}
                         class={cn(
-                          "px-2 py-1 text-xs font-mono",
+                          'px-2 py-1 text-xs font-mono',
                           radius.md,
-                          "bg-surface-base text-text-primary",
+                          'bg-surface-base text-text-primary',
                         )}
                       >
-                        {port.port}/{port.protocol}{" "}
+                        {port.port}/{port.protocol}{' '}
                         {port.service ? (
                           <span class="text-text-muted">({port.service})</span>
                         ) : null}
@@ -419,14 +419,14 @@ function _deviceRow({
                     </div>
                     {device.lldpInfo.managementAddress ? (
                       <div>
-                        <span class="text-text-muted">Mgmt IP:</span>{" "}
+                        <span class="text-text-muted">Mgmt IP:</span>{' '}
                         {device.lldpInfo.managementAddress}
                       </div>
                     ) : null}
                     {device.lldpInfo.capabilities ? (
                       <div>
-                        <span class="text-text-muted">Capabilities:</span>{" "}
-                        {device.lldpInfo.capabilities.join(", ")}
+                        <span class="text-text-muted">Capabilities:</span>{' '}
+                        {device.lldpInfo.capabilities.join(', ')}
                       </div>
                     ) : null}
                   </div>
@@ -446,7 +446,7 @@ function _deviceRow({
                     </div>
                     {device.cdpInfo.nativeVlan ? (
                       <div>
-                        <span class="text-text-muted">Native VLAN:</span>{" "}
+                        <span class="text-text-muted">Native VLAN:</span>{' '}
                         {device.cdpInfo.nativeVlan}
                       </div>
                     ) : null}
@@ -458,7 +458,7 @@ function _deviceRow({
               {device.snmpData ? (
                 <div class="space-y-2">
                   <h4 class="text-xs font-semibold text-text-secondary">
-                    {t("discovery.snmpInfo", "SNMP Details")}
+                    {t('discovery.snmpInfo', 'SNMP Details')}
                   </h4>
 
                   {/* System Info */}
@@ -467,7 +467,7 @@ function _deviceRow({
                       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-1 text-xs">
                         {device.snmpData.system.sysName ? (
                           <div>
-                            <span class="text-text-muted">Name:</span>{" "}
+                            <span class="text-text-muted">Name:</span>{' '}
                             <span class="text-text-primary font-medium">
                               {device.snmpData.system.sysName}
                             </span>
@@ -475,7 +475,7 @@ function _deviceRow({
                         ) : null}
                         {device.snmpData.system.sysDescr ? (
                           <div class="col-span-2">
-                            <span class="text-text-muted">Description:</span>{" "}
+                            <span class="text-text-muted">Description:</span>{' '}
                             <span class="text-text-primary">
                               {device.snmpData.system.sysDescr.length > 80
                                 ? `${device.snmpData.system.sysDescr.substring(0, 80)}...`
@@ -485,7 +485,7 @@ function _deviceRow({
                         ) : null}
                         {device.snmpData.system.sysLocation ? (
                           <div>
-                            <span class="text-text-muted">Location:</span>{" "}
+                            <span class="text-text-muted">Location:</span>{' '}
                             <span class="text-text-primary">
                               {device.snmpData.system.sysLocation}
                             </span>
@@ -493,7 +493,7 @@ function _deviceRow({
                         ) : null}
                         {device.snmpData.system.sysContact ? (
                           <div>
-                            <span class="text-text-muted">Contact:</span>{" "}
+                            <span class="text-text-muted">Contact:</span>{' '}
                             <span class="text-text-primary">
                               {device.snmpData.system.sysContact}
                             </span>
@@ -502,7 +502,7 @@ function _deviceRow({
                         {device.snmpData.system.sysUpTime !== undefined &&
                         device.snmpData.system.sysUpTime > 0 ? (
                           <div>
-                            <span class="text-text-muted">Uptime:</span>{" "}
+                            <span class="text-text-muted">Uptime:</span>{' '}
                             <span class="text-text-primary">
                               {formatUptime(device.snmpData.system.sysUpTime)}
                             </span>
@@ -524,13 +524,13 @@ function _deviceRow({
                           <span
                             key={iface.name}
                             class={cn(
-                              "px-1.5 py-0.5 text-xs",
+                              'px-1.5 py-0.5 text-xs',
                               radius.sm,
-                              iface.operStatus === "up"
-                                ? "bg-status-success/20 text-status-success"
-                                : "bg-surface-hover text-text-muted",
+                              iface.operStatus === 'up'
+                                ? 'bg-status-success/20 text-status-success'
+                                : 'bg-surface-hover text-text-muted',
                             )}
-                            title={`${iface.name} - ${iface.speed ? `${Math.round(iface.speed / 1000000)} Mbps` : "N/A"}`}
+                            title={`${iface.name} - ${iface.speed ? `${Math.round(iface.speed / 1000000)} Mbps` : 'N/A'}`}
                           >
                             {iface.name}
                             {iface.speed && iface.speed > 0 ? (
@@ -562,7 +562,7 @@ function _deviceRow({
                           <span
                             key={vlan.id}
                             class={cn(
-                              "px-1.5 py-0.5 text-xs bg-brand-primary/10 text-brand-primary",
+                              'px-1.5 py-0.5 text-xs bg-brand-primary/10 text-brand-primary',
                               radius.sm,
                             )}
                             title={vlan.name || `VLAN ${vlan.id}`}
@@ -594,9 +594,9 @@ function _deviceRow({
                         {device.snmpData.entities
                           .filter(
                             (e) =>
-                              e.physicalClass === "chassis" ||
-                              e.physicalClass === "module" ||
-                              e.physicalClass === "powerSupply",
+                              e.physicalClass === 'chassis' ||
+                              e.physicalClass === 'module' ||
+                              e.physicalClass === 'powerSupply',
                           )
                           .slice(0, 4)
                           .map((entity) => (
@@ -624,7 +624,7 @@ function _deviceRow({
               {/* OS Guess */}
               {device.osGuess ? (
                 <div>
-                  <span class="text-xs text-text-muted">OS Guess:</span>{" "}
+                  <span class="text-xs text-text-muted">OS Guess:</span>{' '}
                   <span class="text-xs text-text-primary">{device.osGuess}</span>
                 </div>
               ) : null}
@@ -646,11 +646,11 @@ export function DiscoveryModal({
   onScan,
   onDeepScan,
 }: DiscoveryModalProps): JSX.Element | null {
-  const { t } = useTranslation("cards");
+  const { t } = useTranslation('cards');
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<SortField | null>("ip");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortField, setSortField] = useState<SortField | null>('ip');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [expandedDevices, setExpandedDevices] = useState<Set<string>>(new Set());
   const [scanningDevices, setScanningDevices] = useState<Set<string>>(new Set());
   const [showLocalOnly, setShowLocalOnly] = useState(false);
@@ -659,10 +659,10 @@ export function DiscoveryModal({
   const handleSort = useCallback((field: SortField) => {
     setSortField((prev) => {
       if (prev === field) {
-        setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+        setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
         return field;
       }
-      setSortDirection("asc");
+      setSortDirection('asc');
       return field;
     });
   }, []);
@@ -740,12 +740,12 @@ export function DiscoveryModal({
   // Export functions
   const exportJson = useCallback(() => {
     const blob = new Blob([JSON.stringify(filteredDevices, null, 2)], {
-      type: "application/json",
+      type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = url;
-    link.download = `devices-${new Date().toISOString().split("T")[0]}.json`;
+    link.download = `devices-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
   }, [filteredDevices]);
@@ -753,7 +753,7 @@ export function DiscoveryModal({
   const exportCsv = useCallback((): void => {
     const escapeCsv = (val: unknown): string => {
       if (val === null || val === undefined) {
-        return "";
+        return '';
       }
       const str = String(val);
       if (/[",\n]/.test(str)) {
@@ -770,21 +770,21 @@ export function DiscoveryModal({
         escapeCsv(d.mdnsName),
         escapeCsv(d.mac),
         escapeCsv(d.vendor),
-        escapeCsv(d.discoveryMethod.join(";")),
+        escapeCsv(d.discoveryMethod.join(';')),
         escapeCsv(d.lastSeen),
-        escapeCsv(d.isLocal ? "local" : "extended"),
+        escapeCsv(d.isLocal ? 'local' : 'extended'),
         escapeCsv(d.osGuess),
-      ].join(","),
+      ].join(','),
     );
 
     const header =
-      "ip,name,netbios_name,mdns_name,mac,vendor,discovery_methods,last_seen,network,os_guess";
-    const csv = [header, ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+      'ip,name,netbios_name,mdns_name,mac,vendor,discovery_methods,last_seen,network,os_guess';
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = url;
-    link.download = `devices-${new Date().toISOString().split("T")[0]}.csv`;
+    link.download = `devices-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }, [filteredDevices]);
@@ -796,13 +796,13 @@ export function DiscoveryModal({
     }
 
     const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return (): void => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return (): void => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
   if (!isOpen) {
@@ -819,7 +819,7 @@ export function DiscoveryModal({
 
       {/* Modal - full width */}
       <div
-        class={cn("relative", modal.content, modal.size.full, modal.padding.lg, "flex flex-col")}
+        class={cn('relative', modal.content, modal.size.full, modal.padding.lg, 'flex flex-col')}
         role="dialog"
         aria-modal="true"
         aria-labelledby="discovery-modal-title"
@@ -828,14 +828,14 @@ export function DiscoveryModal({
         <div class="flex items-center justify-between mb-4 pb-4 border-b border-surface-border">
           <div>
             <h2 id="discovery-modal-title" class="text-xl font-semibold text-text-primary">
-              {t("discovery.title", "Network Discovery")}
+              {t('discovery.title', 'Network Discovery')}
             </h2>
             <p class="text-sm text-text-muted mt-1">
-              {t("discovery.modalSubtitle", "{{total}} devices ({{local}} local)", {
+              {t('discovery.modalSubtitle', '{{total}} devices ({{local}} local)', {
                 total: deviceCount,
                 local: localCount,
               })}
-              {data?.status?.subnet ? ` - ${data.status.subnet}` : ""}
+              {data?.status?.subnet ? ` - ${data.status.subnet}` : ''}
             </p>
           </div>
 
@@ -850,13 +850,13 @@ export function DiscoveryModal({
                   button.base,
                   button.variant.secondary,
                   button.size.sm,
-                  "flex items-center gap-2",
+                  'flex items-center gap-2',
                 )}
               >
                 <RefreshCw
-                  class={cn(iconTokens.size.sm, data?.status?.scanning ? "animate-spin" : "")}
+                  class={cn(iconTokens.size.sm, data?.status?.scanning ? 'animate-spin' : '')}
                 />
-                {data?.status?.scanning ? t("discovery.scanning") : t("discovery.rescan")}
+                {data?.status?.scanning ? t('discovery.scanning') : t('discovery.rescan')}
               </button>
             ) : null}
 
@@ -869,7 +869,7 @@ export function DiscoveryModal({
                   button.base,
                   button.variant.ghost,
                   button.size.sm,
-                  "flex items-center gap-1",
+                  'flex items-center gap-1',
                 )}
                 title="Export as CSV"
               >
@@ -883,7 +883,7 @@ export function DiscoveryModal({
                   button.base,
                   button.variant.ghost,
                   button.size.sm,
-                  "flex items-center gap-1",
+                  'flex items-center gap-1',
                 )}
                 title="Export as JSON"
               >
@@ -897,7 +897,7 @@ export function DiscoveryModal({
               type="button"
               onClick={onClose}
               class={cn(
-                "p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors",
+                'p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors',
               )}
               aria-label="Close"
             >
@@ -912,9 +912,9 @@ export function DiscoveryModal({
           <div class="relative flex-1 max-w-md">
             <Search
               class={cn(
-                "absolute left-3 top-1/2 -translate-y-1/2",
+                'absolute left-3 top-1/2 -translate-y-1/2',
                 iconTokens.size.sm,
-                "text-text-muted",
+                'text-text-muted',
               )}
             />
             <input
@@ -923,18 +923,18 @@ export function DiscoveryModal({
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 setSearchQuery(e.target.value)
               }
-              placeholder={t("discovery.searchPlaceholder", "Search IP, hostname, MAC, vendor...")}
+              placeholder={t('discovery.searchPlaceholder', 'Search IP, hostname, MAC, vendor...')}
               class={cn(
-                "w-full pl-10 pr-4 py-2",
-                "text-sm bg-surface-base border border-surface-border",
+                'w-full pl-10 pr-4 py-2',
+                'text-sm bg-surface-base border border-surface-border',
                 radius.md,
-                "focus:outline-none focus:ring-1 focus:ring-brand-primary text-text-primary placeholder:text-text-muted",
+                'focus:outline-none focus:ring-1 focus:ring-brand-primary text-text-primary placeholder:text-text-muted',
               )}
             />
             {searchQuery ? (
               <button
                 type="button"
-                onClick={(): void => setSearchQuery("")}
+                onClick={(): void => setSearchQuery('')}
                 class="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
               >
                 <X class={iconTokens.size.sm} />
@@ -948,15 +948,15 @@ export function DiscoveryModal({
               type="button"
               onClick={(): void => setShowLocalOnly(!showLocalOnly)}
               class={cn(
-                "px-3 py-1.5 text-sm",
+                'px-3 py-1.5 text-sm',
                 radius.md,
-                "transition-colors",
+                'transition-colors',
                 showLocalOnly
-                  ? "bg-brand-primary text-text-inverse"
-                  : "bg-surface-hover text-text-secondary hover:text-text-primary",
+                  ? 'bg-brand-primary text-text-inverse'
+                  : 'bg-surface-hover text-text-secondary hover:text-text-primary',
               )}
             >
-              {t("discovery.localOnly", "Local Only")}
+              {t('discovery.localOnly', 'Local Only')}
             </button>
           </div>
 
@@ -972,7 +972,7 @@ export function DiscoveryModal({
             <thead class="bg-surface-base sticky top-0">
               <tr class="border-b border-surface-border">
                 <sortableHeader
-                  label={t("discovery.tableIp", "IP Address")}
+                  label={t('discovery.tableIp', 'IP Address')}
                   field="ip"
                   currentField={sortField}
                   direction={sortDirection}
@@ -980,7 +980,7 @@ export function DiscoveryModal({
                   class="w-40"
                 />
                 <sortableHeader
-                  label={t("discovery.tableHostname", "Hostname")}
+                  label={t('discovery.tableHostname', 'Hostname')}
                   field="hostname"
                   currentField={sortField}
                   direction={sortDirection}
@@ -988,7 +988,7 @@ export function DiscoveryModal({
                   class="w-40"
                 />
                 <sortableHeader
-                  label={t("discovery.tableMac", "MAC")}
+                  label={t('discovery.tableMac', 'MAC')}
                   field="mac"
                   currentField={sortField}
                   direction={sortDirection}
@@ -996,7 +996,7 @@ export function DiscoveryModal({
                   class="w-36"
                 />
                 <sortableHeader
-                  label={t("discovery.tableVendor", "Vendor")}
+                  label={t('discovery.tableVendor', 'Vendor')}
                   field="vendor"
                   currentField={sortField}
                   direction={sortDirection}
@@ -1004,16 +1004,16 @@ export function DiscoveryModal({
                   class="w-32"
                 />
                 <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-28">
-                  {t("discovery.tableDiscovery", "Discovery")}
+                  {t('discovery.tableDiscovery', 'Discovery')}
                 </th>
                 <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-20">
-                  {t("discovery.tablePorts", "Ports")}
+                  {t('discovery.tablePorts', 'Ports')}
                 </th>
                 <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-20">
-                  {t("discovery.tableVulns", "CVEs")}
+                  {t('discovery.tableVulns', 'CVEs')}
                 </th>
                 <sortableHeader
-                  label={t("discovery.tableLastSeen", "Last Seen")}
+                  label={t('discovery.tableLastSeen', 'Last Seen')}
                   field="lastSeen"
                   currentField={sortField}
                   direction={sortDirection}
@@ -1021,7 +1021,7 @@ export function DiscoveryModal({
                   class="w-24"
                 />
                 <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-24">
-                  {t("discovery.tableActions", "Actions")}
+                  {t('discovery.tableActions', 'Actions')}
                 </th>
               </tr>
             </thead>
@@ -1046,8 +1046,8 @@ export function DiscoveryModal({
           {filteredDevices.length === 0 ? (
             <div class="text-center py-12 text-text-muted">
               {searchQuery || showLocalOnly
-                ? t("discovery.noResults", "No devices match your filters")
-                : t("discovery.noDevices", "No devices discovered yet")}
+                ? t('discovery.noResults', 'No devices match your filters')
+                : t('discovery.noDevices', 'No devices discovered yet')}
             </div>
           ) : null}
         </div>

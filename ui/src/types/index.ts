@@ -2,7 +2,7 @@
  * The Seed Type Definitions
  */
 
-export type Status = "success" | "warning" | "error" | "unknown";
+export type Status = 'success' | 'warning' | 'error' | 'unknown';
 
 export interface CardData {
   id: string;
@@ -12,15 +12,15 @@ export interface CardData {
 }
 
 export interface LinkCard extends CardData {
-  type: "link";
+  type: 'link';
   speed: string;
-  duplex: "full" | "half";
+  duplex: 'full' | 'half';
   advertisedSpeeds: string[];
   linkUp: boolean;
 }
 
 export interface CableCard extends CardData {
-  type: "cable";
+  type: 'cable';
   supported: boolean;
   length?: number;
   status: Status;
@@ -28,15 +28,15 @@ export interface CableCard extends CardData {
 }
 
 export interface VlanCard extends CardData {
-  type: "vlan";
+  type: 'vlan';
   nativeVlan?: number;
   taggedVlans: number[];
   voiceVlan?: number;
 }
 
 export interface SwitchCard extends CardData {
-  type: "switch";
-  protocol: "lldp" | "cdp" | "edp" | "fdp" | "unknown";
+  type: 'switch';
+  protocol: 'lldp' | 'cdp' | 'edp' | 'fdp' | 'unknown';
   switchName?: string;
   portId?: string;
   portDescription?: string;
@@ -45,7 +45,7 @@ export interface SwitchCard extends CardData {
 }
 
 export interface WifiCard extends CardData {
-  type: "wifi";
+  type: 'wifi';
   ssid?: string;
   bssid?: string;
   signal: number; // dBm
@@ -55,8 +55,8 @@ export interface WifiCard extends CardData {
 }
 
 export interface DhcpCard extends CardData {
-  type: "dhcp";
-  mode: "dhcp" | "static";
+  type: 'dhcp';
+  mode: 'dhcp' | 'static';
   ip?: string;
   subnet?: string;
   gateway?: string;
@@ -73,7 +73,7 @@ export interface DhcpCard extends CardData {
 }
 
 export interface DnsCard extends CardData {
-  type: "dns";
+  type: 'dns';
   server: string;
   testHostname: string;
   forward?: {
@@ -89,7 +89,7 @@ export interface DnsCard extends CardData {
 }
 
 export interface GatewayCard extends CardData {
-  type: "gateway";
+  type: 'gateway';
   ip: string;
   pings: {
     time: number;
@@ -127,7 +127,7 @@ export interface Settings {
     id: number;
   };
   ip: {
-    mode: "dhcp" | "static";
+    mode: 'dhcp' | 'static';
     static?: {
       address: string;
       netmask: string;
@@ -145,7 +145,7 @@ export interface Settings {
 
 export interface TracerouteRequest {
   target: string;
-  protocol: "icmp" | "udp" | "tcp";
+  protocol: 'icmp' | 'udp' | 'tcp';
   port?: number;
   maxHops?: number;
   timeout?: number;
@@ -156,7 +156,7 @@ export interface TracerouteHop {
   ip?: string;
   hostname?: string;
   rtt: number; // nanoseconds
-  state: "reply" | "timeout" | "error";
+  state: 'reply' | 'timeout' | 'error';
 }
 
 export interface TracerouteResult {
@@ -188,7 +188,7 @@ export interface L2Hop {
   deviceIp: string;
   ingressPort: PortInfo | null;
   egressPort: PortInfo | null;
-  source: "lldp" | "cdp" | "snmp";
+  source: 'lldp' | 'cdp' | 'snmp';
 }
 
 export interface L2PathResult {
@@ -198,8 +198,8 @@ export interface L2PathResult {
 export interface PathRequest {
   source: string; // IP or "self"
   destination: string; // IP or hostname
-  method: "l3" | "l2" | "both";
-  protocol: "icmp" | "udp" | "tcp";
+  method: 'l3' | 'l2' | 'both';
+  protocol: 'icmp' | 'udp' | 'tcp';
   port?: number;
 }
 

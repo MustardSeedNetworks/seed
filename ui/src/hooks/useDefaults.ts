@@ -10,10 +10,10 @@
  * which provides settings merged with defaults.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "../api";
-import { LogComponents, logger } from "../lib/logger";
-import type { DefaultSettings } from "../types/defaults";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { api } from '../api';
+import { LogComponents, logger } from '../lib/logger';
+import type { DefaultSettings } from '../types/defaults';
 
 // ============================================================================
 // Cache for defaults (shared across all hook instances)
@@ -83,7 +83,7 @@ export function useDefaults(): UseDefaultsResult {
     setError(null);
 
     const newPromise: Promise<DefaultSettings> = api.get<DefaultSettings>(
-      "/api/v1/settings/defaults",
+      '/api/v1/settings/defaults',
     );
     fetchPromise = newPromise;
 
@@ -95,7 +95,7 @@ export function useDefaults(): UseDefaultsResult {
         setIsLoading(false);
       }
     } catch (err) {
-      logger.warn(LogComponents.Config, "Failed to fetch defaults from backend", err);
+      logger.warn(LogComponents.Config, 'Failed to fetch defaults from backend', err);
       if (isMountedRef.current) {
         setError(err instanceof Error ? err : new Error(String(err)));
         // Don't set fallback - let caller handle missing defaults

@@ -28,7 +28,7 @@
  */
 
 // API base URL - can be overridden via VITE_API_BASE environment variable
-const API_BASE: string = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 /** Callback function invoked when session expires (401 response after refresh attempt) */
 type SessionExpiredCallback = () => void;
@@ -43,7 +43,7 @@ let refreshPromise: Promise<boolean> | null = null;
 let csrfToken: string | null = null;
 
 /** CSRF token header name - must match backend auth.CSRFHeaderName */
-const CSRF_HEADER_NAME = "X-CSRF-Token";
+const CSRF_HEADER_NAME = 'X-CSRF-Token';
 
 /**
  * Registers a callback to be invoked when the API returns a 401 Unauthorized response
@@ -75,8 +75,8 @@ async function refreshAccessToken(): Promise<boolean> {
   const newPromise: Promise<boolean> = (async (): Promise<boolean> => {
     try {
       const response = await fetch(`${API_BASE}/api/auth/refresh`, {
-        method: "POST",
-        credentials: "include", // Send refresh token cookie
+        method: 'POST',
+        credentials: 'include', // Send refresh token cookie
       });
       return response.ok;
     } catch {
@@ -101,8 +101,8 @@ async function refreshAccessToken(): Promise<boolean> {
 async function fetchCsrfToken(): Promise<string | null> {
   try {
     const response = await fetch(`${API_BASE}/api/auth/csrf`, {
-      method: "GET",
-      credentials: "include", // Send auth cookies
+      method: 'GET',
+      credentials: 'include', // Send auth cookies
     });
     if (response.ok) {
       const data: { token: string } = await (response.json() as Promise<{ token: string }>);
@@ -166,7 +166,7 @@ async function handleResponse<T>(
 
     // Refresh failed or retry failed - session truly expired
     onSessionExpired?.();
-    throw new Error("Session expired");
+    throw new Error('Session expired');
   }
 
   // Handle non-success responses
@@ -192,12 +192,12 @@ export const api = {
    * const status = await api.get<NetworkStatus>('/api/network/status');
    */
   async get<T>(endpoint: string, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint: boolean = endpoint.includes("/api/v1/auth/");
+    const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
     const makeRequest = (): Promise<Response> =>
       fetch(`${API_BASE}${endpoint}`, {
         ...init,
-        method: "GET",
-        credentials: "include", // Send httpOnly cookies
+        method: 'GET',
+        credentials: 'include', // Send httpOnly cookies
         headers: new Headers(init?.headers),
       });
 
@@ -216,12 +216,12 @@ export const api = {
    * const result = await api.post<Result>('/api/network/scan', { subnet: '192.168.1.0/24' });
    */
   async post<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint: boolean = endpoint.includes("/api/v1/auth/");
+    const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
     // Get CSRF token for non-auth endpoints (state-changing requests)
     const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
 
     const makeRequest = (): Promise<Response> => {
-      const headers: Headers = new Headers({ "Content-Type": "application/json" });
+      const headers: Headers = new Headers({ 'Content-Type': 'application/json' });
       if (token) {
         headers.set(CSRF_HEADER_NAME, token);
       }
@@ -231,8 +231,8 @@ export const api = {
 
       return fetch(`${API_BASE}${endpoint}`, {
         ...init,
-        method: "POST",
-        credentials: "include", // Send httpOnly cookies
+        method: 'POST',
+        credentials: 'include', // Send httpOnly cookies
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
       });
@@ -253,12 +253,12 @@ export const api = {
    * await api.put('/api/settings', { theme: 'dark' });
    */
   async put<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint: boolean = endpoint.includes("/api/v1/auth/");
+    const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
     // Get CSRF token for non-auth endpoints (state-changing requests)
     const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
 
     const makeRequest = (): Promise<Response> => {
-      const headers: Headers = new Headers({ "Content-Type": "application/json" });
+      const headers: Headers = new Headers({ 'Content-Type': 'application/json' });
       if (token) {
         headers.set(CSRF_HEADER_NAME, token);
       }
@@ -268,8 +268,8 @@ export const api = {
 
       return fetch(`${API_BASE}${endpoint}`, {
         ...init,
-        method: "PUT",
-        credentials: "include", // Send httpOnly cookies
+        method: 'PUT',
+        credentials: 'include', // Send httpOnly cookies
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
       });
@@ -290,12 +290,12 @@ export const api = {
    * await api.patch('/api/settings', { theme: 'dark' });
    */
   async patch<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint: boolean = endpoint.includes("/api/v1/auth/");
+    const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
     // Get CSRF token for non-auth endpoints (state-changing requests)
     const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
 
     const makeRequest = (): Promise<Response> => {
-      const headers: Headers = new Headers({ "Content-Type": "application/json" });
+      const headers: Headers = new Headers({ 'Content-Type': 'application/json' });
       if (token) {
         headers.set(CSRF_HEADER_NAME, token);
       }
@@ -305,8 +305,8 @@ export const api = {
 
       return fetch(`${API_BASE}${endpoint}`, {
         ...init,
-        method: "PATCH",
-        credentials: "include", // Send httpOnly cookies
+        method: 'PATCH',
+        credentials: 'include', // Send httpOnly cookies
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
       });
@@ -326,7 +326,7 @@ export const api = {
    * await api.delete('/api/devices/12345');
    */
   async delete<T>(endpoint: string, init?: RequestInit): Promise<T> {
-    const isAuthEndpoint: boolean = endpoint.includes("/api/v1/auth/");
+    const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
     // Get CSRF token for non-auth endpoints (state-changing requests)
     const token: string | null = isAuthEndpoint ? null : await getCsrfToken();
 
@@ -338,8 +338,8 @@ export const api = {
 
       return fetch(`${API_BASE}${endpoint}`, {
         ...init,
-        method: "DELETE",
-        credentials: "include", // Send httpOnly cookies
+        method: 'DELETE',
+        credentials: 'include', // Send httpOnly cookies
         headers,
       });
     };
@@ -359,7 +359,7 @@ export const api = {
   fetch(endpoint: string, init?: RequestInit): Promise<Response> {
     return fetch(`${API_BASE}${endpoint}`, {
       ...init,
-      credentials: "include", // Send httpOnly cookies
+      credentials: 'include', // Send httpOnly cookies
       headers: new Headers(init?.headers),
     });
   },

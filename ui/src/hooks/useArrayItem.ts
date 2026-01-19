@@ -32,9 +32,9 @@
  * @module hooks/useArrayItem
  */
 
-import type { Dispatch, SetStateAction } from "react";
-import { useCallback } from "react";
-import { generateId } from "../utils/id";
+import type { Dispatch, SetStateAction } from 'react';
+import { useCallback } from 'react';
+import { generateId } from '../utils/id';
 
 /**
  * Base type for items that can be managed by this hook.
@@ -144,7 +144,7 @@ export function useArrayItem<
 >(
   setSettings: Dispatch<SetStateAction<TSettings>>,
   arrayKey: K,
-  createDefault: () => Omit<ArrayItemType<TSettings, K>, "id">,
+  createDefault: () => Omit<ArrayItemType<TSettings, K>, 'id'>,
 ): UseArrayItemReturn<ArrayItemType<TSettings, K>> {
   type Item = ArrayItemType<TSettings, K>;
 

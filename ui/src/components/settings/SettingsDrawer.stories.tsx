@@ -14,33 +14,33 @@
  * in .storybook/preview.tsx. For individual section testing, see section-specific stories.
  */
 
-import type { Meta, StoryFn, StoryObj } from "@storybook/react-vite";
-import type React from "react";
-import { useState } from "react";
-import { button, cn, radius, spacing } from "../../styles/theme";
-import { SettingsDrawer } from "./SettingsDrawer";
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type React from 'react';
+import { useState } from 'react';
+import { button, cn, radius, spacing } from '../../styles/theme';
+import { SettingsDrawer } from './SettingsDrawer';
 
 const meta: Meta<typeof SettingsDrawer> = {
-  title: "Settings/SettingsDrawer",
+  title: 'Settings/SettingsDrawer',
   component: SettingsDrawer,
   parameters: {
-    layout: "fullscreen",
+    layout: 'fullscreen',
     docs: {
       description: {
         component:
-          "Master settings drawer containing all configuration sections: Network, WiFi, DNS, Health Checks, Performance, Discovery, SNMP, Thresholds, and Appearance. Provides comprehensive application configuration with auto-save, validation, and responsive design.",
+          'Master settings drawer containing all configuration sections: Network, WiFi, DNS, Health Checks, Performance, Discovery, SNMP, Thresholds, and Appearance. Provides comprehensive application configuration with auto-save, validation, and responsive design.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     isOpen: {
-      control: "boolean",
-      description: "Whether drawer is open",
+      control: 'boolean',
+      description: 'Whether drawer is open',
     },
     version: {
-      control: "text",
-      description: "Application version string",
+      control: 'text',
+      description: 'Application version string',
     },
   },
   decorators: [
@@ -64,7 +64,7 @@ export const Closed: Story = {
     onClose: () => {
       // intentionally empty - story placeholder callback
     },
-    version: "1.0.0",
+    version: '1.0.0',
   },
 };
 
@@ -77,7 +77,7 @@ export const Open: Story = {
     onClose: () => {
       // intentionally empty - story placeholder callback
     },
-    version: "1.0.0",
+    version: '1.0.0',
   },
 };
 
@@ -90,7 +90,7 @@ export const DevVersion: Story = {
     onClose: () => {
       // intentionally empty - story placeholder callback
     },
-    version: "dev",
+    version: 'dev',
   },
 };
 
@@ -103,7 +103,7 @@ export const ProductionVersion: Story = {
     onClose: () => {
       // intentionally empty - story placeholder callback
     },
-    version: "1.2.3",
+    version: '1.2.3',
   },
 };
 
@@ -115,15 +115,15 @@ export const Interactive: Story = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div class={cn("h-screen bg-surface-base", spacing.pad.default)}>
+      <div class={cn('h-screen bg-surface-base', spacing.pad.default)}>
         <button
           type="button"
           onClick={() => setIsOpen(true)}
           class={cn(
             button.size.md,
-            "bg-brand-primary text-text-inverse",
+            'bg-brand-primary text-text-inverse',
             radius.lg,
-            "hover:bg-brand-accent",
+            'hover:bg-brand-accent',
           )}
         >
           Open Settings
@@ -143,11 +143,11 @@ export const MobileViewport: Story = {
     onClose: () => {
       // intentionally empty - story placeholder callback
     },
-    version: "1.0.0",
+    version: '1.0.0',
   },
   parameters: {
     viewport: {
-      defaultViewport: "mobile1",
+      defaultViewport: 'mobile1',
     },
   },
 };
@@ -161,11 +161,11 @@ export const TabletViewport: Story = {
     onClose: () => {
       // intentionally empty - story placeholder callback
     },
-    version: "1.0.0",
+    version: '1.0.0',
   },
   parameters: {
     viewport: {
-      defaultViewport: "tablet",
+      defaultViewport: 'tablet',
     },
   },
 };
@@ -179,11 +179,11 @@ export const DesktopViewport: Story = {
     onClose: () => {
       // intentionally empty - story placeholder callback
     },
-    version: "1.0.0",
+    version: '1.0.0',
   },
   parameters: {
     viewport: {
-      defaultViewport: "desktop",
+      defaultViewport: 'desktop',
     },
   },
 };
@@ -204,17 +204,17 @@ export const WithBackdrop: Story = {
     };
 
     return (
-      <div class={cn("h-screen bg-surface-base", spacing.pad.default)}>
+      <div class={cn('h-screen bg-surface-base', spacing.pad.default)}>
         <div
           class={cn(
             spacing.margin.bottom.content,
             spacing.pad.default,
-            "bg-surface-raised",
+            'bg-surface-raised',
             radius.lg,
           )}
         >
           <p class="body-small text-text-primary">Click the dark backdrop to close the drawer.</p>
-          <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
+          <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
             Backdrop clicks: {clickCount}
           </p>
         </div>
@@ -234,7 +234,7 @@ export const DarkTheme: Story = {
     onClose: () => {
       // intentionally empty - story placeholder callback
     },
-    version: "1.0.0",
+    version: '1.0.0',
   },
 };
 
@@ -249,18 +249,18 @@ export const WithContent: Story = {
       <div class="h-screen bg-surface-base">
         {/* Sample page content */}
         <div class={spacing.pad.xl}>
-          <h1 class={cn("heading-1", spacing.margin.bottom.content)}>Network Dashboard</h1>
-          <div class={cn("grid grid-cols-3", spacing.gap.comfortable)}>
-            <div class={cn(spacing.pad.lg, "bg-surface-raised", radius.lg)}>
-              <h2 class={cn("heading-3", spacing.margin.bottom.inline)}>Network Status</h2>
+          <h1 class={cn('heading-1', spacing.margin.bottom.content)}>Network Dashboard</h1>
+          <div class={cn('grid grid-cols-3', spacing.gap.comfortable)}>
+            <div class={cn(spacing.pad.lg, 'bg-surface-raised', radius.lg)}>
+              <h2 class={cn('heading-3', spacing.margin.bottom.inline)}>Network Status</h2>
               <p class="body-small text-text-muted">Connected</p>
             </div>
-            <div class={cn(spacing.pad.lg, "bg-surface-raised", radius.lg)}>
-              <h2 class={cn("heading-3", spacing.margin.bottom.inline)}>Speed Test</h2>
+            <div class={cn(spacing.pad.lg, 'bg-surface-raised', radius.lg)}>
+              <h2 class={cn('heading-3', spacing.margin.bottom.inline)}>Speed Test</h2>
               <p class="body-small text-text-muted">150 Mbps</p>
             </div>
-            <div class={cn(spacing.pad.lg, "bg-surface-raised", radius.lg)}>
-              <h2 class={cn("heading-3", spacing.margin.bottom.inline)}>Devices</h2>
+            <div class={cn(spacing.pad.lg, 'bg-surface-raised', radius.lg)}>
+              <h2 class={cn('heading-3', spacing.margin.bottom.inline)}>Devices</h2>
               <p class="body-small text-text-muted">12 found</p>
             </div>
           </div>
@@ -270,9 +270,9 @@ export const WithContent: Story = {
             class={cn(
               spacing.margin.top.content,
               button.size.md,
-              "bg-brand-primary text-text-inverse",
+              'bg-brand-primary text-text-inverse',
               radius.lg,
-              "hover:bg-brand-accent",
+              'hover:bg-brand-accent',
             )}
           >
             Open Settings
@@ -294,13 +294,13 @@ export const ScrollableContent: Story = {
     onClose: () => {
       // intentionally empty - story placeholder callback
     },
-    version: "1.0.0",
+    version: '1.0.0',
   },
   parameters: {
     docs: {
       description: {
         story:
-          "Demonstrates drawer scrolling behavior when content exceeds viewport height. All sections are expanded to show scroll functionality.",
+          'Demonstrates drawer scrolling behavior when content exceeds viewport height. All sections are expanded to show scroll functionality.',
       },
     },
   },

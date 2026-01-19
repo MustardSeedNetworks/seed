@@ -30,9 +30,9 @@
  * State: Receives visibility state from parent component
  */
 
-import type React from "react";
-import type { ReactNode } from "react";
-import { cn, icon as iconTokens, layout, modal, radius, spacing } from "../../styles/theme";
+import type React from 'react';
+import type { ReactNode } from 'react';
+import { cn, icon as iconTokens, layout, modal, radius, spacing } from '../../styles/theme';
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -62,13 +62,13 @@ export function HelpModal({
       {/* Modal */}
       <div
         class={cn(
-          "relative",
+          'relative',
           modal.content,
           modal.size.md,
           radius.lg,
-          "flex",
-          "flex-col",
-          "overflow-hidden",
+          'flex',
+          'flex-col',
+          'overflow-hidden',
         )}
         role="dialog"
         aria-modal="true"
@@ -79,10 +79,10 @@ export function HelpModal({
           class={cn(
             layout.flex.between,
             spacing.pad.default,
-            "border-b",
-            "border-surface-border",
-            "bg-surface-raised",
-            "shrink-0",
+            'border-b',
+            'border-surface-border',
+            'bg-surface-raised',
+            'shrink-0',
           )}
         >
           <h2 id="help-modal-title" class="heading-3">
@@ -93,11 +93,11 @@ export function HelpModal({
             onClick={onClose}
             class={cn(
               spacing.iconBtn.sm,
-              "text-text-muted",
-              "hover:text-text-primary",
-              "transition-colors",
+              'text-text-muted',
+              'hover:text-text-primary',
+              'transition-colors',
               radius.default,
-              "hover:bg-surface-base",
+              'hover:bg-surface-base',
             )}
             aria-label="Close help"
           >
@@ -117,7 +117,7 @@ export function HelpModal({
         </div>
 
         {/* Content */}
-        <div class={cn(spacing.pad.default, "overflow-y-auto", "flex-1")}>{children}</div>
+        <div class={cn(spacing.pad.default, 'overflow-y-auto', 'flex-1')}>{children}</div>
       </div>
     </div>
   );
@@ -133,14 +133,14 @@ interface HelpSectionProps {
  */
 export function HelpSection({ title, children }: HelpSectionProps): React.JSX.Element {
   return (
-    <div class={cn(spacing.margin.bottom.section, "last:mb-0")}>
+    <div class={cn(spacing.margin.bottom.section, 'last:mb-0')}>
       <h3
         class={cn(
-          "heading-4",
+          'heading-4',
           spacing.margin.bottom.heading,
           spacing.padding.bottom.tight,
-          "border-b",
-          "border-surface-border",
+          'border-b',
+          'border-surface-border',
         )}
       >
         {title}
@@ -161,9 +161,9 @@ interface HelpItemProps {
  */
 export function HelpItem({ term, description, color }: HelpItemProps): React.JSX.Element {
   return (
-    <div class={cn("flex", spacing.gap.default, "body-small")}>
-      <div class={cn("flex", "items-center", spacing.gap.compact, "shrink-0", "w-24")}>
-        {color ? <span class={cn("inline-block", "w-2.5", "h-2.5", radius.full, color)} /> : null}{" "}
+    <div class={cn('flex', spacing.gap.default, 'body-small')}>
+      <div class={cn('flex', 'items-center', spacing.gap.compact, 'shrink-0', 'w-24')}>
+        {color ? <span class={cn('inline-block', 'w-2.5', 'h-2.5', radius.full, color)} /> : null}{' '}
         {/* w-2.5 h-2.5 for status dot */}
         <span class="font-medium text-text-primary">{term}</span>
       </div>

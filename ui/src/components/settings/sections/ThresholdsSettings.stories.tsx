@@ -11,12 +11,12 @@
  * - Interactive with auto-save: Demonstrates save status feedback
  */
 
-import type { Meta, StoryFn, StoryObj } from "@storybook/react-vite";
-import type React from "react";
-import { useState } from "react";
-import { cn, spacing } from "../../../styles/theme";
-import type { SaveStatus, SettingsThresholds } from "../../../types/settings";
-import { ThresholdsSettings } from "./ThresholdsSettings";
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type React from 'react';
+import { useState } from 'react';
+import { cn, spacing } from '../../../styles/theme';
+import type { SaveStatus, SettingsThresholds } from '../../../types/settings';
+import { ThresholdsSettings } from './ThresholdsSettings';
 
 const defaultThresholds: SettingsThresholds = {
   dns: { good: 50, warning: 100 },
@@ -49,10 +49,10 @@ const customThresholds: SettingsThresholds = {
 };
 
 const meta: Meta<typeof ThresholdsSettings> = {
-  title: "Settings/ThresholdsSettings",
+  title: 'Settings/ThresholdsSettings',
   component: ThresholdsSettings,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
@@ -60,12 +60,12 @@ const meta: Meta<typeof ThresholdsSettings> = {
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     thresholdsStatus: {
-      control: "select",
-      options: ["idle", "saving", "saved", "error"],
-      description: "Auto-save status indicator",
+      control: 'select',
+      options: ['idle', 'saving', 'saved', 'error'],
+      description: 'Auto-save status indicator',
     },
   },
   decorators: [
@@ -89,7 +89,7 @@ export const Default: Story = {
     setThresholds: (): void => {
       // intentionally empty
     },
-    thresholdsStatus: "idle",
+    thresholdsStatus: 'idle',
   },
 };
 
@@ -102,7 +102,7 @@ export const CustomValues: Story = {
     setThresholds: (): void => {
       // intentionally empty
     },
-    thresholdsStatus: "idle",
+    thresholdsStatus: 'idle',
   },
 };
 
@@ -115,7 +115,7 @@ export const Saving: Story = {
     setThresholds: (): void => {
       // intentionally empty
     },
-    thresholdsStatus: "saving",
+    thresholdsStatus: 'saving',
   },
 };
 
@@ -128,7 +128,7 @@ export const Saved: Story = {
     setThresholds: (): void => {
       // intentionally empty
     },
-    thresholdsStatus: "saved",
+    thresholdsStatus: 'saved',
   },
 };
 
@@ -141,7 +141,7 @@ export const SaveError: Story = {
     setThresholds: (): void => {
       // intentionally empty
     },
-    thresholdsStatus: "error",
+    thresholdsStatus: 'error',
   },
 };
 
@@ -167,7 +167,7 @@ export const StrictThresholds: Story = {
     setThresholds: (): void => {
       // intentionally empty
     },
-    thresholdsStatus: "idle",
+    thresholdsStatus: 'idle',
   },
 };
 
@@ -193,7 +193,7 @@ export const RelaxedThresholds: Story = {
     setThresholds: (): void => {
       // intentionally empty
     },
-    thresholdsStatus: "idle",
+    thresholdsStatus: 'idle',
   },
 };
 
@@ -203,18 +203,18 @@ export const RelaxedThresholds: Story = {
 export const Interactive: Story = {
   render: function interactiveStory() {
     const [thresholds, setThresholds] = useState<SettingsThresholds>(defaultThresholds);
-    const [status, setStatus] = useState<SaveStatus>("idle");
+    const [status, setStatus] = useState<SaveStatus>('idle');
 
     // Simulate auto-save behavior
     const handleSetThresholds = (updater: React.SetStateAction<SettingsThresholds>): void => {
       setThresholds(updater);
-      setStatus("saving");
+      setStatus('saving');
 
       // Simulate save delay
       setTimeout(() => {
-        setStatus("saved");
+        setStatus('saved');
         setTimeout(() => {
-          setStatus("idle");
+          setStatus('idle');
         }, 2000);
       }, 800);
     };
@@ -234,9 +234,9 @@ export const Interactive: Story = {
  */
 export const SaveStates: Story = {
   render: () => (
-    <div class={cn("stack-lg", spacing.pad.default)}>
+    <div class={cn('stack-lg', spacing.pad.default)}>
       <div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Idle (no changes)</p>
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Idle (no changes)</p>
         <div class="w-[400px]">
           <ThresholdsSettings
             thresholds={defaultThresholds}
@@ -248,7 +248,7 @@ export const SaveStates: Story = {
         </div>
       </div>
       <div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Saving</p>
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Saving</p>
         <div class="w-[400px]">
           <ThresholdsSettings
             thresholds={defaultThresholds}
@@ -260,7 +260,7 @@ export const SaveStates: Story = {
         </div>
       </div>
       <div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Saved</p>
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Saved</p>
         <div class="w-[400px]">
           <ThresholdsSettings
             thresholds={defaultThresholds}
@@ -272,7 +272,7 @@ export const SaveStates: Story = {
         </div>
       </div>
       <div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Error</p>
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Error</p>
         <div class="w-[400px]">
           <ThresholdsSettings
             thresholds={defaultThresholds}

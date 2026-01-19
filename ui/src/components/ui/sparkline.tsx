@@ -35,11 +35,11 @@
  * State: Memoized calculations for path generation and scaling
  */
 
-import type React from "react";
-import { memo, useMemo } from "react";
-import { cn, radius } from "../../styles/theme";
+import type React from 'react';
+import { memo, useMemo } from 'react';
+import { cn, radius } from '../../styles/theme';
 
-export type SparklineType = "availability" | "latency" | "score";
+export type SparklineType = 'availability' | 'latency' | 'score';
 
 interface SparklineProps {
   /** Data points to display (most recent last) */
@@ -47,7 +47,7 @@ interface SparklineProps {
   /** Type of data for coloring and scaling */
   type?: SparklineType;
   /** Size variant */
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg';
   /** Custom threshold for warning/error coloring (latency mode) */
   threshold?: number;
   /** Show area fill under the line */
@@ -67,27 +67,27 @@ const sizeConfigs = {
 
 // Get color based on value and type
 function getSparklineColor(value: number, type: SparklineType, threshold?: number): string {
-  if (type === "availability" || type === "score") {
+  if (type === 'availability' || type === 'score') {
     // Higher is better
     if (value >= 99) {
-      return "var(--color-status-success)";
+      return 'var(--color-status-success)';
     }
     if (value >= 90) {
-      return "var(--color-status-warning)";
+      return 'var(--color-status-warning)';
     }
-    return "var(--color-status-error)";
+    return 'var(--color-status-error)';
   }
 
   // Latency - lower is better
   const effectiveThreshold = threshold ?? 100;
   const ratio = value / effectiveThreshold;
   if (ratio <= 0.5) {
-    return "var(--color-status-success)";
+    return 'var(--color-status-success)';
   }
   if (ratio <= 1.0) {
-    return "var(--color-status-warning)";
+    return 'var(--color-status-warning)';
   }
-  return "var(--color-status-error)";
+  return 'var(--color-status-error)';
 }
 
 // Generate SVG path from data points
@@ -100,7 +100,7 @@ function generatePath(
   maxValue: number,
 ): string {
   if (data.length < 2) {
-    return "";
+    return '';
   }
 
   const effectiveWidth = width - padding * 2;
@@ -141,7 +141,7 @@ function generateAreaPath(
   padding: number,
 ): string {
   if (!linePath) {
-    return "";
+    return '';
   }
 
   const baseY = height - padding;
@@ -156,8 +156,8 @@ export const Sparkline: React.MemoExoticComponent<typeof SparklineComponent> =
 
 function SparklineComponent({
   data,
-  type = "availability",
-  size = "md",
+  type = 'availability',
+  size = 'md',
   threshold,
   showArea = true,
   className,
@@ -174,7 +174,7 @@ function SparklineComponent({
         minValue: 0,
         maxValue: 100,
         currentValue: 0,
-        trendDirection: "stable" as const,
+        trendDirection: 'stable' as const,
       };
     }
 
@@ -194,7 +194,7 @@ function SparklineComponent({
     }
 
     // For availability/score, use fixed 0-100 range for consistency
-    if (type === "availability" || type === "score") {
+    if (type === 'availability' || type === 'score') {
       min = Math.min(min, 0);
       max = Math.max(max, 100);
     } else {
@@ -208,7 +208,7 @@ function SparklineComponent({
     const current = data.at(-1);
 
     // Determine trend direction
-    let trend: "up" | "down" | "stable" = "stable";
+    let trend: 'up' | 'down' | 'stable' = 'stable';
     if (data.length >= 2) {
       const recentAvg =
         data.slice(-Math.min(3, data.length)).reduce((a, b) => a + b, 0) / Math.min(3, data.length);
@@ -220,9 +220,9 @@ function SparklineComponent({
       const thresholdPct = avg * 0.05; // 5% change threshold
 
       if (diff > thresholdPct) {
-        trend = "up";
+        trend = 'up';
       } else if (diff < -thresholdPct) {
-        trend = "down";
+        trend = 'down';
       }
     }
 
@@ -237,7 +237,7 @@ function SparklineComponent({
   // Generate paths
   const { linePath, areaPath } = useMemo(() => {
     const line = generatePath(data, config.width, config.height, padding, minValue, maxValue);
-    const area = showArea ? generateAreaPath(line, config.width, config.height, padding) : "";
+    const area = showArea ? generateAreaPath(line, config.width, config.height, padding) : '';
     return { linePath: line, areaPath: area };
   }, [data, config, minValue, maxValue, showArea]);
 
@@ -249,9 +249,9 @@ function SparklineComponent({
     return (
       <div
         role="img"
-        class={cn("flex items-center justify-center text-text-muted", className)}
+        class={cn('flex items-center justify-center text-text-muted', className)}
         style={{ width: config.width, height: config.height }}
-        aria-label={label || "No data available"}
+        aria-label={label || 'No data available'}
       >
         <span class="caption">—</span>
       </div>
@@ -261,10 +261,10 @@ function SparklineComponent({
   // Accessibility label
   const accessibilityLabel =
     label ||
-    `${type} sparkline: current ${currentValue.toFixed(1)}${type === "latency" ? "ms" : "%"}, trend ${trendDirection}`;
+    `${type} sparkline: current ${currentValue.toFixed(1)}${type === 'latency' ? 'ms' : '%'}, trend ${trendDirection}`;
 
   return (
-    <div class={cn("relative inline-flex", className)}>
+    <div class={cn('relative inline-flex', className)}>
       <svg
         width={config.width}
         height={config.height}
@@ -338,14 +338,14 @@ function SparklineWithLabelComponent({
   showValue = true,
   unit,
   data,
-  type = "availability",
+  type = 'availability',
   ...props
 }: SparklineWithLabelProps): React.JSX.Element {
   const currentValue = data.length > 0 ? data.at(-1) : 0;
 
   // Format value based on type
   const formattedValue = useMemo((): string => {
-    if (type === "latency") {
+    if (type === 'latency') {
       if (currentValue >= 1000) {
         return `${(currentValue / 1000).toFixed(1)}s`;
       }
@@ -354,7 +354,7 @@ function SparklineWithLabelComponent({
     return `${currentValue.toFixed(1)}%`;
   }, [currentValue, type]);
 
-  const displayUnit = unit ?? (type === "latency" ? "" : "");
+  const displayUnit = unit ?? (type === 'latency' ? '' : '');
 
   return (
     <div class="inline-flex items-center gap-2">
@@ -377,7 +377,7 @@ interface HealthScoreBadgeProps {
   /** Score from 0-100 */
   score: number;
   /** Size variant */
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg';
   /** Show numeric value */
   showValue?: boolean;
   /** Custom className */
@@ -389,41 +389,41 @@ export const HealthScoreBadge: React.MemoExoticComponent<typeof HealthScoreBadge
 
 function HealthScoreBadgeComponent({
   score,
-  size = "md",
+  size = 'md',
   showValue = true,
   className,
 }: HealthScoreBadgeProps): React.JSX.Element {
   // Determine status color
   const getStatusColor = (): string => {
     if (score >= 80) {
-      return "bg-status-success/15 text-status-success border-status-success/30";
+      return 'bg-status-success/15 text-status-success border-status-success/30';
     }
     if (score >= 50) {
-      return "bg-status-warning/15 text-status-warning border-status-warning/30";
+      return 'bg-status-warning/15 text-status-warning border-status-warning/30';
     }
-    return "bg-status-error/15 text-status-error border-status-error/30";
+    return 'bg-status-error/15 text-status-error border-status-error/30';
   };
 
   const getStatusLabel = (): string => {
     if (score >= 80) {
-      return "Healthy";
+      return 'Healthy';
     }
     if (score >= 50) {
-      return "Degraded";
+      return 'Degraded';
     }
-    return "Critical";
+    return 'Critical';
   };
 
   const sizeClasses = {
-    sm: "px-1.5 py-0.5 text-[10px]",
-    md: "px-2 py-1 text-xs",
-    lg: "px-3 py-1.5 text-sm",
+    sm: 'px-1.5 py-0.5 text-[10px]',
+    md: 'px-2 py-1 text-xs',
+    lg: 'px-3 py-1.5 text-sm',
   };
 
   return (
     <span
       class={cn(
-        "inline-flex items-center gap-1 font-medium border",
+        'inline-flex items-center gap-1 font-medium border',
         radius.md,
         sizeClasses[size],
         getStatusColor(),
@@ -432,7 +432,7 @@ function HealthScoreBadgeComponent({
       title={`Health Score: ${score.toFixed(0)}% - ${getStatusLabel()}`}
     >
       {showValue ? <span class="tabular-nums">{Math.round(score)}</span> : null}
-      <span class={showValue ? "hidden sm:inline" : ""}>{getStatusLabel()}</span>
+      <span class={showValue ? 'hidden sm:inline' : ''}>{getStatusLabel()}</span>
     </span>
   );
 }

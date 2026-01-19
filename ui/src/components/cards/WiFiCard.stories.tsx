@@ -1,8 +1,8 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Signal, Wifi, WifiOff } from "lucide-react";
-import { cn, spacing } from "../../styles/theme";
-import { Card, CardDivider, CardRow, CardValue } from "../ui/Card";
-import { Skeleton } from "../ui/Skeleton";
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { Signal, Wifi, WifiOff } from 'lucide-react';
+import { cn, spacing } from '../../styles/theme';
+import { Card, CardDivider, CardRow, CardValue } from '../ui/Card';
+import { Skeleton } from '../ui/Skeleton';
 
 /**
  * WiFiCard displays wireless network connection status and signal quality.
@@ -11,11 +11,11 @@ import { Skeleton } from "../ui/Skeleton";
  * This story demonstrates the card's visual states.
  */
 const meta: Meta = {
-  title: "Cards/WiFiCard",
+  title: 'Cards/WiFiCard',
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   decorators: [
     (StoryComponent: React.ComponentType): JSX.Element => (
       <div class="w-80">
@@ -55,7 +55,7 @@ export const WeakSignal: StoryObj = {
         <CardRow label="Channel" value="36 (5 GHz)" />
         <CardRow label="Security" value="WPA2" />
         <CardRow label="Speed" value="72 Mbps" />
-        <p class={cn("caption text-status-warning", spacing.margin.top.inline)}>
+        <p class={cn('caption text-status-warning', spacing.margin.top.inline)}>
           Weak signal. Move closer to the access point or check for interference.
         </p>
       </div>
@@ -72,7 +72,7 @@ export const VeryWeakSignal: StoryObj = {
         <CardRow label="Quality" value="Poor" status="error" />
         <CardDivider />
         <CardRow label="Channel" value="11 (2.4 GHz)" />
-        <p class={cn("caption text-status-danger", spacing.margin.top.inline)}>
+        <p class={cn('caption text-status-danger', spacing.margin.top.inline)}>
           Very weak signal. Connection may be unstable or drop frequently.
         </p>
       </div>
@@ -108,7 +108,7 @@ export const Scanning: StoryObj = {
       icon={<Wifi class="w-4 h-4" />}
       status="loading"
     >
-      <Skeleton class={cn("h-8 w-40", spacing.margin.bottom.content)} />
+      <Skeleton class={cn('h-8 w-40', spacing.margin.bottom.content)} />
       <div class={cn(spacing.stack.sm, spacing.margin.top.content)}>
         <div class="flex justify-between">
           <Skeleton class="h-3 w-16" />
@@ -139,7 +139,7 @@ export const MultipleNetworks: StoryObj = {
       <div class={cn(spacing.margin.top.content, spacing.stack.sm)}>
         <div
           class={cn(
-            "flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */",
+            'flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */',
             spacing.compact.py,
           )}
         >
@@ -148,7 +148,7 @@ export const MultipleNetworks: StoryObj = {
         </div>
         <div
           class={cn(
-            "flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */",
+            'flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */',
             spacing.compact.py,
           )}
         >
@@ -157,7 +157,7 @@ export const MultipleNetworks: StoryObj = {
         </div>
         <div
           class={cn(
-            "flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */",
+            'flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */',
             spacing.compact.py,
           )}
         >
@@ -166,7 +166,7 @@ export const MultipleNetworks: StoryObj = {
         </div>
         <div
           class={cn(
-            "flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */",
+            'flex justify-between items-center border-b border-surface-border/50 /* spacing.compact.py for compact list item */',
             spacing.compact.py,
           )}
         >
@@ -187,7 +187,7 @@ export const NoAdapter: StoryObj = {
       status="unknown"
     >
       <CardValue value="Not Available" size="md" />
-      <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
+      <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
         No wireless adapter detected on this system.
       </p>
     </Card>

@@ -27,9 +27,9 @@
  * to running all network diagnostics without opening settings.
  */
 
-import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { cn, icon as iconTokens, layout, radius } from "../../styles/theme";
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { cn, icon as iconTokens, layout, radius } from '../../styles/theme';
 
 /**
  * Props for FAB component
@@ -42,7 +42,7 @@ interface FabProps {
 /**
  * Floating Action Button - triggers all diagnostic tests
  */
-export function Fab({ class: className = "" }: FabProps): React.JSX.Element {
+export function Fab({ class: className = '' }: FabProps): React.JSX.Element {
   const [isRunning, setIsRunning] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -56,9 +56,9 @@ export function Fab({ class: className = "" }: FabProps): React.JSX.Element {
       }
     };
 
-    window.addEventListener("testsComplete", handleTestsComplete);
+    window.addEventListener('testsComplete', handleTestsComplete);
     return (): void => {
-      window.removeEventListener("testsComplete", handleTestsComplete);
+      window.removeEventListener('testsComplete', handleTestsComplete);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -71,7 +71,7 @@ export function Fab({ class: className = "" }: FabProps): React.JSX.Element {
     }
     setIsRunning(true);
 
-    window.dispatchEvent(new CustomEvent("runAllTests"));
+    window.dispatchEvent(new CustomEvent('runAllTests'));
 
     // Fallback timeout in case testsComplete never fires
     timeoutRef.current = setTimeout(() => {
@@ -85,10 +85,10 @@ export function Fab({ class: className = "" }: FabProps): React.JSX.Element {
       onClick={handleClick}
       disabled={isRunning}
       class={cn(
-        "w-14 h-14 bg-brand-primary text-text-inverse shadow-lg hover:bg-brand-accent active:scale-95 transition-all touch-manipulation focus:outline-none focus:ring-4 focus:ring-brand-primary/50 focus:ring-offset-2 focus:ring-offset-surface-base",
+        'w-14 h-14 bg-brand-primary text-text-inverse shadow-lg hover:bg-brand-accent active:scale-95 transition-all touch-manipulation focus:outline-none focus:ring-4 focus:ring-brand-primary/50 focus:ring-offset-2 focus:ring-offset-surface-base',
         layout.flex.center,
         radius.full,
-        isRunning && "opacity-75 cursor-not-allowed",
+        isRunning && 'opacity-75 cursor-not-allowed',
         className,
       )}
       title="Run All Tests"
@@ -96,7 +96,7 @@ export function Fab({ class: className = "" }: FabProps): React.JSX.Element {
     >
       {isRunning ? (
         <svg
-          class={cn(iconTokens.size.lg, "animate-spin")}
+          class={cn(iconTokens.size.lg, 'animate-spin')}
           fill="none"
           viewBox="0 0 24 24"
           aria-hidden="true"

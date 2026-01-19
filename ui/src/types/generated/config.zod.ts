@@ -1,5 +1,5 @@
 // biome-ignore-all lint/nursery/useExplicitType: Generated Zod schemas - types are inferred by Zod
-import { z } from "zod";
+import { z } from 'zod';
 
 // Server configuration schema
 const serverSchema = z
@@ -30,7 +30,7 @@ const vlanSchema = z
 // IP configuration schema
 const ipSchema = z
   .object({
-    mode: z.enum(["dhcp", "static"]).optional(),
+    mode: z.enum(['dhcp', 'static']).optional(),
     address: z.string().optional(),
     netmask: z.string().optional(),
     gateway: z.string().optional(),
@@ -154,8 +154,8 @@ const iperfSchema = z
   .object({
     server: z.string().optional(),
     port: z.number().int().optional(),
-    protocol: z.enum(["tcp", "udp"]).optional(),
-    direction: z.enum(["upload", "download", "bidirectional"]).optional(),
+    protocol: z.enum(['tcp', 'udp']).optional(),
+    direction: z.enum(['upload', 'download', 'bidirectional']).optional(),
     duration: z.number().int().optional(),
     serverPort: z.number().int().optional(),
     enableServer: z.boolean().optional(),
@@ -256,14 +256,14 @@ const fabOptionsSchema = z
 const displayOptionsSchema = z
   .object({
     showPublicIp: z.boolean().optional(),
-    unitSystem: z.enum(["sae", "metric"]).optional(),
+    unitSystem: z.enum(['sae', 'metric']).optional(),
   })
   .passthrough();
 
 // Logging configuration schema
 const loggingSchema = z
   .object({
-    level: z.enum(["debug", "info", "warn", "error"]).optional(),
+    level: z.enum(['debug', 'info', 'warn', 'error']).optional(),
     file: z.string().optional(),
   })
   .passthrough();
@@ -274,7 +274,7 @@ export const configSchema = z
       .number()
       .int()
       .gte(1)
-      .describe("Configuration schema version for migrations")
+      .describe('Configuration schema version for migrations')
       .default(1),
     server: serverSchema.optional(),
     interface: interfaceSchema.optional(),
@@ -299,4 +299,4 @@ export const configSchema = z
     logging: loggingSchema.optional(),
   })
   .passthrough()
-  .describe("Configuration schema for The Seed network diagnostic tool");
+  .describe('Configuration schema for The Seed network diagnostic tool');

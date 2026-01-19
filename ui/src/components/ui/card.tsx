@@ -28,27 +28,27 @@
  * ```
  */
 
-import type React from "react";
-import type { ReactNode } from "react";
-import { card, cn, icon as iconTokens, layout, spacing } from "../../styles/theme";
-import { StatusBadge } from "./StatusBadge";
-import { getStatusConfig, type Status } from "./StatusConfig";
+import type React from 'react';
+import type { ReactNode } from 'react';
+import { card, cn, icon as iconTokens, layout, spacing } from '../../styles/theme';
+import { StatusBadge } from './StatusBadge';
+import { getStatusConfig, type Status } from './StatusConfig';
 
 // Re-export Status type for convenience (types don't affect react-refresh)
 export type { Status };
 
 // Type-safe size class getter
-function getSizeClass(size: "sm" | "md" | "lg"): string {
+function getSizeClass(size: 'sm' | 'md' | 'lg'): string {
   switch (size) {
-    case "sm":
-      return "body-small";
-    case "md":
-      return "body font-medium leading-snug";
-    case "lg":
-      return "body-large font-semibold leading-snug";
+    case 'sm':
+      return 'body-small';
+    case 'md':
+      return 'body font-medium leading-snug';
+    case 'lg':
+      return 'body-large font-semibold leading-snug';
     default: {
       const _exhaustive: never = size;
-      return "body font-medium leading-snug";
+      return 'body font-medium leading-snug';
     }
   }
 }
@@ -88,7 +88,7 @@ export function Card({
   subtitle,
   status,
   children,
-  class: className = "",
+  class: className = '',
   onClick,
   icon,
   headerAction,
@@ -96,7 +96,7 @@ export function Card({
   ariaLabel,
 }: CardProps): React.JSX.Element {
   // Card is interactive if click handler is provided
-  const isInteractive = typeof onClick === "function";
+  const isInteractive = typeof onClick === 'function';
 
   /**
    * Handle keyboard activation (Enter/Space) for interactive cards.
@@ -106,7 +106,7 @@ export function Card({
     if (!isInteractive) {
       return;
     }
-    if (e.key === "Enter" || e.key === " ") {
+    if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onClick?.();
     }
@@ -114,10 +114,10 @@ export function Card({
 
   // Fixes #674: Add aria-label and aria-live for accessibility
   const ariaProps = {
-    "aria-label": ariaLabel || `${title}${subtitle ? ` - ${subtitle}` : ""}`,
+    'aria-label': ariaLabel || `${title}${subtitle ? ` - ${subtitle}` : ''}`,
     ...(enableLiveRegion && {
-      "aria-live": "polite" as const,
-      "aria-atomic": "true" as const,
+      'aria-live': 'polite' as const,
+      'aria-atomic': 'true' as const,
     }),
   };
 
@@ -130,14 +130,14 @@ export function Card({
         spacing.pad.sm,
         `sm:${spacing.pad.default}`,
         // Fixed width for consistent card grid layout
-        "w-full max-w-sm",
-        "transition-all hover:border-brand-primary/40 touch-manipulation focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base outline-none",
-        isInteractive && "cursor-pointer active:scale-[0.98]",
+        'w-full max-w-sm',
+        'transition-all hover:border-brand-primary/40 touch-manipulation focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base outline-none',
+        isInteractive && 'cursor-pointer active:scale-[0.98]',
         className,
       )}
       onClick={onClick}
       onKeyDown={handleKeyDown}
-      role={isInteractive ? "button" : undefined}
+      role={isInteractive ? 'button' : undefined}
       tabIndex={isInteractive ? 0 : undefined}
       {...ariaProps}
     >
@@ -145,14 +145,14 @@ export function Card({
         <div class={layout.inline.default}>
           {/* biome-ignore lint/nursery/noMisusedPromises: icon is ReactNode, not a Promise - false positive */}
           {icon ? (
-            <span class={cn("text-text-muted shrink-0", iconTokens.size.md)} aria-hidden="true">
+            <span class={cn('text-text-muted shrink-0', iconTokens.size.md)} aria-hidden="true">
               {icon}
             </span>
           ) : null}
           <div class={layout.flex.col}>
             <h3
               class="heading-4 font-display"
-              id={`card-title-${title.replace(/\s+/g, "-").toLowerCase()}`}
+              id={`card-title-${title.replace(/\s+/g, '-').toLowerCase()}`}
             >
               {title}
             </h3>
@@ -166,7 +166,7 @@ export function Card({
       </div>
       <div
         class={cn(spacing.margin.top.inline, `sm:${spacing.margin.top.content}`)}
-        aria-describedby={`card-title-${title.replace(/\s+/g, "-").toLowerCase()}`}
+        aria-describedby={`card-title-${title.replace(/\s+/g, '-').toLowerCase()}`}
       >
         {children}
       </div>
@@ -178,7 +178,7 @@ interface CardValueProps {
   label?: string;
   value: string | number;
   unit?: string;
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg';
   status?: Status;
   mono?: boolean;
   allowWrap?: boolean;
@@ -191,32 +191,32 @@ export function CardValue({
   label,
   value,
   unit,
-  size = "md",
+  size = 'md',
   status,
   mono = false,
   allowWrap = false,
 }: CardValueProps): React.JSX.Element {
-  const statusColorClass = status ? getStatusConfig(status).color : "text-text-primary";
+  const statusColorClass = status ? getStatusConfig(status).color : 'text-text-primary';
   const textMods = [
     statusColorClass,
-    mono ? "font-mono tabular-nums" : "",
-    allowWrap ? "break-all whitespace-pre-wrap" : "",
+    mono ? 'font-mono tabular-nums' : '',
+    allowWrap ? 'break-all whitespace-pre-wrap' : '',
   ]
     .filter(Boolean)
-    .join(" ");
+    .join(' ');
 
   const statusIcon = status ? getStatusConfig(status).icon : null;
 
   return (
     <div>
-      {label ? <p class={cn("caption", spacing.margin.bottom.tight)}>{label}</p> : null}
+      {label ? <p class={cn('caption', spacing.margin.bottom.tight)}>{label}</p> : null}
       <p class={cn(getSizeClass(size), textMods, layout.inline.tight)} data-testid="card-value">
         {statusIcon ? (
-          <span class={cn(layout.flex.center, iconTokens.size.xs, "shrink-0 text-current")}>
+          <span class={cn(layout.flex.center, iconTokens.size.xs, 'shrink-0 text-current')}>
             {statusIcon}
           </span>
         ) : null}
-        <span class={cn(layout.inline.tight, "items-baseline")}>
+        <span class={cn(layout.inline.tight, 'items-baseline')}>
           <span>{value}</span>
           {unit ? <span class="body-small font-normal text-text-muted">{unit}</span> : null}
         </span>
@@ -231,7 +231,7 @@ interface CardRowProps {
   status?: Status;
   wrap?: boolean;
   mono?: boolean;
-  align?: "left" | "right";
+  align?: 'left' | 'right';
 }
 
 /**
@@ -243,37 +243,37 @@ export function CardRow({
   status,
   wrap = false,
   mono = false,
-  align = "right",
+  align = 'right',
 }: CardRowProps): React.JSX.Element {
   const resolvedStatus = status ? getStatusConfig(status) : null;
   const statusIcon = resolvedStatus?.icon ?? null;
-  const justifyClass = align === "right" ? "justify-end" : "justify-start";
+  const justifyClass = align === 'right' ? 'justify-end' : 'justify-start';
 
   return (
     <div
       class={cn(
-        "flex justify-between",
+        'flex justify-between',
         spacing.compact.py,
         layout.inline.default,
-        wrap ? "items-start" : "items-center",
+        wrap ? 'items-start' : 'items-center',
       )}
     >
       <span class="body-small shrink-0">{label}</span>
       <span
         class={cn(
-          "body-small font-medium",
+          'body-small font-medium',
           layout.inline.tight,
           justifyClass,
-          align === "right" ? "text-right" : "text-left",
-          wrap ? "break-all whitespace-pre-wrap" : "truncate",
-          mono && "font-mono tabular-nums",
-          resolvedStatus?.color ?? "text-text-primary",
+          align === 'right' ? 'text-right' : 'text-left',
+          wrap ? 'break-all whitespace-pre-wrap' : 'truncate',
+          mono && 'font-mono tabular-nums',
+          resolvedStatus?.color ?? 'text-text-primary',
         )}
         title={String(value)}
         data-testid="card-row-value"
       >
         {statusIcon ? (
-          <span class={cn(iconTokens.size.xs, "shrink-0 text-current")}>{statusIcon}</span>
+          <span class={cn(iconTokens.size.xs, 'shrink-0 text-current')}>{statusIcon}</span>
         ) : null}
         <span>{value}</span>
       </span>
@@ -288,6 +288,6 @@ interface CardDividerProps {
 /**
  * Horizontal divider line for separating card sections.
  */
-export function CardDivider({ class: className = "" }: CardDividerProps): React.JSX.Element {
-  return <hr class={cn("border-surface-border", spacing.margin.top.content, className)} />;
+export function CardDivider({ class: className = '' }: CardDividerProps): React.JSX.Element {
+  return <hr class={cn('border-surface-border', spacing.margin.top.content, className)} />;
 }

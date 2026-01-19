@@ -23,11 +23,11 @@
  * State: Manages surveys list, selected survey, create dialog state, fetches from API
  */
 
-import type React from "react";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { type Survey, type SurveyType, useSurvey } from "../../hooks/useSurvey";
-import { LogComponents, logger } from "../../lib/logger";
+import type React from 'react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { type Survey, type SurveyType, useSurvey } from '../../hooks/useSurvey';
+import { LogComponents, logger } from '../../lib/logger';
 import {
   button,
   cn,
@@ -37,10 +37,10 @@ import {
   modal,
   radius,
   spacing,
-} from "../../styles/theme";
-import { SurveyView } from "../survey/SurveyView";
-import { Card, type Status } from "../ui/Card";
-import { Activity } from "../ui/Icons";
+} from '../../styles/theme';
+import { SurveyView } from '../survey/SurveyView';
+import { Card, type Status } from '../ui/Card';
+import { Activity } from '../ui/Icons';
 
 interface WifiSurveyCardProps {
   isWifi: boolean;
@@ -53,9 +53,9 @@ interface WifiSurveyCardProps {
  */
 export function WiFiSurveyCard({
   isWifi,
-  currentInterface = "",
+  currentInterface = '',
 }: WifiSurveyCardProps): React.ReactElement {
-  const { t } = useTranslation("cards");
+  const { t } = useTranslation('cards');
   const {
     surveys,
     loading,
@@ -70,14 +70,14 @@ export function WiFiSurveyCard({
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
 
-  const activeSurveys = surveys.filter((s) => s.status === "in_progress" || s.status === "paused");
+  const activeSurveys = surveys.filter((s) => s.status === 'in_progress' || s.status === 'paused');
 
   // Fixes #737: Use "success" for no surveys (ready state) instead of confusing "?" badge
   const getCardStatus = (): Status => {
     if (activeSurveys.length > 0) {
-      return "warning"; // Active work needs attention
+      return 'warning'; // Active work needs attention
     }
-    return "success"; // Ready or completed - system is healthy
+    return 'success'; // Ready or completed - system is healthy
   };
 
   const handleCreateSurvey = async (
@@ -95,24 +95,24 @@ export function WiFiSurveyCard({
       // Automatically open the survey view for setup
       setSelectedSurvey(newSurvey);
     } catch (err) {
-      logger.error(LogComponents.Survey, "Failed to create survey", err);
+      logger.error(LogComponents.Survey, 'Failed to create survey', err);
     }
   };
 
   const handleDelete = async (id: string): Promise<void> => {
-    if (confirm(t("survey.confirmDelete"))) {
+    if (confirm(t('survey.confirmDelete'))) {
       await deleteSurvey(id);
     }
   };
 
   const getSurveyTypeLabel = (type: SurveyType): string => {
     switch (type) {
-      case "passive":
-        return t("survey.typePassiveLabel");
-      case "active":
-        return t("survey.typeActiveLabel");
-      case "throughput":
-        return t("survey.typeThroughputLabel");
+      case 'passive':
+        return t('survey.typePassiveLabel');
+      case 'active':
+        return t('survey.typeActiveLabel');
+      case 'throughput':
+        return t('survey.typeThroughputLabel');
       default:
         return type;
     }
@@ -120,16 +120,16 @@ export function WiFiSurveyCard({
 
   const getStatusLabel = (status: string): string => {
     switch (status) {
-      case "in_progress":
-        return t("survey.inProgress");
-      case "paused":
-        return t("survey.paused");
-      case "completed":
-        return t("survey.completed");
-      case "created":
-        return t("survey.created");
+      case 'in_progress':
+        return t('survey.inProgress');
+      case 'paused':
+        return t('survey.paused');
+      case 'completed':
+        return t('survey.completed');
+      case 'created':
+        return t('survey.created');
       default:
-        return status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase());
+        return status.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase());
     }
   };
 
@@ -137,21 +137,21 @@ export function WiFiSurveyCard({
   const renderSurveyContent = (): React.ReactElement => {
     if (loading && surveys.length === 0) {
       return (
-        <div class={cn("text-center", spacing.pad.lg, "text-text-muted body-small")}>
-          {t("survey.loading")}
+        <div class={cn('text-center', spacing.pad.lg, 'text-text-muted body-small')}>
+          {t('survey.loading')}
         </div>
       );
     }
     if (surveys.length === 0) {
       return (
-        <div class={cn("text-center", spacing.pad.lg, "text-text-muted")}>
-          <p class={cn("body-small", spacing.margin.bottom.inline)}>{t("survey.noSurveys")}</p>
+        <div class={cn('text-center', spacing.pad.lg, 'text-text-muted')}>
+          <p class={cn('body-small', spacing.margin.bottom.inline)}>{t('survey.noSurveys')}</p>
           <button
             type="button"
             onClick={(): void => setShowCreateDialog(true)}
             class="body-small text-brand-primary hover:underline"
           >
-            {t("survey.createFirst")}
+            {t('survey.createFirst')}
           </button>
         </div>
       );
@@ -162,9 +162,9 @@ export function WiFiSurveyCard({
           <div
             key={survey.id}
             class={cn(
-              "border border-surface-border",
+              'border border-surface-border',
               radius.md,
-              "pad-sm hover:bg-surface-hover transition-colors",
+              'pad-sm hover:bg-surface-hover transition-colors',
             )}
           >
             <div class={layout.flex.between}>
@@ -181,17 +181,17 @@ export function WiFiSurveyCard({
                   class={cn(
                     layout.inline.comfortable,
                     spacing.margin.top.inline,
-                    "caption text-text-muted",
+                    'caption text-text-muted',
                   )}
                 >
                   <span>{getSurveyTypeLabel(survey.surveyType)}</span>
                   <span>
-                    {survey.samples?.length ?? 0} {t("survey.samples").toLowerCase()}
+                    {survey.samples?.length ?? 0} {t('survey.samples').toLowerCase()}
                   </span>
                 </div>
               </button>
               <div class={cn(layout.inline.tight, spacing.margin.left.inline)}>
-                {survey.status === "created" ? (
+                {survey.status === 'created' ? (
                   <button
                     type="button"
                     onClick={(): void => {
@@ -199,16 +199,16 @@ export function WiFiSurveyCard({
                     }}
                     class={cn(
                       button.size.xs,
-                      "caption border border-surface-border",
+                      'caption border border-surface-border',
                       radius.md,
-                      "hover:bg-surface-hover",
+                      'hover:bg-surface-hover',
                     )}
-                    title={t("survey.start")}
+                    title={t('survey.start')}
                   >
                     ▶
                   </button>
                 ) : null}
-                {survey.status === "in_progress" ? (
+                {survey.status === 'in_progress' ? (
                   <button
                     type="button"
                     onClick={(): void => {
@@ -216,16 +216,16 @@ export function WiFiSurveyCard({
                     }}
                     class={cn(
                       button.size.xs,
-                      "caption border border-surface-border",
+                      'caption border border-surface-border',
                       radius.md,
-                      "hover:bg-surface-hover",
+                      'hover:bg-surface-hover',
                     )}
-                    title={t("survey.pause")}
+                    title={t('survey.pause')}
                   >
                     ⏸
                   </button>
                 ) : null}
-                {survey.status === "paused" ? (
+                {survey.status === 'paused' ? (
                   <>
                     <button
                       type="button"
@@ -234,11 +234,11 @@ export function WiFiSurveyCard({
                       }}
                       class={cn(
                         button.size.xs,
-                        "caption border border-surface-border",
+                        'caption border border-surface-border',
                         radius.md,
-                        "hover:bg-surface-hover",
+                        'hover:bg-surface-hover',
                       )}
-                      title={t("survey.resume")}
+                      title={t('survey.resume')}
                     >
                       ▶
                     </button>
@@ -249,11 +249,11 @@ export function WiFiSurveyCard({
                       }}
                       class={cn(
                         button.size.xs,
-                        "caption border border-surface-border",
+                        'caption border border-surface-border',
                         radius.md,
-                        "hover:bg-surface-hover",
+                        'hover:bg-surface-hover',
                       )}
-                      title={t("survey.complete")}
+                      title={t('survey.complete')}
                     >
                       ✓
                     </button>
@@ -266,11 +266,11 @@ export function WiFiSurveyCard({
                   }}
                   class={cn(
                     button.size.xs,
-                    "caption border border-surface-border",
+                    'caption border border-surface-border',
                     radius.md,
-                    "hover:bg-status-error/10 text-status-error",
+                    'hover:bg-status-error/10 text-status-error',
                   )}
-                  title={t("survey.delete")}
+                  title={t('survey.delete')}
                 >
                   ×
                 </button>
@@ -279,8 +279,8 @@ export function WiFiSurveyCard({
           </div>
         ))}
         {surveys.length > 3 ? (
-          <div class={cn("text-center caption text-text-muted", spacing.padding.top.tight)}>
-            {t("survey.more", { count: surveys.length - 3 })}
+          <div class={cn('text-center caption text-text-muted', spacing.padding.top.tight)}>
+            {t('survey.more', { count: surveys.length - 3 })}
           </div>
         ) : null}
       </div>
@@ -290,7 +290,7 @@ export function WiFiSurveyCard({
   return (
     <>
       <Card
-        title={t("survey.title")}
+        title={t('survey.title')}
         status={getCardStatus()}
         icon={<Activity class={iconTokens.size.md} />}
         headerAction={
@@ -302,31 +302,31 @@ export function WiFiSurveyCard({
             }}
             class="caption font-medium text-brand-primary hover:underline"
           >
-            {t("survey.new")}
+            {t('survey.new')}
           </button>
         }
       >
         {isWifi ? null : (
           <div
             class={cn(
-              "bg-status-warning/10 border border-status-warning/20 text-status-warning",
+              'bg-status-warning/10 border border-status-warning/20 text-status-warning',
               spacing.pad.sm,
               radius.md,
-              "body-small",
+              'body-small',
               spacing.margin.bottom.heading,
             )}
           >
-            {t("survey.wifiRequired")}
+            {t('survey.wifiRequired')}
           </div>
         )}
 
         {error ? (
           <div
             class={cn(
-              "bg-status-error/10 border border-status-error/20 text-status-error",
+              'bg-status-error/10 border border-status-error/20 text-status-error',
               spacing.pad.sm,
               radius.md,
-              "body-small",
+              'body-small',
               spacing.margin.bottom.heading,
             )}
           >
@@ -363,7 +363,7 @@ export function WiFiSurveyCard({
 interface CreateSurveyDialogProps {
   onClose: () => void;
   onCreate: (name: string, type: SurveyType, iface: string) => void;
-  t: ReturnType<typeof useTranslation<"cards">>["t"];
+  t: ReturnType<typeof useTranslation<'cards'>>['t'];
   /** Current Wifi interface name - fix #572: no hardcoded interface names */
   currentInterface?: string;
 }
@@ -372,10 +372,10 @@ function CreateSurveyDialog({
   onClose,
   onCreate,
   t,
-  currentInterface = "",
+  currentInterface = '',
 }: CreateSurveyDialogProps): React.ReactElement {
-  const [name, setName] = useState("");
-  const [surveyType, setSurveyType] = useState<SurveyType>("passive");
+  const [name, setName] = useState('');
+  const [surveyType, setSurveyType] = useState<SurveyType>('passive');
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
@@ -389,21 +389,21 @@ function CreateSurveyDialog({
     <div class={modal.overlay}>
       <div
         class={cn(
-          "bg-surface-raised",
+          'bg-surface-raised',
           radius.md,
           spacing.pad.lg,
-          "max-w-md w-full",
+          'max-w-md w-full',
           spacing.pad.default,
         )}
       >
-        <h2 class={cn("heading-2", spacing.margin.bottom.content)}>
-          {t("survey.createNewSurvey")}
+        <h2 class={cn('heading-2', spacing.margin.bottom.content)}>
+          {t('survey.createNewSurvey')}
         </h2>
         <form onSubmit={handleSubmit}>
           <div class="stack">
             <div>
-              <label for="survey-name" class={cn("label block", spacing.margin.bottom.tight)}>
-                {t("survey.surveyName")}
+              <label for="survey-name" class={cn('label block', spacing.margin.bottom.tight)}>
+                {t('survey.surveyName')}
               </label>
               <input
                 id="survey-name"
@@ -413,13 +413,13 @@ function CreateSurveyDialog({
                   setName(e.target.value)
                 }
                 class={cn(inputTokens.base, inputTokens.state.default, inputTokens.size.md)}
-                placeholder={t("survey.namePlaceholder")}
+                placeholder={t('survey.namePlaceholder')}
                 required={true}
               />
             </div>
             <div>
-              <label class={cn("label block", spacing.margin.bottom.tight)} for="survey-type">
-                {t("survey.surveyType")}
+              <label class={cn('label block', spacing.margin.bottom.tight)} for="survey-type">
+                {t('survey.surveyType')}
               </label>
               <select
                 id="survey-type"
@@ -429,9 +429,9 @@ function CreateSurveyDialog({
                 }
                 class={cn(inputTokens.base, inputTokens.state.default, inputTokens.size.md)}
               >
-                <option value="passive">{t("survey.typePassive")}</option>
-                <option value="active">{t("survey.typeActive")}</option>
-                <option value="throughput">{t("survey.typeThroughput")}</option>
+                <option value="passive">{t('survey.typePassive')}</option>
+                <option value="active">{t('survey.typeActive')}</option>
+                <option value="throughput">{t('survey.typeThroughput')}</option>
               </select>
             </div>
           </div>
@@ -440,26 +440,26 @@ function CreateSurveyDialog({
               type="button"
               onClick={onClose}
               class={cn(
-                "flex-1",
+                'flex-1',
                 button.size.md,
-                "border border-surface-border",
+                'border border-surface-border',
                 radius.md,
-                "hover:bg-surface-hover",
+                'hover:bg-surface-hover',
               )}
             >
-              {t("survey.cancel")}
+              {t('survey.cancel')}
             </button>
             <button
               type="submit"
               class={cn(
-                "flex-1",
+                'flex-1',
                 button.size.md,
-                "bg-brand-primary text-text-inverse",
+                'bg-brand-primary text-text-inverse',
                 radius.md,
-                "hover:bg-brand-primary/90",
+                'hover:bg-brand-primary/90',
               )}
             >
-              {t("survey.create")}
+              {t('survey.create')}
             </button>
           </div>
         </form>

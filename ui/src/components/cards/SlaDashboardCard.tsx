@@ -21,14 +21,14 @@
  * State: Fetches from SLA and scores API endpoints, updates periodically
  */
 
-import { AlertTriangle, CheckCircle2, Shield, TrendingUp, XCircle } from "lucide-react";
-import type React from "react";
-import { memo, useCallback, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { cn, icon as iconTokens, radius, spacing } from "../../styles/theme";
-import { Card, CardDivider } from "../ui/Card";
-import type { Status } from "../ui/StatusBadge";
-import { StatusBadge } from "../ui/StatusBadge";
+import { AlertTriangle, CheckCircle2, Shield, TrendingUp, XCircle } from 'lucide-react';
+import type React from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
+import { Card, CardDivider } from '../ui/Card';
+import type { Status } from '../ui/StatusBadge';
+import { StatusBadge } from '../ui/StatusBadge';
 
 // biome-ignore lint/style/useNamingConvention: SLA is a standard acronym
 interface SLASummary {
@@ -74,23 +74,23 @@ interface SLADashboardCardProps {
 
 function getComplianceStatus(rate: number): Status {
   if (rate >= 99) {
-    return "success";
+    return 'success';
   }
   if (rate >= 95) {
-    return "warning";
+    return 'warning';
   }
-  return "error";
+  return 'error';
 }
 
 /** Helper to get stroke color based on status */
 function getStrokeColor(status: Status): string {
-  if (status === "success") {
-    return "var(--color-status-success)";
+  if (status === 'success') {
+    return 'var(--color-status-success)';
   }
-  if (status === "warning") {
-    return "var(--color-status-warning)";
+  if (status === 'warning') {
+    return 'var(--color-status-warning)';
   }
-  return "var(--color-status-error)";
+  return 'var(--color-status-error)';
 }
 
 function _complianceRing({ rate, size = 80 }: { rate: number; size?: number }): React.ReactElement {
@@ -154,16 +154,16 @@ function _statBlock({
   className?: string;
 }): React.ReactElement {
   return (
-    <div class={cn("flex items-center gap-2", className)}>
+    <div class={cn('flex items-center gap-2', className)}>
       <div
         class={cn(
-          "flex items-center justify-center rounded-md",
+          'flex items-center justify-center rounded-md',
           radius.md,
           spacing.p2,
-          status === "success" && "bg-status-success/10 text-status-success",
-          status === "warning" && "bg-status-warning/10 text-status-warning",
-          status === "error" && "bg-status-error/10 text-status-error",
-          !status && "bg-surface-secondary text-text-muted",
+          status === 'success' && 'bg-status-success/10 text-status-success',
+          status === 'warning' && 'bg-status-warning/10 text-status-warning',
+          status === 'error' && 'bg-status-error/10 text-status-error',
+          !status && 'bg-surface-secondary text-text-muted',
         )}
       >
         <ICON class={iconTokens.sm} />
@@ -180,7 +180,7 @@ function _statBlock({
 export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps> = memo(
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Dashboard cards require multiple conditional UI sections
   function slaDashboardCardInner({ className }: SLADashboardCardProps): React.ReactElement {
-    const { t } = useTranslation("cards");
+    const { t } = useTranslation('cards');
     const [data, setData] = useState<DashboardData>({
       sla: null,
       scores: null,
@@ -189,7 +189,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [period, setPeriod] = useState<"daily" | "weekly" | "monthly">("daily");
+    const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
     const fetchData = useCallback(async () => {
       setLoading(true);
@@ -197,10 +197,10 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
 
       try {
         const [slaRes, scoresRes, alertsRes, anomaliesRes] = await Promise.all([
-          fetch(`/api/v1/sap/health-checks/sla?period=${period}`, { credentials: "include" }),
-          fetch("/api/v1/sap/health-checks/scores", { credentials: "include" }),
-          fetch("/api/v1/sap/health-checks/alerts", { credentials: "include" }),
-          fetch("/api/v1/sap/health-checks/anomalies", { credentials: "include" }),
+          fetch(`/api/v1/sap/health-checks/sla?period=${period}`, { credentials: 'include' }),
+          fetch('/api/v1/sap/health-checks/scores', { credentials: 'include' }),
+          fetch('/api/v1/sap/health-checks/alerts', { credentials: 'include' }),
+          fetch('/api/v1/sap/health-checks/anomalies', { credentials: 'include' }),
         ]);
 
         const newData: DashboardData = {
@@ -232,7 +232,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
 
         setData(newData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load SLA data");
+        setError(err instanceof Error ? err.message : 'Failed to load SLA data');
       } finally {
         setLoading(false);
       }
@@ -249,59 +249,59 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
 
     const overallStatus = (): Status => {
       if (loading) {
-        return "loading";
+        return 'loading';
       }
       if (error) {
-        return "error";
+        return 'error';
       }
       if (!data.scores) {
-        return "unknown";
+        return 'unknown';
       }
 
       const { healthy, degraded, critical, totalEndpoints } = data.scores;
       if (critical > 0) {
-        return "error";
+        return 'error';
       }
       if (degraded > 0) {
-        return "warning";
+        return 'warning';
       }
       if (healthy === totalEndpoints && totalEndpoints > 0) {
-        return "success";
+        return 'success';
       }
-      return "unknown";
+      return 'unknown';
     };
 
     return (
       <Card
-        title={t("slaDashboard.title", "SLA Dashboard")}
-        subtitle={t("slaDashboard.subtitle", "Service health and compliance")}
+        title={t('slaDashboard.title', 'SLA Dashboard')}
+        subtitle={t('slaDashboard.subtitle', 'Service health and compliance')}
         icon={<Shield class={iconTokens.md} />}
         status={overallStatus()}
         class={className}
       >
         {loading ? (
-          <div class={cn("animate-pulse space-y-4", spacing.p4)}>
+          <div class={cn('animate-pulse space-y-4', spacing.p4)}>
             <div class="h-20 bg-surface-secondary rounded-lg" />
             <div class="h-16 bg-surface-secondary rounded-lg" />
           </div>
         ) : null}
 
-        {error ? <div class={cn("text-center text-status-error", spacing.p4)}>{error}</div> : null}
+        {error ? <div class={cn('text-center text-status-error', spacing.p4)}>{error}</div> : null}
 
         {loading || error ? null : (
-          <div class={cn("space-y-4", spacing.p4)}>
+          <div class={cn('space-y-4', spacing.p4)}>
             {/* Period selector */}
             <div class="flex justify-end gap-1">
-              {(["daily", "weekly", "monthly"] as const).map((p) => (
+              {(['daily', 'weekly', 'monthly'] as const).map((p) => (
                 <button
                   type="button"
                   key={p}
                   onClick={(): void => setPeriod(p)}
                   class={cn(
-                    "px-2 py-1 text-xs rounded transition-colors",
+                    'px-2 py-1 text-xs rounded transition-colors',
                     period === p
-                      ? "bg-accent text-white"
-                      : "bg-surface-secondary text-text-muted hover:text-text-primary",
+                      ? 'bg-accent text-white'
+                      : 'bg-surface-secondary text-text-muted hover:text-text-primary',
                   )}
                 >
                   {t(`slaDashboard.period.${p}`, p.charAt(0).toUpperCase() + p.slice(1))}
@@ -314,16 +314,16 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
               <div class="flex items-center justify-between">
                 <div>
                   <h4 class="text-sm font-medium text-text-primary mb-1">
-                    {t("slaDashboard.compliance", "SLA Compliance")}
+                    {t('slaDashboard.compliance', 'SLA Compliance')}
                   </h4>
                   <p class="text-xs text-text-muted">
-                    {data.sla.endpointsMet} / {data.sla.totalEndpoints}{" "}
-                    {t("slaDashboard.endpointsMet", "endpoints meeting SLA")}
+                    {data.sla.endpointsMet} / {data.sla.totalEndpoints}{' '}
+                    {t('slaDashboard.endpointsMet', 'endpoints meeting SLA')}
                   </p>
                   {data.sla.endpointsMissed > 0 ? (
                     <p class="text-xs text-status-error mt-1">
-                      {data.sla.endpointsMissed}{" "}
-                      {t("slaDashboard.endpointsMissed", "endpoints missing SLA")}
+                      {data.sla.endpointsMissed}{' '}
+                      {t('slaDashboard.endpointsMissed', 'endpoints missing SLA')}
                     </p>
                   ) : null}
                 </div>
@@ -337,30 +337,30 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
             {data.scores ? (
               <div>
                 <h4 class="text-sm font-medium text-text-primary mb-3">
-                  {t("slaDashboard.healthScores", "Health Scores")}
+                  {t('slaDashboard.healthScores', 'Health Scores')}
                 </h4>
                 <div class="grid grid-cols-2 gap-3">
                   <statBlock
                     icon={CheckCircle2}
-                    label={t("slaDashboard.healthy", "Healthy")}
+                    label={t('slaDashboard.healthy', 'Healthy')}
                     value={data.scores.healthy}
                     status="success"
                   />
                   <statBlock
                     icon={AlertTriangle}
-                    label={t("slaDashboard.degraded", "Degraded")}
+                    label={t('slaDashboard.degraded', 'Degraded')}
                     value={data.scores.degraded}
-                    status={data.scores.degraded > 0 ? "warning" : undefined}
+                    status={data.scores.degraded > 0 ? 'warning' : undefined}
                   />
                   <statBlock
                     icon={XCircle}
-                    label={t("slaDashboard.critical", "Critical")}
+                    label={t('slaDashboard.critical', 'Critical')}
                     value={data.scores.critical}
-                    status={data.scores.critical > 0 ? "error" : undefined}
+                    status={data.scores.critical > 0 ? 'error' : undefined}
                   />
                   <statBlock
                     icon={TrendingUp}
-                    label={t("slaDashboard.total", "Total")}
+                    label={t('slaDashboard.total', 'Total')}
                     value={data.scores.totalEndpoints}
                   />
                 </div>
@@ -374,20 +374,20 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
               {data.alerts ? (
                 <div>
                   <h4 class="text-xs text-text-muted mb-2">
-                    {t("slaDashboard.activeAlerts", "Active Alerts")}
+                    {t('slaDashboard.activeAlerts', 'Active Alerts')}
                   </h4>
                   <div class="flex items-center gap-2">
                     <span
                       class={cn(
-                        "text-2xl font-bold",
-                        data.alerts.active > 0 ? "text-status-error" : "text-text-primary",
+                        'text-2xl font-bold',
+                        data.alerts.active > 0 ? 'text-status-error' : 'text-text-primary',
                       )}
                     >
                       {data.alerts.active}
                     </span>
                     {data.alerts.critical > 0 ? (
                       <StatusBadge status="error" size="sm">
-                        {data.alerts.critical} {t("slaDashboard.criticalLabel", "critical")}
+                        {data.alerts.critical} {t('slaDashboard.criticalLabel', 'critical')}
                       </StatusBadge>
                     ) : null}
                   </div>
@@ -396,20 +396,20 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
 
               <div>
                 <h4 class="text-xs text-text-muted mb-2">
-                  {t("slaDashboard.anomalies", "Anomalies")}
+                  {t('slaDashboard.anomalies', 'Anomalies')}
                 </h4>
                 <div class="flex items-center gap-2">
                   <span
                     class={cn(
-                      "text-2xl font-bold",
-                      data.anomalyCount > 0 ? "text-status-warning" : "text-text-primary",
+                      'text-2xl font-bold',
+                      data.anomalyCount > 0 ? 'text-status-warning' : 'text-text-primary',
                     )}
                   >
                     {data.anomalyCount}
                   </span>
                   {data.anomalyCount > 0 ? (
                     <StatusBadge status="warning" size="sm">
-                      {t("slaDashboard.detected", "detected")}
+                      {t('slaDashboard.detected', 'detected')}
                     </StatusBadge>
                   ) : null}
                 </div>

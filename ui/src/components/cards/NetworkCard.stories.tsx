@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { NetworkCard } from "./NetworkCard";
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { NetworkCard } from './NetworkCard';
 
 /**
  * NetworkCard displays network configuration and DHCP information.
@@ -17,16 +17,16 @@ import { NetworkCard } from "./NetworkCard";
  *
  * This story demonstrates various network configuration states.
  */
-const meta: Meta<(typeof meta)["component"]> = {
-  title: "Cards/NetworkCard",
+const meta: Meta<(typeof meta)['component']> = {
+  title: 'Cards/NetworkCard',
   component: NetworkCard,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   decorators: [
     (StoryComponent: React.ComponentType): JSX.Element => (
-      <div style={{ width: "400px" }}>
+      <div style={{ width: '400px' }}>
         <StoryComponent />
       </div>
     ),
@@ -43,17 +43,17 @@ type Story = StoryObj<typeof meta>;
 export const Dhcpv4Success: Story = {
   args: {
     data: {
-      mac: "aa:bb:cc:dd:ee:ff",
-      mode: "dhcp",
+      mac: 'aa:bb:cc:dd:ee:ff',
+      mode: 'dhcp',
       ipv4: {
-        address: "192.168.1.100",
-        subnet: "24",
-        gateway: "192.168.1.1",
-        dhcpServer: "192.168.1.1",
+        address: '192.168.1.100',
+        subnet: '24',
+        gateway: '192.168.1.1',
+        dhcpServer: '192.168.1.1',
         leaseTime: 86400,
       },
       ipv6: [],
-      dns: ["192.168.1.1", "8.8.8.8"],
+      dns: ['192.168.1.1', '8.8.8.8'],
       timing: {
         discover: 45,
         offer: 32,
@@ -73,17 +73,17 @@ export const Dhcpv4Success: Story = {
 export const DhcpSlowTiming: Story = {
   args: {
     data: {
-      mac: "aa:bb:cc:dd:ee:ff",
-      mode: "dhcp",
+      mac: 'aa:bb:cc:dd:ee:ff',
+      mode: 'dhcp',
       ipv4: {
-        address: "192.168.1.100",
-        subnet: "24",
-        gateway: "192.168.1.1",
-        dhcpServer: "192.168.1.1",
+        address: '192.168.1.100',
+        subnet: '24',
+        gateway: '192.168.1.1',
+        dhcpServer: '192.168.1.1',
         leaseTime: 3600,
       },
       ipv6: [],
-      dns: ["192.168.1.1"],
+      dns: ['192.168.1.1'],
       timing: {
         discover: 320,
         offer: 280,
@@ -103,17 +103,17 @@ export const DhcpSlowTiming: Story = {
 export const DhcpCriticalTiming: Story = {
   args: {
     data: {
-      mac: "aa:bb:cc:dd:ee:ff",
-      mode: "dhcp",
+      mac: 'aa:bb:cc:dd:ee:ff',
+      mode: 'dhcp',
       ipv4: {
-        address: "192.168.1.100",
-        subnet: "24",
-        gateway: "192.168.1.1",
-        dhcpServer: "192.168.1.1",
+        address: '192.168.1.100',
+        subnet: '24',
+        gateway: '192.168.1.1',
+        dhcpServer: '192.168.1.1',
         leaseTime: 7200,
       },
       ipv6: [],
-      dns: ["192.168.1.1", "1.1.1.1"],
+      dns: ['192.168.1.1', '1.1.1.1'],
       timing: {
         discover: 1250,
         offer: 1840,
@@ -133,17 +133,17 @@ export const DhcpCriticalTiming: Story = {
 export const StaticIpv4: Story = {
   args: {
     data: {
-      mac: "aa:bb:cc:dd:ee:ff",
-      mode: "static",
+      mac: 'aa:bb:cc:dd:ee:ff',
+      mode: 'static',
       ipv4: {
-        address: "10.0.1.100",
-        subnet: "24",
-        gateway: "10.0.1.1",
+        address: '10.0.1.100',
+        subnet: '24',
+        gateway: '10.0.1.1',
         dhcpServer: null,
         leaseTime: null,
       },
       ipv6: [],
-      dns: ["10.0.1.1", "1.1.1.1", "8.8.8.8"],
+      dns: ['10.0.1.1', '1.1.1.1', '8.8.8.8'],
       timing: null,
     },
     loading: false,
@@ -157,30 +157,30 @@ export const StaticIpv4: Story = {
 export const DualStack: Story = {
   args: {
     data: {
-      mac: "aa:bb:cc:dd:ee:ff",
-      mode: "dhcp",
+      mac: 'aa:bb:cc:dd:ee:ff',
+      mode: 'dhcp',
       ipv4: {
-        address: "192.168.1.100",
-        subnet: "24",
-        gateway: "192.168.1.1",
-        dhcpServer: "192.168.1.1",
+        address: '192.168.1.100',
+        subnet: '24',
+        gateway: '192.168.1.1',
+        dhcpServer: '192.168.1.1',
         leaseTime: 86400,
       },
       ipv6: [
         {
-          address: "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+          address: '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
           prefix: 64,
-          scope: "global",
-          source: "slaac",
+          scope: 'global',
+          source: 'slaac',
         },
         {
-          address: "fe80:0000:0000:0000:1234:5678:9abc:def0",
+          address: 'fe80:0000:0000:0000:1234:5678:9abc:def0',
           prefix: 64,
-          scope: "link-local",
-          source: "slaac",
+          scope: 'link-local',
+          source: 'slaac',
         },
       ],
-      dns: ["2001:4860:4860::8888", "192.168.1.1"],
+      dns: ['2001:4860:4860::8888', '192.168.1.1'],
       timing: {
         discover: 52,
         offer: 38,
@@ -200,30 +200,30 @@ export const DualStack: Story = {
 export const Ipv6Only: Story = {
   args: {
     data: {
-      mac: "aa:bb:cc:dd:ee:ff",
-      mode: "auto",
+      mac: 'aa:bb:cc:dd:ee:ff',
+      mode: 'auto',
       ipv4: null,
       ipv6: [
         {
-          address: "2001:db8::1",
+          address: '2001:db8::1',
           prefix: 64,
-          scope: "global",
-          source: "dhcpv6",
+          scope: 'global',
+          source: 'dhcpv6',
         },
         {
-          address: "fd00::1234:5678",
+          address: 'fd00::1234:5678',
           prefix: 64,
-          scope: "unique-local",
-          source: "static",
+          scope: 'unique-local',
+          source: 'static',
         },
         {
-          address: "fe80::1",
+          address: 'fe80::1',
           prefix: 64,
-          scope: "link-local",
-          source: "slaac",
+          scope: 'link-local',
+          source: 'slaac',
         },
       ],
-      dns: ["2001:4860:4860::8888", "2001:4860:4860::8844"],
+      dns: ['2001:4860:4860::8888', '2001:4860:4860::8844'],
       timing: null,
     },
     loading: false,
@@ -237,24 +237,24 @@ export const Ipv6Only: Story = {
 export const WithPublicIp: Story = {
   args: {
     data: {
-      mac: "aa:bb:cc:dd:ee:ff",
-      mode: "dhcp",
+      mac: 'aa:bb:cc:dd:ee:ff',
+      mode: 'dhcp',
       ipv4: {
-        address: "192.168.1.100",
-        subnet: "24",
-        gateway: "192.168.1.1",
-        dhcpServer: "192.168.1.1",
+        address: '192.168.1.100',
+        subnet: '24',
+        gateway: '192.168.1.1',
+        dhcpServer: '192.168.1.1',
         leaseTime: 86400,
       },
       ipv6: [
         {
-          address: "fe80::1",
+          address: 'fe80::1',
           prefix: 64,
-          scope: "link-local",
-          source: "slaac",
+          scope: 'link-local',
+          source: 'slaac',
         },
       ],
-      dns: ["192.168.1.1", "8.8.8.8"],
+      dns: ['192.168.1.1', '8.8.8.8'],
       timing: {
         discover: 48,
         offer: 35,
@@ -264,8 +264,8 @@ export const WithPublicIp: Story = {
       },
     },
     publicip: {
-      ipv4: "203.0.113.42",
-      ipv6: "2001:db8::42",
+      ipv4: '203.0.113.42',
+      ipv6: '2001:db8::42',
       lastChecked: new Date(Date.now() - 300000).toISOString(),
     },
     loading: false,
@@ -280,8 +280,8 @@ export const WithPublicIp: Story = {
 export const NoIp: Story = {
   args: {
     data: {
-      mac: "aa:bb:cc:dd:ee:ff",
-      mode: "dhcp",
+      mac: 'aa:bb:cc:dd:ee:ff',
+      mode: 'dhcp',
       ipv4: null,
       ipv6: [],
       dns: [],
@@ -298,15 +298,15 @@ export const NoIp: Story = {
 export const LinkLocalOnly: Story = {
   args: {
     data: {
-      mac: "aa:bb:cc:dd:ee:ff",
-      mode: "auto",
+      mac: 'aa:bb:cc:dd:ee:ff',
+      mode: 'auto',
       ipv4: null,
       ipv6: [
         {
-          address: "fe80::a12:34ff:fe56:7890",
+          address: 'fe80::a12:34ff:fe56:7890',
           prefix: 64,
-          scope: "link-local",
-          source: "slaac",
+          scope: 'link-local',
+          source: 'slaac',
         },
       ],
       dns: [],
@@ -334,17 +334,17 @@ export const Loading: Story = {
 export const LongLease: Story = {
   args: {
     data: {
-      mac: "aa:bb:cc:dd:ee:ff",
-      mode: "dhcp",
+      mac: 'aa:bb:cc:dd:ee:ff',
+      mode: 'dhcp',
       ipv4: {
-        address: "10.20.30.40",
-        subnet: "22",
-        gateway: "10.20.28.1",
-        dhcpServer: "10.20.28.1",
+        address: '10.20.30.40',
+        subnet: '22',
+        gateway: '10.20.28.1',
+        dhcpServer: '10.20.28.1',
         leaseTime: 604800,
       },
       ipv6: [],
-      dns: ["10.20.28.1", "10.20.28.2"],
+      dns: ['10.20.28.1', '10.20.28.2'],
       timing: {
         discover: 38,
         offer: 42,

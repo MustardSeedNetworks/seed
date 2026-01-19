@@ -17,9 +17,9 @@
  * ```
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { api } from "../api";
-import { LogComponents, logger } from "../lib/logger";
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { api } from '../api';
+import { LogComponents, logger } from '../lib/logger';
 
 /** Network device from discovery API with display fields */
 export interface DiscoveredDevice {
@@ -65,53 +65,53 @@ export interface GroupedDevices {
  * Returns one of: router, switch, server, workstation, printer, phone, other
  */
 function categorizeDevice(device: DiscoveredDevice): string {
-  const deviceType = device.profile?.deviceType?.toLowerCase() || "";
+  const deviceType = device.profile?.deviceType?.toLowerCase() || '';
 
   // Check router first
-  if (device.isRouter || deviceType.includes("router")) {
-    return "router";
+  if (device.isRouter || deviceType.includes('router')) {
+    return 'router';
   }
 
   // Check for switch
-  if (deviceType.includes("switch")) {
-    return "switch";
+  if (deviceType.includes('switch')) {
+    return 'switch';
   }
 
   // Check for printer
-  if (deviceType.includes("printer")) {
-    return "printer";
+  if (deviceType.includes('printer')) {
+    return 'printer';
   }
 
   // Check for server
   if (
-    deviceType.includes("server") ||
-    deviceType.includes("nas") ||
-    deviceType.includes("storage")
+    deviceType.includes('server') ||
+    deviceType.includes('nas') ||
+    deviceType.includes('storage')
   ) {
-    return "server";
+    return 'server';
   }
 
   // Check for phone/mobile
   if (
-    deviceType.includes("phone") ||
-    deviceType.includes("mobile") ||
-    deviceType.includes("smartphone")
+    deviceType.includes('phone') ||
+    deviceType.includes('mobile') ||
+    deviceType.includes('smartphone')
   ) {
-    return "phone";
+    return 'phone';
   }
 
   // Check for workstation/computer
   if (
-    deviceType.includes("computer") ||
-    deviceType.includes("desktop") ||
-    deviceType.includes("laptop") ||
-    deviceType.includes("workstation") ||
-    deviceType.includes("pc")
+    deviceType.includes('computer') ||
+    deviceType.includes('desktop') ||
+    deviceType.includes('laptop') ||
+    deviceType.includes('workstation') ||
+    deviceType.includes('pc')
   ) {
-    return "workstation";
+    return 'workstation';
   }
 
-  return "other";
+  return 'other';
 }
 
 /**
@@ -131,22 +131,22 @@ function groupDevicesByType(devices: DiscoveredDevice[]): GroupedDevices {
   for (const device of devices) {
     const category = categorizeDevice(device);
     switch (category) {
-      case "router":
+      case 'router':
         grouped.routers.push(device);
         break;
-      case "switch":
+      case 'switch':
         grouped.switches.push(device);
         break;
-      case "server":
+      case 'server':
         grouped.servers.push(device);
         break;
-      case "workstation":
+      case 'workstation':
         grouped.workstations.push(device);
         break;
-      case "printer":
+      case 'printer':
         grouped.printers.push(device);
         break;
-      case "phone":
+      case 'phone':
         grouped.phones.push(device);
         break;
       default:
@@ -194,14 +194,14 @@ export function useDiscoveredDevices(autoRefresh: boolean = false): {
       setError(null);
       // Use /api/devices endpoint which returns discovered network devices
       // (not /api/discovery which returns LLDP/CDP protocol neighbors)
-      const data = await api.get<DiscoveryResponse>("/api/v1/shell/devices");
+      const data = await api.get<DiscoveryResponse>('/api/v1/shell/devices');
       setDevices(data.devices || []);
       setStatus(data.status);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to fetch discovered devices";
+      const message = err instanceof Error ? err.message : 'Failed to fetch discovered devices';
       setError(message);
-      logger.error(LogComponents.Devices, "Failed to fetch discovered devices", err, {
-        endpoint: "/api/v1/shell/devices",
+      logger.error(LogComponents.Devices, 'Failed to fetch discovered devices', err, {
+        endpoint: '/api/v1/shell/devices',
       });
     } finally {
       setIsLoading(false);

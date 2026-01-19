@@ -22,10 +22,10 @@
  * Dependencies: Card UI, DeviceSelector, theme utilities, path discovery API
  */
 
-import type React from "react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { api } from "../../api";
+import type React from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { api } from '../../api';
 import {
   button as buttonTokens,
   cn,
@@ -34,18 +34,18 @@ import {
   layout,
   radius,
   spacing,
-} from "../../styles/theme";
+} from '../../styles/theme';
 import type {
   L2Hop,
   L2PathResult,
   PathResponse,
   TracerouteHop,
   TracerouteResult,
-} from "../../types";
-import { Card, CardDivider, CardValue, type Status } from "../ui/Card";
-import { ChevronDown, ChevronUp, Route } from "../ui/Icons";
+} from '../../types';
+import { Card, CardDivider, CardValue, type Status } from '../ui/Card';
+import { ChevronDown, ChevronUp, Route } from '../ui/Icons';
 
-type Protocol = "icmp" | "udp" | "tcp";
+type Protocol = 'icmp' | 'udp' | 'tcp';
 
 /** WebSocket message for streaming traceroute hops */
 export interface TraceHopMessage {
@@ -66,11 +66,11 @@ interface PathDiscoveryCardProps {
 // Format RTT from nanoseconds to readable string
 function formatRtt(ns: number): string {
   if (ns <= 0) {
-    return "---";
+    return '---';
   }
   const ms = ns / 1_000_000;
   if (ms < 1) {
-    return "<1ms";
+    return '<1ms';
   }
   if (ms >= 1000) {
     return `${(ms / 1000).toFixed(1)}s`;
@@ -91,10 +91,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
     dnsServer,
     onRegisterTraceHandler,
   }: PathDiscoveryCardProps): React.ReactElement {
-    const { t } = useTranslation("cards");
+    const { t } = useTranslation('cards');
 
-    const [target, setTarget] = useState("");
-    const [protocol, setProtocol] = useState<Protocol>("icmp");
+    const [target, setTarget] = useState('');
+    const [protocol, setProtocol] = useState<Protocol>('icmp');
     const [port, setPort] = useState<number>(80);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<PathResponse | null>(null);
@@ -103,7 +103,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
 
     // Streaming hops received via WebSocket (accumulates as trace progresses)
     const [streamingHops, setStreamingHops] = useState<TracerouteHop[]>([]);
-    const [_streamingTarget, setStreamingTarget] = useState<string>("");
+    const [_streamingTarget, setStreamingTarget] = useState<string>('');
     const activeTraceRef = useRef<string | null>(null);
 
     // Handle WebSocket trace hop messages for real-time updates
@@ -152,18 +152,18 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
         activeTraceRef.current = traceTarget.trim(); // Set active trace target
 
         try {
-          const data = await api.post<PathResponse>("/api/v1/roots/path", {
-            source: "self",
+          const data = await api.post<PathResponse>('/api/v1/roots/path', {
+            source: 'self',
             destination: traceTarget.trim(),
-            method: "both", // Always do both L2+L3
+            method: 'both', // Always do both L2+L3
             protocol,
-            port: protocol !== "icmp" ? port : undefined,
+            port: protocol !== 'icmp' ? port : undefined,
           });
           setResult(data);
           setStreamingHops([]); // Clear streaming hops now that we have full result
           activeTraceRef.current = null;
         } catch (err) {
-          setError(err instanceof Error ? err.message : "Path discovery failed");
+          setError(err instanceof Error ? err.message : 'Path discovery failed');
           activeTraceRef.current = null;
         } finally {
           setLoading(false);
@@ -194,7 +194,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
     }, [gateway, runTrace]);
 
     const traceDns = useCallback((): void => {
-      const dns = dnsServer || "8.8.8.8";
+      const dns = dnsServer || '8.8.8.8';
       setTarget(dns);
       runTrace(dns).catch(() => {
         // Error handled in runTrace
@@ -202,7 +202,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
     }, [dnsServer, runTrace]);
 
     const traceInternet = useCallback((): void => {
-      const internetTarget = "8.8.8.8";
+      const internetTarget = '8.8.8.8';
       setTarget(internetTarget);
       runTrace(internetTarget).catch(() => {
         // Error handled in runTrace
@@ -215,10 +215,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
         return;
       }
       const blob = new Blob([JSON.stringify(result, null, 2)], {
-        type: "application/json",
+        type: 'application/json',
       });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
       a.download = `path-discovery-${target}-${Date.now()}.json`;
       a.click();
@@ -231,38 +231,38 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
         return;
       }
 
-      let csvContent = "";
+      let csvContent = '';
 
       // L3 path section
       if (result.l3Path) {
-        csvContent += "L3 Path\n";
-        csvContent += "TTL,IP,Hostname,RTT (ms),State\n";
+        csvContent += 'L3 Path\n';
+        csvContent += 'TTL,IP,Hostname,RTT (ms),State\n';
         csvContent += result.l3Path.hops
           .map(
             (h) =>
-              `${h.ttl},${h.ip || "*"},${h.hostname || ""},${h.rtt > 0 ? (h.rtt / 1_000_000).toFixed(2) : ""},${h.state}`,
+              `${h.ttl},${h.ip || '*'},${h.hostname || ''},${h.rtt > 0 ? (h.rtt / 1_000_000).toFixed(2) : ''},${h.state}`,
           )
-          .join("\n");
+          .join('\n');
       }
 
       // L2 path section
       if (result.l2Path) {
         if (csvContent) {
-          csvContent += "\n\n";
+          csvContent += '\n\n';
         }
-        csvContent += "L2 Path\n";
-        csvContent += "Device,Device IP,Ingress Port,Egress Port,Source\n";
+        csvContent += 'L2 Path\n';
+        csvContent += 'Device,Device IP,Ingress Port,Egress Port,Source\n';
         csvContent += result.l2Path.hops
           .map(
             (h) =>
-              `${h.device},${h.deviceIp},${h.ingressPort?.name || ""},${h.egressPort?.name || ""},${h.source}`,
+              `${h.device},${h.deviceIp},${h.ingressPort?.name || ''},${h.egressPort?.name || ''},${h.source}`,
           )
-          .join("\n");
+          .join('\n');
       }
 
-      const blob = new Blob([csvContent], { type: "text/csv" });
+      const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
       a.download = `path-discovery-${target}-${Date.now()}.csv`;
       a.click();
@@ -280,43 +280,43 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
     // Determine card status based on worst hop result
     const cardStatus: Status = useMemo(() => {
       if (loading) {
-        return "loading";
+        return 'loading';
       }
       if (error) {
-        return "error";
+        return 'error';
       }
       if (!result) {
-        return "unknown";
+        return 'unknown';
       }
 
       // Check L3 path for issues
       const l3Hops = result.l3Path?.hops || [];
-      const hasErrors = l3Hops.some((h) => h.state === "error" || h.state === "unreachable");
-      const hasTimeouts = l3Hops.some((h) => h.state === "timeout");
+      const hasErrors = l3Hops.some((h) => h.state === 'error' || h.state === 'unreachable');
+      const hasTimeouts = l3Hops.some((h) => h.state === 'timeout');
       const hasHighLatency = l3Hops.some((h) => h.rtt > 100000000); // > 100ms
 
       if (hasErrors) {
-        return "error";
+        return 'error';
       }
       if (hasTimeouts || hasHighLatency) {
-        return "warning";
+        return 'warning';
       }
       if (result.l3Path?.completed || result.l2Path) {
-        return "success";
+        return 'success';
       }
-      return "warning";
+      return 'warning';
     }, [loading, error, result]);
 
     const maxRtt = result?.l3Path ? getMaxRtt(result.l3Path.hops) : 1;
 
     return (
       <Card
-        title={t("pathDiscovery.title", "Path Discovery")}
+        title={t('pathDiscovery.title', 'Path Discovery')}
         icon={<Route class={iconTokens.size.md} />}
         status={cardStatus}
       >
         {/* Target Input Form - Responsive layout for various screen sizes */}
-        <form onSubmit={handleSubmit} class={cn("stack-sm", spacing.margin.bottom.content)}>
+        <form onSubmit={handleSubmit} class={cn('stack-sm', spacing.margin.bottom.content)}>
           {/* Target Input Row - Stack on mobile, inline on larger screens */}
           <div class="flex flex-col sm:flex-row gap-2">
             {/* Target input - full width on mobile */}
@@ -326,17 +326,17 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
               onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                 setTarget(e.target.value)
               }
-              placeholder={t("pathDiscovery.enterTarget", "Enter IP or hostname...")}
+              placeholder={t('pathDiscovery.enterTarget', 'Enter IP or hostname...')}
               disabled={loading}
               class={cn(
-                "flex-1 min-w-0",
+                'flex-1 min-w-0',
                 inputTokens.base,
                 inputTokens.state.default,
                 inputTokens.size.sm,
-                "body-small",
+                'body-small',
               )}
               onKeyDown={(e: React.KeyboardEvent): void => {
-                if (e.key === "Enter" && target.trim()) {
+                if (e.key === 'Enter' && target.trim()) {
                   e.preventDefault();
                   handleSubmit(e as unknown as React.FormEvent);
                 }
@@ -356,9 +356,9 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   inputTokens.base,
                   inputTokens.state.default,
                   inputTokens.size.sm,
-                  "w-20 body-small cursor-pointer",
+                  'w-20 body-small cursor-pointer',
                 )}
-                title={t("pathDiscovery.protocol", "Traceroute protocol")}
+                title={t('pathDiscovery.protocol', 'Traceroute protocol')}
               >
                 <option value="icmp">ICMP</option>
                 <option value="udp">UDP</option>
@@ -366,7 +366,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
               </select>
 
               {/* Port input (only for TCP/UDP) */}
-              {protocol !== "icmp" && (
+              {protocol !== 'icmp' && (
                 <input
                   type="number"
                   value={port}
@@ -378,11 +378,11 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   max={65535}
                   disabled={loading}
                   class={cn(
-                    "w-16",
+                    'w-16',
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.sm,
-                    "body-small",
+                    'body-small',
                   )}
                 />
               )}
@@ -394,10 +394,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   buttonTokens.base,
                   buttonTokens.variant.primary,
                   buttonTokens.size.sm,
-                  "whitespace-nowrap",
+                  'whitespace-nowrap',
                 )}
               >
-                {loading ? "..." : t("pathDiscovery.trace", "Trace")}
+                {loading ? '...' : t('pathDiscovery.trace', 'Trace')}
               </button>
             </div>
           </div>
@@ -405,7 +405,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
           {/* Quick Targets - Wrap on small screens */}
           <div class="flex items-center gap-2 flex-wrap">
             <span class="caption text-text-muted shrink-0">
-              {t("pathDiscovery.quick", "Quick")}:
+              {t('pathDiscovery.quick', 'Quick')}:
             </span>
             <div class="flex items-center gap-1.5 flex-wrap">
               <button
@@ -416,10 +416,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   buttonTokens.base,
                   buttonTokens.variant.ghost,
                   buttonTokens.size.xs,
-                  "caption whitespace-nowrap",
+                  'caption whitespace-nowrap',
                 )}
               >
-                {t("pathDiscovery.gateway", "Gateway")}
+                {t('pathDiscovery.gateway', 'Gateway')}
               </button>
               <button
                 type="button"
@@ -429,10 +429,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   buttonTokens.base,
                   buttonTokens.variant.ghost,
                   buttonTokens.size.xs,
-                  "caption whitespace-nowrap",
+                  'caption whitespace-nowrap',
                 )}
               >
-                {t("pathDiscovery.dns", "DNS")}
+                {t('pathDiscovery.dns', 'DNS')}
               </button>
               <button
                 type="button"
@@ -442,10 +442,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   buttonTokens.base,
                   buttonTokens.variant.ghost,
                   buttonTokens.size.xs,
-                  "caption whitespace-nowrap",
+                  'caption whitespace-nowrap',
                 )}
               >
-                {t("pathDiscovery.internet", "Internet")}
+                {t('pathDiscovery.internet', 'Internet')}
               </button>
             </div>
           </div>
@@ -459,10 +459,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
             <CardValue
               value={
                 streamingHops.length > 0
-                  ? t("pathDiscovery.tracingHops", "Tracing... {{count}} hops", {
+                  ? t('pathDiscovery.tracingHops', 'Tracing... {{count}} hops', {
                       count: streamingHops.length,
                     })
-                  : t("pathDiscovery.tracing", "Tracing path...")
+                  : t('pathDiscovery.tracing', 'Tracing path...')
               }
               size="lg"
             />
@@ -473,12 +473,12 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   <div
                     key={hop.ttl}
                     class={cn(
-                      "flex items-center gap-2 py-1",
-                      hop.state === "timeout" && "opacity-50",
+                      'flex items-center gap-2 py-1',
+                      hop.state === 'timeout' && 'opacity-50',
                     )}
                   >
                     <span class="w-6 text-xs text-text-muted font-mono">{hop.ttl}</span>
-                    <span class="flex-1 text-sm font-mono text-text-primary">{hop.ip || "*"}</span>
+                    <span class="flex-1 text-sm font-mono text-text-primary">{hop.ip || '*'}</span>
                     <span class="text-xs text-text-muted">{formatRtt(hop.rtt)}</span>
                   </div>
                 ))}
@@ -496,7 +496,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
 
         {/* Error State */}
         {error && !loading ? (
-          <div class={cn(spacing.pad.sm, "bg-status-error/10", radius.default)}>
+          <div class={cn(spacing.pad.sm, 'bg-status-error/10', radius.default)}>
             <span class="body-small text-status-error">{error}</span>
           </div>
         ) : null}
@@ -528,10 +528,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   buttonTokens.base,
                   buttonTokens.variant.ghost,
                   buttonTokens.size.xs,
-                  "caption",
+                  'caption',
                 )}
               >
-                {t("pathDiscovery.exportJSON", "Export JSON")}
+                {t('pathDiscovery.exportJSON', 'Export JSON')}
               </button>
               <button
                 type="button"
@@ -540,10 +540,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   buttonTokens.base,
                   buttonTokens.variant.ghost,
                   buttonTokens.size.xs,
-                  "caption",
+                  'caption',
                 )}
               >
-                {t("pathDiscovery.exportCSV", "Export CSV")}
+                {t('pathDiscovery.exportCSV', 'Export CSV')}
               </button>
               <button
                 type="button"
@@ -552,10 +552,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   buttonTokens.base,
                   buttonTokens.variant.ghost,
                   buttonTokens.size.xs,
-                  "caption",
+                  'caption',
                 )}
               >
-                {t("pathDiscovery.copy", "Copy")}
+                {t('pathDiscovery.copy', 'Copy')}
               </button>
               <button
                 type="button"
@@ -569,10 +569,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   buttonTokens.base,
                   buttonTokens.variant.ghost,
                   buttonTokens.size.xs,
-                  "caption",
+                  'caption',
                 )}
               >
-                {t("pathDiscovery.rerun", "Re-run")}
+                {t('pathDiscovery.rerun', 'Re-run')}
               </button>
             </div>
           </div>
@@ -583,22 +583,22 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
           <div
             class={cn(
               spacing.pad.md,
-              "text-center",
-              "bg-surface-base/50",
+              'text-center',
+              'bg-surface-base/50',
               radius.lg,
-              "border border-dashed border-surface-border",
+              'border border-dashed border-surface-border',
             )}
           >
             <div class="text-text-muted mb-2">
-              <Route class={cn(iconTokens.size.lg, "mx-auto opacity-40")} />
+              <Route class={cn(iconTokens.size.lg, 'mx-auto opacity-40')} />
             </div>
             <p class="body-small text-text-muted">
-              {t("pathDiscovery.enterTarget", "Select a target to trace")}
+              {t('pathDiscovery.enterTarget', 'Select a target to trace')}
             </p>
             <p class="caption text-text-muted mt-1">
               {t(
-                "pathDiscovery.emptyHint",
-                "Enter an IP address or hostname, or use the quick buttons above",
+                'pathDiscovery.emptyHint',
+                'Enter an IP address or hostname, or use the quick buttons above',
               )}
             </p>
           </div>
@@ -610,13 +610,13 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
 
 // Helper to get RTT bar color class
 function getRttBarColor(state: string, rtt: number, maxRtt: number): string {
-  if (state === "error") {
-    return "bg-status-error";
+  if (state === 'error') {
+    return 'bg-status-error';
   }
   if (rtt / maxRtt > 0.7) {
-    return "bg-status-warning";
+    return 'bg-status-warning';
   }
-  return "bg-status-success";
+  return 'bg-status-success';
 }
 
 // L3 Path Display Component
@@ -631,27 +631,27 @@ const L3_PATH_DISPLAY: React.NamedExoticComponent<L3PathDisplayProps> = memo(
     return (
       <div class="stack-sm">
         {/* L3 Header */}
-        <div class={cn(layout.flex.between, "items-center")}>
+        <div class={cn(layout.flex.between, 'items-center')}>
           <div>
             <span class="body-small font-semibold text-brand-primary">
-              L3 {t("pathDiscovery.path", "Path")}
+              L3 {t('pathDiscovery.path', 'Path')}
             </span>
             <span class="body-small font-medium text-text-primary ml-2">
-              {t("pathDiscovery.to", "to")} {result.target}
+              {t('pathDiscovery.to', 'to')} {result.target}
             </span>
             <span class="caption text-text-muted ml-2">
-              ({result.hops.length} {t("pathDiscovery.hops", "hops")})
+              ({result.hops.length} {t('pathDiscovery.hops', 'hops')})
             </span>
           </div>
           {result.completed ? (
             <span class="caption text-status-success">
-              {t("pathDiscovery.completed", "Completed")}
+              {t('pathDiscovery.completed', 'Completed')}
             </span>
           ) : null}
         </div>
 
         {/* Hop List */}
-        <div class={cn("stack-xs", spacing.margin.top.inline)}>
+        <div class={cn('stack-xs', spacing.margin.top.inline)}>
           {result.hops.map((hop) => (
             <div
               key={hop.ttl}
@@ -660,8 +660,8 @@ const L3_PATH_DISPLAY: React.NamedExoticComponent<L3PathDisplayProps> = memo(
                 spacing.gap.compact,
                 spacing.pad.xs,
                 radius.default,
-                hop.state === "timeout" ? "bg-surface-base" : "bg-surface-raised",
-                "border border-surface-border",
+                hop.state === 'timeout' ? 'bg-surface-base' : 'bg-surface-raised',
+                'border border-surface-border',
               )}
             >
               {/* TTL */}
@@ -669,12 +669,12 @@ const L3_PATH_DISPLAY: React.NamedExoticComponent<L3PathDisplayProps> = memo(
 
               {/* IP and Hostname */}
               <div class="flex-1 min-w-0">
-                {hop.state === "timeout" ? (
+                {hop.state === 'timeout' ? (
                   <span class="caption text-text-muted">* * *</span>
                 ) : (
                   <>
                     <span class="body-small font-mono text-text-primary truncate">
-                      {hop.ip || "?"}
+                      {hop.ip || '?'}
                     </span>
                     {hop.hostname && hop.hostname !== hop.ip ? (
                       <span class="caption text-text-muted ml-2 truncate">{hop.hostname}</span>
@@ -686,18 +686,18 @@ const L3_PATH_DISPLAY: React.NamedExoticComponent<L3PathDisplayProps> = memo(
               {/* RTT */}
               <span
                 class={cn(
-                  "w-16 text-right caption font-mono",
-                  hop.state === "timeout" ? "text-text-muted" : "text-text-primary",
+                  'w-16 text-right caption font-mono',
+                  hop.state === 'timeout' ? 'text-text-muted' : 'text-text-primary',
                 )}
               >
                 {formatRtt(hop.rtt)}
               </span>
 
               {/* RTT Bar */}
-              <div class={cn("w-20 h-2", radius.full, "bg-surface-border overflow-hidden")}>
+              <div class={cn('w-20 h-2', radius.full, 'bg-surface-border overflow-hidden')}>
                 {hop.rtt > 0 ? (
                   <div
-                    class={cn("h-full", radius.full, getRttBarColor(hop.state, hop.rtt, maxRtt))}
+                    class={cn('h-full', radius.full, getRttBarColor(hop.state, hop.rtt, maxRtt))}
                     style={{
                       width: `${Math.min(100, (hop.rtt / maxRtt) * 100)}%`,
                     }}
@@ -714,13 +714,13 @@ const L3_PATH_DISPLAY: React.NamedExoticComponent<L3PathDisplayProps> = memo(
 
 // Helper to get source color class
 function getSourceColor(source: string): string {
-  if (source === "lldp") {
-    return "text-brand-primary";
+  if (source === 'lldp') {
+    return 'text-brand-primary';
   }
-  if (source === "cdp") {
-    return "text-status-success";
+  if (source === 'cdp') {
+    return 'text-status-success';
   }
-  return "text-text-muted";
+  return 'text-text-muted';
 }
 
 // L2 Path Display Component
@@ -749,11 +749,11 @@ const L2_PATH_DISPLAY: React.NamedExoticComponent<L2PathDisplayProps> = memo(
       return (
         <div class="stack-sm">
           <div class="body-small font-semibold text-brand-primary">
-            L2 {t("pathDiscovery.path", "Path")}
+            L2 {t('pathDiscovery.path', 'Path')}
           </div>
-          <div class={cn(spacing.pad.sm, "bg-surface-base", radius.default)}>
+          <div class={cn(spacing.pad.sm, 'bg-surface-base', radius.default)}>
             <span class="caption text-text-muted">
-              {t("pathDiscovery.noL2Path", "No L2 path information available")}
+              {t('pathDiscovery.noL2Path', 'No L2 path information available')}
             </span>
           </div>
         </div>
@@ -763,49 +763,49 @@ const L2_PATH_DISPLAY: React.NamedExoticComponent<L2PathDisplayProps> = memo(
     return (
       <div class="stack-sm">
         {/* L2 Header */}
-        <div class={cn(layout.flex.between, "items-center")}>
+        <div class={cn(layout.flex.between, 'items-center')}>
           <div>
             <span class="body-small font-semibold text-brand-primary">
-              L2 {t("pathDiscovery.path", "Path")}
+              L2 {t('pathDiscovery.path', 'Path')}
             </span>
             <span class="caption text-text-muted ml-2">(via LLDP/CDP/SNMP)</span>
           </div>
           <span class="caption text-text-muted">
-            {result.hops.length} {t("pathDiscovery.switches", "switches")}
+            {result.hops.length} {t('pathDiscovery.switches', 'switches')}
           </span>
         </div>
 
         {/* Visual Path Diagram */}
         <div
           class={cn(
-            "flex items-center overflow-x-auto",
+            'flex items-center overflow-x-auto',
             spacing.pad.sm,
-            "bg-surface-base",
+            'bg-surface-base',
             radius.default,
-            "border border-surface-border",
+            'border border-surface-border',
           )}
         >
           {result.hops.map((hop, hopIndex) => (
             <div
-              key={`${hop.deviceIp}-${hop.ingressPort?.name || "start"}`}
+              key={`${hop.deviceIp}-${hop.ingressPort?.name || 'start'}`}
               class="flex items-center shrink-0"
             >
               {/* Switch Box */}
               <div
                 class={cn(
-                  "flex flex-col items-center",
+                  'flex flex-col items-center',
                   spacing.pad.sm,
-                  "bg-surface-raised",
+                  'bg-surface-raised',
                   radius.md,
-                  "border border-surface-border",
-                  "min-w-28",
+                  'border border-surface-border',
+                  'min-w-28',
                 )}
               >
                 <span class="caption font-semibold text-text-primary truncate max-w-24">
                   {hop.device || hop.deviceIp}
                 </span>
                 <span class="caption text-text-muted">{hop.deviceIp}</span>
-                <span class={cn("caption", getSourceColor(hop.source))}>
+                <span class={cn('caption', getSourceColor(hop.source))}>
                   {hop.source.toUpperCase()}
                 </span>
               </div>
@@ -822,9 +822,9 @@ const L2_PATH_DISPLAY: React.NamedExoticComponent<L2PathDisplayProps> = memo(
                     <div
                       class="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0"
                       style={{
-                        borderTop: "4px solid transparent",
-                        borderBottom: "4px solid transparent",
-                        borderLeft: "6px solid var(--brand-primary)",
+                        borderTop: '4px solid transparent',
+                        borderBottom: '4px solid transparent',
+                        borderLeft: '6px solid var(--brand-primary)',
                       }}
                     />
                   </div>
@@ -845,7 +845,7 @@ const L2_PATH_DISPLAY: React.NamedExoticComponent<L2PathDisplayProps> = memo(
         <div class="stack-xs">
           {result.hops.map((hop, index) => (
             <L2_HOP_DETAIL
-              key={`${hop.deviceIp}-${hop.ingressPort?.name || "start"}-detail`}
+              key={`${hop.deviceIp}-${hop.ingressPort?.name || 'start'}-detail`}
               hop={hop}
               index={index}
               isExpanded={expandedHop === index}
@@ -875,16 +875,16 @@ const L2_HOP_DETAIL: React.NamedExoticComponent<L2HopDetailProps> = memo(functio
   t,
 }: L2HopDetailProps): React.ReactElement {
   return (
-    <div class={cn("border border-surface-border", radius.default, "overflow-hidden")}>
+    <div class={cn('border border-surface-border', radius.default, 'overflow-hidden')}>
       {/* Header */}
       <button
         type="button"
         onClick={onToggle}
         class={cn(
-          "w-full flex items-center justify-between",
+          'w-full flex items-center justify-between',
           spacing.pad.sm,
-          "bg-surface-raised hover:bg-surface-hover transition-colors",
-          "text-left",
+          'bg-surface-raised hover:bg-surface-hover transition-colors',
+          'text-left',
         )}
       >
         <div class="flex items-center gap-2">
@@ -892,20 +892,20 @@ const L2_HOP_DETAIL: React.NamedExoticComponent<L2HopDetailProps> = memo(functio
           <span class="caption text-text-muted">({hop.deviceIp})</span>
         </div>
         {isExpanded ? (
-          <ChevronUp class={cn(iconTokens.size.sm, "text-text-muted")} />
+          <ChevronUp class={cn(iconTokens.size.sm, 'text-text-muted')} />
         ) : (
-          <ChevronDown class={cn(iconTokens.size.sm, "text-text-muted")} />
+          <ChevronDown class={cn(iconTokens.size.sm, 'text-text-muted')} />
         )}
       </button>
 
       {/* Expanded Details */}
       {isExpanded ? (
-        <div class={cn(spacing.pad.sm, "bg-surface-base border-t border-surface-border")}>
+        <div class={cn(spacing.pad.sm, 'bg-surface-base border-t border-surface-border')}>
           <div class="grid grid-cols-2 gap-4">
             {/* Ingress Port */}
             <div>
               <div class="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
-                {t("pathDiscovery.ingressPort", "Ingress Port")}
+                {t('pathDiscovery.ingressPort', 'Ingress Port')}
               </div>
               {hop.ingressPort ? (
                 <PORT_DETAILS port={hop.ingressPort} t={t} />
@@ -917,7 +917,7 @@ const L2_HOP_DETAIL: React.NamedExoticComponent<L2HopDetailProps> = memo(functio
             {/* Egress Port */}
             <div>
               <div class="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
-                {t("pathDiscovery.egressPort", "Egress Port")}
+                {t('pathDiscovery.egressPort', 'Egress Port')}
               </div>
               {hop.egressPort ? (
                 <PORT_DETAILS port={hop.egressPort} t={t} />
@@ -934,7 +934,7 @@ const L2_HOP_DETAIL: React.NamedExoticComponent<L2HopDetailProps> = memo(functio
 
 // Port Details Component
 interface PortDetailsProps {
-  port: L2Hop["ingressPort"];
+  port: L2Hop['ingressPort'];
   t: (key: string, fallback: string) => string;
 }
 
@@ -953,12 +953,12 @@ const PORT_DETAILS: React.NamedExoticComponent<PortDetailsProps> = memo(function
         {port.speed ? <span class="caption text-text-secondary">{port.speed}</span> : null}
         {port.duplex ? <span class="caption text-text-muted">{port.duplex}</span> : null}
         {port.isTrunk ? (
-          <span class="caption text-brand-primary">{t("pathDiscovery.trunk", "Trunk")}</span>
+          <span class="caption text-brand-primary">{t('pathDiscovery.trunk', 'Trunk')}</span>
         ) : null}
       </div>
       {port.vlans && port.vlans.length > 0 ? (
         <div class="caption text-text-muted">
-          VLANs: {port.vlans.slice(0, 5).join(", ")}
+          VLANs: {port.vlans.slice(0, 5).join(', ')}
           {port.vlans.length > 5 ? ` +${port.vlans.length - 5}` : null}
         </div>
       ) : null}

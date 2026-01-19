@@ -1,135 +1,113 @@
-# ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║ Seed - .gitignore                                                         ║
-# ╠═══════════════════════════════════════════════════════════════════════════╣
-# ║ Network testing and automation platform                                   ║
-# ║ Stack: Go (backend), TypeScript/React (UI), Storybook                    ║
-# ╚═══════════════════════════════════════════════════════════════════════════╝
 
-# ─── Go Binaries ─────────────────────────────────────────────────────────────
-/seed
-/seed-*
+!certs/.gitkeep
+.claude/settings.local.json
+.env
+.env.*.local
+.env.local
+.gemini/
+.gocache/
+.golangci-cache/
+.gomodcache/
+.ignore
+.tmp_*
+*.code-workspace
+*.crt
+*.db
+*.deb
+*.dll
+*.dylib
 *.exe
 *.exe~
-*.dll
-*.so
-*.dylib
-
-# ─── Build Directories ───────────────────────────────────────────────────────
-/dist/
-/bin/
-/build/
-
-# ─── Go Testing & Coverage ───────────────────────────────────────────────────
-*.test
-*.out
-coverage.html
-coverage.txt
-
-# ─── Go Workspace & Dependencies ─────────────────────────────────────────────
-go.work
-go.work.sum
-vendor/
-
-# Go build caches
-.gocache/
-.gomodcache/
-.golangci-cache/
-
-# ─── Frontend (UI) ───────────────────────────────────────────────────────────
-# Dependencies
-ui/node_modules/
-node_modules/
-
-# Build outputs
-ui/dist/
-ui/.vite/
-ui/coverage/
-
-# Storybook
-*storybook.log
-storybook-static/
-
-# Playwright test results
-ui/playwright-report/
-ui/test-results/
-
-# TypeScript
-*.tsbuildinfo
-
-# Logs
-npm-debug.log*
-yarn-error.log*
-*.log
-
-# ─── Environment & Secrets ───────────────────────────────────────────────────
-.env
-.env.local
-.env.*.local
-*.pem
 *.key
-*.crt
-
-# Certificates (generated at runtime)
-certs/
-!certs/.gitkeep
-ui/certs/
-
-# ─── Configuration Overrides ─────────────────────────────────────────────────
-# Local config overrides (defaults should be tracked)
-configs/*.local.yaml
-configs/*.local.json
-config.yaml
-
-# ─── Database & Runtime Data ─────────────────────────────────────────────────
-*.db
+*.log
+*.out
+*.pem
+*.png
+*.rpm
+*.so
 *.sqlite
 *.sqlite3
-
-# Auto-generated or downloaded data
-data/
-
-# ─── Logs ────────────────────────────────────────────────────────────────────
-logs/
-
-# ─── Temporary Files ─────────────────────────────────────────────────────────
-tmp/
-temp/
-*.tmp
-.tmp_*
-*~
-
-# ─── Build & Package Artifacts ───────────────────────────────────────────────
 *.tar.gz
+*.test
+*.tmp
+*.tsbuildinfo
 *.zip
-*.deb
-*.rpm
-
-# ─── Debug & Development ─────────────────────────────────────────────────────
-# Debug output images
-DebugImages/
-
-# Screenshot artifacts
-*.png
-
-# ─── AI/Agent Artifacts ──────────────────────────────────────────────────────
-# Claude, Gemini, and other AI tool artifacts
-.claude/settings.local.json
-.gemini/
-CLAUDE.md
-
-# Workspace files
-*.code-workspace
-.ignore
-
-# ─── Documentation Exclusions ────────────────────────────────────────────────
-# Internal planning docs (use GitHub issues/projects instead)
-docs/internal/
-docs/AI_*.md
-docs/*_PLAN.md
-docs/WIKI_CONTENT.md
-docs/DOCUMENTATION_STRUCTURE.md
-docs/issues*.md
-
-# Root-level planning files
+*~
+*storybook.log
 /*_PLAN.md
+/bin/
+/build/
+/dist/
 /issue*.md
+/seed
+/seed-*
+# ╔═══════════════════════════════════════════════════════════════════════════╗
+# ─── AI/Agent Artifacts ──────────────────────────────────────────────────────
+# ─── Build & Package Artifacts ───────────────────────────────────────────────
+# ─── Build Directories ───────────────────────────────────────────────────────
+# ─── Configuration Overrides ─────────────────────────────────────────────────
+# ─── Database & Runtime Data ─────────────────────────────────────────────────
+# ─── Debug & Development ─────────────────────────────────────────────────────
+# ─── Documentation Exclusions ────────────────────────────────────────────────
+# ─── Environment & Secrets ───────────────────────────────────────────────────
+# ─── Frontend (UI) ───────────────────────────────────────────────────────────
+# ─── Go Binaries ─────────────────────────────────────────────────────────────
+# ─── Go Testing & Coverage ───────────────────────────────────────────────────
+# ─── Go Workspace & Dependencies ─────────────────────────────────────────────
+# ─── Logs ────────────────────────────────────────────────────────────────────
+# ║ Network testing and automation platform                                   ║
+# ║ Seed - .gitignore                                                         ║
+# ║ Stack: Go (backend), TypeScript/React (UI), Storybook                    ║
+# ─── Temporary Files ─────────────────────────────────────────────────────────
+# Auto-generated or downloaded data
+# Build outputs
+# Certificates (generated at runtime)
+# Claude, Gemini, and other AI tool artifacts
+# Debug output images
+# Dependencies
+# Go build caches
+# Internal planning docs (use GitHub issues/projects instead)
+# Local config overrides (defaults should be tracked)
+# Logs
+# Playwright test results
+# Root-level planning files
+# Screenshot artifacts
+# Storybook
+# TypeScript
+# Workspace files
+certs/
+CLAUDE.md
+config.yaml
+configs/*.local.json
+configs/*.local.yaml
+coverage.html
+coverage.txt
+data/
+DebugImages/
+docs/*_PLAN.md
+docs/AI_*.md
+docs/DOCUMENTATION_STRUCTURE.md
+docs/internal/
+docs/issues*.md
+docs/WIKI_CONTENT.md
+go.work
+go.work.sum
+logs/
+node_modules/
+npm-debug.log*
+storybook-static/
+temp/
+tmp/
+ui/.vite/
+ui/certs/
+ui/coverage/
+ui/dist/
+ui/node_modules/
+ui/playwright-report/
+ui/test-results/
+vendor/
+yarn-error.log*
+
+# Build output
+dist/
+coverage.out

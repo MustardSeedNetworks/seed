@@ -182,6 +182,7 @@ include mk/lint.mk
 include mk/security.mk
 include mk/package.mk
 include mk/deps.mk
+include mk/container.mk
 
 # =============================================================================
 # Default Target

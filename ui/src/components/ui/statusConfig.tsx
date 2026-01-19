@@ -5,10 +5,10 @@
  * Used by StatusBadge, Card, and other components that need consistent status styling.
  */
 
-import type { ReactNode } from "react";
-import { icon as iconTokens, spacing } from "../../styles/theme";
+import type { ReactNode } from 'react';
+import { icon as iconTokens, spacing } from '../../styles/theme';
 
-export type Status = "success" | "warning" | "error" | "unknown" | "loading";
+export type Status = 'success' | 'warning' | 'error' | 'unknown' | 'loading';
 
 // Centralized status configuration - icons, colors, and labels
 export const statusConfig: Record<
@@ -25,9 +25,9 @@ export const statusConfig: Record<
         />
       </svg>
     ),
-    color: "text-status-success",
-    bgColor: "bg-status-success/10",
-    label: "Status: success",
+    color: 'text-status-success',
+    bgColor: 'bg-status-success/10',
+    label: 'Status: success',
   },
   warning: {
     icon: (
@@ -39,9 +39,9 @@ export const statusConfig: Record<
         />
       </svg>
     ),
-    color: "text-status-warning",
-    bgColor: "bg-status-warning/10",
-    label: "Status: warning",
+    color: 'text-status-warning',
+    bgColor: 'bg-status-warning/10',
+    label: 'Status: warning',
   },
   error: {
     icon: (
@@ -53,9 +53,9 @@ export const statusConfig: Record<
         />
       </svg>
     ),
-    color: "text-status-error",
-    bgColor: "bg-status-error/10",
-    label: "Status: error",
+    color: 'text-status-error',
+    bgColor: 'bg-status-error/10',
+    label: 'Status: error',
   },
   unknown: {
     icon: (
@@ -64,9 +64,9 @@ export const statusConfig: Record<
         <circle cx="10" cy="14" r="1" />
       </svg>
     ),
-    color: "text-text-muted",
-    bgColor: "bg-surface-hover",
-    label: "Status: unknown",
+    color: 'text-text-muted',
+    bgColor: 'bg-surface-hover',
+    label: 'Status: unknown',
   },
   loading: {
     icon: (
@@ -75,9 +75,9 @@ export const statusConfig: Record<
         <path class="opacity-75" fill="currentColor" d="M18 10a8 8 0 00-8-8v4a4 4 0 014 4h4z" />
       </svg>
     ),
-    color: "text-status-info",
-    bgColor: "bg-status-info/10",
-    label: "Status: loading",
+    color: 'text-status-info',
+    bgColor: 'bg-status-info/10',
+    label: 'Status: loading',
   },
 };
 
@@ -85,12 +85,12 @@ export const statusConfig: Record<
 const sizeConfig = {
   sm: {
     icon: iconTokens.size.sm, // w-4 h-4
-    dot: "w-2 h-2",
+    dot: 'w-2 h-2',
     padding: spacing.badge.xs, // 2px - extra small badge padding
   },
   md: {
     icon: iconTokens.size.md, // w-5 h-5
-    dot: "w-2.5 h-2.5",
+    dot: 'w-2.5 h-2.5',
     padding: spacing.badge.sm, // 4px - small badge padding
   },
 } as const;
@@ -109,15 +109,15 @@ export function getStatusConfig(status: Status): {
   label: string;
 } {
   switch (status) {
-    case "success":
+    case 'success':
       return statusConfig.success;
-    case "warning":
+    case 'warning':
       return statusConfig.warning;
-    case "error":
+    case 'error':
       return statusConfig.error;
-    case "unknown":
+    case 'unknown':
       return statusConfig.unknown;
-    case "loading":
+    case 'loading':
       return statusConfig.loading;
     default: {
       const _exhaustive: never = status;
@@ -132,7 +132,7 @@ export function getStatusConfig(status: Status): {
  * @returns The size configuration object with icon, dot, and padding values
  */
 export function getSizeConfig(size: SizeKey): { icon: string; dot: string; padding: string } {
-  if (size === "sm") {
+  if (size === 'sm') {
     return sizeConfig.sm;
   }
   return sizeConfig.md;

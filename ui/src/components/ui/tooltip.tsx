@@ -28,26 +28,26 @@
  * State: Manages show/hide state on hover and focus
  */
 
-import type React from "react";
-import { type ReactNode, useState } from "react";
-import { border, cn, radius, spacing } from "../../styles/theme";
+import type React from 'react';
+import { type ReactNode, useState } from 'react';
+import { border, cn, radius, spacing } from '../../styles/theme';
 
 interface TooltipProps {
   content: string;
   children: ReactNode;
-  position?: "top" | "bottom";
+  position?: 'top' | 'bottom';
 }
 
 /**
  * Hover-triggered tooltip that displays additional information for an element.
  */
-export function Tooltip({ content, children, position = "top" }: TooltipProps): React.JSX.Element {
+export function Tooltip({ content, children, position = 'top' }: TooltipProps): React.JSX.Element {
   const [show, setShow] = useState(false);
 
   const positionClasses =
-    position === "top"
-      ? cn("bottom-full left-1/2 -translate-x-1/2", spacing.margin.bottom.inline)
-      : cn("top-full left-1/2 -translate-x-1/2", spacing.margin.top.inline);
+    position === 'top'
+      ? cn('bottom-full left-1/2 -translate-x-1/2', spacing.margin.bottom.inline)
+      : cn('top-full left-1/2 -translate-x-1/2', spacing.margin.top.inline);
 
   const handleMouseEnter = (): void => setShow(true);
   const handleMouseLeave = (): void => setShow(false);
@@ -65,7 +65,7 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps): 
         class="cursor-help"
         tabIndex={0}
         role="button"
-        aria-describedby={show ? "tooltip-content" : undefined}
+        aria-describedby={show ? 'tooltip-content' : undefined}
       >
         {children}
       </div>
@@ -73,13 +73,13 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps): 
         <div
           id="tooltip-content"
           class={cn(
-            "absolute z-50 shadow-lg max-w-xs",
+            'absolute z-50 shadow-lg max-w-xs',
             spacing.cell.px,
             spacing.compact.pyMd,
             positionClasses,
             radius.default,
             border.card,
-            "bg-surface-raised text-text-primary caption",
+            'bg-surface-raised text-text-primary caption',
           )}
           role="tooltip"
         >

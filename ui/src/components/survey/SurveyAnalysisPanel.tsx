@@ -41,24 +41,24 @@ import {
   Wifi,
   WifiOff,
   Zap,
-} from "lucide-react";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import type { ApLocation, SamplePoint, ScannedNetwork, Survey } from "../../hooks/useSurvey";
-import { button, cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
+} from 'lucide-react';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { ApLocation, SamplePoint, ScannedNetwork, Survey } from '../../hooks/useSurvey';
+import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
 
 /** Finding severity level */
-export type FindingSeverity = "critical" | "warning" | "info" | "success";
+export type FindingSeverity = 'critical' | 'warning' | 'info' | 'success';
 
 /** Finding category */
 export type FindingCategory =
-  | "coverage"
-  | "interference"
-  | "security"
-  | "performance"
-  | "roaming"
-  | "capacity"
-  | "optimization";
+  | 'coverage'
+  | 'interference'
+  | 'security'
+  | 'performance'
+  | 'roaming'
+  | 'capacity'
+  | 'optimization';
 
 /** A single analysis finding/recommendation */
 export interface AnalysisFinding {
@@ -168,11 +168,11 @@ function analyzeSurvey(
         ssidCoverage.set(n.ssid, ssidStats);
 
         // Check for security issues
-        if (n.security === "open" || n.security === "wep") {
+        if (n.security === 'open' || n.security === 'wep') {
           securityIssues.push({
             ssid: n.ssid,
             bssid: n.bssid,
-            security: n.security || "open",
+            security: n.security || 'open',
             x: sample.x,
             y: sample.y,
           });
@@ -205,28 +205,28 @@ function analyzeSurvey(
     if (criticalGaps.length > 0) {
       findings.push({
         id: `finding-${findingId++}`,
-        category: "coverage",
-        severity: "critical",
-        titleKey: "analysis.coverage.deadZones",
-        descriptionKey: "analysis.coverage.deadZonesDesc",
+        category: 'coverage',
+        severity: 'critical',
+        titleKey: 'analysis.coverage.deadZones',
+        descriptionKey: 'analysis.coverage.deadZonesDesc',
         location: criticalGaps[0],
         value: criticalGaps.length,
         threshold: deadZoneThreshold,
-        recommendationKey: "analysis.coverage.deadZonesAction",
+        recommendationKey: 'analysis.coverage.deadZonesAction',
       });
     }
 
     if (weakGaps.length > 0) {
       findings.push({
         id: `finding-${findingId++}`,
-        category: "coverage",
-        severity: "warning",
-        titleKey: "analysis.coverage.weakAreas",
-        descriptionKey: "analysis.coverage.weakAreasDesc",
+        category: 'coverage',
+        severity: 'warning',
+        titleKey: 'analysis.coverage.weakAreas',
+        descriptionKey: 'analysis.coverage.weakAreasDesc',
         location: weakGaps[0],
         value: weakGaps.length,
         threshold: thresholds.minAcceptableRssi,
-        recommendationKey: "analysis.coverage.weakAreasAction",
+        recommendationKey: 'analysis.coverage.weakAreasAction',
       });
     }
   }
@@ -239,15 +239,15 @@ function analyzeSurvey(
 
     findings.push({
       id: `finding-${findingId++}`,
-      category: "interference",
-      severity: coChannelHotspots.length > 5 ? "critical" : "warning",
-      titleKey: "analysis.interference.coChannel",
-      descriptionKey: "analysis.interference.coChannelDesc",
+      category: 'interference',
+      severity: coChannelHotspots.length > 5 ? 'critical' : 'warning',
+      titleKey: 'analysis.interference.coChannel',
+      descriptionKey: 'analysis.interference.coChannelDesc',
       location: worstSpot,
       affectedChannels: [worstSpot.channel],
       value: worstSpot.count,
       threshold: thresholds.maxCoChannelCount,
-      recommendationKey: "analysis.interference.coChannelAction",
+      recommendationKey: 'analysis.interference.coChannelAction',
     });
   }
 
@@ -261,36 +261,36 @@ function analyzeSurvey(
 
   if (uniqueSecurityIssues.size > 0) {
     const openNetworks = Array.from(uniqueSecurityIssues.values()).filter(
-      (i) => i.security === "open",
+      (i) => i.security === 'open',
     );
     const wepNetworks = Array.from(uniqueSecurityIssues.values()).filter(
-      (i) => i.security === "wep",
+      (i) => i.security === 'wep',
     );
 
     if (openNetworks.length > 0) {
       findings.push({
         id: `finding-${findingId++}`,
-        category: "security",
-        severity: "critical",
-        titleKey: "analysis.security.openNetworks",
-        descriptionKey: "analysis.security.openNetworksDesc",
+        category: 'security',
+        severity: 'critical',
+        titleKey: 'analysis.security.openNetworks',
+        descriptionKey: 'analysis.security.openNetworksDesc',
         location: openNetworks[0],
         affectedSsids: openNetworks.map((n) => n.ssid),
         value: openNetworks.length,
-        recommendationKey: "analysis.security.openNetworksAction",
+        recommendationKey: 'analysis.security.openNetworksAction',
       });
     }
 
     if (wepNetworks.length > 0) {
       findings.push({
         id: `finding-${findingId++}`,
-        category: "security",
-        severity: "warning",
-        titleKey: "analysis.security.wepNetworks",
-        descriptionKey: "analysis.security.wepNetworksDesc",
+        category: 'security',
+        severity: 'warning',
+        titleKey: 'analysis.security.wepNetworks',
+        descriptionKey: 'analysis.security.wepNetworksDesc',
         affectedSsids: wepNetworks.map((n) => n.ssid),
         value: wepNetworks.length,
-        recommendationKey: "analysis.security.wepNetworksAction",
+        recommendationKey: 'analysis.security.wepNetworksAction',
       });
     }
   }
@@ -302,13 +302,13 @@ function analyzeSurvey(
   if (overusedChannels.length > 0) {
     findings.push({
       id: `finding-${findingId++}`,
-      category: "optimization",
-      severity: "info",
-      titleKey: "analysis.optimization.overusedChannels",
-      descriptionKey: "analysis.optimization.overusedChannelsDesc",
+      category: 'optimization',
+      severity: 'info',
+      titleKey: 'analysis.optimization.overusedChannels',
+      descriptionKey: 'analysis.optimization.overusedChannelsDesc',
       affectedChannels: overusedChannels.map(([ch]) => ch),
       value: overusedChannels[0][0],
-      recommendationKey: "analysis.optimization.overusedChannelsAction",
+      recommendationKey: 'analysis.optimization.overusedChannelsAction',
     });
   }
 
@@ -316,25 +316,25 @@ function analyzeSurvey(
   if (apLocations.length > 0) {
     findings.push({
       id: `finding-${findingId++}`,
-      category: "coverage",
-      severity: "info",
-      titleKey: "analysis.coverage.apCount",
-      descriptionKey: "analysis.coverage.apCountDesc",
+      category: 'coverage',
+      severity: 'info',
+      titleKey: 'analysis.coverage.apCount',
+      descriptionKey: 'analysis.coverage.apCountDesc',
       value: apLocations.length,
     });
   }
 
   // Overall health summary
-  const criticalCount = findings.filter((i) => i.severity === "critical").length;
-  const warningCount = findings.filter((i) => i.severity === "warning").length;
+  const criticalCount = findings.filter((i) => i.severity === 'critical').length;
+  const warningCount = findings.filter((i) => i.severity === 'warning').length;
 
   if (criticalCount === 0 && warningCount === 0 && samples.length > 0) {
     findings.push({
       id: `finding-${findingId++}`,
-      category: "coverage",
-      severity: "success",
-      titleKey: "analysis.overall.healthy",
-      descriptionKey: "analysis.overall.healthyDesc",
+      category: 'coverage',
+      severity: 'success',
+      titleKey: 'analysis.overall.healthy',
+      descriptionKey: 'analysis.overall.healthyDesc',
       value: samples.length,
     });
   }
@@ -347,19 +347,19 @@ function analyzeSurvey(
  */
 function getFindingIcon(category: FindingCategory, severity: FindingSeverity): typeof Info {
   switch (category) {
-    case "coverage":
-      return severity === "critical" ? WifiOff : Wifi;
-    case "interference":
+    case 'coverage':
+      return severity === 'critical' ? WifiOff : Wifi;
+    case 'interference':
       return Radio;
-    case "security":
-      return severity === "critical" ? ShieldAlert : Shield;
-    case "performance":
+    case 'security':
+      return severity === 'critical' ? ShieldAlert : Shield;
+    case 'performance':
       return Zap;
-    case "roaming":
+    case 'roaming':
       return TrendingUp;
-    case "capacity":
+    case 'capacity':
       return MapPin;
-    case "optimization":
+    case 'optimization':
       return Lightbulb;
     default:
       return Info;
@@ -371,14 +371,14 @@ function getFindingIcon(category: FindingCategory, severity: FindingSeverity): t
  */
 function getSeverityColor(severity: FindingSeverity): string {
   switch (severity) {
-    case "critical":
-      return "text-status-error";
-    case "warning":
-      return "text-status-warning";
-    case "success":
-      return "text-status-success";
+    case 'critical':
+      return 'text-status-error';
+    case 'warning':
+      return 'text-status-warning';
+    case 'success':
+      return 'text-status-success';
     default:
-      return "text-brand-primary";
+      return 'text-brand-primary';
   }
 }
 
@@ -387,14 +387,14 @@ function getSeverityColor(severity: FindingSeverity): string {
  */
 function getSeverityBg(severity: FindingSeverity): string {
   switch (severity) {
-    case "critical":
-      return "bg-status-error/10 border-status-error/20";
-    case "warning":
-      return "bg-status-warning/10 border-status-warning/20";
-    case "success":
-      return "bg-status-success/10 border-status-success/20";
+    case 'critical':
+      return 'bg-status-error/10 border-status-error/20';
+    case 'warning':
+      return 'bg-status-warning/10 border-status-warning/20';
+    case 'success':
+      return 'bg-status-success/10 border-status-success/20';
     default:
-      return "bg-brand-primary/10 border-brand-primary/20";
+      return 'bg-brand-primary/10 border-brand-primary/20';
   }
 }
 
@@ -408,7 +408,7 @@ export function SurveyAnalysisPanel({
   onGenerateReport,
   thresholds: customThresholds,
 }: SurveyAnalysisPanelProps): React.JSX.Element {
-  const { t } = useTranslation("survey");
+  const { t } = useTranslation('survey');
 
   // Merge custom thresholds with defaults
   const thresholds = useMemo(
@@ -423,9 +423,9 @@ export function SurveyAnalysisPanel({
   );
 
   // Group findings by severity
-  const criticalFindings = findings.filter((i) => i.severity === "critical");
-  const warningFindings = findings.filter((i) => i.severity === "warning");
-  const infoFindings = findings.filter((i) => i.severity === "info" || i.severity === "success");
+  const criticalFindings = findings.filter((i) => i.severity === 'critical');
+  const warningFindings = findings.filter((i) => i.severity === 'warning');
+  const infoFindings = findings.filter((i) => i.severity === 'info' || i.severity === 'success');
 
   // Handle finding click
   const handleClick = (finding: AnalysisFinding): void => {
@@ -449,7 +449,7 @@ export function SurveyAnalysisPanel({
         key={finding.id}
         onClick={() => handleClick(finding)}
         onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === "Enter" || e.key === " ") {
+          if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             handleClick(finding);
           }
@@ -459,15 +459,15 @@ export function SurveyAnalysisPanel({
         class={cn(
           spacing.pad.sm,
           radius.md,
-          "border",
+          'border',
           bgClass,
-          "cursor-pointer hover:opacity-80 transition-opacity",
+          'cursor-pointer hover:opacity-80 transition-opacity',
         )}
       >
         <div class={cn(layout.inline.default)}>
-          <ICON class={cn(iconTokens.size.sm, colorClass, "flex-shrink-0")} />
+          <ICON class={cn(iconTokens.size.sm, colorClass, 'flex-shrink-0')} />
           <div class="flex-1 min-w-0">
-            <h4 class={cn("body-small font-medium", colorClass)}>{t(finding.titleKey as never)}</h4>
+            <h4 class={cn('body-small font-medium', colorClass)}>{t(finding.titleKey as never)}</h4>
             <p class="caption text-text-muted">
               {t(finding.descriptionKey as never, {
                 value: finding.value,
@@ -483,14 +483,14 @@ export function SurveyAnalysisPanel({
             ) : null}
             {finding.affectedSsids && finding.affectedSsids.length > 0 ? (
               <p class="caption text-text-muted mt-1 truncate">
-                {t("analysis.affectedSsids")}: {finding.affectedSsids.slice(0, 3).join(", ")}
+                {t('analysis.affectedSsids')}: {finding.affectedSsids.slice(0, 3).join(', ')}
                 {finding.affectedSsids.length > 3 ? ` +${finding.affectedSsids.length - 3}` : null}
               </p>
             ) : null}
             {finding.location ? (
               <p class="caption text-brand-primary mt-1">
                 <MapPin class="w-3 h-3 inline mr-1" />
-                {t("analysis.clickToView")}
+                {t('analysis.clickToView')}
               </p>
             ) : null}
           </div>
@@ -500,12 +500,12 @@ export function SurveyAnalysisPanel({
   };
 
   return (
-    <div class={cn("bg-surface-raised", radius.md, "border border-surface-border", spacing.pad.sm)}>
+    <div class={cn('bg-surface-raised', radius.md, 'border border-surface-border', spacing.pad.sm)}>
       {/* Header */}
-      <div class={cn(layout.inline.default, "justify-between", spacing.margin.bottom.content)}>
+      <div class={cn(layout.inline.default, 'justify-between', spacing.margin.bottom.content)}>
         <div class={cn(layout.inline.default)}>
           <Activity class={iconTokens.size.sm} />
-          <h4 class="body-small font-medium">{t("analysis.title")}</h4>
+          <h4 class="body-small font-medium">{t('analysis.title')}</h4>
         </div>
         <div class={cn(layout.inline.default)}>
           {criticalFindings.length > 0 ? (
@@ -524,14 +524,14 @@ export function SurveyAnalysisPanel({
               onClick={() => onGenerateReport(findings)}
               class={cn(
                 button.size.sm,
-                "bg-brand-primary text-text-inverse",
+                'bg-brand-primary text-text-inverse',
                 radius.md,
-                "hover:opacity-90",
+                'hover:opacity-90',
                 layout.inline.tight,
               )}
             >
               <FileText class="w-3 h-3" />
-              <span>{t("criteria.generateReport")}</span>
+              <span>{t('criteria.generateReport')}</span>
             </button>
           ) : null}
         </div>
@@ -540,34 +540,34 @@ export function SurveyAnalysisPanel({
       {/* Summary */}
       <div class={cn(layout.inline.default, spacing.margin.bottom.content)}>
         {criticalFindings.length > 0 ? (
-          <div class={cn(layout.inline.tight, "text-status-error")}>
+          <div class={cn(layout.inline.tight, 'text-status-error')}>
             <AlertOctagon class="w-4 h-4" />
             <span class="caption">
-              {criticalFindings.length} {t("analysis.critical")}
+              {criticalFindings.length} {t('analysis.critical')}
             </span>
           </div>
         ) : null}
         {warningFindings.length > 0 ? (
-          <div class={cn(layout.inline.tight, "text-status-warning")}>
+          <div class={cn(layout.inline.tight, 'text-status-warning')}>
             <AlertTriangle class="w-4 h-4" />
             <span class="caption">
-              {warningFindings.length} {t("analysis.warnings")}
+              {warningFindings.length} {t('analysis.warnings')}
             </span>
           </div>
         ) : null}
         {criticalFindings.length === 0 && warningFindings.length === 0 ? (
-          <div class={cn(layout.inline.tight, "text-status-success")}>
+          <div class={cn(layout.inline.tight, 'text-status-success')}>
             <CheckCircle2 class="w-4 h-4" />
-            <span class="caption">{t("analysis.noIssues")}</span>
+            <span class="caption">{t('analysis.noIssues')}</span>
           </div>
         ) : null}
       </div>
 
       {/* Findings list */}
       {findings.length === 0 ? (
-        <p class="caption text-text-muted text-center py-4">{t("analysis.noData")}</p>
+        <p class="caption text-text-muted text-center py-4">{t('analysis.noData')}</p>
       ) : (
-        <div class={cn(layout.stack.tight, "max-h-80 overflow-y-auto")}>
+        <div class={cn(layout.stack.tight, 'max-h-80 overflow-y-auto')}>
           {/* Critical first */}
           {criticalFindings.map(renderFinding)}
           {/* Then warnings */}

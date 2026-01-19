@@ -10,11 +10,11 @@
  * Related: #890
  */
 
-import type { StoreApi, UseBoundStore } from "zustand";
-import { create } from "zustand";
-import { devtools, persist, subscribeWithSelector } from "zustand/middleware";
-import { immer } from "zustand/middleware/immer";
-import type { DefaultSettings } from "../types/defaults";
+import type { StoreApi, UseBoundStore } from 'zustand';
+import { create } from 'zustand';
+import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
+import { immer } from 'zustand/middleware/immer';
+import type { DefaultSettings } from '../types/defaults';
 import type {
   AppearanceConfig,
   CableTestConfig,
@@ -32,13 +32,13 @@ import type {
   TestsConfig,
   VulnerabilityConfig,
   WifiSettingsConfig,
-} from "../types/profile";
+} from '../types/profile';
 
 // ============================================================================
 // State Types
 // ============================================================================
 
-export type SettingsSaveStatus = "idle" | "saving" | "saved" | "error";
+export type SettingsSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 interface ProfileState {
   // Core state
@@ -108,7 +108,7 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptionsConfig = {
 };
 
 const DEFAULT_IPERF_SETTINGS: IperfConfig = {
-  server: "",
+  server: '',
   port: 5201,
   duration: 10,
   parallel: 1,
@@ -131,7 +131,7 @@ const DEFAULT_SPEEDTEST_SETTINGS: SpeedtestConfig = {
 
 const DEFAULT_TESTS_SETTINGS: TestsConfig = {
   autoRunOnStart: false,
-  testsToRun: ["gateway", "dns", "speedtest"],
+  testsToRun: ['gateway', 'dns', 'speedtest'],
   runInterval: 0,
 };
 
@@ -140,14 +140,14 @@ const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoveryConfig = {
   scanInterval: 300,
   maxDevices: 256,
   includeOfflineDevices: true,
-  scanMethods: ["arp", "ping", "mdns"],
+  scanMethods: ['arp', 'ping', 'mdns'],
   additionalSubnets: [],
 };
 
 const DEFAULT_SNMP_SETTINGS: SnmpConfig = {
   enabled: false,
-  communities: ["public"],
-  version: "2c",
+  communities: ['public'],
+  version: '2c',
   timeout: 5,
 };
 
@@ -159,30 +159,30 @@ const DEFAULT_WIFI_SETTINGS: WifiSettingsConfig = {
 
 const DEFAULT_LINK_SETTINGS: LinkConfig = {
   mtu: 1500,
-  speed: "auto",
-  duplex: "auto",
+  speed: 'auto',
+  duplex: 'auto',
 };
 
 const DEFAULT_CABLE_TEST_SETTINGS: CableTestConfig = {
   testDuration: 10,
-  targetHost: "8.8.8.8",
+  targetHost: '8.8.8.8',
 };
 
 const DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityConfig = {
   enabled: false,
-  severityThreshold: "medium",
+  severityThreshold: 'medium',
   maxConcurrent: 5,
   autoScan: true,
 };
 
 const DEFAULT_DNS_SETTINGS: DnsSettingsConfig = {
-  testHostname: "google.com",
+  testHostname: 'google.com',
   servers: [],
 };
 
 const DEFAULT_APPEARANCE_SETTINGS: AppearanceConfig = {
-  theme: "system",
-  language: "en",
+  theme: 'system',
+  language: 'en',
 };
 
 // Initial state
@@ -193,7 +193,7 @@ const initialState: ProfileState = {
   isLoading: false,
   isSettingsLoaded: false,
   error: null,
-  settingsStatus: "idle",
+  settingsStatus: 'idle',
 };
 
 // ============================================================================
@@ -267,14 +267,14 @@ export const useProfileStore: UseBoundStore<StoreApi<ProfileState & ProfileActio
         })),
       ),
       {
-        name: "seed-profile-store",
+        name: 'seed-profile-store',
         // Only persist the active profile ID, not the full data
         partialize: (state: ProfileState) => ({
           activeProfileId: state.activeProfile?.id,
         }),
       },
     ),
-    { name: "profile-store" },
+    { name: 'profile-store' },
   ),
 );
 

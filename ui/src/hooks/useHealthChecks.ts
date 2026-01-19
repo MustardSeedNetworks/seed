@@ -24,16 +24,16 @@
  * ```
  */
 
-import { useCallback, useState } from "react";
-import { api } from "../api";
-import { LogComponents, logger } from "../lib/logger";
+import { useCallback, useState } from 'react';
+import { api } from '../api';
+import { LogComponents, logger } from '../lib/logger';
 
 /** DNS test result */
 export interface DnsTestResult {
   server: string;
   hostname: string;
   responseTime: number;
-  status: "success" | "timeout" | "error";
+  status: 'success' | 'timeout' | 'error';
   resolvedIp?: string;
   error?: string;
 }
@@ -50,7 +50,7 @@ export interface GatewayTestResult {
 /** Custom test configuration */
 export interface TestConfig {
   name: string;
-  type: "dns" | "http" | "tcp" | "icmp";
+  type: 'dns' | 'http' | 'tcp' | 'icmp';
   target: string;
   port?: number;
   timeout?: number;
@@ -74,7 +74,7 @@ export interface HealthCheckResults {
   gateway: GatewayTestResult | null;
   custom: CustomTestResult[];
   timestamp: string;
-  overall: "healthy" | "degraded" | "unhealthy";
+  overall: 'healthy' | 'degraded' | 'unhealthy';
 }
 
 /** Test settings */
@@ -90,7 +90,7 @@ export interface TestsSettings {
 
 /** Options for running tests */
 interface RunTestsOptions {
-  types?: ("dns" | "gateway" | "custom")[];
+  types?: ('dns' | 'gateway' | 'custom')[];
 }
 
 /**
@@ -120,11 +120,11 @@ export function useHealthChecks(): {
    */
   const runDnsTests = useCallback(async (): Promise<DnsTestResult[]> => {
     try {
-      const data = await api.get<{ results: DnsTestResult[] }>("/api/v1/sap/dns");
+      const data = await api.get<{ results: DnsTestResult[] }>('/api/v1/sap/dns');
       return data.results || [];
     } catch (err) {
-      logger.error(LogComponents.Dns, "DNS tests failed", err, {
-        endpoint: "/api/v1/sap/dns",
+      logger.error(LogComponents.Dns, 'DNS tests failed', err, {
+        endpoint: '/api/v1/sap/dns',
       });
       return [];
     }
@@ -135,10 +135,10 @@ export function useHealthChecks(): {
    */
   const runGatewayTest = useCallback(async (): Promise<GatewayTestResult | null> => {
     try {
-      return await api.get<GatewayTestResult>("/api/v1/sap/gateway");
+      return await api.get<GatewayTestResult>('/api/v1/sap/gateway');
     } catch (err) {
-      logger.error(LogComponents.Gateway, "Gateway test failed", err, {
-        endpoint: "/api/v1/sap/gateway",
+      logger.error(LogComponents.Gateway, 'Gateway test failed', err, {
+        endpoint: '/api/v1/sap/gateway',
       });
       return null;
     }
@@ -150,11 +150,11 @@ export function useHealthChecks(): {
   const runCustomTests = useCallback(async (): Promise<CustomTestResult[]> => {
     try {
       setIsRunning(true);
-      const data = await api.post<{ results: CustomTestResult[] }>("/api/v1/sap/health-checks/run");
+      const data = await api.post<{ results: CustomTestResult[] }>('/api/v1/sap/health-checks/run');
       return data.results || [];
     } catch (err) {
-      logger.error(LogComponents.System, "Custom tests failed", err, {
-        endpoint: "/api/v1/sap/health-checks/run",
+      logger.error(LogComponents.System, 'Custom tests failed', err, {
+        endpoint: '/api/v1/sap/health-checks/run',
       });
       return [];
     } finally {
@@ -167,7 +167,7 @@ export function useHealthChecks(): {
    */
   const runTests = useCallback(
     async (options: RunTestsOptions = {}): Promise<HealthCheckResults | null> => {
-      const { types = ["dns", "gateway", "custom"] } = options;
+      const { types = ['dns', 'gateway', 'custom'] } = options;
 
       try {
         setError(null);
@@ -177,17 +177,17 @@ export function useHealthChecks(): {
         const testPromises: Promise<unknown>[] = [];
         const testTypes: string[] = [];
 
-        if (types.includes("dns")) {
+        if (types.includes('dns')) {
           testPromises.push(runDnsTests());
-          testTypes.push("dns");
+          testTypes.push('dns');
         }
-        if (types.includes("gateway")) {
+        if (types.includes('gateway')) {
           testPromises.push(runGatewayTest());
-          testTypes.push("gateway");
+          testTypes.push('gateway');
         }
-        if (types.includes("custom")) {
+        if (types.includes('custom')) {
           testPromises.push(runCustomTests());
-          testTypes.push("custom");
+          testTypes.push('custom');
         }
 
         const settledResults = await Promise.allSettled(testPromises);
@@ -198,7 +198,7 @@ export function useHealthChecks(): {
           gateway: null,
           custom: [],
           timestamp: new Date().toISOString(),
-          overall: "healthy",
+          overall: 'healthy',
         };
 
         // Process results - map indices to test types
@@ -212,38 +212,38 @@ export function useHealthChecks(): {
         }
 
         // Extract results by type
-        const dnsResult = resultMap.get("dns");
-        if (dnsResult?.status === "fulfilled") {
+        const dnsResult = resultMap.get('dns');
+        if (dnsResult?.status === 'fulfilled') {
           healthResults.dns = dnsResult.value as DnsTestResult[];
         }
 
-        const gatewayResult = resultMap.get("gateway");
-        if (gatewayResult?.status === "fulfilled") {
+        const gatewayResult = resultMap.get('gateway');
+        if (gatewayResult?.status === 'fulfilled') {
           healthResults.gateway = gatewayResult.value as GatewayTestResult;
         }
 
-        const customResult = resultMap.get("custom");
-        if (customResult?.status === "fulfilled") {
+        const customResult = resultMap.get('custom');
+        if (customResult?.status === 'fulfilled') {
           healthResults.custom = customResult.value as CustomTestResult[];
         }
 
         // Determine overall health status
-        const dnsOk = healthResults.dns.every((d) => d.status === "success");
+        const dnsOk = healthResults.dns.every((d) => d.status === 'success');
         const gatewayOk = healthResults.gateway?.reachable ?? true;
         const customOk = healthResults.custom.every((c) => c.success);
 
         if (!(dnsOk && gatewayOk)) {
-          healthResults.overall = "unhealthy";
+          healthResults.overall = 'unhealthy';
         } else if (!customOk) {
-          healthResults.overall = "degraded";
+          healthResults.overall = 'degraded';
         }
 
         setResults(healthResults);
         return healthResults;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Health check failed";
+        const message = err instanceof Error ? err.message : 'Health check failed';
         setError(message);
-        logger.error(LogComponents.System, "Health check failed", err, {
+        logger.error(LogComponents.System, 'Health check failed', err, {
           types,
         });
         return null;
@@ -259,10 +259,10 @@ export function useHealthChecks(): {
    */
   const fetchSettings = useCallback(async (): Promise<TestsSettings | null> => {
     try {
-      return await api.get<TestsSettings>("/api/v1/sap/health-checks/settings");
+      return await api.get<TestsSettings>('/api/v1/sap/health-checks/settings');
     } catch (err) {
-      logger.error(LogComponents.Config, "Failed to fetch test settings", err, {
-        endpoint: "/api/v1/sap/health-checks/settings",
+      logger.error(LogComponents.Config, 'Failed to fetch test settings', err, {
+        endpoint: '/api/v1/sap/health-checks/settings',
       });
       return null;
     }
@@ -273,11 +273,11 @@ export function useHealthChecks(): {
    */
   const updateSettings = useCallback(async (settings: Partial<TestsSettings>): Promise<boolean> => {
     try {
-      await api.put("/api/v1/sap/health-checks/settings", settings);
+      await api.put('/api/v1/sap/health-checks/settings', settings);
       return true;
     } catch (err) {
-      logger.error(LogComponents.Config, "Failed to update test settings", err, {
-        endpoint: "/api/v1/sap/health-checks/settings",
+      logger.error(LogComponents.Config, 'Failed to update test settings', err, {
+        endpoint: '/api/v1/sap/health-checks/settings',
         updates: settings,
       });
       return false;

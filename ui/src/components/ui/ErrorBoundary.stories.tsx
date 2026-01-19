@@ -1,8 +1,8 @@
-import type { Meta, StoryFn, StoryObj } from "@storybook/react-vite";
-import type React from "react";
-import { useState } from "react";
-import { button, cn, icon, layout, radius, section, spacing } from "../../styles/theme";
-import { ErrorBoundary } from "./ErrorBoundary";
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type React from 'react';
+import { useState } from 'react';
+import { button, cn, icon, layout, radius, section, spacing } from '../../styles/theme';
+import { ErrorBoundary } from './ErrorBoundary';
 
 /**
  * ErrorBoundary catches JavaScript errors in child component trees,
@@ -12,29 +12,29 @@ import { ErrorBoundary } from "./ErrorBoundary";
  * with optional custom fallback UI and retry functionality.
  */
 const meta: Meta<typeof ErrorBoundary> = {
-  title: "UI/ErrorBoundary",
+  title: 'UI/ErrorBoundary',
   component: ErrorBoundary,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "Error Boundary component for catching and handling runtime errors in React component trees with graceful fallback UI.",
+          'Error Boundary component for catching and handling runtime errors in React component trees with graceful fallback UI.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     children: {
-      description: "Child components to be protected by the error boundary",
+      description: 'Child components to be protected by the error boundary',
     },
     fallback: {
-      description: "Optional custom fallback UI to display when error occurs",
+      description: 'Optional custom fallback UI to display when error occurs',
     },
   },
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class={cn(spacing.pad.xl, "w-full max-w-2xl")}>
+      <div class={cn(spacing.pad.xl, 'w-full max-w-2xl')}>
         <StoryComponent />
       </div>
     ),
@@ -52,7 +52,7 @@ type Story = StoryObj<typeof meta>;
  * Component that immediately throws an error on render
  */
 function _brokenComponent(): never {
-  throw new Error("This component intentionally throws an error!");
+  throw new Error('This component intentionally throws an error!');
 }
 
 /**
@@ -62,15 +62,15 @@ function _clickToBrokenComponent(): React.JSX.Element {
   const [shouldThrow, setShouldThrow] = useState(false);
 
   if (shouldThrow) {
-    throw new Error("Error triggered by user action!");
+    throw new Error('Error triggered by user action!');
   }
 
   return (
     <div
-      class={cn(spacing.pad.default, "bg-surface-raised border border-surface-border", radius.lg)}
+      class={cn(spacing.pad.default, 'bg-surface-raised border border-surface-border', radius.lg)}
     >
-      <h3 class={cn("heading-4", spacing.margin.bottom.heading)}>Interactive Error Demo</h3>
-      <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+      <h3 class={cn('heading-4', spacing.margin.bottom.heading)}>Interactive Error Demo</h3>
+      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         Click the button below to trigger an error. The Error Boundary will catch it and display the
         fallback UI.
       </p>
@@ -79,9 +79,9 @@ function _clickToBrokenComponent(): React.JSX.Element {
         onClick={(): void => setShouldThrow(true)}
         class={cn(
           button.size.md,
-          "bg-status-error text-text-inverse",
+          'bg-status-error text-text-inverse',
           radius.lg,
-          "hover:bg-status-error/90 transition-colors",
+          'hover:bg-status-error/90 transition-colors',
         )}
       >
         Trigger Error
@@ -96,7 +96,7 @@ function _clickToBrokenComponent(): React.JSX.Element {
 function _componentWithStackTrace(): null {
   function deepNestedFunction(): void {
     function evenDeeperFunction(): never {
-      throw new Error("Detailed error message with stack trace from deep nested function call");
+      throw new Error('Detailed error message with stack trace from deep nested function call');
     }
     evenDeeperFunction();
   }
@@ -112,7 +112,7 @@ function _workingComponent(): React.JSX.Element {
     <div
       class={cn(
         spacing.pad.default,
-        "bg-status-success/10 border border-status-success/20",
+        'bg-status-success/10 border border-status-success/20',
         radius.lg,
       )}
     >
@@ -121,7 +121,7 @@ function _workingComponent(): React.JSX.Element {
           class={
             cn(
               icon.size.md,
-              "text-status-success shrink-0",
+              'text-status-success shrink-0',
               spacing.micro.mt,
             ) /* spacing.micro.mt for icon alignment */
           }
@@ -136,7 +136,7 @@ function _workingComponent(): React.JSX.Element {
           />
         </svg>
         <div>
-          <h3 class={cn("font-semibold text-status-success", spacing.margin.bottom.tight)}>
+          <h3 class={cn('font-semibold text-status-success', spacing.margin.bottom.tight)}>
             Component Working Correctly
           </h3>
           <p class="body-small text-text-secondary">
@@ -153,7 +153,7 @@ function _workingComponent(): React.JSX.Element {
  * Component simulating a network error
  */
 function _networkErrorComponent(): React.ReactElement {
-  throw new Error("Network request failed: Unable to fetch data from API endpoint");
+  throw new Error('Network request failed: Unable to fetch data from API endpoint');
 }
 
 /**
@@ -181,7 +181,7 @@ export const NoError: Story = {
     docs: {
       description: {
         story:
-          "Normal operation with no errors. Error Boundary is active but transparent - child component renders normally.",
+          'Normal operation with no errors. Error Boundary is active but transparent - child component renders normally.',
       },
     },
   },
@@ -200,7 +200,7 @@ export const ErrorCaught: Story = {
     docs: {
       description: {
         story:
-          "Error Boundary catches the error and displays default fallback UI with error message and retry button.",
+          'Error Boundary catches the error and displays default fallback UI with error message and retry button.',
       },
     },
   },
@@ -219,7 +219,7 @@ export const ErrorWithDetailedMessage: Story = {
     docs: {
       description: {
         story:
-          "Error with detailed message showing network failure. Demonstrates error message display in the fallback UI.",
+          'Error with detailed message showing network failure. Demonstrates error message display in the fallback UI.',
       },
     },
   },
@@ -238,7 +238,7 @@ export const ErrorWithStackTrace: Story = {
     docs: {
       description: {
         story:
-          "Error from deeply nested function calls. Open browser console to see full stack trace logged by componentDidCatch.",
+          'Error from deeply nested function calls. Open browser console to see full stack trace logged by componentDidCatch.',
       },
     },
   },
@@ -273,18 +273,18 @@ export const CustomFallback: Story = {
         <div
           class={cn(
             spacing.pad.lg,
-            "bg-linear-to-br from-status-error/20 to-status-error/5 border-2 border-status-error",
+            'bg-linear-to-br from-status-error/20 to-status-error/5 border-2 border-status-error',
             radius.xl,
           )}
         >
-          <div class={cn(layout.inline.spacious, "items-start")}>
+          <div class={cn(layout.inline.spacious, 'items-start')}>
             <div
               class={cn(
-                "w-12 h-12",
+                'w-12 h-12',
                 radius.full,
-                "bg-status-error/20",
+                'bg-status-error/20',
                 layout.flex.center,
-                "shrink-0",
+                'shrink-0',
               )}
             >
               <svg
@@ -303,10 +303,10 @@ export const CustomFallback: Story = {
               </svg>
             </div>
             <div class="flex-1">
-              <h3 class={cn("heading-3 text-status-error", spacing.margin.bottom.inline)}>
+              <h3 class={cn('heading-3 text-status-error', spacing.margin.bottom.inline)}>
                 Custom Error Fallback UI
               </h3>
-              <p class={cn("body text-text-secondary", spacing.margin.bottom.content)}>
+              <p class={cn('body text-text-secondary', spacing.margin.bottom.content)}>
                 This is a custom fallback component passed as a prop to the Error Boundary. You can
                 design any UI you want to display when errors occur.
               </p>
@@ -315,9 +315,9 @@ export const CustomFallback: Story = {
                   type="button"
                   class={cn(
                     button.size.md,
-                    "bg-status-error text-text-inverse",
+                    'bg-status-error text-text-inverse',
                     radius.lg,
-                    "hover:bg-status-error/90 transition-colors",
+                    'hover:bg-status-error/90 transition-colors',
                   )}
                 >
                   Report Error
@@ -326,9 +326,9 @@ export const CustomFallback: Story = {
                   type="button"
                   class={cn(
                     button.size.md,
-                    "bg-surface-raised border border-surface-border text-text-primary",
+                    'bg-surface-raised border border-surface-border text-text-primary',
                     radius.lg,
-                    "hover:bg-surface-hover transition-colors",
+                    'hover:bg-surface-hover transition-colors',
                   )}
                 >
                   Go to Dashboard
@@ -346,7 +346,7 @@ export const CustomFallback: Story = {
     docs: {
       description: {
         story:
-          "Custom fallback UI passed as a prop. Demonstrates how to provide your own error display instead of the default alert-style UI.",
+          'Custom fallback UI passed as a prop. Demonstrates how to provide your own error display instead of the default alert-style UI.',
       },
     },
   },
@@ -357,9 +357,9 @@ export const CustomFallback: Story = {
  */
 export const MultipleErrorBoundaries: Story = {
   render: () => (
-    <div class={cn(section.spacing.default, "w-full")}>
+    <div class={cn(section.spacing.default, 'w-full')}>
       <div>
-        <h3 class={cn("heading-4", spacing.margin.bottom.inline, "text-text-primary")}>
+        <h3 class={cn('heading-4', spacing.margin.bottom.inline, 'text-text-primary')}>
           Section 1 - Working
         </h3>
         <ErrorBoundary>
@@ -368,7 +368,7 @@ export const MultipleErrorBoundaries: Story = {
       </div>
 
       <div>
-        <h3 class={cn("heading-4", spacing.margin.bottom.inline, "text-text-primary")}>
+        <h3 class={cn('heading-4', spacing.margin.bottom.inline, 'text-text-primary')}>
           Section 2 - Error
         </h3>
         <ErrorBoundary>
@@ -377,7 +377,7 @@ export const MultipleErrorBoundaries: Story = {
       </div>
 
       <div>
-        <h3 class={cn("heading-4", spacing.margin.bottom.inline, "text-text-primary")}>
+        <h3 class={cn('heading-4', spacing.margin.bottom.inline, 'text-text-primary')}>
           Section 3 - Working
         </h3>
         <ErrorBoundary>
@@ -390,7 +390,7 @@ export const MultipleErrorBoundaries: Story = {
     docs: {
       description: {
         story:
-          "Multiple Error Boundaries isolate errors to specific sections. Only Section 2 shows error UI while others render normally.",
+          'Multiple Error Boundaries isolate errors to specific sections. Only Section 2 shows error UI while others render normally.',
       },
     },
   },
@@ -413,16 +413,16 @@ export const WithRetry: Story = {
         <div
           class={cn(
             spacing.pad.default,
-            "bg-status-success/10 border border-status-success/20",
+            'bg-status-success/10 border border-status-success/20',
             radius.lg,
           )}
         >
-          <div class={cn(layout.inline.comfortable, "items-start")}>
+          <div class={cn(layout.inline.comfortable, 'items-start')}>
             <svg
               class={
                 cn(
                   icon.size.md,
-                  "text-status-success shrink-0",
+                  'text-status-success shrink-0',
                   spacing.micro.mt,
                 ) /* spacing.micro.mt for icon alignment */
               }
@@ -437,7 +437,7 @@ export const WithRetry: Story = {
               />
             </svg>
             <div>
-              <h3 class={cn("font-semibold text-status-success", spacing.margin.bottom.tight)}>
+              <h3 class={cn('font-semibold text-status-success', spacing.margin.bottom.tight)}>
                 Success After Retries!
               </h3>
               <p class="body-small text-text-secondary">
@@ -455,7 +455,7 @@ export const WithRetry: Story = {
         <div
           class={cn(
             spacing.pad.default,
-            "bg-surface-hover border border-surface-border",
+            'bg-surface-hover border border-surface-border',
             radius.lg,
           )}
         >
@@ -463,7 +463,7 @@ export const WithRetry: Story = {
             This demo simulates a component that fails twice then succeeds. Click "Try again" when
             you see an error to retry rendering.
           </p>
-          <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
+          <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
             Attempts: {attemptCount + 1}/3
           </p>
         </div>
@@ -475,9 +475,9 @@ export const WithRetry: Story = {
           onClick={() => setAttemptCount((c) => c + 1)}
           class={cn(
             button.size.md,
-            "bg-surface-raised border border-surface-border text-text-primary",
+            'bg-surface-raised border border-surface-border text-text-primary',
             radius.lg,
-            "hover:bg-surface-hover transition-colors",
+            'hover:bg-surface-hover transition-colors',
           )}
         >
           Manual Retry (increment counter)
@@ -489,7 +489,7 @@ export const WithRetry: Story = {
     docs: {
       description: {
         story:
-          "Demonstrates retry functionality. Component fails on first two attempts, then succeeds on third. Shows how Error Boundary allows recovery.",
+          'Demonstrates retry functionality. Component fails on first two attempts, then succeeds on third. Shows how Error Boundary allows recovery.',
       },
     },
   },
@@ -508,7 +508,7 @@ export const TypeErrorDemo: Story = {
     docs: {
       description: {
         story:
-          "Catches TypeError from accessing properties on null/undefined. Common JavaScript error caught by Error Boundary.",
+          'Catches TypeError from accessing properties on null/undefined. Common JavaScript error caught by Error Boundary.',
       },
     },
   },
@@ -525,7 +525,7 @@ export const NestedErrorBoundaries: Story = {
           <div
             class={cn(
               spacing.pad.default,
-              "bg-status-error/10 border border-status-error",
+              'bg-status-error/10 border border-status-error',
               radius.lg,
             )}
           >
@@ -538,12 +538,12 @@ export const NestedErrorBoundaries: Story = {
         <div
           class={cn(
             spacing.pad.default,
-            "bg-surface-raised border border-surface-border",
+            'bg-surface-raised border border-surface-border',
             radius.lg,
           )}
         >
-          <h3 class={cn("heading-4", spacing.margin.bottom.heading)}>Outer Boundary</h3>
-          <p class={cn("body-small text-text-secondary", spacing.margin.bottom.content)}>
+          <h3 class={cn('heading-4', spacing.margin.bottom.heading)}>Outer Boundary</h3>
+          <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
             This outer boundary protects the entire section. The inner boundary handles the specific
             error.
           </p>
@@ -553,7 +553,7 @@ export const NestedErrorBoundaries: Story = {
               <div
                 class={cn(
                   spacing.pad.sm,
-                  "bg-status-warning/10 border border-status-warning",
+                  'bg-status-warning/10 border border-status-warning',
                   radius.lg,
                 )}
               >
@@ -566,7 +566,7 @@ export const NestedErrorBoundaries: Story = {
             <brokenComponent />
           </ErrorBoundary>
 
-          <p class={cn("body-small text-text-secondary", spacing.margin.top.content)}>
+          <p class={cn('body-small text-text-secondary', spacing.margin.top.content)}>
             Content after inner error boundary still renders because error was caught by inner
             boundary.
           </p>
@@ -578,7 +578,7 @@ export const NestedErrorBoundaries: Story = {
     docs: {
       description: {
         story:
-          "Nested Error Boundaries provide granular error isolation. Inner boundary catches the error, outer boundary and sibling content continue rendering.",
+          'Nested Error Boundaries provide granular error isolation. Inner boundary catches the error, outer boundary and sibling content continue rendering.',
       },
     },
   },
@@ -591,7 +591,7 @@ export const RealWorldCardExample: Story = {
   render: () => {
     function _cardContent({ shouldError = false }: { shouldError?: boolean }): React.JSX.Element {
       if (shouldError) {
-        throw new Error("Failed to load card data from API");
+        throw new Error('Failed to load card data from API');
       }
 
       return (
@@ -613,15 +613,15 @@ export const RealWorldCardExample: Story = {
     }
 
     return (
-      <div class={cn("grid md:grid-cols-2", spacing.gap.comfortable, "w-full")}>
+      <div class={cn('grid md:grid-cols-2', spacing.gap.comfortable, 'w-full')}>
         <div
           class={cn(
             spacing.pad.default,
-            "bg-surface-raised border border-surface-border",
+            'bg-surface-raised border border-surface-border',
             radius.lg,
           )}
         >
-          <h3 class={cn("heading-4", spacing.margin.bottom.heading, "text-text-primary")}>
+          <h3 class={cn('heading-4', spacing.margin.bottom.heading, 'text-text-primary')}>
             Link Status - Working
           </h3>
           <ErrorBoundary>
@@ -632,11 +632,11 @@ export const RealWorldCardExample: Story = {
         <div
           class={cn(
             spacing.pad.default,
-            "bg-surface-raised border border-surface-border",
+            'bg-surface-raised border border-surface-border',
             radius.lg,
           )}
         >
-          <h3 class={cn("heading-4", spacing.margin.bottom.heading, "text-text-primary")}>
+          <h3 class={cn('heading-4', spacing.margin.bottom.heading, 'text-text-primary')}>
             Link Status - Error
           </h3>
           <ErrorBoundary>
@@ -650,7 +650,7 @@ export const RealWorldCardExample: Story = {
     docs: {
       description: {
         story:
-          "Real-world usage showing Error Boundary protecting individual dashboard cards. Left card works, right card shows error - demonstrates isolation.",
+          'Real-world usage showing Error Boundary protecting individual dashboard cards. Left card works, right card shows error - demonstrates isolation.',
       },
     },
   },

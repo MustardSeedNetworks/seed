@@ -1,9 +1,9 @@
-import type React from "react";
-import { memo } from "react";
-import { useTranslation } from "react-i18next";
-import { cn, icon as iconTokens, layout, radius, spacing } from "../../../../styles/theme";
-import type { SaveStatus, SubnetConfig } from "../../../../types/settings";
-import { AutoSaveIndicator } from "../AutoSaveIndicator";
+import type React from 'react';
+import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { cn, icon as iconTokens, layout, radius, spacing } from '../../../../styles/theme';
+import type { SaveStatus, SubnetConfig } from '../../../../types/settings';
+import { AutoSaveIndicator } from '../AutoSaveIndicator';
 
 interface SubnetManagerProps {
   subnets: SubnetConfig[];
@@ -37,31 +37,31 @@ export const SubnetManager: React.NamedExoticComponent<SubnetManagerProps> = mem
     toggleSubnet,
     deleteSubnet,
   }: SubnetManagerProps): React.ReactElement {
-    const { t } = useTranslation("settings");
+    const { t } = useTranslation('settings');
 
     return (
-      <div class={cn("border-t border-surface-border", spacing.pad.sm)}>
+      <div class={cn('border-t border-surface-border', spacing.pad.sm)}>
         <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
           <span class="caption text-text-muted font-medium">
-            {t("discovery.targetNetworks")} <AutoSaveIndicator status={subnetsStatus} />
+            {t('discovery.targetNetworks')} <AutoSaveIndicator status={subnetsStatus} />
           </span>
         </div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-          {t("discovery.targetNetworksDesc")}
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+          {t('discovery.targetNetworksDesc')}
         </p>
 
         {/* List of configured subnets */}
         {subnets.length > 0 ? (
-          <div class={cn("stack-sm", spacing.margin.bottom.heading)}>
+          <div class={cn('stack-sm', spacing.margin.bottom.heading)}>
             {subnets.map((subnet) => (
               <div
                 key={subnet.cidr}
                 class={cn(
                   layout.flex.between,
                   spacing.pad.xs,
-                  "bg-surface-base",
+                  'bg-surface-base',
                   radius.default,
-                  "border border-surface-border",
+                  'border border-surface-border',
                 )}
               >
                 <div class="flex-1 min-w-0">
@@ -79,14 +79,14 @@ export const SubnetManager: React.NamedExoticComponent<SubnetManagerProps> = mem
                     }
                     class={iconTokens.size.sm}
                     title={
-                      subnet.enabled ? t("discovery.disableSubnet") : t("discovery.enableSubnet")
+                      subnet.enabled ? t('discovery.disableSubnet') : t('discovery.enableSubnet')
                     }
                   />
                   <button
                     type="button"
                     onClick={(): void => deleteSubnet(subnet.cidr)}
                     class="text-status-error hover:text-status-error/70 body-small"
-                    title={t("discovery.removeSubnet")}
+                    title={t('discovery.removeSubnet')}
                   >
                     X
                   </button>
@@ -105,13 +105,13 @@ export const SubnetManager: React.NamedExoticComponent<SubnetManagerProps> = mem
               setNewSubnetCidr(e.target.value);
               setSubnetError(null);
             }}
-            placeholder={t("discovery.cidrPlaceholder")}
+            placeholder={t('discovery.cidrPlaceholder')}
             class={cn(
-              "w-full",
+              'w-full',
               spacing.chip.lg,
-              "bg-surface-base border border-surface-border",
+              'bg-surface-base border border-surface-border',
               radius.default,
-              "body-small text-text-primary",
+              'body-small text-text-primary',
             )}
           />
           <input
@@ -120,13 +120,13 @@ export const SubnetManager: React.NamedExoticComponent<SubnetManagerProps> = mem
             onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
               setNewSubnetName(e.target.value)
             }
-            placeholder={t("discovery.namePlaceholder")}
+            placeholder={t('discovery.namePlaceholder')}
             class={cn(
-              "w-full",
+              'w-full',
               spacing.chip.lg,
-              "bg-surface-base border border-surface-border",
+              'bg-surface-base border border-surface-border',
               radius.default,
-              "body-small text-text-primary",
+              'body-small text-text-primary',
             )}
           />
           {subnetError ? <p class="caption text-status-error">{subnetError}</p> : null}
@@ -134,14 +134,14 @@ export const SubnetManager: React.NamedExoticComponent<SubnetManagerProps> = mem
             type="button"
             onClick={addSubnet}
             class={cn(
-              "w-full",
+              'w-full',
               spacing.pad.sm,
-              "bg-brand-primary hover:bg-brand-accent text-text-inverse",
+              'bg-brand-primary hover:bg-brand-accent text-text-inverse',
               radius.default,
-              "body-small",
+              'body-small',
             )}
           >
-            {t("discovery.addSubnet")}
+            {t('discovery.addSubnet')}
           </button>
         </div>
       </div>

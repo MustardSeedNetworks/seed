@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import type React from "react";
-import { button, cn, icon as iconTheme, layout, section, spacing } from "../../styles/theme";
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import type React from 'react';
+import { button, cn, icon as iconTheme, layout, section, spacing } from '../../styles/theme';
 import {
   // Card header icons
   Activity,
@@ -91,8 +91,8 @@ import {
   X,
   XCircle,
   Zap,
-} from "./Icons";
-import { ICON_SIZES } from "./icon-config";
+} from './Icons';
+import { ICON_SIZES } from './icon-config';
 
 /**
  * Icon Library showcases all available icons re-exported from lucide-react.
@@ -106,17 +106,17 @@ import { ICON_SIZES } from "./icon-config";
  * Always import icons from this module instead of directly from lucide-react.
  */
 const meta: Meta = {
-  title: "UI/Icons",
+  title: 'UI/Icons',
   parameters: {
-    layout: "padded",
+    layout: 'padded',
     docs: {
       description: {
         component:
-          "Centralized icon library re-exporting Lucide React icons with consistent naming and size presets.",
+          'Centralized icon library re-exporting Lucide React icons with consistent naming and size presets.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
 };
 
 export default meta;
@@ -253,11 +253,11 @@ export const Sizes: Story = {
   render: () => (
     <div class={cn(section.spacing.comfortable, spacing.pad.default)}>
       <h3 class="heading-3 text-text-primary">Icon Size Presets</h3>
-      <div class={cn("flex items-end", spacing.gap.spacious)}>
+      <div class={cn('flex items-end', spacing.gap.spacious)}>
         {(Object.keys(ICON_SIZES) as Array<keyof typeof ICON_SIZES>).map((size) => (
           <div key={size} class="text-center">
-            <Activity class={cn(ICON_SIZES[size], "text-brand-primary mx-auto")} />
-            <p class={cn("body-small text-text-muted", spacing.margin.top.inline)}>{size}</p>
+            <Activity class={cn(ICON_SIZES[size], 'text-brand-primary mx-auto')} />
+            <p class={cn('body-small text-text-muted', spacing.margin.top.inline)}>{size}</p>
             <p class="caption text-text-muted">{ICON_SIZES[size]}</p>
           </div>
         ))}
@@ -268,7 +268,7 @@ export const Sizes: Story = {
     docs: {
       description: {
         story:
-          "Available size presets: xs (w-3 h-3), sm (w-4 h-4), md (w-5 h-5), lg (w-6 h-6), xl (w-8 h-8).",
+          'Available size presets: xs (w-3 h-3), sm (w-4 h-4), md (w-5 h-5), lg (w-6 h-6), xl (w-8 h-8).',
       },
     },
   },
@@ -280,27 +280,27 @@ export const Sizes: Story = {
 export const StatusIcons: Story = {
   render: () => (
     <div class={cn(section.spacing.default, spacing.pad.default)}>
-      <h3 class={cn("heading-3 text-text-primary", spacing.margin.bottom.content)}>
+      <h3 class={cn('heading-3 text-text-primary', spacing.margin.bottom.content)}>
         Status Icons with Semantic Colors
       </h3>
-      <div class={cn("grid grid-cols-2 md:grid-cols-4", spacing.gap.comfortable)}>
+      <div class={cn('grid grid-cols-2 md:grid-cols-4', spacing.gap.comfortable)}>
         <statusExample
-          icon={<CheckCircle class={cn(iconTheme.size.lg, "text-status-success")} />}
+          icon={<CheckCircle class={cn(iconTheme.size.lg, 'text-status-success')} />}
           label="Success"
           description="Operation completed"
         />
         <statusExample
-          icon={<AlertTriangle class={cn(iconTheme.size.lg, "text-status-warning")} />}
+          icon={<AlertTriangle class={cn(iconTheme.size.lg, 'text-status-warning')} />}
           label="Warning"
           description="Needs attention"
         />
         <statusExample
-          icon={<XCircle class={cn(iconTheme.size.lg, "text-status-error")} />}
+          icon={<XCircle class={cn(iconTheme.size.lg, 'text-status-error')} />}
           label="Error"
           description="Operation failed"
         />
         <statusExample
-          icon={<Info class={cn(iconTheme.size.lg, "text-status-info")} />}
+          icon={<Info class={cn(iconTheme.size.lg, 'text-status-info')} />}
           label="Info"
           description="Additional info"
         />
@@ -315,55 +315,55 @@ export const StatusIcons: Story = {
 export const NetworkStatus: Story = {
   render: () => (
     <div class={cn(section.spacing.default, spacing.pad.default)}>
-      <h3 class={cn("heading-3 text-text-primary", spacing.margin.bottom.content)}>
+      <h3 class={cn('heading-3 text-text-primary', spacing.margin.bottom.content)}>
         Network Status Indicators
       </h3>
-      <div class={cn("flex", spacing.gap.spacious)}>
+      <div class={cn('flex', spacing.gap.spacious)}>
         <div class="text-center">
           <div
             class={cn(
-              iconTheme.size["2xl"],
-              "rounded-full bg-status-success/10 flex items-center justify-center",
+              iconTheme.size['2xl'],
+              'rounded-full bg-status-success/10 flex items-center justify-center',
               spacing.margin.bottom.inline,
             )}
           >
-            <Wifi class={cn(iconTheme.size.lg, "text-status-success")} />
+            <Wifi class={cn(iconTheme.size.lg, 'text-status-success')} />
           </div>
           <p class="body-small">Connected</p>
         </div>
         <div class="text-center">
           <div
             class={cn(
-              iconTheme.size["2xl"],
-              "rounded-full bg-status-warning/10 flex items-center justify-center",
+              iconTheme.size['2xl'],
+              'rounded-full bg-status-warning/10 flex items-center justify-center',
               spacing.margin.bottom.inline,
             )}
           >
-            <SignalLow class={cn(iconTheme.size.lg, "text-status-warning")} />
+            <SignalLow class={cn(iconTheme.size.lg, 'text-status-warning')} />
           </div>
           <p class="body-small">Weak Signal</p>
         </div>
         <div class="text-center">
           <div
             class={cn(
-              iconTheme.size["2xl"],
-              "rounded-full bg-status-error/10 flex items-center justify-center",
+              iconTheme.size['2xl'],
+              'rounded-full bg-status-error/10 flex items-center justify-center',
               spacing.margin.bottom.inline,
             )}
           >
-            <Unplug class={cn(iconTheme.size.lg, "text-status-error")} />
+            <Unplug class={cn(iconTheme.size.lg, 'text-status-error')} />
           </div>
           <p class="body-small">Disconnected</p>
         </div>
         <div class="text-center">
           <div
             class={cn(
-              iconTheme.size["2xl"],
-              "rounded-full bg-status-info/10 flex items-center justify-center",
+              iconTheme.size['2xl'],
+              'rounded-full bg-status-info/10 flex items-center justify-center',
               spacing.margin.bottom.inline,
             )}
           >
-            <Loader class={cn(iconTheme.size.lg, "text-status-info animate-spin")} />
+            <Loader class={cn(iconTheme.size.lg, 'text-status-info animate-spin')} />
           </div>
           <p class="body-small">Connecting</p>
         </div>
@@ -378,10 +378,10 @@ export const NetworkStatus: Story = {
 export const DeviceTypes: Story = {
   render: () => (
     <div class={cn(section.spacing.default, spacing.pad.default)}>
-      <h3 class={cn("heading-3 text-text-primary", spacing.margin.bottom.content)}>
+      <h3 class={cn('heading-3 text-text-primary', spacing.margin.bottom.content)}>
         Device Type Icons
       </h3>
-      <div class={cn("grid grid-cols-3 md:grid-cols-7", spacing.gap.comfortable)}>
+      <div class={cn('grid grid-cols-3 md:grid-cols-7', spacing.gap.comfortable)}>
         <deviceExample icon={<Monitor />} name="Desktop" />
         <deviceExample icon={<Laptop />} name="Laptop" />
         <deviceExample icon={<Smartphone />} name="Phone" />
@@ -400,14 +400,14 @@ export const DeviceTypes: Story = {
 export const ButtonIcons: Story = {
   render: () => (
     <div class={cn(section.spacing.default, spacing.pad.default)}>
-      <h3 class={cn("heading-3 text-text-primary", spacing.margin.bottom.content)}>Button Icons</h3>
-      <div class={cn("flex flex-wrap", spacing.gap.default)}>
+      <h3 class={cn('heading-3 text-text-primary', spacing.margin.bottom.content)}>Button Icons</h3>
+      <div class={cn('flex flex-wrap', spacing.gap.default)}>
         <button
           type="button"
           class={cn(
             layout.inline.default,
             button.size.md,
-            "bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90",
+            'bg-brand-primary text-text-inverse rounded-lg hover:bg-brand-primary/90',
           )}
         >
           <Play class={iconTheme.size.sm} />
@@ -418,7 +418,7 @@ export const ButtonIcons: Story = {
           class={cn(
             layout.inline.default,
             button.size.md,
-            "bg-surface-raised border border-surface-border rounded-lg hover:bg-surface-hover",
+            'bg-surface-raised border border-surface-border rounded-lg hover:bg-surface-hover',
           )}
         >
           <RefreshCw class={iconTheme.size.sm} />
@@ -429,7 +429,7 @@ export const ButtonIcons: Story = {
           class={cn(
             layout.inline.default,
             button.size.md,
-            "bg-status-success/10 text-status-success border border-status-success/20 rounded-lg hover:bg-status-success/20",
+            'bg-status-success/10 text-status-success border border-status-success/20 rounded-lg hover:bg-status-success/20',
           )}
         >
           <Download class={iconTheme.size.sm} />
@@ -440,7 +440,7 @@ export const ButtonIcons: Story = {
           class={cn(
             layout.inline.default,
             button.size.md,
-            "bg-status-error/10 text-status-error border border-status-error/20 rounded-lg hover:bg-status-error/20",
+            'bg-status-error/10 text-status-error border border-status-error/20 rounded-lg hover:bg-status-error/20',
           )}
         >
           <Trash2 class={iconTheme.size.sm} />
@@ -457,10 +457,10 @@ export const ButtonIcons: Story = {
 export const CardHeaders: Story = {
   render: () => (
     <div class={cn(section.spacing.default, spacing.pad.default)}>
-      <h3 class={cn("heading-3 text-text-primary", spacing.margin.bottom.content)}>
+      <h3 class={cn('heading-3 text-text-primary', spacing.margin.bottom.content)}>
         Card Header Icons
       </h3>
-      <div class={cn("grid grid-cols-2 md:grid-cols-4", spacing.gap.comfortable)}>
+      <div class={cn('grid grid-cols-2 md:grid-cols-4', spacing.gap.comfortable)}>
         <cardHeaderExample icon={<Activity />} title="Link Status" />
         <cardHeaderExample icon={<Wifi />} title="WiFi" />
         <cardHeaderExample icon={<Cable />} title="Cable Test" />
@@ -486,14 +486,14 @@ function _iconCategory({
     <div>
       <h4
         class={cn(
-          "heading-4 text-text-primary border-b border-surface-border",
+          'heading-4 text-text-primary border-b border-surface-border',
           spacing.margin.bottom.heading,
           spacing.margin.bottom.inline,
         )}
       >
         {title}
       </h4>
-      <div class={cn("grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12", spacing.gap.comfortable)}>
+      <div class={cn('grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12', spacing.gap.comfortable)}>
         {children}
       </div>
     </div>
@@ -504,12 +504,12 @@ function _iconItem({ icon, name }: { icon: React.ReactNode; name: string }): Rea
   return (
     <div
       class={cn(
-        "flex flex-col items-center text-center rounded-lg hover:bg-surface-hover",
+        'flex flex-col items-center text-center rounded-lg hover:bg-surface-hover',
         spacing.pad.sm,
       )}
     >
-      <span class={cn("text-text-primary", iconTheme.size.md)}>{icon}</span>
-      <span class={cn("caption text-text-muted truncate w-full", spacing.margin.top.inline)}>
+      <span class={cn('text-text-primary', iconTheme.size.md)}>{icon}</span>
+      <span class={cn('caption text-text-muted truncate w-full', spacing.margin.top.inline)}>
         {name}
       </span>
     </div>
@@ -528,7 +528,7 @@ function _statusExample({
   return (
     <div
       class={cn(
-        "flex items-center rounded-lg bg-surface-raised border border-surface-border",
+        'flex items-center rounded-lg bg-surface-raised border border-surface-border',
         spacing.gap.default,
         spacing.pad.sm,
       )}
@@ -552,12 +552,12 @@ function _deviceExample({
   return (
     <div
       class={cn(
-        "flex flex-col items-center rounded-lg bg-surface-raised border border-surface-border",
+        'flex flex-col items-center rounded-lg bg-surface-raised border border-surface-border',
         spacing.pad.sm,
       )}
     >
-      <span class={cn(iconTheme.size.xl, "text-text-secondary")}>{icon}</span>
-      <span class={cn("body-small text-text-muted", spacing.margin.top.inline)}>{name}</span>
+      <span class={cn(iconTheme.size.xl, 'text-text-secondary')}>{icon}</span>
+      <span class={cn('body-small text-text-muted', spacing.margin.top.inline)}>{name}</span>
     </div>
   );
 }
@@ -571,10 +571,10 @@ function _cardHeaderExample({
 }): React.JSX.Element {
   return (
     <div
-      class={cn("rounded-lg bg-surface-raised border border-surface-border", spacing.pad.default)}
+      class={cn('rounded-lg bg-surface-raised border border-surface-border', spacing.pad.default)}
     >
-      <div class={cn("flex items-center", spacing.gap.compact)}>
-        <span class={cn(iconTheme.size.md, "text-brand-primary")}>{icon}</span>
+      <div class={cn('flex items-center', spacing.gap.compact)}>
+        <span class={cn(iconTheme.size.md, 'text-brand-primary')}>{icon}</span>
         <span class="body font-medium text-text-primary">{title}</span>
       </div>
     </div>

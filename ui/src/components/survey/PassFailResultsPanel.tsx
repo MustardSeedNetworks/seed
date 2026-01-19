@@ -31,12 +31,12 @@ import {
   TrendingDown,
   TrendingUp,
   XCircle,
-} from "lucide-react";
-import type React from "react";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import type { PassFailResult, SurveyValidation } from "../../hooks/useSurvey";
-import { button, cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
+} from 'lucide-react';
+import type React from 'react';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { PassFailResult, SurveyValidation } from '../../hooks/useSurvey';
+import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
 
 interface PassFailResultsPanelProps {
   validation: SurveyValidation;
@@ -55,21 +55,21 @@ function getResultStatus(result: PassFailResult): {
   if (result.passed) {
     return {
       icon: CheckCircle2,
-      colorClass: "text-status-success",
-      bgClass: "bg-status-success/10",
+      colorClass: 'text-status-success',
+      bgClass: 'bg-status-success/10',
     };
   }
   if (result.percentage >= 80) {
     return {
       icon: AlertTriangle,
-      colorClass: "text-status-warning",
-      bgClass: "bg-status-warning/10",
+      colorClass: 'text-status-warning',
+      bgClass: 'bg-status-warning/10',
     };
   }
   return {
     icon: XCircle,
-    colorClass: "text-status-error",
-    bgClass: "bg-status-error/10",
+    colorClass: 'text-status-error',
+    bgClass: 'bg-status-error/10',
   };
 }
 
@@ -79,16 +79,16 @@ function _comparisonDisplay({
   threshold,
   suffix,
 }: {
-  comparison: "gte" | "lte";
+  comparison: 'gte' | 'lte';
   threshold: number;
   suffix: string;
 }): React.ReactElement {
-  const symbol = comparison === "gte" ? "\u2265" : "\u2264";
+  const symbol = comparison === 'gte' ? '\u2265' : '\u2264';
   return (
     <span class="text-text-muted">
       ({symbol}
       {threshold}
-      {suffix ? ` ${suffix}` : ""})
+      {suffix ? ` ${suffix}` : ''})
     </span>
   );
 }
@@ -97,7 +97,7 @@ function _comparisonDisplay({
 function _trendIndicator({ result }: { result: PassFailResult }): React.ReactElement {
   const { averageValue, threshold, comparison } = result;
   const diff = averageValue - threshold;
-  const isGood = comparison === "gte" ? diff >= 0 : diff <= 0;
+  const isGood = comparison === 'gte' ? diff >= 0 : diff <= 0;
   const margin = Math.abs(diff);
 
   if (margin < 0.1) {
@@ -138,11 +138,11 @@ function _resultRow({
         spacing.pad.sm,
         radius.md,
         bgClass,
-        "border border-transparent hover:border-surface-border transition-colors",
+        'border border-transparent hover:border-surface-border transition-colors',
       )}
     >
       {/* Header row */}
-      <div class={cn(layout.inline.default, "justify-between")}>
+      <div class={cn(layout.inline.default, 'justify-between')}>
         <div class={layout.inline.tight}>
           <ICON class={cn(iconTokens.size.sm, colorClass)} />
           <span class="body-small font-medium">
@@ -150,7 +150,7 @@ function _resultRow({
           </span>
         </div>
         <div class={layout.inline.tight}>
-          <span class={cn("body-small font-medium", colorClass)}>
+          <span class={cn('body-small font-medium', colorClass)}>
             {result.averageValue.toFixed(1)} {result.suffix}
           </span>
           <comparisonDisplay
@@ -162,10 +162,10 @@ function _resultRow({
       </div>
 
       {/* Statistics row */}
-      <div class={cn(layout.inline.default, "justify-between mt-1 text-text-muted")}>
+      <div class={cn(layout.inline.default, 'justify-between mt-1 text-text-muted')}>
         <div class={layout.inline.tight}>
           <span class="caption">
-            {t("criteria.passRate")}: {result.percentage.toFixed(1)}%
+            {t('criteria.passRate')}: {result.percentage.toFixed(1)}%
           </span>
           <span class="caption">
             ({result.totalSampleCount - result.failedSampleCount}/{result.totalSampleCount})
@@ -174,7 +174,7 @@ function _resultRow({
         <div class={layout.inline.tight}>
           <trendIndicator result={result} />
           <span class="caption">
-            {t("criteria.range")}: {result.worstValue.toFixed(1)} - {result.bestValue.toFixed(1)}
+            {t('criteria.range')}: {result.worstValue.toFixed(1)} - {result.bestValue.toFixed(1)}
           </span>
         </div>
       </div>
@@ -184,11 +184,11 @@ function _resultRow({
         <button
           type="button"
           onClick={onShowLocations}
-          class={cn(layout.inline.tight, "mt-1 caption text-brand-primary hover:underline")}
+          class={cn(layout.inline.tight, 'mt-1 caption text-brand-primary hover:underline')}
         >
           <MapPin class="w-3 h-3" />
           <span>
-            {t("criteria.failedLocations", {
+            {t('criteria.failedLocations', {
               count: result.failedSampleCount,
             })}
           </span>
@@ -215,15 +215,15 @@ function _statusBanner({
   const statusConfig = overallPass
     ? {
         icon: CheckCircle2,
-        colorClass: "text-status-success",
-        bgClass: "bg-status-success/10 border-status-success/20",
-        label: t("criteria.statusPass"),
+        colorClass: 'text-status-success',
+        bgClass: 'bg-status-success/10 border-status-success/20',
+        label: t('criteria.statusPass'),
       }
     : {
         icon: XCircle,
-        colorClass: "text-status-error",
-        bgClass: "bg-status-error/10 border-status-error/20",
-        label: t("criteria.statusFail"),
+        colorClass: 'text-status-error',
+        bgClass: 'bg-status-error/10 border-status-error/20',
+        label: t('criteria.statusFail'),
       };
 
   const ICON = statusConfig.icon;
@@ -234,19 +234,19 @@ function _statusBanner({
         spacing.pad.default,
         radius.md,
         statusConfig.bgClass,
-        "border",
+        'border',
         spacing.margin.bottom.content,
       )}
     >
-      <div class={cn(layout.inline.default, "justify-between")}>
+      <div class={cn(layout.inline.default, 'justify-between')}>
         <div class={layout.inline.default}>
           <ICON class={cn(iconTokens.size.md, statusConfig.colorClass)} />
           <div>
-            <h3 class={cn("body-default font-semibold", statusConfig.colorClass)}>
+            <h3 class={cn('body-default font-semibold', statusConfig.colorClass)}>
               {statusConfig.label}
             </h3>
             <p class="caption text-text-muted">
-              {t("criteria.summary", {
+              {t('criteria.summary', {
                 passed: passedCount,
                 total: totalCount,
                 percentage: overallPercentage.toFixed(1),
@@ -255,11 +255,11 @@ function _statusBanner({
           </div>
         </div>
         <div class="text-right">
-          <span class={cn("heading-3", statusConfig.colorClass)}>
+          <span class={cn('heading-3', statusConfig.colorClass)}>
             {overallPercentage.toFixed(0)}%
           </span>
           <p class="caption text-text-muted">
-            {passedCount}/{totalCount} {t("criteria.criteriaPassed")}
+            {passedCount}/{totalCount} {t('criteria.criteriaPassed')}
           </p>
         </div>
       </div>
@@ -277,7 +277,7 @@ export function PassFailResultsPanel({
   onGenerateReport,
   onExportCsv,
 }: PassFailResultsPanelProps): React.ReactElement {
-  const { t } = useTranslation("survey");
+  const { t } = useTranslation('survey');
 
   // Group results by pass/fail
   const { passed, failed } = useMemo(() => {
@@ -298,7 +298,7 @@ export function PassFailResultsPanel({
   };
 
   return (
-    <div class={cn("bg-surface-raised", radius.md, "border border-surface-border", spacing.pad.sm)}>
+    <div class={cn('bg-surface-raised', radius.md, 'border border-surface-border', spacing.pad.sm)}>
       {/* Status banner */}
       <statusBanner validation={validation} t={t} />
 
@@ -306,7 +306,7 @@ export function PassFailResultsPanel({
       {failed.length > 0 ? (
         <div class={spacing.margin.bottom.content}>
           <h4 class="caption font-medium text-status-error mb-2">
-            {t("criteria.failedCriteria")} ({failed.length})
+            {t('criteria.failedCriteria')} ({failed.length})
           </h4>
           <div class={layout.stack.tight}>
             {failed.map((result) => (
@@ -325,7 +325,7 @@ export function PassFailResultsPanel({
       {passed.length > 0 ? (
         <div class={spacing.margin.bottom.content}>
           <h4 class="caption font-medium text-status-success mb-2">
-            {t("criteria.passedCriteria")} ({passed.length})
+            {t('criteria.passedCriteria')} ({passed.length})
           </h4>
           <div class={layout.stack.tight}>
             {passed.map((result) => (
@@ -337,27 +337,27 @@ export function PassFailResultsPanel({
 
       {/* Timestamp */}
       <p class="caption text-text-muted text-center mb-3">
-        {t("criteria.validatedAt", {
+        {t('criteria.validatedAt', {
           time: new Date(validation.timestamp).toLocaleString(),
         })}
       </p>
 
       {/* Actions */}
-      <div class={cn(layout.inline.default, "justify-center pt-2 border-t border-surface-border")}>
+      <div class={cn(layout.inline.default, 'justify-center pt-2 border-t border-surface-border')}>
         {onGenerateReport ? (
           <button
             type="button"
             onClick={onGenerateReport}
             class={cn(
               button.size.sm,
-              "bg-brand-primary text-text-inverse",
+              'bg-brand-primary text-text-inverse',
               radius.md,
-              "hover:opacity-90",
+              'hover:opacity-90',
               layout.inline.tight,
             )}
           >
             <FileText class="w-3 h-3" />
-            <span>{t("criteria.generateReport")}</span>
+            <span>{t('criteria.generateReport')}</span>
           </button>
         ) : null}
         {onExportCsv ? (
@@ -366,14 +366,14 @@ export function PassFailResultsPanel({
             onClick={onExportCsv}
             class={cn(
               button.size.sm,
-              "bg-surface-default border border-surface-border",
+              'bg-surface-default border border-surface-border',
               radius.md,
-              "hover:bg-surface-hover",
+              'hover:bg-surface-hover',
               layout.inline.tight,
             )}
           >
             <Download class="w-3 h-3" />
-            <span>{t("criteria.exportCsv")}</span>
+            <span>{t('criteria.exportCsv')}</span>
           </button>
         ) : null}
       </div>

@@ -27,15 +27,15 @@
  * ```
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { LogComponents, logger } from "../lib/logger";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { LogComponents, logger } from '../lib/logger';
 
 /** SSE connection status states */
 export type SseConnectionStatus =
-  | "connecting" // Attempting to establish connection
-  | "connected" // Successfully connected
-  | "disconnected" // Not connected (intentional or after failure)
-  | "error"; // Connection error occurred
+  | 'connecting' // Attempting to establish connection
+  | 'connected' // Successfully connected
+  | 'disconnected' // Not connected (intentional or after failure)
+  | 'error'; // Connection error occurred
 
 /** Base message structure for SSE communication */
 export interface SseMessage {
@@ -75,11 +75,11 @@ interface UseSseReturn {
  * Defined outside component to be stable across renders.
  */
 function isValidMessage(message: unknown): message is SseMessage {
-  if (!message || typeof message !== "object") {
+  if (!message || typeof message !== 'object') {
     return false;
   }
   const msg = message as Record<string, unknown>;
-  return typeof msg.type === "string";
+  return typeof msg.type === 'string';
 }
 
 /**
@@ -87,11 +87,11 @@ function isValidMessage(message: unknown): message is SseMessage {
  * Defined outside component to be stable across renders.
  */
 function isValidCardUpdate(payload: unknown): payload is SseCardUpdate {
-  if (!payload || typeof payload !== "object") {
+  if (!payload || typeof payload !== 'object') {
     return false;
   }
   const update = payload as Record<string, unknown>;
-  return typeof update.cardId === "string";
+  return typeof update.cardId === 'string';
 }
 
 /**
@@ -106,7 +106,7 @@ export function useSse({
   onMessage,
   onCardUpdate,
 }: UseSseOptions): UseSseReturn {
-  const [status, setStatus] = useState<SseConnectionStatus>("disconnected");
+  const [status, setStatus] = useState<SseConnectionStatus>('disconnected');
   const eventSourceRef = useRef<EventSource | null>(null);
   const connectionIdRef = useRef(0);
 
@@ -138,14 +138,14 @@ export function useSse({
         const message: unknown = JSON.parse(data);
 
         if (!isValidMessage(message)) {
-          logger.warn(LogComponents.SSE, "Invalid message structure", { data });
+          logger.warn(LogComponents.SSE, 'Invalid message structure', { data });
           return;
         }
 
         // Handle card update messages specially with validation
-        if (message.type === "card_update") {
+        if (message.type === 'card_update') {
           if (!isValidCardUpdate(message.payload)) {
-            logger.warn(LogComponents.SSE, "Invalid card_update payload", {
+            logger.warn(LogComponents.SSE, 'Invalid card_update payload', {
               type: typeof message.payload,
             });
             return;
@@ -161,7 +161,7 @@ export function useSse({
           onMessageRef.current(message);
         }
       } catch (error) {
-        logger.error(LogComponents.SSE, "Failed to parse SSE message", error, { data });
+        logger.error(LogComponents.SSE, 'Failed to parse SSE message', error, { data });
       }
     },
     // Validation functions are pure and stable - no dependencies needed
@@ -177,8 +177,8 @@ export function useSse({
   const connect = useCallback(() => {
     // Don't connect if not authenticated
     if (!isAuthenticated) {
-      logger.info(LogComponents.SSE, "Skipping SSE connection - not authenticated");
-      setStatus("disconnected");
+      logger.info(LogComponents.SSE, 'Skipping SSE connection - not authenticated');
+      setStatus('disconnected');
       return;
     }
 
@@ -192,13 +192,13 @@ export function useSse({
       eventSourceRef.current.close();
     }
 
-    setStatus("connecting");
+    setStatus('connecting');
     connectionIdRef.current += 1;
     const connectionId = connectionIdRef.current;
 
     try {
       // Determine the full URL (EventSource doesn't support relative URLs in all browsers)
-      const fullUrl = url.startsWith("http")
+      const fullUrl = url.startsWith('http')
         ? url
         : `${window.location.protocol}//${window.location.host}${url}`;
 
@@ -211,8 +211,8 @@ export function useSse({
         if (connectionId !== connectionIdRef.current) {
           return;
         }
-        setStatus("connected");
-        logger.info(LogComponents.SSE, "SSE connected", { url: fullUrl });
+        setStatus('connected');
+        logger.info(LogComponents.SSE, 'SSE connected', { url: fullUrl });
       };
 
       // Handle incoming messages
@@ -231,19 +231,19 @@ export function useSse({
 
         // EventSource reconnects automatically, but we track status
         if (eventSource.readyState === EventSource.CLOSED) {
-          setStatus("disconnected");
-          logger.warn(LogComponents.SSE, "SSE connection closed");
+          setStatus('disconnected');
+          logger.warn(LogComponents.SSE, 'SSE connection closed');
         } else if (eventSource.readyState === EventSource.CONNECTING) {
-          setStatus("connecting");
-          logger.info(LogComponents.SSE, "SSE reconnecting...");
+          setStatus('connecting');
+          logger.info(LogComponents.SSE, 'SSE reconnecting...');
         } else {
-          setStatus("error");
-          logger.error(LogComponents.SSE, "SSE error", event);
+          setStatus('error');
+          logger.error(LogComponents.SSE, 'SSE error', event);
         }
       };
     } catch (error) {
-      setStatus("error");
-      logger.error(LogComponents.SSE, "Failed to create EventSource", error, { url });
+      setStatus('error');
+      logger.error(LogComponents.SSE, 'Failed to create EventSource', error, { url });
     }
   }, [url, isAuthenticated, handleSseMessage]);
 
@@ -256,7 +256,7 @@ export function useSse({
       eventSourceRef.current.close();
       eventSourceRef.current = null;
     }
-    setStatus("disconnected");
+    setStatus('disconnected');
   }, []);
 
   /**

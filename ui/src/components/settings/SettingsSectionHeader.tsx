@@ -28,11 +28,11 @@
  * Dependencies: AutoSaveIndicator, theme tokens, react-i18next
  */
 
-import type React from "react";
-import { useTranslation } from "react-i18next";
-import { icon as iconTokens, layout } from "../../styles/theme";
-import type { SaveStatus } from "../../types/settings";
-import { AutoSaveIndicator } from "./sections/AutoSaveIndicator";
+import type React from 'react';
+import { useTranslation } from 'react-i18next';
+import { icon as iconTokens, layout } from '../../styles/theme';
+import type { SaveStatus } from '../../types/settings';
+import { AutoSaveIndicator } from './sections/AutoSaveIndicator';
 
 interface SettingsSectionHeaderProps {
   /** Icon component to display before the title */
@@ -54,7 +54,7 @@ interface SettingsSectionHeaderProps {
 export function SettingsSectionHeader({
   icon: ICON,
   titleKey,
-  namespace = "settings",
+  namespace = 'settings',
   status,
 }: SettingsSectionHeaderProps): React.JSX.Element {
   const { t } = useTranslation(namespace);

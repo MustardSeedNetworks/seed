@@ -25,24 +25,24 @@
  * ```
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 
 /** Theme mode options */
-type Theme = "light" | "dark" | "system";
+type Theme = 'light' | 'dark' | 'system';
 
 /** localStorage key for theme persistence */
-const STORAGE_KEY = "seed-theme";
+const STORAGE_KEY = 'seed-theme';
 
 /**
  * Detects the system's preferred color scheme.
  *
  * @returns 'dark' if system prefers dark mode, 'light' otherwise
  */
-function getSystemTheme(): "light" | "dark" {
-  if (typeof window !== "undefined" && window.matchMedia) {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+function getSystemTheme(): 'light' | 'dark' {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
-  return "dark"; // Default to dark if unable to detect
+  return 'dark'; // Default to dark if unable to detect
 }
 
 /**
@@ -53,13 +53,13 @@ function getSystemTheme(): "light" | "dark" {
  */
 function applyTheme(theme: Theme): void {
   const root: HTMLElement = document.documentElement;
-  const effectiveTheme: "light" | "dark" = theme === "system" ? getSystemTheme() : theme;
+  const effectiveTheme: 'light' | 'dark' = theme === 'system' ? getSystemTheme() : theme;
 
   // Tailwind dark mode uses the 'dark' class on root element
-  if (effectiveTheme === "dark") {
-    root.classList.add("dark");
+  if (effectiveTheme === 'dark') {
+    root.classList.add('dark');
   } else {
-    root.classList.remove("dark");
+    root.classList.remove('dark');
   }
 }
 
@@ -73,32 +73,32 @@ function applyTheme(theme: Theme): void {
  */
 export function useTheme(): {
   theme: Theme;
-  effectiveTheme: "light" | "dark";
+  effectiveTheme: 'light' | 'dark';
   setTheme: (newTheme: Theme) => void;
   toggleTheme: () => void;
   isDark: boolean;
 } {
   const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-      return stored || "dark";
+      return stored || 'dark';
     }
-    return "dark";
+    return 'dark';
   });
 
-  const [effectiveTheme, setEffectiveTheme] = useState<"light" | "dark">(() =>
-    theme === "system" ? getSystemTheme() : theme,
+  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(() =>
+    theme === 'system' ? getSystemTheme() : theme,
   );
 
   const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem(STORAGE_KEY, newTheme);
     applyTheme(newTheme);
-    setEffectiveTheme(newTheme === "system" ? getSystemTheme() : newTheme);
+    setEffectiveTheme(newTheme === 'system' ? getSystemTheme() : newTheme);
   }, []);
 
   const toggleTheme = useCallback(() => {
-    const newTheme = effectiveTheme === "dark" ? "light" : "dark";
+    const newTheme = effectiveTheme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
   }, [effectiveTheme, setTheme]);
 
@@ -106,14 +106,14 @@ export function useTheme(): {
   useEffect(() => {
     applyTheme(theme);
 
-    if (theme === "system") {
-      const mediaQuery: MediaQueryList = window.matchMedia("(prefers-color-scheme: dark)");
+    if (theme === 'system') {
+      const mediaQuery: MediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
       const handler = (e: MediaQueryListEvent): void => {
-        setEffectiveTheme(e.matches ? "dark" : "light");
-        applyTheme("system");
+        setEffectiveTheme(e.matches ? 'dark' : 'light');
+        applyTheme('system');
       };
-      mediaQuery.addEventListener("change", handler);
-      return (): void => mediaQuery.removeEventListener("change", handler);
+      mediaQuery.addEventListener('change', handler);
+      return (): void => mediaQuery.removeEventListener('change', handler);
     }
   }, [theme]);
 
@@ -122,6 +122,6 @@ export function useTheme(): {
     effectiveTheme,
     setTheme,
     toggleTheme,
-    isDark: effectiveTheme === "dark",
+    isDark: effectiveTheme === 'dark',
   };
 }

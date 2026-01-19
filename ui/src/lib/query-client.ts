@@ -7,7 +7,7 @@
  * Related: #890
  */
 
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from '@tanstack/react-query';
 
 /**
  * Create a QueryClient with application-specific defaults.

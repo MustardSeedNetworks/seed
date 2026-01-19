@@ -37,14 +37,14 @@
  * State: Manages sort column/direction, search term, filter values, expanded rows
  */
 
-import { ArrowUpDown, ChevronDown, ChevronUp, Filter, Search, X } from "lucide-react";
-import type React from "react";
-import { type ReactNode, useCallback, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { logger } from "../../lib/logger";
-import { border, cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
+import { ArrowUpDown, ChevronDown, ChevronUp, Filter, Search, X } from 'lucide-react';
+import type React from 'react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { logger } from '../../lib/logger';
+import { border, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
 
-export type SortDirection = "asc" | "desc" | null;
+export type SortDirection = 'asc' | 'desc' | null;
 
 export interface Column<T> {
   key: string;
@@ -87,9 +87,9 @@ function _sortIcon({
   active: boolean;
 }): React.JSX.Element {
   if (!(active && direction)) {
-    return <ArrowUpDown class={cn(iconTokens.size.xs, "opacity-40")} />;
+    return <ArrowUpDown class={cn(iconTokens.size.xs, 'opacity-40')} />;
   }
-  return direction === "asc" ? (
+  return direction === 'asc' ? (
     <ChevronUp class={iconTokens.size.xs} />
   ) : (
     <ChevronDown class={iconTokens.size.xs} />
@@ -104,22 +104,22 @@ export function DataTable<T>({
   data,
   columns,
   keyExtractor,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = 'Search...',
   searchKeys,
   onRowClick,
   expandedContent: EXPANDED_CONTENT,
   isExpanded,
-  emptyMessage = "No data found",
-  maxHeight = "max-h-80",
+  emptyMessage = 'No data found',
+  maxHeight = 'max-h-80',
   actions,
   filterOptions,
   error,
   loading = false,
 }: DataTableProps<T>): React.JSX.Element {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common');
   // Note: _expandedContent is available for future row expansion feature (prefixed to suppress unused warning)
   const _expandedContent = EXPANDED_CONTENT;
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
@@ -130,15 +130,15 @@ export function DataTable<T>({
     (key: string) => {
       if (sortKey === key) {
         // Cycle through: asc -> desc -> null
-        if (sortDirection === "asc") {
-          setSortDirection("desc");
-        } else if (sortDirection === "desc") {
+        if (sortDirection === 'asc') {
+          setSortDirection('desc');
+        } else if (sortDirection === 'desc') {
           setSortDirection(null);
           setSortKey(null);
         }
       } else {
         setSortKey(key);
-        setSortDirection("asc");
+        setSortDirection('asc');
       }
     },
     [sortKey, sortDirection],
@@ -146,7 +146,7 @@ export function DataTable<T>({
 
   const handleFilterChange = useCallback((key: string, value: string) => {
     setActiveFilters((prev) => {
-      if (value === "") {
+      if (value === '') {
         const { [key]: _, ...rest } = prev;
         return rest;
       }
@@ -156,14 +156,14 @@ export function DataTable<T>({
 
   const clearFilters = useCallback(() => {
     setActiveFilters({});
-    setSearchQuery("");
+    setSearchQuery('');
   }, []);
 
   const filteredAndSortedData = useMemo(() => {
     // Fixes #680: Add null checks and error handling
     try {
       if (!Array.isArray(data)) {
-        logger.error("ui", "DataTable: data prop is not an array", undefined, { data });
+        logger.error('ui', 'DataTable: data prop is not an array', undefined, { data });
         return [];
       }
 
@@ -183,7 +183,7 @@ export function DataTable<T>({
                 const value = column.accessor(item);
                 return value?.toString().toLowerCase().includes(query);
               } catch (err) {
-                logger.error("ui", "DataTable: Error accessing column value", err);
+                logger.error('ui', 'DataTable: Error accessing column value', err);
                 return false;
               }
             }
@@ -205,7 +205,7 @@ export function DataTable<T>({
                 const value = column.accessor(item);
                 return value?.toString().toLowerCase().includes(filterValue.toLowerCase());
               } catch (err) {
-                logger.error("ui", "DataTable: Error filtering column value", err);
+                logger.error('ui', 'DataTable: Error filtering column value', err);
                 return false;
               }
             });
@@ -230,15 +230,15 @@ export function DataTable<T>({
                 return 0;
               }
               if (aVal === null) {
-                return sortDirection === "asc" ? 1 : -1;
+                return sortDirection === 'asc' ? 1 : -1;
               }
               if (bVal === null) {
-                return sortDirection === "asc" ? -1 : 1;
+                return sortDirection === 'asc' ? -1 : 1;
               }
 
               // Compare values
-              if (typeof aVal === "number" && typeof bVal === "number") {
-                return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+              if (typeof aVal === 'number' && typeof bVal === 'number') {
+                return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
               }
 
               const strA = String(aVal).toLowerCase();
@@ -246,9 +246,9 @@ export function DataTable<T>({
               const comparison = strA.localeCompare(strB, undefined, {
                 numeric: true,
               });
-              return sortDirection === "asc" ? comparison : -comparison;
+              return sortDirection === 'asc' ? comparison : -comparison;
             } catch (err) {
-              logger.error("ui", "DataTable: Error sorting data", err);
+              logger.error('ui', 'DataTable: Error sorting data', err);
               return 0;
             }
           });
@@ -257,13 +257,13 @@ export function DataTable<T>({
 
       return result;
     } catch (err) {
-      logger.error("ui", "DataTable: Error in filteredAndSortedData", err);
+      logger.error('ui', 'DataTable: Error in filteredAndSortedData', err);
       setRenderError(err instanceof Error ? err : new Error(String(err)));
       return [];
     }
   }, [data, searchQuery, searchKeys, activeFilters, sortKey, sortDirection, columns]);
 
-  const hasActiveFilters = searchQuery !== "" || Object.keys(activeFilters).length > 0;
+  const hasActiveFilters = searchQuery !== '' || Object.keys(activeFilters).length > 0;
 
   // Fixes #680: Show error state if error prop is provided or render error occurred
   const displayError = error || renderError?.message;
@@ -276,7 +276,7 @@ export function DataTable<T>({
           class={cn(
             spacing.pad.sm,
             radius.md,
-            "bg-status-error/10 border border-status-error/20 text-status-error body-small",
+            'bg-status-error/10 border border-status-error/20 text-status-error body-small',
             layout.inline.tight,
           )}
           role="alert"
@@ -293,7 +293,7 @@ export function DataTable<T>({
           class={cn(
             spacing.pad.sm,
             radius.md,
-            "bg-surface-hover text-text-muted body-small text-center",
+            'bg-surface-hover text-text-muted body-small text-center',
           )}
           role="status"
           aria-label="Loading data"
@@ -308,7 +308,7 @@ export function DataTable<T>({
           <Search
             class={cn(
               iconTokens.size.sm,
-              "absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none",
+              'absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none',
             )}
           />
           <input
@@ -319,9 +319,9 @@ export function DataTable<T>({
             }
             placeholder={searchPlaceholder}
             class={cn(
-              "w-full pl-9 pr-8",
+              'w-full pl-9 pr-8',
               spacing.compact.pyMd,
-              "body-small bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-brand-primary",
+              'body-small bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-brand-primary',
               border.card,
               radius.lg,
             )}
@@ -329,7 +329,7 @@ export function DataTable<T>({
           {searchQuery ? (
             <button
               type="button"
-              onClick={(): void => setSearchQuery("")}
+              onClick={(): void => setSearchQuery('')}
               class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
               aria-label="Clear search"
             >
@@ -343,12 +343,12 @@ export function DataTable<T>({
             onClick={(): void => setShowFilters(!showFilters)}
             class={cn(
               spacing.iconBtn.md,
-              "transition-colors",
+              'transition-colors',
               radius.lg,
               border.width.default,
               showFilters || hasActiveFilters
-                ? "bg-brand-primary/20 border-brand-primary text-brand-primary"
-                : "border-surface-border text-text-muted hover:text-text-primary hover:border-text-muted",
+                ? 'bg-brand-primary/20 border-brand-primary text-brand-primary'
+                : 'border-surface-border text-text-muted hover:text-text-primary hover:border-text-muted',
             )}
             title="Toggle filters"
           >
@@ -359,18 +359,18 @@ export function DataTable<T>({
 
       {/* Filter Dropdowns */}
       {showFilters && filterOptions ? (
-        <div class={cn(layout.inline.wrap, spacing.pad.xs, "bg-surface-hover", radius.lg)}>
+        <div class={cn(layout.inline.wrap, spacing.pad.xs, 'bg-surface-hover', radius.lg)}>
           {filterOptions.map((filter) => (
             <select
               key={filter.key}
-              value={activeFilters[filter.key] || ""}
+              value={activeFilters[filter.key] || ''}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
                 handleFilterChange(filter.key, e.target.value)
               }
               class={cn(
                 spacing.cell.px,
                 spacing.compact.py,
-                "caption bg-surface-base text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-primary",
+                'caption bg-surface-base text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-primary',
                 border.card,
                 radius.default,
               )}
@@ -391,10 +391,10 @@ export function DataTable<T>({
               class={cn(
                 spacing.cell.px,
                 spacing.compact.py,
-                "caption text-text-muted hover:text-text-primary",
+                'caption text-text-muted hover:text-text-primary',
               )}
             >
-              {t("dataTable.clearAll")}
+              {t('dataTable.clearAll')}
             </button>
           ) : null}
         </div>
@@ -403,7 +403,7 @@ export function DataTable<T>({
       {/* Results count */}
       {hasActiveFilters ? (
         <p class="caption">
-          {t("dataTable.showingResults", {
+          {t('dataTable.showingResults', {
             shown: filteredAndSortedData.length,
             total: data.length,
           })}
@@ -411,7 +411,7 @@ export function DataTable<T>({
       ) : null}
 
       {/* Table */}
-      <div class={cn("overflow-y-auto", maxHeight)}>
+      <div class={cn('overflow-y-auto', maxHeight)}>
         <table class="w-full body-small">
           <thead class="sticky top-0 bg-surface-raised z-10">
             <tr class={border.divider}>
@@ -421,10 +421,10 @@ export function DataTable<T>({
                   class={cn(
                     spacing.cell.px,
                     spacing.compact.pyMd,
-                    "text-left section-title",
-                    column.hiddenOnMobile && "hidden sm:table-cell",
-                    column.sortable && "cursor-pointer hover:text-text-primary select-none",
-                    column.width ? `w-[${column.width}]` : "",
+                    'text-left section-title',
+                    column.hiddenOnMobile && 'hidden sm:table-cell',
+                    column.sortable && 'cursor-pointer hover:text-text-primary select-none',
+                    column.width ? `w-[${column.width}]` : '',
                   )}
                   onClick={column.sortable ? (): void => handleSort(column.key) : undefined}
                 >
@@ -439,7 +439,7 @@ export function DataTable<T>({
                   </span>
                 </th>
               ))}
-              {actions ? <th class={cn(spacing.cell.px, spacing.compact.pyMd, "w-16")} /> : null}
+              {actions ? <th class={cn(spacing.cell.px, spacing.compact.pyMd, 'w-16')} /> : null}
             </tr>
           </thead>
           <tbody>
@@ -447,7 +447,7 @@ export function DataTable<T>({
               <tr>
                 <td
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  class={cn(spacing.tableCell.empty, "text-center text-text-muted")}
+                  class={cn(spacing.tableCell.empty, 'text-center text-text-muted')}
                 >
                   {emptyMessage}
                 </td>
@@ -456,7 +456,7 @@ export function DataTable<T>({
               filteredAndSortedData.map((item) => {
                 // Fixes #680: Add null checks for safe rendering
                 if (!item) {
-                  logger.warn("ui", "DataTable: Encountered null/undefined item in data");
+                  logger.warn('ui', 'DataTable: Encountered null/undefined item in data');
                   return null;
                 }
 
@@ -468,9 +468,9 @@ export function DataTable<T>({
                     <tr
                       key={key}
                       class={cn(
-                        "border-b border-surface-border/50",
-                        onRowClick && "cursor-pointer hover:bg-surface-hover",
-                        expanded && "bg-surface-hover/50",
+                        'border-b border-surface-border/50',
+                        onRowClick && 'cursor-pointer hover:bg-surface-hover',
+                        expanded && 'bg-surface-hover/50',
                       )}
                       onClick={onRowClick ? (): void => onRowClick(item) : undefined}
                     >
@@ -482,14 +482,14 @@ export function DataTable<T>({
                               class={cn(
                                 spacing.cell.px,
                                 spacing.row.py,
-                                column.hiddenOnMobile && "hidden sm:table-cell",
+                                column.hiddenOnMobile && 'hidden sm:table-cell',
                               )}
                             >
-                              {column.render ? column.render(item) : (column.accessor(item) ?? "-")}
+                              {column.render ? column.render(item) : (column.accessor(item) ?? '-')}
                             </td>
                           );
                         } catch (err) {
-                          logger.error("ui", "DataTable: Error rendering column", err, {
+                          logger.error('ui', 'DataTable: Error rendering column', err, {
                             columnKey: column.key,
                           });
                           return (
@@ -498,21 +498,21 @@ export function DataTable<T>({
                               class={cn(
                                 spacing.cell.px,
                                 spacing.row.py,
-                                column.hiddenOnMobile && "hidden sm:table-cell",
+                                column.hiddenOnMobile && 'hidden sm:table-cell',
                               )}
                             >
-                              <span class="text-status-error">{t("status.error")}</span>
+                              <span class="text-status-error">{t('status.error')}</span>
                             </td>
                           );
                         }
                       })}
                       {actions ? (
-                        <td class={cn(spacing.cell.px, spacing.row.py, "text-right")}>
+                        <td class={cn(spacing.cell.px, spacing.row.py, 'text-right')}>
                           {((): React.ReactNode => {
                             try {
                               return actions(item);
                             } catch (err) {
-                              logger.error("ui", "DataTable: Error rendering actions", err);
+                              logger.error('ui', 'DataTable: Error rendering actions', err);
                               return null;
                             }
                           })()}
@@ -521,7 +521,7 @@ export function DataTable<T>({
                     </tr>
                   );
                 } catch (err) {
-                  logger.error("ui", "DataTable: Error rendering row", err);
+                  logger.error('ui', 'DataTable: Error rendering row', err);
                   return null;
                 }
               })

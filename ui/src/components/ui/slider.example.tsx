@@ -5,9 +5,9 @@
  * in real-world scenarios within the Seed project.
  */
 
-import type React from "react";
-import { useState } from "react";
-import { Slider } from "./Slider";
+import type React from 'react';
+import { useState } from 'react';
+import { Slider } from './Slider';
 
 /**
  * Example 1: Scanner Configuration Panel
@@ -285,7 +285,7 @@ export function FormIntegrationExample(): React.JSX.Element {
 
       <Slider
         value={config.timeout}
-        onChange={(v: number): void => updateConfig("timeout", v)}
+        onChange={(v: number): void => updateConfig('timeout', v)}
         min={500}
         max={10000}
         step={500}
@@ -295,7 +295,7 @@ export function FormIntegrationExample(): React.JSX.Element {
 
       <Slider
         value={config.retries}
-        onChange={(v: number): void => updateConfig("retries", v)}
+        onChange={(v: number): void => updateConfig('retries', v)}
         min={0}
         max={10}
         step={1}
@@ -305,7 +305,7 @@ export function FormIntegrationExample(): React.JSX.Element {
 
       <Slider
         value={config.workers}
-        onChange={(v: number): void => updateConfig("workers", v)}
+        onChange={(v: number): void => updateConfig('workers', v)}
         min={5}
         max={100}
         step={5}

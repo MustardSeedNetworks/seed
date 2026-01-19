@@ -31,18 +31,18 @@
  * ```
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { api } from "../api";
-import { LogComponents, logger } from "../lib/logger";
+import { useCallback, useEffect, useState } from 'react';
+import { api } from '../api';
+import { LogComponents, logger } from '../lib/logger';
 
 /** Survey data collection mode */
-export type SurveyType = "passive" | "active" | "throughput";
+export type SurveyType = 'passive' | 'active' | 'throughput';
 
 /** Survey lifecycle status */
-export type SurveyStatus = "created" | "in_progress" | "paused" | "completed";
+export type SurveyStatus = 'created' | 'in_progress' | 'paused' | 'completed';
 
 /** How the floor plan scale was determined */
-export type ScaleSource = "auto" | "dimensions" | "calibration" | "imported" | "default";
+export type ScaleSource = 'auto' | 'dimensions' | 'calibration' | 'imported' | 'default';
 
 /** AP location marker for manual or imported AP placements */
 export interface ApLocation {
@@ -55,25 +55,25 @@ export interface ApLocation {
   band?: WiFiBand; // Primary band
   channel?: number; // Primary channel
   model?: string; // AP model (e.g., "Cisco 9130")
-  source?: "manual" | "imported" | "detected"; // How this AP was added
+  source?: 'manual' | 'imported' | 'detected'; // How this AP was added
 }
 
 /** Heatmap visualization metric types */
 export type HeatmapMetric =
-  | "rssi"
-  | "throughput"
-  | "latency"
-  | "snr"
-  | "noise"
-  | "cochannel"
-  | "adjacent"
-  | "channelUtil"
-  | "apDensity"
-  | "ssidCount"
+  | 'rssi'
+  | 'throughput'
+  | 'latency'
+  | 'snr'
+  | 'noise'
+  | 'cochannel'
+  | 'adjacent'
+  | 'channelUtil'
+  | 'apDensity'
+  | 'ssidCount'
   | null;
 
 /** Survey view mode */
-export type SurveyViewMode = "passive" | "active" | "client" | "probingClient" | "all";
+export type SurveyViewMode = 'passive' | 'active' | 'client' | 'probingClient' | 'all';
 
 /** Heatmap filter configuration */
 export interface HeatmapFilter {
@@ -102,18 +102,18 @@ export interface FloorPlan {
 }
 
 /** 802.11 PHY type identifier */
-export type PhyType = "a" | "b" | "g" | "n" | "ac" | "ax" | "be" | "unknown";
+export type PhyType = 'a' | 'b' | 'g' | 'n' | 'ac' | 'ax' | 'be' | 'unknown';
 
 /** WiFi security type */
 export type SecurityType =
-  | "open"
-  | "wep"
-  | "wpa"
-  | "wpa2"
-  | "wpa3"
-  | "wpa2-enterprise"
-  | "wpa3-enterprise"
-  | "unknown";
+  | 'open'
+  | 'wep'
+  | 'wpa'
+  | 'wpa2'
+  | 'wpa3'
+  | 'wpa2-enterprise'
+  | 'wpa3-enterprise'
+  | 'unknown';
 
 /** Channel width in MHz */
 export type ChannelWidth = 20 | 40 | 80 | 160 | 320;
@@ -173,7 +173,7 @@ export interface SamplePoint {
 }
 
 /** WiFi band identifier */
-export type WiFiBand = "2.4" | "5" | "6";
+export type WiFiBand = '2.4' | '5' | '6';
 
 /** Configuration for a single WiFi adapter in a survey */
 export interface AdapterConfig {
@@ -200,17 +200,17 @@ export interface SurveyConfig {
 
   // Active survey settings
   targetSsid?: string; // Target SSID for active survey
-  roamingSensitivity?: "low" | "medium" | "high";
+  roamingSensitivity?: 'low' | 'medium' | 'high';
 }
 
 /** Default channels for each band */
 export const DEFAULT_CHANNELS: Record<string, number[]> = {
-  "2.4": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-  "5": [
+  '2.4': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+  '5': [
     36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149,
     153, 157, 161, 165,
   ],
-  "6": [
+  '6': [
     1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 49, 53, 57, 61, 65, 69, 73, 77, 81, 85, 89, 93,
   ],
 };
@@ -254,7 +254,7 @@ export interface Survey {
 // ============================================================================
 
 /** Comparison operator for pass/fail threshold */
-export type ComparisonOperator = "gte" | "lte";
+export type ComparisonOperator = 'gte' | 'lte';
 
 /** A single pass/fail criterion with configurable threshold */
 export interface PassFailCriterion {
@@ -266,7 +266,7 @@ export interface PassFailCriterion {
   threshold: number; // Threshold value
   suffix: string; // Unit suffix (dBm, dB, %, Mbps, APs, ms)
   enabled: boolean; // Whether this criterion is active
-  mode: "passive" | "active" | "throughput" | "all"; // Survey type this applies to
+  mode: 'passive' | 'active' | 'throughput' | 'all'; // Survey type this applies to
   apIndex?: number; // For "nth strongest AP" tests (0=strongest, 1=second, etc.)
   description?: string; // Optional description of what this criterion measures
 }
@@ -303,146 +303,146 @@ export interface SurveyValidation {
 /** Default pass/fail criteria for passive surveys */
 export const DEFAULT_PASSIVE_CRITERIA: PassFailCriterion[] = [
   {
-    id: "primary-signal",
-    name: "primarySignal",
-    displayKey: "criteria.primarySignal",
-    metric: "rssi",
-    comparison: "gte",
+    id: 'primary-signal',
+    name: 'primarySignal',
+    displayKey: 'criteria.primarySignal',
+    metric: 'rssi',
+    comparison: 'gte',
     threshold: -65,
-    suffix: "dBm",
+    suffix: 'dBm',
     enabled: true,
-    mode: "passive",
+    mode: 'passive',
     apIndex: 0,
-    description: "Strongest AP signal at each location",
+    description: 'Strongest AP signal at each location',
   },
   {
-    id: "secondary-signal",
-    name: "secondarySignal",
-    displayKey: "criteria.secondarySignal",
-    metric: "rssi",
-    comparison: "gte",
+    id: 'secondary-signal',
+    name: 'secondarySignal',
+    displayKey: 'criteria.secondarySignal',
+    metric: 'rssi',
+    comparison: 'gte',
     threshold: -70,
-    suffix: "dBm",
+    suffix: 'dBm',
     enabled: true,
-    mode: "passive",
+    mode: 'passive',
     apIndex: 1,
-    description: "Second strongest AP for roaming redundancy",
+    description: 'Second strongest AP for roaming redundancy',
   },
   {
-    id: "snr",
-    name: "snr",
-    displayKey: "criteria.snr",
-    metric: "snr",
-    comparison: "gte",
+    id: 'snr',
+    name: 'snr',
+    displayKey: 'criteria.snr',
+    metric: 'snr',
+    comparison: 'gte',
     threshold: 25,
-    suffix: "dB",
+    suffix: 'dB',
     enabled: true,
-    mode: "passive",
-    description: "Signal-to-noise ratio for reliable connections",
+    mode: 'passive',
+    description: 'Signal-to-noise ratio for reliable connections',
   },
   {
-    id: "cochannel",
-    name: "coChannel",
-    displayKey: "criteria.coChannel",
-    metric: "cochannel",
-    comparison: "lte",
+    id: 'cochannel',
+    name: 'coChannel',
+    displayKey: 'criteria.coChannel',
+    metric: 'cochannel',
+    comparison: 'lte',
     threshold: 4,
-    suffix: "APs",
+    suffix: 'APs',
     enabled: true,
-    mode: "passive",
-    description: "Co-channel interference from APs on same channel",
+    mode: 'passive',
+    description: 'Co-channel interference from APs on same channel',
   },
   {
-    id: "adjacent",
-    name: "adjChannel",
-    displayKey: "criteria.adjChannel",
-    metric: "adjacent",
-    comparison: "lte",
+    id: 'adjacent',
+    name: 'adjChannel',
+    displayKey: 'criteria.adjChannel',
+    metric: 'adjacent',
+    comparison: 'lte',
     threshold: 1,
-    suffix: "APs",
+    suffix: 'APs',
     enabled: true,
-    mode: "passive",
-    description: "Adjacent channel interference",
+    mode: 'passive',
+    description: 'Adjacent channel interference',
   },
 ];
 
 /** Default pass/fail criteria for active surveys */
 export const DEFAULT_ACTIVE_CRITERIA: PassFailCriterion[] = [
   {
-    id: "active-signal",
-    name: "activeSignal",
-    displayKey: "criteria.activeSignal",
-    metric: "rssi",
-    comparison: "gte",
+    id: 'active-signal',
+    name: 'activeSignal',
+    displayKey: 'criteria.activeSignal',
+    metric: 'rssi',
+    comparison: 'gte',
     threshold: -65,
-    suffix: "dBm",
+    suffix: 'dBm',
     enabled: true,
-    mode: "active",
-    description: "Connected AP signal strength",
+    mode: 'active',
+    description: 'Connected AP signal strength',
   },
   {
-    id: "active-snr",
-    name: "activeSnr",
-    displayKey: "criteria.activeSnr",
-    metric: "snr",
-    comparison: "gte",
+    id: 'active-snr',
+    name: 'activeSnr',
+    displayKey: 'criteria.activeSnr',
+    metric: 'snr',
+    comparison: 'gte',
     threshold: 25,
-    suffix: "dB",
+    suffix: 'dB',
     enabled: true,
-    mode: "active",
-    description: "Signal-to-noise ratio while connected",
+    mode: 'active',
+    description: 'Signal-to-noise ratio while connected',
   },
   {
-    id: "active-link-rate",
-    name: "activeLinkRate",
-    displayKey: "criteria.linkRate",
-    metric: "throughput",
-    comparison: "gte",
+    id: 'active-link-rate',
+    name: 'activeLinkRate',
+    displayKey: 'criteria.linkRate',
+    metric: 'throughput',
+    comparison: 'gte',
     threshold: 200,
-    suffix: "Mbps",
+    suffix: 'Mbps',
     enabled: true,
-    mode: "active",
-    description: "Minimum PHY data rate",
+    mode: 'active',
+    description: 'Minimum PHY data rate',
   },
 ];
 
 /** Default pass/fail criteria for throughput surveys */
 export const DEFAULT_THROUGHPUT_CRITERIA: PassFailCriterion[] = [
   {
-    id: "bandwidth",
-    name: "bandwidth",
-    displayKey: "criteria.bandwidth",
-    metric: "throughput",
-    comparison: "gte",
+    id: 'bandwidth',
+    name: 'bandwidth',
+    displayKey: 'criteria.bandwidth',
+    metric: 'throughput',
+    comparison: 'gte',
     threshold: 100,
-    suffix: "Mbps",
+    suffix: 'Mbps',
     enabled: true,
-    mode: "throughput",
-    description: "Minimum measured bandwidth (iperf3)",
+    mode: 'throughput',
+    description: 'Minimum measured bandwidth (iperf3)',
   },
   {
-    id: "latency",
-    name: "latency",
-    displayKey: "criteria.latency",
-    metric: "latency",
-    comparison: "lte",
+    id: 'latency',
+    name: 'latency',
+    displayKey: 'criteria.latency',
+    metric: 'latency',
+    comparison: 'lte',
     threshold: 50,
-    suffix: "ms",
+    suffix: 'ms',
     enabled: true,
-    mode: "throughput",
-    description: "Maximum acceptable latency",
+    mode: 'throughput',
+    description: 'Maximum acceptable latency',
   },
   {
-    id: "jitter",
-    name: "jitter",
-    displayKey: "criteria.jitter",
-    metric: "latency",
-    comparison: "lte",
+    id: 'jitter',
+    name: 'jitter',
+    displayKey: 'criteria.jitter',
+    metric: 'latency',
+    comparison: 'lte',
     threshold: 10,
-    suffix: "ms",
+    suffix: 'ms',
     enabled: true,
-    mode: "throughput",
-    description: "Maximum acceptable jitter",
+    mode: 'throughput',
+    description: 'Maximum acceptable jitter',
   },
 ];
 
@@ -451,11 +451,11 @@ export const DEFAULT_THROUGHPUT_CRITERIA: PassFailCriterion[] = [
  */
 export function getDefaultCriteria(surveyType: SurveyType): PassFailCriterion[] {
   switch (surveyType) {
-    case "passive":
+    case 'passive':
       return [...DEFAULT_PASSIVE_CRITERIA];
-    case "active":
+    case 'active':
       return [...DEFAULT_ACTIVE_CRITERIA];
-    case "throughput":
+    case 'throughput':
       return [...DEFAULT_THROUGHPUT_CRITERIA];
     default:
       return [...DEFAULT_PASSIVE_CRITERIA];
@@ -508,14 +508,14 @@ export function useSurvey(): {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.get<Survey[] | { surveys?: Survey[] }>("/api/v1/canopy/survey/list");
+      const data = await api.get<Survey[] | { surveys?: Survey[] }>('/api/v1/canopy/survey/list');
       setSurveys(Array.isArray(data) ? data : (data.surveys ?? []));
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to load surveys";
+      const errorMsg = err instanceof Error ? err.message : 'Failed to load surveys';
       setError(errorMsg);
       // fixes #678 - added structured error logging
-      logger.error(LogComponents.Survey, "Failed to list surveys", err, {
-        endpoint: "/api/v1/canopy/survey/list",
+      logger.error(LogComponents.Survey, 'Failed to list surveys', err, {
+        endpoint: '/api/v1/canopy/survey/list',
       });
     } finally {
       setLoading(false);
@@ -527,20 +527,20 @@ export function useSurvey(): {
       setLoading(true);
       setError(null);
       try {
-        const survey = await api.post<Survey>("/api/v1/canopy/survey/create", request);
+        const survey = await api.post<Survey>('/api/v1/canopy/survey/create', request);
         await listSurveys(); // Refresh list
-        logger.info(LogComponents.Survey, "Survey created successfully", {
+        logger.info(LogComponents.Survey, 'Survey created successfully', {
           surveyId: survey.id,
           name: request.name,
           type: request.surveyType,
         });
         return survey;
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Failed to create survey";
+        const errorMsg = err instanceof Error ? err.message : 'Failed to create survey';
         setError(errorMsg);
         // fixes #678 - added structured error logging
-        logger.error(LogComponents.Survey, "Failed to create survey", err, {
-          endpoint: "/api/v1/canopy/survey/create",
+        logger.error(LogComponents.Survey, 'Failed to create survey', err, {
+          endpoint: '/api/v1/canopy/survey/create',
           request,
         });
         throw new Error(errorMsg);
@@ -558,11 +558,11 @@ export function useSurvey(): {
       const params = new URLSearchParams({ id });
       return await api.get<Survey>(`/api/canopy/survey?${params.toString()}`);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to get survey";
+      const errorMsg = err instanceof Error ? err.message : 'Failed to get survey';
       setError(errorMsg);
       // fixes #678 - added structured error logging
-      logger.error(LogComponents.Survey, "Failed to get survey", err, {
-        endpoint: "/api/v1/canopy/survey",
+      logger.error(LogComponents.Survey, 'Failed to get survey', err, {
+        endpoint: '/api/v1/canopy/survey',
         surveyId: id,
       });
       throw new Error(errorMsg);
@@ -579,15 +579,15 @@ export function useSurvey(): {
         const params = new URLSearchParams({ id });
         await api.delete(`/api/canopy/survey/delete?${params.toString()}`);
         await listSurveys(); // Refresh list
-        logger.info(LogComponents.Survey, "Survey deleted successfully", {
+        logger.info(LogComponents.Survey, 'Survey deleted successfully', {
           surveyId: id,
         });
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Failed to delete survey";
+        const errorMsg = err instanceof Error ? err.message : 'Failed to delete survey';
         setError(errorMsg);
         // fixes #678 - added structured error logging
-        logger.error(LogComponents.Survey, "Failed to delete survey", err, {
-          endpoint: "/api/v1/canopy/survey/delete",
+        logger.error(LogComponents.Survey, 'Failed to delete survey', err, {
+          endpoint: '/api/v1/canopy/survey/delete',
           surveyId: id,
         });
       } finally {
@@ -605,13 +605,13 @@ export function useSurvey(): {
         const params = new URLSearchParams({ id });
         await api.post(`/api/canopy/survey/start?${params.toString()}`);
         await listSurveys(); // Refresh list
-        logger.info(LogComponents.Survey, "Survey started", { surveyId: id });
+        logger.info(LogComponents.Survey, 'Survey started', { surveyId: id });
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Failed to start survey";
+        const errorMsg = err instanceof Error ? err.message : 'Failed to start survey';
         setError(errorMsg);
         // fixes #678 - added structured error logging
-        logger.error(LogComponents.Survey, "Failed to start survey", err, {
-          endpoint: "/api/v1/canopy/survey/start",
+        logger.error(LogComponents.Survey, 'Failed to start survey', err, {
+          endpoint: '/api/v1/canopy/survey/start',
           surveyId: id,
         });
       } finally {
@@ -629,13 +629,13 @@ export function useSurvey(): {
         const params = new URLSearchParams({ id });
         await api.post(`/api/canopy/survey/pause?${params.toString()}`);
         await listSurveys(); // Refresh list
-        logger.info(LogComponents.Survey, "Survey paused", { surveyId: id });
+        logger.info(LogComponents.Survey, 'Survey paused', { surveyId: id });
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Failed to pause survey";
+        const errorMsg = err instanceof Error ? err.message : 'Failed to pause survey';
         setError(errorMsg);
         // fixes #678 - added structured error logging
-        logger.error(LogComponents.Survey, "Failed to pause survey", err, {
-          endpoint: "/api/v1/canopy/survey/pause",
+        logger.error(LogComponents.Survey, 'Failed to pause survey', err, {
+          endpoint: '/api/v1/canopy/survey/pause',
           surveyId: id,
         });
       } finally {
@@ -653,13 +653,13 @@ export function useSurvey(): {
         const params = new URLSearchParams({ id });
         await api.post(`/api/canopy/survey/complete?${params.toString()}`);
         await listSurveys(); // Refresh list
-        logger.info(LogComponents.Survey, "Survey completed", { surveyId: id });
+        logger.info(LogComponents.Survey, 'Survey completed', { surveyId: id });
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Failed to complete survey";
+        const errorMsg = err instanceof Error ? err.message : 'Failed to complete survey';
         setError(errorMsg);
         // fixes #678 - added structured error logging
-        logger.error(LogComponents.Survey, "Failed to complete survey", err, {
-          endpoint: "/api/v1/canopy/survey/complete",
+        logger.error(LogComponents.Survey, 'Failed to complete survey', err, {
+          endpoint: '/api/v1/canopy/survey/complete',
           surveyId: id,
         });
       } finally {
@@ -685,17 +685,17 @@ export function useSurvey(): {
           y,
           sampleData,
         });
-        logger.debug(LogComponents.Survey, "Sample added to survey", {
+        logger.debug(LogComponents.Survey, 'Sample added to survey', {
           surveyId: id,
           x,
           y,
         });
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Failed to add sample";
+        const errorMsg = err instanceof Error ? err.message : 'Failed to add sample';
         setError(errorMsg);
         // fixes #678 - added structured error logging
-        logger.error(LogComponents.Survey, "Failed to add sample", err, {
-          endpoint: "/api/v1/canopy/survey/sample",
+        logger.error(LogComponents.Survey, 'Failed to add sample', err, {
+          endpoint: '/api/v1/canopy/survey/sample',
           surveyId: id,
           coordinates: { x, y },
         });
@@ -712,17 +712,17 @@ export function useSurvey(): {
     try {
       const params = new URLSearchParams({ id });
       await api.post(`/api/canopy/survey/floorplan?${params.toString()}`, floorPlan);
-      logger.info(LogComponents.Survey, "Floor plan updated", {
+      logger.info(LogComponents.Survey, 'Floor plan updated', {
         surveyId: id,
         dimensions: { width: floorPlan.width, height: floorPlan.height },
         scale: floorPlan.scaleM,
       });
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to update floor plan";
+      const errorMsg = err instanceof Error ? err.message : 'Failed to update floor plan';
       setError(errorMsg);
       // fixes #678 - added structured error logging
-      logger.error(LogComponents.Survey, "Failed to update floor plan", err, {
-        endpoint: "/api/v1/canopy/survey/floorplan",
+      logger.error(LogComponents.Survey, 'Failed to update floor plan', err, {
+        endpoint: '/api/v1/canopy/survey/floorplan',
         surveyId: id,
       });
     } finally {

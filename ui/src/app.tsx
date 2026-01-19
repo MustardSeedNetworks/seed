@@ -27,53 +27,52 @@
  * automatically detecting if the system needs configuration.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-
-import { LoginForm } from "./app/LoginForm";
-import { CapabilityWarnings } from "./components/app/CapabilityWarnings";
-import { HeaderBar } from "./components/app/HeaderBar";
-import { CableCard } from "./components/cards/CableCard";
-import { DnsCard } from "./components/cards/DnsCard";
-import { GatewayCard } from "./components/cards/GatewayCard";
-import { HealthCheckCard } from "./components/cards/HealthCheckCard";
-import { LinkCard } from "./components/cards/LinkCard";
-import { LogViewerCard } from "./components/cards/LogViewerCard";
-import { NetworkCard } from "./components/cards/NetworkCard";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { api, setSessionExpiredCallback } from './api';
+import { LoginForm } from './app/LoginForm';
+import { CapabilityWarnings } from './components/app/CapabilityWarnings';
+import { HeaderBar } from './components/app/HeaderBar';
+import { CableCard } from './components/cards/CableCard';
+import { DnsCard } from './components/cards/DnsCard';
+import { GatewayCard } from './components/cards/GatewayCard';
+import { HealthCheckCard } from './components/cards/HealthCheckCard';
+import { LinkCard } from './components/cards/LinkCard';
+import { LogViewerCard } from './components/cards/LogViewerCard';
+import { NetworkCard } from './components/cards/NetworkCard';
 import {
   NetworkDiscoveryCard,
   type NetworkDiscoveryData,
-} from "./components/cards/NetworkDiscoveryCard";
-import { PathDiscoveryCard } from "./components/cards/PathDiscoveryCard";
-import { PerformanceCard } from "./components/cards/PerformanceCard";
-import { PublicIpCard } from "./components/cards/PublicIpCard";
-import { SLADashboardCard } from "./components/cards/SlaDashboardCard";
-import { SwitchCard } from "./components/cards/SwitchCard";
-import { SystemHealthCard } from "./components/cards/SystemHealthCard";
-import { WiFiCard } from "./components/cards/WiFiCard";
-import { WifiChannelGraph } from "./components/cards/WiFiChannelGraph";
-import { WiFiSurveyCard } from "./components/cards/WiFiSurveyCard";
-import { ImprovedHelpModal } from "./components/help/ImprovedHelpModal";
-import { ProfileManagement } from "./components/profiles/ProfileManagement";
-import { SettingsDrawer } from "./components/settings/SettingsDrawer";
-import { SetupWizard } from "./components/setup/SetupWizard";
-import { Fab } from "./components/ui/Fab";
-import { useProfileContext } from "./contexts/profile-context";
-import { useSettings } from "./contexts/useSettings";
-import { useAppDrawers } from "./hooks/useAppDrawers";
-import { useAuth } from "./hooks/useAuth";
-import { useCapabilities } from "./hooks/useCapabilities";
-import { useCardState } from "./hooks/useCardState";
-import { useChannelGraph } from "./hooks/useChannelGraph";
-import { useInterfaceState } from "./hooks/useInterfaceState";
-import { useNetworkFetchers } from "./hooks/useNetworkFetchers";
-import { useSetupState } from "./hooks/useSetupState";
-import { useSse } from "./hooks/useSse";
-import { useSsePolling } from "./hooks/useSsePolling";
-import { useTheme } from "./hooks/useTheme";
-import { api, setSessionExpiredCallback } from "./api";
-import { LogComponents, logger } from "./lib/logger";
-import { cn, layout, radius, section, spacing } from "./styles/theme";
+} from './components/cards/NetworkDiscoveryCard';
+import { PathDiscoveryCard } from './components/cards/PathDiscoveryCard';
+import { PerformanceCard } from './components/cards/PerformanceCard';
+import { PublicIpCard } from './components/cards/PublicIpCard';
+import { SLADashboardCard } from './components/cards/SlaDashboardCard';
+import { SwitchCard } from './components/cards/SwitchCard';
+import { SystemHealthCard } from './components/cards/SystemHealthCard';
+import { WiFiCard } from './components/cards/WiFiCard';
+import { WifiChannelGraph } from './components/cards/WiFiChannelGraph';
+import { WiFiSurveyCard } from './components/cards/WiFiSurveyCard';
+import { ImprovedHelpModal } from './components/help/ImprovedHelpModal';
+import { ProfileManagement } from './components/profiles/ProfileManagement';
+import { SettingsDrawer } from './components/settings/SettingsDrawer';
+import { SetupWizard } from './components/setup/SetupWizard';
+import { Fab } from './components/ui/Fab';
+import { useProfileContext } from './contexts/profile-context';
+import { useSettings } from './contexts/useSettings';
+import { useAppDrawers } from './hooks/useAppDrawers';
+import { useAuth } from './hooks/useAuth';
+import { useCapabilities } from './hooks/useCapabilities';
+import { useCardState } from './hooks/useCardState';
+import { useChannelGraph } from './hooks/useChannelGraph';
+import { useInterfaceState } from './hooks/useInterfaceState';
+import { useNetworkFetchers } from './hooks/useNetworkFetchers';
+import { useSetupState } from './hooks/useSetupState';
+import { useSse } from './hooks/useSse';
+import { useSsePolling } from './hooks/useSsePolling';
+import { useTheme } from './hooks/useTheme';
+import { LogComponents, logger } from './lib/logger';
+import { cn, layout, radius, section, spacing } from './styles/theme';
 
 // ============================================================================
 // Helper types for interface management
@@ -110,7 +109,7 @@ interface InterfaceRestorationResult {
  */
 function findBestInterface(
   interfaces: InterfaceInfo[],
-  type: "ethernet" | "wifi",
+  type: 'ethernet' | 'wifi',
 ): InterfaceInfo | null {
   const candidates = interfaces.filter((iface) => iface.type === type);
   if (candidates.length === 0) {
@@ -136,8 +135,8 @@ function parseProfileInterfaces(
   const result: InterfaceRestorationResult = {
     restoredEthernet: false,
     restoredWifi: false,
-    savedEthernetName: "",
-    savedWifiName: "",
+    savedEthernetName: '',
+    savedWifiName: '',
   };
 
   if (!profileInterfaces) {
@@ -147,7 +146,7 @@ function parseProfileInterfaces(
   // Check ethernet interface
   if (profileInterfaces.active_ethernet) {
     result.savedEthernetName = profileInterfaces.active_ethernet;
-    if (interfaceExistsWithType(interfaces, result.savedEthernetName, "ethernet")) {
+    if (interfaceExistsWithType(interfaces, result.savedEthernetName, 'ethernet')) {
       result.restoredEthernet = true;
     }
   }
@@ -155,7 +154,7 @@ function parseProfileInterfaces(
   // Check wifi interface
   if (profileInterfaces.active_wifi) {
     result.savedWifiName = profileInterfaces.active_wifi;
-    if (interfaceExistsWithType(interfaces, result.savedWifiName, "wifi")) {
+    if (interfaceExistsWithType(interfaces, result.savedWifiName, 'wifi')) {
       result.restoredWifi = true;
     }
   }
@@ -172,7 +171,7 @@ function applyInterfaceRestoration(
   setEthernetInterfaceState: (name: string) => void,
   setWifiInterfaceState: (name: string) => void,
   changeInterface: (name: string) => Promise<void>,
-  setActiveMode: (mode: "ethernet" | "wifi") => void,
+  setActiveMode: (mode: 'ethernet' | 'wifi') => void,
 ): void {
   // Update local state
   if (restoration.restoredEthernet) {
@@ -185,14 +184,14 @@ function applyInterfaceRestoration(
   // Set active interface on backend (prefer ethernet if both exist)
   if (restoration.restoredEthernet) {
     changeInterface(restoration.savedEthernetName).catch((err: unknown) => {
-      logger.error(LogComponents.Network, "Failed to change interface", { error: err });
+      logger.error(LogComponents.Network, 'Failed to change interface', { error: err });
     });
-    setActiveMode("ethernet");
+    setActiveMode('ethernet');
   } else if (restoration.restoredWifi) {
     changeInterface(restoration.savedWifiName).catch((err: unknown) => {
-      logger.error(LogComponents.Network, "Failed to change interface", { error: err });
+      logger.error(LogComponents.Network, 'Failed to change interface', { error: err });
     });
-    setActiveMode("wifi");
+    setActiveMode('wifi');
   }
 }
 
@@ -204,7 +203,7 @@ function applyInterfaceRestoration(
  */
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Main App component with necessary orchestration logic
 function App(): JSX.Element {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common');
   const { isAuthenticated, login, logout, isLoading, error } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   // Issue #803: Track network capabilities for warning display
@@ -262,7 +261,7 @@ function App(): JSX.Element {
     }>
   >([]);
   const [networkDiscovery, setNetworkDiscovery] = useState<NetworkDiscoveryData | null>(null);
-  const [appVersion, setAppVersion] = useState("dev");
+  const [appVersion, setAppVersion] = useState('dev');
   // #756: Auto-detected recommended interfaces (most capable)
   const [recommendedEthernet, setRecommendedEthernet] = useState<string | undefined>();
   const [recommendedWifi, setRecommendedWifi] = useState<string | undefined>();
@@ -281,12 +280,12 @@ function App(): JSX.Element {
       prevActiveProfileRef.current !== null &&
       prevActiveProfileRef.current !== currentProfileId
     ) {
-      logger.info(LogComponents.Config, "Profile changed, refreshing settings", {
+      logger.info(LogComponents.Config, 'Profile changed, refreshing settings', {
         from: prevActiveProfileRef.current,
         to: currentProfileId,
       });
       refreshSettings().catch((err: unknown) => {
-        logger.error(LogComponents.Config, "Failed to refresh settings", { error: err });
+        logger.error(LogComponents.Config, 'Failed to refresh settings', { error: err });
       });
     }
     prevActiveProfileRef.current = currentProfileId;
@@ -408,12 +407,12 @@ function App(): JSX.Element {
           : null,
       );
 
-      await api.post("/api/v1/shell/devices/scan");
+      await api.post('/api/v1/shell/devices/scan');
 
       // Poll for completion
       scanPollIntervalRef.current = setInterval(async () => {
         try {
-          const status = await api.get<{ scanning: boolean }>("/api/v1/shell/devices/status");
+          const status = await api.get<{ scanning: boolean }>('/api/v1/shell/devices/status');
           if (!status.scanning) {
             if (scanPollIntervalRef.current) {
               clearInterval(scanPollIntervalRef.current);
@@ -434,7 +433,7 @@ function App(): JSX.Element {
         }
       }, 60000);
     } catch (err) {
-      logger.error(LogComponents.Devices, "Failed to trigger device scan", err);
+      logger.error(LogComponents.Devices, 'Failed to trigger device scan', err);
       setNetworkDiscovery((prev) =>
         prev
           ? {
@@ -451,7 +450,7 @@ function App(): JSX.Element {
     async (interfaceName: string) => {
       try {
         // Use api.put() which handles CSRF tokens automatically
-        const data = await api.put<{ isWireless?: boolean }>("/api/v1/interface", {
+        const data = await api.put<{ isWireless?: boolean }>('/api/v1/interface', {
           interface: interfaceName,
         });
         if (data) {
@@ -490,7 +489,7 @@ function App(): JSX.Element {
           });
         }
       } catch (err) {
-        logger.error(LogComponents.Network, "Failed to change interface", err);
+        logger.error(LogComponents.Network, 'Failed to change interface', err);
       }
     },
     [
@@ -511,13 +510,13 @@ function App(): JSX.Element {
 
   // Fast switching between Ethernet/Wi-Fi views
   const switchToInterfaceType = useCallback(
-    async (type: "ethernet" | "wifi") => {
+    async (type: 'ethernet' | 'wifi') => {
       // Mark that user explicitly selected this mode - prevents API responses from flipping back
       userSetWifiModeRef.current = true;
       setActiveMode(type);
 
       // Check if we already have a stored interface for this mode
-      const storedInterface = type === "wifi" ? wifiInterface : ethernetInterface;
+      const storedInterface = type === 'wifi' ? wifiInterface : ethernetInterface;
       if (storedInterface) {
         await changeInterface(storedInterface);
         return;
@@ -531,11 +530,11 @@ function App(): JSX.Element {
       }
 
       // Update state and persist selection
-      const setInterfaceState = type === "wifi" ? setWifiInterfaceState : setEthernetInterfaceState;
+      const setInterfaceState = type === 'wifi' ? setWifiInterfaceState : setEthernetInterfaceState;
       setInterfaceState(target.name);
       await changeInterface(target.name);
       // Persist interface selection - use Promise.resolve to satisfy linter
-      if (type === "wifi") {
+      if (type === 'wifi') {
         await Promise.resolve(setWifiInterface(target.name, true));
       } else {
         await Promise.resolve(setEthernetInterface(target.name, true));
@@ -575,12 +574,12 @@ function App(): JSX.Element {
 
     // Log restoration if applicable
     if (restoration.restoredEthernet) {
-      logger.info(LogComponents.Config, "Restoring ethernet interface from profile", {
+      logger.info(LogComponents.Config, 'Restoring ethernet interface from profile', {
         interface: restoration.savedEthernetName,
       });
     }
     if (restoration.restoredWifi) {
-      logger.info(LogComponents.Config, "Restoring WiFi interface from profile", {
+      logger.info(LogComponents.Config, 'Restoring WiFi interface from profile', {
         interface: restoration.savedWifiName,
       });
     }
@@ -660,7 +659,7 @@ function App(): JSX.Element {
       // Trigger network discovery if enabled
       if (runOpts.runNetworkDiscovery) {
         triggerDeviceScan().catch((err: unknown) => {
-          logger.error(LogComponents.Network, "Failed to trigger device scan", { error: err });
+          logger.error(LogComponents.Network, 'Failed to trigger device scan', { error: err });
         });
       }
 
@@ -672,18 +671,18 @@ function App(): JSX.Element {
       // Determine how many card-managed tests we need to wait for
       const cardTestsToWait: string[] = [];
       if (runOpts.runPerformance && runOpts.runSpeedtest) {
-        cardTestsToWait.push("speedtest");
+        cardTestsToWait.push('speedtest');
       }
       if (runOpts.runPerformance && runOpts.runIperf) {
-        cardTestsToWait.push("iperf");
+        cardTestsToWait.push('iperf');
       }
       if (runOpts.runHealthChecks) {
-        cardTestsToWait.push("healthchecks");
+        cardTestsToWait.push('healthchecks');
       }
 
       // If no card-managed tests, signal completion immediately
       if (cardTestsToWait.length === 0) {
-        window.dispatchEvent(new CustomEvent("testsComplete"));
+        window.dispatchEvent(new CustomEvent('testsComplete'));
         return;
       }
 
@@ -695,30 +694,30 @@ function App(): JSX.Element {
           completed.add(testName);
           // Check if all expected tests are done
           if (completed.size === cardTestsToWait.length) {
-            window.removeEventListener("cardTestComplete", handleCardComplete as EventListener);
-            window.dispatchEvent(new CustomEvent("testsComplete"));
+            window.removeEventListener('cardTestComplete', handleCardComplete as EventListener);
+            window.dispatchEvent(new CustomEvent('testsComplete'));
           }
         }
       };
 
       // Listen for card test completions
-      window.addEventListener("cardTestComplete", handleCardComplete as EventListener);
+      window.addEventListener('cardTestComplete', handleCardComplete as EventListener);
 
       // Failsafe timeout (90s) in case a card doesn't report completion
       setTimeout(() => {
-        window.removeEventListener("cardTestComplete", handleCardComplete as EventListener);
+        window.removeEventListener('cardTestComplete', handleCardComplete as EventListener);
         if (completed.size < cardTestsToWait.length) {
           logger.warn(
             LogComponents.Ui,
-            "FAB timeout: Not all card tests completed, signaling done anyway",
+            'FAB timeout: Not all card tests completed, signaling done anyway',
           );
-          window.dispatchEvent(new CustomEvent("testsComplete"));
+          window.dispatchEvent(new CustomEvent('testsComplete'));
         }
       }, 90000);
     };
-    window.addEventListener("runAllTests", handleRunAllTests);
+    window.addEventListener('runAllTests', handleRunAllTests);
     return () => {
-      window.removeEventListener("runAllTests", handleRunAllTests);
+      window.removeEventListener('runAllTests', handleRunAllTests);
     };
   }, [
     fetchLinkData,
@@ -735,7 +734,7 @@ function App(): JSX.Element {
 
   // SSE connection for real-time updates (simpler than WebSocket)
   const { status: sseStatus, reconnect } = useSse({
-    url: "/api/events",
+    url: '/api/events',
     isAuthenticated,
     onMessage: handleMessage,
     onCardUpdate: handleCardUpdate,
@@ -786,7 +785,7 @@ function App(): JSX.Element {
         /* handled */
       });
       fetchChannelGraphData().catch((err: unknown) => {
-        logger.error(LogComponents.Network, "Failed to fetch channel graph data", { error: err });
+        logger.error(LogComponents.Network, 'Failed to fetch channel graph data', { error: err });
       });
       setLoading(false);
     }, 0);
@@ -839,7 +838,7 @@ function App(): JSX.Element {
       // Small delay to let other data load first
       const timer = setTimeout(() => {
         triggerDeviceScan().catch((err: unknown) => {
-          logger.error(LogComponents.Network, "Failed to trigger device scan", { error: err });
+          logger.error(LogComponents.Network, 'Failed to trigger device scan', { error: err });
         });
       }, 2000);
       return () => clearTimeout(timer);
@@ -860,7 +859,7 @@ function App(): JSX.Element {
   );
 
   // Login form
-  const authError = sessionExpired ? "Session expired. Please log in again." : error;
+  const authError = sessionExpired ? 'Session expired. Please log in again.' : error;
 
   const handleLogin = useCallback(
     async (username: string, password: string) => {
@@ -890,7 +889,7 @@ function App(): JSX.Element {
   if (needsSetup === null) {
     return (
       <div class="min-h-screen flex items-center justify-center">
-        <div class="text-text-muted">{t("status.loading")}</div>
+        <div class="text-text-muted">{t('status.loading')}</div>
       </div>
     );
   }
@@ -927,8 +926,8 @@ function App(): JSX.Element {
       />
 
       {/* Main content - pb-24 adds bottom padding for fixed FAB */}
-      <main class={cn(spacing.mainPadding.y, "pb-24")}>
-        <div class={cn(section.width.xl, "mx-auto", spacing.mainPadding.x)}>
+      <main class={cn(spacing.mainPadding.y, 'pb-24')}>
+        <div class={cn(section.width.xl, 'mx-auto', spacing.mainPadding.x)}>
           {/* Issue #803: Show warning banner when network capabilities are missing */}
           <CapabilityWarnings capabilities={capabilities} />
 
@@ -936,9 +935,9 @@ function App(): JSX.Element {
           <section aria-labelledby="connectivity-heading" class={spacing.margin.bottom.section}>
             <h2
               id="connectivity-heading"
-              class={cn("section-title", spacing.margin.bottom.heading)}
+              class={cn('section-title', spacing.margin.bottom.heading)}
             >
-              {t("sections.connectivity")}
+              {t('sections.connectivity')}
             </h2>
             <div class={layout.grid.cards}>
               {/* WiFi-only cards */}
@@ -963,8 +962,8 @@ function App(): JSX.Element {
 
           {/* Section: Network Services */}
           <section aria-labelledby="network-heading" class={spacing.margin.bottom.section}>
-            <h2 id="network-heading" class={cn("section-title", spacing.margin.bottom.heading)}>
-              {t("sections.network")}
+            <h2 id="network-heading" class={cn('section-title', spacing.margin.bottom.heading)}>
+              {t('sections.network')}
             </h2>
             <div class={layout.grid.cards}>
               {/* Network info cards - hide when in WiFi mode without WiFi connection */}
@@ -988,8 +987,8 @@ function App(): JSX.Element {
 
           {/* Section: Testing & Discovery - cards differ by interface type */}
           <section aria-labelledby="performance-heading" class={spacing.margin.bottom.section}>
-            <h2 id="performance-heading" class={cn("section-title", spacing.margin.bottom.heading)}>
-              {t("sections.testingDiscovery")}
+            <h2 id="performance-heading" class={cn('section-title', spacing.margin.bottom.heading)}>
+              {t('sections.testingDiscovery')}
             </h2>
             <div class={layout.grid.cards}>
               {/* Test cards - only show when connected to the selected interface type */}
@@ -1052,8 +1051,8 @@ function App(): JSX.Element {
 
           {/* Section: System */}
           <section aria-labelledby="system-heading" class={spacing.margin.bottom.section}>
-            <h2 id="system-heading" class={cn("section-title", spacing.margin.bottom.heading)}>
-              {t("sections.system")}
+            <h2 id="system-heading" class={cn('section-title', spacing.margin.bottom.heading)}>
+              {t('sections.system')}
             </h2>
             <div class={layout.grid.cards}>
               <SystemHealthCard />
@@ -1066,26 +1065,26 @@ function App(): JSX.Element {
             class={cn(
               spacing.margin.top.section,
               radius.lg,
-              "border border-surface-border bg-surface-raised",
+              'border border-surface-border bg-surface-raised',
               spacing.pad.lg,
             )}
           >
             <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {/* Product Info */}
               <div>
-                <h3 class="heading-4 text-text-primary mb-2">{t("app.title")}</h3>
+                <h3 class="heading-4 text-text-primary mb-2">{t('app.title')}</h3>
                 <p class="body-small text-text-muted mb-1">
-                  {t("footer.byCompany", "by Mustard Seed Networks")}
+                  {t('footer.byCompany', 'by Mustard Seed Networks')}
                 </p>
                 <p class="caption text-text-muted">
-                  {t("footer.version", "Version")} {appVersion}
+                  {t('footer.version', 'Version')} {appVersion}
                 </p>
               </div>
 
               {/* Contact */}
               <div>
                 <h4 class="body-small font-medium text-text-primary mb-2">
-                  {t("footer.contact", "Contact")}
+                  {t('footer.contact', 'Contact')}
                 </h4>
                 <div class="space-y-1">
                   <a
@@ -1106,7 +1105,7 @@ function App(): JSX.Element {
               {/* Website */}
               <div>
                 <h4 class="body-small font-medium text-text-primary mb-2">
-                  {t("footer.website", "Website")}
+                  {t('footer.website', 'Website')}
                 </h4>
                 <a
                   href="https://www.mustardseednetworks.com"
@@ -1121,17 +1120,17 @@ function App(): JSX.Element {
               {/* Legal */}
               <div>
                 <h4 class="body-small font-medium text-text-primary mb-2">
-                  {t("footer.legal", "Legal")}
+                  {t('footer.legal', 'Legal')}
                 </h4>
                 <div class="flex flex-wrap gap-x-3 gap-y-1">
                   <a href="/terms" class="body-small text-text-muted hover:text-brand-primary">
-                    {t("footer.tos", "Terms of Service")}
+                    {t('footer.tos', 'Terms of Service')}
                   </a>
                   <a href="/privacy" class="body-small text-text-muted hover:text-brand-primary">
-                    {t("footer.privacy", "Privacy")}
+                    {t('footer.privacy', 'Privacy')}
                   </a>
                   <a href="/license" class="body-small text-text-muted hover:text-brand-primary">
-                    {t("footer.license", "License")}
+                    {t('footer.license', 'License')}
                   </a>
                 </div>
               </div>
@@ -1140,8 +1139,8 @@ function App(): JSX.Element {
             {/* Copyright */}
             <div class="mt-6 pt-4 border-t border-surface-border text-center">
               <p class="caption text-text-muted">
-                &copy; {new Date().getFullYear()}{" "}
-                {t("footer.copyright", "Mustard Seed Networks. All rights reserved.")}
+                &copy; {new Date().getFullYear()}{' '}
+                {t('footer.copyright', 'Mustard Seed Networks. All rights reserved.')}
               </p>
             </div>
           </footer>
@@ -1164,7 +1163,7 @@ function App(): JSX.Element {
 
       {/* FAB - Run All Tests - positioned inline with card grid */}
       <div class="fixed bottom-0 left-0 right-0 pointer-events-none z-50">
-        <div class={cn(section.width.xl, "mx-auto", spacing.mainPadding.x, "relative")}>
+        <div class={cn(section.width.xl, 'mx-auto', spacing.mainPadding.x, 'relative')}>
           <Fab class="pointer-events-auto absolute bottom-20 -right-2" />
         </div>
       </div>

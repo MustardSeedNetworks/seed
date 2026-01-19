@@ -5,26 +5,26 @@
  * Provides real-time pipeline status via REST API and WebSocket events.
  * Used by NetworkDiscoveryCard to show multi-phase discovery progress.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
-import { logger } from "../lib/logger";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { logger } from '../lib/logger';
 
 // ============================================================================
 // Pipeline Types (matching backend internal/discovery/pipeline.go)
 // ============================================================================
 
 export type PipelineState =
-  | "idle"
-  | "enumerating"
-  | "resolving"
-  | "scanning"
-  | "assessing"
-  | "complete"
-  | "failed"
-  | "canceled";
+  | 'idle'
+  | 'enumerating'
+  | 'resolving'
+  | 'scanning'
+  | 'assessing'
+  | 'complete'
+  | 'failed'
+  | 'canceled';
 
-export type PortScanIntensity = "off" | "quick" | "standard" | "comprehensive" | "custom";
+export type PortScanIntensity = 'off' | 'quick' | 'standard' | 'comprehensive' | 'custom';
 
-export type ScanTimingProfile = "polite" | "normal" | "aggressive";
+export type ScanTimingProfile = 'polite' | 'normal' | 'aggressive';
 
 // Phase configuration
 export interface PipelinePhaseConfig {
@@ -150,16 +150,16 @@ export interface TimingProfileInfo {
 // ============================================================================
 
 export type PipelineEventType =
-  | "pipeline_started"
-  | "phase_started"
-  | "phase_progress"
-  | "phase_completed"
-  | "phase_failed"
-  | "device_discovered"
-  | "device_updated"
-  | "pipeline_completed"
-  | "pipeline_failed"
-  | "pipeline_canceled";
+  | 'pipeline_started'
+  | 'phase_started'
+  | 'phase_progress'
+  | 'phase_completed'
+  | 'phase_failed'
+  | 'device_discovered'
+  | 'device_updated'
+  | 'pipeline_completed'
+  | 'pipeline_failed'
+  | 'pipeline_canceled';
 
 export interface PipelineEvent {
   type: PipelineEventType;
@@ -221,16 +221,16 @@ export interface UsePipelineStatusReturn {
 // ============================================================================
 
 const defaultStatus: PipelineStatus = {
-  state: "idle",
-  runId: "",
-  currentPhase: "",
+  state: 'idle',
+  runId: '',
+  currentPhase: '',
   phaseNumber: 0,
   totalPhases: 0,
   enabledPhases: [],
   processedCount: 0,
   totalCount: 0,
   percentComplete: 0,
-  currentTarget: "",
+  currentTarget: '',
   elapsedMs: 0,
   estimatedRemainMs: 0,
   devicesFound: 0,
@@ -250,10 +250,10 @@ const defaultConfig: PipelineConfig = {
     hostDelay: 20,
     maxConcurrentHosts: 20,
     phaseTimeout: 600000, // 10 minutes in ms
-    profile: "normal",
+    profile: 'normal',
   },
   portScan: {
-    intensity: "off",
+    intensity: 'off',
     bannerGrab: true,
     connectTimeout: 2000,
   },
@@ -304,8 +304,8 @@ export function usePipelineStatus(
   // Fetch pipeline status from API
   const fetchStatus = useCallback(async () => {
     try {
-      const response = await fetch("/api/v1/shell/pipeline/status", {
-        credentials: "include", // Required for httpOnly cookie auth
+      const response = await fetch('/api/v1/shell/pipeline/status', {
+        credentials: 'include', // Required for httpOnly cookie auth
       });
       if (!response.ok) {
         throw new Error(`Failed to fetch pipeline status: ${response.status}`);
@@ -320,8 +320,8 @@ export function usePipelineStatus(
       setStatus((prev) => ({
         ...prev,
         state: run.status,
-        runId: run.id || "",
-        currentPhase: run.currentPhase || "",
+        runId: run.id || '',
+        currentPhase: run.currentPhase || '',
         phaseNumber,
         totalPhases,
         enabledPhases,
@@ -335,15 +335,15 @@ export function usePipelineStatus(
         startTimeRef.current = new Date(run.startedAt).getTime();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch status");
+      setError(err instanceof Error ? err.message : 'Failed to fetch status');
     }
   }, []);
 
   // Fetch pipeline config from API
   const fetchConfig = useCallback(async () => {
     try {
-      const response = await fetch("/api/v1/shell/pipeline/config", {
-        credentials: "include", // Required for httpOnly cookie auth
+      const response = await fetch('/api/v1/shell/pipeline/config', {
+        credentials: 'include', // Required for httpOnly cookie auth
       });
       if (!response.ok) {
         throw new Error(`Failed to fetch pipeline config: ${response.status}`);
@@ -351,7 +351,7 @@ export function usePipelineStatus(
       const cfg: PipelineConfig = await response.json();
       setConfig(cfg);
     } catch (err) {
-      logger.error("discovery", "Failed to fetch pipeline config:", err);
+      logger.error('discovery', 'Failed to fetch pipeline config:', err);
       setConfig(defaultConfig);
     }
   }, []);
@@ -359,30 +359,30 @@ export function usePipelineStatus(
   // Fetch port intensity info
   const fetchPortIntensityInfo = useCallback(async () => {
     try {
-      const response = await fetch("/api/v1/shell/pipeline/port-intensity", {
-        credentials: "include", // Required for httpOnly cookie auth
+      const response = await fetch('/api/v1/shell/pipeline/port-intensity', {
+        credentials: 'include', // Required for httpOnly cookie auth
       });
       if (response.ok) {
         const info: PortIntensityInfo[] = await response.json();
         setPortIntensityInfo(info);
       }
     } catch (err) {
-      logger.error("discovery", "Failed to fetch port intensity info:", err);
+      logger.error('discovery', 'Failed to fetch port intensity info:', err);
     }
   }, []);
 
   // Fetch timing profiles
   const fetchTimingProfiles = useCallback(async () => {
     try {
-      const response = await fetch("/api/v1/shell/pipeline/timing-profiles", {
-        credentials: "include", // Required for httpOnly cookie auth
+      const response = await fetch('/api/v1/shell/pipeline/timing-profiles', {
+        credentials: 'include', // Required for httpOnly cookie auth
       });
       if (response.ok) {
         const profiles: TimingProfileInfo[] = await response.json();
         setTimingProfiles(profiles);
       }
     } catch (err) {
-      logger.error("discovery", "Failed to fetch timing profiles:", err);
+      logger.error('discovery', 'Failed to fetch timing profiles:', err);
     }
   }, []);
 
@@ -392,10 +392,10 @@ export function usePipelineStatus(
       setError(null);
       const body = configOverride ? { config: configOverride } : undefined;
 
-      const response = await fetch("/api/v1/shell/pipeline/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Required for httpOnly cookie auth
+      const response = await fetch('/api/v1/shell/pipeline/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Required for httpOnly cookie auth
         body: body ? JSON.stringify(body) : undefined,
       });
 
@@ -416,7 +416,7 @@ export function usePipelineStatus(
         enabledPhases,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to start pipeline");
+      setError(err instanceof Error ? err.message : 'Failed to start pipeline');
       throw err;
     }
   }, []);
@@ -425,9 +425,9 @@ export function usePipelineStatus(
   const cancelPipeline = useCallback(async () => {
     try {
       setError(null);
-      const response = await fetch("/api/v1/shell/pipeline/cancel", {
-        method: "POST",
-        credentials: "include", // Required for httpOnly cookie auth
+      const response = await fetch('/api/v1/shell/pipeline/cancel', {
+        method: 'POST',
+        credentials: 'include', // Required for httpOnly cookie auth
       });
 
       if (!response.ok) {
@@ -437,10 +437,10 @@ export function usePipelineStatus(
 
       setStatus((prev) => ({
         ...prev,
-        state: "canceled",
+        state: 'canceled',
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to cancel pipeline");
+      setError(err instanceof Error ? err.message : 'Failed to cancel pipeline');
       throw err;
     }
   }, []);
@@ -451,17 +451,17 @@ export function usePipelineStatus(
       try {
         setError(null);
         const headers: Record<string, string> = {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         };
 
         if (acknowledgeIdsRisk) {
-          headers["X-Acknowledge-IDS-Risk"] = "true";
+          headers['X-Acknowledge-IDS-Risk'] = 'true';
         }
 
-        const response = await fetch("/api/v1/shell/pipeline/config", {
-          method: "PUT",
+        const response = await fetch('/api/v1/shell/pipeline/config', {
+          method: 'PUT',
           headers,
-          credentials: "include", // Required for httpOnly cookie auth
+          credentials: 'include', // Required for httpOnly cookie auth
           body: JSON.stringify(newConfig),
         });
 
@@ -473,7 +473,7 @@ export function usePipelineStatus(
         const updatedConfig: PipelineConfig = await response.json();
         setConfig(updatedConfig);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to update config");
+        setError(err instanceof Error ? err.message : 'Failed to update config');
         throw err;
       }
     },
@@ -487,7 +487,7 @@ export function usePipelineStatus(
       onMessage?.(event);
 
       switch (event.type) {
-        case "pipeline_started": {
+        case 'pipeline_started': {
           const payload = event.payload as {
             totalPhases: number;
             phases: string[];
@@ -497,17 +497,17 @@ export function usePipelineStatus(
           const phasesCopy = [...(payload.phases || [])];
           setStatus({
             ...defaultStatus,
-            state: "enumerating",
+            state: 'enumerating',
             runId: event.runId,
             totalPhases: payload.totalPhases,
             enabledPhases: phasesCopy,
-            currentPhase: phasesCopy[0] || "enumeration",
+            currentPhase: phasesCopy[0] || 'enumeration',
             phaseNumber: 1,
           });
           break;
         }
 
-        case "phase_started": {
+        case 'phase_started': {
           const payload = event.payload as {
             phase: string;
             phaseNumber: number;
@@ -523,32 +523,32 @@ export function usePipelineStatus(
             totalCount: payload.deviceCount,
             processedCount: 0,
             percentComplete: 0,
-            currentTarget: "",
+            currentTarget: '',
           }));
           break;
         }
 
-        case "phase_progress": {
+        case 'phase_progress': {
           const payload = event.payload as PhaseProgress;
           setStatus((prev) => ({
             ...prev,
             processedCount: payload.processedCount,
             totalCount: payload.totalCount,
             percentComplete: payload.percentComplete,
-            currentTarget: payload.currentTarget || "",
+            currentTarget: payload.currentTarget || '',
             elapsedMs: payload.elapsedMs,
             estimatedRemainMs: payload.estimatedRemainMs || 0,
           }));
           break;
         }
 
-        case "phase_completed": {
+        case 'phase_completed': {
           const payload = event.payload as PhaseCompleted;
           setStatus((prev) => ({
             ...prev,
             processedCount: prev.totalCount,
             percentComplete: 100,
-            currentTarget: "",
+            currentTarget: '',
             phaseDurations: {
               ...prev.phaseDurations,
               [payload.phase]: payload.duration,
@@ -558,14 +558,14 @@ export function usePipelineStatus(
           break;
         }
 
-        case "pipeline_completed": {
+        case 'pipeline_completed': {
           const payload = event.payload as {
             totalDevices: number;
             phaseDurations: Record<string, number>;
           };
           setStatus((prev) => ({
             ...prev,
-            state: "complete",
+            state: 'complete',
             devicesFound: payload.totalDevices,
             phaseDurations: payload.phaseDurations || prev.phaseDurations,
             percentComplete: 100,
@@ -573,8 +573,8 @@ export function usePipelineStatus(
           break;
         }
 
-        case "pipeline_failed":
-        case "phase_failed": {
+        case 'pipeline_failed':
+        case 'phase_failed': {
           const payload = event.payload as { error?: string; phase?: string };
           setStatus((prev) => {
             // Limit errors array to last 100 entries to prevent unbounded growth (fixes #855)
@@ -584,22 +584,22 @@ export function usePipelineStatus(
               : prev.errors;
             return {
               ...prev,
-              state: "failed",
+              state: 'failed',
               errors: newErrors,
             };
           });
           break;
         }
 
-        case "pipeline_canceled":
+        case 'pipeline_canceled':
           setStatus((prev) => ({
             ...prev,
-            state: "canceled",
+            state: 'canceled',
           }));
           break;
 
-        case "device_discovered":
-        case "device_updated":
+        case 'device_discovered':
+        case 'device_updated':
           // These are handled by NetworkDiscoveryCard directly
           break;
 
@@ -721,15 +721,15 @@ export function usePipelineStatus(
 // ============================================================================
 
 function getEnabledPhases(config: PipelineConfig): string[] {
-  const phases: string[] = ["enumeration"];
+  const phases: string[] = ['enumeration'];
   if (config.phases.nameResolution) {
-    phases.push("resolution");
+    phases.push('resolution');
   }
   if (config.phases.serviceDiscovery) {
-    phases.push("scanning");
+    phases.push('scanning');
   }
   if (config.phases.vulnAssessment) {
-    phases.push("assessment");
+    phases.push('assessment');
   }
   return phases;
 }
@@ -739,25 +739,25 @@ function getEnabledPhases(config: PipelineConfig): string[] {
  */
 function isRunning(state: PipelineState): boolean {
   return (
-    state === "enumerating" ||
-    state === "resolving" ||
-    state === "scanning" ||
-    state === "assessing"
+    state === 'enumerating' ||
+    state === 'resolving' ||
+    state === 'scanning' ||
+    state === 'assessing'
   );
 }
 
 function phaseToState(phase: string): PipelineState {
   switch (phase) {
-    case "enumeration":
-      return "enumerating";
-    case "resolution":
-      return "resolving";
-    case "scanning":
-      return "scanning";
-    case "assessment":
-      return "assessing";
+    case 'enumeration':
+      return 'enumerating';
+    case 'resolution':
+      return 'resolving';
+    case 'scanning':
+      return 'scanning';
+    case 'assessment':
+      return 'assessing';
     default:
-      return "idle";
+      return 'idle';
   }
 }
 

@@ -35,12 +35,12 @@
  * ```
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "../api";
-import { type LogComponent, LogComponents, logger } from "../lib/logger";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { api } from '../api';
+import { type LogComponent, LogComponents, logger } from '../lib/logger';
 
 /** HTTP methods supported by the hook */
-export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 /** Configuration options for useFetch hook */
 export interface UseFetchOptions<T> {
@@ -113,7 +113,7 @@ export interface UseFetchResult<T> {
 export function useFetch<T>(options: UseFetchOptions<T>): UseFetchResult<T> {
   const {
     url,
-    method = "GET",
+    method = 'GET',
     errorMessage,
     logComponent = LogComponents.APP,
     autoFetch = false,
@@ -159,23 +159,23 @@ export function useFetch<T>(options: UseFetchOptions<T>): UseFetchResult<T> {
 
         // Execute appropriate API method based on HTTP method
         switch (method) {
-          case "GET":
+          case 'GET':
             response = await api.get<unknown>(url, headers ? { headers } : undefined);
             break;
-          case "POST":
+          case 'POST':
             response = await api.post<unknown>(url, requestBody, headers ? { headers } : undefined);
             break;
-          case "PUT":
+          case 'PUT':
             response = await api.put<unknown>(url, requestBody, headers ? { headers } : undefined);
             break;
-          case "PATCH":
+          case 'PATCH':
             response = await api.patch<unknown>(
               url,
               requestBody,
               headers ? { headers } : undefined,
             );
             break;
-          case "DELETE":
+          case 'DELETE':
             response = await api.delete<unknown>(url, headers ? { headers } : undefined);
             break;
           default:
@@ -269,12 +269,12 @@ export function useFetch<T>(options: UseFetchOptions<T>): UseFetchResult<T> {
 export function useGet<T>(
   url: string,
   errorMessage: string,
-  options: Omit<UseFetchOptions<T>, "url" | "errorMessage" | "method"> = {},
+  options: Omit<UseFetchOptions<T>, 'url' | 'errorMessage' | 'method'> = {},
 ): UseFetchResult<T> {
   return useFetch<T>({
     url,
     errorMessage,
-    method: "GET",
+    method: 'GET',
     autoFetch: true,
     ...options,
   });
@@ -303,12 +303,12 @@ export function useGet<T>(
 export function usePost<T>(
   url: string,
   errorMessage: string,
-  options: Omit<UseFetchOptions<T>, "url" | "errorMessage" | "method"> = {},
+  options: Omit<UseFetchOptions<T>, 'url' | 'errorMessage' | 'method'> = {},
 ): UseFetchResult<T> {
   return useFetch<T>({
     url,
     errorMessage,
-    method: "POST",
+    method: 'POST',
     autoFetch: false,
     ...options,
   });

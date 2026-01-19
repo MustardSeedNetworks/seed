@@ -13,14 +13,14 @@
  * - Interactive CRUD: Add/remove servers
  */
 
-import type { Meta, StoryFn, StoryObj } from "@storybook/react-vite";
-import type React from "react";
-import { useState } from "react";
-import { cn, spacing } from "../../../styles/theme";
-import type { SaveStatus, TestsSettings } from "../../../types/settings";
-import { DnsSettings } from "./DnsSettings";
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type React from 'react';
+import { useState } from 'react';
+import { cn, spacing } from '../../../styles/theme';
+import type { SaveStatus, TestsSettings } from '../../../types/settings';
+import { DnsSettings } from './DnsSettings';
 
-const baseSettings: Omit<TestsSettings, "dnsHostname" | "dnsServers"> = {
+const baseSettings: Omit<TestsSettings, 'dnsHostname' | 'dnsServers'> = {
   pingTargets: [],
   tcpPorts: [],
   udpPorts: [],
@@ -30,7 +30,7 @@ const baseSettings: Omit<TestsSettings, "dnsHostname" | "dnsServers"> = {
   runIperf: true,
   runDiscovery: true,
   speedtest: {
-    serverId: "",
+    serverId: '',
     autoRunOnLink: false,
   },
   iperf: {
@@ -39,23 +39,23 @@ const baseSettings: Omit<TestsSettings, "dnsHostname" | "dnsServers"> = {
 };
 
 const meta: Meta<typeof DnsSettings> = {
-  title: "Settings/dns-settings",
+  title: 'Settings/dns-settings',
   component: DnsSettings,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "DNS configuration panel for setting test hostname and managing additional DNS servers for response time comparison. Supports adding/removing servers dynamically.",
+          'DNS configuration panel for setting test hostname and managing additional DNS servers for response time comparison. Supports adding/removing servers dynamically.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     testsStatus: {
-      control: "select",
-      options: ["idle", "saving", "saved", "error"],
-      description: "Auto-save status indicator",
+      control: 'select',
+      options: ['idle', 'saving', 'saved', 'error'],
+      description: 'Auto-save status indicator',
     },
   },
   decorators: [
@@ -77,13 +77,13 @@ export const Default: Story = {
   args: {
     testsSettings: {
       ...baseSettings,
-      dnsHostname: "google.com",
+      dnsHostname: 'google.com',
       dnsServers: [],
     },
     setTestsSettings: () => {
       // intentionally empty - story placeholder callback
     },
-    testsStatus: "idle",
+    testsStatus: 'idle',
   },
 };
 
@@ -94,13 +94,13 @@ export const CustomHostname: Story = {
   args: {
     testsSettings: {
       ...baseSettings,
-      dnsHostname: "example.com",
+      dnsHostname: 'example.com',
       dnsServers: [],
     },
     setTestsSettings: () => {
       // intentionally empty - story placeholder callback
     },
-    testsStatus: "idle",
+    testsStatus: 'idle',
   },
 };
 
@@ -111,18 +111,18 @@ export const WithPopularDns: Story = {
   args: {
     testsSettings: {
       ...baseSettings,
-      dnsHostname: "google.com",
+      dnsHostname: 'google.com',
       dnsServers: [
-        { id: "1", address: "8.8.8.8", enabled: true },
-        { id: "2", address: "8.8.4.4", enabled: true },
-        { id: "3", address: "1.1.1.1", enabled: true },
-        { id: "4", address: "1.0.0.1", enabled: true },
+        { id: '1', address: '8.8.8.8', enabled: true },
+        { id: '2', address: '8.8.4.4', enabled: true },
+        { id: '3', address: '1.1.1.1', enabled: true },
+        { id: '4', address: '1.0.0.1', enabled: true },
       ],
     },
     setTestsSettings: () => {
       // intentionally empty
     },
-    testsStatus: "idle",
+    testsStatus: 'idle',
   },
 };
 
@@ -133,19 +133,19 @@ export const MultipleDnsProviders: Story = {
   args: {
     testsSettings: {
       ...baseSettings,
-      dnsHostname: "example.com",
+      dnsHostname: 'example.com',
       dnsServers: [
-        { id: "1", address: "8.8.8.8", enabled: true }, // Google
-        { id: "2", address: "1.1.1.1", enabled: true }, // Cloudflare
-        { id: "3", address: "9.9.9.9", enabled: true }, // Quad9
-        { id: "4", address: "208.67.222.222", enabled: true }, // OpenDNS
-        { id: "5", address: "8.26.56.26", enabled: true }, // Comodo Secure DNS
+        { id: '1', address: '8.8.8.8', enabled: true }, // Google
+        { id: '2', address: '1.1.1.1', enabled: true }, // Cloudflare
+        { id: '3', address: '9.9.9.9', enabled: true }, // Quad9
+        { id: '4', address: '208.67.222.222', enabled: true }, // OpenDNS
+        { id: '5', address: '8.26.56.26', enabled: true }, // Comodo Secure DNS
       ],
     },
     setTestsSettings: () => {
       // intentionally empty
     },
-    testsStatus: "idle",
+    testsStatus: 'idle',
   },
 };
 
@@ -156,13 +156,13 @@ export const SingleServer: Story = {
   args: {
     testsSettings: {
       ...baseSettings,
-      dnsHostname: "google.com",
-      dnsServers: [{ id: "1", address: "1.1.1.1", enabled: true }],
+      dnsHostname: 'google.com',
+      dnsServers: [{ id: '1', address: '1.1.1.1', enabled: true }],
     },
     setTestsSettings: () => {
       // intentionally empty
     },
-    testsStatus: "idle",
+    testsStatus: 'idle',
   },
 };
 
@@ -173,13 +173,13 @@ export const EmptyServerList: Story = {
   args: {
     testsSettings: {
       ...baseSettings,
-      dnsHostname: "google.com",
+      dnsHostname: 'google.com',
       dnsServers: [],
     },
     setTestsSettings: () => {
       // intentionally empty
     },
-    testsStatus: "idle",
+    testsStatus: 'idle',
   },
 };
 
@@ -190,16 +190,16 @@ export const Saving: Story = {
   args: {
     testsSettings: {
       ...baseSettings,
-      dnsHostname: "google.com",
+      dnsHostname: 'google.com',
       dnsServers: [
-        { id: "1", address: "8.8.8.8", enabled: true },
-        { id: "2", address: "1.1.1.1", enabled: true },
+        { id: '1', address: '8.8.8.8', enabled: true },
+        { id: '2', address: '1.1.1.1', enabled: true },
       ],
     },
     setTestsSettings: () => {
       // intentionally empty
     },
-    testsStatus: "saving",
+    testsStatus: 'saving',
   },
 };
 
@@ -210,16 +210,16 @@ export const Saved: Story = {
   args: {
     testsSettings: {
       ...baseSettings,
-      dnsHostname: "example.com",
+      dnsHostname: 'example.com',
       dnsServers: [
-        { id: "1", address: "8.8.8.8", enabled: true },
-        { id: "2", address: "1.1.1.1", enabled: true },
+        { id: '1', address: '8.8.8.8', enabled: true },
+        { id: '2', address: '1.1.1.1', enabled: true },
       ],
     },
     setTestsSettings: () => {
       // intentionally empty
     },
-    testsStatus: "saved",
+    testsStatus: 'saved',
   },
 };
 
@@ -230,22 +230,22 @@ export const Interactive: Story = {
   render: function interactiveStory() {
     const [testsSettings, setTestsSettings] = useState<TestsSettings>({
       ...baseSettings,
-      dnsHostname: "google.com",
+      dnsHostname: 'google.com',
       dnsServers: [
-        { id: "1", address: "8.8.8.8", enabled: true },
-        { id: "2", address: "1.1.1.1", enabled: true },
+        { id: '1', address: '8.8.8.8', enabled: true },
+        { id: '2', address: '1.1.1.1', enabled: true },
       ],
     });
-    const [status, setStatus] = useState<SaveStatus>("idle");
+    const [status, setStatus] = useState<SaveStatus>('idle');
 
     const handleSetTestsSettings = (updater: React.SetStateAction<TestsSettings>) => {
       setTestsSettings(updater);
-      setStatus("saving");
+      setStatus('saving');
 
       setTimeout(() => {
-        setStatus("saved");
+        setStatus('saved');
         setTimeout(() => {
-          setStatus("idle");
+          setStatus('idle');
         }, 2000);
       }, 800);
     };
@@ -265,15 +265,15 @@ export const Interactive: Story = {
  */
 export const Comparison: Story = {
   render: () => (
-    <div class={cn("stack-lg", spacing.pad.default)}>
+    <div class={cn('stack-lg', spacing.pad.default)}>
       <div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           Default (no servers)
         </p>
         <DnsSettings
           testsSettings={{
             ...baseSettings,
-            dnsHostname: "google.com",
+            dnsHostname: 'google.com',
             dnsServers: [],
           }}
           setTestsSettings={() => {
@@ -283,14 +283,14 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>With DNS servers</p>
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>With DNS servers</p>
         <DnsSettings
           testsSettings={{
             ...baseSettings,
-            dnsHostname: "example.com",
+            dnsHostname: 'example.com',
             dnsServers: [
-              { id: "1", address: "8.8.8.8", enabled: true },
-              { id: "2", address: "1.1.1.1", enabled: true },
+              { id: '1', address: '8.8.8.8', enabled: true },
+              { id: '2', address: '1.1.1.1', enabled: true },
             ],
           }}
           setTestsSettings={() => {
@@ -300,12 +300,12 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>Saving state</p>
+        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Saving state</p>
         <DnsSettings
           testsSettings={{
             ...baseSettings,
-            dnsHostname: "google.com",
-            dnsServers: [{ id: "1", address: "8.8.8.8", enabled: true }],
+            dnsHostname: 'google.com',
+            dnsServers: [{ id: '1', address: '8.8.8.8', enabled: true }],
           }}
           setTestsSettings={() => {
             // intentionally empty

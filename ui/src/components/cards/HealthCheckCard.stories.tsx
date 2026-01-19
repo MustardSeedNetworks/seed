@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { HealthCheckCard } from "./HealthCheckCard";
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { HealthCheckCard } from './HealthCheckCard';
 
 /**
  * HealthCheckCard performs comprehensive health checks for remote services.
@@ -17,16 +17,16 @@ import { HealthCheckCard } from "./HealthCheckCard";
  * Note: SettingsProvider and I18nextProvider are provided by global decorators
  * in .storybook/preview.tsx.
  */
-const meta: Meta<(typeof meta)["component"]> = {
-  title: "Cards/HealthCheckCard",
+const meta: Meta<(typeof meta)['component']> = {
+  title: 'Cards/HealthCheckCard',
   component: HealthCheckCard,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   decorators: [
     (StoryComponent: React.ComponentType): JSX.Element => (
-      <div style={{ width: "420px" }}>
+      <div style={{ width: '420px' }}>
         <StoryComponent />
       </div>
     ),

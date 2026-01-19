@@ -16,14 +16,14 @@
  * 4. Server validates, updates password, invalidates all sessions
  */
 
-import { Eye, EyeOff, KeyRound, Lock, Timer } from "lucide-react";
-import type React from "react";
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { alert, button, cn, icon, input, layout, radius, spacing } from "../../styles/theme";
+import { Eye, EyeOff, KeyRound, Lock, Timer } from 'lucide-react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { alert, button, cn, icon, input, layout, radius, spacing } from '../../styles/theme';
 
 // API base URL - configurable via environment variable
-const API_BASE: string = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 // Minimum password length (matches setup-wizard)
 const MIN_PASSWORD_LENGTH = 12;
@@ -51,12 +51,12 @@ export function RecoveryForm({
   onRecoveryComplete,
   onBackToLogin,
   remainingTime: initialRemainingTime = 0,
-  tokenFilePath = "",
+  tokenFilePath = '',
 }: RecoveryFormProps): React.ReactElement {
-  const { t } = useTranslation("common");
-  const [token, setToken] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const { t } = useTranslation('common');
+  const [token, setToken] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +101,7 @@ export function RecoveryForm({
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   // Password validation
@@ -114,12 +114,12 @@ export function RecoveryForm({
     setError(null);
 
     if (!passwordValid) {
-      setError(t("errors.password.tooShort", { min: MIN_PASSWORD_LENGTH }));
+      setError(t('errors.password.tooShort', { min: MIN_PASSWORD_LENGTH }));
       return;
     }
 
     if (!passwordsMatch) {
-      setError(t("errors.password.mismatch"));
+      setError(t('errors.password.mismatch'));
       return;
     }
 
@@ -127,9 +127,9 @@ export function RecoveryForm({
 
     try {
       const response = await fetch(`${API_BASE}/api/recovery/complete`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           token: token.trim(),
@@ -147,28 +147,28 @@ export function RecoveryForm({
       if (response.ok && data.success) {
         onRecoveryComplete();
       } else {
-        setError(data.message || data.error || t("errors.recovery.failed"));
+        setError(data.message || data.error || t('errors.recovery.failed'));
       }
     } catch {
-      setError(t("errors.network"));
+      setError(t('errors.network'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div class={cn("min-h-screen", layout.flex.center, "pad")}>
+    <div class={cn('min-h-screen', layout.flex.center, 'pad')}>
       <div class="w-full max-w-md">
         {/* Header */}
-        <div class={cn("text-center", spacing.margin.bottom.section)}>
-          <div class={cn("w-16 h-16 mx-auto text-status-warning", layout.flex.center)}>
-            <KeyRound class={icon.size["2xl"]} />
+        <div class={cn('text-center', spacing.margin.bottom.section)}>
+          <div class={cn('w-16 h-16 mx-auto text-status-warning', layout.flex.center)}>
+            <KeyRound class={icon.size['2xl']} />
           </div>
-          <h1 class={cn("heading-1", spacing.margin.top.heading)}>
-            {t("recovery.title", "Password Recovery")}
+          <h1 class={cn('heading-1', spacing.margin.top.heading)}>
+            {t('recovery.title', 'Password Recovery')}
           </h1>
-          <p class={cn("body-small", spacing.margin.top.inline)}>
-            {t("recovery.subtitle", "Reset your password using filesystem access")}
+          <p class={cn('body-small', spacing.margin.top.inline)}>
+            {t('recovery.subtitle', 'Reset your password using filesystem access')}
           </p>
         </div>
 
@@ -184,7 +184,7 @@ export function RecoveryForm({
           >
             <Timer class={icon.size.sm} />
             <span class="ml-2">
-              {t("recovery.timeRemaining", "Time remaining")}: {formatTime(remainingTime)}
+              {t('recovery.timeRemaining', 'Time remaining')}: {formatTime(remainingTime)}
             </span>
           </div>
         ) : null}
@@ -193,14 +193,14 @@ export function RecoveryForm({
         {instructions ? (
           <div
             class={cn(
-              "bg-surface-sunken",
+              'bg-surface-sunken',
               radius.md,
-              "border border-surface-border pad",
+              'border border-surface-border pad',
               spacing.margin.bottom.section,
             )}
           >
-            <h3 class={cn("heading-4", spacing.margin.bottom.inline)}>
-              {t("recovery.instructions.title", "Recovery Instructions")}
+            <h3 class={cn('heading-4', spacing.margin.bottom.inline)}>
+              {t('recovery.instructions.title', 'Recovery Instructions')}
             </h3>
             <ol class="body-small text-text-secondary space-y-1 list-decimal list-inside">
               {instructions.steps.map((step) => (
@@ -208,8 +208,8 @@ export function RecoveryForm({
               ))}
             </ol>
             {tokenFilePath ? (
-              <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
-                {t("recovery.tokenLocation", "Token file")}:{" "}
+              <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
+                {t('recovery.tokenLocation', 'Token file')}:{' '}
                 <code class="code">{tokenFilePath}</code>
               </p>
             ) : null}
@@ -219,16 +219,16 @@ export function RecoveryForm({
         {/* Recovery Form */}
         <form
           onSubmit={handleSubmit}
-          class={cn("bg-surface-raised", radius.md, "border border-surface-border pad-lg stack-lg")}
+          class={cn('bg-surface-raised', radius.md, 'border border-surface-border pad-lg stack-lg')}
         >
           {/* Token Input */}
           <div>
-            <label for="recovery-token" class={cn("label block", spacing.margin.bottom.inline)}>
-              {t("recovery.tokenLabel", "Recovery Token")}
+            <label for="recovery-token" class={cn('label block', spacing.margin.bottom.inline)}>
+              {t('recovery.tokenLabel', 'Recovery Token')}
             </label>
             <div class="relative">
               <KeyRound
-                class={cn(icon.size.sm, "absolute left-3 top-1/2 -translate-y-1/2 text-text-muted")}
+                class={cn(icon.size.sm, 'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted')}
               />
               <input
                 id="recovery-token"
@@ -238,15 +238,15 @@ export function RecoveryForm({
                   setToken(e.target.value)
                 }
                 class={cn(
-                  "w-full pl-10",
+                  'w-full pl-10',
                   input.size.md,
                   radius.md,
-                  "border border-surface-border bg-surface-base text-text-primary",
-                  "focus:outline-none focus:border-brand-primary font-mono",
+                  'border border-surface-border bg-surface-base text-text-primary',
+                  'focus:outline-none focus:border-brand-primary font-mono',
                 )}
                 placeholder={t(
-                  "recovery.tokenPlaceholder",
-                  "Paste token from .recovery-token file",
+                  'recovery.tokenPlaceholder',
+                  'Paste token from .recovery-token file',
                 )}
                 autoComplete="off"
                 spellCheck={false}
@@ -257,27 +257,27 @@ export function RecoveryForm({
 
           {/* New Password Input */}
           <div>
-            <label for="recovery-password" class={cn("label block", spacing.margin.bottom.inline)}>
-              {t("recovery.newPasswordLabel", "New Password")}
+            <label for="recovery-password" class={cn('label block', spacing.margin.bottom.inline)}>
+              {t('recovery.newPasswordLabel', 'New Password')}
             </label>
             <div class="relative">
               <Lock
-                class={cn(icon.size.sm, "absolute left-3 top-1/2 -translate-y-1/2 text-text-muted")}
+                class={cn(icon.size.sm, 'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted')}
               />
               <input
                 id="recovery-password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                   setPassword(e.target.value)
                 }
                 class={cn(
-                  "w-full pl-10 pr-10",
+                  'w-full pl-10 pr-10',
                   input.size.md,
                   radius.md,
-                  "border bg-surface-base text-text-primary",
-                  password && !passwordValid ? "border-status-error" : "border-surface-border",
-                  "focus:outline-none focus:border-brand-primary",
+                  'border bg-surface-base text-text-primary',
+                  password && !passwordValid ? 'border-status-error' : 'border-surface-border',
+                  'focus:outline-none focus:border-brand-primary',
                 )}
                 placeholder="••••••••••••"
                 required={true}
@@ -286,21 +286,21 @@ export function RecoveryForm({
                 type="button"
                 onClick={(): void => setShowPassword(!showPassword)}
                 class={cn(
-                  "absolute right-3 top-1/2 -translate-y-1/2 text-text-muted",
-                  "hover:text-text-primary focus:outline-none",
+                  'absolute right-3 top-1/2 -translate-y-1/2 text-text-muted',
+                  'hover:text-text-primary focus:outline-none',
                 )}
-                aria-label={showPassword ? t("buttons.hidePassword") : t("buttons.showPassword")}
+                aria-label={showPassword ? t('buttons.hidePassword') : t('buttons.showPassword')}
               >
                 {showPassword ? <EyeOff class={icon.size.sm} /> : <Eye class={icon.size.sm} />}
               </button>
             </div>
             <p
               class={cn(
-                "caption mt-1",
-                password && !passwordValid ? "text-status-error" : "text-text-muted",
+                'caption mt-1',
+                password && !passwordValid ? 'text-status-error' : 'text-text-muted',
               )}
             >
-              {t("recovery.passwordRequirement", "Minimum {{min}} characters", {
+              {t('recovery.passwordRequirement', 'Minimum {{min}} characters', {
                 min: MIN_PASSWORD_LENGTH,
               })}
             </p>
@@ -310,30 +310,30 @@ export function RecoveryForm({
           <div>
             <label
               for="recovery-confirm-password"
-              class={cn("label block", spacing.margin.bottom.inline)}
+              class={cn('label block', spacing.margin.bottom.inline)}
             >
-              {t("recovery.confirmPasswordLabel", "Confirm Password")}
+              {t('recovery.confirmPasswordLabel', 'Confirm Password')}
             </label>
             <div class="relative">
               <Lock
-                class={cn(icon.size.sm, "absolute left-3 top-1/2 -translate-y-1/2 text-text-muted")}
+                class={cn(icon.size.sm, 'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted')}
               />
               <input
                 id="recovery-confirm-password"
-                type={showConfirmPassword ? "text" : "password"}
+                type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                   setConfirmPassword(e.target.value)
                 }
                 class={cn(
-                  "w-full pl-10 pr-10",
+                  'w-full pl-10 pr-10',
                   input.size.md,
                   radius.md,
-                  "border bg-surface-base text-text-primary",
+                  'border bg-surface-base text-text-primary',
                   confirmPassword && !passwordsMatch
-                    ? "border-status-error"
-                    : "border-surface-border",
-                  "focus:outline-none focus:border-brand-primary",
+                    ? 'border-status-error'
+                    : 'border-surface-border',
+                  'focus:outline-none focus:border-brand-primary',
                 )}
                 placeholder="••••••••••••"
                 required={true}
@@ -342,11 +342,11 @@ export function RecoveryForm({
                 type="button"
                 onClick={(): void => setShowConfirmPassword(!showConfirmPassword)}
                 class={cn(
-                  "absolute right-3 top-1/2 -translate-y-1/2 text-text-muted",
-                  "hover:text-text-primary focus:outline-none",
+                  'absolute right-3 top-1/2 -translate-y-1/2 text-text-muted',
+                  'hover:text-text-primary focus:outline-none',
                 )}
                 aria-label={
-                  showConfirmPassword ? t("buttons.hidePassword") : t("buttons.showPassword")
+                  showConfirmPassword ? t('buttons.hidePassword') : t('buttons.showPassword')
                 }
               >
                 {showConfirmPassword ? (
@@ -358,7 +358,7 @@ export function RecoveryForm({
             </div>
             {confirmPassword && !passwordsMatch ? (
               <p class="caption mt-1 text-status-error">
-                {t("errors.password.mismatch", "Passwords do not match")}
+                {t('errors.password.mismatch', 'Passwords do not match')}
               </p>
             ) : null}
           </div>
@@ -375,19 +375,19 @@ export function RecoveryForm({
             type="submit"
             disabled={!canSubmit}
             class={cn(
-              "w-full",
+              'w-full',
               button.size.md,
-              "bg-brand-primary text-text-inverse",
+              'bg-brand-primary text-text-inverse',
               radius.md,
-              "font-medium hover:bg-brand-accent",
-              "focus:outline-none focus:ring-2 focus:ring-brand-primary",
-              "focus:ring-offset-2 focus:ring-offset-surface-base",
-              "disabled:opacity-50 disabled:cursor-not-allowed",
+              'font-medium hover:bg-brand-accent',
+              'focus:outline-none focus:ring-2 focus:ring-brand-primary',
+              'focus:ring-offset-2 focus:ring-offset-surface-base',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
             )}
           >
             {isSubmitting
-              ? t("recovery.submitting", "Resetting Password...")
-              : t("recovery.submit", "Reset Password")}
+              ? t('recovery.submitting', 'Resetting Password...')
+              : t('recovery.submit', 'Reset Password')}
           </button>
 
           {/* Back to Login Link */}
@@ -395,21 +395,21 @@ export function RecoveryForm({
             type="button"
             onClick={onBackToLogin}
             class={cn(
-              "w-full",
+              'w-full',
               button.size.sm,
-              "text-text-secondary hover:text-text-primary",
-              "focus:outline-none focus:underline",
+              'text-text-secondary hover:text-text-primary',
+              'focus:outline-none focus:underline',
             )}
           >
-            {t("recovery.backToLogin", "Back to Login")}
+            {t('recovery.backToLogin', 'Back to Login')}
           </button>
         </form>
 
         {/* Security Note */}
-        <p class={cn("caption text-text-muted text-center", spacing.margin.top.section)}>
+        <p class={cn('caption text-text-muted text-center', spacing.margin.top.section)}>
           {t(
-            "recovery.securityNote",
-            "Recovery tokens are single-use and expire after 15 minutes.",
+            'recovery.securityNote',
+            'Recovery tokens are single-use and expire after 15 minutes.',
           )}
         </p>
       </div>

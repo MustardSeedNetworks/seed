@@ -25,7 +25,7 @@
  * ```
  */
 
-import JsZip from "jszip";
+import JsZip from 'jszip';
 
 /** Location point from AirMapper */
 export interface AirMapperLocation {
@@ -143,7 +143,7 @@ function ppfToMpp(ppf: number): number {
  * Convert propagation value to meters
  */
 function toMeters(value: number, unit: string): number {
-  if (unit.toLowerCase() === "ft" || unit.toLowerCase() === "feet") {
+  if (unit.toLowerCase() === 'ft' || unit.toLowerCase() === 'feet') {
     return value * 0.3048;
   }
   return value; // Assume meters
@@ -175,11 +175,11 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
       }
 
       const lowerName = filename.toLowerCase();
-      if (lowerName.endsWith(".serial")) {
+      if (lowerName.endsWith('.serial')) {
         serialFile = file;
-      } else if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")) {
+      } else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) {
         jpgFile = file;
-      } else if (lowerName.endsWith(".surveyresult")) {
+      } else if (lowerName.endsWith('.surveyresult')) {
         surveyResultFile = file;
       }
     }
@@ -188,29 +188,29 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
     if (!serialFile) {
       return {
         success: false,
-        error: "Missing .serial metadata file in .amp archive",
+        error: 'Missing .serial metadata file in .amp archive',
         warnings,
       };
     }
 
     if (!jpgFile) {
-      warnings.push("No floor plan image found in archive");
+      warnings.push('No floor plan image found in archive');
     }
 
     if (!surveyResultFile) {
-      warnings.push("No .SurveyResult file found - survey sample data will not be imported");
+      warnings.push('No .SurveyResult file found - survey sample data will not be imported');
     }
 
     // Parse .serial JSON
     // biome-ignore lint/nursery/useAwaitThenable: JSZipObject.async returns a Promise-like thenable
-    const serialContent = await serialFile.async("text");
+    const serialContent = await serialFile.async('text');
     let serialJson: SerialJson;
     try {
       serialJson = JSON.parse(serialContent);
     } catch {
       return {
         success: false,
-        error: "Failed to parse .serial JSON metadata",
+        error: 'Failed to parse .serial JSON metadata',
         warnings,
       };
     }
@@ -218,7 +218,7 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
     // Extract calibration
     const scalePpf = serialJson.floorPlanScalePpf || 10; // Default to 10 ppf
     const propagation = serialJson.propagation || 8;
-    const propagationUnit = serialJson.propagationUnit || "ft";
+    const propagationUnit = serialJson.propagationUnit || 'ft';
 
     const calibration: AirMapperCalibration = {
       scalePpf,
@@ -232,15 +232,15 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
 
     // Extract metadata
     const metadata: AirMapperMetadata = {
-      fileName: serialJson.fileName || "Unknown",
-      surveyName: serialJson.surveyName || serialJson.fileName || "Imported Survey",
-      surveyMode: serialJson.surveyMode || "passive",
+      fileName: serialJson.fileName || 'Unknown',
+      surveyName: serialJson.surveyName || serialJson.fileName || 'Imported Survey',
+      surveyMode: serialJson.surveyMode || 'passive',
       surveyPointCount: serialJson.surveyPointCount || 0,
       surveyItemsCount: serialJson.surveyItemsCount || 0,
       surveyStartTime: serialJson.surveyStartTime || new Date().toISOString(),
-      unitName: serialJson.unitName || "Unknown Device",
-      unitType: serialJson.unitType || "Unknown",
-      unitSerial: serialJson.unitSerial || "",
+      unitName: serialJson.unitName || 'Unknown Device',
+      unitType: serialJson.unitType || 'Unknown',
+      unitSerial: serialJson.unitSerial || '',
       hasActiveData: serialJson.surveyActive1x1,
       labels: serialJson.labels || [],
     };
@@ -258,23 +258,23 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
 
     // Extract views
     const views: AirMapperView[] = (serialJson.views || []).map((v) => ({
-      name: v.name || "Untitled",
-      option: v.option || "",
-      mode: v.mode || "passive",
+      name: v.name || 'Untitled',
+      option: v.option || '',
+      mode: v.mode || 'passive',
       limit: v.limit,
       threshold: v.threshold,
       filters: v.filters,
     }));
 
     // Extract floor plan image
-    let floorPlanImage = "";
-    let floorPlanFilename = serialJson.floorPlanFilename || "floorplan.jpg";
+    let floorPlanImage = '';
+    let floorPlanFilename = serialJson.floorPlanFilename || 'floorplan.jpg';
 
     if (jpgFile) {
       // biome-ignore lint/nursery/useAwaitThenable: JSZipObject.async returns a Promise-like thenable
-      const imageData = await jpgFile.async("base64");
+      const imageData = await jpgFile.async('base64');
       floorPlanImage = `data:image/jpeg;base64,${imageData}`;
-      floorPlanFilename = jpgFile.name.split("/").pop() || floorPlanFilename;
+      floorPlanFilename = jpgFile.name.split('/').pop() || floorPlanFilename;
     }
 
     // Build result
@@ -296,7 +296,7 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to parse .amp file",
+      error: err instanceof Error ? err.message : 'Failed to parse .amp file',
       warnings,
     };
   }
@@ -308,12 +308,12 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
  */
 export function locationsToSamplePoints(
   locations: AirMapperLocations,
-  mode: "passive" | "active" = "passive",
+  mode: 'passive' | 'active' = 'passive',
 ): Array<{ x: number; y: number; label: string }> {
   const points: Array<{ x: number; y: number; label: string }> = [];
 
   // For passive mode, use AP locations
-  if (mode === "passive") {
+  if (mode === 'passive') {
     for (const loc of locations.passive) {
       points.push({
         x: Math.round(loc.x),
@@ -324,7 +324,7 @@ export function locationsToSamplePoints(
   }
 
   // For active mode, use active/1x1 locations
-  if (mode === "active") {
+  if (mode === 'active') {
     for (const loc of [...locations.active, ...locations.oneXone]) {
       points.push({
         x: Math.round(loc.x),
@@ -337,7 +337,7 @@ export function locationsToSamplePoints(
   return points;
 }
 
-const API_BASE: string = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 /** Result from backend AirMapper import API */
 export interface BackendImportResult {
@@ -381,11 +381,11 @@ export async function importAirMapperViaBackend(
   authHeaders: HeadersInit,
 ): Promise<AirMapperParseResult> {
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append('file', file);
 
   try {
     const response = await fetch(`${API_BASE}/api/canopy/survey/import/airmapper`, {
-      method: "POST",
+      method: 'POST',
       headers: authHeaders,
       body: formData,
     });
@@ -395,7 +395,7 @@ export async function importAirMapperViaBackend(
       const errorText = await response.text();
       return {
         success: false,
-        error: errorText || "Failed to import AirMapper file",
+        error: errorText || 'Failed to import AirMapper file',
         warnings: [],
       };
     }
@@ -409,21 +409,21 @@ export async function importAirMapperViaBackend(
         scalePpf: 0, // Not provided by backend
         scaleM: result.calibration.scaleM,
         propagation: result.calibration.propagationM,
-        propagationUnit: "m",
+        propagationUnit: 'm',
         propagationM: result.calibration.propagationM,
         widthPx: 0, // Not provided by backend
         heightPx: 0,
       },
       metadata: {
         fileName: result.floorPlanFilename,
-        surveyName: "Imported Survey",
-        surveyMode: "passive",
+        surveyName: 'Imported Survey',
+        surveyMode: 'passive',
         surveyPointCount: result.surveyPointCount,
         surveyItemsCount: result.surveyItemsCount,
         surveyStartTime: new Date().toISOString(),
-        unitName: "AirMapper",
-        unitType: "Unknown",
-        unitSerial: "",
+        unitName: 'AirMapper',
+        unitType: 'Unknown',
+        unitSerial: '',
         hasActiveData: false,
         labels: [],
       },
@@ -457,7 +457,7 @@ export async function importAirMapperViaBackend(
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to import AirMapper file",
+      error: err instanceof Error ? err.message : 'Failed to import AirMapper file',
       warnings: [],
     };
   }
@@ -478,7 +478,7 @@ export function getAirMapperSummary(data: AirMapperData): {
 } {
   const apCount = data.locations.passive.length;
   const clientCount = data.locations.client.length + data.locations.probingClient.length;
-  const hasBothModes = data.metadata.hasActiveData && data.metadata.surveyMode === "passive";
+  const hasBothModes = data.metadata.hasActiveData && data.metadata.surveyMode === 'passive';
 
   // Calculate facility size in meters
   const widthM = data.calibration.widthPx * data.calibration.scaleM;

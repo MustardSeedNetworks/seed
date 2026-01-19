@@ -13,8 +13,8 @@
  * - All existing filter/search functionality
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   formatLogTimestamp,
   LOG_LEVEL_COLORS,
@@ -23,8 +23,8 @@ import {
   type LogLayer,
   type LogLevel,
   useLogs,
-} from "../../hooks/useLogs";
-import { button, cn, icon as iconTokens, layout, modal, radius, spacing } from "../../styles/theme";
+} from '../../hooks/useLogs';
+import { button, cn, icon as iconTokens, layout, modal, radius, spacing } from '../../styles/theme';
 
 interface LogViewerModalProps {
   isOpen: boolean;
@@ -44,12 +44,12 @@ function FilterBadge({ label, active, onClick, color }: FilterBadgeProps): React
     <button
       type="button"
       class={cn(
-        "px-3 py-1.5",
+        'px-3 py-1.5',
         radius.md,
-        "text-sm font-medium cursor-pointer transition-all",
+        'text-sm font-medium cursor-pointer transition-all',
         active
-          ? color || "bg-brand-primary text-text-inverse"
-          : "bg-surface-base text-text-secondary hover:bg-surface-hover",
+          ? color || 'bg-brand-primary text-text-inverse'
+          : 'bg-surface-base text-text-secondary hover:bg-surface-hover',
       )}
       onClick={onClick}
     >
@@ -76,22 +76,22 @@ function _logEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps):
       class={cn(
         colors.bg,
         colors.border,
-        "px-4 py-3", // Larger padding than card version
-        "mb-2",
+        'px-4 py-3', // Larger padding than card version
+        'mb-2',
         radius.lg,
-        "cursor-pointer transition-colors hover:brightness-95",
-        "w-full text-left", // Button needs explicit width and text alignment
+        'cursor-pointer transition-colors hover:brightness-95',
+        'w-full text-left', // Button needs explicit width and text alignment
       )}
       onClick={onToggle}
     >
-      <div class={cn(layout.inline.default, "flex-wrap items-center")}>
+      <div class={cn(layout.inline.default, 'flex-wrap items-center')}>
         {/* Level badge - larger */}
         <span
           class={cn(
             colors.badge,
-            "px-3 py-1",
+            'px-3 py-1',
             radius.default,
-            "font-mono font-bold min-w-15 text-center text-sm",
+            'font-mono font-bold min-w-15 text-center text-sm',
           )}
         >
           {entry.level}
@@ -101,7 +101,7 @@ function _logEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps):
         <span class="text-sm text-text-muted font-mono">{formatLogTimestamp(entry.timestamp)}</span>
 
         {/* Layer badge */}
-        <span class={cn("px-3 py-1", radius.default, "bg-surface-base text-sm")}>
+        <span class={cn('px-3 py-1', radius.default, 'bg-surface-base text-sm')}>
           {entry.layer}
         </span>
 
@@ -109,9 +109,9 @@ function _logEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps):
         {entry.component ? (
           <span
             class={cn(
-              "px-3 py-1",
+              'px-3 py-1',
               radius.default,
-              "bg-purple-500/20 text-purple-600 dark:text-purple-400 text-sm",
+              'bg-purple-500/20 text-purple-600 dark:text-purple-400 text-sm',
             )}
           >
             {entry.component}
@@ -122,9 +122,9 @@ function _logEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps):
         {entry.request_id ? (
           <span
             class={cn(
-              "px-3 py-1",
+              'px-3 py-1',
               radius.default,
-              "bg-status-info/20 text-status-info text-sm font-mono",
+              'bg-status-info/20 text-status-info text-sm font-mono',
             )}
           >
             {entry.request_id.substring(0, 8)}
@@ -132,7 +132,7 @@ function _logEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps):
         ) : null}
 
         {/* Message - larger, don't truncate as aggressively */}
-        <span class={cn(colors.text, "flex-1 text-base")} title={entry.message}>
+        <span class={cn(colors.text, 'flex-1 text-base')} title={entry.message}>
           {entry.message}
         </span>
 
@@ -140,9 +140,9 @@ function _logEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps):
         {entry.duration_ms !== undefined && entry.duration_ms > 0 ? (
           <span
             class={cn(
-              "px-3 py-1",
+              'px-3 py-1',
               radius.default,
-              "bg-status-success/20 text-status-success text-sm",
+              'bg-status-success/20 text-status-success text-sm',
             )}
           >
             {entry.duration_ms}ms
@@ -151,7 +151,7 @@ function _logEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps):
 
         {/* Expand indicator and close button for expanded entries */}
         <div class="flex items-center gap-2">
-          <span class="text-sm text-text-muted">{expanded ? "▼" : "▶"}</span>
+          <span class="text-sm text-text-muted">{expanded ? '▼' : '▶'}</span>
           {expanded ? (
             <button
               type="button"
@@ -160,9 +160,9 @@ function _logEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps):
                 onClose();
               }}
               class={cn(
-                "p-1 rounded-full",
-                "text-text-muted hover:text-text-primary hover:bg-surface-hover",
-                "transition-colors",
+                'p-1 rounded-full',
+                'text-text-muted hover:text-text-primary hover:bg-surface-hover',
+                'transition-colors',
               )}
               aria-label="Collapse entry"
             >
@@ -180,7 +180,7 @@ function _logEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps):
 
       {/* Expanded content - more spacious */}
       {expanded ? (
-        <div class={cn("mt-4 space-y-3")}>
+        <div class={cn('mt-4 space-y-3')}>
           {/* Full message */}
           <div class="text-base text-text-primary wrap-break-word whitespace-pre-wrap">
             {entry.message}
@@ -190,9 +190,9 @@ function _logEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps):
           {entry.metadata && Object.keys(entry.metadata).length > 0 ? (
             <pre
               class={cn(
-                "p-4",
+                'p-4',
                 radius.lg,
-                "text-sm bg-surface-sunken overflow-x-auto font-mono whitespace-pre-wrap wrap-break-word",
+                'text-sm bg-surface-sunken overflow-x-auto font-mono whitespace-pre-wrap wrap-break-word',
               )}
             >
               {JSON.stringify(entry.metadata, null, 2)}
@@ -203,9 +203,9 @@ function _logEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps):
           {entry.stack ? (
             <pre
               class={cn(
-                "p-4",
+                'p-4',
                 radius.lg,
-                "text-sm text-status-error bg-status-error/10 overflow-x-auto font-mono whitespace-pre-wrap",
+                'text-sm text-status-error bg-status-error/10 overflow-x-auto font-mono whitespace-pre-wrap',
               )}
             >
               {entry.stack}
@@ -215,14 +215,14 @@ function _logEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps):
           {/* Full details - larger grid */}
           <div
             class={cn(
-              "grid grid-cols-2 md:grid-cols-4",
+              'grid grid-cols-2 md:grid-cols-4',
               spacing.gap.comfortable,
-              "text-sm text-text-secondary",
-              "p-3 bg-surface-base rounded-lg",
+              'text-sm text-text-secondary',
+              'p-3 bg-surface-base rounded-lg',
             )}
           >
             <div>
-              <strong class="text-text-primary">Timestamp:</strong>{" "}
+              <strong class="text-text-primary">Timestamp:</strong>{' '}
               {new Date(entry.timestamp).toISOString()}
             </div>
             {entry.session_id ? (
@@ -261,9 +261,9 @@ function _logFiltersBar({
   onReset,
   availableComponents,
 }: LogFiltersBarProps): React.JSX.Element {
-  const { t } = useTranslation("common");
-  const levels: LogLevel[] = ["ERROR", "WARN", "INFO", "DEBUG"];
-  const layers: LogLayer[] = ["backend", "api", "frontend"];
+  const { t } = useTranslation('common');
+  const levels: LogLevel[] = ['ERROR', 'WARN', 'INFO', 'DEBUG'];
+  const layers: LogLayer[] = ['backend', 'api', 'frontend'];
 
   const toggleLevel = (level: LogLevel): void => {
     const newLevels = filters.levels.includes(level)
@@ -290,42 +290,42 @@ function _logFiltersBar({
     filters.levels.length > 0 ||
     filters.layers.length > 0 ||
     filters.components.length > 0 ||
-    filters.search !== "";
+    filters.search !== '';
 
   return (
-    <div class={cn("space-y-3", "p-4", "bg-surface-base", radius.lg)}>
+    <div class={cn('space-y-3', 'p-4', 'bg-surface-base', radius.lg)}>
       {/* Search bar - larger */}
       <div class={cn(layout.inline.default)}>
         <input
           type="text"
-          placeholder={t("logs.searchPlaceholder", "Search logs...")}
+          placeholder={t('logs.searchPlaceholder', 'Search logs...')}
           value={filters.search}
           onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
             onFilterChange({ search: e.target.value })
           }
           class={cn(
-            "flex-1",
-            "px-4 py-2.5 text-base",
+            'flex-1',
+            'px-4 py-2.5 text-base',
             radius.lg,
-            "border border-surface-border bg-surface-raised text-text-primary",
-            "focus:outline-none focus:ring-2 focus:ring-brand-primary",
+            'border border-surface-border bg-surface-raised text-text-primary',
+            'focus:outline-none focus:ring-2 focus:ring-brand-primary',
           )}
         />
         {hasActiveFilters ? (
           <button
             type="button"
             onClick={onReset}
-            class={cn("px-4 py-2", "text-base text-text-secondary hover:text-text-primary")}
+            class={cn('px-4 py-2', 'text-base text-text-secondary hover:text-text-primary')}
           >
-            {t("logs.clearFilters", "Clear All")}
+            {t('logs.clearFilters', 'Clear All')}
           </button>
         ) : null}
       </div>
 
       {/* Level filters */}
-      <div class={cn(layout.inline.default, "flex-wrap")}>
+      <div class={cn(layout.inline.default, 'flex-wrap')}>
         <span class="text-sm text-text-secondary font-medium min-w-20">
-          {t("logs.level", "Level")}:
+          {t('logs.level', 'Level')}:
         </span>
         {levels.map((level) => {
           const badgeColor = LOG_LEVEL_COLORS[level].badge;
@@ -342,9 +342,9 @@ function _logFiltersBar({
       </div>
 
       {/* Layer filters */}
-      <div class={cn(layout.inline.default, "flex-wrap")}>
+      <div class={cn(layout.inline.default, 'flex-wrap')}>
         <span class="text-sm text-text-secondary font-medium min-w-20">
-          {t("logs.layer", "Layer")}:
+          {t('logs.layer', 'Layer')}:
         </span>
         {layers.map((layer) => (
           <FilterBadge
@@ -358,9 +358,9 @@ function _logFiltersBar({
 
       {/* Component filters */}
       {availableComponents.length > 0 ? (
-        <div class={cn(layout.inline.default, "flex-wrap")}>
+        <div class={cn(layout.inline.default, 'flex-wrap')}>
           <span class="text-sm text-text-secondary font-medium min-w-20">
-            {t("logs.component", "Component")}:
+            {t('logs.component', 'Component')}:
           </span>
           {availableComponents.slice(0, 12).map((component) => (
             <FilterBadge
@@ -380,7 +380,7 @@ function _logFiltersBar({
  * LogViewerModal - Full-screen modal for log viewing.
  */
 export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.JSX.Element | null {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common');
   const {
     logs,
     allLogs,
@@ -451,24 +451,24 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
     }
 
     const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return (): void => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return (): void => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
   // Export functions
   const exportJson = useCallback((): void => {
     const blob = new Blob([JSON.stringify(logs, null, 2)], {
-      type: "application/json",
+      type: 'application/json',
     });
     const url: string = URL.createObjectURL(blob);
-    const link: HTMLAnchorElement = document.createElement("a");
+    const link: HTMLAnchorElement = document.createElement('a');
     link.href = url;
-    link.download = `logs-${new Date().toISOString().split("T")[0]}.json`;
+    link.download = `logs-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
   }, [logs]);
@@ -476,7 +476,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
   const exportCsv = useCallback((): void => {
     const escapeCsv = (val: unknown): string => {
       if (val === null || val === undefined) {
-        return "";
+        return '';
       }
       const str: string = String(val);
       if (/[",\n]/.test(str)) {
@@ -486,28 +486,28 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
     };
 
     const rows: string[] = logs.map((entry: LogEntry): string => {
-      const metadata: string = entry.metadata ? JSON.stringify(entry.metadata) : "";
+      const metadata: string = entry.metadata ? JSON.stringify(entry.metadata) : '';
       return [
         escapeCsv(entry.timestamp),
         escapeCsv(entry.level),
         escapeCsv(entry.layer),
-        escapeCsv(entry.component ?? ""),
+        escapeCsv(entry.component ?? ''),
         escapeCsv(entry.message),
-        escapeCsv(entry.request_id ?? ""),
-        escapeCsv(entry.session_id ?? ""),
-        escapeCsv(entry.duration_ms ?? ""),
+        escapeCsv(entry.request_id ?? ''),
+        escapeCsv(entry.session_id ?? ''),
+        escapeCsv(entry.duration_ms ?? ''),
         escapeCsv(metadata),
-      ].join(",");
+      ].join(',');
     });
 
     const header: string =
-      "timestamp,level,layer,component,message,request_id,session_id,duration_ms,metadata";
-    const csv: string = [header, ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+      'timestamp,level,layer,component,message,request_id,session_id,duration_ms,metadata';
+    const csv: string = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url: string = URL.createObjectURL(blob);
-    const link: HTMLAnchorElement = document.createElement("a");
+    const link: HTMLAnchorElement = document.createElement('a');
     link.href = url;
-    link.download = `logs-${new Date().toISOString().split("T")[0]}.csv`;
+    link.download = `logs-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }, [logs]);
@@ -524,13 +524,13 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
       {/* Modal - use xl size for logs */}
       <div
         class={cn(
-          "relative",
+          'relative',
           modal.content,
           modal.size.xl,
           radius.lg,
-          "flex",
-          "flex-col",
-          "h-[90vh]", // 90% viewport height
+          'flex',
+          'flex-col',
+          'h-[90vh]', // 90% viewport height
         )}
         role="dialog"
         aria-modal="true"
@@ -540,25 +540,25 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
         <div
           class={cn(
             layout.flex.between,
-            "px-6 py-4",
-            "border-b",
-            "border-surface-border",
-            "bg-surface-raised",
-            "shrink-0",
+            'px-6 py-4',
+            'border-b',
+            'border-surface-border',
+            'bg-surface-raised',
+            'shrink-0',
           )}
         >
           <div>
             <h2 id="log-viewer-modal-title" class="heading-2">
-              {t("logs.title", "System Logs")}
+              {t('logs.title', 'System Logs')}
             </h2>
             <p class="body-small text-text-secondary mt-1">
-              {t("logs.subtitle", "Real-time application logs with filtering")}
+              {t('logs.subtitle', 'Real-time application logs with filtering')}
               {stats ? (
                 <span class="ml-4">
-                  <strong>{stats.total_count}</strong> {t("logs.totalLogs", "logs")}
+                  <strong>{stats.total_count}</strong> {t('logs.totalLogs', 'logs')}
                   {stats.errors_last_hour > 0 ? (
                     <span class="text-status-error ml-2">
-                      ({stats.errors_last_hour} {t("logs.errorsLastHour", "errors last hour")})
+                      ({stats.errors_last_hour} {t('logs.errorsLastHour', 'errors last hour')})
                     </span>
                   ) : null}
                 </span>
@@ -566,7 +566,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
             </p>
           </div>
 
-          <div class={cn("flex items-center", spacing.gap.comfortable)}>
+          <div class={cn('flex items-center', spacing.gap.comfortable)}>
             {/* Streaming toggle */}
             <button
               type="button"
@@ -574,13 +574,13 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
               class={cn(
                 button.size.md,
                 radius.lg,
-                "font-medium transition-colors",
+                'font-medium transition-colors',
                 isStreaming
-                  ? "bg-status-success text-text-inverse hover:brightness-90"
-                  : "bg-surface-base text-text-primary hover:bg-surface-hover border border-surface-border",
+                  ? 'bg-status-success text-text-inverse hover:brightness-90'
+                  : 'bg-surface-base text-text-primary hover:bg-surface-hover border border-surface-border',
               )}
             >
-              {isStreaming ? t("logs.streaming", "● Live") : t("logs.paused", "○ Paused")}
+              {isStreaming ? t('logs.streaming', '● Live') : t('logs.paused', '○ Paused')}
             </button>
 
             {/* Clear logs */}
@@ -589,11 +589,11 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
               class={cn(
                 button.size.md,
                 radius.lg,
-                "border border-surface-border hover:bg-surface-hover",
+                'border border-surface-border hover:bg-surface-hover',
               )}
               onClick={clearLogs}
             >
-              {t("logs.clear", "Clear")}
+              {t('logs.clear', 'Clear')}
             </button>
 
             {/* Export JSON */}
@@ -602,8 +602,8 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
               class={cn(
                 button.size.md,
                 radius.lg,
-                "border border-surface-border hover:bg-surface-hover",
-                "flex items-center gap-2",
+                'border border-surface-border hover:bg-surface-hover',
+                'flex items-center gap-2',
               )}
               onClick={exportJson}
             >
@@ -630,8 +630,8 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
               class={cn(
                 button.size.md,
                 radius.lg,
-                "border border-surface-border hover:bg-surface-hover",
-                "flex items-center gap-2",
+                'border border-surface-border hover:bg-surface-hover',
+                'flex items-center gap-2',
               )}
               onClick={exportCsv}
             >
@@ -657,14 +657,14 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
               type="button"
               onClick={onClose}
               class={cn(
-                "p-2",
-                "text-text-muted",
-                "hover:text-text-primary",
-                "transition-colors",
+                'p-2',
+                'text-text-muted',
+                'hover:text-text-primary',
+                'transition-colors',
                 radius.lg,
-                "hover:bg-surface-base",
+                'hover:bg-surface-base',
               )}
-              aria-label={t("logs.close", "Close log viewer")}
+              aria-label={t('logs.close', 'Close log viewer')}
             >
               <svg
                 class={iconTokens.size.lg}
@@ -695,25 +695,25 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
         {/* Log entries - scrollable area */}
         <div
           ref={logContainerRef}
-          class={cn("flex-1 overflow-y-auto p-6 bg-surface-base/40")}
+          class={cn('flex-1 overflow-y-auto p-6 bg-surface-base/40')}
           onScroll={handleScroll}
         >
           {/* Loading state */}
           {isLoading ? (
-            <div class={cn("text-center text-text-secondary py-8")}>
-              {t("logs.loading", "Loading logs...")}
+            <div class={cn('text-center text-text-secondary py-8')}>
+              {t('logs.loading', 'Loading logs...')}
             </div>
           ) : null}
 
           {/* Error state */}
-          {error ? <div class={cn("text-center text-status-error py-8")}>{error}</div> : null}
+          {error ? <div class={cn('text-center text-status-error py-8')}>{error}</div> : null}
 
           {/* Empty state */}
           {logs.length === 0 && !isLoading ? (
-            <div class={cn("text-center text-text-secondary py-12")}>
+            <div class={cn('text-center text-text-secondary py-12')}>
               {filters.search || filters.levels.length > 0 || filters.layers.length > 0
-                ? t("logs.noMatchingLogs", "No logs match the current filters")
-                : t("logs.noLogs", "No logs yet")}
+                ? t('logs.noMatchingLogs', 'No logs match the current filters')
+                : t('logs.noLogs', 'No logs yet')}
             </div>
           ) : null}
 
@@ -733,9 +733,9 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
         {!autoScroll && logs.length > 0 ? (
           <div
             class={cn(
-              "px-6 py-3",
-              "text-center border-t border-surface-border",
-              "bg-surface-raised shrink-0",
+              'px-6 py-3',
+              'text-center border-t border-surface-border',
+              'bg-surface-raised shrink-0',
             )}
           >
             <button
@@ -748,7 +748,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
               }}
               class="text-base text-brand-primary hover:underline"
             >
-              ↓ {t("logs.scrollToBottom", "Scroll to latest")}
+              ↓ {t('logs.scrollToBottom', 'Scroll to latest')}
             </button>
           </div>
         ) : null}

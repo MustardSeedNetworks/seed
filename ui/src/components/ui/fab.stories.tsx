@@ -1,20 +1,20 @@
-import type { Meta, StoryFn, StoryObj } from "@storybook/react-vite";
-import type React from "react";
-import { useEffect } from "react";
-import { cn, spacing } from "../../styles/theme";
-import { Fab } from "./Fab";
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type React from 'react';
+import { useEffect } from 'react';
+import { cn, spacing } from '../../styles/theme';
+import { Fab } from './Fab';
 
 /**
  * The Floating Action Button (FAB) provides quick access to running all diagnostic tests.
  * It's positioned in the bottom-right corner and shows a loading spinner during execution.
  */
 const meta: Meta<typeof Fab> = {
-  title: "UI/FAB",
+  title: 'UI/FAB',
   component: Fab,
   parameters: {
-    layout: "fullscreen",
+    layout: 'fullscreen',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
       <div class="relative h-96 bg-surface-base">
@@ -40,12 +40,12 @@ export const WithSimulatedTest: Story = {
     useEffect(() => {
       const handleRunTests = () => {
         setTimeout(() => {
-          window.dispatchEvent(new CustomEvent("testsComplete"));
+          window.dispatchEvent(new CustomEvent('testsComplete'));
         }, 3000);
       };
 
-      window.addEventListener("runAllTests", handleRunTests);
-      return () => window.removeEventListener("runAllTests", handleRunTests);
+      window.addEventListener('runAllTests', handleRunTests);
+      return () => window.removeEventListener('runAllTests', handleRunTests);
     }, []);
 
     return <Fab />;
@@ -53,7 +53,7 @@ export const WithSimulatedTest: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Click the FAB to see it enter loading state. Tests complete after 3 seconds.",
+        story: 'Click the FAB to see it enter loading state. Tests complete after 3 seconds.',
       },
     },
   },
@@ -61,12 +61,12 @@ export const WithSimulatedTest: Story = {
 
 export const CustomPosition: Story = {
   args: {
-    className: "bottom-20 right-20",
+    className: 'bottom-20 right-20',
   },
   parameters: {
     docs: {
       description: {
-        story: "The FAB position can be customized via className prop.",
+        story: 'The FAB position can be customized via className prop.',
       },
     },
   },

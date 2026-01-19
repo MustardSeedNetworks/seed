@@ -12,14 +12,14 @@
  * - All security levels: noAuthNoPriv, authNoPriv, authPriv
  */
 
-import type { Meta, StoryFn, StoryObj } from "@storybook/react-vite";
-import type React from "react";
-import { useState } from "react";
-import type { SaveStatus, SNMPSettings as SnmpSettingsType } from "../../../types/settings";
-import { SNMPSettings } from "./SnmpSettings";
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type React from 'react';
+import { useState } from 'react';
+import type { SaveStatus, SNMPSettings as SnmpSettingsType } from '../../../types/settings';
+import { SNMPSettings } from './SnmpSettings';
 
 const defaultSettings: SnmpSettingsType = {
-  communities: ["public"],
+  communities: ['public'],
   v3Credentials: [],
   timeout: 5000,
   retries: 2,
@@ -27,23 +27,23 @@ const defaultSettings: SnmpSettingsType = {
 };
 
 const meta: Meta<typeof SNMPSettings> = {
-  title: "Settings/SnmpSettings",
+  title: 'Settings/SnmpSettings',
   component: SNMPSettings,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "SNMP configuration panel for managing v1/v2c community strings and v3 credentials. Supports multiple authentication and privacy protocols with expandable credential forms.",
+          'SNMP configuration panel for managing v1/v2c community strings and v3 credentials. Supports multiple authentication and privacy protocols with expandable credential forms.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     snmpStatus: {
-      control: "select",
-      options: ["idle", "saving", "saved", "error"],
-      description: "Auto-save status indicator",
+      control: 'select',
+      options: ['idle', 'saving', 'saved', 'error'],
+      description: 'Auto-save status indicator',
     },
   },
   decorators: [
@@ -67,7 +67,7 @@ export const Default: Story = {
     setSnmpSettings: (): void => {
       // intentionally empty
     },
-    snmpStatus: "idle",
+    snmpStatus: 'idle',
   },
 };
 
@@ -78,12 +78,12 @@ export const MultipleCommunities: Story = {
   args: {
     snmpSettings: {
       ...defaultSettings,
-      communities: ["public", "private", "monitoring"],
+      communities: ['public', 'private', 'monitoring'],
     },
     setSnmpSettings: (): void => {
       // intentionally empty
     },
-    snmpStatus: "idle",
+    snmpStatus: 'idle',
   },
 };
 
@@ -96,22 +96,22 @@ export const V3NoAuthNoPriv: Story = {
       ...defaultSettings,
       v3Credentials: [
         {
-          id: "1",
-          name: "Basic User",
-          username: "basicuser",
-          authProtocol: "",
-          authPassword: "",
-          privProtocol: "",
-          privPassword: "",
-          contextName: "",
-          securityLevel: "noAuthNoPriv",
+          id: '1',
+          name: 'Basic User',
+          username: 'basicuser',
+          authProtocol: '',
+          authPassword: '',
+          privProtocol: '',
+          privPassword: '',
+          contextName: '',
+          securityLevel: 'noAuthNoPriv',
         },
       ],
     },
     setSnmpSettings: (): void => {
       // intentionally empty
     },
-    snmpStatus: "idle",
+    snmpStatus: 'idle',
   },
 };
 
@@ -124,22 +124,22 @@ export const V3AuthNoPriv: Story = {
       ...defaultSettings,
       v3Credentials: [
         {
-          id: "1",
-          name: "Auth User",
-          username: "authuser",
-          authProtocol: "SHA",
-          authPassword: "authpass123",
-          privProtocol: "",
-          privPassword: "",
-          contextName: "",
-          securityLevel: "authNoPriv",
+          id: '1',
+          name: 'Auth User',
+          username: 'authuser',
+          authProtocol: 'SHA',
+          authPassword: 'authpass123',
+          privProtocol: '',
+          privPassword: '',
+          contextName: '',
+          securityLevel: 'authNoPriv',
         },
       ],
     },
     setSnmpSettings: (): void => {
       // intentionally empty
     },
-    snmpStatus: "idle",
+    snmpStatus: 'idle',
   },
 };
 
@@ -152,22 +152,22 @@ export const V3AuthPriv: Story = {
       ...defaultSettings,
       v3Credentials: [
         {
-          id: "1",
-          name: "Secure User",
-          username: "secureuser",
-          authProtocol: "SHA256",
-          authPassword: "authpass123",
-          privProtocol: "AES",
-          privPassword: "privpass456",
-          contextName: "production",
-          securityLevel: "authPriv",
+          id: '1',
+          name: 'Secure User',
+          username: 'secureuser',
+          authProtocol: 'SHA256',
+          authPassword: 'authpass123',
+          privProtocol: 'AES',
+          privPassword: 'privpass456',
+          contextName: 'production',
+          securityLevel: 'authPriv',
         },
       ],
     },
     setSnmpSettings: (): void => {
       // intentionally empty
     },
-    snmpStatus: "idle",
+    snmpStatus: 'idle',
   },
 };
 
@@ -180,44 +180,44 @@ export const MultipleV3Credentials: Story = {
       ...defaultSettings,
       v3Credentials: [
         {
-          id: "1",
-          name: "Read Only",
-          username: "readonly",
-          authProtocol: "",
-          authPassword: "",
-          privProtocol: "",
-          privPassword: "",
-          contextName: "",
-          securityLevel: "noAuthNoPriv",
+          id: '1',
+          name: 'Read Only',
+          username: 'readonly',
+          authProtocol: '',
+          authPassword: '',
+          privProtocol: '',
+          privPassword: '',
+          contextName: '',
+          securityLevel: 'noAuthNoPriv',
         },
         {
-          id: "2",
-          name: "Monitoring",
-          username: "monitor",
-          authProtocol: "SHA",
-          authPassword: "monitorpass",
-          privProtocol: "",
-          privPassword: "",
-          contextName: "",
-          securityLevel: "authNoPriv",
+          id: '2',
+          name: 'Monitoring',
+          username: 'monitor',
+          authProtocol: 'SHA',
+          authPassword: 'monitorpass',
+          privProtocol: '',
+          privPassword: '',
+          contextName: '',
+          securityLevel: 'authNoPriv',
         },
         {
-          id: "3",
-          name: "Admin",
-          username: "admin",
-          authProtocol: "SHA256",
-          authPassword: "adminauth",
-          privProtocol: "AES256",
-          privPassword: "adminpriv",
-          contextName: "admin",
-          securityLevel: "authPriv",
+          id: '3',
+          name: 'Admin',
+          username: 'admin',
+          authProtocol: 'SHA256',
+          authPassword: 'adminauth',
+          privProtocol: 'AES256',
+          privPassword: 'adminpriv',
+          contextName: 'admin',
+          securityLevel: 'authPriv',
         },
       ],
     },
     setSnmpSettings: (): void => {
       // intentionally empty
     },
-    snmpStatus: "idle",
+    snmpStatus: 'idle',
   },
 };
 
@@ -227,18 +227,18 @@ export const MultipleV3Credentials: Story = {
 export const MixedConfiguration: Story = {
   args: {
     snmpSettings: {
-      communities: ["public", "monitoring"],
+      communities: ['public', 'monitoring'],
       v3Credentials: [
         {
-          id: "1",
-          name: "v3 User",
-          username: "snmpuser",
-          authProtocol: "SHA",
-          authPassword: "authpass",
-          privProtocol: "AES",
-          privPassword: "privpass",
-          contextName: "",
-          securityLevel: "authPriv",
+          id: '1',
+          name: 'v3 User',
+          username: 'snmpuser',
+          authProtocol: 'SHA',
+          authPassword: 'authpass',
+          privProtocol: 'AES',
+          privPassword: 'privpass',
+          contextName: '',
+          securityLevel: 'authPriv',
         },
       ],
       timeout: 5000,
@@ -248,7 +248,7 @@ export const MixedConfiguration: Story = {
     setSnmpSettings: (): void => {
       // intentionally empty
     },
-    snmpStatus: "idle",
+    snmpStatus: 'idle',
   },
 };
 
@@ -266,7 +266,7 @@ export const CustomPortTimeout: Story = {
     setSnmpSettings: (): void => {
       // intentionally empty
     },
-    snmpStatus: "idle",
+    snmpStatus: 'idle',
   },
 };
 
@@ -285,7 +285,7 @@ export const Empty: Story = {
     setSnmpSettings: (): void => {
       // intentionally empty
     },
-    snmpStatus: "idle",
+    snmpStatus: 'idle',
   },
 };
 
@@ -296,12 +296,12 @@ export const Saving: Story = {
   args: {
     snmpSettings: {
       ...defaultSettings,
-      communities: ["public", "private"],
+      communities: ['public', 'private'],
     },
     setSnmpSettings: (): void => {
       // intentionally empty
     },
-    snmpStatus: "saving",
+    snmpStatus: 'saving',
   },
 };
 
@@ -311,16 +311,16 @@ export const Saving: Story = {
 export const Interactive: Story = {
   render: function interactiveStory() {
     const [snmpSettings, setSnmpSettings] = useState<SnmpSettingsType>(defaultSettings);
-    const [status, setStatus] = useState<SaveStatus>("idle");
+    const [status, setStatus] = useState<SaveStatus>('idle');
 
     const handleSetSnmpSettings = (updater: React.SetStateAction<SnmpSettingsType>): void => {
       setSnmpSettings(updater);
-      setStatus("saving");
+      setStatus('saving');
 
       setTimeout(() => {
-        setStatus("saved");
+        setStatus('saved');
         setTimeout(() => {
-          setStatus("idle");
+          setStatus('idle');
         }, 2000);
       }, 800);
     };

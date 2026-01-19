@@ -5,8 +5,8 @@
  * for displaying health check trends and scores.
  */
 
-import type { Meta, StoryObj } from "@storybook/react";
-import { HealthScoreBadge, Sparkline, SparklineWithLabel } from "./Sparkline";
+import type { Meta, StoryObj } from '@storybook/react';
+import { HealthScoreBadge, Sparkline, SparklineWithLabel } from './Sparkline';
 
 // Generate sample data with variations
 const generateAvailabilityData = (
@@ -32,23 +32,23 @@ const criticalLatency: number[] = generateLatencyData(24, 150);
 
 // Sparkline Meta
 const meta: Meta<typeof Sparkline> = {
-  title: "UI/Sparkline",
+  title: 'UI/Sparkline',
   component: Sparkline,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     type: {
-      control: "select",
-      options: ["availability", "latency", "score"],
+      control: 'select',
+      options: ['availability', 'latency', 'score'],
     },
     size: {
-      control: "select",
-      options: ["sm", "md", "lg"],
+      control: 'select',
+      options: ['sm', 'md', 'lg'],
     },
     showArea: {
-      control: "boolean",
+      control: 'boolean',
     },
     threshold: {
-      control: "number",
+      control: 'number',
     },
   },
 };
@@ -60,8 +60,8 @@ type Story = StoryObj<typeof Sparkline>;
 export const AvailabilityHealthy: Story = {
   args: {
     data: healthyAvailability,
-    type: "availability",
-    size: "md",
+    type: 'availability',
+    size: 'md',
     showArea: true,
   },
 };
@@ -69,8 +69,8 @@ export const AvailabilityHealthy: Story = {
 export const AvailabilityDegraded: Story = {
   args: {
     data: degradedAvailability,
-    type: "availability",
-    size: "md",
+    type: 'availability',
+    size: 'md',
     showArea: true,
   },
 };
@@ -78,8 +78,8 @@ export const AvailabilityDegraded: Story = {
 export const AvailabilityCritical: Story = {
   args: {
     data: criticalAvailability,
-    type: "availability",
-    size: "md",
+    type: 'availability',
+    size: 'md',
     showArea: true,
   },
 };
@@ -87,8 +87,8 @@ export const AvailabilityCritical: Story = {
 export const LatencyGood: Story = {
   args: {
     data: goodLatency,
-    type: "latency",
-    size: "md",
+    type: 'latency',
+    size: 'md',
     threshold: 100,
     showArea: true,
   },
@@ -97,8 +97,8 @@ export const LatencyGood: Story = {
 export const LatencyWarning: Story = {
   args: {
     data: warningLatency,
-    type: "latency",
-    size: "md",
+    type: 'latency',
+    size: 'md',
     threshold: 100,
     showArea: true,
   },
@@ -107,8 +107,8 @@ export const LatencyWarning: Story = {
 export const LatencyCritical: Story = {
   args: {
     data: criticalLatency,
-    type: "latency",
-    size: "md",
+    type: 'latency',
+    size: 'md',
     threshold: 100,
     showArea: true,
   },
@@ -117,8 +117,8 @@ export const LatencyCritical: Story = {
 export const SizeSmall: Story = {
   args: {
     data: healthyAvailability,
-    type: "availability",
-    size: "sm",
+    type: 'availability',
+    size: 'sm',
     showArea: true,
   },
 };
@@ -126,8 +126,8 @@ export const SizeSmall: Story = {
 export const SizeLarge: Story = {
   args: {
     data: healthyAvailability,
-    type: "availability",
-    size: "lg",
+    type: 'availability',
+    size: 'lg',
     showArea: true,
   },
 };
@@ -135,8 +135,8 @@ export const SizeLarge: Story = {
 export const NoAreaFill: Story = {
   args: {
     data: healthyAvailability,
-    type: "availability",
-    size: "md",
+    type: 'availability',
+    size: 'md',
     showArea: false,
   },
 };
@@ -144,16 +144,16 @@ export const NoAreaFill: Story = {
 export const EmptyData: Story = {
   args: {
     data: [],
-    type: "availability",
-    size: "md",
+    type: 'availability',
+    size: 'md',
   },
 };
 
 export const SingleDataPoint: Story = {
   args: {
     data: [99.5],
-    type: "availability",
-    size: "md",
+    type: 'availability',
+    size: 'md',
   },
 };
 

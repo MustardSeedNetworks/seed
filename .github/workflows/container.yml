@@ -1,0 +1,24 @@
+name: Container Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pack-build:
+    name: Validate Pack Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Pack CLI
+        run: |
+          curl -sSL https://github.com/buildpacks/pack/releases/download/v0.35.1/pack-v0.35.1-linux.tgz | tar -xz
+          sudo mv pack /usr/local/bin/
+
+      - name: Validate Pack Build
+        run: pack build seed:ci --builder paketobuildpacks/builder-jammy-base

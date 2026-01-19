@@ -1,8 +1,8 @@
-import type React from "react";
-import { memo } from "react";
-import { useTranslation } from "react-i18next";
-import { cn, radius, spacing } from "../../../../styles/theme";
-import type { NetworkDiscoverySettings } from "../../../../types/settings";
+import type React from 'react';
+import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { cn, radius, spacing } from '../../../../styles/theme';
+import type { NetworkDiscoverySettings } from '../../../../types/settings';
 
 interface DiscoveryTimingSettingsProps {
   settings: NetworkDiscoverySettings;
@@ -18,16 +18,16 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
     settings,
     onSettingsChange,
   }: DiscoveryTimingSettingsProps) {
-    const { t } = useTranslation("settings");
+    const { t } = useTranslation('settings');
 
     return (
-      <div class={cn("border-t border-surface-border", spacing.pad.sm)}>
-        <span class="caption text-text-muted font-medium">{t("discovery.timingSettings")}</span>
+      <div class={cn('border-t border-surface-border', spacing.pad.sm)}>
+        <span class="caption text-text-muted font-medium">{t('discovery.timingSettings')}</span>
 
         {/* Scan Workers */}
         <div class={spacing.margin.top.inline}>
           <label class="caption text-text-muted" for="discovery-workers">
-            {t("discovery.concurrentWorkers")}
+            {t('discovery.concurrentWorkers')}
           </label>
           <input
             id="discovery-workers"
@@ -42,23 +42,23 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
             min={1}
             max={100}
             class={cn(
-              "w-full",
+              'w-full',
               spacing.margin.top.tight,
               spacing.chip.lg,
-              "bg-surface-base border border-surface-border",
+              'bg-surface-base border border-surface-border',
               radius.default,
-              "body-small text-text-primary",
+              'body-small text-text-primary',
             )}
           />
-          <p class={cn("caption text-text-muted", spacing.margin.top.tight)}>
-            {t("discovery.workersDesc")}
+          <p class={cn('caption text-text-muted', spacing.margin.top.tight)}>
+            {t('discovery.workersDesc')}
           </p>
         </div>
 
         {/* Ping Timeout */}
         <div class={spacing.margin.top.content}>
           <label class="caption text-text-muted" for="discovery-ping-timeout">
-            {t("discovery.pingTimeout")}
+            {t('discovery.pingTimeout')}
           </label>
           <input
             id="discovery-ping-timeout"
@@ -73,12 +73,12 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
             min={100}
             max={5000}
             class={cn(
-              "w-full",
+              'w-full',
               spacing.margin.top.tight,
               spacing.chip.lg,
-              "bg-surface-base border border-surface-border",
+              'bg-surface-base border border-surface-border',
               radius.default,
-              "body-small text-text-primary",
+              'body-small text-text-primary',
             )}
           />
         </div>
@@ -86,7 +86,7 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
         {/* Scan Timeout */}
         <div class={spacing.margin.top.content}>
           <label class="caption text-text-muted" for="discovery-scan-timeout">
-            {t("discovery.scanTimeout")}
+            {t('discovery.scanTimeout')}
           </label>
           <input
             id="discovery-scan-timeout"
@@ -101,12 +101,12 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
             min={5000}
             max={120000}
             class={cn(
-              "w-full",
+              'w-full',
               spacing.margin.top.tight,
               spacing.chip.lg,
-              "bg-surface-base border border-surface-border",
+              'bg-surface-base border border-surface-border',
               radius.default,
-              "body-small text-text-primary",
+              'body-small text-text-primary',
             )}
           />
         </div>
@@ -114,7 +114,7 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
         {/* Rescan Interval */}
         <div class={spacing.margin.top.content}>
           <label class="caption text-text-muted" for="discovery-rescan-interval">
-            {t("discovery.rescanInterval")}
+            {t('discovery.rescanInterval')}
           </label>
           <input
             id="discovery-rescan-interval"
@@ -128,16 +128,16 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
             }
             min={0}
             class={cn(
-              "w-full",
+              'w-full',
               spacing.margin.top.tight,
               spacing.chip.lg,
-              "bg-surface-base border border-surface-border",
+              'bg-surface-base border border-surface-border',
               radius.default,
-              "body-small text-text-primary",
+              'body-small text-text-primary',
             )}
           />
-          <p class={cn("caption text-text-muted", spacing.margin.top.tight)}>
-            {t("discovery.rescanIntervalDesc")}
+          <p class={cn('caption text-text-muted', spacing.margin.top.tight)}>
+            {t('discovery.rescanIntervalDesc')}
           </p>
         </div>
 

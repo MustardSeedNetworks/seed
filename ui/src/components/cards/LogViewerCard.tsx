@@ -14,13 +14,13 @@
  * ```
  */
 
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useLogs } from "../../hooks/useLogs";
-import { cn, icon as iconTokens, radius, spacing } from "../../styles/theme";
-import { Card, CardDivider, CardRow, CardValue, type Status } from "../ui/Card";
-import { AlertCircle, AlertTriangle, FileText, Maximize2 } from "../ui/Icons";
-import { LogViewerModal } from "./LogViewerModal";
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLogs } from '../../hooks/useLogs';
+import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
+import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
+import { AlertCircle, AlertTriangle, FileText, Maximize2 } from '../ui/Icons';
+import { LogViewerModal } from './LogViewerModal';
 
 /** Props for the LogViewerCard component. */
 export interface LogViewerCardProps {
@@ -33,8 +33,8 @@ export interface LogViewerCardProps {
  * Shows summary stats (total, errors, warnings) and streaming status.
  * Full log viewing is done in the modal (click expand icon).
  */
-export function LogViewerCard({ className = "" }: LogViewerCardProps): JSX.Element {
-  const { t } = useTranslation("common");
+export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Element {
+  const { t } = useTranslation('common');
   // Always start streaming (live) by default
   const { stats, isStreaming, isLoading, error } = useLogs({
     maxLogs: 1000,
@@ -44,32 +44,32 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps): JSX.Eleme
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Calculate error and warning counts
-  const errorCount = stats?.by_level && "ERROR" in stats.by_level ? stats.by_level.ERROR : 0;
-  const warnCount = stats?.by_level && "WARN" in stats.by_level ? stats.by_level.WARN : 0;
+  const errorCount = stats?.by_level && 'ERROR' in stats.by_level ? stats.by_level.ERROR : 0;
+  const warnCount = stats?.by_level && 'WARN' in stats.by_level ? stats.by_level.WARN : 0;
 
   // Determine card status based on errors
   const getCardStatus = (): Status => {
     if (isLoading) {
-      return "loading";
+      return 'loading';
     }
     if (error) {
-      return "error";
+      return 'error';
     }
     if (errorCount > 0) {
-      return "warning";
+      return 'warning';
     }
-    return "success";
+    return 'success';
   };
 
   if (isLoading) {
     return (
       <Card
-        title={t("logs.title", "System Logs")}
+        title={t('logs.title', 'System Logs')}
         icon={<FileText class={iconTokens.size.md} />}
         status="loading"
         class={className}
       >
-        <CardValue value={t("logs.loading", "Loading logs...")} size="md" />
+        <CardValue value={t('logs.loading', 'Loading logs...')} size="md" />
       </Card>
     );
   }
@@ -77,7 +77,7 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps): JSX.Eleme
   if (error) {
     return (
       <Card
-        title={t("logs.title", "System Logs")}
+        title={t('logs.title', 'System Logs')}
         icon={<FileText class={iconTokens.size.md} />}
         status="error"
         class={className}
@@ -89,7 +89,7 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps): JSX.Eleme
 
   return (
     <Card
-      title={t("logs.title", "System Logs")}
+      title={t('logs.title', 'System Logs')}
       icon={<FileText class={iconTokens.size.md} />}
       status={getCardStatus()}
       class={className}
@@ -100,13 +100,13 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps): JSX.Eleme
             class={cn(
               spacing.chip.sm,
               radius.md,
-              "text-xs font-medium",
+              'text-xs font-medium',
               isStreaming
-                ? "bg-status-success/20 text-status-success"
-                : "bg-surface-hover text-text-muted",
+                ? 'bg-status-success/20 text-status-success'
+                : 'bg-surface-hover text-text-muted',
             )}
           >
-            {isStreaming ? t("logs.streaming", "Live") : t("logs.paused", "Paused")}
+            {isStreaming ? t('logs.streaming', 'Live') : t('logs.paused', 'Paused')}
           </span>
 
           {/* Full Screen button */}
@@ -114,13 +114,13 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps): JSX.Eleme
             type="button"
             onClick={() => setIsModalOpen(true)}
             class={cn(
-              "p-1.5",
-              "bg-surface-hover text-text-secondary",
+              'p-1.5',
+              'bg-surface-hover text-text-secondary',
               radius.md,
-              "hover:bg-surface-border hover:text-text-primary transition-colors flex items-center justify-center cursor-pointer",
+              'hover:bg-surface-border hover:text-text-primary transition-colors flex items-center justify-center cursor-pointer',
             )}
-            aria-label={t("logs.fullScreen", "Full Screen")}
-            title={t("logs.fullScreen", "Full Screen")}
+            aria-label={t('logs.fullScreen', 'Full Screen')}
+            title={t('logs.fullScreen', 'Full Screen')}
           >
             <Maximize2 class={iconTokens.size.sm} aria-hidden="true" />
           </button>
@@ -129,20 +129,20 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps): JSX.Eleme
     >
       {/* Main stat - total logs */}
       <CardValue value={stats?.total_count ?? 0} size="lg" />
-      <CardRow label={t("logs.totalLogs", "Total logs")} value="" />
+      <CardRow label={t('logs.totalLogs', 'Total logs')} value="" />
 
       <CardDivider />
 
       {/* Error count */}
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <AlertCircle class={cn(iconTokens.size.sm, "text-status-error")} />
-          <span class="text-sm text-text-secondary">{t("logs.errors", "Errors")}</span>
+          <AlertCircle class={cn(iconTokens.size.sm, 'text-status-error')} />
+          <span class="text-sm text-text-secondary">{t('logs.errors', 'Errors')}</span>
         </div>
         <span
           class={cn(
-            "text-sm font-medium",
-            errorCount > 0 ? "text-status-error" : "text-text-muted",
+            'text-sm font-medium',
+            errorCount > 0 ? 'text-status-error' : 'text-text-muted',
           )}
         >
           {errorCount}
@@ -152,13 +152,13 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps): JSX.Eleme
       {/* Warning count */}
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <AlertTriangle class={cn(iconTokens.size.sm, "text-status-warning")} />
-          <span class="text-sm text-text-secondary">{t("logs.warnings", "Warnings")}</span>
+          <AlertTriangle class={cn(iconTokens.size.sm, 'text-status-warning')} />
+          <span class="text-sm text-text-secondary">{t('logs.warnings', 'Warnings')}</span>
         </div>
         <span
           class={cn(
-            "text-sm font-medium",
-            warnCount > 0 ? "text-status-warning" : "text-text-muted",
+            'text-sm font-medium',
+            warnCount > 0 ? 'text-status-warning' : 'text-text-muted',
           )}
         >
           {warnCount}
@@ -170,7 +170,7 @@ export function LogViewerCard({ className = "" }: LogViewerCardProps): JSX.Eleme
         <>
           <CardDivider />
           <CardRow
-            label={t("logs.errorsLastHour", "Errors (last hour)")}
+            label={t('logs.errorsLastHour', 'Errors (last hour)')}
             value={stats.errors_last_hour}
             valueClassName="text-status-error"
           />

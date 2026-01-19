@@ -7,11 +7,11 @@
  * Extracted from App.tsx to reduce component complexity (#889).
  */
 
-import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { NetworkDiscoveryData } from "../components/cards/NetworkDiscoveryCard";
-import { api } from "../api";
-import { LogComponents, logger } from "../lib/logger";
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { api } from '../api';
+import type { NetworkDiscoveryData } from '../components/cards/NetworkDiscoveryCard';
+import { LogComponents, logger } from '../lib/logger';
 
 interface UseDeviceScanningProps {
   /** Function to fetch full network discovery data after scan completes */
@@ -83,12 +83,12 @@ export function useDeviceScanning({
           : null,
       );
 
-      await api.post("/api/v1/shell/devices/scan");
+      await api.post('/api/v1/shell/devices/scan');
 
       // Poll for completion
       scanPollIntervalRef.current = setInterval(async () => {
         try {
-          const status = await api.get<{ scanning: boolean }>("/api/v1/shell/devices/status");
+          const status = await api.get<{ scanning: boolean }>('/api/v1/shell/devices/status');
           if (!status.scanning) {
             if (scanPollIntervalRef.current) {
               clearInterval(scanPollIntervalRef.current);
@@ -109,7 +109,7 @@ export function useDeviceScanning({
         }
       }, 60000);
     } catch (err) {
-      logger.error(LogComponents.Devices, "Failed to trigger device scan", err);
+      logger.error(LogComponents.Devices, 'Failed to trigger device scan', err);
       setNetworkDiscovery((prev) =>
         prev
           ? {

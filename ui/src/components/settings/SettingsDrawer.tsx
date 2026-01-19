@@ -26,13 +26,13 @@
  * State: All settings state, save status, validation errors, iperf3 suggestions
  */
 
-import type React from "react";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useSettings } from "../../contexts/useSettings";
-import { useTheme } from "../../hooks/useTheme";
-import { LogComponents, logger } from "../../lib/logger";
-import { button, cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
+import type React from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useSettings } from '../../contexts/useSettings';
+import { useTheme } from '../../hooks/useTheme';
+import { LogComponents, logger } from '../../lib/logger';
+import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
 import type {
   CableTestSettings as CableTestSettingsType,
   IperfSuggestion,
@@ -46,30 +46,30 @@ import type {
   TestsSettings,
   VulnerabilityScanSettings,
   WiFiSettings as WiFiSettingsType,
-} from "../../types/settings";
-import { generateId } from "../../utils/id";
-import { CollapsibleSection } from "../ui/CollapsibleSection";
-import { Network } from "../ui/Icons";
-import { AppearanceSettings } from "./sections/AppearanceSettings";
-import { AutoSaveIndicator } from "./sections/AutoSaveIndicator";
-import { CableTestSettings } from "./sections/CableTestSettings";
-import { ConfigBackupsSection } from "./sections/ConfigBackupsSection";
-import { DiscoverySettings } from "./sections/DiscoverySettings";
-import { DnsSettings } from "./sections/DnsSettings";
-import { HealthChecksSettings } from "./sections/HealthChecksSettings";
-import { LinkSettings } from "./sections/LinkSettings";
-import { MtuControl } from "./sections/MtuControl";
-import { PerformanceSettings } from "./sections/PerformanceSettings";
-import { ThresholdsSettings } from "./sections/ThresholdsSettings";
-import { UpdateSettings } from "./sections/UpdateSettings";
-import { VlanControl } from "./sections/VlanControl";
-import { VulnerabilitySettings } from "./sections/VulnerabilitySettings";
-import { WiFiSettings } from "./sections/WiFiSettings";
+} from '../../types/settings';
+import { generateId } from '../../utils/id';
+import { CollapsibleSection } from '../ui/CollapsibleSection';
+import { Network } from '../ui/Icons';
+import { AppearanceSettings } from './sections/AppearanceSettings';
+import { AutoSaveIndicator } from './sections/AutoSaveIndicator';
+import { CableTestSettings } from './sections/CableTestSettings';
+import { ConfigBackupsSection } from './sections/ConfigBackupsSection';
+import { DiscoverySettings } from './sections/DiscoverySettings';
+import { DnsSettings } from './sections/DnsSettings';
+import { HealthChecksSettings } from './sections/HealthChecksSettings';
+import { LinkSettings } from './sections/LinkSettings';
+import { MtuControl } from './sections/MtuControl';
+import { PerformanceSettings } from './sections/PerformanceSettings';
+import { ThresholdsSettings } from './sections/ThresholdsSettings';
+import { UpdateSettings } from './sections/UpdateSettings';
+import { VlanControl } from './sections/VlanControl';
+import { VulnerabilitySettings } from './sections/VulnerabilitySettings';
+import { WiFiSettings } from './sections/WiFiSettings';
 
 // Inline defaults - avoids deprecated imports while maintaining fallback behavior
 // The backend is the single source of truth; these are used only for initial state
 const INLINE_DEFAULT_LINK_SETTINGS: LinkSettingsType = {
-  mode: "auto",
+  mode: 'auto',
   availableModes: [],
 };
 
@@ -79,15 +79,15 @@ const INLINE_DEFAULT_CABLE_TEST_SETTINGS: CableTestSettingsType = {
 
 const INLINE_DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityScanSettings = {
   enabled: true,
-  cveDatabase: "nvd",
-  nvdApiKey: "",
+  cveDatabase: 'nvd',
+  nvdApiKey: '',
   updateInterval: 86400,
-  severityThreshold: "medium",
+  severityThreshold: 'medium',
   maxConcurrent: 5,
   autoScan: true,
 };
 
-const API_BASE: string = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 // Utility: ensure every item in an array has a stable id for React keying/updating.
 const withIds = <T extends { id?: string }>(items: T[] = []): Array<T & { id: string }> =>
@@ -110,7 +110,7 @@ interface NormalizedTestsSettings {
 }
 
 const normalizeTestsSettingsForSave = (settings: TestsSettings): NormalizedTestsSettings => {
-  const dnsHostname = settings.dnsHostname?.trim() || "google.com";
+  const dnsHostname = settings.dnsHostname?.trim() || 'google.com';
 
   const dnsServers = (settings.dnsServers || [])
     .map((server) => ({
@@ -131,7 +131,7 @@ const normalizeTestsSettingsForSave = (settings: TestsSettings): NormalizedTests
     .map((port) => ({
       name: port.name?.trim() || port.host.trim(),
       host: port.host.trim(),
-      port: typeof port.port === "number" ? port.port : Number.parseInt(String(port.port), 10) || 0,
+      port: typeof port.port === 'number' ? port.port : Number.parseInt(String(port.port), 10) || 0,
       enabled: port.enabled !== false,
     }))
     .filter((port) => port.host.length > 0 && port.port > 0);
@@ -140,7 +140,7 @@ const normalizeTestsSettingsForSave = (settings: TestsSettings): NormalizedTests
     .map((port) => ({
       name: port.name?.trim() || port.host.trim(),
       host: port.host.trim(),
-      port: typeof port.port === "number" ? port.port : Number.parseInt(String(port.port), 10) || 0,
+      port: typeof port.port === 'number' ? port.port : Number.parseInt(String(port.port), 10) || 0,
       enabled: port.enabled !== false,
     }))
     .filter((port) => port.host.length > 0 && port.port > 0);
@@ -150,7 +150,7 @@ const normalizeTestsSettingsForSave = (settings: TestsSettings): NormalizedTests
       name: endpoint.name?.trim() || endpoint.url.trim(),
       url: endpoint.url.trim(),
       expectedStatus:
-        typeof endpoint.expectedStatus === "number" && endpoint.expectedStatus > 0
+        typeof endpoint.expectedStatus === 'number' && endpoint.expectedStatus > 0
           ? endpoint.expectedStatus
           : 200,
       enabled: endpoint.enabled !== false,
@@ -169,7 +169,7 @@ const normalizeTestsSettingsForSave = (settings: TestsSettings): NormalizedTests
     runIperf: settings.runIperf !== false,
     runDiscovery: settings.runDiscovery !== false,
     speedtest: {
-      serverId: settings.speedtest?.serverId?.trim() || "",
+      serverId: settings.speedtest?.serverId?.trim() || '',
       autoRunOnLink: !!settings.speedtest?.autoRunOnLink,
     },
     iperf: {
@@ -191,10 +191,10 @@ export const SettingsDrawer: React.MemoExoticComponent<
 > = memo(function settingsDrawer({
   isOpen,
   onClose,
-  version = "dev",
+  version = 'dev',
   isWifi = false,
 }: SettingsDrawerProps): React.ReactElement | null {
-  const { t } = useTranslation("settings");
+  const { t } = useTranslation('settings');
   const { theme, setTheme, isDark } = useTheme();
 
   // Get settings from context - single source of truth
@@ -211,7 +211,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
   // Create setter wrappers that use context update methods
   const setDisplayOptions = useCallback(
     (updater: React.SetStateAction<typeof displayOptions>) => {
-      const newValue = typeof updater === "function" ? updater(displayOptions) : updater;
+      const newValue = typeof updater === 'function' ? updater(displayOptions) : updater;
       updateDisplayOptions(newValue);
     },
     [displayOptions, updateDisplayOptions],
@@ -219,7 +219,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
 
   const setIperfSettings = useCallback(
     (updater: React.SetStateAction<typeof iperfSettings>) => {
-      const newValue = typeof updater === "function" ? updater(iperfSettings) : updater;
+      const newValue = typeof updater === 'function' ? updater(iperfSettings) : updater;
       updateIperfSettings(newValue);
     },
     [iperfSettings, updateIperfSettings],
@@ -241,7 +241,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
   useEffect(() => {
     if (prevIsOpenRef.current && !isOpen && testsSettingsChangedRef.current) {
       // Drawer just closed and test settings were changed
-      window.dispatchEvent(new CustomEvent("healthChecksUpdated"));
+      window.dispatchEvent(new CustomEvent('healthChecksUpdated'));
       testsSettingsChangedRef.current = false;
     }
     prevIsOpenRef.current = isOpen;
@@ -261,14 +261,14 @@ export const SettingsDrawer: React.MemoExoticComponent<
     },
   });
   const [ipSettings, setIpSettings] = useState<IpSettings>({
-    mode: "dhcp",
-    address: "",
-    netmask: "24",
-    gateway: "",
+    mode: 'dhcp',
+    address: '',
+    netmask: '24',
+    gateway: '',
     dns: [],
   });
   const [testsSettings, setTestsSettings] = useState<TestsSettings>({
-    dnsHostname: "google.com",
+    dnsHostname: 'google.com',
     dnsServers: [],
     pingTargets: [],
     tcpPorts: [],
@@ -279,7 +279,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
     runIperf: true,
     runDiscovery: true,
     speedtest: {
-      serverId: "",
+      serverId: '',
       autoRunOnLink: false,
     },
     iperf: {
@@ -290,7 +290,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
   // FAB Options, Display Options, and iperf Settings now come from SettingsContext above
 
   const [wifiSettings, setWifiSettings] = useState<WiFiSettingsType>({
-    interface: "",
+    interface: '',
     availableWifi: [],
     isWireless: false,
   });
@@ -300,11 +300,11 @@ export const SettingsDrawer: React.MemoExoticComponent<
   const [cableTestSettings, setCableTestSettings] = useState<CableTestSettingsType>(
     INLINE_DEFAULT_CABLE_TEST_SETTINGS,
   );
-  const [dnsInput, setDnsInput] = useState("");
+  const [dnsInput, setDnsInput] = useState('');
   const [iperfSuggestions, setIperfSuggestions] = useState<IperfSuggestion[]>([]);
   const [iperfSuggestionsStatus, setIperfSuggestionsStatus] = useState<
-    "idle" | "loading" | "error"
-  >("idle");
+    'idle' | 'loading' | 'error'
+  >('idle');
   const [iperfSuggestionsError, setIperfSuggestionsError] = useState<string | null>(null);
   // Network Discovery settings
   const [networkDiscoverySettings, setNetworkDiscoverySettings] =
@@ -327,9 +327,9 @@ export const SettingsDrawer: React.MemoExoticComponent<
         icmpScan: true,
         portScan: {
           enabled: false,
-          preset: "common",
-          tcpPorts: "22,80,443,8080-8100",
-          udpPorts: "53,123,161",
+          preset: 'common',
+          tcpPorts: '22,80,443,8080-8100',
+          udpPorts: '53,123,161',
           bannerTimeoutMs: 2000,
         },
         tcpProbe: {
@@ -358,7 +358,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
     });
   // SNMP settings
   const [snmpSettings, setSnmpSettings] = useState<SnmpSettingsType>({
-    communities: ["public"],
+    communities: ['public'],
     v3Credentials: [],
     timeout: 5000,
     retries: 2,
@@ -366,31 +366,31 @@ export const SettingsDrawer: React.MemoExoticComponent<
   });
   // Additional subnets for scanning
   const [subnets, setSubnets] = useState<SubnetConfig[]>([]);
-  const [newSubnetCidr, setNewSubnetCidr] = useState("");
-  const [newSubnetName, setNewSubnetName] = useState("");
+  const [newSubnetCidr, setNewSubnetCidr] = useState('');
+  const [newSubnetName, setNewSubnetName] = useState('');
   const [subnetError, setSubnetError] = useState<string | null>(null);
   // Log preview (debug)
   const [logPreview, setLogPreview] = useState<string[]>([]);
   const [logLoading, setLogLoading] = useState(false);
   const [logError, setLogError] = useState<string | null>(null);
-  const [subnetsStatus, setSubnetsStatus] = useState<SaveStatus>("idle");
+  const [subnetsStatus, setSubnetsStatus] = useState<SaveStatus>('idle');
   // Auto-save status for each section
-  type SaveStatus = "idle" | "saving" | "saved" | "error";
-  const [thresholdsStatus, setThresholdsStatus] = useState<SaveStatus>("idle");
-  const [testsStatus, setTestsStatus] = useState<SaveStatus>("idle");
-  const [wifiStatus, setWifiStatus] = useState<SaveStatus>("idle");
-  const [linkStatus, setLinkStatus] = useState<SaveStatus>("idle");
-  const [cableTestStatus, setCableTestStatus] = useState<SaveStatus>("idle");
-  const [snmpStatus, setSnmpStatus] = useState<SaveStatus>("idle");
+  type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+  const [thresholdsStatus, setThresholdsStatus] = useState<SaveStatus>('idle');
+  const [testsStatus, setTestsStatus] = useState<SaveStatus>('idle');
+  const [wifiStatus, setWifiStatus] = useState<SaveStatus>('idle');
+  const [linkStatus, setLinkStatus] = useState<SaveStatus>('idle');
+  const [cableTestStatus, setCableTestStatus] = useState<SaveStatus>('idle');
+  const [snmpStatus, setSnmpStatus] = useState<SaveStatus>('idle');
   const [vulnSettings, setVulnSettings] = useState<VulnerabilityScanSettings>(
     INLINE_DEFAULT_VULNERABILITY_SETTINGS,
   );
-  const [vulnStatus, setVulnStatus] = useState<SaveStatus>("idle");
+  const [vulnStatus, setVulnStatus] = useState<SaveStatus>('idle');
   // Status for display, iperf comes from context (settingsStatus)
   const displayStatus = settingsStatus.display;
   const iperfStatus = settingsStatus.iperf;
 
-  const [networkDiscoveryStatus, setNetworkDiscoveryStatus] = useState<SaveStatus>("idle");
+  const [networkDiscoveryStatus, setNetworkDiscoveryStatus] = useState<SaveStatus>('idle');
 
   // Refs to track initial load (skip auto-save on first load)
   const initialLoadRef = useRef(true);
@@ -421,7 +421,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
   const fetchThresholds = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/settings`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await (response.json() as Promise<Record<string, unknown>>);
@@ -433,7 +433,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         }
       }
     } catch (err) {
-      logger.error(LogComponents.Config, "Failed to fetch thresholds", err);
+      logger.error(LogComponents.Config, 'Failed to fetch thresholds', err);
     }
   }, []);
 
@@ -441,21 +441,21 @@ export const SettingsDrawer: React.MemoExoticComponent<
   const fetchIpSettings = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/ipconfig/settings`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await (response.json() as Promise<Record<string, unknown>>);
         setIpSettings({
-          mode: data.mode || "dhcp",
-          address: data.address || "",
-          netmask: data.netmask || "24",
-          gateway: data.gateway || "",
+          mode: data.mode || 'dhcp',
+          address: data.address || '',
+          netmask: data.netmask || '24',
+          gateway: data.gateway || '',
           dns: data.dns || [],
         });
-        setDnsInput((data.dns || []).join(", "));
+        setDnsInput((data.dns || []).join(', '));
       }
     } catch (err) {
-      logger.error(LogComponents.Config, "Failed to fetch IP settings", err);
+      logger.error(LogComponents.Config, 'Failed to fetch IP settings', err);
     }
   }, []);
 
@@ -463,12 +463,12 @@ export const SettingsDrawer: React.MemoExoticComponent<
   const fetchTestsSettings = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/health-checks/settings`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await (response.json() as Promise<Record<string, unknown>>);
         setTestsSettings({
-          dnsHostname: data.dnsHostname || "google.com",
+          dnsHostname: data.dnsHostname || 'google.com',
           dnsServers: withIds(data.dnsServers || []).map((server) => ({
             ...server,
             enabled: server.enabled !== false,
@@ -497,7 +497,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
           runIperf: data.runIperf ?? true,
           runDiscovery: data.runDiscovery ?? true,
           speedtest: {
-            serverId: data.speedtest?.serverId || "",
+            serverId: data.speedtest?.serverId || '',
             autoRunOnLink: data.speedtest?.autoRunOnLink ?? true, // Default to true
           },
           iperf: {
@@ -506,28 +506,28 @@ export const SettingsDrawer: React.MemoExoticComponent<
         });
       }
     } catch (err) {
-      logger.error(LogComponents.Config, "Failed to fetch tests settings", err);
+      logger.error(LogComponents.Config, 'Failed to fetch tests settings', err);
     }
   }, []);
 
   const fetchIperfSuggestions = useCallback(async () => {
-    setIperfSuggestionsStatus("loading");
+    setIperfSuggestionsStatus('loading');
     setIperfSuggestionsError(null);
     try {
       const response = await fetch(`${API_BASE}/api/sap/iperf/suggestions`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await (response.json() as Promise<Record<string, unknown>>);
         setIperfSuggestions(Array.isArray(data) ? data : []);
-        setIperfSuggestionsStatus("idle");
+        setIperfSuggestionsStatus('idle');
       } else {
-        setIperfSuggestionsStatus("error");
-        setIperfSuggestionsError("No iperf hosts found");
+        setIperfSuggestionsStatus('error');
+        setIperfSuggestionsError('No iperf hosts found');
       }
     } catch (err) {
-      setIperfSuggestionsStatus("error");
-      setIperfSuggestionsError(err instanceof Error ? err.message : "Failed to find iperf hosts");
+      setIperfSuggestionsStatus('error');
+      setIperfSuggestionsError(err instanceof Error ? err.message : 'Failed to find iperf hosts');
     }
   }, []);
 
@@ -535,18 +535,18 @@ export const SettingsDrawer: React.MemoExoticComponent<
   const fetchWifiSettings = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/canopy/wifi/settings`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await (response.json() as Promise<Record<string, unknown>>);
         setWifiSettings({
-          interface: data.interface || "",
+          interface: data.interface || '',
           availableWifi: data.availableWifi || [],
           isWireless: data.isWireless,
         });
       }
     } catch (err) {
-      logger.error(LogComponents.Wifi, "Failed to fetch WiFi settings", err);
+      logger.error(LogComponents.Wifi, 'Failed to fetch WiFi settings', err);
     }
   }, []);
 
@@ -557,7 +557,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
   const fetchNetworkDiscoverySettings = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/v1/shell/devices/settings`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await (response.json() as Promise<Record<string, unknown>>);
@@ -580,9 +580,9 @@ export const SettingsDrawer: React.MemoExoticComponent<
             icmpScan: true,
             portScan: {
               enabled: false,
-              preset: "common",
-              tcpPorts: "22,80,443,8080-8100",
-              udpPorts: "53,123,161",
+              preset: 'common',
+              tcpPorts: '22,80,443,8080-8100',
+              udpPorts: '53,123,161',
               bannerTimeoutMs: 2000,
             },
             tcpProbe: {
@@ -611,7 +611,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         });
       }
     } catch (err) {
-      logger.error(LogComponents.Discovery, "Failed to fetch network discovery settings", err);
+      logger.error(LogComponents.Discovery, 'Failed to fetch network discovery settings', err);
     }
   }, []);
 
@@ -619,12 +619,12 @@ export const SettingsDrawer: React.MemoExoticComponent<
   const fetchSnmpSettings = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/sap/snmp/settings`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await (response.json() as Promise<Record<string, unknown>>);
         setSnmpSettings({
-          communities: data.communities ?? ["public"],
+          communities: data.communities ?? ['public'],
           v3Credentials: data.v3Credentials ?? [],
           timeout: data.timeout ?? 5000,
           retries: data.retries ?? 2,
@@ -632,7 +632,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         });
       }
     } catch (err) {
-      logger.error(LogComponents.Config, "Failed to fetch SNMP settings", err);
+      logger.error(LogComponents.Config, 'Failed to fetch SNMP settings', err);
     }
   }, []);
 
@@ -640,19 +640,19 @@ export const SettingsDrawer: React.MemoExoticComponent<
   const fetchLinkSettings = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/settings/link`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await (response.json() as Promise<Record<string, unknown>>);
         // Backend may send separate speed/duplex or combined mode
-        const mode = data.mode ?? (data.auto_negotiation ? "auto" : `${data.speed}/${data.duplex}`);
+        const mode = data.mode ?? (data.auto_negotiation ? 'auto' : `${data.speed}/${data.duplex}`);
         setLinkSettings({
           mode: mode,
           availableModes: data.available_modes ?? [],
         });
       }
     } catch (err) {
-      logger.error(LogComponents.Config, "Failed to fetch link settings", err);
+      logger.error(LogComponents.Config, 'Failed to fetch link settings', err);
     }
   }, []);
 
@@ -660,7 +660,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
   const fetchCableTestSettings = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/settings/cable`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await (response.json() as Promise<Record<string, unknown>>);
@@ -669,7 +669,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         });
       }
     } catch (err) {
-      logger.error(LogComponents.Config, "Failed to fetch cable test settings", err);
+      logger.error(LogComponents.Config, 'Failed to fetch cable test settings', err);
     }
   }, []);
 
@@ -677,14 +677,14 @@ export const SettingsDrawer: React.MemoExoticComponent<
   const fetchSubnets = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/v1/shell/devices/subnets`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await (response.json() as Promise<Record<string, unknown>>);
         setSubnets(Array.isArray(data) ? data : []);
       }
     } catch (err) {
-      logger.error(LogComponents.Discovery, "Failed to fetch subnets", err);
+      logger.error(LogComponents.Discovery, 'Failed to fetch subnets', err);
     }
   }, []);
 
@@ -695,16 +695,16 @@ export const SettingsDrawer: React.MemoExoticComponent<
     setLogError(null);
     try {
       const response = await fetch(`${API_BASE}/api/harvest/logs?lines=200`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (!response.ok) {
-        throw new Error("Unable to load logs");
+        throw new Error('Unable to load logs');
       }
       const data = await (response.json() as Promise<LogsResponse>);
       setLogPreview(data.lines || []);
     } catch (err) {
       setLogPreview([]);
-      setLogError(err instanceof Error ? err.message : "Failed to load log file");
+      setLogError(err instanceof Error ? err.message : 'Failed to load log file');
     } finally {
       setLogLoading(false);
     }
@@ -720,20 +720,20 @@ export const SettingsDrawer: React.MemoExoticComponent<
   // Add a new subnet
   const addSubnet = async (): Promise<void> => {
     if (!newSubnetCidr.trim()) {
-      setSubnetError(t("network.cidrRequired"));
+      setSubnetError(t('network.cidrRequired'));
       return;
     }
 
     setSubnetError(null);
-    setSubnetsStatus("saving");
+    setSubnetsStatus('saving');
 
     try {
       const response = await fetch(`${API_BASE}/api/v1/shell/devices/subnets`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
+        credentials: 'include',
         body: JSON.stringify({
           cidr: newSubnetCidr.trim(),
           name: newSubnetName.trim() || newSubnetCidr.trim(),
@@ -742,121 +742,121 @@ export const SettingsDrawer: React.MemoExoticComponent<
       });
 
       if (response.ok) {
-        setNewSubnetCidr("");
-        setNewSubnetName("");
-        setSubnetsStatus("saved");
-        setTimeout(() => setSubnetsStatus("idle"), 2000);
+        setNewSubnetCidr('');
+        setNewSubnetName('');
+        setSubnetsStatus('saved');
+        setTimeout(() => setSubnetsStatus('idle'), 2000);
         await fetchSubnets();
       } else {
         // Handle both JSON and plain text error responses
-        const contentType = response.headers.get("content-type");
-        if (contentType?.includes("application/json")) {
+        const contentType = response.headers.get('content-type');
+        if (contentType?.includes('application/json')) {
           const errorData = await (response.json() as Promise<{ error?: string }>);
-          setSubnetError(errorData.error || "Failed to add subnet");
+          setSubnetError(errorData.error || 'Failed to add subnet');
         } else {
           const errorText = await (response.text() as Promise<string>);
-          setSubnetError(errorText || "Failed to add subnet");
+          setSubnetError(errorText || 'Failed to add subnet');
         }
-        setSubnetsStatus("error");
+        setSubnetsStatus('error');
       }
     } catch (err) {
-      setSubnetError(err instanceof Error ? err.message : "Network error adding subnet");
-      setSubnetsStatus("error");
+      setSubnetError(err instanceof Error ? err.message : 'Network error adding subnet');
+      setSubnetsStatus('error');
     }
   };
 
   // Toggle subnet enabled state
   const toggleSubnet = async (cidr: string, enabled: boolean): Promise<void> => {
-    setSubnetsStatus("saving");
+    setSubnetsStatus('saving');
     try {
       const response = await fetch(`${API_BASE}/api/v1/shell/devices/subnets`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
+        credentials: 'include',
         body: JSON.stringify({ cidr, enabled }),
       });
 
       if (response.ok) {
-        setSubnetsStatus("saved");
-        setTimeout(() => setSubnetsStatus("idle"), 2000);
+        setSubnetsStatus('saved');
+        setTimeout(() => setSubnetsStatus('idle'), 2000);
         await fetchSubnets();
       } else {
-        setSubnetsStatus("error");
+        setSubnetsStatus('error');
       }
     } catch {
-      setSubnetsStatus("error");
+      setSubnetsStatus('error');
     }
   };
 
   // Delete a subnet
   const deleteSubnet = async (cidr: string): Promise<void> => {
-    setSubnetsStatus("saving");
+    setSubnetsStatus('saving');
     try {
       // Backend expects CIDR as query parameter, not in body
       const response = await fetch(
         `${API_BASE}/api/v1/shell/devices/subnets?cidr=${encodeURIComponent(cidr)}`,
         {
-          method: "DELETE",
-          credentials: "include",
+          method: 'DELETE',
+          credentials: 'include',
         },
       );
 
       if (response.ok) {
-        setSubnetsStatus("saved");
-        setTimeout(() => setSubnetsStatus("idle"), 2000);
+        setSubnetsStatus('saved');
+        setTimeout(() => setSubnetsStatus('idle'), 2000);
         await fetchSubnets();
       } else {
-        setSubnetsStatus("error");
+        setSubnetsStatus('error');
       }
     } catch {
-      setSubnetsStatus("error");
+      setSubnetsStatus('error');
     }
   };
 
   // Save Network Discovery settings to API
   const saveNetworkDiscoverySettings = useCallback(async () => {
-    setNetworkDiscoveryStatus("saving");
+    setNetworkDiscoveryStatus('saving');
     try {
       const response = await fetch(`${API_BASE}/api/v1/shell/devices/settings`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
+        credentials: 'include',
         body: JSON.stringify(networkDiscoverySettings),
       });
       if (response.ok) {
-        setNetworkDiscoveryStatus("saved");
-        setTimeout(() => setNetworkDiscoveryStatus("idle"), 2000);
+        setNetworkDiscoveryStatus('saved');
+        setTimeout(() => setNetworkDiscoveryStatus('idle'), 2000);
       } else {
-        setNetworkDiscoveryStatus("error");
+        setNetworkDiscoveryStatus('error');
       }
     } catch {
-      setNetworkDiscoveryStatus("error");
+      setNetworkDiscoveryStatus('error');
     }
   }, [networkDiscoverySettings]);
 
   const saveSnmpSettings = useCallback(async () => {
-    setSnmpStatus("saving");
+    setSnmpStatus('saving');
     try {
       const response = await fetch(`${API_BASE}/api/sap/snmp/settings`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
+        credentials: 'include',
         body: JSON.stringify(snmpSettings),
       });
       if (response.ok) {
-        setSnmpStatus("saved");
-        setTimeout(() => setSnmpStatus("idle"), 2000);
+        setSnmpStatus('saved');
+        setTimeout(() => setSnmpStatus('idle'), 2000);
       } else {
-        setSnmpStatus("error");
+        setSnmpStatus('error');
       }
     } catch {
-      setSnmpStatus("error");
+      setSnmpStatus('error');
     }
   }, [snmpSettings]);
 
@@ -864,34 +864,34 @@ export const SettingsDrawer: React.MemoExoticComponent<
   const fetchVulnSettings = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/v1/shell/vulnerabilities/settings`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await (response.json() as Promise<Record<string, unknown>>);
         setVulnSettings({
           enabled: data.enabled ?? false,
-          cveDatabase: data.cve_database ?? data.cveDatabase ?? "nvd",
-          nvdApiKey: data.nvd_api_key ?? data.nvdApiKey ?? "",
+          cveDatabase: data.cve_database ?? data.cveDatabase ?? 'nvd',
+          nvdApiKey: data.nvd_api_key ?? data.nvdApiKey ?? '',
           updateInterval: data.update_interval ?? data.updateInterval ?? 86400,
-          severityThreshold: data.severity_threshold ?? data.severityThreshold ?? "medium",
+          severityThreshold: data.severity_threshold ?? data.severityThreshold ?? 'medium',
           maxConcurrent: data.max_concurrent ?? data.maxConcurrent ?? 5,
           autoScan: data.auto_scan ?? data.autoScan ?? false,
         });
       }
     } catch (err) {
-      logger.error(LogComponents.Config, "Failed to fetch vulnerability settings", err);
+      logger.error(LogComponents.Config, 'Failed to fetch vulnerability settings', err);
     }
   }, []);
 
   const saveVulnSettings = useCallback(async () => {
-    setVulnStatus("saving");
+    setVulnStatus('saving');
     try {
       const response = await fetch(`${API_BASE}/api/v1/shell/vulnerabilities/settings`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
+        credentials: 'include',
         body: JSON.stringify({
           enabled: vulnSettings.enabled,
           cveDatabase: vulnSettings.cveDatabase,
@@ -903,13 +903,13 @@ export const SettingsDrawer: React.MemoExoticComponent<
         }),
       });
       if (response.ok) {
-        setVulnStatus("saved");
-        setTimeout(() => setVulnStatus("idle"), 2000);
+        setVulnStatus('saved');
+        setTimeout(() => setVulnStatus('idle'), 2000);
       } else {
-        setVulnStatus("error");
+        setVulnStatus('error');
       }
     } catch {
-      setVulnStatus("error");
+      setVulnStatus('error');
     }
   }, [vulnSettings]);
 
@@ -966,24 +966,24 @@ export const SettingsDrawer: React.MemoExoticComponent<
   ]);
 
   const saveThresholds = useCallback(async () => {
-    setThresholdsStatus("saving");
+    setThresholdsStatus('saving');
     try {
       const response = await fetch(`${API_BASE}/api/settings`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
+        credentials: 'include',
         body: JSON.stringify({ thresholds }),
       });
       if (response.ok) {
-        setThresholdsStatus("saved");
-        setTimeout(() => setThresholdsStatus("idle"), 2000);
+        setThresholdsStatus('saved');
+        setTimeout(() => setThresholdsStatus('idle'), 2000);
       } else {
-        setThresholdsStatus("error");
+        setThresholdsStatus('error');
       }
     } catch {
-      setThresholdsStatus("error");
+      setThresholdsStatus('error');
     }
   }, [thresholds]);
 
@@ -993,16 +993,16 @@ export const SettingsDrawer: React.MemoExoticComponent<
     try {
       // Parse DNS from input
       const dns = dnsInput
-        .split(",")
+        .split(',')
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
 
       const response = await fetch(`${API_BASE}/api/ipconfig/settings`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
+        credentials: 'include',
         body: JSON.stringify({
           mode: ipSettings.mode,
           address: ipSettings.address,
@@ -1012,114 +1012,114 @@ export const SettingsDrawer: React.MemoExoticComponent<
         }),
       });
       if (response.ok) {
-        setIpMessage("IP settings applied");
+        setIpMessage('IP settings applied');
         setTimeout(() => setIpMessage(null), 3000);
       } else {
         const error = await (response.text() as Promise<string>);
         setIpMessage(`Failed: ${error}`);
       }
     } catch {
-      setIpMessage("Error applying IP settings");
+      setIpMessage('Error applying IP settings');
     } finally {
       setSavingIp(false);
     }
   };
 
   const saveTestsSettings = useCallback(async () => {
-    setTestsStatus("saving");
+    setTestsStatus('saving');
     try {
       const payload = normalizeTestsSettingsForSave(testsSettings);
       const response = await fetch(`${API_BASE}/api/health-checks/settings`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
       if (response.ok) {
-        setTestsStatus("saved");
-        setTimeout(() => setTestsStatus("idle"), 2000);
+        setTestsStatus('saved');
+        setTimeout(() => setTestsStatus('idle'), 2000);
         // Mark that test settings changed - event dispatched on drawer close
         testsSettingsChangedRef.current = true;
       } else {
-        setTestsStatus("error");
+        setTestsStatus('error');
       }
     } catch {
-      setTestsStatus("error");
+      setTestsStatus('error');
     }
   }, [testsSettings]);
 
   const saveWifiSettings = useCallback(async () => {
-    setWifiStatus("saving");
+    setWifiStatus('saving');
     try {
       const response = await fetch(`${API_BASE}/api/canopy/wifi/settings`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
+        credentials: 'include',
         body: JSON.stringify({ interface: wifiSettings.interface }),
       });
       if (response.ok) {
-        setWifiStatus("saved");
-        setTimeout(() => setWifiStatus("idle"), 2000);
+        setWifiStatus('saved');
+        setTimeout(() => setWifiStatus('idle'), 2000);
       } else {
-        setWifiStatus("error");
+        setWifiStatus('error');
       }
     } catch {
-      setWifiStatus("error");
+      setWifiStatus('error');
     }
   }, [wifiSettings.interface]);
 
   // Save link settings to backend (fixes #734)
   const saveLinkSettings = useCallback(async () => {
-    setLinkStatus("saving");
+    setLinkStatus('saving');
     try {
       const response = await fetch(`${API_BASE}/api/settings/link`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
+        credentials: 'include',
         body: JSON.stringify({
           mode: linkSettings.mode,
           availableModes: linkSettings.availableModes,
         }),
       });
       if (response.ok) {
-        setLinkStatus("saved");
-        setTimeout(() => setLinkStatus("idle"), 2000);
+        setLinkStatus('saved');
+        setTimeout(() => setLinkStatus('idle'), 2000);
       } else {
-        setLinkStatus("error");
+        setLinkStatus('error');
       }
     } catch {
-      setLinkStatus("error");
+      setLinkStatus('error');
     }
   }, [linkSettings]);
 
   // Save cable test settings to backend (fixes #740)
   const saveCableTestSettings = useCallback(async () => {
-    setCableTestStatus("saving");
+    setCableTestStatus('saving');
     try {
       const response = await fetch(`${API_BASE}/api/settings/cable`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
+        credentials: 'include',
         body: JSON.stringify({
           enabled: cableTestSettings.enabled,
         }),
       });
       if (response.ok) {
-        setCableTestStatus("saved");
-        setTimeout(() => setCableTestStatus("idle"), 2000);
+        setCableTestStatus('saved');
+        setTimeout(() => setCableTestStatus('idle'), 2000);
       } else {
-        setCableTestStatus("error");
+        setCableTestStatus('error');
       }
     } catch {
-      setCableTestStatus("error");
+      setCableTestStatus('error');
     }
   }, [cableTestSettings]);
 
@@ -1306,7 +1306,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
     if (!ip) {
       return true; // Empty is OK for optional fields
     }
-    const parts = ip.split(".");
+    const parts = ip.split('.');
     if (parts.length !== 4) {
       return false;
     }
@@ -1326,19 +1326,19 @@ export const SettingsDrawer: React.MemoExoticComponent<
     }
 
     const handleKeyDown = (e: globalThis.KeyboardEvent): void => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
 
     // Focus the close button when drawer opens
     // Fixes #918: Track timeout for cleanup to prevent stale closure
     const focusTimeout = setTimeout(() => closeButtonRef.current?.focus(), 100);
 
     return (): void => {
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener('keydown', handleKeyDown);
       clearTimeout(focusTimeout);
     };
   }, [isOpen, onClose]);
@@ -1370,14 +1370,14 @@ export const SettingsDrawer: React.MemoExoticComponent<
         <div
           class={cn(
             layout.flex.between,
-            "pad sm:pad-lg border-b border-surface-border sticky top-0 bg-surface-raised z-10",
+            'pad sm:pad-lg border-b border-surface-border sticky top-0 bg-surface-raised z-10',
           )}
         >
           <div class="stack-xs">
             <h2 id="settings-drawer-title" class="heading-3">
-              {t("title")}
+              {t('title')}
             </h2>
-            <p class="body-small">{t("subtitle")}</p>
+            <p class="body-small">{t('subtitle')}</p>
           </div>
           <button
             type="button"
@@ -1386,9 +1386,9 @@ export const SettingsDrawer: React.MemoExoticComponent<
             class={cn(
               button.size.md,
               radius.md,
-              "hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-raised",
+              'hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-raised',
             )}
-            aria-label={t("network.closeSettings")}
+            aria-label={t('network.closeSettings')}
           >
             <svg
               class={iconTokens.size.lg}
@@ -1408,7 +1408,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         </div>
 
         <div
-          class={cn(spacing.drawerPad, "section-gap body-small leading-relaxed")}
+          class={cn(spacing.drawerPad, 'section-gap body-small leading-relaxed')}
           ref={scrollRef}
         >
           {/* Settings sections ordered to match dashboard card order */}
@@ -1433,53 +1433,53 @@ export const SettingsDrawer: React.MemoExoticComponent<
             title={
               <div class={layout.inline.default}>
                 <Network class={iconTokens.size.sm} />
-                <span>{t("sections.network")}</span>
+                <span>{t('sections.network')}</span>
               </div>
             }
           >
             {/* Network Configuration */}
             <div class="stack">
-              <p class="section-title">{t("network.title")}</p>
+              <p class="section-title">{t('network.title')}</p>
               {/* Mode Toggle */}
-              <div class={cn("grid grid-cols-2", spacing.gap.compact)}>
+              <div class={cn('grid grid-cols-2', spacing.gap.compact)}>
                 <button
                   type="button"
-                  onClick={(): void => setIpSettings((prev) => ({ ...prev, mode: "dhcp" }))}
+                  onClick={(): void => setIpSettings((prev) => ({ ...prev, mode: 'dhcp' }))}
                   class={cn(
                     spacing.tab,
                     radius.md,
-                    "body-small font-medium transition-colors",
-                    ipSettings.mode === "dhcp"
-                      ? "bg-brand-primary text-text-inverse"
-                      : "bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover",
+                    'body-small font-medium transition-colors',
+                    ipSettings.mode === 'dhcp'
+                      ? 'bg-brand-primary text-text-inverse'
+                      : 'bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover',
                   )}
                 >
-                  {t("network.dhcp")}
+                  {t('network.dhcp')}
                 </button>
                 <button
                   type="button"
-                  onClick={(): void => setIpSettings((prev) => ({ ...prev, mode: "static" }))}
+                  onClick={(): void => setIpSettings((prev) => ({ ...prev, mode: 'static' }))}
                   class={cn(
                     spacing.tab,
                     radius.md,
-                    "body-small font-medium transition-colors",
-                    ipSettings.mode === "static"
-                      ? "bg-brand-primary text-text-inverse"
-                      : "bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover",
+                    'body-small font-medium transition-colors',
+                    ipSettings.mode === 'static'
+                      ? 'bg-brand-primary text-text-inverse'
+                      : 'bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover',
                   )}
                 >
-                  {t("network.static")}
+                  {t('network.static')}
                 </button>
               </div>
 
               {/* Static IP Fields */}
-              {ipSettings.mode === "static" && (
+              {ipSettings.mode === 'static' && (
                 <div
-                  class={cn("stack", spacing.padding.top.heading, "border-t border-surface-border")}
+                  class={cn('stack', spacing.padding.top.heading, 'border-t border-surface-border')}
                 >
                   <div>
                     <label for="static-ip-address" class="caption font-medium">
-                      {t("network.ipAddress")} *
+                      {t('network.ipAddress')} *
                     </label>
                     <input
                       id="static-ip-address"
@@ -1495,21 +1495,21 @@ export const SettingsDrawer: React.MemoExoticComponent<
                       }
                       placeholder="192.168.1.100"
                       class={cn(
-                        "w-full",
+                        'w-full',
                         spacing.margin.top.tight,
                         spacing.chip.sm,
-                        "bg-surface-base border",
+                        'bg-surface-base border',
                         radius.md,
-                        "body-small text-text-primary",
+                        'body-small text-text-primary',
                         ipSettings.address && !isValidIp(ipSettings.address)
-                          ? "border-status-error"
-                          : "border-surface-border",
+                          ? 'border-status-error'
+                          : 'border-surface-border',
                       )}
                     />
                   </div>
                   <div>
                     <label for="static-subnet-mask" class="caption font-medium">
-                      {t("network.subnetMask")} *
+                      {t('network.subnetMask')} *
                     </label>
                     <input
                       id="static-subnet-mask"
@@ -1525,18 +1525,18 @@ export const SettingsDrawer: React.MemoExoticComponent<
                       }
                       placeholder="24 or 255.255.255.0"
                       class={cn(
-                        "w-full",
+                        'w-full',
                         spacing.margin.top.tight,
                         spacing.chip.lg,
-                        "bg-surface-base border border-surface-border",
+                        'bg-surface-base border border-surface-border',
                         radius.md,
-                        "body-small text-text-primary",
+                        'body-small text-text-primary',
                       )}
                     />
                   </div>
                   <div>
                     <label for="static-gateway" class="caption font-medium">
-                      {t("network.gateway")}
+                      {t('network.gateway')}
                     </label>
                     <input
                       id="static-gateway"
@@ -1552,21 +1552,21 @@ export const SettingsDrawer: React.MemoExoticComponent<
                       }
                       placeholder="192.168.1.1"
                       class={cn(
-                        "w-full",
+                        'w-full',
                         spacing.margin.top.tight,
                         spacing.chip.sm,
-                        "bg-surface-base border",
+                        'bg-surface-base border',
                         radius.md,
-                        "body-small text-text-primary",
+                        'body-small text-text-primary',
                         ipSettings.gateway && !isValidIp(ipSettings.gateway)
-                          ? "border-status-error"
-                          : "border-surface-border",
+                          ? 'border-status-error'
+                          : 'border-surface-border',
                       )}
                     />
                   </div>
                   <div>
                     <label for="static-dns-servers" class="caption font-medium">
-                      {t("network.dnsServers")}
+                      {t('network.dnsServers')}
                     </label>
                     <input
                       id="static-dns-servers"
@@ -1577,12 +1577,12 @@ export const SettingsDrawer: React.MemoExoticComponent<
                       ): void => setDnsInput(e.target.value)}
                       placeholder="8.8.8.8, 8.8.4.4"
                       class={cn(
-                        "w-full",
+                        'w-full',
                         spacing.margin.top.tight,
                         spacing.chip.lg,
-                        "bg-surface-base border border-surface-border",
+                        'bg-surface-base border border-surface-border',
                         radius.md,
-                        "body-small text-text-primary",
+                        'body-small text-text-primary',
                       )}
                     />
                   </div>
@@ -1593,61 +1593,61 @@ export const SettingsDrawer: React.MemoExoticComponent<
               <button
                 type="button"
                 onClick={saveIpSettings}
-                disabled={savingIp || (ipSettings.mode === "static" && !ipSettings.address)}
+                disabled={savingIp || (ipSettings.mode === 'static' && !ipSettings.address)}
                 class={cn(
-                  "w-full",
+                  'w-full',
                   button.size.md,
-                  "bg-brand-primary text-text-inverse",
+                  'bg-brand-primary text-text-inverse',
                   radius.md,
-                  "font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors",
+                  'font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors',
                 )}
               >
-                {savingIp ? t("network.applying") : t("network.applyIpSettings")}
+                {savingIp ? t('network.applying') : t('network.applyIpSettings')}
               </button>
 
               {ipMessage ? (
                 <p
                   class={cn(
-                    "caption text-center",
-                    ipMessage.includes("Failed") || ipMessage.includes("Error")
-                      ? "text-status-error"
-                      : "text-status-success",
+                    'caption text-center',
+                    ipMessage.includes('Failed') || ipMessage.includes('Error')
+                      ? 'text-status-error'
+                      : 'text-status-success',
                   )}
                 >
                   {ipMessage}
                 </p>
               ) : null}
 
-              <p class="caption">{t("network.requiresRoot")}</p>
+              <p class="caption">{t('network.requiresRoot')}</p>
             </div>
 
             {/* Display Options */}
             <div
               class={cn(
-                "border-t border-surface-border",
+                'border-t border-surface-border',
                 spacing.padding.top.heading,
                 spacing.margin.top.heading,
               )}
             >
-              <p class={cn("caption font-medium", spacing.margin.bottom.inline)}>
-                {t("network.displayOptions")} <AutoSaveIndicator status={displayStatus} />
+              <p class={cn('caption font-medium', spacing.margin.bottom.inline)}>
+                {t('network.displayOptions')} <AutoSaveIndicator status={displayStatus} />
               </p>
               <div class="stack-sm">
                 {/* Show Public IP */}
                 <label
                   class={cn(
-                    "flex items-center justify-between",
+                    'flex items-center justify-between',
                     spacing.pad.xs,
-                    "bg-surface-base",
+                    'bg-surface-base',
                     radius.md,
-                    "border border-surface-border",
+                    'border border-surface-border',
                   )}
                 >
                   <div>
                     <span class="body-small text-text-primary font-medium">
-                      {t("network.showPublicIp")}
+                      {t('network.showPublicIp')}
                     </span>
-                    <p class="caption text-text-muted">{t("network.displayInNetworkCard")}</p>
+                    <p class="caption text-text-muted">{t('network.displayInNetworkCard')}</p>
                   </div>
                   <input
                     type="checkbox"
@@ -1667,13 +1667,13 @@ export const SettingsDrawer: React.MemoExoticComponent<
             {/* VLAN Configuration */}
             <div
               class={cn(
-                "border-t border-surface-border",
+                'border-t border-surface-border',
                 spacing.padding.top.heading,
                 spacing.margin.top.heading,
               )}
             >
-              <p class={cn("section-title", spacing.margin.bottom.inline)}>
-                {t("network.vlanTag")}
+              <p class={cn('section-title', spacing.margin.bottom.inline)}>
+                {t('network.vlanTag')}
               </p>
               <VlanControl />
             </div>
@@ -1681,13 +1681,13 @@ export const SettingsDrawer: React.MemoExoticComponent<
             {/* MTU Configuration */}
             <div
               class={cn(
-                "border-t border-surface-border",
+                'border-t border-surface-border',
                 spacing.padding.top.heading,
                 spacing.margin.top.heading,
               )}
             >
-              <p class={cn("section-title", spacing.margin.bottom.inline)}>
-                {t("network.mtuSetting")}
+              <p class={cn('section-title', spacing.margin.bottom.inline)}>
+                {t('network.mtuSetting')}
               </p>
               <MtuControl />
             </div>
@@ -1772,8 +1772,8 @@ export const SettingsDrawer: React.MemoExoticComponent<
             theme={theme}
             setTheme={setTheme}
             isDark={isDark}
-            unitSystem={displayOptions.unitSystem || "sae"}
-            setUnitSystem={(unit: "sae" | "metric"): void =>
+            unitSystem={displayOptions.unitSystem || 'sae'}
+            setUnitSystem={(unit: 'sae' | 'metric'): void =>
               setDisplayOptions((prev) => ({ ...prev, unitSystem: unit }))
             }
           />
@@ -1785,60 +1785,60 @@ export const SettingsDrawer: React.MemoExoticComponent<
           <UpdateSettings currentVersion={version} />
 
           {/* Logs (debug) */}
-          <section class={cn(spacing.padding.top.section, "border-t border-surface-border")}>
+          <section class={cn(spacing.padding.top.section, 'border-t border-surface-border')}>
             <div class="flex items-start justify-between">
               <div>
-                <h3 class="body-small font-medium text-text-muted">{t("logs.title")}</h3>
-                <p class="caption text-text-muted">{t("logs.description")}</p>
+                <h3 class="body-small font-medium text-text-muted">{t('logs.title')}</h3>
+                <p class="caption text-text-muted">{t('logs.description')}</p>
               </div>
               <button
                 type="button"
                 onClick={fetchLogPreview}
                 class={cn(
-                  "caption",
+                  'caption',
                   spacing.chip.sm,
-                  "border border-surface-border",
+                  'border border-surface-border',
                   radius.md,
-                  "text-text-muted hover:text-text-primary hover:border-text-muted transition-colors",
+                  'text-text-muted hover:text-text-primary hover:border-text-muted transition-colors',
                 )}
               >
-                {logLoading ? t("logs.loading") : t("logs.view")}
+                {logLoading ? t('logs.loading') : t('logs.view')}
               </button>
             </div>
             {logError ? (
-              <p class={cn("caption text-status-error", spacing.margin.top.inline)}>{logError}</p>
+              <p class={cn('caption text-status-error', spacing.margin.top.inline)}>{logError}</p>
             ) : null}
             {!logError && logPreview.length > 0 ? (
               <pre
                 class={cn(
                   spacing.margin.top.inline,
-                  "max-h-48 overflow-y-auto text-2xs leading-5 bg-surface-base border border-surface-border",
+                  'max-h-48 overflow-y-auto text-2xs leading-5 bg-surface-base border border-surface-border',
                   radius.md,
                   spacing.chip.lg,
-                  "text-text-primary whitespace-pre-wrap",
+                  'text-text-primary whitespace-pre-wrap',
                 )}
               >
-                {logPreview.join("\n")}
+                {logPreview.join('\n')}
               </pre>
             ) : null}
           </section>
 
           {/* Export Section */}
-          <section class={cn(spacing.padding.top.section, "border-t border-surface-border")}>
-            <h3 class={cn("body-small font-medium text-text-muted", spacing.margin.bottom.heading)}>
-              {t("export.title")}
+          <section class={cn(spacing.padding.top.section, 'border-t border-surface-border')}>
+            <h3 class={cn('body-small font-medium text-text-muted', spacing.margin.bottom.heading)}>
+              {t('export.title')}
             </h3>
             <a
               href={`${API_BASE}/api/harvest/export`}
               download="seed-export.json"
               class={cn(
-                "w-full",
+                'w-full',
                 button.size.md,
-                "bg-surface-base border border-surface-border text-text-primary",
+                'bg-surface-base border border-surface-border text-text-primary',
                 radius.md,
-                "font-medium hover:bg-surface-hover transition-colors flex items-center justify-center",
+                'font-medium hover:bg-surface-hover transition-colors flex items-center justify-center',
                 spacing.gap.compact,
-                "touch-manipulation",
+                'touch-manipulation',
               )}
             >
               <svg
@@ -1855,22 +1855,22 @@ export const SettingsDrawer: React.MemoExoticComponent<
                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                 />
               </svg>
-              {t("export.download")}
+              {t('export.download')}
             </a>
-            <p class={cn("caption text-text-muted", spacing.margin.top.inline)}>
-              {t("export.description")}
+            <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
+              {t('export.description')}
             </p>
           </section>
 
           {/* About Section */}
-          <section class={cn(spacing.padding.top.section, "border-t border-surface-border")}>
-            <h3 class={cn("body-small font-medium text-text-muted", spacing.margin.bottom.inline)}>
-              {t("about.title")}
+          <section class={cn(spacing.padding.top.section, 'border-t border-surface-border')}>
+            <h3 class={cn('body-small font-medium text-text-muted', spacing.margin.bottom.inline)}>
+              {t('about.title')}
             </h3>
             <p class="caption text-text-muted">
-              {t("about.appName")} {version}
+              {t('about.appName')} {version}
               <br />
-              {t("about.description")}
+              {t('about.description')}
             </p>
           </section>
         </div>

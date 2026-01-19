@@ -20,8 +20,8 @@
  * @see Issue #892 - Extract complex polling logic
  */
 
-import { useEffect, useRef } from "react";
-import type { SseConnectionStatus } from "./useSse";
+import { useEffect, useRef } from 'react';
+import type { SseConnectionStatus } from './useSse';
 
 /** Polling intervals configuration */
 const pollingIntervals = {
@@ -107,7 +107,7 @@ export function useSsePolling({
     }
 
     // Only poll if SSE is not connected
-    if (sseStatus === "connected") {
+    if (sseStatus === 'connected') {
       // SSE provides real-time updates, no need for aggressive polling
       // Still poll some endpoints that aren't broadcast via SSE
       const slowInterval: ReturnType<typeof setInterval> = setInterval(() => {

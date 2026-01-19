@@ -6,15 +6,15 @@
 
 /** State of the update process */
 export type UpdateState =
-  | "idle"
-  | "checking"
-  | "downloading"
-  | "verifying"
-  | "applying"
-  | "restarting"
-  | "complete"
-  | "failed"
-  | "rolled_back";
+  | 'idle'
+  | 'checking'
+  | 'downloading'
+  | 'verifying'
+  | 'applying'
+  | 'restarting'
+  | 'complete'
+  | 'failed'
+  | 'rolled_back';
 
 /** Information about an available update */
 export interface UpdateInfo {

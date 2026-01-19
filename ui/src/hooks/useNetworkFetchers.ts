@@ -21,20 +21,20 @@
  * - fetchNetworkDiscovery: Network device discovery
  */
 
-import type React from "react";
-import { useCallback } from "react";
-import type { CableData } from "../components/cards/CableCard";
-import type { DnsData } from "../components/cards/DnsCard";
-import type { GatewayData } from "../components/cards/GatewayCard";
-import type { LinkData } from "../components/cards/LinkCard";
-import type { DhcpData } from "../components/cards/NetworkCard";
-import type { NetworkDiscoveryData } from "../components/cards/NetworkDiscoveryCard";
-import type { PublicIpData } from "../components/cards/PublicIpCard";
-import type { SwitchData, VlanData } from "../components/cards/SwitchCard";
-import type { WiFiData } from "../components/cards/WiFiCard";
-import { LogComponents, logger } from "../lib/logger";
+import type React from 'react';
+import { useCallback } from 'react';
+import type { CableData } from '../components/cards/CableCard';
+import type { DnsData } from '../components/cards/DnsCard';
+import type { GatewayData } from '../components/cards/GatewayCard';
+import type { LinkData } from '../components/cards/LinkCard';
+import type { DhcpData } from '../components/cards/NetworkCard';
+import type { NetworkDiscoveryData } from '../components/cards/NetworkDiscoveryCard';
+import type { PublicIpData } from '../components/cards/PublicIpCard';
+import type { SwitchData, VlanData } from '../components/cards/SwitchCard';
+import type { WiFiData } from '../components/cards/WiFiCard';
+import { LogComponents, logger } from '../lib/logger';
 
-const API_BASE: string = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 interface CardState {
   link: LinkData | null;
@@ -74,7 +74,7 @@ interface CategorizedInterfacesResponse {
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 interface UseNetworkFetchersProps {
@@ -130,7 +130,7 @@ export function useNetworkFetchers({
         ? `${API_BASE}/api/sap/link?interface=${encodeURIComponent(iface)}`
         : `${API_BASE}/api/sap/link`;
       const response = await fetch(url, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await response.json();
@@ -140,15 +140,15 @@ export function useNetworkFetchers({
         const wasDown = prevLinkUpRef.current === false;
 
         // Update previous state
-        if (typeof data.linkUp === "boolean") {
+        if (typeof data.linkUp === 'boolean') {
           prevLinkUpRef.current = data.linkUp;
         }
 
         // Trigger auto-run when link transitions from down to up
         if (newLinkUp && wasDown) {
-          logger.info(LogComponents.Network, "Link up detected (poll), triggering auto-run tests");
+          logger.info(LogComponents.Network, 'Link up detected (poll), triggering auto-run tests');
           setTimeout(() => {
-            window.dispatchEvent(new CustomEvent("runAllTests"));
+            window.dispatchEvent(new CustomEvent('runAllTests'));
           }, 1500);
         }
 
@@ -158,18 +158,18 @@ export function useNetworkFetchers({
             linkUp: data.linkUp,
             carrier: data.carrier ?? data.linkUp, // Fallback for compatibility
             hasIp: data.hasIp ?? data.linkUp, // Fallback for compatibility
-            speed: data.speed || "",
-            duplex: data.duplex || "",
+            speed: data.speed || '',
+            duplex: data.duplex || '',
             advertisedSpeeds: data.advertisedSpeeds || [],
             mtu: data.mtu || 0,
             autoNeg: data.autoNeg,
           },
         }));
-        setCurrentInterface(data.interface || "unknown");
+        setCurrentInterface(data.interface || 'unknown');
         // isWifi is now set by fetchWifiData which properly detects wireless interfaces
       }
     } catch (err) {
-      logger.error(LogComponents.Network, "Failed to fetch link data", err);
+      logger.error(LogComponents.Network, 'Failed to fetch link data', err);
     }
   }, [currentInterfaceRef, setCards, setCurrentInterface, prevLinkUpRef]);
 
@@ -182,15 +182,15 @@ export function useNetworkFetchers({
         ? `${API_BASE}/api/sap/ipconfig?interface=${encodeURIComponent(iface)}`
         : `${API_BASE}/api/sap/ipconfig`;
       const response = await fetch(url, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await response.json();
         setCards((prev) => ({
           ...prev,
           dhcp: {
-            mac: data.mac || "",
-            mode: data.mode || "auto",
+            mac: data.mac || '',
+            mode: data.mode || 'auto',
             ipv4: data.ipv4 || null,
             ipv6: data.ipv6 || [],
             dns: data.dns || [],
@@ -199,7 +199,7 @@ export function useNetworkFetchers({
         }));
       }
     } catch (err) {
-      logger.error(LogComponents.Network, "Failed to fetch IP config", err);
+      logger.error(LogComponents.Network, 'Failed to fetch IP config', err);
     }
   }, [currentInterfaceRef, setCards]);
 
@@ -207,7 +207,7 @@ export function useNetworkFetchers({
   const fetchInterfaces = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/interfaces?categorized=true`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data: CategorizedInterfacesResponse = await response.json();
@@ -223,7 +223,7 @@ export function useNetworkFetchers({
         }
       }
     } catch (err) {
-      logger.error(LogComponents.Network, "Failed to fetch interfaces", err);
+      logger.error(LogComponents.Network, 'Failed to fetch interfaces', err);
     }
   }, [setInterfaces, setRecommendedEthernet, setRecommendedWifi]);
 
@@ -231,7 +231,7 @@ export function useNetworkFetchers({
   const fetchVersion = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/status`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await response.json();
@@ -240,7 +240,7 @@ export function useNetworkFetchers({
         }
       }
     } catch (err) {
-      logger.error(LogComponents.System, "Failed to fetch version", err);
+      logger.error(LogComponents.System, 'Failed to fetch version', err);
     }
   }, [setAppVersion]);
 
@@ -248,7 +248,7 @@ export function useNetworkFetchers({
   const fetchDiscoveryData = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/v1/shell/discovery`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data: unknown = await response.json();
@@ -259,30 +259,30 @@ export function useNetworkFetchers({
         if (neighbors.length > 0 && isPlainObject(neighbors[0])) {
           const [neighbor] = neighbors;
           const rawProtocol =
-            typeof neighbor.protocol === "string" ? neighbor.protocol.toLowerCase() : "unknown";
-          const protocol: SwitchData["protocol"] =
-            rawProtocol === "lldp" ||
-            rawProtocol === "cdp" ||
-            rawProtocol === "edp" ||
-            rawProtocol === "fdp"
+            typeof neighbor.protocol === 'string' ? neighbor.protocol.toLowerCase() : 'unknown';
+          const protocol: SwitchData['protocol'] =
+            rawProtocol === 'lldp' ||
+            rawProtocol === 'cdp' ||
+            rawProtocol === 'edp' ||
+            rawProtocol === 'fdp'
               ? rawProtocol
-              : "unknown";
+              : 'unknown';
 
-          const systemName = typeof neighbor.systemName === "string" ? neighbor.systemName : "";
-          const chassisId = typeof neighbor.chassisId === "string" ? neighbor.chassisId : "";
+          const systemName = typeof neighbor.systemName === 'string' ? neighbor.systemName : '';
+          const chassisId = typeof neighbor.chassisId === 'string' ? neighbor.chassisId : '';
 
           setCards((prev) => ({
             ...prev,
             switch: {
               protocol,
               switchName: systemName || chassisId || null,
-              portId: typeof neighbor.portId === "string" ? neighbor.portId : null,
+              portId: typeof neighbor.portId === 'string' ? neighbor.portId : null,
               portDescription:
-                typeof neighbor.portDescription === "string" ? neighbor.portDescription : null,
+                typeof neighbor.portDescription === 'string' ? neighbor.portDescription : null,
               managementIp:
-                typeof neighbor.managementAddress === "string" ? neighbor.managementAddress : null,
+                typeof neighbor.managementAddress === 'string' ? neighbor.managementAddress : null,
               systemDescription:
-                typeof neighbor.systemDescription === "string" ? neighbor.systemDescription : null,
+                typeof neighbor.systemDescription === 'string' ? neighbor.systemDescription : null,
             },
           }));
         } else {
@@ -293,7 +293,7 @@ export function useNetworkFetchers({
         }
       }
     } catch (err) {
-      logger.error(LogComponents.Discovery, "Failed to fetch discovery data", err);
+      logger.error(LogComponents.Discovery, 'Failed to fetch discovery data', err);
     }
   }, [setCards]);
 
@@ -306,16 +306,16 @@ export function useNetworkFetchers({
         ? `${API_BASE}/api/sap/dns?interface=${encodeURIComponent(iface)}`
         : `${API_BASE}/api/sap/dns`;
       const response = await fetch(url, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await response.json();
         setCards((prev) => ({
           ...prev,
           dns: {
-            server: data.server || "Unknown",
+            server: data.server || 'Unknown',
             servers: data.servers || [],
-            testHostname: data.testHostname || "google.com",
+            testHostname: data.testHostname || 'google.com',
             forward: data.forward
               ? {
                   result: data.forward.result,
@@ -360,7 +360,7 @@ export function useNetworkFetchers({
         }));
       }
     } catch (err) {
-      logger.error(LogComponents.Dns, "Failed to fetch DNS data", err);
+      logger.error(LogComponents.Dns, 'Failed to fetch DNS data', err);
     }
   }, [setCards, currentInterfaceRef.current]);
 
@@ -368,7 +368,7 @@ export function useNetworkFetchers({
   const fetchVlanData = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/sap/vlan`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await response.json();
@@ -383,7 +383,7 @@ export function useNetworkFetchers({
         }));
       }
     } catch (err) {
-      logger.error(LogComponents.Vlan, "Failed to fetch VLAN data", err);
+      logger.error(LogComponents.Vlan, 'Failed to fetch VLAN data', err);
     }
   }, [setCards]);
 
@@ -396,14 +396,14 @@ export function useNetworkFetchers({
         ? `${API_BASE}/api/sap/gateway?interface=${encodeURIComponent(iface)}`
         : `${API_BASE}/api/sap/gateway`;
       const response = await fetch(url, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await response.json();
         setCards((prev) => ({
           ...prev,
           gateway: {
-            gateway: data.gateway || "",
+            gateway: data.gateway || '',
             reachable: data.reachable,
             sent: data.sent || 0,
             received: data.received || 0,
@@ -412,10 +412,10 @@ export function useNetworkFetchers({
             maxTime: data.maxTime || 0,
             avgTime: data.avgTime || 0,
             lastTime: data.lastTime || 0,
-            status: data.status || "unknown",
+            status: data.status || 'unknown',
             ipv6: data.ipv6
               ? {
-                  gateway: data.ipv6.gateway || "",
+                  gateway: data.ipv6.gateway || '',
                   reachable: data.ipv6.reachable,
                   sent: data.ipv6.sent || 0,
                   received: data.ipv6.received || 0,
@@ -424,14 +424,14 @@ export function useNetworkFetchers({
                   maxTime: data.ipv6.maxTime || 0,
                   avgTime: data.ipv6.avgTime || 0,
                   lastTime: data.ipv6.lastTime || 0,
-                  status: data.ipv6.status || "unknown",
+                  status: data.ipv6.status || 'unknown',
                 }
               : undefined,
           },
         }));
       }
     } catch (err) {
-      logger.error(LogComponents.Gateway, "Failed to fetch Gateway data", err);
+      logger.error(LogComponents.Gateway, 'Failed to fetch Gateway data', err);
     }
   }, [setCards, currentInterfaceRef.current]);
 
@@ -444,7 +444,7 @@ export function useNetworkFetchers({
         ? `${API_BASE}/api/canopy/wifi?interface=${encodeURIComponent(iface)}`
         : `${API_BASE}/api/canopy/wifi`;
       const response = await fetch(url, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await response.json();
@@ -453,12 +453,12 @@ export function useNetworkFetchers({
           setCards((prev) => ({
             ...prev,
             wifi: {
-              ssid: data.ssid || "",
-              bssid: data.bssid || "",
+              ssid: data.ssid || '',
+              bssid: data.bssid || '',
               signal: data.signal || 0,
               channel: data.channel || 0,
               frequency: data.frequency || 0,
-              security: data.security || "Unknown",
+              security: data.security || 'Unknown',
             },
           }));
           // Only auto-set WiFi mode if user hasn't manually selected
@@ -474,7 +474,7 @@ export function useNetworkFetchers({
         }
       }
     } catch (err) {
-      logger.error(LogComponents.Wifi, "Failed to fetch Wi-Fi data", err);
+      logger.error(LogComponents.Wifi, 'Failed to fetch Wi-Fi data', err);
     }
   }, [currentInterfaceRef, setCards, setIsWifi, userSetWifiModeRef]);
 
@@ -482,7 +482,7 @@ export function useNetworkFetchers({
   const fetchCableData = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/sap/cable`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await response.json();
@@ -492,13 +492,13 @@ export function useNetworkFetchers({
             supported: data.supported,
             // biome-ignore lint/style/useExplicitLengthCheck: data.length is cable length property, not array
             length: data.length || null,
-            status: data.status || "unknown",
+            status: data.status || 'unknown',
             faults: data.faults || [],
           },
         }));
       }
     } catch (err) {
-      logger.error(LogComponents.Cable, "Failed to fetch Cable data", err);
+      logger.error(LogComponents.Cable, 'Failed to fetch Cable data', err);
     }
   }, [setCards]);
 
@@ -506,7 +506,7 @@ export function useNetworkFetchers({
   const fetchPublicIp = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/sap/publicip`, {
-        credentials: "include",
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await response.json();
@@ -521,7 +521,7 @@ export function useNetworkFetchers({
         }));
       }
     } catch (err) {
-      logger.error(LogComponents.Publicip, "Failed to fetch Public IP data", err);
+      logger.error(LogComponents.Publicip, 'Failed to fetch Public IP data', err);
     }
   }, [setCards]);
 
@@ -535,11 +535,11 @@ export function useNetworkFetchers({
 
       const [devicesRes, statusRes] = await Promise.all([
         fetch(`${API_BASE}/api/v1/shell/devices`, {
-          credentials: "include",
+          credentials: 'include',
           signal: controller.signal,
         }),
         fetch(`${API_BASE}/api/v1/shell/devices/status`, {
-          credentials: "include",
+          credentials: 'include',
           signal: controller.signal,
         }),
       ]);
@@ -552,7 +552,7 @@ export function useNetworkFetchers({
         // Network discovery data is global (not interface-specific), so interface changes
         // shouldn't invalidate the data
         if (controller.signal.aborted) {
-          logger.debug(LogComponents.Devices, "Network discovery fetch aborted", {
+          logger.debug(LogComponents.Devices, 'Network discovery fetch aborted', {
             requestedInterface,
           });
           return;
@@ -561,7 +561,7 @@ export function useNetworkFetchers({
         // devicesData contains { devices: [...], status: {...} }
         // Extract the devices array from the response
         const devices = devicesData.devices || [];
-        logger.debug(LogComponents.Devices, "Network discovery data received", {
+        logger.debug(LogComponents.Devices, 'Network discovery data received', {
           deviceCount: devices.length,
           scanning: status?.scanning,
         });
@@ -570,25 +570,25 @@ export function useNetworkFetchers({
           status: status || {
             scanning: false,
             deviceCount: 0,
-            lastScan: "",
-            subnet: "",
+            lastScan: '',
+            subnet: '',
             // biome-ignore lint/style/useNamingConvention: Matches backend API
-            localIP: "",
+            localIP: '',
             interface: requestedInterface,
           },
         });
       } else {
         // Log error responses for debugging
-        logger.warn(LogComponents.Devices, "Network discovery API error", {
+        logger.warn(LogComponents.Devices, 'Network discovery API error', {
           devicesStatus: devicesRes.status,
           statusStatus: statusRes.status,
         });
       }
     } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") {
+      if (err instanceof DOMException && err.name === 'AbortError') {
         return;
       }
-      logger.error(LogComponents.Devices, "Failed to fetch network discovery data", err);
+      logger.error(LogComponents.Devices, 'Failed to fetch network discovery data', err);
     }
   }, [currentInterfaceRef, setNetworkDiscovery, networkDiscoveryAbortRef]);
 

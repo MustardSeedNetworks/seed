@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { PerformanceCard } from "./PerformanceCard";
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { PerformanceCard } from './PerformanceCard';
 
 /**
  * PerformanceCard displays internet speed testing (speedtest.net) and LAN speed testing (iperf3).
@@ -15,16 +15,16 @@ import { PerformanceCard } from "./PerformanceCard";
  * Note: SettingsProvider and I18nextProvider are provided by global decorators
  * in .storybook/preview.tsx.
  */
-const meta: Meta<(typeof meta)["component"]> = {
-  title: "Cards/PerformanceCard",
+const meta: Meta<(typeof meta)['component']> = {
+  title: 'Cards/PerformanceCard',
   component: PerformanceCard,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   decorators: [
     (StoryComponent: React.ComponentType): JSX.Element => (
-      <div style={{ width: "400px" }}>
+      <div style={{ width: '400px' }}>
         <StoryComponent />
       </div>
     ),

@@ -41,9 +41,9 @@
  * ```
  */
 
-import type React from "react";
-import { memo, useCallback, useRef, useState } from "react";
-import { cn, layout, radius, spacing } from "../../styles/theme";
+import type React from 'react';
+import { memo, useCallback, useRef, useState } from 'react';
+import { cn, layout, radius, spacing } from '../../styles/theme';
 
 interface SliderProps {
   /** Current slider value */
@@ -122,19 +122,19 @@ function SliderComponent({
       const largeStep = step * 10;
 
       switch (event.key) {
-        case "PageUp":
+        case 'PageUp':
           event.preventDefault();
           newValue = Math.min(max, value + largeStep);
           break;
-        case "PageDown":
+        case 'PageDown':
           event.preventDefault();
           newValue = Math.max(min, value - largeStep);
           break;
-        case "Home":
+        case 'Home':
           event.preventDefault();
           newValue = min;
           break;
-        case "End":
+        case 'End':
           event.preventDefault();
           newValue = max;
           break;
@@ -148,12 +148,12 @@ function SliderComponent({
   );
 
   return (
-    <div class={cn("w-full", className)}>
+    <div class={cn('w-full', className)}>
       {/* Label and current value */}
       {label ? (
         <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
           <label
-            for={`slider-${label.replace(/\s+/g, "-").toLowerCase()}`}
+            for={`slider-${label.replace(/\s+/g, '-').toLowerCase()}`}
             class="label text-text-primary"
           >
             {label}
@@ -173,20 +173,20 @@ function SliderComponent({
           {/* Background track */}
           <div
             class={cn(
-              "absolute inset-0 h-2 top-1/2 -translate-y-1/2",
+              'absolute inset-0 h-2 top-1/2 -translate-y-1/2',
               radius.full,
-              "bg-surface-hover",
-              disabled && "opacity-50",
+              'bg-surface-hover',
+              disabled && 'opacity-50',
             )}
           />
 
           {/* Filled portion (progress) */}
           <div
             class={cn(
-              "absolute h-2 top-1/2 -translate-y-1/2",
+              'absolute h-2 top-1/2 -translate-y-1/2',
               radius.full,
-              "bg-brand-primary transition-all",
-              disabled && "opacity-50",
+              'bg-brand-primary transition-all',
+              disabled && 'opacity-50',
             )}
             style={{
               width: `${percentage}%`,
@@ -196,7 +196,7 @@ function SliderComponent({
           {/* Native range input (styled to show only thumb) */}
           <input
             ref={sliderRef}
-            id={label ? `slider-${label.replace(/\s+/g, "-").toLowerCase()}` : undefined}
+            id={label ? `slider-${label.replace(/\s+/g, '-').toLowerCase()}` : undefined}
             type="range"
             min={min}
             max={max}
@@ -210,54 +210,54 @@ function SliderComponent({
             onTouchEnd={(): void => setIsDragging(false)}
             disabled={disabled}
             class={cn(
-              "relative w-full h-2 appearance-none bg-transparent cursor-pointer",
-              "focus:outline-none",
+              'relative w-full h-2 appearance-none bg-transparent cursor-pointer',
+              'focus:outline-none',
               // Thumb styling - webkit browsers
-              "[&::-webkit-slider-thumb]:appearance-none",
-              "[&::-webkit-slider-thumb]:w-5",
-              "[&::-webkit-slider-thumb]:h-5",
-              "[&::-webkit-slider-thumb]:rounded-full",
-              "[&::-webkit-slider-thumb]:bg-brand-primary",
-              "[&::-webkit-slider-thumb]:border-2",
-              "[&::-webkit-slider-thumb]:border-surface-base",
-              "[&::-webkit-slider-thumb]:shadow-md",
-              "[&::-webkit-slider-thumb]:transition-all",
-              "[&::-webkit-slider-thumb]:cursor-pointer",
-              "[&::-webkit-slider-thumb]:hover:scale-110",
-              "[&::-webkit-slider-thumb]:active:scale-125",
+              '[&::-webkit-slider-thumb]:appearance-none',
+              '[&::-webkit-slider-thumb]:w-5',
+              '[&::-webkit-slider-thumb]:h-5',
+              '[&::-webkit-slider-thumb]:rounded-full',
+              '[&::-webkit-slider-thumb]:bg-brand-primary',
+              '[&::-webkit-slider-thumb]:border-2',
+              '[&::-webkit-slider-thumb]:border-surface-base',
+              '[&::-webkit-slider-thumb]:shadow-md',
+              '[&::-webkit-slider-thumb]:transition-all',
+              '[&::-webkit-slider-thumb]:cursor-pointer',
+              '[&::-webkit-slider-thumb]:hover:scale-110',
+              '[&::-webkit-slider-thumb]:active:scale-125',
               // Thumb styling - Firefox
-              "[&::-moz-range-thumb]:appearance-none",
-              "[&::-moz-range-thumb]:w-5",
-              "[&::-moz-range-thumb]:h-5",
-              "[&::-moz-range-thumb]:rounded-full",
-              "[&::-moz-range-thumb]:bg-brand-primary",
-              "[&::-moz-range-thumb]:border-2",
-              "[&::-moz-range-thumb]:border-surface-base",
-              "[&::-moz-range-thumb]:shadow-md",
-              "[&::-moz-range-thumb]:transition-all",
-              "[&::-moz-range-thumb]:cursor-pointer",
-              "[&::-moz-range-thumb]:hover:scale-110",
-              "[&::-moz-range-thumb]:active:scale-125",
-              "[&::-moz-range-thumb]:border-none",
+              '[&::-moz-range-thumb]:appearance-none',
+              '[&::-moz-range-thumb]:w-5',
+              '[&::-moz-range-thumb]:h-5',
+              '[&::-moz-range-thumb]:rounded-full',
+              '[&::-moz-range-thumb]:bg-brand-primary',
+              '[&::-moz-range-thumb]:border-2',
+              '[&::-moz-range-thumb]:border-surface-base',
+              '[&::-moz-range-thumb]:shadow-md',
+              '[&::-moz-range-thumb]:transition-all',
+              '[&::-moz-range-thumb]:cursor-pointer',
+              '[&::-moz-range-thumb]:hover:scale-110',
+              '[&::-moz-range-thumb]:active:scale-125',
+              '[&::-moz-range-thumb]:border-none',
               // Focus ring
-              "focus-visible:ring-2",
-              "focus-visible:ring-brand-primary",
-              "focus-visible:ring-offset-2",
-              "focus-visible:ring-offset-surface-base",
+              'focus-visible:ring-2',
+              'focus-visible:ring-brand-primary',
+              'focus-visible:ring-offset-2',
+              'focus-visible:ring-offset-surface-base',
               radius.full,
               // Disabled state
-              disabled && "cursor-not-allowed",
-              disabled && "[&::-webkit-slider-thumb]:cursor-not-allowed",
-              disabled && "[&::-moz-range-thumb]:cursor-not-allowed",
-              disabled && "[&::-webkit-slider-thumb]:bg-text-muted",
-              disabled && "[&::-moz-range-thumb]:bg-text-muted",
-              disabled && "[&::-webkit-slider-thumb]:hover:scale-100",
-              disabled && "[&::-moz-range-thumb]:hover:scale-100",
+              disabled && 'cursor-not-allowed',
+              disabled && '[&::-webkit-slider-thumb]:cursor-not-allowed',
+              disabled && '[&::-moz-range-thumb]:cursor-not-allowed',
+              disabled && '[&::-webkit-slider-thumb]:bg-text-muted',
+              disabled && '[&::-moz-range-thumb]:bg-text-muted',
+              disabled && '[&::-webkit-slider-thumb]:hover:scale-100',
+              disabled && '[&::-moz-range-thumb]:hover:scale-100',
               // Active state visual feedback
-              isDragging && "[&::-webkit-slider-thumb]:scale-125",
-              isDragging && "[&::-moz-range-thumb]:scale-125",
+              isDragging && '[&::-webkit-slider-thumb]:scale-125',
+              isDragging && '[&::-moz-range-thumb]:scale-125',
             )}
-            aria-label={label || "Slider"}
+            aria-label={label || 'Slider'}
             aria-valuemin={min}
             aria-valuemax={max}
             aria-valuenow={value}
@@ -268,9 +268,9 @@ function SliderComponent({
 
       {/* End labels (e.g., "Slower ◄────► Faster") */}
       {leftLabel || rightLabel ? (
-        <div class={cn(layout.flex.between, "caption text-text-muted")}>
-          <span>{leftLabel || ""}</span>
-          <span>{rightLabel || ""}</span>
+        <div class={cn(layout.flex.between, 'caption text-text-muted')}>
+          <span>{leftLabel || ''}</span>
+          <span>{rightLabel || ''}</span>
         </div>
       ) : null}
     </div>

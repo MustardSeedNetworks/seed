@@ -16,13 +16,13 @@
  * The graph helps visualize channel congestion and optimal channel selection.
  */
 
-import type React from "react";
-import { useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { cn, icon as iconTokens, layout, spacing } from "../../styles/theme";
-import { CardValue } from "../ui/Card";
-import { Wifi } from "../ui/Icons";
-import { SimpleBaseCard } from "./BaseCard";
+import type React from 'react';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { cn, icon as iconTokens, layout, spacing } from '../../styles/theme';
+import { CardValue } from '../ui/Card';
+import { Wifi } from '../ui/Icons';
+import { SimpleBaseCard } from './BaseCard';
 
 /**
  * Network data for channel graph visualization
@@ -70,7 +70,7 @@ interface WifiChannelGraphProps {
 /**
  * Band selection type
  */
-type BandType = "2.4GHz" | "5GHz" | "6GHz";
+type BandType = '2.4GHz' | '5GHz' | '6GHz';
 
 /**
  * Get channel range for a given band
@@ -81,11 +81,11 @@ function getChannelRange(band: BandType): {
   step: number;
 } {
   switch (band) {
-    case "2.4GHz":
+    case '2.4GHz':
       return { min: 1, max: 14, step: 1 };
-    case "5GHz":
+    case '5GHz':
       return { min: 36, max: 165, step: 4 }; // 5GHz channels: 36, 40, 44, 48, ...
-    case "6GHz":
+    case '6GHz':
       return { min: 1, max: 233, step: 4 }; // 6GHz channels
     default:
       return { min: 1, max: 14, step: 1 }; // Default to 2.4GHz
@@ -163,14 +163,14 @@ function getNetworkStrokeWidth(isHovered: boolean, isConnected: boolean): number
 function getCardStatus(
   loading: boolean | undefined,
   available: boolean | undefined,
-): "loading" | "success" | "error" {
+): 'loading' | 'success' | 'error' {
   if (loading) {
-    return "loading";
+    return 'loading';
   }
   if (available) {
-    return "success";
+    return 'success';
   }
-  return "error";
+  return 'error';
 }
 
 /**
@@ -185,8 +185,8 @@ function _channelGraph({
   band: BandType;
   connectedBssid?: string;
 }): React.ReactElement {
-  const { t: tCards } = useTranslation("cards");
-  const { t: tCommon } = useTranslation("common");
+  const { t: tCards } = useTranslation('cards');
+  const { t: tCommon } = useTranslation('common');
   const [hoveredNetwork, setHoveredNetwork] = useState<ChannelNetwork | null>(null);
 
   const channelRange = getChannelRange(band);
@@ -214,7 +214,7 @@ function _channelGraph({
     return (
       <div class={layout.flex.center} style={{ height: `${height}px` }}>
         <p class="body-small text-text-muted">
-          {tCards("wifi.channelGraph.noNetworksDetected", { band })}
+          {tCards('wifi.channelGraph.noNetworksDetected', { band })}
         </p>
       </div>
     );
@@ -262,7 +262,7 @@ function _channelGraph({
         </g>
 
         {/* Y-axis labels (signal strength) */}
-        <g class="text-text-muted" style={{ fontSize: "10px" }}>
+        <g class="text-text-muted" style={{ fontSize: '10px' }}>
           {signalMarkers.map((signal) => {
             const y = padding.top + signalToY(signal, graphHeight);
             return (
@@ -274,7 +274,7 @@ function _channelGraph({
         </g>
 
         {/* X-axis labels (channels) */}
-        <g class="text-text-muted" style={{ fontSize: "10px" }}>
+        <g class="text-text-muted" style={{ fontSize: '10px' }}>
           {channelMarkers.map(({ channel, x }) => (
             <text key={channel} x={x} y={height - padding.bottom + 15} textAnchor="middle">
               {channel}
@@ -308,9 +308,9 @@ function _channelGraph({
               <path
                 key={network.bssid}
                 d={path}
-                fill={isConnected ? "var(--color-brand-primary)" : "var(--color-status-info)"}
+                fill={isConnected ? 'var(--color-brand-primary)' : 'var(--color-status-info)'}
                 opacity={getNetworkOpacity(isHovered, isConnected)}
-                stroke={isConnected ? "var(--color-brand-primary)" : "var(--color-status-info)"}
+                stroke={isConnected ? 'var(--color-brand-primary)' : 'var(--color-status-info)'}
                 strokeWidth={getNetworkStrokeWidth(isHovered, isConnected)}
                 class="transition-all cursor-pointer"
                 onMouseEnter={(): void => setHoveredNetwork(network)}
@@ -326,18 +326,18 @@ function _channelGraph({
       {hoveredNetwork ? (
         <div
           class="absolute bg-surface-raised border border-surface-border rounded shadow-lg p-2 z-10"
-          style={{ top: "10px", right: "10px" }}
+          style={{ top: '10px', right: '10px' }}
         >
-          <p class="body-small font-semibold">{hoveredNetwork.ssid || "(Hidden)"}</p>
+          <p class="body-small font-semibold">{hoveredNetwork.ssid || '(Hidden)'}</p>
           <p class="caption text-text-muted">
-            {tCards("wifi.channelGraph.tooltipChannel", {
+            {tCards('wifi.channelGraph.tooltipChannel', {
               channel: hoveredNetwork.channel,
             })}
           </p>
           <p class="caption text-text-muted">{hoveredNetwork.signal} dBm</p>
           <p class="caption text-text-muted">{hoveredNetwork.channelWidth} MHz</p>
           {hoveredNetwork.isConnected ? (
-            <p class="caption text-brand-primary font-medium">{tCommon("status.connected")}</p>
+            <p class="caption text-brand-primary font-medium">{tCommon('status.connected')}</p>
           ) : null}
         </div>
       ) : null}
@@ -354,9 +354,9 @@ export function WifiChannelGraph({
   loading,
   visible = true,
 }: WifiChannelGraphProps): React.ReactElement | null {
-  const { t: tr } = useTranslation("cards");
-  const { t: tc } = useTranslation("common");
-  const [selectedBand, setSelectedBand] = useState<BandType>("2.4GHz");
+  const { t: tr } = useTranslation('cards');
+  const { t: tc } = useTranslation('common');
+  const [selectedBand, setSelectedBand] = useState<BandType>('2.4GHz');
 
   // Get networks for selected band
   // Note: All hooks must be called before any early returns to follow React rules
@@ -365,11 +365,11 @@ export function WifiChannelGraph({
       return [];
     }
     switch (selectedBand) {
-      case "2.4GHz":
+      case '2.4GHz':
         return data.data.networks24Ghz;
-      case "5GHz":
+      case '5GHz':
         return data.data.networks5Ghz;
-      case "6GHz":
+      case '6GHz':
         return data.data.networks6Ghz;
       default:
         return data.data.networks24Ghz;
@@ -383,13 +383,13 @@ export function WifiChannelGraph({
     }
     const bands: BandType[] = [];
     if (data.data.networks24Ghz.length > 0) {
-      bands.push("2.4GHz");
+      bands.push('2.4GHz');
     }
     if (data.data.networks5Ghz.length > 0) {
-      bands.push("5GHz");
+      bands.push('5GHz');
     }
     if (data.data.networks6Ghz.length > 0) {
-      bands.push("6GHz");
+      bands.push('6GHz');
     }
     return bands;
   }, [data]);
@@ -406,11 +406,11 @@ export function WifiChannelGraph({
 
   return (
     <SimpleBaseCard
-      title={tr("wifi.channelGraph.title")}
+      title={tr('wifi.channelGraph.title')}
       icon={<Wifi class={iconTokens.size.md} />}
       status={getCardStatus(loading, data?.available)}
       loading={loading}
-      loadingContent={<CardValue value={tc("status.scanning")} size="lg" />}
+      loadingContent={<CardValue value={tc('status.scanning')} size="lg" />}
     >
       {data?.available ? (
         <>
@@ -424,11 +424,11 @@ export function WifiChannelGraph({
                   onClick={(): void => setSelectedBand(band)}
                   class={cn(
                     spacing.chip.md,
-                    "rounded",
-                    "transition-colors",
+                    'rounded',
+                    'transition-colors',
                     selectedBand === band
-                      ? "bg-brand-primary text-text-inverse"
-                      : "bg-surface-hover text-text-primary hover:bg-surface-border",
+                      ? 'bg-brand-primary text-text-inverse'
+                      : 'bg-surface-hover text-text-primary hover:bg-surface-border',
                   )}
                 >
                   {band}
@@ -448,16 +448,16 @@ export function WifiChannelGraph({
           <div class={cn(layout.inline.default, spacing.margin.top.inline)}>
             <div class={layout.inline.tight}>
               <div class="w-4 h-4 bg-brand-primary opacity-70 rounded" />
-              <span class="caption text-text-muted">{tc("status.connected")}</span>
+              <span class="caption text-text-muted">{tc('status.connected')}</span>
             </div>
             <div class={layout.inline.tight}>
               <div class="w-4 h-4 bg-status-info opacity-40 rounded" />
-              <span class="caption text-text-muted">{tr("wifi.channelGraph.otherNetworks")}</span>
+              <span class="caption text-text-muted">{tr('wifi.channelGraph.otherNetworks')}</span>
             </div>
           </div>
         </>
       ) : (
-        <CardValue value={data?.error || tc("status.unavailable")} size="md" status="error" />
+        <CardValue value={data?.error || tc('status.unavailable')} size="md" status="error" />
       )}
     </SimpleBaseCard>
   );

@@ -14,12 +14,12 @@
  * logger.error('auth', 'Login failed', error, { username: 'user' });
  */
 
-export type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
+export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 
 export interface LogEntry {
   timestamp: string;
   level: LogLevel;
-  layer: "frontend";
+  layer: 'frontend';
   requestId?: string;
   sessionId?: string;
   message: string;
@@ -30,30 +30,30 @@ export interface LogEntry {
 
 // Standard component names matching backend constants
 export enum LogComponents {
-  AUTH = "auth",
-  DISCOVERY = "discovery",
-  DEVICES = "devices",
-  NETWORK = "network",
-  SURVEY = "survey",
-  WEBSOCKET = "websocket",
-  SSE = "sse", // Server-Sent Events (replaces WebSocket)
-  SPEEDTEST = "speedtest",
-  IPERF = "iperf",
-  VULN = "vulnerabilities",
-  CONFIG = "config",
-  SYSTEM = "system",
-  DNS = "dns",
-  DHCP = "dhcp",
-  GATEWAY = "gateway",
-  VLAN = "vlan",
-  WIFI = "wifi",
-  CABLE = "cable",
-  PUBLICIP = "publicip",
-  EXPORT = "export",
-  SETUP = "setup",
-  PROFILES = "profiles",
-  UI = "ui",
-  APP = "app",
+  AUTH = 'auth',
+  DISCOVERY = 'discovery',
+  DEVICES = 'devices',
+  NETWORK = 'network',
+  SURVEY = 'survey',
+  WEBSOCKET = 'websocket',
+  SSE = 'sse', // Server-Sent Events (replaces WebSocket)
+  SPEEDTEST = 'speedtest',
+  IPERF = 'iperf',
+  VULN = 'vulnerabilities',
+  CONFIG = 'config',
+  SYSTEM = 'system',
+  DNS = 'dns',
+  DHCP = 'dhcp',
+  GATEWAY = 'gateway',
+  VLAN = 'vlan',
+  WIFI = 'wifi',
+  CABLE = 'cable',
+  PUBLICIP = 'publicip',
+  EXPORT = 'export',
+  SETUP = 'setup',
+  PROFILES = 'profiles',
+  UI = 'ui',
+  APP = 'app',
 }
 
 export type LogComponent = `${LogComponents}`;
@@ -71,15 +71,15 @@ const DEFAULT_CONFIG: LoggerConfig = {
   flushInterval: 5000, // 5 seconds
   enabled: true,
   consoleOutput: true, // Also output to console
-  minLevel: "DEBUG",
+  minLevel: 'DEBUG',
 };
 
 // Color styles for console output using a Map with LogLevel keys
 const logColors: Map<LogLevel, string> = new Map<LogLevel, string>([
-  ["DEBUG", "color: #6B7280"], // Gray
-  ["INFO", "color: #3B82F6"], // Blue
-  ["WARN", "color: #EAB308"], // Yellow
-  ["ERROR", "color: #EF4444"], // Red
+  ['DEBUG', 'color: #6B7280'], // Gray
+  ['INFO', 'color: #3B82F6'], // Blue
+  ['WARN', 'color: #EAB308'], // Yellow
+  ['ERROR', 'color: #EF4444'], // Red
 ]);
 
 /**
@@ -102,12 +102,12 @@ class Logger {
     }
 
     // Flush on page unload
-    if (typeof window !== "undefined") {
-      window.addEventListener("beforeunload", () => {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', () => {
         this.flush().catch(() => undefined);
       });
-      window.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "hidden") {
+      window.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
           this.flush().catch(() => undefined);
         }
       });
@@ -138,11 +138,11 @@ class Logger {
 
   private getLevelPriority(level: LogLevel): number {
     switch (level) {
-      case "ERROR":
+      case 'ERROR':
         return 3;
-      case "WARN":
+      case 'WARN':
         return 2;
-      case "INFO":
+      case 'INFO':
         return 1;
       default:
         return 0;
@@ -159,7 +159,7 @@ class Logger {
     return {
       timestamp: new Date().toISOString(),
       level,
-      layer: "frontend",
+      layer: 'frontend',
       sessionId: this.sessionId,
       requestId: this.currentRequestId,
       message,
@@ -174,7 +174,7 @@ class Logger {
       return;
     }
 
-    const style = logColors.get(entry.level) ?? "";
+    const style = logColors.get(entry.level) ?? '';
     const prefix = `%c[${entry.level}][${entry.component}]`;
     const args: unknown[] = [prefix, style, entry.message];
 
@@ -188,7 +188,7 @@ class Logger {
 
     // Use console.warn for all non-error levels since the linter restricts console.log/debug
     switch (entry.level) {
-      case "ERROR":
+      case 'ERROR':
         console.error(...args);
         break;
       default:
@@ -245,12 +245,12 @@ class Logger {
     this.buffer = [];
 
     try {
-      const response = await fetch("/api/v1/harvest/logs/client", {
-        method: "POST",
+      const response = await fetch('/api/v1/harvest/logs/client', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include", // Include cookies for auth
+        credentials: 'include', // Include cookies for auth
         body: JSON.stringify({ entries }),
         // Use keepalive for page unload scenarios
         keepalive: true,
@@ -296,10 +296,10 @@ class Logger {
    * Log a debug message.
    */
   debug(component: string, message: string, metadata?: Record<string, unknown>): void {
-    if (!this.shouldLog("DEBUG")) {
+    if (!this.shouldLog('DEBUG')) {
       return;
     }
-    const entry = this.createEntry("DEBUG", component, message, metadata);
+    const entry = this.createEntry('DEBUG', component, message, metadata);
     this.addToBuffer(entry);
   }
 
@@ -307,10 +307,10 @@ class Logger {
    * Log an info message.
    */
   info(component: string, message: string, metadata?: Record<string, unknown>): void {
-    if (!this.shouldLog("INFO")) {
+    if (!this.shouldLog('INFO')) {
       return;
     }
-    const entry = this.createEntry("INFO", component, message, metadata);
+    const entry = this.createEntry('INFO', component, message, metadata);
     this.addToBuffer(entry);
   }
 
@@ -318,10 +318,10 @@ class Logger {
    * Log a warning message.
    */
   warn(component: string, message: string, metadata?: Record<string, unknown>): void {
-    if (!this.shouldLog("WARN")) {
+    if (!this.shouldLog('WARN')) {
       return;
     }
-    const entry = this.createEntry("WARN", component, message, metadata);
+    const entry = this.createEntry('WARN', component, message, metadata);
     this.addToBuffer(entry);
   }
 
@@ -334,7 +334,7 @@ class Logger {
     error?: Error | unknown,
     metadata?: Record<string, unknown>,
   ): void {
-    if (!this.shouldLog("ERROR")) {
+    if (!this.shouldLog('ERROR')) {
       return;
     }
 
@@ -356,7 +356,7 @@ class Logger {
       };
     }
 
-    const entry = this.createEntry("ERROR", component, message, errorMeta, stack);
+    const entry = this.createEntry('ERROR', component, message, errorMeta, stack);
     this.addToBuffer(entry);
   }
 

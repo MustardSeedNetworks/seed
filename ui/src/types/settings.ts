@@ -9,7 +9,7 @@
 // Save Status
 // ============================================================================
 
-export type SaveStatus = "idle" | "saving" | "saved" | "error";
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 // ============================================================================
 // Threshold Types
@@ -79,7 +79,7 @@ export interface CardSettings {
 // ============================================================================
 
 /** Unit system for measurements - SAE (feet) or Metric (meters) */
-export type UnitSystem = "sae" | "metric";
+export type UnitSystem = 'sae' | 'metric';
 
 export interface DisplayOptions {
   showPublicIp: boolean;
@@ -161,7 +161,7 @@ export interface DicomEndpoint {
 export interface SqlEndpoint {
   id?: string;
   name: string;
-  driver: "postgres" | "mysql" | "mssql" | "oracle";
+  driver: 'postgres' | 'mysql' | 'mssql' | 'oracle';
   host: string;
   port: number;
   database: string;
@@ -174,7 +174,7 @@ export interface SqlEndpoint {
 export interface FileShareEndpoint {
   id?: string;
   name: string;
-  protocol: "smb" | "nfs";
+  protocol: 'smb' | 'nfs';
   host: string;
   sharePath: string;
   enabled: boolean;
@@ -212,7 +212,7 @@ export interface FhirEndpoint {
   id?: string;
   name: string;
   baseUrl: string;
-  authType: "none" | "basic" | "oauth2";
+  authType: 'none' | 'basic' | 'oauth2';
   enabled: boolean;
   criticality?: number;
 }
@@ -232,7 +232,7 @@ export interface OpcuaEndpoint {
   id?: string;
   name: string;
   endpointUrl: string; // opc.tcp://host:4840
-  securityMode: "None" | "Sign" | "SignAndEncrypt";
+  securityMode: 'None' | 'Sign' | 'SignAndEncrypt';
   enabled: boolean;
   criticality?: number;
 }
@@ -254,7 +254,7 @@ export interface SlaConfig {
   endpointName: string;
   targetUptime: number; // Percentage (e.g., 99.9)
   targetLatencyP95: number; // Milliseconds
-  reportingPeriod: "daily" | "weekly" | "monthly";
+  reportingPeriod: 'daily' | 'weekly' | 'monthly';
   enabled: boolean;
 }
 
@@ -316,8 +316,8 @@ export interface TestsSettings {
 export interface IperfSettings {
   server: string;
   port: number;
-  protocol: "tcp" | "udp";
-  direction: "upload" | "download" | "bidirectional";
+  protocol: 'tcp' | 'udp';
+  direction: 'upload' | 'download' | 'bidirectional';
   duration: number;
   serverPort: number;
   enableServer: boolean;
@@ -335,7 +335,7 @@ export interface IperfSuggestion {
 // ============================================================================
 
 /** Port preset for quick configuration */
-export type PortPreset = "common" | "secure" | "insecure" | "custom";
+export type PortPreset = 'common' | 'secure' | 'insecure' | 'custom';
 
 /** Passive protocol configuration (LLDP, CDP, EDP, NDP) */
 export interface PassiveProtocolConfig {
@@ -436,7 +436,7 @@ export interface SubnetConfig {
 // ============================================================================
 
 export interface IpSettings {
-  mode: "dhcp" | "static";
+  mode: 'dhcp' | 'static';
   address: string;
   netmask: string;
   gateway: string;
@@ -519,7 +519,7 @@ export const DEFAULT_CARD_SETTINGS: CardSettings = {
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   showPublicIp: true,
-  unitSystem: "sae", // Default to SAE (feet) for US users
+  unitSystem: 'sae', // Default to SAE (feet) for US users
 };
 
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
@@ -540,10 +540,10 @@ export const DEFAULT_THRESHOLDS: SettingsThresholds = {
 
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_IPERF_SETTINGS: IperfSettings = {
-  server: "",
+  server: '',
   port: 5201,
-  protocol: "tcp",
-  direction: "download",
+  protocol: 'tcp',
+  direction: 'download',
   duration: 10,
   serverPort: 5201,
   enableServer: true,
@@ -554,20 +554,20 @@ export const DEFAULT_IPERF_SETTINGS: IperfSettings = {
  * @deprecated Use useDefaults() hook instead - backend is single source of truth
  */
 export const DEFAULT_TESTS_SETTINGS: TestsSettings = {
-  dnsHostname: "google.com",
+  dnsHostname: 'google.com',
   dnsServers: [],
   pingTargets: [
     {
-      id: "default-google-dns",
-      name: "Google DNS",
-      host: "8.8.8.8",
+      id: 'default-google-dns',
+      name: 'Google DNS',
+      host: '8.8.8.8',
       enabled: true,
       count: 3,
     },
     {
-      id: "default-cloudflare-dns",
-      name: "Cloudflare",
-      host: "1.1.1.1",
+      id: 'default-cloudflare-dns',
+      name: 'Cloudflare',
+      host: '1.1.1.1',
       enabled: true,
       count: 3,
     },
@@ -576,9 +576,9 @@ export const DEFAULT_TESTS_SETTINGS: TestsSettings = {
   udpPorts: [],
   httpEndpoints: [
     {
-      id: "default-google",
-      name: "Google",
-      url: "https://www.google.com",
+      id: 'default-google',
+      name: 'Google',
+      url: 'https://www.google.com',
       expectedStatus: 200,
       enabled: true,
     },
@@ -588,7 +588,7 @@ export const DEFAULT_TESTS_SETTINGS: TestsSettings = {
   runIperf: false,
   runDiscovery: false,
   speedtest: {
-    serverId: "",
+    serverId: '',
     autoRunOnLink: true, // Fixes #728: Match DEFAULT_CARD_SETTINGS
   },
   iperf: {
@@ -619,9 +619,9 @@ export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
     icmpScan: true,
     portScan: {
       enabled: false,
-      preset: "common",
-      tcpPorts: "22,80,443,8080-8100",
-      udpPorts: "53,123,161",
+      preset: 'common',
+      tcpPorts: '22,80,443,8080-8100',
+      udpPorts: '53,123,161',
       bannerTimeoutMs: 2000,
     },
     tcpProbe: {
@@ -651,7 +651,7 @@ export const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoverySettings = {
 
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_SNMP_SETTINGS: SnmpSettings = {
-  communities: ["public"],
+  communities: ['public'],
   v3Credentials: [],
   timeout: 5000, // 5 seconds
   retries: 2,
@@ -664,19 +664,19 @@ export const DEFAULT_SNMP_SETTINGS: SnmpSettings = {
 
 /** Supported link speed values (Mbps) - includes copper and fiber speeds */
 export type LinkSpeed =
-  | "auto"
-  | "10" // 10BASE-T
-  | "100" // 100BASE-TX
-  | "1000" // 1000BASE-T (1G)
-  | "2500" // 2.5GBASE-T
-  | "5000" // 5GBASE-T
-  | "10000" // 10GBASE-T
-  | "25000" // 25GBASE-CR/SR (fiber)
-  | "40000" // 40GBASE-CR4/SR4 (fiber)
-  | "100000"; // 100GBASE-CR4/SR4 (fiber)
+  | 'auto'
+  | '10' // 10BASE-T
+  | '100' // 100BASE-TX
+  | '1000' // 1000BASE-T (1G)
+  | '2500' // 2.5GBASE-T
+  | '5000' // 5GBASE-T
+  | '10000' // 10GBASE-T
+  | '25000' // 25GBASE-CR/SR (fiber)
+  | '40000' // 40GBASE-CR4/SR4 (fiber)
+  | '100000'; // 100GBASE-CR4/SR4 (fiber)
 
 /** Supported duplex modes */
-export type DuplexMode = "auto" | "full" | "half";
+export type DuplexMode = 'auto' | 'full' | 'half';
 
 export interface LinkSettings {
   /** Combined speed/duplex mode (e.g., "100/full", "1000/full") or "auto" for auto-negotiation */
@@ -696,7 +696,7 @@ export interface CableTestSettings {
 
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_LINK_SETTINGS: LinkSettings = {
-  mode: "auto",
+  mode: 'auto',
   availableModes: [],
 };
 
@@ -709,8 +709,8 @@ export const DEFAULT_CABLE_TEST_SETTINGS: CableTestSettings = {
 // Vulnerability Scanning Settings
 // ============================================================================
 
-export type CveDatabase = "nvd" | "local";
-export type SeverityLevel = "low" | "medium" | "high" | "critical";
+export type CveDatabase = 'nvd' | 'local';
+export type SeverityLevel = 'low' | 'medium' | 'high' | 'critical';
 
 export interface VulnerabilityScanSettings {
   enabled: boolean;
@@ -738,10 +738,10 @@ export interface VulnerabilityScanStatus {
 /** @deprecated Use useDefaults() hook instead - backend is single source of truth */
 export const DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityScanSettings = {
   enabled: true, // Enable by default for security visibility
-  cveDatabase: "nvd", // NVD works without API key (rate limited)
-  nvdApiKey: "",
+  cveDatabase: 'nvd', // NVD works without API key (rate limited)
+  nvdApiKey: '',
   updateInterval: 86400, // 24 hours
-  severityThreshold: "medium",
+  severityThreshold: 'medium',
   maxConcurrent: 5,
   autoScan: true, // Auto-scan after device discovery
 };
@@ -751,8 +751,8 @@ export const DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityScanSettings = {
 // ============================================================================
 
 export const STORAGE_KEYS = {
-  cardSettings: "seed-card-settings",
-  displayOptions: "seed-display-options",
-  iperfSettings: "seed-iperf-settings",
-  theme: "seed-theme",
+  cardSettings: 'seed-card-settings',
+  displayOptions: 'seed-display-options',
+  iperfSettings: 'seed-iperf-settings',
+  theme: 'seed-theme',
 } as const;

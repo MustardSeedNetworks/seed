@@ -7,7 +7,7 @@
  * Extracted from App.tsx to reduce component complexity (#889).
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useState } from 'react';
 
 interface UseAppDrawersReturn {
   /** Whether the profiles drawer is open */

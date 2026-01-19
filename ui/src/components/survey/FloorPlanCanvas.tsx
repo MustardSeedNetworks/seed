@@ -31,8 +31,8 @@
  * State: Canvas dimensions, rendering state
  */
 
-import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   ActiveSample,
   ApLocation,
@@ -43,12 +43,12 @@ import type {
   SamplePoint,
   ScannedNetwork,
   ThroughputSample,
-} from "../../hooks/useSurvey";
+} from '../../hooks/useSurvey';
 
 /** Type alias for polymorphic sample data */
 type SampleData = PassiveSample | ActiveSample | ThroughputSample;
 
-import { cn, radius } from "../../styles/theme";
+import { cn, radius } from '../../styles/theme';
 
 export interface CalibrationPoint {
   x: number;
@@ -153,7 +153,7 @@ export function FloorPlanCanvas({
     }
 
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) {
       return;
     }
@@ -194,7 +194,7 @@ export function FloorPlanCanvas({
 
         // Draw signal rings for selected AP
         if (isSelected) {
-          ctx.strokeStyle = "rgba(34, 197, 94, 0.3)"; // green-500 with opacity
+          ctx.strokeStyle = 'rgba(34, 197, 94, 0.3)'; // green-500 with opacity
           ctx.lineWidth = 2;
           for (const r of [20, 35, 50]) {
             ctx.beginPath();
@@ -210,10 +210,10 @@ export function FloorPlanCanvas({
         ctx.lineTo(8, 6);
         ctx.closePath();
         ctx.fillStyle = isSelected
-          ? "rgba(34, 197, 94, 0.9)" // green-500
-          : "rgba(168, 85, 247, 0.9)"; // purple-500
+          ? 'rgba(34, 197, 94, 0.9)' // green-500
+          : 'rgba(168, 85, 247, 0.9)'; // purple-500
         ctx.fill();
-        ctx.strokeStyle = "#ffffff";
+        ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
         ctx.stroke();
 
@@ -221,27 +221,27 @@ export function FloorPlanCanvas({
         ctx.beginPath();
         ctx.moveTo(0, -12);
         ctx.lineTo(0, -18);
-        ctx.strokeStyle = isSelected ? "#22c55e" : "#a855f7";
+        ctx.strokeStyle = isSelected ? '#22c55e' : '#a855f7';
         ctx.lineWidth = 2;
         ctx.stroke();
 
         // Draw antenna top
         ctx.beginPath();
         ctx.arc(0, -18, 3, 0, 2 * Math.PI);
-        ctx.fillStyle = isSelected ? "#22c55e" : "#a855f7";
+        ctx.fillStyle = isSelected ? '#22c55e' : '#a855f7';
         ctx.fill();
 
         ctx.restore();
 
         // Draw label if enabled
         if (showApLabels && ap.label) {
-          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
           const labelWidth = ctx.measureText(ap.label).width + 8;
           ctx.fillRect(ax - labelWidth / 2, ay + 10, labelWidth, 16);
-          ctx.fillStyle = "#ffffff";
-          ctx.font = "bold 10px sans-serif";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "top";
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
           ctx.fillText(ap.label, ax, ay + 12);
         }
       }
@@ -258,19 +258,19 @@ export function FloorPlanCanvas({
         ctx.beginPath();
         ctx.arc(x, y, 8, 0, 2 * Math.PI);
         ctx.fillStyle = heatmapMetric
-          ? "rgba(255, 255, 255, 0.8)" // white for visibility on heatmap
-          : "rgba(5, 104, 57, 0.8)"; // brand-primary green (#056839 at 80% opacity)
+          ? 'rgba(255, 255, 255, 0.8)' // white for visibility on heatmap
+          : 'rgba(5, 104, 57, 0.8)'; // brand-primary green (#056839 at 80% opacity)
         ctx.fill();
-        ctx.strokeStyle = "rgba(255, 255, 255, 1)"; // white border for visibility
+        ctx.strokeStyle = 'rgba(255, 255, 255, 1)'; // white border for visibility
         ctx.lineWidth = 2;
         ctx.stroke();
 
         // Draw point number - high contrast text for visibility
         // Canvas API limitation: must use direct color values
-        ctx.fillStyle = heatmapMetric ? "#1e293b" : "#f8fafc"; // slate-800 / slate-50
-        ctx.font = "bold 10px sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
+        ctx.fillStyle = heatmapMetric ? '#1e293b' : '#f8fafc'; // slate-800 / slate-50
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
         const pointNum = samples.indexOf(sample) + 1;
         ctx.fillText(pointNum.toString(), x, y);
       }
@@ -285,18 +285,18 @@ export function FloorPlanCanvas({
           // Draw point
           ctx.beginPath();
           ctx.arc(cx, cy, 10, 0, 2 * Math.PI);
-          ctx.fillStyle = "rgba(234, 88, 12, 0.9)"; // orange-600
+          ctx.fillStyle = 'rgba(234, 88, 12, 0.9)'; // orange-600
           ctx.fill();
-          ctx.strokeStyle = "rgba(255, 255, 255, 1)";
+          ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
           ctx.lineWidth = 2;
           ctx.stroke();
 
           // Draw label (A or B)
-          ctx.fillStyle = "#ffffff";
-          ctx.font = "bold 12px sans-serif";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(index === 0 ? "A" : "B", cx, cy);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(index === 0 ? 'A' : 'B', cx, cy);
         }
 
         // Draw preview line from first point to mouse cursor
@@ -306,7 +306,7 @@ export function FloorPlanCanvas({
           ctx.beginPath();
           ctx.moveTo(p1.x * scaleX, p1.y * scaleY);
           ctx.lineTo(mousePos.x * scaleX, mousePos.y * scaleY);
-          ctx.strokeStyle = "rgba(234, 88, 12, 0.6)"; // orange-600 with less opacity
+          ctx.strokeStyle = 'rgba(234, 88, 12, 0.6)'; // orange-600 with less opacity
           ctx.lineWidth = 2;
           ctx.setLineDash([5, 5]);
           ctx.stroke();
@@ -314,12 +314,12 @@ export function FloorPlanCanvas({
 
           // Draw preview pixel distance at cursor
           const previewDist = Math.sqrt((mousePos.x - p1.x) ** 2 + (mousePos.y - p1.y) ** 2);
-          ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
           ctx.fillRect(mousePos.x * scaleX + 10, mousePos.y * scaleY - 10, 60, 20);
-          ctx.fillStyle = "#ffffff";
-          ctx.font = "bold 10px sans-serif";
-          ctx.textAlign = "left";
-          ctx.textBaseline = "middle";
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 10px sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
           ctx.fillText(
             `${previewDist.toFixed(0)} px`,
             mousePos.x * scaleX + 15,
@@ -334,7 +334,7 @@ export function FloorPlanCanvas({
           ctx.beginPath();
           ctx.moveTo(p1.x * scaleX, p1.y * scaleY);
           ctx.lineTo(p2.x * scaleX, p2.y * scaleY);
-          ctx.strokeStyle = "rgba(234, 88, 12, 0.9)"; // orange-600
+          ctx.strokeStyle = 'rgba(234, 88, 12, 0.9)'; // orange-600
           ctx.lineWidth = 2;
           ctx.setLineDash([5, 5]);
           ctx.stroke();
@@ -345,11 +345,11 @@ export function FloorPlanCanvas({
           const midY = (p1.y * scaleY + p2.y * scaleY) / 2;
           const pixelDist = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
 
-          ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
           ctx.fillRect(midX - 40, midY - 10, 80, 20);
-          ctx.fillStyle = "#ffffff";
-          ctx.font = "bold 11px sans-serif";
-          ctx.textAlign = "center";
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 11px sans-serif';
+          ctx.textAlign = 'center';
           ctx.fillText(`${pixelDist.toFixed(0)} px`, midX, midY);
         }
       }
@@ -361,7 +361,7 @@ export function FloorPlanCanvas({
     return () => {
       isMounted = false;
       img.onload = null; // Prevent callback from firing after cleanup
-      img.src = ""; // Cancel pending load
+      img.src = ''; // Cancel pending load
     };
   }, [
     floorPlan,
@@ -420,9 +420,9 @@ export function FloorPlanCanvas({
         onClick={handleCanvasClick}
         onMouseMove={handleMouseMove}
         class={cn(
-          "border border-surface-border",
+          'border border-surface-border',
           radius.md,
-          interactive || calibrationMode || apPlacementMode ? "cursor-crosshair" : "",
+          interactive || calibrationMode || apPlacementMode ? 'cursor-crosshair' : '',
         )}
         width={dimensions.width}
         height={dimensions.height}
@@ -437,9 +437,9 @@ function filterSampleData(sample: SamplePoint, filter?: HeatmapFilter): ScannedN
     networks?: ScannedNetwork[];
     channel?: number;
     frequency?: number;
-    channelWidth?: ScannedNetwork["channelWidth"];
-    phyType?: ScannedNetwork["phyType"];
-    security?: ScannedNetwork["security"];
+    channelWidth?: ScannedNetwork['channelWidth'];
+    phyType?: ScannedNetwork['phyType'];
+    security?: ScannedNetwork['security'];
     vendor?: string;
   };
 
@@ -461,13 +461,13 @@ function filterSampleData(sample: SamplePoint, filter?: HeatmapFilter): ScannedN
       }
       if (filter.band) {
         networks = networks.filter((n) => {
-          if (filter.band === "2.4") {
+          if (filter.band === '2.4') {
             return n.frequency >= 2400 && n.frequency < 2500;
           }
-          if (filter.band === "5") {
+          if (filter.band === '5') {
             return n.frequency >= 5000 && n.frequency < 6000;
           }
-          if (filter.band === "6") {
+          if (filter.band === '6') {
             return n.frequency >= 5925 && n.frequency < 7125;
           }
           return true;
@@ -559,18 +559,18 @@ function extractMetricValue(
   const filteredNetworks = filterSampleData(sample, filter);
 
   switch (metric) {
-    case "rssi": {
+    case 'rssi': {
       if (filteredNetworks.length > 0) {
         // Return best RSSI among filtered networks
         return Math.max(...filteredNetworks.map((n) => n.rssi));
       }
       return data.rssi || -100;
     }
-    case "throughput":
+    case 'throughput':
       return data.downloadMbps || 0;
-    case "latency":
+    case 'latency':
       return data.latency || 0;
-    case "snr": {
+    case 'snr': {
       // SNR = RSSI - Noise Floor (assume -95 dBm noise floor if not available)
       const rssi =
         filteredNetworks.length > 0
@@ -579,9 +579,9 @@ function extractMetricValue(
       const noiseFloor = data.noiseFloor || -95;
       return rssi - noiseFloor;
     }
-    case "noise":
+    case 'noise':
       return data.noiseFloor || -95;
-    case "cochannel": {
+    case 'cochannel': {
       // Count networks on same channel (co-channel interference)
       if (filteredNetworks.length === 0) {
         return 0;
@@ -590,7 +590,7 @@ function extractMetricValue(
       const allNetworks = (data.networks || []) as ScannedNetwork[];
       return allNetworks.filter((n) => n.channel === primaryChannel).length - 1;
     }
-    case "adjacent": {
+    case 'adjacent': {
       // Count networks on adjacent channels
       if (filteredNetworks.length === 0) {
         return 0;
@@ -602,10 +602,10 @@ function extractMetricValue(
           Math.abs(n.channel - primaryChannel) > 0 && Math.abs(n.channel - primaryChannel) <= 2,
       ).length;
     }
-    case "channelUtil":
+    case 'channelUtil':
       // Channel utilization (if available)
       return data.channelUtilization || 0;
-    case "apDensity": {
+    case 'apDensity': {
       // Count unique BSSIDs (APs) at this location
       if (data.networks && Array.isArray(data.networks)) {
         const uniqueBssiDs = new Set(data.networks.map((n: ScannedNetwork) => n.bssid));
@@ -613,7 +613,7 @@ function extractMetricValue(
       }
       return data.uniqueBSSIDs || 0;
     }
-    case "ssidCount": {
+    case 'ssidCount': {
       // Count unique SSIDs at this location
       if (data.networks && Array.isArray(data.networks)) {
         const uniqueSsiDs = new Set(
@@ -710,7 +710,7 @@ function getHeatmapColor(
   // Determine if higher is better for this metric
   // Higher is better: RSSI, SNR, throughput
   // Lower is better: latency, noise, cochannel, adjacent, channelUtil
-  const higherIsBetter = metric === "rssi" || metric === "snr" || metric === "throughput";
+  const higherIsBetter = metric === 'rssi' || metric === 'snr' || metric === 'throughput';
 
   // For metrics where higher is better, invert the normalization
   // so that high values appear green and low values appear red
@@ -725,7 +725,7 @@ function getHeatmapColor(
   let b: number;
 
   // For interference metrics, use different color scheme (purple to blue)
-  if (metric === "cochannel" || metric === "adjacent") {
+  if (metric === 'cochannel' || metric === 'adjacent') {
     // Blue (low interference) to purple (high interference)
     if (normalizedValue < 0.5) {
       // Blue to cyan

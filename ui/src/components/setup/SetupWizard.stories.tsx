@@ -1,7 +1,7 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useState } from "react";
-import { cn, radius, spacing } from "../../styles/theme";
-import { SetupWizard } from "./SetupWizard";
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { useState } from 'react';
+import { cn, radius, spacing } from '../../styles/theme';
+import { SetupWizard } from './SetupWizard';
 
 // No-op function for story event handlers
 const noop = (): void => {
@@ -23,12 +23,12 @@ const noop = (): void => {
  * This story demonstrates the complete setup flow and various states.
  */
 const meta: Meta<typeof SetupWizard> = {
-  title: "Setup/SetupWizard",
+  title: 'Setup/SetupWizard',
   component: SetupWizard,
   parameters: {
-    layout: "fullscreen",
+    layout: 'fullscreen',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
 };
 
 export default meta;
@@ -57,7 +57,7 @@ export const WithSuggestedPassword: Story = {
       // Handle setup completion
     },
     onLogin: async (_username: string, _password: string) => true,
-    suggestedPassword: "Xk9mP#2vL@q7Tn4w",
+    suggestedPassword: 'Xk9mP#2vL@q7Tn4w',
   },
 };
 
@@ -125,7 +125,7 @@ export const ValidationErrorMismatch: Story = {
     docs: {
       description: {
         story:
-          "Enter different values in password and confirm password fields to see the mismatch error.",
+          'Enter different values in password and confirm password fields to see the mismatch error.',
       },
     },
   },
@@ -164,7 +164,7 @@ export const NetworkError: Story = {
   args: {
     onComplete: noop,
     onLogin: () => {
-      throw new Error("Network error. Please try again.");
+      throw new Error('Network error. Please try again.');
     },
   },
 };
@@ -202,7 +202,7 @@ export const PasswordVisible: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Click the eye icon to toggle password visibility.",
+        story: 'Click the eye icon to toggle password visibility.',
       },
     },
   },
@@ -218,11 +218,11 @@ export const MobileViewport: Story = {
       // Handle setup completion
     },
     onLogin: async () => true,
-    suggestedPassword: "Xk9mP#2vL@q7Tn4w",
+    suggestedPassword: 'Xk9mP#2vL@q7Tn4w',
   },
   parameters: {
     viewport: {
-      defaultViewport: "mobile1",
+      defaultViewport: 'mobile1',
     },
   },
 };
@@ -237,11 +237,11 @@ export const TabletViewport: Story = {
       // Handle setup completion
     },
     onLogin: async () => true,
-    suggestedPassword: "Xk9mP#2vL@q7Tn4w",
+    suggestedPassword: 'Xk9mP#2vL@q7Tn4w',
   },
   parameters: {
     viewport: {
-      defaultViewport: "tablet",
+      defaultViewport: 'tablet',
     },
   },
 };
@@ -262,7 +262,7 @@ export const InteractiveSetupFlow: Story = {
               class={cn(
                 spacing.margin.bottom.content,
                 radius.full,
-                "w-16 h-16 mx-auto bg-status-success/20 flex items-center justify-center",
+                'w-16 h-16 mx-auto bg-status-success/20 flex items-center justify-center',
               )}
             >
               <svg
@@ -280,7 +280,7 @@ export const InteractiveSetupFlow: Story = {
                 />
               </svg>
             </div>
-            <h2 class={cn(spacing.margin.bottom.inline, "heading-2")}>Setup Complete!</h2>
+            <h2 class={cn(spacing.margin.bottom.inline, 'heading-2')}>Setup Complete!</h2>
             <p class="body-small text-text-muted">You are now logged in.</p>
           </div>
         </div>
@@ -302,7 +302,7 @@ export const InteractiveSetupFlow: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Fill out the form and submit to see the complete setup flow with success state.",
+        story: 'Fill out the form and submit to see the complete setup flow with success state.',
       },
     },
   },

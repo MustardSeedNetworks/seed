@@ -21,11 +21,11 @@
  * - Different from the main ErrorBoundary.tsx - this is the UI utility version
  */
 
-import type { TFunction } from "i18next";
-import { Component, type ErrorInfo, type ReactNode } from "react";
-import { Translation } from "react-i18next";
-import { LogComponents, logger } from "../../lib/logger";
-import { button, cn, icon as iconTokens, layout, radius, spacing } from "../../styles/theme";
+import type { TFunction } from 'i18next';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Translation } from 'react-i18next';
+import { LogComponents, logger } from '../../lib/logger';
+import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
 
 /**
  * Props for the ErrorBoundary component
@@ -86,7 +86,7 @@ export class ErrorBoundary extends Component<Props, State> {
    */
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log error and component stack for debugging and monitoring
-    logger.error(LogComponents.Ui, "ErrorBoundary caught an error", error, {
+    logger.error(LogComponents.Ui, 'ErrorBoundary caught an error', error, {
       componentStack: errorInfo.componentStack,
     });
   }
@@ -122,12 +122,12 @@ export class ErrorBoundary extends Component<Props, State> {
           {(t: TFunction): ReactNode => (
             <div
               role="alert"
-              class={cn("pad bg-status-error/10 border border-status-error/20", radius.lg)}
+              class={cn('pad bg-status-error/10 border border-status-error/20', radius.lg)}
             >
-              <div class={cn("flex items-start", spacing.gap.default)}>
+              <div class={cn('flex items-start', spacing.gap.default)}>
                 {/* Error icon SVG */}
                 <svg
-                  class={cn(iconTokens.size.md, "text-status-error shrink-0", spacing.micro.mt)}
+                  class={cn(iconTokens.size.md, 'text-status-error shrink-0', spacing.micro.mt)}
                   fill="currentColor"
                   viewBox="0 0 20 20"
                   aria-hidden="true"
@@ -139,13 +139,13 @@ export class ErrorBoundary extends Component<Props, State> {
                   />
                 </svg>
                 {/* Error content: heading, message, and retry button */}
-                <div class={cn("flex-1", layout.stack.tight)}>
+                <div class={cn('flex-1', layout.stack.tight)}>
                   <h3 class="body-small font-medium text-status-error">
-                    {t("errorBoundary.title")}
+                    {t('errorBoundary.title')}
                   </h3>
                   <p class="body-small text-text-muted">
                     {/* Display caught error message or generic fallback message */}
-                    {this.state.error?.message || t("errorBoundary.defaultMessage")}
+                    {this.state.error?.message || t('errorBoundary.defaultMessage')}
                   </p>
                   {/* Retry button to attempt recovery by resetting error state */}
                   <button
@@ -153,12 +153,12 @@ export class ErrorBoundary extends Component<Props, State> {
                     onClick={this.handleRetry}
                     class={cn(
                       button.size.sm,
-                      "font-medium text-text-inverse bg-status-error",
+                      'font-medium text-text-inverse bg-status-error',
                       radius.default,
-                      "hover:bg-status-error/90 focus:outline-none focus:ring-2 focus:ring-status-error focus:ring-offset-2",
+                      'hover:bg-status-error/90 focus:outline-none focus:ring-2 focus:ring-status-error focus:ring-offset-2',
                     )}
                   >
-                    {t("errorBoundary.tryAgain")}
+                    {t('errorBoundary.tryAgain')}
                   </button>
                 </div>
               </div>

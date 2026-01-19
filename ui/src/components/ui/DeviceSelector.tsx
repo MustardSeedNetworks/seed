@@ -20,16 +20,16 @@
  * />
  */
 
-import type { LucideIcon } from "lucide-react";
-import type React from "react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import type { LucideIcon } from 'lucide-react';
+import type React from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   type DiscoveredDevice,
   getDeviceDisplayName,
   useDiscoveredDevices,
-} from "../../hooks/useDiscoveredDevices";
-import { cn, icon as iconTokens, radius, spacing } from "../../styles/theme";
+} from '../../hooks/useDiscoveredDevices';
+import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
 import {
   ChevronDown,
   Edit,
@@ -41,7 +41,7 @@ import {
   Search,
   Server,
   Smartphone,
-} from "../ui/Icons";
+} from '../ui/Icons';
 
 interface DeviceSelectorProps {
   value: string;
@@ -56,17 +56,17 @@ interface DeviceSelectorProps {
  */
 function getDeviceIcon(type: string): LucideIcon {
   switch (type) {
-    case "router":
+    case 'router':
       return Router;
-    case "switch":
+    case 'switch':
       return Router; // Use Router icon for switches too
-    case "server":
+    case 'server':
       return Server;
-    case "printer":
+    case 'printer':
       return Printer;
-    case "phone":
+    case 'phone':
       return Smartphone;
-    case "workstation":
+    case 'workstation':
       return Monitor;
     default:
       return HardDrive;
@@ -80,12 +80,12 @@ export const DeviceSelector: React.MemoExoticComponent<typeof DeviceSelectorComp
 function DeviceSelectorComponent({
   value,
   onChange,
-  placeholder = "Select device",
+  placeholder = 'Select device',
   disabled = false,
 }: DeviceSelectorProps): React.JSX.Element {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [manualEntry, setManualEntry] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -107,11 +107,11 @@ function DeviceSelectorComponent({
     };
 
     if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside);
     }
 
     return (): void => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
 
@@ -132,11 +132,11 @@ function DeviceSelectorComponent({
   // Handle keyboard navigation
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         setIsOpen(false);
         setManualEntry(false);
         buttonRef.current?.focus();
-      } else if (event.key === "ArrowDown" && !isOpen) {
+      } else if (event.key === 'ArrowDown' && !isOpen) {
         event.preventDefault();
         setIsOpen(true);
       }
@@ -150,7 +150,7 @@ function DeviceSelectorComponent({
       onChange(device.ip);
       setIsOpen(false);
       setManualEntry(false);
-      setSearchTerm("");
+      setSearchTerm('');
       buttonRef.current?.focus();
     },
     [onChange],
@@ -159,7 +159,7 @@ function DeviceSelectorComponent({
   // Handle manual IP entry
   const handleManualEntry = useCallback(() => {
     setManualEntry(true);
-    setSearchTerm("");
+    setSearchTerm('');
   }, []);
 
   // Submit manual IP
@@ -169,7 +169,7 @@ function DeviceSelectorComponent({
         onChange(ip.trim());
         setIsOpen(false);
         setManualEntry(false);
-        setSearchTerm("");
+        setSearchTerm('');
         buttonRef.current?.focus();
       }
     },
@@ -181,37 +181,37 @@ function DeviceSelectorComponent({
     if (!searchTerm.trim()) {
       return [
         {
-          label: t("device.routers", "Routers"),
+          label: t('device.routers', 'Routers'),
           icon: Router,
           devices: groupedDevices.routers,
         },
         {
-          label: t("device.switches", "Switches"),
+          label: t('device.switches', 'Switches'),
           icon: Router,
           devices: groupedDevices.switches,
         },
         {
-          label: t("device.servers", "Servers"),
+          label: t('device.servers', 'Servers'),
           icon: Server,
           devices: groupedDevices.servers,
         },
         {
-          label: t("device.workstations", "Workstations"),
+          label: t('device.workstations', 'Workstations'),
           icon: Monitor,
           devices: groupedDevices.workstations,
         },
         {
-          label: t("device.printers", "Printers"),
+          label: t('device.printers', 'Printers'),
           icon: Printer,
           devices: groupedDevices.printers,
         },
         {
-          label: t("device.phones", "Phones"),
+          label: t('device.phones', 'Phones'),
           icon: Smartphone,
           devices: groupedDevices.phones,
         },
         {
-          label: t("device.other", "Other"),
+          label: t('device.other', 'Other'),
           icon: HardDrive,
           devices: groupedDevices.other,
         },
@@ -222,7 +222,7 @@ function DeviceSelectorComponent({
     const search = searchTerm.toLowerCase();
     const filtered = devices.filter((d) => {
       const displayName = getDeviceDisplayName(d).toLowerCase();
-      const vendor = (d.vendor || "").toLowerCase();
+      const vendor = (d.vendor || '').toLowerCase();
       return d.ip.includes(search) || displayName.includes(search) || vendor.includes(search);
     });
 
@@ -230,7 +230,7 @@ function DeviceSelectorComponent({
     if (filtered.length > 0) {
       return [
         {
-          label: t("device.searchResults", "Search Results"),
+          label: t('device.searchResults', 'Search Results'),
           icon: Search,
           devices: filtered,
         },
@@ -254,15 +254,15 @@ function DeviceSelectorComponent({
   // Get the appropriate icon based on loading/selection state
   const getDeviceButtonIcon = (): React.JSX.Element => {
     if (isLoading) {
-      return <RefreshCw class={cn(iconTokens.size.sm, "text-text-muted animate-spin")} />;
+      return <RefreshCw class={cn(iconTokens.size.sm, 'text-text-muted animate-spin')} />;
     }
     if (selectedDevice) {
       const ICON_COMPONENT = getDeviceIcon(
-        selectedDevice.profile?.deviceType?.toLowerCase() || "other",
+        selectedDevice.profile?.deviceType?.toLowerCase() || 'other',
       );
-      return <ICON_COMPONENT class={cn(iconTokens.size.sm, "text-brand-primary")} />;
+      return <ICON_COMPONENT class={cn(iconTokens.size.sm, 'text-brand-primary')} />;
     }
-    return <Search class={cn(iconTokens.size.sm, "text-text-muted")} />;
+    return <Search class={cn(iconTokens.size.sm, 'text-text-muted')} />;
   };
 
   // Get secondary text for button (vendor or device type)
@@ -288,15 +288,15 @@ function DeviceSelectorComponent({
         disabled={disabled || isLoading}
         onClick={(): void => setIsOpen(!isOpen)}
         class={cn(
-          "w-full flex items-center",
+          'w-full flex items-center',
           spacing.gap.tight,
           spacing.pad.sm,
           radius.md,
-          "border border-surface-border bg-surface-base hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed",
+          'border border-surface-border bg-surface-base hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed',
         )}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label={t("accessibility.selectDevice", "Select network device")}
+        aria-label={t('accessibility.selectDevice', 'Select network device')}
       >
         {/* Device icon or search icon */}
         {getDeviceButtonIcon()}
@@ -305,8 +305,8 @@ function DeviceSelectorComponent({
         <div class="flex-1 min-w-0 text-left">
           <div
             class={cn(
-              "body-small font-medium truncate",
-              value ? "text-text-primary" : "text-text-muted",
+              'body-small font-medium truncate',
+              value ? 'text-text-primary' : 'text-text-muted',
             )}
           >
             {getButtonText()}
@@ -325,8 +325,8 @@ function DeviceSelectorComponent({
         <ChevronDown
           class={cn(
             iconTokens.size.sm,
-            "text-text-muted transition-transform shrink-0",
-            isOpen ? "rotate-180" : "",
+            'text-text-muted transition-transform shrink-0',
+            isOpen ? 'rotate-180' : '',
           )}
         />
       </button>
@@ -335,21 +335,21 @@ function DeviceSelectorComponent({
       {isOpen ? (
         <div
           class={cn(
-            "absolute top-full left-0 mt-1 w-full min-w-80",
+            'absolute top-full left-0 mt-1 w-full min-w-80',
             radius.md,
-            "border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden",
+            'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
           )}
           role="listbox"
-          aria-label={t("accessibility.deviceList", "Available devices")}
+          aria-label={t('accessibility.deviceList', 'Available devices')}
         >
           {/* Search box */}
           {!manualEntry && (
-            <div class={cn(spacing.pad.sm, "bg-surface-base border-b border-surface-border")}>
+            <div class={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
               <div class="relative">
                 <Search
                   class={cn(
                     iconTokens.size.sm,
-                    "absolute left-2 top-1/2 -translate-y-1/2 text-text-muted",
+                    'absolute left-2 top-1/2 -translate-y-1/2 text-text-muted',
                   )}
                 />
                 <input
@@ -359,13 +359,13 @@ function DeviceSelectorComponent({
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     setSearchTerm(e.target.value)
                   }
-                  placeholder={t("device.search", "Search by IP, name, or vendor")}
+                  placeholder={t('device.search', 'Search by IP, name, or vendor')}
                   class={cn(
-                    "w-full pl-8 pr-3 py-1.5",
-                    "body-small text-text-primary placeholder-text-muted",
-                    "bg-surface-base border border-surface-border",
+                    'w-full pl-8 pr-3 py-1.5',
+                    'body-small text-text-primary placeholder-text-muted',
+                    'bg-surface-base border border-surface-border',
                     radius.md,
-                    "focus:outline-none focus:ring-2 focus:ring-brand-primary",
+                    'focus:outline-none focus:ring-2 focus:ring-brand-primary',
                   )}
                 />
               </div>
@@ -374,9 +374,9 @@ function DeviceSelectorComponent({
 
           {/* Manual entry mode */}
           {manualEntry ? (
-            <div class={cn(spacing.pad.sm, "bg-surface-base border-b border-surface-border")}>
+            <div class={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
               <div class="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
-                {t("device.manualEntry", "Manual IP Entry")}
+                {t('device.manualEntry', 'Manual IP Entry')}
               </div>
               <input
                 ref={manualInputRef}
@@ -384,44 +384,44 @@ function DeviceSelectorComponent({
                 placeholder="192.168.1.1"
                 defaultValue={value}
                 onKeyDown={(e: React.KeyboardEvent): void => {
-                  if (e.key === "Enter") {
+                  if (e.key === 'Enter') {
                     submitManualIp(e.currentTarget.value);
                   }
                 }}
                 class={cn(
-                  "w-full px-3 py-1.5",
-                  "body-small text-text-primary placeholder-text-muted",
-                  "bg-surface-base border border-surface-border",
+                  'w-full px-3 py-1.5',
+                  'body-small text-text-primary placeholder-text-muted',
+                  'bg-surface-base border border-surface-border',
                   radius.md,
-                  "focus:outline-none focus:ring-2 focus:ring-brand-primary",
+                  'focus:outline-none focus:ring-2 focus:ring-brand-primary',
                 )}
               />
               <div class="flex gap-2 mt-2">
                 <button
                   type="button"
-                  onClick={(): void => submitManualIp(manualInputRef.current?.value || "")}
+                  onClick={(): void => submitManualIp(manualInputRef.current?.value || '')}
                   class={cn(
-                    "flex-1 px-3 py-1.5",
-                    "body-small font-medium",
-                    "bg-brand-primary text-text-inverse",
+                    'flex-1 px-3 py-1.5',
+                    'body-small font-medium',
+                    'bg-brand-primary text-text-inverse',
                     radius.md,
-                    "hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-primary",
+                    'hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-primary',
                   )}
                 >
-                  {t("device.select", "Select")}
+                  {t('device.select', 'Select')}
                 </button>
                 <button
                   type="button"
                   onClick={(): void => setManualEntry(false)}
                   class={cn(
-                    "px-3 py-1.5",
-                    "body-small font-medium",
-                    "border border-surface-border bg-surface-base",
+                    'px-3 py-1.5',
+                    'body-small font-medium',
+                    'border border-surface-border bg-surface-base',
                     radius.md,
-                    "hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary",
+                    'hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary',
                   )}
                 >
-                  {t("common.cancel", "Cancel")}
+                  {t('common.cancel', 'Cancel')}
                 </button>
               </div>
             </div>
@@ -431,26 +431,26 @@ function DeviceSelectorComponent({
           {manualEntry ? null : (
             <div class="max-h-96 overflow-y-auto">
               {error ? (
-                <div class={cn(spacing.pad.md, "text-center text-status-error")}>
+                <div class={cn(spacing.pad.md, 'text-center text-status-error')}>
                   <span class="caption">{error}</span>
                 </div>
               ) : null}
 
               {!error && filteredGroups.length === 0 && !isLoading ? (
-                <div class={cn(spacing.pad.md, "text-center")}>
+                <div class={cn(spacing.pad.md, 'text-center')}>
                   <span class="caption text-text-muted">
                     {searchTerm
-                      ? t("device.noResults", "No devices found")
-                      : t("device.noDevices", "No devices discovered")}
+                      ? t('device.noResults', 'No devices found')
+                      : t('device.noDevices', 'No devices discovered')}
                   </span>
                 </div>
               ) : null}
 
               {filteredGroups.map((group) => (
                 <div key={group.label}>
-                  <div class={cn(spacing.pad.sm, "bg-surface-base border-b border-surface-border")}>
+                  <div class={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
                     <div class="flex items-center gap-2">
-                      <group.icon class={cn(iconTokens.size.sm, "text-text-muted")} />
+                      <group.icon class={cn(iconTokens.size.sm, 'text-text-muted')} />
                       <span class="caption font-semibold text-text-muted uppercase tracking-wide">
                         {group.label}
                       </span>
@@ -460,7 +460,7 @@ function DeviceSelectorComponent({
                   {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex device rendering logic */}
                   {group.devices.map((device) => {
                     const ICON = getDeviceIcon(
-                      device.profile?.deviceType?.toLowerCase() || "other",
+                      device.profile?.deviceType?.toLowerCase() || 'other',
                     );
                     const isSelected = device.ip === value;
 
@@ -470,11 +470,11 @@ function DeviceSelectorComponent({
                         key={device.ip}
                         onClick={(): void => selectDevice(device)}
                         class={cn(
-                          "w-full flex items-center",
+                          'w-full flex items-center',
                           spacing.gap.tight,
                           spacing.pad.sm,
-                          "hover:bg-surface-hover focus:bg-surface-hover focus:outline-none",
-                          isSelected ? "bg-brand-primary/10" : "",
+                          'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none',
+                          isSelected ? 'bg-brand-primary/10' : '',
                         )}
                         role="option"
                         aria-selected={isSelected}
@@ -482,8 +482,8 @@ function DeviceSelectorComponent({
                         {/* Selection indicator */}
                         <span
                           class={cn(
-                            "w-2 h-2 rounded-full shrink-0",
-                            isSelected ? "bg-brand-primary" : "bg-transparent",
+                            'w-2 h-2 rounded-full shrink-0',
+                            isSelected ? 'bg-brand-primary' : 'bg-transparent',
                           )}
                         />
 
@@ -491,7 +491,7 @@ function DeviceSelectorComponent({
                         <ICON
                           class={cn(
                             iconTokens.size.sm,
-                            isSelected ? "text-brand-primary" : "text-text-secondary",
+                            isSelected ? 'text-brand-primary' : 'text-text-secondary',
                           )}
                         />
 
@@ -501,7 +501,7 @@ function DeviceSelectorComponent({
                             {getDeviceDisplayName(device)}
                           </div>
                           <div class="caption text-text-muted truncate">
-                            {device.vendor || device.profile?.deviceType || "Unknown"}
+                            {device.vendor || device.profile?.deviceType || 'Unknown'}
                           </div>
                         </div>
 
@@ -522,15 +522,15 @@ function DeviceSelectorComponent({
                 type="button"
                 onClick={handleManualEntry}
                 class={cn(
-                  "w-full flex items-center justify-center",
+                  'w-full flex items-center justify-center',
                   spacing.gap.tight,
                   spacing.pad.sm,
-                  "hover:bg-surface-hover focus:bg-surface-hover focus:outline-none text-brand-primary",
+                  'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none text-brand-primary',
                 )}
               >
                 <Edit class={iconTokens.size.sm} />
                 <span class="body-small font-medium">
-                  {t("device.manualIpEntry", "Manual IP Entry")}
+                  {t('device.manualIpEntry', 'Manual IP Entry')}
                 </span>
               </button>
             </div>

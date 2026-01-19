@@ -12,33 +12,33 @@
  * - Link-up detection for auto-run tests
  */
 
-import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { CableData } from "../components/cards/CableCard";
-import type { DnsData } from "../components/cards/DnsCard";
-import type { GatewayData } from "../components/cards/GatewayCard";
-import type { LinkData } from "../components/cards/LinkCard";
-import type { DhcpData } from "../components/cards/NetworkCard";
-import type { TraceHopMessage } from "../components/cards/PathDiscoveryCard";
-import type { PublicIpData } from "../components/cards/PublicIpCard";
-import type { SwitchData, VlanData } from "../components/cards/SwitchCard";
-import type { WiFiData } from "../components/cards/WiFiCard";
-import { LogComponents, logger } from "../lib/logger";
-import type { PipelineEvent, PipelineEventType } from "./usePipelineStatus";
-import type { SseCardUpdate as CardUpdate, SseMessage as Message } from "./useSSE";
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { CableData } from '../components/cards/CableCard';
+import type { DnsData } from '../components/cards/DnsCard';
+import type { GatewayData } from '../components/cards/GatewayCard';
+import type { LinkData } from '../components/cards/LinkCard';
+import type { DhcpData } from '../components/cards/NetworkCard';
+import type { TraceHopMessage } from '../components/cards/PathDiscoveryCard';
+import type { PublicIpData } from '../components/cards/PublicIpCard';
+import type { SwitchData, VlanData } from '../components/cards/SwitchCard';
+import type { WiFiData } from '../components/cards/WiFiCard';
+import { LogComponents, logger } from '../lib/logger';
+import type { PipelineEvent, PipelineEventType } from './usePipelineStatus';
+import type { SseCardUpdate as CardUpdate, SseMessage as Message } from './useSSE';
 
 // Pipeline event types for routing WebSocket messages
 const PIPELINE_EVENT_TYPES: PipelineEventType[] = [
-  "pipeline_started",
-  "phase_started",
-  "phase_progress",
-  "phase_completed",
-  "phase_failed",
-  "device_discovered",
-  "device_updated",
-  "pipeline_completed",
-  "pipeline_failed",
-  "pipeline_canceled",
+  'pipeline_started',
+  'phase_started',
+  'phase_progress',
+  'phase_completed',
+  'phase_failed',
+  'device_discovered',
+  'device_updated',
+  'pipeline_completed',
+  'pipeline_failed',
+  'pipeline_canceled',
 ];
 
 function isPipelineEvent(type: string): type is PipelineEventType {
@@ -62,24 +62,24 @@ export interface CardState {
 }
 
 const CARD_IDS = [
-  "link",
-  "cable",
-  "vlan",
-  "switch",
-  "wifi",
-  "dhcp",
-  "dns",
-  "gateway",
-  "publicip",
+  'link',
+  'cable',
+  'vlan',
+  'switch',
+  'wifi',
+  'dhcp',
+  'dns',
+  'gateway',
+  'publicip',
 ] as const;
 type CardId = (typeof CARD_IDS)[number];
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function isCardId(value: unknown): value is CardId {
-  return typeof value === "string" && (CARD_IDS as readonly string[]).includes(value);
+  return typeof value === 'string' && (CARD_IDS as readonly string[]).includes(value);
 }
 
 interface UseCardStateProps {
@@ -130,7 +130,7 @@ export function useCardState({
       // Route pipeline events to the pipeline status hook
       // Backend sends: { type: "pipeline", payload: PipelineEvent }
       // PipelineEvent has: { Type: "pipeline_started", Timestamp, RunID, Payload }
-      if (message.type === "pipeline") {
+      if (message.type === 'pipeline') {
         const rawEvent = message.payload as {
           type?: string;
           timestamp?: string;
@@ -139,8 +139,8 @@ export function useCardState({
         };
 
         // Validate the nested event structure
-        if (!rawEvent || typeof rawEvent.type !== "string") {
-          logger.warn(LogComponents.Websocket, "Invalid pipeline event structure", {
+        if (!rawEvent || typeof rawEvent.type !== 'string') {
+          logger.warn(LogComponents.Websocket, 'Invalid pipeline event structure', {
             payload: message.payload,
           });
           return;
@@ -148,7 +148,7 @@ export function useCardState({
 
         // Check if it's a valid pipeline event type
         if (!isPipelineEvent(rawEvent.type)) {
-          logger.warn(LogComponents.Websocket, "Unknown pipeline event type", {
+          logger.warn(LogComponents.Websocket, 'Unknown pipeline event type', {
             type: rawEvent.type,
           });
           return;
@@ -157,7 +157,7 @@ export function useCardState({
         const pipelineEvent: PipelineEvent = {
           type: rawEvent.type,
           timestamp: rawEvent.timestamp || new Date().toISOString(),
-          runId: rawEvent.runId || "",
+          runId: rawEvent.runId || '',
           payload: rawEvent.payload,
         };
 
@@ -170,11 +170,11 @@ export function useCardState({
         ).__pipelineEventHandler;
 
         // Fixes #966: Wrap in try-catch to prevent handler errors from crashing WebSocket
-        if (typeof handler === "function") {
+        if (typeof handler === 'function') {
           try {
             handler(pipelineEvent);
           } catch (err) {
-            logger.error(LogComponents.Websocket, "Pipeline event handler threw exception", {
+            logger.error(LogComponents.Websocket, 'Pipeline event handler threw exception', {
               error: err,
               eventType: pipelineEvent.type,
             });
@@ -184,7 +184,7 @@ export function useCardState({
       }
 
       // Route traceHop events to the path discovery component
-      if (message.type === "traceHop") {
+      if (message.type === 'traceHop') {
         const traceHopMessage = message.payload as TraceHopMessage;
         const handler = (
           window as unknown as {
@@ -192,11 +192,11 @@ export function useCardState({
           }
         ).__traceHopHandler;
 
-        if (typeof handler === "function") {
+        if (typeof handler === 'function') {
           try {
             handler(traceHopMessage);
           } catch (err) {
-            logger.error(LogComponents.Websocket, "TraceHop handler threw exception", {
+            logger.error(LogComponents.Websocket, 'TraceHop handler threw exception', {
               error: err,
               target: traceHopMessage.target,
             });
@@ -205,22 +205,22 @@ export function useCardState({
         return;
       }
 
-      if (message.type === "initial_state") {
+      if (message.type === 'initial_state') {
         setLoading(false);
         if (!isPlainObject(message.payload)) {
-          logger.warn(LogComponents.Websocket, "Invalid initial_state payload", {
+          logger.warn(LogComponents.Websocket, 'Invalid initial_state payload', {
             payload: message.payload,
           });
           return;
         }
 
         const { interface: iface, isWireless, cards: payloadCards } = message.payload;
-        if (typeof iface === "string" && iface) {
+        if (typeof iface === 'string' && iface) {
           setCurrentInterface(iface);
         }
 
         // Only auto-set WiFi mode if user hasn't manually selected
-        if (typeof isWireless === "boolean" && !userSetWifiModeRef.current) {
+        if (typeof isWireless === 'boolean' && !userSetWifiModeRef.current) {
           setIsWifi(isWireless);
         }
 
@@ -245,12 +245,12 @@ export function useCardState({
             }
 
             switch (key) {
-              case "link":
-                updates.link = normalized as CardState["link"];
+              case 'link':
+                updates.link = normalized as CardState['link'];
                 // Initialize prevLinkUpRef on first load
                 if (
                   normalized &&
-                  typeof (normalized as { linkUp?: boolean }).linkUp === "boolean"
+                  typeof (normalized as { linkUp?: boolean }).linkUp === 'boolean'
                 ) {
                   const { linkUp } = normalized as { linkUp: boolean };
                   prevLinkUpRef.current = linkUp;
@@ -260,40 +260,40 @@ export function useCardState({
                     initialAutoRunDoneRef.current = true;
                     logger.info(
                       LogComponents.Network,
-                      "Link up on initial load, triggering auto-run tests",
+                      'Link up on initial load, triggering auto-run tests',
                     );
                     // Track timeout for cleanup on unmount (fixes #851)
                     const timeoutId = setTimeout(() => {
                       timeoutIdsRef.current.delete(timeoutId);
-                      window.dispatchEvent(new CustomEvent("runAllTests"));
+                      window.dispatchEvent(new CustomEvent('runAllTests'));
                     }, 2000);
                     timeoutIdsRef.current.add(timeoutId);
                   }
                 }
                 break;
-              case "cable":
-                updates.cable = normalized as CardState["cable"];
+              case 'cable':
+                updates.cable = normalized as CardState['cable'];
                 break;
-              case "vlan":
-                updates.vlan = normalized as CardState["vlan"];
+              case 'vlan':
+                updates.vlan = normalized as CardState['vlan'];
                 break;
-              case "switch":
-                updates.switch = normalized as CardState["switch"];
+              case 'switch':
+                updates.switch = normalized as CardState['switch'];
                 break;
-              case "wifi":
-                updates.wifi = normalized as CardState["wifi"];
+              case 'wifi':
+                updates.wifi = normalized as CardState['wifi'];
                 break;
-              case "dhcp":
-                updates.dhcp = normalized as CardState["dhcp"];
+              case 'dhcp':
+                updates.dhcp = normalized as CardState['dhcp'];
                 break;
-              case "dns":
-                updates.dns = normalized as CardState["dns"];
+              case 'dns':
+                updates.dns = normalized as CardState['dns'];
                 break;
-              case "gateway":
-                updates.gateway = normalized as CardState["gateway"];
+              case 'gateway':
+                updates.gateway = normalized as CardState['gateway'];
                 break;
-              case "publicip":
-                updates.publicip = normalized as CardState["publicip"];
+              case 'publicip':
+                updates.publicip = normalized as CardState['publicip'];
                 break;
               default:
                 // Unknown card ID - log for debugging
@@ -311,19 +311,19 @@ export function useCardState({
   );
 
   const handleCardUpdate = useCallback((update: CardUpdate) => {
-    if (!update || typeof update !== "object") {
+    if (!update || typeof update !== 'object') {
       return;
     }
 
     const { cardId, data } = update as { cardId?: unknown; data?: unknown };
 
     if (!isCardId(cardId)) {
-      logger.warn(LogComponents.Websocket, "Ignoring card_update for unknown cardId", { cardId });
+      logger.warn(LogComponents.Websocket, 'Ignoring card_update for unknown cardId', { cardId });
       return;
     }
 
     if (data === undefined || (data !== null && !isPlainObject(data))) {
-      logger.warn(LogComponents.Websocket, "Ignoring card_update with invalid data", {
+      logger.warn(LogComponents.Websocket, 'Ignoring card_update with invalid data', {
         cardId,
         data,
       });
@@ -331,24 +331,24 @@ export function useCardState({
     }
 
     // Detect link-up transition for auto-run tests
-    if (cardId === "link" && data && typeof data === "object") {
+    if (cardId === 'link' && data && typeof data === 'object') {
       const linkData = data as { linkUp?: boolean };
       const newLinkUp = linkData.linkUp === true;
       const wasDown = prevLinkUpRef.current === false;
 
       // Update previous state
-      if (typeof linkData.linkUp === "boolean") {
+      if (typeof linkData.linkUp === 'boolean') {
         prevLinkUpRef.current = linkData.linkUp;
       }
 
       // Trigger auto-run when link transitions from down to up
       if (newLinkUp && wasDown) {
-        logger.info(LogComponents.Network, "Link up detected, triggering auto-run tests");
+        logger.info(LogComponents.Network, 'Link up detected, triggering auto-run tests');
         // Small delay to let link stabilize before running tests
         // Track timeout for cleanup on unmount (fixes #851)
         const timeoutId = setTimeout(() => {
           timeoutIdsRef.current.delete(timeoutId);
-          window.dispatchEvent(new CustomEvent("runAllTests"));
+          window.dispatchEvent(new CustomEvent('runAllTests'));
         }, 1500);
         timeoutIdsRef.current.add(timeoutId);
       }

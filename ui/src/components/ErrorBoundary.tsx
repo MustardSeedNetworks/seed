@@ -27,12 +27,12 @@
  * The Error Boundary wraps the entire App in main.tsx to provide global crash protection.
  */
 
-import type { TFunction } from "i18next";
-import type React from "react";
-import { Component, type ReactNode } from "react";
-import { Translation } from "react-i18next";
-import { LogComponents, logger } from "../lib/logger";
-import { button, cn, radius, spacing } from "../styles/theme";
+import type { TFunction } from 'i18next';
+import type React from 'react';
+import { Component, type ReactNode } from 'react';
+import { Translation } from 'react-i18next';
+import { LogComponents, logger } from '../lib/logger';
+import { button, cn, radius, spacing } from '../styles/theme';
 
 /**
  * Props for ErrorBoundary component
@@ -84,7 +84,7 @@ export class ErrorBoundary extends Component<Props, State> {
    * @param errorInfo - Additional error information (component stack trace)
    */
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    logger.error(LogComponents.App, "ErrorBoundary caught an error", error, {
+    logger.error(LogComponents.App, 'ErrorBoundary caught an error', error, {
       componentStack: errorInfo.componentStack,
     });
   }
@@ -111,31 +111,31 @@ export class ErrorBoundary extends Component<Props, State> {
           {(t: TFunction): JSX.Element => (
             <div
               class={cn(
-                "min-h-screen bg-surface-base flex items-center justify-center",
+                'min-h-screen bg-surface-base flex items-center justify-center',
                 spacing.pad.default,
               )}
             >
               <div class="w-full max-w-md text-center">
-                <div class={cn("text-4xl", spacing.margin.bottom.content)}>
+                <div class={cn('text-4xl', spacing.margin.bottom.content)}>
                   <span class="text-status-error">!</span>
                 </div>
-                <h1 class={cn("heading-2", spacing.margin.bottom.inline)}>
-                  {t("errorBoundary.title")}
+                <h1 class={cn('heading-2', spacing.margin.bottom.inline)}>
+                  {t('errorBoundary.title')}
                 </h1>
-                <p class={cn("body-small", spacing.margin.bottom.content)}>
-                  {this.state.error?.message || t("errorBoundary.defaultMessage")}
+                <p class={cn('body-small', spacing.margin.bottom.content)}>
+                  {this.state.error?.message || t('errorBoundary.defaultMessage')}
                 </p>
                 <button
                   type="button"
                   onClick={this.handleRetry}
                   class={cn(
                     button.size.md,
-                    "bg-brand-primary text-text-inverse",
+                    'bg-brand-primary text-text-inverse',
                     radius.md,
-                    "hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary",
+                    'hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary',
                   )}
                 >
-                  {t("errorBoundary.tryAgain")}
+                  {t('errorBoundary.tryAgain')}
                 </button>
               </div>
             </div>

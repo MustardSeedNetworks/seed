@@ -8,19 +8,19 @@
  * for compatibility with existing components.
  */
 
-import { useMemo } from "react";
+import { useMemo } from 'react';
 import type {
   CardSettings,
   DisplayOptions,
   IperfSettings,
   SaveStatus,
   SettingsThresholds,
-} from "../types/settings";
+} from '../types/settings';
 import {
   type SettingsSaveStatus,
   useProfileContext,
   useProfileContextOptional,
-} from "./profile-context";
+} from './profile-context';
 
 /**
  * Context value type for settings management (backward compatibility)
@@ -58,14 +58,14 @@ export interface SettingsContextValue {
  */
 function convertSaveStatus(status: SettingsSaveStatus): SaveStatus {
   switch (status) {
-    case "saving":
-      return "saving";
-    case "saved":
-      return "saved";
-    case "error":
-      return "error";
+    case 'saving':
+      return 'saving';
+    case 'saved':
+      return 'saved';
+    case 'error':
+      return 'error';
     default:
-      return "idle";
+      return 'idle';
   }
 }
 

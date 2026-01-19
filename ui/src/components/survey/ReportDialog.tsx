@@ -21,13 +21,13 @@
  * ```
  */
 
-import { CheckCircle, Download, FileText, Loader, X } from "lucide-react";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { logger } from "../../lib/logger";
-import { button, radius, spacing } from "../../styles/theme";
+import { CheckCircle, Download, FileText, Loader, X } from 'lucide-react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { logger } from '../../lib/logger';
+import { button, radius, spacing } from '../../styles/theme';
 
-const API_BASE: string = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 interface ReportOptions {
   includeHeatmaps: boolean;
@@ -53,13 +53,13 @@ export function ReportDialog({
   open,
   onClose,
 }: ReportDialogProps): React.JSX.Element | null {
-  const { t } = useTranslation("survey");
+  const { t } = useTranslation('survey');
   const [options, setOptions] = useState<ReportOptions>({
     includeHeatmaps: true,
     includeRawData: false,
     includeRecommendations: true,
     includeExecutiveSummary: true,
-    companyName: "",
+    companyName: '',
   });
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,18 +82,18 @@ export function ReportDialog({
 
     try {
       const response = await fetch(`${API_BASE}/api/canopy/survey/report?id=${surveyId}`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
+        credentials: 'include',
         body: JSON.stringify(options),
       });
 
       if (!response.ok) {
         // biome-ignore lint/nursery/useAwaitThenable: Response.text() returns Promise
         const errorText = await response.text();
-        throw new Error(errorText || "Failed to generate report");
+        throw new Error(errorText || 'Failed to generate report');
       }
 
       // Get the PDF blob
@@ -102,9 +102,9 @@ export function ReportDialog({
 
       // Create download link
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
-      link.download = `survey-report-${surveyName.replace(/[^a-z0-9]/gi, "_")}.pdf`;
+      link.download = `survey-report-${surveyName.replace(/[^a-z0-9]/gi, '_')}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -112,8 +112,8 @@ export function ReportDialog({
 
       setSuccess(true);
     } catch (err) {
-      logger.error("survey", "Report generation failed", err);
-      setError(err instanceof Error ? err.message : "Failed to generate report");
+      logger.error('survey', 'Report generation failed', err);
+      setError(err instanceof Error ? err.message : 'Failed to generate report');
     } finally {
       setGenerating(false);
     }
@@ -122,14 +122,14 @@ export function ReportDialog({
   return (
     <div
       style={{
-        position: "fixed",
+        position: 'fixed',
         inset: 0,
         zIndex: 1000,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "rgba(0, 0, 0, 0.5)",
-        backdropFilter: "blur(4px)",
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(4px)',
       }}
       onClick={(e: React.MouseEvent): void => {
         if (e.target === e.currentTarget) {
@@ -137,7 +137,7 @@ export function ReportDialog({
         }
       }}
       onKeyDown={(e: React.KeyboardEvent): void => {
-        if (e.key === "Escape") {
+        if (e.key === 'Escape') {
           onClose();
         }
       }}
@@ -146,36 +146,36 @@ export function ReportDialog({
     >
       <div
         style={{
-          background: "var(--color-background)",
+          background: 'var(--color-background)',
           borderRadius: radius.lg,
-          boxShadow: "var(--shadow-lg)",
-          width: "100%",
-          maxWidth: "480px",
-          maxHeight: "90vh",
-          overflow: "auto",
+          boxShadow: 'var(--shadow-lg)',
+          width: '100%',
+          maxWidth: '480px',
+          maxHeight: '90vh',
+          overflow: 'auto',
         }}
       >
         {/* Header */}
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             padding: spacing.md,
-            borderBottom: "1px solid var(--color-border)",
+            borderBottom: '1px solid var(--color-border)',
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: spacing.sm }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
             <FileText size={20} />
-            <h2 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 600 }}>
-              {t("report.title", "Generate Report")}
+            <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>
+              {t('report.title', 'Generate Report')}
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             style={{ ...button.icon, padding: spacing.xs }}
-            title={t("common.close", "Close")}
+            title={t('common.close', 'Close')}
           >
             <X size={20} />
           </button>
@@ -186,20 +186,20 @@ export function ReportDialog({
           <p
             style={{
               margin: `0 0 ${spacing.md} 0`,
-              color: "var(--color-text-secondary)",
+              color: 'var(--color-text-secondary)',
             }}
           >
             {t(
-              "report.description",
-              "Configure what sections to include in your PDF survey report.",
+              'report.description',
+              'Configure what sections to include in your PDF survey report.',
             )}
           </p>
 
           {/* Options */}
           <div
             style={{
-              display: "flex",
-              flexDirection: "column",
+              display: 'flex',
+              flexDirection: 'column',
               gap: spacing.md,
             }}
           >
@@ -208,28 +208,28 @@ export function ReportDialog({
               <label
                 for="companyName"
                 style={{
-                  display: "block",
+                  display: 'block',
                   marginBottom: spacing.xs,
                   fontWeight: 500,
                 }}
               >
-                {t("report.companyName", "Company Name")} ({t("common.optional", "optional")})
+                {t('report.companyName', 'Company Name')} ({t('common.optional', 'optional')})
               </label>
               <input
                 id="companyName"
                 type="text"
                 value={options.companyName}
                 onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  handleOptionChange("companyName", e.target.value)
+                  handleOptionChange('companyName', e.target.value)
                 }
-                placeholder={t("report.companyNamePlaceholder", "Your Company")}
+                placeholder={t('report.companyNamePlaceholder', 'Your Company')}
                 style={{
-                  width: "100%",
+                  width: '100%',
                   padding: spacing.sm,
                   borderRadius: radius.md,
-                  border: "1px solid var(--color-border)",
-                  background: "var(--color-background)",
-                  color: "var(--color-text)",
+                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-background)',
+                  color: 'var(--color-text)',
                 }}
               />
             </div>
@@ -237,40 +237,40 @@ export function ReportDialog({
             {/* Checkboxes */}
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
+                display: 'flex',
+                flexDirection: 'column',
                 gap: spacing.sm,
               }}
             >
               <label
                 style={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: spacing.sm,
-                  cursor: "pointer",
+                  cursor: 'pointer',
                 }}
               >
                 <input
                   type="checkbox"
                   checked={options.includeExecutiveSummary}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    handleOptionChange("includeExecutiveSummary", e.target.checked)
+                    handleOptionChange('includeExecutiveSummary', e.target.checked)
                   }
-                  style={{ width: "18px", height: "18px" }}
+                  style={{ width: '18px', height: '18px' }}
                 />
                 <div>
                   <div style={{ fontWeight: 500 }}>
-                    {t("report.executiveSummary", "Executive Summary")}
+                    {t('report.executiveSummary', 'Executive Summary')}
                   </div>
                   <div
                     style={{
-                      fontSize: "0.875rem",
-                      color: "var(--color-text-secondary)",
+                      fontSize: '0.875rem',
+                      color: 'var(--color-text-secondary)',
                     }}
                   >
                     {t(
-                      "report.executiveSummaryDesc",
-                      "Coverage score, key metrics, and signal distribution",
+                      'report.executiveSummaryDesc',
+                      'Coverage score, key metrics, and signal distribution',
                     )}
                   </div>
                 </div>
@@ -278,64 +278,64 @@ export function ReportDialog({
 
               <label
                 style={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: spacing.sm,
-                  cursor: "pointer",
+                  cursor: 'pointer',
                 }}
               >
                 <input
                   type="checkbox"
                   checked={options.includeHeatmaps}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    handleOptionChange("includeHeatmaps", e.target.checked)
+                    handleOptionChange('includeHeatmaps', e.target.checked)
                   }
-                  style={{ width: "18px", height: "18px" }}
+                  style={{ width: '18px', height: '18px' }}
                 />
                 <div>
                   <div style={{ fontWeight: 500 }}>
-                    {t("report.heatmaps", "Heatmap References")}
+                    {t('report.heatmaps', 'Heatmap References')}
                   </div>
                   <div
                     style={{
-                      fontSize: "0.875rem",
-                      color: "var(--color-text-secondary)",
+                      fontSize: '0.875rem',
+                      color: 'var(--color-text-secondary)',
                     }}
                   >
-                    {t("report.heatmapsDesc", "Note about heatmap visualization availability")}
+                    {t('report.heatmapsDesc', 'Note about heatmap visualization availability')}
                   </div>
                 </div>
               </label>
 
               <label
                 style={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: spacing.sm,
-                  cursor: "pointer",
+                  cursor: 'pointer',
                 }}
               >
                 <input
                   type="checkbox"
                   checked={options.includeRecommendations}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    handleOptionChange("includeRecommendations", e.target.checked)
+                    handleOptionChange('includeRecommendations', e.target.checked)
                   }
-                  style={{ width: "18px", height: "18px" }}
+                  style={{ width: '18px', height: '18px' }}
                 />
                 <div>
                   <div style={{ fontWeight: 500 }}>
-                    {t("report.recommendations", "Recommendations")}
+                    {t('report.recommendations', 'Recommendations')}
                   </div>
                   <div
                     style={{
-                      fontSize: "0.875rem",
-                      color: "var(--color-text-secondary)",
+                      fontSize: '0.875rem',
+                      color: 'var(--color-text-secondary)',
                     }}
                   >
                     {t(
-                      "report.recommendationsDesc",
-                      "Prioritized improvement suggestions based on analysis",
+                      'report.recommendationsDesc',
+                      'Prioritized improvement suggestions based on analysis',
                     )}
                   </div>
                 </div>
@@ -343,29 +343,29 @@ export function ReportDialog({
 
               <label
                 style={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: spacing.sm,
-                  cursor: "pointer",
+                  cursor: 'pointer',
                 }}
               >
                 <input
                   type="checkbox"
                   checked={options.includeRawData}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    handleOptionChange("includeRawData", e.target.checked)
+                    handleOptionChange('includeRawData', e.target.checked)
                   }
-                  style={{ width: "18px", height: "18px" }}
+                  style={{ width: '18px', height: '18px' }}
                 />
                 <div>
-                  <div style={{ fontWeight: 500 }}>{t("report.rawData", "Raw Sample Data")}</div>
+                  <div style={{ fontWeight: 500 }}>{t('report.rawData', 'Raw Sample Data')}</div>
                   <div
                     style={{
-                      fontSize: "0.875rem",
-                      color: "var(--color-text-secondary)",
+                      fontSize: '0.875rem',
+                      color: 'var(--color-text-secondary)',
                     }}
                   >
-                    {t("report.rawDataDesc", "Appendix with individual sample measurements")}
+                    {t('report.rawDataDesc', 'Appendix with individual sample measurements')}
                   </div>
                 </div>
               </label>
@@ -378,10 +378,10 @@ export function ReportDialog({
               style={{
                 marginTop: spacing.md,
                 padding: spacing.sm,
-                background: "var(--color-error-light)",
+                background: 'var(--color-error-light)',
                 borderRadius: radius.md,
-                color: "var(--color-error)",
-                fontSize: "0.875rem",
+                color: 'var(--color-error)',
+                fontSize: '0.875rem',
               }}
             >
               {error}
@@ -394,19 +394,19 @@ export function ReportDialog({
               style={{
                 marginTop: spacing.md,
                 padding: spacing.sm,
-                background: "var(--color-success-light)",
+                background: 'var(--color-success-light)',
                 borderRadius: radius.md,
-                color: "var(--color-success)",
-                fontSize: "0.875rem",
-                display: "flex",
-                alignItems: "center",
+                color: 'var(--color-success)',
+                fontSize: '0.875rem',
+                display: 'flex',
+                alignItems: 'center',
                 gap: spacing.xs,
               }}
             >
               <CheckCircle size={16} />
               {t(
-                "report.downloadStarted",
-                "Report generated! Download should start automatically.",
+                'report.downloadStarted',
+                'Report generated! Download should start automatically.',
               )}
             </div>
           ) : null}
@@ -415,11 +415,11 @@ export function ReportDialog({
         {/* Footer */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "flex-end",
+            display: 'flex',
+            justifyContent: 'flex-end',
             gap: spacing.sm,
             padding: spacing.md,
-            borderTop: "1px solid var(--color-border)",
+            borderTop: '1px solid var(--color-border)',
           }}
         >
           <button
@@ -430,7 +430,7 @@ export function ReportDialog({
               padding: `${spacing.sm} ${spacing.md}`,
             }}
           >
-            {t("common.cancel", "Cancel")}
+            {t('common.cancel', 'Cancel')}
           </button>
           <button
             type="button"
@@ -439,20 +439,20 @@ export function ReportDialog({
             style={{
               ...button.primary,
               padding: `${spacing.sm} ${spacing.md}`,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: spacing.xs,
             }}
           >
             {generating ? (
               <>
-                <Loader size={16} style={{ animation: "spin 1s linear infinite" }} />
-                {t("report.generating", "Generating...")}
+                <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                {t('report.generating', 'Generating...')}
               </>
             ) : (
               <>
                 <Download size={16} />
-                {t("report.generate", "Generate PDF")}
+                {t('report.generate', 'Generate PDF')}
               </>
             )}
           </button>

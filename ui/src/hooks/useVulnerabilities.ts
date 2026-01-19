@@ -30,16 +30,16 @@
  * ```
  */
 
-import { useCallback, useState } from "react";
-import { api } from "../api";
-import { LogComponents, logger } from "../lib/logger";
+import { useCallback, useState } from 'react';
+import { api } from '../api';
+import { LogComponents, logger } from '../lib/logger';
 import type {
   DeviceVulnerabilities,
   VulnerabilityScannerConfig,
   VulnerabilityScannerStatus,
-} from "../types/vulnerabilities";
+} from '../types/vulnerabilities';
 
-type SeverityFilter = "critical" | "high" | "medium" | "low";
+type SeverityFilter = 'critical' | 'high' | 'medium' | 'low';
 
 /** API response for scan initiation */
 interface ScanResponse {
@@ -54,7 +54,7 @@ interface ResultsResponse {
 }
 
 function isValidIpv4(ip: string): boolean {
-  const parts = ip.split(".");
+  const parts = ip.split('.');
   if (parts.length !== 4) {
     return false;
   }
@@ -69,26 +69,26 @@ function isValidIpv4(ip: string): boolean {
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: IPv6 validation is inherently complex
 function isValidIpv6(ip: string): boolean {
-  if (ip === "") {
+  if (ip === '') {
     return false;
   }
 
-  const [head, ...rest] = ip.split("::");
+  const [head, ...rest] = ip.split('::');
   if (rest.length > 1) {
     return false;
   }
 
-  const headParts = head ? head.split(":") : [];
-  const tailParts = rest.length === 1 && rest[0] ? rest[0].split(":") : [];
+  const headParts = head ? head.split(':') : [];
+  const tailParts = rest.length === 1 && rest[0] ? rest[0].split(':') : [];
   const hasCompression = rest.length === 1;
 
   const allParts = hasCompression ? [...headParts, ...tailParts] : headParts;
-  if (allParts.some((p) => p === "")) {
+  if (allParts.some((p) => p === '')) {
     return false;
   }
 
   const lastPart = allParts.at(-1);
-  const hasIpv4Tail = lastPart ? lastPart.includes(".") : false;
+  const hasIpv4Tail = lastPart ? lastPart.includes('.') : false;
 
   const validateHextet = (part: string): boolean => /^[0-9a-fA-F]{1,4}$/.test(part);
 
@@ -124,10 +124,10 @@ function isValidIp(ip: string): boolean {
 function normalizeSeverityFilter(severity: string): SeverityFilter | null {
   const normalized = severity.trim().toLowerCase();
   switch (normalized) {
-    case "critical":
-    case "high":
-    case "medium":
-    case "low":
+    case 'critical':
+    case 'high':
+    case 'medium':
+    case 'low':
       return normalized;
     default:
       return null;
@@ -163,20 +163,20 @@ export function useVulnerabilities(): {
       if (ip) {
         const trimmed = ip.trim();
         if (!isValidIp(trimmed)) {
-          throw new Error("Invalid IP address");
+          throw new Error('Invalid IP address');
         }
-        params.set("ip", trimmed);
+        params.set('ip', trimmed);
       }
 
       const endpoint =
         params.size > 0
           ? `/api/v1/shell/vulnerabilities/scan?${params.toString()}`
-          : "/api/v1/shell/vulnerabilities/scan";
+          : '/api/v1/shell/vulnerabilities/scan';
 
       const data = await api.post<ScanResponse>(endpoint);
-      return data.status === "scan started" || data.status === "scan already in progress";
+      return data.status === 'scan started' || data.status === 'scan already in progress';
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
+      const message = error instanceof Error ? error.message : 'Unknown error';
       setScanError(message);
       return false;
     } finally {
@@ -186,10 +186,10 @@ export function useVulnerabilities(): {
 
   const fetchStatus = useCallback(async (): Promise<VulnerabilityScannerStatus | null> => {
     try {
-      return await api.get<VulnerabilityScannerStatus>("/api/v1/shell/vulnerabilities/status");
+      return await api.get<VulnerabilityScannerStatus>('/api/v1/shell/vulnerabilities/status');
     } catch (error) {
-      logger.error(LogComponents.Vuln, "Failed to fetch vulnerability status", error, {
-        endpoint: "/api/v1/shell/vulnerabilities/status",
+      logger.error(LogComponents.Vuln, 'Failed to fetch vulnerability status', error, {
+        endpoint: '/api/v1/shell/vulnerabilities/status',
       });
       return null;
     }
@@ -201,20 +201,20 @@ export function useVulnerabilities(): {
       if (severity) {
         const validSeverity = normalizeSeverityFilter(severity);
         if (!validSeverity) {
-          throw new Error("Invalid severity filter");
+          throw new Error('Invalid severity filter');
         }
-        params.set("severity", validSeverity);
+        params.set('severity', validSeverity);
       }
 
       const endpoint =
         params.size > 0
           ? `/api/v1/shell/vulnerabilities/results?${params.toString()}`
-          : "/api/v1/shell/vulnerabilities/results";
+          : '/api/v1/shell/vulnerabilities/results';
       const data = await api.get<ResultsResponse>(endpoint);
       return data.results || [];
     } catch (error) {
-      logger.error(LogComponents.Vuln, "Failed to fetch vulnerability results", error, {
-        endpoint: "/api/v1/shell/vulnerabilities/results",
+      logger.error(LogComponents.Vuln, 'Failed to fetch vulnerability results', error, {
+        endpoint: '/api/v1/shell/vulnerabilities/results',
         severity,
       });
       return [];
@@ -226,7 +226,7 @@ export function useVulnerabilities(): {
       try {
         const trimmed = ip.trim();
         if (!isValidIp(trimmed)) {
-          throw new Error("Invalid IP address");
+          throw new Error('Invalid IP address');
         }
 
         const params = new URLSearchParams({ ip: trimmed });
@@ -234,7 +234,7 @@ export function useVulnerabilities(): {
           `/api/v1/shell/vulnerabilities/device?${params.toString()}`,
         );
       } catch (error) {
-        logger.error(LogComponents.Vuln, "Failed to fetch vulnerabilities for device", error, {
+        logger.error(LogComponents.Vuln, 'Failed to fetch vulnerabilities for device', error, {
           ip,
         });
         return null;
@@ -245,10 +245,10 @@ export function useVulnerabilities(): {
 
   const fetchSettings = useCallback(async (): Promise<VulnerabilityScannerConfig | null> => {
     try {
-      return await api.get<VulnerabilityScannerConfig>("/api/v1/shell/vulnerabilities/settings");
+      return await api.get<VulnerabilityScannerConfig>('/api/v1/shell/vulnerabilities/settings');
     } catch (error) {
-      logger.error(LogComponents.Vuln, "Failed to fetch vulnerability settings", error, {
-        endpoint: "/api/v1/shell/vulnerabilities/settings",
+      logger.error(LogComponents.Vuln, 'Failed to fetch vulnerability settings', error, {
+        endpoint: '/api/v1/shell/vulnerabilities/settings',
       });
       return null;
     }
@@ -257,11 +257,11 @@ export function useVulnerabilities(): {
   const updateSettings = useCallback(
     async (settings: Partial<VulnerabilityScannerConfig>): Promise<boolean> => {
       try {
-        await api.put<{ status: string }>("/api/v1/shell/vulnerabilities/settings", settings);
+        await api.put<{ status: string }>('/api/v1/shell/vulnerabilities/settings', settings);
         return true;
       } catch (error) {
-        logger.error(LogComponents.Vuln, "Failed to update vulnerability settings", error, {
-          endpoint: "/api/v1/shell/vulnerabilities/settings",
+        logger.error(LogComponents.Vuln, 'Failed to update vulnerability settings', error, {
+          endpoint: '/api/v1/shell/vulnerabilities/settings',
           updates: settings,
         });
         return false;

@@ -1,7 +1,7 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import type React from "react";
-import { useState } from "react";
-import { Slider } from "./Slider";
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import type React from 'react';
+import { useState } from 'react';
+import { Slider } from './Slider';
 
 /**
  * Slider component for numeric input with visual feedback.
@@ -19,50 +19,50 @@ import { Slider } from "./Slider";
  * - Touch-friendly for mobile devices
  */
 const meta: Meta<typeof Slider> = {
-  title: "UI/Slider",
+  title: 'UI/Slider',
   component: Slider,
   parameters: {
-    layout: "padded",
+    layout: 'padded',
     docs: {
       description: {
         component:
-          "A customizable range slider for numeric input with visual feedback and formatting options.",
+          'A customizable range slider for numeric input with visual feedback and formatting options.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     value: {
-      control: { type: "number" },
-      description: "Current slider value",
+      control: { type: 'number' },
+      description: 'Current slider value',
     },
     min: {
-      control: { type: "number" },
-      description: "Minimum value",
+      control: { type: 'number' },
+      description: 'Minimum value',
     },
     max: {
-      control: { type: "number" },
-      description: "Maximum value",
+      control: { type: 'number' },
+      description: 'Maximum value',
     },
     step: {
-      control: { type: "number" },
-      description: "Step increment",
+      control: { type: 'number' },
+      description: 'Step increment',
     },
     label: {
-      control: { type: "text" },
-      description: "Label displayed above slider",
+      control: { type: 'text' },
+      description: 'Label displayed above slider',
     },
     leftLabel: {
-      control: { type: "text" },
+      control: { type: 'text' },
       description: "Label at left end (e.g., 'Slower')",
     },
     rightLabel: {
-      control: { type: "text" },
+      control: { type: 'text' },
       description: "Label at right end (e.g., 'Faster')",
     },
     disabled: {
-      control: { type: "boolean" },
-      description: "Disable slider interaction",
+      control: { type: 'boolean' },
+      description: 'Disable slider interaction',
     },
   },
 };
@@ -74,7 +74,7 @@ type Story = StoryObj<typeof meta>;
  * Interactive wrapper for stories
  */
 function _sliderWrapper(
-  props: Omit<React.ComponentProps<typeof Slider>, "value" | "onChange">,
+  props: Omit<React.ComponentProps<typeof Slider>, 'value' | 'onChange'>,
 ): React.JSX.Element {
   const [value, setValue] = useState(props.min + (props.max - props.min) / 2);
   return <Slider {...props} value={value} onChange={setValue} />;

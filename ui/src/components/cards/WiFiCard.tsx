@@ -26,12 +26,12 @@
  * The card is conditionally hidden when not connected to WiFi.
  */
 
-import { useTranslation } from "react-i18next";
-import { useSettings } from "../../contexts/useSettings";
-import { cn, icon as iconTokens, layout, spacing } from "../../styles/theme";
-import { CardDivider, CardRow, CardValue, type Status } from "../ui/Card";
-import { Wifi } from "../ui/Icons";
-import { SimpleBaseCard } from "./BaseCard";
+import { useTranslation } from 'react-i18next';
+import { useSettings } from '../../contexts/useSettings';
+import { cn, icon as iconTokens, layout, spacing } from '../../styles/theme';
+import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
+import { Wifi } from '../ui/Icons';
+import { SimpleBaseCard } from './BaseCard';
 
 /**
  * Current WiFi connection information
@@ -67,12 +67,12 @@ function getSignalStatus(
   thresholds: { warning: number; critical: number },
 ): Status {
   if (signal <= thresholds.critical) {
-    return "error";
+    return 'error';
   }
   if (signal <= thresholds.warning) {
-    return "warning";
+    return 'warning';
   }
-  return "success";
+  return 'success';
 }
 
 function signalToPercentage(signal: number): number {
@@ -84,23 +84,23 @@ function signalToPercentage(signal: number): number {
 function getSignalBars(signal: number): string {
   const percent = signalToPercentage(signal);
   if (percent >= 75) {
-    return "▂▄▆█";
+    return '▂▄▆█';
   }
   if (percent >= 50) {
-    return "▂▄▆░";
+    return '▂▄▆░';
   }
   if (percent >= 25) {
-    return "▂▄░░";
+    return '▂▄░░';
   }
-  return "▂░░░";
+  return '▂░░░';
 }
 
 /**
  * Displays current WiFi connection status with signal strength visualization.
  */
 export function WiFiCard({ data, loading, visible = true }: WiFiCardProps): React.JSX.Element {
-  const { t: tr } = useTranslation("cards");
-  const { t: tc } = useTranslation("common");
+  const { t: tr } = useTranslation('cards');
+  const { t: tc } = useTranslation('common');
   const { thresholds } = useSettings();
   // Map context ThresholdPair (good/warning) to card format (warning/critical)
   // For WiFi: good = -50 dBm, warning = -70 dBm (higher is better, so critical = warning)
@@ -115,15 +115,15 @@ export function WiFiCard({ data, loading, visible = true }: WiFiCardProps): Reac
     return null;
   }
 
-  const status = data ? getSignalStatus(data.signal, th) : "unknown";
+  const status = data ? getSignalStatus(data.signal, th) : 'unknown';
 
   return (
     <SimpleBaseCard
-      title={tr("wifi.title")}
+      title={tr('wifi.title')}
       icon={<Wifi class={iconTokens.size.md} />}
-      status={loading ? "loading" : status}
+      status={loading ? 'loading' : status}
       loading={loading}
-      loadingContent={<CardValue value={tc("status.scanning")} size="lg" />}
+      loadingContent={<CardValue value={tc('status.scanning')} size="lg" />}
     >
       {data ? (
         <>
@@ -135,13 +135,13 @@ export function WiFiCard({ data, loading, visible = true }: WiFiCardProps): Reac
             </span>
           </div>
           <CardDivider />
-          <CardRow label={tr("wifi.bssid")} value={data.bssid} />
-          <CardRow label={tr("wifi.channel")} value={data.channel.toString()} />
-          <CardRow label={tr("wifi.frequency")} value={`${data.frequency} MHz`} />
-          <CardRow label={tr("wifi.security")} value={data.security} />
+          <CardRow label={tr('wifi.bssid')} value={data.bssid} />
+          <CardRow label={tr('wifi.channel')} value={data.channel.toString()} />
+          <CardRow label={tr('wifi.frequency')} value={`${data.frequency} MHz`} />
+          <CardRow label={tr('wifi.security')} value={data.security} />
         </>
       ) : (
-        <CardValue value={tc("status.disconnected")} size="md" />
+        <CardValue value={tc('status.disconnected')} size="md" />
       )}
     </SimpleBaseCard>
   );

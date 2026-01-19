@@ -1,10 +1,10 @@
 // biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Complex component
-import type React from "react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { usePipelineStatus } from "../../hooks/usePipelineStatus";
-import { api } from "../../api";
-import { LogComponents, logger } from "../../lib/logger";
+import type React from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { api } from '../../api';
+import { usePipelineStatus } from '../../hooks/usePipelineStatus';
+import { LogComponents, logger } from '../../lib/logger';
 import {
   button,
   category as categoryTheme,
@@ -12,8 +12,8 @@ import {
   icon as iconTokens,
   radius,
   spacing,
-} from "../../styles/theme";
-import { Card, CardValue, type Status } from "../ui/Card";
+} from '../../styles/theme';
+import { Card, CardValue, type Status } from '../ui/Card';
 import {
   CheckCircle,
   ChevronDown,
@@ -28,10 +28,10 @@ import {
   Server,
   Smartphone,
   Wifi,
-} from "../ui/Icons";
-import { DiscoveryModal } from "./DiscoveryModal";
-import { PipelineProgress } from "./PipelineProgress";
-import { VulnerabilityDetailsModal } from "./VulnerabilityDetailsModal";
+} from '../ui/Icons';
+import { DiscoveryModal } from './DiscoveryModal';
+import { PipelineProgress } from './PipelineProgress';
+import { VulnerabilityDetailsModal } from './VulnerabilityDetailsModal';
 
 export interface LldpInfo {
   chassisId: string;
@@ -72,7 +72,7 @@ export interface NdpInfo {
   lastAdvertisement?: string;
 }
 
-export type DiscoveryMethod = "arp" | "ndp" | "lldp" | "cdp" | "edp" | "mdns" | "ping" | "snmp";
+export type DiscoveryMethod = 'arp' | 'ndp' | 'lldp' | 'cdp' | 'edp' | 'mdns' | 'ping' | 'snmp';
 
 // Auto-profiling types from backend
 export interface OpenPort {
@@ -182,7 +182,7 @@ export interface DiscoveredDevice {
   snmpData?: SnmpFullData; // Extended SNMP data from Phase 3 scanning
   vulnerabilities?: {
     count: number;
-    highestSeverity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+    highestSeverity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   };
 }
 
@@ -205,7 +205,7 @@ export interface NetworkDiscoveryData {
 // Deep Scan (Port Scan) Types - matches backend discovery.ServiceInfo
 export interface ServiceInfo {
   port: number;
-  state: "open" | "closed" | "filtered";
+  state: 'open' | 'closed' | 'filtered';
   service: string;
   banner?: string;
   version?: string;
@@ -215,7 +215,7 @@ export interface ServiceInfo {
 // PortScanResult for display - normalized from backend response
 export interface PortScanResult {
   port: number;
-  state: "open" | "closed" | "filtered";
+  state: 'open' | 'closed' | 'filtered';
   service: string;
   banner?: string;
   version?: string;
@@ -251,39 +251,39 @@ interface NetworkDiscoveryCardProps {
 }
 
 // Sorting types for device list
-type SortField = "ip" | "hostname" | "vendor" | "lastSeen" | null;
-type SortDirection = "asc" | "desc";
+type SortField = 'ip' | 'hostname' | 'vendor' | 'lastSeen' | null;
+type SortDirection = 'asc' | 'desc';
 
 // Format last seen timestamp to human-readable relative time
 function formatLastSeen(
   dateStr: string,
-  t: ReturnType<typeof useTranslation<"cards">>["t"],
+  t: ReturnType<typeof useTranslation<'cards'>>['t'],
 ): string {
   if (!dateStr) {
-    return t("discovery.never");
+    return t('discovery.never');
   }
   const date = new Date(dateStr);
   // Check for invalid date or Go's zero time (year 1 or epoch)
   if (Number.isNaN(date.getTime()) || date.getFullYear() < 2000) {
-    return t("discovery.never");
+    return t('discovery.never');
   }
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffSec = Math.floor(diffMs / 1000);
 
   if (diffSec < 0) {
-    return t("discovery.never"); // Future date = invalid
+    return t('discovery.never'); // Future date = invalid
   }
   if (diffSec < 60) {
-    return t("discovery.justNow");
+    return t('discovery.justNow');
   }
   if (diffSec < 3600) {
-    return t("discovery.mAgo", { min: Math.floor(diffSec / 60) });
+    return t('discovery.mAgo', { min: Math.floor(diffSec / 60) });
   }
   if (diffSec < 86400) {
-    return t("discovery.hAgo", { hour: Math.floor(diffSec / 3600) });
+    return t('discovery.hAgo', { hour: Math.floor(diffSec / 3600) });
   }
-  return t("discovery.dAgo", { day: Math.floor(diffSec / 86400) });
+  return t('discovery.dAgo', { day: Math.floor(diffSec / 86400) });
 }
 
 /**
@@ -291,7 +291,7 @@ function formatLastSeen(
  * e.g., "192.168.64.7/24" -> "192.168.64.0/24"
  */
 function calculateNetworkAddress(cidr: string): string {
-  const [ip, maskStr] = cidr.split("/");
+  const [ip, maskStr] = cidr.split('/');
   if (!(ip && maskStr)) {
     return cidr;
   }
@@ -301,7 +301,7 @@ function calculateNetworkAddress(cidr: string): string {
     return cidr;
   }
 
-  const octets = ip.split(".").map(Number);
+  const octets = ip.split('.').map(Number);
   if (octets.length !== 4 || octets.some(Number.isNaN)) {
     return cidr;
   }
@@ -318,7 +318,7 @@ function calculateNetworkAddress(cidr: string): string {
     networkInt & 0xff,
   ];
 
-  return `${networkOctets.join(".")}/${mask}`;
+  return `${networkOctets.join('.')}/${mask}`;
 }
 
 /**
@@ -359,7 +359,7 @@ function _subnetList({
 
   // ≤5 subnets - inline display
   if (allSubnets.length <= 5) {
-    return <span class="font-mono">{allSubnets.join(", ")}</span>;
+    return <span class="font-mono">{allSubnets.join(', ')}</span>;
   }
 
   // >5 subnets - collapsible display
@@ -420,44 +420,44 @@ function categorizeDevices(devices: DiscoveredDevice[]): CategoryCounts {
   };
 
   for (const device of devices) {
-    const deviceType = device.profile?.deviceType?.toLowerCase() || "";
+    const deviceType = device.profile?.deviceType?.toLowerCase() || '';
     const icons = device.profile?.deviceIcons || [];
 
     if (
-      icons.includes("router") ||
-      deviceType.includes("router") ||
-      device.cdpInfo?.capabilities?.some((c) => c.toLowerCase().includes("router")) ||
-      device.lldpInfo?.capabilities?.some((c) => c.toLowerCase().includes("router"))
+      icons.includes('router') ||
+      deviceType.includes('router') ||
+      device.cdpInfo?.capabilities?.some((c) => c.toLowerCase().includes('router')) ||
+      device.lldpInfo?.capabilities?.some((c) => c.toLowerCase().includes('router'))
     ) {
       categories.routers++;
     } else if (
-      icons.includes("switch") ||
-      deviceType.includes("switch") ||
-      device.cdpInfo?.capabilities?.some((c) => c.toLowerCase().includes("switch")) ||
-      device.lldpInfo?.capabilities?.some((c) => c.toLowerCase().includes("bridge"))
+      icons.includes('switch') ||
+      deviceType.includes('switch') ||
+      device.cdpInfo?.capabilities?.some((c) => c.toLowerCase().includes('switch')) ||
+      device.lldpInfo?.capabilities?.some((c) => c.toLowerCase().includes('bridge'))
     ) {
       categories.network++;
-    } else if (icons.includes("printer") || deviceType.includes("printer")) {
+    } else if (icons.includes('printer') || deviceType.includes('printer')) {
       categories.printers++;
     } else if (
-      icons.includes("server") ||
-      deviceType.includes("server") ||
-      icons.includes("database") ||
-      icons.includes("dns") ||
-      icons.includes("mail")
+      icons.includes('server') ||
+      deviceType.includes('server') ||
+      icons.includes('database') ||
+      icons.includes('dns') ||
+      icons.includes('mail')
     ) {
       categories.servers++;
     } else if (
-      deviceType.includes("phone") ||
-      deviceType.includes("mobile") ||
-      device.vendor?.toLowerCase().includes("apple") ||
-      device.vendor?.toLowerCase().includes("samsung")
+      deviceType.includes('phone') ||
+      deviceType.includes('mobile') ||
+      device.vendor?.toLowerCase().includes('apple') ||
+      device.vendor?.toLowerCase().includes('samsung')
     ) {
       categories.mobile++;
     } else if (
-      device.osGuess?.toLowerCase().includes("windows") ||
-      device.osGuess?.toLowerCase().includes("linux") ||
-      device.osGuess?.toLowerCase().includes("macos")
+      device.osGuess?.toLowerCase().includes('windows') ||
+      device.osGuess?.toLowerCase().includes('linux') ||
+      device.osGuess?.toLowerCase().includes('macos')
     ) {
       categories.workstations++;
     } else {
@@ -480,17 +480,17 @@ function _discoverySummary({
   status: DiscoveryStatus;
   deviceCount: number;
   categories: ReturnType<typeof categorizeDevices>;
-  pipelineStatus?: ReturnType<typeof usePipelineStatus>["status"];
+  pipelineStatus?: ReturnType<typeof usePipelineStatus>['status'];
   onCancelPipeline?: () => void;
-  t: ReturnType<typeof useTranslation<"cards">>["t"];
+  t: ReturnType<typeof useTranslation<'cards'>>['t'];
 }): React.ReactElement {
   // Check if pipeline is actively running
   const isPipelineRunning =
     pipelineStatus &&
-    pipelineStatus.state !== "idle" &&
-    pipelineStatus.state !== "complete" &&
-    pipelineStatus.state !== "failed" &&
-    pipelineStatus.state !== "canceled";
+    pipelineStatus.state !== 'idle' &&
+    pipelineStatus.state !== 'complete' &&
+    pipelineStatus.state !== 'failed' &&
+    pipelineStatus.state !== 'canceled';
 
   // Show pipeline progress when running
   if (isPipelineRunning && pipelineStatus) {
@@ -506,37 +506,37 @@ function _discoverySummary({
   const stats = [
     {
       icon: Router,
-      label: t("discovery.routers"),
+      label: t('discovery.routers'),
       count: categories.routers,
       color: categoryTheme.router,
     },
     {
       icon: Server,
-      label: t("discovery.servers"),
+      label: t('discovery.servers'),
       count: categories.servers,
       color: categoryTheme.server,
     },
     {
       icon: Monitor,
-      label: t("discovery.workstations"),
+      label: t('discovery.workstations'),
       count: categories.workstations,
       color: categoryTheme.workstation,
     },
     {
       icon: Printer,
-      label: t("discovery.printers"),
+      label: t('discovery.printers'),
       count: categories.printers,
       color: categoryTheme.printer,
     },
     {
       icon: Smartphone,
-      label: t("discovery.mobile"),
+      label: t('discovery.mobile'),
       count: categories.mobile,
       color: categoryTheme.mobile,
     },
     {
       icon: Wifi,
-      label: t("discovery.networkDevices"),
+      label: t('discovery.networkDevices'),
       count: categories.network,
       color: categoryTheme.network,
     },
@@ -546,20 +546,20 @@ function _discoverySummary({
     <div class="stack-sm">
       {/* Status row */}
       <div class="flex items-center justify-between body-small">
-        <div class={cn("flex items-center", spacing.gap.compact)}>
+        <div class={cn('flex items-center', spacing.gap.compact)}>
           {status.scanning ? (
             <>
-              <RefreshCw class={cn(iconTokens.size.sm, "text-status-info animate-spin")} />
-              <span class="text-status-info font-medium">{t("discovery.scanning")}</span>
+              <RefreshCw class={cn(iconTokens.size.sm, 'text-status-info animate-spin')} />
+              <span class="text-status-info font-medium">{t('discovery.scanning')}</span>
             </>
           ) : (
             <>
-              <CheckCircle class={cn(iconTokens.size.sm, "text-status-success")} />
-              <span class="text-status-success font-medium">{t("discovery.complete")}</span>
+              <CheckCircle class={cn(iconTokens.size.sm, 'text-status-success')} />
+              <span class="text-status-success font-medium">{t('discovery.complete')}</span>
             </>
           )}
         </div>
-        <div class={cn("flex items-center", spacing.inline.sm, "text-text-muted")}>
+        <div class={cn('flex items-center', spacing.inline.sm, 'text-text-muted')}>
           <Clock class={iconTokens.size.sm} />
           <span class="caption">{formatLastSeen(status.lastScan, t)}</span>
         </div>
@@ -570,12 +570,12 @@ function _discoverySummary({
         <subnetList
           subnets={status.subnets}
           fallbackSubnet={status.subnet}
-          unknownLabel={t("discovery.unknownSubnet")}
+          unknownLabel={t('discovery.unknownSubnet')}
         />
         <span>
           {deviceCount === 1
-            ? t("discovery.deviceFound", { count: deviceCount })
-            : t("discovery.devicesFound", { count: deviceCount })}
+            ? t('discovery.deviceFound', { count: deviceCount })
+            : t('discovery.devicesFound', { count: deviceCount })}
         </span>
       </div>
 
@@ -583,16 +583,16 @@ function _discoverySummary({
       {stats.length > 0 && (
         <div
           class={cn(
-            "flex items-center",
+            'flex items-center',
             spacing.gap.default,
-            "flex-wrap",
+            'flex-wrap',
             spacing.padding.top.heading,
           )}
         >
           {stats.map(({ icon: ICON, label, count, color }) => (
             <div
               key={label}
-              class={cn("flex items-center", spacing.gap.tight)}
+              class={cn('flex items-center', spacing.gap.tight)}
               title={`${count} ${label}`}
             >
               <ICON class={cn(iconTokens.size.sm, color)} />
@@ -617,24 +617,24 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
     loading,
     onScan,
   }: NetworkDiscoveryCardProps): React.ReactElement | null {
-    const { t } = useTranslation("cards");
+    const { t } = useTranslation('cards');
     const [_expandedDevices, SET_EXPANDED_DEVICES] = useState<Set<string>>(new Set());
     const [scanningDevices, setScanningDevices] = useState<Set<string>>(new Set());
     const [scanResults, setScanResults] = useState<Map<string, DeepScanResult>>(new Map());
     // Search and sort state (kept for modal use)
-    const [searchQuery, _setSearchQuery] = useState("");
+    const [searchQuery, _setSearchQuery] = useState('');
     const [sortField, setSortField] = useState<SortField>(null);
-    const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+    const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
     // Pipeline status hook for multi-phase progress display
     const { status: pipelineStatus, startPipeline, cancelPipeline } = usePipelineStatus();
 
     // Check if pipeline is actively running
     const isPipelineRunning =
-      pipelineStatus.state !== "idle" &&
-      pipelineStatus.state !== "complete" &&
-      pipelineStatus.state !== "failed" &&
-      pipelineStatus.state !== "canceled";
+      pipelineStatus.state !== 'idle' &&
+      pipelineStatus.state !== 'complete' &&
+      pipelineStatus.state !== 'failed' &&
+      pipelineStatus.state !== 'canceled';
 
     // Settings for auto-scan behavior - fetched from API
     const [autoScanSettings, setAutoScanSettings] = useState<DiscoverySettingsForAutoScan>({
@@ -652,11 +652,11 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
     // Fetch settings for auto-scan behavior on mount
     useEffect(() => {
       const fetchSettings = async (): Promise<void> => {
-        const apiBase = import.meta.env.VITE_API_BASE || "";
+        const apiBase = import.meta.env.VITE_API_BASE || '';
         try {
           // Fetch discovery options from correct endpoint
           const discoveryResponse = await fetch(`${apiBase}/api/v1/shell/discovery/options`, {
-            credentials: "include",
+            credentials: 'include',
           });
           if (discoveryResponse.ok) {
             // biome-ignore lint/nursery/useAwaitThenable: Response.json() returns Promise
@@ -666,7 +666,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
 
             // Fetch vulnerability settings from correct endpoint
             const vulnResponse = await fetch(`${apiBase}/api/v1/shell/vulnerabilities/settings`, {
-              credentials: "include",
+              credentials: 'include',
             });
             let vulnEnabled = false;
             let vulnAutoScan = false;
@@ -685,7 +685,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
             });
           }
         } catch (error) {
-          logger.debug(LogComponents.Discovery, "Failed to fetch auto-scan settings", error);
+          logger.debug(LogComponents.Discovery, 'Failed to fetch auto-scan settings', error);
         }
       };
 
@@ -699,15 +699,15 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
       (field: SortField): void => {
         if (sortField === field) {
           // Toggle direction or clear
-          if (sortDirection === "asc") {
-            setSortDirection("desc");
+          if (sortDirection === 'asc') {
+            setSortDirection('desc');
           } else {
             setSortField(null);
-            setSortDirection("asc");
+            setSortDirection('asc');
           }
         } else {
           setSortField(field);
-          setSortDirection("asc");
+          setSortDirection('asc');
         }
       },
       [sortField, sortDirection],
@@ -745,7 +745,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
         // Check port scan services
         if (services && services.length > 0) {
           const openServices = services.filter(
-            (s) => s.state === "open" && (s.banner || s.version || s.service !== "unknown"),
+            (s) => s.state === 'open' && (s.banner || s.version || s.service !== 'unknown'),
           );
           if (openServices.length > 0) {
             hasGoodInfo = true;
@@ -758,31 +758,31 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
           // OS guess
           if (device.osGuess) {
             hasGoodInfo = true;
-            reasons.push("OS guess");
+            reasons.push('OS guess');
           }
 
           // LLDP info
           if (device.lldpInfo?.systemDescription) {
             hasGoodInfo = true;
-            reasons.push("LLDP system info");
+            reasons.push('LLDP system info');
           }
 
           // CDP info
           if (device.cdpInfo?.platform || device.cdpInfo?.softwareVersion) {
             hasGoodInfo = true;
-            reasons.push("CDP info");
+            reasons.push('CDP info');
           }
 
           // Device profile with open ports
           if (device.profile?.openPorts?.some((p) => p.isOpen)) {
             hasGoodInfo = true;
-            reasons.push("profile ports");
+            reasons.push('profile ports');
           }
 
           // HTTP info from profile
           if (device.profile?.httpInfo?.server) {
             hasGoodInfo = true;
-            reasons.push("HTTP server");
+            reasons.push('HTTP server');
           }
         }
 
@@ -791,13 +791,13 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
         }
 
         try {
-          logger.info(LogComponents.Discovery, "Triggering auto vulnerability scan", {
+          logger.info(LogComponents.Discovery, 'Triggering auto vulnerability scan', {
             ip,
-            reasons: reasons.join(", "),
+            reasons: reasons.join(', '),
           });
-          await api.post("/api/v1/shell/vulnerabilities/scan", { targets: [ip] });
+          await api.post('/api/v1/shell/vulnerabilities/scan', { targets: [ip] });
         } catch (error) {
-          logger.debug(LogComponents.Discovery, "Failed to trigger vulnerability scan", error);
+          logger.debug(LogComponents.Discovery, 'Failed to trigger vulnerability scan', error);
         }
       },
       [autoScanSettings.vulnScanEnabled, autoScanSettings.vulnAutoScan],
@@ -809,7 +809,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
 
         try {
           const apiResponse = await api.post<PortScanApiResponse>(
-            "/api/v1/shell/discovery/portscan",
+            '/api/v1/shell/discovery/portscan',
             {
               target: ip,
               ports: COMMON_PORTS,
@@ -857,7 +857,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
             await triggerVulnScan(ip, device, apiResponse.services);
           }
         } catch (error) {
-          logger.error(LogComponents.Discovery, "Deep scan failed", error);
+          logger.error(LogComponents.Discovery, 'Deep scan failed', error);
         } finally {
           setScanningDevices((prev) => {
             const next = new Set(prev);
@@ -922,7 +922,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
         autoScannedDevices.current.add(device.ip);
       }
 
-      logger.info(LogComponents.Discovery, "Auto-scanning devices for open ports", {
+      logger.info(LogComponents.Discovery, 'Auto-scanning devices for open ports', {
         count: devicesToScan.length,
         portScanEnabled: autoScanSettings.portScanEnabled,
       });
@@ -1034,7 +1034,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
 
       logger.info(
         LogComponents.Discovery,
-        "Auto-triggering vulnerability scans for devices with discovery info",
+        'Auto-triggering vulnerability scans for devices with discovery info',
         {
           count: devicesToVulnScan.length,
         },
@@ -1085,7 +1085,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
     // Helper function for IP to numeric conversion
     // Fixes #953: Handle malformed IPs that would produce NaN
     const ipToNum = useCallback((ip: string) => {
-      const parts = ip.split(".").map((s) => Number.parseInt(s, 10) || 0);
+      const parts = ip.split('.').map((s) => Number.parseInt(s, 10) || 0);
       return parts[0] * 16777216 + parts[1] * 65536 + parts[2] * 256 + parts[3];
     }, []);
 
@@ -1113,20 +1113,20 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
           let bVal: string | number | null = null;
 
           switch (sortField) {
-            case "ip":
+            case 'ip':
               // Sort IP numerically
               aVal = a.ip ? ipToNum(a.ip) : 0;
               bVal = b.ip ? ipToNum(b.ip) : 0;
               break;
-            case "hostname":
-              aVal = a.hostname?.toLowerCase() || "";
-              bVal = b.hostname?.toLowerCase() || "";
+            case 'hostname':
+              aVal = a.hostname?.toLowerCase() || '';
+              bVal = b.hostname?.toLowerCase() || '';
               break;
-            case "vendor":
-              aVal = a.vendor?.toLowerCase() || "";
-              bVal = b.vendor?.toLowerCase() || "";
+            case 'vendor':
+              aVal = a.vendor?.toLowerCase() || '';
+              bVal = b.vendor?.toLowerCase() || '';
               break;
-            case "lastSeen":
+            case 'lastSeen':
               aVal = a.lastSeen ? new Date(a.lastSeen).getTime() : 0;
               bVal = b.lastSeen ? new Date(b.lastSeen).getTime() : 0;
               break;
@@ -1145,13 +1145,13 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
           }
 
           let comparison = 0;
-          if (typeof aVal === "number" && typeof bVal === "number") {
+          if (typeof aVal === 'number' && typeof bVal === 'number') {
             comparison = aVal - bVal;
           } else {
             comparison = String(aVal).localeCompare(String(bVal));
           }
 
-          return sortDirection === "asc" ? comparison : -comparison;
+          return sortDirection === 'asc' ? comparison : -comparison;
         });
       }
 
@@ -1178,8 +1178,8 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
           return b.discoveryMethod.length - a.discoveryMethod.length;
         }
         // Then by IP numerically - compare each octet
-        const ipA = a.ip.split(".").map(Number);
-        const ipB = b.ip.split(".").map(Number);
+        const ipA = a.ip.split('.').map(Number);
+        const ipB = b.ip.split('.').map(Number);
         // Compare octets using zip iterator pattern
         const ipIterA = ipA[Symbol.iterator]();
         const ipIterB = ipB[Symbol.iterator]();
@@ -1201,13 +1201,13 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
     if (loading) {
       return (
         <Card
-          title={t("discovery.title")}
+          title={t('discovery.title')}
           icon={<ScanSearch class={iconTokens.size.md} />}
           status="loading"
           enableLiveRegion={true}
           ariaLabel="Network discovery scanning in progress"
         >
-          <CardValue value={t("discovery.scanning")} size="lg" />
+          <CardValue value={t('discovery.scanning')} size="lg" />
         </Card>
       );
     }
@@ -1215,28 +1215,28 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
     if (!(data && status)) {
       return (
         <Card
-          title={t("discovery.title")}
+          title={t('discovery.title')}
           icon={<ScanSearch class={iconTokens.size.md} />}
           status="unknown"
           enableLiveRegion={true}
           ariaLabel="Network discovery - no data available"
         >
-          <CardValue value={t("discovery.noData")} size="md" />
+          <CardValue value={t('discovery.noData')} size="md" />
           {onScan ? (
             <button
               type="button"
               onClick={onScan}
               class={cn(
                 spacing.margin.top.heading,
-                "w-full",
+                'w-full',
                 button.size.md,
-                "bg-brand-primary text-text-inverse",
+                'bg-brand-primary text-text-inverse',
                 radius.md,
-                "hover:bg-brand-primary/90 transition-colors font-medium body-small",
+                'hover:bg-brand-primary/90 transition-colors font-medium body-small',
               )}
               aria-label="Start network discovery scan"
             >
-              {t("discovery.startScan")}
+              {t('discovery.startScan')}
             </button>
           ) : null}
         </Card>
@@ -1248,12 +1248,12 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
 
     const getOverallStatus = (): Status => {
       if (status.scanning || isPipelineRunning) {
-        return "loading";
+        return 'loading';
       }
       if (deviceCount === 0) {
-        return "warning";
+        return 'warning';
       }
-      return "success";
+      return 'success';
     };
 
     const cardStatus = getOverallStatus();
@@ -1264,7 +1264,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
 
     return (
       <Card
-        title={t("discovery.title")}
+        title={t('discovery.title')}
         icon={<ScanSearch class={iconTokens.size.md} />}
         status={cardStatus}
         enableLiveRegion={true}
@@ -1276,13 +1276,13 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
               type="button"
               onClick={(): void => setIsModalOpen(true)}
               class={cn(
-                "p-1.5",
-                "bg-surface-hover text-text-secondary",
+                'p-1.5',
+                'bg-surface-hover text-text-secondary',
                 radius.md,
-                "hover:bg-surface-border hover:text-text-primary transition-colors flex items-center justify-center cursor-pointer",
+                'hover:bg-surface-border hover:text-text-primary transition-colors flex items-center justify-center cursor-pointer',
               )}
               aria-label="Open full screen view"
-              title={t("discovery.fullScreen", "Full Screen")}
+              title={t('discovery.fullScreen', 'Full Screen')}
             >
               <Maximize2 class={iconTokens.size.sm} aria-hidden="true" />
             </button>
@@ -1302,7 +1302,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
                       vulnAssessment: false,
                     },
                     portScan: {
-                      intensity: "quick",
+                      intensity: 'quick',
                       bannerGrab: true,
                       connectTimeout: 2000,
                     },
@@ -1315,22 +1315,22 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
                 disabled={status.scanning || isPipelineRunning}
                 class={cn(
                   spacing.chip.sm,
-                  "bg-brand-primary text-text-inverse",
+                  'bg-brand-primary text-text-inverse',
                   radius.md,
-                  "hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center",
+                  'hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center',
                   spacing.inline.sm,
                 )}
                 aria-label={
-                  status.scanning || isPipelineRunning ? "Scanning network" : "Start network scan"
+                  status.scanning || isPipelineRunning ? 'Scanning network' : 'Start network scan'
                 }
               >
                 {status.scanning || isPipelineRunning ? (
                   <>
-                    <RefreshCw class={cn(iconTokens.size.xs, "animate-spin")} aria-hidden="true" />
-                    {t("discovery.scan")}
+                    <RefreshCw class={cn(iconTokens.size.xs, 'animate-spin')} aria-hidden="true" />
+                    {t('discovery.scan')}
                   </>
                 ) : (
-                  t("discovery.scan")
+                  t('discovery.scan')
                 )}
               </button>
             ) : null}
@@ -1348,8 +1348,8 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
         />
 
         {deviceCount === 0 && !status.scanning && !isPipelineRunning ? (
-          <p class={cn("body-small text-text-muted text-center", spacing.pad.default)}>
-            {t("discovery.noDevices")}
+          <p class={cn('body-small text-text-muted text-center', spacing.pad.default)}>
+            {t('discovery.noDevices')}
           </p>
         ) : null}
 

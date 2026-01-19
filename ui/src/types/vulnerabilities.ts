@@ -27,7 +27,7 @@
 export interface Vulnerability {
   cveId: string;
   description: string;
-  severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   score: number;
   published: string;
   modified: string;

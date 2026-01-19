@@ -31,15 +31,15 @@
  * State: Manages multiple arrays of test configurations with CRUD callbacks
  */
 
-import type React from "react";
-import { memo } from "react";
-import { useTranslation } from "react-i18next";
-import { useArrayItem } from "../../../hooks/useArrayItem";
-import { cn, icon as iconTokens, input, layout, radius, spacing } from "../../../styles/theme";
-import type { CardSettings, SaveStatus, TestsSettings } from "../../../types/settings";
-import { CollapsibleSection } from "../../ui/CollapsibleSection";
-import { HeartPulse } from "../../ui/Icons";
-import { AutoSaveIndicator } from "./AutoSaveIndicator";
+import type React from 'react';
+import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useArrayItem } from '../../../hooks/useArrayItem';
+import { cn, icon as iconTokens, input, layout, radius, spacing } from '../../../styles/theme';
+import type { CardSettings, SaveStatus, TestsSettings } from '../../../types/settings';
+import { CollapsibleSection } from '../../ui/CollapsibleSection';
+import { HeartPulse } from '../../ui/Icons';
+import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 interface HealthChecksSettingsProps {
   testsSettings: TestsSettings;
@@ -60,16 +60,16 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
     cardSettings,
     updateCardSettings,
   }: HealthChecksSettingsProps) {
-    const { t } = useTranslation("settings");
+    const { t } = useTranslation('settings');
 
     // Ping target CRUD helpers
     const {
       add: addPingTarget,
       remove: removePingTarget,
       update: updatePingTarget,
-    } = useArrayItem(setTestsSettings, "pingTargets", () => ({
-      name: "",
-      host: "",
+    } = useArrayItem(setTestsSettings, 'pingTargets', () => ({
+      name: '',
+      host: '',
       enabled: true,
       count: 3,
     }));
@@ -79,9 +79,9 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
       add: addTcpPort,
       remove: removeTcpPort,
       update: updateTcpPort,
-    } = useArrayItem(setTestsSettings, "tcpPorts", () => ({
-      name: "",
-      host: "",
+    } = useArrayItem(setTestsSettings, 'tcpPorts', () => ({
+      name: '',
+      host: '',
       port: 80,
       enabled: true,
     }));
@@ -91,9 +91,9 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
       add: addUdpPort,
       remove: removeUdpPort,
       update: updateUdpPort,
-    } = useArrayItem(setTestsSettings, "udpPorts", () => ({
-      name: "",
-      host: "",
+    } = useArrayItem(setTestsSettings, 'udpPorts', () => ({
+      name: '',
+      host: '',
       port: 53,
       enabled: true,
     }));
@@ -103,9 +103,9 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
       add: addHttpEndpoint,
       remove: removeHttpEndpoint,
       update: updateHttpEndpoint,
-    } = useArrayItem(setTestsSettings, "httpEndpoints", () => ({
-      name: "",
-      url: "",
+    } = useArrayItem(setTestsSettings, 'httpEndpoints', () => ({
+      name: '',
+      url: '',
       expectedStatus: 200,
       enabled: true,
     }));
@@ -115,9 +115,9 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
       add: addRtspEndpoint,
       remove: removeRtspEndpoint,
       update: updateRtspEndpoint,
-    } = useArrayItem(setTestsSettings, "rtspEndpoints", () => ({
-      name: "",
-      url: "rtsp://",
+    } = useArrayItem(setTestsSettings, 'rtspEndpoints', () => ({
+      name: '',
+      url: 'rtsp://',
       enabled: true,
       criticality: 5,
     }));
@@ -127,11 +127,11 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
       add: addDicomEndpoint,
       remove: removeDicomEndpoint,
       update: updateDicomEndpoint,
-    } = useArrayItem(setTestsSettings, "dicomEndpoints", () => ({
-      name: "",
-      host: "",
+    } = useArrayItem(setTestsSettings, 'dicomEndpoints', () => ({
+      name: '',
+      host: '',
       port: 104,
-      aeTitle: "",
+      aeTitle: '',
       enabled: true,
       criticality: 8,
     }));
@@ -141,13 +141,13 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
       add: addSqlEndpoint,
       remove: removeSqlEndpoint,
       update: updateSqlEndpoint,
-    } = useArrayItem(setTestsSettings, "sqlEndpoints", () => ({
-      name: "",
-      driver: "postgres" as const,
-      host: "",
+    } = useArrayItem(setTestsSettings, 'sqlEndpoints', () => ({
+      name: '',
+      driver: 'postgres' as const,
+      host: '',
       port: 5432,
-      database: "",
-      username: "",
+      database: '',
+      username: '',
       enabled: true,
       criticality: 7,
     }));
@@ -157,11 +157,11 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
       add: addFileShareEndpoint,
       remove: removeFileShareEndpoint,
       update: updateFileShareEndpoint,
-    } = useArrayItem(setTestsSettings, "fileShareEndpoints", () => ({
-      name: "",
-      protocol: "smb" as const,
-      host: "",
-      sharePath: "",
+    } = useArrayItem(setTestsSettings, 'fileShareEndpoints', () => ({
+      name: '',
+      protocol: 'smb' as const,
+      host: '',
+      sharePath: '',
       enabled: true,
       criticality: 5,
     }));
@@ -171,12 +171,12 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
       add: addLdapEndpoint,
       remove: removeLdapEndpoint,
       update: updateLdapEndpoint,
-    } = useArrayItem(setTestsSettings, "ldapEndpoints", () => ({
-      name: "",
-      host: "",
+    } = useArrayItem(setTestsSettings, 'ldapEndpoints', () => ({
+      name: '',
+      host: '',
       port: 389,
       useTls: false,
-      baseDn: "",
+      baseDn: '',
       enabled: true,
       criticality: 7,
     }));
@@ -186,14 +186,14 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
       add: addHl7Endpoint,
       remove: removeHl7Endpoint,
       update: updateHl7Endpoint,
-    } = useArrayItem(setTestsSettings, "hl7Endpoints", () => ({
-      name: "",
-      host: "",
+    } = useArrayItem(setTestsSettings, 'hl7Endpoints', () => ({
+      name: '',
+      host: '',
       port: 2575,
-      sendingApp: "",
-      sendingFacility: "",
-      receivingApp: "",
-      receivingFacility: "",
+      sendingApp: '',
+      sendingFacility: '',
+      receivingApp: '',
+      receivingFacility: '',
       enabled: true,
       criticality: 9,
     }));
@@ -203,10 +203,10 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
       add: addFhirEndpoint,
       remove: removeFhirEndpoint,
       update: updateFhirEndpoint,
-    } = useArrayItem(setTestsSettings, "fhirEndpoints", () => ({
-      name: "",
-      baseUrl: "https://",
-      authType: "none" as const,
+    } = useArrayItem(setTestsSettings, 'fhirEndpoints', () => ({
+      name: '',
+      baseUrl: 'https://',
+      authType: 'none' as const,
       enabled: true,
       criticality: 8,
     }));
@@ -216,10 +216,10 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
       add: addLtiEndpoint,
       remove: removeLtiEndpoint,
       update: updateLtiEndpoint,
-    } = useArrayItem(setTestsSettings, "ltiEndpoints", () => ({
-      name: "",
-      launchUrl: "https://",
-      consumerKey: "",
+    } = useArrayItem(setTestsSettings, 'ltiEndpoints', () => ({
+      name: '',
+      launchUrl: 'https://',
+      consumerKey: '',
       enabled: true,
       criticality: 6,
     }));
@@ -229,10 +229,10 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
       add: addOpcuaEndpoint,
       remove: removeOpcuaEndpoint,
       update: updateOpcuaEndpoint,
-    } = useArrayItem(setTestsSettings, "opcuaEndpoints", () => ({
-      name: "",
-      endpointUrl: "opc.tcp://",
-      securityMode: "None" as const,
+    } = useArrayItem(setTestsSettings, 'opcuaEndpoints', () => ({
+      name: '',
+      endpointUrl: 'opc.tcp://',
+      securityMode: 'None' as const,
       enabled: true,
       criticality: 8,
     }));
@@ -242,9 +242,9 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
       add: addModbusEndpoint,
       remove: removeModbusEndpoint,
       update: updateModbusEndpoint,
-    } = useArrayItem(setTestsSettings, "modbusEndpoints", () => ({
-      name: "",
-      host: "",
+    } = useArrayItem(setTestsSettings, 'modbusEndpoints', () => ({
+      name: '',
+      host: '',
       port: 502,
       unitId: 1,
       testRegister: 0,
@@ -257,7 +257,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
         title={
           <div class={layout.inline.default}>
             <HeartPulse class={iconTokens.size.sm} />
-            <span>{t("sections.health")}</span>
+            <span>{t('sections.health')}</span>
             <AutoSaveIndicator status={testsStatus} />
           </div>
         }
@@ -269,17 +269,17 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
               class={cn(
                 layout.flex.between,
                 spacing.pad.sm,
-                "bg-surface-base",
+                'bg-surface-base',
                 radius.default,
-                "border border-surface-border",
+                'border border-surface-border',
               )}
             >
               <div>
                 <span class="body-small text-text-primary font-medium">
-                  {t("common.showCard", "Show Card")}
+                  {t('common.showCard', 'Show Card')}
                 </span>
                 <p class="caption text-text-muted">
-                  {t("common.showCardDesc", "Display this card on the dashboard")}
+                  {t('common.showCardDesc', 'Display this card on the dashboard')}
                 </p>
               </div>
               <input
@@ -297,17 +297,17 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
               class={cn(
                 layout.flex.between,
                 spacing.pad.sm,
-                "bg-surface-base",
+                'bg-surface-base',
                 radius.default,
-                "border border-surface-border",
+                'border border-surface-border',
               )}
             >
               <div>
                 <span class="body-small text-text-primary font-medium">
-                  {t("common.runOnFab", "Include in Run All")}
+                  {t('common.runOnFab', 'Include in Run All')}
                 </span>
                 <p class="caption text-text-muted">
-                  {t("common.runOnFabDesc", "Run when FAB button is clicked")}
+                  {t('common.runOnFabDesc', 'Run when FAB button is clicked')}
                 </p>
               </div>
               <input
@@ -328,15 +328,15 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
             class={cn(
               layout.flex.between,
               spacing.pad.sm,
-              "bg-surface-base border border-surface-border",
+              'bg-surface-base border border-surface-border',
               radius.default,
             )}
           >
             <div>
               <span class="body-small text-text-primary font-medium">
-                {t("health.enableHealthChecks")}
+                {t('health.enableHealthChecks')}
               </span>
-              <p class="caption text-text-muted">{t("health.enableDescription")}</p>
+              <p class="caption text-text-muted">{t('health.enableDescription')}</p>
             </div>
             <input
               type="checkbox"
@@ -354,193 +354,193 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
           {/* Ping Targets */}
           <div>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.pingTargets")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.pingTargets')}</span>
               <button
                 type="button"
                 onClick={addPingTarget}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
-            <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-              {t("health.pingDefault")}
+            <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+              {t('health.pingDefault')}
             </p>
             {testsSettings.pingTargets.map((target) => (
               <div
                 key={target.id || target.host}
-                class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
                   value={target.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updatePingTarget(target.id ?? "", "name", e.target.value)
+                    updatePingTarget(target.id ?? '', 'name', e.target.value)
                   }
-                  placeholder={t("common.name")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-24")}
+                  placeholder={t('common.name')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <input
                   type="text"
                   value={target.host}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updatePingTarget(target.id ?? "", "host", e.target.value)
+                    updatePingTarget(target.id ?? '', 'host', e.target.value)
                   }
-                  placeholder={t("common.hostIp")}
-                  class={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                  placeholder={t('common.hostIp')}
+                  class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
                 <input
                   type="number"
                   value={target.count || 3}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updatePingTarget(
-                      target.id ?? "",
-                      "count",
+                      target.id ?? '',
+                      'count',
                       Number.parseInt(e.target.value, 10) || 3,
                     )
                   }
                   min={1}
                   max={10}
-                  title={t("health.numberOfPings")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-14 text-center")}
+                  title={t('health.numberOfPings')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-14 text-center')}
                 />
                 <button
                   type="button"
-                  onClick={(): void => removePingTarget(target.id ?? "")}
-                  class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
-                  aria-label={t("common.remove")}
+                  onClick={(): void => removePingTarget(target.id ?? '')}
+                  class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                  aria-label={t('common.remove')}
                 >
-                  {t("common.remove")}
+                  {t('common.remove')}
                 </button>
               </div>
             ))}
           </div>
 
           {/* TCP Ports */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.tcpPortTests")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.tcpPortTests')}</span>
               <button
                 type="button"
                 onClick={addTcpPort}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
             {testsSettings.tcpPorts.map((port) => (
               <div
                 key={port.id || `${port.host}:${port.port}`}
-                class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
                   value={port.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateTcpPort(port.id ?? "", "name", e.target.value)
+                    updateTcpPort(port.id ?? '', 'name', e.target.value)
                   }
-                  placeholder={t("common.name")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-24")}
+                  placeholder={t('common.name')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <input
                   type="text"
                   value={port.host}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateTcpPort(port.id ?? "", "host", e.target.value)
+                    updateTcpPort(port.id ?? '', 'host', e.target.value)
                   }
-                  placeholder={t("common.host")}
-                  class={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                  placeholder={t('common.host')}
+                  class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
                 <input
                   type="number"
                   value={port.port}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateTcpPort(port.id ?? "", "port", Number.parseInt(e.target.value, 10) || 80)
+                    updateTcpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 80)
                   }
-                  placeholder={t("common.port")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-20")}
+                  placeholder={t('common.port')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-20')}
                 />
                 <button
                   type="button"
-                  onClick={(): void => removeTcpPort(port.id ?? "")}
-                  class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
-                  aria-label={t("common.remove")}
+                  onClick={(): void => removeTcpPort(port.id ?? '')}
+                  class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                  aria-label={t('common.remove')}
                 >
-                  {t("common.remove")}
+                  {t('common.remove')}
                 </button>
               </div>
             ))}
           </div>
 
           {/* UDP Ports */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.udpPortTests")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.udpPortTests')}</span>
               <button
                 type="button"
                 onClick={addUdpPort}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
-            <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-              {t("health.udpDescription")}
+            <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+              {t('health.udpDescription')}
             </p>
             {testsSettings.udpPorts.map((port) => (
               <div
                 key={port.id || `${port.host}:${port.port}`}
-                class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
                   value={port.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateUdpPort(port.id ?? "", "name", e.target.value)
+                    updateUdpPort(port.id ?? '', 'name', e.target.value)
                   }
-                  placeholder={t("common.name")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-24")}
+                  placeholder={t('common.name')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <input
                   type="text"
                   value={port.host}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateUdpPort(port.id ?? "", "host", e.target.value)
+                    updateUdpPort(port.id ?? '', 'host', e.target.value)
                   }
-                  placeholder={t("common.host")}
-                  class={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                  placeholder={t('common.host')}
+                  class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
                 <input
                   type="number"
                   value={port.port}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateUdpPort(port.id ?? "", "port", Number.parseInt(e.target.value, 10) || 53)
+                    updateUdpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 53)
                   }
-                  placeholder={t("common.port")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-20")}
+                  placeholder={t('common.port')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-20')}
                 />
                 <button
                   type="button"
-                  onClick={(): void => removeUdpPort(port.id ?? "")}
-                  class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
-                  aria-label={t("common.remove")}
+                  onClick={(): void => removeUdpPort(port.id ?? '')}
+                  class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                  aria-label={t('common.remove')}
                 >
-                  {t("common.remove")}
+                  {t('common.remove')}
                 </button>
               </div>
             ))}
           </div>
 
           {/* HTTP Endpoints */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.httpEndpoints")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.httpEndpoints')}</span>
               <button
                 type="button"
                 onClick={addHttpEndpoint}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
             {testsSettings.httpEndpoints.map((endpoint) => (
@@ -550,23 +550,23 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                   spacing.stack.xs,
                   spacing.margin.bottom.heading,
                   spacing.pad.xs,
-                  "bg-surface-base border border-surface-border",
+                  'bg-surface-base border border-surface-border',
                   radius.default,
                 )}
               >
-                <div class={cn("flex", spacing.gap.compact)}>
+                <div class={cn('flex', spacing.gap.compact)}>
                   <input
                     type="text"
                     value={endpoint.name}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateHttpEndpoint(endpoint.id ?? "", "name", e.target.value)
+                      updateHttpEndpoint(endpoint.id ?? '', 'name', e.target.value)
                     }
-                    placeholder={t("common.name")}
+                    placeholder={t('common.name')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "flex-1 bg-surface-raised",
+                      'flex-1 bg-surface-raised',
                     )}
                   />
                   <input
@@ -574,44 +574,44 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     value={endpoint.expectedStatus}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateHttpEndpoint(
-                        endpoint.id ?? "",
-                        "expectedStatus",
+                        endpoint.id ?? '',
+                        'expectedStatus',
                         Number.parseInt(e.target.value, 10) || 200,
                       )
                     }
-                    placeholder={t("health.status")}
+                    placeholder={t('health.status')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "w-20 bg-surface-raised",
+                      'w-20 bg-surface-raised',
                     )}
                   />
                   <button
                     type="button"
-                    onClick={(): void => removeHttpEndpoint(endpoint.id ?? "")}
-                    class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
-                    aria-label={t("common.remove")}
+                    onClick={(): void => removeHttpEndpoint(endpoint.id ?? '')}
+                    class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                    aria-label={t('common.remove')}
                   >
-                    {t("common.remove")}
+                    {t('common.remove')}
                   </button>
                 </div>
                 <input
                   type="text"
                   value={endpoint.url}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateHttpEndpoint(endpoint.id ?? "", "url", e.target.value)
+                    updateHttpEndpoint(endpoint.id ?? '', 'url', e.target.value)
                   }
                   placeholder="https://example.com/health"
-                  class={cn(input.base, input.state.default, input.size.md, "bg-surface-raised")}
+                  class={cn(input.base, input.state.default, input.size.md, 'bg-surface-raised')}
                 />
                 {/* Criticality Slider */}
-                <div class={cn("flex items-center", spacing.gap.compact)}>
+                <div class={cn('flex items-center', spacing.gap.compact)}>
                   <label
                     for={`http-criticality-${endpoint.id}`}
                     class="caption text-text-muted w-28"
                   >
-                    {t("health.criticality")}
+                    {t('health.criticality')}
                   </label>
                   <input
                     id={`http-criticality-${endpoint.id}`}
@@ -621,8 +621,8 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     value={endpoint.criticality ?? 5}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateHttpEndpoint(
-                        endpoint.id ?? "",
-                        "criticality",
+                        endpoint.id ?? '',
+                        'criticality',
                         Number.parseInt(e.target.value, 10),
                       )
                     }
@@ -637,19 +637,19 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
           </div>
 
           {/* SQL Database Endpoints */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.sqlEndpoints")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.sqlEndpoints')}</span>
               <button
                 type="button"
                 onClick={addSqlEndpoint}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
-            <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-              {t("health.sqlDescription")}
+            <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+              {t('health.sqlDescription')}
             </p>
             {(testsSettings.sqlEndpoints ?? []).map((endpoint) => (
               <div
@@ -658,35 +658,35 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                   spacing.stack.xs,
                   spacing.margin.bottom.heading,
                   spacing.pad.xs,
-                  "bg-surface-base border border-surface-border",
+                  'bg-surface-base border border-surface-border',
                   radius.default,
                 )}
               >
-                <div class={cn("flex", spacing.gap.compact)}>
+                <div class={cn('flex', spacing.gap.compact)}>
                   <input
                     type="text"
                     value={endpoint.name}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateSqlEndpoint(endpoint.id ?? "", "name", e.target.value)
+                      updateSqlEndpoint(endpoint.id ?? '', 'name', e.target.value)
                     }
-                    placeholder={t("common.name")}
+                    placeholder={t('common.name')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "flex-1 bg-surface-raised",
+                      'flex-1 bg-surface-raised',
                     )}
                   />
                   <select
                     value={endpoint.driver}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateSqlEndpoint(endpoint.id ?? "", "driver", e.target.value)
+                      updateSqlEndpoint(endpoint.id ?? '', 'driver', e.target.value)
                     }
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "w-28 bg-surface-raised",
+                      'w-28 bg-surface-raised',
                     )}
                   >
                     <option value="postgres">PostgreSQL</option>
@@ -696,25 +696,25 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                   </select>
                   <button
                     type="button"
-                    onClick={(): void => removeSqlEndpoint(endpoint.id ?? "")}
-                    class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                    onClick={(): void => removeSqlEndpoint(endpoint.id ?? '')}
+                    class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
                   >
-                    {t("common.remove")}
+                    {t('common.remove')}
                   </button>
                 </div>
-                <div class={cn("flex", spacing.gap.compact)}>
+                <div class={cn('flex', spacing.gap.compact)}>
                   <input
                     type="text"
                     value={endpoint.host}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateSqlEndpoint(endpoint.id ?? "", "host", e.target.value)
+                      updateSqlEndpoint(endpoint.id ?? '', 'host', e.target.value)
                     }
-                    placeholder={t("common.host")}
+                    placeholder={t('common.host')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "flex-1 bg-surface-raised",
+                      'flex-1 bg-surface-raised',
                     )}
                   />
                   <input
@@ -722,47 +722,47 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     value={endpoint.port}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateSqlEndpoint(
-                        endpoint.id ?? "",
-                        "port",
+                        endpoint.id ?? '',
+                        'port',
                         Number.parseInt(e.target.value, 10),
                       )
                     }
-                    placeholder={t("common.port")}
+                    placeholder={t('common.port')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "w-20 bg-surface-raised",
+                      'w-20 bg-surface-raised',
                     )}
                   />
                 </div>
-                <div class={cn("flex", spacing.gap.compact)}>
+                <div class={cn('flex', spacing.gap.compact)}>
                   <input
                     type="text"
                     value={endpoint.database}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateSqlEndpoint(endpoint.id ?? "", "database", e.target.value)
+                      updateSqlEndpoint(endpoint.id ?? '', 'database', e.target.value)
                     }
-                    placeholder={t("health.database")}
+                    placeholder={t('health.database')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "flex-1 bg-surface-raised",
+                      'flex-1 bg-surface-raised',
                     )}
                   />
                   <input
                     type="text"
                     value={endpoint.username}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateSqlEndpoint(endpoint.id ?? "", "username", e.target.value)
+                      updateSqlEndpoint(endpoint.id ?? '', 'username', e.target.value)
                     }
-                    placeholder={t("health.username")}
+                    placeholder={t('health.username')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "flex-1 bg-surface-raised",
+                      'flex-1 bg-surface-raised',
                     )}
                   />
                 </div>
@@ -771,42 +771,42 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
           </div>
 
           {/* File Share Endpoints (SMB/NFS) */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
               <span class="caption text-text-muted font-medium">
-                {t("health.fileShareEndpoints")}
+                {t('health.fileShareEndpoints')}
               </span>
               <button
                 type="button"
                 onClick={addFileShareEndpoint}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
-            <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-              {t("health.fileShareDescription")}
+            <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+              {t('health.fileShareDescription')}
             </p>
             {(testsSettings.fileShareEndpoints ?? []).map((endpoint) => (
               <div
                 key={endpoint.id}
-                class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
                   value={endpoint.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateFileShareEndpoint(endpoint.id ?? "", "name", e.target.value)
+                    updateFileShareEndpoint(endpoint.id ?? '', 'name', e.target.value)
                   }
-                  placeholder={t("common.name")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-24")}
+                  placeholder={t('common.name')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <select
                   value={endpoint.protocol}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateFileShareEndpoint(endpoint.id ?? "", "protocol", e.target.value)
+                    updateFileShareEndpoint(endpoint.id ?? '', 'protocol', e.target.value)
                   }
-                  class={cn(input.base, input.state.default, input.size.md, "w-20")}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-20')}
                 >
                   <option value="smb">SMB</option>
                   <option value="nfs">NFS</option>
@@ -815,45 +815,45 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                   type="text"
                   value={endpoint.host}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateFileShareEndpoint(endpoint.id ?? "", "host", e.target.value)
+                    updateFileShareEndpoint(endpoint.id ?? '', 'host', e.target.value)
                   }
-                  placeholder={t("common.host")}
-                  class={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                  placeholder={t('common.host')}
+                  class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
                 <input
                   type="text"
                   value={endpoint.sharePath}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateFileShareEndpoint(endpoint.id ?? "", "sharePath", e.target.value)
+                    updateFileShareEndpoint(endpoint.id ?? '', 'sharePath', e.target.value)
                   }
-                  placeholder={t("health.sharePath")}
-                  class={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                  placeholder={t('health.sharePath')}
+                  class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
                 <button
                   type="button"
-                  onClick={(): void => removeFileShareEndpoint(endpoint.id ?? "")}
-                  class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                  onClick={(): void => removeFileShareEndpoint(endpoint.id ?? '')}
+                  class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
                 >
-                  {t("common.remove")}
+                  {t('common.remove')}
                 </button>
               </div>
             ))}
           </div>
 
           {/* LDAP Endpoints */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.ldapEndpoints")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.ldapEndpoints')}</span>
               <button
                 type="button"
                 onClick={addLdapEndpoint}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
-            <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-              {t("health.ldapDescription")}
+            <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+              {t('health.ldapDescription')}
             </p>
             {(testsSettings.ldapEndpoints ?? []).map((endpoint) => (
               <div
@@ -862,37 +862,37 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                   spacing.stack.xs,
                   spacing.margin.bottom.heading,
                   spacing.pad.xs,
-                  "bg-surface-base border border-surface-border",
+                  'bg-surface-base border border-surface-border',
                   radius.default,
                 )}
               >
-                <div class={cn("flex", spacing.gap.compact)}>
+                <div class={cn('flex', spacing.gap.compact)}>
                   <input
                     type="text"
                     value={endpoint.name}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateLdapEndpoint(endpoint.id ?? "", "name", e.target.value)
+                      updateLdapEndpoint(endpoint.id ?? '', 'name', e.target.value)
                     }
-                    placeholder={t("common.name")}
+                    placeholder={t('common.name')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "w-32 bg-surface-raised",
+                      'w-32 bg-surface-raised',
                     )}
                   />
                   <input
                     type="text"
                     value={endpoint.host}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateLdapEndpoint(endpoint.id ?? "", "host", e.target.value)
+                      updateLdapEndpoint(endpoint.id ?? '', 'host', e.target.value)
                     }
-                    placeholder={t("common.host")}
+                    placeholder={t('common.host')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "flex-1 bg-surface-raised",
+                      'flex-1 bg-surface-raised',
                     )}
                   />
                   <input
@@ -900,50 +900,50 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     value={endpoint.port}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateLdapEndpoint(
-                        endpoint.id ?? "",
-                        "port",
+                        endpoint.id ?? '',
+                        'port',
                         Number.parseInt(e.target.value, 10),
                       )
                     }
-                    placeholder={t("common.port")}
+                    placeholder={t('common.port')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "w-20 bg-surface-raised",
+                      'w-20 bg-surface-raised',
                     )}
                   />
                   <button
                     type="button"
-                    onClick={(): void => removeLdapEndpoint(endpoint.id ?? "")}
-                    class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                    onClick={(): void => removeLdapEndpoint(endpoint.id ?? '')}
+                    class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
                   >
-                    {t("common.remove")}
+                    {t('common.remove')}
                   </button>
                 </div>
-                <div class={cn("flex items-center", spacing.gap.compact)}>
+                <div class={cn('flex items-center', spacing.gap.compact)}>
                   <input
                     type="text"
                     value={endpoint.baseDn}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateLdapEndpoint(endpoint.id ?? "", "baseDn", e.target.value)
+                      updateLdapEndpoint(endpoint.id ?? '', 'baseDn', e.target.value)
                     }
-                    placeholder={t("health.baseDn")}
+                    placeholder={t('health.baseDn')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "flex-1 bg-surface-raised",
+                      'flex-1 bg-surface-raised',
                     )}
                   />
                   <label
-                    class={cn("flex items-center", spacing.gap.compact, "caption text-text-muted")}
+                    class={cn('flex items-center', spacing.gap.compact, 'caption text-text-muted')}
                   >
                     <input
                       type="checkbox"
                       checked={endpoint.useTls}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                        updateLdapEndpoint(endpoint.id ?? "", "useTls", e.target.checked)
+                        updateLdapEndpoint(endpoint.id ?? '', 'useTls', e.target.checked)
                       }
                     />
                     TLS
@@ -954,139 +954,139 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
           </div>
 
           {/* RTSP Video Endpoints */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.rtspEndpoints")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.rtspEndpoints')}</span>
               <button
                 type="button"
                 onClick={addRtspEndpoint}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
-            <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-              {t("health.rtspDescription")}
+            <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+              {t('health.rtspDescription')}
             </p>
             {(testsSettings.rtspEndpoints ?? []).map((endpoint) => (
               <div
                 key={endpoint.id}
-                class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
                   value={endpoint.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateRtspEndpoint(endpoint.id ?? "", "name", e.target.value)
+                    updateRtspEndpoint(endpoint.id ?? '', 'name', e.target.value)
                   }
-                  placeholder={t("common.name")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-24")}
+                  placeholder={t('common.name')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <input
                   type="text"
                   value={endpoint.url}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateRtspEndpoint(endpoint.id ?? "", "url", e.target.value)
+                    updateRtspEndpoint(endpoint.id ?? '', 'url', e.target.value)
                   }
                   placeholder="rtsp://host:554/stream"
-                  class={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                  class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
                 <button
                   type="button"
-                  onClick={(): void => removeRtspEndpoint(endpoint.id ?? "")}
-                  class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                  onClick={(): void => removeRtspEndpoint(endpoint.id ?? '')}
+                  class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
                 >
-                  {t("common.remove")}
+                  {t('common.remove')}
                 </button>
               </div>
             ))}
           </div>
 
           {/* DICOM Medical Imaging Endpoints */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.dicomEndpoints")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.dicomEndpoints')}</span>
               <button
                 type="button"
                 onClick={addDicomEndpoint}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
-            <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-              {t("health.dicomDescription")}
+            <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+              {t('health.dicomDescription')}
             </p>
             {(testsSettings.dicomEndpoints ?? []).map((endpoint) => (
               <div
                 key={endpoint.id}
-                class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
                   value={endpoint.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateDicomEndpoint(endpoint.id ?? "", "name", e.target.value)
+                    updateDicomEndpoint(endpoint.id ?? '', 'name', e.target.value)
                   }
-                  placeholder={t("common.name")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-24")}
+                  placeholder={t('common.name')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <input
                   type="text"
                   value={endpoint.host}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateDicomEndpoint(endpoint.id ?? "", "host", e.target.value)
+                    updateDicomEndpoint(endpoint.id ?? '', 'host', e.target.value)
                   }
-                  placeholder={t("common.host")}
-                  class={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                  placeholder={t('common.host')}
+                  class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
                 <input
                   type="number"
                   value={endpoint.port}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updateDicomEndpoint(
-                      endpoint.id ?? "",
-                      "port",
+                      endpoint.id ?? '',
+                      'port',
                       Number.parseInt(e.target.value, 10),
                     )
                   }
                   placeholder="104"
-                  class={cn(input.base, input.state.default, input.size.md, "w-20")}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-20')}
                 />
                 <input
                   type="text"
                   value={endpoint.aeTitle}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateDicomEndpoint(endpoint.id ?? "", "aeTitle", e.target.value)
+                    updateDicomEndpoint(endpoint.id ?? '', 'aeTitle', e.target.value)
                   }
                   placeholder="AE Title"
-                  class={cn(input.base, input.state.default, input.size.md, "w-24")}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <button
                   type="button"
-                  onClick={(): void => removeDicomEndpoint(endpoint.id ?? "")}
-                  class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                  onClick={(): void => removeDicomEndpoint(endpoint.id ?? '')}
+                  class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
                 >
-                  {t("common.remove")}
+                  {t('common.remove')}
                 </button>
               </div>
             ))}
           </div>
 
           {/* HL7 MLLP Endpoints */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.hl7Endpoints")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.hl7Endpoints')}</span>
               <button
                 type="button"
                 onClick={addHl7Endpoint}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
-            <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-              {t("health.hl7Description")}
+            <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+              {t('health.hl7Description')}
             </p>
             {(testsSettings.hl7Endpoints ?? []).map((endpoint) => (
               <div
@@ -1095,37 +1095,37 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                   spacing.stack.xs,
                   spacing.margin.bottom.heading,
                   spacing.pad.xs,
-                  "bg-surface-base border border-surface-border",
+                  'bg-surface-base border border-surface-border',
                   radius.default,
                 )}
               >
-                <div class={cn("flex", spacing.gap.compact)}>
+                <div class={cn('flex', spacing.gap.compact)}>
                   <input
                     type="text"
                     value={endpoint.name}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateHl7Endpoint(endpoint.id ?? "", "name", e.target.value)
+                      updateHl7Endpoint(endpoint.id ?? '', 'name', e.target.value)
                     }
-                    placeholder={t("common.name")}
+                    placeholder={t('common.name')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "w-32 bg-surface-raised",
+                      'w-32 bg-surface-raised',
                     )}
                   />
                   <input
                     type="text"
                     value={endpoint.host}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateHl7Endpoint(endpoint.id ?? "", "host", e.target.value)
+                      updateHl7Endpoint(endpoint.id ?? '', 'host', e.target.value)
                     }
-                    placeholder={t("common.host")}
+                    placeholder={t('common.host')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "flex-1 bg-surface-raised",
+                      'flex-1 bg-surface-raised',
                     )}
                   />
                   <input
@@ -1133,8 +1133,8 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     value={endpoint.port}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateHl7Endpoint(
-                        endpoint.id ?? "",
-                        "port",
+                        endpoint.id ?? '',
+                        'port',
                         Number.parseInt(e.target.value, 10),
                       )
                     }
@@ -1143,74 +1143,74 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "w-20 bg-surface-raised",
+                      'w-20 bg-surface-raised',
                     )}
                   />
                   <button
                     type="button"
-                    onClick={(): void => removeHl7Endpoint(endpoint.id ?? "")}
-                    class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                    onClick={(): void => removeHl7Endpoint(endpoint.id ?? '')}
+                    class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
                   >
-                    {t("common.remove")}
+                    {t('common.remove')}
                   </button>
                 </div>
-                <div class={cn("flex", spacing.gap.compact)}>
+                <div class={cn('flex', spacing.gap.compact)}>
                   <input
                     type="text"
                     value={endpoint.sendingApp}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateHl7Endpoint(endpoint.id ?? "", "sendingApp", e.target.value)
+                      updateHl7Endpoint(endpoint.id ?? '', 'sendingApp', e.target.value)
                     }
-                    placeholder={t("health.sendingApp")}
+                    placeholder={t('health.sendingApp')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "flex-1 bg-surface-raised",
+                      'flex-1 bg-surface-raised',
                     )}
                   />
                   <input
                     type="text"
                     value={endpoint.sendingFacility}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateHl7Endpoint(endpoint.id ?? "", "sendingFacility", e.target.value)
+                      updateHl7Endpoint(endpoint.id ?? '', 'sendingFacility', e.target.value)
                     }
-                    placeholder={t("health.sendingFacility")}
+                    placeholder={t('health.sendingFacility')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "flex-1 bg-surface-raised",
+                      'flex-1 bg-surface-raised',
                     )}
                   />
                 </div>
-                <div class={cn("flex", spacing.gap.compact)}>
+                <div class={cn('flex', spacing.gap.compact)}>
                   <input
                     type="text"
                     value={endpoint.receivingApp}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateHl7Endpoint(endpoint.id ?? "", "receivingApp", e.target.value)
+                      updateHl7Endpoint(endpoint.id ?? '', 'receivingApp', e.target.value)
                     }
-                    placeholder={t("health.receivingApp")}
+                    placeholder={t('health.receivingApp')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "flex-1 bg-surface-raised",
+                      'flex-1 bg-surface-raised',
                     )}
                   />
                   <input
                     type="text"
                     value={endpoint.receivingFacility}
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      updateHl7Endpoint(endpoint.id ?? "", "receivingFacility", e.target.value)
+                      updateHl7Endpoint(endpoint.id ?? '', 'receivingFacility', e.target.value)
                     }
-                    placeholder={t("health.receivingFacility")}
+                    placeholder={t('health.receivingFacility')}
                     class={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
-                      "flex-1 bg-surface-raised",
+                      'flex-1 bg-surface-raised',
                     )}
                   />
                 </div>
@@ -1219,49 +1219,49 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
           </div>
 
           {/* FHIR R4 Endpoints */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.fhirEndpoints")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.fhirEndpoints')}</span>
               <button
                 type="button"
                 onClick={addFhirEndpoint}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
-            <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-              {t("health.fhirDescription")}
+            <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+              {t('health.fhirDescription')}
             </p>
             {(testsSettings.fhirEndpoints ?? []).map((endpoint) => (
               <div
                 key={endpoint.id}
-                class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
                   value={endpoint.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateFhirEndpoint(endpoint.id ?? "", "name", e.target.value)
+                    updateFhirEndpoint(endpoint.id ?? '', 'name', e.target.value)
                   }
-                  placeholder={t("common.name")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-24")}
+                  placeholder={t('common.name')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <input
                   type="text"
                   value={endpoint.baseUrl}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateFhirEndpoint(endpoint.id ?? "", "baseUrl", e.target.value)
+                    updateFhirEndpoint(endpoint.id ?? '', 'baseUrl', e.target.value)
                   }
                   placeholder="https://fhir.example.com/r4"
-                  class={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                  class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
                 <select
                   value={endpoint.authType}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateFhirEndpoint(endpoint.id ?? "", "authType", e.target.value)
+                    updateFhirEndpoint(endpoint.id ?? '', 'authType', e.target.value)
                   }
-                  class={cn(input.base, input.state.default, input.size.md, "w-24")}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 >
                   <option value="none">None</option>
                   <option value="basic">Basic</option>
@@ -1269,117 +1269,117 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                 </select>
                 <button
                   type="button"
-                  onClick={(): void => removeFhirEndpoint(endpoint.id ?? "")}
-                  class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                  onClick={(): void => removeFhirEndpoint(endpoint.id ?? '')}
+                  class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
                 >
-                  {t("common.remove")}
+                  {t('common.remove')}
                 </button>
               </div>
             ))}
           </div>
 
           {/* LTI/LMS Education Endpoints */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.ltiEndpoints")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.ltiEndpoints')}</span>
               <button
                 type="button"
                 onClick={addLtiEndpoint}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
-            <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-              {t("health.ltiDescription")}
+            <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+              {t('health.ltiDescription')}
             </p>
             {(testsSettings.ltiEndpoints ?? []).map((endpoint) => (
               <div
                 key={endpoint.id}
-                class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
                   value={endpoint.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateLtiEndpoint(endpoint.id ?? "", "name", e.target.value)
+                    updateLtiEndpoint(endpoint.id ?? '', 'name', e.target.value)
                   }
-                  placeholder={t("common.name")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-24")}
+                  placeholder={t('common.name')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <input
                   type="text"
                   value={endpoint.launchUrl}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateLtiEndpoint(endpoint.id ?? "", "launchUrl", e.target.value)
+                    updateLtiEndpoint(endpoint.id ?? '', 'launchUrl', e.target.value)
                   }
                   placeholder="https://lms.example.com/lti/launch"
-                  class={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                  class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
                 <input
                   type="text"
                   value={endpoint.consumerKey}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateLtiEndpoint(endpoint.id ?? "", "consumerKey", e.target.value)
+                    updateLtiEndpoint(endpoint.id ?? '', 'consumerKey', e.target.value)
                   }
-                  placeholder={t("health.consumerKey")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-32")}
+                  placeholder={t('health.consumerKey')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-32')}
                 />
                 <button
                   type="button"
-                  onClick={(): void => removeLtiEndpoint(endpoint.id ?? "")}
-                  class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                  onClick={(): void => removeLtiEndpoint(endpoint.id ?? '')}
+                  class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
                 >
-                  {t("common.remove")}
+                  {t('common.remove')}
                 </button>
               </div>
             ))}
           </div>
 
           {/* OPC-UA Industrial Endpoints */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.opcuaEndpoints")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.opcuaEndpoints')}</span>
               <button
                 type="button"
                 onClick={addOpcuaEndpoint}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
-            <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-              {t("health.opcuaDescription")}
+            <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+              {t('health.opcuaDescription')}
             </p>
             {(testsSettings.opcuaEndpoints ?? []).map((endpoint) => (
               <div
                 key={endpoint.id}
-                class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
                   value={endpoint.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateOpcuaEndpoint(endpoint.id ?? "", "name", e.target.value)
+                    updateOpcuaEndpoint(endpoint.id ?? '', 'name', e.target.value)
                   }
-                  placeholder={t("common.name")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-24")}
+                  placeholder={t('common.name')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <input
                   type="text"
                   value={endpoint.endpointUrl}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateOpcuaEndpoint(endpoint.id ?? "", "endpointUrl", e.target.value)
+                    updateOpcuaEndpoint(endpoint.id ?? '', 'endpointUrl', e.target.value)
                   }
                   placeholder="opc.tcp://host:4840"
-                  class={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                  class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
                 <select
                   value={endpoint.securityMode}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateOpcuaEndpoint(endpoint.id ?? "", "securityMode", e.target.value)
+                    updateOpcuaEndpoint(endpoint.id ?? '', 'securityMode', e.target.value)
                   }
-                  class={cn(input.base, input.state.default, input.size.md, "w-32")}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-32')}
                 >
                   <option value="None">None</option>
                   <option value="Sign">Sign</option>
@@ -1387,124 +1387,124 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                 </select>
                 <button
                   type="button"
-                  onClick={(): void => removeOpcuaEndpoint(endpoint.id ?? "")}
-                  class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                  onClick={(): void => removeOpcuaEndpoint(endpoint.id ?? '')}
+                  class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
                 >
-                  {t("common.remove")}
+                  {t('common.remove')}
                 </button>
               </div>
             ))}
           </div>
 
           {/* Modbus TCP Industrial Endpoints */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.modbusEndpoints")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.modbusEndpoints')}</span>
               <button
                 type="button"
                 onClick={addModbusEndpoint}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
-            <p class={cn("caption text-text-muted", spacing.margin.bottom.inline)}>
-              {t("health.modbusDescription")}
+            <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+              {t('health.modbusDescription')}
             </p>
             {(testsSettings.modbusEndpoints ?? []).map((endpoint) => (
               <div
                 key={endpoint.id}
-                class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
                   value={endpoint.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateModbusEndpoint(endpoint.id ?? "", "name", e.target.value)
+                    updateModbusEndpoint(endpoint.id ?? '', 'name', e.target.value)
                   }
-                  placeholder={t("common.name")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-24")}
+                  placeholder={t('common.name')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <input
                   type="text"
                   value={endpoint.host}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateModbusEndpoint(endpoint.id ?? "", "host", e.target.value)
+                    updateModbusEndpoint(endpoint.id ?? '', 'host', e.target.value)
                   }
-                  placeholder={t("common.host")}
-                  class={cn(input.base, input.state.default, input.size.md, "flex-1")}
+                  placeholder={t('common.host')}
+                  class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
                 <input
                   type="number"
                   value={endpoint.port}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updateModbusEndpoint(
-                      endpoint.id ?? "",
-                      "port",
+                      endpoint.id ?? '',
+                      'port',
                       Number.parseInt(e.target.value, 10),
                     )
                   }
                   placeholder="502"
-                  class={cn(input.base, input.state.default, input.size.md, "w-20")}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-20')}
                 />
                 <input
                   type="number"
                   value={endpoint.unitId}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updateModbusEndpoint(
-                      endpoint.id ?? "",
-                      "unitId",
+                      endpoint.id ?? '',
+                      'unitId',
                       Number.parseInt(e.target.value, 10),
                     )
                   }
                   placeholder="Unit"
-                  title={t("health.unitId")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-16")}
+                  title={t('health.unitId')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-16')}
                 />
                 <input
                   type="number"
                   value={endpoint.testRegister}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updateModbusEndpoint(
-                      endpoint.id ?? "",
-                      "testRegister",
+                      endpoint.id ?? '',
+                      'testRegister',
                       Number.parseInt(e.target.value, 10),
                     )
                   }
                   placeholder="Reg"
-                  title={t("health.testRegister")}
-                  class={cn(input.base, input.state.default, input.size.md, "w-16")}
+                  title={t('health.testRegister')}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-16')}
                 />
                 <button
                   type="button"
-                  onClick={(): void => removeModbusEndpoint(endpoint.id ?? "")}
-                  class={cn("text-status-error hover:text-status-error/80", spacing.actionBtn)}
+                  onClick={(): void => removeModbusEndpoint(endpoint.id ?? '')}
+                  class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
                 >
-                  {t("common.remove")}
+                  {t('common.remove')}
                 </button>
               </div>
             ))}
           </div>
 
           {/* SLA Configuration */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.slaConfig")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.slaConfig')}</span>
             </div>
             <div class={spacing.stack.xs}>
               <label
                 class={cn(
                   layout.flex.between,
                   spacing.pad.sm,
-                  "bg-surface-base border border-surface-border",
+                  'bg-surface-base border border-surface-border',
                   radius.default,
                 )}
               >
                 <div>
                   <span class="body-small text-text-primary font-medium">
-                    {t("health.enableSla")}
+                    {t('health.enableSla')}
                   </span>
-                  <p class="caption text-text-muted">{t("health.slaDescription")}</p>
+                  <p class="caption text-text-muted">{t('health.slaDescription')}</p>
                 </div>
                 <input
                   type="checkbox"
@@ -1515,10 +1515,10 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                       slaConfigs: [
                         {
                           ...(prev.slaConfigs?.[0] ?? {
-                            endpointName: "*",
+                            endpointName: '*',
                             targetUptime: 99.9,
                             targetLatencyP95: 500,
-                            reportingPeriod: "daily",
+                            reportingPeriod: 'daily',
                           }),
                           enabled: e.target.checked,
                         },
@@ -1528,9 +1528,9 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                   class={iconTokens.size.sm}
                 />
               </label>
-              <div class={cn("flex items-center", spacing.gap.compact)}>
+              <div class={cn('flex items-center', spacing.gap.compact)}>
                 <label for="sla-target-uptime" class="caption text-text-muted w-32">
-                  {t("health.targetUptime")}
+                  {t('health.targetUptime')}
                 </label>
                 <input
                   id="sla-target-uptime"
@@ -1545,23 +1545,23 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                       slaConfigs: [
                         {
                           ...(prev.slaConfigs?.[0] ?? {
-                            endpointName: "*",
+                            endpointName: '*',
                             enabled: true,
                             targetLatencyP95: 500,
-                            reportingPeriod: "daily",
+                            reportingPeriod: 'daily',
                           }),
                           targetUptime: Number.parseFloat(e.target.value) || 99.9,
                         },
                       ],
                     }))
                   }
-                  class={cn(input.base, input.state.default, input.size.md, "w-24")}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <span class="caption text-text-muted">%</span>
               </div>
-              <div class={cn("flex items-center", spacing.gap.compact)}>
+              <div class={cn('flex items-center', spacing.gap.compact)}>
                 <label for="sla-target-latency" class="caption text-text-muted w-32">
-                  {t("health.targetLatency")}
+                  {t('health.targetLatency')}
                 </label>
                 <input
                   id="sla-target-latency"
@@ -1576,17 +1576,17 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                       slaConfigs: [
                         {
                           ...(prev.slaConfigs?.[0] ?? {
-                            endpointName: "*",
+                            endpointName: '*',
                             enabled: true,
                             targetUptime: 99.9,
-                            reportingPeriod: "daily",
+                            reportingPeriod: 'daily',
                           }),
                           targetLatencyP95: Number.parseInt(e.target.value, 10) || 500,
                         },
                       ],
                     }))
                   }
-                  class={cn(input.base, input.state.default, input.size.md, "w-24")}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <span class="caption text-text-muted">ms (P95)</span>
               </div>
@@ -1594,24 +1594,24 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
           </div>
 
           {/* Alert Configuration */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.alertConfig")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.alertConfig')}</span>
             </div>
             <div class={spacing.stack.xs}>
               <label
                 class={cn(
                   layout.flex.between,
                   spacing.pad.xs,
-                  "bg-surface-base border border-surface-border",
+                  'bg-surface-base border border-surface-border',
                   radius.default,
                 )}
               >
                 <div>
                   <span class="body-small text-text-primary font-medium">
-                    {t("health.enableAlerts")}
+                    {t('health.enableAlerts')}
                   </span>
-                  <p class="caption text-text-muted">{t("health.alertsDescription")}</p>
+                  <p class="caption text-text-muted">{t('health.alertsDescription')}</p>
                 </div>
                 <input
                   type="checkbox"
@@ -1634,9 +1634,9 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                 />
               </label>
 
-              <div class={cn("flex items-center", spacing.gap.compact)}>
+              <div class={cn('flex items-center', spacing.gap.compact)}>
                 <label for="alert-consecutive-failures" class="caption text-text-muted flex-1">
-                  {t("health.consecutiveFailures")}
+                  {t('health.consecutiveFailures')}
                 </label>
                 <input
                   id="alert-consecutive-failures"
@@ -1658,13 +1658,13 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                       },
                     }))
                   }
-                  class={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-20 text-center')}
                 />
               </div>
 
-              <div class={cn("flex items-center", spacing.gap.compact)}>
+              <div class={cn('flex items-center', spacing.gap.compact)}>
                 <label for="alert-cooldown-minutes" class="caption text-text-muted flex-1">
-                  {t("health.cooldownMinutes")}
+                  {t('health.cooldownMinutes')}
                 </label>
                 <input
                   id="alert-cooldown-minutes"
@@ -1686,7 +1686,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                       },
                     }))
                   }
-                  class={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-20 text-center')}
                 />
               </div>
 
@@ -1694,15 +1694,15 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                 class={cn(
                   layout.flex.between,
                   spacing.pad.xs,
-                  "bg-surface-base border border-surface-border",
+                  'bg-surface-base border border-surface-border',
                   radius.default,
                 )}
               >
                 <div>
                   <span class="body-small text-text-primary font-medium">
-                    {t("health.digestMode")}
+                    {t('health.digestMode')}
                   </span>
-                  <p class="caption text-text-muted">{t("health.digestDescription")}</p>
+                  <p class="caption text-text-muted">{t('health.digestDescription')}</p>
                 </div>
                 <input
                   type="checkbox"
@@ -1728,24 +1728,24 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
           </div>
 
           {/* Anomaly Detection Configuration */}
-          <div class={cn("border-t border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("health.anomalyConfig")}</span>
+              <span class="caption text-text-muted font-medium">{t('health.anomalyConfig')}</span>
             </div>
             <div class={spacing.stack.xs}>
               <label
                 class={cn(
                   layout.flex.between,
                   spacing.pad.xs,
-                  "bg-surface-base border border-surface-border",
+                  'bg-surface-base border border-surface-border',
                   radius.default,
                 )}
               >
                 <div>
                   <span class="body-small text-text-primary font-medium">
-                    {t("health.enableAnomaly")}
+                    {t('health.enableAnomaly')}
                   </span>
-                  <p class="caption text-text-muted">{t("health.anomalyDescription")}</p>
+                  <p class="caption text-text-muted">{t('health.anomalyDescription')}</p>
                 </div>
                 <input
                   type="checkbox"
@@ -1767,9 +1767,9 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                 />
               </label>
 
-              <div class={cn("flex items-center", spacing.gap.compact)}>
+              <div class={cn('flex items-center', spacing.gap.compact)}>
                 <label for="anomaly-std-dev-threshold" class="caption text-text-muted flex-1">
-                  {t("health.stdDevThreshold")}
+                  {t('health.stdDevThreshold')}
                 </label>
                 <input
                   id="anomaly-std-dev-threshold"
@@ -1791,13 +1791,13 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                       },
                     }))
                   }
-                  class={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-20 text-center')}
                 />
               </div>
 
-              <div class={cn("flex items-center", spacing.gap.compact)}>
+              <div class={cn('flex items-center', spacing.gap.compact)}>
                 <label for="anomaly-max-samples" class="caption text-text-muted flex-1">
-                  {t("health.maxSamples")}
+                  {t('health.maxSamples')}
                 </label>
                 <input
                   id="anomaly-max-samples"
@@ -1819,7 +1819,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                       },
                     }))
                   }
-                  class={cn(input.base, input.state.default, input.size.md, "w-20 text-center")}
+                  class={cn(input.base, input.state.default, input.size.md, 'w-20 text-center')}
                 />
               </div>
             </div>

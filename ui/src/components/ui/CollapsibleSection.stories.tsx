@@ -1,43 +1,43 @@
-import type { Meta, StoryFn, StoryObj } from "@storybook/react-vite";
-import { Settings } from "lucide-react";
-import type React from "react";
-import { cn, spacing } from "../../styles/theme";
-import { CollapsibleSection } from "./CollapsibleSection";
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import { Settings } from 'lucide-react';
+import type React from 'react';
+import { cn, spacing } from '../../styles/theme';
+import { CollapsibleSection } from './CollapsibleSection';
 
 const meta: Meta<typeof CollapsibleSection> = {
-  title: "UI/CollapsibleSection",
+  title: 'UI/CollapsibleSection',
   component: CollapsibleSection,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
-        component: "Collapsible/accordion section for organizing content within cards and modals.",
+        component: 'Collapsible/accordion section for organizing content within cards and modals.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     title: {
-      control: "text",
-      description: "Section title",
+      control: 'text',
+      description: 'Section title',
     },
     defaultOpen: {
-      control: "boolean",
-      description: "Whether section is open by default",
+      control: 'boolean',
+      description: 'Whether section is open by default',
     },
     count: {
-      control: "number",
-      description: "Item count to display in header",
+      control: 'number',
+      description: 'Item count to display in header',
     },
     status: {
-      control: "select",
-      options: ["success", "warning", "error", "unknown", "loading", undefined],
-      description: "Status indicator",
+      control: 'select',
+      options: ['success', 'warning', 'error', 'unknown', 'loading', undefined],
+      description: 'Status indicator',
     },
     variant: {
-      control: "radio",
-      options: ["default", "compact"],
-      description: "Visual variant",
+      control: 'radio',
+      options: ['default', 'compact'],
+      description: 'Visual variant',
     },
   },
   decorators: [
@@ -55,16 +55,16 @@ type Story = StoryObj<typeof meta>;
 // Default variant (with border)
 export const Default: Story = {
   args: {
-    title: "Advanced Options",
+    title: 'Advanced Options',
     defaultOpen: false,
     children: (
       <div class="stack-sm">
         <p class="body-small text-text-muted">Configure advanced settings for network discovery.</p>
-        <label class={cn("flex items-center", spacing.gap.compact)}>
+        <label class={cn('flex items-center', spacing.gap.compact)}>
           <input type="checkbox" class="w-4 h-4" />
           <span class="body-small">Enable deep scanning</span>
         </label>
-        <label class={cn("flex items-center", spacing.gap.compact)}>
+        <label class={cn('flex items-center', spacing.gap.compact)}>
           <input type="checkbox" class="w-4 h-4" />
           <span class="body-small">Include SNMP queries</span>
         </label>
@@ -76,7 +76,7 @@ export const Default: Story = {
 // Default open
 export const DefaultOpen: Story = {
   args: {
-    title: "Settings",
+    title: 'Settings',
     defaultOpen: true,
     children: (
       <div class="stack-sm">
@@ -89,8 +89,8 @@ export const DefaultOpen: Story = {
 // Compact variant (for inside cards)
 export const Compact: Story = {
   args: {
-    title: "Server Results",
-    variant: "compact",
+    title: 'Server Results',
+    variant: 'compact',
     count: 3,
     defaultOpen: true,
     children: (
@@ -115,8 +115,8 @@ export const Compact: Story = {
 // With status indicator
 export const WithStatus: Story = {
   args: {
-    title: "DNS Servers",
-    status: "success",
+    title: 'DNS Servers',
+    status: 'success',
     count: 2,
     defaultOpen: true,
     children: (
@@ -137,8 +137,8 @@ export const WithStatus: Story = {
 // With warning status
 export const WithWarningStatus: Story = {
   args: {
-    title: "Network Interfaces",
-    status: "warning",
+    title: 'Network Interfaces',
+    status: 'warning',
     count: 3,
     defaultOpen: true,
     children: (
@@ -164,7 +164,7 @@ export const WithWarningStatus: Story = {
 export const CustomTitle: Story = {
   args: {
     title: (
-      <div class={cn("flex items-center", spacing.gap.compact)}>
+      <div class={cn('flex items-center', spacing.gap.compact)}>
         <Settings class="w-4 h-4" />
         <span>Configuration</span>
       </div>

@@ -17,10 +17,10 @@
  * - Auto-save settings to active profile with debouncing
  */
 
-import { createContext, type ReactNode, useCallback, useContext, useRef } from "react";
-import { api } from "../api";
-import { LogComponents, logger } from "../lib/logger";
-import { getQueryClient } from "../lib/query-client";
+import { createContext, type ReactNode, useCallback, useContext, useRef } from 'react';
+import { api } from '../api';
+import { LogComponents, logger } from '../lib/logger';
+import { getQueryClient } from '../lib/query-client';
 import {
   profileKeys,
   useActiveProfileQuery,
@@ -33,7 +33,7 @@ import {
   useSaveSettingsMutation,
   useSwitchProfileMutation,
   useUpdateProfileMutation,
-} from "../stores/profile-queries";
+} from '../stores/profile-queries';
 import {
   type SettingsSaveStatus,
   useAppearanceSettings,
@@ -51,7 +51,7 @@ import {
   useThresholds,
   useVulnerabilitySettings,
   useWifiSettings,
-} from "../stores/profile-store";
+} from '../stores/profile-store';
 import type {
   AppearanceConfig,
   CableTestConfig,
@@ -74,7 +74,7 @@ import type {
   TestsConfig,
   VulnerabilityConfig,
   WifiSettingsConfig,
-} from "../types/profile";
+} from '../types/profile';
 
 // Re-export for consumers
 export type { SettingsSaveStatus };
@@ -345,20 +345,20 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
       // fetchQuery returns a thenable, wrap in Promise.resolve for linter
       const result = await Promise.resolve(
         queryClient.fetchQuery({
-          queryKey: [...profileKeys.all, "export"],
+          queryKey: [...profileKeys.all, 'export'],
           queryFn: async () => {
-            const data = await api.get<ProfileExportResponse>("/api/v1/profiles/export");
+            const data = await api.get<ProfileExportResponse>('/api/v1/profiles/export');
             return data;
           },
           staleTime: 0,
         }),
       );
-      logger.info(LogComponents.Profiles, "Profiles exported", {
+      logger.info(LogComponents.Profiles, 'Profiles exported', {
         count: result.profiles.length,
       });
       return result;
     } catch (err) {
-      logger.error(LogComponents.Profiles, "Failed to export profiles", err);
+      logger.error(LogComponents.Profiles, 'Failed to export profiles', err);
       return null;
     }
   }, []);
@@ -372,12 +372,12 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
 
       // Create and trigger download
       const blob = new Blob([JSON.stringify(result, null, 2)], {
-        type: "application/json",
+        type: 'application/json',
       });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
-      link.download = `seed-profiles-${new Date().toISOString().split("T")[0]}.json`;
+      link.download = `seed-profiles-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -385,7 +385,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
 
       return true;
     } catch (err) {
-      logger.error(LogComponents.Profiles, "Failed to download profiles", err);
+      logger.error(LogComponents.Profiles, 'Failed to download profiles', err);
       return false;
     }
   }, [exportProfiles]);
@@ -400,7 +400,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
   const updateSettingsField = useCallback(
     <T extends keyof ProfileSettings>(field: T, updates: Partial<ProfileSettings[T]>) => {
       if (!activeProfile) {
-        logger.warn(LogComponents.Profiles, "Cannot save settings: no active profile");
+        logger.warn(LogComponents.Profiles, 'Cannot save settings: no active profile');
         return;
       }
 
@@ -420,98 +420,98 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
 
   const updateCardSettings = useCallback(
     (updates: Partial<CardSettingsConfig>) => {
-      updateSettingsField("cardSettings", updates);
+      updateSettingsField('cardSettings', updates);
     },
     [updateSettingsField],
   );
 
   const updateDisplayOptions = useCallback(
     (updates: Partial<DisplayOptionsConfig>) => {
-      updateSettingsField("displayOptions", updates);
+      updateSettingsField('displayOptions', updates);
     },
     [updateSettingsField],
   );
 
   const updateIperfSettings = useCallback(
     (updates: Partial<IperfConfig>) => {
-      updateSettingsField("iperf", updates);
+      updateSettingsField('iperf', updates);
     },
     [updateSettingsField],
   );
 
   const updateThresholds = useCallback(
     (updates: Partial<ProfileThresholdsConfig>) => {
-      updateSettingsField("thresholds", updates);
+      updateSettingsField('thresholds', updates);
     },
     [updateSettingsField],
   );
 
   const updateSpeedtestSettings = useCallback(
     (updates: Partial<SpeedtestConfig>) => {
-      updateSettingsField("speedtest", updates);
+      updateSettingsField('speedtest', updates);
     },
     [updateSettingsField],
   );
 
   const updateTestsSettings = useCallback(
     (updates: Partial<TestsConfig>) => {
-      updateSettingsField("tests", updates);
+      updateSettingsField('tests', updates);
     },
     [updateSettingsField],
   );
 
   const updateNetworkDiscoverySettings = useCallback(
     (updates: Partial<NetworkDiscoveryConfig>) => {
-      updateSettingsField("networkDiscovery", updates);
+      updateSettingsField('networkDiscovery', updates);
     },
     [updateSettingsField],
   );
 
   const updateSnmpSettings = useCallback(
     (updates: Partial<SnmpConfig>) => {
-      updateSettingsField("snmp", updates);
+      updateSettingsField('snmp', updates);
     },
     [updateSettingsField],
   );
 
   const updateWifiSettings = useCallback(
     (updates: Partial<WifiSettingsConfig>) => {
-      updateSettingsField("wifi", updates);
+      updateSettingsField('wifi', updates);
     },
     [updateSettingsField],
   );
 
   const updateLinkSettings = useCallback(
     (updates: Partial<LinkConfig>) => {
-      updateSettingsField("link", updates);
+      updateSettingsField('link', updates);
     },
     [updateSettingsField],
   );
 
   const updateCableTestSettings = useCallback(
     (updates: Partial<CableTestConfig>) => {
-      updateSettingsField("cableTest", updates);
+      updateSettingsField('cableTest', updates);
     },
     [updateSettingsField],
   );
 
   const updateVulnerabilitySettings = useCallback(
     (updates: Partial<VulnerabilityConfig>) => {
-      updateSettingsField("vulnerability", updates);
+      updateSettingsField('vulnerability', updates);
     },
     [updateSettingsField],
   );
 
   const updateDnsSettings = useCallback(
     (updates: Partial<DnsSettingsConfig>) => {
-      updateSettingsField("dns", updates);
+      updateSettingsField('dns', updates);
     },
     [updateSettingsField],
   );
 
   const updateAppearanceSettings = useCallback(
     (updates: Partial<AppearanceConfig>) => {
-      updateSettingsField("appearance", updates);
+      updateSettingsField('appearance', updates);
     },
     [updateSettingsField],
   );
@@ -519,7 +519,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
   const updateSettings = useCallback(
     (updates: Partial<ProfileSettings>) => {
       if (!activeProfile) {
-        logger.warn(LogComponents.Profiles, "Cannot save settings: no active profile");
+        logger.warn(LogComponents.Profiles, 'Cannot save settings: no active profile');
         return;
       }
 
@@ -571,12 +571,12 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
   const updateInterfaceConfig = useCallback(
     async (
       updater: (
-        interfaces: NonNullable<NonNullable<Profile["config"]>["interfaces"]>,
-      ) => NonNullable<NonNullable<Profile["config"]>["interfaces"]>,
+        interfaces: NonNullable<NonNullable<Profile['config']>['interfaces']>,
+      ) => NonNullable<NonNullable<Profile['config']>['interfaces']>,
     ): Promise<boolean> => {
       const currentProfile = activeProfileRef.current;
       if (!currentProfile) {
-        logger.warn(LogComponents.Profiles, "Cannot update interfaces: no active profile");
+        logger.warn(LogComponents.Profiles, 'Cannot update interfaces: no active profile');
         return false;
       }
 
@@ -610,7 +610,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
 
         return true;
       } catch (err) {
-        logger.error(LogComponents.Profiles, "Failed to update interface config", err);
+        logger.error(LogComponents.Profiles, 'Failed to update interface config', err);
         return false;
       }
     },
@@ -630,7 +630,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
         return { ...interfaces, ethernet, activeEthernet: name };
       });
       if (result) {
-        logger.info(LogComponents.Profiles, "Ethernet interface set as active", {
+        logger.info(LogComponents.Profiles, 'Ethernet interface set as active', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -653,7 +653,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
         return { ...interfaces, wifi, activeWifi: name };
       });
       if (result) {
-        logger.info(LogComponents.Profiles, "Wifi interface set as active", {
+        logger.info(LogComponents.Profiles, 'Wifi interface set as active', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -676,7 +676,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
         return { ...interfaces, ethernet };
       });
       if (result) {
-        logger.info(LogComponents.Profiles, "Ethernet interface added", {
+        logger.info(LogComponents.Profiles, 'Ethernet interface added', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -699,7 +699,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
         return { ...interfaces, wifi };
       });
       if (result) {
-        logger.info(LogComponents.Profiles, "Wifi interface added", {
+        logger.info(LogComponents.Profiles, 'Wifi interface added', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -714,11 +714,11 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
       const result = await updateInterfaceConfig((interfaces) => {
         const ethernet = (interfaces.ethernet ?? []).filter((i) => i.name !== name);
         const activeEthernetVal =
-          interfaces.activeEthernet === name ? "" : interfaces.activeEthernet;
+          interfaces.activeEthernet === name ? '' : interfaces.activeEthernet;
         return { ...interfaces, ethernet, activeEthernet: activeEthernetVal };
       });
       if (result) {
-        logger.info(LogComponents.Profiles, "Ethernet interface removed", {
+        logger.info(LogComponents.Profiles, 'Ethernet interface removed', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -732,11 +732,11 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
     async (name: string): Promise<boolean> => {
       const result = await updateInterfaceConfig((interfaces) => {
         const wifi = (interfaces.wifi ?? []).filter((i) => i.name !== name);
-        const activeWifiVal = interfaces.activeWifi === name ? "" : interfaces.activeWifi;
+        const activeWifiVal = interfaces.activeWifi === name ? '' : interfaces.activeWifi;
         return { ...interfaces, wifi, activeWifi: activeWifiVal };
       });
       if (result) {
-        logger.info(LogComponents.Profiles, "Wifi interface removed", {
+        logger.info(LogComponents.Profiles, 'Wifi interface removed', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -755,7 +755,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
       if (!exists) {
         logger.warn(
           LogComponents.Profiles,
-          "Cannot set active ethernet interface: interface not in list",
+          'Cannot set active ethernet interface: interface not in list',
           { interface: name },
         );
         return false;
@@ -766,7 +766,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
         activeEthernet: name,
       }));
       if (result) {
-        logger.info(LogComponents.Profiles, "Active ethernet interface changed", {
+        logger.info(LogComponents.Profiles, 'Active ethernet interface changed', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -783,7 +783,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
       if (!exists) {
         logger.warn(
           LogComponents.Profiles,
-          "Cannot set active Wifi interface: interface not in list",
+          'Cannot set active Wifi interface: interface not in list',
           { interface: name },
         );
         return false;
@@ -794,7 +794,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
         activeWifi: name,
       }));
       if (result) {
-        logger.info(LogComponents.Profiles, "Active Wifi interface changed", {
+        logger.info(LogComponents.Profiles, 'Active Wifi interface changed', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -897,7 +897,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
 export function useProfileContext(): ProfileContextValue {
   const context = useContext(PROFILE_CONTEXT);
   if (context === undefined) {
-    throw new Error("useProfileContext must be used within a ProfileProvider");
+    throw new Error('useProfileContext must be used within a ProfileProvider');
   }
   return context;
 }

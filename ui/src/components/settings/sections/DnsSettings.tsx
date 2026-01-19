@@ -27,9 +27,9 @@
  * State: Receives test settings and save status from parent, callbacks for updates
  */
 
-import type React from "react";
-import { memo, useCallback } from "react";
-import { useTranslation } from "react-i18next";
+import type React from 'react';
+import { memo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   cn,
   icon as iconTokens,
@@ -37,12 +37,12 @@ import {
   layout,
   radius,
   spacing,
-} from "../../../styles/theme";
-import type { CardSettings, DnsServer, SaveStatus, TestsSettings } from "../../../types/settings";
-import { generateId } from "../../../utils/id";
-import { CollapsibleSection } from "../../ui/CollapsibleSection";
-import { Globe } from "../../ui/Icons";
-import { AutoSaveIndicator } from "./AutoSaveIndicator";
+} from '../../../styles/theme';
+import type { CardSettings, DnsServer, SaveStatus, TestsSettings } from '../../../types/settings';
+import { generateId } from '../../../utils/id';
+import { CollapsibleSection } from '../../ui/CollapsibleSection';
+import { Globe } from '../../ui/Icons';
+import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 interface DnsSettingsProps {
   testsSettings: TestsSettings;
@@ -62,12 +62,12 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
     cardSettings,
     updateCardSettings,
   }: DnsSettingsProps): React.ReactElement {
-    const { t } = useTranslation("settings");
+    const { t } = useTranslation('settings');
 
     const addDnsServer = useCallback((): void => {
       setTestsSettings((prev) => ({
         ...prev,
-        dnsServers: [...prev.dnsServers, { id: generateId(), address: "", enabled: true }],
+        dnsServers: [...prev.dnsServers, { id: generateId(), address: '', enabled: true }],
       }));
     }, [setTestsSettings]);
 
@@ -96,7 +96,7 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
         title={
           <div class={layout.inline.default}>
             <Globe class={iconTokens.size.sm} />
-            <span>{t("sections.dns")}</span>
+            <span>{t('sections.dns')}</span>
             <AutoSaveIndicator status={testsStatus} />
           </div>
         }
@@ -108,17 +108,17 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
               class={cn(
                 layout.flex.between,
                 spacing.pad.sm,
-                "bg-surface-base",
+                'bg-surface-base',
                 radius.default,
-                "border border-surface-border",
+                'border border-surface-border',
               )}
             >
               <div>
                 <span class="body-small text-text-primary font-medium">
-                  {t("common.showCard", "Show Card")}
+                  {t('common.showCard', 'Show Card')}
                 </span>
                 <p class="caption text-text-muted">
-                  {t("common.showCardDesc", "Display this card on the dashboard")}
+                  {t('common.showCardDesc', 'Display this card on the dashboard')}
                 </p>
               </div>
               <input
@@ -136,17 +136,17 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
               class={cn(
                 layout.flex.between,
                 spacing.pad.sm,
-                "bg-surface-base",
+                'bg-surface-base',
                 radius.default,
-                "border border-surface-border",
+                'border border-surface-border',
               )}
             >
               <div>
                 <span class="body-small text-text-primary font-medium">
-                  {t("common.runOnFab", "Include in Run All")}
+                  {t('common.runOnFab', 'Include in Run All')}
                 </span>
                 <p class="caption text-text-muted">
-                  {t("common.runOnFabDesc", "Run when FAB button is clicked")}
+                  {t('common.runOnFabDesc', 'Run when FAB button is clicked')}
                 </p>
               </div>
               <input
@@ -165,7 +165,7 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
           {/* DNS Hostname */}
           <div>
             <label for="dns-test-hostname" class="caption text-text-muted">
-              {t("dns.testHostname")}
+              {t('dns.testHostname')}
             </label>
             <input
               id="dns-test-hostname"
@@ -182,58 +182,58 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
                 inputTokens.base,
                 inputTokens.state.default,
                 inputTokens.size.md,
-                "w-full",
+                'w-full',
                 spacing.margin.top.tight,
-                "body-small",
+                'body-small',
               )}
             />
-            <p class={cn("caption", "text-text-muted", spacing.margin.top.tight)}>
-              {t("dns.testHostnameDesc")}
+            <p class={cn('caption', 'text-text-muted', spacing.margin.top.tight)}>
+              {t('dns.testHostnameDesc')}
             </p>
           </div>
 
           {/* DNS Servers for per-server testing */}
-          <div class={cn("border-t", "border-surface-border", spacing.padding.top.heading)}>
+          <div class={cn('border-t', 'border-surface-border', spacing.padding.top.heading)}>
             <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t("dns.additionalServers")}</span>
+              <span class="caption text-text-muted font-medium">{t('dns.additionalServers')}</span>
               <button
                 type="button"
                 onClick={addDnsServer}
                 class="caption text-brand-primary hover:text-brand-accent"
               >
-                {t("common.add")}
+                {t('common.add')}
               </button>
             </div>
-            <p class={cn("caption", "text-text-muted", spacing.margin.bottom.inline)}>
-              {t("dns.serversDescription")}
+            <p class={cn('caption', 'text-text-muted', spacing.margin.bottom.inline)}>
+              {t('dns.serversDescription')}
             </p>
             {testsSettings.dnsServers.map((server) => (
               <div
                 key={server.id || server.address}
-                class={cn("flex", spacing.gap.compact, spacing.margin.bottom.inline)}
+                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
                   value={server.address}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    updateDnsServer(server.id ?? "", "address", e.target.value)
+                    updateDnsServer(server.id ?? '', 'address', e.target.value)
                   }
-                  placeholder={t("dns.serverIp")}
+                  placeholder={t('dns.serverIp')}
                   class={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.md,
-                    "flex-1",
-                    "caption",
+                    'flex-1',
+                    'caption',
                   )}
                 />
                 <button
                   type="button"
-                  onClick={(): void => removeDnsServer(server.id ?? "")}
-                  class={cn("text-status-error", "hover:text-status-error/80", spacing.actionBtn)}
-                  aria-label={t("common.remove")}
+                  onClick={(): void => removeDnsServer(server.id ?? '')}
+                  class={cn('text-status-error', 'hover:text-status-error/80', spacing.actionBtn)}
+                  aria-label={t('common.remove')}
                 >
-                  {t("common.remove")}
+                  {t('common.remove')}
                 </button>
               </div>
             ))}

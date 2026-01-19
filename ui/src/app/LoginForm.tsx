@@ -18,14 +18,14 @@
  * - Responsive design with consistent theming
  */
 
-import type React from "react";
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { RecoveryForm } from "../components/login/RecoveryForm";
-import { button, cn, input, layout, radius, spacing } from "../styles/theme";
+import type React from 'react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { RecoveryForm } from '../components/login/RecoveryForm';
+import { button, cn, input, layout, radius, spacing } from '../styles/theme';
 
 // API base URL - configurable via environment variable
-const API_BASE: string = import.meta.env.VITE_API_BASE || "";
+const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
 export interface LoginFormProps {
   onLogin: (username: string, password: string) => Promise<boolean>;
@@ -36,11 +36,11 @@ export interface LoginFormProps {
 // Helper to extract and clear SSO error from URL
 function getAndClearSsoError(): string | null {
   const params = new URLSearchParams(window.location.search);
-  const errorParam = params.get("sso_error");
+  const errorParam = params.get('sso_error');
   if (errorParam) {
     // Clean URL without reload
-    window.history.replaceState({}, "", window.location.pathname);
-    return decodeURIComponent(errorParam.replace(/%20/g, " "));
+    window.history.replaceState({}, '', window.location.pathname);
+    return decodeURIComponent(errorParam.replace(/%20/g, ' '));
   }
   return null;
 }
@@ -59,9 +59,9 @@ interface RecoveryStatus {
 }
 
 export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.Element {
-  const { t } = useTranslation("common");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const { t } = useTranslation('common');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   // Initialize SSO error from URL params using lazy initialization
   const [ssoError] = useState<string | null>(getAndClearSsoError);
   // Fetch SSO providers to conditionally show buttons (fixes #769)
@@ -127,9 +127,9 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
   }
 
   return (
-    <div class={cn("min-h-screen", layout.flex.center, "pad")}>
+    <div class={cn('min-h-screen', layout.flex.center, 'pad')}>
       <div class="w-full max-w-sm">
-        <div class={cn("text-center", spacing.margin.bottom.sectionLg)}>
+        <div class={cn('text-center', spacing.margin.bottom.sectionLg)}>
           <div class="w-16 h-16 mx-auto text-brand-primary">
             <svg viewBox="0 0 48 48" fill="none" class="w-full h-full" aria-hidden="true">
               <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2" opacity="0.3" />
@@ -217,17 +217,17 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
               <circle cx="12.3" cy="35.7" r="2.5" fill="currentColor" />
             </svg>
           </div>
-          <h1 class={cn("heading-1", spacing.margin.top.heading)}>{t("app.title")}</h1>
-          <p class={cn("body-small", spacing.margin.top.inline)}>{t("app.tagline")}</p>
+          <h1 class={cn('heading-1', spacing.margin.top.heading)}>{t('app.title')}</h1>
+          <p class={cn('body-small', spacing.margin.top.inline)}>{t('app.tagline')}</p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          class={cn("bg-surface-raised", radius.md, "border border-surface-border pad-lg stack-lg")}
+          class={cn('bg-surface-raised', radius.md, 'border border-surface-border pad-lg stack-lg')}
         >
           <div>
-            <label for="login-username" class={cn("label block", spacing.margin.bottom.inline)}>
-              {t("labels.username")}
+            <label for="login-username" class={cn('label block', spacing.margin.bottom.inline)}>
+              {t('labels.username')}
             </label>
             <input
               id="login-username"
@@ -235,10 +235,10 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
               value={username}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
               class={cn(
-                "w-full",
+                'w-full',
                 input.size.md,
                 radius.md,
-                "border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary",
+                'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary',
               )}
               placeholder="admin"
               required={true}
@@ -246,8 +246,8 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
           </div>
 
           <div>
-            <label for="login-password" class={cn("label block", spacing.margin.bottom.inline)}>
-              {t("labels.password")}
+            <label for="login-password" class={cn('label block', spacing.margin.bottom.inline)}>
+              {t('labels.password')}
             </label>
             <input
               id="login-password"
@@ -255,10 +255,10 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
               value={password}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               class={cn(
-                "w-full",
+                'w-full',
                 input.size.md,
                 radius.md,
-                "border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary",
+                'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary',
               )}
               placeholder="••••••••"
               required={true}
@@ -270,9 +270,9 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
               role="alert"
               aria-live="assertive"
               class={cn(
-                "pad-sm bg-status-error/10 border border-status-error/20",
+                'pad-sm bg-status-error/10 border border-status-error/20',
                 radius.md,
-                "text-status-error body-small",
+                'text-status-error body-small',
               )}
             >
               {error || ssoError}
@@ -283,70 +283,70 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
             type="submit"
             disabled={isLoading}
             class={cn(
-              "w-full",
+              'w-full',
               button.size.md,
-              "bg-brand-primary text-text-inverse",
+              'bg-brand-primary text-text-inverse',
               radius.md,
-              "font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50",
+              'font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50',
             )}
           >
-            {isLoading ? t("status.loggingIn") : t("buttons.login")}
+            {isLoading ? t('status.loggingIn') : t('buttons.login')}
           </button>
 
-          <p class="caption text-text-muted text-center">{t("login.defaultCredentials")}</p>
+          <p class="caption text-text-muted text-center">{t('login.defaultCredentials')}</p>
 
           {/* SSO Options - only show if any provider is enabled (fixes #769) */}
           {hasEnabledSso ? (
             <div class="flex flex-col space-y-3">
-              {isProviderEnabled("google") && (
+              {isProviderEnabled('google') && (
                 <button
                   type="button"
                   onClick={() => {
                     window.location.href = `${API_BASE}/api/sso/login?provider=google`;
                   }}
                   class={cn(
-                    "w-full",
+                    'w-full',
                     button.size.md,
-                    "bg-status-info text-text-inverse",
+                    'bg-status-info text-text-inverse',
                     radius.md,
-                    "font-medium hover:bg-status-info-dark focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50",
+                    'font-medium hover:bg-status-info-dark focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50',
                   )}
                 >
-                  {t("buttons.signInWithGoogle")}
+                  {t('buttons.signInWithGoogle')}
                 </button>
               )}
-              {isProviderEnabled("microsoft") && (
+              {isProviderEnabled('microsoft') && (
                 <button
                   type="button"
                   onClick={() => {
                     window.location.href = `${API_BASE}/api/sso/login?provider=microsoft`;
                   }}
                   class={cn(
-                    "w-full",
+                    'w-full',
                     button.size.md,
-                    "bg-brand-secondary text-text-inverse",
+                    'bg-brand-secondary text-text-inverse',
                     radius.md,
-                    "font-medium hover:bg-brand-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50",
+                    'font-medium hover:bg-brand-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50',
                   )}
                 >
-                  {t("buttons.signInWithMicrosoft")}
+                  {t('buttons.signInWithMicrosoft')}
                 </button>
               )}
-              {isProviderEnabled("github") && (
+              {isProviderEnabled('github') && (
                 <button
                   type="button"
                   onClick={() => {
                     window.location.href = `${API_BASE}/api/sso/login?provider=github`;
                   }}
                   class={cn(
-                    "w-full",
+                    'w-full',
                     button.size.md,
-                    "bg-surface-sunken text-text-primary",
+                    'bg-surface-sunken text-text-primary',
                     radius.md,
-                    "font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50",
+                    'font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50',
                   )}
                 >
-                  {t("buttons.signInWithGitHub")}
+                  {t('buttons.signInWithGitHub')}
                 </button>
               )}
             </div>

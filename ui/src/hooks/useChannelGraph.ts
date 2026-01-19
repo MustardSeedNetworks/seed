@@ -7,8 +7,8 @@
  * Extracted from App.tsx to reduce component complexity (#889).
  */
 
-import { useCallback, useState } from "react";
-import { api } from "../api";
+import { useCallback, useState } from 'react';
+import { api } from '../api';
 
 /** Network data for channel graph visualization */
 export type ChannelGraphNetwork = {
@@ -64,8 +64,8 @@ const normalizeChannelGraphResponse = (response: ChannelGraphApiResponse): Chann
       networks24Ghz: asNetworkArray(data.networks_2_4ghz),
       networks5Ghz: asNetworkArray(data.networks_5ghz),
       networks6Ghz: asNetworkArray(data.networks_6ghz),
-      connectedBssid: typeof data.connected_bssid === "string" ? data.connected_bssid : undefined,
-      scanTime: typeof data.scan_time === "string" ? data.scan_time : "",
+      connectedBssid: typeof data.connected_bssid === 'string' ? data.connected_bssid : undefined,
+      scanTime: typeof data.scan_time === 'string' ? data.scan_time : '',
     },
   };
 };
@@ -111,7 +111,7 @@ export function useChannelGraph({
       );
       setChannelGraphData(normalizeChannelGraphResponse(response));
     } catch {
-      setChannelGraphData({ available: false, error: "Failed to fetch channel data" });
+      setChannelGraphData({ available: false, error: 'Failed to fetch channel data' });
     } finally {
       setChannelGraphLoading(false);
     }

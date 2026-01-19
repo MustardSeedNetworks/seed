@@ -1,5 +1,5 @@
 // biome-ignore-all lint/nursery/useExplicitType: Test utilities - types inferred from defaults
-import type React from "react";
+import type React from 'react';
 /**
  * Test Setup and Utilities
  *
@@ -27,14 +27,14 @@ import type React from "react";
  * Applied In: All test files via vitest configuration
  */
 
-import "@testing-library/jest-dom";
-import { afterEach, beforeEach, vi } from "vitest";
+import '@testing-library/jest-dom';
+import { afterEach, beforeEach, vi } from 'vitest';
 
 // ============================================================
 // Mock react-i18next
 // ============================================================
 vi.mock(
-  "react-i18next",
+  'react-i18next',
   (): Record<string, unknown> => ({
     useTranslation: (): {
       t: (key: string) => string;
@@ -44,44 +44,44 @@ vi.mock(
         // Return common translations for tests
         const translations: Record<string, string> = {
           // Common namespace
-          "app.title": "The Seed",
-          "app.tagline": "Network Diagnostics by Mustard Seed Networks",
-          "buttons.login": "Login",
-          "buttons.logout": "Logout",
-          "status.loggingIn": "Logging in...",
-          "labels.username": "Username",
-          "labels.password": "Password",
-          "login.defaultCredentials": "Default: admin / seed",
-          "status.error": "Error",
-          "status.noDataAvailable": "No data available",
-          "accessibility.openHelp": "Open help",
-          "accessibility.openSettings": "Open settings",
-          "accessibility.switchToLightMode": "Switch to light mode",
-          "accessibility.switchToDarkMode": "Switch to dark mode",
-          "accessibility.selectInterface": "Select network interface",
-          "accessibility.selectEthernet": "Select Ethernet interface",
-          "accessibility.selectWifi": "Select WiFi interface",
-          "accessibility.selectProfile": "Select profile",
+          'app.title': 'The Seed',
+          'app.tagline': 'Network Diagnostics by Mustard Seed Networks',
+          'buttons.login': 'Login',
+          'buttons.logout': 'Logout',
+          'status.loggingIn': 'Logging in...',
+          'labels.username': 'Username',
+          'labels.password': 'Password',
+          'login.defaultCredentials': 'Default: admin / seed',
+          'status.error': 'Error',
+          'status.noDataAvailable': 'No data available',
+          'accessibility.openHelp': 'Open help',
+          'accessibility.openSettings': 'Open settings',
+          'accessibility.switchToLightMode': 'Switch to light mode',
+          'accessibility.switchToDarkMode': 'Switch to dark mode',
+          'accessibility.selectInterface': 'Select network interface',
+          'accessibility.selectEthernet': 'Select Ethernet interface',
+          'accessibility.selectWifi': 'Select WiFi interface',
+          'accessibility.selectProfile': 'Select profile',
           // Cards namespace
-          "system.title": "System Health",
-          "system.cpu": "CPU",
-          "system.memory": "Memory",
-          "system.disk": "Disk",
-          "system.uptime": "Uptime",
-          "system.load1m": "Load (1m)",
-          "system.goroutines": "Goroutines",
-          "system.processMem": "Process Memory",
+          'system.title': 'System Health',
+          'system.cpu': 'CPU',
+          'system.memory': 'Memory',
+          'system.disk': 'Disk',
+          'system.uptime': 'Uptime',
+          'system.load1m': 'Load (1m)',
+          'system.goroutines': 'Goroutines',
+          'system.processMem': 'Process Memory',
         };
         return translations[key] || key;
       },
       i18n: {
-        language: "en",
+        language: 'en',
         changeLanguage: vi.fn(),
       },
     }),
     // biome-ignore lint/style/useNamingConvention: react-i18next API requires this component name
     Trans: ({ children }: { children: React.ReactNode }) => children,
-    initReactI18next: { type: "3rdParty", init: vi.fn() },
+    initReactI18next: { type: '3rdParty', init: vi.fn() },
   }),
 );
 
@@ -116,7 +116,7 @@ export function createMockLocalStorage(): MockLocalStorage {
 }
 
 const mockLocalStorage: MockLocalStorage = createMockLocalStorage();
-Object.defineProperty(window, "localStorage", { value: mockLocalStorage });
+Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
 
 // Export for use in tests
 export { mockLocalStorage };
@@ -150,7 +150,7 @@ export function createMockResponse<T>(data: T, ok = true, status = 200): Promise
 // Helper to create error responses
 export function createMockErrorResponse(
   status = 500,
-  message = "Error",
+  message = 'Error',
 ): Promise<MockResponse<{ error: string }>> {
   return Promise.resolve({
     ok: false,
@@ -193,7 +193,7 @@ export class MockWebSocket {
     this.closeWasCalled = true;
     this.readyState = MockWebSocket.CLOSED;
     if (this.onclose) {
-      this.onclose(new CloseEvent("close"));
+      this.onclose(new CloseEvent('close'));
     }
   }
 
@@ -201,11 +201,11 @@ export class MockWebSocket {
   simulateOpen(): void {
     this.readyState = MockWebSocket.OPEN;
     if (this.onopen) {
-      this.onopen(new Event("open"));
+      this.onopen(new Event('open'));
     }
   }
 
-  simulateClose(code = 1000, reason = ""): void {
+  simulateClose(code = 1000, reason = ''): void {
     this.readyState = MockWebSocket.CLOSED;
     if (this.onclose) {
       this.onclose({ code, reason, wasClean: true } as CloseEvent);
@@ -214,7 +214,7 @@ export class MockWebSocket {
 
   simulateError(): void {
     if (this.onerror) {
-      this.onerror(new Event("error"));
+      this.onerror(new Event('error'));
     }
   }
 
@@ -234,19 +234,19 @@ export class MockWebSocket {
 // ============================================================
 export function mockWindowLocation(overrides: Partial<Location> = {}): void {
   const defaultLocation: Partial<Location> = {
-    protocol: "http:",
-    host: "localhost:8080",
-    hostname: "localhost",
-    port: "8080",
-    pathname: "/",
-    search: "",
-    hash: "",
-    href: "http://localhost:8080/",
-    origin: "http://localhost:8080",
+    protocol: 'http:',
+    host: 'localhost:8080',
+    hostname: 'localhost',
+    port: '8080',
+    pathname: '/',
+    search: '',
+    hash: '',
+    href: 'http://localhost:8080/',
+    origin: 'http://localhost:8080',
     ...overrides,
   };
 
-  Object.defineProperty(window, "location", {
+  Object.defineProperty(window, 'location', {
     value: defaultLocation,
     writable: true,
   });
@@ -302,7 +302,7 @@ export function createMockThresholds(): MockThresholds {
 /** Mock interface type */
 interface MockInterface {
   name: string;
-  type: "ethernet" | "wifi" | "loopback";
+  type: 'ethernet' | 'wifi' | 'loopback';
   up: boolean;
   friendlyName?: string;
   description?: string;
@@ -317,7 +317,7 @@ interface MockInterface {
 // Network interface factory
 export function createMockInterface(
   name: string,
-  type: "ethernet" | "wifi" | "loopback" = "ethernet",
+  type: 'ethernet' | 'wifi' | 'loopback' = 'ethernet',
   up = true,
   options?: {
     friendlyName?: string;

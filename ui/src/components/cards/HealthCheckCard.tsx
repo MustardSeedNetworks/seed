@@ -26,18 +26,18 @@
  * State: Manages test result data, fetches results periodically, uses SettingsContext for thresholds
  */
 
-import { memo, useCallback, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useSettings } from "../../contexts/useSettings";
-import { cn, icon as iconTokens, layout, radius, spacing, timing } from "../../styles/theme";
-import { HTTP_TIMING_HELP } from "../help/HelpContent";
-import { Card, type Status } from "../ui/Card";
-import { CollapsibleSection } from "../ui/CollapsibleSection";
-import { HeartPulse } from "../ui/Icons";
-import { StatusBadge } from "../ui/StatusBadge";
-import { Tooltip } from "../ui/Tooltip";
+import { memo, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useSettings } from '../../contexts/useSettings';
+import { cn, icon as iconTokens, layout, radius, spacing, timing } from '../../styles/theme';
+import { HTTP_TIMING_HELP } from '../help/HelpContent';
+import { Card, type Status } from '../ui/Card';
+import { CollapsibleSection } from '../ui/CollapsibleSection';
+import { HeartPulse } from '../ui/Icons';
+import { StatusBadge } from '../ui/StatusBadge';
+import { Tooltip } from '../ui/Tooltip';
 
-type StatusValue = "success" | "warning" | "error";
+type StatusValue = 'success' | 'warning' | 'error';
 
 interface TestResult {
   name: string;
@@ -255,7 +255,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
 > = memo(
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Health check card manages multiple protocol results with complex rendering for each test type (ping, TCP, UDP, HTTP, SQL, LDAP, RTSP, DICOM, HL7, FHIR, LTI, OPC-UA, Modbus)
   function healthCheckCard({ loading }: HealthCheckCardProps): React.JSX.Element | null {
-    const { t } = useTranslation("cards");
+    const { t } = useTranslation('cards');
     const { cardSettings } = useSettings();
     const [data, setData] = useState<HealthCheckData | null>(null);
     const [isRunning, setIsRunning] = useState(false);
@@ -265,18 +265,18 @@ export const HealthCheckCard: React.MemoExoticComponent<
       setIsRunning(true);
       setError(null);
       try {
-        const res: Response = await fetch("/api/v1/sap/health-checks/run", {
-          credentials: "include",
+        const res: Response = await fetch('/api/v1/sap/health-checks/run', {
+          credentials: 'include',
         });
         if (res.ok) {
           // biome-ignore lint/nursery/useAwaitThenable: Response.json() returns a Promise
           const result: HealthCheckData = (await res.json()) as HealthCheckData;
           setData(result);
         } else {
-          setError(t("health.failedToRun"));
+          setError(t('health.failedToRun'));
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : t("health.failedToRun"));
+        setError(err instanceof Error ? err.message : t('health.failedToRun'));
       } finally {
         setIsRunning(false);
       }
@@ -297,9 +297,9 @@ export const HealthCheckCard: React.MemoExoticComponent<
           /* Error handled in fetchTests */
         });
       };
-      window.addEventListener("healthChecksUpdated", handleHealthChecksUpdated);
+      window.addEventListener('healthChecksUpdated', handleHealthChecksUpdated);
       return (): void => {
-        window.removeEventListener("healthChecksUpdated", handleHealthChecksUpdated);
+        window.removeEventListener('healthChecksUpdated', handleHealthChecksUpdated);
       };
     }, [fetchTests]);
 
@@ -315,8 +315,8 @@ export const HealthCheckCard: React.MemoExoticComponent<
           await fetchTests();
           // Signal FAB that healthchecks are complete
           window.dispatchEvent(
-            new CustomEvent("cardTestComplete", {
-              detail: { test: "healthchecks" },
+            new CustomEvent('cardTestComplete', {
+              detail: { test: 'healthchecks' },
             }),
           );
         }
@@ -326,9 +326,9 @@ export const HealthCheckCard: React.MemoExoticComponent<
           /* Error handled in fetchTests */
         });
       };
-      window.addEventListener("runAllTests", wrappedHandler);
+      window.addEventListener('runAllTests', wrappedHandler);
       return (): void => {
-        window.removeEventListener("runAllTests", wrappedHandler);
+        window.removeEventListener('runAllTests', wrappedHandler);
       };
     }, [fetchTests, isRunning, cardSettings.healthChecks.autoRunOnLink]);
 
@@ -339,13 +339,13 @@ export const HealthCheckCard: React.MemoExoticComponent<
 
     const getStatus = (): Status => {
       if (loading || isRunning) {
-        return "loading";
+        return 'loading';
       }
       if (error) {
-        return "error";
+        return 'error';
       }
       if (!data) {
-        return "unknown";
+        return 'unknown';
       }
 
       const allResults = [
@@ -355,24 +355,24 @@ export const HealthCheckCard: React.MemoExoticComponent<
         ...data.httpResults,
       ];
       if (allResults.length === 0) {
-        return "unknown";
+        return 'unknown';
       }
 
       // Priority: error > warning > success
       // Any failure (!success) or error status = card is error
       if (
-        allResults.some((r) => !r.success || r.testStatus === "error" || r.certStatus === "error")
+        allResults.some((r) => !r.success || r.testStatus === 'error' || r.certStatus === 'error')
       ) {
-        return "error";
+        return 'error';
       }
 
       // Any warning status = card is warning
-      if (allResults.some((r) => r.testStatus === "warning" || r.certStatus === "warning")) {
-        return "warning";
+      if (allResults.some((r) => r.testStatus === 'warning' || r.certStatus === 'warning')) {
+        return 'warning';
       }
 
       // All tests passed with no warnings
-      return "success";
+      return 'success';
     };
 
     const formatLatency = (ms: number): string => {
@@ -383,47 +383,47 @@ export const HealthCheckCard: React.MemoExoticComponent<
     };
 
     // Helper to determine status label for a test result
-    const getStatusLabel = (result: TestResult): "success" | "warning" | "error" => {
+    const getStatusLabel = (result: TestResult): 'success' | 'warning' | 'error' => {
       if (!result.success) {
-        return "error";
+        return 'error';
       }
-      if (result.testStatus === "warning") {
-        return "warning";
+      if (result.testStatus === 'warning') {
+        return 'warning';
       }
-      return "success";
+      return 'success';
     };
 
     // Helper to get status color class
-    const getStatusColor = (statusLabel: "success" | "warning" | "error"): string => {
-      if (statusLabel === "success") {
-        return "text-status-success";
+    const getStatusColor = (statusLabel: 'success' | 'warning' | 'error'): string => {
+      if (statusLabel === 'success') {
+        return 'text-status-success';
       }
-      if (statusLabel === "warning") {
-        return "text-status-warning";
+      if (statusLabel === 'warning') {
+        return 'text-status-warning';
       }
-      return "text-status-error";
+      return 'text-status-error';
     };
 
     const renderTestResult = (
       result: TestResult,
-      type: "ping" | "tcp" | "udp" | "http",
+      type: 'ping' | 'tcp' | 'udp' | 'http',
     ): React.JSX.Element => {
       // Use testStatus for threshold-based coloring, fall back to success/error
-      const statusLabel: "success" | "warning" | "error" = getStatusLabel(result);
+      const statusLabel: 'success' | 'warning' | 'error' = getStatusLabel(result);
       const statusColor: string = getStatusColor(statusLabel);
 
       // Display name - backend already formats as host:port when name is empty
       // Only add HTTP status code, not ports (already in name)
       const displayName = result.name;
-      let details = "";
-      if (type === "http" && result.status) {
+      let details = '';
+      if (type === 'http' && result.status) {
         details = ` (${result.status})`;
       }
 
       // Extended ping info
-      const hasExtendedPing = type === "ping" && result.packetLoss !== undefined;
+      const hasExtendedPing = type === 'ping' && result.packetLoss !== undefined;
       const extendedInfo = hasExtendedPing
-        ? `${result.packetLoss?.toFixed(0)}% loss${result.jitter !== undefined ? `, ${result.jitter.toFixed(1)}ms jitter` : ""}`
+        ? `${result.packetLoss?.toFixed(0)}% loss${result.jitter !== undefined ? `, ${result.jitter.toFixed(1)}ms jitter` : ''}`
         : null;
 
       return (
@@ -433,15 +433,15 @@ export const HealthCheckCard: React.MemoExoticComponent<
               {displayName}
               {details}
             </span>
-            <span class={cn("inline-flex items-center", spacing.gap.compact)}>
+            <span class={cn('inline-flex items-center', spacing.gap.compact)}>
               <StatusBadge status={statusLabel} size="sm" />
-              <span class={cn("body-small font-medium", statusColor)}>
-                {result.success ? formatLatency(result.latency) : "fail"}
+              <span class={cn('body-small font-medium', statusColor)}>
+                {result.success ? formatLatency(result.latency) : 'fail'}
               </span>
             </span>
           </div>
           {extendedInfo ? (
-            <div class={cn("caption text-text-muted", spacing.micro.mt)}>{extendedInfo}</div>
+            <div class={cn('caption text-text-muted', spacing.micro.mt)}>{extendedInfo}</div>
           ) : null}
         </div>
       );
@@ -471,13 +471,13 @@ export const HealthCheckCard: React.MemoExoticComponent<
 
       // Get status-based text color for legend (bar colors stay fixed for phase identification)
       const getStatusTextColor = (status?: StatusValue): string => {
-        if (status === "error") {
-          return "text-status-error";
+        if (status === 'error') {
+          return 'text-status-error';
         }
-        if (status === "warning") {
-          return "text-status-warning";
+        if (status === 'warning') {
+          return 'text-status-warning';
         }
-        return "text-text-muted";
+        return 'text-text-muted';
       };
 
       // Segment colors are fixed per-phase for consistent identification
@@ -485,31 +485,31 @@ export const HealthCheckCard: React.MemoExoticComponent<
       // Status is indicated only via text color in the legend
       const segments = [
         {
-          label: t("health.timingDns"),
+          label: t('health.timingDns'),
           value: dns,
           color: timing.dns.bg,
           status: result.dnsStatus,
         },
         {
-          label: t("health.timingTcp"),
+          label: t('health.timingTcp'),
           value: tcp,
           color: timing.tcp.bg,
           status: result.tcpStatus,
         },
         {
-          label: t("health.timingTls"),
+          label: t('health.timingTls'),
           value: tls,
           color: timing.tls.bg,
           status: result.tlsStatus,
         },
         {
-          label: t("health.timingWait"),
+          label: t('health.timingWait'),
           value: ttfb,
           color: timing.wait.bg,
           status: result.ttfbStatus,
         },
         {
-          label: t("health.timingDownload"),
+          label: t('health.timingDownload'),
           value: download,
           color: timing.download.bg,
           status: undefined,
@@ -526,20 +526,20 @@ export const HealthCheckCard: React.MemoExoticComponent<
       return (
         <div class={spacing.micro.mtCompactMd}>
           {/* Stacked bar */}
-          <div class={cn("h-2", radius.full, "overflow-hidden flex bg-bg-tertiary")}>
+          <div class={cn('h-2', radius.full, 'overflow-hidden flex bg-bg-tertiary')}>
             {segments.map((seg, i) => {
               const widthPercent = Math.min(100, Math.max(0, (seg.value / total) * 100));
               return (
                 <div
                   key={seg.label}
                   class={cn(
-                    "h-full",
+                    'h-full',
                     seg.color,
-                    i === 0 ? "rounded-l-full" : "",
-                    i === segments.length - 1 ? "rounded-r-full" : "",
+                    i === 0 ? 'rounded-l-full' : '',
+                    i === segments.length - 1 ? 'rounded-r-full' : '',
                   )}
                   style={{ width: `${widthPercent}%` }}
-                  title={`${seg.label}: ${fmt(seg.value)}${seg.status && seg.status !== "success" ? ` (${seg.status})` : ""}`}
+                  title={`${seg.label}: ${fmt(seg.value)}${seg.status && seg.status !== 'success' ? ` (${seg.status})` : ''}`}
                 />
               );
             })}
@@ -547,9 +547,9 @@ export const HealthCheckCard: React.MemoExoticComponent<
           {/* Legend with tooltips */}
           <div
             class={cn(
-              "flex flex-wrap gap-x-3",
+              'flex flex-wrap gap-x-3',
               spacing.margin.top.tight,
-              "caption",
+              'caption',
               spacing.micro.gap,
             )}
           >
@@ -561,12 +561,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
               >
                 <span
                   class={cn(
-                    "inline-flex items-center",
+                    'inline-flex items-center',
                     spacing.gap.tight,
                     getStatusTextColor(seg.status),
                   )}
                 >
-                  <span class={cn("inline-block w-2 h-2", radius.full, seg.color)} />
+                  <span class={cn('inline-block w-2 h-2', radius.full, seg.color)} />
                   {seg.label} {fmt(seg.value)}
                 </span>
               </Tooltip>
@@ -579,15 +579,15 @@ export const HealthCheckCard: React.MemoExoticComponent<
     // Helper to get HTTP result status color
     const getHttpStatusColor = (result: TestResult): string => {
       if (!result.success) {
-        return "text-status-error";
+        return 'text-status-error';
       }
-      if (result.testStatus === "warning") {
-        return "text-status-warning";
+      if (result.testStatus === 'warning') {
+        return 'text-status-warning';
       }
-      if (result.testStatus === "error") {
-        return "text-status-error";
+      if (result.testStatus === 'error') {
+        return 'text-status-error';
       }
-      return "text-status-success";
+      return 'text-status-success';
     };
 
     // Helper to determine section status from test results
@@ -595,35 +595,35 @@ export const HealthCheckCard: React.MemoExoticComponent<
       results: TestResult[],
       // biome-ignore lint/style/noInferrableTypes: Type annotation required by useExplicitType
       checkCertStatus: boolean = false,
-    ): "success" | "warning" | "error" => {
+    ): 'success' | 'warning' | 'error' => {
       const hasError = results.some(
         (r) =>
-          !r.success || r.testStatus === "error" || (checkCertStatus && r.certStatus === "error"),
+          !r.success || r.testStatus === 'error' || (checkCertStatus && r.certStatus === 'error'),
       );
       if (hasError) {
-        return "error";
+        return 'error';
       }
       const hasWarning = results.some(
-        (r) => r.testStatus === "warning" || (checkCertStatus && r.certStatus === "warning"),
+        (r) => r.testStatus === 'warning' || (checkCertStatus && r.certStatus === 'warning'),
       );
       if (hasWarning) {
-        return "warning";
+        return 'warning';
       }
-      return "success";
+      return 'success';
     };
 
     // Helper to get cert status color
     const getCertStatusColor = (status?: StatusValue): string => {
-      if (status === "error") {
-        return "text-status-error";
+      if (status === 'error') {
+        return 'text-status-error';
       }
-      if (status === "warning") {
-        return "text-status-warning";
+      if (status === 'warning') {
+        return 'text-status-warning';
       }
-      if (status === "success") {
-        return "text-status-success";
+      if (status === 'success') {
+        return 'text-status-success';
       }
-      return "text-text-muted";
+      return 'text-text-muted';
     };
 
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: HTTP result rendering requires handling timing breakdown, certificate info, TLS version, and multiple conditional displays
@@ -635,28 +635,28 @@ export const HealthCheckCard: React.MemoExoticComponent<
       const certColor: string = getCertStatusColor(result.certStatus);
 
       const hasCertInfo = result.certDaysLeft !== undefined && result.certDaysLeft >= 0;
-      const hasTls = result.tlsVersion && result.tlsVersion !== "Unknown";
+      const hasTls = result.tlsVersion && result.tlsVersion !== 'Unknown';
 
       // Format cert expiry nicely
       // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Certificate expiry formatting requires multiple date range checks
       const formatCertExpiry = (): string => {
         if (!hasCertInfo || result.certDaysLeft === undefined) {
-          return "";
+          return '';
         }
         const days: number = result.certDaysLeft;
         if (days <= 0) {
-          return t("health.expired");
+          return t('health.expired');
         }
         if (days === 1) {
-          return t("health.certExpiry1Day");
+          return t('health.certExpiry1Day');
         }
         if (days < 30) {
-          return t("health.certExpiryDays", { days });
+          return t('health.certExpiryDays', { days });
         }
         if (days < 365) {
-          return t("health.certExpiryMonths", { months: Math.floor(days / 30) });
+          return t('health.certExpiryMonths', { months: Math.floor(days / 30) });
         }
-        return t("health.certExpiryYears", { years: Math.floor(days / 365) });
+        return t('health.certExpiryYears', { years: Math.floor(days / 365) });
       };
 
       // Check if we have timing breakdown data
@@ -671,20 +671,20 @@ export const HealthCheckCard: React.MemoExoticComponent<
           <div class={layout.flex.between}>
             <span class="body-small text-text-muted truncate flex-1" title={result.name}>
               {result.name}
-              {result.status ? ` (${result.status})` : ""}
+              {result.status ? ` (${result.status})` : ''}
             </span>
-            <span class={cn("body-small font-medium", statusColor)}>
-              {result.success ? formatLatency(result.latency) : "fail"}
+            <span class={cn('body-small font-medium', statusColor)}>
+              {result.success ? formatLatency(result.latency) : 'fail'}
             </span>
           </div>
           {hasTimingData ? <TIMING_BAR result={result} /> : null}
           {!result.success && result.error ? (
-            <div class={cn("caption text-status-error", spacing.margin.top.tight)}>
+            <div class={cn('caption text-status-error', spacing.margin.top.tight)}>
               {result.error}
             </div>
           ) : null}
           {hasTls || hasCertInfo ? (
-            <div class={cn("caption", spacing.margin.top.tight, layout.inline.default)}>
+            <div class={cn('caption', spacing.margin.top.tight, layout.inline.default)}>
               {hasTls ? <span class="text-text-muted">{result.tlsVersion}</span> : null}
               {hasTls && hasCertInfo ? <span class="text-text-muted">·</span> : null}
               {hasCertInfo ? (
@@ -708,57 +708,57 @@ export const HealthCheckCard: React.MemoExoticComponent<
 
     return (
       <Card
-        title={t("health.title")}
+        title={t('health.title')}
         icon={<HeartPulse class={iconTokens.size.md} />}
         status={getStatus()}
       >
-        {isRunning ? <p class="body-small text-text-muted">{t("health.runningTests")}</p> : null}
+        {isRunning ? <p class="body-small text-text-muted">{t('health.runningTests')}</p> : null}
 
         {!isRunning && data ? (
           <>
             {/* Ping Results */}
             {data.pingResults && data.pingResults.length > 0 ? (
               <CollapsibleSection
-                title={t("health.ping")}
+                title={t('health.ping')}
                 count={data.pingResults.length}
                 variant="compact"
                 defaultOpen={true}
                 status={getSectionStatus(data.pingResults)}
               >
-                {data.pingResults.map((r) => renderTestResult(r, "ping"))}
+                {data.pingResults.map((r) => renderTestResult(r, 'ping'))}
               </CollapsibleSection>
             ) : null}
 
             {/* TCP Results */}
             {data.tcpResults && data.tcpResults.length > 0 ? (
               <CollapsibleSection
-                title={t("health.tcpPorts")}
+                title={t('health.tcpPorts')}
                 count={data.tcpResults.length}
                 variant="compact"
                 defaultOpen={true}
                 status={getSectionStatus(data.tcpResults)}
               >
-                {data.tcpResults.map((r) => renderTestResult(r, "tcp"))}
+                {data.tcpResults.map((r) => renderTestResult(r, 'tcp'))}
               </CollapsibleSection>
             ) : null}
 
             {/* UDP Results */}
             {data.udpResults && data.udpResults.length > 0 ? (
               <CollapsibleSection
-                title={t("health.udpPorts")}
+                title={t('health.udpPorts')}
                 count={data.udpResults.length}
                 variant="compact"
                 defaultOpen={true}
                 status={getSectionStatus(data.udpResults)}
               >
-                {data.udpResults.map((r) => renderTestResult(r, "udp"))}
+                {data.udpResults.map((r) => renderTestResult(r, 'udp'))}
               </CollapsibleSection>
             ) : null}
 
             {/* HTTP Results */}
             {data.httpResults && data.httpResults.length > 0 ? (
               <CollapsibleSection
-                title={t("health.http")}
+                title={t('health.http')}
                 count={data.httpResults.length}
                 variant="compact"
                 defaultOpen={true}
@@ -771,12 +771,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
             {/* SQL/Database Results */}
             {data.enterpriseResults?.sqlResults && data.enterpriseResults.sqlResults.length > 0 ? (
               <CollapsibleSection
-                title={t("health.database")}
+                title={t('health.database')}
                 count={data.enterpriseResults.sqlResults.length}
                 variant="compact"
                 defaultOpen={true}
                 status={
-                  data.enterpriseResults.sqlResults.some((r) => !r.success) ? "error" : "success"
+                  data.enterpriseResults.sqlResults.some((r) => !r.success) ? 'error' : 'success'
                 }
               >
                 {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: SQL result rendering with connect/query metrics */}
@@ -787,12 +787,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       layout.flex.between,
                       spacing.pad.xs,
                       radius.default,
-                      r.success ? "bg-surface-raised" : "bg-status-error/10",
+                      r.success ? 'bg-surface-raised' : 'bg-status-error/10',
                     )}
                   >
                     <div class={layout.stack.compact}>
                       <div class="flex items-center gap-2">
-                        <StatusBadge status={r.success ? "success" : "error"} />
+                        <StatusBadge status={r.success ? 'success' : 'error'} />
                         <span class="body-small font-medium">{r.name}</span>
                         <span class="caption text-text-muted">
                           {r.driver} • {r.host}:{r.port}
@@ -825,14 +825,14 @@ export const HealthCheckCard: React.MemoExoticComponent<
             {data.enterpriseResults?.fileShareResults &&
             data.enterpriseResults.fileShareResults.length > 0 ? (
               <CollapsibleSection
-                title={t("health.fileShares")}
+                title={t('health.fileShares')}
                 count={data.enterpriseResults.fileShareResults.length}
                 variant="compact"
                 defaultOpen={true}
                 status={
                   data.enterpriseResults.fileShareResults.some((r) => !r.success)
-                    ? "error"
-                    : "success"
+                    ? 'error'
+                    : 'success'
                 }
               >
                 {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: File share result rendering with read/write speeds */}
@@ -843,12 +843,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       layout.flex.between,
                       spacing.pad.xs,
                       radius.default,
-                      r.success ? "bg-surface-raised" : "bg-status-error/10",
+                      r.success ? 'bg-surface-raised' : 'bg-status-error/10',
                     )}
                   >
                     <div class={layout.stack.compact}>
                       <div class="flex items-center gap-2">
-                        <StatusBadge status={r.success ? "success" : "error"} />
+                        <StatusBadge status={r.success ? 'success' : 'error'} />
                         <span class="body-small font-medium">{r.name}</span>
                         <span class="caption text-text-muted">
                           {r.protocol.toUpperCase()} • /{r.host}/{r.share}
@@ -867,7 +867,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
                             ? `R: ${r.readSpeedMbps.toFixed(1)} MB/s`
                             : null}
                           {r.readSpeedMbps !== undefined && r.writeSpeedMbps !== undefined
-                            ? " • "
+                            ? ' • '
                             : null}
                           {r.writeSpeedMbps !== undefined
                             ? `W: ${r.writeSpeedMbps.toFixed(1)} MB/s`
@@ -889,7 +889,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
                 variant="compact"
                 defaultOpen={true}
                 status={
-                  data.enterpriseResults.ldapResults.some((r) => !r.success) ? "error" : "success"
+                  data.enterpriseResults.ldapResults.some((r) => !r.success) ? 'error' : 'success'
                 }
               >
                 {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: LDAP result rendering with connect/bind metrics */}
@@ -900,15 +900,15 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       layout.flex.between,
                       spacing.pad.xs,
                       radius.default,
-                      r.success ? "bg-surface-raised" : "bg-status-error/10",
+                      r.success ? 'bg-surface-raised' : 'bg-status-error/10',
                     )}
                   >
                     <div class={layout.stack.compact}>
                       <div class="flex items-center gap-2">
-                        <StatusBadge status={r.success ? "success" : "error"} />
+                        <StatusBadge status={r.success ? 'success' : 'error'} />
                         <span class="body-small font-medium">{r.name}</span>
                         <span class="caption text-text-muted">
-                          {r.useTls ? "LDAPS" : "LDAP"} • {r.host}:{r.port}
+                          {r.useTls ? 'LDAPS' : 'LDAP'} • {r.host}:{r.port}
                         </span>
                       </div>
                       {r.success && r.serverInfo ? (
@@ -937,11 +937,11 @@ export const HealthCheckCard: React.MemoExoticComponent<
             {/* RTSP Video Results */}
             {data.videoResults?.rtspResults && data.videoResults.rtspResults.length > 0 ? (
               <CollapsibleSection
-                title={t("health.rtsp")}
+                title={t('health.rtsp')}
                 count={data.videoResults.rtspResults.length}
                 variant="compact"
                 defaultOpen={true}
-                status={data.videoResults.rtspResults.some((r) => !r.success) ? "error" : "success"}
+                status={data.videoResults.rtspResults.some((r) => !r.success) ? 'error' : 'success'}
               >
                 {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: RTSP result rendering with codec/resolution info */}
                 {data.videoResults.rtspResults.map((r) => (
@@ -951,12 +951,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       layout.flex.between,
                       spacing.pad.xs,
                       radius.default,
-                      r.success ? "bg-surface-raised" : "bg-status-error/10",
+                      r.success ? 'bg-surface-raised' : 'bg-status-error/10',
                     )}
                   >
                     <div class={layout.stack.compact}>
                       <div class="flex items-center gap-2">
-                        <StatusBadge status={r.success ? "success" : "error"} />
+                        <StatusBadge status={r.success ? 'success' : 'error'} />
                         <span class="body-small font-medium">{r.name}</span>
                         <span class="caption text-text-muted truncate max-w-48" title={r.url}>
                           {r.url}
@@ -965,7 +965,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       {r.success && (r.codec || r.resolution) ? (
                         <span class="caption text-text-muted ml-6">
                           {r.codec ? r.codec : null}
-                          {r.codec && r.resolution ? " • " : null}
+                          {r.codec && r.resolution ? ' • ' : null}
                           {r.resolution ? r.resolution : null}
                         </span>
                       ) : null}
@@ -989,7 +989,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
                 variant="compact"
                 defaultOpen={true}
                 status={
-                  data.medicalResults.dicomResults.some((r) => !r.success) ? "error" : "success"
+                  data.medicalResults.dicomResults.some((r) => !r.success) ? 'error' : 'success'
                 }
               >
                 {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: DICOM result rendering with AE title and C-ECHO metrics */}
@@ -1000,12 +1000,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       layout.flex.between,
                       spacing.pad.xs,
                       radius.default,
-                      r.success ? "bg-surface-raised" : "bg-status-error/10",
+                      r.success ? 'bg-surface-raised' : 'bg-status-error/10',
                     )}
                   >
                     <div class={layout.stack.compact}>
                       <div class="flex items-center gap-2">
-                        <StatusBadge status={r.success ? "success" : "error"} />
+                        <StatusBadge status={r.success ? 'success' : 'error'} />
                         <span class="body-small font-medium">{r.name}</span>
                         <span class="caption text-text-muted">
                           {r.host}:{r.port} • AE: {r.aeTitle}
@@ -1041,7 +1041,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
                 variant="compact"
                 defaultOpen={true}
                 status={
-                  data.medicalResults.hl7Results.some((r) => !r.success) ? "error" : "success"
+                  data.medicalResults.hl7Results.some((r) => !r.success) ? 'error' : 'success'
                 }
               >
                 {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: HL7 result rendering with ACK code and response metrics */}
@@ -1052,12 +1052,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       layout.flex.between,
                       spacing.pad.xs,
                       radius.default,
-                      r.success ? "bg-surface-raised" : "bg-status-error/10",
+                      r.success ? 'bg-surface-raised' : 'bg-status-error/10',
                     )}
                   >
                     <div class={layout.stack.compact}>
                       <div class="flex items-center gap-2">
-                        <StatusBadge status={r.success ? "success" : "error"} />
+                        <StatusBadge status={r.success ? 'success' : 'error'} />
                         <span class="body-small font-medium">{r.name}</span>
                         <span class="caption text-text-muted">
                           {r.host}:{r.port}
@@ -1066,7 +1066,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       {r.success && (r.ackCode || r.serverVersion) ? (
                         <span class="caption text-text-muted ml-6">
                           {r.ackCode ? `ACK: ${r.ackCode}` : null}
-                          {r.ackCode && r.serverVersion ? " • " : null}
+                          {r.ackCode && r.serverVersion ? ' • ' : null}
                           {r.serverVersion ? r.serverVersion : null}
                         </span>
                       ) : null}
@@ -1095,7 +1095,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
                 variant="compact"
                 defaultOpen={true}
                 status={
-                  data.medicalResults.fhirResults.some((r) => !r.success) ? "error" : "success"
+                  data.medicalResults.fhirResults.some((r) => !r.success) ? 'error' : 'success'
                 }
               >
                 {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: FHIR result rendering with version and resource count */}
@@ -1106,12 +1106,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       layout.flex.between,
                       spacing.pad.xs,
                       radius.default,
-                      r.success ? "bg-surface-raised" : "bg-status-error/10",
+                      r.success ? 'bg-surface-raised' : 'bg-status-error/10',
                     )}
                   >
                     <div class={layout.stack.compact}>
                       <div class="flex items-center gap-2">
-                        <StatusBadge status={r.success ? "success" : "error"} />
+                        <StatusBadge status={r.success ? 'success' : 'error'} />
                         <span class="body-small font-medium">{r.name}</span>
                         <span class="caption text-text-muted truncate max-w-48" title={r.baseUrl}>
                           {r.baseUrl}
@@ -1120,7 +1120,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       {r.success && (r.fhirVersion || r.serverName) ? (
                         <span class="caption text-text-muted ml-6">
                           {r.fhirVersion ? `v${r.fhirVersion}` : null}
-                          {r.fhirVersion && r.serverName ? " • " : null}
+                          {r.fhirVersion && r.serverName ? ' • ' : null}
                           {r.serverName ? r.serverName : null}
                         </span>
                       ) : null}
@@ -1147,7 +1147,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
                 variant="compact"
                 defaultOpen={true}
                 status={
-                  data.educationResults.ltiResults.some((r) => !r.success) ? "error" : "success"
+                  data.educationResults.ltiResults.some((r) => !r.success) ? 'error' : 'success'
                 }
               >
                 {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: LTI result rendering with version info */}
@@ -1158,12 +1158,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       layout.flex.between,
                       spacing.pad.xs,
                       radius.default,
-                      r.success ? "bg-surface-raised" : "bg-status-error/10",
+                      r.success ? 'bg-surface-raised' : 'bg-status-error/10',
                     )}
                   >
                     <div class={layout.stack.compact}>
                       <div class="flex items-center gap-2">
-                        <StatusBadge status={r.success ? "success" : "error"} />
+                        <StatusBadge status={r.success ? 'success' : 'error'} />
                         <span class="body-small font-medium">{r.name}</span>
                         <span class="caption text-text-muted truncate max-w-48" title={r.launchUrl}>
                           {r.launchUrl}
@@ -1193,7 +1193,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
                 variant="compact"
                 defaultOpen={true}
                 status={
-                  data.industrialResults.opcuaResults.some((r) => !r.success) ? "error" : "success"
+                  data.industrialResults.opcuaResults.some((r) => !r.success) ? 'error' : 'success'
                 }
               >
                 {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: OPC-UA result rendering with security and product info */}
@@ -1204,12 +1204,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       layout.flex.between,
                       spacing.pad.xs,
                       radius.default,
-                      r.success ? "bg-surface-raised" : "bg-status-error/10",
+                      r.success ? 'bg-surface-raised' : 'bg-status-error/10',
                     )}
                   >
                     <div class={layout.stack.compact}>
                       <div class="flex items-center gap-2">
-                        <StatusBadge status={r.success ? "success" : "error"} />
+                        <StatusBadge status={r.success ? 'success' : 'error'} />
                         <span class="body-small font-medium">{r.name}</span>
                         <span
                           class="caption text-text-muted truncate max-w-48"
@@ -1221,7 +1221,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       {r.success && (r.securityMode || r.productName) ? (
                         <span class="caption text-text-muted ml-6">
                           {r.securityMode ? r.securityMode : null}
-                          {r.securityMode && r.productName ? " • " : null}
+                          {r.securityMode && r.productName ? ' • ' : null}
                           {r.productName ? r.productName : null}
                         </span>
                       ) : null}
@@ -1249,7 +1249,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
                 variant="compact"
                 defaultOpen={true}
                 status={
-                  data.industrialResults.modbusResults.some((r) => !r.success) ? "error" : "success"
+                  data.industrialResults.modbusResults.some((r) => !r.success) ? 'error' : 'success'
                 }
               >
                 {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Modbus result rendering with register values */}
@@ -1260,12 +1260,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       layout.flex.between,
                       spacing.pad.xs,
                       radius.default,
-                      r.success ? "bg-surface-raised" : "bg-status-error/10",
+                      r.success ? 'bg-surface-raised' : 'bg-status-error/10',
                     )}
                   >
                     <div class={layout.stack.compact}>
                       <div class="flex items-center gap-2">
-                        <StatusBadge status={r.success ? "success" : "error"} />
+                        <StatusBadge status={r.success ? 'success' : 'error'} />
                         <span class="body-small font-medium">{r.name}</span>
                         <span class="caption text-text-muted">
                           {r.host}:{r.port} • Unit {r.unitId}
@@ -1279,7 +1279,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
                       <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                       {r.success && r.registerValue !== undefined ? (
                         <div class="caption text-text-muted">
-                          Reg: 0x{r.registerValue.toString(16).toUpperCase().padStart(4, "0")}
+                          Reg: 0x{r.registerValue.toString(16).toUpperCase().padStart(4, '0')}
                         </div>
                       ) : null}
                     </div>

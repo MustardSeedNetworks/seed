@@ -1,8 +1,8 @@
-import type React from "react";
-import { memo, useCallback, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { logger } from "../../../lib/logger";
-import { cn, icon as iconTokens, layout, radius, spacing } from "../../../styles/theme";
+import type React from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { logger } from '../../../lib/logger';
+import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import type {
   CardSettings,
   DiscoveryServiceStatus as DiscoveryServiceStatusType,
@@ -10,16 +10,16 @@ import type {
   SaveStatus,
   SnmpSettings as SnmpSettingsType,
   SubnetConfig,
-} from "../../../types/settings";
-import { CollapsibleSection } from "../../ui/CollapsibleSection";
-import { ScanSearch } from "../../ui/Icons";
-import { AutoSaveIndicator } from "./AutoSaveIndicator";
-import { DiscoveryCustomOptions } from "./discovery/DiscoveryCustomOptions";
-import { DiscoveryServiceStatus } from "./discovery/DiscoveryServiceStatus";
-import { DiscoveryTimingSettings } from "./discovery/DiscoveryTimingSettings";
-import { DiscoveryToggles } from "./discovery/DiscoveryToggles";
-import { SnmpSettingsSection } from "./discovery/SnmpSettingsSection";
-import { SubnetManager } from "./discovery/SubnetManager";
+} from '../../../types/settings';
+import { CollapsibleSection } from '../../ui/CollapsibleSection';
+import { ScanSearch } from '../../ui/Icons';
+import { AutoSaveIndicator } from './AutoSaveIndicator';
+import { DiscoveryCustomOptions } from './discovery/DiscoveryCustomOptions';
+import { DiscoveryServiceStatus } from './discovery/DiscoveryServiceStatus';
+import { DiscoveryTimingSettings } from './discovery/DiscoveryTimingSettings';
+import { DiscoveryToggles } from './discovery/DiscoveryToggles';
+import { SnmpSettingsSection } from './discovery/SnmpSettingsSection';
+import { SubnetManager } from './discovery/SubnetManager';
 
 interface DiscoverySettingsProps {
   networkDiscoverySettings: NetworkDiscoverySettingsType;
@@ -72,7 +72,7 @@ export const DiscoverySettings: React.NamedExoticComponent<DiscoverySettingsProp
     cardSettings,
     updateCardSettings,
   }: DiscoverySettingsProps): React.ReactElement {
-    const { t } = useTranslation("settings");
+    const { t } = useTranslation('settings');
     const [serviceStatus, setServiceStatus] = useState<DiscoveryServiceStatusType | null>(null);
     const [statusLoading, setStatusLoading] = useState(false);
 
@@ -81,18 +81,18 @@ export const DiscoverySettings: React.NamedExoticComponent<DiscoverySettingsProp
     const fetchServiceStatus = useCallback(async (): Promise<void> => {
       setStatusLoading(true);
       try {
-        const response = await fetch("/api/v1/shell/discovery/service/status");
+        const response = await fetch('/api/v1/shell/discovery/service/status');
         if (response.ok) {
           // biome-ignore lint/nursery/useAwaitThenable: response.json() is a Promise
           const data = (await response.json()) as DiscoveryServiceStatusType;
           setServiceStatus(data);
         } else {
           // Log non-OK responses for debugging
-          logger.warn("discovery", "Failed to fetch service status", { status: response.status });
+          logger.warn('discovery', 'Failed to fetch service status', { status: response.status });
         }
       } catch (err) {
         // Log error for debugging - status display is informational but errors help troubleshoot
-        logger.warn("discovery", "Error fetching service status", { error: err });
+        logger.warn('discovery', 'Error fetching service status', { error: err });
       } finally {
         setStatusLoading(false);
       }
@@ -112,7 +112,7 @@ export const DiscoverySettings: React.NamedExoticComponent<DiscoverySettingsProp
         title={
           <div class={layout.inline.default}>
             <ScanSearch class={iconTokens.size.sm} />
-            <span>{t("sections.discovery")}</span>
+            <span>{t('sections.discovery')}</span>
             <AutoSaveIndicator status={networkDiscoveryStatus} />
           </div>
         }
@@ -125,17 +125,17 @@ export const DiscoverySettings: React.NamedExoticComponent<DiscoverySettingsProp
               class={cn(
                 layout.flex.between,
                 spacing.pad.sm,
-                "bg-surface-base",
+                'bg-surface-base',
                 radius.default,
-                "border border-surface-border",
+                'border border-surface-border',
               )}
             >
               <div>
                 <span class="body-small text-text-primary font-medium">
-                  {t("common.showCard", "Show Card")}
+                  {t('common.showCard', 'Show Card')}
                 </span>
                 <p class="caption text-text-muted">
-                  {t("common.showCardDesc", "Display this card on the dashboard")}
+                  {t('common.showCardDesc', 'Display this card on the dashboard')}
                 </p>
               </div>
               <input
@@ -156,17 +156,17 @@ export const DiscoverySettings: React.NamedExoticComponent<DiscoverySettingsProp
               class={cn(
                 layout.flex.between,
                 spacing.pad.sm,
-                "bg-surface-base",
+                'bg-surface-base',
                 radius.default,
-                "border border-surface-border",
+                'border border-surface-border',
               )}
             >
               <div>
                 <span class="body-small text-text-primary font-medium">
-                  {t("common.runOnFab", "Include in Run All")}
+                  {t('common.runOnFab', 'Include in Run All')}
                 </span>
                 <p class="caption text-text-muted">
-                  {t("common.runOnFabDesc", "Run when FAB button is clicked")}
+                  {t('common.runOnFabDesc', 'Run when FAB button is clicked')}
                 </p>
               </div>
               <input

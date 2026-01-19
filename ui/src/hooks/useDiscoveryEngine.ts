@@ -16,9 +16,9 @@
  * ```
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { api } from "../api";
-import { LogComponents, logger } from "../lib/logger";
+import { useCallback, useEffect, useState } from 'react';
+import { api } from '../api';
+import { LogComponents, logger } from '../lib/logger';
 
 const log: ReturnType<typeof logger> = logger(LogComponents.API);
 
@@ -87,7 +87,7 @@ export interface EngineScanResult {
 
 /** Scan options */
 export interface EngineScanOptions {
-  scanType?: "quick" | "full";
+  scanType?: 'quick' | 'full';
   includeWired?: boolean;
   includeWifi?: boolean;
   includeBluetooth?: boolean;
@@ -156,7 +156,7 @@ export function useDiscoveryEngine(): {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const response = await api.get<EngineResponse>("/api/v1/discovery/engine");
+      const response = await api.get<EngineResponse>('/api/v1/discovery/engine');
       setState((prev) => ({
         ...prev,
         devices: response.devices || [],
@@ -166,8 +166,8 @@ export function useDiscoveryEngine(): {
         isLoading: false,
       }));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to fetch devices";
-      log.error("Failed to fetch devices from Discovery Engine", err);
+      const message = err instanceof Error ? err.message : 'Failed to fetch devices';
+      log.error('Failed to fetch devices from Discovery Engine', err);
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -184,7 +184,7 @@ export function useDiscoveryEngine(): {
 
     try {
       const response = await api.post<EngineResponse>(
-        "/api/v1/discovery/engine/scan",
+        '/api/v1/discovery/engine/scan',
         options || {},
       );
       setState((prev) => ({
@@ -197,8 +197,8 @@ export function useDiscoveryEngine(): {
       }));
       return response.scanResult;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Scan failed";
-      log.error("Discovery Engine scan failed", err);
+      const message = err instanceof Error ? err.message : 'Scan failed';
+      log.error('Discovery Engine scan failed', err);
       setState((prev) => ({
         ...prev,
         isScanning: false,
@@ -215,7 +215,7 @@ export function useDiscoveryEngine(): {
     setState((prev) => ({ ...prev, isScanning: true, error: null }));
 
     try {
-      const response = await api.post<EngineResponse>("/api/v1/discovery/engine/quick");
+      const response = await api.post<EngineResponse>('/api/v1/discovery/engine/quick');
       setState((prev) => ({
         ...prev,
         devices: response.devices || [],
@@ -226,8 +226,8 @@ export function useDiscoveryEngine(): {
       }));
       return response.scanResult;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Quick scan failed";
-      log.error("Discovery Engine quick scan failed", err);
+      const message = err instanceof Error ? err.message : 'Quick scan failed';
+      log.error('Discovery Engine quick scan failed', err);
       setState((prev) => ({
         ...prev,
         isScanning: false,
@@ -244,7 +244,7 @@ export function useDiscoveryEngine(): {
     setState((prev) => ({ ...prev, isScanning: true, error: null }));
 
     try {
-      const response = await api.post<EngineResponse>("/api/v1/discovery/engine/full");
+      const response = await api.post<EngineResponse>('/api/v1/discovery/engine/full');
       setState((prev) => ({
         ...prev,
         devices: response.devices || [],
@@ -255,8 +255,8 @@ export function useDiscoveryEngine(): {
       }));
       return response.scanResult;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Full scan failed";
-      log.error("Discovery Engine full scan failed", err);
+      const message = err instanceof Error ? err.message : 'Full scan failed';
+      log.error('Discovery Engine full scan failed', err);
       setState((prev) => ({
         ...prev,
         isScanning: false,
@@ -286,11 +286,11 @@ export function useDiscoveryEngine(): {
    */
   const fetchCapabilities = useCallback(async () => {
     try {
-      const caps = await api.get<EngineCapabilities>("/api/v1/discovery/engine/capabilities");
+      const caps = await api.get<EngineCapabilities>('/api/v1/discovery/engine/capabilities');
       setState((prev) => ({ ...prev, capabilities: caps }));
       return caps;
     } catch (err) {
-      log.error("Failed to fetch Engine capabilities", err);
+      log.error('Failed to fetch Engine capabilities', err);
       return null;
     }
   }, []);
@@ -300,11 +300,11 @@ export function useDiscoveryEngine(): {
    */
   const fetchStats = useCallback(async () => {
     try {
-      const stats = await api.get<EngineStats>("/api/v1/discovery/engine/stats");
+      const stats = await api.get<EngineStats>('/api/v1/discovery/engine/stats');
       setState((prev) => ({ ...prev, stats }));
       return stats;
     } catch (err) {
-      log.error("Failed to fetch Engine stats", err);
+      log.error('Failed to fetch Engine stats', err);
       return null;
     }
   }, []);

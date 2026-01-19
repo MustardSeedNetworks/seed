@@ -15,11 +15,11 @@
  * <ProfileSelector />
  */
 
-import type React from "react";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { cn, icon as iconTokens, radius, spacing } from "../../styles/theme";
-import type { Profile } from "../../types/profile";
+import type React from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
+import type { Profile } from '../../types/profile';
 
 interface ProfileSelectorProps {
   profiles: Profile[];
@@ -56,21 +56,21 @@ function ProfileSelectorComponent({
     };
 
     if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside);
     }
 
     return (): void => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
 
   // Handle keyboard navigation
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         setIsOpen(false);
         buttonRef.current?.focus();
-      } else if (event.key === "ArrowDown" && !isOpen) {
+      } else if (event.key === 'ArrowDown' && !isOpen) {
         event.preventDefault();
         setIsOpen(true);
       }
@@ -111,13 +111,13 @@ function ProfileSelectorComponent({
     if (activeProfile) {
       return activeProfile.name;
     }
-    return t("profile.none", "No Profile");
+    return t('profile.none', 'No Profile');
   };
 
   // Profile icon
   const PROFILE_ICON = (): React.JSX.Element => (
     <svg
-      class={cn(iconTokens.size.sm, "text-brand-primary")}
+      class={cn(iconTokens.size.sm, 'text-brand-primary')}
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -135,7 +135,7 @@ function ProfileSelectorComponent({
   // Default indicator
   const DEFAULT_BADGE = (): React.JSX.Element => (
     <span class="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary font-medium">
-      {t("profile.default", "Default")}
+      {t('profile.default', 'Default')}
     </span>
   );
 
@@ -151,28 +151,28 @@ function ProfileSelectorComponent({
         disabled={isDisabled}
         onClick={(): void => setIsOpen(!isOpen)}
         class={cn(
-          "flex items-center",
+          'flex items-center',
           spacing.gap.tight,
           spacing.pad.sm,
           radius.md,
-          "border border-surface-border bg-surface-base hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed",
+          'border border-surface-border bg-surface-base hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed',
         )}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label={t("accessibility.selectProfile", "Select profile")}
+        aria-label={t('accessibility.selectProfile', 'Select profile')}
       >
         {/* Profile icon */}
         <PROFILE_ICON />
 
         {/* Current profile name */}
         <span class="body-small font-medium text-text-primary truncate max-w-24 sm:max-w-32">
-          {loading ? t("profile.loading", "Loading...") : getProfileDisplayName()}
+          {loading ? t('profile.loading', 'Loading...') : getProfileDisplayName()}
         </span>
 
         {/* Loading/switching indicator */}
         {loading || switching ? (
           <svg
-            class={cn(iconTokens.size.sm, "text-text-muted animate-spin")}
+            class={cn(iconTokens.size.sm, 'text-text-muted animate-spin')}
             fill="none"
             viewBox="0 0 24 24"
             aria-hidden="true"
@@ -198,8 +198,8 @@ function ProfileSelectorComponent({
           <svg
             class={cn(
               iconTokens.size.sm,
-              "text-text-muted transition-transform",
-              isOpen ? "rotate-180" : "",
+              'text-text-muted transition-transform',
+              isOpen ? 'rotate-180' : '',
             )}
             fill="none"
             stroke="currentColor"
@@ -215,19 +215,19 @@ function ProfileSelectorComponent({
       {isOpen ? (
         <div
           class={cn(
-            "absolute top-full left-0 mt-1 w-64",
+            'absolute top-full left-0 mt-1 w-64',
             radius.md,
-            "border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden",
+            'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
           )}
           role="listbox"
-          aria-label={t("accessibility.profileList", "Available profiles")}
+          aria-label={t('accessibility.profileList', 'Available profiles')}
         >
           {/* Profiles section */}
           {profiles.length > 0 && (
             <div>
-              <div class={cn(spacing.pad.sm, "bg-surface-base border-b border-surface-border")}>
+              <div class={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
                 <span class="caption font-semibold text-text-muted uppercase tracking-wide">
-                  {t("profile.profiles", "Profiles")}
+                  {t('profile.profiles', 'Profiles')}
                 </span>
               </div>
               <div class="max-h-60 overflow-y-auto">
@@ -240,11 +240,11 @@ function ProfileSelectorComponent({
                     }}
                     disabled={switching}
                     class={cn(
-                      "w-full flex items-center",
+                      'w-full flex items-center',
                       spacing.gap.tight,
                       spacing.pad.sm,
-                      "hover:bg-surface-hover focus:bg-surface-hover focus:outline-none disabled:opacity-50",
-                      profile.id === activeProfile?.id ? "bg-brand-primary/10" : "",
+                      'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none disabled:opacity-50',
+                      profile.id === activeProfile?.id ? 'bg-brand-primary/10' : '',
                     )}
                     role="option"
                     aria-selected={profile.id === activeProfile?.id}
@@ -252,8 +252,8 @@ function ProfileSelectorComponent({
                     {/* Selection indicator */}
                     <span
                       class={cn(
-                        "w-2 h-2 rounded-full flex-shrink-0",
-                        profile.id === activeProfile?.id ? "bg-brand-primary" : "bg-transparent",
+                        'w-2 h-2 rounded-full flex-shrink-0',
+                        profile.id === activeProfile?.id ? 'bg-brand-primary' : 'bg-transparent',
                       )}
                     />
 
@@ -273,7 +273,7 @@ function ProfileSelectorComponent({
                     {/* Active check */}
                     {profile.id === activeProfile?.id ? (
                       <svg
-                        class={cn(iconTokens.size.sm, "text-brand-primary flex-shrink-0")}
+                        class={cn(iconTokens.size.sm, 'text-brand-primary flex-shrink-0')}
                         fill="currentColor"
                         viewBox="0 0 24 24"
                         aria-hidden="true"
@@ -289,9 +289,9 @@ function ProfileSelectorComponent({
 
           {/* Empty state */}
           {profiles.length === 0 ? (
-            <div class={cn(spacing.pad.md, "text-center")}>
+            <div class={cn(spacing.pad.md, 'text-center')}>
               <span class="caption text-text-muted">
-                {t("profile.noProfiles", "No profiles found")}
+                {t('profile.noProfiles', 'No profiles found')}
               </span>
             </div>
           ) : null}
@@ -302,10 +302,10 @@ function ProfileSelectorComponent({
               type="button"
               onClick={goToManagement}
               class={cn(
-                "w-full flex items-center justify-center",
+                'w-full flex items-center justify-center',
                 spacing.gap.tight,
                 spacing.pad.sm,
-                "hover:bg-surface-hover focus:bg-surface-hover focus:outline-none text-brand-primary",
+                'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none text-brand-primary',
               )}
             >
               <svg
@@ -328,7 +328,7 @@ function ProfileSelectorComponent({
                   d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-              <span class="body-small font-medium">{t("profile.manage", "Manage Profiles")}</span>
+              <span class="body-small font-medium">{t('profile.manage', 'Manage Profiles')}</span>
             </button>
           </div>
         </div>

@@ -12,7 +12,7 @@
  * Checks if a value is a valid, finite number (not NaN, Infinity, or non-numeric).
  */
 export function isValidNumber(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value);
+  return typeof value === 'number' && Number.isFinite(value);
 }
 
 /**
@@ -22,12 +22,12 @@ export function isValidNumber(value: unknown): value is number {
  * @param ms - Time in milliseconds
  * @param fallback - Value to return if ms is invalid (default: "-")
  */
-export function formatTime(ms: number | undefined | null, fallback: string = "-"): string {
+export function formatTime(ms: number | undefined | null, fallback: string = '-'): string {
   if (!isValidNumber(ms) || ms <= 0) {
     return fallback;
   }
   if (ms < 1) {
-    return "<1ms";
+    return '<1ms';
   }
   if (ms >= 1000) {
     return `${(ms / 1000).toFixed(1)}s`;
@@ -51,7 +51,7 @@ export const formatLatency: typeof formatTime = formatTime;
 export function formatFixed(
   value: number | undefined | null,
   decimals: number = 1,
-  fallback: string = "-",
+  fallback: string = '-',
 ): string {
   if (!isValidNumber(value)) {
     return fallback;
@@ -70,7 +70,7 @@ export function formatFixed(
 export function formatPercent(
   value: number | undefined | null,
   decimals: number = 0,
-  fallback: string = "-",
+  fallback: string = '-',
 ): string {
   if (!isValidNumber(value)) {
     return fallback;
@@ -89,17 +89,17 @@ export function formatPercent(
 export function formatBytes(
   bytes: number | undefined | null,
   decimals: number = 1,
-  fallback: string = "-",
+  fallback: string = '-',
 ): string {
   if (!isValidNumber(bytes) || bytes < 0) {
     return fallback;
   }
   if (bytes === 0) {
-    return "0 B";
+    return '0 B';
   }
 
   const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   const size = i < sizes.length ? sizes[i] : sizes.at(-1);
 
@@ -117,17 +117,17 @@ export function formatBytes(
 export function formatBps(
   bps: number | undefined | null,
   decimals: number = 1,
-  fallback: string = "-",
+  fallback: string = '-',
 ): string {
   if (!isValidNumber(bps) || bps < 0) {
     return fallback;
   }
   if (bps === 0) {
-    return "0 bps";
+    return '0 bps';
   }
 
   const k = 1000;
-  const sizes = ["bps", "Kbps", "Mbps", "Gbps", "Tbps"];
+  const sizes = ['bps', 'Kbps', 'Mbps', 'Gbps', 'Tbps'];
   const i = Math.floor(Math.log(bps) / Math.log(k));
   const size = i < sizes.length ? sizes[i] : sizes.at(-1);
 
@@ -145,7 +145,7 @@ export function formatBps(
 export function formatNumber(
   value: number | undefined | null,
   options?: Intl.NumberFormatOptions,
-  fallback: string = "-",
+  fallback: string = '-',
 ): string {
   if (!isValidNumber(value)) {
     return fallback;
@@ -160,13 +160,13 @@ export function formatNumber(
  * @param ns - Duration in nanoseconds
  * @param fallback - Value to return if invalid (default: "-")
  */
-export function formatNanoseconds(ns: number | undefined | null, fallback: string = "-"): string {
+export function formatNanoseconds(ns: number | undefined | null, fallback: string = '-'): string {
   if (!isValidNumber(ns) || ns <= 0) {
     return fallback;
   }
   const ms = ns / 1_000_000;
   if (ms < 1) {
-    return "<1ms";
+    return '<1ms';
   }
   if (ms >= 1000) {
     return `${(ms / 1000).toFixed(1)}s`;
@@ -183,7 +183,7 @@ export function formatNanoseconds(ns: number | undefined | null, fallback: strin
  */
 export function formatSignalStrength(
   dbm: number | undefined | null,
-  fallback: string = "-",
+  fallback: string = '-',
 ): string {
   if (!isValidNumber(dbm)) {
     return fallback;

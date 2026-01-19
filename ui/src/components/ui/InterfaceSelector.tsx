@@ -20,10 +20,10 @@
  * />
  */
 
-import type React from "react";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { cn, icon as iconTokens, radius, spacing } from "../../styles/theme";
+import type React from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
 
 export interface NetworkInterface {
   name: string;
@@ -89,8 +89,8 @@ function InterfaceSelectorComponent({
   }, [warning]);
 
   // Group interfaces by type
-  const ethernetInterfaces = interfaces.filter((i) => i.type === "ethernet");
-  const wifiInterfaces = interfaces.filter((i) => i.type === "wifi");
+  const ethernetInterfaces = interfaces.filter((i) => i.type === 'ethernet');
+  const wifiInterfaces = interfaces.filter((i) => i.type === 'wifi');
 
   // Get current interface info
   const currentInfo = interfaces.find((i) => i.name === currentInterface);
@@ -104,21 +104,21 @@ function InterfaceSelectorComponent({
     };
 
     if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside);
     }
 
     return (): void => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
 
   // Handle keyboard navigation
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         setIsOpen(false);
         buttonRef.current?.focus();
-      } else if (event.key === "ArrowDown" && !isOpen) {
+      } else if (event.key === 'ArrowDown' && !isOpen) {
         event.preventDefault();
         setIsOpen(true);
       }
@@ -150,31 +150,31 @@ function InterfaceSelectorComponent({
   // Get status text for an interface
   const getStatusText = (iface: NetworkInterface): string => {
     if (!iface.up) {
-      return t("interface.noLink", "No link");
+      return t('interface.noLink', 'No link');
     }
-    if (iface.type === "wifi" && iface.signalStrength !== undefined) {
+    if (iface.type === 'wifi' && iface.signalStrength !== undefined) {
       return `${iface.signalStrength} dBm`;
     }
-    return iface.speedDisplay || "";
+    return iface.speedDisplay || '';
   };
 
   const getDetailText = (iface: NetworkInterface): string => {
     if (iface.description) {
       return iface.description;
     }
-    const vendorModel = [iface.chipsetVendor, iface.chipsetModel].filter(Boolean).join(" ");
+    const vendorModel = [iface.chipsetVendor, iface.chipsetModel].filter(Boolean).join(' ');
     if (vendorModel) {
       return vendorModel;
     }
-    return "";
+    return '';
   };
 
   // Get icon for interface type
   const getTypeIcon = (type: string, up: boolean): React.JSX.Element => {
-    if (type === "wifi") {
+    if (type === 'wifi') {
       return (
         <svg
-          class={cn(iconTokens.size.sm, up ? "text-status-success" : "text-text-muted")}
+          class={cn(iconTokens.size.sm, up ? 'text-status-success' : 'text-text-muted')}
           fill="currentColor"
           viewBox="0 0 24 24"
           aria-hidden="true"
@@ -185,7 +185,7 @@ function InterfaceSelectorComponent({
     }
     return (
       <svg
-        class={cn(iconTokens.size.sm, up ? "text-status-success" : "text-text-muted")}
+        class={cn(iconTokens.size.sm, up ? 'text-status-success' : 'text-text-muted')}
         fill="currentColor"
         viewBox="0 0 24 24"
         aria-hidden="true"
@@ -197,10 +197,10 @@ function InterfaceSelectorComponent({
 
   // Helper to check if an interface is recommended
   const isRecommended = (name: string, type: string): boolean => {
-    if (type === "ethernet") {
+    if (type === 'ethernet') {
       return name === recommendedEthernet;
     }
-    if (type === "wifi") {
+    if (type === 'wifi') {
       return name === recommendedWifi;
     }
     return false;
@@ -213,10 +213,10 @@ function InterfaceSelectorComponent({
       {showWarning && warning ? (
         <div
           class={cn(
-            "absolute bottom-full left-0 right-0 mb-2 p-2",
+            'absolute bottom-full left-0 right-0 mb-2 p-2',
             radius.md,
-            "bg-status-warning/10 border border-status-warning/30 text-status-warning",
-            "flex items-center gap-2",
+            'bg-status-warning/10 border border-status-warning/30 text-status-warning',
+            'flex items-center gap-2',
           )}
         >
           <svg
@@ -237,14 +237,14 @@ function InterfaceSelectorComponent({
               }}
               class="caption font-medium text-status-warning hover:underline"
             >
-              {t("interface.switchTo", "Switch to {{name}}", { name: suggestedInterface })}
+              {t('interface.switchTo', 'Switch to {{name}}', { name: suggestedInterface })}
             </button>
           ) : null}
           <button
             type="button"
             onClick={(): void => setShowWarning(false)}
             class="text-status-warning hover:opacity-70"
-            aria-label={t("accessibility.dismiss", "Dismiss")}
+            aria-label={t('accessibility.dismiss', 'Dismiss')}
           >
             <svg
               class={iconTokens.size.sm}
@@ -265,19 +265,19 @@ function InterfaceSelectorComponent({
         disabled={disabled}
         onClick={(): void => setIsOpen(!isOpen)}
         class={cn(
-          "flex items-center",
+          'flex items-center',
           spacing.gap.tight,
           spacing.pad.sm,
           radius.md,
-          "border border-surface-border bg-surface-base hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed",
-          warning && "border-status-warning/50",
+          'border border-surface-border bg-surface-base hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed',
+          warning && 'border-status-warning/50',
         )}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label={t("accessibility.selectInterface", "Select network interface")}
+        aria-label={t('accessibility.selectInterface', 'Select network interface')}
       >
         {/* Current interface icon */}
-        {getTypeIcon(isWifi ? "wifi" : "ethernet", currentInfo?.up ?? true)}
+        {getTypeIcon(isWifi ? 'wifi' : 'ethernet', currentInfo?.up ?? true)}
 
         {/* Current interface name */}
         <span class="body-small font-medium text-text-primary truncate max-w-24 sm:max-w-32">
@@ -293,8 +293,8 @@ function InterfaceSelectorComponent({
         <svg
           class={cn(
             iconTokens.size.sm,
-            "text-text-muted transition-transform",
-            isOpen ? "rotate-180" : "",
+            'text-text-muted transition-transform',
+            isOpen ? 'rotate-180' : '',
           )}
           fill="none"
           stroke="currentColor"
@@ -309,19 +309,19 @@ function InterfaceSelectorComponent({
       {isOpen ? (
         <div
           class={cn(
-            "absolute top-full left-0 mt-1 w-64",
+            'absolute top-full left-0 mt-1 w-64',
             radius.md,
-            "border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden",
+            'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
           )}
           role="listbox"
-          aria-label={t("accessibility.interfaceList", "Available network interfaces")}
+          aria-label={t('accessibility.interfaceList', 'Available network interfaces')}
         >
           {/* Ethernet section */}
           {ethernetInterfaces.length > 0 && (
             <div>
-              <div class={cn(spacing.pad.sm, "bg-surface-base border-b border-surface-border")}>
+              <div class={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
                 <span class="caption font-semibold text-text-muted uppercase tracking-wide">
-                  {t("interface.ethernet", "Ethernet")}
+                  {t('interface.ethernet', 'Ethernet')}
                 </span>
               </div>
               {ethernetInterfaces.map((iface) => (
@@ -330,11 +330,11 @@ function InterfaceSelectorComponent({
                   key={iface.name}
                   onClick={(): void => selectInterface(iface.name)}
                   class={cn(
-                    "w-full flex items-center",
+                    'w-full flex items-center',
                     spacing.gap.tight,
                     spacing.pad.sm,
-                    "hover:bg-surface-hover focus:bg-surface-hover focus:outline-none",
-                    iface.name === currentInterface ? "bg-brand-primary/10" : "",
+                    'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none',
+                    iface.name === currentInterface ? 'bg-brand-primary/10' : '',
                   )}
                   role="option"
                   aria-selected={iface.name === currentInterface}
@@ -342,13 +342,13 @@ function InterfaceSelectorComponent({
                   {/* Selection indicator */}
                   <span
                     class={cn(
-                      "w-2 h-2 rounded-full",
-                      iface.name === currentInterface ? "bg-brand-primary" : "bg-transparent",
+                      'w-2 h-2 rounded-full',
+                      iface.name === currentInterface ? 'bg-brand-primary' : 'bg-transparent',
                     )}
                   />
 
                   {/* Icon */}
-                  {getTypeIcon("ethernet", iface.up)}
+                  {getTypeIcon('ethernet', iface.up)}
 
                   {/* Name and status */}
                   <div class="flex-1 min-w-0 text-left">
@@ -362,10 +362,10 @@ function InterfaceSelectorComponent({
 
                   {/* Status and recommended indicator */}
                   <div class="flex items-center gap-1">
-                    {isRecommended(iface.name, "ethernet") && (
+                    {isRecommended(iface.name, 'ethernet') && (
                       <span
                         class="text-status-success"
-                        title={t("interface.recommended", "Recommended")}
+                        title={t('interface.recommended', 'Recommended')}
                       >
                         <svg
                           class={iconTokens.size.xs}
@@ -378,7 +378,7 @@ function InterfaceSelectorComponent({
                       </span>
                     )}
                     <span
-                      class={cn("caption", iface.up ? "text-text-secondary" : "text-text-muted")}
+                      class={cn('caption', iface.up ? 'text-text-secondary' : 'text-text-muted')}
                     >
                       {getStatusText(iface)}
                     </span>
@@ -394,13 +394,13 @@ function InterfaceSelectorComponent({
               <div
                 class={cn(
                   spacing.pad.sm,
-                  "bg-surface-base",
-                  ethernetInterfaces.length > 0 ? "border-t" : "",
-                  "border-b border-surface-border",
+                  'bg-surface-base',
+                  ethernetInterfaces.length > 0 ? 'border-t' : '',
+                  'border-b border-surface-border',
                 )}
               >
                 <span class="caption font-semibold text-text-muted uppercase tracking-wide">
-                  {t("interface.wifi", "WiFi")}
+                  {t('interface.wifi', 'WiFi')}
                 </span>
               </div>
               {wifiInterfaces.map((iface) => (
@@ -409,11 +409,11 @@ function InterfaceSelectorComponent({
                   key={iface.name}
                   onClick={(): void => selectInterface(iface.name)}
                   class={cn(
-                    "w-full flex items-center",
+                    'w-full flex items-center',
                     spacing.gap.tight,
                     spacing.pad.sm,
-                    "hover:bg-surface-hover focus:bg-surface-hover focus:outline-none",
-                    iface.name === currentInterface ? "bg-brand-primary/10" : "",
+                    'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none',
+                    iface.name === currentInterface ? 'bg-brand-primary/10' : '',
                   )}
                   role="option"
                   aria-selected={iface.name === currentInterface}
@@ -421,13 +421,13 @@ function InterfaceSelectorComponent({
                   {/* Selection indicator */}
                   <span
                     class={cn(
-                      "w-2 h-2 rounded-full",
-                      iface.name === currentInterface ? "bg-brand-primary" : "bg-transparent",
+                      'w-2 h-2 rounded-full',
+                      iface.name === currentInterface ? 'bg-brand-primary' : 'bg-transparent',
                     )}
                   />
 
                   {/* Icon */}
-                  {getTypeIcon("wifi", iface.up)}
+                  {getTypeIcon('wifi', iface.up)}
 
                   {/* Name */}
                   <div class="flex-1 min-w-0 text-left">
@@ -441,10 +441,10 @@ function InterfaceSelectorComponent({
 
                   {/* Status and recommended indicator */}
                   <div class="flex items-center gap-1">
-                    {isRecommended(iface.name, "wifi") && (
+                    {isRecommended(iface.name, 'wifi') && (
                       <span
                         class="text-status-success"
-                        title={t("interface.recommended", "Recommended")}
+                        title={t('interface.recommended', 'Recommended')}
                       >
                         <svg
                           class={iconTokens.size.xs}
@@ -457,7 +457,7 @@ function InterfaceSelectorComponent({
                       </span>
                     )}
                     <span
-                      class={cn("caption", iface.up ? "text-text-secondary" : "text-text-muted")}
+                      class={cn('caption', iface.up ? 'text-text-secondary' : 'text-text-muted')}
                     >
                       {getStatusText(iface)}
                     </span>
@@ -469,9 +469,9 @@ function InterfaceSelectorComponent({
 
           {/* Empty state */}
           {ethernetInterfaces.length === 0 && wifiInterfaces.length === 0 && (
-            <div class={cn(spacing.pad.md, "text-center")}>
+            <div class={cn(spacing.pad.md, 'text-center')}>
               <span class="caption text-text-muted">
-                {t("interface.noInterfaces", "No network interfaces found")}
+                {t('interface.noInterfaces', 'No network interfaces found')}
               </span>
             </div>
           )}

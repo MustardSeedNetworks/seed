@@ -8,10 +8,10 @@
  * Issue #803: UI detect/warn missing network capabilities
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { LogComponents, logger } from "../lib/logger";
+import { useCallback, useEffect, useState } from 'react';
+import { LogComponents, logger } from '../lib/logger';
 
-const API_BASE = "";
+const API_BASE = '';
 
 export interface Capabilities {
   /** Whether raw ICMP sockets are available (requires root or CAP_NET_RAW) */
@@ -41,7 +41,7 @@ export function useCapabilities(): UseCapabilitiesResult {
   const fetchCapabilities = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/status`, {
-        credentials: "include",
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -61,8 +61,8 @@ export function useCapabilities(): UseCapabilitiesResult {
       });
       setError(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to fetch capabilities";
-      logger.error(LogComponents.System, "Failed to fetch capabilities", err);
+      const message = err instanceof Error ? err.message : 'Failed to fetch capabilities';
+      logger.error(LogComponents.System, 'Failed to fetch capabilities', err);
       setError(message);
     } finally {
       setLoading(false);
@@ -104,12 +104,12 @@ export function getMissingCapabilities(capabilities: Capabilities | null): Array
 
   if (!capabilities.icmpAvailable) {
     missing.push({
-      id: "icmp",
-      title: "ICMP Unavailable",
+      id: 'icmp',
+      title: 'ICMP Unavailable',
       description:
-        "Raw ICMP sockets are not available. Gateway ping, traceroute, and other ICMP-based features will not work.",
+        'Raw ICMP sockets are not available. Gateway ping, traceroute, and other ICMP-based features will not work.',
       remediation:
-        "Run The Seed with elevated privileges (sudo) or grant CAP_NET_RAW capability: sudo setcap cap_net_raw,cap_net_admin=+ep /path/to/seed",
+        'Run The Seed with elevated privileges (sudo) or grant CAP_NET_RAW capability: sudo setcap cap_net_raw,cap_net_admin=+ep /path/to/seed',
     });
   }
 

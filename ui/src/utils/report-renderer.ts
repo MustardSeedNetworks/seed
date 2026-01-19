@@ -19,7 +19,7 @@
  * ```
  */
 
-import type { SurveyReport } from "./report-generator";
+import type { SurveyReport } from './report-generator';
 
 /** Translation function type */
 type TranslateFunction = (key: string, options?: Record<string, unknown>) => string;
@@ -327,11 +327,11 @@ const REPORT_STYLES = `
  */
 function escapeHtml(text: string): string {
   return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 /**
@@ -340,11 +340,11 @@ function escapeHtml(text: string): string {
 function formatDate(isoDate: string): string {
   try {
     return new Date(isoDate).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   } catch {
     return isoDate;
@@ -356,36 +356,36 @@ function formatDate(isoDate: string): string {
  */
 function renderExecutiveSummary(report: SurveyReport, t: TranslateFunction): string {
   const { summary, metadata } = report;
-  const statusClass = summary.overallStatus === "pass" ? "status-pass" : "status-fail";
+  const statusClass = summary.overallStatus === 'pass' ? 'status-pass' : 'status-fail';
   const statusText =
-    summary.overallStatus === "pass" ? t("criteria.statusPass") : t("criteria.statusFail");
+    summary.overallStatus === 'pass' ? t('criteria.statusPass') : t('criteria.statusFail');
 
   return `
     <div class="section">
       <h2 class="section-title">
         <span class="section-number">1</span>
-        ${t("report.executiveSummary")}
+        ${t('report.executiveSummary')}
       </h2>
 
       <div class="status-banner ${statusClass}">
-        <div class="status-title">${t("report.overallStatus")}: ${statusText}</div>
+        <div class="status-title">${t('report.overallStatus')}: ${statusText}</div>
         <div class="status-detail">
-          ${summary.passedCriteria} / ${summary.totalCriteria} ${t("criteria.criteriaPassed")}
+          ${summary.passedCriteria} / ${summary.totalCriteria} ${t('criteria.criteriaPassed')}
           (${summary.overallPercentage.toFixed(1)}%)
         </div>
       </div>
 
       <div class="summary-grid">
         <div class="summary-card">
-          <div class="summary-label">${t("report.surveyType")}</div>
+          <div class="summary-label">${t('report.surveyType')}</div>
           <div class="summary-value">${escapeHtml(metadata.surveyType)}</div>
         </div>
         <div class="summary-card">
-          <div class="summary-label">${t("report.samplePoints")}</div>
+          <div class="summary-label">${t('report.samplePoints')}</div>
           <div class="summary-value">${metadata.sampleCount}</div>
         </div>
         <div class="summary-card">
-          <div class="summary-label">${t("report.facilitySize")}</div>
+          <div class="summary-label">${t('report.facilitySize')}</div>
           <div class="summary-value">${escapeHtml(metadata.facilitySize)}</div>
         </div>
       </div>
@@ -395,10 +395,10 @@ function renderExecutiveSummary(report: SurveyReport, t: TranslateFunction): str
           ? `
         <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">Key Findings</h3>
         <ul class="findings-list">
-          ${summary.keyFindings.map((f) => `<li>${escapeHtml(f)}</li>`).join("")}
+          ${summary.keyFindings.map((f) => `<li>${escapeHtml(f)}</li>`).join('')}
         </ul>
       `
-          : ""
+          : ''
       }
     </div>
   `;
@@ -409,14 +409,14 @@ function renderExecutiveSummary(report: SurveyReport, t: TranslateFunction): str
  */
 function renderCriteriaResults(report: SurveyReport, t: TranslateFunction): string {
   if (!report.validation || report.validation.results.length === 0) {
-    return "";
+    return '';
   }
 
   const rows = report.validation.results
     .map((result) => {
-      const statusClass = result.passed ? "status-pass-cell" : "status-fail-cell";
-      const statusText = result.passed ? "\u2713 PASS" : "\u2717 FAIL";
-      const comparison = result.comparison === "gte" ? "\u2265" : "\u2264";
+      const statusClass = result.passed ? 'status-pass-cell' : 'status-fail-cell';
+      const statusText = result.passed ? '\u2713 PASS' : '\u2717 FAIL';
+      const comparison = result.comparison === 'gte' ? '\u2265' : '\u2264';
 
       return `
       <tr>
@@ -429,13 +429,13 @@ function renderCriteriaResults(report: SurveyReport, t: TranslateFunction): stri
       </tr>
     `;
     })
-    .join("");
+    .join('');
 
   return `
     <div class="section">
       <h2 class="section-title">
         <span class="section-number">2</span>
-        ${t("report.criteriaResults")}
+        ${t('report.criteriaResults')}
       </h2>
 
       <table class="criteria-table">
@@ -462,7 +462,7 @@ function renderCriteriaResults(report: SurveyReport, t: TranslateFunction): stri
  */
 function renderHeatmaps(report: SurveyReport, t: TranslateFunction): string {
   if (report.heatmaps.length === 0) {
-    return "";
+    return '';
   }
 
   const heatmapSections = report.heatmaps
@@ -494,7 +494,7 @@ function renderHeatmaps(report: SurveyReport, t: TranslateFunction): string {
         </div>
       </div>
     `
-        : "";
+        : '';
 
       return `
       <div class="heatmap-section">
@@ -504,13 +504,13 @@ function renderHeatmaps(report: SurveyReport, t: TranslateFunction): string {
       </div>
     `;
     })
-    .join("");
+    .join('');
 
   return `
     <div class="section page-break">
       <h2 class="section-title">
         <span class="section-number">3</span>
-        ${t("report.heatmapVisualizations")}
+        ${t('report.heatmapVisualizations')}
       </h2>
       ${heatmapSections}
     </div>
@@ -522,7 +522,7 @@ function renderHeatmaps(report: SurveyReport, t: TranslateFunction): string {
  */
 function renderApInventory(report: SurveyReport, t: TranslateFunction): string {
   if (report.apInventory.length === 0) {
-    return "";
+    return '';
   }
 
   // Show top 20 APs
@@ -542,13 +542,13 @@ function renderApInventory(report: SurveyReport, t: TranslateFunction): string {
     </tr>
   `,
     )
-    .join("");
+    .join('');
 
   return `
     <div class="section page-break">
       <h2 class="section-title">
         <span class="section-number">4</span>
-        ${t("report.apInventory")} (${report.apInventory.length} total)
+        ${t('report.apInventory')} (${report.apInventory.length} total)
       </h2>
 
       <table class="ap-table">
@@ -567,7 +567,7 @@ function renderApInventory(report: SurveyReport, t: TranslateFunction): string {
           ${rows}
         </tbody>
       </table>
-      ${report.apInventory.length > 20 ? `<p style="font-size: 11px; color: #666; margin-top: 8px;">Showing top 20 of ${report.apInventory.length} APs</p>` : ""}
+      ${report.apInventory.length > 20 ? `<p style="font-size: 11px; color: #666; margin-top: 8px;">Showing top 20 of ${report.apInventory.length} APs</p>` : ''}
     </div>
   `;
 }
@@ -577,7 +577,7 @@ function renderApInventory(report: SurveyReport, t: TranslateFunction): string {
  */
 function renderRecommendations(report: SurveyReport, t: TranslateFunction): string {
   if (report.recommendations.length === 0) {
-    return "";
+    return '';
   }
 
   const items = report.recommendations
@@ -589,13 +589,13 @@ function renderRecommendations(report: SurveyReport, t: TranslateFunction): stri
     </div>
   `,
     )
-    .join("");
+    .join('');
 
   return `
     <div class="section">
       <h2 class="section-title">
         <span class="section-number">5</span>
-        ${t("report.recommendations")}
+        ${t('report.recommendations')}
       </h2>
       <div class="recommendations-list">
         ${items}
@@ -621,9 +621,9 @@ export function renderReportToHtml(report: SurveyReport, t: TranslateFunction): 
       <div class="report-container">
         <header class="report-header">
           <h1 class="report-title">${escapeHtml(report.metadata.title)}</h1>
-          <p class="report-subtitle">${t("report.generatedBy")}</p>
+          <p class="report-subtitle">${t('report.generatedBy')}</p>
           <div class="report-meta">
-            <span>${t("report.date")}: ${formatDate(report.metadata.generatedAt)}</span>
+            <span>${t('report.date')}: ${formatDate(report.metadata.generatedAt)}</span>
             <span>Survey ID: ${escapeHtml(report.metadata.surveyId)}</span>
           </div>
         </header>
@@ -651,9 +651,9 @@ export function renderReportToHtml(report: SurveyReport, t: TranslateFunction): 
 export function openReportForPrint(report: SurveyReport, t: TranslateFunction): void {
   const html = renderReportToHtml(report, t);
   // Create a Blob URL for the HTML content - safer than document.write()
-  const blob = new Blob([html], { type: "text/html" });
+  const blob = new Blob([html], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
-  const printWindow = window.open(url, "_blank");
+  const printWindow = window.open(url, '_blank');
   // Clean up the Blob URL after window loads
   if (printWindow) {
     printWindow.onload = (): void => {
@@ -670,11 +670,11 @@ export function openReportForPrint(report: SurveyReport, t: TranslateFunction): 
  */
 export function downloadReportAsHtml(report: SurveyReport, t: TranslateFunction): void {
   const html = renderReportToHtml(report, t);
-  const blob = new Blob([html], { type: "text/html" });
+  const blob = new Blob([html], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+  const a = document.createElement('a');
   a.href = url;
-  a.download = `${report.metadata.surveyName.replace(/[^a-z0-9]/gi, "_")}_report.html`;
+  a.download = `${report.metadata.surveyName.replace(/[^a-z0-9]/gi, '_')}_report.html`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

@@ -1,8 +1,8 @@
-import type { Meta, StoryFn, StoryObj } from "@storybook/react-vite";
-import type React from "react";
-import { button, cn, layout, radius } from "../../styles/theme";
-import { ToastProvider } from "./Toast";
-import { useToast } from "./useToast";
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type React from 'react';
+import { button, cn, layout, radius } from '../../styles/theme';
+import { ToastProvider } from './Toast';
+import { useToast } from './useToast';
 
 /**
  * Toast notifications provide non-modal feedback to users for actions
@@ -11,7 +11,7 @@ import { useToast } from "./useToast";
  * Toasts appear in the bottom-right corner and auto-dismiss after 5 seconds by default.
  */
 const meta: Meta = {
-  title: "UI/Toast",
+  title: 'UI/Toast',
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
       <ToastProvider>
@@ -20,9 +20,9 @@ const meta: Meta = {
     ),
   ],
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
 };
 
 export default meta;
@@ -31,7 +31,7 @@ function _toastDemo({
   type,
   message,
 }: {
-  type: "success" | "error" | "warning" | "info";
+  type: 'success' | 'error' | 'warning' | 'info';
   message: string;
 }): React.JSX.Element {
   const { addToast } = useToast();
@@ -42,7 +42,7 @@ function _toastDemo({
       onClick={() => addToast(message, type)}
       class={cn(
         button.size.md,
-        "bg-surface-raised hover:bg-surface-hover border border-surface-border text-text-primary",
+        'bg-surface-raised hover:bg-surface-hover border border-surface-border text-text-primary',
         radius.lg,
       )}
     >
@@ -75,14 +75,14 @@ function _allToastsDemo(): React.JSX.Element {
       <button
         type="button"
         onClick={() => {
-          addToast("Success message", "success", 3000);
-          setTimeout(() => addToast("Error message", "error", 3000), 500);
-          setTimeout(() => addToast("Warning message", "warning", 3000), 1000);
-          setTimeout(() => addToast("Info message", "info", 3000), 1500);
+          addToast('Success message', 'success', 3000);
+          setTimeout(() => addToast('Error message', 'error', 3000), 500);
+          setTimeout(() => addToast('Warning message', 'warning', 3000), 1000);
+          setTimeout(() => addToast('Info message', 'info', 3000), 1500);
         }}
         class={cn(
           button.size.md,
-          "bg-status-info hover:bg-status-info/80 text-text-inverse",
+          'bg-status-info hover:bg-status-info/80 text-text-inverse',
           radius.lg,
         )}
       >
@@ -97,7 +97,7 @@ export const AllTypes: StoryObj = {
   parameters: {
     docs: {
       description: {
-        story: "Click to see all toast types in sequence.",
+        story: 'Click to see all toast types in sequence.',
       },
     },
   },

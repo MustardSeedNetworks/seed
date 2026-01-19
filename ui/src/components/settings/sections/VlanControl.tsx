@@ -16,15 +16,15 @@
  * ```
  */
 
-import { memo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { api } from "../../../api";
-import { button, cn, input, layout, radius } from "../../../styles/theme";
+import { memo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { api } from '../../../api';
+import { button, cn, input, layout, radius } from '../../../styles/theme';
 
 export const VlanControl: React.NamedExoticComponent<Record<string, never>> = memo(
   function vlanControl() {
-    const { t } = useTranslation("settings");
-    const [vlanId, setVlanId] = useState("");
+    const { t } = useTranslation('settings');
+    const [vlanId, setVlanId] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{
       text: string;
@@ -34,17 +34,17 @@ export const VlanControl: React.NamedExoticComponent<Record<string, never>> = me
     const handleCreate = async (): Promise<void> => {
       const id = Number.parseInt(vlanId, 10);
       if (Number.isNaN(id) || id < 1 || id > 4094) {
-        setMessage({ text: t("network.vlan.invalidId"), isError: true });
+        setMessage({ text: t('network.vlan.invalidId'), isError: true });
         return;
       }
       setLoading(true);
       setMessage(null);
       try {
-        await api.post("/api/v1/sap/vlan/interface", { vlanId: id });
-        setMessage({ text: t("network.vlan.created", { id }), isError: false });
-        setVlanId("");
+        await api.post('/api/v1/sap/vlan/interface', { vlanId: id });
+        setMessage({ text: t('network.vlan.created', { id }), isError: false });
+        setVlanId('');
       } catch {
-        setMessage({ text: t("network.vlan.createFailed"), isError: true });
+        setMessage({ text: t('network.vlan.createFailed'), isError: true });
       } finally {
         setLoading(false);
         setTimeout(() => setMessage(null), 3000);
@@ -54,20 +54,20 @@ export const VlanControl: React.NamedExoticComponent<Record<string, never>> = me
     const handleDelete = async (): Promise<void> => {
       const id = Number.parseInt(vlanId, 10);
       if (Number.isNaN(id) || id < 1 || id > 4094) {
-        setMessage({ text: t("network.vlan.invalidId"), isError: true });
+        setMessage({ text: t('network.vlan.invalidId'), isError: true });
         return;
       }
       setLoading(true);
       setMessage(null);
       try {
-        await api.delete("/api/v1/sap/vlan/interface", {
+        await api.delete('/api/v1/sap/vlan/interface', {
           body: JSON.stringify({ vlanId: id }),
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         });
-        setMessage({ text: t("network.vlan.deleted", { id }), isError: false });
-        setVlanId("");
+        setMessage({ text: t('network.vlan.deleted', { id }), isError: false });
+        setVlanId('');
       } catch {
-        setMessage({ text: t("network.vlan.deleteFailed"), isError: true });
+        setMessage({ text: t('network.vlan.deleteFailed'), isError: true });
       } finally {
         setLoading(false);
         setTimeout(() => setMessage(null), 3000);
@@ -85,13 +85,13 @@ export const VlanControl: React.NamedExoticComponent<Record<string, never>> = me
             onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
               setVlanId(e.target.value)
             }
-            placeholder={t("network.vlan.placeholder")}
+            placeholder={t('network.vlan.placeholder')}
             class={cn(
-              "flex-1",
+              'flex-1',
               input.size.sm,
-              "bg-surface-base border border-surface-border",
+              'bg-surface-base border border-surface-border',
               radius.md,
-              "body-small text-text-primary",
+              'body-small text-text-primary',
             )}
             disabled={loading}
           />
@@ -101,12 +101,12 @@ export const VlanControl: React.NamedExoticComponent<Record<string, never>> = me
             disabled={loading || !vlanId}
             class={cn(
               button.size.sm,
-              "bg-brand-primary text-text-inverse",
+              'bg-brand-primary text-text-inverse',
               radius.md,
-              "body-small font-medium hover:bg-brand-accent disabled:opacity-50",
+              'body-small font-medium hover:bg-brand-accent disabled:opacity-50',
             )}
           >
-            {t("network.vlan.add")}
+            {t('network.vlan.add')}
           </button>
           <button
             type="button"
@@ -114,20 +114,20 @@ export const VlanControl: React.NamedExoticComponent<Record<string, never>> = me
             disabled={loading || !vlanId}
             class={cn(
               button.size.sm,
-              "bg-status-error text-text-inverse",
+              'bg-status-error text-text-inverse',
               radius.md,
-              "body-small font-medium hover:opacity-80 disabled:opacity-50",
+              'body-small font-medium hover:opacity-80 disabled:opacity-50',
             )}
           >
-            {t("network.vlan.remove")}
+            {t('network.vlan.remove')}
           </button>
         </div>
         {message ? (
-          <p class={cn("caption", message.isError ? "text-status-error" : "text-status-success")}>
+          <p class={cn('caption', message.isError ? 'text-status-error' : 'text-status-success')}>
             {message.text}
           </p>
         ) : null}
-        <p class="caption">{t("network.vlan.description")}</p>
+        <p class="caption">{t('network.vlan.description')}</p>
       </div>
     );
   },

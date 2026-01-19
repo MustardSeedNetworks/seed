@@ -12,14 +12,14 @@
  * - Interactive CRUD: Add/remove/edit tests
  */
 
-import type { Meta, StoryFn, StoryObj } from "@storybook/react-vite";
-import type React from "react";
-import { useState } from "react";
-import type { SaveStatus, TestsSettings } from "../../../types/settings";
-import { HealthChecksSettings } from "./HealthChecksSettings";
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type React from 'react';
+import { useState } from 'react';
+import type { SaveStatus, TestsSettings } from '../../../types/settings';
+import { HealthChecksSettings } from './HealthChecksSettings';
 
 const emptySettings: TestsSettings = {
-  dnsHostname: "google.com",
+  dnsHostname: 'google.com',
   dnsServers: [],
   pingTargets: [],
   tcpPorts: [],
@@ -29,28 +29,28 @@ const emptySettings: TestsSettings = {
   runSpeedtest: true,
   runIperf: true,
   runDiscovery: true,
-  speedtest: { serverId: "", autoRunOnLink: false },
+  speedtest: { serverId: '', autoRunOnLink: false },
   iperf: { autoRunOnLink: false },
 };
 
 const meta: Meta<typeof HealthChecksSettings> = {
-  title: "Settings/health-checks-settings",
+  title: 'Settings/health-checks-settings',
   component: HealthChecksSettings,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "Comprehensive health check configuration panel. Allows users to define ping targets, TCP/UDP port tests, and HTTP endpoint monitoring with custom names and expected results.",
+          'Comprehensive health check configuration panel. Allows users to define ping targets, TCP/UDP port tests, and HTTP endpoint monitoring with custom names and expected results.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     testsStatus: {
-      control: "select",
-      options: ["idle", "saving", "saved", "error"],
-      description: "Auto-save status indicator",
+      control: 'select',
+      options: ['idle', 'saving', 'saved', 'error'],
+      description: 'Auto-save status indicator',
     },
   },
   decorators: [
@@ -74,7 +74,7 @@ export const Empty: Story = {
     setTestsSettings: (): void => {
       // intentionally empty
     },
-    testsStatus: "idle",
+    testsStatus: 'idle',
   },
 };
 
@@ -90,7 +90,7 @@ export const Disabled: Story = {
     setTestsSettings: (): void => {
       // intentionally empty
     },
-    testsStatus: "idle",
+    testsStatus: 'idle',
   },
 };
 
@@ -103,23 +103,23 @@ export const OnlyPingTargets: Story = {
       ...emptySettings,
       pingTargets: [
         {
-          id: "1",
-          name: "Gateway",
-          host: "192.168.1.1",
+          id: '1',
+          name: 'Gateway',
+          host: '192.168.1.1',
           enabled: true,
           count: 3,
         },
         {
-          id: "2",
-          name: "DNS",
-          host: "8.8.8.8",
+          id: '2',
+          name: 'DNS',
+          host: '8.8.8.8',
           enabled: true,
           count: 3,
         },
         {
-          id: "3",
-          name: "Cloudflare",
-          host: "1.1.1.1",
+          id: '3',
+          name: 'Cloudflare',
+          host: '1.1.1.1',
           enabled: true,
           count: 3,
         },
@@ -128,7 +128,7 @@ export const OnlyPingTargets: Story = {
     setTestsSettings: (): void => {
       // intentionally empty
     },
-    testsStatus: "idle",
+    testsStatus: 'idle',
   },
 };
 
@@ -141,23 +141,23 @@ export const OnlyTcpPorts: Story = {
       ...emptySettings,
       tcpPorts: [
         {
-          id: "1",
-          name: "HTTP",
-          host: "192.168.1.100",
+          id: '1',
+          name: 'HTTP',
+          host: '192.168.1.100',
           port: 80,
           enabled: true,
         },
         {
-          id: "2",
-          name: "HTTPS",
-          host: "192.168.1.100",
+          id: '2',
+          name: 'HTTPS',
+          host: '192.168.1.100',
           port: 443,
           enabled: true,
         },
         {
-          id: "3",
-          name: "SSH",
-          host: "192.168.1.100",
+          id: '3',
+          name: 'SSH',
+          host: '192.168.1.100',
           port: 22,
           enabled: true,
         },
@@ -166,7 +166,7 @@ export const OnlyTcpPorts: Story = {
     setTestsSettings: (): void => {
       // intentionally empty
     },
-    testsStatus: "idle",
+    testsStatus: 'idle',
   },
 };
 
@@ -178,11 +178,11 @@ export const OnlyUdpPorts: Story = {
     testsSettings: {
       ...emptySettings,
       udpPorts: [
-        { id: "1", name: "DNS", host: "8.8.8.8", port: 53, enabled: true },
+        { id: '1', name: 'DNS', host: '8.8.8.8', port: 53, enabled: true },
         {
-          id: "2",
-          name: "NTP",
-          host: "pool.ntp.org",
+          id: '2',
+          name: 'NTP',
+          host: 'pool.ntp.org',
           port: 123,
           enabled: true,
         },
@@ -191,7 +191,7 @@ export const OnlyUdpPorts: Story = {
     setTestsSettings: (): void => {
       // intentionally empty
     },
-    testsStatus: "idle",
+    testsStatus: 'idle',
   },
 };
 
@@ -204,16 +204,16 @@ export const OnlyHttpEndpoints: Story = {
       ...emptySettings,
       httpEndpoints: [
         {
-          id: "1",
-          name: "API Health",
-          url: "https://api.example.com/health",
+          id: '1',
+          name: 'API Health',
+          url: 'https://api.example.com/health',
           expectedStatus: 200,
           enabled: true,
         },
         {
-          id: "2",
-          name: "Website",
-          url: "https://example.com",
+          id: '2',
+          name: 'Website',
+          url: 'https://example.com',
           expectedStatus: 200,
           enabled: true,
         },
@@ -222,7 +222,7 @@ export const OnlyHttpEndpoints: Story = {
     setTestsSettings: (): void => {
       // intentionally empty
     },
-    testsStatus: "idle",
+    testsStatus: 'idle',
   },
 };
 
@@ -235,36 +235,36 @@ export const AllTestTypes: Story = {
       ...emptySettings,
       pingTargets: [
         {
-          id: "1",
-          name: "Gateway",
-          host: "192.168.1.1",
+          id: '1',
+          name: 'Gateway',
+          host: '192.168.1.1',
           enabled: true,
           count: 3,
         },
-        { id: "2", name: "DNS", host: "8.8.8.8", enabled: true, count: 3 },
+        { id: '2', name: 'DNS', host: '8.8.8.8', enabled: true, count: 3 },
       ],
       tcpPorts: [
         {
-          id: "1",
-          name: "Web",
-          host: "192.168.1.100",
+          id: '1',
+          name: 'Web',
+          host: '192.168.1.100',
           port: 80,
           enabled: true,
         },
         {
-          id: "2",
-          name: "SSH",
-          host: "192.168.1.100",
+          id: '2',
+          name: 'SSH',
+          host: '192.168.1.100',
           port: 22,
           enabled: true,
         },
       ],
-      udpPorts: [{ id: "1", name: "DNS", host: "8.8.8.8", port: 53, enabled: true }],
+      udpPorts: [{ id: '1', name: 'DNS', host: '8.8.8.8', port: 53, enabled: true }],
       httpEndpoints: [
         {
-          id: "1",
-          name: "API",
-          url: "https://api.example.com/health",
+          id: '1',
+          name: 'API',
+          url: 'https://api.example.com/health',
           expectedStatus: 200,
           enabled: true,
         },
@@ -273,7 +273,7 @@ export const AllTestTypes: Story = {
     setTestsSettings: (): void => {
       // intentionally empty
     },
-    testsStatus: "idle",
+    testsStatus: 'idle',
   },
 };
 
@@ -286,78 +286,78 @@ export const ProductionMonitoring: Story = {
       ...emptySettings,
       pingTargets: [
         {
-          id: "1",
-          name: "Core Router",
-          host: "10.0.0.1",
+          id: '1',
+          name: 'Core Router',
+          host: '10.0.0.1',
           enabled: true,
           count: 5,
         },
         {
-          id: "2",
-          name: "Primary DNS",
-          host: "10.0.1.10",
+          id: '2',
+          name: 'Primary DNS',
+          host: '10.0.1.10',
           enabled: true,
           count: 3,
         },
         {
-          id: "3",
-          name: "Secondary DNS",
-          host: "10.0.1.11",
+          id: '3',
+          name: 'Secondary DNS',
+          host: '10.0.1.11',
           enabled: true,
           count: 3,
         },
       ],
       tcpPorts: [
         {
-          id: "1",
-          name: "Web Server",
-          host: "web.example.com",
+          id: '1',
+          name: 'Web Server',
+          host: 'web.example.com',
           port: 443,
           enabled: true,
         },
         {
-          id: "2",
-          name: "DB Primary",
-          host: "db1.internal",
+          id: '2',
+          name: 'DB Primary',
+          host: 'db1.internal',
           port: 5432,
           enabled: true,
         },
         {
-          id: "3",
-          name: "Redis Cache",
-          host: "cache.internal",
+          id: '3',
+          name: 'Redis Cache',
+          host: 'cache.internal',
           port: 6379,
           enabled: true,
         },
       ],
       udpPorts: [
         {
-          id: "1",
-          name: "Syslog",
-          host: "syslog.internal",
+          id: '1',
+          name: 'Syslog',
+          host: 'syslog.internal',
           port: 514,
           enabled: true,
         },
       ],
       httpEndpoints: [
         {
-          id: "1",
-          name: "API Health",
-          url: "https://api.example.com/health",
+          id: '1',
+          name: 'API Health',
+          url: 'https://api.example.com/health',
           expectedStatus: 200,
           enabled: true,
         },
         {
-          id: "2",
-          name: "Status Page",
-          url: "https://status.example.com",
+          id: '2',
+          name: 'Status Page',
+          url: 'https://status.example.com',
           expectedStatus: 200,
           enabled: true,
         },
         {
-          id: "3",
-          name: "Monitoring",
-          url: "https://monitoring.example.com/ping",
+          id: '3',
+          name: 'Monitoring',
+          url: 'https://monitoring.example.com/ping',
           expectedStatus: 200,
           enabled: true,
         },
@@ -366,7 +366,7 @@ export const ProductionMonitoring: Story = {
     setTestsSettings: (): void => {
       // intentionally empty
     },
-    testsStatus: "idle",
+    testsStatus: 'idle',
   },
 };
 
@@ -379,9 +379,9 @@ export const Saving: Story = {
       ...emptySettings,
       pingTargets: [
         {
-          id: "1",
-          name: "Gateway",
-          host: "192.168.1.1",
+          id: '1',
+          name: 'Gateway',
+          host: '192.168.1.1',
           enabled: true,
           count: 3,
         },
@@ -390,7 +390,7 @@ export const Saving: Story = {
     setTestsSettings: (): void => {
       // intentionally empty
     },
-    testsStatus: "saving",
+    testsStatus: 'saving',
   },
 };
 
@@ -403,33 +403,33 @@ export const Interactive: Story = {
       ...emptySettings,
       pingTargets: [
         {
-          id: "1",
-          name: "Gateway",
-          host: "192.168.1.1",
+          id: '1',
+          name: 'Gateway',
+          host: '192.168.1.1',
           enabled: true,
           count: 3,
         },
       ],
       tcpPorts: [
         {
-          id: "1",
-          name: "HTTP",
-          host: "192.168.1.100",
+          id: '1',
+          name: 'HTTP',
+          host: '192.168.1.100',
           port: 80,
           enabled: true,
         },
       ],
     });
-    const [status, setStatus] = useState<SaveStatus>("idle");
+    const [status, setStatus] = useState<SaveStatus>('idle');
 
     const handleSetTestsSettings = (updater: React.SetStateAction<TestsSettings>) => {
       setTestsSettings(updater);
-      setStatus("saving");
+      setStatus('saving');
 
       setTimeout(() => {
-        setStatus("saved");
+        setStatus('saved');
         setTimeout(() => {
-          setStatus("idle");
+          setStatus('idle');
         }, 2000);
       }, 800);
     };

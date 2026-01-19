@@ -22,10 +22,10 @@
  * Props: status ("idle", "saving", "saved", or "error")
  */
 
-import type React from "react";
-import { useTranslation } from "react-i18next";
-import { cn, spacing } from "../../../styles/theme";
-import type { SaveStatus } from "../../../types/settings";
+import type React from 'react';
+import { useTranslation } from 'react-i18next';
+import { cn, spacing } from '../../../styles/theme';
+import type { SaveStatus } from '../../../types/settings';
 
 interface AutoSaveIndicatorProps {
   status: SaveStatus;
@@ -36,35 +36,35 @@ interface AutoSaveIndicatorProps {
  * Renders a small status indicator for form field save operations
  */
 export function AutoSaveIndicator({ status }: AutoSaveIndicatorProps): React.ReactElement | null {
-  const { t } = useTranslation("settings");
+  const { t } = useTranslation('settings');
 
   // Helper function to get the appropriate text color class based on status
   const getStatusColorClass = (): string => {
-    if (status === "saving") {
-      return "text-text-muted";
+    if (status === 'saving') {
+      return 'text-text-muted';
     }
-    if (status === "saved") {
-      return "text-status-success";
+    if (status === 'saved') {
+      return 'text-status-success';
     }
-    return "text-status-error";
+    return 'text-status-error';
   };
 
   // Helper function to get the translated status text
   const getStatusText = (): string => {
-    if (status === "saving") {
-      return t("autoSave.saving");
+    if (status === 'saving') {
+      return t('autoSave.saving');
     }
-    if (status === "saved") {
-      return t("autoSave.saved");
+    if (status === 'saved') {
+      return t('autoSave.saved');
     }
-    return t("autoSave.error");
+    return t('autoSave.error');
   };
 
-  if (status === "idle") {
+  if (status === 'idle') {
     return null;
   }
   return (
-    <span class={cn("caption", spacing.margin.left.inline, getStatusColorClass())}>
+    <span class={cn('caption', spacing.margin.left.inline, getStatusColorClass())}>
       {getStatusText()}
     </span>
   );

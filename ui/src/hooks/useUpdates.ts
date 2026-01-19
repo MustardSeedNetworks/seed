@@ -24,16 +24,16 @@
  * ```
  */
 
-import { useCallback, useState } from "react";
-import { api } from "../api";
-import { LogComponents, logger } from "../lib/logger";
+import { useCallback, useState } from 'react';
+import { api } from '../api';
+import { LogComponents, logger } from '../lib/logger';
 import type {
   UpdateActionResponse,
   UpdateCheckResponse,
   UpdateConfig,
   UpdateConfigRequest,
   UpdateStatusResponse,
-} from "../types/update";
+} from '../types/update';
 
 /**
  * Custom hook for managing application updates.
@@ -72,14 +72,14 @@ export function useUpdates(): {
     try {
       setError(null);
       setIsChecking(true);
-      const data = await api.get<UpdateCheckResponse>("/api/v1/updates/check");
+      const data = await api.get<UpdateCheckResponse>('/api/v1/updates/check');
       setUpdateInfo(data);
       return data;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to check for updates";
+      const message = err instanceof Error ? err.message : 'Failed to check for updates';
       setError(message);
-      logger.error(LogComponents.System, "Update check failed", err, {
-        endpoint: "/api/v1/updates/check",
+      logger.error(LogComponents.System, 'Update check failed', err, {
+        endpoint: '/api/v1/updates/check',
       });
       return null;
     } finally {
@@ -92,12 +92,12 @@ export function useUpdates(): {
    */
   const getStatus = useCallback(async (): Promise<UpdateStatusResponse | null> => {
     try {
-      const data = await api.get<UpdateStatusResponse>("/api/v1/updates/status");
+      const data = await api.get<UpdateStatusResponse>('/api/v1/updates/status');
       setStatus(data);
       return data;
     } catch (err) {
-      logger.error(LogComponents.System, "Failed to get update status", err, {
-        endpoint: "/api/v1/updates/status",
+      logger.error(LogComponents.System, 'Failed to get update status', err, {
+        endpoint: '/api/v1/updates/status',
       });
       return null;
     }
@@ -108,12 +108,12 @@ export function useUpdates(): {
    */
   const getUpdateInfo = useCallback(async (): Promise<UpdateCheckResponse | null> => {
     try {
-      const data = await api.get<UpdateCheckResponse>("/api/v1/updates/info");
+      const data = await api.get<UpdateCheckResponse>('/api/v1/updates/info');
       setUpdateInfo(data);
       return data;
     } catch (err) {
-      logger.error(LogComponents.System, "Failed to get update info", err, {
-        endpoint: "/api/v1/updates/info",
+      logger.error(LogComponents.System, 'Failed to get update info', err, {
+        endpoint: '/api/v1/updates/info',
       });
       return null;
     }
@@ -126,15 +126,15 @@ export function useUpdates(): {
     try {
       setError(null);
       setIsDownloading(true);
-      await api.post<UpdateActionResponse>("/api/v1/updates/download");
+      await api.post<UpdateActionResponse>('/api/v1/updates/download');
       // Refresh status after download
       await getStatus();
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to download update";
+      const message = err instanceof Error ? err.message : 'Failed to download update';
       setError(message);
-      logger.error(LogComponents.System, "Update download failed", err, {
-        endpoint: "/api/v1/updates/download",
+      logger.error(LogComponents.System, 'Update download failed', err, {
+        endpoint: '/api/v1/updates/download',
       });
       return false;
     } finally {
@@ -149,13 +149,13 @@ export function useUpdates(): {
     try {
       setError(null);
       setIsApplying(true);
-      await api.post<UpdateActionResponse>("/api/v1/updates/apply");
+      await api.post<UpdateActionResponse>('/api/v1/updates/apply');
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to apply update";
+      const message = err instanceof Error ? err.message : 'Failed to apply update';
       setError(message);
-      logger.error(LogComponents.System, "Update apply failed", err, {
-        endpoint: "/api/v1/updates/apply",
+      logger.error(LogComponents.System, 'Update apply failed', err, {
+        endpoint: '/api/v1/updates/apply',
       });
       return false;
     } finally {
@@ -169,13 +169,13 @@ export function useUpdates(): {
   const rollback = useCallback(async (): Promise<boolean> => {
     try {
       setError(null);
-      await api.post<UpdateActionResponse>("/api/v1/updates/rollback");
+      await api.post<UpdateActionResponse>('/api/v1/updates/rollback');
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to rollback update";
+      const message = err instanceof Error ? err.message : 'Failed to rollback update';
       setError(message);
-      logger.error(LogComponents.System, "Update rollback failed", err, {
-        endpoint: "/api/v1/updates/rollback",
+      logger.error(LogComponents.System, 'Update rollback failed', err, {
+        endpoint: '/api/v1/updates/rollback',
       });
       return false;
     }
@@ -186,12 +186,12 @@ export function useUpdates(): {
    */
   const getConfig = useCallback(async (): Promise<UpdateConfig | null> => {
     try {
-      const data = await api.get<UpdateConfig>("/api/v1/updates/config");
+      const data = await api.get<UpdateConfig>('/api/v1/updates/config');
       setConfig(data);
       return data;
     } catch (err) {
-      logger.error(LogComponents.Config, "Failed to get update config", err, {
-        endpoint: "/api/v1/updates/config",
+      logger.error(LogComponents.Config, 'Failed to get update config', err, {
+        endpoint: '/api/v1/updates/config',
       });
       return null;
     }
@@ -202,12 +202,12 @@ export function useUpdates(): {
    */
   const updateConfig = useCallback(async (updates: UpdateConfigRequest): Promise<boolean> => {
     try {
-      const data = await api.patch<UpdateConfig>("/api/v1/updates/config", updates);
+      const data = await api.patch<UpdateConfig>('/api/v1/updates/config', updates);
       setConfig(data);
       return true;
     } catch (err) {
-      logger.error(LogComponents.Config, "Failed to update config", err, {
-        endpoint: "/api/v1/updates/config",
+      logger.error(LogComponents.Config, 'Failed to update config', err, {
+        endpoint: '/api/v1/updates/config',
         updates,
       });
       return false;

@@ -28,17 +28,17 @@
  * State: None - purely presentational component
  */
 
-import type React from "react";
-import { cn, layout, radius } from "../../styles/theme";
-import { getSizeConfig, getStatusConfig, type Status } from "./StatusConfig";
+import type React from 'react';
+import { cn, layout, radius } from '../../styles/theme';
+import { getSizeConfig, getStatusConfig, type Status } from './StatusConfig';
 
 // Re-export Status type for convenience (types don't affect react-refresh)
 export type { Status };
 
 interface StatusBadgeProps {
   status: Status;
-  variant?: "icon" | "dot";
-  size?: "sm" | "md";
+  variant?: 'icon' | 'dot';
+  size?: 'sm' | 'md';
   className?: string;
 }
 
@@ -56,21 +56,21 @@ interface StatusBadgeProps {
  */
 export function StatusBadge({
   status,
-  variant = "icon",
-  size = "sm",
-  className = "",
+  variant = 'icon',
+  size = 'sm',
+  className = '',
 }: StatusBadgeProps): React.JSX.Element {
   const config = getStatusConfig(status);
   const sizes = getSizeConfig(size);
 
-  if (variant === "dot") {
+  if (variant === 'dot') {
     return (
       <span
         class={cn(
-          "inline-block",
+          'inline-block',
           sizes.dot,
           radius.full,
-          config.bgColor.replace("/10", ""),
+          config.bgColor.replace('/10', ''),
           className,
         )}
         role="img"
@@ -83,7 +83,7 @@ export function StatusBadge({
     <span
       class={cn(
         layout.flex.center,
-        "inline-flex",
+        'inline-flex',
         radius.full,
         config.color,
         config.bgColor,

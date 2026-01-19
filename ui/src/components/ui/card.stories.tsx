@@ -1,38 +1,38 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Cable, Server, Wifi } from "lucide-react";
-import { cn, spacing } from "../../styles/theme";
-import { Card, CardDivider, CardRow, CardValue } from "./Card";
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { Cable, Server, Wifi } from 'lucide-react';
+import { cn, spacing } from '../../styles/theme';
+import { Card, CardDivider, CardRow, CardValue } from './Card';
 
 const meta: Meta<typeof Card> = {
-  title: "UI/Card",
+  title: 'UI/Card',
   component: Card,
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "Base card container used throughout the application for displaying information with status indicators.",
+          'Base card container used throughout the application for displaying information with status indicators.',
       },
     },
   },
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     status: {
-      control: "select",
-      options: ["success", "warning", "error", "unknown", "loading"],
-      description: "Status indicator color",
+      control: 'select',
+      options: ['success', 'warning', 'error', 'unknown', 'loading'],
+      description: 'Status indicator color',
     },
     title: {
-      control: "text",
-      description: "Card title (required)",
+      control: 'text',
+      description: 'Card title (required)',
     },
     subtitle: {
-      control: "text",
-      description: "Optional subtitle or description",
+      control: 'text',
+      description: 'Optional subtitle or description',
     },
     onClick: {
-      action: "clicked",
-      description: "Callback when card is clicked",
+      action: 'clicked',
+      description: 'Callback when card is clicked',
     },
   },
 };
@@ -43,9 +43,9 @@ type Story = StoryObj<typeof meta>;
 // Default card with success status
 export const Success: Story = {
   args: {
-    title: "Link Status",
-    subtitle: "eth0",
-    status: "success",
+    title: 'Link Status',
+    subtitle: 'eth0',
+    status: 'success',
     icon: <Cable class="w-5 h-5" />,
     children: (
       <div class="stack-sm">
@@ -61,9 +61,9 @@ export const Success: Story = {
 // Warning status
 export const Warning: Story = {
   args: {
-    title: "WiFi Signal",
-    subtitle: "wlan0",
-    status: "warning",
+    title: 'WiFi Signal',
+    subtitle: 'wlan0',
+    status: 'warning',
     icon: <Wifi class="w-5 h-5" />,
     children: (
       <div class="stack-sm">
@@ -78,9 +78,9 @@ export const Warning: Story = {
 // Error status
 export const ErrorStatus: Story = {
   args: {
-    title: "Gateway",
-    subtitle: "192.168.1.1",
-    status: "error",
+    title: 'Gateway',
+    subtitle: '192.168.1.1',
+    status: 'error',
     icon: <Server class="w-5 h-5" />,
     children: (
       <div class="stack-sm">
@@ -95,9 +95,9 @@ export const ErrorStatus: Story = {
 // Loading state
 export const Loading: Story = {
   args: {
-    title: "Speed Test",
-    subtitle: "Running...",
-    status: "loading",
+    title: 'Speed Test',
+    subtitle: 'Running...',
+    status: 'loading',
     children: (
       <div class="stack-sm">
         <CardValue value="Testing download speed..." size="sm" />
@@ -109,9 +109,9 @@ export const Loading: Story = {
 // Unknown/No Data state
 export const Unknown: Story = {
   args: {
-    title: "Cable Test",
-    subtitle: "No data",
-    status: "unknown",
+    title: 'Cable Test',
+    subtitle: 'No data',
+    status: 'unknown',
     icon: <Cable class="w-5 h-5" />,
     children: (
       <div class="stack-sm">
@@ -124,11 +124,11 @@ export const Unknown: Story = {
 // Interactive card with click handler
 export const Interactive: Story = {
   args: {
-    title: "Network Discovery",
-    subtitle: "Click to view details",
-    status: "success",
+    title: 'Network Discovery',
+    subtitle: 'Click to view details',
+    status: 'success',
     icon: <Server class="w-5 h-5" />,
-    onClick: () => alert("Card clicked!"),
+    onClick: () => alert('Card clicked!'),
     children: (
       <div class="stack-sm">
         <CardRow label="Devices Found" value="12" />
@@ -141,15 +141,15 @@ export const Interactive: Story = {
 // Card with header action
 export const WithHeaderAction: Story = {
   args: {
-    title: "DNS Status",
-    subtitle: "Primary",
-    status: "success",
+    title: 'DNS Status',
+    subtitle: 'Primary',
+    status: 'success',
     headerAction: (
       <button
         type="button"
         class={cn(
           spacing.chip.sm,
-          "caption bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90",
+          'caption bg-brand-primary text-text-inverse rounded-md hover:bg-brand-primary/90',
         )}
       >
         Refresh

@@ -26,15 +26,15 @@
  * State: Manages system health data, fetches from /api/status/system endpoint, updates periodically
  */
 
-import { Server } from "lucide-react";
-import type React from "react";
-import { useCallback, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { formatBytes } from "../../lib/format";
-import { cn, icon as iconTokens, radius, spacing } from "../../styles/theme";
-import { CardDivider, CardRow } from "../ui/Card";
-import type { Status } from "../ui/StatusBadge";
-import { BaseCard } from "./BaseCard";
+import { Server } from 'lucide-react';
+import type React from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatBytes } from '../../lib/format';
+import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
+import { CardDivider, CardRow } from '../ui/Card';
+import type { Status } from '../ui/StatusBadge';
+import { BaseCard } from './BaseCard';
 
 interface ProcessInfo {
   name: string;
@@ -81,40 +81,40 @@ function formatUptime(seconds: number): string {
 
 function getResourceStatus(percent: number): Status {
   if (percent >= 90) {
-    return "error";
+    return 'error';
   }
   if (percent >= 75) {
-    return "warning";
+    return 'warning';
   }
-  return "success";
+  return 'success';
 }
 
 /**
  * Returns contextual remediation suggestions based on resource type and usage level
  */
-function getSuggestion(type: "cpu" | "memory" | "disk", usage: number): string {
-  if (type === "cpu") {
+function getSuggestion(type: 'cpu' | 'memory' | 'disk', usage: number): string {
+  if (type === 'cpu') {
     if (usage >= 90) {
-      return "Check for runaway processes or consider upgrading CPU resources";
+      return 'Check for runaway processes or consider upgrading CPU resources';
     }
-    return "Consider closing unused applications or background tasks";
+    return 'Consider closing unused applications or background tasks';
   }
 
-  if (type === "memory") {
+  if (type === 'memory') {
     if (usage >= 90) {
-      return "Critical: Restart applications to free memory or add more RAM";
+      return 'Critical: Restart applications to free memory or add more RAM';
     }
-    return "Consider increasing system memory or closing memory-intensive applications";
+    return 'Consider increasing system memory or closing memory-intensive applications';
   }
 
-  if (type === "disk") {
+  if (type === 'disk') {
     if (usage >= 90) {
-      return "Critical: Clear temporary files and archive old data immediately";
+      return 'Critical: Clear temporary files and archive old data immediately';
     }
-    return "Clear temporary files, remove unused applications, or archive old data";
+    return 'Clear temporary files, remove unused applications, or archive old data';
   }
 
-  return "";
+  return '';
 }
 
 function _resourceBar({
@@ -130,19 +130,19 @@ function _resourceBar({
   used: number;
   total: number;
   topProcesses?: ProcessInfo[];
-  type: "cpu" | "memory" | "disk";
+  type: 'cpu' | 'memory' | 'disk';
 }): React.ReactElement {
   const status = getResourceStatus(percent);
   const barColor = ((): string => {
     switch (status) {
-      case "success":
-        return "bg-status-success";
-      case "warning":
-        return "bg-status-warning";
-      case "error":
-        return "bg-status-error";
+      case 'success':
+        return 'bg-status-success';
+      case 'warning':
+        return 'bg-status-warning';
+      case 'error':
+        return 'bg-status-error';
       default:
-        return "bg-text-muted";
+        return 'bg-text-muted';
     }
   })();
 
@@ -154,9 +154,9 @@ function _resourceBar({
         <span>{label}</span>
         <span class="text-text-primary font-medium">{percent.toFixed(0)}%</span>
       </div>
-      <div class={cn("h-2 bg-surface-border overflow-hidden", radius.md)}>
+      <div class={cn('h-2 bg-surface-border overflow-hidden', radius.md)}>
         <div
-          class={cn("h-full transition-all duration-300", barColor)}
+          class={cn('h-full transition-all duration-300', barColor)}
           style={{ width: `${Math.min(percent, 100)}%` }}
         />
       </div>
@@ -188,19 +188,19 @@ function _resourceBar({
  * Displays system resource usage with CPU, memory, and disk metrics.
  */
 export function SystemHealthCard(): React.ReactElement {
-  const { t } = useTranslation("cards");
+  const { t } = useTranslation('cards');
   const [data, setData] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchHealth = useCallback(async () => {
     try {
-      const response = await fetch("/api/v1/sap/system/health", {
-        credentials: "include",
+      const response = await fetch('/api/v1/sap/system/health', {
+        credentials: 'include',
       });
       if (response.status === 401) {
         // Trigger session refresh - dispatch custom event for app-level handling
-        window.dispatchEvent(new CustomEvent("session-expired"));
+        window.dispatchEvent(new CustomEvent('session-expired'));
         return; // Don't treat as error, let session refresh handle it
       }
       if (!response.ok) {
@@ -211,7 +211,7 @@ export function SystemHealthCard(): React.ReactElement {
       setData(result.system);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch");
+      setError(err instanceof Error ? err.message : 'Failed to fetch');
     } finally {
       setLoading(false);
     }
@@ -236,7 +236,7 @@ export function SystemHealthCard(): React.ReactElement {
 
   return (
     <BaseCard
-      title={t("system.title")}
+      title={t('system.title')}
       subtitle={data?.hostname}
       icon={<Server class={iconTokens.size.md} />}
       data={data}
@@ -248,7 +248,7 @@ export function SystemHealthCard(): React.ReactElement {
       {(health: SystemHealth): React.ReactElement => (
         <div class="stack">
           <resourceBar
-            label={t("system.cpu")}
+            label={t('system.cpu')}
             percent={health.cpuPercent ?? 0}
             used={0}
             total={0}
@@ -256,7 +256,7 @@ export function SystemHealthCard(): React.ReactElement {
             type="cpu"
           />
           <resourceBar
-            label={t("system.memory")}
+            label={t('system.memory')}
             percent={health.memoryPercent ?? 0}
             used={health.memoryUsed ?? 0}
             total={health.memoryTotal ?? 0}
@@ -264,7 +264,7 @@ export function SystemHealthCard(): React.ReactElement {
             type="memory"
           />
           <resourceBar
-            label={t("system.disk")}
+            label={t('system.disk')}
             percent={health.diskPercent ?? 0}
             used={health.diskUsed ?? 0}
             total={health.diskTotal ?? 0}
@@ -273,28 +273,28 @@ export function SystemHealthCard(): React.ReactElement {
 
           <CardDivider />
 
-          <div class={cn("grid grid-cols-2", spacing.gap.compact)}>
+          <div class={cn('grid grid-cols-2', spacing.gap.compact)}>
             <CardRow
-              label={t("system.uptime")}
+              label={t('system.uptime')}
               value={formatUptime(health.uptime ?? 0)}
               align="left"
             />
             <CardRow
-              label={t("system.load1m")}
+              label={t('system.load1m')}
               value={(health.loadAvg1 ?? 0).toFixed(2)}
               align="left"
-              status={(health.loadAvg1 ?? 0) > (health.numCpu ?? 1) ? "warning" : undefined}
+              status={(health.loadAvg1 ?? 0) > (health.numCpu ?? 1) ? 'warning' : undefined}
             />
-            <CardRow label={t("system.goroutines")} value={health.goroutines ?? 0} align="left" />
+            <CardRow label={t('system.goroutines')} value={health.goroutines ?? 0} align="left" />
             <CardRow
-              label={t("system.processMem")}
+              label={t('system.processMem')}
               value={formatBytes(health.processMemory ?? 0)}
               align="left"
             />
           </div>
 
-          <div class={cn("caption text-center", spacing.padding.top.tight)}>
-            {health.os ?? "Unknown"}/{health.arch ?? "Unknown"} - {health.numCpu ?? 0} CPUs
+          <div class={cn('caption text-center', spacing.padding.top.tight)}>
+            {health.os ?? 'Unknown'}/{health.arch ?? 'Unknown'} - {health.numCpu ?? 0} CPUs
           </div>
         </div>
       )}

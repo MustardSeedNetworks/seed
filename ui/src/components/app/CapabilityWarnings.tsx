@@ -7,11 +7,11 @@
  * Issue #803: UI detect/warn missing network capabilities
  */
 
-import { AlertTriangle, ChevronDown, ChevronUp, X } from "lucide-react";
-import { useCallback, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { type Capabilities, getMissingCapabilities } from "../../hooks/useCapabilities";
-import { cn, radius, spacing } from "../../styles/theme";
+import { AlertTriangle, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { type Capabilities, getMissingCapabilities } from '../../hooks/useCapabilities';
+import { cn, radius, spacing } from '../../styles/theme';
 
 interface CapabilityWarningsProps {
   /** Current capability status from useCapabilities hook */
@@ -28,7 +28,7 @@ export function CapabilityWarnings({
   capabilities,
   onDismiss,
 }: CapabilityWarningsProps): JSX.Element | null {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common');
   const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -49,7 +49,7 @@ export function CapabilityWarnings({
       role="alert"
       aria-live="polite"
       class={cn(
-        "bg-status-warning/10 border border-status-warning/30",
+        'bg-status-warning/10 border border-status-warning/30',
         radius.lg,
         spacing.pad.md,
         spacing.margin.bottom.section,
@@ -73,13 +73,13 @@ export function CapabilityWarnings({
             aria-controls="capability-details"
           >
             <h3 class="body font-medium text-text-primary">
-              {t("capabilities.warning.title", "Limited Network Capabilities")}
+              {t('capabilities.warning.title', 'Limited Network Capabilities')}
             </h3>
             <span class="caption text-text-muted">
-              ({missingCapabilities.length}{" "}
+              ({missingCapabilities.length}{' '}
               {missingCapabilities.length === 1
-                ? t("capabilities.warning.issue", "issue")
-                : t("capabilities.warning.issues", "issues")}
+                ? t('capabilities.warning.issue', 'issue')
+                : t('capabilities.warning.issues', 'issues')}
               )
             </span>
             {expanded ? (
@@ -93,8 +93,8 @@ export function CapabilityWarnings({
           {!expanded && (
             <p class="body-small text-text-muted mt-1">
               {t(
-                "capabilities.warning.summary",
-                "Some features may not work. Click to see details and how to fix.",
+                'capabilities.warning.summary',
+                'Some features may not work. Click to see details and how to fix.',
               )}
             </p>
           )}
@@ -108,7 +108,7 @@ export function CapabilityWarnings({
                   <p class="caption text-text-muted mt-1">{cap.description}</p>
                   <div class="mt-2 bg-surface-base rounded p-2">
                     <p class="caption font-medium text-text-secondary">
-                      {t("capabilities.warning.howToFix", "How to fix:")}
+                      {t('capabilities.warning.howToFix', 'How to fix:')}
                     </p>
                     <code class="caption text-brand-primary break-all">{cap.remediation}</code>
                   </div>
@@ -123,7 +123,7 @@ export function CapabilityWarnings({
           type="button"
           class="p-1 rounded-full hover:bg-surface-hover text-text-muted hover:text-text-primary transition-colors"
           onClick={handleDismiss}
-          aria-label={t("capabilities.warning.dismiss", "Dismiss warning")}
+          aria-label={t('capabilities.warning.dismiss', 'Dismiss warning')}
         >
           <X class="h-4 w-4" />
         </button>

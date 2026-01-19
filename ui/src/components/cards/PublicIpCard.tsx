@@ -24,14 +24,14 @@
  * State: Receives data from parent component via props
  */
 
-import type React from "react";
-import { memo } from "react";
-import { useTranslation } from "react-i18next";
-import { icon as iconTokens } from "../../styles/theme";
-import { CardDivider, CardRow, CardValue, type Status } from "../ui/Card";
-import { CollapsibleSection } from "../ui/CollapsibleSection";
-import { Globe } from "../ui/Icons";
-import { BaseCard } from "./BaseCard";
+import type React from 'react';
+import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { icon as iconTokens } from '../../styles/theme';
+import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
+import { CollapsibleSection } from '../ui/CollapsibleSection';
+import { Globe } from '../ui/Icons';
+import { BaseCard } from './BaseCard';
 
 /** IP history entry for tracking address changes */
 export interface IpHistoryEntry {
@@ -74,7 +74,7 @@ function formatLastChecked(isoDate: string): string {
     const diffMins = Math.floor(diffMs / 60000);
 
     if (diffMins < 1) {
-      return "just now";
+      return 'just now';
     }
     if (diffMins < 60) {
       return `${diffMins}m ago`;
@@ -87,7 +87,7 @@ function formatLastChecked(isoDate: string): string {
 
     return date.toLocaleDateString();
   } catch {
-    return "unknown";
+    return 'unknown';
   }
 }
 
@@ -106,7 +106,7 @@ function formatDateRange(firstSeen: string, lastSeen: string): string {
     }
     return `${firstStr} - ${lastStr}`;
   } catch {
-    return "unknown";
+    return 'unknown';
   }
 }
 
@@ -115,7 +115,7 @@ function formatDateRange(firstSeen: string, lastSeen: string): string {
  * Shows "AS15169 Google LLC" style format
  */
 function formatIspAsn(asn?: string, org?: string, isp?: string): string | null {
-  const asnPart = asn ? `AS${asn.replace(/^AS/i, "")}` : null;
+  const asnPart = asn ? `AS${asn.replace(/^AS/i, '')}` : null;
   const namePart = org || isp;
 
   if (asnPart && namePart) {
@@ -136,32 +136,32 @@ function formatIspAsn(asn?: string, org?: string, isp?: string): string | null {
  */
 function formatLocation(city?: string, region?: string, country?: string): string | null {
   const parts = [city, region, country].filter(Boolean);
-  return parts.length > 0 ? parts.join(", ") : null;
+  return parts.length > 0 ? parts.join(', ') : null;
 }
 
 function getStatus(data: PublicIpData): Status {
   if (data.error && !data.ipv4 && !data.ipv6) {
-    return "error";
+    return 'error';
   }
   if (data.ipv4 || data.ipv6) {
-    return "success";
+    return 'success';
   }
-  return "unknown";
+  return 'unknown';
 }
 
 export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
   function publicIpCard({ data, loading }: PublicIpCardProps): React.ReactElement {
-    const { t } = useTranslation("cards");
+    const { t } = useTranslation('cards');
 
     return (
       <BaseCard
-        title={t("publicIp.title")}
+        title={t('publicIp.title')}
         icon={<Globe class={iconTokens.size.md} />}
         data={data}
         loading={loading}
         getStatus={getStatus}
-        loadingContent={<CardValue value={t("publicIp.checking")} size="lg" />}
-        emptyMessage={t("publicIp.unableToDetect")}
+        loadingContent={<CardValue value={t('publicIp.checking')} size="lg" />}
+        emptyMessage={t('publicIp.unableToDetect')}
       >
         {(ipData: PublicIpData): React.ReactElement => {
           const ispAsnDisplay = formatIspAsn(ipData.asn, ipData.org, ipData.isp);
@@ -173,13 +173,13 @@ export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
               {/* IPv4 Address */}
               {ipData.ipv4 ? (
                 <>
-                  <p class="caption font-medium">{t("publicIp.ipv4")}</p>
+                  <p class="caption font-medium">{t('publicIp.ipv4')}</p>
                   <CardValue value={ipData.ipv4} size="lg" />
                 </>
               ) : (
                 <>
-                  <p class="caption font-medium">{t("publicIp.ipv4")}</p>
-                  <p class="body-small text-text-muted">{t("publicIp.notAvailable")}</p>
+                  <p class="caption font-medium">{t('publicIp.ipv4')}</p>
+                  <p class="body-small text-text-muted">{t('publicIp.notAvailable')}</p>
                 </>
               )}
 
@@ -188,13 +188,13 @@ export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
               {/* IPv6 Address */}
               {ipData.ipv6 ? (
                 <>
-                  <p class="caption font-medium">{t("publicIp.ipv6")}</p>
+                  <p class="caption font-medium">{t('publicIp.ipv6')}</p>
                   <p class="body-small font-mono break-all text-text-primary">{ipData.ipv6}</p>
                 </>
               ) : (
                 <>
-                  <p class="caption font-medium">{t("publicIp.ipv6")}</p>
-                  <p class="body-small text-text-muted">{t("publicIp.notAvailable")}</p>
+                  <p class="caption font-medium">{t('publicIp.ipv6')}</p>
+                  <p class="body-small text-text-muted">{t('publicIp.notAvailable')}</p>
                 </>
               )}
 
@@ -202,7 +202,7 @@ export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
               {ispAsnDisplay ? (
                 <>
                   <CardDivider />
-                  <CardRow label={t("publicIp.ispAsn")} value={ispAsnDisplay} />
+                  <CardRow label={t('publicIp.ispAsn')} value={ispAsnDisplay} />
                 </>
               ) : null}
 
@@ -210,7 +210,7 @@ export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
               {locationDisplay ? (
                 <>
                   <CardDivider />
-                  <CardRow label={t("publicIp.location")} value={locationDisplay} />
+                  <CardRow label={t('publicIp.location')} value={locationDisplay} />
                 </>
               ) : null}
 
@@ -219,7 +219,7 @@ export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
                 <>
                   <CardDivider />
                   <CardRow
-                    label={t("publicIp.lastChecked")}
+                    label={t('publicIp.lastChecked')}
                     value={formatLastChecked(ipData.lastChecked)}
                   />
                 </>
@@ -238,7 +238,7 @@ export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
                 <>
                   <CardDivider />
                   <CollapsibleSection
-                    title={t("publicIp.history")}
+                    title={t('publicIp.history')}
                     count={ipData.history?.length}
                     variant="compact"
                     defaultOpen={false}

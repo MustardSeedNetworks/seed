@@ -24,9 +24,9 @@
  * Dependencies: vitest, @testing-library/react
  */
 
-import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useAuth } from "./useAuth";
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useAuth } from './useAuth';
 
 // Mock localStorage
 interface MockLocalStorage {
@@ -52,7 +52,7 @@ const mockLocalStorage: MockLocalStorage = (() => {
   };
 })();
 
-Object.defineProperty(window, "localStorage", {
+Object.defineProperty(window, 'localStorage', {
   value: mockLocalStorage,
 });
 
@@ -60,13 +60,13 @@ Object.defineProperty(window, "localStorage", {
 const mockFetch: ReturnType<typeof vi.fn> = vi.fn();
 global.fetch = mockFetch;
 
-describe("useAuth", () => {
+describe('useAuth', () => {
   beforeEach(() => {
     mockLocalStorage.clear();
     vi.clearAllMocks();
   });
 
-  it("starts with loading state and checks auth status", async () => {
+  it('starts with loading state and checks auth status', async () => {
     // Mock /api/status to return 401 (not authenticated)
     mockFetch.mockResolvedValueOnce({
       ok: false,
@@ -88,7 +88,7 @@ describe("useAuth", () => {
     expect(result.current.username).toBeNull();
   });
 
-  it("restores auth state when backend confirms session", async () => {
+  it('restores auth state when backend confirms session', async () => {
     // Mock /api/status to return 200 (authenticated)
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -103,29 +103,29 @@ describe("useAuth", () => {
 
     expect(result.current.isAuthenticated).toBe(true);
     expect(mockFetch).toHaveBeenCalledWith(
-      "/api/status",
-      expect.objectContaining({ credentials: "include" }),
+      '/api/status',
+      expect.objectContaining({ credentials: 'include' }),
     );
   });
 
-  it("clears legacy localStorage keys on mount", async () => {
+  it('clears legacy localStorage keys on mount', async () => {
     // Set legacy keys (migrated to httpOnly cookies)
-    mockLocalStorage.setItem("seed-token", "old-token");
-    mockLocalStorage.setItem("seed-token-expiry", "123456");
-    mockLocalStorage.setItem("seed-username", "olduser");
+    mockLocalStorage.setItem('seed-token', 'old-token');
+    mockLocalStorage.setItem('seed-token-expiry', '123456');
+    mockLocalStorage.setItem('seed-username', 'olduser');
 
     mockFetch.mockResolvedValueOnce({ ok: false });
 
     renderHook(() => useAuth());
 
     await waitFor(() => {
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("seed-token");
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("seed-token-expiry");
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("seed-username");
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('seed-token');
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('seed-token-expiry');
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('seed-username');
     });
   });
 
-  it("login sets authenticated state on success", async () => {
+  it('login sets authenticated state on success', async () => {
     // Mock initial status check
     mockFetch.mockResolvedValueOnce({ ok: false });
 
@@ -136,29 +136,29 @@ describe("useAuth", () => {
     // Mock successful login
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ token: "access-token", expires: 3600 }),
+      json: () => Promise.resolve({ token: 'access-token', expires: 3600 }),
     });
 
     let loginResult: boolean;
     await act(async () => {
-      loginResult = await result.current.login("admin", "password");
+      loginResult = await result.current.login('admin', 'password');
     });
 
     expect(loginResult).toBe(true);
     expect(result.current.isAuthenticated).toBe(true);
-    expect(result.current.token).toBe("access-token"); // For WebSocket
-    expect(result.current.username).toBe("admin");
+    expect(result.current.token).toBe('access-token'); // For WebSocket
+    expect(result.current.username).toBe('admin');
     expect(mockFetch).toHaveBeenLastCalledWith(
-      "/api/auth/login",
+      '/api/auth/login',
       expect.objectContaining({
-        method: "POST",
-        credentials: "include",
-        body: JSON.stringify({ username: "admin", password: "password" }),
+        method: 'POST',
+        credentials: 'include',
+        body: JSON.stringify({ username: 'admin', password: 'password' }),
       }),
     );
   });
 
-  it("login sets error on failure", async () => {
+  it('login sets error on failure', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false }); // Initial status check
 
     const { result } = renderHook(() => useAuth());
@@ -172,7 +172,7 @@ describe("useAuth", () => {
 
     let loginResult: boolean;
     await act(async () => {
-      loginResult = await result.current.login("admin", "wrongpassword");
+      loginResult = await result.current.login('admin', 'wrongpassword');
     });
 
     expect(loginResult).toBe(false);
@@ -180,25 +180,25 @@ describe("useAuth", () => {
     expect(result.current.error).toBeTruthy();
   });
 
-  it("login handles network error", async () => {
+  it('login handles network error', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false }); // Initial status check
 
     const { result } = renderHook(() => useAuth());
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    mockFetch.mockRejectedValueOnce(new Error("Network error"));
+    mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
     let loginResult: boolean;
     await act(async () => {
-      loginResult = await result.current.login("admin", "password");
+      loginResult = await result.current.login('admin', 'password');
     });
 
     expect(loginResult).toBe(false);
-    expect(result.current.error).toBe("Network error");
+    expect(result.current.error).toBe('Network error');
   });
 
-  it("login sets isLoading during request", async () => {
+  it('login sets isLoading during request', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false }); // Initial status check
 
     const { result } = renderHook(() => useAuth());
@@ -218,7 +218,7 @@ describe("useAuth", () => {
     mockFetch.mockReturnValueOnce(loginPromise);
 
     act(() => {
-      result.current.login("admin", "password");
+      result.current.login('admin', 'password');
     });
 
     // Should be loading
@@ -228,7 +228,7 @@ describe("useAuth", () => {
     if (resolveLogin) {
       resolveLogin({
         ok: true,
-        json: () => Promise.resolve({ token: "token", expires: 3600 }),
+        json: () => Promise.resolve({ token: 'token', expires: 3600 }),
       });
     }
 
@@ -237,7 +237,7 @@ describe("useAuth", () => {
     });
   });
 
-  it("logout clears auth state", async () => {
+  it('logout clears auth state', async () => {
     // Mock initial authenticated state
     mockFetch.mockResolvedValueOnce({ ok: true });
 
@@ -259,7 +259,7 @@ describe("useAuth", () => {
     expect(result.current.username).toBeNull();
   });
 
-  it("logout calls backend endpoint", async () => {
+  it('logout calls backend endpoint', async () => {
     mockFetch.mockResolvedValueOnce({ ok: true }); // Initial status
 
     const { result } = renderHook(() => useAuth());
@@ -275,16 +275,16 @@ describe("useAuth", () => {
     // Should have called logout endpoint with credentials
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        "/api/auth/logout",
+        '/api/auth/logout',
         expect.objectContaining({
-          method: "POST",
-          credentials: "include",
+          method: 'POST',
+          credentials: 'include',
         }),
       );
     });
   });
 
-  it("logout handles backend error gracefully", async () => {
+  it('logout handles backend error gracefully', async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
     const { result } = renderHook(() => useAuth());
@@ -292,7 +292,7 @@ describe("useAuth", () => {
     await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
     // Mock logout failure
-    mockFetch.mockRejectedValueOnce(new Error("Network error"));
+    mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
     await act(async () => {
       result.current.logout();

@@ -1,8 +1,8 @@
-import type { ReactNode } from "react";
-import { useTranslation } from "react-i18next";
-import { cn, layout, spacing } from "../../styles/theme";
-import { Card, CardValue, type Status } from "../ui/Card";
-import { Skeleton } from "../ui/Skeleton";
+import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { cn, layout, spacing } from '../../styles/theme';
+import { Card, CardValue, type Status } from '../ui/Card';
+import { Skeleton } from '../ui/Skeleton';
 
 interface BaseCardProps<T> {
   title: string;
@@ -57,8 +57,8 @@ export function BaseCard<T>({
   class: className,
   onClick,
 }: BaseCardProps<T>): JSX.Element {
-  const { t } = useTranslation("common");
-  const resolvedEmptyMessage = emptyMessage ?? t("status.noDataAvailable");
+  const { t } = useTranslation('common');
+  const resolvedEmptyMessage = emptyMessage ?? t('status.noDataAvailable');
 
   // Loading state
   if (loading) {
@@ -87,8 +87,8 @@ export function BaseCard<T>({
         class={className}
         enableLiveRegion={true}
       >
-        <CardValue value={t("status.error")} size="md" status="error" />
-        <p class={cn("caption text-status-error", spacing.margin.top.tight)}>{error}</p>
+        <CardValue value={t('status.error')} size="md" status="error" />
+        <p class={cn('caption text-status-error', spacing.margin.top.tight)}>{error}</p>
       </Card>
     );
   }
@@ -134,7 +134,7 @@ export function BaseCard<T>({
 function DefaultLoadingSkeleton(): JSX.Element {
   return (
     <>
-      <Skeleton class={cn("h-8 w-32", spacing.margin.bottom.heading)} />
+      <Skeleton class={cn('h-8 w-32', spacing.margin.bottom.heading)} />
       <div class={cn(spacing.stack.sm, spacing.margin.top.content)}>
         <div class={layout.flex.between}>
           <Skeleton class="h-3 w-16" />
@@ -185,7 +185,7 @@ export function SimpleBaseCard({
   class: className,
   onClick,
 }: SimpleBaseCardProps): JSX.Element {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common');
 
   // Loading state (fixes #674: enable live region for dynamic updates)
   if (loading) {
@@ -214,8 +214,8 @@ export function SimpleBaseCard({
         class={className}
         enableLiveRegion={true}
       >
-        <CardValue value={t("status.error")} size="md" status="error" />
-        <p class={cn("caption text-status-error", spacing.margin.top.tight)}>{error}</p>
+        <CardValue value={t('status.error')} size="md" status="error" />
+        <p class={cn('caption text-status-error', spacing.margin.top.tight)}>{error}</p>
       </Card>
     );
   }

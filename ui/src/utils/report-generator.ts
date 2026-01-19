@@ -20,15 +20,15 @@
  * ```
  */
 
-import type { AnalysisFinding } from "../components/survey/SurveyAnalysisPanel";
+import type { AnalysisFinding } from '../components/survey/SurveyAnalysisPanel';
 import type {
   HeatmapMetric,
   PassiveSample,
   SamplePoint,
   Survey,
   SurveyValidation,
-} from "../hooks/useSurvey";
-import { calculateMetricStatistics, getPercentageMeetingThreshold } from "./survey-validation";
+} from '../hooks/useSurvey';
+import { calculateMetricStatistics, getPercentageMeetingThreshold } from './survey-validation';
 
 /** Report metadata */
 export interface ReportMetadata {
@@ -45,7 +45,7 @@ export interface ReportMetadata {
 
 /** Report summary section */
 export interface ReportSummary {
-  overallStatus: "pass" | "fail";
+  overallStatus: 'pass' | 'fail';
   passedCriteria: number;
   totalCriteria: number;
   overallPercentage: number;
@@ -104,20 +104,20 @@ export interface ReportOptions {
   companyName?: string;
 }
 
-type HeatmapThreshold = { value: number; comparison: "gte" | "lte" };
+type HeatmapThreshold = { value: number; comparison: 'gte' | 'lte' };
 type NonNullHeatmapMetric = Exclude<HeatmapMetric, null>;
 
-const DEFAULT_HEATMAPS_PASSIVE: HeatmapMetric[] = ["rssi", "snr", "noise", "cochannel", "adjacent"];
-const DEFAULT_HEATMAPS_ACTIVE: HeatmapMetric[] = ["rssi", "snr", "throughput"];
-const DEFAULT_HEATMAPS_THROUGHPUT: HeatmapMetric[] = ["rssi", "throughput", "latency"];
+const DEFAULT_HEATMAPS_PASSIVE: HeatmapMetric[] = ['rssi', 'snr', 'noise', 'cochannel', 'adjacent'];
+const DEFAULT_HEATMAPS_ACTIVE: HeatmapMetric[] = ['rssi', 'snr', 'throughput'];
+const DEFAULT_HEATMAPS_THROUGHPUT: HeatmapMetric[] = ['rssi', 'throughput', 'latency'];
 
-function getDefaultHeatmapsForSurveyType(surveyType: Survey["surveyType"]): HeatmapMetric[] {
+function getDefaultHeatmapsForSurveyType(surveyType: Survey['surveyType']): HeatmapMetric[] {
   switch (surveyType) {
-    case "passive":
+    case 'passive':
       return DEFAULT_HEATMAPS_PASSIVE;
-    case "active":
+    case 'active':
       return DEFAULT_HEATMAPS_ACTIVE;
-    case "throughput":
+    case 'throughput':
       return DEFAULT_HEATMAPS_THROUGHPUT;
     default:
       return DEFAULT_HEATMAPS_THROUGHPUT;
@@ -126,77 +126,77 @@ function getDefaultHeatmapsForSurveyType(surveyType: Survey["surveyType"]): Heat
 
 function getHeatmapDisplayName(metric: NonNullHeatmapMetric): string {
   switch (metric) {
-    case "rssi":
-      return "Signal Strength (RSSI)";
-    case "snr":
-      return "Signal-to-Noise Ratio (SNR)";
-    case "noise":
-      return "Noise Floor";
-    case "throughput":
-      return "Throughput";
-    case "latency":
-      return "Latency";
-    case "cochannel":
-      return "Co-Channel Interference";
-    case "adjacent":
-      return "Adjacent Channel Interference";
-    case "channelUtil":
-      return "Channel Utilization";
-    case "apDensity":
-      return "AP Density";
-    case "ssidCount":
-      return "SSID Count";
+    case 'rssi':
+      return 'Signal Strength (RSSI)';
+    case 'snr':
+      return 'Signal-to-Noise Ratio (SNR)';
+    case 'noise':
+      return 'Noise Floor';
+    case 'throughput':
+      return 'Throughput';
+    case 'latency':
+      return 'Latency';
+    case 'cochannel':
+      return 'Co-Channel Interference';
+    case 'adjacent':
+      return 'Adjacent Channel Interference';
+    case 'channelUtil':
+      return 'Channel Utilization';
+    case 'apDensity':
+      return 'AP Density';
+    case 'ssidCount':
+      return 'SSID Count';
     default:
-      return "Unknown";
+      return 'Unknown';
   }
 }
 
 function getHeatmapUnit(metric: NonNullHeatmapMetric): string {
   switch (metric) {
-    case "rssi":
-      return "dBm";
-    case "snr":
-      return "dB";
-    case "noise":
-      return "dBm";
-    case "throughput":
-      return "Mbps";
-    case "latency":
-      return "ms";
-    case "cochannel":
-      return "APs";
-    case "adjacent":
-      return "APs";
-    case "channelUtil":
-      return "%";
-    case "apDensity":
-      return "APs";
-    case "ssidCount":
-      return "";
+    case 'rssi':
+      return 'dBm';
+    case 'snr':
+      return 'dB';
+    case 'noise':
+      return 'dBm';
+    case 'throughput':
+      return 'Mbps';
+    case 'latency':
+      return 'ms';
+    case 'cochannel':
+      return 'APs';
+    case 'adjacent':
+      return 'APs';
+    case 'channelUtil':
+      return '%';
+    case 'apDensity':
+      return 'APs';
+    case 'ssidCount':
+      return '';
     default:
-      return "";
+      return '';
   }
 }
 
 function getDefaultThreshold(metric: NonNullHeatmapMetric): HeatmapThreshold | null {
   switch (metric) {
-    case "rssi":
-      return { value: -65, comparison: "gte" };
-    case "snr":
-      return { value: 25, comparison: "gte" };
-    case "noise":
-      return { value: -90, comparison: "lte" };
-    case "throughput":
-      return { value: 100, comparison: "gte" };
-    case "latency":
-      return { value: 50, comparison: "lte" };
-    case "cochannel":
-      return { value: 4, comparison: "lte" };
-    case "adjacent":
-      return { value: 2, comparison: "lte" };
-    case "channelUtil":
-    case "apDensity":
-    case "ssidCount":
+    case 'rssi':
+      return { value: -65, comparison: 'gte' };
+    case 'snr':
+      return { value: 25, comparison: 'gte' };
+    case 'noise':
+      return { value: -90, comparison: 'lte' };
+    case 'throughput':
+      return { value: 100, comparison: 'gte' };
+    case 'latency':
+      return { value: 50, comparison: 'lte' };
+    case 'cochannel':
+      return { value: 4, comparison: 'lte' };
+    case 'adjacent':
+      return { value: 2, comparison: 'lte' };
+    case 'channelUtil':
+    case 'apDensity':
+    case 'ssidCount':
       return null;
     default:
       return null;
@@ -208,7 +208,7 @@ function getDefaultThreshold(metric: NonNullHeatmapMetric): HeatmapThreshold | n
  */
 function calculateFacilitySize(survey: Survey): string {
   if (!survey.floorPlan) {
-    return "Unknown";
+    return 'Unknown';
   }
 
   const { width, height, scaleM } = survey.floorPlan;
@@ -224,12 +224,12 @@ function calculateFacilitySize(survey: Survey): string {
  */
 function getScaleInfo(survey: Survey): string {
   if (!survey.floorPlan) {
-    return "No floor plan";
+    return 'No floor plan';
   }
 
   const { scaleM, scaleSource } = survey.floorPlan;
   const ppm = 1 / scaleM;
-  const sourceLabel = scaleSource || "default";
+  const sourceLabel = scaleSource || 'default';
 
   return `${scaleM.toFixed(4)} m/px (${ppm.toFixed(1)} px/m) - ${sourceLabel}`;
 }
@@ -247,7 +247,7 @@ function generateKeyFindings(
   if (validation) {
     const failedCriteria = validation.results.filter((r) => !r.passed);
     if (failedCriteria.length === 0) {
-      findings.push("All pass/fail criteria met");
+      findings.push('All pass/fail criteria met');
     } else {
       for (const result of failedCriteria) {
         findings.push(
@@ -258,7 +258,7 @@ function generateKeyFindings(
   }
 
   // Add critical analysis findings
-  const criticalFindings = analysis.filter((f) => f.severity === "critical");
+  const criticalFindings = analysis.filter((f) => f.severity === 'critical');
   for (const finding of criticalFindings) {
     findings.push(finding.titleKey); // Will be translated during render
   }
@@ -273,10 +273,10 @@ function generateHeatmapData(samples: SamplePoint[], metric: HeatmapMetric): Rep
   if (!metric) {
     return {
       type: null,
-      displayName: "Unknown",
-      descriptionKey: "report.heatmapDescriptions.rssi",
+      displayName: 'Unknown',
+      descriptionKey: 'report.heatmapDescriptions.rssi',
       statistics: null,
-      unit: "",
+      unit: '',
     };
   }
 
@@ -321,18 +321,18 @@ function buildApInventory(samples: SamplePoint[]): ApInventoryEntry[] {
   // Collect data from all samples
   for (const sample of samples) {
     const data = sample.sampleData;
-    if ("networks" in data && Array.isArray(data.networks)) {
+    if ('networks' in data && Array.isArray(data.networks)) {
       const passiveData = data as PassiveSample;
       for (const network of passiveData.networks) {
         const key = network.bssid;
         if (!apMap.has(key)) {
           apMap.set(key, {
-            ssid: network.ssid || "(Hidden)",
+            ssid: network.ssid || '(Hidden)',
             bssid: network.bssid,
             channels: [],
             rssiValues: [],
-            security: network.security || "unknown",
-            vendor: network.vendor || "Unknown",
+            security: network.security || 'unknown',
+            vendor: network.vendor || 'Unknown',
           });
         }
         const entry = apMap.get(key);
@@ -357,13 +357,13 @@ function buildApInventory(samples: SamplePoint[]): ApInventoryEntry[] {
 
     // Determine band from channel
     const primaryChannel = data.channels[0] || 0;
-    let band = "Unknown";
+    let band = 'Unknown';
     if (primaryChannel >= 1 && primaryChannel <= 14) {
-      band = "2.4 GHz";
+      band = '2.4 GHz';
     } else if (primaryChannel >= 36 && primaryChannel <= 177) {
-      band = "5 GHz";
+      band = '5 GHz';
     } else if (primaryChannel >= 1 && primaryChannel <= 233) {
-      band = "6 GHz";
+      band = '6 GHz';
     }
 
     inventory.push({
@@ -401,11 +401,11 @@ function extractAnalysisRecommendations(analysis: AnalysisFinding[]): string[] {
  * Get recommendation key for a failed criterion based on its name
  */
 function getRecommendationForCriterion(criterionName: string): string | null {
-  if (criterionName.includes("signal") || criterionName.includes("Signal")) {
-    return "analysis.coverage.weakAreasAction";
+  if (criterionName.includes('signal') || criterionName.includes('Signal')) {
+    return 'analysis.coverage.weakAreasAction';
   }
-  if (criterionName.includes("channel") || criterionName.includes("Channel")) {
-    return "analysis.interference.coChannelAction";
+  if (criterionName.includes('channel') || criterionName.includes('Channel')) {
+    return 'analysis.interference.coChannelAction';
   }
   return null;
 }
@@ -455,7 +455,7 @@ export function generateReport(
   const {
     includeAnalysis = true,
     includeApInventory = true,
-    companyName = "Mustard Seed Networks",
+    companyName = 'Mustard Seed Networks',
   } = options;
   const includeHeatmaps =
     options.includeHeatmaps ?? getDefaultHeatmapsForSurveyType(survey.surveyType);
@@ -475,7 +475,7 @@ export function generateReport(
 
   // Build summary
   const summary: ReportSummary = {
-    overallStatus: validation?.overallPass ? "pass" : "fail",
+    overallStatus: validation?.overallPass ? 'pass' : 'fail',
     passedCriteria: validation?.passedCount || 0,
     totalCriteria: validation?.results.length || 0,
     overallPercentage: validation?.overallPercentage || 0,
@@ -511,38 +511,38 @@ export function exportReportToCsv(report: SurveyReport): string {
   const lines: string[] = [];
 
   // Header
-  lines.push("WiFi Survey Report");
+  lines.push('WiFi Survey Report');
   lines.push(`Survey Name,${report.metadata.surveyName}`);
   lines.push(`Generated,${report.metadata.generatedAt}`);
   lines.push(`Survey Type,${report.metadata.surveyType}`);
   lines.push(`Sample Count,${report.metadata.sampleCount}`);
   lines.push(`Facility Size,${report.metadata.facilitySize}`);
-  lines.push("");
+  lines.push('');
 
   // Summary
-  lines.push("Summary");
+  lines.push('Summary');
   lines.push(`Overall Status,${report.summary.overallStatus.toUpperCase()}`);
   lines.push(`Criteria Passed,${report.summary.passedCriteria}/${report.summary.totalCriteria}`);
   lines.push(`Overall Percentage,${report.summary.overallPercentage}%`);
-  lines.push("");
+  lines.push('');
 
   // Validation results
   if (report.validation) {
-    lines.push("Pass/Fail Criteria Results");
-    lines.push("Criterion,Status,Average,Threshold,Pass Rate,Failed Locations");
+    lines.push('Pass/Fail Criteria Results');
+    lines.push('Criterion,Status,Average,Threshold,Pass Rate,Failed Locations');
     for (const result of report.validation.results) {
-      const status = result.passed ? "PASS" : "FAIL";
-      const comparison = result.comparison === "gte" ? ">=" : "<=";
+      const status = result.passed ? 'PASS' : 'FAIL';
+      const comparison = result.comparison === 'gte' ? '>=' : '<=';
       lines.push(
         `${result.criterionName},${status},${result.averageValue.toFixed(1)} ${result.suffix},${comparison}${result.threshold} ${result.suffix},${result.percentage}%,${result.failedSampleCount}`,
       );
     }
-    lines.push("");
+    lines.push('');
   }
 
   // Heatmap statistics
-  lines.push("Heatmap Statistics");
-  lines.push("Metric,Min,Max,Average,Median,Samples,% Meeting Threshold");
+  lines.push('Heatmap Statistics');
+  lines.push('Metric,Min,Max,Average,Median,Samples,% Meeting Threshold');
   for (const heatmap of report.heatmaps) {
     if (heatmap.statistics) {
       const { min, max, average, median, sampleCount, percentMeetingThreshold } =
@@ -552,12 +552,12 @@ export function exportReportToCsv(report: SurveyReport): string {
       );
     }
   }
-  lines.push("");
+  lines.push('');
 
   // AP Inventory
   if (report.apInventory.length > 0) {
-    lines.push("AP Inventory");
-    lines.push("SSID,BSSID,Channel,Band,Security,Vendor,Avg RSSI,Sample Count");
+    lines.push('AP Inventory');
+    lines.push('SSID,BSSID,Channel,Band,Security,Vendor,Avg RSSI,Sample Count');
     for (const ap of report.apInventory) {
       lines.push(
         `"${ap.ssid}",${ap.bssid},${ap.channel},${ap.band},${ap.security},${ap.vendor},${ap.avgRssi},${ap.sampleCount}`,
@@ -565,5 +565,5 @@ export function exportReportToCsv(report: SurveyReport): string {
     }
   }
 
-  return lines.join("\n");
+  return lines.join('\n');
 }
