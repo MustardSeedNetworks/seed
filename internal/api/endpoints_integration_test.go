@@ -250,10 +250,10 @@ func TestWebSocketHub(t *testing.T) {
 	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, nil, nil)
 	defer server.Close()
 
-	// Test hub exists
-	hub := server.Hub()
+	// Test SSE hub exists
+	hub := server.SSEHub()
 	if hub == nil {
-		t.Error("WebSocket hub is nil")
+		t.Error("SSE hub is nil")
 	}
 }
 

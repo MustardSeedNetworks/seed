@@ -64,9 +64,9 @@ func (s *Server) Close() {
 		s.services.Discovery.Engine.Stop()
 	}
 
-	// Stop WebSocket hub (fixes Hub.Run goroutine leak)
-	if s.services.RealTime.WSHub != nil {
-		s.services.RealTime.WSHub.Shutdown()
+	// Stop SSE hub
+	if s.services.RealTime.SSEHub != nil {
+		s.services.RealTime.SSEHub.Shutdown()
 	}
 }
 
@@ -130,8 +130,8 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 
 	s.services.Canopy.WiFi = wifi.NewManager(cfg.Interface.Default)
 
-	// Initialize WebSocket hub
-	s.services.RealTime.WSHub = NewHub()
+	// Initialize SSE hub
+	s.services.RealTime.SSEHub = NewSSEHub()
 
 	// Setup routes
 	s.setupRoutes()

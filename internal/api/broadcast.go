@@ -2,7 +2,7 @@ package api
 
 //
 // This file contains the broadcast loop that periodically collects network monitoring
-// data and pushes updates to all connected WebSocket clients. The broadcast mechanism
+// data and pushes updates to all connected SSE clients. The broadcast mechanism
 // enables real-time dashboard updates without polling.
 //
 // Architecture:
@@ -21,12 +21,12 @@ package api
 //
 // Performance considerations:
 //   - Collectors use short timeouts to prevent blocking the broadcast loop
-//   - Results are cached to handle multiple concurrent WebSocket clients efficiently
+//   - Results are cached to handle multiple concurrent SSE clients efficiently
 //   - Failed operations are logged but don't stop the broadcast loop
 //   - Collectors skip work when no clients are connected
 //
 // The broadcast loop is started automatically during server initialization
-// and runs until the WebSocket hub signals shutdown.
+// and runs until the SSE hub signals shutdown.
 
 import (
 	"context"
@@ -38,7 +38,7 @@ import (
 
 const (
 	// broadcastInterval specifies how frequently dashboard cards are updated and pushed
-	// to WebSocket clients. Set to 5 seconds to balance responsiveness with system load.
+	// to SSE clients. Set to 5 seconds to balance responsiveness with system load.
 	//
 	// Rationale:
 	//   - Network state changes (link, gateway, DNS) are typically not sub-second events
@@ -56,13 +56,13 @@ const (
 )
 
 // startBroadcastLoop starts a background goroutine that periodically collects network
-// monitoring data and broadcasts card updates to all connected WebSocket clients.
+// monitoring data and broadcasts card updates to all connected SSE clients.
 //
-// The loop runs indefinitely until the WebSocket hub signals shutdown. It:
+// The loop runs indefinitely until the SSE hub signals shutdown. It:
 //  1. Wakes every broadcastInterval (5 seconds)
 //  2. Checks if any clients are connected (skips work if none)
 //  3. Collects data from all card collectors
-//  4. Broadcasts updates via the WebSocket hub
+//  4. Broadcasts updates via the SSE hub
 //  5. Returns to sleep until next interval
 //
 // This function is called once during server initialization. Multiple calls will
@@ -73,8 +73,8 @@ const (
 // begins and continues as long as at least one client remains connected.
 //
 // Goroutine lifecycle:
-//   - Started: During server initialization after WebSocket hub is created
-//   - Runs: Until server shutdown or WebSocket hub shutdown signal
+//   - Started: During server initialization after SSE hub is created
+//   - Runs: Until server shutdown or SSE hub shutdown signal
 //   - Cleanup: Ticker is stopped via defer, goroutine exits on shutdown signal
 func (s *Server) startBroadcastLoop() {
 	go func() {
@@ -85,18 +85,18 @@ func (s *Server) startBroadcastLoop() {
 			select {
 			case <-ticker.C:
 				// Only broadcast if there are connected clients
-				if s.wsHub().ClientCount() == 0 {
+				if s.sseHub().ClientCount() == 0 {
 					continue
 				}
 
 				s.broadcastAllCards()
 
-			case <-s.wsHub().shutdown:
+			case <-s.sseHub().shutdown:
 				return
 			}
 		}
 	}()
-	logging.GetLogger().Info("WebSocket broadcast loop started", "interval", broadcastInterval)
+	logging.GetLogger().Info("SSE broadcast loop started", "interval", broadcastInterval)
 }
 
 // broadcastAllCards collects and broadcasts all dashboard card data to connected clients.
@@ -128,27 +128,27 @@ func (s *Server) broadcastAllCards() {
 
 	// Link card (interface-specific)
 	if linkData := s.collectLinkData(); linkData != nil {
-		s.wsHub().BroadcastCardUpdateForInterface("link", linkData, currentIface)
+		s.sseHub().BroadcastCardUpdateForInterface("link", linkData, currentIface)
 	}
 
 	// Gateway card (interface-specific - routes through selected interface)
 	if gatewayData := s.collectGatewayData(); gatewayData != nil {
-		s.wsHub().BroadcastCardUpdateForInterface("gateway", gatewayData, currentIface)
+		s.sseHub().BroadcastCardUpdateForInterface("gateway", gatewayData, currentIface)
 	}
 
 	// DNS card (interface-specific - uses interface's DNS servers)
 	if dnsData := s.collectDNSData(); dnsData != nil {
-		s.wsHub().BroadcastCardUpdateForInterface("dns", dnsData, currentIface)
+		s.sseHub().BroadcastCardUpdateForInterface("dns", dnsData, currentIface)
 	}
 
 	// Discovery/Switch card (interface-specific - LLDP/CDP on selected interface)
 	if switchData := s.collectDiscoveryData(); switchData != nil {
-		s.wsHub().BroadcastCardUpdateForInterface("switch", switchData, currentIface)
+		s.sseHub().BroadcastCardUpdateForInterface("switch", switchData, currentIface)
 	}
 
 	// Public IP card (global - not interface-specific)
 	if publicIPData := s.collectPublicIPData(); publicIPData != nil {
-		s.wsHub().BroadcastCardUpdate("publicip", publicIPData)
+		s.sseHub().BroadcastCardUpdate("publicip", publicIPData)
 	}
 }
 

@@ -408,7 +408,7 @@ func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 		"services": map[string]any{
 			"discovery_service": s.discoveryService() != nil && s.discoveryService().IsRunning(),
 			"link_monitor":      s.linkMonitor() != nil,
-			"websocket_hub":     s.wsHub() != nil,
+			"sse_hub":           s.sseHub() != nil,
 			"vlan_monitor":      s.vlanTrafficMonitor() != nil,
 		},
 	}

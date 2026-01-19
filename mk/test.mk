@@ -1,0 +1,153 @@
+# =============================================================================
+# Test Targets
+# =============================================================================
+#
+# All testing targets:
+#   - Unit tests (backend + frontend)
+#   - Integration tests
+#   - E2E tests (Playwright)
+#   - Coverage reports
+#
+# =============================================================================
+
+.PHONY: test test-all test-backend test-backend-quiet test-frontend test-frontend-quiet \
+        test-e2e test-e2e-ui test-e2e-install test-coverage test-integration
+
+# =============================================================================
+# Main Test Targets
+# =============================================================================
+
+test: ## Run unit tests (backend + frontend)
+	@printf "$(BOLD)$(CYAN)┌─ Unit Tests ─────────────────────────────────────────────────────────────────┐$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[1/2]$(RESET) Backend (Go)                                                          $(CYAN)│$(RESET)\n"
+	$(call timer-start,test-backend)
+	@$(MAKE) --no-print-directory test-backend-quiet
+	$(call timer-end,test-backend,Backend tests)
+	@printf "$(CYAN)│$(RESET) $(BOLD)[2/2]$(RESET) Frontend (Vitest)                                                      $(CYAN)│$(RESET)\n"
+	$(call timer-start,test-frontend)
+	@$(MAKE) --no-print-directory test-frontend-quiet
+	$(call timer-end,test-frontend,Frontend tests)
+	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
+
+test-all: ## Run ALL tests (unit + E2E)
+	@printf "$(BOLD)$(CYAN)┌─ Full Test Suite ────────────────────────────────────────────────────────────┐$(RESET)\n"
+	@printf "$(CYAN)│$(RESET) $(BOLD)[1/3]$(RESET) Backend unit tests                                                    $(CYAN)│$(RESET)\n"
+	$(call timer-start,test-backend)
+	@$(MAKE) --no-print-directory test-backend-quiet
+	$(call timer-end,test-backend,Backend tests)
+	@printf "$(CYAN)│$(RESET) $(BOLD)[2/3]$(RESET) Frontend unit tests                                                   $(CYAN)│$(RESET)\n"
+	$(call timer-start,test-frontend)
+	@$(MAKE) --no-print-directory test-frontend-quiet
+	$(call timer-end,test-frontend,Frontend tests)
+	@printf "$(CYAN)│$(RESET) $(BOLD)[3/3]$(RESET) E2E tests (Playwright)                                                $(CYAN)│$(RESET)\n"
+	$(call timer-start,test-e2e)
+	@$(MAKE) --no-print-directory test-e2e
+	$(call timer-end,test-e2e,E2E tests)
+	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
+
+# =============================================================================
+# Backend Tests
+# =============================================================================
+
+test-backend: ## Run Go tests with progress
+	@printf "\n$(BOLD)🧪 Running backend tests...$(RESET)\n"
+	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/ui$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
+	PKG_COUNT=$$(echo "$$PKGS" | wc -l | tr -d ' '); \
+	printf "   📦 Testing $$PKG_COUNT packages...\n\n"; \
+	if command -v gotestsum > /dev/null 2>&1; then \
+		gotestsum --format pkgname-and-test-fails -- -race -coverprofile=coverage.out $$PKGS; \
+	else \
+		go test -race -coverprofile=coverage.out $$PKGS; \
+	fi
+	@if [ -f coverage.out ]; then \
+		COV=$$(go tool cover -func=coverage.out | grep total | awk '{print $$3}'); \
+		printf "\n   📊 Coverage: %s\n" "$$COV"; \
+	fi
+	@printf "\n$(GREEN)✓ Backend tests complete$(RESET)\n"
+
+test-backend-quiet:
+	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/ui$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
+	PKG_COUNT=$$(echo "$$PKGS" | wc -l | tr -d ' '); \
+	printf "   Testing $$PKG_COUNT packages...\n"; \
+	go test -race -coverprofile=coverage.out $$PKGS 2>&1 | grep -E "^(ok|FAIL|---)" || true
+	@if [ -f coverage.out ]; then \
+		COV=$$(go tool cover -func=coverage.out | grep total | awk '{print $$3}'); \
+		printf "   📊 Coverage: %s\n" "$$COV"; \
+	fi
+
+# =============================================================================
+# Frontend Tests
+# =============================================================================
+
+test-frontend: ## Run frontend tests with progress
+	@printf "\n$(BOLD)🧪 Running frontend tests...$(RESET)\n"
+	@STORY_COUNT=$$(find ui/src -name "*.test.ts" -o -name "*.test.tsx" 2>/dev/null | wc -l | tr -d ' '); \
+	printf "   📦 Running $$STORY_COUNT test files...\n\n"
+	@cd ui && npm test
+	@printf "\n$(GREEN)✓ Frontend tests complete$(RESET)\n"
+
+test-frontend-quiet:
+	@STORY_COUNT=$$(find ui/src -name "*.test.ts" -o -name "*.test.tsx" 2>/dev/null | wc -l | tr -d ' '); \
+	printf "   Running $$STORY_COUNT test files...\n"
+	@cd ui && npm test 2>&1 | grep -E "(PASS|FAIL|Tests:)" || true
+
+# =============================================================================
+# E2E Tests
+# =============================================================================
+
+test-e2e: ## Run frontend E2E tests (requires backend running)
+	@echo ""
+	@echo "🎭 Running E2E tests (Playwright)..."
+	@E2E_COUNT=$$(find ui/e2e -name "*.spec.ts" 2>/dev/null | wc -l | tr -d ' '); \
+	echo "   📦 Running $$E2E_COUNT spec files..."
+	@echo ""
+	@cd ui && npm run test:e2e
+	@echo ""
+	@echo "✅ E2E tests complete"
+
+test-e2e-ui: ## Run E2E tests with Playwright UI
+	@echo "🎭 Starting Playwright UI mode..."
+	cd ui && npm run test:e2e:ui
+
+test-e2e-install: ## Install Playwright browsers
+	cd ui && npx playwright install --with-deps chromium
+
+# =============================================================================
+# Coverage & Integration
+# =============================================================================
+
+test-coverage: ## Generate coverage report
+	@PKGS=$$(go list ./... | grep -v '/cmd/' | grep -v '/ui$$' | grep -v '/i18n$$' | grep -v '/mcp$$' | grep -v '/oauth$$'); \
+	go test -race -coverprofile=coverage.out $$PKGS
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report: coverage.html"
+
+test-integration: build-linux-docker ## Full integration test on Ubuntu server via systemd
+	@if [ -z "$(TEST_HOST)" ]; then \
+		echo "ERROR: TEST_HOST not set. Usage: TEST_HOST=user@host make test-integration"; \
+		exit 1; \
+	fi
+	@echo "Running integration tests on $(TEST_HOST)..."
+	rsync -avz $(BINARY_NAME)-linux-amd64 $(TEST_HOST):/tmp/seed-test
+	ssh $(TEST_HOST) "\
+		sudo systemctl stop seed-test 2>/dev/null || true && \
+		sudo cp /tmp/seed-test /usr/local/bin/seed-test && \
+		sudo chmod +x /usr/local/bin/seed-test && \
+		sudo setcap cap_net_raw=+ep /usr/local/bin/seed-test && \
+		echo '[Unit]' | sudo tee /etc/systemd/system/seed-test.service > /dev/null && \
+		echo 'Description=The Seed Integration Test' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
+		echo '[Service]' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
+		echo 'Type=simple' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
+		echo 'ExecStart=/usr/local/bin/seed-test' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
+		echo 'WorkingDirectory=/tmp' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
+		echo '[Install]' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
+		echo 'WantedBy=multi-user.target' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
+		sudo systemctl daemon-reload && \
+		sudo systemctl start seed-test && \
+		sleep 5 && \
+		sudo systemctl is-active seed-test && \
+		curl -sf -k https://localhost:8443/api/health && \
+		echo 'PASS: Integration test passed' && \
+		sudo systemctl stop seed-test && \
+		sudo rm -f /etc/systemd/system/seed-test.service /usr/local/bin/seed-test"
+	@echo "Integration tests completed successfully"
