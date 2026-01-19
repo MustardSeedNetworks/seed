@@ -1,11 +1,10 @@
 module github.com/krisarmstrong/seed
 
-go 1.25.5
+go 1.25.6
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/gopacket v1.1.19
-	github.com/gorilla/websocket v1.5.3
 	github.com/showwin/speedtest-go v1.7.10
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/crypto v0.47.0
@@ -27,7 +26,6 @@ require (
 	github.com/vishvananda/netlink v1.3.1
 	golang.org/x/oauth2 v0.34.0
 	golang.org/x/text v0.33.0
-	golang.org/x/time v0.14.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	modernc.org/sqlite v1.43.0
 )

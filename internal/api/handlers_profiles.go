@@ -454,8 +454,8 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	// Broadcast profile change via WebSocket
-	s.wsHub().Broadcast(Message{
+	// Broadcast profile change via SSE
+	s.sseHub().Broadcast(Message{
 		Type: "profileChanged",
 		Payload: map[string]any{
 			"profile_id":   profile.ID,

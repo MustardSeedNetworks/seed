@@ -1,4 +1,4 @@
-// Package api provides the HTTP/WebSocket server.
+// Package api provides the HTTP/REST/SSE server.
 package api
 
 import (
@@ -101,7 +101,7 @@ const (
 	// Allows graceful API evolution without breaking existing clients.
 	APIVersionPrefix = "/api/v1"
 
-	// APIBasePath is the base path for non-versioned routes (WebSocket, SSE).
+	// APIBasePath is the base path for non-versioned routes (SSE).
 	APIBasePath = "/api"
 )
 
@@ -224,8 +224,8 @@ func NewServer(
 	// Configure database-backed services if db was passed in
 	s.initDatabaseServices(cfg, db)
 
-	// Initialize WebSocket hub and log broadcaster
-	s.initWebSocketAndLogging(db)
+	// Initialize SSE hub and log broadcaster
+	s.initSSEAndLogging(db)
 
 	// Initialize discovery service and pipeline
 	s.initDiscoveryPipeline(cfg)
@@ -233,10 +233,10 @@ func NewServer(
 	// Initialize vulnerability scanner if enabled
 	s.initVulnerabilityScanner(cfg)
 
-	// Configure security: allowed origins for CORS/WebSocket
+	// Configure security: allowed origins for CORS
 	s.initSecurityOrigins(cfg)
 
-	// Setup routes (wsHub already initialized and running above)
+	// Setup routes (sseHub already initialized and running above)
 	s.setupRoutes()
 
 	return s
@@ -330,12 +330,6 @@ func (s *Server) WiFiScanner() *wifi.Scanner { return s.services.Canopy.Scanner 
 // SurveyManager returns the survey manager.
 func (s *Server) SurveyManager() *survey.Manager { return s.services.Canopy.Survey }
 
-// WSHub returns the WebSocket hub.
-func (s *Server) WSHub() *Hub { return s.services.RealTime.WSHub }
-
-// Hub returns the WebSocket hub (alias for WSHub, for backwards compatibility).
-func (s *Server) Hub() *Hub { return s.services.RealTime.WSHub }
-
 // SSEHub returns the SSE hub.
 func (s *Server) SSEHub() *SSEHub { return s.services.RealTime.SSEHub }
 
@@ -381,7 +375,6 @@ func (s *Server) publicipChecker() *publicip.Checker       { return s.services.S
 func (s *Server) wifiManager() *wifi.Manager               { return s.services.Canopy.WiFi }
 func (s *Server) wifiScanner() *wifi.Scanner               { return s.services.Canopy.Scanner }
 func (s *Server) surveyManager() *survey.Manager           { return s.services.Canopy.Survey }
-func (s *Server) wsHub() *Hub                              { return s.services.RealTime.WSHub }
 func (s *Server) sseHub() *SSEHub                          { return s.services.RealTime.SSEHub }
 func (s *Server) logBroadcaster() *logging.LogBroadcaster  { return s.services.RealTime.LogBroadcaster }
 func (s *Server) db() *database.DB                         { return s.services.Database.DB }
@@ -504,19 +497,13 @@ func (s *Server) initMibDatabase(db *database.DB) {
 		"mib_count", stats["mib_count"])
 }
 
-// initWebSocketAndLogging initializes the WebSocket hub, SSE hub, and log broadcaster.
-func (s *Server) initWebSocketAndLogging(db *database.DB) {
-	// Initialize WebSocket hub (fixes #512) - kept for backwards compatibility
-	s.services.RealTime.WSHub = NewHub()
-	// Start hub before setupRoutes to prevent race condition
-	go s.wsHub().Run()
-
-	// Initialize SSE hub (replaces WebSocket for real-time updates)
+// initSSEAndLogging initializes the SSE hub and log broadcaster.
+func (s *Server) initSSEAndLogging(db *database.DB) {
+	// Initialize SSE hub for real-time updates
 	s.services.RealTime.SSEHub = NewSSEHub()
 	go s.sseHub().Run()
 
 	// Initialize log broadcaster for real-time log streaming
-	// Use SSE hub for broadcasting (simpler than WebSocket)
 	s.services.RealTime.LogBroadcaster = logging.InitBroadcaster(logBroadcasterBufferSize)
 	s.logBroadcaster().SetBroadcaster(&sseLogBroadcastAdapter{hub: s.sseHub()})
 
@@ -565,7 +552,7 @@ func (s *Server) initDiscoveryPipeline(cfg *config.Config) {
 		&pipelineCfg,
 		s.deviceDiscovery(),
 		sharedProfiler, // Use the same profiler as Service
-		&pipelineBroadcastAdapter{hub: s.wsHub()},
+		&pipelineBroadcastAdapter{hub: s.sseHub()},
 	)
 
 	// Link Service and Pipeline for coordination
@@ -669,12 +656,12 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 	}
 }
 
-// initSecurityOrigins configures allowed origins for CORS/WebSocket.
+// initSecurityOrigins configures allowed origins for CORS.
 func (s *Server) initSecurityOrigins(cfg *config.Config) {
-	getWSState().setAllowedOrigins(cfg.Security.AllowedOrigins)
+	getOriginState().setAllowedOrigins(cfg.Security.AllowedOrigins)
 
 	if len(cfg.Security.AllowedOrigins) == 0 {
-		logging.GetLogger().Info("Using default RFC 1918 private network origins for CORS/WebSocket")
+		logging.GetLogger().Info("Using default RFC 1918 private network origins for CORS")
 		return
 	}
 
@@ -683,7 +670,7 @@ func (s *Server) initSecurityOrigins(cfg *config.Config) {
 	s.logWildcardOriginWarning(cfg)
 
 	logging.GetLogger().Info(
-		"Configured explicit allowed origins for CORS/WebSocket",
+		"Configured explicit allowed origins for CORS",
 		"count",
 		len(cfg.Security.AllowedOrigins),
 	)
@@ -738,7 +725,6 @@ func (s *Server) onLinkStateChange(event netif.LinkEvent) {
 			},
 		}
 		s.sseHub().Broadcast(linkStateMsg)
-		s.wsHub().Broadcast(linkStateMsg)
 
 		// Also broadcast link card update immediately to trigger frontend auto-run tests.
 		// The frontend listens for card_update messages on the "link" card to detect
@@ -746,7 +732,6 @@ func (s *Server) onLinkStateChange(event netif.LinkEvent) {
 		// Multi-interface support (#754): Include interface in broadcast.
 		if linkData := s.collectLinkData(); linkData != nil {
 			s.sseHub().BroadcastCardUpdateForInterface("link", linkData, event.Interface)
-			s.wsHub().BroadcastCardUpdateForInterface("link", linkData, event.Interface)
 		}
 	case netif.LinkStateDown:
 		// Link went down - notify clients
@@ -760,14 +745,12 @@ func (s *Server) onLinkStateChange(event netif.LinkEvent) {
 			},
 		}
 		s.sseHub().Broadcast(linkStateMsg)
-		s.wsHub().Broadcast(linkStateMsg)
 
 		// Also broadcast link card update for proper state tracking.
 		// Frontend uses this to track DOWN state for detecting DOWN→UP transitions.
 		// Multi-interface support (#754): Include interface in broadcast.
 		if linkData := s.collectLinkData(); linkData != nil {
 			s.sseHub().BroadcastCardUpdateForInterface("link", linkData, event.Interface)
-			s.wsHub().BroadcastCardUpdateForInterface("link", linkData, event.Interface)
 		}
 	case netif.LinkStateUnknown:
 		// Unknown state - log but don't take action
@@ -784,7 +767,7 @@ func (s *Server) setupRoutes() {
 	s.setupRootsRoutes()
 	s.setupCanopyRoutes()
 	s.setupHarvestRoutes()
-	s.setupWebSocketAndStatic()
+	s.setupSSEAndStatic()
 }
 
 // setupCoreRoutes registers auth, settings, config, and setup routes.
@@ -999,11 +982,9 @@ func (s *Server) setupHarvestRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/harvest/logs/recent", s.handleLogsRecent)
 }
 
-// setupWebSocketAndStatic registers WebSocket, SSE, and static file handlers.
-func (s *Server) setupWebSocketAndStatic() {
-	// WebSocket endpoint (deprecated - use /api/events for SSE)
-	s.mux.HandleFunc("/ws", s.handleWebSocket)
-	// SSE endpoint for real-time updates (replaces WebSocket)
+// setupSSEAndStatic registers SSE and static file handlers.
+func (s *Server) setupSSEAndStatic() {
+	// SSE endpoint for real-time updates
 	s.mux.HandleFunc(APIVersionPrefix+"/events", s.handleSSE)
 	frontendFS, err := ui.GetFS()
 	if err != nil {
@@ -1124,11 +1105,7 @@ func bodyLimitMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// isAllowedOrigin checks if the origin is in the allowed list for CORS.
-// Uses the same configurable origin checking as WebSocket.
-func isAllowedOrigin(origin string) bool {
-	return isAllowedWSOrigin(origin)
-}
+// isAllowedOrigin is defined in messages.go for CORS origin checking.
 
 // spaHandler wraps a file server to support SPA (Single Page Application) routing.
 // It serves index.html for any path that doesn't match a static file, enabling
@@ -1174,11 +1151,10 @@ func normalizeSPAPath(path string) string {
 	return path
 }
 
-// isAPIOrWSRoute checks if the path is an API, WebSocket, or SSE route.
-func isAPIOrWSRoute(path string) bool {
+// isAPIRoute checks if the path is an API or SSE route.
+func isAPIRoute(path string) bool {
 	return strings.HasPrefix(path, APIVersionPrefix) ||
-		strings.HasPrefix(path, APIBasePath+"/events") || // SSE endpoint
-		strings.HasPrefix(path, "/ws")
+		strings.HasPrefix(path, APIBasePath+"/events") // SSE endpoint
 }
 
 // openSPAFile attempts to open a file from the filesystem, falling back to index.html for SPA routes.
@@ -1188,8 +1164,8 @@ func openSPAFile(fsys http.FileSystem, path string) (http.File, error) {
 		return f, nil
 	}
 
-	// File doesn't exist - check if it's an API or WS route (shouldn't happen, but be safe)
-	if isAPIOrWSRoute(path) {
+	// File doesn't exist - check if it's an API route (shouldn't happen, but be safe)
+	if isAPIRoute(path) {
 		return nil, err
 	}
 
@@ -1610,9 +1586,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	}
 
 	// Stop all services (fixes #524 - services will complete gracefully)
-	logging.GetLogger().InfoContext(ctx, "Stopping WebSocket hub...")
-	s.wsHub().Shutdown()
-
 	logging.GetLogger().InfoContext(ctx, "Stopping SSE hub...")
 	s.sseHub().Shutdown()
 

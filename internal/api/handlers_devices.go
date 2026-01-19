@@ -124,8 +124,8 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 		// Auto-scan for vulnerabilities if enabled
 		s.postScanVulnerabilityCheck(bgLogger)
 
-		// Notify WebSocket clients when scan completes
-		s.wsHub().Broadcast(Message{
+		// Notify SSE clients when scan completes
+		s.sseHub().Broadcast(Message{
 			Type: "deviceScanComplete",
 			Payload: map[string]any{
 				"deviceCount": s.deviceDiscovery().Count(),
@@ -166,7 +166,7 @@ func (s *Server) postScanVulnerabilityCheck(logger *slog.Logger) {
 
 	// Broadcast vulnerability results
 	results := s.vulnScanner().GetAllVulnerabilities()
-	s.wsHub().BroadcastCardUpdate("vulnerabilities", map[string]any{
+	s.sseHub().BroadcastCardUpdate("vulnerabilities", map[string]any{
 		"results": results,
 		"count":   len(results),
 	})

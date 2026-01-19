@@ -262,10 +262,10 @@ func (s *Server) performL3Trace(ctx context.Context, req PathRequest) *discovery
 	// 1s per-hop timeout (was 3s), max hops - most traces complete in 10-15 hops
 	tracer := discovery.NewTracer(1*time.Second, tracerouteMaxHops)
 
-	// Callback to broadcast each hop via WebSocket
+	// Callback to broadcast each hop via SSE
 	onHop := func(hop discovery.TracerouteHop, result *discovery.TracerouteResult) bool {
-		if s.wsHub() != nil {
-			s.wsHub().Broadcast(Message{
+		if s.sseHub() != nil {
+			s.sseHub().Broadcast(Message{
 				Type: "traceHop",
 				Payload: TraceHopMessage{
 					Target:    result.Target,
