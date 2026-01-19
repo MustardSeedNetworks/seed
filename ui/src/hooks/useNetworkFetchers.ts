@@ -146,7 +146,7 @@ export function useNetworkFetchers({
 
         // Trigger auto-run when link transitions from down to up
         if (newLinkUp && wasDown) {
-          logger.info(LogComponents.Network, 'Link up detected (poll), triggering auto-run tests');
+          logger.info(LogComponents.NETWORK, 'Link up detected (poll), triggering auto-run tests');
           setTimeout(() => {
             window.dispatchEvent(new CustomEvent('runAllTests'));
           }, 1500);
@@ -169,7 +169,7 @@ export function useNetworkFetchers({
         // isWifi is now set by fetchWifiData which properly detects wireless interfaces
       }
     } catch (err) {
-      logger.error(LogComponents.Network, 'Failed to fetch link data', err);
+      logger.error(LogComponents.NETWORK, 'Failed to fetch link data', err);
     }
   }, [currentInterfaceRef, setCards, setCurrentInterface, prevLinkUpRef]);
 
@@ -199,7 +199,7 @@ export function useNetworkFetchers({
         }));
       }
     } catch (err) {
-      logger.error(LogComponents.Network, 'Failed to fetch IP config', err);
+      logger.error(LogComponents.NETWORK, 'Failed to fetch IP config', err);
     }
   }, [currentInterfaceRef, setCards]);
 
@@ -223,7 +223,7 @@ export function useNetworkFetchers({
         }
       }
     } catch (err) {
-      logger.error(LogComponents.Network, 'Failed to fetch interfaces', err);
+      logger.error(LogComponents.NETWORK, 'Failed to fetch interfaces', err);
     }
   }, [setInterfaces, setRecommendedEthernet, setRecommendedWifi]);
 

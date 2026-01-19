@@ -190,7 +190,7 @@ export function useUpdates(): {
       setConfig(data);
       return data;
     } catch (err) {
-      logger.error(LogComponents.Config, 'Failed to get update config', err, {
+      logger.error(LogComponents.CONFIG, 'Failed to get update config', err, {
         endpoint: '/api/v1/updates/config',
       });
       return null;
@@ -206,7 +206,7 @@ export function useUpdates(): {
       setConfig(data);
       return true;
     } catch (err) {
-      logger.error(LogComponents.Config, 'Failed to update config', err, {
+      logger.error(LogComponents.CONFIG, 'Failed to update config', err, {
         endpoint: '/api/v1/updates/config',
         updates,
       });
