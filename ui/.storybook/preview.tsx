@@ -10,13 +10,13 @@
  * needing to manually wrap each story with providers.
  */
 
-import type { DecoratorFunction, StoryContext } from "@storybook/csf";
-import type { Preview, ReactRenderer } from "@storybook/react-vite";
-import { type JSX, type ReactNode, Suspense, useEffect } from "react";
-import { I18nextProvider } from "react-i18next";
-import { ProfileProvider } from "../src/contexts/ProfileContext";
-import i18n from "../src/i18n";
-import "../src/index.css";
+import type { DecoratorFunction, StoryContext } from '@storybook/csf';
+import type { Preview, ReactRenderer } from '@storybook/react-vite';
+import { type JSX, type ReactNode, Suspense, useEffect } from 'react';
+import { I18nextProvider } from 'react-i18next';
+import { ProfileProvider } from '../src/contexts/ProfileContext';
+import i18n from '../src/i18n';
+import '../src/index.css';
 
 /**
  * Theme wrapper that applies dark/light class to document.
@@ -32,12 +32,12 @@ function ThemeWrapper({
 }): JSX.Element {
   useEffect((): (() => void) => {
     if (dark) {
-      document.documentElement.classList.add("dark");
+      document.documentElement.classList.add('dark');
     } else {
-      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.remove('dark');
     }
     return (): void => {
-      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.remove('dark');
     };
   }, [dark]);
   return <>{children}</>;
@@ -59,20 +59,20 @@ const preview: Preview = {
       },
     },
     backgrounds: {
-      default: "dark",
+      default: 'dark',
       values: [
-        { name: "dark", value: "var(--color-surface-base, #0f172a)" },
-        { name: "light", value: "var(--color-surface-base-light, #f8fafc)" },
+        { name: 'dark', value: 'var(--color-surface-base, #0f172a)' },
+        { name: 'light', value: 'var(--color-surface-base-light, #f8fafc)' },
       ],
     },
-    layout: "centered",
+    layout: 'centered',
   },
   decorators: [
     // Global decorator: wraps all stories with providers
     ((_story: () => ReactNode, context: StoryContext<ReactRenderer>): JSX.Element => {
       // Determine theme from background parameter
       const isDark =
-        context.globals.backgrounds?.value !== "var(--color-surface-base-light, #f8fafc)";
+        context.globals.backgrounds?.value !== 'var(--color-surface-base-light, #f8fafc)';
 
       return (
         <I18nextProvider i18n={i18n}>

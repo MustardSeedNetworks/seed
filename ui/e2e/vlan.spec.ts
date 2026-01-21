@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from '@playwright/test';
 
 /**
  * VLAN E2E Tests
@@ -12,31 +12,31 @@ import { expect, test } from "@playwright/test";
  * - Switch card integration
  */
 
-test.describe("VLAN Information", () => {
+test.describe('VLAN Information', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByLabel(/username/i).fill("admin");
-    await page.getByLabel(/password/i).fill("seed");
-    await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+    await page.getByLabel(/username/i).fill('admin');
+    await page.getByLabel(/password/i).fill('seed');
+    await page.getByRole('button', { name: /sign in|login/i }).click();
+    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });
   });
 
-  test("should display VLAN information in Switch card", async ({ page }) => {
+  test('should display VLAN information in Switch card', async ({ page }) => {
     // VLAN info is typically in Switch/Network Discovery card
     const switchCard = page
-      .getByRole("heading", { name: /switch|vlan/i })
+      .getByRole('heading', { name: /switch|vlan/i })
       .or(page.locator('[data-testid="switch-card"]'));
 
     const hasCard = await switchCard.isVisible().catch(() => false);
     expect(hasCard).toBeDefined();
   });
 
-  test("should show Native VLAN ID", async ({ page }) => {
+  test('should show Native VLAN ID', async ({ page }) => {
     const nativeVlan = page.getByText(/native.*vlan|vlan.*native/i);
 
     const hasNative = await nativeVlan.isVisible().catch(() => false);
@@ -49,35 +49,35 @@ test.describe("VLAN Information", () => {
     }
   });
 
-  test("should show Voice VLAN if configured", async ({ page }) => {
+  test('should show Voice VLAN if configured', async ({ page }) => {
     const voiceVlan = page.getByText(/voice.*vlan|vlan.*voice/i);
 
     const hasVoice = await voiceVlan.isVisible().catch(() => false);
     expect(hasVoice).toBeDefined();
   });
 
-  test("should show tagged VLANs if present", async ({ page }) => {
+  test('should show tagged VLANs if present', async ({ page }) => {
     const taggedVlan = page.getByText(/tagged|trunk/i);
 
     const hasTagged = await taggedVlan.isVisible().catch(() => false);
     expect(hasTagged).toBeDefined();
   });
 
-  test("should display LLDP/CDP protocol information", async ({ page }) => {
+  test('should display LLDP/CDP protocol information', async ({ page }) => {
     const protocolText = page.getByText(/lldp|cdp|edp/i);
 
     const hasProtocol = await protocolText.isVisible().catch(() => false);
     expect(hasProtocol).toBeDefined();
   });
 
-  test("should show switch port information", async ({ page }) => {
+  test('should show switch port information', async ({ page }) => {
     const portText = page.getByText(/port|ge|fa|eth/i);
 
     const hasPort = await portText.isVisible().catch(() => false);
     expect(hasPort).toBeDefined();
   });
 
-  test("should show switch name if available", async ({ page }) => {
+  test('should show switch name if available', async ({ page }) => {
     // Switch name from LLDP/CDP
     const switchName = page.getByText(/switch.*name|system.*name/i);
 
@@ -85,7 +85,7 @@ test.describe("VLAN Information", () => {
     expect(hasName).toBeDefined();
   });
 
-  test("should show management IP if available", async ({ page }) => {
+  test('should show management IP if available', async ({ page }) => {
     const mgmtIp = page.getByText(/management|mgmt/i);
 
     const hasMgmt = await mgmtIp.isVisible().catch(() => false);
@@ -93,26 +93,26 @@ test.describe("VLAN Information", () => {
   });
 });
 
-test.describe("VLAN Configuration", () => {
+test.describe('VLAN Configuration', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByLabel(/username/i).fill("admin");
-    await page.getByLabel(/password/i).fill("seed");
-    await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+    await page.getByLabel(/username/i).fill('admin');
+    await page.getByLabel(/password/i).fill('seed');
+    await page.getByRole('button', { name: /sign in|login/i }).click();
+    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });
 
     // Open settings
-    const settingsButton = page.getByRole("button", { name: /settings/i });
+    const settingsButton = page.getByRole('button', { name: /settings/i });
     await settingsButton.click();
     await page.waitForTimeout(500);
   });
 
-  test("should have VLAN enable/disable toggle", async ({ page }) => {
+  test('should have VLAN enable/disable toggle', async ({ page }) => {
     const vlanToggle = page
       .locator('label:has-text("VLAN") input[type="checkbox"]')
       .or(page.locator('input[name*="vlan" i][type="checkbox"]'))
@@ -133,7 +133,7 @@ test.describe("VLAN Configuration", () => {
     }
   });
 
-  test("should allow configuring VLAN ID", async ({ page }) => {
+  test('should allow configuring VLAN ID', async ({ page }) => {
     const vlanIdInput = page
       .locator('input[name*="vlan" i][type="number"]')
       .or(page.locator('input[placeholder*="vlan" i]'))
@@ -143,22 +143,22 @@ test.describe("VLAN Configuration", () => {
 
     if (hasInput) {
       // VLAN IDs are 1-4094
-      await vlanIdInput.fill("100");
+      await vlanIdInput.fill('100');
       await page.waitForTimeout(500);
 
       const value = await vlanIdInput.inputValue();
-      expect(value).toBe("100");
+      expect(value).toBe('100');
     }
   });
 
-  test("should validate VLAN ID range", async ({ page }) => {
+  test('should validate VLAN ID range', async ({ page }) => {
     const vlanIdInput = page.locator('input[name*="vlan" i][type="number"]').first();
 
     const hasInput = await vlanIdInput.isVisible().catch(() => false);
 
     if (hasInput) {
       // Try invalid VLAN ID (>4094)
-      await vlanIdInput.fill("5000");
+      await vlanIdInput.fill('5000');
       await page.waitForTimeout(500);
 
       const value = await vlanIdInput.inputValue();
@@ -170,21 +170,21 @@ test.describe("VLAN Configuration", () => {
   });
 });
 
-test.describe("Switch Card Details", () => {
+test.describe('Switch Card Details', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByLabel(/username/i).fill("admin");
-    await page.getByLabel(/password/i).fill("seed");
-    await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+    await page.getByLabel(/username/i).fill('admin');
+    await page.getByLabel(/password/i).fill('seed');
+    await page.getByRole('button', { name: /sign in|login/i }).click();
+    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });
   });
 
-  test("should show switch details when LLDP/CDP available", async ({ page }) => {
+  test('should show switch details when LLDP/CDP available', async ({ page }) => {
     // Switch card shows neighbor info
     const switchCard = page
       .locator('[data-testid="switch-card"]')
@@ -207,7 +207,7 @@ test.describe("Switch Card Details", () => {
     expect(hasNoNeighbor).toBeDefined();
   });
 
-  test("should handle multiple neighbors", async ({ page }) => {
+  test('should handle multiple neighbors', async ({ page }) => {
     // Some configurations may have multiple LLDP neighbors
     const neighborList = page.locator('[data-testid="neighbor-list"]');
 
@@ -216,23 +216,23 @@ test.describe("Switch Card Details", () => {
   });
 });
 
-test.describe("VLAN Help", () => {
+test.describe('VLAN Help', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByLabel(/username/i).fill("admin");
-    await page.getByLabel(/password/i).fill("seed");
-    await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+    await page.getByLabel(/username/i).fill('admin');
+    await page.getByLabel(/password/i).fill('seed');
+    await page.getByRole('button', { name: /sign in|login/i }).click();
+    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });
   });
 
-  test("should explain VLAN concepts in help", async ({ page }) => {
+  test('should explain VLAN concepts in help', async ({ page }) => {
     // Open help
-    const helpButton = page.getByRole("button", { name: /help/i });
+    const helpButton = page.getByRole('button', { name: /help/i });
     await helpButton.click();
     await page.waitForTimeout(500);
 
@@ -243,7 +243,7 @@ test.describe("VLAN Help", () => {
     expect(hasVlanHelp).toBeDefined();
 
     // Close help
-    const closeButton = page.getByRole("button", { name: /close/i }).first();
+    const closeButton = page.getByRole('button', { name: /close/i }).first();
     await closeButton.click();
   });
 });

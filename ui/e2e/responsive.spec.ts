@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from '@playwright/test';
 
 /**
  * Responsive Layout E2E Tests
@@ -25,31 +25,31 @@ import { expect, test } from "@playwright/test";
  * usability on different device sizes.
  */
 
-test.describe("Responsive Layout Tests", () => {
-  test.describe("Mobile Viewport (375x667 - iPhone SE)", () => {
+test.describe('Responsive Layout Tests', () => {
+  test.describe('Mobile Viewport (375x667 - iPhone SE)', () => {
     test.beforeEach(async ({ page }) => {
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
 
-      await page.goto("/");
+      await page.goto('/');
       await page.evaluate(() => localStorage.clear());
       await page.reload();
 
       // Login
-      await page.getByLabel(/username/i).fill("admin");
-      await page.getByLabel(/password/i).fill("seed");
-      await page.getByRole("button", { name: /sign in|login/i }).click();
+      await page.getByLabel(/username/i).fill('admin');
+      await page.getByLabel(/password/i).fill('seed');
+      await page.getByRole('button', { name: /sign in|login/i }).click();
 
       // Wait for dashboard
-      await expect(page.getByRole("heading", { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,
       });
     });
 
-    test("should display login form properly on mobile", async ({ page }) => {
+    test('should display login form properly on mobile', async ({ page }) => {
       // Logout to see login form
       const logoutButton = page
-        .getByRole("button", { name: /logout|sign out/i })
+        .getByRole('button', { name: /logout|sign out/i })
         .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
 
       const hasLogout = await logoutButton.isVisible().catch(() => false);
@@ -58,7 +58,7 @@ test.describe("Responsive Layout Tests", () => {
         await logoutButton.click();
         await page.waitForTimeout(500);
       } else {
-        await page.goto("/");
+        await page.goto('/');
         await page.evaluate(() => localStorage.clear());
         await page.reload();
       }
@@ -66,7 +66,7 @@ test.describe("Responsive Layout Tests", () => {
       // Verify login form is usable on mobile
       const usernameField = page.getByLabel(/username/i);
       const passwordField = page.getByLabel(/password/i);
-      const loginButton = page.getByRole("button", { name: /sign in|login/i });
+      const loginButton = page.getByRole('button', { name: /sign in|login/i });
 
       await expect(usernameField).toBeVisible();
       await expect(passwordField).toBeVisible();
@@ -85,7 +85,7 @@ test.describe("Responsive Layout Tests", () => {
       }
     });
 
-    test("should show hamburger menu on mobile", async ({ page }) => {
+    test('should show hamburger menu on mobile', async ({ page }) => {
       // Look for hamburger menu button
       const hamburgerMenu = page.locator(
         'button[aria-label*="menu" i], button:has(svg[class*="menu"], svg[class*="bars"])',
@@ -97,7 +97,7 @@ test.describe("Responsive Layout Tests", () => {
       expect(hasHamburger).toBeDefined();
     });
 
-    test("should stack cards vertically on mobile", async ({ page }) => {
+    test('should stack cards vertically on mobile', async ({ page }) => {
       await page.waitForTimeout(2000);
 
       // Get all cards
@@ -118,10 +118,10 @@ test.describe("Responsive Layout Tests", () => {
       }
     });
 
-    test("should show settings drawer full-screen on mobile", async ({ page }) => {
+    test('should show settings drawer full-screen on mobile', async ({ page }) => {
       // Open settings
       const settingsButton = page
-        .getByRole("button", { name: /settings/i })
+        .getByRole('button', { name: /settings/i })
         .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
 
       await settingsButton.click();
@@ -140,11 +140,11 @@ test.describe("Responsive Layout Tests", () => {
       }
     });
 
-    test("should have touch-friendly button sizes on mobile", async ({ page }) => {
+    test('should have touch-friendly button sizes on mobile', async ({ page }) => {
       await page.waitForTimeout(1000);
 
       // Find interactive buttons
-      const buttons = page.locator("button").filter({ hasText: /settings|help|logout/i });
+      const buttons = page.locator('button').filter({ hasText: /settings|help|logout/i });
       const buttonCount = await buttons.count();
 
       if (buttonCount > 0) {
@@ -163,7 +163,7 @@ test.describe("Responsive Layout Tests", () => {
       }
     });
 
-    test("should make FAB button accessible on mobile", async ({ page }) => {
+    test('should make FAB button accessible on mobile', async ({ page }) => {
       await page.waitForTimeout(1000);
 
       // Look for FAB (Floating Action Button)
@@ -187,7 +187,7 @@ test.describe("Responsive Layout Tests", () => {
       }
     });
 
-    test("should scroll cards vertically on mobile", async ({ page }) => {
+    test('should scroll cards vertically on mobile', async ({ page }) => {
       await page.waitForTimeout(2000);
 
       // Get initial scroll position
@@ -204,17 +204,17 @@ test.describe("Responsive Layout Tests", () => {
       expect(newScroll).toBeGreaterThan(initialScroll);
     });
 
-    test("should open help modal properly on mobile", async ({ page }) => {
+    test('should open help modal properly on mobile', async ({ page }) => {
       // Find help button
       const helpButton = page
-        .getByRole("button", { name: /help/i })
+        .getByRole('button', { name: /help/i })
         .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
 
       await helpButton.click();
       await page.waitForTimeout(500);
 
       // Help modal should be visible
-      const modal = page.getByRole("dialog").or(page.locator('[role="dialog"]'));
+      const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
       await expect(modal).toBeVisible({ timeout: 5000 });
 
       // Modal should fit viewport
@@ -225,7 +225,7 @@ test.describe("Responsive Layout Tests", () => {
       }
     });
 
-    test("should display all essential features on mobile", async ({ page }) => {
+    test('should display all essential features on mobile', async ({ page }) => {
       await page.waitForTimeout(2000);
 
       // Verify essential UI elements are present
@@ -236,14 +236,14 @@ test.describe("Responsive Layout Tests", () => {
 
       // Settings should be accessible
       const settingsButton = page
-        .getByRole("button", { name: /settings/i })
+        .getByRole('button', { name: /settings/i })
         .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
 
       await expect(settingsButton).toBeVisible();
 
       // Help should be accessible
       const helpButton = page
-        .getByRole("button", { name: /help/i })
+        .getByRole('button', { name: /help/i })
         .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
 
       const hasHelp = await helpButton.isVisible().catch(() => false);
@@ -251,30 +251,30 @@ test.describe("Responsive Layout Tests", () => {
     });
   });
 
-  test.describe("Tablet Viewport (768x1024 - iPad)", () => {
+  test.describe('Tablet Viewport (768x1024 - iPad)', () => {
     test.beforeEach(async ({ page }) => {
       // Set tablet viewport
       await page.setViewportSize({ width: 768, height: 1024 });
 
-      await page.goto("/");
+      await page.goto('/');
       await page.evaluate(() => localStorage.clear());
       await page.reload();
 
       // Login
-      await page.getByLabel(/username/i).fill("admin");
-      await page.getByLabel(/password/i).fill("seed");
-      await page.getByRole("button", { name: /sign in|login/i }).click();
+      await page.getByLabel(/username/i).fill('admin');
+      await page.getByLabel(/password/i).fill('seed');
+      await page.getByRole('button', { name: /sign in|login/i }).click();
 
       // Wait for dashboard
-      await expect(page.getByRole("heading", { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,
       });
     });
 
-    test("should display login form properly on tablet", async ({ page }) => {
+    test('should display login form properly on tablet', async ({ page }) => {
       // Logout to see login form
       const logoutButton = page
-        .getByRole("button", { name: /logout|sign out/i })
+        .getByRole('button', { name: /logout|sign out/i })
         .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
 
       const hasLogout = await logoutButton.isVisible().catch(() => false);
@@ -283,7 +283,7 @@ test.describe("Responsive Layout Tests", () => {
         await logoutButton.click();
         await page.waitForTimeout(500);
       } else {
-        await page.goto("/");
+        await page.goto('/');
         await page.evaluate(() => localStorage.clear());
         await page.reload();
       }
@@ -291,10 +291,10 @@ test.describe("Responsive Layout Tests", () => {
       // Verify login form
       await expect(page.getByLabel(/username/i)).toBeVisible();
       await expect(page.getByLabel(/password/i)).toBeVisible();
-      await expect(page.getByRole("button", { name: /sign in|login/i })).toBeVisible();
+      await expect(page.getByRole('button', { name: /sign in|login/i })).toBeVisible();
     });
 
-    test("should arrange cards in 2-column grid on tablet", async ({ page }) => {
+    test('should arrange cards in 2-column grid on tablet', async ({ page }) => {
       await page.waitForTimeout(2000);
 
       // Get all cards
@@ -320,10 +320,10 @@ test.describe("Responsive Layout Tests", () => {
       }
     });
 
-    test("should show settings drawer as overlay on tablet", async ({ page }) => {
+    test('should show settings drawer as overlay on tablet', async ({ page }) => {
       // Open settings
       const settingsButton = page
-        .getByRole("button", { name: /settings/i })
+        .getByRole('button', { name: /settings/i })
         .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
 
       await settingsButton.click();
@@ -343,11 +343,11 @@ test.describe("Responsive Layout Tests", () => {
       }
     });
 
-    test("should have adequate touch targets on tablet", async ({ page }) => {
+    test('should have adequate touch targets on tablet', async ({ page }) => {
       await page.waitForTimeout(1000);
 
       // Find interactive buttons
-      const buttons = page.locator("button");
+      const buttons = page.locator('button');
       const buttonCount = await buttons.count();
 
       if (buttonCount > 0) {
@@ -368,7 +368,7 @@ test.describe("Responsive Layout Tests", () => {
       }
     });
 
-    test("should display navigation appropriately on tablet", async ({ page }) => {
+    test('should display navigation appropriately on tablet', async ({ page }) => {
       // Navigation might be full or hamburger menu depending on design
       const nav = page.locator('nav, [role="navigation"]');
       const hamburger = page.locator('button[aria-label*="menu" i]');
@@ -380,7 +380,7 @@ test.describe("Responsive Layout Tests", () => {
       expect(hasNav || hasHamburger).toBe(true);
     });
 
-    test("should display all cards on tablet", async ({ page }) => {
+    test('should display all cards on tablet', async ({ page }) => {
       await page.waitForTimeout(2000);
 
       // Count visible cards
@@ -390,35 +390,35 @@ test.describe("Responsive Layout Tests", () => {
       expect(cardCount).toBeGreaterThan(0);
 
       // Verify common cards are visible
-      const linkCard = page.locator("text=/link/i").first();
+      const linkCard = page.locator('text=/link/i').first();
       await expect(linkCard).toBeVisible();
     });
   });
 
-  test.describe("Desktop Viewport (1920x1080 - Full HD)", () => {
+  test.describe('Desktop Viewport (1920x1080 - Full HD)', () => {
     test.beforeEach(async ({ page }) => {
       // Set desktop viewport
       await page.setViewportSize({ width: 1920, height: 1080 });
 
-      await page.goto("/");
+      await page.goto('/');
       await page.evaluate(() => localStorage.clear());
       await page.reload();
 
       // Login
-      await page.getByLabel(/username/i).fill("admin");
-      await page.getByLabel(/password/i).fill("seed");
-      await page.getByRole("button", { name: /sign in|login/i }).click();
+      await page.getByLabel(/username/i).fill('admin');
+      await page.getByLabel(/password/i).fill('seed');
+      await page.getByRole('button', { name: /sign in|login/i }).click();
 
       // Wait for dashboard
-      await expect(page.getByRole("heading", { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,
       });
     });
 
-    test("should display login form properly on desktop", async ({ page }) => {
+    test('should display login form properly on desktop', async ({ page }) => {
       // Logout to see login form
       const logoutButton = page
-        .getByRole("button", { name: /logout|sign out/i })
+        .getByRole('button', { name: /logout|sign out/i })
         .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
 
       const hasLogout = await logoutButton.isVisible().catch(() => false);
@@ -427,7 +427,7 @@ test.describe("Responsive Layout Tests", () => {
         await logoutButton.click();
         await page.waitForTimeout(500);
       } else {
-        await page.goto("/");
+        await page.goto('/');
         await page.evaluate(() => localStorage.clear());
         await page.reload();
       }
@@ -446,7 +446,7 @@ test.describe("Responsive Layout Tests", () => {
       }
     });
 
-    test("should arrange cards in 3-4 column grid on desktop", async ({ page }) => {
+    test('should arrange cards in 3-4 column grid on desktop', async ({ page }) => {
       await page.waitForTimeout(2000);
 
       // Get all cards
@@ -477,7 +477,7 @@ test.describe("Responsive Layout Tests", () => {
       }
     });
 
-    test("should show full navigation on desktop", async ({ page }) => {
+    test('should show full navigation on desktop', async ({ page }) => {
       // Full navigation should be visible (not hamburger menu)
       const nav = page.locator('nav, [role="navigation"]');
       const hamburger = page.locator('button[aria-label*="menu" i]');
@@ -491,10 +491,10 @@ test.describe("Responsive Layout Tests", () => {
       expect(hasHamburger).toBeDefined();
     });
 
-    test("should slide settings drawer from right on desktop", async ({ page }) => {
+    test('should slide settings drawer from right on desktop', async ({ page }) => {
       // Open settings
       const settingsButton = page
-        .getByRole("button", { name: /settings/i })
+        .getByRole('button', { name: /settings/i })
         .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
 
       await settingsButton.click();
@@ -516,7 +516,7 @@ test.describe("Responsive Layout Tests", () => {
       }
     });
 
-    test("should provide optimal layout for large screens", async ({ page }) => {
+    test('should provide optimal layout for large screens', async ({ page }) => {
       await page.waitForTimeout(2000);
 
       // Verify content is well-distributed
@@ -535,7 +535,7 @@ test.describe("Responsive Layout Tests", () => {
       }
     });
 
-    test("should display all cards without scrolling (above the fold)", async ({ page }) => {
+    test('should display all cards without scrolling (above the fold)', async ({ page }) => {
       await page.waitForTimeout(2000);
 
       // Get initial scroll position
@@ -552,17 +552,17 @@ test.describe("Responsive Layout Tests", () => {
       expect(visibleCount).toBeGreaterThan(0);
     });
 
-    test("should handle help modal at desktop size", async ({ page }) => {
+    test('should handle help modal at desktop size', async ({ page }) => {
       // Open help modal
       const helpButton = page
-        .getByRole("button", { name: /help/i })
+        .getByRole('button', { name: /help/i })
         .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
 
       await helpButton.click();
       await page.waitForTimeout(500);
 
       // Help modal should be visible
-      const modal = page.getByRole("dialog").or(page.locator('[role="dialog"]'));
+      const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
       await expect(modal).toBeVisible({ timeout: 5000 });
 
       // Modal should be centered and not full width
@@ -581,19 +581,19 @@ test.describe("Responsive Layout Tests", () => {
     });
   });
 
-  test.describe("Cross-Viewport Feature Consistency", () => {
-    test("should maintain authentication across all viewports", async ({ page }) => {
+  test.describe('Cross-Viewport Feature Consistency', () => {
+    test('should maintain authentication across all viewports', async ({ page }) => {
       // Test on mobile
       await page.setViewportSize({ width: 375, height: 667 });
-      await page.goto("/");
+      await page.goto('/');
       await page.evaluate(() => localStorage.clear());
       await page.reload();
 
-      await page.getByLabel(/username/i).fill("admin");
-      await page.getByLabel(/password/i).fill("seed");
-      await page.getByRole("button", { name: /sign in|login/i }).click();
+      await page.getByLabel(/username/i).fill('admin');
+      await page.getByLabel(/password/i).fill('seed');
+      await page.getByRole('button', { name: /sign in|login/i }).click();
 
-      await expect(page.getByRole("heading", { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,
       });
 
@@ -601,54 +601,54 @@ test.describe("Responsive Layout Tests", () => {
       await page.setViewportSize({ width: 768, height: 1024 });
       await page.waitForTimeout(500);
 
-      await expect(page.getByRole("heading", { name: /link|dashboard/i })).toBeVisible();
+      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible();
 
       // Resize to desktop - should stay authenticated
       await page.setViewportSize({ width: 1920, height: 1080 });
       await page.waitForTimeout(500);
 
-      await expect(page.getByRole("heading", { name: /link|dashboard/i })).toBeVisible();
+      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible();
     });
 
-    test("should maintain theme preference across viewports", async ({ page }) => {
+    test('should maintain theme preference across viewports', async ({ page }) => {
       // Login on desktop
       await page.setViewportSize({ width: 1920, height: 1080 });
-      await page.goto("/");
+      await page.goto('/');
       await page.evaluate(() => localStorage.clear());
       await page.reload();
 
-      await page.getByLabel(/username/i).fill("admin");
-      await page.getByLabel(/password/i).fill("seed");
-      await page.getByRole("button", { name: /sign in|login/i }).click();
+      await page.getByLabel(/username/i).fill('admin');
+      await page.getByLabel(/password/i).fill('seed');
+      await page.getByRole('button', { name: /sign in|login/i }).click();
 
-      await expect(page.getByRole("heading", { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,
       });
 
       // Set dark theme
       const settingsButton = page
-        .getByRole("button", { name: /settings/i })
+        .getByRole('button', { name: /settings/i })
         .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
 
       await settingsButton.click();
       await page.waitForTimeout(500);
 
       const themeToggle = page
-        .getByRole("button", { name: /dark|light|theme/i })
+        .getByRole('button', { name: /dark|light|theme/i })
         .or(page.locator('[data-testid="theme-toggle"]'))
         .first();
 
-      const htmlElement = page.locator("html");
-      let classes = await htmlElement.getAttribute("class");
+      const htmlElement = page.locator('html');
+      let classes = await htmlElement.getAttribute('class');
 
-      if (!classes?.includes("dark")) {
+      if (!classes?.includes('dark')) {
         await themeToggle.click();
         await page.waitForTimeout(500);
       }
 
       // Close settings
       const closeButton = page
-        .getByRole("button", { name: /close/i })
+        .getByRole('button', { name: /close/i })
         .or(page.locator('button:has(svg[class*="x"], svg[class*="close"])'))
         .first();
 
@@ -656,36 +656,36 @@ test.describe("Responsive Layout Tests", () => {
       await page.waitForTimeout(500);
 
       // Verify dark theme
-      classes = await htmlElement.getAttribute("class");
-      expect(classes).toContain("dark");
+      classes = await htmlElement.getAttribute('class');
+      expect(classes).toContain('dark');
 
       // Switch to mobile - theme should persist
       await page.setViewportSize({ width: 375, height: 667 });
       await page.waitForTimeout(500);
 
-      const mobileClasses = await htmlElement.getAttribute("class");
-      expect(mobileClasses).toContain("dark");
+      const mobileClasses = await htmlElement.getAttribute('class');
+      expect(mobileClasses).toContain('dark');
 
       // Switch to tablet - theme should persist
       await page.setViewportSize({ width: 768, height: 1024 });
       await page.waitForTimeout(500);
 
-      const tabletClasses = await htmlElement.getAttribute("class");
-      expect(tabletClasses).toContain("dark");
+      const tabletClasses = await htmlElement.getAttribute('class');
+      expect(tabletClasses).toContain('dark');
     });
 
-    test("should display same card data across all viewports", async ({ page }) => {
+    test('should display same card data across all viewports', async ({ page }) => {
       // Login on desktop
       await page.setViewportSize({ width: 1920, height: 1080 });
-      await page.goto("/");
+      await page.goto('/');
       await page.evaluate(() => localStorage.clear());
       await page.reload();
 
-      await page.getByLabel(/username/i).fill("admin");
-      await page.getByLabel(/password/i).fill("seed");
-      await page.getByRole("button", { name: /sign in|login/i }).click();
+      await page.getByLabel(/username/i).fill('admin');
+      await page.getByLabel(/password/i).fill('seed');
+      await page.getByRole('button', { name: /sign in|login/i }).click();
 
-      await expect(page.getByRole("heading", { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,
       });
 
@@ -710,33 +710,33 @@ test.describe("Responsive Layout Tests", () => {
       expect(mobileCards).toBeGreaterThanOrEqual(desktopCards - 2); // Allow for minor variance
     });
 
-    test("should provide working settings across all viewports", async ({ page }) => {
+    test('should provide working settings across all viewports', async ({ page }) => {
       // Login
       await page.setViewportSize({ width: 1920, height: 1080 });
-      await page.goto("/");
+      await page.goto('/');
       await page.evaluate(() => localStorage.clear());
       await page.reload();
 
-      await page.getByLabel(/username/i).fill("admin");
-      await page.getByLabel(/password/i).fill("seed");
-      await page.getByRole("button", { name: /sign in|login/i }).click();
+      await page.getByLabel(/username/i).fill('admin');
+      await page.getByLabel(/password/i).fill('seed');
+      await page.getByRole('button', { name: /sign in|login/i }).click();
 
-      await expect(page.getByRole("heading", { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,
       });
 
       // Test settings on each viewport
       for (const viewport of [
-        { width: 1920, height: 1080, name: "desktop" },
-        { width: 768, height: 1024, name: "tablet" },
-        { width: 375, height: 667, name: "mobile" },
+        { width: 1920, height: 1080, name: 'desktop' },
+        { width: 768, height: 1024, name: 'tablet' },
+        { width: 375, height: 667, name: 'mobile' },
       ]) {
         await page.setViewportSize(viewport);
         await page.waitForTimeout(500);
 
         // Open settings
         const settingsButton = page
-          .getByRole("button", { name: /settings/i })
+          .getByRole('button', { name: /settings/i })
           .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
 
         await settingsButton.click();
@@ -749,7 +749,7 @@ test.describe("Responsive Layout Tests", () => {
 
         // Close settings
         const closeButton = page
-          .getByRole("button", { name: /close/i })
+          .getByRole('button', { name: /close/i })
           .or(page.locator('button:has(svg[class*="x"], svg[class*="close"])'))
           .first();
 

@@ -1,5 +1,5 @@
-import { fileURLToPath, URL } from "node:url";
-import react from "@vitejs/plugin-react";
+import { fileURLToPath, URL } from 'node:url';
+import react from '@vitejs/plugin-react';
 /**
  * Vite Build Configuration
  *
@@ -30,20 +30,20 @@ import react from "@vitejs/plugin-react";
  * Dependencies: vite, @vitejs/plugin-react
  * See: web/embed.go for how dist/ is embedded in the Go binary
  */
-import { defineConfig } from "vite";
+import { defineConfig } from 'vite';
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
-      "@locales": fileURLToPath(new URL("../locales", import.meta.url)),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@locales': fileURLToPath(new URL('../locales', import.meta.url)),
     },
   },
   server: {
     port: 3000,
   },
   build: {
-    outDir: "dist",
+    outDir: 'dist',
     sourcemap: true,
   },
 });

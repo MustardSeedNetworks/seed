@@ -34,6 +34,8 @@
     "*.{json,md,yml,yaml}": "cd ui && npx biome format --write"
   },
   "commitlint": {
-    "extends": ["@commitlint/config-conventional"]
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   }
 }

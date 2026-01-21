@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from '@playwright/test';
 
 /**
  * Cable Diagnostics E2E Tests
@@ -11,28 +11,28 @@ import { expect, test } from "@playwright/test";
  * - Error handling for unsupported NICs
  */
 
-test.describe("Cable Diagnostics", () => {
+test.describe('Cable Diagnostics', () => {
   test.beforeEach(async ({ page }) => {
     // Login first
-    await page.goto("/");
+    await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
     // Authenticate
-    await page.getByLabel(/username/i).fill("admin");
-    await page.getByLabel(/password/i).fill("seed");
-    await page.getByRole("button", { name: /sign in|login/i }).click();
+    await page.getByLabel(/username/i).fill('admin');
+    await page.getByLabel(/password/i).fill('seed');
+    await page.getByRole('button', { name: /sign in|login/i }).click();
 
     // Wait for dashboard to load
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });
   });
 
-  test("should display Cable card when TDR is supported", async ({ page }) => {
+  test('should display Cable card when TDR is supported', async ({ page }) => {
     // Cable card only appears if NIC supports TDR
     const cableCard = page
-      .getByRole("heading", { name: /cable/i })
+      .getByRole('heading', { name: /cable/i })
       .or(page.locator('[data-testid="cable-card"]'));
 
     // Card may or may not be visible depending on hardware
@@ -40,7 +40,7 @@ test.describe("Cable Diagnostics", () => {
     expect(isVisible).toBeDefined();
   });
 
-  test("should show cable status when connected", async ({ page }) => {
+  test('should show cable status when connected', async ({ page }) => {
     // Look for cable-related status indicators
     const cableStatus = page.getByText(/cable|pair|length|fault/i).first();
 
@@ -50,7 +50,7 @@ test.describe("Cable Diagnostics", () => {
     expect(hasStatus).toBeDefined();
   });
 
-  test("should display cable length measurement", async ({ page }) => {
+  test('should display cable length measurement', async ({ page }) => {
     // Look for length measurement (if TDR supported)
     const lengthText = page.getByText(/\d+\s*(m|meters?|ft|feet)/i);
 
@@ -60,7 +60,7 @@ test.describe("Cable Diagnostics", () => {
     expect(hasLength).toBeDefined();
   });
 
-  test("should show pair status for each wire pair", async ({ page }) => {
+  test('should show pair status for each wire pair', async ({ page }) => {
     // Ethernet has 4 pairs - look for pair status
     const pairStatus = page.getByText(/pair\s*[1-4]|ok|open|short/i).first();
 
@@ -70,7 +70,7 @@ test.describe("Cable Diagnostics", () => {
     expect(hasPairStatus).toBeDefined();
   });
 
-  test("should indicate when TDR is not supported", async ({ page }) => {
+  test('should indicate when TDR is not supported', async ({ page }) => {
     // Look for "not supported" message
     const notSupported = page.getByText(/not supported|unavailable|requires/i);
 
@@ -80,9 +80,9 @@ test.describe("Cable Diagnostics", () => {
     expect(showsNotSupported).toBeDefined();
   });
 
-  test("should provide help for cable diagnostics", async ({ page }) => {
+  test('should provide help for cable diagnostics', async ({ page }) => {
     // Open help modal
-    const helpButton = page.getByRole("button", { name: /help/i });
+    const helpButton = page.getByRole('button', { name: /help/i });
     await helpButton.click();
     await page.waitForTimeout(500);
 
@@ -95,11 +95,11 @@ test.describe("Cable Diagnostics", () => {
     }
 
     // Close help
-    const closeButton = page.getByRole("button", { name: /close/i }).first();
+    const closeButton = page.getByRole('button', { name: /close/i }).first();
     await closeButton.click();
   });
 
-  test("should show fault distance when fault detected", async ({ page }) => {
+  test('should show fault distance when fault detected', async ({ page }) => {
     // Fault distance shown when cable has issue
     const faultDistance = page
       .getByText(/fault.*\d+\s*m|distance.*\d+/i)
@@ -111,7 +111,7 @@ test.describe("Cable Diagnostics", () => {
     expect(hasFaultDistance).toBeDefined();
   });
 
-  test("should differentiate between fault types", async ({ page }) => {
+  test('should differentiate between fault types', async ({ page }) => {
     // Different fault types: open, short, impedance mismatch
     const openFault = page.getByText(/open/i);
     const shortFault = page.getByText(/short/i);
@@ -127,7 +127,7 @@ test.describe("Cable Diagnostics", () => {
     expect(hasImpedanceFault).toBeDefined();
   });
 
-  test("should handle run cable test action", async ({ page }) => {
+  test('should handle run cable test action', async ({ page }) => {
     // Look for "Run Test" or similar button in Cable card
     const runTestButton = page
       .locator('button:has-text("Test Cable")')
@@ -149,9 +149,9 @@ test.describe("Cable Diagnostics", () => {
     }
   });
 
-  test("should display hardware compatibility info in settings", async ({ page }) => {
+  test('should display hardware compatibility info in settings', async ({ page }) => {
     // Open settings
-    const settingsButton = page.getByRole("button", { name: /settings/i });
+    const settingsButton = page.getByRole('button', { name: /settings/i });
     await settingsButton.click();
     await page.waitForTimeout(500);
 
@@ -162,26 +162,26 @@ test.describe("Cable Diagnostics", () => {
     expect(hasHardwareInfo).toBeDefined();
 
     // Close settings
-    const closeButton = page.getByRole("button", { name: /close/i }).first();
+    const closeButton = page.getByRole('button', { name: /close/i }).first();
     await closeButton.click();
   });
 });
 
-test.describe("Cable Card States", () => {
+test.describe('Cable Card States', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByLabel(/username/i).fill("admin");
-    await page.getByLabel(/password/i).fill("seed");
-    await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+    await page.getByLabel(/username/i).fill('admin');
+    await page.getByLabel(/password/i).fill('seed');
+    await page.getByRole('button', { name: /sign in|login/i }).click();
+    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });
   });
 
-  test("should show loading state while fetching cable data", async ({ page }) => {
+  test('should show loading state while fetching cable data', async ({ page }) => {
     // Force refresh and look for loading indicator
     await page.reload();
 
@@ -195,7 +195,7 @@ test.describe("Cable Card States", () => {
     expect(true).toBeTruthy();
   });
 
-  test("should show OK status for good cable", async ({ page }) => {
+  test('should show OK status for good cable', async ({ page }) => {
     // Look for positive status indicators
     const okStatus = page
       .getByText(/^ok$/i)
@@ -208,7 +208,7 @@ test.describe("Cable Card States", () => {
     expect(hasOkStatus).toBeDefined();
   });
 
-  test("should show error status for faulty cable", async ({ page }) => {
+  test('should show error status for faulty cable', async ({ page }) => {
     // Look for error status indicators
     const errorStatus = page
       .getByText(/fault|error|open|short/i)
@@ -221,7 +221,7 @@ test.describe("Cable Card States", () => {
     expect(hasErrorStatus).toBeDefined();
   });
 
-  test("should show warning for partial connectivity", async ({ page }) => {
+  test('should show warning for partial connectivity', async ({ page }) => {
     // Some pairs OK, some faulty
     const warningStatus = page
       .getByText(/warning|partial|degraded/i)
@@ -233,21 +233,21 @@ test.describe("Cable Card States", () => {
   });
 });
 
-test.describe("Cable Card Accessibility", () => {
+test.describe('Cable Card Accessibility', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.getByLabel(/username/i).fill("admin");
-    await page.getByLabel(/password/i).fill("seed");
-    await page.getByRole("button", { name: /sign in|login/i }).click();
-    await expect(page.getByRole("heading", { name: /link/i })).toBeVisible({
+    await page.getByLabel(/username/i).fill('admin');
+    await page.getByLabel(/password/i).fill('seed');
+    await page.getByRole('button', { name: /sign in|login/i }).click();
+    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });
   });
 
-  test("should have accessible status descriptions", async ({ page }) => {
+  test('should have accessible status descriptions', async ({ page }) => {
     // Cable status should have aria labels or screen reader text
     const cableCard = page
       .locator('[data-testid="cable-card"]')
@@ -264,14 +264,14 @@ test.describe("Cable Card Accessibility", () => {
     }
   });
 
-  test("should support keyboard navigation", async ({ page }) => {
+  test('should support keyboard navigation', async ({ page }) => {
     // Tab to Cable card elements
-    await page.keyboard.press("Tab");
-    await page.keyboard.press("Tab");
-    await page.keyboard.press("Tab");
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
 
     // Check if focus is visible
-    const focusedElement = page.locator(":focus");
+    const focusedElement = page.locator(':focus');
     const hasFocus = await focusedElement.isVisible().catch(() => false);
 
     expect(hasFocus).toBeDefined();

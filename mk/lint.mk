@@ -133,9 +133,9 @@ fmt-frontend: ## Format frontend code with Biome
 	@cd ui && npx @biomejs/biome format --write src/
 	@echo "✅ Frontend code formatted"
 
-fmt-md: ## Format markdown files with Prettier
-	npm run format:md
-	@echo "Markdown files formatted"
+fmt-md: ## Format markdown and JSON files with Biome
+	@cd ui && npx @biomejs/biome format --write ..
+	@echo "✅ Markdown/JSON files formatted"
 
 fmt-all: fmt fmt-frontend fmt-md ## Format all code (Go + frontend + markdown)
 
@@ -151,19 +151,37 @@ fmt-check: ## Check all formatting (Go + frontend + markdown) without fixing
 		echo "✅ Go formatting OK"; \
 	fi; \
 	echo "Checking frontend formatting (Biome)..."; \
-	if ! (cd ui && npx @biomejs/biome format --check src/ 2>/dev/null); then \
+	TEMPDIR=$$(mktemp -d); \
+	cp -r ui/src "$$TEMPDIR/"; \
+	(cd ui && npx @biomejs/biome format --write "$$TEMPDIR/src/" 2>/dev/null > /dev/null); \
+	if diff -rq ui/src/ "$$TEMPDIR/src/" > /dev/null 2>&1; then \
+		echo "✅ Frontend formatting OK"; \
+	else \
 		echo "❌ Frontend files need formatting"; \
 		FAILED=1; \
-	else \
-		echo "✅ Frontend formatting OK"; \
 	fi; \
-	echo "Checking markdown formatting..."; \
-	if ! npm run format:md:check 2>/dev/null; then \
+	rm -rf "$$TEMPDIR"; \
+	echo "Checking markdown/JSON formatting..."; \
+	TEMPDIR=$$(mktemp -d); \
+	for f in README.md CONTRIBUTING.md SECURITY.md; do \
+		[ -f "$$f" ] && cp "$$f" "$$TEMPDIR/" || true; \
+	done; \
+	(cd ui && npx @biomejs/biome format --write "$$TEMPDIR/" 2>/dev/null > /dev/null); \
+	CHANGED=0; \
+	for f in README.md CONTRIBUTING.md SECURITY.md; do \
+		if [ -f "$$f" ] && [ -f "$$TEMPDIR/$$f" ]; then \
+			if ! diff -q "$$f" "$$TEMPDIR/$$f" > /dev/null 2>&1; then \
+				CHANGED=1; \
+			fi; \
+		fi; \
+	done; \
+	if [ $$CHANGED -eq 0 ]; then \
+		echo "✅ Markdown formatting OK"; \
+	else \
 		echo "❌ Markdown files need formatting"; \
 		FAILED=1; \
-	else \
-		echo "✅ Markdown formatting OK"; \
 	fi; \
+	rm -rf "$$TEMPDIR"; \
 	if [ $$FAILED -ne 0 ]; then \
 		echo ""; \
 		echo "Run 'make fmt-all' to fix formatting issues"; \
