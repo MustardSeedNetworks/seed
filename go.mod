@@ -15,6 +15,7 @@ require (
 	github.com/go-pdf/fpdf v0.9.0
 	github.com/google/uuid v1.6.0
 	github.com/gosnmp/gosnmp v1.43.2
+	github.com/kardianos/service v1.2.4
 	github.com/mark3labs/mcp-go v0.43.2
 	github.com/mdlayher/wifi v0.7.2
 	github.com/nicksnyder/go-i18n/v2 v2.6.1
@@ -72,5 +73,5 @@ require (
 
 require (
 	golang.org/x/net v0.48.0
-	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/sys v0.40.0
 )

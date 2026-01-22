@@ -35,7 +35,7 @@ mkdir -p %{buildroot}/var/log/seed
 install -m 755 %{_repo_root}/seed %{buildroot}/usr/bin/seed
 
 # Copy systemd service file
-install -m 644 %{_repo_root}/packaging/seed.service %{buildroot}/usr/lib/systemd/system/seed.service
+install -m 644 %{_repo_root}/deploy/deb/seed.service %{buildroot}/usr/lib/systemd/system/seed.service
 
 %files
 %attr(755, root, root) /usr/bin/seed
