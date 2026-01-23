@@ -32,7 +32,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../lib/format';
 import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
-import { CardDivider, CardRow } from '../ui/Card';
+import { CardDivider, CardRow } from '../ui/card';
 import type { Status } from '../ui/StatusBadge';
 import { BaseCard } from './BaseCard';
 

@@ -12,8 +12,8 @@ import {
 import type { SaveStatus, SettingsThresholds } from '../../../types/settings';
 import { THRESHOLD_HELP } from '../../help/HelpContent';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { Info, SlidersHorizontal } from '../../ui/Icons';
-import { Tooltip } from '../../ui/Tooltip';
+import { Info, SlidersHorizontal } from '../../ui/icons';
+import { Tooltip } from '../../ui/tooltip';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 interface ThresholdsSettingsProps {

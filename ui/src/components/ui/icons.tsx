@@ -15,7 +15,7 @@
  *
  * Usage:
  * ```typescript
- * import { CheckCircle, AlertTriangle, Router, Eye } from '../ui/Icons';
+ * import { CheckCircle, AlertTriangle, Router, Eye } from '../ui/icons';
  *
  * // Use in components
  * <CheckCircle className={iconTokens.size.md} />

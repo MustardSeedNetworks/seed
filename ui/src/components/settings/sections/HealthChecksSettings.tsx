@@ -38,7 +38,7 @@ import { useArrayItem } from '../../../hooks/useArrayItem';
 import { cn, icon as iconTokens, input, layout, radius, spacing } from '../../../styles/theme';
 import type { CardSettings, SaveStatus, TestsSettings } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { HeartPulse } from '../../ui/Icons';
+import { HeartPulse } from '../../ui/icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 interface HealthChecksSettingsProps {

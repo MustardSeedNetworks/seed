@@ -28,7 +28,7 @@ import { api } from '../../../api';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import type { SaveStatus, WiFiSettings as WiFiSettingsType } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { Wifi } from '../../ui/Icons';
+import { Wifi } from '../../ui/icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 // Types for WiFi scanning and connection

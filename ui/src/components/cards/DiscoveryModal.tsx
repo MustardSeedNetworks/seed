@@ -34,8 +34,8 @@ import {
   RefreshCw,
   Search,
   X,
-} from '../ui/Icons';
-import { Tooltip } from '../ui/Tooltip';
+} from '../ui/icons';
+import { Tooltip } from '../ui/tooltip';
 import type {
   DiscoveredDevice,
   DiscoveryMethod,

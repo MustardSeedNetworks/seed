@@ -49,7 +49,7 @@ import type {
 import { LogComponents, logger } from '../../lib/logger';
 import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
 import type { AirMapperData } from '../../utils/airmapper';
-import { CheckCircle, Loader, Pause, Play, Upload, X } from '../ui/Icons';
+import { CheckCircle, Loader, Pause, Play, Upload, X } from '../ui/icons';
 import { AirMapperImport, type ImportOptions } from './AirMapperImport';
 import { type CalibrationPoint, FloorPlanCanvas } from './FloorPlanCanvas';
 import { HeatmapLegend } from './HeatmapLegend';

@@ -41,7 +41,7 @@ import {
 import type { CardSettings, DnsServer, SaveStatus, TestsSettings } from '../../../types/settings';
 import { generateId } from '../../../utils/id';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { Globe } from '../../ui/Icons';
+import { Globe } from '../../ui/icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 interface DnsSettingsProps {

@@ -29,9 +29,9 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatTime } from '../../lib/format';
 import { cn, icon as iconTokens, layout, spacing } from '../../styles/theme';
-import { Card, CardDivider, CardValue, type Status } from '../ui/Card';
+import { Card, CardDivider, CardValue, type Status } from '../ui/card';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
-import { Globe } from '../ui/Icons';
+import { Globe } from '../ui/icons';
 import { StatusBadge } from '../ui/StatusBadge';
 
 interface LookupResult {

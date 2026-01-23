@@ -31,7 +31,7 @@ import { formatBytes } from '../../../lib/format';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import type { UpdateConfig } from '../../../types/update';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { CheckCircle, Download, Loader, RefreshCw, RotateCcw } from '../../ui/Icons';
+import { CheckCircle, Download, Loader, RefreshCw, RotateCcw } from '../../ui/icons';
 
 interface UpdateSettingsProps {
   currentVersion?: string;

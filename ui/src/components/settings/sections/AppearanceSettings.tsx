@@ -31,7 +31,7 @@ import { useTranslation } from 'react-i18next';
 import i18n, { languages } from '../../../i18n';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../../styles/theme';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { Palette } from '../../ui/Icons';
+import { Palette } from '../../ui/icons';
 
 interface AppearanceSettingsProps {
   theme: 'light' | 'dark' | 'system';

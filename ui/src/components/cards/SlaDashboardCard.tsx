@@ -26,7 +26,7 @@ import type React from 'react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
-import { Card, CardDivider } from '../ui/Card';
+import { Card, CardDivider } from '../ui/card';
 import type { Status } from '../ui/StatusBadge';
 import { StatusBadge } from '../ui/StatusBadge';
 

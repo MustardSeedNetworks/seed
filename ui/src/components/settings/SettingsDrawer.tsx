@@ -49,7 +49,7 @@ import type {
 } from '../../types/settings';
 import { generateId } from '../../utils/id';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
-import { Network } from '../ui/Icons';
+import { Network } from '../ui/icons';
 import { AppearanceSettings } from './sections/AppearanceSettings';
 import { AutoSaveIndicator } from './sections/AutoSaveIndicator';
 import { CableTestSettings } from './sections/CableTestSettings';

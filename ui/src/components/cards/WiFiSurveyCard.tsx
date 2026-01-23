@@ -39,8 +39,8 @@ import {
   spacing,
 } from '../../styles/theme';
 import { SurveyView } from '../survey/SurveyView';
-import { Card, type Status } from '../ui/Card';
-import { Activity } from '../ui/Icons';
+import { Card, type Status } from '../ui/card';
+import { Activity } from '../ui/icons';
 
 interface WifiSurveyCardProps {
   isWifi: boolean;

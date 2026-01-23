@@ -31,11 +31,11 @@ import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../contexts/useSettings';
 import { cn, icon as iconTokens, layout, radius, spacing, timing } from '../../styles/theme';
 import { HTTP_TIMING_HELP } from '../help/HelpContent';
-import { Card, type Status } from '../ui/Card';
+import { Card, type Status } from '../ui/card';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
-import { HeartPulse } from '../ui/Icons';
+import { HeartPulse } from '../ui/icons';
 import { StatusBadge } from '../ui/StatusBadge';
-import { Tooltip } from '../ui/Tooltip';
+import { Tooltip } from '../ui/tooltip';
 
 type StatusValue = 'success' | 'warning' | 'error';
 

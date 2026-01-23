@@ -36,8 +36,8 @@ import { api } from '../../api';
 import { useSettings } from '../../contexts/useSettings';
 import { LogComponents, logger } from '../../lib/logger';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
-import { Gauge } from '../ui/Icons';
+import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/card';
+import { Gauge } from '../ui/icons';
 import { ProgressRing, PulsingDot, SpeedGauge } from '../ui/SpeedGauge';
 
 // Speedtest types

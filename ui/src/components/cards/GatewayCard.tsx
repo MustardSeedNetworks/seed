@@ -29,8 +29,8 @@ import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../contexts/useSettings';
 import { formatTime, isValidNumber } from '../../lib/format';
 import { cn, icon as iconTokens, layout, spacing } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
-import { Router } from '../ui/Icons';
+import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/card';
+import { Router } from '../ui/icons';
 import { StatusBadge } from '../ui/StatusBadge';
 
 export interface GatewayData {

@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, layout, spacing } from '../../styles/theme';
-import { Card, CardValue, type Status } from '../ui/Card';
-import { Skeleton } from '../ui/Skeleton';
+import { Card, CardValue, type Status } from '../ui/card';
+import { Skeleton } from '../ui/skeleton';
 
 interface BaseCardProps<T> {
   title: string;

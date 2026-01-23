@@ -55,7 +55,7 @@ import type {
   TestsSettings,
 } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { Gauge } from '../../ui/Icons';
+import { Gauge } from '../../ui/icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 interface PerformanceSettingsProps {

@@ -29,8 +29,8 @@
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../contexts/useSettings';
 import { cn, icon as iconTokens, layout, spacing } from '../../styles/theme';
-import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
-import { Wifi } from '../ui/Icons';
+import { CardDivider, CardRow, CardValue, type Status } from '../ui/card';
+import { Wifi } from '../ui/icons';
 import { SimpleBaseCard } from './BaseCard';
 
 /**

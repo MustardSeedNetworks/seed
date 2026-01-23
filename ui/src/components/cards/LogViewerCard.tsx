@@ -18,8 +18,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLogs } from '../../hooks/useLogs';
 import { cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
-import { AlertCircle, AlertTriangle, FileText, Maximize2 } from '../ui/Icons';
+import { Card, CardDivider, CardRow, CardValue, type Status } from '../ui/card';
+import { AlertCircle, AlertTriangle, FileText, Maximize2 } from '../ui/icons';
 import { LogViewerModal } from './LogViewerModal';
 
 /** Props for the LogViewerCard component. */

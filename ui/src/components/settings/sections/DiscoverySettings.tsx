@@ -12,7 +12,7 @@ import type {
   SubnetConfig,
 } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { ScanSearch } from '../../ui/Icons';
+import { ScanSearch } from '../../ui/icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { DiscoveryCustomOptions } from './discovery/DiscoveryCustomOptions';
 import { DiscoveryServiceStatus } from './discovery/DiscoveryServiceStatus';

@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { cn, spacing } from '../../styles/theme';
-import { Card, CardDivider, CardRow, CardValue } from '../ui/Card';
-import { Router } from '../ui/Icons';
-import { Skeleton } from '../ui/Skeleton';
+import { Card, CardDivider, CardRow, CardValue } from '../ui/card';
+import { Router } from '../ui/icons';
+import { Skeleton } from '../ui/skeleton';
 
 /**
  * GatewayCard monitors network gateway (default router) reachability via ICMP ping.

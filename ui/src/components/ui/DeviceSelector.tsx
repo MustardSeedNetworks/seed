@@ -41,7 +41,7 @@ import {
   Search,
   Server,
   Smartphone,
-} from '../ui/Icons';
+} from '../ui/icons';
 
 interface DeviceSelectorProps {
   value: string;

@@ -42,8 +42,8 @@ import type {
   TracerouteHop,
   TracerouteResult,
 } from '../../types';
-import { Card, CardDivider, CardValue, type Status } from '../ui/Card';
-import { ChevronDown, ChevronUp, Route } from '../ui/Icons';
+import { Card, CardDivider, CardValue, type Status } from '../ui/card';
+import { ChevronDown, ChevronUp, Route } from '../ui/icons';
 
 type Protocol = 'icmp' | 'udp' | 'tcp';
 

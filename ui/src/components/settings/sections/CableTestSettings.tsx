@@ -25,7 +25,7 @@ import type {
   SaveStatus,
 } from '../../../types/settings';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { Cable } from '../../ui/Icons';
+import { Cable } from '../../ui/icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';

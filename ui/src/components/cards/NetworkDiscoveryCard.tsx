@@ -13,7 +13,7 @@ import {
   radius,
   spacing,
 } from '../../styles/theme';
-import { Card, CardValue, type Status } from '../ui/Card';
+import { Card, CardValue, type Status } from '../ui/card';
 import {
   CheckCircle,
   ChevronDown,
@@ -28,7 +28,7 @@ import {
   Server,
   Smartphone,
   Wifi,
-} from '../ui/Icons';
+} from '../ui/icons';
 import { DiscoveryModal } from './DiscoveryModal';
 import { PipelineProgress } from './PipelineProgress';
 import { VulnerabilityDetailsModal } from './VulnerabilityDetailsModal';

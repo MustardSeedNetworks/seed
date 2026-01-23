@@ -46,7 +46,7 @@ import {
   SlidersHorizontal,
   Wifi,
   Zap,
-} from '../ui/Icons';
+} from '../ui/icons';
 
 interface HelpModalProps {
   isOpen: boolean;

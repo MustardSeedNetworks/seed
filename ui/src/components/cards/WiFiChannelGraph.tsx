@@ -20,8 +20,8 @@ import type React from 'react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, layout, spacing } from '../../styles/theme';
-import { CardValue } from '../ui/Card';
-import { Wifi } from '../ui/Icons';
+import { CardValue } from '../ui/card';
+import { Wifi } from '../ui/icons';
 import { SimpleBaseCard } from './BaseCard';
 
 /**

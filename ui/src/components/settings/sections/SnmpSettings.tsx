@@ -16,7 +16,7 @@ import type {
 } from '../../../types/settings';
 import { generateId } from '../../../utils/id';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
-import { Server } from '../../ui/Icons';
+import { Server } from '../../ui/icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 interface SnmpSettingsProps {

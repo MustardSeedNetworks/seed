@@ -25,8 +25,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatTime, isValidNumber } from '../../lib/format';
 import { border, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
-import { CardDivider, CardRow, CardValue, type Status } from '../ui/Card';
-import { Network } from '../ui/Icons';
+import { CardDivider, CardRow, CardValue, type Status } from '../ui/card';
+import { Network } from '../ui/icons';
 import { SimpleBaseCard } from './BaseCard';
 
 /**
