@@ -118,7 +118,7 @@ func (t *Tester) Test() *TestResult {
 	}
 
 	switch runtime.GOOS {
-	case "linux":
+	case "linux", "windows":
 		return testPlatform(iface)
 	case "darwin":
 		// macOS doesn't support TDR via standard tools

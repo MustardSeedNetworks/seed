@@ -1,3 +1,5 @@
+//go:build !windows
+
 package discovery
 
 // Traceroute support enables path tracing to determine the network route (hop sequence)
