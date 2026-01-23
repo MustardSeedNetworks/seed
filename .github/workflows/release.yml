@@ -430,15 +430,16 @@ jobs:
           GOOS: windows
           GOARCH: amd64
           CGO_ENABLED: 0
+          VERSION: ${{ github.ref_name }}
         run: |
           go build -trimpath -buildvcs=false \
-            -ldflags="-s -w -X github.com/krisarmstrong/seed/internal/version.Version=${{ github.ref_name }}" \
+            -ldflags="-s -w -X github.com/krisarmstrong/seed/internal/version.Version=${VERSION}" \
             -o dist/seed-windows-amd64.exe ./cmd/seed
 
       - name: Verify binary
         run: |
           file dist/seed-windows-amd64.exe
-          echo "✅ Windows binary built"
+          echo "Windows amd64 binary built"
 
       - name: Create Windows distribution
         env:
