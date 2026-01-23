@@ -16,7 +16,7 @@
         frontend-deps generate-types build-frontend build-frontend-quiet \
         build-backend build-backend-quiet build-backend-dev \
         build-linux-amd64 build-linux-arm64 build-linux-docker \
-        build-darwin build-all \
+        build-darwin build-windows build-all \
         docker-build docker-test docker docker-push \
         run dev dev-frontend
 
@@ -143,6 +143,12 @@ build-darwin: build-frontend ## Build for macOS (native architecture)
 	@echo "Building for macOS ($(shell uname -m))..."
 	@CGO_ENABLED=1 go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME)-darwin-$(shell uname -m) ./cmd/seed
 	@echo "Built: $(BINARY_NAME)-darwin-$(shell uname -m)"
+
+build-windows: build-frontend ## Build for Windows AMD64 (cross-compile)
+	@echo "Building for Windows AMD64..."
+	@GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
+		go build $(GOFLAGS) -ldflags="$(LDFLAGS)" -o $(BINARY_NAME)-windows-amd64.exe ./cmd/seed
+	@echo "Built: $(BINARY_NAME)-windows-amd64.exe"
 
 build-all: build-frontend ## Build for all platforms (native + Linux via Docker)
 	@printf "$(BOLD)$(CYAN)┌─ Building All Platforms ────────────────────────────────────────────────────┐$(RESET)\n"
