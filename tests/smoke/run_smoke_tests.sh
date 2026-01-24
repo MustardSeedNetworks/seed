@@ -300,13 +300,10 @@ test_concurrent_requests() {
     fi
 
     # Send 20 concurrent requests
-    local all_ok=true
     for i in $(seq 1 20); do
-        curl -sk -o /dev/null -w "%{http_code}" "${base_url}/" 2>/dev/null &
+        curl -sk -o /dev/null "${base_url}/" 2>/dev/null &
     done
-
-    local results
-    results=$(wait)
+    wait
 
     # Verify service still responds
     TESTS_RUN=$((TESTS_RUN + 1))
