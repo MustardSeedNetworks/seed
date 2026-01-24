@@ -28,6 +28,11 @@ case "$1" in
             rm -rf "$LOG_DIR"
         fi
 
+        # Remove firewall rules if ufw is available
+        if command -v ufw >/dev/null 2>&1; then
+            ufw delete allow 8443/tcp >/dev/null 2>&1 || true
+        fi
+
         # Remove user
         if getent passwd "$SERVICE_USER" > /dev/null 2>&1; then
             echo "Removing user: $SERVICE_USER"
