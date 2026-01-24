@@ -7,6 +7,9 @@ URL:        https://github.com/krisarmstrong/seed
 BuildArch:  __ARCHITECTURE__
 
 Requires:   libpcap, systemd, libcap
+Requires(pre): shadow-utils
+Provides: user(seed)
+Provides: group(seed)
 
 %description
 The Seed is a professional-grade network diagnostic appliance designed
