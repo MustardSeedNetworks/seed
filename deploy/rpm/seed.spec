@@ -64,6 +64,13 @@ chown -R seed:seed /etc/seed /var/lib/seed /var/log/seed
 # - CAP_NET_ADMIN: Required for ethtool link configuration, interface control
 /usr/sbin/setcap 'cap_net_raw,cap_net_admin=+ep' /usr/bin/seed || true
 
+# Configure firewall if firewalld is running
+if systemctl is-active --quiet firewalld 2>/dev/null; then
+    firewall-cmd --permanent --add-port=8443/tcp 2>/dev/null || true
+    firewall-cmd --reload 2>/dev/null || true
+    echo "Firewall configured for Seed service (port 8443)"
+fi
+
 %systemd_post seed.service
 
 %preun
@@ -72,14 +79,24 @@ chown -R seed:seed /etc/seed /var/lib/seed /var/log/seed
 %postun
 %systemd_postun_with_restart seed.service
 
-# On complete removal (not upgrade), optionally remove user/group
+# On complete removal (not upgrade), clean up
 if [ $1 -eq 0 ]; then
-    # Full removal
+    # Remove firewall rules
+    if systemctl is-active --quiet firewalld 2>/dev/null; then
+        firewall-cmd --permanent --remove-port=8443/tcp 2>/dev/null || true
+        firewall-cmd --reload 2>/dev/null || true
+    fi
+
+    # Remove user/group
     userdel seed 2>/dev/null || true
     groupdel seed 2>/dev/null || true
 fi
 
 %changelog
+* Fri Jan 24 2025 Kris Armstrong <kris@mustardseednetworks.com>
+- Added firewalld integration for automatic port configuration
+- Added user/group Provides for Fedora compatibility
+
 * Fri Dec 27 2024 Kris Armstrong <kris@mustardseednetworks.com>
 - Streamlined packaging with FHS-compliant paths
 - Single binary with embedded frontend assets
