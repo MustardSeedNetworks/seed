@@ -26,6 +26,9 @@ NC='\033[0m'
 SEED_PORT=8443
 SEED_SCHEME="https"
 SEED_HOST="localhost"
+SEED_SMOKE_USERNAME="${SEED_SMOKE_USERNAME:-}"
+SEED_SMOKE_CRED="${SEED_SMOKE_CRED:-}"
+SEED_SMOKE_TOKEN="${SEED_SMOKE_TOKEN:-}"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="${SCRIPT_DIR}/../.."
@@ -46,6 +49,7 @@ TESTS_SKIPPED=0
 
 # Process tracking
 SEED_PID=""
+SEED_COOKIE_JAR="$(mktemp -t seed-smoke-cookie.XXXXXX)"
 
 # Timing
 START_TIME=$(date +%s)
@@ -63,6 +67,12 @@ cleanup() {
     if [[ -n "$SEED_PID" ]]; then
         kill $SEED_PID 2>/dev/null || true
         wait $SEED_PID 2>/dev/null || true
+    fi
+    if [[ -f "$SEED_COOKIE_JAR" ]]; then
+        rm -f "$SEED_COOKIE_JAR"
+    fi
+    if [[ -f /tmp/seed_login.json ]]; then
+        rm -f /tmp/seed_login.json
     fi
 }
 trap cleanup EXIT
@@ -249,6 +259,39 @@ test_api_endpoints() {
     headers=$(curl -sk -I "${base_url}/" 2>/dev/null)
     assert_contains "$headers" "X-Content-Type-Options" "Security header X-Content-Type-Options present"
     assert_contains "$headers" "X-Frame-Options" "Security header X-Frame-Options present"
+
+    log_header "Authenticated Endpoints (optional)"
+    local auth_header=""
+    if [[ -n "$SEED_SMOKE_TOKEN" ]]; then
+        auth_header="Authorization: Bearer ${SEED_SMOKE_TOKEN}"
+    elif [[ -n "$SEED_SMOKE_USERNAME" && -n "$SEED_SMOKE_CRED" ]]; then
+        local login_payload
+        login_payload=$(printf '{"username":"%s","password":"%s"}' "$SEED_SMOKE_USERNAME" "$SEED_SMOKE_CRED")
+        local login_status
+        login_status=$(curl -sk -c "$SEED_COOKIE_JAR" -o /tmp/seed_login.json -w "%{http_code}" \
+            -H "Content-Type: application/json" \
+            -d "$login_payload" \
+            "${base_url}/api/v1/auth/login" 2>/dev/null || true)
+        if [[ "$login_status" == "200" ]]; then
+            local login_token
+            login_token=$(grep -o '"token"[[:space:]]*:[[:space:]]*"[^"]*"' /tmp/seed_login.json | head -1 | cut -d'"' -f4)
+            if [[ -n "$login_token" ]]; then
+                auth_header="Authorization: Bearer ${login_token}"
+            fi
+            log_pass "Login succeeded for authenticated checks"
+        else
+            log_skip "Authenticated checks" "Login failed (HTTP ${login_status})"
+        fi
+    else
+        log_skip "Authenticated checks" "Set SEED_SMOKE_USERNAME/SEED_SMOKE_CRED or SEED_SMOKE_TOKEN to enable"
+    fi
+
+    if [[ -n "$auth_header" ]]; then
+        assert_http_status "${base_url}/api/v1/status" "200" "Status with auth" "-H \"$auth_header\""
+        assert_http_status "${base_url}/api/v1/settings" "200" "Settings with auth" "-H \"$auth_header\""
+        assert_http_status "${base_url}/api/v1/auth/csrf" "200" "CSRF token endpoint with auth" "-H \"$auth_header\""
+        assert_http_status "${base_url}/api/v1/events" "200" "SSE endpoint with auth" "-H \"$auth_header\" -H \"Accept: text/event-stream\" --max-time 2"
+    fi
 }
 
 # ============================================================================
