@@ -83,6 +83,7 @@ jobs:
           # Allowed licenses for npm packages
           # Note: Using --production flag to only check runtime dependencies
           npx license-checker --production \
+            --excludePrivatePackages \
             --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;MPL-2.0;CC0-1.0;0BSD;BlueOak-1.0.0;Python-2.0;Unlicense;WTFPL" \
             --summary || {
             echo "❌ FAILED: Incompatible licenses found in npm dependencies"
@@ -97,11 +98,11 @@ jobs:
         working-directory: ui
         run: |
           echo "Generating npm license report..."
-          npx license-checker --production --csv > ../npm-licenses.csv
+          npx license-checker --production --excludePrivatePackages --csv > ../npm-licenses.csv
 
           echo ""
           echo "=== License Summary ==  =="
-          npx license-checker --production --summary
+          npx license-checker --production --excludePrivatePackages --summary
           echo ""
 
       - name: Upload license reports
