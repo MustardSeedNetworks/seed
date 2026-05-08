@@ -14,9 +14,13 @@ id = "paketo-buildpacks/go"
 [[io.buildpacks.group]]
 id = "paketo-buildpacks/go-build"
 
-[io.buildpacks.build.env]
-BP_GO_TARGETS = "./cmd/seed"
-BP_GO_BUILD_LDFLAGS = "-s -w"
+[[io.buildpacks.build.env]]
+name = "BP_GO_TARGETS"
+value = "./cmd/seed"
+
+[[io.buildpacks.build.env]]
+name = "BP_GO_BUILD_LDFLAGS"
+value = "-s -w"
 
 [[io.buildpacks.build.env]]
 name = "BP_KEEP_FILES"
