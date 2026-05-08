@@ -144,6 +144,11 @@ Use the same format as commit messages:
 feat(dhcp): add phase timing breakdown (#123)
 ```bash
 
+### Test Report Templates
+
+Use `docs/templates/WIFI_TEST_REPORT.md` for Wi-Fi validation and
+`docs/templates/ETHERNET_TEST_REPORT.md` for Ethernet validation.
+
 ## Code Standards
 
 ### Go
