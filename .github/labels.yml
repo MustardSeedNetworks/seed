@@ -1,142 +1,141 @@
-labels:
-  # Types
-  - name: "type: defect"
-    color: D73A4A
-    description: Product defect or regression
-  - name: "type: feature"
-    color: 0E8A16
-    description: New feature or enhancement
-  - name: "type: chore"
-    color: FEF2C0
-    description: Maintenance or refactoring
-  - name: "type: docs"
-    color: 0075CA
-    description: Documentation
-  - name: "type: security"
-    color: B60205
-    description: Security vulnerabilities and hardening
-  - name: "type: epic"
-    color: 8B5CF6
-    description: Epic grouping multiple related issues
+# Types
+- name: "type: defect"
+  color: D73A4A
+  description: Product defect or regression
+- name: "type: feature"
+  color: 0E8A16
+  description: New feature or enhancement
+- name: "type: chore"
+  color: FEF2C0
+  description: Maintenance or refactoring
+- name: "type: docs"
+  color: 0075CA
+  description: Documentation
+- name: "type: security"
+  color: B60205
+  description: Security vulnerabilities and hardening
+- name: "type: epic"
+  color: 8B5CF6
+  description: Epic grouping multiple related issues
 
-  # Priorities
-  - name: "priority: critical"
-    color: B60205
-    description: Must have for release
-  - name: "priority: high"
-    color: D93F0B
-    description: Should have
-  - name: "priority: medium"
-    color: FBCA04
-    description: Nice to have
-  - name: "priority: low"
-    color: C5DEF5
-    description: Future consideration
+# Priorities
+- name: "priority: critical"
+  color: B60205
+  description: Must have for release
+- name: "priority: high"
+  color: D93F0B
+  description: Should have
+- name: "priority: medium"
+  color: FBCA04
+  description: Nice to have
+- name: "priority: low"
+  color: C5DEF5
+  description: Future consideration
 
-  # Status
-  - name: "status: needs-triage"
-    color: EDEDED
-    description: Awaiting triage and label assignment
-  - name: "status: investigating"
-    color: 0E8A16
-    description: Being actively investigated
-  - name: "status: blocked"
-    color: B60205
-    description: Blocked by dependency or prerequisite
-  - name: "status: regression"
-    color: D93F0B
-    description: Regression from previous release
+# Status
+- name: "status: needs-triage"
+  color: EDEDED
+  description: Awaiting triage and label assignment
+- name: "status: investigating"
+  color: 0E8A16
+  description: Being actively investigated
+- name: "status: blocked"
+  color: B60205
+  description: Blocked by dependency or prerequisite
+- name: "status: regression"
+  color: D93F0B
+  description: Regression from previous release
 
-  # Areas
-  - name: "area: auth/setup"
-    color: 6F42C1
-    description: Authentication, authorization, and setup wizard
-  - name: "area: survey/floorplan"
-    color: 0052CC
-    description: Surveys, floorplans, and planner
-  - name: "area: discovery/network"
-    color: 0C88FF
-    description: Network discovery, link tests, DHCP, gateway, speedtest
-  - name: "area: logging"
-    color: F9D0C4
-    description: Logging, observability, log viewer
-  - name: "area: UI/UX"
-    color: CFD3D7
-    description: User interface and experience
-  - name: "area: backend"
-    color: 5319E7
-    description: Backend/Go services
-  - name: "area: frontend"
-    color: 1D76DB
-    description: Frontend/React UI
-  - name: "area: infra"
-    color: 006B75
-    description: CI/CD, packaging, deployment
-  - name: "area: i18n"
-    color: 9B59B6
-    description: Internationalization and localization
+# Areas
+- name: "area: auth/setup"
+  color: 6F42C1
+  description: Authentication, authorization, and setup wizard
+- name: "area: survey/floorplan"
+  color: 0052CC
+  description: Surveys, floorplans, and planner
+- name: "area: discovery/network"
+  color: 0C88FF
+  description: Network discovery, link tests, DHCP, gateway, speedtest
+- name: "area: logging"
+  color: F9D0C4
+  description: Logging, observability, log viewer
+- name: "area: UI/UX"
+  color: CFD3D7
+  description: User interface and experience
+- name: "area: backend"
+  color: 5319E7
+  description: Backend/Go services
+- name: "area: frontend"
+  color: 1D76DB
+  description: Frontend/React UI
+- name: "area: infra"
+  color: 006B75
+  description: CI/CD, packaging, deployment
+- name: "area: i18n"
+  color: 9B59B6
+  description: Internationalization and localization
 
-  # Meta
-  - name: duplicate
-    color: CFD3D7
-    description: This issue or pull request already exists
-  - name: question
-    color: D876E3
-    description: Further information is requested
-  - name: wontfix
-    color: FFFFFF
-    description: This will not be worked on
-  - name: invalid
-    color: E4E669
-    description: This doesn't seem right
-  - name: help wanted
-    color: 008672
-    description: Extra attention is needed
-  - name: good first issue
-    color: 7057FF
-    description: Good for newcomers
-  - name: tech-debt
-    color: 5319E7
-    description: Technical debt and refactoring
-  - name: testing
-    color: 0E8A16
-    description: Testing and test coverage
-  - name: ci
-    color: 6E543E
-    description: CI/CD pipelines
-  - name: accessibility
-    color: 0E7490
-    description: Accessibility improvements
-  - name: integration
-    color: 4A0A66
-    description: Integrations with third-party systems and APIs
-  - name: tracking issue
-    color: 1D76DB
-    description: Meta-issue tracking related tasks
-  - name: "autorelease: pending"
-    color: EDEDED
-    description: ""
-  - name: "autorelease: tagged"
-    color: EDEDED
-    description: ""
-  - name: Review effort 1/5
-    color: D1BCF9
-    description: ""
-  - name: hardware-testing
-    color: 0E8A16
-    description: Hardware compatibility testing and validation
-  - name: "component: ai"
-    color: 8B5CF6
-    description: AI/ML features
-  - name: "ai: foundation"
-    color: A78BFA
-    description: AI infrastructure and foundation
-  - name: "ai: intelligence"
-    color: 7C3AED
-    description: AI analysis and intelligence
-  - name: "ai: wifi"
-    color: 6D28D9
-    description: WiFi AI features (heatmaps, optimization)
-  - name: "component: mcp"
-    color: 5319E7
-    description: MCP (Model Context Protocol) server
+# Meta
+- name: duplicate
+  color: CFD3D7
+  description: This issue or pull request already exists
+- name: question
+  color: D876E3
+  description: Further information is requested
+- name: wontfix
+  color: FFFFFF
+  description: This will not be worked on
+- name: invalid
+  color: E4E669
+  description: This doesn't seem right
+- name: help wanted
+  color: 008672
+  description: Extra attention is needed
+- name: good first issue
+  color: 7057FF
+  description: Good for newcomers
+- name: tech-debt
+  color: 5319E7
+  description: Technical debt and refactoring
+- name: testing
+  color: 0E8A16
+  description: Testing and test coverage
+- name: ci
+  color: 6E543E
+  description: CI/CD pipelines
+- name: accessibility
+  color: 0E7490
+  description: Accessibility improvements
+- name: integration
+  color: 4A0A66
+  description: Integrations with third-party systems and APIs
+- name: tracking issue
+  color: 1D76DB
+  description: Meta-issue tracking related tasks
+- name: "autorelease: pending"
+  color: EDEDED
+  description: ""
+- name: "autorelease: tagged"
+  color: EDEDED
+  description: ""
+- name: Review effort 1/5
+  color: D1BCF9
+  description: ""
+- name: hardware-testing
+  color: 0E8A16
+  description: Hardware compatibility testing and validation
+- name: "component: ai"
+  color: 8B5CF6
+  description: AI/ML features
+- name: "ai: foundation"
+  color: A78BFA
+  description: AI infrastructure and foundation
+- name: "ai: intelligence"
+  color: 7C3AED
+  description: AI analysis and intelligence
+- name: "ai: wifi"
+  color: 6D28D9
+  description: WiFi AI features (heatmaps, optimization)
+- name: "component: mcp"
+  color: 5319E7
+  description: MCP (Model Context Protocol) server
