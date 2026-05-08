@@ -9,6 +9,9 @@ schema-version = "0.2"
 builder = "paketobuildpacks/builder-jammy-base"
 
 [[io.buildpacks.group]]
+id = "paketo-buildpacks/apt"
+
+[[io.buildpacks.group]]
 id = "paketo-buildpacks/go"
 
 [[io.buildpacks.group]]
