@@ -21,6 +21,7 @@ jobs:
       - name: Build web assets
         run: |
           npm ci
+          npm ci --prefix ui
           npm run build
 
       - name: Install Pack CLI
