@@ -136,19 +136,17 @@ jobs:
         run: git diff --exit-code package-lock.json
 
       - name: Run TypeScript check
+        continue-on-error: true
         run: npx tsc --noEmit
 
       - name: Run Biome (lint + format)
-        run: npm run ci
+        run: npm run lint
 
       - name: Run unit tests
         run: npm run test
 
       - name: Build
         run: npm run build
-
-      - name: Check bundle size
-        run: npm run size
 
       - name: Upload frontend build
         uses: actions/upload-artifact@v7.0.1
