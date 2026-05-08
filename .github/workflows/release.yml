@@ -17,6 +17,15 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build artifacts and exit (skip publishing the GitHub release)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -38,11 +47,11 @@ jobs:
             cc: aarch64-linux-gnu-gcc
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
 
       - name: Set up QEMU for cross-arch testing
         if: matrix.arch == 'arm64'
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4.0.0
         with:
           platforms: arm64
 
@@ -102,7 +111,7 @@ jobs:
           echo "✅ iperf3 smoke test passed"
 
       - name: Upload iperf3 artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: iperf3-linux-${{ matrix.arch }}
           path: dist/iperf3-linux-${{ matrix.arch }}
@@ -127,18 +136,18 @@ jobs:
             cc: aarch64-linux-gnu-gcc
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v6.4.0
         with:
           go-version-file: go.mod
           cache: true
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: "25.2.1"
           cache: npm
@@ -146,7 +155,7 @@ jobs:
 
       - name: Set up QEMU for cross-arch testing
         if: matrix.arch == 'arm64'
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4.0.0
         with:
           platforms: arm64
 
@@ -154,6 +163,20 @@ jobs:
         run: |
           if [ "${{ matrix.arch }}" = "arm64" ]; then
             sudo dpkg --add-architecture arm64
+            sudo rm -f /etc/apt/sources.list.d/ubuntu.sources
+            sudo tee /etc/apt/sources.list.d/ubuntu-amd64.list >/dev/null <<'EOF'
+          deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble main universe multiverse restricted
+          deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-updates main universe multiverse restricted
+          deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-backports main universe multiverse restricted
+          deb [arch=amd64] http://security.ubuntu.com/ubuntu noble-security main universe multiverse restricted
+          EOF
+            for f in /etc/apt/sources.list.d/*.list /etc/apt/sources.list; do
+              [ -f "$f" ] || continue
+              case "$f" in
+                */ubuntu-amd64.list|*/ports-arm64.list) continue ;;
+              esac
+              sudo sed -i '/^deb \[/!s|^deb |deb [arch=amd64] |' "$f"
+            done
             sudo tee /etc/apt/sources.list.d/ports-arm64.list >/dev/null <<'EOF'
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main universe multiverse restricted
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main universe multiverse restricted
@@ -162,7 +185,7 @@ jobs:
           EOF
           fi
 
-          sudo apt-get update
+          sudo apt-get update || true
           sudo apt-get install -y rpm
           if [ "${{ matrix.arch }}" = "arm64" ]; then
             sudo apt-get install -y gcc-aarch64-linux-gnu libpcap-dev:arm64 libpcap0.8-dev:arm64 pkg-config qemu-user-static
@@ -171,7 +194,7 @@ jobs:
           fi
 
       - name: Download iperf3 binary
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8.0.1
         with:
           name: iperf3-linux-${{ matrix.arch }}
           path: bin/
@@ -225,12 +248,22 @@ jobs:
           fi
           echo "✅ iperf3 binary smoke test passed"
 
+      - name: Install nfpm
+        run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.46.3
+
       - name: Create release packages
         env:
           VERSION: ${{ github.ref_name }}
           ARCH: ${{ matrix.arch }}
+          REF_TYPE: ${{ github.ref_type }}
+          SHORT_SHA: ${{ github.sha }}
         run: |
-          PKG_VERSION=$(echo "${VERSION#v}" | sed 's/-dirty$//;s/-[0-9]*-g[0-9a-f]*$//')
+          if [ "${REF_TYPE}" = "tag" ]; then
+            PKG_VERSION=$(echo "${VERSION#v}" | sed 's/-dirty$//;s/-[0-9]*-g[0-9a-f]*$//')
+          else
+            VERSION="0.0.0-dryrun-${SHORT_SHA:0:7}"
+            PKG_VERSION="${VERSION}"
+          fi
 
           # Create .tar.gz package
           mkdir -p release/seed-${VERSION}-linux-${ARCH}
@@ -243,50 +276,24 @@ jobs:
           tar -czvf seed-${VERSION}-linux-${ARCH}.tar.gz seed-${VERSION}-linux-${ARCH}
           cd ..
 
-          # Create .deb package
-          DEB_DIR="dist/deb"
-          mkdir -p $DEB_DIR/DEBIAN
-          mkdir -p $DEB_DIR/usr/bin
-          mkdir -p $DEB_DIR/usr/lib/systemd/system
-          mkdir -p $DEB_DIR/var/lib/seed
-          mkdir -p $DEB_DIR/var/log/seed
+          export SEED_VERSION="${PKG_VERSION}"
+          export SEED_ARCH="${ARCH}"
+          export SEED_BINARY="./dist/seed-linux-${ARCH}"
+          envsubst < .nfpm.yaml > nfpm.rendered.yaml
 
-          cp dist/seed-linux-${ARCH} $DEB_DIR/usr/bin/seed
-          chmod 755 $DEB_DIR/usr/bin/seed
-          cp deploy/deb/seed.service $DEB_DIR/usr/lib/systemd/system/
+          case "${ARCH}" in
+            amd64) RPM_ARCH=x86_64 ;;
+            arm64) RPM_ARCH=aarch64 ;;
+            *)     RPM_ARCH="${ARCH}" ;;
+          esac
 
-          sed "s/__VERSION__/${PKG_VERSION}/;s/__ARCHITECTURE__/${ARCH}/" \
-            deploy/deb/control > $DEB_DIR/DEBIAN/control
-
-          cp deploy/deb/postinst $DEB_DIR/DEBIAN/
-          cp deploy/deb/prerm $DEB_DIR/DEBIAN/
-          cp deploy/deb/postrm $DEB_DIR/DEBIAN/
-          chmod 755 $DEB_DIR/DEBIAN/postinst $DEB_DIR/DEBIAN/prerm $DEB_DIR/DEBIAN/postrm
-
-          dpkg-deb --build $DEB_DIR release/seed_${PKG_VERSION}_${ARCH}.deb
-
-          # Create .rpm package
-          RPM_ARCH=${ARCH}
-          if [ "${ARCH}" = "amd64" ]; then
-            RPM_ARCH="x86_64"
-          elif [ "${ARCH}" = "arm64" ]; then
-            RPM_ARCH="aarch64"
-          fi
-
-          # Copy binary to repo root for rpmbuild (spec expects %{_repo_root}/seed)
-          cp dist/seed-linux-${ARCH} seed
-
-          sed "s/__VERSION__/${PKG_VERSION}/;s/__ARCHITECTURE__/${RPM_ARCH}/" \
-            deploy/rpm/seed.spec > seed.spec
-
-          rpmbuild --target "${RPM_ARCH}" \
-            --define "_repo_root $(pwd)" \
-            --define "_topdir $(pwd)/rpmbuild" \
-            --define "_rpmdir $(pwd)/release" \
-            -bb seed.spec
+          nfpm pkg --config nfpm.rendered.yaml --packager deb \
+            --target "release/seed_${PKG_VERSION}_${ARCH}.deb"
+          nfpm pkg --config nfpm.rendered.yaml --packager rpm \
+            --target "release/seed-${PKG_VERSION}-1.${RPM_ARCH}.rpm"
 
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: release-linux-${{ matrix.arch }}
           path: |
@@ -315,18 +322,18 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v6.4.0
         with:
           go-version-file: go.mod
           cache: true
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: "25.2.1"
           cache: npm
@@ -367,8 +374,15 @@ jobs:
         env:
           VERSION: ${{ github.ref_name }}
           ARCH: ${{ matrix.arch }}
+          REF_TYPE: ${{ github.ref_type }}
+          SHORT_SHA: ${{ github.sha }}
         run: |
-          PKG_VERSION=$(echo "${VERSION#v}" | sed 's/-dirty$//;s/-[0-9]*-g[0-9a-f]*$//')
+          if [ "${REF_TYPE}" = "tag" ]; then
+            PKG_VERSION=$(echo "${VERSION#v}" | sed 's/-dirty$//;s/-[0-9]*-g[0-9a-f]*$//')
+          else
+            VERSION="0.0.0-dryrun-${SHORT_SHA:0:7}"
+            PKG_VERSION="${VERSION}"
+          fi
 
           # Create .tar.gz package
           mkdir -p release/seed-${VERSION}-darwin-${ARCH}
@@ -385,7 +399,7 @@ jobs:
           ./deploy/macos/build-pkg.sh ./dist/seed-darwin-${ARCH} ${PKG_VERSION}
 
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: release-darwin-${{ matrix.arch }}
           path: |
@@ -396,24 +410,33 @@ jobs:
   # Build Windows Release
   # ===========================================================================
   release-windows:
-    name: Create Windows Release
+    name: Create Windows Release (${{ matrix.arch }})
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            goarch: amd64
+          - arch: arm64
+            goarch: arm64
+
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v6.4.0
         with:
           go-version-file: go.mod
           cache: true
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: "25.2.1"
           cache: npm
@@ -428,27 +451,34 @@ jobs:
       - name: Build The Seed for Windows
         env:
           GOOS: windows
-          GOARCH: amd64
+          GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
           VERSION: ${{ github.ref_name }}
         run: |
           go build -trimpath -buildvcs=false \
             -ldflags="-s -w -X github.com/krisarmstrong/seed/internal/version.Version=${VERSION}" \
-            -o dist/seed-windows-amd64.exe ./cmd/seed
+            -o dist/seed-windows-${{ matrix.arch }}.exe ./cmd/seed
 
       - name: Verify binary
         run: |
-          file dist/seed-windows-amd64.exe
-          echo "Windows amd64 binary built"
+          file dist/seed-windows-${{ matrix.arch }}.exe
+          echo "Windows ${{ matrix.arch }} binary built"
 
       - name: Create Windows distribution
         env:
           VERSION: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          SHORT_SHA: ${{ github.sha }}
+          ARCH: ${{ matrix.arch }}
         run: |
-          PKG_VERSION=$(echo "${VERSION#v}" | sed 's/-dirty$//;s/-[0-9]*-g[0-9a-f]*$//')
-          PKG_NAME="seed-${PKG_VERSION}-windows-amd64"
+          if [ "${REF_TYPE}" = "tag" ]; then
+            PKG_VERSION=$(echo "${VERSION#v}" | sed 's/-dirty$//;s/-[0-9]*-g[0-9a-f]*$//')
+          else
+            PKG_VERSION="0.0.0-dryrun-${SHORT_SHA:0:7}"
+          fi
+          PKG_NAME="seed-${PKG_VERSION}-windows-${ARCH}"
           mkdir -p "release/${PKG_NAME}"
-          cp dist/seed-windows-amd64.exe "release/${PKG_NAME}/seed.exe"
+          cp dist/seed-windows-${ARCH}.exe "release/${PKG_NAME}/seed.exe"
           cp deploy/windows/build.ps1 "release/${PKG_NAME}/install.ps1"
           cp -r configs "release/${PKG_NAME}/"
           cp -r ui/dist "release/${PKG_NAME}/ui/"
@@ -456,9 +486,9 @@ jobs:
           zip -r "${PKG_NAME}.zip" "${PKG_NAME}"
 
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
-          name: release-windows-amd64
+          name: release-windows-${{ matrix.arch }}
           path: release/*.zip
 
   # ===========================================================================
@@ -473,12 +503,12 @@ jobs:
       id-token: write  # Required for cosign OIDC signing
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
       - name: Download all release artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8.0.1
         with:
           path: artifacts/
 
@@ -506,7 +536,7 @@ jobs:
           done
 
       - name: Install Cosign for signing
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@v4.1.2
 
       - name: Sign release artifacts with cosign (keyless OIDC)
         run: |
@@ -517,6 +547,13 @@ jobs:
               cosign sign-blob --yes --bundle "${file}.cosign.bundle" "${file}"
             fi
           done
+
+      - name: Upload assembled artifacts (dry-run inspectable)
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: release-bundle-${{ github.ref_type == 'tag' && github.ref_name || format('dryrun-{0}', github.run_id) }}
+          path: dist/
+          retention-days: 14
 
       - name: Generate changelog
         id: changelog
@@ -542,7 +579,8 @@ jobs:
           echo "iperf3=$IPERF_VERSION" >> $GITHUB_OUTPUT
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false)
+        uses: softprops/action-gh-release@v3.0.0
         with:
           body: |
             ## Changes
