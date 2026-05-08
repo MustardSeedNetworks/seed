@@ -12,6 +12,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // Common errors for template operations.
@@ -272,7 +275,7 @@ func defaultFuncMap() template.FuncMap {
 		},
 		"upper": strings.ToUpper,
 		"lower": strings.ToLower,
-		"title": strings.Title, //nolint:staticcheck // Title is deprecated but works for simple cases
+		"title": cases.Title(language.Und).String,
 		"join":  strings.Join,
 		"add": func(a, b int) int {
 			return a + b

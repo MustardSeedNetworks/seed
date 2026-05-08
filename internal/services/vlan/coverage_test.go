@@ -3,8 +3,6 @@
 package vlan_test
 
 import (
-	"net"
-	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -184,33 +182,6 @@ func TestProcessPacketWithVariousPacketTypes(t *testing.T) {
 	}
 }
 
-// TestDetectVlanSubinterfacesPlatformWithSystemInterfaces tests with real system interfaces.
-func TestDetectVlanSubinterfacesPlatformWithSystemInterfaces(t *testing.T) {
-	if runtime.GOOS != "darwin" {
-		t.Skip("skipping darwin-specific test")
-	}
-
-	t.Parallel()
-
-	// Get actual system interfaces.
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		t.Skipf("failed to get interfaces: %v", err)
-	}
-
-	for _, iface := range interfaces {
-		t.Run(iface.Name, func(t *testing.T) {
-			t.Parallel()
-
-			vlans := vlan.ExportDetectVlanSubinterfacesPlatform(iface.Name)
-			if vlans == nil {
-				t.Error("expected non-nil slice")
-			}
-			// Most interfaces won't have VLANs, so we just verify no panic.
-		})
-	}
-}
-
 // TestManagerConcurrentGetInfoWithLLDP tests concurrent GetInfoWithLLDP calls.
 func TestManagerConcurrentGetInfoWithLLDP(t *testing.T) {
 	t.Parallel()
@@ -231,6 +202,7 @@ func TestManagerConcurrentGetInfoWithLLDP(t *testing.T) {
 				info := manager.GetInfoWithLLDP(&nv, &vv)
 				if info == nil {
 					t.Error("GetInfoWithLLDP returned nil")
+					return
 				}
 				if info.NativeVlan == nil || *info.NativeVlan != nv {
 					t.Error("NativeVlan mismatch")

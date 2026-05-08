@@ -5,7 +5,6 @@ package phy
 import (
 	"bufio"
 	"bytes"
-	"math"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -195,12 +194,4 @@ func parseEthtoolModuleInfo(output []byte, info *SFPInfo) {
 	}
 
 	info.DDM = ddm
-}
-
-// mWToDbm converts milliwatts to dBm.
-func mWToDbm(mw float64) float64 {
-	if mw <= 0 {
-		return -40.0 // Minimum representable
-	}
-	return 10 * math.Log10(mw)
 }
