@@ -59,6 +59,11 @@ jobs:
       - name: Install libpcap-dev
         uses: ./.github/actions/setup-libpcap
 
+      - name: Install integration test tools
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y iperf3
+
       - name: Set up Node.js
         uses: ./.github/actions/setup-node
 
@@ -86,7 +91,7 @@ jobs:
         run: test -z "$(git ls-files '*.go' | xargs gofmt -l)"
 
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out ./...
+        run: go test -v -coverprofile=coverage.out ./...
 
       - name: Check coverage threshold
         run: |

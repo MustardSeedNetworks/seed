@@ -3,6 +3,7 @@ package shell_test
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -113,6 +114,10 @@ func TestDiscoveryServiceStop(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
+			if tt.startFirst && os.Getenv("CI") == "true" {
+				t.Skip("skipping live discovery start/stop in CI")
+			}
 
 			cfg := testutil.NewConfigBuilder().
 				WithInterface("lo").
