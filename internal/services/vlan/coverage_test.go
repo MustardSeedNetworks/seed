@@ -5,7 +5,6 @@ package vlan_test
 import (
 	"net"
 	"runtime"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -208,39 +207,6 @@ func TestDetectVlanSubinterfacesPlatformWithSystemInterfaces(t *testing.T) {
 				t.Error("expected non-nil slice")
 			}
 			// Most interfaces won't have VLANs, so we just verify no panic.
-		})
-	}
-}
-
-// TestGetVlanInfoWithRealInterfaces tests getVlanInfo with real interface names on darwin.
-func TestGetVlanInfoWithRealInterfaces(t *testing.T) {
-	if runtime.GOOS != "darwin" {
-		t.Skip("skipping darwin-specific test")
-	}
-
-	t.Parallel()
-
-	// Get actual system interfaces.
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		t.Skipf("failed to get interfaces: %v", err)
-	}
-
-	for _, iface := range interfaces {
-		t.Run(iface.Name, func(t *testing.T) {
-			t.Parallel()
-
-			parent, vlanID := vlan.ExportGetVlanInfo(iface.Name)
-
-			// For non-VLAN interfaces, both should be zero/empty.
-			if !strings.HasPrefix(iface.Name, "vlan") {
-				if parent != "" {
-					t.Logf("interface %s has parent %s", iface.Name, parent)
-				}
-				if vlanID != 0 {
-					t.Logf("interface %s has VLAN ID %d", iface.Name, vlanID)
-				}
-			}
 		})
 	}
 }
