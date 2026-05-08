@@ -1,0 +1,75 @@
+# nfpm packaging config for Seed (.deb + .rpm).
+#
+# The release workflow passes build inputs through environment variables:
+#   SEED_VERSION - version string with leading "v" stripped
+#   SEED_ARCH    - "amd64" or "arm64"
+#   SEED_BINARY  - path to the prebuilt Seed binary
+name: seed
+version: ${SEED_VERSION}
+arch: ${SEED_ARCH}
+platform: linux
+section: net
+priority: optional
+maintainer: Kris Armstrong <kris@mustardseednetworks.com>
+description: |
+  The Seed - Network Diagnostic Tool by Mustard Seed Networks
+  .
+  The Seed is a professional-grade network diagnostic appliance designed
+  for network technicians and engineers. Plug it into any network jack and
+  instantly see link status, switch information, DHCP details, DNS health,
+  gateway connectivity, Wi-Fi survey data, and vulnerability findings.
+vendor: Mustard Seed Networks
+homepage: https://github.com/krisarmstrong/seed
+license: BSL-1.1
+
+overrides:
+  deb:
+    depends:
+      - libpcap0.8 | libpcap0.8t64
+      - systemd
+      - libcap2-bin
+  rpm:
+    depends:
+      - libpcap
+      - systemd
+      - libcap
+
+contents:
+  - src: ${SEED_BINARY}
+    dst: /usr/bin/seed
+    file_info:
+      mode: 0755
+  - src: ./deploy/deb/seed.service
+    dst: /usr/lib/systemd/system/seed.service
+    file_info:
+      mode: 0644
+  - dst: /etc/seed
+    type: dir
+    file_info:
+      mode: 0750
+      owner: seed
+      group: seed
+  - dst: /var/lib/seed
+    type: dir
+    file_info:
+      mode: 0750
+      owner: seed
+      group: seed
+  - dst: /var/lib/seed/logs
+    type: dir
+    file_info:
+      mode: 0750
+      owner: seed
+      group: seed
+  - dst: /var/log/seed
+    type: dir
+    file_info:
+      mode: 0750
+      owner: seed
+      group: seed
+
+scripts:
+  preinstall: ./deploy/nfpm/preinstall.sh
+  postinstall: ./deploy/nfpm/postinstall.sh
+  preremove: ./deploy/nfpm/preremove.sh
+  postremove: ./deploy/nfpm/postremove.sh
