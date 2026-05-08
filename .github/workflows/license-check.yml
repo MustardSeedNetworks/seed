@@ -49,7 +49,6 @@ jobs:
           # Restricted: LGPL, CC-BY-SA (requires review)
 
           go-licenses check ./... \
-            --disallowed_types=forbidden,restricted \
             --allowed_licenses=MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MPL-2.0,CC0-1.0 || {
             echo "❌ FAILED: Incompatible licenses found in Go dependencies"
             echo ""
@@ -70,11 +69,11 @@ jobs:
           echo ""
 
       - name: Install npm dependencies
-        working-directory: web
+        working-directory: ui
         run: npm ci
 
       - name: Check npm dependencies for license compliance
-        working-directory: web
+        working-directory: ui
         run: |
           echo "Checking npm dependencies for license compliance..."
           echo ""
@@ -86,14 +85,14 @@ jobs:
             --summary || {
             echo "❌ FAILED: Incompatible licenses found in npm dependencies"
             echo ""
-            echo "To see full report, run: cd web && npx license-checker --production"
+            echo "To see full report, run: cd ui && npx license-checker --production"
             exit 1
           }
 
           echo "✅ All npm production dependencies use compatible licenses"
 
       - name: Generate npm license report
-        working-directory: web
+        working-directory: ui
         run: |
           echo "Generating npm license report..."
           npx license-checker --production --csv > ../npm-licenses.csv

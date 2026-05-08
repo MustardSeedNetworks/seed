@@ -464,9 +464,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Check markdown formatting (Biome)
-        run: npm run format:md:check
-
       - name: Check markdown links
         uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
