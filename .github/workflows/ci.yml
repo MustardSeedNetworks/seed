@@ -583,7 +583,7 @@ jobs:
           EOF
 
           sudo apt-get update || true
-          sudo apt-get install -y gcc-aarch64-linux-gnu libpcap-dev:arm64 libpcap0.8-dev:arm64 pkg-config
+          sudo apt-get install -y gcc-aarch64-linux-gnu linux-libc-dev:arm64 libpcap-dev:arm64 libpcap0.8-dev:arm64 pkg-config
 
       - name: Build Go binary (amd64)
         env:

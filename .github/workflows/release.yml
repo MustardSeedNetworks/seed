@@ -188,7 +188,7 @@ jobs:
           sudo apt-get update || true
           sudo apt-get install -y rpm
           if [ "${{ matrix.arch }}" = "arm64" ]; then
-            sudo apt-get install -y gcc-aarch64-linux-gnu libpcap-dev:arm64 libpcap0.8-dev:arm64 pkg-config qemu-user-static
+            sudo apt-get install -y gcc-aarch64-linux-gnu linux-libc-dev:arm64 libpcap-dev:arm64 libpcap0.8-dev:arm64 pkg-config qemu-user-static
           else
             sudo apt-get install -y libpcap-dev pkg-config
           fi
