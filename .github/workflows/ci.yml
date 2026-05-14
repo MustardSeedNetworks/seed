@@ -558,6 +558,14 @@ jobs:
       - name: Install libpcap-dev
         uses: ./.github/actions/setup-libpcap
 
+      - name: Build Go binary (amd64)
+        env:
+          CGO_ENABLED: 1
+        run: |
+          go build -trimpath -buildvcs=false \
+            -ldflags="-s -w" \
+            -o seed-linux-amd64 ./cmd/seed
+
       - name: Install arm64 cross-build dependencies
         run: |
           sudo dpkg --add-architecture arm64
@@ -584,14 +592,6 @@ jobs:
 
           sudo apt-get update || true
           sudo apt-get install -y gcc-aarch64-linux-gnu linux-libc-dev:arm64 libpcap-dev:arm64 libpcap0.8-dev:arm64 pkg-config
-
-      - name: Build Go binary (amd64)
-        env:
-          CGO_ENABLED: 1
-        run: |
-          go build -trimpath -buildvcs=false \
-            -ldflags="-s -w" \
-            -o seed-linux-amd64 ./cmd/seed
 
       - name: Build Go binary (arm64)
         env:
