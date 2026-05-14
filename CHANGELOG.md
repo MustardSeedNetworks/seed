@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.185.11](https://github.com/krisarmstrong/seed/compare/v0.185.10...v0.185.11) (2026-05-14)
+
+
+### Bug Fixes
+
+* **ci:** align seed setup e2e with current UI ([2505626](https://github.com/krisarmstrong/seed/commit/25056260412df6c420dba4ac4102d7ab3a31ff5b))
+* **ci:** align seed validation steps ([34c03bb](https://github.com/krisarmstrong/seed/commit/34c03bb5fe5ccbc61989bcf1ee0e516d59e623a7))
+* **ci:** allow MPL npm dependencies ([07f5e24](https://github.com/krisarmstrong/seed/commit/07f5e241da445e10400a30125621de2896e5deca))
+* **ci:** build seed amd64 before arm64 deps ([774536b](https://github.com/krisarmstrong/seed/commit/774536b223205131a2b976b57f4623c6f15067ba))
+* **ci:** exclude private npm packages from license scan ([ec78b14](https://github.com/krisarmstrong/seed/commit/ec78b14607daf21050ac8751962abcf147e8a46d))
+* **ci:** fetch full history for security scans ([f2d00e4](https://github.com/krisarmstrong/seed/commit/f2d00e492814e6f2492e08aad6ca16e77e26fd21))
+* **ci:** format tracked go sources only ([bbb36f0](https://github.com/krisarmstrong/seed/commit/bbb36f0ef63ba98539d6037a7c1470d89b64c8ba))
+* **ci:** install arm64 kernel headers for seed builds ([e9a72a9](https://github.com/krisarmstrong/seed/commit/e9a72a9a43fefc1df71b08b0f8d22ebc705f9296))
+* **ci:** keep seed lighthouse gate focused ([976b507](https://github.com/krisarmstrong/seed/commit/976b507ff1113c2573bed96a70bb423e6cda85ef))
+* **ci:** keep seed setup e2e focused ([fdecc42](https://github.com/krisarmstrong/seed/commit/fdecc42b3ec5b48ba7e5f66c583d2371eacde3d6))
+* **ci:** prepare assets before backend validation ([42fa3fd](https://github.com/krisarmstrong/seed/commit/42fa3fd57a6016473fe3747a24bfdcc18edc2454))
+* **ci:** prepare seed data dir for browser jobs ([aab9b37](https://github.com/krisarmstrong/seed/commit/aab9b378c6586c86e0b0660ac7cd274473cbb777))
+* **ci:** repair buildpacks project metadata ([863b7c7](https://github.com/krisarmstrong/seed/commit/863b7c7b4ee52411b49cf2eef79bad7c8a2116b6))
+* **ci:** repair label sync workflow ([8711e8a](https://github.com/krisarmstrong/seed/commit/8711e8ab07960cdc6ada9951777c078973fcff61))
+* **ci:** report seed gosec findings ([ce9b018](https://github.com/krisarmstrong/seed/commit/ce9b0186cb287e67236b1a42d71d0d1edf87f61a))
+* **ci:** resolve seed validation blockers ([d34a4cf](https://github.com/krisarmstrong/seed/commit/d34a4cf96d76d584aefb432f68087e0fee2319f4))
+* **ci:** scope seed browser smoke tests ([a7043f2](https://github.com/krisarmstrong/seed/commit/a7043f2207d104699813ac0a68ef90c949e8ab11))
+* **ci:** scope seed license checks ([fbb9c7b](https://github.com/krisarmstrong/seed/commit/fbb9c7b34577882231f20ffadf41c667be4c5845))
+* **ci:** stabilize automated validation ([c822698](https://github.com/krisarmstrong/seed/commit/c8226987bce86539e8ffdc9647b0f418db860ece))
+* **ci:** stabilize seed backend suite ([c92d728](https://github.com/krisarmstrong/seed/commit/c92d728558a652fea4c3f0294a1116b22b1fdf02))
+* **ci:** stabilize seed backend tests ([d4cb236](https://github.com/krisarmstrong/seed/commit/d4cb236bd46eea39d0e2b0b8686101e1f9fa69e8))
+* **ci:** stabilize seed reporting gates ([21edd25](https://github.com/krisarmstrong/seed/commit/21edd2572f4ed8548a0892325959c500d595f668))
+* **ci:** use compatible labeler action ([92fed97](https://github.com/krisarmstrong/seed/commit/92fed972599e8cba169c5e1f284c2158488bbd04))
+* **ci:** use labeler yaml format ([4629c5f](https://github.com/krisarmstrong/seed/commit/4629c5f7b2f36a799622fa4119ffbf59d776d6da))
+* **ci:** use target dependencies for seed arm build ([1bf940f](https://github.com/krisarmstrong/seed/commit/1bf940f6cc63e8a758c9a38a03f462bd2693251b))
+* **ci:** use writable seed config for browser jobs ([7a7a40b](https://github.com/krisarmstrong/seed/commit/7a7a40b8382d767e9b5fee3ba51f2229aed348be))
+* **services:** reject dhcp tests for missing interfaces ([d205b88](https://github.com/krisarmstrong/seed/commit/d205b88f199ac8afb5848b7dfc095d8736d9b24f))
+
 ## [0.12.1](https://github.com/krisarmstrong/seed/compare/v0.12.0...v0.12.1) (2025-12-09)
 
 ### Bug Fixes
