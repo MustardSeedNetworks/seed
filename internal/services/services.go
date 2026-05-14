@@ -205,7 +205,6 @@ func (s *DHCPService) Test(_ context.Context, iface string) (*DHCPTestResult, er
 	leaseInfo, err := dhcp.GetLeaseInfo(iface)
 
 	result := &DHCPTestResult{
-		Success:  leaseInfo != nil && err == nil,
 		TestedAt: time.Now(),
 	}
 
@@ -217,6 +216,7 @@ func (s *DHCPService) Test(_ context.Context, iface string) (*DHCPTestResult, er
 		result.ServerIP = leaseInfo.DHCPServer
 		result.Gateway = leaseInfo.Gateway
 		result.DNSServers = leaseInfo.DNS
+		result.Success = err == nil && (result.ServerIP != "" || result.Gateway != "" || len(result.DNSServers) > 0)
 		if leaseInfo.LeaseTime > 0 {
 			result.LeaseTime = time.Duration(leaseInfo.LeaseTime) * time.Second
 			result.LeaseTimeSec = leaseInfo.LeaseTime

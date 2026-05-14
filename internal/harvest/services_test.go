@@ -962,10 +962,11 @@ func TestGeneratorService_Generate(t *testing.T) {
 			assert.NotEmpty(t, report.ID)
 			assert.Equal(t, tt.reportType, report.Type)
 			assert.Equal(t, tt.format, report.Format)
-			// Status may be pending or generating depending on timing
+			// Status may already be complete on fast test runners.
 			assert.True(t, report.Status == harvest.StatusPending ||
-				report.Status == harvest.StatusGenerating,
-				"expected pending or generating, got %s", report.Status)
+				report.Status == harvest.StatusGenerating ||
+				report.Status == harvest.StatusComplete,
+				"expected pending, generating, or complete, got %s", report.Status)
 			assert.False(t, report.CreatedAt.IsZero())
 
 			// Wait briefly for async generation to start
