@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.185.12](https://github.com/krisarmstrong/seed/compare/v0.185.11...v0.185.12) (2026-05-14)
+
+
+### Bug Fixes
+
+* **ci:** skip seed docker publish without dockerfile ([8e1a075](https://github.com/krisarmstrong/seed/commit/8e1a075ba946c7fd1ea0b2618272e35a19194b56))
+
 ## [0.185.11](https://github.com/krisarmstrong/seed/compare/v0.185.10...v0.185.11) (2026-05-14)
 
 
