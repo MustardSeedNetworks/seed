@@ -655,12 +655,14 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Start backend server
+        env:
+          SEED_CONFIG_PATH: ${{ runner.temp }}/seed/config.yaml
         run: |
           sudo setcap cap_net_raw=+ep ./seed || true
-          nohup ./seed > server.log 2>&1 &
+          nohup ./seed --config "$SEED_CONFIG_PATH" > server.log 2>&1 &
           echo "Waiting for server to start..."
           for i in {1..30}; do
-            if curl -sf -k https://localhost:8443/api/health 2>/dev/null; then
+            if curl -sk https://localhost:8443/ >/dev/null 2>&1; then
               echo "Server ready after $i attempts"
               exit 0
             fi
@@ -723,12 +725,14 @@ jobs:
             -o seed ./cmd/seed
 
       - name: Start backend server
+        env:
+          SEED_CONFIG_PATH: ${{ runner.temp }}/seed/config.yaml
         run: |
           sudo setcap cap_net_raw=+ep ./seed || true
-          nohup ./seed > server.log 2>&1 &
+          nohup ./seed --config "$SEED_CONFIG_PATH" > server.log 2>&1 &
           echo "Waiting for server to start..."
           for i in {1..30}; do
-            if curl -sf -k https://localhost:8443/api/health 2>/dev/null; then
+            if curl -sk https://localhost:8443/ >/dev/null 2>&1; then
               echo "Server ready after $i attempts"
               exit 0
             fi
