@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * **ci:** resolve seed validation blockers ([d34a4cf](https://github.com/krisarmstrong/seed/commit/d34a4cf96d76d584aefb432f68087e0fee2319f4))
 * **ci:** scope seed browser smoke tests ([a7043f2](https://github.com/krisarmstrong/seed/commit/a7043f2207d104699813ac0a68ef90c949e8ab11))
 * **ci:** scope seed license checks ([fbb9c7b](https://github.com/krisarmstrong/seed/commit/fbb9c7b34577882231f20ffadf41c667be4c5845))
+* **ci:** skip seed docker publish without dockerfile ([fbd0962](https://github.com/krisarmstrong/seed/commit/fbd096287786d75e35c92d97e2da721d014e7989))
 * **ci:** stabilize automated validation ([c822698](https://github.com/krisarmstrong/seed/commit/c8226987bce86539e8ffdc9647b0f418db860ece))
 * **ci:** stabilize seed backend suite ([c92d728](https://github.com/krisarmstrong/seed/commit/c92d728558a652fea4c3f0294a1116b22b1fdf02))
 * **ci:** stabilize seed backend tests ([d4cb236](https://github.com/krisarmstrong/seed/commit/d4cb236bd46eea39d0e2b0b8686101e1f9fa69e8))
