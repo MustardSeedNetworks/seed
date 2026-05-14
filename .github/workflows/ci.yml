@@ -8,7 +8,7 @@
 # - Go version from go.mod, Node.js 25.2.1
 # - Full staticcheck analysis (dead-code.yml handles weekly U* reports)
 # - Deterministic builds with -trimpath -buildvcs=false
-# - Multi-arch verification (amd64 + arm64)
+# - Build verification for amd64 and arm64 release targets
 # - Frontend build artifact sharing between jobs
 #
 # Related workflows:
@@ -114,11 +114,6 @@ jobs:
 
       - name: Deterministic build check
         run: go build -trimpath -buildvcs=false ./...
-
-      - name: Cross-compile verification
-        run: |
-          GOOS=linux GOARCH=amd64 go build ./...
-          GOOS=linux GOARCH=arm64 go build ./...
 
       - name: Check go mod tidy
         run: |
@@ -561,7 +556,36 @@ jobs:
       - name: Install libpcap-dev
         uses: ./.github/actions/setup-libpcap
 
+      - name: Install arm64 cross-build dependencies
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo rm -f /etc/apt/sources.list.d/ubuntu.sources
+          sudo tee /etc/apt/sources.list.d/ubuntu-amd64.list >/dev/null <<'EOF'
+          deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble main universe multiverse restricted
+          deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-updates main universe multiverse restricted
+          deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-backports main universe multiverse restricted
+          deb [arch=amd64] http://security.ubuntu.com/ubuntu noble-security main universe multiverse restricted
+          EOF
+          for f in /etc/apt/sources.list.d/*.list /etc/apt/sources.list; do
+            [ -f "$f" ] || continue
+            case "$f" in
+              */ubuntu-amd64.list|*/ports-arm64.list) continue ;;
+            esac
+            sudo sed -i '/^deb \[/!s|^deb |deb [arch=amd64] |' "$f"
+          done
+          sudo tee /etc/apt/sources.list.d/ports-arm64.list >/dev/null <<'EOF'
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main universe multiverse restricted
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main universe multiverse restricted
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main universe multiverse restricted
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-backports main universe multiverse restricted
+          EOF
+
+          sudo apt-get update || true
+          sudo apt-get install -y gcc-aarch64-linux-gnu libpcap-dev:arm64 libpcap0.8-dev:arm64 pkg-config
+
       - name: Build Go binary (amd64)
+        env:
+          CGO_ENABLED: 1
         run: |
           go build -trimpath -buildvcs=false \
             -ldflags="-s -w" \
@@ -571,7 +595,9 @@ jobs:
         env:
           GOOS: linux
           GOARCH: arm64
-          CGO_ENABLED: 0
+          CGO_ENABLED: 1
+          CC: aarch64-linux-gnu-gcc
+          PKG_CONFIG_PATH: /usr/lib/aarch64-linux-gnu/pkgconfig
         run: |
           go build -trimpath -buildvcs=false \
             -ldflags="-s -w" \
