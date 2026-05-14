@@ -22,9 +22,9 @@ test.describe('Setup Wizard', () => {
   test('should detect if setup is needed', async ({ page }) => {
     await page.goto('/');
 
-    // Wait for either login form or setup wizard
-    const loginForm = page.getByRole('heading', { name: /login/i });
-    const setupWizard = page.getByText(/setup|welcome|get started|configure/i).first();
+    // Wait for either the normal login form or first-run setup wizard.
+    const loginForm = page.getByRole('button', { name: /sign in|login/i });
+    const setupWizard = page.getByText(/welcome to the seed|setup|get started|configure/i).first();
 
     await page.waitForTimeout(3000);
 
@@ -52,8 +52,8 @@ test.describe('Setup Wizard', () => {
 
       await expect(interfaceOptions).toBeVisible({ timeout: 5000 });
     } else {
-      // Setup already complete, verify we can login
-      const loginForm = page.getByRole('heading', { name: /login/i });
+      // Setup already complete, verify the login form is available.
+      const loginForm = page.getByRole('button', { name: /sign in|login/i });
       await expect(loginForm).toBeVisible({ timeout: 5000 });
     }
   });
@@ -106,7 +106,10 @@ test.describe('Setup Wizard', () => {
       }
 
       // After setup, should see login or dashboard
-      const afterSetup = page.getByRole('heading', { name: /login|dashboard|link/i }).first();
+      const afterSetup = page
+        .getByRole('button', { name: /sign in|login/i })
+        .or(page.getByRole('heading', { name: /connectivity|network|system/i }))
+        .first();
 
       await expect(afterSetup).toBeVisible({ timeout: 10000 });
     } else {
@@ -115,7 +118,7 @@ test.describe('Setup Wizard', () => {
       await page.getByLabel(/password/i).fill('seed');
       await page.getByRole('button', { name: /sign in|login/i }).click();
 
-      await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+      await expect(page.getByRole('heading', { name: /connectivity|network|system/i }).first()).toBeVisible({
         timeout: 10000,
       });
     }
