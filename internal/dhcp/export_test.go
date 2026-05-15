@@ -3,7 +3,7 @@ package dhcp
 import (
 	"time"
 
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket/layers"
 )
 
 // ExtractValue exports extractValue for testing.

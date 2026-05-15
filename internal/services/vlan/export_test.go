@@ -6,7 +6,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/gopacket"
+	"github.com/gopacket/gopacket"
 )
 
 // ManagerInterfaceName returns the interface name for testing.

@@ -4,7 +4,7 @@ go 1.26.3
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/google/gopacket v1.1.19
+	github.com/gopacket/gopacket v1.5.0
 	github.com/showwin/speedtest-go v1.7.10
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/crypto v0.50.0
