@@ -13,7 +13,7 @@ func TestInfo(t *testing.T) {
 	}{
 		{
 			name:     "returns all version fields",
-			wantKeys: []string{"version", "commit", "buildTime"},
+			wantKeys: []string{"version", "commit", "buildTime", "uiBuildHash"},
 		},
 	}
 
@@ -50,6 +50,10 @@ func TestInfoDefaultValues(t *testing.T) {
 
 	if info["buildTime"] == "" {
 		t.Error("Info() buildTime should not be empty")
+	}
+
+	if info["uiBuildHash"] == "" {
+		t.Error("Info() uiBuildHash should not be empty")
 	}
 }
 
@@ -88,6 +92,11 @@ func TestGetterFunctions(t *testing.T) {
 		{
 			name:     "GetBuildTime returns value",
 			getter:   version.GetBuildTime,
+			notEmpty: true,
+		},
+		{
+			name:     "GetUIBuildHash returns value",
+			getter:   version.GetUIBuildHash,
 			notEmpty: true,
 		},
 	}
