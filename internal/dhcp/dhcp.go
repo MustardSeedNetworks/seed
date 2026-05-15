@@ -188,18 +188,21 @@ func (m *Monitor) Start() error {
 	m.cleanupDone = make(chan struct{})
 	m.running = true
 
-	// Start capture goroutine
+	// Start capture and cleanup goroutines. Both receive stopChan as a
+	// parameter (not via m.stopChan) so Stop's m.stopChan = nil doesn't race
+	// against the goroutines' reads. cleanupStaleTransactions already used
+	// this pattern; capturePackets now matches.
 	linkType := handle.LinkType()
-	go m.capturePackets(handle, linkType)
-
-	// Start stale transaction cleanup goroutine (fixes #841)
+	go m.capturePackets(handle, linkType, m.stopChan)
 	go m.cleanupStaleTransactions(m.stopChan, m.cleanupDone)
 
 	return nil
 }
 
-// capturePackets runs the packet capture loop.
-func (m *Monitor) capturePackets(handle *pcap.Handle, linkType layers.LinkType) {
+// capturePackets runs the packet capture loop. stopChan is passed as a
+// parameter rather than read from m.stopChan so Stop's nil-assignment doesn't
+// race against this goroutine.
+func (m *Monitor) capturePackets(handle *pcap.Handle, linkType layers.LinkType, stopChan <-chan struct{}) {
 	if handle == nil {
 		return
 	}
@@ -209,7 +212,7 @@ func (m *Monitor) capturePackets(handle *pcap.Handle, linkType layers.LinkType) 
 
 	for {
 		select {
-		case <-m.stopChan:
+		case <-stopChan:
 			return
 		case packet, ok := <-packets:
 			if !ok {

@@ -6,7 +6,6 @@ import (
 )
 
 func TestCLIStateStruct(t *testing.T) {
-	t.Parallel()
 
 	state := &cliState{
 		cfgFile:        "/etc/seed/config.json",
@@ -26,7 +25,6 @@ func TestCLIStateStruct(t *testing.T) {
 }
 
 func TestCLIStateDefaults(t *testing.T) {
-	t.Parallel()
 
 	state := &cliState{}
 
@@ -48,7 +46,6 @@ func TestCLIStateDefaults(t *testing.T) {
 }
 
 func TestNewCLIState(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 
@@ -78,7 +75,6 @@ func TestNewCLIState(t *testing.T) {
 }
 
 func TestNewCLIStateRootCmdShortDescription(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 
@@ -88,7 +84,6 @@ func TestNewCLIStateRootCmdShortDescription(t *testing.T) {
 }
 
 func TestNewCLIStateLongDescription(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 
@@ -113,7 +108,6 @@ func TestNewCLIStateLongDescription(t *testing.T) {
 }
 
 func TestNewCLIStateCompletionValidArgs(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 
@@ -131,7 +125,6 @@ func TestNewCLIStateCompletionValidArgs(t *testing.T) {
 }
 
 func TestInitCommands(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -179,7 +172,6 @@ func TestInitCommands(t *testing.T) {
 }
 
 func TestInitCommandsAddsFlags(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -202,7 +194,6 @@ func TestInitCommandsAddsFlags(t *testing.T) {
 }
 
 func TestCLIStateTrustedProxiesVariants(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name   string
@@ -233,7 +224,6 @@ func TestCLIStateTrustedProxiesVariants(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			state := &cliState{
 				trustedProxies: tc.value,

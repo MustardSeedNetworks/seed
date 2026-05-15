@@ -56,8 +56,9 @@ type RateLimiter struct {
 	window      time.Duration // Time window for rate limiting
 	blockTime   time.Duration // How long to block after exceeding limit
 	cleanup     time.Duration // How often to clean up old entries
-	stopCh      chan struct{}
-	maxVisitors int // Maximum number of unique IPs to track (memory protection)
+	stopCh      chan struct{} // Closed by Stop to signal cleanupLoop to exit
+	stopOnce    sync.Once     // Guards close(stopCh) so Stop is idempotent
+	maxVisitors int           // Maximum number of unique IPs to track (memory protection)
 }
 
 type attemptInfo struct {
@@ -177,16 +178,13 @@ func (rl *RateLimiter) doCleanup() {
 }
 
 // Stop stops the rate limiter cleanup goroutine.
-// Safe to call multiple times (fixes #844).
+// Safe to call multiple times (fixes #844). stopOnce makes the close idempotent
+// without taking rl.mu — cleanupLoop reads rl.stopCh without the lock, so
+// nil-ing the channel under the lock would race against that read.
 func (rl *RateLimiter) Stop() {
-	rl.mu.Lock()
-	defer rl.mu.Unlock()
-
-	if rl.stopCh == nil {
-		return // Already stopped
-	}
-	close(rl.stopCh)
-	rl.stopCh = nil
+	rl.stopOnce.Do(func() {
+		close(rl.stopCh)
+	})
 }
 
 // IsBlocked checks if an IP is currently blocked.
@@ -332,8 +330,9 @@ type EndpointRateLimiter struct {
 	requests    map[string]*requestWindow
 	maxReqs     int           // Maximum requests per window
 	window      time.Duration // Time window for rate limiting
-	stopCh      chan struct{}
-	maxVisitors int // Maximum number of unique IPs to track (memory protection)
+	stopCh      chan struct{} // Closed by Stop to signal cleanupLoop to exit
+	stopOnce    sync.Once     // Guards close(stopCh) so Stop is idempotent
+	maxVisitors int           // Maximum number of unique IPs to track (memory protection)
 }
 
 type requestWindow struct {
@@ -446,16 +445,12 @@ func (erl *EndpointRateLimiter) doCleanup() {
 }
 
 // Stop stops the rate limiter cleanup goroutine.
-// Safe to call multiple times (fixes #844).
+// Safe to call multiple times. stopOnce makes the close idempotent without
+// taking erl.mu — cleanupLoop reads erl.stopCh without the lock.
 func (erl *EndpointRateLimiter) Stop() {
-	erl.mu.Lock()
-	defer erl.mu.Unlock()
-
-	if erl.stopCh == nil {
-		return // Already stopped
-	}
-	close(erl.stopCh)
-	erl.stopCh = nil
+	erl.stopOnce.Do(func() {
+		close(erl.stopCh)
+	})
 }
 
 // Allow checks if a request from an IP should be allowed.

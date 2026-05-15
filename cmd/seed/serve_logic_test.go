@@ -12,7 +12,6 @@ import (
 )
 
 func TestInitServeCmdAddsServeCommand(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initServeCmd(state)
@@ -39,7 +38,6 @@ func TestInitServeCmdAddsServeCommand(t *testing.T) {
 }
 
 func TestServeCmdHasRunFunction(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initServeCmd(state)
@@ -62,7 +60,6 @@ func TestServeCmdHasRunFunction(t *testing.T) {
 }
 
 func TestServeCmdLongDescriptionContent(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initServeCmd(state)
@@ -95,7 +92,6 @@ func TestServeCmdLongDescriptionContent(t *testing.T) {
 }
 
 func TestRootCmdDefaultsToServe(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -107,7 +103,6 @@ func TestRootCmdDefaultsToServe(t *testing.T) {
 }
 
 func TestPrintSetupBannerProtocolLogic(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name          string
@@ -128,7 +123,6 @@ func TestPrintSetupBannerProtocolLogic(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			protocol := "http"
 			if tc.https {
@@ -143,7 +137,6 @@ func TestPrintSetupBannerProtocolLogic(t *testing.T) {
 }
 
 func TestInitializeDatabasePathLogic(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name         string
@@ -169,7 +162,6 @@ func TestInitializeDatabasePathLogic(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			// Test the path resolution logic
 			dbPath := tc.dbPath
@@ -185,7 +177,6 @@ func TestInitializeDatabasePathLogic(t *testing.T) {
 }
 
 func TestConfigValidationWithTestFile(t *testing.T) {
-	t.Parallel()
 
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "seed.json")
@@ -220,7 +211,6 @@ func TestConfigValidationWithTestFile(t *testing.T) {
 }
 
 func TestDevModeSetsHTTPFalse(t *testing.T) {
-	t.Parallel()
 
 	// Test the logic that --dev sets HTTPS to false
 	devMode := true
@@ -232,7 +222,6 @@ func TestDevModeSetsHTTPFalse(t *testing.T) {
 }
 
 func TestLogPathDefaultLogic(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name         string
@@ -253,7 +242,6 @@ func TestLogPathDefaultLogic(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			logPath := tc.configPath
 			if logPath == "" {
@@ -268,7 +256,6 @@ func TestLogPathDefaultLogic(t *testing.T) {
 }
 
 func TestServeCmdNoSubcommands(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initServeCmd(state)
@@ -292,7 +279,6 @@ func TestServeCmdNoSubcommands(t *testing.T) {
 }
 
 func TestFindActiveInterfaceRetryLogic(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name        string
@@ -318,7 +304,6 @@ func TestFindActiveInterfaceRetryLogic(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			// Test the retry logic without actually calling the function
 			shouldRetry := tc.maxRetries > 0
@@ -331,7 +316,6 @@ func TestFindActiveInterfaceRetryLogic(t *testing.T) {
 }
 
 func TestInterfacePreferredOrder(t *testing.T) {
-	t.Parallel()
 
 	initialInterface := "eth0"
 	fallbacks := []string{"eth1", "wlan0", "enp0s3"}

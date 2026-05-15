@@ -6,7 +6,6 @@ import (
 )
 
 func TestOutputCredentialsJSONMarshaling(t *testing.T) {
-	t.Parallel()
 
 	creds := setupCredentials{
 		Username: "admin",
@@ -39,7 +38,6 @@ func TestOutputCredentialsJSONMarshaling(t *testing.T) {
 }
 
 func TestOutputCredentialsJSONFieldNames(t *testing.T) {
-	t.Parallel()
 
 	creds := setupCredentials{
 		Username: "user",
@@ -64,7 +62,6 @@ func TestOutputCredentialsJSONFieldNames(t *testing.T) {
 }
 
 func TestOutputResultJSONMarshaling(t *testing.T) {
-	t.Parallel()
 
 	result := ValidationResult{
 		Valid:    true,
@@ -95,7 +92,6 @@ func TestOutputResultJSONMarshaling(t *testing.T) {
 }
 
 func TestOutputResultJSONFieldNames(t *testing.T) {
-	t.Parallel()
 
 	result := ValidationResult{
 		Valid:    false,
@@ -121,7 +117,6 @@ func TestOutputResultJSONFieldNames(t *testing.T) {
 }
 
 func TestValidationResultJSONOmitEmpty(t *testing.T) {
-	t.Parallel()
 
 	result := ValidationResult{
 		Valid:    true,
@@ -147,7 +142,6 @@ func TestValidationResultJSONOmitEmpty(t *testing.T) {
 }
 
 func TestValidationResultStructure(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name     string
@@ -199,7 +193,6 @@ func TestValidationResultStructure(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			if tc.hasError && len(tc.result.Errors) == 0 {
 				t.Error("Expected errors but none found")
@@ -218,7 +211,6 @@ func TestValidationResultStructure(t *testing.T) {
 }
 
 func TestSetupCredentialsStructure(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name     string
@@ -248,7 +240,6 @@ func TestSetupCredentialsStructure(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			creds := setupCredentials{
 				Username: tc.username,
@@ -270,7 +261,6 @@ func TestSetupCredentialsStructure(t *testing.T) {
 }
 
 func TestOutputCredentialsFunctionExists(t *testing.T) {
-	t.Parallel()
 
 	// Just verify the function exists and can be called with valid arguments
 	// We don't capture output to avoid race conditions
@@ -292,7 +282,6 @@ func TestOutputCredentialsFunctionExists(t *testing.T) {
 }
 
 func TestOutputResultFunctionExists(t *testing.T) {
-	t.Parallel()
 
 	// Just verify the function exists with correct signature
 	result := ValidationResult{
@@ -312,7 +301,6 @@ func TestOutputResultFunctionExists(t *testing.T) {
 }
 
 func TestValidationResultRoundTrip(t *testing.T) {
-	t.Parallel()
 
 	original := ValidationResult{
 		Valid:    false,
@@ -349,7 +337,6 @@ func TestValidationResultRoundTrip(t *testing.T) {
 }
 
 func TestSetupCredentialsRoundTrip(t *testing.T) {
-	t.Parallel()
 
 	original := setupCredentials{
 		Username: "admin",

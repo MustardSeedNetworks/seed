@@ -423,9 +423,13 @@ func (l *MDNSListener) Start() error {
 	}
 	l.running = true
 	l.stopCh = make(chan struct{})
+	stopCh := l.stopCh
 	l.mu.Unlock()
 
-	go l.listen()
+	// Pass stopCh as a parameter so the listen goroutine works on its
+	// captured copy; if Stop swapped l.stopCh out, the goroutine would
+	// otherwise race on the field read.
+	go l.listen(stopCh)
 	return nil
 }
 
@@ -441,8 +445,9 @@ func (l *MDNSListener) Stop() {
 	l.mu.Unlock()
 }
 
-// listen captures mDNS multicast traffic.
-func (l *MDNSListener) listen() {
+// listen captures mDNS multicast traffic. stopCh is passed as a parameter
+// to avoid racing on l.stopCh between this goroutine and Start.
+func (l *MDNSListener) listen(stopCh <-chan struct{}) {
 	// Join mDNS multicast group
 	addr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("%s:%d", mdnsIPv4Addr, mdnsPort))
 	if err != nil {
@@ -475,7 +480,7 @@ func (l *MDNSListener) listen() {
 	buf := make([]byte, mdnsPacketBufferSize)
 	for {
 		select {
-		case <-l.stopCh:
+		case <-stopCh:
 			return
 		default:
 		}

@@ -10,7 +10,6 @@ import (
 )
 
 func TestValidationResultMarshalJSON(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name     string
@@ -73,7 +72,6 @@ func TestValidationResultMarshalJSON(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			data, err := json.Marshal(tc.result)
 			if err != nil {
@@ -94,7 +92,6 @@ func TestValidationResultMarshalJSON(t *testing.T) {
 }
 
 func TestCheckConfigWarnings(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name          string
@@ -207,7 +204,6 @@ func TestCheckConfigWarnings(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			warnings := checkConfigWarnings(tc.cfg)
 			assertWarningsContain(t, warnings, tc.wantWarnings)
@@ -259,7 +255,6 @@ func sliceContainsSubstring(values []string, needle string) bool {
 }
 
 func TestOutputResultJSON(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name   string
@@ -292,7 +287,6 @@ func TestOutputResultJSON(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			// Marshal the result to verify it produces valid JSON
 			data, err := json.MarshalIndent(tc.result, "", "  ")
@@ -317,7 +311,6 @@ func TestOutputResultJSON(t *testing.T) {
 }
 
 func TestOutputResultHumanReadable(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name           string
@@ -364,7 +357,6 @@ func TestOutputResultHumanReadable(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			// We can't easily capture stdout from outputResult, but we can test the logic
 			// by verifying the ValidationResult struct fields that drive the output
@@ -384,7 +376,6 @@ func TestOutputResultHumanReadable(t *testing.T) {
 }
 
 func TestValidationResultFields(t *testing.T) {
-	t.Parallel()
 
 	// Test that all fields are properly set and accessible
 	result := ValidationResult{
@@ -412,7 +403,6 @@ func TestValidationResultFields(t *testing.T) {
 }
 
 func TestValidationResultJSONRoundTrip(t *testing.T) {
-	t.Parallel()
 
 	original := ValidationResult{
 		Valid:    false,
@@ -449,7 +439,6 @@ func TestValidationResultJSONRoundTrip(t *testing.T) {
 }
 
 func TestValidationResultJSONOutput(t *testing.T) {
-	t.Parallel()
 
 	result := ValidationResult{
 		Valid:    true,
@@ -483,7 +472,6 @@ func TestValidationResultJSONOutput(t *testing.T) {
 }
 
 func TestOutputResultFunction(t *testing.T) {
-	t.Parallel()
 
 	// Test that outputResult can be called without panic for both JSON and human-readable modes
 	// We're not capturing stdout here, just ensuring no panics

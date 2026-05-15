@@ -5,7 +5,6 @@ import (
 )
 
 func TestParseOSRelease(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name     string
@@ -215,7 +214,6 @@ PRETTY_NAME="AlmaLinux 9.3"
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			result := parseOSRelease(tc.content)
 
 			if result.ID != tc.expected.ID {
@@ -235,7 +233,6 @@ PRETTY_NAME="AlmaLinux 9.3"
 }
 
 func TestDistroStruct(t *testing.T) {
-	t.Parallel()
 
 	distro := &Distro{
 		ID:      "ubuntu",
@@ -259,7 +256,6 @@ func TestDistroStruct(t *testing.T) {
 }
 
 func TestExpectedLinuxReleaseParts(t *testing.T) {
-	t.Parallel()
 
 	// Verify the constant is set correctly for splitting key=value pairs
 	if expectedLinuxReleaseParts != 2 {

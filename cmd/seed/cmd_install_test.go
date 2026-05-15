@@ -7,7 +7,6 @@ import (
 )
 
 func TestModeString(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name     string
@@ -38,7 +37,6 @@ func TestModeString(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			result := modeString(tc.mode)
 			if result != tc.expected {
 				t.Errorf("modeString(%d) = %q, want %q", tc.mode, result, tc.expected)
@@ -48,7 +46,6 @@ func TestModeString(t *testing.T) {
 }
 
 func TestInstallFlagsStruct(t *testing.T) {
-	t.Parallel()
 
 	// Test default values
 	flags := installFlags{}
@@ -68,7 +65,6 @@ func TestInstallFlagsStruct(t *testing.T) {
 }
 
 func TestInstallFlagsAllTrue(t *testing.T) {
-	t.Parallel()
 
 	flags := installFlags{
 		systemMode: true,
@@ -92,7 +88,6 @@ func TestInstallFlagsAllTrue(t *testing.T) {
 }
 
 func TestServiceConfigStruct(t *testing.T) {
-	t.Parallel()
 
 	cfg := serviceConfig{
 		User:       "seed",
@@ -128,7 +123,6 @@ func TestServiceConfigStruct(t *testing.T) {
 }
 
 func TestSystemdServiceTemplateContainsRequiredFields(t *testing.T) {
-	t.Parallel()
 
 	requiredFields := []string{
 		"[Unit]",
@@ -155,7 +149,6 @@ func TestSystemdServiceTemplateContainsRequiredFields(t *testing.T) {
 }
 
 func TestUserServiceTemplateContainsRequiredFields(t *testing.T) {
-	t.Parallel()
 
 	requiredFields := []string{
 		"[Unit]",
@@ -177,7 +170,6 @@ func TestUserServiceTemplateContainsRequiredFields(t *testing.T) {
 }
 
 func TestUserServiceTemplateDoesNotContainSystemFields(t *testing.T) {
-	t.Parallel()
 
 	// User service template should not require system-level fields
 	systemFields := []string{
@@ -197,7 +189,6 @@ func TestUserServiceTemplateDoesNotContainSystemFields(t *testing.T) {
 }
 
 func TestTimeoutConstants(t *testing.T) {
-	t.Parallel()
 
 	if userCheckTimeoutSeconds <= 0 {
 		t.Error("userCheckTimeoutSeconds should be positive")

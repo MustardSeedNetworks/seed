@@ -9,7 +9,6 @@ import (
 )
 
 func TestCompletionCmdExists(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -29,7 +28,6 @@ func TestCompletionCmdExists(t *testing.T) {
 }
 
 func TestCompletionCmdValidArgs(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 
@@ -48,7 +46,6 @@ func TestCompletionCmdValidArgs(t *testing.T) {
 }
 
 func TestCompletionCmdDisablesFlagsInUseLine(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 
@@ -58,7 +55,6 @@ func TestCompletionCmdDisablesFlagsInUseLine(t *testing.T) {
 }
 
 func TestCompletionCmdHasRun(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 
@@ -68,7 +64,6 @@ func TestCompletionCmdHasRun(t *testing.T) {
 }
 
 func TestCompletionCmdArgs(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -93,7 +88,6 @@ func TestCompletionCmdArgs(t *testing.T) {
 }
 
 func TestCompletionCmdShortDescription(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 
@@ -107,7 +101,6 @@ func TestCompletionCmdShortDescription(t *testing.T) {
 }
 
 func TestCompletionCmdLongDescriptionContainsInstructions(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 
@@ -127,7 +120,6 @@ func TestCompletionCmdLongDescriptionContainsInstructions(t *testing.T) {
 }
 
 func TestCompletionBashGeneration(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -150,7 +142,6 @@ func TestCompletionBashGeneration(t *testing.T) {
 }
 
 func TestCompletionZshGeneration(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -168,7 +159,6 @@ func TestCompletionZshGeneration(t *testing.T) {
 }
 
 func TestCompletionFishGeneration(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -186,7 +176,6 @@ func TestCompletionFishGeneration(t *testing.T) {
 }
 
 func TestCompletionPowerShellGeneration(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -204,7 +193,6 @@ func TestCompletionPowerShellGeneration(t *testing.T) {
 }
 
 func TestCompletionCmdArgsValidation(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name    string
@@ -250,7 +238,6 @@ func TestCompletionCmdArgsValidation(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			state := newCLIState()
 			initCommands(state)

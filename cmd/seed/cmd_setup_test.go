@@ -8,7 +8,6 @@ import (
 )
 
 func TestSetupCredentialsStruct(t *testing.T) {
-	t.Parallel()
 
 	creds := setupCredentials{
 		Username: "admin",
@@ -28,7 +27,6 @@ func TestSetupCredentialsStruct(t *testing.T) {
 }
 
 func TestSetupCredentialsMarshalJSON(t *testing.T) {
-	t.Parallel()
 
 	creds := setupCredentials{
 		Username: "admin",
@@ -58,7 +56,6 @@ func TestSetupCredentialsMarshalJSON(t *testing.T) {
 }
 
 func TestSetupCredentialsJSONTags(t *testing.T) {
-	t.Parallel()
 
 	creds := setupCredentials{
 		Username: "user",
@@ -83,7 +80,6 @@ func TestSetupCredentialsJSONTags(t *testing.T) {
 }
 
 func TestEnsureConfigDir(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name       string
@@ -104,7 +100,6 @@ func TestEnsureConfigDir(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			err := ensureConfigDir(tc.configPath)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("ensureConfigDir(%q) error = %v, wantErr %v", tc.configPath, err, tc.wantErr)
@@ -114,7 +109,6 @@ func TestEnsureConfigDir(t *testing.T) {
 }
 
 func TestEnsureConfigDirCreatesDirectory(t *testing.T) {
-	t.Parallel()
 
 	// Create a temporary directory
 	tmpDir := t.TempDir()
@@ -137,7 +131,6 @@ func TestEnsureConfigDirCreatesDirectory(t *testing.T) {
 }
 
 func TestEnsureConfigDirExistingDirectory(t *testing.T) {
-	t.Parallel()
 
 	// Create a temporary directory that already exists
 	tmpDir := t.TempDir()
@@ -159,7 +152,6 @@ func TestEnsureConfigDirExistingDirectory(t *testing.T) {
 }
 
 func TestDefaultPasswordLengthConstant(t *testing.T) {
-	t.Parallel()
 
 	if defaultPasswordLength <= 0 {
 		t.Error("defaultPasswordLength should be positive")
@@ -170,7 +162,6 @@ func TestDefaultPasswordLengthConstant(t *testing.T) {
 }
 
 func TestOutputCredentialsJSON(t *testing.T) {
-	t.Parallel()
 
 	creds := setupCredentials{
 		Username: "admin",
@@ -202,7 +193,6 @@ func TestOutputCredentialsJSON(t *testing.T) {
 }
 
 func TestSetupCredentialsEmptyFields(t *testing.T) {
-	t.Parallel()
 
 	creds := setupCredentials{}
 
@@ -218,7 +208,6 @@ func TestSetupCredentialsEmptyFields(t *testing.T) {
 }
 
 func TestSetupCredentialsWithSpecialCharacters(t *testing.T) {
-	t.Parallel()
 
 	creds := setupCredentials{
 		Username: "admin@example.com",

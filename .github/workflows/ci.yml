@@ -121,6 +121,45 @@ jobs:
           git diff --exit-code go.mod go.sum
 
   # ===========================================================================
+  # Go Race Detector
+  # ===========================================================================
+  # Race detection moved here from the pre-commit hook (#945). Hook ran fast
+  # short tests; this job runs the full suite under -race on every push/PR.
+  # Blocking — the cmd/seed t.Parallel() races discovered when this job was
+  # introduced were fixed in the same PR (#947) by dropping parallelism from
+  # cmd/seed tests, since subtests shared a single cobra.Command parent and
+  # raced on its sortedFlags cache.
+  race:
+    name: Backend (race detector)
+    runs-on: ubuntu-latest
+    env:
+      GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
+      GOCACHE: ${{ github.workspace }}/.cache/go/build
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Install libpcap-dev
+        uses: ./.github/actions/setup-libpcap
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Build embedded UI assets
+        working-directory: ui
+        run: |
+          npm ci
+          npm run build
+
+      - name: Run tests with race detector
+        env:
+          SKIP_IPERF_TEST: "1"
+        run: go test -short -race ./...
+
+  # ===========================================================================
   # Frontend Checks
   # ===========================================================================
   frontend:

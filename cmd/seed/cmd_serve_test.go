@@ -5,7 +5,6 @@ import (
 )
 
 func TestServeConstants(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name     string
@@ -35,7 +34,6 @@ func TestServeConstants(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			if tc.value < tc.minValue {
 				t.Errorf("%s = %d, want >= %d: %s", tc.name, tc.value, tc.minValue, tc.desc)
 			}
@@ -44,7 +42,6 @@ func TestServeConstants(t *testing.T) {
 }
 
 func TestLogBroadcasterBufferSize(t *testing.T) {
-	t.Parallel()
 
 	if logBroadcasterBufferSize != 1000 {
 		t.Errorf("logBroadcasterBufferSize should be 1000, got %d", logBroadcasterBufferSize)
@@ -52,7 +49,6 @@ func TestLogBroadcasterBufferSize(t *testing.T) {
 }
 
 func TestSignalChannelBufferSize(t *testing.T) {
-	t.Parallel()
 
 	if signalChannelBufferSize != 2 {
 		t.Errorf("signalChannelBufferSize should be 2, got %d", signalChannelBufferSize)
@@ -60,7 +56,6 @@ func TestSignalChannelBufferSize(t *testing.T) {
 }
 
 func TestShutdownTimeoutSeconds(t *testing.T) {
-	t.Parallel()
 
 	if shutdownTimeoutSeconds != 30 {
 		t.Errorf("shutdownTimeoutSeconds should be 30, got %d", shutdownTimeoutSeconds)
@@ -68,7 +63,6 @@ func TestShutdownTimeoutSeconds(t *testing.T) {
 }
 
 func TestPrintSetupBannerLogic(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name     string
@@ -98,7 +92,6 @@ func TestPrintSetupBannerLogic(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			// Test the protocol selection logic from printSetupBanner
 			protocol := "http"
@@ -117,7 +110,6 @@ func TestPrintSetupBannerLogic(t *testing.T) {
 }
 
 func TestServeConstantsRelationships(t *testing.T) {
-	t.Parallel()
 
 	// Log buffer should be larger than signal channel buffer
 	if logBroadcasterBufferSize <= signalChannelBufferSize {

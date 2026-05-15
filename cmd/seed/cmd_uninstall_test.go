@@ -7,7 +7,6 @@ import (
 )
 
 func TestUninstallFlagsStruct(t *testing.T) {
-	t.Parallel()
 
 	// Test default values
 	flags := uninstallFlags{}
@@ -27,7 +26,6 @@ func TestUninstallFlagsStruct(t *testing.T) {
 }
 
 func TestUninstallFlagsAllTrue(t *testing.T) {
-	t.Parallel()
 
 	flags := uninstallFlags{
 		purge:      true,
@@ -51,7 +49,6 @@ func TestUninstallFlagsAllTrue(t *testing.T) {
 }
 
 func TestDetermineUninstallMode(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name     string
@@ -81,7 +78,6 @@ func TestDetermineUninstallMode(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			result := determineUninstallMode(tc.flags)
 
 			// Skip root-dependent test if it would require root
@@ -101,7 +97,6 @@ func TestDetermineUninstallMode(t *testing.T) {
 }
 
 func TestDetermineUninstallModeSystemPriority(t *testing.T) {
-	t.Parallel()
 
 	// When both system and user are set, system should take priority
 	flags := uninstallFlags{
@@ -116,7 +111,6 @@ func TestDetermineUninstallModeSystemPriority(t *testing.T) {
 }
 
 func TestDetermineUninstallModeSystemFlagOnly(t *testing.T) {
-	t.Parallel()
 
 	flags := uninstallFlags{
 		systemMode: true,
@@ -132,7 +126,6 @@ func TestDetermineUninstallModeSystemFlagOnly(t *testing.T) {
 }
 
 func TestDetermineUninstallModeUserFlagOnly(t *testing.T) {
-	t.Parallel()
 
 	flags := uninstallFlags{
 		systemMode: false,
@@ -148,7 +141,6 @@ func TestDetermineUninstallModeUserFlagOnly(t *testing.T) {
 }
 
 func TestGetServiceFilePathSystem(t *testing.T) {
-	t.Parallel()
 
 	// For system mode, the path should be the standard systemd location
 	// We can't call the actual function as it needs context, but we can test the logic
@@ -161,7 +153,6 @@ func TestGetServiceFilePathSystem(t *testing.T) {
 }
 
 func TestUninstallFlagsCombinations(t *testing.T) {
-	t.Parallel()
 
 	testCases := []struct {
 		name   string
@@ -212,7 +203,6 @@ func TestUninstallFlagsCombinations(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			if tc.flags.purge != tc.purge {
 				t.Errorf("purge: got %v, want %v", tc.flags.purge, tc.purge)
 			}

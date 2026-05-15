@@ -5,7 +5,6 @@ import (
 )
 
 func TestAllConstantsHaveValidValues(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name     string
@@ -59,7 +58,6 @@ func TestAllConstantsHaveValidValues(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			if tc.value < tc.minValue {
 				t.Errorf("%s = %d, should be >= %d", tc.name, tc.value, tc.minValue)
@@ -72,7 +70,6 @@ func TestAllConstantsHaveValidValues(t *testing.T) {
 }
 
 func TestRedactedValueConstantFormat(t *testing.T) {
-	t.Parallel()
 
 	redacted := GetRedactedValue()
 
@@ -87,7 +84,6 @@ func TestRedactedValueConstantFormat(t *testing.T) {
 }
 
 func TestSystemdServiceTemplateValid(t *testing.T) {
-	t.Parallel()
 
 	tmpl := GetSystemdServiceTemplate()
 
@@ -127,7 +123,6 @@ func TestSystemdServiceTemplateValid(t *testing.T) {
 }
 
 func TestUserServiceTemplateValid(t *testing.T) {
-	t.Parallel()
 
 	tmpl := GetUserServiceTemplate()
 
@@ -154,7 +149,6 @@ func TestUserServiceTemplateValid(t *testing.T) {
 }
 
 func TestSystemdTemplateSecurityHardening(t *testing.T) {
-	t.Parallel()
 
 	tmpl := GetSystemdServiceTemplate()
 
@@ -173,7 +167,6 @@ func TestSystemdTemplateSecurityHardening(t *testing.T) {
 }
 
 func TestSystemdTemplateHasReadWritePaths(t *testing.T) {
-	t.Parallel()
 
 	tmpl := GetSystemdServiceTemplate()
 
@@ -186,7 +179,6 @@ func TestSystemdTemplateHasReadWritePaths(t *testing.T) {
 }
 
 func TestSystemdTemplateHasCapabilities(t *testing.T) {
-	t.Parallel()
 
 	tmpl := GetSystemdServiceTemplate()
 
@@ -197,7 +189,6 @@ func TestSystemdTemplateHasCapabilities(t *testing.T) {
 }
 
 func TestTimeoutConstantsRelationships(t *testing.T) {
-	t.Parallel()
 
 	userCheck := GetUserCheckTimeoutSeconds()
 	command := GetCommandTimeoutSeconds()
@@ -219,7 +210,6 @@ func TestTimeoutConstantsRelationships(t *testing.T) {
 }
 
 func TestBufferSizesAreReasonable(t *testing.T) {
-	t.Parallel()
 
 	logBuffer := GetLogBroadcasterBufferSize()
 	signalBuffer := GetSignalChannelBufferSize()
@@ -240,7 +230,6 @@ func TestBufferSizesAreReasonable(t *testing.T) {
 }
 
 func TestPasswordLengthMeetsSecurity(t *testing.T) {
-	t.Parallel()
 
 	pwdLen := GetDefaultPasswordLength()
 

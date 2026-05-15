@@ -146,10 +146,15 @@ func (s *GeneratorService) Generate(
 		return nil, fmt.Errorf("saving report: %w", err)
 	}
 
-	// Generate report asynchronously
+	// Generate report asynchronously. Return a snapshot to the caller so they
+	// can observe the initial pending state without racing the goroutine's
+	// later writes to Status / CompletedAt / ExpiresAt / FileSize. Callers
+	// wanting to observe progress should use GetReport(id), which reads
+	// through s.mu.
 	go s.generateReport(context.Background(), report)
 
-	return report, nil
+	snapshot := *report
+	return &snapshot, nil
 }
 
 // generateReport performs the actual report generation.

@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -14,7 +15,10 @@ import (
 )
 
 // testHandler is a simple handler that captures log records for testing.
+// mu makes records-append safe under TestRedactingHandler_Handle_MultipleWriters,
+// which deliberately exercises concurrent Handle calls.
 type testHandler struct {
+	mu      sync.Mutex
 	records []slog.Record
 	attrs   []slog.Attr
 	groups  []string
@@ -25,6 +29,8 @@ func (h *testHandler) Enabled(_ context.Context, _ slog.Level) bool {
 }
 
 func (h *testHandler) Handle(_ context.Context, r slog.Record) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	h.records = append(h.records, r)
 	return nil
 }

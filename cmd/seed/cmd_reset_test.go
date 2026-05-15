@@ -7,7 +7,6 @@ import (
 )
 
 func TestResetFlagsStruct(t *testing.T) {
-	t.Parallel()
 
 	// Test default values
 	flags := resetFlags{}
@@ -27,7 +26,6 @@ func TestResetFlagsStruct(t *testing.T) {
 }
 
 func TestResetFlagsAllTrue(t *testing.T) {
-	t.Parallel()
 
 	flags := resetFlags{
 		preserveAuth: true,
@@ -51,7 +49,6 @@ func TestResetFlagsAllTrue(t *testing.T) {
 }
 
 func TestPreserveExistingCredentials(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name        string
@@ -167,7 +164,6 @@ func TestPreserveExistingCredentials(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			// Make a copy to avoid modifying the test case
 			newCfg := &config.Config{
@@ -270,7 +266,6 @@ func assertJWTPreservation(t *testing.T, tc struct {
 }
 
 func TestPreserveExistingCredentialsNilExisting(t *testing.T) {
-	t.Parallel()
 
 	newCfg := &config.Config{
 		Auth: config.AuthConfig{
@@ -304,7 +299,6 @@ func TestPreserveExistingCredentialsNilExisting(t *testing.T) {
 }
 
 func TestResetFlagsCombinations(t *testing.T) {
-	t.Parallel()
 
 	testCases := []struct {
 		name         string
@@ -325,7 +319,6 @@ func TestResetFlagsCombinations(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			flags := resetFlags{
 				preserveAuth: tc.preserveAuth,

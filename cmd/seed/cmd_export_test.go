@@ -7,7 +7,6 @@ import (
 )
 
 func TestRedactSecrets(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name string
@@ -78,7 +77,6 @@ func TestRedactSecrets(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			redacted := redactSecrets(tc.cfg)
 			assertRedactedSecrets(t, tc.cfg, redacted)
@@ -87,7 +85,6 @@ func TestRedactSecrets(t *testing.T) {
 }
 
 func TestRedactSecretsPreservesNonSensitiveData(t *testing.T) {
-	t.Parallel()
 
 	original := &config.Config{
 		Version: 2,
@@ -212,7 +209,6 @@ func assertPreservedNonSensitiveData(t *testing.T, original, redacted *config.Co
 }
 
 func TestRedactSecretsDoesNotModifyOriginal(t *testing.T) {
-	t.Parallel()
 
 	original := &config.Config{
 		Auth: config.AuthConfig{
@@ -279,7 +275,6 @@ func TestRedactSecretsDoesNotModifyOriginal(t *testing.T) {
 }
 
 func TestRedactedValueConstant(t *testing.T) {
-	t.Parallel()
 
 	if redactedValue != "[REDACTED]" {
 		t.Errorf("redactedValue should be '[REDACTED]', got %q", redactedValue)
@@ -287,7 +282,6 @@ func TestRedactedValueConstant(t *testing.T) {
 }
 
 func TestRedactSecretsWithEmptySNMPCredentials(t *testing.T) {
-	t.Parallel()
 
 	cfg := &config.Config{
 		Auth: config.AuthConfig{
@@ -308,7 +302,6 @@ func TestRedactSecretsWithEmptySNMPCredentials(t *testing.T) {
 }
 
 func TestRedactSecretsWithMultipleSNMPCredentials(t *testing.T) {
-	t.Parallel()
 
 	cfg := &config.Config{
 		SNMP: config.SNMPConfig{

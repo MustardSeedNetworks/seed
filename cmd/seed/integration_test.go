@@ -14,7 +14,6 @@ import (
 )
 
 func TestFullCLIInitialization(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -57,7 +56,6 @@ func TestFullCLIInitialization(t *testing.T) {
 }
 
 func TestCLIStateWithCustomConfig(t *testing.T) {
-	t.Parallel()
 
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "seed.json")
@@ -91,7 +89,6 @@ func TestCLIStateWithCustomConfig(t *testing.T) {
 }
 
 func TestAllCommandsHaveDescription(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -107,7 +104,6 @@ func TestAllCommandsHaveDescription(t *testing.T) {
 }
 
 func TestAllCommandsHaveRunFunction(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -120,7 +116,6 @@ func TestAllCommandsHaveRunFunction(t *testing.T) {
 }
 
 func TestPersistentFlagsAvailableToSubcommands(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -156,7 +151,6 @@ func TestPersistentFlagsAvailableToSubcommands(t *testing.T) {
 }
 
 func TestRootCommandVersion(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -167,7 +161,6 @@ func TestRootCommandVersion(t *testing.T) {
 }
 
 func TestRootCommandUse(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 
@@ -177,7 +170,6 @@ func TestRootCommandUse(t *testing.T) {
 }
 
 func TestCommandHelpOutput(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -210,7 +202,6 @@ func TestCommandHelpOutput(t *testing.T) {
 }
 
 func TestSubcommandHelpOutput(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -218,7 +209,6 @@ func TestSubcommandHelpOutput(t *testing.T) {
 	// Test help for each subcommand
 	for _, cmd := range state.rootCmd.Commands() {
 		t.Run(cmd.Use, func(t *testing.T) {
-			t.Parallel()
 
 			buf := new(bytes.Buffer)
 			cmd.SetOut(buf)
@@ -236,7 +226,6 @@ func TestSubcommandHelpOutput(t *testing.T) {
 }
 
 func TestCompletionCommandIsUsable(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -258,7 +247,6 @@ func TestCompletionCommandIsUsable(t *testing.T) {
 	shells := []string{"bash", "zsh", "fish", "powershell"}
 	for _, shell := range shells {
 		t.Run(shell, func(t *testing.T) {
-			t.Parallel()
 
 			buf := new(bytes.Buffer)
 
@@ -285,7 +273,6 @@ func TestCompletionCommandIsUsable(t *testing.T) {
 }
 
 func TestNoCommandConflicts(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)
@@ -310,7 +297,6 @@ func TestNoCommandConflicts(t *testing.T) {
 }
 
 func TestFlagsDoNotConflict(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCommands(state)

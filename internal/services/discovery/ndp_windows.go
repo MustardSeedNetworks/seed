@@ -105,8 +105,9 @@ func (ns *NDPScanner) Start() error {
 	ns.running = true
 	ns.stopChan = make(chan struct{})
 
-	// Start background scanner
-	go ns.scanLoop()
+	// Pass stopChan as a parameter so the goroutine works on its captured
+	// copy; matches the linux build.
+	go ns.scanLoop(ns.stopChan)
 
 	slog.Info("IPv6 NDP scanner started", "interface", ns.interfaceName)
 	return nil
@@ -150,8 +151,9 @@ func (ns *NDPScanner) GetNeighbors() map[string]*NDPNeighbor {
 	return neighbors
 }
 
-// scanLoop periodically scans the IPv6 neighbor table.
-func (ns *NDPScanner) scanLoop() {
+// scanLoop periodically scans the IPv6 neighbor table. stopChan is passed as
+// a parameter so the goroutine works on its captured copy; matches linux.
+func (ns *NDPScanner) scanLoop(stopChan <-chan struct{}) {
 	// Initial scan
 	if err := ns.scanNeighborTable(); err != nil {
 		slog.Error("IPv6 neighbor scan error", "error", err)
@@ -162,7 +164,7 @@ func (ns *NDPScanner) scanLoop() {
 
 	for {
 		select {
-		case <-ns.stopChan:
+		case <-stopChan:
 			return
 		case <-ticker.C:
 			if err := ns.scanNeighborTable(); err != nil {

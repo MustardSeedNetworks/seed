@@ -10,7 +10,6 @@ import (
 )
 
 func TestCopyFileLogic(t *testing.T) {
-	t.Parallel()
 
 	tmpDir := t.TempDir()
 	srcPath := filepath.Join(tmpDir, "source.txt")
@@ -40,7 +39,6 @@ func TestCopyFileLogic(t *testing.T) {
 }
 
 func TestCopyFileNonExistentSource(t *testing.T) {
-	t.Parallel()
 
 	tmpDir := t.TempDir()
 	srcPath := filepath.Join(tmpDir, "nonexistent.txt")
@@ -53,7 +51,6 @@ func TestCopyFileNonExistentSource(t *testing.T) {
 }
 
 func TestCreateInstallDirectoriesLogic(t *testing.T) {
-	t.Parallel()
 
 	tmpDir := t.TempDir()
 	dirs := []string{
@@ -82,7 +79,6 @@ func TestCreateInstallDirectoriesLogic(t *testing.T) {
 }
 
 func TestCreateInstallDirectoriesNestedPaths(t *testing.T) {
-	t.Parallel()
 
 	tmpDir := t.TempDir()
 	dirs := []string{
@@ -103,7 +99,6 @@ func TestCreateInstallDirectoriesNestedPaths(t *testing.T) {
 }
 
 func TestResolveBinaryDestinationUser(t *testing.T) {
-	t.Parallel()
 
 	// Test user mode
 	p := &paths.Paths{
@@ -122,7 +117,6 @@ func TestResolveBinaryDestinationUser(t *testing.T) {
 }
 
 func TestResolveBinaryDestinationSystem(t *testing.T) {
-	t.Parallel()
 
 	p := &paths.Paths{
 		BinaryDir: "/usr/local/bin",
@@ -140,7 +134,6 @@ func TestResolveBinaryDestinationSystem(t *testing.T) {
 }
 
 func TestInstallBinaryWithForce(t *testing.T) {
-	t.Parallel()
 
 	tmpDir := t.TempDir()
 	srcPath := filepath.Join(tmpDir, "source")
@@ -182,7 +175,6 @@ func TestInstallBinaryWithForce(t *testing.T) {
 }
 
 func TestInstallBinaryNewDestination(t *testing.T) {
-	t.Parallel()
 
 	tmpDir := t.TempDir()
 	srcPath := filepath.Join(tmpDir, "source")
@@ -211,7 +203,6 @@ func TestInstallBinaryNewDestination(t *testing.T) {
 }
 
 func TestServiceConfigTemplate(t *testing.T) {
-	t.Parallel()
 
 	cfg := serviceConfig{
 		User:       "seed",
@@ -256,7 +247,6 @@ func TestServiceConfigTemplate(t *testing.T) {
 }
 
 func TestUserServiceConfigTemplate(t *testing.T) {
-	t.Parallel()
 
 	cfg := serviceConfig{
 		BinaryPath: "/home/user/.local/bin/seed",
@@ -290,7 +280,6 @@ func TestUserServiceConfigTemplate(t *testing.T) {
 }
 
 func TestPrintCompletionMessageDoesNotPanic(t *testing.T) {
-	t.Parallel()
 
 	// Test that printCompletionMessage doesn't panic for either mode
 	defer func() {
@@ -306,7 +295,6 @@ func TestPrintCompletionMessageDoesNotPanic(t *testing.T) {
 }
 
 func TestCreateDefaultConfigLogic(t *testing.T) {
-	t.Parallel()
 
 	tmpDir := t.TempDir()
 
@@ -321,7 +309,6 @@ func TestCreateDefaultConfigLogic(t *testing.T) {
 }
 
 func TestCreateDefaultConfigExisting(t *testing.T) {
-	t.Parallel()
 
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "seed.json")

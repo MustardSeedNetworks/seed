@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
@@ -134,6 +135,7 @@ func (s *TracerouteService) Trace(
 type TopologyService struct {
 	cfg    *config.Config
 	db     *database.DB
+	mu     sync.Mutex // Guards cancel against concurrent Start/Stop.
 	cancel context.CancelFunc
 }
 
@@ -147,6 +149,8 @@ func NewTopologyService(cfg *config.Config, db *database.DB) *TopologyService {
 
 // Start begins background topology discovery.
 func (s *TopologyService) Start(ctx context.Context) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	_, s.cancel = context.WithCancel(ctx)
 	// Topology discovery requires combining data from multiple sources:
 	// - Device discovery results
@@ -158,8 +162,11 @@ func (s *TopologyService) Start(ctx context.Context) error {
 
 // Stop halts topology discovery.
 func (s *TopologyService) Stop() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if s.cancel != nil {
 		s.cancel()
+		s.cancel = nil
 	}
 }
 

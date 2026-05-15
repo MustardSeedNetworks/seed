@@ -351,8 +351,11 @@ func (t *Tester) StartContinuous(interval time.Duration, callback func(*PingStat
 	t.running = true
 	t.stopCh = make(chan struct{})
 	t.stopOnce = sync.Once{} // Reset Once for new channel (fixes #854)
+	stopCh := t.stopCh
 	t.mu.Unlock()
 
+	// Capture stopCh into a local so the goroutine doesn't race with a
+	// future StartContinuous reassigning t.stopCh.
 	go func() {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
@@ -370,7 +373,7 @@ func (t *Tester) StartContinuous(interval time.Duration, callback func(*PingStat
 				if callback != nil {
 					callback(tickStats)
 				}
-			case <-t.stopCh:
+			case <-stopCh:
 				return
 			}
 		}

@@ -177,12 +177,15 @@ func (m *Monitor) Start() error {
 		return nil
 	}
 	m.stopCh = make(chan struct{})
+	stopCh := m.stopCh
 	m.running = true
 	m.startTime = time.Now()
 	m.state = checkLinkState(m.interfaceName)
 	m.mu.Unlock()
 
-	go m.pollLoop()
+	// pollLoop reads its stopCh from a parameter so a future Stop+restart
+	// cycle doesn't race the field with this goroutine.
+	go m.pollLoop(stopCh)
 	return nil
 }
 
@@ -268,14 +271,15 @@ func (m *Monitor) WaitForDown(timeout time.Duration) bool {
 	return m.WaitForState(StateDown, timeout)
 }
 
-// pollLoop continuously checks link state.
-func (m *Monitor) pollLoop() {
+// pollLoop continuously checks link state. stopCh is a parameter so the
+// goroutine works on its captured channel, not the m.stopCh field.
+func (m *Monitor) pollLoop(stopCh <-chan struct{}) {
 	ticker := time.NewTicker(m.pollInterval)
 	defer ticker.Stop()
 
 	for {
 		select {
-		case <-m.stopCh:
+		case <-stopCh:
 			return
 		case <-ticker.C:
 			m.checkAndNotify()

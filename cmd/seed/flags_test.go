@@ -9,7 +9,6 @@ import (
 )
 
 func TestParseInstallFlagsValidation(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name       string
@@ -45,7 +44,6 @@ func TestParseInstallFlagsValidation(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			// Create a test command with the flags
 			cmd := &cobra.Command{}
@@ -76,7 +74,6 @@ func TestParseInstallFlagsValidation(t *testing.T) {
 }
 
 func TestParseResetFlagsValidation(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name         string
@@ -131,7 +128,6 @@ func TestParseResetFlagsValidation(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			cmd := &cobra.Command{}
 			cmd.Flags().Bool("preserve-auth", tc.preserveAuth, "")
@@ -166,7 +162,6 @@ func TestParseResetFlagsValidation(t *testing.T) {
 }
 
 func TestParseUninstallFlagsValidation(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name       string
@@ -221,7 +216,6 @@ func TestParseUninstallFlagsValidation(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			cmd := &cobra.Command{}
 			cmd.Flags().Bool("purge", tc.purge, "")
@@ -256,7 +250,6 @@ func TestParseUninstallFlagsValidation(t *testing.T) {
 }
 
 func TestResolveInstallModeLogic(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name       string
@@ -290,7 +283,6 @@ func TestResolveInstallModeLogic(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			flags := installFlags{
 				systemMode: tc.systemMode,
@@ -330,7 +322,6 @@ func boolToString(b bool) string {
 }
 
 func TestInstallCmdFlagsRegistration(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initInstallCmd(state)
@@ -363,7 +354,6 @@ func TestInstallCmdFlagsRegistration(t *testing.T) {
 }
 
 func TestResetCmdFlagsRegistration(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initResetCmd(state)
@@ -402,7 +392,6 @@ func TestResetCmdFlagsRegistration(t *testing.T) {
 }
 
 func TestUninstallCmdFlagsRegistration(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initUninstallCmd(state)
@@ -435,7 +424,6 @@ func TestUninstallCmdFlagsRegistration(t *testing.T) {
 }
 
 func TestSetupCmdFlagsRegistration(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initSetupCmd(state)
@@ -462,7 +450,6 @@ func TestSetupCmdFlagsRegistration(t *testing.T) {
 }
 
 func TestExportCmdFlagsRegistration(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initExportCmd(state)
@@ -501,7 +488,6 @@ func TestExportCmdFlagsRegistration(t *testing.T) {
 }
 
 func TestValidateCmdFlagsRegistration(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initValidateCmd(state)

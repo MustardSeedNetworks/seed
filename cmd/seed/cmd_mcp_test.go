@@ -7,7 +7,6 @@ import (
 )
 
 func TestInitMCPCmd(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initMCPCmd(state)
@@ -35,7 +34,6 @@ func TestInitMCPCmd(t *testing.T) {
 }
 
 func TestMCPCmdHasRunFunction(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initMCPCmd(state)
@@ -59,7 +57,6 @@ func TestMCPCmdHasRunFunction(t *testing.T) {
 }
 
 func TestMCPCmdLongDescriptionContent(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initMCPCmd(state)
@@ -93,7 +90,6 @@ func TestMCPCmdLongDescriptionContent(t *testing.T) {
 }
 
 func TestMCPCmdNoSubcommands(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initMCPCmd(state)
@@ -118,7 +114,6 @@ func TestMCPCmdNoSubcommands(t *testing.T) {
 }
 
 func TestMCPCmdExampleInLongDescription(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initMCPCmd(state)

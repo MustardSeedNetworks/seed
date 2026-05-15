@@ -7,6 +7,10 @@
 # Test files are treated same as production code
 # ============================================
 
+# pipefail makes `go test ... | tail -10` honour go test's exit code instead of
+# tail's. Without it the hook silently let failing tests land (#945).
+set -o pipefail
+
 # Skip hooks in CI
 [ -n "$CI" ] && exit 0
 
@@ -110,9 +114,9 @@ if [ -n "$STAGED_GO_FILES" ]; then
     echo "⚠ gosec not installed, skipping security scan"
   fi
 
-  # Go tests (short mode)
+  # Go tests (short mode, no -race here — that runs in CI per #945)
   echo "Running Go tests..."
-  if ! go test -short -race ./... 2>&1 | tail -10; then
+  if ! go test -short ./... 2>&1 | tail -10; then
     echo "❌ Go tests failed!"
     FAILED=1
   else

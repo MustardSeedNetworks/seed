@@ -12,7 +12,6 @@ import (
 )
 
 func TestGeneratePasswordAndHashValid(t *testing.T) {
-	t.Parallel()
 
 	password, hash, err := generatePasswordAndHash()
 	if err != nil {
@@ -43,7 +42,6 @@ func TestGeneratePasswordAndHashValid(t *testing.T) {
 }
 
 func TestGeneratePasswordAndHashVerifiable(t *testing.T) {
-	t.Parallel()
 
 	password, hash, err := generatePasswordAndHash()
 	if err != nil {
@@ -62,7 +60,6 @@ func TestGeneratePasswordAndHashVerifiable(t *testing.T) {
 }
 
 func TestEnsureConfigDirCreatesNestedDirectories(t *testing.T) {
-	t.Parallel()
 
 	tmpDir := t.TempDir()
 	nestedPath := filepath.Join(tmpDir, "a", "b", "c", "config.json")
@@ -80,7 +77,6 @@ func TestEnsureConfigDirCreatesNestedDirectories(t *testing.T) {
 }
 
 func TestEnsureConfigDirWithExistingParent(t *testing.T) {
-	t.Parallel()
 
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.json")
@@ -93,7 +89,6 @@ func TestEnsureConfigDirWithExistingParent(t *testing.T) {
 }
 
 func TestEnsureConfigDirCurrentDirectory(t *testing.T) {
-	t.Parallel()
 
 	// Test with just a filename (current directory)
 	err := ensureConfigDir("config.json")
@@ -103,7 +98,6 @@ func TestEnsureConfigDirCurrentDirectory(t *testing.T) {
 }
 
 func TestEnsureConfigDirDotPath(t *testing.T) {
-	t.Parallel()
 
 	err := ensureConfigDir("./config.json")
 	if err != nil {
@@ -112,7 +106,6 @@ func TestEnsureConfigDirDotPath(t *testing.T) {
 }
 
 func TestPreserveExistingCredentialsWithAllFlags(t *testing.T) {
-	t.Parallel()
 
 	newCfg := &config.Config{
 		Auth: config.AuthConfig{
@@ -150,7 +143,6 @@ func TestPreserveExistingCredentialsWithAllFlags(t *testing.T) {
 }
 
 func TestPreserveExistingCredentialsNoPreservation(t *testing.T) {
-	t.Parallel()
 
 	newCfg := &config.Config{
 		Auth: config.AuthConfig{
@@ -188,7 +180,6 @@ func TestPreserveExistingCredentialsNoPreservation(t *testing.T) {
 }
 
 func TestCheckConfigWarningsAllMissing(t *testing.T) {
-	t.Parallel()
 
 	cfg := &config.Config{
 		Interface: config.InterfaceConfig{
@@ -211,7 +202,6 @@ func TestCheckConfigWarningsAllMissing(t *testing.T) {
 }
 
 func TestCheckConfigWarningsNoneMissing(t *testing.T) {
-	t.Parallel()
 
 	cfg := &config.Config{
 		Interface: config.InterfaceConfig{
@@ -234,7 +224,6 @@ func TestCheckConfigWarningsNoneMissing(t *testing.T) {
 }
 
 func TestRedactSecretsComprehensive(t *testing.T) {
-	t.Parallel()
 
 	cfg := &config.Config{
 		Version: 1,
@@ -306,7 +295,6 @@ func TestRedactSecretsComprehensive(t *testing.T) {
 }
 
 func TestDistroParsingEdgeCases(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name       string
@@ -342,7 +330,6 @@ func TestDistroParsingEdgeCases(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			distro := parseOSRelease(tc.content)
 
@@ -357,7 +344,6 @@ func TestDistroParsingEdgeCases(t *testing.T) {
 }
 
 func TestModeStringAllValues(t *testing.T) {
-	t.Parallel()
 
 	// paths.Mode constant values:
 	// ModeAuto = 0, ModeUser = 1, ModeSystem = 2
@@ -375,7 +361,6 @@ func TestModeStringAllValues(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			result := modeString(tc.input)
 

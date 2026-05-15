@@ -115,13 +115,16 @@ func (m *LinkMonitor) Start() error {
 		return nil
 	}
 	m.stopCh = make(chan struct{})
+	stopCh := m.stopCh
 	m.running = true
 	m.mu.Unlock()
 
 	// Get initial state
 	m.lastState = m.checkLinkState()
 
-	go m.pollLoop()
+	// pollLoop reads stopCh as a parameter, not via m.stopCh, so Stop's
+	// close-then-reassign cycle on a future Start can't race the read.
+	go m.pollLoop(stopCh)
 	return nil
 }
 
@@ -165,14 +168,15 @@ type stateChangeResult struct {
 	shouldNotify bool
 }
 
-// pollLoop continuously checks link state.
-func (m *LinkMonitor) pollLoop() {
+// pollLoop continuously checks link state. stopCh is a parameter (not read
+// from m.stopCh) so the goroutine works on its captured channel.
+func (m *LinkMonitor) pollLoop(stopCh <-chan struct{}) {
 	ticker := time.NewTicker(m.pollInterval)
 	defer ticker.Stop()
 
 	for {
 		select {
-		case <-m.stopCh:
+		case <-stopCh:
 			return
 		case <-ticker.C:
 			m.handlePollTick()

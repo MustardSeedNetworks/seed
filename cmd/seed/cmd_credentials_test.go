@@ -12,7 +12,6 @@ import (
 )
 
 func TestInitCredentialsCmd(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCredentialsCmd(state)
@@ -40,7 +39,6 @@ func TestInitCredentialsCmd(t *testing.T) {
 }
 
 func TestCredentialsCmdHasJSONFlag(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCredentialsCmd(state)
@@ -69,7 +67,6 @@ func TestCredentialsCmdHasJSONFlag(t *testing.T) {
 }
 
 func TestCredentialsCmdHasRunFunction(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCredentialsCmd(state)
@@ -93,7 +90,6 @@ func TestCredentialsCmdHasRunFunction(t *testing.T) {
 }
 
 func TestCredentialsCommandLongDescriptionContent(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCredentialsCmd(state)
@@ -126,7 +122,6 @@ func TestCredentialsCommandLongDescriptionContent(t *testing.T) {
 }
 
 func TestCredentialsCmdWithConfigFile(t *testing.T) {
-	t.Parallel()
 
 	// Create a temp directory for config
 	tmpDir := t.TempDir()
@@ -159,7 +154,6 @@ func TestCredentialsCmdWithConfigFile(t *testing.T) {
 }
 
 func TestCredentialsCmdFlagTypes(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initCredentialsCmd(state)

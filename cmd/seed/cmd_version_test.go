@@ -10,7 +10,6 @@ import (
 )
 
 func TestInitVersionCmd(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initVersionCmd(state)
@@ -38,7 +37,6 @@ func TestInitVersionCmd(t *testing.T) {
 }
 
 func TestVersionCmdExecution(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initVersionCmd(state)
@@ -69,7 +67,6 @@ func TestVersionCmdExecution(t *testing.T) {
 }
 
 func TestVersionCmdHasRunFunction(t *testing.T) {
-	t.Parallel()
 
 	state := newCLIState()
 	initVersionCmd(state)
