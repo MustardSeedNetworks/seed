@@ -128,12 +128,15 @@ jobs:
       packages: write
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - arch: amd64
             cc: gcc
+            pkg_config_path: /usr/lib/x86_64-linux-gnu/pkgconfig
           - arch: arm64
             cc: aarch64-linux-gnu-gcc
+            pkg_config_path: /usr/lib/aarch64-linux-gnu/pkgconfig
 
     steps:
       - uses: actions/checkout@v6.0.2
@@ -163,6 +166,12 @@ jobs:
         run: |
           if [ "${{ matrix.arch }}" = "arm64" ]; then
             sudo dpkg --add-architecture arm64
+            # Replace Ubuntu's default deb822 sources with explicit amd64
+            # .list entries. The deb822 format groups each repo into a
+            # multi-line stanza, and appending `Architectures: amd64` at
+            # end-of-file only attaches to the last stanza — which leaves
+            # apt fetching arm64 indexes from azure/security.ubuntu.com
+            # (404, since arm64 packages are at ports.ubuntu.com).
             sudo rm -f /etc/apt/sources.list.d/ubuntu.sources
             sudo tee /etc/apt/sources.list.d/ubuntu-amd64.list >/dev/null <<'EOF'
           deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble main universe multiverse restricted
@@ -170,6 +179,9 @@ jobs:
           deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-backports main universe multiverse restricted
           deb [arch=amd64] http://security.ubuntu.com/ubuntu noble-security main universe multiverse restricted
           EOF
+            # Restrict third-party .list sources to amd64 too, but skip
+            # entries that already have [arch=...] (e.g. microsoft-prod.list
+            # would otherwise become malformed) and skip our own files.
             for f in /etc/apt/sources.list.d/*.list /etc/apt/sources.list; do
               [ -f "$f" ] || continue
               case "$f" in
@@ -177,6 +189,8 @@ jobs:
               esac
               sudo sed -i '/^deb \[/!s|^deb |deb [arch=amd64] |' "$f"
             done
+            # Add arm64 sources from ports.ubuntu.com (the canonical home
+            # for non-amd64 Ubuntu architectures).
             sudo tee /etc/apt/sources.list.d/ports-arm64.list >/dev/null <<'EOF'
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main universe multiverse restricted
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main universe multiverse restricted
@@ -185,10 +199,17 @@ jobs:
           EOF
           fi
 
+          # apt-get update can return 100 on partial source failures (e.g.
+          # third-party repos that don't publish arm64 indexes). Tolerate it
+          # here — the install step below is the actual gate: if the arm64
+          # libpcap headers don't land we'll still fail loudly.
           sudo apt-get update || true
           sudo apt-get install -y rpm
           if [ "${{ matrix.arch }}" = "arm64" ]; then
-            sudo apt-get install -y gcc-aarch64-linux-gnu linux-libc-dev:arm64 libpcap-dev:arm64 libpcap0.8-dev:arm64 pkg-config qemu-user-static
+            # linux-libc-dev:arm64 brings kernel headers needed by libpcap's
+            # netlink probes during cgo link. libpcap0.8-dev was redundant —
+            # libpcap-dev already pulls the right SO links.
+            sudo apt-get install -y gcc-aarch64-linux-gnu linux-libc-dev:arm64 libpcap-dev:arm64 pkg-config qemu-user-static
           else
             sudo apt-get install -y libpcap-dev pkg-config
           fi
@@ -232,15 +253,11 @@ jobs:
           GOARCH: ${{ matrix.arch }}
           CGO_ENABLED: 1
           CC: ${{ matrix.cc }}
+          PKG_CONFIG_PATH: ${{ matrix.pkg_config_path }}
           VERSION: ${{ github.ref_name }}
           COMMIT: ${{ github.sha }}
           UI_HASH: ${{ steps.ui-hash.outputs.hash }}
         run: |
-          if [ "${{ matrix.arch }}" = "arm64" ]; then
-            export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
-          else
-            export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
-          fi
           BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           go build -trimpath -buildvcs=false \
             -ldflags="-s -w \
