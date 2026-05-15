@@ -290,11 +290,14 @@ func (e *Engine) Start(ctx context.Context) error {
 
 	e.running = true
 	e.stopCh = make(chan struct{})
+	stopCh := e.stopCh
 
-	// Start auto-scan if configured
+	// Start auto-scan if configured. Pass stopCh as a parameter so the
+	// goroutine works on its captured copy (avoids racing on e.stopCh if
+	// Stop reassigns it on a future restart cycle).
 	if e.config.AutoScanInterval > 0 {
 		e.wg.Add(1)
-		go e.autoScanLoop(ctx)
+		go e.autoScanLoop(ctx, stopCh)
 	}
 
 	return nil
@@ -736,8 +739,9 @@ func (e *Engine) bluetoothDeviceToDevice(bt *BluetoothDevice) *DiscoveredDevice 
 	return device
 }
 
-// autoScanLoop runs periodic scans.
-func (e *Engine) autoScanLoop(ctx context.Context) {
+// autoScanLoop runs periodic scans. stopCh is passed as a parameter rather
+// than read from e.stopCh so Stop's potential reassignment doesn't race.
+func (e *Engine) autoScanLoop(ctx context.Context, stopCh <-chan struct{}) {
 	defer e.wg.Done()
 
 	ticker := time.NewTicker(e.config.AutoScanInterval)
@@ -747,7 +751,7 @@ func (e *Engine) autoScanLoop(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			_, _ = e.QuickScan(ctx)
-		case <-e.stopCh:
+		case <-stopCh:
 			return
 		case <-ctx.Done():
 			return

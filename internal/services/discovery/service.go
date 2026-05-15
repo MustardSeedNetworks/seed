@@ -135,7 +135,7 @@ func (s *Service) Start() error {
 
 	// Start background rescan loop if configured
 	rescanInterval := s.cfg.NetworkDiscovery.Timing.RescanInterval
-	if rescanInterval > 0 && s.shouldDoActiveScan() {
+	if rescanInterval > 0 && s.shouldDoActiveScanLocked() {
 		s.rescanTicker = time.NewTicker(rescanInterval)
 		go s.rescanLoop()
 	}
@@ -143,7 +143,7 @@ func (s *Service) Start() error {
 	// Trigger initial scan asynchronously to populate subnet info immediately (fixes #XXX)
 	// This ensures GetStatus() returns valid subnet info without waiting for the first
 	// scheduled rescan or manual trigger from the frontend
-	if s.shouldDoActiveScan() {
+	if s.shouldDoActiveScanLocked() {
 		go func() {
 			ctx, cancel := context.WithTimeout(context.Background(), s.cfg.NetworkDiscovery.ScanTimeout)
 			defer cancel()
@@ -210,16 +210,28 @@ func (s *Service) applyOptions(opts *config.DiscoveryOptions) error {
 }
 
 // shouldDoActiveScan returns true if any active scanning methods are enabled.
+// Takes s.mu.RLock; do not call from contexts already holding s.mu (Go's
+// RWMutex is not reentrant). For locked callers, use shouldDoActiveScanLocked.
 func (s *Service) shouldDoActiveScan() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.shouldDoActiveScanLocked()
+}
+
+// shouldDoActiveScanLocked is the no-lock variant — the caller must already
+// hold s.mu (read or write). Used from Start/Reload which hold s.mu.Lock.
+func (s *Service) shouldDoActiveScanLocked() bool {
 	opts := s.cfg.NetworkDiscovery.Options
 	return opts.ARPScan || opts.ICMPScan || opts.PortScan.Enabled
 }
 
 // rescanLoop periodically triggers network scans based on RescanInterval.
+// Both the ticker and stopCh are captured up front so a future Reload that
+// reassigns s.stopCh or s.rescanTicker doesn't race this goroutine.
 func (s *Service) rescanLoop() {
-	// Capture ticker channel at start to avoid race with Stop() setting ticker to nil
 	s.mu.RLock()
 	ticker := s.rescanTicker
+	stopCh := s.stopCh
 	s.mu.RUnlock()
 
 	if ticker == nil {
@@ -228,7 +240,7 @@ func (s *Service) rescanLoop() {
 
 	for {
 		select {
-		case <-s.stopCh:
+		case <-stopCh:
 			return
 		case <-ticker.C:
 			logging.GetLogger().Debug("Discovery: starting scheduled rescan")
@@ -376,7 +388,7 @@ func (s *Service) Reload() error {
 
 		// Restart rescan ticker if needed
 		rescanInterval := s.cfg.NetworkDiscovery.Timing.RescanInterval
-		if rescanInterval > 0 && s.shouldDoActiveScan() {
+		if rescanInterval > 0 && s.shouldDoActiveScanLocked() {
 			s.rescanTicker = time.NewTicker(rescanInterval)
 			go s.rescanLoop()
 		}

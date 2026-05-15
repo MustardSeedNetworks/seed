@@ -392,17 +392,59 @@ func (db *OUIDatabase) DownloadOUIDatabase(ctx context.Context, destPath string)
 	return nil
 }
 
+// ieeeOUICache caches parsed IEEE OUI files keyed by absolute path. The
+// 6.5MB+ oui.txt takes ~hundreds of ms to parse and was being parsed once
+// per DeviceDiscovery construction — tests creating many DeviceDiscovery
+// instances paid that cost N times. The cache makes repeat loads ~free.
+//
+//nolint:gochecknoglobals // Intentional thread-safe cache: same singleton pattern as i18n, config, messages.
+var ieeeOUICache sync.Map // map[string]*ieeeOUIEntry
+
+type ieeeOUIEntry struct {
+	once    sync.Once
+	vendors map[string]string
+	err     error
+}
+
+// estimatedOUIEntries is the initial capacity hint for the vendors map.
+// IEEE oui.txt has ~50k assignments today; over-allocating slightly is
+// cheaper than rehashing during the parse.
+const estimatedOUIEntries = 50000
+
 // LoadFromIEEEFormat loads OUI entries from the IEEE oui.txt format
 // Format: "AA-BB-CC   (hex)\t\tVendor Name".
 func (db *OUIDatabase) LoadFromIEEEFormat(path string) error {
-	file, err := os.Open(path)
-	if err != nil {
-		return fmt.Errorf("open IEEE OUI file: %w", err)
+	abs, absErr := filepath.Abs(path)
+	if absErr != nil {
+		abs = path
 	}
-	defer func() { _ = file.Close() }()
+	val, _ := ieeeOUICache.LoadOrStore(abs, &ieeeOUIEntry{})
+	entry, ok := val.(*ieeeOUIEntry)
+	if !ok {
+		return fmt.Errorf("ouiCache: unexpected entry type %T for path %q", val, abs)
+	}
+	entry.once.Do(func() {
+		entry.vendors, entry.err = parseIEEEOUIFile(path)
+	})
+	if entry.err != nil {
+		return entry.err
+	}
 
 	db.mu.Lock()
 	defer db.mu.Unlock()
+	maps.Copy(db.vendors, entry.vendors)
+	logging.GetLogger().Debug("Loaded OUI database from cache", "path", abs, "entries", len(entry.vendors))
+	return nil
+}
+
+// parseIEEEOUIFile parses an IEEE oui.txt file into a vendor map. Called
+// once per path via the ieeeOUICache.
+func parseIEEEOUIFile(path string) (map[string]string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("open IEEE OUI file: %w", err)
+	}
+	defer func() { _ = file.Close() }()
 
 	// IEEE format regex: "AA-BB-CC   (hex)\t\tVendor Name"
 	// or "AABBCC     (base 16)\t\tVendor Name"
@@ -411,6 +453,7 @@ func (db *OUIDatabase) LoadFromIEEEFormat(path string) error {
 	)
 	base16Pattern := regexp.MustCompile(`^([0-9A-Fa-f]{6})\s+\(base 16\)\s+(.+)$`)
 
+	vendors := make(map[string]string, estimatedOUIEntries)
 	scanner := bufio.NewScanner(file)
 	count := 0
 	for scanner.Scan() {
@@ -421,7 +464,7 @@ func (db *OUIDatabase) LoadFromIEEEFormat(path string) error {
 			prefix := strings.ToUpper(strings.ReplaceAll(matches[1], "-", ":"))
 			vendor := strings.TrimSpace(matches[2])
 			if vendor != "" {
-				db.vendors[prefix] = vendor
+				vendors[prefix] = vendor
 				count++
 			}
 			continue
@@ -433,16 +476,17 @@ func (db *OUIDatabase) LoadFromIEEEFormat(path string) error {
 			prefix := fmt.Sprintf("%s:%s:%s", mac[0:2], mac[2:4], mac[4:6])
 			vendor := strings.TrimSpace(matches[2])
 			if vendor != "" {
-				db.vendors[prefix] = vendor
+				vendors[prefix] = vendor
 				count++
 			}
 		}
 	}
 
 	if scanErr := scanner.Err(); scanErr != nil {
-		return fmt.Errorf("scan IEEE OUI file: %w", scanErr)
+		return nil, fmt.Errorf("scan IEEE OUI file: %w", scanErr)
 	}
-	return nil
+	logging.GetLogger().Info("Parsed IEEE OUI file", "path", path, "entries", count)
+	return vendors, nil
 }
 
 // NeedsUpdate checks if the OUI database file needs updating.
