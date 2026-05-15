@@ -12,9 +12,10 @@ import (
 //
 //nolint:gochecknoglobals // Build metadata injected via ldflags.
 var (
-	Version   string // Set via -ldflags
-	Commit    string // Set via -ldflags
-	BuildTime string // Set via -ldflags
+	Version     string // Set via -ldflags
+	Commit      string // Set via -ldflags
+	BuildTime   string // Set via -ldflags
+	UIBuildHash string // Set via -ldflags; md5 of all files under ui/dist
 )
 
 const (
@@ -109,12 +110,22 @@ func GetBuildTime() string {
 	return buildTime
 }
 
+// GetUIBuildHash returns the md5 hash of the embedded UI assets.
+// Returns unknownValue when not injected via -ldflags at build time.
+func GetUIBuildHash() string {
+	if UIBuildHash == "" {
+		return unknownValue
+	}
+	return UIBuildHash
+}
+
 // Info returns all version information.
 func Info() map[string]string {
 	ver, commit, buildTime := getVersionInfo()
 	return map[string]string{
-		"version":   ver,
-		"commit":    commit,
-		"buildTime": buildTime,
+		"version":     ver,
+		"commit":      commit,
+		"buildTime":   buildTime,
+		"uiBuildHash": GetUIBuildHash(),
 	}
 }

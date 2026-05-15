@@ -760,6 +760,7 @@ func (s *Server) onLinkStateChange(event netif.LinkEvent) {
 
 // setupRoutes configures all HTTP routes.
 func (s *Server) setupRoutes() {
+	s.mux.HandleFunc("/__version", s.handleBuildVersion)
 	s.setupCoreRoutes()
 	s.registerUpdateRoutes()
 	s.setupSAPRoutes()

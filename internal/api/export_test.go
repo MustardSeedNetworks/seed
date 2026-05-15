@@ -136,6 +136,11 @@ func (s *Server) HandleStatus(w http.ResponseWriter, r *http.Request) {
 	s.handleStatus(w, r)
 }
 
+// HandleBuildVersion exports handleBuildVersion for testing.
+func (s *Server) HandleBuildVersion(w http.ResponseWriter, r *http.Request) {
+	s.handleBuildVersion(w, r)
+}
+
 // HandleExport exports handleExport for testing.
 func (s *Server) HandleExport(w http.ResponseWriter, r *http.Request) {
 	s.handleExport(w, r)

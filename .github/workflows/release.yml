@@ -208,20 +208,46 @@ jobs:
           npm ci
           npm run build
 
+      - name: Verify embedded frontend
+        run: |
+          # ui/dist is consumed by ui/embed.go via //go:embed all:dist before
+          # the Go build runs. If npm run build silently produced nothing,
+          # the binary would ship without a UI — fail loudly here.
+          if [ ! -d ui/dist ] || [ -z "$(ls -A ui/dist)" ]; then
+            echo "ui/dist is missing or empty after npm run build"
+            exit 1
+          fi
+          ls -la ui/dist/
+
+      - name: Generate UI build hash
+        id: ui-hash
+        run: |
+          UI_HASH=$(find ui/dist -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1)
+          echo "hash=$UI_HASH" >> "$GITHUB_OUTPUT"
+          echo "UI Build Hash: $UI_HASH"
+
       - name: Build The Seed
         env:
           GOOS: linux
           GOARCH: ${{ matrix.arch }}
           CGO_ENABLED: 1
           CC: ${{ matrix.cc }}
+          VERSION: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
+          UI_HASH: ${{ steps.ui-hash.outputs.hash }}
         run: |
           if [ "${{ matrix.arch }}" = "arm64" ]; then
             export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
           else
             export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
           fi
+          BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           go build -trimpath -buildvcs=false \
-            -ldflags="-s -w -X github.com/krisarmstrong/seed/internal/version.Version=${{ github.ref_name }}" \
+            -ldflags="-s -w \
+              -X github.com/krisarmstrong/seed/internal/version.Version=${VERSION} \
+              -X github.com/krisarmstrong/seed/internal/version.Commit=${COMMIT} \
+              -X github.com/krisarmstrong/seed/internal/version.BuildTime=${BUILD_TIME} \
+              -X github.com/krisarmstrong/seed/internal/version.UIBuildHash=${UI_HASH}" \
             -o dist/seed-linux-${{ matrix.arch }} ./cmd/seed
 
       - name: Verify binaries (smoke test)
@@ -353,14 +379,42 @@ jobs:
           npm ci
           npm run build
 
+      - name: Verify embedded frontend
+        run: |
+          if [ ! -d ui/dist ] || [ -z "$(ls -A ui/dist)" ]; then
+            echo "ui/dist is missing or empty after npm run build"
+            exit 1
+          fi
+          ls -la ui/dist/
+
+      - name: Generate UI build hash
+        id: ui-hash
+        run: |
+          # macOS md5 has a -q quiet flag; fall back to md5sum for portability.
+          if command -v md5sum >/dev/null 2>&1; then
+            UI_HASH=$(find ui/dist -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1)
+          else
+            UI_HASH=$(find ui/dist -type f -exec md5 -q {} \; | sort | md5 -q | tr -d '[:space:]')
+          fi
+          echo "hash=$UI_HASH" >> "$GITHUB_OUTPUT"
+          echo "UI Build Hash: $UI_HASH"
+
       - name: Build The Seed for macOS
         env:
           GOOS: darwin
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 1
+          VERSION: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
+          UI_HASH: ${{ steps.ui-hash.outputs.hash }}
         run: |
+          BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           go build -trimpath -buildvcs=false \
-            -ldflags="-s -w -X github.com/krisarmstrong/seed/internal/version.Version=${{ github.ref_name }}" \
+            -ldflags="-s -w \
+              -X github.com/krisarmstrong/seed/internal/version.Version=${VERSION} \
+              -X github.com/krisarmstrong/seed/internal/version.Commit=${COMMIT} \
+              -X github.com/krisarmstrong/seed/internal/version.BuildTime=${BUILD_TIME} \
+              -X github.com/krisarmstrong/seed/internal/version.UIBuildHash=${UI_HASH}" \
             -o dist/seed-darwin-${{ matrix.arch }} ./cmd/seed
 
       - name: Verify binary (smoke test)
@@ -451,15 +505,37 @@ jobs:
           npm ci
           npm run build
 
+      - name: Verify embedded frontend
+        run: |
+          if [ ! -d ui/dist ] || [ -z "$(ls -A ui/dist)" ]; then
+            echo "ui/dist is missing or empty after npm run build"
+            exit 1
+          fi
+          ls -la ui/dist/
+
+      - name: Generate UI build hash
+        id: ui-hash
+        run: |
+          UI_HASH=$(find ui/dist -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1)
+          echo "hash=$UI_HASH" >> "$GITHUB_OUTPUT"
+          echo "UI Build Hash: $UI_HASH"
+
       - name: Build The Seed for Windows
         env:
           GOOS: windows
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
           VERSION: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
+          UI_HASH: ${{ steps.ui-hash.outputs.hash }}
         run: |
+          BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           go build -trimpath -buildvcs=false \
-            -ldflags="-s -w -X github.com/krisarmstrong/seed/internal/version.Version=${VERSION}" \
+            -ldflags="-s -w \
+              -X github.com/krisarmstrong/seed/internal/version.Version=${VERSION} \
+              -X github.com/krisarmstrong/seed/internal/version.Commit=${COMMIT} \
+              -X github.com/krisarmstrong/seed/internal/version.BuildTime=${BUILD_TIME} \
+              -X github.com/krisarmstrong/seed/internal/version.UIBuildHash=${UI_HASH}" \
             -o dist/seed-windows-${{ matrix.arch }}.exe ./cmd/seed
 
       - name: Verify binary
