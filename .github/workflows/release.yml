@@ -576,16 +576,36 @@ jobs:
 
       - name: Generate changelog
         id: changelog
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
         run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [ -n "$PREV_TAG" ]; then
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD)
-          else
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" -20)
+          # Prefer the section release-please emits in CHANGELOG.md — it's
+          # grouped by conventional-commit type and includes commit links.
+          # The git-log fallback is for dry-runs and any manually pushed tag
+          # that release-please didn't produce. (#921)
+          CHANGELOG=""
+          if [ "${REF_TYPE}" = "tag" ] && [ -f CHANGELOG.md ]; then
+            VER="${REF_NAME#v}"
+            CHANGELOG=$(awk -v v="$VER" '
+              $0 ~ "^## \\[" v "\\]" {found=1; print; next}
+              found && /^## \[/ {exit}
+              found {print}
+            ' CHANGELOG.md)
           fi
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGELOG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          if [ -z "$CHANGELOG" ]; then
+            PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+            if [ -n "$PREV_TAG" ]; then
+              CHANGELOG=$(git log --pretty=format:"- %s (%h)" "$PREV_TAG"..HEAD)
+            else
+              CHANGELOG=$(git log --pretty=format:"- %s (%h)" -20)
+            fi
+          fi
+          {
+            echo "changelog<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Get versions
         id: versions
