@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.185.13](https://github.com/krisarmstrong/seed/compare/v0.185.12...v0.185.13) (2026-05-15)
+
+
+### Bug Fixes
+
+* **ci:** stabilize seed release artifact matrix ([cd9b368](https://github.com/krisarmstrong/seed/commit/cd9b368df37ab223921748a435871fb97184a641))
+
 ## [0.185.12](https://github.com/krisarmstrong/seed/compare/v0.185.11...v0.185.12) (2026-05-14)
 
 
