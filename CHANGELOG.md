@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.187.1](https://github.com/krisarmstrong/seed/compare/v0.187.0...v0.187.1) (2026-05-16)
+
+
+### Bug Fixes
+
+* **ui:** gate Cable Test card on link absence ([#740](https://github.com/krisarmstrong/seed/issues/740)) ([fa5e028](https://github.com/krisarmstrong/seed/commit/fa5e0280b2643724bb7a5b1755137495ec517e54))
+
 ## [0.186.0](https://github.com/krisarmstrong/seed/compare/v0.185.13...v0.186.0) (2026-05-16)
 
 
