@@ -88,6 +88,7 @@ jobs:
       - name: Run tests
         env:
           SKIP_IPERF_TEST: "1"
+          SKIP_NETWORK_TESTS: "1"
         run: go test -v -coverprofile=coverage.out ./...
 
       - name: Check coverage threshold
@@ -163,6 +164,7 @@ jobs:
       - name: Run tests with race detector
         env:
           SKIP_IPERF_TEST: "1"
+          SKIP_NETWORK_TESTS: "1"
         run: go test -short -race ./...
 
   # ===========================================================================

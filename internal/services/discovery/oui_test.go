@@ -183,6 +183,9 @@ func TestOUIDownloadDatabase(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping network test in short mode")
 	}
+	if os.Getenv("SKIP_NETWORK_TESTS") != "" {
+		t.Skip("SKIP_NETWORK_TESTS set — skipping network-dependent test")
+	}
 
 	tmpDir := t.TempDir()
 	ouiFile := filepath.Join(tmpDir, "oui.txt")
@@ -221,6 +224,9 @@ func TestOUIDownloadDatabase(t *testing.T) {
 func TestOUIUpdateIfNeeded(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping network test in short mode")
+	}
+	if os.Getenv("SKIP_NETWORK_TESTS") != "" {
+		t.Skip("SKIP_NETWORK_TESTS set — skipping network-dependent test")
 	}
 
 	tmpDir := t.TempDir()
