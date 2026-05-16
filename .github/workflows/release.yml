@@ -1,13 +1,26 @@
 # =============================================================================
-# Release - The Seed
+# Release (goreleaser)
 # =============================================================================
-# Manual release workflow for creating versioned releases.
-# Builds multi-arch packages (.tar.gz, .deb, .rpm) with bundled iperf3.
-# Triggered on version tags (v*) or manual dispatch.
+# Canonical release pipeline as of #956 cutover.
 #
-# NOTE: Full CI validation happens in ci.yml on every push to main.
-# Tags should only be created after CI passes on main.
-# This workflow focuses on building release artifacts.
+# Triggers:
+#   - push to a v* tag: real release, builds + signs + publishes
+#   - workflow_dispatch with dry_run=true: snapshot, no publish or sign
+#
+# Toolchain notes:
+#   Build runs inside the goreleaser-cross Docker image which ships:
+#     - gcc + gcc-aarch64-linux-gnu (Linux cross)
+#     - mingw-w64 (Windows cross; we use CGO_ENABLED=0 there anyway)
+#     - osxcross + macOS SDK (Darwin cross)
+#   Node + iperf3 produced in separate jobs and downloaded into the
+#   goreleaser workspace; the cross image is Go-focused.
+#   libpcap-dev:arm64 is apt-installed at the start because the cross
+#   image doesn't ship libpcap headers per target arch.
+#
+# Cutover differences from the pre-#956 release.yml:
+#   - macOS .pkg installer dropped (no native pkgbuild from Linux).
+#     macOS users get the .tar.gz. deploy/macos/build-pkg.sh stays in
+#     the tree for anyone who wants to assemble one locally.
 # =============================================================================
 
 name: Release
@@ -19,7 +32,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Build artifacts and exit (skip publishing the GitHub release)"
+        description: "Snapshot build only — do not publish or sign"
         type: boolean
         default: true
 
@@ -29,18 +42,17 @@ concurrency:
 
 permissions:
   contents: write
+  id-token: write # cosign keyless OIDC
+  packages: write
 
 jobs:
-  # ===========================================================================
-  # Build iperf3
-  # ===========================================================================
+  # =========================================================================
+  # iperf3 binaries — same matrix as release.yml's build-iperf3 job.
+  # Built on native runners; goreleaser picks them up from bin/.
+  # =========================================================================
   build-iperf3:
-    name: Build iperf3
-    # Native runner per arch — amd64 stays on ubuntu-latest, arm64 uses the
-    # GitHub-hosted ubuntu-24.04-arm runner. Removes the QEMU / cross-toolchain
-    # / qemu-aarch64-static-smoke-test plumbing entirely.
+    name: Build iperf3 (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
-
     strategy:
       fail-fast: false
       matrix:
@@ -49,7 +61,6 @@ jobs:
             runner: ubuntu-latest
           - arch: arm64
             runner: ubuntu-24.04-arm
-
     steps:
       - uses: actions/checkout@v6.0.2
 
@@ -63,7 +74,6 @@ jobs:
         run: |
           LATEST=$(curl -s https://api.github.com/repos/esnet/iperf/releases/latest | jq -r '.tag_name')
           echo "version=$LATEST" >> "$GITHUB_OUTPUT"
-          echo "Latest iperf3 version: $LATEST"
 
       - name: Download and build iperf3
         run: |
@@ -71,28 +81,13 @@ jobs:
           curl -L -o iperf3.tar.gz "https://github.com/esnet/iperf/archive/refs/tags/${VERSION}.tar.gz"
           tar -xzf iperf3.tar.gz
           cd iperf-*
-
-          if [ ! -f configure ]; then
-            ./bootstrap.sh || autoreconf -i
-          fi
-
+          if [ ! -f configure ]; then ./bootstrap.sh || autoreconf -i; fi
           ./configure --prefix=/tmp/iperf3-install --disable-shared --enable-static-bin
           make -j$(nproc)
           make install
-
           mkdir -p ../dist
           cp /tmp/iperf3-install/bin/iperf3 ../dist/iperf3-linux-${{ matrix.arch }}
           chmod +x ../dist/iperf3-linux-${{ matrix.arch }}
-
-      - name: Verify iperf3 binary (smoke test)
-        run: |
-          echo "=== Binary file type ==="
-          file dist/iperf3-linux-${{ matrix.arch }}
-
-          echo ""
-          echo "=== Version smoke test ==="
-          ./dist/iperf3-linux-${{ matrix.arch }} --version
-          echo "✅ iperf3 smoke test passed"
 
       - name: Upload iperf3 artifact
         uses: actions/upload-artifact@v7.0.1
@@ -101,40 +96,18 @@ jobs:
           path: dist/iperf3-linux-${{ matrix.arch }}
           retention-days: 1
 
-  # ===========================================================================
-  # Build Release Packages
-  # ===========================================================================
-  release:
-    name: Create Release
-    # Native runner per arch — drops the entire deb822 source-list rewriting
-    # dance, the cross-toolchain install, the QEMU smoke-test plumbing, and
-    # the PKG_CONFIG_PATH branch. cgo just compiles against the runner's own
-    # libpcap-dev.
-    runs-on: ${{ matrix.runner }}
-    needs: build-iperf3
-    permissions:
-      contents: write
-      packages: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: amd64
-            runner: ubuntu-latest
-          - arch: arm64
-            runner: ubuntu-24.04-arm
-
+  # =========================================================================
+  # UI build — done outside the goreleaser-cross container because that
+  # image is Go-focused and doesn't ship Node. We build ui/dist here and
+  # the next job inherits the workspace.
+  # =========================================================================
+  build-ui:
+    name: Build UI
+    runs-on: ubuntu-latest
+    outputs:
+      ui_hash: ${{ steps.ui-hash.outputs.hash }}
     steps:
       - uses: actions/checkout@v6.0.2
-        with:
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v6.4.0
-        with:
-          go-version-file: go.mod
-          cache: true
 
       - name: Set up Node.js
         uses: actions/setup-node@v6.4.0
@@ -143,627 +116,114 @@ jobs:
           cache: npm
           cache-dependency-path: ui/package-lock.json
 
-      - name: Install build dependencies
+      - name: Build UI
         run: |
-          sudo apt-get update
-          sudo apt-get install -y rpm libpcap-dev pkg-config
+          cd ui
+          npm ci
+          npm run build
 
-      - name: Download iperf3 binary
+      - name: Compute UI build hash
+        id: ui-hash
+        run: |
+          UI_BUILD_HASH=$(find ui/dist -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1)
+          echo "hash=$UI_BUILD_HASH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload UI dist
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: ui-dist
+          path: ui/dist/
+          retention-days: 1
+          include-hidden-files: true
+
+  # =========================================================================
+  # goreleaser build + publish — runs inside goreleaser-cross container
+  # so all cross-compile toolchains are present.
+  # =========================================================================
+  goreleaser:
+    name: goreleaser ${{ inputs.dry_run && '(snapshot)' || '(release)' }}
+    runs-on: ubuntu-latest
+    needs: [build-iperf3, build-ui]
+    container:
+      # Docker Hub tag scheme: <go-version>-<bundle-revision>. v1.26.2-3
+      # tracks Go 1.26.2 + goreleaser v2.15.4. Pin so behaviour stays
+      # reproducible; bump via dependabot when newer revs land.
+      image: goreleaser/goreleaser-cross:v1.26.2-3
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Mark workspace as safe (container runs as root)
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Install libpcap headers for amd64 + arm64
+        # goreleaser-cross ships compilers but not libpcap headers.
+        # gopacket/pcap needs pcap.h for cgo. Add the arm64 architecture
+        # and pull libpcap-dev for both archs.
+        shell: bash
+        run: |
+          set -euo pipefail
+          dpkg --add-architecture arm64
+          if [ -f /etc/apt/sources.list ]; then
+            sed -i 's|^deb |deb [arch=amd64] |' /etc/apt/sources.list
+          fi
+          shopt -s nullglob
+          for f in /etc/apt/sources.list.d/*.list; do
+            sed -i 's|^deb |deb [arch=amd64] |' "$f"
+          done
+          cat > /etc/apt/sources.list.d/arm64.list <<'EOF'
+          deb [arch=arm64] http://deb.debian.org/debian bookworm main
+          deb [arch=arm64] http://deb.debian.org/debian-security bookworm-security main
+          deb [arch=arm64] http://deb.debian.org/debian bookworm-updates main
+          EOF
+          apt-get update || true
+          apt-get install -y libpcap-dev libpcap-dev:arm64
+
+      - name: Download iperf3 artifacts (amd64 + arm64)
         uses: actions/download-artifact@v8.0.1
         with:
-          name: iperf3-linux-${{ matrix.arch }}
+          pattern: iperf3-linux-*
           path: bin/
+          merge-multiple: true
 
-      - name: Restore iperf3 executable bit
-        run: chmod +x bin/iperf3-linux-${{ matrix.arch }}
+      - name: Restore iperf3 executable bits
+        run: chmod +x bin/iperf3-linux-*
 
-      - name: Build frontend
-        run: |
-          cd ui
-          npm ci
-          npm run build
-
-      - name: Verify embedded frontend
-        run: |
-          # ui/dist is consumed by ui/embed.go via //go:embed all:dist before
-          # the Go build runs. If npm run build silently produced nothing,
-          # the binary would ship without a UI — fail loudly here.
-          if [ ! -d ui/dist ] || [ -z "$(ls -A ui/dist)" ]; then
-            echo "ui/dist is missing or empty after npm run build"
-            exit 1
-          fi
-          ls -la ui/dist/
-
-      - name: Generate UI build hash
-        id: ui-hash
-        run: |
-          UI_HASH=$(find ui/dist -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1)
-          echo "hash=$UI_HASH" >> "$GITHUB_OUTPUT"
-          echo "UI Build Hash: $UI_HASH"
-
-      - name: Build The Seed
-        env:
-          GOOS: linux
-          GOARCH: ${{ matrix.arch }}
-          CGO_ENABLED: 1
-          VERSION: ${{ github.ref_name }}
-          COMMIT: ${{ github.sha }}
-          UI_HASH: ${{ steps.ui-hash.outputs.hash }}
-        run: |
-          BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          go build -trimpath -buildvcs=false \
-            -ldflags="-s -w \
-              -X github.com/krisarmstrong/seed/internal/version.Version=${VERSION} \
-              -X github.com/krisarmstrong/seed/internal/version.Commit=${COMMIT} \
-              -X github.com/krisarmstrong/seed/internal/version.BuildTime=${BUILD_TIME} \
-              -X github.com/krisarmstrong/seed/internal/version.UIBuildHash=${UI_HASH}" \
-            -o dist/seed-linux-${{ matrix.arch }} ./cmd/seed
-
-      - name: Verify binaries (smoke test)
-        run: |
-          echo "=== Seed binary file type ==="
-          file dist/seed-linux-${{ matrix.arch }}
-
-          echo ""
-          echo "=== Seed version smoke test ==="
-          ./dist/seed-linux-${{ matrix.arch }} --version || ./dist/seed-linux-${{ matrix.arch }} version || echo "Version flag not supported, checking binary runs..."
-          echo "✅ Seed binary smoke test passed"
-
-          echo ""
-          echo "=== iperf3 binary file type ==="
-          file bin/iperf3-linux-${{ matrix.arch }}
-
-          echo ""
-          echo "=== iperf3 version smoke test ==="
-          ./bin/iperf3-linux-${{ matrix.arch }} --version
-          echo "✅ iperf3 binary smoke test passed"
-
-      - name: Install nfpm
-        run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.46.3
-
-      - name: Create release packages
-        env:
-          VERSION: ${{ github.ref_name }}
-          ARCH: ${{ matrix.arch }}
-          REF_TYPE: ${{ github.ref_type }}
-          SHORT_SHA: ${{ github.sha }}
-        run: |
-          if [ "${REF_TYPE}" = "tag" ]; then
-            PKG_VERSION=$(echo "${VERSION#v}" | sed 's/-dirty$//;s/-[0-9]*-g[0-9a-f]*$//')
-          else
-            VERSION="0.0.0-dryrun-${SHORT_SHA:0:7}"
-            PKG_VERSION="${VERSION}"
-          fi
-
-          # Create .tar.gz package
-          mkdir -p release/seed-${VERSION}-linux-${ARCH}
-          cp dist/seed-linux-${ARCH} release/seed-${VERSION}-linux-${ARCH}/seed
-          cp bin/iperf3-linux-${ARCH} release/seed-${VERSION}-linux-${ARCH}/iperf3
-          chmod +x release/seed-${VERSION}-linux-${ARCH}/*
-          cp -r configs release/seed-${VERSION}-linux-${ARCH}/
-          cp -r ui/dist release/seed-${VERSION}-linux-${ARCH}/ui/
-          cd release
-          tar -czvf seed-${VERSION}-linux-${ARCH}.tar.gz seed-${VERSION}-linux-${ARCH}
-          cd ..
-
-          export SEED_VERSION="${PKG_VERSION}"
-          export SEED_ARCH="${ARCH}"
-          export SEED_BINARY="./dist/seed-linux-${ARCH}"
-          envsubst < .nfpm.yaml > nfpm.rendered.yaml
-
-          case "${ARCH}" in
-            amd64) RPM_ARCH=x86_64 ;;
-            arm64) RPM_ARCH=aarch64 ;;
-            *)     RPM_ARCH="${ARCH}" ;;
-          esac
-
-          nfpm pkg --config nfpm.rendered.yaml --packager deb \
-            --target "release/seed_${PKG_VERSION}_${ARCH}.deb"
-          nfpm pkg --config nfpm.rendered.yaml --packager rpm \
-            --target "release/seed-${PKG_VERSION}-1.${RPM_ARCH}.rpm"
-
-      - name: Upload release artifacts
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: release-linux-${{ matrix.arch }}
-          path: |
-            release/*.tar.gz
-            release/*.deb
-            release/*.rpm
-          retention-days: 7
-
-  # ===========================================================================
-  # Build macOS Release (closes #474)
-  # ===========================================================================
-  release-macos:
-    name: Create macOS Release
-    permissions:
-      contents: write
-
-    strategy:
-      matrix:
-        include:
-          - os: macos-14
-            arch: arm64
-            goarch: arm64
-          - os: macos-15-intel
-            arch: amd64
-            goarch: amd64
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - uses: actions/checkout@v6.0.2
-        with:
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v6.4.0
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6.4.0
-        with:
-          node-version: "25.2.1"
-          cache: npm
-          cache-dependency-path: ui/package-lock.json
-
-      - name: Install libpcap
-        run: |
-          # macOS has libpcap pre-installed, but ensure headers are available
-          brew list libpcap || brew install libpcap
-
-      - name: Build frontend
-        run: |
-          cd ui
-          npm ci
-          npm run build
-
-      - name: Verify embedded frontend
-        run: |
-          if [ ! -d ui/dist ] || [ -z "$(ls -A ui/dist)" ]; then
-            echo "ui/dist is missing or empty after npm run build"
-            exit 1
-          fi
-          ls -la ui/dist/
-
-      - name: Generate UI build hash
-        id: ui-hash
-        run: |
-          # macOS md5 has a -q quiet flag; fall back to md5sum for portability.
-          if command -v md5sum >/dev/null 2>&1; then
-            UI_HASH=$(find ui/dist -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1)
-          else
-            UI_HASH=$(find ui/dist -type f -exec md5 -q {} \; | sort | md5 -q | tr -d '[:space:]')
-          fi
-          echo "hash=$UI_HASH" >> "$GITHUB_OUTPUT"
-          echo "UI Build Hash: $UI_HASH"
-
-      - name: Build The Seed for macOS
-        env:
-          GOOS: darwin
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: 1
-          VERSION: ${{ github.ref_name }}
-          COMMIT: ${{ github.sha }}
-          UI_HASH: ${{ steps.ui-hash.outputs.hash }}
-        run: |
-          BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          go build -trimpath -buildvcs=false \
-            -ldflags="-s -w \
-              -X github.com/krisarmstrong/seed/internal/version.Version=${VERSION} \
-              -X github.com/krisarmstrong/seed/internal/version.Commit=${COMMIT} \
-              -X github.com/krisarmstrong/seed/internal/version.BuildTime=${BUILD_TIME} \
-              -X github.com/krisarmstrong/seed/internal/version.UIBuildHash=${UI_HASH}" \
-            -o dist/seed-darwin-${{ matrix.arch }} ./cmd/seed
-
-      - name: Verify binary (smoke test)
-        run: |
-          echo "=== Binary file type ==="
-          file dist/seed-darwin-${{ matrix.arch }}
-
-          echo ""
-          echo "=== Version smoke test ==="
-          ./dist/seed-darwin-${{ matrix.arch }} --version || ./dist/seed-darwin-${{ matrix.arch }} version || echo "Version flag check"
-          echo "✅ macOS binary smoke test passed"
-
-      - name: Create release packages
-        env:
-          VERSION: ${{ github.ref_name }}
-          ARCH: ${{ matrix.arch }}
-          REF_TYPE: ${{ github.ref_type }}
-          SHORT_SHA: ${{ github.sha }}
-        run: |
-          if [ "${REF_TYPE}" = "tag" ]; then
-            PKG_VERSION=$(echo "${VERSION#v}" | sed 's/-dirty$//;s/-[0-9]*-g[0-9a-f]*$//')
-          else
-            VERSION="0.0.0-dryrun-${SHORT_SHA:0:7}"
-            PKG_VERSION="${VERSION}"
-          fi
-
-          # Create .tar.gz package
-          mkdir -p release/seed-${VERSION}-darwin-${ARCH}
-          cp dist/seed-darwin-${ARCH} release/seed-${VERSION}-darwin-${ARCH}/seed
-          chmod +x release/seed-${VERSION}-darwin-${ARCH}/*
-          cp -r configs release/seed-${VERSION}-darwin-${ARCH}/
-          cp -r ui/dist release/seed-${VERSION}-darwin-${ARCH}/ui/
-          cd release
-          tar -czvf seed-${VERSION}-darwin-${ARCH}.tar.gz seed-${VERSION}-darwin-${ARCH}
-          cd ..
-
-          # Create .pkg installer
-          chmod +x deploy/macos/build-pkg.sh
-          ./deploy/macos/build-pkg.sh ./dist/seed-darwin-${ARCH} ${PKG_VERSION}
-
-      - name: Upload release artifacts
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: release-darwin-${{ matrix.arch }}
-          path: |
-            release/*.tar.gz
-            dist/*.pkg
-          retention-days: 7
-
-  # ===========================================================================
-  # Build Windows Release
-  # ===========================================================================
-  release-windows:
-    name: Create Windows Release (${{ matrix.arch }})
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: amd64
-            goarch: amd64
-          - arch: arm64
-            goarch: arm64
-
-    steps:
-      - uses: actions/checkout@v6.0.2
-        with:
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v6.4.0
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6.4.0
-        with:
-          node-version: "25.2.1"
-          cache: npm
-          cache-dependency-path: ui/package-lock.json
-
-      - name: Build frontend
-        run: |
-          cd ui
-          npm ci
-          npm run build
-
-      - name: Verify embedded frontend
-        run: |
-          if [ ! -d ui/dist ] || [ -z "$(ls -A ui/dist)" ]; then
-            echo "ui/dist is missing or empty after npm run build"
-            exit 1
-          fi
-          ls -la ui/dist/
-
-      - name: Generate UI build hash
-        id: ui-hash
-        run: |
-          UI_HASH=$(find ui/dist -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1)
-          echo "hash=$UI_HASH" >> "$GITHUB_OUTPUT"
-          echo "UI Build Hash: $UI_HASH"
-
-      - name: Build The Seed for Windows
-        env:
-          GOOS: windows
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: 0
-          VERSION: ${{ github.ref_name }}
-          COMMIT: ${{ github.sha }}
-          UI_HASH: ${{ steps.ui-hash.outputs.hash }}
-        run: |
-          BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          go build -trimpath -buildvcs=false \
-            -ldflags="-s -w \
-              -X github.com/krisarmstrong/seed/internal/version.Version=${VERSION} \
-              -X github.com/krisarmstrong/seed/internal/version.Commit=${COMMIT} \
-              -X github.com/krisarmstrong/seed/internal/version.BuildTime=${BUILD_TIME} \
-              -X github.com/krisarmstrong/seed/internal/version.UIBuildHash=${UI_HASH}" \
-            -o dist/seed-windows-${{ matrix.arch }}.exe ./cmd/seed
-
-      - name: Verify binary
-        run: |
-          file dist/seed-windows-${{ matrix.arch }}.exe
-          echo "Windows ${{ matrix.arch }} binary built"
-
-      - name: Create Windows distribution
-        env:
-          VERSION: ${{ github.ref_name }}
-          REF_TYPE: ${{ github.ref_type }}
-          SHORT_SHA: ${{ github.sha }}
-          ARCH: ${{ matrix.arch }}
-        run: |
-          if [ "${REF_TYPE}" = "tag" ]; then
-            PKG_VERSION=$(echo "${VERSION#v}" | sed 's/-dirty$//;s/-[0-9]*-g[0-9a-f]*$//')
-          else
-            PKG_VERSION="0.0.0-dryrun-${SHORT_SHA:0:7}"
-          fi
-          PKG_NAME="seed-${PKG_VERSION}-windows-${ARCH}"
-          mkdir -p "release/${PKG_NAME}"
-          cp dist/seed-windows-${ARCH}.exe "release/${PKG_NAME}/seed.exe"
-          cp deploy/windows/build.ps1 "release/${PKG_NAME}/install.ps1"
-          cp -r configs "release/${PKG_NAME}/"
-          cp -r ui/dist "release/${PKG_NAME}/ui/"
-          cd release
-          zip -r "${PKG_NAME}.zip" "${PKG_NAME}"
-
-      - name: Upload release artifacts
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: release-windows-${{ matrix.arch }}
-          path: release/*.zip
-          retention-days: 7
-
-  # ===========================================================================
-  # Publish Release
-  # ===========================================================================
-  publish:
-    name: Publish Release
-    runs-on: ubuntu-latest
-    needs: [release, release-macos, release-windows]
-    permissions:
-      contents: write
-      id-token: write  # Required for cosign OIDC signing
-
-    steps:
-      - uses: actions/checkout@v6.0.2
-        with:
-          fetch-depth: 0
-
-      - name: Download all release artifacts
+      - name: Download UI dist
         uses: actions/download-artifact@v8.0.1
         with:
-          path: artifacts/
+          name: ui-dist
+          path: ui/dist/
 
-      - name: Prepare release files
+      - name: Install Syft (SBOM) inside container
         run: |
-          mkdir -p dist
-          find artifacts -name "*.tar.gz" -exec cp {} dist/ \;
-          find artifacts -name "*.deb" -exec cp {} dist/ \;
-          find artifacts -name "*.rpm" -exec cp {} dist/ \;
-          find artifacts -name "*.pkg" -exec cp {} dist/ \;
-          find artifacts -name "*.zip" -exec cp {} dist/ \;
-          cd dist
-          sha256sum * > checksums.txt 2>/dev/null || true
-          cat checksums.txt
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 
-      - name: Install Syft for SBOM generation
-        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0
-
-      - name: Generate SBOMs for packages
+      - name: Install Cosign inside container
         run: |
-          cd dist
-          for pkg in *.tar.gz; do
-            echo "Generating SBOM for ${pkg}..."
-            syft "${pkg}" -o cyclonedx-json > "${pkg%.tar.gz}.sbom.json"
-          done
+          COSIGN_VERSION=v2.4.1
+          curl -sSfL -o /usr/local/bin/cosign "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
+          chmod +x /usr/local/bin/cosign
 
-      - name: Install Cosign for signing
-        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+      - name: Run goreleaser (snapshot/dry-run)
+        if: inputs.dry_run
+        env:
+          UI_BUILD_HASH: ${{ needs.build-ui.outputs.ui_hash }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: goreleaser release --snapshot --clean --skip=publish,announce
 
-      - name: Sign release artifacts with cosign (keyless OIDC)
-        run: |
-          cd dist
-          for file in *.tar.gz *.deb *.rpm *.pkg *.zip checksums.txt *.sbom.json; do
-            if [ -f "${file}" ]; then
-              echo "Signing ${file}..."
-              cosign sign-blob --yes --bundle "${file}.cosign.bundle" "${file}"
-            fi
-          done
+      - name: Run goreleaser (publish)
+        if: ${{ !inputs.dry_run }}
+        env:
+          UI_BUILD_HASH: ${{ needs.build-ui.outputs.ui_hash }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: goreleaser release --clean
 
-      - name: Upload assembled artifacts (dry-run inspectable)
+      - name: Upload dry-run artifact bundle for inspection
+        if: inputs.dry_run
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: release-bundle-${{ github.ref_type == 'tag' && github.ref_name || format('dryrun-{0}', github.run_id) }}
+          name: goreleaser-dryrun-${{ github.run_id }}
           path: dist/
           retention-days: 14
-
-      - name: Generate changelog
-        id: changelog
-        env:
-          REF_NAME: ${{ github.ref_name }}
-          REF_TYPE: ${{ github.ref_type }}
-        run: |
-          # Prefer the section release-please emits in CHANGELOG.md — it's
-          # grouped by conventional-commit type and includes commit links.
-          # The git-log fallback is for dry-runs and any manually pushed tag
-          # that release-please didn't produce. (#921)
-          CHANGELOG=""
-          if [ "${REF_TYPE}" = "tag" ] && [ -f CHANGELOG.md ]; then
-            VER="${REF_NAME#v}"
-            CHANGELOG=$(awk -v v="$VER" '
-              $0 ~ "^## \\[" v "\\]" {found=1; print; next}
-              found && /^## \[/ {exit}
-              found {print}
-            ' CHANGELOG.md)
-          fi
-          if [ -z "$CHANGELOG" ]; then
-            PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-            if [ -n "$PREV_TAG" ]; then
-              CHANGELOG=$(git log --pretty=format:"- %s (%h)" "$PREV_TAG"..HEAD)
-            else
-              CHANGELOG=$(git log --pretty=format:"- %s (%h)" -20)
-            fi
-          fi
-          {
-            echo "changelog<<EOF"
-            echo "$CHANGELOG"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Get versions
-        id: versions
-        run: |
-          GO_VERSION=$(curl -s 'https://go.dev/VERSION?m=text' | head -1)
-          NODE_VERSION=$(curl -s https://nodejs.org/dist/index.json | jq -r '[.[] | select(.lts != false)][0].version')
-          IPERF_VERSION=$(curl -s https://api.github.com/repos/esnet/iperf/releases/latest | jq -r '.tag_name')
-          echo "go=$GO_VERSION" >> $GITHUB_OUTPUT
-          echo "node=$NODE_VERSION" >> $GITHUB_OUTPUT
-          echo "iperf3=$IPERF_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Create Release
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false)
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
-        with:
-          body: |
-            ## Changes
-
-            ${{ steps.changelog.outputs.changelog }}
-
-            ## Build Information
-
-            | Component | Version |
-            |-----------|---------|
-            | Go | ${{ steps.versions.outputs.go }} |
-            | Node.js | ${{ steps.versions.outputs.node }} |
-            | iperf3 | ${{ steps.versions.outputs.iperf3 }} |
-
-            ## Checksums
-
-            ```
-            $(cat dist/checksums.txt)
-            ```
-
-            ## Installation
-
-            ### Debian/Ubuntu Package (Recommended)
-
-            **AMD64:**
-            ```bash
-            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed_${{ github.ref_name }}_amd64.deb
-            sudo dpkg -i seed_${{ github.ref_name }}_amd64.deb
-            ```
-
-            **ARM64:**
-            ```bash
-            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed_${{ github.ref_name }}_arm64.deb
-            sudo dpkg -i seed_${{ github.ref_name }}_arm64.deb
-            ```
-
-            ### Fedora/RHEL Package
-
-            **x86_64:**
-            ```bash
-            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed-${{ github.ref_name }}.x86_64.rpm
-            sudo rpm -i seed-${{ github.ref_name }}.x86_64.rpm
-            ```
-
-            **aarch64:**
-            ```bash
-            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed-${{ github.ref_name }}.aarch64.rpm
-            sudo rpm -i seed-${{ github.ref_name }}.aarch64.rpm
-            ```
-
-            ### macOS (.pkg Installer - Recommended)
-
-            **Apple Silicon (M1/M2/M3):**
-            ```bash
-            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed-<version>-arm64.pkg
-            sudo installer -pkg seed-*-arm64.pkg -target /
-            ```
-
-            **Intel Mac:**
-            ```bash
-            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed-<version>-amd64.pkg
-            sudo installer -pkg seed-*-amd64.pkg -target /
-            ```
-
-            ### macOS (tar.gz - Manual)
-
-            ```bash
-            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed-${{ github.ref_name }}-darwin-arm64.tar.gz
-            tar -xzf seed-${{ github.ref_name }}-darwin-arm64.tar.gz
-            cd seed-${{ github.ref_name }}-darwin-arm64
-            sudo mv seed /usr/local/bin/
-            ```
-
-            > **Note:** macOS builds do not include bundled iperf3. Install via `brew install iperf3` if needed.
-
-            ### Windows
-
-            ```powershell
-            # Download and extract
-            Invoke-WebRequest -Uri "https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed-<version>-windows-amd64.zip" -OutFile seed.zip
-            Expand-Archive seed.zip -DestinationPath .
-            cd seed-*-windows-amd64
-
-            # Install as service (Run as Administrator)
-            .\install.ps1
-            ```
-
-            ### Linux Manual Installation (tar.gz)
-
-            **Linux AMD64:**
-            ```bash
-            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed-${{ github.ref_name }}-linux-amd64.tar.gz
-            tar -xzf seed-${{ github.ref_name }}-linux-amd64.tar.gz
-            cd seed-${{ github.ref_name }}-linux-amd64
-            sudo mv seed iperf3 /usr/local/bin/
-            ```
-
-            **Linux ARM64:**
-            ```bash
-            curl -LO https://github.com/krisarmstrong/seed/releases/download/${{ github.ref_name }}/seed-${{ github.ref_name }}-linux-arm64.tar.gz
-            tar -xzf seed-${{ github.ref_name }}-linux-arm64.tar.gz
-            cd seed-${{ github.ref_name }}-linux-arm64
-            sudo mv seed iperf3 /usr/local/bin/
-            ```
-
-            ## Package Contents
-
-            **Linux packages include:**
-            - `seed` - Main application binary
-            - `iperf3` - Bundled iperf3 binary
-            - `configs/` - Default configuration files
-            - `ui/` - Frontend assets
-
-            **macOS packages include:**
-            - `seed` - Main application binary
-            - `configs/` - Default configuration files
-            - `ui/` - Frontend assets
-
-            ## Supply Chain Security
-
-            All release artifacts include:
-            - **SBOM** (Software Bill of Materials) in CycloneDX JSON format
-            - **Cosign signatures** for cryptographic verification
-
-            Verify signatures with:
-            ```bash
-            cosign verify-blob \
-              --bundle seed-${{ github.ref_name }}-linux-amd64.tar.gz.cosign.bundle \
-              --certificate-identity-regexp='https://github.com/krisarmstrong/seed' \
-              --certificate-oidc-issuer='https://token.actions.githubusercontent.com' \
-              seed-${{ github.ref_name }}-linux-amd64.tar.gz
-            ```
-          files: |
-            dist/*.tar.gz
-            dist/*.deb
-            dist/*.rpm
-            dist/*.pkg
-            dist/*.zip
-            dist/checksums.txt
-            dist/*.sbom.json
-            dist/*.cosign.bundle
-          draft: false
-          prerelease: ${{ contains(github.ref_name, '-') }}
