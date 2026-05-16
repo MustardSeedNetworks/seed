@@ -30,29 +30,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, setSessionExpiredCallback } from './api';
+import {
+  applyInterfaceRestoration,
+  findBestInterface,
+  type ProfileInterfacesConfig,
+  parseProfileInterfaces,
+} from './app/appInterfaceHelpers';
 import { LoginForm } from './app/LoginForm';
+import { AppDashboard } from './components/app/AppDashboard';
+import { AppFooter } from './components/app/AppFooter';
 import { CapabilityWarnings } from './components/app/CapabilityWarnings';
 import { HeaderBar } from './components/app/HeaderBar';
-import { CableCard } from './components/cards/CableCard';
-import { DnsCard } from './components/cards/DnsCard';
-import { GatewayCard } from './components/cards/GatewayCard';
-import { HealthCheckCard } from './components/cards/HealthCheckCard';
-import { LinkCard } from './components/cards/LinkCard';
-import { LogViewerCard } from './components/cards/LogViewerCard';
-import { NetworkCard } from './components/cards/NetworkCard';
-import {
-  NetworkDiscoveryCard,
-  type NetworkDiscoveryData,
-} from './components/cards/NetworkDiscoveryCard';
-import { PathDiscoveryCard } from './components/cards/PathDiscoveryCard';
-import { PerformanceCard } from './components/cards/PerformanceCard';
-import { PublicIpCard } from './components/cards/PublicIpCard';
-import { SLADashboardCard } from './components/cards/SlaDashboardCard';
-import { SwitchCard } from './components/cards/SwitchCard';
-import { SystemHealthCard } from './components/cards/SystemHealthCard';
-import { WiFiCard } from './components/cards/WiFiCard';
-import { WifiChannelGraph } from './components/cards/WiFiChannelGraph';
-import { WiFiSurveyCard } from './components/cards/WiFiSurveyCard';
+import type { NetworkDiscoveryData } from './components/cards/NetworkDiscoveryCard';
 import { ImprovedHelpModal } from './components/help/ImprovedHelpModal';
 import { ProfileManagement } from './components/profiles/ProfileManagement';
 import { SettingsDrawer } from './components/settings/SettingsDrawer';
@@ -65,6 +54,7 @@ import { useAuth } from './hooks/useAuth';
 import { useCapabilities } from './hooks/useCapabilities';
 import { useCardState } from './hooks/useCardState';
 import { useChannelGraph } from './hooks/useChannelGraph';
+import { useDeviceScan } from './hooks/useDeviceScan';
 import { useInterfaceState } from './hooks/useInterfaceState';
 import { useNetworkFetchers } from './hooks/useNetworkFetchers';
 import { useSetupState } from './hooks/useSetupState';
@@ -72,128 +62,7 @@ import { useSse } from './hooks/useSse';
 import { useSsePolling } from './hooks/useSsePolling';
 import { useTheme } from './hooks/useTheme';
 import { LogComponents, logger } from './lib/logger';
-import { cn, layout, radius, section, spacing } from './styles/theme';
-
-// ============================================================================
-// Helper types for interface management
-// ============================================================================
-
-interface InterfaceInfo {
-  name: string;
-  type: string;
-  up: boolean;
-}
-
-/** Profile interface config from backend (uses snake_case) */
-interface ProfileInterfacesConfig {
-  // biome-ignore lint/style/useNamingConvention: Backend API uses snake_case
-  active_ethernet?: string;
-  // biome-ignore lint/style/useNamingConvention: Backend API uses snake_case
-  active_wifi?: string;
-}
-
-interface InterfaceRestorationResult {
-  restoredEthernet: boolean;
-  restoredWifi: boolean;
-  savedEthernetName: string;
-  savedWifiName: string;
-}
-
-// ============================================================================
-// Helper functions for interface management (extracted to reduce complexity)
-// ============================================================================
-
-/**
- * Find the best interface of a given type from available interfaces.
- * Prefers link-up interfaces, otherwise returns the first one.
- */
-function findBestInterface(
-  interfaces: InterfaceInfo[],
-  type: 'ethernet' | 'wifi',
-): InterfaceInfo | null {
-  const candidates = interfaces.filter((iface) => iface.type === type);
-  if (candidates.length === 0) {
-    return null;
-  }
-  return candidates.find((iface) => iface.up) ?? candidates[0];
-}
-
-/**
- * Check if a saved interface exists in the available interfaces.
- */
-function interfaceExistsWithType(interfaces: InterfaceInfo[], name: string, type: string): boolean {
-  return interfaces.some((i) => i.name === name && i.type === type);
-}
-
-/**
- * Parse profile interfaces config and determine which interfaces can be restored.
- */
-function parseProfileInterfaces(
-  profileInterfaces: ProfileInterfacesConfig | undefined,
-  interfaces: InterfaceInfo[],
-): InterfaceRestorationResult {
-  const result: InterfaceRestorationResult = {
-    restoredEthernet: false,
-    restoredWifi: false,
-    savedEthernetName: '',
-    savedWifiName: '',
-  };
-
-  if (!profileInterfaces) {
-    return result;
-  }
-
-  // Check ethernet interface
-  if (profileInterfaces.active_ethernet) {
-    result.savedEthernetName = profileInterfaces.active_ethernet;
-    if (interfaceExistsWithType(interfaces, result.savedEthernetName, 'ethernet')) {
-      result.restoredEthernet = true;
-    }
-  }
-
-  // Check wifi interface
-  if (profileInterfaces.active_wifi) {
-    result.savedWifiName = profileInterfaces.active_wifi;
-    if (interfaceExistsWithType(interfaces, result.savedWifiName, 'wifi')) {
-      result.restoredWifi = true;
-    }
-  }
-
-  return result;
-}
-
-/**
- * Apply interface state updates for restoration.
- * Handles setting local state and notifying backend.
- */
-function applyInterfaceRestoration(
-  restoration: InterfaceRestorationResult,
-  setEthernetInterfaceState: (name: string) => void,
-  setWifiInterfaceState: (name: string) => void,
-  changeInterface: (name: string) => Promise<void>,
-  setActiveMode: (mode: 'ethernet' | 'wifi') => void,
-): void {
-  // Update local state
-  if (restoration.restoredEthernet) {
-    setEthernetInterfaceState(restoration.savedEthernetName);
-  }
-  if (restoration.restoredWifi) {
-    setWifiInterfaceState(restoration.savedWifiName);
-  }
-
-  // Set active interface on backend (prefer ethernet if both exist)
-  if (restoration.restoredEthernet) {
-    changeInterface(restoration.savedEthernetName).catch((err: unknown) => {
-      logger.error(LogComponents.NETWORK, 'Failed to change interface', { error: err });
-    });
-    setActiveMode('ethernet');
-  } else if (restoration.restoredWifi) {
-    changeInterface(restoration.savedWifiName).catch((err: unknown) => {
-      logger.error(LogComponents.NETWORK, 'Failed to change interface', { error: err });
-    });
-    setActiveMode('wifi');
-  }
-}
+import { cn, section, spacing } from './styles/theme';
 
 /**
  * Main App Component
@@ -201,7 +70,6 @@ function applyInterfaceRestoration(
  * Orchestrates the entire application, managing authentication,
  * real-time data updates, and the dashboard interface.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Main App component with necessary orchestration logic
 function App(): JSX.Element {
   const { t } = useTranslation('common');
   const { isAuthenticated, login, logout, isLoading, error } = useAuth();
@@ -266,9 +134,6 @@ function App(): JSX.Element {
   const [recommendedEthernet, setRecommendedEthernet] = useState<string | undefined>();
   const [recommendedWifi, setRecommendedWifi] = useState<string | undefined>();
 
-  // Refs to track device scan polling interval and timeout for cleanup
-  const scanPollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const networkDiscoveryAbortRef = useRef<AbortController | null>(null);
 
   // Refresh settings when profile changes (fixes #781)
@@ -384,66 +249,11 @@ function App(): JSX.Element {
     };
   }, [logout]);
 
-  // Trigger network device scan
-  const triggerDeviceScan = useCallback(async () => {
-    try {
-      // Clear any existing polling interval/timeout
-      if (scanPollIntervalRef.current) {
-        clearInterval(scanPollIntervalRef.current);
-        scanPollIntervalRef.current = null;
-      }
-      if (scanTimeoutRef.current) {
-        clearTimeout(scanTimeoutRef.current);
-        scanTimeoutRef.current = null;
-      }
-
-      // Update status to show scanning
-      setNetworkDiscovery((prev) =>
-        prev
-          ? {
-              ...prev,
-              status: { ...prev.status, scanning: true },
-            }
-          : null,
-      );
-
-      await api.post('/api/v1/shell/devices/scan');
-
-      // Poll for completion
-      scanPollIntervalRef.current = setInterval(async () => {
-        try {
-          const status = await api.get<{ scanning: boolean }>('/api/v1/shell/devices/status');
-          if (!status.scanning) {
-            if (scanPollIntervalRef.current) {
-              clearInterval(scanPollIntervalRef.current);
-              scanPollIntervalRef.current = null;
-            }
-            await fetchNetworkDiscovery();
-          }
-        } catch {
-          // Status check failed, keep polling
-        }
-      }, 1000);
-
-      // Safety timeout - stop polling after 60 seconds
-      scanTimeoutRef.current = setTimeout(() => {
-        if (scanPollIntervalRef.current) {
-          clearInterval(scanPollIntervalRef.current);
-          scanPollIntervalRef.current = null;
-        }
-      }, 60000);
-    } catch (err) {
-      logger.error(LogComponents.Devices, 'Failed to trigger device scan', err);
-      setNetworkDiscovery((prev) =>
-        prev
-          ? {
-              ...prev,
-              status: { ...prev.status, scanning: false },
-            }
-          : null,
-      );
-    }
-  }, [fetchNetworkDiscovery]);
+  // Trigger network device scan (hook owns poll/timeout refs and cleanup)
+  const triggerDeviceScan = useDeviceScan({
+    fetchNetworkDiscovery,
+    setNetworkDiscovery,
+  });
 
   // Change interface on backend
   const changeInterface = useCallback(
@@ -845,19 +655,6 @@ function App(): JSX.Element {
     }
   }, [isAuthenticated, triggerDeviceScan, runOpts.runNetworkDiscovery]);
 
-  // Cleanup device scan polling on unmount
-  useEffect(
-    () => (): void => {
-      if (scanPollIntervalRef.current) {
-        clearInterval(scanPollIntervalRef.current);
-      }
-      if (scanTimeoutRef.current) {
-        clearTimeout(scanTimeoutRef.current);
-      }
-    },
-    [],
-  );
-
   // Login form
   const authError = sessionExpired ? 'Session expired. Please log in again.' : error;
 
@@ -931,223 +728,21 @@ function App(): JSX.Element {
           {/* Issue #803: Show warning banner when network capabilities are missing */}
           <CapabilityWarnings capabilities={capabilities} />
 
-          {/* Section: Primary Connectivity - cards differ by interface type */}
-          <section aria-labelledby="connectivity-heading" class={spacing.margin.bottom.section}>
-            <h2
-              id="connectivity-heading"
-              class={cn('section-title', spacing.margin.bottom.heading)}
-            >
-              {t('sections.connectivity')}
-            </h2>
-            <div class={layout.grid.cards}>
-              {/* WiFi-only cards */}
-              {isWifi ? <WiFiCard data={cards.wifi} loading={loading} visible={true} /> : null}
+          <AppDashboard
+            cards={cards}
+            loading={loading}
+            isWifi={isWifi}
+            currentInterface={currentInterface}
+            cardSettings={cardSettings}
+            displayOptions={displayOptions}
+            networkDiscovery={networkDiscovery}
+            triggerDeviceScan={triggerDeviceScan}
+            registerTraceHopHandler={registerTraceHopHandler}
+            channelGraphData={channelGraphData}
+            channelGraphLoading={channelGraphLoading}
+          />
 
-              {/* Ethernet-only cards */}
-              {!isWifi && (
-                <>
-                  <LinkCard data={cards.link} loading={loading} />
-                  {/* Cable Test card: only render when the link is DOWN
-                      (cable plugged in + working = nothing to diagnose).
-                      The card itself handles the supported/not-supported
-                      branches when rendered. Fixes #740. */}
-                  {cards.link && cards.link.linkUp === false ? (
-                    <CableCard
-                      data={cards.cable}
-                      loading={loading}
-                      unitSystem={displayOptions.unitSystem}
-                    />
-                  ) : null}
-                  <SwitchCard data={cards.switch} vlanData={cards.vlan} loading={loading} />
-                </>
-              )}
-            </div>
-          </section>
-
-          {/* Section: Network Services */}
-          <section aria-labelledby="network-heading" class={spacing.margin.bottom.section}>
-            <h2 id="network-heading" class={cn('section-title', spacing.margin.bottom.heading)}>
-              {t('sections.network')}
-            </h2>
-            <div class={layout.grid.cards}>
-              {/* Network info cards - hide when in WiFi mode without WiFi connection */}
-              {/* Prevents showing wired interface data when user selected WiFi mode */}
-              {(!isWifi || cards.wifi) && (
-                <>
-                  <NetworkCard
-                    data={cards.dhcp}
-                    publicip={cards.publicip}
-                    loading={loading}
-                    showPublicIp={displayOptions.showPublicIp}
-                  />
-                  <GatewayCard data={cards.gateway} loading={loading} />
-                  <DnsCard data={cards.dns} loading={loading} />
-                  {/* Public IP Card - shows geolocation, ISP/ASN, and IP history */}
-                  <PublicIpCard data={cards.publicip} loading={loading} />
-                </>
-              )}
-            </div>
-          </section>
-
-          {/* Section: Testing & Discovery - cards differ by interface type */}
-          <section aria-labelledby="performance-heading" class={spacing.margin.bottom.section}>
-            <h2 id="performance-heading" class={cn('section-title', spacing.margin.bottom.heading)}>
-              {t('sections.testingDiscovery')}
-            </h2>
-            <div class={layout.grid.cards}>
-              {/* Test cards - only show when connected to the selected interface type */}
-              {/* Fix: Don't show test results from wired when in WiFi mode but disconnected */}
-              {(!isWifi || cards.wifi) && (
-                <>
-                  <HealthCheckCard loading={loading} />
-                  {/* SLA Dashboard - aggregates health scores, SLA compliance, and alerts */}
-                  <SLADashboardCard />
-                  {cardSettings.performance.enabled ? (
-                    <PerformanceCard
-                      loading={loading}
-                      runSpeedtestEnabled={
-                        cardSettings.performance.speedtest.enabled &&
-                        cardSettings.performance.speedtest.autoRunOnLink
-                      }
-                      runIperfEnabled={
-                        cardSettings.performance.iperf.enabled &&
-                        cardSettings.performance.iperf.autoRunOnLink
-                      }
-                    />
-                  ) : null}
-                </>
-              )}
-
-              {/* Ethernet-only: Network Discovery (ARP/LLDP/SNMP) */}
-              {!isWifi && cardSettings.networkDiscovery.enabled && (
-                <NetworkDiscoveryCard
-                  data={networkDiscovery}
-                  loading={loading}
-                  onScan={triggerDeviceScan}
-                />
-              )}
-
-              {/* Path Discovery - only show when connected */}
-              {(!isWifi || cards.wifi) && (
-                <PathDiscoveryCard
-                  gateway={cards.gateway?.gateway}
-                  dnsServer={cards.dns?.servers?.[0]?.address}
-                  onRegisterTraceHandler={registerTraceHopHandler}
-                />
-              )}
-
-              {/* WiFi-only: WiFi Survey for heatmaps and site surveys */}
-              {/* Fix #572: Pass current interface to avoid hardcoded "wlan0" */}
-              {isWifi ? (
-                <WiFiSurveyCard isWifi={isWifi} currentInterface={currentInterface} />
-              ) : null}
-
-              {/* WiFi-only: Channel Graph for visualizing channel overlap */}
-              {isWifi ? (
-                <WifiChannelGraph
-                  data={channelGraphData}
-                  loading={channelGraphLoading}
-                  visible={isWifi}
-                />
-              ) : null}
-            </div>
-          </section>
-
-          {/* Section: System */}
-          <section aria-labelledby="system-heading" class={spacing.margin.bottom.section}>
-            <h2 id="system-heading" class={cn('section-title', spacing.margin.bottom.heading)}>
-              {t('sections.system')}
-            </h2>
-            <div class={layout.grid.cards}>
-              <SystemHealthCard />
-              <LogViewerCard maxHeight="400px" />
-            </div>
-          </section>
-
-          {/* Footer */}
-          <footer
-            class={cn(
-              spacing.margin.top.section,
-              radius.lg,
-              'border border-surface-border bg-surface-raised',
-              spacing.pad.lg,
-            )}
-          >
-            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {/* Product Info */}
-              <div>
-                <h3 class="heading-4 text-text-primary mb-2">{t('app.title')}</h3>
-                <p class="body-small text-text-muted mb-1">
-                  {t('footer.byCompany', 'by Mustard Seed Networks')}
-                </p>
-                <p class="caption text-text-muted">
-                  {t('footer.version', 'Version')} {appVersion}
-                </p>
-              </div>
-
-              {/* Contact */}
-              <div>
-                <h4 class="body-small font-medium text-text-primary mb-2">
-                  {t('footer.contact', 'Contact')}
-                </h4>
-                <div class="space-y-1">
-                  <a
-                    href="mailto:support@mustardseednetworks.com"
-                    class="body-small text-brand-primary hover:underline block"
-                  >
-                    support@mustardseednetworks.com
-                  </a>
-                  <a
-                    href="tel:+17194403079"
-                    class="body-small text-text-muted hover:text-text-primary block"
-                  >
-                    719.440.3079
-                  </a>
-                </div>
-              </div>
-
-              {/* Website */}
-              <div>
-                <h4 class="body-small font-medium text-text-primary mb-2">
-                  {t('footer.website', 'Website')}
-                </h4>
-                <a
-                  href="https://www.mustardseednetworks.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="body-small text-brand-primary hover:underline"
-                >
-                  www.mustardseednetworks.com
-                </a>
-              </div>
-
-              {/* Legal */}
-              <div>
-                <h4 class="body-small font-medium text-text-primary mb-2">
-                  {t('footer.legal', 'Legal')}
-                </h4>
-                <div class="flex flex-wrap gap-x-3 gap-y-1">
-                  <a href="/terms" class="body-small text-text-muted hover:text-brand-primary">
-                    {t('footer.tos', 'Terms of Service')}
-                  </a>
-                  <a href="/privacy" class="body-small text-text-muted hover:text-brand-primary">
-                    {t('footer.privacy', 'Privacy')}
-                  </a>
-                  <a href="/license" class="body-small text-text-muted hover:text-brand-primary">
-                    {t('footer.license', 'License')}
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Copyright */}
-            <div class="mt-6 pt-4 border-t border-surface-border text-center">
-              <p class="caption text-text-muted">
-                &copy; {new Date().getFullYear()}{' '}
-                {t('footer.copyright', 'Mustard Seed Networks. All rights reserved.')}
-              </p>
-            </div>
-          </footer>
+          <AppFooter appVersion={appVersion} />
         </div>
       </main>
 
