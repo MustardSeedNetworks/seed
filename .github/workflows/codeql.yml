@@ -32,6 +32,9 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
+          # security-extended adds 30+ deeper CWE queries beyond the default
+          # set; security-and-quality adds the code-quality pack.
+          queries: security-extended,security-and-quality
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3

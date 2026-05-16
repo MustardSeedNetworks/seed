@@ -2,10 +2,15 @@
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.x.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+Until seed reaches 1.0, only the **latest released version** receives
+security fixes. Older 0.x versions will not be patched — upgrade to the
+current minor.
+
+| Version       | Supported          |
+| ------------- | ------------------ |
+| Latest 0.x    | :white_check_mark: |
+| Older 0.x     | :x:                |
+| Future 1.x.x  | :white_check_mark: |
 
 ## Reporting a Vulnerability
 
@@ -13,9 +18,17 @@ We take security vulnerabilities seriously. If you discover a security issue, pl
 
 ### How to Report
 
+**Preferred:** Use GitHub's private vulnerability reporting on this repo —
+[Security tab → Report a vulnerability](https://github.com/krisarmstrong/seed/security/advisories/new).
+That gives us a private channel scoped to maintainers, with built-in CVE
+coordination and an audit trail.
+
+**Alternative:** Email kris.armstrong@icloud.com.
+
+Either way, please:
+
 1. **Do NOT open a public issue** for security vulnerabilities
-2. Email security concerns to: [your-email]
-3. Include:
+2. Include:
    - Description of the vulnerability
    - Steps to reproduce
    - Potential impact
