@@ -1,0 +1,167 @@
+# =============================================================================
+# Release via goreleaser (parallel-rollout candidate)
+# =============================================================================
+# Side-by-side with the existing release.yml. workflow_dispatch only — never
+# auto-triggers on tag push. Used to validate that .goreleaser.yml produces
+# artifacts equivalent to release.yml's output before we swap the cutover.
+#
+# Once a dry-run here produces the same artifact names, signatures, and
+# SBOMs as a recent release.yml run, follow-up PR will:
+#   1. Move the `on: push: tags` trigger from release.yml to this file
+#   2. Delete release.yml and its build-iperf3 job dependency
+#   3. Rename this file to release.yml
+# =============================================================================
+
+name: Release (goreleaser, parallel rollout)
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Snapshot build only — do not publish or sign"
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write # cosign keyless OIDC
+  packages: write
+
+jobs:
+  # =========================================================================
+  # iperf3 binaries — same matrix as release.yml's build-iperf3 job.
+  # goreleaser picks these up from bin/ in the next job.
+  # =========================================================================
+  build-iperf3:
+    name: Build iperf3 (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential autoconf automake libtool
+
+      - name: Get latest iperf3 version
+        id: iperf3_version
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/esnet/iperf/releases/latest | jq -r '.tag_name')
+          echo "version=$LATEST" >> "$GITHUB_OUTPUT"
+
+      - name: Download and build iperf3
+        run: |
+          VERSION="${{ steps.iperf3_version.outputs.version }}"
+          curl -L -o iperf3.tar.gz "https://github.com/esnet/iperf/archive/refs/tags/${VERSION}.tar.gz"
+          tar -xzf iperf3.tar.gz
+          cd iperf-*
+          if [ ! -f configure ]; then ./bootstrap.sh || autoreconf -i; fi
+          ./configure --prefix=/tmp/iperf3-install --disable-shared --enable-static-bin
+          make -j$(nproc)
+          make install
+          mkdir -p ../dist
+          cp /tmp/iperf3-install/bin/iperf3 ../dist/iperf3-linux-${{ matrix.arch }}
+          chmod +x ../dist/iperf3-linux-${{ matrix.arch }}
+
+      - name: Upload iperf3 artifact
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: iperf3-linux-${{ matrix.arch }}
+          path: dist/iperf3-linux-${{ matrix.arch }}
+          retention-days: 1
+
+  # =========================================================================
+  # goreleaser build + publish (or snapshot)
+  # =========================================================================
+  goreleaser:
+    name: goreleaser ${{ inputs.dry_run && '(snapshot)' || '(release)' }}
+    runs-on: ubuntu-latest
+    needs: build-iperf3
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6.4.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6.4.0
+        with:
+          node-version: "25.2.1"
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install libpcap-dev (host CGO link target)
+        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+
+      - name: Download iperf3 artifacts (amd64 + arm64)
+        uses: actions/download-artifact@v8.0.1
+        with:
+          pattern: iperf3-linux-*
+          path: bin/
+          merge-multiple: true
+
+      - name: Restore iperf3 executable bits
+        run: chmod +x bin/iperf3-linux-*
+
+      - name: Compute UI build hash
+        id: ui-hash
+        run: |
+          # The before-hook in .goreleaser.yml builds ui/dist; compute the
+          # hash now and pass via env so the ldflag substitution sees it.
+          cd ui && npm ci && npm run build
+          cd ..
+          UI_BUILD_HASH=$(find ui/dist -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1)
+          echo "hash=$UI_BUILD_HASH" >> "$GITHUB_OUTPUT"
+
+      - name: Install Syft (SBOM)
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v4.1.2
+
+      - name: Run goreleaser (snapshot/dry-run)
+        if: inputs.dry_run
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --snapshot --clean --skip=publish,announce
+        env:
+          UI_BUILD_HASH: ${{ steps.ui-hash.outputs.hash }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run goreleaser (publish)
+        if: ${{ !inputs.dry_run }}
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+        env:
+          UI_BUILD_HASH: ${{ steps.ui-hash.outputs.hash }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload dry-run artifact bundle for inspection
+        if: inputs.dry_run
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: goreleaser-dryrun-${{ github.run_id }}
+          path: dist/
+          retention-days: 14

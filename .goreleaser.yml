@@ -1,0 +1,253 @@
+# =============================================================================
+# goreleaser config for The Seed
+# =============================================================================
+# First-pass migration of release.yml's hand-coded pipeline (#956).
+#
+# Status: PARALLEL ROLLOUT. The canonical release pipeline is still
+# .github/workflows/release.yml. This config is exercised only by
+# .github/workflows/release-goreleaser.yml (workflow_dispatch). Once a
+# dry-run produces artifacts equivalent to release.yml's output, a
+# follow-up PR will swap the trigger over and delete the old workflow.
+#
+# Things this config covers natively:
+#   - Multi-arch builds (linux amd64/arm64, darwin amd64/arm64, windows
+#     amd64/arm64)
+#   - .tar.gz, .zip, .deb, .rpm
+#   - ldflags injection (Version, Commit, BuildTime, UIBuildHash)
+#   - cosign keyless signing of every artifact
+#   - syft SBOM per archive
+#   - SHA-256 checksums
+#   - release-please CHANGELOG.md as release body
+#
+# Things still handled outside goreleaser (custom hooks / sidecar jobs):
+#   - iperf3 binary bundled into Linux archives — pre-built by the existing
+#     build-iperf3 matrix job; goreleaser picks it up via extra_files
+#   - macOS .pkg installer via deploy/macos/build-pkg.sh — see "after" hook
+#   - UI frontend build (npm run build) — runs in the "before" hook so
+#     ui/embed.go picks up the dist before the Go build starts
+#
+# Tested against goreleaser v2.x.
+# =============================================================================
+
+version: 2
+
+project_name: seed
+
+before:
+  hooks:
+    - go mod download
+    # Build the embedded frontend. ui/embed.go relies on ui/dist existing
+    # before Go compiles. Mirrors the "verify embedded frontend" step in
+    # release.yml.
+    - bash -c "cd ui && npm ci && npm run build"
+    - bash -c 'test -d ui/dist && test -n "$(ls -A ui/dist)" || (echo "ui/dist empty — npm run build failed silently"; exit 1)'
+
+builds:
+  - id: seed-linux
+    main: ./cmd/seed
+    binary: seed
+    env:
+      - CGO_ENABLED=1
+    goos: [linux]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+      - -buildvcs=false
+    ldflags: &ldflags
+      - -s -w
+      - -X github.com/krisarmstrong/seed/internal/version.Version={{.Version}}
+      - -X github.com/krisarmstrong/seed/internal/version.Commit={{.Commit}}
+      - -X github.com/krisarmstrong/seed/internal/version.BuildTime={{.Date}}
+      - -X github.com/krisarmstrong/seed/internal/version.UIBuildHash={{.Env.UI_BUILD_HASH}}
+
+  - id: seed-darwin
+    main: ./cmd/seed
+    binary: seed
+    env:
+      - CGO_ENABLED=1
+    goos: [darwin]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+      - -buildvcs=false
+    ldflags: *ldflags
+
+  - id: seed-windows
+    main: ./cmd/seed
+    binary: seed
+    # Windows: CGO disabled (gopacket/pcap fork handles arm64 build without
+    # native libpcap-windows toolchain). Matches release.yml.
+    env:
+      - CGO_ENABLED=0
+    goos: [windows]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+      - -buildvcs=false
+    ldflags: *ldflags
+
+archives:
+  - id: linux-archive
+    ids: [seed-linux]
+    name_template: "seed-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    formats: [tar.gz]
+    files:
+      - src: configs
+        dst: configs
+      - src: ui/dist
+        dst: ui
+      # iperf3 binary, pre-built by the build-iperf3 job and downloaded into
+      # bin/ before goreleaser runs. One per arch.
+      - src: "bin/iperf3-linux-{{ .Arch }}"
+        dst: iperf3
+        info:
+          mode: 0o755
+
+  - id: darwin-archive
+    ids: [seed-darwin]
+    name_template: "seed-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    formats: [tar.gz]
+    files:
+      - src: configs
+        dst: configs
+      - src: ui/dist
+        dst: ui
+
+  - id: windows-archive
+    ids: [seed-windows]
+    name_template: "seed-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    formats: [zip]
+    files:
+      - src: configs
+        dst: configs
+      - src: ui/dist
+        dst: ui
+      - src: deploy/windows/build.ps1
+        dst: install.ps1
+
+# Linux .deb + .rpm via nfpm (built into goreleaser). Port of .nfpm.yaml.
+nfpms:
+  - id: linux-packages
+    ids: [seed-linux]
+    package_name: seed
+    vendor: Mustard Seed Networks
+    homepage: https://github.com/krisarmstrong/seed
+    maintainer: Kris Armstrong <kris@mustardseednetworks.com>
+    description: |
+      The Seed - Network Diagnostic Tool by Mustard Seed Networks
+      .
+      The Seed is a professional-grade network diagnostic appliance designed
+      for network technicians and engineers. Plug it into any network jack
+      and instantly see link status, switch information, DHCP details, DNS
+      health, gateway connectivity, Wi-Fi survey data, and vulnerability
+      findings.
+    license: BSL-1.1
+    section: net
+    priority: optional
+    formats:
+      - deb
+      - rpm
+    file_name_template: >-
+      {{- if eq .ConventionalExtension ".deb" -}}
+        seed_{{ .Version }}_{{ .Arch }}
+      {{- else if eq .ConventionalExtension ".rpm" -}}
+        {{- $rpmarch := .Arch -}}
+        {{- if eq .Arch "amd64" }}{{ $rpmarch = "x86_64" }}{{ end -}}
+        {{- if eq .Arch "arm64" }}{{ $rpmarch = "aarch64" }}{{ end -}}
+        seed-{{ .Version }}-1.{{ $rpmarch }}
+      {{- end -}}
+    dependencies:
+      - systemd
+    overrides:
+      deb:
+        dependencies:
+          - libpcap0.8 | libpcap0.8t64
+          - systemd
+          - libcap2-bin
+      rpm:
+        dependencies:
+          - libpcap
+          - systemd
+          - libcap
+    contents:
+      - src: ./deploy/deb/seed.service
+        dst: /usr/lib/systemd/system/seed.service
+        file_info:
+          mode: 0o644
+      - dst: /etc/seed
+        type: dir
+        file_info:
+          mode: 0o750
+          owner: seed
+          group: seed
+      - dst: /var/lib/seed
+        type: dir
+        file_info:
+          mode: 0o750
+          owner: seed
+          group: seed
+      - dst: /var/lib/seed/logs
+        type: dir
+        file_info:
+          mode: 0o750
+          owner: seed
+          group: seed
+      - dst: /var/log/seed
+        type: dir
+        file_info:
+          mode: 0o750
+          owner: seed
+          group: seed
+    scripts:
+      preinstall: ./deploy/nfpm/preinstall.sh
+      postinstall: ./deploy/nfpm/postinstall.sh
+      preremove: ./deploy/nfpm/preremove.sh
+      postremove: ./deploy/nfpm/postremove.sh
+    # Default install location for the binary (overrides nfpm default of
+    # /usr/local/bin). Matches existing .deb/.rpm contract.
+    bindir: /usr/bin
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+sboms:
+  - id: archives-sbom
+    artifacts: archive
+    documents:
+      - "{{ .ArtifactName }}.sbom.json"
+
+signs:
+  # Sign all release artifacts via cosign keyless OIDC. Mirrors release.yml's
+  # cosign sign-blob loop. Bundle format preserves Sigstore transparency log
+  # entry.
+  - cmd: cosign
+    signature: "${artifact}.cosign.bundle"
+    args:
+      - sign-blob
+      - "--yes"
+      - "--bundle"
+      - "${artifact}.cosign.bundle"
+      - "${artifact}"
+    artifacts: all
+    output: true
+
+release:
+  github:
+    owner: krisarmstrong
+    name: seed
+  # Use release-please's CHANGELOG.md section as the release body. The
+  # `replace_existing_artifacts: true` lets a re-run overwrite a partial
+  # earlier failure cleanly.
+  replace_existing_artifacts: true
+  draft: false
+  prerelease: auto
+  mode: replace
+  header: |
+    The Seed {{ .Tag }} — Network Diagnostic Tool by Mustard Seed Networks.
+
+    See [CHANGELOG.md](https://github.com/krisarmstrong/seed/blob/main/CHANGELOG.md)
+    for the full release notes.
+
+snapshot:
+  version_template: "0.0.0-dryrun-{{ .ShortCommit }}"
