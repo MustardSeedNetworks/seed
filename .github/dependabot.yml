@@ -3,19 +3,28 @@
 
 version: 2
 updates:
-  # Keep GitHub Actions up to date
+  # Keep GitHub Actions up to date. Workflows are SHA-pinned (#955);
+  # Dependabot detects the SHA+tag-comment format and updates both.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     labels:
       - "dependencies"
       - "github-actions"
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
+    # Group minor/patch updates so we don't get 17 PRs every week.
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Keep Go dependencies up to date
   - package-ecosystem: "gomod"
@@ -39,9 +48,11 @@ updates:
           - "minor"
           - "patch"
 
-  # Keep npm dependencies up to date
+  # Keep npm dependencies up to date.
+  # Directory was /web before the web → ui rename; corrected to /ui so
+  # this ecosystem actually runs.
   - package-ecosystem: "npm"
-    directory: "/web"
+    directory: "/ui"
     schedule:
       interval: "weekly"
       day: "monday"
