@@ -735,6 +735,7 @@ jobs:
         with:
           name: server-logs
           path: server.log
+          retention-days: 7
 
   # ===========================================================================
   # Lighthouse CI - Performance & Accessibility Audits
@@ -801,3 +802,4 @@ jobs:
         with:
           name: lighthouse-server-logs
           path: server.log
+          retention-days: 7
