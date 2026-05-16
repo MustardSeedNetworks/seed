@@ -99,6 +99,7 @@ jobs:
         with:
           name: iperf3-linux-${{ matrix.arch }}
           path: dist/iperf3-linux-${{ matrix.arch }}
+          retention-days: 1
 
   # ===========================================================================
   # Build Release Packages
@@ -269,6 +270,7 @@ jobs:
             release/*.tar.gz
             release/*.deb
             release/*.rpm
+          retention-days: 7
 
   # ===========================================================================
   # Build macOS Release (closes #474)
@@ -402,6 +404,7 @@ jobs:
           path: |
             release/*.tar.gz
             dist/*.pkg
+          retention-days: 7
 
   # ===========================================================================
   # Build Windows Release
@@ -509,6 +512,7 @@ jobs:
         with:
           name: release-windows-${{ matrix.arch }}
           path: release/*.zip
+          retention-days: 7
 
   # ===========================================================================
   # Publish Release
