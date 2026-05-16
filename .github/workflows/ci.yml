@@ -291,6 +291,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check file sizes (warn-only)
+        # Mirrors niac/go's file-size budget gate. Warn mode for now —
+        # seed has many oversized files inherited from earlier development.
+        # Flip STRICT=1 once the worst offenders (App.tsx, SettingsDrawer,
+        # handlers_health_checks.go, config.go, etc.) are split.
+        env:
+          STRICT: "0"
+        run: ./scripts/check-file-size.sh
+
       - name: Check for AI tool references
         run: |
           PATTERN='(claude|chatgpt|gpt-4|gemini|anthropic|openai|copilot|ai.generated|generated.with)'
