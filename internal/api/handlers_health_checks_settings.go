@@ -410,3 +410,9 @@ type statusResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }
+
+// Common JSON status-field values reused across ack-style responses.
+const (
+	statusDeleted     = "deleted"
+	statusSampleAdded = "sample added"
+)
