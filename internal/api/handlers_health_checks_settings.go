@@ -416,3 +416,9 @@ const (
 	statusDeleted     = "deleted"
 	statusSampleAdded = "sample added"
 )
+
+// Common JSON field-name keys reused across many SSE / response payloads.
+const (
+	jsonKeyInterface = "interface"
+	jsonKeyTimestamp = "timestamp"
+)
