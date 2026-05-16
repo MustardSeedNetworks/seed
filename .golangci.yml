@@ -479,6 +479,15 @@ linters:
       - text: 'G115: integer overflow conversion int -> byte'
         path: 'internal/api/health_checks_dicom\.go'
         linters: [ gosec ]
+      # profiler_infer.go contains portToService, an intentional literal-
+      # reference table mapping port numbers to user-facing protocol names.
+      # The repeated strings (ftp/ssh/http/etc.) are protocol identifiers,
+      # not refactorable constants.
+      - path: 'internal/services/discovery/profiler_infer\.go'
+        linters: [ goconst ]
+      - path: 'internal/services/discovery/profiler_scan\.go'
+        text: 'string `https?` has'
+        linters: [ goconst ]
       - path: '_test\.go'
         linters:
           - bodyclose
