@@ -4,6 +4,8 @@
 **Model:** Commercial (paid license)
 **Status:** Development - NOT FOR PUBLIC DISTRIBUTION
 
+> Companion: [EDITIONS.md](EDITIONS.md) — Lite vs Pro hardware profiles, software differentiation, and licensing hooks (#251).
+
 ---
 
 ## Current State (Development)
