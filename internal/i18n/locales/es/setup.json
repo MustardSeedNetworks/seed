@@ -22,6 +22,14 @@
     "label": "Contraseña",
     "minLength": "Mínimo 12 caracteres, incluyendo mayúsculas, minúsculas, números y caracteres especiales.",
     "placeholder": "Ingrese la contraseña de administrador",
+    "rulesLabel": "Requisitos de la contraseña",
+    "rules": {
+      "length": "Al menos 12 caracteres",
+      "uppercase": "Contiene una letra mayúscula (A-Z)",
+      "lowercase": "Contiene una letra minúscula (a-z)",
+      "number": "Contiene un número (0-9)",
+      "special": "Contiene un carácter especial (!@#$…)"
+    },
     "confirm": {
       "label": "Confirmar Contraseña",
       "placeholder": "Confirme su contraseña"

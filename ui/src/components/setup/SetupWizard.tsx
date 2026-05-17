@@ -27,6 +27,7 @@ import { Activity, Copy, Eye, EyeOff, Lock, Zap } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { evaluatePassword, type PasswordRule } from '../../lib/passwordPolicy';
 import {
   button,
   buttonClass,
@@ -71,6 +72,7 @@ interface SetupWizardProps {
 /**
  * First-run setup flow that forces the user to create credentials before using the app.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Single-screen wizard with several conditional UI blocks; refactoring split is tracked separately.
 export function SetupWizard({
   onComplete,
   onLogin,
@@ -141,7 +143,9 @@ export function SetupWizard({
     e.preventDefault();
     setError(null);
 
-    if (password.length < 12) {
+    // Fixes #723: enforce complexity rules, not just length.
+    const policy = evaluatePassword(password);
+    if (!policy.valid) {
       setError(t('errors.passwordTooShort'));
       return;
     }
@@ -362,6 +366,27 @@ export function SetupWizard({
                 <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
                   {t('password.minLength')}
                 </p>
+                {/* Fixes #723: live complexity-rule checklist so the user
+                    can see exactly which constraints they still need to meet. */}
+                {password.length > 0 ? (
+                  <ul
+                    aria-label={t('password.rulesLabel')}
+                    class={cn('caption stack-xs', spacing.margin.top.inline)}
+                  >
+                    {evaluatePassword(password).rules.map((rule: PasswordRule) => (
+                      <li
+                        key={rule.id}
+                        class={cn(
+                          'flex items-center gap-2',
+                          rule.ok ? 'text-status-success' : 'text-text-muted',
+                        )}
+                      >
+                        <span aria-hidden="true">{rule.ok ? '✓' : '○'}</span>
+                        <span>{t(`password.rules.${rule.id}`)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </div>
 
               <div class={spacing.margin.bottom.section}>

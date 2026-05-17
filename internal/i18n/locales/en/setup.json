@@ -22,6 +22,14 @@
     "label": "Password",
     "minLength": "Minimum 12 characters, including uppercase, lowercase, numbers, and special characters.",
     "placeholder": "Enter admin password",
+    "rulesLabel": "Password requirements",
+    "rules": {
+      "length": "At least 12 characters",
+      "uppercase": "Contains an uppercase letter (A-Z)",
+      "lowercase": "Contains a lowercase letter (a-z)",
+      "number": "Contains a number (0-9)",
+      "special": "Contains a special character (!@#$…)"
+    },
     "confirm": {
       "label": "Confirm Password",
       "placeholder": "Confirm your password"
