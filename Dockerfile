@@ -26,7 +26,7 @@ RUN mkdir -p /out && cp -r ../internal/api/ui /out/ui
 # -----------------------------------------------------------------------------
 # Stage 2: build the Go binary with CGO + libpcap
 # -----------------------------------------------------------------------------
-FROM golang:1.25-bookworm AS go-build
+FROM golang:1.26-bookworm AS go-build
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libpcap-dev \
     && rm -rf /var/lib/apt/lists/*
