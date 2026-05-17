@@ -9,31 +9,19 @@
  * - React Query for API calls (caching, deduplication, background refetch)
  * - Context provides backwards-compatible interface for consumers
  *
- * Features:
- * - Load and cache profiles
- * - Track active profile
- * - Handle profile switching
- * - Manage ALL user settings (cardSettings, displayOptions, thresholds, etc.)
- * - Auto-save settings to active profile with debouncing
+ * Layout:
+ *  - profileContext.tsx    — ProfileContextValue interface + ProfileProvider
+ *                            assembly + the public useProfileContext hook
+ *  - useProfileApi.ts      — backwards-compat wrappers around React Query
+ *                            queries / mutations (refresh / CRUD / import / export)
+ *  - useProfileSettingsUpdates.ts — auto-save settings updaters that target
+ *                            the active profile via the saveSettings mutation
+ *  - useProfileInterfaces.ts — ethernet / wifi multi-interface helpers
+ *                            (get / set / add / remove / setActive)
  */
 
-import { createContext, type ReactNode, useCallback, useContext, useRef } from 'react';
-import { api } from '../api';
-import { LogComponents, logger } from '../lib/logger';
-import { getQueryClient } from '../lib/queryClient';
-import {
-  profileKeys,
-  useActiveProfileQuery,
-  useBackendDefaultsQuery,
-  useCreateProfileMutation,
-  useDeleteProfileMutation,
-  useDuplicateProfileMutation,
-  useImportProfilesMutation,
-  useProfilesQuery,
-  useSaveSettingsMutation,
-  useSwitchProfileMutation,
-  useUpdateProfileMutation,
-} from '../stores/profileQueries';
+import { createContext, type ReactNode, useCallback, useContext } from 'react';
+import { useBackendDefaultsQuery } from '../stores/profileQueries';
 import {
   type SettingsSaveStatus,
   useAppearanceSettings,
@@ -75,6 +63,9 @@ import type {
   VulnerabilityConfig,
   WifiSettingsConfig,
 } from '../types/profile';
+import { useProfileApi } from './useProfileApi';
+import { useProfileInterfaces } from './useProfileInterfaces';
+import { useProfileSettingsUpdates } from './useProfileSettingsUpdates';
 
 // Re-export for consumers
 export type { SettingsSaveStatus };
@@ -197,9 +188,7 @@ interface ProfileProviderProps {
  * Uses Zustand for state and React Query for API calls (#890).
  */
 export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.Element {
-  // ============================================================================
-  // Zustand Store State
-  // ============================================================================
+  // Zustand store state
   const profiles = useProfileStore((s) => s.profiles);
   const activeProfile = useProfileStore((s) => s.activeProfile);
   const isLoading = useProfileStore((s) => s.isLoading);
@@ -208,9 +197,7 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
   const isSettingsLoaded = useProfileStore((s) => s.isSettingsLoaded);
   const setActiveProfile = useProfileStore((s) => s.setActiveProfile);
 
-  // ============================================================================
-  // Zustand Derived Selectors (memoized settings)
-  // ============================================================================
+  // Memoized settings selectors
   const linkSettings = useLinkSettings();
   const cableTestSettings = useCableTestSettings();
   const displayOptions = useDisplayOptions();
@@ -226,587 +213,17 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
   const appearanceSettings = useAppearanceSettings();
   const cardSettings = useCardSettings();
 
-  // ============================================================================
-  // React Query Hooks
-  // ============================================================================
-  const profilesQuery = useProfilesQuery();
-  const activeProfileQuery = useActiveProfileQuery();
-  useBackendDefaultsQuery(); // Just triggers the query, state synced via effect
+  // Trigger backend defaults query (state synced via effect inside the hook)
+  useBackendDefaultsQuery();
 
-  const createProfileMutation = useCreateProfileMutation();
-  const updateProfileMutation = useUpdateProfileMutation();
-  const deleteProfileMutation = useDeleteProfileMutation();
-  const switchProfileMutation = useSwitchProfileMutation();
-  const duplicateProfileMutation = useDuplicateProfileMutation();
-  const importProfilesMutation = useImportProfilesMutation();
-  const saveSettingsMutation = useSaveSettingsMutation();
-
-  // ============================================================================
-  // Refs for interface helpers
-  // ============================================================================
-  const activeProfileRef = useRef(activeProfile);
-  activeProfileRef.current = activeProfile;
-
-  // ============================================================================
-  // API Methods - Wrapped for backwards compatibility
-  // ============================================================================
-
-  const refreshProfiles = useCallback(async () => {
-    // refetch returns a thenable (QueryObserverResult), awaiting for completion
-    await Promise.resolve(profilesQuery.refetch());
-  }, [profilesQuery]);
-
-  const refreshActiveProfile = useCallback(async () => {
-    // refetch returns a thenable (QueryObserverResult), awaiting for completion
-    await Promise.resolve(activeProfileQuery.refetch());
-  }, [activeProfileQuery]);
-
-  const createProfile = useCallback(
-    async (profile: ProfileRequest): Promise<Profile | null> => {
-      try {
-        // mutateAsync returns a thenable, wrap in Promise.resolve for linter
-        const result = await Promise.resolve(createProfileMutation.mutateAsync(profile));
-        return result;
-      } catch {
-        return null;
-      }
-    },
-    [createProfileMutation],
-  );
-
-  const updateProfile = useCallback(
-    async (id: string, profile: ProfileRequest): Promise<Profile | null> => {
-      try {
-        // mutateAsync returns a thenable, wrap in Promise.resolve for linter
-        const result = await Promise.resolve(updateProfileMutation.mutateAsync({ id, profile }));
-        return result;
-      } catch {
-        return null;
-      }
-    },
-    [updateProfileMutation],
-  );
-
-  const deleteProfile = useCallback(
-    async (id: string): Promise<boolean> => {
-      try {
-        // mutateAsync returns a thenable, wrap in Promise.resolve for linter
-        await Promise.resolve(deleteProfileMutation.mutateAsync(id));
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    [deleteProfileMutation],
-  );
-
-  const switchProfile = useCallback(
-    async (profileId: string): Promise<boolean> => {
-      try {
-        // mutateAsync returns a thenable, wrap in Promise.resolve for linter
-        await Promise.resolve(switchProfileMutation.mutateAsync(profileId));
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    [switchProfileMutation],
-  );
-
-  const duplicateProfile = useCallback(
-    async (id: string, _newName?: string): Promise<Profile | null> => {
-      try {
-        // mutateAsync returns a thenable, wrap in Promise.resolve for linter
-        const result = await Promise.resolve(duplicateProfileMutation.mutateAsync(id));
-        return result;
-      } catch {
-        return null;
-      }
-    },
-    [duplicateProfileMutation],
-  );
-
-  const importProfiles = useCallback(
-    async (request: ProfileImportRequest): Promise<ProfileImportResponse | null> => {
-      try {
-        // mutateAsync returns a thenable, wrap in Promise.resolve for linter
-        const result = await Promise.resolve(importProfilesMutation.mutateAsync(request));
-        return result;
-      } catch {
-        return null;
-      }
-    },
-    [importProfilesMutation],
-  );
-
-  const exportProfiles = useCallback(async (): Promise<ProfileExportResponse | null> => {
-    try {
-      const queryClient = getQueryClient();
-      // fetchQuery returns a thenable, wrap in Promise.resolve for linter
-      const result = await Promise.resolve(
-        queryClient.fetchQuery({
-          queryKey: [...profileKeys.all, 'export'],
-          queryFn: async () => {
-            const data = await api.get<ProfileExportResponse>('/api/v1/profiles/export');
-            return data;
-          },
-          staleTime: 0,
-        }),
-      );
-      logger.info(LogComponents.Profiles, 'Profiles exported', {
-        count: result.profiles.length,
-      });
-      return result;
-    } catch (err) {
-      logger.error(LogComponents.Profiles, 'Failed to export profiles', err);
-      return null;
-    }
-  }, []);
-
-  const downloadProfiles = useCallback(async (): Promise<boolean> => {
-    try {
-      const result = await exportProfiles();
-      if (!result) {
-        return false;
-      }
-
-      // Create and trigger download
-      const blob = new Blob([JSON.stringify(result, null, 2)], {
-        type: 'application/json',
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `seed-profiles-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      return true;
-    } catch (err) {
-      logger.error(LogComponents.Profiles, 'Failed to download profiles', err);
-      return false;
-    }
-  }, [exportProfiles]);
-
-  // ============================================================================
-  // Settings Update Methods
-  // ============================================================================
-
-  /**
-   * Generic settings updater that uses the save mutation.
-   */
-  const updateSettingsField = useCallback(
-    <T extends keyof ProfileSettings>(field: T, updates: Partial<ProfileSettings[T]>) => {
-      if (!activeProfile) {
-        logger.warn(LogComponents.Profiles, 'Cannot save settings: no active profile');
-        return;
-      }
-
-      const currentSettings = activeProfile.settings ?? {};
-      const currentFieldValue = currentSettings[field] ?? {};
-      const newSettings = {
-        [field]: { ...currentFieldValue, ...updates },
-      };
-
-      saveSettingsMutation.mutate({
-        profileId: activeProfile.id,
-        settings: newSettings,
-      });
-    },
-    [activeProfile, saveSettingsMutation],
-  );
-
-  const updateCardSettings = useCallback(
-    (updates: Partial<CardSettingsConfig>) => {
-      updateSettingsField('cardSettings', updates);
-    },
-    [updateSettingsField],
-  );
-
-  const updateDisplayOptions = useCallback(
-    (updates: Partial<DisplayOptionsConfig>) => {
-      updateSettingsField('displayOptions', updates);
-    },
-    [updateSettingsField],
-  );
-
-  const updateIperfSettings = useCallback(
-    (updates: Partial<IperfConfig>) => {
-      updateSettingsField('iperf', updates);
-    },
-    [updateSettingsField],
-  );
-
-  const updateThresholds = useCallback(
-    (updates: Partial<ProfileThresholdsConfig>) => {
-      updateSettingsField('thresholds', updates);
-    },
-    [updateSettingsField],
-  );
-
-  const updateSpeedtestSettings = useCallback(
-    (updates: Partial<SpeedtestConfig>) => {
-      updateSettingsField('speedtest', updates);
-    },
-    [updateSettingsField],
-  );
-
-  const updateTestsSettings = useCallback(
-    (updates: Partial<TestsConfig>) => {
-      updateSettingsField('tests', updates);
-    },
-    [updateSettingsField],
-  );
-
-  const updateNetworkDiscoverySettings = useCallback(
-    (updates: Partial<NetworkDiscoveryConfig>) => {
-      updateSettingsField('networkDiscovery', updates);
-    },
-    [updateSettingsField],
-  );
-
-  const updateSnmpSettings = useCallback(
-    (updates: Partial<SnmpConfig>) => {
-      updateSettingsField('snmp', updates);
-    },
-    [updateSettingsField],
-  );
-
-  const updateWifiSettings = useCallback(
-    (updates: Partial<WifiSettingsConfig>) => {
-      updateSettingsField('wifi', updates);
-    },
-    [updateSettingsField],
-  );
-
-  const updateLinkSettings = useCallback(
-    (updates: Partial<LinkConfig>) => {
-      updateSettingsField('link', updates);
-    },
-    [updateSettingsField],
-  );
-
-  const updateCableTestSettings = useCallback(
-    (updates: Partial<CableTestConfig>) => {
-      updateSettingsField('cableTest', updates);
-    },
-    [updateSettingsField],
-  );
-
-  const updateVulnerabilitySettings = useCallback(
-    (updates: Partial<VulnerabilityConfig>) => {
-      updateSettingsField('vulnerability', updates);
-    },
-    [updateSettingsField],
-  );
-
-  const updateDnsSettings = useCallback(
-    (updates: Partial<DnsSettingsConfig>) => {
-      updateSettingsField('dns', updates);
-    },
-    [updateSettingsField],
-  );
-
-  const updateAppearanceSettings = useCallback(
-    (updates: Partial<AppearanceConfig>) => {
-      updateSettingsField('appearance', updates);
-    },
-    [updateSettingsField],
-  );
-
-  const updateSettings = useCallback(
-    (updates: Partial<ProfileSettings>) => {
-      if (!activeProfile) {
-        logger.warn(LogComponents.Profiles, 'Cannot save settings: no active profile');
-        return;
-      }
-
-      saveSettingsMutation.mutate({
-        profileId: activeProfile.id,
-        settings: updates,
-      });
-    },
-    [activeProfile, saveSettingsMutation],
-  );
+  // Extracted hooks: API wrappers, settings updaters, interface helpers
+  const apiOps = useProfileApi();
+  const settingsUpdaters = useProfileSettingsUpdates(activeProfile);
+  const interfaceOps = useProfileInterfaces(activeProfile, setActiveProfile);
 
   const refreshSettings = useCallback(async () => {
-    await refreshActiveProfile();
-  }, [refreshActiveProfile]);
-
-  // ============================================================================
-  // Interface Selection Helpers
-  // ============================================================================
-
-  const getEthernetInterface = useCallback((): ProfileInterfaceSelection | null => {
-    const interfaces = activeProfileRef.current?.config?.interfaces;
-    if (!(interfaces?.activeEthernet && interfaces.ethernet)) {
-      return null;
-    }
-    return interfaces.ethernet.find((i) => i.name === interfaces.activeEthernet) ?? null;
-  }, []);
-
-  const getWifiInterface = useCallback((): ProfileInterfaceSelection | null => {
-    const interfaces = activeProfileRef.current?.config?.interfaces;
-    if (!(interfaces?.activeWifi && interfaces.wifi)) {
-      return null;
-    }
-    return interfaces.wifi.find((i) => i.name === interfaces.activeWifi) ?? null;
-  }, []);
-
-  const getAllEthernetInterfaces = useCallback(
-    (): ProfileInterfaceSelection[] => activeProfileRef.current?.config?.interfaces?.ethernet ?? [],
-    [],
-  );
-
-  const getAllWifiInterfaces = useCallback(
-    (): ProfileInterfaceSelection[] => activeProfileRef.current?.config?.interfaces?.wifi ?? [],
-    [],
-  );
-
-  /**
-   * Helper to update interface config on the backend.
-   */
-  const updateInterfaceConfig = useCallback(
-    async (
-      updater: (
-        interfaces: NonNullable<NonNullable<Profile['config']>['interfaces']>,
-      ) => NonNullable<NonNullable<Profile['config']>['interfaces']>,
-    ): Promise<boolean> => {
-      const currentProfile = activeProfileRef.current;
-      if (!currentProfile) {
-        logger.warn(LogComponents.Profiles, 'Cannot update interfaces: no active profile');
-        return false;
-      }
-
-      try {
-        const currentInterfaces = currentProfile.config?.interfaces ?? {
-          ethernet: [],
-          wifi: [],
-        };
-        const updatedInterfaces = updater(currentInterfaces);
-
-        const updatedConfig = {
-          ...currentProfile.config,
-          interfaces: updatedInterfaces,
-        };
-
-        await api.put(`/api/profiles/${currentProfile.id}`, {
-          name: currentProfile.name,
-          description: currentProfile.description,
-          config: updatedConfig,
-        });
-
-        // Update local state
-        setActiveProfile({
-          ...currentProfile,
-          config: updatedConfig,
-        });
-
-        // Invalidate queries
-        const queryClient = getQueryClient();
-        queryClient.invalidateQueries({ queryKey: profileKeys.active() });
-
-        return true;
-      } catch (err) {
-        logger.error(LogComponents.Profiles, 'Failed to update interface config', err);
-        return false;
-      }
-    },
-    [setActiveProfile],
-  );
-
-  const setEthernetInterface = useCallback(
-    async (name: string, enabled = true): Promise<boolean> => {
-      const result = await updateInterfaceConfig((interfaces) => {
-        const ethernet = [...(interfaces.ethernet ?? [])];
-        const existingIdx = ethernet.findIndex((i) => i.name === name);
-        if (existingIdx >= 0) {
-          ethernet[existingIdx] = { ...ethernet[existingIdx], enabled };
-        } else {
-          ethernet.push({ name, enabled });
-        }
-        return { ...interfaces, ethernet, activeEthernet: name };
-      });
-      if (result) {
-        logger.info(LogComponents.Profiles, 'Ethernet interface set as active', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
-
-  const setWifiInterface = useCallback(
-    async (name: string, enabled = true): Promise<boolean> => {
-      const result = await updateInterfaceConfig((interfaces) => {
-        const wifi = [...(interfaces.wifi ?? [])];
-        const existingIdx = wifi.findIndex((i) => i.name === name);
-        if (existingIdx >= 0) {
-          wifi[existingIdx] = { ...wifi[existingIdx], enabled };
-        } else {
-          wifi.push({ name, enabled });
-        }
-        return { ...interfaces, wifi, activeWifi: name };
-      });
-      if (result) {
-        logger.info(LogComponents.Profiles, 'Wifi interface set as active', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
-
-  const addEthernetInterface = useCallback(
-    async (name: string, enabled = true): Promise<boolean> => {
-      const result = await updateInterfaceConfig((interfaces) => {
-        const ethernet = [...(interfaces.ethernet ?? [])];
-        const existingIdx = ethernet.findIndex((i) => i.name === name);
-        if (existingIdx >= 0) {
-          ethernet[existingIdx] = { ...ethernet[existingIdx], enabled };
-        } else {
-          ethernet.push({ name, enabled });
-        }
-        return { ...interfaces, ethernet };
-      });
-      if (result) {
-        logger.info(LogComponents.Profiles, 'Ethernet interface added', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
-
-  const addWifiInterface = useCallback(
-    async (name: string, enabled = true): Promise<boolean> => {
-      const result = await updateInterfaceConfig((interfaces) => {
-        const wifi = [...(interfaces.wifi ?? [])];
-        const existingIdx = wifi.findIndex((i) => i.name === name);
-        if (existingIdx >= 0) {
-          wifi[existingIdx] = { ...wifi[existingIdx], enabled };
-        } else {
-          wifi.push({ name, enabled });
-        }
-        return { ...interfaces, wifi };
-      });
-      if (result) {
-        logger.info(LogComponents.Profiles, 'Wifi interface added', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
-
-  const removeEthernetInterface = useCallback(
-    async (name: string): Promise<boolean> => {
-      const result = await updateInterfaceConfig((interfaces) => {
-        const ethernet = (interfaces.ethernet ?? []).filter((i) => i.name !== name);
-        const activeEthernetVal =
-          interfaces.activeEthernet === name ? '' : interfaces.activeEthernet;
-        return { ...interfaces, ethernet, activeEthernet: activeEthernetVal };
-      });
-      if (result) {
-        logger.info(LogComponents.Profiles, 'Ethernet interface removed', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
-
-  const removeWifiInterface = useCallback(
-    async (name: string): Promise<boolean> => {
-      const result = await updateInterfaceConfig((interfaces) => {
-        const wifi = (interfaces.wifi ?? []).filter((i) => i.name !== name);
-        const activeWifiVal = interfaces.activeWifi === name ? '' : interfaces.activeWifi;
-        return { ...interfaces, wifi, activeWifi: activeWifiVal };
-      });
-      if (result) {
-        logger.info(LogComponents.Profiles, 'Wifi interface removed', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
-
-  const setActiveEthernetInterface = useCallback(
-    async (name: string): Promise<boolean> => {
-      const currentProfile = activeProfileRef.current;
-      const exists = (currentProfile?.config?.interfaces?.ethernet ?? []).some(
-        (i) => i.name === name,
-      );
-      if (!exists) {
-        logger.warn(
-          LogComponents.Profiles,
-          'Cannot set active ethernet interface: interface not in list',
-          { interface: name },
-        );
-        return false;
-      }
-
-      const result = await updateInterfaceConfig((interfaces) => ({
-        ...interfaces,
-        activeEthernet: name,
-      }));
-      if (result) {
-        logger.info(LogComponents.Profiles, 'Active ethernet interface changed', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
-
-  const setActiveWifiInterface = useCallback(
-    async (name: string): Promise<boolean> => {
-      const currentProfile = activeProfileRef.current;
-      const exists = (currentProfile?.config?.interfaces?.wifi ?? []).some((i) => i.name === name);
-      if (!exists) {
-        logger.warn(
-          LogComponents.Profiles,
-          'Cannot set active Wifi interface: interface not in list',
-          { interface: name },
-        );
-        return false;
-      }
-
-      const result = await updateInterfaceConfig((interfaces) => ({
-        ...interfaces,
-        activeWifi: name,
-      }));
-      if (result) {
-        logger.info(LogComponents.Profiles, 'Active Wifi interface changed', {
-          profileId: activeProfileRef.current?.id,
-          interface: name,
-        });
-      }
-      return result;
-    },
-    [updateInterfaceConfig],
-  );
-
-  // ============================================================================
-  // Context Value
-  // ============================================================================
+    await apiOps.refreshActiveProfile();
+  }, [apiOps.refreshActiveProfile]);
 
   const contextValue: ProfileContextValue = {
     // Profile state (from Zustand)
@@ -816,7 +233,6 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
     error,
 
     // Settings state (from Zustand selectors)
-    // Order matches Settings Drawer UI for consistency
     linkSettings,
     cableTestSettings,
     displayOptions,
@@ -834,60 +250,22 @@ export function ProfileProvider({ children }: ProfileProviderProps): React.JSX.E
     settingsStatus,
     isSettingsLoaded,
 
-    // Profile list/fetch operations
-    refreshProfiles,
-    refreshActiveProfile,
+    // Profile list/fetch + CRUD + import/export
+    ...apiOps,
 
-    // Profile CRUD operations
-    createProfile,
-    updateProfile,
-    deleteProfile,
-    switchProfile,
-    duplicateProfile,
-
-    // Profile import/export
-    importProfiles,
-    exportProfiles,
-    downloadProfiles,
-
-    // Settings update methods - order matches Settings Drawer UI
-    updateLinkSettings,
-    updateCableTestSettings,
-    updateDisplayOptions,
-    updateWifiSettings,
-    updateDnsSettings,
-    updateTestsSettings,
-    updateSpeedtestSettings,
-    updateIperfSettings,
-    updateNetworkDiscoverySettings,
-    updateSnmpSettings,
-    updateVulnerabilitySettings,
-    updateThresholds,
-    updateAppearanceSettings,
-    updateCardSettings,
-    updateSettings,
+    // Settings auto-save
+    ...settingsUpdaters,
     refreshSettings,
 
-    // Interface selection helpers
-    getEthernetInterface,
-    getWifiInterface,
-    getAllEthernetInterfaces,
-    getAllWifiInterfaces,
-    setEthernetInterface,
-    setWifiInterface,
-    addEthernetInterface,
-    addWifiInterface,
-    removeEthernetInterface,
-    removeWifiInterface,
-    setActiveEthernetInterface,
-    setActiveWifiInterface,
+    // Interface helpers
+    ...interfaceOps,
   };
 
   return <PROFILE_CONTEXT.Provider value={contextValue}>{children}</PROFILE_CONTEXT.Provider>;
 }
 
 // ============================================================================
-// Hook
+// Hooks
 // ============================================================================
 
 /**
