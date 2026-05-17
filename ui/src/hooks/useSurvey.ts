@@ -34,6 +34,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
+import {
+  validateCoordinates,
+  validateCreateSurvey,
+  validateFloorPlan,
+  validateSurveyId,
+} from '../lib/surveyValidation';
 
 /** Survey data collection mode */
 export type SurveyType = 'passive' | 'active' | 'throughput';
@@ -524,6 +530,18 @@ export function useSurvey(): {
 
   const createSurvey = useCallback(
     async (request: CreateSurveyRequest): Promise<Survey> => {
+      // Fixes #725: validate before sending so we don't push malformed
+      // payloads at the backend and can surface a clear field-specific error.
+      const check = validateCreateSurvey(request);
+      if (!check.ok) {
+        setError(check.error);
+        logger.warn(LogComponents.Survey, 'Rejected createSurvey - validation failed', {
+          error: check.error,
+          field: check.field,
+        });
+        throw new Error(check.error);
+      }
+
       setLoading(true);
       setError(null);
       try {
@@ -552,6 +570,11 @@ export function useSurvey(): {
   );
 
   const getSurvey = useCallback(async (id: string): Promise<Survey> => {
+    const check = validateSurveyId(id);
+    if (!check.ok) {
+      setError(check.error);
+      throw new Error(check.error);
+    }
     setLoading(true);
     setError(null);
     try {
@@ -573,6 +596,11 @@ export function useSurvey(): {
 
   const deleteSurvey = useCallback(
     async (id: string) => {
+      const check = validateSurveyId(id);
+      if (!check.ok) {
+        setError(check.error);
+        return;
+      }
       setLoading(true);
       setError(null);
       try {
@@ -599,6 +627,11 @@ export function useSurvey(): {
 
   const startSurvey = useCallback(
     async (id: string) => {
+      const check = validateSurveyId(id);
+      if (!check.ok) {
+        setError(check.error);
+        return;
+      }
       setLoading(true);
       setError(null);
       try {
@@ -623,6 +656,11 @@ export function useSurvey(): {
 
   const pauseSurvey = useCallback(
     async (id: string) => {
+      const check = validateSurveyId(id);
+      if (!check.ok) {
+        setError(check.error);
+        return;
+      }
       setLoading(true);
       setError(null);
       try {
@@ -647,6 +685,11 @@ export function useSurvey(): {
 
   const completeSurvey = useCallback(
     async (id: string) => {
+      const check = validateSurveyId(id);
+      if (!check.ok) {
+        setError(check.error);
+        return;
+      }
       setLoading(true);
       setError(null);
       try {
@@ -676,6 +719,25 @@ export function useSurvey(): {
       y: number,
       sampleData: PassiveSample | ActiveSample | ThroughputSample,
     ) => {
+      const idCheck = validateSurveyId(id);
+      if (!idCheck.ok) {
+        setError(idCheck.error);
+        return;
+      }
+      // Fixes #725: reject non-finite or negative coordinates before submission.
+      // (Bounds vs floor-plan extent are enforced at the canvas layer.)
+      const coordCheck = validateCoordinates(x, y);
+      if (!coordCheck.ok) {
+        setError(coordCheck.error);
+        logger.warn(LogComponents.Survey, 'Rejected sample - coordinate validation failed', {
+          surveyId: id,
+          x,
+          y,
+          error: coordCheck.error,
+        });
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {
@@ -707,6 +769,24 @@ export function useSurvey(): {
   );
 
   const updateFloorPlan = useCallback(async (id: string, floorPlan: FloorPlan) => {
+    const idCheck = validateSurveyId(id);
+    if (!idCheck.ok) {
+      setError(idCheck.error);
+      return;
+    }
+    // Fixes #725: enforce max dimensions / payload size before sending.
+    const planCheck = validateFloorPlan(floorPlan);
+    if (!planCheck.ok) {
+      setError(planCheck.error);
+      logger.warn(LogComponents.Survey, 'Rejected updateFloorPlan - validation failed', {
+        surveyId: id,
+        error: planCheck.error,
+        field: planCheck.field,
+        dimensions: { width: floorPlan.width, height: floorPlan.height },
+      });
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
