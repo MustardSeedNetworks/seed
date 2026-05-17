@@ -30,32 +30,26 @@
  * State: survey data, sampling status, heatmap metric selection, upload progress
  */
 
-// Import Ruler and FileArchive directly from lucide-react
-import { Activity, Clock, FileArchive, Gauge, Hash, Radio, Ruler, Waves, Wifi } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../contexts/useSettings';
 import type {
   ActiveSample,
-  FloorPlan,
   HeatmapMetric,
   PassiveSample,
   Survey,
-  SurveyConfig,
   SurveyType,
   ThroughputSample,
 } from '../../hooks/useSurvey';
 import { LogComponents, logger } from '../../lib/logger';
-import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
-import type { AirMapperData } from '../../utils/airmapper';
-import { CheckCircle, Loader, Pause, Play, Upload, X } from '../ui/icons';
-import { AirMapperImport, type ImportOptions } from './AirMapperImport';
-import { type CalibrationPoint, FloorPlanCanvas } from './FloorPlanCanvas';
-import { HeatmapLegend } from './HeatmapLegend';
-import { HeatmapStats } from './HeatmapStats';
-import { ScaleCalibrationPanel } from './ScaleCalibrationPanel';
-import { SurveyConfigPanel } from './SurveyConfigPanel';
-import { calculateMetricRange, renderSampleData } from './surveyViewHelpers';
+import { cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
+import { Loader } from '../ui/icons';
+import { AirMapperImport } from './AirMapperImport';
+import type { CalibrationPoint } from './FloorPlanCanvas';
+import { SurveyViewFloorPlanPanel } from './SurveyViewFloorPlanPanel';
+import { SurveyViewHeader } from './SurveyViewHeader';
+import { SurveyViewSidePanel } from './SurveyViewSidePanel';
+import { useSurveyMutations } from './useSurveyMutations';
 
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
@@ -135,7 +129,6 @@ export function SurveyView({
   const [editSurveyType, setEditSurveyType] = useState(initialSurvey.surveyType);
   const [editIperfServer, setEditIperfServer] = useState(initialSurvey.iperfServer || '');
   const [editTestDuration, setEditTestDuration] = useState(initialSurvey.testDuration || 3);
-  const [savingSettings, setSavingSettings] = useState(false);
   // AirMapper import state
   const [showImport, setShowImport] = useState(false);
   // Setup progress helpers
@@ -515,67 +508,25 @@ export function SurveyView({
     setCalibrationDistance('');
   };
 
-  // Handle floor plan scale/propagation updates from ScaleCalibrationPanel
-  const handleFloorPlanUpdate = async (updates: Partial<FloorPlan>): Promise<void> => {
-    if (!currentFloorPlan) {
-      return;
-    }
-
-    try {
-      const updatedFloorPlan: FloorPlan = {
-        ...currentFloorPlan,
-        ...updates,
-      };
-
-      const res: Response = await fetch(`${API_BASE}/api/canopy/survey/floorplan?id=${survey.id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(updatedFloorPlan),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to update floor plan settings');
-      }
-
-      const updated: Survey = await (res.json() as Promise<Survey>);
-      setSurvey(updated);
-      onUpdate();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update settings');
-    }
-  };
-
-  // Handle survey config updates from SurveyConfigPanel
-  const handleConfigUpdate = async (configUpdates: Partial<SurveyConfig>): Promise<void> => {
-    try {
-      const updatedConfig: SurveyConfig = {
-        ...(survey.config || {}),
-        ...configUpdates,
-      } as SurveyConfig;
-
-      const res: Response = await fetch(`${API_BASE}/api/canopy/survey/config?id=${survey.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(updatedConfig),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to update survey config');
-      }
-
-      const updated: Survey = await (res.json() as Promise<Survey>);
-      setSurvey(updated);
-      onUpdate();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update config');
-    }
-  };
+  // Survey API mutations live in their own hook
+  const {
+    handleFloorPlanUpdate,
+    handleConfigUpdate,
+    handleAirMapperImport,
+    handleSaveSettings,
+    handleStatusChange,
+    savingSettings,
+  } = useSurveyMutations({
+    survey,
+    setSurvey,
+    onUpdate,
+    setError,
+    currentFloorPlan,
+    editSurveyType,
+    editIperfServer,
+    editTestDuration,
+    setShowImport,
+  });
 
   // Handle survey type change from SurveyConfigPanel
   const handleSurveyTypeChange = (newType: SurveyType): void => {
@@ -592,98 +543,6 @@ export function SurveyView({
     setEditTestDuration(duration);
   };
 
-  // Handle AirMapper import
-  const handleAirMapperImport = async (
-    data: AirMapperData,
-    options: ImportOptions,
-  ): Promise<void> => {
-    try {
-      // Build floor plan from imported data
-      if (options.importFloorPlan && data.floorPlanImage) {
-        // Get image dimensions from the data URL
-        const img: HTMLImageElement = new Image();
-        await new Promise<void>((resolve, reject) => {
-          img.onload = (): void => resolve();
-          img.onerror = (): void => reject(new Error('Failed to load imported image'));
-          img.src = data.floorPlanImage;
-        });
-
-        const floorPlan: FloorPlan = {
-          imageData: data.floorPlanImage,
-          width: img.width,
-          height: img.height,
-          scaleM: options.importCalibration ? data.calibration.scaleM : 0.1,
-          scaleSource: options.importCalibration ? 'imported' : 'default',
-          propagationM: options.importCalibration ? data.calibration.propagationM : 10,
-          originalFile: data.floorPlanFilename,
-        };
-
-        // Upload floor plan to server
-        const res = await fetch(`${API_BASE}/api/canopy/survey/floorplan?id=${survey.id}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify(floorPlan),
-        });
-
-        if (!res.ok) {
-          throw new Error('Failed to import floor plan');
-        }
-
-        const updated = await (res.json() as Promise<Survey>);
-        setSurvey(updated);
-        onUpdate();
-      } else if (options.importCalibration && currentFloorPlan) {
-        // Just import calibration settings
-        await handleFloorPlanUpdate({
-          scaleM: data.calibration.scaleM,
-          scaleSource: 'imported',
-          propagationM: data.calibration.propagationM,
-        });
-      }
-
-      setShowImport(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to import AirMapper data');
-    }
-  };
-
-  // Save survey settings
-  const handleSaveSettings = async (): Promise<void> => {
-    setSavingSettings(true);
-    setError(null);
-
-    try {
-      const res: Response = await fetch(`${API_BASE}/api/canopy/survey/settings?id=${survey.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          surveyType: editSurveyType,
-          iperfServer: editIperfServer,
-          testDuration: editTestDuration,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorText: string = await (res.text() as Promise<string>);
-        throw new Error(errorText || 'Failed to save settings');
-      }
-
-      const updated: Survey = await (res.json() as Promise<Survey>);
-      setSurvey(updated);
-      onUpdate();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save settings');
-    } finally {
-      setSavingSettings(false);
-    }
-  };
-
   // Get button title for start/resume buttons
   const getStartButtonTitle = (): string | undefined => {
     if (!wifiStatus?.canScan) {
@@ -695,167 +554,17 @@ export function SurveyView({
     return;
   };
 
-  // Handle status changes
-  const handleStatusChange = async (action: 'start' | 'pause' | 'complete'): Promise<void> => {
-    try {
-      const res: Response = await fetch(`${API_BASE}/api/canopy/survey/${action}?id=${survey.id}`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (res.ok) {
-        const updated: Survey = await (res.json() as Promise<Survey>);
-        setSurvey(updated);
-        onUpdate();
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : `Failed to ${action} survey`);
-    }
-  };
-
   return (
     <div class="fixed inset-0 bg-surface-base z-50 overflow-auto">
-      {/* Header */}
-      <div class="sticky top-0 bg-surface-raised border-b border-surface-border z-10">
-        <div class={cn('max-w-7xl mx-auto pad', layout.flex.between)}>
-          <div>
-            <h1 class="heading-1">{survey.name}</h1>
-            <p class={cn('body-small', spacing.margin.top.tight)}>
-              {(survey.surveyType ?? 'wifi').charAt(0).toUpperCase() +
-                (survey.surveyType ?? 'wifi').slice(1)}{' '}
-              {t('status.survey')} • {currentSamples.length} {t('status.samples')} •{' '}
-              {survey.status ?? 'unknown'}
-            </p>
-          </div>
-
-          <div class={layout.inline.default}>
-            {/* Status controls */}
-            {survey.status === 'created' ? (
-              <button
-                type="button"
-                onClick={(): void => {
-                  handleStatusChange('start').catch(() => {
-                    /* Error handled in handleStatusChange */
-                  });
-                }}
-                disabled={!(wifiStatus?.canScan && readyToStart)}
-                title={getStartButtonTitle()}
-                class={cn(
-                  button.size.md,
-                  'bg-brand-primary text-text-inverse',
-                  radius.md,
-                  'hover:bg-brand-primary/90',
-                  layout.inline.default,
-                  'disabled:opacity-50 disabled:cursor-not-allowed',
-                )}
-              >
-                <Play class={iconTokens.size.sm} />
-                {t('buttons.startSurvey')}
-              </button>
-            ) : null}
-
-            {survey.status === 'in_progress' ? (
-              <>
-                <button
-                  type="button"
-                  onClick={(): void => {
-                    handleStatusChange('pause').catch(() => {
-                      /* Error handled in handleStatusChange */
-                    });
-                  }}
-                  class={cn(
-                    button.size.md,
-                    'border border-surface-border',
-                    radius.md,
-                    'hover:bg-surface-hover',
-                    layout.inline.default,
-                  )}
-                >
-                  <Pause class={iconTokens.size.sm} />
-                  {t('buttons.pause')}
-                </button>
-                <button
-                  type="button"
-                  onClick={(): void => {
-                    handleStatusChange('complete').catch(() => {
-                      /* Error handled in handleStatusChange */
-                    });
-                  }}
-                  class={cn(
-                    button.size.md,
-                    'bg-status-success text-text-inverse',
-                    radius.md,
-                    'hover:bg-status-success/90',
-                    layout.inline.default,
-                  )}
-                >
-                  <CheckCircle class={iconTokens.size.sm} />
-                  {t('buttons.complete')}
-                </button>
-              </>
-            ) : null}
-
-            {survey.status === 'paused' ? (
-              <>
-                <button
-                  type="button"
-                  onClick={(): void => {
-                    handleStatusChange('start').catch(() => {
-                      /* Error handled in handleStatusChange */
-                    });
-                  }}
-                  disabled={!(wifiStatus?.canScan && readyToStart)}
-                  title={getStartButtonTitle()}
-                  class={cn(
-                    button.size.md,
-                    'bg-brand-primary text-text-inverse',
-                    radius.md,
-                    'hover:bg-brand-primary/90',
-                    layout.inline.default,
-                    'disabled:opacity-50 disabled:cursor-not-allowed',
-                  )}
-                >
-                  <Play class={iconTokens.size.sm} />
-                  {t('buttons.resume')}
-                </button>
-                <button
-                  type="button"
-                  onClick={(): void => {
-                    handleStatusChange('complete').catch(() => {
-                      /* Error handled in handleStatusChange */
-                    });
-                  }}
-                  class={cn(
-                    button.size.md,
-                    'bg-status-success text-text-inverse',
-                    radius.md,
-                    'hover:bg-status-success/90',
-                    layout.inline.default,
-                  )}
-                >
-                  <CheckCircle class={iconTokens.size.sm} />
-                  {t('buttons.complete')}
-                </button>
-              </>
-            ) : null}
-
-            <button
-              type="button"
-              onClick={onClose}
-              class={cn(
-                button.size.md,
-                'border border-surface-border',
-                radius.md,
-                'hover:bg-surface-hover',
-                layout.inline.default,
-              )}
-            >
-              <X class={iconTokens.size.sm} />
-              {t('buttons.close')}
-            </button>
-          </div>
-        </div>
-      </div>
+      <SurveyViewHeader
+        survey={survey}
+        sampleCount={currentSamples.length}
+        wifiStatus={wifiStatus}
+        readyToStart={readyToStart}
+        getStartButtonTitle={getStartButtonTitle}
+        handleStatusChange={handleStatusChange}
+        onClose={onClose}
+      />
 
       {/* Main content */}
       <div class={cn('max-w-7xl mx-auto', spacing.pad.default, spacing.pad.lg)}>
@@ -940,708 +649,52 @@ export function SurveyView({
         ) : null}
 
         <div class={cn('grid grid-cols-1 lg:grid-cols-3', spacing.gap.spacious)}>
-          {/* Floor plan */}
-          <div class="lg:col-span-2">
-            <div class={cn('bg-surface-raised', radius.md, 'border border-surface-border pad')}>
-              <div class={cn(layout.flex.between, spacing.margin.bottom.content)}>
-                <h2 class="heading-3">{t('floorPlan.title')}</h2>
-                {heatmapMetric !== null && (
-                  <button
-                    type="button"
-                    onClick={() => setHeatmapMetric(null)}
-                    class={cn(
-                      button.size.sm,
-                      'body-small bg-brand-primary text-text-inverse',
-                      radius.md,
-                      'hover:bg-brand-primary/90',
-                    )}
-                  >
-                    {t('buttons.hideHeatmap')}
-                  </button>
-                )}
-              </div>
+          <SurveyViewFloorPlanPanel
+            survey={survey}
+            currentFloorPlan={currentFloorPlan}
+            currentSamples={currentSamples}
+            heatmapMetric={heatmapMetric}
+            setHeatmapMetric={setHeatmapMetric}
+            calibrationMode={calibrationMode}
+            setCalibrationMode={setCalibrationMode}
+            calibrationPoints={calibrationPoints}
+            setCalibrationPoints={setCalibrationPoints}
+            calibrationDistance={calibrationDistance}
+            setCalibrationDistance={setCalibrationDistance}
+            useSae={useSae}
+            handleSaveCalibration={handleSaveCalibration}
+            handleCancelCalibration={handleCancelCalibration}
+            handlePointClick={handlePointClick}
+            handleCalibrationClick={handleCalibrationClick}
+            handleFloorPlanUpload={handleFloorPlanUpload}
+            sampling={sampling}
+            wifiStatus={wifiStatus}
+            uploadingFloorPlan={uploadingFloorPlan}
+            setShowImport={setShowImport}
+          />
 
-              {/* Heatmap metric selector - categorized */}
-              {heatmapMetric === null && currentSamples.length > 0 && (
-                <div class={cn(spacing.margin.bottom.content, spacing.stack.sm)}>
-                  {/* Signal Category */}
-                  <div>
-                    <div class={cn('body-small text-text-muted', spacing.margin.bottom.tight)}>
-                      {t('heatmaps.categories.signal')}
-                    </div>
-                    <div class={layout.inline.default}>
-                      <button
-                        type="button"
-                        onClick={() => setHeatmapMetric('rssi')}
-                        class={cn(
-                          button.size.sm,
-                          'body-small border border-surface-border',
-                          radius.md,
-                          'hover:bg-surface-hover',
-                          layout.inline.tight,
-                        )}
-                      >
-                        <Wifi class={iconTokens.size.sm} />
-                        {t('heatmaps.rssi')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setHeatmapMetric('snr')}
-                        class={cn(
-                          button.size.sm,
-                          'body-small border border-surface-border',
-                          radius.md,
-                          'hover:bg-surface-hover',
-                          layout.inline.tight,
-                        )}
-                      >
-                        <Activity class={iconTokens.size.sm} />
-                        {t('heatmaps.snr')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setHeatmapMetric('noise')}
-                        class={cn(
-                          button.size.sm,
-                          'body-small border border-surface-border',
-                          radius.md,
-                          'hover:bg-surface-hover',
-                          layout.inline.tight,
-                        )}
-                      >
-                        <Radio class={iconTokens.size.sm} />
-                        {t('heatmaps.noise')}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Interference Category */}
-                  <div>
-                    <div class={cn('body-small text-text-muted', spacing.margin.bottom.tight)}>
-                      {t('heatmaps.categories.interference')}
-                    </div>
-                    <div class={layout.inline.default}>
-                      <button
-                        type="button"
-                        onClick={() => setHeatmapMetric('cochannel')}
-                        class={cn(
-                          button.size.sm,
-                          'body-small border border-surface-border',
-                          radius.md,
-                          'hover:bg-surface-hover',
-                          layout.inline.tight,
-                        )}
-                      >
-                        <Waves class={iconTokens.size.sm} />
-                        {t('heatmaps.cochannel')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setHeatmapMetric('adjacent')}
-                        class={cn(
-                          button.size.sm,
-                          'body-small border border-surface-border',
-                          radius.md,
-                          'hover:bg-surface-hover',
-                          layout.inline.tight,
-                        )}
-                      >
-                        <Waves class={iconTokens.size.sm} />
-                        {t('heatmaps.adjacent')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setHeatmapMetric('apDensity')}
-                        class={cn(
-                          button.size.sm,
-                          'body-small border border-surface-border',
-                          radius.md,
-                          'hover:bg-surface-hover',
-                          layout.inline.tight,
-                        )}
-                      >
-                        <Hash class={iconTokens.size.sm} />
-                        {t('heatmaps.apDensity')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setHeatmapMetric('ssidCount')}
-                        class={cn(
-                          button.size.sm,
-                          'body-small border border-surface-border',
-                          radius.md,
-                          'hover:bg-surface-hover',
-                          layout.inline.tight,
-                        )}
-                      >
-                        <Hash class={iconTokens.size.sm} />
-                        {t('heatmaps.ssidCount')}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Performance Category - only for throughput surveys */}
-                  {survey.surveyType === 'throughput' && (
-                    <div>
-                      <div class={cn('body-small text-text-muted', spacing.margin.bottom.tight)}>
-                        {t('heatmaps.categories.performance')}
-                      </div>
-                      <div class={layout.inline.default}>
-                        <button
-                          type="button"
-                          onClick={() => setHeatmapMetric('throughput')}
-                          class={cn(
-                            button.size.sm,
-                            'body-small border border-surface-border',
-                            radius.md,
-                            'hover:bg-surface-hover',
-                            layout.inline.tight,
-                          )}
-                        >
-                          <Gauge class={iconTokens.size.sm} />
-                          {t('heatmaps.throughput')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setHeatmapMetric('latency')}
-                          class={cn(
-                            button.size.sm,
-                            'body-small border border-surface-border',
-                            radius.md,
-                            'hover:bg-surface-hover',
-                            layout.inline.tight,
-                          )}
-                        >
-                          <Clock class={iconTokens.size.sm} />
-                          {t('heatmaps.latency')}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {currentFloorPlan ? (
-                <div>
-                  {/* Calibration panel */}
-                  {calibrationMode ? (
-                    <div
-                      class={cn(
-                        'bg-status-warning/10 border border-status-warning/20',
-                        spacing.pad.sm,
-                        radius.md,
-                        spacing.margin.bottom.content,
-                      )}
-                    >
-                      <div
-                        class={cn('font-medium text-status-warning', spacing.margin.bottom.inline)}
-                      >
-                        📐 {t('calibration.title')}
-                      </div>
-                      <p
-                        class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}
-                      >
-                        {t('calibration.instructions')}
-                      </p>
-                      <div class="stack-sm">
-                        <div class={layout.inline.default}>
-                          <span class="body-small text-text-muted w-20">
-                            {t('calibration.pointA')}:
-                          </span>
-                          {calibrationPoints[0] ? (
-                            <span class="body-small font-medium">
-                              ({calibrationPoints[0].x}, {calibrationPoints[0].y})
-                            </span>
-                          ) : (
-                            <span class="body-small text-text-muted italic">
-                              {t('calibration.clickFloorPlan')}
-                            </span>
-                          )}
-                        </div>
-                        <div class={layout.inline.default}>
-                          <span class="body-small text-text-muted w-20">
-                            {t('calibration.pointB')}:
-                          </span>
-                          {calibrationPoints[1] ? (
-                            <span class="body-small font-medium">
-                              ({calibrationPoints[1].x}, {calibrationPoints[1].y})
-                            </span>
-                          ) : (
-                            <span class="body-small text-text-muted italic">
-                              {t('calibration.clickFloorPlan')}
-                            </span>
-                          )}
-                        </div>
-                        {calibrationPoints.length === 2 && (
-                          <div class={layout.inline.default}>
-                            <span class="body-small text-text-muted w-20">
-                              {t('calibration.pixelDistance')}:
-                            </span>
-                            <span class="body-small font-medium">
-                              {Math.sqrt(
-                                (calibrationPoints[1].x - calibrationPoints[0].x) ** 2 +
-                                  (calibrationPoints[1].y - calibrationPoints[0].y) ** 2,
-                              ).toFixed(0)}{' '}
-                              px
-                            </span>
-                          </div>
-                        )}
-                        <div class={cn(layout.inline.default, spacing.margin.top.inline)}>
-                          <label for="calibration-distance" class="body-small text-text-muted w-20">
-                            {t('calibration.distance')}:
-                          </label>
-                          <input
-                            id="calibration-distance"
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={calibrationDistance}
-                            onChange={(
-                              e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                            ): void => setCalibrationDistance(e.target.value)}
-                            placeholder={
-                              useSae ? t('calibration.enterFeet') : t('calibration.enterMeters')
-                            }
-                            class={cn(
-                              'flex-1',
-                              button.size.sm,
-                              'border border-surface-border',
-                              radius.md,
-                              'bg-surface-base text-text-primary',
-                            )}
-                          />
-                          <span class="body-small text-text-muted">
-                            {useSae ? t('calibration.feet') : t('calibration.meters')}
-                          </span>
-                        </div>
-                        <div class={cn(layout.inline.default, spacing.margin.top.inline)}>
-                          <button
-                            type="button"
-                            onClick={handleSaveCalibration}
-                            disabled={calibrationPoints.length !== 2 || !calibrationDistance}
-                            class={cn(
-                              button.size.sm,
-                              'bg-brand-primary text-text-inverse',
-                              radius.md,
-                              'hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed',
-                            )}
-                          >
-                            {t('buttons.saveScale')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleCancelCalibration}
-                            class={cn(
-                              button.size.sm,
-                              'border border-surface-border',
-                              radius.md,
-                              'hover:bg-surface-hover',
-                            )}
-                          >
-                            {t('buttons.cancel')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCalibrationPoints([])}
-                            class={cn(
-                              button.size.sm,
-                              'border border-surface-border',
-                              radius.md,
-                              'hover:bg-surface-hover',
-                            )}
-                          >
-                            {t('buttons.resetPoints')}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {/* Calibrate button and current scale info */}
-                  {!calibrationMode && currentFloorPlan && (
-                    <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-                      <div class="body-small text-text-muted">
-                        {t('floorPlan.scale')}: {currentFloorPlan.scaleM.toFixed(3)} m/px
-                        {survey.status === 'in_progress' && ` • ${t('floorPlan.clickToMeasure')}`}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setCalibrationMode(true)}
-                        class={cn(
-                          button.size.sm,
-                          'body-small border border-surface-border',
-                          radius.md,
-                          'hover:bg-surface-hover',
-                          layout.inline.tight,
-                        )}
-                      >
-                        <Ruler class={iconTokens.size.sm} />
-                        {t('buttons.calibrateScale')}
-                      </button>
-                    </div>
-                  )}
-
-                  <FloorPlanCanvas
-                    floorPlan={
-                      currentFloorPlan ?? {
-                        id: '',
-                        name: '',
-                        imageUrl: '',
-                        width: 0,
-                        height: 0,
-                        scale: 1,
-                      }
-                    }
-                    samples={currentSamples}
-                    onPointClick={handlePointClick}
-                    interactive={
-                      survey.status === 'in_progress' &&
-                      !sampling &&
-                      !calibrationMode &&
-                      wifiStatus?.canScan === true
-                    }
-                    heatmapMetric={heatmapMetric}
-                    calibrationMode={calibrationMode}
-                    calibrationPoints={calibrationPoints}
-                    onCalibrationClick={handleCalibrationClick}
-                  />
-
-                  {/* Heatmap Legend and Stats - show when heatmap is active */}
-                  {heatmapMetric !== null && currentSamples.length > 0 && (
-                    <div class={spacing.margin.top.content}>
-                      <HeatmapLegend
-                        metric={heatmapMetric}
-                        minValue={calculateMetricRange(currentSamples, heatmapMetric).min}
-                        maxValue={calculateMetricRange(currentSamples, heatmapMetric).max}
-                      />
-                      <HeatmapStats samples={currentSamples} metric={heatmapMetric} />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div
-                  class={cn(
-                    'border-2 border-dashed border-surface-border',
-                    radius.md,
-                    'pad-lg text-center',
-                  )}
-                >
-                  <Upload
-                    class={cn(
-                      iconTokens.size.xl,
-                      'mx-auto text-text-muted',
-                      spacing.margin.bottom.content,
-                    )}
-                  />
-                  <p class={cn('text-text-muted', spacing.margin.bottom.content)}>
-                    {t('floorPlan.uploadPrompt')}
-                  </p>
-                  <label
-                    class={cn(
-                      'inline-block',
-                      button.size.md,
-                      'bg-brand-primary text-text-inverse',
-                      radius.md,
-                      'cursor-pointer hover:bg-brand-primary/90',
-                    )}
-                  >
-                    {uploadingFloorPlan ? t('floorPlan.uploading') : t('floorPlan.chooseFile')}
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
-                      class="hidden"
-                      onChange={(
-                        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                      ): void => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleFloorPlanUpload(file).catch(() => undefined);
-                        }
-                        // Reset input so same file can be selected again if needed
-                        e.target.value = '';
-                      }}
-                      disabled={uploadingFloorPlan}
-                    />
-                  </label>
-                  <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
-                    {t('floorPlan.supportedFormats')}
-                  </p>
-                  <div
-                    class={cn(
-                      spacing.margin.top.content,
-                      'border-t border-surface-border',
-                      spacing.padding.top,
-                    )}
-                  >
-                    <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
-                      {t('import.description')}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setShowImport(true)}
-                      class={cn(
-                        button.size.sm,
-                        'border border-surface-border',
-                        radius.md,
-                        'hover:bg-surface-hover',
-                        layout.inline.default,
-                      )}
-                    >
-                      <FileArchive class={iconTokens.size.sm} />
-                      {t('import.button')}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Settings panel (shown when survey is in created status) and Sample list */}
-          <div class={cn('lg:col-span-1', spacing.stack.default)}>
-            {/* Setup checklist to guide users before starting a survey */}
-            {survey.status === 'created' && (
-              <div class={cn('bg-surface-raised', radius.md, 'border border-surface-border pad')}>
-                <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-                  <h2 class="heading-3">{t('setup.checklist')}</h2>
-                  <span class="caption text-text-muted">
-                    {completedSetupSteps}/{setupSteps.length}
-                  </span>
-                </div>
-                <div class="stack-sm">
-                  {setupSteps.map((step) => (
-                    <div
-                      key={step.key}
-                      class={cn(
-                        'flex items-center justify-between',
-                        spacing.pad.xs,
-                        radius.sm,
-                        step.done ? 'bg-surface-hover' : 'bg-transparent',
-                      )}
-                    >
-                      <div class={layout.inline.default}>
-                        {step.done ? (
-                          <CheckCircle class={cn(iconTokens.size.sm, 'text-status-success')} />
-                        ) : (
-                          <Clock class={cn(iconTokens.size.sm, 'text-text-muted')} />
-                        )}
-                        <span class="body-small">{step.label}</span>
-                      </div>
-                      {step.done ? <span class="caption text-status-success">✓</span> : null}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Survey Settings Panel - only show when survey hasn't started */}
-            {survey.status === 'created' && (
-              <div class={cn('bg-surface-raised', radius.md, 'border border-surface-border pad')}>
-                <h2 class={cn('heading-3', spacing.margin.bottom.content)}>
-                  {t('settings.title')}
-                </h2>
-                <div class="stack">
-                  {/* Survey Type */}
-                  <div>
-                    <label
-                      for="survey-type-select"
-                      class={cn('body-small text-text-muted block', spacing.margin.bottom.tight)}
-                    >
-                      {t('settings.surveyType')}
-                    </label>
-                    <select
-                      id="survey-type-select"
-                      value={editSurveyType}
-                      onChange={(
-                        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                      ): void =>
-                        setEditSurveyType(e.target.value as 'passive' | 'active' | 'throughput')
-                      }
-                      class={cn(
-                        'w-full',
-                        button.size.md,
-                        'border border-surface-border',
-                        radius.md,
-                        'bg-surface-base text-text-primary',
-                      )}
-                    >
-                      <option value="passive">{t('settings.types.passive')}</option>
-                      <option value="active">{t('settings.types.active')}</option>
-                      <option value="throughput">{t('settings.types.throughput')}</option>
-                    </select>
-                  </div>
-
-                  {/* iperf Server - only show for throughput surveys */}
-                  {editSurveyType === 'throughput' && (
-                    <>
-                      <div>
-                        <label
-                          for="survey-iperf-server"
-                          class={cn(
-                            'body-small text-text-muted block',
-                            spacing.margin.bottom.tight,
-                          )}
-                        >
-                          {t('settings.iperfServer')}
-                        </label>
-                        <input
-                          id="survey-iperf-server"
-                          type="text"
-                          value={editIperfServer}
-                          onChange={(
-                            e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                          ): void => setEditIperfServer(e.target.value)}
-                          placeholder="hostname:5201"
-                          class={cn(
-                            'w-full',
-                            button.size.md,
-                            'border border-surface-border',
-                            radius.md,
-                            'bg-surface-base text-text-primary',
-                          )}
-                        />
-                        <p class={cn('caption text-text-muted', spacing.margin.top.tight)}>
-                          {t('settings.iperfServerHint')}
-                        </p>
-                      </div>
-
-                      <div>
-                        <label
-                          for="survey-test-duration"
-                          class={cn(
-                            'body-small text-text-muted block',
-                            spacing.margin.bottom.tight,
-                          )}
-                        >
-                          {t('settings.testDuration')}
-                        </label>
-                        <input
-                          id="survey-test-duration"
-                          type="number"
-                          min="1"
-                          max="60"
-                          value={editTestDuration}
-                          onChange={(
-                            e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-                          ): void => setEditTestDuration(Number.parseInt(e.target.value, 10) || 3)}
-                          class={cn(
-                            'w-full',
-                            button.size.md,
-                            'border border-surface-border',
-                            radius.md,
-                            'bg-surface-base text-text-primary',
-                          )}
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  {/* Save button */}
-                  <button
-                    type="button"
-                    onClick={handleSaveSettings}
-                    disabled={savingSettings}
-                    class={cn(
-                      'w-full',
-                      button.size.md,
-                      'bg-brand-primary text-text-inverse',
-                      radius.md,
-                      'hover:bg-brand-primary/90 disabled:opacity-50',
-                    )}
-                  >
-                    {savingSettings ? t('buttons.saving') : t('buttons.saveSettings')}
-                  </button>
-
-                  {/* Survey type descriptions */}
-                  <div
-                    class={cn(
-                      'caption text-text-muted border-t border-surface-border',
-                      spacing.padding.top.section,
-                      spacing.margin.top.inline,
-                    )}
-                  >
-                    <p class={cn('font-medium', spacing.margin.bottom.inline)}>
-                      {t('settings.typesDescription')}
-                    </p>
-                    <ul class={cn('list-disc list-inside', spacing.stack.xs)}>
-                      <li>
-                        <strong>Passive:</strong> {t('settings.passiveDesc')}
-                      </li>
-                      <li>
-                        <strong>Active:</strong> {t('settings.activeDesc')}
-                      </li>
-                      <li>
-                        <strong>Throughput:</strong> {t('settings.throughputDesc')}
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Scale Calibration Panel - show when floor plan exists */}
-            {currentFloorPlan ? (
-              <ScaleCalibrationPanel
-                floorPlan={currentFloorPlan}
-                onUpdate={handleFloorPlanUpdate}
-                onStartCalibration={(): void => setCalibrationMode(true)}
-                isCalibrating={calibrationMode}
-              />
-            ) : null}
-
-            {/* Survey Configuration Panel - show when floor plan exists */}
-            {currentFloorPlan && wifiStatus ? (
-              <SurveyConfigPanel
-                config={survey.config}
-                surveyType={editSurveyType}
-                availableAdapters={wifiStatus.availableAdapters || []}
-                currentInterface={wifiStatus.currentInterface || survey.interface}
-                iperfServer={editIperfServer}
-                testDuration={editTestDuration}
-                onUpdate={handleConfigUpdate}
-                onSurveyTypeChange={handleSurveyTypeChange}
-                onIperfSettingsChange={handleIperfSettingsChange}
-              />
-            ) : null}
-
-            {/* Sample list */}
-            <div class={cn('bg-surface-raised', radius.md, 'border border-surface-border pad')}>
-              <h2 class={cn('heading-3', spacing.margin.bottom.content)}>
-                {t('samples.title')} ({currentSamples.length})
-              </h2>
-              <div class="stack-sm max-h-[70vh] overflow-y-auto">
-                {currentSamples.length === 0 ? (
-                  <p class={cn('body-small text-center', spacing.pad.lg)}>
-                    {t('samples.noSamples')}{' '}
-                    {survey.status === 'in_progress'
-                      ? t('samples.clickToStart')
-                      : t('samples.startToBegin')}
-                  </p>
-                ) : (
-                  currentSamples.map((sample, idx) => (
-                    <div
-                      key={sample.timestamp}
-                      class={cn('border border-surface-border', radius.md, 'pad-sm body-small')}
-                    >
-                      <div
-                        class={cn(
-                          'flex items-center justify-between',
-                          spacing.margin.bottom.inline,
-                        )}
-                      >
-                        <span class="font-semibold">#{idx + 1}</span>
-                        <span class="caption">
-                          {new Date(sample.timestamp).toLocaleTimeString()}
-                        </span>
-                      </div>
-                      <div class="caption stack-xs">
-                        {renderSampleData(sample.sampleData, survey.surveyType)}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
+          <SurveyViewSidePanel
+            survey={survey}
+            currentSamples={currentSamples}
+            currentFloorPlan={currentFloorPlan}
+            setupSteps={setupSteps}
+            completedSetupSteps={completedSetupSteps}
+            editSurveyType={editSurveyType}
+            setEditSurveyType={setEditSurveyType}
+            editIperfServer={editIperfServer}
+            setEditIperfServer={setEditIperfServer}
+            editTestDuration={editTestDuration}
+            setEditTestDuration={setEditTestDuration}
+            savingSettings={savingSettings}
+            handleSaveSettings={handleSaveSettings}
+            handleFloorPlanUpdate={handleFloorPlanUpdate}
+            setCalibrationMode={setCalibrationMode}
+            calibrationMode={calibrationMode}
+            wifiStatus={wifiStatus}
+            handleConfigUpdate={handleConfigUpdate}
+            handleSurveyTypeChange={handleSurveyTypeChange}
+            handleIperfSettingsChange={handleIperfSettingsChange}
+          />
         </div>
       </div>
     </div>
