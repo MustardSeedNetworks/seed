@@ -64,11 +64,9 @@ interface SetupWizardProps {
  * Modal-like component that requires user to set admin password before
  * accessing the main application.
  */
-// SSO provider info from backend
-interface SsoProvider {
-  name: string;
-  enabled: boolean;
-}
+// SSO providers from backend (/api/sso/providers returns the names of
+// only the providers that are enabled AND have a ClientID configured -
+// see internal/api/handlers_oauth.go::initOAuthManager). Fixes #720.
 
 /**
  * First-run setup flow that forces the user to create credentials before using the app.
@@ -89,13 +87,13 @@ export function SetupWizard({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [ssoProviders, setSsoProviders] = useState<SsoProvider[]>([]);
+  const [ssoProviders, setSsoProviders] = useState<string[]>([]);
 
-  // Fetch enabled SSO providers (fixes #769)
+  // Fetch enabled SSO providers (fixes #769, #720)
   useEffect(() => {
     fetch(`${API_BASE}/api/sso/providers`)
       .then((res) => (res.ok ? res.json() : { providers: [] }))
-      .then((data) => setSsoProviders(data.providers || []))
+      .then((data: { providers?: string[] }) => setSsoProviders(data.providers ?? []))
       .catch(() => setSsoProviders([]));
   }, []);
 
@@ -107,12 +105,14 @@ export function SetupWizard({
     }
   }, [passwordMode, suggestedPassword]);
 
-  // Helper to check if a provider is enabled
+  // Helper to check if a provider is enabled. The backend only lists
+  // providers that have Enabled=true AND a non-empty ClientID, so
+  // presence in the list is sufficient (#720).
   const isProviderEnabled = (name: string): boolean =>
-    ssoProviders.some((p) => p.name.toLowerCase() === name.toLowerCase() && p.enabled);
+    ssoProviders.some((p) => p.toLowerCase() === name.toLowerCase());
 
   // Check if any SSO provider is enabled
-  const hasEnabledSso = ssoProviders.some((p) => p.enabled);
+  const hasEnabledSso = ssoProviders.length > 0;
 
   const handleCopyPassword = async (): Promise<void> => {
     if (suggestedPassword) {
@@ -175,9 +175,10 @@ export function SetupWizard({
       const loginSuccess = await onLogin(username, password);
 
       if (!loginSuccess) {
+        // Fixes #719: do not exit the wizard when auto-login fails - the user
+        // would land in the main UI unauthenticated. Keep the wizard open with
+        // the error visible so they can retry or surface the real failure.
         setError(t('errors.loginFailed'));
-        // Still call onComplete to exit setup wizard
-        onComplete();
         return;
       }
 

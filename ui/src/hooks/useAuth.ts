@@ -287,6 +287,14 @@ export function useAuth(): UseAuthReturn {
    * This is used by WebSocket to get a fresh token for reconnection.
    */
   const refreshToken = useCallback(async (): Promise<string | null> => {
+    // Fixes #718: any refresh-failure path must drop auth state so the UI
+    // doesn't keep showing an authenticated session with a stale token.
+    const clearAuthState = (): void => {
+      setState({ isAuthenticated: false, token: null, username: null });
+      setConnected(false);
+      clearCSRFToken();
+    };
+
     try {
       const response = await fetch(`${API_BASE}/api/auth/refresh`, {
         method: 'POST',
@@ -297,6 +305,7 @@ export function useAuth(): UseAuthReturn {
         logger.warn(LogComponents.Auth, 'Token refresh failed', {
           status: response.status,
         });
+        clearAuthState();
         return null;
       }
 
@@ -312,6 +321,7 @@ export function useAuth(): UseAuthReturn {
       return data.token;
     } catch (err) {
       logger.error(LogComponents.Auth, 'Token refresh error', err);
+      clearAuthState();
       return null;
     }
   }, []);
