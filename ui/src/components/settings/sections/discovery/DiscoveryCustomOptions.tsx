@@ -11,41 +11,12 @@ import {
   spacing,
 } from '../../../../styles/theme';
 import type { NetworkDiscoverySettings, PortPreset } from '../../../../types/settings';
+import { PORT_PRESETS } from './DiscoveryCustomOptions.constants';
 
 interface DiscoveryCustomOptionsProps {
   settings: NetworkDiscoverySettings;
   onSettingsChange: React.Dispatch<React.SetStateAction<NetworkDiscoverySettings>>;
 }
-
-/**
- * Port presets as defined in the plan:
- * - Common Services: OS/application/service identification
- * - Secure Ports: Encrypted/authenticated services
- * - Insecure Ports: Should probably be disabled if running
- * - Custom: User-defined ports
- */
-const PORT_PRESETS: Record<PortPreset, { tcp: string; udp: string; description: string }> = {
-  common: {
-    tcp: '21,22,23,25,53,80,110,111,135,139,143,443,445,993,995,1433,1521,3306,3389,5432,5900,5985,8080,8443',
-    udp: '53,67,68,69,123,137,138,161,162,500,514,1900',
-    description: 'Common service ports for OS/application identification',
-  },
-  secure: {
-    tcp: '22,443,465,587,636,853,993,995,8443,9443',
-    udp: '443,500,4500,853',
-    description: 'Encrypted and authenticated services (recommended)',
-  },
-  insecure: {
-    tcp: '21,23,25,69,80,110,111,135,139,143,445,512,513,514,1099,2049,3389,5800,5900,6000-6009',
-    udp: '67,68,69,111,137,138,161,162,514,1900,2049',
-    description: 'Insecure ports that should be disabled',
-  },
-  custom: {
-    tcp: '',
-    udp: '',
-    description: 'Manually configure port lists',
-  },
-};
 
 /**
  * Discovery scan method options.
