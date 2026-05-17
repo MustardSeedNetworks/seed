@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.188.1](https://github.com/krisarmstrong/seed/compare/v0.188.0...v0.188.1) (2026-05-17)
+
+
+### Bug Fixes
+
+* **ci:** bump Dockerfile go-build to golang:1.26-bookworm ([65c237e](https://github.com/krisarmstrong/seed/commit/65c237ef812d12bf44709b1007bfb611581fa737))
+* **ci:** copy internal/i18n/locales into ui-build stage ([6737eed](https://github.com/krisarmstrong/seed/commit/6737eed6bc5f0a266baa6a676fbc456af61b45bc))
+* **ci:** delete stale ui/vite.config.js (hand-maintained duplicate) ([d59f447](https://github.com/krisarmstrong/seed/commit/d59f4475a09ce0833a72793e3eb3610e246d5ad2))
+
 ## [0.188.0](https://github.com/krisarmstrong/seed/compare/v0.187.1...v0.188.0) (2026-05-17)
 
 
