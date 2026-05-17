@@ -11,6 +11,10 @@
  * - With subnets: Additional target networks configured
  * - Timing settings: Workers, timeouts, intervals
  * - SNMP configuration: Communities, v3 credentials, timeout, retries
+ *
+ * Story fixtures (defaultSettings, defaultSnmpSettings, baseArgs) live in
+ * DiscoverySettings.fixtures.ts so each story can override only what it
+ * exercises.
  */
 
 import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
@@ -23,64 +27,7 @@ import type {
   SubnetConfig,
 } from '../../../types/settings';
 import { DiscoverySettings } from './DiscoverySettings';
-
-const defaultSettings: NetworkDiscoverySettings = {
-  enabled: true,
-  arpScanWorkers: 50,
-  pingTimeoutMs: 500,
-  scanTimeoutMs: 30000,
-  autoScan: false,
-  scanIntervalMs: 0,
-  ouiFilePath: 'data/oui.txt',
-  options: {
-    passiveProtocols: {
-      lldp: true,
-      cdp: true,
-      edp: false,
-      ndp: false,
-    },
-    arpScan: true,
-    icmpScan: true,
-    portScan: {
-      enabled: false,
-      preset: 'common',
-      tcpPorts: '',
-      udpPorts: '',
-      bannerTimeoutMs: 3000,
-    },
-    tcpProbe: {
-      timeoutMs: 3000,
-      workers: 10,
-    },
-    traceroute: false,
-    snmpQuery: false,
-  },
-  timing: {
-    probeIntervalMs: 100,
-    rescanIntervalMs: 300000,
-    workers: 50,
-  },
-  profiler: {
-    enabled: true,
-    timeoutMs: 5000,
-    maxConcurrent: 10,
-    quickPorts: [22, 80, 443],
-  },
-  fingerprinting: {
-    enabled: true,
-    osDetection: true,
-    serviceProbes: true,
-  },
-  ipv6Enabled: false,
-};
-
-const defaultSnmpSettings: SNMPSettings = {
-  communities: ['public'],
-  v3Credentials: [],
-  timeout: 5000,
-  retries: 2,
-  port: 161,
-};
+import { baseArgs, defaultSettings, defaultSnmpSettings } from './DiscoverySettings.fixtures';
 
 const meta: Meta<typeof DiscoverySettings> = {
   title: 'Settings/discovery-settings',
@@ -128,41 +75,7 @@ type Story = StoryObj<typeof meta>;
  * Default discovery settings with basic methods enabled
  */
 export const Default: Story = {
-  args: {
-    networkDiscoverySettings: defaultSettings,
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
-    networkDiscoveryStatus: 'idle',
-    subnets: [],
-    subnetsStatus: 'idle',
-    newSubnetCidr: '',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
-    subnetError: null,
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
-    },
-    snmpSettings: defaultSnmpSettings,
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
-  },
+  args: baseArgs(),
 };
 
 /**
@@ -170,64 +83,16 @@ export const Default: Story = {
  */
 export const PassiveOnly: Story = {
   args: {
+    ...baseArgs(),
     networkDiscoverySettings: {
       ...defaultSettings,
       options: {
-        passiveProtocols: {
-          lldp: true,
-          cdp: true,
-          edp: true,
-          ndp: true,
-        },
+        ...defaultSettings.options,
+        passiveProtocols: { lldp: true, cdp: true, edp: true, ndp: true },
         arpScan: false,
         icmpScan: false,
-        portScan: {
-          enabled: false,
-          preset: 'common',
-          tcpPorts: '',
-          udpPorts: '',
-          bannerTimeoutMs: 3000,
-        },
-        tcpProbe: {
-          timeoutMs: 3000,
-          workers: 10,
-        },
-        traceroute: false,
-        snmpQuery: false,
       },
     },
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
-    networkDiscoveryStatus: 'idle',
-    subnets: [],
-    subnetsStatus: 'idle',
-    newSubnetCidr: '',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
-    subnetError: null,
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
-    },
-    snmpSettings: defaultSnmpSettings,
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
   },
 };
 
@@ -236,17 +101,15 @@ export const PassiveOnly: Story = {
  */
 export const FullDiscovery: Story = {
   args: {
+    ...baseArgs([
+      { cidr: '10.0.0.0/24', name: 'Server VLAN', enabled: true },
+      { cidr: '172.16.0.0/16', name: 'Management', enabled: true },
+    ]),
     networkDiscoverySettings: {
       ...defaultSettings,
       options: {
-        passiveProtocols: {
-          lldp: true,
-          cdp: true,
-          edp: true,
-          ndp: true,
-        },
-        arpScan: true,
-        icmpScan: true,
+        ...defaultSettings.options,
+        passiveProtocols: { lldp: true, cdp: true, edp: true, ndp: true },
         portScan: {
           enabled: true,
           preset: 'common',
@@ -254,43 +117,9 @@ export const FullDiscovery: Story = {
           udpPorts: '53,161,162',
           bannerTimeoutMs: 3000,
         },
-        tcpProbe: {
-          timeoutMs: 3000,
-          workers: 10,
-        },
         traceroute: true,
         snmpQuery: true,
       },
-    },
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
-    networkDiscoveryStatus: 'idle',
-    subnets: [
-      { cidr: '10.0.0.0/24', name: 'Server VLAN', enabled: true },
-      { cidr: '172.16.0.0/16', name: 'Management', enabled: true },
-    ],
-    subnetsStatus: 'idle',
-    newSubnetCidr: '',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
-    subnetError: null,
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
     },
     snmpSettings: {
       communities: ['public', 'private'],
@@ -299,10 +128,6 @@ export const FullDiscovery: Story = {
       retries: 3,
       port: 161,
     },
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
   },
 };
 
@@ -311,6 +136,7 @@ export const FullDiscovery: Story = {
  */
 export const WithPortScanCommon: Story = {
   args: {
+    ...baseArgs(),
     networkDiscoverySettings: {
       ...defaultSettings,
       options: {
@@ -324,38 +150,6 @@ export const WithPortScanCommon: Story = {
         },
       },
     },
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
-    networkDiscoveryStatus: 'idle',
-    subnets: [],
-    subnetsStatus: 'idle',
-    newSubnetCidr: '',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
-    subnetError: null,
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
-    },
-    snmpSettings: defaultSnmpSettings,
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
   },
 };
 
@@ -364,6 +158,7 @@ export const WithPortScanCommon: Story = {
  */
 export const WithPortScanSecure: Story = {
   args: {
+    ...baseArgs(),
     networkDiscoverySettings: {
       ...defaultSettings,
       options: {
@@ -377,38 +172,6 @@ export const WithPortScanSecure: Story = {
         },
       },
     },
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
-    networkDiscoveryStatus: 'idle',
-    subnets: [],
-    subnetsStatus: 'idle',
-    newSubnetCidr: '',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
-    subnetError: null,
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
-    },
-    snmpSettings: defaultSnmpSettings,
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
   },
 };
 
@@ -417,6 +180,7 @@ export const WithPortScanSecure: Story = {
  */
 export const WithPortScanInsecure: Story = {
   args: {
+    ...baseArgs(),
     networkDiscoverySettings: {
       ...defaultSettings,
       options: {
@@ -430,38 +194,6 @@ export const WithPortScanInsecure: Story = {
         },
       },
     },
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
-    networkDiscoveryStatus: 'idle',
-    subnets: [],
-    subnetsStatus: 'idle',
-    newSubnetCidr: '',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
-    subnetError: null,
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
-    },
-    snmpSettings: defaultSnmpSettings,
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
   },
 };
 
@@ -470,6 +202,7 @@ export const WithPortScanInsecure: Story = {
  */
 export const CustomPorts: Story = {
   args: {
+    ...baseArgs(),
     networkDiscoverySettings: {
       ...defaultSettings,
       options: {
@@ -483,38 +216,6 @@ export const CustomPorts: Story = {
         },
       },
     },
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
-    networkDiscoveryStatus: 'idle',
-    subnets: [],
-    subnetsStatus: 'idle',
-    newSubnetCidr: '',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
-    subnetError: null,
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
-    },
-    snmpSettings: defaultSnmpSettings,
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
   },
 };
 
@@ -523,42 +224,8 @@ export const CustomPorts: Story = {
  */
 export const Disabled: Story = {
   args: {
-    networkDiscoverySettings: {
-      ...defaultSettings,
-      enabled: false,
-    },
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
-    networkDiscoveryStatus: 'idle',
-    subnets: [],
-    subnetsStatus: 'idle',
-    newSubnetCidr: '',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
-    subnetError: null,
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
-    },
-    snmpSettings: defaultSnmpSettings,
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
+    ...baseArgs(),
+    networkDiscoverySettings: { ...defaultSettings, enabled: false },
   },
 };
 
@@ -567,43 +234,12 @@ export const Disabled: Story = {
  */
 export const AutoScanEnabled: Story = {
   args: {
+    ...baseArgs(),
     networkDiscoverySettings: {
       ...defaultSettings,
       autoScan: true,
       scanIntervalMs: 300000, // 5 minutes
     },
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
-    networkDiscoveryStatus: 'idle',
-    subnets: [],
-    subnetsStatus: 'idle',
-    newSubnetCidr: '',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
-    subnetError: null,
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
-    },
-    snmpSettings: defaultSnmpSettings,
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
   },
 };
 
@@ -611,46 +247,12 @@ export const AutoScanEnabled: Story = {
  * With multiple subnets configured
  */
 export const WithSubnets: Story = {
-  args: {
-    networkDiscoverySettings: defaultSettings,
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
-    networkDiscoveryStatus: 'idle',
-    subnets: [
-      { cidr: '10.0.0.0/24', name: 'Server VLAN', enabled: true },
-      { cidr: '10.0.1.0/24', name: 'IoT Devices', enabled: true },
-      { cidr: '172.16.0.0/16', name: 'Management Network', enabled: false },
-      { cidr: '192.168.100.0/24', name: 'Guest WiFi', enabled: true },
-    ],
-    subnetsStatus: 'idle',
-    newSubnetCidr: '',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
-    subnetError: null,
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
-    },
-    snmpSettings: defaultSnmpSettings,
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
-  },
+  args: baseArgs([
+    { cidr: '10.0.0.0/24', name: 'Server VLAN', enabled: true },
+    { cidr: '10.0.1.0/24', name: 'IoT Devices', enabled: true },
+    { cidr: '172.16.0.0/16', name: 'Management Network', enabled: false },
+    { cidr: '192.168.100.0/24', name: 'Guest WiFi', enabled: true },
+  ]),
 };
 
 /**
@@ -658,39 +260,10 @@ export const WithSubnets: Story = {
  */
 export const SubnetError: Story = {
   args: {
-    networkDiscoverySettings: defaultSettings,
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
-    networkDiscoveryStatus: 'idle',
-    subnets: [],
+    ...baseArgs(),
     subnetsStatus: 'error',
     newSubnetCidr: 'invalid-cidr',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
     subnetError: 'Invalid CIDR format',
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
-    },
-    snmpSettings: defaultSnmpSettings,
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
   },
 };
 
@@ -699,60 +272,19 @@ export const SubnetError: Story = {
  */
 export const FastTiming: Story = {
   args: {
+    ...baseArgs(),
     networkDiscoverySettings: {
       ...defaultSettings,
       arpScanWorkers: 100,
       pingTimeoutMs: 200,
       scanTimeoutMs: 15000,
-      timing: {
-        probeIntervalMs: 50,
-        rescanIntervalMs: 60000, // 1 minute
-        workers: 100,
-      },
+      timing: { probeIntervalMs: 50, rescanIntervalMs: 60000, workers: 100 },
       options: {
         ...defaultSettings.options,
-        tcpProbe: {
-          timeoutMs: 1000,
-          workers: 20,
-        },
-        portScan: {
-          ...defaultSettings.options.portScan,
-          bannerTimeoutMs: 1000,
-        },
+        tcpProbe: { timeoutMs: 1000, workers: 20 },
+        portScan: { ...defaultSettings.options.portScan, bannerTimeoutMs: 1000 },
       },
     },
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
-    networkDiscoveryStatus: 'idle',
-    subnets: [],
-    subnetsStatus: 'idle',
-    newSubnetCidr: '',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
-    subnetError: null,
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
-    },
-    snmpSettings: defaultSnmpSettings,
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
   },
 };
 
@@ -761,60 +293,19 @@ export const FastTiming: Story = {
  */
 export const ThoroughTiming: Story = {
   args: {
+    ...baseArgs(),
     networkDiscoverySettings: {
       ...defaultSettings,
       arpScanWorkers: 20,
       pingTimeoutMs: 2000,
       scanTimeoutMs: 120000,
-      timing: {
-        probeIntervalMs: 500,
-        rescanIntervalMs: 600000, // 10 minutes
-        workers: 20,
-      },
+      timing: { probeIntervalMs: 500, rescanIntervalMs: 600000, workers: 20 },
       options: {
         ...defaultSettings.options,
-        tcpProbe: {
-          timeoutMs: 10000,
-          workers: 5,
-        },
-        portScan: {
-          ...defaultSettings.options.portScan,
-          bannerTimeoutMs: 10000,
-        },
+        tcpProbe: { timeoutMs: 10000, workers: 5 },
+        portScan: { ...defaultSettings.options.portScan, bannerTimeoutMs: 10000 },
       },
     },
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
-    networkDiscoveryStatus: 'idle',
-    subnets: [],
-    subnetsStatus: 'idle',
-    newSubnetCidr: '',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
-    subnetError: null,
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
-    },
-    snmpSettings: defaultSnmpSettings,
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
   },
 };
 
@@ -823,39 +314,8 @@ export const ThoroughTiming: Story = {
  */
 export const Saving: Story = {
   args: {
-    networkDiscoverySettings: defaultSettings,
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
+    ...baseArgs(),
     networkDiscoveryStatus: 'saving',
-    subnets: [],
-    subnetsStatus: 'idle',
-    newSubnetCidr: '',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
-    subnetError: null,
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
-    },
-    snmpSettings: defaultSnmpSettings,
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
   },
 };
 
@@ -864,39 +324,10 @@ export const Saving: Story = {
  */
 export const WithSnmpSettings: Story = {
   args: {
+    ...baseArgs(),
     networkDiscoverySettings: {
       ...defaultSettings,
-      options: {
-        ...defaultSettings.options,
-        snmpQuery: true,
-      },
-    },
-    setNetworkDiscoverySettings: () => {
-      // intentionally empty
-    },
-    networkDiscoveryStatus: 'idle',
-    subnets: [],
-    subnetsStatus: 'idle',
-    newSubnetCidr: '',
-    setNewSubnetCidr: () => {
-      // intentionally empty
-    },
-    newSubnetName: '',
-    setNewSubnetName: () => {
-      // intentionally empty
-    },
-    subnetError: null,
-    setSubnetError: () => {
-      // intentionally empty
-    },
-    addSubnet: () => {
-      // intentionally empty
-    },
-    toggleSubnet: () => {
-      // intentionally empty
-    },
-    deleteSubnet: () => {
-      // intentionally empty
+      options: { ...defaultSettings.options, snmpQuery: true },
     },
     snmpSettings: {
       communities: ['public', 'private', 'secret'],
@@ -916,10 +347,6 @@ export const WithSnmpSettings: Story = {
       retries: 5,
       port: 161,
     },
-    setSnmpSettings: () => {
-      // intentionally empty
-    },
-    snmpStatus: 'idle',
   },
 };
 
