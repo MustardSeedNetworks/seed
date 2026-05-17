@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.188.0](https://github.com/krisarmstrong/seed/compare/v0.187.1...v0.188.0) (2026-05-17)
+
+
+### Features
+
+* **security:** guest network isolation audit ([#397](https://github.com/krisarmstrong/seed/issues/397)) ([#1003](https://github.com/krisarmstrong/seed/issues/1003)) ([81be6a8](https://github.com/krisarmstrong/seed/commit/81be6a8e9342994d4e8756b900b564d2f7102465))
+
+
+### Bug Fixes
+
+* **auth:** clear stale state, gate setup completion, match SSO contract ([#996](https://github.com/krisarmstrong/seed/issues/996)) ([e6280cf](https://github.com/krisarmstrong/seed/commit/e6280cf4edf9d4084fde127f5e0a76fd8ddc26a8))
+* **setup:** enforce password complexity rules with live checklist ([#997](https://github.com/krisarmstrong/seed/issues/997)) ([073eb35](https://github.com/krisarmstrong/seed/commit/073eb35563e30e4f19f8fefc044e1d36347f9614))
+* **survey:** client-side validation for ids, coords, floorplan size ([#999](https://github.com/krisarmstrong/seed/issues/999)) ([83ad1e9](https://github.com/krisarmstrong/seed/commit/83ad1e99a8d942c73d776f42f258a57fbf9d1ed7))
+* **survey:** persist AirMapper-imported placements + criteria ([#727](https://github.com/krisarmstrong/seed/issues/727)) ([#1000](https://github.com/krisarmstrong/seed/issues/1000)) ([acffbd7](https://github.com/krisarmstrong/seed/commit/acffbd7a0e5adf3fa235a3d6a2b35ab72a8d5010))
+
 ## [0.187.1](https://github.com/krisarmstrong/seed/compare/v0.187.0...v0.187.1) (2026-05-16)
 
 
