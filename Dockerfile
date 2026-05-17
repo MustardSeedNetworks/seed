@@ -18,6 +18,10 @@ WORKDIR /src/ui
 COPY ui/package.json ui/package-lock.json ./
 RUN npm ci
 COPY ui/ ./
+# Vite's @locales alias resolves to ../internal/i18n/locales (sibling to
+# ui/); bring that tree into the build context so TypeScript can resolve
+# the imports.
+COPY internal/i18n/locales /src/internal/i18n/locales
 RUN npm run build
 # Vite outputs to ../internal/api/ui (via outDir in vite.config.ts); copy that
 # tree out so the next stage can mount it via COPY --from.
