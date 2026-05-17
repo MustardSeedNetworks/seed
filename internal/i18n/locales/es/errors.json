@@ -52,6 +52,13 @@
     "failedToLoad": "Error al cargar configuración",
     "insecureCredentials": "Credenciales predeterminadas inseguras detectadas"
   },
+  "guestAudit": {
+    "notEnabled": "La auditoría de red de invitados no está habilitada. Habilítela en Configuración de seguridad.",
+    "noTargets": "No hay objetivos internos configurados. Agregue al menos una IP sensible en Configuración de seguridad.",
+    "invalidTarget": "Dirección IP de objetivo inválida",
+    "invalidPort": "El puerto debe estar entre 1 y 65535",
+    "runFailed": "La auditoría de red de invitados falló"
+  },
   "vlan": {
     "failedToCreate": "Error al crear VLAN",
     "failedToDelete": "Error al eliminar VLAN",

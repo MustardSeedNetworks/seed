@@ -14,6 +14,7 @@ import type { CardSettings, DisplayOptions } from '../../types/settings';
 import { CableCard } from '../cards/CableCard';
 import { DnsCard } from '../cards/DnsCard';
 import { GatewayCard } from '../cards/GatewayCard';
+import { GuestNetworkAuditCard } from '../cards/GuestNetworkAuditCard';
 import { HealthCheckCard } from '../cards/HealthCheckCard';
 import { LinkCard } from '../cards/LinkCard';
 import { LogViewerCard } from '../cards/LogViewerCard';
@@ -127,6 +128,8 @@ export function AppDashboard({
           {(!isWifi || cards.wifi) && (
             <>
               <HealthCheckCard loading={loading} />
+              {/* #397: Guest Network isolation audit. Self-hides when disabled. */}
+              <GuestNetworkAuditCard />
               {/* SLA Dashboard - aggregates health scores, SLA compliance, and alerts */}
               <SLADashboardCard />
               {cardSettings.performance.enabled ? (

@@ -488,6 +488,11 @@ linters:
       - path: 'internal/services/discovery/profiler_scan\.go'
         text: 'string `https?` has'
         linters: [ goconst ]
+      # handlers_guest_audit.go uses "status"/"updated" as JSON response
+      # field+value; this convention is shared across every PUT handler in
+      # the api package and is not refactorable to a single constant (#397).
+      - path: 'internal/api/handlers_guest_audit\.go'
+        linters: [ goconst ]
       - path: '_test\.go'
         linters:
           - bodyclose

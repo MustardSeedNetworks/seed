@@ -40,6 +40,32 @@ type SecurityConfig struct {
 
 	// VulnerabilityScanning configures CVE vulnerability scanning for discovered devices.
 	VulnerabilityScanning VulnerabilityScanConfig `json:"vulnerability_scanning"`
+
+	// GuestNetworkAudit configures the on-demand guest-network isolation test (#397).
+	GuestNetworkAudit GuestNetworkAuditConfig `json:"guest_network_audit"`
+}
+
+// GuestNetworkAuditConfig stores the list of sensitive internal targets that
+// MUST NOT be reachable from a guest network, plus optional audit-run settings.
+// The audit is run on demand from the UI: the technician connects the appliance
+// to the guest network and triggers the test, which probes the configured
+// targets and raises an alert if any are reachable (#397).
+type GuestNetworkAuditConfig struct {
+	// Enabled gates whether the audit endpoint accepts run requests.
+	Enabled bool `json:"enabled"`
+
+	// Targets is the list of sensitive internal hosts (EMR, PACS, etc.).
+	Targets []GuestAuditTarget `json:"targets,omitempty"`
+
+	// Ports overrides the default port list probed against each target.
+	// Empty means use the package default (HTTP/HTTPS/SSH/RDP/SMB/etc).
+	Ports []int `json:"ports,omitempty"`
+}
+
+// GuestAuditTarget identifies a single sensitive internal host.
+type GuestAuditTarget struct {
+	IP    string `json:"ip"`              // IPv4 address; validated server-side
+	Label string `json:"label,omitempty"` // Friendly name (e.g. "EMR primary")
 }
 
 // DHCPConfig contains DHCP monitoring and security settings.

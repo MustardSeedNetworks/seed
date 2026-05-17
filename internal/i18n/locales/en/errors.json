@@ -52,6 +52,13 @@
     "failedToLoad": "Failed to load configuration",
     "insecureCredentials": "Insecure default credentials detected"
   },
+  "guestAudit": {
+    "notEnabled": "Guest network audit is not enabled. Enable it in Security settings.",
+    "noTargets": "No internal targets configured. Add at least one sensitive IP in Security settings.",
+    "invalidTarget": "Invalid target IP address",
+    "invalidPort": "Port must be between 1 and 65535",
+    "runFailed": "Guest network audit failed to run"
+  },
   "vlan": {
     "failedToCreate": "Failed to create VLAN",
     "failedToDelete": "Failed to delete VLAN",

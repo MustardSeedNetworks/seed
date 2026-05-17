@@ -132,6 +132,12 @@ func (s *Server) setupShellRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/device", s.handleDeviceVulnerabilities)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/settings", s.handleVulnerabilitySettings)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/validate-api-key", s.handleNVDAPIKeyValidate)
+	// Guest-network isolation audit (#397).
+	s.mux.HandleFunc(APIVersionPrefix+"/shell/guest-audit/settings", s.handleGuestAuditSettings)
+	s.mux.Handle(
+		APIVersionPrefix+"/shell/guest-audit/run",
+		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleGuestAuditRun)),
+	)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/status", s.handlePipelineStatus)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/start", s.handlePipelineStart)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/cancel", s.handlePipelineCancel)

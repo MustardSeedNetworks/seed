@@ -1878,6 +1878,51 @@
         },
         "vulnerability_scanning": {
           "$ref": "#/$defs/VulnerabilityScanConfig"
+        },
+        "guest_network_audit": {
+          "$ref": "#/$defs/GuestNetworkAuditConfig"
+        }
+      }
+    },
+    "GuestNetworkAuditConfig": {
+      "type": "object",
+      "description": "On-demand guest-network isolation audit (#397)",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Gate whether the audit endpoint accepts run requests",
+          "default": false
+        },
+        "targets": {
+          "type": "array",
+          "description": "Sensitive internal hosts that must NOT be reachable from the guest network",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["ip"],
+            "properties": {
+              "ip": {
+                "type": "string",
+                "description": "IPv4 address of the sensitive host"
+              },
+              "label": {
+                "type": "string",
+                "description": "Friendly name (e.g. 'EMR primary')"
+              }
+            }
+          },
+          "default": []
+        },
+        "ports": {
+          "type": "array",
+          "description": "Override the default port list probed against each target",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "default": []
         }
       }
     },
