@@ -13,7 +13,7 @@
 # -----------------------------------------------------------------------------
 # Stage 1: build the embedded React/Vite UI
 # -----------------------------------------------------------------------------
-FROM node:25-bookworm AS ui-build
+FROM node:26-bookworm AS ui-build
 WORKDIR /src/ui
 COPY ui/package.json ui/package-lock.json ./
 RUN npm ci
