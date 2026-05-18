@@ -31,6 +31,22 @@ interface LogViewerModalProps {
   onClose: () => void;
 }
 
+/**
+ * Compute the hover tooltip for the live/paused toggle button.
+ * Hoisted to keep `LogViewerModal` under the cognitive-complexity limit.
+ */
+function getStreamingToggleHint(
+  streaming: boolean,
+  t: ReturnType<typeof useTranslation>['t'],
+): string {
+  return streaming
+    ? t(
+        'logs.streamingHint',
+        'Pause the live log stream; existing entries stay visible but no new entries are appended',
+      )
+    : t('logs.pausedHint', 'Resume streaming live log entries from the backend');
+}
+
 // Filter badge component
 interface FilterBadgeProps {
   label: string;
@@ -571,6 +587,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
             <button
               type="button"
               onClick={() => setIsStreaming(!isStreaming)}
+              title={getStreamingToggleHint(isStreaming, t)}
               class={cn(
                 button.size.md,
                 radius.lg,
@@ -592,6 +609,10 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
                 'border border-surface-border hover:bg-surface-hover',
               )}
               onClick={clearLogs}
+              title={t(
+                'logs.clearHint',
+                'Remove all log entries from the viewer; the backend log store is unaffected',
+              )}
             >
               {t('logs.clear', 'Clear')}
             </button>
@@ -606,6 +627,10 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
                 'flex items-center gap-2',
               )}
               onClick={exportJson}
+              title={t(
+                'logs.exportJsonHint',
+                'Download the current log entries as a JSON file for offline analysis',
+              )}
             >
               <svg
                 class="w-4 h-4"
@@ -634,6 +659,10 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
                 'flex items-center gap-2',
               )}
               onClick={exportCsv}
+              title={t(
+                'logs.exportCsvHint',
+                'Download the current log entries as a CSV file for spreadsheet analysis',
+              )}
             >
               <svg
                 class="w-4 h-4"
@@ -664,6 +693,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
                 radius.lg,
                 'hover:bg-surface-base',
               )}
+              title={t('logs.close', 'Close log viewer')}
               aria-label={t('logs.close', 'Close log viewer')}
             >
               <svg

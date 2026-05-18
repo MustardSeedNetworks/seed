@@ -586,7 +586,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             class={iconButtonClass}
             onClick={onSettingsOpen}
             aria-label={t('accessibility.openSettings')}
-            title={t('settings.title', 'Settings')}
+            title={t(
+              'tooltips.header.settings',
+              'Open the settings drawer to configure modules, network thresholds, and preferences',
+            )}
           >
             <svg
               class={iconTokens.size.md}
@@ -616,7 +619,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             class={iconButtonClass}
             onClick={onHelpOpen}
             aria-label={t('accessibility.openHelp')}
-            title={t('help.title', 'Help')}
+            title={t(
+              'tooltips.header.help',
+              'Open the in-app help with quick tours, keyboard shortcuts, and documentation links',
+            )}
           >
             <svg
               class={iconTokens.size.md}
@@ -640,7 +646,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             class={iconButtonClass}
             onClick={logout}
             aria-label={t('buttons.logout')}
-            title={t('buttons.logout', 'Logout')}
+            title={t(
+              'tooltips.header.logout',
+              'Sign out of the session and return to the login screen',
+            )}
           >
             <svg
               class={iconTokens.size.md}

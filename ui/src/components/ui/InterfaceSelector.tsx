@@ -244,6 +244,7 @@ function InterfaceSelectorComponent({
             type="button"
             onClick={(): void => setShowWarning(false)}
             class="text-status-warning hover:opacity-70"
+            title={t('accessibility.dismiss', 'Dismiss this warning until it is re-detected')}
             aria-label={t('accessibility.dismiss', 'Dismiss')}
           >
             <svg
