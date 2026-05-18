@@ -11,7 +11,6 @@
 #   - cosign keyless signing of every artifact
 #   - syft SBOM per archive
 #   - SHA-256 checksums
-#   - Homebrew tap publish (when HOMEBREW_TAP_TOKEN is set)
 #   - release-please CHANGELOG.md as release body
 #
 # Handled outside goreleaser by sidecar jobs in release.yml:
@@ -19,8 +18,10 @@
 #     build-iperf3 matrix; goreleaser picks it up from bin/ via archive files
 #   - UI frontend (npm run build) — pre-built by the build-ui job and
 #     downloaded into ui/dist/ before the Go build embeds it
-#   - SLSA L3 provenance — slsa-github-generator v2 reads goreleaser's
-#     artifact hashes via its outputs.hashes step
+#   - SLSA L3 provenance — actions/attest-build-provenance@v2 reads
+#     goreleaser's outputs.hashes (base64 list of artifact SHA-256s)
+#     and produces a signed in-toto attestation uploaded as
+#     seed-slsa-provenance.intoto.jsonl
 #
 # Not produced from this config:
 #   - macOS .pkg installer (no native pkgbuild from Linux). macOS users get
