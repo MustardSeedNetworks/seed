@@ -254,34 +254,12 @@ signs:
     artifacts: all
     output: true
 
-# Homebrew formula published to krisarmstrong/homebrew-tap on every
-# release. Requires a HOMEBREW_TAP_TOKEN repository secret (fine-grained
-# PAT with contents:write on both krisarmstrong/seed and
-# krisarmstrong/homebrew-tap). When the secret is absent, goreleaser
-# skips this step gracefully.
-brews:
-  - name: seed
-    repository:
-      owner: krisarmstrong
-      name: homebrew-tap
-      branch: main
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    homepage: https://github.com/krisarmstrong/seed
-    description: |
-      The Seed — Network Diagnostic Tool by Mustard Seed Networks.
-      Plug into any network jack for real-time link, switch, DHCP, DNS,
-      gateway, Wi-Fi, and vulnerability diagnostics via a web UI.
-    license: BSL-1.1
-    # macOS only; Linux users have first-class .deb/.rpm/.tar.gz.
-    skip_upload: auto
-    test: |
-      system "#{bin}/seed --version"
-    install: |
-      bin.install "seed"
-    commit_author:
-      name: goreleaser-bot
-      email: bot@krisarmstrong.dev
-    commit_msg_template: "chore(brew): seed {{ .Tag }}"
+# Homebrew tap publishing previously lived here. Removed 2026-05-18
+# because the HOMEBREW_TAP_TOKEN repo secret is unset / lacks scope on
+# krisarmstrong/homebrew-tap, which made every release error out
+# at the brew step with 403, blocking the downstream SLSA attestation
+# job (needs: [goreleaser]). Restore by re-adding the brews: block
+# once the PAT is provisioned — see git history of this file.
 
 release:
   github:

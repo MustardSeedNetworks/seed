@@ -226,11 +226,6 @@ jobs:
         env:
           UI_BUILD_HASH: ${{ needs.build-ui.outputs.ui_hash }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Optional. When present, goreleaser publishes the Homebrew
-          # formula to krisarmstrong/homebrew-tap. When absent, the brew
-          # step is skipped (config sets skip_upload: auto). PAT scope:
-          # fine-grained with contents:write on this repo and the tap.
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN || secrets.GITHUB_TOKEN }}
         run: goreleaser release --clean
 
       - name: Capture artifact hashes for SLSA provenance
