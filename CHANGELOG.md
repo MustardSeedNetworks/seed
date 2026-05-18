@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.190.0](https://github.com/krisarmstrong/seed/compare/v0.189.1...v0.190.0) (2026-05-18)
+
+
+### Features
+
+* **make:** add capability-aware dev-run target ([#1018](https://github.com/krisarmstrong/seed/issues/1018)) ([3d26875](https://github.com/krisarmstrong/seed/commit/3d26875f9afac36f6ca76ad6019e0bb2dfda1ddc))
+
 ## [0.189.1](https://github.com/krisarmstrong/seed/compare/v0.189.0...v0.189.1) (2026-05-18)
 
 
