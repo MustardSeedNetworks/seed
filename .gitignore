@@ -32,6 +32,12 @@ CLAUDE.md
 *.out
 *.pem
 *.png
+# Allow favicon raster artifacts (committed; regenerated via scripts/build-favicons.js).
+!ui/public/favicon-16x16.png
+!ui/public/favicon-32x32.png
+!ui/public/apple-touch-icon.png
+!ui/public/android-chrome-192x192.png
+!ui/public/android-chrome-512x512.png
 *.rpm
 *.so
 *.sqlite

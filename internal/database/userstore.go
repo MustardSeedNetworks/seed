@@ -1,6 +1,6 @@
-package database
+// SPDX-License-Identifier: BUSL-1.1
 
-// (c) 2025 Mustard Seed Networks
+package database
 
 import (
 	"context"

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="The Seed">
+  <title>The Seed</title>
+  <!-- Background tile, rounded -->
+  <rect x="0" y="0" width="64" height="64" rx="12" fill="#2d7a3e"/>
+  <!-- RJ45 port body (jack at the bottom) -->
+  <rect x="14" y="42" width="36" height="14" rx="2" fill="#fafaf7" stroke="#1f5a2c" stroke-width="1.5"/>
+  <!-- RJ45 retention clip notch -->
+  <rect x="24" y="40" width="16" height="4" rx="1" fill="#fafaf7" stroke="#1f5a2c" stroke-width="1.5"/>
+  <!-- RJ45 contact lines -->
+  <g stroke="#1f5a2c" stroke-width="1.2" stroke-linecap="round" opacity="0.85">
+    <line x1="20" y1="48" x2="20" y2="54"/>
+    <line x1="24" y1="48" x2="24" y2="54"/>
+    <line x1="28" y1="48" x2="28" y2="54"/>
+    <line x1="32" y1="48" x2="32" y2="54"/>
+    <line x1="36" y1="48" x2="36" y2="54"/>
+    <line x1="40" y1="48" x2="40" y2="54"/>
+    <line x1="44" y1="48" x2="44" y2="54"/>
+  </g>
+  <!-- Seedling stem rising from the port -->
+  <path d="M32 40 C 32 30, 32 22, 32 12" stroke="#fafaf7" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- Left leaf -->
+  <path d="M32 22 C 22 22, 16 18, 14 10 C 22 12, 30 16, 32 22 Z" fill="#fafaf7"/>
+  <!-- Right leaf -->
+  <path d="M32 18 C 42 18, 48 14, 50 6 C 42 8, 34 12, 32 18 Z" fill="#fafaf7"/>
+</svg>
