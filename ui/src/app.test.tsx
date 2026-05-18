@@ -684,11 +684,14 @@ describe('App', () => {
     it('renders settings button', async () => {
       renderWithProviders(<App />);
 
+      // Phase A introduced a sidebar with Settings/Help entries in addition to
+      // the header bar — there are now multiple buttons labelled "open settings".
+      // We just need at least one to exist; getAllByRole asserts ≥1 found.
       await waitFor(() => {
-        const settingsButton = screen.getByRole('button', {
+        const settingsButtons = screen.getAllByRole('button', {
           name: /open settings/i,
         });
-        expect(settingsButton).toBeInTheDocument();
+        expect(settingsButtons.length).toBeGreaterThan(0);
       });
     });
 
@@ -696,8 +699,8 @@ describe('App', () => {
       renderWithProviders(<App />);
 
       await waitFor(() => {
-        const helpButton = screen.getByRole('button', { name: /open help/i });
-        expect(helpButton).toBeInTheDocument();
+        const helpButtons = screen.getAllByRole('button', { name: /open help/i });
+        expect(helpButtons.length).toBeGreaterThan(0);
       });
     });
 
