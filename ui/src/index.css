@@ -41,12 +41,28 @@
   --color-surface-hover: var(--color-surface-hover);
   --color-surface-sunken: var(--color-surface-sunken);
 
+  /* Legacy bg-* aliases (mirror niac so shared primitives compile).
+   * Components should prefer bg-surface-* in new code. */
+  --color-bg-base: var(--color-surface-base);
+  --color-bg-surface: var(--color-surface-raised);
+  --color-bg-elevated: var(--color-surface-raised);
+  --color-bg-overlay: var(--color-surface-hover);
+  --color-bg-muted: var(--color-surface-hover);
+
+  /* Border aliases — match niac's primitive vocabulary. */
+  --color-border-default: var(--color-surface-border);
+  --color-border-subtle: var(--color-surface-border);
+  --color-border-muted: var(--color-surface-border);
+  --color-border-focus: var(--color-brand-primary);
+  --color-border-error: var(--color-status-error);
+
   /* Text Colors */
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
   --color-text-muted: var(--color-text-muted);
   --color-text-accent: var(--color-text-accent);
   --color-text-inverse: var(--color-text-inverse);
+  --color-text-disabled: var(--color-text-muted);
 
   /* Status Colors - INDUSTRY STANDARD (do not change) */
   --color-status-success: var(--color-status-success);

@@ -46,6 +46,7 @@ import { ImprovedHelpModal } from './components/help/ImprovedHelpModal';
 import { ProfileManagement } from './components/profiles/ProfileManagement';
 import { SettingsDrawer } from './components/settings/SettingsDrawer';
 import { SetupWizard } from './components/setup/SetupWizard';
+import { CommandPalette } from './components/ui/CommandPalette';
 import { Fab } from './components/ui/fab';
 import { AppContext, type AppContextValue } from './contexts/AppContext';
 import { useProfileContext } from './contexts/profileContext';
@@ -112,6 +113,9 @@ function App(): JSX.Element {
   } = useAppDrawers();
 
   const [sessionExpired, setSessionExpired] = useState(false);
+
+  // Command palette open state (Cmd+K / Ctrl+K toggles).
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   // Setup wizard state (extracted to hook #889)
   const { needsSetup, suggestedPassword, setupUsername, setupToken, completeSetup } =
@@ -787,6 +791,17 @@ function App(): JSX.Element {
         <div class="fixed bottom-0 right-0 pointer-events-none z-50">
           <Fab class="pointer-events-auto absolute bottom-20 right-6" />
         </div>
+
+        {/* Command palette (Cmd+K / Ctrl+K) */}
+        <CommandPalette
+          groups={navGroups}
+          open={paletteOpen}
+          onOpenChange={setPaletteOpen}
+          onOpenSettings={openSettings}
+          onOpenHelp={openHelp}
+          onToggleTheme={toggleTheme}
+          isDark={isDark}
+        />
       </AppContext.Provider>
     </BrowserRouter>
   );
