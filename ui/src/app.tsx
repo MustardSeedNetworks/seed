@@ -27,8 +27,9 @@
  * automatically detecting if the system needs configuration.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { api, setSessionExpiredCallback } from './api';
 import {
   applyInterfaceRestoration,
@@ -37,7 +38,6 @@ import {
   parseProfileInterfaces,
 } from './app/appInterfaceHelpers';
 import { LoginForm } from './app/LoginForm';
-import { AppDashboard } from './components/app/AppDashboard';
 import { AppFooter } from './components/app/AppFooter';
 import { CapabilityWarnings } from './components/app/CapabilityWarnings';
 import { HeaderBar } from './components/app/HeaderBar';
@@ -47,6 +47,7 @@ import { ProfileManagement } from './components/profiles/ProfileManagement';
 import { SettingsDrawer } from './components/settings/SettingsDrawer';
 import { SetupWizard } from './components/setup/SetupWizard';
 import { Fab } from './components/ui/fab';
+import { AppContext, type AppContextValue } from './contexts/AppContext';
 import { useProfileContext } from './contexts/profileContext';
 import { useSettings } from './contexts/useSettings';
 import { useAppDrawers } from './hooks/useAppDrawers';
@@ -62,7 +63,11 @@ import { useSse } from './hooks/useSse';
 import { useSsePolling } from './hooks/useSsePolling';
 import { useTheme } from './hooks/useTheme';
 import { LogComponents, logger } from './lib/logger';
-import { cn, section, spacing } from './styles/theme';
+import { navGroups } from './navGroups';
+import { pages } from './pageRegistry';
+import { cn, section } from './styles/theme';
+import { PageLoader } from './ui/PageLoader';
+import { SidebarLayout } from './ui/Sidebar';
 
 /**
  * Main App Component
@@ -695,78 +700,95 @@ function App(): JSX.Element {
     return <LoginForm onLogin={handleLogin} isLoading={isLoading} error={authError} />;
   }
 
+  const appContextValue: AppContextValue = {
+    cards,
+    loading,
+    isWifi,
+    currentInterface,
+    cardSettings,
+    displayOptions,
+    networkDiscovery,
+    triggerDeviceScan,
+    registerTraceHopHandler,
+    channelGraphData,
+    channelGraphLoading,
+    appVersion,
+  };
+
+  const topBar = (
+    <HeaderBar
+      wsStatus={sseStatus}
+      onReconnect={reconnect}
+      profiles={profiles}
+      activeProfile={activeProfile}
+      profilesLoading={profilesLoading}
+      onProfileSwitch={switchProfile}
+      onProfileManage={openProfiles}
+      interfaces={interfaces}
+      currentInterface={currentInterface}
+      isWifi={isWifi}
+      onInterfaceChange={changeInterface}
+      hasEthernet={hasEthernet}
+      hasWifiInterface={hasWifiInterface}
+      switchToInterfaceType={switchToInterfaceType}
+      toggleTheme={toggleTheme}
+      isDark={isDark}
+      onHelpOpen={openHelp}
+      onSettingsOpen={openSettings}
+      logout={logout}
+      recommendedEthernet={recommendedEthernet}
+      recommendedWifi={recommendedWifi}
+    />
+  );
+
   return (
-    <div class="min-h-screen text-text-primary font-body">
-      <HeaderBar
-        wsStatus={sseStatus}
-        onReconnect={reconnect}
-        profiles={profiles}
-        activeProfile={activeProfile}
-        profilesLoading={profilesLoading}
-        onProfileSwitch={switchProfile}
-        onProfileManage={openProfiles}
-        interfaces={interfaces}
-        currentInterface={currentInterface}
-        isWifi={isWifi}
-        onInterfaceChange={changeInterface}
-        hasEthernet={hasEthernet}
-        hasWifiInterface={hasWifiInterface}
-        switchToInterfaceType={switchToInterfaceType}
-        toggleTheme={toggleTheme}
-        isDark={isDark}
-        onHelpOpen={openHelp}
-        onSettingsOpen={openSettings}
-        logout={logout}
-        // #756: Recommended (most capable) interfaces
-        recommendedEthernet={recommendedEthernet}
-        recommendedWifi={recommendedWifi}
-      />
+    <BrowserRouter>
+      <AppContext.Provider value={appContextValue}>
+        <SidebarLayout
+          groups={navGroups}
+          version={appVersion}
+          onOpenHelp={openHelp}
+          onOpenSettings={openSettings}
+          onOpenProfiles={openProfiles}
+          topBar={topBar}
+        >
+          <div class={cn(section.width.xl, 'mx-auto')}>
+            <CapabilityWarnings capabilities={capabilities} />
 
-      {/* Main content - pb-24 adds bottom padding for fixed FAB */}
-      <main class={cn(spacing.mainPadding.y, 'pb-24')}>
-        <div class={cn(section.width.xl, 'mx-auto', spacing.mainPadding.x)}>
-          {/* Issue #803: Show warning banner when network capabilities are missing */}
-          <CapabilityWarnings capabilities={capabilities} />
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Navigate to="/link" replace={true} />} />
+                {pages.map((page) => (
+                  <Route key={page.path} path={page.path} element={<page.component />} />
+                ))}
+                <Route path="*" element={<Navigate to="/link" replace={true} />} />
+              </Routes>
+            </Suspense>
 
-          <AppDashboard
-            cards={cards}
-            loading={loading}
-            isWifi={isWifi}
-            currentInterface={currentInterface}
-            cardSettings={cardSettings}
-            displayOptions={displayOptions}
-            networkDiscovery={networkDiscovery}
-            triggerDeviceScan={triggerDeviceScan}
-            registerTraceHopHandler={registerTraceHopHandler}
-            channelGraphData={channelGraphData}
-            channelGraphLoading={channelGraphLoading}
-          />
+            <AppFooter appVersion={appVersion} />
+          </div>
+        </SidebarLayout>
 
-          <AppFooter appVersion={appVersion} />
+        {/* Settings Drawer - shows interface-specific settings (#754) */}
+        <SettingsDrawer
+          isOpen={settingsOpen}
+          onClose={closeSettings}
+          version={appVersion}
+          isWifi={isWifi}
+        />
+
+        {/* Help Modal - improved with TOC, About, and search */}
+        <ImprovedHelpModal isOpen={helpOpen} onClose={closeHelp} version={appVersion} />
+
+        {/* Profile Management Modal (#754) */}
+        {profilesOpen ? <ProfileManagement onClose={closeProfiles} /> : null}
+
+        {/* FAB - Run All Tests - positioned bottom-right */}
+        <div class="fixed bottom-0 right-0 pointer-events-none z-50">
+          <Fab class="pointer-events-auto absolute bottom-20 right-6" />
         </div>
-      </main>
-
-      {/* Settings Drawer - shows interface-specific settings (#754) */}
-      <SettingsDrawer
-        isOpen={settingsOpen}
-        onClose={closeSettings}
-        version={appVersion}
-        isWifi={isWifi}
-      />
-
-      {/* Help Modal - improved with TOC, About, and search */}
-      <ImprovedHelpModal isOpen={helpOpen} onClose={closeHelp} version={appVersion} />
-
-      {/* Profile Management Modal (#754) */}
-      {profilesOpen ? <ProfileManagement onClose={closeProfiles} /> : null}
-
-      {/* FAB - Run All Tests - positioned inline with card grid */}
-      <div class="fixed bottom-0 left-0 right-0 pointer-events-none z-50">
-        <div class={cn(section.width.xl, 'mx-auto', spacing.mainPadding.x, 'relative')}>
-          <Fab class="pointer-events-auto absolute bottom-20 -right-2" />
-        </div>
-      </div>
-    </div>
+      </AppContext.Provider>
+    </BrowserRouter>
   );
 }
 
