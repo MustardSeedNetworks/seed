@@ -49,7 +49,7 @@ on:
         type: boolean
         default: false
       target_tag:
-        description: "Backfill target tag (e.g. v0.190.0). Required when provenance_only=true — workflow_dispatch must be issued against main since older tags don\'t have these inputs."
+        description: "Backfill target tag (e.g. v0.190.0). Required when provenance_only=true — workflow_dispatch must be issued against main since older tags don't have these inputs."
         type: string
         default: ""
 
