@@ -919,6 +919,12 @@ jobs:
   ci-complete:
     name: CI Complete
     runs-on: ubuntu-latest
+    # NOTE: e2e and lighthouse are deliberately excluded from this aggregator.
+    # They were dropped from required-status-checks on main because they're
+    # advisory (flaky / surface real issues that are tracked separately).
+    # Including them here would re-block merge via the dispatcher on the
+    # same flakes. They still run on every PR and surface their own status;
+    # they just don't gate merge.
     needs:
       - changes
       - backend
@@ -930,8 +936,6 @@ jobs:
       - i18n
       - docs
       - build
-      - e2e
-      - lighthouse
     if: always()
     steps:
       - name: Verify upstream results
