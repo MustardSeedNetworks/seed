@@ -31,6 +31,13 @@ func TestHandleBuildVersionGET(t *testing.T) {
 			t.Errorf("response missing or empty field %q (got %#v)", key, body)
 		}
 	}
+
+	// tlsFingerprint must always be present (stable response shape) but may
+	// be empty when the server runs in HTTP mode, which is the default for
+	// the test server.
+	if _, ok := body["tlsFingerprint"]; !ok {
+		t.Errorf("response missing tlsFingerprint field (got %#v)", body)
+	}
 }
 
 func TestHandleBuildVersionMethodNotAllowed(t *testing.T) {

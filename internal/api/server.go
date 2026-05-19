@@ -107,10 +107,11 @@ type Server struct {
 	services *ServiceContainer
 
 	// Runtime state
-	icmpAvailable      bool      // Whether raw ICMP sockets are available
-	startTime          time.Time // Application start time for uptime tracking (fixes #540)
-	setupModeStartTime time.Time // Security fix #891: Track when setup mode started
-	modules            *Modules  // Application modules (Sap, Shell, Canopy, Roots, Harvest)
+	icmpAvailable      bool                // Whether raw ICMP sockets are available
+	startTime          time.Time           // Application start time for uptime tracking (fixes #540)
+	setupModeStartTime time.Time           // Security fix #891: Track when setup mode started
+	modules            *Modules            // Application modules (Sap, Shell, Canopy, Roots, Harvest)
+	tlsFingerprint     tlsFingerprintCache // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
 }
 
 // NewServer creates a new server instance.

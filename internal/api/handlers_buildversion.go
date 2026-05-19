@@ -11,6 +11,11 @@ import (
 // validation. Unauthenticated by design — operators need to verify which
 // binary is running without holding a session. Required by the Universal
 // Build Contract; see CLAUDE.md.
+//
+// In addition to version.Info() the response carries `tlsFingerprint`, the
+// SHA-256 fingerprint of the active TLS certificate. The field is always
+// present so the response shape is stable; it is an empty string when the
+// server runs without TLS (HTTP mode or ACME-managed certs).
 func (s *Server) handleBuildVersion(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	if r.Method != http.MethodGet {
@@ -24,5 +29,7 @@ func (s *Server) handleBuildVersion(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-	sendJSONResponse(w, logger, http.StatusOK, version.Info())
+	resp := version.Info()
+	resp["tlsFingerprint"] = s.tlsFingerprintForResponse()
+	sendJSONResponse(w, logger, http.StatusOK, resp)
 }

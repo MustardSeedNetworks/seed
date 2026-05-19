@@ -139,10 +139,12 @@ func (s *Server) startHTTP() error {
 	return nil
 }
 
-// startHTTPRedirect starts an HTTP server that redirects all requests to HTTPS (fixes #515).
-// Properly tracks the server and allows shutdown.
-func (s *Server) startHTTPRedirect(port int) {
-	redirectHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// httpToHTTPSRedirectHandler returns an [http.Handler] that permanently
+// redirects every request to the equivalent HTTPS URL. Extracted from
+// startHTTPRedirect so it can be exercised in tests without bringing up
+// a real listener.
+func (s *Server) httpToHTTPSRedirectHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Build HTTPS URL preserving the host and path
 		host := r.Host
 		// Remove port from host if present (to avoid localhost:80 → https://localhost:80:8443)
@@ -161,8 +163,19 @@ func (s *Server) startHTTPRedirect(port int) {
 
 		// #nosec G710 -- httpsURL is server-controlled: scheme/port from our config, host stripped to its
 		// bare form before re-joining; user-supplied r.RequestURI is appended as the path/query only.
-		http.Redirect(w, r, httpsURL, http.StatusMovedPermanently)
+		//
+		// Use 308 Permanent Redirect (RFC 7538) rather than 301 so the HTTP
+		// method and body are preserved across the redirect. 301 allows
+		// clients to downgrade POST to GET, which would silently break
+		// state-changing API calls that arrive on the HTTP listener.
+		http.Redirect(w, r, httpsURL, http.StatusPermanentRedirect)
 	})
+}
+
+// startHTTPRedirect starts an HTTP server that redirects all requests to HTTPS (fixes #515).
+// Properly tracks the server and allows shutdown.
+func (s *Server) startHTTPRedirect(port int) {
+	redirectHandler := s.httpToHTTPSRedirectHandler()
 
 	// Bind via the port-fallback helper so a busy :80 (or whatever is
 	// configured) walks up to +9 instead of killing the redirect goroutine.
@@ -339,18 +352,32 @@ func (s *Server) ensureSelfSignedCert() (string, string, error) {
 		return "", "", fmt.Errorf("generate RSA key: %w", err)
 	}
 
-	// Create certificate template
+	// Create certificate template.
+	//
+	// The cert is a single-tier self-signed CA: it acts as both the root
+	// (Issuer == Subject) and the leaf the TLS listener serves. This lets
+	// `seed install-ca` install the same file into the OS trust store so
+	// browsers stop showing the self-signed warning. Without IsCA=true and
+	// KeyUsageCertSign, OS trust stores will reject the cert as not
+	// eligible to act as a root.
+	//
+	// Existing certs on disk are not regenerated automatically; they will
+	// continue to work for TLS but cannot be installed as roots until they
+	// are deleted and seed regenerates them.
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
 			Organization: []string{"The Seed"},
 			CommonName:   "The Seed Self-Signed",
 		},
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().AddDate(1, 0, 0), // Valid for 1 year
-		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		NotBefore: time.Now(),
+		NotAfter:  time.Now().AddDate(1, 0, 0), // Valid for 1 year
+		KeyUsage: x509.KeyUsageKeyEncipherment |
+			x509.KeyUsageDigitalSignature |
+			x509.KeyUsageCertSign,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
+		IsCA:                  true,
 		DNSNames:              []string{"localhost", "seed.local"},
 	}
 
@@ -373,7 +400,7 @@ func (s *Server) ensureSelfSignedCert() (string, string, error) {
 		return "", "", fmt.Errorf("create cert file: %w", err)
 	}
 	defer func() { _ = certOut.Close() }()
-	if encodeErr := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: certDER}); encodeErr != nil {
+	if encodeErr := pem.Encode(certOut, &pem.Block{Type: pemCertBlockType, Bytes: certDER}); encodeErr != nil {
 		return "", "", fmt.Errorf("encode certificate PEM: %w", encodeErr)
 	}
 

@@ -421,3 +421,38 @@ func ExportBindWithFallback(
 func ExportIsAddrInUse(err error) bool {
 	return isAddrInUse(err)
 }
+
+// HTTPToHTTPSRedirectHandler exposes the HTTP→HTTPS redirect handler for testing.
+func (s *Server) HTTPToHTTPSRedirectHandler() http.Handler {
+	return s.httpToHTTPSRedirectHandler()
+}
+
+// EnsureSelfSignedCert exposes ensureSelfSignedCert for testing.
+func (s *Server) EnsureSelfSignedCert() (string, string, error) {
+	return s.ensureSelfSignedCert()
+}
+
+// ExportFingerprintFromPEM exposes fingerprintFromPEM for testing.
+func ExportFingerprintFromPEM(pemData []byte) (string, error) {
+	return fingerprintFromPEM(pemData)
+}
+
+// ExportComputeCertFingerprint exposes computeCertFingerprint for testing.
+func ExportComputeCertFingerprint(path string) (string, error) {
+	return computeCertFingerprint(path)
+}
+
+// ExportFormatFingerprint exposes formatFingerprint for testing.
+func ExportFormatFingerprint(digest []byte) string {
+	return formatFingerprint(digest)
+}
+
+// ErrEmptyCertPath exposes errEmptyCertPath for testing.
+var ErrEmptyCertPath = errEmptyCertPath
+
+// ErrNoCertificateBlock exposes errNoCertificateBlock for testing.
+var ErrNoCertificateBlock = errNoCertificateBlock
+
+// TLSFingerprintCache is the exported type alias for tlsFingerprintCache,
+// used in tests that exercise the cache behaviour directly.
+type TLSFingerprintCache = tlsFingerprintCache

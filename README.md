@@ -96,6 +96,35 @@ brew install krisarmstrong/tap/seed
 2. Walk the first-run setup wizard to create the admin password — there is
    no shipped default password.
 
+### First-time TLS trust setup (optional)
+
+Seed serves its UI over HTTPS with a self-signed certificate. To eliminate
+the browser warning, install that certificate into your OS trust store:
+
+```bash
+sudo seed install-ca
+```
+
+This adds seed's root certificate to the macOS Keychain, the Linux system
+CA bundle (Debian/Ubuntu via `update-ca-certificates`, RHEL/Fedora via
+`update-ca-trust`), or the Windows Certificate Store. After the install
+command finishes it prints the certificate's SHA-256 fingerprint. Compare
+it against what your browser shows ("View certificate → Details →
+Fingerprints") and against the value served at `/__version`:
+
+```bash
+seed install-ca --print-fingerprint
+curl -k https://localhost:8443/__version | jq -r .tlsFingerprint
+```
+
+The two values must match.
+
+To remove the certificate from the trust store:
+
+```bash
+sudo seed install-ca --uninstall
+```
+
 ## Configuration
 
 `seed.yaml` (and `SEED_*` env vars) configure the appliance:
