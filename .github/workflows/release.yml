@@ -48,6 +48,10 @@ on:
         description: "Backfill: skip build, recompute subjects from the existing release's checksums.txt, attest + upload bundle"
         type: boolean
         default: false
+      target_tag:
+        description: "Backfill target tag (e.g. v0.190.0). Required when provenance_only=true — workflow_dispatch must be issued against main since older tags don\'t have these inputs."
+        type: string
+        default: ""
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -286,10 +290,15 @@ jobs:
       - name: Download checksums.txt from existing release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_TAG: ${{ inputs.target_tag }}
         shell: bash
         run: |
           set -euo pipefail
-          gh release download "${GITHUB_REF_NAME}" \
+          if [ -z "$TARGET_TAG" ]; then
+            echo "::error::provenance_only=true requires target_tag to identify which existing release to attest"
+            exit 1
+          fi
+          gh release download "$TARGET_TAG" \
             --repo "${GITHUB_REPOSITORY}" \
             --pattern 'checksums.txt' \
             --dir .
@@ -359,10 +368,11 @@ jobs:
       - name: Attach attestation bundle to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_TAG: ${{ inputs.target_tag || github.ref_name }}
         shell: bash
         run: |
           set -euo pipefail
           cp "${{ steps.attest.outputs.bundle-path }}" \
              seed-slsa-provenance.intoto.jsonl
-          gh release upload "${GITHUB_REF_NAME}" \
+          gh release upload "$TARGET_TAG" \
              seed-slsa-provenance.intoto.jsonl --clobber --repo "${GITHUB_REPOSITORY}"
