@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.193.0](https://github.com/krisarmstrong/seed/compare/v0.192.0...v0.193.0) (2026-05-20)
+
+
+### Features
+
+* **auth:** Argon2id password hashing + zxcvbn strength + HIBP breach check (Wave 2) ([#1047](https://github.com/krisarmstrong/seed/issues/1047)) ([b746151](https://github.com/krisarmstrong/seed/commit/b746151fe0d79ff20f654f831a63a28f7ed79709))
+* **auth:** argon2id totp mfa + webauthn passkeys (wave 3) ([#1048](https://github.com/krisarmstrong/seed/issues/1048)) ([d8749b7](https://github.com/krisarmstrong/seed/commit/d8749b7ab386dc22adbb332f002f9e330ed6ebd9))
+* **ci:** Add provenance_only mode for SLSA backfill ([#75](https://github.com/krisarmstrong/seed/issues/75)) ([#1040](https://github.com/krisarmstrong/seed/issues/1040)) ([ef45f8f](https://github.com/krisarmstrong/seed/commit/ef45f8f056cdec57aa58c3f18c5ef92a0af5ec13))
+* **tls:** Trust-store install UX + cert fingerprint + 308 redirect (Wave 1) ([#1046](https://github.com/krisarmstrong/seed/issues/1046)) ([efcfa12](https://github.com/krisarmstrong/seed/commit/efcfa12e3970884fe46d72c5db172fbbf6c1356e))
+
+
+### Bug Fixes
+
+* **ci:** add target_tag input to SLSA backfill ([#75](https://github.com/krisarmstrong/seed/issues/75) follow-up) ([#1042](https://github.com/krisarmstrong/seed/issues/1042)) ([c946a2c](https://github.com/krisarmstrong/seed/commit/c946a2cce5f3085141cb102c6baba8fd5ae45f45))
+* **ci:** unescape apostrophe in target_tag description ([#1043](https://github.com/krisarmstrong/seed/issues/1043)) ([2238293](https://github.com/krisarmstrong/seed/commit/22382930a919a441316627b4e7b7b5f96e77e22a))
+
 ## [0.192.0](https://github.com/krisarmstrong/seed/compare/v0.191.2...v0.192.0) (2026-05-19)
 
 
