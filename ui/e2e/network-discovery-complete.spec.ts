@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import { mockAuthenticated } from './helpers/auth';
 
 /**
  * Network Discovery Complete Flow E2E Tests
@@ -20,16 +21,8 @@ import { expect, type Page, test } from '@playwright/test';
  * Helper function to login and navigate to dashboard
  */
 async function loginAndNavigate(page: Page): Promise<void> {
+  await mockAuthenticated(page);
   await page.goto('/');
-  await page.evaluate(() => localStorage.clear());
-  await page.reload();
-
-  // Authenticate with valid credentials
-  await page.getByLabel(/username/i).fill('admin');
-  await page.getByLabel(/password/i).fill('seed');
-  await page.getByRole('button', { name: /sign in|login/i }).click();
-
-  // Wait for dashboard to load
   await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
     timeout: 10000,
   });

@@ -3,6 +3,8 @@ package api
 import (
 	"net"
 	"net/http"
+	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -76,9 +78,21 @@ type RateLimitConfig struct {
 }
 
 // DefaultRateLimitConfig returns the default rate limiting configuration.
+// SEED_LOGIN_MAX_ATTEMPTS overrides MaxAttempts when set to a positive
+// integer; this is the documented escape hatch for E2E runs that
+// genuinely need to drive the real auth flow more than 5 times per
+// 15-minute window (auth.spec.ts + auth-complete.spec.ts cover XSS,
+// SQLi, brute-force, lockout, etc., and burn the default budget
+// before the rest of the suite gets a chance).
 func DefaultRateLimitConfig() RateLimitConfig {
+	maxAttempts := defaultMaxAttempts
+	if raw := os.Getenv("SEED_LOGIN_MAX_ATTEMPTS"); raw != "" {
+		if n, err := strconv.Atoi(raw); err == nil && n > 0 {
+			maxAttempts = n
+		}
+	}
 	return RateLimitConfig{
-		MaxAttempts: defaultMaxAttempts,
+		MaxAttempts: maxAttempts,
 		Window:      rateLimitWindowMin * time.Minute,
 		BlockTime:   rateLimitWindowMin * time.Minute,
 	}
