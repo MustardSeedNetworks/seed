@@ -6,6 +6,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/dhcp"
 	"github.com/krisarmstrong/seed/internal/netif"
 	"github.com/krisarmstrong/seed/internal/pipeline/publicip"
@@ -74,6 +75,21 @@ func (s *Server) Close() {
 // This is used by tests to get the full middleware stack.
 func (s *Server) GetAuthenticatedHandler() http.Handler {
 	return corsMiddleware(s.authManager().Middleware(s.mux))
+}
+
+// SetTestDB injects a *database.DB into the test server. Wave 3 (#85)
+// added MFA endpoints that require persistence; tests use this to
+// attach a temp SQLite database without standing up the full
+// NewServer dependency graph.
+func SetTestDB(s *Server, db *database.DB) {
+	s.services.Database.DB = db
+}
+
+// ResetMFAAttempts clears the package-level MFA rate-limit store.
+// Tests call this in t.Cleanup or at the start of each case to avoid
+// cross-test bleed-through (the store is process-global).
+func ResetMFAAttempts() {
+	mfaAttempts.Reset()
 }
 
 // NewTestServerWithConfig creates a test server with a specific config.

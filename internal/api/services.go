@@ -69,6 +69,9 @@ type AuthServices struct {
 	Recovery       *auth.RecoveryTokenManager
 	OAuth          *oauth.Manager
 	TrustedProxies *TrustedProxies
+	// WebAuthn is the optional WebAuthn (passkeys) manager, populated
+	// in server_init.go. Wave 3 (#85).
+	WebAuthn *auth.WebAuthnManager
 }
 
 // RateLimitServices groups rate limiting services.

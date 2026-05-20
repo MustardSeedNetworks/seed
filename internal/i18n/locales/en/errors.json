@@ -10,6 +10,15 @@
     "refreshNotFound": "Refresh token not found",
     "sessionExpired": "Session expired. Please log in again."
   },
+  "mfa": {
+    "notEnrolled": "Multi-factor authentication is not enrolled for this account",
+    "invalidCode": "Invalid or expired authentication code",
+    "invalidToken": "Invalid or expired multi-factor authentication token",
+    "sessionExpired": "Multi-factor authentication session expired. Please retry.",
+    "registrationFailed": "Passkey registration failed",
+    "assertionFailed": "Passkey verification failed",
+    "noCredentials": "No passkey credentials are registered for this account"
+  },
   "network": {
     "connectionFailed": "Connection failed",
     "networkError": "Network error",

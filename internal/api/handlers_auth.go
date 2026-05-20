@@ -30,9 +30,16 @@ type LoginRequest struct {
 }
 
 // LoginResponse represents a successful login response.
+//
+// MFARequired and MFAToken are populated instead of Token/Expires when
+// the user has TOTP enabled — the client must then call
+// /api/v1/auth/login/totp with the supplied mfa_token + a fresh code
+// to obtain the real access token. Wave 3 (#85).
 type LoginResponse struct {
-	Token   string `json:"token"`
-	Expires int64  `json:"expires"`
+	Token       string `json:"token,omitempty"`
+	Expires     int64  `json:"expires,omitempty"`
+	MFARequired bool   `json:"mfa_required,omitempty"`
+	MFAToken    string `json:"mfa_token,omitempty"`
 }
 
 // handleLoginRateLimited checks and handles rate limiting, returns true if blocked.
@@ -142,21 +149,46 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := s.authManager().Authenticate(r.Context(), req.Username, req.Password); err != nil {
+	// Wave 3 (#85): verify password first, then check whether TOTP is
+	// enrolled. If it is, hand back an MFA-pending token instead of
+	// the real access token — the client must then post the TOTP code
+	// to /api/v1/auth/login/totp to complete the login.
+	if err := s.authManager().VerifyPasswordOnly(r.Context(), req.Username, req.Password); err != nil {
 		s.handleLoginFailure(w, logger, localizer, req.Username, clientIP)
 		return
+	}
+	s.loginRateLimiter().RecordAttempt(clientIP, true)
+
+	if s.db() != nil {
+		_, totpEnabled, totpErr := s.db().GetTOTP(r.Context(), req.Username)
+		if totpErr == nil && totpEnabled {
+			mfaToken, err := s.authManager().
+				GenerateMFAPendingToken(r.Context(), req.Username)
+			if err != nil {
+				logger.ErrorContext(r.Context(), "Failed to generate MFA pending token", "error", err)
+				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+					ErrCodeInternal, localizer.T("errors.api.internalError"), "")
+				return
+			}
+			logger.InfoContext(r.Context(), "Login awaiting second factor",
+				"username", req.Username,
+				"client_ip", clientIP,
+				"event", "auth.login.mfa_required",
+				"factor", "totp")
+			sendJSONResponse(w, logger, http.StatusOK, LoginResponse{
+				MFARequired: true,
+				MFAToken:    mfaToken,
+			})
+			return
+		}
 	}
 
 	logger.Info(
 		"Login successful",
-		"username",
-		req.Username,
-		"client_ip",
-		clientIP,
-		"event",
-		"auth.login.success",
+		"username", req.Username,
+		"client_ip", clientIP,
+		"event", "auth.login.success",
 	)
-	s.loginRateLimiter().RecordAttempt(clientIP, true)
 
 	accessToken, err := s.generateAndSetLoginTokens(w, r, req.Username)
 	if err != nil {

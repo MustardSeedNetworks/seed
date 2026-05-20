@@ -1,6 +1,8 @@
 package auth
 
-import "os"
+import (
+	"os"
+)
 
 // ExportRandomChar exports randomChar for testing.
 func ExportRandomChar(chars string) (byte, error) {
