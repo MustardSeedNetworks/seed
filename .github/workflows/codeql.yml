@@ -32,9 +32,10 @@ jobs:
         uses: github/codeql-action/init@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4.35.5
         with:
           languages: ${{ matrix.language }}
-          # security-extended adds 30+ deeper CWE queries beyond the default
-          # set; security-and-quality adds the code-quality pack.
-          queries: security-extended,security-and-quality
+          # config-file holds queries + query-filters; keeping them together
+          # lets us scope exclusions to specific rules with inline justification
+          # (see the config for the HIBP SHA-1 false positive).
+          config-file: ./.github/codeql/codeql-config.yml
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4.35.5
