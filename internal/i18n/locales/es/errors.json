@@ -71,7 +71,8 @@
   "password": {
     "tooShort": "La contraseña debe tener al menos 8 caracteres",
     "mismatch": "Las contraseñas no coinciden",
-    "weak": "La contraseña no cumple los requisitos de seguridad"
+    "weak": "La contraseña no cumple los requisitos de seguridad",
+    "breached": "Esta contraseña aparece en filtraciones de datos conocidas. Elige otra."
   },
   "subnet": {
     "alreadyExists": "La subred ya existe",
