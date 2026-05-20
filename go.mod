@@ -53,6 +53,7 @@ require (
 	github.com/shoenig/go-m1cpu v0.2.1 // indirect
 	github.com/shoenig/test v1.12.2 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
+	github.com/test-go/testify v1.1.4 // indirect
 	github.com/tklauser/go-sysconf v0.4.0 // indirect
 	github.com/tklauser/numcpus v0.12.0 // indirect
 	github.com/vishvananda/netns v0.0.5 // indirect
@@ -65,6 +66,7 @@ require (
 )
 
 require (
+	github.com/trustelem/zxcvbn v1.0.1
 	golang.org/x/net v0.54.0
 	golang.org/x/sys v0.44.0
 )

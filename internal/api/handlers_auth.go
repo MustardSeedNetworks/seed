@@ -549,15 +549,24 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate password strength
-	if err := auth.ValidatePasswordStrength(req.Password); err != nil {
-		sendJSONResponse(w, logger, http.StatusBadRequest, map[string]string{
-			"error": localizer.T("errors.password.weak"),
-		})
+	// Enforce full password policy: length+class, zxcvbn strength,
+	// HIBP breach corpus. (Wave 2 / task #86.)
+	username := s.config.Auth.DefaultUsername
+	policyResult, policyErr := auth.EnforcePasswordPolicy(
+		r.Context(),
+		req.Password,
+		[]string{username},
+	)
+	if policyErr != nil {
+		s.respondPolicyRejection(w, logger, localizer, clientIP, "setup", policyResult)
 		return
 	}
 
-	// Hash the new password
+	// Capture the algorithm of the OLD hash for the audit log before
+	// we overwrite it (Wave 2 / task #84).
+	previousAlg := string(auth.DetectHashAlgorithm(s.config.Auth.DefaultPasswordHash))
+
+	// Hash the new password (Argon2id).
 	hash, err := auth.HashPassword(req.Password)
 	if err != nil {
 		sendJSONResponse(w, logger, http.StatusInternalServerError, map[string]string{
@@ -570,7 +579,6 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783, #815)
 	s.config.Lock()
 	s.config.Auth.DefaultPasswordHash = hash
-	username := s.config.Auth.DefaultUsername
 	s.config.Unlock() // Explicit unlock before Save() to prevent deadlock
 
 	// Create or update user in database if available
@@ -598,11 +606,52 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Security audit log: initial setup completed (fixes #697)
+	// Wave 2 / task #84: include previous_algorithm so password rotations
+	// are auditable across the bcrypt → argon2id migration.
 	logger.Info("Initial setup completed - admin password changed",
 		"client_ip", clientIP,
-		"event", "auth.setup.complete")
+		"event", "password_change",
+		"result", "accepted",
+		"previous_algorithm", previousAlg,
+		"setup", true)
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
 		"status": "success",
+	})
+}
+
+// respondPolicyRejection translates a PasswordPolicyResult into a
+// 400 response and emits a structured password_change audit log.
+// Used by both setup completion and recovery completion.
+func (s *Server) respondPolicyRejection(
+	w http.ResponseWriter,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+	clientIP, source string,
+	result auth.PasswordPolicyResult,
+) {
+	logger.Warn("Password change rejected by policy",
+		"client_ip", clientIP,
+		"event", "password_change",
+		"result", "rejected",
+		"reject_reason", string(result.Reason),
+		"source", source,
+		"score", result.Strength.Score,
+		"breach_count", result.BreachCount,
+		"detail", result.Message)
+
+	i18nKey := "errors.password.weak"
+	if result.Reason == auth.PasswordRejectBreached {
+		i18nKey = "errors.password.breached"
+	}
+
+	sendJSONResponse(w, logger, http.StatusBadRequest, map[string]any{
+		"error":        localizer.T(i18nKey),
+		"reason":       string(result.Reason),
+		"detail":       result.Message,
+		"score":        result.Strength.Score,
+		statusWarning:  result.Strength.Warning,
+		"suggestions":  result.Strength.Suggestions,
+		"breach_count": result.BreachCount,
 	})
 }

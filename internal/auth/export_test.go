@@ -1,8 +1,29 @@
 package auth
 
+import "os"
+
 // ExportRandomChar exports randomChar for testing.
 func ExportRandomChar(chars string) (byte, error) {
 	return randomChar(chars)
+}
+
+// SetHIBPEndpointForTest swaps the HIBP endpoint URL (used to point at
+// a [httptest.Server]) via the SEED_HIBP_ENDPOINT_TEST environment
+// variable. Returns a restore function the test should defer.
+//
+// We use the env-var seam rather than a package-level mutable variable
+// so that the production code path keeps no global state (satisfying
+// gochecknoglobals) while still letting tests redirect requests.
+func SetHIBPEndpointForTest(url string) func() {
+	orig, hadOrig := os.LookupEnv(hibpEnvEndpoint)
+	_ = os.Setenv(hibpEnvEndpoint, url)
+	return func() {
+		if hadOrig {
+			_ = os.Setenv(hibpEnvEndpoint, orig)
+			return
+		}
+		_ = os.Unsetenv(hibpEnvEndpoint)
+	}
 }
 
 // ExportRandomInt exports randomInt for testing.

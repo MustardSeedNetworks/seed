@@ -170,20 +170,24 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Token is valid - proceed with password reset
+	// Token is valid - proceed with password reset.
 
-	// Validate password strength
-	if err := auth.ValidatePasswordStrength(req.Password); err != nil {
-		logger.Warn("Recovery failed - weak password",
-			"client_ip", clientIP,
-			"event", "auth.recovery.weak_password")
-		sendJSONResponse(w, logger, http.StatusBadRequest, map[string]string{
-			"error": localizer.T("errors.password.weak"),
-		})
+	// Capture the OLD hash's algorithm before we overwrite, for audit.
+	previousAlg := string(auth.DetectHashAlgorithm(s.config.Auth.DefaultPasswordHash))
+
+	// Enforce full password policy: length+class, zxcvbn strength,
+	// HIBP breach corpus. (Wave 2 / task #86.)
+	policyResult, policyErr := auth.EnforcePasswordPolicy(
+		r.Context(),
+		req.Password,
+		[]string{s.config.Auth.DefaultUsername},
+	)
+	if policyErr != nil {
+		s.respondPolicyRejection(w, logger, localizer, clientIP, "recovery", policyResult)
 		return
 	}
 
-	// Hash the new password
+	// Hash the new password (Argon2id).
 	hash, err := auth.HashPassword(req.Password)
 	if err != nil {
 		logger.Error("Failed to hash password during recovery", "error", err)
@@ -207,11 +211,14 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 	// Reset rate limiter for this IP after successful recovery
 	s.loginRateLimiter().RecordAttempt(clientIP, true)
 
-	// Security audit log
+	// Security audit log (Wave 2 / task #84: includes previous_algorithm).
 	logger.Info("Password recovery completed successfully",
 		"client_ip", clientIP,
 		"username", username,
-		"event", "auth.recovery.success")
+		"event", "password_change",
+		"result", "accepted",
+		"previous_algorithm", previousAlg,
+		"source", "recovery")
 
 	sendJSONResponse(w, logger, http.StatusOK, RecoveryCompleteResponse{
 		Success: true,

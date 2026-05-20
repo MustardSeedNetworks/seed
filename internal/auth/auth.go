@@ -18,7 +18,6 @@ import (
 	"unicode"
 
 	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
 
 	"github.com/krisarmstrong/seed/internal/logging"
 )
@@ -275,10 +274,39 @@ func (m *Manager) authenticateWithUserStore(
 		return "", ErrInvalidCredentials
 	}
 
-	// Password comparison (bcrypt.CompareHashAndPassword is already constant-time)
-	if compareErr := bcrypt.CompareHashAndPassword([]byte(dbHash), []byte(password)); compareErr != nil {
+	// Password comparison handles both Argon2id and legacy bcrypt; bcrypt
+	// matches trigger transparent rehash + persist (Wave 2 / task #84).
+	matched, needsRehash, verifyErr := VerifyPassword(dbHash, password)
+	if verifyErr != nil {
+		logging.GetLogger().
+			ErrorContext(ctx, "Stored password hash has unsupported format",
+				"username", username, "error", verifyErr,
+				"event", "auth.password.unsupported_hash")
 		_ = userStore.RecordLoginFailure(ctx, username)
 		return "", ErrInvalidCredentials
+	}
+	if !matched {
+		_ = userStore.RecordLoginFailure(ctx, username)
+		return "", ErrInvalidCredentials
+	}
+
+	// Transparent migration: re-hash legacy bcrypt credentials with
+	// Argon2id and persist before issuing the token. Failure here is
+	// logged but does not block the login (the user has already
+	// successfully authenticated).
+	if needsRehash {
+		if rehashErr := m.rehashAndPersist(ctx, userStore, username, password); rehashErr != nil {
+			logging.GetLogger().
+				WarnContext(ctx, "Password rehash failed; login still permitted",
+					"username", username, "error", rehashErr,
+					"event", "auth.password.rehash_failed")
+		} else {
+			logging.GetLogger().
+				InfoContext(ctx, "Password migrated to argon2id",
+					"username", username,
+					"previous_algorithm", string(HashAlgorithmBcrypt),
+					"event", "auth.password.rehashed")
+		}
 	}
 
 	// Record successful login
@@ -288,6 +316,30 @@ func (m *Manager) authenticateWithUserStore(
 	}
 
 	return m.GenerateToken(ctx, username)
+}
+
+// rehashAndPersist generates a new Argon2id hash for the given password
+// and writes it via the UserStore. It is invoked transparently when a
+// legacy bcrypt hash matches at login time.
+func (m *Manager) rehashAndPersist(
+	ctx context.Context,
+	userStore UserStore,
+	username, password string,
+) error {
+	newHash, hashErr := HashPassword(password)
+	if hashErr != nil {
+		return fmt.Errorf("hash password: %w", hashErr)
+	}
+	if updateErr := userStore.UpdatePassword(ctx, username, newHash); updateErr != nil {
+		return fmt.Errorf("persist new hash: %w", updateErr)
+	}
+	// Keep the in-memory mirror in sync if this is the default user.
+	m.mu.Lock()
+	if m.username == username {
+		m.passwordHash = newHash
+	}
+	m.mu.Unlock()
+	return nil
 }
 
 // authenticateInMemory handles authentication via in-memory credentials (legacy/config-based).
@@ -301,15 +353,38 @@ func (m *Manager) authenticateInMemory(
 		[]byte(storedUsername),
 	) == 1
 
-	// Password comparison (bcrypt.CompareHashAndPassword is already constant-time)
-	passwordMatch := bcrypt.CompareHashAndPassword(
-		[]byte(storedPasswordHash),
-		[]byte(password),
-	) == nil
+	// Password comparison handles both Argon2id and legacy bcrypt; bcrypt
+	// matches trigger transparent rehash of the in-memory hash.
+	passwordMatch, needsRehash, verifyErr := VerifyPassword(storedPasswordHash, password)
+	if verifyErr != nil {
+		logging.GetLogger().
+			ErrorContext(ctx, "In-memory password hash has unsupported format",
+				"error", verifyErr,
+				"event", "auth.password.unsupported_hash")
+		return "", ErrInvalidCredentials
+	}
 
 	// Both checks must succeed - evaluated in constant time
 	if !usernameMatch || !passwordMatch {
 		return "", ErrInvalidCredentials
+	}
+
+	if needsRehash {
+		if newHash, hashErr := HashPassword(password); hashErr == nil {
+			m.mu.Lock()
+			m.passwordHash = newHash
+			m.mu.Unlock()
+			logging.GetLogger().
+				InfoContext(ctx, "In-memory password migrated to argon2id",
+					"username", username,
+					"previous_algorithm", string(HashAlgorithmBcrypt),
+					"event", "auth.password.rehashed")
+		} else {
+			logging.GetLogger().
+				WarnContext(ctx, "In-memory password rehash failed; login still permitted",
+					"error", hashErr,
+					"event", "auth.password.rehash_failed")
+		}
 	}
 
 	return m.GenerateToken(ctx, username)
@@ -468,18 +543,6 @@ func (m *Manager) RefreshAccessToken(ctx context.Context, refreshToken string) (
 
 	// Generate new access token with same username
 	return m.GenerateAccessToken(ctx, claims.Username)
-}
-
-// HashPassword creates a bcrypt hash of a password.
-// Uses cost factor of 12 for enhanced security (fixes #712).
-// This provides a good balance between security and performance.
-func HashPassword(password string) (string, error) {
-	const bcryptCost = 12 // Increased from DefaultCost (10) for better security
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate bcrypt hash: %w", err)
-	}
-	return string(hash), nil
 }
 
 // extractTokenFromSubprotocol extracts the JWT token from WebSocket subprotocol header.
@@ -835,8 +898,9 @@ func IsDefaultPasswordHash(hash string) bool {
 		return true
 	}
 
-	// Check default "seed" password
-	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte("seed")); err == nil {
+	// Check default "seed" password against both Argon2id and bcrypt
+	// formats (legacy installs still carry bcrypt hashes until migrated).
+	if matched, _, err := VerifyPassword(hash, "seed"); err == nil && matched {
 		return true
 	}
 

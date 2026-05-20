@@ -5,8 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"golang.org/x/crypto/bcrypt"
-
+	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/paths"
 )
@@ -48,13 +47,21 @@ func TestGeneratePasswordAndHashVerifiable(t *testing.T) {
 		t.Fatalf("generatePasswordAndHash failed: %v", err)
 	}
 
-	// Verify the password matches the hash using bcrypt
-	if compareErr := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); compareErr != nil {
+	// Verify the password matches the hash (Argon2id post-Wave 2).
+	matched, _, verifyErr := auth.VerifyPassword(hash, password)
+	if verifyErr != nil {
+		t.Errorf("VerifyPassword returned error: %v", verifyErr)
+	}
+	if !matched {
 		t.Error("Password should verify against its hash")
 	}
 
-	// Wrong password should not match
-	if compareErr := bcrypt.CompareHashAndPassword([]byte(hash), []byte("wrongpassword")); compareErr == nil {
+	// Wrong password should not match.
+	wrongMatched, _, wrongVerifyErr := auth.VerifyPassword(hash, "wrongpassword")
+	if wrongVerifyErr != nil {
+		t.Errorf("VerifyPassword on wrong password returned error: %v", wrongVerifyErr)
+	}
+	if wrongMatched {
 		t.Error("Wrong password should not verify against hash")
 	}
 }

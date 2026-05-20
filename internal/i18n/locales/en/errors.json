@@ -71,7 +71,8 @@
   "password": {
     "tooShort": "Password must be at least 8 characters",
     "mismatch": "Passwords do not match",
-    "weak": "Password does not meet strength requirements"
+    "weak": "Password does not meet strength requirements",
+    "breached": "This password has appeared in known data breaches. Choose a different one."
   },
   "subnet": {
     "alreadyExists": "Subnet already exists",
