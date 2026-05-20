@@ -807,6 +807,48 @@ func getMigrationDefs() []migrationDef {
 			);
 		`,
 		},
+		{
+			// Wave 3 (#85): TOTP MFA + WebAuthn passkeys.
+			//
+			// totp_secret holds the shared secret as base32 text. It is
+			// stored at rest in the SQLite database with file-system
+			// permissions; we deliberately do not encrypt it with the
+			// JWT-secret-derived key because the JWT secret in seed is
+			// regenerated on every restart unless explicitly configured
+			// (see auth.GenerateJWTSecret docstring), which would lock
+			// users out of their MFA on each restart. Operators who need
+			// at-rest encryption should rely on full-disk encryption or
+			// configure jwt_secret persistently and revisit this in a
+			// future hardening pass.
+			//
+			// totp_enabled gates whether login should require a TOTP
+			// code as a second factor. It is set to 1 only after the
+			// user has confirmed possession of the secret by submitting
+			// a valid code via /api/v1/auth/totp/verify.
+			Description: "Add TOTP MFA columns and webauthn_credentials table (#85)",
+			Up: `
+			ALTER TABLE users ADD COLUMN totp_secret TEXT;
+			ALTER TABLE users ADD COLUMN totp_enabled INTEGER DEFAULT 0;
+
+			CREATE TABLE IF NOT EXISTS webauthn_credentials (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				user_id INTEGER NOT NULL,
+				credential_id BLOB NOT NULL UNIQUE,
+				public_key BLOB NOT NULL,
+				sign_count INTEGER NOT NULL DEFAULT 0,
+				attestation_type TEXT,
+				transports TEXT,
+				aaguid BLOB,
+				created_at TEXT NOT NULL,
+				last_used_at TEXT,
+				FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_webauthn_user ON webauthn_credentials(user_id);
+			CREATE UNIQUE INDEX IF NOT EXISTS idx_webauthn_credential_id
+				ON webauthn_credentials(credential_id);
+		`,
+		},
 	}
 }
 

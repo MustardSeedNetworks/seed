@@ -9,6 +9,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/auth"
@@ -138,6 +139,17 @@ func NewServer(
 	services.Auth.SetupToken = NewSetupTokenManager()
 	services.Auth.Recovery = auth.NewRecoveryTokenManager(paths.Resolve(paths.ModeAuto).DataDir)
 	services.Auth.TrustedProxies = trustedProxies
+
+	// Wave 3 (#85): initialise the WebAuthn manager. The relying-party
+	// ID and origins are derived from the server config; failures here
+	// are non-fatal because the rest of the auth surface still works
+	// without passkeys.
+	if wan, wanErr := auth.NewWebAuthnManager(webAuthnConfigFromServer(cfg)); wanErr != nil {
+		logging.GetLogger().Warn("WebAuthn manager init failed; passkeys disabled",
+			"error", wanErr)
+	} else {
+		services.Auth.WebAuthn = wan
+	}
 
 	// Initialize rate limiters
 	services.RateLimit.Login = NewRateLimiter(DefaultRateLimitConfig())
@@ -334,6 +346,7 @@ func (s *Server) setupTokenManager() *SetupTokenManager       { return s.service
 func (s *Server) recoveryManager() *auth.RecoveryTokenManager { return s.services.Auth.Recovery }
 func (s *Server) oauthManager() *oauth.Manager                { return s.services.Auth.OAuth }
 func (s *Server) trustedProxies() *TrustedProxies             { return s.services.Auth.TrustedProxies }
+func (s *Server) webAuthnManager() *auth.WebAuthnManager      { return s.services.Auth.WebAuthn }
 func (s *Server) loginRateLimiter() *RateLimiter              { return s.services.RateLimit.Login }
 func (s *Server) endpointRateLimiter() *EndpointRateLimiter   { return s.services.RateLimit.Endpoint }
 func (s *Server) netManager() *netif.Manager                  { return s.services.Network.Manager }
@@ -361,3 +374,39 @@ func (s *Server) surveyManager() *survey.Manager           { return s.services.C
 func (s *Server) sseHub() *SSEHub                          { return s.services.RealTime.SSEHub }
 func (s *Server) logBroadcaster() *logging.LogBroadcaster  { return s.services.RealTime.LogBroadcaster }
 func (s *Server) db() *database.DB                         { return s.services.Database.DB }
+
+// webAuthnConfigFromServer derives the relying-party config for the
+// WebAuthn manager from the server config. The RPID is bound to the
+// configured ACME domain when present (production) and falls back to
+// the dev hostname otherwise (self-signed). Origins follow the same
+// scheme + port: HTTPS uses https:// and the configured port, HTTP
+// uses http://. Wave 3 (#85).
+func webAuthnConfigFromServer(cfg *config.Config) auth.WebAuthnConfig {
+	const (
+		devHost     = "localhost"
+		defaultPort = 8443
+		schemeHTTPS = "https"
+		schemeHTTP  = "http"
+	)
+	rpid := devHost
+	if cfg != nil && cfg.Server.ACME.Domain != "" {
+		rpid = cfg.Server.ACME.Domain
+	}
+	scheme := schemeHTTPS
+	if cfg != nil && !cfg.Server.HTTPS {
+		scheme = schemeHTTP
+	}
+	port := defaultPort
+	if cfg != nil && cfg.Server.Port > 0 {
+		port = cfg.Server.Port
+	}
+	origin := scheme + "://" + rpid
+	if port != 443 && port != 80 {
+		origin = origin + ":" + strconv.Itoa(port)
+	}
+	return auth.WebAuthnConfig{
+		RPID:          rpid,
+		RPDisplayName: "Seed",
+		RPOrigins:     []string{origin},
+	}
+}

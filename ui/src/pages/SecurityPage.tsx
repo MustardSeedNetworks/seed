@@ -1,5 +1,6 @@
 import { Shield } from 'lucide-react';
 import { GuestNetworkAuditCard } from '../components/cards/GuestNetworkAuditCard';
+import { MfaCard } from '../components/cards/MfaCard';
 import { layout } from '../styles/theme';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
 import { PageHeader } from '../ui/PageHeader';
@@ -15,6 +16,7 @@ export function SecurityPage() {
         iconColorClass="text-module-shell"
       />
       <div class={layout.grid.cards}>
+        <MfaCard />
         <GuestNetworkAuditCard />
       </div>
     </section>

@@ -230,6 +230,80 @@ func GenerateJWTSecret() string {
 	return base64.URLEncoding.EncodeToString(bytes)
 }
 
+// VerifyPasswordOnly checks the username/password pair without issuing
+// a JWT. It is the first half of a two-factor login flow: callers
+// check this, then probe TOTP enrolment, then either issue an
+// MFA-pending token or a full JWT.
+//
+// Side-effects are identical to Authenticate: success records a login
+// success on the UserStore; failure records a login failure. Wave 3
+// (#85).
+func (m *Manager) VerifyPasswordOnly(ctx context.Context, username, password string) error {
+	m.mu.RLock()
+	storedUsername := m.username
+	storedPasswordHash := m.passwordHash
+	userStore := m.userStore
+	m.mu.RUnlock()
+
+	if userStore != nil {
+		return m.verifyPasswordOnlyWithStore(ctx, userStore, username, password)
+	}
+
+	usernameMatch := subtle.ConstantTimeCompare(
+		[]byte(username), []byte(storedUsername),
+	) == 1
+	passwordMatch, needsRehash, verifyErr := VerifyPassword(storedPasswordHash, password)
+	if verifyErr != nil {
+		return ErrInvalidCredentials
+	}
+	if !usernameMatch || !passwordMatch {
+		return ErrInvalidCredentials
+	}
+	if needsRehash {
+		if newHash, hashErr := HashPassword(password); hashErr == nil {
+			m.mu.Lock()
+			m.passwordHash = newHash
+			m.mu.Unlock()
+		}
+	}
+	return nil
+}
+
+// verifyPasswordOnlyWithStore is the UserStore-backed branch of
+// VerifyPasswordOnly. Kept separate so the function-length limits stay
+// happy and the in-memory branch remains a single straight line.
+func (m *Manager) verifyPasswordOnlyWithStore(
+	ctx context.Context, userStore UserStore, username, password string,
+) error {
+	locked, lockErr := userStore.IsLocked(ctx, username)
+	if lockErr == nil && locked {
+		return ErrInvalidCredentials
+	}
+
+	dbHash, err := userStore.GetPasswordHash(ctx, username)
+	if err != nil {
+		_ = userStore.RecordLoginFailure(ctx, username)
+		return ErrInvalidCredentials
+	}
+	matched, needsRehash, verifyErr := VerifyPassword(dbHash, password)
+	if verifyErr != nil {
+		_ = userStore.RecordLoginFailure(ctx, username)
+		return ErrInvalidCredentials
+	}
+	if !matched {
+		_ = userStore.RecordLoginFailure(ctx, username)
+		return ErrInvalidCredentials
+	}
+	if needsRehash {
+		_ = m.rehashAndPersist(ctx, userStore, username, password)
+	}
+	if successErr := userStore.RecordLoginSuccess(ctx, username); successErr != nil {
+		logging.GetLogger().WarnContext(ctx,
+			"Failed to record login success", "username", username, "error", successErr)
+	}
+	return nil
+}
+
 // Authenticate validates credentials and returns a JWT token.
 // Uses constant-time comparison for username to prevent timing attacks (fixes #513).
 // If a UserStore is set, uses database for authentication; otherwise uses in-memory.
@@ -583,7 +657,13 @@ func shouldBypassAuth(path string) bool {
 	switch path {
 	case "/api/v1/auth/login", "/api/v1/auth/refresh",
 		"/api/v1/setup/status", "/api/v1/setup/complete",
-		"/api/v1/recovery/status", "/api/v1/recovery/complete", "/api/v1/recovery/instructions":
+		"/api/v1/recovery/status", "/api/v1/recovery/complete", "/api/v1/recovery/instructions",
+		// Wave 3 (#85): second-factor login + passkey ceremonies happen
+		// before the user has a real access token, so they bypass the
+		// JWT middleware.
+		"/api/v1/auth/login/totp",
+		"/api/v1/auth/webauthn/login/begin",
+		"/api/v1/auth/webauthn/login/finish":
 		return true
 	}
 	if strings.HasPrefix(path, "/api/v1/sso/") {

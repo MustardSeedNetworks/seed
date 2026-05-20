@@ -10,6 +10,15 @@
     "refreshNotFound": "Token de actualización no encontrado",
     "sessionExpired": "Sesión expirada. Por favor inicie sesión nuevamente."
   },
+  "mfa": {
+    "notEnrolled": "La autenticación de múltiples factores no está habilitada para esta cuenta",
+    "invalidCode": "Código de autenticación inválido o expirado",
+    "invalidToken": "Token de autenticación multifactor inválido o expirado",
+    "sessionExpired": "Sesión de autenticación multifactor expirada. Intente nuevamente.",
+    "registrationFailed": "Error al registrar la passkey",
+    "assertionFailed": "Verificación de passkey fallida",
+    "noCredentials": "No hay credenciales passkey registradas para esta cuenta"
+  },
   "network": {
     "connectionFailed": "Conexión fallida",
     "networkError": "Error de red",
