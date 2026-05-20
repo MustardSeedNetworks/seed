@@ -8,7 +8,12 @@ import { expect, test } from '@playwright/test';
  * - Login with valid credentials
  * - Login with invalid credentials shows error
  * - Logout clears session
+ *
+ * Opts out of the suite-wide authenticated storageState so each test
+ * starts from a clean unauthenticated context.
  */
+
+test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Authentication', () => {
   test.beforeEach(async ({ page }) => {

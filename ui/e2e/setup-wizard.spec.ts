@@ -10,7 +10,12 @@ import { expect, test } from '@playwright/test';
  * - Completion flow
  *
  * Note: These tests may skip if setup is already complete
+ *
+ * Opts out of the suite-wide authenticated storageState so the wizard
+ * detection runs against a clean unauthenticated context.
  */
+
+test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Setup Wizard', () => {
   test.beforeEach(async ({ page }) => {

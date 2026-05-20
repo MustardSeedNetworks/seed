@@ -14,7 +14,12 @@ import { expect, test } from '@playwright/test';
  *
  * These tests verify that authentication works correctly across all scenarios
  * and that sessions are properly managed throughout the application lifecycle.
+ *
+ * Opts out of the suite-wide authenticated storageState so each test
+ * starts from a clean unauthenticated context.
  */
+
+test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Complete Authentication Lifecycle', () => {
   test.beforeEach(async ({ page }) => {
