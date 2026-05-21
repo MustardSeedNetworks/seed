@@ -30,8 +30,10 @@
     "runAllTests": "Run All Tests",
     "signInWithGoogle": "Sign in with Google",
     "signInWithMicrosoft": "Sign in with Microsoft",
-    "signInWithGitHub": "Sign in with GitHub"
+    "signInWithGitHub": "Sign in with GitHub",
+    "copied": "Copied"
   },
+  "or": "or",
   "status": {
     "connected": "Connected",
     "disconnected": "Disconnected",

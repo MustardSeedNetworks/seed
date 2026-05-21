@@ -83,6 +83,7 @@ export function SetupWizard({
   setupToken,
 }: SetupWizardProps): React.JSX.Element {
   const { t } = useTranslation('setup');
+  const { t: tCommon } = useTranslation('common');
   // Default to custom password entry - more secure UX
   const [passwordMode, setPasswordMode] = useState<'generated' | 'custom'>('custom');
   const [password, setPassword] = useState('');
@@ -106,7 +107,9 @@ export function SetupWizard({
       })
       .catch((err: unknown) => {
         setSsoProviders([]);
-        logger.warn(LogComponents.SETUP, 'Failed to load SSO providers', err);
+        logger.warn(LogComponents.SETUP, 'Failed to load SSO providers', {
+          error: err instanceof Error ? err.message : String(err),
+        });
       });
   }, []);
 
@@ -341,7 +344,7 @@ export function SetupWizard({
                       </div>
                       {copied ? (
                         <p className={cn('caption text-status-success', spacing.margin.top.inline)}>
-                          {t('buttons.copied')}
+                          {tCommon('buttons.copied')}
                         </p>
                       ) : null}
                       <p className={cn('caption text-status-warning', spacing.margin.top.inline)}>
@@ -476,7 +479,7 @@ export function SetupWizard({
                 </div>
                 <div className="relative flex justify-center">
                   <span className="px-2 bg-surface-raised text-sm text-text-muted">
-                    {t('common:or')}
+                    {tCommon('or')}
                   </span>
                 </div>
               </div>
@@ -496,7 +499,7 @@ export function SetupWizard({
                       'font-medium hover:bg-status-info-dark focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50',
                     )}
                   >
-                    {t('common:buttons.signInWithGoogle')}
+                    {tCommon('buttons.signInWithGoogle')}
                   </button>
                 )}
                 {isProviderEnabled('microsoft') && (
@@ -513,7 +516,7 @@ export function SetupWizard({
                       'font-medium hover:bg-brand-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50',
                     )}
                   >
-                    {t('common:buttons.signInWithMicrosoft')}
+                    {tCommon('buttons.signInWithMicrosoft')}
                   </button>
                 )}
                 {isProviderEnabled('github') && (
@@ -530,7 +533,7 @@ export function SetupWizard({
                       'font-medium hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-surface-border focus:ring-offset-2 focus:ring-offset-surface-base border border-surface-border disabled:opacity-50',
                     )}
                   >
-                    {t('common:buttons.signInWithGitHub')}
+                    {tCommon('buttons.signInWithGitHub')}
                   </button>
                 )}
               </div>

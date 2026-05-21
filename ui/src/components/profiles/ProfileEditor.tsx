@@ -29,7 +29,7 @@ export function ProfileEditor({
 
   const [name, setName] = useState(profile?.name || '');
   const [description, setDescription] = useState(profile?.description || '');
-  const [isDefault, setIsDefault] = useState(profile?.is_default);
+  const [isDefault, setIsDefault] = useState(profile?.isDefault);
   const [notes, setNotes] = useState((profile?.config as { notes?: string })?.notes || '');
 
   const handleSubmit = useCallback(
@@ -38,7 +38,7 @@ export function ProfileEditor({
       await onSave({
         name,
         description,
-        is_default: isDefault,
+        isDefault: isDefault,
         config: { notes },
       });
     },
@@ -67,7 +67,7 @@ export function ProfileEditor({
         )}
       >
         {/* Header */}
-        <div className={cn(spacing.pad.md, 'border-b border-surface-border')}>
+        <div className={cn(spacing.pad.default, 'border-b border-surface-border')}>
           <h2 className="heading-2 text-text-primary">
             {isEditing ? t('profile.edit', 'Edit Profile') : t('profile.create', 'Create Profile')}
           </h2>
@@ -75,7 +75,7 @@ export function ProfileEditor({
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <div className={cn(spacing.pad.md, 'space-y-4')}>
+          <div className={cn(spacing.pad.default, 'space-y-4')}>
             {/* Name */}
             <div>
               <label
@@ -138,7 +138,7 @@ export function ProfileEditor({
               <textarea
                 id="profile-notes"
                 value={notes}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
                   setNotes(e.target.value)
                 }
                 rows={3}
@@ -170,7 +170,10 @@ export function ProfileEditor({
 
           {/* Footer */}
           <div
-            className={cn(spacing.pad.md, 'border-t border-surface-border flex justify-end gap-3')}
+            className={cn(
+              spacing.pad.default,
+              'border-t border-surface-border flex justify-end gap-3',
+            )}
           >
             <button
               type="button"
