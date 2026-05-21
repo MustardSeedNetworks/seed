@@ -39,7 +39,6 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
   // Always start streaming (live) by default
   const { stats, isStreaming, isLoading, error } = useLogs({
     maxLogs: 1000,
-    autoStart: true,
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -169,7 +168,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
           <CardRow
             label={t('logs.errorsLastHour', 'Errors (last hour)')}
             value={stats.errors_last_hour}
-            valueClassName={statusColor.text.error}
+            status={stats.errors_last_hour > 0 ? 'error' : 'success'}
           />
         </>
       )}

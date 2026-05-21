@@ -26,7 +26,7 @@ export function NetworkPage() {
           <>
             <NetworkCard
               data={cards.dhcp}
-              publicip={cards.publicip}
+              publicIp={cards.publicip}
               loading={loading}
               showPublicIp={displayOptions.showPublicIp}
             />

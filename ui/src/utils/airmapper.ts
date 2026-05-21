@@ -239,7 +239,7 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
       unitName: serialJson.unitName || 'Unknown Device',
       unitType: serialJson.unitType || 'Unknown',
       unitSerial: serialJson.unitSerial || '',
-      hasActiveData: serialJson.surveyActive1x1,
+      hasActiveData: serialJson.surveyActive1x1 ?? false,
       labels: serialJson.labels || [],
     };
 

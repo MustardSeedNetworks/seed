@@ -40,11 +40,11 @@ function getStreamingToggleHint(
   t: ReturnType<typeof useTranslation>['t'],
 ): string {
   return streaming
-    ? t(
+    ? (t(
         'logs.streamingHint',
         'Pause the live log stream; existing entries stay visible but no new entries are appended',
-      )
-    : t('logs.pausedHint', 'Resume streaming live log entries from the backend');
+      ) as string)
+    : (t('logs.pausedHint', 'Resume streaming live log entries from the backend') as string);
 }
 
 // Filter badge component

@@ -30,7 +30,7 @@ export function PathAnalysisPage() {
         {(!isWifi || cards.wifi) && (
           <PathDiscoveryCard
             gateway={cards.gateway?.gateway}
-            dnsServer={cards.dns?.servers?.[0]?.address}
+            dnsServer={cards.dns?.servers?.[0] ?? cards.dns?.server}
             onRegisterTraceHandler={registerTraceHopHandler}
           />
         )}

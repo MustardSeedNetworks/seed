@@ -86,7 +86,9 @@ export function useGuestNetworkAudit(): UseGuestNetworkAuditResult {
         });
       })
       .catch((err: unknown) => {
-        logger.warn(LogComponents.CONFIG, 'Failed to load guest-audit settings', err);
+        logger.warn(LogComponents.CONFIG, 'Failed to load guest-audit settings', {
+          error: err instanceof Error ? err.message : String(err),
+        });
       })
       .finally(() => setLoading(false));
   }, []);
