@@ -1,8 +1,14 @@
 import { mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { chromium, type FullConfig, request } from '@playwright/test';
 
 import { AUTH_STORAGE_STATE, TEST_CREDENTIALS } from './helpers/auth';
+
+// ESM equivalent of __dirname; Playwright executes this file as ESM so
+// the CommonJS globals are not available.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /**
  * One real login at suite start; every spec shares the resulting

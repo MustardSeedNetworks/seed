@@ -42,6 +42,17 @@ const (
 	Pin8 = 8
 )
 
+// RJ45 twisted-pair identifiers, expressed as the pin pair they
+// occupy in the 8P8C connector. These are stable across both T568A
+// and T568B wiring standards (the standards only differ in which
+// colour goes on which pin).
+const (
+	pair12 = "1-2"
+	pair36 = "3-6"
+	pair45 = "4-5"
+	pair78 = "7-8"
+)
+
 // MetersToFeetFactor is the conversion factor from meters to feet.
 // 1 meter = 3.28084 feet (exact definition: 1 foot = 0.3048 meters).
 const MetersToFeetFactor = 3.28084
@@ -140,14 +151,14 @@ func (t *Tester) GetLastResult() *TestResult {
 // T568A is primarily used in residential installations and crossover cables.
 func Get568APinout() []WirePinout {
 	return []WirePinout{
-		{Pin: Pin1, Color: "White/Green", Pair: "3-6"},
-		{Pin: Pin2, Color: "Green", Pair: "3-6"},
-		{Pin: Pin3, Color: "White/Orange", Pair: "1-2"},
-		{Pin: Pin4, Color: "Blue", Pair: "4-5"},
-		{Pin: Pin5, Color: "White/Blue", Pair: "4-5"},
-		{Pin: Pin6, Color: "Orange", Pair: "1-2"},
-		{Pin: Pin7, Color: "White/Brown", Pair: "7-8"},
-		{Pin: Pin8, Color: "Brown", Pair: "7-8"},
+		{Pin: Pin1, Color: "White/Green", Pair: pair36},
+		{Pin: Pin2, Color: "Green", Pair: pair36},
+		{Pin: Pin3, Color: "White/Orange", Pair: pair12},
+		{Pin: Pin4, Color: "Blue", Pair: pair45},
+		{Pin: Pin5, Color: "White/Blue", Pair: pair45},
+		{Pin: Pin6, Color: "Orange", Pair: pair12},
+		{Pin: Pin7, Color: "White/Brown", Pair: pair78},
+		{Pin: Pin8, Color: "Brown", Pair: pair78},
 	}
 }
 
@@ -155,14 +166,14 @@ func Get568APinout() []WirePinout {
 // T568B is the most common standard in commercial installations.
 func Get568BPinout() []WirePinout {
 	return []WirePinout{
-		{Pin: Pin1, Color: "White/Orange", Pair: "1-2"},
-		{Pin: Pin2, Color: "Orange", Pair: "1-2"},
-		{Pin: Pin3, Color: "White/Green", Pair: "3-6"},
-		{Pin: Pin4, Color: "Blue", Pair: "4-5"},
-		{Pin: Pin5, Color: "White/Blue", Pair: "4-5"},
-		{Pin: Pin6, Color: "Green", Pair: "3-6"},
-		{Pin: Pin7, Color: "White/Brown", Pair: "7-8"},
-		{Pin: Pin8, Color: "Brown", Pair: "7-8"},
+		{Pin: Pin1, Color: "White/Orange", Pair: pair12},
+		{Pin: Pin2, Color: "Orange", Pair: pair12},
+		{Pin: Pin3, Color: "White/Green", Pair: pair36},
+		{Pin: Pin4, Color: "Blue", Pair: pair45},
+		{Pin: Pin5, Color: "White/Blue", Pair: pair45},
+		{Pin: Pin6, Color: "Green", Pair: pair36},
+		{Pin: Pin7, Color: "White/Brown", Pair: pair78},
+		{Pin: Pin8, Color: "Brown", Pair: pair78},
 	}
 }
 

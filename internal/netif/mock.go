@@ -8,6 +8,11 @@ const (
 	mockMTULoopback  = 65536
 	mockSpeedGigabit = 1000000000 // 1 Gbps
 	mockSpeedWiFi    = 866000000  // 866 Mbps (WiFi 5 AC)
+
+	// mockEth0 is the canonical mock ethernet interface name used as
+	// the default in DefaultMockConfig and as a map key for the same
+	// InterfaceInfo entry.
+	mockEth0 = "eth0"
 )
 
 // MockManagerConfig contains configuration for creating a mock network manager.
@@ -22,10 +27,10 @@ type MockManagerConfig struct {
 // with a single ethernet interface for testing.
 func DefaultMockConfig() MockManagerConfig {
 	return MockManagerConfig{
-		CurrentInterface: "eth0",
+		CurrentInterface: mockEth0,
 		Interfaces: map[string]*InterfaceInfo{
-			"eth0": {
-				Name:         "eth0",
+			mockEth0: {
+				Name:         mockEth0,
 				FriendlyName: "Ethernet 0",
 				Description:  "Mock Ethernet Interface",
 				Type:         InterfaceTypeEthernet,
