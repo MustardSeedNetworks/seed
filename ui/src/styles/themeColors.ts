@@ -266,7 +266,7 @@ export const gauge = {
     return 'var(--color-status-success)';
   },
   // Tailwind class equivalents for non-SVG usage
-  class: {
+  className: {
     critical: 'text-status-error',
     warning: 'text-status-warning',
     caution: 'text-amber-500 dark:text-amber-400',

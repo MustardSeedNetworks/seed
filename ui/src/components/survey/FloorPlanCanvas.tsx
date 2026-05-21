@@ -414,12 +414,12 @@ export function FloorPlanCanvas({
   };
 
   return (
-    <div ref={containerRef} class="w-full">
+    <div ref={containerRef} className="w-full">
       <canvas
         ref={canvasRef}
         onClick={handleCanvasClick}
         onMouseMove={handleMouseMove}
-        class={cn(
+        className={cn(
           'border border-surface-border',
           radius.md,
           interactive || calibrationMode || apPlacementMode ? 'cursor-crosshair' : '',

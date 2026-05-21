@@ -37,11 +37,11 @@ export function SurveyViewHeader({
   const { t } = useTranslation('survey');
 
   return (
-    <div class="sticky top-0 bg-surface-raised border-b border-surface-border z-10">
-      <div class={cn('max-w-7xl mx-auto pad', layout.flex.between)}>
+    <div className="sticky top-0 bg-surface-raised border-b border-surface-border z-10">
+      <div className={cn('max-w-7xl mx-auto pad', layout.flex.between)}>
         <div>
-          <h1 class="heading-1">{survey.name}</h1>
-          <p class={cn('body-small', spacing.margin.top.tight)}>
+          <h1 className="heading-1">{survey.name}</h1>
+          <p className={cn('body-small', spacing.margin.top.tight)}>
             {(survey.surveyType ?? 'wifi').charAt(0).toUpperCase() +
               (survey.surveyType ?? 'wifi').slice(1)}{' '}
             {t('status.survey')} • {sampleCount} {t('status.samples')} •{' '}
@@ -49,7 +49,7 @@ export function SurveyViewHeader({
           </p>
         </div>
 
-        <div class={layout.inline.default}>
+        <div className={layout.inline.default}>
           {/* Status controls */}
           {survey.status === 'created' ? (
             <button
@@ -61,7 +61,7 @@ export function SurveyViewHeader({
               }}
               disabled={!(wifiStatus?.canScan && readyToStart)}
               title={getStartButtonTitle()}
-              class={cn(
+              className={cn(
                 button.size.md,
                 'bg-brand-primary text-text-inverse',
                 radius.md,
@@ -70,7 +70,7 @@ export function SurveyViewHeader({
                 'disabled:opacity-50 disabled:cursor-not-allowed',
               )}
             >
-              <Play class={iconTokens.size.sm} />
+              <Play className={iconTokens.size.sm} />
               {t('buttons.startSurvey')}
             </button>
           ) : null}
@@ -84,7 +84,7 @@ export function SurveyViewHeader({
                     /* Error handled in handleStatusChange */
                   });
                 }}
-                class={cn(
+                className={cn(
                   button.size.md,
                   'border border-surface-border',
                   radius.md,
@@ -92,7 +92,7 @@ export function SurveyViewHeader({
                   layout.inline.default,
                 )}
               >
-                <Pause class={iconTokens.size.sm} />
+                <Pause className={iconTokens.size.sm} />
                 {t('buttons.pause')}
               </button>
               <button
@@ -102,7 +102,7 @@ export function SurveyViewHeader({
                     /* Error handled in handleStatusChange */
                   });
                 }}
-                class={cn(
+                className={cn(
                   button.size.md,
                   'bg-status-success text-text-inverse',
                   radius.md,
@@ -110,7 +110,7 @@ export function SurveyViewHeader({
                   layout.inline.default,
                 )}
               >
-                <CheckCircle class={iconTokens.size.sm} />
+                <CheckCircle className={iconTokens.size.sm} />
                 {t('buttons.complete')}
               </button>
             </>
@@ -127,7 +127,7 @@ export function SurveyViewHeader({
                 }}
                 disabled={!(wifiStatus?.canScan && readyToStart)}
                 title={getStartButtonTitle()}
-                class={cn(
+                className={cn(
                   button.size.md,
                   'bg-brand-primary text-text-inverse',
                   radius.md,
@@ -136,7 +136,7 @@ export function SurveyViewHeader({
                   'disabled:opacity-50 disabled:cursor-not-allowed',
                 )}
               >
-                <Play class={iconTokens.size.sm} />
+                <Play className={iconTokens.size.sm} />
                 {t('buttons.resume')}
               </button>
               <button
@@ -146,7 +146,7 @@ export function SurveyViewHeader({
                     /* Error handled in handleStatusChange */
                   });
                 }}
-                class={cn(
+                className={cn(
                   button.size.md,
                   'bg-status-success text-text-inverse',
                   radius.md,
@@ -154,7 +154,7 @@ export function SurveyViewHeader({
                   layout.inline.default,
                 )}
               >
-                <CheckCircle class={iconTokens.size.sm} />
+                <CheckCircle className={iconTokens.size.sm} />
                 {t('buttons.complete')}
               </button>
             </>
@@ -163,7 +163,7 @@ export function SurveyViewHeader({
           <button
             type="button"
             onClick={onClose}
-            class={cn(
+            className={cn(
               button.size.md,
               'border border-surface-border',
               radius.md,
@@ -171,7 +171,7 @@ export function SurveyViewHeader({
               layout.inline.default,
             )}
           >
-            <X class={iconTokens.size.sm} />
+            <X className={iconTokens.size.sm} />
             {t('buttons.close')}
           </button>
         </div>

@@ -107,7 +107,7 @@ export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard
     return (
       <Card
         title={tr('gateway.title')}
-        icon={<Router class={iconTokens.size.md} />}
+        icon={<Router className={iconTokens.size.md} />}
         status="loading"
       >
         <CardValue value={tr('gateway.pinging')} size="lg" />
@@ -123,11 +123,11 @@ export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard
     return (
       <Card
         title={tr('gateway.title')}
-        icon={<Router class={iconTokens.size.md} />}
+        icon={<Router className={iconTokens.size.md} />}
         status="unknown"
       >
         <CardValue value={tr('gateway.noGateway')} size="md" />
-        <p class={cn('caption', spacing.margin.top.tight)}>{tr('gateway.unableToDetect')}</p>
+        <p className={cn('caption', spacing.margin.top.tight)}>{tr('gateway.unableToDetect')}</p>
       </Card>
     );
   }
@@ -149,19 +149,22 @@ export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard
   }
 
   return (
-    <Card title={tr('gateway.title')} icon={<Router class={iconTokens.size.md} />} status={status}>
-      <div class={layout.flex.between}>
+    <Card
+      title={tr('gateway.title')}
+      icon={<Router className={iconTokens.size.md} />}
+      status={status}
+    >
+      <div className={layout.flex.between}>
         <CardValue value={data.gateway} size="lg" />
         <StatusBadge status={data.reachable ? 'success' : 'error'} size="sm" />
       </div>
       <CardDivider />
-
       {/* Latency stats */}
-      <div class={cn('grid grid-cols-3', spacing.gap.compact, spacing.margin.bottom.inline)}>
-        <div class="text-center">
-          <p class="caption">{tr('gateway.min')}</p>
+      <div className={cn('grid grid-cols-3', spacing.gap.compact, spacing.margin.bottom.inline)}>
+        <div className="text-center">
+          <p className="caption">{tr('gateway.min')}</p>
           <p
-            class={cn(
+            className={cn(
               'body-small font-medium',
               data.minTime > 0 ? getLatencyClassName(data.minTime) : 'text-text-muted',
             )}
@@ -169,10 +172,10 @@ export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard
             {data.minTime > 0 ? formatTime(data.minTime) : '-'}
           </p>
         </div>
-        <div class="text-center">
-          <p class="caption">{tr('gateway.avg')}</p>
+        <div className="text-center">
+          <p className="caption">{tr('gateway.avg')}</p>
           <p
-            class={cn(
+            className={cn(
               'body-small font-medium',
               data.avgTime > 0 ? getLatencyClassName(data.avgTime) : 'text-text-muted',
             )}
@@ -180,10 +183,10 @@ export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard
             {data.avgTime > 0 ? formatTime(data.avgTime) : '-'}
           </p>
         </div>
-        <div class="text-center">
-          <p class="caption">{tr('gateway.max')}</p>
+        <div className="text-center">
+          <p className="caption">{tr('gateway.max')}</p>
           <p
-            class={cn(
+            className={cn(
               'body-small font-medium',
               data.maxTime > 0 ? getLatencyClassName(data.maxTime) : 'text-text-muted',
             )}
@@ -192,7 +195,6 @@ export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard
           </p>
         </div>
       </div>
-
       <CardRow
         label={tr('gateway.packets')}
         value={`${data.received}/${data.sent}`}
@@ -205,23 +207,24 @@ export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard
           status={data.lossPercent >= 50 ? 'error' : 'warning'}
         />
       )}
-
       {/* IPv6 Gateway Section */}
       {data.ipv6?.gateway ? (
         <>
           <CardDivider />
-          <p class={cn('caption', spacing.margin.bottom.tight, 'font-medium')}>
+          <p className={cn('caption', spacing.margin.bottom.tight, 'font-medium')}>
             {tr('gateway.ipv6Gateway')}
           </p>
           <CardValue value={data.ipv6.gateway} size="md" />
-          <p class={cn('caption', spacing.margin.bottom.inline)}>
+          <p className={cn('caption', spacing.margin.bottom.inline)}>
             {data.ipv6.reachable ? tr('gateway.reachable') : tr('gateway.unreachable')}
           </p>
-          <div class={cn('grid grid-cols-3', spacing.gap.compact, spacing.margin.bottom.inline)}>
-            <div class="text-center">
-              <p class="caption">{tr('gateway.min')}</p>
+          <div
+            className={cn('grid grid-cols-3', spacing.gap.compact, spacing.margin.bottom.inline)}
+          >
+            <div className="text-center">
+              <p className="caption">{tr('gateway.min')}</p>
               <p
-                class={cn(
+                className={cn(
                   'body-small font-medium',
                   data.ipv6.minTime > 0
                     ? getLatencyClassName(data.ipv6.minTime)
@@ -231,10 +234,10 @@ export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard
                 {data.ipv6.minTime > 0 ? formatTime(data.ipv6.minTime) : '-'}
               </p>
             </div>
-            <div class="text-center">
-              <p class="caption">{tr('gateway.avg')}</p>
+            <div className="text-center">
+              <p className="caption">{tr('gateway.avg')}</p>
               <p
-                class={cn(
+                className={cn(
                   'body-small font-medium',
                   data.ipv6.avgTime > 0
                     ? getLatencyClassName(data.ipv6.avgTime)
@@ -244,10 +247,10 @@ export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard
                 {data.ipv6.avgTime > 0 ? formatTime(data.ipv6.avgTime) : '-'}
               </p>
             </div>
-            <div class="text-center">
-              <p class="caption">{tr('gateway.max')}</p>
+            <div className="text-center">
+              <p className="caption">{tr('gateway.max')}</p>
               <p
-                class={cn(
+                className={cn(
                   'body-small font-medium',
                   data.ipv6.maxTime > 0
                     ? getLatencyClassName(data.ipv6.maxTime)

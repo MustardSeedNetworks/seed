@@ -42,7 +42,7 @@ const meta: Meta<typeof CollapsibleSection> = {
   },
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="w-[400px]">
+      <div className="w-[400px]">
         <StoryComponent />
       </div>
     ),
@@ -58,15 +58,17 @@ export const Default: Story = {
     title: 'Advanced Options',
     defaultOpen: false,
     children: (
-      <div class="stack-sm">
-        <p class="body-small text-text-muted">Configure advanced settings for network discovery.</p>
-        <label class={cn('flex items-center', spacing.gap.compact)}>
-          <input type="checkbox" class="w-4 h-4" />
-          <span class="body-small">Enable deep scanning</span>
+      <div className="stack-sm">
+        <p className="body-small text-text-muted">
+          Configure advanced settings for network discovery.
+        </p>
+        <label className={cn('flex items-center', spacing.gap.compact)}>
+          <input type="checkbox" className="w-4 h-4" />
+          <span className="body-small">Enable deep scanning</span>
         </label>
-        <label class={cn('flex items-center', spacing.gap.compact)}>
-          <input type="checkbox" class="w-4 h-4" />
-          <span class="body-small">Include SNMP queries</span>
+        <label className={cn('flex items-center', spacing.gap.compact)}>
+          <input type="checkbox" className="w-4 h-4" />
+          <span className="body-small">Include SNMP queries</span>
         </label>
       </div>
     ),
@@ -79,8 +81,8 @@ export const DefaultOpen: Story = {
     title: 'Settings',
     defaultOpen: true,
     children: (
-      <div class="stack-sm">
-        <p class="body-small text-text-muted">These settings are shown by default.</p>
+      <div className="stack-sm">
+        <p className="body-small text-text-muted">These settings are shown by default.</p>
       </div>
     ),
   },
@@ -94,18 +96,18 @@ export const Compact: Story = {
     count: 3,
     defaultOpen: true,
     children: (
-      <div class="stack-xs">
-        <div class="flex justify-between body-small">
+      <div className="stack-xs">
+        <div className="flex justify-between body-small">
           <span>8.8.8.8</span>
-          <span class={statusColor.text.success}>12ms</span>
+          <span className={statusColor.text.success}>12ms</span>
         </div>
-        <div class="flex justify-between body-small">
+        <div className="flex justify-between body-small">
           <span>1.1.1.1</span>
-          <span class={statusColor.text.success}>8ms</span>
+          <span className={statusColor.text.success}>8ms</span>
         </div>
-        <div class="flex justify-between body-small">
+        <div className="flex justify-between body-small">
           <span>192.168.1.1</span>
-          <span class={statusColor.text.warning}>45ms</span>
+          <span className={statusColor.text.warning}>45ms</span>
         </div>
       </div>
     ),
@@ -120,14 +122,14 @@ export const WithStatus: Story = {
     count: 2,
     defaultOpen: true,
     children: (
-      <div class="stack-sm">
-        <div class="flex justify-between body-small">
+      <div className="stack-sm">
+        <div className="flex justify-between body-small">
           <span>Primary: 8.8.8.8</span>
-          <span class={statusColor.text.success}>Online</span>
+          <span className={statusColor.text.success}>Online</span>
         </div>
-        <div class="flex justify-between body-small">
+        <div className="flex justify-between body-small">
           <span>Secondary: 8.8.4.4</span>
-          <span class={statusColor.text.success}>Online</span>
+          <span className={statusColor.text.success}>Online</span>
         </div>
       </div>
     ),
@@ -142,18 +144,18 @@ export const WithWarningStatus: Story = {
     count: 3,
     defaultOpen: true,
     children: (
-      <div class="stack-sm">
-        <div class="flex justify-between body-small">
+      <div className="stack-sm">
+        <div className="flex justify-between body-small">
           <span>eth0</span>
-          <span class={statusColor.text.success}>Connected</span>
+          <span className={statusColor.text.success}>Connected</span>
         </div>
-        <div class="flex justify-between body-small">
+        <div className="flex justify-between body-small">
           <span>wlan0</span>
-          <span class={statusColor.text.warning}>Weak Signal</span>
+          <span className={statusColor.text.warning}>Weak Signal</span>
         </div>
-        <div class="flex justify-between body-small">
+        <div className="flex justify-between body-small">
           <span>eth1</span>
-          <span class="text-text-muted">Disconnected</span>
+          <span className="text-text-muted">Disconnected</span>
         </div>
       </div>
     ),
@@ -164,15 +166,15 @@ export const WithWarningStatus: Story = {
 export const CustomTitle: Story = {
   args: {
     title: (
-      <div class={cn('flex items-center', spacing.gap.compact)}>
-        <Settings class="w-4 h-4" />
+      <div className={cn('flex items-center', spacing.gap.compact)}>
+        <Settings className="w-4 h-4" />
         <span>Configuration</span>
       </div>
     ),
     defaultOpen: true,
     children: (
-      <div class="stack-sm">
-        <p class="body-small text-text-muted">Custom title with icon support.</p>
+      <div className="stack-sm">
+        <p className="body-small text-text-muted">Custom title with icon support.</p>
       </div>
     ),
   },
@@ -181,23 +183,23 @@ export const CustomTitle: Story = {
 // Multiple sections example
 export const MultipleSections: Story = {
   render: () => (
-    <div class="stack">
+    <div className="stack">
       <CollapsibleSection title="Network Settings" status="success" defaultOpen={true}>
-        <div class="stack-sm">
-          <p class="body-small">Interface: eth0</p>
-          <p class="body-small">IP: 192.168.1.100</p>
+        <div className="stack-sm">
+          <p className="body-small">Interface: eth0</p>
+          <p className="body-small">IP: 192.168.1.100</p>
         </div>
       </CollapsibleSection>
       <CollapsibleSection title="DNS Configuration" status="success">
-        <div class="stack-sm">
-          <p class="body-small">Primary: 8.8.8.8</p>
-          <p class="body-small">Secondary: 8.8.4.4</p>
+        <div className="stack-sm">
+          <p className="body-small">Primary: 8.8.8.8</p>
+          <p className="body-small">Secondary: 8.8.4.4</p>
         </div>
       </CollapsibleSection>
       <CollapsibleSection title="WiFi Settings" status="warning">
-        <div class="stack-sm">
-          <p class="body-small">SSID: Office-5G</p>
-          <p class="body-small">Signal: -72 dBm</p>
+        <div className="stack-sm">
+          <p className="body-small">SSID: Office-5G</p>
+          <p className="body-small">Signal: -72 dBm</p>
         </div>
       </CollapsibleSection>
     </div>

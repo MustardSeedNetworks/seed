@@ -23,15 +23,16 @@ interface AboutSectionProps {
 function _aboutSection({ version }: AboutSectionProps): React.JSX.Element {
   const { t } = useTranslation('help');
   return (
-    <div class="section-gap max-w-3xl">
+    <div className="section-gap max-w-3xl">
       <div>
-        <h3 class={cn('heading-2', spacing.margin.bottom.heading)}>{t('content.about.welcome')}</h3>
-        <p class={cn('body leading-relaxed', spacing.margin.bottom.content)}>
+        <h3 className={cn('heading-2', spacing.margin.bottom.heading)}>
+          {t('content.about.welcome')}
+        </h3>
+        <p className={cn('body leading-relaxed', spacing.margin.bottom.content)}>
           {t('content.about.description')}
         </p>
       </div>
-
-      <div class={cn('grid md:grid-cols-2', spacing.gap.comfortable)}>
+      <div className={cn('grid md:grid-cols-2', spacing.gap.comfortable)}>
         <featureCard
           title={t('content.about.features.realTimeMonitoring.title')}
           description={t('content.about.features.realTimeMonitoring.description')}
@@ -49,38 +50,36 @@ function _aboutSection({ version }: AboutSectionProps): React.JSX.Element {
           description={t('content.about.features.cableDiagnostics.description')}
         />
       </div>
-
       <div
-        class={cn(
+        className={cn(
           'border-l-4 border-brand-primary bg-brand-primary/5',
           spacing.pad.default,
           radius.default,
         )}
       >
-        <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
+        <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
           {t('content.about.licensing.title', 'Commercial Software')}
         </h4>
-        <p class="body-small text-text-secondary">
+        <p className="body-small text-text-secondary">
           {t(
             'content.about.licensing.description',
             'SEED is commercial software developed by Mustard Seed Networks. All rights reserved. Unauthorized distribution or modification is prohibited.',
           )}
         </p>
       </div>
-
       <div>
-        <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.heading)}>
+        <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.heading)}>
           {t('content.about.versionInfo.title')}
         </h4>
-        <dl class="grid grid-cols-2 gap-x-4 gap-y-2 body-small">
-          <dt class="text-text-muted">{t('content.about.versionInfo.currentVersion')}</dt>
-          <dd class="font-mono text-text-primary">{version}</dd>
-          <dt class="text-text-muted">{t('content.about.versionInfo.backend')}</dt>
-          <dd class="text-text-primary">Go 1.25.5+</dd>
-          <dt class="text-text-muted">{t('content.about.versionInfo.frontend')}</dt>
-          <dd class="text-text-primary">React 19.2 + TypeScript</dd>
-          <dt class="text-text-muted">{t('content.about.versionInfo.runtime', 'Runtime')}</dt>
-          <dd class="text-text-primary">Node.js 25.2</dd>
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 body-small">
+          <dt className="text-text-muted">{t('content.about.versionInfo.currentVersion')}</dt>
+          <dd className="font-mono text-text-primary">{version}</dd>
+          <dt className="text-text-muted">{t('content.about.versionInfo.backend')}</dt>
+          <dd className="text-text-primary">Go 1.25.5+</dd>
+          <dt className="text-text-muted">{t('content.about.versionInfo.frontend')}</dt>
+          <dd className="text-text-primary">React 19.2 + TypeScript</dd>
+          <dt className="text-text-muted">{t('content.about.versionInfo.runtime', 'Runtime')}</dt>
+          <dd className="text-text-primary">Node.js 25.2</dd>
         </dl>
       </div>
     </div>
@@ -93,12 +92,11 @@ function _gettingStartedSection(): React.JSX.Element {
     returnObjects: true,
   }) as string[];
   return (
-    <div class="section-gap max-w-3xl">
-      <h3 class={cn('heading-2', spacing.margin.bottom.heading)}>
+    <div className="section-gap max-w-3xl">
+      <h3 className={cn('heading-2', spacing.margin.bottom.heading)}>
         {t('content.gettingStarted.title')}
       </h3>
-
-      <div class="stack-lg">
+      <div className="stack-lg">
         <stepCard
           number={1}
           title={t('content.gettingStarted.steps.dashboard.title')}
@@ -125,9 +123,8 @@ function _gettingStartedSection(): React.JSX.Element {
           description={t('content.gettingStarted.steps.exploreCards.description')}
         />
       </div>
-
       <div
-        class={cn(
+        className={cn(
           'bg-surface-hover border border-surface-border',
           radius.default,
           spacing.pad.default,
@@ -135,17 +132,17 @@ function _gettingStartedSection(): React.JSX.Element {
         )}
       >
         <h4
-          class={cn(
+          className={cn(
             'font-semibold text-text-primary',
             spacing.margin.bottom.inline,
             'flex items-center',
             spacing.gap.compact,
           )}
         >
-          <span class={statusColor.text.info}>💡</span>
+          <span className={statusColor.text.info}>💡</span>
           {t('content.gettingStarted.proTips.title')}
         </h4>
-        <ul class={cn('body-small stack-sm', spacing.margin.left.spacious, 'list-disc')}>
+        <ul className={cn('body-small stack-sm', spacing.margin.left.spacious, 'list-disc')}>
           {tips.map((tip) => (
             <li key={tip}>{tip}</li>
           ))}
@@ -159,7 +156,7 @@ function _linkStatusSection(): React.JSX.Element {
   const { t } = useTranslation('help');
   return (
     <helpContentSection title={t('sections.link')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.linkStatus.description')}
       </p>
       <helpTermList
@@ -194,7 +191,7 @@ function _cableTestSection(): React.JSX.Element {
   const { t } = useTranslation('help');
   return (
     <helpContentSection title={t('sections.cable')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.cableTest.description')}
       </p>
       <helpTermList
@@ -218,14 +215,14 @@ function _cableTestSection(): React.JSX.Element {
         ]}
       />
       <div
-        class={cn(
+        className={cn(
           spacing.margin.top.content,
           'bg-status-warning/10 border border-status-warning/20',
           radius.default,
           spacing.pad.sm,
         )}
       >
-        <p class="caption text-status-warning">
+        <p className="caption text-status-warning">
           <strong>{t('common:labels.note', 'Note')}:</strong> {t('content.cableTest.note')}
         </p>
       </div>
@@ -237,7 +234,7 @@ function _wiFiStatusSection(): React.JSX.Element {
   const { t } = useTranslation('help');
   return (
     <helpContentSection title={t('sections.wifi')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.wifiStatus.description')}
       </p>
       <helpTermList
@@ -281,7 +278,7 @@ function _networkSection(): React.JSX.Element {
   const { t } = useTranslation('help');
   return (
     <helpContentSection title={t('sections.network')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.networkDhcp.description')}
       </p>
       <helpTermList
@@ -317,7 +314,7 @@ function _gatewaySection(): React.JSX.Element {
   const { t } = useTranslation('help');
   return (
     <helpContentSection title={t('sections.gateway')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.gatewayHelp.description')}
       </p>
       <helpTermList
@@ -352,7 +349,7 @@ function _dnsSection(): React.JSX.Element {
   const { t } = useTranslation('help');
   return (
     <helpContentSection title={t('sections.dns')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.dnsTests.description')}
       </p>
       <helpTermList
@@ -383,7 +380,7 @@ function _performanceSection(): React.JSX.Element {
   const { t } = useTranslation('help');
   return (
     <helpContentSection title={t('sections.performance')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.performanceTests.description')}
       </p>
       <helpTermList
@@ -425,7 +422,7 @@ function _discoverySection(): React.JSX.Element {
   const { t } = useTranslation('help');
   return (
     <helpContentSection title={t('sections.discovery')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.networkDiscovery.description')}
       </p>
       <helpTermList

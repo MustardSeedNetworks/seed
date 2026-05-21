@@ -67,7 +67,7 @@ interface SliderProps {
   /** Disable slider interaction */
   disabled?: boolean;
   /** Additional CSS classes */
-  class?: string;
+  className?: string;
 }
 
 /**
@@ -88,7 +88,7 @@ function SliderComponent({
   rightLabel,
   formatValue,
   disabled = false,
-  class: className,
+  className,
 }: SliderProps): React.JSX.Element {
   const sliderRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -148,31 +148,30 @@ function SliderComponent({
   );
 
   return (
-    <div class={cn('w-full', className)}>
+    <div className={cn('w-full', className)}>
       {/* Label and current value */}
       {label ? (
-        <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
           <label
-            for={`slider-${label.replace(/\s+/g, '-').toLowerCase()}`}
-            class="label text-text-primary"
+            htmlFor={`slider-${label.replace(/\s+/g, '-').toLowerCase()}`}
+            className="label text-text-primary"
           >
             {label}
           </label>
           <span
-            class="body-small font-medium text-brand-primary font-mono tabular-nums"
+            className="body-small font-medium text-brand-primary font-mono tabular-nums"
             aria-live="polite"
           >
             {displayValue}
           </span>
         </div>
       ) : null}
-
       {/* Slider container with track and thumb */}
-      <div class={spacing.margin.bottom.inline}>
-        <div class="relative">
+      <div className={spacing.margin.bottom.inline}>
+        <div className="relative">
           {/* Background track */}
           <div
-            class={cn(
+            className={cn(
               'absolute inset-0 h-2 top-1/2 -translate-y-1/2',
               radius.full,
               'bg-surface-hover',
@@ -182,7 +181,7 @@ function SliderComponent({
 
           {/* Filled portion (progress) */}
           <div
-            class={cn(
+            className={cn(
               'absolute h-2 top-1/2 -translate-y-1/2',
               radius.full,
               'bg-brand-primary transition-all',
@@ -209,7 +208,7 @@ function SliderComponent({
             onTouchStart={(): void => setIsDragging(true)}
             onTouchEnd={(): void => setIsDragging(false)}
             disabled={disabled}
-            class={cn(
+            className={cn(
               'relative w-full h-2 appearance-none bg-transparent cursor-pointer',
               'focus:outline-none',
               // Thumb styling - webkit browsers
@@ -265,10 +264,9 @@ function SliderComponent({
           />
         </div>
       </div>
-
       {/* End labels (e.g., "Slower ◄────► Faster") */}
       {leftLabel || rightLabel ? (
-        <div class={cn(layout.flex.between, 'caption text-text-muted')}>
+        <div className={cn(layout.flex.between, 'caption text-text-muted')}>
           <span>{leftLabel || ''}</span>
           <span>{rightLabel || ''}</span>
         </div>

@@ -110,25 +110,25 @@ export class ErrorBoundary extends Component<Props, State> {
         <Translation ns="common">
           {(t: TFunction): JSX.Element => (
             <div
-              class={cn(
+              className={cn(
                 'min-h-screen bg-surface-base flex items-center justify-center',
                 spacing.pad.default,
               )}
             >
-              <div class="w-full max-w-md text-center">
-                <div class={cn('text-4xl', spacing.margin.bottom.content)}>
-                  <span class={statusColor.text.error}>!</span>
+              <div className="w-full max-w-md text-center">
+                <div className={cn('text-4xl', spacing.margin.bottom.content)}>
+                  <span className={statusColor.text.error}>!</span>
                 </div>
-                <h1 class={cn('heading-2', spacing.margin.bottom.inline)}>
+                <h1 className={cn('heading-2', spacing.margin.bottom.inline)}>
                   {t('errorBoundary.title')}
                 </h1>
-                <p class={cn('body-small', spacing.margin.bottom.content)}>
+                <p className={cn('body-small', spacing.margin.bottom.content)}>
                   {this.state.error?.message || t('errorBoundary.defaultMessage')}
                 </p>
                 <button
                   type="button"
                   onClick={this.handleRetry}
-                  class={cn(
+                  className={cn(
                     button.size.md,
                     'bg-brand-primary text-text-inverse',
                     radius.md,

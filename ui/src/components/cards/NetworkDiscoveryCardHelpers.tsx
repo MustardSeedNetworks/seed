@@ -136,17 +136,17 @@ export function subnetList({
   }, [subnets, fallbackSubnet]);
 
   if (allSubnets.length === 0) {
-    return <span class="font-mono">{unknownLabel}</span>;
+    return <span className="font-mono">{unknownLabel}</span>;
   }
 
   // Single subnet - simple display
   if (allSubnets.length === 1) {
-    return <span class="font-mono">{allSubnets[0]}</span>;
+    return <span className="font-mono">{allSubnets[0]}</span>;
   }
 
   // <=5 subnets - inline display
   if (allSubnets.length <= 5) {
-    return <span class="font-mono">{allSubnets.join(', ')}</span>;
+    return <span className="font-mono">{allSubnets.join(', ')}</span>;
   }
 
   // >5 subnets - collapsible display
@@ -155,27 +155,27 @@ export function subnetList({
       <button
         type="button"
         onClick={(): void => setExpanded(true)}
-        class="font-mono text-text-muted hover:text-text-primary flex items-center gap-1"
+        className="font-mono text-text-muted hover:text-text-primary flex items-center gap-1"
       >
         <span>{allSubnets.length} subnets</span>
-        <ChevronDown class={iconTokens.size.xs} />
+        <ChevronDown className={iconTokens.size.xs} />
       </button>
     );
   }
 
   return (
-    <div class="flex flex-col gap-1">
+    <div className="flex flex-col gap-1">
       <button
         type="button"
         onClick={(): void => setExpanded(false)}
-        class="font-mono text-text-muted hover:text-text-primary flex items-center gap-1"
+        className="font-mono text-text-muted hover:text-text-primary flex items-center gap-1"
       >
         <span>{allSubnets.length} subnets</span>
-        <ChevronUp class={iconTokens.size.xs} />
+        <ChevronUp className={iconTokens.size.xs} />
       </button>
-      <div class="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1">
         {allSubnets.map((subnet) => (
-          <span key={subnet} class="font-mono text-xs">
+          <span key={subnet} className="font-mono text-xs">
             {subnet}
           </span>
         ))}
@@ -283,7 +283,7 @@ export function discoverySummary({
   // Show pipeline progress when running
   if (isPipelineRunning && pipelineStatus) {
     return (
-      <div class="stack-sm">
+      <div className="stack-sm">
         <PipelineProgress status={pipelineStatus} onCancel={onCancelPipeline} />
       </div>
     );
@@ -331,30 +331,29 @@ export function discoverySummary({
   ].filter((s) => s.count > 0);
 
   return (
-    <div class="stack-sm">
+    <div className="stack-sm">
       {/* Status row */}
-      <div class="flex items-center justify-between body-small">
-        <div class={cn('flex items-center', spacing.gap.compact)}>
+      <div className="flex items-center justify-between body-small">
+        <div className={cn('flex items-center', spacing.gap.compact)}>
           {status.scanning ? (
             <>
-              <RefreshCw class={cn(iconTokens.size.sm, 'text-status-info animate-spin')} />
-              <span class="text-status-info font-medium">{t('discovery.scanning')}</span>
+              <RefreshCw className={cn(iconTokens.size.sm, 'text-status-info animate-spin')} />
+              <span className="text-status-info font-medium">{t('discovery.scanning')}</span>
             </>
           ) : (
             <>
-              <CheckCircle class={cn(iconTokens.size.sm, statusColor.text.success)} />
-              <span class="text-status-success font-medium">{t('discovery.complete')}</span>
+              <CheckCircle className={cn(iconTokens.size.sm, statusColor.text.success)} />
+              <span className="text-status-success font-medium">{t('discovery.complete')}</span>
             </>
           )}
         </div>
-        <div class={cn('flex items-center', spacing.inline.sm, 'text-text-muted')}>
-          <Clock class={iconTokens.size.sm} />
-          <span class="caption">{formatLastSeen(status.lastScan, t)}</span>
+        <div className={cn('flex items-center', spacing.inline.sm, 'text-text-muted')}>
+          <Clock className={iconTokens.size.sm} />
+          <span className="caption">{formatLastSeen(status.lastScan, t)}</span>
         </div>
       </div>
-
       {/* Simplified network info row - I3: Uses subnetList for multi-subnet display */}
-      <div class="flex items-center justify-between caption text-text-muted">
+      <div className="flex items-center justify-between caption text-text-muted">
         <subnetList
           subnets={status.subnets}
           fallbackSubnet={status.subnet}
@@ -366,11 +365,10 @@ export function discoverySummary({
             : t('discovery.devicesFound', { count: deviceCount })}
         </span>
       </div>
-
       {/* Category stats row */}
       {stats.length > 0 && (
         <div
-          class={cn(
+          className={cn(
             'flex items-center',
             spacing.gap.default,
             'flex-wrap',
@@ -380,11 +378,11 @@ export function discoverySummary({
           {stats.map(({ icon: ICON, label, count, color }) => (
             <div
               key={label}
-              class={cn('flex items-center', spacing.gap.tight)}
+              className={cn('flex items-center', spacing.gap.tight)}
               title={`${count} ${label}`}
             >
-              <ICON class={cn(iconTokens.size.sm, color)} />
-              <span class="caption text-text-secondary">{count}</span>
+              <ICON className={cn(iconTokens.size.sm, color)} />
+              <span className="caption text-text-secondary">{count}</span>
             </div>
           ))}
         </div>

@@ -22,29 +22,43 @@ function _troubleshootingCategory({
   issues: TroubleshootingIssue[];
 }): React.JSX.Element {
   return (
-    <div class={cn(spacing.margin.top.section)}>
-      <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>{title}</h4>
-      <div class="stack-lg">
+    <div className={cn(spacing.margin.top.section)}>
+      <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
+        {title}
+      </h4>
+      <div className="stack-lg">
         {issues.map((issue) => (
           <div
             key={issue.symptom}
-            class={cn('border border-surface-border', radius.default, spacing.pad.default)}
+            className={cn('border border-surface-border', radius.default, spacing.pad.default)}
           >
-            <h5 class={cn('font-semibold text-status-warning', spacing.margin.bottom.inline)}>
+            <h5 className={cn('font-semibold text-status-warning', spacing.margin.bottom.inline)}>
               {issue.symptom}
             </h5>
-            <div class="grid md:grid-cols-2 gap-4 body-small">
+            <div className="grid md:grid-cols-2 gap-4 body-small">
               <div>
-                <p class="font-semibold text-text-primary mb-1">Possible Causes:</p>
-                <ul class={cn('text-text-secondary', spacing.margin.left.comfortable, 'list-disc')}>
+                <p className="font-semibold text-text-primary mb-1">Possible Causes:</p>
+                <ul
+                  className={cn(
+                    'text-text-secondary',
+                    spacing.margin.left.comfortable,
+                    'list-disc',
+                  )}
+                >
                   {issue.causes.map((cause) => (
                     <li key={cause}>{cause}</li>
                   ))}
                 </ul>
               </div>
               <div>
-                <p class="font-semibold text-text-primary mb-1">Solutions:</p>
-                <ul class={cn('text-text-secondary', spacing.margin.left.comfortable, 'list-disc')}>
+                <p className="font-semibold text-text-primary mb-1">Solutions:</p>
+                <ul
+                  className={cn(
+                    'text-text-secondary',
+                    spacing.margin.left.comfortable,
+                    'list-disc',
+                  )}
+                >
                   {issue.solutions.map((solution) => (
                     <li key={solution}>{solution}</li>
                   ))}
@@ -71,10 +85,16 @@ function _featureCard({
 }): React.JSX.Element {
   return (
     <div
-      class={cn('bg-surface-hover border border-surface-border', radius.lg, spacing.pad.default)}
+      className={cn(
+        'bg-surface-hover border border-surface-border',
+        radius.lg,
+        spacing.pad.default,
+      )}
     >
-      <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>{title}</h4>
-      <p class="body-small text-text-secondary">{description}</p>
+      <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
+        {title}
+      </h4>
+      <p className="body-small text-text-secondary">{description}</p>
     </div>
   );
 }
@@ -89,9 +109,9 @@ function _stepCard({
   description: string;
 }): React.JSX.Element {
   return (
-    <div class={cn('flex', spacing.gap.comfortable)}>
+    <div className={cn('flex', spacing.gap.comfortable)}>
       <div
-        class={cn(
+        className={cn(
           'shrink-0 w-8 h-8',
           radius.full,
           'bg-brand-primary text-text-inverse',
@@ -101,9 +121,9 @@ function _stepCard({
       >
         {number}
       </div>
-      <div class="flex-1">
-        <h4 class={cn('font-semibold', spacing.margin.bottom.inline)}>{title}</h4>
-        <p class="body-small">{description}</p>
+      <div className="flex-1">
+        <h4 className={cn('font-semibold', spacing.margin.bottom.inline)}>{title}</h4>
+        <p className="body-small">{description}</p>
       </div>
     </div>
   );
@@ -117,8 +137,8 @@ function _helpContentSection({
   children: ReactNode;
 }): React.JSX.Element {
   return (
-    <div class="max-w-3xl">
-      <h3 class={cn('heading-2', spacing.margin.bottom.content)}>{title}</h3>
+    <div className="max-w-3xl">
+      <h3 className={cn('heading-2', spacing.margin.bottom.content)}>{title}</h3>
       {children}
     </div>
   );
@@ -130,13 +150,16 @@ function _helpTermList({
   items: Array<{ term: string; description: string }>;
 }): React.JSX.Element {
   return (
-    <dl class="stack-lg">
+    <dl className="stack-lg">
       {items.map((item) => (
-        <div key={item.term} class={cn('border-l-2 border-surface-border', spacing.pad.default)}>
-          <dt class={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
+        <div
+          key={item.term}
+          className={cn('border-l-2 border-surface-border', spacing.pad.default)}
+        >
+          <dt className={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
             {item.term}
           </dt>
-          <dd class="body-small text-text-secondary">{item.description}</dd>
+          <dd className="body-small text-text-secondary">{item.description}</dd>
         </div>
       ))}
     </dl>
@@ -157,23 +180,21 @@ function _profilesSection(): React.JSX.Element {
 
   return (
     <helpContentSection title={t('sections.profiles')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.profiles.description')}
       </p>
-
-      <div class={spacing.margin.bottom.section}>
-        <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
+      <div className={spacing.margin.bottom.section}>
+        <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
           {t('content.profiles.overview.title')}
         </h4>
-        <p class="body-small text-text-secondary">{t('content.profiles.overview.content')}</p>
+        <p className="body-small text-text-secondary">{t('content.profiles.overview.content')}</p>
       </div>
-
-      <div class={spacing.margin.bottom.section}>
-        <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
+      <div className={spacing.margin.bottom.section}>
+        <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
           {t('content.profiles.capabilities_title', 'Profile Capabilities')}
         </h4>
         <ul
-          class={cn(
+          className={cn(
             'body-small text-text-secondary stack-sm',
             spacing.margin.left.spacious,
             'list-disc',
@@ -184,21 +205,20 @@ function _profilesSection(): React.JSX.Element {
           ))}
         </ul>
       </div>
-
       <div>
-        <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
+        <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
           {t('content.profiles.useCases.title')}
         </h4>
-        <div class="stack-lg">
+        <div className="stack-lg">
           {useCases?.map((useCase) => (
             <div
               key={useCase.name}
-              class={cn('border-l-2 border-brand-primary', spacing.pad.default)}
+              className={cn('border-l-2 border-brand-primary', spacing.pad.default)}
             >
-              <dt class={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
+              <dt className={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
                 {useCase.name}
               </dt>
-              <dd class="body-small text-text-secondary">{useCase.description}</dd>
+              <dd className="body-small text-text-secondary">{useCase.description}</dd>
             </div>
           ))}
         </div>
@@ -219,10 +239,9 @@ function _wiFiSurveySection(): React.JSX.Element {
 
   return (
     <helpContentSection title={t('sections.wifiSurvey')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.wifiSurvey.description')}
       </p>
-
       <helpTermList
         items={[
           {
@@ -243,41 +262,39 @@ function _wiFiSurveySection(): React.JSX.Element {
           },
         ]}
       />
-
-      <div class={spacing.margin.top.section}>
-        <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
+      <div className={spacing.margin.top.section}>
+        <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
           {t('content.wifiSurvey.visualizationsTitle', 'Visualization Modes')}
         </h4>
-        <div class="grid md:grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-2 gap-4">
           {visualizations?.map((viz) => (
             <div
               key={viz.type}
-              class={cn(
+              className={cn(
                 'bg-surface-hover border border-surface-border',
                 radius.default,
                 spacing.pad.sm,
               )}
             >
-              <h5 class="font-semibold text-text-primary">{viz.type}</h5>
-              <p class="body-small text-text-secondary">{viz.description}</p>
+              <h5 className="font-semibold text-text-primary">{viz.type}</h5>
+              <p className="body-small text-text-secondary">{viz.description}</p>
             </div>
           ))}
         </div>
       </div>
-
       <div
-        class={cn(
+        className={cn(
           spacing.margin.top.section,
           'bg-status-info/10 border border-status-info/20',
           radius.default,
           spacing.pad.default,
         )}
       >
-        <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
+        <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
           {t('content.wifiSurvey.bestPractices.title')}
         </h4>
         <ul
-          class={cn(
+          className={cn(
             'body-small text-text-secondary stack-sm',
             spacing.margin.left.spacious,
             'list-disc',
@@ -301,10 +318,9 @@ function _rtspChecksSection(): React.JSX.Element {
 
   return (
     <helpContentSection title={t('sections.rtspChecks')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.rtspChecks.description')}
       </p>
-
       <helpTermList
         items={[
           {
@@ -325,16 +341,18 @@ function _rtspChecksSection(): React.JSX.Element {
           },
         ]}
       />
-
-      <div class={spacing.margin.top.section}>
-        <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
+      <div className={spacing.margin.top.section}>
+        <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
           {t('content.rtspChecks.configurationTitle', 'Configuration Options')}
         </h4>
-        <div class="stack-sm">
+        <div className="stack-sm">
           {configuration?.map((config) => (
-            <div key={config.field} class={cn('border-l-2 border-surface-border', spacing.pad.sm)}>
-              <span class="font-mono text-brand-primary">{config.field}</span>
-              <span class="body-small text-text-secondary ml-2">{config.description}</span>
+            <div
+              key={config.field}
+              className={cn('border-l-2 border-surface-border', spacing.pad.sm)}
+            >
+              <span className="font-mono text-brand-primary">{config.field}</span>
+              <span className="body-small text-text-secondary ml-2">{config.description}</span>
             </div>
           ))}
         </div>
@@ -356,10 +374,9 @@ function _dicomChecksSection(): React.JSX.Element {
 
   return (
     <helpContentSection title={t('sections.dicomChecks')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.dicomChecks.description')}
       </p>
-
       <helpTermList
         items={[
           {
@@ -384,37 +401,38 @@ function _dicomChecksSection(): React.JSX.Element {
           },
         ]}
       />
-
-      <div class={spacing.margin.top.section}>
-        <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
+      <div className={spacing.margin.top.section}>
+        <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
           {t('content.dicomChecks.configurationTitle', 'Configuration')}
         </h4>
-        <div class="stack-sm">
+        <div className="stack-sm">
           {configuration?.map((config) => (
-            <div key={config.field} class={cn('border-l-2 border-surface-border', spacing.pad.sm)}>
-              <span class="font-mono text-brand-primary">{config.field}</span>
-              <span class="body-small text-text-secondary ml-2">{config.description}</span>
+            <div
+              key={config.field}
+              className={cn('border-l-2 border-surface-border', spacing.pad.sm)}
+            >
+              <span className="font-mono text-brand-primary">{config.field}</span>
+              <span className="body-small text-text-secondary ml-2">{config.description}</span>
             </div>
           ))}
         </div>
       </div>
-
       <div
-        class={cn(
+        className={cn(
           spacing.margin.top.section,
           'bg-status-warning/10 border border-status-warning/20',
           radius.default,
           spacing.pad.default,
         )}
       >
-        <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
+        <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
           {t('content.dicomChecks.commonIssuesTitle', 'Common Issues')}
         </h4>
-        <div class="stack-lg">
+        <div className="stack-lg">
           {commonIssues?.map((item) => (
             <div key={item.issue}>
-              <p class="font-semibold text-status-warning">{item.issue}</p>
-              <p class="body-small text-text-secondary">{item.solution}</p>
+              <p className="font-semibold text-status-warning">{item.issue}</p>
+              <p className="body-small text-text-secondary">{item.solution}</p>
             </div>
           ))}
         </div>
@@ -436,25 +454,24 @@ function _howToSection(): React.JSX.Element {
 
   return (
     <helpContentSection title={t('sections.howTo')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.howTo.description')}
       </p>
-
-      <div class="stack-xl">
+      <div className="stack-xl">
         {guides
           ? Object.entries(guides).map(([key, guide]) => (
               <div
                 key={key}
-                class={cn('border border-surface-border', radius.lg, spacing.pad.default)}
+                className={cn('border border-surface-border', radius.lg, spacing.pad.default)}
               >
-                <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
+                <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
                   {guide.title}
                 </h4>
-                <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+                <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
                   {guide.description}
                 </p>
                 <ol
-                  class={cn(
+                  className={cn(
                     'body-small text-text-secondary stack-sm',
                     spacing.margin.left.spacious,
                     'list-decimal',
@@ -504,18 +521,17 @@ function _glossarySection(): React.JSX.Element {
     : [];
 
   return (
-    <div class="max-w-3xl">
-      <h3 class={cn('heading-2', spacing.margin.bottom.content)}>{t('title')}</h3>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+    <div className="max-w-3xl">
+      <h3 className={cn('heading-2', spacing.margin.bottom.content)}>{t('title')}</h3>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('description')}
       </p>
-
       {/* Search and Filter */}
-      <div class={cn('flex flex-wrap gap-4', spacing.margin.bottom.section)}>
-        <div class="flex-1 min-w-[200px]">
-          <div class="relative">
+      <div className={cn('flex flex-wrap gap-4', spacing.margin.bottom.section)}>
+        <div className="flex-1 min-w-[200px]">
+          <div className="relative">
             <Search
-              class={cn('absolute left-3 top-1/2 -translate-y-1/2', 'w-4 h-4 text-text-muted')}
+              className={cn('absolute left-3 top-1/2 -translate-y-1/2', 'w-4 h-4 text-text-muted')}
             />
             <input
               type="text"
@@ -524,7 +540,7 @@ function _glossarySection(): React.JSX.Element {
               onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                 setSearchTerm(e.target.value)
               }
-              class={cn(
+              className={cn(
                 'w-full pl-9 pr-3 py-2',
                 'body-small',
                 radius.default,
@@ -539,7 +555,7 @@ function _glossarySection(): React.JSX.Element {
           onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
             setSelectedCategory(e.target.value)
           }
-          class={cn(
+          className={cn(
             'px-3 py-2',
             'body-small',
             radius.default,
@@ -557,29 +573,28 @@ function _glossarySection(): React.JSX.Element {
             : null}
         </select>
       </div>
-
       {/* Terms List */}
-      <div class="stack-lg">
+      <div className="stack-lg">
         {filteredTerms.map(([key, termData]) => (
           <div
             key={key}
-            class={cn(
+            className={cn(
               'border border-surface-border',
               radius.default,
               spacing.pad.default,
               'hover:border-brand-primary/50 transition-colors',
             )}
           >
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex-1">
-                <div class="flex items-baseline gap-2 mb-1">
-                  <span class="font-bold text-brand-primary">{termData.term}</span>
-                  <span class="body-small text-text-muted">({termData.fullName})</span>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-baseline gap-2 mb-1">
+                  <span className="font-bold text-brand-primary">{termData.term}</span>
+                  <span className="body-small text-text-muted">({termData.fullName})</span>
                 </div>
-                <p class="body-small text-text-secondary">{termData.definition}</p>
+                <p className="body-small text-text-secondary">{termData.definition}</p>
               </div>
               <span
-                class={cn(
+                className={cn(
                   'px-2 py-0.5 text-xs font-medium',
                   radius.default,
                   'bg-surface-hover text-text-muted capitalize',
@@ -592,7 +607,9 @@ function _glossarySection(): React.JSX.Element {
         ))}
 
         {filteredTerms.length === 0 && (
-          <div class="text-center py-8 text-text-muted">No terms found matching your search.</div>
+          <div className="text-center py-8 text-text-muted">
+            No terms found matching your search.
+          </div>
         )}
       </div>
     </div>

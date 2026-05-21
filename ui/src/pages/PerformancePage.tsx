@@ -10,14 +10,14 @@ export function PerformancePage() {
   const { loading, isWifi, cards, cardSettings } = useAppContext();
 
   return (
-    <section class="space-y-6">
+    <section className="space-y-6">
       <Breadcrumbs />
       <PageHeader
         icon={Activity}
         title="Performance"
         description="Active throughput tests (speedtest, iperf3) and health-check probes."
       />
-      <div class={layout.grid.cards}>
+      <div className={layout.grid.cards}>
         {(!isWifi || cards.wifi) && (
           <>
             <HealthCheckCard loading={loading} />

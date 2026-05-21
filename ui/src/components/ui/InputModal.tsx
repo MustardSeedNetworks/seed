@@ -56,10 +56,10 @@ export const InputModal: FC<InputModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onCancel} size="sm" showCloseButton={false}>
-      <div class="space-y-4">
+      <div className="space-y-4">
         <div>
-          <h2 class="text-lg font-semibold text-text-primary">{title}</h2>
-          <p class="text-text-secondary mt-1">{message}</p>
+          <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
+          <p className="text-text-secondary mt-1">{message}</p>
         </div>
         <input
           ref={inputRef}
@@ -68,9 +68,9 @@ export const InputModal: FC<InputModalProps> = ({
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          class="w-full rounded-lg border border-surface-border bg-bg-base/60 p-3 text-sm text-text-primary placeholder-gray-500 focus:border-brand-accent focus:outline-none"
+          className="w-full rounded-lg border border-surface-border bg-bg-base/60 p-3 text-sm text-text-primary placeholder-gray-500 focus:border-brand-accent focus:outline-none"
         />
-        <div class="flex justify-end gap-3 pt-2">
+        <div className="flex justify-end gap-3 pt-2">
           <Button variant="outline" onClick={onCancel}>
             {cancelLabel}
           </Button>

@@ -24,7 +24,7 @@ const colorStyles: Record<TagColorScheme, string> = {
 
 export const Tag: FC<TagProps> = ({ children, colorScheme = 'gray', className = '' }) => (
   <span
-    class={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${colorStyles[colorScheme]} ${className}`}
+    className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${colorStyles[colorScheme]} ${className}`}
   >
     {children}
   </span>

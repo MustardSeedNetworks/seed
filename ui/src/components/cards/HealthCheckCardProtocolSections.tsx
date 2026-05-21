@@ -38,30 +38,30 @@ export function HealthCheckCardProtocolSections({
           {data.enterpriseResults.sqlResults.map((r) => (
             <div
               key={`sql-${r.name}`}
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.xs,
                 radius.default,
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div class={layout.stack.compact}>
-                <div class="flex items-center gap-2">
+              <div className={layout.stack.compact}>
+                <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
-                  <span class="body-small font-medium">{r.name}</span>
-                  <span class="caption text-text-muted">
+                  <span className="body-small font-medium">{r.name}</span>
+                  <span className="caption text-text-muted">
                     {r.driver} • {r.host}:{r.port}
                   </span>
                 </div>
                 {r.success && r.serverVersion ? (
-                  <span class="caption text-text-muted ml-6">{r.serverVersion}</span>
+                  <span className="caption text-text-muted ml-6">{r.serverVersion}</span>
                 ) : null}
-                {r.error ? <span class="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
               </div>
-              <div class="text-right">
-                <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+              <div className="text-right">
+                <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                 {r.success ? (
-                  <div class="caption text-text-muted">
+                  <div className="caption text-text-muted">
                     Connect: {r.connectTimeMs.toFixed(1)}ms
                     {r.queryTimeMs !== undefined ? ` • Query: ${r.queryTimeMs.toFixed(1)}ms` : null}
                   </div>
@@ -71,7 +71,6 @@ export function HealthCheckCardProtocolSections({
           ))}
         </CollapsibleSection>
       ) : null}
-
       {/* File Share Results (SMB/NFS) */}
       {data.enterpriseResults?.fileShareResults &&
       data.enterpriseResults.fileShareResults.length > 0 ? (
@@ -88,27 +87,27 @@ export function HealthCheckCardProtocolSections({
           {data.enterpriseResults.fileShareResults.map((r) => (
             <div
               key={`fileshare-${r.name}`}
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.xs,
                 radius.default,
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div class={layout.stack.compact}>
-                <div class="flex items-center gap-2">
+              <div className={layout.stack.compact}>
+                <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
-                  <span class="body-small font-medium">{r.name}</span>
-                  <span class="caption text-text-muted">
+                  <span className="body-small font-medium">{r.name}</span>
+                  <span className="caption text-text-muted">
                     {r.protocol.toUpperCase()} • /{r.host}/{r.share}
                   </span>
                 </div>
-                {r.error ? <span class="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
               </div>
-              <div class="text-right">
-                <div class="body-small font-mono">{r.connectTimeMs.toFixed(1)}ms</div>
+              <div className="text-right">
+                <div className="body-small font-mono">{r.connectTimeMs.toFixed(1)}ms</div>
                 {r.success && (r.readSpeedMbps !== undefined || r.writeSpeedMbps !== undefined) ? (
-                  <div class="caption text-text-muted">
+                  <div className="caption text-text-muted">
                     {r.readSpeedMbps !== undefined ? `R: ${r.readSpeedMbps.toFixed(1)} MB/s` : null}
                     {r.readSpeedMbps !== undefined && r.writeSpeedMbps !== undefined ? ' • ' : null}
                     {r.writeSpeedMbps !== undefined
@@ -121,7 +120,6 @@ export function HealthCheckCardProtocolSections({
           ))}
         </CollapsibleSection>
       ) : null}
-
       {/* LDAP Results */}
       {data.enterpriseResults?.ldapResults && data.enterpriseResults.ldapResults.length > 0 ? (
         <CollapsibleSection
@@ -135,30 +133,30 @@ export function HealthCheckCardProtocolSections({
           {data.enterpriseResults.ldapResults.map((r) => (
             <div
               key={`ldap-${r.name}`}
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.xs,
                 radius.default,
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div class={layout.stack.compact}>
-                <div class="flex items-center gap-2">
+              <div className={layout.stack.compact}>
+                <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
-                  <span class="body-small font-medium">{r.name}</span>
-                  <span class="caption text-text-muted">
+                  <span className="body-small font-medium">{r.name}</span>
+                  <span className="caption text-text-muted">
                     {r.useTls ? 'LDAPS' : 'LDAP'} • {r.host}:{r.port}
                   </span>
                 </div>
                 {r.success && r.serverInfo ? (
-                  <span class="caption text-text-muted ml-6">{r.serverInfo}</span>
+                  <span className="caption text-text-muted ml-6">{r.serverInfo}</span>
                 ) : null}
-                {r.error ? <span class="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
               </div>
-              <div class="text-right">
-                <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+              <div className="text-right">
+                <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                 {r.success ? (
-                  <div class="caption text-text-muted">
+                  <div className="caption text-text-muted">
                     Connect: {r.connectTimeMs.toFixed(1)}ms
                     {r.bindTimeMs !== undefined ? ` • Bind: ${r.bindTimeMs.toFixed(1)}ms` : null}
                   </div>
@@ -168,7 +166,6 @@ export function HealthCheckCardProtocolSections({
           ))}
         </CollapsibleSection>
       ) : null}
-
       {/* RTSP Video Results */}
       {data.videoResults?.rtspResults && data.videoResults.rtspResults.length > 0 ? (
         <CollapsibleSection
@@ -182,38 +179,37 @@ export function HealthCheckCardProtocolSections({
           {data.videoResults.rtspResults.map((r) => (
             <div
               key={`rtsp-${r.name}`}
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.xs,
                 radius.default,
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div class={layout.stack.compact}>
-                <div class="flex items-center gap-2">
+              <div className={layout.stack.compact}>
+                <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
-                  <span class="body-small font-medium">{r.name}</span>
-                  <span class="caption text-text-muted truncate max-w-48" title={r.url}>
+                  <span className="body-small font-medium">{r.name}</span>
+                  <span className="caption text-text-muted truncate max-w-48" title={r.url}>
                     {r.url}
                   </span>
                 </div>
                 {r.success && (r.codec || r.resolution) ? (
-                  <span class="caption text-text-muted ml-6">
+                  <span className="caption text-text-muted ml-6">
                     {r.codec ? r.codec : null}
                     {r.codec && r.resolution ? ' • ' : null}
                     {r.resolution ? r.resolution : null}
                   </span>
                 ) : null}
-                {r.error ? <span class="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
               </div>
-              <div class="text-right">
-                <div class="body-small font-mono">{r.connectTimeMs.toFixed(1)}ms</div>
+              <div className="text-right">
+                <div className="body-small font-mono">{r.connectTimeMs.toFixed(1)}ms</div>
               </div>
             </div>
           ))}
         </CollapsibleSection>
       ) : null}
-
       {/* DICOM Results */}
       {data.medicalResults?.dicomResults && data.medicalResults.dicomResults.length > 0 ? (
         <CollapsibleSection
@@ -227,37 +223,36 @@ export function HealthCheckCardProtocolSections({
           {data.medicalResults.dicomResults.map((r) => (
             <div
               key={`dicom-${r.name}`}
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.xs,
                 radius.default,
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div class={layout.stack.compact}>
-                <div class="flex items-center gap-2">
+              <div className={layout.stack.compact}>
+                <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
-                  <span class="body-small font-medium">{r.name}</span>
-                  <span class="caption text-text-muted">
+                  <span className="body-small font-medium">{r.name}</span>
+                  <span className="caption text-text-muted">
                     {r.host}:{r.port} • AE: {r.aeTitle}
                   </span>
                 </div>
                 {r.success && r.serverAeTitle ? (
-                  <span class="caption text-text-muted ml-6">Server AE: {r.serverAeTitle}</span>
+                  <span className="caption text-text-muted ml-6">Server AE: {r.serverAeTitle}</span>
                 ) : null}
-                {r.error ? <span class="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
               </div>
-              <div class="text-right">
-                <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+              <div className="text-right">
+                <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                 {r.success && r.echoTimeMs !== undefined ? (
-                  <div class="caption text-text-muted">C-ECHO: {r.echoTimeMs.toFixed(1)}ms</div>
+                  <div className="caption text-text-muted">C-ECHO: {r.echoTimeMs.toFixed(1)}ms</div>
                 ) : null}
               </div>
             </div>
           ))}
         </CollapsibleSection>
       ) : null}
-
       {/* HL7 MLLP Results */}
       {data.medicalResults?.hl7Results && data.medicalResults.hl7Results.length > 0 ? (
         <CollapsibleSection
@@ -271,34 +266,34 @@ export function HealthCheckCardProtocolSections({
           {data.medicalResults.hl7Results.map((r) => (
             <div
               key={`hl7-${r.name}`}
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.xs,
                 radius.default,
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div class={layout.stack.compact}>
-                <div class="flex items-center gap-2">
+              <div className={layout.stack.compact}>
+                <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
-                  <span class="body-small font-medium">{r.name}</span>
-                  <span class="caption text-text-muted">
+                  <span className="body-small font-medium">{r.name}</span>
+                  <span className="caption text-text-muted">
                     {r.host}:{r.port}
                   </span>
                 </div>
                 {r.success && (r.ackCode || r.serverVersion) ? (
-                  <span class="caption text-text-muted ml-6">
+                  <span className="caption text-text-muted ml-6">
                     {r.ackCode ? `ACK: ${r.ackCode}` : null}
                     {r.ackCode && r.serverVersion ? ' • ' : null}
                     {r.serverVersion ? r.serverVersion : null}
                   </span>
                 ) : null}
-                {r.error ? <span class="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
               </div>
-              <div class="text-right">
-                <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+              <div className="text-right">
+                <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                 {r.success && r.responseTimeMs !== undefined ? (
-                  <div class="caption text-text-muted">
+                  <div className="caption text-text-muted">
                     Response: {r.responseTimeMs.toFixed(1)}ms
                   </div>
                 ) : null}
@@ -307,7 +302,6 @@ export function HealthCheckCardProtocolSections({
           ))}
         </CollapsibleSection>
       ) : null}
-
       {/* FHIR Results */}
       {data.medicalResults?.fhirResults && data.medicalResults.fhirResults.length > 0 ? (
         <CollapsibleSection
@@ -321,41 +315,40 @@ export function HealthCheckCardProtocolSections({
           {data.medicalResults.fhirResults.map((r) => (
             <div
               key={`fhir-${r.name}`}
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.xs,
                 radius.default,
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div class={layout.stack.compact}>
-                <div class="flex items-center gap-2">
+              <div className={layout.stack.compact}>
+                <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
-                  <span class="body-small font-medium">{r.name}</span>
-                  <span class="caption text-text-muted truncate max-w-48" title={r.baseUrl}>
+                  <span className="body-small font-medium">{r.name}</span>
+                  <span className="caption text-text-muted truncate max-w-48" title={r.baseUrl}>
                     {r.baseUrl}
                   </span>
                 </div>
                 {r.success && (r.fhirVersion || r.serverName) ? (
-                  <span class="caption text-text-muted ml-6">
+                  <span className="caption text-text-muted ml-6">
                     {r.fhirVersion ? `v${r.fhirVersion}` : null}
                     {r.fhirVersion && r.serverName ? ' • ' : null}
                     {r.serverName ? r.serverName : null}
                   </span>
                 ) : null}
-                {r.error ? <span class="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
               </div>
-              <div class="text-right">
-                <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+              <div className="text-right">
+                <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                 {r.success && r.resourceCount !== undefined ? (
-                  <div class="caption text-text-muted">{r.resourceCount} resources</div>
+                  <div className="caption text-text-muted">{r.resourceCount} resources</div>
                 ) : null}
               </div>
             </div>
           ))}
         </CollapsibleSection>
       ) : null}
-
       {/* LTI/LMS Results */}
       {data.educationResults?.ltiResults && data.educationResults.ltiResults.length > 0 ? (
         <CollapsibleSection
@@ -368,34 +361,33 @@ export function HealthCheckCardProtocolSections({
           {data.educationResults.ltiResults.map((r) => (
             <div
               key={`lti-${r.name}`}
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.xs,
                 radius.default,
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div class={layout.stack.compact}>
-                <div class="flex items-center gap-2">
+              <div className={layout.stack.compact}>
+                <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
-                  <span class="body-small font-medium">{r.name}</span>
-                  <span class="caption text-text-muted truncate max-w-48" title={r.launchUrl}>
+                  <span className="body-small font-medium">{r.name}</span>
+                  <span className="caption text-text-muted truncate max-w-48" title={r.launchUrl}>
                     {r.launchUrl}
                   </span>
                 </div>
                 {r.success && r.ltiVersion ? (
-                  <span class="caption text-text-muted ml-6">LTI {r.ltiVersion}</span>
+                  <span className="caption text-text-muted ml-6">LTI {r.ltiVersion}</span>
                 ) : null}
-                {r.error ? <span class="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
               </div>
-              <div class="text-right">
-                <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+              <div className="text-right">
+                <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
               </div>
             </div>
           ))}
         </CollapsibleSection>
       ) : null}
-
       {/* OPC-UA Results */}
       {data.industrialResults?.opcuaResults && data.industrialResults.opcuaResults.length > 0 ? (
         <CollapsibleSection
@@ -409,41 +401,40 @@ export function HealthCheckCardProtocolSections({
           {data.industrialResults.opcuaResults.map((r) => (
             <div
               key={`opcua-${r.name}`}
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.xs,
                 radius.default,
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div class={layout.stack.compact}>
-                <div class="flex items-center gap-2">
+              <div className={layout.stack.compact}>
+                <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
-                  <span class="body-small font-medium">{r.name}</span>
-                  <span class="caption text-text-muted truncate max-w-48" title={r.endpointUrl}>
+                  <span className="body-small font-medium">{r.name}</span>
+                  <span className="caption text-text-muted truncate max-w-48" title={r.endpointUrl}>
                     {r.endpointUrl}
                   </span>
                 </div>
                 {r.success && (r.securityMode || r.productName) ? (
-                  <span class="caption text-text-muted ml-6">
+                  <span className="caption text-text-muted ml-6">
                     {r.securityMode ? r.securityMode : null}
                     {r.securityMode && r.productName ? ' • ' : null}
                     {r.productName ? r.productName : null}
                   </span>
                 ) : null}
-                {r.error ? <span class="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
               </div>
-              <div class="text-right">
-                <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+              <div className="text-right">
+                <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                 {r.success && r.serverState ? (
-                  <div class="caption text-text-muted">{r.serverState}</div>
+                  <div className="caption text-text-muted">{r.serverState}</div>
                 ) : null}
               </div>
             </div>
           ))}
         </CollapsibleSection>
       ) : null}
-
       {/* Modbus TCP Results */}
       {data.industrialResults?.modbusResults && data.industrialResults.modbusResults.length > 0 ? (
         <CollapsibleSection
@@ -458,27 +449,27 @@ export function HealthCheckCardProtocolSections({
           {data.industrialResults.modbusResults.map((r) => (
             <div
               key={`modbus-${r.name}`}
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.xs,
                 radius.default,
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div class={layout.stack.compact}>
-                <div class="flex items-center gap-2">
+              <div className={layout.stack.compact}>
+                <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
-                  <span class="body-small font-medium">{r.name}</span>
-                  <span class="caption text-text-muted">
+                  <span className="body-small font-medium">{r.name}</span>
+                  <span className="caption text-text-muted">
                     {r.host}:{r.port} • Unit {r.unitId}
                   </span>
                 </div>
-                {r.error ? <span class="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
               </div>
-              <div class="text-right">
-                <div class="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
+              <div className="text-right">
+                <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
                 {r.success && r.registerValue !== undefined ? (
-                  <div class="caption text-text-muted">
+                  <div className="caption text-text-muted">
                     Reg: 0x{r.registerValue.toString(16).toUpperCase().padStart(4, '0')}
                   </div>
                 ) : null}

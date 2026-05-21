@@ -129,17 +129,17 @@ export function MfaCard(): JSX.Element {
   return (
     <Card
       title={t('mfa.title', 'Multi-factor authentication')}
-      icon={<Shield class={iconTokens.size.md} />}
+      icon={<Shield className={iconTokens.size.md} />}
       status={status?.totp_enabled || status?.webauthn_enabled ? 'success' : 'unknown'}
     >
-      <div class="stack-sm">
-        <p class="body-small text-text-muted">{statusLine}</p>
-        {error ? <p class="body-small text-status-error">{error}</p> : null}
+      <div className="stack-sm">
+        <p className="body-small text-text-muted">{statusLine}</p>
+        {error ? <p className="body-small text-status-error">{error}</p> : null}
 
         {!(status?.totp_enabled || setup) ? (
           <button
             type="button"
-            class="btn btn-secondary"
+            className="btn btn-secondary"
             disabled={busy}
             onClick={() => {
               startTotp().catch(() => undefined);
@@ -150,14 +150,14 @@ export function MfaCard(): JSX.Element {
         ) : null}
 
         {setup ? (
-          <div class="stack-sm">
+          <div className="stack-sm">
             <img
               alt={t('mfa.qrAlt', 'TOTP QR code')}
               src={`data:image/png;base64,${setup.qr_code_png_base64}`}
               width={200}
               height={200}
             />
-            <p class="body-small text-text-muted">
+            <p className="body-small text-text-muted">
               {t('mfa.scanAndEnter', 'Scan with an authenticator app, then enter a code')}
             </p>
             <input
@@ -168,11 +168,11 @@ export function MfaCard(): JSX.Element {
               value={code}
               onInput={(e) => setCode((e.target as HTMLInputElement).value)}
               placeholder="123456"
-              class="input"
+              className="input"
             />
             <button
               type="button"
-              class="btn btn-primary"
+              className="btn btn-primary"
               disabled={busy || code.length !== 6}
               onClick={() => {
                 verifyTotp().catch(() => undefined);
@@ -185,7 +185,7 @@ export function MfaCard(): JSX.Element {
 
         <button
           type="button"
-          class="btn btn-secondary"
+          className="btn btn-secondary"
           disabled={busy}
           onClick={() => {
             addPasskey().catch(() => undefined);

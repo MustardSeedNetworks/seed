@@ -17,7 +17,7 @@ export const statusConfig: Record<
 > = {
   success: {
     icon: (
-      <svg class="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <svg className="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path
           fillRule="evenodd"
           d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-10.707a1 1 0 00-1.414-1.414L9 9.172 7.707 7.879a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -31,7 +31,7 @@ export const statusConfig: Record<
   },
   warning: {
     icon: (
-      <svg class="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <svg className="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path
           fillRule="evenodd"
           d="M8.257 3.099c.765-1.36 2.72-1.36 3.485 0l6.518 11.6c.75 1.334-.214 3.001-1.742 3.001H3.48c-1.528 0-2.492-1.667-1.742-3.001l6.52-11.6zM11 14a1 1 0 11-2 0 1 1 0 012 0zm-1-2a1 1 0 01-1-1V8a1 1 0 112 0v3a1 1 0 01-1 1z"
@@ -45,7 +45,7 @@ export const statusConfig: Record<
   },
   error: {
     icon: (
-      <svg class="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <svg className="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path
           fillRule="evenodd"
           d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1.293-5.293a1 1 0 011.414 0L10 12.586l.879-.879a1 1 0 111.414 1.414L11.414 14l.879.879a1 1 0 01-1.414 1.414L10 15.414l-.879.879a1 1 0 11-1.414-1.414L8.586 14l-.879-.879a1 1 0 010-1.414z"
@@ -59,7 +59,7 @@ export const statusConfig: Record<
   },
   unknown: {
     icon: (
-      <svg class="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <svg className="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path d="M9 7a1 1 0 012 0c0 1.5-2 1.5-2 3h2c0-1.5 2-1.5 2-3a3 3 0 10-6 0h2z" />
         <circle cx="10" cy="14" r="1" />
       </svg>
@@ -70,9 +70,21 @@ export const statusConfig: Record<
   },
   loading: {
     icon: (
-      <svg class="w-full h-full animate-spin" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <circle class="opacity-25" cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="3" />
-        <path class="opacity-75" fill="currentColor" d="M18 10a8 8 0 00-8-8v4a4 4 0 014 4h4z" />
+      <svg
+        className="w-full h-full animate-spin"
+        viewBox="0 0 20 20"
+        fill="none"
+        aria-hidden="true"
+      >
+        <circle
+          className="opacity-25"
+          cx="10"
+          cy="10"
+          r="8"
+          stroke="currentColor"
+          strokeWidth="3"
+        />
+        <path className="opacity-75" fill="currentColor" d="M18 10a8 8 0 00-8-8v4a4 4 0 014 4h4z" />
       </svg>
     ),
     color: statusColor.text.info,

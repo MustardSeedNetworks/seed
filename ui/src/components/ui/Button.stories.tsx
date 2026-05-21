@@ -42,7 +42,7 @@ const meta: Meta<typeof Button> = {
   },
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="p-2">
+      <div className="p-2">
         <StoryComponent />
       </div>
     ),
@@ -80,7 +80,7 @@ export const Danger: Story = {
   args: {
     variant: 'solid',
     tone: 'red',
-    leftIcon: <Trash2 class="h-4 w-4" />,
+    leftIcon: <Trash2 className="h-4 w-4" />,
     children: 'Delete profile',
   },
 };
@@ -97,7 +97,7 @@ export const WithIcons: Story = {
   args: {
     variant: 'solid',
     tone: 'green',
-    leftIcon: <Plus class="h-4 w-4" />,
+    leftIcon: <Plus className="h-4 w-4" />,
     children: 'Add server',
   },
 };
@@ -122,8 +122,8 @@ export const Disabled: Story = {
 
 export const AllVariants: Story = {
   render: () => (
-    <div class="space-y-4">
-      <div class="flex flex-wrap items-center gap-2">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
         <Button variant="solid" tone="violet">
           Solid
         </Button>
@@ -137,8 +137,8 @@ export const AllVariants: Story = {
           Secondary
         </Button>
       </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <Button variant="solid" tone="green" leftIcon={<Download class="h-4 w-4" />}>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="solid" tone="green" leftIcon={<Download className="h-4 w-4" />}>
           Success
         </Button>
         <Button variant="solid" tone="blue">
@@ -151,7 +151,7 @@ export const AllVariants: Story = {
           Neutral
         </Button>
       </div>
-      <div class="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button size="xs">XS</Button>
         <Button size="sm">Small</Button>
         <Button size="md">Medium</Button>

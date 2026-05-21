@@ -35,7 +35,7 @@ const meta: Meta<typeof Input> = {
   },
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="w-[360px]">
+      <div className="w-[360px]">
         <StoryComponent />
       </div>
     ),
@@ -73,7 +73,7 @@ export const WithLeftIcon: Story = {
   args: {
     label: 'Email',
     placeholder: 'you@example.com',
-    leftIcon: <Mail class="h-4 w-4" />,
+    leftIcon: <Mail className="h-4 w-4" />,
   },
 };
 
@@ -82,7 +82,7 @@ export const Disabled: Story = {
     label: 'Locked field',
     defaultValue: 'cannot edit',
     disabled: true,
-    leftIcon: <Lock class="h-4 w-4" />,
+    leftIcon: <Lock className="h-4 w-4" />,
   },
 };
 
@@ -153,7 +153,7 @@ export const SearchInputExample: Story = {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onClear={() => setQuery('')}
-        leftIcon={<Search class="h-4 w-4" />}
+        leftIcon={<Search className="h-4 w-4" />}
       />
     );
   },

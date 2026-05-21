@@ -113,7 +113,7 @@ export interface SnmpVlan {
 export interface SnmpEntity {
   index: number;
   description?: string;
-  class?: string;
+  className?: string;
   name?: string;
   hardwareRev?: string;
   firmwareRev?: string;

@@ -111,19 +111,19 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
     return (
       <CollapsibleSection
         title={
-          <div class={layout.inline.default}>
-            <Gauge class={iconTokens.size.sm} />
+          <div className={layout.inline.default}>
+            <Gauge className={iconTokens.size.sm} />
             <span>{t('sections.performance')}</span>
             <AutoSaveIndicator status={iperfStatus} />
           </div>
         }
         defaultOpen={false}
       >
-        <div class="stack">
+        <div className="stack">
           {/* Enable/Disable Toggles */}
-          <div class="stack-sm">
+          <div className="stack-sm">
             <label
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.sm,
                 'bg-surface-base',
@@ -132,10 +132,10 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
               )}
             >
               <div>
-                <span class="body-small text-text-primary font-medium">
+                <span className="body-small text-text-primary font-medium">
                   {t('performance.enableSpeedtest')}
                 </span>
-                <p class="caption text-text-muted">{t('performance.speedtestDesc')}</p>
+                <p className="caption text-text-muted">{t('performance.speedtestDesc')}</p>
               </div>
               <input
                 type="checkbox"
@@ -146,11 +146,11 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     runSpeedtest: e.target.checked,
                   }))
                 }
-                class={iconTokens.size.sm}
+                className={iconTokens.size.sm}
               />
             </label>
             <label
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.sm,
                 'bg-surface-base',
@@ -159,10 +159,10 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
               )}
             >
               <div>
-                <span class="body-small text-text-primary font-medium">
+                <span className="body-small text-text-primary font-medium">
                   {t('performance.enableIperf')}
                 </span>
-                <p class="caption text-text-muted">{t('performance.iperfDesc')}</p>
+                <p className="caption text-text-muted">{t('performance.iperfDesc')}</p>
               </div>
               <input
                 type="checkbox"
@@ -173,25 +173,25 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     runIperf: e.target.checked,
                   }))
                 }
-                class={iconTokens.size.sm}
+                className={iconTokens.size.sm}
               />
             </label>
           </div>
 
           {/* Auto-Run on Link Up (FAB button) */}
-          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-            <span class="caption text-text-muted font-medium">
+          <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+            <span className="caption text-text-muted font-medium">
               {t('performance.autoRunOnLink')}
             </span>
-            <p class="caption text-text-muted mt-1">
+            <p className="caption text-text-muted mt-1">
               {t(
                 'performance.autoRunOnLinkDesc',
                 'Controls which tests run when FAB button is clicked',
               )}
             </p>
-            <div class={cn(spacing.margin.top.inline, 'stack-sm')}>
+            <div className={cn(spacing.margin.top.inline, 'stack-sm')}>
               <label
-                class={cn(
+                className={cn(
                   layout.flex.between,
                   spacing.pad.sm,
                   'bg-surface-base',
@@ -199,7 +199,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                   'border border-surface-border',
                 )}
               >
-                <span class="body-small text-text-primary">{t('performance.speedtest')}</span>
+                <span className="body-small text-text-primary">{t('performance.speedtest')}</span>
                 <input
                   type="checkbox"
                   checked={cardSettings.performance.speedtest.autoRunOnLink}
@@ -214,11 +214,11 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                       },
                     })
                   }
-                  class={iconTokens.size.sm}
+                  className={iconTokens.size.sm}
                 />
               </label>
               <label
-                class={cn(
+                className={cn(
                   layout.flex.between,
                   spacing.pad.sm,
                   'bg-surface-base',
@@ -226,7 +226,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                   'border border-surface-border',
                 )}
               >
-                <span class="body-small text-text-primary">{t('performance.iperf')}</span>
+                <span className="body-small text-text-primary">{t('performance.iperf')}</span>
                 <input
                   type="checkbox"
                   checked={cardSettings.performance.iperf.autoRunOnLink}
@@ -241,16 +241,16 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                       },
                     })
                   }
-                  class={iconTokens.size.sm}
+                  className={iconTokens.size.sm}
                 />
               </label>
             </div>
           </div>
 
           {/* Internet Speed (Speedtest) Subsection */}
-          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+          <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
             <h4
-              class={cn(
+              className={cn(
                 'body-small font-semibold text-text-primary',
                 spacing.margin.bottom.inline,
                 'uppercase tracking-wide',
@@ -258,9 +258,12 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
             >
               {t('performance.internetSpeed')}
             </h4>
-            <div class="stack">
+            <div className="stack">
               <div>
-                <label for="speedtest-server-id" class="caption text-text-muted font-medium">
+                <label
+                  htmlFor="speedtest-server-id"
+                  className="caption text-text-muted font-medium"
+                >
                   {t('performance.serverId')}
                 </label>
                 <input
@@ -277,7 +280,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     }))
                   }
                   placeholder={t('performance.autoClosestServer')}
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.md,
@@ -286,8 +289,8 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     'body-small',
                   )}
                 />
-                <div class={cn(layout.flex.between, spacing.margin.top.tight)}>
-                  <p class="caption text-text-muted">{t('performance.autoSelectDesc')}</p>
+                <div className={cn(layout.flex.between, spacing.margin.top.tight)}>
+                  <p className="caption text-text-muted">{t('performance.autoSelectDesc')}</p>
                   <button
                     type="button"
                     onClick={(): void =>
@@ -296,7 +299,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                         speedtest: { ...prev.speedtest, serverId: '' },
                       }))
                     }
-                    class="caption text-brand-primary hover:underline"
+                    className="caption text-brand-primary hover:underline"
                   >
                     {t('performance.resetToAuto')}
                   </button>
@@ -308,7 +311,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
           {/* LAN Speed (iperf3) Subsection */}
           <div>
             <h4
-              class={cn(
+              className={cn(
                 'body-small font-semibold text-text-primary',
                 spacing.margin.bottom.inline,
                 'uppercase tracking-wide',
@@ -316,12 +319,15 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
             >
               {t('performance.lanSpeed')}
             </h4>
-            <div class="stack">
-              <p class="caption text-text-muted">{t('performance.lanSpeedDesc')}</p>
+            <div className="stack">
+              <p className="caption text-text-muted">{t('performance.lanSpeedDesc')}</p>
 
               {/* Server Address */}
               <div>
-                <label for="iperf-server-address" class="caption text-text-muted font-medium">
+                <label
+                  htmlFor="iperf-server-address"
+                  className="caption text-text-muted font-medium"
+                >
                   {t('performance.serverAddress')}
                 </label>
                 <input
@@ -335,7 +341,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     }))
                   }
                   placeholder="192.168.1.100"
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.md,
@@ -344,12 +350,12 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     'body-small disabled:opacity-60',
                   )}
                 />
-                <div class={cn(layout.flex.between, spacing.margin.top.inline)}>
+                <div className={cn(layout.flex.between, spacing.margin.top.inline)}>
                   <button
                     type="button"
                     disabled={iperfSuggestionsStatus === 'loading'}
                     onClick={fetchIperfSuggestions}
-                    class="caption text-brand-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="caption text-brand-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {iperfSuggestionsStatus === 'loading'
                       ? t('performance.scanning')
@@ -357,13 +363,13 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                   </button>
                   {iperfSuggestionsStatus === 'loading' && (
                     <svg
-                      class={cn(iconTokens.size.sm, 'animate-spin text-text-muted')}
+                      className={cn(iconTokens.size.sm, 'animate-spin text-text-muted')}
                       viewBox="0 0 24 24"
                       fill="none"
                       aria-hidden="true"
                     >
                       <circle
-                        class="opacity-25"
+                        className="opacity-25"
                         cx="12"
                         cy="12"
                         r="10"
@@ -371,7 +377,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                         strokeWidth="4"
                       />
                       <path
-                        class="opacity-75"
+                        className="opacity-75"
                         fill="currentColor"
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       />
@@ -379,17 +385,19 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                   )}
                 </div>
                 {iperfSuggestionsStatus === 'error' && (
-                  <p class={cn('caption text-status-warning', spacing.margin.top.tight)}>
+                  <p className={cn('caption text-status-warning', spacing.margin.top.tight)}>
                     {iperfSuggestionsError || t('performance.noIperfHosts')}
                   </p>
                 )}
                 {iperfSuggestions.length > 0 && (
-                  <div class={cn('flex flex-wrap', spacing.gap.compact, spacing.margin.top.inline)}>
+                  <div
+                    className={cn('flex flex-wrap', spacing.gap.compact, spacing.margin.top.inline)}
+                  >
                     {iperfSuggestions.map((sugg) => (
                       <button
                         type="button"
                         key={`${sugg.host}-${sugg.hostname || ''}`}
-                        class={cn(
+                        className={cn(
                           spacing.chip.sm,
                           radius.full,
                           'border border-surface-border bg-surface-base caption text-text-primary hover:bg-surface-hover',
@@ -401,8 +409,8 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                           }))
                         }
                       >
-                        <span class="font-medium">{sugg.hostname || sugg.host}</span>
-                        <span class={cn('text-text-muted', spacing.margin.left.tight)}>
+                        <span className="font-medium">{sugg.hostname || sugg.host}</span>
+                        <span className={cn('text-text-muted', spacing.margin.left.tight)}>
                           {sugg.hostname ? `(${sugg.host})` : ''}
                           {sugg.latencyMs !== undefined ? ` · ${Math.round(sugg.latencyMs)}ms` : ''}
                         </span>
@@ -414,7 +422,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
 
               {/* Port */}
               <div>
-                <label class="caption text-text-muted font-medium" for="iperf-port">
+                <label className="caption text-text-muted font-medium" htmlFor="iperf-port">
                   {t('performance.port')}
                 </label>
                 <input
@@ -427,7 +435,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                       port: Number.parseInt(e.target.value, 10) || 5201,
                     }))
                   }
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.md,
@@ -441,7 +449,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
               {/* Protocol Toggle */}
               <div>
                 <span
-                  class={cn(
+                  className={cn(
                     'caption text-text-muted font-medium block',
                     spacing.margin.bottom.inline,
                   )}
@@ -449,7 +457,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                   {t('performance.protocol')}
                 </span>
                 <div
-                  class={cn('flex flex-wrap', spacing.gap.compact)}
+                  className={cn('flex flex-wrap', spacing.gap.compact)}
                   role="radiogroup"
                   aria-label="Protocol selection"
                 >
@@ -458,7 +466,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     return (
                       <label
                         key={proto}
-                        class={cn(
+                        className={cn(
                           'cursor-pointer',
                           spacing.chip.md,
                           radius.full,
@@ -479,7 +487,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                               protocol: proto,
                             }))
                           }
-                          class="sr-only"
+                          className="sr-only"
                           aria-label={`${proto.toUpperCase()} protocol`}
                         />
                         {proto.toUpperCase()}
@@ -492,7 +500,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
               {/* Direction Toggle */}
               <div>
                 <span
-                  class={cn(
+                  className={cn(
                     'caption text-text-muted font-medium block',
                     spacing.margin.bottom.inline,
                   )}
@@ -500,7 +508,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                   {t('performance.direction')}
                 </span>
                 <div
-                  class={cn('flex flex-wrap', spacing.gap.compact)}
+                  className={cn('flex flex-wrap', spacing.gap.compact)}
                   role="radiogroup"
                   aria-label="Direction selection"
                 >
@@ -509,7 +517,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     return (
                       <label
                         key={direction}
-                        class={cn(
+                        className={cn(
                           'cursor-pointer',
                           spacing.chip.md,
                           radius.full,
@@ -530,7 +538,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                               direction: direction,
                             }))
                           }
-                          class="sr-only"
+                          className="sr-only"
                           aria-label={`${getDirectionLabel(direction)} direction`}
                         />
                         {getDirectionLabel(direction)}
@@ -542,7 +550,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
 
               {/* Duration */}
               <div>
-                <label class="caption text-text-muted font-medium" for="iperf-duration">
+                <label className="caption text-text-muted font-medium" htmlFor="iperf-duration">
                   {t('performance.duration')}
                 </label>
                 <input
@@ -557,7 +565,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                   }
                   min={1}
                   max={60}
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.md,
@@ -569,9 +577,9 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
               </div>
 
               {/* Server Mode */}
-              <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+              <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
                 <label
-                  class={cn(
+                  className={cn(
                     layout.flex.between,
                     spacing.pad.sm,
                     'bg-surface-base',
@@ -580,7 +588,9 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     spacing.margin.bottom.inline,
                   )}
                 >
-                  <span class="body-small text-text-primary">{t('performance.enableServer')}</span>
+                  <span className="body-small text-text-primary">
+                    {t('performance.enableServer')}
+                  </span>
                   <input
                     type="checkbox"
                     checked={iperfSettings.enableServer}
@@ -590,11 +600,14 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                         enableServer: e.target.checked,
                       }))
                     }
-                    class={iconTokens.size.sm}
+                    className={iconTokens.size.sm}
                   />
                 </label>
                 <div>
-                  <label class="caption text-text-muted font-medium" for="iperf-server-port">
+                  <label
+                    className="caption text-text-muted font-medium"
+                    htmlFor="iperf-server-port"
+                  >
                     {t('performance.serverPort')}
                   </label>
                   <input
@@ -607,7 +620,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                         serverPort: Number.parseInt(e.target.value, 10) || 5201,
                       }))
                     }
-                    class={cn(
+                    className={cn(
                       inputTokens.base,
                       inputTokens.state.default,
                       inputTokens.size.md,
@@ -617,7 +630,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                     )}
                   />
                 </div>
-                <p class={cn('caption text-text-muted', spacing.margin.top.tight)}>
+                <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
                   {t('performance.serverAutoStart')}
                 </p>
               </div>

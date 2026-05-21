@@ -67,29 +67,29 @@ export const Modal: FC<ModalProps> = ({
   };
 
   return (
-    <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       {closeOnBackdropClick ? (
         <button
           type="button"
-          class="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
           onClick={onClose}
           aria-label="Close modal"
         />
       ) : (
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       )}
       <div
         ref={containerRef}
-        class={`mx-4 w-full ${sizeClasses[size]} rounded-2xl border border-surface-border bg-bg-surface/95 shadow-2xl ${className}`}
+        className={`mx-4 w-full ${sizeClasses[size]} rounded-2xl border border-surface-border bg-bg-surface/95 shadow-2xl ${className}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
         onKeyDown={handleContentKeyDown}
       >
         {title || showCloseButton ? (
-          <div class="flex items-center justify-between px-6 py-4 border-b border-surface-border">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border">
             {title ? (
-              <h2 id="modal-title" class="text-lg font-semibold text-text-primary">
+              <h2 id="modal-title" className="text-lg font-semibold text-text-primary">
                 {title}
               </h2>
             ) : null}
@@ -97,15 +97,15 @@ export const Modal: FC<ModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                class="ml-auto p-1 text-text-muted hover:text-text-primary transition-colors rounded-lg hover:bg-surface-hover"
+                className="ml-auto p-1 text-text-muted hover:text-text-primary transition-colors rounded-lg hover:bg-surface-hover"
                 aria-label="Close modal"
               >
-                <X class={iconSizes.lg} />
+                <X className={iconSizes.lg} />
               </button>
             ) : null}
           </div>
         ) : null}
-        <div class="p-6">{children}</div>
+        <div className="p-6">{children}</div>
       </div>
     </div>
   );
@@ -114,18 +114,18 @@ export const Modal: FC<ModalProps> = ({
 export const ModalHeader: FC<{ children: ReactNode; className?: string }> = ({
   children,
   className = '',
-}) => <div class={`mb-4 ${className}`}>{children}</div>;
+}) => <div className={`mb-4 ${className}`}>{children}</div>;
 
 export const ModalBody: FC<{ children: ReactNode; className?: string }> = ({
   children,
   className = '',
-}) => <div class={`space-y-4 ${className}`}>{children}</div>;
+}) => <div className={`space-y-4 ${className}`}>{children}</div>;
 
 export const ModalFooter: FC<{ children: ReactNode; className?: string }> = ({
   children,
   className = '',
 }) => (
-  <div class={`flex justify-end gap-3 pt-4 mt-4 border-t border-surface-border ${className}`}>
+  <div className={`flex justify-end gap-3 pt-4 mt-4 border-t border-surface-border ${className}`}>
     {children}
   </div>
 );

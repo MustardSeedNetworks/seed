@@ -212,8 +212,8 @@ function _channelGraph({
 
   if (networks.length === 0) {
     return (
-      <div class={layout.flex.center} style={{ height: `${height}px` }}>
-        <p class="body-small text-text-muted">
+      <div className={layout.flex.center} style={{ height: `${height}px` }}>
+        <p className="body-small text-text-muted">
           {tCards('wifi.channelGraph.noNetworksDetected', { band })}
         </p>
       </div>
@@ -221,17 +221,17 @@ function _channelGraph({
   }
 
   return (
-    <div class="relative">
+    <div className="relative">
       <svg
         width={width}
         height={height}
-        class="w-full"
+        className="w-full"
         viewBox={`0 0 ${width} ${height}`}
         role="img"
         aria-label="WiFi channel signal graph"
       >
         {/* Background grid */}
-        <g class="opacity-10">
+        <g className="opacity-10">
           {/* Horizontal lines (signal strength) */}
           {signalMarkers.map((signal) => {
             const y = padding.top + signalToY(signal, graphHeight);
@@ -262,7 +262,7 @@ function _channelGraph({
         </g>
 
         {/* Y-axis labels (signal strength) */}
-        <g class="text-text-muted" style={{ fontSize: '10px' }}>
+        <g className="text-text-muted" style={{ fontSize: '10px' }}>
           {signalMarkers.map((signal) => {
             const y = padding.top + signalToY(signal, graphHeight);
             return (
@@ -274,7 +274,7 @@ function _channelGraph({
         </g>
 
         {/* X-axis labels (channels) */}
-        <g class="text-text-muted" style={{ fontSize: '10px' }}>
+        <g className="text-text-muted" style={{ fontSize: '10px' }}>
           {channelMarkers.map(({ channel, x }) => (
             <text key={channel} x={x} y={height - padding.bottom + 15} textAnchor="middle">
               {channel}
@@ -288,11 +288,16 @@ function _channelGraph({
           y={height / 2}
           textAnchor="middle"
           transform={`rotate(-90, ${padding.left / 2}, ${height / 2})`}
-          class="body-small text-text-muted"
+          className="body-small text-text-muted"
         >
           Signal (dBm)
         </text>
-        <text x={width / 2} y={height - 5} textAnchor="middle" class="body-small text-text-muted">
+        <text
+          x={width / 2}
+          y={height - 5}
+          textAnchor="middle"
+          className="body-small text-text-muted"
+        >
           Channel
         </text>
 
@@ -312,7 +317,7 @@ function _channelGraph({
                 opacity={getNetworkOpacity(isHovered, isConnected)}
                 stroke={isConnected ? 'var(--color-brand-primary)' : 'var(--color-status-info)'}
                 strokeWidth={getNetworkStrokeWidth(isHovered, isConnected)}
-                class="transition-all cursor-pointer"
+                className="transition-all cursor-pointer"
                 onMouseEnter={(): void => setHoveredNetwork(network)}
                 onMouseLeave={(): void => setHoveredNetwork(null)}
                 aria-label={`Network ${network.ssid || network.bssid} on channel ${network.channel}`}
@@ -321,23 +326,22 @@ function _channelGraph({
           })}
         </g>
       </svg>
-
       {/* Hover tooltip */}
       {hoveredNetwork ? (
         <div
-          class="absolute bg-surface-raised border border-surface-border rounded shadow-lg p-2 z-10"
+          className="absolute bg-surface-raised border border-surface-border rounded shadow-lg p-2 z-10"
           style={{ top: '10px', right: '10px' }}
         >
-          <p class="body-small font-semibold">{hoveredNetwork.ssid || '(Hidden)'}</p>
-          <p class="caption text-text-muted">
+          <p className="body-small font-semibold">{hoveredNetwork.ssid || '(Hidden)'}</p>
+          <p className="caption text-text-muted">
             {tCards('wifi.channelGraph.tooltipChannel', {
               channel: hoveredNetwork.channel,
             })}
           </p>
-          <p class="caption text-text-muted">{hoveredNetwork.signal} dBm</p>
-          <p class="caption text-text-muted">{hoveredNetwork.channelWidth} MHz</p>
+          <p className="caption text-text-muted">{hoveredNetwork.signal} dBm</p>
+          <p className="caption text-text-muted">{hoveredNetwork.channelWidth} MHz</p>
           {hoveredNetwork.isConnected ? (
-            <p class="caption text-brand-primary font-medium">{tCommon('status.connected')}</p>
+            <p className="caption text-brand-primary font-medium">{tCommon('status.connected')}</p>
           ) : null}
         </div>
       ) : null}
@@ -407,7 +411,7 @@ export function WifiChannelGraph({
   return (
     <SimpleBaseCard
       title={tr('wifi.channelGraph.title')}
-      icon={<Wifi class={iconTokens.size.md} />}
+      icon={<Wifi className={iconTokens.size.md} />}
       status={getCardStatus(loading, data?.available)}
       loading={loading}
       loadingContent={<CardValue value={tc('status.scanning')} size="lg" />}
@@ -416,13 +420,13 @@ export function WifiChannelGraph({
         <>
           {/* Band selection tabs */}
           {availableBands.length > 1 ? (
-            <div class={cn(layout.inline.default, spacing.margin.bottom.inline)}>
+            <div className={cn(layout.inline.default, spacing.margin.bottom.inline)}>
               {availableBands.map((band) => (
                 <button
                   type="button"
                   key={band}
                   onClick={(): void => setSelectedBand(band)}
-                  class={cn(
+                  className={cn(
                     spacing.chip.md,
                     'rounded',
                     'transition-colors',
@@ -445,14 +449,16 @@ export function WifiChannelGraph({
           />
 
           {/* Legend */}
-          <div class={cn(layout.inline.default, spacing.margin.top.inline)}>
-            <div class={layout.inline.tight}>
-              <div class="w-4 h-4 bg-brand-primary opacity-70 rounded" />
-              <span class="caption text-text-muted">{tc('status.connected')}</span>
+          <div className={cn(layout.inline.default, spacing.margin.top.inline)}>
+            <div className={layout.inline.tight}>
+              <div className="w-4 h-4 bg-brand-primary opacity-70 rounded" />
+              <span className="caption text-text-muted">{tc('status.connected')}</span>
             </div>
-            <div class={layout.inline.tight}>
-              <div class="w-4 h-4 bg-status-info opacity-40 rounded" />
-              <span class="caption text-text-muted">{tr('wifi.channelGraph.otherNetworks')}</span>
+            <div className={layout.inline.tight}>
+              <div className="w-4 h-4 bg-status-info opacity-40 rounded" />
+              <span className="caption text-text-muted">
+                {tr('wifi.channelGraph.otherNetworks')}
+              </span>
             </div>
           </div>
         </>

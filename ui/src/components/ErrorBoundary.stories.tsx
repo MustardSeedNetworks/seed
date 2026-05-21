@@ -19,7 +19,7 @@ function Crash(): React.JSX.Element {
 export const Default: Story = {
   render: () => (
     <ErrorBoundary>
-      <div class="p-6 text-text-base">Child content renders normally.</div>
+      <div className="p-6 text-text-base">Child content renders normally.</div>
     </ErrorBoundary>
   ),
 };
@@ -38,10 +38,10 @@ export const RetryFlow: Story = {
     return (
       <ErrorBoundary
         fallback={
-          <div class="p-6 space-y-4">
-            <p class="text-text-base">Custom fallback rendered.</p>
+          <div className="p-6 space-y-4">
+            <p className="text-text-base">Custom fallback rendered.</p>
             <button
-              class="px-3 py-2 rounded bg-brand-primary text-text-inverse"
+              className="px-3 py-2 rounded bg-brand-primary text-text-inverse"
               type="button"
               onClick={() => setShouldThrow(false)}
             >
@@ -50,7 +50,7 @@ export const RetryFlow: Story = {
           </div>
         }
       >
-        {shouldThrow ? <Crash /> : <div class="p-6">Recovered content.</div>}
+        {shouldThrow ? <Crash /> : <div className="p-6">Recovered content.</div>}
       </ErrorBoundary>
     );
   },

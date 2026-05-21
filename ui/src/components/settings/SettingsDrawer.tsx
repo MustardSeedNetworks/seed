@@ -514,11 +514,10 @@ export const SettingsDrawer: React.MemoExoticComponent<
     <>
       {/* Backdrop */}
       <div
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
         onClick={onClose}
         aria-hidden="true"
       />
-
       {/* Drawer - full width on mobile, 384px on larger screens */}
       <div
         ref={drawerRef}
@@ -527,26 +526,26 @@ export const SettingsDrawer: React.MemoExoticComponent<
         aria-labelledby="settings-drawer-title"
         onClick={(e: React.MouseEvent): void => e.stopPropagation()}
         onKeyDown={(e: React.KeyboardEvent): void => e.stopPropagation()}
-        class="fixed right-0 top-0 h-full w-full sm:w-96 lg:w-lg bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl"
+        className="fixed right-0 top-0 h-full w-full sm:w-96 lg:w-lg bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl"
       >
         {/* Header */}
         <div
-          class={cn(
+          className={cn(
             layout.flex.between,
             'pad sm:pad-lg border-b border-surface-border sticky top-0 bg-surface-raised z-10',
           )}
         >
-          <div class="stack-xs">
-            <h2 id="settings-drawer-title" class="heading-3">
+          <div className="stack-xs">
+            <h2 id="settings-drawer-title" className="heading-3">
               {t('title')}
             </h2>
-            <p class="body-small">{t('subtitle')}</p>
+            <p className="body-small">{t('subtitle')}</p>
           </div>
           <button
             type="button"
             ref={closeButtonRef}
             onClick={onClose}
-            class={cn(
+            className={cn(
               button.size.md,
               radius.md,
               'hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-raised',
@@ -554,7 +553,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
             aria-label={t('network.closeSettings')}
           >
             <svg
-              class={iconTokens.size.lg}
+              className={iconTokens.size.lg}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -571,7 +570,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         </div>
 
         <div
-          class={cn(spacing.drawerPad, 'section-gap body-small leading-relaxed')}
+          className={cn(spacing.drawerPad, 'section-gap body-small leading-relaxed')}
           ref={scrollRef}
         >
           {/* Settings sections ordered to match dashboard card order */}

@@ -82,15 +82,15 @@ export function SurveyViewFloorPlanPanel({
   const { t } = useTranslation('survey');
 
   return (
-    <div class="lg:col-span-2">
-      <div class={cn('bg-surface-raised', radius.md, 'border border-surface-border pad')}>
-        <div class={cn(layout.flex.between, spacing.margin.bottom.content)}>
-          <h2 class="heading-3">{t('floorPlan.title')}</h2>
+    <div className="lg:col-span-2">
+      <div className={cn('bg-surface-raised', radius.md, 'border border-surface-border pad')}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.content)}>
+          <h2 className="heading-3">{t('floorPlan.title')}</h2>
           {heatmapMetric !== null && (
             <button
               type="button"
               onClick={() => setHeatmapMetric(null)}
-              class={cn(
+              className={cn(
                 button.size.sm,
                 'body-small bg-brand-primary text-text-inverse',
                 radius.md,
@@ -114,50 +114,56 @@ export function SurveyViewFloorPlanPanel({
             {/* Calibration panel */}
             {calibrationMode ? (
               <div
-                class={cn(
+                className={cn(
                   'bg-status-warning/10 border border-status-warning/20',
                   spacing.pad.sm,
                   radius.md,
                   spacing.margin.bottom.content,
                 )}
               >
-                <div class={cn('font-medium text-status-warning', spacing.margin.bottom.inline)}>
+                <div
+                  className={cn('font-medium text-status-warning', spacing.margin.bottom.inline)}
+                >
                   📐 {t('calibration.title')}
                 </div>
-                <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+                <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
                   {t('calibration.instructions')}
                 </p>
-                <div class="stack-sm">
-                  <div class={layout.inline.default}>
-                    <span class="body-small text-text-muted w-20">{t('calibration.pointA')}:</span>
+                <div className="stack-sm">
+                  <div className={layout.inline.default}>
+                    <span className="body-small text-text-muted w-20">
+                      {t('calibration.pointA')}:
+                    </span>
                     {calibrationPoints[0] ? (
-                      <span class="body-small font-medium">
+                      <span className="body-small font-medium">
                         ({calibrationPoints[0].x}, {calibrationPoints[0].y})
                       </span>
                     ) : (
-                      <span class="body-small text-text-muted italic">
+                      <span className="body-small text-text-muted italic">
                         {t('calibration.clickFloorPlan')}
                       </span>
                     )}
                   </div>
-                  <div class={layout.inline.default}>
-                    <span class="body-small text-text-muted w-20">{t('calibration.pointB')}:</span>
+                  <div className={layout.inline.default}>
+                    <span className="body-small text-text-muted w-20">
+                      {t('calibration.pointB')}:
+                    </span>
                     {calibrationPoints[1] ? (
-                      <span class="body-small font-medium">
+                      <span className="body-small font-medium">
                         ({calibrationPoints[1].x}, {calibrationPoints[1].y})
                       </span>
                     ) : (
-                      <span class="body-small text-text-muted italic">
+                      <span className="body-small text-text-muted italic">
                         {t('calibration.clickFloorPlan')}
                       </span>
                     )}
                   </div>
                   {calibrationPoints.length === 2 && (
-                    <div class={layout.inline.default}>
-                      <span class="body-small text-text-muted w-20">
+                    <div className={layout.inline.default}>
+                      <span className="body-small text-text-muted w-20">
                         {t('calibration.pixelDistance')}:
                       </span>
-                      <span class="body-small font-medium">
+                      <span className="body-small font-medium">
                         {Math.sqrt(
                           (calibrationPoints[1].x - calibrationPoints[0].x) ** 2 +
                             (calibrationPoints[1].y - calibrationPoints[0].y) ** 2,
@@ -166,8 +172,11 @@ export function SurveyViewFloorPlanPanel({
                       </span>
                     </div>
                   )}
-                  <div class={cn(layout.inline.default, spacing.margin.top.inline)}>
-                    <label for="calibration-distance" class="body-small text-text-muted w-20">
+                  <div className={cn(layout.inline.default, spacing.margin.top.inline)}>
+                    <label
+                      htmlFor="calibration-distance"
+                      className="body-small text-text-muted w-20"
+                    >
                       {t('calibration.distance')}:
                     </label>
                     <input
@@ -182,7 +191,7 @@ export function SurveyViewFloorPlanPanel({
                       placeholder={
                         useSae ? t('calibration.enterFeet') : t('calibration.enterMeters')
                       }
-                      class={cn(
+                      className={cn(
                         'flex-1',
                         button.size.sm,
                         'border border-surface-border',
@@ -190,16 +199,16 @@ export function SurveyViewFloorPlanPanel({
                         'bg-surface-base text-text-primary',
                       )}
                     />
-                    <span class="body-small text-text-muted">
+                    <span className="body-small text-text-muted">
                       {useSae ? t('calibration.feet') : t('calibration.meters')}
                     </span>
                   </div>
-                  <div class={cn(layout.inline.default, spacing.margin.top.inline)}>
+                  <div className={cn(layout.inline.default, spacing.margin.top.inline)}>
                     <button
                       type="button"
                       onClick={handleSaveCalibration}
                       disabled={calibrationPoints.length !== 2 || !calibrationDistance}
-                      class={cn(
+                      className={cn(
                         button.size.sm,
                         'bg-brand-primary text-text-inverse',
                         radius.md,
@@ -211,7 +220,7 @@ export function SurveyViewFloorPlanPanel({
                     <button
                       type="button"
                       onClick={handleCancelCalibration}
-                      class={cn(
+                      className={cn(
                         button.size.sm,
                         'border border-surface-border',
                         radius.md,
@@ -223,7 +232,7 @@ export function SurveyViewFloorPlanPanel({
                     <button
                       type="button"
                       onClick={() => setCalibrationPoints([])}
-                      class={cn(
+                      className={cn(
                         button.size.sm,
                         'border border-surface-border',
                         radius.md,
@@ -239,15 +248,15 @@ export function SurveyViewFloorPlanPanel({
 
             {/* Calibrate button and current scale info */}
             {!calibrationMode && currentFloorPlan && (
-              <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-                <div class="body-small text-text-muted">
+              <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+                <div className="body-small text-text-muted">
                   {t('floorPlan.scale')}: {currentFloorPlan.scaleM.toFixed(3)} m/px
                   {survey.status === 'in_progress' && ` • ${t('floorPlan.clickToMeasure')}`}
                 </div>
                 <button
                   type="button"
                   onClick={() => setCalibrationMode(true)}
-                  class={cn(
+                  className={cn(
                     button.size.sm,
                     'body-small border border-surface-border',
                     radius.md,
@@ -255,7 +264,7 @@ export function SurveyViewFloorPlanPanel({
                     layout.inline.tight,
                   )}
                 >
-                  <Ruler class={iconTokens.size.sm} />
+                  <Ruler className={iconTokens.size.sm} />
                   {t('buttons.calibrateScale')}
                 </button>
               </div>
@@ -290,7 +299,7 @@ export function SurveyViewFloorPlanPanel({
 
             {/* Heatmap Legend and Stats - show when heatmap is active */}
             {heatmapMetric !== null && currentSamples.length > 0 && (
-              <div class={spacing.margin.top.content}>
+              <div className={spacing.margin.top.content}>
                 <HeatmapLegend
                   metric={heatmapMetric}
                   minValue={calculateMetricRange(currentSamples, heatmapMetric).min}
@@ -302,24 +311,24 @@ export function SurveyViewFloorPlanPanel({
           </div>
         ) : (
           <div
-            class={cn(
+            className={cn(
               'border-2 border-dashed border-surface-border',
               radius.md,
               'pad-lg text-center',
             )}
           >
             <Upload
-              class={cn(
+              className={cn(
                 iconTokens.size.xl,
                 'mx-auto text-text-muted',
                 spacing.margin.bottom.content,
               )}
             />
-            <p class={cn('text-text-muted', spacing.margin.bottom.content)}>
+            <p className={cn('text-text-muted', spacing.margin.bottom.content)}>
               {t('floorPlan.uploadPrompt')}
             </p>
             <label
-              class={cn(
+              className={cn(
                 'inline-block',
                 button.size.md,
                 'bg-brand-primary text-text-inverse',
@@ -331,7 +340,7 @@ export function SurveyViewFloorPlanPanel({
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
-                class="hidden"
+                className="hidden"
                 onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void => {
                   const file = (e.target as HTMLInputElement).files?.[0];
                   if (file) {
@@ -343,23 +352,23 @@ export function SurveyViewFloorPlanPanel({
                 disabled={uploadingFloorPlan}
               />
             </label>
-            <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
+            <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
               {t('floorPlan.supportedFormats')}
             </p>
             <div
-              class={cn(
+              className={cn(
                 spacing.margin.top.content,
                 'border-t border-surface-border',
                 spacing.padding.top,
               )}
             >
-              <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+              <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
                 {t('import.description')}
               </p>
               <button
                 type="button"
                 onClick={() => setShowImport(true)}
-                class={cn(
+                className={cn(
                   button.size.sm,
                   'border border-surface-border',
                   radius.md,
@@ -367,7 +376,7 @@ export function SurveyViewFloorPlanPanel({
                   layout.inline.default,
                 )}
               >
-                <FileArchive class={iconTokens.size.sm} />
+                <FileArchive className={iconTokens.size.sm} />
                 {t('import.button')}
               </button>
             </div>

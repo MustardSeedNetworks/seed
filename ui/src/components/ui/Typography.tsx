@@ -13,43 +13,43 @@ interface TypographyProps extends HTMLAttributes<HTMLElement> {
 }
 
 export const H1: FC<TypographyProps> = ({ children, className = '', ...props }) => (
-  <h1 class={`text-2xl font-bold text-text-primary ${className}`} {...props}>
+  <h1 className={`text-2xl font-bold text-text-primary ${className}`} {...props}>
     {children}
   </h1>
 );
 
 export const H2: FC<TypographyProps> = ({ children, className = '', ...props }) => (
-  <h2 class={`text-xl font-semibold text-text-primary ${className}`} {...props}>
+  <h2 className={`text-xl font-semibold text-text-primary ${className}`} {...props}>
     {children}
   </h2>
 );
 
 export const H3: FC<TypographyProps> = ({ children, className = '', ...props }) => (
-  <h3 class={`text-lg font-semibold text-text-primary ${className}`} {...props}>
+  <h3 className={`text-lg font-semibold text-text-primary ${className}`} {...props}>
     {children}
   </h3>
 );
 
 export const H4: FC<TypographyProps> = ({ children, className = '', ...props }) => (
-  <h4 class={`text-sm font-semibold text-text-primary ${className}`} {...props}>
+  <h4 className={`text-sm font-semibold text-text-primary ${className}`} {...props}>
     {children}
   </h4>
 );
 
 export const P: FC<TypographyProps> = ({ children, className = '', ...props }) => (
-  <p class={`text-text-secondary leading-relaxed ${className}`} {...props}>
+  <p className={`text-text-secondary leading-relaxed ${className}`} {...props}>
     {children}
   </p>
 );
 
 export const SmallText: FC<TypographyProps> = ({ children, className = '', ...props }) => (
-  <span class={`text-sm text-text-muted ${className}`} {...props}>
+  <span className={`text-sm text-text-muted ${className}`} {...props}>
     {children}
   </span>
 );
 
 export const Caption: FC<TypographyProps> = ({ children, className = '', ...props }) => (
-  <span class={`text-xs text-text-muted ${className}`} {...props}>
+  <span className={`text-xs text-text-muted ${className}`} {...props}>
     {children}
   </span>
 );
@@ -72,20 +72,20 @@ export const AccentLink: FC<AccentLinkProps> = ({
 
   if (to) {
     return (
-      <Link to={to} class={linkClass} {...props}>
+      <Link to={to} className={linkClass} {...props}>
         {children}
       </Link>
     );
   }
   if (href) {
     return (
-      <a href={href} class={linkClass} {...props}>
+      <a href={href} className={linkClass} {...props}>
         {children}
       </a>
     );
   }
   return (
-    <button type="button" onClick={onClick} class={linkClass} {...props}>
+    <button type="button" onClick={onClick} className={linkClass} {...props}>
       {children}
     </button>
   );

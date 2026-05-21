@@ -555,7 +555,7 @@ export function SurveyView({
   };
 
   return (
-    <div class="fixed inset-0 bg-surface-base z-50 overflow-auto">
+    <div className="fixed inset-0 bg-surface-base z-50 overflow-auto">
       <SurveyViewHeader
         survey={survey}
         sampleCount={currentSamples.length}
@@ -565,12 +565,11 @@ export function SurveyView({
         handleStatusChange={handleStatusChange}
         onClose={onClose}
       />
-
       {/* Main content */}
-      <div class={cn('max-w-7xl mx-auto', spacing.pad.default, spacing.pad.lg)}>
+      <div className={cn('max-w-7xl mx-auto', spacing.pad.default, spacing.pad.lg)}>
         {error ? (
           <div
-            class={cn(
+            className={cn(
               'bg-status-error/10 border border-status-error/20 text-status-error',
               spacing.pad.sm,
               radius.md,
@@ -583,7 +582,7 @@ export function SurveyView({
 
         {!readyToStart && (
           <div
-            class={cn(
+            className={cn(
               'bg-status-warning/10 border border-status-warning/30 text-status-warning',
               spacing.pad.sm,
               radius.md,
@@ -596,7 +595,7 @@ export function SurveyView({
 
         {/* AirMapper Import Modal */}
         {showImport ? (
-          <div class={spacing.margin.bottom.content}>
+          <div className={spacing.margin.bottom.content}>
             <AirMapperImport
               onImport={handleAirMapperImport}
               onCancel={(): void => setShowImport(false)}
@@ -607,7 +606,7 @@ export function SurveyView({
         {/* WiFi adapter status banner */}
         {wifiStatus && wifiStatus.status !== 'ready' && (
           <div
-            class={cn(
+            className={cn(
               wifiStatus.status === 'unavailable'
                 ? 'bg-status-info/10 border-status-info/20 text-status-info'
                 : 'bg-status-info/10 border-status-info/20 text-status-info',
@@ -617,17 +616,17 @@ export function SurveyView({
               spacing.margin.bottom.content,
             )}
           >
-            <div class="font-medium">
+            <div className="font-medium">
               {wifiStatus.status === 'unavailable'
                 ? t('wifi.noAdapterSetup')
                 : t('wifi.adapterAvailable')}
             </div>
             {wifiStatus.availableAdapters.length > 0 && (
-              <div class={cn('caption', spacing.margin.top.tight)}>
+              <div className={cn('caption', spacing.margin.top.tight)}>
                 {t('wifi.availableAdapters')}: {wifiStatus.availableAdapters.join(', ')}
               </div>
             )}
-            <div class={cn('caption', spacing.margin.top.tight)}>
+            <div className={cn('caption', spacing.margin.top.tight)}>
               {t('wifi.setupWithoutAdapter')}
             </div>
           </div>
@@ -635,7 +634,7 @@ export function SurveyView({
 
         {sampling ? (
           <div
-            class={cn(
+            className={cn(
               'bg-status-info/10 border border-status-info/20 text-status-info',
               spacing.pad.sm,
               radius.md,
@@ -643,12 +642,12 @@ export function SurveyView({
               layout.inline.default,
             )}
           >
-            <Loader class={cn(iconTokens.size.sm, 'animate-spin')} />
+            <Loader className={cn(iconTokens.size.sm, 'animate-spin')} />
             {t('progress.takingMeasurement')}
           </div>
         ) : null}
 
-        <div class={cn('grid grid-cols-1 lg:grid-cols-3', spacing.gap.spacious)}>
+        <div className={cn('grid grid-cols-1 lg:grid-cols-3', spacing.gap.spacious)}>
           <SurveyViewFloorPlanPanel
             survey={survey}
             currentFloorPlan={currentFloorPlan}

@@ -31,17 +31,17 @@ export function SurveyViewHeatmapSelector({
   }
 
   return (
-    <div class={cn(spacing.margin.bottom.content, spacing.stack.sm)}>
+    <div className={cn(spacing.margin.bottom.content, spacing.stack.sm)}>
       {/* Signal Category */}
       <div>
-        <div class={cn('body-small text-text-muted', spacing.margin.bottom.tight)}>
+        <div className={cn('body-small text-text-muted', spacing.margin.bottom.tight)}>
           {t('heatmaps.categories.signal')}
         </div>
-        <div class={layout.inline.default}>
+        <div className={layout.inline.default}>
           <button
             type="button"
             onClick={() => setHeatmapMetric('rssi')}
-            class={cn(
+            className={cn(
               button.size.sm,
               'body-small border border-surface-border',
               radius.md,
@@ -49,13 +49,13 @@ export function SurveyViewHeatmapSelector({
               layout.inline.tight,
             )}
           >
-            <Wifi class={iconTokens.size.sm} />
+            <Wifi className={iconTokens.size.sm} />
             {t('heatmaps.rssi')}
           </button>
           <button
             type="button"
             onClick={() => setHeatmapMetric('snr')}
-            class={cn(
+            className={cn(
               button.size.sm,
               'body-small border border-surface-border',
               radius.md,
@@ -63,13 +63,13 @@ export function SurveyViewHeatmapSelector({
               layout.inline.tight,
             )}
           >
-            <Activity class={iconTokens.size.sm} />
+            <Activity className={iconTokens.size.sm} />
             {t('heatmaps.snr')}
           </button>
           <button
             type="button"
             onClick={() => setHeatmapMetric('noise')}
-            class={cn(
+            className={cn(
               button.size.sm,
               'body-small border border-surface-border',
               radius.md,
@@ -77,22 +77,21 @@ export function SurveyViewHeatmapSelector({
               layout.inline.tight,
             )}
           >
-            <Radio class={iconTokens.size.sm} />
+            <Radio className={iconTokens.size.sm} />
             {t('heatmaps.noise')}
           </button>
         </div>
       </div>
-
       {/* Interference Category */}
       <div>
-        <div class={cn('body-small text-text-muted', spacing.margin.bottom.tight)}>
+        <div className={cn('body-small text-text-muted', spacing.margin.bottom.tight)}>
           {t('heatmaps.categories.interference')}
         </div>
-        <div class={layout.inline.default}>
+        <div className={layout.inline.default}>
           <button
             type="button"
             onClick={() => setHeatmapMetric('cochannel')}
-            class={cn(
+            className={cn(
               button.size.sm,
               'body-small border border-surface-border',
               radius.md,
@@ -100,13 +99,13 @@ export function SurveyViewHeatmapSelector({
               layout.inline.tight,
             )}
           >
-            <Waves class={iconTokens.size.sm} />
+            <Waves className={iconTokens.size.sm} />
             {t('heatmaps.cochannel')}
           </button>
           <button
             type="button"
             onClick={() => setHeatmapMetric('adjacent')}
-            class={cn(
+            className={cn(
               button.size.sm,
               'body-small border border-surface-border',
               radius.md,
@@ -114,13 +113,13 @@ export function SurveyViewHeatmapSelector({
               layout.inline.tight,
             )}
           >
-            <Waves class={iconTokens.size.sm} />
+            <Waves className={iconTokens.size.sm} />
             {t('heatmaps.adjacent')}
           </button>
           <button
             type="button"
             onClick={() => setHeatmapMetric('apDensity')}
-            class={cn(
+            className={cn(
               button.size.sm,
               'body-small border border-surface-border',
               radius.md,
@@ -128,13 +127,13 @@ export function SurveyViewHeatmapSelector({
               layout.inline.tight,
             )}
           >
-            <Hash class={iconTokens.size.sm} />
+            <Hash className={iconTokens.size.sm} />
             {t('heatmaps.apDensity')}
           </button>
           <button
             type="button"
             onClick={() => setHeatmapMetric('ssidCount')}
-            class={cn(
+            className={cn(
               button.size.sm,
               'body-small border border-surface-border',
               radius.md,
@@ -142,23 +141,22 @@ export function SurveyViewHeatmapSelector({
               layout.inline.tight,
             )}
           >
-            <Hash class={iconTokens.size.sm} />
+            <Hash className={iconTokens.size.sm} />
             {t('heatmaps.ssidCount')}
           </button>
         </div>
       </div>
-
       {/* Performance Category - only for throughput surveys */}
       {surveyType === 'throughput' && (
         <div>
-          <div class={cn('body-small text-text-muted', spacing.margin.bottom.tight)}>
+          <div className={cn('body-small text-text-muted', spacing.margin.bottom.tight)}>
             {t('heatmaps.categories.performance')}
           </div>
-          <div class={layout.inline.default}>
+          <div className={layout.inline.default}>
             <button
               type="button"
               onClick={() => setHeatmapMetric('throughput')}
-              class={cn(
+              className={cn(
                 button.size.sm,
                 'body-small border border-surface-border',
                 radius.md,
@@ -166,13 +164,13 @@ export function SurveyViewHeatmapSelector({
                 layout.inline.tight,
               )}
             >
-              <Gauge class={iconTokens.size.sm} />
+              <Gauge className={iconTokens.size.sm} />
               {t('heatmaps.throughput')}
             </button>
             <button
               type="button"
               onClick={() => setHeatmapMetric('latency')}
-              class={cn(
+              className={cn(
                 button.size.sm,
                 'body-small border border-surface-border',
                 radius.md,
@@ -180,7 +178,7 @@ export function SurveyViewHeatmapSelector({
                 layout.inline.tight,
               )}
             >
-              <Clock class={iconTokens.size.sm} />
+              <Clock className={iconTokens.size.sm} />
               {t('heatmaps.latency')}
             </button>
           </div>

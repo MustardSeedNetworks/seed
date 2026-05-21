@@ -50,19 +50,19 @@ export const Alert: FC<AlertProps> = ({ status, children, onDismiss, className =
 
   return (
     <div
-      class={`flex items-center gap-2 rounded-lg border p-3 ${config.containerClass} ${className}`}
+      className={`flex items-center gap-2 rounded-lg border p-3 ${config.containerClass} ${className}`}
       role="alert"
     >
-      <Icon class={`${iconSizes.md} flex-shrink-0 ${config.iconClass}`} />
-      <span class="flex-1">{children}</span>
+      <Icon className={`${iconSizes.md} flex-shrink-0 ${config.iconClass}`} />
+      <span className="flex-1">{children}</span>
       {onDismiss ? (
         <button
           type="button"
           onClick={onDismiss}
-          class="ml-auto text-current hover:opacity-70 transition-opacity"
+          className="ml-auto text-current hover:opacity-70 transition-opacity"
           aria-label="Dismiss alert"
         >
-          <X class={iconSizes.md} />
+          <X className={iconSizes.md} />
         </button>
       ) : null}
     </div>

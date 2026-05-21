@@ -83,7 +83,9 @@ const deviceColumns: Column<Device>[] = [
       };
       const statusClass = statusColors[d.status];
       return (
-        <span class={cn(spacing.badge.padXs, 'rounded-full text-xs', statusClass)}>{d.status}</span>
+        <span className={cn(spacing.badge.padXs, 'rounded-full text-xs', statusClass)}>
+          {d.status}
+        </span>
       );
     },
   },
@@ -191,7 +193,7 @@ export const WithActions: Story = {
           e.stopPropagation();
           alert(`Action on ${device.hostname}`);
         }}
-        class={cn(
+        className={cn(
           spacing.chip.sm,
           'text-xs bg-brand-primary/20 text-brand-primary rounded hover:bg-brand-primary/30',
         )}

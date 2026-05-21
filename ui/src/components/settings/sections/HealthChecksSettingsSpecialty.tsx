@@ -116,24 +116,24 @@ export function HealthChecksSettingsSpecialty({
   return (
     <>
       {/* RTSP Video Endpoints */}
-      <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-        <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-          <span class="caption text-text-muted font-medium">{t('health.rtspEndpoints')}</span>
+      <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+          <span className="caption text-text-muted font-medium">{t('health.rtspEndpoints')}</span>
           <button
             type="button"
             onClick={addRtspEndpoint}
-            class="caption text-brand-primary hover:text-brand-accent"
+            className="caption text-brand-primary hover:text-brand-accent"
           >
             {t('common.add')}
           </button>
         </div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           {t('health.rtspDescription')}
         </p>
         {(testsSettings.rtspEndpoints ?? []).map((endpoint) => (
           <div
             key={endpoint.id}
-            class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+            className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
           >
             <input
               type="text"
@@ -142,7 +142,7 @@ export function HealthChecksSettingsSpecialty({
                 updateRtspEndpoint(endpoint.id ?? '', 'name', e.target.value)
               }
               placeholder={t('common.name')}
-              class={cn(input.base, input.state.default, input.size.md, 'w-24')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
             />
             <input
               type="text"
@@ -151,38 +151,37 @@ export function HealthChecksSettingsSpecialty({
                 updateRtspEndpoint(endpoint.id ?? '', 'url', e.target.value)
               }
               placeholder="rtsp://host:554/stream"
-              class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
+              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
             />
             <button
               type="button"
               onClick={(): void => removeRtspEndpoint(endpoint.id ?? '')}
-              class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+              className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
             >
               {t('common.remove')}
             </button>
           </div>
         ))}
       </div>
-
       {/* DICOM Medical Imaging Endpoints */}
-      <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-        <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-          <span class="caption text-text-muted font-medium">{t('health.dicomEndpoints')}</span>
+      <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+          <span className="caption text-text-muted font-medium">{t('health.dicomEndpoints')}</span>
           <button
             type="button"
             onClick={addDicomEndpoint}
-            class="caption text-brand-primary hover:text-brand-accent"
+            className="caption text-brand-primary hover:text-brand-accent"
           >
             {t('common.add')}
           </button>
         </div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           {t('health.dicomDescription')}
         </p>
         {(testsSettings.dicomEndpoints ?? []).map((endpoint) => (
           <div
             key={endpoint.id}
-            class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+            className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
           >
             <input
               type="text"
@@ -191,7 +190,7 @@ export function HealthChecksSettingsSpecialty({
                 updateDicomEndpoint(endpoint.id ?? '', 'name', e.target.value)
               }
               placeholder={t('common.name')}
-              class={cn(input.base, input.state.default, input.size.md, 'w-24')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
             />
             <input
               type="text"
@@ -200,7 +199,7 @@ export function HealthChecksSettingsSpecialty({
                 updateDicomEndpoint(endpoint.id ?? '', 'host', e.target.value)
               }
               placeholder={t('common.host')}
-              class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
+              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
             />
             <input
               type="number"
@@ -209,7 +208,7 @@ export function HealthChecksSettingsSpecialty({
                 updateDicomEndpoint(endpoint.id ?? '', 'port', Number.parseInt(e.target.value, 10))
               }
               placeholder="104"
-              class={cn(input.base, input.state.default, input.size.md, 'w-20')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-20')}
             />
             <input
               type="text"
@@ -218,38 +217,37 @@ export function HealthChecksSettingsSpecialty({
                 updateDicomEndpoint(endpoint.id ?? '', 'aeTitle', e.target.value)
               }
               placeholder="AE Title"
-              class={cn(input.base, input.state.default, input.size.md, 'w-24')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
             />
             <button
               type="button"
               onClick={(): void => removeDicomEndpoint(endpoint.id ?? '')}
-              class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+              className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
             >
               {t('common.remove')}
             </button>
           </div>
         ))}
       </div>
-
       {/* HL7 MLLP Endpoints */}
-      <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-        <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-          <span class="caption text-text-muted font-medium">{t('health.hl7Endpoints')}</span>
+      <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+          <span className="caption text-text-muted font-medium">{t('health.hl7Endpoints')}</span>
           <button
             type="button"
             onClick={addHl7Endpoint}
-            class="caption text-brand-primary hover:text-brand-accent"
+            className="caption text-brand-primary hover:text-brand-accent"
           >
             {t('common.add')}
           </button>
         </div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           {t('health.hl7Description')}
         </p>
         {(testsSettings.hl7Endpoints ?? []).map((endpoint) => (
           <div
             key={endpoint.id}
-            class={cn(
+            className={cn(
               spacing.stack.xs,
               spacing.margin.bottom.heading,
               spacing.pad.xs,
@@ -257,7 +255,7 @@ export function HealthChecksSettingsSpecialty({
               radius.default,
             )}
           >
-            <div class={cn('flex', spacing.gap.compact)}>
+            <div className={cn('flex', spacing.gap.compact)}>
               <input
                 type="text"
                 value={endpoint.name}
@@ -265,7 +263,12 @@ export function HealthChecksSettingsSpecialty({
                   updateHl7Endpoint(endpoint.id ?? '', 'name', e.target.value)
                 }
                 placeholder={t('common.name')}
-                class={cn(input.base, input.state.default, input.size.md, 'w-32 bg-surface-raised')}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  'w-32 bg-surface-raised',
+                )}
               />
               <input
                 type="text"
@@ -274,7 +277,7 @@ export function HealthChecksSettingsSpecialty({
                   updateHl7Endpoint(endpoint.id ?? '', 'host', e.target.value)
                 }
                 placeholder={t('common.host')}
-                class={cn(
+                className={cn(
                   input.base,
                   input.state.default,
                   input.size.md,
@@ -288,17 +291,22 @@ export function HealthChecksSettingsSpecialty({
                   updateHl7Endpoint(endpoint.id ?? '', 'port', Number.parseInt(e.target.value, 10))
                 }
                 placeholder="2575"
-                class={cn(input.base, input.state.default, input.size.md, 'w-20 bg-surface-raised')}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  'w-20 bg-surface-raised',
+                )}
               />
               <button
                 type="button"
                 onClick={(): void => removeHl7Endpoint(endpoint.id ?? '')}
-                class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
               >
                 {t('common.remove')}
               </button>
             </div>
-            <div class={cn('flex', spacing.gap.compact)}>
+            <div className={cn('flex', spacing.gap.compact)}>
               <input
                 type="text"
                 value={endpoint.sendingApp}
@@ -306,7 +314,7 @@ export function HealthChecksSettingsSpecialty({
                   updateHl7Endpoint(endpoint.id ?? '', 'sendingApp', e.target.value)
                 }
                 placeholder={t('health.sendingApp')}
-                class={cn(
+                className={cn(
                   input.base,
                   input.state.default,
                   input.size.md,
@@ -320,7 +328,7 @@ export function HealthChecksSettingsSpecialty({
                   updateHl7Endpoint(endpoint.id ?? '', 'sendingFacility', e.target.value)
                 }
                 placeholder={t('health.sendingFacility')}
-                class={cn(
+                className={cn(
                   input.base,
                   input.state.default,
                   input.size.md,
@@ -328,7 +336,7 @@ export function HealthChecksSettingsSpecialty({
                 )}
               />
             </div>
-            <div class={cn('flex', spacing.gap.compact)}>
+            <div className={cn('flex', spacing.gap.compact)}>
               <input
                 type="text"
                 value={endpoint.receivingApp}
@@ -336,7 +344,7 @@ export function HealthChecksSettingsSpecialty({
                   updateHl7Endpoint(endpoint.id ?? '', 'receivingApp', e.target.value)
                 }
                 placeholder={t('health.receivingApp')}
-                class={cn(
+                className={cn(
                   input.base,
                   input.state.default,
                   input.size.md,
@@ -350,7 +358,7 @@ export function HealthChecksSettingsSpecialty({
                   updateHl7Endpoint(endpoint.id ?? '', 'receivingFacility', e.target.value)
                 }
                 placeholder={t('health.receivingFacility')}
-                class={cn(
+                className={cn(
                   input.base,
                   input.state.default,
                   input.size.md,
@@ -361,26 +369,25 @@ export function HealthChecksSettingsSpecialty({
           </div>
         ))}
       </div>
-
       {/* FHIR R4 Endpoints */}
-      <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-        <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-          <span class="caption text-text-muted font-medium">{t('health.fhirEndpoints')}</span>
+      <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+          <span className="caption text-text-muted font-medium">{t('health.fhirEndpoints')}</span>
           <button
             type="button"
             onClick={addFhirEndpoint}
-            class="caption text-brand-primary hover:text-brand-accent"
+            className="caption text-brand-primary hover:text-brand-accent"
           >
             {t('common.add')}
           </button>
         </div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           {t('health.fhirDescription')}
         </p>
         {(testsSettings.fhirEndpoints ?? []).map((endpoint) => (
           <div
             key={endpoint.id}
-            class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+            className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
           >
             <input
               type="text"
@@ -389,7 +396,7 @@ export function HealthChecksSettingsSpecialty({
                 updateFhirEndpoint(endpoint.id ?? '', 'name', e.target.value)
               }
               placeholder={t('common.name')}
-              class={cn(input.base, input.state.default, input.size.md, 'w-24')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
             />
             <input
               type="text"
@@ -398,14 +405,14 @@ export function HealthChecksSettingsSpecialty({
                 updateFhirEndpoint(endpoint.id ?? '', 'baseUrl', e.target.value)
               }
               placeholder="https://fhir.example.com/r4"
-              class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
+              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
             />
             <select
               value={endpoint.authType}
               onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                 updateFhirEndpoint(endpoint.id ?? '', 'authType', e.target.value)
               }
-              class={cn(input.base, input.state.default, input.size.md, 'w-24')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
             >
               <option value="none">None</option>
               <option value="basic">Basic</option>
@@ -414,33 +421,32 @@ export function HealthChecksSettingsSpecialty({
             <button
               type="button"
               onClick={(): void => removeFhirEndpoint(endpoint.id ?? '')}
-              class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+              className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
             >
               {t('common.remove')}
             </button>
           </div>
         ))}
       </div>
-
       {/* LTI/LMS Education Endpoints */}
-      <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-        <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-          <span class="caption text-text-muted font-medium">{t('health.ltiEndpoints')}</span>
+      <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+          <span className="caption text-text-muted font-medium">{t('health.ltiEndpoints')}</span>
           <button
             type="button"
             onClick={addLtiEndpoint}
-            class="caption text-brand-primary hover:text-brand-accent"
+            className="caption text-brand-primary hover:text-brand-accent"
           >
             {t('common.add')}
           </button>
         </div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           {t('health.ltiDescription')}
         </p>
         {(testsSettings.ltiEndpoints ?? []).map((endpoint) => (
           <div
             key={endpoint.id}
-            class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+            className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
           >
             <input
               type="text"
@@ -449,7 +455,7 @@ export function HealthChecksSettingsSpecialty({
                 updateLtiEndpoint(endpoint.id ?? '', 'name', e.target.value)
               }
               placeholder={t('common.name')}
-              class={cn(input.base, input.state.default, input.size.md, 'w-24')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
             />
             <input
               type="text"
@@ -458,7 +464,7 @@ export function HealthChecksSettingsSpecialty({
                 updateLtiEndpoint(endpoint.id ?? '', 'launchUrl', e.target.value)
               }
               placeholder="https://lms.example.com/lti/launch"
-              class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
+              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
             />
             <input
               type="text"
@@ -467,38 +473,37 @@ export function HealthChecksSettingsSpecialty({
                 updateLtiEndpoint(endpoint.id ?? '', 'consumerKey', e.target.value)
               }
               placeholder={t('health.consumerKey')}
-              class={cn(input.base, input.state.default, input.size.md, 'w-32')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-32')}
             />
             <button
               type="button"
               onClick={(): void => removeLtiEndpoint(endpoint.id ?? '')}
-              class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+              className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
             >
               {t('common.remove')}
             </button>
           </div>
         ))}
       </div>
-
       {/* OPC-UA Industrial Endpoints */}
-      <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-        <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-          <span class="caption text-text-muted font-medium">{t('health.opcuaEndpoints')}</span>
+      <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+          <span className="caption text-text-muted font-medium">{t('health.opcuaEndpoints')}</span>
           <button
             type="button"
             onClick={addOpcuaEndpoint}
-            class="caption text-brand-primary hover:text-brand-accent"
+            className="caption text-brand-primary hover:text-brand-accent"
           >
             {t('common.add')}
           </button>
         </div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           {t('health.opcuaDescription')}
         </p>
         {(testsSettings.opcuaEndpoints ?? []).map((endpoint) => (
           <div
             key={endpoint.id}
-            class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+            className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
           >
             <input
               type="text"
@@ -507,7 +512,7 @@ export function HealthChecksSettingsSpecialty({
                 updateOpcuaEndpoint(endpoint.id ?? '', 'name', e.target.value)
               }
               placeholder={t('common.name')}
-              class={cn(input.base, input.state.default, input.size.md, 'w-24')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
             />
             <input
               type="text"
@@ -516,14 +521,14 @@ export function HealthChecksSettingsSpecialty({
                 updateOpcuaEndpoint(endpoint.id ?? '', 'endpointUrl', e.target.value)
               }
               placeholder="opc.tcp://host:4840"
-              class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
+              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
             />
             <select
               value={endpoint.securityMode}
               onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                 updateOpcuaEndpoint(endpoint.id ?? '', 'securityMode', e.target.value)
               }
-              class={cn(input.base, input.state.default, input.size.md, 'w-32')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-32')}
             >
               <option value="None">None</option>
               <option value="Sign">Sign</option>
@@ -532,33 +537,32 @@ export function HealthChecksSettingsSpecialty({
             <button
               type="button"
               onClick={(): void => removeOpcuaEndpoint(endpoint.id ?? '')}
-              class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+              className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
             >
               {t('common.remove')}
             </button>
           </div>
         ))}
       </div>
-
       {/* Modbus TCP Industrial Endpoints */}
-      <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-        <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-          <span class="caption text-text-muted font-medium">{t('health.modbusEndpoints')}</span>
+      <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+          <span className="caption text-text-muted font-medium">{t('health.modbusEndpoints')}</span>
           <button
             type="button"
             onClick={addModbusEndpoint}
-            class="caption text-brand-primary hover:text-brand-accent"
+            className="caption text-brand-primary hover:text-brand-accent"
           >
             {t('common.add')}
           </button>
         </div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           {t('health.modbusDescription')}
         </p>
         {(testsSettings.modbusEndpoints ?? []).map((endpoint) => (
           <div
             key={endpoint.id}
-            class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+            className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
           >
             <input
               type="text"
@@ -567,7 +571,7 @@ export function HealthChecksSettingsSpecialty({
                 updateModbusEndpoint(endpoint.id ?? '', 'name', e.target.value)
               }
               placeholder={t('common.name')}
-              class={cn(input.base, input.state.default, input.size.md, 'w-24')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
             />
             <input
               type="text"
@@ -576,7 +580,7 @@ export function HealthChecksSettingsSpecialty({
                 updateModbusEndpoint(endpoint.id ?? '', 'host', e.target.value)
               }
               placeholder={t('common.host')}
-              class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
+              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
             />
             <input
               type="number"
@@ -585,7 +589,7 @@ export function HealthChecksSettingsSpecialty({
                 updateModbusEndpoint(endpoint.id ?? '', 'port', Number.parseInt(e.target.value, 10))
               }
               placeholder="502"
-              class={cn(input.base, input.state.default, input.size.md, 'w-20')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-20')}
             />
             <input
               type="number"
@@ -599,7 +603,7 @@ export function HealthChecksSettingsSpecialty({
               }
               placeholder="Unit"
               title={t('health.unitId')}
-              class={cn(input.base, input.state.default, input.size.md, 'w-16')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-16')}
             />
             <input
               type="number"
@@ -613,12 +617,12 @@ export function HealthChecksSettingsSpecialty({
               }
               placeholder="Reg"
               title={t('health.testRegister')}
-              class={cn(input.base, input.state.default, input.size.md, 'w-16')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-16')}
             />
             <button
               type="button"
               onClick={(): void => removeModbusEndpoint(endpoint.id ?? '')}
-              class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+              className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
             >
               {t('common.remove')}
             </button>

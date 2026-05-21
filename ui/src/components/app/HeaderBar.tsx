@@ -191,9 +191,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
   );
 
   return (
-    <header class="border-b border-surface-border bg-surface-raised">
+    <header className="border-b border-surface-border bg-surface-raised">
       <div
-        class={cn(
+        className={cn(
           section.width.xl,
           'mx-auto',
           spacing.mainPadding.x,
@@ -205,7 +205,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
         {/* Logo and title */}
         <button
           type="button"
-          class={cn(
+          className={cn(
             layout.inline.default,
             'min-w-0 group',
             wsStatus !== 'connected' && 'cursor-pointer',
@@ -220,7 +220,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
         >
           {/* Seed icon - color indicates connection status */}
           <svg
-            class={cn(
+            className={cn(
               'w-7 h-7 shrink-0 transition-colors',
               getSeedColor(),
               wsStatus === 'connecting' && 'animate-pulse',
@@ -232,18 +232,18 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
           >
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93s3.05-7.44 7-7.93v15.86zm2-15.86c1.03.13 2 .45 2.87.93H13v-.93zM13 7h5.24c.25.31.48.65.68 1H13V7zm0 3h6.74c.08.33.15.66.19 1H13v-1zm0 9.93V19h2.87c-.87.48-1.84.8-2.87.93zM18.24 17H13v-1h5.92c-.2.35-.43.69-.68 1zm1.5-3H13v-1h6.93c-.04.34-.11.67-.19 1z" />
           </svg>
-          <h1 class="heading-4 hidden xs:block sm:block truncate text-text-primary">
+          <h1 className="heading-4 hidden xs:block sm:block truncate text-text-primary">
             {t('app.title')}
           </h1>
         </button>
 
         {/* Icon toolbar - all icons, no boxed dropdowns */}
-        <div class={cn('flex items-center', spacing.gap.tight)}>
+        <div className={cn('flex items-center', spacing.gap.tight)}>
           {/* Profile icon with dropdown */}
-          <div ref={profileDropdownRef} class="relative">
+          <div ref={profileDropdownRef} className="relative">
             <button
               type="button"
-              class={iconButtonClass}
+              className={iconButtonClass}
               onClick={(): void => setProfileDropdownOpen(!profileDropdownOpen)}
               aria-label={t('accessibility.selectProfile', 'Select profile')}
               title={
@@ -254,13 +254,13 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             >
               {profilesLoading ? (
                 <svg
-                  class={cn(iconTokens.size.md, 'animate-spin')}
+                  className={cn(iconTokens.size.md, 'animate-spin')}
                   fill="none"
                   viewBox="0 0 24 24"
                   aria-hidden="true"
                 >
                   <circle
-                    class="opacity-25"
+                    className="opacity-25"
                     cx="12"
                     cy="12"
                     r="10"
@@ -268,14 +268,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                     strokeWidth="4"
                   />
                   <path
-                    class="opacity-75"
+                    className="opacity-75"
                     fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                   />
                 </svg>
               ) : (
                 <svg
-                  class={iconTokens.size.md}
+                  className={iconTokens.size.md}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -294,16 +294,16 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             {/* Profile dropdown */}
             {profileDropdownOpen ? (
               <div
-                class={cn(
+                className={cn(
                   'absolute top-full right-0 mt-1 w-56',
                   radius.lg,
                   'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
                 )}
               >
-                <div class="max-h-60 overflow-y-auto">
+                <div className="max-h-60 overflow-y-auto">
                   {profiles.length === 0 ? (
-                    <div class={cn(spacing.pad.md, 'text-center')}>
-                      <span class="caption text-text-muted">
+                    <div className={cn(spacing.pad.md, 'text-center')}>
+                      <span className="caption text-text-muted">
                         {t('profile.noProfiles', 'No profiles')}
                       </span>
                     </div>
@@ -315,18 +315,20 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                         onClick={(): void => {
                           handleProfileSelect(profile.id).catch(console.error);
                         }}
-                        class={cn(
+                        className={cn(
                           'w-full text-left',
                           spacing.pad.sm,
                           'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none',
                           profile.id === activeProfile?.id && 'bg-brand-primary/10',
                         )}
                       >
-                        <div class="flex items-center justify-between">
-                          <span class="body-small text-text-primary truncate">{profile.name}</span>
+                        <div className="flex items-center justify-between">
+                          <span className="body-small text-text-primary truncate">
+                            {profile.name}
+                          </span>
                           {profile.id === activeProfile?.id && (
                             <svg
-                              class={cn(iconTokens.size.sm, 'text-brand-primary')}
+                              className={cn(iconTokens.size.sm, 'text-brand-primary')}
                               fill="currentColor"
                               viewBox="0 0 24 24"
                               aria-hidden="true"
@@ -339,14 +341,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                     ))
                   )}
                 </div>
-                <div class="border-t border-surface-border">
+                <div className="border-t border-surface-border">
                   <button
                     type="button"
                     onClick={(): void => {
                       setProfileDropdownOpen(false);
                       onProfileManage();
                     }}
-                    class={cn(
+                    className={cn(
                       'w-full flex items-center justify-center',
                       spacing.gap.tight,
                       spacing.pad.sm,
@@ -354,7 +356,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                     )}
                   >
                     <svg
-                      class={iconTokens.size.sm}
+                      className={iconTokens.size.sm}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -373,7 +375,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                       />
                     </svg>
-                    <span class="body-small font-medium">{t('profile.manage', 'Manage')}</span>
+                    <span className="body-small font-medium">{t('profile.manage', 'Manage')}</span>
                   </button>
                 </div>
               </div>
@@ -381,10 +383,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
           </div>
 
           {/* Ethernet interface selector - RJ45 jack icon */}
-          <div ref={interfaceDropdownRef} class="relative">
+          <div ref={interfaceDropdownRef} className="relative">
             <button
               type="button"
-              class={cn(
+              className={cn(
                 iconButtonClass,
                 !isWifi && 'ring-2 ring-brand-primary ring-offset-1 ring-offset-surface-raised',
               )}
@@ -394,7 +396,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             >
               {/* RJ45 Ethernet jack icon */}
               <svg
-                class={iconTokens.size.md}
+                className={iconTokens.size.md}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -412,21 +414,23 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             {/* Ethernet interface dropdown */}
             {interfaceDropdownOpen ? (
               <div
-                class={cn(
+                className={cn(
                   'absolute top-full right-0 mt-1 w-64',
                   radius.lg,
                   'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
                 )}
               >
-                <div class={cn(spacing.pad.sm, 'border-b border-surface-border bg-surface-base')}>
-                  <span class="caption font-medium text-text-muted uppercase tracking-wide">
+                <div
+                  className={cn(spacing.pad.sm, 'border-b border-surface-border bg-surface-base')}
+                >
+                  <span className="caption font-medium text-text-muted uppercase tracking-wide">
                     {t('interface.ethernetInterfaces', 'Ethernet Interfaces')}
                   </span>
                 </div>
-                <div class="max-h-60 overflow-y-auto">
+                <div className="max-h-60 overflow-y-auto">
                   {interfaces.filter((i) => i.type !== 'wifi').length === 0 ? (
-                    <div class={cn(spacing.pad.md, 'text-center')}>
-                      <span class="caption text-text-muted">
+                    <div className={cn(spacing.pad.md, 'text-center')}>
+                      <span className="caption text-text-muted">
                         {t('interface.noEthernet', 'No Ethernet interfaces')}
                       </span>
                     </div>
@@ -440,23 +444,26 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                           onClick={(): void => {
                             handleInterfaceSelect(iface.name, false).catch(console.error);
                           }}
-                          class={cn(
+                          className={cn(
                             'w-full text-left',
                             spacing.pad.sm,
                             'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none',
                             iface.name === currentInterface && 'bg-brand-primary/10',
                           )}
                         >
-                          <div class="flex items-center justify-between">
-                            <div class="stack-xs">
-                              <div class="flex items-center gap-1">
-                                <span class="body-small text-text-primary font-medium">
+                          <div className="flex items-center justify-between">
+                            <div className="stack-xs">
+                              <div className="flex items-center gap-1">
+                                <span className="body-small text-text-primary font-medium">
                                   {getFriendlyInterfaceName(iface.name, false)}
                                 </span>
                                 {/* #756: Show star for recommended (most capable) interface */}
                                 {iface.name === recommendedEthernet && (
                                   <svg
-                                    class={cn(iconTokens.size.xs, 'text-status-success shrink-0')}
+                                    className={cn(
+                                      iconTokens.size.xs,
+                                      'text-status-success shrink-0',
+                                    )}
                                     fill="currentColor"
                                     viewBox="0 0 24 24"
                                     aria-hidden="true"
@@ -467,7 +474,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                                 )}
                               </div>
                               <span
-                                class={cn(
+                                className={cn(
                                   'caption text-text-muted',
                                   spacing.chip.sm,
                                   radius.default,
@@ -479,7 +486,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                             </div>
                             {iface.name === currentInterface && (
                               <svg
-                                class={cn(iconTokens.size.sm, 'text-brand-primary shrink-0')}
+                                className={cn(iconTokens.size.sm, 'text-brand-primary shrink-0')}
                                 fill="currentColor"
                                 viewBox="0 0 24 24"
                                 aria-hidden="true"
@@ -497,10 +504,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
           </div>
 
           {/* WiFi interface selector - always visible for survey/planning */}
-          <div class="relative">
+          <div className="relative">
             <button
               type="button"
-              class={cn(
+              className={cn(
                 iconButtonClass,
                 isWifi && 'ring-2 ring-brand-primary ring-offset-1 ring-offset-surface-raised',
               )}
@@ -518,7 +525,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             >
               {/* WiFi signal icon */}
               <svg
-                class={cn(iconTokens.size.md, !hasWifiInterface && 'opacity-60')}
+                className={cn(iconTokens.size.md, !hasWifiInterface && 'opacity-60')}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -534,7 +541,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
               {/* Small indicator when no WiFi hardware */}
               {!hasWifiInterface && (
                 <span
-                  class="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-status-warning rounded-full"
+                  className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-status-warning rounded-full"
                   title={t('interface.noWifiHardware', 'No WiFi hardware - Planning mode')}
                 />
               )}
@@ -544,7 +551,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
           {/* Theme toggle */}
           <button
             type="button"
-            class={iconButtonClass}
+            className={iconButtonClass}
             onClick={toggleTheme}
             aria-label={
               isDark ? t('accessibility.switchToLightMode') : t('accessibility.switchToDarkMode')
@@ -557,7 +564,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
           >
             {isDark ? (
               <svg
-                class={iconTokens.size.md}
+                className={iconTokens.size.md}
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 aria-hidden="true"
@@ -566,7 +573,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
               </svg>
             ) : (
               <svg
-                class={iconTokens.size.md}
+                className={iconTokens.size.md}
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 aria-hidden="true"
@@ -583,7 +590,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
           {/* Settings */}
           <button
             type="button"
-            class={iconButtonClass}
+            className={iconButtonClass}
             onClick={onSettingsOpen}
             aria-label={t('accessibility.openSettings')}
             title={t(
@@ -592,7 +599,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             )}
           >
             <svg
-              class={iconTokens.size.md}
+              className={iconTokens.size.md}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -616,7 +623,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
           {/* Help */}
           <button
             type="button"
-            class={iconButtonClass}
+            className={iconButtonClass}
             onClick={onHelpOpen}
             aria-label={t('accessibility.openHelp')}
             title={t(
@@ -625,7 +632,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             )}
           >
             <svg
-              class={iconTokens.size.md}
+              className={iconTokens.size.md}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -643,7 +650,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
           {/* Logout */}
           <button
             type="button"
-            class={iconButtonClass}
+            className={iconButtonClass}
             onClick={logout}
             aria-label={t('buttons.logout')}
             title={t(
@@ -652,7 +659,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             )}
           >
             <svg
-              class={iconTokens.size.md}
+              className={iconTokens.size.md}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -668,11 +675,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
           </button>
         </div>
       </div>
-
       {/* Mobile connection status - visible on small screens when disconnected */}
       {wsStatus !== 'connected' && (
         <div
-          class={cn(
+          className={cn(
             'sm:hidden',
             spacing.mainPadding.x,
             spacing.padding.bottom.inline,
@@ -682,7 +688,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
           <button
             type="button"
             onClick={onReconnect}
-            class={cn(
+            className={cn(
               'caption flex items-center gap-1.5',
               wsStatus === 'connecting' ? statusColor.text.warning : statusColor.text.error,
             )}
@@ -690,13 +696,13 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             {wsStatus === 'connecting' ? (
               <>
                 <svg
-                  class={cn(iconTokens.size.sm, 'animate-spin')}
+                  className={cn(iconTokens.size.sm, 'animate-spin')}
                   fill="none"
                   viewBox="0 0 24 24"
                   aria-hidden="true"
                 >
                   <circle
-                    class="opacity-25"
+                    className="opacity-25"
                     cx="12"
                     cy="12"
                     r="10"
@@ -704,7 +710,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                     strokeWidth="4"
                   />
                   <path
-                    class="opacity-75"
+                    className="opacity-75"
                     fill="currentColor"
                     d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
                   />

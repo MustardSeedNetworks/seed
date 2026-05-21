@@ -216,7 +216,14 @@ describe('Slider', () => {
   it('applies custom className', () => {
     const onChange = vi.fn();
     const { container } = render(
-      <Slider value={50} onChange={onChange} min={0} max={100} step={10} class="custom-class" />,
+      <Slider
+        value={50}
+        onChange={onChange}
+        min={0}
+        max={100}
+        step={10}
+        className="custom-class"
+      />,
     );
 
     const wrapper = container.querySelector('.custom-class');

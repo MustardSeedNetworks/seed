@@ -17,40 +17,40 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
 
   return (
     <footer
-      class={cn(
+      className={cn(
         spacing.margin.top.section,
         radius.lg,
         'border border-surface-border bg-surface-raised',
         spacing.pad.lg,
       )}
     >
-      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {/* Product Info */}
         <div>
-          <h3 class="heading-4 text-text-primary mb-2">{t('app.title')}</h3>
-          <p class="body-small text-text-muted mb-1">
+          <h3 className="heading-4 text-text-primary mb-2">{t('app.title')}</h3>
+          <p className="body-small text-text-muted mb-1">
             {t('footer.byCompany', 'by Mustard Seed Networks')}
           </p>
-          <p class="caption text-text-muted">
+          <p className="caption text-text-muted">
             {t('footer.version', 'Version')} {appVersion}
           </p>
         </div>
 
         {/* Contact */}
         <div>
-          <h4 class="body-small font-medium text-text-primary mb-2">
+          <h4 className="body-small font-medium text-text-primary mb-2">
             {t('footer.contact', 'Contact')}
           </h4>
-          <div class="space-y-1">
+          <div className="space-y-1">
             <a
               href="mailto:support@mustardseednetworks.com"
-              class="body-small text-brand-primary hover:underline block"
+              className="body-small text-brand-primary hover:underline block"
             >
               support@mustardseednetworks.com
             </a>
             <a
               href="tel:+17194403079"
-              class="body-small text-text-muted hover:text-text-primary block"
+              className="body-small text-text-muted hover:text-text-primary block"
             >
               719.440.3079
             </a>
@@ -59,14 +59,14 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
 
         {/* Website */}
         <div>
-          <h4 class="body-small font-medium text-text-primary mb-2">
+          <h4 className="body-small font-medium text-text-primary mb-2">
             {t('footer.website', 'Website')}
           </h4>
           <a
             href="https://www.mustardseednetworks.com"
             target="_blank"
             rel="noopener noreferrer"
-            class="body-small text-brand-primary hover:underline"
+            className="body-small text-brand-primary hover:underline"
           >
             www.mustardseednetworks.com
           </a>
@@ -74,26 +74,25 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
 
         {/* Legal */}
         <div>
-          <h4 class="body-small font-medium text-text-primary mb-2">
+          <h4 className="body-small font-medium text-text-primary mb-2">
             {t('footer.legal', 'Legal')}
           </h4>
-          <div class="flex flex-wrap gap-x-3 gap-y-1">
-            <a href="/terms" class="body-small text-text-muted hover:text-brand-primary">
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            <a href="/terms" className="body-small text-text-muted hover:text-brand-primary">
               {t('footer.tos', 'Terms of Service')}
             </a>
-            <a href="/privacy" class="body-small text-text-muted hover:text-brand-primary">
+            <a href="/privacy" className="body-small text-text-muted hover:text-brand-primary">
               {t('footer.privacy', 'Privacy')}
             </a>
-            <a href="/license" class="body-small text-text-muted hover:text-brand-primary">
+            <a href="/license" className="body-small text-text-muted hover:text-brand-primary">
               {t('footer.license', 'License')}
             </a>
           </div>
         </div>
       </div>
-
       {/* Copyright */}
-      <div class="mt-6 pt-4 border-t border-surface-border text-center">
-        <p class="caption text-text-muted">
+      <div className="mt-6 pt-4 border-t border-surface-border text-center">
+        <p className="caption text-text-muted">
           &copy; {new Date().getFullYear()}{' '}
           {t('footer.copyright', 'Mustard Seed Networks. All rights reserved.')}
         </p>

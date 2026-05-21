@@ -30,7 +30,7 @@ const meta: Meta<typeof Combobox<Interface>> = {
   tags: ['autodocs'],
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="w-[360px]">
+      <div className="w-[360px]">
         <StoryComponent />
       </div>
     ),

@@ -198,7 +198,7 @@ export const BadgeCritical: StoryObj<typeof HealthScoreBadge> = {
 
 export const BadgeSizes: StoryObj<typeof HealthScoreBadge> = {
   render: () => (
-    <div class="flex items-center gap-4">
+    <div className="flex items-center gap-4">
       <HealthScoreBadge score={92} size="sm" />
       <HealthScoreBadge score={92} size="md" />
       <HealthScoreBadge score={92} size="lg" />
@@ -208,7 +208,7 @@ export const BadgeSizes: StoryObj<typeof HealthScoreBadge> = {
 
 export const BadgeValueOnly: StoryObj<typeof HealthScoreBadge> = {
   render: () => (
-    <div class="flex items-center gap-4">
+    <div className="flex items-center gap-4">
       <HealthScoreBadge score={92} size="md" showValue={true} />
       <HealthScoreBadge score={65} size="md" showValue={true} />
       <HealthScoreBadge score={35} size="md" showValue={true} />
@@ -219,17 +219,17 @@ export const BadgeValueOnly: StoryObj<typeof HealthScoreBadge> = {
 // Combined example showing all components together
 export const CombinedExample: StoryObj<typeof Sparkline> = {
   render: () => (
-    <div class="space-y-6 p-4 bg-bg-primary rounded-lg">
-      <h3 class="text-text-primary font-semibold">Endpoint Health Overview</h3>
+    <div className="space-y-6 p-4 bg-bg-primary rounded-lg">
+      <h3 className="text-text-primary font-semibold">Endpoint Health Overview</h3>
 
-      <div class="space-y-4">
+      <div className="space-y-4">
         {/* API Gateway */}
-        <div class="flex items-center justify-between p-3 bg-bg-secondary rounded-md">
-          <div class="flex items-center gap-3">
-            <span class="text-text-primary font-medium">API Gateway</span>
+        <div className="flex items-center justify-between p-3 bg-bg-secondary rounded-md">
+          <div className="flex items-center gap-3">
+            <span className="text-text-primary font-medium">API Gateway</span>
             <HealthScoreBadge score={94} size="sm" />
           </div>
-          <div class="flex items-center gap-4">
+          <div className="flex items-center gap-4">
             <SparklineWithLabel
               labelText="Availability"
               data={healthyAvailability}
@@ -249,12 +249,12 @@ export const CombinedExample: StoryObj<typeof Sparkline> = {
         </div>
 
         {/* Database */}
-        <div class="flex items-center justify-between p-3 bg-bg-secondary rounded-md">
-          <div class="flex items-center gap-3">
-            <span class="text-text-primary font-medium">Database</span>
+        <div className="flex items-center justify-between p-3 bg-bg-secondary rounded-md">
+          <div className="flex items-center gap-3">
+            <span className="text-text-primary font-medium">Database</span>
             <HealthScoreBadge score={72} size="sm" />
           </div>
-          <div class="flex items-center gap-4">
+          <div className="flex items-center gap-4">
             <SparklineWithLabel
               labelText="Availability"
               data={degradedAvailability}
@@ -274,12 +274,12 @@ export const CombinedExample: StoryObj<typeof Sparkline> = {
         </div>
 
         {/* CDN */}
-        <div class="flex items-center justify-between p-3 bg-bg-secondary rounded-md">
-          <div class="flex items-center gap-3">
-            <span class="text-text-primary font-medium">CDN</span>
+        <div className="flex items-center justify-between p-3 bg-bg-secondary rounded-md">
+          <div className="flex items-center gap-3">
+            <span className="text-text-primary font-medium">CDN</span>
             <HealthScoreBadge score={45} size="sm" />
           </div>
-          <div class="flex items-center gap-4">
+          <div className="flex items-center gap-4">
             <SparklineWithLabel
               labelText="Availability"
               data={criticalAvailability}

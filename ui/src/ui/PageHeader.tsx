@@ -20,16 +20,18 @@ export const PageHeader: FC<PageHeaderProps> = ({
   actions,
   iconColorClass = 'text-brand-primary',
 }) => (
-  <div class="mb-6 animate-fade-in">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div class="flex items-center gap-3">
+  <div className="mb-6 animate-fade-in">
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex items-center gap-3">
         {icon ? createElement(icon, { className: `h-8 w-8 ${iconColorClass}` }) : null}
         <div>
-          <h1 class="text-2xl font-bold text-text-primary font-display">{title}</h1>
-          {description ? <p class="text-sm text-text-muted mt-1 max-w-2xl">{description}</p> : null}
+          <h1 className="text-2xl font-bold text-text-primary font-display">{title}</h1>
+          {description ? (
+            <p className="text-sm text-text-muted mt-1 max-w-2xl">{description}</p>
+          ) : null}
         </div>
       </div>
-      {actions ? <div class="flex items-center gap-3">{actions}</div> : null}
+      {actions ? <div className="flex items-center gap-3">{actions}</div> : null}
     </div>
   </div>
 );

@@ -26,13 +26,13 @@ export function HealthChecksSettingsAdvanced({
   return (
     <>
       {/* SLA Configuration */}
-      <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-        <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-          <span class="caption text-text-muted font-medium">{t('health.slaConfig')}</span>
+      <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+          <span className="caption text-text-muted font-medium">{t('health.slaConfig')}</span>
         </div>
-        <div class={spacing.stack.xs}>
+        <div className={spacing.stack.xs}>
           <label
-            class={cn(
+            className={cn(
               layout.flex.between,
               spacing.pad.sm,
               'bg-surface-base border border-surface-border',
@@ -40,8 +40,10 @@ export function HealthChecksSettingsAdvanced({
             )}
           >
             <div>
-              <span class="body-small text-text-primary font-medium">{t('health.enableSla')}</span>
-              <p class="caption text-text-muted">{t('health.slaDescription')}</p>
+              <span className="body-small text-text-primary font-medium">
+                {t('health.enableSla')}
+              </span>
+              <p className="caption text-text-muted">{t('health.slaDescription')}</p>
             </div>
             <input
               type="checkbox"
@@ -62,11 +64,11 @@ export function HealthChecksSettingsAdvanced({
                   ],
                 }))
               }
-              class={iconTokens.size.sm}
+              className={iconTokens.size.sm}
             />
           </label>
-          <div class={cn('flex items-center', spacing.gap.compact)}>
-            <label for="sla-target-uptime" class="caption text-text-muted w-32">
+          <div className={cn('flex items-center', spacing.gap.compact)}>
+            <label htmlFor="sla-target-uptime" className="caption text-text-muted w-32">
               {t('health.targetUptime')}
             </label>
             <input
@@ -92,12 +94,12 @@ export function HealthChecksSettingsAdvanced({
                   ],
                 }))
               }
-              class={cn(input.base, input.state.default, input.size.md, 'w-24')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
             />
-            <span class="caption text-text-muted">%</span>
+            <span className="caption text-text-muted">%</span>
           </div>
-          <div class={cn('flex items-center', spacing.gap.compact)}>
-            <label for="sla-target-latency" class="caption text-text-muted w-32">
+          <div className={cn('flex items-center', spacing.gap.compact)}>
+            <label htmlFor="sla-target-latency" className="caption text-text-muted w-32">
               {t('health.targetLatency')}
             </label>
             <input
@@ -123,21 +125,20 @@ export function HealthChecksSettingsAdvanced({
                   ],
                 }))
               }
-              class={cn(input.base, input.state.default, input.size.md, 'w-24')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
             />
-            <span class="caption text-text-muted">ms (P95)</span>
+            <span className="caption text-text-muted">ms (P95)</span>
           </div>
         </div>
       </div>
-
       {/* Alert Configuration */}
-      <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-        <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-          <span class="caption text-text-muted font-medium">{t('health.alertConfig')}</span>
+      <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+          <span className="caption text-text-muted font-medium">{t('health.alertConfig')}</span>
         </div>
-        <div class={spacing.stack.xs}>
+        <div className={spacing.stack.xs}>
           <label
-            class={cn(
+            className={cn(
               layout.flex.between,
               spacing.pad.xs,
               'bg-surface-base border border-surface-border',
@@ -145,10 +146,10 @@ export function HealthChecksSettingsAdvanced({
             )}
           >
             <div>
-              <span class="body-small text-text-primary font-medium">
+              <span className="body-small text-text-primary font-medium">
                 {t('health.enableAlerts')}
               </span>
-              <p class="caption text-text-muted">{t('health.alertsDescription')}</p>
+              <p className="caption text-text-muted">{t('health.alertsDescription')}</p>
             </div>
             <input
               type="checkbox"
@@ -167,12 +168,12 @@ export function HealthChecksSettingsAdvanced({
                   },
                 }))
               }
-              class={iconTokens.size.sm}
+              className={iconTokens.size.sm}
             />
           </label>
 
-          <div class={cn('flex items-center', spacing.gap.compact)}>
-            <label for="alert-consecutive-failures" class="caption text-text-muted flex-1">
+          <div className={cn('flex items-center', spacing.gap.compact)}>
+            <label htmlFor="alert-consecutive-failures" className="caption text-text-muted flex-1">
               {t('health.consecutiveFailures')}
             </label>
             <input
@@ -195,12 +196,12 @@ export function HealthChecksSettingsAdvanced({
                   },
                 }))
               }
-              class={cn(input.base, input.state.default, input.size.md, 'w-20 text-center')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-20 text-center')}
             />
           </div>
 
-          <div class={cn('flex items-center', spacing.gap.compact)}>
-            <label for="alert-cooldown-minutes" class="caption text-text-muted flex-1">
+          <div className={cn('flex items-center', spacing.gap.compact)}>
+            <label htmlFor="alert-cooldown-minutes" className="caption text-text-muted flex-1">
               {t('health.cooldownMinutes')}
             </label>
             <input
@@ -223,12 +224,12 @@ export function HealthChecksSettingsAdvanced({
                   },
                 }))
               }
-              class={cn(input.base, input.state.default, input.size.md, 'w-20 text-center')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-20 text-center')}
             />
           </div>
 
           <label
-            class={cn(
+            className={cn(
               layout.flex.between,
               spacing.pad.xs,
               'bg-surface-base border border-surface-border',
@@ -236,8 +237,10 @@ export function HealthChecksSettingsAdvanced({
             )}
           >
             <div>
-              <span class="body-small text-text-primary font-medium">{t('health.digestMode')}</span>
-              <p class="caption text-text-muted">{t('health.digestDescription')}</p>
+              <span className="body-small text-text-primary font-medium">
+                {t('health.digestMode')}
+              </span>
+              <p className="caption text-text-muted">{t('health.digestDescription')}</p>
             </div>
             <input
               type="checkbox"
@@ -256,20 +259,19 @@ export function HealthChecksSettingsAdvanced({
                   },
                 }))
               }
-              class={iconTokens.size.sm}
+              className={iconTokens.size.sm}
             />
           </label>
         </div>
       </div>
-
       {/* Anomaly Detection Configuration */}
-      <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-        <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-          <span class="caption text-text-muted font-medium">{t('health.anomalyConfig')}</span>
+      <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+          <span className="caption text-text-muted font-medium">{t('health.anomalyConfig')}</span>
         </div>
-        <div class={spacing.stack.xs}>
+        <div className={spacing.stack.xs}>
           <label
-            class={cn(
+            className={cn(
               layout.flex.between,
               spacing.pad.xs,
               'bg-surface-base border border-surface-border',
@@ -277,10 +279,10 @@ export function HealthChecksSettingsAdvanced({
             )}
           >
             <div>
-              <span class="body-small text-text-primary font-medium">
+              <span className="body-small text-text-primary font-medium">
                 {t('health.enableAnomaly')}
               </span>
-              <p class="caption text-text-muted">{t('health.anomalyDescription')}</p>
+              <p className="caption text-text-muted">{t('health.anomalyDescription')}</p>
             </div>
             <input
               type="checkbox"
@@ -298,12 +300,12 @@ export function HealthChecksSettingsAdvanced({
                   },
                 }))
               }
-              class={iconTokens.size.sm}
+              className={iconTokens.size.sm}
             />
           </label>
 
-          <div class={cn('flex items-center', spacing.gap.compact)}>
-            <label for="anomaly-std-dev-threshold" class="caption text-text-muted flex-1">
+          <div className={cn('flex items-center', spacing.gap.compact)}>
+            <label htmlFor="anomaly-std-dev-threshold" className="caption text-text-muted flex-1">
               {t('health.stdDevThreshold')}
             </label>
             <input
@@ -326,12 +328,12 @@ export function HealthChecksSettingsAdvanced({
                   },
                 }))
               }
-              class={cn(input.base, input.state.default, input.size.md, 'w-20 text-center')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-20 text-center')}
             />
           </div>
 
-          <div class={cn('flex items-center', spacing.gap.compact)}>
-            <label for="anomaly-max-samples" class="caption text-text-muted flex-1">
+          <div className={cn('flex items-center', spacing.gap.compact)}>
+            <label htmlFor="anomaly-max-samples" className="caption text-text-muted flex-1">
               {t('health.maxSamples')}
             </label>
             <input
@@ -354,7 +356,7 @@ export function HealthChecksSettingsAdvanced({
                   },
                 }))
               }
-              class={cn(input.base, input.state.default, input.size.md, 'w-20 text-center')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-20 text-center')}
             />
           </div>
         </div>

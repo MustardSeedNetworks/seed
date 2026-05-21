@@ -19,7 +19,7 @@ const meta: Meta<typeof H1> = {
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
       <MemoryRouter>
-        <div class="w-[480px]">
+        <div className="w-[480px]">
           <StoryComponent />
         </div>
       </MemoryRouter>
@@ -68,7 +68,7 @@ export const CaptionStory: Story = {
 export const LinkVariants: Story = {
   name: 'AccentLink',
   render: () => (
-    <div class="space-y-3">
+    <div className="space-y-3">
       <div>
         <AccentLink href="https://example.com">External link (href)</AccentLink>
       </div>
@@ -84,16 +84,16 @@ export const LinkVariants: Story = {
 
 export const Hierarchy: Story = {
   render: () => (
-    <div class="space-y-4">
+    <div className="space-y-4">
       <H1>The Seed</H1>
       <H2>Modules</H2>
       <P>Five modules cover the full network diagnostics surface:</P>
-      <div class="space-y-2">
+      <div className="space-y-2">
         <H3>Roots — path analysis</H3>
         <P>Hop-by-hop latency, jitter, and loss measurements over TCP/UDP/ICMP.</P>
         <SmallText>RFC 2544 baseline supported.</SmallText>
       </div>
-      <div class="space-y-2">
+      <div className="space-y-2">
         <H3>Canopy — Wi-Fi planning</H3>
         <P>RF coverage and capacity planning informed by IEEE 802.11 telemetry.</P>
       </div>

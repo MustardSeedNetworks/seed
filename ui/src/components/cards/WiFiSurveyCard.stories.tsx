@@ -23,7 +23,7 @@ const meta: Meta<typeof WiFiSurveyCard> = {
   tags: ['autodocs'],
   decorators: [
     (StoryComponent: React.ComponentType): JSX.Element => (
-      <div class="w-96">
+      <div className="w-96">
         <StoryComponent />
       </div>
     ),

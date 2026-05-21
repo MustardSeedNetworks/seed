@@ -48,7 +48,7 @@ const meta: Meta<typeof SNMPSettings> = {
   },
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="w-[500px] max-h-[700px] overflow-y-auto">
+      <div className="w-[500px] max-h-[700px] overflow-y-auto">
         <StoryComponent />
       </div>
     ),

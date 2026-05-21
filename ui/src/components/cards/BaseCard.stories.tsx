@@ -36,7 +36,7 @@ const meta: Meta<typeof BaseCard<SampleData>> = {
   tags: ['autodocs'],
   decorators: [
     (StoryComponent: React.ComponentType) => (
-      <div class="w-80">
+      <div className="w-80">
         <StoryComponent />
       </div>
     ),
@@ -50,7 +50,7 @@ export const Default: Story = {
   args: {
     title: 'Network Status',
     subtitle: 'Primary Interface',
-    icon: <Globe class="w-4 h-4" />,
+    icon: <Globe className="w-4 h-4" />,
     data: sampleData,
     getStatus: (data: SampleData): 'success' | 'warning' | 'error' => {
       if (data.status === 'healthy') {
@@ -130,7 +130,7 @@ export const SimpleCard: StoryObj<typeof SimpleBaseCard> = {
     <SimpleBaseCard
       title="Simple Card"
       subtitle="No data derivation"
-      icon={<Server class="w-4 h-4" />}
+      icon={<Server className="w-4 h-4" />}
       status="success"
     >
       <CardValue value="Active" size="lg" status="success" />
@@ -144,7 +144,7 @@ export const SimpleCardLoading: StoryObj<typeof SimpleBaseCard> = {
   render: () => (
     <SimpleBaseCard
       title="Simple Card"
-      icon={<Wifi class="w-4 h-4" />}
+      icon={<Wifi className="w-4 h-4" />}
       status="loading"
       loading={true}
     >
@@ -156,10 +156,10 @@ export const SimpleCardLoading: StoryObj<typeof SimpleBaseCard> = {
 
 export const CardGrid: Story = {
   render: () => (
-    <div class={cn('grid grid-cols-2 w-150', spacing.gap.comfortable)}>
+    <div className={cn('grid grid-cols-2 w-150', spacing.gap.comfortable)}>
       <BaseCard
         title="Gateway"
-        icon={<Server class="w-4 h-4" />}
+        icon={<Server className="w-4 h-4" />}
         data={sampleData}
         getStatus={() => 'success'}
       >
@@ -167,7 +167,7 @@ export const CardGrid: Story = {
       </BaseCard>
       <BaseCard
         title="DNS"
-        icon={<Globe class="w-4 h-4" />}
+        icon={<Globe className="w-4 h-4" />}
         data={{ ...sampleData, status: 'warning' } as SampleData}
         getStatus={(d: SampleData) => (d.status === 'healthy' ? 'success' : d.status)}
       >
@@ -175,7 +175,7 @@ export const CardGrid: Story = {
       </BaseCard>
       <BaseCard
         title="WiFi"
-        icon={<Wifi class="w-4 h-4" />}
+        icon={<Wifi className="w-4 h-4" />}
         data={null}
         loading={true}
         getStatus={() => 'success'}

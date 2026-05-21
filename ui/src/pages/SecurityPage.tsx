@@ -7,7 +7,7 @@ import { PageHeader } from '../ui/PageHeader';
 
 export function SecurityPage() {
   return (
-    <section class="space-y-6">
+    <section className="space-y-6">
       <Breadcrumbs />
       <PageHeader
         icon={Shield}
@@ -15,7 +15,7 @@ export function SecurityPage() {
         description="Guest network isolation audit and security posture checks."
         iconColorClass="text-module-shell"
       />
-      <div class={layout.grid.cards}>
+      <div className={layout.grid.cards}>
         <MfaCard />
         <GuestNetworkAuditCard />
       </div>

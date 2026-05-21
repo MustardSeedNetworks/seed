@@ -57,28 +57,31 @@ export function ProfileEditor({
   };
 
   return (
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div class="fixed inset-0 bg-black/50" onClick={onCancel} aria-hidden="true" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/50" onClick={onCancel} aria-hidden="true" />
       <div
-        class={cn(
+        className={cn(
           'relative w-full max-w-lg',
           radius.lg,
           'bg-surface-raised shadow-xl overflow-hidden',
         )}
       >
         {/* Header */}
-        <div class={cn(spacing.pad.md, 'border-b border-surface-border')}>
-          <h2 class="heading-2 text-text-primary">
+        <div className={cn(spacing.pad.md, 'border-b border-surface-border')}>
+          <h2 className="heading-2 text-text-primary">
             {isEditing ? t('profile.edit', 'Edit Profile') : t('profile.create', 'Create Profile')}
           </h2>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <div class={cn(spacing.pad.md, 'space-y-4')}>
+          <div className={cn(spacing.pad.md, 'space-y-4')}>
             {/* Name */}
             <div>
-              <label for="profile-name" class="block body-small font-medium text-text-primary mb-1">
+              <label
+                htmlFor="profile-name"
+                className="block body-small font-medium text-text-primary mb-1"
+              >
                 {t('profile.name', 'Name')} *
               </label>
               <input
@@ -89,7 +92,7 @@ export function ProfileEditor({
                   setName(e.target.value)
                 }
                 required={true}
-                class={cn(
+                className={cn(
                   'w-full',
                   spacing.pad.sm,
                   radius.md,
@@ -102,8 +105,8 @@ export function ProfileEditor({
             {/* Description */}
             <div>
               <label
-                for="profile-description"
-                class="block body-small font-medium text-text-primary mb-1"
+                htmlFor="profile-description"
+                className="block body-small font-medium text-text-primary mb-1"
               >
                 {t('profile.description', 'Description')}
               </label>
@@ -114,7 +117,7 @@ export function ProfileEditor({
                 onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                   setDescription(e.target.value)
                 }
-                class={cn(
+                className={cn(
                   'w-full',
                   spacing.pad.sm,
                   radius.md,
@@ -127,8 +130,8 @@ export function ProfileEditor({
             {/* Notes */}
             <div>
               <label
-                for="profile-notes"
-                class="block body-small font-medium text-text-primary mb-1"
+                htmlFor="profile-notes"
+                className="block body-small font-medium text-text-primary mb-1"
               >
                 {t('profile.notes', 'Notes')}
               </label>
@@ -139,7 +142,7 @@ export function ProfileEditor({
                   setNotes(e.target.value)
                 }
                 rows={3}
-                class={cn(
+                className={cn(
                   'w-full',
                   spacing.pad.sm,
                   radius.md,
@@ -150,28 +153,30 @@ export function ProfileEditor({
             </div>
 
             {/* Default checkbox */}
-            <label class="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={isDefault}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                   setIsDefault(e.target.checked)
                 }
-                class="w-4 h-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary"
+                className="w-4 h-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary"
               />
-              <span class="body-small text-text-primary">
+              <span className="body-small text-text-primary">
                 {t('profile.setAsDefault', 'Set as default profile')}
               </span>
             </label>
           </div>
 
           {/* Footer */}
-          <div class={cn(spacing.pad.md, 'border-t border-surface-border flex justify-end gap-3')}>
+          <div
+            className={cn(spacing.pad.md, 'border-t border-surface-border flex justify-end gap-3')}
+          >
             <button
               type="button"
               onClick={onCancel}
               disabled={isLoading}
-              class={cn(
+              className={cn(
                 spacing.pad.sm,
                 'px-4',
                 radius.md,
@@ -183,7 +188,7 @@ export function ProfileEditor({
             <button
               type="submit"
               disabled={isLoading || !name.trim()}
-              class={cn(
+              className={cn(
                 spacing.pad.sm,
                 'px-4',
                 radius.md,

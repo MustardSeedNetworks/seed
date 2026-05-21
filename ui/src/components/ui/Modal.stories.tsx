@@ -28,7 +28,7 @@ const meta: Meta<typeof Modal> = {
   },
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="min-h-[60vh] p-4">
+      <div className="min-h-[60vh] p-4">
         <StoryComponent />
       </div>
     ),
@@ -41,7 +41,7 @@ type Story = StoryObj<typeof meta>;
 export const Open: Story = {
   render: () => (
     <Modal isOpen={true} onClose={() => undefined} title="Modal title" size="md">
-      <p class="text-text-secondary">
+      <p className="text-text-secondary">
         Modal body. Tab is trapped inside the dialog; Escape closes when closeOnEscape is on.
       </p>
     </Modal>
@@ -61,11 +61,13 @@ export const WithSlots: Story = {
   render: () => (
     <Modal isOpen={true} onClose={() => undefined} size="lg">
       <ModalHeader>
-        <h2 class="text-lg font-semibold text-text-primary">Edit DHCP profile</h2>
-        <p class="text-sm text-text-muted">Changes apply to all interfaces using this profile.</p>
+        <h2 className="text-lg font-semibold text-text-primary">Edit DHCP profile</h2>
+        <p className="text-sm text-text-muted">
+          Changes apply to all interfaces using this profile.
+        </p>
       </ModalHeader>
       <ModalBody>
-        <p class="text-text-secondary">
+        <p className="text-text-secondary">
           DNS, ARP, and TCP/UDP defaults are inherited unless overridden per interface.
         </p>
       </ModalBody>
@@ -83,11 +85,11 @@ export const Interactive: Story = {
   render: () => {
     const [open, setOpen] = useState(false);
     return (
-      <div class="space-y-3">
+      <div className="space-y-3">
         <Button onClick={() => setOpen(true)}>Open modal</Button>
         <Modal isOpen={open} onClose={() => setOpen(false)} title="Hello" size="md">
-          <p class="text-text-secondary">Click the backdrop or press Escape to close.</p>
-          <div class="mt-4 flex justify-end">
+          <p className="text-text-secondary">Click the backdrop or press Escape to close.</p>
+          <div className="mt-4 flex justify-end">
             <Button onClick={() => setOpen(false)}>Close</Button>
           </div>
         </Modal>
@@ -99,7 +101,7 @@ export const Interactive: Story = {
 export const Sizes: Story = {
   render: () => (
     <Modal isOpen={true} onClose={() => undefined} title="Full size modal" size="full">
-      <p class="text-text-secondary">
+      <p className="text-text-secondary">
         Use size=&quot;full&quot; for content-heavy dialogs (reports, log viewers).
       </p>
     </Modal>

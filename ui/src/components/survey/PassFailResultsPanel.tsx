@@ -93,7 +93,7 @@ function _comparisonDisplay({
 }): React.ReactElement {
   const symbol = comparison === 'gte' ? '\u2265' : '\u2264';
   return (
-    <span class="text-text-muted">
+    <span className="text-text-muted">
       ({symbol}
       {threshold}
       {suffix ? ` ${suffix}` : ''})
@@ -109,21 +109,21 @@ function _trendIndicator({ result }: { result: PassFailResult }): React.ReactEle
   const margin = Math.abs(diff);
 
   if (margin < 0.1) {
-    return <Minus class="w-3 h-3 text-text-muted" />;
+    return <Minus className="w-3 h-3 text-text-muted" />;
   }
 
   if (isGood) {
-    return <trendUp class="w-3 h-3 text-status-success" />;
+    return <trendUp className="w-3 h-3 text-status-success" />;
   }
-  return <trendDown class="w-3 h-3 text-status-error" />;
+  return <trendDown className="w-3 h-3 text-status-error" />;
 }
 
 function _trendUp({ className }: { className?: string }): React.ReactElement {
-  return <TrendingUp class={className} />;
+  return <TrendingUp className={className} />;
 }
 
 function _trendDown({ className }: { className?: string }): React.ReactElement {
-  return <TrendingDown class={className} />;
+  return <TrendingDown className={className} />;
 }
 
 /**
@@ -142,7 +142,7 @@ function _resultRow({
 
   return (
     <div
-      class={cn(
+      className={cn(
         spacing.pad.sm,
         radius.md,
         bgClass,
@@ -150,15 +150,15 @@ function _resultRow({
       )}
     >
       {/* Header row */}
-      <div class={cn(layout.inline.default, 'justify-between')}>
-        <div class={layout.inline.tight}>
-          <ICON class={cn(iconTokens.size.sm, colorClass)} />
-          <span class="body-small font-medium">
+      <div className={cn(layout.inline.default, 'justify-between')}>
+        <div className={layout.inline.tight}>
+          <ICON className={cn(iconTokens.size.sm, colorClass)} />
+          <span className="body-small font-medium">
             {t(`criteria.${result.criterionName}` as never)}
           </span>
         </div>
-        <div class={layout.inline.tight}>
-          <span class={cn('body-small font-medium', colorClass)}>
+        <div className={layout.inline.tight}>
+          <span className={cn('body-small font-medium', colorClass)}>
             {result.averageValue.toFixed(1)} {result.suffix}
           </span>
           <comparisonDisplay
@@ -168,39 +168,37 @@ function _resultRow({
           />
         </div>
       </div>
-
       {/* Statistics row */}
-      <div class={cn(layout.inline.default, 'justify-between mt-1 text-text-muted')}>
-        <div class={layout.inline.tight}>
-          <span class="caption">
+      <div className={cn(layout.inline.default, 'justify-between mt-1 text-text-muted')}>
+        <div className={layout.inline.tight}>
+          <span className="caption">
             {t('criteria.passRate')}: {result.percentage.toFixed(1)}%
           </span>
-          <span class="caption">
+          <span className="caption">
             ({result.totalSampleCount - result.failedSampleCount}/{result.totalSampleCount})
           </span>
         </div>
-        <div class={layout.inline.tight}>
+        <div className={layout.inline.tight}>
           <trendIndicator result={result} />
-          <span class="caption">
+          <span className="caption">
             {t('criteria.range')}: {result.worstValue.toFixed(1)} - {result.bestValue.toFixed(1)}
           </span>
         </div>
       </div>
-
       {/* Failed locations link */}
       {result.failedSampleCount > 0 && onShowLocations ? (
         <button
           type="button"
           onClick={onShowLocations}
-          class={cn(layout.inline.tight, 'mt-1 caption text-brand-primary hover:underline')}
+          className={cn(layout.inline.tight, 'mt-1 caption text-brand-primary hover:underline')}
         >
-          <MapPin class="w-3 h-3" />
+          <MapPin className="w-3 h-3" />
           <span>
             {t('criteria.failedLocations', {
               count: result.failedSampleCount,
             })}
           </span>
-          <ChevronRight class="w-3 h-3" />
+          <ChevronRight className="w-3 h-3" />
         </button>
       ) : null}
     </div>
@@ -238,7 +236,7 @@ function _statusBanner({
 
   return (
     <div
-      class={cn(
+      className={cn(
         spacing.pad.default,
         radius.md,
         statusConfig.bgClass,
@@ -246,14 +244,14 @@ function _statusBanner({
         spacing.margin.bottom.content,
       )}
     >
-      <div class={cn(layout.inline.default, 'justify-between')}>
-        <div class={layout.inline.default}>
-          <ICON class={cn(iconTokens.size.md, statusConfig.colorClass)} />
+      <div className={cn(layout.inline.default, 'justify-between')}>
+        <div className={layout.inline.default}>
+          <ICON className={cn(iconTokens.size.md, statusConfig.colorClass)} />
           <div>
-            <h3 class={cn('body-default font-semibold', statusConfig.colorClass)}>
+            <h3 className={cn('body-default font-semibold', statusConfig.colorClass)}>
               {statusConfig.label}
             </h3>
-            <p class="caption text-text-muted">
+            <p className="caption text-text-muted">
               {t('criteria.summary', {
                 passed: passedCount,
                 total: totalCount,
@@ -262,11 +260,11 @@ function _statusBanner({
             </p>
           </div>
         </div>
-        <div class="text-right">
-          <span class={cn('heading-3', statusConfig.colorClass)}>
+        <div className="text-right">
+          <span className={cn('heading-3', statusConfig.colorClass)}>
             {overallPercentage.toFixed(0)}%
           </span>
-          <p class="caption text-text-muted">
+          <p className="caption text-text-muted">
             {passedCount}/{totalCount} {t('criteria.criteriaPassed')}
           </p>
         </div>
@@ -306,17 +304,18 @@ export function PassFailResultsPanel({
   };
 
   return (
-    <div class={cn('bg-surface-raised', radius.md, 'border border-surface-border', spacing.pad.sm)}>
+    <div
+      className={cn('bg-surface-raised', radius.md, 'border border-surface-border', spacing.pad.sm)}
+    >
       {/* Status banner */}
       <statusBanner validation={validation} t={t} />
-
       {/* Failed criteria (show first) */}
       {failed.length > 0 ? (
-        <div class={spacing.margin.bottom.content}>
-          <h4 class="caption font-medium text-status-error mb-2">
+        <div className={spacing.margin.bottom.content}>
+          <h4 className="caption font-medium text-status-error mb-2">
             {t('criteria.failedCriteria')} ({failed.length})
           </h4>
-          <div class={layout.stack.tight}>
+          <div className={layout.stack.tight}>
             {failed.map((result) => (
               <resultRow
                 key={result.criterionId}
@@ -328,35 +327,34 @@ export function PassFailResultsPanel({
           </div>
         </div>
       ) : null}
-
       {/* Passed criteria */}
       {passed.length > 0 ? (
-        <div class={spacing.margin.bottom.content}>
-          <h4 class="caption font-medium text-status-success mb-2">
+        <div className={spacing.margin.bottom.content}>
+          <h4 className="caption font-medium text-status-success mb-2">
             {t('criteria.passedCriteria')} ({passed.length})
           </h4>
-          <div class={layout.stack.tight}>
+          <div className={layout.stack.tight}>
             {passed.map((result) => (
               <resultRow key={result.criterionId} result={result} t={t} />
             ))}
           </div>
         </div>
       ) : null}
-
       {/* Timestamp */}
-      <p class="caption text-text-muted text-center mb-3">
+      <p className="caption text-text-muted text-center mb-3">
         {t('criteria.validatedAt', {
           time: new Date(validation.timestamp).toLocaleString(),
         })}
       </p>
-
       {/* Actions */}
-      <div class={cn(layout.inline.default, 'justify-center pt-2 border-t border-surface-border')}>
+      <div
+        className={cn(layout.inline.default, 'justify-center pt-2 border-t border-surface-border')}
+      >
         {onGenerateReport ? (
           <button
             type="button"
             onClick={onGenerateReport}
-            class={cn(
+            className={cn(
               button.size.sm,
               'bg-brand-primary text-text-inverse',
               radius.md,
@@ -364,7 +362,7 @@ export function PassFailResultsPanel({
               layout.inline.tight,
             )}
           >
-            <FileText class="w-3 h-3" />
+            <FileText className="w-3 h-3" />
             <span>{t('criteria.generateReport')}</span>
           </button>
         ) : null}
@@ -372,7 +370,7 @@ export function PassFailResultsPanel({
           <button
             type="button"
             onClick={onExportCsv}
-            class={cn(
+            className={cn(
               button.size.sm,
               'bg-surface-default border border-surface-border',
               radius.md,
@@ -380,7 +378,7 @@ export function PassFailResultsPanel({
               layout.inline.tight,
             )}
           >
-            <Download class="w-3 h-3" />
+            <Download className="w-3 h-3" />
             <span>{t('criteria.exportCsv')}</span>
           </button>
         ) : null}

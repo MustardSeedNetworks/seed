@@ -23,7 +23,7 @@ const meta: Meta<typeof Tag> = {
   },
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="p-2">
+      <div className="p-2">
         <StoryComponent />
       </div>
     ),
@@ -69,7 +69,7 @@ export const Blue: Story = {
 
 export const AllColors: Story = {
   render: () => (
-    <div class="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <Tag colorScheme="gray">Gray</Tag>
       <Tag colorScheme="red">Red</Tag>
       <Tag colorScheme="green">Green</Tag>
@@ -84,7 +84,7 @@ export const AllColors: Story = {
 
 export const NetworkStatuses: Story = {
   render: () => (
-    <div class="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <Tag colorScheme="green">DHCP active</Tag>
       <Tag colorScheme="blue">DNS resolving</Tag>
       <Tag colorScheme="yellow">ARP slow</Tag>

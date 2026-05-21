@@ -156,7 +156,7 @@ export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
     return (
       <BaseCard
         title={t('publicIp.title')}
-        icon={<Globe class={iconTokens.size.md} />}
+        icon={<Globe className={iconTokens.size.md} />}
         data={data}
         loading={loading}
         getStatus={getStatus}
@@ -173,31 +173,28 @@ export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
               {/* IPv4 Address */}
               {ipData.ipv4 ? (
                 <>
-                  <p class="caption font-medium">{t('publicIp.ipv4')}</p>
+                  <p className="caption font-medium">{t('publicIp.ipv4')}</p>
                   <CardValue value={ipData.ipv4} size="lg" />
                 </>
               ) : (
                 <>
-                  <p class="caption font-medium">{t('publicIp.ipv4')}</p>
-                  <p class="body-small text-text-muted">{t('publicIp.notAvailable')}</p>
+                  <p className="caption font-medium">{t('publicIp.ipv4')}</p>
+                  <p className="body-small text-text-muted">{t('publicIp.notAvailable')}</p>
                 </>
               )}
-
               <CardDivider />
-
               {/* IPv6 Address */}
               {ipData.ipv6 ? (
                 <>
-                  <p class="caption font-medium">{t('publicIp.ipv6')}</p>
-                  <p class="body-small font-mono break-all text-text-primary">{ipData.ipv6}</p>
+                  <p className="caption font-medium">{t('publicIp.ipv6')}</p>
+                  <p className="body-small font-mono break-all text-text-primary">{ipData.ipv6}</p>
                 </>
               ) : (
                 <>
-                  <p class="caption font-medium">{t('publicIp.ipv6')}</p>
-                  <p class="body-small text-text-muted">{t('publicIp.notAvailable')}</p>
+                  <p className="caption font-medium">{t('publicIp.ipv6')}</p>
+                  <p className="body-small text-text-muted">{t('publicIp.notAvailable')}</p>
                 </>
               )}
-
               {/* ISP/ASN - only show if available */}
               {ispAsnDisplay ? (
                 <>
@@ -205,7 +202,6 @@ export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
                   <CardRow label={t('publicIp.ispAsn')} value={ispAsnDisplay} />
                 </>
               ) : null}
-
               {/* Location - only show if available */}
               {locationDisplay ? (
                 <>
@@ -213,7 +209,6 @@ export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
                   <CardRow label={t('publicIp.location')} value={locationDisplay} />
                 </>
               ) : null}
-
               {/* Last checked */}
               {ipData.lastChecked ? (
                 <>
@@ -224,15 +219,13 @@ export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
                   />
                 </>
               ) : null}
-
               {/* Error if any */}
               {ipData.error ? (
                 <>
                   <CardDivider />
-                  <p class="caption text-status-error">{ipData.error}</p>
+                  <p className="caption text-status-error">{ipData.error}</p>
                 </>
               ) : null}
-
               {/* IP History - collapsible section */}
               {hasHistory ? (
                 <>
@@ -243,19 +236,21 @@ export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
                     variant="compact"
                     defaultOpen={false}
                   >
-                    <div class="space-y-2">
+                    <div className="space-y-2">
                       {ipData.history?.map((entry, index) => {
                         const entryLocation = formatLocation(entry.city, undefined, entry.country);
                         return (
-                          <div key={`${entry.ip}-${index}`} class="flex flex-col gap-0.5">
-                            <div class="flex justify-between items-center">
-                              <span class="body-small font-mono text-text-primary">{entry.ip}</span>
-                              <span class="caption text-text-muted">
+                          <div key={`${entry.ip}-${index}`} className="flex flex-col gap-0.5">
+                            <div className="flex justify-between items-center">
+                              <span className="body-small font-mono text-text-primary">
+                                {entry.ip}
+                              </span>
+                              <span className="caption text-text-muted">
                                 {formatDateRange(entry.firstSeen, entry.lastSeen)}
                               </span>
                             </div>
                             {entryLocation ? (
-                              <span class="caption text-text-muted">{entryLocation}</span>
+                              <span className="caption text-text-muted">{entryLocation}</span>
                             ) : null}
                           </div>
                         );

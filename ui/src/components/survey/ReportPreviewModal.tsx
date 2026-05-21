@@ -84,14 +84,14 @@ function _sectionPreview({
   count?: number;
 }): React.JSX.Element {
   return (
-    <div class={cn(layout.inline.default, spacing.pad.sm, 'bg-surface-default', radius.md)}>
-      <ICON class={cn(iconTokens.size.sm, 'text-brand-primary flex-shrink-0')} />
-      <div class="flex-1 min-w-0">
-        <div class="body-small font-medium">{title}</div>
-        <div class="caption text-text-muted">{description}</div>
+    <div className={cn(layout.inline.default, spacing.pad.sm, 'bg-surface-default', radius.md)}>
+      <ICON className={cn(iconTokens.size.sm, 'text-brand-primary flex-shrink-0')} />
+      <div className="flex-1 min-w-0">
+        <div className="body-small font-medium">{title}</div>
+        <div className="caption text-text-muted">{description}</div>
       </div>
       {count !== undefined ? (
-        <span class="caption bg-surface-raised px-2 py-0.5 rounded-full">{count}</span>
+        <span className="caption bg-surface-raised px-2 py-0.5 rounded-full">{count}</span>
       ) : null}
     </div>
   );
@@ -193,17 +193,16 @@ export function ReportPreviewModal({
   const STATUS_ICON = report.summary.overallStatus === 'pass' ? CheckCircle2 : XCircle;
 
   return (
-    <div class={cn('fixed inset-0 z-50 flex items-center justify-center', spacing.pad.default)}>
+    <div className={cn('fixed inset-0 z-50 flex items-center justify-center', spacing.pad.default)}>
       {/* Backdrop */}
       <div
-        class={cn('absolute inset-0', modal.overlay, 'backdrop-blur-sm')}
+        className={cn('absolute inset-0', modal.overlay, 'backdrop-blur-sm')}
         onClick={onClose}
         aria-hidden="true"
       />
-
       {/* Modal */}
       <div
-        class={cn(
+        className={cn(
           'relative bg-surface-raised border border-surface-border',
           radius.lg,
           'shadow-xl max-w-xl w-full max-h-modal overflow-hidden flex flex-col',
@@ -214,25 +213,25 @@ export function ReportPreviewModal({
       >
         {/* Header */}
         <div
-          class={cn(
+          className={cn(
             layout.flex.between,
             spacing.pad.default,
             'border-b border-surface-border bg-surface-raised shrink-0',
           )}
         >
-          <div class={layout.inline.default}>
-            <FileText class={cn(iconTokens.size.md, 'text-brand-primary')} />
+          <div className={layout.inline.default}>
+            <FileText className={cn(iconTokens.size.md, 'text-brand-primary')} />
             <div>
-              <h2 id="report-modal-title" class="heading-3">
+              <h2 id="report-modal-title" className="heading-3">
                 {t('report.title')}
               </h2>
-              <p class="caption text-text-muted">{report.metadata.surveyName}</p>
+              <p className="caption text-text-muted">{report.metadata.surveyName}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            class={cn(
+            className={cn(
               spacing.iconBtn.sm,
               'text-text-muted hover:text-text-primary transition-colors',
               radius.default,
@@ -240,15 +239,15 @@ export function ReportPreviewModal({
             )}
             aria-label={t('report.close')}
           >
-            <X class={iconTokens.size.md} />
+            <X className={iconTokens.size.md} />
           </button>
         </div>
 
         {/* Content */}
-        <div class={cn(spacing.pad.default, 'overflow-y-auto flex-1')}>
+        <div className={cn(spacing.pad.default, 'overflow-y-auto flex-1')}>
           {/* Status Summary */}
           <div
-            class={cn(
+            className={cn(
               spacing.pad.default,
               radius.md,
               report.summary.overallStatus === 'pass'
@@ -257,17 +256,17 @@ export function ReportPreviewModal({
               spacing.margin.bottom.content,
             )}
           >
-            <div class={cn(layout.inline.default, 'justify-between')}>
-              <div class={layout.inline.default}>
-                <STATUS_ICON class={cn(iconTokens.size.lg, statusClass)} />
+            <div className={cn(layout.inline.default, 'justify-between')}>
+              <div className={layout.inline.default}>
+                <STATUS_ICON className={cn(iconTokens.size.lg, statusClass)} />
                 <div>
-                  <div class={cn('body-default font-semibold', statusClass)}>
+                  <div className={cn('body-default font-semibold', statusClass)}>
                     {t('report.overallStatus')}:{' '}
                     {t(
                       `criteria.status${report.summary.overallStatus === 'pass' ? 'Pass' : 'Fail'}`,
                     )}
                   </div>
-                  <div class="caption text-text-muted">
+                  <div className="caption text-text-muted">
                     {t('criteria.summary', {
                       passed: report.summary.passedCriteria,
                       total: report.summary.totalCriteria,
@@ -276,32 +275,36 @@ export function ReportPreviewModal({
                   </div>
                 </div>
               </div>
-              <div class={cn('heading-2', statusClass)}>
+              <div className={cn('heading-2', statusClass)}>
                 {report.summary.overallPercentage.toFixed(0)}%
               </div>
             </div>
           </div>
 
           {/* Report Info Grid */}
-          <div class={cn('grid grid-cols-3', spacing.gap.default, spacing.margin.bottom.content)}>
-            <div class={cn(spacing.pad.sm, 'bg-surface-default', radius.md, 'text-center')}>
-              <div class="caption text-text-muted">{t('report.surveyType')}</div>
-              <div class="body-small font-medium capitalize">{report.metadata.surveyType}</div>
+          <div
+            className={cn('grid grid-cols-3', spacing.gap.default, spacing.margin.bottom.content)}
+          >
+            <div className={cn(spacing.pad.sm, 'bg-surface-default', radius.md, 'text-center')}>
+              <div className="caption text-text-muted">{t('report.surveyType')}</div>
+              <div className="body-small font-medium capitalize">{report.metadata.surveyType}</div>
             </div>
-            <div class={cn(spacing.pad.sm, 'bg-surface-default', radius.md, 'text-center')}>
-              <div class="caption text-text-muted">{t('report.samplePoints')}</div>
-              <div class="body-small font-medium">{report.metadata.sampleCount}</div>
+            <div className={cn(spacing.pad.sm, 'bg-surface-default', radius.md, 'text-center')}>
+              <div className="caption text-text-muted">{t('report.samplePoints')}</div>
+              <div className="body-small font-medium">{report.metadata.sampleCount}</div>
             </div>
-            <div class={cn(spacing.pad.sm, 'bg-surface-default', radius.md, 'text-center')}>
-              <div class="caption text-text-muted">{t('report.date')}</div>
-              <div class="body-small font-medium">{formatDate(report.metadata.generatedAt)}</div>
+            <div className={cn(spacing.pad.sm, 'bg-surface-default', radius.md, 'text-center')}>
+              <div className="caption text-text-muted">{t('report.date')}</div>
+              <div className="body-small font-medium">
+                {formatDate(report.metadata.generatedAt)}
+              </div>
             </div>
           </div>
 
           {/* Sections Preview */}
-          <div class={spacing.margin.bottom.content}>
-            <h3 class="body-small font-medium mb-2">{t('report.reportSections')}</h3>
-            <div class={layout.stack.tight}>
+          <div className={spacing.margin.bottom.content}>
+            <h3 className="body-small font-medium mb-2">{t('report.reportSections')}</h3>
+            <div className={layout.stack.tight}>
               {sections.map((section) => (
                 <sectionPreview
                   key={section.titleKey}
@@ -316,9 +319,9 @@ export function ReportPreviewModal({
 
           {/* Key Findings */}
           {report.summary.keyFindings.length > 0 && (
-            <div class={cn(spacing.pad.sm, 'bg-surface-default', radius.md)}>
-              <h3 class="body-small font-medium mb-2">{t('report.keyFindings')}</h3>
-              <ul class="list-disc list-inside caption text-text-muted space-y-1">
+            <div className={cn(spacing.pad.sm, 'bg-surface-default', radius.md)}>
+              <h3 className="body-small font-medium mb-2">{t('report.keyFindings')}</h3>
+              <ul className="list-disc list-inside caption text-text-muted space-y-1">
                 {report.summary.keyFindings.slice(0, 5).map((finding) => (
                   <li key={finding}>{finding}</li>
                 ))}
@@ -329,7 +332,7 @@ export function ReportPreviewModal({
 
         {/* Footer Actions */}
         <div
-          class={cn(
+          className={cn(
             layout.inline.default,
             'justify-end',
             spacing.pad.default,
@@ -339,7 +342,7 @@ export function ReportPreviewModal({
           <button
             type="button"
             onClick={onClose}
-            class={cn(
+            className={cn(
               button.size.md,
               'bg-surface-default border border-surface-border',
               radius.md,
@@ -351,7 +354,7 @@ export function ReportPreviewModal({
           <button
             type="button"
             onClick={handleDownloadHtml}
-            class={cn(
+            className={cn(
               button.size.md,
               'bg-surface-default border border-surface-border',
               radius.md,
@@ -359,13 +362,13 @@ export function ReportPreviewModal({
               layout.inline.tight,
             )}
           >
-            <Download class="w-4 h-4" />
+            <Download className="w-4 h-4" />
             <span>{t('report.downloadHTML')}</span>
           </button>
           <button
             type="button"
             onClick={handlePrint}
-            class={cn(
+            className={cn(
               button.size.md,
               'bg-brand-primary text-text-inverse',
               radius.md,
@@ -373,7 +376,7 @@ export function ReportPreviewModal({
               layout.inline.tight,
             )}
           >
-            <Printer class="w-4 h-4" />
+            <Printer className="w-4 h-4" />
             <span>{t('report.download')}</span>
           </button>
         </div>

@@ -64,7 +64,7 @@ export function AutoSaveIndicator({ status }: AutoSaveIndicatorProps): React.Rea
     return null;
   }
   return (
-    <span class={cn('caption', spacing.margin.left.inline, getStatusColorClass())}>
+    <span className={cn('caption', spacing.margin.left.inline, getStatusColorClass())}>
       {getStatusText()}
     </span>
   );

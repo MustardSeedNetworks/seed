@@ -166,10 +166,10 @@ function SpeedGaugeComponent({
   const ticks = [0, 25, 50, 75, 100];
 
   return (
-    <div class="flex flex-col items-center">
+    <div className="flex flex-col items-center">
       {label ? (
         <p
-          class={cn(
+          className={cn(
             'caption text-text-muted',
             spacing.margin.bottom.tight,
             'uppercase tracking-wider',
@@ -178,12 +178,12 @@ function SpeedGaugeComponent({
           {label}
         </p>
       ) : null}
-      <div class="relative">
+      <div className="relative">
         <svg
           width={sizeConfig.width}
           height={sizeConfig.height}
           viewBox={`0 0 ${sizeConfig.width} ${sizeConfig.height}`}
-          class={isRunning ? 'animate-pulse' : ''}
+          className={isRunning ? 'animate-pulse' : ''}
           role="img"
           aria-label={`Speed gauge showing ${value} ${unit}`}
         >
@@ -194,7 +194,7 @@ function SpeedGaugeComponent({
             stroke="currentColor"
             strokeWidth={sizeConfig.strokeWidth}
             strokeLinecap="round"
-            class="text-surface-border"
+            className="text-surface-border"
           />
 
           {/* Value arc with gradient */}
@@ -205,7 +205,7 @@ function SpeedGaugeComponent({
               stroke={gaugeColor}
               strokeWidth={sizeConfig.strokeWidth}
               strokeLinecap="round"
-              class="transition-all duration-500 ease-out"
+              className="transition-all duration-500 ease-out"
             />
           ) : null}
 
@@ -227,7 +227,7 @@ function SpeedGaugeComponent({
                 y2={tickEndY}
                 stroke="currentColor"
                 strokeWidth={1.5}
-                class="text-text-muted/50"
+                className="text-text-muted/50"
               />
             );
           })}
@@ -239,24 +239,27 @@ function SpeedGaugeComponent({
               cy={currentY}
               r={4}
               fill={gaugeColor}
-              class="transition-all duration-500 ease-out"
+              className="transition-all duration-500 ease-out"
             />
           ) : null}
         </svg>
 
         {/* Center value display */}
         <div
-          class={cn(
+          className={cn(
             'absolute inset-0 flex flex-col items-center justify-end',
             getPaddingBottomClass(size),
           )}
         >
           <span
-            class={cn('font-mono font-bold text-text-primary tabular-nums', getFontSizeClass(size))}
+            className={cn(
+              'font-mono font-bold text-text-primary tabular-nums',
+              getFontSizeClass(size),
+            )}
           >
             {isRunning && value === 0 ? '—' : displayValue.value}
           </span>
-          <span class={cn('caption text-text-muted', spacing.micro.mtNeg)}>
+          <span className={cn('caption text-text-muted', spacing.micro.mtNeg)}>
             {displayValue.unit}
           </span>{' '}
           {/* Negative margin for tight visual alignment between value and unit */}
@@ -288,9 +291,9 @@ function ProgressRingComponent({
   const offset = circumference - (progress / 100) * circumference;
 
   return (
-    <div class="flex flex-col items-center">
-      <div class="relative">
-        <svg width={size} height={size} class="-rotate-90" aria-hidden="true">
+    <div className="flex flex-col items-center">
+      <div className="relative">
+        <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
           {/* Background circle */}
           <circle
             cx={size / 2}
@@ -299,7 +302,7 @@ function ProgressRingComponent({
             fill="none"
             stroke="currentColor"
             strokeWidth={strokeWidth}
-            class="text-surface-border"
+            className="text-surface-border"
           />
           {/* Progress circle */}
           <circle
@@ -312,18 +315,18 @@ function ProgressRingComponent({
             strokeDasharray={circumference}
             strokeDashoffset={offset}
             strokeLinecap="round"
-            class="text-brand-primary transition-all duration-300 ease-out"
+            className="text-brand-primary transition-all duration-300 ease-out"
           />
         </svg>
         {/* Center percentage */}
-        <div class="absolute inset-0 flex items-center justify-center">
-          <span class="caption font-medium text-text-primary tabular-nums">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="caption font-medium text-text-primary tabular-nums">
             {Math.round(progress)}%
           </span>
         </div>
       </div>
       {label ? (
-        <span class={cn('caption text-text-muted', spacing.margin.top.tight, 'text-center')}>
+        <span className={cn('caption text-text-muted', spacing.margin.top.tight, 'text-center')}>
           {label}
         </span>
       ) : null}
@@ -369,16 +372,16 @@ function PulsingDotComponent({
   const sizeClass = getDotSizeClass(size);
 
   return (
-    <span class="relative flex">
+    <span className="relative flex">
       <span
-        class={cn(
+        className={cn(
           'animate-ping absolute inline-flex h-full w-full',
           radiusTokens.full,
           'opacity-75',
           colorClass,
         )}
       />
-      <span class={cn('relative inline-flex', radiusTokens.full, sizeClass, colorClass)} />
+      <span className={cn('relative inline-flex', radiusTokens.full, sizeClass, colorClass)} />
     </span>
   );
 }

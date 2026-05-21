@@ -21,7 +21,7 @@ export const DiscoveryToggles: React.NamedExoticComponent<DiscoveryTogglesProps>
       <>
         {/* Enable Toggle */}
         <label
-          class={cn(
+          className={cn(
             layout.flex.between,
             spacing.pad.xs,
             'bg-surface-base',
@@ -30,10 +30,10 @@ export const DiscoveryToggles: React.NamedExoticComponent<DiscoveryTogglesProps>
           )}
         >
           <div>
-            <span class="body-small text-text-primary font-medium">
+            <span className="body-small text-text-primary font-medium">
               {t('discovery.enableDiscovery')}
             </span>
-            <p class="caption text-text-muted">{t('discovery.scanForDevices')}</p>
+            <p className="caption text-text-muted">{t('discovery.scanForDevices')}</p>
           </div>
           <input
             type="checkbox"
@@ -44,13 +44,12 @@ export const DiscoveryToggles: React.NamedExoticComponent<DiscoveryTogglesProps>
                 enabled: e.target.checked,
               }))
             }
-            class={iconTokens.size.sm}
+            className={iconTokens.size.sm}
           />
         </label>
-
         {/* Auto-Scan on Link Up */}
         <label
-          class={cn(
+          className={cn(
             layout.flex.between,
             spacing.pad.xs,
             'bg-surface-base',
@@ -59,10 +58,10 @@ export const DiscoveryToggles: React.NamedExoticComponent<DiscoveryTogglesProps>
           )}
         >
           <div>
-            <span class="body-small text-text-primary font-medium">
+            <span className="body-small text-text-primary font-medium">
               {t('discovery.autoScanOnLink')}
             </span>
-            <p class="caption text-text-muted">{t('discovery.autoScanDesc')}</p>
+            <p className="caption text-text-muted">{t('discovery.autoScanDesc')}</p>
           </div>
           <input
             type="checkbox"
@@ -73,7 +72,7 @@ export const DiscoveryToggles: React.NamedExoticComponent<DiscoveryTogglesProps>
                 autoScan: e.target.checked,
               }))
             }
-            class={iconTokens.size.sm}
+            className={iconTokens.size.sm}
           />
         </label>
       </>

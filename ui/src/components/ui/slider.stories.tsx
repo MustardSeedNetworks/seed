@@ -265,9 +265,8 @@ export const ScannerSettings: Story = {
     const [bannerTimeout, setBannerTimeout] = useState(2000);
 
     return (
-      <div class="space-y-6 max-w-2xl">
-        <h3 class="heading-3">Network Scanner Settings</h3>
-
+      <div className="space-y-6 max-w-2xl">
+        <h3 className="heading-3">Network Scanner Settings</h3>
         <Slider
           value={probeInterval}
           onChange={setProbeInterval}
@@ -279,7 +278,6 @@ export const ScannerSettings: Story = {
           rightLabel="Slower"
           formatValue={(v: number): string => `${v}ms`}
         />
-
         <Slider
           value={scanTimeout}
           onChange={setScanTimeout}
@@ -291,7 +289,6 @@ export const ScannerSettings: Story = {
           rightLabel="Patient"
           formatValue={(v: number): string => (v >= 1000 ? `${v / 1000}s` : `${v}ms`)}
         />
-
         <Slider
           value={workers}
           onChange={setWorkers}
@@ -303,7 +300,6 @@ export const ScannerSettings: Story = {
           rightLabel="Aggressive"
           formatValue={(v: number): string => `${v} workers`}
         />
-
         <Slider
           value={rescanInterval}
           onChange={setRescanInterval}
@@ -315,7 +311,6 @@ export const ScannerSettings: Story = {
           rightLabel="Rare"
           formatValue={(v: number): string => `${v} min`}
         />
-
         <Slider
           value={bannerTimeout}
           onChange={setBannerTimeout}
@@ -327,10 +322,9 @@ export const ScannerSettings: Story = {
           rightLabel="Patient"
           formatValue={(v: number): string => `${v}ms`}
         />
-
-        <div class="mt-8 p-4 bg-surface-raised rounded-lg border border-surface-border">
-          <h4 class="heading-4 mb-2">Current Configuration</h4>
-          <div class="body-small space-y-1 font-mono">
+        <div className="mt-8 p-4 bg-surface-raised rounded-lg border border-surface-border">
+          <h4 className="heading-4 mb-2">Current Configuration</h4>
+          <div className="body-small space-y-1 font-mono">
             <div>Probe Interval: {probeInterval}ms</div>
             <div>Scan Timeout: {scanTimeout}ms</div>
             <div>Workers: {workers}</div>

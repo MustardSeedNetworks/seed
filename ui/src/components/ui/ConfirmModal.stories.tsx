@@ -18,7 +18,7 @@ const meta: Meta<typeof ConfirmModal> = {
   tags: ['autodocs'],
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="min-h-[60vh] p-4">
+      <div className="min-h-[60vh] p-4">
         <StoryComponent />
       </div>
     ),
@@ -89,7 +89,7 @@ export const Interactive: Story = {
   render: () => {
     const [open, setOpen] = useState(false);
     return (
-      <div class="space-y-4">
+      <div className="space-y-4">
         <Button tone="red" onClick={() => setOpen(true)}>
           Delete profile…
         </Button>

@@ -18,7 +18,7 @@ const meta: Meta = {
   tags: ['autodocs'],
   decorators: [
     (StoryComponent: React.ComponentType): JSX.Element => (
-      <div class="w-80">
+      <div className="w-80">
         <StoryComponent />
       </div>
     ),
@@ -32,11 +32,11 @@ export const Reachable: StoryObj = {
     <Card
       title="Gateway"
       subtitle="Default Router"
-      icon={<Router class="w-4 h-4" />}
+      icon={<Router className="w-4 h-4" />}
       status="success"
     >
       <CardValue value="192.168.1.1" size="lg" />
-      <div class={cn(spacing.margin.top.content, spacing.stack.xs)}>
+      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Status" value="Reachable" status="success" />
         <CardRow label="Packet Loss" value="0%" status="success" />
         <CardDivider />
@@ -54,11 +54,11 @@ export const HighLatency: StoryObj = {
     <Card
       title="Gateway"
       subtitle="Default Router"
-      icon={<Router class="w-4 h-4" />}
+      icon={<Router className="w-4 h-4" />}
       status="warning"
     >
       <CardValue value="192.168.1.1" size="lg" />
-      <div class={cn(spacing.margin.top.content, spacing.stack.xs)}>
+      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Status" value="Slow" status="warning" />
         <CardRow label="Packet Loss" value="5%" status="warning" />
         <CardDivider />
@@ -76,15 +76,15 @@ export const Unreachable: StoryObj = {
     <Card
       title="Gateway"
       subtitle="Default Router"
-      icon={<Router class="w-4 h-4" />}
+      icon={<Router className="w-4 h-4" />}
       status="error"
     >
       <CardValue value="192.168.1.1" size="lg" status="error" />
-      <div class={cn(spacing.margin.top.content, spacing.stack.xs)}>
+      <div className={cn(spacing.margin.top.content, spacing.stack.xs)}>
         <CardRow label="Status" value="Unreachable" status="error" />
         <CardRow label="Packet Loss" value="100%" status="error" />
         <CardDivider />
-        <p class="caption text-status-danger">
+        <p className="caption text-status-danger">
           Gateway is not responding to ICMP ping requests. Check network connectivity.
         </p>
       </div>
@@ -94,17 +94,22 @@ export const Unreachable: StoryObj = {
 
 export const DualStack: StoryObj = {
   render: () => (
-    <Card title="Gateway" subtitle="IPv4 + IPv6" icon={<Router class="w-4 h-4" />} status="success">
-      <div class={spacing.stack.default}>
+    <Card
+      title="Gateway"
+      subtitle="IPv4 + IPv6"
+      icon={<Router className="w-4 h-4" />}
+      status="success"
+    >
+      <div className={spacing.stack.default}>
         <div>
-          <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>IPv4</p>
+          <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>IPv4</p>
           <CardValue value="192.168.1.1" size="md" />
           <CardRow label="Latency" value="2.3ms" status="success" />
           <CardRow label="Loss" value="0%" />
         </div>
         <CardDivider />
         <div>
-          <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>IPv6</p>
+          <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>IPv6</p>
           <CardValue value="fe80::1" size="md" />
           <CardRow label="Latency" value="1.8ms" status="success" />
           <CardRow label="Loss" value="0%" />
@@ -119,22 +124,22 @@ export const Loading: StoryObj = {
     <Card
       title="Gateway"
       subtitle="Default Router"
-      icon={<Router class="w-4 h-4" />}
+      icon={<Router className="w-4 h-4" />}
       status="loading"
     >
-      <Skeleton class={cn('h-8 w-32', spacing.margin.bottom.content)} />
-      <div class={cn(spacing.stack.sm, spacing.margin.top.content)}>
-        <div class="flex justify-between">
-          <Skeleton class="h-3 w-16" />
-          <Skeleton class="h-3 w-20" />
+      <Skeleton className={cn('h-8 w-32', spacing.margin.bottom.content)} />
+      <div className={cn(spacing.stack.sm, spacing.margin.top.content)}>
+        <div className="flex justify-between">
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-20" />
         </div>
-        <div class="flex justify-between">
-          <Skeleton class="h-3 w-20" />
-          <Skeleton class="h-3 w-12" />
+        <div className="flex justify-between">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-3 w-12" />
         </div>
-        <div class="flex justify-between">
-          <Skeleton class="h-3 w-24" />
-          <Skeleton class="h-3 w-16" />
+        <div className="flex justify-between">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-3 w-16" />
         </div>
       </div>
     </Card>
@@ -146,11 +151,11 @@ export const NoGateway: StoryObj = {
     <Card
       title="Gateway"
       subtitle="Default Router"
-      icon={<Router class="w-4 h-4" />}
+      icon={<Router className="w-4 h-4" />}
       status="unknown"
     >
       <CardValue value="Not Configured" size="md" />
-      <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
+      <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
         No default gateway configured on this interface.
       </p>
     </Card>

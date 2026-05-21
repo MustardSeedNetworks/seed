@@ -331,16 +331,13 @@ export function NetworkCard({
   return (
     <SimpleBaseCard
       title={tr('network.title')}
-      icon={<Network class={iconTokens.size.md} />}
+      icon={<Network className={iconTokens.size.md} />}
       status={status}
       loading={loading}
     >
       <CardValue value={primaryIp} size="lg" mono={true} allowWrap={true} />
-
       <CardDivider />
-
       {!hasData && <CardValue value={tr('network.noDataAvailable')} size="md" />}
-
       {hasData ? (
         <>
           {/* MAC Address */}
@@ -351,7 +348,7 @@ export function NetworkCard({
           {hasIpv4 && ipv4 ? (
             <>
               <CardDivider />
-              <p class={cn('caption font-medium', spacing.margin.bottom.tight)}>
+              <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>
                 {tr('network.ipv4')}
               </p>
               <CardRow
@@ -386,13 +383,13 @@ export function NetworkCard({
           {hasIpv6 ? (
             <>
               <CardDivider />
-              <p class={cn('caption font-medium', spacing.margin.bottom.tight)}>
+              <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>
                 {tr('network.ipv6')}
               </p>
-              <div class="stack-sm">
+              <div className="stack-sm">
                 {groupedIpv6.map((group) => (
-                  <div key={group.label} class="stack-xs">
-                    <p class="text-2xs uppercase tracking-wide text-text-muted font-semibold">
+                  <div key={group.label} className="stack-xs">
+                    <p className="text-2xs uppercase tracking-wide text-text-muted font-semibold">
                       {group.label}
                     </p>
                     {group.entries.map((ip) => (
@@ -416,12 +413,12 @@ export function NetworkCard({
           {timing ? (
             <>
               <CardDivider />
-              <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
-                <p class="caption font-medium">{tr('network.dhcpTiming')}</p>
+              <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
+                <p className="caption font-medium">{tr('network.dhcpTiming')}</p>
                 {showTiming ? (
                   <button
                     type="button"
-                    class={cn(
+                    className={cn(
                       'caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary',
                       spacing.actionBtn,
                       radius.default,
@@ -434,7 +431,7 @@ export function NetworkCard({
                 ) : (
                   <button
                     type="button"
-                    class={cn(
+                    className={cn(
                       'caption font-medium text-brand-primary hover:text-brand-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary',
                       spacing.actionBtn,
                       radius.default,
@@ -447,7 +444,7 @@ export function NetworkCard({
                 )}
               </div>
               {showTiming ? (
-                <div class="stack-xs">
+                <div className="stack-xs">
                   <CardRow
                     label={tr('network.discoverOffer')}
                     value={formatTime(timing.discover)}
@@ -463,7 +460,7 @@ export function NetworkCard({
                     value={formatTime(timing.request)}
                     status={getTimingStatus(timing.request, th.perPhase)}
                   />
-                  <div class={cn(spacing.padding.top.tight, border.divider)}>
+                  <div className={cn(spacing.padding.top.tight, border.divider)}>
                     <CardRow
                       label={tr('network.total')}
                       value={formatTime(timing.total)}
@@ -478,7 +475,7 @@ export function NetworkCard({
           {hasData && !timing ? (
             <>
               <CardDivider />
-              <p class="caption">{tr('network.notRecorded')}</p>
+              <p className="caption">{tr('network.notRecorded')}</p>
             </>
           ) : null}
 
@@ -486,7 +483,7 @@ export function NetworkCard({
           {showPublicIp && publicIp && (publicIp.ipv4 || publicIp.ipv6) ? (
             <>
               <CardDivider />
-              <p class={cn('caption font-medium', spacing.margin.bottom.tight)}>
+              <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>
                 {tr('network.publicIp')}
               </p>
               {publicIp.ipv4 ? <CardRow label={tr('network.ipv4')} value={publicIp.ipv4} /> : null}
@@ -500,7 +497,7 @@ export function NetworkCard({
                 />
               ) : null}
               {publicIp.error ? (
-                <p class={cn('caption text-status-error', spacing.margin.top.tight)}>
+                <p className={cn('caption text-status-error', spacing.margin.top.tight)}>
                   {publicIp.error}
                 </p>
               ) : null}

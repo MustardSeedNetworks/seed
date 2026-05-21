@@ -37,23 +37,23 @@ export const Breadcrumbs: FC = () => {
   }
 
   return (
-    <nav aria-label="Breadcrumb" class="flex items-center gap-1 text-sm text-text-muted mb-4">
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-text-muted mb-4">
       <Link
         to="/"
-        class="flex items-center gap-1 hover:text-text-primary transition-colors"
+        className="flex items-center gap-1 hover:text-text-primary transition-colors"
         aria-label="Home"
       >
-        <Home class={iconSizes.sm} />
+        <Home className={iconSizes.sm} />
       </Link>
       {items.map((item, index) => (
-        <span key={item.path} class="flex items-center gap-1">
-          <ChevronRight class={`${iconSizes.xs} text-text-muted`} />
+        <span key={item.path} className="flex items-center gap-1">
+          <ChevronRight className={`${iconSizes.xs} text-text-muted`} />
           {index === items.length - 1 ? (
-            <span class="text-text-primary font-medium capitalize" aria-current="page">
+            <span className="text-text-primary font-medium capitalize" aria-current="page">
               {item.label}
             </span>
           ) : (
-            <Link to={item.path} class="hover:text-text-primary transition-colors capitalize">
+            <Link to={item.path} className="hover:text-text-primary transition-colors capitalize">
               {item.label}
             </Link>
           )}

@@ -120,7 +120,7 @@ export function WiFiCard({ data, loading, visible = true }: WiFiCardProps): Reac
   return (
     <SimpleBaseCard
       title={tr('wifi.title')}
-      icon={<Wifi class={iconTokens.size.md} />}
+      icon={<Wifi className={iconTokens.size.md} />}
       status={loading ? 'loading' : status}
       loading={loading}
       loadingContent={<CardValue value={tc('status.scanning')} size="lg" />}
@@ -128,9 +128,9 @@ export function WiFiCard({ data, loading, visible = true }: WiFiCardProps): Reac
       {data ? (
         <>
           <CardValue value={data.ssid} size="lg" />
-          <div class={cn(layout.inline.default, spacing.margin.top.tight)}>
-            <span class="body-large font-mono">{getSignalBars(data.signal)}</span>
-            <span class="body-small text-text-muted">
+          <div className={cn(layout.inline.default, spacing.margin.top.tight)}>
+            <span className="body-large font-mono">{getSignalBars(data.signal)}</span>
+            <span className="body-small text-text-muted">
               {data.signal} dBm ({signalToPercentage(data.signal)}%)
             </span>
           </div>

@@ -123,29 +123,34 @@ export function HeatmapLegend({
   }
 
   return (
-    <div class={cn('bg-surface-raised border border-surface-border', radius.md, spacing.pad.sm)}>
-      <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
-        <span class="body-small font-medium">{info.name}</span>
+    <div
+      className={cn('bg-surface-raised border border-surface-border', radius.md, spacing.pad.sm)}
+    >
+      <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
+        <span className="body-small font-medium">{info.name}</span>
       </div>
-
       {/* Color gradient bar */}
       <div
-        class={cn('relative h-6', radius.default, 'overflow-hidden', spacing.margin.bottom.tight)}
+        className={cn(
+          'relative h-6',
+          radius.default,
+          'overflow-hidden',
+          spacing.margin.bottom.tight,
+        )}
       >
         <div
-          class="absolute inset-0"
+          className="absolute inset-0"
           style={{
             background: gradient,
           }}
         />
       </div>
-
       {/* Min/max labels */}
-      <div class={layout.flex.between}>
-        <span class="caption text-text-muted">
+      <div className={layout.flex.between}>
+        <span className="caption text-text-muted">
           {minValue.toFixed(1)} {info.unit}
         </span>
-        <span class="caption text-text-muted">
+        <span className="caption text-text-muted">
           {maxValue.toFixed(1)} {info.unit}
         </span>
       </div>

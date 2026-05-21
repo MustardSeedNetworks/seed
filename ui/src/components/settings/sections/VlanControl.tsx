@@ -75,8 +75,8 @@ export const VlanControl: React.NamedExoticComponent<Record<string, never>> = me
     };
 
     return (
-      <div class="stack-sm">
-        <div class={layout.inline.default}>
+      <div className="stack-sm">
+        <div className={layout.inline.default}>
           <input
             type="number"
             min="1"
@@ -86,7 +86,7 @@ export const VlanControl: React.NamedExoticComponent<Record<string, never>> = me
               setVlanId(e.target.value)
             }
             placeholder={t('network.vlan.placeholder')}
-            class={cn(
+            className={cn(
               'flex-1',
               input.size.sm,
               'bg-surface-base border border-surface-border',
@@ -99,7 +99,7 @@ export const VlanControl: React.NamedExoticComponent<Record<string, never>> = me
             type="button"
             onClick={handleCreate}
             disabled={loading || !vlanId}
-            class={cn(
+            className={cn(
               button.size.sm,
               'bg-brand-primary text-text-inverse',
               radius.md,
@@ -112,7 +112,7 @@ export const VlanControl: React.NamedExoticComponent<Record<string, never>> = me
             type="button"
             onClick={handleDelete}
             disabled={loading || !vlanId}
-            class={cn(
+            className={cn(
               button.size.sm,
               'bg-status-error text-text-inverse',
               radius.md,
@@ -124,7 +124,7 @@ export const VlanControl: React.NamedExoticComponent<Record<string, never>> = me
         </div>
         {message ? (
           <p
-            class={cn(
+            className={cn(
               'caption',
               message.isError ? statusColor.text.error : statusColor.text.success,
             )}
@@ -132,7 +132,7 @@ export const VlanControl: React.NamedExoticComponent<Record<string, never>> = me
             {message.text}
           </p>
         ) : null}
-        <p class="caption">{t('network.vlan.description')}</p>
+        <p className="caption">{t('network.vlan.description')}</p>
       </div>
     );
   },

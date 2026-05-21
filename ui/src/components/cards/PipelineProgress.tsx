@@ -69,15 +69,15 @@ function renderPhaseIcon(
   isComplete: boolean,
   isCurrent: boolean,
   isRunning: boolean,
-  Icon: React.ComponentType<{ class?: string }>,
+  Icon: React.ComponentType<{ className?: string }>,
 ): React.ReactElement {
   if (isComplete) {
-    return <Check class={iconTokens.size.sm} />;
+    return <Check className={iconTokens.size.sm} />;
   }
   if (isCurrent && isRunning) {
-    return <Loader2 class={cn(iconTokens.size.sm, 'animate-spin')} />;
+    return <Loader2 className={cn(iconTokens.size.sm, 'animate-spin')} />;
   }
-  return <Icon class={iconTokens.size.sm} />;
+  return <Icon className={iconTokens.size.sm} />;
 }
 
 export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps> = memo(
@@ -96,14 +96,14 @@ export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps>
     const currentPhaseIndex = rawPhaseIndex >= 0 ? rawPhaseIndex : 0;
 
     return (
-      <div class={cn('space-y-3', spacing.pad.sm)}>
+      <div className={cn('space-y-3', spacing.pad.sm)}>
         {/* Current phase header */}
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
             {isRunning ? (
-              <Loader2 class={cn(iconTokens.size.sm, 'text-brand-primary animate-spin')} />
+              <Loader2 className={cn(iconTokens.size.sm, 'text-brand-primary animate-spin')} />
             ) : null}
-            <span class="body-small font-medium text-text-primary">
+            <span className="body-small font-medium text-text-primary">
               {t('pipeline.phaseProgress', {
                 current: status.phaseNumber,
                 total: status.totalPhases,
@@ -116,7 +116,7 @@ export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps>
             <button
               type="button"
               onClick={onCancel}
-              class={cn(
+              className={cn(
                 button.base,
                 button.size.sm,
                 button.variant.secondary,
@@ -124,23 +124,22 @@ export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps>
               )}
               aria-label={t('pipeline.cancel', { defaultValue: 'Cancel' })}
             >
-              <X class={iconTokens.size.xs} />
-              <span class="hidden sm:inline">
+              <X className={iconTokens.size.xs} />
+              <span className="hidden sm:inline">
                 {t('pipeline.cancel', { defaultValue: 'Cancel' })}
               </span>
             </button>
           ) : null}
         </div>
-
         {/* Progress bar */}
-        <div class="space-y-1">
-          <div class={cn('h-2 bg-surface-sunken overflow-hidden', radius.default)}>
+        <div className="space-y-1">
+          <div className={cn('h-2 bg-surface-sunken overflow-hidden', radius.default)}>
             <div
-              class={cn('h-full bg-brand-primary transition-all duration-300', radius.default)}
+              className={cn('h-full bg-brand-primary transition-all duration-300', radius.default)}
               style={{ width: `${Math.min(status.percentComplete, 100)}%` }}
             />
           </div>
-          <div class="flex justify-between caption text-text-muted">
+          <div className="flex justify-between caption text-text-muted">
             <span>
               {status.processedCount} / {status.totalCount}{' '}
               {t('pipeline.devices', { defaultValue: 'devices' })}
@@ -148,13 +147,12 @@ export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps>
             <span>{Math.round(status.percentComplete)}%</span>
           </div>
         </div>
-
         {/* Current target and timing */}
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 caption text-text-muted">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 caption text-text-muted">
           {status.currentTarget ? (
             <span>
               {t('pipeline.scanning', { defaultValue: 'Scanning' })}:{' '}
-              <span class="font-mono text-text-secondary">{status.currentTarget}</span>
+              <span className="font-mono text-text-secondary">{status.currentTarget}</span>
             </span>
           ) : null}
           <span>
@@ -167,9 +165,8 @@ export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps>
             </span>
           )}
         </div>
-
         {/* Phase stepper */}
-        <div class="flex items-center justify-between gap-1 pt-2 border-t border-surface-border">
+        <div className="flex items-center justify-between gap-1 pt-2 border-t border-surface-border">
           {status.enabledPhases.map((phase, index) => {
             const config = PHASE_CONFIG[phase];
             const ICON = config?.icon || Circle;
@@ -183,11 +180,11 @@ export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps>
             return (
               <div
                 key={phase}
-                class={cn('flex flex-col items-center gap-1 flex-1', isPending && 'opacity-50')}
+                className={cn('flex flex-col items-center gap-1 flex-1', isPending && 'opacity-50')}
               >
                 {/* Icon with status indicator */}
                 <div
-                  class={cn(
+                  className={cn(
                     'flex items-center justify-center w-8 h-8',
                     radius.full,
                     isComplete && 'bg-status-success text-text-inverse',
@@ -197,36 +194,35 @@ export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps>
                 >
                   {renderPhaseIcon(isComplete, isCurrent, isRunning, ICON)}
                 </div>
-
                 {/* Phase name */}
                 <span
-                  class={cn(
+                  className={cn(
                     'caption text-center',
                     isCurrent ? 'text-text-primary font-medium' : 'text-text-muted',
                   )}
                 >
                   {PHASE_DISPLAY_NAMES[phase] || phase}
                 </span>
-
                 {/* Duration if complete */}
                 {duration !== undefined && (
-                  <span class="caption text-text-muted">{formatDuration(duration)}</span>
+                  <span className="caption text-text-muted">{formatDuration(duration)}</span>
                 )}
               </div>
             );
           })}
         </div>
-
         {/* Errors if any */}
         {status.errors.length > 0 && (
-          <div class={cn('p-2 bg-status-error/10 border border-status-error/30', radius.default)}>
-            <span class="caption text-status-error font-medium">
+          <div
+            className={cn('p-2 bg-status-error/10 border border-status-error/30', radius.default)}
+          >
+            <span className="caption text-status-error font-medium">
               {t('pipeline.errors', { defaultValue: 'Errors' })}:
             </span>
-            <ul class="mt-1 space-y-0.5">
+            <ul className="mt-1 space-y-0.5">
               {/* Fixes #926, #939: Use error content hash for stable keys */}
               {status.errors.map((error, i) => (
-                <li key={`${i}-${simpleHash(error)}`} class="caption text-status-error">
+                <li key={`${i}-${simpleHash(error)}`} className="caption text-status-error">
                   {error}
                 </li>
               ))}

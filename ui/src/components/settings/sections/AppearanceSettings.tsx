@@ -70,16 +70,16 @@ export const AppearanceSettings: React.NamedExoticComponent<AppearanceSettingsPr
     return (
       <CollapsibleSection
         title={
-          <div class={layout.inline.default}>
-            <Palette class={iconTokens.size.sm} />
+          <div className={layout.inline.default}>
+            <Palette className={iconTokens.size.sm} />
             <span>{t('sections.appearance')}</span>
           </div>
         }
         defaultOpen={false}
       >
-        <div class="stack-sm">
+        <div className="stack-sm">
           <label
-            class={cn(
+            className={cn(
               layout.flex.between,
               spacing.pad.sm,
               'bg-surface-base',
@@ -87,13 +87,13 @@ export const AppearanceSettings: React.NamedExoticComponent<AppearanceSettingsPr
               'border border-surface-border',
             )}
           >
-            <span class="body-small text-text-primary">{t('appearance.theme')}</span>
+            <span className="body-small text-text-primary">{t('appearance.theme')}</span>
             <select
               value={theme}
               onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                 setTheme(e.target.value as 'light' | 'dark' | 'system')
               }
-              class={cn(
+              className={cn(
                 'bg-surface-raised border border-surface-border',
                 radius.default,
                 spacing.chip.sm,
@@ -107,7 +107,7 @@ export const AppearanceSettings: React.NamedExoticComponent<AppearanceSettingsPr
           </label>
 
           <label
-            class={cn(
+            className={cn(
               layout.flex.between,
               spacing.pad.sm,
               'bg-surface-base',
@@ -115,13 +115,13 @@ export const AppearanceSettings: React.NamedExoticComponent<AppearanceSettingsPr
               'border border-surface-border',
             )}
           >
-            <span class="body-small text-text-primary">{t('appearance.language')}</span>
+            <span className="body-small text-text-primary">{t('appearance.language')}</span>
             <select
               value={currentLanguage}
               onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                 handleLanguageChange(e.target.value)
               }
-              class={cn(
+              className={cn(
                 'bg-surface-raised border border-surface-border',
                 radius.default,
                 spacing.chip.sm,
@@ -137,7 +137,7 @@ export const AppearanceSettings: React.NamedExoticComponent<AppearanceSettingsPr
           </label>
 
           <label
-            class={cn(
+            className={cn(
               layout.flex.between,
               spacing.pad.sm,
               'bg-surface-base',
@@ -145,13 +145,13 @@ export const AppearanceSettings: React.NamedExoticComponent<AppearanceSettingsPr
               'border border-surface-border',
             )}
           >
-            <span class="body-small text-text-primary">{t('appearance.measurementUnits')}</span>
+            <span className="body-small text-text-primary">{t('appearance.measurementUnits')}</span>
             <select
               value={unitSystem}
               onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                 setUnitSystem(e.target.value as 'sae' | 'metric')
               }
-              class={cn(
+              className={cn(
                 'bg-surface-raised border border-surface-border',
                 radius.default,
                 spacing.chip.sm,
@@ -166,7 +166,7 @@ export const AppearanceSettings: React.NamedExoticComponent<AppearanceSettingsPr
           <button
             type="button"
             onClick={(): void => setTheme(isDark ? 'light' : 'dark')}
-            class={cn(
+            className={cn(
               'w-full',
               layout.flex.between,
               spacing.pad.sm,
@@ -175,8 +175,8 @@ export const AppearanceSettings: React.NamedExoticComponent<AppearanceSettingsPr
               'border border-surface-border hover:bg-surface-hover transition-colors',
             )}
           >
-            <span class="body-small text-text-primary">{t('appearance.quickToggle')}</span>
-            <span class="text-xl">{isDark ? '\u{1F319}' : '\u2600\uFE0F'}</span>
+            <span className="body-small text-text-primary">{t('appearance.quickToggle')}</span>
+            <span className="text-xl">{isDark ? '\u{1F319}' : '\u2600\uFE0F'}</span>
           </button>
         </div>
       </CollapsibleSection>

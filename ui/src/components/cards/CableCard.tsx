@@ -172,9 +172,9 @@ export function CableCard({
       return (
         <>
           <CardValue value={t('cable.notSupported')} size="md" />
-          <p class={cn('caption', spacing.margin.top.inline)}>{t('cable.tdrNotSupported')}</p>
+          <p className={cn('caption', spacing.margin.top.inline)}>{t('cable.tdrNotSupported')}</p>
           {data.driverName ? (
-            <p class={cn('caption text-text-muted', spacing.margin.top.tight)}>
+            <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
               {t('cable.driver', 'Driver')}: {data.driverName}
             </p>
           ) : null}
@@ -189,19 +189,16 @@ export function CableCard({
           size="lg"
           status={statusMap[data.status] || 'unknown'}
         />
-
         {/* TDR support indicator (#740) — confirm the NIC can run diagnostics. */}
-        <p class={cn('caption text-text-muted', spacing.margin.top.tight)}>
+        <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
           {t('cable.tdrSupported', 'TDR diagnostics supported')}
         </p>
-
         {/* Crossover indicator */}
         {data.isCrossover ? (
-          <p class={cn('caption text-status-warning font-medium', spacing.margin.top.tight)}>
+          <p className={cn('caption text-status-warning font-medium', spacing.margin.top.tight)}>
             {t('cable.crossover', 'Crossover Cable Detected')}
           </p>
         ) : null}
-
         {/* Overall length */}
         {data.length !== null && data.length !== undefined && (
           <>
@@ -209,21 +206,20 @@ export function CableCard({
             <CardRow label={t('cable.length')} value={formatLength(data.length, data.lengthFt)} />
           </>
         )}
-
         {/* Per-pair results */}
         {data.pairs && data.pairs.length > 0 && (
           <>
             <CardDivider />
-            <p class={cn('caption font-medium text-text-muted', spacing.margin.bottom.tight)}>
+            <p className={cn('caption font-medium text-text-muted', spacing.margin.bottom.tight)}>
               {t('cable.pairResults', 'Pair Results')}
             </p>
-            <div class={cn('stack-sm', spacing.margin.top.tight)}>
+            <div className={cn('stack-sm', spacing.margin.top.tight)}>
               {data.pairs.map((pair) => (
-                <div key={pair.pair} class={cn(layout.flex.between, 'body-small')}>
-                  <span class="text-text-muted">
+                <div key={pair.pair} className={cn(layout.flex.between, 'body-small')}>
+                  <span className="text-text-muted">
                     {t('cable.pair', 'Pair')} {pair.pairLetter} ({pair.pair})
                   </span>
-                  <span class={cn(getPairStatusClass(pair.status))}>
+                  <span className={cn(getPairStatusClass(pair.status))}>
                     {getStatusLabel(pair.status)}
                     {pair.lengthM !== null &&
                       pair.lengthM !== undefined &&
@@ -234,50 +230,47 @@ export function CableCard({
             </div>
           </>
         )}
-
         {/* Wiring standard pinout */}
         {showPinout && data.pinout && data.pinout.length > 0 && (
           <>
             <CardDivider />
-            <p class={cn('caption font-medium text-text-muted', spacing.margin.bottom.tight)}>
+            <p className={cn('caption font-medium text-text-muted', spacing.margin.bottom.tight)}>
               {t('cable.wiringStandard', 'Wiring Standard')}: {data.wiringStandard || '568B'}
             </p>
-            <div class={cn('grid grid-cols-8', spacing.gap.tight, spacing.margin.top.tight)}>
+            <div className={cn('grid grid-cols-8', spacing.gap.tight, spacing.margin.top.tight)}>
               {data.pinout.map((pin) => (
-                <div key={pin.pin} class="text-center">
+                <div key={pin.pin} className="text-center">
                   <div
-                    class={cn(
+                    className={cn(
                       'w-4 h-6 mx-auto border',
                       radius.sm,
                       wireColorMap[pin.color.toLowerCase()] || 'bg-surface-border',
                     )}
                     title={pin.color}
                   />
-                  <span class="caption text-text-muted">{pin.pin}</span>
+                  <span className="caption text-text-muted">{pin.pin}</span>
                 </div>
               ))}
             </div>
           </>
         )}
-
         {/* Faults list */}
         {data.faults && data.faults.length > 0 && (
           <>
             <CardDivider />
-            <p class={cn('caption font-medium text-status-error', spacing.margin.bottom.tight)}>
+            <p className={cn('caption font-medium text-status-error', spacing.margin.bottom.tight)}>
               {t('cable.faultsDetected', 'Faults Detected')}:
             </p>
-            <ul class={cn('caption text-text-secondary', spacing.margin.top.tight)}>
+            <ul className={cn('caption text-text-secondary', spacing.margin.top.tight)}>
               {data.faults.map((fault) => (
                 <li key={fault}>• {fault}</li>
               ))}
             </ul>
           </>
         )}
-
         {/* Driver info */}
         {data.driverName ? (
-          <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
+          <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
             {t('cable.driver', 'Driver')}: {data.driverName}
           </p>
         ) : null}
@@ -288,7 +281,7 @@ export function CableCard({
   return (
     <SimpleBaseCard
       title={t('cable.title')}
-      icon={<Cable class={iconTokens.size.md} />}
+      icon={<Cable className={iconTokens.size.md} />}
       status={loading ? 'loading' : getCardStatus(data)}
       loading={loading}
       loadingContent={<CardValue value={t('cable.testing')} size="lg" />}

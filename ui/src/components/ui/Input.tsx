@@ -37,20 +37,20 @@ export const Input: FC<InputProps> = ({
   const hasError = !!error;
 
   return (
-    <div class={containerClassName}>
+    <div className={containerClassName}>
       {label ? (
-        <label for={inputId} class="block text-sm font-medium text-text-secondary mb-2">
+        <label htmlFor={inputId} className="block text-sm font-medium text-text-secondary mb-2">
           {label}
         </label>
       ) : null}
-      <div class="relative">
+      <div className="relative">
         {leftIcon ? (
-          <div class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">{leftIcon}</div>
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">{leftIcon}</div>
         ) : null}
         <input
           ref={ref}
           id={inputId}
-          class={`
+          className={`
             ${inputBaseStyles}
             ${hasError ? 'border-status-error focus:border-status-error focus:ring-status-error/20' : `${inputBorderStyles} ${inputFocusStyles}`}
             ${leftIcon ? 'pl-10' : 'px-4'}
@@ -61,11 +61,13 @@ export const Input: FC<InputProps> = ({
           {...props}
         />
         {rightIcon ? (
-          <div class="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted">{rightIcon}</div>
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted">
+            {rightIcon}
+          </div>
         ) : null}
       </div>
       {error || hint ? (
-        <p class={`mt-1.5 text-sm ${hasError ? 'text-status-error' : 'text-text-muted'}`}>
+        <p className={`mt-1.5 text-sm ${hasError ? 'text-status-error' : 'text-text-muted'}`}>
           {error || hint}
         </p>
       ) : null}
@@ -95,16 +97,16 @@ export const Textarea: FC<TextareaProps> = ({
   const hasError = !!error;
 
   return (
-    <div class={containerClassName}>
+    <div className={containerClassName}>
       {label ? (
-        <label for={textareaId} class="block text-sm font-medium text-text-secondary mb-2">
+        <label htmlFor={textareaId} className="block text-sm font-medium text-text-secondary mb-2">
           {label}
         </label>
       ) : null}
       <textarea
         ref={ref}
         id={textareaId}
-        class={`
+        className={`
           ${inputBaseStyles}
           ${hasError ? 'border-status-error focus:border-status-error focus:ring-status-error/20' : `${inputBorderStyles} ${inputFocusStyles}`}
           px-4 py-2.5 min-h-[100px] resize-y
@@ -113,7 +115,7 @@ export const Textarea: FC<TextareaProps> = ({
         {...props}
       />
       {error || hint ? (
-        <p class={`mt-1.5 text-sm ${hasError ? 'text-status-error' : 'text-text-muted'}`}>
+        <p className={`mt-1.5 text-sm ${hasError ? 'text-status-error' : 'text-text-muted'}`}>
           {error || hint}
         </p>
       ) : null}
@@ -155,16 +157,16 @@ export const Select: FC<SelectProps> = ({
   const hasError = !!error;
 
   return (
-    <div class={containerClassName}>
+    <div className={containerClassName}>
       {label ? (
-        <label for={selectId} class="block text-sm font-medium text-text-secondary mb-2">
+        <label htmlFor={selectId} className="block text-sm font-medium text-text-secondary mb-2">
           {label}
         </label>
       ) : null}
       <select
         ref={ref}
         id={selectId}
-        class={`
+        className={`
           ${inputBaseStyles}
           ${hasError ? 'border-status-error focus:border-status-error focus:ring-status-error/20' : `${inputBorderStyles} ${inputFocusStyles}`}
           px-4 py-2.5 appearance-none cursor-pointer
@@ -187,7 +189,7 @@ export const Select: FC<SelectProps> = ({
         ))}
       </select>
       {error || hint ? (
-        <p class={`mt-1.5 text-sm ${hasError ? 'text-status-error' : 'text-text-muted'}`}>
+        <p className={`mt-1.5 text-sm ${hasError ? 'text-status-error' : 'text-text-muted'}`}>
           {error || hint}
         </p>
       ) : null}
@@ -214,12 +216,12 @@ export const Checkbox: FC<CheckboxProps> = ({
   const checkboxId = id || label.toLowerCase().replace(/\s+/g, '-');
 
   return (
-    <div class={`flex items-start gap-3 ${containerClassName}`}>
+    <div className={`flex items-start gap-3 ${containerClassName}`}>
       <input
         ref={ref}
         type="checkbox"
         id={checkboxId}
-        class={`
+        className={`
           mt-0.5 h-4 w-4 rounded border-border-muted bg-bg-elevated text-brand-primary
           focus:ring-2 focus:ring-brand-primary/50 focus:ring-offset-0
           transition-colors cursor-pointer
@@ -228,10 +230,13 @@ export const Checkbox: FC<CheckboxProps> = ({
         {...props}
       />
       <div>
-        <label for={checkboxId} class="text-sm font-medium text-text-primary cursor-pointer">
+        <label
+          htmlFor={checkboxId}
+          className="text-sm font-medium text-text-primary cursor-pointer"
+        >
           {label}
         </label>
-        {description ? <p class="text-sm text-text-muted mt-0.5">{description}</p> : null}
+        {description ? <p className="text-sm text-text-muted mt-0.5">{description}</p> : null}
       </div>
     </div>
   );
@@ -257,12 +262,12 @@ export const Toggle: FC<ToggleProps> = ({
   const toggleId = id || label.toLowerCase().replace(/\s+/g, '-');
 
   return (
-    <div class={`flex items-center justify-between gap-4 ${containerClassName}`}>
+    <div className={`flex items-center justify-between gap-4 ${containerClassName}`}>
       <div>
-        <label for={toggleId} class="text-sm font-medium text-text-primary cursor-pointer">
+        <label htmlFor={toggleId} className="text-sm font-medium text-text-primary cursor-pointer">
           {label}
         </label>
-        {description ? <p class="text-sm text-text-muted mt-0.5">{description}</p> : null}
+        {description ? <p className="text-sm text-text-muted mt-0.5">{description}</p> : null}
       </div>
       <button
         type="button"
@@ -274,7 +279,7 @@ export const Toggle: FC<ToggleProps> = ({
             input.click();
           }
         }}
-        class={`
+        className={`
           relative inline-flex h-6 w-11 items-center rounded-full transition-colors
           focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:ring-offset-2 focus:ring-offset-gray-900
           ${checked ? 'bg-brand-primary' : 'bg-bg-elevated'}
@@ -282,13 +287,20 @@ export const Toggle: FC<ToggleProps> = ({
         `}
       >
         <span
-          class={`
+          className={`
             inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform
             ${checked ? 'translate-x-6' : 'translate-x-1'}
           `}
         />
       </button>
-      <input ref={ref} type="checkbox" id={toggleId} checked={checked} class="sr-only" {...props} />
+      <input
+        ref={ref}
+        type="checkbox"
+        id={toggleId}
+        checked={checked}
+        className="sr-only"
+        {...props}
+      />
     </div>
   );
 };
@@ -327,17 +339,17 @@ export const SearchInput: FC<SearchInputProps> = ({
   };
 
   return (
-    <div class={containerClassName}>
+    <div className={containerClassName}>
       {label ? (
-        <label for={inputId} class="block text-sm font-medium text-text-secondary mb-2">
+        <label htmlFor={inputId} className="block text-sm font-medium text-text-secondary mb-2">
           {label}
         </label>
       ) : null}
-      <div class="relative">
-        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
+      <div className="relative">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4"
+            className="h-4 w-4"
             aria-hidden="true"
             fill="none"
             viewBox="0 0 24 24"
@@ -358,7 +370,7 @@ export const SearchInput: FC<SearchInputProps> = ({
           value={value}
           onChange={onChange}
           placeholder={props.placeholder || 'Search...'}
-          class={`
+          className={`
             ${inputBaseStyles}
             ${inputBorderStyles}
             ${inputFocusStyles}
@@ -374,11 +386,11 @@ export const SearchInput: FC<SearchInputProps> = ({
             type="button"
             onClick={handleClear}
             aria-label="Clear search"
-            class="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary/50 rounded"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary/50 rounded"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
+              className="h-4 w-4"
               aria-hidden="true"
               fill="none"
               viewBox="0 0 24 24"
@@ -400,7 +412,7 @@ interface FormGroupProps {
 }
 
 export const FormGroup: FC<FormGroupProps> = ({ children, className = '' }) => (
-  <div class={`space-y-4 ${className}`}>{children}</div>
+  <div className={`space-y-4 ${className}`}>{children}</div>
 );
 
 interface FormSectionProps {
@@ -416,11 +428,11 @@ export const FormSection: FC<FormSectionProps> = ({
   children,
   className = '',
 }) => (
-  <div class={`space-y-4 ${className}`}>
+  <div className={`space-y-4 ${className}`}>
     <div>
-      <h3 class="text-lg font-semibold text-text-primary">{title}</h3>
-      {description ? <p class="text-sm text-text-muted mt-1">{description}</p> : null}
+      <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
+      {description ? <p className="text-sm text-text-muted mt-1">{description}</p> : null}
     </div>
-    <div class="space-y-4">{children}</div>
+    <div className="space-y-4">{children}</div>
   </div>
 );

@@ -85,11 +85,11 @@ export const Interactive: Story = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div class={cn('min-h-screen bg-surface-base', spacing.pad.xl)}>
+      <div className={cn('min-h-screen bg-surface-base', spacing.pad.xl)}>
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          class={cn(
+          className={cn(
             button.size.md,
             'bg-brand-primary text-text-inverse',
             radius.lg,
@@ -120,9 +120,11 @@ export const WithSearch: Story = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="min-h-screen bg-surface-base">
-        <div class={cn(spacing.pad.default, 'bg-surface-raised border-b border-surface-border')}>
-          <p class="body-small text-text-muted">
+      <div className="min-h-screen bg-surface-base">
+        <div
+          className={cn(spacing.pad.default, 'bg-surface-raised border-b border-surface-border')}
+        >
+          <p className="body-small text-text-muted">
             Use the search box in the modal sidebar to filter help sections. Try searching for
             "wifi", "dns", or "gateway".
           </p>
@@ -149,12 +151,14 @@ export const AllSections: Story = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="min-h-screen bg-surface-base">
-        <div class={cn(spacing.pad.default, 'bg-surface-raised border-b border-surface-border')}>
-          <h2 class={cn('heading-3 text-text-primary', spacing.margin.bottom.inline)}>
+      <div className="min-h-screen bg-surface-base">
+        <div
+          className={cn(spacing.pad.default, 'bg-surface-raised border-b border-surface-border')}
+        >
+          <h2 className={cn('heading-3 text-text-primary', spacing.margin.bottom.inline)}>
             Help Modal - All Sections
           </h2>
-          <p class="body-small text-text-muted">
+          <p className="body-small text-text-muted">
             Navigate through all available help sections using the sidebar
           </p>
         </div>
@@ -180,7 +184,7 @@ export const MobileView: Story = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="min-h-screen bg-surface-base">
+      <div className="min-h-screen bg-surface-base">
         <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </div>
     );
@@ -206,7 +210,7 @@ export const TabletView: Story = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="min-h-screen bg-surface-base">
+      <div className="min-h-screen bg-surface-base">
         <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </div>
     );
@@ -231,7 +235,7 @@ export const DarkTheme: Story = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="min-h-screen bg-surface-base dark">
+      <div className="min-h-screen bg-surface-base dark">
         <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </div>
     );
@@ -277,12 +281,14 @@ export const SimpleBasic: StoryObj<typeof HelpModal> = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="min-h-screen bg-surface-base">
+      <div className="min-h-screen bg-surface-base">
         <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Link Status Help">
-          <p class={cn('body text-text-secondary', spacing.margin.bottom.content)}>
+          <p className={cn('body text-text-secondary', spacing.margin.bottom.content)}>
             The Link Status card monitors the physical layer connection of your network interface.
           </p>
-          <ul class={cn('list-disc list-inside body-small text-text-secondary', spacing.stack.sm)}>
+          <ul
+            className={cn('list-disc list-inside body-small text-text-secondary', spacing.stack.sm)}
+          >
             <li>Carrier: Shows if cable is physically connected</li>
             <li>Speed: Negotiated link speed (e.g., 1000 Mbps)</li>
             <li>Duplex: Full or Half duplex communication</li>
@@ -309,10 +315,10 @@ export const SimpleWithSections: StoryObj<typeof HelpModal> = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="min-h-screen bg-surface-base">
+      <div className="min-h-screen bg-surface-base">
         <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="WiFi Survey Help">
           <HelpSection title="What is a WiFi Survey?">
-            <p class="body-small text-text-secondary">
+            <p className="body-small text-text-secondary">
               A WiFi survey maps wireless signal coverage across different locations. Use it to
               identify dead zones and optimize access point placement.
             </p>
@@ -343,7 +349,7 @@ export const SimpleWithSections: StoryObj<typeof HelpModal> = {
 
           <HelpSection title="How to Use">
             <ol
-              class={cn(
+              className={cn(
                 'list-decimal list-inside body-small text-text-secondary',
                 spacing.stack.sm,
               )}
@@ -377,20 +383,20 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="min-h-screen bg-surface-base">
+      <div className="min-h-screen bg-surface-base">
         <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Speed Test Results">
-          <div class={cn(spacing.gap.comfortable, 'flex flex-col')}>
+          <div className={cn(spacing.gap.comfortable, 'flex flex-col')}>
             <div
-              class={cn(
+              className={cn(
                 'bg-brand-primary/10 border border-brand-primary/20',
                 radius.lg,
                 spacing.pad.default,
               )}
             >
-              <h4 class={cn('font-semibold text-brand-primary', spacing.margin.bottom.inline)}>
+              <h4 className={cn('font-semibold text-brand-primary', spacing.margin.bottom.inline)}>
                 Understanding Your Results
               </h4>
-              <p class="body-small text-text-secondary">
+              <p className="body-small text-text-secondary">
                 Speed test results show your connection's maximum throughput under ideal conditions.
                 Real-world performance may vary based on network congestion, server load, and
                 simultaneous connections.
@@ -398,17 +404,20 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
             </div>
 
             <div
-              class={cn(
+              className={cn(
                 'bg-status-warning/10 border border-status-warning/20',
                 radius.lg,
                 spacing.pad.default,
               )}
             >
-              <h4 class={cn('font-semibold text-status-warning', spacing.margin.bottom.inline)}>
+              <h4 className={cn('font-semibold text-status-warning', spacing.margin.bottom.inline)}>
                 Factors Affecting Speed
               </h4>
               <ul
-                class={cn('list-disc list-inside body-small text-text-secondary', spacing.stack.xs)}
+                className={cn(
+                  'list-disc list-inside body-small text-text-secondary',
+                  spacing.stack.xs,
+                )}
               >
                 <li>Distance from router or access point</li>
                 <li>Number of connected devices</li>
@@ -419,16 +428,16 @@ export const SimpleCustomContent: StoryObj<typeof HelpModal> = {
             </div>
 
             <div
-              class={cn(
+              className={cn(
                 'bg-status-success/10 border border-status-success/20',
                 radius.lg,
                 spacing.pad.default,
               )}
             >
-              <h4 class={cn('font-semibold text-status-success', spacing.margin.bottom.inline)}>
+              <h4 className={cn('font-semibold text-status-success', spacing.margin.bottom.inline)}>
                 Improving Speed
               </h4>
-              <p class="body-small text-text-secondary">
+              <p className="body-small text-text-secondary">
                 Move closer to the router, switch to 5GHz band, reduce device count, or upgrade your
                 internet plan for better performance.
               </p>
@@ -455,16 +464,16 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div class={cn('min-h-screen bg-surface-base', spacing.pad.xl)}>
-        <div class={cn('max-w-2xl mx-auto flex flex-col', spacing.gap.comfortable)}>
-          <h1 class="heading-2 text-text-primary">Network Dashboard</h1>
-          <p class={cn('body text-text-secondary', spacing.margin.bottom.section)}>
+      <div className={cn('min-h-screen bg-surface-base', spacing.pad.xl)}>
+        <div className={cn('max-w-2xl mx-auto flex flex-col', spacing.gap.comfortable)}>
+          <h1 className="heading-2 text-text-primary">Network Dashboard</h1>
+          <p className={cn('body text-text-secondary', spacing.margin.bottom.section)}>
             Click the help button below to learn more about this feature.
           </p>
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            class={cn(
+            className={cn(
               button.size.md,
               'bg-surface-raised border border-surface-border hover:bg-surface-hover transition-colors text-text-primary',
               radius.lg,
@@ -473,48 +482,47 @@ export const SimpleInteractive: StoryObj<typeof HelpModal> = {
             Show Help
           </button>
         </div>
-
         <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Network Dashboard">
-          <p class={cn('body text-text-secondary', spacing.margin.bottom.content)}>
+          <p className={cn('body text-text-secondary', spacing.margin.bottom.content)}>
             The Network Dashboard provides a comprehensive overview of your network's health and
             performance.
           </p>
-          <div class={spacing.stack.default}>
-            <div class={cn('flex items-start', spacing.gap.default)}>
-              <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
+          <div className={spacing.stack.default}>
+            <div className={cn('flex items-start', spacing.gap.default)}>
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
                 1
               </span>
-              <div class="flex-1">
-                <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.tight)}>
+              <div className="flex-1">
+                <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.tight)}>
                   Monitor Status
                 </h4>
-                <p class="body-small text-text-secondary">
+                <p className="body-small text-text-secondary">
                   View real-time status of all network interfaces and connections.
                 </p>
               </div>
             </div>
-            <div class={cn('flex items-start', spacing.gap.default)}>
-              <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
+            <div className={cn('flex items-start', spacing.gap.default)}>
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
                 2
               </span>
-              <div class="flex-1">
-                <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.tight)}>
+              <div className="flex-1">
+                <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.tight)}>
                   Run Tests
                 </h4>
-                <p class="body-small text-text-secondary">
+                <p className="body-small text-text-secondary">
                   Execute speed tests, cable diagnostics, and network discovery scans.
                 </p>
               </div>
             </div>
-            <div class={cn('flex items-start', spacing.gap.default)}>
-              <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
+            <div className={cn('flex items-start', spacing.gap.default)}>
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-primary text-text-inverse text-sm font-semibold">
                 3
               </span>
-              <div class="flex-1">
-                <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.tight)}>
+              <div className="flex-1">
+                <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.tight)}>
                   Analyze Results
                 </h4>
-                <p class="body-small text-text-secondary">
+                <p className="body-small text-text-secondary">
                   Review detailed metrics and identify potential issues or bottlenecks.
                 </p>
               </div>
@@ -542,8 +550,8 @@ export const SimpleClosed: StoryObj<typeof HelpModal> = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div class={cn('min-h-screen bg-surface-base', spacing.pad.xl)}>
-        <p class="body text-text-secondary">Modal is closed - nothing rendered</p>
+      <div className={cn('min-h-screen bg-surface-base', spacing.pad.xl)}>
+        <p className="body text-text-secondary">Modal is closed - nothing rendered</p>
         <HelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Test">
           <p>This will not be visible</p>
         </HelpModal>
@@ -568,16 +576,16 @@ export const BackdropClose: Story = {
     const [clickCount, setClickCount] = useState(0);
 
     return (
-      <div class="min-h-screen bg-surface-base">
+      <div className="min-h-screen bg-surface-base">
         {!isOpen && (
-          <div class={spacing.pad.xl}>
-            <p class={cn('body text-text-secondary', spacing.margin.bottom.content)}>
+          <div className={spacing.pad.xl}>
+            <p className={cn('body text-text-secondary', spacing.margin.bottom.content)}>
               Modal was closed {clickCount} time(s)
             </p>
             <button
               type="button"
               onClick={() => setIsOpen(true)}
-              class={cn(
+              className={cn(
                 button.size.md,
                 'bg-brand-primary text-text-inverse hover:bg-brand-primary/90',
                 radius.lg,

@@ -115,18 +115,18 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
     return (
       <CollapsibleSection
         title={
-          <div class={layout.inline.default}>
-            <HeartPulse class={iconTokens.size.sm} />
+          <div className={layout.inline.default}>
+            <HeartPulse className={iconTokens.size.sm} />
             <span>{t('sections.health')}</span>
             <AutoSaveIndicator status={testsStatus} />
           </div>
         }
       >
-        <div class={spacing.stack.default}>
+        <div className={spacing.stack.default}>
           {/* Card Visibility & FAB Controls */}
-          <div class="stack-sm">
+          <div className="stack-sm">
             <label
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.sm,
                 'bg-surface-base',
@@ -135,10 +135,10 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
               )}
             >
               <div>
-                <span class="body-small text-text-primary font-medium">
+                <span className="body-small text-text-primary font-medium">
                   {t('common.showCard', 'Show Card')}
                 </span>
-                <p class="caption text-text-muted">
+                <p className="caption text-text-muted">
                   {t('common.showCardDesc', 'Display this card on the dashboard')}
                 </p>
               </div>
@@ -150,11 +150,11 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     healthChecks: { ...cardSettings.healthChecks, enabled: e.target.checked },
                   })
                 }
-                class={iconTokens.size.sm}
+                className={iconTokens.size.sm}
               />
             </label>
             <label
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.sm,
                 'bg-surface-base',
@@ -163,10 +163,10 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
               )}
             >
               <div>
-                <span class="body-small text-text-primary font-medium">
+                <span className="body-small text-text-primary font-medium">
                   {t('common.runOnFab', 'Include in Run All')}
                 </span>
-                <p class="caption text-text-muted">
+                <p className="caption text-text-muted">
                   {t('common.runOnFabDesc', 'Run when FAB button is clicked')}
                 </p>
               </div>
@@ -178,14 +178,14 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     healthChecks: { ...cardSettings.healthChecks, autoRunOnLink: e.target.checked },
                   })
                 }
-                class={iconTokens.size.sm}
+                className={iconTokens.size.sm}
               />
             </label>
           </div>
 
           {/* Enable Toggle */}
           <label
-            class={cn(
+            className={cn(
               layout.flex.between,
               spacing.pad.sm,
               'bg-surface-base border border-surface-border',
@@ -193,10 +193,10 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
             )}
           >
             <div>
-              <span class="body-small text-text-primary font-medium">
+              <span className="body-small text-text-primary font-medium">
                 {t('health.enableHealthChecks')}
               </span>
-              <p class="caption text-text-muted">{t('health.enableDescription')}</p>
+              <p className="caption text-text-muted">{t('health.enableDescription')}</p>
             </div>
             <input
               type="checkbox"
@@ -207,29 +207,29 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                   runPerformance: e.target.checked,
                 }))
               }
-              class={iconTokens.size.sm}
+              className={iconTokens.size.sm}
             />
           </label>
 
           {/* Ping Targets */}
           <div>
-            <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t('health.pingTargets')}</span>
+            <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+              <span className="caption text-text-muted font-medium">{t('health.pingTargets')}</span>
               <button
                 type="button"
                 onClick={addPingTarget}
-                class="caption text-brand-primary hover:text-brand-accent"
+                className="caption text-brand-primary hover:text-brand-accent"
               >
                 {t('common.add')}
               </button>
             </div>
-            <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+            <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
               {t('health.pingDefault')}
             </p>
             {testsSettings.pingTargets.map((target) => (
               <div
                 key={target.id || target.host}
-                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+                className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
@@ -238,7 +238,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     updatePingTarget(target.id ?? '', 'name', e.target.value)
                   }
                   placeholder={t('common.name')}
-                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
+                  className={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <input
                   type="text"
@@ -247,7 +247,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     updatePingTarget(target.id ?? '', 'host', e.target.value)
                   }
                   placeholder={t('common.hostIp')}
-                  class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
+                  className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
                 <input
                   type="number"
@@ -262,12 +262,12 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                   min={1}
                   max={10}
                   title={t('health.numberOfPings')}
-                  class={cn(input.base, input.state.default, input.size.md, 'w-14 text-center')}
+                  className={cn(input.base, input.state.default, input.size.md, 'w-14 text-center')}
                 />
                 <button
                   type="button"
                   onClick={(): void => removePingTarget(target.id ?? '')}
-                  class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                  className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
                   aria-label={t('common.remove')}
                 >
                   {t('common.remove')}
@@ -277,13 +277,15 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
           </div>
 
           {/* TCP Ports */}
-          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-            <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t('health.tcpPortTests')}</span>
+          <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+            <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+              <span className="caption text-text-muted font-medium">
+                {t('health.tcpPortTests')}
+              </span>
               <button
                 type="button"
                 onClick={addTcpPort}
-                class="caption text-brand-primary hover:text-brand-accent"
+                className="caption text-brand-primary hover:text-brand-accent"
               >
                 {t('common.add')}
               </button>
@@ -291,7 +293,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
             {testsSettings.tcpPorts.map((port) => (
               <div
                 key={port.id || `${port.host}:${port.port}`}
-                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+                className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
@@ -300,7 +302,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     updateTcpPort(port.id ?? '', 'name', e.target.value)
                   }
                   placeholder={t('common.name')}
-                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
+                  className={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <input
                   type="text"
@@ -309,7 +311,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     updateTcpPort(port.id ?? '', 'host', e.target.value)
                   }
                   placeholder={t('common.host')}
-                  class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
+                  className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
                 <input
                   type="number"
@@ -318,12 +320,12 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     updateTcpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 80)
                   }
                   placeholder={t('common.port')}
-                  class={cn(input.base, input.state.default, input.size.md, 'w-20')}
+                  className={cn(input.base, input.state.default, input.size.md, 'w-20')}
                 />
                 <button
                   type="button"
                   onClick={(): void => removeTcpPort(port.id ?? '')}
-                  class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                  className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
                   aria-label={t('common.remove')}
                 >
                   {t('common.remove')}
@@ -333,24 +335,26 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
           </div>
 
           {/* UDP Ports */}
-          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-            <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t('health.udpPortTests')}</span>
+          <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+            <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+              <span className="caption text-text-muted font-medium">
+                {t('health.udpPortTests')}
+              </span>
               <button
                 type="button"
                 onClick={addUdpPort}
-                class="caption text-brand-primary hover:text-brand-accent"
+                className="caption text-brand-primary hover:text-brand-accent"
               >
                 {t('common.add')}
               </button>
             </div>
-            <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+            <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
               {t('health.udpDescription')}
             </p>
             {testsSettings.udpPorts.map((port) => (
               <div
                 key={port.id || `${port.host}:${port.port}`}
-                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+                className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
@@ -359,7 +363,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     updateUdpPort(port.id ?? '', 'name', e.target.value)
                   }
                   placeholder={t('common.name')}
-                  class={cn(input.base, input.state.default, input.size.md, 'w-24')}
+                  className={cn(input.base, input.state.default, input.size.md, 'w-24')}
                 />
                 <input
                   type="text"
@@ -368,7 +372,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     updateUdpPort(port.id ?? '', 'host', e.target.value)
                   }
                   placeholder={t('common.host')}
-                  class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
+                  className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
                 />
                 <input
                   type="number"
@@ -377,12 +381,12 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     updateUdpPort(port.id ?? '', 'port', Number.parseInt(e.target.value, 10) || 53)
                   }
                   placeholder={t('common.port')}
-                  class={cn(input.base, input.state.default, input.size.md, 'w-20')}
+                  className={cn(input.base, input.state.default, input.size.md, 'w-20')}
                 />
                 <button
                   type="button"
                   onClick={(): void => removeUdpPort(port.id ?? '')}
-                  class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                  className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
                   aria-label={t('common.remove')}
                 >
                   {t('common.remove')}
@@ -392,13 +396,15 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
           </div>
 
           {/* HTTP Endpoints */}
-          <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-            <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t('health.httpEndpoints')}</span>
+          <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+            <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+              <span className="caption text-text-muted font-medium">
+                {t('health.httpEndpoints')}
+              </span>
               <button
                 type="button"
                 onClick={addHttpEndpoint}
-                class="caption text-brand-primary hover:text-brand-accent"
+                className="caption text-brand-primary hover:text-brand-accent"
               >
                 {t('common.add')}
               </button>
@@ -406,7 +412,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
             {testsSettings.httpEndpoints.map((endpoint) => (
               <div
                 key={endpoint.id || endpoint.url}
-                class={cn(
+                className={cn(
                   spacing.stack.xs,
                   spacing.margin.bottom.heading,
                   spacing.pad.xs,
@@ -414,7 +420,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                   radius.default,
                 )}
               >
-                <div class={cn('flex', spacing.gap.compact)}>
+                <div className={cn('flex', spacing.gap.compact)}>
                   <input
                     type="text"
                     value={endpoint.name}
@@ -422,7 +428,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                       updateHttpEndpoint(endpoint.id ?? '', 'name', e.target.value)
                     }
                     placeholder={t('common.name')}
-                    class={cn(
+                    className={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
@@ -440,7 +446,7 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                       )
                     }
                     placeholder={t('health.status')}
-                    class={cn(
+                    className={cn(
                       input.base,
                       input.state.default,
                       input.size.md,
@@ -450,7 +456,10 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                   <button
                     type="button"
                     onClick={(): void => removeHttpEndpoint(endpoint.id ?? '')}
-                    class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                    className={cn(
+                      'text-status-error hover:text-status-error/80',
+                      spacing.actionBtn,
+                    )}
                     aria-label={t('common.remove')}
                   >
                     {t('common.remove')}
@@ -463,13 +472,18 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                     updateHttpEndpoint(endpoint.id ?? '', 'url', e.target.value)
                   }
                   placeholder="https://example.com/health"
-                  class={cn(input.base, input.state.default, input.size.md, 'bg-surface-raised')}
+                  className={cn(
+                    input.base,
+                    input.state.default,
+                    input.size.md,
+                    'bg-surface-raised',
+                  )}
                 />
                 {/* Criticality Slider */}
-                <div class={cn('flex items-center', spacing.gap.compact)}>
+                <div className={cn('flex items-center', spacing.gap.compact)}>
                   <label
-                    for={`http-criticality-${endpoint.id}`}
-                    class="caption text-text-muted w-28"
+                    htmlFor={`http-criticality-${endpoint.id}`}
+                    className="caption text-text-muted w-28"
                   >
                     {t('health.criticality')}
                   </label>
@@ -486,9 +500,9 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                         Number.parseInt(e.target.value, 10),
                       )
                     }
-                    class="flex-1 h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-brand-primary"
+                    className="flex-1 h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-brand-primary"
                   />
-                  <span class="caption text-text-muted w-6 text-center">
+                  <span className="caption text-text-muted w-6 text-center">
                     {endpoint.criticality ?? 5}
                   </span>
                 </div>

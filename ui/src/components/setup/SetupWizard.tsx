@@ -220,32 +220,37 @@ export function SetupWizard({
   };
 
   return (
-    <div class={cn('min-h-screen bg-surface-base', layout.flex.center, 'pad')}>
-      <div class="w-full max-w-md">
-        <div class={cn('text-center', spacing.margin.bottom.sectionLg)}>
-          <div class="w-16 h-16 mx-auto flex items-center justify-center rounded-2xl bg-brand-primary text-text-inverse">
-            <Activity class="w-8 h-8" />
+    <div className={cn('min-h-screen bg-surface-base', layout.flex.center, 'pad')}>
+      <div className="w-full max-w-md">
+        <div className={cn('text-center', spacing.margin.bottom.sectionLg)}>
+          <div className="w-16 h-16 mx-auto flex items-center justify-center rounded-2xl bg-brand-primary text-text-inverse">
+            <Activity className="w-8 h-8" />
           </div>
-          <h1 class={cn('heading-2', spacing.margin.top.heading)}>{t('welcome.title')}</h1>
-          <p class={cn('body-small', spacing.margin.top.inline)}>{t('welcome.subtitle')}</p>
+          <h1 className={cn('heading-2', spacing.margin.top.heading)}>{t('welcome.title')}</h1>
+          <p className={cn('body-small', spacing.margin.top.inline)}>{t('welcome.subtitle')}</p>
         </div>
 
-        <form onSubmit={handleSubmit} class={cardClass('default', 'lg')}>
-          <div class={spacing.margin.bottom.content}>
-            <p class={cn('body-small', spacing.margin.bottom.content)}>
+        <form onSubmit={handleSubmit} className={cardClass('default', 'lg')}>
+          <div className={spacing.margin.bottom.content}>
+            <p className={cn('body-small', spacing.margin.bottom.content)}>
               {t('username.label')} <strong>{username}</strong> {t('username.cannotChange')}
             </p>
           </div>
 
           {/* Password mode selection */}
-          <div class={cn(spacing.margin.bottom.section, 'stack-sm')}>
-            <p class={cn('body-small font-medium text-text-primary', spacing.margin.bottom.inline)}>
+          <div className={cn(spacing.margin.bottom.section, 'stack-sm')}>
+            <p
+              className={cn(
+                'body-small font-medium text-text-primary',
+                spacing.margin.bottom.inline,
+              )}
+            >
               {t('password.chooseMethod')}
             </p>
 
             {/* Custom password option */}
             <label
-              class={cn(
+              className={cn(
                 'flex items-start',
                 spacing.gap.default,
                 'pad-sm',
@@ -259,18 +264,18 @@ export function SetupWizard({
                 value="custom"
                 checked={passwordMode === 'custom'}
                 onChange={(): void => handlePasswordModeChange('custom')}
-                class={cn(
+                className={cn(
                   spacing.margin.top.inline,
                   iconTokens.size.sm,
                   'text-brand-primary focus:ring-brand-primary',
                 )}
               />
               <div>
-                <span class="body-small font-medium text-text-primary flex items-center gap-2">
-                  <Lock class={iconTokens.size.sm} />
+                <span className="body-small font-medium text-text-primary flex items-center gap-2">
+                  <Lock className={iconTokens.size.sm} />
                   {t('password.custom.title')}
                 </span>
-                <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
+                <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
                   {t('password.custom.description')}
                 </p>
               </div>
@@ -279,7 +284,7 @@ export function SetupWizard({
             {/* Generated password option */}
             {suggestedPassword ? (
               <label
-                class={cn(
+                className={cn(
                   'flex items-start',
                   spacing.gap.default,
                   'pad-sm',
@@ -293,37 +298,37 @@ export function SetupWizard({
                   value="generated"
                   checked={passwordMode === 'generated'}
                   onChange={(): void => handlePasswordModeChange('generated')}
-                  class={cn(
+                  className={cn(
                     spacing.margin.top.inline,
                     iconTokens.size.sm,
                     'text-brand-primary focus:ring-brand-primary',
                   )}
                 />
-                <div class="flex-1">
-                  <span class="body-small font-medium text-text-primary flex items-center gap-2">
-                    <Zap class={iconTokens.size.sm} />
+                <div className="flex-1">
+                  <span className="body-small font-medium text-text-primary flex items-center gap-2">
+                    <Zap className={iconTokens.size.sm} />
                     {t('password.generated.title')}
                   </span>
-                  <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
+                  <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
                     {t('password.generated.description')}
                   </p>
                   {passwordMode === 'generated' && (
                     <div
-                      class={cn(
+                      className={cn(
                         spacing.margin.top.inline,
                         spacing.pad.sm,
                         'bg-surface-sunken',
                         radius.default,
                       )}
                     >
-                      <div class={cn(layout.inline.default)}>
-                        <code class="flex-1 font-mono body-small text-brand-primary select-all break-all">
+                      <div className={cn(layout.inline.default)}>
+                        <code className="flex-1 font-mono body-small text-brand-primary select-all break-all">
                           {suggestedPassword}
                         </code>
                         <button
                           type="button"
                           onClick={handleCopyPassword}
-                          class={cn(
+                          className={cn(
                             button.size.xs,
                             'text-text-muted hover:text-text-primary border border-surface-border',
                             radius.md,
@@ -331,15 +336,15 @@ export function SetupWizard({
                           )}
                           title={t('buttons.copy')}
                         >
-                          <Copy class="w-3.5 h-3.5" />
+                          <Copy className="w-3.5 h-3.5" />
                         </button>
                       </div>
                       {copied ? (
-                        <p class={cn('caption text-status-success', spacing.margin.top.inline)}>
+                        <p className={cn('caption text-status-success', spacing.margin.top.inline)}>
                           {t('buttons.copied')}
                         </p>
                       ) : null}
-                      <p class={cn('caption text-status-warning', spacing.margin.top.inline)}>
+                      <p className={cn('caption text-status-warning', spacing.margin.top.inline)}>
                         {t('password.generated.saveWarning')}
                       </p>
                     </div>
@@ -351,17 +356,17 @@ export function SetupWizard({
 
           {passwordMode === 'custom' && (
             <>
-              <div class={spacing.margin.bottom.content}>
+              <div className={spacing.margin.bottom.content}>
                 <label
-                  for="setup-password"
-                  class={cn(
+                  htmlFor="setup-password"
+                  className={cn(
                     'block body-small font-medium text-text-primary',
                     spacing.margin.bottom.inline,
                   )}
                 >
                   {t('password.label')}
                 </label>
-                <div class="relative">
+                <div className="relative">
                   <input
                     id="setup-password"
                     type={showPassword ? 'text' : 'password'}
@@ -369,7 +374,7 @@ export function SetupWizard({
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       setPassword(e.target.value)
                     }
-                    class={cn(inputClass('default', 'md'), spacing.padding.right.icon)}
+                    className={cn(inputClass('default', 'md'), spacing.padding.right.icon)}
                     placeholder={t('password.placeholder')}
                     required={true}
                     minLength={12}
@@ -377,17 +382,17 @@ export function SetupWizard({
                   <button
                     type="button"
                     onClick={(): void => setShowPassword(!showPassword)}
-                    class="absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center text-text-muted hover:text-text-primary"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center text-text-muted hover:text-text-primary"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? (
-                      <EyeOff class={iconTokens.size.md} />
+                      <EyeOff className={iconTokens.size.md} />
                     ) : (
-                      <Eye class={iconTokens.size.md} />
+                      <Eye className={iconTokens.size.md} />
                     )}
                   </button>
                 </div>
-                <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
+                <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
                   {t('password.minLength')}
                 </p>
                 {/* Fixes #723: live complexity-rule checklist so the user
@@ -395,12 +400,12 @@ export function SetupWizard({
                 {password.length > 0 ? (
                   <ul
                     aria-label={t('password.rulesLabel')}
-                    class={cn('caption stack-xs', spacing.margin.top.inline)}
+                    className={cn('caption stack-xs', spacing.margin.top.inline)}
                   >
                     {evaluatePassword(password).rules.map((rule: PasswordRule) => (
                       <li
                         key={rule.id}
-                        class={cn(
+                        className={cn(
                           'flex items-center gap-2',
                           rule.ok ? statusColor.text.success : 'text-text-muted',
                         )}
@@ -413,10 +418,10 @@ export function SetupWizard({
                 ) : null}
               </div>
 
-              <div class={spacing.margin.bottom.section}>
+              <div className={spacing.margin.bottom.section}>
                 <label
-                  for="setup-confirm-password"
-                  class={cn(
+                  htmlFor="setup-confirm-password"
+                  className={cn(
                     'block body-small font-medium text-text-primary',
                     spacing.margin.bottom.inline,
                   )}
@@ -430,7 +435,7 @@ export function SetupWizard({
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     setConfirmPassword(e.target.value)
                   }
-                  class={inputClass('default', 'md')}
+                  className={inputClass('default', 'md')}
                   placeholder={t('password.confirm.placeholder')}
                   required={true}
                 />
@@ -442,7 +447,7 @@ export function SetupWizard({
             <div
               role="alert"
               aria-live="assertive"
-              class={cn(
+              className={cn(
                 spacing.margin.bottom.content,
                 'pad-sm bg-status-error/10 border border-status-error/20',
                 radius.md,
@@ -456,7 +461,7 @@ export function SetupWizard({
           <button
             type="submit"
             disabled={isSubmitting}
-            class={buttonClass('primary', 'md', 'w-full')}
+            className={buttonClass('primary', 'md', 'w-full')}
           >
             {isSubmitting ? t('buttons.settingUp') : t('buttons.completeSetup')}
           </button>
@@ -465,25 +470,25 @@ export function SetupWizard({
           {hasEnabledSso && (
             <>
               {/* Separator */}
-              <div class="relative my-6">
-                <div class="absolute inset-0 flex items-center" aria-hidden="true">
-                  <div class="w-full border-t border-surface-border" />
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                  <div className="w-full border-t border-surface-border" />
                 </div>
-                <div class="relative flex justify-center">
-                  <span class="px-2 bg-surface-raised text-sm text-text-muted">
+                <div className="relative flex justify-center">
+                  <span className="px-2 bg-surface-raised text-sm text-text-muted">
                     {t('common:or')}
                   </span>
                 </div>
               </div>
 
-              <div class="flex flex-col stack-sm">
+              <div className="flex flex-col stack-sm">
                 {isProviderEnabled('google') && (
                   <button
                     type="button"
                     onClick={() => {
                       window.location.href = `${API_BASE}/api/v1/sso/login?provider=google`;
                     }}
-                    class={cn(
+                    className={cn(
                       'w-full',
                       button.size.md,
                       'bg-status-info text-text-inverse',
@@ -500,7 +505,7 @@ export function SetupWizard({
                     onClick={() => {
                       window.location.href = `${API_BASE}/api/v1/sso/login?provider=microsoft`;
                     }}
-                    class={cn(
+                    className={cn(
                       'w-full',
                       button.size.md,
                       'bg-brand-secondary text-text-inverse',
@@ -517,7 +522,7 @@ export function SetupWizard({
                     onClick={() => {
                       window.location.href = `${API_BASE}/api/v1/sso/login?provider=github`;
                     }}
-                    class={cn(
+                    className={cn(
                       'w-full',
                       button.size.md,
                       'bg-surface-sunken text-text-primary',

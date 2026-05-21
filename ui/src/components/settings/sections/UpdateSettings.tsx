@@ -135,17 +135,17 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
     return (
       <CollapsibleSection
         title={
-          <div class={layout.inline.default}>
-            <Download class={iconTokens.size.sm} />
+          <div className={layout.inline.default}>
+            <Download className={iconTokens.size.sm} />
             <span>{t('sections.updates', 'Updates')}</span>
           </div>
         }
         defaultOpen={false}
       >
-        <div class="stack-sm">
+        <div className="stack-sm">
           {/* Current Version Display */}
           <div
-            class={cn(
+            className={cn(
               layout.flex.between,
               spacing.pad.sm,
               'bg-surface-base',
@@ -153,10 +153,10 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
               'border border-surface-border',
             )}
           >
-            <span class="body-small text-text-primary">
+            <span className="body-small text-text-primary">
               {t('updates.currentVersion', 'Current Version')}
             </span>
-            <span class="body-small text-text-secondary font-mono">
+            <span className="body-small text-text-secondary font-mono">
               {currentVersion || updateInfo?.currentVersion || 'Unknown'}
             </span>
           </div>
@@ -168,7 +168,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
               handleCheckForUpdate().catch(() => undefined);
             }}
             disabled={isChecking}
-            class={cn(
+            className={cn(
               'w-full',
               layout.flex.between,
               spacing.pad.sm,
@@ -178,56 +178,62 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
               'disabled:opacity-50 disabled:cursor-not-allowed',
             )}
           >
-            <span class="body-small text-text-primary">
+            <span className="body-small text-text-primary">
               {t('updates.checkForUpdates', 'Check for Updates')}
             </span>
             {isChecking ? (
-              <Loader class={cn(iconTokens.size.sm, 'animate-spin')} />
+              <Loader className={cn(iconTokens.size.sm, 'animate-spin')} />
             ) : (
-              <RefreshCw class={iconTokens.size.sm} />
+              <RefreshCw className={iconTokens.size.sm} />
             )}
           </button>
 
           {/* Error Display */}
           {error ? (
             <div
-              class={cn(spacing.pad.sm, 'bg-red-500/10 border border-red-500/30', radius.default)}
+              className={cn(
+                spacing.pad.sm,
+                'bg-red-500/10 border border-red-500/30',
+                radius.default,
+              )}
             >
-              <span class="body-small text-red-500">{error}</span>
+              <span className="body-small text-red-500">{error}</span>
             </div>
           ) : null}
 
           {/* Update Available */}
           {hasChecked && updateInfo?.available ? (
             <div
-              class={cn(
+              className={cn(
                 'stack-sm',
                 spacing.pad.sm,
                 'bg-green-500/10 border border-green-500/30',
                 radius.default,
               )}
             >
-              <div class={layout.flex.between}>
-                <span class="body-small text-green-500 font-medium">
+              <div className={layout.flex.between}>
+                <span className="body-small text-green-500 font-medium">
                   {t('updates.updateAvailable', 'Update Available')}
                 </span>
-                <span class="body-small text-green-500 font-mono">v{updateInfo.latestVersion}</span>
+                <span className="body-small text-green-500 font-mono">
+                  v{updateInfo.latestVersion}
+                </span>
               </div>
 
               {updateInfo.publishedAt ? (
-                <div class="body-small text-text-secondary">
+                <div className="body-small text-text-secondary">
                   {t('updates.releasedOn', 'Released')}: {formatDate(updateInfo.publishedAt)}
                 </div>
               ) : null}
 
               {updateInfo.downloadSize > 0 ? (
-                <div class="body-small text-text-secondary">
+                <div className="body-small text-text-secondary">
                   {t('updates.downloadSize', 'Size')}: {formatBytes(updateInfo.downloadSize)}
                 </div>
               ) : null}
 
               {updateInfo.releaseNotes ? (
-                <div class="body-small text-text-secondary whitespace-pre-wrap max-h-32 overflow-y-auto">
+                <div className="body-small text-text-secondary whitespace-pre-wrap max-h-32 overflow-y-auto">
                   {updateInfo.releaseNotes}
                 </div>
               ) : null}
@@ -240,7 +246,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                     handleDownload().catch(() => undefined);
                   }}
                   disabled={isDownloading}
-                  class={cn(
+                  className={cn(
                     'w-full',
                     layout.flex.center,
                     spacing.gap.sm,
@@ -253,13 +259,15 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                 >
                   {isDownloading ? (
                     <>
-                      <Loader class={cn(iconTokens.size.sm, 'animate-spin')} />
-                      <span class="body-small">{t('updates.downloading', 'Downloading...')}</span>
+                      <Loader className={cn(iconTokens.size.sm, 'animate-spin')} />
+                      <span className="body-small">
+                        {t('updates.downloading', 'Downloading...')}
+                      </span>
                     </>
                   ) : (
                     <>
-                      <Download class={iconTokens.size.sm} />
-                      <span class="body-small">
+                      <Download className={iconTokens.size.sm} />
+                      <span className="body-small">
                         {t('updates.downloadUpdate', 'Download Update')}
                       </span>
                     </>
@@ -275,7 +283,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                     handleApply().catch(() => undefined);
                   }}
                   disabled={isApplying}
-                  class={cn(
+                  className={cn(
                     'w-full',
                     layout.flex.center,
                     spacing.gap.sm,
@@ -288,13 +296,13 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                 >
                   {isApplying ? (
                     <>
-                      <Loader class={cn(iconTokens.size.sm, 'animate-spin')} />
-                      <span class="body-small">{t('updates.applying', 'Applying...')}</span>
+                      <Loader className={cn(iconTokens.size.sm, 'animate-spin')} />
+                      <span className="body-small">{t('updates.applying', 'Applying...')}</span>
                     </>
                   ) : (
                     <>
-                      <CheckCircle class={iconTokens.size.sm} />
-                      <span class="body-small">
+                      <CheckCircle className={iconTokens.size.sm} />
+                      <span className="body-small">
                         {t('updates.applyUpdate', 'Apply Update & Restart')}
                       </span>
                     </>
@@ -307,7 +315,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
           {/* No Update Available */}
           {hasChecked && !updateInfo?.available && !error ? (
             <div
-              class={cn(
+              className={cn(
                 layout.flex.center,
                 spacing.gap.sm,
                 spacing.pad.sm,
@@ -316,8 +324,8 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                 'border border-surface-border',
               )}
             >
-              <CheckCircle class={cn(iconTokens.size.sm, 'text-green-500')} />
-              <span class="body-small text-text-secondary">
+              <CheckCircle className={cn(iconTokens.size.sm, 'text-green-500')} />
+              <span className="body-small text-text-secondary">
                 {t('updates.upToDate', "You're up to date!")}
               </span>
             </div>
@@ -325,7 +333,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
 
           {/* Last Check Time */}
           {status?.lastCheck ? (
-            <div class="body-small text-text-muted text-center">
+            <div className="body-small text-text-muted text-center">
               {t('updates.lastChecked', 'Last checked')}: {formatDate(status.lastCheck)}
             </div>
           ) : null}
@@ -333,10 +341,10 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
           {/* Configuration Options */}
           {localConfig ? (
             <>
-              <div class="border-t border-surface-border my-2" />
+              <div className="border-t border-surface-border my-2" />
 
               <label
-                class={cn(
+                className={cn(
                   layout.flex.between,
                   spacing.pad.sm,
                   'bg-surface-base',
@@ -344,7 +352,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                   'border border-surface-border cursor-pointer',
                 )}
               >
-                <span class="body-small text-text-primary">
+                <span className="body-small text-text-primary">
                   {t('updates.autoCheck', 'Automatic Update Checks')}
                 </span>
                 <input
@@ -353,12 +361,12 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
                     handleConfigChange('enabled', e.target.checked).catch(() => undefined);
                   }}
-                  class="w-4 h-4 accent-primary"
+                  className="w-4 h-4 accent-primary"
                 />
               </label>
 
               <label
-                class={cn(
+                className={cn(
                   layout.flex.between,
                   spacing.pad.sm,
                   'bg-surface-base',
@@ -366,7 +374,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                   'border border-surface-border cursor-pointer',
                 )}
               >
-                <span class="body-small text-text-primary">
+                <span className="body-small text-text-primary">
                   {t('updates.autoDownload', 'Auto-Download Updates')}
                 </span>
                 <input
@@ -375,12 +383,12 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
                     handleConfigChange('autoDownload', e.target.checked).catch(() => undefined);
                   }}
-                  class="w-4 h-4 accent-primary"
+                  className="w-4 h-4 accent-primary"
                 />
               </label>
 
               <label
-                class={cn(
+                className={cn(
                   layout.flex.between,
                   spacing.pad.sm,
                   'bg-surface-base',
@@ -388,7 +396,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                   'border border-surface-border cursor-pointer',
                 )}
               >
-                <span class="body-small text-text-primary">
+                <span className="body-small text-text-primary">
                   {t('updates.includePrerelease', 'Include Pre-release Versions')}
                 </span>
                 <input
@@ -399,7 +407,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                       () => undefined,
                     );
                   }}
-                  class="w-4 h-4 accent-primary"
+                  className="w-4 h-4 accent-primary"
                 />
               </label>
 
@@ -409,7 +417,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                 onClick={(): void => {
                   handleRollback().catch(() => undefined);
                 }}
-                class={cn(
+                className={cn(
                   'w-full',
                   layout.flex.between,
                   spacing.pad.sm,
@@ -419,10 +427,10 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                   'text-orange-500',
                 )}
               >
-                <span class="body-small">
+                <span className="body-small">
                   {t('updates.rollback', 'Rollback to Previous Version')}
                 </span>
-                <RotateCcw class={iconTokens.size.sm} />
+                <RotateCcw className={iconTokens.size.sm} />
               </button>
             </>
           ) : null}
