@@ -377,7 +377,7 @@ export function SetupWizard({
                   <button
                     type="button"
                     onClick={(): void => setShowPassword(!showPassword)}
-                    class="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center text-text-muted hover:text-text-primary"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? (

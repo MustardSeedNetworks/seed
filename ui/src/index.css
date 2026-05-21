@@ -163,7 +163,7 @@
   /* Text Colors - Inverted for dark backgrounds */
   --color-text-primary: #f8f8f8; /* Snow - main text */
   --color-text-secondary: #e5e5e5; /* Cloud - secondary text */
-  --color-text-muted: #999999; /* Silver - subtle text, captions */
+  --color-text-muted: #a3a3a3; /* Tailwind neutral-400; AA 4.5:1 vs #333 surface (#999 was 4.43, failed WCAG) */
   --color-text-accent: #81c784; /* Lighter Seed Green - links, highlights */
   --color-text-inverse: #1a1a1a; /* Midnight - text on colored backgrounds */
 
