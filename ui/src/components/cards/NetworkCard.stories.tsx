@@ -18,7 +18,7 @@ import { NetworkCard } from './NetworkCard';
  *
  * This story demonstrates various network configuration states.
  */
-const meta: Meta<(typeof meta)['component']> = {
+const meta: Meta<typeof NetworkCard> = {
   title: 'Cards/NetworkCard',
   component: NetworkCard,
   parameters: {

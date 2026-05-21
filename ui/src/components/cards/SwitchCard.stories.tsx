@@ -16,7 +16,7 @@ import { SwitchCard } from './SwitchCard';
  *
  * This story demonstrates various switch discovery scenarios.
  */
-const meta: Meta<(typeof meta)['component']> = {
+const meta: Meta<typeof SwitchCard> = {
   title: 'Cards/SwitchCard',
   component: SwitchCard,
   parameters: {

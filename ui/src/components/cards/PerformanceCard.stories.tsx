@@ -16,7 +16,7 @@ import { PerformanceCard } from './PerformanceCard';
  * Note: SettingsProvider and I18nextProvider are provided by global decorators
  * in .storybook/preview.tsx.
  */
-const meta: Meta<(typeof meta)['component']> = {
+const meta: Meta<typeof PerformanceCard> = {
   title: 'Cards/PerformanceCard',
   component: PerformanceCard,
   parameters: {
