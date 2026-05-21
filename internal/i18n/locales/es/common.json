@@ -23,6 +23,8 @@
     "close": "Cerrar",
     "show": "Mostrar",
     "hide": "Ocultar",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
     "clear": "Limpiar",
     "reconnect": "Reconectar",
     "runAllTests": "Ejecutar todas las pruebas",

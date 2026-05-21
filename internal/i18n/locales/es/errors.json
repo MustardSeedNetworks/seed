@@ -78,10 +78,13 @@
     "invalidRange": "MTU debe ser 68-9000"
   },
   "password": {
-    "tooShort": "La contraseña debe tener al menos 8 caracteres",
+    "tooShort": "La contraseña debe tener al menos {{min}} caracteres",
     "mismatch": "Las contraseñas no coinciden",
     "weak": "La contraseña no cumple los requisitos de seguridad",
     "breached": "Esta contraseña aparece en filtraciones de datos conocidas. Elige otra."
+  },
+  "recovery": {
+    "failed": "La recuperación falló. Inténtalo de nuevo o contacta al soporte."
   },
   "subnet": {
     "alreadyExists": "La subred ya existe",
