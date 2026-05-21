@@ -319,6 +319,8 @@ export const Comparison: Story = {
             // intentionally empty
           }}
           testsStatus="saving"
+          cardSettings={{ dns: { enabled: true, autoRunOnLink: true } } as unknown as CardSettings}
+          updateCardSettings={() => {}}
         />
       </div>
     </div>

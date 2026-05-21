@@ -407,6 +407,8 @@ export const Interactive: Story = {
         snmpSettings={snmpSettings}
         setSnmpSettings={handleSetSnmpSettings}
         snmpStatus={snmpStatus}
+        cardSettings={{} as never}
+        updateCardSettings={() => {}}
       />
     );
   },

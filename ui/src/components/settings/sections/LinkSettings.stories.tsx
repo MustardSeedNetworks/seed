@@ -14,6 +14,13 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
+  args: {
+    linkSettings: {} as never,
+    setLinkSettings: () => {},
+    linkStatus: 'idle',
+    cardSettings: {} as never,
+    updateCardSettings: () => {},
+  },
   render: () => {
     const [linkSettings, setLinkSettings] = useState<LinkSettingsType>({
       ...DEFAULT_LINK_SETTINGS,
