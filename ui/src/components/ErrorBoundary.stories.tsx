@@ -17,6 +17,7 @@ function Crash(): React.JSX.Element {
 }
 
 export const Default: Story = {
+  args: { children: null },
   render: () => (
     <ErrorBoundary>
       <div className="p-6 text-text-base">Child content renders normally.</div>
@@ -25,6 +26,7 @@ export const Default: Story = {
 };
 
 export const WithError: Story = {
+  args: { children: null },
   render: () => (
     <ErrorBoundary>
       <Crash />
@@ -33,6 +35,7 @@ export const WithError: Story = {
 };
 
 export const RetryFlow: Story = {
+  args: { children: null },
   render: () => {
     const [shouldThrow, setShouldThrow] = useState(true);
     return (
