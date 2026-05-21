@@ -12,6 +12,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Profile } from '../types/profile';
 
 interface NetworkInterface {
   name: string;
@@ -29,17 +30,9 @@ interface NetworkInterface {
 
 interface UseInterfaceStateProps {
   interfaces: NetworkInterface[];
-  activeProfile: {
-    id: string;
-    config?: {
-      interfaces?: {
-        ethernet?: { name: string };
-        wifi?: { name: string };
-      };
-    };
-  } | null;
-  setEthernetInterface: (name: string, persist: boolean) => Promise<void>;
-  setWifiInterface: (name: string, persist: boolean) => Promise<void>;
+  activeProfile: Profile | null;
+  setEthernetInterface: (name: string, enabled?: boolean) => Promise<boolean>;
+  setWifiInterface: (name: string, enabled?: boolean) => Promise<boolean>;
 }
 
 export function useInterfaceState({
