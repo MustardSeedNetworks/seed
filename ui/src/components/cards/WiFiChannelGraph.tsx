@@ -52,7 +52,7 @@ interface ChannelGraphData {
 /**
  * API response structure
  */
-interface ChannelGraphResponse {
+export interface ChannelGraphResponse {
   available: boolean;
   error?: string;
   data?: ChannelGraphData;

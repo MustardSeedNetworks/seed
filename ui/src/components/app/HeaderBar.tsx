@@ -302,7 +302,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
               >
                 <div className="max-h-60 overflow-y-auto">
                   {profiles.length === 0 ? (
-                    <div className={cn(spacing.pad.md, 'text-center')}>
+                    <div className={cn(spacing.pad.default, 'text-center')}>
                       <span className="caption text-text-muted">
                         {t('profile.noProfiles', 'No profiles')}
                       </span>
@@ -429,7 +429,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                 </div>
                 <div className="max-h-60 overflow-y-auto">
                   {interfaces.filter((i) => i.type !== 'wifi').length === 0 ? (
-                    <div className={cn(spacing.pad.md, 'text-center')}>
+                    <div className={cn(spacing.pad.default, 'text-center')}>
                       <span className="caption text-text-muted">
                         {t('interface.noEthernet', 'No Ethernet interfaces')}
                       </span>
@@ -467,8 +467,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                                     fill="currentColor"
                                     viewBox="0 0 24 24"
                                     aria-hidden="true"
-                                    title={t('interface.recommended', 'Recommended')}
+                                    aria-label={t('interface.recommended', 'Recommended')}
                                   >
+                                    <title>{t('interface.recommended', 'Recommended')}</title>
                                     <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                                   </svg>
                                 )}
