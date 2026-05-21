@@ -140,7 +140,7 @@ export function useCardState({
 
         // Validate the nested event structure
         if (!rawEvent || typeof rawEvent.type !== 'string') {
-          logger.warn(LogComponents.Websocket, 'Invalid pipeline event structure', {
+          logger.warn(LogComponents.WEBSOCKET, 'Invalid pipeline event structure', {
             payload: message.payload,
           });
           return;
@@ -148,7 +148,7 @@ export function useCardState({
 
         // Check if it's a valid pipeline event type
         if (!isPipelineEvent(rawEvent.type)) {
-          logger.warn(LogComponents.Websocket, 'Unknown pipeline event type', {
+          logger.warn(LogComponents.WEBSOCKET, 'Unknown pipeline event type', {
             type: rawEvent.type,
           });
           return;
@@ -174,7 +174,7 @@ export function useCardState({
           try {
             handler(pipelineEvent);
           } catch (err) {
-            logger.error(LogComponents.Websocket, 'Pipeline event handler threw exception', {
+            logger.error(LogComponents.WEBSOCKET, 'Pipeline event handler threw exception', {
               error: err,
               eventType: pipelineEvent.type,
             });
@@ -196,7 +196,7 @@ export function useCardState({
           try {
             handler(traceHopMessage);
           } catch (err) {
-            logger.error(LogComponents.Websocket, 'TraceHop handler threw exception', {
+            logger.error(LogComponents.WEBSOCKET, 'TraceHop handler threw exception', {
               error: err,
               target: traceHopMessage.target,
             });
@@ -208,7 +208,7 @@ export function useCardState({
       if (message.type === 'initial_state') {
         setLoading(false);
         if (!isPlainObject(message.payload)) {
-          logger.warn(LogComponents.Websocket, 'Invalid initial_state payload', {
+          logger.warn(LogComponents.WEBSOCKET, 'Invalid initial_state payload', {
             payload: message.payload,
           });
           return;
@@ -318,12 +318,12 @@ export function useCardState({
     const { cardId, data } = update as { cardId?: unknown; data?: unknown };
 
     if (!isCardId(cardId)) {
-      logger.warn(LogComponents.Websocket, 'Ignoring card_update for unknown cardId', { cardId });
+      logger.warn(LogComponents.WEBSOCKET, 'Ignoring card_update for unknown cardId', { cardId });
       return;
     }
 
     if (data === undefined || (data !== null && !isPlainObject(data))) {
-      logger.warn(LogComponents.Websocket, 'Ignoring card_update with invalid data', {
+      logger.warn(LogComponents.WEBSOCKET, 'Ignoring card_update with invalid data', {
         cardId,
         data,
       });

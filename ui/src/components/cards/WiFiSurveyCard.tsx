@@ -95,7 +95,7 @@ export function WiFiSurveyCard({
       // Automatically open the survey view for setup
       setSelectedSurvey(newSurvey);
     } catch (err) {
-      logger.error(LogComponents.Survey, 'Failed to create survey', err);
+      logger.error(LogComponents.SURVEY, 'Failed to create survey', err);
     }
   };
 

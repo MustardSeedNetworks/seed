@@ -135,7 +135,7 @@ export function useAuth(): UseAuthReturn {
     setConnected(false);
     setError(message);
 
-    logger.warn(LogComponents.Auth, 'Session expired', { message });
+    logger.warn(LogComponents.AUTH, 'Session expired', { message });
   }, []);
 
   // Clear error handler
@@ -179,7 +179,7 @@ export function useAuth(): UseAuthReturn {
       .catch((err) => {
         // Error checking auth, assume not authenticated
         // fixes #678 - added logging for auth check errors
-        logger.error(LogComponents.Auth, 'Failed to check authentication status', err, {
+        logger.error(LogComponents.AUTH, 'Failed to check authentication status', err, {
           endpoint: '/api/v1/status',
         });
         setState({
@@ -223,7 +223,7 @@ export function useAuth(): UseAuthReturn {
       });
       setConnected(true);
 
-      logger.info(LogComponents.Auth, 'User logged in successfully', {
+      logger.info(LogComponents.AUTH, 'User logged in successfully', {
         username,
       });
       return true;
@@ -231,7 +231,7 @@ export function useAuth(): UseAuthReturn {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
       // fixes #678 - added structured error logging for login failures
-      logger.error(LogComponents.Auth, 'Login failed', err, {
+      logger.error(LogComponents.AUTH, 'Login failed', err, {
         endpoint: '/api/v1/auth/login',
         username,
       });
@@ -267,13 +267,13 @@ export function useAuth(): UseAuthReturn {
       credentials: 'include', // Send cookies to be cleared
     })
       .then(() => {
-        logger.info(LogComponents.Auth, 'User logged out successfully', {
+        logger.info(LogComponents.AUTH, 'User logged out successfully', {
           username: currentUsername,
         });
       })
       .catch((err) => {
         // fixes #678 - added error logging for logout failures
-        logger.error(LogComponents.Auth, 'Logout API call failed', err, {
+        logger.error(LogComponents.AUTH, 'Logout API call failed', err, {
           endpoint: '/api/v1/auth/logout',
           username: currentUsername,
         });
@@ -302,7 +302,7 @@ export function useAuth(): UseAuthReturn {
       });
 
       if (!response.ok) {
-        logger.warn(LogComponents.Auth, 'Token refresh failed', {
+        logger.warn(LogComponents.AUTH, 'Token refresh failed', {
           status: response.status,
         });
         clearAuthState();
@@ -317,10 +317,10 @@ export function useAuth(): UseAuthReturn {
         token: data.token,
       }));
 
-      logger.info(LogComponents.Auth, 'Token refreshed successfully');
+      logger.info(LogComponents.AUTH, 'Token refreshed successfully');
       return data.token;
     } catch (err) {
-      logger.error(LogComponents.Auth, 'Token refresh error', err);
+      logger.error(LogComponents.AUTH, 'Token refresh error', err);
       clearAuthState();
       return null;
     }

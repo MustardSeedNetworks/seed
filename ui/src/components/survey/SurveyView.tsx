@@ -174,11 +174,11 @@ export function SurveyView({
           setWifiStatus(status);
         }
       } catch (err) {
-        logger.error(LogComponents.Wifi, 'Failed to check WiFi status', err);
+        logger.error(LogComponents.WIFI, 'Failed to check WiFi status', err);
       }
     };
     checkWifiStatus().catch((err: unknown) => {
-      logger.error(LogComponents.Wifi, 'Error checking WiFi status', err);
+      logger.error(LogComponents.WIFI, 'Error checking WiFi status', err);
     });
   }, []);
 
@@ -198,7 +198,7 @@ export function SurveyView({
           setSurvey(updated);
         }
       } catch (err) {
-        logger.error(LogComponents.Survey, 'Failed to refresh survey', err);
+        logger.error(LogComponents.SURVEY, 'Failed to refresh survey', err);
       }
     }, 3000);
 

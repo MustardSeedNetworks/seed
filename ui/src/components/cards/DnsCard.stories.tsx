@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Globe } from 'lucide-react';
+import type { JSX } from 'react';
 import { cn, spacing } from '../../styles/theme';
 import { Card, CardDivider, CardRow, CardValue } from '../ui/card';
 import { Skeleton } from '../ui/skeleton';

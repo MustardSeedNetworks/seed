@@ -29,6 +29,7 @@
 
 import type { TFunction } from 'i18next';
 import type React from 'react';
+import type { JSX } from 'react';
 import { Component, type ReactNode } from 'react';
 import { Translation } from 'react-i18next';
 import { LogComponents, logger } from '../lib/logger';
@@ -84,7 +85,7 @@ export class ErrorBoundary extends Component<Props, State> {
    * @param errorInfo - Additional error information (component stack trace)
    */
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    logger.error(LogComponents.App, 'ErrorBoundary caught an error', error, {
+    logger.error(LogComponents.APP, 'ErrorBoundary caught an error', error, {
       componentStack: errorInfo.componentStack,
     });
   }

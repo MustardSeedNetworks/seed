@@ -93,7 +93,7 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps): R
           setParseResult(backendResult);
         } else {
           // Fallback to client-side parsing if backend fails
-          logger.warn(LogComponents.Survey, 'Backend parsing failed, falling back to client-side', {
+          logger.warn(LogComponents.SURVEY, 'Backend parsing failed, falling back to client-side', {
             error: backendResult.error,
           });
           const buffer = await file.arrayBuffer();

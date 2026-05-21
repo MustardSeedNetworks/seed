@@ -17,6 +17,7 @@
  * /api/v1/auth/webauthn/* — see internal/api/handlers_mfa.go.
  */
 
+import type { JSX } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';

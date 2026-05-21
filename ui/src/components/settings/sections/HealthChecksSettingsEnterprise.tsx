@@ -7,6 +7,7 @@
  */
 
 import type React from 'react';
+import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useArrayItem } from '../../../hooks/useArrayItem';
 import { cn, input, layout, radius, spacing } from '../../../styles/theme';

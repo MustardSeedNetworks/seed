@@ -3,6 +3,7 @@
  * About blurb. Pulled out so SettingsDrawer.tsx can shrink.
  */
 
+import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { button, cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
 

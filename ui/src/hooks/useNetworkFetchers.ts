@@ -240,7 +240,7 @@ export function useNetworkFetchers({
         }
       }
     } catch (err) {
-      logger.error(LogComponents.System, 'Failed to fetch version', err);
+      logger.error(LogComponents.SYSTEM, 'Failed to fetch version', err);
     }
   }, [setAppVersion]);
 
@@ -293,7 +293,7 @@ export function useNetworkFetchers({
         }
       }
     } catch (err) {
-      logger.error(LogComponents.Discovery, 'Failed to fetch discovery data', err);
+      logger.error(LogComponents.DISCOVERY, 'Failed to fetch discovery data', err);
     }
   }, [setCards]);
 
@@ -360,7 +360,7 @@ export function useNetworkFetchers({
         }));
       }
     } catch (err) {
-      logger.error(LogComponents.Dns, 'Failed to fetch DNS data', err);
+      logger.error(LogComponents.DNS, 'Failed to fetch DNS data', err);
     }
   }, [setCards, currentInterfaceRef.current]);
 
@@ -383,7 +383,7 @@ export function useNetworkFetchers({
         }));
       }
     } catch (err) {
-      logger.error(LogComponents.Vlan, 'Failed to fetch VLAN data', err);
+      logger.error(LogComponents.VLAN, 'Failed to fetch VLAN data', err);
     }
   }, [setCards]);
 
@@ -431,7 +431,7 @@ export function useNetworkFetchers({
         }));
       }
     } catch (err) {
-      logger.error(LogComponents.Gateway, 'Failed to fetch Gateway data', err);
+      logger.error(LogComponents.GATEWAY, 'Failed to fetch Gateway data', err);
     }
   }, [setCards, currentInterfaceRef.current]);
 
@@ -474,7 +474,7 @@ export function useNetworkFetchers({
         }
       }
     } catch (err) {
-      logger.error(LogComponents.Wifi, 'Failed to fetch Wi-Fi data', err);
+      logger.error(LogComponents.WIFI, 'Failed to fetch Wi-Fi data', err);
     }
   }, [currentInterfaceRef, setCards, setIsWifi, userSetWifiModeRef]);
 
@@ -498,7 +498,7 @@ export function useNetworkFetchers({
         }));
       }
     } catch (err) {
-      logger.error(LogComponents.Cable, 'Failed to fetch Cable data', err);
+      logger.error(LogComponents.CABLE, 'Failed to fetch Cable data', err);
     }
   }, [setCards]);
 
@@ -521,7 +521,7 @@ export function useNetworkFetchers({
         }));
       }
     } catch (err) {
-      logger.error(LogComponents.Publicip, 'Failed to fetch Public IP data', err);
+      logger.error(LogComponents.PUBLICIP, 'Failed to fetch Public IP data', err);
     }
   }, [setCards]);
 
@@ -552,7 +552,7 @@ export function useNetworkFetchers({
         // Network discovery data is global (not interface-specific), so interface changes
         // shouldn't invalidate the data
         if (controller.signal.aborted) {
-          logger.debug(LogComponents.Devices, 'Network discovery fetch aborted', {
+          logger.debug(LogComponents.DEVICES, 'Network discovery fetch aborted', {
             requestedInterface,
           });
           return;
@@ -561,7 +561,7 @@ export function useNetworkFetchers({
         // devicesData contains { devices: [...], status: {...} }
         // Extract the devices array from the response
         const devices = devicesData.devices || [];
-        logger.debug(LogComponents.Devices, 'Network discovery data received', {
+        logger.debug(LogComponents.DEVICES, 'Network discovery data received', {
           deviceCount: devices.length,
           scanning: status?.scanning,
         });
@@ -578,7 +578,7 @@ export function useNetworkFetchers({
         });
       } else {
         // Log error responses for debugging
-        logger.warn(LogComponents.Devices, 'Network discovery API error', {
+        logger.warn(LogComponents.DEVICES, 'Network discovery API error', {
           devicesStatus: devicesRes.status,
           statusStatus: statusRes.status,
         });
@@ -587,7 +587,7 @@ export function useNetworkFetchers({
       if (err instanceof DOMException && err.name === 'AbortError') {
         return;
       }
-      logger.error(LogComponents.Devices, 'Failed to fetch network discovery data', err);
+      logger.error(LogComponents.DEVICES, 'Failed to fetch network discovery data', err);
     }
   }, [currentInterfaceRef, setNetworkDiscovery, networkDiscoveryAbortRef]);
 

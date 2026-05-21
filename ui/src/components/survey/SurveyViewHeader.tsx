@@ -6,6 +6,7 @@
  * parent's handleStatusChange callback.
  */
 
+import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Survey } from '../../hooks/useSurvey';
 import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';

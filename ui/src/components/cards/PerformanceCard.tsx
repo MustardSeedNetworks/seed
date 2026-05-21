@@ -201,7 +201,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
           }
         }
       } catch (err) {
-        logger.error(LogComponents.Iperf, 'Failed to manage iperf server', err);
+        logger.error(LogComponents.IPERF, 'Failed to manage iperf server', err);
       }
     }, []);
 
@@ -252,7 +252,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
             setIperfServerStatus(await iperfServerRes.json());
           }
         } catch (err) {
-          logger.error(LogComponents.Speedtest, 'Failed to fetch performance status', err);
+          logger.error(LogComponents.SPEEDTEST, 'Failed to fetch performance status', err);
         }
       };
       fetchStatus().catch(() => {
@@ -346,7 +346,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
               }
             }
           } catch (err) {
-            logger.error(LogComponents.Speedtest, 'Failed to poll speedtest status', err);
+            logger.error(LogComponents.SPEEDTEST, 'Failed to poll speedtest status', err);
           }
         })().catch(() => {
           // Error already logged
@@ -386,7 +386,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
               }
             }
           } catch (err) {
-            logger.error(LogComponents.Iperf, 'Failed to poll iperf status', err);
+            logger.error(LogComponents.IPERF, 'Failed to poll iperf status', err);
           }
         })().catch(() => {
           // Error already logged

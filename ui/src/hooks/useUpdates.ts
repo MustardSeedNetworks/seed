@@ -78,7 +78,7 @@ export function useUpdates(): {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to check for updates';
       setError(message);
-      logger.error(LogComponents.System, 'Update check failed', err, {
+      logger.error(LogComponents.SYSTEM, 'Update check failed', err, {
         endpoint: '/api/v1/updates/check',
       });
       return null;
@@ -96,7 +96,7 @@ export function useUpdates(): {
       setStatus(data);
       return data;
     } catch (err) {
-      logger.error(LogComponents.System, 'Failed to get update status', err, {
+      logger.error(LogComponents.SYSTEM, 'Failed to get update status', err, {
         endpoint: '/api/v1/updates/status',
       });
       return null;
@@ -112,7 +112,7 @@ export function useUpdates(): {
       setUpdateInfo(data);
       return data;
     } catch (err) {
-      logger.error(LogComponents.System, 'Failed to get update info', err, {
+      logger.error(LogComponents.SYSTEM, 'Failed to get update info', err, {
         endpoint: '/api/v1/updates/info',
       });
       return null;
@@ -133,7 +133,7 @@ export function useUpdates(): {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to download update';
       setError(message);
-      logger.error(LogComponents.System, 'Update download failed', err, {
+      logger.error(LogComponents.SYSTEM, 'Update download failed', err, {
         endpoint: '/api/v1/updates/download',
       });
       return false;
@@ -154,7 +154,7 @@ export function useUpdates(): {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to apply update';
       setError(message);
-      logger.error(LogComponents.System, 'Update apply failed', err, {
+      logger.error(LogComponents.SYSTEM, 'Update apply failed', err, {
         endpoint: '/api/v1/updates/apply',
       });
       return false;
@@ -174,7 +174,7 @@ export function useUpdates(): {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to rollback update';
       setError(message);
-      logger.error(LogComponents.System, 'Update rollback failed', err, {
+      logger.error(LogComponents.SYSTEM, 'Update rollback failed', err, {
         endpoint: '/api/v1/updates/rollback',
       });
       return false;

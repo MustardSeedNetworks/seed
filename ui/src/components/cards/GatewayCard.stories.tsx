@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { JSX } from 'react';
 import { cn, spacing } from '../../styles/theme';
 import { Card, CardDivider, CardRow, CardValue } from '../ui/card';
 import { Router } from '../ui/icons';

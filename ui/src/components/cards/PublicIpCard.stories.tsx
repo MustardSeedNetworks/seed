@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { JSX } from 'react';
 import { PublicIpCard } from './PublicIpCard';
 
 /**

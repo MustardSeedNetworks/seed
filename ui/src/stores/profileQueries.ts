@@ -84,7 +84,7 @@ export function useProfilesQuery(): UseQueryResult<Profile[], Error> {
       if (!message.toLowerCase().includes('session')) {
         setError(message);
       }
-      logger.error(LogComponents.Profiles, 'Failed to fetch profiles', query.error);
+      logger.error(LogComponents.PROFILES, 'Failed to fetch profiles', query.error);
     }
   }, [query.isError, query.error, setError]);
 
@@ -142,7 +142,7 @@ export function useActiveProfileQuery(): UseQueryResult<Profile, Error> {
         query.error instanceof Error ? query.error.message : 'Failed to fetch active profile';
       if (!message.toLowerCase().includes('session')) {
         setError(message);
-        logger.error(LogComponents.Profiles, 'Failed to fetch active profile', query.error);
+        logger.error(LogComponents.PROFILES, 'Failed to fetch active profile', query.error);
       }
       setIsSettingsLoaded(true);
     }
@@ -177,7 +177,7 @@ export function useBackendDefaultsQuery(): UseQueryResult<DefaultSettings, Error
   useEffect(() => {
     if (query.isError && query.error) {
       logger.warn(
-        LogComponents.Profiles,
+        LogComponents.PROFILES,
         'Could not load backend defaults, using hardcoded',
         query.error,
       );
@@ -200,7 +200,7 @@ export function useCreateProfileMutation(): UseMutationResult<Profile, Error, Pr
   return useMutation({
     mutationFn: async (profile: ProfileRequest) => {
       const created = await api.post<Profile>('/api/v1/profiles', profile);
-      logger.info(LogComponents.Profiles, 'Profile created', {
+      logger.info(LogComponents.PROFILES, 'Profile created', {
         id: created.id,
         name: created.name,
       });
@@ -211,7 +211,7 @@ export function useCreateProfileMutation(): UseMutationResult<Profile, Error, Pr
       queryClient.invalidateQueries({ queryKey: profileKeys.list() });
     },
     onError: (err: Error) => {
-      logger.error(LogComponents.Profiles, 'Failed to create profile', err);
+      logger.error(LogComponents.PROFILES, 'Failed to create profile', err);
     },
   });
 }
@@ -231,7 +231,7 @@ export function useUpdateProfileMutation(): UseMutationResult<
   return useMutation({
     mutationFn: async ({ id, profile }: { id: string; profile: ProfileRequest }) => {
       const updated = await api.put<Profile>(`/api/v1/profiles/${id}`, profile);
-      logger.info(LogComponents.Profiles, 'Profile updated', {
+      logger.info(LogComponents.PROFILES, 'Profile updated', {
         id: updated.id,
         name: updated.name,
       });
@@ -247,7 +247,7 @@ export function useUpdateProfileMutation(): UseMutationResult<
       queryClient.invalidateQueries({ queryKey: profileKeys.detail(updated.id) });
     },
     onError: (err: Error) => {
-      logger.error(LogComponents.Profiles, 'Failed to update profile', err);
+      logger.error(LogComponents.PROFILES, 'Failed to update profile', err);
     },
   });
 }
@@ -261,7 +261,7 @@ export function useDeleteProfileMutation(): UseMutationResult<string, Error, str
   return useMutation({
     mutationFn: async (id: string) => {
       await api.delete(`/api/v1/profiles/${id}`);
-      logger.info(LogComponents.Profiles, 'Profile deleted', { id });
+      logger.info(LogComponents.PROFILES, 'Profile deleted', { id });
       return id;
     },
     onSuccess: () => {
@@ -269,7 +269,7 @@ export function useDeleteProfileMutation(): UseMutationResult<string, Error, str
       queryClient.invalidateQueries({ queryKey: profileKeys.active() });
     },
     onError: (err: Error) => {
-      logger.error(LogComponents.Profiles, 'Failed to delete profile', err);
+      logger.error(LogComponents.PROFILES, 'Failed to delete profile', err);
     },
   });
 }
@@ -301,7 +301,7 @@ export function useSwitchProfileMutation(): UseMutationResult<
     onSuccess: ({ activeProfile, profiles }: { activeProfile: Profile; profiles: Profile[] }) => {
       // Single batched state update instead of multiple
       batchProfileSwitch(activeProfile, profiles);
-      logger.info(LogComponents.Profiles, 'Profile switched', {
+      logger.info(LogComponents.PROFILES, 'Profile switched', {
         id: activeProfile.id,
         name: activeProfile.name,
       });
@@ -310,7 +310,7 @@ export function useSwitchProfileMutation(): UseMutationResult<
       queryClient.invalidateQueries({ queryKey: profileKeys.all });
     },
     onError: (err: Error) => {
-      logger.error(LogComponents.Profiles, 'Failed to switch profile', err);
+      logger.error(LogComponents.PROFILES, 'Failed to switch profile', err);
     },
   });
 }
@@ -324,7 +324,7 @@ export function useDuplicateProfileMutation(): UseMutationResult<Profile, Error,
   return useMutation({
     mutationFn: async (id: string) => {
       const duplicated = await api.post<Profile>(`/api/v1/profiles/${id}/duplicate`);
-      logger.info(LogComponents.Profiles, 'Profile duplicated', {
+      logger.info(LogComponents.PROFILES, 'Profile duplicated', {
         sourceId: id,
         newId: duplicated.id,
       });
@@ -334,7 +334,7 @@ export function useDuplicateProfileMutation(): UseMutationResult<Profile, Error,
       queryClient.invalidateQueries({ queryKey: profileKeys.list() });
     },
     onError: (err: Error) => {
-      logger.error(LogComponents.Profiles, 'Failed to duplicate profile', err);
+      logger.error(LogComponents.PROFILES, 'Failed to duplicate profile', err);
     },
   });
 }
@@ -352,7 +352,7 @@ export function useImportProfilesMutation(): UseMutationResult<
   return useMutation({
     mutationFn: async (data: ProfileImportRequest) => {
       const result = await api.post<ProfileImportResponse>('/api/v1/profiles/import', data);
-      logger.info(LogComponents.Profiles, 'Profiles imported', {
+      logger.info(LogComponents.PROFILES, 'Profiles imported', {
         imported: result.imported,
         skipped: result.skipped,
       });
@@ -362,7 +362,7 @@ export function useImportProfilesMutation(): UseMutationResult<
       queryClient.invalidateQueries({ queryKey: profileKeys.list() });
     },
     onError: (err: Error) => {
-      logger.error(LogComponents.Profiles, 'Failed to import profiles', err);
+      logger.error(LogComponents.PROFILES, 'Failed to import profiles', err);
     },
   });
 }
@@ -420,7 +420,7 @@ export function useSaveSettingsMutation(): UseMutationResult<
     },
     onError: (err: Error) => {
       setSettingsStatus('error');
-      logger.error(LogComponents.Profiles, 'Failed to save settings', err);
+      logger.error(LogComponents.PROFILES, 'Failed to save settings', err);
 
       // Reset status after delay
       setTimeout(() => setSettingsStatus('idle'), 3000);

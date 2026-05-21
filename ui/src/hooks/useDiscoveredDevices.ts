@@ -200,7 +200,7 @@ export function useDiscoveredDevices(autoRefresh: boolean = false): {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch discovered devices';
       setError(message);
-      logger.error(LogComponents.Devices, 'Failed to fetch discovered devices', err, {
+      logger.error(LogComponents.DEVICES, 'Failed to fetch discovered devices', err, {
         endpoint: '/api/v1/shell/devices',
       });
     } finally {

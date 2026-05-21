@@ -19,6 +19,7 @@
  */
 
 import type React from 'react';
+import type { JSX } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RecoveryForm } from '../components/login/RecoveryForm';

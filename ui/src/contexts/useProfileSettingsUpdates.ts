@@ -53,7 +53,7 @@ export function useProfileSettingsUpdates(activeProfile: Profile | null): Profil
   const updateSettingsField = useCallback(
     <T extends keyof ProfileSettings>(field: T, updates: Partial<ProfileSettings[T]>) => {
       if (!activeProfile) {
-        logger.warn(LogComponents.Profiles, 'Cannot save settings: no active profile');
+        logger.warn(LogComponents.PROFILES, 'Cannot save settings: no active profile');
         return;
       }
 
@@ -131,7 +131,7 @@ export function useProfileSettingsUpdates(activeProfile: Profile | null): Profil
   const updateSettings = useCallback(
     (updates: Partial<ProfileSettings>) => {
       if (!activeProfile) {
-        logger.warn(LogComponents.Profiles, 'Cannot save settings: no active profile');
+        logger.warn(LogComponents.PROFILES, 'Cannot save settings: no active profile');
         return;
       }
 

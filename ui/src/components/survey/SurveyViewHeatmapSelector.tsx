@@ -7,6 +7,7 @@
  */
 
 import { Activity, Clock, Gauge, Hash, Radio, Waves, Wifi } from 'lucide-react';
+import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { HeatmapMetric, SurveyType } from '../../hooks/useSurvey';
 import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';

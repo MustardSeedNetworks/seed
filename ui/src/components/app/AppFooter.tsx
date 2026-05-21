@@ -5,6 +5,7 @@
  * the current app version and the translator from the parent.
  */
 
+import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, radius, spacing } from '../../styles/theme';
 

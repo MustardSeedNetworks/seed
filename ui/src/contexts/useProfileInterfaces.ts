@@ -77,7 +77,7 @@ export function useProfileInterfaces(
     ): Promise<boolean> => {
       const currentProfile = activeProfileRef.current;
       if (!currentProfile) {
-        logger.warn(LogComponents.Profiles, 'Cannot update interfaces: no active profile');
+        logger.warn(LogComponents.PROFILES, 'Cannot update interfaces: no active profile');
         return false;
       }
 
@@ -99,7 +99,7 @@ export function useProfileInterfaces(
 
         return true;
       } catch (err) {
-        logger.error(LogComponents.Profiles, 'Failed to update interface config', err);
+        logger.error(LogComponents.PROFILES, 'Failed to update interface config', err);
         return false;
       }
     },
@@ -119,7 +119,7 @@ export function useProfileInterfaces(
         return { ...interfaces, ethernet, activeEthernet: name };
       });
       if (result) {
-        logger.info(LogComponents.Profiles, 'Ethernet interface set as active', {
+        logger.info(LogComponents.PROFILES, 'Ethernet interface set as active', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -142,7 +142,7 @@ export function useProfileInterfaces(
         return { ...interfaces, wifi, activeWifi: name };
       });
       if (result) {
-        logger.info(LogComponents.Profiles, 'Wifi interface set as active', {
+        logger.info(LogComponents.PROFILES, 'Wifi interface set as active', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -165,7 +165,7 @@ export function useProfileInterfaces(
         return { ...interfaces, ethernet };
       });
       if (result) {
-        logger.info(LogComponents.Profiles, 'Ethernet interface added', {
+        logger.info(LogComponents.PROFILES, 'Ethernet interface added', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -188,7 +188,7 @@ export function useProfileInterfaces(
         return { ...interfaces, wifi };
       });
       if (result) {
-        logger.info(LogComponents.Profiles, 'Wifi interface added', {
+        logger.info(LogComponents.PROFILES, 'Wifi interface added', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -207,7 +207,7 @@ export function useProfileInterfaces(
         return { ...interfaces, ethernet, activeEthernet: activeEthernetVal };
       });
       if (result) {
-        logger.info(LogComponents.Profiles, 'Ethernet interface removed', {
+        logger.info(LogComponents.PROFILES, 'Ethernet interface removed', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -225,7 +225,7 @@ export function useProfileInterfaces(
         return { ...interfaces, wifi, activeWifi: activeWifiVal };
       });
       if (result) {
-        logger.info(LogComponents.Profiles, 'Wifi interface removed', {
+        logger.info(LogComponents.PROFILES, 'Wifi interface removed', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -243,7 +243,7 @@ export function useProfileInterfaces(
       );
       if (!exists) {
         logger.warn(
-          LogComponents.Profiles,
+          LogComponents.PROFILES,
           'Cannot set active ethernet interface: interface not in list',
           { interface: name },
         );
@@ -255,7 +255,7 @@ export function useProfileInterfaces(
         activeEthernet: name,
       }));
       if (result) {
-        logger.info(LogComponents.Profiles, 'Active ethernet interface changed', {
+        logger.info(LogComponents.PROFILES, 'Active ethernet interface changed', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });
@@ -271,7 +271,7 @@ export function useProfileInterfaces(
       const exists = (currentProfile?.config?.interfaces?.wifi ?? []).some((i) => i.name === name);
       if (!exists) {
         logger.warn(
-          LogComponents.Profiles,
+          LogComponents.PROFILES,
           'Cannot set active Wifi interface: interface not in list',
           { interface: name },
         );
@@ -283,7 +283,7 @@ export function useProfileInterfaces(
         activeWifi: name,
       }));
       if (result) {
-        logger.info(LogComponents.Profiles, 'Active Wifi interface changed', {
+        logger.info(LogComponents.PROFILES, 'Active Wifi interface changed', {
           profileId: activeProfileRef.current?.id,
           interface: name,
         });

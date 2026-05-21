@@ -8,6 +8,7 @@
  */
 
 import type { TFunction } from 'i18next';
+import type { JSX } from 'react';
 import { cn, layout, radius, spacing, status as statusColor } from '../../styles/theme';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { StatusBadge } from '../ui/StatusBadge';

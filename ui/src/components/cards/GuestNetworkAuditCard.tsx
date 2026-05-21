@@ -11,6 +11,7 @@
  * Configuration of the target list lives in Settings -> Security.
  */
 
+import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGuestNetworkAudit } from '../../hooks/useGuestNetworkAudit';
 import {
