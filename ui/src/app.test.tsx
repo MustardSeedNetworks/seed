@@ -205,7 +205,7 @@ describe('App', () => {
 
     // Default API mocks - includes profile endpoints for ProfileContext
     mockFetch.mockImplementation((url: string) => {
-      if (url.includes('/api/setup/status')) {
+      if (url.includes('/api/v1/setup/status')) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ needsSetup: false, username: 'admin' }),
@@ -388,7 +388,7 @@ describe('App', () => {
 
     it('handles login form submission', async () => {
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes('/api/setup/status')) {
+        if (url.includes('/api/v1/setup/status')) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: 'admin' }),
@@ -447,7 +447,7 @@ describe('App', () => {
 
     it('shows error message on login failure', async () => {
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes('/api/setup/status')) {
+        if (url.includes('/api/v1/setup/status')) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: 'admin' }),
@@ -499,7 +499,7 @@ describe('App', () => {
     it('disables login button while loading', async () => {
       let resolveLogin: (value: unknown) => void;
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes('/api/setup/status')) {
+        if (url.includes('/api/v1/setup/status')) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: 'admin' }),
@@ -555,9 +555,9 @@ describe('App', () => {
 
   describe('authenticated state', () => {
     beforeEach(() => {
-      // Set up authenticated state by mocking /api/status to return authenticated
+      // Set up authenticated state by mocking /api/v1/status to return authenticated
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes('/api/setup/status')) {
+        if (url.includes('/api/v1/setup/status')) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: 'admin' }),
@@ -615,7 +615,7 @@ describe('App', () => {
 
     it('renders interface selector', async () => {
       mockFetch.mockImplementation((url: string) => {
-        if (url.includes('/api/setup/status')) {
+        if (url.includes('/api/v1/setup/status')) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ needsSetup: false, username: 'admin' }),
@@ -720,7 +720,7 @@ describe('LoginForm input validation', () => {
     vi.clearAllMocks();
 
     mockFetch.mockImplementation((url: string) => {
-      if (url.includes('/api/setup/status')) {
+      if (url.includes('/api/v1/setup/status')) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ needsSetup: false, username: 'admin' }),
