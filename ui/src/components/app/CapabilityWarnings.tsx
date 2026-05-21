@@ -52,7 +52,7 @@ export function CapabilityWarnings({
       className={cn(
         'bg-status-warning/10 border border-status-warning/30',
         radius.lg,
-        spacing.pad.md,
+        spacing.pad.default,
         spacing.margin.bottom.section,
       )}
     >

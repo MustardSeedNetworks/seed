@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { button, cn, icon as iconTokens, modal, radius } from '../../styles/theme';
 import { ArrowUpDown, ChevronDown, ChevronUp, Download, RefreshCw, Search, X } from '../ui/icons';
+import { DeviceRow } from './DiscoveryModalDeviceRow';
 import type { DiscoveredDevice, NetworkDiscoveryData } from './NetworkDiscoveryCard';
 
 interface DiscoveryModalProps {
@@ -515,7 +516,7 @@ export function DiscoveryModal({
               {filteredDevices.map((device) => {
                 const deviceKey = device.mac || `ip:${device.ip}`;
                 return (
-                  <deviceRow
+                  <DeviceRow
                     key={deviceKey}
                     device={device}
                     isExpanded={expandedDevices.has(deviceKey)}
