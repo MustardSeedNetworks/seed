@@ -444,7 +444,7 @@ function ProfileCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="body-small font-medium text-text-primary truncate">{profile.name}</h3>
-              {profile.is_default ? (
+              {profile.isDefault ? (
                 <span className="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary font-medium">
                   {t('profile.default', 'Default')}
                 </span>
@@ -463,7 +463,7 @@ function ProfileCard({
 
         {/* Updated date */}
         <p className="caption text-text-muted mb-3">
-          {t('profile.updated', 'Updated')} {new Date(profile.updated_at).toLocaleDateString()}
+          {t('profile.updated', 'Updated')} {new Date(profile.updatedAt).toLocaleDateString()}
         </p>
 
         {/* Action buttons - always visible */}
@@ -525,7 +525,7 @@ function ProfileCard({
           </button>
 
           {/* Delete button - only if not default and not active */}
-          {profile.is_default || isActive ? null : (
+          {profile.isDefault || isActive ? null : (
             <button
               type="button"
               onClick={onDelete}
