@@ -60,7 +60,7 @@ export function HealthChecksSettingsAdvanced({
                         targetLatencyP95: 500,
                         reportingPeriod: 'daily',
                       }),
-                      enabled: e.target.checked,
+                      enabled: (e.target as HTMLInputElement).checked,
                     },
                   ],
                 }))
@@ -165,7 +165,7 @@ export function HealthChecksSettingsAdvanced({
                       cooldownMinutes: 5,
                       digestMode: false,
                     }),
-                    enabled: e.target.checked,
+                    enabled: (e.target as HTMLInputElement).checked,
                   },
                 }))
               }
@@ -256,7 +256,7 @@ export function HealthChecksSettingsAdvanced({
                       cooldownMinutes: 5,
                       digestMode: false,
                     }),
-                    digestMode: e.target.checked,
+                    digestMode: (e.target as HTMLInputElement).checked,
                   },
                 }))
               }
@@ -297,7 +297,7 @@ export function HealthChecksSettingsAdvanced({
                       stdDevThreshold: 2,
                       maxSamples: 100,
                     }),
-                    enabled: e.target.checked,
+                    enabled: (e.target as HTMLInputElement).checked,
                   },
                 }))
               }
