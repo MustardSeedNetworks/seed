@@ -244,9 +244,29 @@ jobs:
       - name: Verify package-lock integrity
         run: git diff --exit-code package-lock.json
 
-      - name: Run TypeScript check
+      - name: Run TypeScript check (advisory)
         continue-on-error: true
         run: npx tsc --noEmit
+
+      # TypeScript ratchet — see #1052 phase 3 / seed#1058 follow-up.
+      # The strict tsc gate is intentionally advisory above so we can pay
+      # down the existing ~238 type-debt errors gradually; this step
+      # enforces that NEW code can only DECREASE the count, never raise
+      # it. The current count is stored in .tsc-baseline (one integer
+      # on one line). To pay down debt: lower the count via fixes, then
+      # update .tsc-baseline to the new lower number in the same PR.
+      - name: TypeScript ratchet (required)
+        run: |
+          CURRENT=$(npx tsc --noEmit 2>&1 | grep -c "error TS" || true)
+          BASELINE=$(cat ../.tsc-baseline 2>/dev/null || echo 0)
+          echo "tsc errors — current: $CURRENT, baseline: $BASELINE"
+          if [ "$CURRENT" -gt "$BASELINE" ]; then
+            echo "::error::tsc errors increased ($BASELINE -> $CURRENT). New code must not add type errors. Either fix the new TS errors, or, if these were pre-existing and you discovered them, lower .tsc-baseline to match the new count in this PR."
+            exit 1
+          fi
+          if [ "$CURRENT" -lt "$BASELINE" ]; then
+            echo "::warning::tsc errors dropped ($BASELINE -> $CURRENT). Lower .tsc-baseline to $CURRENT in this PR to lock the new floor."
+          fi
 
       - name: Run Biome (lint + format)
         run: npm run lint
