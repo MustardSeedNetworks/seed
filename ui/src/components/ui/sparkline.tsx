@@ -343,7 +343,7 @@ function SparklineWithLabelComponent({
   type = 'availability',
   ...props
 }: SparklineWithLabelProps): React.JSX.Element {
-  const currentValue = data.length > 0 ? data.at(-1) : 0;
+  const currentValue = data.at(-1) ?? 0;
 
   // Format value based on type
   const formattedValue = useMemo((): string => {

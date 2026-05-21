@@ -13,6 +13,12 @@ import type { NetworkDiscoveryData } from '../components/cards/NetworkDiscoveryC
 // Network Discovery Card Mock Data — consumed by DiscoveryModal.stories.tsx
 // ============================================================================
 
+const profileFor = (deviceType: string, ports: number[]) => ({
+  deviceType,
+  openPorts: ports.map((port) => ({ port, protocol: 'tcp', isOpen: true })),
+  profiledAt: new Date().toISOString(),
+});
+
 export const mockNetworkDiscoveryData: Record<string, NetworkDiscoveryData> = {
   withDevices: {
     devices: [
@@ -22,8 +28,10 @@ export const mockNetworkDiscoveryData: Record<string, NetworkDiscoveryData> = {
         hostname: 'router.local',
         vendor: 'Cisco Systems',
         lastSeen: new Date(Date.now() - 60000).toISOString(),
-        deviceType: 'router',
-        openPorts: [22, 80, 443],
+        // deviceType lives on DeviceProfile, not DiscoveredDevice
+        isLocal: true,
+        discoveryMethod: ['arp'],
+        profile: profileFor('router', [22, 80, 443]),
       },
       {
         ip: '192.168.1.100',
@@ -31,8 +39,10 @@ export const mockNetworkDiscoveryData: Record<string, NetworkDiscoveryData> = {
         hostname: 'workstation-01',
         vendor: 'Dell Inc.',
         lastSeen: new Date(Date.now() - 30000).toISOString(),
-        deviceType: 'computer',
-        openPorts: [22],
+        // deviceType lives on DeviceProfile, not DiscoveredDevice
+        isLocal: true,
+        discoveryMethod: ['arp'],
+        profile: profileFor('computer', [22]),
       },
       {
         ip: '192.168.1.150',
@@ -40,8 +50,10 @@ export const mockNetworkDiscoveryData: Record<string, NetworkDiscoveryData> = {
         hostname: 'printer-office',
         vendor: 'HP Inc.',
         lastSeen: new Date(Date.now() - 120000).toISOString(),
-        deviceType: 'printer',
-        openPorts: [9100],
+        // deviceType lives on DeviceProfile, not DiscoveredDevice
+        isLocal: true,
+        discoveryMethod: ['arp'],
+        profile: profileFor('printer', [9100]),
       },
     ],
     status: {

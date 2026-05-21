@@ -371,5 +371,11 @@
     "download": "Download PDF",
     "downloadHTML": "Download HTML",
     "close": "Close"
+  },
+  "heatmapStats": {
+    "average": "Average",
+    "median": "Median",
+    "stdDev": "Std Dev",
+    "samples": "Samples"
   }
 }

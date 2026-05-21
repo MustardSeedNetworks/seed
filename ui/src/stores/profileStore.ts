@@ -281,7 +281,6 @@ export const useThresholds = (): ProfileThresholdsConfig => {
 
 export const useSpeedtestSettings = (): SpeedtestConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
-  const _backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
     activeProfile?.config?.settings?.speedtest,
     undefined, // backend DefaultSettings does not currently expose speedtest
@@ -321,7 +320,6 @@ export const useSnmpSettings = (): SnmpConfig => {
 
 export const useWifiSettings = (): WiFiSettingsConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
-  const _backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
     activeProfile?.config?.settings?.wifi,
     undefined, // backend DefaultSettings does not currently expose wifi
@@ -361,7 +359,6 @@ export const useVulnerabilitySettings = (): VulnerabilityConfig => {
 
 export const useDnsSettings = (): DnsSettingsConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
-  const _backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
     activeProfile?.config?.settings?.dns,
     undefined, // backend DefaultSettings does not currently expose dns
@@ -371,7 +368,6 @@ export const useDnsSettings = (): DnsSettingsConfig => {
 
 export const useAppearanceSettings = (): AppearanceConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
-  const _backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
     activeProfile?.config?.settings?.appearance,
     undefined, // backend DefaultSettings does not currently expose appearance

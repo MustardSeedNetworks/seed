@@ -371,5 +371,11 @@
     "download": "Descargar PDF",
     "downloadHTML": "Descargar HTML",
     "close": "Cerrar"
+  },
+  "heatmapStats": {
+    "average": "Promedio",
+    "median": "Mediana",
+    "stdDev": "Desv. Est.",
+    "samples": "Muestras"
   }
 }
