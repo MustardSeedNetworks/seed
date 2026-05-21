@@ -20,11 +20,9 @@ import type { DiscoveredDevice, DiscoveryMethod, OpenPort } from './NetworkDisco
 
 // Discovery method badge
 export function MethodBadge({ method }: { method: DiscoveryMethod }): JSX.Element {
-  const theme = discoveryMethodTheme[method] || discoveryMethodTheme.arp;
+  const themeClass = discoveryMethodTheme[method] ?? discoveryMethodTheme.arp;
   return (
-    <span
-      className={cn('px-1.5 py-0.5 text-xs font-medium uppercase', radius.md, theme.bg, theme.text)}
-    >
+    <span className={cn('px-1.5 py-0.5 text-xs font-medium uppercase', radius.md, themeClass)}>
       {method}
     </span>
   );
@@ -113,13 +111,14 @@ export function DeviceRow({
 }): JSX.Element {
   const { t } = useTranslation('cards');
   const openPorts = device.profile?.openPorts?.filter((p) => p.isOpen) || [];
-  const hasDetails =
+  const hasDetails = Boolean(
     device.lldpInfo ||
-    device.cdpInfo ||
-    device.edpInfo ||
-    device.ndpInfo ||
-    device.snmpData ||
-    openPorts.length > 0;
+      device.cdpInfo ||
+      device.edpInfo ||
+      device.ndpInfo ||
+      device.snmpData ||
+      openPorts.length > 0,
+  );
 
   const handleScan = async (e: React.MouseEvent): Promise<void> => {
     e.stopPropagation();
@@ -413,14 +412,14 @@ export function DeviceRow({
                                 ? 'bg-status-success/20 text-status-success'
                                 : 'bg-surface-hover text-text-muted',
                             )}
-                            title={`${iface.name} - ${iface.speed ? `${Math.round(iface.speed / 1000000)} Mbps` : 'N/A'}`}
+                            title={`${iface.name} - ${iface.speedMbps ? `${iface.speedMbps} Mbps` : 'N/A'}`}
                           >
                             {iface.name}
-                            {iface.speed && iface.speed > 0 ? (
+                            {iface.speedMbps && iface.speedMbps > 0 ? (
                               <span className="text-text-muted ml-1">
-                                {iface.speed >= 1000000000
-                                  ? `${Math.round(iface.speed / 1000000000)}G`
-                                  : `${Math.round(iface.speed / 1000000)}M`}
+                                {iface.speedMbps >= 1000
+                                  ? `${Math.round(iface.speedMbps / 1000)}G`
+                                  : `${iface.speedMbps}M`}
                               </span>
                             ) : null}
                           </span>
@@ -470,11 +469,11 @@ export function DeviceRow({
                   ) : null}
 
                   {/* Hardware Inventory */}
-                  {device.snmpData.entities && device.snmpData.entities.length > 0 ? (
+                  {device.snmpData.inventory && device.snmpData.inventory.length > 0 ? (
                     <div>
                       <span className="text-xs text-text-muted">Hardware:</span>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-1 mt-1 text-xs">
-                        {device.snmpData.entities
+                        {device.snmpData.inventory
                           .filter(
                             (e) =>
                               e.physicalClass === 'chassis' ||

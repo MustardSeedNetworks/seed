@@ -11,7 +11,7 @@
  */
 export const discoveryMethod = {
   arp: 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
-  icmp: 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400',
+  ping: 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400',
   ndp: 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400',
   lldp: 'bg-green-500/20 text-green-600 dark:text-green-400',
   cdp: 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
