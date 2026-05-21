@@ -8,6 +8,7 @@
  */
 
 import { AlertTriangle, ChevronDown, ChevronUp, X } from 'lucide-react';
+import type { JSX } from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type Capabilities, getMissingCapabilities } from '../../hooks/useCapabilities';

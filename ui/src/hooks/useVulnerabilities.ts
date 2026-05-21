@@ -188,7 +188,7 @@ export function useVulnerabilities(): {
     try {
       return await api.get<VulnerabilityScannerStatus>('/api/v1/shell/vulnerabilities/status');
     } catch (error) {
-      logger.error(LogComponents.Vuln, 'Failed to fetch vulnerability status', error, {
+      logger.error(LogComponents.VULN, 'Failed to fetch vulnerability status', error, {
         endpoint: '/api/v1/shell/vulnerabilities/status',
       });
       return null;
@@ -213,7 +213,7 @@ export function useVulnerabilities(): {
       const data = await api.get<ResultsResponse>(endpoint);
       return data.results || [];
     } catch (error) {
-      logger.error(LogComponents.Vuln, 'Failed to fetch vulnerability results', error, {
+      logger.error(LogComponents.VULN, 'Failed to fetch vulnerability results', error, {
         endpoint: '/api/v1/shell/vulnerabilities/results',
         severity,
       });
@@ -234,7 +234,7 @@ export function useVulnerabilities(): {
           `/api/v1/shell/vulnerabilities/device?${params.toString()}`,
         );
       } catch (error) {
-        logger.error(LogComponents.Vuln, 'Failed to fetch vulnerabilities for device', error, {
+        logger.error(LogComponents.VULN, 'Failed to fetch vulnerabilities for device', error, {
           ip,
         });
         return null;
@@ -247,7 +247,7 @@ export function useVulnerabilities(): {
     try {
       return await api.get<VulnerabilityScannerConfig>('/api/v1/shell/vulnerabilities/settings');
     } catch (error) {
-      logger.error(LogComponents.Vuln, 'Failed to fetch vulnerability settings', error, {
+      logger.error(LogComponents.VULN, 'Failed to fetch vulnerability settings', error, {
         endpoint: '/api/v1/shell/vulnerabilities/settings',
       });
       return null;
@@ -260,7 +260,7 @@ export function useVulnerabilities(): {
         await api.put<{ status: string }>('/api/v1/shell/vulnerabilities/settings', settings);
         return true;
       } catch (error) {
-        logger.error(LogComponents.Vuln, 'Failed to update vulnerability settings', error, {
+        logger.error(LogComponents.VULN, 'Failed to update vulnerability settings', error, {
           endpoint: '/api/v1/shell/vulnerabilities/settings',
           updates: settings,
         });

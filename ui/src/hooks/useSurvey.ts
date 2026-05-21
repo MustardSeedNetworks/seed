@@ -520,7 +520,7 @@ export function useSurvey(): {
       const errorMsg = err instanceof Error ? err.message : 'Failed to load surveys';
       setError(errorMsg);
       // fixes #678 - added structured error logging
-      logger.error(LogComponents.Survey, 'Failed to list surveys', err, {
+      logger.error(LogComponents.SURVEY, 'Failed to list surveys', err, {
         endpoint: '/api/v1/canopy/survey/list',
       });
     } finally {
@@ -535,7 +535,7 @@ export function useSurvey(): {
       const check = validateCreateSurvey(request);
       if (!check.ok) {
         setError(check.error);
-        logger.warn(LogComponents.Survey, 'Rejected createSurvey - validation failed', {
+        logger.warn(LogComponents.SURVEY, 'Rejected createSurvey - validation failed', {
           error: check.error,
           field: check.field,
         });
@@ -547,7 +547,7 @@ export function useSurvey(): {
       try {
         const survey = await api.post<Survey>('/api/v1/canopy/survey/create', request);
         await listSurveys(); // Refresh list
-        logger.info(LogComponents.Survey, 'Survey created successfully', {
+        logger.info(LogComponents.SURVEY, 'Survey created successfully', {
           surveyId: survey.id,
           name: request.name,
           type: request.surveyType,
@@ -557,7 +557,7 @@ export function useSurvey(): {
         const errorMsg = err instanceof Error ? err.message : 'Failed to create survey';
         setError(errorMsg);
         // fixes #678 - added structured error logging
-        logger.error(LogComponents.Survey, 'Failed to create survey', err, {
+        logger.error(LogComponents.SURVEY, 'Failed to create survey', err, {
           endpoint: '/api/v1/canopy/survey/create',
           request,
         });
@@ -584,7 +584,7 @@ export function useSurvey(): {
       const errorMsg = err instanceof Error ? err.message : 'Failed to get survey';
       setError(errorMsg);
       // fixes #678 - added structured error logging
-      logger.error(LogComponents.Survey, 'Failed to get survey', err, {
+      logger.error(LogComponents.SURVEY, 'Failed to get survey', err, {
         endpoint: '/api/v1/canopy/survey',
         surveyId: id,
       });
@@ -607,14 +607,14 @@ export function useSurvey(): {
         const params = new URLSearchParams({ id });
         await api.delete(`/api/v1/canopy/survey/delete?${params.toString()}`);
         await listSurveys(); // Refresh list
-        logger.info(LogComponents.Survey, 'Survey deleted successfully', {
+        logger.info(LogComponents.SURVEY, 'Survey deleted successfully', {
           surveyId: id,
         });
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Failed to delete survey';
         setError(errorMsg);
         // fixes #678 - added structured error logging
-        logger.error(LogComponents.Survey, 'Failed to delete survey', err, {
+        logger.error(LogComponents.SURVEY, 'Failed to delete survey', err, {
           endpoint: '/api/v1/canopy/survey/delete',
           surveyId: id,
         });
@@ -638,12 +638,12 @@ export function useSurvey(): {
         const params = new URLSearchParams({ id });
         await api.post(`/api/v1/canopy/survey/start?${params.toString()}`);
         await listSurveys(); // Refresh list
-        logger.info(LogComponents.Survey, 'Survey started', { surveyId: id });
+        logger.info(LogComponents.SURVEY, 'Survey started', { surveyId: id });
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Failed to start survey';
         setError(errorMsg);
         // fixes #678 - added structured error logging
-        logger.error(LogComponents.Survey, 'Failed to start survey', err, {
+        logger.error(LogComponents.SURVEY, 'Failed to start survey', err, {
           endpoint: '/api/v1/canopy/survey/start',
           surveyId: id,
         });
@@ -667,12 +667,12 @@ export function useSurvey(): {
         const params = new URLSearchParams({ id });
         await api.post(`/api/v1/canopy/survey/pause?${params.toString()}`);
         await listSurveys(); // Refresh list
-        logger.info(LogComponents.Survey, 'Survey paused', { surveyId: id });
+        logger.info(LogComponents.SURVEY, 'Survey paused', { surveyId: id });
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Failed to pause survey';
         setError(errorMsg);
         // fixes #678 - added structured error logging
-        logger.error(LogComponents.Survey, 'Failed to pause survey', err, {
+        logger.error(LogComponents.SURVEY, 'Failed to pause survey', err, {
           endpoint: '/api/v1/canopy/survey/pause',
           surveyId: id,
         });
@@ -696,12 +696,12 @@ export function useSurvey(): {
         const params = new URLSearchParams({ id });
         await api.post(`/api/v1/canopy/survey/complete?${params.toString()}`);
         await listSurveys(); // Refresh list
-        logger.info(LogComponents.Survey, 'Survey completed', { surveyId: id });
+        logger.info(LogComponents.SURVEY, 'Survey completed', { surveyId: id });
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Failed to complete survey';
         setError(errorMsg);
         // fixes #678 - added structured error logging
-        logger.error(LogComponents.Survey, 'Failed to complete survey', err, {
+        logger.error(LogComponents.SURVEY, 'Failed to complete survey', err, {
           endpoint: '/api/v1/canopy/survey/complete',
           surveyId: id,
         });
@@ -729,7 +729,7 @@ export function useSurvey(): {
       const coordCheck = validateCoordinates(x, y);
       if (!coordCheck.ok) {
         setError(coordCheck.error);
-        logger.warn(LogComponents.Survey, 'Rejected sample - coordinate validation failed', {
+        logger.warn(LogComponents.SURVEY, 'Rejected sample - coordinate validation failed', {
           surveyId: id,
           x,
           y,
@@ -747,7 +747,7 @@ export function useSurvey(): {
           y,
           sampleData,
         });
-        logger.debug(LogComponents.Survey, 'Sample added to survey', {
+        logger.debug(LogComponents.SURVEY, 'Sample added to survey', {
           surveyId: id,
           x,
           y,
@@ -756,7 +756,7 @@ export function useSurvey(): {
         const errorMsg = err instanceof Error ? err.message : 'Failed to add sample';
         setError(errorMsg);
         // fixes #678 - added structured error logging
-        logger.error(LogComponents.Survey, 'Failed to add sample', err, {
+        logger.error(LogComponents.SURVEY, 'Failed to add sample', err, {
           endpoint: '/api/v1/canopy/survey/sample',
           surveyId: id,
           coordinates: { x, y },
@@ -778,7 +778,7 @@ export function useSurvey(): {
     const planCheck = validateFloorPlan(floorPlan);
     if (!planCheck.ok) {
       setError(planCheck.error);
-      logger.warn(LogComponents.Survey, 'Rejected updateFloorPlan - validation failed', {
+      logger.warn(LogComponents.SURVEY, 'Rejected updateFloorPlan - validation failed', {
         surveyId: id,
         error: planCheck.error,
         field: planCheck.field,
@@ -792,7 +792,7 @@ export function useSurvey(): {
     try {
       const params = new URLSearchParams({ id });
       await api.post(`/api/v1/canopy/survey/floorplan?${params.toString()}`, floorPlan);
-      logger.info(LogComponents.Survey, 'Floor plan updated', {
+      logger.info(LogComponents.SURVEY, 'Floor plan updated', {
         surveyId: id,
         dimensions: { width: floorPlan.width, height: floorPlan.height },
         scale: floorPlan.scaleM,
@@ -801,7 +801,7 @@ export function useSurvey(): {
       const errorMsg = err instanceof Error ? err.message : 'Failed to update floor plan';
       setError(errorMsg);
       // fixes #678 - added structured error logging
-      logger.error(LogComponents.Survey, 'Failed to update floor plan', err, {
+      logger.error(LogComponents.SURVEY, 'Failed to update floor plan', err, {
         endpoint: '/api/v1/canopy/survey/floorplan',
         surveyId: id,
       });

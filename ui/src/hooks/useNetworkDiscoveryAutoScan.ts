@@ -77,7 +77,7 @@ export function useNetworkDiscoveryAutoScan(
           });
         }
       } catch (error) {
-        logger.debug(LogComponents.Discovery, 'Failed to fetch auto-scan settings', error);
+        logger.debug(LogComponents.DISCOVERY, 'Failed to fetch auto-scan settings', error);
       }
     };
 
@@ -136,13 +136,13 @@ export function useNetworkDiscoveryAutoScan(
       }
 
       try {
-        logger.info(LogComponents.Discovery, 'Triggering auto vulnerability scan', {
+        logger.info(LogComponents.DISCOVERY, 'Triggering auto vulnerability scan', {
           ip,
           reasons: reasons.join(', '),
         });
         await api.post('/api/v1/shell/vulnerabilities/scan', { targets: [ip] });
       } catch (error) {
-        logger.debug(LogComponents.Discovery, 'Failed to trigger vulnerability scan', error);
+        logger.debug(LogComponents.DISCOVERY, 'Failed to trigger vulnerability scan', error);
       }
     },
     [autoScanSettings.vulnScanEnabled, autoScanSettings.vulnAutoScan],
@@ -200,7 +200,7 @@ export function useNetworkDiscoveryAutoScan(
           await triggerVulnScan(ip, device, apiResponse.services);
         }
       } catch (error) {
-        logger.error(LogComponents.Discovery, 'Deep scan failed', error);
+        logger.error(LogComponents.DISCOVERY, 'Deep scan failed', error);
       } finally {
         setScanningDevices((prev) => {
           const next = new Set(prev);
@@ -252,7 +252,7 @@ export function useNetworkDiscoveryAutoScan(
       autoScannedDevices.current.add(device.ip);
     }
 
-    logger.info(LogComponents.Discovery, 'Auto-scanning devices for open ports', {
+    logger.info(LogComponents.DISCOVERY, 'Auto-scanning devices for open ports', {
       count: devicesToScan.length,
       portScanEnabled: autoScanSettings.portScanEnabled,
     });
@@ -345,7 +345,7 @@ export function useNetworkDiscoveryAutoScan(
     }
 
     logger.info(
-      LogComponents.Discovery,
+      LogComponents.DISCOVERY,
       'Auto-triggering vulnerability scans for devices with discovery info',
       {
         count: devicesToVulnScan.length,

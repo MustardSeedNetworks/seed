@@ -214,7 +214,7 @@ export function useSettingsDrawerLoaders({
         });
       }
     } catch (err) {
-      logger.error(LogComponents.Wifi, 'Failed to fetch WiFi settings', err);
+      logger.error(LogComponents.WIFI, 'Failed to fetch WiFi settings', err);
     }
   }, [setWifiSettings]);
 
@@ -267,7 +267,7 @@ export function useSettingsDrawerLoaders({
         });
       }
     } catch (err) {
-      logger.error(LogComponents.Discovery, 'Failed to fetch network discovery settings', err);
+      logger.error(LogComponents.DISCOVERY, 'Failed to fetch network discovery settings', err);
     }
   }, [setNetworkDiscoverySettings]);
 

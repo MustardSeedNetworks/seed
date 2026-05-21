@@ -6,6 +6,7 @@
  * only wires hook state into props.
  */
 
+import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CardState } from '../../hooks/useCardState';
 import { cn, layout, spacing } from '../../styles/theme';

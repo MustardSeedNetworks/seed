@@ -73,7 +73,7 @@ export function useDeviceScan({
         }
       }, 60000);
     } catch (err) {
-      logger.error(LogComponents.Devices, 'Failed to trigger device scan', err);
+      logger.error(LogComponents.DEVICES, 'Failed to trigger device scan', err);
       setNetworkDiscovery((prev) =>
         prev
           ? {

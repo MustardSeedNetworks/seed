@@ -48,7 +48,7 @@ export function useSubnetSettings(isOpen: boolean): UseSubnetSettingsResult {
         setSubnets(Array.isArray(data) ? data : []);
       }
     } catch (err) {
-      logger.error(LogComponents.Discovery, 'Failed to fetch subnets', err);
+      logger.error(LogComponents.DISCOVERY, 'Failed to fetch subnets', err);
     }
   }, []);
 

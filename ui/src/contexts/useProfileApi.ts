@@ -147,12 +147,12 @@ export function useProfileApi(): ProfileApi {
           staleTime: 0,
         }),
       );
-      logger.info(LogComponents.Profiles, 'Profiles exported', {
+      logger.info(LogComponents.PROFILES, 'Profiles exported', {
         count: result.profiles.length,
       });
       return result;
     } catch (err) {
-      logger.error(LogComponents.Profiles, 'Failed to export profiles', err);
+      logger.error(LogComponents.PROFILES, 'Failed to export profiles', err);
       return null;
     }
   }, []);
@@ -174,7 +174,7 @@ export function useProfileApi(): ProfileApi {
       URL.revokeObjectURL(url);
       return true;
     } catch (err) {
-      logger.error(LogComponents.Profiles, 'Failed to download profiles', err);
+      logger.error(LogComponents.PROFILES, 'Failed to download profiles', err);
       return false;
     }
   }, [exportProfiles]);

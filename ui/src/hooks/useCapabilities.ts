@@ -62,7 +62,7 @@ export function useCapabilities(): UseCapabilitiesResult {
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch capabilities';
-      logger.error(LogComponents.System, 'Failed to fetch capabilities', err);
+      logger.error(LogComponents.SYSTEM, 'Failed to fetch capabilities', err);
       setError(message);
     } finally {
       setLoading(false);

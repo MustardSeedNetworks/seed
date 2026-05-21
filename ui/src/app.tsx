@@ -27,6 +27,7 @@
  * automatically detecting if the system needs configuration.
  */
 
+import type { JSX } from 'react';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
@@ -527,7 +528,7 @@ function App(): JSX.Element {
         window.removeEventListener('cardTestComplete', handleCardComplete as EventListener);
         if (completed.size < cardTestsToWait.length) {
           logger.warn(
-            LogComponents.Ui,
+            LogComponents.UI,
             'FAB timeout: Not all card tests completed, signaling done anyway',
           );
           window.dispatchEvent(new CustomEvent('testsComplete'));

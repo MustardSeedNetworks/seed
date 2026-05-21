@@ -23,6 +23,7 @@
  */
 
 import type React from 'react';
+import type { JSX } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
