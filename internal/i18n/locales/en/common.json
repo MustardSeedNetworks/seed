@@ -23,6 +23,8 @@
     "close": "Close",
     "show": "Show",
     "hide": "Hide",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "clear": "Clear",
     "reconnect": "Reconnect",
     "runAllTests": "Run All Tests",

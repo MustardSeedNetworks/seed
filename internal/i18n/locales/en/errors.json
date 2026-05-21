@@ -78,10 +78,13 @@
     "invalidRange": "MTU must be 68-9000"
   },
   "password": {
-    "tooShort": "Password must be at least 8 characters",
+    "tooShort": "Password must be at least {{min}} characters",
     "mismatch": "Passwords do not match",
     "weak": "Password does not meet strength requirements",
     "breached": "This password has appeared in known data breaches. Choose a different one."
+  },
+  "recovery": {
+    "failed": "Recovery failed. Please try again or contact support."
   },
   "subnet": {
     "alreadyExists": "Subnet already exists",
