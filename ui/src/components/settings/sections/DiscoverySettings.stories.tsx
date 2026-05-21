@@ -23,7 +23,7 @@ import { useState } from 'react';
 import type {
   NetworkDiscoverySettings,
   SaveStatus,
-  SNMPSettings,
+  SnmpSettings,
   SubnetConfig,
 } from '../../../types/settings';
 import { DiscoverySettings } from './DiscoverySettings';
@@ -357,7 +357,7 @@ export const Interactive: Story = {
   render: function interactiveStory() {
     const [settings, setSettings] = useState<NetworkDiscoverySettings>(defaultSettings);
     const [status, setStatus] = useState<SaveStatus>('idle');
-    const [snmpSettings, setSnmpSettings] = useState<SNMPSettings>(defaultSnmpSettings);
+    const [snmpSettings, setSnmpSettings] = useState<SnmpSettings>(defaultSnmpSettings);
     const [snmpStatus, setSnmpStatus] = useState<SaveStatus>('idle');
     const subnets: SubnetConfig[] = [{ cidr: '10.0.0.0/24', name: 'Server VLAN', enabled: true }];
     const [newCidr, setNewCidr] = useState('');
@@ -373,7 +373,7 @@ export const Interactive: Story = {
       }, 800);
     };
 
-    const handleSetSnmpSettings = (updater: React.SetStateAction<SNMPSettings>) => {
+    const handleSetSnmpSettings = (updater: React.SetStateAction<SnmpSettings>) => {
       setSnmpSettings(updater);
       setSnmpStatus('saving');
       setTimeout(() => {

@@ -264,7 +264,7 @@ export const WithPublicIp: Story = {
         total: 151,
       },
     },
-    publicip: {
+    publicIp: {
       ipv4: '203.0.113.42',
       ipv6: '2001:db8::42',
       lastChecked: new Date(Date.now() - 300000).toISOString(),
