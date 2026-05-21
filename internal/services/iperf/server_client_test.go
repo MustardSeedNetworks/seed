@@ -416,17 +416,27 @@ func TestGetVersionWithInstalledIperf(t *testing.T) {
 	t.Logf("Installed iperf3 version: %s", version)
 }
 
-// TestCheckInstalledReturnsConsistent tests consistency.
+// TestCheckInstalledReturnsConsistent verifies CheckInstalled is
+// idempotent against the package-level binary-path cache.
+//
+// This intentionally does NOT use t.Parallel: other tests in this
+// package call CheckInstalled / ExtractEmbeddedBinary in parallel
+// and mutate the same cache, so a parallel run here would observe a
+// "not found" result on the first call and a populated path on the
+// fifth call (or vice versa) — a real interleaving, not a logic bug
+// in CheckInstalled itself. Running serial + clearing the cache up-
+// front isolates this test from the rest of the package and pins the
+// invariant we actually care about: once the cache is set, repeated
+// calls return the same outcome.
 func TestCheckInstalledReturnsConsistent(t *testing.T) {
-	t.Parallel()
+	iperf.ClearIperfBinaryPath()
+	t.Cleanup(iperf.ClearIperfBinaryPath)
 
-	// Call multiple times
 	results := make([]error, 5)
 	for i := range results {
 		results[i] = iperf.CheckInstalled()
 	}
 
-	// All results should be consistent
 	first := results[0]
 	for i, r := range results {
 		if (first == nil) != (r == nil) {

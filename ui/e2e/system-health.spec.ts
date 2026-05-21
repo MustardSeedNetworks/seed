@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { mockAuthenticated } from './helpers/auth';
 
 /**
  * System Health E2E Tests
@@ -14,13 +15,8 @@ import { expect, test } from '@playwright/test';
 
 test.describe('System Health', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticated(page);
     await page.goto('/');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('seed');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });
@@ -137,13 +133,8 @@ test.describe('System Health', () => {
 
 test.describe('System Health Thresholds', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticated(page);
     await page.goto('/');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('seed');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });

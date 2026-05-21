@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+import { AUTH_STORAGE_STATE } from './e2e/helpers/auth';
+
 /**
  * Playwright E2E Test Configuration
  *
@@ -25,6 +27,10 @@ export default defineConfig({
   expect: {
     timeout: 10000,
   },
+  // Single real login at suite start; persisted to AUTH_STORAGE_STATE
+  // and replayed into every test via use.storageState below. See
+  // e2e/global-setup.ts and the comment in e2e/helpers/auth.ts.
+  globalSetup: './e2e/global-setup.ts',
   reporter: [
     ['html', { outputFolder: 'playwright-report' }],
     ['list'],
@@ -38,6 +44,11 @@ export default defineConfig({
     video: 'on-first-retry',
     // biome-ignore lint/style/useNamingConvention: Playwright API property
     ignoreHTTPSErrors: true,
+    // Cookies + localStorage captured by global-setup. Specs that
+    // need an unauthenticated context (auth.spec.ts,
+    // auth-complete.spec.ts, setup-wizard.spec.ts) override with
+    // test.use({ storageState: { cookies: [], origins: [] } }).
+    storageState: AUTH_STORAGE_STATE,
   },
   projects: [
     // Desktop browsers

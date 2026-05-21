@@ -10,7 +10,12 @@ import { expect, test } from '@playwright/test';
  * - Completion flow
  *
  * Note: These tests may skip if setup is already complete
+ *
+ * Opts out of the suite-wide authenticated storageState so the wizard
+ * detection runs against a clean unauthenticated context.
  */
+
+test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Setup Wizard', () => {
   test.beforeEach(async ({ page }) => {
@@ -116,7 +121,9 @@ test.describe('Setup Wizard', () => {
       // Setup is already complete; verify the app exposes the expected entry point.
       await expect(page.getByLabel(/username/i)).toBeVisible({ timeout: 5000 });
       await expect(page.getByLabel(/password/i)).toBeVisible({ timeout: 5000 });
-      await expect(page.getByRole('button', { name: /sign in|login/i })).toBeVisible({ timeout: 5000 });
+      await expect(page.getByRole('button', { name: /sign in|login/i })).toBeVisible({
+        timeout: 5000,
+      });
     }
   });
 });

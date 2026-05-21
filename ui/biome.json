@@ -456,6 +456,9 @@
         "rules": {
           "nursery": {
             "useAwaitThenable": "off"
+          },
+          "suspicious": {
+            "noSkippedTests": "off"
           }
         }
       }

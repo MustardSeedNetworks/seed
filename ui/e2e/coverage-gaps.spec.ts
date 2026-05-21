@@ -1,15 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { mockAuthenticated } from './helpers/auth';
 
 test.describe('Coverage gaps', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticated(page);
     await page.goto('/');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('seed');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
-
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });
@@ -25,7 +20,9 @@ test.describe('Coverage gaps', () => {
   });
 
   test('opens log viewer modal', async ({ page }) => {
-    const logsCardTitle = page.locator('h3:has-text("System Logs"), h4:has-text("System Logs")').first();
+    const logsCardTitle = page
+      .locator('h3:has-text("System Logs"), h4:has-text("System Logs")')
+      .first();
     await expect(logsCardTitle).toBeVisible();
 
     const logsCard = logsCardTitle.locator('..').first();

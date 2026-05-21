@@ -118,6 +118,7 @@ ui/coverage/
 ui/dist/
 ui/node_modules/
 ui/playwright-report/
+ui/playwright/.auth/
 
 # Frontend build outputs (Vite builds directly to internal/api/ui)
 internal/api/ui/*

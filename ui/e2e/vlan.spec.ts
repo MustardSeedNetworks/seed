@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { mockAuthenticated } from './helpers/auth';
 
 /**
  * VLAN E2E Tests
@@ -14,13 +15,8 @@ import { expect, test } from '@playwright/test';
 
 test.describe('VLAN Information', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticated(page);
     await page.goto('/');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('seed');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });
@@ -95,13 +91,8 @@ test.describe('VLAN Information', () => {
 
 test.describe('VLAN Configuration', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticated(page);
     await page.goto('/');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('seed');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });
@@ -172,13 +163,8 @@ test.describe('VLAN Configuration', () => {
 
 test.describe('Switch Card Details', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticated(page);
     await page.goto('/');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('seed');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });
@@ -218,13 +204,8 @@ test.describe('Switch Card Details', () => {
 
 test.describe('VLAN Help', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticated(page);
     await page.goto('/');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('seed');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });

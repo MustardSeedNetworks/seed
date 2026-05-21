@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import { mockAuthenticated, TEST_CREDENTIALS } from './helpers/auth';
 
 /**
  * Comprehensive Error Scenario E2E Tests
@@ -37,14 +38,8 @@ import { expect, type Page, test } from '@playwright/test';
  * Helper: Login to the application
  */
 async function login(page: Page): Promise<void> {
+  await mockAuthenticated(page);
   await page.goto('/');
-  await page.evaluate(() => localStorage.clear());
-  await page.reload();
-
-  await page.getByLabel(/username/i).fill('admin');
-  await page.getByLabel(/password/i).fill('seed');
-  await page.getByRole('button', { name: /sign in|login/i }).click();
-
   await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
     timeout: 10000,
   });
@@ -66,8 +61,8 @@ test.describe('API Error Scenarios', () => {
         });
       });
 
-      await page.getByLabel(/username/i).fill('admin');
-      await page.getByLabel(/password/i).fill('seed');
+      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
 
       // Should show user-friendly error message
@@ -208,8 +203,8 @@ test.describe('API Error Scenarios', () => {
         await route.abort('timedout');
       });
 
-      await page.getByLabel(/username/i).fill('admin');
-      await page.getByLabel(/password/i).fill('seed');
+      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
 
       // Should show timeout or error message
@@ -1123,8 +1118,8 @@ test.describe('Error Recovery Mechanisms', () => {
     });
 
     // First attempt
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('seed');
+    await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+    await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
     await page.getByRole('button', { name: /sign in|login/i }).click();
 
     // Should show error

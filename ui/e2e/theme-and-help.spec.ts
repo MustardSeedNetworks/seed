@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { mockAuthenticated } from './helpers/auth';
 
 /**
  * Theme Toggle and Help Modal E2E Tests
@@ -25,17 +26,9 @@ import { expect, test } from '@playwright/test';
 
 test.describe('Theme Toggle and Help Modal', () => {
   test.beforeEach(async ({ page }) => {
+    await mockAuthenticated(page);
     await page.goto('/');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-
-    // Login
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('seed');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
-
-    // Wait for dashboard
-    await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
+    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
     });
   });

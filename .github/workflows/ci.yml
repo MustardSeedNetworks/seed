@@ -793,6 +793,7 @@ jobs:
       - name: Start backend server
         env:
           SEED_CONFIG_PATH: ${{ runner.temp }}/seed/config.yaml
+          SEED_LOGIN_MAX_ATTEMPTS: "200"
         run: |
           mkdir -p data
           sudo setcap cap_net_raw=+ep ./seed || true
@@ -872,6 +873,7 @@ jobs:
       - name: Start backend server
         env:
           SEED_CONFIG_PATH: ${{ runner.temp }}/seed/config.yaml
+          SEED_LOGIN_MAX_ATTEMPTS: "200"
         run: |
           mkdir -p data
           sudo setcap cap_net_raw=+ep ./seed || true

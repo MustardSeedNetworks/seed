@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { TEST_CREDENTIALS } from './helpers/auth';
 
 /**
  * Complete Authentication Lifecycle E2E Tests
@@ -14,7 +15,12 @@ import { expect, test } from '@playwright/test';
  *
  * These tests verify that authentication works correctly across all scenarios
  * and that sessions are properly managed throughout the application lifecycle.
+ *
+ * Opts out of the suite-wide authenticated storageState so each test
+ * starts from a clean unauthenticated context.
  */
+
+test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Complete Authentication Lifecycle', () => {
   test.beforeEach(async ({ page }) => {
@@ -59,8 +65,8 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.goto('/');
 
       // Login with valid credentials
-      await page.getByLabel(/username/i).fill('admin');
-      await page.getByLabel(/password/i).fill('seed');
+      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
 
       // Verify redirect to dashboard
@@ -76,7 +82,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.goto('/');
 
       // Attempt login with invalid credentials
-      await page.getByLabel(/username/i).fill('admin');
+      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill('wrongpassword');
       await page.getByRole('button', { name: /sign in|login/i }).click();
 
@@ -97,8 +103,8 @@ test.describe('Complete Authentication Lifecycle', () => {
     test.beforeEach(async ({ page }) => {
       // Login first for logout tests
       await page.goto('/');
-      await page.getByLabel(/username/i).fill('admin');
-      await page.getByLabel(/password/i).fill('seed');
+      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
       await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,
@@ -227,8 +233,8 @@ test.describe('Complete Authentication Lifecycle', () => {
     test('should handle 401 unauthorized response gracefully', async ({ page }) => {
       // Login first
       await page.goto('/');
-      await page.getByLabel(/username/i).fill('admin');
-      await page.getByLabel(/password/i).fill('seed');
+      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
       await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,
@@ -261,8 +267,8 @@ test.describe('Complete Authentication Lifecycle', () => {
     test('should allow re-login after session expiry', async ({ page }) => {
       // Login first
       await page.goto('/');
-      await page.getByLabel(/username/i).fill('admin');
-      await page.getByLabel(/password/i).fill('seed');
+      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
       await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,
@@ -279,8 +285,8 @@ test.describe('Complete Authentication Lifecycle', () => {
       });
 
       // Login again
-      await page.getByLabel(/username/i).fill('admin');
-      await page.getByLabel(/password/i).fill('seed');
+      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
 
       // Should successfully login again
@@ -307,8 +313,8 @@ test.describe('Complete Authentication Lifecycle', () => {
     test('should allow access to protected routes when authenticated', async ({ page }) => {
       // Login
       await page.goto('/');
-      await page.getByLabel(/username/i).fill('admin');
-      await page.getByLabel(/password/i).fill('seed');
+      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
 
       // Should access dashboard
@@ -327,8 +333,8 @@ test.describe('Complete Authentication Lifecycle', () => {
     test('should persist authentication on page reload', async ({ page }) => {
       // Login
       await page.goto('/');
-      await page.getByLabel(/username/i).fill('admin');
-      await page.getByLabel(/password/i).fill('seed');
+      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
       await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,
@@ -355,8 +361,8 @@ test.describe('Complete Authentication Lifecycle', () => {
 
       // Login
       await page.goto('/');
-      await page.getByLabel(/username/i).fill('admin');
-      await page.getByLabel(/password/i).fill('seed');
+      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
       await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,
@@ -402,8 +408,8 @@ test.describe('Complete Authentication Lifecycle', () => {
 
       // Login
       await page.goto('/');
-      await page.getByLabel(/username/i).fill('admin');
-      await page.getByLabel(/password/i).fill('seed');
+      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
       await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,
@@ -440,8 +446,8 @@ test.describe('Complete Authentication Lifecycle', () => {
       await rememberMe.check();
 
       // Login
-      await page.getByLabel(/username/i).fill('admin');
-      await page.getByLabel(/password/i).fill('seed');
+      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
       await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,
@@ -474,8 +480,8 @@ test.describe('Complete Authentication Lifecycle', () => {
       await rememberMe.uncheck();
 
       // Login
-      await page.getByLabel(/username/i).fill('admin');
-      await page.getByLabel(/password/i).fill('seed');
+      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
       await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
         timeout: 10000,

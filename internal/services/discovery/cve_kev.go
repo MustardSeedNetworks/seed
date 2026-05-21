@@ -279,9 +279,9 @@ func (kev *KEVProvider) EnrichVulnerabilities(vulns []Vulnerability) []Vulnerabi
 			vulns[i].DueDate = entry.DueDate
 
 			// Boost priority - any KEV entry should be treated as critical priority
-			if vulns[i].Severity != "CRITICAL" {
+			if vulns[i].Severity != severityCritical {
 				vulns[i].OriginalSeverity = vulns[i].Severity
-				vulns[i].Severity = "CRITICAL" // Escalate to critical due to active exploitation
+				vulns[i].Severity = severityCritical // Escalate due to active exploitation
 			}
 		}
 	}
@@ -360,8 +360,8 @@ func (kev *KEVProvider) entryToVulnerability(entry *KEVEntry) Vulnerability {
 	return Vulnerability{
 		CVEID:       entry.CVEID,
 		Description: entry.ShortDescription,
-		Severity:    "CRITICAL",      // All KEV entries are critical priority
-		Score:       kevMaxCVSSScore, // Max score for actively exploited
+		Severity:    severityCritical, // All KEV entries are critical priority
+		Score:       kevMaxCVSSScore,  // Max score for actively exploited
 		Published:   dateAdded,
 		References: []string{
 			fmt.Sprintf("https://nvd.nist.gov/vuln/detail/%s", entry.CVEID),
