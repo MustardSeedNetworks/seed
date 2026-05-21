@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.193.1](https://github.com/krisarmstrong/seed/compare/v0.193.0...v0.193.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* **e2e:** bypass login modal for non-auth specs and lift rate limit for CI ([#1049](https://github.com/krisarmstrong/seed/issues/1049)) ([bd98c6b](https://github.com/krisarmstrong/seed/commit/bd98c6b6f2571b20e97e516c5643a15b8018d55b))
+* **ui:** Version every backend fetch under /api/v1/* (P0 silent auth failure) ([#1050](https://github.com/krisarmstrong/seed/issues/1050)) ([0c6b68a](https://github.com/krisarmstrong/seed/commit/0c6b68a9d6cdbd92d6340106ea71477d1bc74aad))
+
 ## [0.193.0](https://github.com/krisarmstrong/seed/compare/v0.192.0...v0.193.0) (2026-05-20)
 
 
