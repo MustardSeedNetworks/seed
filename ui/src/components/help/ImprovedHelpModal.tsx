@@ -66,11 +66,7 @@ interface HelpSection {
  * ImprovedHelpModal Component
  * Renders a modal dialog with tabbed help content and search functionality
  */
-export function ImprovedHelpModal({
-  isOpen,
-  onClose,
-  version = 'dev',
-}: HelpModalProps): React.JSX.Element | null {
+export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps): React.JSX.Element | null {
   const { t } = useTranslation('help');
   // Track which help section is currently active
   const [activeSection, setActiveSection] = useState<string>('about');
@@ -86,115 +82,115 @@ export function ImprovedHelpModal({
       id: 'about',
       title: t('sections.about'),
       icon: <Info className={iconTokens.size.sm} />,
-      content: <aboutSection version={version} />,
+      content: null,
     },
     {
       id: 'getting-started',
       title: t('sections.gettingStarted'),
       icon: <LayoutDashboard className={iconTokens.size.sm} />,
-      content: <gettingStartedSection />,
+      content: null,
     },
     {
       id: 'link',
       title: t('sections.link'),
       icon: <Activity className={iconTokens.size.sm} />,
-      content: <linkStatusSection />,
+      content: null,
     },
     {
       id: 'cable',
       title: t('sections.cable'),
       icon: <Cable className={iconTokens.size.sm} />,
-      content: <cableTestSection />,
+      content: null,
     },
     {
       id: 'wifi',
       title: t('sections.wifi'),
       icon: <Wifi className={iconTokens.size.sm} />,
-      content: <wiFiStatusSection />,
+      content: null,
     },
     {
       id: 'network',
       title: t('sections.network'),
       icon: <Network className={iconTokens.size.sm} />,
-      content: <networkSection />,
+      content: null,
     },
     {
       id: 'gateway',
       title: t('sections.gateway'),
       icon: <Server className={iconTokens.size.sm} />,
-      content: <gatewaySection />,
+      content: null,
     },
     {
       id: 'dns',
       title: t('sections.dns'),
       icon: <Search className={iconTokens.size.sm} />,
-      content: <dnsSection />,
+      content: null,
     },
     {
       id: 'performance',
       title: t('sections.performance'),
       icon: <Zap className={iconTokens.size.sm} />,
-      content: <performanceSection />,
+      content: null,
     },
     {
       id: 'discovery',
       title: t('sections.discovery'),
       icon: <Search className={iconTokens.size.sm} />,
-      content: <discoverySection />,
+      content: null,
     },
     {
       id: 'healthChecks',
       title: t('sections.healthChecks'),
       icon: <Heart className={iconTokens.size.sm} />,
-      content: <healthChecksSection />,
+      content: null,
     },
     {
       id: 'security',
       title: t('sections.security'),
       icon: <Shield className={iconTokens.size.sm} />,
-      content: <securitySection />,
+      content: null,
     },
     {
       id: 'troubleshooting',
       title: t('sections.troubleshooting'),
       icon: <AlertTriangle className={iconTokens.size.sm} />,
-      content: <troubleshootingSection />,
+      content: null,
     },
     {
       id: 'profiles',
       title: t('sections.profiles'),
       icon: <SlidersHorizontal className={iconTokens.size.sm} />,
-      content: <profilesSection />,
+      content: null,
     },
     {
       id: 'wifiSurvey',
       title: t('sections.wifiSurvey'),
       icon: <Signal className={iconTokens.size.sm} />,
-      content: <wiFiSurveySection />,
+      content: null,
     },
     {
       id: 'rtspChecks',
       title: t('sections.rtspChecks'),
       icon: <Monitor className={iconTokens.size.sm} />,
-      content: <rtspChecksSection />,
+      content: null,
     },
     {
       id: 'dicomChecks',
       title: t('sections.dicomChecks'),
       icon: <HeartPulse className={iconTokens.size.sm} />,
-      content: <dicomChecksSection />,
+      content: null,
     },
     {
       id: 'howTo',
       title: t('sections.howTo'),
       icon: <Lightbulb className={iconTokens.size.sm} />,
-      content: <howToSection />,
+      content: null,
     },
     {
       id: 'glossary',
       title: t('sections.glossary'),
       icon: <BookOpen className={iconTokens.size.sm} />,
-      content: <glossarySection />,
+      content: null,
     },
   ];
 
