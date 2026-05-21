@@ -131,10 +131,8 @@ export function getStatusConfig(status: Status): {
       return statusConfig.unknown;
     case 'loading':
       return statusConfig.loading;
-    default: {
-      const _exhaustive: never = status;
+    default:
       return statusConfig.unknown;
-    }
   }
 }
 

@@ -103,7 +103,7 @@ export function HeatmapLegend({
     return null;
   }
 
-  const info = getMetricInfo(metric, t);
+  const info = getMetricInfo(metric, t as unknown as (k: string) => string);
 
   // Build gradient based on metric type
   // For interference metrics (cochannel, adjacent), use blue->purple

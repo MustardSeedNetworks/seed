@@ -46,10 +46,8 @@ function getSizeClass(size: 'sm' | 'md' | 'lg'): string {
       return 'body font-medium leading-snug';
     case 'lg':
       return 'body-large font-semibold leading-snug';
-    default: {
-      const _exhaustive: never = size;
+    default:
       return 'body font-medium leading-snug';
-    }
   }
 }
 

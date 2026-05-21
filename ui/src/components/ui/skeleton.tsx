@@ -75,10 +75,8 @@ export function Skeleton({
         return radius.full;
       case 'rectangular':
         return radius.lg;
-      default: {
-        const _exhaustive: never = v;
+      default:
         return radius.default;
-      }
     }
   }
 
