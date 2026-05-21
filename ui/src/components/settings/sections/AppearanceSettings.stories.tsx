@@ -122,7 +122,15 @@ export const Interactive: Story = {
       // For "system", we'd normally detect OS preference
     };
 
-    return <AppearanceSettings theme={theme} setTheme={handleSetTheme} isDark={isDark} />;
+    return (
+      <AppearanceSettings
+        theme={theme}
+        setTheme={handleSetTheme}
+        isDark={isDark}
+        unitSystem="sae"
+        setUnitSystem={() => {}}
+      />
+    );
   },
 };
 
@@ -139,15 +147,33 @@ export const Comparison: Story = {
     <div className="stack-lg">
       <div>
         <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Light Theme</p>
-        <AppearanceSettings theme="light" setTheme={noopSetTheme} isDark={false} />
+        <AppearanceSettings
+          theme="light"
+          setTheme={noopSetTheme}
+          isDark={false}
+          unitSystem="sae"
+          setUnitSystem={() => {}}
+        />
       </div>
       <div>
         <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Dark Theme</p>
-        <AppearanceSettings theme="dark" setTheme={noopSetTheme} isDark={true} />
+        <AppearanceSettings
+          theme="dark"
+          setTheme={noopSetTheme}
+          isDark={true}
+          unitSystem="sae"
+          setUnitSystem={() => {}}
+        />
       </div>
       <div>
         <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>System Theme</p>
-        <AppearanceSettings theme="system" setTheme={noopSetTheme} isDark={false} />
+        <AppearanceSettings
+          theme="system"
+          setTheme={noopSetTheme}
+          isDark={false}
+          unitSystem="sae"
+          setUnitSystem={() => {}}
+        />
       </div>
     </div>
   ),

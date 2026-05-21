@@ -17,7 +17,7 @@ import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 import { useState } from 'react';
 import { cn, spacing } from '../../../styles/theme';
-import type { SaveStatus, TestsSettings } from '../../../types/settings';
+import type { CardSettings, SaveStatus, TestsSettings } from '../../../types/settings';
 import { DnsSettings } from './DnsSettings';
 
 const baseSettings: Omit<TestsSettings, 'dnsHostname' | 'dnsServers'> = {
@@ -255,6 +255,8 @@ export const Interactive: Story = {
         testsSettings={testsSettings}
         setTestsSettings={handleSetTestsSettings}
         testsStatus={status}
+        cardSettings={{ dns: { enabled: true, autoRunOnLink: true } } as unknown as CardSettings}
+        updateCardSettings={() => {}}
       />
     );
   },
@@ -280,6 +282,8 @@ export const Comparison: Story = {
             // intentionally empty
           }}
           testsStatus="idle"
+          cardSettings={{ dns: { enabled: true, autoRunOnLink: true } } as unknown as CardSettings}
+          updateCardSettings={() => {}}
         />
       </div>
       <div>
@@ -299,6 +303,8 @@ export const Comparison: Story = {
             // intentionally empty
           }}
           testsStatus="idle"
+          cardSettings={{ dns: { enabled: true, autoRunOnLink: true } } as unknown as CardSettings}
+          updateCardSettings={() => {}}
         />
       </div>
       <div>
