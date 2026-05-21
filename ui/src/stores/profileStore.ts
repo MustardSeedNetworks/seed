@@ -31,7 +31,7 @@ import type {
   SpeedtestConfig,
   TestsConfig,
   VulnerabilityConfig,
-  WifiSettingsConfig,
+  WiFiSettingsConfig,
 } from '../types/profile';
 
 // ============================================================================
@@ -100,90 +100,25 @@ const DEFAULT_CARD_SETTINGS: CardSettingsConfig = {
   },
 };
 
-const DEFAULT_DISPLAY_OPTIONS: DisplayOptionsConfig = {
-  showAdvancedMetrics: false,
-  compactMode: false,
-  autoRefresh: true,
-  refreshInterval: 30,
-};
-
-const DEFAULT_IPERF_SETTINGS: IperfConfig = {
-  server: '',
-  port: 5201,
-  duration: 10,
-  parallel: 1,
-  reverse: false,
-};
-
-const DEFAULT_THRESHOLDS: ProfileThresholdsConfig = {
-  latency: { good: 50, warning: 100 },
-  jitter: { good: 10, warning: 30 },
-  packetLoss: { good: 0.1, warning: 1.0 },
-  downloadSpeed: { good: 100, warning: 25 },
-  uploadSpeed: { good: 50, warning: 10 },
-};
-
-const DEFAULT_SPEEDTEST_SETTINGS: SpeedtestConfig = {
-  serverId: null,
-  duration: 10,
-  parallelConnections: 4,
-};
-
-const DEFAULT_TESTS_SETTINGS: TestsConfig = {
-  autoRunOnStart: false,
-  testsToRun: ['gateway', 'dns', 'speedtest'],
-  runInterval: 0,
-};
-
-const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoveryConfig = {
-  autoScanOnStart: true,
-  scanInterval: 300,
-  maxDevices: 256,
-  includeOfflineDevices: true,
-  scanMethods: ['arp', 'ping', 'mdns'],
-  additionalSubnets: [],
-};
-
-const DEFAULT_SNMP_SETTINGS: SnmpConfig = {
-  enabled: false,
-  communities: ['public'],
-  version: '2c',
-  timeout: 5,
-};
-
-const DEFAULT_WIFI_SETTINGS: WifiSettingsConfig = {
-  scanDuration: 5,
-  includeHiddenNetworks: false,
-  signalThreshold: -80,
-};
-
-const DEFAULT_LINK_SETTINGS: LinkConfig = {
-  mtu: 1500,
-  speed: 'auto',
-  duplex: 'auto',
-};
-
-const DEFAULT_CABLE_TEST_SETTINGS: CableTestConfig = {
-  testDuration: 10,
-  targetHost: '8.8.8.8',
-};
-
-const DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityConfig = {
-  enabled: false,
-  severityThreshold: 'medium',
-  maxConcurrent: 5,
-  autoScan: true,
-};
-
-const DEFAULT_DNS_SETTINGS: DnsSettingsConfig = {
-  testHostname: 'google.com',
-  servers: [],
-};
-
-const DEFAULT_APPEARANCE_SETTINGS: AppearanceConfig = {
-  theme: 'system',
-  language: 'en',
-};
+// All *Config types have fully optional fields. These last-resort defaults
+// are only used when both the active profile AND backendDefaults are
+// missing the section. The backend ships canonical defaults via
+// /api/v1/sap/defaults, so the empty literals here are intentional —
+// they exist so selectors return a non-undefined value rather than
+// claiming any specific defaults that would drift from the backend.
+const DEFAULT_DISPLAY_OPTIONS: DisplayOptionsConfig = {};
+const DEFAULT_IPERF_SETTINGS: IperfConfig = {};
+const DEFAULT_THRESHOLDS: ProfileThresholdsConfig = {};
+const DEFAULT_SPEEDTEST_SETTINGS: SpeedtestConfig = {};
+const DEFAULT_TESTS_SETTINGS: TestsConfig = {};
+const DEFAULT_NETWORK_DISCOVERY_SETTINGS: NetworkDiscoveryConfig = {};
+const DEFAULT_SNMP_SETTINGS: SnmpConfig = {};
+const DEFAULT_WIFI_SETTINGS: WiFiSettingsConfig = {};
+const DEFAULT_LINK_SETTINGS: LinkConfig = {};
+const DEFAULT_CABLE_TEST_SETTINGS: CableTestConfig = {};
+const DEFAULT_VULNERABILITY_SETTINGS: VulnerabilityConfig = {};
+const DEFAULT_DNS_SETTINGS: DnsSettingsConfig = {};
+const DEFAULT_APPEARANCE_SETTINGS: AppearanceConfig = {};
 
 // Initial state
 const initialState: ProfileState = {
@@ -372,7 +307,7 @@ export const useSnmpSettings = (): SnmpConfig => {
   );
 };
 
-export const useWifiSettings = (): WifiSettingsConfig => {
+export const useWifiSettings = (): WiFiSettingsConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
   const backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
