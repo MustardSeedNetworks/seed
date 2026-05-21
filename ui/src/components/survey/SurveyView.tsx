@@ -308,7 +308,11 @@ export function SurveyView({
             if (!scanRes.ok) {
               throw new Error('WiFi scan failed');
             }
-            const scanData = await (scanRes.json() as Promise<Record<string, unknown>>);
+            const scanData = await (scanRes.json() as Promise<{
+              available?: boolean;
+              error?: string;
+              networks?: ScannedNetwork[];
+            }>);
             // Check if scan was successful
             if (!scanData.available) {
               throw new Error(scanData.error || 'WiFi scan not available');
@@ -325,7 +329,12 @@ export function SurveyView({
             if (!wifiRes.ok) {
               throw new Error('WiFi status fetch failed');
             }
-            const wifiData = await (wifiRes.json() as Promise<Record<string, unknown>>);
+            const wifiData = await (wifiRes.json() as Promise<{
+              ssid?: string;
+              bssid?: string;
+              signal?: number;
+              bitrate?: number;
+            }>);
 
             // Check if BSSID changed (roaming)
             const lastSample = currentSamples.at(-1);
@@ -350,7 +359,11 @@ export function SurveyView({
             if (!wifiRes2.ok) {
               throw new Error('WiFi status fetch failed');
             }
-            const wifiData2 = await (wifiRes2.json() as Promise<Record<string, unknown>>);
+            const wifiData2 = await (wifiRes2.json() as Promise<{
+              ssid?: string;
+              bssid?: string;
+              signal?: number;
+            }>);
 
             // Run iperf3 test
             if (!survey.iperfServer) {
@@ -375,7 +388,16 @@ export function SurveyView({
             if (!iperfRes.ok) {
               throw new Error('iperf3 test failed');
             }
-            const iperfData = await (iperfRes.json() as Promise<Record<string, unknown>>);
+            const iperfData = await (iperfRes.json() as Promise<{
+              summary?: {
+                sum_received?: {
+                  bits_per_second?: number;
+                  jitter_ms?: number;
+                  lost_percent?: number;
+                };
+                sum_sent?: { bits_per_second?: number };
+              };
+            }>);
 
             sampleData = {
               ssid: wifiData2.ssid || '',
