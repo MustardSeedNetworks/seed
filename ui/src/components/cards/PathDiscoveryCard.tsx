@@ -558,7 +558,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
         {result || loading || error ? null : (
           <div
             className={cn(
-              spacing.pad.md,
+              spacing.pad.default,
               'text-center',
               'bg-surface-base/50',
               radius.lg,

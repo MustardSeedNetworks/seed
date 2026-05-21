@@ -1,5 +1,5 @@
 /**
- * SNMPSettings Storybook Stories
+ * SnmpSettings Storybook Stories
  *
  * Demonstrates the SNMP configuration component for managing community strings
  * (v1/v2c) and v3 credentials with authentication and privacy settings.
@@ -15,8 +15,8 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 import { useState } from 'react';
-import type { SaveStatus, SNMPSettings as SnmpSettingsType } from '../../../types/settings';
-import { SNMPSettings } from './SnmpSettings';
+import type { SaveStatus, SnmpSettings as SnmpSettingsType } from '../../../types/settings';
+import { SnmpSettings } from './SnmpSettings';
 
 const defaultSettings: SnmpSettingsType = {
   communities: ['public'],
@@ -26,9 +26,9 @@ const defaultSettings: SnmpSettingsType = {
   port: 161,
 };
 
-const meta: Meta<typeof SNMPSettings> = {
+const meta: Meta<typeof SnmpSettings> = {
   title: 'Settings/SnmpSettings',
-  component: SNMPSettings,
+  component: SnmpSettings,
   parameters: {
     layout: 'centered',
     docs: {
@@ -326,7 +326,7 @@ export const Interactive: Story = {
     };
 
     return (
-      <SNMPSettings
+      <SnmpSettings
         snmpSettings={snmpSettings}
         setSnmpSettings={handleSetSnmpSettings}
         snmpStatus={status}
