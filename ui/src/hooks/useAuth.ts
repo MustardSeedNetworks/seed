@@ -154,12 +154,12 @@ export function useAuth(): UseAuthReturn {
     clearLegacyStorage();
 
     // Check if we're authenticated by calling a protected endpoint
-    fetch(`${API_BASE}/api/status`, {
+    fetch(`${API_BASE}/api/v1/status`, {
       credentials: 'include', // Send cookies
     })
       .then((response) => {
         if (response.ok) {
-          // Authenticated - we don't have username from /api/status, will be set on login
+          // Authenticated - we don't have username from /api/v1/status, will be set on login
           setState({
             isAuthenticated: true,
             token: null, // Will be set on login for SSE
@@ -199,7 +199,7 @@ export function useAuth(): UseAuthReturn {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE}/api/auth/login`, {
+      const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -262,7 +262,7 @@ export function useAuth(): UseAuthReturn {
     clearCSRFToken();
 
     // Call logout endpoint to clear httpOnly cookies
-    fetch(`${API_BASE}/api/auth/logout`, {
+    fetch(`${API_BASE}/api/v1/auth/logout`, {
       method: 'POST',
       credentials: 'include', // Send cookies to be cleared
     })
@@ -296,7 +296,7 @@ export function useAuth(): UseAuthReturn {
     };
 
     try {
-      const response = await fetch(`${API_BASE}/api/auth/refresh`, {
+      const response = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
         method: 'POST',
         credentials: 'include', // Send refresh token cookie
       });

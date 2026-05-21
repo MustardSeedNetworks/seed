@@ -67,9 +67,9 @@ interface SetupWizardProps {
  * Modal-like component that requires user to set admin password before
  * accessing the main application.
  */
-// SSO providers from backend (/api/sso/providers returns the names of
+// SSO providers from backend (/api/v1/sso/providers returns the names of
 // only the providers that are enabled AND have a ClientID configured -
-// see internal/api/handlers_oauth.go::initOAuthManager). Fixes #720.
+// see internal/api/v1/handlers_oauth.go::initOAuthManager). Fixes #720.
 
 /**
  * First-run setup flow that forces the user to create credentials before using the app.
@@ -95,7 +95,7 @@ export function SetupWizard({
 
   // Fetch enabled SSO providers (fixes #769, #720)
   useEffect(() => {
-    fetch(`${API_BASE}/api/sso/providers`)
+    fetch(`${API_BASE}/api/v1/sso/providers`)
       .then((res) => (res.ok ? res.json() : { providers: [] }))
       .then((data: { providers?: string[] }) => {
         const providers = data.providers ?? [];
@@ -481,7 +481,7 @@ export function SetupWizard({
                   <button
                     type="button"
                     onClick={() => {
-                      window.location.href = `${API_BASE}/api/sso/login?provider=google`;
+                      window.location.href = `${API_BASE}/api/v1/sso/login?provider=google`;
                     }}
                     class={cn(
                       'w-full',
@@ -498,7 +498,7 @@ export function SetupWizard({
                   <button
                     type="button"
                     onClick={() => {
-                      window.location.href = `${API_BASE}/api/sso/login?provider=microsoft`;
+                      window.location.href = `${API_BASE}/api/v1/sso/login?provider=microsoft`;
                     }}
                     class={cn(
                       'w-full',
@@ -515,7 +515,7 @@ export function SetupWizard({
                   <button
                     type="button"
                     onClick={() => {
-                      window.location.href = `${API_BASE}/api/sso/login?provider=github`;
+                      window.location.href = `${API_BASE}/api/v1/sso/login?provider=github`;
                     }}
                     class={cn(
                       'w-full',

@@ -63,7 +63,7 @@ interface SurveyViewProps {
  * SurveyView Component
  * Main survey interface with floor plan, sampling controls, and heatmap visualization
  */
-// WiFi adapter status from /api/canopy/wifi/status
+// WiFi adapter status from /api/v1/canopy/wifi/status
 interface WiFiStatus {
   status: 'unavailable' | 'available' | 'ready';
   message: string;
@@ -166,7 +166,7 @@ export function SurveyView({
   useEffect(() => {
     const checkWifiStatus = async (): Promise<void> => {
       try {
-        const res: Response = await fetch(`${API_BASE}/api/canopy/wifi/status`, {
+        const res: Response = await fetch(`${API_BASE}/api/v1/canopy/wifi/status`, {
           credentials: 'include',
         });
         if (res.ok) {
@@ -190,7 +190,7 @@ export function SurveyView({
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/canopy/survey?id=${survey.id}`, {
+        const res = await fetch(`${API_BASE}/api/v1/canopy/survey?id=${survey.id}`, {
           credentials: 'include',
         });
         if (res.ok) {
@@ -252,7 +252,7 @@ export function SurveyView({
         };
 
         // Upload to server
-        const res = await fetch(`${API_BASE}/api/canopy/survey/floorplan?id=${survey.id}`, {
+        const res = await fetch(`${API_BASE}/api/v1/canopy/survey/floorplan?id=${survey.id}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -302,7 +302,7 @@ export function SurveyView({
         switch (survey.surveyType) {
           case 'passive': {
             // Fetch WiFi scan
-            const scanRes = await fetch(`${API_BASE}/api/canopy/wifi/scan`, {
+            const scanRes = await fetch(`${API_BASE}/api/v1/canopy/wifi/scan`, {
               credentials: 'include',
             });
             if (!scanRes.ok) {
@@ -319,7 +319,7 @@ export function SurveyView({
 
           case 'active': {
             // Fetch current WiFi status
-            const wifiRes = await fetch(`${API_BASE}/api/canopy/wifi`, {
+            const wifiRes = await fetch(`${API_BASE}/api/v1/canopy/wifi`, {
               credentials: 'include',
             });
             if (!wifiRes.ok) {
@@ -344,7 +344,7 @@ export function SurveyView({
 
           case 'throughput': {
             // Fetch WiFi status first
-            const wifiRes2 = await fetch(`${API_BASE}/api/canopy/wifi`, {
+            const wifiRes2 = await fetch(`${API_BASE}/api/v1/canopy/wifi`, {
               credentials: 'include',
             });
             if (!wifiRes2.ok) {
@@ -358,7 +358,7 @@ export function SurveyView({
             }
 
             const [host, port] = survey.iperfServer.split(':');
-            const iperfRes = await fetch(`${API_BASE}/api/sap/iperf/client`, {
+            const iperfRes = await fetch(`${API_BASE}/api/v1/sap/iperf/client`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -399,7 +399,7 @@ export function SurveyView({
         }
 
         // Submit sample to server
-        const res = await fetch(`${API_BASE}/api/canopy/survey/sample?id=${survey.id}`, {
+        const res = await fetch(`${API_BASE}/api/v1/canopy/survey/sample?id=${survey.id}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -413,7 +413,7 @@ export function SurveyView({
         }
 
         // Refresh survey to get updated samples
-        const refreshRes = await fetch(`${API_BASE}/api/canopy/survey?id=${survey.id}`, {
+        const refreshRes = await fetch(`${API_BASE}/api/v1/canopy/survey?id=${survey.id}`, {
           credentials: 'include',
         });
         if (refreshRes.ok) {
@@ -471,7 +471,7 @@ export function SurveyView({
 
     try {
       // Update floor plan scale on server
-      const res = await fetch(`${API_BASE}/api/canopy/survey/floorplan?id=${survey.id}`, {
+      const res = await fetch(`${API_BASE}/api/v1/canopy/survey/floorplan?id=${survey.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

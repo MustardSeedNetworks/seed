@@ -86,7 +86,7 @@ export function useProfileInterfaces(
         const updatedInterfaces = updater(currentInterfaces);
         const updatedConfig = { ...currentProfile.config, interfaces: updatedInterfaces };
 
-        await api.put(`/api/profiles/${currentProfile.id}`, {
+        await api.put(`/api/v1/profiles/${currentProfile.id}`, {
           name: currentProfile.name,
           description: currentProfile.description,
           config: updatedConfig,

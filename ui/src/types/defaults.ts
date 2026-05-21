@@ -236,7 +236,7 @@ export interface VulnerabilityDefaults {
 }
 
 // ============================================================================
-// Complete Default Settings (from /api/settings/defaults)
+// Complete Default Settings (from /api/v1/settings/defaults)
 // ============================================================================
 
 export interface DefaultSettings {

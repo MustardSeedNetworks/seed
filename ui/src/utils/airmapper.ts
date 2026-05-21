@@ -381,7 +381,7 @@ export async function importAirMapperViaBackend(
   formData.append('file', file);
 
   try {
-    const response = await fetch(`${API_BASE}/api/canopy/survey/import/airmapper`, {
+    const response = await fetch(`${API_BASE}/api/v1/canopy/survey/import/airmapper`, {
       method: 'POST',
       headers: authHeaders,
       body: formData,

@@ -93,7 +93,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
       setScanError(null);
       try {
         const response = await api.get<{ networks: ScannedNetwork[]; error?: string }>(
-          `/api/canopy/wifi/scan?interface=${wifiSettings.interface}`,
+          `/api/v1/canopy/wifi/scan?interface=${wifiSettings.interface}`,
         );
         if (response?.networks) {
           // Filter out hidden networks (empty SSID) and sort by signal strength
@@ -174,7 +174,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
     const forgetNetwork = useCallback(
       async (ssid: string) => {
         try {
-          await api.delete(`/api/canopy/wifi/forget?ssid=${encodeURIComponent(ssid)}`);
+          await api.delete(`/api/v1/canopy/wifi/forget?ssid=${encodeURIComponent(ssid)}`);
           await loadSavedNetworks();
         } catch {
           // Ignore errors

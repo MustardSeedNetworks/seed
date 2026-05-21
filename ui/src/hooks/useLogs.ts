@@ -164,7 +164,7 @@ export function useLogs({
     setError(null);
 
     try {
-      const response = await fetch(`/api/harvest/logs/recent?limit=${limit}`);
+      const response = await fetch(`/api/v1/harvest/logs/recent?limit=${limit}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch logs: ${response.statusText}`);
       }

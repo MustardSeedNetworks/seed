@@ -81,7 +81,7 @@ export function ReportDialog({
     setSuccess(false);
 
     try {
-      const response = await fetch(`${API_BASE}/api/canopy/survey/report?id=${surveyId}`, {
+      const response = await fetch(`${API_BASE}/api/v1/canopy/survey/report?id=${surveyId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

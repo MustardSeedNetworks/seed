@@ -579,7 +579,7 @@ export function useSurvey(): {
     setError(null);
     try {
       const params = new URLSearchParams({ id });
-      return await api.get<Survey>(`/api/canopy/survey?${params.toString()}`);
+      return await api.get<Survey>(`/api/v1/canopy/survey?${params.toString()}`);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to get survey';
       setError(errorMsg);
@@ -605,7 +605,7 @@ export function useSurvey(): {
       setError(null);
       try {
         const params = new URLSearchParams({ id });
-        await api.delete(`/api/canopy/survey/delete?${params.toString()}`);
+        await api.delete(`/api/v1/canopy/survey/delete?${params.toString()}`);
         await listSurveys(); // Refresh list
         logger.info(LogComponents.Survey, 'Survey deleted successfully', {
           surveyId: id,
@@ -636,7 +636,7 @@ export function useSurvey(): {
       setError(null);
       try {
         const params = new URLSearchParams({ id });
-        await api.post(`/api/canopy/survey/start?${params.toString()}`);
+        await api.post(`/api/v1/canopy/survey/start?${params.toString()}`);
         await listSurveys(); // Refresh list
         logger.info(LogComponents.Survey, 'Survey started', { surveyId: id });
       } catch (err) {
@@ -665,7 +665,7 @@ export function useSurvey(): {
       setError(null);
       try {
         const params = new URLSearchParams({ id });
-        await api.post(`/api/canopy/survey/pause?${params.toString()}`);
+        await api.post(`/api/v1/canopy/survey/pause?${params.toString()}`);
         await listSurveys(); // Refresh list
         logger.info(LogComponents.Survey, 'Survey paused', { surveyId: id });
       } catch (err) {
@@ -694,7 +694,7 @@ export function useSurvey(): {
       setError(null);
       try {
         const params = new URLSearchParams({ id });
-        await api.post(`/api/canopy/survey/complete?${params.toString()}`);
+        await api.post(`/api/v1/canopy/survey/complete?${params.toString()}`);
         await listSurveys(); // Refresh list
         logger.info(LogComponents.Survey, 'Survey completed', { surveyId: id });
       } catch (err) {
@@ -742,7 +742,7 @@ export function useSurvey(): {
       setError(null);
       try {
         const params = new URLSearchParams({ id });
-        await api.post(`/api/canopy/survey/sample?${params.toString()}`, {
+        await api.post(`/api/v1/canopy/survey/sample?${params.toString()}`, {
           x,
           y,
           sampleData,
@@ -791,7 +791,7 @@ export function useSurvey(): {
     setError(null);
     try {
       const params = new URLSearchParams({ id });
-      await api.post(`/api/canopy/survey/floorplan?${params.toString()}`, floorPlan);
+      await api.post(`/api/v1/canopy/survey/floorplan?${params.toString()}`, floorPlan);
       logger.info(LogComponents.Survey, 'Floor plan updated', {
         surveyId: id,
         dimensions: { width: floorPlan.width, height: floorPlan.height },

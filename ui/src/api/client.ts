@@ -16,10 +16,10 @@
  * import { api } from './api';
  *
  * // GET request
- * const data = await api.get<MyType>('/api/endpoint');
+ * const data = await api.get<MyType>('/api/v1/endpoint');
  *
  * // POST request with body
- * const result = await api.post<Response>('/api/endpoint', { key: 'value' });
+ * const result = await api.post<Response>('/api/v1/endpoint', { key: 'value' });
  * ```
  *
  * Session Management:
@@ -74,7 +74,7 @@ async function refreshAccessToken(): Promise<boolean> {
   // Start new refresh attempt
   const newPromise: Promise<boolean> = (async (): Promise<boolean> => {
     try {
-      const response = await fetch(`${API_BASE}/api/auth/refresh`, {
+      const response = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
         method: 'POST',
         credentials: 'include', // Send refresh token cookie
       });
@@ -100,7 +100,7 @@ async function refreshAccessToken(): Promise<boolean> {
  */
 async function fetchCsrfToken(): Promise<string | null> {
   try {
-    const response = await fetch(`${API_BASE}/api/auth/csrf`, {
+    const response = await fetch(`${API_BASE}/api/v1/auth/csrf`, {
       method: 'GET',
       credentials: 'include', // Send auth cookies
     });
@@ -185,10 +185,10 @@ export const api = {
   /**
    * Performs a GET request to the specified endpoint.
    *
-   * @param endpoint - API endpoint path (e.g., '/api/network/status')
+   * @param endpoint - API endpoint path (e.g., '/api/v1/network/status')
    * @returns Promise resolving to typed response data
    * @example
-   * const status = await api.get<NetworkStatus>('/api/network/status');
+   * const status = await api.get<NetworkStatus>('/api/v1/network/status');
    */
   async get<T>(endpoint: string, init?: RequestInit): Promise<T> {
     const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
@@ -212,7 +212,7 @@ export const api = {
    * @param body - Request body (will be JSON serialized)
    * @returns Promise resolving to typed response data
    * @example
-   * const result = await api.post<Result>('/api/network/scan', { subnet: '192.168.1.0/24' });
+   * const result = await api.post<Result>('/api/v1/network/scan', { subnet: '192.168.1.0/24' });
    */
   async post<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
@@ -249,7 +249,7 @@ export const api = {
    * @param body - Request body (will be JSON serialized)
    * @returns Promise resolving to typed response data
    * @example
-   * await api.put('/api/settings', { theme: 'dark' });
+   * await api.put('/api/v1/settings', { theme: 'dark' });
    */
   async put<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
@@ -286,7 +286,7 @@ export const api = {
    * @param body - Request body (will be JSON serialized)
    * @returns Promise resolving to typed response data
    * @example
-   * await api.patch('/api/settings', { theme: 'dark' });
+   * await api.patch('/api/v1/settings', { theme: 'dark' });
    */
   async patch<T>(endpoint: string, body?: unknown, init?: RequestInit): Promise<T> {
     const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');
@@ -322,7 +322,7 @@ export const api = {
    * @param endpoint - API endpoint path
    * @returns Promise resolving to typed response data
    * @example
-   * await api.delete('/api/devices/12345');
+   * await api.delete('/api/v1/devices/12345');
    */
   async delete<T>(endpoint: string, init?: RequestInit): Promise<T> {
     const isAuthEndpoint: boolean = endpoint.includes('/api/v1/auth/');

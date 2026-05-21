@@ -71,7 +71,7 @@ export function useSettingsDrawerSavers({
   const saveThresholds = useCallback(async () => {
     setThresholdsStatus('saving');
     try {
-      const response = await fetch(`${API_BASE}/api/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -92,7 +92,7 @@ export function useSettingsDrawerSavers({
     setTestsStatus('saving');
     try {
       const payload = normalizeTestsSettingsForSave(testsSettings);
-      const response = await fetch(`${API_BASE}/api/health-checks/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/sap/health-checks/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -113,7 +113,7 @@ export function useSettingsDrawerSavers({
   const saveWifiSettings = useCallback(async () => {
     setWifiStatus('saving');
     try {
-      const response = await fetch(`${API_BASE}/api/canopy/wifi/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/canopy/wifi/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -133,7 +133,7 @@ export function useSettingsDrawerSavers({
   const saveLinkSettings = useCallback(async () => {
     setLinkStatus('saving');
     try {
-      const response = await fetch(`${API_BASE}/api/settings/link`, {
+      const response = await fetch(`${API_BASE}/api/v1/settings/link`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -156,7 +156,7 @@ export function useSettingsDrawerSavers({
   const saveCableTestSettings = useCallback(async () => {
     setCableTestStatus('saving');
     try {
-      const response = await fetch(`${API_BASE}/api/settings/cable`, {
+      const response = await fetch(`${API_BASE}/api/v1/settings/cable`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -196,7 +196,7 @@ export function useSettingsDrawerSavers({
   const saveSnmpSettings = useCallback(async () => {
     setSnmpStatus('saving');
     try {
-      const response = await fetch(`${API_BASE}/api/sap/snmp/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/sap/snmp/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

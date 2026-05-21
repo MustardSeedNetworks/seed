@@ -42,7 +42,7 @@ export const MtuControl: React.NamedExoticComponent<Record<string, never>> = mem
       setLoading(true);
       setMessage(null);
       try {
-        const response = await fetch(`${API_BASE}/api/network/mtu`, {
+        const response = await fetch(`${API_BASE}/api/v1/network/mtu`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',

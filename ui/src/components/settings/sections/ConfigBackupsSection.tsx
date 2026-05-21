@@ -62,8 +62,8 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
       setError(null);
       try {
         const [backupsRes, versionRes] = await Promise.all([
-          fetch(`${API_BASE}/api/config/backups`, { credentials: 'include' }),
-          fetch(`${API_BASE}/api/config/version`, { credentials: 'include' }),
+          fetch(`${API_BASE}/api/v1/config/backups`, { credentials: 'include' }),
+          fetch(`${API_BASE}/api/v1/config/version`, { credentials: 'include' }),
         ]);
 
         if (backupsRes.ok) {
@@ -91,7 +91,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
       setActionLoading('create');
       setError(null);
       try {
-        const response = await fetch(`${API_BASE}/api/config/backup`, {
+        const response = await fetch(`${API_BASE}/api/v1/config/backup`, {
           method: 'POST',
           credentials: 'include',
         });
@@ -111,7 +111,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
       setActionLoading(backupName);
       setError(null);
       try {
-        const response = await fetch(`${API_BASE}/api/config/restore`, {
+        const response = await fetch(`${API_BASE}/api/v1/config/restore`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -137,7 +137,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
       setError(null);
       try {
         const response = await fetch(
-          `${API_BASE}/api/config/backup/delete?name=${encodeURIComponent(backupName)}`,
+          `${API_BASE}/api/v1/config/backup/delete?name=${encodeURIComponent(backupName)}`,
           {
             method: 'DELETE',
             credentials: 'include',
