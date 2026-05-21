@@ -72,7 +72,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
 
   // Fetch recovery status on mount
   useEffect(() => {
-    fetch(`${API_BASE}/api/recovery/status`)
+    fetch(`${API_BASE}/api/v1/recovery/status`)
       .then((res) => (res.ok ? res.json() : { active: false }))
       .then((data: RecoveryStatus) => {
         setRecoveryStatus(data);
@@ -86,7 +86,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
 
   // Fetch enabled SSO providers on mount (fixes #769)
   useEffect(() => {
-    fetch(`${API_BASE}/api/sso/providers`)
+    fetch(`${API_BASE}/api/v1/sso/providers`)
       .then((res) => (res.ok ? res.json() : { providers: [] }))
       .then((data) => setSsoProviders(data.providers || []))
       .catch(() => setSsoProviders([]));
@@ -302,7 +302,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
                 <button
                   type="button"
                   onClick={() => {
-                    window.location.href = `${API_BASE}/api/sso/login?provider=google`;
+                    window.location.href = `${API_BASE}/api/v1/sso/login?provider=google`;
                   }}
                   class={cn(
                     'w-full',
@@ -319,7 +319,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
                 <button
                   type="button"
                   onClick={() => {
-                    window.location.href = `${API_BASE}/api/sso/login?provider=microsoft`;
+                    window.location.href = `${API_BASE}/api/v1/sso/login?provider=microsoft`;
                   }}
                   class={cn(
                     'w-full',
@@ -336,7 +336,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
                 <button
                   type="button"
                   onClick={() => {
-                    window.location.href = `${API_BASE}/api/sso/login?provider=github`;
+                    window.location.href = `${API_BASE}/api/v1/sso/login?provider=github`;
                   }}
                   class={cn(
                     'w-full',

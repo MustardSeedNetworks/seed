@@ -127,8 +127,8 @@ export function useNetworkFetchers({
       // Use ref to get current interface without dependency change (#754)
       const iface = currentInterfaceRef.current;
       const url = iface
-        ? `${API_BASE}/api/sap/link?interface=${encodeURIComponent(iface)}`
-        : `${API_BASE}/api/sap/link`;
+        ? `${API_BASE}/api/v1/sap/link?interface=${encodeURIComponent(iface)}`
+        : `${API_BASE}/api/v1/sap/link`;
       const response = await fetch(url, {
         credentials: 'include',
       });
@@ -179,8 +179,8 @@ export function useNetworkFetchers({
       // Use ref to get current interface without dependency change (#754)
       const iface = currentInterfaceRef.current;
       const url = iface
-        ? `${API_BASE}/api/sap/ipconfig?interface=${encodeURIComponent(iface)}`
-        : `${API_BASE}/api/sap/ipconfig`;
+        ? `${API_BASE}/api/v1/sap/ipconfig?interface=${encodeURIComponent(iface)}`
+        : `${API_BASE}/api/v1/sap/ipconfig`;
       const response = await fetch(url, {
         credentials: 'include',
       });
@@ -206,7 +206,7 @@ export function useNetworkFetchers({
   // Fetch interfaces (#756: Use categorized endpoint for recommendations)
   const fetchInterfaces = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/interfaces?categorized=true`, {
+      const response = await fetch(`${API_BASE}/api/v1/interfaces?categorized=true`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -230,7 +230,7 @@ export function useNetworkFetchers({
   // Fetch app version from status endpoint
   const fetchVersion = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/status`, {
+      const response = await fetch(`${API_BASE}/api/v1/status`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -303,8 +303,8 @@ export function useNetworkFetchers({
       // Use ref to get current interface without dependency change (#754)
       const iface = currentInterfaceRef.current;
       const url = iface
-        ? `${API_BASE}/api/sap/dns?interface=${encodeURIComponent(iface)}`
-        : `${API_BASE}/api/sap/dns`;
+        ? `${API_BASE}/api/v1/sap/dns?interface=${encodeURIComponent(iface)}`
+        : `${API_BASE}/api/v1/sap/dns`;
       const response = await fetch(url, {
         credentials: 'include',
       });
@@ -367,7 +367,7 @@ export function useNetworkFetchers({
   // Fetch VLAN data
   const fetchVlanData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/sap/vlan`, {
+      const response = await fetch(`${API_BASE}/api/v1/sap/vlan`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -393,8 +393,8 @@ export function useNetworkFetchers({
       // Use ref to get current interface without dependency change (#754)
       const iface = currentInterfaceRef.current;
       const url = iface
-        ? `${API_BASE}/api/sap/gateway?interface=${encodeURIComponent(iface)}`
-        : `${API_BASE}/api/sap/gateway`;
+        ? `${API_BASE}/api/v1/sap/gateway?interface=${encodeURIComponent(iface)}`
+        : `${API_BASE}/api/v1/sap/gateway`;
       const response = await fetch(url, {
         credentials: 'include',
       });
@@ -441,8 +441,8 @@ export function useNetworkFetchers({
       // Use ref to get current interface without dependency change (#754)
       const iface = currentInterfaceRef.current;
       const url = iface
-        ? `${API_BASE}/api/canopy/wifi?interface=${encodeURIComponent(iface)}`
-        : `${API_BASE}/api/canopy/wifi`;
+        ? `${API_BASE}/api/v1/canopy/wifi?interface=${encodeURIComponent(iface)}`
+        : `${API_BASE}/api/v1/canopy/wifi`;
       const response = await fetch(url, {
         credentials: 'include',
       });
@@ -481,7 +481,7 @@ export function useNetworkFetchers({
   // Fetch Cable test data
   const fetchCableData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/sap/cable`, {
+      const response = await fetch(`${API_BASE}/api/v1/sap/cable`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -505,7 +505,7 @@ export function useNetworkFetchers({
   // Fetch Public IP data
   const fetchPublicIp = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/sap/publicip`, {
+      const response = await fetch(`${API_BASE}/api/v1/sap/publicip`, {
         credentials: 'include',
       });
       if (response.ok) {

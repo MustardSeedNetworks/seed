@@ -76,7 +76,7 @@ export function RecoveryForm({
 
   // Fetch recovery instructions on mount
   useEffect(() => {
-    fetch(`${API_BASE}/api/recovery/instructions`)
+    fetch(`${API_BASE}/api/v1/recovery/instructions`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) {
@@ -136,7 +136,7 @@ export function RecoveryForm({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_BASE}/api/recovery/complete`, {
+      const response = await fetch(`${API_BASE}/api/v1/recovery/complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

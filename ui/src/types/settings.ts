@@ -491,7 +491,7 @@ export interface LogsResponse {
 //
 // DEPRECATED: These constants are now fallbacks only.
 // The single source of truth for defaults is the backend API:
-//   GET /api/settings/defaults
+//   GET /api/v1/settings/defaults
 //
 // Use the useDefaults() hook from "../hooks/useDefaults" to get defaults.
 // These constants will be removed in a future version.

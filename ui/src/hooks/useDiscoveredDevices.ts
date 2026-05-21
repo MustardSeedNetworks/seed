@@ -43,7 +43,7 @@ export interface DiscoveryStatus {
   lastScan: string;
 }
 
-/** API response from /api/discovery */
+/** API response from /api/v1/discovery */
 interface DiscoveryResponse {
   devices: DiscoveredDevice[];
   status: DiscoveryStatus;
@@ -192,8 +192,8 @@ export function useDiscoveredDevices(autoRefresh: boolean = false): {
   const fetchDevices = useCallback(async (): Promise<void> => {
     try {
       setError(null);
-      // Use /api/devices endpoint which returns discovered network devices
-      // (not /api/discovery which returns LLDP/CDP protocol neighbors)
+      // Use /api/v1/devices endpoint which returns discovered network devices
+      // (not /api/v1/discovery which returns LLDP/CDP protocol neighbors)
       const data = await api.get<DiscoveryResponse>('/api/v1/shell/devices');
       setDevices(data.devices || []);
       setStatus(data.status);

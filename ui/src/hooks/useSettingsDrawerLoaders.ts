@@ -90,7 +90,7 @@ export function useSettingsDrawerLoaders({
 }: UseSettingsDrawerLoadersArgs): UseSettingsDrawerLoadersResult {
   const fetchThresholds = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/settings`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -106,7 +106,7 @@ export function useSettingsDrawerLoaders({
 
   const fetchIpSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/ipconfig/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/sap/ipconfig/settings`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -129,7 +129,7 @@ export function useSettingsDrawerLoaders({
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Reads many optional fields off the API payload; same shape as the original inline code
     async () => {
       try {
-        const response = await fetch(`${API_BASE}/api/health-checks/settings`, {
+        const response = await fetch(`${API_BASE}/api/v1/sap/health-checks/settings`, {
           credentials: 'include',
         });
         if (response.ok) {
@@ -183,7 +183,7 @@ export function useSettingsDrawerLoaders({
     setIperfSuggestionsStatus('loading');
     setIperfSuggestionsError(null);
     try {
-      const response = await fetch(`${API_BASE}/api/sap/iperf/suggestions`, {
+      const response = await fetch(`${API_BASE}/api/v1/sap/iperf/suggestions`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -202,7 +202,7 @@ export function useSettingsDrawerLoaders({
 
   const fetchWifiSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/canopy/wifi/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/canopy/wifi/settings`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -273,7 +273,7 @@ export function useSettingsDrawerLoaders({
 
   const fetchSnmpSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/sap/snmp/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/sap/snmp/settings`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -293,7 +293,7 @@ export function useSettingsDrawerLoaders({
 
   const fetchLinkSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/settings/link`, {
+      const response = await fetch(`${API_BASE}/api/v1/settings/link`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -311,7 +311,7 @@ export function useSettingsDrawerLoaders({
 
   const fetchCableTestSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/settings/cable`, {
+      const response = await fetch(`${API_BASE}/api/v1/settings/cable`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -329,7 +329,7 @@ export function useSettingsDrawerLoaders({
     setLogLoading(true);
     setLogError(null);
     try {
-      const response = await fetch(`${API_BASE}/api/harvest/logs?lines=200`, {
+      const response = await fetch(`${API_BASE}/api/v1/harvest/logs?lines=200`, {
         credentials: 'include',
       });
       if (!response.ok) {
