@@ -16,7 +16,7 @@ import type { HealthCheckData } from './healthCheckCardTypes';
 
 interface HealthCheckCardProtocolSectionsProps {
   data: HealthCheckData;
-  t: TFunction;
+  t: TFunction<'cards'>;
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Renders ten optional protocol sections each gated on result-array presence
@@ -46,7 +46,7 @@ export function HealthCheckCardProtocolSections({
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div className={layout.stack.compact}>
+              <div className={layout.stack.tight}>
                 <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
@@ -95,7 +95,7 @@ export function HealthCheckCardProtocolSections({
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div className={layout.stack.compact}>
+              <div className={layout.stack.tight}>
                 <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
@@ -141,7 +141,7 @@ export function HealthCheckCardProtocolSections({
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div className={layout.stack.compact}>
+              <div className={layout.stack.tight}>
                 <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
@@ -187,7 +187,7 @@ export function HealthCheckCardProtocolSections({
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div className={layout.stack.compact}>
+              <div className={layout.stack.tight}>
                 <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
@@ -231,7 +231,7 @@ export function HealthCheckCardProtocolSections({
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div className={layout.stack.compact}>
+              <div className={layout.stack.tight}>
                 <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
@@ -274,7 +274,7 @@ export function HealthCheckCardProtocolSections({
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div className={layout.stack.compact}>
+              <div className={layout.stack.tight}>
                 <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
@@ -323,7 +323,7 @@ export function HealthCheckCardProtocolSections({
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div className={layout.stack.compact}>
+              <div className={layout.stack.tight}>
                 <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
@@ -369,7 +369,7 @@ export function HealthCheckCardProtocolSections({
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div className={layout.stack.compact}>
+              <div className={layout.stack.tight}>
                 <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
@@ -409,7 +409,7 @@ export function HealthCheckCardProtocolSections({
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div className={layout.stack.compact}>
+              <div className={layout.stack.tight}>
                 <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
@@ -457,7 +457,7 @@ export function HealthCheckCardProtocolSections({
                 r.success ? 'bg-surface-raised' : statusColor.bg.errorSoft,
               )}
             >
-              <div className={layout.stack.compact}>
+              <div className={layout.stack.tight}>
                 <div className="flex items-center gap-2">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
