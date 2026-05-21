@@ -18,7 +18,7 @@ export function LogsPage() {
       <div className={layout.grid.cards}>
         <SystemHealthCard />
       </div>
-      <LogViewerCard maxHeight="600px" />
+      <LogViewerCard />
     </section>
   );
 }

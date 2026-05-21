@@ -236,10 +236,10 @@ export const LinkCard: React.MemoExoticComponent<(props: LinkCardProps) => JSX.E
                         label={t('link.poeStandard', 'Standard')}
                         value={linkData.poe.standard || 'Unknown'}
                       />
-                      {linkData.poe.class !== undefined && (
+                      {linkData.poe.className !== undefined && (
                         <CardRow
                           label={t('link.poeClass', 'Class')}
-                          value={linkData.poe.class.toString()}
+                          value={linkData.poe.className.toString()}
                         />
                       )}
                       {linkData.poe.powerMw !== undefined && (

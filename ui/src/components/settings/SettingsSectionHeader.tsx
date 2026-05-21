@@ -57,12 +57,13 @@ export function SettingsSectionHeader({
   namespace = 'settings',
   status,
 }: SettingsSectionHeaderProps): React.JSX.Element {
-  const { t } = useTranslation(namespace);
+  // biome-ignore lint/suspicious/noExplicitAny: namespace is a generic prop; per-call typed t() requires a literal namespace.
+  const { t } = useTranslation(namespace as any);
 
   return (
     <div className={layout.inline.default}>
       <ICON className={iconTokens.size.sm} />
-      <span>{t(titleKey)}</span>
+      <span>{(t as (k: string) => string)(titleKey)}</span>
       {status !== undefined && <AutoSaveIndicator status={status} />}
     </div>
   );

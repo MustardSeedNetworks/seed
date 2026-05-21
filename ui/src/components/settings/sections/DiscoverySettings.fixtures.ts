@@ -21,7 +21,6 @@ export const defaultSettings: NetworkDiscoverySettings = {
   scanTimeoutMs: 30000,
   autoScan: false,
   scanIntervalMs: 0,
-  ouiFilePath: 'data/oui.txt',
   options: {
     passiveProtocols: {
       lldp: true,
@@ -96,4 +95,8 @@ export const baseArgs = (subnets: SubnetConfig[] = []): DiscoverySettingsArgs =>
   snmpSettings: defaultSnmpSettings,
   setSnmpSettings: noop,
   snmpStatus: 'idle',
+  cardSettings: {
+    networkDiscovery: { enabled: true, autoRunOnLink: true },
+  } as unknown as DiscoverySettingsArgs['cardSettings'],
+  updateCardSettings: noop,
 });
