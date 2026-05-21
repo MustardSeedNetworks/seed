@@ -174,7 +174,7 @@ function InterfaceSelectorComponent({
     if (type === 'wifi') {
       return (
         <svg
-          class={cn(iconTokens.size.sm, up ? statusColor.text.success : 'text-text-muted')}
+          className={cn(iconTokens.size.sm, up ? statusColor.text.success : 'text-text-muted')}
           fill="currentColor"
           viewBox="0 0 24 24"
           aria-hidden="true"
@@ -185,7 +185,7 @@ function InterfaceSelectorComponent({
     }
     return (
       <svg
-        class={cn(iconTokens.size.sm, up ? statusColor.text.success : 'text-text-muted')}
+        className={cn(iconTokens.size.sm, up ? statusColor.text.success : 'text-text-muted')}
         fill="currentColor"
         viewBox="0 0 24 24"
         aria-hidden="true"
@@ -208,11 +208,11 @@ function InterfaceSelectorComponent({
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: Group role is semantically correct for dropdown container
-    <div ref={dropdownRef} class="relative" onKeyDown={handleKeyDown} role="group">
+    <div ref={dropdownRef} className="relative" onKeyDown={handleKeyDown} role="group">
       {/* #756: Warning banner when interface is unavailable */}
       {showWarning && warning ? (
         <div
-          class={cn(
+          className={cn(
             'absolute bottom-full left-0 right-0 mb-2 p-2',
             radius.md,
             'bg-status-warning/10 border border-status-warning/30 text-status-warning',
@@ -220,14 +220,14 @@ function InterfaceSelectorComponent({
           )}
         >
           <svg
-            class={iconTokens.size.sm}
+            className={iconTokens.size.sm}
             fill="currentColor"
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
             <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
           </svg>
-          <span class="caption flex-1">{warning}</span>
+          <span className="caption flex-1">{warning}</span>
           {suggestedInterface && onAcceptSuggestion ? (
             <button
               type="button"
@@ -235,7 +235,7 @@ function InterfaceSelectorComponent({
                 onAcceptSuggestion();
                 setShowWarning(false);
               }}
-              class="caption font-medium text-status-warning hover:underline"
+              className="caption font-medium text-status-warning hover:underline"
             >
               {t('interface.switchTo', 'Switch to {{name}}', { name: suggestedInterface })}
             </button>
@@ -243,12 +243,12 @@ function InterfaceSelectorComponent({
           <button
             type="button"
             onClick={(): void => setShowWarning(false)}
-            class="text-status-warning hover:opacity-70"
+            className="text-status-warning hover:opacity-70"
             title={t('accessibility.dismiss', 'Dismiss this warning until it is re-detected')}
             aria-label={t('accessibility.dismiss', 'Dismiss')}
           >
             <svg
-              class={iconTokens.size.sm}
+              className={iconTokens.size.sm}
               fill="currentColor"
               viewBox="0 0 24 24"
               aria-hidden="true"
@@ -258,14 +258,13 @@ function InterfaceSelectorComponent({
           </button>
         </div>
       ) : null}
-
       {/* Trigger button */}
       <button
         ref={buttonRef}
         type="button"
         disabled={disabled}
         onClick={(): void => setIsOpen(!isOpen)}
-        class={cn(
+        className={cn(
           'flex items-center',
           spacing.gap.tight,
           spacing.pad.sm,
@@ -281,18 +280,20 @@ function InterfaceSelectorComponent({
         {getTypeIcon(isWifi ? 'wifi' : 'ethernet', currentInfo?.up ?? true)}
 
         {/* Current interface name */}
-        <span class="body-small font-medium text-text-primary truncate max-w-24 sm:max-w-32">
+        <span className="body-small font-medium text-text-primary truncate max-w-24 sm:max-w-32">
           {currentInfo ? getDisplayName(currentInfo) : String(currentInterface)}
         </span>
 
         {/* Status indicator */}
         {currentInfo && (
-          <span class="caption text-text-muted hidden sm:inline">{getStatusText(currentInfo)}</span>
+          <span className="caption text-text-muted hidden sm:inline">
+            {getStatusText(currentInfo)}
+          </span>
         )}
 
         {/* Dropdown arrow */}
         <svg
-          class={cn(
+          className={cn(
             iconTokens.size.sm,
             'text-text-muted transition-transform',
             isOpen ? 'rotate-180' : '',
@@ -305,11 +306,10 @@ function InterfaceSelectorComponent({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-
       {/* Dropdown menu */}
       {isOpen ? (
         <div
-          class={cn(
+          className={cn(
             'absolute top-full left-0 mt-1 w-64',
             radius.md,
             'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
@@ -320,8 +320,8 @@ function InterfaceSelectorComponent({
           {/* Ethernet section */}
           {ethernetInterfaces.length > 0 && (
             <div>
-              <div class={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
-                <span class="caption font-semibold text-text-muted uppercase tracking-wide">
+              <div className={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
+                <span className="caption font-semibold text-text-muted uppercase tracking-wide">
                   {t('interface.ethernet', 'Ethernet')}
                 </span>
               </div>
@@ -330,7 +330,7 @@ function InterfaceSelectorComponent({
                   type="button"
                   key={iface.name}
                   onClick={(): void => selectInterface(iface.name)}
-                  class={cn(
+                  className={cn(
                     'w-full flex items-center',
                     spacing.gap.tight,
                     spacing.pad.sm,
@@ -342,7 +342,7 @@ function InterfaceSelectorComponent({
                 >
                   {/* Selection indicator */}
                   <span
-                    class={cn(
+                    className={cn(
                       'w-2 h-2 rounded-full',
                       iface.name === currentInterface ? 'bg-brand-primary' : 'bg-transparent',
                     )}
@@ -352,24 +352,24 @@ function InterfaceSelectorComponent({
                   {getTypeIcon('ethernet', iface.up)}
 
                   {/* Name and status */}
-                  <div class="flex-1 min-w-0 text-left">
-                    <div class="body-small font-medium text-text-primary truncate">
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="body-small font-medium text-text-primary truncate">
                       {getDisplayName(iface)}
                     </div>
                     {getDetailText(iface) && (
-                      <div class="caption text-text-muted truncate">{getDetailText(iface)}</div>
+                      <div className="caption text-text-muted truncate">{getDetailText(iface)}</div>
                     )}
                   </div>
 
                   {/* Status and recommended indicator */}
-                  <div class="flex items-center gap-1">
+                  <div className="flex items-center gap-1">
                     {isRecommended(iface.name, 'ethernet') && (
                       <span
-                        class={statusColor.text.success}
+                        className={statusColor.text.success}
                         title={t('interface.recommended', 'Recommended')}
                       >
                         <svg
-                          class={iconTokens.size.xs}
+                          className={iconTokens.size.xs}
                           fill="currentColor"
                           viewBox="0 0 24 24"
                           aria-hidden="true"
@@ -379,7 +379,10 @@ function InterfaceSelectorComponent({
                       </span>
                     )}
                     <span
-                      class={cn('caption', iface.up ? 'text-text-secondary' : 'text-text-muted')}
+                      className={cn(
+                        'caption',
+                        iface.up ? 'text-text-secondary' : 'text-text-muted',
+                      )}
                     >
                       {getStatusText(iface)}
                     </span>
@@ -393,14 +396,14 @@ function InterfaceSelectorComponent({
           {wifiInterfaces.length > 0 && (
             <div>
               <div
-                class={cn(
+                className={cn(
                   spacing.pad.sm,
                   'bg-surface-base',
                   ethernetInterfaces.length > 0 ? 'border-t' : '',
                   'border-b border-surface-border',
                 )}
               >
-                <span class="caption font-semibold text-text-muted uppercase tracking-wide">
+                <span className="caption font-semibold text-text-muted uppercase tracking-wide">
                   {t('interface.wifi', 'WiFi')}
                 </span>
               </div>
@@ -409,7 +412,7 @@ function InterfaceSelectorComponent({
                   type="button"
                   key={iface.name}
                   onClick={(): void => selectInterface(iface.name)}
-                  class={cn(
+                  className={cn(
                     'w-full flex items-center',
                     spacing.gap.tight,
                     spacing.pad.sm,
@@ -421,7 +424,7 @@ function InterfaceSelectorComponent({
                 >
                   {/* Selection indicator */}
                   <span
-                    class={cn(
+                    className={cn(
                       'w-2 h-2 rounded-full',
                       iface.name === currentInterface ? 'bg-brand-primary' : 'bg-transparent',
                     )}
@@ -431,24 +434,24 @@ function InterfaceSelectorComponent({
                   {getTypeIcon('wifi', iface.up)}
 
                   {/* Name */}
-                  <div class="flex-1 min-w-0 text-left">
-                    <div class="body-small font-medium text-text-primary truncate">
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="body-small font-medium text-text-primary truncate">
                       {getDisplayName(iface)}
                     </div>
                     {getDetailText(iface) && (
-                      <div class="caption text-text-muted truncate">{getDetailText(iface)}</div>
+                      <div className="caption text-text-muted truncate">{getDetailText(iface)}</div>
                     )}
                   </div>
 
                   {/* Status and recommended indicator */}
-                  <div class="flex items-center gap-1">
+                  <div className="flex items-center gap-1">
                     {isRecommended(iface.name, 'wifi') && (
                       <span
-                        class={statusColor.text.success}
+                        className={statusColor.text.success}
                         title={t('interface.recommended', 'Recommended')}
                       >
                         <svg
-                          class={iconTokens.size.xs}
+                          className={iconTokens.size.xs}
                           fill="currentColor"
                           viewBox="0 0 24 24"
                           aria-hidden="true"
@@ -458,7 +461,10 @@ function InterfaceSelectorComponent({
                       </span>
                     )}
                     <span
-                      class={cn('caption', iface.up ? 'text-text-secondary' : 'text-text-muted')}
+                      className={cn(
+                        'caption',
+                        iface.up ? 'text-text-secondary' : 'text-text-muted',
+                      )}
                     >
                       {getStatusText(iface)}
                     </span>
@@ -470,8 +476,8 @@ function InterfaceSelectorComponent({
 
           {/* Empty state */}
           {ethernetInterfaces.length === 0 && wifiInterfaces.length === 0 && (
-            <div class={cn(spacing.pad.md, 'text-center')}>
-              <span class="caption text-text-muted">
+            <div className={cn(spacing.pad.md, 'text-center')}>
+              <span className="caption text-text-muted">
                 {t('interface.noInterfaces', 'No network interfaces found')}
               </span>
             </div>

@@ -227,21 +227,21 @@ export const HealthCheckCard: React.MemoExoticComponent<
         : null;
 
       return (
-        <div key={`${type}-${result.name}`} class={spacing.compact.py}>
-          <div class={layout.flex.between}>
-            <span class="body-small text-text-muted truncate flex-1" title={displayName}>
+        <div key={`${type}-${result.name}`} className={spacing.compact.py}>
+          <div className={layout.flex.between}>
+            <span className="body-small text-text-muted truncate flex-1" title={displayName}>
               {displayName}
               {details}
             </span>
-            <span class={cn('inline-flex items-center', spacing.gap.compact)}>
+            <span className={cn('inline-flex items-center', spacing.gap.compact)}>
               <StatusBadge status={statusLabel} size="sm" />
-              <span class={cn('body-small font-medium', statusClass)}>
+              <span className={cn('body-small font-medium', statusClass)}>
                 {result.success ? formatLatency(result.latency) : 'fail'}
               </span>
             </span>
           </div>
           {extendedInfo ? (
-            <div class={cn('caption text-text-muted', spacing.micro.mt)}>{extendedInfo}</div>
+            <div className={cn('caption text-text-muted', spacing.micro.mt)}>{extendedInfo}</div>
           ) : null}
         </div>
       );
@@ -324,15 +324,15 @@ export const HealthCheckCard: React.MemoExoticComponent<
         ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`;
 
       return (
-        <div class={spacing.micro.mtCompactMd}>
+        <div className={spacing.micro.mtCompactMd}>
           {/* Stacked bar */}
-          <div class={cn('h-2', radius.full, 'overflow-hidden flex bg-bg-tertiary')}>
+          <div className={cn('h-2', radius.full, 'overflow-hidden flex bg-bg-tertiary')}>
             {segments.map((seg, i) => {
               const widthPercent = Math.min(100, Math.max(0, (seg.value / total) * 100));
               return (
                 <div
                   key={seg.label}
-                  class={cn(
+                  className={cn(
                     'h-full',
                     seg.color,
                     i === 0 ? 'rounded-l-full' : '',
@@ -346,7 +346,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
           </div>
           {/* Legend with tooltips */}
           <div
-            class={cn(
+            className={cn(
               'flex flex-wrap gap-x-3',
               spacing.margin.top.tight,
               'caption',
@@ -360,13 +360,13 @@ export const HealthCheckCard: React.MemoExoticComponent<
                 position="bottom"
               >
                 <span
-                  class={cn(
+                  className={cn(
                     'inline-flex items-center',
                     spacing.gap.tight,
                     getStatusTextColor(seg.status),
                   )}
                 >
-                  <span class={cn('inline-block w-2 h-2', radius.full, seg.color)} />
+                  <span className={cn('inline-block w-2 h-2', radius.full, seg.color)} />
                   {seg.label} {fmt(seg.value)}
                 </span>
               </Tooltip>
@@ -467,35 +467,35 @@ export const HealthCheckCard: React.MemoExoticComponent<
         result.ttfbLatency !== undefined;
 
       return (
-        <div key={`http-${result.name}`} class={spacing.compact.pyMd}>
-          <div class={layout.flex.between}>
-            <span class="body-small text-text-muted truncate flex-1" title={result.name}>
+        <div key={`http-${result.name}`} className={spacing.compact.pyMd}>
+          <div className={layout.flex.between}>
+            <span className="body-small text-text-muted truncate flex-1" title={result.name}>
               {result.name}
               {result.status ? ` (${result.status})` : ''}
             </span>
-            <span class={cn('body-small font-medium', statusClass)}>
+            <span className={cn('body-small font-medium', statusClass)}>
               {result.success ? formatLatency(result.latency) : 'fail'}
             </span>
           </div>
           {hasTimingData ? <TIMING_BAR result={result} /> : null}
           {!result.success && result.error ? (
-            <div class={cn('caption text-status-error', spacing.margin.top.tight)}>
+            <div className={cn('caption text-status-error', spacing.margin.top.tight)}>
               {result.error}
             </div>
           ) : null}
           {hasTls || hasCertInfo ? (
-            <div class={cn('caption', spacing.margin.top.tight, layout.inline.default)}>
-              {hasTls ? <span class="text-text-muted">{result.tlsVersion}</span> : null}
-              {hasTls && hasCertInfo ? <span class="text-text-muted">·</span> : null}
+            <div className={cn('caption', spacing.margin.top.tight, layout.inline.default)}>
+              {hasTls ? <span className="text-text-muted">{result.tlsVersion}</span> : null}
+              {hasTls && hasCertInfo ? <span className="text-text-muted">·</span> : null}
               {hasCertInfo ? (
-                <span class={certColor} title={`Expires: ${result.certExpiry}`}>
+                <span className={certColor} title={`Expires: ${result.certExpiry}`}>
                   {formatCertExpiry()}
                 </span>
               ) : null}
               {result.certIssuer ? (
                 <>
-                  <span class="text-text-muted">·</span>
-                  <span class="text-text-muted truncate" title={result.certIssuer}>
+                  <span className="text-text-muted">·</span>
+                  <span className="text-text-muted truncate" title={result.certIssuer}>
                     {result.certIssuer}
                   </span>
                 </>
@@ -509,11 +509,12 @@ export const HealthCheckCard: React.MemoExoticComponent<
     return (
       <Card
         title={t('health.title')}
-        icon={<HeartPulse class={iconTokens.size.md} />}
+        icon={<HeartPulse className={iconTokens.size.md} />}
         status={getStatus()}
       >
-        {isRunning ? <p class="body-small text-text-muted">{t('health.runningTests')}</p> : null}
-
+        {isRunning ? (
+          <p className="body-small text-text-muted">{t('health.runningTests')}</p>
+        ) : null}
         {!isRunning && data ? (
           <>
             {/* Ping Results */}
@@ -571,8 +572,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
             <HealthCheckCardProtocolSections data={data} t={t} />
           </>
         ) : null}
-
-        {error ? <p class="body-small text-status-error">{error}</p> : null}
+        {error ? <p className="body-small text-status-error">{error}</p> : null}
       </Card>
     );
   },

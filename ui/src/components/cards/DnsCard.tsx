@@ -103,17 +103,17 @@ function _lookupRow({
   const statusClass = getStatusColorClass(statusBadge);
 
   return (
-    <div class={spacing.margin.bottom.inline}>
-      <div class={layout.flex.between}>
-        <span class="caption">{label}</span>
-        <span class={layout.inline.default}>
+    <div className={spacing.margin.bottom.inline}>
+      <div className={layout.flex.between}>
+        <span className="caption">{label}</span>
+        <span className={layout.inline.default}>
           <StatusBadge status={statusBadge} size="sm" />
-          <span class={cn('caption font-medium', statusClass)}>
+          <span className={cn('caption font-medium', statusClass)}>
             {formatTime(lookup.timeMs || lookup.time)}
           </span>
         </span>
       </div>
-      <p class="body-small truncate" title={lookup.result}>
+      <p className="body-small truncate" title={lookup.result}>
         {lookup.result}
       </p>
     </div>
@@ -126,7 +126,11 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
 
     if (loading) {
       return (
-        <Card title={t('dns.title')} icon={<Globe class={iconTokens.size.md} />} status="loading">
+        <Card
+          title={t('dns.title')}
+          icon={<Globe className={iconTokens.size.md} />}
+          status="loading"
+        >
           <CardValue value={t('dns.testing')} size="lg" />
         </Card>
       );
@@ -134,7 +138,11 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
 
     if (!data) {
       return (
-        <Card title={t('dns.title')} icon={<Globe class={iconTokens.size.md} />} status="unknown">
+        <Card
+          title={t('dns.title')}
+          icon={<Globe className={iconTokens.size.md} />}
+          status="unknown"
+        >
           <CardValue value={t('dns.noData')} size="md" />
         </Card>
       );
@@ -155,45 +163,41 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
     return (
       <Card
         title={t('dns.title')}
-        icon={<Globe class={iconTokens.size.md} />}
+        icon={<Globe className={iconTokens.size.md} />}
         status={overallStatus}
       >
         {/* DNS Servers */}
-        <div class={spacing.margin.bottom.inline}>
-          <p class={cn('caption', spacing.margin.bottom.tight)}>{t('dns.dnsServers')}</p>
-          <div class="stack-xs">
+        <div className={spacing.margin.bottom.inline}>
+          <p className={cn('caption', spacing.margin.bottom.tight)}>{t('dns.dnsServers')}</p>
+          <div className="stack-xs">
             {servers.map((server) => (
-              <p key={server} class="body-small font-mono break-all" title={server}>
+              <p key={server} className="body-small font-mono break-all" title={server}>
                 {server}
               </p>
             ))}
           </div>
         </div>
-
-        <p class="caption">{t('dns.testingHost', { hostname: data.testHostname })}</p>
+        <p className="caption">{t('dns.testingHost', { hostname: data.testHostname })}</p>
         <CardDivider />
-
         {/* IPv4 Lookups */}
         {data.forward || data.reverse ? (
-          <div class={spacing.margin.bottom.inline}>
-            <p class={cn('caption font-medium', spacing.margin.bottom.tight)}>IPv4</p>
+          <div className={spacing.margin.bottom.inline}>
+            <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>IPv4</p>
             <lookupRow label={t('dns.forwardA')} lookup={data.forward} />
             <lookupRow label={t('dns.reversePTR')} lookup={data.reverse} />
           </div>
         ) : null}
-
         {/* IPv6 Lookups */}
         {data.forwardIpv6 || data.reverseIpv6 ? (
           <>
             <CardDivider />
             <div>
-              <p class={cn('caption font-medium', spacing.margin.bottom.tight)}>IPv6</p>
+              <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>IPv6</p>
               <lookupRow label={t('dns.forwardAAAA')} lookup={data.forwardIpv6} />
               <lookupRow label={t('dns.reversePTR')} lookup={data.reverseIpv6} />
             </div>
           </>
         ) : null}
-
         {/* Per-Server Results (collapsible) */}
         {data.perServerResults && data.perServerResults.length > 0 && (
           <>
@@ -205,19 +209,19 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
               status={getAggregatedStatus(data.perServerResults)}
             >
               {data.perServerResults.map((server) => (
-                <div key={server.server} class={spacing.chip.sm}>
-                  <div class={cn(layout.flex.between, spacing.margin.bottom.tight)}>
-                    <span class="caption font-mono">{server.server}</span>
-                    <span class={cn('caption font-medium', getStatusColorClass(server.status))}>
+                <div key={server.server} className={spacing.chip.sm}>
+                  <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
+                    <span className="caption font-mono">{server.server}</span>
+                    <span className={cn('caption font-medium', getStatusColorClass(server.status))}>
                       {formatTime(server.avgTimeMs)}
                     </span>
                   </div>
                   {server.forward ? (
-                    <div class={cn(layout.flex.between, 'caption')}>
+                    <div className={cn(layout.flex.between, 'caption')}>
                       <span>A</span>
-                      <span class={layout.inline.default}>
+                      <span className={layout.inline.default}>
                         <StatusBadge status={server.forward.status} size="sm" />
-                        <span class={getStatusColorClass(server.forward.status)}>
+                        <span className={getStatusColorClass(server.forward.status)}>
                           {server.forward.result === 'No A record'
                             ? 'N/A'
                             : formatTime(server.forward.timeMs)}
@@ -226,11 +230,11 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
                     </div>
                   ) : null}
                   {server.forwardIpv6 ? (
-                    <div class={cn(layout.flex.between, 'caption')}>
+                    <div className={cn(layout.flex.between, 'caption')}>
                       <span>AAAA</span>
-                      <span class={layout.inline.default}>
+                      <span className={layout.inline.default}>
                         <StatusBadge status={server.forwardIpv6.status} size="sm" />
-                        <span class={getStatusColorClass(server.forwardIpv6.status)}>
+                        <span className={getStatusColorClass(server.forwardIpv6.status)}>
                           {server.forwardIpv6.result === 'No AAAA record'
                             ? 'N/A'
                             : formatTime(server.forwardIpv6.timeMs)}

@@ -204,7 +204,7 @@ export function ReportDialog({
             {/* Company Name */}
             <div>
               <label
-                for="companyName"
+                htmlFor="companyName"
                 style={{
                   display: 'block',
                   marginBottom: spacing.xs,

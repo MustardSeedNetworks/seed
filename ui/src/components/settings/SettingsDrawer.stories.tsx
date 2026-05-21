@@ -45,7 +45,7 @@ const meta: Meta<typeof SettingsDrawer> = {
   },
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="h-screen bg-surface-base">
+      <div className="h-screen bg-surface-base">
         <StoryComponent />
       </div>
     ),
@@ -115,11 +115,11 @@ export const Interactive: Story = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div class={cn('h-screen bg-surface-base', spacing.pad.default)}>
+      <div className={cn('h-screen bg-surface-base', spacing.pad.default)}>
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          class={cn(
+          className={cn(
             button.size.md,
             'bg-brand-primary text-text-inverse',
             radius.lg,
@@ -204,17 +204,19 @@ export const WithBackdrop: Story = {
     };
 
     return (
-      <div class={cn('h-screen bg-surface-base', spacing.pad.default)}>
+      <div className={cn('h-screen bg-surface-base', spacing.pad.default)}>
         <div
-          class={cn(
+          className={cn(
             spacing.margin.bottom.content,
             spacing.pad.default,
             'bg-surface-raised',
             radius.lg,
           )}
         >
-          <p class="body-small text-text-primary">Click the dark backdrop to close the drawer.</p>
-          <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
+          <p className="body-small text-text-primary">
+            Click the dark backdrop to close the drawer.
+          </p>
+          <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
             Backdrop clicks: {clickCount}
           </p>
         </div>
@@ -246,28 +248,28 @@ export const WithContent: Story = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="h-screen bg-surface-base">
+      <div className="h-screen bg-surface-base">
         {/* Sample page content */}
-        <div class={spacing.pad.xl}>
-          <h1 class={cn('heading-1', spacing.margin.bottom.content)}>Network Dashboard</h1>
-          <div class={cn('grid grid-cols-3', spacing.gap.comfortable)}>
-            <div class={cn(spacing.pad.lg, 'bg-surface-raised', radius.lg)}>
-              <h2 class={cn('heading-3', spacing.margin.bottom.inline)}>Network Status</h2>
-              <p class="body-small text-text-muted">Connected</p>
+        <div className={spacing.pad.xl}>
+          <h1 className={cn('heading-1', spacing.margin.bottom.content)}>Network Dashboard</h1>
+          <div className={cn('grid grid-cols-3', spacing.gap.comfortable)}>
+            <div className={cn(spacing.pad.lg, 'bg-surface-raised', radius.lg)}>
+              <h2 className={cn('heading-3', spacing.margin.bottom.inline)}>Network Status</h2>
+              <p className="body-small text-text-muted">Connected</p>
             </div>
-            <div class={cn(spacing.pad.lg, 'bg-surface-raised', radius.lg)}>
-              <h2 class={cn('heading-3', spacing.margin.bottom.inline)}>Speed Test</h2>
-              <p class="body-small text-text-muted">150 Mbps</p>
+            <div className={cn(spacing.pad.lg, 'bg-surface-raised', radius.lg)}>
+              <h2 className={cn('heading-3', spacing.margin.bottom.inline)}>Speed Test</h2>
+              <p className="body-small text-text-muted">150 Mbps</p>
             </div>
-            <div class={cn(spacing.pad.lg, 'bg-surface-raised', radius.lg)}>
-              <h2 class={cn('heading-3', spacing.margin.bottom.inline)}>Devices</h2>
-              <p class="body-small text-text-muted">12 found</p>
+            <div className={cn(spacing.pad.lg, 'bg-surface-raised', radius.lg)}>
+              <h2 className={cn('heading-3', spacing.margin.bottom.inline)}>Devices</h2>
+              <p className="body-small text-text-muted">12 found</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            class={cn(
+            className={cn(
               spacing.margin.top.content,
               button.size.md,
               'bg-brand-primary text-text-inverse',
@@ -278,7 +280,6 @@ export const WithContent: Story = {
             Open Settings
           </button>
         </div>
-
         <SettingsDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} version="1.0.0" />
       </div>
     );

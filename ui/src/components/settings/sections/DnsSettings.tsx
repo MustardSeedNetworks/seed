@@ -95,18 +95,18 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
     return (
       <CollapsibleSection
         title={
-          <div class={layout.inline.default}>
-            <Globe class={iconTokens.size.sm} />
+          <div className={layout.inline.default}>
+            <Globe className={iconTokens.size.sm} />
             <span>{t('sections.dns')}</span>
             <AutoSaveIndicator status={testsStatus} />
           </div>
         }
       >
-        <div class="stack">
+        <div className="stack">
           {/* Card Visibility & FAB Controls */}
-          <div class="stack-sm">
+          <div className="stack-sm">
             <label
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.sm,
                 'bg-surface-base',
@@ -115,10 +115,10 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
               )}
             >
               <div>
-                <span class="body-small text-text-primary font-medium">
+                <span className="body-small text-text-primary font-medium">
                   {t('common.showCard', 'Show Card')}
                 </span>
-                <p class="caption text-text-muted">
+                <p className="caption text-text-muted">
                   {t('common.showCardDesc', 'Display this card on the dashboard')}
                 </p>
               </div>
@@ -130,11 +130,11 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
                     dns: { ...cardSettings.dns, enabled: e.target.checked },
                   })
                 }
-                class={iconTokens.size.sm}
+                className={iconTokens.size.sm}
               />
             </label>
             <label
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.sm,
                 'bg-surface-base',
@@ -143,10 +143,10 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
               )}
             >
               <div>
-                <span class="body-small text-text-primary font-medium">
+                <span className="body-small text-text-primary font-medium">
                   {t('common.runOnFab', 'Include in Run All')}
                 </span>
-                <p class="caption text-text-muted">
+                <p className="caption text-text-muted">
                   {t('common.runOnFabDesc', 'Run when FAB button is clicked')}
                 </p>
               </div>
@@ -158,14 +158,14 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
                     dns: { ...cardSettings.dns, autoRunOnLink: e.target.checked },
                   })
                 }
-                class={iconTokens.size.sm}
+                className={iconTokens.size.sm}
               />
             </label>
           </div>
 
           {/* DNS Hostname */}
           <div>
-            <label for="dns-test-hostname" class="caption text-text-muted">
+            <label htmlFor="dns-test-hostname" className="caption text-text-muted">
               {t('dns.testHostname')}
             </label>
             <input
@@ -179,7 +179,7 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
                 }))
               }
               placeholder="google.com"
-              class={cn(
+              className={cn(
                 inputTokens.base,
                 inputTokens.state.default,
                 inputTokens.size.md,
@@ -188,30 +188,32 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
                 'body-small',
               )}
             />
-            <p class={cn('caption', 'text-text-muted', spacing.margin.top.tight)}>
+            <p className={cn('caption', 'text-text-muted', spacing.margin.top.tight)}>
               {t('dns.testHostnameDesc')}
             </p>
           </div>
 
           {/* DNS Servers for per-server testing */}
-          <div class={cn('border-t', 'border-surface-border', spacing.padding.top.heading)}>
-            <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-              <span class="caption text-text-muted font-medium">{t('dns.additionalServers')}</span>
+          <div className={cn('border-t', 'border-surface-border', spacing.padding.top.heading)}>
+            <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+              <span className="caption text-text-muted font-medium">
+                {t('dns.additionalServers')}
+              </span>
               <button
                 type="button"
                 onClick={addDnsServer}
-                class="caption text-brand-primary hover:text-brand-accent"
+                className="caption text-brand-primary hover:text-brand-accent"
               >
                 {t('common.add')}
               </button>
             </div>
-            <p class={cn('caption', 'text-text-muted', spacing.margin.bottom.inline)}>
+            <p className={cn('caption', 'text-text-muted', spacing.margin.bottom.inline)}>
               {t('dns.serversDescription')}
             </p>
             {testsSettings.dnsServers.map((server) => (
               <div
                 key={server.id || server.address}
-                class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+                className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
               >
                 <input
                   type="text"
@@ -220,7 +222,7 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
                     updateDnsServer(server.id ?? '', 'address', e.target.value)
                   }
                   placeholder={t('dns.serverIp')}
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.md,
@@ -231,7 +233,7 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
                 <button
                   type="button"
                   onClick={(): void => removeDnsServer(server.id ?? '')}
-                  class={cn(
+                  className={cn(
                     statusColor.text.error,
                     'hover:text-status-error/80',
                     spacing.actionBtn,

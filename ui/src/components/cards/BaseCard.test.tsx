@@ -180,7 +180,7 @@ describe('BaseCard', () => {
 
   describe('className prop', () => {
     it('applies custom className', () => {
-      render(<BaseCard {...defaultProps} class="custom-class" />);
+      render(<BaseCard {...defaultProps} className="custom-class" />);
 
       // Find the card element that has the custom class
       const card = document.querySelector('.custom-class');
@@ -277,7 +277,7 @@ describe('SimpleBaseCard', () => {
 
   describe('className prop', () => {
     it('applies custom className', () => {
-      render(<SimpleBaseCard {...defaultProps} class="my-custom-class" />);
+      render(<SimpleBaseCard {...defaultProps} className="my-custom-class" />);
 
       const card = document.querySelector('.my-custom-class');
       expect(card).toBeInTheDocument();

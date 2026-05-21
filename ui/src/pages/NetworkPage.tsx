@@ -13,7 +13,7 @@ export function NetworkPage() {
   const { cards, loading, isWifi, displayOptions } = useAppContext();
 
   return (
-    <section class="space-y-6">
+    <section className="space-y-6">
       <Breadcrumbs />
       <PageHeader
         icon={Server}
@@ -21,7 +21,7 @@ export function NetworkPage() {
         description="DHCP, gateway, DNS, public IP, and upstream switch detection."
         iconColorClass="text-module-sap"
       />
-      <div class={layout.grid.cards}>
+      <div className={layout.grid.cards}>
         {(!isWifi || cards.wifi) && (
           <>
             <NetworkCard

@@ -90,52 +90,51 @@ export function SurveyViewSidePanel({
   const { t } = useTranslation('survey');
 
   return (
-    <div class={cn('lg:col-span-1', spacing.stack.default)}>
+    <div className={cn('lg:col-span-1', spacing.stack.default)}>
       {/* Setup checklist to guide users before starting a survey */}
       {survey.status === 'created' && (
-        <div class={cn('bg-surface-raised', radius.md, 'border border-surface-border pad')}>
-          <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-            <h2 class="heading-3">{t('setup.checklist')}</h2>
-            <span class="caption text-text-muted">
+        <div className={cn('bg-surface-raised', radius.md, 'border border-surface-border pad')}>
+          <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+            <h2 className="heading-3">{t('setup.checklist')}</h2>
+            <span className="caption text-text-muted">
               {completedSetupSteps}/{setupSteps.length}
             </span>
           </div>
-          <div class="stack-sm">
+          <div className="stack-sm">
             {setupSteps.map((step) => (
               <div
                 key={step.key}
-                class={cn(
+                className={cn(
                   'flex items-center justify-between',
                   spacing.pad.xs,
                   radius.sm,
                   step.done ? 'bg-surface-hover' : 'bg-transparent',
                 )}
               >
-                <div class={layout.inline.default}>
+                <div className={layout.inline.default}>
                   {step.done ? (
-                    <CheckCircle class={cn(iconTokens.size.sm, statusColor.text.success)} />
+                    <CheckCircle className={cn(iconTokens.size.sm, statusColor.text.success)} />
                   ) : (
-                    <Clock class={cn(iconTokens.size.sm, 'text-text-muted')} />
+                    <Clock className={cn(iconTokens.size.sm, 'text-text-muted')} />
                   )}
-                  <span class="body-small">{step.label}</span>
+                  <span className="body-small">{step.label}</span>
                 </div>
-                {step.done ? <span class="caption text-status-success">✓</span> : null}
+                {step.done ? <span className="caption text-status-success">✓</span> : null}
               </div>
             ))}
           </div>
         </div>
       )}
-
       {/* Survey Settings Panel - only show when survey hasn't started */}
       {survey.status === 'created' && (
-        <div class={cn('bg-surface-raised', radius.md, 'border border-surface-border pad')}>
-          <h2 class={cn('heading-3', spacing.margin.bottom.content)}>{t('settings.title')}</h2>
-          <div class="stack">
+        <div className={cn('bg-surface-raised', radius.md, 'border border-surface-border pad')}>
+          <h2 className={cn('heading-3', spacing.margin.bottom.content)}>{t('settings.title')}</h2>
+          <div className="stack">
             {/* Survey Type */}
             <div>
               <label
-                for="survey-type-select"
-                class={cn('body-small text-text-muted block', spacing.margin.bottom.tight)}
+                htmlFor="survey-type-select"
+                className={cn('body-small text-text-muted block', spacing.margin.bottom.tight)}
               >
                 {t('settings.surveyType')}
               </label>
@@ -145,7 +144,7 @@ export function SurveyViewSidePanel({
                 onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                   setEditSurveyType(e.target.value as SurveyType)
                 }
-                class={cn(
+                className={cn(
                   'w-full',
                   button.size.md,
                   'border border-surface-border',
@@ -164,8 +163,8 @@ export function SurveyViewSidePanel({
               <>
                 <div>
                   <label
-                    for="survey-iperf-server"
-                    class={cn('body-small text-text-muted block', spacing.margin.bottom.tight)}
+                    htmlFor="survey-iperf-server"
+                    className={cn('body-small text-text-muted block', spacing.margin.bottom.tight)}
                   >
                     {t('settings.iperfServer')}
                   </label>
@@ -177,7 +176,7 @@ export function SurveyViewSidePanel({
                       setEditIperfServer(e.target.value)
                     }
                     placeholder="hostname:5201"
-                    class={cn(
+                    className={cn(
                       'w-full',
                       button.size.md,
                       'border border-surface-border',
@@ -185,15 +184,15 @@ export function SurveyViewSidePanel({
                       'bg-surface-base text-text-primary',
                     )}
                   />
-                  <p class={cn('caption text-text-muted', spacing.margin.top.tight)}>
+                  <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
                     {t('settings.iperfServerHint')}
                   </p>
                 </div>
 
                 <div>
                   <label
-                    for="survey-test-duration"
-                    class={cn('body-small text-text-muted block', spacing.margin.bottom.tight)}
+                    htmlFor="survey-test-duration"
+                    className={cn('body-small text-text-muted block', spacing.margin.bottom.tight)}
                   >
                     {t('settings.testDuration')}
                   </label>
@@ -206,7 +205,7 @@ export function SurveyViewSidePanel({
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       setEditTestDuration(Number.parseInt(e.target.value, 10) || 3)
                     }
-                    class={cn(
+                    className={cn(
                       'w-full',
                       button.size.md,
                       'border border-surface-border',
@@ -223,7 +222,7 @@ export function SurveyViewSidePanel({
               type="button"
               onClick={handleSaveSettings}
               disabled={savingSettings}
-              class={cn(
+              className={cn(
                 'w-full',
                 button.size.md,
                 'bg-brand-primary text-text-inverse',
@@ -236,16 +235,16 @@ export function SurveyViewSidePanel({
 
             {/* Survey type descriptions */}
             <div
-              class={cn(
+              className={cn(
                 'caption text-text-muted border-t border-surface-border',
                 spacing.padding.top.section,
                 spacing.margin.top.inline,
               )}
             >
-              <p class={cn('font-medium', spacing.margin.bottom.inline)}>
+              <p className={cn('font-medium', spacing.margin.bottom.inline)}>
                 {t('settings.typesDescription')}
               </p>
-              <ul class={cn('list-disc list-inside', spacing.stack.xs)}>
+              <ul className={cn('list-disc list-inside', spacing.stack.xs)}>
                 <li>
                   <strong>Passive:</strong> {t('settings.passiveDesc')}
                 </li>
@@ -260,7 +259,6 @@ export function SurveyViewSidePanel({
           </div>
         </div>
       )}
-
       {/* Scale Calibration Panel - show when floor plan exists */}
       {currentFloorPlan ? (
         <ScaleCalibrationPanel
@@ -270,7 +268,6 @@ export function SurveyViewSidePanel({
           isCalibrating={calibrationMode}
         />
       ) : null}
-
       {/* Survey Configuration Panel - show when floor plan exists */}
       {currentFloorPlan && wifiStatus ? (
         <SurveyConfigPanel
@@ -285,15 +282,14 @@ export function SurveyViewSidePanel({
           onIperfSettingsChange={handleIperfSettingsChange}
         />
       ) : null}
-
       {/* Sample list */}
-      <div class={cn('bg-surface-raised', radius.md, 'border border-surface-border pad')}>
-        <h2 class={cn('heading-3', spacing.margin.bottom.content)}>
+      <div className={cn('bg-surface-raised', radius.md, 'border border-surface-border pad')}>
+        <h2 className={cn('heading-3', spacing.margin.bottom.content)}>
           {t('samples.title')} ({currentSamples.length})
         </h2>
-        <div class="stack-sm max-h-[70vh] overflow-y-auto">
+        <div className="stack-sm max-h-[70vh] overflow-y-auto">
           {currentSamples.length === 0 ? (
-            <p class={cn('body-small text-center', spacing.pad.lg)}>
+            <p className={cn('body-small text-center', spacing.pad.lg)}>
               {t('samples.noSamples')}{' '}
               {survey.status === 'in_progress'
                 ? t('samples.clickToStart')
@@ -303,13 +299,15 @@ export function SurveyViewSidePanel({
             currentSamples.map((sample, idx) => (
               <div
                 key={sample.timestamp}
-                class={cn('border border-surface-border', radius.md, 'pad-sm body-small')}
+                className={cn('border border-surface-border', radius.md, 'pad-sm body-small')}
               >
-                <div class={cn('flex items-center justify-between', spacing.margin.bottom.inline)}>
-                  <span class="font-semibold">#{idx + 1}</span>
-                  <span class="caption">{new Date(sample.timestamp).toLocaleTimeString()}</span>
+                <div
+                  className={cn('flex items-center justify-between', spacing.margin.bottom.inline)}
+                >
+                  <span className="font-semibold">#{idx + 1}</span>
+                  <span className="caption">{new Date(sample.timestamp).toLocaleTimeString()}</span>
                 </div>
-                <div class="caption stack-xs">
+                <div className="caption stack-xs">
                   {renderSampleData(sample.sampleData, survey.surveyType)}
                 </div>
               </div>

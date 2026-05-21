@@ -17,7 +17,7 @@ function _healthChecksSection(): React.JSX.Element {
   };
   return (
     <helpContentSection title={t('sections.healthChecks')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.healthChecks.description')}
       </p>
       <helpTermList
@@ -45,18 +45,18 @@ function _healthChecksSection(): React.JSX.Element {
         ]}
       />
       <div
-        class={cn(
+        className={cn(
           spacing.margin.top.content,
           'bg-status-info/10 border border-status-info/20',
           radius.default,
           spacing.pad.default,
         )}
       >
-        <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
+        <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
           {commonIssues.title}
         </h4>
         <ul
-          class={cn(
+          className={cn(
             'body-small text-text-secondary stack-sm',
             spacing.margin.left.spacious,
             'list-disc',
@@ -96,7 +96,7 @@ function _securitySection(): React.JSX.Element {
   };
   return (
     <helpContentSection title={t('sections.security')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.security.description')}
       </p>
       <helpTermList
@@ -119,24 +119,23 @@ function _securitySection(): React.JSX.Element {
           },
         ]}
       />
-
       {/* Password Recovery Section */}
       <div
-        class={cn(
+        className={cn(
           spacing.margin.top.section,
           'bg-status-warning/10 border border-status-warning/20',
           radius.default,
           spacing.pad.default,
         )}
       >
-        <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
+        <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
           {recovery.title}
         </h4>
-        <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+        <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
           {recovery.description}
         </p>
         <ol
-          class={cn(
+          className={cn(
             'body-small text-text-secondary stack-sm',
             spacing.margin.left.spacious,
             'list-decimal',
@@ -145,7 +144,7 @@ function _securitySection(): React.JSX.Element {
           {recovery.steps.map((step) => (
             <li
               key={step}
-              class={
+              className={
                 step.startsWith('User mode:') || step.startsWith('System mode:')
                   ? 'font-mono text-xs bg-surface-base px-2 py-1 rounded'
                   : ''
@@ -155,39 +154,37 @@ function _securitySection(): React.JSX.Element {
             </li>
           ))}
         </ol>
-        <p class={cn('caption text-status-warning', spacing.margin.top.content)}>
+        <p className={cn('caption text-status-warning', spacing.margin.top.content)}>
           <strong>Note:</strong> {recovery.note}
         </p>
       </div>
-
       {/* Port Scan Details */}
-      <div class={cn(spacing.margin.top.section)}>
-        <h4 class={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
+      <div className={cn(spacing.margin.top.section)}>
+        <h4 className={cn('font-semibold text-text-primary', spacing.margin.bottom.content)}>
           {portDetails.title}
         </h4>
-        <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+        <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
           {portDetails.description}
         </p>
-        <div class="grid grid-cols-2 gap-2 body-small">
+        <div className="grid grid-cols-2 gap-2 body-small">
           {Object.entries(portDetails.levels).map(([level, desc]) => (
-            <div key={level} class={cn('border-l-2 border-surface-border', spacing.pad.sm)}>
-              <dt class="font-semibold text-text-primary capitalize">{level}</dt>
-              <dd class="text-text-secondary">{desc}</dd>
+            <div key={level} className={cn('border-l-2 border-surface-border', spacing.pad.sm)}>
+              <dt className="font-semibold text-text-primary capitalize">{level}</dt>
+              <dd className="text-text-secondary">{desc}</dd>
             </div>
           ))}
         </div>
       </div>
-
       {/* Common Ports Reference */}
-      <div class={cn(spacing.margin.top.content)}>
-        <h5 class={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
+      <div className={cn(spacing.margin.top.content)}>
+        <h5 className={cn('font-semibold text-text-primary', spacing.margin.bottom.inline)}>
           Common Ports Reference
         </h5>
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 body-small font-mono">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 body-small font-mono">
           {Object.entries(portDetails.commonPorts).map(([port, desc]) => (
-            <div key={port} class="flex items-baseline gap-2">
-              <span class="text-brand-primary font-bold">{port}</span>
-              <span class="text-text-muted">{desc}</span>
+            <div key={port} className="flex items-baseline gap-2">
+              <span className="text-brand-primary font-bold">{port}</span>
+              <span className="text-text-muted">{desc}</span>
             </div>
           ))}
         </div>
@@ -208,10 +205,9 @@ function _troubleshootingSection(): React.JSX.Element {
 
   return (
     <helpContentSection title={t('sections.troubleshooting')}>
-      <p class={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
+      <p className={cn('body-small text-text-secondary', spacing.margin.bottom.content)}>
         {t('content.troubleshooting.description')}
       </p>
-
       {/* Link Issues */}
       <troubleshootingCategory
         title={categories.linkIssues.title}
@@ -252,7 +248,6 @@ function _troubleshootingSection(): React.JSX.Element {
           },
         ]}
       />
-
       {/* Cable Issues */}
       <troubleshootingCategory
         title={categories.cableIssues.title}
@@ -297,7 +292,6 @@ function _troubleshootingSection(): React.JSX.Element {
           },
         ]}
       />
-
       {/* DNS Issues */}
       <troubleshootingCategory
         title={categories.dnsIssues.title}
@@ -321,7 +315,6 @@ function _troubleshootingSection(): React.JSX.Element {
           },
         ]}
       />
-
       {/* Gateway Issues */}
       <troubleshootingCategory
         title={categories.gatewayIssues.title}
@@ -362,7 +355,6 @@ function _troubleshootingSection(): React.JSX.Element {
           },
         ]}
       />
-
       {/* Performance Issues */}
       <troubleshootingCategory
         title={categories.performanceIssues.title}

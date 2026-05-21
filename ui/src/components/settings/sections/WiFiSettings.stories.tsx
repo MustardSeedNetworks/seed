@@ -41,7 +41,7 @@ const meta: Meta<typeof WiFiSettings> = {
   },
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="w-[400px]">
+      <div className="w-[400px]">
         <StoryComponent />
       </div>
     ),
@@ -226,9 +226,9 @@ export const Interactive: Story = {
  */
 export const Comparison: Story = {
   render: () => (
-    <div class={cn('stack-lg', spacing.pad.default)}>
+    <div className={cn('stack-lg', spacing.pad.default)}>
       <div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           Multiple interfaces available
         </p>
         <WiFiSettings
@@ -244,7 +244,7 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           No interfaces (manual entry)
         </p>
         <WiFiSettings
@@ -260,7 +260,7 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Saving state</p>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Saving state</p>
         <WiFiSettings
           wifiSettings={{
             interface: 'wlan0',

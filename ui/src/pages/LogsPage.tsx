@@ -7,7 +7,7 @@ import { PageHeader } from '../ui/PageHeader';
 
 export function LogsPage() {
   return (
-    <section class="space-y-6">
+    <section className="space-y-6">
       <Breadcrumbs />
       <PageHeader
         icon={ScrollText}
@@ -15,7 +15,7 @@ export function LogsPage() {
         description="Live log stream and system health for the daemon."
         iconColorClass="text-module-harvest"
       />
-      <div class={layout.grid.cards}>
+      <div className={layout.grid.cards}>
         <SystemHealthCard />
       </div>
       <LogViewerCard maxHeight="600px" />

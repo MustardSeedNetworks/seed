@@ -11,7 +11,7 @@ export function LinkPage() {
   const { cards, loading, isWifi, displayOptions } = useAppContext();
 
   return (
-    <section class="space-y-6">
+    <section className="space-y-6">
       <Breadcrumbs />
       <PageHeader
         icon={Network}
@@ -19,7 +19,7 @@ export function LinkPage() {
         description="Physical link state, cable diagnostics, and Wi-Fi association for the active interface."
         iconColorClass="text-module-sap"
       />
-      <div class={layout.grid.cards}>
+      <div className={layout.grid.cards}>
         {isWifi ? <WiFiCard data={cards.wifi} loading={loading} visible={true} /> : null}
         {!isWifi && (
           <>

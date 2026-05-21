@@ -37,8 +37,10 @@ type Story = StoryObj;
  */
 export const AllSections: Story = {
   render: () => (
-    <div class={cn('max-w-3xl mx-auto', spacing.pad.default, sectionStyles.spacing.comfortable)}>
-      <h1 class={cn('heading-1 text-text-primary', spacing.margin.bottom.section)}>
+    <div
+      className={cn('max-w-3xl mx-auto', spacing.pad.default, sectionStyles.spacing.comfortable)}
+    >
+      <h1 className={cn('heading-1 text-text-primary', spacing.margin.bottom.section)}>
         WiFi Survey Help
       </h1>
       {WIFI_SURVEY_HELP.map((section) => (
@@ -63,7 +65,7 @@ export const Overview: Story = {
     }
 
     return (
-      <div class={cn('max-w-3xl mx-auto', spacing.pad.default)}>
+      <div className={cn('max-w-3xl mx-auto', spacing.pad.default)}>
         <helpSection title={overviewSection.title}>
           {overviewSection.items.map((item) => (
             <helpItem key={item.question} question={item.question} answer={item.answer} />
@@ -92,7 +94,7 @@ export const SurveyModes: Story = {
     }
 
     return (
-      <div class={cn('max-w-3xl mx-auto', spacing.pad.default)}>
+      <div className={cn('max-w-3xl mx-auto', spacing.pad.default)}>
         <helpSection title={modesSection.title}>
           {modesSection.items.map((item) => (
             <helpItem key={item.question} question={item.question} answer={item.answer} />
@@ -122,7 +124,7 @@ export const CreatingSurvey: Story = {
     }
 
     return (
-      <div class={cn('max-w-3xl mx-auto', spacing.pad.default)}>
+      <div className={cn('max-w-3xl mx-auto', spacing.pad.default)}>
         <helpSection title={createSection.title}>
           {createSection.items.map((item) => (
             <helpItem key={item.question} question={item.question} answer={item.answer} />
@@ -152,7 +154,7 @@ export const ConductingSurvey: Story = {
     }
 
     return (
-      <div class={cn('max-w-3xl mx-auto', spacing.pad.default)}>
+      <div className={cn('max-w-3xl mx-auto', spacing.pad.default)}>
         <helpSection title={conductSection.title}>
           {conductSection.items.map((item) => (
             <helpItem key={item.question} question={item.question} answer={item.answer} />
@@ -181,7 +183,7 @@ export const ViewingResults: Story = {
     }
 
     return (
-      <div class={cn('max-w-3xl mx-auto', spacing.pad.default)}>
+      <div className={cn('max-w-3xl mx-auto', spacing.pad.default)}>
         <helpSection title={resultsSection.title}>
           {resultsSection.items.map((item) => (
             <helpItem key={item.question} question={item.question} answer={item.answer} />
@@ -210,7 +212,7 @@ export const Troubleshooting: Story = {
     }
 
     return (
-      <div class={cn('max-w-3xl mx-auto', spacing.pad.default)}>
+      <div className={cn('max-w-3xl mx-auto', spacing.pad.default)}>
         <helpSection title={troubleSection.title}>
           {troubleSection.items.map((item) => (
             <helpItem key={item.question} question={item.question} answer={item.answer} />
@@ -240,7 +242,7 @@ export const BestPractices: Story = {
     }
 
     return (
-      <div class={cn('max-w-3xl mx-auto', spacing.pad.default)}>
+      <div className={cn('max-w-3xl mx-auto', spacing.pad.default)}>
         <helpSection title={bestSection.title}>
           {bestSection.items.map((item) => (
             <helpItem key={item.question} question={item.question} answer={item.answer} />
@@ -263,11 +265,11 @@ export const BestPractices: Story = {
  */
 export const SignalStrengthLegend: Story = {
   render: () => (
-    <div class={cn('max-w-xl mx-auto', spacing.pad.default)}>
-      <h2 class={cn('heading-2 text-text-primary', spacing.margin.bottom.content)}>
+    <div className={cn('max-w-xl mx-auto', spacing.pad.default)}>
+      <h2 className={cn('heading-2 text-text-primary', spacing.margin.bottom.content)}>
         Signal Strength Heatmap Legend
       </h2>
-      <div class="stack-sm">
+      <div className="stack-sm">
         <signalLevel
           color="bg-status-success"
           range="-30 to -50 dBm"
@@ -315,11 +317,11 @@ export const SignalStrengthLegend: Story = {
  */
 export const ThroughputLegend: Story = {
   render: () => (
-    <div class={cn('max-w-xl mx-auto', spacing.pad.default)}>
-      <h2 class={cn('heading-2 text-text-primary', spacing.margin.bottom.content)}>
+    <div className={cn('max-w-xl mx-auto', spacing.pad.default)}>
+      <h2 className={cn('heading-2 text-text-primary', spacing.margin.bottom.content)}>
         Throughput Heatmap Legend
       </h2>
-      <div class="stack-sm">
+      <div className="stack-sm">
         <signalLevel
           color="bg-status-success"
           range="80-100%+ of expected"
@@ -367,11 +369,11 @@ export const ThroughputLegend: Story = {
  */
 export const ModesComparison: Story = {
   render: () => (
-    <div class={cn('max-w-4xl mx-auto', spacing.pad.default)}>
-      <h2 class={cn('heading-2 text-text-primary', spacing.margin.bottom.content)}>
+    <div className={cn('max-w-4xl mx-auto', spacing.pad.default)}>
+      <h2 className={cn('heading-2 text-text-primary', spacing.margin.bottom.content)}>
         Survey Modes Comparison
       </h2>
-      <div class={cn('grid md:grid-cols-3', spacing.gap.comfortable)}>
+      <div className={cn('grid md:grid-cols-3', spacing.gap.comfortable)}>
         <modeCard
           title="Passive Scan"
           icon="📡"
@@ -418,27 +420,27 @@ function _helpSection({
   children: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <div class="bg-surface-raised border border-surface-border rounded-lg overflow-hidden">
+    <div className="bg-surface-raised border border-surface-border rounded-lg overflow-hidden">
       <h2
-        class={cn(
+        className={cn(
           'heading-3 text-text-primary bg-surface-base border-b border-surface-border',
           spacing.pad.default,
         )}
       >
         {title}
       </h2>
-      <div class="divide-y divide-surface-border">{children}</div>
+      <div className="divide-y divide-surface-border">{children}</div>
     </div>
   );
 }
 
 function _helpItem({ question, answer }: { question: string; answer: string }): React.JSX.Element {
   return (
-    <div class={spacing.pad.default}>
-      <h3 class={cn('body font-semibold text-text-primary', spacing.margin.bottom.inline)}>
+    <div className={spacing.pad.default}>
+      <h3 className={cn('body font-semibold text-text-primary', spacing.margin.bottom.inline)}>
         {question}
       </h3>
-      <div class="body-small text-text-secondary whitespace-pre-line">{answer}</div>
+      <div className="body-small text-text-secondary whitespace-pre-line">{answer}</div>
     </div>
   );
 }
@@ -456,19 +458,19 @@ function _signalLevel({
 }): React.JSX.Element {
   return (
     <div
-      class={cn(
+      className={cn(
         'flex items-center bg-surface-raised border border-surface-border rounded-lg',
         spacing.gap.default,
         spacing.pad.sm,
       )}
     >
-      <div class={cn('w-8 h-8 rounded', color)} />
-      <div class="flex-1">
-        <div class={cn('flex items-baseline', spacing.gap.compact)}>
-          <span class="body font-semibold text-text-primary">{label}</span>
-          <span class="body-small text-text-muted">({range})</span>
+      <div className={cn('w-8 h-8 rounded', color)} />
+      <div className="flex-1">
+        <div className={cn('flex items-baseline', spacing.gap.compact)}>
+          <span className="body font-semibold text-text-primary">{label}</span>
+          <span className="body-small text-text-muted">({range})</span>
         </div>
-        <p class="caption text-text-secondary">{description}</p>
+        <p className="caption text-text-secondary">{description}</p>
       </div>
     </div>
   );
@@ -491,36 +493,44 @@ function _modeCard({
 }): React.JSX.Element {
   return (
     <div
-      class={cn('bg-surface-raised border border-surface-border rounded-lg', spacing.pad.default)}
+      className={cn(
+        'bg-surface-raised border border-surface-border rounded-lg',
+        spacing.pad.default,
+      )}
     >
-      <div class={cn('text-3xl', spacing.margin.bottom.inline)}>{icon}</div>
-      <h3 class={cn('heading-4 text-text-primary', spacing.margin.bottom.tight)}>{title}</h3>
-      <p class={cn('body-small text-text-muted', spacing.margin.bottom.content)}>{description}</p>
-
-      <div class="stack-sm">
+      <div className={cn('text-3xl', spacing.margin.bottom.inline)}>{icon}</div>
+      <h3 className={cn('heading-4 text-text-primary', spacing.margin.bottom.tight)}>{title}</h3>
+      <p className={cn('body-small text-text-muted', spacing.margin.bottom.content)}>
+        {description}
+      </p>
+      <div className="stack-sm">
         <div>
-          <h4 class={cn('caption font-semibold text-status-success', spacing.margin.bottom.tight)}>
+          <h4
+            className={cn('caption font-semibold text-status-success', spacing.margin.bottom.tight)}
+          >
             Pros
           </h4>
-          <ul class="list-disc list-inside caption text-text-secondary">
+          <ul className="list-disc list-inside caption text-text-secondary">
             {pros.map((p) => (
               <li key={p}>{p}</li>
             ))}
           </ul>
         </div>
         <div>
-          <h4 class={cn('caption font-semibold text-status-warning', spacing.margin.bottom.tight)}>
+          <h4
+            className={cn('caption font-semibold text-status-warning', spacing.margin.bottom.tight)}
+          >
             Cons
           </h4>
-          <ul class="list-disc list-inside caption text-text-secondary">
+          <ul className="list-disc list-inside caption text-text-secondary">
             {cons.map((c) => (
               <li key={c}>{c}</li>
             ))}
           </ul>
         </div>
-        <div class={cn('border-t border-surface-border', spacing.padding.bottom.inline)}>
-          <span class="caption text-text-muted">Best for: </span>
-          <span class="caption text-text-primary font-medium">{bestFor}</span>
+        <div className={cn('border-t border-surface-border', spacing.padding.bottom.inline)}>
+          <span className="caption text-text-muted">Best for: </span>
+          <span className="caption text-text-primary font-medium">{bestFor}</span>
         </div>
       </div>
     </div>

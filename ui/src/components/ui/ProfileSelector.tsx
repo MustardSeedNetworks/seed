@@ -117,7 +117,7 @@ function ProfileSelectorComponent({
   // Profile icon
   const PROFILE_ICON = (): React.JSX.Element => (
     <svg
-      class={cn(iconTokens.size.sm, 'text-brand-primary')}
+      className={cn(iconTokens.size.sm, 'text-brand-primary')}
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -134,7 +134,7 @@ function ProfileSelectorComponent({
 
   // Default indicator
   const DEFAULT_BADGE = (): React.JSX.Element => (
-    <span class="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary font-medium">
+    <span className="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary font-medium">
       {t('profile.default', 'Default')}
     </span>
   );
@@ -143,14 +143,14 @@ function ProfileSelectorComponent({
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: Group role is semantically correct for dropdown container
-    <div ref={dropdownRef} class="relative" onKeyDown={handleKeyDown} role="group">
+    <div ref={dropdownRef} className="relative" onKeyDown={handleKeyDown} role="group">
       {/* Trigger button */}
       <button
         ref={buttonRef}
         type="button"
         disabled={isDisabled}
         onClick={(): void => setIsOpen(!isOpen)}
-        class={cn(
+        className={cn(
           'flex items-center',
           spacing.gap.tight,
           spacing.pad.sm,
@@ -165,20 +165,20 @@ function ProfileSelectorComponent({
         <PROFILE_ICON />
 
         {/* Current profile name */}
-        <span class="body-small font-medium text-text-primary truncate max-w-24 sm:max-w-32">
+        <span className="body-small font-medium text-text-primary truncate max-w-24 sm:max-w-32">
           {loading ? t('profile.loading', 'Loading...') : getProfileDisplayName()}
         </span>
 
         {/* Loading/switching indicator */}
         {loading || switching ? (
           <svg
-            class={cn(iconTokens.size.sm, 'text-text-muted animate-spin')}
+            className={cn(iconTokens.size.sm, 'text-text-muted animate-spin')}
             fill="none"
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
             <circle
-              class="opacity-25"
+              className="opacity-25"
               cx="12"
               cy="12"
               r="10"
@@ -186,7 +186,7 @@ function ProfileSelectorComponent({
               strokeWidth="4"
             />
             <path
-              class="opacity-75"
+              className="opacity-75"
               fill="currentColor"
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
@@ -196,7 +196,7 @@ function ProfileSelectorComponent({
         {/* Dropdown arrow */}
         {loading || switching ? null : (
           <svg
-            class={cn(
+            className={cn(
               iconTokens.size.sm,
               'text-text-muted transition-transform',
               isOpen ? 'rotate-180' : '',
@@ -210,11 +210,10 @@ function ProfileSelectorComponent({
           </svg>
         )}
       </button>
-
       {/* Dropdown menu */}
       {isOpen ? (
         <div
-          class={cn(
+          className={cn(
             'absolute top-full left-0 mt-1 w-64',
             radius.md,
             'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
@@ -225,12 +224,12 @@ function ProfileSelectorComponent({
           {/* Profiles section */}
           {profiles.length > 0 && (
             <div>
-              <div class={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
-                <span class="caption font-semibold text-text-muted uppercase tracking-wide">
+              <div className={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
+                <span className="caption font-semibold text-text-muted uppercase tracking-wide">
                   {t('profile.profiles', 'Profiles')}
                 </span>
               </div>
-              <div class="max-h-60 overflow-y-auto">
+              <div className="max-h-60 overflow-y-auto">
                 {profiles.map((profile) => (
                   <button
                     type="button"
@@ -239,7 +238,7 @@ function ProfileSelectorComponent({
                       selectProfile(profile.id).catch(() => undefined);
                     }}
                     disabled={switching}
-                    class={cn(
+                    className={cn(
                       'w-full flex items-center',
                       spacing.gap.tight,
                       spacing.pad.sm,
@@ -251,29 +250,31 @@ function ProfileSelectorComponent({
                   >
                     {/* Selection indicator */}
                     <span
-                      class={cn(
+                      className={cn(
                         'w-2 h-2 rounded-full flex-shrink-0',
                         profile.id === activeProfile?.id ? 'bg-brand-primary' : 'bg-transparent',
                       )}
                     />
 
                     {/* Profile info */}
-                    <div class="flex-1 min-w-0 text-left">
-                      <div class="flex items-center gap-1.5">
-                        <span class="body-small font-medium text-text-primary truncate">
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="flex items-center gap-1.5">
+                        <span className="body-small font-medium text-text-primary truncate">
                           {profile.name}
                         </span>
                         {profile.is_default ? <DEFAULT_BADGE /> : null}
                       </div>
                       {profile.description ? (
-                        <div class="caption text-text-muted truncate">{profile.description}</div>
+                        <div className="caption text-text-muted truncate">
+                          {profile.description}
+                        </div>
                       ) : null}
                     </div>
 
                     {/* Active check */}
                     {profile.id === activeProfile?.id ? (
                       <svg
-                        class={cn(iconTokens.size.sm, 'text-brand-primary flex-shrink-0')}
+                        className={cn(iconTokens.size.sm, 'text-brand-primary flex-shrink-0')}
                         fill="currentColor"
                         viewBox="0 0 24 24"
                         aria-hidden="true"
@@ -289,19 +290,19 @@ function ProfileSelectorComponent({
 
           {/* Empty state */}
           {profiles.length === 0 ? (
-            <div class={cn(spacing.pad.md, 'text-center')}>
-              <span class="caption text-text-muted">
+            <div className={cn(spacing.pad.md, 'text-center')}>
+              <span className="caption text-text-muted">
                 {t('profile.noProfiles', 'No profiles found')}
               </span>
             </div>
           ) : null}
 
           {/* Manage profiles link */}
-          <div class="border-t border-surface-border">
+          <div className="border-t border-surface-border">
             <button
               type="button"
               onClick={goToManagement}
-              class={cn(
+              className={cn(
                 'w-full flex items-center justify-center',
                 spacing.gap.tight,
                 spacing.pad.sm,
@@ -309,7 +310,7 @@ function ProfileSelectorComponent({
               )}
             >
               <svg
-                class={iconTokens.size.sm}
+                className={iconTokens.size.sm}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -328,7 +329,9 @@ function ProfileSelectorComponent({
                   d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-              <span class="body-small font-medium">{t('profile.manage', 'Manage Profiles')}</span>
+              <span className="body-small font-medium">
+                {t('profile.manage', 'Manage Profiles')}
+              </span>
             </button>
           </div>
         </div>

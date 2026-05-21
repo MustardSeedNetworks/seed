@@ -149,35 +149,35 @@ function _resourceBar({
   const showConsumers = topProcesses && topProcesses.length > 0 && percent >= 75;
 
   return (
-    <div class="stack-xs">
-      <div class="flex justify-between caption">
+    <div className="stack-xs">
+      <div className="flex justify-between caption">
         <span>{label}</span>
-        <span class="text-text-primary font-medium">{percent.toFixed(0)}%</span>
+        <span className="text-text-primary font-medium">{percent.toFixed(0)}%</span>
       </div>
-      <div class={cn('h-2 bg-surface-border overflow-hidden', radius.md)}>
+      <div className={cn('h-2 bg-surface-border overflow-hidden', radius.md)}>
         <div
-          class={cn('h-full transition-all duration-300', barColor)}
+          className={cn('h-full transition-all duration-300', barColor)}
           style={{ width: `${Math.min(percent, 100)}%` }}
         />
       </div>
       {used > 0 && total > 0 ? (
-        <div class="caption">
+        <div className="caption">
           {formatBytes(used)} / {formatBytes(total)}
         </div>
       ) : null}
       {showConsumers ? (
-        <div class="caption text-text-muted pl-3 mt-1">
+        <div className="caption text-text-muted pl-3 mt-1">
           <div>Top consumers:</div>
           {topProcesses.slice(0, 3).map((proc) => (
-            <div key={proc.pid} class="pl-2">
+            <div key={proc.pid} className="pl-2">
               - {proc.name} ({Math.round(proc.memoryMb)} MB)
             </div>
           ))}
         </div>
       ) : null}
       {percent >= 75 ? (
-        <div class="mt-2 text-xs text-text-muted">
-          <span class="font-medium">Tip:</span> {getSuggestion(type, percent)}
+        <div className="mt-2 text-xs text-text-muted">
+          <span className="font-medium">Tip:</span> {getSuggestion(type, percent)}
         </div>
       ) : null}
     </div>
@@ -237,7 +237,7 @@ export function SystemHealthCard(): React.ReactElement {
     <BaseCard
       title={t('system.title')}
       subtitle={data?.hostname}
-      icon={<Server class={iconTokens.size.md} />}
+      icon={<Server className={iconTokens.size.md} />}
       data={data}
       loading={loading}
       error={error}
@@ -245,7 +245,7 @@ export function SystemHealthCard(): React.ReactElement {
     >
       {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Resource bars require conditional rendering */}
       {(health: SystemHealth): React.ReactElement => (
-        <div class="stack">
+        <div className="stack">
           <resourceBar
             label={t('system.cpu')}
             percent={health.cpuPercent ?? 0}
@@ -272,7 +272,7 @@ export function SystemHealthCard(): React.ReactElement {
 
           <CardDivider />
 
-          <div class={cn('grid grid-cols-2', spacing.gap.compact)}>
+          <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
             <CardRow
               label={t('system.uptime')}
               value={formatUptime(health.uptime ?? 0)}
@@ -292,7 +292,7 @@ export function SystemHealthCard(): React.ReactElement {
             />
           </div>
 
-          <div class={cn('caption text-center', spacing.padding.top.tight)}>
+          <div className={cn('caption text-center', spacing.padding.top.tight)}>
             {health.os ?? 'Unknown'}/{health.arch ?? 'Unknown'} - {health.numCpu ?? 0} CPUs
           </div>
         </div>

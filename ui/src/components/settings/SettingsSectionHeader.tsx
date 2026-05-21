@@ -60,8 +60,8 @@ export function SettingsSectionHeader({
   const { t } = useTranslation(namespace);
 
   return (
-    <div class={layout.inline.default}>
-      <ICON class={iconTokens.size.sm} />
+    <div className={layout.inline.default}>
+      <ICON className={iconTokens.size.sm} />
       <span>{t(titleKey)}</span>
       {status !== undefined && <AutoSaveIndicator status={status} />}
     </div>

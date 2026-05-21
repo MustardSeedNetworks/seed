@@ -68,7 +68,7 @@ export const WithSuggestedPassword: Story = {
 export const GeneratedPasswordSelected: Story = {
   render: () => {
     return (
-      <div class="relative min-h-screen">
+      <div className="relative min-h-screen">
         <SetupWizard
           onComplete={() => {
             // Handle setup completion
@@ -256,17 +256,17 @@ export const InteractiveSetupFlow: Story = {
 
     if (setupComplete) {
       return (
-        <div class="min-h-screen bg-surface-base flex items-center justify-center">
-          <div class="text-center">
+        <div className="min-h-screen bg-surface-base flex items-center justify-center">
+          <div className="text-center">
             <div
-              class={cn(
+              className={cn(
                 spacing.margin.bottom.content,
                 radius.full,
                 'w-16 h-16 mx-auto bg-status-success/20 flex items-center justify-center',
               )}
             >
               <svg
-                class="w-8 h-8 text-status-success"
+                className="w-8 h-8 text-status-success"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -280,8 +280,8 @@ export const InteractiveSetupFlow: Story = {
                 />
               </svg>
             </div>
-            <h2 class={cn(spacing.margin.bottom.inline, 'heading-2')}>Setup Complete!</h2>
-            <p class="body-small text-text-muted">You are now logged in.</p>
+            <h2 className={cn(spacing.margin.bottom.inline, 'heading-2')}>Setup Complete!</h2>
+            <p className="body-small text-text-muted">You are now logged in.</p>
           </div>
         </div>
       );

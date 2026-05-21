@@ -28,16 +28,16 @@ export function SettingsDrawerFooter({
   return (
     <>
       {/* Logs (debug) */}
-      <section class={cn(spacing.padding.top.section, 'border-t border-surface-border')}>
-        <div class="flex items-start justify-between">
+      <section className={cn(spacing.padding.top.section, 'border-t border-surface-border')}>
+        <div className="flex items-start justify-between">
           <div>
-            <h3 class="body-small font-medium text-text-muted">{t('logs.title')}</h3>
-            <p class="caption text-text-muted">{t('logs.description')}</p>
+            <h3 className="body-small font-medium text-text-muted">{t('logs.title')}</h3>
+            <p className="caption text-text-muted">{t('logs.description')}</p>
           </div>
           <button
             type="button"
             onClick={fetchLogPreview}
-            class={cn(
+            className={cn(
               'caption',
               spacing.chip.sm,
               'border border-surface-border',
@@ -49,11 +49,11 @@ export function SettingsDrawerFooter({
           </button>
         </div>
         {logError ? (
-          <p class={cn('caption text-status-error', spacing.margin.top.inline)}>{logError}</p>
+          <p className={cn('caption text-status-error', spacing.margin.top.inline)}>{logError}</p>
         ) : null}
         {!logError && logPreview.length > 0 ? (
           <pre
-            class={cn(
+            className={cn(
               spacing.margin.top.inline,
               'max-h-48 overflow-y-auto text-2xs leading-5 bg-surface-base border border-surface-border',
               radius.md,
@@ -65,16 +65,15 @@ export function SettingsDrawerFooter({
           </pre>
         ) : null}
       </section>
-
       {/* Export Section */}
-      <section class={cn(spacing.padding.top.section, 'border-t border-surface-border')}>
-        <h3 class={cn('body-small font-medium text-text-muted', spacing.margin.bottom.heading)}>
+      <section className={cn(spacing.padding.top.section, 'border-t border-surface-border')}>
+        <h3 className={cn('body-small font-medium text-text-muted', spacing.margin.bottom.heading)}>
           {t('export.title')}
         </h3>
         <a
           href={`${API_BASE}/api/v1/harvest/export`}
           download="seed-export.json"
-          class={cn(
+          className={cn(
             'w-full',
             button.size.md,
             'bg-surface-base border border-surface-border text-text-primary',
@@ -85,7 +84,7 @@ export function SettingsDrawerFooter({
           )}
         >
           <svg
-            class={iconTokens.size.sm}
+            className={iconTokens.size.sm}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -100,17 +99,16 @@ export function SettingsDrawerFooter({
           </svg>
           {t('export.download')}
         </a>
-        <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
+        <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
           {t('export.description')}
         </p>
       </section>
-
       {/* About Section */}
-      <section class={cn(spacing.padding.top.section, 'border-t border-surface-border')}>
-        <h3 class={cn('body-small font-medium text-text-muted', spacing.margin.bottom.inline)}>
+      <section className={cn(spacing.padding.top.section, 'border-t border-surface-border')}>
+        <h3 className={cn('body-small font-medium text-text-muted', spacing.margin.bottom.inline)}>
           {t('about.title')}
         </h3>
-        <p class="caption text-text-muted">
+        <p className="caption text-text-muted">
           {t('about.appName')} {version}
           <br />
           {t('about.description')}

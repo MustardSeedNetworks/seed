@@ -94,7 +94,7 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps): React.
   return (
     <SimpleBaseCard
       title={t('switch.title')}
-      icon={<Network class={iconTokens.size.md} />}
+      icon={<Network className={iconTokens.size.md} />}
       status={status}
       loading={loading}
       loadingContent={<CardValue value={t('switch.listening')} size="lg" />}
@@ -111,9 +111,9 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps): React.
           {data?.managementIp ? (
             <CardRow label={t('switch.managementIp')} value={data?.managementIp} />
           ) : null}
-          <div class={spacing.margin.top.inline}>
+          <div className={spacing.margin.top.inline}>
             <span
-              class={cn(
+              className={cn(
                 'caption',
                 spacing.chip.sm,
                 'bg-brand-primary/20',
@@ -128,15 +128,14 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps): React.
       ) : (
         <>
           <CardValue value={t('switch.noDiscoveryFrames')} size="md" />
-          <p class={cn('caption', spacing.margin.top.inline)}>{t('switch.waitingFrames')}</p>
+          <p className={cn('caption', spacing.margin.top.inline)}>{t('switch.waitingFrames')}</p>
         </>
       )}
-
       {/* VLAN Section */}
       {vlanData ? (
         <>
           <CardDivider />
-          <p class={cn('section-title', spacing.margin.bottom.inline)}>{t('switch.vlans')}</p>
+          <p className={cn('section-title', spacing.margin.bottom.inline)}>{t('switch.vlans')}</p>
           {vlanData.nativeVlan !== null ? (
             <CardRow label={t('switch.nativeVlan')} value={vlanData.nativeVlan.toString()} />
           ) : (
@@ -146,13 +145,15 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps): React.
             <CardRow label={t('switch.voiceVlan')} value={vlanData.voiceVlan.toString()} />
           ) : null}
           {vlanData.taggedVlans.length > 0 ? (
-            <div class={spacing.margin.top.inline}>
-              <p class={cn('caption', spacing.margin.bottom.inline)}>{t('switch.taggedVlans')}</p>
-              <div class={layout.inline.wrap}>
+            <div className={spacing.margin.top.inline}>
+              <p className={cn('caption', spacing.margin.bottom.inline)}>
+                {t('switch.taggedVlans')}
+              </p>
+              <div className={layout.inline.wrap}>
                 {vlanData.taggedVlans.map((vlan) => (
                   <span
                     key={vlan}
-                    class={cn('caption', spacing.chip.sm, 'bg-surface-hover', radius.default)}
+                    className={cn('caption', spacing.chip.sm, 'bg-surface-hover', radius.default)}
                   >
                     {vlan}
                   </span>
@@ -162,7 +163,11 @@ export function SwitchCard({ data, vlanData, loading }: SwitchCardProps): React.
           ) : null}
           {vlanData.configured.enabled ? (
             <div
-              class={cn(spacing.margin.top.heading, spacing.padding.top.heading, border.divider)}
+              className={cn(
+                spacing.margin.top.heading,
+                spacing.padding.top.heading,
+                border.divider,
+              )}
             >
               <CardRow
                 label={t('switch.configuredTag')}

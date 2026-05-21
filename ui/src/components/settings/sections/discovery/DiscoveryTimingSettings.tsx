@@ -21,12 +21,11 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
     const { t } = useTranslation('settings');
 
     return (
-      <div class={cn('border-t border-surface-border', spacing.pad.sm)}>
-        <span class="caption text-text-muted font-medium">{t('discovery.timingSettings')}</span>
-
+      <div className={cn('border-t border-surface-border', spacing.pad.sm)}>
+        <span className="caption text-text-muted font-medium">{t('discovery.timingSettings')}</span>
         {/* Scan Workers */}
-        <div class={spacing.margin.top.inline}>
-          <label class="caption text-text-muted" for="discovery-workers">
+        <div className={spacing.margin.top.inline}>
+          <label className="caption text-text-muted" htmlFor="discovery-workers">
             {t('discovery.concurrentWorkers')}
           </label>
           <input
@@ -41,7 +40,7 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
             }
             min={1}
             max={100}
-            class={cn(
+            className={cn(
               'w-full',
               spacing.margin.top.tight,
               spacing.chip.lg,
@@ -50,14 +49,13 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
               'body-small text-text-primary',
             )}
           />
-          <p class={cn('caption text-text-muted', spacing.margin.top.tight)}>
+          <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
             {t('discovery.workersDesc')}
           </p>
         </div>
-
         {/* Ping Timeout */}
-        <div class={spacing.margin.top.content}>
-          <label class="caption text-text-muted" for="discovery-ping-timeout">
+        <div className={spacing.margin.top.content}>
+          <label className="caption text-text-muted" htmlFor="discovery-ping-timeout">
             {t('discovery.pingTimeout')}
           </label>
           <input
@@ -72,7 +70,7 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
             }
             min={100}
             max={5000}
-            class={cn(
+            className={cn(
               'w-full',
               spacing.margin.top.tight,
               spacing.chip.lg,
@@ -82,10 +80,9 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
             )}
           />
         </div>
-
         {/* Scan Timeout */}
-        <div class={spacing.margin.top.content}>
-          <label class="caption text-text-muted" for="discovery-scan-timeout">
+        <div className={spacing.margin.top.content}>
+          <label className="caption text-text-muted" htmlFor="discovery-scan-timeout">
             {t('discovery.scanTimeout')}
           </label>
           <input
@@ -100,7 +97,7 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
             }
             min={5000}
             max={120000}
-            class={cn(
+            className={cn(
               'w-full',
               spacing.margin.top.tight,
               spacing.chip.lg,
@@ -110,10 +107,9 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
             )}
           />
         </div>
-
         {/* Rescan Interval */}
-        <div class={spacing.margin.top.content}>
-          <label class="caption text-text-muted" for="discovery-rescan-interval">
+        <div className={spacing.margin.top.content}>
+          <label className="caption text-text-muted" htmlFor="discovery-rescan-interval">
             {t('discovery.rescanInterval')}
           </label>
           <input
@@ -127,7 +123,7 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
               }))
             }
             min={0}
-            class={cn(
+            className={cn(
               'w-full',
               spacing.margin.top.tight,
               spacing.chip.lg,
@@ -136,11 +132,10 @@ export const DiscoveryTimingSettings: React.NamedExoticComponent<DiscoveryTiming
               'body-small text-text-primary',
             )}
           />
-          <p class={cn('caption text-text-muted', spacing.margin.top.tight)}>
+          <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
             {t('discovery.rescanIntervalDesc')}
           </p>
         </div>
-
         {/* OUI database is baked into binary at build time - no runtime path needed */}
       </div>
     );

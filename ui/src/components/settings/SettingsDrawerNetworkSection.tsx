@@ -56,21 +56,21 @@ export function SettingsDrawerNetworkSection({
   return (
     <CollapsibleSection
       title={
-        <div class={cn('flex items-center', spacing.gap.compact)}>
-          <Network class={iconTokens.size.sm} />
+        <div className={cn('flex items-center', spacing.gap.compact)}>
+          <Network className={iconTokens.size.sm} />
           <span>{t('sections.network')}</span>
         </div>
       }
     >
       {/* Network Configuration */}
-      <div class="stack">
-        <p class="section-title">{t('network.title')}</p>
+      <div className="stack">
+        <p className="section-title">{t('network.title')}</p>
         {/* Mode Toggle */}
-        <div class={cn('grid grid-cols-2', spacing.gap.compact)}>
+        <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
           <button
             type="button"
             onClick={(): void => setIpSettings((prev) => ({ ...prev, mode: 'dhcp' }))}
-            class={cn(
+            className={cn(
               spacing.tab,
               radius.md,
               'body-small font-medium transition-colors',
@@ -84,7 +84,7 @@ export function SettingsDrawerNetworkSection({
           <button
             type="button"
             onClick={(): void => setIpSettings((prev) => ({ ...prev, mode: 'static' }))}
-            class={cn(
+            className={cn(
               spacing.tab,
               radius.md,
               'body-small font-medium transition-colors',
@@ -99,9 +99,11 @@ export function SettingsDrawerNetworkSection({
 
         {/* Static IP Fields */}
         {ipSettings.mode === 'static' && (
-          <div class={cn('stack', spacing.padding.top.heading, 'border-t border-surface-border')}>
+          <div
+            className={cn('stack', spacing.padding.top.heading, 'border-t border-surface-border')}
+          >
             <div>
-              <label for="static-ip-address" class="caption font-medium">
+              <label htmlFor="static-ip-address" className="caption font-medium">
                 {t('network.ipAddress')} *
               </label>
               <input
@@ -115,7 +117,7 @@ export function SettingsDrawerNetworkSection({
                   }))
                 }
                 placeholder="192.168.1.100"
-                class={cn(
+                className={cn(
                   'w-full',
                   spacing.margin.top.tight,
                   spacing.chip.sm,
@@ -129,7 +131,7 @@ export function SettingsDrawerNetworkSection({
               />
             </div>
             <div>
-              <label for="static-subnet-mask" class="caption font-medium">
+              <label htmlFor="static-subnet-mask" className="caption font-medium">
                 {t('network.subnetMask')} *
               </label>
               <input
@@ -143,7 +145,7 @@ export function SettingsDrawerNetworkSection({
                   }))
                 }
                 placeholder="24 or 255.255.255.0"
-                class={cn(
+                className={cn(
                   'w-full',
                   spacing.margin.top.tight,
                   spacing.chip.lg,
@@ -154,7 +156,7 @@ export function SettingsDrawerNetworkSection({
               />
             </div>
             <div>
-              <label for="static-gateway" class="caption font-medium">
+              <label htmlFor="static-gateway" className="caption font-medium">
                 {t('network.gateway')}
               </label>
               <input
@@ -168,7 +170,7 @@ export function SettingsDrawerNetworkSection({
                   }))
                 }
                 placeholder="192.168.1.1"
-                class={cn(
+                className={cn(
                   'w-full',
                   spacing.margin.top.tight,
                   spacing.chip.sm,
@@ -182,7 +184,7 @@ export function SettingsDrawerNetworkSection({
               />
             </div>
             <div>
-              <label for="static-dns-servers" class="caption font-medium">
+              <label htmlFor="static-dns-servers" className="caption font-medium">
                 {t('network.dnsServers')}
               </label>
               <input
@@ -193,7 +195,7 @@ export function SettingsDrawerNetworkSection({
                   setDnsInput(e.target.value)
                 }
                 placeholder="8.8.8.8, 8.8.4.4"
-                class={cn(
+                className={cn(
                   'w-full',
                   spacing.margin.top.tight,
                   spacing.chip.lg,
@@ -211,7 +213,7 @@ export function SettingsDrawerNetworkSection({
           type="button"
           onClick={saveIpSettings}
           disabled={savingIp || (ipSettings.mode === 'static' && !ipSettings.address)}
-          class={cn(
+          className={cn(
             'w-full',
             button.size.md,
             'bg-brand-primary text-text-inverse',
@@ -224,7 +226,7 @@ export function SettingsDrawerNetworkSection({
 
         {ipMessage ? (
           <p
-            class={cn(
+            className={cn(
               'caption text-center',
               ipMessage.includes('Failed') || ipMessage.includes('Error')
                 ? statusColor.text.error
@@ -235,24 +237,23 @@ export function SettingsDrawerNetworkSection({
           </p>
         ) : null}
 
-        <p class="caption">{t('network.requiresRoot')}</p>
+        <p className="caption">{t('network.requiresRoot')}</p>
       </div>
-
       {/* Display Options */}
       <div
-        class={cn(
+        className={cn(
           'border-t border-surface-border',
           spacing.padding.top.heading,
           spacing.margin.top.heading,
         )}
       >
-        <p class={cn('caption font-medium', spacing.margin.bottom.inline)}>
+        <p className={cn('caption font-medium', spacing.margin.bottom.inline)}>
           {t('network.displayOptions')} <AutoSaveIndicator status={displayStatus} />
         </p>
-        <div class="stack-sm">
+        <div className="stack-sm">
           {/* Show Public IP */}
           <label
-            class={cn(
+            className={cn(
               'flex items-center justify-between',
               spacing.pad.xs,
               'bg-surface-base',
@@ -261,10 +262,10 @@ export function SettingsDrawerNetworkSection({
             )}
           >
             <div>
-              <span class="body-small text-text-primary font-medium">
+              <span className="body-small text-text-primary font-medium">
                 {t('network.showPublicIp')}
               </span>
-              <p class="caption text-text-muted">{t('network.displayInNetworkCard')}</p>
+              <p className="caption text-text-muted">{t('network.displayInNetworkCard')}</p>
             </div>
             <input
               type="checkbox"
@@ -275,33 +276,33 @@ export function SettingsDrawerNetworkSection({
                   showPublicIp: e.target.checked,
                 }))
               }
-              class={iconTokens.size.sm}
+              className={iconTokens.size.sm}
             />
           </label>
         </div>
       </div>
-
       {/* VLAN Configuration */}
       <div
-        class={cn(
+        className={cn(
           'border-t border-surface-border',
           spacing.padding.top.heading,
           spacing.margin.top.heading,
         )}
       >
-        <p class={cn('section-title', spacing.margin.bottom.inline)}>{t('network.vlanTag')}</p>
+        <p className={cn('section-title', spacing.margin.bottom.inline)}>{t('network.vlanTag')}</p>
         <VlanControl />
       </div>
-
       {/* MTU Configuration */}
       <div
-        class={cn(
+        className={cn(
           'border-t border-surface-border',
           spacing.padding.top.heading,
           spacing.margin.top.heading,
         )}
       >
-        <p class={cn('section-title', spacing.margin.bottom.inline)}>{t('network.mtuSetting')}</p>
+        <p className={cn('section-title', spacing.margin.bottom.inline)}>
+          {t('network.mtuSetting')}
+        </p>
         <MtuControl />
       </div>
     </CollapsibleSection>

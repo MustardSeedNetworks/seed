@@ -35,12 +35,12 @@ export const L2_PATH_DISPLAY: React.NamedExoticComponent<L2PathDisplayProps> = m
 
     if (result.hops.length === 0) {
       return (
-        <div class="stack-sm">
-          <div class="body-small font-semibold text-brand-primary">
+        <div className="stack-sm">
+          <div className="body-small font-semibold text-brand-primary">
             L2 {t('pathDiscovery.path', 'Path')}
           </div>
-          <div class={cn(spacing.pad.sm, 'bg-surface-base', radius.default)}>
-            <span class="caption text-text-muted">
+          <div className={cn(spacing.pad.sm, 'bg-surface-base', radius.default)}>
+            <span className="caption text-text-muted">
               {t('pathDiscovery.noL2Path', 'No L2 path information available')}
             </span>
           </div>
@@ -49,23 +49,22 @@ export const L2_PATH_DISPLAY: React.NamedExoticComponent<L2PathDisplayProps> = m
     }
 
     return (
-      <div class="stack-sm">
+      <div className="stack-sm">
         {/* L2 Header */}
-        <div class={cn(layout.flex.between, 'items-center')}>
+        <div className={cn(layout.flex.between, 'items-center')}>
           <div>
-            <span class="body-small font-semibold text-brand-primary">
+            <span className="body-small font-semibold text-brand-primary">
               L2 {t('pathDiscovery.path', 'Path')}
             </span>
-            <span class="caption text-text-muted ml-2">(via LLDP/CDP/SNMP)</span>
+            <span className="caption text-text-muted ml-2">(via LLDP/CDP/SNMP)</span>
           </div>
-          <span class="caption text-text-muted">
+          <span className="caption text-text-muted">
             {result.hops.length} {t('pathDiscovery.switches', 'switches')}
           </span>
         </div>
-
         {/* Visual Path Diagram */}
         <div
-          class={cn(
+          className={cn(
             'flex items-center overflow-x-auto',
             spacing.pad.sm,
             'bg-surface-base',
@@ -76,11 +75,11 @@ export const L2_PATH_DISPLAY: React.NamedExoticComponent<L2PathDisplayProps> = m
           {result.hops.map((hop, hopIndex) => (
             <div
               key={`${hop.deviceIp}-${hop.ingressPort?.name || 'start'}`}
-              class="flex items-center shrink-0"
+              className="flex items-center shrink-0"
             >
               {/* Switch Box */}
               <div
-                class={cn(
+                className={cn(
                   'flex flex-col items-center',
                   spacing.pad.sm,
                   'bg-surface-raised',
@@ -89,26 +88,26 @@ export const L2_PATH_DISPLAY: React.NamedExoticComponent<L2PathDisplayProps> = m
                   'min-w-28',
                 )}
               >
-                <span class="caption font-semibold text-text-primary truncate max-w-24">
+                <span className="caption font-semibold text-text-primary truncate max-w-24">
                   {hop.device || hop.deviceIp}
                 </span>
-                <span class="caption text-text-muted">{hop.deviceIp}</span>
-                <span class={cn('caption', getSourceColor(hop.source))}>
+                <span className="caption text-text-muted">{hop.deviceIp}</span>
+                <span className={cn('caption', getSourceColor(hop.source))}>
                   {hop.source.toUpperCase()}
                 </span>
               </div>
 
               {/* Arrow with port names */}
               {hopIndex < result.hops.length - 1 ? (
-                <div class="flex items-center mx-2">
-                  <div class="flex flex-col items-end mr-1">
+                <div className="flex items-center mx-2">
+                  <div className="flex flex-col items-end mr-1">
                     {hop.egressPort ? (
-                      <span class="caption text-text-muted">{hop.egressPort.name}</span>
+                      <span className="caption text-text-muted">{hop.egressPort.name}</span>
                     ) : null}
                   </div>
-                  <div class="w-8 h-0.5 bg-brand-primary relative">
+                  <div className="w-8 h-0.5 bg-brand-primary relative">
                     <div
-                      class="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0"
                       style={{
                         borderTop: '4px solid transparent',
                         borderBottom: '4px solid transparent',
@@ -116,9 +115,9 @@ export const L2_PATH_DISPLAY: React.NamedExoticComponent<L2PathDisplayProps> = m
                       }}
                     />
                   </div>
-                  <div class="flex flex-col items-start ml-1">
+                  <div className="flex flex-col items-start ml-1">
                     {result.hops[hopIndex + 1]?.ingressPort ? (
-                      <span class="caption text-text-muted">
+                      <span className="caption text-text-muted">
                         {result.hops[hopIndex + 1]?.ingressPort?.name}
                       </span>
                     ) : null}
@@ -128,9 +127,8 @@ export const L2_PATH_DISPLAY: React.NamedExoticComponent<L2PathDisplayProps> = m
             </div>
           ))}
         </div>
-
         {/* Detailed Port Information */}
-        <div class="stack-xs">
+        <div className="stack-xs">
           {result.hops.map((hop, index) => (
             <L2_HOP_DETAIL
               key={`${hop.deviceIp}-${hop.ingressPort?.name || 'start'}-detail`}
@@ -162,54 +160,55 @@ const L2_HOP_DETAIL: React.NamedExoticComponent<L2HopDetailProps> = memo(functio
   t,
 }: L2HopDetailProps): React.ReactElement {
   return (
-    <div class={cn('border border-surface-border', radius.default, 'overflow-hidden')}>
+    <div className={cn('border border-surface-border', radius.default, 'overflow-hidden')}>
       {/* Header */}
       <button
         type="button"
         onClick={onToggle}
-        class={cn(
+        className={cn(
           'w-full flex items-center justify-between',
           spacing.pad.sm,
           'bg-surface-raised hover:bg-surface-hover transition-colors',
           'text-left',
         )}
       >
-        <div class="flex items-center gap-2">
-          <span class="body-small font-medium text-text-primary">{hop.device || hop.deviceIp}</span>
-          <span class="caption text-text-muted">({hop.deviceIp})</span>
+        <div className="flex items-center gap-2">
+          <span className="body-small font-medium text-text-primary">
+            {hop.device || hop.deviceIp}
+          </span>
+          <span className="caption text-text-muted">({hop.deviceIp})</span>
         </div>
         {isExpanded ? (
-          <ChevronUp class={cn(iconTokens.size.sm, 'text-text-muted')} />
+          <ChevronUp className={cn(iconTokens.size.sm, 'text-text-muted')} />
         ) : (
-          <ChevronDown class={cn(iconTokens.size.sm, 'text-text-muted')} />
+          <ChevronDown className={cn(iconTokens.size.sm, 'text-text-muted')} />
         )}
       </button>
-
       {/* Expanded Details */}
       {isExpanded ? (
-        <div class={cn(spacing.pad.sm, 'bg-surface-base border-t border-surface-border')}>
-          <div class="grid grid-cols-2 gap-4">
+        <div className={cn(spacing.pad.sm, 'bg-surface-base border-t border-surface-border')}>
+          <div className="grid grid-cols-2 gap-4">
             {/* Ingress Port */}
             <div>
-              <div class="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
+              <div className="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
                 {t('pathDiscovery.ingressPort', 'Ingress Port')}
               </div>
               {hop.ingressPort ? (
                 <PORT_DETAILS port={hop.ingressPort} t={t} />
               ) : (
-                <span class="caption text-text-muted">---</span>
+                <span className="caption text-text-muted">---</span>
               )}
             </div>
 
             {/* Egress Port */}
             <div>
-              <div class="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
+              <div className="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
                 {t('pathDiscovery.egressPort', 'Egress Port')}
               </div>
               {hop.egressPort ? (
                 <PORT_DETAILS port={hop.egressPort} t={t} />
               ) : (
-                <span class="caption text-text-muted">---</span>
+                <span className="caption text-text-muted">---</span>
               )}
             </div>
           </div>
@@ -233,23 +232,23 @@ const PORT_DETAILS: React.NamedExoticComponent<PortDetailsProps> = memo(function
   }
 
   return (
-    <div class="stack-xs">
-      <div class="body-small font-mono text-text-primary">{port.name}</div>
-      <div class="flex flex-wrap gap-2">
-        {port.speed ? <span class="caption text-text-secondary">{port.speed}</span> : null}
-        {port.duplex ? <span class="caption text-text-muted">{port.duplex}</span> : null}
+    <div className="stack-xs">
+      <div className="body-small font-mono text-text-primary">{port.name}</div>
+      <div className="flex flex-wrap gap-2">
+        {port.speed ? <span className="caption text-text-secondary">{port.speed}</span> : null}
+        {port.duplex ? <span className="caption text-text-muted">{port.duplex}</span> : null}
         {port.isTrunk ? (
-          <span class="caption text-brand-primary">{t('pathDiscovery.trunk', 'Trunk')}</span>
+          <span className="caption text-brand-primary">{t('pathDiscovery.trunk', 'Trunk')}</span>
         ) : null}
       </div>
       {port.vlans && port.vlans.length > 0 ? (
-        <div class="caption text-text-muted">
+        <div className="caption text-text-muted">
           VLANs: {port.vlans.slice(0, 5).join(', ')}
           {port.vlans.length > 5 ? ` +${port.vlans.length - 5}` : null}
         </div>
       ) : null}
       {port.connectedTo ? (
-        <div class="caption text-text-secondary">→ {port.connectedTo}</div>
+        <div className="caption text-text-secondary">→ {port.connectedTo}</div>
       ) : null}
     </div>
   );

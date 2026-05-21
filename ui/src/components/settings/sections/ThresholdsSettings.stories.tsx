@@ -70,7 +70,7 @@ const meta: Meta<typeof ThresholdsSettings> = {
   },
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="w-[500px] max-h-[600px] overflow-y-auto">
+      <div className="w-[500px] max-h-[600px] overflow-y-auto">
         <StoryComponent />
       </div>
     ),
@@ -234,10 +234,12 @@ export const Interactive: Story = {
  */
 export const SaveStates: Story = {
   render: () => (
-    <div class={cn('stack-lg', spacing.pad.default)}>
+    <div className={cn('stack-lg', spacing.pad.default)}>
       <div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Idle (no changes)</p>
-        <div class="w-[400px]">
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+          Idle (no changes)
+        </p>
+        <div className="w-[400px]">
           <ThresholdsSettings
             thresholds={defaultThresholds}
             setThresholds={(): void => {
@@ -248,8 +250,8 @@ export const SaveStates: Story = {
         </div>
       </div>
       <div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Saving</p>
-        <div class="w-[400px]">
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Saving</p>
+        <div className="w-[400px]">
           <ThresholdsSettings
             thresholds={defaultThresholds}
             setThresholds={(): void => {
@@ -260,8 +262,8 @@ export const SaveStates: Story = {
         </div>
       </div>
       <div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Saved</p>
-        <div class="w-[400px]">
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Saved</p>
+        <div className="w-[400px]">
           <ThresholdsSettings
             thresholds={defaultThresholds}
             setThresholds={(): void => {
@@ -272,8 +274,8 @@ export const SaveStates: Story = {
         </div>
       </div>
       <div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Error</p>
-        <div class="w-[400px]">
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Error</p>
+        <div className="w-[400px]">
           <ThresholdsSettings
             thresholds={defaultThresholds}
             setThresholds={(): void => {

@@ -45,7 +45,7 @@ interface LinkHistoryEvent {
 interface PoeInfo {
   detected: boolean;
   standard?: string; // 802.3af, 802.3at, 802.3bt
-  class?: number;
+  className?: number;
   powerMw?: number;
   voltage?: number;
 }
@@ -128,15 +128,15 @@ function getStatus(data: LinkData): Status {
 function _linkLoadingSkeleton(): JSX.Element {
   return (
     <>
-      <Skeleton class={cn('h-8 w-32', spacing.margin.bottom.heading)} />
-      <div class={cn('stack-sm', spacing.margin.top.content)}>
-        <div class={layout.flex.between}>
-          <Skeleton class="h-3 w-16" />
-          <Skeleton class="h-3 w-20" />
+      <Skeleton className={cn('h-8 w-32', spacing.margin.bottom.heading)} />
+      <div className={cn('stack-sm', spacing.margin.top.content)}>
+        <div className={layout.flex.between}>
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-20" />
         </div>
-        <div class={layout.flex.between}>
-          <Skeleton class="h-3 w-12" />
-          <Skeleton class="h-3 w-8" />
+        <div className={layout.flex.between}>
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-3 w-8" />
         </div>
       </div>
     </>
@@ -161,7 +161,7 @@ export const LinkCard: React.MemoExoticComponent<(props: LinkCardProps) => JSX.E
     return (
       <BaseCard
         title={t('link.title')}
-        icon={<Cable class={iconTokens.size.md} />}
+        icon={<Cable className={iconTokens.size.md} />}
         data={data}
         loading={loading}
         getStatus={getStatus}
@@ -198,15 +198,19 @@ export const LinkCard: React.MemoExoticComponent<(props: LinkCardProps) => JSX.E
                     <CardRow label={t('link.flaps24h')} value={linkData.flapCount24h.toString()} />
                   )}
                   {linkData.advertisedSpeeds && linkData.advertisedSpeeds.length > 0 && (
-                    <div class={spacing.margin.top.inline}>
-                      <p class={cn('caption', spacing.margin.bottom.inline)}>
+                    <div className={spacing.margin.top.inline}>
+                      <p className={cn('caption', spacing.margin.bottom.inline)}>
                         {t('link.advertisedSpeeds')}
                       </p>
-                      <div class={layout.inline.wrap}>
+                      <div className={layout.inline.wrap}>
                         {linkData.advertisedSpeeds.map((speed) => (
                           <span
                             key={speed}
-                            class={cn('caption bg-surface-hover', spacing.chip.sm, radius.default)}
+                            className={cn(
+                              'caption bg-surface-hover',
+                              spacing.chip.sm,
+                              radius.default,
+                            )}
                           >
                             {speed}
                           </span>
@@ -220,7 +224,7 @@ export const LinkCard: React.MemoExoticComponent<(props: LinkCardProps) => JSX.E
                     <>
                       <CardDivider />
                       <p
-                        class={cn(
+                        className={cn(
                           'caption font-medium text-text-muted',
                           spacing.margin.bottom.tight,
                         )}
@@ -257,7 +261,7 @@ export const LinkCard: React.MemoExoticComponent<(props: LinkCardProps) => JSX.E
                     <>
                       <CardDivider />
                       <p
-                        class={cn(
+                        className={cn(
                           'caption font-medium text-text-muted',
                           spacing.margin.bottom.tight,
                         )}
@@ -288,9 +292,9 @@ export const LinkCard: React.MemoExoticComponent<(props: LinkCardProps) => JSX.E
 
                       {/* SFP DDM Readings */}
                       {linkData.sfp.ddmSupport && linkData.sfp.ddm ? (
-                        <div class={spacing.margin.top.inline}>
+                        <div className={spacing.margin.top.inline}>
                           <p
-                            class={cn(
+                            className={cn(
                               'caption font-medium text-text-muted',
                               spacing.margin.bottom.tight,
                             )}
@@ -314,7 +318,9 @@ export const LinkCard: React.MemoExoticComponent<(props: LinkCardProps) => JSX.E
                             value={`${linkData.sfp.ddm.rxPowerDbm.toFixed(1)} dBm`}
                           />
                           {linkData.sfp.ddm.alarms && linkData.sfp.ddm.alarms.length > 0 && (
-                            <div class={cn('caption text-status-error', spacing.margin.top.tight)}>
+                            <div
+                              className={cn('caption text-status-error', spacing.margin.top.tight)}
+                            >
                               {linkData.sfp.ddm.alarms.map((alarm) => (
                                 <p key={alarm}>{alarm}</p>
                               ))}
@@ -322,7 +328,10 @@ export const LinkCard: React.MemoExoticComponent<(props: LinkCardProps) => JSX.E
                           )}
                           {linkData.sfp.ddm.warnings && linkData.sfp.ddm.warnings.length > 0 && (
                             <div
-                              class={cn('caption text-status-warning', spacing.margin.top.tight)}
+                              className={cn(
+                                'caption text-status-warning',
+                                spacing.margin.top.tight,
+                              )}
                             >
                               {linkData.sfp.ddm.warnings.map((warning) => (
                                 <p key={warning}>{warning}</p>

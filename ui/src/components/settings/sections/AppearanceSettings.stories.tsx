@@ -43,7 +43,7 @@ const meta: Meta<typeof AppearanceSettings> = {
   },
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="w-[400px]">
+      <div className="w-[400px]">
         <StoryComponent />
       </div>
     ),
@@ -137,17 +137,17 @@ const noopSetTheme = (): void => {
 
 export const Comparison: Story = {
   render: () => (
-    <div class="stack-lg">
+    <div className="stack-lg">
       <div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Light Theme</p>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Light Theme</p>
         <AppearanceSettings theme="light" setTheme={noopSetTheme} isDark={false} />
       </div>
       <div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Dark Theme</p>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Dark Theme</p>
         <AppearanceSettings theme="dark" setTheme={noopSetTheme} isDark={true} />
       </div>
       <div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>System Theme</p>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>System Theme</p>
         <AppearanceSettings theme="system" setTheme={noopSetTheme} isDark={false} />
       </div>
     </div>

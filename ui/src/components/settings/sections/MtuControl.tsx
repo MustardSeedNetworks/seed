@@ -69,8 +69,8 @@ export const MtuControl: React.NamedExoticComponent<Record<string, never>> = mem
     };
 
     return (
-      <div class="stack-sm">
-        <div class={layout.inline.default}>
+      <div className="stack-sm">
+        <div className={layout.inline.default}>
           <input
             type="number"
             min="68"
@@ -80,7 +80,7 @@ export const MtuControl: React.NamedExoticComponent<Record<string, never>> = mem
               setMtu(e.target.value)
             }
             placeholder={t('network.mtuControl.placeholder')}
-            class={cn(
+            className={cn(
               'flex-1',
               input.size.sm,
               'bg-surface-base border border-surface-border',
@@ -95,7 +95,7 @@ export const MtuControl: React.NamedExoticComponent<Record<string, never>> = mem
               handleApply().catch(() => undefined);
             }}
             disabled={loading}
-            class={cn(
+            className={cn(
               button.size.md,
               'bg-brand-primary text-text-inverse',
               radius.md,
@@ -107,7 +107,7 @@ export const MtuControl: React.NamedExoticComponent<Record<string, never>> = mem
         </div>
         {message ? (
           <p
-            class={cn(
+            className={cn(
               'caption',
               message.isError ? statusColor.text.error : statusColor.text.success,
             )}
@@ -115,7 +115,7 @@ export const MtuControl: React.NamedExoticComponent<Record<string, never>> = mem
             {message.text}
           </p>
         ) : null}
-        <p class="caption">{t('network.mtuControl.description')}</p>
+        <p className="caption">{t('network.mtuControl.description')}</p>
       </div>
     );
   },

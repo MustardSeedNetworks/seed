@@ -77,19 +77,19 @@ export const Interactive: Story = {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-      <div class={cn('min-h-screen bg-surface-base', spacing.pad.xl)}>
-        <div class="max-w-xl mx-auto text-center">
-          <h1 class={cn('heading-2 text-text-primary', spacing.margin.bottom.content)}>
+      <div className={cn('min-h-screen bg-surface-base', spacing.pad.xl)}>
+        <div className="max-w-xl mx-auto text-center">
+          <h1 className={cn('heading-2 text-text-primary', spacing.margin.bottom.content)}>
             Help Center Demo
           </h1>
-          <p class={cn('body text-text-secondary', spacing.margin.bottom.section)}>
+          <p className={cn('body text-text-secondary', spacing.margin.bottom.section)}>
             Click the button below to open the help center. Use the sidebar to navigate between
             sections, or use the search to filter content.
           </p>
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            class={cn(
+            className={cn(
               button.size.lg,
               'bg-brand-primary text-text-inverse',
               radius.lg,
@@ -120,16 +120,18 @@ export const SearchDemo: Story = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="min-h-screen bg-surface-base">
-        <div class={cn(spacing.pad.default, 'bg-surface-raised border-b border-surface-border')}>
-          <h2 class={cn('heading-3 text-text-primary', spacing.margin.bottom.inline)}>
+      <div className="min-h-screen bg-surface-base">
+        <div
+          className={cn(spacing.pad.default, 'bg-surface-raised border-b border-surface-border')}
+        >
+          <h2 className={cn('heading-3 text-text-primary', spacing.margin.bottom.inline)}>
             Search Functionality
           </h2>
-          <p class="body-small text-text-muted">
+          <p className="body-small text-text-muted">
             Use the search box in the sidebar to filter help sections. Try searching for:
           </p>
           <ul
-            class={cn(
+            className={cn(
               'list-disc list-inside body-small text-text-muted',
               spacing.margin.top.inline,
             )}
@@ -161,16 +163,18 @@ export const AllSections: Story = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="min-h-screen bg-surface-base">
-        <div class={cn(spacing.pad.default, 'bg-surface-raised border-b border-surface-border')}>
-          <h2 class={cn('heading-3 text-text-primary', spacing.margin.bottom.inline)}>
+      <div className="min-h-screen bg-surface-base">
+        <div
+          className={cn(spacing.pad.default, 'bg-surface-raised border-b border-surface-border')}
+        >
+          <h2 className={cn('heading-3 text-text-primary', spacing.margin.bottom.inline)}>
             All Help Sections
           </h2>
-          <p class="body-small text-text-muted">
+          <p className="body-small text-text-muted">
             Navigate through all available sections using the sidebar:
           </p>
           <div
-            class={cn(
+            className={cn(
               'grid grid-cols-2 md:grid-cols-5',
               spacing.gap.compact,
               spacing.margin.top.heading,
@@ -209,7 +213,7 @@ export const MobileView: Story = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="min-h-screen bg-surface-base">
+      <div className="min-h-screen bg-surface-base">
         <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </div>
     );
@@ -234,7 +238,7 @@ export const TabletView: Story = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="min-h-screen bg-surface-base">
+      <div className="min-h-screen bg-surface-base">
         <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </div>
     );
@@ -259,7 +263,7 @@ export const DarkTheme: Story = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="min-h-screen bg-surface-base dark">
+      <div className="min-h-screen bg-surface-base dark">
         <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </div>
     );
@@ -283,16 +287,16 @@ export const BackdropClose: Story = {
     const [closeCount, setCloseCount] = useState(0);
 
     return (
-      <div class="min-h-screen bg-surface-base">
+      <div className="min-h-screen bg-surface-base">
         {!isOpen && (
-          <div class={cn(spacing.pad.xl, 'text-center')}>
-            <p class={cn('body text-text-secondary', spacing.margin.bottom.content)}>
+          <div className={cn(spacing.pad.xl, 'text-center')}>
+            <p className={cn('body text-text-secondary', spacing.margin.bottom.content)}>
               Modal closed {closeCount} time(s)
             </p>
             <button
               type="button"
               onClick={() => setIsOpen(true)}
-              class={cn(button.size.md, 'bg-brand-primary text-text-inverse', radius.lg)}
+              className={cn(button.size.md, 'bg-brand-primary text-text-inverse', radius.lg)}
             >
               Reopen Modal
             </button>
@@ -326,29 +330,31 @@ export const KeyboardNavigation: Story = {
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-      <div class="min-h-screen bg-surface-base">
-        <div class={cn(spacing.pad.default, 'bg-surface-raised border-b border-surface-border')}>
-          <h2 class={cn('heading-3 text-text-primary', spacing.margin.bottom.inline)}>
+      <div className="min-h-screen bg-surface-base">
+        <div
+          className={cn(spacing.pad.default, 'bg-surface-raised border-b border-surface-border')}
+        >
+          <h2 className={cn('heading-3 text-text-primary', spacing.margin.bottom.inline)}>
             Keyboard Navigation
           </h2>
-          <p class="body-small text-text-muted">The help modal supports keyboard navigation:</p>
+          <p className="body-small text-text-muted">The help modal supports keyboard navigation:</p>
           <ul
-            class={cn(
+            className={cn(
               'list-disc list-inside body-small text-text-muted',
               spacing.margin.top.inline,
             )}
           >
             <li>
-              Press <kbd class={cn(spacing.kbd, 'bg-surface-hover rounded text-xs')}>ESC</kbd> to
-              close
+              Press <kbd className={cn(spacing.kbd, 'bg-surface-hover rounded text-xs')}>ESC</kbd>{' '}
+              to close
             </li>
             <li>
-              Use <kbd class={cn(spacing.kbd, 'bg-surface-hover rounded text-xs')}>Tab</kbd> to
+              Use <kbd className={cn(spacing.kbd, 'bg-surface-hover rounded text-xs')}>Tab</kbd> to
               navigate between elements
             </li>
             <li>
-              Press <kbd class={cn(spacing.kbd, 'bg-surface-hover rounded text-xs')}>Enter</kbd> to
-              select a section
+              Press <kbd className={cn(spacing.kbd, 'bg-surface-hover rounded text-xs')}>Enter</kbd>{' '}
+              to select a section
             </li>
           </ul>
         </div>
@@ -369,7 +375,7 @@ export const KeyboardNavigation: Story = {
 function _sectionBadge({ name }: { name: string }): React.JSX.Element {
   return (
     <span
-      class={cn(
+      className={cn(
         spacing.chip.sm,
         'bg-surface-base border border-surface-border rounded text-xs text-text-secondary',
       )}

@@ -52,12 +52,12 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
   return (
     <Card
       title={t('guestAudit.title', 'Guest Network Audit')}
-      icon={<Shield class={iconTokens.size.md} />}
+      icon={<Shield className={iconTokens.size.md} />}
       status={status}
     >
-      <div class="stack-sm">
+      <div className="stack-sm">
         {!hasTargets ? (
-          <p class="body-small text-text-muted">
+          <p className="body-small text-text-muted">
             {t(
               'guestAudit.noTargets',
               'Add sensitive internal IP addresses (EMR, PACS, etc.) in Settings → Security to enable this audit.',
@@ -65,7 +65,7 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
           </p>
         ) : (
           <>
-            <p class="body-small text-text-muted">
+            <p className="body-small text-text-muted">
               {t(
                 'guestAudit.description',
                 'Probe configured internal hosts to confirm guest-network isolation. Connect to the guest network before running.',
@@ -77,7 +77,7 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
                 runAudit().catch(() => undefined);
               }}
               disabled={running}
-              class={cn(
+              className={cn(
                 button.size.md,
                 'bg-brand-primary text-text-inverse',
                 radius.md,
@@ -90,14 +90,14 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
             </button>
 
             {error ? (
-              <div class={cn(spacing.pad.sm, statusColor.bg.errorSoft, radius.md)} role="alert">
-                <span class="body-small text-status-error">{error}</span>
+              <div className={cn(spacing.pad.sm, statusColor.bg.errorSoft, radius.md)} role="alert">
+                <span className="body-small text-status-error">{error}</span>
               </div>
             ) : null}
 
             {report?.isolationFailed ? (
               <div
-                class={cn(
+                className={cn(
                   spacing.pad.sm,
                   'bg-status-error/10 border border-status-error',
                   radius.md,
@@ -105,23 +105,23 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
                 )}
                 role="alert"
               >
-                <div class={cn('flex items-center', spacing.gap.compact)}>
-                  <AlertTriangle class={cn(iconTokens.size.sm, statusColor.text.error)} />
-                  <span class="body-small font-semibold text-status-error">
+                <div className={cn('flex items-center', spacing.gap.compact)}>
+                  <AlertTriangle className={cn(iconTokens.size.sm, statusColor.text.error)} />
+                  <span className="body-small font-semibold text-status-error">
                     {t(
                       'guestAudit.criticalAlert',
                       'Critical: Guest network isolation is not configured correctly.',
                     )}
                   </span>
                 </div>
-                <p class="caption text-text-secondary">
+                <p className="caption text-text-secondary">
                   {t(
                     'guestAudit.criticalDetail',
                     '{{count}} of {{total}} internal hosts are reachable from the guest network.',
                     { count: report.reachableTargets, total: report.totalTargets },
                   )}
                 </p>
-                <ul class="stack-xs caption">
+                <ul className="stack-xs caption">
                   {report.results
                     .filter((r) => r.reachable)
                     .map((r) => (
@@ -140,16 +140,16 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
 
             {report && !report.isolationFailed ? (
               <div
-                class={cn(
+                className={cn(
                   spacing.pad.sm,
                   'bg-status-success/10 border border-status-success',
                   radius.md,
                 )}
                 role="status"
               >
-                <div class={cn('flex items-center', spacing.gap.compact)}>
-                  <CheckCircle class={cn(iconTokens.size.sm, statusColor.text.success)} />
-                  <span class="body-small font-medium text-status-success">
+                <div className={cn('flex items-center', spacing.gap.compact)}>
+                  <CheckCircle className={cn(iconTokens.size.sm, statusColor.text.success)} />
+                  <span className="body-small font-medium text-status-success">
                     {t(
                       'guestAudit.passed',
                       'Isolation verified - none of the {{total}} internal hosts are reachable.',

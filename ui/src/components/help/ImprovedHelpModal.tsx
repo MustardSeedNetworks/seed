@@ -85,115 +85,115 @@ export function ImprovedHelpModal({
     {
       id: 'about',
       title: t('sections.about'),
-      icon: <Info class={iconTokens.size.sm} />,
+      icon: <Info className={iconTokens.size.sm} />,
       content: <aboutSection version={version} />,
     },
     {
       id: 'getting-started',
       title: t('sections.gettingStarted'),
-      icon: <LayoutDashboard class={iconTokens.size.sm} />,
+      icon: <LayoutDashboard className={iconTokens.size.sm} />,
       content: <gettingStartedSection />,
     },
     {
       id: 'link',
       title: t('sections.link'),
-      icon: <Activity class={iconTokens.size.sm} />,
+      icon: <Activity className={iconTokens.size.sm} />,
       content: <linkStatusSection />,
     },
     {
       id: 'cable',
       title: t('sections.cable'),
-      icon: <Cable class={iconTokens.size.sm} />,
+      icon: <Cable className={iconTokens.size.sm} />,
       content: <cableTestSection />,
     },
     {
       id: 'wifi',
       title: t('sections.wifi'),
-      icon: <Wifi class={iconTokens.size.sm} />,
+      icon: <Wifi className={iconTokens.size.sm} />,
       content: <wiFiStatusSection />,
     },
     {
       id: 'network',
       title: t('sections.network'),
-      icon: <Network class={iconTokens.size.sm} />,
+      icon: <Network className={iconTokens.size.sm} />,
       content: <networkSection />,
     },
     {
       id: 'gateway',
       title: t('sections.gateway'),
-      icon: <Server class={iconTokens.size.sm} />,
+      icon: <Server className={iconTokens.size.sm} />,
       content: <gatewaySection />,
     },
     {
       id: 'dns',
       title: t('sections.dns'),
-      icon: <Search class={iconTokens.size.sm} />,
+      icon: <Search className={iconTokens.size.sm} />,
       content: <dnsSection />,
     },
     {
       id: 'performance',
       title: t('sections.performance'),
-      icon: <Zap class={iconTokens.size.sm} />,
+      icon: <Zap className={iconTokens.size.sm} />,
       content: <performanceSection />,
     },
     {
       id: 'discovery',
       title: t('sections.discovery'),
-      icon: <Search class={iconTokens.size.sm} />,
+      icon: <Search className={iconTokens.size.sm} />,
       content: <discoverySection />,
     },
     {
       id: 'healthChecks',
       title: t('sections.healthChecks'),
-      icon: <Heart class={iconTokens.size.sm} />,
+      icon: <Heart className={iconTokens.size.sm} />,
       content: <healthChecksSection />,
     },
     {
       id: 'security',
       title: t('sections.security'),
-      icon: <Shield class={iconTokens.size.sm} />,
+      icon: <Shield className={iconTokens.size.sm} />,
       content: <securitySection />,
     },
     {
       id: 'troubleshooting',
       title: t('sections.troubleshooting'),
-      icon: <AlertTriangle class={iconTokens.size.sm} />,
+      icon: <AlertTriangle className={iconTokens.size.sm} />,
       content: <troubleshootingSection />,
     },
     {
       id: 'profiles',
       title: t('sections.profiles'),
-      icon: <SlidersHorizontal class={iconTokens.size.sm} />,
+      icon: <SlidersHorizontal className={iconTokens.size.sm} />,
       content: <profilesSection />,
     },
     {
       id: 'wifiSurvey',
       title: t('sections.wifiSurvey'),
-      icon: <Signal class={iconTokens.size.sm} />,
+      icon: <Signal className={iconTokens.size.sm} />,
       content: <wiFiSurveySection />,
     },
     {
       id: 'rtspChecks',
       title: t('sections.rtspChecks'),
-      icon: <Monitor class={iconTokens.size.sm} />,
+      icon: <Monitor className={iconTokens.size.sm} />,
       content: <rtspChecksSection />,
     },
     {
       id: 'dicomChecks',
       title: t('sections.dicomChecks'),
-      icon: <HeartPulse class={iconTokens.size.sm} />,
+      icon: <HeartPulse className={iconTokens.size.sm} />,
       content: <dicomChecksSection />,
     },
     {
       id: 'howTo',
       title: t('sections.howTo'),
-      icon: <Lightbulb class={iconTokens.size.sm} />,
+      icon: <Lightbulb className={iconTokens.size.sm} />,
       content: <howToSection />,
     },
     {
       id: 'glossary',
       title: t('sections.glossary'),
-      icon: <BookOpen class={iconTokens.size.sm} />,
+      icon: <BookOpen className={iconTokens.size.sm} />,
       content: <glossarySection />,
     },
   ];
@@ -207,13 +207,12 @@ export function ImprovedHelpModal({
   const currentSection = sections.find((s) => s.id === activeSection);
 
   return (
-    <div class={modal.overlay}>
+    <div className={modal.overlay}>
       {/* Backdrop */}
-      <div class={modal.backdrop} onClick={onClose} aria-hidden="true" />
-
+      <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
       {/* Modal */}
       <div
-        class={cn(
+        className={cn(
           'relative',
           modal.content,
           modal.size.xl,
@@ -226,19 +225,19 @@ export function ImprovedHelpModal({
       >
         {/* Header */}
         <div
-          class={cn(
+          className={cn(
             layout.flex.between,
             spacing.pad.default,
             'border-b border-surface-border shrink-0',
           )}
         >
-          <h2 id="help-modal-title" class="heading-3">
+          <h2 id="help-modal-title" className="heading-3">
             {t('modal.title')}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            class={cn(
+            className={cn(
               spacing.pad.xs,
               'text-text-muted hover:text-text-primary transition-colors',
               radius.default,
@@ -247,7 +246,7 @@ export function ImprovedHelpModal({
             aria-label={t('modal.closeHelp')}
           >
             <svg
-              class={iconTokens.size.md}
+              className={iconTokens.size.md}
               viewBox="0 0 20 20"
               fill="currentColor"
               aria-hidden="true"
@@ -262,14 +261,14 @@ export function ImprovedHelpModal({
         </div>
 
         {/* Content area with sidebar */}
-        <div class="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden">
           {/* Sidebar / TOC */}
-          <aside class="w-64 border-r border-surface-border bg-surface-base overflow-y-auto shrink-0">
+          <aside className="w-64 border-r border-surface-border bg-surface-base overflow-y-auto shrink-0">
             {/* Search */}
-            <div class={cn(spacing.pad.sm, 'border-b border-surface-border')}>
-              <div class="relative">
+            <div className={cn(spacing.pad.sm, 'border-b border-surface-border')}>
+              <div className="relative">
                 <Search
-                  class={cn(
+                  className={cn(
                     'absolute left-3 top-1/2 -translate-y-1/2',
                     iconTokens.size.sm,
                     'text-text-muted',
@@ -282,7 +281,7 @@ export function ImprovedHelpModal({
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     setSearchQuery(e.target.value)
                   }
-                  class={cn(
+                  className={cn(
                     'w-full pl-9',
                     spacing.chip.lg,
                     'body-small',
@@ -294,8 +293,8 @@ export function ImprovedHelpModal({
             </div>
 
             {/* Table of Contents */}
-            <nav class={cn(spacing.pad.xs, 'stack-xs')}>
-              <p class={cn('caption', spacing.chip.lg, 'uppercase tracking-wider')}>
+            <nav className={cn(spacing.pad.xs, 'stack-xs')}>
+              <p className={cn('caption', spacing.chip.lg, 'uppercase tracking-wider')}>
                 {t('modal.contents')}
               </p>
               {filteredSections.map((section) => (
@@ -303,7 +302,7 @@ export function ImprovedHelpModal({
                   type="button"
                   key={section.id}
                   onClick={(): void => setActiveSection(section.id)}
-                  class={cn(
+                  className={cn(
                     'w-full flex items-center',
                     spacing.gap.default,
                     spacing.tab,
@@ -322,7 +321,7 @@ export function ImprovedHelpModal({
           </aside>
 
           {/* Main content */}
-          <main class={cn('flex-1 overflow-y-auto', spacing.pad.lg)}>
+          <main className={cn('flex-1 overflow-y-auto', spacing.pad.lg)}>
             {currentSection && <div>{currentSection.content}</div>}
           </main>
         </div>

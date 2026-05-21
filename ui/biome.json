@@ -269,7 +269,7 @@
         "noMisplacedAssertion": "error",
         "noMisrefactoredShorthandAssign": "error",
         "noPrototypeBuiltins": "error",
-        "noReactSpecificProps": "error",
+        "noReactSpecificProps": "off",
         "noRedeclare": "error",
         "noRedundantUseStrict": "error",
         "noSelfCompare": "error",

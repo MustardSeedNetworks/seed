@@ -66,7 +66,7 @@ export function StatusBadge({
   if (variant === 'dot') {
     return (
       <span
-        class={cn(
+        className={cn(
           'inline-block',
           sizes.dot,
           radius.full,
@@ -81,7 +81,7 @@ export function StatusBadge({
 
   return (
     <span
-      class={cn(
+      className={cn(
         layout.flex.center,
         'inline-flex',
         radius.full,
@@ -93,7 +93,7 @@ export function StatusBadge({
       role="img"
       aria-label={config.label}
     >
-      <span class={sizes.icon} aria-hidden="true">
+      <span className={sizes.icon} aria-hidden="true">
         {config.icon}
       </span>
     </span>

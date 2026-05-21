@@ -137,19 +137,19 @@ export function WiFiSurveyCard({
   const renderSurveyContent = (): React.ReactElement => {
     if (loading && surveys.length === 0) {
       return (
-        <div class={cn('text-center', spacing.pad.lg, 'text-text-muted body-small')}>
+        <div className={cn('text-center', spacing.pad.lg, 'text-text-muted body-small')}>
           {t('survey.loading')}
         </div>
       );
     }
     if (surveys.length === 0) {
       return (
-        <div class={cn('text-center', spacing.pad.lg, 'text-text-muted')}>
-          <p class={cn('body-small', spacing.margin.bottom.inline)}>{t('survey.noSurveys')}</p>
+        <div className={cn('text-center', spacing.pad.lg, 'text-text-muted')}>
+          <p className={cn('body-small', spacing.margin.bottom.inline)}>{t('survey.noSurveys')}</p>
           <button
             type="button"
             onClick={(): void => setShowCreateDialog(true)}
-            class="body-small text-brand-primary hover:underline"
+            className="body-small text-brand-primary hover:underline"
           >
             {t('survey.createFirst')}
           </button>
@@ -157,28 +157,28 @@ export function WiFiSurveyCard({
       );
     }
     return (
-      <div class="stack-sm">
+      <div className="stack-sm">
         {surveys.slice(0, 3).map((survey) => (
           <div
             key={survey.id}
-            class={cn(
+            className={cn(
               'border border-surface-border',
               radius.md,
               'pad-sm hover:bg-surface-hover transition-colors',
             )}
           >
-            <div class={layout.flex.between}>
+            <div className={layout.flex.between}>
               <button
                 type="button"
-                class="flex-1 min-w-0 text-left cursor-pointer bg-transparent border-none p-0"
+                className="flex-1 min-w-0 text-left cursor-pointer bg-transparent border-none p-0"
                 onClick={(): void => setSelectedSurvey(survey)}
               >
-                <div class={layout.inline.default}>
-                  <h4 class="font-medium body-small truncate">{survey.name}</h4>
-                  <span class="caption text-text-muted">{getStatusLabel(survey.status)}</span>
+                <div className={layout.inline.default}>
+                  <h4 className="font-medium body-small truncate">{survey.name}</h4>
+                  <span className="caption text-text-muted">{getStatusLabel(survey.status)}</span>
                 </div>
                 <div
-                  class={cn(
+                  className={cn(
                     layout.inline.comfortable,
                     spacing.margin.top.inline,
                     'caption text-text-muted',
@@ -190,14 +190,14 @@ export function WiFiSurveyCard({
                   </span>
                 </div>
               </button>
-              <div class={cn(layout.inline.tight, spacing.margin.left.inline)}>
+              <div className={cn(layout.inline.tight, spacing.margin.left.inline)}>
                 {survey.status === 'created' ? (
                   <button
                     type="button"
                     onClick={(): void => {
                       startSurvey(survey.id).catch(() => undefined);
                     }}
-                    class={cn(
+                    className={cn(
                       button.size.xs,
                       'caption border border-surface-border',
                       radius.md,
@@ -214,7 +214,7 @@ export function WiFiSurveyCard({
                     onClick={(): void => {
                       pauseSurvey(survey.id).catch(() => undefined);
                     }}
-                    class={cn(
+                    className={cn(
                       button.size.xs,
                       'caption border border-surface-border',
                       radius.md,
@@ -232,7 +232,7 @@ export function WiFiSurveyCard({
                       onClick={(): void => {
                         startSurvey(survey.id).catch(() => undefined);
                       }}
-                      class={cn(
+                      className={cn(
                         button.size.xs,
                         'caption border border-surface-border',
                         radius.md,
@@ -247,7 +247,7 @@ export function WiFiSurveyCard({
                       onClick={(): void => {
                         completeSurvey(survey.id).catch(() => undefined);
                       }}
-                      class={cn(
+                      className={cn(
                         button.size.xs,
                         'caption border border-surface-border',
                         radius.md,
@@ -264,7 +264,7 @@ export function WiFiSurveyCard({
                   onClick={(): void => {
                     handleDelete(survey.id).catch(() => undefined);
                   }}
-                  class={cn(
+                  className={cn(
                     button.size.xs,
                     'caption border border-surface-border',
                     radius.md,
@@ -279,7 +279,7 @@ export function WiFiSurveyCard({
           </div>
         ))}
         {surveys.length > 3 ? (
-          <div class={cn('text-center caption text-text-muted', spacing.padding.top.tight)}>
+          <div className={cn('text-center caption text-text-muted', spacing.padding.top.tight)}>
             {t('survey.more', { count: surveys.length - 3 })}
           </div>
         ) : null}
@@ -292,7 +292,7 @@ export function WiFiSurveyCard({
       <Card
         title={t('survey.title')}
         status={getCardStatus()}
-        icon={<Activity class={iconTokens.size.md} />}
+        icon={<Activity className={iconTokens.size.md} />}
         headerAction={
           <button
             type="button"
@@ -300,7 +300,7 @@ export function WiFiSurveyCard({
               e.stopPropagation();
               setShowCreateDialog(true);
             }}
-            class="caption font-medium text-brand-primary hover:underline"
+            className="caption font-medium text-brand-primary hover:underline"
           >
             {t('survey.new')}
           </button>
@@ -308,7 +308,7 @@ export function WiFiSurveyCard({
       >
         {isWifi ? null : (
           <div
-            class={cn(
+            className={cn(
               'bg-status-warning/10 border border-status-warning/20 text-status-warning',
               spacing.pad.sm,
               radius.md,
@@ -322,7 +322,7 @@ export function WiFiSurveyCard({
 
         {error ? (
           <div
-            class={cn(
+            className={cn(
               'bg-status-error/10 border border-status-error/20 text-status-error',
               spacing.pad.sm,
               radius.md,
@@ -336,7 +336,6 @@ export function WiFiSurveyCard({
 
         {renderSurveyContent()}
       </Card>
-
       {showCreateDialog ? (
         <CreateSurveyDialog
           onClose={(): void => setShowCreateDialog(false)}
@@ -345,7 +344,6 @@ export function WiFiSurveyCard({
           currentInterface={currentInterface}
         />
       ) : null}
-
       {selectedSurvey ? (
         <SurveyView
           survey={selectedSurvey}
@@ -386,9 +384,9 @@ function CreateSurveyDialog({
   };
 
   return (
-    <div class={modal.overlay}>
+    <div className={modal.overlay}>
       <div
-        class={cn(
+        className={cn(
           'bg-surface-raised',
           radius.md,
           spacing.pad.lg,
@@ -396,13 +394,16 @@ function CreateSurveyDialog({
           spacing.pad.default,
         )}
       >
-        <h2 class={cn('heading-2', spacing.margin.bottom.content)}>
+        <h2 className={cn('heading-2', spacing.margin.bottom.content)}>
           {t('survey.createNewSurvey')}
         </h2>
         <form onSubmit={handleSubmit}>
-          <div class="stack">
+          <div className="stack">
             <div>
-              <label for="survey-name" class={cn('label block', spacing.margin.bottom.tight)}>
+              <label
+                htmlFor="survey-name"
+                className={cn('label block', spacing.margin.bottom.tight)}
+              >
                 {t('survey.surveyName')}
               </label>
               <input
@@ -412,13 +413,16 @@ function CreateSurveyDialog({
                 onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                   setName(e.target.value)
                 }
-                class={cn(inputTokens.base, inputTokens.state.default, inputTokens.size.md)}
+                className={cn(inputTokens.base, inputTokens.state.default, inputTokens.size.md)}
                 placeholder={t('survey.namePlaceholder')}
                 required={true}
               />
             </div>
             <div>
-              <label class={cn('label block', spacing.margin.bottom.tight)} for="survey-type">
+              <label
+                className={cn('label block', spacing.margin.bottom.tight)}
+                htmlFor="survey-type"
+              >
                 {t('survey.surveyType')}
               </label>
               <select
@@ -427,7 +431,7 @@ function CreateSurveyDialog({
                 onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                   setSurveyType(e.target.value as SurveyType)
                 }
-                class={cn(inputTokens.base, inputTokens.state.default, inputTokens.size.md)}
+                className={cn(inputTokens.base, inputTokens.state.default, inputTokens.size.md)}
               >
                 <option value="passive">{t('survey.typePassive')}</option>
                 <option value="active">{t('survey.typeActive')}</option>
@@ -435,11 +439,11 @@ function CreateSurveyDialog({
               </select>
             </div>
           </div>
-          <div class={cn(layout.inline.default, spacing.margin.top.section)}>
+          <div className={cn(layout.inline.default, spacing.margin.top.section)}>
             <button
               type="button"
               onClick={onClose}
-              class={cn(
+              className={cn(
                 'flex-1',
                 button.size.md,
                 'border border-surface-border',
@@ -451,7 +455,7 @@ function CreateSurveyDialog({
             </button>
             <button
               type="submit"
-              class={cn(
+              className={cn(
                 'flex-1',
                 button.size.md,
                 'bg-brand-primary text-text-inverse',

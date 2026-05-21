@@ -40,13 +40,13 @@ function _toastDemo({
     <button
       type="button"
       onClick={() => addToast(message, type)}
-      class={cn(
+      className={cn(
         button.size.md,
         'bg-surface-raised hover:bg-surface-hover border border-surface-border text-text-primary',
         radius.lg,
       )}
     >
-      Show {type} toast
+      Show {type}toast
     </button>
   );
 }
@@ -71,7 +71,7 @@ function _allToastsDemo(): React.JSX.Element {
   const { addToast } = useToast();
 
   return (
-    <div class={layout.stack.default}>
+    <div className={layout.stack.default}>
       <button
         type="button"
         onClick={() => {
@@ -80,7 +80,7 @@ function _allToastsDemo(): React.JSX.Element {
           setTimeout(() => addToast('Warning message', 'warning', 3000), 1000);
           setTimeout(() => addToast('Info message', 'info', 3000), 1500);
         }}
-        class={cn(
+        className={cn(
           button.size.md,
           'bg-status-info hover:bg-status-info/80 text-text-inverse',
           radius.lg,

@@ -38,7 +38,7 @@ const meta: Meta<typeof CommandPalette> = {
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
       <MemoryRouter>
-        <div class="min-h-[60vh] p-4">
+        <div className="min-h-[60vh] p-4">
           <StoryComponent />
         </div>
       </MemoryRouter>
@@ -51,10 +51,10 @@ type Story = StoryObj<typeof meta>;
 
 export const Closed: Story = {
   render: () => (
-    <div class="space-y-3">
-      <p class="text-sm text-text-muted">
-        Press <kbd class="rounded border border-surface-border px-1.5 py-0.5">⌘K</kbd> /{' '}
-        <kbd class="rounded border border-surface-border px-1.5 py-0.5">Ctrl+K</kbd> to open.
+    <div className="space-y-3">
+      <p className="text-sm text-text-muted">
+        Press <kbd className="rounded border border-surface-border px-1.5 py-0.5">⌘K</kbd> /{' '}
+        <kbd className="rounded border border-surface-border px-1.5 py-0.5">Ctrl+K</kbd> to open.
       </p>
       <CommandPalette
         groups={navGroups}
@@ -87,7 +87,7 @@ export const Interactive: Story = {
   render: () => {
     const [open, setOpen] = useState(false);
     return (
-      <div class="space-y-3">
+      <div className="space-y-3">
         <Button onClick={() => setOpen(true)}>Open command palette</Button>
         <CommandPalette
           groups={navGroups}

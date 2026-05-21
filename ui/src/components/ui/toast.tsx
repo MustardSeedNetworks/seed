@@ -96,7 +96,7 @@ function _toastContainer({ toasts, removeToast }: ToastContainerProps): React.JS
       role="region"
       aria-live="polite"
       aria-label="Notifications"
-      class={cn('fixed bottom-20 right-4 z-50 max-w-sm', layout.stack.default)}
+      className={cn('fixed bottom-20 right-4 z-50 max-w-sm', layout.stack.default)}
     >
       {toasts.map((toast) => (
         <toastItem key={toast.id} toast={toast} onClose={handleClose.bind(null, toast.id)} />
@@ -123,7 +123,7 @@ function _toastItem({ toast, onClose }: ToastItemProps): React.JSX.Element {
   return (
     <div
       role="alert"
-      class={cn(
+      className={cn(
         layout.inline.comfortable,
         toastTokens.container,
         toastTokens.animation,
@@ -133,18 +133,23 @@ function _toastItem({ toast, onClose }: ToastItemProps): React.JSX.Element {
       aria-label={`Notification: ${toast.type}`}
     >
       {icons[toast.type]}
-      <p class="body-small font-medium flex-1">{toast.message}</p>
+      <p className="body-small font-medium flex-1">{toast.message}</p>
       <button
         type="button"
         onClick={onClose}
-        class={cn(
+        className={cn(
           spacing.iconBtn.sm,
           'hover:bg-surface-hover/50 focus:outline-none focus:ring-2 focus:ring-surface-border',
           radius.default,
         )}
         aria-label="Dismiss notification"
       >
-        <svg class={iconTokens.size.sm} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <svg
+          className={iconTokens.size.sm}
+          fill="currentColor"
+          viewBox="0 0 20 20"
+          aria-hidden="true"
+        >
           <path
             fillRule="evenodd"
             d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"

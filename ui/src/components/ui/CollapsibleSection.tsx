@@ -71,7 +71,7 @@ export function CollapsibleSection({
 
   return (
     <section
-      class={cn(
+      className={cn(
         !isCompact && border.card,
         !isCompact && radius.lg,
         !isCompact && 'overflow-hidden',
@@ -80,7 +80,7 @@ export function CollapsibleSection({
       <button
         type="button"
         onClick={(): void => setIsOpen(!isOpen)}
-        class={cn(
+        className={cn(
           'w-full transition-colors',
           layout.flex.between,
           isCompact
@@ -88,9 +88,9 @@ export function CollapsibleSection({
             : cn(spacing.pad.sm, 'bg-surface-base hover:bg-surface-hover'),
         )}
       >
-        <div class={layout.inline.default}>
+        <div className={layout.inline.default}>
           <svg
-            class={cn(
+            className={cn(
               iconTokens.size.xs,
               'text-text-muted transition-transform duration-200',
               isOpen && 'rotate-90',
@@ -103,17 +103,19 @@ export function CollapsibleSection({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
           {status ? <StatusBadge status={status} size="sm" /> : null}
-          <span class={cn('font-medium text-text-primary', isCompact ? 'caption' : 'body-small')}>
+          <span
+            className={cn('font-medium text-text-primary', isCompact ? 'caption' : 'body-small')}
+          >
             {title}
             {count !== undefined ? (
-              <span class={cn('text-text-muted', spacing.margin.left.tight)}>({count})</span>
+              <span className={cn('text-text-muted', spacing.margin.left.tight)}>({count})</span>
             ) : null}
           </span>
         </div>
       </button>
       {isOpen ? (
         <div
-          class={cn(
+          className={cn(
             isCompact
               ? cn(spacing.indent, spacing.padding.bottom.inline, 'stack-xs')
               : cn(spacing.pad.sm, 'border-t border-surface-border bg-surface-raised stack'),

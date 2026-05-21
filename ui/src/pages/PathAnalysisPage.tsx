@@ -18,7 +18,7 @@ export function PathAnalysisPage() {
   } = useAppContext();
 
   return (
-    <section class="space-y-6">
+    <section className="space-y-6">
       <Breadcrumbs />
       <PageHeader
         icon={Route}
@@ -26,7 +26,7 @@ export function PathAnalysisPage() {
         description="L2/L3 path discovery, traceroute hops, and on-link device discovery."
         iconColorClass="text-module-roots"
       />
-      <div class={layout.grid.cards}>
+      <div className={layout.grid.cards}>
         {(!isWifi || cards.wifi) && (
           <PathDiscoveryCard
             gateway={cards.gateway?.gateway}

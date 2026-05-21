@@ -86,7 +86,7 @@ export function Skeleton({
 
   return (
     <div
-      class={cn(baseClasses, getVariantClass(variant), sizeClasses, className)}
+      className={cn(baseClasses, getVariantClass(variant), sizeClasses, className)}
       aria-hidden="true"
     />
   );
@@ -97,20 +97,20 @@ export function Skeleton({
  */
 export function CardSkeleton(): React.JSX.Element {
   return (
-    <div class={cn(card.base, card.variant.default, card.padding.md)}>
-      <div class={cn(layout.flex.between, spacing.margin.bottom.heading)}>
-        <Skeleton class="h-4 w-24" />
-        <Skeleton variant="circular" class="h-3 w-3" />
+    <div className={cn(card.base, card.variant.default, card.padding.md)}>
+      <div className={cn(layout.flex.between, spacing.margin.bottom.heading)}>
+        <Skeleton className="h-4 w-24" />
+        <Skeleton variant="circular" className="h-3 w-3" />
       </div>
-      <Skeleton class={cn('h-8 w-32', spacing.margin.bottom.inline)} />
-      <div class={cn('stack-sm', spacing.margin.top.content)}>
-        <div class={layout.flex.between}>
-          <Skeleton class="h-3 w-16" />
-          <Skeleton class="h-3 w-20" />
+      <Skeleton className={cn('h-8 w-32', spacing.margin.bottom.inline)} />
+      <div className={cn('stack-sm', spacing.margin.top.content)}>
+        <div className={layout.flex.between}>
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-20" />
         </div>
-        <div class={layout.flex.between}>
-          <Skeleton class="h-3 w-12" />
-          <Skeleton class="h-3 w-16" />
+        <div className={layout.flex.between}>
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-3 w-16" />
         </div>
       </div>
     </div>
@@ -130,9 +130,9 @@ export function TextSkeleton({ lines = 3 }: { lines?: number }): React.JSX.Eleme
   }));
 
   return (
-    <div class="stack-sm">
+    <div className="stack-sm">
       {lineConfigs.map((config) => (
-        <Skeleton key={config.id} class="h-4" width={config.width} />
+        <Skeleton key={config.id} className="h-4" width={config.width} />
       ))}
     </div>
   );

@@ -60,7 +60,7 @@ const meta: Meta<typeof DnsSettings> = {
   },
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="w-[450px]">
+      <div className="w-[450px]">
         <StoryComponent />
       </div>
     ),
@@ -265,9 +265,9 @@ export const Interactive: Story = {
  */
 export const Comparison: Story = {
   render: () => (
-    <div class={cn('stack-lg', spacing.pad.default)}>
+    <div className={cn('stack-lg', spacing.pad.default)}>
       <div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           Default (no servers)
         </p>
         <DnsSettings
@@ -283,7 +283,9 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>With DNS servers</p>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+          With DNS servers
+        </p>
         <DnsSettings
           testsSettings={{
             ...baseSettings,
@@ -300,7 +302,7 @@ export const Comparison: Story = {
         />
       </div>
       <div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Saving state</p>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>Saving state</p>
         <DnsSettings
           testsSettings={{
             ...baseSettings,

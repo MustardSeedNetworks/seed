@@ -28,7 +28,7 @@ const meta: Meta<typeof Alert> = {
   },
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="w-[440px]">
+      <div className="w-[440px]">
         <StoryComponent />
       </div>
     ),
@@ -77,7 +77,7 @@ export const Dismissable: Story = {
 
 export const AllVariants: Story = {
   render: () => (
-    <div class="space-y-3">
+    <div className="space-y-3">
       <Alert status="info">Info: ARP cache contains 24 entries.</Alert>
       <Alert status="success">Success: RFC 2544 benchmark passed.</Alert>
       <Alert status="warning">Warning: UDP retransmits exceeded threshold.</Alert>

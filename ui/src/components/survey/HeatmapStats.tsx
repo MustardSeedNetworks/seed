@@ -237,35 +237,35 @@ export function HeatmapStats({ samples, metric }: HeatmapStatsProps): React.Reac
 
   return (
     <div
-      class={cn(
+      className={cn(
         'bg-surface-raised border border-surface-border',
         radius.md,
         spacing.pad.sm,
         spacing.margin.top.tight,
       )}
     >
-      <div class={cn('grid grid-cols-2 gap-x-4 gap-y-1')}>
-        <div class="flex justify-between">
-          <span class="caption text-text-muted">{t('heatmapStats.average')}</span>
-          <span class="caption font-medium">
+      <div className={cn('grid grid-cols-2 gap-x-4 gap-y-1')}>
+        <div className="flex justify-between">
+          <span className="caption text-text-muted">{t('heatmapStats.average')}</span>
+          <span className="caption font-medium">
             {stats.average.toFixed(1)} {unit}
           </span>
         </div>
-        <div class="flex justify-between">
-          <span class="caption text-text-muted">{t('heatmapStats.median')}</span>
-          <span class="caption font-medium">
+        <div className="flex justify-between">
+          <span className="caption text-text-muted">{t('heatmapStats.median')}</span>
+          <span className="caption font-medium">
             {stats.median.toFixed(1)} {unit}
           </span>
         </div>
-        <div class="flex justify-between">
-          <span class="caption text-text-muted">{t('heatmapStats.stdDev')}</span>
-          <span class="caption font-medium">
+        <div className="flex justify-between">
+          <span className="caption text-text-muted">{t('heatmapStats.stdDev')}</span>
+          <span className="caption font-medium">
             {stats.stdDev.toFixed(1)} {unit}
           </span>
         </div>
-        <div class="flex justify-between">
-          <span class="caption text-text-muted">{t('heatmapStats.samples')}</span>
-          <span class="caption font-medium">{stats.count}</span>
+        <div className="flex justify-between">
+          <span className="caption text-text-muted">{t('heatmapStats.samples')}</span>
+          <span className="caption font-medium">{stats.count}</span>
         </div>
       </div>
     </div>

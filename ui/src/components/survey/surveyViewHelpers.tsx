@@ -44,7 +44,7 @@ export function renderSampleData(
         <div>RSSI: {activeData.rssi} dBm</div>
         <div>Rate: {activeData.dataRate} Mbps</div>
         {activeData.roamingEvent ? (
-          <div class="text-status-warning font-semibold">⚠ Roaming</div>
+          <div className="text-status-warning font-semibold">⚠ Roaming</div>
         ) : null}
       </>
     );
@@ -59,7 +59,9 @@ export function renderSampleData(
         <div>↑ {throughputData.uploadMbps.toFixed(1)} Mbps</div>
         <div>Jitter: {throughputData.jitter.toFixed(1)} ms</div>
         {throughputData.packetLoss > 0 && (
-          <div class={statusColor.text.error}>Loss: {throughputData.packetLoss.toFixed(1)}%</div>
+          <div className={statusColor.text.error}>
+            Loss: {throughputData.packetLoss.toFixed(1)}%
+          </div>
         )}
       </>
     );

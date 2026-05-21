@@ -46,7 +46,7 @@ export const DiscoveryServiceStatus: React.NamedExoticComponent<DiscoveryService
 
     return (
       <div
-        class={cn(
+        className={cn(
           spacing.pad.sm,
           radius.lg,
           'border',
@@ -55,23 +55,23 @@ export const DiscoveryServiceStatus: React.NamedExoticComponent<DiscoveryService
             : 'bg-status-error/10 border-status-error/30',
         )}
       >
-        <div class={layout.flex.between}>
-          <div class={layout.inline.default}>
-            <div class={cn('w-2 h-2', radius.full, getStatusIndicatorColor())} />
-            <span class="body-small font-medium text-text-primary">{getStatusText()}</span>
+        <div className={layout.flex.between}>
+          <div className={layout.inline.default}>
+            <div className={cn('w-2 h-2', radius.full, getStatusIndicatorColor())} />
+            <span className="body-small font-medium text-text-primary">{getStatusText()}</span>
           </div>
           <button
             type="button"
             onClick={onRefresh}
             disabled={loading}
-            class="caption text-text-muted hover:text-text-primary"
+            className="caption text-text-muted hover:text-text-primary"
           >
             {loading ? '...' : t('discovery.serviceStatus.refresh')}
           </button>
         </div>
         {status.running ? (
           <div
-            class={cn(
+            className={cn(
               spacing.margin.top.inline,
               'grid grid-cols-2',
               spacing.gap.compact,
@@ -79,29 +79,29 @@ export const DiscoveryServiceStatus: React.NamedExoticComponent<DiscoveryService
             )}
           >
             <div>
-              <span class="font-medium">{t('discovery.serviceStatus.devices')}:</span>{' '}
+              <span className="font-medium">{t('discovery.serviceStatus.devices')}:</span>{' '}
               {status.deviceCount}
             </div>
             <div>
-              <span class="font-medium">{t('discovery.serviceStatus.interface')}:</span>{' '}
+              <span className="font-medium">{t('discovery.serviceStatus.interface')}:</span>{' '}
               {status.interface || 'auto'}
             </div>
             <div>
-              <span class="font-medium">{t('discovery.serviceStatus.subnet')}:</span>{' '}
+              <span className="font-medium">{t('discovery.serviceStatus.subnet')}:</span>{' '}
               {status.subnet || '...'}
             </div>
             <div>
-              <span class="font-medium">{t('discovery.serviceStatus.localIP')}:</span>{' '}
+              <span className="font-medium">{t('discovery.serviceStatus.localIP')}:</span>{' '}
               {status.localIP || '...'}
             </div>
           </div>
         ) : null}
         {status.activeMethods && status.activeMethods.length > 0 ? (
-          <div class={cn(spacing.margin.top.inline, 'flex flex-wrap', spacing.gap.tight)}>
+          <div className={cn(spacing.margin.top.inline, 'flex flex-wrap', spacing.gap.tight)}>
             {status.activeMethods.map((method) => (
               <span
                 key={method}
-                class={cn(
+                className={cn(
                   spacing.chip.sm,
                   'bg-surface-base',
                   radius.default,

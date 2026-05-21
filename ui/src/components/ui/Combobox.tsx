@@ -80,7 +80,7 @@ export function Combobox<T>({
   };
 
   return (
-    <div ref={containerRef} class={`relative inline-block w-full ${className}`}>
+    <div ref={containerRef} className={`relative inline-block w-full ${className}`}>
       <button
         type="button"
         aria-haspopup="listbox"
@@ -88,24 +88,25 @@ export function Combobox<T>({
         aria-label={ariaLabel}
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        class="flex w-full items-center justify-between gap-2 rounded-lg border border-surface-border bg-bg-base/60 px-3 py-2 text-sm text-text-primary transition-colors hover:border-surface-border focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full items-center justify-between gap-2 rounded-lg border border-surface-border bg-bg-base/60 px-3 py-2 text-sm text-text-primary transition-colors hover:border-surface-border focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <span class={selectedLabel ? '' : 'text-text-muted'}>{selectedLabel || placeholder}</span>
-        <ChevronsUpDown class="h-4 w-4 text-text-muted" aria-hidden="true" />
+        <span className={selectedLabel ? '' : 'text-text-muted'}>
+          {selectedLabel || placeholder}
+        </span>
+        <ChevronsUpDown className="h-4 w-4 text-text-muted" aria-hidden="true" />
       </button>
-
       {open ? (
-        <div class="absolute left-0 right-0 z-40 mt-1 rounded-lg border border-surface-border bg-bg-surface shadow-xl">
-          <Command shouldFilter={true} class="overflow-hidden rounded-lg">
+        <div className="absolute left-0 right-0 z-40 mt-1 rounded-lg border border-surface-border bg-bg-surface shadow-xl">
+          <Command shouldFilter={true} className="overflow-hidden rounded-lg">
             <Command.Input
               autoFocus={true}
               value={query}
               onValueChange={setQuery}
               placeholder="Search…"
-              class="w-full bg-transparent px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none border-b border-surface-border"
+              className="w-full bg-transparent px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none border-b border-surface-border"
             />
-            <Command.List class="max-h-60 overflow-y-auto py-1 text-sm">
-              <Command.Empty class="px-3 py-4 text-center text-text-muted">
+            <Command.List className="max-h-60 overflow-y-auto py-1 text-sm">
+              <Command.Empty className="px-3 py-4 text-center text-text-muted">
                 {emptyText}
               </Command.Empty>
               {options.map((option) => {
@@ -117,15 +118,15 @@ export function Combobox<T>({
                     key={key}
                     value={`${label} ${key}`}
                     onSelect={() => handleSelect(option)}
-                    class="flex cursor-pointer items-center gap-2 px-3 py-2 text-text-primary aria-selected:bg-surface-hover"
+                    className="flex cursor-pointer items-center gap-2 px-3 py-2 text-text-primary aria-selected:bg-surface-hover"
                   >
-                    <span class="flex-1">
+                    <span className="flex-1">
                       {renderItem !== undefined
                         ? (renderItem(option, isSelected) ?? null)
                         : label || null}
                     </span>
                     {isSelected ? (
-                      <Check class="h-4 w-4 text-brand-accent" aria-hidden="true" />
+                      <Check className="h-4 w-4 text-brand-accent" aria-hidden="true" />
                     ) : null}
                   </Command.Item>
                 );

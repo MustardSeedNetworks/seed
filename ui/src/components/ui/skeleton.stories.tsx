@@ -69,7 +69,7 @@ export const Card: StoryObj<typeof CardSkeleton> = {
 
 export const DashboardGrid: Story = {
   render: () => (
-    <div class={cn('grid grid-cols-2 w-[600px]', spacing.gap.comfortable)}>
+    <div className={cn('grid grid-cols-2 w-[600px]', spacing.gap.comfortable)}>
       <CardSkeleton />
       <CardSkeleton />
       <CardSkeleton />
@@ -87,12 +87,12 @@ export const DashboardGrid: Story = {
 
 export const UserProfile: Story = {
   render: () => (
-    <div class={cn(layout.inline.spacious, spacing.pad.default, 'bg-surface-base rounded-lg')}>
-      <Skeleton variant="circular" class="h-16 w-16" />
-      <div class={layout.stack.default}>
-        <Skeleton variant="text" class="h-5 w-32" />
-        <Skeleton variant="text" class="h-4 w-48" />
-        <Skeleton variant="text" class="h-3 w-24" />
+    <div className={cn(layout.inline.spacious, spacing.pad.default, 'bg-surface-base rounded-lg')}>
+      <Skeleton variant="circular" className="h-16 w-16" />
+      <div className={layout.stack.default}>
+        <Skeleton variant="text" className="h-5 w-32" />
+        <Skeleton variant="text" className="h-4 w-48" />
+        <Skeleton variant="text" className="h-3 w-24" />
       </div>
     </div>
   ),
@@ -107,22 +107,22 @@ export const UserProfile: Story = {
 
 export const TableRows: Story = {
   render: () => (
-    <div class={cn('w-[500px] bg-surface-base rounded-lg', spacing.pad.default)}>
-      <div class={cn(layout.flex.between, spacing.margin.bottom.content)}>
-        <Skeleton variant="text" class="h-5 w-20" />
-        <Skeleton variant="text" class="h-5 w-24" />
-        <Skeleton variant="text" class="h-5 w-16" />
+    <div className={cn('w-[500px] bg-surface-base rounded-lg', spacing.pad.default)}>
+      <div className={cn(layout.flex.between, spacing.margin.bottom.content)}>
+        <Skeleton variant="text" className="h-5 w-20" />
+        <Skeleton variant="text" className="h-5 w-24" />
+        <Skeleton variant="text" className="h-5 w-16" />
       </div>
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          class={cn(layout.flex.between, spacing.row.pyLg, 'border-t border-surface-border')}
+          className={cn(layout.flex.between, spacing.row.pyLg, 'border-t border-surface-border')}
         >
           {' '}
           {/* spacing.row.pyLg for table row spacing */}
-          <Skeleton variant="text" class="h-4 w-24" />
-          <Skeleton variant="text" class="h-4 w-32" />
-          <Skeleton variant="text" class="h-4 w-16" />
+          <Skeleton variant="text" className="h-4 w-24" />
+          <Skeleton variant="text" className="h-4 w-32" />
+          <Skeleton variant="text" className="h-4 w-16" />
         </div>
       ))}
     </div>

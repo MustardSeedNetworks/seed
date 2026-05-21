@@ -63,11 +63,14 @@ export function AppDashboard({
   return (
     <>
       {/* Section: Primary Connectivity - cards differ by interface type */}
-      <section aria-labelledby="connectivity-heading" class={spacing.margin.bottom.section}>
-        <h2 id="connectivity-heading" class={cn('section-title', spacing.margin.bottom.heading)}>
+      <section aria-labelledby="connectivity-heading" className={spacing.margin.bottom.section}>
+        <h2
+          id="connectivity-heading"
+          className={cn('section-title', spacing.margin.bottom.heading)}
+        >
           {t('sections.connectivity')}
         </h2>
-        <div class={layout.grid.cards}>
+        <div className={layout.grid.cards}>
           {/* WiFi-only cards */}
           {isWifi ? <WiFiCard data={cards.wifi} loading={loading} visible={true} /> : null}
 
@@ -91,13 +94,12 @@ export function AppDashboard({
           )}
         </div>
       </section>
-
       {/* Section: Network Services */}
-      <section aria-labelledby="network-heading" class={spacing.margin.bottom.section}>
-        <h2 id="network-heading" class={cn('section-title', spacing.margin.bottom.heading)}>
+      <section aria-labelledby="network-heading" className={spacing.margin.bottom.section}>
+        <h2 id="network-heading" className={cn('section-title', spacing.margin.bottom.heading)}>
           {t('sections.network')}
         </h2>
-        <div class={layout.grid.cards}>
+        <div className={layout.grid.cards}>
           {/* Network info cards - hide when in WiFi mode without WiFi connection */}
           {/* Prevents showing wired interface data when user selected WiFi mode */}
           {(!isWifi || cards.wifi) && (
@@ -116,13 +118,12 @@ export function AppDashboard({
           )}
         </div>
       </section>
-
       {/* Section: Testing & Discovery - cards differ by interface type */}
-      <section aria-labelledby="performance-heading" class={spacing.margin.bottom.section}>
-        <h2 id="performance-heading" class={cn('section-title', spacing.margin.bottom.heading)}>
+      <section aria-labelledby="performance-heading" className={spacing.margin.bottom.section}>
+        <h2 id="performance-heading" className={cn('section-title', spacing.margin.bottom.heading)}>
           {t('sections.testingDiscovery')}
         </h2>
-        <div class={layout.grid.cards}>
+        <div className={layout.grid.cards}>
           {/* Test cards - only show when connected to the selected interface type */}
           {/* Fix: Don't show test results from wired when in WiFi mode but disconnected */}
           {(!isWifi || cards.wifi) && (
@@ -180,13 +181,12 @@ export function AppDashboard({
           ) : null}
         </div>
       </section>
-
       {/* Section: System */}
-      <section aria-labelledby="system-heading" class={spacing.margin.bottom.section}>
-        <h2 id="system-heading" class={cn('section-title', spacing.margin.bottom.heading)}>
+      <section aria-labelledby="system-heading" className={spacing.margin.bottom.section}>
+        <h2 id="system-heading" className={cn('section-title', spacing.margin.bottom.heading)}>
           {t('sections.system')}
         </h2>
-        <div class={layout.grid.cards}>
+        <div className={layout.grid.cards}>
           <SystemHealthCard />
           <LogViewerCard maxHeight="400px" />
         </div>

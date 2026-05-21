@@ -132,7 +132,7 @@ describe('Fab', () => {
   });
 
   it('accepts custom className', () => {
-    render(<Fab class="custom-class" />);
+    render(<Fab className="custom-class" />);
 
     const button = screen.getByRole('button');
     expect(button).toHaveClass('custom-class');

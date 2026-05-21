@@ -17,9 +17,9 @@ const meta: Meta<typeof Fab> = {
   tags: ['autodocs'],
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="relative h-96 bg-surface-base">
-        <div class={cn(spacing.pad.default)}>
-          <p class="text-text-secondary">
+      <div className="relative h-96 bg-surface-base">
+        <div className={cn(spacing.pad.default)}>
+          <p className="text-text-secondary">
             The FAB is fixed in the bottom-right corner. Click to trigger tests.
           </p>
         </div>

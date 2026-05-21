@@ -15,7 +15,7 @@ interface BaseCardProps<T> {
   children: (data: T) => ReactNode;
   loadingContent?: ReactNode;
   emptyMessage?: string;
-  class?: string;
+  className?: string;
   onClick?: () => void;
 }
 
@@ -54,7 +54,7 @@ export function BaseCard<T>({
   children,
   loadingContent,
   emptyMessage,
-  class: className,
+  className,
   onClick,
 }: BaseCardProps<T>): JSX.Element {
   const { t } = useTranslation('common');
@@ -68,7 +68,7 @@ export function BaseCard<T>({
         subtitle={subtitle}
         icon={icon}
         status="loading"
-        class={className}
+        className={className}
         enableLiveRegion={true}
       >
         {loadingContent || <DefaultLoadingSkeleton />}
@@ -84,11 +84,11 @@ export function BaseCard<T>({
         subtitle={subtitle}
         icon={icon}
         status="error"
-        class={className}
+        className={className}
         enableLiveRegion={true}
       >
         <CardValue value={t('status.error')} size="md" status="error" />
-        <p class={cn('caption text-status-error', spacing.margin.top.tight)}>{error}</p>
+        <p className={cn('caption text-status-error', spacing.margin.top.tight)}>{error}</p>
       </Card>
     );
   }
@@ -101,7 +101,7 @@ export function BaseCard<T>({
         subtitle={subtitle}
         icon={icon}
         status="unknown"
-        class={className}
+        className={className}
         enableLiveRegion={true}
       >
         <CardValue value={resolvedEmptyMessage} size="md" />
@@ -118,7 +118,7 @@ export function BaseCard<T>({
       subtitle={subtitle}
       icon={icon}
       status={status}
-      class={className}
+      className={className}
       onClick={onClick}
       enableLiveRegion={true}
     >
@@ -134,19 +134,19 @@ export function BaseCard<T>({
 function DefaultLoadingSkeleton(): JSX.Element {
   return (
     <>
-      <Skeleton class={cn('h-8 w-32', spacing.margin.bottom.heading)} />
-      <div class={cn(spacing.stack.sm, spacing.margin.top.content)}>
-        <div class={layout.flex.between}>
-          <Skeleton class="h-3 w-16" />
-          <Skeleton class="h-3 w-20" />
+      <Skeleton className={cn('h-8 w-32', spacing.margin.bottom.heading)} />
+      <div className={cn(spacing.stack.sm, spacing.margin.top.content)}>
+        <div className={layout.flex.between}>
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-20" />
         </div>
-        <div class={layout.flex.between}>
-          <Skeleton class="h-3 w-12" />
-          <Skeleton class="h-3 w-16" />
+        <div className={layout.flex.between}>
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-3 w-16" />
         </div>
-        <div class={layout.flex.between}>
-          <Skeleton class="h-3 w-20" />
-          <Skeleton class="h-3 w-12" />
+        <div className={layout.flex.between}>
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-3 w-12" />
         </div>
       </div>
     </>
@@ -166,7 +166,7 @@ interface SimpleBaseCardProps {
   error?: string | null;
   children: ReactNode;
   loadingContent?: ReactNode;
-  class?: string;
+  className?: string;
   onClick?: () => void;
 }
 
@@ -182,7 +182,7 @@ export function SimpleBaseCard({
   error = null,
   children,
   loadingContent,
-  class: className,
+  className,
   onClick,
 }: SimpleBaseCardProps): JSX.Element {
   const { t } = useTranslation('common');
@@ -195,7 +195,7 @@ export function SimpleBaseCard({
         subtitle={subtitle}
         icon={icon}
         status="loading"
-        class={className}
+        className={className}
         enableLiveRegion={true}
       >
         {loadingContent || <DefaultLoadingSkeleton />}
@@ -211,11 +211,11 @@ export function SimpleBaseCard({
         subtitle={subtitle}
         icon={icon}
         status="error"
-        class={className}
+        className={className}
         enableLiveRegion={true}
       >
         <CardValue value={t('status.error')} size="md" status="error" />
-        <p class={cn('caption text-status-error', spacing.margin.top.tight)}>{error}</p>
+        <p className={cn('caption text-status-error', spacing.margin.top.tight)}>{error}</p>
       </Card>
     );
   }
@@ -226,7 +226,7 @@ export function SimpleBaseCard({
       subtitle={subtitle}
       icon={icon}
       status={status}
-      class={className}
+      className={className}
       onClick={onClick}
       enableLiveRegion={true}
     >

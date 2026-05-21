@@ -142,9 +142,9 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
   return (
     <>
       {/* Modal overlay */}
-      <div class={modal.overlay}>
+      <div className={modal.overlay}>
         {/* Backdrop */}
-        <div class={modal.backdrop} onClick={onClose} aria-hidden="true" />
+        <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
 
         {/* Modal content */}
         <div
@@ -152,22 +152,22 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
           role="dialog"
           aria-modal="true"
           aria-labelledby="profile-modal-title"
-          class={cn('relative', modal.content, modal.size.lg, 'flex flex-col')}
+          className={cn('relative', modal.content, modal.size.lg, 'flex flex-col')}
           style={{ maxHeight: '85vh' }}
         >
           {/* Header */}
           <div
-            class={cn(
+            className={cn(
               layout.flex.between,
               spacing.pad.lg,
               'border-b border-surface-border shrink-0',
             )}
           >
             <div>
-              <h2 id="profile-modal-title" class="heading-2">
+              <h2 id="profile-modal-title" className="heading-2">
                 {t('profile.management', 'Profile Management')}
               </h2>
-              <p class="body-small text-text-muted mt-1">
+              <p className="body-small text-text-muted mt-1">
                 {t('profile.managementDesc', 'Create and manage client-specific configurations')}
               </p>
             </div>
@@ -175,7 +175,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
               type="button"
               ref={closeButtonRef}
               onClick={onClose}
-              class={cn(
+              className={cn(
                 'p-2',
                 radius.md,
                 'hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary',
@@ -183,7 +183,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
               aria-label={t('common.close', 'Close')}
             >
               <svg
-                class={iconTokens.size.lg}
+                className={iconTokens.size.lg}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -201,7 +201,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
 
           {/* Actions bar */}
           <div
-            class={cn(
+            className={cn(
               spacing.pad.default,
               'border-b border-surface-border bg-surface-base flex items-center gap-2 shrink-0',
             )}
@@ -209,7 +209,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
             <button
               type="button"
               onClick={handleCreate}
-              class={cn(
+              className={cn(
                 spacing.pad.sm,
                 'px-4',
                 radius.md,
@@ -217,7 +217,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
               )}
             >
               <svg
-                class="w-4 h-4"
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -235,7 +235,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
             <button
               type="button"
               onClick={handleExport}
-              class={cn(
+              className={cn(
                 spacing.pad.sm,
                 'px-4',
                 radius.md,
@@ -244,7 +244,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
               title={t('profile.export', 'Export All')}
             >
               <svg
-                class="w-4 h-4"
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -261,9 +261,9 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
             </button>
 
             {/* Search bar */}
-            <div class="relative flex-1 ml-4">
+            <div className="relative flex-1 ml-4">
               <svg
-                class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -283,7 +283,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                 onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                   setSearchQuery(e.target.value)
                 }
-                class={cn(
+                className={cn(
                   'w-full pl-9 pr-4 py-2',
                   radius.md,
                   'border border-surface-border bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary body-small',
@@ -295,7 +295,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
           {/* Error message */}
           {error ? (
             <div
-              class={cn(
+              className={cn(
                 'mx-4 mt-4',
                 spacing.pad.sm,
                 radius.md,
@@ -307,20 +307,22 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
           ) : null}
 
           {/* Scrollable content */}
-          <div class={cn(spacing.pad.lg, 'overflow-y-auto flex-1')}>
+          <div className={cn(spacing.pad.lg, 'overflow-y-auto flex-1')}>
             {/* Loading state */}
             {isLoading && profiles.length === 0 ? (
-              <div class="text-center py-12">
-                <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary" />
-                <p class="mt-3 body-small text-text-muted">{t('common.loading', 'Loading...')}</p>
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary" />
+                <p className="mt-3 body-small text-text-muted">
+                  {t('common.loading', 'Loading...')}
+                </p>
               </div>
             ) : null}
 
             {/* Profile grid */}
             {!isLoading && filteredProfiles.length === 0 ? (
-              <div class="text-center py-12">
+              <div className="text-center py-12">
                 <svg
-                  class="mx-auto w-16 h-16 text-text-muted mb-4"
+                  className="mx-auto w-16 h-16 text-text-muted mb-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -333,12 +335,12 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                     d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
                   />
                 </svg>
-                <h3 class="body font-medium text-text-primary mb-2">
+                <h3 className="body font-medium text-text-primary mb-2">
                   {searchQuery
                     ? t('profile.noResults', 'No profiles found')
                     : t('profile.noProfiles', 'No profiles yet')}
                 </h3>
-                <p class="body-small text-text-muted mb-6">
+                <p className="body-small text-text-muted mb-6">
                   {searchQuery
                     ? t('profile.noResultsDesc', 'Try adjusting your search criteria')
                     : t('profile.noProfilesDesc', 'Create your first profile to get started')}
@@ -347,7 +349,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                   <button
                     type="button"
                     onClick={handleCreate}
-                    class={cn(
+                    className={cn(
                       spacing.pad.sm,
                       'px-4',
                       radius.md,
@@ -359,7 +361,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                 )}
               </div>
             ) : (
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredProfiles.map((profile) => (
                   <ProfileCard
                     key={profile.id}
@@ -380,7 +382,6 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
           </div>
         </div>
       </div>
-
       {/* Profile editor modal */}
       {isEditorOpen ? (
         <ProfileEditor
@@ -390,7 +391,6 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
           isLoading={isLoading}
         />
       ) : null}
-
       {/* Delete confirmation modal */}
       {deleteConfirm ? (
         <DeleteConfirmModal
@@ -431,7 +431,7 @@ function ProfileCard({
 
   return (
     <div
-      class={cn(
+      className={cn(
         radius.lg,
         'border',
         isActive ? 'border-brand-primary ring-2 ring-brand-primary/20' : 'border-surface-border',
@@ -439,40 +439,40 @@ function ProfileCard({
       )}
     >
       {/* Card content */}
-      <div class={cn(spacing.pad.default)}>
-        <div class="flex items-start justify-between mb-2">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <h3 class="body-small font-medium text-text-primary truncate">{profile.name}</h3>
+      <div className={cn(spacing.pad.default)}>
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="body-small font-medium text-text-primary truncate">{profile.name}</h3>
               {profile.is_default ? (
-                <span class="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary font-medium">
+                <span className="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary font-medium">
                   {t('profile.default', 'Default')}
                 </span>
               ) : null}
               {isActive ? (
-                <span class="caption px-1.5 py-0.5 rounded bg-status-success/10 text-status-success font-medium">
+                <span className="caption px-1.5 py-0.5 rounded bg-status-success/10 text-status-success font-medium">
                   {t('profile.active', 'Active')}
                 </span>
               ) : null}
             </div>
             {profile.description ? (
-              <p class="caption text-text-muted mt-1 line-clamp-2">{profile.description}</p>
+              <p className="caption text-text-muted mt-1 line-clamp-2">{profile.description}</p>
             ) : null}
           </div>
         </div>
 
         {/* Updated date */}
-        <p class="caption text-text-muted mb-3">
+        <p className="caption text-text-muted mb-3">
           {t('profile.updated', 'Updated')} {new Date(profile.updated_at).toLocaleDateString()}
         </p>
 
         {/* Action buttons - always visible */}
-        <div class="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Edit button */}
           <button
             type="button"
             onClick={onEdit}
-            class={cn(
+            className={cn(
               spacing.chip.sm,
               radius.md,
               'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5',
@@ -480,7 +480,7 @@ function ProfileCard({
             title={t('common.edit', 'Edit')}
           >
             <svg
-              class="w-3.5 h-3.5"
+              className="w-3.5 h-3.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -500,7 +500,7 @@ function ProfileCard({
           <button
             type="button"
             onClick={onDuplicate}
-            class={cn(
+            className={cn(
               spacing.chip.sm,
               radius.md,
               'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5',
@@ -508,7 +508,7 @@ function ProfileCard({
             title={t('common.clone', 'Clone')}
           >
             <svg
-              class="w-3.5 h-3.5"
+              className="w-3.5 h-3.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -529,7 +529,7 @@ function ProfileCard({
             <button
               type="button"
               onClick={onDelete}
-              class={cn(
+              className={cn(
                 spacing.chip.sm,
                 radius.md,
                 'border border-status-error/30 bg-status-error/5 hover:bg-status-error/10 text-status-error caption font-medium flex items-center gap-1.5',
@@ -537,7 +537,7 @@ function ProfileCard({
               title={t('common.delete', 'Delete')}
             >
               <svg
-                class="w-3.5 h-3.5"
+                className="w-3.5 h-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -559,7 +559,7 @@ function ProfileCard({
             <button
               type="button"
               onClick={onSetActive}
-              class={cn(
+              className={cn(
                 spacing.chip.sm,
                 radius.md,
                 'bg-brand-primary hover:bg-brand-primary-hover text-text-inverse caption font-medium flex items-center gap-1.5 ml-auto',
@@ -567,7 +567,7 @@ function ProfileCard({
               title={t('profile.activate', 'Activate')}
             >
               <svg
-                class="w-3.5 h-3.5"
+                className="w-3.5 h-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -610,25 +610,25 @@ function DeleteConfirmModal({
 
   return (
     // z-60 required: nested modal must appear above parent modal (z-50)
-    <div class={cn(modal.overlay, 'z-60')}>
-      <div class={modal.backdrop} onClick={onCancel} aria-hidden="true" />
-      <div class={cn('relative', modal.content, modal.size.sm, modal.padding.md)}>
-        <h3 class="heading-2 text-text-primary mb-2">
+    <div className={cn(modal.overlay, 'z-60')}>
+      <div className={modal.backdrop} onClick={onCancel} aria-hidden="true" />
+      <div className={cn('relative', modal.content, modal.size.sm, modal.padding.md)}>
+        <h3 className="heading-2 text-text-primary mb-2">
           {t('profile.deleteConfirm', 'Delete Profile?')}
         </h3>
-        <p class="body-small text-text-secondary mb-6">
+        <p className="body-small text-text-secondary mb-6">
           {t(
             'profile.deleteConfirmDesc',
             'Are you sure you want to delete "{{name}}"? This action cannot be undone.',
             { name: profileName },
           )}
         </p>
-        <div class="flex justify-end gap-3">
+        <div className="flex justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            class={cn(
+            className={cn(
               spacing.pad.sm,
               'px-4',
               radius.md,
@@ -641,7 +641,7 @@ function DeleteConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            class={cn(
+            className={cn(
               spacing.pad.sm,
               'px-4',
               radius.md,

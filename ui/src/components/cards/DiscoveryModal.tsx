@@ -76,12 +76,12 @@ function compareDevices(
 // Helper function to get sort icon (avoids nested ternary)
 function getSortIcon(isActive: boolean, direction: SortDirection): JSX.Element {
   if (!isActive) {
-    return <ArrowUpDown class="w-3 h-3 opacity-30" />;
+    return <ArrowUpDown className="w-3 h-3 opacity-30" />;
   }
   if (direction === 'asc') {
-    return <ChevronUp class="w-3 h-3" />;
+    return <ChevronUp className="w-3 h-3" />;
   }
-  return <ChevronDown class="w-3 h-3" />;
+  return <ChevronDown className="w-3 h-3" />;
 }
 
 // Table header with sort indicator
@@ -103,13 +103,13 @@ function _sortableHeader({
   const isActive = currentField === field;
   return (
     <th
-      class={cn(
+      className={cn(
         'px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:bg-surface-hover transition-colors select-none',
         className,
       )}
       onClick={() => onSort(field)}
     >
-      <div class="flex items-center gap-1">
+      <div className="flex items-center gap-1">
         <span>{label}</span>
         {getSortIcon(isActive, direction)}
       </div>
@@ -293,24 +293,29 @@ export function DiscoveryModal({
   const localCount = data?.devices?.filter((d) => d.isLocal).length || 0;
 
   return (
-    <div class={modal.overlay}>
+    <div className={modal.overlay}>
       {/* Backdrop */}
-      <div class={modal.backdrop} onClick={onClose} aria-hidden="true" />
-
+      <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
       {/* Modal - full width */}
       <div
-        class={cn('relative', modal.content, modal.size.full, modal.padding.lg, 'flex flex-col')}
+        className={cn(
+          'relative',
+          modal.content,
+          modal.size.full,
+          modal.padding.lg,
+          'flex flex-col',
+        )}
         role="dialog"
         aria-modal="true"
         aria-labelledby="discovery-modal-title"
       >
         {/* Header */}
-        <div class="flex items-center justify-between mb-4 pb-4 border-b border-surface-border">
+        <div className="flex items-center justify-between mb-4 pb-4 border-b border-surface-border">
           <div>
-            <h2 id="discovery-modal-title" class="text-xl font-semibold text-text-primary">
+            <h2 id="discovery-modal-title" className="text-xl font-semibold text-text-primary">
               {t('discovery.title', 'Network Discovery')}
             </h2>
-            <p class="text-sm text-text-muted mt-1">
+            <p className="text-sm text-text-muted mt-1">
               {t('discovery.modalSubtitle', '{{total}} devices ({{local}} local)', {
                 total: deviceCount,
                 local: localCount,
@@ -319,14 +324,14 @@ export function DiscoveryModal({
             </p>
           </div>
 
-          <div class="flex items-center gap-3">
+          <div className="flex items-center gap-3">
             {/* Scan button */}
             {onScan ? (
               <button
                 type="button"
                 onClick={onScan}
                 disabled={data?.status?.scanning}
-                class={cn(
+                className={cn(
                   button.base,
                   button.variant.secondary,
                   button.size.sm,
@@ -334,18 +339,18 @@ export function DiscoveryModal({
                 )}
               >
                 <RefreshCw
-                  class={cn(iconTokens.size.sm, data?.status?.scanning ? 'animate-spin' : '')}
+                  className={cn(iconTokens.size.sm, data?.status?.scanning ? 'animate-spin' : '')}
                 />
                 {data?.status?.scanning ? t('discovery.scanning') : t('discovery.rescan')}
               </button>
             ) : null}
 
             {/* Export dropdown */}
-            <div class="flex items-center gap-1">
+            <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={exportCsv}
-                class={cn(
+                className={cn(
                   button.base,
                   button.variant.ghost,
                   button.size.sm,
@@ -353,13 +358,13 @@ export function DiscoveryModal({
                 )}
                 title="Export as CSV"
               >
-                <Download class={iconTokens.size.sm} />
+                <Download className={iconTokens.size.sm} />
                 CSV
               </button>
               <button
                 type="button"
                 onClick={exportJson}
-                class={cn(
+                className={cn(
                   button.base,
                   button.variant.ghost,
                   button.size.sm,
@@ -367,7 +372,7 @@ export function DiscoveryModal({
                 )}
                 title="Export as JSON"
               >
-                <Download class={iconTokens.size.sm} />
+                <Download className={iconTokens.size.sm} />
                 JSON
               </button>
             </div>
@@ -376,22 +381,22 @@ export function DiscoveryModal({
             <button
               type="button"
               onClick={onClose}
-              class={cn(
+              className={cn(
                 'p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors',
               )}
               aria-label="Close"
             >
-              <X class={iconTokens.size.md} />
+              <X className={iconTokens.size.md} />
             </button>
           </div>
         </div>
 
         {/* Search and filters */}
-        <div class="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-4 mb-4">
           {/* Search input */}
-          <div class="relative flex-1 max-w-md">
+          <div className="relative flex-1 max-w-md">
             <Search
-              class={cn(
+              className={cn(
                 'absolute left-3 top-1/2 -translate-y-1/2',
                 iconTokens.size.sm,
                 'text-text-muted',
@@ -404,7 +409,7 @@ export function DiscoveryModal({
                 setSearchQuery(e.target.value)
               }
               placeholder={t('discovery.searchPlaceholder', 'Search IP, hostname, MAC, vendor...')}
-              class={cn(
+              className={cn(
                 'w-full pl-10 pr-4 py-2',
                 'text-sm bg-surface-base border border-surface-border',
                 radius.md,
@@ -415,19 +420,19 @@ export function DiscoveryModal({
               <button
                 type="button"
                 onClick={(): void => setSearchQuery('')}
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
               >
-                <X class={iconTokens.size.sm} />
+                <X className={iconTokens.size.sm} />
               </button>
             ) : null}
           </div>
 
           {/* Filter toggles */}
-          <div class="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={(): void => setShowLocalOnly(!showLocalOnly)}
-              class={cn(
+              className={cn(
                 'px-3 py-1.5 text-sm',
                 radius.md,
                 'transition-colors',
@@ -441,23 +446,23 @@ export function DiscoveryModal({
           </div>
 
           {/* Results count */}
-          <span class="text-sm text-text-muted">
+          <span className="text-sm text-text-muted">
             {filteredDevices.length} of {deviceCount} devices
           </span>
         </div>
 
         {/* Table */}
-        <div class="flex-1 overflow-auto">
-          <table class="w-full min-w-[900px]">
-            <thead class="bg-surface-base sticky top-0">
-              <tr class="border-b border-surface-border">
+        <div className="flex-1 overflow-auto">
+          <table className="w-full min-w-[900px]">
+            <thead className="bg-surface-base sticky top-0">
+              <tr className="border-b border-surface-border">
                 <sortableHeader
                   label={t('discovery.tableIp', 'IP Address')}
                   field="ip"
                   currentField={sortField}
                   direction={sortDirection}
                   onSort={handleSort}
-                  class="w-40"
+                  className="w-40"
                 />
                 <sortableHeader
                   label={t('discovery.tableHostname', 'Hostname')}
@@ -465,7 +470,7 @@ export function DiscoveryModal({
                   currentField={sortField}
                   direction={sortDirection}
                   onSort={handleSort}
-                  class="w-40"
+                  className="w-40"
                 />
                 <sortableHeader
                   label={t('discovery.tableMac', 'MAC')}
@@ -473,7 +478,7 @@ export function DiscoveryModal({
                   currentField={sortField}
                   direction={sortDirection}
                   onSort={handleSort}
-                  class="w-36"
+                  className="w-36"
                 />
                 <sortableHeader
                   label={t('discovery.tableVendor', 'Vendor')}
@@ -481,15 +486,15 @@ export function DiscoveryModal({
                   currentField={sortField}
                   direction={sortDirection}
                   onSort={handleSort}
-                  class="w-32"
+                  className="w-32"
                 />
-                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-28">
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-28">
                   {t('discovery.tableDiscovery', 'Discovery')}
                 </th>
-                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-20">
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-20">
                   {t('discovery.tablePorts', 'Ports')}
                 </th>
-                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-20">
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-20">
                   {t('discovery.tableVulns', 'CVEs')}
                 </th>
                 <sortableHeader
@@ -498,14 +503,14 @@ export function DiscoveryModal({
                   currentField={sortField}
                   direction={sortDirection}
                   onSort={handleSort}
-                  class="w-24"
+                  className="w-24"
                 />
-                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-24">
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-24">
                   {t('discovery.tableActions', 'Actions')}
                 </th>
               </tr>
             </thead>
-            <tbody class="text-text-primary">
+            <tbody className="text-text-primary">
               {filteredDevices.map((device) => {
                 const deviceKey = device.mac || `ip:${device.ip}`;
                 return (
@@ -524,7 +529,7 @@ export function DiscoveryModal({
 
           {/* Empty state */}
           {filteredDevices.length === 0 ? (
-            <div class="text-center py-12 text-text-muted">
+            <div className="text-center py-12 text-text-muted">
               {searchQuery || showLocalOnly
                 ? t('discovery.noResults', 'No devices match your filters')
                 : t('discovery.noDevices', 'No devices discovered yet')}

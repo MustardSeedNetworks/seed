@@ -60,7 +60,7 @@ function groupCriteriaByMode(criteria: PassFailCriterion[]): Map<string, PassFai
 /** Render comparison operator symbol */
 function _comparisonSymbol({ comparison }: { comparison: ComparisonOperator }): React.ReactElement {
   return (
-    <span class="text-text-muted font-mono">{comparison === 'gte' ? '\u2265' : '\u2264'}</span>
+    <span className="text-text-muted font-mono">{comparison === 'gte' ? '\u2265' : '\u2264'}</span>
   );
 }
 
@@ -94,40 +94,41 @@ function _criterionRow({
 
   return (
     <div
-      class={cn(
+      className={cn(
         layout.inline.default,
         'justify-between py-1.5 border-b border-surface-border/50 last:border-b-0',
       )}
     >
       {/* Enable checkbox and name */}
-      <label class={cn(layout.inline.tight, 'cursor-pointer flex-1')}>
+      <label className={cn(layout.inline.tight, 'cursor-pointer flex-1')}>
         <input
           type="checkbox"
           checked={criterion.enabled}
           onChange={handleToggle}
           disabled={disabled}
-          class="w-4 h-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary"
+          className="w-4 h-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary"
         />
-        <span class={cn('caption', criterion.enabled ? 'text-text-primary' : 'text-text-muted')}>
+        <span
+          className={cn('caption', criterion.enabled ? 'text-text-primary' : 'text-text-muted')}
+        >
           {t(criterion.displayKey as never)}
         </span>
       </label>
-
       {/* Comparison and threshold */}
-      <div class={cn(layout.inline.tight)}>
+      <div className={cn(layout.inline.tight)}>
         <comparisonSymbol comparison={criterion.comparison} />
         <input
           type="number"
           value={criterion.threshold}
           onChange={handleThresholdChange}
           disabled={disabled || !criterion.enabled}
-          class={cn(
+          className={cn(
             'w-16 px-2 py-1 text-right caption bg-surface-default border border-surface-border disabled:opacity-50 focus:outline-none focus:ring-1 focus:ring-brand-primary',
             radius.sm,
           )}
           step={criterion.suffix === '%' || criterion.suffix === 'ms' ? 1 : 0.1}
         />
-        <span class="caption text-text-muted w-12">{criterion.suffix}</span>
+        <span className="caption text-text-muted w-12">{criterion.suffix}</span>
       </div>
     </div>
   );
@@ -152,28 +153,27 @@ function _criteriaSection({
   disabled?: boolean;
 }): React.ReactElement {
   return (
-    <div class="mb-2">
+    <div className="mb-2">
       {/* Section header */}
       <button
         type="button"
         onClick={onToggle}
-        class={cn(
+        className={cn(
           'w-full justify-between py-1.5 hover:bg-surface-hover transition-colors',
           layout.inline.default,
           radius.sm,
         )}
       >
-        <span class="caption font-medium text-text-secondary">{title}</span>
+        <span className="caption font-medium text-text-secondary">{title}</span>
         {expanded ? (
-          <ChevronDown class={iconTokens.size.xs} />
+          <ChevronDown className={iconTokens.size.xs} />
         ) : (
-          <ChevronRight class={iconTokens.size.xs} />
+          <ChevronRight className={iconTokens.size.xs} />
         )}
       </button>
-
       {/* Criteria list */}
       {expanded ? (
-        <div class={cn('pl-2', spacing.margin.top.tight)}>
+        <div className={cn('pl-2', spacing.margin.top.tight)}>
           {criteria.map((criterion) => (
             <criterionRow
               key={criterion.id}
@@ -260,33 +260,34 @@ export function PassFailCriteriaPanel({
   };
 
   return (
-    <div class={cn('bg-surface-raised border border-surface-border', radius.md, spacing.pad.sm)}>
+    <div
+      className={cn('bg-surface-raised border border-surface-border', radius.md, spacing.pad.sm)}
+    >
       {/* Header */}
-      <div class={cn('justify-between', layout.inline.default, spacing.margin.bottom.content)}>
-        <div class={cn(layout.inline.default)}>
-          <Settings2 class={iconTokens.size.sm} />
-          <h4 class="body-small font-medium">{t('criteria.title')}</h4>
+      <div className={cn('justify-between', layout.inline.default, spacing.margin.bottom.content)}>
+        <div className={cn(layout.inline.default)}>
+          <Settings2 className={iconTokens.size.sm} />
+          <h4 className="body-small font-medium">{t('criteria.title')}</h4>
         </div>
         {onValidate ? (
           <button
             type="button"
             onClick={onValidate}
             disabled={disabled || validating}
-            class={cn(
+            className={cn(
               'bg-brand-primary text-text-inverse hover:opacity-90 disabled:opacity-50',
               button.size.sm,
               radius.md,
               layout.inline.tight,
             )}
           >
-            <Play class="w-3 h-3" />
+            <Play className="w-3 h-3" />
             <span>{validating ? t('criteria.validating') : t('criteria.runTest')}</span>
           </button>
         ) : null}
       </div>
-
       {/* Criteria sections */}
-      <div class={spacing.margin.bottom.content}>
+      <div className={spacing.margin.bottom.content}>
         {Array.from(groupedCriteria.entries()).map(([mode, modeCriteria]) => (
           <criteriaSection
             key={mode}
@@ -299,29 +300,30 @@ export function PassFailCriteriaPanel({
           />
         ))}
       </div>
-
       {/* Actions */}
-      <div class={cn('justify-between pt-2 border-t border-surface-border', layout.inline.default)}>
-        <div class={cn(layout.inline.tight)}>
+      <div
+        className={cn('justify-between pt-2 border-t border-surface-border', layout.inline.default)}
+      >
+        <div className={cn(layout.inline.tight)}>
           <button
             type="button"
             onClick={handleReset}
             disabled={disabled}
-            class={cn(
+            className={cn(
               'bg-surface-default border border-surface-border hover:bg-surface-hover disabled:opacity-50',
               button.size.sm,
               radius.md,
               layout.inline.tight,
             )}
           >
-            <RotateCcw class="w-3 h-3" />
+            <RotateCcw className="w-3 h-3" />
             <span>{t('criteria.resetDefaults')}</span>
           </button>
           <button
             type="button"
             onClick={handleLoadAll}
             disabled={disabled}
-            class={cn(
+            className={cn(
               'bg-surface-default border border-surface-border hover:bg-surface-hover disabled:opacity-50',
               button.size.sm,
               radius.md,
@@ -335,14 +337,14 @@ export function PassFailCriteriaPanel({
             type="button"
             onClick={onImportFromAirMapper}
             disabled={disabled}
-            class={cn(
+            className={cn(
               'bg-surface-default border border-surface-border hover:bg-surface-hover disabled:opacity-50',
               button.size.sm,
               radius.md,
               layout.inline.tight,
             )}
           >
-            <Upload class="w-3 h-3" />
+            <Upload className="w-3 h-3" />
             <span>{t('criteria.importAirMapper')}</span>
           </button>
         ) : null}

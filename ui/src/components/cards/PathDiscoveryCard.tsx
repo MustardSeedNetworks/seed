@@ -289,13 +289,13 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
     return (
       <Card
         title={t('pathDiscovery.title', 'Path Discovery')}
-        icon={<Route class={iconTokens.size.md} />}
+        icon={<Route className={iconTokens.size.md} />}
         status={cardStatus}
       >
         {/* Target Input Form - Responsive layout for various screen sizes */}
-        <form onSubmit={handleSubmit} class={cn('stack-sm', spacing.margin.bottom.content)}>
+        <form onSubmit={handleSubmit} className={cn('stack-sm', spacing.margin.bottom.content)}>
           {/* Target Input Row - Stack on mobile, inline on larger screens */}
-          <div class="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             {/* Target input - full width on mobile */}
             <input
               type="text"
@@ -305,7 +305,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
               }
               placeholder={t('pathDiscovery.enterTarget', 'Enter IP or hostname...')}
               disabled={loading}
-              class={cn(
+              className={cn(
                 'flex-1 min-w-0',
                 inputTokens.base,
                 inputTokens.state.default,
@@ -321,7 +321,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
             />
 
             {/* Protocol and Trace button group - inline always */}
-            <div class="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               {/* Protocol selector - styled to match design system */}
               <select
                 value={protocol}
@@ -329,7 +329,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   setProtocol(e.target.value as Protocol)
                 }
                 disabled={loading}
-                class={cn(
+                className={cn(
                   inputTokens.base,
                   inputTokens.state.default,
                   inputTokens.size.sm,
@@ -354,7 +354,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   min={1}
                   max={65535}
                   disabled={loading}
-                  class={cn(
+                  className={cn(
                     'w-16',
                     inputTokens.base,
                     inputTokens.state.default,
@@ -367,7 +367,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
               <button
                 type="submit"
                 disabled={loading || !target.trim()}
-                class={cn(
+                className={cn(
                   buttonTokens.base,
                   buttonTokens.variant.primary,
                   buttonTokens.size.sm,
@@ -380,16 +380,16 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
           </div>
 
           {/* Quick Targets - Wrap on small screens */}
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="caption text-text-muted shrink-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="caption text-text-muted shrink-0">
               {t('pathDiscovery.quick', 'Quick')}:
             </span>
-            <div class="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <button
                 type="button"
                 onClick={traceGateway}
                 disabled={loading || !gateway}
-                class={cn(
+                className={cn(
                   buttonTokens.base,
                   buttonTokens.variant.ghost,
                   buttonTokens.size.xs,
@@ -402,7 +402,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                 type="button"
                 onClick={traceDns}
                 disabled={loading}
-                class={cn(
+                className={cn(
                   buttonTokens.base,
                   buttonTokens.variant.ghost,
                   buttonTokens.size.xs,
@@ -415,7 +415,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                 type="button"
                 onClick={traceInternet}
                 disabled={loading}
-                class={cn(
+                className={cn(
                   buttonTokens.base,
                   buttonTokens.variant.ghost,
                   buttonTokens.size.xs,
@@ -427,12 +427,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
             </div>
           </div>
         </form>
-
         <CardDivider />
-
         {/* Loading State with Streaming Hops */}
         {loading ? (
-          <div class="stack-sm">
+          <div className="stack-sm">
             <CardValue
               value={
                 streamingHops.length > 0
@@ -445,42 +443,42 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
             />
             {/* Show streaming hops in real-time */}
             {streamingHops.length > 0 ? (
-              <div class="stack-xs">
+              <div className="stack-xs">
                 {streamingHops.map((hop) => (
                   <div
                     key={hop.ttl}
-                    class={cn(
+                    className={cn(
                       'flex items-center gap-2 py-1',
                       hop.state === 'timeout' && 'opacity-50',
                     )}
                   >
-                    <span class="w-6 text-xs text-text-muted font-mono">{hop.ttl}</span>
-                    <span class="flex-1 text-sm font-mono text-text-primary">{hop.ip || '*'}</span>
-                    <span class="text-xs text-text-muted">{formatRtt(hop.rtt)}</span>
+                    <span className="w-6 text-xs text-text-muted font-mono">{hop.ttl}</span>
+                    <span className="flex-1 text-sm font-mono text-text-primary">
+                      {hop.ip || '*'}
+                    </span>
+                    <span className="text-xs text-text-muted">{formatRtt(hop.rtt)}</span>
                   </div>
                 ))}
                 {/* Pulsing indicator for next hop */}
-                <div class="flex items-center gap-2 py-1 animate-pulse">
-                  <span class="w-6 text-xs text-text-muted font-mono">
+                <div className="flex items-center gap-2 py-1 animate-pulse">
+                  <span className="w-6 text-xs text-text-muted font-mono">
                     {streamingHops.length + 1}
                   </span>
-                  <span class="text-sm text-text-muted">...</span>
+                  <span className="text-sm text-text-muted">...</span>
                 </div>
               </div>
             ) : null}
           </div>
         ) : null}
-
         {/* Error State */}
         {error && !loading ? (
-          <div class={cn(spacing.pad.sm, statusColor.bg.errorSoft, radius.default)}>
-            <span class="body-small text-status-error">{error}</span>
+          <div className={cn(spacing.pad.sm, statusColor.bg.errorSoft, radius.default)}>
+            <span className="body-small text-status-error">{error}</span>
           </div>
         ) : null}
-
         {/* Results */}
         {result && !loading ? (
-          <div class="stack-md">
+          <div className="stack-md">
             {/* L3 Path Results */}
             {result.l3Path ? (
               <L3_PATH_DISPLAY result={result.l3Path} maxRtt={maxRtt} t={t} />
@@ -497,11 +495,13 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
             ) : null}
 
             {/* Export Actions */}
-            <div class={cn(layout.inline.default, spacing.gap.compact, spacing.margin.top.inline)}>
+            <div
+              className={cn(layout.inline.default, spacing.gap.compact, spacing.margin.top.inline)}
+            >
               <button
                 type="button"
                 onClick={exportJson}
-                class={cn(
+                className={cn(
                   buttonTokens.base,
                   buttonTokens.variant.ghost,
                   buttonTokens.size.xs,
@@ -513,7 +513,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
               <button
                 type="button"
                 onClick={exportCsv}
-                class={cn(
+                className={cn(
                   buttonTokens.base,
                   buttonTokens.variant.ghost,
                   buttonTokens.size.xs,
@@ -525,7 +525,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
               <button
                 type="button"
                 onClick={copyToClipboard}
-                class={cn(
+                className={cn(
                   buttonTokens.base,
                   buttonTokens.variant.ghost,
                   buttonTokens.size.xs,
@@ -542,7 +542,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   });
                 }}
                 disabled={loading}
-                class={cn(
+                className={cn(
                   buttonTokens.base,
                   buttonTokens.variant.ghost,
                   buttonTokens.size.xs,
@@ -554,11 +554,10 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
             </div>
           </div>
         ) : null}
-
         {/* Empty State - improved visual design */}
         {result || loading || error ? null : (
           <div
-            class={cn(
+            className={cn(
               spacing.pad.md,
               'text-center',
               'bg-surface-base/50',
@@ -566,13 +565,13 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
               'border border-dashed border-surface-border',
             )}
           >
-            <div class="text-text-muted mb-2">
-              <Route class={cn(iconTokens.size.lg, 'mx-auto opacity-40')} />
+            <div className="text-text-muted mb-2">
+              <Route className={cn(iconTokens.size.lg, 'mx-auto opacity-40')} />
             </div>
-            <p class="body-small text-text-muted">
+            <p className="body-small text-text-muted">
               {t('pathDiscovery.enterTarget', 'Select a target to trace')}
             </p>
-            <p class="caption text-text-muted mt-1">
+            <p className="caption text-text-muted mt-1">
               {t(
                 'pathDiscovery.emptyHint',
                 'Enter an IP address or hostname, or use the quick buttons above',

@@ -109,19 +109,19 @@ export const DiscoverySettings: React.NamedExoticComponent<DiscoverySettingsProp
     return (
       <CollapsibleSection
         title={
-          <div class={layout.inline.default}>
-            <ScanSearch class={iconTokens.size.sm} />
+          <div className={layout.inline.default}>
+            <ScanSearch className={iconTokens.size.sm} />
             <span>{t('sections.discovery')}</span>
             <AutoSaveIndicator status={networkDiscoveryStatus} />
           </div>
         }
         defaultOpen={false}
       >
-        <div class="stack">
+        <div className="stack">
           {/* Card Visibility & FAB Controls */}
-          <div class="stack-sm">
+          <div className="stack-sm">
             <label
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.sm,
                 'bg-surface-base',
@@ -130,10 +130,10 @@ export const DiscoverySettings: React.NamedExoticComponent<DiscoverySettingsProp
               )}
             >
               <div>
-                <span class="body-small text-text-primary font-medium">
+                <span className="body-small text-text-primary font-medium">
                   {t('common.showCard', 'Show Card')}
                 </span>
-                <p class="caption text-text-muted">
+                <p className="caption text-text-muted">
                   {t('common.showCardDesc', 'Display this card on the dashboard')}
                 </p>
               </div>
@@ -148,11 +148,11 @@ export const DiscoverySettings: React.NamedExoticComponent<DiscoverySettingsProp
                     },
                   })
                 }
-                class={iconTokens.size.sm}
+                className={iconTokens.size.sm}
               />
             </label>
             <label
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.sm,
                 'bg-surface-base',
@@ -161,10 +161,10 @@ export const DiscoverySettings: React.NamedExoticComponent<DiscoverySettingsProp
               )}
             >
               <div>
-                <span class="body-small text-text-primary font-medium">
+                <span className="body-small text-text-primary font-medium">
                   {t('common.runOnFab', 'Include in Run All')}
                 </span>
-                <p class="caption text-text-muted">
+                <p className="caption text-text-muted">
                   {t('common.runOnFabDesc', 'Run when FAB button is clicked')}
                 </p>
               </div>
@@ -179,7 +179,7 @@ export const DiscoverySettings: React.NamedExoticComponent<DiscoverySettingsProp
                     },
                   })
                 }
-                class={iconTokens.size.sm}
+                className={iconTokens.size.sm}
               />
             </label>
           </div>

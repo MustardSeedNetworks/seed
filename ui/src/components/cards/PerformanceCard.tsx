@@ -514,19 +514,23 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
       <Card
         title={t('performance.title')}
         subtitle={t('performance.subtitle')}
-        icon={<Gauge class={iconTokens.size.md} />}
+        icon={<Gauge className={iconTokens.size.md} />}
         status={getStatus()}
       >
         <div>
           {/* Internet Speed Section */}
-          <p class={cn('caption font-medium', spacing.margin.bottom.inline)}>
+          <p className={cn('caption font-medium', spacing.margin.bottom.inline)}>
             {t('performance.internetSpeed')}
           </p>
 
           {speedtestRunning && speedtestStatus ? (
-            <div class={spacing.margin.bottom.heading}>
+            <div className={spacing.margin.bottom.heading}>
               <div
-                class={cn(layout.flex.center, spacing.gap.spacious, spacing.padding.bottom.inline)}
+                className={cn(
+                  layout.flex.center,
+                  spacing.gap.spacious,
+                  spacing.padding.bottom.inline,
+                )}
               >
                 <SpeedGauge
                   value={speedtestStatus.currentDownload || 0}
@@ -541,12 +545,14 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                   isRunning={speedtestStatus.phase === 'testing_upload'}
                 />
               </div>
-              <div class={cn(layout.inline.default, spacing.pad.xs, 'bg-surface-hover', radius.md)}>
+              <div
+                className={cn(layout.inline.default, spacing.pad.xs, 'bg-surface-hover', radius.md)}
+              >
                 <PulsingDot color="primary" size="sm" />
-                <span class="body-small font-medium">
+                <span className="body-small font-medium">
                   {getSpeedtestPhaseLabel(speedtestStatus.phase)}
                 </span>
-                <span class="body-small text-text-muted ml-auto">
+                <span className="body-small text-text-muted ml-auto">
                   {Math.round(speedtestStatus.progress)}%
                 </span>
               </div>
@@ -554,9 +560,13 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
           ) : null}
 
           {!speedtestRunning && speedtestResult ? (
-            <div class={spacing.margin.bottom.heading}>
+            <div className={spacing.margin.bottom.heading}>
               <div
-                class={cn(layout.flex.center, spacing.gap.spacious, spacing.padding.bottom.inline)}
+                className={cn(
+                  layout.flex.center,
+                  spacing.gap.spacious,
+                  spacing.padding.bottom.inline,
+                )}
               >
                 <SpeedGauge
                   value={speedtestResult.download}
@@ -578,18 +588,18 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
           ) : null}
 
           {speedtestRunning || speedtestResult || speedtestError ? null : (
-            <p class={cn('body-small', spacing.margin.bottom.inline)}>
+            <p className={cn('body-small', spacing.margin.bottom.inline)}>
               {t('performance.noResults')}
             </p>
           )}
 
-          {speedtestError ? <p class="body-small text-status-error">{speedtestError}</p> : null}
+          {speedtestError ? <p className="body-small text-status-error">{speedtestError}</p> : null}
 
           <CardDivider />
 
           {/* LAN Speed (iperf3) Section */}
           <p
-            class={cn(
+            className={cn(
               'caption font-medium',
               spacing.margin.bottom.inline,
               spacing.margin.top.inline,
@@ -597,14 +607,14 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
           >
             {t('performance.lanSpeed')}
             {iperfInfo?.version ? (
-              <span class={cn('text-text-muted font-normal', spacing.margin.left.inline)}>
+              <span className={cn('text-text-muted font-normal', spacing.margin.left.inline)}>
                 {iperfInfo.version}
               </span>
             ) : null}
           </p>
 
           {iperfInfo?.installed ? null : (
-            <p class={cn('body-small text-status-warning', spacing.margin.bottom.heading)}>
+            <p className={cn('body-small text-status-warning', spacing.margin.bottom.heading)}>
               {t('performance.iperfNotInstalled')}
             </p>
           )}
@@ -614,7 +624,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
               {/* Config Summary */}
               {iperfSettings.server ? (
                 <div
-                  class={cn(
+                  className={cn(
                     'caption',
                     spacing.margin.bottom.heading,
                     spacing.pad.sm,
@@ -622,15 +632,15 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                     radius.default,
                   )}
                 >
-                  <div class={layout.flex.between}>
+                  <div className={layout.flex.between}>
                     <span>{t('performance.server')}:</span>
-                    <span class="text-text-primary">
+                    <span className="text-text-primary">
                       {iperfSettings.server}:{iperfSettings.port}
                     </span>
                   </div>
-                  <div class={layout.flex.between}>
+                  <div className={layout.flex.between}>
                     <span>{t('performance.test')}:</span>
-                    <span class="text-text-primary">
+                    <span className="text-text-primary">
                       {iperfSettings.protocol.toUpperCase()}{' '}
                       {iperfSettings.direction === 'bidirectional'
                         ? t('performance.both')
@@ -639,7 +649,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                   </div>
                 </div>
               ) : (
-                <p class={cn('caption', spacing.margin.bottom.heading)}>
+                <p className={cn('caption', spacing.margin.bottom.heading)}>
                   {t('performance.configureServer')}
                 </p>
               )}
@@ -647,7 +657,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
               {/* Client Status/Results */}
               {iperfClientRunning && iperfClientStatus ? (
                 <div
-                  class={cn(
+                  className={cn(
                     layout.inline.spacious,
                     spacing.margin.bottom.heading,
                     spacing.pad.sm,
@@ -656,10 +666,10 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                   )}
                 >
                   <ProgressRing progress={iperfClientStatus.progress} size={56} strokeWidth={5} />
-                  <div class="flex-1">
-                    <div class={layout.inline.default}>
+                  <div className="flex-1">
+                    <div className={layout.inline.default}>
                       <PulsingDot color="primary" size="sm" />
-                      <span class="body-small font-medium">
+                      <span className="body-small font-medium">
                         {getIperfPhaseLabel(iperfClientStatus.phase)}
                       </span>
                     </div>
@@ -670,7 +680,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                           value={pp}
                           max={100}
                           aria-label="iPerf progress"
-                          class={cn(spacing.margin.top.inline, 'w-full', radius.full)}
+                          className={cn(spacing.margin.top.inline, 'w-full', radius.full)}
                         />
                       );
                     })()}
@@ -679,9 +689,9 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
               ) : null}
 
               {!iperfClientRunning && iperfResult ? (
-                <div class={cn(spacing.margin.bottom.heading, 'stack-sm')}>
+                <div className={cn(spacing.margin.bottom.heading, 'stack-sm')}>
                   {iperfResult.direction === 'bidirectional' ? (
-                    <div class={cn('grid grid-cols-1 sm:grid-cols-2', spacing.gap.default)}>
+                    <div className={cn('grid grid-cols-1 sm:grid-cols-2', spacing.gap.default)}>
                       <CardValue
                         label={t('performance.download')}
                         value={formatSpeed(iperfResult.downloadBandwidth ?? iperfResult.bandwidth)}
@@ -709,7 +719,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                   )}
 
                   {iperfResult.direction === 'bidirectional' ? (
-                    <div class={cn('grid grid-cols-1 sm:grid-cols-2', spacing.gap.default)}>
+                    <div className={cn('grid grid-cols-1 sm:grid-cols-2', spacing.gap.default)}>
                       {iperfResult.downloadTransfer !== undefined ? (
                         <CardRow
                           label={t('performance.downloadTransfer')}
@@ -751,12 +761,12 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                 </div>
               ) : null}
 
-              {iperfError ? <p class="body-small text-status-error">{iperfError}</p> : null}
+              {iperfError ? <p className="body-small text-status-error">{iperfError}</p> : null}
 
               {/* Server status indicator (if enabled) */}
               {iperfSettings.enableServer ? (
                 <div
-                  class={cn(
+                  className={cn(
                     'caption',
                     layout.flex.between,
                     'pad-sm bg-surface-hover',
@@ -765,7 +775,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                 >
                   <span>{t('performance.serverMode')}</span>
                   <span
-                    class={
+                    className={
                       iperfServerStatus?.running ? statusColor.text.success : 'text-text-muted'
                     }
                   >

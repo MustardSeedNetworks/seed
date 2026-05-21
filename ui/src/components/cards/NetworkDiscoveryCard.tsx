@@ -224,7 +224,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
       return (
         <Card
           title={t('discovery.title')}
-          icon={<ScanSearch class={iconTokens.size.md} />}
+          icon={<ScanSearch className={iconTokens.size.md} />}
           status="loading"
           enableLiveRegion={true}
           ariaLabel="Network discovery scanning in progress"
@@ -238,7 +238,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
       return (
         <Card
           title={t('discovery.title')}
-          icon={<ScanSearch class={iconTokens.size.md} />}
+          icon={<ScanSearch className={iconTokens.size.md} />}
           status="unknown"
           enableLiveRegion={true}
           ariaLabel="Network discovery - no data available"
@@ -248,7 +248,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
             <button
               type="button"
               onClick={onScan}
-              class={cn(
+              className={cn(
                 spacing.margin.top.heading,
                 'w-full',
                 button.size.md,
@@ -287,17 +287,17 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
     return (
       <Card
         title={t('discovery.title')}
-        icon={<ScanSearch class={iconTokens.size.md} />}
+        icon={<ScanSearch className={iconTokens.size.md} />}
         status={cardStatus}
         enableLiveRegion={true}
         ariaLabel={`Network discovery - ${deviceCount} devices found`}
         headerAction={
-          <div class="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             {/* Full Screen button */}
             <button
               type="button"
               onClick={(): void => setIsModalOpen(true)}
-              class={cn(
+              className={cn(
                 'p-1.5',
                 'bg-surface-hover text-text-secondary',
                 radius.md,
@@ -306,7 +306,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
               aria-label="Open full screen view"
               title={t('discovery.fullScreen', 'Full Screen')}
             >
-              <Maximize2 class={iconTokens.size.sm} aria-hidden="true" />
+              <Maximize2 className={iconTokens.size.sm} aria-hidden="true" />
             </button>
 
             {/* Scan button */}
@@ -335,7 +335,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
                   onScan?.();
                 }}
                 disabled={status.scanning || isPipelineRunning}
-                class={cn(
+                className={cn(
                   spacing.chip.sm,
                   'bg-brand-primary text-text-inverse',
                   radius.md,
@@ -348,7 +348,10 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
               >
                 {status.scanning || isPipelineRunning ? (
                   <>
-                    <RefreshCw class={cn(iconTokens.size.xs, 'animate-spin')} aria-hidden="true" />
+                    <RefreshCw
+                      className={cn(iconTokens.size.xs, 'animate-spin')}
+                      aria-hidden="true"
+                    />
                     {t('discovery.scan')}
                   </>
                 ) : (
@@ -368,13 +371,11 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
           onCancelPipeline={cancelPipeline}
           t={t}
         />
-
         {deviceCount === 0 && !status.scanning && !isPipelineRunning ? (
-          <p class={cn('body-small text-text-muted text-center', spacing.pad.default)}>
+          <p className={cn('body-small text-text-muted text-center', spacing.pad.default)}>
             {t('discovery.noDevices')}
           </p>
         ) : null}
-
         {/* Vulnerability Details Modal */}
         {selectedDeviceForVuln ? (
           <VulnerabilityDetailsModal
@@ -382,7 +383,6 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
             onClose={(): void => setSelectedDeviceForVuln(null)}
           />
         ) : null}
-
         {/* Full Screen Discovery Modal */}
         <DiscoveryModal
           isOpen={isModalOpen}

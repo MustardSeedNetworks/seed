@@ -55,13 +55,12 @@ export function HelpModal({
   }
 
   return (
-    <div class={modal.overlay}>
+    <div className={modal.overlay}>
       {/* Backdrop */}
-      <div class={modal.backdrop} onClick={onClose} aria-hidden="true" />
-
+      <div className={modal.backdrop} onClick={onClose} aria-hidden="true" />
       {/* Modal */}
       <div
-        class={cn(
+        className={cn(
           'relative',
           modal.content,
           modal.size.md,
@@ -76,7 +75,7 @@ export function HelpModal({
       >
         {/* Header */}
         <div
-          class={cn(
+          className={cn(
             layout.flex.between,
             spacing.pad.default,
             'border-b',
@@ -85,13 +84,13 @@ export function HelpModal({
             'shrink-0',
           )}
         >
-          <h2 id="help-modal-title" class="heading-3">
+          <h2 id="help-modal-title" className="heading-3">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            class={cn(
+            className={cn(
               spacing.iconBtn.sm,
               'text-text-muted',
               'hover:text-text-primary',
@@ -102,7 +101,7 @@ export function HelpModal({
             aria-label="Close help"
           >
             <svg
-              class={iconTokens.size.md}
+              className={iconTokens.size.md}
               viewBox="0 0 20 20"
               fill="currentColor"
               aria-hidden="true"
@@ -117,7 +116,7 @@ export function HelpModal({
         </div>
 
         {/* Content */}
-        <div class={cn(spacing.pad.default, 'overflow-y-auto', 'flex-1')}>{children}</div>
+        <div className={cn(spacing.pad.default, 'overflow-y-auto', 'flex-1')}>{children}</div>
       </div>
     </div>
   );
@@ -133,9 +132,9 @@ interface HelpSectionProps {
  */
 export function HelpSection({ title, children }: HelpSectionProps): React.JSX.Element {
   return (
-    <div class={cn(spacing.margin.bottom.section, 'last:mb-0')}>
+    <div className={cn(spacing.margin.bottom.section, 'last:mb-0')}>
       <h3
-        class={cn(
+        className={cn(
           'heading-4',
           spacing.margin.bottom.heading,
           spacing.padding.bottom.tight,
@@ -145,7 +144,7 @@ export function HelpSection({ title, children }: HelpSectionProps): React.JSX.El
       >
         {title}
       </h3>
-      <div class="stack-sm">{children}</div>
+      <div className="stack-sm">{children}</div>
     </div>
   );
 }
@@ -161,13 +160,15 @@ interface HelpItemProps {
  */
 export function HelpItem({ term, description, color }: HelpItemProps): React.JSX.Element {
   return (
-    <div class={cn('flex', spacing.gap.default, 'body-small')}>
-      <div class={cn('flex', 'items-center', spacing.gap.compact, 'shrink-0', 'w-24')}>
-        {color ? <span class={cn('inline-block', 'w-2.5', 'h-2.5', radius.full, color)} /> : null}{' '}
+    <div className={cn('flex', spacing.gap.default, 'body-small')}>
+      <div className={cn('flex', 'items-center', spacing.gap.compact, 'shrink-0', 'w-24')}>
+        {color ? (
+          <span className={cn('inline-block', 'w-2.5', 'h-2.5', radius.full, color)} />
+        ) : null}{' '}
         {/* w-2.5 h-2.5 for status dot */}
-        <span class="font-medium text-text-primary">{term}</span>
+        <span className="font-medium text-text-primary">{term}</span>
       </div>
-      <span class="text-text-muted">{description}</span>
+      <span className="text-text-muted">{description}</span>
     </div>
   );
 }

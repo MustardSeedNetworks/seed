@@ -22,7 +22,7 @@ const meta: Meta<typeof WifiChannelGraph> = {
   tags: ['autodocs'],
   decorators: [
     (StoryComponent: React.ComponentType): JSX.Element => (
-      <div class="w-[640px]">
+      <div className="w-[640px]">
         <StoryComponent />
       </div>
     ),

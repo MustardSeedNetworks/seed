@@ -88,19 +88,19 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
     return (
       <CollapsibleSection
         title={
-          <div class={layout.inline.default}>
-            <PlugZap class={iconTokens.size.sm} />
+          <div className={layout.inline.default}>
+            <PlugZap className={iconTokens.size.sm} />
             <span>{t('sections.link', 'Link')}</span>
             <AutoSaveIndicator status={linkStatus} />
           </div>
         }
         defaultOpen={false}
       >
-        <div class="stack">
+        <div className="stack">
           {/* Card Visibility & FAB Controls */}
-          <div class="stack-sm">
+          <div className="stack-sm">
             <label
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.sm,
                 'bg-surface-base',
@@ -109,10 +109,10 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
               )}
             >
               <div>
-                <span class="body-small text-text-primary font-medium">
+                <span className="body-small text-text-primary font-medium">
                   {t('common.showCard', 'Show Card')}
                 </span>
-                <p class="caption text-text-muted">
+                <p className="caption text-text-muted">
                   {t('common.showCardDesc', 'Display this card on the dashboard')}
                 </p>
               </div>
@@ -124,11 +124,11 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
                     link: { ...cardSettings.link, enabled: e.target.checked },
                   })
                 }
-                class={iconTokens.size.sm}
+                className={iconTokens.size.sm}
               />
             </label>
             <label
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.sm,
                 'bg-surface-base',
@@ -137,10 +137,10 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
               )}
             >
               <div>
-                <span class="body-small text-text-primary font-medium">
+                <span className="body-small text-text-primary font-medium">
                   {t('common.runOnFab', 'Include in Run All')}
                 </span>
-                <p class="caption text-text-muted">
+                <p className="caption text-text-muted">
                   {t('common.runOnFabDesc', 'Run when FAB button is clicked')}
                 </p>
               </div>
@@ -152,14 +152,14 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
                     link: { ...cardSettings.link, autoRunOnLink: e.target.checked },
                   })
                 }
-                class={iconTokens.size.sm}
+                className={iconTokens.size.sm}
               />
             </label>
           </div>
 
           {/* Combined Speed/Duplex Dropdown */}
           <div>
-            <label class="caption text-text-muted font-medium" for="link-mode">
+            <label className="caption text-text-muted font-medium" htmlFor="link-mode">
               {t('link.speedDuplex', 'Speed / Duplex')}
             </label>
             <select
@@ -168,7 +168,7 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
               onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                 handleModeChange(e.target.value)
               }
-              class={cn(
+              className={cn(
                 'w-full',
                 spacing.margin.top.tight,
                 spacing.chip.lg,
@@ -187,7 +187,7 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
 
           {/* Warning for manual settings */}
           {isManualMode ? (
-            <p class={cn('caption text-status-warning', spacing.margin.top.inline)}>
+            <p className={cn('caption text-status-warning', spacing.margin.top.inline)}>
               {t(
                 'link.manualWarning',
                 'Manual speed/duplex may cause link issues if mismatched with switch',
@@ -197,15 +197,15 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
 
           {/* Available Modes Display */}
           {linkSettings.availableModes.length > 0 ? (
-            <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-              <span class="caption text-text-muted font-medium">
+            <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+              <span className="caption text-text-muted font-medium">
                 {t('link.availableModes', 'Supported Modes')}
               </span>
-              <div class={cn('flex flex-wrap', spacing.gap.tight, spacing.margin.top.inline)}>
+              <div className={cn('flex flex-wrap', spacing.gap.tight, spacing.margin.top.inline)}>
                 {linkSettings.availableModes.map((mode) => (
                   <span
                     key={mode}
-                    class={cn(
+                    className={cn(
                       spacing.chip.sm,
                       'bg-surface-base border border-surface-border',
                       radius.default,
@@ -219,7 +219,7 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
             </div>
           ) : null}
 
-          <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
+          <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
             {t('link.requiresRoot', 'Changing link settings requires root privileges')}
           </p>
         </div>

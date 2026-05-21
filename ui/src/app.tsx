@@ -694,8 +694,8 @@ function App(): JSX.Element {
   // Show loading while checking setup status
   if (needsSetup === null) {
     return (
-      <div class="min-h-screen flex items-center justify-center">
-        <div class="text-text-muted">{t('status.loading')}</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-text-muted">{t('status.loading')}</div>
       </div>
     );
   }
@@ -756,7 +756,7 @@ function App(): JSX.Element {
           onOpenProfiles={openProfiles}
           topBar={topBar}
         >
-          <div class={cn(section.width.xl, 'mx-auto')}>
+          <div className={cn(section.width.xl, 'mx-auto')}>
             <CapabilityWarnings capabilities={capabilities} />
 
             <Suspense fallback={<PageLoader />}>
@@ -788,8 +788,8 @@ function App(): JSX.Element {
         {profilesOpen ? <ProfileManagement onClose={closeProfiles} /> : null}
 
         {/* FAB - Run All Tests - positioned bottom-right */}
-        <div class="fixed bottom-0 right-0 pointer-events-none z-50">
-          <Fab class="pointer-events-auto absolute bottom-20 right-6" />
+        <div className="fixed bottom-0 right-0 pointer-events-none z-50">
+          <Fab className="pointer-events-auto absolute bottom-20 right-6" />
         </div>
 
         {/* Command palette (Cmd+K / Ctrl+K) */}

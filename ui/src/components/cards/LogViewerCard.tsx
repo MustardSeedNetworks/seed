@@ -65,9 +65,9 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
     return (
       <Card
         title={t('logs.title', 'System Logs')}
-        icon={<FileText class={iconTokens.size.md} />}
+        icon={<FileText className={iconTokens.size.md} />}
         status="loading"
-        class={className}
+        className={className}
       >
         <CardValue value={t('logs.loading', 'Loading logs...')} size="md" />
       </Card>
@@ -78,9 +78,9 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
     return (
       <Card
         title={t('logs.title', 'System Logs')}
-        icon={<FileText class={iconTokens.size.md} />}
+        icon={<FileText className={iconTokens.size.md} />}
         status="error"
-        class={className}
+        className={className}
       >
         <CardValue value={error} size="md" />
       </Card>
@@ -90,14 +90,14 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
   return (
     <Card
       title={t('logs.title', 'System Logs')}
-      icon={<FileText class={iconTokens.size.md} />}
+      icon={<FileText className={iconTokens.size.md} />}
       status={getCardStatus()}
-      class={className}
+      className={className}
       headerAction={
-        <div class="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           {/* Streaming indicator */}
           <span
-            class={cn(
+            className={cn(
               spacing.chip.sm,
               radius.md,
               'text-xs font-medium',
@@ -113,7 +113,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            class={cn(
+            className={cn(
               'p-1.5',
               'bg-surface-hover text-text-secondary',
               radius.md,
@@ -122,7 +122,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
             aria-label={t('logs.fullScreen', 'Full Screen')}
             title={t('logs.fullScreen', 'Full Screen')}
           >
-            <Maximize2 class={iconTokens.size.sm} aria-hidden="true" />
+            <Maximize2 className={iconTokens.size.sm} aria-hidden="true" />
           </button>
         </div>
       }
@@ -130,17 +130,15 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
       {/* Main stat - total logs */}
       <CardValue value={stats?.total_count ?? 0} size="lg" />
       <CardRow label={t('logs.totalLogs', 'Total logs')} value="" />
-
       <CardDivider />
-
       {/* Error count */}
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <AlertCircle class={cn(iconTokens.size.sm, statusColor.text.error)} />
-          <span class="text-sm text-text-secondary">{t('logs.errors', 'Errors')}</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <AlertCircle className={cn(iconTokens.size.sm, statusColor.text.error)} />
+          <span className="text-sm text-text-secondary">{t('logs.errors', 'Errors')}</span>
         </div>
         <span
-          class={cn(
+          className={cn(
             'text-sm font-medium',
             errorCount > 0 ? statusColor.text.error : 'text-text-muted',
           )}
@@ -148,15 +146,14 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
           {errorCount}
         </span>
       </div>
-
       {/* Warning count */}
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <AlertTriangle class={cn(iconTokens.size.sm, statusColor.text.warning)} />
-          <span class="text-sm text-text-secondary">{t('logs.warnings', 'Warnings')}</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className={cn(iconTokens.size.sm, statusColor.text.warning)} />
+          <span className="text-sm text-text-secondary">{t('logs.warnings', 'Warnings')}</span>
         </div>
         <span
-          class={cn(
+          className={cn(
             'text-sm font-medium',
             warnCount > 0 ? statusColor.text.warning : 'text-text-muted',
           )}
@@ -164,7 +161,6 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
           {warnCount}
         </span>
       </div>
-
       {/* Errors in last hour */}
       {stats?.errors_last_hour !== undefined && stats.errors_last_hour > 0 && (
         <>
@@ -176,7 +172,6 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
           />
         </>
       )}
-
       {/* Full Screen Modal */}
       <LogViewerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </Card>

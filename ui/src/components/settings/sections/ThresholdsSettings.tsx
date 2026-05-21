@@ -108,34 +108,39 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
     return (
       <CollapsibleSection
         title={
-          <div class={layout.inline.default}>
-            <SlidersHorizontal class={iconTokens.size.sm} />
+          <div className={layout.inline.default}>
+            <SlidersHorizontal className={iconTokens.size.sm} />
             <span>{t('sections.thresholds')}</span>
             <AutoSaveIndicator status={thresholdsStatus} />
           </div>
         }
       >
-        <div class="stack-sm">
+        <div className="stack-sm">
           {/* DNS Thresholds */}
           <div
-            class={cn(spacing.pad.sm, 'bg-surface-base', radius.md, 'border border-surface-border')}
+            className={cn(
+              spacing.pad.sm,
+              'bg-surface-base',
+              radius.md,
+              'border border-surface-border',
+            )}
           >
-            <div class={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
-              <span class="body-small font-medium text-text-primary">
+            <div className={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
+              <span className="body-small font-medium text-text-primary">
                 {t('thresholds.dnsLookup')}
               </span>
               <Tooltip content={THRESHOLD_HELP.dnsLookup} position="top">
                 <Info
-                  class={cn(
+                  className={cn(
                     iconTokens.size.xs,
                     'text-text-muted hover:text-text-secondary cursor-help',
                   )}
                 />
               </Tooltip>
             </div>
-            <div class={cn('grid grid-cols-2', spacing.gap.compact)}>
+            <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
               <div>
-                <label class="caption text-text-muted" for="dns-good">
+                <label className="caption text-text-muted" htmlFor="dns-good">
                   {t('thresholds.goodLess')}
                 </label>
                 <input
@@ -145,7 +150,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updateThreshold('dns', 'good', Number(e.target.value))
                   }
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.sm,
@@ -155,7 +160,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                 />
               </div>
               <div>
-                <label class="caption text-text-muted" for="dns-warning">
+                <label className="caption text-text-muted" htmlFor="dns-warning">
                   {t('thresholds.warningLess')}
                 </label>
                 <input
@@ -165,7 +170,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updateThreshold('dns', 'warning', Number(e.target.value))
                   }
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.sm,
@@ -179,24 +184,29 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
 
           {/* Gateway Thresholds */}
           <div
-            class={cn(spacing.pad.sm, 'bg-surface-base', radius.md, 'border border-surface-border')}
+            className={cn(
+              spacing.pad.sm,
+              'bg-surface-base',
+              radius.md,
+              'border border-surface-border',
+            )}
           >
-            <div class={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
-              <span class="body-small font-medium text-text-primary">
+            <div className={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
+              <span className="body-small font-medium text-text-primary">
                 {t('thresholds.gatewayPing')}
               </span>
               <Tooltip content={THRESHOLD_HELP.gatewayPing} position="top">
                 <Info
-                  class={cn(
+                  className={cn(
                     iconTokens.size.xs,
                     'text-text-muted hover:text-text-secondary cursor-help',
                   )}
                 />
               </Tooltip>
             </div>
-            <div class={cn('grid grid-cols-2', spacing.gap.compact)}>
+            <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
               <div>
-                <label class="caption text-text-muted" for="gateway-good">
+                <label className="caption text-text-muted" htmlFor="gateway-good">
                   {t('thresholds.goodLess')}
                 </label>
                 <input
@@ -206,7 +216,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updateThreshold('gateway', 'good', Number(e.target.value))
                   }
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.sm,
@@ -216,7 +226,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                 />
               </div>
               <div>
-                <label class="caption text-text-muted" for="gateway-warning">
+                <label className="caption text-text-muted" htmlFor="gateway-warning">
                   {t('thresholds.warningLess')}
                 </label>
                 <input
@@ -226,7 +236,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updateThreshold('gateway', 'warning', Number(e.target.value))
                   }
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.sm,
@@ -240,24 +250,29 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
 
           {/* Wi-Fi Signal Thresholds */}
           <div
-            class={cn(spacing.pad.sm, 'bg-surface-base', radius.md, 'border border-surface-border')}
+            className={cn(
+              spacing.pad.sm,
+              'bg-surface-base',
+              radius.md,
+              'border border-surface-border',
+            )}
           >
-            <div class={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
-              <span class="body-small font-medium text-text-primary">
+            <div className={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
+              <span className="body-small font-medium text-text-primary">
                 {t('thresholds.wifiSignal')}
               </span>
               <Tooltip content={THRESHOLD_HELP.wifiSignal} position="top">
                 <Info
-                  class={cn(
+                  className={cn(
                     iconTokens.size.xs,
                     'text-text-muted hover:text-text-secondary cursor-help',
                   )}
                 />
               </Tooltip>
             </div>
-            <div class={cn('grid grid-cols-2', spacing.gap.compact)}>
+            <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
               <div>
-                <label class="caption text-text-muted" for="wifi-good">
+                <label className="caption text-text-muted" htmlFor="wifi-good">
                   {t('thresholds.goodGreater')}
                 </label>
                 <input
@@ -267,7 +282,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updateThreshold('wifi', 'good', Number(e.target.value))
                   }
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.sm,
@@ -277,7 +292,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                 />
               </div>
               <div>
-                <label class="caption text-text-muted" for="wifi-warning">
+                <label className="caption text-text-muted" htmlFor="wifi-warning">
                   {t('thresholds.warningGreater')}
                 </label>
                 <input
@@ -287,7 +302,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updateThreshold('wifi', 'warning', Number(e.target.value))
                   }
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.sm,
@@ -301,24 +316,29 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
 
           {/* Health Check Ping Thresholds */}
           <div
-            class={cn(spacing.pad.sm, 'bg-surface-base', radius.md, 'border border-surface-border')}
+            className={cn(
+              spacing.pad.sm,
+              'bg-surface-base',
+              radius.md,
+              'border border-surface-border',
+            )}
           >
-            <div class={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
-              <span class="body-small font-medium text-text-primary">
+            <div className={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
+              <span className="body-small font-medium text-text-primary">
                 {t('thresholds.healthPing')}
               </span>
               <Tooltip content={THRESHOLD_HELP.healthCheckPing} position="top">
                 <Info
-                  class={cn(
+                  className={cn(
                     iconTokens.size.xs,
                     'text-text-muted hover:text-text-secondary cursor-help',
                   )}
                 />
               </Tooltip>
             </div>
-            <div class={cn('grid grid-cols-2', spacing.gap.compact)}>
+            <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
               <div>
-                <label class="caption text-text-muted" for="ping-good">
+                <label className="caption text-text-muted" htmlFor="ping-good">
                   {t('thresholds.goodLess')}
                 </label>
                 <input
@@ -328,7 +348,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updateThreshold('customPing', 'good', Number(e.target.value))
                   }
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.sm,
@@ -338,7 +358,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                 />
               </div>
               <div>
-                <label class="caption text-text-muted" for="ping-warning">
+                <label className="caption text-text-muted" htmlFor="ping-warning">
                   {t('thresholds.warningLess')}
                 </label>
                 <input
@@ -348,7 +368,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updateThreshold('customPing', 'warning', Number(e.target.value))
                   }
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.sm,
@@ -362,24 +382,29 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
 
           {/* Health Check TCP Thresholds */}
           <div
-            class={cn(spacing.pad.sm, 'bg-surface-base', radius.md, 'border border-surface-border')}
+            className={cn(
+              spacing.pad.sm,
+              'bg-surface-base',
+              radius.md,
+              'border border-surface-border',
+            )}
           >
-            <div class={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
-              <span class="body-small font-medium text-text-primary">
+            <div className={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
+              <span className="body-small font-medium text-text-primary">
                 {t('thresholds.healthTcp')}
               </span>
               <Tooltip content={THRESHOLD_HELP.healthCheckTcp} position="top">
                 <Info
-                  class={cn(
+                  className={cn(
                     iconTokens.size.xs,
                     'text-text-muted hover:text-text-secondary cursor-help',
                   )}
                 />
               </Tooltip>
             </div>
-            <div class={cn('grid grid-cols-2', spacing.gap.compact)}>
+            <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
               <div>
-                <label class="caption text-text-muted" for="tcp-good">
+                <label className="caption text-text-muted" htmlFor="tcp-good">
                   {t('thresholds.goodLess')}
                 </label>
                 <input
@@ -389,7 +414,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updateThreshold('customTcp', 'good', Number(e.target.value))
                   }
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.sm,
@@ -399,7 +424,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                 />
               </div>
               <div>
-                <label class="caption text-text-muted" for="tcp-warning">
+                <label className="caption text-text-muted" htmlFor="tcp-warning">
                   {t('thresholds.warningLess')}
                 </label>
                 <input
@@ -409,7 +434,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                     updateThreshold('customTcp', 'warning', Number(e.target.value))
                   }
-                  class={cn(
+                  className={cn(
                     inputTokens.base,
                     inputTokens.state.default,
                     inputTokens.size.sm,
@@ -423,10 +448,15 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
 
           {/* HTTP Thresholds (Total + Timing Phases) */}
           <div
-            class={cn(spacing.pad.sm, 'bg-surface-base', radius.md, 'border border-surface-border')}
+            className={cn(
+              spacing.pad.sm,
+              'bg-surface-base',
+              radius.md,
+              'border border-surface-border',
+            )}
           >
             <span
-              class={cn(
+              className={cn(
                 'body-small font-medium text-text-primary block',
                 spacing.margin.bottom.inline,
               )}
@@ -435,23 +465,23 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
             </span>
 
             {/* Total */}
-            <div class={spacing.margin.bottom.heading}>
-              <div class={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
-                <span class="caption font-medium text-text-primary">
+            <div className={spacing.margin.bottom.heading}>
+              <div className={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
+                <span className="caption font-medium text-text-primary">
                   {t('thresholds.totalResponseTime')}
                 </span>
                 <Tooltip content={THRESHOLD_HELP.httpTotal} position="top">
                   <Info
-                    class={cn(
+                    className={cn(
                       iconTokens.size.xs,
                       'text-text-muted hover:text-text-secondary cursor-help',
                     )}
                   />
                 </Tooltip>
               </div>
-              <div class={cn('grid grid-cols-2', spacing.gap.compact)}>
+              <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
                 <div>
-                  <label class="caption text-text-muted" for="http-total-good">
+                  <label className="caption text-text-muted" htmlFor="http-total-good">
                     {t('thresholds.goodLess')}
                   </label>
                   <input
@@ -461,7 +491,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateThreshold('customHttp', 'good', Number(e.target.value))
                     }
-                    class={cn(
+                    className={cn(
                       inputTokens.base,
                       inputTokens.state.default,
                       inputTokens.size.sm,
@@ -471,7 +501,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   />
                 </div>
                 <div>
-                  <label class="caption text-text-muted" for="http-total-warning">
+                  <label className="caption text-text-muted" htmlFor="http-total-warning">
                     {t('thresholds.warningLess')}
                   </label>
                   <input
@@ -481,7 +511,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateThreshold('customHttp', 'warning', Number(e.target.value))
                     }
-                    class={cn(
+                    className={cn(
                       inputTokens.base,
                       inputTokens.state.default,
                       inputTokens.size.sm,
@@ -494,7 +524,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
             </div>
 
             <p
-              class={cn(
+              className={cn(
                 'caption text-text-muted',
                 spacing.margin.bottom.heading,
                 'border-t border-surface-border',
@@ -505,23 +535,23 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
             </p>
 
             {/* DNS */}
-            <div class={spacing.margin.bottom.heading}>
-              <div class={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
-                <span class="caption font-medium text-text-primary">
+            <div className={spacing.margin.bottom.heading}>
+              <div className={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
+                <span className="caption font-medium text-text-primary">
                   {t('thresholds.dnsLookupPhase')}
                 </span>
                 <Tooltip content={THRESHOLD_HELP.httpDns} position="top">
                   <Info
-                    class={cn(
+                    className={cn(
                       iconTokens.size.xs,
                       'text-text-muted hover:text-text-secondary cursor-help',
                     )}
                   />
                 </Tooltip>
               </div>
-              <div class={cn('grid grid-cols-2', spacing.gap.compact)}>
+              <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
                 <div>
-                  <label class="caption text-text-muted" for="http-dns-good">
+                  <label className="caption text-text-muted" htmlFor="http-dns-good">
                     {t('thresholds.goodLess')}
                   </label>
                   <input
@@ -531,7 +561,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateHttpTimingThreshold('dns', 'good', Number(e.target.value))
                     }
-                    class={cn(
+                    className={cn(
                       inputTokens.base,
                       inputTokens.state.default,
                       inputTokens.size.sm,
@@ -541,7 +571,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   />
                 </div>
                 <div>
-                  <label class="caption text-text-muted" for="http-dns-warning">
+                  <label className="caption text-text-muted" htmlFor="http-dns-warning">
                     {t('thresholds.warningLess')}
                   </label>
                   <input
@@ -551,7 +581,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateHttpTimingThreshold('dns', 'warning', Number(e.target.value))
                     }
-                    class={cn(
+                    className={cn(
                       inputTokens.base,
                       inputTokens.state.default,
                       inputTokens.size.sm,
@@ -564,23 +594,23 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
             </div>
 
             {/* TCP */}
-            <div class={spacing.margin.bottom.heading}>
-              <div class={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
-                <span class="caption font-medium text-text-primary">
+            <div className={spacing.margin.bottom.heading}>
+              <div className={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
+                <span className="caption font-medium text-text-primary">
                   {t('thresholds.tcpConnect')}
                 </span>
                 <Tooltip content={THRESHOLD_HELP.httpTcp} position="top">
                   <Info
-                    class={cn(
+                    className={cn(
                       iconTokens.size.xs,
                       'text-text-muted hover:text-text-secondary cursor-help',
                     )}
                   />
                 </Tooltip>
               </div>
-              <div class={cn('grid grid-cols-2', spacing.gap.compact)}>
+              <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
                 <div>
-                  <label class="caption text-text-muted" for="http-tcp-good">
+                  <label className="caption text-text-muted" htmlFor="http-tcp-good">
                     {t('thresholds.goodLess')}
                   </label>
                   <input
@@ -590,7 +620,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateHttpTimingThreshold('tcp', 'good', Number(e.target.value))
                     }
-                    class={cn(
+                    className={cn(
                       inputTokens.base,
                       inputTokens.state.default,
                       inputTokens.size.sm,
@@ -600,7 +630,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   />
                 </div>
                 <div>
-                  <label class="caption text-text-muted" for="http-tcp-warning">
+                  <label className="caption text-text-muted" htmlFor="http-tcp-warning">
                     {t('thresholds.warningLess')}
                   </label>
                   <input
@@ -610,7 +640,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateHttpTimingThreshold('tcp', 'warning', Number(e.target.value))
                     }
-                    class={cn(
+                    className={cn(
                       inputTokens.base,
                       inputTokens.state.default,
                       inputTokens.size.sm,
@@ -623,23 +653,23 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
             </div>
 
             {/* TLS */}
-            <div class={spacing.margin.bottom.heading}>
-              <div class={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
-                <span class="caption font-medium text-text-primary">
+            <div className={spacing.margin.bottom.heading}>
+              <div className={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
+                <span className="caption font-medium text-text-primary">
                   {t('thresholds.tlsHandshake')}
                 </span>
                 <Tooltip content={THRESHOLD_HELP.httpTls} position="top">
                   <Info
-                    class={cn(
+                    className={cn(
                       iconTokens.size.xs,
                       'text-text-muted hover:text-text-secondary cursor-help',
                     )}
                   />
                 </Tooltip>
               </div>
-              <div class={cn('grid grid-cols-2', spacing.gap.compact)}>
+              <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
                 <div>
-                  <label class="caption text-text-muted" for="http-tls-good">
+                  <label className="caption text-text-muted" htmlFor="http-tls-good">
                     {t('thresholds.goodLess')}
                   </label>
                   <input
@@ -649,7 +679,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateHttpTimingThreshold('tls', 'good', Number(e.target.value))
                     }
-                    class={cn(
+                    className={cn(
                       inputTokens.base,
                       inputTokens.state.default,
                       inputTokens.size.sm,
@@ -659,7 +689,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   />
                 </div>
                 <div>
-                  <label class="caption text-text-muted" for="http-tls-warning">
+                  <label className="caption text-text-muted" htmlFor="http-tls-warning">
                     {t('thresholds.warningLess')}
                   </label>
                   <input
@@ -669,7 +699,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateHttpTimingThreshold('tls', 'warning', Number(e.target.value))
                     }
-                    class={cn(
+                    className={cn(
                       inputTokens.base,
                       inputTokens.state.default,
                       inputTokens.size.sm,
@@ -683,20 +713,22 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
 
             {/* TTFB */}
             <div>
-              <div class={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
-                <span class="caption font-medium text-text-primary">{t('thresholds.ttfb')}</span>
+              <div className={cn(layout.inline.tight, spacing.margin.bottom.inline)}>
+                <span className="caption font-medium text-text-primary">
+                  {t('thresholds.ttfb')}
+                </span>
                 <Tooltip content={THRESHOLD_HELP.httpTtfb} position="top">
                   <Info
-                    class={cn(
+                    className={cn(
                       iconTokens.size.xs,
                       'text-text-muted hover:text-text-secondary cursor-help',
                     )}
                   />
                 </Tooltip>
               </div>
-              <div class={cn('grid grid-cols-2', spacing.gap.compact)}>
+              <div className={cn('grid grid-cols-2', spacing.gap.compact)}>
                 <div>
-                  <label class="caption text-text-muted" for="http-ttfb-good">
+                  <label className="caption text-text-muted" htmlFor="http-ttfb-good">
                     {t('thresholds.goodLess')}
                   </label>
                   <input
@@ -706,7 +738,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateHttpTimingThreshold('ttfb', 'good', Number(e.target.value))
                     }
-                    class={cn(
+                    className={cn(
                       inputTokens.base,
                       inputTokens.state.default,
                       inputTokens.size.sm,
@@ -716,7 +748,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                   />
                 </div>
                 <div>
-                  <label class="caption text-text-muted" for="http-ttfb-warning">
+                  <label className="caption text-text-muted" htmlFor="http-ttfb-warning">
                     {t('thresholds.warningLess')}
                   </label>
                   <input
@@ -726,7 +758,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                       updateHttpTimingThreshold('ttfb', 'warning', Number(e.target.value))
                     }
-                    class={cn(
+                    className={cn(
                       inputTokens.base,
                       inputTokens.state.default,
                       inputTokens.size.sm,

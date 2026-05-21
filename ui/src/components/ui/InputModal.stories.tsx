@@ -19,7 +19,7 @@ const meta: Meta<typeof InputModal> = {
   tags: ['autodocs'],
   decorators: [
     (StoryComponent: StoryFn): React.ReactElement => (
-      <div class="min-h-[60vh] p-4">
+      <div className="min-h-[60vh] p-4">
         <StoryComponent />
       </div>
     ),
@@ -76,9 +76,9 @@ export const Interactive: Story = {
     const [open, setOpen] = useState(false);
     const [name, setName] = useState('Office gateway');
     return (
-      <div class="space-y-3">
+      <div className="space-y-3">
         <Button onClick={() => setOpen(true)}>Rename profile…</Button>
-        <p class="text-sm text-text-muted">Current name: {name}</p>
+        <p className="text-sm text-text-muted">Current name: {name}</p>
         <InputModal
           isOpen={open}
           onSubmit={(value) => {

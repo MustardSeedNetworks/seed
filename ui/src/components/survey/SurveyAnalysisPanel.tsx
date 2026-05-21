@@ -464,7 +464,7 @@ export function SurveyAnalysisPanel({
         }}
         role="button"
         tabIndex={0}
-        class={cn(
+        className={cn(
           spacing.pad.sm,
           radius.md,
           'border',
@@ -472,11 +472,13 @@ export function SurveyAnalysisPanel({
           'cursor-pointer hover:opacity-80 transition-opacity',
         )}
       >
-        <div class={cn(layout.inline.default)}>
-          <ICON class={cn(iconTokens.size.sm, colorClass, 'flex-shrink-0')} />
-          <div class="flex-1 min-w-0">
-            <h4 class={cn('body-small font-medium', colorClass)}>{t(finding.titleKey as never)}</h4>
-            <p class="caption text-text-muted">
+        <div className={cn(layout.inline.default)}>
+          <ICON className={cn(iconTokens.size.sm, colorClass, 'flex-shrink-0')} />
+          <div className="flex-1 min-w-0">
+            <h4 className={cn('body-small font-medium', colorClass)}>
+              {t(finding.titleKey as never)}
+            </h4>
+            <p className="caption text-text-muted">
               {t(finding.descriptionKey as never, {
                 value: finding.value,
                 threshold: finding.threshold,
@@ -484,20 +486,20 @@ export function SurveyAnalysisPanel({
               })}
             </p>
             {finding.recommendationKey ? (
-              <p class="caption text-text-primary mt-1">
-                <Lightbulb class="w-3 h-3 inline mr-1" />
+              <p className="caption text-text-primary mt-1">
+                <Lightbulb className="w-3 h-3 inline mr-1" />
                 {t(finding.recommendationKey as never)}
               </p>
             ) : null}
             {finding.affectedSsids && finding.affectedSsids.length > 0 ? (
-              <p class="caption text-text-muted mt-1 truncate">
+              <p className="caption text-text-muted mt-1 truncate">
                 {t('analysis.affectedSsids')}: {finding.affectedSsids.slice(0, 3).join(', ')}
                 {finding.affectedSsids.length > 3 ? ` +${finding.affectedSsids.length - 3}` : null}
               </p>
             ) : null}
             {finding.location ? (
-              <p class="caption text-brand-primary mt-1">
-                <MapPin class="w-3 h-3 inline mr-1" />
+              <p className="caption text-brand-primary mt-1">
+                <MapPin className="w-3 h-3 inline mr-1" />
                 {t('analysis.clickToView')}
               </p>
             ) : null}
@@ -508,21 +510,23 @@ export function SurveyAnalysisPanel({
   };
 
   return (
-    <div class={cn('bg-surface-raised', radius.md, 'border border-surface-border', spacing.pad.sm)}>
+    <div
+      className={cn('bg-surface-raised', radius.md, 'border border-surface-border', spacing.pad.sm)}
+    >
       {/* Header */}
-      <div class={cn(layout.inline.default, 'justify-between', spacing.margin.bottom.content)}>
-        <div class={cn(layout.inline.default)}>
-          <Activity class={iconTokens.size.sm} />
-          <h4 class="body-small font-medium">{t('analysis.title')}</h4>
+      <div className={cn(layout.inline.default, 'justify-between', spacing.margin.bottom.content)}>
+        <div className={cn(layout.inline.default)}>
+          <Activity className={iconTokens.size.sm} />
+          <h4 className="body-small font-medium">{t('analysis.title')}</h4>
         </div>
-        <div class={cn(layout.inline.default)}>
+        <div className={cn(layout.inline.default)}>
           {criticalFindings.length > 0 ? (
-            <span class="px-2 py-0.5 text-xs bg-status-error text-text-inverse rounded-full">
+            <span className="px-2 py-0.5 text-xs bg-status-error text-text-inverse rounded-full">
               {criticalFindings.length}
             </span>
           ) : null}
           {warningFindings.length > 0 ? (
-            <span class="px-2 py-0.5 text-xs bg-status-warning text-text-inverse rounded-full">
+            <span className="px-2 py-0.5 text-xs bg-status-warning text-text-inverse rounded-full">
               {warningFindings.length}
             </span>
           ) : null}
@@ -530,7 +534,7 @@ export function SurveyAnalysisPanel({
             <button
               type="button"
               onClick={() => onGenerateReport(findings)}
-              class={cn(
+              className={cn(
                 button.size.sm,
                 'bg-brand-primary text-text-inverse',
                 radius.md,
@@ -538,44 +542,42 @@ export function SurveyAnalysisPanel({
                 layout.inline.tight,
               )}
             >
-              <FileText class="w-3 h-3" />
+              <FileText className="w-3 h-3" />
               <span>{t('criteria.generateReport')}</span>
             </button>
           ) : null}
         </div>
       </div>
-
       {/* Summary */}
-      <div class={cn(layout.inline.default, spacing.margin.bottom.content)}>
+      <div className={cn(layout.inline.default, spacing.margin.bottom.content)}>
         {criticalFindings.length > 0 ? (
-          <div class={cn(layout.inline.tight, statusColor.text.error)}>
-            <AlertOctagon class="w-4 h-4" />
-            <span class="caption">
+          <div className={cn(layout.inline.tight, statusColor.text.error)}>
+            <AlertOctagon className="w-4 h-4" />
+            <span className="caption">
               {criticalFindings.length} {t('analysis.critical')}
             </span>
           </div>
         ) : null}
         {warningFindings.length > 0 ? (
-          <div class={cn(layout.inline.tight, statusColor.text.warning)}>
-            <AlertTriangle class="w-4 h-4" />
-            <span class="caption">
+          <div className={cn(layout.inline.tight, statusColor.text.warning)}>
+            <AlertTriangle className="w-4 h-4" />
+            <span className="caption">
               {warningFindings.length} {t('analysis.warnings')}
             </span>
           </div>
         ) : null}
         {criticalFindings.length === 0 && warningFindings.length === 0 ? (
-          <div class={cn(layout.inline.tight, statusColor.text.success)}>
-            <CheckCircle2 class="w-4 h-4" />
-            <span class="caption">{t('analysis.noIssues')}</span>
+          <div className={cn(layout.inline.tight, statusColor.text.success)}>
+            <CheckCircle2 className="w-4 h-4" />
+            <span className="caption">{t('analysis.noIssues')}</span>
           </div>
         ) : null}
       </div>
-
       {/* Findings list */}
       {findings.length === 0 ? (
-        <p class="caption text-text-muted text-center py-4">{t('analysis.noData')}</p>
+        <p className="caption text-text-muted text-center py-4">{t('analysis.noData')}</p>
       ) : (
-        <div class={cn(layout.stack.tight, 'max-h-80 overflow-y-auto')}>
+        <div className={cn(layout.stack.tight, 'max-h-80 overflow-y-auto')}>
           {/* Critical first */}
           {criticalFindings.map(renderFinding)}
           {/* Then warnings */}

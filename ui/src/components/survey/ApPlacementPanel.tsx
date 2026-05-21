@@ -99,17 +99,19 @@ export function ApPlacementPanel({
   };
 
   return (
-    <div class={cn('bg-surface-raised', radius.md, 'border border-surface-border', spacing.pad.sm)}>
+    <div
+      className={cn('bg-surface-raised', radius.md, 'border border-surface-border', spacing.pad.sm)}
+    >
       {/* Header */}
-      <div class={cn(layout.inline.default, 'justify-between', spacing.margin.bottom.content)}>
-        <div class={cn(layout.inline.default)}>
-          <Radio class={iconTokens.size.sm} />
-          <h4 class="body-small font-medium">{t('apPlacement.title')}</h4>
+      <div className={cn(layout.inline.default, 'justify-between', spacing.margin.bottom.content)}>
+        <div className={cn(layout.inline.default)}>
+          <Radio className={iconTokens.size.sm} />
+          <h4 className="body-small font-medium">{t('apPlacement.title')}</h4>
         </div>
         <button
           type="button"
           onClick={togglePlacementMode}
-          class={cn(
+          className={cn(
             button.size.xs,
             radius.md,
             layout.inline.default,
@@ -119,38 +121,36 @@ export function ApPlacementPanel({
               : 'bg-surface-base border border-surface-border hover:bg-surface-hover',
           )}
         >
-          <Plus class={iconTokens.size.xs} />
+          <Plus className={iconTokens.size.xs} />
           <span>{t('apPlacement.addAp')}</span>
         </button>
       </div>
-
       {/* Placement mode instructions */}
       {placementMode ? (
         <div
-          class={cn(
+          className={cn(
             'bg-purple-500/10 border border-purple-500/20',
             radius.md,
             spacing.pad.sm,
             spacing.margin.bottom.content,
           )}
         >
-          <p class="caption text-purple-600 dark:text-purple-400">
-            <MapPin class="w-3 h-3 inline mr-1" />
+          <p className="caption text-purple-600 dark:text-purple-400">
+            <MapPin className="w-3 h-3 inline mr-1" />
             {t('apPlacement.placementMode')}
           </p>
         </div>
       ) : null}
-
       {/* AP List */}
       {apLocations.length === 0 ? (
-        <p class="caption text-text-muted text-center py-4">{t('apPlacement.noAps')}</p>
+        <p className="caption text-text-muted text-center py-4">{t('apPlacement.noAps')}</p>
       ) : (
-        <div class={cn(layout.stack.tight, 'max-h-64 overflow-y-auto')}>
+        <div className={cn(layout.stack.tight, 'max-h-64 overflow-y-auto')}>
           {apLocations.map((ap) => (
             // biome-ignore lint/a11y/useSemanticElements: Complex card with nested interactive elements
             <div
               key={ap.id}
-              class={cn(
+              className={cn(
                 spacing.pad.sm,
                 radius.md,
                 'border transition-colors cursor-pointer',
@@ -176,7 +176,7 @@ export function ApPlacementPanel({
             >
               {editingApId === ap.id ? (
                 <div
-                  class={cn(layout.stack.tight)}
+                  className={cn(layout.stack.tight)}
                   onClick={(e: React.MouseEvent): void => e.stopPropagation()}
                   aria-hidden="true"
                 >
@@ -188,7 +188,7 @@ export function ApPlacementPanel({
                       setEditForm({ ...editForm, label: e.target.value })
                     }
                     placeholder={t('apPlacement.label')}
-                    class={cn(
+                    className={cn(
                       'w-full',
                       spacing.pad.sm,
                       radius.md,
@@ -204,7 +204,7 @@ export function ApPlacementPanel({
                       setEditForm({ ...editForm, bssid: e.target.value })
                     }
                     placeholder={t('apPlacement.bssid')}
-                    class={cn(
+                    className={cn(
                       'w-full',
                       spacing.pad.sm,
                       radius.md,
@@ -213,7 +213,7 @@ export function ApPlacementPanel({
                   />
 
                   {/* Band and Channel */}
-                  <div class={cn(layout.inline.default)}>
+                  <div className={cn(layout.inline.default)}>
                     <select
                       value={editForm.band || ''}
                       onChange={(
@@ -224,7 +224,7 @@ export function ApPlacementPanel({
                           band: e.target.value as WiFiBand | undefined,
                         })
                       }
-                      class={cn(
+                      className={cn(
                         'flex-1',
                         spacing.pad.sm,
                         radius.md,
@@ -248,7 +248,7 @@ export function ApPlacementPanel({
                         })
                       }
                       placeholder={t('apPlacement.channel')}
-                      class={cn(
+                      className={cn(
                         'w-20',
                         spacing.pad.sm,
                         radius.md,
@@ -265,7 +265,7 @@ export function ApPlacementPanel({
                       setEditForm({ ...editForm, model: e.target.value })
                     }
                     placeholder={t('apPlacement.model')}
-                    class={cn(
+                    className={cn(
                       'w-full',
                       spacing.pad.sm,
                       radius.md,
@@ -274,49 +274,51 @@ export function ApPlacementPanel({
                   />
 
                   {/* Actions */}
-                  <div class={cn(layout.inline.default, 'justify-end')}>
+                  <div className={cn(layout.inline.default, 'justify-end')}>
                     <button
                       type="button"
                       onClick={handleCancel}
-                      class={cn(
+                      className={cn(
                         button.size.xs,
                         radius.md,
                         'border border-surface-border hover:bg-surface-hover',
                         layout.inline.default,
                       )}
                     >
-                      <X class={iconTokens.size.xs} />
+                      <X className={iconTokens.size.xs} />
                     </button>
                     <button
                       type="button"
                       onClick={handleSave}
-                      class={cn(
+                      className={cn(
                         button.size.xs,
                         radius.md,
                         'bg-brand-primary text-text-inverse',
                         layout.inline.default,
                       )}
                     >
-                      <Check class={iconTokens.size.xs} />
+                      <Check className={iconTokens.size.xs} />
                     </button>
                   </div>
                 </div>
               ) : (
                 // Display mode
-                <div class={cn(layout.inline.default, 'justify-between')}>
+                <div className={cn(layout.inline.default, 'justify-between')}>
                   <div>
-                    <div class={cn(layout.inline.default)}>
+                    <div className={cn(layout.inline.default)}>
                       <Radio
-                        class={cn(
+                        className={cn(
                           'w-3 h-3',
                           selectedApId === ap.id ? 'text-purple-500' : 'text-text-muted',
                         )}
                       />
-                      <span class="body-small font-medium">{ap.label}</span>
+                      <span className="body-small font-medium">{ap.label}</span>
                     </div>
-                    {ap.bssid ? <p class="caption text-text-muted font-mono">{ap.bssid}</p> : null}
+                    {ap.bssid ? (
+                      <p className="caption text-text-muted font-mono">{ap.bssid}</p>
+                    ) : null}
                     {ap.band || ap.channel ? (
-                      <p class="caption text-text-muted">
+                      <p className="caption text-text-muted">
                         {ap.band ? `${ap.band} GHz` : null}
                         {ap.band && ap.channel ? ' · ' : null}
                         {ap.channel ? `Ch ${ap.channel}` : null}
@@ -325,27 +327,27 @@ export function ApPlacementPanel({
                   </div>
                   {/* biome-ignore lint/a11y/noStaticElementInteractions: Used to stop propagation to parent button */}
                   <div
-                    class={cn(layout.inline.tight)}
+                    className={cn(layout.inline.tight)}
                     onClick={(e: React.MouseEvent): void => e.stopPropagation()}
                     onKeyDown={(e: React.KeyboardEvent): void => e.stopPropagation()}
                   >
                     <button
                       type="button"
                       onClick={(): void => handleEdit(ap)}
-                      class={cn(button.size.xs, radius.md, 'hover:bg-surface-hover')}
+                      className={cn(button.size.xs, radius.md, 'hover:bg-surface-hover')}
                     >
-                      <Edit2 class={iconTokens.size.xs} />
+                      <Edit2 className={iconTokens.size.xs} />
                     </button>
                     <button
                       type="button"
                       onClick={(): void => handleDelete(ap.id)}
-                      class={cn(
+                      className={cn(
                         button.size.xs,
                         radius.md,
                         'hover:bg-status-error/10 text-status-error',
                       )}
                     >
-                      <Trash2 class={iconTokens.size.xs} />
+                      <Trash2 className={iconTokens.size.xs} />
                     </button>
                   </div>
                 </div>

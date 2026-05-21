@@ -166,36 +166,36 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
     // Helper function to render backups list content based on loading/data state
     const renderBackupsContent = (): React.ReactElement => {
       if (loading) {
-        return <p class="caption text-text-muted">{t('configBackups.loading')}</p>;
+        return <p className="caption text-text-muted">{t('configBackups.loading')}</p>;
       }
       if (backups.length === 0) {
-        return <p class="caption text-text-muted">{t('configBackups.noBackups')}</p>;
+        return <p className="caption text-text-muted">{t('configBackups.noBackups')}</p>;
       }
       return (
-        <div class="stack-xs">
-          <p class="caption text-text-muted">
+        <div className="stack-xs">
+          <p className="caption text-text-muted">
             {t('configBackups.available', { count: backups.length })}
           </p>
           {backups.map((backup) => (
             <div
               key={backup.name}
-              class={cn(
+              className={cn(
                 spacing.pad.sm,
                 'bg-surface-base',
                 radius.default,
                 'border border-surface-border',
               )}
             >
-              <div class={layout.flex.between}>
+              <div className={layout.flex.between}>
                 <div>
-                  <p class="body-small text-text-primary font-medium">
+                  <p className="body-small text-text-primary font-medium">
                     {formatDate(backup.createdAt)}
                   </p>
-                  <p class="caption text-text-muted">
+                  <p className="caption text-text-muted">
                     {formatBytes(backup.size)} • v{backup.version || '?'}
                   </p>
                 </div>
-                <div class={cn('flex', spacing.gap.compact)}>
+                <div className={cn('flex', spacing.gap.compact)}>
                   {restoreConfirm === backup.name ? (
                     <>
                       <button
@@ -204,7 +204,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
                           restoreBackup(backup.name).catch(() => undefined);
                         }}
                         disabled={!!actionLoading}
-                        class={cn(
+                        className={cn(
                           spacing.chip.sm,
                           radius.md,
                           'bg-status-warning text-text-inverse caption hover:opacity-90 disabled:opacity-50',
@@ -218,7 +218,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
                         type="button"
                         onClick={(): void => setRestoreConfirm(null)}
                         disabled={!!actionLoading}
-                        class={cn(
+                        className={cn(
                           spacing.chip.sm,
                           radius.md,
                           'border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50',
@@ -233,7 +233,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
                         type="button"
                         onClick={(): void => setRestoreConfirm(backup.name)}
                         disabled={!!actionLoading}
-                        class={cn(
+                        className={cn(
                           spacing.chip.sm,
                           radius.md,
                           'border border-surface-border caption text-text-muted hover:text-text-primary disabled:opacity-50',
@@ -248,7 +248,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
                           deleteBackup(backup.name).catch(() => undefined);
                         }}
                         disabled={!!actionLoading}
-                        class={cn(
+                        className={cn(
                           spacing.chip.sm,
                           radius.md,
                           'border border-status-error caption text-status-error hover:bg-status-error hover:text-text-inverse disabled:opacity-50',
@@ -270,9 +270,9 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
     return (
       <CollapsibleSection
         title={
-          <div class={layout.inline.default}>
+          <div className={layout.inline.default}>
             <svg
-              class={iconTokens.size.sm}
+              className={iconTokens.size.sm}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -289,11 +289,11 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
           </div>
         }
       >
-        <div class="stack-sm">
+        <div className="stack-sm">
           {/* Version Info */}
           {version ? (
             <div
-              class={cn(
+              className={cn(
                 layout.flex.between,
                 spacing.pad.sm,
                 'bg-surface-base',
@@ -301,11 +301,11 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
                 'border border-surface-border',
               )}
             >
-              <span class="body-small text-text-muted">{t('configBackups.version')}</span>
-              <span class="body-small text-text-primary">
+              <span className="body-small text-text-muted">{t('configBackups.version')}</span>
+              <span className="body-small text-text-primary">
                 v{version.current}
                 {version.needsMigration ? (
-                  <span class="ml-2 text-status-warning">
+                  <span className="ml-2 text-status-warning">
                     ({t('configBackups.needsMigration')})
                   </span>
                 ) : null}
@@ -320,7 +320,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
               createBackup().catch(() => undefined);
             }}
             disabled={actionLoading === 'create'}
-            class={cn(
+            className={cn(
               'w-full',
               button.size.md,
               'bg-brand-primary text-text-inverse',
@@ -335,7 +335,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
             ) : (
               <>
                 <svg
-                  class={iconTokens.size.sm}
+                  className={iconTokens.size.sm}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -354,12 +354,12 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
           </button>
 
           {/* Error Message */}
-          {error ? <p class="caption text-status-error">{error}</p> : null}
+          {error ? <p className="caption text-status-error">{error}</p> : null}
 
           {/* Backups List */}
           {renderBackupsContent()}
 
-          <p class={cn('caption text-text-muted', spacing.margin.top.inline)}>
+          <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
             {t('configBackups.description')}
           </p>
         </div>

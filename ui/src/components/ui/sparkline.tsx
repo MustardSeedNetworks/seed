@@ -249,11 +249,11 @@ function SparklineComponent({
     return (
       <div
         role="img"
-        class={cn('flex items-center justify-center text-text-muted', className)}
+        className={cn('flex items-center justify-center text-text-muted', className)}
         style={{ width: config.width, height: config.height }}
         aria-label={label || 'No data available'}
       >
-        <span class="caption">—</span>
+        <span className="caption">—</span>
       </div>
     );
   }
@@ -264,14 +264,14 @@ function SparklineComponent({
     `${type} sparkline: current ${currentValue.toFixed(1)}${type === 'latency' ? 'ms' : '%'}, trend ${trendDirection}`;
 
   return (
-    <div class={cn('relative inline-flex', className)}>
+    <div className={cn('relative inline-flex', className)}>
       <svg
         width={config.width}
         height={config.height}
         viewBox={`0 0 ${config.width} ${config.height}`}
         role="img"
         aria-label={accessibilityLabel}
-        class="overflow-visible"
+        className="overflow-visible"
       >
         {/* Area fill (gradient from line color to transparent) */}
         {showArea && areaPath ? (
@@ -285,7 +285,7 @@ function SparklineComponent({
             <path
               d={areaPath}
               fill={`url(#sparkline-gradient-${type})`}
-              class="transition-all duration-500 ease-out"
+              className="transition-all duration-500 ease-out"
             />
           </>
         ) : null}
@@ -298,7 +298,7 @@ function SparklineComponent({
           strokeWidth={config.strokeWidth}
           strokeLinecap="round"
           strokeLinejoin="round"
-          class="transition-all duration-500 ease-out"
+          className="transition-all duration-500 ease-out"
         />
 
         {/* Current value indicator dot */}
@@ -311,7 +311,7 @@ function SparklineComponent({
           }
           r={config.strokeWidth + 1}
           fill={strokeColor}
-          class="transition-all duration-300 ease-out"
+          className="transition-all duration-300 ease-out"
         />
       </svg>
     </div>
@@ -357,11 +357,11 @@ function SparklineWithLabelComponent({
   const displayUnit = unit ?? (type === 'latency' ? '' : '');
 
   return (
-    <div class="inline-flex items-center gap-2">
-      {labelText ? <span class="caption text-text-muted">{labelText}</span> : null}
+    <div className="inline-flex items-center gap-2">
+      {labelText ? <span className="caption text-text-muted">{labelText}</span> : null}
       <Sparkline data={data} type={type} {...props} />
       {showValue ? (
-        <span class="caption font-medium text-text-primary tabular-nums">
+        <span className="caption font-medium text-text-primary tabular-nums">
           {formattedValue}
           {displayUnit}
         </span>
@@ -422,7 +422,7 @@ function HealthScoreBadgeComponent({
 
   return (
     <span
-      class={cn(
+      className={cn(
         'inline-flex items-center gap-1 font-medium border',
         radius.md,
         sizeClasses[size],
@@ -431,8 +431,8 @@ function HealthScoreBadgeComponent({
       )}
       title={`Health Score: ${score.toFixed(0)}% - ${getStatusLabel()}`}
     >
-      {showValue ? <span class="tabular-nums">{Math.round(score)}</span> : null}
-      <span class={showValue ? 'hidden sm:inline' : ''}>{getStatusLabel()}</span>
+      {showValue ? <span className="tabular-nums">{Math.round(score)}</span> : null}
+      <span className={showValue ? 'hidden sm:inline' : ''}>{getStatusLabel()}</span>
     </span>
   );
 }

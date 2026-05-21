@@ -12,7 +12,7 @@ export function WifiPage() {
     useAppContext();
 
   return (
-    <section class="space-y-6">
+    <section className="space-y-6">
       <Breadcrumbs />
       <PageHeader
         icon={Wifi}
@@ -20,7 +20,7 @@ export function WifiPage() {
         description="Wireless link, channel survey, and channel-overlap visualisation."
         iconColorClass="text-module-canopy"
       />
-      <div class={layout.grid.cards}>
+      <div className={layout.grid.cards}>
         {isWifi ? <WiFiCard data={cards.wifi} loading={loading} visible={true} /> : null}
         {isWifi ? <WiFiSurveyCard isWifi={isWifi} currentInterface={currentInterface} /> : null}
         {isWifi ? (
@@ -31,7 +31,7 @@ export function WifiPage() {
           />
         ) : null}
         {!isWifi && (
-          <div class="col-span-full text-sm text-text-muted">
+          <div className="col-span-full text-sm text-text-muted">
             Switch to Wi-Fi mode from the header to view wireless data.
           </div>
         )}

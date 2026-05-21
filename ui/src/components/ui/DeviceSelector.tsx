@@ -254,15 +254,15 @@ function DeviceSelectorComponent({
   // Get the appropriate icon based on loading/selection state
   const getDeviceButtonIcon = (): React.JSX.Element => {
     if (isLoading) {
-      return <RefreshCw class={cn(iconTokens.size.sm, 'text-text-muted animate-spin')} />;
+      return <RefreshCw className={cn(iconTokens.size.sm, 'text-text-muted animate-spin')} />;
     }
     if (selectedDevice) {
       const ICON_COMPONENT = getDeviceIcon(
         selectedDevice.profile?.deviceType?.toLowerCase() || 'other',
       );
-      return <ICON_COMPONENT class={cn(iconTokens.size.sm, 'text-brand-primary')} />;
+      return <ICON_COMPONENT className={cn(iconTokens.size.sm, 'text-brand-primary')} />;
     }
-    return <Search class={cn(iconTokens.size.sm, 'text-text-muted')} />;
+    return <Search className={cn(iconTokens.size.sm, 'text-text-muted')} />;
   };
 
   // Get secondary text for button (vendor or device type)
@@ -280,14 +280,14 @@ function DeviceSelectorComponent({
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: Group role is semantically correct for dropdown container
-    <div ref={dropdownRef} class="relative" onKeyDown={handleKeyDown} role="group">
+    <div ref={dropdownRef} className="relative" onKeyDown={handleKeyDown} role="group">
       {/* Trigger button */}
       <button
         ref={buttonRef}
         type="button"
         disabled={disabled || isLoading}
         onClick={(): void => setIsOpen(!isOpen)}
-        class={cn(
+        className={cn(
           'w-full flex items-center',
           spacing.gap.tight,
           spacing.pad.sm,
@@ -302,9 +302,9 @@ function DeviceSelectorComponent({
         {getDeviceButtonIcon()}
 
         {/* Device name and info */}
-        <div class="flex-1 min-w-0 text-left">
+        <div className="flex-1 min-w-0 text-left">
           <div
-            class={cn(
+            className={cn(
               'body-small font-medium truncate',
               value ? 'text-text-primary' : 'text-text-muted',
             )}
@@ -312,29 +312,28 @@ function DeviceSelectorComponent({
             {getButtonText()}
           </div>
           {getSecondaryText() ? (
-            <div class="caption text-text-muted truncate">{getSecondaryText()}</div>
+            <div className="caption text-text-muted truncate">{getSecondaryText()}</div>
           ) : null}
         </div>
 
         {/* Show IP if device is selected */}
         {selectedDevice && selectedDevice.ip !== value ? (
-          <span class="caption text-text-muted hidden sm:inline">{selectedDevice.ip}</span>
+          <span className="caption text-text-muted hidden sm:inline">{selectedDevice.ip}</span>
         ) : null}
 
         {/* Dropdown arrow */}
         <ChevronDown
-          class={cn(
+          className={cn(
             iconTokens.size.sm,
             'text-text-muted transition-transform shrink-0',
             isOpen ? 'rotate-180' : '',
           )}
         />
       </button>
-
       {/* Dropdown menu */}
       {isOpen ? (
         <div
-          class={cn(
+          className={cn(
             'absolute top-full left-0 mt-1 w-full min-w-80',
             radius.md,
             'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
@@ -344,10 +343,10 @@ function DeviceSelectorComponent({
         >
           {/* Search box */}
           {!manualEntry && (
-            <div class={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
-              <div class="relative">
+            <div className={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
+              <div className="relative">
                 <Search
-                  class={cn(
+                  className={cn(
                     iconTokens.size.sm,
                     'absolute left-2 top-1/2 -translate-y-1/2 text-text-muted',
                   )}
@@ -360,7 +359,7 @@ function DeviceSelectorComponent({
                     setSearchTerm(e.target.value)
                   }
                   placeholder={t('device.search', 'Search by IP, name, or vendor')}
-                  class={cn(
+                  className={cn(
                     'w-full pl-8 pr-3 py-1.5',
                     'body-small text-text-primary placeholder-text-muted',
                     'bg-surface-base border border-surface-border',
@@ -374,8 +373,8 @@ function DeviceSelectorComponent({
 
           {/* Manual entry mode */}
           {manualEntry ? (
-            <div class={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
-              <div class="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
+            <div className={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
+              <div className="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
                 {t('device.manualEntry', 'Manual IP Entry')}
               </div>
               <input
@@ -388,7 +387,7 @@ function DeviceSelectorComponent({
                     submitManualIp(e.currentTarget.value);
                   }
                 }}
-                class={cn(
+                className={cn(
                   'w-full px-3 py-1.5',
                   'body-small text-text-primary placeholder-text-muted',
                   'bg-surface-base border border-surface-border',
@@ -396,11 +395,11 @@ function DeviceSelectorComponent({
                   'focus:outline-none focus:ring-2 focus:ring-brand-primary',
                 )}
               />
-              <div class="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-2">
                 <button
                   type="button"
                   onClick={(): void => submitManualIp(manualInputRef.current?.value || '')}
-                  class={cn(
+                  className={cn(
                     'flex-1 px-3 py-1.5',
                     'body-small font-medium',
                     'bg-brand-primary text-text-inverse',
@@ -413,7 +412,7 @@ function DeviceSelectorComponent({
                 <button
                   type="button"
                   onClick={(): void => setManualEntry(false)}
-                  class={cn(
+                  className={cn(
                     'px-3 py-1.5',
                     'body-small font-medium',
                     'border border-surface-border bg-surface-base',
@@ -429,16 +428,16 @@ function DeviceSelectorComponent({
 
           {/* Device groups */}
           {manualEntry ? null : (
-            <div class="max-h-96 overflow-y-auto">
+            <div className="max-h-96 overflow-y-auto">
               {error ? (
-                <div class={cn(spacing.pad.md, 'text-center text-status-error')}>
-                  <span class="caption">{error}</span>
+                <div className={cn(spacing.pad.md, 'text-center text-status-error')}>
+                  <span className="caption">{error}</span>
                 </div>
               ) : null}
 
               {!error && filteredGroups.length === 0 && !isLoading ? (
-                <div class={cn(spacing.pad.md, 'text-center')}>
-                  <span class="caption text-text-muted">
+                <div className={cn(spacing.pad.md, 'text-center')}>
+                  <span className="caption text-text-muted">
                     {searchTerm
                       ? t('device.noResults', 'No devices found')
                       : t('device.noDevices', 'No devices discovered')}
@@ -448,13 +447,15 @@ function DeviceSelectorComponent({
 
               {filteredGroups.map((group) => (
                 <div key={group.label}>
-                  <div class={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}>
-                    <div class="flex items-center gap-2">
-                      <group.icon class={cn(iconTokens.size.sm, 'text-text-muted')} />
-                      <span class="caption font-semibold text-text-muted uppercase tracking-wide">
+                  <div
+                    className={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <group.icon className={cn(iconTokens.size.sm, 'text-text-muted')} />
+                      <span className="caption font-semibold text-text-muted uppercase tracking-wide">
                         {group.label}
                       </span>
-                      <span class="caption text-text-muted">({group.devices.length})</span>
+                      <span className="caption text-text-muted">({group.devices.length})</span>
                     </div>
                   </div>
                   {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex device rendering logic */}
@@ -469,7 +470,7 @@ function DeviceSelectorComponent({
                         type="button"
                         key={device.ip}
                         onClick={(): void => selectDevice(device)}
-                        class={cn(
+                        className={cn(
                           'w-full flex items-center',
                           spacing.gap.tight,
                           spacing.pad.sm,
@@ -481,32 +482,29 @@ function DeviceSelectorComponent({
                       >
                         {/* Selection indicator */}
                         <span
-                          class={cn(
+                          className={cn(
                             'w-2 h-2 rounded-full shrink-0',
                             isSelected ? 'bg-brand-primary' : 'bg-transparent',
                           )}
                         />
-
                         {/* Icon */}
                         <ICON
-                          class={cn(
+                          className={cn(
                             iconTokens.size.sm,
                             isSelected ? 'text-brand-primary' : 'text-text-secondary',
                           )}
                         />
-
                         {/* Device info */}
-                        <div class="flex-1 min-w-0 text-left">
-                          <div class="body-small font-medium text-text-primary truncate">
+                        <div className="flex-1 min-w-0 text-left">
+                          <div className="body-small font-medium text-text-primary truncate">
                             {getDeviceDisplayName(device)}
                           </div>
-                          <div class="caption text-text-muted truncate">
+                          <div className="caption text-text-muted truncate">
                             {device.vendor || device.profile?.deviceType || 'Unknown'}
                           </div>
                         </div>
-
                         {/* IP address */}
-                        <span class="caption text-text-secondary shrink-0">{device.ip}</span>
+                        <span className="caption text-text-secondary shrink-0">{device.ip}</span>
                       </button>
                     );
                   })}
@@ -517,19 +515,19 @@ function DeviceSelectorComponent({
 
           {/* Manual IP entry button */}
           {manualEntry ? null : (
-            <div class="border-t border-surface-border">
+            <div className="border-t border-surface-border">
               <button
                 type="button"
                 onClick={handleManualEntry}
-                class={cn(
+                className={cn(
                   'w-full flex items-center justify-center',
                   spacing.gap.tight,
                   spacing.pad.sm,
                   'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none text-brand-primary',
                 )}
               >
-                <Edit class={iconTokens.size.sm} />
-                <span class="body-small font-medium">
+                <Edit className={iconTokens.size.sm} />
+                <span className="body-small font-medium">
                   {t('device.manualIpEntry', 'Manual IP Entry')}
                 </span>
               </button>

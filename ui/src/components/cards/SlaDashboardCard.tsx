@@ -101,11 +101,11 @@ function _complianceRing({ rate, size = 80 }: { rate: number; size?: number }): 
   const strokeColor = getStrokeColor(status);
 
   return (
-    <div class="relative inline-flex items-center justify-center">
+    <div className="relative inline-flex items-center justify-center">
       <svg
         height={size}
         width={size}
-        class="-rotate-90"
+        className="-rotate-90"
         role="img"
         aria-labelledby="compliance-title"
       >
@@ -128,11 +128,11 @@ function _complianceRing({ rate, size = 80 }: { rate: number; size?: number }): 
           r={normalizedRadius}
           cx={size / 2}
           cy={size / 2}
-          class="transition-all duration-500"
+          className="transition-all duration-500"
         />
       </svg>
-      <div class="absolute inset-0 flex items-center justify-center">
-        <span class="text-lg font-bold text-text-primary">{rate.toFixed(1)}%</span>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-lg font-bold text-text-primary">{rate.toFixed(1)}%</span>
       </div>
     </div>
   );
@@ -152,9 +152,9 @@ function _statBlock({
   className?: string;
 }): React.ReactElement {
   return (
-    <div class={cn('flex items-center gap-2', className)}>
+    <div className={cn('flex items-center gap-2', className)}>
       <div
-        class={cn(
+        className={cn(
           'flex items-center justify-center rounded-md',
           radius.md,
           spacing.p2,
@@ -164,11 +164,11 @@ function _statBlock({
           !status && 'bg-surface-secondary text-text-muted',
         )}
       >
-        <ICON class={iconTokens.sm} />
+        <ICON className={iconTokens.sm} />
       </div>
-      <div class="flex flex-col">
-        <span class="text-xs text-text-muted">{label}</span>
-        <span class="text-sm font-medium text-text-primary">{value}</span>
+      <div className="flex flex-col">
+        <span className="text-xs text-text-muted">{label}</span>
+        <span className="text-sm font-medium text-text-primary">{value}</span>
       </div>
     </div>
   );
@@ -268,29 +268,29 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
       <Card
         title={t('slaDashboard.title', 'SLA Dashboard')}
         subtitle={t('slaDashboard.subtitle', 'Service health and compliance')}
-        icon={<Shield class={iconTokens.md} />}
+        icon={<Shield className={iconTokens.md} />}
         status={overallStatus()}
-        class={className}
+        className={className}
       >
         {loading ? (
-          <div class={cn('animate-pulse space-y-4', spacing.p4)}>
-            <div class="h-20 bg-surface-secondary rounded-lg" />
-            <div class="h-16 bg-surface-secondary rounded-lg" />
+          <div className={cn('animate-pulse space-y-4', spacing.p4)}>
+            <div className="h-20 bg-surface-secondary rounded-lg" />
+            <div className="h-16 bg-surface-secondary rounded-lg" />
           </div>
         ) : null}
-
-        {error ? <div class={cn('text-center text-status-error', spacing.p4)}>{error}</div> : null}
-
+        {error ? (
+          <div className={cn('text-center text-status-error', spacing.p4)}>{error}</div>
+        ) : null}
         {loading || error ? null : (
-          <div class={cn('space-y-4', spacing.p4)}>
+          <div className={cn('space-y-4', spacing.p4)}>
             {/* Period selector */}
-            <div class="flex justify-end gap-1">
+            <div className="flex justify-end gap-1">
               {(['daily', 'weekly', 'monthly'] as const).map((p) => (
                 <button
                   type="button"
                   key={p}
                   onClick={(): void => setPeriod(p)}
-                  class={cn(
+                  className={cn(
                     'px-2 py-1 text-xs rounded transition-colors',
                     period === p
                       ? 'bg-accent text-white'
@@ -304,17 +304,17 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
 
             {/* SLA Compliance */}
             {data.sla ? (
-              <div class="flex items-center justify-between">
+              <div className="flex items-center justify-between">
                 <div>
-                  <h4 class="text-sm font-medium text-text-primary mb-1">
+                  <h4 className="text-sm font-medium text-text-primary mb-1">
                     {t('slaDashboard.compliance', 'SLA Compliance')}
                   </h4>
-                  <p class="text-xs text-text-muted">
+                  <p className="text-xs text-text-muted">
                     {data.sla.endpointsMet} / {data.sla.totalEndpoints}{' '}
                     {t('slaDashboard.endpointsMet', 'endpoints meeting SLA')}
                   </p>
                   {data.sla.endpointsMissed > 0 ? (
-                    <p class="text-xs text-status-error mt-1">
+                    <p className="text-xs text-status-error mt-1">
                       {data.sla.endpointsMissed}{' '}
                       {t('slaDashboard.endpointsMissed', 'endpoints missing SLA')}
                     </p>
@@ -329,10 +329,10 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
             {/* Health Score Distribution */}
             {data.scores ? (
               <div>
-                <h4 class="text-sm font-medium text-text-primary mb-3">
+                <h4 className="text-sm font-medium text-text-primary mb-3">
                   {t('slaDashboard.healthScores', 'Health Scores')}
                 </h4>
-                <div class="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <statBlock
                     icon={CheckCircle2}
                     label={t('slaDashboard.healthy', 'Healthy')}
@@ -363,15 +363,15 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
             <CardDivider />
 
             {/* Alerts and Anomalies */}
-            <div class="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {data.alerts ? (
                 <div>
-                  <h4 class="text-xs text-text-muted mb-2">
+                  <h4 className="text-xs text-text-muted mb-2">
                     {t('slaDashboard.activeAlerts', 'Active Alerts')}
                   </h4>
-                  <div class="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <span
-                      class={cn(
+                      className={cn(
                         'text-2xl font-bold',
                         data.alerts.active > 0 ? statusColor.text.error : 'text-text-primary',
                       )}
@@ -388,12 +388,12 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
               ) : null}
 
               <div>
-                <h4 class="text-xs text-text-muted mb-2">
+                <h4 className="text-xs text-text-muted mb-2">
                   {t('slaDashboard.anomalies', 'Anomalies')}
                 </h4>
-                <div class="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <span
-                    class={cn(
+                    className={cn(
                       'text-2xl font-bold',
                       data.anomalyCount > 0 ? statusColor.text.warning : 'text-text-primary',
                     )}

@@ -68,24 +68,24 @@ export function HealthChecksSettingsEnterprise({
   return (
     <>
       {/* SQL Database Endpoints */}
-      <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-        <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-          <span class="caption text-text-muted font-medium">{t('health.sqlEndpoints')}</span>
+      <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+          <span className="caption text-text-muted font-medium">{t('health.sqlEndpoints')}</span>
           <button
             type="button"
             onClick={addSqlEndpoint}
-            class="caption text-brand-primary hover:text-brand-accent"
+            className="caption text-brand-primary hover:text-brand-accent"
           >
             {t('common.add')}
           </button>
         </div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           {t('health.sqlDescription')}
         </p>
         {(testsSettings.sqlEndpoints ?? []).map((endpoint) => (
           <div
             key={endpoint.id}
-            class={cn(
+            className={cn(
               spacing.stack.xs,
               spacing.margin.bottom.heading,
               spacing.pad.xs,
@@ -93,7 +93,7 @@ export function HealthChecksSettingsEnterprise({
               radius.default,
             )}
           >
-            <div class={cn('flex', spacing.gap.compact)}>
+            <div className={cn('flex', spacing.gap.compact)}>
               <input
                 type="text"
                 value={endpoint.name}
@@ -101,7 +101,7 @@ export function HealthChecksSettingsEnterprise({
                   updateSqlEndpoint(endpoint.id ?? '', 'name', e.target.value)
                 }
                 placeholder={t('common.name')}
-                class={cn(
+                className={cn(
                   input.base,
                   input.state.default,
                   input.size.md,
@@ -113,7 +113,12 @@ export function HealthChecksSettingsEnterprise({
                 onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                   updateSqlEndpoint(endpoint.id ?? '', 'driver', e.target.value)
                 }
-                class={cn(input.base, input.state.default, input.size.md, 'w-28 bg-surface-raised')}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  'w-28 bg-surface-raised',
+                )}
               >
                 <option value="postgres">PostgreSQL</option>
                 <option value="mysql">MySQL</option>
@@ -123,12 +128,12 @@ export function HealthChecksSettingsEnterprise({
               <button
                 type="button"
                 onClick={(): void => removeSqlEndpoint(endpoint.id ?? '')}
-                class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
               >
                 {t('common.remove')}
               </button>
             </div>
-            <div class={cn('flex', spacing.gap.compact)}>
+            <div className={cn('flex', spacing.gap.compact)}>
               <input
                 type="text"
                 value={endpoint.host}
@@ -136,7 +141,7 @@ export function HealthChecksSettingsEnterprise({
                   updateSqlEndpoint(endpoint.id ?? '', 'host', e.target.value)
                 }
                 placeholder={t('common.host')}
-                class={cn(
+                className={cn(
                   input.base,
                   input.state.default,
                   input.size.md,
@@ -150,10 +155,15 @@ export function HealthChecksSettingsEnterprise({
                   updateSqlEndpoint(endpoint.id ?? '', 'port', Number.parseInt(e.target.value, 10))
                 }
                 placeholder={t('common.port')}
-                class={cn(input.base, input.state.default, input.size.md, 'w-20 bg-surface-raised')}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  'w-20 bg-surface-raised',
+                )}
               />
             </div>
-            <div class={cn('flex', spacing.gap.compact)}>
+            <div className={cn('flex', spacing.gap.compact)}>
               <input
                 type="text"
                 value={endpoint.database}
@@ -161,7 +171,7 @@ export function HealthChecksSettingsEnterprise({
                   updateSqlEndpoint(endpoint.id ?? '', 'database', e.target.value)
                 }
                 placeholder={t('health.database')}
-                class={cn(
+                className={cn(
                   input.base,
                   input.state.default,
                   input.size.md,
@@ -175,7 +185,7 @@ export function HealthChecksSettingsEnterprise({
                   updateSqlEndpoint(endpoint.id ?? '', 'username', e.target.value)
                 }
                 placeholder={t('health.username')}
-                class={cn(
+                className={cn(
                   input.base,
                   input.state.default,
                   input.size.md,
@@ -186,26 +196,27 @@ export function HealthChecksSettingsEnterprise({
           </div>
         ))}
       </div>
-
       {/* File Share Endpoints (SMB/NFS) */}
-      <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-        <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-          <span class="caption text-text-muted font-medium">{t('health.fileShareEndpoints')}</span>
+      <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+          <span className="caption text-text-muted font-medium">
+            {t('health.fileShareEndpoints')}
+          </span>
           <button
             type="button"
             onClick={addFileShareEndpoint}
-            class="caption text-brand-primary hover:text-brand-accent"
+            className="caption text-brand-primary hover:text-brand-accent"
           >
             {t('common.add')}
           </button>
         </div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           {t('health.fileShareDescription')}
         </p>
         {(testsSettings.fileShareEndpoints ?? []).map((endpoint) => (
           <div
             key={endpoint.id}
-            class={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
+            className={cn('flex', spacing.gap.compact, spacing.margin.bottom.inline)}
           >
             <input
               type="text"
@@ -214,14 +225,14 @@ export function HealthChecksSettingsEnterprise({
                 updateFileShareEndpoint(endpoint.id ?? '', 'name', e.target.value)
               }
               placeholder={t('common.name')}
-              class={cn(input.base, input.state.default, input.size.md, 'w-24')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-24')}
             />
             <select
               value={endpoint.protocol}
               onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
                 updateFileShareEndpoint(endpoint.id ?? '', 'protocol', e.target.value)
               }
-              class={cn(input.base, input.state.default, input.size.md, 'w-20')}
+              className={cn(input.base, input.state.default, input.size.md, 'w-20')}
             >
               <option value="smb">SMB</option>
               <option value="nfs">NFS</option>
@@ -233,7 +244,7 @@ export function HealthChecksSettingsEnterprise({
                 updateFileShareEndpoint(endpoint.id ?? '', 'host', e.target.value)
               }
               placeholder={t('common.host')}
-              class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
+              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
             />
             <input
               type="text"
@@ -242,38 +253,37 @@ export function HealthChecksSettingsEnterprise({
                 updateFileShareEndpoint(endpoint.id ?? '', 'sharePath', e.target.value)
               }
               placeholder={t('health.sharePath')}
-              class={cn(input.base, input.state.default, input.size.md, 'flex-1')}
+              className={cn(input.base, input.state.default, input.size.md, 'flex-1')}
             />
             <button
               type="button"
               onClick={(): void => removeFileShareEndpoint(endpoint.id ?? '')}
-              class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+              className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
             >
               {t('common.remove')}
             </button>
           </div>
         ))}
       </div>
-
       {/* LDAP Endpoints */}
-      <div class={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-        <div class={cn(layout.flex.between, spacing.margin.bottom.inline)}>
-          <span class="caption text-text-muted font-medium">{t('health.ldapEndpoints')}</span>
+      <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
+        <div className={cn(layout.flex.between, spacing.margin.bottom.inline)}>
+          <span className="caption text-text-muted font-medium">{t('health.ldapEndpoints')}</span>
           <button
             type="button"
             onClick={addLdapEndpoint}
-            class="caption text-brand-primary hover:text-brand-accent"
+            className="caption text-brand-primary hover:text-brand-accent"
           >
             {t('common.add')}
           </button>
         </div>
-        <p class={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
+        <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>
           {t('health.ldapDescription')}
         </p>
         {(testsSettings.ldapEndpoints ?? []).map((endpoint) => (
           <div
             key={endpoint.id}
-            class={cn(
+            className={cn(
               spacing.stack.xs,
               spacing.margin.bottom.heading,
               spacing.pad.xs,
@@ -281,7 +291,7 @@ export function HealthChecksSettingsEnterprise({
               radius.default,
             )}
           >
-            <div class={cn('flex', spacing.gap.compact)}>
+            <div className={cn('flex', spacing.gap.compact)}>
               <input
                 type="text"
                 value={endpoint.name}
@@ -289,7 +299,12 @@ export function HealthChecksSettingsEnterprise({
                   updateLdapEndpoint(endpoint.id ?? '', 'name', e.target.value)
                 }
                 placeholder={t('common.name')}
-                class={cn(input.base, input.state.default, input.size.md, 'w-32 bg-surface-raised')}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  'w-32 bg-surface-raised',
+                )}
               />
               <input
                 type="text"
@@ -298,7 +313,7 @@ export function HealthChecksSettingsEnterprise({
                   updateLdapEndpoint(endpoint.id ?? '', 'host', e.target.value)
                 }
                 placeholder={t('common.host')}
-                class={cn(
+                className={cn(
                   input.base,
                   input.state.default,
                   input.size.md,
@@ -312,17 +327,22 @@ export function HealthChecksSettingsEnterprise({
                   updateLdapEndpoint(endpoint.id ?? '', 'port', Number.parseInt(e.target.value, 10))
                 }
                 placeholder={t('common.port')}
-                class={cn(input.base, input.state.default, input.size.md, 'w-20 bg-surface-raised')}
+                className={cn(
+                  input.base,
+                  input.state.default,
+                  input.size.md,
+                  'w-20 bg-surface-raised',
+                )}
               />
               <button
                 type="button"
                 onClick={(): void => removeLdapEndpoint(endpoint.id ?? '')}
-                class={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
+                className={cn('text-status-error hover:text-status-error/80', spacing.actionBtn)}
               >
                 {t('common.remove')}
               </button>
             </div>
-            <div class={cn('flex items-center', spacing.gap.compact)}>
+            <div className={cn('flex items-center', spacing.gap.compact)}>
               <input
                 type="text"
                 value={endpoint.baseDn}
@@ -330,7 +350,7 @@ export function HealthChecksSettingsEnterprise({
                   updateLdapEndpoint(endpoint.id ?? '', 'baseDn', e.target.value)
                 }
                 placeholder={t('health.baseDn')}
-                class={cn(
+                className={cn(
                   input.base,
                   input.state.default,
                   input.size.md,
@@ -338,7 +358,7 @@ export function HealthChecksSettingsEnterprise({
                 )}
               />
               <label
-                class={cn('flex items-center', spacing.gap.compact, 'caption text-text-muted')}
+                className={cn('flex items-center', spacing.gap.compact, 'caption text-text-muted')}
               >
                 <input
                   type="checkbox"
