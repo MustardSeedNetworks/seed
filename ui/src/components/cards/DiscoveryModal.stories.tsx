@@ -14,6 +14,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const WithDevices: Story = {
+  args: { isOpen: true, onClose: () => {}, data: null },
   render: () => {
     const [open, setOpen] = useState(true);
     return (

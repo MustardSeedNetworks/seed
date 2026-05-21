@@ -13,6 +13,19 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
+  args: {
+    subnets: [],
+    subnetsStatus: 'idle',
+    newSubnetCidr: '',
+    setNewSubnetCidr: () => {},
+    newSubnetName: '',
+    setNewSubnetName: () => {},
+    subnetError: null,
+    setSubnetError: () => {},
+    addSubnet: () => {},
+    toggleSubnet: () => {},
+    deleteSubnet: () => {},
+  },
   render: () => {
     const [subnets, setSubnets] = useState<SubnetConfig[]>([
       { cidr: '192.168.1.0/24', name: 'Office LAN', enabled: true },
