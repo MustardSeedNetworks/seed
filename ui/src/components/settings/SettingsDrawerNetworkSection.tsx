@@ -32,7 +32,7 @@ interface SettingsDrawerNetworkSectionProps {
   setDnsInput: React.Dispatch<React.SetStateAction<string>>;
   saveIpSettings: () => Promise<void>;
   savingIp: boolean;
-  ipMessage: string;
+  ipMessage: string | null;
   displayOptions: DisplayOptions;
   setDisplayOptions: React.Dispatch<React.SetStateAction<DisplayOptions>>;
   displayStatus: SaveStatus;
