@@ -811,11 +811,13 @@ jobs:
           cat server.log
           exit 1
 
-      - name: Run Playwright E2E tests
+      - name: Run Playwright E2E tests (full suite minus smoke)
         working-directory: ui
         env:
           E2E_BASE_URL: https://localhost:8443
-        run: npx playwright test --project=chromium --reporter=html
+        # Smoke tier runs in the e2e-smoke job; full e2e skips it to
+        # avoid duplicate runtime. See seed#1053.
+        run: npx playwright test --project=chromium --reporter=html --grep-invert "@smoke"
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -830,6 +832,101 @@ jobs:
         if: failure()
         with:
           name: server-logs
+          path: server.log
+          retention-days: 7
+
+  # ===========================================================================
+  # E2E Smoke Tests (Playwright tier-1 / required)
+  # ===========================================================================
+  # Smaller, faster subset of the Playwright suite covering the critical
+  # paths (login, dashboard renders, theme toggle, smoke-spec checks).
+  # Runs the @smoke-tagged tests only — currently ~33 tests, target
+  # runtime < 5 minutes. Designed to be gated by branch protection as
+  # the user-visible E2E signal, distinct from the full e2e job which
+  # is advisory. See seed#1053.
+  e2e-smoke:
+    name: E2E Smoke
+    runs-on: ubuntu-latest
+    needs: [changes, backend, frontend]
+    timeout-minutes: 15
+    if: |
+      always() &&
+      (github.event_name != 'pull_request' || github.event.pull_request.draft == false) &&
+      needs.frontend.result == 'success' &&
+      (needs.backend.result == 'success' || needs.backend.result == 'skipped')
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install libpcap-dev
+        uses: ./.github/actions/setup-libpcap
+
+      - name: Download frontend build
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: frontend-dist
+          path: internal/api/ui/
+
+      - name: Install frontend dependencies (for Playwright)
+        working-directory: ui
+        run: npm ci
+
+      - name: Build backend
+        run: |
+          go build -trimpath -buildvcs=false \
+            -ldflags="-s -w" \
+            -o seed ./cmd/seed
+
+      - name: Install Playwright browsers
+        working-directory: ui
+        run: npx playwright install --with-deps chromium
+
+      - name: Start backend server
+        env:
+          SEED_CONFIG_PATH: ${{ runner.temp }}/seed/config.yaml
+          SEED_LOGIN_MAX_ATTEMPTS: "200"
+        run: |
+          mkdir -p data
+          sudo setcap cap_net_raw=+ep ./seed || true
+          nohup ./seed --config "$SEED_CONFIG_PATH" > server.log 2>&1 &
+          echo "Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -sk https://localhost:8443/ >/dev/null 2>&1; then
+              echo "Server ready after $i attempts"
+              exit 0
+            fi
+            echo "Attempt $i: Server not ready, waiting..."
+            sleep $((i < 5 ? 1 : 2))
+          done
+          echo "Server failed to start after 30 attempts"
+          cat server.log
+          exit 1
+
+      - name: Run Playwright @smoke tests
+        working-directory: ui
+        env:
+          E2E_BASE_URL: https://localhost:8443
+        run: npx playwright test --project=chromium --reporter=html --grep "@smoke"
+
+      - name: Upload Playwright smoke report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: playwright-smoke-report
+          path: ui/playwright-report/
+          retention-days: 7
+
+      - name: Upload server logs on smoke failure
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: smoke-server-logs
           path: server.log
           retention-days: 7
 

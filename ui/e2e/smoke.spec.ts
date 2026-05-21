@@ -9,7 +9,7 @@ import { expect, test } from '@playwright/test';
  * - Basic UI elements render
  */
 
-test.describe('Smoke Tests', () => {
+test.describe('Smoke Tests', { tag: '@smoke' }, () => {
   test('should load the application without errors', async ({ page }) => {
     const errors: string[] = [];
 

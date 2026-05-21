@@ -16,7 +16,7 @@ import { TEST_CREDENTIALS } from './helpers/auth';
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test.describe('@smoke Authentication', () => {
+test.describe('Authentication', { tag: '@smoke' }, () => {
   test.beforeEach(async ({ page }) => {
     // Clear any stored tokens
     await page.goto('/');
@@ -27,10 +27,8 @@ test.describe('@smoke Authentication', () => {
   test('should display login form when not authenticated', async ({ page }) => {
     await page.goto('/');
 
-    // The LoginForm renders the app brand ("The Seed") as the H1, not
-    // the word "Login" — assert on the brand + the form controls, which
-    // are the load-bearing UX contract here.
-    await expect(page.getByRole('heading', { name: /the seed/i })).toBeVisible();
+    // Check for login form elements
+    await expect(page.getByRole('heading', { name: /login/i })).toBeVisible();
     await expect(page.getByLabel(/username/i)).toBeVisible();
     await expect(page.getByLabel(/password/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /sign in|login/i })).toBeVisible();
@@ -44,13 +42,9 @@ test.describe('@smoke Authentication', () => {
     await page.getByLabel(/password/i).fill('wrongpassword');
     await page.getByRole('button', { name: /sign in|login/i }).click();
 
-    // Backend returns "Invalid credentials" on bad auth; the form
-    // surfaces it in a status-error badge below the inputs. Use first()
-    // to bypass strict-mode matching against the i18n placeholder text
-    // that also contains "Invalid". 10s timeout because the per-IP
-    // rate limiter can throttle repeat attempts on a hot suite.
-    await expect(page.getByText(/invalid|incorrect|failed/i).first()).toBeVisible({
-      timeout: 10000,
+    // Should show error message
+    await expect(page.getByText(/invalid|incorrect|failed/i)).toBeVisible({
+      timeout: 5000,
     });
   });
 
@@ -64,11 +58,8 @@ test.describe('@smoke Authentication', () => {
     await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
     await page.getByRole('button', { name: /sign in|login/i }).click();
 
-    // Should redirect to dashboard. The dashboard's primary H1 is
-    // "Link" (the active page tab); the H3 "Link Status" inside the
-    // card chrome would otherwise trip strict-mode matching. Pin to
-    // level: 1 to keep the assertion unambiguous.
-    await expect(page.getByRole('heading', { name: /^link$|dashboard/i, level: 1 })).toBeVisible({
+    // Should redirect to dashboard
+    await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
       timeout: 10000,
     });
   });
