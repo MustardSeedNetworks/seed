@@ -37,6 +37,7 @@ import type {
   ActiveSample,
   HeatmapMetric,
   PassiveSample,
+  ScannedNetwork,
   Survey,
   SurveyType,
   ThroughputSample,

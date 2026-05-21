@@ -355,7 +355,7 @@ export function SurveyViewFloorPlanPanel({
               className={cn(
                 spacing.margin.top.content,
                 'border-t border-surface-border',
-                spacing.padding.top,
+                spacing.padding.top.section,
               )}
             >
               <p className={cn('caption text-text-muted', spacing.margin.bottom.inline)}>

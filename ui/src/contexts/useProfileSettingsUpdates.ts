@@ -57,7 +57,7 @@ export function useProfileSettingsUpdates(activeProfile: Profile | null): Profil
         return;
       }
 
-      const currentSettings = activeProfile.settings ?? {};
+      const currentSettings = activeProfile.config?.settings ?? {};
       const currentFieldValue = currentSettings[field] ?? {};
       const newSettings = {
         [field]: { ...currentFieldValue, ...updates },
