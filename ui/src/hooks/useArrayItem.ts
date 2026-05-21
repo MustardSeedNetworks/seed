@@ -42,7 +42,6 @@ import { generateId } from '../utils/id';
  */
 interface ItemWithId {
   id?: string;
-  [key: string]: unknown;
 }
 
 /**
@@ -138,10 +137,7 @@ interface UseArrayItemReturn<TItem extends ItemWithId> {
  * );
  * ```
  */
-export function useArrayItem<
-  TSettings extends Record<string, unknown>,
-  K extends ArrayKeys<TSettings>,
->(
+export function useArrayItem<TSettings extends object, K extends ArrayKeys<TSettings>>(
   setSettings: Dispatch<SetStateAction<TSettings>>,
   arrayKey: K,
   createDefault: () => Omit<ArrayItemType<TSettings, K>, 'id'>,
@@ -173,7 +169,7 @@ export function useArrayItem<
   const remove = useCallback(
     (id: string) => {
       setSettings((prev) => {
-        const currentArray = ((prev[arrayKey] as Item[] | undefined) ?? []) as Item[];
+        const currentArray = (prev[arrayKey] as unknown as ItemWithId[] | undefined) ?? [];
         return {
           ...prev,
           [arrayKey]: currentArray.filter((item) => item.id !== id),
@@ -189,7 +185,7 @@ export function useArrayItem<
   const update = useCallback(
     <F extends keyof Item>(id: string, field: F, value: Item[F]) => {
       setSettings((prev) => {
-        const currentArray = ((prev[arrayKey] as Item[] | undefined) ?? []) as Item[];
+        const currentArray = (prev[arrayKey] as unknown as ItemWithId[] | undefined) ?? [];
         return {
           ...prev,
           [arrayKey]: currentArray.map((item) =>
