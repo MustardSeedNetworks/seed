@@ -1,5 +1,5 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
-import { Lock, Mail, Search } from 'lucide-react';
+import { Lock, Mail } from 'lucide-react';
 import { useState } from 'react';
 import {
   Checkbox,
@@ -152,7 +152,6 @@ export const SearchInputExample: Story = {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onClear={() => setQuery('')}
-        leftIcon={<Search className="h-4 w-4" />}
       />
     );
   },

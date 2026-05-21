@@ -14,6 +14,11 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
+  args: {
+    floorPlan: { imageData: '', width: 800, height: 600, scaleM: 0.1 },
+    onUpdate: () => {},
+    onStartCalibration: () => {},
+  },
   render: () => {
     const [floorPlan, setFloorPlan] = useState<FloorPlan>(
       sampleFloors[0]?.floorPlan ?? { imageData: '', width: 800, height: 600, scaleM: 0.1 },

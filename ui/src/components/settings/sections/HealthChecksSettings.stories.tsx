@@ -439,6 +439,8 @@ export const Interactive: Story = {
         testsSettings={testsSettings}
         setTestsSettings={handleSetTestsSettings}
         testsStatus={status}
+        cardSettings={{} as never}
+        updateCardSettings={() => {}}
       />
     );
   },

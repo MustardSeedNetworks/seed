@@ -527,6 +527,8 @@ export const Interactive: Story = {
         iperfSuggestionsStatus={suggestionsStatus}
         iperfSuggestionsError={null}
         fetchIperfSuggestions={handleFetchSuggestions}
+        cardSettings={{} as never}
+        updateCardSettings={() => {}}
       />
     );
   },

@@ -37,14 +37,14 @@ interface LogViewerModalProps {
  */
 function getStreamingToggleHint(
   streaming: boolean,
-  t: ReturnType<typeof useTranslation>['t'],
+  t: (key: string, fallback?: string) => string,
 ): string {
   return streaming
-    ? (t(
+    ? t(
         'logs.streamingHint',
         'Pause the live log stream; existing entries stay visible but no new entries are appended',
-      ) as string)
-    : (t('logs.pausedHint', 'Resume streaming live log entries from the backend') as string);
+      )
+    : t('logs.pausedHint', 'Resume streaming live log entries from the backend');
 }
 
 // Filter badge component
@@ -584,7 +584,10 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
             <button
               type="button"
               onClick={() => setIsStreaming(!isStreaming)}
-              title={getStreamingToggleHint(isStreaming, t)}
+              title={getStreamingToggleHint(
+                isStreaming,
+                t as unknown as (k: string, f?: string) => string,
+              )}
               className={cn(
                 button.size.md,
                 radius.lg,

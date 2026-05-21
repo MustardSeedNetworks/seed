@@ -57,7 +57,8 @@
     "noDataAvailable": "No data available",
     "never": "Never",
     "justNow": "Just now",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "unavailable": "Unavailable"
   },
   "labels": {
     "username": "Username",

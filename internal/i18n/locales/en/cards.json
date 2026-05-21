@@ -252,6 +252,7 @@
     "testsDisabled": "Performance tests are disabled in Settings",
     "serverNotConfigured": "Server not configured",
     "speedtestFailed": "Speedtest failed",
+    "iperfFailed": "iPerf test failed",
     "phaseReady": "Ready",
     "phaseFindingServer": "Finding server...",
     "phaseTestingLatency": "Testing latency...",
