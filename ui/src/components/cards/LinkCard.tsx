@@ -126,7 +126,7 @@ function getStatus(data: LinkData): Status {
   return 'success'; // Fully connected
 }
 
-function _linkLoadingSkeleton(): JSX.Element {
+function LinkLoadingSkeleton(): JSX.Element {
   return (
     <>
       <Skeleton className={cn('h-8 w-32', spacing.margin.bottom.heading)} />
@@ -166,7 +166,7 @@ export const LinkCard: React.MemoExoticComponent<(props: LinkCardProps) => JSX.E
         data={data}
         loading={loading}
         getStatus={getStatus}
-        loadingContent={<linkLoadingSkeleton />}
+        loadingContent={<LinkLoadingSkeleton />}
         emptyMessage={tc('status.noData')}
       >
         {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex link card with multiple status displays */}

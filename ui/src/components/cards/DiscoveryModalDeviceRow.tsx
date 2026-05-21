@@ -19,7 +19,7 @@ import { Tooltip } from '../ui/tooltip';
 import type { DiscoveredDevice, DiscoveryMethod, OpenPort } from './NetworkDiscoveryCard';
 
 // Discovery method badge
-export function _methodBadge({ method }: { method: DiscoveryMethod }): JSX.Element {
+export function MethodBadge({ method }: { method: DiscoveryMethod }): JSX.Element {
   const theme = discoveryMethodTheme[method] || discoveryMethodTheme.arp;
   return (
     <span
@@ -98,7 +98,7 @@ export function getSeverityClasses(severity: string): string {
 
 // Device row component
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Device row handles many device types and states
-export function _deviceRow({
+export function DeviceRow({
   device,
   isExpanded,
   onToggle,
@@ -191,7 +191,7 @@ export function _deviceRow({
         <td className="px-3 py-2">
           <div className="flex items-center gap-1 flex-wrap">
             {device.discoveryMethod.map((method) => (
-              <methodBadge key={method} method={method} />
+              <MethodBadge key={method} method={method} />
             ))}
           </div>
         </td>

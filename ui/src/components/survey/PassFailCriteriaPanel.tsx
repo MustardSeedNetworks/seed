@@ -58,7 +58,7 @@ function groupCriteriaByMode(criteria: PassFailCriterion[]): Map<string, PassFai
 }
 
 /** Render comparison operator symbol */
-function _comparisonSymbol({ comparison }: { comparison: ComparisonOperator }): React.ReactElement {
+function ComparisonSymbol({ comparison }: { comparison: ComparisonOperator }): React.ReactElement {
   return (
     <span className="text-text-muted font-mono">{comparison === 'gte' ? '\u2265' : '\u2264'}</span>
   );
@@ -67,7 +67,7 @@ function _comparisonSymbol({ comparison }: { comparison: ComparisonOperator }): 
 /**
  * A single criterion row with toggle and threshold input
  */
-function _criterionRow({
+function CriterionRow({
   criterion,
   onChange,
   disabled,
@@ -116,7 +116,7 @@ function _criterionRow({
       </label>
       {/* Comparison and threshold */}
       <div className={cn(layout.inline.tight)}>
-        <comparisonSymbol comparison={criterion.comparison} />
+        <ComparisonSymbol comparison={criterion.comparison} />
         <input
           type="number"
           value={criterion.threshold}
@@ -137,7 +137,7 @@ function _criterionRow({
 /**
  * Collapsible section for criteria group
  */
-function _criteriaSection({
+function CriteriaSection({
   title,
   criteria,
   expanded,
@@ -175,7 +175,7 @@ function _criteriaSection({
       {expanded ? (
         <div className={cn('pl-2', spacing.margin.top.tight)}>
           {criteria.map((criterion) => (
-            <criterionRow
+            <CriterionRow
               key={criterion.id}
               criterion={criterion}
               onChange={(updated: PassFailCriterion): void => onChange(criterion.id, updated)}
@@ -289,7 +289,7 @@ export function PassFailCriteriaPanel({
       {/* Criteria sections */}
       <div className={spacing.margin.bottom.content}>
         {Array.from(groupedCriteria.entries()).map(([mode, modeCriteria]) => (
-          <criteriaSection
+          <CriteriaSection
             key={mode}
             title={getSectionTitle(mode)}
             criteria={modeCriteria}

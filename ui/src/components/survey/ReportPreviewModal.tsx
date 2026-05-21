@@ -72,7 +72,7 @@ function formatDate(isoDate: string): string {
 /**
  * Section preview item
  */
-function _sectionPreview({
+function SectionPreview({
   icon: ICON,
   title,
   description,
@@ -306,7 +306,7 @@ export function ReportPreviewModal({
             <h3 className="body-small font-medium mb-2">{t('report.reportSections')}</h3>
             <div className={layout.stack.tight}>
               {sections.map((section) => (
-                <sectionPreview
+                <SectionPreview
                   key={section.titleKey}
                   icon={section.icon}
                   title={t(section.titleKey as never)}

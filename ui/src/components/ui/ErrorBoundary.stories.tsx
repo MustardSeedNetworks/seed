@@ -51,14 +51,14 @@ type Story = StoryObj<typeof meta>;
 /**
  * Component that immediately throws an error on render
  */
-function _brokenComponent(): never {
+function BrokenComponent(): never {
   throw new Error('This component intentionally throws an error!');
 }
 
 /**
  * Component that throws after a button click
  */
-function _clickToBrokenComponent(): React.JSX.Element {
+function ClickToBrokenComponent(): React.JSX.Element {
   const [shouldThrow, setShouldThrow] = useState(false);
 
   if (shouldThrow) {
@@ -97,7 +97,7 @@ function _clickToBrokenComponent(): React.JSX.Element {
 /**
  * Component that throws an error with stack trace details
  */
-function _componentWithStackTrace(): null {
+function ComponentWithStackTrace(): null {
   function deepNestedFunction(): void {
     function evenDeeperFunction(): never {
       throw new Error('Detailed error message with stack trace from deep nested function call');
@@ -111,7 +111,7 @@ function _componentWithStackTrace(): null {
 /**
  * Normal working component - no errors
  */
-function _workingComponent(): React.JSX.Element {
+function WorkingComponent(): React.JSX.Element {
   return (
     <div
       className={cn(
@@ -156,14 +156,14 @@ function _workingComponent(): React.JSX.Element {
 /**
  * Component simulating a network error
  */
-function _networkErrorComponent(): React.ReactElement {
+function NetworkErrorComponent(): React.ReactElement {
   throw new Error('Network request failed: Unable to fetch data from API endpoint');
 }
 
 /**
  * Component simulating a type error
  */
-function _typeErrorComponent(): React.JSX.Element {
+function TypeErrorComponent(): React.JSX.Element {
   const data = null as unknown as { property: { nested: { value: string } } };
   return <div>{data.property.nested.value}</div>;
 }
@@ -178,7 +178,7 @@ function _typeErrorComponent(): React.JSX.Element {
 export const NoError: Story = {
   render: () => (
     <ErrorBoundary>
-      <workingComponent />
+      <WorkingComponent />
     </ErrorBoundary>
   ),
   parameters: {
@@ -197,7 +197,7 @@ export const NoError: Story = {
 export const ErrorCaught: Story = {
   render: () => (
     <ErrorBoundary>
-      <brokenComponent />
+      <BrokenComponent />
     </ErrorBoundary>
   ),
   parameters: {
@@ -216,7 +216,7 @@ export const ErrorCaught: Story = {
 export const ErrorWithDetailedMessage: Story = {
   render: () => (
     <ErrorBoundary>
-      <networkErrorComponent />
+      <NetworkErrorComponent />
     </ErrorBoundary>
   ),
   parameters: {
@@ -235,7 +235,7 @@ export const ErrorWithDetailedMessage: Story = {
 export const ErrorWithStackTrace: Story = {
   render: () => (
     <ErrorBoundary>
-      <componentWithStackTrace />
+      <ComponentWithStackTrace />
     </ErrorBoundary>
   ),
   parameters: {
@@ -254,7 +254,7 @@ export const ErrorWithStackTrace: Story = {
 export const InteractiveError: Story = {
   render: () => (
     <ErrorBoundary>
-      <clickToBrokenComponent />
+      <ClickToBrokenComponent />
     </ErrorBoundary>
   ),
   parameters: {
@@ -343,7 +343,7 @@ export const CustomFallback: Story = {
         </div>
       }
     >
-      <brokenComponent />
+      <BrokenComponent />
     </ErrorBoundary>
   ),
   parameters: {
@@ -367,7 +367,7 @@ export const MultipleErrorBoundaries: Story = {
           Section 1 - Working
         </h3>
         <ErrorBoundary>
-          <workingComponent />
+          <WorkingComponent />
         </ErrorBoundary>
       </div>
 
@@ -376,7 +376,7 @@ export const MultipleErrorBoundaries: Story = {
           Section 2 - Error
         </h3>
         <ErrorBoundary>
-          <brokenComponent />
+          <BrokenComponent />
         </ErrorBoundary>
       </div>
 
@@ -385,7 +385,7 @@ export const MultipleErrorBoundaries: Story = {
           Section 3 - Working
         </h3>
         <ErrorBoundary>
-          <workingComponent />
+          <WorkingComponent />
         </ErrorBoundary>
       </div>
     </div>
@@ -505,7 +505,7 @@ export const WithRetry: Story = {
 export const TypeErrorDemo: Story = {
   render: () => (
     <ErrorBoundary>
-      <typeErrorComponent />
+      <TypeErrorComponent />
     </ErrorBoundary>
   ),
   parameters: {
@@ -567,7 +567,7 @@ export const NestedErrorBoundaries: Story = {
               </div>
             }
           >
-            <brokenComponent />
+            <BrokenComponent />
           </ErrorBoundary>
 
           <p className={cn('body-small text-text-secondary', spacing.margin.top.content)}>

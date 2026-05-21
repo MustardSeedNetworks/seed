@@ -87,7 +87,7 @@ export interface DataTableProps<T> {
   loading?: boolean;
 }
 
-function _sortIcon({
+function SortIcon({
   direction,
   active,
 }: {
@@ -434,7 +434,7 @@ export function DataTable<T>({
                   <span className={layout.inline.tight}>
                     {column.header}
                     {column.sortable ? (
-                      <sortIcon
+                      <SortIcon
                         direction={sortKey === column.key ? sortDirection : null}
                         active={sortKey === column.key}
                       />

@@ -78,7 +78,7 @@ export function ToastProvider({ children }: ToastProviderProps): React.JSX.Eleme
   return (
     <ToastContext.Provider value={{ addToast, removeToast }}>
       {children}
-      <toastContainer toasts={toasts} removeToast={removeToast} />
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </ToastContext.Provider>
   );
 }
@@ -88,7 +88,7 @@ interface ToastContainerProps {
   removeToast: (id: string) => void;
 }
 
-function _toastContainer({ toasts, removeToast }: ToastContainerProps): React.JSX.Element {
+function ToastContainer({ toasts, removeToast }: ToastContainerProps): React.JSX.Element {
   const handleClose = (id: string): void => removeToast(id);
   return (
     // biome-ignore lint/a11y/useSemanticElements: Region role with aria-live is the correct pattern for toast notifications
@@ -99,7 +99,7 @@ function _toastContainer({ toasts, removeToast }: ToastContainerProps): React.JS
       className={cn('fixed bottom-20 right-4 z-50 max-w-sm', layout.stack.default)}
     >
       {toasts.map((toast) => (
-        <toastItem key={toast.id} toast={toast} onClose={handleClose.bind(null, toast.id)} />
+        <ToastItem key={toast.id} toast={toast} onClose={handleClose.bind(null, toast.id)} />
       ))}
     </div>
   );
@@ -110,7 +110,7 @@ interface ToastItemProps {
   onClose: () => void;
 }
 
-function _toastItem({ toast, onClose }: ToastItemProps): React.JSX.Element {
+function ToastItem({ toast, onClose }: ToastItemProps): React.JSX.Element {
   useEffect((): undefined | (() => void) => {
     if (toast.duration && toast.duration > 0) {
       const timer = setTimeout(onClose, toast.duration);

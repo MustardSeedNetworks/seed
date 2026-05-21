@@ -176,7 +176,7 @@ function getCardStatus(
 /**
  * Render the channel graph for a specific band
  */
-function _channelGraph({
+function ChannelGraph({
   networks,
   band,
   connectedBssid,
@@ -442,7 +442,7 @@ export function WifiChannelGraph({
           ) : null}
 
           {/* Channel graph */}
-          <channelGraph
+          <ChannelGraph
             networks={networks}
             band={selectedBand}
             connectedBssid={data.data?.connectedBssid}

@@ -89,7 +89,7 @@ function getAggregatedStatus(results: ServerTestResult[]): 'error' | 'warning' |
   return 'success';
 }
 
-function _lookupRow({
+function LookupRow({
   label,
   lookup,
 }: {
@@ -184,8 +184,8 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
         {data.forward || data.reverse ? (
           <div className={spacing.margin.bottom.inline}>
             <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>IPv4</p>
-            <lookupRow label={t('dns.forwardA')} lookup={data.forward} />
-            <lookupRow label={t('dns.reversePTR')} lookup={data.reverse} />
+            <LookupRow label={t('dns.forwardA')} lookup={data.forward} />
+            <LookupRow label={t('dns.reversePTR')} lookup={data.reverse} />
           </div>
         ) : null}
         {/* IPv6 Lookups */}
@@ -194,8 +194,8 @@ export const DnsCard: React.MemoExoticComponent<(props: DnsCardProps) => JSX.Ele
             <CardDivider />
             <div>
               <p className={cn('caption font-medium', spacing.margin.bottom.tight)}>IPv6</p>
-              <lookupRow label={t('dns.forwardAAAA')} lookup={data.forwardIpv6} />
-              <lookupRow label={t('dns.reversePTR')} lookup={data.reverseIpv6} />
+              <LookupRow label={t('dns.forwardAAAA')} lookup={data.forwardIpv6} />
+              <LookupRow label={t('dns.reversePTR')} lookup={data.reverseIpv6} />
             </div>
           </>
         ) : null}

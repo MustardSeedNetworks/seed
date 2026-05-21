@@ -91,7 +91,7 @@ function getStrokeColor(status: Status): string {
   return 'var(--color-status-error)';
 }
 
-function _complianceRing({ rate, size = 80 }: { rate: number; size?: number }): React.ReactElement {
+function ComplianceRing({ rate, size = 80 }: { rate: number; size?: number }): React.ReactElement {
   const strokeWidth = 8;
   const normalizedRadius = (size - strokeWidth) / 2;
   const circumference = normalizedRadius * 2 * Math.PI;
@@ -138,7 +138,7 @@ function _complianceRing({ rate, size = 80 }: { rate: number; size?: number }): 
   );
 }
 
-function _statBlock({
+function StatBlock({
   icon: ICON,
   label,
   value,
@@ -320,7 +320,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                     </p>
                   ) : null}
                 </div>
-                <complianceRing rate={data.sla.complianceRate} />
+                <ComplianceRing rate={data.sla.complianceRate} />
               </div>
             ) : null}
 
@@ -333,25 +333,25 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                   {t('slaDashboard.healthScores', 'Health Scores')}
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
-                  <statBlock
+                  <StatBlock
                     icon={CheckCircle2}
                     label={t('slaDashboard.healthy', 'Healthy')}
                     value={data.scores.healthy}
                     status="success"
                   />
-                  <statBlock
+                  <StatBlock
                     icon={AlertTriangle}
                     label={t('slaDashboard.degraded', 'Degraded')}
                     value={data.scores.degraded}
                     status={data.scores.degraded > 0 ? 'warning' : undefined}
                   />
-                  <statBlock
+                  <StatBlock
                     icon={XCircle}
                     label={t('slaDashboard.critical', 'Critical')}
                     value={data.scores.critical}
                     status={data.scores.critical > 0 ? 'error' : undefined}
                   />
-                  <statBlock
+                  <StatBlock
                     icon={TrendingUp}
                     label={t('slaDashboard.total', 'Total')}
                     value={data.scores.totalEndpoints}

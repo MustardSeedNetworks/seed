@@ -82,7 +82,7 @@ function getResultStatus(result: PassFailResult): {
 }
 
 /** Render comparison operator symbol */
-function _comparisonDisplay({
+function ComparisonDisplay({
   comparison,
   threshold,
   suffix,
@@ -102,7 +102,7 @@ function _comparisonDisplay({
 }
 
 /** Render trend indicator based on comparison type and values */
-function _trendIndicator({ result }: { result: PassFailResult }): React.ReactElement {
+function TrendIndicator({ result }: { result: PassFailResult }): React.ReactElement {
   const { averageValue, threshold, comparison } = result;
   const diff = averageValue - threshold;
   const isGood = comparison === 'gte' ? diff >= 0 : diff <= 0;
@@ -113,23 +113,23 @@ function _trendIndicator({ result }: { result: PassFailResult }): React.ReactEle
   }
 
   if (isGood) {
-    return <trendUp className="w-3 h-3 text-status-success" />;
+    return <TrendUp className="w-3 h-3 text-status-success" />;
   }
-  return <trendDown className="w-3 h-3 text-status-error" />;
+  return <TrendDown className="w-3 h-3 text-status-error" />;
 }
 
-function _trendUp({ className }: { className?: string }): React.ReactElement {
+function TrendUp({ className }: { className?: string }): React.ReactElement {
   return <TrendingUp className={className} />;
 }
 
-function _trendDown({ className }: { className?: string }): React.ReactElement {
+function TrendDown({ className }: { className?: string }): React.ReactElement {
   return <TrendingDown className={className} />;
 }
 
 /**
  * A single result row showing criterion pass/fail status
  */
-function _resultRow({
+function ResultRow({
   result,
   onShowLocations,
   t,
@@ -161,7 +161,7 @@ function _resultRow({
           <span className={cn('body-small font-medium', colorClass)}>
             {result.averageValue.toFixed(1)} {result.suffix}
           </span>
-          <comparisonDisplay
+          <ComparisonDisplay
             comparison={result.comparison}
             threshold={result.threshold}
             suffix={result.suffix}
@@ -179,7 +179,7 @@ function _resultRow({
           </span>
         </div>
         <div className={layout.inline.tight}>
-          <trendIndicator result={result} />
+          <TrendIndicator result={result} />
           <span className="caption">
             {t('criteria.range')}: {result.worstValue.toFixed(1)} - {result.bestValue.toFixed(1)}
           </span>
@@ -208,7 +208,7 @@ function _resultRow({
 /**
  * Overall status banner
  */
-function _statusBanner({
+function StatusBanner({
   validation,
   t,
 }: {
@@ -308,7 +308,7 @@ export function PassFailResultsPanel({
       className={cn('bg-surface-raised', radius.md, 'border border-surface-border', spacing.pad.sm)}
     >
       {/* Status banner */}
-      <statusBanner validation={validation} t={t} />
+      <StatusBanner validation={validation} t={t} />
       {/* Failed criteria (show first) */}
       {failed.length > 0 ? (
         <div className={spacing.margin.bottom.content}>
@@ -317,7 +317,7 @@ export function PassFailResultsPanel({
           </h4>
           <div className={layout.stack.tight}>
             {failed.map((result) => (
-              <resultRow
+              <ResultRow
                 key={result.criterionId}
                 result={result}
                 onShowLocations={(): void => handleShowLocations(result)}
@@ -335,7 +335,7 @@ export function PassFailResultsPanel({
           </h4>
           <div className={layout.stack.tight}>
             {passed.map((result) => (
-              <resultRow key={result.criterionId} result={result} t={t} />
+              <ResultRow key={result.criterionId} result={result} t={t} />
             ))}
           </div>
         </div>

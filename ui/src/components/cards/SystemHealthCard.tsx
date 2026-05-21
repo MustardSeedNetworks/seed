@@ -117,7 +117,7 @@ function getSuggestion(type: 'cpu' | 'memory' | 'disk', usage: number): string {
   return '';
 }
 
-function _resourceBar({
+function ResourceBar({
   label,
   percent,
   used,
@@ -246,7 +246,7 @@ export function SystemHealthCard(): React.ReactElement {
       {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Resource bars require conditional rendering */}
       {(health: SystemHealth): React.ReactElement => (
         <div className="stack">
-          <resourceBar
+          <ResourceBar
             label={t('system.cpu')}
             percent={health.cpuPercent ?? 0}
             used={0}
@@ -254,7 +254,7 @@ export function SystemHealthCard(): React.ReactElement {
             topProcesses={health.topCpuProcesses}
             type="cpu"
           />
-          <resourceBar
+          <ResourceBar
             label={t('system.memory')}
             percent={health.memoryPercent ?? 0}
             used={health.memoryUsed ?? 0}
@@ -262,7 +262,7 @@ export function SystemHealthCard(): React.ReactElement {
             topProcesses={health.topMemoryProcesses}
             type="memory"
           />
-          <resourceBar
+          <ResourceBar
             label={t('system.disk')}
             percent={health.diskPercent ?? 0}
             used={health.diskUsed ?? 0}
