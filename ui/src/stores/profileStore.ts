@@ -191,9 +191,12 @@ export const useProfileStore: UseBoundStore<StoreApi<ProfileState & ProfileActio
           updateActiveProfileSettings: (settings: Partial<ProfileSettings>) =>
             set((state: ProfileState) => {
               if (state.activeProfile) {
-                state.activeProfile.settings = {
-                  ...state.activeProfile.settings,
-                  ...settings,
+                state.activeProfile.config = {
+                  ...state.activeProfile.config,
+                  settings: {
+                    ...state.activeProfile.config?.settings,
+                    ...settings,
+                  },
                 };
               }
             }),
@@ -217,13 +220,22 @@ export const useProfileStore: UseBoundStore<StoreApi<ProfileState & ProfileActio
 // Derived Selectors (memoized automatically by Zustand)
 // ============================================================================
 
-// Helper to merge settings with defaults
+/**
+ * Merge order: profileValue (user-saved) → backendDefault (server-shipped
+ * canonical) → hardcodedDefault (last-resort, always type-safe).
+ *
+ * backendDefault is typed as `unknown` because the backend Defaults
+ * namespace (e.g. DisplayOptionsDefaults) is structurally similar but
+ * not identical to the Config namespace (DisplayOptionsConfig). The
+ * cast happens at the merge boundary to keep selector consumers
+ * working without a giant Defaults↔Config type-map rewrite.
+ */
 function mergeWithDefaults<T>(
   profileValue: T | undefined,
-  backendDefault: T | undefined,
+  backendDefault: unknown,
   hardcodedDefault: T,
 ): T {
-  return profileValue ?? backendDefault ?? hardcodedDefault;
+  return (profileValue ?? (backendDefault as T | undefined) ?? hardcodedDefault) as T;
 }
 
 // Settings selectors - these replace the 15+ useMemo hooks
@@ -231,7 +243,7 @@ export const useCardSettings = (): CardSettingsConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
   const backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
-    activeProfile?.settings?.cardSettings,
+    activeProfile?.config?.settings?.cardSettings,
     backendDefaults?.cardSettings,
     DEFAULT_CARD_SETTINGS,
   );
@@ -241,7 +253,7 @@ export const useDisplayOptions = (): DisplayOptionsConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
   const backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
-    activeProfile?.settings?.displayOptions,
+    activeProfile?.config?.settings?.displayOptions,
     backendDefaults?.displayOptions,
     DEFAULT_DISPLAY_OPTIONS,
   );
@@ -251,7 +263,7 @@ export const useIperfSettings = (): IperfConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
   const backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
-    activeProfile?.settings?.iperf,
+    activeProfile?.config?.settings?.iperf,
     backendDefaults?.iperf,
     DEFAULT_IPERF_SETTINGS,
   );
@@ -261,7 +273,7 @@ export const useThresholds = (): ProfileThresholdsConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
   const backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
-    activeProfile?.settings?.thresholds,
+    activeProfile?.config?.settings?.thresholds,
     backendDefaults?.thresholds,
     DEFAULT_THRESHOLDS,
   );
@@ -269,10 +281,10 @@ export const useThresholds = (): ProfileThresholdsConfig => {
 
 export const useSpeedtestSettings = (): SpeedtestConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
-  const backendDefaults = useProfileStore((s) => s.backendDefaults);
+  const _backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
-    activeProfile?.settings?.speedtest,
-    backendDefaults?.speedtest,
+    activeProfile?.config?.settings?.speedtest,
+    undefined, // backend DefaultSettings does not currently expose speedtest
     DEFAULT_SPEEDTEST_SETTINGS,
   );
 };
@@ -281,7 +293,7 @@ export const useTestsSettings = (): TestsConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
   const backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
-    activeProfile?.settings?.tests,
+    activeProfile?.config?.settings?.tests,
     backendDefaults?.tests,
     DEFAULT_TESTS_SETTINGS,
   );
@@ -291,7 +303,7 @@ export const useNetworkDiscoverySettings = (): NetworkDiscoveryConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
   const backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
-    activeProfile?.settings?.networkDiscovery,
+    activeProfile?.config?.settings?.networkDiscovery,
     backendDefaults?.networkDiscovery,
     DEFAULT_NETWORK_DISCOVERY_SETTINGS,
   );
@@ -301,7 +313,7 @@ export const useSnmpSettings = (): SnmpConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
   const backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
-    activeProfile?.settings?.snmp,
+    activeProfile?.config?.settings?.snmp,
     backendDefaults?.snmp,
     DEFAULT_SNMP_SETTINGS,
   );
@@ -309,10 +321,10 @@ export const useSnmpSettings = (): SnmpConfig => {
 
 export const useWifiSettings = (): WiFiSettingsConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
-  const backendDefaults = useProfileStore((s) => s.backendDefaults);
+  const _backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
-    activeProfile?.settings?.wifi,
-    backendDefaults?.wifi,
+    activeProfile?.config?.settings?.wifi,
+    undefined, // backend DefaultSettings does not currently expose wifi
     DEFAULT_WIFI_SETTINGS,
   );
 };
@@ -321,7 +333,7 @@ export const useLinkSettings = (): LinkConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
   const backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
-    activeProfile?.settings?.link,
+    activeProfile?.config?.settings?.link,
     backendDefaults?.link,
     DEFAULT_LINK_SETTINGS,
   );
@@ -331,7 +343,7 @@ export const useCableTestSettings = (): CableTestConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
   const backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
-    activeProfile?.settings?.cableTest,
+    activeProfile?.config?.settings?.cableTest,
     backendDefaults?.cableTest,
     DEFAULT_CABLE_TEST_SETTINGS,
   );
@@ -341,7 +353,7 @@ export const useVulnerabilitySettings = (): VulnerabilityConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
   const backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
-    activeProfile?.settings?.vulnerability,
+    activeProfile?.config?.settings?.vulnerability,
     backendDefaults?.vulnerability,
     DEFAULT_VULNERABILITY_SETTINGS,
   );
@@ -349,20 +361,20 @@ export const useVulnerabilitySettings = (): VulnerabilityConfig => {
 
 export const useDnsSettings = (): DnsSettingsConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
-  const backendDefaults = useProfileStore((s) => s.backendDefaults);
+  const _backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
-    activeProfile?.settings?.dns,
-    backendDefaults?.dns,
+    activeProfile?.config?.settings?.dns,
+    undefined, // backend DefaultSettings does not currently expose dns
     DEFAULT_DNS_SETTINGS,
   );
 };
 
 export const useAppearanceSettings = (): AppearanceConfig => {
   const activeProfile = useProfileStore((s) => s.activeProfile);
-  const backendDefaults = useProfileStore((s) => s.backendDefaults);
+  const _backendDefaults = useProfileStore((s) => s.backendDefaults);
   return mergeWithDefaults(
-    activeProfile?.settings?.appearance,
-    backendDefaults?.appearance,
+    activeProfile?.config?.settings?.appearance,
+    undefined, // backend DefaultSettings does not currently expose appearance
     DEFAULT_APPEARANCE_SETTINGS,
   );
 };
