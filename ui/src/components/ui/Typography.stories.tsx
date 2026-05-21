@@ -1,5 +1,4 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
-import type React from 'react';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { MemoryRouter } from 'react-router-dom';
 import { AccentLink, Caption, H1, H2, H3, H4, P, SmallText } from './Typography';
 
@@ -17,10 +16,10 @@ const meta: Meta<typeof H1> = {
   },
   tags: ['autodocs'],
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <MemoryRouter>
         <div className="w-[480px]">
-          <StoryComponent />
+          <Story />
         </div>
       </MemoryRouter>
     ),

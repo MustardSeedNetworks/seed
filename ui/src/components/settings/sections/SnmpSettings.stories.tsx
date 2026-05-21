@@ -12,7 +12,7 @@
  * - All security levels: noAuthNoPriv, authNoPriv, authPriv
  */
 
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 import { useState } from 'react';
 import type { SaveStatus, SNMPSettings as SnmpSettingsType } from '../../../types/settings';
@@ -47,9 +47,9 @@ const meta: Meta<typeof SNMPSettings> = {
     },
   },
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="w-[500px] max-h-[700px] overflow-y-auto">
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],

@@ -1,5 +1,4 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
-import type React from 'react';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { cn, layout, spacing } from '../../styles/theme';
 import { ProgressRing, PulsingDot, SpeedGauge } from './SpeedGauge';
 
@@ -50,9 +49,9 @@ const meta: Meta<typeof SpeedGauge> = {
     },
   },
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className={spacing.pad.xl}>
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],

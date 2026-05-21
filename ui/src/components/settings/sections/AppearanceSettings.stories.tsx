@@ -11,8 +11,7 @@
  * - Interactive theme toggle
  */
 
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
-import type React from 'react';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { cn, spacing } from '../../../styles/theme';
 import { AppearanceSettings } from './AppearanceSettings';
@@ -42,9 +41,9 @@ const meta: Meta<typeof AppearanceSettings> = {
     },
   },
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="w-[400px]">
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],

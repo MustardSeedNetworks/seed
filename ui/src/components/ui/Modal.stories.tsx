@@ -1,5 +1,4 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
-import type React from 'react';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { Button } from './Button';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from './Modal';
@@ -27,9 +26,9 @@ const meta: Meta<typeof Modal> = {
     closeOnEscape: { control: 'boolean' },
   },
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="min-h-[60vh] p-4">
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],

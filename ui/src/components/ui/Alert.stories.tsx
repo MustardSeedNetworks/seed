@@ -1,5 +1,4 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
-import type React from 'react';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { Alert } from './Alert';
 
 const meta: Meta<typeof Alert> = {
@@ -27,9 +26,9 @@ const meta: Meta<typeof Alert> = {
     },
   },
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="w-[440px]">
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],

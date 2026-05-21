@@ -1,6 +1,5 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { Download, Plus, Trash2 } from 'lucide-react';
-import type React from 'react';
 import { Button } from './Button';
 
 const meta: Meta<typeof Button> = {
@@ -41,9 +40,9 @@ const meta: Meta<typeof Button> = {
     },
   },
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="p-2">
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],

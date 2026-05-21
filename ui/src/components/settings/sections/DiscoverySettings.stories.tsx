@@ -17,7 +17,7 @@
  * exercises.
  */
 
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 import { useState } from 'react';
 import type {
@@ -60,9 +60,9 @@ const meta: Meta<typeof DiscoverySettings> = {
     },
   },
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="w-[550px] max-h-[700px] overflow-y-auto">
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],

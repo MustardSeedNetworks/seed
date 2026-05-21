@@ -1,6 +1,5 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { Activity, BookOpen, Home, Sparkles } from 'lucide-react';
-import type React from 'react';
 import { useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import type { SidebarNavGroup } from '../../ui/Sidebar';
@@ -36,10 +35,10 @@ const meta: Meta<typeof CommandPalette> = {
   },
   tags: ['autodocs'],
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <MemoryRouter>
         <div className="min-h-[60vh] p-4">
-          <StoryComponent />
+          <Story />
         </div>
       </MemoryRouter>
     ),

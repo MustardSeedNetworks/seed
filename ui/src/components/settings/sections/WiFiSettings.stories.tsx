@@ -12,7 +12,7 @@
  * - Interactive selection
  */
 
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 import { useState } from 'react';
 import { cn, spacing } from '../../../styles/theme';
@@ -40,9 +40,9 @@ const meta: Meta<typeof WiFiSettings> = {
     },
   },
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="w-[400px]">
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],

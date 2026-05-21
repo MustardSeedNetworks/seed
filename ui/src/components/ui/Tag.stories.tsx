@@ -1,5 +1,4 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
-import type React from 'react';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { Tag } from './Tag';
 
 const meta: Meta<typeof Tag> = {
@@ -22,9 +21,9 @@ const meta: Meta<typeof Tag> = {
     },
   },
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="p-2">
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],

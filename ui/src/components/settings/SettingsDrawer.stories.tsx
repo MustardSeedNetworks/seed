@@ -14,8 +14,7 @@
  * in .storybook/preview.tsx. For individual section testing, see section-specific stories.
  */
 
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
-import type React from 'react';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { button, cn, radius, spacing } from '../../styles/theme';
 import { SettingsDrawer } from './SettingsDrawer';
@@ -44,9 +43,9 @@ const meta: Meta<typeof SettingsDrawer> = {
     },
   },
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="h-screen bg-surface-base">
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],
