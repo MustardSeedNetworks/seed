@@ -430,13 +430,13 @@ function DeviceSelectorComponent({
           {manualEntry ? null : (
             <div className="max-h-96 overflow-y-auto">
               {error ? (
-                <div className={cn(spacing.pad.md, 'text-center text-status-error')}>
+                <div className={cn(spacing.pad.default, 'text-center text-status-error')}>
                   <span className="caption">{error}</span>
                 </div>
               ) : null}
 
               {!error && filteredGroups.length === 0 && !isLoading ? (
-                <div className={cn(spacing.pad.md, 'text-center')}>
+                <div className={cn(spacing.pad.default, 'text-center')}>
                   <span className="caption text-text-muted">
                     {searchTerm
                       ? t('device.noResults', 'No devices found')
