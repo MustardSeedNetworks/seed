@@ -98,7 +98,11 @@ function getSignalBars(signal: number): string {
 /**
  * Displays current WiFi connection status with signal strength visualization.
  */
-export function WiFiCard({ data, loading, visible = true }: WiFiCardProps): React.JSX.Element {
+export function WiFiCard({
+  data,
+  loading,
+  visible = true,
+}: WiFiCardProps): React.JSX.Element | null {
   const { t: tr } = useTranslation('cards');
   const { t: tc } = useTranslation('common');
   const { thresholds } = useSettings();

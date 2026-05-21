@@ -43,7 +43,7 @@ export const Completed: Story = {
   args: {
     status: {
       ...sampleStatus,
-      state: 'completed',
+      state: 'complete',
       currentPhase: 'assessment',
       phaseNumber: 4,
       percentComplete: 100,

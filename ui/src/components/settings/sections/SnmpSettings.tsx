@@ -12,7 +12,7 @@ import {
 import type {
   SaveStatus,
   SnmpSettings as SnmpSettingsType,
-  Snmpv3Credential,
+  SnmpV3Credential,
 } from '../../../types/settings';
 import { generateId } from '../../../utils/id';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
@@ -96,7 +96,7 @@ export const SnmpSettings: React.NamedExoticComponent<SnmpSettingsProps> = memo(
     );
 
     const addv3Credential = useCallback((): void => {
-      const newCred: Snmpv3Credential = {
+      const newCred: SnmpV3Credential = {
         id: generateId(),
         name: t('snmp.newCredential'),
         username: '',
@@ -128,7 +128,7 @@ export const SnmpSettings: React.NamedExoticComponent<SnmpSettingsProps> = memo(
     );
 
     const updatev3Credential = useCallback(
-      (id: string, field: keyof Snmpv3Credential, value: string): void => {
+      (id: string, field: keyof SnmpV3Credential, value: string): void => {
         setSnmpSettings((prev) => ({
           ...prev,
           v3Credentials: prev.v3Credentials.map((c) =>
