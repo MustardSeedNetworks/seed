@@ -46,6 +46,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Ethernet: Story = {
+  args: { interfaces: [], currentInterface: 'eth0', isWifi: false, onChange: () => {} },
   render: () => {
     const [current, setCurrent] = useState('eth0');
     return (
@@ -61,6 +62,7 @@ export const Ethernet: Story = {
 };
 
 export const Wifi: Story = {
+  args: { interfaces: [], currentInterface: 'wlan0', isWifi: true, onChange: () => {} },
   render: () => {
     const [current, setCurrent] = useState('wlan0');
     return (
@@ -76,6 +78,7 @@ export const Wifi: Story = {
 };
 
 export const Warning: Story = {
+  args: { interfaces: [], currentInterface: 'eth0', isWifi: false, onChange: () => {} },
   render: () => (
     <InterfaceSelector
       interfaces={sampleInterfaces}

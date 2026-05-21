@@ -12,6 +12,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
+  args: { value: '', onChange: () => {} },
   render: () => {
     const [value, setValue] = useState('192.168.1.1');
     return <DeviceSelector value={value} onChange={setValue} />;
@@ -19,5 +20,6 @@ export const Default: Story = {
 };
 
 export const Disabled: Story = {
+  args: { value: '', onChange: () => {}, disabled: true },
   render: () => <DeviceSelector value="192.168.1.1" onChange={() => {}} disabled={true} />,
 };

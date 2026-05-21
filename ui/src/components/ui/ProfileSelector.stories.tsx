@@ -34,6 +34,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
+  args: { profiles: [], activeProfile: null, onSwitch: async () => true },
   render: () => {
     const [active, setActive] = useState<Profile | null>(profiles[0]);
     return (
@@ -52,6 +53,7 @@ export const Default: Story = {
 };
 
 export const Loading: Story = {
+  args: { profiles: [], activeProfile: null, onSwitch: async () => true, loading: true },
   render: () => (
     <ProfileSelector
       profiles={profiles}
@@ -63,6 +65,7 @@ export const Loading: Story = {
 };
 
 export const Disabled: Story = {
+  args: { profiles: [], activeProfile: null, onSwitch: async () => true, disabled: true },
   render: () => (
     <ProfileSelector
       profiles={profiles}

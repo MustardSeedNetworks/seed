@@ -382,7 +382,7 @@ function DeviceSelectorComponent({
                 type="text"
                 placeholder="192.168.1.1"
                 defaultValue={value}
-                onKeyDown={(e: React.KeyboardEvent): void => {
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
                   if (e.key === 'Enter') {
                     submitManualIp(e.currentTarget.value);
                   }
