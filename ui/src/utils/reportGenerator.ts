@@ -482,13 +482,15 @@ export function generateReport(
     keyFindings: generateKeyFindings(validation, analysis),
   };
 
+  const samples = survey.samples ?? [];
+
   // Generate heatmap data
   const heatmaps: ReportHeatmap[] = includeHeatmaps
     .filter((m): m is HeatmapMetric => m !== null)
-    .map((metric) => generateHeatmapData(survey.samples, metric));
+    .map((metric) => generateHeatmapData(samples, metric));
 
   // Build AP inventory
-  const apInventory = includeApInventory ? buildApInventory(survey.samples) : [];
+  const apInventory = includeApInventory ? buildApInventory(samples) : [];
 
   // Generate recommendations
   const recommendations = generateRecommendations(validation, analysis);
