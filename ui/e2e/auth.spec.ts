@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { TEST_CREDENTIALS } from './helpers/auth';
 
 /**
  * Authentication E2E Tests
@@ -50,9 +51,11 @@ test.describe('Authentication', () => {
   test('should login successfully with valid credentials', async ({ page }) => {
     await page.goto('/');
 
-    // Fill in valid credentials (default admin/seed)
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('seed');
+    // Provisioned in e2e/global-setup.ts; the wave-2 password policy
+    // rejects the legacy short "seed" literal, so the suite uses a
+    // shared strong passphrase from helpers/auth.ts.
+    await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+    await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
     await page.getByRole('button', { name: /sign in|login/i }).click();
 
     // Should redirect to dashboard

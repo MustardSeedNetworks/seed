@@ -25,9 +25,19 @@ import type { Page } from '@playwright/test';
  * surface changes only require one edit.
  */
 
+/**
+ * Credentials the suite provisions in global-setup.ts.
+ *
+ * Wave 2 (#1047) enforces Argon2id + zxcvbn + HIBP on every password,
+ * so the legacy "seed" literal would be rejected by the setup wizard
+ * and login would never succeed. This value is long enough to clear
+ * zxcvbn's score-3 threshold and synthetic enough to stay out of the
+ * HIBP breach corpus; auth.spec.ts and auth-complete.spec.ts import
+ * this constant directly so the password is in one place.
+ */
 export const TEST_CREDENTIALS = {
   username: 'admin',
-  password: 'seed',
+  password: 'Seed-E2E-Strong-Passphrase-2026!', // gitleaks:allow — test fixture, provisioned in global-setup.ts
 } as const;
 
 /** Path (relative to ui/) where global-setup persists the storage state. */
