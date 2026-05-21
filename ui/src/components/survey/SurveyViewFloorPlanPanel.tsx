@@ -13,15 +13,10 @@ import { FileArchive, Ruler } from 'lucide-react';
 import type React from 'react';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  CalibrationPoint,
-  FloorPlan,
-  HeatmapMetric,
-  SamplePoint,
-  Survey,
-} from '../../hooks/useSurvey';
+import type { FloorPlan, HeatmapMetric, SamplePoint, Survey } from '../../hooks/useSurvey';
 import { button, cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
 import { Upload } from '../ui/icons';
+import type { CalibrationPoint } from './FloorPlanCanvas';
 import { FloorPlanCanvas } from './FloorPlanCanvas';
 import { HeatmapLegend } from './HeatmapLegend';
 import { HeatmapStats } from './HeatmapStats';
