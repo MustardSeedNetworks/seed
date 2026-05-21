@@ -9,11 +9,11 @@ interface SubnetManagerProps {
   subnets: SubnetConfig[];
   subnetsStatus: SaveStatus;
   newSubnetCidr: string;
-  setNewSubnetCidr: React.Dispatch<React.SetStateAction<string>>;
+  setNewSubnetCidr: (value: string) => void;
   newSubnetName: string;
-  setNewSubnetName: React.Dispatch<React.SetStateAction<string>>;
+  setNewSubnetName: (value: string) => void;
   subnetError: string | null;
-  setSubnetError: React.Dispatch<React.SetStateAction<string | null>>;
+  setSubnetError: (value: string | null) => void;
   addSubnet: () => void;
   toggleSubnet: (cidr: string, enabled: boolean) => void;
   deleteSubnet: (cidr: string) => void;
