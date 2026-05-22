@@ -5,7 +5,7 @@
 #
 # Features:
 # - Pinned action versions (@v6) for reproducibility
-# - Go version from go.mod, Node.js 25.2.1
+# - Go version from go.mod, Node.js 26.2.0
 # - Full staticcheck analysis (dead-code.yml handles weekly U* reports)
 # - Deterministic builds with -trimpath -buildvcs=false
 # - Build verification for amd64 and arm64 release targets
