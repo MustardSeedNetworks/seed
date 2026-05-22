@@ -93,10 +93,12 @@
      Accent: Mustard Gold - the "mustard seed" highlight
      ========================================================================== */
 
-  /* Brand Colors */
-  --color-brand-primary: #2d7a3e; /* Seed Green - primary actions, links */
-  --color-brand-accent: #4caf50; /* Lighter Seed Green - hover states */
-  --color-brand-gold: #d4a017; /* Mustard Gold - special highlights, premium features */
+  /* Brand Colors — constant across light/dark (canonical 2026-05-22).
+   * Seed product anchor is seed-500. Foreground variants for AA on light
+   * surfaces use text-accent (below) which carries the darker seed-600. */
+  --color-brand-primary: #4caf50; /* Seed anchor (seed-500) — buttons, focus, glows */
+  --color-brand-accent: #81c784; /* Lighter sibling (seed-300) — hover states */
+  --color-brand-gold: #d4a017; /* Mustard cross-brand accent (mustard-500) */
 
   /* Legacy: Soil Brown (commented out - uncomment to restore)
   --color-brand-secondary: #5c4033;
@@ -114,7 +116,7 @@
   --color-text-primary: #1a2520; /* Deep botanical - main text */
   --color-text-secondary: #4a5650; /* Muted botanical - secondary text */
   --color-text-muted: #6b766f; /* Subtle botanical - tertiary text */
-  --color-text-accent: #166534; /* Green 800 - links (Phase 5 retargets for Stem/NIAC) */
+  --color-text-accent: #2d7a3e; /* Seed-600 (canonical) — links on light surfaces (AA) */
   --color-text-inverse: #ffffff; /* Pure White - text on colored backgrounds */
 
   /* Status Colors - canonical anchors, constant across modes (2026-05-22) */
@@ -143,10 +145,10 @@
      Status colors remain constant (industry standard).
      ========================================================================== */
 
-  /* Brand Colors - Lightened for dark backgrounds */
-  --color-brand-primary: #81c784; /* Lighter Seed Green */
-  --color-brand-accent: #a5d6a7; /* Even Lighter Seed Green */
-  --color-brand-gold: #fbbf24; /* Lighter Mustard Gold */
+  /* Brand Colors — constant across modes (no .dark override).
+   * Lightening previously applied here violated the brand-constant rule
+   * (canonical 2026-05-22). Foreground for AA on dark surfaces is
+   * provided via text-accent below. */
 
   /* Legacy: Soil Brown (commented out - uncomment to restore)
   --color-brand-secondary: #a1887f;
