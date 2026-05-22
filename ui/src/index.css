@@ -93,35 +93,37 @@
      Accent: Mustard Gold - the "mustard seed" highlight
      ========================================================================== */
 
-  /* Brand Colors */
-  --color-brand-primary: #2d7a3e; /* Seed Green - primary actions, links */
-  --color-brand-accent: #4caf50; /* Lighter Seed Green - hover states */
-  --color-brand-gold: #d4a017; /* Mustard Gold - special highlights, premium features */
+  /* Brand Colors — constant across light/dark (canonical 2026-05-22).
+   * Seed product anchor is seed-500. Foreground variants for AA on light
+   * surfaces use text-accent (below) which carries the darker seed-600. */
+  --color-brand-primary: #4caf50; /* Seed anchor (seed-500) — buttons, focus, glows */
+  --color-brand-accent: #81c784; /* Lighter sibling (seed-300) — hover states */
+  --color-brand-gold: #d4a017; /* Mustard cross-brand accent (mustard-500) */
 
   /* Legacy: Soil Brown (commented out - uncomment to restore)
   --color-brand-secondary: #5c4033;
   --color-brand-secondary-dark: #4e342e;
   */
 
-  /* Surface Colors - Clean professional light palette */
-  --color-surface-base: #f8fafc; /* Cool white - page background */
+  /* Surface Colors - Botanical-earth: warm cream palette (canonical 2026-05-22) */
+  --color-surface-base: #fbfaf5; /* Warm cream - page background */
   --color-surface-raised: #ffffff; /* Pure white - cards, modals */
-  --color-surface-border: #e2e8f0; /* Light slate - borders, dividers */
-  --color-surface-hover: #f1f5f9; /* Subtle blue-gray - hover backgrounds */
-  --color-surface-sunken: #e2e8f0; /* Light slate - inset areas */
+  --color-surface-border: #e1d9c4; /* Warm tan - borders, dividers */
+  --color-surface-hover: #f3efe2; /* Light cream - hover backgrounds */
+  --color-surface-sunken: #e9e3ce; /* Deeper cream - inset areas */
 
-  /* Text Colors - Optimized for light backgrounds */
-  --color-text-primary: #0f172a; /* Slate 900 - main text */
-  --color-text-secondary: #475569; /* Slate 600 - secondary text */
-  --color-text-muted: #64748b; /* Slate 500 - subtle text, captions */
-  --color-text-accent: #166534; /* Green 800 - links, highlights */
+  /* Text Colors - Botanical-earth (WCAG AA against warm cream surfaces) */
+  --color-text-primary: #1a2520; /* Deep botanical - main text */
+  --color-text-secondary: #4a5650; /* Muted botanical - secondary text */
+  --color-text-muted: #6b766f; /* Subtle botanical - tertiary text */
+  --color-text-accent: #2d7a3e; /* Seed-600 (canonical) — links on light surfaces (AA) */
   --color-text-inverse: #ffffff; /* Pure White - text on colored backgrounds */
 
-  /* Status Colors - INDUSTRY STANDARD (do not change) */
-  --color-status-success: #28a745; /* Green - positive states */
-  --color-status-warning: #ffc107; /* Amber - caution states */
-  --color-status-error: #dc3545; /* Red - error/danger states */
-  --color-status-info: #17a2b8; /* Cyan - informational states */
+  /* Status Colors - canonical anchors, constant across modes (2026-05-22) */
+  --color-status-success: #4caf50; /* Material green = seed-500 */
+  --color-status-warning: #d4a017; /* Mustard = mustard-500 brand accent */
+  --color-status-error: #ef4444; /* Coral red */
+  --color-status-info: #1976d2; /* Material blue = stem-500 */
 
   /* Module Accent Colors - for icons/badges only, not backgrounds */
   --color-module-roots: #b45309; /* Amber/Brown - foundation, path analysis */
@@ -143,35 +145,35 @@
      Status colors remain constant (industry standard).
      ========================================================================== */
 
-  /* Brand Colors - Lightened for dark backgrounds */
-  --color-brand-primary: #81c784; /* Lighter Seed Green */
-  --color-brand-accent: #a5d6a7; /* Even Lighter Seed Green */
-  --color-brand-gold: #fbbf24; /* Lighter Mustard Gold */
+  /* Brand Colors — constant across modes (no .dark override).
+   * Lightening previously applied here violated the brand-constant rule
+   * (canonical 2026-05-22). Foreground for AA on dark surfaces is
+   * provided via text-accent below. */
 
   /* Legacy: Soil Brown (commented out - uncomment to restore)
   --color-brand-secondary: #a1887f;
   --color-brand-secondary-dark: #8d6e63;
   */
 
-  /* Surface Colors - Standard elevation pattern (lighter = more elevated) */
-  --color-surface-base: #1a1a1a; /* Midnight - page background */
-  --color-surface-raised: #333333; /* Charcoal - cards, modals */
-  --color-surface-border: #666666; /* Slate - borders, dividers */
-  --color-surface-hover: #666666; /* Slate - hover backgrounds */
-  --color-surface-sunken: #000000; /* Black - inset areas */
+  /* Surface Colors - Botanical-earth: deep green-black palette */
+  --color-surface-base: #0e1612; /* Deep botanical - page background */
+  --color-surface-raised: #1a2520; /* Card botanical - cards, modals */
+  --color-surface-border: #2b3a31; /* Forest border */
+  --color-surface-hover: #16201b; /* Subtle elevation - hover backgrounds */
+  --color-surface-sunken: #1f2c25; /* Sunken botanical - inset areas */
 
-  /* Text Colors - Inverted for dark backgrounds */
-  --color-text-primary: #f8f8f8; /* Snow - main text */
-  --color-text-secondary: #e5e5e5; /* Cloud - secondary text */
-  --color-text-muted: #a3a3a3; /* Tailwind neutral-400; AA 4.5:1 vs #333 surface (#999 was 4.43, failed WCAG) */
+  /* Text Colors - Botanical-earth (WCAG AA against deep green-black surfaces) */
+  --color-text-primary: #e8eee9; /* Botanical white - main text */
+  --color-text-secondary: #a3b1a7; /* Muted botanical - secondary text */
+  --color-text-muted: #9aa297; /* Subtle botanical - tertiary text (AA vs surface) */
   --color-text-accent: #81c784; /* Lighter Seed Green - links, highlights */
-  --color-text-inverse: #1a1a1a; /* Midnight - text on colored backgrounds */
+  --color-text-inverse: #1a2520; /* Card botanical - text on colored backgrounds */
 
-  /* Status Colors - INDUSTRY STANDARD (same as light mode) */
-  --color-status-success: #28a745;
-  --color-status-warning: #ffc107;
-  --color-status-error: #dc3545;
-  --color-status-info: #17a2b8;
+  /* Status Colors - canonical anchors (same as light, constant by design) */
+  --color-status-success: #4caf50;
+  --color-status-warning: #d4a017;
+  --color-status-error: #ef4444;
+  --color-status-info: #1976d2;
 
   /* Module Accent Colors - Lightened for dark backgrounds */
   --color-module-roots: #fbbf24; /* Lighter Amber - foundation, path analysis */
@@ -187,18 +189,25 @@
 
 body {
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  /* Light mode gradient - clean with subtle blue-green tints */
-  background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 35%, #ecfdf5 65%, #f8fafc 100%);
+  /* Botanical atmospheric: mustard + brand-primary radial gradients over surface.
+   * surface-base auto-flips light↔dark via :root/.dark var swap; no .dark body needed. */
+  background:
+    radial-gradient(
+      1200px 600px at 80% -10%,
+      color-mix(in oklab, var(--color-brand-gold) 8%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      900px 500px at -10% 20%,
+      color-mix(in oklab, var(--color-brand-primary) 7%, transparent),
+      transparent
+    ),
+    var(--color-surface-base);
   background-attachment: fixed;
   min-height: 100vh;
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Dark mode gradient - richer green/teal undertones visible on dark */
-.dark body {
-  background: linear-gradient(135deg, #1a1a1a 0%, #1a2e1c 30%, #1c2823 60%, #1a1a1a 100%);
 }
 
 /* ============================================================================
