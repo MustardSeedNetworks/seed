@@ -4,7 +4,7 @@ inputs:
   node-version:
     description: 'Node.js version'
     required: false
-    default: '25.2.1'
+    default: '26.2.0'
   working-directory:
     description: 'Working directory for npm'
     required: false
