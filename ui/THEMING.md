@@ -2,6 +2,15 @@
 
 This document describes the design system and theming architecture for **The Seed** by **Mustard Seed Networks**.
 
+> [!IMPORTANT]
+> **Describes canonical TARGET state — locked 2026-05-22 (brand audit).**
+> The values below reflect the post-audit canonical token map. The actual `src/index.css` may still
+> hold pre-migration values; the brand migration is phased (1–7) and lands in order:
+> status palette → fonts → typography → surfaces → per-product brand → modules → cleanup.
+>
+> - **Source-of-truth Tailwind v4 `@theme` block:** `_web/mustardseednetworks-com/src/index.css`
+> - **Cross-product canonical map:** `msn-docs-internal/04-Brand-Marketing/CANONICAL_TOKENS.md`
+
 ## Architecture Overview
 
 The theming system consists of three layers:
@@ -14,54 +23,75 @@ The theming system consists of three layers:
 
 ### Brand Colors - Mustard Seed Networks
 
-| Token                   | Light     | Dark      | Usage                             |
-| ----------------------- | --------- | --------- | --------------------------------- |
-| `--color-brand-primary` | `#2d7a3e` | `#81c784` | Seed Green - primary actions      |
-| `--color-brand-accent`  | `#4caf50` | `#a5d6a7` | Lighter Seed Green - hover states |
-| `--color-brand-gold`    | `#d4a017` | `#fbbf24` | Mustard Gold - premium highlights |
+Brand anchors are **constant across light and dark modes** (do not lighten in dark). Foreground variants
+(`-strong` for text on light surfaces, `-soft` for text on dark surfaces) shift to preserve WCAG AA contrast.
+
+| Token                          | Value     | Usage                                                                  |
+| ------------------------------ | --------- | ---------------------------------------------------------------------- |
+| `--color-brand-primary`        | `#4caf50` | Seed Green anchor (seed-500) — filled buttons, focus rings, glows      |
+| `--color-brand-primary-strong` | `#2d7a3e` | Darker (seed-600) — for text/links on light surfaces (AA)              |
+| `--color-brand-primary-soft`   | `#81c784` | Lighter (seed-300) — for text/links on dark surfaces (AA)              |
+| `--color-brand-gold`           | `#d4a017` | Mustard cross-brand accent — warning state, focus, premium highlights  |
 
 ### Surface Colors
 
-| Token                    | Light     | Dark      | Usage                   |
-| ------------------------ | --------- | --------- | ----------------------- |
-| `--color-surface-base`   | `#f8f8f8` | `#1a1a1a` | Snow/Midnight - page bg |
-| `--color-surface-raised` | `#ffffff` | `#333333` | White/Charcoal - cards  |
-| `--color-surface-border` | `#e5e5e5` | `#666666` | Cloud/Slate - borders   |
-| `--color-surface-hover`  | `#e5e5e5` | `#666666` | Hover backgrounds       |
-| `--color-surface-sunken` | `#e5e5e5` | `#000000` | Inset areas             |
-
-### Text Colors
+**Botanical-earth palette:** warm cream in light mode, deep green-black in dark. Replaces the prior
+cool-slate / neutral-charcoal palette. Body background also carries a subtle mustard + seed radial
+gradient atmospheric (see `_web/mustardseednetworks-com/src/index.css` body styles).
 
 | Token                    | Light     | Dark      | Usage                       |
 | ------------------------ | --------- | --------- | --------------------------- |
-| `--color-text-primary`   | `#1a1a1a` | `#f8f8f8` | Midnight/Snow - main text   |
-| `--color-text-secondary` | `#333333` | `#e5e5e5` | Charcoal/Cloud - secondary  |
-| `--color-text-muted`     | `#666666` | `#999999` | Slate/Silver - subtle text  |
-| `--color-text-accent`    | `#2d7a3e` | `#81c784` | Seed Green - links          |
-| `--color-text-inverse`   | `#ffffff` | `#1a1a1a` | Text on colored backgrounds |
+| `--color-surface`        | `#fbfaf5` | `#0e1612` | Page background             |
+| `--color-surface-raised` | `#f3efe2` | `#16201b` | Subtle elevation, hover bg  |
+| `--color-surface-sunken` | `#e9e3ce` | `#1f2c25` | Inset / recessed areas      |
+| `--color-card`           | `#ffffff` | `#1a2520` | Cards, modals               |
+| `--color-border`         | `#e1d9c4` | `#2b3a31` | Default border              |
+| `--color-border-strong`  | `#b6ab8b` | `#3d4f44` | Emphasized border           |
 
-### Status Colors (Industry Standard - DO NOT CHANGE)
+### Text Colors
 
-These colors are industry standard and should remain constant:
+All three values pass WCAG AA on the matching surface. The dark-mode `fg-subtle` is bumped to
+`#9aa297` (from the older `#7a8a7f` which failed AA against `--color-surface`).
 
-| Token                    | Value     | Usage                   |
-| ------------------------ | --------- | ----------------------- |
-| `--color-status-success` | `#28a745` | Green - positive states |
-| `--color-status-warning` | `#ffc107` | Amber - caution states  |
-| `--color-status-error`   | `#dc3545` | Red - error/danger      |
-| `--color-status-info`    | `#17a2b8` | Cyan - informational    |
+| Token                  | Light     | Dark      | Usage                                          |
+| ---------------------- | --------- | --------- | ---------------------------------------------- |
+| `--color-fg`           | `#1a2520` | `#e8eee9` | Primary text                                   |
+| `--color-fg-muted`     | `#4a5650` | `#a3b1a7` | Secondary text                                 |
+| `--color-fg-subtle`    | `#6b766f` | `#9aa297` | Tertiary text, metadata, timestamps            |
+| `--color-text-inverse` | `#ffffff` | `#1a2520` | Text on filled brand-color backgrounds         |
+
+### Status Colors
+
+Status anchors are **constant across modes** and tied to the brand: `success = seed-500`,
+`warning = mustard-500`, `info = stem-500`. Each has `-fg-on-light` / `-fg-on-dark` foreground
+variants and `-bg-tint` background-tint variants that shift between modes to preserve AA contrast.
+
+> [!NOTE]
+> Pre-2026-05-22 values (`#28a745` / `#ffc107` / `#dc3545` / `#17a2b8`) were Bootstrap-3 era —
+> visually competing with the brand. The current canonical values reinforce brand identity.
+
+| Token                | Value     | Usage                                                  |
+| -------------------- | --------- | ------------------------------------------------------ |
+| `--color-success`    | `#4caf50` | Positive states (= `seed-500`)                         |
+| `--color-warning`    | `#d4a017` | Caution states (= `mustard-500`, brand cross-accent)   |
+| `--color-danger`     | `#ef4444` | Error / destructive actions                            |
+| `--color-info`       | `#1976d2` | Informational states (= `stem-500`)                    |
 
 ### Module Colors (Icons/Badges Only)
 
-These colors identify The Seed's feature modules. Use for icons and small badges only - NOT for card backgrounds.
+These colors identify The Seed's feature modules. Use for icons and small badges only — NOT for card backgrounds.
 
-| Token                    | Light     | Dark      | Module                 |
-| ------------------------ | --------- | --------- | ---------------------- |
-| `--color-module-roots`   | `#b45309` | `#fbbf24` | Roots - path analysis  |
-| `--color-module-canopy`  | `#2d7a3e` | `#81c784` | Canopy - WiFi planning |
-| `--color-module-shell`   | `#ea580c` | `#fb923c` | Shell - security       |
-| `--color-module-sap`     | `#0891b2` | `#22d3ee` | Sap - telemetry        |
-| `--color-module-harvest` | `#d4a017` | `#fbbf24` | Harvest - reports      |
+**Brand-constant rule:** module accents do **not** change between light and dark modes. Use the
+canonical hex; surrounding surface/border provides the contrast. The pre-2026-05-22 dark variants
+(`#fbbf24` for Roots and Harvest) made them indistinguishable from each other and from `brand-gold`.
+
+| Token                    | Value     | Module                                              |
+| ------------------------ | --------- | --------------------------------------------------- |
+| `--color-module-roots`   | `#b45309` | Roots — path analysis, traceroute, deep connectivity |
+| `--color-module-canopy`  | `#2d7a3e` | Canopy — Wi-Fi visibility, neighbor scan (matches `brand-primary-strong`) |
+| `--color-module-shell`   | `#ea580c` | Shell — security posture, hardening                 |
+| `--color-module-sap`     | `#0891b2` | Sap — live telemetry, monitoring                    |
+| `--color-module-harvest` | `#d4a017` | Harvest — reports, compliance (matches `brand-gold`) |
 
 ```tsx
 import { moduleColor } from '../styles/theme';
