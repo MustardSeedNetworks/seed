@@ -1,6 +1,5 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { Settings } from 'lucide-react';
-import type React from 'react';
 import { cn, spacing, status as statusColor } from '../../styles/theme';
 import { CollapsibleSection } from './CollapsibleSection';
 
@@ -41,9 +40,9 @@ const meta: Meta<typeof CollapsibleSection> = {
     },
   },
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="w-[400px]">
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],

@@ -20,7 +20,7 @@ import { NetworkDiscoveryCard } from './NetworkDiscoveryCard';
  *
  * This story demonstrates various discovery states and device types.
  */
-const meta: Meta<(typeof meta)['component']> = {
+const meta: Meta<typeof NetworkDiscoveryCard> = {
   title: 'Cards/NetworkDiscoveryCard',
   component: NetworkDiscoveryCard,
   parameters: {

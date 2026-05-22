@@ -10,7 +10,6 @@ import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CardState } from '../../hooks/useCardState';
 import { cn, layout, spacing } from '../../styles/theme';
-import type { ChannelGraphResponse } from '../../types';
 import type { CardSettings, DisplayOptions } from '../../types/settings';
 import { CableCard } from '../cards/CableCard';
 import { DnsCard } from '../cards/DnsCard';
@@ -28,6 +27,7 @@ import { SLADashboardCard } from '../cards/SlaDashboardCard';
 import { SwitchCard } from '../cards/SwitchCard';
 import { SystemHealthCard } from '../cards/SystemHealthCard';
 import { WiFiCard } from '../cards/WiFiCard';
+import type { ChannelGraphResponse } from '../cards/WiFiChannelGraph';
 import { WifiChannelGraph } from '../cards/WiFiChannelGraph';
 import { WiFiSurveyCard } from '../cards/WiFiSurveyCard';
 
@@ -107,7 +107,7 @@ export function AppDashboard({
             <>
               <NetworkCard
                 data={cards.dhcp}
-                publicip={cards.publicip}
+                publicIp={cards.publicip}
                 loading={loading}
                 showPublicIp={displayOptions.showPublicIp}
               />
@@ -163,7 +163,7 @@ export function AppDashboard({
           {(!isWifi || cards.wifi) && (
             <PathDiscoveryCard
               gateway={cards.gateway?.gateway}
-              dnsServer={cards.dns?.servers?.[0]?.address}
+              dnsServer={cards.dns?.servers?.[0] ?? cards.dns?.server}
               onRegisterTraceHandler={registerTraceHopHandler}
             />
           )}
@@ -189,7 +189,7 @@ export function AppDashboard({
         </h2>
         <div className={layout.grid.cards}>
           <SystemHealthCard />
-          <LogViewerCard maxHeight="400px" />
+          <LogViewerCard />
         </div>
       </section>
     </>

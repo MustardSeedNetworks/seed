@@ -23,13 +23,17 @@
     "close": "Close",
     "show": "Show",
     "hide": "Hide",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "clear": "Clear",
     "reconnect": "Reconnect",
     "runAllTests": "Run All Tests",
     "signInWithGoogle": "Sign in with Google",
     "signInWithMicrosoft": "Sign in with Microsoft",
-    "signInWithGitHub": "Sign in with GitHub"
+    "signInWithGitHub": "Sign in with GitHub",
+    "copied": "Copied"
   },
+  "or": "or",
   "status": {
     "connected": "Connected",
     "disconnected": "Disconnected",
@@ -53,7 +57,8 @@
     "noDataAvailable": "No data available",
     "never": "Never",
     "justNow": "Just now",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "unavailable": "Unavailable"
   },
   "labels": {
     "username": "Username",

@@ -14,6 +14,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
+  args: { snmpSettings: {} as never, setSnmpSettings: () => {}, snmpStatus: 'idle' },
   render: () => {
     const [settings, setSettings] = useState<SnmpSettings>(DEFAULT_SNMP_SETTINGS);
     return (

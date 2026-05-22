@@ -61,7 +61,7 @@ import type {
   SpeedtestConfig,
   TestsConfig,
   VulnerabilityConfig,
-  WifiSettingsConfig,
+  WiFiSettingsConfig,
 } from '../types/profile';
 import { useProfileApi } from './useProfileApi';
 import { useProfileInterfaces } from './useProfileInterfaces';
@@ -86,7 +86,7 @@ export interface ProfileContextValue {
   linkSettings: LinkConfig;
   cableTestSettings: CableTestConfig;
   displayOptions: DisplayOptionsConfig;
-  wifiSettings: WifiSettingsConfig;
+  wifiSettings: WiFiSettingsConfig;
   dnsSettings: DnsSettingsConfig;
   testsSettings: TestsConfig;
   speedtestSettings: SpeedtestConfig;
@@ -125,7 +125,7 @@ export interface ProfileContextValue {
   updateLinkSettings: (updates: Partial<LinkConfig>) => void;
   updateCableTestSettings: (updates: Partial<CableTestConfig>) => void;
   updateDisplayOptions: (updates: Partial<DisplayOptionsConfig>) => void;
-  updateWifiSettings: (updates: Partial<WifiSettingsConfig>) => void;
+  updateWifiSettings: (updates: Partial<WiFiSettingsConfig>) => void;
   updateDnsSettings: (updates: Partial<DnsSettingsConfig>) => void;
   updateTestsSettings: (updates: Partial<TestsConfig>) => void;
   updateSpeedtestSettings: (updates: Partial<SpeedtestConfig>) => void;

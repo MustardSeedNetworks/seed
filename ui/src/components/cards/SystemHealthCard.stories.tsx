@@ -18,7 +18,7 @@ import { SystemHealthCard } from './SystemHealthCard';
  *
  * This story demonstrates various system health states.
  */
-const meta: Meta<(typeof meta)['component']> = {
+const meta: Meta<typeof SystemHealthCard> = {
   title: 'Cards/SystemHealthCard',
   component: SystemHealthCard,
   parameters: {

@@ -180,16 +180,16 @@ export const AllSections: Story = {
               spacing.margin.top.heading,
             )}
           >
-            <sectionBadge name="About" />
-            <sectionBadge name="Getting Started" />
-            <sectionBadge name="Link Status" />
-            <sectionBadge name="Cable Test" />
-            <sectionBadge name="WiFi Status" />
-            <sectionBadge name="Network & DHCP" />
-            <sectionBadge name="Gateway" />
-            <sectionBadge name="DNS Tests" />
-            <sectionBadge name="Performance" />
-            <sectionBadge name="Discovery" />
+            <SectionBadge name="About" />
+            <SectionBadge name="Getting Started" />
+            <SectionBadge name="Link Status" />
+            <SectionBadge name="Cable Test" />
+            <SectionBadge name="WiFi Status" />
+            <SectionBadge name="Network & DHCP" />
+            <SectionBadge name="Gateway" />
+            <SectionBadge name="DNS Tests" />
+            <SectionBadge name="Performance" />
+            <SectionBadge name="Discovery" />
           </div>
         </div>
         <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
@@ -372,7 +372,7 @@ export const KeyboardNavigation: Story = {
 };
 
 // Helper component
-function _sectionBadge({ name }: { name: string }): React.JSX.Element {
+function SectionBadge({ name }: { name: string }): React.JSX.Element {
   return (
     <span
       className={cn(

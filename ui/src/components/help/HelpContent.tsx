@@ -177,4 +177,8 @@ export const HARDWARE_RECOMMENDATIONS: {
     notSupported: ['Apple Silicon built-in Wi-Fi'],
     testCommand: "iw list | grep -A 10 'Supported interface modes'",
   },
+  dom: {
+    supported: ['Finisar', 'JDSU', 'Cisco SFP+ with DOM'],
+    module: 'ethtool -m',
+  },
 };

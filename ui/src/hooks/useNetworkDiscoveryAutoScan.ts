@@ -77,7 +77,9 @@ export function useNetworkDiscoveryAutoScan(
           });
         }
       } catch (error) {
-        logger.debug(LogComponents.DISCOVERY, 'Failed to fetch auto-scan settings', error);
+        logger.debug(LogComponents.DISCOVERY, 'Failed to fetch auto-scan settings', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     };
 
@@ -142,7 +144,9 @@ export function useNetworkDiscoveryAutoScan(
         });
         await api.post('/api/v1/shell/vulnerabilities/scan', { targets: [ip] });
       } catch (error) {
-        logger.debug(LogComponents.DISCOVERY, 'Failed to trigger vulnerability scan', error);
+        logger.debug(LogComponents.DISCOVERY, 'Failed to trigger vulnerability scan', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     },
     [autoScanSettings.vulnScanEnabled, autoScanSettings.vulnAutoScan],

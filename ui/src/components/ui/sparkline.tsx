@@ -128,7 +128,9 @@ function generatePath(
 
   // Connect to last point
   const last = points.at(-1);
-  path += ` L ${last.x} ${last.y}`;
+  if (last) {
+    path += ` L ${last.x} ${last.y}`;
+  }
 
   return path;
 }
@@ -205,7 +207,7 @@ function SparklineComponent({
     }
 
     const avg = sum / data.length;
-    const current = data.at(-1);
+    const current = data.at(-1) ?? 0;
 
     // Determine trend direction
     let trend: 'up' | 'down' | 'stable' = 'stable';
@@ -341,7 +343,7 @@ function SparklineWithLabelComponent({
   type = 'availability',
   ...props
 }: SparklineWithLabelProps): React.JSX.Element {
-  const currentValue = data.length > 0 ? data.at(-1) : 0;
+  const currentValue = data.at(-1) ?? 0;
 
   // Format value based on type
   const formattedValue = useMemo((): string => {

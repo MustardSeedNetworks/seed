@@ -19,6 +19,8 @@ const sampleStatus: DiscoveryServiceStatusType = {
   subnet: '192.168.1.0/24',
   localIP: '192.168.1.10',
   activeMethods: ['arp', 'icmp', 'lldp'],
+  lastScan: new Date(Date.now() - 30000).toISOString(),
+  rescanInterval: 60,
 };
 
 export const Running: Story = {

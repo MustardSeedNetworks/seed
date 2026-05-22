@@ -18,7 +18,7 @@ import { HealthCheckCard } from './HealthCheckCard';
  * Note: SettingsProvider and I18nextProvider are provided by global decorators
  * in .storybook/preview.tsx.
  */
-const meta: Meta<(typeof meta)['component']> = {
+const meta: Meta<typeof HealthCheckCard> = {
   title: 'Cards/HealthCheckCard',
   component: HealthCheckCard,
   parameters: {

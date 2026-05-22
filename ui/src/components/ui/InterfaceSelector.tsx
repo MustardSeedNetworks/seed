@@ -476,7 +476,7 @@ function InterfaceSelectorComponent({
 
           {/* Empty state */}
           {ethernetInterfaces.length === 0 && wifiInterfaces.length === 0 && (
-            <div className={cn(spacing.pad.md, 'text-center')}>
+            <div className={cn(spacing.pad.default, 'text-center')}>
               <span className="caption text-text-muted">
                 {t('interface.noInterfaces', 'No network interfaces found')}
               </span>

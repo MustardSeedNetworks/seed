@@ -64,7 +64,6 @@ function getBandInfo(band: WiFiBand): { label: string; color: string } {
     case '6':
       return BAND_INFO['6'];
     default: {
-      const _exhaustive: never = band;
       return BAND_INFO['2.4'];
     }
   }
@@ -79,7 +78,6 @@ function getChannelsForBand(band: WiFiBand): number[] {
     case '6':
       return CHANNELS['6'];
     default: {
-      const _exhaustive: never = band;
       return CHANNELS['2.4'];
     }
   }
@@ -97,7 +95,6 @@ function getCustomChannelsForBand(
     case '6':
       return customChannels['6'];
     default: {
-      const _exhaustive: never = band;
       return customChannels['2.4'];
     }
   }
@@ -116,7 +113,6 @@ function updateCustomChannelsForBand(
     case '6':
       return { ...customChannels, '6': channels };
     default: {
-      const _exhaustive: never = band;
       return { ...customChannels, '2.4': channels };
     }
   }
@@ -270,7 +266,6 @@ export function SurveyConfigPanel({
         });
         break;
       default: {
-        const _exhaustive: never = band;
         break;
       }
     }
@@ -318,7 +313,7 @@ export function SurveyConfigPanel({
         return t('settings.types.throughput');
       default: {
         const _exhaustive: never = type;
-        return '';
+        return _exhaustive;
       }
     }
   };

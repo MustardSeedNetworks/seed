@@ -410,8 +410,12 @@ export function HealthChecksSettingsSpecialty({
             />
             <select
               value={endpoint.authType}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateFhirEndpoint(endpoint.id ?? '', 'authType', e.target.value)
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                updateFhirEndpoint(
+                  endpoint.id ?? '',
+                  'authType',
+                  e.target.value as 'none' | 'basic' | 'oauth2',
+                )
               }
               className={cn(input.base, input.state.default, input.size.md, 'w-24')}
             >
@@ -526,8 +530,12 @@ export function HealthChecksSettingsSpecialty({
             />
             <select
               value={endpoint.securityMode}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateOpcuaEndpoint(endpoint.id ?? '', 'securityMode', e.target.value)
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                updateOpcuaEndpoint(
+                  endpoint.id ?? '',
+                  'securityMode',
+                  e.target.value as 'None' | 'Sign' | 'SignAndEncrypt',
+                )
               }
               className={cn(input.base, input.state.default, input.size.md, 'w-32')}
             >

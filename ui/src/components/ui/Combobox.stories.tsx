@@ -1,5 +1,4 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
-import type React from 'react';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { Combobox } from './Combobox';
 
@@ -29,9 +28,9 @@ const meta: Meta<typeof Combobox<Interface>> = {
   },
   tags: ['autodocs'],
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="w-[360px]">
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],

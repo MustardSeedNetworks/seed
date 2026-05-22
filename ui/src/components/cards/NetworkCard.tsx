@@ -325,7 +325,14 @@ export function NetworkCard({
 
   // Primary display value
   const primaryIpRaw =
-    ipv4?.address || globalIpv6[0]?.address || getFallbackIpDisplay(loading, hasData, tc, tr);
+    ipv4?.address ||
+    globalIpv6[0]?.address ||
+    getFallbackIpDisplay(
+      loading,
+      hasData,
+      tc as unknown as (k: string) => string,
+      tr as unknown as (k: string) => string,
+    );
   const primaryIp = primaryIpRaw?.includes(':') ? compressIpv6(primaryIpRaw) : primaryIpRaw;
 
   return (

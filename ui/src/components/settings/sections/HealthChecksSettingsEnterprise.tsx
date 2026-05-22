@@ -111,8 +111,12 @@ export function HealthChecksSettingsEnterprise({
               />
               <select
                 value={endpoint.driver}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  updateSqlEndpoint(endpoint.id ?? '', 'driver', e.target.value)
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                  updateSqlEndpoint(
+                    endpoint.id ?? '',
+                    'driver',
+                    e.target.value as 'mysql' | 'postgres' | 'mssql' | 'oracle',
+                  )
                 }
                 className={cn(
                   input.base,
@@ -230,8 +234,12 @@ export function HealthChecksSettingsEnterprise({
             />
             <select
               value={endpoint.protocol}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                updateFileShareEndpoint(endpoint.id ?? '', 'protocol', e.target.value)
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                updateFileShareEndpoint(
+                  endpoint.id ?? '',
+                  'protocol',
+                  e.target.value as 'smb' | 'nfs',
+                )
               }
               className={cn(input.base, input.state.default, input.size.md, 'w-20')}
             >

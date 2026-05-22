@@ -23,14 +23,14 @@ import type {
   SpeedtestConfig,
   TestsConfig,
   VulnerabilityConfig,
-  WifiSettingsConfig,
+  WiFiSettingsConfig,
 } from '../types/profile';
 
 export interface ProfileSettingsUpdaters {
   updateLinkSettings: (updates: Partial<LinkConfig>) => void;
   updateCableTestSettings: (updates: Partial<CableTestConfig>) => void;
   updateDisplayOptions: (updates: Partial<DisplayOptionsConfig>) => void;
-  updateWifiSettings: (updates: Partial<WifiSettingsConfig>) => void;
+  updateWifiSettings: (updates: Partial<WiFiSettingsConfig>) => void;
   updateDnsSettings: (updates: Partial<DnsSettingsConfig>) => void;
   updateTestsSettings: (updates: Partial<TestsConfig>) => void;
   updateSpeedtestSettings: (updates: Partial<SpeedtestConfig>) => void;
@@ -57,7 +57,7 @@ export function useProfileSettingsUpdates(activeProfile: Profile | null): Profil
         return;
       }
 
-      const currentSettings = activeProfile.settings ?? {};
+      const currentSettings = activeProfile.config?.settings ?? {};
       const currentFieldValue = currentSettings[field] ?? {};
       const newSettings = {
         [field]: { ...currentFieldValue, ...updates },
@@ -104,7 +104,7 @@ export function useProfileSettingsUpdates(activeProfile: Profile | null): Profil
     [updateSettingsField],
   );
   const updateWifiSettings = useCallback(
-    (updates: Partial<WifiSettingsConfig>) => updateSettingsField('wifi', updates),
+    (updates: Partial<WiFiSettingsConfig>) => updateSettingsField('wifi', updates),
     [updateSettingsField],
   );
   const updateLinkSettings = useCallback(

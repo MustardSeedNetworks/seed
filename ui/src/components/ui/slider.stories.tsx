@@ -73,7 +73,7 @@ type Story = StoryObj<typeof meta>;
 /**
  * Interactive wrapper for stories
  */
-function _sliderWrapper(
+function SliderWrapper(
   props: Omit<React.ComponentProps<typeof Slider>, 'value' | 'onChange'>,
 ): React.JSX.Element {
   const [value, setValue] = useState(props.min + (props.max - props.min) / 2);
@@ -84,7 +84,7 @@ function _sliderWrapper(
  * Default slider - simple numeric range
  */
 export const Default: Story = {
-  render: () => <sliderWrapper min={0} max={100} step={1} label="Volume" />,
+  render: () => <SliderWrapper min={0} max={100} step={1} label="Volume" />,
 };
 
 /**
@@ -93,7 +93,7 @@ export const Default: Story = {
  */
 export const ProbeInterval: Story = {
   render: () => (
-    <sliderWrapper
+    <SliderWrapper
       min={25}
       max={500}
       step={25}
@@ -111,7 +111,7 @@ export const ProbeInterval: Story = {
  */
 export const ScanTimeout: Story = {
   render: () => (
-    <sliderWrapper
+    <SliderWrapper
       min={500}
       max={10000}
       step={500}
@@ -129,7 +129,7 @@ export const ScanTimeout: Story = {
  */
 export const Workers: Story = {
   render: () => (
-    <sliderWrapper
+    <SliderWrapper
       min={5}
       max={100}
       step={5}
@@ -147,7 +147,7 @@ export const Workers: Story = {
  */
 export const RescanInterval: Story = {
   render: () => (
-    <sliderWrapper
+    <SliderWrapper
       min={1}
       max={60}
       step={1}
@@ -165,7 +165,7 @@ export const RescanInterval: Story = {
  */
 export const BannerTimeout: Story = {
   render: () => (
-    <sliderWrapper
+    <SliderWrapper
       min={500}
       max={10000}
       step={500}
@@ -179,7 +179,7 @@ export const BannerTimeout: Story = {
  * Without labels - minimal slider
  */
 export const NoLabels: Story = {
-  render: () => <sliderWrapper min={0} max={100} step={10} />,
+  render: () => <SliderWrapper min={0} max={100} step={10} />,
 };
 
 /**
@@ -187,7 +187,7 @@ export const NoLabels: Story = {
  */
 export const LabelOnly: Story = {
   render: () => (
-    <sliderWrapper
+    <SliderWrapper
       min={0}
       max={100}
       step={5}
@@ -202,7 +202,7 @@ export const LabelOnly: Story = {
  */
 export const EndLabelsOnly: Story = {
   render: () => (
-    <sliderWrapper min={0} max={100} step={10} leftLabel="Gentler" rightLabel="Aggressive" />
+    <SliderWrapper min={0} max={100} step={10} leftLabel="Gentler" rightLabel="Aggressive" />
   ),
 };
 
@@ -211,7 +211,7 @@ export const EndLabelsOnly: Story = {
  */
 export const Disabled: Story = {
   render: () => (
-    <sliderWrapper
+    <SliderWrapper
       min={0}
       max={100}
       step={10}
@@ -228,7 +228,7 @@ export const Disabled: Story = {
  */
 export const FineGrained: Story = {
   render: () => (
-    <sliderWrapper
+    <SliderWrapper
       min={0}
       max={10}
       step={0.1}
@@ -243,7 +243,7 @@ export const FineGrained: Story = {
  */
 export const LargeRange: Story = {
   render: () => (
-    <sliderWrapper
+    <SliderWrapper
       min={0}
       max={10000}
       step={100}

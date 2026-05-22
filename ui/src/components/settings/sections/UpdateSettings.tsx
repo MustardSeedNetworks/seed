@@ -249,7 +249,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                   className={cn(
                     'w-full',
                     layout.flex.center,
-                    spacing.gap.sm,
+                    spacing.gap.compact,
                     spacing.pad.sm,
                     'bg-green-500 hover:bg-green-600 text-white',
                     radius.default,
@@ -286,7 +286,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                   className={cn(
                     'w-full',
                     layout.flex.center,
-                    spacing.gap.sm,
+                    spacing.gap.compact,
                     spacing.pad.sm,
                     'bg-blue-500 hover:bg-blue-600 text-white',
                     radius.default,
@@ -317,7 +317,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
             <div
               className={cn(
                 layout.flex.center,
-                spacing.gap.sm,
+                spacing.gap.compact,
                 spacing.pad.sm,
                 'bg-surface-base',
                 radius.default,

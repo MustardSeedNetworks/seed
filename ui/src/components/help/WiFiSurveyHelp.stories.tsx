@@ -44,11 +44,11 @@ export const AllSections: Story = {
         WiFi Survey Help
       </h1>
       {WIFI_SURVEY_HELP.map((section) => (
-        <helpSection key={section.title} title={section.title}>
+        <HelpSection key={section.title} title={section.title}>
           {section.items.map((item) => (
-            <helpItem key={item.question} question={item.question} answer={item.answer} />
+            <HelpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </helpSection>
+        </HelpSection>
       ))}
     </div>
   ),
@@ -66,11 +66,11 @@ export const Overview: Story = {
 
     return (
       <div className={cn('max-w-3xl mx-auto', spacing.pad.default)}>
-        <helpSection title={overviewSection.title}>
+        <HelpSection title={overviewSection.title}>
           {overviewSection.items.map((item) => (
-            <helpItem key={item.question} question={item.question} answer={item.answer} />
+            <HelpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </helpSection>
+        </HelpSection>
       </div>
     );
   },
@@ -95,11 +95,11 @@ export const SurveyModes: Story = {
 
     return (
       <div className={cn('max-w-3xl mx-auto', spacing.pad.default)}>
-        <helpSection title={modesSection.title}>
+        <HelpSection title={modesSection.title}>
           {modesSection.items.map((item) => (
-            <helpItem key={item.question} question={item.question} answer={item.answer} />
+            <HelpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </helpSection>
+        </HelpSection>
       </div>
     );
   },
@@ -125,11 +125,11 @@ export const CreatingSurvey: Story = {
 
     return (
       <div className={cn('max-w-3xl mx-auto', spacing.pad.default)}>
-        <helpSection title={createSection.title}>
+        <HelpSection title={createSection.title}>
           {createSection.items.map((item) => (
-            <helpItem key={item.question} question={item.question} answer={item.answer} />
+            <HelpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </helpSection>
+        </HelpSection>
       </div>
     );
   },
@@ -155,11 +155,11 @@ export const ConductingSurvey: Story = {
 
     return (
       <div className={cn('max-w-3xl mx-auto', spacing.pad.default)}>
-        <helpSection title={conductSection.title}>
+        <HelpSection title={conductSection.title}>
           {conductSection.items.map((item) => (
-            <helpItem key={item.question} question={item.question} answer={item.answer} />
+            <HelpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </helpSection>
+        </HelpSection>
       </div>
     );
   },
@@ -184,11 +184,11 @@ export const ViewingResults: Story = {
 
     return (
       <div className={cn('max-w-3xl mx-auto', spacing.pad.default)}>
-        <helpSection title={resultsSection.title}>
+        <HelpSection title={resultsSection.title}>
           {resultsSection.items.map((item) => (
-            <helpItem key={item.question} question={item.question} answer={item.answer} />
+            <HelpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </helpSection>
+        </HelpSection>
       </div>
     );
   },
@@ -213,11 +213,11 @@ export const Troubleshooting: Story = {
 
     return (
       <div className={cn('max-w-3xl mx-auto', spacing.pad.default)}>
-        <helpSection title={troubleSection.title}>
+        <HelpSection title={troubleSection.title}>
           {troubleSection.items.map((item) => (
-            <helpItem key={item.question} question={item.question} answer={item.answer} />
+            <HelpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </helpSection>
+        </HelpSection>
       </div>
     );
   },
@@ -243,11 +243,11 @@ export const BestPractices: Story = {
 
     return (
       <div className={cn('max-w-3xl mx-auto', spacing.pad.default)}>
-        <helpSection title={bestSection.title}>
+        <HelpSection title={bestSection.title}>
           {bestSection.items.map((item) => (
-            <helpItem key={item.question} question={item.question} answer={item.answer} />
+            <HelpItem key={item.question} question={item.question} answer={item.answer} />
           ))}
-        </helpSection>
+        </HelpSection>
       </div>
     );
   },
@@ -270,31 +270,31 @@ export const SignalStrengthLegend: Story = {
         Signal Strength Heatmap Legend
       </h2>
       <div className="stack-sm">
-        <signalLevel
+        <SignalLevel
           color="bg-status-success"
           range="-30 to -50 dBm"
           label="Excellent"
           description="Maximum signal strength, ideal for all applications"
         />
-        <signalLevel
+        <SignalLevel
           color="bg-lime-500"
           range="-50 to -60 dBm"
           label="Very Good"
           description="Strong signal, excellent for streaming and VoIP"
         />
-        <signalLevel
+        <SignalLevel
           color="bg-status-warning"
           range="-60 to -70 dBm"
           label="Good"
           description="Reliable connection for most activities"
         />
-        <signalLevel
+        <SignalLevel
           color="bg-orange-500"
           range="-70 to -80 dBm"
           label="Fair"
           description="Adequate for basic browsing, may have issues"
         />
-        <signalLevel
+        <SignalLevel
           color="bg-status-error"
           range="Below -80 dBm"
           label="Weak/Dead Zone"
@@ -322,31 +322,31 @@ export const ThroughputLegend: Story = {
         Throughput Heatmap Legend
       </h2>
       <div className="stack-sm">
-        <signalLevel
+        <SignalLevel
           color="bg-status-success"
           range="80-100%+ of expected"
           label="Excellent"
           description="Full speed, meeting or exceeding expectations"
         />
-        <signalLevel
+        <SignalLevel
           color="bg-lime-500"
           range="60-80% of expected"
           label="Good"
           description="Strong performance for most applications"
         />
-        <signalLevel
+        <SignalLevel
           color="bg-status-warning"
           range="40-60% of expected"
           label="Fair"
           description="Usable but may impact some activities"
         />
-        <signalLevel
+        <SignalLevel
           color="bg-orange-500"
           range="20-40% of expected"
           label="Poor"
           description="Significantly degraded performance"
         />
-        <signalLevel
+        <SignalLevel
           color="bg-status-error"
           range="Below 20% of expected"
           label="Critical"
@@ -374,7 +374,7 @@ export const ModesComparison: Story = {
         Survey Modes Comparison
       </h2>
       <div className={cn('grid md:grid-cols-3', spacing.gap.comfortable)}>
-        <modeCard
+        <ModeCard
           title="Passive Scan"
           icon="📡"
           description="Scans all visible networks"
@@ -382,7 +382,7 @@ export const ModesComparison: Story = {
           cons={["Doesn't test actual speed", 'No roaming detection']}
           bestFor="Initial site assessment"
         />
-        <modeCard
+        <ModeCard
           title="Active Monitoring"
           icon="📶"
           description="Monitors current connection"
@@ -390,7 +390,7 @@ export const ModesComparison: Story = {
           cons={['Single network only', 'Requires connection']}
           bestFor="Coverage validation"
         />
-        <modeCard
+        <ModeCard
           title="Throughput Testing"
           icon="⚡"
           description="Measures actual speeds"
@@ -412,7 +412,7 @@ export const ModesComparison: Story = {
 
 // Helper Components
 
-function _helpSection({
+function HelpSection({
   title,
   children,
 }: {
@@ -434,7 +434,7 @@ function _helpSection({
   );
 }
 
-function _helpItem({ question, answer }: { question: string; answer: string }): React.JSX.Element {
+function HelpItem({ question, answer }: { question: string; answer: string }): React.JSX.Element {
   return (
     <div className={spacing.pad.default}>
       <h3 className={cn('body font-semibold text-text-primary', spacing.margin.bottom.inline)}>
@@ -445,7 +445,7 @@ function _helpItem({ question, answer }: { question: string; answer: string }): 
   );
 }
 
-function _signalLevel({
+function SignalLevel({
   color,
   range,
   label,
@@ -476,7 +476,7 @@ function _signalLevel({
   );
 }
 
-function _modeCard({
+function ModeCard({
   title,
   icon,
   description,

@@ -13,6 +13,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Open: Story = {
+  args: { isOpen: true, onClose: () => {} },
   render: () => {
     const [open, setOpen] = useState(true);
     return <LogViewerModal isOpen={open} onClose={() => setOpen(false)} />;

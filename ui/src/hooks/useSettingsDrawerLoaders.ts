@@ -94,7 +94,9 @@ export function useSettingsDrawerLoaders({
         credentials: 'include',
       });
       if (response.ok) {
-        const data = await (response.json() as Promise<Record<string, unknown>>);
+        const data = await (response.json() as Promise<{
+          thresholds?: Partial<SettingsThresholds>;
+        }>);
         if (data.thresholds) {
           setThresholds((prev) => ({ ...prev, ...data.thresholds }));
         }
@@ -110,7 +112,7 @@ export function useSettingsDrawerLoaders({
         credentials: 'include',
       });
       if (response.ok) {
-        const data = await (response.json() as Promise<Record<string, unknown>>);
+        const data = await (response.json() as Promise<Partial<IpSettings>>);
         setIpSettings({
           mode: data.mode || 'dhcp',
           address: data.address || '',
@@ -133,7 +135,7 @@ export function useSettingsDrawerLoaders({
           credentials: 'include',
         });
         if (response.ok) {
-          const data = await (response.json() as Promise<Record<string, unknown>>);
+          const data = await (response.json() as Promise<Partial<TestsSettings>>);
           setTestsSettings({
             dnsHostname: data.dnsHostname || 'google.com',
             dnsServers: withIds(data.dnsServers || []).map((server) => ({
@@ -168,7 +170,7 @@ export function useSettingsDrawerLoaders({
               autoRunOnLink: data.speedtest?.autoRunOnLink ?? true,
             },
             iperf: {
-              autoRunOnLink: data.iperf?.autoRunOnLink,
+              autoRunOnLink: data.iperf?.autoRunOnLink ?? true,
             },
           });
         }
@@ -187,7 +189,7 @@ export function useSettingsDrawerLoaders({
         credentials: 'include',
       });
       if (response.ok) {
-        const data = await (response.json() as Promise<Record<string, unknown>>);
+        const data = await (response.json() as Promise<IperfSuggestion[]>);
         setIperfSuggestions(Array.isArray(data) ? data : []);
         setIperfSuggestionsStatus('idle');
       } else {
@@ -206,11 +208,11 @@ export function useSettingsDrawerLoaders({
         credentials: 'include',
       });
       if (response.ok) {
-        const data = await (response.json() as Promise<Record<string, unknown>>);
+        const data = await (response.json() as Promise<Partial<WiFiSettingsType>>);
         setWifiSettings({
           interface: data.interface || '',
           availableWifi: data.availableWifi || [],
-          isWireless: data.isWireless,
+          isWireless: data.isWireless ?? false,
         });
       }
     } catch (err) {
@@ -224,7 +226,7 @@ export function useSettingsDrawerLoaders({
         credentials: 'include',
       });
       if (response.ok) {
-        const data = await (response.json() as Promise<Record<string, unknown>>);
+        const data = await (response.json() as Promise<Partial<NetworkDiscoverySettings>>);
         setNetworkDiscoverySettings({
           enabled: data.enabled ?? true,
           arpScanWorkers: data.arpScanWorkers ?? 50,
@@ -277,7 +279,7 @@ export function useSettingsDrawerLoaders({
         credentials: 'include',
       });
       if (response.ok) {
-        const data = await (response.json() as Promise<Record<string, unknown>>);
+        const data = await (response.json() as Promise<Partial<SnmpSettingsType>>);
         setSnmpSettings({
           communities: data.communities ?? ['public'],
           v3Credentials: data.v3Credentials ?? [],
@@ -297,7 +299,13 @@ export function useSettingsDrawerLoaders({
         credentials: 'include',
       });
       if (response.ok) {
-        const data = await (response.json() as Promise<Record<string, unknown>>);
+        const data = await (response.json() as Promise<{
+          mode?: string;
+          auto_negotiation?: boolean;
+          speed?: string;
+          duplex?: string;
+          available_modes?: string[];
+        }>);
         const mode = data.mode ?? (data.auto_negotiation ? 'auto' : `${data.speed}/${data.duplex}`);
         setLinkSettings({
           mode: mode,
@@ -315,7 +323,7 @@ export function useSettingsDrawerLoaders({
         credentials: 'include',
       });
       if (response.ok) {
-        const data = await (response.json() as Promise<Record<string, unknown>>);
+        const data = await (response.json() as Promise<Partial<CableTestSettingsType>>);
         setCableTestSettings({
           enabled: data.enabled ?? true,
         });

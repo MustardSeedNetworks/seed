@@ -262,7 +262,7 @@ function ProfileSelectorComponent({
                         <span className="body-small font-medium text-text-primary truncate">
                           {profile.name}
                         </span>
-                        {profile.is_default ? <DEFAULT_BADGE /> : null}
+                        {profile.isDefault ? <DEFAULT_BADGE /> : null}
                       </div>
                       {profile.description ? (
                         <div className="caption text-text-muted truncate">
@@ -290,7 +290,7 @@ function ProfileSelectorComponent({
 
           {/* Empty state */}
           {profiles.length === 0 ? (
-            <div className={cn(spacing.pad.md, 'text-center')}>
+            <div className={cn(spacing.pad.default, 'text-center')}>
               <span className="caption text-text-muted">
                 {t('profile.noProfiles', 'No profiles found')}
               </span>

@@ -426,7 +426,7 @@ export function SurveyAnalysisPanel({
 
   // Analyze survey data
   const findings = useMemo(
-    () => analyzeSurvey(survey.samples, survey.apLocations || [], thresholds),
+    () => analyzeSurvey(survey.samples ?? [], survey.apLocations || [], thresholds),
     [survey.samples, survey.apLocations, thresholds],
   );
 

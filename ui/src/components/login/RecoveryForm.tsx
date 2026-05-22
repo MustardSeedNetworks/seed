@@ -64,6 +64,7 @@ export function RecoveryForm({
   tokenFilePath = '',
 }: RecoveryFormProps): React.ReactElement {
   const { t } = useTranslation('common');
+  const { t: tErrors } = useTranslation('errors');
   const [token, setToken] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -124,12 +125,12 @@ export function RecoveryForm({
     setError(null);
 
     if (!passwordValid) {
-      setError(t('errors.password.tooShort', { min: MIN_PASSWORD_LENGTH }));
+      setError(tErrors('password.tooShort', { min: MIN_PASSWORD_LENGTH }));
       return;
     }
 
     if (!passwordsMatch) {
-      setError(t('errors.password.mismatch'));
+      setError(tErrors('password.mismatch'));
       return;
     }
 
@@ -156,10 +157,10 @@ export function RecoveryForm({
       if (response.ok && data.success) {
         onRecoveryComplete();
       } else {
-        setError(data.message || data.error || t('errors.recovery.failed'));
+        setError(data.message || data.error || tErrors('recovery.failed'));
       }
     } catch {
-      setError(t('errors.network'));
+      setError(tErrors('network.networkError'));
     } finally {
       setIsSubmitting(false);
     }

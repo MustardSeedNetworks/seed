@@ -517,7 +517,9 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                         <span className="body-small text-text-primary">{network.ssid}</span>
                         <button
                           type="button"
-                          onClick={(): void => forgetNetwork(network.ssid)}
+                          onClick={(): void => {
+                            forgetNetwork(network.ssid).catch(() => undefined);
+                          }}
                           className="caption text-status-error hover:underline"
                         >
                           Forget

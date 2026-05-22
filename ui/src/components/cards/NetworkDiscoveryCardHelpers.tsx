@@ -3,9 +3,9 @@
  *
  * Contains:
  * - formatLastSeen / calculateNetworkAddress pure helpers
- * - subnetList: smart inline / collapsible subnet display
+ * - SubnetList: smart inline / collapsible subnet display
  * - categorizeDevices: bucketise discovered devices for the stat row
- * - discoverySummary: the top-of-card status + subnet + category panel
+ * - DiscoverySummary: the top-of-card status + subnet + category panel
  * - COMMON_PORTS: deep-scan port list
  */
 
@@ -109,11 +109,11 @@ export function calculateNetworkAddress(cidr: string): string {
 }
 
 /**
- * subnetList component for I3 - displays subnets with smart rollup.
+ * SubnetList component for I3 - displays subnets with smart rollup.
  * - Inline display for <=5 subnets
  * - Expandable dropdown for >5 subnets
  */
-export function subnetList({
+export function SubnetList({
   subnets,
   fallbackSubnet,
   unknownLabel,
@@ -257,7 +257,7 @@ export function categorizeDevices(devices: DiscoveredDevice[]): CategoryCounts {
 }
 
 // Summary bar component
-export function discoverySummary({
+export function DiscoverySummary({
   status,
   deviceCount,
   categories,
@@ -352,9 +352,9 @@ export function discoverySummary({
           <span className="caption">{formatLastSeen(status.lastScan, t)}</span>
         </div>
       </div>
-      {/* Simplified network info row - I3: Uses subnetList for multi-subnet display */}
+      {/* Simplified network info row - I3: Uses SubnetList for multi-subnet display */}
       <div className="flex items-center justify-between caption text-text-muted">
-        <subnetList
+        <SubnetList
           subnets={status.subnets}
           fallbackSubnet={status.subnet}
           unknownLabel={t('discovery.unknownSubnet')}

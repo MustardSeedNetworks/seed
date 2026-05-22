@@ -17,13 +17,13 @@
  * exercises.
  */
 
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 import { useState } from 'react';
 import type {
   NetworkDiscoverySettings,
   SaveStatus,
-  SNMPSettings,
+  SnmpSettings,
   SubnetConfig,
 } from '../../../types/settings';
 import { DiscoverySettings } from './DiscoverySettings';
@@ -60,9 +60,9 @@ const meta: Meta<typeof DiscoverySettings> = {
     },
   },
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="w-[550px] max-h-[700px] overflow-y-auto">
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],
@@ -357,7 +357,7 @@ export const Interactive: Story = {
   render: function interactiveStory() {
     const [settings, setSettings] = useState<NetworkDiscoverySettings>(defaultSettings);
     const [status, setStatus] = useState<SaveStatus>('idle');
-    const [snmpSettings, setSnmpSettings] = useState<SNMPSettings>(defaultSnmpSettings);
+    const [snmpSettings, setSnmpSettings] = useState<SnmpSettings>(defaultSnmpSettings);
     const [snmpStatus, setSnmpStatus] = useState<SaveStatus>('idle');
     const subnets: SubnetConfig[] = [{ cidr: '10.0.0.0/24', name: 'Server VLAN', enabled: true }];
     const [newCidr, setNewCidr] = useState('');
@@ -373,7 +373,7 @@ export const Interactive: Story = {
       }, 800);
     };
 
-    const handleSetSnmpSettings = (updater: React.SetStateAction<SNMPSettings>) => {
+    const handleSetSnmpSettings = (updater: React.SetStateAction<SnmpSettings>) => {
       setSnmpSettings(updater);
       setSnmpStatus('saving');
       setTimeout(() => {
@@ -407,6 +407,8 @@ export const Interactive: Story = {
         snmpSettings={snmpSettings}
         setSnmpSettings={handleSetSnmpSettings}
         snmpStatus={snmpStatus}
+        cardSettings={{} as never}
+        updateCardSettings={() => {}}
       />
     );
   },

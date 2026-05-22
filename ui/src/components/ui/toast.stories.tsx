@@ -1,4 +1,4 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 import { button, cn, layout, radius } from '../../styles/theme';
 import { ToastProvider } from './toast';
@@ -13,9 +13,9 @@ import { useToast } from './useToast';
 const meta: Meta = {
   title: 'UI/Toast',
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <ToastProvider>
-        <StoryComponent />
+        <Story />
       </ToastProvider>
     ),
   ],
@@ -27,7 +27,7 @@ const meta: Meta = {
 
 export default meta;
 
-function _toastDemo({
+function ToastDemo({
   type,
   message,
 }: {
@@ -52,22 +52,22 @@ function _toastDemo({
 }
 
 export const Success: StoryObj = {
-  render: () => <toastDemo type="success" message="Operation completed successfully!" />,
+  render: () => <ToastDemo type="success" message="Operation completed successfully!" />,
 };
 
 export const ErrorToast: StoryObj = {
-  render: () => <toastDemo type="error" message="An error occurred. Please try again." />,
+  render: () => <ToastDemo type="error" message="An error occurred. Please try again." />,
 };
 
 export const Warning: StoryObj = {
-  render: () => <toastDemo type="warning" message="This action cannot be undone." />,
+  render: () => <ToastDemo type="warning" message="This action cannot be undone." />,
 };
 
 export const Info: StoryObj = {
-  render: () => <toastDemo type="info" message="Network scan is in progress..." />,
+  render: () => <ToastDemo type="info" message="Network scan is in progress..." />,
 };
 
-function _allToastsDemo(): React.JSX.Element {
+function AllToastsDemo(): React.JSX.Element {
   const { addToast } = useToast();
 
   return (
@@ -93,7 +93,7 @@ function _allToastsDemo(): React.JSX.Element {
 }
 
 export const AllTypes: StoryObj = {
-  render: () => <allToastsDemo />,
+  render: () => <AllToastsDemo />,
   parameters: {
     docs: {
       description: {

@@ -7,7 +7,7 @@
  */
 
 import type { ComponentProps } from 'react';
-import type { NetworkDiscoverySettings, SNMPSettings, SubnetConfig } from '../../../types/settings';
+import type { NetworkDiscoverySettings, SnmpSettings, SubnetConfig } from '../../../types/settings';
 import type { DiscoverySettings } from './DiscoverySettings';
 
 const noop = (): void => {
@@ -21,7 +21,6 @@ export const defaultSettings: NetworkDiscoverySettings = {
   scanTimeoutMs: 30000,
   autoScan: false,
   scanIntervalMs: 0,
-  ouiFilePath: 'data/oui.txt',
   options: {
     passiveProtocols: {
       lldp: true,
@@ -64,7 +63,7 @@ export const defaultSettings: NetworkDiscoverySettings = {
   ipv6Enabled: false,
 };
 
-export const defaultSnmpSettings: SNMPSettings = {
+export const defaultSnmpSettings: SnmpSettings = {
   communities: ['public'],
   v3Credentials: [],
   timeout: 5000,
@@ -96,4 +95,8 @@ export const baseArgs = (subnets: SubnetConfig[] = []): DiscoverySettingsArgs =>
   snmpSettings: defaultSnmpSettings,
   setSnmpSettings: noop,
   snmpStatus: 'idle',
+  cardSettings: {
+    networkDiscovery: { enabled: true, autoRunOnLink: true },
+  } as unknown as DiscoverySettingsArgs['cardSettings'],
+  updateCardSettings: noop,
 });

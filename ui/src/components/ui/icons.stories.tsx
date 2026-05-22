@@ -136,123 +136,123 @@ type Story = StoryObj;
 export const AllIcons: Story = {
   render: () => (
     <div className={cn(section.spacing.spacious, spacing.pad.default)}>
-      <iconCategory title="Card Header Icons">
-        <iconItem icon={<Activity />} name="Activity" />
-        <iconItem icon={<Cable />} name="Cable" />
-        <iconItem icon={<Globe />} name="Globe" />
-        <iconItem icon={<Network />} name="Network" />
-        <iconItem icon={<Router />} name="Router" />
-        <iconItem icon={<Search />} name="Search" />
-        <iconItem icon={<ScanSearch />} name="ScanSearch" />
-        <iconItem icon={<Server />} name="Server" />
-        <iconItem icon={<Wifi />} name="Wifi" />
-        <iconItem icon={<Gauge />} name="Gauge" />
-        <iconItem icon={<HeartPulse />} name="HeartPulse" />
-        <iconItem icon={<Settings />} name="Settings" />
-      </iconCategory>
+      <IconCategory title="Card Header Icons">
+        <IconItem icon={<Activity />} name="Activity" />
+        <IconItem icon={<Cable />} name="Cable" />
+        <IconItem icon={<Globe />} name="Globe" />
+        <IconItem icon={<Network />} name="Network" />
+        <IconItem icon={<Router />} name="Router" />
+        <IconItem icon={<Search />} name="Search" />
+        <IconItem icon={<ScanSearch />} name="ScanSearch" />
+        <IconItem icon={<Server />} name="Server" />
+        <IconItem icon={<Wifi />} name="Wifi" />
+        <IconItem icon={<Gauge />} name="Gauge" />
+        <IconItem icon={<HeartPulse />} name="HeartPulse" />
+        <IconItem icon={<Settings />} name="Settings" />
+      </IconCategory>
 
-      <iconCategory title="Status Icons">
-        <iconItem icon={<CheckCircle className={statusColor.text.success} />} name="CheckCircle" />
-        <iconItem icon={<XCircle className={statusColor.text.error} />} name="XCircle" />
-        <iconItem
+      <IconCategory title="Status Icons">
+        <IconItem icon={<CheckCircle className={statusColor.text.success} />} name="CheckCircle" />
+        <IconItem icon={<XCircle className={statusColor.text.error} />} name="XCircle" />
+        <IconItem
           icon={<AlertTriangle className={statusColor.text.warning} />}
           name="AlertTriangle"
         />
-        <iconItem icon={<AlertCircle className={statusColor.text.info} />} name="AlertCircle" />
-        <iconItem icon={<Info className="text-brand-primary" />} name="Info" />
-      </iconCategory>
+        <IconItem icon={<AlertCircle className={statusColor.text.info} />} name="AlertCircle" />
+        <IconItem icon={<Info className="text-brand-primary" />} name="Info" />
+      </IconCategory>
 
-      <iconCategory title="Device Type Icons">
-        <iconItem icon={<Monitor />} name="Monitor" />
-        <iconItem icon={<Smartphone />} name="Smartphone" />
-        <iconItem icon={<Printer />} name="Printer" />
-        <iconItem icon={<HardDrive />} name="HardDrive" />
-        <iconItem icon={<Laptop />} name="Laptop" />
-        <iconItem icon={<Tablet />} name="Tablet" />
-        <iconItem icon={<Tv />} name="Tv" />
-      </iconCategory>
+      <IconCategory title="Device Type Icons">
+        <IconItem icon={<Monitor />} name="Monitor" />
+        <IconItem icon={<Smartphone />} name="Smartphone" />
+        <IconItem icon={<Printer />} name="Printer" />
+        <IconItem icon={<HardDrive />} name="HardDrive" />
+        <IconItem icon={<Laptop />} name="Laptop" />
+        <IconItem icon={<Tablet />} name="Tablet" />
+        <IconItem icon={<Tv />} name="Tv" />
+      </IconCategory>
 
-      <iconCategory title="Navigation Icons">
-        <iconItem icon={<ChevronDown />} name="ChevronDown" />
-        <iconItem icon={<ChevronUp />} name="ChevronUp" />
-        <iconItem icon={<ChevronLeft />} name="ChevronLeft" />
-        <iconItem icon={<ChevronRight />} name="ChevronRight" />
-        <iconItem icon={<X />} name="X" />
-        <iconItem icon={<Menu />} name="Menu" />
-      </iconCategory>
+      <IconCategory title="Navigation Icons">
+        <IconItem icon={<ChevronDown />} name="ChevronDown" />
+        <IconItem icon={<ChevronUp />} name="ChevronUp" />
+        <IconItem icon={<ChevronLeft />} name="ChevronLeft" />
+        <IconItem icon={<ChevronRight />} name="ChevronRight" />
+        <IconItem icon={<X />} name="X" />
+        <IconItem icon={<Menu />} name="Menu" />
+      </IconCategory>
 
-      <iconCategory title="Action Icons">
-        <iconItem icon={<RefreshCw />} name="RefreshCw" />
-        <iconItem icon={<Download />} name="Download" />
-        <iconItem icon={<Upload />} name="Upload" />
-        <iconItem icon={<Play />} name="Play" />
-        <iconItem icon={<Pause />} name="Pause" />
-        <iconItem icon={<RotateCcw />} name="RotateCcw" />
-        <iconItem icon={<Loader className="animate-spin" />} name="Loader" />
-      </iconCategory>
+      <IconCategory title="Action Icons">
+        <IconItem icon={<RefreshCw />} name="RefreshCw" />
+        <IconItem icon={<Download />} name="Download" />
+        <IconItem icon={<Upload />} name="Upload" />
+        <IconItem icon={<Play />} name="Play" />
+        <IconItem icon={<Pause />} name="Pause" />
+        <IconItem icon={<RotateCcw />} name="RotateCcw" />
+        <IconItem icon={<Loader className="animate-spin" />} name="Loader" />
+      </IconCategory>
 
-      <iconCategory title="UI Icons">
-        <iconItem icon={<Eye />} name="Eye" />
-        <iconItem icon={<EyeOff />} name="EyeOff" />
-        <iconItem icon={<Copy />} name="Copy" />
-        <iconItem icon={<Check />} name="Check" />
-        <iconItem icon={<Trash2 />} name="Trash2" />
-        <iconItem icon={<Edit />} name="Edit" />
-        <iconItem icon={<Plus />} name="Plus" />
-        <iconItem icon={<Minus />} name="Minus" />
-        <iconItem icon={<Filter />} name="Filter" />
-      </iconCategory>
+      <IconCategory title="UI Icons">
+        <IconItem icon={<Eye />} name="Eye" />
+        <IconItem icon={<EyeOff />} name="EyeOff" />
+        <IconItem icon={<Copy />} name="Copy" />
+        <IconItem icon={<Check />} name="Check" />
+        <IconItem icon={<Trash2 />} name="Trash2" />
+        <IconItem icon={<Edit />} name="Edit" />
+        <IconItem icon={<Plus />} name="Plus" />
+        <IconItem icon={<Minus />} name="Minus" />
+        <IconItem icon={<Filter />} name="Filter" />
+      </IconCategory>
 
-      <iconCategory title="Network Icons">
-        <iconItem icon={<Unplug />} name="Unplug" />
-        <iconItem icon={<PlugZap />} name="PlugZap" />
-        <iconItem icon={<Signal />} name="Signal" />
-        <iconItem icon={<SignalHigh />} name="SignalHigh" />
-        <iconItem icon={<SignalMedium />} name="SignalMedium" />
-        <iconItem icon={<SignalLow />} name="SignalLow" />
-        <iconItem icon={<SignalZero />} name="SignalZero" />
-        <iconItem icon={<Zap />} name="Zap" />
-      </iconCategory>
+      <IconCategory title="Network Icons">
+        <IconItem icon={<Unplug />} name="Unplug" />
+        <IconItem icon={<PlugZap />} name="PlugZap" />
+        <IconItem icon={<Signal />} name="Signal" />
+        <IconItem icon={<SignalHigh />} name="SignalHigh" />
+        <IconItem icon={<SignalMedium />} name="SignalMedium" />
+        <IconItem icon={<SignalLow />} name="SignalLow" />
+        <IconItem icon={<SignalZero />} name="SignalZero" />
+        <IconItem icon={<Zap />} name="Zap" />
+      </IconCategory>
 
-      <iconCategory title="Service/Protocol Icons">
-        <iconItem icon={<Terminal />} name="Terminal" />
-        <iconItem icon={<FileText />} name="FileText" />
-        <iconItem icon={<Mail />} name="Mail" />
-        <iconItem icon={<Database />} name="Database" />
-        <iconItem icon={<Container />} name="Container" />
-        <iconItem icon={<ShieldOff />} name="ShieldOff" />
-      </iconCategory>
+      <IconCategory title="Service/Protocol Icons">
+        <IconItem icon={<Terminal />} name="Terminal" />
+        <IconItem icon={<FileText />} name="FileText" />
+        <IconItem icon={<Mail />} name="Mail" />
+        <IconItem icon={<Database />} name="Database" />
+        <IconItem icon={<Container />} name="Container" />
+        <IconItem icon={<ShieldOff />} name="ShieldOff" />
+      </IconCategory>
 
-      <iconCategory title="System Icons">
-        <iconItem icon={<Cpu />} name="Cpu" />
-        <iconItem icon={<MemoryStick />} name="MemoryStick" />
-        <iconItem icon={<HardDriveDownload />} name="HardDriveDownload" />
-        <iconItem icon={<Clock />} name="Clock" />
-        <iconItem icon={<Timer />} name="Timer" />
-        <iconItem icon={<Calendar />} name="Calendar" />
-        <iconItem icon={<User />} name="User" />
-      </iconCategory>
+      <IconCategory title="System Icons">
+        <IconItem icon={<Cpu />} name="Cpu" />
+        <IconItem icon={<MemoryStick />} name="MemoryStick" />
+        <IconItem icon={<HardDriveDownload />} name="HardDriveDownload" />
+        <IconItem icon={<Clock />} name="Clock" />
+        <IconItem icon={<Timer />} name="Timer" />
+        <IconItem icon={<Calendar />} name="Calendar" />
+        <IconItem icon={<User />} name="User" />
+      </IconCategory>
 
-      <iconCategory title="Security Icons">
-        <iconItem icon={<Lock />} name="Lock" />
-        <iconItem icon={<Unlock />} name="Unlock" />
-        <iconItem icon={<Key />} name="Key" />
-        <iconItem icon={<Shield />} name="Shield" />
-        <iconItem icon={<ShieldCheck className={statusColor.text.success} />} name="ShieldCheck" />
-        <iconItem icon={<ShieldAlert className={statusColor.text.warning} />} name="ShieldAlert" />
-      </iconCategory>
+      <IconCategory title="Security Icons">
+        <IconItem icon={<Lock />} name="Lock" />
+        <IconItem icon={<Unlock />} name="Unlock" />
+        <IconItem icon={<Key />} name="Key" />
+        <IconItem icon={<Shield />} name="Shield" />
+        <IconItem icon={<ShieldCheck className={statusColor.text.success} />} name="ShieldCheck" />
+        <IconItem icon={<ShieldAlert className={statusColor.text.warning} />} name="ShieldAlert" />
+      </IconCategory>
 
-      <iconCategory title="Layout Icons">
-        <iconItem icon={<LayoutDashboard />} name="LayoutDashboard" />
-        <iconItem icon={<List />} name="List" />
-        <iconItem icon={<Grid3X3 />} name="Grid3X3" />
-        <iconItem icon={<Columns3 />} name="Columns3" />
-      </iconCategory>
+      <IconCategory title="Layout Icons">
+        <IconItem icon={<LayoutDashboard />} name="LayoutDashboard" />
+        <IconItem icon={<List />} name="List" />
+        <IconItem icon={<Grid3X3 />} name="Grid3X3" />
+        <IconItem icon={<Columns3 />} name="Columns3" />
+      </IconCategory>
 
-      <iconCategory title="Settings Icons">
-        <iconItem icon={<SlidersHorizontal />} name="SlidersHorizontal" />
-        <iconItem icon={<Palette />} name="Palette" />
-      </iconCategory>
+      <IconCategory title="Settings Icons">
+        <IconItem icon={<SlidersHorizontal />} name="SlidersHorizontal" />
+        <IconItem icon={<Palette />} name="Palette" />
+      </IconCategory>
     </div>
   ),
 };
@@ -295,22 +295,22 @@ export const StatusIcons: Story = {
         Status Icons with Semantic Colors
       </h3>
       <div className={cn('grid grid-cols-2 md:grid-cols-4', spacing.gap.comfortable)}>
-        <statusExample
+        <StatusExample
           icon={<CheckCircle className={cn(iconTheme.size.lg, statusColor.text.success)} />}
           label="Success"
           description="Operation completed"
         />
-        <statusExample
+        <StatusExample
           icon={<AlertTriangle className={cn(iconTheme.size.lg, statusColor.text.warning)} />}
           label="Warning"
           description="Needs attention"
         />
-        <statusExample
+        <StatusExample
           icon={<XCircle className={cn(iconTheme.size.lg, statusColor.text.error)} />}
           label="Error"
           description="Operation failed"
         />
-        <statusExample
+        <StatusExample
           icon={<Info className={cn(iconTheme.size.lg, statusColor.text.info)} />}
           label="Info"
           description="Additional info"
@@ -393,13 +393,13 @@ export const DeviceTypes: Story = {
         Device Type Icons
       </h3>
       <div className={cn('grid grid-cols-3 md:grid-cols-7', spacing.gap.comfortable)}>
-        <deviceExample icon={<Monitor />} name="Desktop" />
-        <deviceExample icon={<Laptop />} name="Laptop" />
-        <deviceExample icon={<Smartphone />} name="Phone" />
-        <deviceExample icon={<Tablet />} name="Tablet" />
-        <deviceExample icon={<Printer />} name="Printer" />
-        <deviceExample icon={<Tv />} name="TV" />
-        <deviceExample icon={<HardDrive />} name="NAS" />
+        <DeviceExample icon={<Monitor />} name="Desktop" />
+        <DeviceExample icon={<Laptop />} name="Laptop" />
+        <DeviceExample icon={<Smartphone />} name="Phone" />
+        <DeviceExample icon={<Tablet />} name="Tablet" />
+        <DeviceExample icon={<Printer />} name="Printer" />
+        <DeviceExample icon={<Tv />} name="TV" />
+        <DeviceExample icon={<HardDrive />} name="NAS" />
       </div>
     </div>
   ),
@@ -474,21 +474,21 @@ export const CardHeaders: Story = {
         Card Header Icons
       </h3>
       <div className={cn('grid grid-cols-2 md:grid-cols-4', spacing.gap.comfortable)}>
-        <cardHeaderExample icon={<Activity />} title="Link Status" />
-        <cardHeaderExample icon={<Wifi />} title="WiFi" />
-        <cardHeaderExample icon={<Cable />} title="Cable Test" />
-        <cardHeaderExample icon={<Network />} title="Network" />
-        <cardHeaderExample icon={<Server />} title="Gateway" />
-        <cardHeaderExample icon={<Gauge />} title="Performance" />
-        <cardHeaderExample icon={<ScanSearch />} title="Discovery" />
-        <cardHeaderExample icon={<HeartPulse />} title="Health Checks" />
+        <CardHeaderExample icon={<Activity />} title="Link Status" />
+        <CardHeaderExample icon={<Wifi />} title="WiFi" />
+        <CardHeaderExample icon={<Cable />} title="Cable Test" />
+        <CardHeaderExample icon={<Network />} title="Network" />
+        <CardHeaderExample icon={<Server />} title="Gateway" />
+        <CardHeaderExample icon={<Gauge />} title="Performance" />
+        <CardHeaderExample icon={<ScanSearch />} title="Discovery" />
+        <CardHeaderExample icon={<HeartPulse />} title="Health Checks" />
       </div>
     </div>
   ),
 };
 
 // Helper components for stories
-function _iconCategory({
+function IconCategory({
   title,
   children,
 }: {
@@ -515,7 +515,7 @@ function _iconCategory({
   );
 }
 
-function _iconItem({ icon, name }: { icon: React.ReactNode; name: string }): React.JSX.Element {
+function IconItem({ icon, name }: { icon: React.ReactNode; name: string }): React.JSX.Element {
   return (
     <div
       className={cn(
@@ -531,7 +531,7 @@ function _iconItem({ icon, name }: { icon: React.ReactNode; name: string }): Rea
   );
 }
 
-function _statusExample({
+function StatusExample({
   icon,
   label,
   description,
@@ -557,13 +557,7 @@ function _statusExample({
   );
 }
 
-function _deviceExample({
-  icon,
-  name,
-}: {
-  icon: React.ReactNode;
-  name: string;
-}): React.JSX.Element {
+function DeviceExample({ icon, name }: { icon: React.ReactNode; name: string }): React.JSX.Element {
   return (
     <div
       className={cn(
@@ -577,7 +571,7 @@ function _deviceExample({
   );
 }
 
-function _cardHeaderExample({
+function CardHeaderExample({
   icon,
   title,
 }: {

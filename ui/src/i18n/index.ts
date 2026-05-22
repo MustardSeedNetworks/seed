@@ -105,7 +105,7 @@ i18n
   .use(initReactI18next)
   // Initialize i18next
   .init({
-    resources,
+    resources: resources as Parameters<typeof i18n.init>[0]['resources'],
     fallbackLng: 'en',
     defaultNS: defaultNs,
     ns: namespaces,

@@ -13,6 +13,12 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Passive: Story = {
+  args: {
+    surveyType: 'passive',
+    availableAdapters: [],
+    currentInterface: '',
+    onUpdate: () => {},
+  },
   render: () => {
     const [config, setConfig] = useState<SurveyConfig>({
       bands: ['2.4', '5'],
@@ -32,6 +38,12 @@ export const Passive: Story = {
 };
 
 export const Throughput: Story = {
+  args: {
+    surveyType: 'throughput',
+    availableAdapters: [],
+    currentInterface: '',
+    onUpdate: () => {},
+  },
   render: () => {
     const [type, setType] = useState<SurveyType>('throughput');
     const [config, setConfig] = useState<SurveyConfig>({

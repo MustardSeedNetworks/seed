@@ -1,5 +1,4 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
-import type React from 'react';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { Button } from './Button';
 import { ConfirmModal } from './ConfirmModal';
@@ -17,9 +16,9 @@ const meta: Meta<typeof ConfirmModal> = {
   },
   tags: ['autodocs'],
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="min-h-[60vh] p-4">
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],

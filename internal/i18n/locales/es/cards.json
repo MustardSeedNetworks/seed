@@ -252,6 +252,7 @@
     "testsDisabled": "Las pruebas de rendimiento están deshabilitadas en Ajustes",
     "serverNotConfigured": "Servidor no configurado",
     "speedtestFailed": "Error en Speedtest",
+    "iperfFailed": "Error en prueba iPerf",
     "phaseReady": "Listo",
     "phaseFindingServer": "Buscando servidor...",
     "phaseTestingLatency": "Probando latencia...",

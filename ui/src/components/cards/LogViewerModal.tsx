@@ -37,7 +37,7 @@ interface LogViewerModalProps {
  */
 function getStreamingToggleHint(
   streaming: boolean,
-  t: ReturnType<typeof useTranslation>['t'],
+  t: (key: string, fallback?: string) => string,
 ): string {
   return streaming
     ? t(
@@ -83,7 +83,7 @@ interface LogEntryRowProps {
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex log entry with expandable details
-function _logEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): React.JSX.Element {
+function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): React.JSX.Element {
   const colors = LOG_LEVEL_COLORS[entry.level];
 
   return (
@@ -272,7 +272,7 @@ interface LogFiltersBarProps {
   availableComponents: string[];
 }
 
-function _logFiltersBar({
+function LogFiltersBar({
   filters,
   onFilterChange,
   onReset,
@@ -584,7 +584,10 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
             <button
               type="button"
               onClick={() => setIsStreaming(!isStreaming)}
-              title={getStreamingToggleHint(isStreaming, t)}
+              title={getStreamingToggleHint(
+                isStreaming,
+                t as unknown as (k: string, f?: string) => string,
+              )}
               className={cn(
                 button.size.md,
                 radius.lg,
@@ -711,7 +714,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
 
         {/* Filters */}
         <div className="px-6 py-4 bg-surface-raised border-b border-surface-border shrink-0">
-          <logFiltersBar
+          <LogFiltersBar
             filters={filters}
             onFilterChange={setFilters}
             onReset={resetFilters}
@@ -746,7 +749,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
 
           {/* Log entries */}
           {logs.map((entry) => (
-            <logEntryRow
+            <LogEntryRow
               key={`${entry.timestamp}-${entry.message.substring(0, 20)}`}
               entry={entry}
               expanded={expandedIds.has(entry.timestamp)}

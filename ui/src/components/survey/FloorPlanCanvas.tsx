@@ -448,13 +448,14 @@ function filterSampleData(sample: SamplePoint, filter?: HeatmapFilter): ScannedN
     let networks = data.networks as ScannedNetwork[];
 
     if (filter) {
-      if (filter.ssid) {
-        networks = networks.filter((n) => n.ssid === filter.ssid || n.ssid.includes(filter.ssid));
+      const filterSsid = filter.ssid;
+      if (filterSsid) {
+        networks = networks.filter((n) => n.ssid === filterSsid || n.ssid.includes(filterSsid));
       }
-      if (filter.bssid) {
-        networks = networks.filter((n) =>
-          n.bssid.toLowerCase().includes(filter.bssid.toLowerCase()),
-        );
+      const filterBssid = filter.bssid;
+      if (filterBssid) {
+        const lower = filterBssid.toLowerCase();
+        networks = networks.filter((n) => n.bssid.toLowerCase().includes(lower));
       }
       if (filter.channel) {
         networks = networks.filter((n) => n.channel === filter.channel);
@@ -495,17 +496,14 @@ function filterSampleData(sample: SamplePoint, filter?: HeatmapFilter): ScannedN
   }
 
   // For active/throughput surveys, return single network
-  if (data.ssid && data.bssid) {
+  if ('ssid' in data && 'bssid' in data && data.ssid && data.bssid) {
+    const activeOrThroughput = data as ActiveSample | ThroughputSample;
     const network: ScannedNetwork = {
-      ssid: data.ssid,
-      bssid: data.bssid,
-      rssi: data.rssi || -100,
-      channel: data.channel || 0,
-      frequency: data.frequency || 0,
-      channelWidth: data.channelWidth,
-      phyType: data.phyType,
-      security: data.security,
-      vendor: data.vendor,
+      ssid: activeOrThroughput.ssid,
+      bssid: activeOrThroughput.bssid,
+      rssi: activeOrThroughput.rssi ?? -100,
+      channel: 0,
+      frequency: 0,
     };
 
     // Apply filter for active surveys
@@ -611,7 +609,7 @@ function extractMetricValue(
         const uniqueBssiDs = new Set(data.networks.map((n: ScannedNetwork) => n.bssid));
         return uniqueBssiDs.size;
       }
-      return data.uniqueBSSIDs || 0;
+      return 0;
     }
     case 'ssidCount': {
       // Count unique SSIDs at this location
@@ -621,7 +619,7 @@ function extractMetricValue(
         );
         return uniqueSsiDs.size;
       }
-      return data.uniqueSSIDs || 0;
+      return 0;
     }
     default:
       return 0;

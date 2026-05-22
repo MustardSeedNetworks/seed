@@ -28,7 +28,6 @@ import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, radius, spacing, status as statusColor } from '../../styles/theme';
 import { Card, CardDivider } from '../ui/card';
 import type { Status } from '../ui/StatusBadge';
-import { StatusBadge } from '../ui/StatusBadge';
 
 interface SLASummary {
   period: string;
@@ -91,7 +90,7 @@ function getStrokeColor(status: Status): string {
   return 'var(--color-status-error)';
 }
 
-function _complianceRing({ rate, size = 80 }: { rate: number; size?: number }): React.ReactElement {
+function ComplianceRing({ rate, size = 80 }: { rate: number; size?: number }): React.ReactElement {
   const strokeWidth = 8;
   const normalizedRadius = (size - strokeWidth) / 2;
   const circumference = normalizedRadius * 2 * Math.PI;
@@ -138,7 +137,7 @@ function _complianceRing({ rate, size = 80 }: { rate: number; size?: number }): 
   );
 }
 
-function _statBlock({
+function StatBlock({
   icon: ICON,
   label,
   value,
@@ -157,14 +156,14 @@ function _statBlock({
         className={cn(
           'flex items-center justify-center rounded-md',
           radius.md,
-          spacing.p2,
+          spacing.pad.xs,
           status === 'success' && 'bg-status-success/10 text-status-success',
           status === 'warning' && 'bg-status-warning/10 text-status-warning',
           status === 'error' && 'bg-status-error/10 text-status-error',
           !status && 'bg-surface-secondary text-text-muted',
         )}
       >
-        <ICON className={iconTokens.sm} />
+        <ICON className={iconTokens.size.sm} />
       </div>
       <div className="flex flex-col">
         <span className="text-xs text-text-muted">{label}</span>
@@ -268,21 +267,21 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
       <Card
         title={t('slaDashboard.title', 'SLA Dashboard')}
         subtitle={t('slaDashboard.subtitle', 'Service health and compliance')}
-        icon={<Shield className={iconTokens.md} />}
+        icon={<Shield className={iconTokens.size.md} />}
         status={overallStatus()}
         className={className}
       >
         {loading ? (
-          <div className={cn('animate-pulse space-y-4', spacing.p4)}>
+          <div className={cn('animate-pulse space-y-4', spacing.pad.default)}>
             <div className="h-20 bg-surface-secondary rounded-lg" />
             <div className="h-16 bg-surface-secondary rounded-lg" />
           </div>
         ) : null}
         {error ? (
-          <div className={cn('text-center text-status-error', spacing.p4)}>{error}</div>
+          <div className={cn('text-center text-status-error', spacing.pad.default)}>{error}</div>
         ) : null}
         {loading || error ? null : (
-          <div className={cn('space-y-4', spacing.p4)}>
+          <div className={cn('space-y-4', spacing.pad.default)}>
             {/* Period selector */}
             <div className="flex justify-end gap-1">
               {(['daily', 'weekly', 'monthly'] as const).map((p) => (
@@ -320,7 +319,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                     </p>
                   ) : null}
                 </div>
-                <complianceRing rate={data.sla.complianceRate} />
+                <ComplianceRing rate={data.sla.complianceRate} />
               </div>
             ) : null}
 
@@ -333,25 +332,25 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                   {t('slaDashboard.healthScores', 'Health Scores')}
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
-                  <statBlock
+                  <StatBlock
                     icon={CheckCircle2}
                     label={t('slaDashboard.healthy', 'Healthy')}
                     value={data.scores.healthy}
                     status="success"
                   />
-                  <statBlock
+                  <StatBlock
                     icon={AlertTriangle}
                     label={t('slaDashboard.degraded', 'Degraded')}
                     value={data.scores.degraded}
                     status={data.scores.degraded > 0 ? 'warning' : undefined}
                   />
-                  <statBlock
+                  <StatBlock
                     icon={XCircle}
                     label={t('slaDashboard.critical', 'Critical')}
                     value={data.scores.critical}
                     status={data.scores.critical > 0 ? 'error' : undefined}
                   />
-                  <statBlock
+                  <StatBlock
                     icon={TrendingUp}
                     label={t('slaDashboard.total', 'Total')}
                     value={data.scores.totalEndpoints}
@@ -379,9 +378,14 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                       {data.alerts.active}
                     </span>
                     {data.alerts.critical > 0 ? (
-                      <StatusBadge status="error" size="sm">
+                      <span
+                        className={cn(
+                          'text-xs px-2 py-0.5 bg-status-error/10 text-status-error',
+                          radius.full,
+                        )}
+                      >
                         {data.alerts.critical} {t('slaDashboard.criticalLabel', 'critical')}
-                      </StatusBadge>
+                      </span>
                     ) : null}
                   </div>
                 </div>
@@ -401,9 +405,14 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                     {data.anomalyCount}
                   </span>
                   {data.anomalyCount > 0 ? (
-                    <StatusBadge status="warning" size="sm">
+                    <span
+                      className={cn(
+                        'text-xs px-2 py-0.5 bg-status-warning/10 text-status-warning',
+                        radius.full,
+                      )}
+                    >
                       {t('slaDashboard.detected', 'detected')}
-                    </StatusBadge>
+                    </span>
                   ) : null}
                 </div>
               </div>

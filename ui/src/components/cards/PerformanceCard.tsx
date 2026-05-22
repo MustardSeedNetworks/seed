@@ -191,14 +191,13 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
       try {
         const action = shouldRun ? 'start' : 'stop';
         // Use api.post() for CSRF token inclusion (#CSRF-FIX)
-        const res = await api.post('/api/v1/sap/iperf/server', { action, port });
-        if (res.ok) {
-          const statusRes = await fetch('/api/v1/sap/iperf/server/status', {
-            credentials: 'include',
-          });
-          if (statusRes.ok) {
-            setIperfServerStatus(await statusRes.json());
-          }
+        // api.post throws on non-2xx, so reaching the next line implies success.
+        await api.post('/api/v1/sap/iperf/server', { action, port });
+        const statusRes = await fetch('/api/v1/sap/iperf/server/status', {
+          credentials: 'include',
+        });
+        if (statusRes.ok) {
+          setIperfServerStatus(await statusRes.json());
         }
       } catch (err) {
         logger.error(LogComponents.IPERF, 'Failed to manage iperf server', err);
@@ -404,13 +403,25 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
 
       setSpeedtestError(null);
       setSpeedtestRunning(true);
-      setSpeedtestStatus({ running: true, phase: 'finding_server', progress: 0 });
+      setSpeedtestStatus({
+        running: true,
+        phase: 'finding_server',
+        progress: 0,
+        currentDownload: 0,
+        currentUpload: 0,
+      });
 
       try {
         await api.post('/api/v1/sap/speedtest');
       } catch (err) {
         setSpeedtestError(err instanceof Error ? err.message : t('performance.speedtestFailed'));
-        setSpeedtestStatus({ running: false, phase: 'idle', progress: 0 });
+        setSpeedtestStatus({
+          running: false,
+          phase: 'idle',
+          progress: 0,
+          currentDownload: 0,
+          currentUpload: 0,
+        });
         setSpeedtestRunning(false);
       }
     }, [runSpeedtestEnabled, t]);

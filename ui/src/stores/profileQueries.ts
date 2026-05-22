@@ -176,11 +176,9 @@ export function useBackendDefaultsQuery(): UseQueryResult<DefaultSettings, Error
 
   useEffect(() => {
     if (query.isError && query.error) {
-      logger.warn(
-        LogComponents.PROFILES,
-        'Could not load backend defaults, using hardcoded',
-        query.error,
-      );
+      logger.warn(LogComponents.PROFILES, 'Could not load backend defaults, using hardcoded', {
+        error: query.error instanceof Error ? query.error.message : String(query.error),
+      });
     }
   }, [query.isError, query.error]);
 
@@ -353,7 +351,8 @@ export function useImportProfilesMutation(): UseMutationResult<
     mutationFn: async (data: ProfileImportRequest) => {
       const result = await api.post<ProfileImportResponse>('/api/v1/profiles/import', data);
       logger.info(LogComponents.PROFILES, 'Profiles imported', {
-        imported: result.imported,
+        created: result.created,
+        updated: result.updated,
         skipped: result.skipped,
       });
       return result;
@@ -409,7 +408,9 @@ export function useSaveSettingsMutation(): UseMutationResult<
       return updated;
     },
     onSuccess: (updated: Profile) => {
-      updateActiveProfileSettings(updated.settings);
+      if (updated.config?.settings) {
+        updateActiveProfileSettings(updated.config.settings);
+      }
       setSettingsStatus('saved');
 
       // Reset status after delay

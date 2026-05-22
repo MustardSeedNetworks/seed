@@ -268,8 +268,9 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
 
       // Check L3 path for issues
       const l3Hops = result.l3Path?.hops || [];
-      const hasErrors = l3Hops.some((h) => h.state === 'error' || h.state === 'unreachable');
+      // L3Hop.state is 'timeout' | 'reply'; absence of reply = error state.
       const hasTimeouts = l3Hops.some((h) => h.state === 'timeout');
+      const hasErrors = false;
       const hasHighLatency = l3Hops.some((h) => h.rtt > 100000000); // > 100ms
 
       if (hasErrors) {
@@ -558,7 +559,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
         {result || loading || error ? null : (
           <div
             className={cn(
-              spacing.pad.md,
+              spacing.pad.default,
               'text-center',
               'bg-surface-base/50',
               radius.lg,

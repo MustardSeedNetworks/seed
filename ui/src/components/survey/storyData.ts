@@ -18,6 +18,9 @@ export const sampleFloors: Floor[] = [
       height: 600,
       scaleM: 0.1,
     },
+    samples: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: 'floor-2',
@@ -29,6 +32,9 @@ export const sampleFloors: Floor[] = [
       height: 600,
       scaleM: 0.1,
     },
+    samples: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
 ];
 

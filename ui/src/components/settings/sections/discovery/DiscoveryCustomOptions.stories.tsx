@@ -14,6 +14,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
+  args: { settings: {} as never, onSettingsChange: () => {} },
   render: () => {
     const [settings, setSettings] = useState<NetworkDiscoverySettings>(
       DEFAULT_NETWORK_DISCOVERY_SETTINGS,

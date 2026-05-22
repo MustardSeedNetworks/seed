@@ -19,12 +19,10 @@ import { Tooltip } from '../ui/tooltip';
 import type { DiscoveredDevice, DiscoveryMethod, OpenPort } from './NetworkDiscoveryCard';
 
 // Discovery method badge
-export function _methodBadge({ method }: { method: DiscoveryMethod }): JSX.Element {
-  const theme = discoveryMethodTheme[method] || discoveryMethodTheme.arp;
+export function MethodBadge({ method }: { method: DiscoveryMethod }): JSX.Element {
+  const themeClass = discoveryMethodTheme[method] ?? discoveryMethodTheme.arp;
   return (
-    <span
-      className={cn('px-1.5 py-0.5 text-xs font-medium uppercase', radius.md, theme.bg, theme.text)}
-    >
+    <span className={cn('px-1.5 py-0.5 text-xs font-medium uppercase', radius.md, themeClass)}>
       {method}
     </span>
   );
@@ -98,7 +96,7 @@ export function getSeverityClasses(severity: string): string {
 
 // Device row component
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Device row handles many device types and states
-export function _deviceRow({
+export function DeviceRow({
   device,
   isExpanded,
   onToggle,
@@ -113,13 +111,14 @@ export function _deviceRow({
 }): JSX.Element {
   const { t } = useTranslation('cards');
   const openPorts = device.profile?.openPorts?.filter((p) => p.isOpen) || [];
-  const hasDetails =
+  const hasDetails = Boolean(
     device.lldpInfo ||
-    device.cdpInfo ||
-    device.edpInfo ||
-    device.ndpInfo ||
-    device.snmpData ||
-    openPorts.length > 0;
+      device.cdpInfo ||
+      device.edpInfo ||
+      device.ndpInfo ||
+      device.snmpData ||
+      openPorts.length > 0,
+  );
 
   const handleScan = async (e: React.MouseEvent): Promise<void> => {
     e.stopPropagation();
@@ -191,7 +190,7 @@ export function _deviceRow({
         <td className="px-3 py-2">
           <div className="flex items-center gap-1 flex-wrap">
             {device.discoveryMethod.map((method) => (
-              <methodBadge key={method} method={method} />
+              <MethodBadge key={method} method={method} />
             ))}
           </div>
         </td>
@@ -413,14 +412,14 @@ export function _deviceRow({
                                 ? 'bg-status-success/20 text-status-success'
                                 : 'bg-surface-hover text-text-muted',
                             )}
-                            title={`${iface.name} - ${iface.speed ? `${Math.round(iface.speed / 1000000)} Mbps` : 'N/A'}`}
+                            title={`${iface.name} - ${iface.speedMbps ? `${iface.speedMbps} Mbps` : 'N/A'}`}
                           >
                             {iface.name}
-                            {iface.speed && iface.speed > 0 ? (
+                            {iface.speedMbps && iface.speedMbps > 0 ? (
                               <span className="text-text-muted ml-1">
-                                {iface.speed >= 1000000000
-                                  ? `${Math.round(iface.speed / 1000000000)}G`
-                                  : `${Math.round(iface.speed / 1000000)}M`}
+                                {iface.speedMbps >= 1000
+                                  ? `${Math.round(iface.speedMbps / 1000)}G`
+                                  : `${iface.speedMbps}M`}
                               </span>
                             ) : null}
                           </span>
@@ -470,16 +469,16 @@ export function _deviceRow({
                   ) : null}
 
                   {/* Hardware Inventory */}
-                  {device.snmpData.entities && device.snmpData.entities.length > 0 ? (
+                  {device.snmpData.inventory && device.snmpData.inventory.length > 0 ? (
                     <div>
                       <span className="text-xs text-text-muted">Hardware:</span>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-1 mt-1 text-xs">
-                        {device.snmpData.entities
+                        {device.snmpData.inventory
                           .filter(
                             (e) =>
-                              e.physicalClass === 'chassis' ||
-                              e.physicalClass === 'module' ||
-                              e.physicalClass === 'powerSupply',
+                              e.className === 'chassis' ||
+                              e.className === 'module' ||
+                              e.className === 'powerSupply',
                           )
                           .slice(0, 4)
                           .map((entity) => (

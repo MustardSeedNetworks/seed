@@ -254,8 +254,9 @@ export function validateSurvey(survey: Survey, criteria: PassFailCriterion[]): S
   );
 
   // Validate each criterion
+  const samples = survey.samples ?? [];
   const results: PassFailResult[] = applicableCriteria.map((criterion) =>
-    validateCriterion(survey.samples, criterion),
+    validateCriterion(samples, criterion),
   );
 
   // Calculate overall results
@@ -358,8 +359,8 @@ export function calculateMetricStatistics(
 
   values.sort((a, b) => a - b);
 
-  const [min] = values;
-  const max = values.at(-1);
+  const min = values[0] ?? 0;
+  const max = values.at(-1) ?? 0;
   const average = values.reduce((a, b) => a + b, 0) / values.length;
   const median =
     values.length % 2 === 0

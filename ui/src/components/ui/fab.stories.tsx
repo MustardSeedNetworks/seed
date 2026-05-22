@@ -1,5 +1,4 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
-import type React from 'react';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect } from 'react';
 import { cn, spacing } from '../../styles/theme';
 import { Fab } from './fab';
@@ -16,14 +15,14 @@ const meta: Meta<typeof Fab> = {
   },
   tags: ['autodocs'],
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="relative h-96 bg-surface-base">
         <div className={cn(spacing.pad.default)}>
           <p className="text-text-secondary">
             The FAB is fixed in the bottom-right corner. Click to trigger tests.
           </p>
         </div>
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],

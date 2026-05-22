@@ -51,7 +51,7 @@ type ChannelGraphApiResponse = {
  */
 const normalizeChannelGraphResponse = (response: ChannelGraphApiResponse): ChannelGraphResponse => {
   if (!response.data) {
-    return response;
+    return response as ChannelGraphResponse;
   }
 
   const data = response.data as Record<string, unknown>;

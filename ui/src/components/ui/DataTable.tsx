@@ -87,7 +87,7 @@ export interface DataTableProps<T> {
   loading?: boolean;
 }
 
-function _sortIcon({
+function SortIcon({
   direction,
   active,
 }: {
@@ -115,7 +115,7 @@ export function DataTable<T>({
   searchPlaceholder = 'Search...',
   searchKeys,
   onRowClick,
-  expandedContent: EXPANDED_CONTENT,
+  expandedContent: _EXPANDED_CONTENT,
   isExpanded,
   emptyMessage = 'No data found',
   maxHeight = 'max-h-80',
@@ -125,8 +125,6 @@ export function DataTable<T>({
   loading = false,
 }: DataTableProps<T>): React.JSX.Element {
   const { t } = useTranslation('common');
-  // Note: _expandedContent is available for future row expansion feature (prefixed to suppress unused warning)
-  const _expandedContent = EXPANDED_CONTENT;
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -434,7 +432,7 @@ export function DataTable<T>({
                   <span className={layout.inline.tight}>
                     {column.header}
                     {column.sortable ? (
-                      <sortIcon
+                      <SortIcon
                         direction={sortKey === column.key ? sortDirection : null}
                         active={sortKey === column.key}
                       />

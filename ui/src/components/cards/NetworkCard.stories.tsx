@@ -18,7 +18,7 @@ import { NetworkCard } from './NetworkCard';
  *
  * This story demonstrates various network configuration states.
  */
-const meta: Meta<(typeof meta)['component']> = {
+const meta: Meta<typeof NetworkCard> = {
   title: 'Cards/NetworkCard',
   component: NetworkCard,
   parameters: {
@@ -264,7 +264,7 @@ export const WithPublicIp: Story = {
         total: 151,
       },
     },
-    publicip: {
+    publicIp: {
       ipv4: '203.0.113.42',
       ipv6: '2001:db8::42',
       lastChecked: new Date(Date.now() - 300000).toISOString(),

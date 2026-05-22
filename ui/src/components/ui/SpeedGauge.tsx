@@ -70,10 +70,8 @@ function getPaddingBottomClass(size: 'sm' | 'md' | 'lg'): string {
       return spacing.micro.pbCompact;
     case 'lg':
       return spacing.micro.pbCompactMd;
-    default: {
-      const _exhaustive: never = size;
+    default:
       return spacing.micro.pbCompact;
-    }
   }
 }
 
@@ -86,10 +84,8 @@ function getFontSizeClass(size: 'sm' | 'md' | 'lg'): string {
       return 'text-[14px]';
     case 'lg':
       return 'text-[16px]';
-    default: {
-      const _exhaustive: never = size;
+    default:
       return 'text-[14px]';
-    }
   }
 }
 

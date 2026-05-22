@@ -1,6 +1,5 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react-vite';
-import { Lock, Mail, Search } from 'lucide-react';
-import type React from 'react';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
+import { Lock, Mail } from 'lucide-react';
 import { useState } from 'react';
 import {
   Checkbox,
@@ -34,9 +33,9 @@ const meta: Meta<typeof Input> = {
     disabled: { control: 'boolean' },
   },
   decorators: [
-    (StoryComponent: StoryFn): React.ReactElement => (
+    (Story: Parameters<Decorator>[0]) => (
       <div className="w-[360px]">
-        <StoryComponent />
+        <Story />
       </div>
     ),
   ],
@@ -153,7 +152,6 @@ export const SearchInputExample: Story = {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onClear={() => setQuery('')}
-        leftIcon={<Search className="h-4 w-4" />}
       />
     );
   },

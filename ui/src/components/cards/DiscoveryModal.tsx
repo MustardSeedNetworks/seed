@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { button, cn, icon as iconTokens, modal, radius } from '../../styles/theme';
 import { ArrowUpDown, ChevronDown, ChevronUp, Download, RefreshCw, Search, X } from '../ui/icons';
+import { DeviceRow } from './DiscoveryModalDeviceRow';
 import type { DiscoveredDevice, NetworkDiscoveryData } from './NetworkDiscoveryCard';
 
 interface DiscoveryModalProps {
@@ -86,7 +87,7 @@ function getSortIcon(isActive: boolean, direction: SortDirection): JSX.Element {
 }
 
 // Table header with sort indicator
-function _sortableHeader({
+function SortableHeader({
   label,
   field,
   currentField,
@@ -457,7 +458,7 @@ export function DiscoveryModal({
           <table className="w-full min-w-[900px]">
             <thead className="bg-surface-base sticky top-0">
               <tr className="border-b border-surface-border">
-                <sortableHeader
+                <SortableHeader
                   label={t('discovery.tableIp', 'IP Address')}
                   field="ip"
                   currentField={sortField}
@@ -465,7 +466,7 @@ export function DiscoveryModal({
                   onSort={handleSort}
                   className="w-40"
                 />
-                <sortableHeader
+                <SortableHeader
                   label={t('discovery.tableHostname', 'Hostname')}
                   field="hostname"
                   currentField={sortField}
@@ -473,7 +474,7 @@ export function DiscoveryModal({
                   onSort={handleSort}
                   className="w-40"
                 />
-                <sortableHeader
+                <SortableHeader
                   label={t('discovery.tableMac', 'MAC')}
                   field="mac"
                   currentField={sortField}
@@ -481,7 +482,7 @@ export function DiscoveryModal({
                   onSort={handleSort}
                   className="w-36"
                 />
-                <sortableHeader
+                <SortableHeader
                   label={t('discovery.tableVendor', 'Vendor')}
                   field="vendor"
                   currentField={sortField}
@@ -498,7 +499,7 @@ export function DiscoveryModal({
                 <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-20">
                   {t('discovery.tableVulns', 'CVEs')}
                 </th>
-                <sortableHeader
+                <SortableHeader
                   label={t('discovery.tableLastSeen', 'Last Seen')}
                   field="lastSeen"
                   currentField={sortField}
@@ -515,7 +516,7 @@ export function DiscoveryModal({
               {filteredDevices.map((device) => {
                 const deviceKey = device.mac || `ip:${device.ip}`;
                 return (
-                  <deviceRow
+                  <DeviceRow
                     key={deviceKey}
                     device={device}
                     isExpanded={expandedDevices.has(deviceKey)}

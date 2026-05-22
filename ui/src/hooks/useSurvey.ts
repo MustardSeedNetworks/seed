@@ -492,20 +492,7 @@ export interface CreateSurveyRequest {
  *
  * @returns Survey state and control functions
  */
-export function useSurvey(): {
-  surveys: Survey[];
-  loading: boolean;
-  error: string | null;
-  listSurveys: () => Promise<void>;
-  createSurvey: (params: CreateSurveyParams) => Promise<Survey | null>;
-  getSurvey: (id: string) => Promise<Survey | null>;
-  deleteSurvey: (id: string) => Promise<boolean>;
-  startSurvey: (id: string) => Promise<boolean>;
-  pauseSurvey: (id: string) => Promise<boolean>;
-  completeSurvey: (id: string) => Promise<boolean>;
-  addSample: (surveyId: string, sample: SurveySample) => Promise<boolean>;
-  updateFloorPlan: (surveyId: string, floorPlan: FloorPlan) => Promise<boolean>;
-} {
+export function useSurvey() {
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

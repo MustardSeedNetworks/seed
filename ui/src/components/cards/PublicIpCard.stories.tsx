@@ -14,7 +14,7 @@ import { PublicIpCard } from './PublicIpCard';
  *
  * This story demonstrates various public IP detection states.
  */
-const meta: Meta<(typeof meta)['component']> = {
+const meta: Meta<typeof PublicIpCard> = {
   title: 'Cards/PublicIpCard',
   component: PublicIpCard,
   parameters: {

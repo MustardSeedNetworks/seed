@@ -14,6 +14,11 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
+  args: {
+    cableTestSettings: { enabled: true },
+    setCableTestSettings: () => {},
+    cableTestStatus: 'idle',
+  },
   render: () => {
     const [settings, setSettings] = useState<CableTestSettingsType>(DEFAULT_CABLE_TEST_SETTINGS);
     return (
