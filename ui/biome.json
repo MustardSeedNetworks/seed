@@ -465,6 +465,19 @@
     },
     {
       "includes": [
+        "**/*.stories.ts",
+        "**/*.stories.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noShadow": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
         "**/scripts/**",
         "**/cli/**"
       ],
