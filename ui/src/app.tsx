@@ -670,11 +670,15 @@ function App(): JSX.Element {
 
   const handleLogin = useCallback(
     async (username: string, password: string) => {
-      const success = await login(username, password);
-      if (success) {
-        setSessionExpired(false);
-      }
-      return success;
+      // Clear the "session expired" banner at the START of every attempt
+      // — not only on success. Otherwise a stale session-expired flag
+      // (set by the previous logout/timeout) masks the real "Invalid
+      // credentials" error from the new attempt, because authError
+      // prioritizes sessionExpired over error. The user clicked Login,
+      // so they're acknowledging the stale-session notice; whatever
+      // happens next should reflect THIS attempt.
+      setSessionExpired(false);
+      return login(username, password);
     },
     [login],
   );
