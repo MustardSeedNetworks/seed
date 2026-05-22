@@ -11,11 +11,17 @@ export const button = {
   base: 'inline-flex items-center justify-center gap-2 rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed',
 
   variant: {
-    primary: 'bg-brand-primary text-text-inverse hover:bg-brand-accent',
+    // Seed anchor is seed-500 (#4caf50) — needs DARK text (white fails AA).
+    // text-zinc-900 is constant across modes (text-text-inverse flips and
+    // would fail one of them). Opacity hover avoids the lighten-to-accent
+    // trap. Per Phase 7 of the 2026-05-22 brand audit.
+    primary: 'bg-brand-primary text-zinc-900 hover:bg-brand-primary/90',
     secondary: 'border border-surface-border bg-surface-raised hover:bg-surface-hover',
     ghost: 'hover:bg-surface-hover',
-    danger: 'bg-status-error text-text-inverse hover:opacity-90',
-    success: 'bg-status-success text-text-inverse hover:opacity-90',
+    // Status danger/success buttons also fail AA with text-inverse in some
+    // mode; use a constant.
+    danger: 'bg-status-error text-white hover:bg-status-error/90',
+    success: 'bg-status-success text-zinc-900 hover:bg-status-success/90',
   },
 
   size: {
