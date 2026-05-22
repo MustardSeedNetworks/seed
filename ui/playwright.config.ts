@@ -21,8 +21,15 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // retries 1 (not 2) — one retry is enough to dodge transient flakes; the
+  //   second retry was costing ~30s × N flaky tests with no incremental signal.
+  // workers 2 in CI (was 1) — GH Actions runners are 4-vCPU; 1 worker wastes
+  //   75% of the box and is the biggest single driver of the 30-min full-suite
+  //   runtime we're trying to fix (issue #1072). Two workers run safely against
+  //   our single-instance backend without state interference today; bump to 4
+  //   once we've audited tests that mutate global server state.
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? 2 : undefined,
   timeout: 30000,
   expect: {
     timeout: 10000,
