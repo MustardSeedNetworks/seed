@@ -117,11 +117,11 @@
   --color-text-accent: #166534; /* Green 800 - links, highlights */
   --color-text-inverse: #ffffff; /* Pure White - text on colored backgrounds */
 
-  /* Status Colors - INDUSTRY STANDARD (do not change) */
-  --color-status-success: #28a745; /* Green - positive states */
-  --color-status-warning: #ffc107; /* Amber - caution states */
-  --color-status-error: #dc3545; /* Red - error/danger states */
-  --color-status-info: #17a2b8; /* Cyan - informational states */
+  /* Status Colors - canonical anchors, constant across modes (2026-05-22) */
+  --color-status-success: #4caf50; /* Material green = seed-500 */
+  --color-status-warning: #d4a017; /* Mustard = mustard-500 brand accent */
+  --color-status-error: #ef4444; /* Coral red */
+  --color-status-info: #1976d2; /* Material blue = stem-500 */
 
   /* Module Accent Colors - for icons/badges only, not backgrounds */
   --color-module-roots: #b45309; /* Amber/Brown - foundation, path analysis */
@@ -167,11 +167,11 @@
   --color-text-accent: #81c784; /* Lighter Seed Green - links, highlights */
   --color-text-inverse: #1a1a1a; /* Midnight - text on colored backgrounds */
 
-  /* Status Colors - INDUSTRY STANDARD (same as light mode) */
-  --color-status-success: #28a745;
-  --color-status-warning: #ffc107;
-  --color-status-error: #dc3545;
-  --color-status-info: #17a2b8;
+  /* Status Colors - canonical anchors (same as light, constant by design) */
+  --color-status-success: #4caf50;
+  --color-status-warning: #d4a017;
+  --color-status-error: #ef4444;
+  --color-status-info: #1976d2;
 
   /* Module Accent Colors - Lightened for dark backgrounds */
   --color-module-roots: #fbbf24; /* Lighter Amber - foundation, path analysis */
