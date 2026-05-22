@@ -16,13 +16,18 @@ const config: StorybookConfig = {
   ],
   framework: '@storybook/react-vite',
   viteFinal: (viteConfig: UserConfig): UserConfig => {
-    // Ensure CSS imports and path aliases resolve correctly
+    // OVERRIDE — don't merge aliases. The main vite.config.ts declares
+    // aliases as an array of `{find: RegExp, replacement: string}` entries
+    // (Vite's "advanced" form), but Storybook's rolldown-based builder
+    // expects the simpler object form. Spread-merging the two produces a
+    // malformed config that crashes with "StringExpected on
+    // BindingViteAliasPluginAlias.replacement". The object form below
+    // satisfies Storybook; runtime Vite still uses the regex form.
     return {
       ...viteConfig,
       resolve: {
         ...viteConfig.resolve,
         alias: {
-          ...viteConfig.resolve?.alias,
           '@': resolve(currentDir, '../src'),
           '@locales': resolve(currentDir, '../../internal/i18n/locales'),
         },
