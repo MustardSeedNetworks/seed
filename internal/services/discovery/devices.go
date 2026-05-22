@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"sync"
 	"time"
 
@@ -76,7 +77,29 @@ func loadOUIFromFile(oui *OUIDatabase, ouiPath string) {
 }
 
 // loadOUIWithAutoUpdate updates OUI database if needed, then loads it.
+//
+// Honors the SKIP_NETWORK_TESTS env var: when set, the auto-download is
+// skipped and the bundled file (loaded via TryLoadIEEEFile or its
+// preloaded vendor map) is used as-is. CI sets this env var to avoid
+// hanging on the IEEE OUI download when the runner has no outbound
+// network — without the guard the 2-min timeout per attempt stacks up
+// and the test suite blows past its 10-min deadline.
+//
+// Production binaries get a fresh OUI baked in at build time, so the
+// in-process refresh is a quality-of-life feature, not load-bearing.
 func loadOUIWithAutoUpdate(oui *OUIDatabase, ouiPath string, ouiMaxAge time.Duration) {
+	if os.Getenv("SKIP_NETWORK_TESTS") != "" {
+		if err := oui.TryLoadIEEEFile(); err != nil {
+			logging.GetLogger().Warn("SKIP_NETWORK_TESTS set; bundled OUI file not loadable", "error", err)
+		} else {
+			logging.GetLogger().Info(
+				"OUI database loaded from bundled file (SKIP_NETWORK_TESTS set)",
+				"entries", oui.Count(),
+			)
+		}
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), ouiUpdateTimeoutMinutes*time.Minute)
 	defer cancel()
 
