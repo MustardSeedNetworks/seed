@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.195.0](https://github.com/krisarmstrong/seed/compare/v0.194.0...v0.195.0) (2026-05-22)
+
+
+### Features
+
+* **theme:** adopt botanical-earth surface palette (Phase 4) ([ba20ddd](https://github.com/krisarmstrong/seed/commit/ba20dddd9aa47252665ede817e99e31a4fc54fa4))
+* **theme:** Apply 2026-05-22 brand audit — botanical-earth + Seed identity ([4b041d8](https://github.com/krisarmstrong/seed/commit/4b041d805a1ef89ffc7dd3a7e8094a1ee9fb81dc))
+* **theme:** fix button contrast against constant brand anchor (Phase 7) ([16650ed](https://github.com/krisarmstrong/seed/commit/16650ed81c5c18828fd4fdefd0d2016f90e300ec))
+* **theme:** lock brand anchor to seed-500 constant across modes (Phase 5) ([2693d6e](https://github.com/krisarmstrong/seed/commit/2693d6e0b2be617c985d565d5537ccf3b282bae1))
+* **theme:** self-host Inter + JetBrains Mono via [@fontsource-variable](https://github.com/fontsource-variable) (Phase 2) ([cbd0268](https://github.com/krisarmstrong/seed/commit/cbd026822ef29cc5cc53d70f81eac420d68914a8))
+* **theme:** swap status palette to canonical brand-tied anchors (Phase 1) ([4334ef4](https://github.com/krisarmstrong/seed/commit/4334ef4520f364cbedbf2cb85c3eaff43187714c))
+
 ## [0.194.0](https://github.com/krisarmstrong/seed/compare/v0.193.1...v0.194.0) (2026-05-22)
 
 
