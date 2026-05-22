@@ -24,7 +24,7 @@ import { mockAuthenticated } from './helpers/auth';
  * - Content rendering
  */
 
-test.describe('Theme Toggle and Help Modal', () => {
+test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthenticated(page);
     await page.goto('/');
