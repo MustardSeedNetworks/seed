@@ -47,7 +47,7 @@ function ThemeWrapper({
  * Loading fallback for Suspense during i18n initialization
  */
 function LoadingFallback(): JSX.Element {
-  return <div class="flex items-center justify-center p-4 text-text-muted">Loading...</div>;
+  return <div className="flex items-center justify-center p-4 text-text-muted">Loading...</div>;
 }
 
 const preview: Preview = {
@@ -66,11 +66,28 @@ const preview: Preview = {
       ],
     },
     layout: 'centered',
+    // Wave 5 / seed-W5-3: activate the axe-core a11y addon. 'todo'
+    // surfaces WCAG 2.1 AA violations in the Storybook UI as a
+    // catalog without failing CI yet. After a baseline pass through
+    // existing stories, raise to 'error' to gate new violations.
+    a11y: {
+      test: 'todo',
+      config: {
+        rules: [
+          // color-contrast can flake on Tailwind tokens whose runtime
+          // values depend on theme-context. Leave enabled but bias
+          // toward report-only for now.
+        ],
+      },
+    },
   },
   decorators: [
-    // Global decorator: wraps all stories with providers
-    ((_story: () => ReactNode, context: StoryContext<ReactRenderer>): JSX.Element => {
-      // Determine theme from background parameter
+    // Global decorator: wraps all stories with providers. The Story
+    // argument is the rendered story; rendering `<Story />` (capital
+    // S — JSX component, not the lowercase HTML element placeholder
+    // a prior version had) is what makes the wrapper actually show
+    // the story content.
+    ((Story: () => ReactNode, context: StoryContext<ReactRenderer>): JSX.Element => {
       const isDark =
         context.globals.backgrounds?.value !== 'var(--color-surface-base-light, #f8fafc)';
 
@@ -79,8 +96,8 @@ const preview: Preview = {
           <Suspense fallback={<LoadingFallback />}>
             <ProfileProvider>
               <ThemeWrapper dark={isDark}>
-                <div class="p-4">
-                  <story />
+                <div className="p-4">
+                  <Story />
                 </div>
               </ThemeWrapper>
             </ProfileProvider>
