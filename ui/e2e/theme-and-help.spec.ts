@@ -28,7 +28,9 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthenticated(page);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+    // Pin to level: 1 + exact-match "Link" so the H3 "Link Status" card
+    // chrome doesn't trip strict mode (same fix as auth.spec / dashboard.spec).
+    await expect(page.getByRole('heading', { name: /^link$/i, level: 1 })).toBeVisible({
       timeout: 10000,
     });
   });
