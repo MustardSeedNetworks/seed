@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.194.0](https://github.com/krisarmstrong/seed/compare/v0.193.1...v0.194.0) (2026-05-22)
+
+
+### Features
+
+* **stories:** activate a11y addon + fix decorator (Wave 5 / seed-W5-3) ([#1063](https://github.com/krisarmstrong/seed/issues/1063)) ([97fbc3e](https://github.com/krisarmstrong/seed/commit/97fbc3ec7b074734d93969a9072f6e916a8936db))
+
+
+### Bug Fixes
+
+* **auth+e2e:** stabilize auth.spec + dashboard.spec for [@smoke](https://github.com/smoke) ([#1053](https://github.com/krisarmstrong/seed/issues/1053)) ([#1065](https://github.com/krisarmstrong/seed/issues/1065)) ([d48943b](https://github.com/krisarmstrong/seed/commit/d48943bc4043e7c871f9d5f421dac122072e6cd7))
+* **e2e:** Broaden smoke filter to exclude 404/Failed-to-load-resource ([#1068](https://github.com/krisarmstrong/seed/issues/1068)) ([571ef76](https://github.com/krisarmstrong/seed/commit/571ef7618cd5724d972d70c7f670bf00082f4deb))
+* **lint:** disable noShadow in stories (Storybook decorator convention) ([#1067](https://github.com/krisarmstrong/seed/issues/1067)) ([3822887](https://github.com/krisarmstrong/seed/commit/38228872e13c66b72c8fb48ce10d73a240626838))
+
 ## [0.193.1](https://github.com/krisarmstrong/seed/compare/v0.193.0...v0.193.1) (2026-05-21)
 
 
