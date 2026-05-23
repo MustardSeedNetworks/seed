@@ -855,7 +855,7 @@ func (s *Server) handleIPSettingsPut(
 		w,
 		logger,
 		http.StatusOK,
-		map[string]string{"status": "success", "message": "IP configuration updated"},
+		map[string]string{"status": statusSuccess, "message": "IP configuration updated"},
 	)
 }
 
@@ -933,7 +933,7 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"status":    "success",
+		"status":    statusSuccess,
 		"message":   "MTU updated",
 		"interface": iface,
 		"mtu":       req.MTU,

@@ -180,6 +180,14 @@ linters:
       # Default: 0.0
       package-average: 10.0
 
+    goconst:
+      # Minimum occurrences of a string to flag. Default 3. Bumped to 10
+      # so data files (cobra Use: strings, distro IDs, MOC vendor names,
+      # vcs.* metadata keys) with 3-9 short-string occurrences aren't
+      # forced into PascalCase consts.
+      min-occurrences: 10
+      min-len: 3
+
     depguard:
       # Rules to apply.
       #
@@ -495,6 +503,19 @@ linters:
       # The repeated strings (ftp/ssh/http/etc.) are protocol identifiers,
       # not refactorable constants.
       - path: 'internal/services/discovery/profiler_infer\.go'
+        linters: [ goconst ]
+      # oui.go is a MAC OUI -> vendor name lookup table. Apple/Dell appear
+      # 16-24 times because the IEEE assigns them many prefixes; extracting
+      # `const VendorApple` adds noise without improving safety.
+      - path: 'internal/services/discovery/oui\.go'
+        linters: [ goconst ]
+      # Shared JSON response field-name conventions across all api handlers
+      # (status/message/error/interface/available/good). Project uses literal
+      # keys in map[string]any{...} payloads by convention; consolidating
+      # them into a single const would require touching every handler with
+      # no behavioural change. The strings ARE the wire contract.
+      - path: 'internal/api/'
+        text: 'string `(status|message|error|interface|available|good|warning)` has'
         linters: [ goconst ]
       - path: 'internal/services/discovery/profiler_scan\.go'
         text: 'string `https?` has'

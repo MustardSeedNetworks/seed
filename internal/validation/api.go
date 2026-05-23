@@ -21,6 +21,9 @@ const (
 	MaxEndpointNameLength = 100
 )
 
+// fieldNameKey is the JSON field name for resource names in error responses.
+const fieldNameKey = "name"
+
 // APIError represents a standardized JSON error response.
 type APIError struct {
 	Error   string            `json:"error"`
@@ -147,9 +150,9 @@ func ValidateHTTPEndpoint(ep *HTTPEndpointRequest) []FieldError {
 	var errors []FieldError
 
 	if ep.Name == "" {
-		errors = append(errors, FieldError{Field: "name", Message: "name is required"})
+		errors = append(errors, FieldError{Field: fieldNameKey, Message: "name is required"})
 	} else if len(ep.Name) > MaxEndpointNameLength {
-		errors = append(errors, FieldError{Field: "name", Message: "name too long (max 100 characters)"})
+		errors = append(errors, FieldError{Field: fieldNameKey, Message: "name too long (max 100 characters)"})
 	}
 
 	if ep.URL == "" {
@@ -182,9 +185,9 @@ func ValidatePingTarget(pt *PingTargetRequest) []FieldError {
 	var errors []FieldError
 
 	if pt.Name == "" {
-		errors = append(errors, FieldError{Field: "name", Message: "name is required"})
+		errors = append(errors, FieldError{Field: fieldNameKey, Message: "name is required"})
 	} else if len(pt.Name) > MaxEndpointNameLength {
-		errors = append(errors, FieldError{Field: "name", Message: "name too long (max 100 characters)"})
+		errors = append(errors, FieldError{Field: fieldNameKey, Message: "name too long (max 100 characters)"})
 	}
 
 	if pt.Host == "" {
@@ -209,9 +212,9 @@ func ValidateTCPPort(tp *TCPPortRequest) []FieldError {
 	var errors []FieldError
 
 	if tp.Name == "" {
-		errors = append(errors, FieldError{Field: "name", Message: "name is required"})
+		errors = append(errors, FieldError{Field: fieldNameKey, Message: "name is required"})
 	} else if len(tp.Name) > MaxEndpointNameLength {
-		errors = append(errors, FieldError{Field: "name", Message: "name too long (max 100 characters)"})
+		errors = append(errors, FieldError{Field: fieldNameKey, Message: "name too long (max 100 characters)"})
 	}
 
 	if tp.Host == "" {

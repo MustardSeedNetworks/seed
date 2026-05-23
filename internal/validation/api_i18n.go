@@ -166,12 +166,12 @@ func ValidateHTTPEndpointI18n(ep *HTTPEndpointRequest) []FieldErrorWithKey {
 
 	if ep.Name == "" {
 		errors = append(errors, FieldErrorWithKey{
-			Field:      "name",
+			Field:      fieldNameKey,
 			MessageKey: "validation.endpoint.nameRequired",
 		})
 	} else if len(ep.Name) > MaxEndpointNameLength {
 		errors = append(errors, FieldErrorWithKey{
-			Field:      "name",
+			Field:      fieldNameKey,
 			MessageKey: "validation.endpoint.nameTooLong",
 		})
 	}
@@ -207,12 +207,12 @@ func ValidatePingTargetI18n(pt *PingTargetRequest) []FieldErrorWithKey {
 
 	if pt.Name == "" {
 		errors = append(errors, FieldErrorWithKey{
-			Field:      "name",
+			Field:      fieldNameKey,
 			MessageKey: "validation.endpoint.nameRequired",
 		})
 	} else if len(pt.Name) > MaxEndpointNameLength {
 		errors = append(errors, FieldErrorWithKey{
-			Field:      "name",
+			Field:      fieldNameKey,
 			MessageKey: "validation.endpoint.nameTooLong",
 		})
 	}
@@ -238,12 +238,12 @@ func ValidateTCPPortI18n(tp *TCPPortRequest) []FieldErrorWithKey {
 
 	if tp.Name == "" {
 		errors = append(errors, FieldErrorWithKey{
-			Field:      "name",
+			Field:      fieldNameKey,
 			MessageKey: "validation.endpoint.nameRequired",
 		})
 	} else if len(tp.Name) > MaxEndpointNameLength {
 		errors = append(errors, FieldErrorWithKey{
-			Field:      "name",
+			Field:      fieldNameKey,
 			MessageKey: "validation.endpoint.nameTooLong",
 		})
 	}

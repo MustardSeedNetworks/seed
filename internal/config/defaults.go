@@ -459,7 +459,7 @@ func buildTestsDefaults(cfg *Config) TestsDefaults {
 
 // generateDefaultID creates a stable ID for default items.
 //
-// Uses fmt.Sprintf("%d") instead of the historical rune trick so an index
+// Uses [fmt.Sprintf]("%d") instead of the historical rune trick so an index
 // > 9 produces a multi-digit suffix instead of garbage runes.
 func generateDefaultID(prefix string, index int) string {
 	return fmt.Sprintf("%s-default-%s-%d", prefix, time.Now().Format("2006"), index)

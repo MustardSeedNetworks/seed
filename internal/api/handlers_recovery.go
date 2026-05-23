@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/auth"
@@ -170,16 +171,24 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Token is valid - proceed with password reset.
+	s.applyRecoveredPassword(w, r, logger, localizer, clientIP, req.Password)
+}
 
-	// Capture the OLD hash's algorithm before we overwrite, for audit.
+// applyRecoveredPassword enforces the password policy, hashes + persists the
+// new password, cleans up recovery state, and emits the audit log. Split out
+// of handleRecoveryComplete to keep that handler under the funlen budget.
+func (s *Server) applyRecoveredPassword(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+	clientIP, password string,
+) {
 	previousAlg := string(auth.DetectHashAlgorithm(s.config.Auth.DefaultPasswordHash))
 
-	// Enforce full password policy: length+class, zxcvbn strength,
-	// HIBP breach corpus. (Wave 2 / task #86.)
 	policyResult, policyErr := auth.EnforcePasswordPolicy(
 		r.Context(),
-		req.Password,
+		password,
 		[]string{s.config.Auth.DefaultUsername},
 	)
 	if policyErr != nil {
@@ -187,8 +196,7 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Hash the new password (Argon2id).
-	hash, err := auth.HashPassword(req.Password)
+	hash, err := auth.HashPassword(password)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to hash password during recovery", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal,
@@ -196,7 +204,6 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Update password in config, database, and auth manager
 	username, err := s.updatePasswordHash(r.Context(), hash)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to save config after recovery", "error", err)
@@ -205,13 +212,9 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Cleanup recovery files
 	s.recoveryManager().Cleanup()
-
-	// Reset rate limiter for this IP after successful recovery
 	s.loginRateLimiter().RecordAttempt(clientIP, true)
 
-	// Security audit log (Wave 2 / task #84: includes previous_algorithm).
 	logger.InfoContext(r.Context(), "Password recovery completed successfully",
 		"client_ip", clientIP,
 		"username", username,

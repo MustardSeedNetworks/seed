@@ -362,7 +362,7 @@ func (s *Server) completeOAuthLogin(
 		return false
 	}
 
-	s.clearOAuthCookies(w, r)
+	s.clearOAuthCookies(w)
 
 	cookieConfig := auth.DefaultCookieConfig()
 	auth.SetAccessTokenCookie(w, accessToken, cookieConfig)
@@ -419,7 +419,7 @@ func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 
 // redirectWithError redirects to the frontend with an error message.
 func (s *Server) redirectWithError(w http.ResponseWriter, r *http.Request, errorMsg string) {
-	s.clearOAuthCookies(w, r)
+	s.clearOAuthCookies(w)
 	// Always redirect to the root of OUR app — never an attacker-controlled
 	// URL. errorMsg is properly URL-encoded as a query param value.
 	target := (&url.URL{
@@ -430,7 +430,7 @@ func (s *Server) redirectWithError(w http.ResponseWriter, r *http.Request, error
 }
 
 // clearOAuthCookies removes the OAuth state cookies.
-func (s *Server) clearOAuthCookies(w http.ResponseWriter, r *http.Request) {
+func (s *Server) clearOAuthCookies(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     oauthStateCookie,
 		Value:    "",

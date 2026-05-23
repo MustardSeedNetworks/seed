@@ -489,7 +489,7 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  "success",
+		"status":  statusSuccess,
 		"message": "Network discovery settings updated",
 	})
 }
@@ -625,7 +625,7 @@ func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  "success",
+		"status":  statusSuccess,
 		"message": "Subnet added",
 	})
 }
@@ -705,7 +705,7 @@ func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  "success",
+		"status":  statusSuccess,
 		"message": "Subnet updated",
 	})
 }
@@ -769,7 +769,7 @@ func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  "success",
+		"status":  statusSuccess,
 		"message": "Subnet deleted",
 	})
 }

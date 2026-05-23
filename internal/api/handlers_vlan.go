@@ -301,7 +301,7 @@ func (s *Server) createVLANInterface(
 	}
 
 	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"status":    "success",
+		"status":    statusSuccess,
 		"message":   "VLAN interface created",
 		"interface": iface,
 		"vlanId":    vlanID,
@@ -344,7 +344,7 @@ func (s *Server) deleteVLANInterface(
 	}
 
 	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"status":    "success",
+		"status":    statusSuccess,
 		"message":   "VLAN interface deleted",
 		"interface": iface,
 		"vlanId":    vlanID,

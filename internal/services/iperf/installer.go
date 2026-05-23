@@ -21,6 +21,10 @@ import (
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
+// iperfPackageName is the canonical package name for iperf3 across all
+// supported OS package managers (apt/dnf/yum/pacman/apk/zypper/brew/etc).
+const iperfPackageName = "iperf3"
+
 const (
 	// GitHub API endpoint for iperf3 releases.
 	iperfReleasesAPI = "https://api.github.com/repos/esnet/iperf/releases/latest"
@@ -124,20 +128,20 @@ func detectLinuxPackageManager() *PackageManagerInfo {
 		install []string
 		update  []string
 	}{
-		{"apt", "apt", []string{"apt", "install", "-y", "iperf3"}, []string{"apt", "update"}},
-		{"dnf", "dnf", []string{"dnf", "install", "-y", "iperf3"}, nil},
-		{"yum", "yum", []string{"yum", "install", "-y", "iperf3"}, nil},
+		{"apt", "apt", []string{"apt", "install", "-y", iperfPackageName}, []string{"apt", "update"}},
+		{"dnf", "dnf", []string{"dnf", "install", "-y", iperfPackageName}, nil},
+		{"yum", "yum", []string{"yum", "install", "-y", iperfPackageName}, nil},
 		{
 			"pacman",
 			"pacman",
-			[]string{"pacman", "-S", "--noconfirm", "iperf3"},
+			[]string{"pacman", "-S", "--noconfirm", iperfPackageName},
 			[]string{"pacman", "-Sy"},
 		},
-		{"apk", "apk", []string{"apk", "add", "iperf3"}, []string{"apk", "update"}},
+		{"apk", "apk", []string{"apk", "add", iperfPackageName}, []string{"apk", "update"}},
 		{
 			"zypper",
 			"zypper",
-			[]string{"zypper", "install", "-y", "iperf3"},
+			[]string{"zypper", "install", "-y", iperfPackageName},
 			[]string{"zypper", "refresh"},
 		},
 	}
@@ -160,7 +164,7 @@ func detectMacOSPackageManager() *PackageManagerInfo {
 	if _, err := exec.LookPath("brew"); err == nil {
 		return &PackageManagerInfo{
 			Name:           "homebrew",
-			InstallCommand: []string{"brew", "install", "iperf3"},
+			InstallCommand: []string{"brew", "install", iperfPackageName},
 			UpdateCommand:  []string{"brew", "update"},
 			Available:      true,
 		}
@@ -169,7 +173,7 @@ func detectMacOSPackageManager() *PackageManagerInfo {
 	if _, err := exec.LookPath("port"); err == nil {
 		return &PackageManagerInfo{
 			Name:           "macports",
-			InstallCommand: []string{"port", "install", "iperf3"},
+			InstallCommand: []string{"port", "install", iperfPackageName},
 			UpdateCommand:  []string{"port", "selfupdate"},
 			Available:      true,
 		}
@@ -182,7 +186,7 @@ func detectWindowsPackageManager() *PackageManagerInfo {
 	if _, err := exec.LookPath("choco"); err == nil {
 		return &PackageManagerInfo{
 			Name:           "chocolatey",
-			InstallCommand: []string{"choco", "install", "iperf3", "-y"},
+			InstallCommand: []string{"choco", "install", iperfPackageName, "-y"},
 			Available:      true,
 		}
 	}
@@ -190,7 +194,7 @@ func detectWindowsPackageManager() *PackageManagerInfo {
 	if _, err := exec.LookPath("scoop"); err == nil {
 		return &PackageManagerInfo{
 			Name:           "scoop",
-			InstallCommand: []string{"scoop", "install", "iperf3"},
+			InstallCommand: []string{"scoop", "install", iperfPackageName},
 			Available:      true,
 		}
 	}
@@ -198,7 +202,7 @@ func detectWindowsPackageManager() *PackageManagerInfo {
 	if _, err := exec.LookPath("winget"); err == nil {
 		return &PackageManagerInfo{
 			Name:           "winget",
-			InstallCommand: []string{"winget", "install", "iperf3"},
+			InstallCommand: []string{"winget", "install", iperfPackageName},
 			Available:      true,
 		}
 	}
@@ -308,7 +312,7 @@ func InstallViaPackageManager(opts InstallOptions) *InstallResult {
 	}
 
 	// Verify installation
-	path, err := exec.LookPath("iperf3")
+	path, err := exec.LookPath(iperfPackageName)
 	if err != nil {
 		return &InstallResult{
 			Success: false,
@@ -546,11 +550,11 @@ func installIperf3(sourceDir string, opts InstallOptions) *InstallResult {
 	}
 
 	// Verify installation
-	path, err := exec.LookPath("iperf3")
+	path, err := exec.LookPath(iperfPackageName)
 	if err != nil {
 		// Check if installed to custom prefix
 		if opts.InstallDir != "" {
-			customPath := filepath.Join(opts.InstallDir, "bin", "iperf3")
+			customPath := filepath.Join(opts.InstallDir, "bin", iperfPackageName)
 			if _, statErr := os.Stat(customPath); statErr == nil {
 				path = customPath
 			}
