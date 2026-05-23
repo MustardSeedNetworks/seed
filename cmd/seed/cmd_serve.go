@@ -46,9 +46,8 @@ func initServeCmd(state *cliState) {
 		Long: `Start The Seed network diagnostics server.
 
 The server provides a web-based UI for network diagnostics, monitoring,
-and analysis. By default, it runs with HTTPS enabled on port 8443.
-
-Use the --dev flag to run in development mode (HTTP on port 8080).`,
+and analysis. It runs with HTTPS on port 8443. HTTPS is required —
+the HTTP listener exists only as a 308 redirector.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			runServe(cmd, args, state)
 		},
@@ -61,7 +60,7 @@ func runServe(_ *cobra.Command, _ []string, state *cliState) {
 	configPath := paths.ResolveConfigPath(state.cfgFile, paths.ModeAuto)
 
 	icmpAvailable := checkICMPCapabilities()
-	cfg := loadAndConfigureConfig(configPath, state.devMode)
+	cfg := loadAndConfigureConfig(configPath)
 	logPath := setupLogging(cfg)
 
 	// Check for deprecated SNMP settings after logging is initialized
@@ -202,7 +201,7 @@ func setupLogging(cfg *config.Config) string {
 
 // loadAndConfigureConfig loads configuration and applies necessary modifications.
 // Note: Called before logging is initialized, so uses [fmt.Fprintf] for errors.
-func loadAndConfigureConfig(configPath string, devMode bool) *config.Config {
+func loadAndConfigureConfig(configPath string) *config.Config {
 	cfg, _, err := config.EnsureConfig(configPath, auth.IsDefaultPasswordHash)
 	if err != nil && !errors.Is(err, config.ErrInsecureCredentials) {
 		fmt.Fprintf(os.Stderr, "Fatal: Failed to load configuration: %v\n", err)
@@ -222,13 +221,10 @@ func loadAndConfigureConfig(configPath string, devMode bool) *config.Config {
 	}
 
 	migrateSNMPCredentials(cfg, configPath)
-	// Security fix #301: Removed applyEnvironmentOverrides (LOG_ACCESS_TOKEN) - JWT auth is sufficient
 
-	if devMode {
-		fmt.Fprintln(os.Stderr, "Running in development mode")
-		cfg.Server.HTTPS = false
-		fmt.Fprintln(os.Stderr, "Protocol: HTTP (development mode)")
-	}
+	// HTTPS is required, unconditionally. The HTTP listener exists only as a
+	// 308 redirector. No --dev or env-var opt-out is supported.
+	cfg.Server.HTTPS = true
 
 	if validateErr := cfg.Validate(); validateErr != nil {
 		fmt.Fprintf(os.Stderr, "Fatal: Invalid configuration: %v\n", validateErr)

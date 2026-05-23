@@ -3,7 +3,10 @@ package config
 // The default profile settings are exposed via API so the frontend
 // doesn't need to maintain duplicate default values.
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // defaultPingCount is the number of ICMP echo requests sent per ping target.
 const defaultPingCount = 3
@@ -368,18 +371,26 @@ func buildThresholdDefaults(t *ThresholdMsValues) ThresholdDefaults {
 // buildNetworkDiscoveryDefaults constructs network discovery defaults from config.
 func buildNetworkDiscoveryDefaults(cfg *Config) NetworkDiscoveryDefaults {
 	return NetworkDiscoveryDefaults{
-		Enabled: cfg.NetworkDiscovery.Enabled, ARPScanWorkers: cfg.NetworkDiscovery.ARPScanWorkers,
-		PingTimeoutMs: cfg.NetworkDiscovery.PingTimeout.Milliseconds(), ScanTimeoutMs: cfg.NetworkDiscovery.ScanTimeout.Milliseconds(),
-		AutoScan: cfg.NetworkDiscovery.AutoScan, ScanIntervalMs: cfg.NetworkDiscovery.ScanInterval.Milliseconds(), IPv6Enabled: cfg.NetworkDiscovery.IPv6Enabled,
+		Enabled:        cfg.NetworkDiscovery.Enabled,
+		ARPScanWorkers: cfg.NetworkDiscovery.ARPScanWorkers,
+		PingTimeoutMs:  cfg.NetworkDiscovery.PingTimeout.Milliseconds(),
+		ScanTimeoutMs:  cfg.NetworkDiscovery.ScanTimeout.Milliseconds(),
+		AutoScan:       cfg.NetworkDiscovery.AutoScan,
+		ScanIntervalMs: cfg.NetworkDiscovery.ScanInterval.Milliseconds(),
+		IPv6Enabled:    cfg.NetworkDiscovery.IPv6Enabled,
 		Options: DiscoveryOptionsDefaults{
 			PassiveProtocols: PassiveProtocolDefaults{
-				LLDP: cfg.NetworkDiscovery.Options.PassiveProtocols.LLDP, CDP: cfg.NetworkDiscovery.Options.PassiveProtocols.CDP,
-				EDP: cfg.NetworkDiscovery.Options.PassiveProtocols.EDP, NDP: cfg.NetworkDiscovery.Options.PassiveProtocols.NDP,
+				LLDP: cfg.NetworkDiscovery.Options.PassiveProtocols.LLDP,
+				CDP:  cfg.NetworkDiscovery.Options.PassiveProtocols.CDP,
+				EDP:  cfg.NetworkDiscovery.Options.PassiveProtocols.EDP,
+				NDP:  cfg.NetworkDiscovery.Options.PassiveProtocols.NDP,
 			},
 			ARPScan: cfg.NetworkDiscovery.Options.ARPScan, ICMPScan: cfg.NetworkDiscovery.Options.ICMPScan,
 			PortScan: PortScanDefaults{
-				Enabled: cfg.NetworkDiscovery.Options.PortScan.Enabled, Preset: string(cfg.NetworkDiscovery.Options.PortScan.Preset),
-				TCPPorts: cfg.NetworkDiscovery.Options.PortScan.TCPPorts, UDPPorts: cfg.NetworkDiscovery.Options.PortScan.UDPPorts,
+				Enabled:         cfg.NetworkDiscovery.Options.PortScan.Enabled,
+				Preset:          string(cfg.NetworkDiscovery.Options.PortScan.Preset),
+				TCPPorts:        cfg.NetworkDiscovery.Options.PortScan.TCPPorts,
+				UDPPorts:        cfg.NetworkDiscovery.Options.PortScan.UDPPorts,
 				BannerTimeoutMs: cfg.NetworkDiscovery.Options.PortScan.BannerTimeout.Milliseconds(),
 			},
 			TCPProbe: TCPProbeDefaults{
@@ -389,15 +400,19 @@ func buildNetworkDiscoveryDefaults(cfg *Config) NetworkDiscoveryDefaults {
 			Traceroute: cfg.NetworkDiscovery.Options.Traceroute, SNMPQuery: cfg.NetworkDiscovery.Options.SNMPQuery,
 		},
 		Timing: DiscoveryTimingDefaults{
-			ProbeIntervalMs: cfg.NetworkDiscovery.Timing.ProbeInterval.Milliseconds(), RescanIntervalMs: cfg.NetworkDiscovery.Timing.RescanInterval.Milliseconds(),
-			Workers: cfg.NetworkDiscovery.Timing.Workers,
+			ProbeIntervalMs:  cfg.NetworkDiscovery.Timing.ProbeInterval.Milliseconds(),
+			RescanIntervalMs: cfg.NetworkDiscovery.Timing.RescanInterval.Milliseconds(),
+			Workers:          cfg.NetworkDiscovery.Timing.Workers,
 		},
 		Profiler: DeviceProfilerDefaults{
-			Enabled: cfg.NetworkDiscovery.Profiler.Enabled, TimeoutMs: cfg.NetworkDiscovery.Profiler.Timeout.Milliseconds(),
-			MaxConcurrent: cfg.NetworkDiscovery.Profiler.MaxConcurrent, QuickPorts: cfg.NetworkDiscovery.Profiler.QuickPorts,
+			Enabled:       cfg.NetworkDiscovery.Profiler.Enabled,
+			TimeoutMs:     cfg.NetworkDiscovery.Profiler.Timeout.Milliseconds(),
+			MaxConcurrent: cfg.NetworkDiscovery.Profiler.MaxConcurrent,
+			QuickPorts:    cfg.NetworkDiscovery.Profiler.QuickPorts,
 		},
 		Fingerprinting: FingerprintingDefaults{
-			Enabled: cfg.NetworkDiscovery.Fingerprinting.Enabled, OSDetection: cfg.NetworkDiscovery.Fingerprinting.OSDetection,
+			Enabled:       cfg.NetworkDiscovery.Fingerprinting.Enabled,
+			OSDetection:   cfg.NetworkDiscovery.Fingerprinting.OSDetection,
 			ServiceProbes: cfg.NetworkDiscovery.Fingerprinting.ServiceProbes,
 		},
 	}
@@ -443,6 +458,9 @@ func buildTestsDefaults(cfg *Config) TestsDefaults {
 }
 
 // generateDefaultID creates a stable ID for default items.
+//
+// Uses fmt.Sprintf("%d") instead of the historical rune trick so an index
+// > 9 produces a multi-digit suffix instead of garbage runes.
 func generateDefaultID(prefix string, index int) string {
-	return prefix + "-default-" + time.Now().Format("2006") + "-" + string(rune('0'+index))
+	return fmt.Sprintf("%s-default-%s-%d", prefix, time.Now().Format("2006"), index)
 }

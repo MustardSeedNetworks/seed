@@ -7,7 +7,6 @@ import (
 )
 
 func TestRedactSecrets(t *testing.T) {
-
 	tests := []struct {
 		name string
 		cfg  *config.Config
@@ -77,7 +76,6 @@ func TestRedactSecrets(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			redacted := redactSecrets(tc.cfg)
 			assertRedactedSecrets(t, tc.cfg, redacted)
 		})
@@ -85,7 +83,6 @@ func TestRedactSecrets(t *testing.T) {
 }
 
 func TestRedactSecretsPreservesNonSensitiveData(t *testing.T) {
-
 	original := &config.Config{
 		Version: 2,
 		Server: config.ServerConfig{
@@ -209,7 +206,6 @@ func assertPreservedNonSensitiveData(t *testing.T, original, redacted *config.Co
 }
 
 func TestRedactSecretsDoesNotModifyOriginal(t *testing.T) {
-
 	original := &config.Config{
 		Auth: config.AuthConfig{
 			DefaultPasswordHash: "original-hash",
@@ -275,14 +271,12 @@ func TestRedactSecretsDoesNotModifyOriginal(t *testing.T) {
 }
 
 func TestRedactedValueConstant(t *testing.T) {
-
 	if redactedValue != "[REDACTED]" {
 		t.Errorf("redactedValue should be '[REDACTED]', got %q", redactedValue)
 	}
 }
 
 func TestRedactSecretsWithEmptySNMPCredentials(t *testing.T) {
-
 	cfg := &config.Config{
 		Auth: config.AuthConfig{
 			DefaultPasswordHash: "hash",
@@ -302,7 +296,6 @@ func TestRedactSecretsWithEmptySNMPCredentials(t *testing.T) {
 }
 
 func TestRedactSecretsWithMultipleSNMPCredentials(t *testing.T) {
-
 	cfg := &config.Config{
 		SNMP: config.SNMPConfig{
 			V3Credentials: []config.SNMPv3Credential{

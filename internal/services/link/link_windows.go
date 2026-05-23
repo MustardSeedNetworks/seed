@@ -52,7 +52,10 @@ func getSpeedDuplex(iface string) (Speed, Duplex) {
 // getSpeedDuplexPowerShell uses PowerShell Get-NetAdapter for speed/duplex.
 func getSpeedDuplexPowerShell(ctx context.Context, iface string) (Speed, Duplex) {
 	// PowerShell command to get adapter info
-	psCmd := fmt.Sprintf(`Get-NetAdapter -Name '%s' -ErrorAction SilentlyContinue | Select-Object LinkSpeed, FullDuplex | ConvertTo-Csv -NoTypeInformation`, iface)
+	psCmd := fmt.Sprintf(
+		`Get-NetAdapter -Name '%s' -ErrorAction SilentlyContinue | Select-Object LinkSpeed, FullDuplex | ConvertTo-Csv -NoTypeInformation`,
+		iface,
+	)
 
 	output, err := exec.CommandContext(ctx, "powershell", "-NoProfile", "-Command", psCmd).Output()
 	if err != nil {
@@ -90,7 +93,10 @@ func getSpeedDuplexPowerShell(ctx context.Context, iface string) (Speed, Duplex)
 // getSpeedDuplexWMI uses WMI for speed/duplex as fallback.
 func getSpeedDuplexWMI(ctx context.Context, iface string) (Speed, Duplex) {
 	// Query WMI via PowerShell
-	psCmd := fmt.Sprintf(`Get-WmiObject Win32_NetworkAdapter | Where-Object { $_.NetConnectionID -eq '%s' } | Select-Object Speed | ConvertTo-Csv -NoTypeInformation`, iface)
+	psCmd := fmt.Sprintf(
+		`Get-WmiObject Win32_NetworkAdapter | Where-Object { $_.NetConnectionID -eq '%s' } | Select-Object Speed | ConvertTo-Csv -NoTypeInformation`,
+		iface,
+	)
 
 	output, err := exec.CommandContext(ctx, "powershell", "-NoProfile", "-Command", psCmd).Output()
 	if err != nil {
@@ -181,7 +187,10 @@ func isPhysicalInterfacePlatform(iface string) bool {
 	defer cancel()
 
 	// Use PowerShell to check if adapter is physical
-	psCmd := fmt.Sprintf(`Get-NetAdapter -Name '%s' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Physical`, iface)
+	psCmd := fmt.Sprintf(
+		`Get-NetAdapter -Name '%s' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Physical`,
+		iface,
+	)
 
 	output, err := exec.CommandContext(ctx, "powershell", "-NoProfile", "-Command", psCmd).Output()
 	if err != nil {

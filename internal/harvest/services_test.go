@@ -509,7 +509,7 @@ func TestSchedulerService_Create(t *testing.T) {
 				Format:   harvest.FormatHTML,
 				Schedule: harvest.Schedule{
 					Frequency: harvest.FrequencyWeekly,
-					DayOfWeek: intPtr(1), // Monday
+					DayOfWeek: new(1), // Monday
 					Hour:      8,
 					Minute:    30,
 					Timezone:  "America/New_York",
@@ -526,7 +526,7 @@ func TestSchedulerService_Create(t *testing.T) {
 				Format:   harvest.FormatCSV,
 				Schedule: harvest.Schedule{
 					Frequency:  harvest.FrequencyMonthly,
-					DayOfMonth: intPtr(1),
+					DayOfMonth: new(1),
 					Hour:       7,
 					Minute:     0,
 					Timezone:   "Europe/London",
@@ -707,7 +707,7 @@ func TestSchedulerService_Update(t *testing.T) {
 			name: "update schedule frequency",
 			modifyFn: func(s *harvest.ScheduledReport) {
 				s.Schedule.Frequency = harvest.FrequencyWeekly
-				s.Schedule.DayOfWeek = intPtr(1)
+				s.Schedule.DayOfWeek = new(1)
 			},
 			wantErr: false,
 		},
@@ -849,13 +849,13 @@ func TestCalculateNextRun(t *testing.T) {
 		{
 			name:      "weekly on Monday",
 			frequency: harvest.FrequencyWeekly,
-			dayOfWeek: intPtr(1),
+			dayOfWeek: new(1),
 			hour:      10,
 		},
 		{
 			name:       "monthly on the 15th",
 			frequency:  harvest.FrequencyMonthly,
-			dayOfMonth: intPtr(15),
+			dayOfMonth: new(15),
 			hour:       8,
 		},
 	}
@@ -1326,10 +1326,6 @@ func TestModule_ConcurrentAccess(t *testing.T) {
 // ----------------------------------------------------------------------------
 // Helper Functions
 // ----------------------------------------------------------------------------
-
-func intPtr(i int) *int {
-	return &i
-}
 
 //nolint:revive // t comes before ctx for testing helper convention
 func setupTestData(t *testing.T, ctx context.Context, db *database.DB) {

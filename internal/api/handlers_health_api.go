@@ -78,14 +78,14 @@ func (s *Server) handleHealthCheckResults(w http.ResponseWriter, r *http.Request
 	}
 
 	if err != nil {
-		logger.Error("failed to get health check results", "error", err)
+		logger.ErrorContext(r.Context(), "failed to get health check results", "error", err)
 		http.Error(w, "Failed to retrieve results", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if encErr := json.NewEncoder(w).Encode(results); encErr != nil {
-		logger.Error("failed to encode health check results", "error", encErr)
+		logger.ErrorContext(r.Context(), "failed to encode health check results", "error", encErr)
 	}
 }
 
@@ -121,7 +121,7 @@ func (s *Server) handleHealthCheckHistory(w http.ResponseWriter, r *http.Request
 		// Use daily rollups for longer periods
 		rollups, err := repo.GetDailyRollups(ctx, checkType, endpointName, timeRange)
 		if err != nil {
-			logger.Error("failed to get daily rollups", "error", err)
+			logger.ErrorContext(r.Context(), "failed to get daily rollups", "error", err)
 			http.Error(w, "Failed to retrieve history", http.StatusInternalServerError)
 			return
 		}
@@ -136,7 +136,7 @@ func (s *Server) handleHealthCheckHistory(w http.ResponseWriter, r *http.Request
 		// Use hourly rollups for medium periods
 		rollups, err := repo.GetHourlyRollups(ctx, checkType, endpointName, timeRange)
 		if err != nil {
-			logger.Error("failed to get hourly rollups", "error", err)
+			logger.ErrorContext(r.Context(), "failed to get hourly rollups", "error", err)
 			http.Error(w, "Failed to retrieve history", http.StatusInternalServerError)
 			return
 		}
@@ -156,7 +156,7 @@ func (s *Server) handleHealthCheckHistory(w http.ResponseWriter, r *http.Request
 			Limit:        healthQueryLimitHistory,
 		})
 		if err != nil {
-			logger.Error("failed to get health check history", "error", err)
+			logger.ErrorContext(r.Context(), "failed to get health check history", "error", err)
 			http.Error(w, "Failed to retrieve history", http.StatusInternalServerError)
 			return
 		}
@@ -171,7 +171,7 @@ func (s *Server) handleHealthCheckHistory(w http.ResponseWriter, r *http.Request
 
 	w.Header().Set("Content-Type", "application/json")
 	if encErr := json.NewEncoder(w).Encode(response); encErr != nil {
-		logger.Error("failed to encode health check history", "error", encErr)
+		logger.ErrorContext(r.Context(), "failed to encode health check history", "error", encErr)
 	}
 }
 
@@ -193,7 +193,7 @@ func (s *Server) handleHealthCheckScores(w http.ResponseWriter, r *http.Request)
 	// Get scores from the health scorer
 	scores, err := scorer.CalculateAllScores(ctx)
 	if err != nil {
-		logger.Error("failed to get health scores", "error", err)
+		logger.ErrorContext(r.Context(), "failed to get health scores", "error", err)
 		http.Error(w, "Failed to retrieve scores", http.StatusInternalServerError)
 		return
 	}
@@ -227,7 +227,7 @@ func (s *Server) handleHealthCheckScores(w http.ResponseWriter, r *http.Request)
 
 	w.Header().Set("Content-Type", "application/json")
 	if encErr := json.NewEncoder(w).Encode(response); encErr != nil {
-		logger.Error("failed to encode health scores", "error", encErr)
+		logger.ErrorContext(r.Context(), "failed to encode health scores", "error", encErr)
 	}
 }
 
@@ -265,14 +265,14 @@ func (s *Server) handleHealthCheckSLA(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		logger.Error("failed to get SLA data", "error", err)
+		logger.ErrorContext(r.Context(), "failed to get SLA data", "error", err)
 		http.Error(w, "Failed to retrieve SLA data", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if encErr := json.NewEncoder(w).Encode(response); encErr != nil {
-		logger.Error("failed to encode SLA data", "error", encErr)
+		logger.ErrorContext(r.Context(), "failed to encode SLA data", "error", encErr)
 	}
 }
 
@@ -308,7 +308,7 @@ func (s *Server) getHealthCheckAlerts(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if encErr := json.NewEncoder(w).Encode(response); encErr != nil {
-		logger.Error("failed to encode alerts", "error", encErr)
+		logger.ErrorContext(r.Context(), "failed to encode alerts", "error", encErr)
 	}
 }
 
@@ -342,7 +342,7 @@ func (s *Server) acknowledgeHealthCheckAlert(w http.ResponseWriter, r *http.Requ
 
 	w.Header().Set("Content-Type", "application/json")
 	if encErr := json.NewEncoder(w).Encode(map[string]string{"status": "acknowledged"}); encErr != nil {
-		logger.Error("failed to encode response", "error", encErr)
+		logger.ErrorContext(r.Context(), "failed to encode response", "error", encErr)
 	}
 }
 
@@ -436,6 +436,6 @@ func (s *Server) handleHealthCheckAnomalies(w http.ResponseWriter, r *http.Reque
 
 	w.Header().Set("Content-Type", "application/json")
 	if encErr := json.NewEncoder(w).Encode(response); encErr != nil {
-		logger.Error("failed to encode anomalies", "error", encErr)
+		logger.ErrorContext(r.Context(), "failed to encode anomalies", "error", encErr)
 	}
 }

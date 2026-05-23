@@ -7,7 +7,6 @@ import (
 )
 
 func TestModeString(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		mode     paths.Mode
@@ -46,7 +45,6 @@ func TestModeString(t *testing.T) {
 }
 
 func TestInstallFlagsStruct(t *testing.T) {
-
 	// Test default values
 	flags := installFlags{}
 
@@ -65,7 +63,6 @@ func TestInstallFlagsStruct(t *testing.T) {
 }
 
 func TestInstallFlagsAllTrue(t *testing.T) {
-
 	flags := installFlags{
 		systemMode: true,
 		userMode:   true,
@@ -88,7 +85,6 @@ func TestInstallFlagsAllTrue(t *testing.T) {
 }
 
 func TestServiceConfigStruct(t *testing.T) {
-
 	cfg := serviceConfig{
 		User:       "seed",
 		Group:      "seed",
@@ -123,7 +119,6 @@ func TestServiceConfigStruct(t *testing.T) {
 }
 
 func TestSystemdServiceTemplateContainsRequiredFields(t *testing.T) {
-
 	requiredFields := []string{
 		"[Unit]",
 		"[Service]",
@@ -149,7 +144,6 @@ func TestSystemdServiceTemplateContainsRequiredFields(t *testing.T) {
 }
 
 func TestUserServiceTemplateContainsRequiredFields(t *testing.T) {
-
 	requiredFields := []string{
 		"[Unit]",
 		"[Service]",
@@ -170,7 +164,6 @@ func TestUserServiceTemplateContainsRequiredFields(t *testing.T) {
 }
 
 func TestUserServiceTemplateDoesNotContainSystemFields(t *testing.T) {
-
 	// User service template should not require system-level fields
 	systemFields := []string{
 		"{{.User}}",
@@ -189,7 +182,6 @@ func TestUserServiceTemplateDoesNotContainSystemFields(t *testing.T) {
 }
 
 func TestTimeoutConstants(t *testing.T) {
-
 	if userCheckTimeoutSeconds <= 0 {
 		t.Error("userCheckTimeoutSeconds should be positive")
 	}

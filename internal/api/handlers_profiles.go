@@ -112,7 +112,7 @@ func (s *Server) handleListProfiles(w http.ResponseWriter, r *http.Request) {
 
 	profiles, err := s.db().Profiles().List(ctx)
 	if err != nil {
-		logger.Error("Failed to list profiles", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to list profiles", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.profile.listFailed"), "") // fixes #694, #H7
 		return
@@ -138,7 +138,7 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 
 	var req ProfileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
@@ -166,7 +166,7 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 				ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
 			return
 		}
-		logger.Error("Failed to create profile", "error", err, "profile_name", req.Name)
+		logger.ErrorContext(r.Context(), "Failed to create profile", "error", err, "profile_name", req.Name)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.profile.createFailed"), "") // fixes #694, #H7
 		return
@@ -205,7 +205,7 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 
 	var req ProfileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "") // fixes #694, #H7
 		return
@@ -435,7 +435,7 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	// Uses Config.ApplyProfileJSON() - single source of truth, no ProfileSettings intermediate
 	if profile.ConfigJSON != "" {
 		if applyErr := s.config.ApplyProfileJSON(profile.ConfigJSON); applyErr != nil {
-			logger.Warn(
+			logger.WarnContext(r.Context(),
 				"Failed to parse profile settings, using defaults",
 				"error",
 				applyErr,
@@ -445,12 +445,19 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 		} else {
 			// Save updated config to file (fixes #782 - return error instead of silent warning)
 			if saveErr := s.config.Save(s.configPath); saveErr != nil {
-				logger.Error("Failed to save config after profile switch", "error", saveErr)
+				logger.ErrorContext(r.Context(), "Failed to save config after profile switch", "error", saveErr)
 				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 					ErrCodeInternal, localizer.T("errors.config.failedToSave"), saveErr.Error())
 				return
 			}
-			logger.Info("Applied profile settings", "profile_id", profile.ID, "profile_name", profile.Name)
+			logger.InfoContext(
+				r.Context(),
+				"Applied profile settings",
+				"profile_id",
+				profile.ID,
+				"profile_name",
+				profile.Name,
+			)
 		}
 	}
 
@@ -686,7 +693,7 @@ func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 
 	profiles, err := s.db().Profiles().List(ctx)
 	if err != nil {
-		logger.Error("Failed to list profiles", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to list profiles", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.profile.listFailed"), "") // fixes #694, #H7
 		return

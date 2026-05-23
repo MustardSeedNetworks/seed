@@ -25,14 +25,13 @@ const (
 	MaxSessionLifetime = 24 * time.Hour // 24 hours
 )
 
-// CookieConfig holds cookie security settings.
+// CookieConfig holds cookie scope settings.
+//
+// Security attributes (Secure, HttpOnly, SameSite) are hardcoded on every
+// auth cookie because the daemon enforces HTTPS for all auth endpoints
+// (HTTP listener redirects to HTTPS; no auth flow ever runs over plain
+// HTTP). They are intentionally NOT configurable.
 type CookieConfig struct {
-	// Secure sets the Secure flag (HTTPS only)
-	Secure bool
-
-	// SameSite sets the SameSite attribute
-	SameSite http.SameSite
-
 	// Domain sets the cookie domain
 	Domain string
 
@@ -40,69 +39,65 @@ type CookieConfig struct {
 	Path string
 }
 
-// DefaultCookieConfig returns secure defaults.
-// SameSite=Strict prevents CSRF attacks by blocking cookies in cross-site contexts (fixes #707).
+// DefaultCookieConfig returns the standard cookie scope for seed.
 func DefaultCookieConfig() CookieConfig {
 	return CookieConfig{
-		Secure:   true, // HTTPS only
-		SameSite: http.SameSiteStrictMode,
-		Domain:   "", // Current domain
-		Path:     "/",
+		Domain: "", // Current domain
+		Path:   "/",
+	}
+}
+
+// newAuthCookie builds an [http.Cookie] with seed's hardcoded auth-cookie
+// security baseline. Centralising the literals here keeps every auth
+// cookie identical (and lets gosec G124 see Secure/HttpOnly/SameSite are
+// all set unconditionally).
+func newAuthCookie(name, value string, expires time.Time, maxAge int, config CookieConfig) *http.Cookie {
+	return &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Path:     config.Path,
+		Domain:   config.Domain,
+		Expires:  expires,
+		MaxAge:   maxAge,
+		Secure:   true,                    // HTTPS-only (HTTP listener redirects, never serves auth)
+		HttpOnly: true,                    // Prevent JavaScript access (XSS protection)
+		SameSite: http.SameSiteStrictMode, // Block cross-site contexts (CSRF)
 	}
 }
 
 // SetAccessTokenCookie sets the access token as an httpOnly cookie.
 func SetAccessTokenCookie(w http.ResponseWriter, token string, config CookieConfig) {
-	cookie := &http.Cookie{
-		Name:     CookieNameAccess,
-		Value:    token,
-		Path:     config.Path,
-		Domain:   config.Domain,
-		Expires:  time.Now().Add(AccessTokenDuration),
-		MaxAge:   int(AccessTokenDuration.Seconds()),
-		Secure:   config.Secure,
-		HttpOnly: true, // Prevent JavaScript access (XSS protection)
-		SameSite: config.SameSite,
-	}
-	http.SetCookie(w, cookie)
+	http.SetCookie(
+		w,
+		newAuthCookie(
+			CookieNameAccess,
+			token,
+			time.Now().Add(AccessTokenDuration),
+			int(AccessTokenDuration.Seconds()),
+			config,
+		),
+	)
 }
 
 // SetRefreshTokenCookie sets the refresh token as an httpOnly cookie.
 func SetRefreshTokenCookie(w http.ResponseWriter, token string, config CookieConfig) {
-	cookie := &http.Cookie{
-		Name:     CookieNameRefresh,
-		Value:    token,
-		Path:     config.Path,
-		Domain:   config.Domain,
-		Expires:  time.Now().Add(RefreshTokenDuration),
-		MaxAge:   int(RefreshTokenDuration.Seconds()),
-		Secure:   config.Secure,
-		HttpOnly: true,
-		SameSite: config.SameSite,
-	}
-	http.SetCookie(w, cookie)
+	http.SetCookie(
+		w,
+		newAuthCookie(
+			CookieNameRefresh,
+			token,
+			time.Now().Add(RefreshTokenDuration),
+			int(RefreshTokenDuration.Seconds()),
+			config,
+		),
+	)
 }
 
 // ClearAuthCookies removes both access and refresh token cookies.
 func ClearAuthCookies(w http.ResponseWriter, config CookieConfig) {
-	// Set expired cookies to clear them
-	clearCookie := func(name string) {
-		cookie := &http.Cookie{
-			Name:     name,
-			Value:    "",
-			Path:     config.Path,
-			Domain:   config.Domain,
-			Expires:  time.Unix(0, 0),
-			MaxAge:   -1,
-			Secure:   config.Secure,
-			HttpOnly: true,
-			SameSite: config.SameSite,
-		}
-		http.SetCookie(w, cookie)
+	for _, name := range []string{CookieNameAccess, CookieNameRefresh} {
+		http.SetCookie(w, newAuthCookie(name, "", time.Unix(0, 0), -1, config))
 	}
-
-	clearCookie(CookieNameAccess)
-	clearCookie(CookieNameRefresh)
 }
 
 // GetAccessTokenFromCookie extracts the access token from cookies.

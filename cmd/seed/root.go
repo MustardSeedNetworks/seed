@@ -12,7 +12,6 @@ import (
 // cliState holds the CLI configuration state and commands.
 type cliState struct {
 	cfgFile        string
-	devMode        bool
 	trustedProxies string
 	rootCmd        *cobra.Command
 	completionCmd  *cobra.Command
@@ -130,8 +129,6 @@ func initCommands(state *cliState) {
 	// Persistent flags are available to all subcommands
 	state.rootCmd.PersistentFlags().
 		StringVar(&state.cfgFile, "config", "", "config file path (default: XDG config paths or configs/seed.json)")
-	state.rootCmd.PersistentFlags().
-		BoolVar(&state.devMode, "dev", false, "run in development mode (HTTP instead of HTTPS)")
 	state.rootCmd.PersistentFlags().
 		StringVar(&state.trustedProxies, "trusted-proxies", "", "comma-separated list of trusted proxy IPs/CIDRs for X-Forwarded-For")
 

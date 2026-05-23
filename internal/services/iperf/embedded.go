@@ -197,17 +197,17 @@ func (e *NotFoundError) Error() string {
 	msg.WriteString("iperf3 not found\n\n")
 
 	if e.EmbeddedError != nil {
-		msg.WriteString(fmt.Sprintf("Embedded binary: %v\n", e.EmbeddedError))
+		fmt.Fprintf(&msg, "Embedded binary: %v\n", e.EmbeddedError)
 	}
 
 	if e.SystemError != nil {
-		msg.WriteString(fmt.Sprintf("System PATH: %v\n", e.SystemError))
+		fmt.Fprintf(&msg, "System PATH: %v\n", e.SystemError)
 	}
 
 	if len(e.SearchedPaths) > 0 {
 		msg.WriteString("\nSearched paths:\n")
 		for _, p := range e.SearchedPaths {
-			msg.WriteString(fmt.Sprintf("  - %s\n", p))
+			fmt.Fprintf(&msg, "  - %s\n", p)
 		}
 	}
 

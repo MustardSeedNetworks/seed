@@ -156,7 +156,9 @@ func (s *GeneratorService) Generate(
 	// later writes to Status / CompletedAt / ExpiresAt / FileSize. Callers
 	// wanting to observe progress should use GetReport(id), which reads
 	// through s.mu.
-	go s.generateReport(context.Background(), report)
+	// WithoutCancel inherits logging values from the caller but detaches
+	// lifecycle so the generation outlives the originating request/op.
+	go s.generateReport(context.WithoutCancel(ctx), report)
 
 	snapshot := *report
 	return &snapshot, nil

@@ -5,7 +5,6 @@ import (
 )
 
 func TestParseOSRelease(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		content  string
@@ -233,7 +232,6 @@ PRETTY_NAME="AlmaLinux 9.3"
 }
 
 func TestDistroStruct(t *testing.T) {
-
 	distro := &Distro{
 		ID:      "ubuntu",
 		Name:    "Ubuntu",
@@ -256,7 +254,6 @@ func TestDistroStruct(t *testing.T) {
 }
 
 func TestExpectedLinuxReleaseParts(t *testing.T) {
-
 	// Verify the constant is set correctly for splitting key=value pairs
 	if expectedLinuxReleaseParts != 2 {
 		t.Errorf("Expected expectedLinuxReleaseParts to be 2, got %d", expectedLinuxReleaseParts)

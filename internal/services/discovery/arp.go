@@ -434,10 +434,13 @@ func splitSubnetIntoChunks(subnet *net.IPNet, maxChunks int) []*net.IPNet {
 		offset := uint32(i) * hostsPerSubnet24Block
 		chunkUint := baseUint + offset
 
+		// Mask each shifted value to byte explicitly. The shifts produce
+		// values that fit in byte (8 bits) but gosec G115 needs the mask
+		// to prove the bound.
 		chunkIP := net.IP{
-			byte(chunkUint >> byteShift24),
-			byte(chunkUint >> byteShift16),
-			byte(chunkUint >> byteShift8),
+			byte((chunkUint >> byteShift24) & byteMask),
+			byte((chunkUint >> byteShift16) & byteMask),
+			byte((chunkUint >> byteShift8) & byteMask),
 			0, // Start of /24 block
 		}
 

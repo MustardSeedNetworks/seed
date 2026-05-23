@@ -90,6 +90,7 @@ func GetTestDefaults() *TestDefaults {
 		cfg := config.DefaultConfig()
 
 		setTestDefaults(&TestDefaults{
+			//nolint:gosec // G101: test fixture struct, lives in testutil package compiled out of release binaries
 			Auth: AuthDefaults{
 				Username:     "admin",
 				Password:     "TestP@ssw0rd!Secure123",

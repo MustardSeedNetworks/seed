@@ -83,7 +83,7 @@ func (s *Server) handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
 
 	info, err := updateService.CheckForUpdate(r.Context())
 	if err != nil {
-		logger.Warn("Update check failed", "error", err)
+		logger.WarnContext(r.Context(), "Update check failed", "error", err)
 		sendUpdateError(w, r, http.StatusInternalServerError, "Failed to check for updates")
 		return
 	}
@@ -161,7 +161,7 @@ func (s *Server) handleUpdateDownload(w http.ResponseWriter, r *http.Request) {
 	// Start download (this is blocking)
 	_, err := updateService.DownloadUpdate(r.Context(), nil)
 	if err != nil {
-		logger.Warn("Update download failed", "error", err)
+		logger.WarnContext(r.Context(), "Update download failed", "error", err)
 		sendUpdateError(w, r, http.StatusInternalServerError, "Failed to download update")
 		return
 	}
@@ -189,7 +189,7 @@ func (s *Server) handleUpdateApply(w http.ResponseWriter, r *http.Request) {
 
 	// Apply the update
 	if err := updateService.ApplyUpdate(r.Context()); err != nil {
-		logger.Warn("Update apply failed", "error", err)
+		logger.WarnContext(r.Context(), "Update apply failed", "error", err)
 		sendUpdateError(w, r, http.StatusInternalServerError, "Failed to apply update")
 		return
 	}
@@ -211,7 +211,7 @@ func (s *Server) handleUpdateRollback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := updateService.Rollback(); err != nil {
-		logger.Warn("Update rollback failed", "error", err)
+		logger.WarnContext(r.Context(), "Update rollback failed", "error", err)
 		sendUpdateError(w, r, http.StatusInternalServerError, "Failed to rollback update")
 		return
 	}

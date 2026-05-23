@@ -10,7 +10,6 @@ import (
 )
 
 func TestValidationResultMarshalJSON(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		result   ValidationResult
@@ -72,7 +71,6 @@ func TestValidationResultMarshalJSON(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			data, err := json.Marshal(tc.result)
 			if err != nil {
 				t.Fatalf("Failed to marshal ValidationResult: %v", err)
@@ -92,7 +90,6 @@ func TestValidationResultMarshalJSON(t *testing.T) {
 }
 
 func TestCheckConfigWarnings(t *testing.T) {
-
 	tests := []struct {
 		name          string
 		cfg           *config.Config
@@ -204,7 +201,6 @@ func TestCheckConfigWarnings(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			warnings := checkConfigWarnings(tc.cfg)
 			assertWarningsContain(t, warnings, tc.wantWarnings)
 			assertWarningsMissing(t, warnings, tc.wantNoWarning)
@@ -255,7 +251,6 @@ func sliceContainsSubstring(values []string, needle string) bool {
 }
 
 func TestOutputResultJSON(t *testing.T) {
-
 	tests := []struct {
 		name   string
 		result ValidationResult
@@ -287,7 +282,6 @@ func TestOutputResultJSON(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			// Marshal the result to verify it produces valid JSON
 			data, err := json.MarshalIndent(tc.result, "", "  ")
 			if err != nil {
@@ -311,7 +305,6 @@ func TestOutputResultJSON(t *testing.T) {
 }
 
 func TestOutputResultHumanReadable(t *testing.T) {
-
 	tests := []struct {
 		name           string
 		result         ValidationResult
@@ -357,7 +350,6 @@ func TestOutputResultHumanReadable(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			// We can't easily capture stdout from outputResult, but we can test the logic
 			// by verifying the ValidationResult struct fields that drive the output
 			if tc.result.Valid {
@@ -376,7 +368,6 @@ func TestOutputResultHumanReadable(t *testing.T) {
 }
 
 func TestValidationResultFields(t *testing.T) {
-
 	// Test that all fields are properly set and accessible
 	result := ValidationResult{
 		Valid:    true,
@@ -403,7 +394,6 @@ func TestValidationResultFields(t *testing.T) {
 }
 
 func TestValidationResultJSONRoundTrip(t *testing.T) {
-
 	original := ValidationResult{
 		Valid:    false,
 		Errors:   []string{"error 1", "error 2"},
@@ -439,7 +429,6 @@ func TestValidationResultJSONRoundTrip(t *testing.T) {
 }
 
 func TestValidationResultJSONOutput(t *testing.T) {
-
 	result := ValidationResult{
 		Valid:    true,
 		Path:     "/test/config.json",
@@ -472,7 +461,6 @@ func TestValidationResultJSONOutput(t *testing.T) {
 }
 
 func TestOutputResultFunction(t *testing.T) {
-
 	// Test that outputResult can be called without panic for both JSON and human-readable modes
 	// We're not capturing stdout here, just ensuring no panics
 

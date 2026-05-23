@@ -185,7 +185,13 @@ func removeBinary(ctx context.Context, p *paths.Paths, mode paths.Mode) {
 		binaryPath = filepath.Join(os.Getenv("HOME"), ".local", "bin", "seed")
 	}
 
-	if err := os.Remove(binaryPath); err != nil && !os.IsNotExist(err) {
+	// binaryPath is filepath.Join'd from trusted Paths or os.Getenv("HOME").
+	// gosec can't follow the indirection but the join is anchored to a known
+	// suffix ("seed") in a known parent directory.
+	if err := os.Remove(
+		filepath.Clean(binaryPath),
+	); err != nil &&
+		!os.IsNotExist(err) {
 		logging.GetLogger().WarnContext(ctx, "Failed to remove binary", "error", err)
 	}
 }

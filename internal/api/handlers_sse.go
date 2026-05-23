@@ -271,13 +271,13 @@ func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 
 	claims, err := s.authManager().ValidateToken(r.Context(), token)
 	if err != nil {
-		logger.Warn("SSE auth failed", "error", err, "source", source)
+		logger.WarnContext(r.Context(), "SSE auth failed", "error", err, "source", source)
 		sendErrorResponseWithDetails(w, logger, http.StatusUnauthorized, ErrCodeUnauthorized,
 			localizer.T("errors.auth.invalidToken"), "")
 		return
 	}
 
-	logger.Debug("SSE authenticated", "username", claims.Username, "source", source)
+	logger.DebugContext(r.Context(), "SSE authenticated", "username", claims.Username, "source", source)
 
 	// Check if the client supports SSE (streaming)
 	flusher, ok := w.(http.Flusher)
@@ -327,7 +327,7 @@ func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 			}
 			// Write SSE formatted message
 			if _, writeErr := fmt.Fprintf(w, "data: %s\n\n", message); writeErr != nil {
-				logger.Debug("SSE write error", "error", writeErr)
+				logger.DebugContext(r.Context(), "SSE write error", "error", writeErr)
 				return
 			}
 			flusher.Flush()
@@ -335,7 +335,7 @@ func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 		case <-heartbeat.C:
 			// Send heartbeat comment to keep connection alive
 			if _, writeErr := fmt.Fprintf(w, ": heartbeat\n\n"); writeErr != nil {
-				logger.Debug("SSE heartbeat error", "error", writeErr)
+				logger.DebugContext(r.Context(), "SSE heartbeat error", "error", writeErr)
 				return
 			}
 			flusher.Flush()

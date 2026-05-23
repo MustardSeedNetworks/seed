@@ -6,6 +6,7 @@ package discovery
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -403,7 +404,10 @@ func (b *WiFiBridge) calculateChannelUtilization(aps []WiFiAccessPoint) []Channe
 	now := time.Now()
 
 	for _, ap := range aps {
-		key := string(ap.Band) + "-" + string(rune(ap.Channel+'0'))
+		// Use %d so multi-digit channels (5GHz: 36..165) render properly,
+		// instead of the historical rune trick that would produce garbage
+		// for channels > 9.
+		key := fmt.Sprintf("%s-%d", ap.Band, ap.Channel)
 
 		util, exists := channelMap[key]
 		if !exists {

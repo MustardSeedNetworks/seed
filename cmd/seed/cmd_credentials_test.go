@@ -12,7 +12,6 @@ import (
 )
 
 func TestInitCredentialsCmd(t *testing.T) {
-
 	state := newCLIState()
 	initCredentialsCmd(state)
 
@@ -39,7 +38,6 @@ func TestInitCredentialsCmd(t *testing.T) {
 }
 
 func TestCredentialsCmdHasJSONFlag(t *testing.T) {
-
 	state := newCLIState()
 	initCredentialsCmd(state)
 
@@ -67,7 +65,6 @@ func TestCredentialsCmdHasJSONFlag(t *testing.T) {
 }
 
 func TestCredentialsCmdHasRunFunction(t *testing.T) {
-
 	state := newCLIState()
 	initCredentialsCmd(state)
 
@@ -90,7 +87,6 @@ func TestCredentialsCmdHasRunFunction(t *testing.T) {
 }
 
 func TestCredentialsCommandLongDescriptionContent(t *testing.T) {
-
 	state := newCLIState()
 	initCredentialsCmd(state)
 
@@ -122,7 +118,6 @@ func TestCredentialsCommandLongDescriptionContent(t *testing.T) {
 }
 
 func TestCredentialsCmdWithConfigFile(t *testing.T) {
-
 	// Create a temp directory for config
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "seed.json")
@@ -154,7 +149,6 @@ func TestCredentialsCmdWithConfigFile(t *testing.T) {
 }
 
 func TestCredentialsCmdFlagTypes(t *testing.T) {
-
 	state := newCLIState()
 	initCredentialsCmd(state)
 

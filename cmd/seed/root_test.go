@@ -6,18 +6,13 @@ import (
 )
 
 func TestCLIStateStruct(t *testing.T) {
-
 	state := &cliState{
 		cfgFile:        "/etc/seed/config.json",
-		devMode:        true,
 		trustedProxies: "10.0.0.0/8,172.16.0.0/12",
 	}
 
 	if state.cfgFile != "/etc/seed/config.json" {
 		t.Errorf("cfgFile should be '/etc/seed/config.json', got %q", state.cfgFile)
-	}
-	if !state.devMode {
-		t.Error("devMode should be true")
 	}
 	if state.trustedProxies != "10.0.0.0/8,172.16.0.0/12" {
 		t.Errorf("trustedProxies should be '10.0.0.0/8,172.16.0.0/12', got %q", state.trustedProxies)
@@ -25,14 +20,10 @@ func TestCLIStateStruct(t *testing.T) {
 }
 
 func TestCLIStateDefaults(t *testing.T) {
-
 	state := &cliState{}
 
 	if state.cfgFile != "" {
 		t.Errorf("cfgFile should default to empty string, got %q", state.cfgFile)
-	}
-	if state.devMode {
-		t.Error("devMode should default to false")
 	}
 	if state.trustedProxies != "" {
 		t.Errorf("trustedProxies should default to empty string, got %q", state.trustedProxies)
@@ -46,7 +37,6 @@ func TestCLIStateDefaults(t *testing.T) {
 }
 
 func TestNewCLIState(t *testing.T) {
-
 	state := newCLIState()
 
 	if state == nil {
@@ -75,7 +65,6 @@ func TestNewCLIState(t *testing.T) {
 }
 
 func TestNewCLIStateRootCmdShortDescription(t *testing.T) {
-
 	state := newCLIState()
 
 	if state.rootCmd.Short == "" {
@@ -84,7 +73,6 @@ func TestNewCLIStateRootCmdShortDescription(t *testing.T) {
 }
 
 func TestNewCLIStateLongDescription(t *testing.T) {
-
 	state := newCLIState()
 
 	if state.rootCmd.Long == "" {
@@ -108,7 +96,6 @@ func TestNewCLIStateLongDescription(t *testing.T) {
 }
 
 func TestNewCLIStateCompletionValidArgs(t *testing.T) {
-
 	state := newCLIState()
 
 	expectedShells := []string{"bash", "zsh", "fish", "powershell"}
@@ -125,7 +112,6 @@ func TestNewCLIStateCompletionValidArgs(t *testing.T) {
 }
 
 func TestInitCommands(t *testing.T) {
-
 	state := newCLIState()
 	initCommands(state)
 
@@ -172,7 +158,6 @@ func TestInitCommands(t *testing.T) {
 }
 
 func TestInitCommandsAddsFlags(t *testing.T) {
-
 	state := newCLIState()
 	initCommands(state)
 
@@ -182,11 +167,6 @@ func TestInitCommandsAddsFlags(t *testing.T) {
 		t.Error("Expected --config flag to be defined")
 	}
 
-	devFlag := state.rootCmd.PersistentFlags().Lookup("dev")
-	if devFlag == nil {
-		t.Error("Expected --dev flag to be defined")
-	}
-
 	proxyFlag := state.rootCmd.PersistentFlags().Lookup("trusted-proxies")
 	if proxyFlag == nil {
 		t.Error("Expected --trusted-proxies flag to be defined")
@@ -194,7 +174,6 @@ func TestInitCommandsAddsFlags(t *testing.T) {
 }
 
 func TestCLIStateTrustedProxiesVariants(t *testing.T) {
-
 	tests := []struct {
 		name   string
 		value  string
@@ -224,7 +203,6 @@ func TestCLIStateTrustedProxiesVariants(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			state := &cliState{
 				trustedProxies: tc.value,
 			}

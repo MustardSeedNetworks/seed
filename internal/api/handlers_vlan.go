@@ -216,7 +216,7 @@ func (s *Server) parseVLANRequest(
 
 	var req VLANInterfaceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -230,7 +230,7 @@ func (s *Server) parseVLANRequest(
 
 	// Validate VLAN ID
 	if err := validation.ValidateVLANID(req.VlanID); err != nil {
-		logger.Warn("Invalid VLAN ID", "error", err, "vlanID", req.VlanID)
+		logger.WarnContext(r.Context(), "Invalid VLAN ID", "error", err, "vlanID", req.VlanID)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -250,7 +250,7 @@ func (s *Server) parseVLANRequest(
 
 	// Validate interface name
 	if err := validation.ValidateInterface(iface); err != nil {
-		logger.Warn("Invalid interface", "error", err, "interface", iface)
+		logger.WarnContext(r.Context(), "Invalid interface", "error", err, "interface", iface)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -280,7 +280,7 @@ func (s *Server) createVLANInterface(
 	}
 
 	if err := vlan.CreateVlanInterface(iface, vlanID); err != nil {
-		logger.Error(
+		logger.ErrorContext(r.Context(),
 			"Failed to create VLAN interface",
 			"error",
 			err,
@@ -323,7 +323,7 @@ func (s *Server) deleteVLANInterface(
 	}
 
 	if err := vlan.DeleteVlanInterface(iface, vlanID); err != nil {
-		logger.Error(
+		logger.ErrorContext(r.Context(),
 			"Failed to delete VLAN interface",
 			"error",
 			err,

@@ -8,7 +8,6 @@ import (
 )
 
 func TestSetupCredentialsStruct(t *testing.T) {
-
 	creds := setupCredentials{
 		Username: "admin",
 		Password: "super-secret-password",
@@ -27,7 +26,6 @@ func TestSetupCredentialsStruct(t *testing.T) {
 }
 
 func TestSetupCredentialsMarshalJSON(t *testing.T) {
-
 	creds := setupCredentials{
 		Username: "admin",
 		Password: "test-password",
@@ -56,7 +54,6 @@ func TestSetupCredentialsMarshalJSON(t *testing.T) {
 }
 
 func TestSetupCredentialsJSONTags(t *testing.T) {
-
 	creds := setupCredentials{
 		Username: "user",
 		Password: "pass",
@@ -80,7 +77,6 @@ func TestSetupCredentialsJSONTags(t *testing.T) {
 }
 
 func TestEnsureConfigDir(t *testing.T) {
-
 	tests := []struct {
 		name       string
 		configPath string
@@ -109,7 +105,6 @@ func TestEnsureConfigDir(t *testing.T) {
 }
 
 func TestEnsureConfigDirCreatesDirectory(t *testing.T) {
-
 	// Create a temporary directory
 	tmpDir := t.TempDir()
 	newDir := filepath.Join(tmpDir, "subdir", "config")
@@ -131,7 +126,6 @@ func TestEnsureConfigDirCreatesDirectory(t *testing.T) {
 }
 
 func TestEnsureConfigDirExistingDirectory(t *testing.T) {
-
 	// Create a temporary directory that already exists
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "seed.json")
@@ -152,7 +146,6 @@ func TestEnsureConfigDirExistingDirectory(t *testing.T) {
 }
 
 func TestDefaultPasswordLengthConstant(t *testing.T) {
-
 	if defaultPasswordLength <= 0 {
 		t.Error("defaultPasswordLength should be positive")
 	}
@@ -162,7 +155,6 @@ func TestDefaultPasswordLengthConstant(t *testing.T) {
 }
 
 func TestOutputCredentialsJSON(t *testing.T) {
-
 	creds := setupCredentials{
 		Username: "admin",
 		Password: "generated-password",
@@ -193,7 +185,6 @@ func TestOutputCredentialsJSON(t *testing.T) {
 }
 
 func TestSetupCredentialsEmptyFields(t *testing.T) {
-
 	creds := setupCredentials{}
 
 	if creds.Username != "" {
@@ -208,7 +199,6 @@ func TestSetupCredentialsEmptyFields(t *testing.T) {
 }
 
 func TestSetupCredentialsWithSpecialCharacters(t *testing.T) {
-
 	creds := setupCredentials{
 		Username: "admin@example.com",
 		Password: "p@ss!word#123$%^&*()",

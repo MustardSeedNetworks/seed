@@ -122,7 +122,7 @@ func (s *Server) handleProblemScan(w http.ResponseWriter, r *http.Request) {
 
 	result, err := detector.Scan(r.Context(), devices)
 	if err != nil {
-		logger.Error("Problem scan failed", "error", err)
+		logger.ErrorContext(r.Context(), "Problem scan failed", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -175,7 +175,7 @@ func (s *Server) handleProblemThresholds(w http.ResponseWriter, r *http.Request)
 
 		var thresholds discovery.ProblemThresholds
 		if err := json.NewDecoder(r.Body).Decode(&thresholds); err != nil {
-			logger.Warn("Invalid request body", "error", err)
+			logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 			sendErrorResponseWithDetails(
 				w,
 				logger,

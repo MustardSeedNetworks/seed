@@ -137,7 +137,10 @@ func GetRSSIColorScale() ColorScale {
 			}},
 			// Red (very poor)
 			{Value: rssiVeryPoor, Color: color.RGBA{
-				R: colorChannelDarkRed, G: colorChannelWarningOrange, B: colorChannelBootstrapRed, A: colorChannelOpaque,
+				R: colorChannelDarkRed,
+				G: colorChannelWarningOrange,
+				B: colorChannelBootstrapRed,
+				A: colorChannelOpaque,
 			}},
 			// Orange (poor)
 			{Value: rssiPoor, Color: color.RGBA{
@@ -149,11 +152,17 @@ func GetRSSIColorScale() ColorScale {
 			}},
 			// Light green (good)
 			{Value: rssiGood, Color: color.RGBA{
-				R: colorChannelMediumGreen, G: colorChannelLightGreen, B: colorChannelMediumGreen, A: colorChannelOpaque,
+				R: colorChannelMediumGreen,
+				G: colorChannelLightGreen,
+				B: colorChannelMediumGreen,
+				A: colorChannelOpaque,
 			}},
 			// Green (excellent)
 			{Value: rssiExcellent, Color: color.RGBA{
-				R: colorChannelAccentGreen, G: colorChannelDarkGreen, B: colorChannelBootstrapRed, A: colorChannelOpaque,
+				R: colorChannelAccentGreen,
+				G: colorChannelDarkGreen,
+				B: colorChannelBootstrapRed,
+				A: colorChannelOpaque,
 			}},
 		},
 	}
@@ -169,7 +178,10 @@ func GetSNRColorScale() ColorScale {
 		Stops: []ColorStop{
 			// Red
 			{Value: snrMinimum, Color: color.RGBA{
-				R: colorChannelDarkRed, G: colorChannelWarningOrange, B: colorChannelBootstrapRed, A: colorChannelOpaque,
+				R: colorChannelDarkRed,
+				G: colorChannelWarningOrange,
+				B: colorChannelBootstrapRed,
+				A: colorChannelOpaque,
 			}},
 			// Orange
 			{Value: snrPoor, Color: color.RGBA{
@@ -181,11 +193,17 @@ func GetSNRColorScale() ColorScale {
 			}},
 			// Light green
 			{Value: snrGood, Color: color.RGBA{
-				R: colorChannelMediumGreen, G: colorChannelLightGreen, B: colorChannelMediumGreen, A: colorChannelOpaque,
+				R: colorChannelMediumGreen,
+				G: colorChannelLightGreen,
+				B: colorChannelMediumGreen,
+				A: colorChannelOpaque,
 			}},
 			// Green
 			{Value: snrExcellent, Color: color.RGBA{
-				R: colorChannelAccentGreen, G: colorChannelDarkGreen, B: colorChannelBootstrapRed, A: colorChannelOpaque,
+				R: colorChannelAccentGreen,
+				G: colorChannelDarkGreen,
+				B: colorChannelBootstrapRed,
+				A: colorChannelOpaque,
 			}},
 		},
 	}
@@ -206,7 +224,10 @@ func GetAPDensityColorScale() ColorScale {
 			}},
 			// Cornflower blue
 			{Value: apDensityLow, Color: color.RGBA{
-				R: colorChannelCornflower, G: colorChannelCornflowerGreen, B: colorChannelCornflowerBlue, A: colorChannelOpaque,
+				R: colorChannelCornflower,
+				G: colorChannelCornflowerGreen,
+				B: colorChannelCornflowerBlue,
+				A: colorChannelOpaque,
 			}},
 			// Blue violet
 			{Value: apDensityModerate, Color: color.RGBA{
@@ -218,7 +239,10 @@ func GetAPDensityColorScale() ColorScale {
 			}},
 			// Red (congested)
 			{Value: apDensityMax, Color: color.RGBA{
-				R: colorChannelDarkRed, G: colorChannelWarningOrange, B: colorChannelBootstrapRed, A: colorChannelOpaque,
+				R: colorChannelDarkRed,
+				G: colorChannelWarningOrange,
+				B: colorChannelBootstrapRed,
+				A: colorChannelOpaque,
 			}},
 		},
 	}
@@ -235,11 +259,17 @@ func GetInterferenceColorScale() ColorScale {
 		Stops: []ColorStop{
 			// Green (no interference)
 			{Value: interferenceNone, Color: color.RGBA{
-				R: colorChannelAccentGreen, G: colorChannelDarkGreen, B: colorChannelBootstrapRed, A: colorChannelOpaque,
+				R: colorChannelAccentGreen,
+				G: colorChannelDarkGreen,
+				B: colorChannelBootstrapRed,
+				A: colorChannelOpaque,
 			}},
 			// Light green
 			{Value: interferenceLow, Color: color.RGBA{
-				R: colorChannelMediumGreen, G: colorChannelLightGreen, B: colorChannelMediumGreen, A: colorChannelOpaque,
+				R: colorChannelMediumGreen,
+				G: colorChannelLightGreen,
+				B: colorChannelMediumGreen,
+				A: colorChannelOpaque,
 			}},
 			// Yellow
 			{Value: interferenceMild, Color: color.RGBA{
@@ -251,7 +281,10 @@ func GetInterferenceColorScale() ColorScale {
 			}},
 			// Red
 			{Value: interferenceSevere, Color: color.RGBA{
-				R: colorChannelDarkRed, G: colorChannelWarningOrange, B: colorChannelBootstrapRed, A: colorChannelOpaque,
+				R: colorChannelDarkRed,
+				G: colorChannelWarningOrange,
+				B: colorChannelBootstrapRed,
+				A: colorChannelOpaque,
 			}},
 		},
 	}

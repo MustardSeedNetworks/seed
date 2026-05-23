@@ -5,7 +5,6 @@ import (
 )
 
 func TestServeConstants(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		value    int
@@ -42,28 +41,24 @@ func TestServeConstants(t *testing.T) {
 }
 
 func TestLogBroadcasterBufferSize(t *testing.T) {
-
 	if logBroadcasterBufferSize != 1000 {
 		t.Errorf("logBroadcasterBufferSize should be 1000, got %d", logBroadcasterBufferSize)
 	}
 }
 
 func TestSignalChannelBufferSize(t *testing.T) {
-
 	if signalChannelBufferSize != 2 {
 		t.Errorf("signalChannelBufferSize should be 2, got %d", signalChannelBufferSize)
 	}
 }
 
 func TestShutdownTimeoutSeconds(t *testing.T) {
-
 	if shutdownTimeoutSeconds != 30 {
 		t.Errorf("shutdownTimeoutSeconds should be 30, got %d", shutdownTimeoutSeconds)
 	}
 }
 
 func TestPrintSetupBannerLogic(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		port     int
@@ -92,7 +87,6 @@ func TestPrintSetupBannerLogic(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			// Test the protocol selection logic from printSetupBanner
 			protocol := "http"
 			if tc.https {
@@ -110,7 +104,6 @@ func TestPrintSetupBannerLogic(t *testing.T) {
 }
 
 func TestServeConstantsRelationships(t *testing.T) {
-
 	// Log buffer should be larger than signal channel buffer
 	if logBroadcasterBufferSize <= signalChannelBufferSize {
 		t.Error("logBroadcasterBufferSize should be larger than signalChannelBufferSize")

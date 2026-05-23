@@ -773,6 +773,10 @@ func ValidatePasswordStrength(password string) error {
 // Uses rejection sampling to avoid modulo bias (fixes #517).
 // Fixes G7: Uses cryptoRandRead for retry logic on crypto/rand failures.
 func randomChar(chars string) (byte, error) {
+	if len(chars) == 0 || len(chars) > maxByteValue {
+		return 0, errors.New("chars must be 1-255 bytes")
+	}
+	//nolint:gosec // G115: bounded by the len check above; gosec can't follow the guard
 	charsLen := byte(len(chars))
 	// Calculate the largest multiple of charsLen that fits in a byte
 	maxValid := maxByteValue - (maxByteValue % int(charsLen))

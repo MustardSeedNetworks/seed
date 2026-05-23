@@ -40,7 +40,7 @@ func TestCalculateNextRun_Internal(t *testing.T) {
 			name: "weekly schedule on Monday",
 			schedule: &harvest.Schedule{
 				Frequency: harvest.FrequencyWeekly,
-				DayOfWeek: intPtrHelper(1),
+				DayOfWeek: new(1),
 				Hour:      10,
 				Minute:    30,
 				Timezone:  "UTC",
@@ -51,7 +51,7 @@ func TestCalculateNextRun_Internal(t *testing.T) {
 			name: "weekly schedule on Sunday",
 			schedule: &harvest.Schedule{
 				Frequency: harvest.FrequencyWeekly,
-				DayOfWeek: intPtrHelper(0),
+				DayOfWeek: new(0),
 				Hour:      8,
 				Minute:    0,
 				Timezone:  "America/New_York",
@@ -62,7 +62,7 @@ func TestCalculateNextRun_Internal(t *testing.T) {
 			name: "monthly schedule on 1st",
 			schedule: &harvest.Schedule{
 				Frequency:  harvest.FrequencyMonthly,
-				DayOfMonth: intPtrHelper(1),
+				DayOfMonth: new(1),
 				Hour:       7,
 				Minute:     0,
 				Timezone:   "UTC",
@@ -73,7 +73,7 @@ func TestCalculateNextRun_Internal(t *testing.T) {
 			name: "monthly schedule on 15th",
 			schedule: &harvest.Schedule{
 				Frequency:  harvest.FrequencyMonthly,
-				DayOfMonth: intPtrHelper(15),
+				DayOfMonth: new(15),
 				Hour:       12,
 				Minute:     0,
 				Timezone:   "Europe/London",
@@ -94,7 +94,7 @@ func TestCalculateNextRun_Internal(t *testing.T) {
 			name: "weekly schedule no day specified",
 			schedule: &harvest.Schedule{
 				Frequency: harvest.FrequencyWeekly,
-				DayOfWeek: intPtrHelper(int(time.Now().Weekday()) + 1), // Next day of week
+				DayOfWeek: new(int(time.Now().Weekday()) + 1), // Next day of week
 				Hour:      8,
 				Minute:    0,
 				Timezone:  "UTC",
@@ -685,7 +685,7 @@ func TestSaveSchedule_Internal(t *testing.T) {
 		Format:   harvest.FormatPDF,
 		Schedule: harvest.Schedule{
 			Frequency: harvest.FrequencyWeekly,
-			DayOfWeek: intPtrHelper(1),
+			DayOfWeek: new(1),
 			Hour:      10,
 			Minute:    30,
 			Timezone:  "UTC",
@@ -956,10 +956,6 @@ func TestReportsPath_Internal(t *testing.T) {
 // ----------------------------------------------------------------------------
 // Helper Functions
 // ----------------------------------------------------------------------------
-
-func intPtrHelper(i int) *int {
-	return &i
-}
 
 func testDBHelper(t *testing.T) (*database.DB, func()) {
 	t.Helper()
@@ -1241,7 +1237,7 @@ func TestSchedulerService_ScheduleVariations(t *testing.T) {
 			name: "weekly on Friday",
 			schedule: harvest.Schedule{
 				Frequency: harvest.FrequencyWeekly,
-				DayOfWeek: intPtrHelper(5),
+				DayOfWeek: new(5),
 				Hour:      17,
 				Minute:    30,
 				Timezone:  "UTC",
@@ -1251,7 +1247,7 @@ func TestSchedulerService_ScheduleVariations(t *testing.T) {
 			name: "monthly on last day",
 			schedule: harvest.Schedule{
 				Frequency:  harvest.FrequencyMonthly,
-				DayOfMonth: intPtrHelper(28),
+				DayOfMonth: new(28),
 				Hour:       23,
 				Minute:     59,
 				Timezone:   "UTC",

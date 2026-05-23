@@ -126,7 +126,7 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 
 	// Check if recovery manager is configured
 	if s.recoveryManager() == nil {
-		logger.Warn("Recovery attempt but recovery manager not configured",
+		logger.WarnContext(r.Context(), "Recovery attempt but recovery manager not configured",
 			"client_ip", clientIP,
 			"event", "auth.recovery.not_configured")
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable, ErrCodeInternal,
@@ -136,7 +136,7 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 
 	// Check rate limiting for recovery attempts
 	if s.loginRateLimiter().IsBlocked(clientIP) {
-		logger.Warn("Recovery blocked due to rate limiting",
+		logger.WarnContext(r.Context(), "Recovery blocked due to rate limiting",
 			"client_ip", clientIP,
 			"event", "auth.recovery.blocked")
 		w.Header().Set("Retry-After", "900")
@@ -150,7 +150,7 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 
 	var req RecoveryCompleteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Recovery decode error", "client_ip", clientIP, "error", err)
+		logger.WarnContext(r.Context(), "Recovery decode error", "client_ip", clientIP, "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest,
 			localizer.T("errors.api.invalidRequestBody"), "")
 		return
@@ -158,7 +158,7 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 
 	// Validate the recovery token
 	if !s.recoveryManager().ValidateAndConsume(req.Token) {
-		logger.Warn("Recovery failed - invalid or expired token",
+		logger.WarnContext(r.Context(), "Recovery failed - invalid or expired token",
 			"client_ip", clientIP,
 			"event", "auth.recovery.invalid_token")
 
@@ -190,7 +190,7 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 	// Hash the new password (Argon2id).
 	hash, err := auth.HashPassword(req.Password)
 	if err != nil {
-		logger.Error("Failed to hash password during recovery", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to hash password during recovery", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal,
 			localizer.T("errors.api.internalError"), "")
 		return
@@ -199,7 +199,7 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 	// Update password in config, database, and auth manager
 	username, err := s.updatePasswordHash(r.Context(), hash)
 	if err != nil {
-		logger.Error("Failed to save config after recovery", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to save config after recovery", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal,
 			localizer.T("errors.config.failedToSave"), "")
 		return
@@ -212,7 +212,7 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 	s.loginRateLimiter().RecordAttempt(clientIP, true)
 
 	// Security audit log (Wave 2 / task #84: includes previous_algorithm).
-	logger.Info("Password recovery completed successfully",
+	logger.InfoContext(r.Context(), "Password recovery completed successfully",
 		"client_ip", clientIP,
 		"username", username,
 		"event", "password_change",

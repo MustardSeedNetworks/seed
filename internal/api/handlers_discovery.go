@@ -163,7 +163,7 @@ func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 
 	var req config.DiscoveryOptions
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -184,7 +184,7 @@ func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 
 	// Apply the options change to the running service
 	if err := s.discoveryService().Reload(); err != nil {
-		logger.Error("Failed to reload discovery options", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to reload discovery options", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -198,7 +198,7 @@ func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 
 	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Error("Failed to save config", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,

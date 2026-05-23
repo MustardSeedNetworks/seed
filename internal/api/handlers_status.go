@@ -95,7 +95,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	// Get interface from query param or fallback to current.
 	currentIface := s.getInterfaceFromRequest(r)
 	if err := s.netManager().RefreshInterfaces(); err != nil {
-		logger.Error("Failed to refresh interfaces", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to refresh interfaces", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -139,7 +139,7 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(export); err != nil {
-		logger.Error("Error encoding export response", "error", err)
+		logger.ErrorContext(r.Context(), "Error encoding export response", "error", err)
 	}
 }
 
@@ -330,7 +330,7 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 	const maxBytes int64 = 500 * 1024 // limit read size to 500KB
 	lines, err := readLastLines(s.logPath, maxBytes, maxLines)
 	if err != nil {
-		logger.Error("Failed to read log file", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to read log file", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -390,7 +390,7 @@ func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 	// Get system health metrics
 	health, err := system.GetHealth()
 	if err != nil {
-		logger.Error("Failed to get system health", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to get system health", "error", err)
 		sendJSONResponse(w, logger, http.StatusInternalServerError, map[string]string{
 			"error": "Failed to get system health. Check server logs for details.",
 		})

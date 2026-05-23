@@ -73,7 +73,7 @@ func (s *Server) handlePipelineStart(w http.ResponseWriter, r *http.Request) {
 
 	if r.Body != nil && r.ContentLength > 0 {
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			logging.GetLogger().Warn("Failed to parse pipeline start request", "error", err)
+			logging.GetLogger().WarnContext(r.Context(), "Failed to parse pipeline start request", "error", err)
 			// Continue with existing config
 		}
 	}
@@ -95,12 +95,12 @@ func (s *Server) handlePipelineStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logging.GetLogger().Info("Pipeline started via API", "runId", run.ID)
+	logging.GetLogger().InfoContext(r.Context(), "Pipeline started via API", "runId", run.ID)
 	sendJSONResponse(w, nil, http.StatusOK, run)
 }
 
 // handlePipelineCancel cancels the current pipeline run (POST /api/pipeline/cancel).
-func (s *Server) handlePipelineCancel(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) handlePipelineCancel(w http.ResponseWriter, r *http.Request) {
 	if s.pipeline() == nil {
 		http.Error(w, "Pipeline not initialized", http.StatusServiceUnavailable)
 		return
@@ -111,7 +111,7 @@ func (s *Server) handlePipelineCancel(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	logging.GetLogger().Info("Pipeline canceled via API")
+	logging.GetLogger().InfoContext(r.Context(), "Pipeline canceled via API")
 	sendJSONResponse(w, nil, http.StatusOK, map[string]string{"status": "canceled"})
 }
 
@@ -206,7 +206,7 @@ func (s *Server) handlePipelineConfigUpdate(w http.ResponseWriter, r *http.Reque
 	s.config.Pipeline.Persistence.PurgeAfter = config.Persistence.PurgeAfter
 	s.config.Unlock()
 
-	logging.GetLogger().Info("Pipeline config updated via API")
+	logging.GetLogger().InfoContext(r.Context(), "Pipeline config updated via API")
 	sendJSONResponse(w, nil, http.StatusOK, config)
 }
 
