@@ -75,12 +75,6 @@ func DefaultConfig() *Config {
 			MaxAge:     defaultLogMaxAgeDays,
 			Compress:   true,
 		},
-		MCP: MCPConfig{
-			Enabled:            false,
-			RequireAuth:        true,
-			RateLimitPerMinute: defaultRateLimitPerMinute,
-			AllowedTools:       nil,
-		},
 		Database: DatabaseConfig{
 			Path:           "data/seed.db",
 			RetentionDays:  defaultDBRetentionDays,

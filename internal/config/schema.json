@@ -24,7 +24,6 @@
     "fabOptions",
     "displayOptions",
     "logging",
-    "mcp",
     "database",
     "pipeline"
   ],
@@ -89,9 +88,6 @@
     },
     "logging": {
       "$ref": "#/$defs/LoggingConfig"
-    },
-    "mcp": {
-      "$ref": "#/$defs/MCPConfig"
     },
     "database": {
       "$ref": "#/$defs/DatabaseConfig"
@@ -2184,38 +2180,6 @@
           "type": "boolean",
           "description": "Compress rotated files",
           "default": true
-        }
-      }
-    },
-    "MCPConfig": {
-      "type": "object",
-      "description": "MCP (Model Context Protocol) server settings for AI assistant integration",
-      "required": ["enabled", "require_auth", "rate_limit_per_minute"],
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "description": "Enable the MCP server endpoint",
-          "default": false
-        },
-        "require_auth": {
-          "type": "boolean",
-          "description": "Require JWT authentication for MCP connections",
-          "default": true
-        },
-        "rate_limit_per_minute": {
-          "type": "integer",
-          "description": "Requests per minute per client (0 = unlimited)",
-          "minimum": 0,
-          "default": 60
-        },
-        "allowed_tools": {
-          "type": "array",
-          "description": "Specific tools to expose via MCP (empty = all tools)",
-          "items": {
-            "type": "string"
-          },
-          "default": []
         }
       }
     },

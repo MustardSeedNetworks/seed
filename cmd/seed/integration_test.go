@@ -23,7 +23,6 @@ func TestFullCLIInitialization(t *testing.T) {
 		"credentials":     false,
 		"export-config":   false,
 		"install":         false,
-		"mcp":             false,
 		"reset-config":    false,
 		"serve":           false,
 		"setup-wizard":    false,

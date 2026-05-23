@@ -51,9 +51,6 @@ func TestNew(t *testing.T) {
 			if module.Channel() == nil {
 				t.Error("expected Channel service to be initialized")
 			}
-			if module.AI() == nil {
-				t.Error("expected AI service to be initialized")
-			}
 		})
 	}
 }
@@ -91,7 +88,6 @@ func TestModuleServiceAccessors(t *testing.T) {
 				_ = module.WiFi()
 				_ = module.Survey()
 				_ = module.Channel()
-				_ = module.AI()
 			}
 			done <- true
 		}()
@@ -537,59 +533,6 @@ func TestChannelServiceAnalyzeNilScanner(t *testing.T) {
 	}
 	if !errors.Is(err, canopy.ErrNotInitialized) {
 		t.Errorf("expected ErrNotInitialized, got: %v", err)
-	}
-}
-
-// -----------------------------------------------------------------------------
-// AIService Tests
-// -----------------------------------------------------------------------------
-
-func TestNewAIService(t *testing.T) {
-	cfg := config.DefaultConfig()
-
-	service := canopy.NewAIService(cfg)
-	if service == nil {
-		t.Fatal("expected non-nil AIService")
-	}
-}
-
-func TestAIServiceAnalyzeCoverage(t *testing.T) {
-	cfg := config.DefaultConfig()
-	service := canopy.NewAIService(cfg)
-	ctx := context.Background()
-
-	survey := &canopy.Survey{
-		ID:   "test-survey",
-		Name: "Test Survey",
-	}
-
-	_, err := service.AnalyzeCoverage(ctx, survey)
-	if err == nil {
-		t.Error("expected error (not implemented)")
-	}
-	if !errors.Is(err, canopy.ErrNotImplemented) {
-		t.Errorf("expected ErrNotImplemented, got: %v", err)
-	}
-}
-
-func TestAIServiceSuggestAPPlacement(t *testing.T) {
-	cfg := config.DefaultConfig()
-	service := canopy.NewAIService(cfg)
-	ctx := context.Background()
-
-	floorPlan := &canopy.FloorPlan{
-		ID:     "test-floor",
-		Name:   "Test Floor",
-		Width:  100.0,
-		Height: 50.0,
-	}
-
-	_, err := service.SuggestAPPlacement(ctx, floorPlan, nil)
-	if err == nil {
-		t.Error("expected error (not implemented)")
-	}
-	if !errors.Is(err, canopy.ErrNotImplemented) {
-		t.Errorf("expected ErrNotImplemented, got: %v", err)
 	}
 }
 
@@ -1114,7 +1057,6 @@ func TestModuleConcurrentAccess(t *testing.T) {
 				_ = module.WiFi()
 				_ = module.Survey()
 				_ = module.Channel()
-				_ = module.AI()
 			}
 			done <- true
 		}()
@@ -1588,13 +1530,6 @@ func TestModuleIntegration(t *testing.T) {
 	_, analyzeErr := channel.Analyze(ctx, canopy.Band2_4GHz)
 	if analyzeErr != nil {
 		t.Logf("Channel.Analyze() returned error (expected on systems without WiFi): %v", analyzeErr)
-	}
-
-	// Test AI service (returns not implemented)
-	ai := module.AI()
-	_, analyzeCoverageErr := ai.AnalyzeCoverage(ctx, &canopy.Survey{})
-	if !errors.Is(analyzeCoverageErr, canopy.ErrNotImplemented) {
-		t.Errorf("expected ErrNotImplemented from AI.AnalyzeCoverage, got: %v", analyzeCoverageErr)
 	}
 
 	// Stop module

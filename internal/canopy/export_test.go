@@ -82,13 +82,6 @@ func (m *Module) SetChannel(channel *ChannelService) {
 	m.channel = channel
 }
 
-// SetModuleAI sets the AI service on a module for testing.
-func (m *Module) SetAI(ai *AIService) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.ai = ai
-}
-
 // SetChannelServiceScanner sets the scanner on a channel service for testing.
 func (s *ChannelService) SetScanner(scanner *wifi.Scanner) {
 	s.scanner = scanner

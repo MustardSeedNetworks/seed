@@ -38,7 +38,6 @@ type Config struct {
 	FABOptions       FABOptionsConfig       `json:"fabOptions"`
 	DisplayOptions   DisplayOptionsConfig   `json:"displayOptions"`
 	Logging          LoggingConfig          `json:"logging"`
-	MCP              MCPConfig              `json:"mcp"`
 	Database         DatabaseConfig         `json:"database"`
 	Pipeline         PipelineConfig         `json:"pipeline"`
 	// Profile-specific settings (not in YAML config, only stored per-profile)
@@ -101,7 +100,6 @@ func (c *Config) cloneFields() *Config {
 		FABOptions:       c.FABOptions,
 		DisplayOptions:   c.DisplayOptions,
 		Logging:          c.Logging,
-		MCP:              c.MCP,
 		Database:         c.Database,
 		Pipeline:         c.Pipeline,
 	}
@@ -148,7 +146,6 @@ func (c *Config) CopyFieldsFrom(src *Config) {
 	c.FABOptions = temp.FABOptions
 	c.DisplayOptions = temp.DisplayOptions
 	c.Logging = temp.Logging
-	c.MCP = temp.MCP
 	c.Database = temp.Database
 	c.Pipeline = temp.Pipeline
 }
