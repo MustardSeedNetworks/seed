@@ -78,7 +78,7 @@ func TestServeCmdLongDescriptionContent(t *testing.T) {
 		"server",
 		"web",
 		"HTTPS",
-		"--dev",
+		"redirector",
 	}
 
 	for _, content := range expectedContent {

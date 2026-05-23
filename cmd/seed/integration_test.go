@@ -117,11 +117,6 @@ func TestPersistentFlagsAvailableToSubcommands(t *testing.T) {
 		t.Fatal("--config persistent flag not found on root")
 	}
 
-	devFlag := state.rootCmd.PersistentFlags().Lookup("dev")
-	if devFlag == nil {
-		t.Fatal("--dev persistent flag not found on root")
-	}
-
 	proxyFlag := state.rootCmd.PersistentFlags().Lookup("trusted-proxies")
 	if proxyFlag == nil {
 		t.Fatal("--trusted-proxies persistent flag not found on root")
@@ -134,10 +129,6 @@ func TestPersistentFlagsAvailableToSubcommands(t *testing.T) {
 			t.Errorf("Command %q should inherit --config flag", cmd.Use)
 		}
 
-		inheritedDev := cmd.InheritedFlags().Lookup("dev")
-		if inheritedDev == nil {
-			t.Errorf("Command %q should inherit --dev flag", cmd.Use)
-		}
 	}
 }
 

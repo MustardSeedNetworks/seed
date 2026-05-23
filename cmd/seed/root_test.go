@@ -167,11 +167,6 @@ func TestInitCommandsAddsFlags(t *testing.T) {
 		t.Error("Expected --config flag to be defined")
 	}
 
-	devFlag := state.rootCmd.PersistentFlags().Lookup("dev")
-	if devFlag == nil {
-		t.Error("Expected --dev flag to be defined")
-	}
-
 	proxyFlag := state.rootCmd.PersistentFlags().Lookup("trusted-proxies")
 	if proxyFlag == nil {
 		t.Error("Expected --trusted-proxies flag to be defined")
