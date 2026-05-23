@@ -126,16 +126,4 @@
   description: Hardware compatibility testing and validation
 - name: "component: ai"
   color: 8B5CF6
-  description: AI/ML features
-- name: "ai: foundation"
-  color: A78BFA
-  description: AI infrastructure and foundation
-- name: "ai: intelligence"
-  color: 7C3AED
-  description: AI analysis and intelligence
-- name: "ai: wifi"
-  color: 6D28D9
-  description: WiFi AI features (heatmaps, optimization)
-- name: "component: mcp"
-  color: 5319E7
-  description: MCP (Model Context Protocol) server
+  description: Reserved

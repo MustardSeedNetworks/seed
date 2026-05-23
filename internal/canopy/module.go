@@ -1,4 +1,7 @@
-// Package canopy provides WiFi scanning, planning, and site survey capabilities.
+// Package canopy provides WiFi visibility, troubleshooting, and site survey
+// capabilities (signal/SSID/neighbors/channel-utilization, association
+// forensics, roam analysis, AirMapper baseline diff). Wi-Fi planning is
+// explicitly out of scope per LICENSE_STRATEGY §5.
 // Color: Green #2d7a3e
 package canopy
 
@@ -19,7 +22,6 @@ type Module struct {
 	wifi    *WiFiService
 	survey  *SurveyService
 	channel *ChannelService
-	ai      *AIService
 }
 
 // New creates a new Canopy module instance.
@@ -40,8 +42,6 @@ func New(cfg *config.Config, db *database.DB) *Module {
 
 	// Create channel service with WiFi scanner
 	m.channel = NewChannelService(cfg, m.wifi.Scanner())
-
-	m.ai = NewAIService(cfg)
 
 	return m
 }
@@ -65,13 +65,6 @@ func (m *Module) Channel() *ChannelService {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.channel
-}
-
-// AI returns the AI-assisted WiFi planning service.
-func (m *Module) AI() *AIService {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.ai
 }
 
 // Start initializes and starts the Canopy module services.

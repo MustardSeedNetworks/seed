@@ -239,6 +239,9 @@ func NewServer(
 
 // Service accessors - provide backwards-compatible access to services (#888)
 
+// GetConfig returns the server configuration.
+func (s *Server) GetConfig() *config.Config { return s.config }
+
 // AuthManager returns the authentication manager.
 func (s *Server) AuthManager() *auth.Manager { return s.services.Auth.Manager }
 

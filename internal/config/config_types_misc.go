@@ -2,7 +2,7 @@ package config
 
 // config_types_misc.go contains the remaining configuration types that don't
 // belong to a larger domain: profile-scoped Link/CableTest, database, DNS,
-// logging, MCP, FAB / display options, and setup-result.
+// logging, FAB / display options, and setup-result.
 
 import "time"
 
@@ -79,25 +79,6 @@ type LoggingConfig struct {
 	MaxBackups int    `json:"max_backups"` // Number of old files to keep
 	MaxAge     int    `json:"max_age"`     // Days to keep old files
 	Compress   bool   `json:"compress"`    // Compress rotated files
-}
-
-// MCPConfig contains MCP (Model Context Protocol) server settings.
-// MCP enables AI assistants like Claude to interact with the network diagnostics tools.
-type MCPConfig struct {
-	// Enabled enables the MCP server endpoint.
-	Enabled bool `json:"enabled"`
-
-	// RequireAuth requires JWT authentication for MCP connections.
-	// When true, MCP requests must include a valid Bearer token.
-	RequireAuth bool `json:"require_auth"`
-
-	// RateLimitPerMinute limits requests per minute per client.
-	// Set to 0 for unlimited (not recommended).
-	RateLimitPerMinute int `json:"rate_limit_per_minute"`
-
-	// AllowedTools lists specific tools to expose via MCP.
-	// Empty list means all tools are available.
-	AllowedTools []string `json:"allowed_tools,omitempty"`
 }
 
 // SetupResult holds information about first-boot credential setup.

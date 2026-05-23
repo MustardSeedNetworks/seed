@@ -33,9 +33,6 @@ type SystemConfig struct {
 
 	// Security configuration for rate limiting and CORS.
 	Security SystemSecurityConfig `json:"security"`
-
-	// MCP configuration for AI assistant integration (optional).
-	MCP SystemMCPConfig `json:"mcp,omitzero"`
 }
 
 // SystemDatabaseConfig contains database settings.
@@ -204,24 +201,6 @@ type SystemVulnScanConfig struct {
 	SeverityThreshold string `json:"severity_threshold"`
 }
 
-// SystemMCPConfig contains MCP server settings.
-type SystemMCPConfig struct {
-	// Enabled enables the MCP server endpoint.
-	// Env: SEED_MCP_ENABLED
-	Enabled bool `json:"enabled"`
-
-	// RequireAuth requires JWT authentication for MCP connections.
-	// Env: SEED_MCP_REQUIRE_AUTH
-	RequireAuth bool `json:"require_auth"`
-
-	// RateLimitPerMinute limits requests per minute per client.
-	// Env: SEED_MCP_RATE_LIMIT
-	RateLimitPerMinute int `json:"rate_limit_per_minute"`
-
-	// AllowedTools lists specific tools to expose via MCP.
-	AllowedTools []string `json:"allowed_tools,omitempty"`
-}
-
 // DefaultSystemConfig returns the default system configuration.
 func DefaultSystemConfig() *SystemConfig {
 	return &SystemConfig{
@@ -249,10 +228,6 @@ func DefaultSystemConfig() *SystemConfig {
 			SessionTimeout:      time.Duration(defaultSessionTimeoutHours) * time.Hour,
 		},
 		Security: SystemSecurityConfig{
-			RateLimitPerMinute: defaultRateLimitPerMinute,
-		},
-		MCP: SystemMCPConfig{
-			RequireAuth:        true,
 			RateLimitPerMinute: defaultRateLimitPerMinute,
 		},
 	}
@@ -290,7 +265,6 @@ func applyEnvOverrides(cfg *SystemConfig) {
 	applyLoggingEnv(cfg)
 	applyAuthEnv(cfg)
 	applySecurityEnv(cfg)
-	applyMCPEnv(cfg)
 }
 
 func applyDatabaseEnv(cfg *SystemConfig) {
@@ -410,20 +384,6 @@ func applySecurityEnv(cfg *SystemConfig) {
 	if v := os.Getenv("SEED_SECURITY_RATE_LIMIT"); v != "" {
 		if i, err := strconv.Atoi(v); err == nil {
 			cfg.Security.RateLimitPerMinute = i
-		}
-	}
-}
-
-func applyMCPEnv(cfg *SystemConfig) {
-	if v := os.Getenv("SEED_MCP_ENABLED"); v != "" {
-		cfg.MCP.Enabled = parseBool(v)
-	}
-	if v := os.Getenv("SEED_MCP_REQUIRE_AUTH"); v != "" {
-		cfg.MCP.RequireAuth = parseBool(v)
-	}
-	if v := os.Getenv("SEED_MCP_RATE_LIMIT"); v != "" {
-		if i, err := strconv.Atoi(v); err == nil {
-			cfg.MCP.RateLimitPerMinute = i
 		}
 	}
 }
@@ -578,11 +538,6 @@ func (c *SystemConfig) ToLegacyConfig() *Config {
 	cfg.Security.VulnerabilityScanning.NVDAPIKey = c.Security.VulnerabilityScanning.NVDAPIKey
 	cfg.Security.VulnerabilityScanning.UpdateInterval = c.Security.VulnerabilityScanning.UpdateInterval
 	cfg.Security.VulnerabilityScanning.SeverityThreshold = c.Security.VulnerabilityScanning.SeverityThreshold
-
-	cfg.MCP.Enabled = c.MCP.Enabled
-	cfg.MCP.RequireAuth = c.MCP.RequireAuth
-	cfg.MCP.RateLimitPerMinute = c.MCP.RateLimitPerMinute
-	cfg.MCP.AllowedTools = c.MCP.AllowedTools
 
 	return cfg
 }

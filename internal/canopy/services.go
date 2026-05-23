@@ -368,32 +368,6 @@ func (s *ChannelService) Analyze(_ context.Context, band WiFiBand) (*ChannelAnal
 	}, nil
 }
 
-// AIService provides AI-assisted WiFi planning.
-type AIService struct {
-	cfg *config.Config
-}
-
-// NewAIService creates a new AI planning service.
-func NewAIService(cfg *config.Config) *AIService {
-	return &AIService{cfg: cfg}
-}
-
-// AnalyzeCoverage analyzes survey coverage and provides recommendations.
-func (s *AIService) AnalyzeCoverage(_ context.Context, _ *Survey) (*CoverageAnalysis, error) {
-	// AI coverage analysis requires ML models not yet implemented
-	return nil, ErrNotImplemented
-}
-
-// SuggestAPPlacement suggests optimal AP placement.
-func (s *AIService) SuggestAPPlacement(
-	_ context.Context,
-	_ *FloorPlan,
-	_ map[string]any,
-) ([]Recommendation, error) {
-	// AI-based AP placement requires ML models not yet implemented
-	return nil, ErrNotImplemented
-}
-
 // Helper functions
 
 func convertScannedNetwork(n *wifi.ScannedNetwork) WiFiNetwork {
