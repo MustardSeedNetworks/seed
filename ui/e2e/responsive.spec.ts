@@ -49,7 +49,7 @@ test.describe('Responsive Layout Tests', () => {
 
       if (hasLogout) {
         await logoutButton.click();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(150);
       } else {
         await page.goto('/');
         await page.evaluate(() => localStorage.clear());
@@ -91,7 +91,7 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should stack cards vertically on mobile', async ({ page }) => {
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(400);
 
       // Get all cards
       const cards = page.locator('[class*="card"]');
@@ -118,7 +118,7 @@ test.describe('Responsive Layout Tests', () => {
         .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
 
       await settingsButton.click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(150);
 
       // Settings drawer should be visible
       await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible();
@@ -134,7 +134,7 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should have touch-friendly button sizes on mobile', async ({ page }) => {
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(250);
 
       // Find interactive buttons
       const buttons = page.locator('button').filter({ hasText: /settings|help|logout/i });
@@ -157,7 +157,7 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should make FAB button accessible on mobile', async ({ page }) => {
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(250);
 
       // Look for FAB (Floating Action Button)
       const fab = page
@@ -181,14 +181,14 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should scroll cards vertically on mobile', async ({ page }) => {
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(400);
 
       // Get initial scroll position
       const initialScroll = await page.evaluate(() => window.scrollY);
 
       // Scroll down
       await page.evaluate(() => window.scrollBy(0, 300));
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(100);
 
       // Get new scroll position
       const newScroll = await page.evaluate(() => window.scrollY);
@@ -204,7 +204,7 @@ test.describe('Responsive Layout Tests', () => {
         .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
 
       await helpButton.click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(150);
 
       // Help modal should be visible
       const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
@@ -219,7 +219,7 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should display all essential features on mobile', async ({ page }) => {
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(400);
 
       // Verify essential UI elements are present
       const cards = page.locator('[class*="card"]');
@@ -266,7 +266,7 @@ test.describe('Responsive Layout Tests', () => {
 
       if (hasLogout) {
         await logoutButton.click();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(150);
       } else {
         await page.goto('/');
         await page.evaluate(() => localStorage.clear());
@@ -280,7 +280,7 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should arrange cards in 2-column grid on tablet', async ({ page }) => {
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(400);
 
       // Get all cards
       const cards = page.locator('[class*="card"]');
@@ -312,7 +312,7 @@ test.describe('Responsive Layout Tests', () => {
         .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
 
       await settingsButton.click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(150);
 
       // Settings drawer should be visible
       await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible();
@@ -329,7 +329,7 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should have adequate touch targets on tablet', async ({ page }) => {
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(250);
 
       // Find interactive buttons
       const buttons = page.locator('button');
@@ -366,7 +366,7 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should display all cards on tablet', async ({ page }) => {
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(400);
 
       // Count visible cards
       const cards = page.locator('[class*="card"]');
@@ -402,7 +402,7 @@ test.describe('Responsive Layout Tests', () => {
 
       if (hasLogout) {
         await logoutButton.click();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(150);
       } else {
         await page.goto('/');
         await page.evaluate(() => localStorage.clear());
@@ -424,7 +424,7 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should arrange cards in 3-4 column grid on desktop', async ({ page }) => {
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(400);
 
       // Get all cards
       const cards = page.locator('[class*="card"]');
@@ -475,7 +475,7 @@ test.describe('Responsive Layout Tests', () => {
         .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
 
       await settingsButton.click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(150);
 
       // Settings drawer should be visible
       await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible();
@@ -494,7 +494,7 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should provide optimal layout for large screens', async ({ page }) => {
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(400);
 
       // Verify content is well-distributed
       const cards = page.locator('[class*="card"]');
@@ -513,7 +513,7 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should display all cards without scrolling (above the fold)', async ({ page }) => {
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(400);
 
       // Get initial scroll position
       const scrollY = await page.evaluate(() => window.scrollY);
@@ -536,7 +536,7 @@ test.describe('Responsive Layout Tests', () => {
         .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
 
       await helpButton.click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(150);
 
       // Help modal should be visible
       const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
@@ -570,13 +570,13 @@ test.describe('Responsive Layout Tests', () => {
 
       // Resize to tablet - should stay authenticated
       await page.setViewportSize({ width: 768, height: 1024 });
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(150);
 
       await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible();
 
       // Resize to desktop - should stay authenticated
       await page.setViewportSize({ width: 1920, height: 1080 });
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(150);
 
       await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible();
     });
@@ -596,7 +596,7 @@ test.describe('Responsive Layout Tests', () => {
         .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
 
       await settingsButton.click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(150);
 
       const themeToggle = page
         .getByRole('button', { name: /dark|light|theme/i })
@@ -608,7 +608,7 @@ test.describe('Responsive Layout Tests', () => {
 
       if (!classes?.includes('dark')) {
         await themeToggle.click();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(150);
       }
 
       // Close settings
@@ -618,7 +618,7 @@ test.describe('Responsive Layout Tests', () => {
         .first();
 
       await closeButton.click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(150);
 
       // Verify dark theme
       classes = await htmlElement.getAttribute('class');
@@ -626,14 +626,14 @@ test.describe('Responsive Layout Tests', () => {
 
       // Switch to mobile - theme should persist
       await page.setViewportSize({ width: 375, height: 667 });
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(150);
 
       const mobileClasses = await htmlElement.getAttribute('class');
       expect(mobileClasses).toContain('dark');
 
       // Switch to tablet - theme should persist
       await page.setViewportSize({ width: 768, height: 1024 });
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(150);
 
       const tabletClasses = await htmlElement.getAttribute('class');
       expect(tabletClasses).toContain('dark');
@@ -648,7 +648,7 @@ test.describe('Responsive Layout Tests', () => {
         timeout: 10000,
       });
 
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(400);
 
       // Count cards on desktop
       const desktopCards = await page.locator('[class*="card"]').count();
@@ -656,14 +656,14 @@ test.describe('Responsive Layout Tests', () => {
 
       // Switch to tablet
       await page.setViewportSize({ width: 768, height: 1024 });
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(250);
 
       const tabletCards = await page.locator('[class*="card"]').count();
       expect(tabletCards).toBeGreaterThanOrEqual(desktopCards - 2); // Allow for minor variance
 
       // Switch to mobile
       await page.setViewportSize({ width: 375, height: 667 });
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(250);
 
       const mobileCards = await page.locator('[class*="card"]').count();
       expect(mobileCards).toBeGreaterThanOrEqual(desktopCards - 2); // Allow for minor variance
@@ -685,7 +685,7 @@ test.describe('Responsive Layout Tests', () => {
         { width: 375, height: 667, name: 'mobile' },
       ]) {
         await page.setViewportSize(viewport);
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(150);
 
         // Open settings
         const settingsButton = page
@@ -693,7 +693,7 @@ test.describe('Responsive Layout Tests', () => {
           .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
 
         await settingsButton.click();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(150);
 
         // Verify settings content visible
         await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible({
@@ -707,7 +707,7 @@ test.describe('Responsive Layout Tests', () => {
           .first();
 
         await closeButton.click();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(150);
       }
     });
   });
