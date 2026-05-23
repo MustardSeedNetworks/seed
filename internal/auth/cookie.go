@@ -47,7 +47,7 @@ func DefaultCookieConfig() CookieConfig {
 	}
 }
 
-// newAuthCookie builds an http.Cookie with seed's hardcoded auth-cookie
+// newAuthCookie builds an [http.Cookie] with seed's hardcoded auth-cookie
 // security baseline. Centralising the literals here keeps every auth
 // cookie identical (and lets gosec G124 see Secure/HttpOnly/SameSite are
 // all set unconditionally).

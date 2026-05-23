@@ -4,6 +4,7 @@ package wifi
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -14,19 +15,28 @@ import (
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
+// wifiCmdTimeout bounds external Wi-Fi tooling (nmcli/iw/ip) to prevent
+// hangs when the wireless stack is in a bad state.
+const wifiCmdTimeout = 30 * time.Second
+
 // scanPlatform performs a WiFi scan on Linux using nmcli.
 // nmcli doesn't require root privileges unlike iw scan.
 func scanPlatform(iface string) ([]*ScannedNetwork, error) {
 	logger := logging.GetLogger()
 
+	// nmcli rescan can hang on stuck Wi-Fi stacks; bound to wifiCmdTimeout.
+	ctx, cancel := context.WithTimeout(context.Background(), wifiCmdTimeout)
+	defer cancel()
+
 	// Use nmcli to list WiFi networks - doesn't require root
 	// First rescan to get fresh results
-	rescanCmd := exec.Command("nmcli", "device", "wifi", "rescan", "ifname", iface)
+	rescanCmd := exec.CommandContext(ctx, "nmcli", "device", "wifi", "rescan", "ifname", iface)
 	_ = rescanCmd.Run() // Ignore error, rescan might fail if already scanning
 
 	// Get the list of networks
 	//nolint:gosec // iface is validated by caller
-	cmd := exec.Command(
+	cmd := exec.CommandContext(
+		ctx,
 		"nmcli",
 		"-t",
 		"-f",
@@ -164,9 +174,12 @@ func scanWithIW(iface string) ([]*ScannedNetwork, error) {
 		logger.Warn("Failed to ensure interface is up", "interface", iface, "error", err)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), wifiCmdTimeout)
+	defer cancel()
+
 	// Try iw scan dump (doesn't trigger new scan, uses cached results)
 	//nolint:gosec // iface is validated by caller
-	cmd := exec.Command("iw", "dev", iface, "scan", "dump")
+	cmd := exec.CommandContext(ctx, "iw", "dev", iface, "scan", "dump")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan WiFi networks: %w", err)
@@ -177,8 +190,10 @@ func scanWithIW(iface string) ([]*ScannedNetwork, error) {
 
 // ensureInterfaceUp brings the interface up if it's down.
 func ensureInterfaceUp(iface string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), wifiCmdTimeout)
+	defer cancel()
 	//nolint:gosec // iface is validated by caller
-	cmd := exec.Command("ip", "link", "set", iface, "up")
+	cmd := exec.CommandContext(ctx, "ip", "link", "set", iface, "up")
 	return cmd.Run()
 }
 
