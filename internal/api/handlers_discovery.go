@@ -211,7 +211,7 @@ func (s *Server) setDiscoveryOptions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  "success",
+		"status":  statusSuccess,
 		"message": "Discovery options updated",
 	})
 }

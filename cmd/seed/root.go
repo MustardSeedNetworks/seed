@@ -9,6 +9,10 @@ import (
 	"github.com/krisarmstrong/seed/internal/version"
 )
 
+// binaryName is the canonical name of the seed binary used in cobra Use:,
+// systemd unit, installer paths, and Linux user/group references.
+const binaryName = "seed"
+
 // cliState holds the CLI configuration state and commands.
 type cliState struct {
 	cfgFile        string
@@ -35,7 +39,7 @@ func newCLIState() *cliState {
 
 	// Note: Run function is set in initCommands() to avoid initialization cycle
 	state.rootCmd = &cobra.Command{
-		Use:   "seed",
+		Use:   binaryName,
 		Short: "The Seed - Network Diagnostics by Mustard Seed Networks",
 		Long: fmt.Sprintf(`The Seed %s - Network Diagnostics by Mustard Seed Networks
 

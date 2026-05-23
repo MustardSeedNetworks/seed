@@ -578,7 +578,7 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  "success",
+		"status":  statusSuccess,
 		"message": "SNMP settings updated",
 	})
 }

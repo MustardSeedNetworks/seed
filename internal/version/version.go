@@ -27,6 +27,13 @@ const (
 	unknownValue = "unknown"
 )
 
+// [debug.BuildInfo] setting keys reported by the Go toolchain.
+const (
+	vcsRevisionKey = "vcs.revision"
+	vcsTimeKey     = "vcs.time"
+	vcsModifiedKey = "vcs.modified"
+)
+
 // extractVersionFromBuildInfo processes a [debug.BuildInfo] and extracts version information.
 // This function is separated from getVersionInfo to enable testing with mock build info.
 func extractVersionFromBuildInfo(info *debug.BuildInfo) (string, string, string) {
@@ -47,15 +54,15 @@ func extractVersionFromBuildInfo(info *debug.BuildInfo) (string, string, string)
 	var modified bool
 	for _, setting := range info.Settings {
 		switch setting.Key {
-		case "vcs.revision":
+		case vcsRevisionKey:
 			commit = setting.Value
 			// Shorten for display.
 			if len(commit) > shortCommitLen {
 				commit = commit[:shortCommitLen]
 			}
-		case "vcs.time":
+		case vcsTimeKey:
 			buildTime = setting.Value
-		case "vcs.modified":
+		case vcsModifiedKey:
 			modified = setting.Value == "true"
 		}
 	}

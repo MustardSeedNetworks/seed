@@ -143,7 +143,7 @@ func (s *Server) updateWiFiSettings(
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  "success",
+		"status":  statusSuccess,
 		"message": "WiFi settings updated",
 	})
 }
@@ -599,7 +599,7 @@ func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request)
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status":  "success",
+		"status":  statusSuccess,
 		"message": "Network forgotten",
 	})
 }

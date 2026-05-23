@@ -188,14 +188,14 @@ func setupSystemModeUser(dirs []string) {
 // resolveBinaryDestination determines where to install the binary.
 func resolveBinaryDestination(mode paths.Mode, p *paths.Paths) (string, error) {
 	if mode == paths.ModeUser {
-		destBinary := filepath.Join(os.Getenv("HOME"), ".local", "bin", "seed")
+		destBinary := filepath.Join(os.Getenv("HOME"), ".local", "bin", binaryName)
 		//nolint:gosec // G301: User binary directory needs 0755 permissions
 		if err := os.MkdirAll(filepath.Dir(destBinary), 0o755); err != nil {
 			return "", fmt.Errorf("creating binary directory: %w", err)
 		}
 		return destBinary, nil
 	}
-	return filepath.Join(p.BinaryDir, "seed"), nil
+	return filepath.Join(p.BinaryDir, binaryName), nil
 }
 
 // installBinary copies the executable to the destination path.
@@ -345,14 +345,23 @@ func createSystemUser() {
 	if _, err := exec.LookPath("id"); err == nil {
 		ctx, cancel := context.WithTimeout(context.Background(), userCheckTimeoutSeconds*time.Second)
 		defer cancel()
-		if exec.CommandContext(ctx, "id", "seed").Run() == nil {
+		if exec.CommandContext(ctx, "id", binaryName).Run() == nil {
 			fmt.Fprintln(os.Stdout, "  User 'seed' already exists")
 			return
 		}
 	}
 
 	// Create user
-	if err := runCommand("useradd", "-r", "-s", "/usr/sbin/nologin", "-d", "/var/lib/seed", "-m", "seed"); err != nil {
+	if err := runCommand(
+		"useradd",
+		"-r",
+		"-s",
+		"/usr/sbin/nologin",
+		"-d",
+		"/var/lib/seed",
+		"-m",
+		binaryName,
+	); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: Failed to create user: %v\n", err)
 	} else {
 		fmt.Fprintln(os.Stdout, "  Created user 'seed'")
@@ -368,8 +377,8 @@ func installSystemdService(mode paths.Mode, p *paths.Paths, binaryPath string) {
 		servicePath = "/etc/systemd/system/seed.service"
 		tmpl = systemdServiceTemplate
 		svcCfg = serviceConfig{
-			User:       "seed",
-			Group:      "seed",
+			User:       binaryName,
+			Group:      binaryName,
 			BinaryPath: binaryPath,
 			ConfigDir:  p.ConfigDir,
 			DataDir:    p.DataDir,

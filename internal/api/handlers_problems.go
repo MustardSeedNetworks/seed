@@ -189,7 +189,7 @@ func (s *Server) handleProblemThresholds(w http.ResponseWriter, r *http.Request)
 
 		detector.SetThresholds(thresholds)
 		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-			"status":  "success",
+			"status":  statusSuccess,
 			"message": "Thresholds updated",
 		})
 

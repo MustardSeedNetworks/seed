@@ -228,7 +228,7 @@ func NewOUIDatabase() *OUIDatabase {
 // LoadFromFile loads additional OUI entries from a file.
 // File format: AA:BB:CC<tab>Vendor Name.
 //
-// path is filepath.Clean'd to normalize traversal sequences. This is an
+// path is [filepath.Clean]'d to normalize traversal sequences. This is an
 // administrative load operation invoked at boot or by privileged code
 // paths — not user-controlled at runtime — so the cleaning is purely
 // defensive (and to satisfy gosec's taint analysis).

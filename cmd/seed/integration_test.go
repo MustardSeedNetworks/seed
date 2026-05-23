@@ -128,7 +128,6 @@ func TestPersistentFlagsAvailableToSubcommands(t *testing.T) {
 		if inheritedConfig == nil {
 			t.Errorf("Command %q should inherit --config flag", cmd.Use)
 		}
-
 	}
 }
 

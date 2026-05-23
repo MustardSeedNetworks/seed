@@ -642,7 +642,7 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 		"setup", true)
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"status": "success",
+		"status": statusSuccess,
 	})
 }
 

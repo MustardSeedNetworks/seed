@@ -237,7 +237,7 @@ func (s *Server) handleDNSSecuritySettings(w http.ResponseWriter, r *http.Reques
 		s.dnsSecurityScanner().SetConfig(newConfig)
 
 		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-			"status":  "success",
+			"status":  statusSuccess,
 			"message": "DNS security settings updated",
 		})
 
