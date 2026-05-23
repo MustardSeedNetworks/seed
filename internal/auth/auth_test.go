@@ -953,12 +953,6 @@ func TestRandomInt(t *testing.T) {
 func TestDefaultCookieConfig(t *testing.T) {
 	config := auth.DefaultCookieConfig()
 
-	if !config.Secure {
-		t.Error("Secure should be true by default")
-	}
-	if config.SameSite != http.SameSiteStrictMode {
-		t.Errorf("SameSite should be Strict (fix #707), got %v", config.SameSite)
-	}
 	if config.Domain != "" {
 		t.Errorf("Domain should be empty by default, got %q", config.Domain)
 	}
@@ -970,7 +964,6 @@ func TestDefaultCookieConfig(t *testing.T) {
 func TestSetAccessTokenCookie(t *testing.T) {
 	rec := httptest.NewRecorder()
 	config := auth.DefaultCookieConfig()
-	config.Secure = false // For testing without HTTPS
 
 	auth.SetAccessTokenCookie(rec, "test-token", config)
 
@@ -989,12 +982,17 @@ func TestSetAccessTokenCookie(t *testing.T) {
 	if !cookie.HttpOnly {
 		t.Error("cookie should be HttpOnly")
 	}
+	if !cookie.Secure {
+		t.Error("cookie must be Secure (HTTPS-only, hardcoded)")
+	}
+	if cookie.SameSite != http.SameSiteStrictMode {
+		t.Errorf("cookie SameSite must be StrictMode (hardcoded), got %v", cookie.SameSite)
+	}
 }
 
 func TestSetRefreshTokenCookie(t *testing.T) {
 	rec := httptest.NewRecorder()
 	config := auth.DefaultCookieConfig()
-	config.Secure = false
 
 	auth.SetRefreshTokenCookie(rec, "refresh-token", config)
 

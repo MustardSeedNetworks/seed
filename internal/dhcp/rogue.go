@@ -181,7 +181,7 @@ func (rd *RogueDetector) capturePackets(ctx context.Context, handle *pcap.Handle
 			}
 			rd.running = false
 			rd.cancel = nil
-			logging.GetLogger().Warn("Rogue DHCP detector capture loop exited unexpectedly")
+			logging.GetLogger().WarnContext(ctx, "Rogue DHCP detector capture loop exited unexpectedly")
 		}
 		rd.mu.Unlock()
 	}()

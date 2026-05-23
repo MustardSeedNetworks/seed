@@ -227,8 +227,14 @@ func NewOUIDatabase() *OUIDatabase {
 
 // LoadFromFile loads additional OUI entries from a file.
 // File format: AA:BB:CC<tab>Vendor Name.
+//
+// path is filepath.Clean'd to normalize traversal sequences. This is an
+// administrative load operation invoked at boot or by privileged code
+// paths — not user-controlled at runtime — so the cleaning is purely
+// defensive (and to satisfy gosec's taint analysis).
 func (db *OUIDatabase) LoadFromFile(path string) error {
-	file, err := os.Open(path)
+	cleanPath := filepath.Clean(path)
+	file, err := os.Open(cleanPath)
 	if err != nil {
 		return fmt.Errorf("open OUI file: %w", err)
 	}
@@ -308,6 +314,7 @@ func (db *OUIDatabase) TryLoadIEEEFile() error {
 	}
 
 	for _, loc := range locations {
+		//nolint:gosec // G703: locations is a literal hardcoded list of well-known OUI database paths
 		if _, err := os.Stat(loc); err == nil {
 			return db.LoadFromFile(loc)
 		}

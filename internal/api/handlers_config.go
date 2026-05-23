@@ -60,7 +60,7 @@ func (s *Server) handleConfigBackups(w http.ResponseWriter, r *http.Request) {
 
 	backups, err := backupMgr.ListBackups()
 	if err != nil {
-		logger.Error("Failed to list backups", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to list backups", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -97,7 +97,7 @@ func (s *Server) handleConfigBackupCreate(w http.ResponseWriter, r *http.Request
 
 	backup, err := backupMgr.CreateBackup()
 	if err != nil {
-		logger.Error("Failed to create backup", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to create backup", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -111,7 +111,7 @@ func (s *Server) handleConfigBackupCreate(w http.ResponseWriter, r *http.Request
 
 	// Security audit log: config backup created (fixes #697)
 	clientIP := s.getClientIP(r)
-	logger.Info("Configuration backup created",
+	logger.InfoContext(r.Context(), "Configuration backup created",
 		"client_ip", clientIP,
 		"backup_name", backup.Name,
 		"event", "config.backup.create")
@@ -141,7 +141,7 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 
 	var req RestoreRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -169,7 +169,7 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 	backupMgr := config.NewBackupManager(s.configPath, backupDir, defaultBackupMaxCount)
 
 	if err := backupMgr.RestoreBackup(req.BackupName); err != nil {
-		logger.Error("Failed to restore backup", "error", err, "backup_name", req.BackupName)
+		logger.ErrorContext(r.Context(), "Failed to restore backup", "error", err, "backup_name", req.BackupName)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -184,7 +184,7 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 	// Reload config after restore
 	newCfg, err := config.Load(s.configPath)
 	if err != nil {
-		logger.Error("Failed to reload config after restore", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to reload config after restore", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -205,7 +205,7 @@ func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 
 	// Security audit log: config restored from backup (fixes #697)
 	clientIP := s.getClientIP(r)
-	logger.Info("Configuration restored from backup",
+	logger.InfoContext(r.Context(), "Configuration restored from backup",
 		"client_ip", clientIP,
 		"backup_name", req.BackupName,
 		"event", "config.backup.restore")
@@ -268,7 +268,7 @@ func (s *Server) handleConfigBackupDelete(w http.ResponseWriter, r *http.Request
 	backupMgr := config.NewBackupManager(s.configPath, backupDir, defaultBackupMaxCount)
 
 	if err := backupMgr.DeleteBackup(backupName); err != nil {
-		logger.Error("Failed to delete backup", "error", err, "backup_name", backupName)
+		logger.ErrorContext(r.Context(), "Failed to delete backup", "error", err, "backup_name", backupName)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -282,7 +282,7 @@ func (s *Server) handleConfigBackupDelete(w http.ResponseWriter, r *http.Request
 
 	// Security audit log: config backup deleted (fixes #697)
 	clientIP := s.getClientIP(r)
-	logger.Info("Configuration backup deleted",
+	logger.InfoContext(r.Context(), "Configuration backup deleted",
 		"client_ip", clientIP,
 		"backup_name", backupName,
 		"event", "config.backup.delete")

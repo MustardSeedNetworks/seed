@@ -167,7 +167,7 @@ func (s *Server) handleIperfInfo(w http.ResponseWriter, r *http.Request) {
 	resp := IperfInfoResponse{}
 	iperfVersion, err := iperf.GetVersion()
 	if err != nil {
-		logger.Warn("Failed to get iperf version", "error", err)
+		logger.WarnContext(r.Context(), "Failed to get iperf version", "error", err)
 		resp.Installed = false
 		resp.Error = "iperf3 not found or not accessible"
 	} else {
@@ -200,7 +200,7 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 
 	var req IperfClientRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -213,7 +213,7 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := validateIperfClientRequest(&req); err != nil {
-		logger.Warn("iPerf validation failed", "error", err)
+		logger.WarnContext(r.Context(), "iPerf validation failed", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -235,18 +235,18 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 		Parallel:  req.Parallel,
 	}
 
-	// Run test in background and return immediately
-	go func(logger *slog.Logger) {
-		// Add timeout protection for iperf operations
+	// Run test in background and return immediately. WithoutCancel detaches
+	// lifecycle from the request so the test outlives HTTP cancellation.
+	go func(parentCtx context.Context, logger *slog.Logger) {
 		ctx, cancel := context.WithTimeout(
-			context.Background(),
+			context.WithoutCancel(parentCtx),
 			time.Duration(req.Duration+iperfTimeoutPaddingSec)*time.Second,
 		)
 		defer cancel()
 		if _, err := s.iperfManager().RunClient(ctx, &iperfConfig); err != nil {
-			logger.Error("iperf client failed", "error", err)
+			logger.ErrorContext(parentCtx, "iperf client failed", "error", err)
 		}
-	}(logger)
+	}(r.Context(), logger)
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
 		"message": "iperf3 test started. Poll /api/iperf/client/status for results.",
@@ -323,7 +323,7 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 
 	var req IperfServerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -342,7 +342,7 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 			port = 5201
 		}
 		if err := s.iperfManager().StartServer(port); err != nil {
-			logger.Error("Failed to start iPerf server", "error", err)
+			logger.ErrorContext(r.Context(), "Failed to start iPerf server", "error", err)
 			sendErrorResponseWithDetails(
 				w,
 				logger,
@@ -359,7 +359,7 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 		})
 	case "stop":
 		if err := s.iperfManager().StopServer(); err != nil {
-			logger.Error("Failed to stop iPerf server", "error", err)
+			logger.ErrorContext(r.Context(), "Failed to stop iPerf server", "error", err)
 			sendErrorResponseWithDetails(
 				w,
 				logger,

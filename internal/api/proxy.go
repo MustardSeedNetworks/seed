@@ -153,7 +153,7 @@ func (tp *TrustedProxies) GetClientIPWithProxy(r *http.Request) string {
 		// Not from trusted proxy - use RemoteAddr only
 		// Log at debug level to help troubleshoot misconfiguration
 		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-			logging.GetLogger().Debug("Ignoring X-Forwarded-For from untrusted source",
+			logging.GetLogger().DebugContext(r.Context(), "Ignoring X-Forwarded-For from untrusted source",
 				"xff", xff,
 				"remote_addr", r.RemoteAddr)
 		}
@@ -167,7 +167,7 @@ func (tp *TrustedProxies) GetClientIPWithProxy(r *http.Request) string {
 		if xri := r.Header.Get("X-Real-IP"); xri != "" {
 			ip := net.ParseIP(strings.TrimSpace(xri))
 			if ip != nil {
-				logging.GetLogger().Debug("Using X-Real-IP from trusted proxy",
+				logging.GetLogger().DebugContext(r.Context(), "Using X-Real-IP from trusted proxy",
 					"client_ip", ip.String(),
 					"proxy", remoteIP)
 				return ip.String()
@@ -182,7 +182,7 @@ func (tp *TrustedProxies) GetClientIPWithProxy(r *http.Request) string {
 		clientIP := strings.TrimSpace(ips[0])
 		ip := net.ParseIP(clientIP)
 		if ip != nil {
-			logging.GetLogger().Debug("Using X-Forwarded-For from trusted proxy",
+			logging.GetLogger().DebugContext(r.Context(), "Using X-Forwarded-For from trusted proxy",
 				"client_ip", ip.String(),
 				"proxy", remoteIP,
 				"xff_chain", xff)

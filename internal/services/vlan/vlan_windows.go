@@ -71,7 +71,8 @@ func parseVlanCsv(output, parentIface string) []int {
 
 			if vlanID > 0 {
 				// Filter by parent interface if specified
-				if parentIface != "" && !strings.Contains(name, parentIface) && !strings.Contains(description, parentIface) {
+				if parentIface != "" && !strings.Contains(name, parentIface) &&
+					!strings.Contains(description, parentIface) {
 					continue
 				}
 

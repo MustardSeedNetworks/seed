@@ -6,7 +6,6 @@ import (
 )
 
 func TestOutputCredentialsJSONMarshaling(t *testing.T) {
-
 	creds := setupCredentials{
 		Username: "admin",
 		Password: "testpassword123",
@@ -38,7 +37,6 @@ func TestOutputCredentialsJSONMarshaling(t *testing.T) {
 }
 
 func TestOutputCredentialsJSONFieldNames(t *testing.T) {
-
 	creds := setupCredentials{
 		Username: "user",
 		Password: "pass",
@@ -62,7 +60,6 @@ func TestOutputCredentialsJSONFieldNames(t *testing.T) {
 }
 
 func TestOutputResultJSONMarshaling(t *testing.T) {
-
 	result := ValidationResult{
 		Valid:    true,
 		Path:     "/etc/seed/seed.json",
@@ -92,7 +89,6 @@ func TestOutputResultJSONMarshaling(t *testing.T) {
 }
 
 func TestOutputResultJSONFieldNames(t *testing.T) {
-
 	result := ValidationResult{
 		Valid:    false,
 		Path:     "/test/config.json",
@@ -117,7 +113,6 @@ func TestOutputResultJSONFieldNames(t *testing.T) {
 }
 
 func TestValidationResultJSONOmitEmpty(t *testing.T) {
-
 	result := ValidationResult{
 		Valid:    true,
 		Path:     "/test/config.json",
@@ -142,7 +137,6 @@ func TestValidationResultJSONOmitEmpty(t *testing.T) {
 }
 
 func TestValidationResultStructure(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		result   ValidationResult
@@ -193,7 +187,6 @@ func TestValidationResultStructure(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			if tc.hasError && len(tc.result.Errors) == 0 {
 				t.Error("Expected errors but none found")
 			}
@@ -211,7 +204,6 @@ func TestValidationResultStructure(t *testing.T) {
 }
 
 func TestSetupCredentialsStructure(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		username string
@@ -240,7 +232,6 @@ func TestSetupCredentialsStructure(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			creds := setupCredentials{
 				Username: tc.username,
 				Password: tc.password,
@@ -261,7 +252,6 @@ func TestSetupCredentialsStructure(t *testing.T) {
 }
 
 func TestOutputCredentialsFunctionExists(t *testing.T) {
-
 	// Just verify the function exists and can be called with valid arguments
 	// We don't capture output to avoid race conditions
 	creds := setupCredentials{
@@ -282,7 +272,6 @@ func TestOutputCredentialsFunctionExists(t *testing.T) {
 }
 
 func TestOutputResultFunctionExists(t *testing.T) {
-
 	// Just verify the function exists with correct signature
 	result := ValidationResult{
 		Valid: true,
@@ -301,7 +290,6 @@ func TestOutputResultFunctionExists(t *testing.T) {
 }
 
 func TestValidationResultRoundTrip(t *testing.T) {
-
 	original := ValidationResult{
 		Valid:    false,
 		Path:     "/var/lib/seed/config.json",
@@ -337,7 +325,6 @@ func TestValidationResultRoundTrip(t *testing.T) {
 }
 
 func TestSetupCredentialsRoundTrip(t *testing.T) {
-
 	original := setupCredentials{
 		Username: "admin",
 		Password: "supersecret",

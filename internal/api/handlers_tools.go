@@ -126,7 +126,7 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 
 	var req TCPProbeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -140,7 +140,7 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 
 	ip, err := resolveTargetIP(req.Target)
 	if err != nil {
-		logger.Warn("Invalid target", "error", err, "target", req.Target)
+		logger.WarnContext(r.Context(), "Invalid target", "error", err, "target", req.Target)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -154,7 +154,7 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 
 	ports, err := validateTCPProbePorts(&req)
 	if err != nil {
-		logger.Warn("Port validation failed", "error", err)
+		logger.WarnContext(r.Context(), "Port validation failed", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -175,7 +175,7 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 	// Create prober
 	prober, err := discovery.NewTCPProber(timeout)
 	if err != nil {
-		logger.Error("Failed to create TCP prober", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to create TCP prober", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -233,7 +233,7 @@ func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
 
 	var req TracerouteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -363,7 +363,7 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 
 	var req PortScanRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -377,7 +377,7 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 
 	// Validate target
 	if err := validation.ValidateServerAddress(req.Target); err != nil {
-		logger.Warn("Invalid target", "error", err, "target", req.Target)
+		logger.WarnContext(r.Context(), "Invalid target", "error", err, "target", req.Target)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -392,7 +392,7 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 	// Create scanner
 	scanner, err := discovery.NewPortScanner(portScanTimeoutSec * time.Second)
 	if err != nil {
-		logger.Error("Failed to create port scanner", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to create port scanner", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -456,7 +456,7 @@ func (s *Server) handleAdvancedFingerprint(w http.ResponseWriter, r *http.Reques
 		IP string `json:"ip"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,

@@ -149,7 +149,7 @@ func (s *Server) handleDNSSecurity(w http.ResponseWriter, r *http.Request) {
 		// Trigger a security scan
 		var req DNSSecurityScanRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			logger.Warn("Invalid request body for DNS security scan", "error", err)
+			logger.WarnContext(r.Context(), "Invalid request body for DNS security scan", "error", err)
 			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 				ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 			return
@@ -188,7 +188,7 @@ func (s *Server) handleDNSSecurity(w http.ResponseWriter, r *http.Request) {
 		// Run concurrent scans
 		results, err := s.dnsSecurityScanner().ScanServers(r.Context(), req.Servers, dnsSecurityConcurrentScans)
 		if err != nil {
-			logger.Error("DNS security scan failed", "error", err)
+			logger.ErrorContext(r.Context(), "DNS security scan failed", "error", err)
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 				ErrCodeInternal, localizer.T("errors.health.scanFailed"), "")
 			return
@@ -228,7 +228,7 @@ func (s *Server) handleDNSSecuritySettings(w http.ResponseWriter, r *http.Reques
 	case http.MethodPut:
 		var newConfig dns.SecurityScanConfig
 		if err := json.NewDecoder(r.Body).Decode(&newConfig); err != nil {
-			logger.Warn("Invalid request body for DNS security config", "error", err)
+			logger.WarnContext(r.Context(), "Invalid request body for DNS security config", "error", err)
 			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 				ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 			return

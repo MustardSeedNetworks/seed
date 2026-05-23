@@ -9,7 +9,6 @@ import (
 )
 
 func TestCompletionCmdExists(t *testing.T) {
-
 	state := newCLIState()
 	initCommands(state)
 
@@ -28,7 +27,6 @@ func TestCompletionCmdExists(t *testing.T) {
 }
 
 func TestCompletionCmdValidArgs(t *testing.T) {
-
 	state := newCLIState()
 
 	expectedShells := []string{"bash", "zsh", "fish", "powershell"}
@@ -46,7 +44,6 @@ func TestCompletionCmdValidArgs(t *testing.T) {
 }
 
 func TestCompletionCmdDisablesFlagsInUseLine(t *testing.T) {
-
 	state := newCLIState()
 
 	if !state.completionCmd.DisableFlagsInUseLine {
@@ -55,7 +52,6 @@ func TestCompletionCmdDisablesFlagsInUseLine(t *testing.T) {
 }
 
 func TestCompletionCmdHasRun(t *testing.T) {
-
 	state := newCLIState()
 
 	if state.completionCmd.Run == nil {
@@ -64,7 +60,6 @@ func TestCompletionCmdHasRun(t *testing.T) {
 }
 
 func TestCompletionCmdArgs(t *testing.T) {
-
 	state := newCLIState()
 	initCommands(state)
 
@@ -88,7 +83,6 @@ func TestCompletionCmdArgs(t *testing.T) {
 }
 
 func TestCompletionCmdShortDescription(t *testing.T) {
-
 	state := newCLIState()
 
 	if state.completionCmd.Short == "" {
@@ -101,7 +95,6 @@ func TestCompletionCmdShortDescription(t *testing.T) {
 }
 
 func TestCompletionCmdLongDescriptionContainsInstructions(t *testing.T) {
-
 	state := newCLIState()
 
 	// Long description should contain instructions for all shells
@@ -120,7 +113,6 @@ func TestCompletionCmdLongDescriptionContainsInstructions(t *testing.T) {
 }
 
 func TestCompletionBashGeneration(t *testing.T) {
-
 	state := newCLIState()
 	initCommands(state)
 
@@ -142,7 +134,6 @@ func TestCompletionBashGeneration(t *testing.T) {
 }
 
 func TestCompletionZshGeneration(t *testing.T) {
-
 	state := newCLIState()
 	initCommands(state)
 
@@ -159,7 +150,6 @@ func TestCompletionZshGeneration(t *testing.T) {
 }
 
 func TestCompletionFishGeneration(t *testing.T) {
-
 	state := newCLIState()
 	initCommands(state)
 
@@ -176,7 +166,6 @@ func TestCompletionFishGeneration(t *testing.T) {
 }
 
 func TestCompletionPowerShellGeneration(t *testing.T) {
-
 	state := newCLIState()
 	initCommands(state)
 
@@ -193,7 +182,6 @@ func TestCompletionPowerShellGeneration(t *testing.T) {
 }
 
 func TestCompletionCmdArgsValidation(t *testing.T) {
-
 	tests := []struct {
 		name    string
 		args    []string
@@ -238,7 +226,6 @@ func TestCompletionCmdArgsValidation(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			state := newCLIState()
 			initCommands(state)
 

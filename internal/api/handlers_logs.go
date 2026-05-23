@@ -81,7 +81,7 @@ func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 
 	var req ClientLogRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -232,7 +232,7 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// Fall through to memory buffer on error
-		logger.Warn("Failed to query logs from database, falling back to memory", "error", err)
+		logger.WarnContext(r.Context(), "Failed to query logs from database, falling back to memory", "error", err)
 	}
 
 	// Fall back to memory buffer

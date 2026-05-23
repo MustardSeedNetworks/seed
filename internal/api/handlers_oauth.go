@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -168,7 +169,7 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 		Path:     "/api/sso",
 		MaxAge:   int(oauthStateCookieExpiry.Seconds()),
 		HttpOnly: true,
-		Secure:   r.TLS != nil, // Set Secure flag if HTTPS
+		Secure:   true, // HTTPS required at daemon level
 		SameSite: http.SameSiteLaxMode,
 	})
 
@@ -179,7 +180,7 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 		Path:     "/api/sso",
 		MaxAge:   int(oauthStateCookieExpiry.Seconds()),
 		HttpOnly: true,
-		Secure:   r.TLS != nil,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
 
@@ -189,8 +190,19 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 		"client_ip", s.getClientIP(r),
 		"event", "auth.sso.initiated")
 
-	// Redirect to OAuth provider
+	// Redirect to OAuth provider. provider.GetAuthURL() builds the URL using
+	// oauth2.Config.AuthCodeURL — the base AuthURL is the provider's hard-
+	// configured endpoint (Google, GitHub, etc.) set at provider construction
+	// from internal config, NOT from the request. The state query param is
+	// CSRF nonce material. Defense-in-depth: validate the produced URL still
+	// starts with the configured provider AuthURL before redirecting.
 	authURL := provider.GetAuthURL(state)
+	if !strings.HasPrefix(authURL, provider.Config.Endpoint.AuthURL) {
+		logger.ErrorContext(r.Context(), "OAuth URL host mismatch", "url_prefix", authURL[:min(64, len(authURL))])
+		http.Error(w, "invalid OAuth redirect", http.StatusInternalServerError)
+		return
+	}
+	//nolint:gosec // G710: authURL is verified to start with provider.Config.Endpoint.AuthURL (hardcoded at provider construction) above; gosec taint analysis can't follow the prefix check
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }
 
@@ -344,9 +356,6 @@ func (s *Server) completeOAuthLogin(
 	s.clearOAuthCookies(w, r)
 
 	cookieConfig := auth.DefaultCookieConfig()
-	if !s.config.Server.HTTPS {
-		cookieConfig.Secure = false
-	}
 	auth.SetAccessTokenCookie(w, accessToken, cookieConfig)
 	auth.SetRefreshTokenCookie(w, refreshToken, cookieConfig)
 
@@ -402,9 +411,13 @@ func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 // redirectWithError redirects to the frontend with an error message.
 func (s *Server) redirectWithError(w http.ResponseWriter, r *http.Request, errorMsg string) {
 	s.clearOAuthCookies(w, r)
-	// URL-encode the error message
-	encoded := strings.ReplaceAll(errorMsg, " ", "%20")
-	http.Redirect(w, r, "/?sso_error="+encoded, http.StatusTemporaryRedirect)
+	// Always redirect to the root of OUR app — never an attacker-controlled
+	// URL. errorMsg is properly URL-encoded as a query param value.
+	target := (&url.URL{
+		Path:     "/",
+		RawQuery: url.Values{"sso_error": []string{errorMsg}}.Encode(),
+	}).String()
+	http.Redirect(w, r, target, http.StatusTemporaryRedirect)
 }
 
 // clearOAuthCookies removes the OAuth state cookies.
@@ -415,7 +428,7 @@ func (s *Server) clearOAuthCookies(w http.ResponseWriter, r *http.Request) {
 		Path:     "/api/sso",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   r.TLS != nil,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
 	http.SetCookie(w, &http.Cookie{
@@ -424,7 +437,7 @@ func (s *Server) clearOAuthCookies(w http.ResponseWriter, r *http.Request) {
 		Path:     "/api/sso",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   r.TLS != nil,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
 }

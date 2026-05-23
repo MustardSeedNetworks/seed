@@ -253,7 +253,10 @@ func getColorScaleForType(ht HeatmapType) ColorScale {
 			Stops: []ColorStop{
 				// Red (very slow)
 				{Value: throughputMin, Color: color.RGBA{
-					R: colorChannelDarkRed, G: colorChannelWarningOrange, B: colorChannelBootstrapRed, A: colorChannelOpaque,
+					R: colorChannelDarkRed,
+					G: colorChannelWarningOrange,
+					B: colorChannelBootstrapRed,
+					A: colorChannelOpaque,
 				}},
 				// Orange (slow)
 				{Value: throughputSlow, Color: color.RGBA{
@@ -265,11 +268,17 @@ func getColorScaleForType(ht HeatmapType) ColorScale {
 				}},
 				// Light green (good)
 				{Value: throughputGood, Color: color.RGBA{
-					R: colorChannelMediumGreen, G: colorChannelLightGreen, B: colorChannelMediumGreen, A: colorChannelOpaque,
+					R: colorChannelMediumGreen,
+					G: colorChannelLightGreen,
+					B: colorChannelMediumGreen,
+					A: colorChannelOpaque,
 				}},
 				// Green (excellent)
 				{Value: throughputExcellent, Color: color.RGBA{
-					R: colorChannelAccentGreen, G: colorChannelDarkGreen, B: colorChannelBootstrapRed, A: colorChannelOpaque,
+					R: colorChannelAccentGreen,
+					G: colorChannelDarkGreen,
+					B: colorChannelBootstrapRed,
+					A: colorChannelOpaque,
 				}},
 			},
 		}

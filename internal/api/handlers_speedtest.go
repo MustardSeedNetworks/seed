@@ -92,17 +92,17 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Run the test in the background (takes 30-60 seconds)
-	go func(logger *slog.Logger) {
-		// Add timeout protection for speedtest operations
-		ctx, cancel := context.WithTimeout(context.Background(), speedtestTimeoutMin*time.Minute)
+	// Run the test in the background (takes 30-60 seconds). WithoutCancel
+	// detaches lifecycle from request so the test outlives HTTP cancellation.
+	go func(parentCtx context.Context, logger *slog.Logger) {
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(parentCtx), speedtestTimeoutMin*time.Minute)
 		defer cancel()
 
 		_, err := s.speedtestTester().RunTest(ctx)
 		if err != nil {
-			logger.Error("Speedtest failed", "error", err)
+			logger.ErrorContext(parentCtx, "Speedtest failed", "error", err)
 		}
-	}(logger)
+	}(r.Context(), logger)
 
 	// Return immediately with "started" status
 	sendJSONResponse(w, logger, http.StatusOK, map[string]any{

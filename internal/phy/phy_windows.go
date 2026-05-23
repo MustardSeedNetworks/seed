@@ -123,7 +123,11 @@ func SetPHYSpeed(iface string, speed string) error {
 	}
 
 	// Use PowerShell to set adapter speed
-	psCmd := fmt.Sprintf(`Set-NetAdapterAdvancedProperty -Name '%s' -RegistryKeyword '*SpeedDuplex' -RegistryValue %s`, iface, speedValue)
+	psCmd := fmt.Sprintf(
+		`Set-NetAdapterAdvancedProperty -Name '%s' -RegistryKeyword '*SpeedDuplex' -RegistryValue %s`,
+		iface,
+		speedValue,
+	)
 
 	output, err := exec.CommandContext(ctx, "powershell", "-NoProfile", "-Command", psCmd).CombinedOutput()
 	if err != nil {

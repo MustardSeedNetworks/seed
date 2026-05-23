@@ -26,7 +26,17 @@ func scanPlatform(iface string) ([]*ScannedNetwork, error) {
 
 	// Get the list of networks
 	//nolint:gosec // iface is validated by caller
-	cmd := exec.Command("nmcli", "-t", "-f", "BSSID,SSID,MODE,CHAN,FREQ,RATE,SIGNAL,SECURITY", "device", "wifi", "list", "ifname", iface)
+	cmd := exec.Command(
+		"nmcli",
+		"-t",
+		"-f",
+		"BSSID,SSID,MODE,CHAN,FREQ,RATE,SIGNAL,SECURITY",
+		"device",
+		"wifi",
+		"list",
+		"ifname",
+		iface,
+	)
 	output, err := cmd.Output()
 	if err != nil {
 		// Fallback to iw if nmcli fails

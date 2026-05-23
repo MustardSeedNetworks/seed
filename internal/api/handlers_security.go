@@ -82,7 +82,7 @@ func (s *Server) handleRogueDHCPAction(
 		Action string `json:"action"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w, logger, http.StatusBadRequest, ErrCodeBadRequest,
 			localizer.T("errors.api.invalidRequestBody"), "",
@@ -221,7 +221,7 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 			AlertOnDetection *bool    `json:"alertOnDetection,omitempty"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			logger.Warn("Invalid request body", "error", err)
+			logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 			sendErrorResponseWithDetails(
 				w,
 				logger,
@@ -252,7 +252,7 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 
 		// Save config (fixes #782 - return error instead of silent warning)
 		if err := s.config.Save(s.configPath); err != nil {
-			logger.Error("Failed to save config", "error", err)
+			logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
 			sendErrorResponseWithDetails(
 				w,
 				logger,
@@ -526,7 +526,7 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 
 	var req SNMPSettingsResponse
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body for SNMP settings", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body for SNMP settings", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest,
 			localizer.T("errors.api.invalidRequestBody"), "")
 		return
@@ -565,7 +565,7 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Save config (passwords are now encrypted) (fixes #782 - return error instead of silent warning)
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Error("Failed to save config", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,

@@ -115,9 +115,6 @@ func (s *Server) generateAndSetLoginTokens(
 	}
 
 	cookieConfig := auth.DefaultCookieConfig()
-	if !s.config.Server.HTTPS {
-		cookieConfig.Secure = false
-	}
 	auth.SetAccessTokenCookie(w, accessToken, cookieConfig)
 	auth.SetRefreshTokenCookie(w, refreshToken, cookieConfig)
 
@@ -143,7 +140,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeAuth)
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Login decode error", "client_ip", clientIP, "error", err)
+		logger.WarnContext(r.Context(), "Login decode error", "client_ip", clientIP, "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return
@@ -183,7 +180,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	logger.Info(
+	logger.InfoContext(r.Context(),
 		"Login successful",
 		"username", req.Username,
 		"client_ip", clientIP,
@@ -192,7 +189,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	accessToken, err := s.generateAndSetLoginTokens(w, r, req.Username)
 	if err != nil {
-		logger.Error("Failed to generate tokens", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to generate tokens", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.api.internalError"), "")
 		return
@@ -232,15 +229,12 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 
 	// Security audit log: user logout (fixes #697)
 	clientIP := s.getClientIP(r)
-	logger.Info("User logout",
+	logger.InfoContext(r.Context(), "User logout",
 		"client_ip", clientIP,
 		"event", "auth.logout")
 
 	// Clear authentication cookies (fixes #478)
 	cookieConfig := auth.DefaultCookieConfig()
-	if !s.config.Server.HTTPS {
-		cookieConfig.Secure = false
-	}
 	auth.ClearAuthCookies(w, cookieConfig)
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "logged out"})
@@ -268,7 +262,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Security audit log: refresh token not found (fixes #697)
 		clientIP := s.getClientIP(r)
-		logger.Warn("Token refresh failed - token not found",
+		logger.WarnContext(r.Context(), "Token refresh failed - token not found",
 			"client_ip", clientIP,
 			"event", "auth.refresh.failed",
 			"error", "token not found")
@@ -283,7 +277,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Security audit log: invalid/expired refresh token (fixes #697)
 		clientIP := s.getClientIP(r)
-		logger.Warn("Token refresh failed - invalid or expired token",
+		logger.WarnContext(r.Context(), "Token refresh failed - invalid or expired token",
 			"client_ip", clientIP,
 			"event", "auth.refresh.failed",
 			"error", err.Error())
@@ -295,15 +289,12 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	// Security audit log: successful token refresh (fixes #697)
 	clientIP := s.getClientIP(r)
-	logger.Info("Token refresh successful",
+	logger.InfoContext(r.Context(), "Token refresh successful",
 		"client_ip", clientIP,
 		"event", "auth.refresh.success")
 
 	// Set new access token cookie
 	cookieConfig := auth.DefaultCookieConfig()
-	if !s.config.Server.HTTPS {
-		cookieConfig.Secure = false
-	}
 	auth.SetAccessTokenCookie(w, newAccessToken, cookieConfig)
 
 	// Return new access token
@@ -341,7 +332,7 @@ func (s *Server) handleCSRFToken(w http.ResponseWriter, r *http.Request) {
 	// Get session ID from JWT (set by auth middleware)
 	sessionID := auth.GetSessionIDFromRequest(r)
 	if sessionID == "" {
-		logger.Warn("CSRF token request without valid session")
+		logger.WarnContext(r.Context(), "CSRF token request without valid session")
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -356,7 +347,7 @@ func (s *Server) handleCSRFToken(w http.ResponseWriter, r *http.Request) {
 	// Generate CSRF token for this session
 	token, err := s.csrfManager().GenerateToken(sessionID)
 	if err != nil {
-		logger.Error("Failed to generate CSRF token", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to generate CSRF token", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -368,13 +359,16 @@ func (s *Server) handleCSRFToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Also set as cookie for convenience (httpOnly=false so JS can read it)
+	// CSRF cookie must be readable by JS (so axios reads it and echoes as
+	// X-CSRF-Token header) — that's the entire point of the double-submit
+	// CSRF pattern. Locked down otherwise (Secure + SameSiteStrict).
+	//nolint:gosec // G124: HttpOnly=false is intentional per double-submit-cookie CSRF pattern (OWASP-approved); Secure+Strict + HTTPS-required daemon are the actual defense
 	http.SetCookie(w, &http.Cookie{
 		Name:     auth.CSRFCookieName,
 		Value:    token,
 		Path:     "/",
-		HttpOnly: false, // Must be accessible to JavaScript
-		Secure:   s.config.Server.HTTPS,
+		HttpOnly: false,
+		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
 	})
 
@@ -414,7 +408,7 @@ func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
 	if needsSetup && !s.setupModeStartTime.IsZero() {
 		setupDuration := time.Since(s.setupModeStartTime)
 		if setupDuration > setupModeTimeoutMin*time.Minute {
-			logger.Warn("Setup mode has expired", "event", "auth.setup.expired",
+			logger.WarnContext(r.Context(), "Setup mode has expired", "event", "auth.setup.expired",
 				"elapsed_minutes", setupDuration.Minutes())
 			sendErrorResponseWithDetails(w, logger, http.StatusForbidden, ErrCodeSetupExpired,
 				"Setup mode has expired. Please restart the server to try again.", "")
@@ -438,13 +432,13 @@ func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
 		// This token must be provided when completing setup to prevent CSRF attacks
 		setupToken, err := s.setupTokenManager().GenerateToken()
 		if err != nil {
-			logger.Error("Failed to generate setup token", "error", err)
+			logger.ErrorContext(r.Context(), "Failed to generate setup token", "error", err)
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError, ErrCodeInternal,
 				"Failed to initialize setup", "")
 			return
 		}
 		resp.SetupToken = setupToken
-		logger.Info("Setup token generated", "event", "auth.setup.token_generated")
+		logger.InfoContext(r.Context(), "Setup token generated", "event", "auth.setup.token_generated")
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)
@@ -522,7 +516,7 @@ func decodeSetupCompleteRequest(
 
 	var req SetupCompleteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Setup decode error", "error", err)
+		logger.WarnContext(r.Context(), "Setup decode error", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -620,7 +614,7 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 		if createErr := userStore.CreateUser(r.Context(), username, hash, "admin"); createErr != nil {
 			// If user exists, update the password
 			if updateErr := userStore.UpdatePassword(r.Context(), username, hash); updateErr != nil {
-				logger.Error("Failed to update user in database", "error", updateErr)
+				logger.ErrorContext(r.Context(), "Failed to update user in database", "error", updateErr)
 			}
 		}
 	}
@@ -630,7 +624,7 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 
 	// Save config to disk
 	if saveErr := s.config.Save(s.configPath); saveErr != nil {
-		logger.Error("Failed to save config after setup", "error", saveErr)
+		logger.ErrorContext(r.Context(), "Failed to save config after setup", "error", saveErr)
 		sendJSONResponse(w, logger, http.StatusInternalServerError, map[string]string{
 			"error": localizer.T("errors.config.failedToSave"),
 		})
@@ -640,7 +634,7 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	// Security audit log: initial setup completed (fixes #697)
 	// Wave 2 / task #84: include previous_algorithm so password rotations
 	// are auditable across the bcrypt → argon2id migration.
-	logger.Info("Initial setup completed - admin password changed",
+	logger.InfoContext(r.Context(), "Initial setup completed - admin password changed",
 		"client_ip", clientIP,
 		"event", "password_change",
 		"result", "accepted",

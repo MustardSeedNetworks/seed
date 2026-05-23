@@ -39,6 +39,12 @@ interactive setup.`,
 }
 
 // setupCredentials holds the generated credentials for output.
+//
+// The Password field is intentionally included in JSON output: this struct
+// is only used by `seed setup --json`, which is the bootstrap CLI invocation
+// that GENERATES the initial admin password and shows it to the operator
+// once. After setup runs, only the bcrypt hash is persisted; this struct
+// is never serialized to disk or transmitted over a network.
 type setupCredentials struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -73,6 +79,7 @@ func ensureConfigDir(configPath string) error {
 // outputCredentials writes credentials to stdout in the requested format.
 func outputCredentials(creds setupCredentials, asJSON bool) error {
 	if asJSON {
+		//nolint:gosec // G117: bootstrap-only output to operator on first-run setup; Password is intentionally shown once and never persisted in this form
 		data, err := json.MarshalIndent(creds, "", "  ")
 		if err != nil {
 			return fmt.Errorf("marshaling credentials: %w", err)

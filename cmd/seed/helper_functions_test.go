@@ -11,7 +11,6 @@ import (
 )
 
 func TestGeneratePasswordAndHashValid(t *testing.T) {
-
 	password, hash, err := generatePasswordAndHash()
 	if err != nil {
 		t.Fatalf("generatePasswordAndHash failed: %v", err)
@@ -41,7 +40,6 @@ func TestGeneratePasswordAndHashValid(t *testing.T) {
 }
 
 func TestGeneratePasswordAndHashVerifiable(t *testing.T) {
-
 	password, hash, err := generatePasswordAndHash()
 	if err != nil {
 		t.Fatalf("generatePasswordAndHash failed: %v", err)
@@ -67,7 +65,6 @@ func TestGeneratePasswordAndHashVerifiable(t *testing.T) {
 }
 
 func TestEnsureConfigDirCreatesNestedDirectories(t *testing.T) {
-
 	tmpDir := t.TempDir()
 	nestedPath := filepath.Join(tmpDir, "a", "b", "c", "config.json")
 
@@ -84,7 +81,6 @@ func TestEnsureConfigDirCreatesNestedDirectories(t *testing.T) {
 }
 
 func TestEnsureConfigDirWithExistingParent(t *testing.T) {
-
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.json")
 
@@ -96,7 +92,6 @@ func TestEnsureConfigDirWithExistingParent(t *testing.T) {
 }
 
 func TestEnsureConfigDirCurrentDirectory(t *testing.T) {
-
 	// Test with just a filename (current directory)
 	err := ensureConfigDir("config.json")
 	if err != nil {
@@ -105,7 +100,6 @@ func TestEnsureConfigDirCurrentDirectory(t *testing.T) {
 }
 
 func TestEnsureConfigDirDotPath(t *testing.T) {
-
 	err := ensureConfigDir("./config.json")
 	if err != nil {
 		t.Errorf("ensureConfigDir should not error for dot path: %v", err)
@@ -113,7 +107,6 @@ func TestEnsureConfigDirDotPath(t *testing.T) {
 }
 
 func TestPreserveExistingCredentialsWithAllFlags(t *testing.T) {
-
 	newCfg := &config.Config{
 		Auth: config.AuthConfig{
 			DefaultUsername:     "new-user",
@@ -150,7 +143,6 @@ func TestPreserveExistingCredentialsWithAllFlags(t *testing.T) {
 }
 
 func TestPreserveExistingCredentialsNoPreservation(t *testing.T) {
-
 	newCfg := &config.Config{
 		Auth: config.AuthConfig{
 			DefaultUsername:     "new-user",
@@ -187,7 +179,6 @@ func TestPreserveExistingCredentialsNoPreservation(t *testing.T) {
 }
 
 func TestCheckConfigWarningsAllMissing(t *testing.T) {
-
 	cfg := &config.Config{
 		Interface: config.InterfaceConfig{
 			Default: "",
@@ -209,7 +200,6 @@ func TestCheckConfigWarningsAllMissing(t *testing.T) {
 }
 
 func TestCheckConfigWarningsNoneMissing(t *testing.T) {
-
 	cfg := &config.Config{
 		Interface: config.InterfaceConfig{
 			Default: "eth0",
@@ -231,7 +221,6 @@ func TestCheckConfigWarningsNoneMissing(t *testing.T) {
 }
 
 func TestRedactSecretsComprehensive(t *testing.T) {
-
 	cfg := &config.Config{
 		Version: 1,
 		Server: config.ServerConfig{
@@ -302,7 +291,6 @@ func TestRedactSecretsComprehensive(t *testing.T) {
 }
 
 func TestDistroParsingEdgeCases(t *testing.T) {
-
 	tests := []struct {
 		name       string
 		content    string
@@ -337,7 +325,6 @@ func TestDistroParsingEdgeCases(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			distro := parseOSRelease(tc.content)
 
 			if distro.ID != tc.wantID {
@@ -351,7 +338,6 @@ func TestDistroParsingEdgeCases(t *testing.T) {
 }
 
 func TestModeStringAllValues(t *testing.T) {
-
 	// paths.Mode constant values:
 	// ModeAuto = 0, ModeUser = 1, ModeSystem = 2
 	tests := []struct {
@@ -368,7 +354,6 @@ func TestModeStringAllValues(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			result := modeString(tc.input)
 
 			if result != tc.expected {
