@@ -202,7 +202,12 @@ func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	// starts with the configured provider AuthURL before redirecting.
 	authURL := provider.GetAuthURL(state)
 	if !strings.HasPrefix(authURL, provider.Config.Endpoint.AuthURL) {
-		logger.ErrorContext(r.Context(), "OAuth URL host mismatch", "url_prefix", authURL[:min(urlLogPrefixLen, len(authURL))])
+		logger.ErrorContext(
+			r.Context(),
+			"OAuth URL host mismatch",
+			"url_prefix",
+			authURL[:min(urlLogPrefixLen, len(authURL))],
+		)
 		http.Error(w, "invalid OAuth redirect", http.StatusInternalServerError)
 		return
 	}
