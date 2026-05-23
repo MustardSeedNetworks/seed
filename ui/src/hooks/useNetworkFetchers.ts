@@ -490,7 +490,6 @@ export function useNetworkFetchers({
           ...prev,
           cable: {
             supported: data.supported,
-            // biome-ignore lint/style/useExplicitLengthCheck: data.length is cable length property, not array
             length: data.length || null,
             status: data.status || 'unknown',
             faults: data.faults || [],

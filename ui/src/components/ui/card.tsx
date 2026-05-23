@@ -141,7 +141,6 @@ export function Card({
     >
       <div className={layout.flex.between}>
         <div className={layout.inline.default}>
-          {/* biome-ignore lint/nursery/noMisusedPromises: icon is ReactNode, not a Promise - false positive */}
           {icon ? (
             <span className={cn('text-text-muted shrink-0', iconTokens.size.md)} aria-hidden="true">
               {icon}

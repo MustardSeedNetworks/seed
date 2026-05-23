@@ -174,7 +174,6 @@ function StatBlock({
 }
 
 export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps> = memo(
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Dashboard cards require multiple conditional UI sections
   function slaDashboardCardInner({ className }: SLADashboardCardProps): React.ReactElement {
     const { t } = useTranslation('cards');
     const [data, setData] = useState<DashboardData>({

@@ -67,7 +67,6 @@ function isValidIpv4(ip: string): boolean {
   });
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: IPv6 validation is inherently complex
 function isValidIpv6(ip: string): boolean {
   if (ip === '') {
     return false;

@@ -195,7 +195,6 @@ export interface CategoryCounts {
 }
 
 // Device type categorization based on profile icons and device type
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Categorisation walks several optional discovery hints per device
 export function categorizeDevices(devices: DiscoveredDevice[]): CategoryCounts {
   const categories: CategoryCounts = {
     routers: 0,

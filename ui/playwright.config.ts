@@ -44,12 +44,10 @@ export default defineConfig({
     ['json', { outputFile: 'playwright-report/results.json' }],
   ],
   use: {
-    // biome-ignore lint/style/useNamingConvention: Playwright API property
     baseURL: process.env.E2E_BASE_URL || 'http://localhost:5173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
-    // biome-ignore lint/style/useNamingConvention: Playwright API property
     ignoreHTTPSErrors: true,
     // Cookies + localStorage captured by global-setup. Specs that
     // need an unauthenticated context (auth.spec.ts,

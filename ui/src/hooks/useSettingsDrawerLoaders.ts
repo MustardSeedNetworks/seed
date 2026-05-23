@@ -127,59 +127,55 @@ export function useSettingsDrawerLoaders({
     }
   }, [setIpSettings, setDnsInput]);
 
-  const fetchTestsSettings = useCallback(
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Reads many optional fields off the API payload; same shape as the original inline code
-    async () => {
-      try {
-        const response = await fetch(`${API_BASE}/api/v1/sap/health-checks/settings`, {
-          credentials: 'include',
+  const fetchTestsSettings = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/sap/health-checks/settings`, {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await (response.json() as Promise<Partial<TestsSettings>>);
+        setTestsSettings({
+          dnsHostname: data.dnsHostname || 'google.com',
+          dnsServers: withIds(data.dnsServers || []).map((server) => ({
+            ...server,
+            enabled: server.enabled !== false,
+          })),
+          pingTargets: withIds(data.pingTargets || []).map((target) => ({
+            ...target,
+            enabled: target.enabled !== false,
+          })),
+          tcpPorts: withIds(data.tcpPorts || []).map((port) => ({
+            ...port,
+            port: port.port || 80,
+            enabled: port.enabled !== false,
+          })),
+          udpPorts: withIds(data.udpPorts || []).map((port) => ({
+            ...port,
+            port: port.port || 53,
+            enabled: port.enabled !== false,
+          })),
+          httpEndpoints: withIds(data.httpEndpoints || []).map((endpoint) => ({
+            ...endpoint,
+            expectedStatus: endpoint.expectedStatus || 200,
+            enabled: endpoint.enabled !== false,
+          })),
+          runPerformance: data.runPerformance ?? true,
+          runSpeedtest: data.runSpeedtest ?? true,
+          runIperf: data.runIperf ?? true,
+          runDiscovery: data.runDiscovery ?? true,
+          speedtest: {
+            serverId: data.speedtest?.serverId || '',
+            autoRunOnLink: data.speedtest?.autoRunOnLink ?? true,
+          },
+          iperf: {
+            autoRunOnLink: data.iperf?.autoRunOnLink ?? true,
+          },
         });
-        if (response.ok) {
-          const data = await (response.json() as Promise<Partial<TestsSettings>>);
-          setTestsSettings({
-            dnsHostname: data.dnsHostname || 'google.com',
-            dnsServers: withIds(data.dnsServers || []).map((server) => ({
-              ...server,
-              enabled: server.enabled !== false,
-            })),
-            pingTargets: withIds(data.pingTargets || []).map((target) => ({
-              ...target,
-              enabled: target.enabled !== false,
-            })),
-            tcpPorts: withIds(data.tcpPorts || []).map((port) => ({
-              ...port,
-              port: port.port || 80,
-              enabled: port.enabled !== false,
-            })),
-            udpPorts: withIds(data.udpPorts || []).map((port) => ({
-              ...port,
-              port: port.port || 53,
-              enabled: port.enabled !== false,
-            })),
-            httpEndpoints: withIds(data.httpEndpoints || []).map((endpoint) => ({
-              ...endpoint,
-              expectedStatus: endpoint.expectedStatus || 200,
-              enabled: endpoint.enabled !== false,
-            })),
-            runPerformance: data.runPerformance ?? true,
-            runSpeedtest: data.runSpeedtest ?? true,
-            runIperf: data.runIperf ?? true,
-            runDiscovery: data.runDiscovery ?? true,
-            speedtest: {
-              serverId: data.speedtest?.serverId || '',
-              autoRunOnLink: data.speedtest?.autoRunOnLink ?? true,
-            },
-            iperf: {
-              autoRunOnLink: data.iperf?.autoRunOnLink ?? true,
-            },
-          });
-        }
-      } catch (err) {
-        logger.error(LogComponents.CONFIG, 'Failed to fetch tests settings', err);
       }
-    },
-    [setTestsSettings],
-  );
+    } catch (err) {
+      logger.error(LogComponents.CONFIG, 'Failed to fetch tests settings', err);
+    }
+  }, [setTestsSettings]);
 
   const fetchIperfSuggestions = useCallback(async () => {
     setIperfSuggestionsStatus('loading');

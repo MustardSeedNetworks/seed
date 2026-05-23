@@ -71,7 +71,6 @@ interface HeaderBarProps {
  * Primary application header with clean icon-based toolbar.
  * Seed logo changes color based on connection status.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex header with multiple toolbar sections and state handling
 export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
   wsStatus,
   onReconnect,

@@ -151,7 +151,6 @@ function formatLeaseTime(seconds: number): string {
 // }
 
 // Compress IPv6 address by replacing longest run of zeros with ::
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: IPv6 compression algorithm requires multiple steps
 function compressIpv6(address: string): string {
   // Already compressed or not a valid IPv6
   if (address.includes('::') || !address.includes(':')) {

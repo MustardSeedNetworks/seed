@@ -169,7 +169,6 @@ function SparklineComponent({
   const padding = 2;
 
   // Calculate min/max for scaling
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex calculation with trend analysis
   const { minValue, maxValue, currentValue, trendDirection } = useMemo(() => {
     if (data.length === 0) {
       return {

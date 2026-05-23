@@ -243,7 +243,6 @@ export function SystemHealthCard(): React.ReactElement {
       error={error}
       getStatus={getStatus}
     >
-      {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Resource bars require conditional rendering */}
       {(health: SystemHealth): React.ReactElement => (
         <div className="stack">
           <ResourceBar

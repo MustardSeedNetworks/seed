@@ -43,7 +43,6 @@ interface UpdateSettingsProps {
  * Memoized to prevent unnecessary re-renders when parent state changes.
  */
 export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = memo(
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex update management UI with multiple states
   function updateSettings({ currentVersion = '', onUpdateApplied }: UpdateSettingsProps) {
     const { t } = useTranslation('settings');
     const {

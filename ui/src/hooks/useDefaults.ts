@@ -60,7 +60,6 @@ export function useDefaults(): UseDefaultsResult {
 
     // If already fetching, wait for that promise
     const existingPromise: Promise<DefaultSettings> | null = fetchPromise;
-    // biome-ignore lint/nursery/noMisusedPromises: checking if promise exists, not its resolved value
     if (existingPromise) {
       try {
         const result: DefaultSettings = await existingPromise;

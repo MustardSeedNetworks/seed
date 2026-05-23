@@ -45,7 +45,6 @@ interface AppDashboardProps {
   channelGraphLoading: boolean;
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Dashboard renders many conditional cards; the gating logic mirrors the previous inline App.tsx render
 export function AppDashboard({
   cards,
   loading,

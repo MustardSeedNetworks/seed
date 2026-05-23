@@ -8,7 +8,6 @@ import { button, cn, icon as iconTokens, radius, spacing } from '../../styles/th
 import { Card, CardValue, type Status } from '../ui/card';
 import { Maximize2, RefreshCw, ScanSearch } from '../ui/icons';
 import { DiscoveryModal } from './DiscoveryModal';
-// biome-ignore lint/correctness/noUnusedImports: DiscoverySummary referenced via lowercase <DiscoverySummary> JSX (pre-existing pattern, preserved as-is)
 import { categorizeDevices, DiscoverySummary } from './NetworkDiscoveryCardHelpers';
 import type { NetworkDiscoveryData as _NetworkDiscoveryData } from './networkDiscoveryCardTypes';
 import { VulnerabilityDetailsModal } from './VulnerabilityDetailsModal';

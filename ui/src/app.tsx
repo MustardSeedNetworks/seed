@@ -448,7 +448,6 @@ function App(): JSX.Element {
 
   // Listen for FAB "run all tests" event with per-card autoRunOnLink settings
   useEffect(() => {
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Main test orchestration requires handling multiple card types
     const handleRunAllTests = async (): Promise<void> => {
       // Use per-card autoRunOnLink settings to determine which tests to run
 

@@ -34,7 +34,6 @@ type SortField = 'ip' | 'hostname' | 'vendor' | 'mac' | 'lastSeen';
 type SortDirection = 'asc' | 'desc';
 
 // Sort comparator
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Comparison function handles multiple sort fields
 function compareDevices(
   a: DiscoveredDevice,
   b: DiscoveredDevice,

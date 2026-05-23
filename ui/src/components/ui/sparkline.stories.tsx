@@ -9,17 +9,11 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { HealthScoreBadge, Sparkline, SparklineWithLabel } from './sparkline';
 
 // Generate sample data with variations
-const generateAvailabilityData = (
-  count: number,
-  // biome-ignore lint/style/noInferrableTypes: Type annotation required by useExplicitType
-  baseValue: number = 99,
-): number[] => Array.from({ length: count }, () => baseValue + (Math.random() - 0.3) * 2);
+const generateAvailabilityData = (count: number, baseValue: number = 99): number[] =>
+  Array.from({ length: count }, () => baseValue + (Math.random() - 0.3) * 2);
 
-const generateLatencyData = (
-  count: number,
-  // biome-ignore lint/style/noInferrableTypes: Type annotation required by useExplicitType
-  baseValue: number = 50,
-): number[] => Array.from({ length: count }, () => baseValue + (Math.random() - 0.5) * 30);
+const generateLatencyData = (count: number, baseValue: number = 50): number[] =>
+  Array.from({ length: count }, () => baseValue + (Math.random() - 0.5) * 30);
 
 // Sample data sets
 const healthyAvailability: number[] = generateAvailabilityData(24, 99.5);

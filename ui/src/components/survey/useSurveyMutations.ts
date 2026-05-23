@@ -243,7 +243,6 @@ export function useSurveyMutations({
   );
 
   const handleAirMapperImport = useCallback(
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: AirMapper import branches on importFloorPlan vs calibration-only; mirrors the original inline structure
     async (data: AirMapperData, options: ImportOptions): Promise<void> => {
       try {
         // Build floor plan from imported data

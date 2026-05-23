@@ -74,7 +74,6 @@ interface SetupWizardProps {
 /**
  * First-run setup flow that forces the user to create credentials before using the app.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Single-screen wizard with several conditional UI blocks; refactoring split is tracked separately.
 export function SetupWizard({
   onComplete,
   onLogin,

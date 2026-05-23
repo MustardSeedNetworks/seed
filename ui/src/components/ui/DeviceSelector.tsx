@@ -76,7 +76,6 @@ function getDeviceIcon(type: string): LucideIcon {
 export const DeviceSelector: React.MemoExoticComponent<typeof DeviceSelectorComponent> =
   memo(DeviceSelectorComponent);
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex component with dropdown logic
 function DeviceSelectorComponent({
   value,
   onChange,
@@ -458,7 +457,6 @@ function DeviceSelectorComponent({
                       <span className="caption text-text-muted">({group.devices.length})</span>
                     </div>
                   </div>
-                  {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex device rendering logic */}
                   {group.devices.map((device) => {
                     const ICON = getDeviceIcon(
                       device.profile?.deviceType?.toLowerCase() || 'other',

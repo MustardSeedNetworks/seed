@@ -68,7 +68,6 @@ function getLatencyStatus(
   return 'success';
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Gateway card handles IPv4/IPv6 with multiple status conditions
 export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard({
   data,
   loading,
