@@ -75,7 +75,7 @@ test.describe('FAB - Run All Tests Flow', () => {
     await fab.click();
 
     // Wait a bit for API calls to be made
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(150);
 
     // Verify key endpoints were called (based on default FAB options)
     // Link layer
@@ -169,7 +169,7 @@ test.describe('FAB - Run All Tests Flow', () => {
     });
 
     // Should still only have one test run
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(250);
     const finalCount = await page.evaluate(
       () => (window as unknown as { runAllTestsCount?: number }).runAllTestsCount || 0,
     );
@@ -221,7 +221,7 @@ test.describe('FAB - Run All Tests Flow', () => {
     await fab.click();
 
     // Wait a bit for scan to be triggered
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(400);
 
     // Verify scan was triggered (if network discovery is enabled in FAB options)
     // Note: This depends on default FAB options configuration
@@ -269,14 +269,14 @@ test.describe('FAB - Run All Tests Flow', () => {
 
     // Scroll down the page
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(150);
 
     // FAB should still be visible (it's position: fixed)
     await expect(fab).toBeVisible();
 
     // Scroll back to top
     await page.evaluate(() => window.scrollTo(0, 0));
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(150);
 
     // FAB should still be visible
     await expect(fab).toBeVisible();
@@ -305,7 +305,7 @@ test.describe('FAB - Run All Tests Flow', () => {
     await page.keyboard.press('Enter');
 
     // Wait a bit for API calls
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(250);
 
     // Tests should have been triggered
     expect(testTriggered).toBeTruthy();
