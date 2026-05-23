@@ -69,7 +69,6 @@ const protocolLabels: Record<string, string> = {
 /**
  * Displays detected switch information from LLDP/CDP discovery protocols.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Switch card requires multiple conditional VLAN sections
 export function SwitchCard({ data, vlanData, loading }: SwitchCardProps): React.ReactElement {
   const { t } = useTranslation('cards');
 

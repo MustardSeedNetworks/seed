@@ -19,7 +19,6 @@ interface HealthCheckCardProtocolSectionsProps {
   t: TFunction<'cards'>;
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Renders ten optional protocol sections each gated on result-array presence
 export function HealthCheckCardProtocolSections({
   data,
   t,
@@ -35,7 +34,6 @@ export function HealthCheckCardProtocolSections({
           defaultOpen={true}
           status={data.enterpriseResults.sqlResults.some((r) => !r.success) ? 'error' : 'success'}
         >
-          {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: SQL result rendering with connect/query metrics */}
           {data.enterpriseResults.sqlResults.map((r) => (
             <div
               key={`sql-${r.name}`}
@@ -84,7 +82,6 @@ export function HealthCheckCardProtocolSections({
             data.enterpriseResults.fileShareResults.some((r) => !r.success) ? 'error' : 'success'
           }
         >
-          {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: File share result rendering with read/write speeds */}
           {data.enterpriseResults.fileShareResults.map((r) => (
             <div
               key={`fileshare-${r.name}`}
@@ -130,7 +127,6 @@ export function HealthCheckCardProtocolSections({
           defaultOpen={true}
           status={data.enterpriseResults.ldapResults.some((r) => !r.success) ? 'error' : 'success'}
         >
-          {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: LDAP result rendering with connect/bind metrics */}
           {data.enterpriseResults.ldapResults.map((r) => (
             <div
               key={`ldap-${r.name}`}
@@ -176,7 +172,6 @@ export function HealthCheckCardProtocolSections({
           defaultOpen={true}
           status={data.videoResults.rtspResults.some((r) => !r.success) ? 'error' : 'success'}
         >
-          {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: RTSP result rendering with codec/resolution info */}
           {data.videoResults.rtspResults.map((r) => (
             <div
               key={`rtsp-${r.name}`}
@@ -220,7 +215,6 @@ export function HealthCheckCardProtocolSections({
           defaultOpen={true}
           status={data.medicalResults.dicomResults.some((r) => !r.success) ? 'error' : 'success'}
         >
-          {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: DICOM result rendering with AE title and C-ECHO metrics */}
           {data.medicalResults.dicomResults.map((r) => (
             <div
               key={`dicom-${r.name}`}
@@ -263,7 +257,6 @@ export function HealthCheckCardProtocolSections({
           defaultOpen={true}
           status={data.medicalResults.hl7Results.some((r) => !r.success) ? 'error' : 'success'}
         >
-          {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: HL7 result rendering with ACK code and response metrics */}
           {data.medicalResults.hl7Results.map((r) => (
             <div
               key={`hl7-${r.name}`}
@@ -312,7 +305,6 @@ export function HealthCheckCardProtocolSections({
           defaultOpen={true}
           status={data.medicalResults.fhirResults.some((r) => !r.success) ? 'error' : 'success'}
         >
-          {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: FHIR result rendering with version and resource count */}
           {data.medicalResults.fhirResults.map((r) => (
             <div
               key={`fhir-${r.name}`}
@@ -398,7 +390,6 @@ export function HealthCheckCardProtocolSections({
           defaultOpen={true}
           status={data.industrialResults.opcuaResults.some((r) => !r.success) ? 'error' : 'success'}
         >
-          {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: OPC-UA result rendering with security and product info */}
           {data.industrialResults.opcuaResults.map((r) => (
             <div
               key={`opcua-${r.name}`}

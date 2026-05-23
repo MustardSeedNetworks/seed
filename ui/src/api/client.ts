@@ -66,7 +66,6 @@ export function setSessionExpiredCallback(callback: SessionExpiredCallback | nul
 async function refreshAccessToken(): Promise<boolean> {
   // If refresh is already in progress, wait for it to complete
   const existingPromise: Promise<boolean> | null = refreshPromise;
-  // biome-ignore lint/nursery/noMisusedPromises: checking if promise exists, not its resolved value
   if (existingPromise) {
     return existingPromise;
   }

@@ -56,7 +56,6 @@ interface RecoveryInstructions {
   steps: string[];
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: form component with validation
 export function RecoveryForm({
   onRecoveryComplete,
   onBackToLogin,

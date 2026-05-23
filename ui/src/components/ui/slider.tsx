@@ -76,7 +76,6 @@ interface SliderProps {
  */
 export const Slider: React.MemoExoticComponent<typeof SliderComponent> = memo(SliderComponent);
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex component with slider track styling and keyboard handling
 function SliderComponent({
   value,
   onChange,

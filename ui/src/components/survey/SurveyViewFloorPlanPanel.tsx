@@ -51,7 +51,6 @@ interface SurveyViewFloorPlanPanelProps {
   setShowImport: (show: boolean) => void;
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Panel renders a multi-state floor-plan area; mirrors original inline structure
 export function SurveyViewFloorPlanPanel({
   survey,
   currentFloorPlan,

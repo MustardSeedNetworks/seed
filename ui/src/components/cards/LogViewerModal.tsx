@@ -82,7 +82,6 @@ interface LogEntryRowProps {
   onClose: () => void;
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex log entry with expandable details
 function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): React.JSX.Element {
   const colors = LOG_LEVEL_COLORS[entry.level];
 

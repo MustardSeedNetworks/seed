@@ -127,7 +127,6 @@ export function useSse({
    * Processes an SSE message and routes it to appropriate handlers.
    */
   const handleSseMessage = useCallback(
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex message routing logic
     (data: string, connectionId: number) => {
       // Ignore messages from stale connections
       if (connectionId !== connectionIdRef.current) {

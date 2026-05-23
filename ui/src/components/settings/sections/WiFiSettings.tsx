@@ -72,7 +72,6 @@ interface WiFiSettingsProps {
  * Settings section for WiFi scanning configuration, adapter selection, and connection management.
  */
 export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex WiFi management component
   function wiFiSettings({ wifiSettings, setWifiSettings, wifiStatus }: WiFiSettingsProps) {
     const { t } = useTranslation('settings');
 

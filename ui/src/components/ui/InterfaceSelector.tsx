@@ -62,7 +62,6 @@ export const InterfaceSelector: React.MemoExoticComponent<typeof InterfaceSelect
   InterfaceSelectorComponent,
 );
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex component with dropdown logic
 function InterfaceSelectorComponent({
   interfaces,
   currentInterface,

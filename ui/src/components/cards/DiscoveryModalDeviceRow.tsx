@@ -401,7 +401,6 @@ export function DeviceRow({
                         Interfaces ({device.snmpData.interfaces.length}):
                       </span>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex interface status rendering */}
                         {device.snmpData.interfaces.slice(0, 8).map((iface) => (
                           <span
                             key={iface.name}

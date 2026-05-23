@@ -304,7 +304,6 @@ function generateHeatmapData(samples: SamplePoint[], metric: HeatmapMetric): Rep
 /**
  * Build AP inventory from survey samples
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: AP inventory aggregates from multiple samples
 function buildApInventory(samples: SamplePoint[]): ApInventoryEntry[] {
   const apMap = new Map<
     string,

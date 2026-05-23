@@ -163,7 +163,6 @@ export function CableCard({
   };
 
   // Helper function to render card content (avoids nested ternary)
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex cable data rendering with multiple states
   const renderCardContent = (): JSX.Element => {
     if (!data) {
       return <CardValue value={t('cable.noData')} size="md" />;

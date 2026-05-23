@@ -62,7 +62,6 @@ interface PathDiscoveryCardProps {
 }
 
 export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProps> = memo(
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex path discovery with trace and hop visualization
   function pathDiscoveryCard({
     gateway,
     dnsServer,

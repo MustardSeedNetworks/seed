@@ -206,7 +206,6 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
 
     // Fetch initial status
     useEffect(() => {
-      // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Initial fetch requires checking multiple API endpoints
       const fetchStatus = async (): Promise<void> => {
         try {
           // Fetch speedtest status
@@ -271,7 +270,6 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
       // On initial load or settings change, ensure server state matches settings
       if (!initialServerSyncDone.current || iperfSettings.enableServer) {
         // Check current server status and sync if needed
-        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Server sync requires checking status and conditionally starting/stopping
         const syncServerState = async (): Promise<void> => {
           try {
             const res = await fetch('/api/v1/sap/iperf/server/status', {
@@ -322,7 +320,6 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
       }
 
       const interval = setInterval((): void => {
-        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Speedtest poll handles status update and completion signaling
         (async (): Promise<void> => {
           try {
             const res = await fetch('/api/v1/sap/speedtest/status', {
@@ -362,7 +359,6 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
       }
 
       const interval = setInterval((): void => {
-        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: iPerf poll handles status update and completion signaling
         (async (): Promise<void> => {
           try {
             const res = await fetch('/api/v1/sap/iperf/client/status', {
