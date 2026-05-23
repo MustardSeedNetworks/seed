@@ -7,7 +7,6 @@ import (
 )
 
 func TestUninstallFlagsStruct(t *testing.T) {
-
 	// Test default values
 	flags := uninstallFlags{}
 
@@ -26,7 +25,6 @@ func TestUninstallFlagsStruct(t *testing.T) {
 }
 
 func TestUninstallFlagsAllTrue(t *testing.T) {
-
 	flags := uninstallFlags{
 		purge:      true,
 		force:      true,
@@ -49,7 +47,6 @@ func TestUninstallFlagsAllTrue(t *testing.T) {
 }
 
 func TestDetermineUninstallMode(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		flags    uninstallFlags
@@ -97,7 +94,6 @@ func TestDetermineUninstallMode(t *testing.T) {
 }
 
 func TestDetermineUninstallModeSystemPriority(t *testing.T) {
-
 	// When both system and user are set, system should take priority
 	flags := uninstallFlags{
 		systemMode: true,
@@ -111,7 +107,6 @@ func TestDetermineUninstallModeSystemPriority(t *testing.T) {
 }
 
 func TestDetermineUninstallModeSystemFlagOnly(t *testing.T) {
-
 	flags := uninstallFlags{
 		systemMode: true,
 		userMode:   false,
@@ -126,7 +121,6 @@ func TestDetermineUninstallModeSystemFlagOnly(t *testing.T) {
 }
 
 func TestDetermineUninstallModeUserFlagOnly(t *testing.T) {
-
 	flags := uninstallFlags{
 		systemMode: false,
 		userMode:   true,
@@ -141,7 +135,6 @@ func TestDetermineUninstallModeUserFlagOnly(t *testing.T) {
 }
 
 func TestGetServiceFilePathSystem(t *testing.T) {
-
 	// For system mode, the path should be the standard systemd location
 	// We can't call the actual function as it needs context, but we can test the logic
 	expectedSystemPath := "/etc/systemd/system/seed.service"
@@ -153,7 +146,6 @@ func TestGetServiceFilePathSystem(t *testing.T) {
 }
 
 func TestUninstallFlagsCombinations(t *testing.T) {
-
 	testCases := []struct {
 		name   string
 		flags  uninstallFlags

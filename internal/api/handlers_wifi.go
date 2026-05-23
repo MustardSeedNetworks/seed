@@ -101,7 +101,7 @@ func (s *Server) updateWiFiSettings(
 		Interface string `json:"interface"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -130,7 +130,7 @@ func (s *Server) updateWiFiSettings(
 
 	// Save config
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Error("Failed to save config", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -441,7 +441,7 @@ func (s *Server) handleWiFiConnect(w http.ResponseWriter, r *http.Request) {
 	// Attempt connection
 	result, err := s.wifiManager().Connect(req.SSID, req.Password)
 	if err != nil {
-		logger.Error("WiFi connection failed", "error", err, "ssid", req.SSID)
+		logger.ErrorContext(r.Context(), "WiFi connection failed", "error", err, "ssid", req.SSID)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -488,7 +488,7 @@ func (s *Server) handleWiFiDisconnect(w http.ResponseWriter, r *http.Request) {
 	// Attempt disconnection
 	result, err := s.wifiManager().Disconnect()
 	if err != nil {
-		logger.Error("WiFi disconnection failed", "error", err)
+		logger.ErrorContext(r.Context(), "WiFi disconnection failed", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -529,7 +529,7 @@ func (s *Server) handleWiFiSavedNetworks(w http.ResponseWriter, r *http.Request)
 
 	networks, err := s.wifiManager().GetSavedNetworks()
 	if err != nil {
-		logger.Warn("Failed to get saved networks", "error", err)
+		logger.WarnContext(r.Context(), "Failed to get saved networks", "error", err)
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
 			"networks": []any{},
 			"error":    err.Error(),
@@ -586,7 +586,7 @@ func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := s.wifiManager().ForgetNetwork(ssid); err != nil {
-		logger.Error("Failed to forget network", "error", err, "ssid", ssid)
+		logger.ErrorContext(r.Context(), "Failed to forget network", "error", err, "ssid", ssid)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -757,7 +757,7 @@ func (s *Server) handleWiFiDiscoveryScan(w http.ResponseWriter, r *http.Request)
 
 	result, err := bridge.Scan(r.Context())
 	if err != nil {
-		logger.Error("WiFi discovery scan failed", "error", err)
+		logger.ErrorContext(r.Context(), "WiFi discovery scan failed", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,

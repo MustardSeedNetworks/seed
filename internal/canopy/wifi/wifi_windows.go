@@ -108,7 +108,8 @@ func parseNetshWlanOutput(output, targetIface string) *Info {
 			if len(parts) == 2 {
 				radioType := strings.TrimSpace(parts[1])
 				// Determine frequency from radio type
-				if strings.Contains(radioType, "802.11a") || strings.Contains(radioType, "802.11n") && info.Channel > 14 {
+				if strings.Contains(radioType, "802.11a") ||
+					strings.Contains(radioType, "802.11n") && info.Channel > 14 {
 					info.Frequency = 5000 // 5 GHz band
 				} else {
 					info.Frequency = 2400 // 2.4 GHz band

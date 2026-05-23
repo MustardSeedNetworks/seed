@@ -100,7 +100,7 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 
 		_, err := s.speedtestTester().RunTest(ctx)
 		if err != nil {
-			logger.Error("Speedtest failed", "error", err)
+			logger.ErrorContext(r.Context(), "Speedtest failed", "error", err)
 		}
 	}(logger)
 

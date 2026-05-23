@@ -10,7 +10,6 @@ import (
 )
 
 func TestCopyFileLogic(t *testing.T) {
-
 	tmpDir := t.TempDir()
 	srcPath := filepath.Join(tmpDir, "source.txt")
 	dstPath := filepath.Join(tmpDir, "dest.txt")
@@ -39,7 +38,6 @@ func TestCopyFileLogic(t *testing.T) {
 }
 
 func TestCopyFileNonExistentSource(t *testing.T) {
-
 	tmpDir := t.TempDir()
 	srcPath := filepath.Join(tmpDir, "nonexistent.txt")
 	dstPath := filepath.Join(tmpDir, "dest.txt")
@@ -51,7 +49,6 @@ func TestCopyFileNonExistentSource(t *testing.T) {
 }
 
 func TestCreateInstallDirectoriesLogic(t *testing.T) {
-
 	tmpDir := t.TempDir()
 	dirs := []string{
 		filepath.Join(tmpDir, "config"),
@@ -79,7 +76,6 @@ func TestCreateInstallDirectoriesLogic(t *testing.T) {
 }
 
 func TestCreateInstallDirectoriesNestedPaths(t *testing.T) {
-
 	tmpDir := t.TempDir()
 	dirs := []string{
 		filepath.Join(tmpDir, "a", "b", "c"),
@@ -99,7 +95,6 @@ func TestCreateInstallDirectoriesNestedPaths(t *testing.T) {
 }
 
 func TestResolveBinaryDestinationUser(t *testing.T) {
-
 	// Test user mode
 	p := &paths.Paths{
 		BinaryDir: "/usr/local/bin",
@@ -117,7 +112,6 @@ func TestResolveBinaryDestinationUser(t *testing.T) {
 }
 
 func TestResolveBinaryDestinationSystem(t *testing.T) {
-
 	p := &paths.Paths{
 		BinaryDir: "/usr/local/bin",
 	}
@@ -134,7 +128,6 @@ func TestResolveBinaryDestinationSystem(t *testing.T) {
 }
 
 func TestInstallBinaryWithForce(t *testing.T) {
-
 	tmpDir := t.TempDir()
 	srcPath := filepath.Join(tmpDir, "source")
 	destPath := filepath.Join(tmpDir, "dest")
@@ -175,7 +168,6 @@ func TestInstallBinaryWithForce(t *testing.T) {
 }
 
 func TestInstallBinaryNewDestination(t *testing.T) {
-
 	tmpDir := t.TempDir()
 	srcPath := filepath.Join(tmpDir, "source")
 	destPath := filepath.Join(tmpDir, "dest")
@@ -203,7 +195,6 @@ func TestInstallBinaryNewDestination(t *testing.T) {
 }
 
 func TestServiceConfigTemplate(t *testing.T) {
-
 	cfg := serviceConfig{
 		User:       "seed",
 		Group:      "seed",
@@ -247,7 +238,6 @@ func TestServiceConfigTemplate(t *testing.T) {
 }
 
 func TestUserServiceConfigTemplate(t *testing.T) {
-
 	cfg := serviceConfig{
 		BinaryPath: "/home/user/.local/bin/seed",
 	}
@@ -280,7 +270,6 @@ func TestUserServiceConfigTemplate(t *testing.T) {
 }
 
 func TestPrintCompletionMessageDoesNotPanic(t *testing.T) {
-
 	// Test that printCompletionMessage doesn't panic for either mode
 	defer func() {
 		if r := recover(); r != nil {
@@ -295,7 +284,6 @@ func TestPrintCompletionMessageDoesNotPanic(t *testing.T) {
 }
 
 func TestCreateDefaultConfigLogic(t *testing.T) {
-
 	tmpDir := t.TempDir()
 
 	// Call createDefaultConfig for a new directory
@@ -309,7 +297,6 @@ func TestCreateDefaultConfigLogic(t *testing.T) {
 }
 
 func TestCreateDefaultConfigExisting(t *testing.T) {
-
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "seed.json")
 

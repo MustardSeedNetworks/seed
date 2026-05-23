@@ -25,7 +25,11 @@ const (
 )
 
 // scanPlatform performs Bluetooth scanning on Linux.
-func (s *BluetoothScanner) scanPlatform(ctx context.Context, adapter string, config *BluetoothScanConfig) ([]BluetoothDevice, error) {
+func (s *BluetoothScanner) scanPlatform(
+	ctx context.Context,
+	adapter string,
+	config *BluetoothScanConfig,
+) ([]BluetoothDevice, error) {
 	ctx, cancel := context.WithTimeout(ctx, linuxBTScanTimeoutSecs*time.Second)
 	defer cancel()
 
@@ -195,7 +199,11 @@ func parseBluetoothctlInfo(output, address string) (BluetoothDevice, error) {
 }
 
 // scanHCITool uses hcitool for classic Bluetooth discovery.
-func (s *BluetoothScanner) scanHCITool(ctx context.Context, adapter string, config *BluetoothScanConfig) ([]BluetoothDevice, error) {
+func (s *BluetoothScanner) scanHCITool(
+	ctx context.Context,
+	adapter string,
+	config *BluetoothScanConfig,
+) ([]BluetoothDevice, error) {
 	// hcitool inq for inquiry scan
 	args := []string{"inq"}
 	if adapter != "" {
@@ -219,7 +227,9 @@ func parseHCIToolOutput(output string) ([]BluetoothDevice, error) {
 	// Inquiring ...
 	// AA:BB:CC:DD:EE:FF       clock offset: 0x1234    class: 0x240404
 
-	addrRegex := regexp.MustCompile(`([0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})`)
+	addrRegex := regexp.MustCompile(
+		`([0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2})`,
+	)
 	classRegex := regexp.MustCompile(`class:\s*0x([0-9A-Fa-f]+)`)
 
 	lines := strings.Split(output, "\n")
@@ -253,7 +263,11 @@ func parseHCIToolOutput(output string) ([]BluetoothDevice, error) {
 }
 
 // scanBLE uses hcitool lescan for BLE discovery.
-func (s *BluetoothScanner) scanBLE(ctx context.Context, adapter string, config *BluetoothScanConfig) ([]BluetoothDevice, error) {
+func (s *BluetoothScanner) scanBLE(
+	ctx context.Context,
+	adapter string,
+	config *BluetoothScanConfig,
+) ([]BluetoothDevice, error) {
 	// hcitool lescan requires root, timeout after configured duration
 	scanDuration := time.Duration(config.ScanDurationSec) * time.Second
 	if scanDuration == 0 {

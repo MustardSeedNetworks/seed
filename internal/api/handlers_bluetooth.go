@@ -74,7 +74,7 @@ func (s *Server) handleBluetoothScan(w http.ResponseWriter, r *http.Request) {
 
 	result, err := btScanner.Scan(r.Context())
 	if err != nil {
-		logger.Error("Bluetooth scan failed", "error", err)
+		logger.ErrorContext(r.Context(), "Bluetooth scan failed", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,

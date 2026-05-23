@@ -220,7 +220,7 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.netManager().RefreshInterfaces(); err != nil {
-		logger.Error("Failed to refresh interfaces", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to refresh interfaces", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -395,7 +395,7 @@ func (s *Server) handlePutInterface(
 
 	var req SetInterfaceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -410,7 +410,7 @@ func (s *Server) handlePutInterface(
 	// #756: Validate interface exists and is available
 	ifaceInfo, err := s.netManager().GetInterface(req.Interface)
 	if err != nil {
-		logger.Warn("Invalid interface", "error", err, "interface", req.Interface)
+		logger.WarnContext(r.Context(), "Invalid interface", "error", err, "interface", req.Interface)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -429,7 +429,7 @@ func (s *Server) handlePutInterface(
 	}
 
 	if setErr := s.netManager().SetCurrentInterface(req.Interface); setErr != nil {
-		logger.Warn("Failed to set interface", "error", setErr, "interface", req.Interface)
+		logger.WarnContext(r.Context(), "Failed to set interface", "error", setErr, "interface", req.Interface)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -445,7 +445,7 @@ func (s *Server) handlePutInterface(
 	if s.discoveryService() != nil {
 		if discErr := s.discoveryService().SetInterface(req.Interface); discErr != nil {
 			// Log but don't fail - discovery may not work without root
-			logging.GetLogger().Warn("Failed to set discovery interface", "error", discErr)
+			logging.GetLogger().WarnContext(r.Context(), "Failed to set discovery interface", "error", discErr)
 		}
 	}
 
@@ -556,7 +556,7 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.netManager().RefreshInterfaces(); err != nil {
-		logger.Error("Failed to refresh interfaces", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to refresh interfaces", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.netif.refreshFailed"), "")
 		return
@@ -565,7 +565,7 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 	currentIface := s.getInterfaceFromRequest(r)
 	ifaceInfo, err := s.netManager().GetInterface(currentIface)
 	if err != nil {
-		logger.Warn("Interface not found", "error", err, "interface", currentIface)
+		logger.WarnContext(r.Context(), "Interface not found", "error", err, "interface", currentIface)
 		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 			ErrCodeNotFound, localizer.T("errors.netif.interfaceNotFound"), "")
 		return
@@ -574,7 +574,7 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 	linkStatus, err := s.netManager().GetLinkStatus(currentIface)
 	if err != nil {
 		logging.GetLogger().
-			Warn("Failed to get link status", "interface", currentIface, "error", err)
+			WarnContext(r.Context(), "Failed to get link status", "interface", currentIface, "error", err)
 	}
 
 	resp := LinkResponse{Interface: currentIface, LinkUp: false, MTU: ifaceInfo.MTU}
@@ -628,7 +628,7 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.netManager().RefreshInterfaces(); err != nil {
-		logger.Error("Failed to refresh interfaces", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to refresh interfaces", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -645,7 +645,7 @@ func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 
 	ifaceInfo, err := s.netManager().GetInterface(currentIface)
 	if err != nil {
-		logger.Warn("Interface not found", "error", err, "interface", currentIface)
+		logger.WarnContext(r.Context(), "Interface not found", "error", err, "interface", currentIface)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -773,7 +773,7 @@ func (s *Server) handleIPSettingsPut(
 
 	var req IPSettingsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -826,7 +826,7 @@ func (s *Server) handleIPSettingsPut(
 	}
 
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Error("Failed to save config", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -839,7 +839,7 @@ func (s *Server) handleIPSettingsPut(
 	}
 
 	if err := s.netManager().RefreshInterfaces(); err != nil {
-		logger.Error("Failed to refresh interfaces", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to refresh interfaces", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -881,7 +881,7 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 
 	var req SetMTURequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -895,7 +895,7 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 
 	// Validate MTU value
 	if err := validation.ValidateMTU(req.MTU); err != nil {
-		logger.Warn("Invalid MTU value", "error", err, "mtu", req.MTU)
+		logger.WarnContext(r.Context(), "Invalid MTU value", "error", err, "mtu", req.MTU)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -915,7 +915,7 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 
 	// Set the MTU
 	if err := s.netManager().SetMTU(iface, req.MTU); err != nil {
-		logger.Error("Failed to set MTU", "error", err, "interface", iface, "mtu", req.MTU)
+		logger.ErrorContext(r.Context(), "Failed to set MTU", "error", err, "interface", iface, "mtu", req.MTU)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -929,7 +929,7 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 
 	// Refresh interface data
 	if err := s.netManager().RefreshInterfaces(); err != nil {
-		logging.GetLogger().Warn("Failed to refresh interfaces after MTU change", "error", err)
+		logging.GetLogger().WarnContext(r.Context(), "Failed to refresh interfaces after MTU change", "error", err)
 	}
 
 	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
@@ -952,7 +952,7 @@ func (s *Server) getInterfaceFromRequest(r *http.Request) string {
 		// Validate interface name to prevent path traversal/injection
 		if err := validation.ValidateInterface(iface); err != nil {
 			logging.GetLogger().
-				Warn("Invalid interface name in request", "interface", iface, "error", err)
+				WarnContext(r.Context(), "Invalid interface name in request", "interface", iface, "error", err)
 			// Fall back to current interface instead of returning invalid input
 			if s.netManager() != nil {
 				return s.netManager().GetCurrentInterface()

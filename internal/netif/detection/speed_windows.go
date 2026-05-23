@@ -33,7 +33,10 @@ func getInterfaceSpeed(name string) int64 {
 	}
 
 	// Fallback to WMI
-	psCmd = fmt.Sprintf(`(Get-WmiObject Win32_NetworkAdapter | Where-Object { $_.NetConnectionID -eq '%s' }).Speed`, name)
+	psCmd = fmt.Sprintf(
+		`(Get-WmiObject Win32_NetworkAdapter | Where-Object { $_.NetConnectionID -eq '%s' }).Speed`,
+		name,
+	)
 	output, err = exec.CommandContext(ctx, "powershell", "-NoProfile", "-Command", psCmd).Output()
 	if err == nil {
 		speedStr := strings.TrimSpace(string(output))

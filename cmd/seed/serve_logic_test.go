@@ -12,7 +12,6 @@ import (
 )
 
 func TestInitServeCmdAddsServeCommand(t *testing.T) {
-
 	state := newCLIState()
 	initServeCmd(state)
 
@@ -38,7 +37,6 @@ func TestInitServeCmdAddsServeCommand(t *testing.T) {
 }
 
 func TestServeCmdHasRunFunction(t *testing.T) {
-
 	state := newCLIState()
 	initServeCmd(state)
 
@@ -60,7 +58,6 @@ func TestServeCmdHasRunFunction(t *testing.T) {
 }
 
 func TestServeCmdLongDescriptionContent(t *testing.T) {
-
 	state := newCLIState()
 	initServeCmd(state)
 
@@ -92,7 +89,6 @@ func TestServeCmdLongDescriptionContent(t *testing.T) {
 }
 
 func TestRootCmdDefaultsToServe(t *testing.T) {
-
 	state := newCLIState()
 	initCommands(state)
 
@@ -103,7 +99,6 @@ func TestRootCmdDefaultsToServe(t *testing.T) {
 }
 
 func TestPrintSetupBannerProtocolLogic(t *testing.T) {
-
 	tests := []struct {
 		name          string
 		https         bool
@@ -123,7 +118,6 @@ func TestPrintSetupBannerProtocolLogic(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			protocol := "http"
 			if tc.https {
 				protocol = "https"
@@ -137,7 +131,6 @@ func TestPrintSetupBannerProtocolLogic(t *testing.T) {
 }
 
 func TestInitializeDatabasePathLogic(t *testing.T) {
-
 	tests := []struct {
 		name         string
 		dbPath       string
@@ -162,7 +155,6 @@ func TestInitializeDatabasePathLogic(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			// Test the path resolution logic
 			dbPath := tc.dbPath
 			if dbPath == "" {
@@ -177,7 +169,6 @@ func TestInitializeDatabasePathLogic(t *testing.T) {
 }
 
 func TestConfigValidationWithTestFile(t *testing.T) {
-
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "seed.json")
 
@@ -211,7 +202,6 @@ func TestConfigValidationWithTestFile(t *testing.T) {
 }
 
 func TestDevModeSetsHTTPFalse(t *testing.T) {
-
 	// Test the logic that --dev sets HTTPS to false
 	devMode := true
 	https := !devMode
@@ -222,7 +212,6 @@ func TestDevModeSetsHTTPFalse(t *testing.T) {
 }
 
 func TestLogPathDefaultLogic(t *testing.T) {
-
 	tests := []struct {
 		name         string
 		configPath   string
@@ -242,7 +231,6 @@ func TestLogPathDefaultLogic(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			logPath := tc.configPath
 			if logPath == "" {
 				logPath = filepath.Join("logs", "seed.log")
@@ -256,7 +244,6 @@ func TestLogPathDefaultLogic(t *testing.T) {
 }
 
 func TestServeCmdNoSubcommands(t *testing.T) {
-
 	state := newCLIState()
 	initServeCmd(state)
 
@@ -279,7 +266,6 @@ func TestServeCmdNoSubcommands(t *testing.T) {
 }
 
 func TestFindActiveInterfaceRetryLogic(t *testing.T) {
-
 	tests := []struct {
 		name        string
 		maxRetries  int
@@ -304,7 +290,6 @@ func TestFindActiveInterfaceRetryLogic(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			// Test the retry logic without actually calling the function
 			shouldRetry := tc.maxRetries > 0
 
@@ -316,7 +301,6 @@ func TestFindActiveInterfaceRetryLogic(t *testing.T) {
 }
 
 func TestInterfacePreferredOrder(t *testing.T) {
-
 	initialInterface := "eth0"
 	fallbacks := []string{"eth1", "wlan0", "enp0s3"}
 

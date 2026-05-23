@@ -107,10 +107,10 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), deviceScanTimeoutMin*time.Minute)
 		defer cancel()
 
-		bgLogger.Info("Starting background device scan")
+		bgLogger.InfoContext(reqCtx, "Starting background device scan")
 		start := time.Now()
 		defer func() {
-			bgLogger.Info(
+			bgLogger.InfoContext(reqCtx,
 				"Background device scan finished",
 				"duration_ms",
 				time.Since(start).Milliseconds(),
@@ -118,7 +118,7 @@ func (s *Server) handleDevicesScan(w http.ResponseWriter, r *http.Request) {
 		}()
 
 		if err := s.deviceDiscovery().Scan(ctx); err != nil {
-			bgLogger.Error("Device scan error", "error", err)
+			bgLogger.ErrorContext(reqCtx, "Device scan error", "error", err)
 		}
 
 		// Auto-scan for vulnerabilities if enabled
@@ -456,7 +456,7 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 
 	var req NetworkDiscoverySettingsResponse
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -478,7 +478,7 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Error("Failed to save config", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
 		sendErrorResponseWithDetails(
 			w, logger, http.StatusInternalServerError, ErrCodeInternal,
 			localizer.T("errors.settings.saveFailed"), "",
@@ -552,7 +552,7 @@ func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 
 	var req SubnetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -567,7 +567,7 @@ func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	// Validate CIDR format
 	_, _, err := net.ParseCIDR(req.CIDR)
 	if err != nil {
-		logger.Warn("Invalid CIDR format", "error", err, "cidr", req.CIDR)
+		logger.WarnContext(r.Context(), "Invalid CIDR format", "error", err, "cidr", req.CIDR)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -610,7 +610,7 @@ func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 
 	// Save config to file (fixes #735 - return error on save failure)
 	if saveErr := s.config.Save(s.configPath); saveErr != nil {
-		logger.Error("Failed to save config", "error", saveErr)
+		logger.ErrorContext(r.Context(), "Failed to save config", "error", saveErr)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -636,7 +636,7 @@ func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 
 	var req SubnetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid request body", "error", err)
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -650,7 +650,7 @@ func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 
 	// Validate CIDR format
 	if _, _, err := net.ParseCIDR(req.CIDR); err != nil {
-		logger.Warn("Invalid CIDR format", "error", err, "cidr", req.CIDR)
+		logger.WarnContext(r.Context(), "Invalid CIDR format", "error", err, "cidr", req.CIDR)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -690,7 +690,7 @@ func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 
 	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Error("Failed to save config", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -754,7 +754,7 @@ func (s *Server) deleteDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 
 	// Save config to file (fixes #735 - return error on save failure)
 	if err := s.config.Save(s.configPath); err != nil {
-		logger.Error("Failed to save config", "error", err)
+		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,

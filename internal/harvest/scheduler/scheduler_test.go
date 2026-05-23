@@ -60,9 +60,7 @@ func setupSchedulerService(t *testing.T) (
 }
 
 // intPtr is a helper to create int pointers.
-func intPtr(i int) *int {
-	return &i
-}
+//
 
 // ----------------------------------------------------------------------------
 // Next Run Calculation Tests (via Create API)
@@ -171,7 +169,7 @@ func TestNextRunCalculation_Weekly(t *testing.T) {
 			name: "weekly on Monday at 10am",
 			schedule: harvest.Schedule{
 				Frequency: harvest.FrequencyWeekly,
-				DayOfWeek: intPtr(1), // Monday
+				DayOfWeek: new(1), // Monday
 				Hour:      10,
 				Minute:    0,
 				Timezone:  "UTC",
@@ -186,7 +184,7 @@ func TestNextRunCalculation_Weekly(t *testing.T) {
 			name: "weekly on Friday at 17:00",
 			schedule: harvest.Schedule{
 				Frequency: harvest.FrequencyWeekly,
-				DayOfWeek: intPtr(5), // Friday
+				DayOfWeek: new(5), // Friday
 				Hour:      17,
 				Minute:    0,
 				Timezone:  "UTC",
@@ -201,7 +199,7 @@ func TestNextRunCalculation_Weekly(t *testing.T) {
 			name: "weekly on Sunday at 6:00",
 			schedule: harvest.Schedule{
 				Frequency: harvest.FrequencyWeekly,
-				DayOfWeek: intPtr(0), // Sunday
+				DayOfWeek: new(0), // Sunday
 				Hour:      6,
 				Minute:    0,
 				Timezone:  "UTC",
@@ -261,7 +259,7 @@ func TestNextRunCalculation_Monthly(t *testing.T) {
 			name: "monthly on the 1st at 8am",
 			schedule: harvest.Schedule{
 				Frequency:  harvest.FrequencyMonthly,
-				DayOfMonth: intPtr(1),
+				DayOfMonth: new(1),
 				Hour:       8,
 				Minute:     0,
 				Timezone:   "UTC",
@@ -276,7 +274,7 @@ func TestNextRunCalculation_Monthly(t *testing.T) {
 			name: "monthly on the 15th at noon",
 			schedule: harvest.Schedule{
 				Frequency:  harvest.FrequencyMonthly,
-				DayOfMonth: intPtr(15),
+				DayOfMonth: new(15),
 				Hour:       12,
 				Minute:     0,
 				Timezone:   "UTC",
@@ -291,7 +289,7 @@ func TestNextRunCalculation_Monthly(t *testing.T) {
 			name: "monthly on the 28th",
 			schedule: harvest.Schedule{
 				Frequency:  harvest.FrequencyMonthly,
-				DayOfMonth: intPtr(28),
+				DayOfMonth: new(28),
 				Hour:       9,
 				Minute:     30,
 				Timezone:   "UTC",
@@ -426,7 +424,7 @@ func TestSchedulerService_Create_TableDriven(t *testing.T) {
 				Format:   harvest.FormatHTML,
 				Schedule: harvest.Schedule{
 					Frequency: harvest.FrequencyWeekly,
-					DayOfWeek: intPtr(1),
+					DayOfWeek: new(1),
 					Hour:      10,
 					Minute:    30,
 					Timezone:  "America/New_York",
@@ -451,7 +449,7 @@ func TestSchedulerService_Create_TableDriven(t *testing.T) {
 				Format:   harvest.FormatCSV,
 				Schedule: harvest.Schedule{
 					Frequency:  harvest.FrequencyMonthly,
-					DayOfMonth: intPtr(1),
+					DayOfMonth: new(1),
 					Hour:       7,
 					Minute:     0,
 					Timezone:   "Europe/London",
@@ -730,7 +728,7 @@ func TestSchedulerService_Update_TableDriven(t *testing.T) {
 			name: "change to weekly frequency",
 			modifyFn: func() *harvest.ScheduledReport {
 				schedule.Schedule.Frequency = harvest.FrequencyWeekly
-				schedule.Schedule.DayOfWeek = intPtr(3) // Wednesday
+				schedule.Schedule.DayOfWeek = new(3) // Wednesday
 				return schedule
 			},
 			wantErr: false,
@@ -1057,7 +1055,7 @@ func TestScheduleFrequency_EdgeCases(t *testing.T) {
 			name: "weekly Saturday at midnight",
 			schedule: harvest.Schedule{
 				Frequency: harvest.FrequencyWeekly,
-				DayOfWeek: intPtr(6), // Saturday
+				DayOfWeek: new(6), // Saturday
 				Hour:      0,
 				Minute:    0,
 				Timezone:  "UTC",
@@ -1071,7 +1069,7 @@ func TestScheduleFrequency_EdgeCases(t *testing.T) {
 			name: "monthly on 31st",
 			schedule: harvest.Schedule{
 				Frequency:  harvest.FrequencyMonthly,
-				DayOfMonth: intPtr(31),
+				DayOfMonth: new(31),
 				Hour:       12,
 				Minute:     0,
 				Timezone:   "UTC",

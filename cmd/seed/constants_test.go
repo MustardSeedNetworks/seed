@@ -5,7 +5,6 @@ import (
 )
 
 func TestAllConstantsHaveValidValues(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		value    int
@@ -58,7 +57,6 @@ func TestAllConstantsHaveValidValues(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			if tc.value < tc.minValue {
 				t.Errorf("%s = %d, should be >= %d", tc.name, tc.value, tc.minValue)
 			}
@@ -70,7 +68,6 @@ func TestAllConstantsHaveValidValues(t *testing.T) {
 }
 
 func TestRedactedValueConstantFormat(t *testing.T) {
-
 	redacted := GetRedactedValue()
 
 	if redacted == "" {
@@ -84,7 +81,6 @@ func TestRedactedValueConstantFormat(t *testing.T) {
 }
 
 func TestSystemdServiceTemplateValid(t *testing.T) {
-
 	tmpl := GetSystemdServiceTemplate()
 
 	// Must have all required systemd sections
@@ -123,7 +119,6 @@ func TestSystemdServiceTemplateValid(t *testing.T) {
 }
 
 func TestUserServiceTemplateValid(t *testing.T) {
-
 	tmpl := GetUserServiceTemplate()
 
 	// Must have all required systemd sections
@@ -149,7 +144,6 @@ func TestUserServiceTemplateValid(t *testing.T) {
 }
 
 func TestSystemdTemplateSecurityHardening(t *testing.T) {
-
 	tmpl := GetSystemdServiceTemplate()
 
 	// Check for security hardening directives
@@ -167,7 +161,6 @@ func TestSystemdTemplateSecurityHardening(t *testing.T) {
 }
 
 func TestSystemdTemplateHasReadWritePaths(t *testing.T) {
-
 	tmpl := GetSystemdServiceTemplate()
 
 	// When using ProtectSystem=strict, ReadWritePaths must be defined
@@ -179,7 +172,6 @@ func TestSystemdTemplateHasReadWritePaths(t *testing.T) {
 }
 
 func TestSystemdTemplateHasCapabilities(t *testing.T) {
-
 	tmpl := GetSystemdServiceTemplate()
 
 	// Check for setcap in ExecStartPre for network capabilities
@@ -189,7 +181,6 @@ func TestSystemdTemplateHasCapabilities(t *testing.T) {
 }
 
 func TestTimeoutConstantsRelationships(t *testing.T) {
-
 	userCheck := GetUserCheckTimeoutSeconds()
 	command := GetCommandTimeoutSeconds()
 	shutdown := GetShutdownTimeoutSeconds()
@@ -210,7 +201,6 @@ func TestTimeoutConstantsRelationships(t *testing.T) {
 }
 
 func TestBufferSizesAreReasonable(t *testing.T) {
-
 	logBuffer := GetLogBroadcasterBufferSize()
 	signalBuffer := GetSignalChannelBufferSize()
 
@@ -230,7 +220,6 @@ func TestBufferSizesAreReasonable(t *testing.T) {
 }
 
 func TestPasswordLengthMeetsSecurity(t *testing.T) {
-
 	pwdLen := GetDefaultPasswordLength()
 
 	// NIST recommends at least 8 characters, but for auto-generated passwords

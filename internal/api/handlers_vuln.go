@@ -104,7 +104,7 @@ func (s *Server) handleVulnerabilityScan(w http.ResponseWriter, r *http.Request)
 		// Scan each device
 		for _, device := range devices {
 			if _, err := s.vulnScanner().ScanDevice(ctx, device); err != nil {
-				bgLogger.Warn("Vulnerability scan failed", "device_ip", device.IP, "error", err)
+				bgLogger.WarnContext(reqCtx, "Vulnerability scan failed", "device_ip", device.IP, "error", err)
 			}
 		}
 
@@ -283,7 +283,7 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 	case http.MethodPut:
 		var settings discovery.VulnerabilityScannerConfig
 		if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
-			logger.Warn("Invalid JSON for vulnerability settings", "error", err)
+			logger.WarnContext(r.Context(), "Invalid JSON for vulnerability settings", "error", err)
 			sendErrorResponseWithDetails(
 				w,
 				logger,
@@ -309,7 +309,7 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 
 		// Save config
 		if err := s.config.Save(s.configPath); err != nil {
-			logger.Error("Failed to save vulnerability config", "error", err)
+			logger.ErrorContext(r.Context(), "Failed to save vulnerability config", "error", err)
 			sendErrorResponseWithDetails(
 				w,
 				logger,
@@ -371,7 +371,7 @@ func (s *Server) handleNVDAPIKeyValidate(w http.ResponseWriter, r *http.Request)
 
 	var req NVDAPIKeyValidateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn("Invalid JSON for NVD API key validation", "error", err)
+		logger.WarnContext(r.Context(), "Invalid JSON for NVD API key validation", "error", err)
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -400,7 +400,7 @@ func (s *Server) handleNVDAPIKeyValidate(w http.ResponseWriter, r *http.Request)
 	// Validate the API key by making a test request to NVD
 	valid, err := discovery.ValidateNVDAPIKey(r.Context(), req.APIKey)
 	if err != nil {
-		logger.Warn("NVD API key validation failed", "error", err)
+		logger.WarnContext(r.Context(), "NVD API key validation failed", "error", err)
 		response.Valid = false
 		response.Message = "Failed to validate API key. Please check that the key is correct and try again."
 		response.RateLimit = 10

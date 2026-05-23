@@ -22,7 +22,11 @@ import (
 //   - Third-party library like go-bluetooth
 //
 // For now, return a platform limitation error with guidance.
-func (s *BluetoothScanner) scanPlatform(ctx context.Context, adapter string, config *BluetoothScanConfig) ([]BluetoothDevice, error) {
+func (s *BluetoothScanner) scanPlatform(
+	ctx context.Context,
+	adapter string,
+	config *BluetoothScanConfig,
+) ([]BluetoothDevice, error) {
 	// Check for context cancellation
 	select {
 	case <-ctx.Done():

@@ -211,7 +211,7 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 		sessionID := GetSessionIDFromRequest(r)
 
 		if sessionID == "" {
-			logging.GetLogger().Warn("CSRF validation failed: no session ID",
+			logging.GetLogger().WarnContext(r.Context(), "CSRF validation failed: no session ID",
 				"path", r.URL.Path,
 				"method", r.Method)
 			sendAuthError(w, http.StatusUnauthorized, errCodeUnauthorized, "Unauthorized")
@@ -223,7 +223,7 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 
 		// Validate the token
 		if err := m.ValidateToken(sessionID, token); err != nil {
-			logging.GetLogger().Warn("CSRF validation failed",
+			logging.GetLogger().WarnContext(r.Context(), "CSRF validation failed",
 				"path", r.URL.Path,
 				"method", r.Method,
 				"error", err)
