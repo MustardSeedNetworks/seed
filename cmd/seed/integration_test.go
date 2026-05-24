@@ -23,6 +23,7 @@ func TestFullCLIInitialization(t *testing.T) {
 		"credentials":     false,
 		"export-config":   false,
 		"install":         false,
+		"license":         false,
 		"reset-config":    false,
 		"serve":           false,
 		"setup-wizard":    false,
@@ -100,6 +101,11 @@ func TestAllCommandsHaveRunFunction(t *testing.T) {
 	initCommands(state)
 
 	for _, cmd := range state.rootCmd.Commands() {
+		// Parent commands (those that own subcommands) delegate to cobra's
+		// automatic help when invoked alone; they don't need their own Run.
+		if cmd.HasSubCommands() {
+			continue
+		}
 		if cmd.Run == nil && cmd.RunE == nil {
 			t.Errorf("Command %q should have a Run or RunE function", cmd.Use)
 		}

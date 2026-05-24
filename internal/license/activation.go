@@ -1,0 +1,402 @@
+// SPDX-License-Identifier: BUSL-1.1
+
+// Package license provides Seed's offline license validation, device
+// binding, 14-day trial, and encrypted on-disk state. Keys are issued
+// by the canonical keygen tool; this package only validates them.
+package license
+
+import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"time"
+)
+
+// License file lives at ~/.config/seed/.license, distinct from stem
+// and niac to keep per-product activations isolated on shared hosts.
+const licenseFileName = ".license"
+
+// TrialDays is the trial-period length before a paid key is required.
+const TrialDays = 14
+
+// OfflineMaxDays is the number of days allowed offline after activation.
+const OfflineMaxDays = 90
+
+// CheckInInterval is the number of days between optional check-ins.
+const CheckInInterval = 30
+
+// encryptionSalt is product-distinct so an attacker can't reuse a
+// stem/niac license file by renaming it.
+const encryptionSalt = "MSN-SEED-DIAG-2026-LICENSE"
+
+// Hours per day for time calculations.
+const hoursPerDay = 24
+
+// Days in a year for license expiration.
+const daysPerYear = 365
+
+// ActivationState represents the current license activation status.
+type ActivationState struct {
+	LicenseKey      string    `json:"licenseKey"`
+	DeviceHash      string    `json:"deviceHash"`
+	Tier            Tier      `json:"tier"`
+	ActivatedAt     time.Time `json:"activatedAt"`
+	LastValidatedAt time.Time `json:"lastValidatedAt"`
+	ExpiresAt       time.Time `json:"expiresAt"`
+	TrialStartedAt  time.Time `json:"trialStartedAt,omitzero"`
+	IsTrialMode     bool      `json:"isTrialMode"`
+	Features        []string  `json:"features"`
+}
+
+// ActivationResult contains the result of an activation attempt.
+type ActivationResult struct {
+	Success       bool   `json:"success"`
+	Message       string `json:"message"`
+	Tier          Tier   `json:"tier,omitempty"`
+	DaysRemaining int    `json:"daysRemaining,omitempty"`
+	IsTrialMode   bool   `json:"isTrialMode"`
+}
+
+// Manager handles license activation and validation.
+type Manager struct {
+	state       *ActivationState
+	fingerprint *DeviceFingerprint
+	configDir   string
+}
+
+// NewManager creates a new license manager rooted at the default
+// per-user config directory.
+func NewManager() (*Manager, error) {
+	homeDir, homeErr := os.UserHomeDir()
+	if homeErr != nil {
+		homeDir = "/tmp"
+	}
+	return NewManagerWithDir(filepath.Join(homeDir, ".config", "seed"))
+}
+
+// NewManagerWithDir creates a license manager that persists state in
+// the given directory. Exposed so tests can use a tmpdir without
+// poking at the user's real config.
+func NewManagerWithDir(configDir string) (*Manager, error) {
+	fp, fpErr := GenerateFingerprint()
+	if fpErr != nil {
+		return nil, fmt.Errorf("failed to generate fingerprint: %w", fpErr)
+	}
+
+	m := &Manager{
+		state:       nil,
+		fingerprint: fp,
+		configDir:   configDir,
+	}
+
+	// Load existing state (best-effort, non-fatal).
+	_ = m.loadState()
+	return m, nil
+}
+
+// GetState returns the current activation state.
+func (m *Manager) GetState() *ActivationState {
+	return m.state
+}
+
+// GetFingerprint returns the device fingerprint.
+func (m *Manager) GetFingerprint() *DeviceFingerprint {
+	return m.fingerprint
+}
+
+// IsActivated returns true if a valid license is active.
+func (m *Manager) IsActivated() bool {
+	if m.state == nil {
+		return false
+	}
+	if m.state.IsTrialMode {
+		return m.IsTrialValid()
+	}
+	if !m.state.ExpiresAt.IsZero() && time.Now().After(m.state.ExpiresAt) {
+		return false
+	}
+	if m.state.DeviceHash != m.fingerprint.Hash() {
+		return false
+	}
+	return true
+}
+
+// IsTrialValid returns true if trial period is still active.
+func (m *Manager) IsTrialValid() bool {
+	if m.state == nil || !m.state.IsTrialMode {
+		return false
+	}
+	if m.state.TrialStartedAt.IsZero() {
+		return false
+	}
+	trialEnd := m.state.TrialStartedAt.AddDate(0, 0, TrialDays)
+	return time.Now().Before(trialEnd)
+}
+
+// TrialDaysRemaining returns days left in trial.
+func (m *Manager) TrialDaysRemaining() int {
+	if m.state == nil || !m.state.IsTrialMode {
+		return 0
+	}
+	if m.state.TrialStartedAt.IsZero() {
+		return TrialDays
+	}
+	trialEnd := m.state.TrialStartedAt.AddDate(0, 0, TrialDays)
+	remaining := int(time.Until(trialEnd).Hours() / hoursPerDay)
+	if remaining < 0 {
+		return 0
+	}
+	return remaining
+}
+
+// StartTrial begins the trial period.
+func (m *Manager) StartTrial() *ActivationResult {
+	if m.IsActivated() && !m.state.IsTrialMode {
+		return &ActivationResult{
+			Success: true,
+			Message: "Already activated with full license",
+			Tier:    m.state.Tier,
+		}
+	}
+
+	if m.state != nil && !m.state.TrialStartedAt.IsZero() {
+		remaining := m.TrialDaysRemaining()
+		if remaining <= 0 {
+			return &ActivationResult{
+				Success:     false,
+				Message:     "Trial period has expired. Please enter a license key.",
+				Tier:        TierInvalid,
+				IsTrialMode: true,
+			}
+		}
+		return &ActivationResult{
+			Success:       true,
+			Message:       fmt.Sprintf("Trial active: %d days remaining", remaining),
+			Tier:          TierPro, // Full Pro features during trial.
+			DaysRemaining: remaining,
+			IsTrialMode:   true,
+		}
+	}
+
+	m.state = &ActivationState{
+		LicenseKey:     "",
+		DeviceHash:     m.fingerprint.Hash(),
+		Tier:           TierPro, // Full Pro features during trial.
+		TrialStartedAt: time.Now(),
+		IsTrialMode:    true,
+		Features:       proFeatures(),
+	}
+
+	if saveErr := m.saveState(); saveErr != nil {
+		return &ActivationResult{
+			Success: false,
+			Message: fmt.Sprintf("Failed to save trial state: %v", saveErr),
+			Tier:    TierInvalid,
+		}
+	}
+
+	return &ActivationResult{
+		Success:       true,
+		Message:       fmt.Sprintf("Trial started! %d days of full Pro access.", TrialDays),
+		Tier:          TierPro,
+		DaysRemaining: TrialDays,
+		IsTrialMode:   true,
+	}
+}
+
+// Activate attempts to activate a license key.
+func (m *Manager) Activate(licenseKey string) *ActivationResult {
+	info := ValidateLicenseKey(licenseKey)
+	if !info.Valid {
+		return &ActivationResult{
+			Success: false,
+			Message: info.ErrorMsg,
+			Tier:    TierInvalid,
+		}
+	}
+
+	m.state = &ActivationState{
+		LicenseKey:      info.Key,
+		DeviceHash:      m.fingerprint.Hash(),
+		Tier:            info.Tier,
+		ActivatedAt:     time.Now(),
+		LastValidatedAt: time.Now(),
+		ExpiresAt:       time.Now().AddDate(1, 0, 0), // 1 year from activation.
+		IsTrialMode:     false,
+		Features:        info.Features,
+	}
+
+	if saveErr := m.saveState(); saveErr != nil {
+		return &ActivationResult{
+			Success: false,
+			Message: fmt.Sprintf("Failed to save activation: %v", saveErr),
+			Tier:    TierInvalid,
+		}
+	}
+
+	return &ActivationResult{
+		Success:       true,
+		Message:       fmt.Sprintf("License activated successfully! Tier: %s", info.Tier),
+		Tier:          info.Tier,
+		DaysRemaining: daysPerYear,
+	}
+}
+
+// Deactivate removes the current license.
+func (m *Manager) Deactivate() error {
+	licensePath := filepath.Join(m.configDir, licenseFileName)
+	if removeErr := os.Remove(licensePath); removeErr != nil && !os.IsNotExist(removeErr) {
+		return fmt.Errorf("failed to remove license file: %w", removeErr)
+	}
+	m.state = nil
+	return nil
+}
+
+// CheckIn updates the last-validated timestamp on a non-trial license.
+func (m *Manager) CheckIn() *ActivationResult {
+	if m.state == nil {
+		return &ActivationResult{
+			Success: false,
+			Message: "No active license to validate",
+			Tier:    TierInvalid,
+		}
+	}
+	m.state.LastValidatedAt = time.Now()
+	_ = m.saveState() // Best-effort.
+	return &ActivationResult{
+		Success: true,
+		Message: "License validated successfully",
+		Tier:    m.state.Tier,
+	}
+}
+
+// NeedsCheckIn returns true if optional check-in is recommended.
+func (m *Manager) NeedsCheckIn() bool {
+	if m.state == nil || m.state.IsTrialMode {
+		return false
+	}
+	daysSinceCheck := int(time.Since(m.state.LastValidatedAt).Hours() / hoursPerDay)
+	return daysSinceCheck >= CheckInInterval
+}
+
+// loadState reads and decrypts activation state from disk.
+func (m *Manager) loadState() error {
+	licensePath := filepath.Clean(filepath.Join(m.configDir, licenseFileName))
+
+	f, openErr := os.Open(licensePath)
+	if openErr != nil {
+		if os.IsNotExist(openErr) {
+			return nil
+		}
+		return fmt.Errorf("open license file: %w", openErr)
+	}
+	defer func() { _ = f.Close() }()
+
+	data, readErr := io.ReadAll(f)
+	if readErr != nil {
+		return fmt.Errorf("read license file: %w", readErr)
+	}
+
+	decrypted, decryptErr := m.decrypt(data)
+	if decryptErr != nil {
+		return fmt.Errorf("failed to decrypt license: %w", decryptErr)
+	}
+
+	state := &ActivationState{}
+	if unmarshalErr := json.Unmarshal(decrypted, state); unmarshalErr != nil {
+		return fmt.Errorf("failed to parse license: %w", unmarshalErr)
+	}
+
+	m.state = state
+	return nil
+}
+
+// saveState encrypts and writes activation state to disk.
+func (m *Manager) saveState() error {
+	if m.state == nil {
+		return nil
+	}
+	if mkdirErr := os.MkdirAll(m.configDir, 0o700); mkdirErr != nil {
+		return fmt.Errorf("failed to create config directory: %w", mkdirErr)
+	}
+
+	data, marshalErr := json.Marshal(m.state)
+	if marshalErr != nil {
+		return fmt.Errorf("failed to marshal license state: %w", marshalErr)
+	}
+
+	encrypted, encryptErr := m.encrypt(data)
+	if encryptErr != nil {
+		return encryptErr
+	}
+
+	licensePath := filepath.Join(m.configDir, licenseFileName)
+	if writeErr := os.WriteFile(licensePath, encrypted, 0o600); writeErr != nil {
+		return fmt.Errorf("failed to write license file: %w", writeErr)
+	}
+	return nil
+}
+
+func (m *Manager) encrypt(plaintext []byte) ([]byte, error) {
+	key := m.deriveKey()
+
+	block, blockErr := aes.NewCipher(key)
+	if blockErr != nil {
+		return nil, fmt.Errorf("failed to create cipher: %w", blockErr)
+	}
+	gcm, gcmErr := cipher.NewGCM(block)
+	if gcmErr != nil {
+		return nil, fmt.Errorf("failed to create GCM: %w", gcmErr)
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, nonceErr := io.ReadFull(rand.Reader, nonce); nonceErr != nil {
+		return nil, fmt.Errorf("failed to generate nonce: %w", nonceErr)
+	}
+
+	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
+	return []byte(base64.StdEncoding.EncodeToString(ciphertext)), nil
+}
+
+func (m *Manager) decrypt(ciphertext []byte) ([]byte, error) {
+	data, decodeErr := base64.StdEncoding.DecodeString(string(ciphertext))
+	if decodeErr != nil {
+		return nil, fmt.Errorf("failed to decode base64: %w", decodeErr)
+	}
+
+	key := m.deriveKey()
+	block, blockErr := aes.NewCipher(key)
+	if blockErr != nil {
+		return nil, fmt.Errorf("failed to create cipher: %w", blockErr)
+	}
+	gcm, gcmErr := cipher.NewGCM(block)
+	if gcmErr != nil {
+		return nil, fmt.Errorf("failed to create GCM: %w", gcmErr)
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(data) < nonceSize {
+		return nil, errors.New("ciphertext too short")
+	}
+
+	nonce, ciphertextBytes := data[:nonceSize], data[nonceSize:]
+	plaintext, openErr := gcm.Open(nil, nonce, ciphertextBytes, nil)
+	if openErr != nil {
+		return nil, fmt.Errorf("failed to decrypt: %w", openErr)
+	}
+	return plaintext, nil
+}
+
+func (m *Manager) deriveKey() []byte {
+	data := m.fingerprint.Hash() + encryptionSalt
+	hash := sha256.Sum256([]byte(data))
+	return hash[:] // 32 bytes for AES-256.
+}

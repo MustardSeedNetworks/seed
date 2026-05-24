@@ -144,6 +144,7 @@ func initCommands(state *cliState) {
 	initExportCmd(state)
 	initInstallCmd(state)
 	initInstallCACmd(state)
+	initLicenseCmd(state)
 	initPlatformCmd(state)
 	initResetCmd(state)
 	initServeCmd(state)

@@ -126,6 +126,7 @@ func TestInitCommands(t *testing.T) {
 		"credentials",
 		"export-config",
 		"install",
+		"license",
 		"reset-config",
 		"serve",
 		"setup-wizard",
