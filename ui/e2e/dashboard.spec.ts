@@ -45,7 +45,8 @@ test.describe('Dashboard', () => {
     // Click settings button
     const settingsButton = page
       .getByRole('button', { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+      .first();
     await settingsButton.click();
 
     // Settings drawer should be visible
@@ -56,7 +57,8 @@ test.describe('Dashboard', () => {
     // Open settings
     const settingsButton = page
       .getByRole('button', { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+      .first();
     await settingsButton.click();
 
     // Find and click theme toggle
@@ -68,7 +70,8 @@ test.describe('Dashboard', () => {
     // Click help button
     const helpButton = page
       .getByRole('button', { name: /help/i })
-      .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+      .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+      .first();
     await helpButton.click();
 
     // Help modal should be visible

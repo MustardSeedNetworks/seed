@@ -115,7 +115,8 @@ test.describe('Responsive Layout Tests', () => {
       // Open settings
       const settingsButton = page
         .getByRole('button', { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       await settingsButton.click();
       await page.waitForTimeout(150);
@@ -201,7 +202,8 @@ test.describe('Responsive Layout Tests', () => {
       // Find help button
       const helpButton = page
         .getByRole('button', { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
       await page.waitForTimeout(150);
@@ -230,14 +232,16 @@ test.describe('Responsive Layout Tests', () => {
       // Settings should be accessible
       const settingsButton = page
         .getByRole('button', { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       await expect(settingsButton).toBeVisible();
 
       // Help should be accessible
       const helpButton = page
         .getByRole('button', { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       const hasHelp = await helpButton.isVisible().catch(() => false);
       expect(hasHelp).toBeDefined();
@@ -309,7 +313,8 @@ test.describe('Responsive Layout Tests', () => {
       // Open settings
       const settingsButton = page
         .getByRole('button', { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       await settingsButton.click();
       await page.waitForTimeout(150);
@@ -472,7 +477,8 @@ test.describe('Responsive Layout Tests', () => {
       // Open settings
       const settingsButton = page
         .getByRole('button', { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       await settingsButton.click();
       await page.waitForTimeout(150);
@@ -533,7 +539,8 @@ test.describe('Responsive Layout Tests', () => {
       // Open help modal
       const helpButton = page
         .getByRole('button', { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
       await page.waitForTimeout(150);
@@ -593,7 +600,8 @@ test.describe('Responsive Layout Tests', () => {
       // Set dark theme
       const settingsButton = page
         .getByRole('button', { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       await settingsButton.click();
       await page.waitForTimeout(150);
@@ -690,7 +698,8 @@ test.describe('Responsive Layout Tests', () => {
         // Open settings
         const settingsButton = page
           .getByRole('button', { name: /settings/i })
-          .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+          .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+          .first();
 
         await settingsButton.click();
         await page.waitForTimeout(150);

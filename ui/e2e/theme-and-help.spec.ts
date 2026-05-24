@@ -41,7 +41,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const settingsButton = page
         .getByRole('button', { name: 'Open settings' })
         .first()
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       await settingsButton.click();
       await page.waitForTimeout(150);
@@ -77,7 +78,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const settingsButton = page
         .getByRole('button', { name: 'Open settings' })
         .first()
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       await settingsButton.click();
       await page.waitForTimeout(150);
@@ -115,7 +117,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const settingsButton = page
         .getByRole('button', { name: 'Open settings' })
         .first()
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       await settingsButton.click();
       await page.waitForTimeout(150);
@@ -144,7 +147,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const settingsButton = page
         .getByRole('button', { name: 'Open settings' })
         .first()
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       await settingsButton.click();
       await page.waitForTimeout(150);
@@ -188,7 +192,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const settingsButton = page
         .getByRole('button', { name: 'Open settings' })
         .first()
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       await settingsButton.click();
       await page.waitForTimeout(150);
@@ -233,7 +238,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const settingsButton = page
         .getByRole('button', { name: 'Open settings' })
         .first()
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       await settingsButton.click();
       await page.waitForTimeout(150);
@@ -285,7 +291,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const helpButton = page
         .getByRole('button', { name: 'Open help' })
         .first()
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
 
@@ -303,7 +310,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const helpButton = page
         .getByRole('button', { name: 'Open help' })
         .first()
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
       await page.waitForTimeout(150);
@@ -324,7 +332,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const helpButton = page
         .getByRole('button', { name: 'Open help' })
         .first()
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
       await page.waitForTimeout(150);
@@ -347,7 +356,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const helpButton = page
         .getByRole('button', { name: 'Open help' })
         .first()
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
       await page.waitForTimeout(150);
@@ -369,7 +379,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const helpButton = page
         .getByRole('button', { name: 'Open help' })
         .first()
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
       await page.waitForTimeout(150);
@@ -396,7 +407,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const helpButton = page
         .getByRole('button', { name: 'Open help' })
         .first()
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
       await page.waitForTimeout(150);
@@ -415,7 +427,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const helpButton = page
         .getByRole('button', { name: 'Open help' })
         .first()
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
       await page.waitForTimeout(150);
@@ -442,7 +455,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const helpButton = page
         .getByRole('button', { name: 'Open help' })
         .first()
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
       await page.waitForTimeout(150);
@@ -471,7 +485,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const helpButton = page
         .getByRole('button', { name: 'Open help' })
         .first()
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
       await page.waitForTimeout(150);
@@ -492,7 +507,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const helpButton = page
         .getByRole('button', { name: 'Open help' })
         .first()
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
       await page.waitForTimeout(150);
@@ -529,7 +545,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const helpButton = page
         .getByRole('button', { name: 'Open help' })
         .first()
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
       await page.waitForTimeout(150);
@@ -545,7 +562,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const settingsButton = page
         .getByRole('button', { name: 'Open settings' })
         .first()
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       await settingsButton.click();
       await page.waitForTimeout(150);
@@ -587,7 +605,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const helpButton = page
         .getByRole('button', { name: 'Open help' })
         .first()
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
       await page.waitForTimeout(150);
@@ -596,7 +615,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const settingsButton = page
         .getByRole('button', { name: 'Open settings' })
         .first()
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       const settingsVisible = await settingsButton.isVisible().catch(() => false);
 
@@ -632,7 +652,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const settingsButton = page
         .getByRole('button', { name: 'Open settings' })
         .first()
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       await settingsButton.click();
       await page.waitForTimeout(150);
@@ -657,7 +678,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const helpButton = page
         .getByRole('button', { name: 'Open help' })
         .first()
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'));
+        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
+        .first();
 
       await helpButton.click();
       await page.waitForTimeout(150);

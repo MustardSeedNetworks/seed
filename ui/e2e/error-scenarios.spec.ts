@@ -454,7 +454,8 @@ test.describe('API Error Scenarios', () => {
       // Try to open settings
       const settingsButton = page
         .getByRole('button', { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       if (await settingsButton.isVisible({ timeout: 3000 })) {
         await settingsButton.click();
@@ -512,7 +513,8 @@ test.describe('Validation Error Scenarios', () => {
       // Open settings
       const settingsButton = page
         .getByRole('button', { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'));
+        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
+        .first();
 
       if (await settingsButton.isVisible({ timeout: 3000 })) {
         await settingsButton.click();
