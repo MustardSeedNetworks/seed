@@ -166,6 +166,8 @@ export const AppearanceSettings: React.NamedExoticComponent<AppearanceSettingsPr
           <button
             type="button"
             onClick={(): void => setTheme(isDark ? 'light' : 'dark')}
+            data-testid="theme-toggle"
+            aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
             className={cn(
               'w-full',
               layout.flex.between,
