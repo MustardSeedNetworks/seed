@@ -7,6 +7,7 @@ import (
 	"net"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/krisarmstrong/seed/internal/logging"
 )
@@ -84,24 +85,38 @@ func NewDetector() *Detector {
 
 // DetectAll discovers and scores all network interfaces.
 // Returns interfaces sorted by score (highest first).
+//
+// Per-interface scoring shells out to platform tools (e.g.
+// `networksetup -getmedia` on macOS, `ethtool` on Linux) and each
+// call carries a multi-second timeout. We score every interface
+// concurrently so the worst-case wall clock is one interface's
+// timeout, not N×timeout — without this, hosts with many virtual
+// interfaces (utun*, awdl*, bridge*) made test runs unboundedly slow.
 func (d *Detector) DetectAll() ([]InterfaceScore, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return nil, err
 	}
 
-	scores := make([]InterfaceScore, 0, len(ifaces))
+	candidates := make([]net.Interface, 0, len(ifaces))
 	for _, iface := range ifaces {
-		// Skip loopback
 		if iface.Flags&net.FlagLoopback != 0 {
 			continue
 		}
-
-		score := d.ScoreInterface(iface)
-		scores = append(scores, score)
+		candidates = append(candidates, iface)
 	}
 
-	// Sort by score descending
+	scores := make([]InterfaceScore, len(candidates))
+	var wg sync.WaitGroup
+	for i := range candidates {
+		wg.Add(1)
+		go func(idx int, iface net.Interface) {
+			defer wg.Done()
+			scores[idx] = d.ScoreInterface(iface)
+		}(i, candidates[i])
+	}
+	wg.Wait()
+
 	sort.Slice(scores, func(i, j int) bool {
 		return scores[i].Score > scores[j].Score
 	})
