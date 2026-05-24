@@ -8,6 +8,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/dhcp"
 	"github.com/krisarmstrong/seed/internal/health"
+	"github.com/krisarmstrong/seed/internal/license"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/mibdb"
 	"github.com/krisarmstrong/seed/internal/netif"
@@ -72,6 +73,12 @@ type AuthServices struct {
 	// WebAuthn is the optional WebAuthn (passkeys) manager, populated
 	// in server_init.go. Wave 3 (#85).
 	WebAuthn *auth.WebAuthnManager
+	// License is the offline license manager. Populated lazily in
+	// server_init.go (Phase D-2); may be nil in tests that don't
+	// exercise license-gated endpoints.
+	License *license.Manager
+	// APITokens persists personal-access tokens (Phase D-2).
+	APITokens *database.APITokenRepository
 }
 
 // RateLimitServices groups rate limiting services.

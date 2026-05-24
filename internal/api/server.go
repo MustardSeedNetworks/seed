@@ -18,6 +18,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/dhcp"
+	"github.com/krisarmstrong/seed/internal/license"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/mibdb"
 	"github.com/krisarmstrong/seed/internal/netif"
@@ -191,6 +192,8 @@ func NewServer(
 	// Initialize database services
 	services.Database.DB = db
 
+	initLicenseAndAPITokens(services, db)
+
 	s := &Server{
 		config:        cfg,
 		configPath:    configPath,
@@ -235,6 +238,21 @@ func NewServer(
 	s.setupRoutes()
 
 	return s
+}
+
+// initLicenseAndAPITokens wires the Phase D-2 license manager + API
+// token repository into the service container. The license manager is
+// best-effort: failure to load isn't fatal, the mint endpoint just
+// behaves as if no paid license is present (rejects with 402).
+func initLicenseAndAPITokens(services *ServiceContainer, db *database.DB) {
+	services.Auth.APITokens = database.NewAPITokenRepository(db)
+	lm, lmErr := license.NewManager()
+	if lmErr != nil {
+		logging.GetLogger().Warn("license manager init failed; minting will be disabled",
+			"error", lmErr)
+		return
+	}
+	services.Auth.License = lm
 }
 
 // Service accessors - provide backwards-compatible access to services (#888)

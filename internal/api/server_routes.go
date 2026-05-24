@@ -14,6 +14,7 @@ import (
 func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/__version", s.handleBuildVersion)
 	s.setupCoreRoutes()
+	s.setupAPITokenRoutes()
 	s.registerUpdateRoutes()
 	s.setupSAPRoutes()
 	s.setupShellRoutes()
@@ -21,6 +22,13 @@ func (s *Server) setupRoutes() {
 	s.setupCanopyRoutes()
 	s.setupHarvestRoutes()
 	s.setupSSEAndStatic()
+}
+
+// setupAPITokenRoutes registers the Phase D-2 personal-access-token
+// endpoints.
+func (s *Server) setupAPITokenRoutes() {
+	s.mux.HandleFunc(APIVersionPrefix+"/tokens", s.handleAPITokens)
+	s.mux.HandleFunc(APIVersionPrefix+"/tokens/", s.handleAPITokenByID)
 }
 
 // setupCoreRoutes registers auth, settings, config, and setup routes.

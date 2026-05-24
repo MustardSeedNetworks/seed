@@ -41,6 +41,10 @@ func (s *Server) Start() error {
 	// Body limit middleware enforces request body size limits
 	// i18n middleware extracts Accept-Language and attaches localizer to context
 	// CSRF middleware validates tokens on state-changing requests (POST, PUT, DELETE)
+	// Phase D-2: apiTokenMiddleware sits in front of the JWT middleware.
+	// If the request carries `Authorization: Bearer sd_pat_…` it resolves
+	// the personal-access token, sets X-Username, and forwards. Otherwise
+	// it falls through and the JWT middleware handles the request normally.
 	handler := recoverMiddleware(
 		logging.RequestIDMiddleware(
 			logging.LoggingMiddleware(
@@ -48,8 +52,9 @@ func (s *Server) Start() error {
 					bodyLimitMiddleware(
 						corsMiddleware(
 							i18n.Middleware()(
-								s.authManager().Middleware(
-									s.csrfManager().CSRFMiddleware(s.mux)))))))))
+								apiTokenMiddleware(s.services.Auth.APITokens,
+									s.authManager().Middleware(
+										s.csrfManager().CSRFMiddleware(s.mux))))))))))
 
 	s.httpServer = &http.Server{
 		Addr:         addr,
