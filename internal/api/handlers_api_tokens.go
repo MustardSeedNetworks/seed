@@ -75,6 +75,64 @@ type TokenListItem struct {
 	RevokedAt  time.Time `json:"revokedAt,omitzero"`
 }
 
+// LicenseStatusResponse is returned by GET /api/v1/license. It tells
+// the UI which tier is active, whether features should be exposed,
+// and how much trial time (if any) remains.
+type LicenseStatusResponse struct {
+	Tier          string    `json:"tier"`      // "Free" | "Starter" | "Pro" | "Trial"
+	TierValue     int       `json:"tierValue"` // numeric (0=Free, 1=Starter, 2=Pro)
+	IsTrialMode   bool      `json:"isTrialMode"`
+	TrialDaysLeft int       `json:"trialDaysLeft,omitempty"`
+	CanMintTokens bool      `json:"canMintTokens"` // true iff Tier >= Pro or active trial
+	Activated     bool      `json:"activated"`
+	ExpiresAt     time.Time `json:"expiresAt,omitzero"`
+}
+
+// handleLicenseStatus exposes the local license state to the UI. The
+// unlicensed (Free) state is a valid result, not an error condition.
+func (s *Server) handleLicenseStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeAPITokenError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed,
+			"Method not allowed")
+		return
+	}
+
+	resp := LicenseStatusResponse{
+		Tier:          license.TierFree.String(),
+		TierValue:     int(license.TierFree),
+		CanMintTokens: false,
+	}
+
+	mgr := s.services.Auth.License
+	if mgr == nil {
+		// License disabled (dev / test build) — allow minting so the
+		// feature stays usable. Matches licenseAllowsAPITokens().
+		resp.CanMintTokens = true
+		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, resp)
+		return
+	}
+
+	st := mgr.GetState()
+	if st == nil {
+		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, resp)
+		return
+	}
+
+	resp.Activated = true
+	resp.IsTrialMode = st.IsTrialMode
+	resp.ExpiresAt = st.ExpiresAt
+	resp.TierValue = int(st.Tier)
+	if st.IsTrialMode {
+		resp.Tier = "Trial"
+		resp.TrialDaysLeft = mgr.TrialDaysRemaining()
+		resp.CanMintTokens = true
+	} else {
+		resp.Tier = st.Tier.String()
+		resp.CanMintTokens = st.Tier >= license.TierPro
+	}
+	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, resp)
+}
+
 // handleAPITokens routes /api/v1/tokens (POST = mint, GET = list).
 func (s *Server) handleAPITokens(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {

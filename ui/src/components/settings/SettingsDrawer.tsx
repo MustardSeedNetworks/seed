@@ -50,6 +50,7 @@ import type {
 } from '../../types/settings';
 import { SettingsDrawerFooter } from './SettingsDrawerFooter';
 import { SettingsDrawerNetworkSection } from './SettingsDrawerNetworkSection';
+import { ApiTokensSettings } from './sections/ApiTokensSettings';
 import { AppearanceSettings } from './sections/AppearanceSettings';
 import { CableTestSettings } from './sections/CableTestSettings';
 import { ConfigBackupsSection } from './sections/ConfigBackupsSection';
@@ -689,6 +690,9 @@ export const SettingsDrawer: React.MemoExoticComponent<
               setDisplayOptions((prev) => ({ ...prev, unitSystem: unit }))
             }
           />
+
+          {/* API tokens (Phase D-2 LICENSE_STRATEGY) */}
+          <ApiTokensSettings />
 
           {/* Config Backups Section (implements #494) */}
           <ConfigBackupsSection />
