@@ -25,10 +25,12 @@ func (s *Server) setupRoutes() {
 }
 
 // setupAPITokenRoutes registers the Phase D-2 personal-access-token
-// endpoints.
+// endpoints and the read-only license status endpoint the UI uses to
+// know whether the mint button should be enabled.
 func (s *Server) setupAPITokenRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/tokens", s.handleAPITokens)
 	s.mux.HandleFunc(APIVersionPrefix+"/tokens/", s.handleAPITokenByID)
+	s.mux.HandleFunc(APIVersionPrefix+"/license", s.handleLicenseStatus)
 }
 
 // setupCoreRoutes registers auth, settings, config, and setup routes.
