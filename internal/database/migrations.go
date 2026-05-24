@@ -849,6 +849,29 @@ func getMigrationDefs() []migrationDef {
 				ON webauthn_credentials(credential_id);
 		`,
 		},
+		{
+			// Phase D-2 (LICENSE_STRATEGY.md): API personal-access tokens
+			// for programmatic access. Pro-tier capability; minting is
+			// gated server-side at the handler. Token plaintext is shown
+			// once at creation; only its SHA-256 hash is stored.
+			Description: "Add api_tokens table for personal-access tokens",
+			Up: `
+			CREATE TABLE IF NOT EXISTS api_tokens (
+				id              TEXT PRIMARY KEY,
+				owner_username  TEXT NOT NULL,
+				name            TEXT NOT NULL,
+				token_hash      TEXT NOT NULL UNIQUE,
+				prefix          TEXT NOT NULL,
+				created_at      TEXT NOT NULL,
+				last_used_at    TEXT,
+				revoked_at      TEXT
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_api_tokens_owner    ON api_tokens(owner_username);
+			CREATE INDEX IF NOT EXISTS idx_api_tokens_hash     ON api_tokens(token_hash);
+			CREATE INDEX IF NOT EXISTS idx_api_tokens_active   ON api_tokens(revoked_at);
+		`,
+		},
 	}
 }
 
