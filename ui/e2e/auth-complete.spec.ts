@@ -373,11 +373,10 @@ test.describe('Complete Authentication Lifecycle', () => {
       const hamburgerMenu = page.locator(
         'button[aria-label*="menu" i], button:has(svg[class*="menu"])',
       );
-      const hasHamburger = await hamburgerMenu.isVisible().catch(() => false);
+      const hasHamburger = await hamburgerMenu.isVisible();
 
       if (hasHamburger) {
         await hamburgerMenu.click();
-        await page.waitForTimeout(150);
       }
 
       // Find logout button
@@ -418,7 +417,6 @@ test.describe('Complete Authentication Lifecycle', () => {
 
       // Wait to see if any automatic refresh happens
       // (In a real scenario, we'd mock a near-expiry token)
-      await page.waitForTimeout(400);
 
       // Verify user session continues uninterrupted
       await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible();
@@ -437,11 +435,9 @@ test.describe('Complete Authentication Lifecycle', () => {
 
       // Look for remember me checkbox
       const rememberMe = page.getByLabel(/remember me/i);
-      const hasRememberMe = await rememberMe.isVisible().catch(() => false);
-
-      if (!hasRememberMe) {
-        test.skip();
-      }
+      // Loud failure beats silent skip: if the UI changed and remember-me
+      // disappeared, this test surfaces the regression instead of hiding it.
+      await expect(rememberMe, 'precondition: remember-me checkbox must be visible').toBeVisible();
 
       // Check remember me
       await rememberMe.check();
@@ -471,11 +467,9 @@ test.describe('Complete Authentication Lifecycle', () => {
 
       // Look for remember me checkbox
       const rememberMe = page.getByLabel(/remember me/i);
-      const hasRememberMe = await rememberMe.isVisible().catch(() => false);
-
-      if (!hasRememberMe) {
-        test.skip();
-      }
+      // Loud failure beats silent skip: if the UI changed and remember-me
+      // disappeared, this test surfaces the regression instead of hiding it.
+      await expect(rememberMe, 'precondition: remember-me checkbox must be visible').toBeVisible();
 
       // Ensure remember me is unchecked
       await rememberMe.uncheck();

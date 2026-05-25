@@ -45,7 +45,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await settingsButton.click();
-      await page.waitForTimeout(150);
 
       // Get current theme from HTML element
       const htmlElement = page.locator('html');
@@ -60,7 +59,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await themeToggle.click();
-      await page.waitForTimeout(150);
 
       // Verify theme changed
       const newClasses = await htmlElement.getAttribute('class');
@@ -82,7 +80,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await settingsButton.click();
-      await page.waitForTimeout(150);
 
       // Find theme toggle
       const themeToggle = page
@@ -96,7 +93,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
       if (!classes?.includes('dark')) {
         await themeToggle.click();
-        await page.waitForTimeout(150);
       }
 
       // Verify dark class present
@@ -105,7 +101,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
       // Toggle to light
       await themeToggle.click();
-      await page.waitForTimeout(150);
 
       // Verify dark class removed
       classes = await htmlElement.getAttribute('class');
@@ -121,7 +116,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await settingsButton.click();
-      await page.waitForTimeout(150);
 
       // Find and click theme toggle
       const themeToggle = page
@@ -130,7 +124,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await themeToggle.click();
-      await page.waitForTimeout(150);
 
       // Check localStorage for theme preference
       const storedTheme = await page.evaluate(
@@ -151,7 +144,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await settingsButton.click();
-      await page.waitForTimeout(150);
 
       // Toggle to dark theme
       const themeToggle = page
@@ -165,7 +157,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       // Ensure we're in dark mode
       if (!classes?.includes('dark')) {
         await themeToggle.click();
-        await page.waitForTimeout(150);
       }
 
       // Verify dark mode
@@ -174,7 +165,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
       // Reload page
       await page.reload();
-      await page.waitForTimeout(250);
 
       // Verify theme persisted
       const reloadedClasses = await page.locator('html').getAttribute('class');
@@ -196,7 +186,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await settingsButton.click();
-      await page.waitForTimeout(150);
 
       // Toggle theme
       const themeToggle = page
@@ -205,7 +194,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await themeToggle.click();
-      await page.waitForTimeout(150);
 
       // Close settings
       const closeButton = page
@@ -214,7 +202,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await closeButton.click();
-      await page.waitForTimeout(150);
 
       // Verify all cards still visible
       const cardsAfterToggle = await page.locator('[class*="card"]').count();
@@ -222,11 +209,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
       // Toggle back
       await settingsButton.click();
-      await page.waitForTimeout(150);
       await themeToggle.click();
-      await page.waitForTimeout(150);
       await closeButton.click();
-      await page.waitForTimeout(150);
 
       // Verify cards still visible in original theme
       const cardsAfterSecondToggle = await page.locator('[class*="card"]').count();
@@ -242,7 +226,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await settingsButton.click();
-      await page.waitForTimeout(150);
 
       // Get current theme
       const htmlClasses = await page.locator('html').getAttribute('class');
@@ -255,10 +238,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await closeButton.click();
-      await page.waitForTimeout(150);
 
       await settingsButton.click();
-      await page.waitForTimeout(150);
 
       // Theme should still be the same
       const reopenedClasses = await page.locator('html').getAttribute('class');
@@ -314,14 +295,10 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await helpButton.click();
-      await page.waitForTimeout(150);
 
       // Look for navigation/TOC
       const navigation = page.locator('text=/table.*contents|navigation|contents|sections/i');
-      const hasNavigation = await navigation
-        .first()
-        .isVisible()
-        .catch(() => false);
+      const hasNavigation = await navigation.first().isVisible();
 
       // Navigation may or may not be present depending on implementation
       expect(hasNavigation).toBeDefined();
@@ -336,7 +313,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await helpButton.click();
-      await page.waitForTimeout(150);
 
       // Find and click close button
       const closeButton = page
@@ -360,7 +336,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await helpButton.click();
-      await page.waitForTimeout(150);
 
       // Verify modal is open
       const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
@@ -368,7 +343,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
       // Press ESC key
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(150);
 
       // Verify modal closes
       await expect(modal).not.toBeVisible({ timeout: 3000 });
@@ -383,7 +357,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await helpButton.click();
-      await page.waitForTimeout(150);
 
       // Verify modal is open
       const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
@@ -391,11 +364,10 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
       // Click outside modal (on backdrop)
       const backdrop = page.locator('[class*="backdrop"], [class*="overlay"]').first();
-      const hasBackdrop = await backdrop.isVisible().catch(() => false);
+      const hasBackdrop = await backdrop.isVisible();
 
       if (hasBackdrop) {
         await backdrop.click({ position: { x: 10, y: 10 } });
-        await page.waitForTimeout(150);
 
         // Modal should close
         await expect(modal).not.toBeVisible({ timeout: 3000 });
@@ -411,7 +383,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await helpButton.click();
-      await page.waitForTimeout(150);
 
       // Look for common help topics
       const helpTopics = page.locator(
@@ -431,7 +402,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await helpButton.click();
-      await page.waitForTimeout(150);
 
       // Look for clickable TOC links
       const tocLinks = page.locator('a[href^="#"], button[data-section]');
@@ -440,7 +410,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       if (linkCount > 0) {
         // Click first TOC link
         await tocLinks.first().click();
-        await page.waitForTimeout(150);
 
         // Modal should still be open
         const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
@@ -459,19 +428,18 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await helpButton.click();
-      await page.waitForTimeout(150);
 
-      // Look for search input
+      // Look for search input.
+      // Loud failure beats silent skip: if the help drawer search disappears,
+      // this test surfaces the regression instead of hiding it.
       const searchInput = page.getByPlaceholder(/search|filter/i);
-      const hasSearch = await searchInput.isVisible().catch(() => false);
-
-      if (!hasSearch) {
-        test.skip();
-      }
+      await expect(
+        searchInput,
+        'precondition: help drawer search input must be visible',
+      ).toBeVisible();
 
       // Enter search term
       await searchInput.fill('network');
-      await page.waitForTimeout(150);
 
       // Verify filtered results
       const results = page.locator('text=/network/i');
@@ -489,7 +457,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await helpButton.click();
-      await page.waitForTimeout(150);
 
       // Verify modal has content (headings, paragraphs)
       const headings = page.locator('h1, h2, h3, h4, h5, h6');
@@ -511,7 +478,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await helpButton.click();
-      await page.waitForTimeout(150);
 
       // Scroll within modal
       const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
@@ -520,24 +486,21 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         scrollable.scrollTop = 100;
       });
 
-      await page.waitForTimeout(100);
-
       // Close modal
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(150);
 
       // Reopen modal
       await helpButton.click();
-      await page.waitForTimeout(150);
 
-      // Scroll position may reset (implementation-dependent)
-      // This test documents expected behavior
+      // After close + reopen the modal should reset its scroll to top.
+      // The original test accepted any non-negative scroll value, which is
+      // tautological (scrollTop is always non-negative) and would pass even
+      // if the modal silently leaked scroll state across opens.
       const scrollPosition = await modal.evaluate((el) => {
-        const scrollable = el.querySelector('[class*="scroll"]') || el;
+        const scrollable = el.querySelector('[class*="scroll"]') ?? el;
         return scrollable.scrollTop;
       });
-
-      expect(scrollPosition).toBeGreaterThanOrEqual(0);
+      expect(scrollPosition, 'modal scroll should reset to top on reopen').toBe(0);
     });
 
     test('should display help modal in both light and dark themes', async ({ page }) => {
@@ -549,14 +512,12 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await helpButton.click();
-      await page.waitForTimeout(150);
 
       const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
       await expect(modal).toBeVisible();
 
       // Close modal
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(150);
 
       // Toggle to dark theme
       const settingsButton = page
@@ -566,7 +527,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await settingsButton.click();
-      await page.waitForTimeout(150);
 
       const themeToggle = page
         .getByRole('button', { name: /dark|light|theme/i })
@@ -574,7 +534,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await themeToggle.click();
-      await page.waitForTimeout(150);
 
       const closeSettings = page
         .getByRole('button', { name: /close/i })
@@ -582,11 +541,9 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await closeSettings.click();
-      await page.waitForTimeout(150);
 
       // Open help modal in dark theme
       await helpButton.click();
-      await page.waitForTimeout(150);
 
       // Modal should be visible in dark theme
       await expect(modal).toBeVisible();
@@ -609,7 +566,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await helpButton.click();
-      await page.waitForTimeout(150);
 
       // Open settings (if possible with modal open)
       const settingsButton = page
@@ -618,11 +574,10 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
         .first();
 
-      const settingsVisible = await settingsButton.isVisible().catch(() => false);
+      const settingsVisible = await settingsButton.isVisible();
 
       if (settingsVisible) {
         await settingsButton.click();
-        await page.waitForTimeout(150);
 
         // Toggle theme
         const themeToggle = page
@@ -630,11 +585,10 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
           .or(page.locator('[data-testid="theme-toggle"]'))
           .first();
 
-        const toggleVisible = await themeToggle.isVisible().catch(() => false);
+        const toggleVisible = await themeToggle.isVisible();
 
         if (toggleVisible) {
           await themeToggle.click();
-          await page.waitForTimeout(150);
 
           // Help modal should still be open
           const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
@@ -656,7 +610,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await settingsButton.click();
-      await page.waitForTimeout(150);
 
       const themeToggle = page
         .getByRole('button', { name: /dark|light|theme/i })
@@ -664,7 +617,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await themeToggle.click();
-      await page.waitForTimeout(150);
 
       const closeSettings = page
         .getByRole('button', { name: /close/i })
@@ -672,7 +624,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await closeSettings.click();
-      await page.waitForTimeout(150);
 
       // Open help modal in new theme
       const helpButton = page
@@ -682,7 +633,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .first();
 
       await helpButton.click();
-      await page.waitForTimeout(150);
 
       // Verify theme changed
       const newClasses = await page.locator('html').getAttribute('class');
