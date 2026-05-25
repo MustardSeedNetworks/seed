@@ -23,7 +23,8 @@
       "!**/go.sum",
       "!**/*.d.ts",
       "!**/*.min.js",
-      "!**/*.generated.*"
+      "!**/*.generated.*",
+      "!**/src/types/generated/**"
     ],
     "maxSize": 1048576
   },
