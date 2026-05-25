@@ -764,6 +764,34 @@ jobs:
           file seed-linux-arm64
           ls -la seed-linux-arm64
 
+      - name: Verify UIBuildHash embedded (Universal Build Contract)
+        # Static check: the binary must contain the md5 hash of the
+        # embedded UI assets, proving the -X ...UIBuildHash=... ldflag
+        # was set during go build. Failing here means /__version would
+        # return uiBuildHash="unknown" in production — silent contract
+        # violation. Static check is cheaper + more reliable than
+        # starting the server with TLS+DB in CI.
+        run: |
+          if [ -z "$(ls -A internal/api/ui/ 2>/dev/null | grep -v '^\.gitkeep$')" ]; then
+            echo "::error::internal/api/ui is empty — frontend-dist artifact missing?"
+            exit 1
+          fi
+          EXPECTED=$(find internal/api/ui -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1)
+          if [ "${#EXPECTED}" -ne 32 ]; then
+            echo "::error::Computed UI_BUILD_HASH is not 32 chars: '$EXPECTED'"
+            exit 1
+          fi
+          echo "Expected UIBuildHash: $EXPECTED"
+          for bin in seed-linux-amd64 seed-linux-arm64; do
+            if strings "$bin" | grep -qF "$EXPECTED"; then
+              echo "  ✓ $bin: UIBuildHash embedded correctly"
+            else
+              echo "::error::$bin does not contain UIBuildHash $EXPECTED"
+              echo "  → Universal Build Contract violated. Check -X ...UIBuildHash=... ldflag in 'Build Go binary' step."
+              exit 1
+            fi
+          done
+
   # ===========================================================================
   # E2E Browser Tests (Playwright)
   # ===========================================================================
