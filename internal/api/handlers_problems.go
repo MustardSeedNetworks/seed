@@ -3,7 +3,6 @@ package api
 // handlers_problems.go extends the discovery API with network problem detection endpoints.
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/i18n"
@@ -171,19 +170,8 @@ func (s *Server) handleProblemThresholds(w http.ResponseWriter, r *http.Request)
 		sendJSONResponse(w, logger, http.StatusOK, thresholds)
 
 	case http.MethodPut:
-		r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 		var thresholds discovery.ProblemThresholds
-		if err := json.NewDecoder(r.Body).Decode(&thresholds); err != nil {
-			logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusBadRequest,
-				ErrCodeBadRequest,
-				localizer.T("errors.api.invalidRequestBody"),
-				"",
-			)
+		if !decodeJSONStrictLocalized(w, r, &thresholds, MaxBodySizeJSON, logger, localizer) {
 			return
 		}
 

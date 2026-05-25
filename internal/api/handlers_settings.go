@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -170,16 +169,7 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var updates map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
-		logger.WarnContext(ctx, "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			"Invalid request body",
-			"",
-		)
+	if !decodeJSONStrict(w, r, &updates, MaxBodySizeJSON) {
 		return
 	}
 
@@ -1017,16 +1007,7 @@ func (s *Server) updateLinkSettings(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeConfig)
 
 	var updates config.LinkConfig
-	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
-		logger.WarnContext(ctx, "Invalid link settings request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			"Invalid request body",
-			"",
-		)
+	if !decodeJSONStrict(w, r, &updates, MaxBodySizeJSON) {
 		return
 	}
 
@@ -1116,16 +1097,7 @@ func (s *Server) updateCableTestSettings(w http.ResponseWriter, r *http.Request)
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeConfig)
 
 	var updates config.CableTestConfig
-	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
-		logger.WarnContext(ctx, "Invalid cable test settings request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			"Invalid request body",
-			"",
-		)
+	if !decodeJSONStrict(w, r, &updates, MaxBodySizeJSON) {
 		return
 	}
 

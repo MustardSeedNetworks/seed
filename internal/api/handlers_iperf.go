@@ -5,7 +5,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -195,20 +194,8 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit request body size to prevent DoS attacks
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req IperfClientRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		)
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 
@@ -318,20 +305,8 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit request body size to prevent DoS attacks
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req IperfServerRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		)
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 

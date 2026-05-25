@@ -3,8 +3,10 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
+	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -78,4 +80,60 @@ func decodeJSONStrict(w http.ResponseWriter, r *http.Request, dst any, maxSize i
 // handler has no use for a typed error and just wants to bail.
 func (c *HandlerContext) DecodeJSONOrFail(dst any, maxSize int64) bool {
 	return decodeJSONStrict(c.W, c.R, dst, maxSize)
+}
+
+// invalidRequestBodyKey is the i18n message key used by
+// decodeJSONStrictLocalized for the user-facing "Invalid request body"
+// message. Every converted call site uses the same key today; the helper
+// exposes it as a constant so future callers can override the formatting
+// path (e.g., by calling localizer.T(...) themselves around a typed error)
+// without breaking the standard contract.
+const invalidRequestBodyKey = "errors.api.invalidRequestBody"
+
+// decodeJSONStrictLocalized is the i18n-preserving variant of
+// decodeJSONStrict. Same strictness (MaxBytesReader, DisallowUnknownFields,
+// trailing-data guard) but on failure writes a localized 4xx response
+// using localizer.T(invalidRequestBodyKey) and the ErrCodeBadRequest code,
+// and logs a WARN with "Invalid request body" — matching the contract of
+// the scattered bare-decode call sites this helper is meant to replace.
+//
+// Use this for handlers that already construct localized error responses
+// and want to keep the BAD_REQUEST code instead of switching to
+// VALIDATION_ERROR. Most existing seed handlers fit that profile.
+func decodeJSONStrictLocalized(
+	w http.ResponseWriter,
+	r *http.Request,
+	dst any,
+	maxSize int64,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+) bool {
+	r.Body = http.MaxBytesReader(w, r.Body, maxSize)
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(dst); err != nil {
+		var maxBytesErr *http.MaxBytesError
+		status := http.StatusBadRequest
+		if errors.As(err, &maxBytesErr) {
+			status = http.StatusRequestEntityTooLarge
+		}
+		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
+		sendErrorResponseWithDetails(
+			w, logger, status, ErrCodeBadRequest, localizer.T(invalidRequestBodyKey), "",
+		)
+		return false
+	}
+
+	if decoder.More() {
+		logger.WarnContext(r.Context(), "Unexpected trailing data after JSON object")
+		sendErrorResponseWithDetails(
+			w, logger, http.StatusBadRequest,
+			ErrCodeBadRequest, localizer.T(invalidRequestBodyKey), "",
+		)
+		return false
+	}
+
+	return true
 }

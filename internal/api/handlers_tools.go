@@ -121,20 +121,8 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit request body size to prevent DoS attacks (fixes #693)
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req TCPProbeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		)
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 
@@ -228,20 +216,8 @@ func (s *Server) handleTraceroute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit request body size to prevent DoS attacks (fixes #693)
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req TracerouteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		)
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 
@@ -358,20 +334,8 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit request body size to prevent DoS attacks (fixes #693)
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req PortScanRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		)
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 

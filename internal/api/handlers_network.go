@@ -5,7 +5,6 @@ package api
 // Related handlers moved to: handlers_wifi.go, handlers_vlan.go, handlers_cable.go
 
 import (
-	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -390,20 +389,8 @@ func (s *Server) handlePutInterface(
 	logger *slog.Logger,
 	localizer *i18n.Localizer,
 ) {
-	// Limit request body size to prevent DoS attacks (fixes #693)
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req SetInterfaceRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		)
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 
@@ -769,19 +756,8 @@ func (s *Server) handleIPSettingsPut(
 	logger *slog.Logger,
 	localizer *i18n.Localizer,
 ) {
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req IPSettingsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		)
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 
@@ -876,20 +852,8 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit request body size to prevent DoS attacks (fixes #693)
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req SetMTURequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		)
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 

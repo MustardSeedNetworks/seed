@@ -9,7 +9,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -34,16 +33,7 @@ func (s *Server) handleGuestAuditSettings(w http.ResponseWriter, r *http.Request
 
 	case http.MethodPut:
 		var settings config.GuestNetworkAuditConfig
-		if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
-			logger.WarnContext(r.Context(), "Invalid guest-audit settings body", "error", err)
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusBadRequest,
-				ErrCodeBadRequest,
-				localizer.T("errors.api.invalidRequestBody"),
-				"",
-			)
+		if !decodeJSONStrictLocalized(w, r, &settings, MaxBodySizeJSON, logger, localizer) {
 			return
 		}
 

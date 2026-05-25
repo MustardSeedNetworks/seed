@@ -123,20 +123,8 @@ func (s *Server) addFloor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit request body size
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req AddFloorRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		) // fixes #694, #H7
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 
