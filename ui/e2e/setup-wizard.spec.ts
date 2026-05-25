@@ -33,8 +33,8 @@ test.describe('Setup Wizard', () => {
 
     await page.waitForTimeout(150);
 
-    const hasLogin = await loginForm.isVisible().catch(() => false);
-    const hasSetup = await setupWizard.isVisible().catch(() => false);
+    const hasLogin = await loginForm.isVisible();
+    const hasSetup = await setupWizard.isVisible();
 
     // Should show either login or setup
     expect(hasLogin || hasSetup).toBeTruthy();
@@ -46,7 +46,7 @@ test.describe('Setup Wizard', () => {
 
     // Check if we're in setup mode
     const setupIndicator = page.getByText(/setup|configure|interface selection/i).first();
-    const isInSetup = await setupIndicator.isVisible().catch(() => false);
+    const isInSetup = await setupIndicator.isVisible();
 
     if (isInSetup) {
       // Should show interface options
@@ -68,7 +68,7 @@ test.describe('Setup Wizard', () => {
     await page.waitForTimeout(400);
 
     const setupIndicator = page.getByText(/setup|welcome/i).first();
-    const isInSetup = await setupIndicator.isVisible().catch(() => false);
+    const isInSetup = await setupIndicator.isVisible();
 
     if (isInSetup) {
       // Look for next/continue/skip buttons
@@ -86,7 +86,7 @@ test.describe('Setup Wizard', () => {
     await page.waitForTimeout(400);
 
     const setupIndicator = page.getByText(/setup|welcome/i).first();
-    const isInSetup = await setupIndicator.isVisible().catch(() => false);
+    const isInSetup = await setupIndicator.isVisible();
 
     if (isInSetup) {
       // Click through setup steps
@@ -98,7 +98,7 @@ test.describe('Setup Wizard', () => {
           .getByRole('button', { name: /next|continue|finish|complete|skip/i })
           .first();
 
-        const hasNext = await nextBtn.isVisible().catch(() => false);
+        const hasNext = await nextBtn.isVisible();
 
         if (hasNext) {
           await nextBtn.click();

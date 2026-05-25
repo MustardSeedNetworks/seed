@@ -192,7 +192,7 @@ test.describe('FAB - Run All Tests Flow', () => {
     // Look for FAB-related settings (if they exist in UI)
     // This will help verify FAB options are configurable
     const fabSettings = page.locator('text=/FAB|Run All Tests|Test Options/i').first();
-    const hasFabSettings = await fabSettings.isVisible().catch(() => false);
+    const hasFabSettings = await fabSettings.isVisible();
 
     if (hasFabSettings) {
       // If FAB settings exist, verify they can be changed

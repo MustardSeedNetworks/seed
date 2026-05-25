@@ -45,7 +45,7 @@ test.describe('Responsive Layout Tests', () => {
         .getByRole('button', { name: /logout|sign out/i })
         .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
 
-      const hasLogout = await logoutButton.isVisible().catch(() => false);
+      const hasLogout = await logoutButton.isVisible();
 
       if (hasLogout) {
         await logoutButton.click();
@@ -84,7 +84,7 @@ test.describe('Responsive Layout Tests', () => {
         'button[aria-label*="menu" i], button:has(svg[class*="menu"], svg[class*="bars"])',
       );
 
-      const hasHamburger = await hamburgerMenu.isVisible().catch(() => false);
+      const hasHamburger = await hamburgerMenu.isVisible();
 
       // Hamburger menu may or may not be present depending on design
       expect(hasHamburger).toBeDefined();
@@ -165,7 +165,7 @@ test.describe('Responsive Layout Tests', () => {
         .locator('[data-testid="fab"], button[class*="fab"]')
         .or(page.locator('button[class*="fixed"][class*="bottom"]'));
 
-      const hasFab = await fab.isVisible().catch(() => false);
+      const hasFab = await fab.isVisible();
 
       if (hasFab) {
         // FAB should be positioned in viewport
@@ -243,7 +243,7 @@ test.describe('Responsive Layout Tests', () => {
         .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
         .first();
 
-      const hasHelp = await helpButton.isVisible().catch(() => false);
+      const hasHelp = await helpButton.isVisible();
       expect(hasHelp).toBeDefined();
     });
   });
@@ -266,7 +266,7 @@ test.describe('Responsive Layout Tests', () => {
         .getByRole('button', { name: /logout|sign out/i })
         .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
 
-      const hasLogout = await logoutButton.isVisible().catch(() => false);
+      const hasLogout = await logoutButton.isVisible();
 
       if (hasLogout) {
         await logoutButton.click();
@@ -343,7 +343,7 @@ test.describe('Responsive Layout Tests', () => {
       if (buttonCount > 0) {
         for (let i = 0; i < Math.min(buttonCount, 5); i++) {
           const button = buttons.nth(i);
-          const isVisible = await button.isVisible().catch(() => false);
+          const isVisible = await button.isVisible();
 
           if (isVisible) {
             const box = await button.boundingBox();
@@ -363,8 +363,8 @@ test.describe('Responsive Layout Tests', () => {
       const nav = page.locator('nav, [role="navigation"]');
       const hamburger = page.locator('button[aria-label*="menu" i]');
 
-      const hasNav = await nav.isVisible().catch(() => false);
-      const hasHamburger = await hamburger.isVisible().catch(() => false);
+      const hasNav = await nav.isVisible();
+      const hasHamburger = await hamburger.isVisible();
 
       // Either full nav or hamburger should be present
       expect(hasNav || hasHamburger).toBe(true);
@@ -403,7 +403,7 @@ test.describe('Responsive Layout Tests', () => {
         .getByRole('button', { name: /logout|sign out/i })
         .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
 
-      const hasLogout = await logoutButton.isVisible().catch(() => false);
+      const hasLogout = await logoutButton.isVisible();
 
       if (hasLogout) {
         await logoutButton.click();
@@ -464,8 +464,8 @@ test.describe('Responsive Layout Tests', () => {
       const nav = page.locator('nav, [role="navigation"]');
       const hamburger = page.locator('button[aria-label*="menu" i]');
 
-      const hasNav = await nav.isVisible().catch(() => false);
-      const hasHamburger = await hamburger.isVisible().catch(() => false);
+      const hasNav = await nav.isVisible();
+      const hasHamburger = await hamburger.isVisible();
 
       // Desktop should prefer full navigation over hamburger
       // But implementation may vary
@@ -510,7 +510,7 @@ test.describe('Responsive Layout Tests', () => {
 
       // Content should not be stretched to full width
       const container = page.locator('[class*="container"], [class*="wrapper"]').first();
-      const containerBox = await container.boundingBox().catch(() => null);
+      const containerBox = await container.boundingBox();
 
       if (containerBox) {
         // Container might have max-width for readability

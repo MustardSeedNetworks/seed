@@ -124,7 +124,7 @@ test.describe('API Error Scenarios', () => {
       // Try to find and click speed test button
       const speedTestButton = page.getByRole('button', { name: /speed test|test speed/i }).first();
 
-      const isVisible = await speedTestButton.isVisible({ timeout: 3000 }).catch(() => false);
+      const isVisible = await speedTestButton.isVisible({ timeout: 3000 });
 
       if (isVisible) {
         await speedTestButton.click();
@@ -161,7 +161,7 @@ test.describe('API Error Scenarios', () => {
 
       // Try to create a survey if available
       const surveyButton = page.getByRole('button', { name: /survey|wifi survey/i }).first();
-      const isVisible = await surveyButton.isVisible({ timeout: 3000 }).catch(() => false);
+      const isVisible = await surveyButton.isVisible({ timeout: 3000 });
 
       if (isVisible) {
         await surveyButton.click();
@@ -286,7 +286,7 @@ test.describe('API Error Scenarios', () => {
 
       // Try to open survey view if available
       const surveyButton = page.getByRole('button', { name: /survey|wifi survey/i }).first();
-      const isVisible = await surveyButton.isVisible({ timeout: 3000 }).catch(() => false);
+      const isVisible = await surveyButton.isVisible({ timeout: 3000 });
 
       if (isVisible) {
         await surveyButton.click();
@@ -478,8 +478,7 @@ test.describe('API Error Scenarios', () => {
             // Should show permission denied error
             const errorShown = await page
               .getByText(/permission|forbidden|denied|authorized/i)
-              .isVisible({ timeout: 5000 })
-              .catch(() => false);
+              .isVisible({ timeout: 5000 });
 
             // Either error shown or app remains functional
             expect(
@@ -502,11 +501,8 @@ test.describe('Validation Error Scenarios', () => {
       await loginButton.click();
 
       // Should show validation error or button be disabled
-      const hasError = await page
-        .getByText(/required|enter|provide/i)
-        .isVisible({ timeout: 3000 })
-        .catch(() => false);
-      const buttonDisabled = await loginButton.isDisabled().catch(() => false);
+      const hasError = await page.getByText(/required|enter|provide/i).isVisible({ timeout: 3000 });
+      const buttonDisabled = await loginButton.isDisabled();
 
       expect(hasError || buttonDisabled).toBeTruthy();
     });
@@ -532,11 +528,10 @@ test.describe('Validation Error Scenarios', () => {
           // Should show validation error or prevent submission
           const errorShown = await page
             .getByText(/invalid|positive|greater/i)
-            .isVisible({ timeout: 3000 })
-            .catch(() => false);
+            .isVisible({ timeout: 3000 });
 
           const saveButton = page.getByRole('button', { name: /save|apply/i }).first();
-          const saveDisabled = await saveButton.isDisabled().catch(() => false);
+          const saveDisabled = await saveButton.isDisabled();
 
           expect(errorShown || saveDisabled).toBeTruthy();
         }
@@ -588,7 +583,7 @@ test.describe('Validation Error Scenarios', () => {
 
       // Try to create survey without name
       const surveyButton = page.getByRole('button', { name: /survey|wifi survey/i }).first();
-      const isVisible = await surveyButton.isVisible({ timeout: 3000 }).catch(() => false);
+      const isVisible = await surveyButton.isVisible({ timeout: 3000 });
 
       if (isVisible) {
         await surveyButton.click();
@@ -605,9 +600,8 @@ test.describe('Validation Error Scenarios', () => {
             // Should show validation error or button be disabled
             const errorShown = await page
               .getByText(/required|name|enter/i)
-              .isVisible({ timeout: 3000 })
-              .catch(() => false);
-            const submitDisabled = await submitButton.isDisabled().catch(() => false);
+              .isVisible({ timeout: 3000 });
+            const submitDisabled = await submitButton.isDisabled();
 
             expect(errorShown || submitDisabled).toBeTruthy();
           }
@@ -656,7 +650,7 @@ test.describe('Validation Error Scenarios', () => {
 
       // Try to upload invalid file type (if file upload available)
       const surveyButton = page.getByRole('button', { name: /survey|wifi survey/i }).first();
-      const isVisible = await surveyButton.isVisible({ timeout: 3000 }).catch(() => false);
+      const isVisible = await surveyButton.isVisible({ timeout: 3000 });
 
       if (isVisible) {
         await surveyButton.click();
@@ -676,8 +670,7 @@ test.describe('Validation Error Scenarios', () => {
           // Should show error about invalid file type
           const errorShown = await page
             .getByText(/invalid|file type|png|jpg|jpeg|image/i)
-            .isVisible({ timeout: 5000 })
-            .catch(() => false);
+            .isVisible({ timeout: 5000 });
 
           expect(errorShown).toBeTruthy();
         }
@@ -736,10 +729,7 @@ test.describe('WebSocket Error Scenarios', () => {
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
 
     // May show disconnected indicator but app should work
-    const _hasError = await page
-      .getByText(/disconnected|offline|connection/i)
-      .isVisible()
-      .catch(() => false);
+    const _hasError = await page.getByText(/disconnected|offline|connection/i).isVisible();
 
     // Either shows status or works silently
     expect(true).toBeTruthy(); // App didn't crash
@@ -809,8 +799,7 @@ test.describe('Resource Error Scenarios - Empty States', () => {
     // Should show helpful empty state message
     const emptyStateShown = await page
       .getByText(/no devices|no hosts|0 devices|empty|start.*scan/i)
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
+      .isVisible({ timeout: 5000 });
 
     // Should show either empty state or scan prompt
     expect(
@@ -834,7 +823,7 @@ test.describe('Resource Error Scenarios - Empty States', () => {
 
     // Open survey view
     const surveyButton = page.getByRole('button', { name: /survey|wifi survey/i }).first();
-    const isVisible = await surveyButton.isVisible({ timeout: 3000 }).catch(() => false);
+    const isVisible = await surveyButton.isVisible({ timeout: 3000 });
 
     if (isVisible) {
       await surveyButton.click();
@@ -843,8 +832,7 @@ test.describe('Resource Error Scenarios - Empty States', () => {
       // Should show helpful empty state
       const emptyStateShown = await page
         .getByText(/no surveys|create.*first|get started|empty/i)
-        .isVisible({ timeout: 5000 })
-        .catch(() => false);
+        .isVisible({ timeout: 5000 });
 
       expect(
         emptyStateShown || (await page.getByRole('button', { name: /create|new/i }).isVisible()),
@@ -884,8 +872,7 @@ test.describe('Resource Error Scenarios - Empty States', () => {
     // Should either show success message or be functional
     const successShown = await page
       .getByText(/no vulnerabilities|secure|safe|clean/i)
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
+      .isVisible({ timeout: 5000 });
 
     expect(
       successShown || (await page.getByRole('heading', { name: /link/i }).isVisible()),
@@ -915,8 +902,7 @@ test.describe('Backend Service Unavailable', () => {
 
     const promptShown = await page
       .getByText(/install|not installed|iperf|unavailable/i)
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
+      .isVisible({ timeout: 5000 });
 
     // Either shows prompt or app remains functional
     expect(
@@ -986,10 +972,7 @@ test.describe('Edge Cases', () => {
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
 
     // Should show device count
-    const _deviceCount = await page
-      .getByText(/1000|devices|hosts/i)
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
+    const _deviceCount = await page.getByText(/1000|devices|hosts/i).isVisible({ timeout: 5000 });
 
     expect(true).toBeTruthy(); // App didn't crash
   });
@@ -1058,8 +1041,8 @@ test.describe('Edge Cases', () => {
     const scanButton = page.getByRole('button', { name: /scan|discover/i }).first();
     const speedButton = page.getByRole('button', { name: /speed test/i }).first();
 
-    const scanVisible = await scanButton.isVisible({ timeout: 3000 }).catch(() => false);
-    const speedVisible = await speedButton.isVisible({ timeout: 3000 }).catch(() => false);
+    const scanVisible = await scanButton.isVisible({ timeout: 3000 });
+    const speedVisible = await speedButton.isVisible({ timeout: 3000 });
 
     if (scanVisible) {
       await scanButton.click();
@@ -1089,7 +1072,7 @@ test.describe('Edge Cases', () => {
     // Quick navigation test
     for (let i = 0; i < 3; i++) {
       for (const button of buttons) {
-        if (await button.isVisible({ timeout: 1000 }).catch(() => false)) {
+        if (await button.isVisible({ timeout: 1000 })) {
           await button.click();
           await page.waitForTimeout(200);
         }
@@ -1161,10 +1144,7 @@ test.describe('Error Recovery Mechanisms', () => {
       await scanButton.click();
 
       // Wait for error
-      const errorVisible = await page
-        .getByText(/error|failed/i)
-        .isVisible({ timeout: 5000 })
-        .catch(() => false);
+      const errorVisible = await page.getByText(/error|failed/i).isVisible({ timeout: 5000 });
 
       if (errorVisible) {
         // Try to dismiss (close button, X, or click away)
@@ -1227,8 +1207,7 @@ test.describe('Cross-Browser Error Handling', () => {
     // Should handle error consistently regardless of browser
     const appFunctional = await page
       .getByRole('heading', { name: /link|login/i })
-      .isVisible({ timeout: 10000 })
-      .catch(() => false);
+      .isVisible({ timeout: 10000 });
 
     expect(appFunctional).toBeTruthy();
   });

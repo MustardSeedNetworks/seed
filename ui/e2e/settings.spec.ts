@@ -69,7 +69,7 @@ test.describe('Settings', () => {
       .or(page.locator('[data-testid="theme-toggle"]'))
       .first();
 
-    const hasToggle = await themeToggle.isVisible().catch(() => false);
+    const hasToggle = await themeToggle.isVisible();
 
     if (hasToggle) {
       // Get current theme state
@@ -105,7 +105,7 @@ test.describe('Settings', () => {
       .or(page.locator('[data-testid="auto-save"]'))
       .first();
 
-    const _hasAutoSave = await autoSave.isVisible().catch(() => false);
+    const _hasAutoSave = await autoSave.isVisible();
 
     // Auto-save indicator may not always be visible, but settings should work
     expect(true).toBeTruthy();
@@ -133,7 +133,7 @@ test.describe('Settings', () => {
       .or(page.locator('[data-testid="theme-toggle"]'))
       .first();
 
-    const hasToggle = await themeToggle.isVisible().catch(() => false);
+    const hasToggle = await themeToggle.isVisible();
 
     if (hasToggle) {
       // Toggle theme
@@ -283,7 +283,7 @@ test.describe('Settings CRUD Operations', () => {
       .locator('label:has-text("Speedtest"), label:has-text("Speed Test")')
       .locator('input[type="checkbox"]')
       .first();
-    const hasSpeedtestToggle = await speedtestToggle.isVisible().catch(() => false);
+    const hasSpeedtestToggle = await speedtestToggle.isVisible();
 
     if (hasSpeedtestToggle) {
       const wasChecked = await speedtestToggle.isChecked();
@@ -347,7 +347,7 @@ test.describe('Settings CRUD Operations', () => {
       await page.waitForTimeout(150);
 
       // Check if indicator was visible (it may be transient)
-      const indicatorVisible = await autoSaveIndicator.isVisible().catch(() => false);
+      const indicatorVisible = await autoSaveIndicator.isVisible();
 
       // Indicator may not always be visible depending on implementation
       expect(indicatorVisible).toBeDefined();
@@ -449,7 +449,7 @@ test.describe('Settings CRUD Operations', () => {
       'button:has-text("Reset"), button:has-text("Default"), button:has-text("Restore")',
     );
 
-    const hasResetButton = await resetButton.isVisible().catch(() => false);
+    const hasResetButton = await resetButton.isVisible();
 
     if (hasResetButton) {
       // Make some changes first
@@ -473,7 +473,7 @@ test.describe('Settings CRUD Operations', () => {
   test('should save FAB configuration options', async ({ page }) => {
     // Look for FAB-related settings
     const fabText = page.locator('text=/FAB|Run All|Test Options/i');
-    const hasFabSettings = await fabText.isVisible().catch(() => false);
+    const hasFabSettings = await fabText.isVisible();
 
     if (hasFabSettings) {
       // Find FAB-related toggles

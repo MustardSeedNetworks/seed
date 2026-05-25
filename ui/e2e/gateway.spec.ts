@@ -34,7 +34,7 @@ test.describe('Gateway', () => {
     // Look for IP address format
     const ipAddress = page.getByText(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/);
 
-    const hasIp = await ipAddress.isVisible().catch(() => false);
+    const hasIp = await ipAddress.isVisible();
     expect(hasIp).toBeTruthy();
   });
 
@@ -58,7 +58,7 @@ test.describe('Gateway', () => {
     await page.waitForTimeout(400);
     const lossText = page.getByText(/loss|packet/i);
 
-    const hasLoss = await lossText.isVisible().catch(() => false);
+    const hasLoss = await lossText.isVisible();
 
     if (hasLoss) {
       // When packet loss section is shown, it should have a percentage
@@ -81,21 +81,15 @@ test.describe('Gateway', () => {
     const ipv4Text = page.getByText(/ipv4|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/i);
 
     // Either IPv4 or IPv6 (or both) should be visible
-    const hasIpv6 = await ipv6Text
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasIpv4 = await ipv4Text
-      .first()
-      .isVisible()
-      .catch(() => false);
+    const hasIpv6 = await ipv6Text.first().isVisible();
+    const hasIpv4 = await ipv4Text.first().isVisible();
     expect(hasIpv6 || hasIpv4).toBeTruthy();
   });
 
   test('should update gateway status in real-time', async ({ page }) => {
     // Get initial latency
     const latencyElement = page.locator(':text-matches("\\\\d+(\\\\.\\\\d+)?\\\\s*ms")').first();
-    const hasElement = await latencyElement.isVisible().catch(() => false);
+    const hasElement = await latencyElement.isVisible();
 
     if (hasElement) {
       // Wait for update (gateway pings typically update every few seconds)
@@ -117,14 +111,8 @@ test.describe('Gateway', () => {
     const errorIndicator = page.getByText(/unreachable|error|failed/i);
 
     // Either success OR error state should be shown
-    const hasSuccess = await successIndicator
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasError = await errorIndicator
-      .first()
-      .isVisible()
-      .catch(() => false);
+    const hasSuccess = await successIndicator.first().isVisible();
+    const hasError = await errorIndicator.first().isVisible();
     expect(hasSuccess || hasError).toBeTruthy();
   });
 

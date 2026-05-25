@@ -318,10 +318,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
       // Look for navigation/TOC
       const navigation = page.locator('text=/table.*contents|navigation|contents|sections/i');
-      const hasNavigation = await navigation
-        .first()
-        .isVisible()
-        .catch(() => false);
+      const hasNavigation = await navigation.first().isVisible();
 
       // Navigation may or may not be present depending on implementation
       expect(hasNavigation).toBeDefined();
@@ -391,7 +388,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
       // Click outside modal (on backdrop)
       const backdrop = page.locator('[class*="backdrop"], [class*="overlay"]').first();
-      const hasBackdrop = await backdrop.isVisible().catch(() => false);
+      const hasBackdrop = await backdrop.isVisible();
 
       if (hasBackdrop) {
         await backdrop.click({ position: { x: 10, y: 10 } });
@@ -619,7 +616,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
         .first();
 
-      const settingsVisible = await settingsButton.isVisible().catch(() => false);
+      const settingsVisible = await settingsButton.isVisible();
 
       if (settingsVisible) {
         await settingsButton.click();
@@ -631,7 +628,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
           .or(page.locator('[data-testid="theme-toggle"]'))
           .first();
 
-        const toggleVisible = await themeToggle.isVisible().catch(() => false);
+        const toggleVisible = await themeToggle.isVisible();
 
         if (toggleVisible) {
           await themeToggle.click();

@@ -373,7 +373,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       const hamburgerMenu = page.locator(
         'button[aria-label*="menu" i], button:has(svg[class*="menu"])',
       );
-      const hasHamburger = await hamburgerMenu.isVisible().catch(() => false);
+      const hasHamburger = await hamburgerMenu.isVisible();
 
       if (hasHamburger) {
         await hamburgerMenu.click();
