@@ -352,6 +352,11 @@ func ExportSecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return securityHeadersMiddleware(next)
 }
 
+// ExportDecodeJSONStrict exposes decodeJSONStrict for testing.
+func ExportDecodeJSONStrict(w http.ResponseWriter, r *http.Request, dst any, maxSize int64) bool {
+	return decodeJSONStrict(w, r, dst, maxSize)
+}
+
 // ExportRecoverMiddleware exposes recoverMiddleware for testing.
 func ExportRecoverMiddleware(next http.Handler) http.Handler {
 	return recoverMiddleware(next)
