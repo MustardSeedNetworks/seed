@@ -8,6 +8,7 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -355,6 +356,16 @@ func ExportSecurityHeadersMiddleware(next http.Handler) http.Handler {
 // ExportDecodeJSONStrict exposes decodeJSONStrict for testing.
 func ExportDecodeJSONStrict(w http.ResponseWriter, r *http.Request, dst any, maxSize int64) bool {
 	return decodeJSONStrict(w, r, dst, maxSize)
+}
+
+// ExportValidateStruct exposes validateStruct for testing.
+func ExportValidateStruct(
+	w http.ResponseWriter,
+	r *http.Request,
+	dto any,
+	localizer *i18n.Localizer,
+) bool {
+	return validateStruct(w, r, dto, localizer)
 }
 
 // ExportRecoverMiddleware exposes recoverMiddleware for testing.

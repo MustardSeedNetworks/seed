@@ -25,8 +25,10 @@ const (
 
 // LoginRequest represents a login request.
 type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	// Length cap is intentionally large; the auth layer applies its own
+	// runtime guards on credential length. Catch only the obvious: empty.
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
 // LoginResponse represents a successful login response.
@@ -446,8 +448,8 @@ func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
 
 // SetupCompleteRequest represents the setup completion request.
 type SetupCompleteRequest struct {
-	Password   string `json:"password"`
-	SetupToken string `json:"setupToken"` // Security fix #724, #758 - required one-time token
+	Password   string `json:"password"   validate:"required,min=8"`
+	SetupToken string `json:"setupToken" validate:"required"` // Security fix #724, #758
 }
 
 func ensurePostMethod(

@@ -35,11 +35,11 @@ const (
 
 // PathRequest represents a path discovery request.
 type PathRequest struct {
-	Source      string `json:"source"`      // IP address or "self" for local machine
-	Destination string `json:"destination"` // IP address or hostname
-	Method      string `json:"method"`      // "l3", "l2", "both"
-	Protocol    string `json:"protocol"`    // "icmp", "udp", "tcp" (for L3 traceroute)
-	Port        int    `json:"port"`        // Port for tcp/udp traceroute
+	Source      string `json:"source"      validate:"required"`                     // IP address or "self" for local machine
+	Destination string `json:"destination" validate:"required"`                     // IP address or hostname
+	Method      string `json:"method"      validate:"required,oneof=l3 l2 both"`    // route resolution method
+	Protocol    string `json:"protocol"    validate:"omitempty,oneof=icmp udp tcp"` // L3 traceroute protocol
+	Port        int    `json:"port"        validate:"omitempty,gte=1,lte=65535"`    // TCP/UDP traceroute port
 }
 
 // PathResponse contains both L2 and L3 path information.

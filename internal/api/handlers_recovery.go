@@ -23,8 +23,8 @@ type RecoveryStatusResponse struct {
 
 // RecoveryCompleteRequest represents a password recovery request.
 type RecoveryCompleteRequest struct {
-	Token    string `json:"token"`
-	Password string `json:"password"`
+	Token    string `json:"token"    validate:"required"`
+	Password string `json:"password" validate:"required,min=8"`
 }
 
 // RecoveryCompleteResponse represents a recovery completion response.

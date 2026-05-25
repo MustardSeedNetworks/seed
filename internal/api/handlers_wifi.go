@@ -377,8 +377,8 @@ func (s *Server) handleWiFiStatus(w http.ResponseWriter, r *http.Request) {
 
 // WiFiConnectRequest represents a request to connect to a WiFi network.
 type WiFiConnectRequest struct {
-	SSID     string `json:"ssid"`
-	Password string `json:"password,omitempty"`
+	SSID     string `json:"ssid"               validate:"required,min=1,max=32"` // 802.11 SSID max is 32 bytes
+	Password string `json:"password,omitempty" validate:"omitempty,min=8"`       // WPA2 minimum is 8
 }
 
 // handleWiFiConnect handles WiFi connection requests.
