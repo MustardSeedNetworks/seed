@@ -122,6 +122,29 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   thresholds: [],
 })) as unknown as typeof IntersectionObserver;
 
+// EventSource: required by useSse (#1134) — mounted at the top level in app.tsx,
+// so EVERY component test that renders the root App tree hits this. JSDoM does
+// not implement EventSource. Without this polyfill, tests throw
+// "ReferenceError: EventSource is not defined". Tests that need to assert SSE
+// behavior should mock this further per-suite.
+const eventSourceMock = vi.fn().mockImplementation(() => ({
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  close: vi.fn(),
+  dispatchEvent: vi.fn(() => true),
+  url: '/api/v1/events',
+  readyState: 1, // OPEN
+  withCredentials: false,
+  onerror: null,
+  onmessage: null,
+  onopen: null,
+  CONNECTING: 0,
+  OPEN: 1,
+  CLOSED: 2,
+}));
+Object.assign(eventSourceMock, { CONNECTING: 0, OPEN: 1, CLOSED: 2 });
+global.EventSource = eventSourceMock as unknown as typeof EventSource;
+
 // ============================================================
 // Mock localStorage
 // ============================================================

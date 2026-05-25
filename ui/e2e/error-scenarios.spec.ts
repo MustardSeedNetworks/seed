@@ -50,8 +50,11 @@ test.describe('API Error Scenarios', () => {
     test('should handle 500 error on login', async ({ page }) => {
       await page.goto('/');
 
-      // Mock login endpoint returning 500
-      await page.route('**/api/auth/login', async (route) => {
+      // Mock login endpoint returning 500. Match both /api/auth/login (legacy)
+      // and /api/v1/auth/login (current — UI calls this since the v1 prefix
+      // rollout). The previous glob `**/api/auth/login` would not intercept
+      // the v1 form, so the mock was silently inert.
+      await page.route(/\/api(\/v1)?\/auth\/login$/, async (route) => {
         await route.fulfill({
           status: 500,
           contentType: 'application/json',
@@ -193,9 +196,10 @@ test.describe('API Error Scenarios', () => {
     test('should handle API timeout gracefully', async ({ page }) => {
       await page.goto('/');
 
-      // Mock login endpoint that never responds (simulates timeout)
+      // Mock login endpoint that never responds (simulates timeout).
+      // RegExp matches both /api/auth/login and /api/v1/auth/login.
       let timeoutHandle: NodeJS.Timeout;
-      await page.route('**/api/auth/login', async (route) => {
+      await page.route(/\/api(\/v1)?\/auth\/login$/, async (route) => {
         // Delay indefinitely to trigger timeout
         await new Promise((resolve) => {
           timeoutHandle = setTimeout(resolve, 60000); // 1 minute
@@ -1105,8 +1109,9 @@ test.describe('Error Recovery Mechanisms', () => {
 
     let attemptCount = 0;
 
-    // First attempt fails, second succeeds
-    await page.route('**/api/auth/login', async (route) => {
+    // First attempt fails, second succeeds.
+    // RegExp matches both /api/auth/login and /api/v1/auth/login.
+    await page.route(/\/api(\/v1)?\/auth\/login$/, async (route) => {
       attemptCount++;
       if (attemptCount === 1) {
         await route.fulfill({

@@ -50,7 +50,10 @@ export const AUTH_STORAGE_STATE = 'playwright/.auth/user.json';
  * Must be called before page.goto so the route handler is registered.
  */
 export async function mockAuthenticated(page: Page): Promise<void> {
-  await page.route('**/api/setup/status', (route) => {
+  // Match both legacy /api/setup/status and v1-prefixed /api/v1/setup/status.
+  // UI calls the v1 form; the legacy form is kept for resilience until any
+  // remaining legacy callers are excised.
+  await page.route(/\/api(\/v1)?\/setup\/status$/, (route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -68,7 +71,10 @@ export async function loginViaUI(
   page: Page,
   creds: { username: string; password: string } = TEST_CREDENTIALS,
 ): Promise<void> {
-  await page.route('**/api/setup/status', (route) => {
+  // Match both legacy /api/setup/status and v1-prefixed /api/v1/setup/status.
+  // UI calls the v1 form; the legacy form is kept for resilience until any
+  // remaining legacy callers are excised.
+  await page.route(/\/api(\/v1)?\/setup\/status$/, (route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
