@@ -1,0 +1,63 @@
+# =============================================================================
+# Codecov configuration
+# =============================================================================
+# Controls how coverage uploads are interpreted and reported on PRs.
+# Canonical across seed/stem/niac per CLAUDE.md harmonization.
+# Docs: https://docs.codecov.com/docs/codecov-yaml
+# =============================================================================
+
+coverage:
+  precision: 2
+  round: down
+  range: "50...90"          # red below 50%, green above 90%
+
+  status:
+    project:
+      default:
+        # Compare against base commit; allow small fluctuations
+        target: auto
+        threshold: 1%       # tolerate 1pp drop before failing
+        if_not_found: success
+        if_ci_failed: error
+    patch:
+      default:
+        # New code (the PR's diff) must have at least 50% coverage
+        # (matches CLAUDE.md minimum; raise as repo coverage climbs).
+        target: 50%
+        threshold: 0%
+        if_not_found: success
+        if_ci_failed: error
+
+# PR comment with coverage summary
+comment:
+  layout: "reach, diff, flags, files, footer"
+  behavior: default
+  require_changes: true     # only comment if coverage actually changes
+  require_base: false
+  require_head: true
+
+# Don't fail CI if Codecov itself has problems
+codecov:
+  require_ci_to_pass: true
+  notify:
+    wait_for_ci: true
+
+# Exclude generated / vendor / test scaffolding from coverage reports
+ignore:
+  - "**/node_modules/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/coverage/**"
+  - "**/vendor/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "**/test/setup.ts"
+  - "**/*.stories.tsx"
+  - "**/*.config.ts"
+  - "**/*.config.js"
+  - "**/*.d.ts"
+  - "**/*_test.go"
+  - "**/testdata/**"
+  - "**/mocks/**"
