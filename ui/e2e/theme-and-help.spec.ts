@@ -492,14 +492,15 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       // Reopen modal
       await helpButton.click();
 
-      // Scroll position may reset (implementation-dependent)
-      // This test documents expected behavior
+      // After close + reopen the modal should reset its scroll to top.
+      // The original test accepted any non-negative scroll value, which is
+      // tautological (scrollTop is always non-negative) and would pass even
+      // if the modal silently leaked scroll state across opens.
       const scrollPosition = await modal.evaluate((el) => {
-        const scrollable = el.querySelector('[class*="scroll"]') || el;
+        const scrollable = el.querySelector('[class*="scroll"]') ?? el;
         return scrollable.scrollTop;
       });
-
-      expect(scrollPosition).toBeGreaterThanOrEqual(0);
+      expect(scrollPosition, 'modal scroll should reset to top on reopen').toBe(0);
     });
 
     test('should display help modal in both light and dark themes', async ({ page }) => {
