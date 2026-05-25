@@ -131,7 +131,8 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Setup request interception
       const logoutRequests: { method: string; url: string }[] = [];
       page.on('request', (request) => {
-        if (request.url().includes('/api/auth/logout')) {
+        // Match both /api/auth/logout (legacy) and /api/v1/auth/logout (current).
+        if (/\/api(\/v1)?\/auth\/logout/.test(request.url())) {
           logoutRequests.push({
             method: request.method(),
             url: request.url(),
@@ -243,8 +244,8 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Mock expired session by intercepting API calls to return 401
       await page.route('**/api/**', (route) => {
         const url = route.request().url();
-        // Don't intercept login/logout endpoints
-        if (url.includes('/api/auth/login') || url.includes('/api/auth/logout')) {
+        // Don't intercept login/logout endpoints (match v1 + legacy).
+        if (/\/api(\/v1)?\/auth\/(login|logout)/.test(url)) {
           route.continue();
         } else {
           route.fulfill({
@@ -395,10 +396,10 @@ test.describe('Complete Authentication Lifecycle', () => {
 
   test.describe('Token Refresh', () => {
     test('should handle token refresh transparently', async ({ page }) => {
-      // Track refresh requests
+      // Track refresh requests (match v1 + legacy paths).
       const refreshRequests: { method: string; url: string }[] = [];
       page.on('request', (request) => {
-        if (request.url().includes('/api/auth/refresh')) {
+        if (/\/api(\/v1)?\/auth\/refresh/.test(request.url())) {
           refreshRequests.push({
             method: request.method(),
             url: request.url(),
