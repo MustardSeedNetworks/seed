@@ -50,8 +50,10 @@ export default defineConfig({
   build: {
     // Output directly into the Go embed directory — no copying or syncing.
     // Canonical path shared with niac and stem: internal/api/ui/.
+    // emptyOutDir intentionally omitted: outDir is outside Vite's project
+    // root, so Vite defaults to false and preserves the tracked .gitkeep
+    // placeholder (CLAUDE.md mandate).
     outDir: '../internal/api/ui',
-    emptyOutDir: true,
     sourcemap: true,
     // Never inline assets as data: URLs (Vite default is 4096 bytes). Required
     // because @fontsource-variable ships small metric-override shim fonts that
