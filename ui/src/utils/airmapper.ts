@@ -26,6 +26,7 @@
  */
 
 import JsZip from 'jszip';
+import { parseSerialJson, type SerialJson } from '@/schemas/airmapper';
 
 /** Location point from AirMapper */
 export interface AirMapperLocation {
@@ -99,35 +100,14 @@ export interface AirMapperParseResult {
   warnings: string[];
 }
 
-/** Raw .serial JSON structure (partial) */
-interface SerialJson {
-  fileName?: string;
-  floorPlanFilename?: string;
-  floorPlanScalePpf?: number;
-  floorPlanWidthPx?: number;
-  floorPlanHeightPx?: number;
-  propagation?: number;
-  propagationUnit?: string;
-  surveyName?: string;
-  surveyMode?: string;
-  surveyPointCount?: number;
-  surveyItemsCount?: number;
-  surveyStartTime?: string;
-  surveyActive1x1?: boolean;
-  unitName?: string;
-  unitType?: string;
-  unitSerial?: string;
-  labels?: string[];
-  views?: AirMapperView[];
-  locations?: {
-    passive?: AirMapperLocation[];
-    active?: AirMapperLocation[];
-    oneXone?: AirMapperLocation[];
-    client?: AirMapperLocation[];
-    probingClient?: AirMapperLocation[];
-    bluetooth?: AirMapperLocation[];
-  };
-}
+/**
+ * Raw .serial JSON structure (partial).
+ *
+ * Re-exported from `@/schemas/airmapper` as `SerialJson` — the canonical
+ * type is now derived from the valibot schema so adding fields is a
+ * one-place change. See `ui/src/schemas/airmapper.ts`.
+ */
+export type { SerialJson };
 
 /**
  * Convert pixels per foot to meters per pixel
@@ -200,18 +180,24 @@ export async function parseAirMapperFile(data: ArrayBuffer): Promise<AirMapperPa
       warnings.push('No .SurveyResult file found - survey sample data will not be imported');
     }
 
-    // Parse .serial JSON
+    // Parse .serial JSON via valibot schema — the file comes from a
+    // third-party tool (AirMapper) and is effectively untrusted input;
+    // safeParse turns a malformed payload into a structured error
+    // instead of letting the cast through.
     const serialContent = await serialFile.async('text');
-    let serialJson: SerialJson;
-    try {
-      serialJson = JSON.parse(serialContent);
-    } catch {
+    const parsed = parseSerialJson(serialContent);
+    if (!parsed.ok) {
+      // Surface the first ~3 schema issues to the user; full list goes
+      // into warnings for debugging.
+      const headline = parsed.issues.slice(0, 3).join('; ');
+      warnings.push(...parsed.issues);
       return {
         success: false,
-        error: 'Failed to parse .serial JSON metadata',
+        error: headline ? `${parsed.reason} (${headline})` : parsed.reason,
         warnings,
       };
     }
+    const serialJson: SerialJson = parsed.value;
 
     // Extract calibration
     const scalePpf = serialJson.floorPlanScalePpf || 10; // Default to 10 ppf
