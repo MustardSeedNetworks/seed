@@ -71,7 +71,12 @@ RUN setcap 'cap_net_raw,cap_net_admin=+ep' /usr/bin/seed
 
 USER seed
 WORKDIR /var/lib/seed
-EXPOSE 8443
+# Per CLAUDE.md Default Ports table:
+#   8443 = TLS canonical (post-Wave-1)
+#   8042 = HTTP->HTTPS 308 redirector (fallback port; the privileged
+#          port 80 isn't usable inside the container because we run
+#          as the unprivileged `seed` user).
+EXPOSE 8443 8042
 
 # OCI labels for traceability.
 ARG VERSION=dev
