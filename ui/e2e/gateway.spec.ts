@@ -39,7 +39,6 @@ test.describe('Gateway', () => {
   });
 
   test('should show ping latency in milliseconds', async ({ page }) => {
-    await page.waitForTimeout(400);
     const latencyText = page.getByText(/\d+(\.\d+)?\s*ms/i);
 
     // Latency should be visible when gateway is reachable
@@ -47,7 +46,6 @@ test.describe('Gateway', () => {
   });
 
   test('should show reachability status', async ({ page }) => {
-    await page.waitForTimeout(400);
     const reachableText = page.getByText(/reachable|unreachable|connected/i);
 
     // Status indicator should always be present
@@ -55,7 +53,6 @@ test.describe('Gateway', () => {
   });
 
   test('should show packet loss percentage', async ({ page }) => {
-    await page.waitForTimeout(400);
     const lossText = page.getByText(/loss|packet/i);
 
     const hasLoss = await lossText.isVisible();
@@ -68,7 +65,6 @@ test.describe('Gateway', () => {
   });
 
   test('should show min/avg/max latency stats', async ({ page }) => {
-    await page.waitForTimeout(400);
     const avgText = page.getByText(/avg|average/i);
 
     // Average latency should be displayed
@@ -76,7 +72,6 @@ test.describe('Gateway', () => {
   });
 
   test('should show IPv6 gateway if available', async ({ page }) => {
-    await page.waitForTimeout(400);
     const ipv6Text = page.getByText(/ipv6/i);
     const ipv4Text = page.getByText(/ipv4|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/i);
 
@@ -93,7 +88,6 @@ test.describe('Gateway', () => {
 
     if (hasElement) {
       // Wait for update (gateway pings typically update every few seconds)
-      await page.waitForTimeout(250);
 
       // Value should still be a valid latency
       const newValue = await latencyElement.textContent();
@@ -102,7 +96,6 @@ test.describe('Gateway', () => {
   });
 
   test('should show success indicator when gateway reachable', async ({ page }) => {
-    await page.waitForTimeout(400);
     const successIndicator = page
       .locator('[class*="success"]')
       .or(page.locator('svg[class*="check"]'))
@@ -117,7 +110,6 @@ test.describe('Gateway', () => {
   });
 
   test('should show error indicator when gateway unreachable', async ({ page }) => {
-    await page.waitForTimeout(400);
     // This test verifies error handling is present in the UI
     const statusIndicator = page
       .locator('[class*="error"], [class*="success"], [class*="warning"]')
@@ -141,7 +133,6 @@ test.describe('Gateway Help', () => {
     // Open help
     const helpButton = page.getByRole('button', { name: /help/i });
     await helpButton.click();
-    await page.waitForTimeout(150);
 
     // Look for gateway section
     const gatewayHelp = page.getByText(/gateway/i);

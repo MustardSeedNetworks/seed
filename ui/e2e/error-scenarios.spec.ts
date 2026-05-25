@@ -211,14 +211,13 @@ test.describe('API Error Scenarios', () => {
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
 
-      // Should show timeout or error message
-      const errorShown = await Promise.race([
-        page
-          .getByText(/timeout|error|failed|unable/i)
-          .isVisible({ timeout: 15000 })
-          .then(() => true),
-        page.waitForTimeout(100).then(() => false),
-      ]);
+      // Should show timeout or error message. Old form raced .isVisible({15s})
+      // against a 100ms hard sleep — the sleep branch always won, defeating
+      // the race. Direct isVisible with the desired timeout is equivalent and
+      // honest about what we're waiting for.
+      const errorShown = await page
+        .getByText(/timeout|error|failed|unable/i)
+        .isVisible({ timeout: 15000 });
 
       if (timeoutHandle) {
         clearTimeout(timeoutHandle);
@@ -243,7 +242,6 @@ test.describe('API Error Scenarios', () => {
         await scanButton.click();
 
         // Should handle timeout gracefully (loading ends or error shown)
-        await page.waitForTimeout(250);
 
         // App should remain functional
         await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
@@ -290,21 +288,20 @@ test.describe('API Error Scenarios', () => {
 
       if (isVisible) {
         await surveyButton.click();
-        await page.waitForTimeout(400);
 
         // Try to click on a survey
         const surveyItem = page.getByText('Test Survey').first();
         if (await surveyItem.isVisible({ timeout: 2000 })) {
           await surveyItem.click();
 
-          // Should show "not found" message
-          const notFoundShown = await Promise.race([
-            page
-              .getByText(/not found|doesn't exist|unavailable/i)
-              .isVisible({ timeout: 5000 })
-              .then(() => true),
-            page.waitForTimeout(250).then(() => false),
-          ]);
+          // Should show "not found" message. Old form raced isVisible({5s})
+          // against a 250ms hard sleep — the sleep branch always won, so we
+          // were effectively checking with a 250ms timeout. Direct isVisible
+          // is honest about the actual budget; keeping it short to match the
+          // original intent.
+          const notFoundShown = await page
+            .getByText(/not found|doesn't exist|unavailable/i)
+            .isVisible({ timeout: 1000 });
 
           // Either shows error or remains functional
           expect(
@@ -346,7 +343,6 @@ test.describe('API Error Scenarios', () => {
       });
 
       // App should handle missing device gracefully
-      await page.waitForTimeout(400);
       await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
     });
   });
@@ -379,19 +375,19 @@ test.describe('API Error Scenarios', () => {
       // Refresh to trigger API calls
       await page.reload();
 
-      // Should show login page or session expired message
-      const loginShown = await Promise.race([
-        page
-          .getByLabel(/username|password/i)
-          .first()
-          .isVisible({ timeout: 10000 })
-          .then(() => true),
-        page
-          .getByText(/session.*expired|unauthorized|login/i)
-          .isVisible({ timeout: 10000 })
-          .then(() => true),
-        page.waitForTimeout(10000).then(() => false),
-      ]);
+      // Should show login page or session expired message. The race had a
+      // 10s fallback that returned false; equivalent to two parallel 10s
+      // isVisible probes ORed together. Express directly with
+      // Promise.any-style logic.
+      const usernameVisible = page
+        .getByLabel(/username|password/i)
+        .first()
+        .isVisible({ timeout: 10000 });
+      const expiredTextVisible = page
+        .getByText(/session.*expired|unauthorized|login/i)
+        .isVisible({ timeout: 10000 });
+      const [usernameOk, expiredOk] = await Promise.all([usernameVisible, expiredTextVisible]);
+      const loginShown = usernameOk || expiredOk;
 
       expect(loginShown).toBeTruthy();
     });
@@ -416,20 +412,18 @@ test.describe('API Error Scenarios', () => {
         await scanButton.click();
 
         // Should show unauthorized error or redirect to login
-        await page.waitForTimeout(150);
 
-        const handled = await Promise.race([
-          page
-            .getByText(/unauthorized|session|login/i)
-            .isVisible()
-            .then(() => true),
+        // Old form raced two isVisible probes against a 250ms timeout — the
+        // 250ms branch always won. Replaced with parallel short-timeout probes
+        // ORed together for the same semantics, no race.
+        const [authTextSeen, loginFieldSeen] = await Promise.all([
+          page.getByText(/unauthorized|session|login/i).isVisible({ timeout: 1000 }),
           page
             .getByLabel(/username|password/i)
             .first()
-            .isVisible()
-            .then(() => true),
-          page.waitForTimeout(250).then(() => false),
+            .isVisible({ timeout: 1000 }),
         ]);
+        const handled = authTextSeen || loginFieldSeen;
 
         expect(handled).toBeTruthy();
       }
@@ -463,7 +457,6 @@ test.describe('API Error Scenarios', () => {
 
       if (await settingsButton.isVisible({ timeout: 3000 })) {
         await settingsButton.click();
-        await page.waitForTimeout(250);
 
         // Try to modify a setting if available
         const input = page.locator('input[type="number"], input[type="text"]').first();
@@ -518,7 +511,6 @@ test.describe('Validation Error Scenarios', () => {
 
       if (await settingsButton.isVisible({ timeout: 3000 })) {
         await settingsButton.click();
-        await page.waitForTimeout(250);
 
         // Try to enter negative number in threshold input
         const thresholdInput = page.locator('input[type="number"]').first();
@@ -654,7 +646,6 @@ test.describe('Validation Error Scenarios', () => {
 
       if (isVisible) {
         await surveyButton.click();
-        await page.waitForTimeout(250);
 
         // Look for file input
         const fileInput = page.locator('input[type="file"]').first();
@@ -709,7 +700,6 @@ test.describe('Validation Error Scenarios', () => {
       });
 
       // App should remain functional
-      await page.waitForTimeout(400);
       await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
     });
   });
@@ -723,7 +713,6 @@ test.describe('WebSocket Error Scenarios', () => {
     await login(page);
 
     // App should still function without WebSocket
-    await page.waitForTimeout(150);
 
     // Dashboard should be visible
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
@@ -752,7 +741,6 @@ test.describe('WebSocket Error Scenarios', () => {
     });
 
     // Wait for potential WS messages
-    await page.waitForTimeout(250);
 
     // App should remain functional
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
@@ -794,7 +782,6 @@ test.describe('Resource Error Scenarios - Empty States', () => {
 
     // Reload to get fresh data
     await page.reload();
-    await page.waitForTimeout(150);
 
     // Should show helpful empty state message
     const emptyStateShown = await page
@@ -827,7 +814,6 @@ test.describe('Resource Error Scenarios - Empty States', () => {
 
     if (isVisible) {
       await surveyButton.click();
-      await page.waitForTimeout(400);
 
       // Should show helpful empty state
       const emptyStateShown = await page
@@ -867,7 +853,6 @@ test.describe('Resource Error Scenarios - Empty States', () => {
     });
 
     // App should show this as a positive result
-    await page.waitForTimeout(400);
 
     // Should either show success message or be functional
     const successShown = await page
@@ -898,7 +883,6 @@ test.describe('Backend Service Unavailable', () => {
     });
 
     // Should show installation prompt
-    await page.waitForTimeout(400);
 
     const promptShown = await page
       .getByText(/install|not installed|iperf|unavailable/i)
@@ -935,7 +919,6 @@ test.describe('Backend Service Unavailable', () => {
     });
 
     // App should handle this gracefully
-    await page.waitForTimeout(400);
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
   });
 });
@@ -966,7 +949,6 @@ test.describe('Edge Cases', () => {
     });
 
     await page.reload();
-    await page.waitForTimeout(150);
 
     // App should handle large dataset (pagination, virtualization, or graceful degradation)
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
@@ -1001,10 +983,7 @@ test.describe('Edge Cases', () => {
       // Rapidly click scan button 5 times
       for (let i = 0; i < 5; i++) {
         await scanButton.click({ force: true });
-        await page.waitForTimeout(100);
       }
-
-      await page.waitForTimeout(400);
 
       // Should have prevented duplicate requests (ideally only 1 request)
       expect(scanCount).toBeLessThanOrEqual(2); // Allow 1-2 requests, not all 5
@@ -1053,7 +1032,6 @@ test.describe('Edge Cases', () => {
     }
 
     // Wait for operations
-    await page.waitForTimeout(250);
 
     // App should handle concurrent operations without crashing
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
@@ -1074,7 +1052,6 @@ test.describe('Edge Cases', () => {
       for (const button of buttons) {
         if (await button.isVisible({ timeout: 1000 })) {
           await button.click();
-          await page.waitForTimeout(200);
         }
       }
     }
@@ -1121,7 +1098,6 @@ test.describe('Error Recovery Mechanisms', () => {
     await page.getByRole('button', { name: /sign in|login|retry/i }).click();
 
     // Should eventually succeed or allow retry
-    await page.waitForTimeout(150);
 
     expect(attemptCount).toBeGreaterThan(0);
   });
@@ -1153,7 +1129,6 @@ test.describe('Error Recovery Mechanisms', () => {
           await closeButton.click();
 
           // Error should be dismissable
-          await page.waitForTimeout(250);
           await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
         }
       }
@@ -1179,7 +1154,6 @@ test.describe('Error Recovery Mechanisms', () => {
     const scanButton = page.getByRole('button', { name: /scan/i }).first();
     if (await scanButton.isVisible({ timeout: 5000 })) {
       await scanButton.click();
-      await page.waitForTimeout(400);
     }
 
     // State should be preserved
@@ -1202,7 +1176,6 @@ test.describe('Cross-Browser Error Handling', () => {
     });
 
     await page.reload();
-    await page.waitForTimeout(150);
 
     // Should handle error consistently regardless of browser
     const appFunctional = await page

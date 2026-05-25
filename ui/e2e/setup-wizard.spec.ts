@@ -31,8 +31,6 @@ test.describe('Setup Wizard', () => {
     const loginForm = page.getByRole('button', { name: /sign in|login/i });
     const setupWizard = page.getByText(/welcome to the seed|setup|get started|configure/i).first();
 
-    await page.waitForTimeout(150);
-
     const hasLogin = await loginForm.isVisible();
     const hasSetup = await setupWizard.isVisible();
 
@@ -42,7 +40,6 @@ test.describe('Setup Wizard', () => {
 
   test('should show interface selection if in setup mode', async ({ page }) => {
     await page.goto('/');
-    await page.waitForTimeout(400);
 
     // Check if we're in setup mode
     const setupIndicator = page.getByText(/setup|configure|interface selection/i).first();
@@ -65,7 +62,6 @@ test.describe('Setup Wizard', () => {
 
   test('should have navigation through setup steps', async ({ page }) => {
     await page.goto('/');
-    await page.waitForTimeout(400);
 
     const setupIndicator = page.getByText(/setup|welcome/i).first();
     const isInSetup = await setupIndicator.isVisible();
@@ -83,7 +79,6 @@ test.describe('Setup Wizard', () => {
 
   test('should complete setup and reach dashboard', async ({ page }) => {
     await page.goto('/');
-    await page.waitForTimeout(400);
 
     const setupIndicator = page.getByText(/setup|welcome/i).first();
     const isInSetup = await setupIndicator.isVisible();
@@ -102,7 +97,6 @@ test.describe('Setup Wizard', () => {
 
         if (hasNext) {
           await nextBtn.click();
-          await page.waitForTimeout(250);
         } else {
           break;
         }

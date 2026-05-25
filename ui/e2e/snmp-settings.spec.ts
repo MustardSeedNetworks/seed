@@ -70,7 +70,6 @@ test.describe('SNMP Settings', () => {
 
       // Enter test community string
       await communityInput.fill('test-community');
-      await page.waitForTimeout(150);
 
       // Verify value was set
       const newValue = await communityInput.inputValue();
@@ -78,7 +77,6 @@ test.describe('SNMP Settings', () => {
 
       // Restore original
       await communityInput.fill(originalValue || 'public');
-      await page.waitForTimeout(150);
     }
   });
 
@@ -94,7 +92,6 @@ test.describe('SNMP Settings', () => {
     if (hasSelector) {
       // Select v3
       await versionSelector.selectOption({ label: /v3/i });
-      await page.waitForTimeout(150);
 
       // Look for v3-specific fields
       const usernameField = page.locator(
@@ -125,7 +122,6 @@ test.describe('SNMP Settings', () => {
     if (hasInput) {
       // Enter test target
       await targetInput.fill('192.168.1.1');
-      await page.waitForTimeout(150);
 
       const value = await targetInput.inputValue();
       expect(value).toBe('192.168.1.1');
@@ -146,7 +142,6 @@ test.describe('SNMP Settings', () => {
 
       // Try invalid port
       await portInput.fill('999999');
-      await page.waitForTimeout(150);
 
       // Should either show error or clamp to valid range
       const value = await portInput.inputValue();
@@ -157,7 +152,6 @@ test.describe('SNMP Settings', () => {
 
       // Restore original
       await portInput.fill(originalValue || '161');
-      await page.waitForTimeout(150);
     }
   });
 
@@ -174,17 +168,14 @@ test.describe('SNMP Settings', () => {
       // Set unique value
       const testValue = `persist-test-${Date.now()}`;
       await communityInput.fill(testValue);
-      await page.waitForTimeout(250);
 
       // Close settings
       const closeButton = page.getByRole('button', { name: /close/i }).first();
       await closeButton.click();
-      await page.waitForTimeout(150);
 
       // Reopen settings
       const settingsButton = page.getByRole('button', { name: /settings/i });
       await settingsButton.click();
-      await page.waitForTimeout(150);
 
       // Check if value persisted
       const reopenedInput = page
@@ -213,11 +204,9 @@ test.describe('SNMP Settings', () => {
 
       // Toggle and verify changes
       await enableToggle.click();
-      await page.waitForTimeout(150);
 
       // Restore
       await enableToggle.click();
-      await page.waitForTimeout(150);
     }
   });
 
@@ -254,7 +243,6 @@ test.describe('SNMP Authentication', () => {
 
     const settingsButton = page.getByRole('button', { name: /settings/i });
     await settingsButton.click();
-    await page.waitForTimeout(150);
   });
 
   test('should have authentication protocol selector for SNMPv3', async ({ page }) => {
@@ -266,7 +254,6 @@ test.describe('SNMP Authentication', () => {
       // Try to select v3
       try {
         await versionSelector.selectOption({ label: /v3/i });
-        await page.waitForTimeout(150);
 
         // Look for auth protocol selector
         const authProtocol = page
@@ -296,7 +283,6 @@ test.describe('SNMP Authentication', () => {
     if (hasSelector) {
       try {
         await versionSelector.selectOption({ label: /v3/i });
-        await page.waitForTimeout(150);
 
         // Look for privacy protocol selector
         const privProtocol = page
@@ -343,7 +329,6 @@ test.describe('SNMP Test Connection', () => {
 
     const settingsButton = page.getByRole('button', { name: /settings/i });
     await settingsButton.click();
-    await page.waitForTimeout(150);
   });
 
   test('should have test connection button', async ({ page }) => {
@@ -369,7 +354,6 @@ test.describe('SNMP Test Connection', () => {
 
     if (hasButton) {
       await testButton.click();
-      await page.waitForTimeout(150);
 
       // Look for status message
       const statusMessage = page.getByText(/success|failed|error|connected|timeout/i).first();
@@ -390,7 +374,6 @@ test.describe('SNMP Test Connection', () => {
 
     if (hasInput) {
       await targetInput.fill('10.255.255.1');
-      await page.waitForTimeout(150);
 
       // Try to test connection
       const testButton = page.locator('button:has-text("Test")').first();
@@ -398,7 +381,6 @@ test.describe('SNMP Test Connection', () => {
 
       if (hasButton) {
         await testButton.click();
-        await page.waitForTimeout(250);
 
         // Should show timeout/error message (not crash)
         const errorMessage = page.getByText(/timeout|error|failed|unreachable/i);

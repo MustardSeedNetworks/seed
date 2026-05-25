@@ -78,7 +78,6 @@ test.describe('Settings', () => {
 
       // Click toggle
       await themeToggle.click();
-      await page.waitForTimeout(150);
 
       // Check theme changed
       const newHtmlClasses = await page.locator('html').getAttribute('class');
@@ -138,19 +137,16 @@ test.describe('Settings', () => {
     if (hasToggle) {
       // Toggle theme
       await themeToggle.click();
-      await page.waitForTimeout(150);
 
       const themeAfterToggle = await page.locator('html').getAttribute('class');
 
       // Close drawer
       const closeButton = page.getByRole('button', { name: /close/i }).first();
       await closeButton.click();
-      await page.waitForTimeout(150);
 
       // Reopen drawer
       const settingsButton = page.getByRole('button', { name: /settings/i }).first();
       await settingsButton.click();
-      await page.waitForTimeout(150);
 
       // Theme should still be the same
       const themeAfterReopen = await page.locator('html').getAttribute('class');
@@ -198,19 +194,22 @@ test.describe('Settings CRUD Operations', () => {
     // Change the value
     const newValue = '50';
     await firstInput.fill(newValue);
-    await page.waitForTimeout(250); // Wait for auto-save
 
-    // Verify input shows new value
-    const updatedValue = await firstInput.inputValue();
-    expect(updatedValue).toBe(newValue);
+    // Verify input shows new value (fill auto-waits for input to settle)
+    await expect(firstInput).toHaveValue(newValue);
 
-    // Settings should be persisted to localStorage
-    const localStorage = await page.evaluate(() => window.localStorage.getItem('seed-settings'));
-    expect(localStorage).toBeTruthy();
+    // Wait for the auto-save debounce to flush to localStorage. The save is
+    // observable as a non-null seed-settings entry — poll for it instead of
+    // sleeping a fixed 250ms.
+    await expect
+      .poll(() => page.evaluate(() => window.localStorage.getItem('seed-settings')), {
+        timeout: 5000,
+        message: 'auto-save should flush seed-settings to localStorage',
+      })
+      .toBeTruthy();
 
     // Restore original value
     await firstInput.fill(originalValue);
-    await page.waitForTimeout(150);
   });
 
   test('should change DNS test hostname and verify save', async ({ page }) => {
@@ -228,7 +227,6 @@ test.describe('Settings CRUD Operations', () => {
     // Change to test hostname
     const testHostname = 'example.com';
     await firstDnsInput.fill(testHostname);
-    await page.waitForTimeout(250);
 
     // Verify change
     const newHostname = await firstDnsInput.inputValue();
@@ -237,7 +235,6 @@ test.describe('Settings CRUD Operations', () => {
     // Restore original
     if (originalHostname) {
       await firstDnsInput.fill(originalHostname);
-      await page.waitForTimeout(150);
     }
   });
 
@@ -253,7 +250,6 @@ test.describe('Settings CRUD Operations', () => {
 
     // Toggle it
     await firstToggle.click();
-    await page.waitForTimeout(250);
 
     // Verify state changed
     const isNowChecked = await firstToggle.isChecked();
@@ -268,7 +264,6 @@ test.describe('Settings CRUD Operations', () => {
 
     // Restore original state
     await firstToggle.click();
-    await page.waitForTimeout(150);
   });
 
   test('should change performance settings and verify persistence', async ({ page }) => {
@@ -290,7 +285,6 @@ test.describe('Settings CRUD Operations', () => {
 
       // Toggle it
       await speedtestToggle.click();
-      await page.waitForTimeout(250);
 
       // Verify changed
       const isNowChecked = await speedtestToggle.isChecked();
@@ -298,7 +292,6 @@ test.describe('Settings CRUD Operations', () => {
 
       // Restore
       await speedtestToggle.click();
-      await page.waitForTimeout(150);
     }
   });
 
@@ -313,7 +306,6 @@ test.describe('Settings CRUD Operations', () => {
 
     // Try to enter invalid value (negative number for a threshold)
     await firstInput.fill('-100');
-    await page.waitForTimeout(150);
 
     // Input should either:
     // 1. Reject the value (keep original)
@@ -327,7 +319,6 @@ test.describe('Settings CRUD Operations', () => {
 
     // Restore original
     await firstInput.fill(originalValue);
-    await page.waitForTimeout(150);
   });
 
   test('should show auto-save indicator when settings change', async ({ page }) => {
@@ -344,7 +335,6 @@ test.describe('Settings CRUD Operations', () => {
 
       // Auto-save indicator might appear briefly
       // Wait a bit to see if it appears
-      await page.waitForTimeout(150);
 
       // Check if indicator was visible (it may be transient)
       const indicatorVisible = await autoSaveIndicator.isVisible();
@@ -354,7 +344,6 @@ test.describe('Settings CRUD Operations', () => {
 
       // Restore state
       await firstCheckbox.click();
-      await page.waitForTimeout(150);
     }
   });
 
@@ -371,7 +360,6 @@ test.describe('Settings CRUD Operations', () => {
       const wasChecked = await firstCheckbox.isChecked();
 
       await firstCheckbox.click();
-      await page.waitForTimeout(250);
 
       // Get settings after change
       const afterSettings = await page.evaluate(() => window.localStorage.getItem('seed-settings'));
@@ -393,7 +381,6 @@ test.describe('Settings CRUD Operations', () => {
         .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
         .first();
       await settingsButton.click();
-      await page.waitForTimeout(250);
 
       // Get settings after reload
       const reloadedSettings = await page.evaluate(() =>
@@ -409,7 +396,6 @@ test.describe('Settings CRUD Operations', () => {
 
       if (isStillChecked !== wasChecked) {
         await settingCheckbox.click();
-        await page.waitForTimeout(150);
       }
     }
   });
@@ -427,7 +413,14 @@ test.describe('Settings CRUD Operations', () => {
     // Toggle multiple settings rapidly
     await checkboxes.nth(0).click();
     await checkboxes.nth(1).click();
-    await page.waitForTimeout(100); // Wait for auto-save
+    // Wait for the auto-save debounce to flush. Polling instead of a fixed
+    // 100ms sleep that often raced the save.
+    await expect
+      .poll(() => page.evaluate(() => window.localStorage.getItem('seed-settings')), {
+        timeout: 5000,
+        message: 'auto-save should flush seed-settings to localStorage',
+      })
+      .toBeTruthy();
 
     // Both changes should be saved
     const settings = await page.evaluate(() => {
@@ -440,7 +433,6 @@ test.describe('Settings CRUD Operations', () => {
     // Restore states
     await checkboxes.nth(0).click();
     await checkboxes.nth(1).click();
-    await page.waitForTimeout(150);
   });
 
   test('should reset to defaults when available', async ({ page }) => {
@@ -456,12 +448,10 @@ test.describe('Settings CRUD Operations', () => {
       const checkboxes = page.locator('input[type="checkbox"]');
       if ((await checkboxes.count()) > 0) {
         await checkboxes.first().click();
-        await page.waitForTimeout(150);
       }
 
       // Click reset
       await resetButton.click();
-      await page.waitForTimeout(250);
 
       // Settings should be reset (verify via localStorage or UI state)
       const settings = await page.evaluate(() => window.localStorage.getItem('seed-settings'));
@@ -486,7 +476,6 @@ test.describe('Settings CRUD Operations', () => {
 
         // Toggle it
         await toggle.click();
-        await page.waitForTimeout(250);
 
         // Verify persisted
         const settings = await page.evaluate(() => {
@@ -503,7 +492,6 @@ test.describe('Settings CRUD Operations', () => {
 
         // Restore
         await toggle.click();
-        await page.waitForTimeout(150);
       }
     }
   });
@@ -523,7 +511,6 @@ test.describe('Settings CRUD Operations', () => {
     // Set to middle value
     const midValue = (Number.parseInt(min, 10) + Number.parseInt(max, 10)) / 2;
     await firstRange.fill(midValue.toString());
-    await page.waitForTimeout(250);
 
     // Verify changed
     const newValue = await firstRange.inputValue();
@@ -532,7 +519,6 @@ test.describe('Settings CRUD Operations', () => {
 
     // Restore
     await firstRange.fill(originalValue);
-    await page.waitForTimeout(150);
   });
 
   test('should maintain settings state when drawer is closed', async ({ page }) => {
@@ -546,7 +532,6 @@ test.describe('Settings CRUD Operations', () => {
     const wasChecked = await firstCheckbox.isChecked();
 
     await firstCheckbox.click();
-    await page.waitForTimeout(250);
 
     // Close drawer
     const closeButton = page
@@ -554,7 +539,6 @@ test.describe('Settings CRUD Operations', () => {
       .or(page.locator('button:has(svg[class*="x"], svg[class*="close"])'))
       .first();
     await closeButton.click();
-    await page.waitForTimeout(150);
 
     // Reopen drawer
     const settingsButton = page
@@ -562,7 +546,6 @@ test.describe('Settings CRUD Operations', () => {
       .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
       .first();
     await settingsButton.click();
-    await page.waitForTimeout(250);
 
     // Check if state was maintained
     const reopenedCheckbox = page.locator('input[type="checkbox"]').first();
@@ -573,7 +556,6 @@ test.describe('Settings CRUD Operations', () => {
 
     // Restore
     await reopenedCheckbox.click();
-    await page.waitForTimeout(150);
   });
 
   test('should validate numeric input boundaries', async ({ page }) => {
@@ -591,7 +573,6 @@ test.describe('Settings CRUD Operations', () => {
       // Try to exceed max
       const overMax = Number.parseInt(max, 10) + 1000;
       await firstInput.fill(overMax.toString());
-      await page.waitForTimeout(150);
 
       const resultValue = await firstInput.inputValue();
       const resultNum = Number.parseInt(resultValue, 10);
@@ -604,7 +585,6 @@ test.describe('Settings CRUD Operations', () => {
       // Try to go below min
       const underMin = Number.parseInt(min, 10) - 1000;
       await firstInput.fill(underMin.toString());
-      await page.waitForTimeout(150);
 
       const resultValue = await firstInput.inputValue();
       const resultNum = Number.parseInt(resultValue, 10);
@@ -615,6 +595,5 @@ test.describe('Settings CRUD Operations', () => {
 
     // Restore
     await firstInput.fill(originalValue);
-    await page.waitForTimeout(150);
   });
 });

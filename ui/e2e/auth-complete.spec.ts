@@ -377,7 +377,6 @@ test.describe('Complete Authentication Lifecycle', () => {
 
       if (hasHamburger) {
         await hamburgerMenu.click();
-        await page.waitForTimeout(150);
       }
 
       // Find logout button
@@ -418,7 +417,6 @@ test.describe('Complete Authentication Lifecycle', () => {
 
       // Wait to see if any automatic refresh happens
       // (In a real scenario, we'd mock a near-expiry token)
-      await page.waitForTimeout(400);
 
       // Verify user session continues uninterrupted
       await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible();
