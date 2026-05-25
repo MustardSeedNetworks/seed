@@ -24,6 +24,7 @@ repos:
       - id: check-yaml
         args: [--allow-multiple-documents]
       - id: check-json
+      - id: check-toml
       - id: check-added-large-files
         args: [--maxkb=1000]
       - id: check-merge-conflict
@@ -96,6 +97,15 @@ repos:
         language: system
         files: ^ui/.*\.(ts|tsx|js|jsx)$
         pass_filenames: false
+
+  # ===========================================================================
+  # Shell Script Checks
+  # ===========================================================================
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.10.0
+    hooks:
+      - id: shellcheck
+        files: \.(sh|bash)$
 
   # ===========================================================================
   # Markdown Checks
