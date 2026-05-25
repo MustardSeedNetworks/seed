@@ -147,7 +147,7 @@ fi
 
 echo "Building iperf3..."
 make clean 2>/dev/null || true
-make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
+make "-j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)"
 make install
 
 # Copy binary to output directory

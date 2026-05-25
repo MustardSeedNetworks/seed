@@ -118,8 +118,10 @@ do_upgrade() {
     echo ""
 
     # Get versions
-    local current_version=$(get_current_version)
-    local new_version=$(get_new_version "$binary_path")
+    local current_version
+    current_version=$(get_current_version)
+    local new_version
+    new_version=$(get_new_version "$binary_path")
 
     echo "┌────────────────────────────────────────────────────────┐"
     echo "│  Seed Upgrade                                          │"
