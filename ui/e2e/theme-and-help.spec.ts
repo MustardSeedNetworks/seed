@@ -461,13 +461,14 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await helpButton.click();
       await page.waitForTimeout(150);
 
-      // Look for search input
+      // Look for search input.
+      // Loud failure beats silent skip: if the help drawer search disappears,
+      // this test surfaces the regression instead of hiding it.
       const searchInput = page.getByPlaceholder(/search|filter/i);
-      const hasSearch = await searchInput.isVisible().catch(() => false);
-
-      if (!hasSearch) {
-        test.skip();
-      }
+      await expect(
+        searchInput,
+        'precondition: help drawer search input must be visible',
+      ).toBeVisible();
 
       // Enter search term
       await searchInput.fill('network');

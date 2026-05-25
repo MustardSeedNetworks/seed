@@ -437,11 +437,9 @@ test.describe('Complete Authentication Lifecycle', () => {
 
       // Look for remember me checkbox
       const rememberMe = page.getByLabel(/remember me/i);
-      const hasRememberMe = await rememberMe.isVisible().catch(() => false);
-
-      if (!hasRememberMe) {
-        test.skip();
-      }
+      // Loud failure beats silent skip: if the UI changed and remember-me
+      // disappeared, this test surfaces the regression instead of hiding it.
+      await expect(rememberMe, 'precondition: remember-me checkbox must be visible').toBeVisible();
 
       // Check remember me
       await rememberMe.check();
@@ -471,11 +469,9 @@ test.describe('Complete Authentication Lifecycle', () => {
 
       // Look for remember me checkbox
       const rememberMe = page.getByLabel(/remember me/i);
-      const hasRememberMe = await rememberMe.isVisible().catch(() => false);
-
-      if (!hasRememberMe) {
-        test.skip();
-      }
+      // Loud failure beats silent skip: if the UI changed and remember-me
+      // disappeared, this test surfaces the regression instead of hiding it.
+      await expect(rememberMe, 'precondition: remember-me checkbox must be visible').toBeVisible();
 
       // Ensure remember me is unchecked
       await rememberMe.uncheck();

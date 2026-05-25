@@ -189,10 +189,7 @@ test.describe('Settings CRUD Operations', () => {
     const thresholdInputs = page.locator('input[type="number"]');
     const inputCount = await thresholdInputs.count();
 
-    if (inputCount === 0) {
-      test.skip(true, 'No threshold inputs found');
-      return;
-    }
+    expect(inputCount, 'precondition: No threshold inputs found').toBeGreaterThan(0);
 
     // Get first threshold input
     const firstInput = thresholdInputs.first();
@@ -223,10 +220,7 @@ test.describe('Settings CRUD Operations', () => {
       .or(page.locator('input[placeholder*="hostname" i]'));
 
     const inputExists = await dnsInput.count();
-    if (inputExists === 0) {
-      test.skip(true, 'No DNS hostname input found');
-      return;
-    }
+    expect(inputExists, 'precondition: No DNS hostname input found').toBeGreaterThan(0);
 
     const firstDnsInput = dnsInput.first();
     const originalHostname = await firstDnsInput.inputValue();
@@ -252,10 +246,7 @@ test.describe('Settings CRUD Operations', () => {
     const discoveryToggles = page.locator('input[type="checkbox"]');
 
     const toggleCount = await discoveryToggles.count();
-    if (toggleCount === 0) {
-      test.skip(true, 'No discovery toggles found');
-      return;
-    }
+    expect(toggleCount, 'precondition: No discovery toggles found').toBeGreaterThan(0);
 
     const firstToggle = discoveryToggles.first();
     const wasChecked = await firstToggle.isChecked();
@@ -285,10 +276,7 @@ test.describe('Settings CRUD Operations', () => {
     const perfToggles = page.locator('input[type="checkbox"]');
     const toggleCount = await perfToggles.count();
 
-    if (toggleCount === 0) {
-      test.skip(true, 'No performance toggles found');
-      return;
-    }
+    expect(toggleCount, 'precondition: No performance toggles found').toBeGreaterThan(0);
 
     // Try to find specific performance toggles by nearby text
     const speedtestToggle = page
@@ -318,10 +306,7 @@ test.describe('Settings CRUD Operations', () => {
     const numberInputs = page.locator('input[type="number"]');
     const inputCount = await numberInputs.count();
 
-    if (inputCount === 0) {
-      test.skip(true, 'No number inputs found');
-      return;
-    }
+    expect(inputCount, 'precondition: No number inputs found').toBeGreaterThan(0);
 
     const firstInput = numberInputs.first();
     const originalValue = await firstInput.inputValue();
@@ -434,10 +419,10 @@ test.describe('Settings CRUD Operations', () => {
     const checkboxes = page.locator('input[type="checkbox"]');
     const checkboxCount = await checkboxes.count();
 
-    if (checkboxCount < 2) {
-      test.skip(true, 'Need at least 2 checkboxes for concurrent test');
-      return;
-    }
+    expect(
+      checkboxCount,
+      'precondition: Need at least 2 checkboxes for concurrent test',
+    ).toBeGreaterThanOrEqual(2);
 
     // Toggle multiple settings rapidly
     await checkboxes.nth(0).click();
@@ -528,10 +513,7 @@ test.describe('Settings CRUD Operations', () => {
     const rangeInputs = page.locator('input[type="range"]');
     const rangeCount = await rangeInputs.count();
 
-    if (rangeCount === 0) {
-      test.skip(true, 'No range inputs found');
-      return;
-    }
+    expect(rangeCount, 'precondition: No range inputs found').toBeGreaterThan(0);
 
     const firstRange = rangeInputs.first();
     const originalValue = await firstRange.inputValue();
@@ -558,10 +540,7 @@ test.describe('Settings CRUD Operations', () => {
     const checkboxes = page.locator('input[type="checkbox"]');
     const hasCheckbox = (await checkboxes.count()) > 0;
 
-    if (!hasCheckbox) {
-      test.skip(true, 'No checkboxes found');
-      return;
-    }
+    expect(hasCheckbox, 'precondition: No checkboxes found').toBeTruthy();
 
     const firstCheckbox = checkboxes.first();
     const wasChecked = await firstCheckbox.isChecked();
@@ -601,10 +580,7 @@ test.describe('Settings CRUD Operations', () => {
     const numberInputs = page.locator('input[type="number"]');
     const inputCount = await numberInputs.count();
 
-    if (inputCount === 0) {
-      test.skip(true, 'No number inputs found');
-      return;
-    }
+    expect(inputCount, 'precondition: No number inputs found').toBeGreaterThan(0);
 
     const firstInput = numberInputs.first();
     const min = await firstInput.getAttribute('min');
