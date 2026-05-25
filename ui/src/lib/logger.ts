@@ -28,33 +28,36 @@ export interface LogEntry {
   stack?: string;
 }
 
-// Standard component names matching backend constants
-export enum LogComponents {
-  AUTH = 'auth',
-  DISCOVERY = 'discovery',
-  DEVICES = 'devices',
-  NETWORK = 'network',
-  SURVEY = 'survey',
-  WEBSOCKET = 'websocket',
-  SSE = 'sse', // Server-Sent Events (replaces WebSocket)
-  SPEEDTEST = 'speedtest',
-  IPERF = 'iperf',
-  VULN = 'vulnerabilities',
-  CONFIG = 'config',
-  SYSTEM = 'system',
-  DNS = 'dns',
-  DHCP = 'dhcp',
-  GATEWAY = 'gateway',
-  VLAN = 'vlan',
-  WIFI = 'wifi',
-  CABLE = 'cable',
-  PUBLICIP = 'publicip',
-  EXPORT = 'export',
-  SETUP = 'setup',
-  PROFILES = 'profiles',
-  UI = 'ui',
-  APP = 'app',
-}
+// Standard component names matching backend constants.
+// Using a const-as-const object (not TS `enum`) so the module is
+// erasable-syntax-only compatible (tsconfig.json:erasableSyntaxOnly).
+export const LogComponents = {
+  AUTH: 'auth',
+  DISCOVERY: 'discovery',
+  DEVICES: 'devices',
+  NETWORK: 'network',
+  SURVEY: 'survey',
+  WEBSOCKET: 'websocket',
+  SSE: 'sse', // Server-Sent Events (replaces WebSocket)
+  SPEEDTEST: 'speedtest',
+  IPERF: 'iperf',
+  VULN: 'vulnerabilities',
+  CONFIG: 'config',
+  SYSTEM: 'system',
+  DNS: 'dns',
+  DHCP: 'dhcp',
+  GATEWAY: 'gateway',
+  VLAN: 'vlan',
+  WIFI: 'wifi',
+  CABLE: 'cable',
+  PUBLICIP: 'publicip',
+  EXPORT: 'export',
+  SETUP: 'setup',
+  PROFILES: 'profiles',
+  UI: 'ui',
+  APP: 'app',
+} as const;
+export type LogComponents = (typeof LogComponents)[keyof typeof LogComponents];
 
 export type LogComponent = `${LogComponents}`;
 
@@ -409,10 +412,15 @@ class Logger {
  * A logger bound to a specific component.
  */
 class ComponentLogger {
-  constructor(
-    private parent: Logger,
-    private component: string,
-  ) {}
+  // Explicit field declarations (no parameter properties) to satisfy
+  // tsconfig.json:erasableSyntaxOnly.
+  private readonly parent: Logger;
+  private readonly component: string;
+
+  constructor(parent: Logger, component: string) {
+    this.parent = parent;
+    this.component = component;
+  }
 
   debug(message: string, metadata?: Record<string, unknown>): void {
     this.parent.debug(this.component, message, metadata);
