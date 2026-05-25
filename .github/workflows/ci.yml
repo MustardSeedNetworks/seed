@@ -128,6 +128,9 @@ jobs:
       - name: Run go vet
         run: go vet ./...
 
+      - name: Verify API schemas are up to date
+        run: ./scripts/check-schema-drift.sh
+
       - name: Run staticcheck
         run: |
           go install honnef.co/go/tools/cmd/staticcheck@latest
