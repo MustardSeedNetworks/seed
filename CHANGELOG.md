@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.196.0](https://github.com/krisarmstrong/seed/compare/v0.195.0...v0.196.0) (2026-05-25)
+
+
+### Features
+
+* **api:** add personal-access tokens for programmatic API access (Pro tier) ([#1096](https://github.com/krisarmstrong/seed/issues/1096)) ([15bb20c](https://github.com/krisarmstrong/seed/commit/15bb20c204b742f37b037c8b93ae947c3d55a53b))
+* **license:** add offline license framework with trial and keygen contract ([#1095](https://github.com/krisarmstrong/seed/issues/1095)) ([3f23b27](https://github.com/krisarmstrong/seed/commit/3f23b2704d853722edbcb8f918f5c630d863c1f2))
+* **ui:** add Settings → API Tokens panel with Pro-gated mint UX ([#1098](https://github.com/krisarmstrong/seed/issues/1098)) ([ffeac16](https://github.com/krisarmstrong/seed/commit/ffeac162d582970bebd9123abc3eacb68efecbc3))
+
+
+### Bug Fixes
+
+* **netif:** parallelize per-interface scoring in detector.DetectAll ([#1097](https://github.com/krisarmstrong/seed/issues/1097)) ([eed5979](https://github.com/krisarmstrong/seed/commit/eed59799be5e7c12fafdf41bd21ac0b6237e3040))
+* **security:** Real-code fixes for all 27 seed gosec issues ([#1070](https://github.com/krisarmstrong/seed/issues/1070)) ([#1090](https://github.com/krisarmstrong/seed/issues/1090)) ([8bb115e](https://github.com/krisarmstrong/seed/commit/8bb115e0a3941e97d1648ad92e9c09b5509d44be))
+* **ui:** add data-testid + aria-label to theme quick-toggle button ([#1109](https://github.com/krisarmstrong/seed/issues/1109)) ([6f44a6f](https://github.com/krisarmstrong/seed/commit/6f44a6f2faef3bbe384bcce5806cf95f00413698))
+
+
+### Performance Improvements
+
+* **e2e:** bump CI workers 1-&gt;2 and retries 2-&gt;1 ([#1072](https://github.com/krisarmstrong/seed/issues/1072)) ([#1080](https://github.com/krisarmstrong/seed/issues/1080)) ([fcefbe6](https://github.com/krisarmstrong/seed/commit/fcefbe682bcc11226eab961813aa9e07d050634c))
+
 ## [0.195.0](https://github.com/krisarmstrong/seed/compare/v0.194.0...v0.195.0) (2026-05-22)
 
 
