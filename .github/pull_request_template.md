@@ -22,7 +22,7 @@
 <!-- Describe how you tested these changes -->
 
 - [ ] Unit tests pass (`go test ./...`)
-- [ ] Frontend builds (`cd web && npm run build`)
+- [ ] Frontend builds (`cd ui && npm run build`)
 - [ ] Manual testing on Ubuntu VM
 
 ## Related Issues
