@@ -13,7 +13,7 @@
 
 .PHONY: build build-iperf3 build-iperf3-quiet build-iperf3-linux build-iperf3-linux-amd64 \
         build-iperf3-linux-arm64 build-iperf3-all \
-        frontend-deps generate-types build-frontend build-frontend-quiet \
+        frontend-deps generate-types schema build-frontend build-frontend-quiet \
         build-backend build-backend-quiet build-backend-dev \
         build-linux-amd64 build-linux-arm64 build-linux-docker \
         build-darwin build-windows build-all \
@@ -87,6 +87,11 @@ generate-types: frontend-deps ## Generate TypeScript types from JSON Schema
 	@echo "🔧 Generating TypeScript types from schema..."
 	@./scripts/generate-types.sh
 	@echo "✅ TypeScript types generated"
+
+schema: ## Regenerate docs/schemas/api/*.json from internal/api Go DTOs
+	@printf "$(BOLD)Generating JSON Schemas for API DTOs...$(RESET)\n"
+	@go run ./cmd/seed-schema -o docs/schemas/api
+	@printf "$(GREEN)Wrote $$(ls -1 docs/schemas/api/*.json 2>/dev/null | wc -l | tr -d ' ') schema(s) to docs/schemas/api/$(RESET)\n"
 
 build-frontend: frontend-deps ## Build React frontend
 	@printf "$(BOLD)🔨 Building frontend...$(RESET)\n"

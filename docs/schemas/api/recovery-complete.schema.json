@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/recovery-complete.schema.json",
+  "$ref": "#/$defs/RecoveryCompleteRequest",
+  "$defs": {
+    "RecoveryCompleteRequest": {
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "token",
+        "password"
+      ]
+    }
+  },
+  "title": "RecoveryCompleteRequest",
+  "description": "RecoveryCompleteRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

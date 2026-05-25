@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/set-mtu.schema.json",
+  "$ref": "#/$defs/SetMTURequest",
+  "$defs": {
+    "SetMTURequest": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "mtu": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface",
+        "mtu"
+      ]
+    }
+  },
+  "title": "SetMTURequest",
+  "description": "SetMTURequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

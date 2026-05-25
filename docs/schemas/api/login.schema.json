@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/login.schema.json",
+  "$ref": "#/$defs/LoginRequest",
+  "$defs": {
+    "LoginRequest": {
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "username",
+        "password"
+      ]
+    }
+  },
+  "title": "LoginRequest",
+  "description": "LoginRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

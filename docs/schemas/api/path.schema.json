@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/path.schema.json",
+  "$ref": "#/$defs/PathRequest",
+  "$defs": {
+    "PathRequest": {
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "destination": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "source",
+        "destination",
+        "method",
+        "protocol",
+        "port"
+      ]
+    }
+  },
+  "title": "PathRequest",
+  "description": "PathRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
