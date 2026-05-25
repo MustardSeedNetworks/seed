@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.197.0](https://github.com/krisarmstrong/seed/compare/v0.196.0...v0.197.0) (2026-05-25)
+
+
+### Features
+
+* **api:** add decodeJSONStrict + HandlerContext.DecodeJSONOrFail ([#1125](https://github.com/krisarmstrong/seed/issues/1125)) ([15cd859](https://github.com/krisarmstrong/seed/commit/15cd8590b96f39931a69f2d29091e3aae9449fe2)), closes [#1100](https://github.com/krisarmstrong/seed/issues/1100)
+* **api:** add go-playground/validator + tags on hot DTOs ([#1132](https://github.com/krisarmstrong/seed/issues/1132)) ([15a2ce1](https://github.com/krisarmstrong/seed/commit/15a2ce185f3ca6a980d406fd66d7987102fd82cd))
+* **api:** port invopop/jsonschema generator from NIAC ([#1135](https://github.com/krisarmstrong/seed/issues/1135)) ([6babf2c](https://github.com/krisarmstrong/seed/commit/6babf2cdfc6bc755498577cfec12c6c14fe32d4b))
+* **canopy/survey:** validate AirMapper .serial JSON with valibot ([#1133](https://github.com/krisarmstrong/seed/issues/1133)) ([2839cec](https://github.com/krisarmstrong/seed/commit/2839cec96d73688af3d378889f37f000927c8a05)), closes [#1106](https://github.com/krisarmstrong/seed/issues/1106)
+* **ui:** generate TypeScript types from JSON Schemas ([#1137](https://github.com/krisarmstrong/seed/issues/1137)) ([c259663](https://github.com/krisarmstrong/seed/commit/c25966389b37158379f9a5e355cf238932079451))
+* **ui:** validate SSE frames with valibot in useSse ([#1134](https://github.com/krisarmstrong/seed/issues/1134)) ([8b92a0d](https://github.com/krisarmstrong/seed/commit/8b92a0d2229b17566c0773d2661612ec1aad9377)), closes [#1107](https://github.com/krisarmstrong/seed/issues/1107)
+
+
+### Bug Fixes
+
+* **ci:** add .gitkeep to internal/api/ui + remove vite emptyOutDir ([#1118](https://github.com/krisarmstrong/seed/issues/1118)) ([2459473](https://github.com/krisarmstrong/seed/commit/2459473ef2d724445063fa19697a4bafb1e08b81))
+* **ci:** inject UIBuildHash ldflag (Universal Build Contract) ([#1119](https://github.com/krisarmstrong/seed/issues/1119)) ([a1b1bc3](https://github.com/krisarmstrong/seed/commit/a1b1bc30ce9e5c8d2dc9e8646ecc3e5df8a5f330))
+* **ci:** verify UIBuildHash embedded in built binary ([#1123](https://github.com/krisarmstrong/seed/issues/1123)) ([393e9f5](https://github.com/krisarmstrong/seed/commit/393e9f52db51d4e8ef6eea3c69fd572dec3b9ab7))
+* **docs:** correct PR template 'cd web' -&gt; 'cd ui' ([#1120](https://github.com/krisarmstrong/seed/issues/1120)) ([cd6c4b6](https://github.com/krisarmstrong/seed/commit/cd6c4b693b352ebf584e4a7b20c69c88ce4062d0))
+* **ui:** enable erasableSyntaxOnly + refactor logger.ts TS-only syntax ([#1127](https://github.com/krisarmstrong/seed/issues/1127)) ([b667587](https://github.com/krisarmstrong/seed/commit/b667587664de09378366b41ce7159d7b480a3384)), closes [#1122](https://github.com/krisarmstrong/seed/issues/1122)
+
 ## [0.196.0](https://github.com/krisarmstrong/seed/compare/v0.195.0...v0.196.0) (2026-05-25)
 
 
