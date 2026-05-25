@@ -46,7 +46,6 @@ require (
 	github.com/google/go-tpm v0.9.8 // indirect
 	github.com/google/pprof v0.0.0-20251213031049-b05bdaca462f // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/invopop/jsonschema v0.14.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/lufia/plan9stats v0.0.0-20260330125221-c963978e514e // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
@@ -85,5 +84,6 @@ require (
 
 require (
 	github.com/go-webauthn/webauthn v0.17.4
+	github.com/invopop/jsonschema v0.14.0
 	github.com/pquerna/otp v1.5.0
 )
