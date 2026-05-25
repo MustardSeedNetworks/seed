@@ -160,15 +160,11 @@ func (s *Server) handleEngineScan(w http.ResponseWriter, r *http.Request) {
 	// Parse options from body, default to quick scan
 	var opts *discovery.ScanOptions
 	if r.ContentLength > 0 {
+		// Note: previously this handler leaked the json parser error into
+		// the `details` field; the strict helper drops that (the
+		// structured WARN log retains the diagnostic).
 		var req EngineScanRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			sendErrorResponseWithDetails(
-				w, logger,
-				http.StatusBadRequest,
-				ErrCodeBadRequest,
-				"Invalid request body",
-				err.Error(),
-			)
+		if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
 			return
 		}
 

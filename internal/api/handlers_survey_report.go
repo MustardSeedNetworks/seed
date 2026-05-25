@@ -4,7 +4,6 @@ package api
 // handler (#653).
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -54,22 +53,10 @@ func (s *Server) generateSurveyReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit request body size
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	// Parse options from request body (all optional)
 	var req GenerateReportRequest
 	if r.ContentLength > 0 {
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			logger.WarnContext(r.Context(), "Invalid request body for report generation", "error", err)
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusBadRequest,
-				ErrCodeBadRequest,
-				localizer.T("errors.api.invalidRequestBody"),
-				"",
-			) // fixes #694, #H7
+		if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 			return
 		}
 	}

@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -283,16 +282,8 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 
 	case http.MethodPut:
 		var settings discovery.VulnerabilityScannerConfig
-		if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
-			logger.WarnContext(r.Context(), "Invalid JSON for vulnerability settings", "error", err)
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusBadRequest,
-				ErrCodeBadRequest,
-				localizer.T("errors.vuln.invalidJson"),
-				"",
-			) // fixes #694, #H7
+		if !decodeJSONStrictLocalized(w, r, &settings, MaxBodySizeJSON,
+			logger, localizer) {
 			return
 		}
 
@@ -371,16 +362,8 @@ func (s *Server) handleNVDAPIKeyValidate(w http.ResponseWriter, r *http.Request)
 	}
 
 	var req NVDAPIKeyValidateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid JSON for NVD API key validation", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.vuln.invalidJson"),
-			"",
-		) // fixes #H7
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON,
+		logger, localizer) {
 		return
 	}
 

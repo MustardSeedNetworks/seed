@@ -325,7 +325,14 @@ func (s *Server) acknowledgeHealthCheckAlert(w http.ResponseWriter, r *http.Requ
 		AcknowledgedBy string `json:"acknowledgedBy"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	// Strict decode — unknown fields rejected, body size capped. This
+	// endpoint pre-dates the structured envelope and writes plain-text
+	// http.Error, so we keep that response shape; security hardening
+	// is the inline DisallowUnknownFields + MaxBytesReader.
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
