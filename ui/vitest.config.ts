@@ -54,6 +54,16 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: ['node_modules/', 'src/test/', '**/*.d.ts', '**/*.config.*', 'dist/'],
+      // Anti-regression floor (set ~2pp below current measurement).
+      // Ratchet up toward the CLAUDE.md mandatory minimum of 50% as
+      // coverage improves. Current: lines 31, branches 17, functions
+      // 22, stmts 31.
+      thresholds: {
+        lines: 28,
+        branches: 14,
+        functions: 18,
+        statements: 28,
+      },
     },
   },
 });

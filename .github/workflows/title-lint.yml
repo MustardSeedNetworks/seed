@@ -1,8 +1,9 @@
 # =============================================================================
-# Title Lint - The Seed
+# Title Lint
 # =============================================================================
-# Enforces consistent title patterns for issues and PRs.
-# Closes #483
+# Enforces conventional commit format on PR titles via amannn/action-
+# semantic-pull-request. Also checks that issue titles use an approved
+# prefix (BUG, FEATURE, etc.) — adds needs-triage if not.
 # =============================================================================
 
 name: Title Lint
@@ -10,176 +11,64 @@ name: Title Lint
 on:
   issues:
     types: [opened, edited]
-  pull_request:
-    types: [opened, edited]
+  pull_request_target:
+    types: [opened, edited, synchronize]
 
 permissions:
   issues: write
-  pull-requests: write
+  pull-requests: read
 
 jobs:
+  lint-pr-title:
+    name: Lint PR Title
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request_target'
+    steps:
+      - name: Validate PR title (conventional commits)
+        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          requireScope: false
+          subjectPattern: ^.{3,}$
+          subjectPatternError: |
+            The subject "{subject}" must be at least 3 characters.
+          ignoreLabels: |
+            bot
+            dependencies
+
   lint-issue-title:
     name: Lint Issue Title
     runs-on: ubuntu-latest
     if: github.event_name == 'issues'
-
     steps:
-      - name: Check issue title format
+      - name: Check issue title prefix
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            const title = context.payload.issue.title;
-            const issueNumber = context.payload.issue.number;
-
-            // Valid prefixes for issue titles
-            const validPrefixes = [
-              '[BUG]',
-              '[FEATURE]',
-              '[CHORE]',
-              '[DOCS]',
-              '[TEST]',
-              '[SECURITY]',
-              '[ENHANCEMENT]',
-              '[Hardware]',
-              '[EPIC]',
-              '[RENAME]',
-            ];
-
-            // Also allow conventional commit style
-            const conventionalPattern = /^(feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\(.+\))?:/i;
-
-            const hasValidPrefix = validPrefixes.some(prefix =>
-              title.startsWith(prefix)
-            );
-            const isConventional = conventionalPattern.test(title);
-
-            if (!hasValidPrefix && !isConventional) {
-              // Add a helpful comment
-              const body = `
-            ### Title Format Suggestion
-
-            Your issue title doesn't follow the standard format. Consider using one of these prefixes:
-
-            | Prefix | Use Case |
-            |--------|----------|
-            | \`[BUG]\` | Bug reports |
-            | \`[FEATURE]\` | New feature requests |
-            | \`[CHORE]\` | Maintenance tasks |
-            | \`[DOCS]\` | Documentation updates |
-            | \`[ENHANCEMENT]\` | Improvements to existing features |
-            | \`[SECURITY]\` | Security-related issues |
-
-            Or use conventional commit style: \`feat(scope): description\`
-
-            **Example:** \`[BUG] Login fails with special characters in password\`
-
-            ---
-            *This is an automated suggestion. Feel free to update your title or ignore if your format is intentional.*
-            `;
-
-              // Check if we already commented
-              const comments = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber,
-              });
-
-              const hasComment = comments.data.some(c =>
-                c.body.includes('Title Format Suggestion') &&
-                c.user.type === 'Bot'
-              );
-
-              if (!hasComment) {
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issueNumber,
-                  body: body,
-                });
-              }
-
-              // Add needs-triage label
+            const title = context.payload.issue.title || '';
+            const validPrefixes = ['[BUG]', '[FEATURE]', '[CHORE]', '[DOCS]', '[TEST]', '[SECURITY]', '[ENHANCEMENT]', '[Hardware]', '[EPIC]', '[RENAME]'];
+            const conventional = /^(feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\(.+\))?:/i;
+            const hasPrefix = validPrefixes.some(p => title.startsWith(p));
+            const isConventional = conventional.test(title);
+            if (!hasPrefix && !isConventional) {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: issueNumber,
+                issue_number: context.payload.issue.number,
                 labels: ['needs-triage'],
               });
-            }
-
-  lint-pr-title:
-    name: Lint PR Title
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Check PR title format
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            const title = context.payload.pull_request.title;
-            const prNumber = context.payload.pull_request.number;
-
-            // PRs should use conventional commit format
-            const conventionalPattern = /^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\(.+\))?: .+/i;
-
-            if (!conventionalPattern.test(title)) {
-              // Add a helpful comment
-              const body = `
-            ### PR Title Format Required
-
-            PR titles must follow the [Conventional Commits](https://www.conventionalcommits.org/) format:
-
-            \`\`\`
-            type(scope): description
-            \`\`\`
-
-            **Types:**
-            - \`feat\`: New feature
-            - \`fix\`: Bug fix
-            - \`docs\`: Documentation
-            - \`style\`: Code style (formatting, etc.)
-            - \`refactor\`: Code refactoring
-            - \`perf\`: Performance improvement
-            - \`test\`: Tests
-            - \`chore\`: Maintenance
-            - \`ci\`: CI/CD changes
-            - \`build\`: Build system changes
-
-            **Examples:**
-            - \`feat(ui): add dark mode toggle\`
-            - \`fix(api): handle null response in discovery\`
-            - \`chore(deps): upgrade React to v19\`
-
-            Please update your PR title to match this format.
-
-            ---
-            *This check helps maintain a clean git history and enables automated changelog generation.*
-            `;
-
-              // Check if we already commented
-              const comments = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-              });
-
-              const hasComment = comments.data.some(c =>
-                c.body.includes('PR Title Format Required') &&
-                c.user.type === 'Bot'
-              );
-
-              if (!hasComment) {
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: prNumber,
-                  body: body,
-                });
-              }
-
-              // Fail the check
-              core.setFailed('PR title does not follow conventional commit format');
-            } else {
-              console.log('PR title format is valid');
+              console.log('Added needs-triage to issue #' + context.payload.issue.number);
             }
