@@ -41,7 +41,6 @@ require (
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.30.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/go-webauthn/x v0.2.6 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -84,6 +83,7 @@ require (
 )
 
 require (
+	github.com/go-playground/validator/v10 v10.30.2
 	github.com/go-webauthn/webauthn v0.17.4
 	github.com/pquerna/otp v1.5.0
 )
