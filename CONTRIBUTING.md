@@ -600,6 +600,32 @@ AX200
 features.
 ```text
 
+## Quality Gates
+
+Commits + PRs are gated by automation, all configured in-repo:
+
+- **Commit message format** — enforced by `commitlint.config.js`
+  (conventional commits + per-project scope list). Husky runs it on
+  every commit via `.husky/commit-msg`.
+- **Pre-commit checks** — `.pre-commit-config.yaml` runs on
+  `git commit`: secret detection (gitleaks), formatting (biome,
+  clang-format), shellcheck on `.sh` scripts, large-file checks,
+  schema validation.
+- **CI required checks** — `CI Complete`, `License Compliance Check`,
+  and CodeQL (`Analyze (go)` + `Analyze (javascript-typescript)`)
+  must pass before merge.
+- **Coverage floor** — `ui/vitest.config.ts` enforces a per-project
+  anti-regression threshold; the Go test job in CI enforces its own.
+
+If pre-commit blocks a commit, fix the issue locally — **do not** use
+`--no-verify` (forbidden by CLAUDE.md).
+
+## Reporting Security Vulnerabilities
+
+**Do not open a public issue for a security vulnerability.** See
+[SECURITY.md](SECURITY.md) for the private disclosure channels
+(GitHub Security Advisories or email).
+
 ## Questions?
 
 - Check existing issues and documentation
