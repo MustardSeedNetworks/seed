@@ -167,9 +167,12 @@ type IPSettingsResponse struct {
 }
 
 // SetMTURequest represents the request to set interface MTU.
+//
+// MTU range 68..65535: 68 is the IPv4 minimum per RFC 791; 65535 is the
+// absolute cap (jumbo frames live below 9216 in practice).
 type SetMTURequest struct {
-	Interface string `json:"interface"`
-	MTU       int    `json:"mtu"`
+	Interface string `json:"interface" validate:"required"`
+	MTU       int    `json:"mtu"       validate:"required,gte=68,lte=65535"`
 }
 
 // ============================================================================

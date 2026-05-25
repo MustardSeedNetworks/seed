@@ -246,7 +246,7 @@ func (s *Server) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
 
 // totpVerifyRequest is the body for POST /api/v1/auth/totp/verify.
 type totpVerifyRequest struct {
-	Code string `json:"code"`
+	Code string `json:"code" validate:"required,numeric,len=6"`
 }
 
 // handleTOTPVerify confirms the user can derive a valid code from the
@@ -398,8 +398,8 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 
 // totpLoginRequest is the body for POST /api/v1/auth/login/totp.
 type totpLoginRequest struct {
-	MFAToken string `json:"mfa_token"`
-	Code     string `json:"code"`
+	MFAToken string `json:"mfa_token" validate:"required"`
+	Code     string `json:"code"      validate:"required,numeric,len=6"`
 }
 
 // handleLoginTOTP trades an mfa_pending token + a valid TOTP code for
