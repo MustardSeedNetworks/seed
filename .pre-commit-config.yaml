@@ -105,6 +105,10 @@ repos:
     rev: v0.10.0
     hooks:
       - id: shellcheck
+        # --severity=warning: catches real bugs; info-level style suggestions
+        # (SC2086 word splitting in known-safe contexts, etc.) stay advisory
+        # to avoid blocking commits on intentional patterns.
+        args: [--severity=warning]
         files: \.(sh|bash)$
 
   # ===========================================================================

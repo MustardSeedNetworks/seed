@@ -96,6 +96,7 @@ update_and_verify_remote() {
   local remote_host=$1
   print_info "Updating remote system: $remote_host..."
 
+  # shellcheck disable=SC2087  # intentional: client-side vars are expanded into the remote shell
   ssh "$REMOTE_USER@$remote_host" << EOF
     # --- Remote Helper Functions ---
     print_info() {

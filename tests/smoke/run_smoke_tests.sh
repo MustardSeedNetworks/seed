@@ -343,7 +343,7 @@ test_concurrent_requests() {
     fi
 
     # Send 20 concurrent requests
-    for i in $(seq 1 20); do
+    for _ in $(seq 1 20); do
         curl -sk -o /dev/null "${base_url}/" 2>/dev/null &
     done
     wait
@@ -386,8 +386,10 @@ main() {
     test_concurrent_requests
 
     # Summary
-    local end_time=$(date +%s)
-    local elapsed=$((end_time - START_TIME))
+    local end_time
+    end_time=$(date +%s)
+    local elapsed
+    elapsed=$((end_time - START_TIME))
 
     echo ""
     echo -e "${BOLD}${CYAN}=== TEST SUMMARY ===${NC}"
