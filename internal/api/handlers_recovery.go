@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -146,14 +145,9 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Limit request body size
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeAuth)
-
 	var req RecoveryCompleteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Recovery decode error", "client_ip", clientIP, "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"), "")
+	if !decodeJSONStrictLocalizedWith(w, r, &req, MaxBodySizeAuth,
+		logger, localizer, "client_ip", clientIP) {
 		return
 	}
 

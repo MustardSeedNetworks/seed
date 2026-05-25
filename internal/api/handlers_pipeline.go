@@ -72,7 +72,13 @@ func (s *Server) handlePipelineStart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Body != nil && r.ContentLength > 0 {
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		// Strict decode — unknown fields rejected. Pre-existing semantics:
+		// the handler logs and continues on decode failure rather than
+		// bailing, so we don't switch to the strict helper (which writes
+		// an error response).
+		dec := json.NewDecoder(r.Body)
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&req); err != nil {
 			logging.GetLogger().WarnContext(r.Context(), "Failed to parse pipeline start request", "error", err)
 			// Continue with existing config
 		}
@@ -149,8 +155,14 @@ func (s *Server) handlePipelineConfigUpdate(w http.ResponseWriter, r *http.Reque
 	// Fixes #925: Limit request body size to prevent memory exhaustion
 	r.Body = http.MaxBytesReader(w, r.Body, maxPipelineRequestBodyBytes)
 
+	// Strict decode — unknown fields rejected. This endpoint pre-dates
+	// the structured envelope and writes plain-text http.Error, so we
+	// keep that response shape; security hardening is the inline
+	// DisallowUnknownFields.
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
 	var config discovery.PipelineConfig
-	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+	if err := dec.Decode(&config); err != nil {
 		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
 		return
 	}

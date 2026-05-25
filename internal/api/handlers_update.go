@@ -249,8 +249,15 @@ func (s *Server) handleUpdateConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Strict decode — unknown fields rejected, body size capped.
+	// This endpoint uses sendUpdateError (a localized variant with
+	// release-channel context), so we keep that envelope shape and just
+	// harden the decode inline.
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeConfig)
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
 	var req UpdateConfigRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := dec.Decode(&req); err != nil {
 		sendUpdateError(w, r, http.StatusBadRequest, "Invalid request body")
 		return
 	}

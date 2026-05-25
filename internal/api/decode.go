@@ -108,6 +108,26 @@ func decodeJSONStrictLocalized(
 	logger *slog.Logger,
 	localizer *i18n.Localizer,
 ) bool {
+	return decodeJSONStrictLocalizedWith(w, r, dst, maxSize, logger, localizer)
+}
+
+// decodeJSONStrictLocalizedWith is the variant of decodeJSONStrictLocalized
+// that carries extra structured log fields (e.g., client_ip on auth flows,
+// username on MFA verifications) into the WARN line on decode failure.
+//
+// Same contract as decodeJSONStrictLocalized otherwise. Use this for auth,
+// MFA, and recovery endpoints where preserving the audit-log breadcrumb
+// matters — the security team relies on those fields to spot brute-force
+// patterns.
+func decodeJSONStrictLocalizedWith(
+	w http.ResponseWriter,
+	r *http.Request,
+	dst any,
+	maxSize int64,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+	extraAttrs ...any,
+) bool {
 	r.Body = http.MaxBytesReader(w, r.Body, maxSize)
 
 	decoder := json.NewDecoder(r.Body)
@@ -119,7 +139,8 @@ func decodeJSONStrictLocalized(
 		if errors.As(err, &maxBytesErr) {
 			status = http.StatusRequestEntityTooLarge
 		}
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
+		attrs := append([]any{"error", err}, extraAttrs...)
+		logger.WarnContext(r.Context(), "Invalid request body", attrs...)
 		sendErrorResponseWithDetails(
 			w, logger, status, ErrCodeBadRequest, localizer.T(invalidRequestBodyKey), "",
 		)
@@ -127,7 +148,7 @@ func decodeJSONStrictLocalized(
 	}
 
 	if decoder.More() {
-		logger.WarnContext(r.Context(), "Unexpected trailing data after JSON object")
+		logger.WarnContext(r.Context(), "Unexpected trailing data after JSON object", extraAttrs...)
 		sendErrorResponseWithDetails(
 			w, logger, http.StatusBadRequest,
 			ErrCodeBadRequest, localizer.T(invalidRequestBodyKey), "",

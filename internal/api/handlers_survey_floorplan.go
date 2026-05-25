@@ -5,7 +5,6 @@ package api
 // path. Multi-floor variants live in handlers_survey_floors_data.go.
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 	"slices"
@@ -71,16 +70,8 @@ func (s *Server) updateSurveyFloorPlan(w http.ResponseWriter, r *http.Request) {
 
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeFloorPlan)
 	var req UpdateFloorPlanRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		)
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON,
+		logger, localizer) {
 		return
 	}
 
@@ -158,11 +149,8 @@ func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 	var req UpdateSurveySettingsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		ctx.sendBadRequestError("errors.api.invalidRequestBody")
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 
@@ -231,11 +219,8 @@ func (s *Server) updateSurveyImportedData(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 	var req UpdateSurveyImportedDataRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid imported-data body", "error", err)
-		ctx.sendBadRequestError("errors.api.invalidRequestBody")
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 

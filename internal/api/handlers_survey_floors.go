@@ -5,7 +5,6 @@ package api
 // dispatchers that route by HTTP verb.
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/i18n"
@@ -248,12 +247,8 @@ func (s *Server) updateFloor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req UpdateFloorRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		ctx.sendBadRequestError("errors.api.invalidRequestBody")
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 

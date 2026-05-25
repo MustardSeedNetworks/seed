@@ -23,7 +23,6 @@ package api
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -273,11 +272,9 @@ func (s *Server) handleTOTPVerify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, mfaBodyLimit)
 	var req totpVerifyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+	if !decodeJSONStrictLocalizedWith(w, r, &req, mfaBodyLimit,
+		logger, localizer, "username", username, "factor", mfaFactorTOTP) {
 		return
 	}
 
@@ -346,11 +343,9 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, mfaBodyLimit)
 	var req totpDisableRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+	if !decodeJSONStrictLocalizedWith(w, r, &req, mfaBodyLimit,
+		logger, localizer, "username", username, "factor", mfaFactorTOTP) {
 		return
 	}
 
@@ -416,11 +411,9 @@ func (s *Server) handleLoginTOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, mfaBodyLimit)
 	var req totpLoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+	if !decodeJSONStrictLocalizedWith(w, r, &req, mfaBodyLimit,
+		logger, localizer, "factor", mfaFactorTOTP) {
 		return
 	}
 
@@ -685,7 +678,7 @@ func (s *Server) handleWebAuthnRegisterFinish(w http.ResponseWriter, r *http.Req
 // We accept the username here because (unlike registration) the user
 // hasn't authenticated yet.
 type webAuthnLoginBeginRequest struct {
-	Username string `json:"username"`
+	Username string `json:"username" validate:"required"`
 }
 
 // handleWebAuthnLoginBegin starts the assertion ceremony for the given
@@ -702,9 +695,11 @@ func (s *Server) handleWebAuthnLoginBegin(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, mfaBodyLimit)
 	var req webAuthnLoginBeginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Username == "" {
+	if !decodeJSONStrictLocalized(w, r, &req, mfaBodyLimit, logger, localizer) {
+		return
+	}
+	if req.Username == "" {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
 		return

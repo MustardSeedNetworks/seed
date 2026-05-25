@@ -14,7 +14,6 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -179,9 +178,7 @@ func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req MintTokenRequest
-	if decErr := json.NewDecoder(r.Body).Decode(&req); decErr != nil {
-		writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeBadRequest,
-			"Invalid JSON body")
+	if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
 		return
 	}
 	req.Name = strings.TrimSpace(req.Name)

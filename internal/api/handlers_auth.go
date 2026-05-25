@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -139,12 +138,9 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeAuth)
 	var req LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Login decode error", "client_ip", clientIP, "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+	if !decodeJSONStrictLocalizedWith(w, r, &req, MaxBodySizeAuth,
+		logger, localizer, "client_ip", clientIP) {
 		return
 	}
 

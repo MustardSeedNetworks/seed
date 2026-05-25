@@ -5,7 +5,6 @@ package api
 // and adding a sample to a specific floor.
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/canopy/survey"
@@ -130,16 +129,8 @@ func (s *Server) updateFloorFloorPlan(w http.ResponseWriter, r *http.Request) {
 
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeFloorPlan)
 	var req UpdateFloorPlanRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		)
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON,
+		logger, localizer) {
 		return
 	}
 
