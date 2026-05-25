@@ -6,7 +6,6 @@ package api
 // handlers_health_checks_settings_types.go.
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/config"
@@ -363,19 +362,8 @@ func (s *Server) updateHealthChecksSettings(w http.ResponseWriter, r *http.Reque
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req TestsSettingsResponse
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		)
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -76,17 +75,10 @@ func (s *Server) handleRogueDHCPAction(
 	logger *slog.Logger,
 	localizer *i18n.Localizer,
 ) {
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req struct {
 		Action string `json:"action"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w, logger, http.StatusBadRequest, ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"), "",
-		)
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 
@@ -211,25 +203,13 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 		sendJSONResponse(w, logger, http.StatusOK, resp)
 
 	case http.MethodPut:
-		// Limit request body size to prevent DoS attacks (fixes #682)
-		r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 		// Update configuration
 		var req struct {
 			Enabled          *bool    `json:"enabled,omitempty"`
 			KnownServers     []string `json:"knownServers,omitempty"`
 			AlertOnDetection *bool    `json:"alertOnDetection,omitempty"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusBadRequest,
-				ErrCodeBadRequest,
-				localizer.T("errors.api.invalidRequestBody"),
-				"",
-			) // fixes #694, #H7
+		if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 			return
 		}
 
@@ -521,14 +501,8 @@ func (s *Server) updateSNMPSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	// Limit request body size to prevent DoS attacks (fixes #682)
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req SNMPSettingsResponse
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body for SNMP settings", "error", err)
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest, ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"), "")
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 

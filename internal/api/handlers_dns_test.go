@@ -233,9 +233,13 @@ func TestHandleDNSSecuritySettingsPUT(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
+	// SecurityScanConfig fields per internal/services/dns.SecurityScanConfig.
+	// Pre-#1101 the strict decoder allowed unknown fields ("timeout",
+	// "concurrency") so the original fixture silently passed despite the
+	// typos. Use canonical field names now.
 	reqBody := map[string]any{
-		"timeout":     5000,
-		"concurrency": 10,
+		"enabled":   true,
+		"timeoutMs": 5000,
 	}
 	body, _ := json.Marshal(reqBody)
 

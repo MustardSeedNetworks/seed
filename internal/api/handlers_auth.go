@@ -511,20 +511,8 @@ func decodeSetupCompleteRequest(
 	logger *slog.Logger,
 	localizer *i18n.Localizer,
 ) (SetupCompleteRequest, bool) {
-	// Limit request body size to prevent memory exhaustion
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeAuth)
-
 	var req SetupCompleteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Setup decode error", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		) // fixes #694, #699
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeAuth, logger, localizer) {
 		return SetupCompleteRequest{}, false
 	}
 

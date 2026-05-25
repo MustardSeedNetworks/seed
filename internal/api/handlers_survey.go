@@ -8,7 +8,6 @@ package api
 // generation each live in their own handlers_survey_*.go file.
 
 import (
-	"encoding/json"
 	"log/slog"
 	"net/http"
 	"slices"
@@ -146,20 +145,8 @@ func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	// Limit request body size to prevent DoS attacks (fixes #682)
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req CreateSurveyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		) // fixes #694, #H7
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 

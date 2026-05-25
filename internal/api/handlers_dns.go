@@ -4,7 +4,6 @@ package api
 // Split from handlers_health_checks.go for code organization (Plan F).
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/i18n"
@@ -148,10 +147,7 @@ func (s *Server) handleDNSSecurity(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		// Trigger a security scan
 		var req DNSSecurityScanRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			logger.WarnContext(r.Context(), "Invalid request body for DNS security scan", "error", err)
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-				ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 			return
 		}
 
@@ -227,10 +223,7 @@ func (s *Server) handleDNSSecuritySettings(w http.ResponseWriter, r *http.Reques
 
 	case http.MethodPut:
 		var newConfig dns.SecurityScanConfig
-		if err := json.NewDecoder(r.Body).Decode(&newConfig); err != nil {
-			logger.WarnContext(r.Context(), "Invalid request body for DNS security config", "error", err)
-			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-				ErrCodeBadRequest, localizer.T("errors.api.invalidRequestBody"), "")
+		if !decodeJSONStrictLocalized(w, r, &newConfig, MaxBodySizeJSON, logger, localizer) {
 			return
 		}
 

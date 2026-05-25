@@ -4,7 +4,6 @@ package api
 // Split from handlers_network.go for code organization (Plan F).
 
 import (
-	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -211,20 +210,8 @@ func (s *Server) parseVLANRequest(
 	logger *slog.Logger,
 	localizer *i18n.Localizer,
 ) (string, int, bool) {
-	// Limit request body size to prevent DoS attacks
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
 	var req VLANInterfaceRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			localizer.T("errors.api.invalidRequestBody"),
-			"",
-		)
+	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return "", 0, false
 	}
 

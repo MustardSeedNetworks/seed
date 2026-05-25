@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -618,19 +617,9 @@ func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit request body size (fixes #760)
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
-
+	// Existing handler was English-only — use the non-localized helper.
 	var req ssoUpdateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			"Invalid request body",
-			"",
-		)
+	if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
 		return
 	}
 

@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
 	"net"
 	"net/http"
@@ -457,16 +456,7 @@ func (s *Server) updateDevicesSettings(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req NetworkDiscoverySettingsResponse
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			"Invalid request body",
-			"",
-		)
+	if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
 		return
 	}
 
@@ -553,16 +543,7 @@ func (s *Server) addDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req SubnetRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			"Invalid request body",
-			"",
-		)
+	if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
 		return
 	}
 
@@ -637,16 +618,7 @@ func (s *Server) updateDevicesSubnet(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req SubnetRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.WarnContext(r.Context(), "Invalid request body", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			"Invalid request body",
-			"",
-		)
+	if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
 		return
 	}
 
