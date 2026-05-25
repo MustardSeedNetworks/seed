@@ -45,7 +45,7 @@
 *.go @krisarmstrong
 
 # Frontend
-/web/ @krisarmstrong
+/ui/ @krisarmstrong
 
 # Infrastructure
 /.github/ @krisarmstrong

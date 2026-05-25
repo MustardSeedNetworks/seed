@@ -1,0 +1,44 @@
+# Default to LF line endings everywhere; Git auto-converts on Windows checkouts.
+* text=auto eol=lf
+
+# Force LF on shell scripts and CI files even on Windows checkouts (would
+# otherwise refuse to execute on Linux runners).
+*.sh        text eol=lf
+*.bash      text eol=lf
+.husky/*    text eol=lf
+
+# CRLF for files that are run by Windows tooling.
+*.ps1       text eol=crlf
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+# Treat binary blobs as binary so Git doesn't munge or diff them.
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.pdf       binary
+*.zip       binary
+*.tar.gz    binary
+*.tgz       binary
+*.deb       binary
+*.rpm       binary
+*.pkg       binary
+*.exe       binary
+*.dll       binary
+*.so        binary
+*.dylib     binary
+
+# Tell GitHub language stats what to count and what to skip. The `linguist-`
+# attributes tweak how the language bar on the repo page is computed.
+# Embedded UI build output, fixtures, and vendored data shouldn't dominate.
+internal/api/ui/**          linguist-generated=true
+ui/dist/**                  linguist-generated=true
+ui/coverage/**              linguist-generated=true
+ui/playwright-report/**     linguist-generated=true
+**/*_gen.go                 linguist-generated=true
+
+# pcap fixtures (binary)
+*.pcap      binary
+*.pcapng    binary
