@@ -29,6 +29,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { LogComponents, logger } from '../lib/logger';
+import {
+  parseSseCardUpdate,
+  parseSseMessage,
+  type SseCardUpdate as SseCardUpdateSchemaType,
+  type SseMessage as SseMessageSchemaType,
+} from '../schemas/sse';
 
 /** SSE connection status states */
 export type SseConnectionStatus =
@@ -37,18 +43,18 @@ export type SseConnectionStatus =
   | 'disconnected' // Not connected (intentional or after failure)
   | 'error'; // Connection error occurred
 
-/** Base message structure for SSE communication */
-export interface SseMessage {
-  type: string; // Message type identifier
-  payload: unknown; // Message data (type varies by message type)
-}
+/**
+ * Base message structure for SSE communication. Re-exports the type
+ * derived from the valibot schema in `@/schemas/sse` — adding fields
+ * means updating the schema and the type falls out automatically.
+ */
+export type SseMessage = SseMessageSchemaType;
 
-/** Card update message for real-time UI updates */
-export interface SseCardUpdate {
-  cardId: string; // ID of the card to update
-  data: unknown; // Updated card data
-  interface?: string; // Network interface name (e.g., "eth0", "wlan0")
-}
+/**
+ * Card update message for real-time UI updates. Re-exports the
+ * schema-derived type from `@/schemas/sse`.
+ */
+export type SseCardUpdate = SseCardUpdateSchemaType;
 
 /** Configuration options for useSse hook */
 interface UseSseOptions {
@@ -70,29 +76,10 @@ interface UseSseReturn {
   reconnect: () => void;
 }
 
-/**
- * Validates message structure before processing.
- * Defined outside component to be stable across renders.
- */
-function isValidMessage(message: unknown): message is SseMessage {
-  if (!message || typeof message !== 'object') {
-    return false;
-  }
-  const msg = message as Record<string, unknown>;
-  return typeof msg.type === 'string';
-}
-
-/**
- * Validates card update payload structure.
- * Defined outside component to be stable across renders.
- */
-function isValidCardUpdate(payload: unknown): payload is SseCardUpdate {
-  if (!payload || typeof payload !== 'object') {
-    return false;
-  }
-  const update = payload as Record<string, unknown>;
-  return typeof update.cardId === 'string';
-}
+// Frame-level validation lives in @/schemas/sse via valibot safeParse.
+// The hand-rolled isValidMessage / isValidCardUpdate guards that used
+// to live here drifted independently from the Go side; the schemas now
+// keep the runtime check and the static type in one place.
 
 /**
  * Custom hook for managing SSE connections with automatic reconnection.
@@ -133,34 +120,40 @@ export function useSse({
         return;
       }
 
+      let raw: unknown;
       try {
-        const message: unknown = JSON.parse(data);
-
-        if (!isValidMessage(message)) {
-          logger.warn(LogComponents.SSE, 'Invalid message structure', { data });
-          return;
-        }
-
-        // Handle card update messages specially with validation
-        if (message.type === 'card_update') {
-          if (!isValidCardUpdate(message.payload)) {
-            logger.warn(LogComponents.SSE, 'Invalid card_update payload', {
-              type: typeof message.payload,
-            });
-            return;
-          }
-
-          if (onCardUpdateRef.current) {
-            onCardUpdateRef.current(message.payload);
-          }
-        }
-
-        // Always invoke general message handler
-        if (onMessageRef.current) {
-          onMessageRef.current(message);
-        }
+        raw = JSON.parse(data);
       } catch (error) {
         logger.error(LogComponents.SSE, 'Failed to parse SSE message', error, { data });
+        return;
+      }
+
+      const message = parseSseMessage(raw);
+      if (!message) {
+        logger.warn(LogComponents.SSE, 'Invalid SSE envelope', { data });
+        return;
+      }
+
+      // Handle card update messages specially with per-type validation.
+      // The envelope's payload is `unknown` until we narrow it via the
+      // card-update schema; dropping invalid card_update frames is
+      // safer than dispatching them and crashing the subscriber.
+      if (message.type === 'card_update') {
+        const update = parseSseCardUpdate(message.payload);
+        if (!update) {
+          logger.warn(LogComponents.SSE, 'Invalid card_update payload', {
+            payloadType: typeof message.payload,
+          });
+          return;
+        }
+        if (onCardUpdateRef.current) {
+          onCardUpdateRef.current(update);
+        }
+      }
+
+      // Always invoke general message handler with the validated envelope.
+      if (onMessageRef.current) {
+        onMessageRef.current(message);
       }
     },
     // Validation functions are pure and stable - no dependencies needed
