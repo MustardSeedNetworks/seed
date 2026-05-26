@@ -122,6 +122,7 @@ export function Card({
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Interactive role is conditionally applied based on onClick presence
     <div
+      data-testid="card"
       className={cn(
         card.base,
         card.variant.default,

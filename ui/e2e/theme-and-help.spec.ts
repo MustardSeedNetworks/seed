@@ -162,7 +162,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
     test('should render all cards correctly in both themes', async ({ page }) => {
       // Get initial card count
-      const initialCards = await page.locator('[class*="card"]').count();
+      const initialCards = await page.getByTestId('card').count();
       expect(initialCards).toBeGreaterThan(0);
 
       // Open settings
@@ -188,7 +188,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await closeButton.click();
 
       // Verify all cards still visible
-      const cardsAfterToggle = await page.locator('[class*="card"]').count();
+      const cardsAfterToggle = await page.getByTestId('card').count();
       expect(cardsAfterToggle).toBeGreaterThanOrEqual(initialCards - 1); // Allow for minor variance
 
       // Toggle back
@@ -197,7 +197,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await closeButton.click();
 
       // Verify cards still visible in original theme
-      const cardsAfterSecondToggle = await page.locator('[class*="card"]').count();
+      const cardsAfterSecondToggle = await page.getByTestId('card').count();
       expect(cardsAfterSecondToggle).toBeGreaterThanOrEqual(initialCards - 1);
     });
 
