@@ -48,11 +48,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const wasLight = !initialClasses?.includes('dark');
 
       // Find and click theme toggle
-      const themeToggle = page
-        .getByRole('button', { name: /dark|light|theme/i })
-        .or(page.locator('input[type="checkbox"][name*="theme"]'))
-        .or(page.locator('[data-testid="theme-toggle"]'))
-        .first();
+      const themeToggle = page.getByTestId('theme-toggle');
 
       await themeToggle.click();
 
@@ -74,10 +70,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await settingsButton.click();
 
       // Find theme toggle
-      const themeToggle = page
-        .getByRole('button', { name: /dark|light|theme/i })
-        .or(page.locator('[data-testid="theme-toggle"]'))
-        .first();
+      const themeToggle = page.getByTestId('theme-toggle');
 
       // Toggle to dark
       const htmlElement = page.locator('html');
@@ -106,10 +99,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await settingsButton.click();
 
       // Find and click theme toggle
-      const themeToggle = page
-        .getByRole('button', { name: /dark|light|theme/i })
-        .or(page.locator('[data-testid="theme-toggle"]'))
-        .first();
+      const themeToggle = page.getByTestId('theme-toggle');
 
       await themeToggle.click();
 
@@ -130,10 +120,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await settingsButton.click();
 
       // Toggle to dark theme
-      const themeToggle = page
-        .getByRole('button', { name: /dark|light|theme/i })
-        .or(page.locator('[data-testid="theme-toggle"]'))
-        .first();
+      const themeToggle = page.getByTestId('theme-toggle');
 
       const htmlElement = page.locator('html');
       let classes = await htmlElement.getAttribute('class');
@@ -168,10 +155,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await settingsButton.click();
 
       // Toggle theme
-      const themeToggle = page
-        .getByRole('button', { name: /dark|light|theme/i })
-        .or(page.locator('[data-testid="theme-toggle"]'))
-        .first();
+      const themeToggle = page.getByTestId('theme-toggle');
 
       await themeToggle.click();
 
@@ -456,10 +440,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
       await settingsButton.click();
 
-      const themeToggle = page
-        .getByRole('button', { name: /dark|light|theme/i })
-        .or(page.locator('[data-testid="theme-toggle"]'))
-        .first();
+      const themeToggle = page.getByTestId('theme-toggle');
 
       await themeToggle.click();
 
@@ -500,10 +481,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         await settingsButton.click();
 
         // Toggle theme
-        const themeToggle = page
-          .getByRole('button', { name: /dark|light|theme/i })
-          .or(page.locator('[data-testid="theme-toggle"]'))
-          .first();
+        const themeToggle = page.getByTestId('theme-toggle');
 
         const toggleVisible = await themeToggle.isVisible();
 
@@ -521,16 +499,15 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       // Get initial theme
       const initialClasses = await page.locator('html').getAttribute('class');
       const initialTheme = initialClasses?.includes('dark') ? 'dark' : 'light';
+      theme - toggle;
+      (');');
 
       // Open settings and toggle theme
       const settingsButton = page.getByTestId('header-open-settings');
 
       await settingsButton.click();
 
-      const themeToggle = page
-        .getByRole('button', { name: /dark|light|theme/i })
-        .or(page.locator('[data-testid="theme-toggle"]'))
-        .first();
+      const themeToggle = page.getByTestId('theme-toggle');
 
       await themeToggle.click();
 
@@ -549,6 +526,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       // Verify theme changed
       const newClasses = await page.locator('html').getAttribute('class');
       const newTheme = newClasses?.includes('dark') ? 'dark' : 'light';
+      theme - toggle;
+      (');');
 
       expect(newTheme).not.toBe(initialTheme);
 
