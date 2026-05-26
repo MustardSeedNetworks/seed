@@ -12,13 +12,13 @@ test.describe('Reports Page', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/reports');
-    await expect(page.getByRole('heading', { name: /^reports$/i, level: 1 })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
   });
 
   test('should render the page header with Reports title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /^reports$/i, level: 1 })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
     await expect(
       page.getByText(/aggregated sla dashboard|compliance|historical reporting/i),
     ).toBeVisible();

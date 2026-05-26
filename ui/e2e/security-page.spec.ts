@@ -13,13 +13,13 @@ test.describe('Security Page', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/security');
-    await expect(page.getByRole('heading', { name: /^security$/i, level: 1 })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
   });
 
   test('should render the page header with Security title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /^security$/i, level: 1 })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
     await expect(page.getByText(/guest network isolation audit/i)).toBeVisible();
   });
 

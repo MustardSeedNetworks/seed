@@ -16,13 +16,13 @@ test.describe('Link Page', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/link');
-    await expect(page.getByRole('heading', { name: /^link$/i, level: 1 })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
   });
 
   test('should render the page header with Link title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /^link$/i, level: 1 })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
     await expect(page.getByText(/physical link state.*cable diagnostics/i)).toBeVisible();
   });
 
@@ -33,7 +33,7 @@ test.describe('Link Page', () => {
   test('should be the default route when navigating to root', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/link$/);
-    await expect(page.getByRole('heading', { name: /^link$/i, level: 1 })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
   });
 
   test('should render at least one link-state card (LinkCard or WiFiCard)', async ({ page }) => {

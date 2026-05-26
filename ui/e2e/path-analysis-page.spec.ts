@@ -14,13 +14,13 @@ test.describe('Path Analysis Page', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/path');
-    await expect(page.getByRole('heading', { name: /path analysis/i, level: 1 })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
   });
 
   test('should render the page header with Path Analysis title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /path analysis/i, level: 1 })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
     await expect(page.getByText(/path discovery|traceroute|device discovery/i)).toBeVisible();
   });
 

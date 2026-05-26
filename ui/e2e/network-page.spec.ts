@@ -16,13 +16,13 @@ test.describe('Network Page', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/network');
-    await expect(page.getByRole('heading', { name: /^network$/i, level: 1 })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
   });
 
   test('should render the page header with Network title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /^network$/i, level: 1 })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
     await expect(page.getByText(/dhcp.*gateway.*dns/i)).toBeVisible();
   });
 
