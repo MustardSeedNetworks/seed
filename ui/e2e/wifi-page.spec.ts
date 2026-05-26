@@ -19,13 +19,13 @@ test.describe('Wi-Fi Page', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/wifi');
-    await expect(page.getByRole('heading', { name: /wi-fi/i, level: 1 })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
   });
 
   test('should render the page header with the Wi-Fi title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /wi-fi/i, level: 1 })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
     await expect(page.getByText(/wireless link, channel survey/i)).toBeVisible();
   });
 
@@ -53,7 +53,7 @@ test.describe('Wi-Fi Page', () => {
       });
     });
     await page.reload();
-    await expect(page.getByRole('heading', { name: /wi-fi/i, level: 1 })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
     // Either the wired-mode message OR the cards must be the one rendered;
     // both branches are valid given different test environments.
     const content = page

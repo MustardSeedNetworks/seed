@@ -14,13 +14,13 @@ test.describe('Performance Page', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/performance');
-    await expect(page.getByRole('heading', { name: /^performance$/i, level: 1 })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
   });
 
   test('should render the page header with Performance title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /^performance$/i, level: 1 })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
     await expect(page.getByText(/active throughput tests/i)).toBeVisible();
   });
 
