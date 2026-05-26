@@ -148,9 +148,16 @@ func (s *Server) setupShellRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices/status", s.handleDevicesStatus)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices/settings", s.handleDevicesSettings)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices/subnets", s.handleDevicesSubnets)
+	// Vulnerability scan + guest-audit run are compliance_advanced
+	// (Pro) per LICENSE_STRATEGY §2. Read-only results / status /
+	// settings endpoints stay open so existing scan output remains
+	// visible to lower tiers (and so admins can downgrade then still
+	// read prior reports).
 	s.mux.Handle(
 		APIVersionPrefix+"/shell/vulnerabilities/scan",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleVulnerabilityScan)),
+		s.endpointRateLimiter().RateLimitMiddleware(
+			s.requireFeature("compliance_advanced", s.handleVulnerabilityScan),
+		),
 	)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/status", s.handleVulnerabilityStatus)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/results", s.handleVulnerabilityResults)
@@ -161,7 +168,9 @@ func (s *Server) setupShellRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/guest-audit/settings", s.handleGuestAuditSettings)
 	s.mux.Handle(
 		APIVersionPrefix+"/shell/guest-audit/run",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleGuestAuditRun)),
+		s.endpointRateLimiter().RateLimitMiddleware(
+			s.requireFeature("compliance_advanced", s.handleGuestAuditRun),
+		),
 	)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/status", s.handlePipelineStatus)
 	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/start", s.handlePipelineStart)
