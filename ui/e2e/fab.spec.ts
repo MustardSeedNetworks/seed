@@ -178,10 +178,7 @@ test.describe('FAB - Run All Tests Flow', () => {
 
   test('should respect FAB options from settings', async ({ page }) => {
     // Open settings drawer
-    const settingsButton = page
-      .getByRole('button', { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
-      .first();
+    const settingsButton = page.getByTestId('header-open-settings');
     await settingsButton.click();
 
     // Wait for settings drawer

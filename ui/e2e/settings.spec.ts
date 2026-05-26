@@ -26,10 +26,7 @@ test.describe('Settings', () => {
     });
 
     // Open settings drawer
-    const settingsButton = page
-      .getByRole('button', { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
-      .first();
+    const settingsButton = page.getByTestId('header-open-settings');
     await settingsButton.click();
 
     // Wait for drawer to open
@@ -170,10 +167,7 @@ test.describe('Settings CRUD Operations', () => {
     });
 
     // Open settings drawer
-    const settingsButton = page
-      .getByRole('button', { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
-      .first();
+    const settingsButton = page.getByTestId('header-open-settings');
     await settingsButton.click();
 
     // Wait for drawer to open
@@ -376,10 +370,7 @@ test.describe('Settings CRUD Operations', () => {
       });
 
       // Open settings again
-      const settingsButton = page
-        .getByRole('button', { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
-        .first();
+      const settingsButton = page.getByTestId('header-open-settings');
       await settingsButton.click();
 
       // Get settings after reload
@@ -541,10 +532,7 @@ test.describe('Settings CRUD Operations', () => {
     await closeButton.click();
 
     // Reopen drawer
-    const settingsButton = page
-      .getByRole('button', { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
-      .first();
+    const settingsButton = page.getByTestId('header-open-settings');
     await settingsButton.click();
 
     // Check if state was maintained

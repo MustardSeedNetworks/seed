@@ -592,6 +592,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             type="button"
             className={iconButtonClass}
             onClick={onSettingsOpen}
+            data-testid="header-open-settings"
             aria-label={t('accessibility.openSettings')}
             title={t(
               'tooltips.header.settings',
@@ -625,6 +626,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             type="button"
             className={iconButtonClass}
             onClick={onHelpOpen}
+            data-testid="header-open-help"
             aria-label={t('accessibility.openHelp')}
             title={t(
               'tooltips.header.help',
