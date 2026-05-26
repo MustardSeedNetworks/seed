@@ -24,9 +24,7 @@ test.describe('FAB - Run All Tests Flow', () => {
 
   test('should display FAB button when authenticated', async ({ page }) => {
     // FAB should be visible in bottom-right corner
-    const fab = page
-      .locator('button[title="Run All Tests"]')
-      .or(page.locator('button[aria-label="Run All Tests"]'));
+    const fab = page.getByTestId('fab-run-all-tests');
     await expect(fab).toBeVisible();
 
     // Check FAB positioning (fixed bottom-right)
@@ -39,16 +37,15 @@ test.describe('FAB - Run All Tests Flow', () => {
   });
 
   test('should show loading spinner when FAB is clicked', async ({ page }) => {
-    const fab = page
-      .locator('button[title="Run All Tests"]')
-      .or(page.locator('button[aria-label="Run All Tests"]'));
+    const fab = page.getByTestId('fab-run-all-tests');
 
     // Click FAB
     await fab.click();
 
     // Should show spinner (animated SVG with opacity classes)
-    const spinner = fab.locator('svg.animate-spin');
-    await expect(spinner).toBeVisible({ timeout: 2000 });
+    // Synchronously check the data-running attribute instead of
+    // racing the animate-spin CSS class — see seed#1168.
+    await expect(fab).toHaveAttribute('data-running', 'true');
 
     // FAB should be disabled during test execution
     await expect(fab).toBeDisabled();
@@ -67,9 +64,7 @@ test.describe('FAB - Run All Tests Flow', () => {
       }
     });
 
-    const fab = page
-      .locator('button[title="Run All Tests"]')
-      .or(page.locator('button[aria-label="Run All Tests"]'));
+    const fab = page.getByTestId('fab-run-all-tests');
 
     // Click FAB to trigger all tests
     await fab.click();
@@ -99,57 +94,43 @@ test.describe('FAB - Run All Tests Flow', () => {
       }
     });
 
-    const fab = page
-      .locator('button[title="Run All Tests"]')
-      .or(page.locator('button[aria-label="Run All Tests"]'));
+    const fab = page.getByTestId('fab-run-all-tests');
 
     // Click FAB
     await fab.click();
 
     // Wait for tests to complete (spinner disappears)
-    await expect(fab.locator('svg.animate-spin')).toBeVisible({
-      timeout: 5000,
-    });
-    await expect(fab.locator('svg.animate-spin')).toBeHidden({
-      timeout: 65000,
-    }); // 60s timeout + buffer
+    await expect(fab).toHaveAttribute('data-running', 'true');
+    await expect(fab).toHaveAttribute('data-running', 'false', { timeout: 65000 }); // 60s timeout + buffer
 
     // Verify card data was updated
     expect(cardUpdated).toBeTruthy();
   });
 
   test('should complete and stop spinner after tests finish', async ({ page }) => {
-    const fab = page
-      .locator('button[title="Run All Tests"]')
-      .or(page.locator('button[aria-label="Run All Tests"]'));
+    const fab = page.getByTestId('fab-run-all-tests');
 
     // Click FAB
     await fab.click();
 
     // Spinner should appear
-    const spinner = fab.locator('svg.animate-spin');
-    await expect(spinner).toBeVisible({ timeout: 2000 });
+    // Synchronously check the data-running attribute instead of
+    // racing the animate-spin CSS class — see seed#1168.
+    await expect(fab).toHaveAttribute('data-running', 'true');
 
-    // Wait for completion - spinner should disappear
-    // Max timeout is 60s in FAB implementation
-    await expect(spinner).toBeHidden({ timeout: 65000 });
+    // Wait for completion — FAB returns to idle within 60s.
+    await expect(fab).toHaveAttribute('data-running', 'false', { timeout: 65000 });
 
     // FAB should be enabled again
     await expect(fab).toBeEnabled();
 
-    // Play icon should be back (spinner should be gone)
+    // Play icon should be back (FAB returned to idle).
     const playIcon = fab.locator('svg');
     await expect(playIcon).toBeVisible();
-
-    // Verify it's not a spinner anymore
-    const hasSpinClass = await playIcon.evaluate((el) => el.classList.contains('animate-spin'));
-    expect(hasSpinClass).toBe(false);
   });
 
   test('should not trigger tests if FAB is clicked while already running', async ({ page }) => {
-    const fab = page
-      .locator('button[title="Run All Tests"]')
-      .or(page.locator('button[aria-label="Run All Tests"]'));
+    const fab = page.getByTestId('fab-run-all-tests');
 
     // Click FAB first time
     await fab.click();
@@ -209,9 +190,7 @@ test.describe('FAB - Run All Tests Flow', () => {
       }
     });
 
-    const fab = page
-      .locator('button[title="Run All Tests"]')
-      .or(page.locator('button[aria-label="Run All Tests"]'));
+    const fab = page.getByTestId('fab-run-all-tests');
 
     // Click FAB
     await fab.click();
@@ -233,31 +212,23 @@ test.describe('FAB - Run All Tests Flow', () => {
       });
     });
 
-    const fab = page
-      .locator('button[title="Run All Tests"]')
-      .or(page.locator('button[aria-label="Run All Tests"]'));
+    const fab = page.getByTestId('fab-run-all-tests');
 
     // Click FAB
     await fab.click();
 
     // Spinner should still appear
-    await expect(fab.locator('svg.animate-spin')).toBeVisible({
-      timeout: 2000,
-    });
+    await expect(fab).toHaveAttribute('data-running', 'true');
 
     // Even with failures, tests should complete and spinner should stop
-    await expect(fab.locator('svg.animate-spin')).toBeHidden({
-      timeout: 65000,
-    });
+    await expect(fab).toHaveAttribute('data-running', 'false', { timeout: 65000 });
 
     // FAB should be enabled again
     await expect(fab).toBeEnabled();
   });
 
   test('should maintain FAB visibility on page scroll', async ({ page }) => {
-    const fab = page
-      .locator('button[title="Run All Tests"]')
-      .or(page.locator('button[aria-label="Run All Tests"]'));
+    const fab = page.getByTestId('fab-run-all-tests');
 
     // Verify FAB is visible initially
     await expect(fab).toBeVisible();
@@ -276,9 +247,7 @@ test.describe('FAB - Run All Tests Flow', () => {
   });
 
   test('should be keyboard accessible', async ({ page }) => {
-    const fab = page
-      .locator('button[title="Run All Tests"]')
-      .or(page.locator('button[aria-label="Run All Tests"]'));
+    const fab = page.getByTestId('fab-run-all-tests');
 
     // Tab to FAB (may need multiple tabs depending on page structure)
     // Focus the FAB using keyboard
@@ -304,9 +273,7 @@ test.describe('FAB - Run All Tests Flow', () => {
   });
 
   test('should show proper aria labels for accessibility', async ({ page }) => {
-    const fab = page
-      .locator('button[title="Run All Tests"]')
-      .or(page.locator('button[aria-label="Run All Tests"]'));
+    const fab = page.getByTestId('fab-run-all-tests');
 
     // Verify accessibility attributes
     const ariaLabel = await fab.getAttribute('aria-label');
