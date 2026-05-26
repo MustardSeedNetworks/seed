@@ -39,21 +39,18 @@ test.describe('Responsive Layout Tests', () => {
       });
     });
 
-    test('should display login form properly on mobile', async ({ page }) => {
-      // Logout to see login form
-      const logoutButton = page
-        .getByRole('button', { name: /logout|sign out/i })
-        .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
-
-      const hasLogout = await logoutButton.isVisible();
-
-      if (hasLogout) {
-        await logoutButton.click();
-      } else {
-        await page.goto('/');
-        await page.evaluate(() => localStorage.clear());
-        await page.reload();
-      }
+    // Run this test with an unauthenticated context — see file-
+    // top describe('Login-form…') for the rationale. Clicking the
+    // header logout button via the shared storageState would blacklist
+    // the suite-wide auth token and poison every later test.
+    test('should display login form properly on mobile', async ({ browser }) => {
+      const ctx = await browser.newContext({
+        viewport: { width: 375, height: 667 },
+        storageState: { cookies: [], origins: [] },
+      });
+      const page = await ctx.newPage();
+      await skipSetupWizard(page);
+      await page.goto('/');
 
       // Verify login form is usable on mobile
       const usernameField = page.getByLabel(/username/i);
@@ -75,6 +72,8 @@ test.describe('Responsive Layout Tests', () => {
         expect(usernameBox.width).toBeLessThanOrEqual(375);
         expect(passwordBox.width).toBeLessThanOrEqual(375);
       }
+
+      await ctx.close();
     });
 
     test('should show hamburger menu on mobile', async ({ page }) => {
@@ -234,26 +233,21 @@ test.describe('Responsive Layout Tests', () => {
       });
     });
 
-    test('should display login form properly on tablet', async ({ page }) => {
-      // Logout to see login form
-      const logoutButton = page
-        .getByRole('button', { name: /logout|sign out/i })
-        .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
+    // Unauthenticated context — see comment on the mobile sibling.
+    test('should display login form properly on tablet', async ({ browser }) => {
+      const ctx = await browser.newContext({
+        viewport: { width: 768, height: 1024 },
+        storageState: { cookies: [], origins: [] },
+      });
+      const page = await ctx.newPage();
+      await skipSetupWizard(page);
+      await page.goto('/');
 
-      const hasLogout = await logoutButton.isVisible();
-
-      if (hasLogout) {
-        await logoutButton.click();
-      } else {
-        await page.goto('/');
-        await page.evaluate(() => localStorage.clear());
-        await page.reload();
-      }
-
-      // Verify login form
       await expect(page.getByLabel(/username/i)).toBeVisible();
       await expect(page.getByLabel(/password/i)).toBeVisible();
       await expect(page.getByRole('button', { name: /sign in|login/i })).toBeVisible();
+
+      await ctx.close();
     });
 
     test('should arrange cards in 2-column grid on tablet', async ({ page }) => {
@@ -360,23 +354,16 @@ test.describe('Responsive Layout Tests', () => {
       });
     });
 
-    test('should display login form properly on desktop', async ({ page }) => {
-      // Logout to see login form
-      const logoutButton = page
-        .getByRole('button', { name: /logout|sign out/i })
-        .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
+    // Unauthenticated context — see comment on the mobile sibling.
+    test('should display login form properly on desktop', async ({ browser }) => {
+      const ctx = await browser.newContext({
+        viewport: { width: 1920, height: 1080 },
+        storageState: { cookies: [], origins: [] },
+      });
+      const page = await ctx.newPage();
+      await skipSetupWizard(page);
+      await page.goto('/');
 
-      const hasLogout = await logoutButton.isVisible();
-
-      if (hasLogout) {
-        await logoutButton.click();
-      } else {
-        await page.goto('/');
-        await page.evaluate(() => localStorage.clear());
-        await page.reload();
-      }
-
-      // Verify login form
       await expect(page.getByLabel(/username/i)).toBeVisible();
       await expect(page.getByLabel(/password/i)).toBeVisible();
 
@@ -388,6 +375,8 @@ test.describe('Responsive Layout Tests', () => {
         // Login form should not span full width on desktop
         expect(box.width).toBeLessThan(1000);
       }
+
+      await ctx.close();
     });
 
     test('should arrange cards in 3-4 column grid on desktop', async ({ page }) => {
