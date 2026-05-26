@@ -515,8 +515,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       // Get initial theme
       const initialClasses = await page.locator('html').getAttribute('class');
       const initialTheme = initialClasses?.includes('dark') ? 'dark' : 'light';
-      theme - toggle;
-      (');');
 
       // Open settings and toggle theme
       const settingsButton = page.getByTestId('header-open-settings');
@@ -543,8 +541,6 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       // Verify theme changed
       const newClasses = await page.locator('html').getAttribute('class');
       const newTheme = newClasses?.includes('dark') ? 'dark' : 'light';
-      theme - toggle;
-      (');');
 
       expect(newTheme).not.toBe(initialTheme);
 
