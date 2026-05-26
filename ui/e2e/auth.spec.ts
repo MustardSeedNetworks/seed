@@ -30,7 +30,7 @@ test.describe('Authentication', () => {
     await page.goto('/');
 
     // Check for login form elements
-    await expect(page.getByRole('heading', { name: /login/i })).toBeVisible();
+    await expect(page.getByTestId('login-title')).toBeVisible();
     await expect(page.getByLabel(/username/i)).toBeVisible();
     await expect(page.getByLabel(/password/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /sign in|login/i })).toBeVisible();
