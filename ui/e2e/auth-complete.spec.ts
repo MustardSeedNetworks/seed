@@ -38,7 +38,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.goto('/');
 
       // Verify login form elements are present
-      await expect(page.getByRole('heading', { name: /login/i })).toBeVisible();
+      await expect(page.getByTestId('login-title')).toBeVisible();
       await expect(page.getByLabel(/username/i)).toBeVisible();
       await expect(page.getByLabel(/password/i)).toBeVisible();
       await expect(page.getByRole('button', { name: /sign in|login/i })).toBeVisible();
@@ -70,7 +70,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.getByRole('button', { name: /sign in|login/i }).click();
 
       // Verify redirect to dashboard
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 
@@ -106,7 +106,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
     });
@@ -120,7 +120,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await logoutButton.click();
 
       // Verify redirect to login page
-      await expect(page.getByRole('heading', { name: /login/i })).toBeVisible({
+      await expect(page.getByTestId('login-title')).toBeVisible({
         timeout: 5000,
       });
       await expect(page.getByLabel(/username/i)).toBeVisible();
@@ -148,7 +148,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await logoutButton.click();
 
       // Wait for redirect
-      await expect(page.getByRole('heading', { name: /login/i })).toBeVisible({
+      await expect(page.getByTestId('login-title')).toBeVisible({
         timeout: 5000,
       });
 
@@ -172,7 +172,7 @@ test.describe('Complete Authentication Lifecycle', () => {
         .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
 
       await logoutButton.click();
-      await expect(page.getByRole('heading', { name: /login/i })).toBeVisible({
+      await expect(page.getByTestId('login-title')).toBeVisible({
         timeout: 5000,
       });
 
@@ -195,7 +195,7 @@ test.describe('Complete Authentication Lifecycle', () => {
         .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
 
       await logoutButton.click();
-      await expect(page.getByRole('heading', { name: /login/i })).toBeVisible({
+      await expect(page.getByTestId('login-title')).toBeVisible({
         timeout: 5000,
       });
 
@@ -204,7 +204,7 @@ test.describe('Complete Authentication Lifecycle', () => {
 
       // Should show login form, not dashboard
       await expect(page.getByLabel(/username/i)).toBeVisible({ timeout: 5000 });
-      await expect(page.getByRole('heading', { name: /login/i })).toBeVisible();
+      await expect(page.getByTestId('login-title')).toBeVisible();
     });
 
     test('should display empty login form after logout', async ({ page }) => {
@@ -214,7 +214,7 @@ test.describe('Complete Authentication Lifecycle', () => {
         .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
 
       await logoutButton.click();
-      await expect(page.getByRole('heading', { name: /login/i })).toBeVisible({
+      await expect(page.getByTestId('login-title')).toBeVisible({
         timeout: 5000,
       });
 
@@ -237,7 +237,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 
@@ -271,7 +271,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 
@@ -281,7 +281,7 @@ test.describe('Complete Authentication Lifecycle', () => {
         .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
 
       await logoutButton.click();
-      await expect(page.getByRole('heading', { name: /login/i })).toBeVisible({
+      await expect(page.getByTestId('login-title')).toBeVisible({
         timeout: 5000,
       });
 
@@ -291,7 +291,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.getByRole('button', { name: /sign in|login/i }).click();
 
       // Should successfully login again
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
     });
@@ -305,7 +305,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.goto('/');
 
       // Should show login form
-      await expect(page.getByRole('heading', { name: /login/i })).toBeVisible({
+      await expect(page.getByTestId('login-title')).toBeVisible({
         timeout: 5000,
       });
       await expect(page.getByLabel(/username/i)).toBeVisible();
@@ -319,7 +319,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.getByRole('button', { name: /sign in|login/i }).click();
 
       // Should access dashboard
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 
@@ -337,7 +337,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 
@@ -345,7 +345,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.reload();
 
       // Should still be authenticated (cookies persist)
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 
@@ -365,7 +365,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 
@@ -387,7 +387,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await logoutButton.click();
 
       // Verify redirect to login
-      await expect(page.getByRole('heading', { name: /login/i })).toBeVisible({
+      await expect(page.getByTestId('login-title')).toBeVisible({
         timeout: 5000,
       });
     });
@@ -411,7 +411,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 
@@ -419,7 +419,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       // (In a real scenario, we'd mock a near-expiry token)
 
       // Verify user session continues uninterrupted
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible();
+      await expect(page.getByTestId('page-header-title')).toBeVisible();
 
       // Note: Actual refresh might not occur in short test duration
       // This test documents expected behavior
@@ -446,7 +446,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 
@@ -478,7 +478,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
       await page.getByRole('button', { name: /sign in|login/i }).click();
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 
@@ -487,7 +487,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.goto('/');
 
       // Should require login again
-      await expect(page.getByRole('heading', { name: /login/i })).toBeVisible();
+      await expect(page.getByTestId('login-title')).toBeVisible();
     });
   });
 });

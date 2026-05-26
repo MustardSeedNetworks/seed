@@ -218,7 +218,9 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
               <circle cx="12.3" cy="35.7" r="2.5" fill="currentColor" />
             </svg>
           </div>
-          <h1 className={cn('heading-1', spacing.margin.top.heading)}>{t('app.title')}</h1>
+          <h1 data-testid="login-title" className={cn('heading-1', spacing.margin.top.heading)}>
+            {t('app.title')}
+          </h1>
           <p className={cn('body-small', spacing.margin.top.inline)}>{t('app.tagline')}</p>
         </div>
 
