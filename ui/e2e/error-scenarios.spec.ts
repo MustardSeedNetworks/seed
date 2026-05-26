@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { mockAuthenticated, TEST_CREDENTIALS } from './helpers/auth';
+import { skipSetupWizard, TEST_CREDENTIALS } from './helpers/auth';
 
 /**
  * Comprehensive Error Scenario E2E Tests
@@ -38,7 +38,7 @@ import { mockAuthenticated, TEST_CREDENTIALS } from './helpers/auth';
  * Helper: Login to the application
  */
 async function login(page: Page): Promise<void> {
-  await mockAuthenticated(page);
+  await skipSetupWizard(page);
   await page.goto('/');
   await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
     timeout: 10000,

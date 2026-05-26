@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { mockAuthenticated } from './helpers/auth';
+import { skipSetupWizard } from './helpers/auth';
 
 /**
  * Reports Page (/reports) E2E
@@ -10,7 +10,7 @@ import { mockAuthenticated } from './helpers/auth';
 
 test.describe('Reports Page', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthenticated(page);
+    await skipSetupWizard(page);
     await page.goto('/reports');
     await expect(page.getByRole('heading', { name: /^reports$/i, level: 1 })).toBeVisible({
       timeout: 10000,

@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { mockAuthenticated } from './helpers/auth';
+import { skipSetupWizard } from './helpers/auth';
 
 test.describe('Coverage gaps', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthenticated(page);
+    await skipSetupWizard(page);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,

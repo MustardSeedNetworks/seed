@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { mockAuthenticated } from './helpers/auth';
+import { skipSetupWizard } from './helpers/auth';
 
 /**
  * SNMP Settings E2E Tests
@@ -15,7 +15,7 @@ import { mockAuthenticated } from './helpers/auth';
 
 test.describe('SNMP Settings', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthenticated(page);
+    await skipSetupWizard(page);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
@@ -235,7 +235,7 @@ test.describe('SNMP Settings', () => {
 
 test.describe('SNMP Authentication', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthenticated(page);
+    await skipSetupWizard(page);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,
@@ -321,7 +321,7 @@ test.describe('SNMP Authentication', () => {
 
 test.describe('SNMP Test Connection', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthenticated(page);
+    await skipSetupWizard(page);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
       timeout: 10000,

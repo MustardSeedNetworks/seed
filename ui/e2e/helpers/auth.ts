@@ -18,7 +18,7 @@ import type { Page } from '@playwright/test';
  * `test.use({ storageState: { cookies: [], origins: [] } })` and use
  * loginViaUI() / their own flows.
  *
- * mockAuthenticated() still exists for specs that need to short-
+ * skipSetupWizard() still exists for specs that need to short-
  * circuit the first-run setup wizard without driving the form — the
  * storageState already covers auth, so this helper now only mocks
  * /api/setup/status. Kept as a single call site so future setup-
@@ -49,7 +49,7 @@ export const AUTH_STORAGE_STATE = 'playwright/.auth/user.json';
  *
  * Must be called before page.goto so the route handler is registered.
  */
-export async function mockAuthenticated(page: Page): Promise<void> {
+export async function skipSetupWizard(page: Page): Promise<void> {
   // Match both legacy /api/setup/status and v1-prefixed /api/v1/setup/status.
   // UI calls the v1 form; the legacy form is kept for resilience until any
   // remaining legacy callers are excised.
