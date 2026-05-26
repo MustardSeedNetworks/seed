@@ -43,10 +43,7 @@ test.describe('Dashboard', () => {
 
   test('should open settings drawer', async ({ page }) => {
     // Click settings button
-    const settingsButton = page
-      .getByRole('button', { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
-      .first();
+    const settingsButton = page.getByTestId('header-open-settings');
     await settingsButton.click();
 
     // Settings drawer should be visible
@@ -55,10 +52,7 @@ test.describe('Dashboard', () => {
 
   test('should toggle theme in settings', async ({ page }) => {
     // Open settings
-    const settingsButton = page
-      .getByRole('button', { name: /settings/i })
-      .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
-      .first();
+    const settingsButton = page.getByTestId('header-open-settings');
     await settingsButton.click();
 
     // Find and click theme toggle
@@ -68,10 +62,7 @@ test.describe('Dashboard', () => {
 
   test('should show help modal', async ({ page }) => {
     // Click help button
-    const helpButton = page
-      .getByRole('button', { name: /help/i })
-      .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
-      .first();
+    const helpButton = page.getByTestId('header-open-help');
     await helpButton.click();
 
     // Help modal should be visible

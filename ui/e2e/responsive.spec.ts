@@ -110,10 +110,7 @@ test.describe('Responsive Layout Tests', () => {
 
     test('should show settings drawer full-screen on mobile', async ({ page }) => {
       // Open settings
-      const settingsButton = page
-        .getByRole('button', { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
-        .first();
+      const settingsButton = page.getByTestId('header-open-settings');
 
       await settingsButton.click();
 
@@ -189,10 +186,7 @@ test.describe('Responsive Layout Tests', () => {
 
     test('should open help modal properly on mobile', async ({ page }) => {
       // Find help button
-      const helpButton = page
-        .getByRole('button', { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
-        .first();
+      const helpButton = page.getByTestId('header-open-help');
 
       await helpButton.click();
 
@@ -216,18 +210,12 @@ test.describe('Responsive Layout Tests', () => {
       expect(cardCount).toBeGreaterThan(0);
 
       // Settings should be accessible
-      const settingsButton = page
-        .getByRole('button', { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
-        .first();
+      const settingsButton = page.getByTestId('header-open-settings');
 
       await expect(settingsButton).toBeVisible();
 
       // Help should be accessible
-      const helpButton = page
-        .getByRole('button', { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
-        .first();
+      const helpButton = page.getByTestId('header-open-help');
 
       const hasHelp = await helpButton.isVisible();
       expect(hasHelp).toBeDefined();
@@ -294,10 +282,7 @@ test.describe('Responsive Layout Tests', () => {
 
     test('should show settings drawer as overlay on tablet', async ({ page }) => {
       // Open settings
-      const settingsButton = page
-        .getByRole('button', { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
-        .first();
+      const settingsButton = page.getByTestId('header-open-settings');
 
       await settingsButton.click();
 
@@ -450,10 +435,7 @@ test.describe('Responsive Layout Tests', () => {
 
     test('should slide settings drawer from right on desktop', async ({ page }) => {
       // Open settings
-      const settingsButton = page
-        .getByRole('button', { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
-        .first();
+      const settingsButton = page.getByTestId('header-open-settings');
 
       await settingsButton.click();
 
@@ -507,10 +489,7 @@ test.describe('Responsive Layout Tests', () => {
 
     test('should handle help modal at desktop size', async ({ page }) => {
       // Open help modal
-      const helpButton = page
-        .getByRole('button', { name: /help/i })
-        .or(page.locator('button:has(svg[class*="help"], svg[class*="question"])'))
-        .first();
+      const helpButton = page.getByTestId('header-open-help');
 
       await helpButton.click();
 
@@ -565,10 +544,7 @@ test.describe('Responsive Layout Tests', () => {
       });
 
       // Set dark theme
-      const settingsButton = page
-        .getByRole('button', { name: /settings/i })
-        .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
-        .first();
+      const settingsButton = page.getByTestId('header-open-settings');
 
       await settingsButton.click();
 
@@ -653,10 +629,7 @@ test.describe('Responsive Layout Tests', () => {
         await page.setViewportSize(viewport);
 
         // Open settings
-        const settingsButton = page
-          .getByRole('button', { name: /settings/i })
-          .or(page.locator('button:has(svg[class*="settings"], svg[class*="cog"])'))
-          .first();
+        const settingsButton = page.getByTestId('header-open-settings');
 
         await settingsButton.click();
 
