@@ -871,6 +871,9 @@ jobs:
         working-directory: ui
         env:
           E2E_BASE_URL: https://localhost:8443
+          # Self-signed cert in CI; playwright.config.ts gates
+          # ignoreHTTPSErrors to !CI but honors this env override.
+          PLAYWRIGHT_IGNORE_HTTPS_ERRORS: "true"
         # Smoke tier runs in the e2e-smoke job; full e2e skips it to
         # avoid duplicate runtime. See seed#1053.
         run: npx playwright test --project=chromium --reporter=html --grep-invert "@smoke"
@@ -969,6 +972,9 @@ jobs:
         working-directory: ui
         env:
           E2E_BASE_URL: https://localhost:8443
+          # Self-signed cert in CI; playwright.config.ts gates
+          # ignoreHTTPSErrors to !CI but honors this env override.
+          PLAYWRIGHT_IGNORE_HTTPS_ERRORS: "true"
         # Both chromium and webkit run; smoke tier on both browsers per PR
         # per E2E_CONVENTIONS.
         run: npx playwright test --reporter=html --grep "@smoke"

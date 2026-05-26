@@ -48,7 +48,12 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
-    ignoreHTTPSErrors: true,
+    // Gated to local dev only. CI is expected to provision a CA-trusted
+    // cert (the seed binary's self-signed cert is fine for laptop work but
+    // CI MUST enforce real TLS per E2E_CONVENTIONS). If a CI run needs the
+    // self-signed fallback, set PLAYWRIGHT_IGNORE_HTTPS_ERRORS=true in the
+    // workflow env — that override is honored below.
+    ignoreHTTPSErrors: process.env.PLAYWRIGHT_IGNORE_HTTPS_ERRORS === 'true' || !process.env.CI,
     // Cookies + localStorage captured by global-setup. Specs that
     // need an unauthenticated context (auth.spec.ts,
     // auth-complete.spec.ts, setup-wizard.spec.ts) override with
