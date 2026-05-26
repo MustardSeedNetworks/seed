@@ -93,6 +93,12 @@ export function Fab({ className = '' }: FabProps): React.JSX.Element {
       )}
       title="Run All Tests"
       aria-label="Run All Tests"
+      // aria-busy + data-testid let E2E specs synchronise on the
+      // "running" → "idle" transition without racing the animate-spin
+      // class on the SVG. See seed#1168 / E2E_CONVENTIONS.
+      aria-busy={isRunning}
+      data-testid="fab-run-all-tests"
+      data-running={isRunning ? 'true' : 'false'}
     >
       {isRunning ? (
         <svg
