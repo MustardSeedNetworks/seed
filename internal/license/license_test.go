@@ -241,3 +241,48 @@ func TestActivationLifecycle(t *testing.T) {
 		t.Error("expected !IsActivated after Deactivate")
 	}
 }
+
+// TestManagerConcurrentReadsAndWrites exercises the RWMutex so `go test
+// -race` fails loudly if the locking ever regresses. Per-feature gates
+// in the HTTP layer call read methods on every request; activation
+// can land via CLI or future portal pushes mid-flight.
+func TestManagerConcurrentReadsAndWrites(t *testing.T) {
+	t.Parallel()
+	tmp := t.TempDir()
+	mgr, err := license.NewManagerWithDir(tmp)
+	if err != nil {
+		t.Fatalf("NewManagerWithDir: %v", err)
+	}
+
+	key, _ := license.GenerateLicenseKey("4002", "ABCDEFG", license.TierPro)
+
+	// Spin up a writer goroutine that toggles activation, plus several
+	// reader goroutines that hammer the read API.
+	done := make(chan struct{})
+	go func() {
+		for range 50 {
+			mgr.Activate(key)
+			_ = mgr.Deactivate()
+		}
+		close(done)
+	}()
+
+	for range 8 {
+		go func() {
+			for {
+				select {
+				case <-done:
+					return
+				default:
+					_ = mgr.IsActivated()
+					_ = mgr.GetState()
+					_ = mgr.IsTrialValid()
+					_ = mgr.TrialDaysRemaining()
+					_ = mgr.NeedsCheckIn()
+				}
+			}
+		}()
+	}
+
+	<-done
+}
