@@ -941,7 +941,8 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: ui
-        run: npx playwright install --with-deps chromium
+        # Per E2E_CONVENTIONS: chromium (Chrome+Edge) and webkit (Safari).
+        run: npx playwright install --with-deps chromium webkit
 
       - name: Start backend server
         env:
@@ -968,7 +969,9 @@ jobs:
         working-directory: ui
         env:
           E2E_BASE_URL: https://localhost:8443
-        run: npx playwright test --project=chromium --reporter=html --grep "@smoke"
+        # Both chromium and webkit run; smoke tier on both browsers per PR
+        # per E2E_CONVENTIONS.
+        run: npx playwright test --reporter=html --grep "@smoke"
 
       - name: Upload Playwright smoke report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
