@@ -30,7 +30,7 @@ test.describe('Settings', () => {
     await settingsButton.click();
 
     // Wait for drawer to open
-    await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('settings-drawer')).toBeVisible({ timeout: 5000 });
   });
 
   test('should display Appearance settings section', async ({ page }) => {
@@ -171,7 +171,7 @@ test.describe('Settings CRUD Operations', () => {
     await settingsButton.click();
 
     // Wait for drawer to open
-    await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('settings-drawer')).toBeVisible({ timeout: 5000 });
   });
 
   test('should update threshold values and persist', async ({ page }) => {
