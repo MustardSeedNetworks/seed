@@ -19,6 +19,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './app';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { LicenseProvider } from './contexts/LicenseContext';
 import { ProfileProvider } from './contexts/profileContext';
 import { getQueryClient } from './lib/queryClient';
 import './index.css';
@@ -34,9 +35,11 @@ createRoot(rootElement).render(
   <StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={getQueryClient()}>
-        <ProfileProvider>
-          <App />
-        </ProfileProvider>
+        <LicenseProvider>
+          <ProfileProvider>
+            <App />
+          </ProfileProvider>
+        </LicenseProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>,
