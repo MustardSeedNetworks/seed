@@ -32,6 +32,14 @@
     "dhcpConfigFailed": "Failed to configure DHCP",
     "invalidMode": "Mode must be 'dhcp' or 'static'"
   },
+  "license": {
+    "tierTooLow": "This feature requires the {{tier}} tier",
+    "upgradeHint": "Start a 14-day {{tier}} trial with `seed license trial`, or activate a {{tier}} key with `seed license activate -k <KEY>`.",
+    "tierGateTooltip": "Requires the {{tier}} tier",
+    "featureUnavailable": "{{feature}} is not available on your current tier",
+    "currentTier": "Current tier: {{tier}}",
+    "loading": "Checking license…"
+  },
   "validation": {
     "failed": "Validation failed",
     "required": "{{field}} is required",
