@@ -654,6 +654,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             type="button"
             className={iconButtonClass}
             onClick={logout}
+            data-testid="header-logout"
             aria-label={t('buttons.logout')}
             title={t(
               'tooltips.header.logout',

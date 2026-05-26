@@ -113,9 +113,7 @@ test.describe('Complete Authentication Lifecycle', () => {
 
     test('should logout successfully on desktop', async ({ page }) => {
       // Find and click logout button
-      const logoutButton = page
-        .getByRole('button', { name: /logout|sign out/i })
-        .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
+      const logoutButton = page.getByTestId('header-logout');
 
       await logoutButton.click();
 
@@ -141,9 +139,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       });
 
       // Click logout
-      const logoutButton = page
-        .getByRole('button', { name: /logout|sign out/i })
-        .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
+      const logoutButton = page.getByTestId('header-logout');
 
       await logoutButton.click();
 
@@ -167,9 +163,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       });
 
       // Logout
-      const logoutButton = page
-        .getByRole('button', { name: /logout|sign out/i })
-        .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
+      const logoutButton = page.getByTestId('header-logout');
 
       await logoutButton.click();
       await expect(page.getByTestId('login-title')).toBeVisible({
@@ -190,9 +184,7 @@ test.describe('Complete Authentication Lifecycle', () => {
 
     test('should prevent access to protected routes after logout', async ({ page }) => {
       // Logout
-      const logoutButton = page
-        .getByRole('button', { name: /logout|sign out/i })
-        .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
+      const logoutButton = page.getByTestId('header-logout');
 
       await logoutButton.click();
       await expect(page.getByTestId('login-title')).toBeVisible({
@@ -209,9 +201,7 @@ test.describe('Complete Authentication Lifecycle', () => {
 
     test('should display empty login form after logout', async ({ page }) => {
       // Logout
-      const logoutButton = page
-        .getByRole('button', { name: /logout|sign out/i })
-        .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
+      const logoutButton = page.getByTestId('header-logout');
 
       await logoutButton.click();
       await expect(page.getByTestId('login-title')).toBeVisible({
@@ -276,9 +266,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       });
 
       // Logout to simulate session expiry
-      const logoutButton = page
-        .getByRole('button', { name: /logout|sign out/i })
-        .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
+      const logoutButton = page.getByTestId('header-logout');
 
       await logoutButton.click();
       await expect(page.getByTestId('login-title')).toBeVisible({
@@ -380,9 +368,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       }
 
       // Find logout button
-      const logoutButton = page
-        .getByRole('button', { name: /logout|sign out/i })
-        .or(page.locator('button:has(svg[class*="logout"], svg[class*="sign-out"])'));
+      const logoutButton = page.getByTestId('header-logout');
 
       await logoutButton.click();
 
