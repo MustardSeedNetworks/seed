@@ -118,7 +118,13 @@ func (s *Server) setupSAPRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/scores", s.handleHealthCheckScores)
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/sla", s.handleHealthCheckSLA)
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/alerts", s.handleHealthCheckAlerts)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/anomalies", s.handleHealthCheckAnomalies)
+	// Anomaly detection is a Pro feature (LICENSE_STRATEGY §2). Base
+	// health-check results / history / alerts remain accessible to
+	// all tiers — only the trend/anomaly analysis is paid.
+	s.mux.HandleFunc(
+		APIVersionPrefix+"/sap/health-checks/anomalies",
+		s.requireFeature("anomaly_detection", s.handleHealthCheckAnomalies),
+	)
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/snmp/settings", s.handleSNMPSettings)
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/system/health", s.handleSystemHealth)
 	s.mux.HandleFunc(APIVersionPrefix+"/sap/ipconfig", s.handleIPConfig)
