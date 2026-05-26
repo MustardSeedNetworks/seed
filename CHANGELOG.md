@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.197.1](https://github.com/krisarmstrong/seed/compare/v0.197.0...v0.197.1) (2026-05-26)
+
+
+### Bug Fixes
+
+* **e2e,test:** repair v1-API URL drift + EventSource polyfill ([#1146](https://github.com/krisarmstrong/seed/issues/1146)) ([972f1e3](https://github.com/krisarmstrong/seed/commit/972f1e3fec89e74ed1dabd16eeb7fc214ec8b478))
+* **license:** add RWMutex to Manager for safe concurrent access ([#1152](https://github.com/krisarmstrong/seed/issues/1152)) ([810cfd9](https://github.com/krisarmstrong/seed/commit/810cfd9ead9d4d13b17e1a43909f4e5798f0bfcc))
+* **scripts:** clean up all shellcheck warnings + pin severity=warning ([#1144](https://github.com/krisarmstrong/seed/issues/1144)) ([0be82a4](https://github.com/krisarmstrong/seed/commit/0be82a4e80f9f9683debf69563e5baea7a0ab500))
+
 ## [0.197.0](https://github.com/krisarmstrong/seed/compare/v0.196.0...v0.197.0) (2026-05-25)
 
 
