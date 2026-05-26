@@ -162,7 +162,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
     test('should render all cards correctly in both themes', async ({ page }) => {
       // Get initial card count
-      const initialCards = await page.locator('[class*="card"]').count();
+      const initialCards = await page.getByTestId('card').count();
       expect(initialCards).toBeGreaterThan(0);
 
       // Open settings
@@ -180,15 +180,12 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await themeToggle.click();
 
       // Close settings
-      const closeButton = page
-        .getByRole('button', { name: /close/i })
-        .or(page.locator('button:has(svg[class*="x"], svg[class*="close"])'))
-        .first();
+      const closeButton = page.getByTestId('settings-drawer-close');
 
       await closeButton.click();
 
       // Verify all cards still visible
-      const cardsAfterToggle = await page.locator('[class*="card"]').count();
+      const cardsAfterToggle = await page.getByTestId('card').count();
       expect(cardsAfterToggle).toBeGreaterThanOrEqual(initialCards - 1); // Allow for minor variance
 
       // Toggle back
@@ -197,7 +194,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await closeButton.click();
 
       // Verify cards still visible in original theme
-      const cardsAfterSecondToggle = await page.locator('[class*="card"]').count();
+      const cardsAfterSecondToggle = await page.getByTestId('card').count();
       expect(cardsAfterSecondToggle).toBeGreaterThanOrEqual(initialCards - 1);
     });
 
@@ -212,10 +209,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const isDark = htmlClasses?.includes('dark') ?? false;
 
       // Close and reopen settings
-      const closeButton = page
-        .getByRole('button', { name: /close/i })
-        .or(page.locator('button:has(svg[class*="x"], svg[class*="close"])'))
-        .first();
+      const closeButton = page.getByTestId('settings-drawer-close');
 
       await closeButton.click();
 
@@ -283,10 +277,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await helpButton.click();
 
       // Find and click close button
-      const closeButton = page
-        .getByRole('button', { name: /close/i })
-        .or(page.locator('button:has(svg[class*="x"], svg[class*="close"])'))
-        .first();
+      const closeButton = page.getByTestId('settings-drawer-close');
 
       await closeButton.click();
 
@@ -468,10 +459,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
       await themeToggle.click();
 
-      const closeSettings = page
-        .getByRole('button', { name: /close/i })
-        .or(page.locator('button:has(svg[class*="x"], svg[class*="close"])'))
-        .first();
+      const closeSettings = page.getByTestId('settings-drawer-close');
 
       await closeSettings.click();
 
@@ -543,10 +531,7 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
       await themeToggle.click();
 
-      const closeSettings = page
-        .getByRole('button', { name: /close/i })
-        .or(page.locator('button:has(svg[class*="x"], svg[class*="close"])'))
-        .first();
+      const closeSettings = page.getByTestId('settings-drawer-close');
 
       await closeSettings.click();
 

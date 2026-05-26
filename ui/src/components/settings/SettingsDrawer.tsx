@@ -546,6 +546,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
             type="button"
             ref={closeButtonRef}
             onClick={onClose}
+            data-testid="settings-drawer-close"
             className={cn(
               button.size.md,
               radius.md,
