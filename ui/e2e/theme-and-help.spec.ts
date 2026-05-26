@@ -48,6 +48,10 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const wasLight = !initialClasses?.includes('dark');
 
       // Find and click theme toggle
+      await page
+        .getByRole('button', { name: /appearance/i })
+        .first()
+        .click();
       const themeToggle = page.getByTestId('theme-toggle');
 
       await themeToggle.click();
@@ -70,6 +74,10 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await settingsButton.click();
 
       // Find theme toggle
+      await page
+        .getByRole('button', { name: /appearance/i })
+        .first()
+        .click();
       const themeToggle = page.getByTestId('theme-toggle');
 
       // Toggle to dark
@@ -99,6 +107,10 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await settingsButton.click();
 
       // Find and click theme toggle
+      await page
+        .getByRole('button', { name: /appearance/i })
+        .first()
+        .click();
       const themeToggle = page.getByTestId('theme-toggle');
 
       await themeToggle.click();
@@ -120,6 +132,10 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await settingsButton.click();
 
       // Toggle to dark theme
+      await page
+        .getByRole('button', { name: /appearance/i })
+        .first()
+        .click();
       const themeToggle = page.getByTestId('theme-toggle');
 
       const htmlElement = page.locator('html');
@@ -155,6 +171,10 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       await settingsButton.click();
 
       // Toggle theme
+      await page
+        .getByRole('button', { name: /appearance/i })
+        .first()
+        .click();
       const themeToggle = page.getByTestId('theme-toggle');
 
       await themeToggle.click();
@@ -440,6 +460,10 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
       await settingsButton.click();
 
+      await page
+        .getByRole('button', { name: /appearance/i })
+        .first()
+        .click();
       const themeToggle = page.getByTestId('theme-toggle');
 
       await themeToggle.click();
@@ -481,6 +505,10 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
         await settingsButton.click();
 
         // Toggle theme
+        await page
+          .getByRole('button', { name: /appearance/i })
+          .first()
+          .click();
         const themeToggle = page.getByTestId('theme-toggle');
 
         const toggleVisible = await themeToggle.isVisible();
@@ -507,6 +535,10 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
       await settingsButton.click();
 
+      await page
+        .getByRole('button', { name: /appearance/i })
+        .first()
+        .click();
       const themeToggle = page.getByTestId('theme-toggle');
 
       await themeToggle.click();
