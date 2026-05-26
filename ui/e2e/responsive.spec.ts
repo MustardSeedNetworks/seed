@@ -114,7 +114,7 @@ test.describe('Responsive Layout Tests', () => {
       await settingsButton.click();
 
       // Settings drawer should be visible
-      await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible();
+      await expect(page.getByTestId('settings-drawer')).toBeVisible();
 
       // Check if drawer is full-screen or near full-screen
       const drawer = page.locator('[class*="drawer"], [role="dialog"]').first();
@@ -281,7 +281,7 @@ test.describe('Responsive Layout Tests', () => {
       await settingsButton.click();
 
       // Settings drawer should be visible
-      await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible();
+      await expect(page.getByTestId('settings-drawer')).toBeVisible();
 
       // Drawer should overlay content (not full-screen)
       const drawer = page.locator('[class*="drawer"], [role="dialog"]').first();
@@ -429,7 +429,7 @@ test.describe('Responsive Layout Tests', () => {
       await settingsButton.click();
 
       // Settings drawer should be visible
-      await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible();
+      await expect(page.getByTestId('settings-drawer')).toBeVisible();
 
       // Drawer should be positioned on right side
       const drawer = page.locator('[class*="drawer"], [role="dialog"]').first();
@@ -623,7 +623,7 @@ test.describe('Responsive Layout Tests', () => {
         await settingsButton.click();
 
         // Verify settings content visible
-        await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible({
+        await expect(page.getByTestId('settings-drawer')).toBeVisible({
           timeout: 5000,
         });
 

@@ -163,7 +163,7 @@ test.describe('FAB - Run All Tests Flow', () => {
     await settingsButton.click();
 
     // Wait for settings drawer
-    await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('settings-drawer')).toBeVisible({ timeout: 5000 });
 
     // Look for FAB-related settings (if they exist in UI)
     // This will help verify FAB options are configurable

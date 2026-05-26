@@ -25,8 +25,9 @@ test.describe('SNMP Settings', () => {
     const settingsButton = page.getByTestId('header-open-settings');
     await settingsButton.click();
 
-    // Wait for settings drawer
-    await expect(page.getByText(/settings/i)).toBeVisible({ timeout: 5000 });
+    // Wait for settings drawer (use the stable testid added in #1174;
+    // the /settings/i text matched too many elements).
+    await expect(page.getByTestId('settings-drawer')).toBeVisible({ timeout: 5000 });
   });
 
   test('should display SNMP settings section', async ({ page }) => {
