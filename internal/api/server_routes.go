@@ -253,8 +253,16 @@ func (s *Server) setupCanopyRoutes() {
 }
 
 // setupHarvestRoutes registers Harvest module routes (reporting).
+// /harvest/export is gated behind the `export_csv_json` feature
+// (Starter or higher) per LICENSE_STRATEGY §2. Log endpoints stay
+// ungated because operational visibility is a basic capability for
+// every tier; only data extraction (the customer-facing reporting
+// surface) is paid.
 func (s *Server) setupHarvestRoutes() {
-	s.mux.HandleFunc(APIVersionPrefix+"/harvest/export", s.handleExport)
+	s.mux.HandleFunc(
+		APIVersionPrefix+"/harvest/export",
+		s.requireFeature("export_csv_json", s.handleExport),
+	)
 	s.mux.HandleFunc(APIVersionPrefix+"/harvest/logs", s.handleLogs)
 	s.mux.HandleFunc(APIVersionPrefix+"/harvest/logs/client", s.handleClientLogs)
 	s.mux.HandleFunc(APIVersionPrefix+"/harvest/logs/query", s.handleLogsQuery)
