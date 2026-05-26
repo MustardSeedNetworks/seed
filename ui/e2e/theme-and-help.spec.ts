@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { mockAuthenticated } from './helpers/auth';
+import { skipSetupWizard } from './helpers/auth';
 
 /**
  * Theme Toggle and Help Modal E2E Tests
@@ -26,7 +26,7 @@ import { mockAuthenticated } from './helpers/auth';
 
 test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthenticated(page);
+    await skipSetupWizard(page);
     await page.goto('/');
     // Pin to level: 1 + exact-match "Link" so the H3 "Link Status" card
     // chrome doesn't trip strict mode (same fix as auth.spec / dashboard.spec).

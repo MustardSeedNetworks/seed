@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { mockAuthenticated } from './helpers/auth';
+import { skipSetupWizard } from './helpers/auth';
 
 /**
  * Responsive Layout E2E Tests
@@ -32,7 +32,7 @@ test.describe('Responsive Layout Tests', () => {
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
 
-      await mockAuthenticated(page);
+      await skipSetupWizard(page);
       await page.goto('/');
       await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
         timeout: 10000,
@@ -239,7 +239,7 @@ test.describe('Responsive Layout Tests', () => {
       // Set tablet viewport
       await page.setViewportSize({ width: 768, height: 1024 });
 
-      await mockAuthenticated(page);
+      await skipSetupWizard(page);
       await page.goto('/');
       await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
         timeout: 10000,
@@ -368,7 +368,7 @@ test.describe('Responsive Layout Tests', () => {
       // Set desktop viewport
       await page.setViewportSize({ width: 1920, height: 1080 });
 
-      await mockAuthenticated(page);
+      await skipSetupWizard(page);
       await page.goto('/');
       await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
         timeout: 10000,
@@ -538,7 +538,7 @@ test.describe('Responsive Layout Tests', () => {
     test('should maintain authentication across all viewports', async ({ page }) => {
       // Test on mobile
       await page.setViewportSize({ width: 375, height: 667 });
-      await mockAuthenticated(page);
+      await skipSetupWizard(page);
       await page.goto('/');
       await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
         timeout: 10000,
@@ -558,7 +558,7 @@ test.describe('Responsive Layout Tests', () => {
     test('should maintain theme preference across viewports', async ({ page }) => {
       // Login on desktop
       await page.setViewportSize({ width: 1920, height: 1080 });
-      await mockAuthenticated(page);
+      await skipSetupWizard(page);
       await page.goto('/');
       await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
         timeout: 10000,
@@ -612,7 +612,7 @@ test.describe('Responsive Layout Tests', () => {
     test('should display same card data across all viewports', async ({ page }) => {
       // Login on desktop
       await page.setViewportSize({ width: 1920, height: 1080 });
-      await mockAuthenticated(page);
+      await skipSetupWizard(page);
       await page.goto('/');
       await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
         timeout: 10000,
@@ -638,7 +638,7 @@ test.describe('Responsive Layout Tests', () => {
     test('should provide working settings across all viewports', async ({ page }) => {
       // Login
       await page.setViewportSize({ width: 1920, height: 1080 });
-      await mockAuthenticated(page);
+      await skipSetupWizard(page);
       await page.goto('/');
       await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
         timeout: 10000,
