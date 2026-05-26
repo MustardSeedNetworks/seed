@@ -17,6 +17,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 	"time"
 )
@@ -132,6 +133,29 @@ func (m *Manager) IsActivated() bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.isActivatedLocked()
+}
+
+// HasFeature reports whether the active license includes the named
+// feature. Returns false when:
+//   - no license is loaded
+//   - the license has expired or is otherwise invalid
+//   - the feature is not in the license's feature set
+//
+// During an active trial, the license carries Pro features regardless
+// of which key (if any) was activated; HasFeature reflects that.
+//
+// Per-feature gates in HTTP handlers call this on every request, so
+// it must be cheap: a single map-equivalent lookup under RLock. The
+// canonical feature names are the strings in keygen's productCatalog
+// (e.g. "wifi_roam_analysis", "scheduled_reports") — mirrored by
+// starterFeatures() and proFeatures() in validator.go.
+func (m *Manager) HasFeature(feature string) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if !m.isActivatedLocked() || m.state == nil {
+		return false
+	}
+	return slices.Contains(m.state.Features, feature)
 }
 
 // isActivatedLocked assumes the caller holds at least an RLock.

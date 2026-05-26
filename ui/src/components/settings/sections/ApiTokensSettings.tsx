@@ -14,19 +14,11 @@
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../../api/client';
+import { useLicense } from '../../../contexts/LicenseContext';
 import { Button } from '../../ui/Button';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Input } from '../../ui/Input';
 import { Key, Plus, Trash2 } from '../../ui/icons';
-
-interface LicenseStatus {
-  tier: string;
-  tierValue: number;
-  isTrialMode: boolean;
-  trialDaysLeft?: number;
-  canMintTokens: boolean;
-  activated: boolean;
-}
 
 interface ApiToken {
   id: string;
@@ -61,7 +53,10 @@ function formatDate(value: string | undefined): string {
 }
 
 export function ApiTokensSettings(): React.ReactElement {
-  const [licenseStatus, setLicenseStatus] = useState<LicenseStatus | null>(null);
+  // License state is sourced from the shared LicenseProvider so every
+  // tier-aware UI surface stays in sync; this panel used to fetch it
+  // inline (pre-PR-A4).
+  const { status: licenseStatus, refresh: refreshLicense } = useLicense();
   const [tokens, setTokens] = useState<ApiToken[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,18 +67,17 @@ export function ApiTokensSettings(): React.ReactElement {
   const refresh = useCallback(async (): Promise<void> => {
     setError(null);
     try {
-      const [status, tokenList] = await Promise.all([
-        api.get<LicenseStatus>('/api/v1/license'),
+      const [, tokenList] = await Promise.all([
+        refreshLicense(),
         api.get<ApiToken[] | null>('/api/v1/tokens'),
       ]);
-      setLicenseStatus(status);
       setTokens(tokenList ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load API tokens');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refreshLicense]);
 
   useEffect(() => {
     void refresh();
