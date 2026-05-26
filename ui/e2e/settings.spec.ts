@@ -21,7 +21,7 @@ test.describe('Settings', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
 
@@ -162,7 +162,7 @@ test.describe('Settings CRUD Operations', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
 
@@ -365,7 +365,7 @@ test.describe('Settings CRUD Operations', () => {
       await page.reload();
 
       // Wait for dashboard
-      await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 

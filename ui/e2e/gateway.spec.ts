@@ -17,7 +17,7 @@ test.describe('Gateway', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
   });
@@ -124,7 +124,7 @@ test.describe('Gateway Help', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
   });

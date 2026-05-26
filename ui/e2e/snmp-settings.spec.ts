@@ -17,7 +17,7 @@ test.describe('SNMP Settings', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
 
@@ -234,7 +234,7 @@ test.describe('SNMP Authentication', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
 
@@ -320,7 +320,7 @@ test.describe('SNMP Test Connection', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
 

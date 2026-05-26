@@ -34,7 +34,7 @@ test.describe('Responsive Layout Tests', () => {
 
       await skipSetupWizard(page);
       await page.goto('/');
-      await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
     });
@@ -229,7 +229,7 @@ test.describe('Responsive Layout Tests', () => {
 
       await skipSetupWizard(page);
       await page.goto('/');
-      await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
     });
@@ -355,7 +355,7 @@ test.describe('Responsive Layout Tests', () => {
 
       await skipSetupWizard(page);
       await page.goto('/');
-      await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
     });
@@ -519,19 +519,19 @@ test.describe('Responsive Layout Tests', () => {
       await page.setViewportSize({ width: 375, height: 667 });
       await skipSetupWizard(page);
       await page.goto('/');
-      await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 
       // Resize to tablet - should stay authenticated
       await page.setViewportSize({ width: 768, height: 1024 });
 
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible();
+      await expect(page.getByTestId('page-header-title')).toBeVisible();
 
       // Resize to desktop - should stay authenticated
       await page.setViewportSize({ width: 1920, height: 1080 });
 
-      await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible();
+      await expect(page.getByTestId('page-header-title')).toBeVisible();
     });
 
     test('should maintain theme preference across viewports', async ({ page }) => {
@@ -539,7 +539,7 @@ test.describe('Responsive Layout Tests', () => {
       await page.setViewportSize({ width: 1920, height: 1080 });
       await skipSetupWizard(page);
       await page.goto('/');
-      await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 
@@ -590,7 +590,7 @@ test.describe('Responsive Layout Tests', () => {
       await page.setViewportSize({ width: 1920, height: 1080 });
       await skipSetupWizard(page);
       await page.goto('/');
-      await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 
@@ -616,7 +616,7 @@ test.describe('Responsive Layout Tests', () => {
       await page.setViewportSize({ width: 1920, height: 1080 });
       await skipSetupWizard(page);
       await page.goto('/');
-      await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+      await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
 

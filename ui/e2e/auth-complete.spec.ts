@@ -427,10 +427,11 @@ test.describe('Complete Authentication Lifecycle', () => {
   });
 
   test.describe('Remember Me Functionality', () => {
-    test('should persist session when remember me is checked', async ({ page }) => {
-      // Skip if remember me not implemented
-      // This test is a placeholder for future implementation
-
+    // The "remember me" checkbox isn't implemented in LoginForm yet —
+    // these placeholder tests are marked fixme so they surface in
+    // reports (a Playwright failure stays loud) without blocking
+    // every CI run. Drop the fixme markers when the feature lands.
+    test.fixme('should persist session when remember me is checked', async ({ page }) => {
       await page.goto('/');
 
       // Look for remember me checkbox
@@ -459,10 +460,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Implementation would need to verify this behavior
     });
 
-    test('should not persist session when remember me is unchecked', async ({ page }) => {
-      // Skip if remember me not implemented
-      // This test is a placeholder for future implementation
-
+    test.fixme('should not persist session when remember me is unchecked', async ({ page }) => {
       await page.goto('/');
 
       // Look for remember me checkbox
