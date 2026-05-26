@@ -525,6 +525,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-drawer-title"
+        data-testid="settings-drawer"
         onClick={(e: React.MouseEvent): void => e.stopPropagation()}
         onKeyDown={(e: React.KeyboardEvent): void => e.stopPropagation()}
         className="fixed right-0 top-0 h-full w-full sm:w-96 lg:w-lg bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl"

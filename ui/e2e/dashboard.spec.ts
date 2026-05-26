@@ -32,13 +32,14 @@ test.describe('Dashboard', () => {
   });
 
   test('should display Gateway card', async ({ page }) => {
-    const gatewayCard = page.locator('h3:has-text("Gateway"), h4:has-text("Gateway")').first();
-    await expect(gatewayCard).toBeVisible();
+    // Card.tsx generates id="card-title-<slug>" on every card's H3 —
+    // stable across i18n drift since slug derives from the title prop
+    // at component-mount time (still English in the dev backend).
+    await expect(page.locator('#card-title-gateway')).toBeVisible();
   });
 
   test('should display DNS card', async ({ page }) => {
-    const dnsCard = page.locator('h3:has-text("DNS"), h4:has-text("DNS")').first();
-    await expect(dnsCard).toBeVisible();
+    await expect(page.locator('#card-title-dns')).toBeVisible();
   });
 
   test('should open settings drawer', async ({ page }) => {
@@ -47,7 +48,7 @@ test.describe('Dashboard', () => {
     await settingsButton.click();
 
     // Settings drawer should be visible
-    await expect(page.getByText(/thresholds|appearance|discovery/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('settings-drawer')).toBeVisible({ timeout: 5000 });
   });
 
   test('should toggle theme in settings', async ({ page }) => {

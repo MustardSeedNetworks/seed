@@ -20,9 +20,9 @@ test.describe('Coverage gaps', () => {
   });
 
   test('opens log viewer modal', async ({ page }) => {
-    const logsCardTitle = page
-      .locator('h3:has-text("System Logs"), h4:has-text("System Logs")')
-      .first();
+    // Card.tsx generates id="card-title-<slug>" — see comment in
+    // dashboard.spec.ts. "System Logs" → "system-logs".
+    const logsCardTitle = page.locator('#card-title-system-logs');
     await expect(logsCardTitle).toBeVisible();
 
     const logsCard = logsCardTitle.locator('..').first();

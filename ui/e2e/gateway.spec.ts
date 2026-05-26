@@ -23,11 +23,11 @@ test.describe('Gateway', () => {
   });
 
   test('should display Gateway card', async ({ page }) => {
-    const gatewayCard = page
-      .getByRole('heading', { name: /gateway/i })
-      .or(page.locator('[data-testid="gateway-card"]'));
-
-    await expect(gatewayCard).toBeVisible({ timeout: 5000 });
+    // Card.tsx generates id="card-title-<slug>" — see comment in
+    // dashboard.spec.ts. The `.or()` chain previously hit a strict-
+    // mode violation because the page H1 "Link" + the card H3
+    // "Link Status" both matched a heading regex.
+    await expect(page.locator('#card-title-gateway')).toBeVisible({ timeout: 5000 });
   });
 
   test('should show gateway IP address', async ({ page }) => {
