@@ -14,7 +14,10 @@ test.describe('Coverage gaps', () => {
     await page.getByLabel(/select profile/i).click();
     await page.getByRole('button', { name: /manage profiles/i }).click();
 
-    await expect(page.getByRole('heading', { name: /profile management/i })).toBeVisible();
+    // ProfileManagement.tsx already gives the H2 id="profile-modal-title"
+    // (aria-labelledby target on the dialog); using it avoids i18n drift
+    // on the /profile management/i regex.
+    await expect(page.locator('#profile-modal-title')).toBeVisible();
 
     await page.getByRole('button', { name: /close/i }).click();
   });
