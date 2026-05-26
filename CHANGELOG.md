@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.198.0](https://github.com/krisarmstrong/seed/compare/v0.197.1...v0.198.0) (2026-05-26)
+
+
+### Features
+
+* **i18n:** add errors.license.* keys for tier-gating UI ([#1160](https://github.com/krisarmstrong/seed/issues/1160)) ([7392e31](https://github.com/krisarmstrong/seed/commit/7392e3179538406e62ef95ce25f9cb95a7cd9e2e))
+* **license:** add feature-gating framework ([#1153](https://github.com/krisarmstrong/seed/issues/1153)) ([cc6a1fa](https://github.com/krisarmstrong/seed/commit/cc6a1fa9298ff24c17f93e1f4252ce2da863d19a))
+* **license:** gate /harvest/export and ReportsPage on export_csv_json (PR-B2) ([#1156](https://github.com/krisarmstrong/seed/issues/1156)) ([a41567a](https://github.com/krisarmstrong/seed/commit/a41567a5eb2c99f1bbad92eb91da86ded2880109))
+* **license:** gate /sap/health-checks/anomalies on anomaly_detection (PR-B3) ([#1158](https://github.com/krisarmstrong/seed/issues/1158)) ([dff5269](https://github.com/krisarmstrong/seed/commit/dff5269ea815128b809b2175ebb9845cb9cccce1))
+* **license:** gate AirMapper baseline-diff import behind Pro tier (PR-B1) ([#1157](https://github.com/krisarmstrong/seed/issues/1157)) ([05ef48b](https://github.com/krisarmstrong/seed/commit/05ef48b931d46d957231d9fb4957db80084c1c4a))
+* **license:** gate path_analysis (Roots) behind Pro tier (PR-B5) ([#1155](https://github.com/krisarmstrong/seed/issues/1155)) ([550f088](https://github.com/krisarmstrong/seed/commit/550f0882923117fa6eae050e4b9d713b6ffacff9))
+* **license:** gate shell active-scan endpoints on compliance_advanced (PR-B4) ([#1159](https://github.com/krisarmstrong/seed/issues/1159)) ([e43dab1](https://github.com/krisarmstrong/seed/commit/e43dab17e516f3193862fe0924f652840a5353ed))
+
+
+### Bug Fixes
+
+* **e2e:** bulk-replace brittle heading regexes with getByTestId ([#1162](https://github.com/krisarmstrong/seed/issues/1162)) ([22f9c06](https://github.com/krisarmstrong/seed/commit/22f9c067623f14036b90f2a24704456ec9efbb74))
+* **e2e:** use data-testid for auth login + page header selectors ([#1161](https://github.com/krisarmstrong/seed/issues/1161)) ([f6a0848](https://github.com/krisarmstrong/seed/commit/f6a0848a48cdae0a6d5a28f55f04290cc3972c50))
+* **ui:** Add data-testid card + update e2e selector (kill last pre-existing E2E flake) ([#1154](https://github.com/krisarmstrong/seed/issues/1154)) ([e5293dc](https://github.com/krisarmstrong/seed/commit/e5293dcd871907ca3b9a4f3c25fca640a88cdbb2))
+
 ## [0.197.1](https://github.com/krisarmstrong/seed/compare/v0.197.0...v0.197.1) (2026-05-26)
 
 
