@@ -232,9 +232,15 @@ func (s *Server) setupCanopyRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/floorplan", s.updateSurveyFloorPlan)
 	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/settings", s.updateSurveySettings)
 	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/imported-data", s.updateSurveyImportedData)
+	// AirMapper baseline-diff is a Pro feature (LICENSE_STRATEGY §2):
+	// imports an existing AirMapper survey JSON and diffs it against
+	// the current floor-plan baseline. The rate limiter still wraps
+	// the gated handler so trial / Pro users can't abuse the endpoint.
 	s.mux.Handle(
 		APIVersionPrefix+"/canopy/survey/import/airmapper",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.importAirMapper)),
+		s.endpointRateLimiter().RateLimitMiddleware(
+			s.requireFeature("airmapper_baseline_diff", s.importAirMapper),
+		),
 	)
 	s.mux.Handle(
 		APIVersionPrefix+"/canopy/survey/heatmap",
