@@ -202,12 +202,21 @@ func (s *Server) setupShellRoutes() {
 }
 
 // setupRootsRoutes registers Roots module routes (path analysis).
+// Both endpoints are gated on the `path_analysis` feature (Pro tier);
+// Free / Starter receive 402 with an upgrade hint. The rate-limit
+// middleware still wraps traceroute so abuse remains capped even for
+// trial users.
 func (s *Server) setupRootsRoutes() {
 	s.mux.Handle(
 		APIVersionPrefix+"/roots/traceroute",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleTraceroute)),
+		s.endpointRateLimiter().RateLimitMiddleware(
+			s.requireFeature("path_analysis", s.handleTraceroute),
+		),
 	)
-	s.mux.HandleFunc(APIVersionPrefix+"/roots/path", s.handlePath)
+	s.mux.HandleFunc(
+		APIVersionPrefix+"/roots/path",
+		s.requireFeature("path_analysis", s.handlePath),
+	)
 }
 
 // setupCanopyRoutes registers Canopy module routes (Wi-Fi planning).
