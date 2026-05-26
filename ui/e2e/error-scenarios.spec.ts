@@ -40,7 +40,7 @@ import { skipSetupWizard, TEST_CREDENTIALS } from './helpers/auth';
 async function login(page: Page): Promise<void> {
   await skipSetupWizard(page);
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+  await expect(page.getByTestId('page-header-title')).toBeVisible({
     timeout: 10000,
   });
 }
@@ -103,7 +103,7 @@ test.describe('API Error Scenarios', () => {
         });
 
         // App should remain functional
-        await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
+        await expect(page.getByTestId('page-header-title')).toBeVisible();
       }
     });
 
@@ -244,7 +244,7 @@ test.describe('API Error Scenarios', () => {
         // Should handle timeout gracefully (loading ends or error shown)
 
         // App should remain functional
-        await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
+        await expect(page.getByTestId('page-header-title')).toBeVisible();
       }
     });
   });
@@ -305,7 +305,7 @@ test.describe('API Error Scenarios', () => {
 
           // Either shows error or remains functional
           expect(
-            notFoundShown || (await page.getByRole('heading', { name: /link/i }).isVisible()),
+            notFoundShown || (await page.getByTestId('page-header-title').isVisible()),
           ).toBeTruthy();
         }
       }
@@ -343,7 +343,7 @@ test.describe('API Error Scenarios', () => {
       });
 
       // App should handle missing device gracefully
-      await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
+      await expect(page.getByTestId('page-header-title')).toBeVisible();
     });
   });
 
@@ -472,7 +472,7 @@ test.describe('API Error Scenarios', () => {
 
             // Either error shown or app remains functional
             expect(
-              errorShown || (await page.getByRole('heading', { name: /link/i }).isVisible()),
+              errorShown || (await page.getByTestId('page-header-title').isVisible()),
             ).toBeTruthy();
           }
         }
@@ -694,7 +694,7 @@ test.describe('Validation Error Scenarios', () => {
       });
 
       // App should remain functional
-      await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
+      await expect(page.getByTestId('page-header-title')).toBeVisible();
     });
   });
 });
@@ -709,7 +709,7 @@ test.describe('WebSocket Error Scenarios', () => {
     // App should still function without WebSocket
 
     // Dashboard should be visible
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
 
     // May show disconnected indicator but app should work
     const _hasError = await page.getByText(/disconnected|offline|connection/i).isVisible();
@@ -737,7 +737,7 @@ test.describe('WebSocket Error Scenarios', () => {
     // Wait for potential WS messages
 
     // App should remain functional
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
 
     // Should not have critical crashes (some errors may be expected)
     const hasCriticalError = errors.some(
@@ -853,9 +853,7 @@ test.describe('Resource Error Scenarios - Empty States', () => {
       .getByText(/no vulnerabilities|secure|safe|clean/i)
       .isVisible({ timeout: 5000 });
 
-    expect(
-      successShown || (await page.getByRole('heading', { name: /link/i }).isVisible()),
-    ).toBeTruthy();
+    expect(successShown || (await page.getByTestId('page-header-title').isVisible())).toBeTruthy();
   });
 });
 
@@ -883,9 +881,7 @@ test.describe('Backend Service Unavailable', () => {
       .isVisible({ timeout: 5000 });
 
     // Either shows prompt or app remains functional
-    expect(
-      promptShown || (await page.getByRole('heading', { name: /link/i }).isVisible()),
-    ).toBeTruthy();
+    expect(promptShown || (await page.getByTestId('page-header-title').isVisible())).toBeTruthy();
   });
 
   test('should handle speedtest.net unavailable', async ({ page }) => {
@@ -913,7 +909,7 @@ test.describe('Backend Service Unavailable', () => {
     });
 
     // App should handle this gracefully
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
   });
 });
 
@@ -945,7 +941,7 @@ test.describe('Edge Cases', () => {
     await page.reload();
 
     // App should handle large dataset (pagination, virtualization, or graceful degradation)
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
 
     // Should show device count
     const _deviceCount = await page.getByText(/1000|devices|hosts/i).isVisible({ timeout: 5000 });
@@ -1028,7 +1024,7 @@ test.describe('Edge Cases', () => {
     // Wait for operations
 
     // App should handle concurrent operations without crashing
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
   });
 
   test('should handle rapid navigation between views', async ({ page }) => {
@@ -1051,7 +1047,7 @@ test.describe('Edge Cases', () => {
     }
 
     // App should remain functional
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 5000,
     });
   });
@@ -1123,7 +1119,7 @@ test.describe('Error Recovery Mechanisms', () => {
           await closeButton.click();
 
           // Error should be dismissable
-          await expect(page.getByRole('heading', { name: /link/i })).toBeVisible();
+          await expect(page.getByTestId('page-header-title')).toBeVisible();
         }
       }
     }
@@ -1133,7 +1129,7 @@ test.describe('Error Recovery Mechanisms', () => {
     await login(page);
 
     // Note some initial state
-    const initialHeading = await page.getByRole('heading', { name: /link/i }).textContent();
+    const initialHeading = await page.getByTestId('page-header-title').textContent();
 
     // Mock error
     await page.route('**/api/devices/scan', async (route) => {
@@ -1151,7 +1147,7 @@ test.describe('Error Recovery Mechanisms', () => {
     }
 
     // State should be preserved
-    const currentHeading = await page.getByRole('heading', { name: /link/i }).textContent();
+    const currentHeading = await page.getByTestId('page-header-title').textContent();
     expect(currentHeading).toBe(initialHeading);
   });
 });
@@ -1171,11 +1167,17 @@ test.describe('Cross-Browser Error Handling', () => {
 
     await page.reload();
 
-    // Should handle error consistently regardless of browser
-    const appFunctional = await page
-      .getByRole('heading', { name: /link|login/i })
-      .isVisible({ timeout: 10000 });
+    // Should handle error consistently regardless of browser — either
+    // the page-header (post-login) OR the login form is showing.
+    const headerVisible = await page
+      .getByTestId('page-header-title')
+      .isVisible({ timeout: 10000 })
+      .catch(() => false);
+    const loginVisible = await page
+      .getByTestId('login-title')
+      .isVisible({ timeout: 1000 })
+      .catch(() => false);
 
-    expect(appFunctional).toBeTruthy();
+    expect(headerVisible || loginVisible).toBeTruthy();
   });
 });

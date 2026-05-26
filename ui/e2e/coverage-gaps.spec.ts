@@ -5,7 +5,7 @@ test.describe('Coverage gaps', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /link/i })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
   });

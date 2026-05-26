@@ -61,7 +61,7 @@ test.describe('Authentication', () => {
     await page.getByRole('button', { name: /sign in|login/i }).click();
 
     // Should redirect to dashboard
-    await expect(page.getByRole('heading', { name: /link|dashboard/i })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
   });
