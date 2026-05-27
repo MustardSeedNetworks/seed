@@ -222,20 +222,18 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       expect(stillDark).toBe(isDark);
     });
 
-    test('should respect system theme preference if implemented', async ({ page }) => {
-      // This test is skipped as system theme preference may not be implemented
-      // To implement: check if theme matches system preference on first load
-
-      // Get system theme preference
+    // System-theme-sync (prefers-color-scheme) is not implemented in
+    // seed; this test would always fail until the feature exists.
+    // Marked fixme so it surfaces in reports as expected-broken
+    // (loud-failure pattern, no silent skip) without blocking CI.
+    // Drop the fixme when the feature lands. Per 2026-05-26 audit
+    // in msn-docs-internal/05-Engineering/SEED_E2E_PER_TEST_EVAL_*.
+    test.fixme('should respect system theme preference if implemented', async ({ page }) => {
       const systemPrefersDark = await page.evaluate(
         () => window.matchMedia('(prefers-color-scheme: dark)').matches,
       );
-
-      // Check if app theme matches system theme
       const htmlClasses = await page.locator('html').getAttribute('class');
       const appIsDark = htmlClasses?.includes('dark') ?? false;
-
-      // If system theme sync is implemented, these should match
       expect(appIsDark).toBe(systemPrefersDark);
     });
   });
