@@ -183,10 +183,18 @@ def main() -> int:
     # Exception: keys that are looked up dynamically via
     # t(`namespace.${variable}.suffix`) can't be statically validated;
     # we add a fallback heuristic — if a JSON key's flat path starts
-    # with the same prefix as a t() call with a template literal, allow
-    # it. For now we list known dynamic-lookup prefixes here; expand as
-    # needed.
-    DYNAMIC_PREFIXES = (
+    # with one of the prefixes below, allow it.
+    #
+    # Two layers of allowlist:
+    # - Built-in prefixes (this list): common across all 3 products,
+    #   tied to the shared SettingsDrawer/AppearanceSection patterns.
+    # - Per-repo allowlist file (scripts/i18n/dynamic-prefixes.txt):
+    #   one prefix per line, comments with #. Captures repo-specific
+    #   data-driven lookups (glossary terms, help content, device
+    #   types, RFC test catalog, CLI category metadata, etc.) that the
+    #   static analyzer can't see because the keys are consumed via
+    #   <ns>.json[<section>] lookups rather than literal t() strings.
+    BUILTIN_DYNAMIC_PREFIXES = [
         # SettingsDrawer renders t(`tabs.${tab.id}`) for 5 tabs.
         "tabs.",
         # SimulationSection renders t(`simulation.${labelKey}`) for 3 tabs.
@@ -199,14 +207,26 @@ def main() -> int:
         "network.interfaceTypes.",
         # DebugSection renders t(`debug.levels.${lvl}`).
         "debug.levels.",
-    )
+    ]
+
+    repo_allowlist_path = Path("scripts/i18n/dynamic-prefixes.txt")
+    repo_prefixes: list[str] = []
+    if repo_allowlist_path.is_file():
+        for raw in repo_allowlist_path.read_text().splitlines():
+            line = raw.split("#", 1)[0].strip()
+            if line:
+                repo_prefixes.append(line)
+
+    all_prefixes = tuple(BUILTIN_DYNAMIC_PREFIXES + repo_prefixes)
 
     unused: list[tuple[str, str]] = []
     for ns, keys in locale.items():
         for k in keys:
             if k in used_keys.get(ns, set()):
                 continue
-            if any(k.startswith(p) for p in DYNAMIC_PREFIXES):
+            # Match either `key.path` or `<namespace>:key.path`
+            qualified = f"{ns}:{k}"
+            if any(k.startswith(p) or qualified.startswith(p) for p in all_prefixes):
                 continue
             unused.append((ns, k))
 
