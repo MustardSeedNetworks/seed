@@ -129,4 +129,16 @@ i18n
     debug: import.meta.env.DEV,
   });
 
+// Keep the document's lang attribute in sync with the active locale.
+// Required for screen readers, search engines, browser spell-check, and
+// CSS :lang() selectors. Without this, `<html lang="en">` from index.html
+// stays English even after the user switches to Spanish — WCAG 3.1.1/3.1.2
+// violation. Per msn-docs-internal/05-Engineering/I18N_CONVENTIONS.md.
+if (typeof document !== 'undefined') {
+  document.documentElement.lang = i18n.language;
+  i18n.on('languageChanged', (lng) => {
+    document.documentElement.lang = lng;
+  });
+}
+
 export default i18n;
