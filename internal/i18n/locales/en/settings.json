@@ -491,5 +491,20 @@
     "status": {
       "saved": "{{provider}} configuration saved."
     }
+  },
+  "interfaces": {
+    "title": "Network Interfaces",
+    "description": "Configure which ethernet and Wi-Fi interfaces Seed monitors.",
+    "ethernet": "Ethernet",
+    "wifi": "Wi-Fi",
+    "addEthernet": "Add ethernet",
+    "addWifi": "Add Wi-Fi",
+    "removeInterface": "Remove",
+    "removeConfirm": "Remove {{name}} from this profile?",
+    "removeConfirmPrompt": "Background monitoring for this interface will stop. The system interface itself is not affected.",
+    "active": "Active",
+    "setActive": "Set active",
+    "noInterfaces": "No {{kind}} interfaces configured.",
+    "limitReachedFreeStarter": "Free and Starter tiers support 1 ethernet + 1 Wi-Fi interface. Upgrade to Pro for unlimited concurrent interfaces."
   }
 }

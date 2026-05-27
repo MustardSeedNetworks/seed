@@ -57,6 +57,7 @@ import { ConfigBackupsSection } from './sections/ConfigBackupsSection';
 import { DiscoverySettings } from './sections/DiscoverySettings';
 import { DnsSettings } from './sections/DnsSettings';
 import { HealthChecksSettings } from './sections/HealthChecksSettings';
+import { InterfacesSettings } from './sections/InterfacesSettings';
 import { LinkSettings } from './sections/LinkSettings';
 import { PerformanceSettings } from './sections/PerformanceSettings';
 import { SsoSettings } from './sections/SsoSettings';
@@ -699,6 +700,9 @@ export const SettingsDrawer: React.MemoExoticComponent<
 
           {/* SSO admin panel (seed#1198) */}
           <SsoSettings />
+
+          {/* Network Interfaces (multi_interface, seed#1192) */}
+          <InterfacesSettings />
 
           {/* Config Backups Section (implements #494) */}
           <ConfigBackupsSection />

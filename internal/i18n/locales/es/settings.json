@@ -491,5 +491,20 @@
     "status": {
       "saved": "Configuración de {{provider}} guardada."
     }
+  },
+  "interfaces": {
+    "title": "Interfaces de red",
+    "description": "Configure qué interfaces ethernet y Wi-Fi monitorea Seed.",
+    "ethernet": "Ethernet",
+    "wifi": "Wi-Fi",
+    "addEthernet": "Agregar ethernet",
+    "addWifi": "Agregar Wi-Fi",
+    "removeInterface": "Eliminar",
+    "removeConfirm": "¿Eliminar {{name}} de este perfil?",
+    "removeConfirmPrompt": "El monitoreo en segundo plano de esta interfaz se detendrá. La interfaz del sistema no se ve afectada.",
+    "active": "Activa",
+    "setActive": "Activar",
+    "noInterfaces": "No hay interfaces {{kind}} configuradas.",
+    "limitReachedFreeStarter": "Las licencias Free y Starter permiten 1 interfaz ethernet + 1 Wi-Fi. Actualice a Pro para interfaces concurrentes ilimitadas."
   }
 }
