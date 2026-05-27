@@ -1,0 +1,189 @@
+# i18n glossary — terms preserved verbatim in all secondary locales.
+# One term per line. Lines starting with # are comments.
+# Source of truth: msn-docs-internal/05-Engineering/I18N_GLOSSARY.md
+#
+# Used by scripts/i18n-validate.sh — when an EN locale string contains one
+# of these terms, the corresponding secondary-locale string MUST contain the
+# same term verbatim (case-sensitive, word-boundary match).
+#
+# Adding a term: open a PR that updates BOTH this file AND
+# msn-docs-internal/05-Engineering/I18N_GLOSSARY.md so they stay in sync.
+
+# --- IETF RFCs (sample; add as referenced)
+RFC 2544
+RFC 2889
+RFC 6349
+RFC 5357
+RFC 1918
+RFC 8200
+
+# --- ITU-T standards
+Y.1564
+Y.1731
+G.781
+G.8275
+
+# --- IEEE / industry
+802.1Q
+802.1X
+802.1AS
+802.1AB
+802.11ax
+802.11ac
+802.3
+MEF
+TSN
+DOCSIS
+
+# --- L2/L3 protocols
+ARP
+BGP
+BFD
+CDP
+DHCP
+DHCPv6
+ICMP
+ICMPv6
+IGMP
+ISIS
+LACP
+LLDP
+MPLS
+MSTP
+NDP
+NTP
+OSPF
+OSPFv3
+PIM
+RIP
+RSTP
+STP
+VRRP
+
+# --- L4-7 / application
+DNS
+FTP
+GRE
+GTP
+HTTP
+HTTPS
+IMAP
+IPSec
+SMTP
+SNMP
+SSH
+SSL
+STUN
+TCP
+TLS
+UDP
+mTLS
+
+# --- auth / identity
+EAP
+EAP-TLS
+JOSE
+JWT
+OAuth
+OAuth2
+OIDC
+PSK
+RADIUS
+SAML
+SAML2
+WebAuthn
+WPA2
+WPA3
+
+# --- NIAC simulated protocols
+NetBIOS
+WINS
+mDNS
+
+# --- addressing / layer
+ASN
+CIDR
+DSCP
+ECMP
+IP
+IPv4
+IPv6
+MAC
+MPLS
+MTU
+NAT
+PAT
+QoS
+VLAN
+VXLAN
+
+# --- Wi-Fi / RF
+AP
+BSSID
+dBm
+EIRP
+ESSID
+GHz
+MHz
+RSSI
+SNR
+SSID
+
+# --- performance units (SI / industry)
+bps
+Mbps
+Gbps
+Tbps
+B/s
+MB/s
+GB/s
+TB/s
+pps
+Mpps
+fps
+ns
+μs
+ms
+RTT
+
+# --- brand / product
+Mustard Seed Networks
+The Seed
+The Stem
+NIAC
+AirMapper
+
+# --- Seed modules
+Roots
+Canopy
+Shell
+Sap
+Harvest
+
+# --- Stem modules
+Reflector
+Benchmark
+ServiceTest
+TrafficGen
+Measure
+Certify
+TestMaster
+
+# --- license tier names (English brand terms in ES per I18N_GLOSSARY.md)
+Pro
+Starter
+Free
+Enterprise
+Pro Bundle
+
+# --- file formats
+JSON
+YAML
+XML
+CSV
+PCAP
+PCAPNG
+TOML
+INI
+MIB
+BPF

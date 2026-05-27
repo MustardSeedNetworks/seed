@@ -1,0 +1,27 @@
+# Glossary exception list — per-key allow-list for false positives in
+# the glossary-preservation check (validate.sh:check_glossary_preservation).
+#
+# Use when the English value uses a glossary term in a non-glossary
+# sense (e.g., "Pro Tips" uses "Pro" as the adjective "professional",
+# not the license-tier brand "Pro"). The Spanish translation legitimately
+# does NOT contain the term, so we mark the key as a known exception.
+#
+# Format: one `namespace.key.path` per line (no .json extension on
+# namespace). Lines starting with # are comments.
+#
+# Adding an entry is a REVIEW gate — if you're tempted to allow-list a key,
+# first confirm with the translator/glossary owner that this is genuinely
+# a non-glossary use of the term. Cross-product: each repo maintains its
+# own exception file; don't share across repos.
+
+# --- "Pro" used as adjective "professional", not the tier brand
+help.content.gettingStarted.proTips.title
+
+# --- "Measure" used as verb "to measure", not the Stem module name
+survey.config.goals.throughputDesc
+survey.scalePanel.measureDistance
+
+# --- "Enterprise" used as 802.11 auth mode (WPA2/WPA3-Enterprise),
+#     not the deprecated license-tier brand
+survey.heatmaps.security.wpa2-enterprise
+survey.heatmaps.security.wpa3-enterprise
