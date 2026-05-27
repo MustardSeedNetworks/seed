@@ -63,6 +63,7 @@ import { PerformanceSettings } from './sections/PerformanceSettings';
 import { SsoSettings } from './sections/SsoSettings';
 import { ThresholdsSettings } from './sections/ThresholdsSettings';
 import { UpdateSettings } from './sections/UpdateSettings';
+import { UsersSettings } from './sections/UsersSettings';
 import { VulnerabilitySettings } from './sections/VulnerabilitySettings';
 import { WiFiSettings } from './sections/WiFiSettings';
 import {
@@ -697,6 +698,9 @@ export const SettingsDrawer: React.MemoExoticComponent<
 
           {/* API tokens (Phase D-2 LICENSE_STRATEGY) */}
           <ApiTokensSettings />
+
+          {/* Users CRUD (multi_user, seed#1191) */}
+          <UsersSettings />
 
           {/* SSO admin panel (seed#1198) */}
           <SsoSettings />

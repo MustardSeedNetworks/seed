@@ -506,5 +506,41 @@
     "setActive": "Set active",
     "noInterfaces": "No {{kind}} interfaces configured.",
     "limitReachedFreeStarter": "Free and Starter tiers support 1 ethernet + 1 Wi-Fi interface. Upgrade to Pro for unlimited concurrent interfaces."
+  },
+  "users": {
+    "title": "Users",
+    "description": "Manage local user accounts and SSO-linked identities.",
+    "addUser": "Add user",
+    "editUser": "Edit user",
+    "deleteUser": "Delete user",
+    "resetPassword": "Reset password",
+    "currentUser": "(you)",
+    "columns": {
+      "username": "Username",
+      "email": "Email",
+      "role": "Role",
+      "lastLogin": "Last login",
+      "status": "Status",
+      "authProvider": "Auth"
+    },
+    "status": {
+      "active": "Active",
+      "disabled": "Disabled",
+      "locked": "Locked"
+    },
+    "roles": {
+      "admin": "Admin",
+      "operator": "Operator",
+      "viewer": "Viewer"
+    },
+    "providers": {
+      "local": "Local",
+      "google": "Google",
+      "microsoft": "Microsoft",
+      "github": "GitHub"
+    },
+    "confirmDelete": "Delete user {{username}}?",
+    "confirmDeletePrompt": "This will revoke all of {{username}}'s sessions and API tokens. Cannot be undone.",
+    "neverLoggedIn": "Never"
   }
 }
