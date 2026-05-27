@@ -222,19 +222,34 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       expect(stillDark).toBe(isDark);
     });
 
-    // System-theme-sync (prefers-color-scheme) is not implemented in
-    // seed; this test would always fail until the feature exists.
-    // Marked fixme so it surfaces in reports as expected-broken
-    // (loud-failure pattern, no silent skip) without blocking CI.
-    // Drop the fixme when the feature lands. Per 2026-05-26 audit
-    // in msn-docs-internal/05-Engineering/SEED_E2E_PER_TEST_EVAL_*.
-    test.fixme('should respect system theme preference if implemented', async ({ page }) => {
-      const systemPrefersDark = await page.evaluate(
-        () => window.matchMedia('(prefers-color-scheme: dark)').matches,
-      );
-      const htmlClasses = await page.locator('html').getAttribute('class');
-      const appIsDark = htmlClasses?.includes('dark') ?? false;
-      expect(appIsDark).toBe(systemPrefersDark);
+    test('should track system theme when theme=system', async ({ page }) => {
+      // System theme detection IS implemented in seed (see
+      // ui/src/hooks/useTheme.ts — Theme = 'light' | 'dark' |
+      // 'system', live matchMedia listener). Exercises both
+      // system → dark and system → light branches and the
+      // bidirectional matchMedia 'change' listener.
+      //
+      // Previous shape loaded the page with the default theme
+      // (hardcoded 'dark') and compared the resulting html class
+      // against window.matchMedia — only passed when the host
+      // happened to also be dark. This rewrite forces theme=system
+      // explicitly via localStorage and uses Playwright's
+      // colorScheme emulation to drive both branches
+      // deterministically.
+
+      // Emulate dark system preference and load with theme=system.
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await page.evaluate(() => localStorage.setItem('seed-theme', 'system'));
+      await page.reload();
+      await expect(page.locator('html')).toHaveClass(/dark/);
+
+      // Live system theme change: app should follow.
+      await page.emulateMedia({ colorScheme: 'light' });
+      await expect(page.locator('html')).not.toHaveClass(/dark/);
+
+      // Back to dark to confirm the listener is bidirectional.
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await expect(page.locator('html')).toHaveClass(/dark/);
     });
   });
 
