@@ -463,5 +463,33 @@
     "step4": "Paso 4: Pegue la clave aquí y el escáner la utilizará.",
     "updateInterval": "Intervalo de actualización",
     "vulnerabilities": "Vulnerabilidades"
+  },
+  "sso": {
+    "title": "Inicio de sesión único",
+    "description": "Permita a los usuarios iniciar sesión mediante su proveedor de identidad.",
+    "providers": {
+      "google": "Google Workspace",
+      "microsoft": "Microsoft Entra ID",
+      "github": "GitHub"
+    },
+    "fields": {
+      "enabled": "Habilitado",
+      "clientId": "Client ID",
+      "clientSecret": "Client secret",
+      "clientSecretMask": "(almacenado — déjelo en blanco para conservar el actual)",
+      "redirectUrl": "URL de redirección",
+      "redirectUrlHint": "Pegue esta URL en las URL de redirección permitidas de su proveedor de identidad.",
+      "tenantId": "ID de tenant",
+      "tenantIdHint": "Use 'common' para cuentas personales + de trabajo, 'organizations' solo para trabajo, o un ID específico para apps Entra de tenant único.",
+      "allowedDomains": "Dominios de correo permitidos",
+      "scopes": "Scopes de OAuth (avanzado)"
+    },
+    "actions": {
+      "save": "Guardar",
+      "disable": "Deshabilitar proveedor"
+    },
+    "status": {
+      "saved": "Configuración de {{provider}} guardada."
+    }
   }
 }

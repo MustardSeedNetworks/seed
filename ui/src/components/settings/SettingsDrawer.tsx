@@ -59,6 +59,7 @@ import { DnsSettings } from './sections/DnsSettings';
 import { HealthChecksSettings } from './sections/HealthChecksSettings';
 import { LinkSettings } from './sections/LinkSettings';
 import { PerformanceSettings } from './sections/PerformanceSettings';
+import { SsoSettings } from './sections/SsoSettings';
 import { ThresholdsSettings } from './sections/ThresholdsSettings';
 import { UpdateSettings } from './sections/UpdateSettings';
 import { VulnerabilitySettings } from './sections/VulnerabilitySettings';
@@ -695,6 +696,9 @@ export const SettingsDrawer: React.MemoExoticComponent<
 
           {/* API tokens (Phase D-2 LICENSE_STRATEGY) */}
           <ApiTokensSettings />
+
+          {/* SSO admin panel (seed#1198) */}
+          <SsoSettings />
 
           {/* Config Backups Section (implements #494) */}
           <ConfigBackupsSection />

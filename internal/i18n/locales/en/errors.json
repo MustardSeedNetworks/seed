@@ -115,5 +115,8 @@
   "profile": {
     "multiClientRequired": "Free and Starter licenses allow 1 profile. Upgrade to Pro to manage configurations for multiple clients from a single Seed instance.",
     "multiInterfaceRequired": "Free and Starter licenses allow at most 1 ethernet + 1 Wi-Fi interface per profile. Upgrade to Pro for unlimited concurrent interfaces."
+  },
+  "sso": {
+    "featureRequired": "Single Sign-On configuration requires a Pro license. Existing providers continue to accept logins on any tier; only enabling or editing providers is blocked."
   }
 }

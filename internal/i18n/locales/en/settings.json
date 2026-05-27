@@ -463,5 +463,33 @@
     "step4": "Step 4: Paste the key here and the scanner will use it.",
     "updateInterval": "Update interval",
     "vulnerabilities": "Vulnerabilities"
+  },
+  "sso": {
+    "title": "Single Sign-On",
+    "description": "Allow users to sign in via your identity provider.",
+    "providers": {
+      "google": "Google Workspace",
+      "microsoft": "Microsoft Entra ID",
+      "github": "GitHub"
+    },
+    "fields": {
+      "enabled": "Enabled",
+      "clientId": "Client ID",
+      "clientSecret": "Client secret",
+      "clientSecretMask": "(stored — leave blank to keep current)",
+      "redirectUrl": "Redirect URL",
+      "redirectUrlHint": "Paste this into your identity provider's allowed redirect URLs.",
+      "tenantId": "Tenant ID",
+      "tenantIdHint": "Use 'common' for personal + work accounts, 'organizations' for work only, or a specific tenant ID for single-tenant Entra apps.",
+      "allowedDomains": "Allowed email domains",
+      "scopes": "OAuth scopes (advanced)"
+    },
+    "actions": {
+      "save": "Save",
+      "disable": "Disable provider"
+    },
+    "status": {
+      "saved": "{{provider}} configuration saved."
+    }
   }
 }
