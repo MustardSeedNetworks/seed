@@ -129,79 +129,19 @@ test.describe('FAB - Run All Tests Flow', () => {
     await expect(playIcon).toBeVisible();
   });
 
-  test('should not trigger tests if FAB is clicked while already running', async ({ page }) => {
-    const fab = page.getByTestId('fab-run-all-tests');
-
-    // Click FAB first time
-    await fab.click();
-    await expect(fab).toBeDisabled();
-
-    // Try clicking again while disabled
-    const _clickCount = await page.evaluate(() => {
-      let count = 0;
-      window.addEventListener('runAllTests', () => count++);
-      return count;
-    });
-
-    // Try to click disabled FAB
-    await fab.click({ force: true }).catch(() => {
-      // Expected to fail or do nothing
-    });
-
-    // Should still only have one test run
-    const finalCount = await page.evaluate(
-      () => (window as unknown as { runAllTestsCount?: number }).runAllTestsCount || 0,
-    );
-
-    // Event should not have fired multiple times
-    expect(finalCount).toBeLessThanOrEqual(1);
-  });
-
-  test('should respect FAB options from settings', async ({ page }) => {
-    // Open settings drawer
-    const settingsButton = page.getByTestId('header-open-settings');
-    await settingsButton.click();
-
-    // Wait for settings drawer
-    await expect(page.getByTestId('settings-drawer')).toBeVisible({ timeout: 5000 });
-
-    // Look for FAB-related settings (if they exist in UI)
-    // This will help verify FAB options are configurable
-    const fabSettings = page.locator('text=/FAB|Run All Tests|Test Options/i').first();
-    const hasFabSettings = await fabSettings.isVisible();
-
-    if (hasFabSettings) {
-      // If FAB settings exist, verify they can be changed
-      await expect(fabSettings).toBeVisible();
-    }
-
-    // Close settings
-    const closeButton = page.getByRole('button', { name: /close/i }).first();
-    await closeButton.click();
-  });
-
-  test('should trigger network discovery scan when FAB is clicked', async ({ page }) => {
-    // Track if network discovery scan endpoint is called
-    let scanTriggered = false;
-
-    page.on('request', (request) => {
-      if (request.url().includes('/api/devices/scan') && request.method() === 'POST') {
-        scanTriggered = true;
-      }
-    });
-
-    const fab = page.getByTestId('fab-run-all-tests');
-
-    // Click FAB
-    await fab.click();
-
-    // Wait a bit for scan to be triggered
-
-    // Verify scan was triggered (if network discovery is enabled in FAB options)
-    // Note: This depends on default FAB options configuration
-    // The test verifies the mechanism works, actual behavior depends on settings
-    expect(scanTriggered).toBeDefined();
-  });
+  // Deleted: "should not trigger tests if FAB is clicked while already
+  //   running" — tested window.runAllTestsCount which is never set;
+  //   finalCount was always 0 and `expect(0).toBeLessThanOrEqual(1)`
+  //   is tautologically true. The disabled-state on click is already
+  //   covered by `toBeDisabled()` in the spinner test above.
+  // Deleted: "should respect FAB options from settings" — body wrapped
+  //   in `if (hasFabSettings)`; silently passes when the panel doesn't
+  //   exist (which is always, currently). Tested nothing.
+  // Deleted: "should trigger network discovery scan when FAB is
+  //   clicked" — final assertion `expect(scanTriggered).toBeDefined()`
+  //   on a `let scanTriggered = false` is tautological.
+  // See msn-docs-internal/05-Engineering/SEED_E2E_PER_TEST_EVAL_2026-05-26.md
+  // for the full evaluation.
 
   test('should handle test failures gracefully', async ({ page }) => {
     // Intercept an API call and make it fail
