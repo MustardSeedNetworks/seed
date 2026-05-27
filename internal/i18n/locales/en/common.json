@@ -162,5 +162,11 @@
       "howToFix": "How to fix:",
       "dismiss": "Dismiss warning"
     }
+  },
+  "plurals": {
+    "intervalMinutes": "{{count}} min",
+    "intervalHours": "{{count}} hr",
+    "intervalDays_one": "{{count}} day",
+    "intervalDays_other": "{{count}} days"
   }
 }
