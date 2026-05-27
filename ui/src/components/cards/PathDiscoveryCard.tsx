@@ -22,10 +22,13 @@
  * Dependencies: Card UI, DeviceSelector, theme utilities, path discovery API
  */
 
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import type React from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
+import { PathDiscoverySchema } from '../../schemas/auth';
 import {
   button as buttonTokens,
   cn,
@@ -69,9 +72,26 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
   }: PathDiscoveryCardProps): React.ReactElement {
     const { t } = useTranslation('cards');
 
-    const [target, setTarget] = useState('');
-    const [protocol, setProtocol] = useState<Protocol>('icmp');
-    const [port, setPort] = useState<number>(80);
+    const {
+      register,
+      handleSubmit,
+      watch,
+      setValue,
+      formState: { errors },
+    } = useForm<{ target: string; protocol: Protocol; port: number }>({
+      resolver: valibotResolver(PathDiscoverySchema),
+      defaultValues: { target: '', protocol: 'icmp', port: 80 },
+      mode: 'onBlur',
+    });
+    const target = watch('target');
+    const protocol = watch('protocol');
+    const port = watch('port');
+    const setTarget = useCallback(
+      (next: string): void => {
+        setValue('target', next, { shouldValidate: true, shouldDirty: true });
+      },
+      [setValue],
+    );
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<PathResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -148,15 +168,13 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
       [protocol, port],
     );
 
-    // Handle form submit
-    const handleSubmit = useCallback(
-      (e: React.FormEvent): void => {
-        e.preventDefault();
-        runTrace(target).catch(() => {
+    const onSubmit = useCallback(
+      ({ target: traceTarget }: { target: string }): void => {
+        runTrace(traceTarget).catch(() => {
           // Error handled in runTrace
         });
       },
-      [target, runTrace],
+      [runTrace],
     );
 
     // Quick target handlers
@@ -293,16 +311,16 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
         status={cardStatus}
       >
         {/* Target Input Form - Responsive layout for various screen sizes */}
-        <form onSubmit={handleSubmit} className={cn('stack-sm', spacing.margin.bottom.content)}>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className={cn('stack-sm', spacing.margin.bottom.content)}
+        >
           {/* Target Input Row - Stack on mobile, inline on larger screens */}
           <div className="flex flex-col sm:flex-row gap-2">
             {/* Target input - full width on mobile */}
             <input
               type="text"
-              value={target}
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                setTarget(e.target.value)
-              }
+              {...register('target')}
               placeholder={t('pathDiscovery.enterTarget', 'Enter IP or hostname...')}
               disabled={loading}
               className={cn(
@@ -312,22 +330,13 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                 inputTokens.size.sm,
                 'body-small',
               )}
-              onKeyDown={(e: React.KeyboardEvent): void => {
-                if (e.key === 'Enter' && target.trim()) {
-                  e.preventDefault();
-                  handleSubmit(e as unknown as React.FormEvent);
-                }
-              }}
             />
 
             {/* Protocol and Trace button group - inline always */}
             <div className="flex items-center gap-2 shrink-0">
               {/* Protocol selector - styled to match design system */}
               <select
-                value={protocol}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setProtocol(e.target.value as Protocol)
-                }
+                {...register('protocol')}
                 disabled={loading}
                 className={cn(
                   inputTokens.base,
@@ -346,10 +355,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
               {protocol !== 'icmp' && (
                 <input
                   type="number"
-                  value={port}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    setPort(Number.parseInt(e.target.value, 10) || 80)
-                  }
+                  {...register('port', { valueAsNumber: true })}
                   placeholder="Port"
                   min={1}
                   max={65535}
@@ -366,7 +372,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
 
               <button
                 type="submit"
-                disabled={loading || !target.trim()}
+                disabled={loading || !target?.trim()}
                 className={cn(
                   buttonTokens.base,
                   buttonTokens.variant.primary,
@@ -378,6 +384,12 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
               </button>
             </div>
           </div>
+          {errors.target ? (
+            <p className={cn('caption', statusColor.text.error)}>{errors.target.message}</p>
+          ) : null}
+          {errors.port ? (
+            <p className={cn('caption', statusColor.text.error)}>{errors.port.message}</p>
+          ) : null}
 
           {/* Quick Targets - Wrap on small screens */}
           <div className="flex items-center gap-2 flex-wrap">

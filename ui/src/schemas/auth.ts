@@ -111,3 +111,36 @@ export const ProfileEditorSchema = v.object({
   isDefault: v.boolean(),
   notes: v.pipe(v.string(), v.maxLength(2048, 'Notes are too long (max 2048 chars)')),
 });
+
+/** Wi-Fi survey creation form. */
+export const CreateSurveySchema = v.object({
+  name: v.pipe(
+    v.string('Survey name is required'),
+    v.trim(),
+    v.minLength(1, 'Survey name is required'),
+    v.maxLength(128, 'Survey name is too long (max 128 chars)'),
+  ),
+  surveyType: v.picklist(['passive', 'active', 'throughput']),
+});
+
+/**
+ * Path discovery form. Target is a hostname or IPv4/IPv6 address. The
+ * Go side does authoritative parsing — this UI check just blocks
+ * obviously malformed input (empty, too long, contains spaces).
+ */
+export const PathDiscoverySchema = v.object({
+  target: v.pipe(
+    v.string('Target is required'),
+    v.trim(),
+    v.minLength(1, 'Target is required'),
+    v.maxLength(253, 'Target is too long (max 253 chars)'),
+    v.regex(/^[^\s]+$/, 'Target cannot contain whitespace'),
+  ),
+  protocol: v.picklist(['icmp', 'tcp', 'udp']),
+  port: v.pipe(
+    v.number('Port must be a number'),
+    v.integer('Port must be an integer'),
+    v.minValue(1, 'Port must be 1-65535'),
+    v.maxValue(65535, 'Port must be 1-65535'),
+  ),
+});

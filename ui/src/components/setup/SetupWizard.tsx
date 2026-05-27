@@ -23,12 +23,15 @@
  * (no admin password configured). It's displayed before the main application.
  */
 
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import { Activity, Copy, Eye, EyeOff, Lock, Zap } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { LogComponents, logger } from '../../lib/logger';
 import { evaluatePassword, type PasswordRule } from '../../lib/passwordPolicy';
+import { SetupWizardSchema } from '../../schemas/auth';
 import {
   button,
   buttonClass,
@@ -85,13 +88,24 @@ export function SetupWizard({
   const { t: tCommon } = useTranslation('common');
   // Default to custom password entry - more secure UX
   const [passwordMode, setPasswordMode] = useState<'generated' | 'custom'>('custom');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [ssoProviders, setSsoProviders] = useState<string[]>([]);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<{ password: string; confirmPassword: string }>({
+    resolver: valibotResolver(SetupWizardSchema),
+    defaultValues: { password: '', confirmPassword: '' },
+    mode: 'onBlur',
+  });
+
+  const password = watch('password');
 
   // Fetch enabled SSO providers (fixes #769, #720)
   useEffect(() => {
@@ -115,10 +129,10 @@ export function SetupWizard({
   // Update password fields when switching to generated mode
   useEffect(() => {
     if (passwordMode === 'generated' && suggestedPassword) {
-      setPassword(suggestedPassword);
-      setConfirmPassword(suggestedPassword);
+      setValue('password', suggestedPassword, { shouldValidate: true, shouldDirty: true });
+      setValue('confirmPassword', suggestedPassword, { shouldValidate: true, shouldDirty: true });
     }
-  }, [passwordMode, suggestedPassword]);
+  }, [passwordMode, suggestedPassword, setValue]);
 
   // Helper to check if a provider is enabled. The backend only lists
   // providers that have Enabled=true AND a non-empty ClientID, so
@@ -140,38 +154,34 @@ export function SetupWizard({
   const handlePasswordModeChange = (mode: 'generated' | 'custom'): void => {
     setPasswordMode(mode);
     if (mode === 'generated' && suggestedPassword) {
-      setPassword(suggestedPassword);
-      setConfirmPassword(suggestedPassword);
+      setValue('password', suggestedPassword, { shouldValidate: true, shouldDirty: true });
+      setValue('confirmPassword', suggestedPassword, { shouldValidate: true, shouldDirty: true });
       setShowPassword(true);
     } else {
-      setPassword('');
-      setConfirmPassword('');
+      setValue('password', '', { shouldValidate: false });
+      setValue('confirmPassword', '', { shouldValidate: false });
       setShowPassword(false);
     }
-    setError(null);
+    setSubmitError(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
-    setError(null);
+  const onSubmit: SubmitHandler<{ password: string; confirmPassword: string }> = async ({
+    password,
+  }) => {
+    setSubmitError(null);
 
-    // Fixes #723: enforce complexity rules, not just length.
+    // Fixes #723: enforce complexity rules, not just length. The
+    // resolver only checks length + confirmation match; the policy
+    // evaluator gates submit on the broader rule set.
     const policy = evaluatePassword(password);
     if (!policy.valid) {
-      setError(t('errors.passwordTooShort'));
+      setSubmitError(t('errors.passwordTooShort'));
       logger.warn(LogComponents.SETUP, 'Setup rejected - password policy not met', {
         failedRules: policy.rules.filter((r) => !r.ok).map((r) => r.id),
       });
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError(t('errors.passwordMismatch'));
-      logger.warn(LogComponents.SETUP, 'Setup rejected - password confirmation mismatch');
-      return;
-    }
-
-    setIsSubmitting(true);
     logger.info(LogComponents.SETUP, 'Setup submission started', { username });
 
     try {
@@ -179,15 +189,13 @@ export function SetupWizard({
       // Security fix #724, #758: Include the one-time setup token to prevent CSRF attacks
       const response = await fetch(`${API_BASE}/api/v1/setup/complete`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password, setupToken }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || t('errors.setupFailed'));
+        setSubmitError(data.error || t('errors.setupFailed'));
         logger.error(LogComponents.SETUP, 'Setup complete request failed', null, {
           status: response.status,
           serverError: typeof data?.error === 'string' ? data.error : undefined,
@@ -198,28 +206,29 @@ export function SetupWizard({
 
       logger.info(LogComponents.SETUP, 'Setup complete request succeeded', { username });
 
-      // Step 2: Automatically log in with the new password (fixes #768 - use username from config)
       const loginSuccess = await onLogin(username, password);
-
       if (!loginSuccess) {
-        // Fixes #719: do not exit the wizard when auto-login fails - the user
-        // would land in the main UI unauthenticated. Keep the wizard open with
-        // the error visible so they can retry or surface the real failure.
-        setError(t('errors.loginFailed'));
+        setSubmitError(t('errors.loginFailed'));
         logger.error(LogComponents.SETUP, 'Auto-login after setup failed', null, { username });
         return;
       }
 
-      // Step 3: Setup complete and user is logged in
       logger.info(LogComponents.SETUP, 'Setup wizard completed - user logged in', { username });
       onComplete();
     } catch (err) {
-      setError(t('errors.networkError'));
+      setSubmitError(t('errors.networkError'));
       logger.error(LogComponents.SETUP, 'Setup network error', err, { username });
-    } finally {
-      setIsSubmitting(false);
     }
   };
+
+  // Cross-field error (passwords don't match) from valibot v.check().
+  const rootErrors = errors.root;
+  const crossFieldError = rootErrors
+    ? Object.values(rootErrors).find(
+        (e): e is { message: string } =>
+          typeof e === 'object' && e !== null && 'message' in e && typeof e.message === 'string',
+      )
+    : undefined;
 
   return (
     <div className={cn('min-h-screen bg-surface-base', layout.flex.center, 'pad')}>
@@ -232,7 +241,7 @@ export function SetupWizard({
           <p className={cn('body-small', spacing.margin.top.inline)}>{t('welcome.subtitle')}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className={cardClass('default', 'lg')}>
+        <form onSubmit={handleSubmit(onSubmit)} className={cardClass('default', 'lg')}>
           <div className={spacing.margin.bottom.content}>
             <p className={cn('body-small', spacing.margin.bottom.content)}>
               {t('username.label')} <strong>{username}</strong> {t('username.cannotChange')}
@@ -372,14 +381,11 @@ export function SetupWizard({
                   <input
                     id="setup-password"
                     type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                      setPassword(e.target.value)
-                    }
-                    className={cn(inputClass('default', 'md'), spacing.padding.right.icon)}
-                    placeholder={t('password.placeholder')}
                     required={true}
                     minLength={12}
+                    {...register('password')}
+                    className={cn(inputClass('default', 'md'), spacing.padding.right.icon)}
+                    placeholder={t('password.placeholder')}
                   />
                   <button
                     type="button"
@@ -433,19 +439,34 @@ export function SetupWizard({
                 <input
                   id="setup-confirm-password"
                   type={showPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                    setConfirmPassword(e.target.value)
-                  }
+                  required={true}
+                  {...register('confirmPassword')}
                   className={inputClass('default', 'md')}
                   placeholder={t('password.confirm.placeholder')}
-                  required={true}
                 />
+                {errors.confirmPassword ? (
+                  <p className={cn('caption mt-1', statusColor.text.error)}>
+                    {errors.confirmPassword.message}
+                  </p>
+                ) : null}
               </div>
             </>
           )}
 
-          {error ? (
+          {crossFieldError ? (
+            <div
+              role="alert"
+              className={cn(
+                spacing.margin.bottom.content,
+                'pad-sm bg-status-error/10 border border-status-error/20',
+                radius.md,
+                'text-status-error body-small',
+              )}
+            >
+              {crossFieldError.message}
+            </div>
+          ) : null}
+          {submitError ? (
             <div
               role="alert"
               aria-live="assertive"
@@ -456,7 +477,7 @@ export function SetupWizard({
                 'text-status-error body-small',
               )}
             >
-              {error}
+              {submitError}
             </div>
           ) : null}
 
