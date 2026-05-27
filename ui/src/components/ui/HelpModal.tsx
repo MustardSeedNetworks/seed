@@ -31,7 +31,7 @@
  */
 
 import type React from 'react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { cn, icon as iconTokens, layout, modal, radius, spacing } from '../../styles/theme';
 
 interface HelpModalProps {
@@ -50,6 +50,20 @@ export function HelpModal({
   title,
   children,
 }: HelpModalProps): React.JSX.Element | null {
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) {
     return null;
   }
@@ -90,6 +104,7 @@ export function HelpModal({
           <button
             type="button"
             onClick={onClose}
+            data-testid="help-modal-close"
             className={cn(
               spacing.iconBtn.sm,
               'text-text-muted',
