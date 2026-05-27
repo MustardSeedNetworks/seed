@@ -91,8 +91,8 @@
         }
       },
       "openSource": {
-        "title": "Open Source & Customizable",
-        "description": "The Seed is open source software. Customize thresholds, configure tests, and integrate with your existing monitoring infrastructure."
+        "title": "Source-Available & Customizable",
+        "description": "The Seed is source-available software (BUSL-1.1). Customize thresholds, configure tests, and integrate with your existing monitoring infrastructure."
       },
       "versionInfo": {
         "title": "Version Info",
