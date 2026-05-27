@@ -547,38 +547,27 @@ jobs:
     name: i18n Validation
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    # Run on locale changes, ui source changes, workflow changes, or script
+    # changes (so updates to scripts/i18n/* trigger revalidation).
+    if: |
+      needs.changes.outputs.frontend == 'true'
+      || needs.changes.outputs.workflows == 'true'
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Check translation key coverage
-        run: |
-          echo "Checking translation key coverage..."
-
-          # Compare English and Spanish locale keys
-          for file in locales/en/*.json; do
-            name=$(basename "$file")
-            es_file="locales/es/$name"
-
-            if [ ! -f "$es_file" ]; then
-              echo "❌ Missing Spanish locale file: $name"
-              exit 1
-            fi
-
-            # Extract keys from both files and compare
-            en_keys=$(jq -r 'paths(scalars) | join(".")' "$file" | sort)
-            es_keys=$(jq -r 'paths(scalars) | join(".")' "$es_file" | sort)
-
-            missing=$(comm -23 <(echo "$en_keys") <(echo "$es_keys"))
-            if [ -n "$missing" ]; then
-              echo "❌ Missing keys in es/$name:"
-              echo "$missing"
-              exit 1
-            fi
-          done
-
-          echo "✅ All translation keys present in all locales"
+      - name: Validate i18n (parity, glossary, banned vocab, etc.)
+        # The previous job used the wrong locales path (`locales/en/*.json`
+        # at repo root — actual path is `internal/i18n/locales/en/*.json`),
+        # so the loop matched nothing and the job was a silent always-pass.
+        # Replaced with the canonical shared script in scripts/i18n/.
+        #
+        # --ratchet demotes the pre-existing-debt checks (no-fallback-patterns
+        # and locked-versions) from fail to warn. Drop --ratchet once Phase 3
+        # cleanup brings both counts to zero across seed/stem/niac.
+        # See scripts/i18n/README.md and
+        # msn-docs-internal/05-Engineering/I18N_CONVENTIONS.md.
+        run: ./scripts/i18n/validate.sh --ratchet
 
   # ===========================================================================
   # Documentation Checks

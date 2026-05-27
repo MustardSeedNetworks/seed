@@ -1,0 +1,41 @@
+# i18n banned vocabulary — must NOT appear in any locale file.
+# One term per line. Lines starting with # are comments.
+# Source of truth: CLAUDE.md banned-vocabulary list.
+#
+# Used by scripts/i18n-validate.sh. Match is case-insensitive,
+# word-boundary-ish (preceded + followed by non-letter).
+
+# --- AI / marketing forbidden by CLAUDE.md strategy reset
+AI-powered
+AI-driven
+powered by AI
+machine learning
+LLM
+Claude
+Anthropic
+MCP
+natural language query
+
+# --- generic marketing fluff
+magic
+revolutionary
+disruptive
+next-gen
+best-in-class
+world-class
+industry-leading
+game-changing
+cutting-edge
+leverage
+synergy
+
+# --- legal / licensing accuracy
+open source
+open-source
+código abierto
+fuente abierta
+
+# --- legacy Stem tier names (renamed per LICENSE_STRATEGY)
+Premium
+Certify tier
+TestSuite
