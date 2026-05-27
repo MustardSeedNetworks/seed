@@ -506,5 +506,41 @@
     "setActive": "Activar",
     "noInterfaces": "No hay interfaces {{kind}} configuradas.",
     "limitReachedFreeStarter": "Las licencias Free y Starter permiten 1 interfaz ethernet + 1 Wi-Fi. Actualice a Pro para interfaces concurrentes ilimitadas."
+  },
+  "users": {
+    "title": "Usuarios",
+    "description": "Administre cuentas de usuario locales e identidades vinculadas por SSO.",
+    "addUser": "Agregar usuario",
+    "editUser": "Editar usuario",
+    "deleteUser": "Eliminar usuario",
+    "resetPassword": "Restablecer contraseña",
+    "currentUser": "(tú)",
+    "columns": {
+      "username": "Nombre de usuario",
+      "email": "Correo",
+      "role": "Rol",
+      "lastLogin": "Último acceso",
+      "status": "Estado",
+      "authProvider": "Auth"
+    },
+    "status": {
+      "active": "Activo",
+      "disabled": "Deshabilitado",
+      "locked": "Bloqueado"
+    },
+    "roles": {
+      "admin": "Administrador",
+      "operator": "Operador",
+      "viewer": "Visor"
+    },
+    "providers": {
+      "local": "Local",
+      "google": "Google",
+      "microsoft": "Microsoft",
+      "github": "GitHub"
+    },
+    "confirmDelete": "¿Eliminar al usuario {{username}}?",
+    "confirmDeletePrompt": "Esto revocará todas las sesiones y los tokens de API de {{username}}. No se puede deshacer.",
+    "neverLoggedIn": "Nunca"
   }
 }
