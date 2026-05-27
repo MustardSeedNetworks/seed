@@ -109,7 +109,9 @@ func TestFormatKey(t *testing.T) {
 // fix the cipher, or regenerate keygen + update all three products in
 // lockstep.
 //
-// Anchored to keygen v2.0.0 (2026-05-21).
+// Anchored to keygen v2.2.0 (2026-05-26) — multi_interface moved
+// Starter→Pro; multi_user added on Pro; multi_site renamed to
+// multi_client on Pro; sso added on Pro.
 func TestKeygenContract(t *testing.T) {
 	t.Parallel()
 	vectors := []keygenVector{
@@ -121,7 +123,6 @@ func TestKeygenContract(t *testing.T) {
 			serial:  "SEEDSTR",
 			features: []string{
 				"monitoring_scheduled",
-				"multi_interface",
 				"wifi_visibility_basic",
 				"compliance_basic",
 				"export_csv_json",
@@ -134,12 +135,13 @@ func TestKeygenContract(t *testing.T) {
 			product: "4002",
 			serial:  "SEEDPRO",
 			features: []string{
-				"monitoring_scheduled", "multi_interface", "wifi_visibility_basic",
+				"monitoring_scheduled", "wifi_visibility_basic",
 				"compliance_basic", "export_csv_json",
 				"wifi_roam_analysis", "wifi_association_forensics",
 				"airmapper_baseline_diff", "anomaly_detection", "path_analysis",
 				"live_telemetry", "compliance_advanced", "scheduled_reports",
-				"audit_pdf", "multi_site", "white_label", "rest_api",
+				"audit_pdf", "multi_interface", "multi_user", "multi_client",
+				"sso", "white_label", "rest_api",
 			},
 		},
 	}
