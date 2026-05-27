@@ -1,0 +1,3 @@
+# SOURCE_SHA: 2b6604246970750e83e6fee5b5d0b3d3c1b6d48c  (chore/phase1-canonical-shell-modernize)
+781da6243dcbff582cfd446c401b8672d4142712dad203806b72b3072e606e74  ui/src/ui/Sidebar.tsx
+77dedb9669e2970233ab5d2fbc0ba40ebef78c16b314c0b49245eacd177fd470  ui/src/ui/PageHeader.tsx

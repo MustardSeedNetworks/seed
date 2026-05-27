@@ -1,29 +1,34 @@
+// SYNCED FROM stem@2b6604246970 — DO NOT EDIT.
+// Edits in this repo will be overwritten on next `make sync-shell`.
+// To change this file, send a PR to stem then re-sync.
 /**
  * Sidebar layout shell — persistent collapsible left navigation.
  *
- * Ported from niac to keep the three sibling projects (niac, seed,
- * stem) on the same shell pattern. Theme tokens are adapted to seed's
- * surface/brand palette.
+ * CANONICAL SHELL — owned by stem; seed and niac sync this file via
+ * scripts/sync-shell.sh. Edits made downstream will be overwritten on
+ * next sync. All colors/spacing reference theme tokens; per-product
+ * brand identity comes from each repo's index.css token values.
  *
- * Drawer triggers (help, settings, profiles) call up to the host App
- * via the `onOpenHelp` / `onOpenSettings` / `onOpenProfiles` props so
- * the actual drawer components stay mounted at AppShell level where
- * the existing data plumbing lives.
+ * Drawer triggers (help, settings, history) call up to the host App
+ * via callback props so the actual drawer components stay mounted at
+ * AppShell level alongside the existing test/state plumbing.
  */
 import {
+  Activity,
   ChevronLeft,
   ChevronRight,
   HelpCircle,
+  History,
   type LucideIcon,
   Menu,
   Settings,
-  Sprout,
   Users,
   X,
 } from 'lucide-react';
 import { createElement, type FC, type ReactNode, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { iconSizes } from '../constants/sizes';
+import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';
 
 export interface SidebarNavItem {
@@ -42,13 +47,20 @@ interface SidebarLayoutProps {
   groups: SidebarNavGroup[];
   version?: string;
   children: ReactNode;
+  /**
+   * Drawer callbacks — all optional. Pass only the ones your product uses;
+   * the corresponding footer button only renders when its callback is provided.
+   * Stem typically uses help/settings/history; seed uses help/settings/profiles;
+   * niac uses help/settings. Add more here if a new product needs another drawer.
+   */
   onOpenHelp?: () => void;
   onOpenSettings?: () => void;
+  onOpenHistory?: () => void;
   onOpenProfiles?: () => void;
   topBar?: ReactNode;
 }
 
-const STORAGE_KEY = 'seed-sidebar-collapsed';
+const STORAGE_KEY = 'stem-sidebar-collapsed';
 
 interface NavItemButtonProps {
   item: SidebarNavItem;
@@ -57,32 +69,68 @@ interface NavItemButtonProps {
   onNavigate: (path: string) => void;
 }
 
+function badgeClass(badge: string): string {
+  if (badge === 'New') return 'bg-status-success/20 text-status-success';
+  if (badge === 'Beta') return 'bg-status-warning/20 text-status-warning';
+  return 'bg-brand-primary/20 text-brand-accent';
+}
+
 const NavItemButton: FC<NavItemButtonProps> = ({ item, active, collapsed, onNavigate }) => (
   <button
     type="button"
     onClick={() => onNavigate(item.path)}
+    onMouseEnter={() => prefetchRoute(item.path)}
     className={`group flex items-center gap-default w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
       active
-        ? 'bg-brand-primary/15 text-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
+        ? 'bg-gradient-to-r from-brand-primary/30 to-brand-primary/20 text-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
         : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
     }`}
     title={collapsed ? item.label : undefined}
   >
     {createElement(item.icon, {
       className: `${iconSizes.lg} flex-shrink-0 ${
-        active ? 'text-brand-primary' : 'text-text-muted group-hover:text-text-secondary'
+        active ? 'text-brand-accent' : 'text-text-muted group-hover:text-text-secondary'
       }`,
     })}
     {!collapsed ? (
       <>
         <span className="flex-1 text-left truncate">{item.label}</span>
         {item.badge ? (
-          <span className="px-1.5 py-0.5 text-xs rounded font-medium bg-brand-primary/20 text-brand-primary">
+          <span className={`px-1.5 py-0.5 text-xs rounded font-medium ${badgeClass(item.badge)}`}>
             {item.badge}
           </span>
         ) : null}
       </>
     ) : null}
+  </button>
+);
+
+interface FooterIconButtonProps {
+  collapsed: boolean;
+  onClick: () => void;
+  icon: LucideIcon;
+  label: string;
+  title: string;
+}
+
+const FooterIconButton: FC<FooterIconButtonProps> = ({
+  collapsed,
+  onClick,
+  icon,
+  label,
+  title,
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
+      collapsed ? 'justify-center' : 'gap-compact'
+    } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
+    title={title}
+    aria-label={title}
+  >
+    {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
+    {!collapsed ? <span>{label}</span> : null}
   </button>
 );
 
@@ -100,13 +148,13 @@ const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse }) => (
     <div className={`flex items-center gap-compact ${collapsed ? 'justify-center' : ''}`}>
       <div className="relative flex-shrink-0">
         <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex-center shadow-lg">
-          <Sprout className={`${iconSizes.lg} text-text-inverse`} />
+          <Activity className={`${iconSizes.lg} text-text-inverse`} />
         </div>
         <div className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-status-success border-2 border-surface-raised" />
       </div>
       {!collapsed ? (
         <span className="font-display font-bold text-lg text-text-primary tracking-tight">
-          The Seed
+          The Stem
         </span>
       ) : null}
     </div>
@@ -124,52 +172,42 @@ const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse }) => (
   </div>
 );
 
-interface FooterButtonProps {
-  collapsed: boolean;
-  onClick: () => void;
-  icon: LucideIcon;
-  label: string;
-  title: string;
-  testId?: string;
-}
-
-const FooterIconButton: FC<FooterButtonProps> = ({
-  collapsed,
-  onClick,
-  icon,
-  label,
-  title,
-  testId,
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    data-testid={testId}
-    className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
-      collapsed ? 'justify-center' : 'gap-compact'
-    } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
-    title={title}
-    aria-label={title}
-  >
-    {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
-    {!collapsed ? <span>{label}</span> : null}
-  </button>
-);
-
 interface SidebarFooterProps {
   collapsed: boolean;
   version?: string;
   onOpenHelp?: () => void;
   onOpenSettings?: () => void;
+  onOpenHistory?: () => void;
   onOpenProfiles?: () => void;
   onExpand: () => void;
 }
+
+interface FullWidthDrawerButtonProps {
+  onClick: () => void;
+  icon: LucideIcon;
+  label: string;
+  title: string;
+}
+
+const FullWidthDrawerButton: FC<FullWidthDrawerButtonProps> = ({ onClick, icon, label, title }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
+    title={title}
+    aria-label={title}
+  >
+    {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
+    <span>{label}</span>
+  </button>
+);
 
 const SidebarFooter: FC<SidebarFooterProps> = ({
   collapsed,
   version,
   onOpenHelp,
   onOpenSettings,
+  onOpenHistory,
   onOpenProfiles,
   onExpand,
 }) => (
@@ -182,7 +220,6 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
           icon={HelpCircle}
           label="Help"
           title="Open help"
-          testId="sidebar-open-help"
         />
       ) : null}
       {onOpenSettings ? (
@@ -192,22 +229,26 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
           icon={Settings}
           label="Settings"
           title="Open settings"
-          testId="sidebar-open-settings"
         />
       ) : null}
     </div>
 
+    {onOpenHistory && !collapsed ? (
+      <FullWidthDrawerButton
+        onClick={onOpenHistory}
+        icon={History}
+        label="History"
+        title="Open test history"
+      />
+    ) : null}
+
     {onOpenProfiles && !collapsed ? (
-      <button
-        type="button"
+      <FullWidthDrawerButton
         onClick={onOpenProfiles}
-        className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
+        icon={Users}
+        label="Profiles"
         title="Manage profiles"
-        aria-label="Manage profiles"
-      >
-        <Users className={`${iconSizes.md} flex-shrink-0`} />
-        <span>Profiles</span>
-      </button>
+      />
     ) : null}
 
     {version ? (
@@ -240,6 +281,7 @@ interface SidebarBodyProps {
   isActive: (path: string) => boolean;
   onOpenHelp?: () => void;
   onOpenSettings?: () => void;
+  onOpenHistory?: () => void;
   onOpenProfiles?: () => void;
 }
 
@@ -253,14 +295,15 @@ const SidebarBody: FC<SidebarBodyProps> = ({
   isActive,
   onOpenHelp,
   onOpenSettings,
+  onOpenHistory,
   onOpenProfiles,
 }) => (
   <>
     <SidebarHeader collapsed={collapsed} onCollapse={onCollapse} />
     <nav className="flex-1 overflow-y-auto py-4 px-cell stack-xl">
-      {groups.map((group) => (
-        <div key={group.label}>
-          {!collapsed ? (
+      {groups.map((group, groupIndex) => (
+        <div key={group.label || `nav-group-${String(groupIndex)}`}>
+          {!collapsed && group.label ? (
             <h3 className="px-3 mb-2 text-xs font-semibold text-text-muted uppercase tracking-wider">
               {group.label}
             </h3>
@@ -285,6 +328,7 @@ const SidebarBody: FC<SidebarBodyProps> = ({
       version={version}
       onOpenHelp={onOpenHelp}
       onOpenSettings={onOpenSettings}
+      onOpenHistory={onOpenHistory}
       onOpenProfiles={onOpenProfiles}
       onExpand={onExpand}
     />
@@ -300,9 +344,9 @@ const MobileTopBar: FC<MobileTopBarProps> = ({ mobileOpen, toggleMobile }) => (
   <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex-between px-4 py-row-lg bg-surface-raised/95 backdrop-blur-xl border-b border-surface-border">
     <div className="flex items-center gap-compact">
       <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex-center">
-        <Sprout className={`${iconSizes.md} text-text-inverse`} />
+        <Activity className={`${iconSizes.md} text-text-inverse`} />
       </div>
-      <span className="font-display font-bold text-text-primary">The Seed</span>
+      <span className="font-display font-bold text-text-primary">The Stem</span>
     </div>
     <button
       type="button"
@@ -322,6 +366,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
   children,
   onOpenHelp,
   onOpenSettings,
+  onOpenHistory,
   onOpenProfiles,
   topBar,
 }) => {
@@ -352,27 +397,31 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       isActive={isActive}
       onOpenHelp={onOpenHelp}
       onOpenSettings={onOpenSettings}
+      onOpenHistory={onOpenHistory}
       onOpenProfiles={onOpenProfiles}
     />
   );
 
   return (
-    <div className="min-h-screen text-text-primary font-body">
+    <div className="min-h-screen text-text-primary bg-gradient-to-br from-surface-base via-surface-raised to-surface-deep">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-row focus:rounded-lg focus:bg-brand-primary focus:text-text-inverse focus:outline-none"
       >
         Skip to main content
       </a>
+
       <MobileTopBar mobileOpen={mobileOpen} toggleMobile={() => setMobileOpen(!mobileOpen)} />
+
       {mobileOpen ? (
         <button
           type="button"
-          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          className="lg:hidden fixed inset-0 z-40 bg-scrim/60 backdrop-blur-sm"
           onClick={() => setMobileOpen(false)}
           aria-label="Close menu"
         />
       ) : null}
+
       <aside
         className={`lg:hidden fixed top-0 left-0 z-50 h-full w-72 bg-surface-raised/95 backdrop-blur-xl border-r border-surface-border transform transition-transform duration-300 ease-in-out ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
@@ -380,6 +429,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       >
         <div className="flex flex-col h-full">{body}</div>
       </aside>
+
       <aside
         className={`hidden lg:flex fixed top-0 left-0 z-40 h-full flex-col bg-surface-raised/80 backdrop-blur-xl border-r border-surface-border transition-all duration-300 ease-in-out ${
           collapsed ? 'w-16' : 'w-64'
@@ -387,6 +437,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       >
         {body}
       </aside>
+
       <main
         id="main-content"
         className={`transition-all duration-300 ease-in-out pt-16 lg:pt-0 ${

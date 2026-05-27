@@ -260,6 +260,9 @@ jobs:
       - name: Design token discipline (Phase 0 gate)
         run: ../scripts/check-token-discipline.sh
 
+      - name: Verify synced shell matches lock (Phase 1 gate)
+        run: ../scripts/sync-shell.sh --verify
+
       - name: Run unit tests
         run: npm run test
 
