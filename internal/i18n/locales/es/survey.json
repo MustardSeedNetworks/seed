@@ -184,7 +184,8 @@
     "optionCalibration": "Importar configuración de escala y propagación",
     "optionLocations": "Importar ubicaciones de AP y clientes",
     "confirm": "Importar",
-    "button": "Importar AirMapper"
+    "button": "Importar AirMapper",
+    "dropZone": "Suelte aquí un archivo JSON de encuesta o haga clic para elegir."
   },
   "heatmaps": {
     "title": "Visualización de Mapa de Calor",

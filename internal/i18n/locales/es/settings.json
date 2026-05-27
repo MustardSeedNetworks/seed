@@ -10,7 +10,11 @@
     "dns": "DNS",
     "wifi": "WiFi",
     "snmp": "SNMP",
-    "thresholds": "Umbrales"
+    "thresholds": "Umbrales",
+    "cableTest": "Prueba de cable",
+    "link": "Enlace",
+    "updates": "Actualizaciones",
+    "vulnerability": "Escaneo de vulnerabilidades"
   },
   "common": {
     "add": "+ Agregar",
@@ -19,7 +23,15 @@
     "host": "Host",
     "hostIp": "Host/IP",
     "port": "Puerto",
-    "enabled": "Habilitado"
+    "enabled": "Habilitado",
+    "hideHelp": "Ocultar ayuda",
+    "needKey": "Requiere una clave API",
+    "refresh": "Actualizar",
+    "runOnFab": "Ejecutar en la fábrica",
+    "runOnFabDesc": "Ejecutar esta tarjeta en cada host de la fábrica, no solo en la puerta de enlace.",
+    "seconds": "segundos",
+    "showCard": "Mostrar tarjeta",
+    "showCardDesc": "Mostrar esta tarjeta en el panel."
   },
   "appearance": {
     "title": "Apariencia",
@@ -143,7 +155,16 @@
       "interface": "Interfaz",
       "subnet": "Subred",
       "localIP": "IP local"
-    }
+    },
+    "aggressive": "Agresivo",
+    "bannerTimeout": "Tiempo de espera del banner",
+    "faster": "Más rápido",
+    "gentler": "Más suave",
+    "performanceTiming": "Temporización de rendimiento",
+    "performanceTimingDesc": "Ajuste la agresividad del escaneo frente al impacto en la red.",
+    "probeInterval": "Intervalo de sondeo",
+    "slower": "Más lento",
+    "workers": "Cantidad de trabajadores"
   },
   "performance": {
     "title": "Rendimiento",
@@ -174,7 +195,8 @@
     "duration": "Duración (segundos)",
     "enableServer": "Habilitar servidor iperf3",
     "serverPort": "Puerto del servidor",
-    "serverAutoStart": "Cuando está habilitado, inicia el servidor iperf3 automáticamente"
+    "serverAutoStart": "Cuando está habilitado, inicia el servidor iperf3 automáticamente",
+    "autoRunOnLinkDesc": "Volver a ejecutar las pruebas de rendimiento cuando cambie el estado del enlace."
   },
   "health": {
     "title": "Verificaciones de salud",
@@ -300,7 +322,8 @@
     "noPrivacy": "Sin privacidad",
     "noAuthNoPriv": "Sin auth / Sin privacidad",
     "authNoPriv": "Auth / Sin privacidad",
-    "authPriv": "Auth / Privacidad"
+    "authPriv": "Auth / Privacidad",
+    "description": "Cadenas de comunidad SNMP utilizadas para el sondeo y descubrimiento de dispositivos."
   },
   "thresholds": {
     "title": "Umbrales",
@@ -375,5 +398,70 @@
     "title": "Acerca de",
     "appName": "The Seed",
     "description": "Herramienta de diagnóstico de red"
+  },
+  "cableTest": {
+    "checkingSupport": "Comprobando compatibilidad del controlador…",
+    "driver": "Controlador",
+    "enableCard": "Prueba de cable",
+    "enableCardDesc": "Mostrar diagnósticos de cable (TDR, estado de pares, longitud, fallos) en el panel.",
+    "notSupported": "No compatible con esta interfaz",
+    "supported": "Compatible",
+    "tdrNote": "La reflectometría en el dominio del tiempo (TDR) mide la longitud del cable y la ubicación de fallos analizando las señales reflejadas."
+  },
+  "link": {
+    "availableModes": "Modos disponibles",
+    "manualWarning": "Forzar manualmente la velocidad/dúplex puede causar inestabilidad del enlace si el extremo está en autoneg.",
+    "requiresRoot": "Requiere root para cambiar la configuración del enlace",
+    "speedDuplex": "Velocidad / Dúplex"
+  },
+  "updates": {
+    "applyUpdate": "Aplicar actualización",
+    "applying": "Aplicando…",
+    "autoCheck": "Comprobar actualizaciones automáticamente",
+    "autoDownload": "Descargar actualizaciones automáticamente",
+    "checkForUpdates": "Comprobar actualizaciones",
+    "currentVersion": "Versión actual",
+    "downloadSize": "Tamaño de descarga",
+    "downloadUpdate": "Descargar actualización",
+    "downloading": "Descargando…",
+    "includePrerelease": "Incluir versiones preliminares",
+    "lastChecked": "Última comprobación",
+    "releasedOn": "Publicado el",
+    "rollback": "Volver a la versión anterior",
+    "upToDate": "Actualizado",
+    "updateAvailable": "Actualización disponible"
+  },
+  "vulnerability": {
+    "apiKey": "Clave API NVD",
+    "apiKeyPlaceholder": "Pegar clave API NVD",
+    "autoScan": "Escaneo automático",
+    "autoScanDesc": "Escanear periódicamente los dispositivos descubiertos en busca de CVE conocidos.",
+    "concurrentDesc": "Cantidad de dispositivos a escanear en paralelo.",
+    "database": "Base de datos CVE",
+    "databaseLocal": "Base de datos local",
+    "databaseNVD": "NVD (National Vulnerability Database)",
+    "devicesScanned": "Dispositivos escaneados",
+    "enable": "Activar el escaneo de vulnerabilidades",
+    "enableDesc": "Escanear los dispositivos descubiertos contra la base de datos CVE configurada.",
+    "howToGetKey": "Cómo obtener una clave API NVD",
+    "maxConcurrent": "Escaneos concurrentes máximos",
+    "noKeyRateLimit": "Sin una clave API, NVD aplica un límite de velocidad estricto (5 solicitudes por 30s).",
+    "rateLimitInfo": "Límite de velocidad: {{value}} solicitudes / 30s",
+    "requestKey": "Solicitar una clave API NVD",
+    "severityCritical": "Crítica",
+    "severityDesc": "Severidad mínima a mostrar.",
+    "severityHigh": "Alta",
+    "severityLow": "Baja",
+    "severityMedium": "Media",
+    "severityThreshold": "Umbral de severidad",
+    "statusDisabled": "Desactivado",
+    "statusReady": "Listo",
+    "statusScanning": "Escaneando…",
+    "step1": "Paso 1: Visite la página de solicitud de clave API de NVD.",
+    "step2": "Paso 2: Complete el formulario de solicitud (gratuito, sin revisión).",
+    "step3": "Paso 3: Reciba la clave API por correo electrónico en minutos.",
+    "step4": "Paso 4: Pegue la clave aquí y el escáner la utilizará.",
+    "updateInterval": "Intervalo de actualización",
+    "vulnerabilities": "Vulnerabilidades"
   }
 }
