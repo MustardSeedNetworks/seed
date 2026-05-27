@@ -12,7 +12,7 @@ export function WifiPage() {
     useAppContext();
 
   return (
-    <section className="space-y-6">
+    <section className="stack-xl">
       <Breadcrumbs />
       <PageHeader
         icon={Wifi}

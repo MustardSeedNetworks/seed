@@ -10,7 +10,7 @@ export function PerformancePage() {
   const { loading, isWifi, cards, cardSettings } = useAppContext();
 
   return (
-    <section className="space-y-6">
+    <section className="stack-xl">
       <Breadcrumbs />
       <PageHeader
         icon={Activity}

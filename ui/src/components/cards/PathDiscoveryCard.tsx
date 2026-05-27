@@ -316,7 +316,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
           className={cn('stack-sm', spacing.margin.bottom.content)}
         >
           {/* Target Input Row - Stack on mobile, inline on larger screens */}
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-compact">
             {/* Target input - full width on mobile */}
             <input
               type="text"
@@ -333,7 +333,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
             />
 
             {/* Protocol and Trace button group - inline always */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-compact shrink-0">
               {/* Protocol selector - styled to match design system */}
               <select
                 {...register('protocol')}
@@ -392,7 +392,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
           ) : null}
 
           {/* Quick Targets - Wrap on small screens */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-compact flex-wrap">
             <span className="caption text-text-muted shrink-0">
               {t('pathDiscovery.quick', 'Quick')}:
             </span>
@@ -460,7 +460,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   <div
                     key={hop.ttl}
                     className={cn(
-                      'flex items-center gap-2 py-1',
+                      'flex items-center gap-compact py-compact',
                       hop.state === 'timeout' && 'opacity-50',
                     )}
                   >
@@ -472,7 +472,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
                   </div>
                 ))}
                 {/* Pulsing indicator for next hop */}
-                <div className="flex items-center gap-2 py-1 animate-pulse">
+                <div className="flex items-center gap-compact py-compact animate-pulse">
                   <span className="w-6 text-xs text-text-muted font-mono">
                     {streamingHops.length + 1}
                   </span>
@@ -583,7 +583,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
             <p className="body-small text-text-muted">
               {t('pathDiscovery.enterTarget', 'Select a target to trace')}
             </p>
-            <p className="caption text-text-muted mt-1">
+            <p className="caption text-text-muted mt-tight">
               {t(
                 'pathDiscovery.emptyHint',
                 'Enter an IP address or hostname, or use the quick buttons above',

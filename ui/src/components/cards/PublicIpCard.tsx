@@ -236,7 +236,7 @@ export const PublicIpCard: React.NamedExoticComponent<PublicIpCardProps> = memo(
                     variant="compact"
                     defaultOpen={false}
                   >
-                    <div className="space-y-2">
+                    <div className="stack-sm">
                       {ipData.history?.map((entry, index) => {
                         const entryLocation = formatLocation(entry.city, undefined, entry.country);
                         return (

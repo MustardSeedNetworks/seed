@@ -486,19 +486,19 @@ export function SurveyAnalysisPanel({
               })}
             </p>
             {finding.recommendationKey ? (
-              <p className="caption text-text-primary mt-1">
+              <p className="caption text-text-primary mt-tight">
                 <Lightbulb className="w-3 h-3 inline mr-1" />
                 {t(finding.recommendationKey as never)}
               </p>
             ) : null}
             {finding.affectedSsids && finding.affectedSsids.length > 0 ? (
-              <p className="caption text-text-muted mt-1 truncate">
+              <p className="caption text-text-muted mt-tight truncate">
                 {t('analysis.affectedSsids')}: {finding.affectedSsids.slice(0, 3).join(', ')}
                 {finding.affectedSsids.length > 3 ? ` +${finding.affectedSsids.length - 3}` : null}
               </p>
             ) : null}
             {finding.location ? (
-              <p className="caption text-brand-primary mt-1">
+              <p className="caption text-brand-primary mt-tight">
                 <MapPin className="w-3 h-3 inline mr-1" />
                 {t('analysis.clickToView')}
               </p>
@@ -521,12 +521,12 @@ export function SurveyAnalysisPanel({
         </div>
         <div className={cn(layout.inline.default)}>
           {criticalFindings.length > 0 ? (
-            <span className="px-2 py-0.5 text-xs bg-status-error text-text-inverse rounded-full">
+            <span className="px-cell py-0.5 text-xs bg-status-error text-text-inverse rounded-full">
               {criticalFindings.length}
             </span>
           ) : null}
           {warningFindings.length > 0 ? (
-            <span className="px-2 py-0.5 text-xs bg-status-warning text-text-inverse rounded-full">
+            <span className="px-cell py-0.5 text-xs bg-status-warning text-text-inverse rounded-full">
               {warningFindings.length}
             </span>
           ) : null}

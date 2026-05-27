@@ -250,7 +250,7 @@ function SparklineComponent({
     return (
       <div
         role="img"
-        className={cn('flex items-center justify-center text-text-muted', className)}
+        className={cn('flex-center text-text-muted', className)}
         style={{ width: config.width, height: config.height }}
         aria-label={label || 'No data available'}
       >
@@ -358,7 +358,7 @@ function SparklineWithLabelComponent({
   const displayUnit = unit ?? (type === 'latency' ? '' : '');
 
   return (
-    <div className="inline-flex items-center gap-2">
+    <div className="inline-flex items-center gap-compact">
       {labelText ? <span className="caption text-text-muted">{labelText}</span> : null}
       <Sparkline data={data} type={type} {...props} />
       {showValue ? (
@@ -417,14 +417,14 @@ function HealthScoreBadgeComponent({
 
   const sizeClasses = {
     sm: 'px-1.5 py-0.5 text-[10px]',
-    md: 'px-2 py-1 text-xs',
-    lg: 'px-3 py-1.5 text-sm',
+    md: 'px-cell py-compact text-xs',
+    lg: 'px-3 py-compact-md text-sm',
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 font-medium border',
+        'inline-flex items-center gap-tight font-medium border',
         radius.md,
         sizeClasses[size],
         getStatusColor(),

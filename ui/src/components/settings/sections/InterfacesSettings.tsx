@@ -110,7 +110,7 @@ export function InterfacesSettings(): React.ReactElement {
   return (
     <CollapsibleSection
       title={
-        <div className="inline-flex items-center gap-2">
+        <div className="inline-flex items-center gap-compact">
           <Wifi className="w-4 h-4" />
           <span>{t('settings:interfaces.title')}</span>
         </div>
@@ -121,14 +121,14 @@ export function InterfacesSettings(): React.ReactElement {
         <p className="text-sm text-text-secondary">{t('settings:interfaces.description')}</p>
 
         {(!canAddEthernet || !canAddWifi) && (
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-200">
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 pad-sm text-sm text-amber-200">
             {t('settings:interfaces.limitReachedFreeStarter')}
           </div>
         )}
 
         {error && (
           <div
-            className="rounded-lg border border-status-error/30 bg-status-error/5 p-3 text-sm text-status-error"
+            className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error"
             data-testid="interfaces-error"
           >
             {error}
@@ -195,7 +195,7 @@ function InterfaceGroup({
 
   return (
     <div className="stack-xs" data-testid={`interface-group-${kind}`}>
-      <div className="flex items-center justify-between">
+      <div className="flex-between">
         <h4 className="text-sm font-medium">{label}</h4>
         <span className="text-xs text-text-muted">{interfaces.length}</span>
       </div>
@@ -211,7 +211,7 @@ function InterfaceGroup({
             return (
               <li
                 key={iface.name}
-                className="flex items-center gap-2 rounded border border-surface-border p-2"
+                className="flex items-center gap-compact rounded border border-surface-border pad-xs"
                 data-testid={`interface-row-${kind}-${iface.name}`}
               >
                 <span className="font-mono text-sm flex-1">{iface.name}</span>
@@ -248,7 +248,7 @@ function InterfaceGroup({
         </ul>
       )}
 
-      <div className="flex items-end gap-2">
+      <div className="flex items-end gap-compact">
         <div className="flex-1">
           <Input
             id={`add-${kind}-name`}

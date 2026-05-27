@@ -96,10 +96,10 @@ export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps>
     const currentPhaseIndex = rawPhaseIndex >= 0 ? rawPhaseIndex : 0;
 
     return (
-      <div className={cn('space-y-3', spacing.pad.sm)}>
+      <div className={cn('stack', spacing.pad.sm)}>
         {/* Current phase header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex-between">
+          <div className="flex items-center gap-compact">
             {isRunning ? (
               <Loader2 className={cn(iconTokens.size.sm, 'text-brand-primary animate-spin')} />
             ) : null}
@@ -120,7 +120,7 @@ export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps>
                 button.base,
                 button.size.sm,
                 button.variant.secondary,
-                'flex items-center gap-1',
+                'flex items-center gap-tight',
               )}
               aria-label={t('pipeline.cancel', { defaultValue: 'Cancel' })}
             >
@@ -132,7 +132,7 @@ export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps>
           ) : null}
         </div>
         {/* Progress bar */}
-        <div className="space-y-1">
+        <div className="stack-xs">
           <div className={cn('h-2 bg-surface-sunken overflow-hidden', radius.default)}>
             <div
               className={cn('h-full bg-brand-primary transition-all duration-300', radius.default)}
@@ -166,7 +166,7 @@ export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps>
           )}
         </div>
         {/* Phase stepper */}
-        <div className="flex items-center justify-between gap-1 pt-2 border-t border-surface-border">
+        <div className="flex-between gap-tight pt-2 border-t border-surface-border">
           {status.enabledPhases.map((phase, index) => {
             const config = PHASE_CONFIG[phase];
             const ICON = config?.icon || Circle;
@@ -180,12 +180,15 @@ export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps>
             return (
               <div
                 key={phase}
-                className={cn('flex flex-col items-center gap-1 flex-1', isPending && 'opacity-50')}
+                className={cn(
+                  'flex flex-col items-center gap-tight flex-1',
+                  isPending && 'opacity-50',
+                )}
               >
                 {/* Icon with status indicator */}
                 <div
                   className={cn(
-                    'flex items-center justify-center w-8 h-8',
+                    'flex-center w-8 h-8',
                     radius.full,
                     isComplete && 'bg-status-success text-text-inverse',
                     isCurrent && 'bg-brand-primary text-text-inverse',
@@ -214,12 +217,15 @@ export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps>
         {/* Errors if any */}
         {status.errors.length > 0 && (
           <div
-            className={cn('p-2 bg-status-error/10 border border-status-error/30', radius.default)}
+            className={cn(
+              'pad-xs bg-status-error/10 border border-status-error/30',
+              radius.default,
+            )}
           >
             <span className="caption text-status-error font-medium">
               {t('pipeline.errors', { defaultValue: 'Errors' })}:
             </span>
-            <ul className="mt-1 space-y-0.5">
+            <ul className="mt-tight space-y-0.5">
               {/* Fixes #926, #939: Use error content hash for stable keys */}
               {status.errors.map((error, i) => (
                 <li key={`${i}-${simpleHash(error)}`} className="caption text-status-error">

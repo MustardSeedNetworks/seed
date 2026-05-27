@@ -56,7 +56,7 @@ export function CapabilityWarnings({
         spacing.margin.bottom.section,
       )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-default">
         {/* Warning icon */}
         <AlertTriangle
           className="h-5 w-5 text-status-warning flex-shrink-0 mt-0.5"
@@ -68,7 +68,7 @@ export function CapabilityWarnings({
           {/* Header with expand/collapse toggle */}
           <button
             type="button"
-            className="flex items-center gap-2 w-full text-left group"
+            className="flex items-center gap-compact w-full text-left group"
             onClick={(): void => setExpanded(!expanded)}
             aria-expanded={expanded}
             aria-controls="capability-details"
@@ -92,7 +92,7 @@ export function CapabilityWarnings({
 
           {/* Summary when collapsed */}
           {!expanded && (
-            <p className="body-small text-text-muted mt-1">
+            <p className="body-small text-text-muted mt-tight">
               {t(
                 'capabilities.warning.summary',
                 'Some features may not work. Click to see details and how to fix.',
@@ -102,12 +102,12 @@ export function CapabilityWarnings({
 
           {/* Expanded details */}
           {expanded ? (
-            <div id="capability-details" className="mt-3 space-y-4">
+            <div id="capability-details" className="mt-heading stack-lg">
               {missingCapabilities.map((cap) => (
                 <div key={cap.id} className="border-l-2 border-status-warning/50 pl-3">
                   <h4 className="body-small font-medium text-text-primary">{cap.title}</h4>
-                  <p className="caption text-text-muted mt-1">{cap.description}</p>
-                  <div className="mt-2 bg-surface-base rounded p-2">
+                  <p className="caption text-text-muted mt-tight">{cap.description}</p>
+                  <div className="mt-inline bg-surface-base rounded pad-xs">
                     <p className="caption font-medium text-text-secondary">
                       {t('capabilities.warning.howToFix', 'How to fix:')}
                     </p>

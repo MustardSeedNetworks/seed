@@ -13,19 +13,19 @@ interface TypographyProps extends HTMLAttributes<HTMLElement> {
 }
 
 export const H1: FC<TypographyProps> = ({ children, className = '', ...props }) => (
-  <h1 className={`text-2xl font-bold text-text-primary ${className}`} {...props}>
+  <h1 className={`heading-1 text-text-primary ${className}`} {...props}>
     {children}
   </h1>
 );
 
 export const H2: FC<TypographyProps> = ({ children, className = '', ...props }) => (
-  <h2 className={`text-xl font-semibold text-text-primary ${className}`} {...props}>
+  <h2 className={`heading-2 text-text-primary ${className}`} {...props}>
     {children}
   </h2>
 );
 
 export const H3: FC<TypographyProps> = ({ children, className = '', ...props }) => (
-  <h3 className={`text-lg font-semibold text-text-primary ${className}`} {...props}>
+  <h3 className={`heading-3 text-text-primary ${className}`} {...props}>
     {children}
   </h3>
 );

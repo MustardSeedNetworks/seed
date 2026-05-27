@@ -138,7 +138,7 @@ export function SsoSettings(): React.ReactElement {
   return (
     <CollapsibleSection
       title={
-        <div className="inline-flex items-center gap-2">
+        <div className="inline-flex items-center gap-compact">
           <Key className="w-4 h-4" />
           <span>{t('settings:sso.title')}</span>
         </div>
@@ -149,14 +149,14 @@ export function SsoSettings(): React.ReactElement {
         <p className="text-sm text-text-secondary">{t('settings:sso.description')}</p>
 
         {!canEdit && (
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-200">
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 pad-sm text-sm text-amber-200">
             {t('errors:sso.featureRequired')}
           </div>
         )}
 
         {error && (
           <div
-            className="rounded-lg border border-status-error/30 bg-status-error/5 p-3 text-sm text-status-error"
+            className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error"
             data-testid="sso-error"
           >
             {error}
@@ -164,7 +164,7 @@ export function SsoSettings(): React.ReactElement {
         )}
 
         {saveStatus && (
-          <div className="rounded-lg border border-status-success/30 bg-status-success/5 p-3 text-sm text-status-success">
+          <div className="rounded-lg border border-status-success/30 bg-status-success/5 pad-sm text-sm text-status-success">
             {saveStatus}
           </div>
         )}
@@ -230,10 +230,10 @@ function ProviderCard({
 
   return (
     <div
-      className="rounded-lg border border-surface-border bg-surface-raised p-3 stack-xs"
+      className="rounded-lg border border-surface-border bg-surface-raised pad-sm stack-xs"
       data-testid={`sso-provider-${name}`}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex-between">
         <h4 className="text-sm font-medium">{t(`settings:sso.providers.${name}`)}</h4>
         <label className="inline-flex items-center gap-1.5 text-xs">
           <input
@@ -248,7 +248,7 @@ function ProviderCard({
       </div>
 
       <div>
-        <label className="block text-xs text-text-muted mb-1" htmlFor={`sso-${name}-cid`}>
+        <label className="block text-xs text-text-muted mb-tight" htmlFor={`sso-${name}-cid`}>
           {t('settings:sso.fields.clientId')}
         </label>
         <Input
@@ -261,7 +261,7 @@ function ProviderCard({
       </div>
 
       <div>
-        <label className="block text-xs text-text-muted mb-1" htmlFor={`sso-${name}-cs`}>
+        <label className="block text-xs text-text-muted mb-tight" htmlFor={`sso-${name}-cs`}>
           {t('settings:sso.fields.clientSecret')}
         </label>
         <Input
@@ -276,7 +276,7 @@ function ProviderCard({
       </div>
 
       <div>
-        <label className="block text-xs text-text-muted mb-1" htmlFor={`sso-${name}-ru`}>
+        <label className="block text-xs text-text-muted mb-tight" htmlFor={`sso-${name}-ru`}>
           {t('settings:sso.fields.redirectUrl')}
         </label>
         <Input
@@ -286,12 +286,14 @@ function ProviderCard({
           disabled={!canEdit || saving}
           data-testid={`sso-redirect-${name}`}
         />
-        <p className="text-xs text-text-muted mt-1">{t('settings:sso.fields.redirectUrlHint')}</p>
+        <p className="text-xs text-text-muted mt-tight">
+          {t('settings:sso.fields.redirectUrlHint')}
+        </p>
       </div>
 
       {isMicrosoft && (
         <div>
-          <label className="block text-xs text-text-muted mb-1" htmlFor={`sso-${name}-tid`}>
+          <label className="block text-xs text-text-muted mb-tight" htmlFor={`sso-${name}-tid`}>
             {t('settings:sso.fields.tenantId')}
           </label>
           <Input
@@ -302,7 +304,9 @@ function ProviderCard({
             disabled={!canEdit || saving}
             data-testid={`sso-tenant-${name}`}
           />
-          <p className="text-xs text-text-muted mt-1">{t('settings:sso.fields.tenantIdHint')}</p>
+          <p className="text-xs text-text-muted mt-tight">
+            {t('settings:sso.fields.tenantIdHint')}
+          </p>
         </div>
       )}
 

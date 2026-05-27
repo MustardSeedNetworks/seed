@@ -27,10 +27,10 @@ export const L3_PATH_DISPLAY: React.NamedExoticComponent<L3PathDisplayProps> = m
             <span className="body-small font-semibold text-brand-primary">
               L3 {t('pathDiscovery.path', 'Path')}
             </span>
-            <span className="body-small font-medium text-text-primary ml-2">
+            <span className="body-small font-medium text-text-primary ml-inline">
               {t('pathDiscovery.to', 'to')} {result.target}
             </span>
-            <span className="caption text-text-muted ml-2">
+            <span className="caption text-text-muted ml-inline">
               ({result.hops.length} {t('pathDiscovery.hops', 'hops')})
             </span>
           </div>
@@ -67,7 +67,9 @@ export const L3_PATH_DISPLAY: React.NamedExoticComponent<L3PathDisplayProps> = m
                       {hop.ip || '?'}
                     </span>
                     {hop.hostname && hop.hostname !== hop.ip ? (
-                      <span className="caption text-text-muted ml-2 truncate">{hop.hostname}</span>
+                      <span className="caption text-text-muted ml-inline truncate">
+                        {hop.hostname}
+                      </span>
                     ) : null}
                   </>
                 )}

@@ -123,7 +123,7 @@ export function ApiTokensSettings(): React.ReactElement {
   return (
     <CollapsibleSection
       title={
-        <div className="inline-flex items-center gap-2">
+        <div className="inline-flex items-center gap-compact">
           <Key className="w-4 h-4" />
           <span>API Tokens</span>
         </div>
@@ -137,7 +137,7 @@ export function ApiTokensSettings(): React.ReactElement {
         </p>
 
         {!canMint && (
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-200">
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 pad-sm text-sm text-amber-200">
             Current tier: <strong>{tierLabel}</strong>. Minting API tokens requires Pro. Start a
             14-day trial with <code>seed license trial</code>, or activate a Pro key with{' '}
             <code>seed license activate -k &lt;KEY&gt;</code>.
@@ -145,20 +145,20 @@ export function ApiTokensSettings(): React.ReactElement {
         )}
 
         {error && (
-          <div className="rounded-lg border border-status-error/30 bg-status-error/5 p-3 text-sm text-status-error">
+          <div className="rounded-lg border border-status-error/30 bg-status-error/5 pad-sm text-sm text-status-error">
             {error}
           </div>
         )}
 
         {mintedToken && (
-          <div className="rounded-lg border border-status-success/40 bg-status-success/5 p-3 stack-xs">
+          <div className="rounded-lg border border-status-success/40 bg-status-success/5 pad-sm stack-xs">
             <div className="text-sm font-medium text-status-success">
               Token created — copy it now. It will not be shown again.
             </div>
-            <code className="block break-all rounded bg-surface-raised px-2 py-1 text-xs">
+            <code className="block break-all rounded bg-surface-raised px-cell py-compact text-xs">
               {mintedToken.token}
             </code>
-            <div className="flex gap-2">
+            <div className="flex gap-compact">
               <Button
                 variant="outline"
                 tone="green"
@@ -174,9 +174,9 @@ export function ApiTokensSettings(): React.ReactElement {
           </div>
         )}
 
-        <div className="flex items-end gap-2">
+        <div className="flex items-end gap-compact">
           <div className="flex-1">
-            <label className="block text-xs text-text-muted mb-1" htmlFor="api-token-name">
+            <label className="block text-xs text-text-muted mb-tight" htmlFor="api-token-name">
               Token name
             </label>
             <Input
@@ -210,12 +210,12 @@ export function ApiTokensSettings(): React.ReactElement {
           <table className="w-full text-sm">
             <thead className="text-xs text-text-muted text-left">
               <tr>
-                <th className="py-2 pr-2">Name</th>
-                <th className="py-2 pr-2">Prefix</th>
-                <th className="py-2 pr-2">Created</th>
-                <th className="py-2 pr-2">Last used</th>
-                <th className="py-2 pr-2">Status</th>
-                <th className="py-2" />
+                <th className="py-row pr-2">Name</th>
+                <th className="py-row pr-2">Prefix</th>
+                <th className="py-row pr-2">Created</th>
+                <th className="py-row pr-2">Last used</th>
+                <th className="py-row pr-2">Status</th>
+                <th className="py-row" />
               </tr>
             </thead>
             <tbody>
@@ -223,18 +223,18 @@ export function ApiTokensSettings(): React.ReactElement {
                 const revoked = !isZeroTime(t.revokedAt);
                 return (
                   <tr key={t.id} className="border-t border-surface-border">
-                    <td className="py-2 pr-2">{t.name}</td>
-                    <td className="py-2 pr-2 font-mono text-xs">{t.prefix}…</td>
-                    <td className="py-2 pr-2">{formatDate(t.createdAt)}</td>
-                    <td className="py-2 pr-2">{formatDate(t.lastUsedAt)}</td>
-                    <td className="py-2 pr-2">
+                    <td className="py-row pr-2">{t.name}</td>
+                    <td className="py-row pr-2 font-mono text-xs">{t.prefix}…</td>
+                    <td className="py-row pr-2">{formatDate(t.createdAt)}</td>
+                    <td className="py-row pr-2">{formatDate(t.lastUsedAt)}</td>
+                    <td className="py-row pr-2">
                       {revoked ? (
                         <span className="text-status-error">revoked</span>
                       ) : (
                         <span className="text-status-success">active</span>
                       )}
                     </td>
-                    <td className="py-2 text-right">
+                    <td className="py-row text-right">
                       {!revoked && (
                         <Button
                           variant="ghost"

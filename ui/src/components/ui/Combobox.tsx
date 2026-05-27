@@ -88,7 +88,7 @@ export function Combobox<T>({
         aria-label={ariaLabel}
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 rounded-lg border border-surface-border bg-bg-base/60 px-3 py-2 text-sm text-text-primary transition-colors hover:border-surface-border focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full items-center justify-between gap-compact rounded-lg border border-surface-border bg-bg-base/60 px-3 py-row text-sm text-text-primary transition-colors hover:border-surface-border focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className={selectedLabel ? '' : 'text-text-muted'}>
           {selectedLabel || placeholder}
@@ -96,16 +96,16 @@ export function Combobox<T>({
         <ChevronsUpDown className="h-4 w-4 text-text-muted" aria-hidden="true" />
       </button>
       {open ? (
-        <div className="absolute left-0 right-0 z-40 mt-1 rounded-lg border border-surface-border bg-bg-surface shadow-xl">
+        <div className="absolute left-0 right-0 z-40 mt-tight rounded-lg border border-surface-border bg-bg-surface shadow-xl">
           <Command shouldFilter={true} className="overflow-hidden rounded-lg">
             <Command.Input
               autoFocus={true}
               value={query}
               onValueChange={setQuery}
               placeholder="Search…"
-              className="w-full bg-transparent px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none border-b border-surface-border"
+              className="w-full bg-transparent px-3 py-row text-sm text-text-primary placeholder:text-text-muted focus:outline-none border-b border-surface-border"
             />
-            <Command.List className="max-h-60 overflow-y-auto py-1 text-sm">
+            <Command.List className="max-h-60 overflow-y-auto py-compact text-sm">
               <Command.Empty className="px-3 py-4 text-center text-text-muted">
                 {emptyText}
               </Command.Empty>
@@ -118,7 +118,7 @@ export function Combobox<T>({
                     key={key}
                     value={`${label} ${key}`}
                     onSelect={() => handleSelect(option)}
-                    className="flex cursor-pointer items-center gap-2 px-3 py-2 text-text-primary aria-selected:bg-surface-hover"
+                    className="flex cursor-pointer items-center gap-compact px-3 py-row text-text-primary aria-selected:bg-surface-hover"
                   >
                     <span className="flex-1">
                       {renderItem !== undefined

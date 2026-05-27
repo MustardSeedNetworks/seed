@@ -329,7 +329,7 @@ function ChannelGraph({
       {/* Hover tooltip */}
       {hoveredNetwork ? (
         <div
-          className="absolute bg-surface-raised border border-surface-border rounded shadow-lg p-2 z-10"
+          className="absolute bg-surface-raised border border-surface-border rounded shadow-lg pad-xs z-10"
           style={{ top: '10px', right: '10px' }}
         >
           <p className="body-small font-semibold">{hoveredNetwork.ssid || '(Hidden)'}</p>

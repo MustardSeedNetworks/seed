@@ -166,7 +166,7 @@ function ResourceBar({
         </div>
       ) : null}
       {showConsumers ? (
-        <div className="caption text-text-muted pl-3 mt-1">
+        <div className="caption text-text-muted pl-3 mt-tight">
           <div>Top consumers:</div>
           {topProcesses.slice(0, 3).map((proc) => (
             <div key={proc.pid} className="pl-2">
@@ -176,7 +176,7 @@ function ResourceBar({
         </div>
       ) : null}
       {percent >= 75 ? (
-        <div className="mt-2 text-xs text-text-muted">
+        <div className="mt-inline text-xs text-text-muted">
           <span className="font-medium">Tip:</span> {getSuggestion(type, percent)}
         </div>
       ) : null}

@@ -30,24 +30,24 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const baseStyles =
-  'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]';
+  'inline-flex items-center justify-center gap-compact font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]';
 
 const sizeStyles: Record<ButtonSize, string> = {
-  xs: 'px-2 py-1 text-xs',
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-3 text-base',
+  xs: 'px-cell py-compact text-xs',
+  sm: 'px-3 py-compact-md text-sm',
+  md: 'px-4 py-row text-sm',
+  lg: 'px-6 py-row-lg text-base',
 };
 
 const variantStyles: Record<ButtonVariant, Record<ButtonTone, string>> = {
   solid: {
     violet:
-      'bg-gradient-to-r from-brand-primary to-brand-primary hover:from-brand-primary hover:to-brand-accent text-text-primary shadow-lg shadow-brand-primary/25 focus:ring-brand-primary',
-    red: 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-text-primary shadow-lg shadow-red-500/25 focus:ring-status-error',
+      'bg-brand-primary hover:bg-brand-accent text-text-inverse shadow-lg shadow-brand-primary/25 focus:ring-brand-primary',
+    red: 'bg-status-error hover:bg-status-error/85 text-text-inverse shadow-lg shadow-status-error/25 focus:ring-status-error',
     green:
-      'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-text-primary shadow-lg shadow-emerald-500/25 focus:ring-status-success',
-    blue: 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-text-primary shadow-lg shadow-blue-500/25 focus:ring-status-info',
-    gray: 'bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-500 hover:to-gray-400 text-text-primary shadow-lg shadow-gray-500/25 focus:ring-border-muted',
+      'bg-status-success hover:bg-status-success/85 text-text-inverse shadow-lg shadow-status-success/25 focus:ring-status-success',
+    blue: 'bg-status-info hover:bg-status-info/85 text-text-inverse shadow-lg shadow-status-info/25 focus:ring-status-info',
+    gray: 'bg-surface-hover hover:bg-surface-sunken text-text-primary shadow-lg shadow-surface-border/25 focus:ring-border-muted',
   },
   outline: {
     violet:
@@ -141,8 +141,8 @@ export const IconButton: FC<IconButtonProps> = ({
 }) => {
   const iconSizeStyles = {
     sm: 'p-1.5',
-    md: 'p-2',
-    lg: 'p-3',
+    md: 'pad-xs',
+    lg: 'pad-sm',
   };
 
   const variantBase = {

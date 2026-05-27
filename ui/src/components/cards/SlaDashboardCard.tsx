@@ -130,7 +130,7 @@ function ComplianceRing({ rate, size = 80 }: { rate: number; size?: number }): R
           className="transition-all duration-500"
         />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
+      <div className="absolute inset-0 flex-center">
         <span className="text-lg font-bold text-text-primary">{rate.toFixed(1)}%</span>
       </div>
     </div>
@@ -151,10 +151,10 @@ function StatBlock({
   className?: string;
 }): React.ReactElement {
   return (
-    <div className={cn('flex items-center gap-2', className)}>
+    <div className={cn('flex items-center gap-compact', className)}>
       <div
         className={cn(
-          'flex items-center justify-center rounded-md',
+          'flex-center rounded-md',
           radius.md,
           spacing.pad.xs,
           status === 'success' && 'bg-status-success/10 text-status-success',
@@ -167,7 +167,7 @@ function StatBlock({
       </div>
       <div className="flex flex-col">
         <span className="text-xs text-text-muted">{label}</span>
-        <span className="text-sm font-medium text-text-primary">{value}</span>
+        <span className="label">{value}</span>
       </div>
     </div>
   );
@@ -271,7 +271,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
         className={className}
       >
         {loading ? (
-          <div className={cn('animate-pulse space-y-4', spacing.pad.default)}>
+          <div className={cn('animate-pulse stack-lg', spacing.pad.default)}>
             <div className="h-20 bg-surface-secondary rounded-lg" />
             <div className="h-16 bg-surface-secondary rounded-lg" />
           </div>
@@ -280,16 +280,16 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
           <div className={cn('text-center text-status-error', spacing.pad.default)}>{error}</div>
         ) : null}
         {loading || error ? null : (
-          <div className={cn('space-y-4', spacing.pad.default)}>
+          <div className={cn('stack-lg', spacing.pad.default)}>
             {/* Period selector */}
-            <div className="flex justify-end gap-1">
+            <div className="flex justify-end gap-tight">
               {(['daily', 'weekly', 'monthly'] as const).map((p) => (
                 <button
                   type="button"
                   key={p}
                   onClick={(): void => setPeriod(p)}
                   className={cn(
-                    'px-2 py-1 text-xs rounded transition-colors',
+                    'px-cell py-compact text-xs rounded transition-colors',
                     period === p
                       ? 'bg-accent text-white'
                       : 'bg-surface-secondary text-text-muted hover:text-text-primary',
@@ -302,9 +302,9 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
 
             {/* SLA Compliance */}
             {data.sla ? (
-              <div className="flex items-center justify-between">
+              <div className="flex-between">
                 <div>
-                  <h4 className="text-sm font-medium text-text-primary mb-1">
+                  <h4 className="label mb-tight">
                     {t('slaDashboard.compliance', 'SLA Compliance')}
                   </h4>
                   <p className="text-xs text-text-muted">
@@ -312,7 +312,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                     {t('slaDashboard.endpointsMet', 'endpoints meeting SLA')}
                   </p>
                   {data.sla.endpointsMissed > 0 ? (
-                    <p className="text-xs text-status-error mt-1">
+                    <p className="text-xs text-status-error mt-tight">
                       {data.sla.endpointsMissed}{' '}
                       {t('slaDashboard.endpointsMissed', 'endpoints missing SLA')}
                     </p>
@@ -327,10 +327,10 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
             {/* Health Score Distribution */}
             {data.scores ? (
               <div>
-                <h4 className="text-sm font-medium text-text-primary mb-3">
+                <h4 className="label mb-heading">
                   {t('slaDashboard.healthScores', 'Health Scores')}
                 </h4>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-default">
                   <StatBlock
                     icon={CheckCircle2}
                     label={t('slaDashboard.healthy', 'Healthy')}
@@ -361,16 +361,16 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
             <CardDivider />
 
             {/* Alerts and Anomalies */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-comfortable">
               {data.alerts ? (
                 <div>
                   <h4 className="text-xs text-text-muted mb-2">
                     {t('slaDashboard.activeAlerts', 'Active Alerts')}
                   </h4>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-compact">
                     <span
                       className={cn(
-                        'text-2xl font-bold',
+                        'heading-1',
                         data.alerts.active > 0 ? statusColor.text.error : 'text-text-primary',
                       )}
                     >
@@ -379,7 +379,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                     {data.alerts.critical > 0 ? (
                       <span
                         className={cn(
-                          'text-xs px-2 py-0.5 bg-status-error/10 text-status-error',
+                          'text-xs px-cell py-0.5 bg-status-error/10 text-status-error',
                           radius.full,
                         )}
                       >
@@ -394,10 +394,10 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                 <h4 className="text-xs text-text-muted mb-2">
                   {t('slaDashboard.anomalies', 'Anomalies')}
                 </h4>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-compact">
                   <span
                     className={cn(
-                      'text-2xl font-bold',
+                      'heading-1',
                       data.anomalyCount > 0 ? statusColor.text.warning : 'text-text-primary',
                     )}
                   >
@@ -406,7 +406,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                   {data.anomalyCount > 0 ? (
                     <span
                       className={cn(
-                        'text-xs px-2 py-0.5 bg-status-warning/10 text-status-warning',
+                        'text-xs px-cell py-0.5 bg-status-warning/10 text-status-warning',
                         radius.full,
                       )}
                     >

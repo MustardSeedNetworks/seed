@@ -305,7 +305,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
               <span className="body-small text-text-primary">
                 v{version.current}
                 {version.needsMigration ? (
-                  <span className="ml-2 text-status-warning">
+                  <span className="ml-inline text-status-warning">
                     ({t('configBackups.needsMigration')})
                   </span>
                 ) : null}
@@ -325,7 +325,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
               button.size.md,
               'bg-brand-primary text-text-inverse',
               radius.md,
-              'font-medium hover:bg-brand-primary-hover transition-colors flex items-center justify-center',
+              'font-medium hover:bg-brand-primary-hover transition-colors flex-center',
               spacing.gap.compact,
               'touch-manipulation disabled:opacity-50',
             )}

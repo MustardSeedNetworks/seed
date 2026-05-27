@@ -25,11 +25,11 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
         spacing.pad.lg,
       )}
     >
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-spacious sm:grid-cols-2 lg:grid-cols-4">
         {/* Product Info */}
         <div>
           <h3 className="heading-4 text-text-primary mb-2">{t('app.title')}</h3>
-          <p className="body-small text-text-muted mb-1">
+          <p className="body-small text-text-muted mb-tight">
             {t('footer.byCompany', 'by Mustard Seed Networks')}
           </p>
           <p className="caption text-text-muted">
@@ -42,7 +42,7 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
           <h4 className="body-small font-medium text-text-primary mb-2">
             {t('footer.contact', 'Contact')}
           </h4>
-          <div className="space-y-1">
+          <div className="stack-xs">
             <a
               href="mailto:support@mustardseednetworks.com"
               className="body-small text-brand-primary hover:underline block"
@@ -92,7 +92,7 @@ export function AppFooter({ appVersion }: AppFooterProps): JSX.Element {
         </div>
       </div>
       {/* Copyright */}
-      <div className="mt-6 pt-4 border-t border-surface-border text-center">
+      <div className="mt-6 pt-section border-t border-surface-border text-center">
         <p className="caption text-text-muted">
           &copy; {new Date().getFullYear()}{' '}
           {t('footer.copyright', 'Mustard Seed Networks. All rights reserved.')}

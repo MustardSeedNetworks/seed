@@ -333,7 +333,7 @@ function DeviceSelectorComponent({
       {isOpen ? (
         <div
           className={cn(
-            'absolute top-full left-0 mt-1 w-full min-w-80',
+            'absolute top-full left-0 mt-tight w-full min-w-80',
             radius.md,
             'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
           )}
@@ -359,7 +359,7 @@ function DeviceSelectorComponent({
                   }
                   placeholder={t('device.search', 'Search by IP, name, or vendor')}
                   className={cn(
-                    'w-full pl-8 pr-3 py-1.5',
+                    'w-full pl-8 pr-3 py-compact-md',
                     'body-small text-text-primary placeholder-text-muted',
                     'bg-surface-base border border-surface-border',
                     radius.md,
@@ -387,19 +387,19 @@ function DeviceSelectorComponent({
                   }
                 }}
                 className={cn(
-                  'w-full px-3 py-1.5',
+                  'w-full px-3 py-compact-md',
                   'body-small text-text-primary placeholder-text-muted',
                   'bg-surface-base border border-surface-border',
                   radius.md,
                   'focus:outline-none focus:ring-2 focus:ring-brand-primary',
                 )}
               />
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-compact mt-inline">
                 <button
                   type="button"
                   onClick={(): void => submitManualIp(manualInputRef.current?.value || '')}
                   className={cn(
-                    'flex-1 px-3 py-1.5',
+                    'flex-1 px-3 py-compact-md',
                     'body-small font-medium',
                     'bg-brand-primary text-text-inverse',
                     radius.md,
@@ -412,7 +412,7 @@ function DeviceSelectorComponent({
                   type="button"
                   onClick={(): void => setManualEntry(false)}
                   className={cn(
-                    'px-3 py-1.5',
+                    'px-3 py-compact-md',
                     'body-small font-medium',
                     'border border-surface-border bg-surface-base',
                     radius.md,
@@ -449,7 +449,7 @@ function DeviceSelectorComponent({
                   <div
                     className={cn(spacing.pad.sm, 'bg-surface-base border-b border-surface-border')}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-compact">
                       <group.icon className={cn(iconTokens.size.sm, 'text-text-muted')} />
                       <span className="caption font-semibold text-text-muted uppercase tracking-wide">
                         {group.label}
@@ -518,7 +518,7 @@ function DeviceSelectorComponent({
                 type="button"
                 onClick={handleManualEntry}
                 className={cn(
-                  'w-full flex items-center justify-center',
+                  'w-full flex-center',
                   spacing.gap.tight,
                   spacing.pad.sm,
                   'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none text-brand-primary',

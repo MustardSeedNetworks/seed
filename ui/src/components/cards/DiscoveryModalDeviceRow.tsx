@@ -137,11 +137,9 @@ export function DeviceRow({
         onClick={onToggle}
       >
         {/* IP Address */}
-        <td className="px-3 py-2">
+        <td className="px-3 py-row">
           <div className="flex flex-col">
-            <span className="font-mono text-sm font-medium text-text-primary">
-              {device.ip || t('network.noIP')}
-            </span>
+            <span className="font-mono label">{device.ip || t('network.noIP')}</span>
             {device.ipv6 ? (
               <span
                 className="font-mono text-xs text-text-muted truncate max-w-40"
@@ -154,7 +152,7 @@ export function DeviceRow({
         </td>
 
         {/* Hostname - prefer displayName, fallback to mdnsName, netbiosName, hostname */}
-        <td className="px-3 py-2">
+        <td className="px-3 py-row">
           <span
             className="text-sm text-text-secondary truncate block max-w-40"
             title={device.displayName || device.mdnsName || device.netbiosName || device.hostname}
@@ -164,12 +162,12 @@ export function DeviceRow({
         </td>
 
         {/* MAC Address */}
-        <td className="px-3 py-2">
+        <td className="px-3 py-row">
           <span className="font-mono text-xs text-text-muted">{device.mac || '-'}</span>
         </td>
 
         {/* Vendor */}
-        <td className="px-3 py-2">
+        <td className="px-3 py-row">
           {device.vendor === 'LAA' ? (
             <Tooltip
               content="Locally Administered Address - MAC assigned locally rather than by manufacturer"
@@ -187,8 +185,8 @@ export function DeviceRow({
         </td>
 
         {/* Discovery Methods */}
-        <td className="px-3 py-2">
-          <div className="flex items-center gap-1 flex-wrap">
+        <td className="px-3 py-row">
+          <div className="flex items-center gap-tight flex-wrap">
             {device.discoveryMethod.map((method) => (
               <MethodBadge key={method} method={method} />
             ))}
@@ -196,7 +194,7 @@ export function DeviceRow({
         </td>
 
         {/* Open Ports */}
-        <td className="px-3 py-2">
+        <td className="px-3 py-row">
           {openPorts.length > 0 ? (
             <span
               className={cn(
@@ -212,11 +210,11 @@ export function DeviceRow({
         </td>
 
         {/* Vulnerabilities */}
-        <td className="px-3 py-2">
+        <td className="px-3 py-row">
           {device.vulnerabilities && device.vulnerabilities.count > 0 ? (
             <span
               className={cn(
-                'inline-flex items-center gap-1 text-xs px-1.5 py-0.5',
+                'inline-flex items-center gap-tight text-xs px-1.5 py-0.5',
                 radius.md,
                 getSeverityClasses(device.vulnerabilities.highestSeverity),
               )}
@@ -230,20 +228,20 @@ export function DeviceRow({
         </td>
 
         {/* Last Seen */}
-        <td className="px-3 py-2">
+        <td className="px-3 py-row">
           <span className="text-xs text-text-muted">{formatLastSeen(device.lastSeen)}</span>
         </td>
 
         {/* Actions */}
-        <td className="px-3 py-2">
-          <div className="flex items-center gap-2">
+        <td className="px-3 py-row">
+          <div className="flex items-center gap-compact">
             {onDeepScan && device.ip ? (
               <button
                 type="button"
                 onClick={handleScan}
                 disabled={isScanning}
                 className={cn(
-                  'text-xs px-2 py-1 bg-brand-primary/20 text-brand-primary',
+                  'text-xs px-cell py-compact bg-brand-primary/20 text-brand-primary',
                   radius.md,
                   'hover:bg-brand-primary/30 transition-colors disabled:opacity-50',
                 )}
@@ -258,18 +256,18 @@ export function DeviceRow({
       {/* Expanded details row */}
       {isExpanded && hasDetails ? (
         <tr className="bg-surface-sunken">
-          <td colSpan={9} className="px-4 py-3">
-            <div className="space-y-3">
+          <td colSpan={9} className="px-4 py-row-lg">
+            <div className="stack">
               {/* Open Ports */}
               {openPorts.length > 0 ? (
                 <div>
-                  <h4 className="text-xs font-semibold text-text-secondary mb-1">Open Ports</h4>
-                  <div className="flex flex-wrap gap-2">
+                  <h4 className="text-xs font-semibold text-text-secondary mb-tight">Open Ports</h4>
+                  <div className="flex flex-wrap gap-compact">
                     {openPorts.map((port: OpenPort) => (
                       <span
                         key={port.port}
                         className={cn(
-                          'px-2 py-1 text-xs font-mono',
+                          'px-cell py-compact text-xs font-mono',
                           radius.md,
                           'bg-surface-base text-text-primary',
                         )}
@@ -287,10 +285,10 @@ export function DeviceRow({
               {/* LLDP Info */}
               {device.lldpInfo ? (
                 <div>
-                  <h4 className="text-xs font-semibold text-text-secondary mb-1">
+                  <h4 className="text-xs font-semibold text-text-secondary mb-tight">
                     LLDP Information
                   </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-compact text-xs">
                     <div>
                       <span className="text-text-muted">System:</span> {device.lldpInfo.systemName}
                     </div>
@@ -316,10 +314,10 @@ export function DeviceRow({
               {/* CDP Info */}
               {device.cdpInfo ? (
                 <div>
-                  <h4 className="text-xs font-semibold text-text-secondary mb-1">
+                  <h4 className="text-xs font-semibold text-text-secondary mb-tight">
                     CDP Information
                   </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-compact text-xs">
                     <div>
                       <span className="text-text-muted">Device:</span> {device.cdpInfo.deviceId}
                     </div>
@@ -338,14 +336,14 @@ export function DeviceRow({
 
               {/* SNMP Data */}
               {device.snmpData ? (
-                <div className="space-y-2">
+                <div className="stack-sm">
                   <h4 className="text-xs font-semibold text-text-secondary">
                     {t('discovery.snmpInfo', 'SNMP Details')}
                   </h4>
 
                   {/* System Info */}
                   {device.snmpData.system ? (
-                    <div className="bg-surface-base p-2 rounded-md">
+                    <div className="bg-surface-base pad-xs rounded-md">
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-1 text-xs">
                         {device.snmpData.system.sysName ? (
                           <div>
@@ -400,7 +398,7 @@ export function DeviceRow({
                       <span className="text-xs text-text-muted">
                         Interfaces ({device.snmpData.interfaces.length}):
                       </span>
-                      <div className="flex flex-wrap gap-1 mt-1">
+                      <div className="flex flex-wrap gap-tight mt-tight">
                         {device.snmpData.interfaces.slice(0, 8).map((iface) => (
                           <span
                             key={iface.name}
@@ -415,7 +413,7 @@ export function DeviceRow({
                           >
                             {iface.name}
                             {iface.speedMbps && iface.speedMbps > 0 ? (
-                              <span className="text-text-muted ml-1">
+                              <span className="text-text-muted ml-tight">
                                 {iface.speedMbps >= 1000
                                   ? `${Math.round(iface.speedMbps / 1000)}G`
                                   : `${iface.speedMbps}M`}
@@ -438,7 +436,7 @@ export function DeviceRow({
                       <span className="text-xs text-text-muted">
                         VLANs ({device.snmpData.vlans.length}):
                       </span>
-                      <div className="flex flex-wrap gap-1 mt-1">
+                      <div className="flex flex-wrap gap-tight mt-tight">
                         {device.snmpData.vlans.slice(0, 12).map((vlan) => (
                           <span
                             key={vlan.id}
@@ -450,7 +448,7 @@ export function DeviceRow({
                           >
                             {vlan.id}
                             {vlan.name && vlan.name !== `VLAN${vlan.id}` ? (
-                              <span className="text-text-muted ml-1">
+                              <span className="text-text-muted ml-tight">
                                 {vlan.name.length > 10
                                   ? `${vlan.name.substring(0, 10)}...`
                                   : vlan.name}
@@ -471,7 +469,7 @@ export function DeviceRow({
                   {device.snmpData.inventory && device.snmpData.inventory.length > 0 ? (
                     <div>
                       <span className="text-xs text-text-muted">Hardware:</span>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-1 mt-1 text-xs">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-tight mt-tight text-xs">
                         {device.snmpData.inventory
                           .filter(
                             (e) =>
@@ -483,18 +481,18 @@ export function DeviceRow({
                           .map((entity) => (
                             <div
                               key={entity.serialNum || entity.name || entity.description}
-                              className="bg-surface-hover px-2 py-1 rounded"
+                              className="bg-surface-hover px-cell py-compact rounded"
                             >
                               <span className="text-text-primary">
                                 {entity.name || entity.description}
                               </span>
                               {entity.serialNum ? (
-                                <span className="text-text-muted ml-2">
+                                <span className="text-text-muted ml-inline">
                                   S/N: {entity.serialNum}
                                 </span>
                               ) : null}
                               {entity.modelName ? (
-                                <span className="text-text-muted ml-2">
+                                <span className="text-text-muted ml-inline">
                                   Model: {entity.modelName}
                                 </span>
                               ) : null}

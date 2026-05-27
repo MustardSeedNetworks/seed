@@ -214,7 +214,7 @@ function ProfileSelectorComponent({
       {isOpen ? (
         <div
           className={cn(
-            'absolute top-full left-0 mt-1 w-64',
+            'absolute top-full left-0 mt-tight w-64',
             radius.md,
             'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
           )}
@@ -303,7 +303,7 @@ function ProfileSelectorComponent({
               type="button"
               onClick={goToManagement}
               className={cn(
-                'w-full flex items-center justify-center',
+                'w-full flex-center',
                 spacing.gap.tight,
                 spacing.pad.sm,
                 'hover:bg-surface-hover focus:bg-surface-hover focus:outline-none text-brand-primary',

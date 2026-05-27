@@ -313,7 +313,7 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps): R
             {summary.surveyName}
           </h4>
 
-          <div className="grid grid-cols-2 gap-2 caption">
+          <div className="grid grid-cols-2 gap-compact caption">
             <div className="text-text-muted">{t('import.device')}:</div>
             <div>{summary.deviceInfo}</div>
 

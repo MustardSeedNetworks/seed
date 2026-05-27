@@ -60,7 +60,7 @@ function FilterBadge({ label, active, onClick, color }: FilterBadgeProps): React
     <button
       type="button"
       className={cn(
-        'px-3 py-1.5',
+        'px-3 py-compact-md',
         radius.md,
         'text-sm font-medium cursor-pointer transition-all',
         active
@@ -91,7 +91,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
       className={cn(
         colors.bg,
         colors.border,
-        'px-4 py-3', // Larger padding than card version
+        'px-4 py-row-lg', // Larger padding than card version
         'mb-2',
         radius.lg,
         'cursor-pointer transition-colors hover:brightness-95',
@@ -104,7 +104,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
         <span
           className={cn(
             colors.badge,
-            'px-3 py-1',
+            'px-3 py-compact',
             radius.default,
             'font-mono font-bold min-w-15 text-center text-sm',
           )}
@@ -118,7 +118,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
         </span>
 
         {/* Layer badge */}
-        <span className={cn('px-3 py-1', radius.default, 'bg-surface-base text-sm')}>
+        <span className={cn('px-3 py-compact', radius.default, 'bg-surface-base text-sm')}>
           {entry.layer}
         </span>
 
@@ -126,7 +126,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
         {entry.component ? (
           <span
             className={cn(
-              'px-3 py-1',
+              'px-3 py-compact',
               radius.default,
               'bg-purple-500/20 text-purple-600 dark:text-purple-400 text-sm',
             )}
@@ -139,7 +139,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
         {entry.request_id ? (
           <span
             className={cn(
-              'px-3 py-1',
+              'px-3 py-compact',
               radius.default,
               'bg-status-info/20 text-status-info text-sm font-mono',
             )}
@@ -157,7 +157,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
         {entry.duration_ms !== undefined && entry.duration_ms > 0 ? (
           <span
             className={cn(
-              'px-3 py-1',
+              'px-3 py-compact',
               radius.default,
               'bg-status-success/20 text-status-success text-sm',
             )}
@@ -167,7 +167,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
         ) : null}
 
         {/* Expand indicator and close button for expanded entries */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <span className="text-sm text-text-muted">{expanded ? '▼' : '▶'}</span>
           {expanded ? (
             <button
@@ -196,7 +196,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
       </div>
       {/* Expanded content - more spacious */}
       {expanded ? (
-        <div className={cn('mt-4 space-y-3')}>
+        <div className={cn('mt-content stack')}>
           {/* Full message */}
           <div className="text-base text-text-primary wrap-break-word whitespace-pre-wrap">
             {entry.message}
@@ -206,7 +206,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
           {entry.metadata && Object.keys(entry.metadata).length > 0 ? (
             <pre
               className={cn(
-                'p-4',
+                'pad',
                 radius.lg,
                 'text-sm bg-surface-sunken overflow-x-auto font-mono whitespace-pre-wrap wrap-break-word',
               )}
@@ -219,7 +219,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
           {entry.stack ? (
             <pre
               className={cn(
-                'p-4',
+                'pad',
                 radius.lg,
                 'text-sm text-status-error bg-status-error/10 overflow-x-auto font-mono whitespace-pre-wrap',
               )}
@@ -234,7 +234,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
               'grid grid-cols-2 md:grid-cols-4',
               spacing.gap.comfortable,
               'text-sm text-text-secondary',
-              'p-3 bg-surface-base rounded-lg',
+              'pad-sm bg-surface-base rounded-lg',
             )}
           >
             <div>
@@ -309,7 +309,7 @@ function LogFiltersBar({
     filters.search !== '';
 
   return (
-    <div className={cn('space-y-3', 'p-4', 'bg-surface-base', radius.lg)}>
+    <div className={cn('stack', 'pad', 'bg-surface-base', radius.lg)}>
       {/* Search bar - larger */}
       <div className={cn(layout.inline.default)}>
         <input
@@ -331,7 +331,7 @@ function LogFiltersBar({
           <button
             type="button"
             onClick={onReset}
-            className={cn('px-4 py-2', 'text-base text-text-secondary hover:text-text-primary')}
+            className={cn('px-4 py-row', 'text-base text-text-secondary hover:text-text-primary')}
           >
             {t('logs.clearFilters', 'Clear All')}
           </button>
@@ -563,13 +563,13 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
             <h2 id="log-viewer-modal-title" className="heading-2">
               {t('logs.title', 'System Logs')}
             </h2>
-            <p className="body-small text-text-secondary mt-1">
+            <p className="body-small text-text-secondary mt-tight">
               {t('logs.subtitle', 'Real-time application logs with filtering')}
               {stats ? (
-                <span className="ml-4">
+                <span className="ml-content">
                   <strong>{stats.total_count}</strong> {t('logs.totalLogs', 'logs')}
                   {stats.errors_last_hour > 0 ? (
-                    <span className="text-status-error ml-2">
+                    <span className="text-status-error ml-inline">
                       ({stats.errors_last_hour} {t('logs.errorsLastHour', 'errors last hour')})
                     </span>
                   ) : null}
@@ -623,7 +623,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
                 button.size.md,
                 radius.lg,
                 'border border-surface-border hover:bg-surface-hover',
-                'flex items-center gap-2',
+                'flex items-center gap-compact',
               )}
               onClick={exportJson}
               title={t(
@@ -655,7 +655,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
                 button.size.md,
                 radius.lg,
                 'border border-surface-border hover:bg-surface-hover',
-                'flex items-center gap-2',
+                'flex items-center gap-compact',
               )}
               onClick={exportCsv}
               title={t(
@@ -685,7 +685,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
               type="button"
               onClick={onClose}
               className={cn(
-                'p-2',
+                'pad-xs',
                 'text-text-muted',
                 'hover:text-text-primary',
                 'transition-colors',
@@ -724,7 +724,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
         {/* Log entries - scrollable area */}
         <div
           ref={logContainerRef}
-          className={cn('flex-1 overflow-y-auto p-6 bg-surface-base/40')}
+          className={cn('flex-1 overflow-y-auto pad-lg bg-surface-base/40')}
           onScroll={handleScroll}
         >
           {/* Loading state */}
@@ -739,7 +739,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
 
           {/* Empty state */}
           {logs.length === 0 && !isLoading ? (
-            <div className={cn('text-center text-text-secondary py-12')}>
+            <div className={cn('text-center text-text-secondary py-centered')}>
               {filters.search || filters.levels.length > 0 || filters.layers.length > 0
                 ? t('logs.noMatchingLogs', 'No logs match the current filters')
                 : t('logs.noLogs', 'No logs yet')}
@@ -762,7 +762,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
         {!autoScroll && logs.length > 0 ? (
           <div
             className={cn(
-              'px-6 py-3',
+              'px-6 py-row-lg',
               'text-center border-t border-surface-border',
               'bg-surface-raised shrink-0',
             )}

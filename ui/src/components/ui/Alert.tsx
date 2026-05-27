@@ -50,7 +50,7 @@ export const Alert: FC<AlertProps> = ({ status, children, onDismiss, className =
 
   return (
     <div
-      className={`flex items-center gap-2 rounded-lg border p-3 ${config.containerClass} ${className}`}
+      className={`flex items-center gap-compact rounded-lg border pad-sm ${config.containerClass} ${className}`}
       role="alert"
     >
       <Icon className={`${iconSizes.md} flex-shrink-0 ${config.iconClass}`} />

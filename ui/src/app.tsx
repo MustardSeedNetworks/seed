@@ -698,7 +698,7 @@ function App(): JSX.Element {
   // Show loading while checking setup status
   if (needsSetup === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex-center">
         <div className="text-text-muted">{t('status.loading')}</div>
       </div>
     );

@@ -257,6 +257,9 @@ jobs:
       - name: Run Biome (lint + format)
         run: npm run lint
 
+      - name: Design token discipline (Phase 0 gate)
+        run: ../scripts/check-token-discipline.sh
+
       - name: Run unit tests
         run: npm run test
 

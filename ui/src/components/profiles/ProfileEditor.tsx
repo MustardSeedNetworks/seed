@@ -78,7 +78,7 @@ export function ProfileEditor({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex-center pad">
       <div className="fixed inset-0 bg-black/50" onClick={onCancel} aria-hidden="true" />
       <div
         className={cn(
@@ -96,12 +96,12 @@ export function ProfileEditor({
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className={cn(spacing.pad.default, 'space-y-4')}>
+          <div className={cn(spacing.pad.default, 'stack-lg')}>
             {/* Name */}
             <div>
               <label
                 htmlFor="profile-name"
-                className="block body-small font-medium text-text-primary mb-1"
+                className="block body-small font-medium text-text-primary mb-tight"
               >
                 {t('profile.name', 'Name')} *
               </label>
@@ -118,7 +118,7 @@ export function ProfileEditor({
                 placeholder={t('profile.namePlaceholder', 'e.g., Client A')}
               />
               {errors.name ? (
-                <p className="caption mt-1 text-status-error">{errors.name.message}</p>
+                <p className="caption mt-tight text-status-error">{errors.name.message}</p>
               ) : null}
             </div>
 
@@ -126,7 +126,7 @@ export function ProfileEditor({
             <div>
               <label
                 htmlFor="profile-description"
-                className="block body-small font-medium text-text-primary mb-1"
+                className="block body-small font-medium text-text-primary mb-tight"
               >
                 {t('profile.description', 'Description')}
               </label>
@@ -143,7 +143,7 @@ export function ProfileEditor({
                 placeholder={t('profile.descriptionPlaceholder', 'Brief description')}
               />
               {errors.description ? (
-                <p className="caption mt-1 text-status-error">{errors.description.message}</p>
+                <p className="caption mt-tight text-status-error">{errors.description.message}</p>
               ) : null}
             </div>
 
@@ -151,7 +151,7 @@ export function ProfileEditor({
             <div>
               <label
                 htmlFor="profile-notes"
-                className="block body-small font-medium text-text-primary mb-1"
+                className="block body-small font-medium text-text-primary mb-tight"
               >
                 {t('profile.notes', 'Notes')}
               </label>
@@ -170,7 +170,7 @@ export function ProfileEditor({
             </div>
 
             {/* Default checkbox */}
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-compact cursor-pointer">
               <input
                 type="checkbox"
                 checked={isDefault}
@@ -187,7 +187,7 @@ export function ProfileEditor({
           <div
             className={cn(
               spacing.pad.default,
-              'border-t border-surface-border flex justify-end gap-3',
+              'border-t border-surface-border flex justify-end gap-default',
             )}
           >
             <button

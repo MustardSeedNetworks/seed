@@ -243,7 +243,7 @@ export const SnmpSettings: React.NamedExoticComponent<SnmpSettingsProps> = memo(
 
           {/* Community Strings (v1/v2c) */}
           <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-            <div className={cn('flex items-center justify-between', spacing.margin.bottom.inline)}>
+            <div className={cn('flex-between', spacing.margin.bottom.inline)}>
               <span className="caption text-text-muted font-medium">
                 {t('snmp.communityStrings')}
               </span>
@@ -315,7 +315,7 @@ export const SnmpSettings: React.NamedExoticComponent<SnmpSettingsProps> = memo(
 
           {/* SNMPv3 Credentials */}
           <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-            <div className={cn('flex items-center justify-between', spacing.margin.bottom.inline)}>
+            <div className={cn('flex-between', spacing.margin.bottom.inline)}>
               <span className="caption text-text-muted font-medium">{t('snmp.v3Credentials')}</span>
               <button
                 type="button"
@@ -341,7 +341,7 @@ export const SnmpSettings: React.NamedExoticComponent<SnmpSettingsProps> = memo(
                 {/* biome-ignore lint/a11y/useSemanticElements: Accordion header pattern with nested interactive elements */}
                 <div
                   className={cn(
-                    'flex items-center justify-between',
+                    'flex-between',
                     spacing.pad.xs,
                     'bg-surface-base cursor-pointer hover:bg-surface-hover',
                   )}

@@ -7,7 +7,7 @@ import { PageHeader } from '../ui/PageHeader';
 
 export function SecurityPage() {
   return (
-    <section className="space-y-6">
+    <section className="stack-xl">
       <Breadcrumbs />
       <PageHeader
         icon={Shield}

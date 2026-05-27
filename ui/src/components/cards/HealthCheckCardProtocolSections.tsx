@@ -45,7 +45,7 @@ export function HealthCheckCardProtocolSections({
               )}
             >
               <div className={layout.stack.tight}>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-compact">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
                   <span className="caption text-text-muted">
@@ -53,9 +53,11 @@ export function HealthCheckCardProtocolSections({
                   </span>
                 </div>
                 {r.success && r.serverVersion ? (
-                  <span className="caption text-text-muted ml-6">{r.serverVersion}</span>
+                  <span className="caption text-text-muted ml-spacious">{r.serverVersion}</span>
                 ) : null}
-                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? (
+                  <span className="caption text-status-error ml-spacious">{r.error}</span>
+                ) : null}
               </div>
               <div className="text-right">
                 <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
@@ -93,14 +95,16 @@ export function HealthCheckCardProtocolSections({
               )}
             >
               <div className={layout.stack.tight}>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-compact">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
                   <span className="caption text-text-muted">
                     {r.protocol.toUpperCase()} • /{r.host}/{r.share}
                   </span>
                 </div>
-                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? (
+                  <span className="caption text-status-error ml-spacious">{r.error}</span>
+                ) : null}
               </div>
               <div className="text-right">
                 <div className="body-small font-mono">{r.connectTimeMs.toFixed(1)}ms</div>
@@ -138,7 +142,7 @@ export function HealthCheckCardProtocolSections({
               )}
             >
               <div className={layout.stack.tight}>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-compact">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
                   <span className="caption text-text-muted">
@@ -146,9 +150,11 @@ export function HealthCheckCardProtocolSections({
                   </span>
                 </div>
                 {r.success && r.serverInfo ? (
-                  <span className="caption text-text-muted ml-6">{r.serverInfo}</span>
+                  <span className="caption text-text-muted ml-spacious">{r.serverInfo}</span>
                 ) : null}
-                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? (
+                  <span className="caption text-status-error ml-spacious">{r.error}</span>
+                ) : null}
               </div>
               <div className="text-right">
                 <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
@@ -183,7 +189,7 @@ export function HealthCheckCardProtocolSections({
               )}
             >
               <div className={layout.stack.tight}>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-compact">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
                   <span className="caption text-text-muted truncate max-w-48" title={r.url}>
@@ -191,13 +197,15 @@ export function HealthCheckCardProtocolSections({
                   </span>
                 </div>
                 {r.success && (r.codec || r.resolution) ? (
-                  <span className="caption text-text-muted ml-6">
+                  <span className="caption text-text-muted ml-spacious">
                     {r.codec ? r.codec : null}
                     {r.codec && r.resolution ? ' • ' : null}
                     {r.resolution ? r.resolution : null}
                   </span>
                 ) : null}
-                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? (
+                  <span className="caption text-status-error ml-spacious">{r.error}</span>
+                ) : null}
               </div>
               <div className="text-right">
                 <div className="body-small font-mono">{r.connectTimeMs.toFixed(1)}ms</div>
@@ -226,7 +234,7 @@ export function HealthCheckCardProtocolSections({
               )}
             >
               <div className={layout.stack.tight}>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-compact">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
                   <span className="caption text-text-muted">
@@ -234,9 +242,13 @@ export function HealthCheckCardProtocolSections({
                   </span>
                 </div>
                 {r.success && r.serverAeTitle ? (
-                  <span className="caption text-text-muted ml-6">Server AE: {r.serverAeTitle}</span>
+                  <span className="caption text-text-muted ml-spacious">
+                    Server AE: {r.serverAeTitle}
+                  </span>
                 ) : null}
-                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? (
+                  <span className="caption text-status-error ml-spacious">{r.error}</span>
+                ) : null}
               </div>
               <div className="text-right">
                 <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
@@ -268,7 +280,7 @@ export function HealthCheckCardProtocolSections({
               )}
             >
               <div className={layout.stack.tight}>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-compact">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
                   <span className="caption text-text-muted">
@@ -276,13 +288,15 @@ export function HealthCheckCardProtocolSections({
                   </span>
                 </div>
                 {r.success && (r.ackCode || r.serverVersion) ? (
-                  <span className="caption text-text-muted ml-6">
+                  <span className="caption text-text-muted ml-spacious">
                     {r.ackCode ? `ACK: ${r.ackCode}` : null}
                     {r.ackCode && r.serverVersion ? ' • ' : null}
                     {r.serverVersion ? r.serverVersion : null}
                   </span>
                 ) : null}
-                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? (
+                  <span className="caption text-status-error ml-spacious">{r.error}</span>
+                ) : null}
               </div>
               <div className="text-right">
                 <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
@@ -316,7 +330,7 @@ export function HealthCheckCardProtocolSections({
               )}
             >
               <div className={layout.stack.tight}>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-compact">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
                   <span className="caption text-text-muted truncate max-w-48" title={r.baseUrl}>
@@ -324,13 +338,15 @@ export function HealthCheckCardProtocolSections({
                   </span>
                 </div>
                 {r.success && (r.fhirVersion || r.serverName) ? (
-                  <span className="caption text-text-muted ml-6">
+                  <span className="caption text-text-muted ml-spacious">
                     {r.fhirVersion ? `v${r.fhirVersion}` : null}
                     {r.fhirVersion && r.serverName ? ' • ' : null}
                     {r.serverName ? r.serverName : null}
                   </span>
                 ) : null}
-                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? (
+                  <span className="caption text-status-error ml-spacious">{r.error}</span>
+                ) : null}
               </div>
               <div className="text-right">
                 <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
@@ -362,7 +378,7 @@ export function HealthCheckCardProtocolSections({
               )}
             >
               <div className={layout.stack.tight}>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-compact">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
                   <span className="caption text-text-muted truncate max-w-48" title={r.launchUrl}>
@@ -370,9 +386,11 @@ export function HealthCheckCardProtocolSections({
                   </span>
                 </div>
                 {r.success && r.ltiVersion ? (
-                  <span className="caption text-text-muted ml-6">LTI {r.ltiVersion}</span>
+                  <span className="caption text-text-muted ml-spacious">LTI {r.ltiVersion}</span>
                 ) : null}
-                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? (
+                  <span className="caption text-status-error ml-spacious">{r.error}</span>
+                ) : null}
               </div>
               <div className="text-right">
                 <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
@@ -401,7 +419,7 @@ export function HealthCheckCardProtocolSections({
               )}
             >
               <div className={layout.stack.tight}>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-compact">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
                   <span className="caption text-text-muted truncate max-w-48" title={r.endpointUrl}>
@@ -409,13 +427,15 @@ export function HealthCheckCardProtocolSections({
                   </span>
                 </div>
                 {r.success && (r.securityMode || r.productName) ? (
-                  <span className="caption text-text-muted ml-6">
+                  <span className="caption text-text-muted ml-spacious">
                     {r.securityMode ? r.securityMode : null}
                     {r.securityMode && r.productName ? ' • ' : null}
                     {r.productName ? r.productName : null}
                   </span>
                 ) : null}
-                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? (
+                  <span className="caption text-status-error ml-spacious">{r.error}</span>
+                ) : null}
               </div>
               <div className="text-right">
                 <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>
@@ -449,14 +469,16 @@ export function HealthCheckCardProtocolSections({
               )}
             >
               <div className={layout.stack.tight}>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-compact">
                   <StatusBadge status={r.success ? 'success' : 'error'} />
                   <span className="body-small font-medium">{r.name}</span>
                   <span className="caption text-text-muted">
                     {r.host}:{r.port} • Unit {r.unitId}
                   </span>
                 </div>
-                {r.error ? <span className="caption text-status-error ml-6">{r.error}</span> : null}
+                {r.error ? (
+                  <span className="caption text-status-error ml-spacious">{r.error}</span>
+                ) : null}
               </div>
               <div className="text-right">
                 <div className="body-small font-mono">{r.totalTimeMs.toFixed(1)}ms</div>

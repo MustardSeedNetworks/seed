@@ -79,7 +79,7 @@ export function SettingsDrawerFooter({
             button.size.md,
             'bg-surface-base border border-surface-border text-text-primary',
             radius.md,
-            'font-medium hover:bg-surface-hover transition-colors flex items-center justify-center',
+            'font-medium hover:bg-surface-hover transition-colors flex-center',
             spacing.gap.compact,
             'touch-manipulation',
           )}

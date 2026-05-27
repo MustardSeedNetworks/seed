@@ -155,7 +155,7 @@ export function SubnetList({
       <button
         type="button"
         onClick={(): void => setExpanded(true)}
-        className="font-mono text-text-muted hover:text-text-primary flex items-center gap-1"
+        className="font-mono text-text-muted hover:text-text-primary flex items-center gap-tight"
       >
         <span>{allSubnets.length} subnets</span>
         <ChevronDown className={iconTokens.size.xs} />
@@ -164,16 +164,16 @@ export function SubnetList({
   }
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-tight">
       <button
         type="button"
         onClick={(): void => setExpanded(false)}
-        className="font-mono text-text-muted hover:text-text-primary flex items-center gap-1"
+        className="font-mono text-text-muted hover:text-text-primary flex items-center gap-tight"
       >
         <span>{allSubnets.length} subnets</span>
         <ChevronUp className={iconTokens.size.xs} />
       </button>
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-tight">
         {allSubnets.map((subnet) => (
           <span key={subnet} className="font-mono text-xs">
             {subnet}
@@ -332,7 +332,7 @@ export function DiscoverySummary({
   return (
     <div className="stack-sm">
       {/* Status row */}
-      <div className="flex items-center justify-between body-small">
+      <div className="flex-between body-small">
         <div className={cn('flex items-center', spacing.gap.compact)}>
           {status.scanning ? (
             <>
@@ -352,7 +352,7 @@ export function DiscoverySummary({
         </div>
       </div>
       {/* Simplified network info row - I3: Uses SubnetList for multi-subnet display */}
-      <div className="flex items-center justify-between caption text-text-muted">
+      <div className="flex-between caption text-text-muted">
         <SubnetList
           subnets={status.subnets}
           fallbackSubnet={status.subnet}

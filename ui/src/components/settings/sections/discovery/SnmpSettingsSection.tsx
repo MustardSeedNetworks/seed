@@ -210,7 +210,7 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
             spacing.margin.top.inline,
           )}
         >
-          <div className={cn('flex items-center justify-between', spacing.margin.bottom.inline)}>
+          <div className={cn('flex-between', spacing.margin.bottom.inline)}>
             <span className="caption text-text-muted font-medium">
               {t('snmp.communityStrings')}
             </span>
@@ -278,7 +278,7 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
         </div>
         {/* SNMPv3 Credentials */}
         <div className={cn('border-t border-surface-border', spacing.padding.top.heading)}>
-          <div className={cn('flex items-center justify-between', spacing.margin.bottom.inline)}>
+          <div className={cn('flex-between', spacing.margin.bottom.inline)}>
             <span className="caption text-text-muted font-medium">{t('snmp.v3Credentials')}</span>
             <button
               type="button"
@@ -301,7 +301,7 @@ export const SnmpSettingsSection: React.NamedExoticComponent<SnmpSettingsSection
               {/* biome-ignore lint/a11y/useSemanticElements: Accordion header pattern with nested interactive elements */}
               <div
                 className={cn(
-                  'flex items-center justify-between',
+                  'flex-between',
                   spacing.pad.xs,
                   'bg-surface-base cursor-pointer hover:bg-surface-hover',
                 )}

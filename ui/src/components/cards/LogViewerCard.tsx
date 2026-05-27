@@ -94,7 +94,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
       status={getCardStatus()}
       className={className}
       headerAction={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           {/* Streaming indicator */}
           <span
             className={cn(
@@ -117,7 +117,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
               'p-1.5',
               'bg-surface-hover text-text-secondary',
               radius.md,
-              'hover:bg-surface-border hover:text-text-primary transition-colors flex items-center justify-center cursor-pointer',
+              'hover:bg-surface-border hover:text-text-primary transition-colors flex-center cursor-pointer',
             )}
             aria-label={t('logs.fullScreen', 'Full Screen')}
             title={t('logs.fullScreen', 'Full Screen')}
@@ -132,8 +132,8 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
       <CardRow label={t('logs.totalLogs', 'Total logs')} value="" />
       <CardDivider />
       {/* Error count */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex-between">
+        <div className="flex items-center gap-compact">
           <AlertCircle className={cn(iconTokens.size.sm, statusColor.text.error)} />
           <span className="text-sm text-text-secondary">{t('logs.errors', 'Errors')}</span>
         </div>
@@ -147,8 +147,8 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
         </span>
       </div>
       {/* Warning count */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex-between">
+        <div className="flex items-center gap-compact">
           <AlertTriangle className={cn(iconTokens.size.sm, statusColor.text.warning)} />
           <span className="text-sm text-text-secondary">{t('logs.warnings', 'Warnings')}</span>
         </div>
