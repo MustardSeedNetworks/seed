@@ -29,12 +29,84 @@ type ACMEConfig struct {
 }
 
 // InterfaceConfig contains network interface settings.
+//
+// Multi-interface (Pro tier, seed#1192): the canonical list of monitored
+// ethernet interfaces is Ethernet[]; the canonical list of monitored
+// Wi-Fi interfaces is WiFiList[]. The legacy single-string fields
+// (Default + WiFi) remain the "active/primary" indicators that 71+
+// downstream callers still read. The AllEthernet / AllWiFi helpers
+// reconcile both shapes so callers can choose either model:
+//
+//   - cfg.Interface.AllEthernet()  → full set (Ethernet[] ∪ {Default})
+//   - cfg.Interface.AllWiFi()      → full set (WiFiList[] ∪ {WiFi})
+//   - cfg.Interface.Default         → primary ethernet (single)
+//   - cfg.Interface.WiFi            → primary Wi-Fi    (single)
+//
+// Free/Starter licenses cap at 1 ethernet + 1 Wi-Fi (the single fields
+// only). Pro is unlimited via the slice fields. The gate fires in
+// enforceMultiInterfaceGate when a saved profile would exceed the cap.
 type InterfaceConfig struct {
 	Default          string        `json:"default"`
 	Fallbacks        []string      `json:"fallbacks"`
-	WiFi             string        `json:"wifi,omitempty"`     // Separate WiFi interface (optional)
-	StartupRetries   int           `json:"startup_retries"`    // Number of retries when finding interface at startup (fixes #528)
-	StartupRetryWait time.Duration `json:"startup_retry_wait"` // Delay between startup retries (fixes #528)
+	WiFi             string        `json:"wifi,omitempty"`      // Separate WiFi interface (optional)
+	Ethernet         []string      `json:"ethernet,omitempty"`  // Pro: additional ethernet interfaces to monitor (seed#1192)
+	WiFiList         []string      `json:"wifi_list,omitempty"` // Pro: additional Wi-Fi interfaces to monitor (seed#1192)
+	StartupRetries   int           `json:"startup_retries"`     // Number of retries when finding interface at startup (fixes #528)
+	StartupRetryWait time.Duration `json:"startup_retry_wait"`  // Delay between startup retries (fixes #528)
+}
+
+// AllEthernet returns the de-duplicated list of ethernet interfaces the
+// operator configured. Default is folded in as the first element so the
+// legacy single-interface workflow remains the canonical "primary." The
+// returned slice may be empty if neither field is populated.
+func (c *InterfaceConfig) AllEthernet() []string {
+	seen := make(map[string]struct{}, len(c.Ethernet)+1)
+	out := make([]string, 0, len(c.Ethernet)+1)
+	if c.Default != "" {
+		seen[c.Default] = struct{}{}
+		out = append(out, c.Default)
+	}
+	for _, name := range c.Ethernet {
+		if name == "" {
+			continue
+		}
+		if _, dup := seen[name]; dup {
+			continue
+		}
+		seen[name] = struct{}{}
+		out = append(out, name)
+	}
+	return out
+}
+
+// AllWiFi returns the de-duplicated list of Wi-Fi interfaces the
+// operator configured. WiFi is folded in as the first element so the
+// legacy single-interface workflow remains the canonical "primary".
+func (c *InterfaceConfig) AllWiFi() []string {
+	seen := make(map[string]struct{}, len(c.WiFiList)+1)
+	out := make([]string, 0, len(c.WiFiList)+1)
+	if c.WiFi != "" {
+		seen[c.WiFi] = struct{}{}
+		out = append(out, c.WiFi)
+	}
+	for _, name := range c.WiFiList {
+		if name == "" {
+			continue
+		}
+		if _, dup := seen[name]; dup {
+			continue
+		}
+		seen[name] = struct{}{}
+		out = append(out, name)
+	}
+	return out
+}
+
+// MultiInterfaceCounts returns (ethernetCount, wifiCount) — used by the
+// license gate to decide whether the operator has exceeded the
+// Free/Starter 1+1 cap.
+func (c *InterfaceConfig) MultiInterfaceCounts() (int, int) {
+	return len(c.AllEthernet()), len(c.AllWiFi())
 }
 
 // VLANConfig contains VLAN settings.

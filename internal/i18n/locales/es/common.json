@@ -168,5 +168,34 @@
     "intervalHours": "{{count}} h",
     "intervalDays_one": "{{count}} día",
     "intervalDays_other": "{{count}} días"
+  },
+  "profile": {
+    "edit": "Editar",
+    "export": "Exportar",
+    "loading": "Cargando perfiles…",
+    "management": "Gestión de perfiles",
+    "managementDesc": "Crear y gestionar perfiles de dispositivos",
+    "name": "Nombre",
+    "namePlaceholder": "Nombre del perfil",
+    "noProfilesDesc": "Cree un perfil para guardar la configuración específica del dispositivo.",
+    "noResults": "Sin perfiles coincidentes",
+    "noResultsDesc": "Pruebe a ajustar la búsqueda.",
+    "none": "Sin perfil",
+    "notes": "Notas",
+    "notesPlaceholder": "Notas opcionales",
+    "profiles": "Perfiles",
+    "searchPlaceholder": "Buscar perfiles…",
+    "setAsDefault": "Establecer como predeterminado",
+    "updated": "Actualizado"
+  },
+  "recovery": {
+    "backToLogin": "Volver a iniciar sesión",
+    "confirmPasswordLabel": "Confirmar contraseña",
+    "instructions": {
+      "title": "Restablezca su contraseña"
+    },
+    "newPasswordLabel": "Nueva contraseña",
+    "passwordRequirement": "Al menos 8 caracteres",
+    "securityNote": "Por seguridad, debe usar un código de recuperación de un solo uso."
   }
 }
