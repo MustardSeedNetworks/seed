@@ -13,7 +13,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/database"
 )
 
-func setupAPITokenTest(t *testing.T) (*database.APITokenRepository, context.Context) {
+func setupAPITokenTest(t *testing.T, owners ...string) (*database.APITokenRepository, context.Context) {
 	t.Helper()
 	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-test-*.db")
 	if err != nil {
@@ -29,7 +29,23 @@ func setupAPITokenTest(t *testing.T) (*database.APITokenRepository, context.Cont
 	}
 	t.Cleanup(func() { _ = db.Close() })
 
-	return database.NewAPITokenRepository(db), context.Background()
+	// The hardening migration added an ON DELETE CASCADE FK from
+	// api_tokens.owner_username -> users.username. Tests must seed any
+	// owner referenced by an inserted token, otherwise the FK rejects
+	// the row. Default ("alice","bob") covers the existing cases; extra
+	// owners can be passed in by name.
+	ctx := context.Background()
+	if len(owners) == 0 {
+		owners = []string{"alice", "bob"}
+	}
+	for _, name := range owners {
+		_, createErr := db.CreateUser(ctx, name, "$2a$10$x", database.RoleAdmin)
+		if createErr != nil {
+			t.Fatalf("seed user %q: %v", name, createErr)
+		}
+	}
+
+	return database.NewAPITokenRepository(db), ctx
 }
 
 func TestAPITokenInsertAndLookup(t *testing.T) {
@@ -147,7 +163,7 @@ func TestAPITokenListByOwnerSorted(t *testing.T) {
 
 func TestAPITokenTouchLastUsedUpdatesTimestamp(t *testing.T) {
 	t.Parallel()
-	repo, ctx := setupAPITokenTest(t)
+	repo, ctx := setupAPITokenTest(t, "carol")
 
 	rec := database.APITokenRecord{
 		ID: "tokenid04", OwnerUsername: "carol", Name: "k",

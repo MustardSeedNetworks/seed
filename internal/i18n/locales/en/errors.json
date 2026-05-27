@@ -118,5 +118,16 @@
   },
   "sso": {
     "featureRequired": "Single Sign-On configuration requires a Pro license. Existing providers continue to accept logins on any tier; only enabling or editing providers is blocked."
+  },
+  "users": {
+    "lastAdmin": "Cannot delete or demote the last administrator.",
+    "invalidRole": "Role must be one of: admin, operator, viewer.",
+    "userExists": "A user with that username already exists.",
+    "lockedOut": "Account temporarily locked due to repeated failed sign-ins.",
+    "weakPassword": "Password does not meet policy: minimum 12 characters, mixed case, digit, symbol.",
+    "selfDelete": "You cannot delete your own account.",
+    "selfDeactivate": "You cannot deactivate your own account.",
+    "selfDemote": "You cannot demote your own account from admin.",
+    "featureRequired": "Adding additional users requires a Pro license."
   }
 }
