@@ -314,7 +314,7 @@ function LogFiltersBar({
       <div className={cn(layout.inline.default)}>
         <input
           type="text"
-          placeholder={t('logs.searchPlaceholder', 'Search logs...')}
+          placeholder={t('logs.searchPlaceholder')}
           value={filters.search}
           onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
             onFilterChange({ search: e.target.value })
@@ -333,15 +333,13 @@ function LogFiltersBar({
             onClick={onReset}
             className={cn('px-4 py-2', 'text-base text-text-secondary hover:text-text-primary')}
           >
-            {t('logs.clearFilters', 'Clear All')}
+            {t('logs.clearFilters')}
           </button>
         ) : null}
       </div>
       {/* Level filters */}
       <div className={cn(layout.inline.default, 'flex-wrap')}>
-        <span className="text-sm text-text-secondary font-medium min-w-20">
-          {t('logs.level', 'Level')}:
-        </span>
+        <span className="text-sm text-text-secondary font-medium min-w-20">{t('logs.level')}:</span>
         {levels.map((level) => {
           const badgeColor = LOG_LEVEL_COLORS[level].badge;
           return (
@@ -357,9 +355,7 @@ function LogFiltersBar({
       </div>
       {/* Layer filters */}
       <div className={cn(layout.inline.default, 'flex-wrap')}>
-        <span className="text-sm text-text-secondary font-medium min-w-20">
-          {t('logs.layer', 'Layer')}:
-        </span>
+        <span className="text-sm text-text-secondary font-medium min-w-20">{t('logs.layer')}:</span>
         {layers.map((layer) => (
           <FilterBadge
             key={layer}
@@ -373,7 +369,7 @@ function LogFiltersBar({
       {availableComponents.length > 0 ? (
         <div className={cn(layout.inline.default, 'flex-wrap')}>
           <span className="text-sm text-text-secondary font-medium min-w-20">
-            {t('logs.component', 'Component')}:
+            {t('logs.component')}:
           </span>
           {availableComponents.slice(0, 12).map((component) => (
             <FilterBadge
@@ -561,16 +557,16 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
         >
           <div>
             <h2 id="log-viewer-modal-title" className="heading-2">
-              {t('logs.title', 'System Logs')}
+              {t('logs.title')}
             </h2>
             <p className="body-small text-text-secondary mt-1">
-              {t('logs.subtitle', 'Real-time application logs with filtering')}
+              {t('logs.subtitle')}
               {stats ? (
                 <span className="ml-4">
-                  <strong>{stats.total_count}</strong> {t('logs.totalLogs', 'logs')}
+                  <strong>{stats.total_count}</strong> {t('logs.totalLogs')}
                   {stats.errors_last_hour > 0 ? (
                     <span className="text-status-error ml-2">
-                      ({stats.errors_last_hour} {t('logs.errorsLastHour', 'errors last hour')})
+                      ({stats.errors_last_hour} {t('logs.errorsLastHour')})
                     </span>
                   ) : null}
                 </span>
@@ -596,7 +592,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
                   : 'bg-surface-base text-text-primary hover:bg-surface-hover border border-surface-border',
               )}
             >
-              {isStreaming ? t('logs.streaming', '● Live') : t('logs.paused', '○ Paused')}
+              {isStreaming ? t('logs.streaming') : t('logs.paused')}
             </button>
 
             {/* Clear logs */}
@@ -613,7 +609,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
                 'Remove all log entries from the viewer; the backend log store is unaffected',
               )}
             >
-              {t('logs.clear', 'Clear')}
+              {t('logs.clear')}
             </button>
 
             {/* Export JSON */}
@@ -692,8 +688,8 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
                 radius.lg,
                 'hover:bg-surface-base',
               )}
-              title={t('logs.close', 'Close log viewer')}
-              aria-label={t('logs.close', 'Close log viewer')}
+              title={t('logs.close')}
+              aria-label={t('logs.close')}
             >
               <svg
                 className={iconTokens.size.lg}
@@ -729,9 +725,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
         >
           {/* Loading state */}
           {isLoading ? (
-            <div className={cn('text-center text-text-secondary py-8')}>
-              {t('logs.loading', 'Loading logs...')}
-            </div>
+            <div className={cn('text-center text-text-secondary py-8')}>{t('logs.loading')}</div>
           ) : null}
 
           {/* Error state */}
@@ -741,8 +735,8 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
           {logs.length === 0 && !isLoading ? (
             <div className={cn('text-center text-text-secondary py-12')}>
               {filters.search || filters.levels.length > 0 || filters.layers.length > 0
-                ? t('logs.noMatchingLogs', 'No logs match the current filters')
-                : t('logs.noLogs', 'No logs yet')}
+                ? t('logs.noMatchingLogs')
+                : t('logs.noLogs')}
             </div>
           ) : null}
 
@@ -777,7 +771,7 @@ export function LogViewerModal({ isOpen, onClose }: LogViewerModalProps): React.
               }}
               className="text-base text-brand-primary hover:underline"
             >
-              ↓ {t('logs.scrollToBottom', 'Scroll to latest')}
+              ↓ {t('logs.scrollToBottom')}
             </button>
           </div>
         ) : null}

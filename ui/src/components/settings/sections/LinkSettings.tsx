@@ -90,7 +90,7 @@ export const LinkSettings: React.NamedExoticComponent<LinkSettingsProps> = memo(
         title={
           <div className={layout.inline.default}>
             <PlugZap className={iconTokens.size.sm} />
-            <span>{t('sections.link', 'Link')}</span>
+            <span>{t('sections.link', 'Link Status')}</span>
             <AutoSaveIndicator status={linkStatus} />
           </div>
         }

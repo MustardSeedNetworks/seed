@@ -273,7 +273,7 @@ function InterfaceSelectorComponent({
         )}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-label={t('accessibility.selectInterface', 'Select network interface')}
+        aria-label={t('accessibility.selectInterface')}
       >
         {/* Current interface icon */}
         {getTypeIcon(isWifi ? 'wifi' : 'ethernet', currentInfo?.up ?? true)}

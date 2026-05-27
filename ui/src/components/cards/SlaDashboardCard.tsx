@@ -264,8 +264,8 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
 
     return (
       <Card
-        title={t('slaDashboard.title', 'SLA Dashboard')}
-        subtitle={t('slaDashboard.subtitle', 'Service health and compliance')}
+        title={t('slaDashboard.title')}
+        subtitle={t('slaDashboard.subtitle')}
         icon={<Shield className={iconTokens.size.md} />}
         status={overallStatus()}
         className={className}
@@ -305,16 +305,15 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-sm font-medium text-text-primary mb-1">
-                    {t('slaDashboard.compliance', 'SLA Compliance')}
+                    {t('slaDashboard.compliance')}
                   </h4>
                   <p className="text-xs text-text-muted">
                     {data.sla.endpointsMet} / {data.sla.totalEndpoints}{' '}
-                    {t('slaDashboard.endpointsMet', 'endpoints meeting SLA')}
+                    {t('slaDashboard.endpointsMet')}
                   </p>
                   {data.sla.endpointsMissed > 0 ? (
                     <p className="text-xs text-status-error mt-1">
-                      {data.sla.endpointsMissed}{' '}
-                      {t('slaDashboard.endpointsMissed', 'endpoints missing SLA')}
+                      {data.sla.endpointsMissed} {t('slaDashboard.endpointsMissed')}
                     </p>
                   ) : null}
                 </div>
@@ -328,30 +327,30 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
             {data.scores ? (
               <div>
                 <h4 className="text-sm font-medium text-text-primary mb-3">
-                  {t('slaDashboard.healthScores', 'Health Scores')}
+                  {t('slaDashboard.healthScores')}
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
                   <StatBlock
                     icon={CheckCircle2}
-                    label={t('slaDashboard.healthy', 'Healthy')}
+                    label={t('slaDashboard.healthy')}
                     value={data.scores.healthy}
                     status="success"
                   />
                   <StatBlock
                     icon={AlertTriangle}
-                    label={t('slaDashboard.degraded', 'Degraded')}
+                    label={t('slaDashboard.degraded')}
                     value={data.scores.degraded}
                     status={data.scores.degraded > 0 ? 'warning' : undefined}
                   />
                   <StatBlock
                     icon={XCircle}
-                    label={t('slaDashboard.critical', 'Critical')}
+                    label={t('slaDashboard.critical')}
                     value={data.scores.critical}
                     status={data.scores.critical > 0 ? 'error' : undefined}
                   />
                   <StatBlock
                     icon={TrendingUp}
-                    label={t('slaDashboard.total', 'Total')}
+                    label={t('slaDashboard.total')}
                     value={data.scores.totalEndpoints}
                   />
                 </div>
@@ -364,9 +363,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
             <div className="grid grid-cols-2 gap-4">
               {data.alerts ? (
                 <div>
-                  <h4 className="text-xs text-text-muted mb-2">
-                    {t('slaDashboard.activeAlerts', 'Active Alerts')}
-                  </h4>
+                  <h4 className="text-xs text-text-muted mb-2">{t('slaDashboard.activeAlerts')}</h4>
                   <div className="flex items-center gap-2">
                     <span
                       className={cn(
@@ -383,7 +380,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                           radius.full,
                         )}
                       >
-                        {data.alerts.critical} {t('slaDashboard.criticalLabel', 'critical')}
+                        {data.alerts.critical} {t('slaDashboard.criticalLabel')}
                       </span>
                     ) : null}
                   </div>
@@ -391,9 +388,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
               ) : null}
 
               <div>
-                <h4 className="text-xs text-text-muted mb-2">
-                  {t('slaDashboard.anomalies', 'Anomalies')}
-                </h4>
+                <h4 className="text-xs text-text-muted mb-2">{t('slaDashboard.anomalies')}</h4>
                 <div className="flex items-center gap-2">
                   <span
                     className={cn(
@@ -410,7 +405,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                         radius.full,
                       )}
                     >
-                      {t('slaDashboard.detected', 'detected')}
+                      {t('slaDashboard.detected')}
                     </span>
                   ) : null}
                 </div>

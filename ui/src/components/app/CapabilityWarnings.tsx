@@ -74,13 +74,13 @@ export function CapabilityWarnings({
             aria-controls="capability-details"
           >
             <h3 className="body font-medium text-text-primary">
-              {t('capabilities.warning.title', 'Limited Network Capabilities')}
+              {t('capabilities.warning.title')}
             </h3>
             <span className="caption text-text-muted">
               ({missingCapabilities.length}{' '}
               {missingCapabilities.length === 1
-                ? t('capabilities.warning.issue', 'issue')
-                : t('capabilities.warning.issues', 'issues')}
+                ? t('capabilities.warning.issue')
+                : t('capabilities.warning.issues')}
               )
             </span>
             {expanded ? (
@@ -92,12 +92,7 @@ export function CapabilityWarnings({
 
           {/* Summary when collapsed */}
           {!expanded && (
-            <p className="body-small text-text-muted mt-1">
-              {t(
-                'capabilities.warning.summary',
-                'Some features may not work. Click to see details and how to fix.',
-              )}
-            </p>
+            <p className="body-small text-text-muted mt-1">{t('capabilities.warning.summary')}</p>
           )}
 
           {/* Expanded details */}
@@ -109,7 +104,7 @@ export function CapabilityWarnings({
                   <p className="caption text-text-muted mt-1">{cap.description}</p>
                   <div className="mt-2 bg-surface-base rounded p-2">
                     <p className="caption font-medium text-text-secondary">
-                      {t('capabilities.warning.howToFix', 'How to fix:')}
+                      {t('capabilities.warning.howToFix')}
                     </p>
                     <code className="caption text-brand-primary break-all">{cap.remediation}</code>
                   </div>
@@ -124,7 +119,7 @@ export function CapabilityWarnings({
           type="button"
           className="p-1 rounded-full hover:bg-surface-hover text-text-muted hover:text-text-primary transition-colors"
           onClick={handleDismiss}
-          aria-label={t('capabilities.warning.dismiss', 'Dismiss warning')}
+          aria-label={t('capabilities.warning.dismiss')}
         >
           <X className="h-4 w-4" />
         </button>

@@ -59,10 +59,7 @@ export function GuestNetworkAuditCard(): JSX.Element | null {
       <div className="stack-sm">
         {!hasTargets ? (
           <p className="body-small text-text-muted">
-            {t(
-              'guestAudit.noTargets',
-              'Add sensitive internal IP addresses (EMR, PACS, etc.) in Settings → Security to enable this audit.',
-            )}
+            {t('guestAudit.noTargets', 'No guest network targets configured.')}
           </p>
         ) : (
           <>

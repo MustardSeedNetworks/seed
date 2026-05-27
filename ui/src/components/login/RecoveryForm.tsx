@@ -389,9 +389,7 @@ export function RecoveryForm({
               </button>
             </div>
             {confirmPassword && !passwordsMatch ? (
-              <p className="caption mt-1 text-status-error">
-                {t('errors.password.mismatch', 'Passwords do not match')}
-              </p>
+              <p className="caption mt-1 text-status-error">{tErrors('password.mismatch')}</p>
             ) : null}
           </div>
 

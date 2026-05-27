@@ -50,14 +50,12 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
 
     return (
       <div className={cn('border-t border-surface-border', spacing.pad.sm)}>
-        <span className="caption text-text-muted font-medium">
-          {t('discovery.scanMethods', 'Scan Methods')}
-        </span>
+        <span className="caption text-text-muted font-medium">{t('discovery.scanMethods')}</span>
         <div className={cn(spacing.margin.top.inline, 'stack-sm')}>
           {/* Passive Protocol Details */}
           <div>
             <span className="body-small text-text-primary font-medium">
-              {t('discovery.passiveProtocols', 'Passive Protocols')}
+              {t('discovery.passiveProtocols')}
             </span>
             <div
               className={cn(
@@ -243,7 +241,7 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
             >
               <div>
                 <label className="caption text-text-muted" htmlFor="port-scan-preset">
-                  {t('discovery.portScanPreset', 'Port Preset')}
+                  {t('discovery.portScanPreset')}
                 </label>
                 <select
                   id="port-scan-preset"
@@ -282,14 +280,10 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
                     'body-small',
                   )}
                 >
-                  <option value="common">
-                    {t('discovery.portPresetCommon', 'Common Services')}
-                  </option>
-                  <option value="secure">{t('discovery.portPresetSecure', 'Secure Ports')}</option>
-                  <option value="insecure">
-                    {t('discovery.portPresetInsecure', 'Insecure Ports')}
-                  </option>
-                  <option value="custom">{t('discovery.portPresetCustom', 'Custom')}</option>
+                  <option value="common">{t('discovery.portPresetCommon')}</option>
+                  <option value="secure">{t('discovery.portPresetSecure')}</option>
+                  <option value="insecure">{t('discovery.portPresetInsecure')}</option>
+                  <option value="custom">{t('discovery.portPresetCustom')}</option>
                 </select>
                 {/* Description for selected preset */}
                 <p className={cn('caption text-text-muted', spacing.margin.top.tight)}>
@@ -298,10 +292,10 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
               </div>
               <div>
                 <label className="caption text-text-muted" htmlFor="port-scan-tcp">
-                  {t('discovery.portScanTcpPorts', 'TCP Ports')}
+                  {t('discovery.portScanTcpPorts')}
                   {(settings.options?.portScan?.preset ?? 'common') !== 'custom' && (
                     <span className="ml-2 text-text-muted italic">
-                      {t('discovery.portPresetReadOnly', '(read-only, select Custom to edit)')}
+                      {t('discovery.portPresetReadOnly')}
                     </span>
                   )}
                 </label>
@@ -342,10 +336,10 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
               </div>
               <div>
                 <label className="caption text-text-muted" htmlFor="port-scan-udp">
-                  {t('discovery.portScanUdpPorts', 'UDP Ports')}
+                  {t('discovery.portScanUdpPorts')}
                   {(settings.options?.portScan?.preset ?? 'common') !== 'custom' && (
                     <span className="ml-2 text-text-muted italic">
-                      {t('discovery.portPresetReadOnly', '(read-only, select Custom to edit)')}
+                      {t('discovery.portPresetReadOnly')}
                     </span>
                   )}
                 </label>
@@ -386,7 +380,7 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
               </div>
               <div>
                 <label className="caption text-text-muted" htmlFor="port-scan-banner">
-                  {t('discovery.portScanBannerTimeout', 'Banner Timeout (ms)')}
+                  {t('discovery.portScanBannerTimeout')}
                 </label>
                 <input
                   id="port-scan-banner"
@@ -432,18 +426,13 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
             )}
           >
             <span className="caption text-text-muted font-medium">
-              {t('discovery.tcpProbeSettings', 'TCP Probe Settings')}
+              {t('discovery.tcpProbeSettings')}
             </span>
-            <p className="caption text-text-muted">
-              {t(
-                'discovery.tcpProbeDesc',
-                'Configure TCP connection probing for device detection and service discovery',
-              )}
-            </p>
+            <p className="caption text-text-muted">{t('discovery.tcpProbeDesc')}</p>
             <div className={cn('grid grid-cols-2', spacing.gap.compact, spacing.margin.top.inline)}>
               <div>
                 <label className="caption text-text-muted" htmlFor="tcp-probe-timeout">
-                  {t('discovery.tcpProbeTimeout', 'Timeout (ms)')}
+                  {t('discovery.tcpProbeTimeout')}
                 </label>
                 <input
                   id="tcp-probe-timeout"
@@ -476,7 +465,7 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
               </div>
               <div>
                 <label className="caption text-text-muted" htmlFor="tcp-probe-workers">
-                  {t('discovery.tcpProbeWorkers', 'Workers')}
+                  {t('discovery.tcpProbeWorkers')}
                 </label>
                 <input
                   id="tcp-probe-workers"
@@ -609,7 +598,7 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
               <div>
                 <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
                   <label htmlFor="scan-timeout-slider" className="caption text-text-muted">
-                    {t('discovery.scanTimeout', 'Scan Timeout')}
+                    {t('discovery.scanTimeout')}
                   </label>
                   <span className="caption text-text-primary font-medium">
                     {settings.scanTimeoutMs ?? 2000}ms
@@ -688,7 +677,7 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
               <div>
                 <div className={cn(layout.flex.between, spacing.margin.bottom.tight)}>
                   <label htmlFor="rescan-interval-slider" className="caption text-text-muted">
-                    {t('discovery.rescanInterval', 'Rescan Interval')}
+                    {t('discovery.rescanInterval')}
                   </label>
                   <span className="caption text-text-primary font-medium">
                     {Math.round((settings.timing?.rescanIntervalMs ?? 600000) / 60000)}m

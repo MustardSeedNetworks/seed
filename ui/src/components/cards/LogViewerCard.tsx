@@ -64,12 +64,12 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
   if (isLoading) {
     return (
       <Card
-        title={t('logs.title', 'System Logs')}
+        title={t('logs.title')}
         icon={<FileText className={iconTokens.size.md} />}
         status="loading"
         className={className}
       >
-        <CardValue value={t('logs.loading', 'Loading logs...')} size="md" />
+        <CardValue value={t('logs.loading')} size="md" />
       </Card>
     );
   }
@@ -77,7 +77,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
   if (error) {
     return (
       <Card
-        title={t('logs.title', 'System Logs')}
+        title={t('logs.title')}
         icon={<FileText className={iconTokens.size.md} />}
         status="error"
         className={className}
@@ -89,7 +89,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
 
   return (
     <Card
-      title={t('logs.title', 'System Logs')}
+      title={t('logs.title')}
       icon={<FileText className={iconTokens.size.md} />}
       status={getCardStatus()}
       className={className}
@@ -106,7 +106,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
                 : 'bg-surface-hover text-text-muted',
             )}
           >
-            {isStreaming ? t('logs.streaming', 'Live') : t('logs.paused', 'Paused')}
+            {isStreaming ? t('logs.streaming') : t('logs.paused')}
           </span>
 
           {/* Full Screen button */}
@@ -119,8 +119,8 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
               radius.md,
               'hover:bg-surface-border hover:text-text-primary transition-colors flex items-center justify-center cursor-pointer',
             )}
-            aria-label={t('logs.fullScreen', 'Full Screen')}
-            title={t('logs.fullScreen', 'Full Screen')}
+            aria-label={t('logs.fullScreen')}
+            title={t('logs.fullScreen')}
           >
             <Maximize2 className={iconTokens.size.sm} aria-hidden="true" />
           </button>
@@ -129,13 +129,13 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
     >
       {/* Main stat - total logs */}
       <CardValue value={stats?.total_count ?? 0} size="lg" />
-      <CardRow label={t('logs.totalLogs', 'Total logs')} value="" />
+      <CardRow label={t('logs.totalLogs')} value="" />
       <CardDivider />
       {/* Error count */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <AlertCircle className={cn(iconTokens.size.sm, statusColor.text.error)} />
-          <span className="text-sm text-text-secondary">{t('logs.errors', 'Errors')}</span>
+          <span className="text-sm text-text-secondary">{t('logs.errors')}</span>
         </div>
         <span
           className={cn(
@@ -150,7 +150,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <AlertTriangle className={cn(iconTokens.size.sm, statusColor.text.warning)} />
-          <span className="text-sm text-text-secondary">{t('logs.warnings', 'Warnings')}</span>
+          <span className="text-sm text-text-secondary">{t('logs.warnings')}</span>
         </div>
         <span
           className={cn(
@@ -166,7 +166,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
         <>
           <CardDivider />
           <CardRow
-            label={t('logs.errorsLastHour', 'Errors (last hour)')}
+            label={t('logs.errorsLastHour')}
             value={stats.errors_last_hour}
             status={stats.errors_last_hour > 0 ? 'error' : 'success'}
           />

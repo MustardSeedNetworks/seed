@@ -314,10 +314,10 @@ export function DiscoveryModal({
         <div className="flex items-center justify-between mb-4 pb-4 border-b border-surface-border">
           <div>
             <h2 id="discovery-modal-title" className="text-xl font-semibold text-text-primary">
-              {t('discovery.title', 'Network Discovery')}
+              {t('discovery.title')}
             </h2>
             <p className="text-sm text-text-muted mt-1">
-              {t('discovery.modalSubtitle', '{{total}} devices ({{local}} local)', {
+              {t('discovery.modalSubtitle', {
                 total: deviceCount,
                 local: localCount,
               })}
@@ -409,7 +409,7 @@ export function DiscoveryModal({
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 setSearchQuery(e.target.value)
               }
-              placeholder={t('discovery.searchPlaceholder', 'Search IP, hostname, MAC, vendor...')}
+              placeholder={t('discovery.searchPlaceholder')}
               className={cn(
                 'w-full pl-10 pr-4 py-2',
                 'text-sm bg-surface-base border border-surface-border',
@@ -442,7 +442,7 @@ export function DiscoveryModal({
                   : 'bg-surface-hover text-text-secondary hover:text-text-primary',
               )}
             >
-              {t('discovery.localOnly', 'Local Only')}
+              {t('discovery.localOnly')}
             </button>
           </div>
 
@@ -458,7 +458,7 @@ export function DiscoveryModal({
             <thead className="bg-surface-base sticky top-0">
               <tr className="border-b border-surface-border">
                 <SortableHeader
-                  label={t('discovery.tableIp', 'IP Address')}
+                  label={t('discovery.tableIp')}
                   field="ip"
                   currentField={sortField}
                   direction={sortDirection}
@@ -466,7 +466,7 @@ export function DiscoveryModal({
                   className="w-40"
                 />
                 <SortableHeader
-                  label={t('discovery.tableHostname', 'Hostname')}
+                  label={t('discovery.tableHostname')}
                   field="hostname"
                   currentField={sortField}
                   direction={sortDirection}
@@ -474,7 +474,7 @@ export function DiscoveryModal({
                   className="w-40"
                 />
                 <SortableHeader
-                  label={t('discovery.tableMac', 'MAC')}
+                  label={t('discovery.tableMac')}
                   field="mac"
                   currentField={sortField}
                   direction={sortDirection}
@@ -482,7 +482,7 @@ export function DiscoveryModal({
                   className="w-36"
                 />
                 <SortableHeader
-                  label={t('discovery.tableVendor', 'Vendor')}
+                  label={t('discovery.tableVendor')}
                   field="vendor"
                   currentField={sortField}
                   direction={sortDirection}
@@ -490,16 +490,16 @@ export function DiscoveryModal({
                   className="w-32"
                 />
                 <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-28">
-                  {t('discovery.tableDiscovery', 'Discovery')}
+                  {t('discovery.tableDiscovery')}
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-20">
-                  {t('discovery.tablePorts', 'Ports')}
+                  {t('discovery.tablePorts')}
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-20">
-                  {t('discovery.tableVulns', 'CVEs')}
+                  {t('discovery.tableVulns')}
                 </th>
                 <SortableHeader
-                  label={t('discovery.tableLastSeen', 'Last Seen')}
+                  label={t('discovery.tableLastSeen')}
                   field="lastSeen"
                   currentField={sortField}
                   direction={sortDirection}
@@ -507,7 +507,7 @@ export function DiscoveryModal({
                   className="w-24"
                 />
                 <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider w-24">
-                  {t('discovery.tableActions', 'Actions')}
+                  {t('discovery.tableActions')}
                 </th>
               </tr>
             </thead>
@@ -531,9 +531,7 @@ export function DiscoveryModal({
           {/* Empty state */}
           {filteredDevices.length === 0 ? (
             <div className="text-center py-12 text-text-muted">
-              {searchQuery || showLocalOnly
-                ? t('discovery.noResults', 'No devices match your filters')
-                : t('discovery.noDevices', 'No devices discovered yet')}
+              {searchQuery || showLocalOnly ? t('discovery.noResults') : t('discovery.noDevices')}
             </div>
           ) : null}
         </div>

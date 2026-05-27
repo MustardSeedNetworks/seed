@@ -143,15 +143,15 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
   const getStatusTooltip = (): string => {
     switch (wsStatus) {
       case 'connected':
-        return t('status.connected', 'Connected');
+        return t('status.connected');
       case 'connecting':
-        return t('status.connecting', 'Connecting...');
+        return t('status.connecting');
       case 'disconnected':
-        return t('status.disconnected', 'Disconnected');
+        return t('status.disconnected');
       case 'error':
-        return t('status.error', 'Connection Error');
+        return t('status.error');
       default:
-        return t('status.error', 'Connection Error');
+        return t('status.error');
     }
   };
 
@@ -557,9 +557,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
               isDark ? t('accessibility.switchToLightMode') : t('accessibility.switchToDarkMode')
             }
             title={
-              isDark
-                ? t('accessibility.switchToLightMode', 'Light mode')
-                : t('accessibility.switchToDarkMode', 'Dark mode')
+              isDark ? t('accessibility.switchToLightMode') : t('accessibility.switchToDarkMode')
             }
           >
             {isDark ? (
@@ -718,7 +716,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                     d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
                   />
                 </svg>
-                {t('status.connecting', 'Connecting...')}
+                {t('status.connecting')}
               </>
             ) : (
               <>

@@ -165,7 +165,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
                 'hover:bg-surface-border hover:text-text-primary transition-colors flex items-center justify-center cursor-pointer',
               )}
               aria-label="Open full screen view"
-              title={t('discovery.fullScreen', 'Full Screen')}
+              title={t('discovery.fullScreen')}
             >
               <Maximize2 className={iconTokens.size.sm} aria-hidden="true" />
             </button>
