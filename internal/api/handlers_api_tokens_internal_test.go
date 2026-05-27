@@ -35,6 +35,17 @@ func apiTokenTestSetup(t *testing.T) (*Server, *license.Manager) {
 	}
 	t.Cleanup(func() { _ = db.Close() })
 
+	// Seed the usernames these tests mint tokens for. The hardening
+	// migration added FOREIGN KEY (owner_username) REFERENCES users
+	// ON DELETE CASCADE on api_tokens, so any owner referenced by an
+	// inserted token must exist as a users row first.
+	for _, name := range []string{"alice", "bob", "carol"} {
+		_, createErr := db.CreateUser(t.Context(), name, "$2a$10$x", database.RoleAdmin)
+		if createErr != nil {
+			t.Fatalf("seed user %q: %v", name, createErr)
+		}
+	}
+
 	licenseDir := t.TempDir()
 	mgr, mgrErr := license.NewManagerWithDir(licenseDir)
 	if mgrErr != nil {

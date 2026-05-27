@@ -872,6 +872,113 @@ func getMigrationDefs() []migrationDef {
 			CREATE INDEX IF NOT EXISTS idx_api_tokens_active   ON api_tokens(revoked_at);
 		`,
 		},
+		{
+			// Multi-feature hardening 2026-05-26 (msn-docs PR #14 §2):
+			// adds CHECK constraints + SSO columns to users, and an
+			// ON DELETE CASCADE FK from api_tokens.owner_username so
+			// revoking a user automatically invalidates their tokens.
+			// Pre-alpha: empty production DBs, so the table-swap pattern
+			// SQLite forces on us (no ALTER ADD CHECK / ADD FK) is safe.
+			Description: "Harden users + api_tokens schemas; add SSO columns",
+			Up: `
+			-- Disable FK enforcement during the swap so api_tokens can
+			-- briefly reference a renamed users table without erroring.
+			PRAGMA foreign_keys = OFF;
+
+			-- 1. Recreate users with CHECK constraints + SSO columns.
+			--    auth_provider = which channel created the row ('local'
+			--    for password users; provider name for SSO). external_id
+			--    is the IdP's stable subject claim ('sub' for OIDC, 'id'
+			--    for Microsoft Graph). The (auth_provider, external_id)
+			--    pair is the SSO lookup key so the same email arriving
+			--    via two providers is two separate user rows on purpose.
+			CREATE TABLE users_new (
+				id              INTEGER PRIMARY KEY AUTOINCREMENT,
+				username        TEXT    NOT NULL UNIQUE CHECK (LENGTH(username) >= 3 AND LENGTH(username) <= 64),
+				password_hash   TEXT    NOT NULL,
+				role            TEXT    NOT NULL DEFAULT 'viewer' CHECK (role IN ('admin','operator','viewer')),
+				is_active       INTEGER NOT NULL DEFAULT 1,
+				last_login      TEXT,
+				failed_attempts INTEGER NOT NULL DEFAULT 0,
+				locked_until    TEXT,
+				token_version   INTEGER NOT NULL DEFAULT 1,
+				totp_secret     TEXT,
+				totp_enabled    INTEGER NOT NULL DEFAULT 0,
+				auth_provider   TEXT    NOT NULL DEFAULT 'local' CHECK (auth_provider IN ('local','google','microsoft','github')),
+				external_id     TEXT,
+				email           TEXT,
+				display_name    TEXT,
+				created_at      TEXT    NOT NULL,
+				updated_at      TEXT    NOT NULL,
+				UNIQUE (auth_provider, external_id)
+			);
+
+			-- Copy existing rows. Pre-existing data is all local-auth
+			-- (no SSO callback could have been invoked yet), so we leave
+			-- auth_provider at its default of 'local' and external_id/
+			-- email/display_name NULL. Role mapping: existing 'admin' is
+			-- preserved; anything unrecognized gets demoted to 'viewer'
+			-- (defensive — should not occur on a fresh dev DB). TOTP
+			-- columns from the Wave-3 MFA migration are preserved
+			-- verbatim so existing enrolments survive the table swap.
+			INSERT INTO users_new
+				(id, username, password_hash, role, is_active, last_login,
+				 failed_attempts, locked_until, token_version,
+				 totp_secret, totp_enabled,
+				 created_at, updated_at)
+			SELECT
+				id, username, password_hash,
+				CASE WHEN role IN ('admin','operator','viewer') THEN role ELSE 'viewer' END,
+				COALESCE(is_active, 1), last_login,
+				COALESCE(failed_attempts, 0), locked_until,
+				COALESCE(token_version, 1),
+				totp_secret, COALESCE(totp_enabled, 0),
+				created_at, updated_at
+			FROM users;
+
+			DROP TABLE users;
+			ALTER TABLE users_new RENAME TO users;
+
+			CREATE INDEX idx_users_username             ON users(username);
+			CREATE INDEX idx_users_active               ON users(is_active);
+			CREATE INDEX idx_users_provider_external_id ON users(auth_provider, external_id);
+			CREATE INDEX idx_users_email                ON users(email);
+
+			-- 2. Recreate api_tokens with FK to users.username (CASCADE).
+			--    Deleting a user automatically revokes every token they
+			--    own; this matches the IncrementTokenVersion behaviour
+			--    that's already wired for JWT session revocation.
+			CREATE TABLE api_tokens_new (
+				id              TEXT PRIMARY KEY,
+				owner_username  TEXT NOT NULL,
+				name            TEXT NOT NULL,
+				token_hash      TEXT NOT NULL UNIQUE,
+				prefix          TEXT NOT NULL,
+				created_at      TEXT NOT NULL,
+				last_used_at    TEXT,
+				revoked_at      TEXT,
+				FOREIGN KEY (owner_username) REFERENCES users(username) ON DELETE CASCADE ON UPDATE CASCADE
+			);
+
+			INSERT INTO api_tokens_new
+				(id, owner_username, name, token_hash, prefix, created_at, last_used_at, revoked_at)
+			SELECT
+				id, owner_username, name, token_hash, prefix, created_at, last_used_at, revoked_at
+			FROM api_tokens
+			-- Defensive: drop any orphan rows whose owner no longer
+			-- exists in users. Pre-alpha, should be empty.
+			WHERE owner_username IN (SELECT username FROM users);
+
+			DROP TABLE api_tokens;
+			ALTER TABLE api_tokens_new RENAME TO api_tokens;
+
+			CREATE INDEX idx_api_tokens_owner  ON api_tokens(owner_username);
+			CREATE INDEX idx_api_tokens_hash   ON api_tokens(token_hash);
+			CREATE INDEX idx_api_tokens_active ON api_tokens(revoked_at);
+
+			PRAGMA foreign_keys = ON;
+		`,
+		},
 	}
 }
 

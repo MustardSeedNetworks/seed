@@ -31,6 +31,15 @@ func (s *Server) setupAPITokenRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/tokens", s.handleAPITokens)
 	s.mux.HandleFunc(APIVersionPrefix+"/tokens/", s.handleAPITokenByID)
 	s.mux.HandleFunc(APIVersionPrefix+"/license", s.handleLicenseStatus)
+
+	// Users CRUD (seed#1191 — multi_user). The /users/me endpoint must
+	// register BEFORE /users/ so the path router doesn't treat "me"
+	// as a {username} suffix. POST /users is admin-only AND Pro-gated
+	// (the gate is checked inside the handler so a 403/402 carries the
+	// appropriate FeatureGateResponse rather than a generic Pro 402).
+	s.mux.HandleFunc(APIVersionPrefix+"/users/me", s.handleCurrentUser)
+	s.mux.HandleFunc(APIVersionPrefix+"/users", s.handleUsers)
+	s.mux.HandleFunc(APIVersionPrefix+"/users/", s.handleUserByName)
 }
 
 // setupCoreRoutes registers auth, settings, config, and setup routes.

@@ -118,5 +118,16 @@
   },
   "sso": {
     "featureRequired": "La configuración de Single Sign-On requiere una licencia Pro. Los proveedores existentes siguen aceptando inicios de sesión en cualquier nivel; solo se bloquea habilitar o editar proveedores."
+  },
+  "users": {
+    "lastAdmin": "No se puede eliminar ni degradar al último administrador.",
+    "invalidRole": "El rol debe ser uno de: admin, operator, viewer.",
+    "userExists": "Ya existe un usuario con ese nombre.",
+    "lockedOut": "Cuenta bloqueada temporalmente por varios intentos fallidos.",
+    "weakPassword": "La contraseña no cumple la política: mínimo 12 caracteres, mayúsculas y minúsculas, dígito y símbolo.",
+    "selfDelete": "No puede eliminar su propia cuenta.",
+    "selfDeactivate": "No puede desactivar su propia cuenta.",
+    "selfDemote": "No puede degradar su propia cuenta de administrador.",
+    "featureRequired": "Agregar usuarios adicionales requiere una licencia Pro."
   }
 }

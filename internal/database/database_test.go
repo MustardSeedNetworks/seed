@@ -808,7 +808,10 @@ func TestUserStoreAdapter(t *testing.T) {
 	})
 
 	t.Run("CreateUser", func(t *testing.T) {
-		err := adapter.CreateUser(ctx, "newuser", "$2a$10$newhash", "user")
+		// "user" is not a valid role anymore (CHECK constraint added in
+		// the hardening migration). Use the canonical "operator" role
+		// instead — the call exercises the same code path.
+		err := adapter.CreateUser(ctx, "newuser", "$2a$10$newhash", database.RoleOperator)
 		require.NoError(t, err)
 	})
 
