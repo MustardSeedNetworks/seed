@@ -184,7 +184,8 @@
     "optionCalibration": "Import scale and propagation settings",
     "optionLocations": "Import AP and client locations",
     "confirm": "Import",
-    "button": "Import AirMapper"
+    "button": "Import AirMapper",
+    "dropZone": "Drop a survey JSON file here, or click to choose."
   },
   "heatmaps": {
     "title": "Heatmap Visualization",

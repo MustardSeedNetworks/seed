@@ -58,7 +58,9 @@
     "never": "Never",
     "justNow": "Just now",
     "unknown": "Unknown",
-    "unavailable": "Unavailable"
+    "unavailable": "Unavailable",
+    "clickToReconnect": "Click to reconnect",
+    "tapToReconnect": "Tap to reconnect"
   },
   "labels": {
     "username": "Username",
@@ -98,7 +100,18 @@
     "selectInterface": "Select network interface",
     "clearSearch": "Clear search",
     "wsStatus": "WebSocket status: {{status}}",
-    "newCommunityString": "New community string"
+    "newCommunityString": "New community string",
+    "closeSettings": "Close settings",
+    "openHistory": "Open test history",
+    "refreshInterfaces": "Refresh interfaces",
+    "selectProfile": "Select profile",
+    "deviceList": "Device list",
+    "dismiss": "Dismiss",
+    "interfaceList": "Interface list",
+    "profileList": "Profile list",
+    "selectDevice": "Select device",
+    "selectEthernet": "Select Ethernet interface",
+    "selectWifi": "Select Wi-Fi interface"
   },
   "sections": {
     "connectivity": "Connectivity",
@@ -135,14 +148,28 @@
     "scrollToBottom": "Scroll to latest",
     "fullScreen": "Full Screen",
     "close": "Close log viewer",
-    "viewLogs": "View Logs"
+    "viewLogs": "View Logs",
+    "clearHint": "Clear all logs from the buffer",
+    "exportCsvHint": "Export logs to a CSV file",
+    "exportJsonHint": "Export logs to a JSON file",
+    "pausedHint": "Resume log streaming",
+    "streamingHint": "Pause log streaming"
   },
   "login": {
     "defaultCredentials": "Default: admin / seed"
   },
   "footer": {
     "runTestsHint": "Tap the play button to run all tests.",
-    "networkDiscoveryHint": "Use the Network Discovery card to scan for devices on your network."
+    "networkDiscoveryHint": "Use the Network Discovery card to scan for devices on your network.",
+    "byCompany": "by {{company}}",
+    "contact": "Contact",
+    "copyright": "© {{year}} {{company}}. All rights reserved.",
+    "legal": "Legal",
+    "license": "License",
+    "privacy": "Privacy",
+    "tos": "Terms of Service",
+    "version": "Version",
+    "website": "Website"
   },
   "errorBoundary": {
     "title": "Something went wrong",
@@ -186,7 +213,20 @@
     "profiles": "Profiles",
     "searchPlaceholder": "Search profiles…",
     "setAsDefault": "Set as default",
-    "updated": "Updated"
+    "updated": "Updated",
+    "activate": "Activate",
+    "active": "Active",
+    "create": "Create profile",
+    "createFirst": "Create your first profile",
+    "current": "Current profile",
+    "default": "Default",
+    "deleteConfirm": "Delete profile?",
+    "deleteConfirmDesc": "This will permanently remove the profile and its settings.",
+    "description": "Description",
+    "descriptionPlaceholder": "Optional description",
+    "manage": "Manage",
+    "noProfiles": "No profiles",
+    "select": "Select Profile"
   },
   "recovery": {
     "backToLogin": "Back to login",
@@ -196,6 +236,118 @@
     },
     "newPasswordLabel": "New password",
     "passwordRequirement": "At least 8 characters",
-    "securityNote": "For security, you must use a one-time recovery code."
+    "securityNote": "For security, you must use a one-time recovery code.",
+    "submit": "Reset password",
+    "submitting": "Resetting…",
+    "subtitle": "Enter the recovery token from your password manager or admin.",
+    "timeRemaining": "Time remaining: {{value}}",
+    "title": "Account recovery",
+    "tokenLabel": "Recovery token",
+    "tokenLocation": "Stored in your password manager when the account was created.",
+    "tokenPlaceholder": "Paste recovery token"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "clone": "Clone",
+    "close": "Close",
+    "create": "Create",
+    "delete": "Delete",
+    "deleting": "Deleting…",
+    "edit": "Edit",
+    "loading": "Loading…",
+    "save": "Save",
+    "saving": "Saving…"
+  },
+  "criteria": {
+    "criteriaPassed": "criteria passed",
+    "statusPass": "PASS",
+    "statusFail": "FAIL"
+  },
+  "device": {
+    "manualEntry": "Manual entry",
+    "manualIpEntry": "Enter IP address manually",
+    "noDevices": "No devices discovered",
+    "noResults": "No results",
+    "other": "Other",
+    "phones": "Phones",
+    "printers": "Printers",
+    "routers": "Routers",
+    "search": "Search devices",
+    "searchResults": "Search results",
+    "select": "Select device",
+    "servers": "Servers",
+    "switches": "Switches",
+    "workstations": "Workstations"
+  },
+  "discovery": {
+    "complete": "Complete",
+    "dAgo": "{{value}}d ago",
+    "deviceFound": "{{count}} device found",
+    "devicesFound": "{{count}} devices found",
+    "hAgo": "{{value}}h ago",
+    "justNow": "just now",
+    "mAgo": "{{value}}m ago",
+    "mobile": "Mobile",
+    "networkDevices": "Network Devices",
+    "never": "Never",
+    "printers": "Printers",
+    "routers": "Routers",
+    "scanning": "Scanning…",
+    "servers": "Servers",
+    "unknownSubnet": "Unknown subnet",
+    "workstations": "Workstations"
+  },
+  "errors": {
+    "password": {
+      "mismatch": "Passwords do not match"
+    }
+  },
+  "health": {
+    "database": "Database",
+    "fileShares": "File shares",
+    "rtsp": "RTSP"
+  },
+  "interface": {
+    "ethernet": "Ethernet",
+    "ethernetInterfaces": "Ethernet Interfaces",
+    "noEthernet": "No Ethernet interfaces",
+    "noInterfaces": "No interfaces found",
+    "noLink": "No link",
+    "noWifiHardware": "No Wi-Fi hardware",
+    "recommended": "Recommended",
+    "switchTo": "Switch to {{name}}",
+    "wifi": "Wi-Fi",
+    "wifiPlanning": "Wi-Fi planning"
+  },
+  "pathDiscovery": {
+    "completed": "Completed",
+    "egressPort": "Egress Port",
+    "hops": "hops",
+    "ingressPort": "Ingress Port",
+    "noL2Path": "No L2 path information available",
+    "path": "Path",
+    "switches": "switches",
+    "to": "to",
+    "trunk": "Trunk"
+  },
+  "report": {
+    "apInventory": "AP Inventory",
+    "criteriaResults": "Criteria Results",
+    "date": "Date",
+    "executiveSummary": "Executive Summary",
+    "facilitySize": "Facility Size",
+    "generatedBy": "Generated by",
+    "heatmapVisualizations": "Heatmap Visualizations",
+    "overallStatus": "Overall Status",
+    "recommendations": "Recommendations",
+    "samplePoints": "Sample Points",
+    "surveyType": "Survey Type"
+  },
+  "tooltips": {
+    "header": {
+      "help": "Open the help drawer",
+      "logout": "Sign out of the current session",
+      "settings": "Open the settings drawer"
+    }
   }
 }

@@ -7,7 +7,22 @@
     "mtu": "MTU",
     "autoNeg": "Auto-Neg",
     "flaps24h": "Caídas (24h)",
-    "advertisedSpeeds": "Velocidades anunciadas"
+    "advertisedSpeeds": "Velocidades anunciadas",
+    "ddm": "Lecturas DDM",
+    "ddmTemp": "Temperatura",
+    "ddmVoltage": "Voltaje",
+    "ddmTxPower": "Potencia TX",
+    "ddmRxPower": "Potencia RX",
+    "poe": "Power over Ethernet",
+    "poeClass": "Clase",
+    "poePower": "Potencia",
+    "poeStandard": "Estándar",
+    "poeVoltage": "Voltaje",
+    "sfp": "Módulo SFP",
+    "sfpVendor": "Fabricante",
+    "sfpType": "Tipo",
+    "sfpWavelength": "Longitud de onda",
+    "sfpDistance": "Distancia máxima"
   },
   "network": {
     "title": "Red",
@@ -123,7 +138,8 @@
     "tableVulns": "CVEs",
     "tableLastSeen": "Última Vez",
     "tableActions": "Acciones",
-    "viewAllDevices": "Ver Todos los Dispositivos"
+    "viewAllDevices": "Ver Todos los Dispositivos",
+    "snmpInfo": "Detalles SNMP"
   },
   "pipeline": {
     "phaseProgress": "Fase {{current}} de {{total}}",
@@ -223,7 +239,16 @@
     "statusOpen": "Abierto",
     "statusShort": "Cortocircuito",
     "statusImpedanceMismatch": "Desajuste de impedancia",
-    "statusUnknown": "Desconocido"
+    "statusUnknown": "Desconocido",
+    "crossover": "Cable cruzado detectado",
+    "driver": "Controlador",
+    "faultsDetected": "Fallos detectados",
+    "pair": "Par",
+    "pairResults": "Resultados por par",
+    "statusCrosstalk": "Diafonía",
+    "statusSplitPair": "Par dividido",
+    "tdrSupported": "Diagnóstico TDR compatible",
+    "wiringStandard": "Estándar de cableado"
   },
   "performance": {
     "title": "Pruebas de rendimiento",
@@ -410,5 +435,47 @@
       "weekly": "Semanal",
       "monthly": "Mensual"
     }
+  },
+  "guestAudit": {
+    "title": "Auditoría de red de invitados",
+    "noTargets": "Añada direcciones IP internas sensibles (EMR, PACS, etc.) en Configuración → Seguridad para activar esta auditoría.",
+    "description": "Sondear los hosts internos configurados para confirmar el aislamiento de la red de invitados. Conéctese a la red de invitados antes de ejecutar.",
+    "running": "Ejecutando auditoría...",
+    "runButton": "Ejecutar auditoría ({{count}} objetivos)",
+    "criticalAlert": "Crítico: el aislamiento de la red de invitados no está configurado correctamente.",
+    "criticalDetail": "{{count}} de {{total}} hosts internos son accesibles desde la red de invitados.",
+    "passed": "Aislamiento verificado: ninguno de los {{total}} hosts internos es accesible.",
+    "ping": "ping",
+    "openPorts": "puertos abiertos"
+  },
+  "mfa": {
+    "title": "Autenticación de múltiples factores",
+    "loading": "Cargando…",
+    "bothEnabled": "TOTP + llave de acceso activadas",
+    "totpEnabled": "TOTP activado",
+    "passkeyEnabled": "Llave de acceso activada",
+    "none": "Sin segundo factor registrado",
+    "setupTotp": "Configurar TOTP",
+    "qrAlt": "Código QR de TOTP",
+    "scanAndEnter": "Escanee con una aplicación de autenticación y luego ingrese un código",
+    "verifyAndEnable": "Verificar y activar",
+    "addPasskey": "Añadir llave de acceso"
+  },
+  "pathDiscovery": {
+    "title": "Descubrimiento de ruta",
+    "copy": "Copiar",
+    "dns": "DNS",
+    "emptyHint": "Ingrese una IP o nombre de host para trazar la ruta de red.",
+    "enterTarget": "Ingresar destino",
+    "exportCSV": "Exportar CSV",
+    "exportJSON": "Exportar JSON",
+    "gateway": "Puerta de enlace",
+    "internet": "Internet",
+    "protocol": "Protocolo",
+    "quick": "Rápido",
+    "rerun": "Volver a ejecutar",
+    "trace": "Trazar",
+    "tracing": "Trazando ruta...",
+    "tracingHops": "Trazando... {{count}} saltos"
   }
 }

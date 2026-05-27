@@ -10,7 +10,11 @@
     "dns": "DNS",
     "wifi": "WiFi",
     "snmp": "SNMP",
-    "thresholds": "Thresholds"
+    "thresholds": "Thresholds",
+    "cableTest": "Cable Test",
+    "link": "Link",
+    "updates": "Updates",
+    "vulnerability": "Vulnerability Scanning"
   },
   "common": {
     "add": "+ Add",
@@ -19,7 +23,15 @@
     "host": "Host",
     "hostIp": "Host/IP",
     "port": "Port",
-    "enabled": "Enabled"
+    "enabled": "Enabled",
+    "hideHelp": "Hide help",
+    "needKey": "Requires an API key",
+    "refresh": "Refresh",
+    "runOnFab": "Run on fabric",
+    "runOnFabDesc": "Run this card against every host on the fabric, not just the gateway.",
+    "seconds": "seconds",
+    "showCard": "Show card",
+    "showCardDesc": "Display this card on the dashboard."
   },
   "appearance": {
     "title": "Appearance",
@@ -143,7 +155,16 @@
       "interface": "Discovery interface",
       "subnet": "Subnet",
       "localIP": "Local IP"
-    }
+    },
+    "aggressive": "Aggressive",
+    "bannerTimeout": "Banner Timeout",
+    "faster": "Faster",
+    "gentler": "Gentler",
+    "performanceTiming": "Performance Timing",
+    "performanceTimingDesc": "Adjust scan aggressiveness vs network impact.",
+    "probeInterval": "Probe interval",
+    "slower": "Slower",
+    "workers": "Worker count"
   },
   "performance": {
     "title": "Performance",
@@ -174,7 +195,8 @@
     "duration": "Duration (seconds)",
     "enableServer": "Enable iperf3 Server",
     "serverPort": "Server Port",
-    "serverAutoStart": "When enabled, starts iperf3 server automatically"
+    "serverAutoStart": "When enabled, starts iperf3 server automatically",
+    "autoRunOnLinkDesc": "Re-run performance tests whenever the link state changes."
   },
   "health": {
     "title": "Health Checks",
@@ -300,7 +322,8 @@
     "noPrivacy": "No Privacy",
     "noAuthNoPriv": "No Auth / No Privacy",
     "authNoPriv": "Auth / No Privacy",
-    "authPriv": "Auth / Privacy"
+    "authPriv": "Auth / Privacy",
+    "description": "SNMP community strings used for device polling and discovery."
   },
   "thresholds": {
     "title": "Thresholds",
@@ -375,5 +398,70 @@
     "title": "About",
     "appName": "The Seed",
     "description": "Network Diagnostic Tool"
+  },
+  "cableTest": {
+    "checkingSupport": "Checking driver support…",
+    "driver": "Driver",
+    "enableCard": "Cable Test",
+    "enableCardDesc": "Display cable diagnostics (TDR, pair status, length, faults) on the dashboard.",
+    "notSupported": "Not supported on this interface",
+    "supported": "Supported",
+    "tdrNote": "Time Domain Reflectometry (TDR) measures cable length and fault location by analyzing reflected signals."
+  },
+  "link": {
+    "availableModes": "Available modes",
+    "manualWarning": "Manually forcing speed/duplex may cause link instability if the peer is set to autoneg.",
+    "requiresRoot": "Requires root to change link settings",
+    "speedDuplex": "Speed / Duplex"
+  },
+  "updates": {
+    "applyUpdate": "Apply update",
+    "applying": "Applying…",
+    "autoCheck": "Automatically check for updates",
+    "autoDownload": "Automatically download updates",
+    "checkForUpdates": "Check for updates",
+    "currentVersion": "Current version",
+    "downloadSize": "Download size",
+    "downloadUpdate": "Download update",
+    "downloading": "Downloading…",
+    "includePrerelease": "Include pre-release builds",
+    "lastChecked": "Last checked",
+    "releasedOn": "Released on",
+    "rollback": "Rollback to previous version",
+    "upToDate": "Up to date",
+    "updateAvailable": "Update available"
+  },
+  "vulnerability": {
+    "apiKey": "NVD API Key",
+    "apiKeyPlaceholder": "Paste NVD API key",
+    "autoScan": "Auto-scan",
+    "autoScanDesc": "Periodically scan discovered devices for known CVEs.",
+    "concurrentDesc": "Number of devices to scan in parallel.",
+    "database": "CVE Database",
+    "databaseLocal": "Local Database",
+    "databaseNVD": "NVD (National Vulnerability Database)",
+    "devicesScanned": "Devices scanned",
+    "enable": "Enable vulnerability scanning",
+    "enableDesc": "Scan discovered devices against the configured CVE database.",
+    "howToGetKey": "How to get an NVD API key",
+    "maxConcurrent": "Max concurrent scans",
+    "noKeyRateLimit": "Without an API key, NVD enforces a strict rate limit (5 requests per 30s).",
+    "rateLimitInfo": "Rate limit: {{value}} requests / 30s",
+    "requestKey": "Request an NVD API key",
+    "severityCritical": "Critical",
+    "severityDesc": "Minimum severity to display.",
+    "severityHigh": "High",
+    "severityLow": "Low",
+    "severityMedium": "Medium",
+    "severityThreshold": "Severity threshold",
+    "statusDisabled": "Disabled",
+    "statusReady": "Ready",
+    "statusScanning": "Scanning…",
+    "step1": "Step 1: Visit the NVD API key request page.",
+    "step2": "Step 2: Fill out the request form (free, no review).",
+    "step3": "Step 3: Receive the API key via email within minutes.",
+    "step4": "Step 4: Paste the key here and the scanner will use it.",
+    "updateInterval": "Update interval",
+    "vulnerabilities": "Vulnerabilities"
   }
 }

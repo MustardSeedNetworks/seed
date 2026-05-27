@@ -7,7 +7,22 @@
     "mtu": "MTU",
     "autoNeg": "Auto-Neg",
     "flaps24h": "Flaps (24h)",
-    "advertisedSpeeds": "Advertised Speeds"
+    "advertisedSpeeds": "Advertised Speeds",
+    "ddm": "DDM Readings",
+    "ddmTemp": "Temperature",
+    "ddmVoltage": "Voltage",
+    "ddmTxPower": "TX Power",
+    "ddmRxPower": "RX Power",
+    "poe": "Power over Ethernet",
+    "poeClass": "Class",
+    "poePower": "Power",
+    "poeStandard": "Standard",
+    "poeVoltage": "Voltage",
+    "sfp": "SFP Module",
+    "sfpVendor": "Vendor",
+    "sfpType": "Type",
+    "sfpWavelength": "Wavelength",
+    "sfpDistance": "Max Distance"
   },
   "network": {
     "title": "Network",
@@ -123,7 +138,8 @@
     "tableVulns": "CVEs",
     "tableLastSeen": "Last Seen",
     "tableActions": "Actions",
-    "viewAllDevices": "View All Devices"
+    "viewAllDevices": "View All Devices",
+    "snmpInfo": "SNMP Details"
   },
   "pipeline": {
     "phaseProgress": "Phase {{current}} of {{total}}",
@@ -223,7 +239,16 @@
     "statusOpen": "Open",
     "statusShort": "Short",
     "statusImpedanceMismatch": "Impedance Mismatch",
-    "statusUnknown": "Unknown"
+    "statusUnknown": "Unknown",
+    "crossover": "Crossover Cable Detected",
+    "driver": "Driver",
+    "faultsDetected": "Faults Detected",
+    "pair": "Pair",
+    "pairResults": "Pair Results",
+    "statusCrosstalk": "Crosstalk",
+    "statusSplitPair": "Split Pair",
+    "tdrSupported": "TDR diagnostics supported",
+    "wiringStandard": "Wiring Standard"
   },
   "performance": {
     "title": "Performance Tests",
@@ -410,5 +435,47 @@
       "weekly": "Weekly",
       "monthly": "Monthly"
     }
+  },
+  "guestAudit": {
+    "title": "Guest Network Audit",
+    "noTargets": "Add sensitive internal IP addresses (EMR, PACS, etc.) in Settings → Security to enable this audit.",
+    "description": "Probe configured internal hosts to confirm guest-network isolation. Connect to the guest network before running.",
+    "running": "Running audit...",
+    "runButton": "Run audit ({{count}} targets)",
+    "criticalAlert": "Critical: Guest network isolation is not configured correctly.",
+    "criticalDetail": "{{count}} of {{total}} internal hosts are reachable from the guest network.",
+    "passed": "Isolation verified - none of the {{total}} internal hosts are reachable.",
+    "ping": "ping",
+    "openPorts": "open ports"
+  },
+  "mfa": {
+    "title": "Multi-factor authentication",
+    "loading": "Loading…",
+    "bothEnabled": "TOTP + Passkey enabled",
+    "totpEnabled": "TOTP enabled",
+    "passkeyEnabled": "Passkey enabled",
+    "none": "No second factor enrolled",
+    "setupTotp": "Set up TOTP",
+    "qrAlt": "TOTP QR code",
+    "scanAndEnter": "Scan with an authenticator app, then enter a code",
+    "verifyAndEnable": "Verify and enable",
+    "addPasskey": "Add passkey"
+  },
+  "pathDiscovery": {
+    "title": "Path Discovery",
+    "copy": "Copy",
+    "dns": "DNS",
+    "emptyHint": "Enter an IP or hostname to trace the network path.",
+    "enterTarget": "Enter target",
+    "exportCSV": "Export CSV",
+    "exportJSON": "Export JSON",
+    "gateway": "Gateway",
+    "internet": "Internet",
+    "protocol": "Protocol",
+    "quick": "Quick",
+    "rerun": "Re-run",
+    "trace": "Trace",
+    "tracing": "Tracing path...",
+    "tracingHops": "Tracing... {{count}} hops"
   }
 }

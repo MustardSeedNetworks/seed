@@ -58,7 +58,9 @@
     "never": "Nunca",
     "justNow": "Ahora mismo",
     "unknown": "Desconocido",
-    "unavailable": "No disponible"
+    "unavailable": "No disponible",
+    "clickToReconnect": "Haga clic para reconectar",
+    "tapToReconnect": "Toque para reconectar"
   },
   "labels": {
     "username": "Usuario",
@@ -98,7 +100,18 @@
     "selectInterface": "Seleccionar interfaz de red",
     "clearSearch": "Limpiar búsqueda",
     "wsStatus": "Estado de WebSocket: {{status}}",
-    "newCommunityString": "Nueva cadena de comunidad"
+    "newCommunityString": "Nueva cadena de comunidad",
+    "closeSettings": "Cerrar configuración",
+    "openHistory": "Abrir historial de pruebas",
+    "refreshInterfaces": "Actualizar interfaces",
+    "selectProfile": "Seleccionar perfil",
+    "deviceList": "Lista de dispositivos",
+    "dismiss": "Descartar",
+    "interfaceList": "Lista de interfaces",
+    "profileList": "Lista de perfiles",
+    "selectDevice": "Seleccionar dispositivo",
+    "selectEthernet": "Seleccionar interfaz Ethernet",
+    "selectWifi": "Seleccionar interfaz Wi-Fi"
   },
   "sections": {
     "connectivity": "Conectividad",
@@ -135,14 +148,28 @@
     "scrollToBottom": "Ir al último",
     "fullScreen": "Pantalla Completa",
     "close": "Cerrar visor de registros",
-    "viewLogs": "Ver Registros"
+    "viewLogs": "Ver Registros",
+    "clearHint": "Borrar todos los registros del búfer",
+    "exportCsvHint": "Exportar registros a un archivo CSV",
+    "exportJsonHint": "Exportar registros a un archivo JSON",
+    "pausedHint": "Reanudar la transmisión de registros",
+    "streamingHint": "Pausar la transmisión de registros"
   },
   "login": {
     "defaultCredentials": "Predeterminado: admin / seed"
   },
   "footer": {
     "runTestsHint": "Toca el botón de reproducción para ejecutar todas las pruebas.",
-    "networkDiscoveryHint": "Usa la tarjeta de Descubrimiento de Red para buscar dispositivos en tu red."
+    "networkDiscoveryHint": "Usa la tarjeta de Descubrimiento de Red para buscar dispositivos en tu red.",
+    "byCompany": "por {{company}}",
+    "contact": "Contacto",
+    "copyright": "© {{year}} {{company}}. Todos los derechos reservados.",
+    "legal": "Legal",
+    "license": "Licencia",
+    "privacy": "Privacidad",
+    "tos": "Términos de servicio",
+    "version": "Versión",
+    "website": "Sitio web"
   },
   "errorBoundary": {
     "title": "Algo salió mal",
@@ -186,7 +213,20 @@
     "profiles": "Perfiles",
     "searchPlaceholder": "Buscar perfiles…",
     "setAsDefault": "Establecer como predeterminado",
-    "updated": "Actualizado"
+    "updated": "Actualizado",
+    "activate": "Activar",
+    "active": "Activo",
+    "create": "Crear perfil",
+    "createFirst": "Cree su primer perfil",
+    "current": "Perfil actual",
+    "default": "Predeterminado",
+    "deleteConfirm": "¿Eliminar perfil?",
+    "deleteConfirmDesc": "Esto eliminará permanentemente el perfil y sus configuraciones.",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Descripción opcional",
+    "manage": "Gestionar",
+    "noProfiles": "Sin perfiles",
+    "select": "Seleccionar perfil"
   },
   "recovery": {
     "backToLogin": "Volver a iniciar sesión",
@@ -196,6 +236,118 @@
     },
     "newPasswordLabel": "Nueva contraseña",
     "passwordRequirement": "Al menos 8 caracteres",
-    "securityNote": "Por seguridad, debe usar un código de recuperación de un solo uso."
+    "securityNote": "Por seguridad, debe usar un código de recuperación de un solo uso.",
+    "submit": "Restablecer contraseña",
+    "submitting": "Restableciendo…",
+    "subtitle": "Ingrese el token de recuperación de su gestor de contraseñas o administrador.",
+    "timeRemaining": "Tiempo restante: {{value}}",
+    "title": "Recuperación de cuenta",
+    "tokenLabel": "Token de recuperación",
+    "tokenLocation": "Almacenado en su gestor de contraseñas cuando se creó la cuenta.",
+    "tokenPlaceholder": "Pegar token de recuperación"
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "clone": "Clonar",
+    "close": "Cerrar",
+    "create": "Crear",
+    "delete": "Eliminar",
+    "deleting": "Eliminando…",
+    "edit": "Editar",
+    "loading": "Cargando…",
+    "save": "Guardar",
+    "saving": "Guardando…"
+  },
+  "criteria": {
+    "criteriaPassed": "criterios superados",
+    "statusPass": "PASS",
+    "statusFail": "FAIL"
+  },
+  "device": {
+    "manualEntry": "Entrada manual",
+    "manualIpEntry": "Ingrese la dirección IP manualmente",
+    "noDevices": "No se descubrieron dispositivos",
+    "noResults": "Sin resultados",
+    "other": "Otro",
+    "phones": "Teléfonos",
+    "printers": "Impresoras",
+    "routers": "Enrutadores",
+    "search": "Buscar dispositivos",
+    "searchResults": "Resultados de búsqueda",
+    "select": "Seleccionar dispositivo",
+    "servers": "Servidores",
+    "switches": "Switches",
+    "workstations": "Estaciones de trabajo"
+  },
+  "discovery": {
+    "complete": "Completado",
+    "dAgo": "hace {{value}}d",
+    "deviceFound": "{{count}} dispositivo encontrado",
+    "devicesFound": "{{count}} dispositivos encontrados",
+    "hAgo": "hace {{value}}h",
+    "justNow": "ahora mismo",
+    "mAgo": "hace {{value}}m",
+    "mobile": "Móvil",
+    "networkDevices": "Dispositivos de red",
+    "never": "Nunca",
+    "printers": "Impresoras",
+    "routers": "Enrutadores",
+    "scanning": "Escaneando…",
+    "servers": "Servidores",
+    "unknownSubnet": "Subred desconocida",
+    "workstations": "Estaciones de trabajo"
+  },
+  "errors": {
+    "password": {
+      "mismatch": "Las contraseñas no coinciden"
+    }
+  },
+  "health": {
+    "database": "Base de datos",
+    "fileShares": "Recursos compartidos",
+    "rtsp": "RTSP"
+  },
+  "interface": {
+    "ethernet": "Ethernet",
+    "ethernetInterfaces": "Interfaces Ethernet",
+    "noEthernet": "Sin interfaces Ethernet",
+    "noInterfaces": "No se encontraron interfaces",
+    "noLink": "Sin enlace",
+    "noWifiHardware": "Sin hardware Wi-Fi",
+    "recommended": "Recomendado",
+    "switchTo": "Cambiar a {{name}}",
+    "wifi": "Wi-Fi",
+    "wifiPlanning": "Planificación Wi-Fi"
+  },
+  "pathDiscovery": {
+    "completed": "Completado",
+    "egressPort": "Puerto de salida",
+    "hops": "saltos",
+    "ingressPort": "Puerto de entrada",
+    "noL2Path": "Sin información de ruta L2 disponible",
+    "path": "Ruta",
+    "switches": "switches",
+    "to": "a",
+    "trunk": "Troncal"
+  },
+  "report": {
+    "apInventory": "Inventario de AP",
+    "criteriaResults": "Resultados de criterios",
+    "date": "Fecha",
+    "executiveSummary": "Resumen ejecutivo",
+    "facilitySize": "Tamaño de la instalación",
+    "generatedBy": "Generado por",
+    "heatmapVisualizations": "Visualizaciones de mapa de calor",
+    "overallStatus": "Estado general",
+    "recommendations": "Recomendaciones",
+    "samplePoints": "Puntos de muestreo",
+    "surveyType": "Tipo de encuesta"
+  },
+  "tooltips": {
+    "header": {
+      "help": "Abrir el panel de ayuda",
+      "logout": "Cerrar la sesión actual",
+      "settings": "Abrir el panel de configuración"
+    }
   }
 }
