@@ -246,12 +246,22 @@ def main() -> int:
         print("✓ every t() call has a matching EN locale key")
 
     if unused:
-        print(f"::warning::{len(unused)} EN locale key(s) not referenced by any t() call:")
+        # All 3 repos hit 0 unused via per-repo dynamic-prefixes.txt
+        # allowlist files (see scripts/i18n/dynamic-prefixes.txt).
+        # Promoted from warn-only to fail so new cruft is caught at
+        # PR time. To allow a genuinely dynamic-lookup key that the
+        # static analyzer can't see, add a prefix entry to
+        # dynamic-prefixes.txt with a one-line WHY comment.
+        # --ratchet downgrades to warn for callers that want to defer
+        # cleanup; the validator passes --ratchet through.
+        level = "warning" if ratchet else "error"
+        print(f"::{level}::{len(unused)} EN locale key(s) not referenced by any t() call:")
         for ns, key in sorted(unused)[:30]:
             print(f"  {ns}.json: {key}")
         if len(unused) > 30:
             print(f"  … and {len(unused) - 30} more")
-        # Don't fail on unused yet — too noisy until we catch up. Demote to warn.
+        if not ratchet:
+            code = 1
     else:
         print("✓ every EN locale key is referenced by at least one t() call")
 
