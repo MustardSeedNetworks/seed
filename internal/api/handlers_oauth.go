@@ -12,6 +12,7 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/oauth"
@@ -334,6 +335,13 @@ func (s *Server) exchangeCodeForUserInfo(
 }
 
 // completeOAuthLogin generates tokens, sets cookies, and redirects.
+//
+// Per seed#1198: upserts the IdP user into the `users` table BEFORE
+// issuing session tokens so multi_user CRUD (#1191) can see and manage
+// SSO-authenticated identities. Tokens are issued against the canonical
+// `username` (synthetic, "<provider>:<external_id>") rather than the
+// raw email so a local-auth account and an SSO account sharing an
+// email never collide.
 func (s *Server) completeOAuthLogin(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -341,21 +349,42 @@ func (s *Server) completeOAuthLogin(
 	providerName string,
 	logger *slog.Logger,
 ) bool {
-	accessToken, err := s.authManager().GenerateAccessToken(r.Context(), userInfo.Email)
+	db := s.services.Database.DB
+	if db == nil {
+		logger.ErrorContext(r.Context(), "SSO callback: database unavailable for user upsert",
+			"provider", providerName, "email", userInfo.Email)
+		s.redirectWithError(w, r, "User store unavailable.")
+		return false
+	}
+
+	user, err := db.UpsertSSOUser(r.Context(), database.SSOUserInput{
+		Provider:    providerName,
+		ExternalID:  userInfo.ID,
+		Email:       userInfo.Email,
+		DisplayName: userInfo.Name,
+	})
+	if err != nil {
+		logger.ErrorContext(r.Context(), "SSO callback: UpsertSSOUser failed",
+			"provider", providerName, "email", userInfo.Email, "error", err)
+		s.redirectWithError(w, r, "Could not create your user record. Contact your administrator.")
+		return false
+	}
+
+	accessToken, err := s.authManager().GenerateAccessToken(r.Context(), user.Username)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to generate access token",
 			"provider", providerName,
-			"email", userInfo.Email,
+			"username", user.Username,
 			"error", err)
 		s.redirectWithError(w, r, "Failed to create session.")
 		return false
 	}
 
-	refreshToken, err := s.authManager().GenerateRefreshToken(r.Context(), userInfo.Email)
+	refreshToken, err := s.authManager().GenerateRefreshToken(r.Context(), user.Username)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to generate refresh token",
 			"provider", providerName,
-			"email", userInfo.Email,
+			"username", user.Username,
 			"error", err)
 		s.redirectWithError(w, r, "Failed to create session.")
 		return false
@@ -366,6 +395,12 @@ func (s *Server) completeOAuthLogin(
 	cookieConfig := auth.DefaultCookieConfig()
 	auth.SetAccessTokenCookie(w, accessToken, cookieConfig)
 	auth.SetRefreshTokenCookie(w, refreshToken, cookieConfig)
+
+	logger.InfoContext(r.Context(), "SSO user record synced",
+		"provider", providerName,
+		"username", user.Username,
+		"role", user.Role,
+		"event", "auth.sso.user_synced")
 
 	return true
 }

@@ -85,7 +85,12 @@ func (s *Server) setupCoreRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/sso/login", s.handleSSOLogin)
 	s.mux.HandleFunc(APIVersionPrefix+"/sso/callback", s.handleSSOCallback)
 	s.mux.HandleFunc(APIVersionPrefix+"/sso/settings", s.handleSSOSettings)
-	s.mux.HandleFunc(APIVersionPrefix+"/sso/update", s.handleSSOUpdate)
+	// SSO settings PUT is Pro-gated via requireFeature("sso") — see seed#1198.
+	// GET stays open so operators can inspect existing config on any tier
+	// (a Pro→Free downgrade must not lock them out of reading current
+	// state). Provider login + callback continue to work for already-
+	// configured providers regardless of tier — only WRITES are blocked.
+	s.mux.HandleFunc(APIVersionPrefix+"/sso/update", s.requireFeature("sso", s.handleSSOUpdate))
 	s.mux.HandleFunc(APIVersionPrefix+"/health", s.handleHealth)
 }
 
