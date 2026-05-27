@@ -159,6 +159,12 @@ func NewServer(
 	// Initialize network services
 	services.Network.Manager = netMgr
 	services.Network.LinkMonitor = netif.NewLinkMonitor(cfg.Interface.Default)
+	// LinkMonitorPool tracks every interface in the multi_interface set
+	// (Pro). Reconcile primes the pool from the active profile; the pool
+	// itself is not started here — server_lifecycle.go owns Start/Stop.
+	services.Network.LinkMonitorPool = netif.NewLinkMonitorPool()
+	primaryInterfaces := append(cfg.Interface.AllEthernet(), cfg.Interface.AllWiFi()...)
+	services.Network.LinkMonitorPool.Reconcile(primaryInterfaces)
 
 	// Initialize discovery services
 	services.Discovery.Device = discovery.NewDeviceDiscoveryWithOUI(
