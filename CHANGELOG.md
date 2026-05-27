@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.199.0](https://github.com/krisarmstrong/seed/compare/v0.198.0...v0.199.0) (2026-05-27)
+
+
+### Features
+
+* **i18n:** add useLocale hook + migrate VulnerabilitySettings plural ([#1200](https://github.com/krisarmstrong/seed/issues/1200)) ([f8ad517](https://github.com/krisarmstrong/seed/commit/f8ad517ab43c6ce7c6bd582dc3cb735ec6f65eeb))
+* **i18n:** port shared validator + check-keys + add phase 6 i18n tests ([#1203](https://github.com/krisarmstrong/seed/issues/1203)) ([46379ff](https://github.com/krisarmstrong/seed/commit/46379ffa7d55021d5b4eabec04557e75cd3e59fe))
+* **license:** mirror keygen v2.2.0 — add sso + drop legacy multi_site/starter multi_interface ([#1197](https://github.com/krisarmstrong/seed/issues/1197)) ([726668e](https://github.com/krisarmstrong/seed/commit/726668e19ef0bb6b3ba74ad7b7a32b1f68077ee0))
+* **seed#1192:** multi_interface gate + Ethernet[] / WiFiList[] config ([#1206](https://github.com/krisarmstrong/seed/issues/1206)) ([59fd51d](https://github.com/krisarmstrong/seed/commit/59fd51d6b775c2c74b7c38b34ad41ac9f6b9ff73))
+* **seed#1196:** wire multi_client gate on profile-create paths ([#1205](https://github.com/krisarmstrong/seed/issues/1205)) ([2a1b2e7](https://github.com/krisarmstrong/seed/commit/2a1b2e7ae1ab56fa48103abde0406731379e24aa))
+
+
+### Bug Fixes
+
+* **e2e:** add header-logout testid + retire SVG class fallback in auth-complete ([#1177](https://github.com/krisarmstrong/seed/issues/1177)) ([1a6c9ef](https://github.com/krisarmstrong/seed/commit/1a6c9ef729dd5e3ecfeb44b0cffc9ed1b3fb2701))
+* **e2e:** isolate responsive logout tests so they don't poison shared storageState ([#1176](https://github.com/krisarmstrong/seed/issues/1176)) ([935f318](https://github.com/krisarmstrong/seed/commit/935f318a96add5823e80e275088412d9e4a2c51d))
+* **e2e:** remove garbage JS in theme-and-help.spec.ts (closes [#1169](https://github.com/krisarmstrong/seed/issues/1169)) ([#1171](https://github.com/krisarmstrong/seed/issues/1171)) ([7cd0d74](https://github.com/krisarmstrong/seed/commit/7cd0d74ca7910fe3e078583cb0b7eead63fe3ee3))
+* **e2e:** replace brittle text regexes with stable id selectors (Category B) ([#1174](https://github.com/krisarmstrong/seed/issues/1174)) ([879ee93](https://github.com/krisarmstrong/seed/commit/879ee93fd7fef910620307b9d2526a37e533dc48))
+* **e2e:** replace per-page H1 heading regexes with getByTestId (Category C) ([#1173](https://github.com/krisarmstrong/seed/issues/1173)) ([484f6a4](https://github.com/krisarmstrong/seed/commit/484f6a49c6d786d2099aa50afc2ee847e23647ad))
+* **e2e:** replace remaining settings-drawer text regexes with testid ([#1179](https://github.com/krisarmstrong/seed/issues/1179)) ([bb36015](https://github.com/krisarmstrong/seed/commit/bb36015816d9e410609b1fb12f2999b7a46ff5ff))
+* **e2e:** rewrite global-setup to run login in a single chromium context ([#1172](https://github.com/krisarmstrong/seed/issues/1172)) ([385220c](https://github.com/krisarmstrong/seed/commit/385220cc6bd90f0619f1624fb1d43dd93b1773d6))
+* **e2e:** rewrite system-theme test with colorScheme emulation (real assertion) ([#1189](https://github.com/krisarmstrong/seed/issues/1189)) ([6dc2c80](https://github.com/krisarmstrong/seed/commit/6dc2c80c67330db25d820142e7b6f39e0fd1515d))
+* **e2e:** sync FAB tests on data-running attribute, not animate-spin (Category D) ([#1175](https://github.com/krisarmstrong/seed/issues/1175)) ([e939137](https://github.com/krisarmstrong/seed/commit/e9391370833c5267dddc8e6b3bf3a3991818bb43))
+* **e2e:** use #profile-modal-title id for profile-management modal assertion ([#1178](https://github.com/krisarmstrong/seed/issues/1178)) ([e7fec8d](https://github.com/krisarmstrong/seed/commit/e7fec8d734cd3a3ccc7247f4b050928af28889be))
+* **i18n:** replace banned 'open source' with 'source-available' per CLAUDE.md ([#1184](https://github.com/krisarmstrong/seed/issues/1184)) ([ac207b3](https://github.com/krisarmstrong/seed/commit/ac207b3ced7c666f7c4293256505e70dbe0868f8))
+* **i18n:** resolve 329 t() calls referencing missing EN locale keys ([#1211](https://github.com/krisarmstrong/seed/issues/1211)) ([3502972](https://github.com/krisarmstrong/seed/commit/3502972c501803da7adee56a74833abb9279d279))
+* **i18n:** update document.lang on locale change for a11y ([#1186](https://github.com/krisarmstrong/seed/issues/1186)) ([c357405](https://github.com/krisarmstrong/seed/commit/c3574055da426d1b55244c23c69a59385614daa8))
+
 ## [0.198.0](https://github.com/krisarmstrong/seed/compare/v0.197.1...v0.198.0) (2026-05-26)
 
 
