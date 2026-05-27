@@ -165,31 +165,24 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const initialCards = await page.getByTestId('card').count();
       expect(initialCards).toBeGreaterThan(0);
 
-      // Open settings
       const settingsButton = page.getByTestId('header-open-settings');
-
-      await settingsButton.click();
-
-      // Toggle theme
-      await page
-        .getByRole('button', { name: /appearance/i })
-        .first()
-        .click();
+      const appearanceAccordion = page.getByRole('button', { name: /appearance/i }).first();
       const themeToggle = page.getByTestId('theme-toggle');
-
-      await themeToggle.click();
-
-      // Close settings
       const closeButton = page.getByTestId('settings-drawer-close');
 
+      // Open settings → expand Appearance → toggle theme → close
+      await settingsButton.click();
+      await appearanceAccordion.click();
+      await themeToggle.click();
       await closeButton.click();
 
       // Verify all cards still visible
       const cardsAfterToggle = await page.getByTestId('card').count();
       expect(cardsAfterToggle).toBeGreaterThanOrEqual(initialCards - 1); // Allow for minor variance
 
-      // Toggle back
+      // Toggle back — reopen drawer + re-expand accordion (accordion collapses on close)
       await settingsButton.click();
+      await appearanceAccordion.click();
       await themeToggle.click();
       await closeButton.click();
 
@@ -289,8 +282,8 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
 
       await helpButton.click();
 
-      // Find and click close button
-      const closeButton = page.getByTestId('settings-drawer-close');
+      // Find and click close button (help modal's own close, not the settings drawer's)
+      const closeButton = page.getByTestId('help-modal-close');
 
       await closeButton.click();
 
@@ -496,32 +489,29 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const helpButton = page.getByTestId('header-open-help');
 
       await helpButton.click();
+      const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
+      await expect(modal).toBeVisible();
 
-      // Open settings (if possible with modal open)
+      // Help modal blocks header buttons via backdrop. Close help with ESC,
+      // then exercise the theme toggle path — verifying the two surfaces
+      // don't deadlock each other.
+      await page.keyboard.press('Escape');
+      await expect(modal).not.toBeVisible({ timeout: 3000 });
+
       const settingsButton = page.getByTestId('header-open-settings');
+      await settingsButton.click();
+      await page
+        .getByRole('button', { name: /appearance/i })
+        .first()
+        .click();
+      const themeToggle = page.getByTestId('theme-toggle');
+      await themeToggle.click();
 
-      const settingsVisible = await settingsButton.isVisible();
-
-      if (settingsVisible) {
-        await settingsButton.click();
-
-        // Toggle theme
-        await page
-          .getByRole('button', { name: /appearance/i })
-          .first()
-          .click();
-        const themeToggle = page.getByTestId('theme-toggle');
-
-        const toggleVisible = await themeToggle.isVisible();
-
-        if (toggleVisible) {
-          await themeToggle.click();
-
-          // Help modal should still be open
-          const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
-          await expect(modal).toBeVisible();
-        }
-      }
+      // Reopen help modal — should still render after theme switch.
+      const closeSettings = page.getByTestId('settings-drawer-close');
+      await closeSettings.click();
+      await helpButton.click();
+      await expect(modal).toBeVisible();
     });
 
     test('should maintain help modal state when toggling theme', async ({ page }) => {
