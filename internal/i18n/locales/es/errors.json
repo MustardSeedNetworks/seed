@@ -115,5 +115,8 @@
   "profile": {
     "multiClientRequired": "Las licencias Free y Starter permiten 1 perfil. Actualice a Pro para administrar configuraciones de varios clientes desde una sola instancia de Seed.",
     "multiInterfaceRequired": "Las licencias Free y Starter permiten como máximo 1 interfaz ethernet + 1 Wi-Fi por perfil. Actualice a Pro para interfaces concurrentes ilimitadas."
+  },
+  "sso": {
+    "featureRequired": "La configuración de Single Sign-On requiere una licencia Pro. Los proveedores existentes siguen aceptando inicios de sesión en cualquier nivel; solo se bloquea habilitar o editar proveedores."
   }
 }
