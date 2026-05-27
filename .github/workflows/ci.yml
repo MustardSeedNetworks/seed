@@ -552,33 +552,20 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Check translation key coverage
-        run: |
-          echo "Checking translation key coverage..."
-
-          # Compare English and Spanish locale keys
-          for file in locales/en/*.json; do
-            name=$(basename "$file")
-            es_file="locales/es/$name"
-
-            if [ ! -f "$es_file" ]; then
-              echo "❌ Missing Spanish locale file: $name"
-              exit 1
-            fi
-
-            # Extract keys from both files and compare
-            en_keys=$(jq -r 'paths(scalars) | join(".")' "$file" | sort)
-            es_keys=$(jq -r 'paths(scalars) | join(".")' "$es_file" | sort)
-
-            missing=$(comm -23 <(echo "$en_keys") <(echo "$es_keys"))
-            if [ -n "$missing" ]; then
-              echo "❌ Missing keys in es/$name:"
-              echo "$missing"
-              exit 1
-            fi
-          done
-
-          echo "✅ All translation keys present in all locales"
+      - name: Run shared i18n validator
+        # Replaces the prior inline stub (which used the wrong path
+        # `locales/en/*.json` — should be `internal/i18n/locales/en/`
+        # — so it never actually ran). The shared script enforces
+        # I18N_CONVENTIONS.md across all 3 products: key parity, no
+        # empty values, no t('key', 'fallback') patterns, banned
+        # vocabulary, glossary preservation, interpolation parity,
+        # plural completeness, t()→key cross-reference, locked
+        # versions, and a warn-only hardcoded-JSX heuristic.
+        #
+        # --ratchet demotes the new check_key_usage from error → warn
+        # while seed's 329 pre-existing wrong-namespace t() calls
+        # are queued for cleanup. Drop --ratchet once they're gone.
+        run: ./scripts/i18n/validate.sh --ratchet
 
   # ===========================================================================
   # Documentation Checks
