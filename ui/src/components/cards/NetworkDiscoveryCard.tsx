@@ -153,7 +153,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
         enableLiveRegion={true}
         ariaLabel={`Network discovery - ${deviceCount} devices found`}
         headerAction={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-compact">
             {/* Full Screen button */}
             <button
               type="button"
@@ -162,7 +162,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
                 'p-1.5',
                 'bg-surface-hover text-text-secondary',
                 radius.md,
-                'hover:bg-surface-border hover:text-text-primary transition-colors flex items-center justify-center cursor-pointer',
+                'hover:bg-surface-border hover:text-text-primary transition-colors flex-center cursor-pointer',
               )}
               aria-label="Open full screen view"
               title={t('discovery.fullScreen', 'Full Screen')}

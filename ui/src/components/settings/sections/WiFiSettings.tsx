@@ -300,8 +300,8 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
           {wifiSettings.isWireless ? (
             <>
               {/* Available Networks */}
-              <div className="border-t border-surface-border pt-3">
-                <div className="flex items-center justify-between">
+              <div className="border-t border-surface-border pt-heading">
+                <div className="flex-between">
                   <span className="body-small font-medium text-text-primary">
                     Available Networks{' '}
                     {scanning ? <span className="text-text-muted">(scanning...)</span> : null}
@@ -322,23 +322,25 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                   </button>
                 </div>
 
-                {scanError ? <p className="caption text-status-error mt-1">{scanError}</p> : null}
+                {scanError ? (
+                  <p className="caption text-status-error mt-tight">{scanError}</p>
+                ) : null}
 
                 {/* Loading state when no networks yet */}
                 {networks.length === 0 && scanning && (
-                  <p className="caption text-text-muted mt-2">Scanning for networks...</p>
+                  <p className="caption text-text-muted mt-inline">Scanning for networks...</p>
                 )}
 
                 {/* No networks found */}
                 {networks.length === 0 && !scanning && !scanError && (
-                  <p className="caption text-text-muted mt-2">No networks found</p>
+                  <p className="caption text-text-muted mt-inline">No networks found</p>
                 )}
 
                 {/* Network List */}
                 {networks.length > 0 && (
                   <div
                     className={cn(
-                      'mt-2 max-h-48 overflow-y-auto',
+                      'mt-inline max-h-48 overflow-y-auto',
                       'border border-surface-border',
                       radius.default,
                       'bg-surface-base',
@@ -354,18 +356,20 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                           setConnectionStatus(null);
                         }}
                         className={cn(
-                          'w-full text-left px-3 py-2',
+                          'w-full text-left px-3 py-row',
                           'border-b border-surface-border last:border-b-0',
                           'hover:bg-surface-hover',
                           selectedNetwork?.bssid === network.bssid && 'bg-brand-primary/10',
                         )}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex-between">
                           <div>
                             <span className="body-small text-text-primary">{network.ssid}</span>
-                            <span className="caption text-text-muted ml-2">{network.security}</span>
+                            <span className="caption text-text-muted ml-inline">
+                              {network.security}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-compact">
                             <span className="caption text-text-muted">Ch {network.channel}</span>
                             <span
                               className={cn('font-mono caption', getSignalColor(network.signal))}
@@ -383,13 +387,13 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                 {selectedNetwork ? (
                   <div
                     className={cn(
-                      'mt-3 p-3',
+                      'mt-heading pad-sm',
                       'border border-surface-border',
                       radius.default,
                       'bg-surface-sunken',
                     )}
                   >
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex-between mb-2">
                       <span className="body-small font-medium text-text-primary">
                         Connect to {selectedNetwork.ssid}
                       </span>
@@ -459,7 +463,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                 {connectionStatus ? (
                   <p
                     className={cn(
-                      'caption mt-2',
+                      'caption mt-inline',
                       connectionStatus.includes('Connected')
                         ? statusColor.text.success
                         : statusColor.text.error,
@@ -471,8 +475,8 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
               </div>
 
               {/* Current Connection / Disconnect */}
-              <div className="border-t border-surface-border pt-3">
-                <div className="flex items-center justify-between">
+              <div className="border-t border-surface-border pt-heading">
+                <div className="flex-between">
                   <span className="body-small font-medium text-text-primary">Connection</span>
                   <button
                     type="button"
@@ -493,7 +497,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
 
               {/* Saved Networks */}
               {savedNetworks.length > 0 ? (
-                <div className="border-t border-surface-border pt-3">
+                <div className="border-t border-surface-border pt-heading">
                   <span className="body-small font-medium text-text-primary block mb-2">
                     Saved Networks
                   </span>
@@ -509,7 +513,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                       <div
                         key={network.uuid || network.ssid}
                         className={cn(
-                          'flex items-center justify-between px-3 py-2',
+                          'flex-between px-3 py-row',
                           'border-b border-surface-border last:border-b-0',
                         )}
                       >

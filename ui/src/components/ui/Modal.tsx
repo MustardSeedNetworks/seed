@@ -67,7 +67,7 @@ export const Modal: FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex-center">
       {closeOnBackdropClick ? (
         <button
           type="button"
@@ -87,9 +87,9 @@ export const Modal: FC<ModalProps> = ({
         onKeyDown={handleContentKeyDown}
       >
         {title || showCloseButton ? (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border">
+          <div className="flex-between px-6 py-4 border-b border-surface-border">
             {title ? (
-              <h2 id="modal-title" className="text-lg font-semibold text-text-primary">
+              <h2 id="modal-title" className="heading-3 text-text-primary">
                 {title}
               </h2>
             ) : null}
@@ -105,7 +105,7 @@ export const Modal: FC<ModalProps> = ({
             ) : null}
           </div>
         ) : null}
-        <div className="p-6">{children}</div>
+        <div className="pad-lg">{children}</div>
       </div>
     </div>
   );
@@ -114,18 +114,20 @@ export const Modal: FC<ModalProps> = ({
 export const ModalHeader: FC<{ children: ReactNode; className?: string }> = ({
   children,
   className = '',
-}) => <div className={`mb-4 ${className}`}>{children}</div>;
+}) => <div className={`mb-content ${className}`}>{children}</div>;
 
 export const ModalBody: FC<{ children: ReactNode; className?: string }> = ({
   children,
   className = '',
-}) => <div className={`space-y-4 ${className}`}>{children}</div>;
+}) => <div className={`stack-lg ${className}`}>{children}</div>;
 
 export const ModalFooter: FC<{ children: ReactNode; className?: string }> = ({
   children,
   className = '',
 }) => (
-  <div className={`flex justify-end gap-3 pt-4 mt-4 border-t border-surface-border ${className}`}>
+  <div
+    className={`flex justify-end gap-default pt-section mt-content border-t border-surface-border ${className}`}
+  >
     {children}
   </div>
 );

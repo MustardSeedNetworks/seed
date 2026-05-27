@@ -167,7 +167,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
               <h2 id="profile-modal-title" className="heading-2">
                 {t('profile.management', 'Profile Management')}
               </h2>
-              <p className="body-small text-text-muted mt-1">
+              <p className="body-small text-text-muted mt-tight">
                 {t('profile.managementDesc', 'Create and manage client-specific configurations')}
               </p>
             </div>
@@ -176,7 +176,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
               ref={closeButtonRef}
               onClick={onClose}
               className={cn(
-                'p-2',
+                'pad-xs',
                 radius.md,
                 'hover:bg-surface-hover active:bg-surface-hover text-text-muted touch-manipulation focus:outline-none focus:ring-2 focus:ring-brand-primary',
               )}
@@ -203,7 +203,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
           <div
             className={cn(
               spacing.pad.default,
-              'border-b border-surface-border bg-surface-base flex items-center gap-2 shrink-0',
+              'border-b border-surface-border bg-surface-base flex items-center gap-compact shrink-0',
             )}
           >
             <button
@@ -213,7 +213,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                 spacing.pad.sm,
                 'px-4',
                 radius.md,
-                'bg-brand-primary hover:bg-brand-primary-hover text-text-inverse body-small font-medium flex items-center gap-2',
+                'bg-brand-primary hover:bg-brand-primary-hover text-text-inverse body-small font-medium flex items-center gap-compact',
               )}
             >
               <svg
@@ -239,7 +239,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                 spacing.pad.sm,
                 'px-4',
                 radius.md,
-                'border border-surface-border bg-surface-raised hover:bg-surface-hover text-text-primary body-small font-medium flex items-center gap-2',
+                'border border-surface-border bg-surface-raised hover:bg-surface-hover text-text-primary body-small font-medium flex items-center gap-compact',
               )}
               title={t('profile.export', 'Export All')}
             >
@@ -261,7 +261,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
             </button>
 
             {/* Search bar */}
-            <div className="relative flex-1 ml-4">
+            <div className="relative flex-1 ml-content">
               <svg
                 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
                 fill="none"
@@ -284,7 +284,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                   setSearchQuery(e.target.value)
                 }
                 className={cn(
-                  'w-full pl-9 pr-4 py-2',
+                  'w-full pl-9 pr-4 py-row',
                   radius.md,
                   'border border-surface-border bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary body-small',
                 )}
@@ -296,7 +296,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
           {error ? (
             <div
               className={cn(
-                'mx-4 mt-4',
+                'mx-4 mt-content',
                 spacing.pad.sm,
                 radius.md,
                 'bg-status-error/10 border border-status-error/20 text-status-error body-small shrink-0',
@@ -310,9 +310,9 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
           <div className={cn(spacing.pad.lg, 'overflow-y-auto flex-1')}>
             {/* Loading state */}
             {isLoading && profiles.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-centered">
                 <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary" />
-                <p className="mt-3 body-small text-text-muted">
+                <p className="mt-heading body-small text-text-muted">
                   {t('common.loading', 'Loading...')}
                 </p>
               </div>
@@ -320,9 +320,9 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
 
             {/* Profile grid */}
             {!isLoading && filteredProfiles.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-centered">
                 <svg
-                  className="mx-auto w-16 h-16 text-text-muted mb-4"
+                  className="mx-auto w-16 h-16 text-text-muted mb-content"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -340,7 +340,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                     ? t('profile.noResults', 'No profiles found')
                     : t('profile.noProfiles', 'No profiles yet')}
                 </h3>
-                <p className="body-small text-text-muted mb-6">
+                <p className="body-small text-text-muted mb-section">
                   {searchQuery
                     ? t('profile.noResultsDesc', 'Try adjusting your search criteria')
                     : t('profile.noProfilesDesc', 'Create your first profile to get started')}
@@ -361,7 +361,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-comfortable">
                 {filteredProfiles.map((profile) => (
                   <ProfileCard
                     key={profile.id}
@@ -442,7 +442,7 @@ function ProfileCard({
       <div className={cn(spacing.pad.default)}>
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-compact flex-wrap">
               <h3 className="body-small font-medium text-text-primary truncate">{profile.name}</h3>
               {profile.isDefault ? (
                 <span className="caption px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary font-medium">
@@ -456,18 +456,18 @@ function ProfileCard({
               ) : null}
             </div>
             {profile.description ? (
-              <p className="caption text-text-muted mt-1 line-clamp-2">{profile.description}</p>
+              <p className="caption text-text-muted mt-tight line-clamp-2">{profile.description}</p>
             ) : null}
           </div>
         </div>
 
         {/* Updated date */}
-        <p className="caption text-text-muted mb-3">
+        <p className="caption text-text-muted mb-heading">
           {t('profile.updated', 'Updated')} {new Date(profile.updatedAt).toLocaleDateString()}
         </p>
 
         {/* Action buttons - always visible */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-compact flex-wrap">
           {/* Edit button */}
           <button
             type="button"
@@ -616,14 +616,14 @@ function DeleteConfirmModal({
         <h3 className="heading-2 text-text-primary mb-2">
           {t('profile.deleteConfirm', 'Delete Profile?')}
         </h3>
-        <p className="body-small text-text-secondary mb-6">
+        <p className="body-small text-text-secondary mb-section">
           {t(
             'profile.deleteConfirmDesc',
             'Are you sure you want to delete "{{name}}"? This action cannot be undone.',
             { name: profileName },
           )}
         </p>
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-default">
           <button
             type="button"
             onClick={onCancel}

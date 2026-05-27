@@ -234,7 +234,7 @@ export function SetupWizard({
     <div className={cn('min-h-screen bg-surface-base', layout.flex.center, 'pad')}>
       <div className="w-full max-w-md">
         <div className={cn('text-center', spacing.margin.bottom.sectionLg)}>
-          <div className="w-16 h-16 mx-auto flex items-center justify-center rounded-2xl bg-brand-primary text-text-inverse">
+          <div className="w-16 h-16 mx-auto flex-center rounded-2xl bg-brand-primary text-text-inverse">
             <Activity className="w-8 h-8" />
           </div>
           <h1 className={cn('heading-2', spacing.margin.top.heading)}>{t('welcome.title')}</h1>
@@ -282,7 +282,7 @@ export function SetupWizard({
                 )}
               />
               <div>
-                <span className="body-small font-medium text-text-primary flex items-center gap-2">
+                <span className="body-small font-medium text-text-primary flex items-center gap-compact">
                   <Lock className={iconTokens.size.sm} />
                   {t('password.custom.title')}
                 </span>
@@ -316,7 +316,7 @@ export function SetupWizard({
                   )}
                 />
                 <div className="flex-1">
-                  <span className="body-small font-medium text-text-primary flex items-center gap-2">
+                  <span className="body-small font-medium text-text-primary flex items-center gap-compact">
                     <Zap className={iconTokens.size.sm} />
                     {t('password.generated.title')}
                   </span>
@@ -414,7 +414,7 @@ export function SetupWizard({
                       <li
                         key={rule.id}
                         className={cn(
-                          'flex items-center gap-2',
+                          'flex items-center gap-compact',
                           rule.ok ? statusColor.text.success : 'text-text-muted',
                         )}
                       >
@@ -445,7 +445,7 @@ export function SetupWizard({
                   placeholder={t('password.confirm.placeholder')}
                 />
                 {errors.confirmPassword ? (
-                  <p className={cn('caption mt-1', statusColor.text.error)}>
+                  <p className={cn('caption mt-tight', statusColor.text.error)}>
                     {errors.confirmPassword.message}
                   </p>
                 ) : null}
@@ -498,7 +498,7 @@ export function SetupWizard({
                   <div className="w-full border-t border-surface-border" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="px-2 bg-surface-raised text-sm text-text-muted">
+                  <span className="px-cell bg-surface-raised text-sm text-text-muted">
                     {tCommon('or')}
                   </span>
                 </div>

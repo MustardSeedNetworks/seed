@@ -110,12 +110,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <Translation ns="common">
           {(t: TFunction): JSX.Element => (
-            <div
-              className={cn(
-                'min-h-screen bg-surface-base flex items-center justify-center',
-                spacing.pad.default,
-              )}
-            >
+            <div className={cn('min-h-screen bg-surface-base flex-center', spacing.pad.default)}>
               <div className="w-full max-w-md text-center">
                 <div className={cn('text-4xl', spacing.margin.bottom.content)}>
                   <span className={statusColor.text.error}>!</span>

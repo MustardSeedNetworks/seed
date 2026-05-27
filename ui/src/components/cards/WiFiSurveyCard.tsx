@@ -425,7 +425,7 @@ function CreateSurveyDialog({
                 placeholder={t('survey.namePlaceholder')}
               />
               {errors.name ? (
-                <p className="caption mt-1 text-status-error">{errors.name.message}</p>
+                <p className="caption mt-tight text-status-error">{errors.name.message}</p>
               ) : null}
             </div>
             <div>
@@ -445,7 +445,7 @@ function CreateSurveyDialog({
                 <option value="throughput">{t('survey.typeThroughput')}</option>
               </select>
               {errors.surveyType ? (
-                <p className="caption mt-1 text-status-error">{errors.surveyType.message}</p>
+                <p className="caption mt-tight text-status-error">{errors.surveyType.message}</p>
               ) : null}
             </div>
           </div>

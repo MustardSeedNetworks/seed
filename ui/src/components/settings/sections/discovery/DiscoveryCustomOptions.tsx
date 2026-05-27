@@ -61,7 +61,7 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
             </span>
             <div
               className={cn(
-                'ml-6',
+                'ml-spacious',
                 spacing.pad.xs,
                 spacing.margin.top.tight,
                 'bg-surface-base',
@@ -234,7 +234,7 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
           {settings.options?.portScan?.enabled ? (
             <div
               className={cn(
-                'ml-6 stack-sm',
+                'ml-spacious stack-sm',
                 spacing.pad.sm,
                 'bg-surface-base',
                 radius.default,
@@ -300,7 +300,7 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
                 <label className="caption text-text-muted" htmlFor="port-scan-tcp">
                   {t('discovery.portScanTcpPorts', 'TCP Ports')}
                   {(settings.options?.portScan?.preset ?? 'common') !== 'custom' && (
-                    <span className="ml-2 text-text-muted italic">
+                    <span className="ml-inline text-text-muted italic">
                       {t('discovery.portPresetReadOnly', '(read-only, select Custom to edit)')}
                     </span>
                   )}
@@ -344,7 +344,7 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
                 <label className="caption text-text-muted" htmlFor="port-scan-udp">
                   {t('discovery.portScanUdpPorts', 'UDP Ports')}
                   {(settings.options?.portScan?.preset ?? 'common') !== 'custom' && (
-                    <span className="ml-2 text-text-muted italic">
+                    <span className="ml-inline text-text-muted italic">
                       {t('discovery.portPresetReadOnly', '(read-only, select Custom to edit)')}
                     </span>
                   )}

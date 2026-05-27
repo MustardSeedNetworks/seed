@@ -70,7 +70,7 @@ export function TierGate({
       <span aria-hidden="true" className="absolute inset-0 cursor-not-allowed" title={hint} />
       <span
         role="tooltip"
-        className="invisible group-hover:visible group-focus-within:visible absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 rounded bg-surface-raised border border-surface-border text-xs text-text-primary whitespace-nowrap shadow-lg"
+        className="invisible group-hover:visible group-focus-within:visible absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-tight px-cell py-compact rounded bg-surface-raised border border-surface-border text-xs text-text-primary whitespace-nowrap shadow-lg"
       >
         {hint}
       </span>

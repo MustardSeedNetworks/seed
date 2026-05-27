@@ -212,10 +212,10 @@ function InterfaceSelectorComponent({
       {showWarning && warning ? (
         <div
           className={cn(
-            'absolute bottom-full left-0 right-0 mb-2 p-2',
+            'absolute bottom-full left-0 right-0 mb-2 pad-xs',
             radius.md,
             'bg-status-warning/10 border border-status-warning/30 text-status-warning',
-            'flex items-center gap-2',
+            'flex items-center gap-compact',
           )}
         >
           <svg
@@ -309,7 +309,7 @@ function InterfaceSelectorComponent({
       {isOpen ? (
         <div
           className={cn(
-            'absolute top-full left-0 mt-1 w-64',
+            'absolute top-full left-0 mt-tight w-64',
             radius.md,
             'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
           )}
@@ -361,7 +361,7 @@ function InterfaceSelectorComponent({
                   </div>
 
                   {/* Status and recommended indicator */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-tight">
                     {isRecommended(iface.name, 'ethernet') && (
                       <span
                         className={statusColor.text.success}
@@ -443,7 +443,7 @@ function InterfaceSelectorComponent({
                   </div>
 
                   {/* Status and recommended indicator */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-tight">
                     {isRecommended(iface.name, 'wifi') && (
                       <span
                         className={statusColor.text.success}

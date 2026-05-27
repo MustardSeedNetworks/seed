@@ -56,7 +56,7 @@ export const L2_PATH_DISPLAY: React.NamedExoticComponent<L2PathDisplayProps> = m
             <span className="body-small font-semibold text-brand-primary">
               L2 {t('pathDiscovery.path', 'Path')}
             </span>
-            <span className="caption text-text-muted ml-2">(via LLDP/CDP/SNMP)</span>
+            <span className="caption text-text-muted ml-inline">(via LLDP/CDP/SNMP)</span>
           </div>
           <span className="caption text-text-muted">
             {result.hops.length} {t('pathDiscovery.switches', 'switches')}
@@ -115,7 +115,7 @@ export const L2_PATH_DISPLAY: React.NamedExoticComponent<L2PathDisplayProps> = m
                       }}
                     />
                   </div>
-                  <div className="flex flex-col items-start ml-1">
+                  <div className="flex flex-col items-start ml-tight">
                     {result.hops[hopIndex + 1]?.ingressPort ? (
                       <span className="caption text-text-muted">
                         {result.hops[hopIndex + 1]?.ingressPort?.name}
@@ -166,13 +166,13 @@ const L2_HOP_DETAIL: React.NamedExoticComponent<L2HopDetailProps> = memo(functio
         type="button"
         onClick={onToggle}
         className={cn(
-          'w-full flex items-center justify-between',
+          'w-full flex-between',
           spacing.pad.sm,
           'bg-surface-raised hover:bg-surface-hover transition-colors',
           'text-left',
         )}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <span className="body-small font-medium text-text-primary">
             {hop.device || hop.deviceIp}
           </span>
@@ -187,7 +187,7 @@ const L2_HOP_DETAIL: React.NamedExoticComponent<L2HopDetailProps> = memo(functio
       {/* Expanded Details */}
       {isExpanded ? (
         <div className={cn(spacing.pad.sm, 'bg-surface-base border-t border-surface-border')}>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-comfortable">
             {/* Ingress Port */}
             <div>
               <div className="caption font-semibold text-text-muted uppercase tracking-wide mb-2">
@@ -234,7 +234,7 @@ const PORT_DETAILS: React.NamedExoticComponent<PortDetailsProps> = memo(function
   return (
     <div className="stack-xs">
       <div className="body-small font-mono text-text-primary">{port.name}</div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-compact">
         {port.speed ? <span className="caption text-text-secondary">{port.speed}</span> : null}
         {port.duplex ? <span className="caption text-text-muted">{port.duplex}</span> : null}
         {port.isTrunk ? (

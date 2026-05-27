@@ -11,7 +11,7 @@ export function LinkPage() {
   const { cards, loading, isWifi, displayOptions } = useAppContext();
 
   return (
-    <section className="space-y-6">
+    <section className="stack-xl">
       <Breadcrumbs />
       <PageHeader
         icon={Network}

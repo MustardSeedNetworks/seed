@@ -76,6 +76,21 @@
   --color-module-shell: var(--color-module-shell);
   --color-module-sap: var(--color-module-sap);
   --color-module-harvest: var(--color-module-harvest);
+
+  /* Deeper surface — gradient terminus for the shared shell. */
+  --color-surface-deep: var(--color-surface-deep);
+
+  /* Log level colors (Syslog/RFC 5424) — constant across light/dark. */
+  --color-log-trace: var(--color-log-trace);
+  --color-log-debug: var(--color-log-debug);
+  --color-log-info: var(--color-log-info);
+  --color-log-warn: var(--color-log-warn);
+  --color-log-error: var(--color-log-error);
+  --color-log-fatal: var(--color-log-fatal);
+
+  /* Constant-across-modes utility colors. */
+  --color-scrim: var(--color-scrim);
+  --color-knob: var(--color-knob);
 }
 
 /* Source detection for Tailwind */
@@ -132,6 +147,21 @@
   --color-module-sap: #0891b2; /* Cyan - telemetry, data flow */
   --color-module-harvest: #d4a017; /* Gold - reports, results */
 
+  /* Deeper surface — gradient terminus for the shell. */
+  --color-surface-deep: #d9d2bd;
+
+  /* Log level colors (Syslog/RFC 5424) — constant across light/dark. */
+  --color-log-trace: #64748b;
+  --color-log-debug: #06b6d4;
+  --color-log-info: #3b82f6;
+  --color-log-warn: #f59e0b;
+  --color-log-error: #ef4444;
+  --color-log-fatal: #dc2626;
+
+  /* Constant-across-modes utility colors. */
+  --color-scrim: #000000;
+  --color-knob: #ffffff;
+
   /* Gauge/Progress Colors (for SVG) */
   --gauge-amber: #d97706;
   --gauge-orange: #ea580c;
@@ -161,6 +191,7 @@
   --color-surface-border: #2b3a31; /* Forest border */
   --color-surface-hover: #16201b; /* Subtle elevation - hover backgrounds */
   --color-surface-sunken: #1f2c25; /* Sunken botanical - inset areas */
+  --color-surface-deep: #080d0a; /* Deeper than surface-base — gradient terminus */
 
   /* Text Colors - Botanical-earth (WCAG AA against deep green-black surfaces) */
   --color-text-primary: #e8eee9; /* Botanical white - main text */

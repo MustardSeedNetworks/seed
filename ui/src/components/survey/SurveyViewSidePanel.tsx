@@ -106,7 +106,7 @@ export function SurveyViewSidePanel({
               <div
                 key={step.key}
                 className={cn(
-                  'flex items-center justify-between',
+                  'flex-between',
                   spacing.pad.xs,
                   radius.sm,
                   step.done ? 'bg-surface-hover' : 'bg-transparent',
@@ -302,9 +302,7 @@ export function SurveyViewSidePanel({
                 key={sample.timestamp}
                 className={cn('border border-surface-border', radius.md, 'pad-sm body-small')}
               >
-                <div
-                  className={cn('flex items-center justify-between', spacing.margin.bottom.inline)}
-                >
+                <div className={cn('flex-between', spacing.margin.bottom.inline)}>
                   <span className="font-semibold">#{idx + 1}</span>
                   <span className="caption">{new Date(sample.timestamp).toLocaleTimeString()}</span>
                 </div>

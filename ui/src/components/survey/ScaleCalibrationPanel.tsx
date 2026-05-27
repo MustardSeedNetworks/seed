@@ -306,7 +306,9 @@ export function ScaleCalibrationPanel({
         </div>
       </div>
       {/* Signal Propagation Section */}
-      <div className={cn('border-t border-surface-border', spacing.margin.top.content, 'pt-4')}>
+      <div
+        className={cn('border-t border-surface-border', spacing.margin.top.content, 'pt-section')}
+      >
         <div className={cn(layout.inline.default, spacing.margin.bottom.content)}>
           <Sliders className={iconTokens.size.sm} />
           <span className="body-small font-medium">{t('scalePanel.signalPropagation')}</span>
@@ -317,7 +319,7 @@ export function ScaleCalibrationPanel({
           <span className={cn('caption text-text-muted block', spacing.margin.bottom.tight)}>
             {t('scalePanel.environmentType')}
           </span>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-compact">
             {ENVIRONMENT_PRESETS.map((preset) => (
               <button
                 type="button"

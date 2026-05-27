@@ -61,7 +61,7 @@ const NavItemButton: FC<NavItemButtonProps> = ({ item, active, collapsed, onNavi
   <button
     type="button"
     onClick={() => onNavigate(item.path)}
-    className={`group flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+    className={`group flex items-center gap-default w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
       active
         ? 'bg-brand-primary/15 text-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
         : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
@@ -97,9 +97,9 @@ const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse }) => (
       collapsed ? 'justify-center' : 'justify-between'
     } px-3 py-4 border-b border-surface-border`}
   >
-    <div className={`flex items-center gap-2 ${collapsed ? 'justify-center' : ''}`}>
+    <div className={`flex items-center gap-compact ${collapsed ? 'justify-center' : ''}`}>
       <div className="relative flex-shrink-0">
-        <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center shadow-lg">
+        <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex-center shadow-lg">
           <Sprout className={`${iconSizes.lg} text-text-inverse`} />
         </div>
         <div className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-status-success border-2 border-surface-raised" />
@@ -146,8 +146,8 @@ const FooterIconButton: FC<FooterButtonProps> = ({
     onClick={onClick}
     data-testid={testId}
     className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
-      collapsed ? 'justify-center' : 'gap-2'
-    } px-3 py-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
+      collapsed ? 'justify-center' : 'gap-compact'
+    } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
     title={title}
     aria-label={title}
   >
@@ -174,7 +174,7 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
   onExpand,
 }) => (
   <div className={`px-3 py-4 border-t border-surface-border ${collapsed ? 'text-center' : ''}`}>
-    <div className={`${collapsed ? 'space-y-2' : 'flex items-center gap-2'} mb-3`}>
+    <div className={`${collapsed ? 'stack-sm' : 'flex items-center gap-compact'} mb-heading`}>
       {onOpenHelp ? (
         <FooterIconButton
           collapsed={collapsed}
@@ -201,7 +201,7 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
       <button
         type="button"
         onClick={onOpenProfiles}
-        className="w-full mb-3 flex items-center gap-2 px-3 py-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
+        className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
         title="Manage profiles"
         aria-label="Manage profiles"
       >
@@ -211,11 +211,7 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
     ) : null}
 
     {version ? (
-      <div
-        className={`text-xs font-mono text-text-muted ${
-          collapsed ? '' : 'flex items-center justify-between'
-        }`}
-      >
+      <div className={`text-xs font-mono text-text-muted ${collapsed ? '' : 'flex-between'}`}>
         {!collapsed ? <span>Version</span> : null}
         <span>{version}</span>
       </div>
@@ -224,7 +220,7 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
       <button
         type="button"
         onClick={onExpand}
-        className="mt-2 p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+        className="mt-inline p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
         title="Expand sidebar"
         aria-label="Expand sidebar"
       >
@@ -261,7 +257,7 @@ const SidebarBody: FC<SidebarBodyProps> = ({
 }) => (
   <>
     <SidebarHeader collapsed={collapsed} onCollapse={onCollapse} />
-    <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-6">
+    <nav className="flex-1 overflow-y-auto py-4 px-cell stack-xl">
       {groups.map((group) => (
         <div key={group.label}>
           {!collapsed ? (
@@ -270,7 +266,7 @@ const SidebarBody: FC<SidebarBodyProps> = ({
             </h3>
           ) : null}
           {collapsed ? <div className="h-px bg-surface-border mx-2 mb-2" /> : null}
-          <div className="space-y-1">
+          <div className="stack-xs">
             {group.items.map((item) => (
               <NavItemButton
                 key={item.path}
@@ -301,9 +297,9 @@ interface MobileTopBarProps {
 }
 
 const MobileTopBar: FC<MobileTopBarProps> = ({ mobileOpen, toggleMobile }) => (
-  <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-surface-raised/95 backdrop-blur-xl border-b border-surface-border">
-    <div className="flex items-center gap-2">
-      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center">
+  <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex-between px-4 py-row-lg bg-surface-raised/95 backdrop-blur-xl border-b border-surface-border">
+    <div className="flex items-center gap-compact">
+      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex-center">
         <Sprout className={`${iconSizes.md} text-text-inverse`} />
       </div>
       <span className="font-display font-bold text-text-primary">The Seed</span>
@@ -311,7 +307,7 @@ const MobileTopBar: FC<MobileTopBarProps> = ({ mobileOpen, toggleMobile }) => (
     <button
       type="button"
       onClick={toggleMobile}
-      className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+      className="pad-xs rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
       title={mobileOpen ? 'Close menu' : 'Open menu'}
       aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
     >
@@ -364,7 +360,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
     <div className="min-h-screen text-text-primary font-body">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-brand-primary focus:text-text-inverse focus:outline-none"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-row focus:rounded-lg focus:bg-brand-primary focus:text-text-inverse focus:outline-none"
       >
         Skip to main content
       </a>
@@ -398,7 +394,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
         }`}
       >
         {topBar}
-        <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+        <div className="pad sm:pad-lg lg:pad-xl">{children}</div>
       </main>
     </div>
   );

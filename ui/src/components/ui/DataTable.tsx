@@ -323,7 +323,7 @@ export function DataTable<T>({
             }
             placeholder={searchPlaceholder}
             className={cn(
-              'w-full pl-9 pr-8',
+              'w-full pl-9 pr-tight',
               spacing.compact.pyMd,
               'body-small bg-surface-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-brand-primary',
               border.card,

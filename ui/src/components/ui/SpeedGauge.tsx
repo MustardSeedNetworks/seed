@@ -315,7 +315,7 @@ function ProgressRingComponent({
           />
         </svg>
         {/* Center percentage */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex-center">
           <span className="caption font-medium text-text-primary tabular-nums">
             {Math.round(progress)}%
           </span>

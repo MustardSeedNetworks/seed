@@ -294,7 +294,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             {profileDropdownOpen ? (
               <div
                 className={cn(
-                  'absolute top-full right-0 mt-1 w-56',
+                  'absolute top-full right-0 mt-tight w-56',
                   radius.lg,
                   'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
                 )}
@@ -321,7 +321,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                           profile.id === activeProfile?.id && 'bg-brand-primary/10',
                         )}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex-between">
                           <span className="body-small text-text-primary truncate">
                             {profile.name}
                           </span>
@@ -348,7 +348,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                       onProfileManage();
                     }}
                     className={cn(
-                      'w-full flex items-center justify-center',
+                      'w-full flex-center',
                       spacing.gap.tight,
                       spacing.pad.sm,
                       'hover:bg-surface-hover text-brand-primary',
@@ -414,7 +414,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             {interfaceDropdownOpen ? (
               <div
                 className={cn(
-                  'absolute top-full right-0 mt-1 w-64',
+                  'absolute top-full right-0 mt-tight w-64',
                   radius.lg,
                   'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
                 )}
@@ -450,9 +450,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                             iface.name === currentInterface && 'bg-brand-primary/10',
                           )}
                         >
-                          <div className="flex items-center justify-between">
+                          <div className="flex-between">
                             <div className="stack-xs">
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-tight">
                                 <span className="body-small text-text-primary font-medium">
                                   {getFriendlyInterfaceName(iface.name, false)}
                                 </span>

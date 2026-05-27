@@ -264,7 +264,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
               placeholder="admin"
             />
             {errors.username ? (
-              <p className="caption mt-1 text-status-error">{errors.username.message}</p>
+              <p className="caption mt-tight text-status-error">{errors.username.message}</p>
             ) : null}
           </div>
 
@@ -289,7 +289,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
               placeholder="••••••••"
             />
             {errors.password ? (
-              <p className="caption mt-1 text-status-error">{errors.password.message}</p>
+              <p className="caption mt-tight text-status-error">{errors.password.message}</p>
             ) : null}
           </div>
 
@@ -325,7 +325,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
 
           {/* SSO Options - only show if any provider is enabled (fixes #769) */}
           {hasEnabledSso ? (
-            <div className="flex flex-col space-y-3">
+            <div className="flex flex-col stack">
               {isProviderEnabled('google') && (
                 <button
                   type="button"

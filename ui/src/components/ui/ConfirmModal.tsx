@@ -38,13 +38,13 @@ export const ConfirmModal: FC<ConfirmModalProps> = ({
   icon,
 }) => (
   <Modal isOpen={isOpen} onClose={onCancel} size="sm" showCloseButton={false}>
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
+    <div className="stack-lg">
+      <div className="flex items-center gap-default">
         {icon ?? <AlertTriangle className={`${iconSizes.xl} ${iconColorClass[confirmTone]}`} />}
-        <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
+        <h2 className="heading-3 text-text-primary">{title}</h2>
       </div>
       <div className="text-text-secondary">{message}</div>
-      <div className="flex justify-end gap-3 pt-2">
+      <div className="flex justify-end gap-default pt-2">
         <Button variant="outline" onClick={onCancel}>
           {cancelLabel}
         </Button>

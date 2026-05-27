@@ -22,7 +22,7 @@ export function PathAnalysisPage() {
     <RequireFeature
       feature="path_analysis"
       fallback={
-        <section className="space-y-6">
+        <section className="stack-xl">
           <Breadcrumbs />
           <PageHeader
             icon={Route}
@@ -30,11 +30,11 @@ export function PathAnalysisPage() {
             description="L2/L3 path discovery, traceroute hops, and on-link device discovery."
             iconColorClass="text-module-roots"
           />
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-200">
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 pad text-sm text-amber-200">
             Path Analysis is a Pro-tier feature. Start a 14-day Pro trial with
             <code className="mx-1 px-1 rounded bg-surface-raised">seed license trial</code>
             or activate a Pro key with
-            <code className="ml-1 px-1 rounded bg-surface-raised">
+            <code className="ml-tight px-1 rounded bg-surface-raised">
               seed license activate -k &lt;KEY&gt;
             </code>
             .
@@ -42,7 +42,7 @@ export function PathAnalysisPage() {
         </section>
       }
     >
-      <section className="space-y-6">
+      <section className="stack-xl">
         <Breadcrumbs />
         <PageHeader
           icon={Route}

@@ -395,7 +395,7 @@ export function SurveyConfigPanel({
               <label
                 key={goal.id}
                 className={cn(
-                  'flex items-start gap-3',
+                  'flex items-start gap-default',
                   spacing.pad.sm,
                   radius.md,
                   'border cursor-pointer transition-colors',
@@ -412,7 +412,7 @@ export function SurveyConfigPanel({
                   className="w-4 h-4 mt-0.5 accent-brand-primary"
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-compact">
                     <span className="body-small font-medium">{t(goal.titleKey as never)}</span>
                     {goal.recommended ? (
                       <span className="caption px-1.5 py-0.5 bg-status-success/10 text-status-success rounded">
@@ -427,7 +427,7 @@ export function SurveyConfigPanel({
                     className={cn(
                       'caption text-text-muted',
                       spacing.margin.top.tight,
-                      'flex items-center gap-3',
+                      'flex items-center gap-default',
                     )}
                   >
                     <span>{formatSurveyTypes(goal.surveyTypes)}</span>
@@ -476,7 +476,7 @@ export function SurveyConfigPanel({
           <Radio className={iconTokens.size.sm} />
           <span className="body-small font-medium">{t('config.bandsToScan')}</span>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-default">
           {(['2.4', '5', '6'] as WiFiBand[]).map((band) => {
             const bandInfo = getBandInfo(band);
             return (
@@ -558,7 +558,7 @@ export function SurveyConfigPanel({
                       >
                         {getBandInfo(band).label} {t('config.channels')}
                       </span>
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-tight">
                         {getChannelsForBand(band).map((channel) => (
                           <button
                             type="button"
@@ -648,7 +648,7 @@ export function SurveyConfigPanel({
                 </div>
                 <div>
                   <span className="caption text-text-muted">{t('config.bands')}</span>
-                  <div className="flex gap-2">
+                  <div className="flex gap-compact">
                     {(['2.4', '5', '6'] as WiFiBand[]).map((band) => (
                       <label key={band} className={cn(layout.inline.default, 'cursor-pointer')}>
                         <input

@@ -255,7 +255,7 @@ export function SettingsDrawerNetworkSection({
           {/* Show Public IP */}
           <label
             className={cn(
-              'flex items-center justify-between',
+              'flex-between',
               spacing.pad.xs,
               'bg-surface-base',
               radius.md,

@@ -174,7 +174,7 @@ export function RecoveryForm({
             )}
           >
             <Timer className={icon.size.sm} />
-            <span className="ml-2">
+            <span className="ml-inline">
               {t('recovery.timeRemaining', 'Time remaining')}: {formatTime(remainingTime)}
             </span>
           </div>
@@ -193,7 +193,7 @@ export function RecoveryForm({
             <h3 className={cn('heading-4', spacing.margin.bottom.inline)}>
               {t('recovery.instructions.title', 'Recovery Instructions')}
             </h3>
-            <ol className="body-small text-text-secondary space-y-1 list-decimal list-inside">
+            <ol className="body-small text-text-secondary stack-xs list-decimal list-inside">
               {instructions.steps.map((step) => (
                 <li key={step}>{step}</li>
               ))}
@@ -252,7 +252,7 @@ export function RecoveryForm({
               />
             </div>
             {errors.token ? (
-              <p className="caption mt-1 text-status-error">{errors.token.message}</p>
+              <p className="caption mt-tight text-status-error">{errors.token.message}</p>
             ) : null}
           </div>
 
@@ -277,7 +277,7 @@ export function RecoveryForm({
                 required={true}
                 {...register('password')}
                 className={cn(
-                  'w-full pl-10 pr-10',
+                  'w-full pl-10 pr-icon',
                   input.size.md,
                   radius.md,
                   'border bg-surface-base text-text-primary',
@@ -303,9 +303,9 @@ export function RecoveryForm({
               </button>
             </div>
             {errors.password ? (
-              <p className="caption mt-1 text-status-error">{errors.password.message}</p>
+              <p className="caption mt-tight text-status-error">{errors.password.message}</p>
             ) : (
-              <p className="caption mt-1 text-text-muted">
+              <p className="caption mt-tight text-text-muted">
                 {t('recovery.passwordRequirement', 'Minimum {{min}} characters', {
                   min: MIN_PASSWORD_LENGTH,
                 })}
@@ -334,7 +334,7 @@ export function RecoveryForm({
                 required={true}
                 {...register('confirmPassword')}
                 className={cn(
-                  'w-full pl-10 pr-10',
+                  'w-full pl-10 pr-icon',
                   input.size.md,
                   radius.md,
                   'border bg-surface-base text-text-primary',
@@ -364,7 +364,7 @@ export function RecoveryForm({
               </button>
             </div>
             {errors.confirmPassword ? (
-              <p className="caption mt-1 text-status-error">{errors.confirmPassword.message}</p>
+              <p className="caption mt-tight text-status-error">{errors.confirmPassword.message}</p>
             ) : null}
           </div>
 
