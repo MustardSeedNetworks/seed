@@ -14,6 +14,7 @@
  * rows.
  */
 
+import type { TFunction } from 'i18next';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -50,7 +51,14 @@ function formatLastLogin(value: string | undefined): string {
   }
 }
 
-function statusOf(u: UserRow, t: (k: string) => string): string {
+// i18next's TFunction carries the namespace tuple as a generic so the
+// keys are typed against the loaded resource bundles. Use the project's
+// concrete TFunction type rather than the loose (k: string) => string
+// signature — that older helper signature is no longer assignable from
+// useTranslation's return value under stricter TS.
+type StatusT = TFunction<readonly ['settings', 'errors']>;
+
+function statusOf(u: UserRow, t: StatusT): string {
   if (!u.isActive) return t('settings:users.status.disabled');
   if (u.lockedUntilFuture) return t('settings:users.status.locked');
   return t('settings:users.status.active');
