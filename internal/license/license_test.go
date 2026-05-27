@@ -109,7 +109,16 @@ func TestFormatKey(t *testing.T) {
 // fix the cipher, or regenerate keygen + update all three products in
 // lockstep.
 //
-// Anchored to keygen v2.0.0 (2026-05-21).
+// Anchored to keygen v2.1.0 (2026-05-26). Features updated:
+//   - multi_interface moved Starter→Pro (definition tightened to
+//     "more than 1 ethernet + 1 wifi configured concurrently").
+//   - multi_user added to Pro (replaces the previously-muddy role
+//     multi_interface used to play as the ops-team differentiator).
+//   - multi_site renamed → multi_client (same feature, clearer
+//     name; old name confused with geographic locations).
+//
+// Keys themselves are unchanged — they encode only
+// (product, serial, tier), not the feature list.
 func TestKeygenContract(t *testing.T) {
 	t.Parallel()
 	vectors := []keygenVector{
@@ -121,7 +130,6 @@ func TestKeygenContract(t *testing.T) {
 			serial:  "SEEDSTR",
 			features: []string{
 				"monitoring_scheduled",
-				"multi_interface",
 				"wifi_visibility_basic",
 				"compliance_basic",
 				"export_csv_json",
@@ -134,12 +142,13 @@ func TestKeygenContract(t *testing.T) {
 			product: "4002",
 			serial:  "SEEDPRO",
 			features: []string{
-				"monitoring_scheduled", "multi_interface", "wifi_visibility_basic",
+				"monitoring_scheduled", "wifi_visibility_basic",
 				"compliance_basic", "export_csv_json",
 				"wifi_roam_analysis", "wifi_association_forensics",
 				"airmapper_baseline_diff", "anomaly_detection", "path_analysis",
 				"live_telemetry", "compliance_advanced", "scheduled_reports",
-				"audit_pdf", "multi_site", "white_label", "rest_api",
+				"audit_pdf", "multi_interface", "multi_user", "multi_client",
+				"white_label", "rest_api",
 			},
 		},
 	}

@@ -247,10 +247,13 @@ func (li *Info) CanRunPro() bool {
 
 // starterFeatures returns the feature list granted to Seed Starter
 // (product code 4001). Mirrors keygen's productCatalog.
+//
+// 2026-05-26: multi_interface moved to Pro-only — definition
+// tightened to mean "more than 1 ethernet + 1 wifi configured
+// concurrently." Starter stays at the 1+1 baseline like Free.
 func starterFeatures() []string {
 	return []string{
 		"monitoring_scheduled",
-		"multi_interface",
 		"wifi_visibility_basic",
 		"compliance_basic",
 		"export_csv_json",
@@ -260,6 +263,19 @@ func starterFeatures() []string {
 // proFeatures returns the feature list granted to Seed Pro (product
 // code 4002). Includes every Starter feature plus the Pro additions.
 // Mirrors keygen's productCatalog.
+//
+// 2026-05-26 catalog changes:
+//   - multi_interface moved here from Starter (now Pro-only).
+//     Free/Starter cap at 1 ethernet + 1 wifi; Pro unlimited.
+//     Profile-schema spec in seed#1192.
+//   - multi_user added — backend (UserStore, per-user token
+//     version) already in place; CRUD + UI tracked in seed#1191.
+//     "Ops team vs solo" differentiator.
+//   - multi_client renamed from multi_site. Same feature (the MSP
+//     Profile system, seed#754 — one Seed instance, N client-
+//     specific profiles) under a clearer name. The old name
+//     sounded like geographically distributed locations, which
+//     isn't what this is.
 func proFeatures() []string {
 	pro := []string{
 		"wifi_roam_analysis",
@@ -271,7 +287,9 @@ func proFeatures() []string {
 		"compliance_advanced",
 		"scheduled_reports",
 		"audit_pdf",
-		"multi_site",
+		"multi_interface",
+		"multi_user",
+		"multi_client",
 		"white_label",
 		"rest_api",
 	}
