@@ -77,6 +77,21 @@ func (s *Server) Start() error {
 			"state", s.linkMonitor().GetState())
 	}
 
+	// Start the multi-interface monitor pool (Pro multi_interface fan-out,
+	// seed#1192 / follow-up #1214). The pool was reconciled to the active
+	// profile's interface set in NewServer; Start polls each child monitor
+	// concurrently so the runtime can observe state changes across N
+	// interfaces. A single monitor (Default) is the common Free / Starter
+	// case — the pool gracefully handles that with one child.
+	if pool := s.services.Network.LinkMonitorPool; pool != nil {
+		if err := pool.Start(); err != nil {
+			logging.GetLogger().Warn("Link monitor pool: partial start", "error", err)
+		} else {
+			logging.GetLogger().Info("Link monitor pool started",
+				"interfaces", pool.Interfaces())
+		}
+	}
+
 	// Start unified discovery service.
 	if err := s.discoveryService().Start(); err != nil {
 		logging.GetLogger().

@@ -88,9 +88,17 @@ type RateLimitServices struct {
 }
 
 // NetworkServices groups core network management services.
+//
+// LinkMonitor watches the single "primary" interface (cfg.Interface.Default)
+// — it stays as-is for the existing card surfaces that bind to one
+// interface at a time. LinkMonitorPool watches every interface in the
+// Pro multi_interface fan-out (cfg.Interface.AllEthernet() ∪
+// cfg.Interface.AllWiFi()). The pool is reconciled on profile change so
+// it tracks the operator's current configuration.
 type NetworkServices struct {
-	Manager     *netif.Manager
-	LinkMonitor *netif.LinkMonitor
+	Manager         *netif.Manager
+	LinkMonitor     *netif.LinkMonitor
+	LinkMonitorPool *netif.LinkMonitorPool
 }
 
 // DiscoveryServices groups device and network discovery services.
@@ -182,6 +190,9 @@ func (sc *ServiceContainer) Stop() {
 	// Stop network services
 	if sc.Network.LinkMonitor != nil {
 		sc.Network.LinkMonitor.Stop()
+	}
+	if sc.Network.LinkMonitorPool != nil {
+		sc.Network.LinkMonitorPool.Stop()
 	}
 
 	// Stop discovery services
