@@ -16,6 +16,10 @@
 
 set -euo pipefail
 
+# Resolve to repo root so paths work whether invoked from repo root or ui/.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."
+
 STEM_DIR="${STEM_DIR:-../stem}"
 SHELL_FILES=(
   "ui/src/ui/Sidebar.tsx"
