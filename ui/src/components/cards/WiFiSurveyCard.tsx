@@ -23,11 +23,14 @@
  * State: Manages surveys list, selected survey, create dialog state, fetches from API
  */
 
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import type React from 'react';
 import { useState } from 'react';
+import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { type Survey, type SurveyType, useSurvey } from '../../hooks/useSurvey';
 import { LogComponents, logger } from '../../lib/logger';
+import { CreateSurveySchema } from '../../schemas/auth';
 import {
   button,
   cn,
@@ -372,15 +375,22 @@ function CreateSurveyDialog({
   t,
   currentInterface = '',
 }: CreateSurveyDialogProps): React.ReactElement {
-  const [name, setName] = useState('');
-  const [surveyType, setSurveyType] = useState<SurveyType>('passive');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<{ name: string; surveyType: SurveyType }>({
+    resolver: valibotResolver(CreateSurveySchema),
+    defaultValues: { name: '', surveyType: 'passive' },
+    mode: 'onBlur',
+  });
 
-  const handleSubmit = (e: React.FormEvent): void => {
-    e.preventDefault();
-    if (name.trim()) {
-      // Fix #572: Use interface from props instead of hardcoded "wlan0"
-      onCreate(name.trim(), surveyType, currentInterface);
-    }
+  const onSubmit: SubmitHandler<{ name: string; surveyType: SurveyType }> = ({
+    name,
+    surveyType,
+  }) => {
+    // Fix #572: Use interface from props instead of hardcoded "wlan0"
+    onCreate(name, surveyType, currentInterface);
   };
 
   return (
@@ -397,7 +407,7 @@ function CreateSurveyDialog({
         <h2 className={cn('heading-2', spacing.margin.bottom.content)}>
           {t('survey.createNewSurvey')}
         </h2>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <div className="stack">
             <div>
               <label
@@ -409,14 +419,14 @@ function CreateSurveyDialog({
               <input
                 id="survey-name"
                 type="text"
-                value={name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setName(e.target.value)
-                }
+                required={true}
+                {...register('name')}
                 className={cn(inputTokens.base, inputTokens.state.default, inputTokens.size.md)}
                 placeholder={t('survey.namePlaceholder')}
-                required={true}
               />
+              {errors.name ? (
+                <p className="caption mt-1 text-status-error">{errors.name.message}</p>
+              ) : null}
             </div>
             <div>
               <label
@@ -427,16 +437,16 @@ function CreateSurveyDialog({
               </label>
               <select
                 id="survey-type"
-                value={surveyType}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setSurveyType(e.target.value as SurveyType)
-                }
+                {...register('surveyType')}
                 className={cn(inputTokens.base, inputTokens.state.default, inputTokens.size.md)}
               >
                 <option value="passive">{t('survey.typePassive')}</option>
                 <option value="active">{t('survey.typeActive')}</option>
                 <option value="throughput">{t('survey.typeThroughput')}</option>
               </select>
+              {errors.surveyType ? (
+                <p className="caption mt-1 text-status-error">{errors.surveyType.message}</p>
+              ) : null}
             </div>
           </div>
           <div className={cn(layout.inline.default, spacing.margin.top.section)}>

@@ -1,10 +1,13 @@
 /**
- * ProfileEditor Component - Modal for creating/editing profiles
+ * ProfileEditor Component - Modal for creating/editing profiles.
+ * Migrated to react-hook-form + valibot per seed#1201.
  */
 
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import type React from 'react';
-import { useCallback, useState } from 'react';
+import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { ProfileEditorSchema } from '../../schemas/auth';
 import { cn, radius, spacing } from '../../styles/theme';
 import type { Profile, ProfileRequest } from '../../types/profile';
 
@@ -13,6 +16,13 @@ interface ProfileEditorProps {
   onSave: (data: ProfileRequest) => Promise<void>;
   onCancel: () => void;
   isLoading: boolean;
+}
+
+interface ProfileFormFields {
+  name: string;
+  description: string;
+  isDefault: boolean;
+  notes: string;
 }
 
 /**
@@ -27,25 +37,36 @@ export function ProfileEditor({
   const { t } = useTranslation();
   const isEditing = profile !== null;
 
-  const [name, setName] = useState(profile?.name || '');
-  const [description, setDescription] = useState(profile?.description || '');
-  const [isDefault, setIsDefault] = useState(profile?.isDefault);
-  const [notes, setNotes] = useState((profile?.config as { notes?: string })?.notes || '');
+  const initialNotes = (profile?.config as { notes?: string })?.notes || '';
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      await onSave({
-        name,
-        description,
-        isDefault: isDefault,
-        config: { notes },
-      });
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isValid },
+  } = useForm<ProfileFormFields>({
+    resolver: valibotResolver(ProfileEditorSchema),
+    defaultValues: {
+      name: profile?.name || '',
+      description: profile?.description || '',
+      isDefault: Boolean(profile?.isDefault),
+      notes: initialNotes,
     },
-    [name, description, isDefault, notes, onSave],
-  );
+    mode: 'onBlur',
+  });
 
-  // Helper to get button label (avoids nested ternary)
+  const isDefault = watch('isDefault');
+
+  const onSubmit: SubmitHandler<ProfileFormFields> = async (values) => {
+    await onSave({
+      name: values.name,
+      description: values.description,
+      isDefault: values.isDefault,
+      config: { notes: values.notes },
+    });
+  };
+
   const getButtonLabel = (): string => {
     if (isLoading) {
       return t('common.saving', 'Saving...');
@@ -74,7 +95,7 @@ export function ProfileEditor({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <div className={cn(spacing.pad.default, 'space-y-4')}>
             {/* Name */}
             <div>
@@ -87,11 +108,7 @@ export function ProfileEditor({
               <input
                 id="profile-name"
                 type="text"
-                value={name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setName(e.target.value)
-                }
-                required={true}
+                {...register('name')}
                 className={cn(
                   'w-full',
                   spacing.pad.sm,
@@ -100,6 +117,9 @@ export function ProfileEditor({
                 )}
                 placeholder={t('profile.namePlaceholder', 'e.g., Client A')}
               />
+              {errors.name ? (
+                <p className="caption mt-1 text-status-error">{errors.name.message}</p>
+              ) : null}
             </div>
 
             {/* Description */}
@@ -113,10 +133,7 @@ export function ProfileEditor({
               <input
                 id="profile-description"
                 type="text"
-                value={description}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setDescription(e.target.value)
-                }
+                {...register('description')}
                 className={cn(
                   'w-full',
                   spacing.pad.sm,
@@ -125,6 +142,9 @@ export function ProfileEditor({
                 )}
                 placeholder={t('profile.descriptionPlaceholder', 'Brief description')}
               />
+              {errors.description ? (
+                <p className="caption mt-1 text-status-error">{errors.description.message}</p>
+              ) : null}
             </div>
 
             {/* Notes */}
@@ -137,10 +157,7 @@ export function ProfileEditor({
               </label>
               <textarea
                 id="profile-notes"
-                value={notes}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                  setNotes(e.target.value)
-                }
+                {...register('notes')}
                 rows={3}
                 className={cn(
                   'w-full',
@@ -157,9 +174,7 @@ export function ProfileEditor({
               <input
                 type="checkbox"
                 checked={isDefault}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  setIsDefault(e.target.checked)
-                }
+                onChange={(e) => setValue('isDefault', e.target.checked, { shouldDirty: true })}
                 className="w-4 h-4 rounded border-surface-border text-brand-primary focus:ring-brand-primary"
               />
               <span className="body-small text-text-primary">
@@ -190,7 +205,7 @@ export function ProfileEditor({
             </button>
             <button
               type="submit"
-              disabled={isLoading || !name.trim()}
+              disabled={isLoading || !isValid}
               className={cn(
                 spacing.pad.sm,
                 'px-4',

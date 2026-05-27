@@ -18,11 +18,13 @@
  * - Responsive design with consistent theming
  */
 
-import type React from 'react';
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import type { JSX } from 'react';
 import { useEffect, useState } from 'react';
+import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { RecoveryForm } from '../components/login/RecoveryForm';
+import { LoginSchema } from '../schemas/auth';
 import { button, cn, input, layout, radius, spacing } from '../styles/theme';
 
 // API base URL - configurable via environment variable
@@ -61,8 +63,15 @@ interface RecoveryStatus {
 
 export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.Element {
   const { t } = useTranslation('common');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<{ username: string; password: string }>({
+    resolver: valibotResolver(LoginSchema),
+    defaultValues: { username: '', password: '' },
+    mode: 'onBlur',
+  });
   // Initialize SSO error from URL params using lazy initialization
   const [ssoError] = useState<string | null>(getAndClearSsoError);
   // Fetch SSO providers to conditionally show buttons (fixes #769)
@@ -100,8 +109,10 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
   // Check if any SSO provider is enabled
   const hasEnabledSso = ssoProviders.some((p) => p.enabled);
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
+  const onSubmit: SubmitHandler<{ username: string; password: string }> = async ({
+    username,
+    password,
+  }) => {
     await onLogin(username, password);
   };
 
@@ -225,7 +236,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
         </div>
 
         <form
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmit(onSubmit)}
           className={cn(
             'bg-surface-raised',
             radius.md,
@@ -242,8 +253,8 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
             <input
               id="login-username"
               type="text"
-              value={username}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+              required={true}
+              {...register('username')}
               className={cn(
                 'w-full',
                 input.size.md,
@@ -251,8 +262,10 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
                 'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary',
               )}
               placeholder="admin"
-              required={true}
             />
+            {errors.username ? (
+              <p className="caption mt-1 text-status-error">{errors.username.message}</p>
+            ) : null}
           </div>
 
           <div>
@@ -265,8 +278,8 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
             <input
               id="login-password"
               type="password"
-              value={password}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+              required={true}
+              {...register('password')}
               className={cn(
                 'w-full',
                 input.size.md,
@@ -274,8 +287,10 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
                 'border border-surface-border bg-surface-base text-text-primary focus:outline-none focus:border-brand-primary',
               )}
               placeholder="••••••••"
-              required={true}
             />
+            {errors.password ? (
+              <p className="caption mt-1 text-status-error">{errors.password.message}</p>
+            ) : null}
           </div>
 
           {error || ssoError ? (

@@ -2,24 +2,16 @@
  * RecoveryForm Component
  *
  * Password recovery form for The Seed application.
- *
- * Responsibilities:
- * - Display recovery status and remaining time
- * - Accept recovery token from filesystem
- * - Set new password with confirmation
- * - Validate password strength (min 12 chars)
- *
- * Recovery Flow:
- * 1. Admin creates .recovery file via SSH (proves filesystem access)
- * 2. Server generates token, writes to .recovery-token
- * 3. Admin enters token + new password in this form
- * 4. Server validates, updates password, invalidates all sessions
+ * Migrated to react-hook-form + valibot per #1201.
  */
 
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import { Eye, EyeOff, KeyRound, Lock, Timer } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { RecoveryCompleteSchema } from '../../schemas/auth';
 import {
   alert,
   button,
@@ -35,7 +27,7 @@ import {
 // API base URL - configurable via environment variable
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
-// Minimum password length (matches setup-wizard)
+// Minimum password length (matches setup-wizard, mirrored in schema)
 const MIN_PASSWORD_LENGTH = 12;
 
 export interface RecoveryFormProps {
@@ -56,6 +48,12 @@ interface RecoveryInstructions {
   steps: string[];
 }
 
+interface RecoveryFormFields {
+  token: string;
+  password: string;
+  confirmPassword: string;
+}
+
 export function RecoveryForm({
   onRecoveryComplete,
   onBackToLogin,
@@ -64,15 +62,21 @@ export function RecoveryForm({
 }: RecoveryFormProps): React.ReactElement {
   const { t } = useTranslation('common');
   const { t: tErrors } = useTranslation('errors');
-  const [token, setToken] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [remainingTime, setRemainingTime] = useState(initialRemainingTime);
   const [instructions, setInstructions] = useState<RecoveryInstructions | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RecoveryFormFields>({
+    resolver: valibotResolver(RecoveryCompleteSchema),
+    defaultValues: { token: '', password: '', confirmPassword: '' },
+    mode: 'onBlur',
+  });
 
   // Fetch recovery instructions on mount
   useEffect(() => {
@@ -93,7 +97,6 @@ export function RecoveryForm({
     if (remainingTime <= 0) {
       return;
     }
-
     const interval = setInterval(() => {
       setRemainingTime((prev) => {
         if (prev <= 1) {
@@ -103,67 +106,46 @@ export function RecoveryForm({
         return prev - 1;
       });
     }, 1000);
-
     return (): void => clearInterval(interval);
   }, [remainingTime]);
 
-  // Format remaining time as MM:SS
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Password validation
-  const passwordValid = password.length >= MIN_PASSWORD_LENGTH;
-  const passwordsMatch = password === confirmPassword;
-  const canSubmit = token.trim() && passwordValid && passwordsMatch && !isSubmitting;
-
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
-    setError(null);
-
-    if (!passwordValid) {
-      setError(tErrors('password.tooShort', { min: MIN_PASSWORD_LENGTH }));
-      return;
-    }
-
-    if (!passwordsMatch) {
-      setError(tErrors('password.mismatch'));
-      return;
-    }
-
-    setIsSubmitting(true);
-
+  const onSubmit: SubmitHandler<RecoveryFormFields> = async ({ token, password }) => {
+    setSubmitError(null);
     try {
       const response = await fetch(`${API_BASE}/api/v1/recovery/complete`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: token.trim(),
-          password,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token.trim(), password }),
       });
-
       const data = (await response.json()) as {
         success?: boolean;
         message?: string;
         error?: string;
       };
-
       if (response.ok && data.success) {
         onRecoveryComplete();
       } else {
-        setError(data.message || data.error || tErrors('recovery.failed'));
+        setSubmitError(data.message || data.error || tErrors('recovery.failed'));
       }
     } catch {
-      setError(tErrors('network.networkError'));
-    } finally {
-      setIsSubmitting(false);
+      setSubmitError(tErrors('network.networkError'));
     }
   };
+
+  // Cross-field error (passwords don't match) from valibot v.check().
+  const rootErrors = errors.root;
+  const crossFieldError = rootErrors
+    ? Object.values(rootErrors).find(
+        (e): e is { message: string } =>
+          typeof e === 'object' && e !== null && 'message' in e && typeof e.message === 'string',
+      )
+    : undefined;
 
   return (
     <div className={cn('min-h-screen', layout.flex.center, 'pad')}>
@@ -227,7 +209,7 @@ export function RecoveryForm({
 
         {/* Recovery Form */}
         <form
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmit(onSubmit)}
           className={cn(
             'bg-surface-raised',
             radius.md,
@@ -252,10 +234,8 @@ export function RecoveryForm({
               <input
                 id="recovery-token"
                 type="text"
-                value={token}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setToken(e.target.value)
-                }
+                required={true}
+                {...register('token')}
                 className={cn(
                   'w-full pl-10',
                   input.size.md,
@@ -269,9 +249,11 @@ export function RecoveryForm({
                 )}
                 autoComplete="off"
                 spellCheck={false}
-                required={true}
               />
             </div>
+            {errors.token ? (
+              <p className="caption mt-1 text-status-error">{errors.token.message}</p>
+            ) : null}
           </div>
 
           {/* New Password Input */}
@@ -292,20 +274,17 @@ export function RecoveryForm({
               <input
                 id="recovery-password"
                 type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setPassword(e.target.value)
-                }
+                required={true}
+                {...register('password')}
                 className={cn(
                   'w-full pl-10 pr-10',
                   input.size.md,
                   radius.md,
                   'border bg-surface-base text-text-primary',
-                  password && !passwordValid ? statusColor.border.error : 'border-surface-border',
+                  errors.password ? statusColor.border.error : 'border-surface-border',
                   'focus:outline-none focus:border-brand-primary',
                 )}
                 placeholder="••••••••••••"
-                required={true}
               />
               <button
                 type="button"
@@ -323,16 +302,15 @@ export function RecoveryForm({
                 )}
               </button>
             </div>
-            <p
-              className={cn(
-                'caption mt-1',
-                password && !passwordValid ? statusColor.text.error : 'text-text-muted',
-              )}
-            >
-              {t('recovery.passwordRequirement', 'Minimum {{min}} characters', {
-                min: MIN_PASSWORD_LENGTH,
-              })}
-            </p>
+            {errors.password ? (
+              <p className="caption mt-1 text-status-error">{errors.password.message}</p>
+            ) : (
+              <p className="caption mt-1 text-text-muted">
+                {t('recovery.passwordRequirement', 'Minimum {{min}} characters', {
+                  min: MIN_PASSWORD_LENGTH,
+                })}
+              </p>
+            )}
           </div>
 
           {/* Confirm Password Input */}
@@ -353,22 +331,19 @@ export function RecoveryForm({
               <input
                 id="recovery-confirm-password"
                 type={showConfirmPassword ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void =>
-                  setConfirmPassword(e.target.value)
-                }
+                required={true}
+                {...register('confirmPassword')}
                 className={cn(
                   'w-full pl-10 pr-10',
                   input.size.md,
                   radius.md,
                   'border bg-surface-base text-text-primary',
-                  confirmPassword && !passwordsMatch
+                  errors.confirmPassword || crossFieldError
                     ? statusColor.border.error
                     : 'border-surface-border',
                   'focus:outline-none focus:border-brand-primary',
                 )}
                 placeholder="••••••••••••"
-                required={true}
               />
               <button
                 type="button"
@@ -388,24 +363,29 @@ export function RecoveryForm({
                 )}
               </button>
             </div>
-            {confirmPassword && !passwordsMatch ? (
-              <p className="caption mt-1 text-status-error">
-                {t('errors.password.mismatch', 'Passwords do not match')}
-              </p>
+            {errors.confirmPassword ? (
+              <p className="caption mt-1 text-status-error">{errors.confirmPassword.message}</p>
             ) : null}
           </div>
 
-          {/* Error Display */}
-          {error ? (
+          {/* Cross-field error (passwords don't match) */}
+          {crossFieldError ? (
+            <div role="alert" className={cn(alert.base, alert.variant.error)}>
+              {crossFieldError.message}
+            </div>
+          ) : null}
+
+          {/* Submit error (network / server) */}
+          {submitError ? (
             <div role="alert" aria-live="assertive" className={cn(alert.base, alert.variant.error)}>
-              {error}
+              {submitError}
             </div>
           ) : null}
 
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={!canSubmit}
+            disabled={isSubmitting}
             className={cn(
               'w-full',
               button.size.md,
