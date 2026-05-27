@@ -91,8 +91,8 @@
         }
       },
       "openSource": {
-        "title": "Código abierto y personalizable",
-        "description": "The Seed es software de código abierto. Personalice umbrales, configure pruebas e integre con su infraestructura de monitoreo existente."
+        "title": "Código fuente disponible y personalizable",
+        "description": "The Seed es software con código fuente disponible (source-available, BUSL-1.1). Personalice umbrales, configure pruebas e integre con su infraestructura de supervisión existente."
       },
       "versionInfo": {
         "title": "Información de versión",
