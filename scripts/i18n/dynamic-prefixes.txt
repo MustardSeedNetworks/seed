@@ -1,0 +1,223 @@
+# Per-repo allowlist for check-keys.py. One prefix per line; comments
+# with #. Matches either a flat key (`section.field`) or namespace-
+# qualified form (`namespace:section.field`).
+#
+# Use when a JSON key is consumed via a dynamic lookup that the static
+# analyzer can't see — typically t(`prefix.${variable}.suffix`) or a
+# data-driven render path that reads from <ns>.json[<section>].
+#
+# Keys matching one of these prefixes won't be reported as "unused".
+# Keep this list narrow and document WHY each entry is here so a
+# future cleanup pass can confirm whether the dynamic path still
+# exists.
+
+# --- seed ---
+
+# help.content.* — HelpDrawer renders documentation pages by reading
+# the help content tree at runtime, indexed by page slug. Each page
+# has nested heading/body/tip keys. The render path is data-driven
+# (help-content.ts catalog + dynamic key resolution).
+help:content.
+
+# help.portServices.* — PortServiceCard looks up well-known port
+# explanations via t(`help:portServices.${port}.${field}`).
+help:portServices.
+
+# help.tooltips.* — tooltip resolver indexes t(`help:tooltips.${id}`).
+help:tooltips.
+
+# help.related.* — RelatedDocs renders links by reading a doc.id →
+# label/url map.
+help:related.
+
+# help.workflow.* — workflow walkthroughs indexed by workflow ID.
+help:workflow.
+
+# glossary.terms.* — GlossaryView renders all glossary terms by
+# iterating glossary-data.ts (term ID → definition, examples,
+# see-also). Each term has multiple fields.
+glossary:terms.
+glossary:categories.
+
+# cards.* subtrees — most card components render fields via lookups
+# of the form t(`cards:${cardName}.${field}`).
+cards:discovery.
+cards:network.
+cards:wifi.
+cards:gateway.
+cards:health.
+cards:cable.
+cards:dns.
+cards:performance.
+cards:link.
+cards:pipeline.
+cards:publicIp.
+cards:pathDiscovery.
+cards:mfa.
+cards:guestAudit.
+cards:slaDashboard.
+cards:survey.
+cards:switch.
+cards:system.
+cards:vlan.
+
+# survey.* — WiFi survey reports (heatmaps, criteria evaluation, AP
+# placement, environment templates, analysis sections) all use
+# data-driven label resolution via t(`survey:${section}.${id}`).
+survey:heatmaps.
+survey:criteria.
+survey:report.
+survey:analysis.
+survey:apPlacement.
+survey:environments.
+survey:config.
+survey:import.
+survey:results.
+survey:wizard.
+survey:errors.
+
+# settings.* — Settings sections render via field-schema → label
+# lookups: t(`settings:${section}.${field}`).
+settings:discovery.
+settings:thresholds.
+settings:network.
+settings:performance.
+settings:security.
+settings:notifications.
+settings:wifi.
+settings:capture.
+settings:api.
+settings:advanced.
+settings:vulnerability.
+settings:autoProfile.
+settings:autoRun.
+
+# errors.<category>.* — error mapper resolves t(`errors:${category}.
+# ${code}`) by daemon error classification.
+errors:network.
+errors:auth.
+errors:api.
+errors:validation.
+errors:capture.
+errors:export.
+errors:performance.
+errors:setup.
+errors:config.
+errors:file.
+errors:guestAudit.
+errors:license.
+errors:mfa.
+errors:mtu.
+errors:password.
+errors:profile.
+errors:service.
+errors:vlan.
+errors:wifi.
+errors:rateLimited.
+errors:throttled.
+errors:subnet.
+errors:survey.
+
+# common.or — used as a separator literal in OR-logic UI strings.
+common:or
+
+# glossary.title / glossary.description — drawer headings.
+glossary:title
+glossary:description
+
+# help.instructions.* / help.settings.* — onboarding hint copy
+# rendered by the help drawer for a small fixed set of topics.
+help:instructions.
+help:settings.
+
+# settings.appearance.* / settings.common.* / settings.dns.* /
+# settings.health.* — additional Settings drawer subtrees with
+# dynamic field-schema resolution.
+settings:appearance.
+settings:common.
+settings:dns.
+settings:health.
+settings:snmp.
+settings:sso.
+settings:subtitle
+settings:title
+
+# setup.* — initial-setup wizard reads field labels and password
+# rule descriptions via t(`setup:${section}.${field}`).
+setup:password.
+setup:username.
+
+# survey.buttons.* / survey.scalePanel.* / survey.wifi.* — toolbar
+# button labels + scale-conversion picker + Wi-Fi adapter messages
+# in the survey UI.
+survey:buttons.
+survey:scalePanel.
+survey:wifi.
+
+# validation.* — field-validation messages indexed by field type +
+# rule. Form library resolves t(`validation:${field}.${rule}`).
+validation:address.
+validation:endpoint.
+validation:host.
+validation:interface.
+validation:ip.
+validation:login.
+validation:mtu.
+validation:netmask.
+validation:port.
+validation:profile.
+validation:server.
+validation:threshold.
+validation:vlan.
+
+# common.* trees — UI primitive baseline + chrome + shell. Many
+# components use dynamic helpers that resolve into common.*.
+common:buttons.
+common:labels.
+common:status.
+common:accessibility.
+common:time.
+common:plurals.
+common:common.
+common:sections.
+common:login.
+common:logs.
+common:footer.
+common:errorBoundary.
+common:dataTable.
+common:capabilities.
+common:profile.
+common:discovery.
+common:device.
+common:health.
+common:interface.
+common:report.
+common:recovery.
+common:tooltips.
+common:pathDiscovery.
+common:errors.
+common:criteria.
+
+# api.* — API metadata namespace (response schema labels). Consumed
+# by api-aware error renderer + form validation + status message
+# resolver that maps daemon-side success/error codes to localized
+# strings.
+api:errors.
+api:validation.
+api:fields.
+api:auth.
+api:dhcp.
+api:discovery.
+api:iperf.
+api:messages.
+api:settings.
+api:speedtest.
+api:status.
+api:survey.
+api:tests.
+api:vlan.
+api:vulnerabilities.
+
+# validation.* — form validation message namespace.
+validation:rules.
+validation:fields.
