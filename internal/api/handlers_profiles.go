@@ -155,6 +155,12 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// multi_interface gate (seed#1192): if the saved profile.Config exceeds
+	// the Free/Starter 1+1 cap, Pro is required.
+	if !s.enforceMultiInterfaceGate(w, r, req.Config) {
+		return
+	}
+
 	// Create profile
 	profile := &database.Profile{
 		ID:          uuid.New().String(),
@@ -209,6 +215,13 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 
 	var req ProfileRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
+		return
+	}
+
+	// multi_interface gate (seed#1192): if the incoming config exceeds the
+	// 1+1 cap, Pro is required. Done before the DB read so a 402 short-
+	// circuits without a wasted query.
+	if req.Config != nil && !s.enforceMultiInterfaceGate(w, r, req.Config) {
 		return
 	}
 
@@ -796,4 +809,86 @@ func profileToResponse(p *database.Profile) ProfileResponse {
 		CreatedAt:   p.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   p.UpdatedAt.Format(time.RFC3339),
 	}
+}
+
+// profileInterfaceShape is the just-enough projection of a profile's
+// ConfigJSON we need to count interfaces for the multi_interface gate.
+// We avoid pulling in the full config.Config schema here — JSON
+// unmarshal of unknown fields is fine; only the interface block matters.
+type profileInterfaceShape struct {
+	Interface struct {
+		Default  string   `json:"default"`
+		WiFi     string   `json:"wifi"`
+		Ethernet []string `json:"ethernet"`
+		WiFiList []string `json:"wifi_list"`
+	} `json:"interface"`
+}
+
+// enforceMultiInterfaceGate returns true if the request may proceed and
+// writes a 402 + returns false when the profile's interface block
+// exceeds 1 ethernet + 1 wifi without the `multi_interface` feature.
+//
+// The "active" / single-interface workflow (Default + WiFi) always
+// passes — Free/Starter are explicitly entitled to one of each.
+// Pro is required only when Ethernet[] or WiFiList[] would push the
+// count above 1 in either category.
+func (s *Server) enforceMultiInterfaceGate(w http.ResponseWriter, r *http.Request, rawConfig json.RawMessage) bool {
+	logger := logging.FromContext(r.Context())
+
+	if len(rawConfig) == 0 {
+		return true
+	}
+
+	var shape profileInterfaceShape
+	if err := json.Unmarshal(rawConfig, &shape); err != nil {
+		// Malformed JSON is the caller's problem to surface; let the
+		// downstream validation reject it. We must not gate on parse
+		// failure or we'd lock operators out of fixing bad configs.
+		logger.DebugContext(r.Context(), "multi_interface gate: skipping due to config parse error", "error", err)
+		return true
+	}
+
+	ifc := shape.Interface
+	ethCount := countNonEmpty(ifc.Default, ifc.Ethernet)
+	wifiCount := countNonEmpty(ifc.WiFi, ifc.WiFiList)
+
+	if ethCount <= 1 && wifiCount <= 1 {
+		return true
+	}
+
+	mgr := s.services.Auth.License
+	if mgr == nil {
+		return true
+	}
+	if mgr.HasFeature("multi_interface") {
+		return true
+	}
+
+	localizer := i18n.FromRequest(r)
+	sendErrorResponseWithDetails(
+		w,
+		logger,
+		http.StatusPaymentRequired,
+		"TIER_TOO_LOW",
+		localizer.T("errors.profile.multiInterfaceRequired"),
+		"",
+	)
+	return false
+}
+
+// countNonEmpty counts how many distinct non-empty interface names are
+// present in (primary, extras). Empty strings and duplicates of the
+// primary are skipped so the same name appearing in both fields is one.
+func countNonEmpty(primary string, extras []string) int {
+	seen := make(map[string]struct{}, len(extras)+1)
+	if primary != "" {
+		seen[primary] = struct{}{}
+	}
+	for _, name := range extras {
+		if name == "" {
+			continue
+		}
+		seen[name] = struct{}{}
+	}
+	return len(seen)
 }

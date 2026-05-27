@@ -168,5 +168,34 @@
     "intervalHours": "{{count}} hr",
     "intervalDays_one": "{{count}} day",
     "intervalDays_other": "{{count}} days"
+  },
+  "profile": {
+    "edit": "Edit",
+    "export": "Export",
+    "loading": "Loading profiles…",
+    "management": "Profile Management",
+    "managementDesc": "Create and manage device profiles",
+    "name": "Name",
+    "namePlaceholder": "Profile name",
+    "noProfilesDesc": "Create a profile to save device-specific settings.",
+    "noResults": "No matching profiles",
+    "noResultsDesc": "Try adjusting your search.",
+    "none": "No profile",
+    "notes": "Notes",
+    "notesPlaceholder": "Optional notes",
+    "profiles": "Profiles",
+    "searchPlaceholder": "Search profiles…",
+    "setAsDefault": "Set as default",
+    "updated": "Updated"
+  },
+  "recovery": {
+    "backToLogin": "Back to login",
+    "confirmPasswordLabel": "Confirm password",
+    "instructions": {
+      "title": "Reset your password"
+    },
+    "newPasswordLabel": "New password",
+    "passwordRequirement": "At least 8 characters",
+    "securityNote": "For security, you must use a one-time recovery code."
   }
 }
