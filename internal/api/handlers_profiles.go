@@ -136,6 +136,13 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 	ctx := r.Context()
 
+	// multi_client gate: Free/Starter may keep their bootstrap profile,
+	// but a SECOND (or later) profile requires Pro. Checked before body
+	// decode so we return 402 without scanning the request payload.
+	if !s.enforceMultiClientGate(w, r) {
+		return
+	}
+
 	var req ProfileRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
@@ -479,6 +486,12 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// multi_client gate: duplicating always creates a NEW profile, which by
+	// definition pushes the operator over the Free/Starter 1-profile cap.
+	if !s.enforceMultiClientGate(w, r) {
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		sendErrorResponseWithDetails(
 			w,
@@ -562,6 +575,13 @@ func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 	if s.db() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
+		return
+	}
+
+	// multi_client gate: any import that would land >1 profile total
+	// requires Pro. We gate at entry rather than mid-loop so partial
+	// imports don't leave the operator in an inconsistent state.
+	if !s.enforceMultiClientGate(w, r) {
 		return
 	}
 
@@ -704,6 +724,58 @@ func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 		Set("Content-Disposition", fmt.Sprintf("attachment; filename=seed-profiles-%s.json", time.Now().Format("2006-01-02")))
 
 	sendJSONResponse(w, logger, http.StatusOK, response)
+}
+
+// enforceMultiClientGate returns true if the request may proceed and
+// writes a 402 FeatureGateResponse + returns false when the operator
+// has reached the Free/Starter 1-profile cap and lacks the `multi_client`
+// feature. The first profile (bootstrap) is always allowed so a fresh
+// install is functional on any tier; this gate fires only when creating
+// a 2nd or later profile.
+//
+// MSP positioning: customer-facing copy always calls these "client
+// profiles." The internal feature key stays `multi_client`.
+func (s *Server) enforceMultiClientGate(w http.ResponseWriter, r *http.Request) bool {
+	logger := logging.FromContext(r.Context())
+
+	if s.db() == nil {
+		// No DB → no profile count to compare; fall through. The
+		// downstream handler returns a service-unavailable error.
+		return true
+	}
+
+	count, err := s.db().Profiles().Count(r.Context())
+	if err != nil {
+		logger.WarnContext(r.Context(), "multi_client gate: failed to count profiles", "error", err)
+		// Fail open — refusing to gate is safer than blocking the
+		// operator when the DB hiccups. CI catches it as a real error.
+		return true
+	}
+	if count < 1 {
+		// First-ever profile is always free.
+		return true
+	}
+
+	// 2nd+ profile. Check the license.
+	mgr := s.services.Auth.License
+	if mgr == nil {
+		// License disabled (dev / test builds) — permit.
+		return true
+	}
+	if mgr.HasFeature("multi_client") {
+		return true
+	}
+
+	localizer := i18n.FromRequest(r)
+	sendErrorResponseWithDetails(
+		w,
+		logger,
+		http.StatusPaymentRequired,
+		"TIER_TOO_LOW",
+		localizer.T("errors.profile.multiClientRequired"),
+		"",
+	)
+	return false
 }
 
 // profileToResponse converts a database profile to an API response.

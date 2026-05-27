@@ -111,5 +111,8 @@
   "file": {
     "failedToRead": "Failed to read file",
     "pathNotConfigured": "Path not configured"
+  },
+  "profile": {
+    "multiClientRequired": "Free and Starter licenses allow 1 profile. Upgrade to Pro to manage configurations for multiple clients from a single Seed instance."
   }
 }

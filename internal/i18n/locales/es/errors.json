@@ -111,5 +111,8 @@
   "file": {
     "failedToRead": "Error al leer archivo",
     "pathNotConfigured": "Ruta no configurada"
+  },
+  "profile": {
+    "multiClientRequired": "Las licencias Free y Starter permiten 1 perfil. Actualice a Pro para administrar configuraciones de varios clientes desde una sola instancia de Seed."
   }
 }
