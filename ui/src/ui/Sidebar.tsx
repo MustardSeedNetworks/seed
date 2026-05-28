@@ -1,4 +1,4 @@
-// SYNCED FROM stem@6a5de95ca0a1 — DO NOT EDIT.
+// SYNCED FROM stem@446b6390f435 — DO NOT EDIT.
 // Edits in this repo will be overwritten on next `make sync-shell`.
 // To change this file, send a PR to stem then re-sync.
 /**
@@ -140,38 +140,41 @@ interface SidebarHeaderProps {
   onCollapse: () => void;
 }
 
-const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse }) => (
-  <div
-    className={`flex items-center ${
-      collapsed ? 'justify-center' : 'justify-between'
-    } px-3 py-4 border-b border-surface-border`}
-  >
-    <div className={`flex items-center gap-compact ${collapsed ? 'justify-center' : ''}`}>
-      <div className="relative flex-shrink-0">
-        <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex-center shadow-lg">
-          <Activity className={`${iconSizes.lg} text-text-inverse`} />
+const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse }) => {
+  const { t } = useTranslation();
+  return (
+    <div
+      className={`flex items-center ${
+        collapsed ? 'justify-center' : 'justify-between'
+      } px-3 py-4 border-b border-surface-border`}
+    >
+      <div className={`flex items-center gap-compact ${collapsed ? 'justify-center' : ''}`}>
+        <div className="relative flex-shrink-0">
+          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex-center shadow-lg">
+            <Activity className={`${iconSizes.lg} text-text-inverse`} />
+          </div>
+          <div className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-status-success border-2 border-surface-raised" />
         </div>
-        <div className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-status-success border-2 border-surface-raised" />
+        {!collapsed ? (
+          <span className="font-display font-bold text-lg text-text-primary tracking-tight">
+            {t('app.title')}
+          </span>
+        ) : null}
       </div>
       {!collapsed ? (
-        <span className="font-display font-bold text-lg text-text-primary tracking-tight">
-          The Stem
-        </span>
+        <button
+          type="button"
+          onClick={onCollapse}
+          className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors lg:flex hidden"
+          title="Collapse sidebar"
+          aria-label="Collapse sidebar"
+        >
+          <ChevronLeft className={iconSizes.md} />
+        </button>
       ) : null}
     </div>
-    {!collapsed ? (
-      <button
-        type="button"
-        onClick={onCollapse}
-        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors lg:flex hidden"
-        title="Collapse sidebar"
-        aria-label="Collapse sidebar"
-      >
-        <ChevronLeft className={iconSizes.md} />
-      </button>
-    ) : null}
-  </div>
-);
+  );
+};
 
 interface SidebarFooterProps {
   collapsed: boolean;
@@ -349,25 +352,28 @@ interface MobileTopBarProps {
   toggleMobile: () => void;
 }
 
-const MobileTopBar: FC<MobileTopBarProps> = ({ mobileOpen, toggleMobile }) => (
-  <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex-between px-4 py-row-lg bg-surface-raised/95 backdrop-blur-xl border-b border-surface-border">
-    <div className="flex items-center gap-compact">
-      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex-center">
-        <Activity className={`${iconSizes.md} text-text-inverse`} />
+const MobileTopBar: FC<MobileTopBarProps> = ({ mobileOpen, toggleMobile }) => {
+  const { t } = useTranslation();
+  return (
+    <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex-between px-4 py-row-lg bg-surface-raised/95 backdrop-blur-xl border-b border-surface-border">
+      <div className="flex items-center gap-compact">
+        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex-center">
+          <Activity className={`${iconSizes.md} text-text-inverse`} />
+        </div>
+        <span className="font-display font-bold text-text-primary">{t('app.title')}</span>
       </div>
-      <span className="font-display font-bold text-text-primary">The Stem</span>
-    </div>
-    <button
-      type="button"
-      onClick={toggleMobile}
-      className="pad-xs rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
-      title={mobileOpen ? 'Close menu' : 'Open menu'}
-      aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-    >
-      {mobileOpen ? <X className={iconSizes.lg} /> : <Menu className={iconSizes.lg} />}
-    </button>
-  </header>
-);
+      <button
+        type="button"
+        onClick={toggleMobile}
+        className="pad-xs rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+        title={mobileOpen ? 'Close menu' : 'Open menu'}
+        aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+      >
+        {mobileOpen ? <X className={iconSizes.lg} /> : <Menu className={iconSizes.lg} />}
+      </button>
+    </header>
+  );
+};
 
 export const SidebarLayout: FC<SidebarLayoutProps> = ({
   groups,

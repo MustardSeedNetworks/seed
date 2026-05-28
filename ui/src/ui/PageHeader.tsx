@@ -1,4 +1,4 @@
-// SYNCED FROM stem@6a5de95ca0a1 — DO NOT EDIT.
+// SYNCED FROM stem@446b6390f435 — DO NOT EDIT.
 // Edits in this repo will be overwritten on next `make sync-shell`.
 // To change this file, send a PR to stem then re-sync.
 /**
