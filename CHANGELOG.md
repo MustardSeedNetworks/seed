@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.200.0](https://github.com/krisarmstrong/seed/compare/v0.199.0...v0.200.0) (2026-05-28)
+
+
+### Features
+
+* **interfaces:** settings ui for multi_interface ([#1210](https://github.com/krisarmstrong/seed/issues/1210)) ([4e6de69](https://github.com/krisarmstrong/seed/commit/4e6de694eb96dbfcf514346af74db12cb86c445d))
+* **netif:** linkmonitor pool for multi_interface fan-out ([#1219](https://github.com/krisarmstrong/seed/issues/1219)) ([b2df3fb](https://github.com/krisarmstrong/seed/commit/b2df3fb53dfa74098a5ac936d70e45db07fe8252))
+* **seed#1191:** multi_user CRUD + schema hardening + SSO columns ([#1204](https://github.com/krisarmstrong/seed/issues/1204)) ([5c3c6b9](https://github.com/krisarmstrong/seed/commit/5c3c6b9f23060b2e1b29d9f0684ffedc98aa1e37))
+* **sso:** gate settings PUT and sync IdP users on callback ([#1207](https://github.com/krisarmstrong/seed/issues/1207)) ([2427d4c](https://github.com/krisarmstrong/seed/commit/2427d4c27faf7d67e0a63ffd3d6ed2f744e19190))
+* **ui:** sync canonical shell from stem (Phase 1) ([#1222](https://github.com/krisarmstrong/seed/issues/1222)) ([271f5f4](https://github.com/krisarmstrong/seed/commit/271f5f4068a77f99998575f5d727bfbf45a47f44))
+* **users:** settings ui for multi_user crud ([#1208](https://github.com/krisarmstrong/seed/issues/1208)) ([2e3af3d](https://github.com/krisarmstrong/seed/commit/2e3af3d464aae6d26fec0ddfd9eb4d675658c701))
+
+
+### Bug Fixes
+
+* **e2e:** repoint seed specs to sidebar Settings/Help after Phase 2 ([#1231](https://github.com/krisarmstrong/seed/issues/1231)) ([1c4299d](https://github.com/krisarmstrong/seed/commit/1c4299d8c75353c584f282df9b027309bbe4d2de))
+* **help-modal:** add esc handler + testid; fix e2e selectors ([#1228](https://github.com/krisarmstrong/seed/issues/1228)) ([e1a74a5](https://github.com/krisarmstrong/seed/commit/e1a74a536206bee7ec5ad3d929fd84387aeeaa26))
+* **ui:** re-sync shell from stem to pull page-header-title testid ([#1230](https://github.com/krisarmstrong/seed/issues/1230)) ([7092857](https://github.com/krisarmstrong/seed/commit/7092857d3c7f20eec93300628d7bf847fe91af3e))
+* **ui:** users settings TS error blocking CI strict tsc check ([#1229](https://github.com/krisarmstrong/seed/issues/1229)) ([a0b5ced](https://github.com/krisarmstrong/seed/commit/a0b5ced1aa69fef87e33c411783b140ca2a59d37))
+
 ## [0.199.0](https://github.com/krisarmstrong/seed/compare/v0.198.0...v0.199.0) (2026-05-27)
 
 
