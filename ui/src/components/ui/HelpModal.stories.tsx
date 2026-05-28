@@ -1,24 +1,24 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { button, cn, radius, spacing } from '../../styles/theme';
-import { ImprovedHelpModal } from '../help/ImprovedHelpModal';
+import { HelpDrawer } from '../help/HelpDrawer';
 import { HelpItem, HelpModal, HelpSection } from './HelpModal';
 
 /**
- * HelpModal provides contextual help content in a modal dialog overlay.
- * Two variants are available:
- * - HelpModal: Simple reusable modal with custom content
- * - ImprovedHelpModal: Comprehensive help center with tabbed navigation and search
+ * Two help surfaces are available:
+ * - HelpModal: Simple reusable modal with custom content (this file's "Simple" stories)
+ * - HelpDrawer: Data-driven help center as a right-side drawer with section
+ *   navigation, search, and real content (default stories below)
  */
-const meta: Meta<typeof ImprovedHelpModal> = {
+const meta: Meta<typeof HelpDrawer> = {
   title: 'UI/HelpModal',
-  component: ImprovedHelpModal,
+  component: HelpDrawer,
   parameters: {
     layout: 'fullscreen',
     docs: {
       description: {
         component:
-          'Modal dialog for displaying help content with search, navigation, and rich documentation for all application features.',
+          'Right-side drawer for displaying help content with search, section navigation, and rich documentation for all application features.',
       },
     },
   },
@@ -98,7 +98,7 @@ export const Interactive: Story = {
         >
           Open Help Center
         </button>
-        <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        <HelpDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </div>
     );
   },
@@ -129,7 +129,7 @@ export const WithSearch: Story = {
             "wifi", "dns", or "gateway".
           </p>
         </div>
-        <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        <HelpDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </div>
     );
   },
@@ -162,7 +162,7 @@ export const AllSections: Story = {
             Navigate through all available help sections using the sidebar
           </p>
         </div>
-        <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        <HelpDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </div>
     );
   },
@@ -185,7 +185,7 @@ export const MobileView: Story = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        <HelpDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </div>
     );
   },
@@ -211,7 +211,7 @@ export const TabletView: Story = {
 
     return (
       <div className="min-h-screen bg-surface-base">
-        <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        <HelpDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </div>
     );
   },
@@ -236,7 +236,7 @@ export const DarkTheme: Story = {
 
     return (
       <div className="min-h-screen bg-surface-base dark">
-        <ImprovedHelpModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        <HelpDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} />
       </div>
     );
   },
@@ -595,7 +595,7 @@ export const BackdropClose: Story = {
             </button>
           </div>
         )}
-        <ImprovedHelpModal
+        <HelpDrawer
           isOpen={isOpen}
           onClose={() => {
             setIsOpen(false);
