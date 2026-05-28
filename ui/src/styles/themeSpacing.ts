@@ -89,6 +89,9 @@ export const spacing = {
       content: 'ml-content', // 16px - content indentation
       spacious: 'ml-spacious', // 24px - large indentation (lists)
     },
+    right: {
+      inline: 'mr-2', // 8px - inline content (e.g. side-anchored tooltips)
+    },
   },
 
   // Padding utilities for dividers/sections

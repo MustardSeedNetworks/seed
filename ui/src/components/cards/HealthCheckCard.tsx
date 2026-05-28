@@ -354,8 +354,8 @@ export const HealthCheckCard: React.MemoExoticComponent<
           {segments.map((seg) => (
             <Tooltip
               key={seg.label}
-              content={HTTP_TIMING_HELP[seg.label.toLowerCase()] || seg.label}
-              position="bottom"
+              text={HTTP_TIMING_HELP[seg.label.toLowerCase()] || seg.label}
+              side="bottom"
             >
               <span
                 className={cn(
