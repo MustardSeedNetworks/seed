@@ -170,8 +170,8 @@ export function DeviceRow({
         <td className="px-3 py-row">
           {device.vendor === 'LAA' ? (
             <Tooltip
-              content="Locally Administered Address - MAC assigned locally rather than by manufacturer"
-              position="bottom"
+              text="Locally Administered Address - MAC assigned locally rather than by manufacturer"
+              side="bottom"
             >
               <span className="text-xs text-text-muted underline decoration-dotted cursor-help">
                 LAA

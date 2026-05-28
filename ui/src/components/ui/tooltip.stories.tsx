@@ -15,11 +15,11 @@ const meta: Meta<typeof Tooltip> = {
   },
   tags: ['autodocs'],
   argTypes: {
-    position: {
+    side: {
       control: 'radio',
       options: ['top', 'bottom'],
     },
-    content: {
+    text: {
       control: 'text',
     },
   },
@@ -30,30 +30,30 @@ type Story = StoryObj<typeof Tooltip>;
 
 export const Default: Story = {
   args: {
-    content: 'This is helpful information',
+    text: 'This is helpful information',
     children: <Info className="w-5 h-5 text-text-secondary cursor-help" />,
   },
 };
 
 export const PositionTop: Story = {
   args: {
-    content: 'Tooltip appears above the element',
-    position: 'top',
+    text: 'Tooltip appears above the element',
+    side: 'top',
     children: <span className="text-text-secondary cursor-help underline">Hover me (top)</span>,
   },
 };
 
 export const PositionBottom: Story = {
   args: {
-    content: 'Tooltip appears below the element',
-    position: 'bottom',
+    text: 'Tooltip appears below the element',
+    side: 'bottom',
     children: <span className="text-text-secondary cursor-help underline">Hover me (bottom)</span>,
   },
 };
 
 export const WithIcon: Story = {
   args: {
-    content: 'Click to access settings',
+    text: 'Click to access settings',
     children: (
       <button
         type="button"
@@ -67,8 +67,7 @@ export const WithIcon: Story = {
 
 export const LongContent: Story = {
   args: {
-    content:
-      'This is a much longer tooltip that explains a complex concept in detail. It will wrap to multiple lines if needed.',
+    text: 'This is a much longer tooltip that explains a complex concept in detail. It will wrap to multiple lines if needed.',
     children: <HelpCircle className="w-5 h-5 text-text-secondary cursor-help" />,
   },
 };
@@ -77,7 +76,7 @@ export const InContext: Story = {
   render: () => (
     <div className={cn('flex items-center', spacing.gap.compact)}>
       <span className="text-text-primary">Upload limit</span>
-      <Tooltip content="Maximum file size for uploads is 10MB">
+      <Tooltip text="Maximum file size for uploads is 10MB">
         <HelpCircle className="w-4 h-4 text-text-muted cursor-help" />
       </Tooltip>
     </div>

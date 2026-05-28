@@ -1,91 +1,81 @@
 /**
- * Tooltip Component
+ * Tooltip primitive — shared design across seed / stem / niac.
  *
- * Purpose: Displays contextual help text on hover or focus. Provides accessible tooltips
- * for explaining UI elements with customizable position (top/bottom).
+ * Minimal CSS-only tooltip with proper a11y wiring. Use native `title=` for
+ * plain strings; reach for this primitive when the tooltip holds formatted,
+ * multi-line, or linked content. The wrapper exposes `aria-describedby`
+ * pointing at the bubble so screen readers announce it; hover OR keyboard
+ * focus on the trigger reveals it.
  *
- * Key Features:
- * - Position control: top (default) or bottom positioning
- * - Hover and focus triggers: shows on mouseEnter or focus events
- * - Accessible: uses role="tooltip" for screen readers
- * - Max-width constraint: prevents long text from wrapping excessively
- * - Smooth positioning: uses CSS transforms for centering
- * - Theme-aware: uses surface-raised background and text-primary color
- * - Z-layer management: uses z-50 to appear above other content
- *
- * Usage:
- * ```typescript
- * <Tooltip content="Click here to start scanning">
- *   <button>Start</button>
- * </Tooltip>
- *
- * <Tooltip content="CPU usage %" position="bottom">
- *   <div>{cpuPercent}%</div>
- * </Tooltip>
- * ```
- *
- * Dependencies: React, theme utilities (cn, radius, border)
- * State: Manages show/hide state on hover and focus
+ * Behavior/API is kept consistent with the stem and niac copies (each repo
+ * owns its own file; no master). Visuals use this repo's theme tokens.
  */
-
 import type React from 'react';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 import { border, cn, radius, spacing } from '../../styles/theme';
 
-interface TooltipProps {
-  content: string;
+export interface TooltipProps {
+  /** Hover/focus content. If omitted, the wrapper renders children unchanged. */
+  text?: ReactNode;
+  /** Where to place the bubble relative to the trigger. Defaults to "top". */
+  side?: 'top' | 'bottom' | 'left' | 'right';
+  /** Trigger element(s). */
   children: ReactNode;
-  position?: 'top' | 'bottom';
+  /** Optional class on the wrapper. */
+  className?: string;
 }
 
+const sideClass: Record<NonNullable<TooltipProps['side']>, string> = {
+  top: cn('bottom-full left-1/2 -translate-x-1/2', spacing.margin.bottom.inline),
+  bottom: cn('top-full left-1/2 -translate-x-1/2', spacing.margin.top.inline),
+  left: cn('right-full top-1/2 -translate-y-1/2', spacing.margin.right.inline),
+  right: cn('left-full top-1/2 -translate-y-1/2', spacing.margin.left.inline),
+};
+
 /**
- * Hover-triggered tooltip that displays additional information for an element.
+ * Hover/focus-triggered tooltip that enriches an element with extra context.
  */
-export function Tooltip({ content, children, position = 'top' }: TooltipProps): React.JSX.Element {
-  const [show, setShow] = useState(false);
+export function Tooltip({
+  text,
+  side = 'top',
+  children,
+  className = '',
+}: TooltipProps): React.JSX.Element {
+  const id = useId();
+  const [open, setOpen] = useState(false);
 
-  const positionClasses =
-    position === 'top'
-      ? cn('bottom-full left-1/2 -translate-x-1/2', spacing.margin.bottom.inline)
-      : cn('top-full left-1/2 -translate-x-1/2', spacing.margin.top.inline);
-
-  const handleMouseEnter = (): void => setShow(true);
-  const handleMouseLeave = (): void => setShow(false);
-  const handleFocus = (): void => setShow(true);
-  const handleBlur = (): void => setShow(false);
+  if (text === undefined || text === null || text === '') {
+    return <>{children}</>;
+  }
 
   return (
-    <div className="relative inline-flex items-center">
-      {/* biome-ignore lint/a11y/useSemanticElements: Tooltip trigger wraps arbitrary content - cannot use semantic button */}
-      <div
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        className="cursor-help"
-        tabIndex={0}
-        role="button"
-        aria-describedby={show ? 'tooltip-content' : undefined}
-      >
+    // biome-ignore lint/a11y/noStaticElementInteractions: hover-only enrichment; a11y comes from aria-describedby below
+    <span
+      className={cn('relative inline-flex', className)}
+      onMouseEnter={(): void => setOpen(true)}
+      onMouseLeave={(): void => setOpen(false)}
+      onFocus={(): void => setOpen(true)}
+      onBlur={(): void => setOpen(false)}
+    >
+      <span aria-describedby={id} className="inline-flex">
         {children}
-      </div>
-      {show ? (
-        <div
-          id="tooltip-content"
-          className={cn(
-            'absolute z-50 shadow-lg max-w-xs',
-            spacing.cell.px,
-            spacing.compact.pyMd,
-            positionClasses,
-            radius.default,
-            border.card,
-            'bg-surface-raised text-text-primary caption',
-          )}
-          role="tooltip"
-        >
-          {content}
-        </div>
-      ) : null}
-    </div>
+      </span>
+      <span
+        id={id}
+        role="tooltip"
+        className={cn(
+          'pointer-events-none absolute z-50 max-w-xs whitespace-normal shadow-lg transition-opacity duration-100',
+          spacing.cell.px,
+          spacing.compact.pyMd,
+          radius.default,
+          border.card,
+          'bg-surface-raised text-text-primary caption',
+          sideClass[side],
+          open ? 'opacity-100' : 'opacity-0',
+        )}
+      >
+        {text}
+      </span>
+    </span>
   );
 }
