@@ -608,9 +608,13 @@ describe('App', () => {
         expect(seedElements.length).toBeGreaterThan(0);
       });
 
-      // Should show logout button(s) - desktop and mobile versions may both render
-      const logoutButtons = screen.getAllByRole('button', { name: /logout/i });
-      expect(logoutButtons.length).toBeGreaterThan(0);
+      // Phase 2 (HeaderBar slim) moved the standalone Logout button into
+      // the ProfileDropdown menu. The button only renders once the
+      // profile dropdown is opened. Verify the profile trigger exists
+      // (which gates access to logout) rather than the logout button
+      // itself — that round-trip is covered end-to-end by e2e tests.
+      const profileTriggers = screen.getAllByRole('button', { name: /select profile|profile/i });
+      expect(profileTriggers.length).toBeGreaterThan(0);
     });
 
     it('renders interface selector', async () => {
