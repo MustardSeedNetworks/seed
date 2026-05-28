@@ -43,7 +43,7 @@ import { AppFooter } from './components/app/AppFooter';
 import { CapabilityWarnings } from './components/app/CapabilityWarnings';
 import { HeaderBar } from './components/app/HeaderBar';
 import type { NetworkDiscoveryData } from './components/cards/NetworkDiscoveryCard';
-import { ImprovedHelpModal } from './components/help/ImprovedHelpModal';
+import { HelpDrawer } from './components/help/HelpDrawer';
 import { ProfileManagement } from './components/profiles/ProfileManagement';
 import { SettingsDrawer } from './components/settings/SettingsDrawer';
 import { SetupWizard } from './components/setup/SetupWizard';
@@ -785,8 +785,8 @@ function App(): JSX.Element {
           isWifi={isWifi}
         />
 
-        {/* Help Modal - improved with TOC, About, and search */}
-        <ImprovedHelpModal isOpen={helpOpen} onClose={closeHelp} version={appVersion} />
+        {/* Help Drawer - data-driven, with TOC, search, and real content */}
+        <HelpDrawer isOpen={helpOpen} onClose={closeHelp} version={appVersion} />
 
         {/* Profile Management Modal (#754) */}
         {profilesOpen ? <ProfileManagement onClose={closeProfiles} /> : null}

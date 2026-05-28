@@ -19,14 +19,14 @@ import {
  * - Cards render correctly in both themes
  * - System theme preference (if implemented)
  *
- * Help Modal:
- * - Open/close help modal
+ * Help Drawer:
+ * - Open/close help drawer
  * - Navigation and table of contents
- * - Section scrolling
- * - Search functionality (if implemented)
+ * - Section switching
+ * - Search functionality
  * - Keyboard navigation (ESC to close)
  * - Click outside to dismiss
- * - Content rendering
+ * - Real content rendering (bug-fix regression)
  */
 
 test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
@@ -151,222 +151,179 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
     });
   });
 
-  test.describe('Help Modal', () => {
-    test('should open help modal when clicking help button', async ({ page }) => {
-      // Find and click help button
+  test.describe('Help Drawer', () => {
+    test('should open help drawer when clicking help button', async ({ page }) => {
       const helpButton = sidebarHelpButton(page);
-
       await helpButton.click();
 
-      // Verify modal opens
-      const modal = page
-        .getByRole('dialog')
-        .or(page.locator('[role="dialog"]'))
-        .or(page.locator('[class*="modal"]'));
-
-      await expect(modal).toBeVisible({ timeout: 5000 });
+      // The data-driven drawer is the canonical target (data-testid="help-drawer").
+      const drawer = page.getByTestId('help-drawer');
+      await expect(drawer).toBeVisible({ timeout: 5000 });
+      await expect(drawer).toHaveAttribute('role', 'dialog');
+      await expect(drawer).toHaveAttribute('aria-modal', 'true');
     });
 
-    test('should display help modal with navigation/table of contents', async ({ page }) => {
-      // Open help modal
+    test('should display help drawer with navigation/table of contents', async ({ page }) => {
       const helpButton = sidebarHelpButton(page);
-
       await helpButton.click();
 
-      // Look for navigation/TOC
-      const navigation = page.locator('text=/table.*contents|navigation|contents|sections/i');
-      const hasNavigation = await navigation.first().isVisible();
+      const drawer = page.getByTestId('help-drawer');
+      await expect(drawer).toBeVisible();
 
-      // Navigation may or may not be present depending on implementation
-      expect(hasNavigation).toBeDefined();
+      // The drawer lists navigable sections in its sidebar nav.
+      const tocButtons = drawer.locator('nav button');
+      expect(
+        await tocButtons.count(),
+        'help drawer should list navigable sections',
+      ).toBeGreaterThan(0);
     });
 
-    test('should close help modal with close button', async ({ page }) => {
-      // Open help modal
+    test('should close help drawer with close button', async ({ page }) => {
       const helpButton = sidebarHelpButton(page);
-
       await helpButton.click();
 
-      // Find and click close button (help modal's own close, not the settings drawer's)
-      const closeButton = page.getByTestId('help-modal-close');
+      const drawer = page.getByTestId('help-drawer');
+      await expect(drawer).toBeVisible();
 
-      await closeButton.click();
+      // The drawer's own close button (not the settings drawer's).
+      await page.getByTestId('help-drawer-close').click();
 
-      // Verify modal closes
-      const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
-      await expect(modal).not.toBeVisible({ timeout: 3000 });
+      await expect(drawer).not.toBeVisible({ timeout: 3000 });
     });
 
-    test('should close help modal with ESC key', async ({ page }) => {
-      // Open help modal
+    test('should close help drawer with ESC key', async ({ page }) => {
       const helpButton = sidebarHelpButton(page);
-
       await helpButton.click();
 
-      // Verify modal is open
-      const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
-      await expect(modal).toBeVisible();
+      const drawer = page.getByTestId('help-drawer');
+      await expect(drawer).toBeVisible();
 
-      // Press ESC key
       await page.keyboard.press('Escape');
 
-      // Verify modal closes
-      await expect(modal).not.toBeVisible({ timeout: 3000 });
+      await expect(drawer).not.toBeVisible({ timeout: 3000 });
     });
 
-    test('should close help modal when clicking outside', async ({ page }) => {
-      // Open help modal
+    test('should close help drawer when clicking outside', async ({ page }) => {
       const helpButton = sidebarHelpButton(page);
-
       await helpButton.click();
 
-      // Verify modal is open
-      const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
-      await expect(modal).toBeVisible();
+      const drawer = page.getByTestId('help-drawer');
+      await expect(drawer).toBeVisible();
 
-      // Click outside modal (on backdrop)
-      const backdrop = page.locator('[class*="backdrop"], [class*="overlay"]').first();
-      const hasBackdrop = await backdrop.isVisible();
-
-      if (hasBackdrop) {
+      // Click the backdrop (dark overlay behind the drawer).
+      const backdrop = page.locator('[class*="backdrop"]').first();
+      if (await backdrop.isVisible()) {
         await backdrop.click({ position: { x: 10, y: 10 } });
-
-        // Modal should close
-        await expect(modal).not.toBeVisible({ timeout: 3000 });
+        await expect(drawer).not.toBeVisible({ timeout: 3000 });
       }
-    });
-
-    test('should display help content sections', async ({ page }) => {
-      // Open help modal
-      const helpButton = sidebarHelpButton(page);
-
-      await helpButton.click();
-
-      // Look for common help topics
-      const helpTopics = page.locator(
-        'text=/dashboard|network|wifi|discovery|speed.*test|settings|authentication/i',
-      );
-
-      const topicCount = await helpTopics.count();
-      expect(topicCount).toBeGreaterThan(0);
     });
 
     test('should switch sections when clicking a table-of-contents entry', async ({ page }) => {
       const helpButton = sidebarHelpButton(page);
       await helpButton.click();
 
-      const modal = page.getByRole('dialog');
-      await expect(modal).toBeVisible();
+      const drawer = page.getByTestId('help-drawer');
+      await expect(drawer).toBeVisible();
 
-      // ImprovedHelpModal renders its table of contents as section buttons
-      // inside the dialog's nav (the old a[href^="#"] anchors are gone — that
-      // selector was matching the sidebar "Skip to main content" link).
-      const tocButtons = modal.locator('nav button');
-      const count = await tocButtons.count();
-      expect(count, 'help modal should list navigable sections').toBeGreaterThan(0);
+      const tocButtons = drawer.locator('nav button');
+      expect(
+        await tocButtons.count(),
+        'help drawer should list navigable sections',
+      ).toBeGreaterThan(1);
 
-      // Selecting a section keeps the modal open and swaps the content pane.
+      // Selecting a section keeps the drawer open and swaps the content pane.
+      const content = page.getByTestId('help-drawer-content');
+      const before = await content.innerText();
       await tocButtons.nth(1).click();
-      await expect(modal).toBeVisible();
+      await expect(drawer).toBeVisible();
+      // The active section's title heads the content pane and changes on switch.
+      await expect.poll(async () => content.innerText()).not.toBe(before);
     });
 
     test('should filter help content with search functionality', async ({ page }) => {
-      // This test is skipped if search is not implemented
-
-      // Open help modal
       const helpButton = sidebarHelpButton(page);
-
       await helpButton.click();
 
-      // Look for search input.
+      const drawer = page.getByTestId('help-drawer');
+      await expect(drawer).toBeVisible();
+
       // Loud failure beats silent skip: if the help drawer search disappears,
       // this test surfaces the regression instead of hiding it.
-      const searchInput = page.getByPlaceholder(/search|filter/i);
+      const searchInput = drawer.getByPlaceholder(/search|filter/i);
       await expect(
         searchInput,
         'precondition: help drawer search input must be visible',
       ).toBeVisible();
 
-      // Enter search term
-      await searchInput.fill('network');
-
-      // Verify filtered results
-      const results = page.locator('text=/network/i');
-      const resultCount = await results.count();
-
-      expect(resultCount).toBeGreaterThan(0);
+      // Narrow to a single section, then confirm the TOC shrank.
+      const tocButtons = drawer.locator('nav button');
+      const allCount = await tocButtons.count();
+      await searchInput.fill('wifi survey');
+      await expect.poll(async () => tocButtons.count()).toBeLessThan(allCount);
+      expect(await tocButtons.count()).toBeGreaterThan(0);
     });
 
-    test('should render help content correctly', async ({ page }) => {
-      // Open help modal
+    test('should render real help content (bug-fix regression)', async ({ page }) => {
+      // The old modal defined every section with `content: null`, so the pane
+      // rendered nothing. This asserts the drawer renders actual body copy —
+      // the core bug this feature fixes.
       const helpButton = sidebarHelpButton(page);
-
       await helpButton.click();
 
-      // Verify modal has content (headings, paragraphs)
-      const headings = page.locator('h1, h2, h3, h4, h5, h6');
-      const paragraphs = page.locator('p');
+      const content = page.getByTestId('help-drawer-content');
+      await expect(content).toBeVisible();
 
-      const headingCount = await headings.count();
-      const paragraphCount = await paragraphs.count();
+      // The default (About) section names the Seed modules in its body.
+      await expect(content).toContainText('Roots');
+      await expect(content).toContainText('Canopy');
 
-      // Should have some content
-      expect(headingCount + paragraphCount).toBeGreaterThan(0);
+      // And there is substantive prose, not an empty pane.
+      const text = (await content.innerText()).trim();
+      expect(text.length, 'content pane should not be empty').toBeGreaterThan(100);
+      expect(await content.locator('p').count()).toBeGreaterThan(0);
     });
 
-    test('should maintain scroll position when reopening help modal', async ({ page }) => {
-      // Open help modal
+    test('should reset content scroll to top on reopen', async ({ page }) => {
       const helpButton = sidebarHelpButton(page);
-
       await helpButton.click();
 
-      // Scroll within modal
-      const modal = page.getByRole('dialog').or(page.locator('[role="dialog"]'));
-      await modal.evaluate((el) => {
-        const scrollable = el.querySelector('[class*="scroll"]') || el;
-        scrollable.scrollTop = 100;
+      const content = page.getByTestId('help-drawer-content');
+      await expect(content).toBeVisible();
+      await content.evaluate((el) => {
+        el.scrollTop = 100;
       });
 
-      // Close modal
       await page.keyboard.press('Escape');
+      await expect(page.getByTestId('help-drawer')).not.toBeVisible();
 
-      // Reopen modal
       await helpButton.click();
+      await expect(content).toBeVisible();
 
-      // After close + reopen the modal should reset its scroll to top.
-      // The original test accepted any non-negative scroll value, which is
-      // tautological (scrollTop is always non-negative) and would pass even
-      // if the modal silently leaked scroll state across opens.
-      const scrollPosition = await modal.evaluate((el) => {
-        const scrollable = el.querySelector('[class*="scroll"]') ?? el;
-        return scrollable.scrollTop;
-      });
-      expect(scrollPosition, 'modal scroll should reset to top on reopen').toBe(0);
+      // The content pane remounts on reopen, so scroll resets to the top.
+      const scrollPosition = await content.evaluate((el) => el.scrollTop);
+      expect(scrollPosition, 'content scroll should reset to top on reopen').toBe(0);
     });
 
-    test('should display help modal in light and dark themes', async ({ page }) => {
+    test('should display help drawer in light and dark themes', async ({ page }) => {
       const helpButton = sidebarHelpButton(page);
-      const modal = page.getByRole('dialog');
+      const drawer = page.getByTestId('help-drawer');
       const html = page.locator('html');
 
-      // Set the theme deterministically via localStorage (the settings-drawer
-      // close button is momentarily unresponsive during the app-wide re-theme)
-      // and confirm the help dialog renders in each theme.
       await page.evaluate(() => localStorage.setItem('seed-theme', 'light'));
       await page.reload();
       await expect(page.getByTestId('page-header-title')).toBeVisible();
       await expect(html).not.toHaveClass(/dark/);
       await helpButton.click();
-      await expect(modal).toBeVisible();
+      await expect(drawer).toBeVisible();
       await page.keyboard.press('Escape');
-      await expect(modal).not.toBeVisible();
+      await expect(drawer).not.toBeVisible();
 
       await page.evaluate(() => localStorage.setItem('seed-theme', 'dark'));
       await page.reload();
       await expect(page.getByTestId('page-header-title')).toBeVisible();
       await expect(html).toHaveClass(/dark/);
       await helpButton.click();
-      await expect(modal).toBeVisible();
+      await expect(drawer).toBeVisible();
     });
   });
 });
