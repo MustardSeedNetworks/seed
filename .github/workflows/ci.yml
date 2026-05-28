@@ -807,7 +807,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [chromium, webkit]
+        browser: [chromium, webkit]
     # Skipped on draft PRs (slow); also skipped if no frontend/backend changed.
     # always() lets the if: evaluate when backend was skipped upstream.
     if: |
@@ -881,13 +881,13 @@ jobs:
         # avoid duplicate runtime. See seed#1053.
         # Both chromium and webkit run per E2E_CONVENTIONS — the projects
         # array in playwright.config.ts is now exactly [chromium, webkit].
-        run: npx playwright test --reporter=html --project=${{ matrix.project }} --grep-invert "@smoke"
+        run: npx playwright test --reporter=html --project=${{ matrix.browser }} --grep-invert "@smoke"
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: playwright-report-${{ matrix.project }}
+          name: playwright-report-${{ matrix.browser }}
           path: ui/playwright-report/
           retention-days: 7
 
@@ -895,7 +895,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:
-          name: server-logs-${{ matrix.project }}
+          name: server-logs-${{ matrix.browser }}
           path: server.log
           retention-days: 7
 
