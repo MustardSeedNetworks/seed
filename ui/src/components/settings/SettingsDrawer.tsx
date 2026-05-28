@@ -31,6 +31,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../contexts/useSettings';
 import { useDebouncedAutoSave } from '../../hooks/useDebouncedAutoSave';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useSettingsDrawerLoaders } from '../../hooks/useSettingsDrawerLoaders';
 import { useSettingsDrawerSavers } from '../../hooks/useSettingsDrawerSavers';
 import { useSubnetSettings } from '../../hooks/useSubnetSettings';
@@ -483,32 +484,11 @@ export const SettingsDrawer: React.MemoExoticComponent<
     });
   };
 
-  const drawerRef = useRef<HTMLDivElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-
-  // Handle ESC key to close drawer
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const handleKeyDown = (e: globalThis.KeyboardEvent): void => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    // Focus the close button when drawer opens
-    // Fixes #918: Track timeout for cleanup to prevent stale closure
-    const focusTimeout = setTimeout(() => closeButtonRef.current?.focus(), 100);
-
-    return (): void => {
-      document.removeEventListener('keydown', handleKeyDown);
-      clearTimeout(focusTimeout);
-    };
-  }, [isOpen, onClose]);
+  // Focus trap: ESC to close, Tab cycling, and focus restore on close.
+  const drawerRef = useFocusTrap<HTMLDivElement>({
+    isActive: isOpen,
+    onEscape: onClose,
+  });
 
   if (!isOpen) {
     return null;
@@ -531,7 +511,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         data-testid="settings-drawer"
         onClick={(e: React.MouseEvent): void => e.stopPropagation()}
         onKeyDown={(e: React.KeyboardEvent): void => e.stopPropagation()}
-        className="fixed right-0 top-0 h-full w-full sm:w-96 lg:w-lg bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl"
+        className="fixed right-0 top-0 h-full w-full sm:w-96 lg:w-lg bg-surface-raised border-l border-surface-border z-50 overflow-y-auto shadow-xl animate-slide-in"
       >
         {/* Header */}
         <div
@@ -548,7 +528,6 @@ export const SettingsDrawer: React.MemoExoticComponent<
           </div>
           <button
             type="button"
-            ref={closeButtonRef}
             onClick={onClose}
             data-testid="settings-drawer-close"
             className={cn(
