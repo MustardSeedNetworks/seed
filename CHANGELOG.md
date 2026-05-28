@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.201.1](https://github.com/krisarmstrong/seed/compare/v0.201.0...v0.201.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* **ui:** replace broken help modal with data-driven help drawer ([#43](https://github.com/krisarmstrong/seed/issues/43)) ([#1239](https://github.com/krisarmstrong/seed/issues/1239)) ([11384f3](https://github.com/krisarmstrong/seed/commit/11384f3ad2aa3a3bf73065d5648e45300bb0686e))
+* **ui:** settings drawer focus trap — drop stopPropagation that defeated it ([#1240](https://github.com/krisarmstrong/seed/issues/1240)) ([41c2cbd](https://github.com/krisarmstrong/seed/commit/41c2cbd6498cb98118af85537d20fa18c2e10e0c))
+
 ## [0.201.0](https://github.com/krisarmstrong/seed/compare/v0.200.0...v0.201.0) (2026-05-28)
 
 
