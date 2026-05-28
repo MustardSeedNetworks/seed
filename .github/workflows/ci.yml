@@ -799,6 +799,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes, backend, frontend]
     timeout-minutes: 30
+    # Advisory tier — "CI Complete" does NOT gate on this job. Sharded by
+    # browser so each leg finishes inside the 30-min budget instead of the
+    # combined run overrunning and being cancelled. continue-on-error keeps a
+    # slow or failing full-suite leg from flipping the overall workflow run to
+    # a non-success conclusion, which would otherwise skip the release-please
+    # workflow (it triggers on workflow_run.conclusion == 'success'). The
+    # required, blocking E2E gate is the separate E2E Smoke job.
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, webkit]
     # Skipped on draft PRs (slow); also skipped if no frontend/backend changed.
     # always() lets the if: evaluate when backend was skipped upstream.
     if: |
@@ -872,13 +884,13 @@ jobs:
         # avoid duplicate runtime. See seed#1053.
         # Both chromium and webkit run per E2E_CONVENTIONS — the projects
         # array in playwright.config.ts is now exactly [chromium, webkit].
-        run: npx playwright test --reporter=html --grep-invert "@smoke"
+        run: npx playwright test --reporter=html --project=${{ matrix.project }} --grep-invert "@smoke"
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.project }}
           path: ui/playwright-report/
           retention-days: 7
 
@@ -886,7 +898,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:
-          name: server-logs
+          name: server-logs-${{ matrix.project }}
           path: server.log
           retention-days: 7
 
