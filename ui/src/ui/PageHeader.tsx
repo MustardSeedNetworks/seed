@@ -1,13 +1,10 @@
-// SYNCED FROM stem@446b6390f435 — DO NOT EDIT.
-// Edits in this repo will be overwritten on next `make sync-shell`.
-// To change this file, send a PR to stem then re-sync.
 /**
  * PageHeader — page-level title bar with optional breadcrumbs, actions,
  * and a slide-out help panel.
  *
- * CANONICAL SHELL — owned by stem; seed and niac sync this file via
- * scripts/sync-shell.sh. Edits made downstream will be overwritten on
- * next sync. All colors/spacing reference theme tokens.
+ * Shared shell pattern — kept visually and behaviorally consistent across
+ * seed / stem / niac by convention; each repo owns this file independently
+ * (no master, no sync). All colors/spacing reference theme tokens.
  *
  * Usage:
  *   <PageHeader

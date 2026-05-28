@@ -393,12 +393,3 @@ iso-info: ## Show instructions for creating custom Ubuntu ISO
 	@echo "     - Copy deploy/systemd/seed.service to /etc/systemd/system/"
 	@echo "     - Enable service: systemctl enable seed"
 	@echo "  4. Generate ISO"
-
-.PHONY: sync-shell verify-shell
-## sync-shell: Pull canonical UI shell files from stem (../stem). Run this in a dev branch.
-sync-shell:
-	./scripts/sync-shell.sh
-
-## verify-shell: Check that synced shell files match the lockfile. Run by CI.
-verify-shell:
-	./scripts/sync-shell.sh --verify

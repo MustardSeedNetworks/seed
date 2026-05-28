@@ -1,13 +1,10 @@
-// SYNCED FROM stem@446b6390f435 — DO NOT EDIT.
-// Edits in this repo will be overwritten on next `make sync-shell`.
-// To change this file, send a PR to stem then re-sync.
 /**
  * Sidebar layout shell — persistent collapsible left navigation.
  *
- * CANONICAL SHELL — owned by stem; seed and niac sync this file via
- * scripts/sync-shell.sh. Edits made downstream will be overwritten on
- * next sync. All colors/spacing reference theme tokens; per-product
- * brand identity comes from each repo's index.css token values.
+ * Shared shell pattern — kept visually and behaviorally consistent across
+ * seed / stem / niac by convention; each repo owns this file independently
+ * (no master, no sync). All colors/spacing reference theme tokens;
+ * per-product brand identity comes from each repo's index.css token values.
  *
  * Drawer triggers (help, settings, history) call up to the host App
  * via callback props so the actual drawer components stay mounted at
