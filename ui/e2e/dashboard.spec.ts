@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { skipSetupWizard } from './helpers/auth';
+import { sidebarHelpButton, sidebarSettingsButton, skipSetupWizard } from './helpers/auth';
 
 /**
  * Dashboard E2E Tests
@@ -44,7 +44,7 @@ test.describe('Dashboard', () => {
 
   test('should open settings drawer', async ({ page }) => {
     // Click settings button
-    const settingsButton = page.getByTestId('header-open-settings');
+    const settingsButton = sidebarSettingsButton(page);
     await settingsButton.click();
 
     // Settings drawer should be visible
@@ -53,7 +53,7 @@ test.describe('Dashboard', () => {
 
   test('should toggle theme in settings', async ({ page }) => {
     // Open settings
-    const settingsButton = page.getByTestId('header-open-settings');
+    const settingsButton = sidebarSettingsButton(page);
     await settingsButton.click();
 
     // Find and click theme toggle
@@ -63,7 +63,7 @@ test.describe('Dashboard', () => {
 
   test('should show help modal', async ({ page }) => {
     // Click help button
-    const helpButton = page.getByTestId('header-open-help');
+    const helpButton = sidebarHelpButton(page);
     await helpButton.click();
 
     // Help modal should be visible

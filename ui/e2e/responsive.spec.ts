@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { skipSetupWizard } from './helpers/auth';
+import {
+  revealSidebar,
+  sidebarHelpButton,
+  sidebarSettingsButton,
+  skipSetupWizard,
+} from './helpers/auth';
 
 /**
  * Responsive Layout E2E Tests
@@ -108,8 +113,9 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should show settings drawer full-screen on mobile', async ({ page }) => {
-      // Open settings
-      const settingsButton = page.getByTestId('header-open-settings');
+      // Settings lives in the sidebar drawer behind the hamburger on mobile.
+      await revealSidebar(page);
+      const settingsButton = sidebarSettingsButton(page);
 
       await settingsButton.click();
 
@@ -184,8 +190,9 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should open help modal properly on mobile', async ({ page }) => {
-      // Find help button
-      const helpButton = page.getByTestId('header-open-help');
+      // Help lives in the sidebar drawer behind the hamburger on mobile.
+      await revealSidebar(page);
+      const helpButton = sidebarHelpButton(page);
 
       await helpButton.click();
 
@@ -208,16 +215,11 @@ test.describe('Responsive Layout Tests', () => {
 
       expect(cardCount).toBeGreaterThan(0);
 
-      // Settings should be accessible
-      const settingsButton = page.getByTestId('header-open-settings');
-
-      await expect(settingsButton).toBeVisible();
-
-      // Help should be accessible
-      const helpButton = page.getByTestId('header-open-help');
-
-      const hasHelp = await helpButton.isVisible();
-      expect(hasHelp).toBeDefined();
+      // Settings + Help moved into the sidebar (Phase 2); on mobile they're
+      // reached via the hamburger. Open the drawer, then assert both surface.
+      await revealSidebar(page);
+      await expect(sidebarSettingsButton(page)).toBeVisible();
+      await expect(sidebarHelpButton(page)).toBeVisible();
     });
   });
 
@@ -275,8 +277,9 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should show settings drawer as overlay on tablet', async ({ page }) => {
-      // Open settings
-      const settingsButton = page.getByTestId('header-open-settings');
+      // Below lg (tablet = 768px) the sidebar is a drawer behind the hamburger.
+      await revealSidebar(page);
+      const settingsButton = sidebarSettingsButton(page);
 
       await settingsButton.click();
 
@@ -424,7 +427,7 @@ test.describe('Responsive Layout Tests', () => {
 
     test('should slide settings drawer from right on desktop', async ({ page }) => {
       // Open settings
-      const settingsButton = page.getByTestId('header-open-settings');
+      const settingsButton = sidebarSettingsButton(page);
 
       await settingsButton.click();
 
@@ -478,7 +481,7 @@ test.describe('Responsive Layout Tests', () => {
 
     test('should handle help modal at desktop size', async ({ page }) => {
       // Open help modal
-      const helpButton = page.getByTestId('header-open-help');
+      const helpButton = sidebarHelpButton(page);
 
       await helpButton.click();
 
@@ -533,7 +536,7 @@ test.describe('Responsive Layout Tests', () => {
       });
 
       // Set dark theme
-      const settingsButton = page.getByTestId('header-open-settings');
+      const settingsButton = sidebarSettingsButton(page);
 
       await settingsButton.click();
 
@@ -617,8 +620,9 @@ test.describe('Responsive Layout Tests', () => {
       ]) {
         await page.setViewportSize(viewport);
 
-        // Open settings
-        const settingsButton = page.getByTestId('header-open-settings');
+        // Sidebar is behind the hamburger below lg; no-op at desktop width.
+        await revealSidebar(page);
+        const settingsButton = sidebarSettingsButton(page);
 
         await settingsButton.click();
 
@@ -627,13 +631,10 @@ test.describe('Responsive Layout Tests', () => {
           timeout: 5000,
         });
 
-        // Close settings
-        const closeButton = page
-          .getByRole('button', { name: /close/i })
-          .or(page.locator('button:has(svg[class*="x"], svg[class*="close"])'))
-          .first();
-
-        await closeButton.click();
+        // Close via the drawer's own button. A generic /close/i would also
+        // match the mobile sidebar's "Close menu" hamburger that revealSidebar
+        // surfaces below lg, so target the settings-drawer close directly.
+        await page.getByTestId('settings-drawer-close').click();
       }
     });
   });
