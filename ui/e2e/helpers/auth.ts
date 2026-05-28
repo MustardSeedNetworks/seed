@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 /**
  * Shared E2E auth helpers.
@@ -87,4 +87,53 @@ export async function loginViaUI(
   await page.getByLabel(/username/i).fill(creds.username);
   await page.getByLabel(/password/i).fill(creds.password);
   await page.getByRole('button', { name: /sign in|login/i }).click();
+}
+
+/**
+ * Settings / Help live in the sidebar footer, not the header (Phase 2 —
+ * see components/app/HeaderBar.tsx and the sidebar's FooterIconButton).
+ * The buttons carry the hardcoded English aria-labels "Open settings" /
+ * "Open help" (not i18n keys), so getByRole on the accessible name is
+ * stable across locales.
+ *
+ * The shell renders the sidebar twice — a mobile drawer (`lg:hidden`)
+ * and a desktop rail (`hidden lg:flex`). Only one is in the a11y tree at
+ * a time (the other is display:none), but `.filter({ visible: true })`
+ * is kept as a guard. Below the lg breakpoint (1024px) the sidebar is a
+ * drawer behind the hamburger — call revealSidebar() first there.
+ */
+export function sidebarSettingsButton(page: Page): Locator {
+  return page.getByRole('button', { name: 'Open settings' }).filter({ visible: true });
+}
+
+export function sidebarHelpButton(page: Page): Locator {
+  return page.getByRole('button', { name: 'Open help' }).filter({ visible: true });
+}
+
+/**
+ * Disable CSS transitions/animations for the page. The settings-drawer
+ * open + accordion-expand transitions otherwise race Playwright's
+ * scroll-into-view under parallel CI load, hanging clicks on deep
+ * elements (e.g. the theme-toggle) until the 30s test timeout. Must be
+ * called before page.goto so the style is installed on every navigation.
+ */
+export async function disableAnimations(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const style = document.createElement('style');
+    style.textContent =
+      '*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}';
+    document.documentElement.appendChild(style);
+  });
+}
+
+/**
+ * Open the mobile sidebar drawer when below the lg breakpoint. The
+ * hamburger ("Open menu") only exists under lg, so this is a no-op on
+ * desktop viewports where the sidebar rail is always present.
+ */
+export async function revealSidebar(page: Page): Promise<void> {
+  const menuButton = page.getByRole('button', { name: 'Open menu' });
+  if (await menuButton.isVisible().catch(() => false)) {
+    await menuButton.click();
+  }
 }

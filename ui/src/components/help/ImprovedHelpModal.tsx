@@ -24,7 +24,7 @@
  */
 
 import type React from 'react';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, layout, modal, radius, spacing } from '../../styles/theme';
 import {
@@ -72,6 +72,20 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps): React.JS
   const [activeSection, setActiveSection] = useState<string>('about');
   // Track search query for filtering help content
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Close on Escape — expected behavior for an aria-modal dialog (WCAG 2.1.2).
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return (): void => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) {
     return null;
@@ -233,6 +247,7 @@ export function ImprovedHelpModal({ isOpen, onClose }: HelpModalProps): React.JS
           <button
             type="button"
             onClick={onClose}
+            data-testid="help-modal-close"
             className={cn(
               spacing.pad.xs,
               'text-text-muted hover:text-text-primary transition-colors',

@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { skipSetupWizard, TEST_CREDENTIALS } from './helpers/auth';
+import { sidebarSettingsButton, skipSetupWizard, TEST_CREDENTIALS } from './helpers/auth';
 
 /**
  * Comprehensive Error Scenario E2E Tests
@@ -450,7 +450,7 @@ test.describe('API Error Scenarios', () => {
       });
 
       // Try to open settings
-      const settingsButton = page.getByTestId('header-open-settings');
+      const settingsButton = sidebarSettingsButton(page);
 
       if (await settingsButton.isVisible({ timeout: 3000 })) {
         await settingsButton.click();
@@ -501,7 +501,7 @@ test.describe('Validation Error Scenarios', () => {
       await login(page);
 
       // Open settings
-      const settingsButton = page.getByTestId('header-open-settings');
+      const settingsButton = sidebarSettingsButton(page);
 
       if (await settingsButton.isVisible({ timeout: 3000 })) {
         await settingsButton.click();

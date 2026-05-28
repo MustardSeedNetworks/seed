@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { skipSetupWizard } from './helpers/auth';
+import { sidebarSettingsButton, skipSetupWizard } from './helpers/auth';
 
 /**
  * SNMP Settings E2E Tests
@@ -32,7 +32,7 @@ test.describe('SNMP Settings', () => {
       timeout: 10000,
     });
 
-    const settingsButton = page.getByTestId('header-open-settings');
+    const settingsButton = sidebarSettingsButton(page);
     await settingsButton.click();
 
     await expect(page.getByTestId('settings-drawer')).toBeVisible({ timeout: 5000 });

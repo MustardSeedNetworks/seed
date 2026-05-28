@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { skipSetupWizard } from './helpers/auth';
+import { sidebarSettingsButton, skipSetupWizard } from './helpers/auth';
 
 /**
  * Settings E2E Tests
@@ -26,7 +26,7 @@ test.describe('Settings', () => {
     });
 
     // Open settings drawer
-    const settingsButton = page.getByTestId('header-open-settings');
+    const settingsButton = sidebarSettingsButton(page);
     await settingsButton.click();
 
     // Wait for drawer to open
@@ -167,7 +167,7 @@ test.describe('Settings CRUD Operations', () => {
     });
 
     // Open settings drawer
-    const settingsButton = page.getByTestId('header-open-settings');
+    const settingsButton = sidebarSettingsButton(page);
     await settingsButton.click();
 
     // Wait for drawer to open
@@ -370,7 +370,7 @@ test.describe('Settings CRUD Operations', () => {
       });
 
       // Open settings again
-      const settingsButton = page.getByTestId('header-open-settings');
+      const settingsButton = sidebarSettingsButton(page);
       await settingsButton.click();
 
       // Get settings after reload
@@ -532,7 +532,7 @@ test.describe('Settings CRUD Operations', () => {
     await closeButton.click();
 
     // Reopen drawer
-    const settingsButton = page.getByTestId('header-open-settings');
+    const settingsButton = sidebarSettingsButton(page);
     await settingsButton.click();
 
     // Check if state was maintained
