@@ -1,4 +1,4 @@
-// SYNCED FROM stem@2b6604246970 — DO NOT EDIT.
+// SYNCED FROM stem@6a5de95ca0a1 — DO NOT EDIT.
 // Edits in this repo will be overwritten on next `make sync-shell`.
 // To change this file, send a PR to stem then re-sync.
 /**
@@ -26,6 +26,7 @@ import {
   X,
 } from 'lucide-react';
 import { createElement, type FC, type ReactNode, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { iconSizes } from '../constants/sizes';
 import { prefetchRoute } from '../utils/prefetch';
@@ -297,43 +298,51 @@ const SidebarBody: FC<SidebarBodyProps> = ({
   onOpenSettings,
   onOpenHistory,
   onOpenProfiles,
-}) => (
-  <>
-    <SidebarHeader collapsed={collapsed} onCollapse={onCollapse} />
-    <nav className="flex-1 overflow-y-auto py-4 px-cell stack-xl">
-      {groups.map((group, groupIndex) => (
-        <div key={group.label || `nav-group-${String(groupIndex)}`}>
-          {!collapsed && group.label ? (
-            <h3 className="px-3 mb-2 text-xs font-semibold text-text-muted uppercase tracking-wider">
-              {group.label}
-            </h3>
-          ) : null}
-          {collapsed ? <div className="h-px bg-surface-border mx-2 mb-2" /> : null}
-          <div className="stack-xs">
-            {group.items.map((item) => (
-              <NavItemButton
-                key={item.path}
-                item={item}
-                active={isActive(item.path)}
-                collapsed={collapsed}
-                onNavigate={onNavigate}
-              />
-            ))}
+}) => {
+  const { t } = useTranslation();
+  // group.label is either a plain display string ("Account") or an
+  // i18n key ("common:sections.modules"). t() returns the translation
+  // if the key resolves; otherwise the defaultValue (label itself).
+  const translateLabel = (label: string): string =>
+    label ? t(label, { defaultValue: label }) : '';
+  return (
+    <>
+      <SidebarHeader collapsed={collapsed} onCollapse={onCollapse} />
+      <nav className="flex-1 overflow-y-auto py-4 px-cell stack-xl">
+        {groups.map((group, groupIndex) => (
+          <div key={group.label || `nav-group-${String(groupIndex)}`}>
+            {!collapsed && group.label ? (
+              <h3 className="px-3 mb-2 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                {translateLabel(group.label)}
+              </h3>
+            ) : null}
+            {collapsed ? <div className="h-px bg-surface-border mx-2 mb-2" /> : null}
+            <div className="stack-xs">
+              {group.items.map((item) => (
+                <NavItemButton
+                  key={item.path}
+                  item={item}
+                  active={isActive(item.path)}
+                  collapsed={collapsed}
+                  onNavigate={onNavigate}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
-    </nav>
-    <SidebarFooter
-      collapsed={collapsed}
-      version={version}
-      onOpenHelp={onOpenHelp}
-      onOpenSettings={onOpenSettings}
-      onOpenHistory={onOpenHistory}
-      onOpenProfiles={onOpenProfiles}
-      onExpand={onExpand}
-    />
-  </>
-);
+        ))}
+      </nav>
+      <SidebarFooter
+        collapsed={collapsed}
+        version={version}
+        onOpenHelp={onOpenHelp}
+        onOpenSettings={onOpenSettings}
+        onOpenHistory={onOpenHistory}
+        onOpenProfiles={onOpenProfiles}
+        onExpand={onExpand}
+      />
+    </>
+  );
+};
 
 interface MobileTopBarProps {
   mobileOpen: boolean;
