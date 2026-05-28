@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.201.0](https://github.com/krisarmstrong/seed/compare/v0.200.0...v0.201.0) (2026-05-28)
+
+
+### Features
+
+* **ui:** converge settings drawer shell — focus trap + slide-in (Phase 3c) ([#1236](https://github.com/krisarmstrong/seed/issues/1236)) ([50da4e0](https://github.com/krisarmstrong/seed/commit/50da4e0ae736920786b4193a755161f5d115f131))
+* **ui:** converge Tooltip to the shared text/side design (Phase 3a) ([#1235](https://github.com/krisarmstrong/seed/issues/1235)) ([f04b9c4](https://github.com/krisarmstrong/seed/commit/f04b9c4cfe1610559e60806623b7db980691bf39))
+
+
+### Bug Fixes
+
+* **ui:** re-sync shell from stem — sidebar shows the product name ([#1233](https://github.com/krisarmstrong/seed/issues/1233)) ([2a4641b](https://github.com/krisarmstrong/seed/commit/2a4641b367ccf17e38c57d8e67ed28f01dca054f))
+
 ## [0.200.0](https://github.com/krisarmstrong/seed/compare/v0.199.0...v0.200.0) (2026-05-28)
 
 
