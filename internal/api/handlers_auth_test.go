@@ -382,3 +382,37 @@ func TestHandleSetupStatus(t *testing.T) {
 		})
 	}
 }
+
+// TestRefreshToken_RateLimited is the #1224 regression test: repeated
+// failed refreshes from one IP must trip the shared login rate limiter
+// (5 attempts/window) and return 429, not an unbounded stream of 401s.
+func TestRefreshToken_RateLimited(t *testing.T) {
+	server := api.NewTestServer()
+	defer server.Close()
+
+	// Fire invalid-token refreshes from the same IP until blocked. The
+	// limiter blocks after defaultMaxAttempts (5); the next request must
+	// be 429.
+	const attempts = 7
+	var got429 bool
+	for i := range attempts {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh", http.NoBody)
+		req.AddCookie(&http.Cookie{Name: auth.CookieNameRefresh, Value: "invalid-token"})
+		w := httptest.NewRecorder()
+		server.HandleRefreshToken(w, req)
+		if w.Code == http.StatusTooManyRequests {
+			got429 = true
+			if w.Header().Get("Retry-After") == "" {
+				t.Error("429 response missing Retry-After header")
+			}
+			break
+		}
+		if w.Code != http.StatusUnauthorized {
+			t.Fatalf("attempt %d: expected 401 or 429, got %d", i+1, w.Code)
+		}
+	}
+
+	if !got429 {
+		t.Errorf("refresh endpoint never rate-limited after %d failed attempts", attempts)
+	}
+}
