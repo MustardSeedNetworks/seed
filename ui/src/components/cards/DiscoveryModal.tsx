@@ -422,6 +422,8 @@ export function DiscoveryModal({
                 type="button"
                 onClick={(): void => setSearchQuery('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                aria-label={t('discovery.clearSearch', 'Clear search')}
+                title={t('discovery.clearSearch', 'Clear search')}
               >
                 <X className={iconTokens.size.sm} />
               </button>
