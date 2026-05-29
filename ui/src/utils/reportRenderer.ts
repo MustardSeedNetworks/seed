@@ -24,7 +24,16 @@ import type { SurveyReport } from './reportGenerator';
 /** Translation function type */
 type TranslateFunction = (key: string, options?: Record<string, unknown>) => string;
 
-/** Report style configuration */
+/**
+ * Report style configuration.
+ *
+ * This is a self-contained print stylesheet for an exported HTML/PDF document,
+ * which is ALWAYS light (printed on white) and independent of the app's theme.
+ * Its palette is therefore an intentional fixed light palette rather than the
+ * app's CSS theme variables — this file is allowlisted from the design-token
+ * lint rule. The only value that must track the brand is the seed green
+ * (#2d7a3e = canonical seed-600, the strong green for light surfaces).
+ */
 const REPORT_STYLES = `
   @page {
     size: A4;
@@ -66,7 +75,7 @@ const REPORT_STYLES = `
 
   .report-header {
     text-align: center;
-    border-bottom: 2px solid #056839; /* brand-primary green */
+    border-bottom: 2px solid #2d7a3e; /* canonical seed-600 brand green */
     padding-bottom: 20px;
     margin-bottom: 30px;
   }
@@ -108,7 +117,7 @@ const REPORT_STYLES = `
     display: inline-block;
     width: 24px;
     height: 24px;
-    background: #056839; /* brand-primary green */
+    background: #2d7a3e; /* canonical seed-600 brand green */
     color: white;
     border-radius: 50%;
     text-align: center;

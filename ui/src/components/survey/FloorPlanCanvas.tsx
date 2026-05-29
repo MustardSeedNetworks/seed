@@ -49,6 +49,7 @@ import type {
 type SampleData = PassiveSample | ActiveSample | ThroughputSample;
 
 import { cn, radius } from '../../styles/theme';
+import { readTokens } from '../../styles/tokens';
 
 export interface CalibrationPoint {
   x: number;
@@ -173,6 +174,14 @@ export function FloorPlanCanvas({
       }
       ctx.drawImage(img, 0, 0, dimensions.width, dimensions.height);
 
+      // Resolve theme colors for the marker/affordance fills. Canvas needs
+      // string color values, so we read the live CSS variables via tokens.ts
+      // (this is the supported way to use design tokens on a canvas). The
+      // white/black strokes and the orange calibration markers below stay
+      // fixed on purpose — they guarantee contrast over arbitrary floor-plan
+      // imagery regardless of the active theme.
+      const tone = readTokens(['brandPrimary', 'cat6', 'onBrand']);
+
       // Calculate scale factor
       const scaleX = dimensions.width / floorPlan.width;
       const scaleY = dimensions.height / floorPlan.height;
@@ -194,7 +203,7 @@ export function FloorPlanCanvas({
 
         // Draw signal rings for selected AP
         if (isSelected) {
-          ctx.strokeStyle = 'rgba(34, 197, 94, 0.3)'; // green-500 with opacity
+          ctx.strokeStyle = `${tone.brandPrimary}4d`; // brand green @ 30%
           ctx.lineWidth = 2;
           for (const r of [20, 35, 50]) {
             ctx.beginPath();
@@ -210,10 +219,10 @@ export function FloorPlanCanvas({
         ctx.lineTo(8, 6);
         ctx.closePath();
         ctx.fillStyle = isSelected
-          ? 'rgba(34, 197, 94, 0.9)' // green-500
-          : 'rgba(168, 85, 247, 0.9)'; // purple-500
+          ? `${tone.brandPrimary}e6` // brand green @ 90%
+          : `${tone.cat6}e6`; // data-viz purple @ 90%
         ctx.fill();
-        ctx.strokeStyle = '#ffffff';
+        ctx.strokeStyle = '#ffffff'; // fixed white outline for contrast over imagery
         ctx.lineWidth = 2;
         ctx.stroke();
 
@@ -221,14 +230,14 @@ export function FloorPlanCanvas({
         ctx.beginPath();
         ctx.moveTo(0, -12);
         ctx.lineTo(0, -18);
-        ctx.strokeStyle = isSelected ? '#22c55e' : '#a855f7';
+        ctx.strokeStyle = isSelected ? tone.brandPrimary : tone.cat6;
         ctx.lineWidth = 2;
         ctx.stroke();
 
         // Draw antenna top
         ctx.beginPath();
         ctx.arc(0, -18, 3, 0, 2 * Math.PI);
-        ctx.fillStyle = isSelected ? '#22c55e' : '#a855f7';
+        ctx.fillStyle = isSelected ? tone.brandPrimary : tone.cat6;
         ctx.fill();
 
         ctx.restore();
@@ -251,23 +260,22 @@ export function FloorPlanCanvas({
         const x = sample.x * scaleX;
         const y = sample.y * scaleY;
 
-        // Draw point
-        // Note: Canvas API requires direct color values - CSS variables don't work
-        // These colors are intentionally hardcoded for Canvas compatibility
-        // See: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fillStyle
+        // Draw point. The dot fill comes from the brand token (read above);
+        // over a heatmap it's white for legibility. The white stroke is a
+        // fixed contrast outline (see note where `tone` is read).
         ctx.beginPath();
         ctx.arc(x, y, 8, 0, 2 * Math.PI);
         ctx.fillStyle = heatmapMetric
           ? 'rgba(255, 255, 255, 0.8)' // white for visibility on heatmap
-          : 'rgba(5, 104, 57, 0.8)'; // brand-primary green (#056839 at 80% opacity)
+          : `${tone.brandPrimary}cc`; // brand green @ 80%
         ctx.fill();
         ctx.strokeStyle = 'rgba(255, 255, 255, 1)'; // white border for visibility
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Draw point number - high contrast text for visibility
-        // Canvas API limitation: must use direct color values
-        ctx.fillStyle = heatmapMetric ? '#1e293b' : '#f8fafc'; // slate-800 / slate-50
+        // Point number — on-brand dark reads cleanly on both the white heatmap
+        // dot and the brand-green dot (AA in both cases).
+        ctx.fillStyle = tone.onBrand;
         ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
