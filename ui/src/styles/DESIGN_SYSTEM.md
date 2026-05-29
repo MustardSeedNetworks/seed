@@ -3,6 +3,37 @@
 This design system ensures consistent styling across the application. Instead of scattered utility classes, use the
 centralized theme tokens and component utilities.
 
+## Token Architecture (read first)
+
+Three tiers, **one** source of truth for values, **one** derivation direction:
+
+```
+Primitive   Tailwind's built-in palette (green-500 = #4caf50)   ← never referenced directly in app code
+   ↓ alias
+Semantic    index.css @theme + :root/.dark                      ← THE source of truth for VALUES
+            brand-*, status-*, surface-*, text-*, cat-1..8,
+            log-*-bg/-fg, on-brand, on-danger, z-overlay/z-max
+   ↓ alias
+Component   components/ui/* (<Button>, <Card>, <Input> …)        ← consumes semantic tokens
+            + TS class-token objects in styles/theme (status.*, layout.* …)
+```
+
+**Two invariants (enforced by lint):**
+
+1. **Values flow one direction** — defined once in `index.css`, everything else
+   references them. Never hand-copy a hex sideways into a `.ts`/`.tsx` file.
+2. **App code names only semantic / component tokens** — never a primitive
+   palette utility (`bg-green-500`) and never a raw hex.
+
+**When you can't use a class** (`<canvas>` drawing, generated HTML/PDF reports),
+read the value at runtime from `styles/tokens.ts` (`token('brandPrimary')`),
+which reads the CSS variable — so there's still a single source of truth.
+
+**Legitimate exceptions** (allowlisted): `styles/tokens.ts`,
+`utils/reportRenderer.ts`, `components/survey/FloorPlanCanvas.tsx`, and named
+domain-palette maps (e.g. T568B Ethernet wire colors), which represent physical
+reality and are intentionally outside the brand palette.
+
 ## Quick Start
 
 ````tsx
@@ -21,7 +52,7 @@ import { buttonClass, cardClass, cn } from '../styles/theme';
 
 ## Color System
 
-Colors are defined as CSS variables in `index.css` and mapped in `tailwind.config.js`.
+Colors are defined as CSS variables in `index.css` (`:root` / `.dark`) and exposed to Tailwind via the `@theme` block in the same file (Tailwind v4 is CSS-first — there is no `tailwind.config.js`).
 
 ### Brand Colors
 
