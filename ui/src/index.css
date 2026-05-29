@@ -91,6 +91,40 @@
   /* Constant-across-modes utility colors. */
   --color-scrim: var(--color-scrim);
   --color-knob: var(--color-knob);
+
+  /* On-color foregrounds — text/icon color that sits ON a filled brand or
+   * status surface and passes AA. Constant across modes (the surface is the
+   * same hue in both). Replaces hardcoded text-zinc-900 / text-white. */
+  --color-on-brand: var(--color-on-brand);
+  --color-on-danger: var(--color-on-danger);
+
+  /* Categorical data-viz palette — a fixed qualitative set for "N distinct
+   * categories" (discovery methods, timing phases, device types, progress
+   * series). NOT for status/meaning (use status-* for that). Values flip
+   * light↔dark in :root/.dark for AA on each surface. */
+  --color-cat-1: var(--color-cat-1);
+  --color-cat-2: var(--color-cat-2);
+  --color-cat-3: var(--color-cat-3);
+  --color-cat-4: var(--color-cat-4);
+  --color-cat-5: var(--color-cat-5);
+  --color-cat-6: var(--color-cat-6);
+  --color-cat-7: var(--color-cat-7);
+  --color-cat-8: var(--color-cat-8);
+
+  /* Log-level tinted bg + readable fg pairs (extends the solid --color-log-*
+   * above). For row highlights / chips in the log viewer. */
+  --color-log-trace-bg: var(--color-log-trace-bg);
+  --color-log-trace-fg: var(--color-log-trace-fg);
+  --color-log-debug-bg: var(--color-log-debug-bg);
+  --color-log-debug-fg: var(--color-log-debug-fg);
+  --color-log-info-bg: var(--color-log-info-bg);
+  --color-log-info-fg: var(--color-log-info-fg);
+  --color-log-warn-bg: var(--color-log-warn-bg);
+  --color-log-warn-fg: var(--color-log-warn-fg);
+  --color-log-error-bg: var(--color-log-error-bg);
+  --color-log-error-fg: var(--color-log-error-fg);
+  --color-log-fatal-bg: var(--color-log-fatal-bg);
+  --color-log-fatal-fg: var(--color-log-fatal-fg);
 }
 
 /* Source detection for Tailwind */
@@ -162,6 +196,34 @@
   --color-scrim: #000000;
   --color-knob: #ffffff;
 
+  /* On-color foregrounds — constant across modes (no .dark override). */
+  --color-on-brand: #18181b; /* zinc-900 — AA on brand/success fills */
+  --color-on-danger: #ffffff; /* white — AA on status-error fills */
+
+  /* Categorical data-viz palette — LIGHT (≈600 weight, AA on warm cream). */
+  --color-cat-1: #2563eb; /* blue */
+  --color-cat-2: #0891b2; /* cyan */
+  --color-cat-3: #4f46e5; /* indigo */
+  --color-cat-4: #16a34a; /* green */
+  --color-cat-5: #ea580c; /* orange */
+  --color-cat-6: #9333ea; /* purple */
+  --color-cat-7: #0d9488; /* teal */
+  --color-cat-8: #e11d48; /* rose */
+
+  /* Log-level bg/fg pairs — LIGHT (tint bg + dark fg). */
+  --color-log-trace-bg: #f8fafc;
+  --color-log-trace-fg: #334155;
+  --color-log-debug-bg: #ecfeff;
+  --color-log-debug-fg: #0e7490;
+  --color-log-info-bg: #eff6ff;
+  --color-log-info-fg: #1d4ed8;
+  --color-log-warn-bg: #fefce8;
+  --color-log-warn-fg: #a16207;
+  --color-log-error-bg: #fef2f2;
+  --color-log-error-fg: #b91c1c;
+  --color-log-fatal-bg: #fee2e2;
+  --color-log-fatal-fg: #991b1b;
+
   /* Gauge/Progress Colors (for SVG) */
   --gauge-amber: #d97706;
   --gauge-orange: #ea580c;
@@ -212,6 +274,30 @@
   --color-module-shell: #fb923c; /* Lighter Orange - security, protection */
   --color-module-sap: #22d3ee; /* Lighter Cyan - telemetry, data flow */
   --color-module-harvest: #fbbf24; /* Lighter Gold - reports, results */
+
+  /* Categorical data-viz palette — DARK (≈400 weight, AA on deep green-black). */
+  --color-cat-1: #60a5fa; /* blue */
+  --color-cat-2: #22d3ee; /* cyan */
+  --color-cat-3: #818cf8; /* indigo */
+  --color-cat-4: #4ade80; /* green */
+  --color-cat-5: #fb923c; /* orange */
+  --color-cat-6: #c084fc; /* purple */
+  --color-cat-7: #2dd4bf; /* teal */
+  --color-cat-8: #fb7185; /* rose */
+
+  /* Log-level bg/fg pairs — DARK (deep bg + light fg). */
+  --color-log-trace-bg: #020617;
+  --color-log-trace-fg: #cbd5e1;
+  --color-log-debug-bg: #083344;
+  --color-log-debug-fg: #67e8f9;
+  --color-log-info-bg: #172554;
+  --color-log-info-fg: #93c5fd;
+  --color-log-warn-bg: #422006;
+  --color-log-warn-fg: #fde047;
+  --color-log-error-bg: #450a0a;
+  --color-log-error-fg: #fca5a5;
+  --color-log-fatal-bg: #450a0a;
+  --color-log-fatal-fg: #fecaca;
 
   /* Gauge/Progress Colors (for SVG) */
   --gauge-amber: #fbbf24;
@@ -438,6 +524,19 @@ body {
   /* Focus states */
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base;
+  }
+
+  /* ========================================================================
+     Z-INDEX SCALE
+     ========================================================================
+     Named stacking levels — use instead of arbitrary z-[..] values.
+     Tailwind's z-50 remains the modal/drawer level; these sit above it.
+     ======================================================================== */
+  .z-overlay {
+    z-index: 60; /* command palette, transient overlays above modals */
+  }
+  .z-max {
+    z-index: 100; /* skip links, always-on-top affordances */
   }
 
   /* ========================================================================
