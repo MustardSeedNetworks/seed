@@ -34,11 +34,10 @@ import { evaluatePassword, type PasswordRule } from '../../lib/passwordPolicy';
 import { SetupWizardSchema } from '../../schemas/auth';
 import {
   button,
-  buttonClass,
-  cardClass,
+  card,
   cn,
   icon as iconTokens,
-  inputClass,
+  input,
   layout,
   radius,
   spacing,
@@ -241,7 +240,10 @@ export function SetupWizard({
           <p className={cn('body-small', spacing.margin.top.inline)}>{t('welcome.subtitle')}</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className={cardClass('default', 'lg')}>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className={cn(card.base, card.variant.default, card.padding.lg)}
+        >
           <div className={spacing.margin.bottom.content}>
             <p className={cn('body-small', spacing.margin.bottom.content)}>
               {t('username.label')} <strong>{username}</strong> {t('username.cannotChange')}
@@ -384,7 +386,12 @@ export function SetupWizard({
                     required={true}
                     minLength={12}
                     {...register('password')}
-                    className={cn(inputClass('default', 'md'), spacing.padding.right.icon)}
+                    className={cn(
+                      input.base,
+                      input.state.default,
+                      input.size.md,
+                      spacing.padding.right.icon,
+                    )}
                     placeholder={t('password.placeholder')}
                   />
                   <button
@@ -441,7 +448,7 @@ export function SetupWizard({
                   type={showPassword ? 'text' : 'password'}
                   required={true}
                   {...register('confirmPassword')}
-                  className={inputClass('default', 'md')}
+                  className={cn(input.base, input.state.default, input.size.md)}
                   placeholder={t('password.confirm.placeholder')}
                 />
                 {errors.confirmPassword ? (
@@ -484,7 +491,7 @@ export function SetupWizard({
           <button
             type="submit"
             disabled={isSubmitting}
-            className={buttonClass('primary', 'md', 'w-full')}
+            className={cn(button.base, button.variant.primary, button.size.md, 'w-full')}
           >
             {isSubmitting ? t('buttons.settingUp') : t('buttons.completeSetup')}
           </button>

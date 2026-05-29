@@ -6,27 +6,28 @@
  */
 
 /**
- * Discovery method colors - for network discovery badges
- * Use dark: variants for proper dark mode support
+ * Discovery method colors - for network discovery badges.
+ * Backed by the categorical data-viz palette (--color-cat-*), which flips
+ * light/dark automatically — no dark: variants needed.
  */
 export const discoveryMethod = {
-  arp: 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
-  ping: 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400',
-  ndp: 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400',
-  lldp: 'bg-green-500/20 text-green-600 dark:text-green-400',
-  cdp: 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
-  snmp: 'bg-purple-500/20 text-purple-600 dark:text-purple-400',
-  edp: 'bg-teal-500/20 text-teal-600 dark:text-teal-400',
-  mdns: 'bg-rose-500/20 text-rose-600 dark:text-rose-400',
+  arp: 'bg-cat-1/20 text-cat-1',
+  ping: 'bg-cat-2/20 text-cat-2',
+  ndp: 'bg-cat-3/20 text-cat-3',
+  lldp: 'bg-cat-4/20 text-cat-4',
+  cdp: 'bg-cat-5/20 text-cat-5',
+  snmp: 'bg-cat-6/20 text-cat-6',
+  edp: 'bg-cat-7/20 text-cat-7',
+  mdns: 'bg-cat-8/20 text-cat-8',
 } as const;
 
 /**
  * Progress bar colors - for timing/performance visualization
  */
 export const progressBar = {
-  http: 'bg-blue-500 dark:bg-blue-400',
-  tcp: 'bg-amber-500 dark:bg-amber-400',
-  success: 'bg-green-500 dark:bg-green-400',
+  http: 'bg-cat-1',
+  tcp: 'bg-cat-5',
+  success: 'bg-status-success',
 } as const;
 
 /**
@@ -123,10 +124,10 @@ export const severity = {
     dot: 'bg-status-error',
   },
   high: {
-    bg: 'bg-orange-500/15 dark:bg-orange-400/15',
-    text: 'text-orange-600 dark:text-orange-400',
-    border: 'border-orange-500/30 dark:border-orange-400/30',
-    dot: 'bg-orange-500 dark:bg-orange-400',
+    bg: 'bg-severity-high/15',
+    text: 'text-severity-high',
+    border: 'border-severity-high/30',
+    dot: 'bg-severity-high',
   },
   medium: {
     bg: 'bg-status-warning/15',
@@ -154,24 +155,24 @@ export const severity = {
  */
 export const timing = {
   dns: {
-    bg: 'bg-blue-500 dark:bg-blue-400',
-    text: 'text-blue-600 dark:text-blue-400',
+    bg: 'bg-cat-1',
+    text: 'text-cat-1',
   },
   tcp: {
-    bg: 'bg-cyan-500 dark:bg-cyan-400',
-    text: 'text-cyan-600 dark:text-cyan-400',
+    bg: 'bg-cat-2',
+    text: 'text-cat-2',
   },
   tls: {
-    bg: 'bg-purple-500 dark:bg-purple-400',
-    text: 'text-purple-600 dark:text-purple-400',
+    bg: 'bg-cat-6',
+    text: 'text-cat-6',
   },
   wait: {
-    bg: 'bg-amber-500 dark:bg-amber-400',
-    text: 'text-amber-600 dark:text-amber-400',
+    bg: 'bg-cat-5',
+    text: 'text-cat-5',
   },
   download: {
-    bg: 'bg-green-500 dark:bg-green-400',
-    text: 'text-green-600 dark:text-green-400',
+    bg: 'bg-cat-4',
+    text: 'text-cat-4',
   },
 } as const;
 
@@ -179,12 +180,12 @@ export const timing = {
  * Category colors - for device types, network segments
  */
 export const category = {
-  router: 'text-blue-500 dark:text-blue-400',
-  server: 'text-purple-500 dark:text-purple-400',
-  workstation: 'text-green-500 dark:text-green-400',
-  printer: 'text-orange-500 dark:text-orange-400',
-  mobile: 'text-cyan-500 dark:text-cyan-400',
-  network: 'text-teal-500 dark:text-teal-400',
+  router: 'text-cat-1',
+  server: 'text-cat-6',
+  workstation: 'text-cat-4',
+  printer: 'text-cat-5',
+  mobile: 'text-cat-2',
+  network: 'text-cat-7',
   unknown: 'text-text-muted',
 } as const;
 
@@ -261,7 +262,7 @@ export const gauge = {
       return 'var(--color-status-warning)';
     }
     if (percentage < 75) {
-      return 'var(--gauge-amber, #eab308)';
+      return 'var(--gauge-amber)';
     }
     return 'var(--color-status-success)';
   },
@@ -269,7 +270,7 @@ export const gauge = {
   className: {
     critical: 'text-status-error',
     warning: 'text-status-warning',
-    caution: 'text-amber-500 dark:text-amber-400',
+    caution: 'text-cat-5',
     good: 'text-status-success',
   },
 } as const;

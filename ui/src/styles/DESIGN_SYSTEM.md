@@ -37,17 +37,15 @@ reality and are intentionally outside the brand palette.
 ## Quick Start
 
 ````tsx
-import { buttonClass, cardClass, cn } from '../styles/theme';
+import { Button } from '../components/ui/Button';
 
-// ❌ Bad - scattered utilities, hard to maintain
+// ❌ Bad - scattered utilities, hard to maintain, raw palette
 <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
   Click me
 </button>
 
-// ✅ Good - uses design system
-<button className={buttonClass('primary', 'md')}>
-  Click me
-</button>
+// ✅ Good - the component is the source of truth for button styling
+<Button>Click me</Button>
 ```python
 
 ## Color System
@@ -141,123 +139,75 @@ import { typography } from '../styles/theme';
 
 ## Component Variants
 
+> The `<Button>`, `<Card>`, `<Input>`, `<Modal>`, and `<StatusBadge>` components in
+> `components/ui/*` are the source of truth for component styling. Prefer them.
+> The `button` / `card` / `input` / `badge` / `modal` token objects in
+> `styles/theme` remain for ad-hoc composition with `cn()` when a component
+> can't apply (e.g. styling a `<form>` like a card).
+
 ### Buttons
 
 ```tsx
-import { buttonClass } from '../styles/theme';
+import { Button } from '../components/ui/Button';
 
-// Primary action button
-<button className={buttonClass('primary', 'md')}>
-  Save Changes
-</button>
-
-// Secondary button
-<button className={buttonClass('secondary', 'md')}>
-  Cancel
-</button>
-
-// Ghost button (no background)
-<button className={buttonClass('ghost', 'sm')}>
-  View Details
-</button>
-
-// Danger button
-<button className={buttonClass('danger', 'md')}>
-  Delete
-</button>
-
-// Custom additions
-<button className={buttonClass('primary', 'lg', 'w-full')}>
-  Full Width Button
-</button>
+<Button>Save Changes</Button>                          // solid / violet (brand)
+<Button variant="secondary">Cancel</Button>
+<Button variant="ghost" size="sm">View Details</Button>
+<Button tone="red">Delete</Button>
+<Button className="w-full">Full Width Button</Button>
 ```python
 
-**Sizes**: `sm` | `md` | `lg`
+**variant**: `solid` | `outline` | `ghost` | `secondary` · **tone**: `violet` | `red` | `green` | `blue` | `gray` · **size**: `xs` | `sm` | `md` | `lg`
 
-**Variants**: `primary` | `secondary` | `ghost` | `danger` | `success`
+Ad-hoc (non-`<button>` element): `cn(button.base, button.variant.primary, button.size.md)`.
 
 ### Inputs
 
 ```tsx
-import { inputClass } from '../styles/theme';
+import { Input } from '../components/ui/Input';
 
-// Default input
-<input className={inputClass('default', 'md')} />
-
-// Error state
-<input className={inputClass('error', 'md')} />
-
-// Success state
-<input className={inputClass('success', 'md')} />
-
-// Custom additions
-<input className={inputClass('default', 'md', 'font-mono')} />
+<Input label="Email" placeholder="you@example.com" />
+<Input label="Email" error="Required" />
+<Input label="Host" hint="IP or hostname" rightIcon={<Search />} />
 ```python
 
-**Sizes**: `sm` | `md` | `lg`
-
-**States**: `default` | `error` | `success`
+For bespoke inputs (custom label/affordance layout) compose the token object:
+`cn(input.base, input.state.default, input.size.md)` — states `default` | `error` | `success`.
 
 ### Cards
 
 ```tsx
-import { cardClass } from '../styles/theme';
+import { Card } from '../components/ui/card';
 
-// Default card
-<div className={cardClass('default', 'md')}>
-  <h3 className="font-semibold mb-2">Card Title</h3>
-  <p>Card content</p>
-</div>
-
-// Elevated card (with shadow)
-<div className={cardClass('elevated', 'lg')}>
-  Content
-</div>
-
-// Interactive card (hover effect)
-<div className={cardClass('interactive', 'md')}>
-  Clickable card
-</div>
+<Card>Card content</Card>
 ```python
 
-**Variants**: `default` | `elevated` | `interactive`
-
-**Padding**: `none` | `sm` | `md` | `lg`
+For a non-`<div>` element that should look like a card (e.g. a `<form>`):
+`cn(card.base, card.variant.default, card.padding.lg)` — variants `default` | `elevated` | `interactive`, padding `none` | `sm` | `md` | `lg`.
 
 ### Badges
 
 ```tsx
-import { badgeClass } from '../styles/theme';
+import { StatusBadge } from '../components/ui/StatusBadge';
 
-<span className={badgeClass('success')}>Active</span>
-<span className={badgeClass('warning')}>Pending</span>
-<span className={badgeClass('error')}>Failed</span>
-<span className={badgeClass('info')}>Info</span>
-<span className={badgeClass('primary')}>New</span>
+<StatusBadge status="success">Active</StatusBadge>
 ```python
 
-**Variants**: `default` | `success` | `warning` | `error` | `info` | `primary`
+Or compose the token object: `cn(badge.base, badge.variant.success)` — variants
+`default` | `success` | `warning` | `error` | `info` | `primary`.
 
 ### Modals
 
 ```tsx
-import { modal, modalClass } from "../styles/theme";
+import { Modal } from '../components/ui/Modal';
 
-<div className={modal.overlay}>
-  <div className={modalClass("md", "md")}>
-    <h2 className="text-xl font-semibold mb-4">Modal Title</h2>
-    <p className="mb-6">Modal content</p>
-    <div className="flex justify-end gap-3">
-      <button className={buttonClass("secondary", "md")}>Cancel</button>
-      <button className={buttonClass("primary", "md")}>Confirm</button>
-    </div>
-  </div>
-</div>;
+<Modal open={open} onClose={close} title="Modal Title" size="md">
+  <p>Modal content</p>
+</Modal>
 ```python
 
-**Sizes**: `sm` | `md` | `lg` | `xl` | `full`
-
-**Padding**: `sm` | `md` | `lg`
+Sizes `sm` | `md` | `lg` | `xl` | `full`. The `modal` token object (overlay /
+backdrop / content) remains for fully custom dialogs.
 
 ### Status Indicators
 
@@ -325,15 +275,14 @@ import { cn } from '../styles/theme';
 ### After (design system)
 
 ```tsx
-import { buttonClass, cardClass } from '../styles/theme';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/card';
 
-<button className={buttonClass('primary', 'md')}>
-  Save
-</button>
+<Button>Save</Button>
 
-<div className={cardClass('default', 'lg')}>
-  <h3 className="text-xl font-semibold mb-2">Title</h3>
-</div>
+<Card>
+  <h3 className="heading-3 mb-heading">Title</h3>
+</Card>
 ```text
 
 ## Benefits

@@ -111,6 +111,10 @@
   --color-cat-7: var(--color-cat-7);
   --color-cat-8: var(--color-cat-8);
 
+  /* Severity scale extension — CVSS "high" has no status-* equivalent (sits
+   * between status-warning and status-error). Semantic, not categorical. */
+  --color-severity-high: var(--color-severity-high);
+
   /* Log-level tinted bg + readable fg pairs (extends the solid --color-log-*
    * above). For row highlights / chips in the log viewer. */
   --color-log-trace-bg: var(--color-log-trace-bg);
@@ -210,6 +214,9 @@
   --color-cat-7: #0d9488; /* teal */
   --color-cat-8: #e11d48; /* rose */
 
+  /* Severity "high" — LIGHT (orange-600, between warning and error). */
+  --color-severity-high: #ea580c;
+
   /* Log-level bg/fg pairs — LIGHT (tint bg + dark fg). */
   --color-log-trace-bg: #f8fafc;
   --color-log-trace-fg: #334155;
@@ -284,6 +291,9 @@
   --color-cat-6: #c084fc; /* purple */
   --color-cat-7: #2dd4bf; /* teal */
   --color-cat-8: #fb7185; /* rose */
+
+  /* Severity "high" — DARK (orange-400). */
+  --color-severity-high: #fb923c;
 
   /* Log-level bg/fg pairs — DARK (deep bg + light fg). */
   --color-log-trace-bg: #020617;
