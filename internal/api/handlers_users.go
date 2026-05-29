@@ -410,23 +410,102 @@ func (s *Server) requireAdmin(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
-// callerIsAdmin looks up the request's user and returns whether their
-// role is "admin". Tolerates a missing DB (dev builds) by assuming
-// admin so the panel stays usable.
-func (s *Server) callerIsAdmin(r *http.Request) bool {
-	caller := usernameFromContext(r)
-	if caller == "" {
-		return false
-	}
+// callerRole resolves the requesting user's role. ok is false when the
+// role can't be established (no caller, lookup failure, inactive user).
+// When no user DB is configured (single-user/env mode) it returns
+// admin/true: the lone env-configured operator is implicitly admin, which
+// keeps single-user dev builds fully usable.
+func (s *Server) callerRole(r *http.Request) (string, bool) {
 	db := s.services.Database.DB
+	caller := usernameFromContext(r)
+	// No user DB attached = no multi-user authorization model in effect,
+	// so the gate has nothing to enforce — treat the request as admin.
+	// Production single-user still gets X-Username from the auth
+	// middleware, so this branch only fires in test/dev contexts that
+	// reach the mux without auth middleware, matching the long-standing
+	// callerIsAdmin "no DB = admin" tolerance.
 	if db == nil {
-		return true
+		return database.RoleAdmin, true
+	}
+	if caller == "" {
+		return "", false
 	}
 	u, err := db.GetUser(r.Context(), caller)
-	if err != nil {
+	if err != nil || !u.IsActive {
+		return "", false
+	}
+	return u.Role, true
+}
+
+// Role ranks order the three roles for >= comparisons. Unknown/unresolved
+// roles rank at rankNone so they never satisfy a minimum of viewer or above.
+const (
+	rankNone     = 0
+	rankViewer   = 1
+	rankOperator = 2
+	rankAdmin    = 3
+)
+
+// roleRank maps a role string to its comparable rank.
+func roleRank(role string) int {
+	switch role {
+	case database.RoleAdmin:
+		return rankAdmin
+	case database.RoleOperator:
+		return rankOperator
+	case database.RoleViewer:
+		return rankViewer
+	default:
+		return rankNone
+	}
+}
+
+// callerIsAdmin reports whether the request's user is an admin. Tolerates
+// a missing DB (dev builds) by assuming admin so the panel stays usable.
+func (s *Server) callerIsAdmin(r *http.Request) bool {
+	role, ok := s.callerRole(r)
+	return ok && role == database.RoleAdmin
+}
+
+// requireRole replies 401 (no caller) or 403 (under-privileged) unless the
+// requester's role ranks at or above min. Returns true when the request
+// may proceed.
+func (s *Server) requireRole(w http.ResponseWriter, r *http.Request, minRole string) bool {
+	role, ok := s.callerRole(r)
+	if !ok {
+		writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required")
 		return false
 	}
-	return u.Role == database.RoleAdmin && u.IsActive
+	if roleRank(role) < roleRank(minRole) {
+		writeAPITokenError(w, r, http.StatusForbidden, ErrCodeForbidden, minRole+" role required")
+		return false
+	}
+	return true
+}
+
+// requireWriteAccess gates state-changing operations on operator-or-above;
+// viewers are read-only (#1226). Safe (read) methods should skip this.
+func (s *Server) requireWriteAccess(w http.ResponseWriter, r *http.Request) bool {
+	return s.requireRole(w, r, database.RoleOperator)
+}
+
+// writeGated wraps a handler so that state-changing methods require an
+// operator-or-above role while safe reads (GET/HEAD/OPTIONS) pass through
+// untouched. Applied at route registration to persistent-configuration
+// endpoints so viewers stay read-only on them; diagnostic actions
+// (scans/pings/traceroute) are deliberately left ungated (#1226).
+func (s *Server) writeGated(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet, http.MethodHead, http.MethodOptions:
+			next(w, r)
+		default:
+			if !s.requireWriteAccess(w, r) {
+				return
+			}
+			next(w, r)
+		}
+	}
 }
 
 // licenseAllowsMultiUser reports whether the active license tier may
