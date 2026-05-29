@@ -1,7 +1,5 @@
 import { twMerge } from 'tailwind-merge';
 
-import { button, card, input } from './themeComponents';
-
 /**
  * =============================================================================
  * THE SEED DESIGN SYSTEM - Mustard Seed Networks
@@ -12,7 +10,9 @@ import { button, card, input } from './themeComponents';
  * ARCHITECTURE:
  * 1. CSS Variables (index.css) - Core color tokens for light/dark modes
  * 2. This file (theme.ts) - Barrel that re-exports the per-domain token
- *    modules + the class-name composition helpers (cn, buttonClass, etc.)
+ *    modules + the cn() class-name helper. For component STYLING use the
+ *    components in components/ui/* (<Button>, <Card>, <Input>); for ad-hoc
+ *    composition use the token objects directly (cn(button.base, ...)).
  * 3. Tailwind Classes - CSS-first configuration using @theme directive
  *
  * Token modules:
@@ -63,66 +63,4 @@ export { typography } from './themeTypography';
  */
 export function cn(...classes: (string | boolean | undefined | null)[]): string {
   return twMerge(classes.filter(Boolean).join(' '));
-}
-
-// Type-safe Maps for dynamic lookups
-const buttonVariantMap: Map<keyof typeof button.variant, string> = new Map<
-  keyof typeof button.variant,
-  string
->(Object.entries(button.variant) as [keyof typeof button.variant, string][]);
-const buttonSizeMap: Map<keyof typeof button.size, string> = new Map<
-  keyof typeof button.size,
-  string
->(Object.entries(button.size) as [keyof typeof button.size, string][]);
-
-/**
- * Build a button class string
- */
-export function buttonClass(
-  variant: keyof typeof button.variant = 'primary',
-  size: keyof typeof button.size = 'md',
-  className?: string,
-): string {
-  return cn(button.base, buttonVariantMap.get(variant), buttonSizeMap.get(size), className);
-}
-
-// Type-safe Maps for input lookups
-const inputStateMap: Map<keyof typeof input.state, string> = new Map<
-  keyof typeof input.state,
-  string
->(Object.entries(input.state) as [keyof typeof input.state, string][]);
-const inputSizeMap: Map<keyof typeof input.size, string> = new Map<keyof typeof input.size, string>(
-  Object.entries(input.size) as [keyof typeof input.size, string][],
-);
-
-/**
- * Build an input class string
- */
-export function inputClass(
-  state: keyof typeof input.state = 'default',
-  size: keyof typeof input.size = 'md',
-  className?: string,
-): string {
-  return cn(input.base, inputStateMap.get(state), inputSizeMap.get(size), className);
-}
-
-// Type-safe Maps for card lookups
-const cardVariantMap: Map<keyof typeof card.variant, string> = new Map<
-  keyof typeof card.variant,
-  string
->(Object.entries(card.variant) as [keyof typeof card.variant, string][]);
-const cardPaddingMap: Map<keyof typeof card.padding, string> = new Map<
-  keyof typeof card.padding,
-  string
->(Object.entries(card.padding) as [keyof typeof card.padding, string][]);
-
-/**
- * Build a card class string
- */
-export function cardClass(
-  variant: keyof typeof card.variant = 'default',
-  padding: keyof typeof card.padding = 'md',
-  className?: string,
-): string {
-  return cn(card.base, cardVariantMap.get(variant), cardPaddingMap.get(padding), className);
 }

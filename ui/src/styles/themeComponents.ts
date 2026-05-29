@@ -12,16 +12,16 @@ export const button = {
 
   variant: {
     // Seed anchor is seed-500 (#4caf50) — needs DARK text (white fails AA).
-    // text-zinc-900 is constant across modes (text-text-inverse flips and
-    // would fail one of them). Opacity hover avoids the lighten-to-accent
-    // trap. Per Phase 7 of the 2026-05-22 brand audit.
-    primary: 'bg-brand-primary text-zinc-900 hover:bg-brand-primary/90',
+    // text-on-brand is the AA-safe, mode-constant foreground for filled brand
+    // surfaces (text-text-inverse flips and would fail one mode). Opacity hover
+    // avoids the lighten-to-accent trap. Per Phase 7 of the 2026-05-22 audit.
+    primary: 'bg-brand-primary text-on-brand hover:bg-brand-primary/90',
     secondary: 'border border-surface-border bg-surface-raised hover:bg-surface-hover',
     ghost: 'hover:bg-surface-hover',
     // Status danger/success buttons also fail AA with text-inverse in some
-    // mode; use a constant.
-    danger: 'bg-status-error text-white hover:bg-status-error/90',
-    success: 'bg-status-success text-zinc-900 hover:bg-status-success/90',
+    // mode; use the on-* tokens (constant across modes).
+    danger: 'bg-status-error text-on-danger hover:bg-status-error/90',
+    success: 'bg-status-success text-on-brand hover:bg-status-success/90',
   },
 
   size: {
