@@ -134,6 +134,9 @@ jobs:
       - name: Verify generated TS types are up to date
         run: ./scripts/check-types-drift.sh
 
+      - name: Output-escaping / XSS gate (#1225)
+        run: ./scripts/check-output-escaping.sh
+
       - name: Run staticcheck
         run: |
           go install honnef.co/go/tools/cmd/staticcheck@latest
