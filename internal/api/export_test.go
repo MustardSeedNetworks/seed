@@ -438,11 +438,6 @@ func ExportIsAddrInUse(err error) bool {
 	return isAddrInUse(err)
 }
 
-// HTTPToHTTPSRedirectHandler exposes the HTTP→HTTPS redirect handler for testing.
-func (s *Server) HTTPToHTTPSRedirectHandler() http.Handler {
-	return s.httpToHTTPSRedirectHandler()
-}
-
 // EnsureSelfSignedCert exposes ensureSelfSignedCert for testing.
 func (s *Server) EnsureSelfSignedCert() (string, string, error) {
 	return s.ensureSelfSignedCert()
