@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.203.0](https://github.com/krisarmstrong/seed/compare/v0.202.1...v0.203.0) (2026-05-29)
+
+
+### Features
+
+* **api:** enforce viewer read-only via writeGated route wrapper ([#1226](https://github.com/krisarmstrong/seed/issues/1226)) ([#1265](https://github.com/krisarmstrong/seed/issues/1265)) ([b99dae0](https://github.com/krisarmstrong/seed/commit/b99dae0409e68379185b3a9fddd16d49c661c041))
+* **api:** per-token role scope for personal-access tokens ([#1255](https://github.com/krisarmstrong/seed/issues/1255)) ([#1268](https://github.com/krisarmstrong/seed/issues/1268)) ([a5078dd](https://github.com/krisarmstrong/seed/commit/a5078dd8ec126d3163225fe8f08becd231be72e4))
+* **api:** structured audit log for authz denials ([#1257](https://github.com/krisarmstrong/seed/issues/1257)) ([#1271](https://github.com/krisarmstrong/seed/issues/1271)) ([47bdac6](https://github.com/krisarmstrong/seed/commit/47bdac6ff46e188ee60c748b682a5a26d379a737))
+* **config:** refuse CORS `*` origin at startup ([#1256](https://github.com/krisarmstrong/seed/issues/1256)) ([#1269](https://github.com/krisarmstrong/seed/issues/1269)) ([32cd690](https://github.com/krisarmstrong/seed/commit/32cd690973cb4009f8e7bfbf22b554846d27b6df))
+* **ui:** role-based write gating with RoleContext + WriteGate ([#1254](https://github.com/krisarmstrong/seed/issues/1254)) ([#1267](https://github.com/krisarmstrong/seed/issues/1267)) ([04a4b35](https://github.com/krisarmstrong/seed/commit/04a4b35c311710d5008627181f541c940701c933))
+* **ui:** wrap SettingsDrawer in ReadOnlyView for viewer role ([#1254](https://github.com/krisarmstrong/seed/issues/1254) follow-up) ([#1270](https://github.com/krisarmstrong/seed/issues/1270)) ([2aa3b6d](https://github.com/krisarmstrong/seed/commit/2aa3b6d97d304e544bf745fabbdc371d78f24eb0))
+
 ## [0.202.1](https://github.com/krisarmstrong/seed/compare/v0.202.0...v0.202.1) (2026-05-29)
 
 
