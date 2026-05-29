@@ -42,7 +42,7 @@
     "channelWidth": {
       "term": "Channel Width",
       "fullName": "Ancho de Banda del Canal",
-      "definition": "El rango de frecuencia usado por un canal WiFi (20, 40, 80 o 160 MHz). Canales más anchos proporcionan mayor rendimiento pero son más susceptibles a interferencia.",
+      "definition": "El rango de frecuencia usado por un canal WiFi (20, 40, 80 o 160 MHz). Canales más anchos proporcionan mayor throughput pero son más susceptibles a interferencia.",
       "category": "wifi"
     },
     "802.11ax": {
@@ -54,7 +54,7 @@
     "802.11be": {
       "term": "802.11be",
       "fullName": "WiFi 7",
-      "definition": "El último estándar IEEE inalámbrico con canales de 320 MHz, modulación 4096-QAM y operación multi-enlace para rendimiento extremadamente alto.",
+      "definition": "El último estándar IEEE inalámbrico con canales de 320 MHz, modulación 4096-QAM y operación multi-enlace para throughput extremadamente alto.",
       "category": "wifi"
     },
     "mcs": {
@@ -216,30 +216,30 @@
     "iperf": {
       "term": "iPerf",
       "fullName": "iPerf3",
-      "definition": "Una herramienta ampliamente usada para medir el rendimiento de red entre dos puntos finales. Soporta pruebas TCP y UDP con varias opciones de configuración.",
+      "definition": "Una herramienta ampliamente usada para medir el throughput de red entre dos puntos finales. Soporta pruebas TCP y UDP con varias opciones de configuración.",
       "category": "performance"
     },
     "speedtest": {
       "term": "Speedtest",
       "fullName": "Prueba de Velocidad de Internet",
-      "definition": "Una prueba que mide la velocidad de descarga, velocidad de subida y latencia para determinar el rendimiento de la conexión a internet.",
+      "definition": "Una prueba que mide la velocidad de descarga, velocidad de subida y latency para determinar el rendimiento de la conexión a internet.",
       "category": "performance"
     },
     "latency": {
       "term": "Latency",
-      "fullName": "Latencia de Red",
+      "fullName": "Latency de Red",
       "definition": "El retraso de tiempo entre enviar una solicitud y recibir una respuesta, típicamente medido en milisegundos (ms). Menor es mejor.",
       "category": "performance"
     },
     "jitter": {
       "term": "Jitter",
       "fullName": "Variación de Retardo de Paquetes",
-      "definition": "La variación en la latencia a lo largo del tiempo. Alto jitter causa problemas para aplicaciones en tiempo real como VoIP y videoconferencia.",
+      "definition": "La variación en la latency a lo largo del tiempo. Alto jitter causa problemas para aplicaciones en tiempo real como VoIP y videoconferencia.",
       "category": "performance"
     },
     "throughput": {
       "term": "Throughput",
-      "fullName": "Rendimiento de Red",
+      "fullName": "Throughput de Red",
       "definition": "La tasa real de transferencia exitosa de datos sobre una red, medida en bits por segundo (bps, Mbps, Gbps).",
       "category": "performance"
     },
