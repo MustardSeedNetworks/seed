@@ -481,13 +481,37 @@ func (s *Server) callerIsAdmin(r *http.Request) bool {
 // requireRole replies 401 (no caller) or 403 (under-privileged) unless the
 // requester's role ranks at or above min. Returns true when the request
 // may proceed.
+//
+// Denials emit structured `event=auth.unauthorized` / `event=auth.forbidden`
+// records (#1257) so SIEM pipelines across seed/stem/niac can filter
+// authorization failures uniformly. The fields mirror what niac emits on
+// scope mismatch: required role/scope, actual role (if resolved), client
+// IP, request path + method, and the caller username.
 func (s *Server) requireRole(w http.ResponseWriter, r *http.Request, minRole string) bool {
 	role, ok := s.callerRole(r)
 	if !ok {
+		logging.FromContext(r.Context()).WarnContext(r.Context(),
+			"Authentication required for protected endpoint",
+			"event", "auth.unauthorized",
+			"required_role", minRole,
+			"client_ip", GetClientIP(r),
+			"path", r.URL.Path,
+			"method", r.Method,
+		)
 		writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required")
 		return false
 	}
 	if roleRank(role) < roleRank(minRole) {
+		logging.FromContext(r.Context()).WarnContext(r.Context(),
+			"Forbidden: insufficient role",
+			"event", "auth.forbidden",
+			"required_role", minRole,
+			"actual_role", role,
+			"username", usernameFromContext(r),
+			"client_ip", GetClientIP(r),
+			"path", r.URL.Path,
+			"method", r.Method,
+		)
 		writeAPITokenError(w, r, http.StatusForbidden, ErrCodeForbidden, minRole+" role required")
 		return false
 	}
