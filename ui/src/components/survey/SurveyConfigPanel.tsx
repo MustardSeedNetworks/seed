@@ -50,9 +50,9 @@ const CHANNELS: Record<WiFiBand, number[]> = {
 
 /** Band display info */
 const BAND_INFO: Record<WiFiBand, { label: string; color: string }> = {
-  '2.4': { label: '2.4 GHz', color: 'bg-blue-500' },
-  '5': { label: '5 GHz', color: 'bg-green-500' },
-  '6': { label: '6 GHz', color: 'bg-purple-500' },
+  '2.4': { label: '2.4 GHz', color: 'bg-cat-1' },
+  '5': { label: '5 GHz', color: 'bg-cat-4' },
+  '6': { label: '6 GHz', color: 'bg-cat-6' },
 };
 
 function getBandInfo(band: WiFiBand): { label: string; color: string } {

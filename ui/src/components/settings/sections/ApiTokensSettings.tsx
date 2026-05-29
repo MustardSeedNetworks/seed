@@ -137,7 +137,7 @@ export function ApiTokensSettings(): React.ReactElement {
         </p>
 
         {!canMint && (
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 pad-sm text-sm text-amber-200">
+          <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad-sm text-sm text-status-warning">
             Current tier: <strong>{tierLabel}</strong>. Minting API tokens requires Pro. Start a
             14-day trial with <code>seed license trial</code>, or activate a Pro key with{' '}
             <code>seed license activate -k &lt;KEY&gt;</code>.

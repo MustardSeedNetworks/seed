@@ -68,7 +68,7 @@ export const InputModal: FC<InputModalProps> = ({
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full rounded-lg border border-surface-border bg-bg-base/60 pad-sm text-sm text-text-primary placeholder-gray-500 focus:border-brand-accent focus:outline-none"
+          className="w-full rounded-lg border border-surface-border bg-bg-base/60 pad-sm text-sm text-text-primary placeholder:text-text-muted focus:border-brand-accent focus:outline-none"
         />
         <div className="flex justify-end gap-default pt-2">
           <Button variant="outline" onClick={onCancel}>

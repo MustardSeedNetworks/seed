@@ -124,13 +124,7 @@ function LogEntryRow({ entry, expanded, onToggle, onClose }: LogEntryRowProps): 
 
         {/* Component badge */}
         {entry.component ? (
-          <span
-            className={cn(
-              'px-3 py-compact',
-              radius.default,
-              'bg-purple-500/20 text-purple-600 dark:text-purple-400 text-sm',
-            )}
-          >
+          <span className={cn('px-3 py-compact', radius.default, 'bg-cat-6/20 text-cat-6 text-sm')}>
             {entry.component}
           </span>
         ) : null}

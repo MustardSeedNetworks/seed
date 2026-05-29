@@ -149,7 +149,7 @@ export function SsoSettings(): React.ReactElement {
         <p className="text-sm text-text-secondary">{t('settings:sso.description')}</p>
 
         {!canEdit && (
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 pad-sm text-sm text-amber-200">
+          <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad-sm text-sm text-status-warning">
             {t('errors:sso.featureRequired')}
           </div>
         )}

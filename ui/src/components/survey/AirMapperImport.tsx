@@ -330,18 +330,18 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps): R
           {/* Location counts */}
           <div className={cn(layout.inline.default, spacing.margin.top.content, 'flex-wrap')}>
             <div className={cn(layout.inline.default, 'caption')}>
-              <MapPin className="w-3 h-3 text-green-500" />
+              <MapPin className="w-3 h-3 text-cat-4" />
               <span>{summary.apCount} APs</span>
             </div>
             <div className={cn(layout.inline.default, 'caption')}>
-              <Users className="w-3 h-3 text-blue-500" />
+              <Users className="w-3 h-3 text-cat-1" />
               <span>
                 {summary.clientCount} {t('import.clients')}
               </span>
             </div>
             {summary.hasBothModes ? (
               <div className={cn(layout.inline.default, 'caption')}>
-                <Radio className="w-3 h-3 text-purple-500" />
+                <Radio className="w-3 h-3 text-cat-6" />
                 <span>{t('import.passiveAndActive')}</span>
               </div>
             ) : null}

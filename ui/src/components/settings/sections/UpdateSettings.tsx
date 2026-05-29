@@ -192,11 +192,11 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
             <div
               className={cn(
                 spacing.pad.sm,
-                'bg-red-500/10 border border-red-500/30',
+                'bg-status-error/10 border border-status-error/30',
                 radius.default,
               )}
             >
-              <span className="body-small text-red-500">{error}</span>
+              <span className="body-small text-status-error">{error}</span>
             </div>
           ) : null}
 
@@ -206,15 +206,15 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
               className={cn(
                 'stack-sm',
                 spacing.pad.sm,
-                'bg-green-500/10 border border-green-500/30',
+                'bg-status-success/10 border border-status-success/30',
                 radius.default,
               )}
             >
               <div className={layout.flex.between}>
-                <span className="body-small text-green-500 font-medium">
+                <span className="body-small text-status-success font-medium">
                   {t('updates.updateAvailable', 'Update Available')}
                 </span>
-                <span className="body-small text-green-500 font-mono">
+                <span className="body-small text-status-success font-mono">
                   v{updateInfo.latestVersion}
                 </span>
               </div>
@@ -250,7 +250,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                     layout.flex.center,
                     spacing.gap.compact,
                     spacing.pad.sm,
-                    'bg-green-500 hover:bg-green-600 text-white',
+                    'bg-status-success hover:bg-status-success/90 text-on-brand',
                     radius.default,
                     'transition-colors',
                     'disabled:opacity-50 disabled:cursor-not-allowed',
@@ -287,7 +287,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                     layout.flex.center,
                     spacing.gap.compact,
                     spacing.pad.sm,
-                    'bg-blue-500 hover:bg-blue-600 text-white',
+                    'bg-status-info hover:bg-status-info/90 text-on-info',
                     radius.default,
                     'transition-colors',
                     'disabled:opacity-50 disabled:cursor-not-allowed',
@@ -323,7 +323,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                 'border border-surface-border',
               )}
             >
-              <CheckCircle className={cn(iconTokens.size.sm, 'text-green-500')} />
+              <CheckCircle className={cn(iconTokens.size.sm, 'text-status-success')} />
               <span className="body-small text-text-secondary">
                 {t('updates.upToDate', "You're up to date!")}
               </span>
@@ -423,7 +423,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                   'bg-surface-base',
                   radius.default,
                   'border border-surface-border hover:bg-surface-hover transition-colors',
-                  'text-orange-500',
+                  'text-status-warning',
                 )}
               >
                 <span className="body-small">
