@@ -325,7 +325,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
               button.size.md,
               'bg-brand-primary text-on-brand',
               radius.md,
-              'font-medium hover:bg-brand-primary-hover transition-colors flex-center',
+              'font-medium hover:bg-brand-accent transition-colors flex-center',
               spacing.gap.compact,
               'touch-manipulation disabled:opacity-50',
             )}
