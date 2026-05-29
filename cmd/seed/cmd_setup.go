@@ -28,6 +28,17 @@ This command allows you to regenerate authentication credentials without
 going through the web UI. Use --generate-password to auto-generate a
 secure password, or start the server and use the web wizard for
 interactive setup.`,
+		Example: `  # Generate a strong password and print it once
+  seed setup-wizard --generate-password
+
+  # Generate a password and emit machine-readable output
+  seed setup-wizard --generate-password --json
+
+  # Reset back to the first-run web wizard
+  seed setup-wizard
+
+  # Also rotate the JWT secret (forces all sessions to log in again)
+  seed setup-wizard --generate-password --reset-jwt`,
 		Run: func(cmd *cobra.Command, args []string) {
 			runSetup(cmd, args, state)
 		},

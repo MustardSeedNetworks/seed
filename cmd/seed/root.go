@@ -55,6 +55,14 @@ A comprehensive network diagnostic tool that provides:`, version.GetVersion()) +
   - Real-time network monitoring
 
 The Seed runs as a web server with a modern React-based UI.`,
+		Example: `  # Start the web server (also: ` + "`seed serve`" + `)
+  seed
+
+  # Use a specific config file
+  seed --config /etc/seed/seed.json
+
+  # See per-command help
+  seed help install`,
 	}
 
 	state.completionCmd = &cobra.Command{

@@ -35,6 +35,17 @@ func initUninstallCmd(state *cliState) {
 
 By default, configuration and data files are preserved.
 Use --purge to remove all files including configuration.`,
+		Example: `  # Remove the system-wide installation (keeps /etc/seed + data)
+  sudo seed uninstall --system
+
+  # Remove the user-mode installation
+  seed uninstall --user
+
+  # Remove EVERYTHING: binary, systemd unit, config, data, logs
+  sudo seed uninstall --system --purge
+
+  # Skip the confirmation prompt
+  sudo seed uninstall --system --purge --force`,
 		Run: func(cmd *cobra.Command, args []string) {
 			runUninstall(cmd, args, state)
 		},

@@ -38,6 +38,17 @@ This command will:
 4. Set capabilities for raw socket access
 5. Install and enable the systemd service
 6. Create a default configuration file if needed`,
+		Example: `  # System-wide install (Linux, requires root)
+  sudo seed install --system
+
+  # Per-user install (no root, ~/.local/bin + systemd --user)
+  seed install --user
+
+  # Install the binary without registering a systemd service
+  sudo seed install --system --no-service
+
+  # Force-overwrite an existing installation
+  sudo seed install --system --force`,
 		Run: func(cmd *cobra.Command, args []string) {
 			runInstall(cmd, args, state)
 		},

@@ -30,6 +30,17 @@ func initResetCmd(state *cliState) {
 By default, this will create a backup of the current config and replace it
 with a fresh default configuration. Authentication credentials can optionally
 be preserved.`,
+		Example: `  # Reset config with a confirmation prompt (creates a backup)
+  seed reset-config
+
+  # Reset but keep the existing admin user and password
+  seed reset-config --preserve-auth
+
+  # Reset, keep auth, also keep the JWT secret (no forced re-login)
+  seed reset-config --preserve-auth --preserve-jwt
+
+  # Reset without confirmation or backup (DANGEROUS)
+  seed reset-config --force --backup=false`,
 		Run: func(cmd *cobra.Command, args []string) {
 			runReset(cmd, args, state)
 		},

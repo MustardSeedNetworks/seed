@@ -18,6 +18,14 @@ func initExportCmd(state *cliState) {
 		Use:   "export-config",
 		Short: "Export configuration",
 		Long:  "Export configuration as JSON with secrets redacted (safe for sharing)",
+		Example: `  # Print redacted config to stdout
+  seed export-config
+
+  # Save redacted config to a file
+  seed export-config -o seed-config.json
+
+  # Export with secrets included (DANGEROUS — never share this output)
+  seed export-config --no-redact -o seed-config-full.json`,
 		Run: func(cmd *cobra.Command, args []string) {
 			runExport(cmd, args, state)
 		},

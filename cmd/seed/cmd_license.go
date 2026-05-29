@@ -26,18 +26,42 @@ diagnostics only). Paid tiers:
     and REST API access
 
 A 14-day trial of the full Pro tier is available without a key.`,
+		Example: `  # Check the current tier / activation
+  seed license status
+
+  # Start a 14-day Pro trial (no key required)
+  seed license trial
+
+  # Activate a paid key
+  seed license activate -k XXXX-XXXX-XXXX-XXXX
+
+  # Remove the license from this device
+  seed license deactivate`,
 	}
 
 	licenseCmd.AddCommand(&cobra.Command{
 		Use:   "status",
 		Short: "Show current license status",
-		Run:   func(_ *cobra.Command, _ []string) { runLicenseStatus(state) },
+		Long: `Print the current license tier, key, activation date, expiry,
+device hash, and unlocked feature count. With no license active, prints the
+Free-tier banner.`,
+		Example: `  # Show the active license / trial status
+  seed license status`,
+		Run: func(_ *cobra.Command, _ []string) { runLicenseStatus(state) },
 	})
 
 	activateCmd := &cobra.Command{
 		Use:   "activate",
 		Short: "Activate a license key",
-		Run:   func(cmd *cobra.Command, _ []string) { runLicenseActivate(cmd) },
+		Long: `Activate a Seed license key on this device. Validation is fully
+offline (rotor cipher + device fingerprint); no phone-home. The key is bound
+to this device's hash and unlocks the tier features encoded in the key.`,
+		Example: `  # Activate a Pro key
+  seed license activate -k XXXX-XXXX-XXXX-XXXX
+
+  # The flag is required — this prints the usage
+  seed license activate`,
+		Run: func(cmd *cobra.Command, _ []string) { runLicenseActivate(cmd) },
 	}
 	activateCmd.Flags().StringP("key", "k", "", "License key to activate (XXXX-XXXX-XXXX-XXXX)")
 	_ = activateCmd.MarkFlagRequired("key")
@@ -46,13 +70,24 @@ A 14-day trial of the full Pro tier is available without a key.`,
 	licenseCmd.AddCommand(&cobra.Command{
 		Use:   "deactivate",
 		Short: "Remove the current license from this device",
-		Run:   func(_ *cobra.Command, _ []string) { runLicenseDeactivate(state) },
+		Long: `Remove the activated license from this device. After deactivation
+Seed reverts to the Free tier. The license key itself remains valid and can
+be activated on another device.`,
+		Example: `  # Deactivate the current license (revert to Free tier)
+  seed license deactivate`,
+		Run: func(_ *cobra.Command, _ []string) { runLicenseDeactivate(state) },
 	})
 
 	licenseCmd.AddCommand(&cobra.Command{
 		Use:   "trial",
 		Short: "Start the 14-day Pro trial",
-		Run:   func(_ *cobra.Command, _ []string) { runLicenseTrial(state) },
+		Long: `Begin a one-time 14-day trial of the full Pro tier. The trial is
+tied to this device's hash and cannot be reset after expiry — activate a
+real key with ` + "`seed license activate -k ...`" + ` to continue using Pro
+features.`,
+		Example: `  # Start the 14-day Pro trial
+  seed license trial`,
+		Run: func(_ *cobra.Command, _ []string) { runLicenseTrial(state) },
 	})
 
 	state.rootCmd.AddCommand(licenseCmd)
