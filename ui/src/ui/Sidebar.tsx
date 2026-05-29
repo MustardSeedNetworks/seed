@@ -312,7 +312,7 @@ const SidebarBody: FC<SidebarBodyProps> = ({
         {groups.map((group, groupIndex) => (
           <div key={group.label || `nav-group-${String(groupIndex)}`}>
             {!collapsed && group.label ? (
-              <h3 className="px-3 mb-2 text-xs font-semibold text-text-muted uppercase tracking-wider">
+              <h3 className="section-title font-semibold px-3 mb-2">
                 {translateLabel(group.label)}
               </h3>
             ) : null}

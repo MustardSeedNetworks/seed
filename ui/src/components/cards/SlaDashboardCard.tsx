@@ -364,7 +364,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
             <div className="grid grid-cols-2 gap-comfortable">
               {data.alerts ? (
                 <div>
-                  <h4 className="text-xs text-text-muted mb-2">
+                  <h4 className="caption mb-2">
                     {t('slaDashboard.activeAlerts', 'Active Alerts')}
                   </h4>
                   <div className="flex items-center gap-compact">
@@ -391,9 +391,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
               ) : null}
 
               <div>
-                <h4 className="text-xs text-text-muted mb-2">
-                  {t('slaDashboard.anomalies', 'Anomalies')}
-                </h4>
+                <h4 className="caption mb-2">{t('slaDashboard.anomalies', 'Anomalies')}</h4>
                 <div className="flex items-center gap-compact">
                   <span
                     className={cn(

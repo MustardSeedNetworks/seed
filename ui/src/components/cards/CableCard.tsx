@@ -41,6 +41,7 @@ import type { UnitSystem } from '../../types/settings';
 import { CardDivider, CardRow, CardValue, type Status } from '../ui/card';
 import { Cable } from '../ui/icons';
 import { SimpleBaseCard } from './BaseCard';
+import { wireColorMap } from './cableWire';
 
 /** Per-pair TDR test result */
 interface CablePairResult {
@@ -87,18 +88,6 @@ const statusMap: Record<string, Status> = {
   crosstalk: 'warning',
   splitPair: 'warning',
   unknown: 'unknown',
-};
-
-// Wire color to CSS class mapping for visual display (keys are lowercase for lookup)
-const wireColorMap: Record<string, string> = {
-  'white/orange': 'bg-orange-100 border-orange-400',
-  orange: 'bg-orange-500',
-  'white/green': 'bg-green-100 border-green-400',
-  green: 'bg-green-500',
-  'white/blue': 'bg-blue-100 border-blue-400',
-  blue: 'bg-blue-500',
-  'white/brown': 'bg-amber-100 border-amber-600',
-  brown: 'bg-amber-700',
 };
 
 function getCardStatus(data: CableData | null): Status {
