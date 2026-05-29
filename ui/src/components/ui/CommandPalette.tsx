@@ -82,7 +82,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
       open={open}
       onOpenChange={onOpenChange}
       label="Command palette"
-      className="fixed inset-0 z-[60] flex items-start justify-center pt-[10vh]"
+      className="fixed inset-0 z-overlay flex items-start justify-center pt-[10vh]"
       shouldFilter={true}
     >
       <button
