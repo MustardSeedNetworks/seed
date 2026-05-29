@@ -434,6 +434,17 @@ func (s *Server) callerRole(r *http.Request) (string, bool) {
 	if err != nil || !u.IsActive {
 		return "", false
 	}
+	// #1255: PAT auth sets X-Token-Scope to a per-token role cap. The
+	// effective role becomes the lower of the owner's role and the
+	// token's scope so an automation token minted from an admin owner
+	// can't escalate. An invalid/unknown scope value is ignored (rank-0
+	// would lock the token out entirely, the wrong failure mode for a
+	// malformed header).
+	if scope := r.Header.Get("X-Token-Scope"); scope != "" && database.IsValidRole(scope) {
+		if roleRank(scope) < roleRank(u.Role) {
+			return scope, true
+		}
+	}
 	return u.Role, true
 }
 

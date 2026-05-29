@@ -23,6 +23,12 @@ type APITokenRecord struct {
 	CreatedAt     time.Time
 	LastUsedAt    time.Time
 	RevokedAt     time.Time
+	// Scope caps the effective role of requests made with this token.
+	// Empty means inherit the owner's role (the default for tokens minted
+	// before #1255). When set, the effective role is min(owner.role,
+	// scope) at auth time so a less-privileged automation token can be
+	// minted from an admin owner.
+	Scope string
 }
 
 // IsActive reports whether the token is currently usable (not revoked).
@@ -42,12 +48,18 @@ func NewAPITokenRepository(db *DB) *APITokenRepository {
 	return &APITokenRepository{db: db}
 }
 
-// Insert persists a newly minted token record.
+// Insert persists a newly minted token record. An empty Scope is stored
+// as NULL so the column reads back as "" via the COALESCE in scan, which
+// the auth layer interprets as "inherit owner's role" (#1255).
 func (r *APITokenRepository) Insert(ctx context.Context, t APITokenRecord) error {
+	var scope any
+	if t.Scope != "" {
+		scope = t.Scope
+	}
 	_, err := r.db.conn.ExecContext(ctx, `
-		INSERT INTO api_tokens (id, owner_username, name, token_hash, prefix, created_at)
-		VALUES (?, ?, ?, ?, ?, ?)
-	`, t.ID, t.OwnerUsername, t.Name, t.TokenHash, t.Prefix, t.CreatedAt.UTC().Format(time.RFC3339Nano))
+		INSERT INTO api_tokens (id, owner_username, name, token_hash, prefix, created_at, scope)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+	`, t.ID, t.OwnerUsername, t.Name, t.TokenHash, t.Prefix, t.CreatedAt.UTC().Format(time.RFC3339Nano), scope)
 	if err != nil {
 		return fmt.Errorf("insert api token: %w", err)
 	}
@@ -59,7 +71,8 @@ func (r *APITokenRepository) Insert(ctx context.Context, t APITokenRecord) error
 func (r *APITokenRepository) FindActiveByHash(ctx context.Context, hash string) (APITokenRecord, error) {
 	row := r.db.conn.QueryRowContext(ctx, `
 		SELECT id, owner_username, name, token_hash, prefix, created_at,
-		       COALESCE(last_used_at, ''), COALESCE(revoked_at, '')
+		       COALESCE(last_used_at, ''), COALESCE(revoked_at, ''),
+		       COALESCE(scope, '')
 		FROM api_tokens
 		WHERE token_hash = ? AND revoked_at IS NULL
 	`, hash)
@@ -73,7 +86,8 @@ func (r *APITokenRepository) FindActiveByHash(ctx context.Context, hash string) 
 func (r *APITokenRepository) ListByOwner(ctx context.Context, owner string) ([]APITokenRecord, error) {
 	rows, err := r.db.conn.QueryContext(ctx, `
 		SELECT id, owner_username, name, token_hash, prefix, created_at,
-		       COALESCE(last_used_at, ''), COALESCE(revoked_at, '')
+		       COALESCE(last_used_at, ''), COALESCE(revoked_at, ''),
+		       COALESCE(scope, '')
 		FROM api_tokens
 		WHERE owner_username = ?
 		ORDER BY created_at DESC
@@ -139,7 +153,7 @@ func scanAPIToken(r rowScanner) (APITokenRecord, error) {
 
 	scanErr := r.Scan(
 		&rec.ID, &rec.OwnerUsername, &rec.Name, &rec.TokenHash, &rec.Prefix,
-		&createdStr, &lastUsedStr, &revokedStr,
+		&createdStr, &lastUsedStr, &revokedStr, &rec.Scope,
 	)
 	if scanErr != nil {
 		if errors.Is(scanErr, sql.ErrNoRows) {

@@ -979,6 +979,19 @@ func getMigrationDefs() []migrationDef {
 			PRAGMA foreign_keys = ON;
 		`,
 		},
+		{
+			// Wave 5 (#1255): per-token scope for personal-access tokens.
+			// NULL means the token inherits the owner's role (existing
+			// behavior); a non-NULL value caps the effective role at
+			// min(owner.role, token.scope). Validated by the CHECK
+			// constraint so writes through the application layer or via
+			// the SQLite shell both stay bounded to the legal set.
+			Description: "Add scope column to api_tokens for per-token role capping (#1255)",
+			Up: `
+			ALTER TABLE api_tokens ADD COLUMN scope TEXT
+			    CHECK (scope IS NULL OR scope IN ('admin','operator','viewer'));
+		`,
+		},
 	}
 }
 
