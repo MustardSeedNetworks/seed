@@ -255,11 +255,20 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Rate-limit refresh on the same per-IP bucket as login (#1224).
+	// Refresh tokens are signed JWTs so a valid one can't be brute-forced,
+	// but limiting still blunts CPU-abuse and refresh-token-stuffing if a
+	// token ever leaks. Bail early if this IP is already blocked.
+	clientIP := s.getClientIP(r)
+	if s.handleLoginRateLimited(w, logger, localizer, clientIP) {
+		return
+	}
+
 	// Get refresh token from cookie
 	refreshToken, err := auth.GetRefreshTokenFromCookie(r)
 	if err != nil {
 		// Security audit log: refresh token not found (fixes #697)
-		clientIP := s.getClientIP(r)
+		s.loginRateLimiter().RecordAttempt(clientIP, false)
 		logger.WarnContext(r.Context(), "Token refresh failed - token not found",
 			"client_ip", clientIP,
 			"event", "auth.refresh.failed",
@@ -274,7 +283,7 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	newAccessToken, err := s.authManager().RefreshAccessToken(r.Context(), refreshToken)
 	if err != nil {
 		// Security audit log: invalid/expired refresh token (fixes #697)
-		clientIP := s.getClientIP(r)
+		s.loginRateLimiter().RecordAttempt(clientIP, false)
 		logger.WarnContext(r.Context(), "Token refresh failed - invalid or expired token",
 			"client_ip", clientIP,
 			"event", "auth.refresh.failed",
@@ -285,8 +294,10 @@ func (s *Server) handleRefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Successful refresh resets the per-IP attempt counter (#1224).
+	s.loginRateLimiter().RecordAttempt(clientIP, true)
+
 	// Security audit log: successful token refresh (fixes #697)
-	clientIP := s.getClientIP(r)
 	logger.InfoContext(r.Context(), "Token refresh successful",
 		"client_ip", clientIP,
 		"event", "auth.refresh.success")
