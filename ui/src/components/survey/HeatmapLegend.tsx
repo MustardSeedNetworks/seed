@@ -113,13 +113,13 @@ export function HeatmapLegend({
 
   if (isInterference) {
     // Blue (good) to purple (bad)
-    gradient = 'linear-gradient(to right, rgb(100, 150, 255), rgb(200, 50, 255))';
+    gradient = 'linear-gradient(to right, #6496ff, #c832ff)';
   } else if (info.higherIsBetter) {
     // Higher is better: green (high) to red (low)
-    gradient = 'linear-gradient(to right, rgb(255, 0, 0), rgb(255, 255, 0), rgb(0, 255, 0))';
+    gradient = 'linear-gradient(to right, #ff0000, #ffff00, #00ff00)';
   } else {
     // Lower is better: green (low) to red (high)
-    gradient = 'linear-gradient(to right, rgb(0, 255, 0), rgb(255, 255, 0), rgb(255, 0, 0))';
+    gradient = 'linear-gradient(to right, #00ff00, #ffff00, #ff0000)';
   }
 
   return (
