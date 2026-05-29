@@ -292,28 +292,28 @@ export function useLogs({
  */
 export const LOG_LEVEL_COLORS = {
   ERROR: {
-    bg: 'bg-red-50 dark:bg-red-950',
-    text: 'text-red-700 dark:text-red-300',
+    bg: 'bg-log-error-bg',
+    text: 'text-log-error-fg',
     badge: 'bg-status-error text-text-inverse',
     border: 'border-l-4 border-status-error',
   },
   WARN: {
-    bg: 'bg-yellow-50 dark:bg-yellow-950',
-    text: 'text-yellow-700 dark:text-yellow-300',
+    bg: 'bg-log-warn-bg',
+    text: 'text-log-warn-fg',
     badge: 'bg-status-warning text-text-inverse',
     border: 'border-l-4 border-status-warning',
   },
   INFO: {
-    bg: 'bg-blue-50 dark:bg-blue-950',
-    text: 'text-blue-700 dark:text-blue-300',
+    bg: 'bg-log-info-bg',
+    text: 'text-log-info-fg',
     badge: 'bg-status-info text-text-inverse',
     border: 'border-l-4 border-status-info',
   },
   DEBUG: {
-    bg: 'bg-surface-secondary dark:bg-dark-surface-secondary',
-    text: 'text-content-secondary dark:text-dark-content-secondary',
-    badge: 'bg-surface-tertiary text-text-inverse',
-    border: 'border-l-4 border-border',
+    bg: 'bg-log-debug-bg',
+    text: 'text-log-debug-fg',
+    badge: 'bg-surface-sunken text-text-primary',
+    border: 'border-l-4 border-surface-border',
   },
 } as const;
 

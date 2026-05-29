@@ -97,6 +97,7 @@
    * same hue in both). Replaces hardcoded text-zinc-900 / text-white. */
   --color-on-brand: var(--color-on-brand);
   --color-on-danger: var(--color-on-danger);
+  --color-on-info: var(--color-on-info);
 
   /* Categorical data-viz palette — a fixed qualitative set for "N distinct
    * categories" (discovery methods, timing phases, device types, progress
@@ -203,6 +204,7 @@
   /* On-color foregrounds — constant across modes (no .dark override). */
   --color-on-brand: #18181b; /* zinc-900 — AA on brand/success fills */
   --color-on-danger: #ffffff; /* white — AA on status-error fills */
+  --color-on-info: #ffffff; /* white — AA on status-info fills */
 
   /* Categorical data-viz palette — LIGHT (≈600 weight, AA on warm cream). */
   --color-cat-1: #2563eb; /* blue */

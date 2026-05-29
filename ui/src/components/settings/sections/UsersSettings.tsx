@@ -176,7 +176,7 @@ export function UsersSettings(): React.ReactElement {
         <p className="text-sm text-text-secondary">{t('settings:users.description')}</p>
 
         {isAdmin && !canCreate && (
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-200">
+          <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 p-3 text-sm text-status-warning">
             {t('errors:users.featureRequired')} <strong>{tierLabel}</strong>
           </div>
         )}

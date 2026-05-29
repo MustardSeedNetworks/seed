@@ -18,7 +18,7 @@ export function ReportsPage() {
             description="Aggregated SLA dashboard, compliance tracking, and historical reporting."
             iconColorClass="text-module-harvest"
           />
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 pad text-sm text-amber-200">
+          <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad text-sm text-status-warning">
             Reports require the Starter tier or higher. Start a 14-day Pro trial with
             <code className="mx-1 px-1 rounded bg-surface-raised">seed license trial</code>
             or activate a Starter / Pro key with
