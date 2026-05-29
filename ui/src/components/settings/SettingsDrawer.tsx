@@ -49,6 +49,7 @@ import type {
   TestsSettings,
   WiFiSettings as WiFiSettingsType,
 } from '../../types/settings';
+import { ReadOnlyView } from '../ui/ReadOnlyView';
 import { SettingsDrawerFooter } from './SettingsDrawerFooter';
 import { SettingsDrawerNetworkSection } from './SettingsDrawerNetworkSection';
 import { ApiTokensSettings } from './sections/ApiTokensSettings';
@@ -556,148 +557,156 @@ export const SettingsDrawer: React.MemoExoticComponent<
           className={cn(spacing.drawerPad, 'section-gap body-small leading-relaxed')}
           ref={scrollRef}
         >
-          {/* Settings sections ordered to match dashboard card order */}
-          {/* Link Settings - always visible for ethernet interface config */}
-          <LinkSettings
-            linkSettings={linkSettings}
-            setLinkSettings={setLinkSettings}
-            linkStatus={linkStatus}
-            cardSettings={cardSettings}
-            updateCardSettings={updateCardSettings}
-          />
-
-          {/* Cable Test Settings - always visible for cable diagnostics */}
-          <CableTestSettings
-            cableTestSettings={cableTestSettings}
-            setCableTestSettings={setCableTestSettings}
-            cableTestStatus={cableTestStatus}
-          />
-
-          {/* Network Section - IP/DHCP config (third) */}
-          <SettingsDrawerNetworkSection
-            ipSettings={ipSettings}
-            setIpSettings={setIpSettings}
-            dnsInput={dnsInput}
-            setDnsInput={setDnsInput}
-            saveIpSettings={saveIpSettings}
-            savingIp={savingIp}
-            ipMessage={ipMessage}
-            displayOptions={displayOptions}
-            setDisplayOptions={setDisplayOptions}
-            displayStatus={displayStatus}
-            isValidIp={isValidIp}
-          />
-
-          {/* WiFi Settings - only shown in WiFi mode (#754) */}
-          {isWifi ? (
-            <WiFiSettings
-              wifiSettings={wifiSettings}
-              setWifiSettings={setWifiSettings}
-              wifiStatus={wifiStatus}
+          {/* #1254: viewers see every panel read-only via one wrap. The
+              fieldset inside ReadOnlyView propagates `disabled` to every
+              descendant input/button so each section needn't gate its own
+              controls. ApiTokensSettings still composes its license+role
+              tooltips per-control inside; ReadOnlyView's disabled is
+              idempotent with those, so no conflict. */}
+          <ReadOnlyView>
+            {/* Settings sections ordered to match dashboard card order */}
+            {/* Link Settings - always visible for ethernet interface config */}
+            <LinkSettings
+              linkSettings={linkSettings}
+              setLinkSettings={setLinkSettings}
+              linkStatus={linkStatus}
+              cardSettings={cardSettings}
+              updateCardSettings={updateCardSettings}
             />
-          ) : null}
 
-          {/* DNS Settings - matches DnsCard position */}
-          <DnsSettings
-            testsSettings={testsSettings}
-            setTestsSettings={setTestsSettings}
-            testsStatus={testsStatus}
-            cardSettings={cardSettings}
-            updateCardSettings={updateCardSettings}
-          />
+            {/* Cable Test Settings - always visible for cable diagnostics */}
+            <CableTestSettings
+              cableTestSettings={cableTestSettings}
+              setCableTestSettings={setCableTestSettings}
+              cableTestStatus={cableTestStatus}
+            />
 
-          <HealthChecksSettings
-            testsSettings={testsSettings}
-            setTestsSettings={setTestsSettings}
-            testsStatus={testsStatus}
-            cardSettings={cardSettings}
-            updateCardSettings={updateCardSettings}
-          />
+            {/* Network Section - IP/DHCP config (third) */}
+            <SettingsDrawerNetworkSection
+              ipSettings={ipSettings}
+              setIpSettings={setIpSettings}
+              dnsInput={dnsInput}
+              setDnsInput={setDnsInput}
+              saveIpSettings={saveIpSettings}
+              savingIp={savingIp}
+              ipMessage={ipMessage}
+              displayOptions={displayOptions}
+              setDisplayOptions={setDisplayOptions}
+              displayStatus={displayStatus}
+              isValidIp={isValidIp}
+            />
 
-          <PerformanceSettings
-            testsSettings={testsSettings}
-            setTestsSettings={setTestsSettings}
-            iperfSettings={iperfSettings}
-            setIperfSettings={setIperfSettings}
-            iperfStatus={iperfStatus}
-            iperfSuggestions={iperfSuggestions}
-            iperfSuggestionsStatus={iperfSuggestionsStatus}
-            iperfSuggestionsError={iperfSuggestionsError}
-            fetchIperfSuggestions={fetchIperfSuggestions}
-            cardSettings={cardSettings}
-            updateCardSettings={updateCardSettings}
-          />
+            {/* WiFi Settings - only shown in WiFi mode (#754) */}
+            {isWifi ? (
+              <WiFiSettings
+                wifiSettings={wifiSettings}
+                setWifiSettings={setWifiSettings}
+                wifiStatus={wifiStatus}
+              />
+            ) : null}
 
-          <DiscoverySettings
-            networkDiscoverySettings={networkDiscoverySettings}
-            setNetworkDiscoverySettings={setNetworkDiscoverySettings}
-            networkDiscoveryStatus={networkDiscoveryStatus}
-            subnets={subnets}
-            subnetsStatus={subnetsStatus}
-            newSubnetCidr={newSubnetCidr}
-            setNewSubnetCidr={setNewSubnetCidr}
-            newSubnetName={newSubnetName}
-            setNewSubnetName={setNewSubnetName}
-            subnetError={subnetError}
-            setSubnetError={setSubnetError}
-            addSubnet={addSubnet}
-            toggleSubnet={toggleSubnet}
-            deleteSubnet={deleteSubnet}
-            snmpSettings={snmpSettings}
-            setSnmpSettings={setSnmpSettings}
-            snmpStatus={snmpStatus}
-            cardSettings={cardSettings}
-            updateCardSettings={updateCardSettings}
-          />
+            {/* DNS Settings - matches DnsCard position */}
+            <DnsSettings
+              testsSettings={testsSettings}
+              setTestsSettings={setTestsSettings}
+              testsStatus={testsStatus}
+              cardSettings={cardSettings}
+              updateCardSettings={updateCardSettings}
+            />
 
-          <VulnerabilitySettings
-            settings={vulnSettings}
-            setSettings={setVulnSettings}
-            status={vulnStatus}
-          />
+            <HealthChecksSettings
+              testsSettings={testsSettings}
+              setTestsSettings={setTestsSettings}
+              testsStatus={testsStatus}
+              cardSettings={cardSettings}
+              updateCardSettings={updateCardSettings}
+            />
 
-          <ThresholdsSettings
-            thresholds={thresholds}
-            setThresholds={setThresholds}
-            thresholdsStatus={thresholdsStatus}
-          />
+            <PerformanceSettings
+              testsSettings={testsSettings}
+              setTestsSettings={setTestsSettings}
+              iperfSettings={iperfSettings}
+              setIperfSettings={setIperfSettings}
+              iperfStatus={iperfStatus}
+              iperfSuggestions={iperfSuggestions}
+              iperfSuggestionsStatus={iperfSuggestionsStatus}
+              iperfSuggestionsError={iperfSuggestionsError}
+              fetchIperfSuggestions={fetchIperfSuggestions}
+              cardSettings={cardSettings}
+              updateCardSettings={updateCardSettings}
+            />
 
-          {/* Appearance Section */}
-          <AppearanceSettings
-            theme={theme}
-            setTheme={setTheme}
-            isDark={isDark}
-            unitSystem={displayOptions.unitSystem || 'sae'}
-            setUnitSystem={(unit: 'sae' | 'metric'): void =>
-              setDisplayOptions((prev) => ({ ...prev, unitSystem: unit }))
-            }
-          />
+            <DiscoverySettings
+              networkDiscoverySettings={networkDiscoverySettings}
+              setNetworkDiscoverySettings={setNetworkDiscoverySettings}
+              networkDiscoveryStatus={networkDiscoveryStatus}
+              subnets={subnets}
+              subnetsStatus={subnetsStatus}
+              newSubnetCidr={newSubnetCidr}
+              setNewSubnetCidr={setNewSubnetCidr}
+              newSubnetName={newSubnetName}
+              setNewSubnetName={setNewSubnetName}
+              subnetError={subnetError}
+              setSubnetError={setSubnetError}
+              addSubnet={addSubnet}
+              toggleSubnet={toggleSubnet}
+              deleteSubnet={deleteSubnet}
+              snmpSettings={snmpSettings}
+              setSnmpSettings={setSnmpSettings}
+              snmpStatus={snmpStatus}
+              cardSettings={cardSettings}
+              updateCardSettings={updateCardSettings}
+            />
 
-          {/* API tokens (Phase D-2 LICENSE_STRATEGY) */}
-          <ApiTokensSettings />
+            <VulnerabilitySettings
+              settings={vulnSettings}
+              setSettings={setVulnSettings}
+              status={vulnStatus}
+            />
 
-          {/* Users CRUD (multi_user, seed#1191) */}
-          <UsersSettings />
+            <ThresholdsSettings
+              thresholds={thresholds}
+              setThresholds={setThresholds}
+              thresholdsStatus={thresholdsStatus}
+            />
 
-          {/* SSO admin panel (seed#1198) */}
-          <SsoSettings />
+            {/* Appearance Section */}
+            <AppearanceSettings
+              theme={theme}
+              setTheme={setTheme}
+              isDark={isDark}
+              unitSystem={displayOptions.unitSystem || 'sae'}
+              setUnitSystem={(unit: 'sae' | 'metric'): void =>
+                setDisplayOptions((prev) => ({ ...prev, unitSystem: unit }))
+              }
+            />
 
-          {/* Network Interfaces (multi_interface, seed#1192) */}
-          <InterfacesSettings />
+            {/* API tokens (Phase D-2 LICENSE_STRATEGY) */}
+            <ApiTokensSettings />
 
-          {/* Config Backups Section (implements #494) */}
-          <ConfigBackupsSection />
+            {/* Users CRUD (multi_user, seed#1191) */}
+            <UsersSettings />
 
-          {/* Updates Section (implements #862) */}
-          <UpdateSettings currentVersion={version} />
+            {/* SSO admin panel (seed#1198) */}
+            <SsoSettings />
 
-          <SettingsDrawerFooter
-            version={version}
-            fetchLogPreview={fetchLogPreview}
-            logLoading={logLoading}
-            logError={logError}
-            logPreview={logPreview}
-          />
+            {/* Network Interfaces (multi_interface, seed#1192) */}
+            <InterfacesSettings />
+
+            {/* Config Backups Section (implements #494) */}
+            <ConfigBackupsSection />
+
+            {/* Updates Section (implements #862) */}
+            <UpdateSettings currentVersion={version} />
+
+            <SettingsDrawerFooter
+              version={version}
+              fetchLogPreview={fetchLogPreview}
+              logLoading={logLoading}
+              logError={logError}
+              logPreview={logPreview}
+            />
+          </ReadOnlyView>
         </div>
       </div>
     </>
