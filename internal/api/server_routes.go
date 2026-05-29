@@ -316,8 +316,14 @@ func (s *Server) setupHarvestRoutes() {
 
 // setupSSEAndStatic registers SSE and static file handlers.
 func (s *Server) setupSSEAndStatic() {
-	// SSE endpoint for real-time updates
-	s.mux.HandleFunc(APIVersionPrefix+"/events", s.handleSSE)
+	// SSE endpoint for real-time updates. Gated on `live_telemetry`
+	// (Pro tier) per FEATURE_TIER_MATRIX — the live stream of card
+	// data (RSSI, link state, gateway latency, etc.) is the Pro-tier
+	// real-time surface. Free / Starter get card data via the
+	// per-endpoint REST handlers without the WebSocket-like stream.
+	// `/discovery/engine/events` (the discovery-lifecycle SSE) is
+	// intentionally NOT gated here — discovery is a Free-tier surface.
+	s.mux.HandleFunc(APIVersionPrefix+"/events", s.requireFeature("live_telemetry", s.handleSSE))
 	frontendFS, err := getUIFS()
 	if err != nil {
 		logging.GetLogger().
