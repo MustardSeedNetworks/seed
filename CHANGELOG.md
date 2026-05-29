@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.204.0](https://github.com/krisarmstrong/seed/compare/v0.203.0...v0.204.0) (2026-05-29)
+
+
+### Features
+
+* **a11y:** axe-core test harness + DiscoveryModal clear-button label ([#1272](https://github.com/krisarmstrong/seed/issues/1272)) ([8d8913d](https://github.com/krisarmstrong/seed/commit/8d8913d46f15c37f0964c030f33cadc84007bb8d))
+* **cli:** example blocks on all commands + help completeness test ([#1273](https://github.com/krisarmstrong/seed/issues/1273)) ([8cadbb1](https://github.com/krisarmstrong/seed/commit/8cadbb109307a2e41755efa591695b8e9285472e))
+* **help:** add path/reports/logs sections + route-coverage test ([#1274](https://github.com/krisarmstrong/seed/issues/1274)) ([5fc112f](https://github.com/krisarmstrong/seed/commit/5fc112fb779f503039032bf3e4835b18e4a7605c))
+* **i18n:** en/es key parity + DNT compliance test ([#1276](https://github.com/krisarmstrong/seed/issues/1276)) ([7c0dc9f](https://github.com/krisarmstrong/seed/commit/7c0dc9f6fc54a81bded5c26745138099680382bb))
+
 ## [0.203.0](https://github.com/krisarmstrong/seed/compare/v0.202.1...v0.203.0) (2026-05-29)
 
 
