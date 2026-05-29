@@ -291,7 +291,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                   className={cn(
                     'px-cell py-compact text-xs rounded transition-colors',
                     period === p
-                      ? 'bg-accent text-white'
+                      ? 'bg-brand-primary text-on-brand'
                       : 'bg-surface-secondary text-text-muted hover:text-text-primary',
                   )}
                 >
