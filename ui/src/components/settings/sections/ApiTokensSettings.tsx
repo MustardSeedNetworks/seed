@@ -15,6 +15,7 @@ import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../../api/client';
 import { useLicense } from '../../../contexts/LicenseContext';
+import { useRole } from '../../../contexts/RoleContext';
 import { Button } from '../../ui/Button';
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { Input } from '../../ui/Input';
@@ -57,6 +58,8 @@ export function ApiTokensSettings(): React.ReactElement {
   // tier-aware UI surface stays in sync; this panel used to fetch it
   // inline (pre-PR-A4).
   const { status: licenseStatus, refresh: refreshLicense } = useLicense();
+  // #1226: viewers are read-only — block the mint flow regardless of tier.
+  const { canWrite } = useRole();
   const [tokens, setTokens] = useState<ApiToken[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -185,7 +188,7 @@ export function ApiTokensSettings(): React.ReactElement {
               onChange={(e) => setNewTokenName(e.target.value)}
               placeholder="e.g. monitoring-prod"
               maxLength={64}
-              disabled={!canMint || minting}
+              disabled={!canMint || !canWrite || minting}
             />
           </div>
           <Button
@@ -193,9 +196,15 @@ export function ApiTokensSettings(): React.ReactElement {
             tone="violet"
             size="md"
             leftIcon={<Plus className="w-4 h-4" />}
-            disabled={!canMint || minting || newTokenName.trim().length === 0}
+            disabled={!canMint || !canWrite || minting || newTokenName.trim().length === 0}
             loading={minting}
-            title={canMint ? undefined : 'API token minting requires the Pro tier'}
+            title={
+              !canWrite
+                ? 'Read-only — operator role required to mint API tokens'
+                : !canMint
+                  ? 'API token minting requires the Pro tier'
+                  : undefined
+            }
             onClick={() => void handleMint()}
           >
             Create token
@@ -241,6 +250,12 @@ export function ApiTokensSettings(): React.ReactElement {
                           tone="red"
                           size="xs"
                           leftIcon={<Trash2 className="w-3 h-3" />}
+                          disabled={!canWrite}
+                          title={
+                            canWrite
+                              ? undefined
+                              : 'Read-only — operator role required to revoke tokens'
+                          }
                           onClick={() => void handleRevoke(t)}
                         >
                           Revoke

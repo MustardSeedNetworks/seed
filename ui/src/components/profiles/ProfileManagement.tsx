@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { useProfileContext } from '../../contexts/profileContext';
 import { cn, icon as iconTokens, layout, modal, radius, spacing } from '../../styles/theme';
 import type { Profile, ProfileRequest } from '../../types/profile';
+import { WriteGate } from '../ui/WriteGate';
 import { ProfileEditor } from './ProfileEditor';
 
 interface ProfileManagementProps {
@@ -206,32 +207,34 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
               'border-b border-surface-border bg-surface-base flex items-center gap-compact shrink-0',
             )}
           >
-            <button
-              type="button"
-              onClick={handleCreate}
-              className={cn(
-                spacing.pad.sm,
-                'px-4',
-                radius.md,
-                'bg-brand-primary hover:bg-brand-accent text-on-brand body-small font-medium flex items-center gap-compact',
-              )}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
+            <WriteGate>
+              <button
+                type="button"
+                onClick={handleCreate}
+                className={cn(
+                  spacing.pad.sm,
+                  'px-4',
+                  radius.md,
+                  'bg-brand-primary hover:bg-brand-accent text-on-brand body-small font-medium flex items-center gap-compact',
+                )}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              {t('profile.create', 'Create Profile')}
-            </button>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                {t('profile.create', 'Create Profile')}
+              </button>
+            </WriteGate>
             <button
               type="button"
               onClick={handleExport}
@@ -346,18 +349,20 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                     : t('profile.noProfilesDesc', 'Create your first profile to get started')}
                 </p>
                 {searchQuery ? null : (
-                  <button
-                    type="button"
-                    onClick={handleCreate}
-                    className={cn(
-                      spacing.pad.sm,
-                      'px-4',
-                      radius.md,
-                      'bg-brand-primary hover:bg-brand-accent text-on-brand body-small font-medium',
-                    )}
-                  >
-                    {t('profile.createFirst', 'Create Your First Profile')}
-                  </button>
+                  <WriteGate>
+                    <button
+                      type="button"
+                      onClick={handleCreate}
+                      className={cn(
+                        spacing.pad.sm,
+                        'px-4',
+                        radius.md,
+                        'bg-brand-primary hover:bg-brand-accent text-on-brand body-small font-medium',
+                      )}
+                    >
+                      {t('profile.createFirst', 'Create Your First Profile')}
+                    </button>
+                  </WriteGate>
                 )}
               </div>
             ) : (
@@ -466,75 +471,19 @@ function ProfileCard({
           {t('profile.updated', 'Updated')} {new Date(profile.updatedAt).toLocaleDateString()}
         </p>
 
-        {/* Action buttons - always visible */}
-        <div className="flex items-center gap-compact flex-wrap">
-          {/* Edit button */}
-          <button
-            type="button"
-            onClick={onEdit}
-            className={cn(
-              spacing.chip.sm,
-              radius.md,
-              'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5',
-            )}
-            title={t('common.edit', 'Edit')}
-          >
-            <svg
-              className="w-3.5 h-3.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
-            </svg>
-            {t('common.edit', 'Edit')}
-          </button>
-
-          {/* Clone/Duplicate button */}
-          <button
-            type="button"
-            onClick={onDuplicate}
-            className={cn(
-              spacing.chip.sm,
-              radius.md,
-              'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5',
-            )}
-            title={t('common.clone', 'Clone')}
-          >
-            <svg
-              className="w-3.5 h-3.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
-            </svg>
-            {t('common.clone', 'Clone')}
-          </button>
-
-          {/* Delete button - only if not default and not active */}
-          {profile.isDefault || isActive ? null : (
+        {/* Action buttons - hidden for viewers (#1226). */}
+        <WriteGate>
+          <div className="flex items-center gap-compact flex-wrap">
+            {/* Edit button */}
             <button
               type="button"
-              onClick={onDelete}
+              onClick={onEdit}
               className={cn(
                 spacing.chip.sm,
                 radius.md,
-                'border border-status-error/30 bg-status-error/5 hover:bg-status-error/10 text-status-error caption font-medium flex items-center gap-1.5',
+                'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5',
               )}
-              title={t('common.delete', 'Delete')}
+              title={t('common.edit', 'Edit')}
             >
               <svg
                 className="w-3.5 h-3.5"
@@ -547,24 +496,22 @@ function ProfileCard({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                 />
               </svg>
-              {t('common.delete', 'Delete')}
+              {t('common.edit', 'Edit')}
             </button>
-          )}
 
-          {/* Activate button - only if not active */}
-          {isActive ? null : (
+            {/* Clone/Duplicate button */}
             <button
               type="button"
-              onClick={onSetActive}
+              onClick={onDuplicate}
               className={cn(
                 spacing.chip.sm,
                 radius.md,
-                'bg-brand-primary hover:bg-brand-accent text-on-brand caption font-medium flex items-center gap-1.5 ml-auto',
+                'border border-surface-border bg-surface-base hover:bg-surface-hover text-text-primary caption font-medium flex items-center gap-1.5',
               )}
-              title={t('profile.activate', 'Activate')}
+              title={t('common.clone', 'Clone')}
             >
               <svg
                 className="w-3.5 h-3.5"
@@ -577,13 +524,73 @@ function ProfileCard({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M5 13l4 4L19 7"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                 />
               </svg>
-              {t('profile.activate', 'Activate')}
+              {t('common.clone', 'Clone')}
             </button>
-          )}
-        </div>
+
+            {/* Delete button - only if not default and not active */}
+            {profile.isDefault || isActive ? null : (
+              <button
+                type="button"
+                onClick={onDelete}
+                className={cn(
+                  spacing.chip.sm,
+                  radius.md,
+                  'border border-status-error/30 bg-status-error/5 hover:bg-status-error/10 text-status-error caption font-medium flex items-center gap-1.5',
+                )}
+                title={t('common.delete', 'Delete')}
+              >
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+                {t('common.delete', 'Delete')}
+              </button>
+            )}
+
+            {/* Activate button - only if not active */}
+            {isActive ? null : (
+              <button
+                type="button"
+                onClick={onSetActive}
+                className={cn(
+                  spacing.chip.sm,
+                  radius.md,
+                  'bg-brand-primary hover:bg-brand-accent text-on-brand caption font-medium flex items-center gap-1.5 ml-auto',
+                )}
+                title={t('profile.activate', 'Activate')}
+              >
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                {t('profile.activate', 'Activate')}
+              </button>
+            )}
+          </div>
+        </WriteGate>
       </div>
     </div>
   );

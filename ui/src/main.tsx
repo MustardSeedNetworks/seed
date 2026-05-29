@@ -21,6 +21,7 @@ import App from './app';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LicenseProvider } from './contexts/LicenseContext';
 import { ProfileProvider } from './contexts/profileContext';
+import { RoleProvider } from './contexts/RoleContext';
 import { getQueryClient } from './lib/queryClient';
 import './index.css';
 
@@ -36,9 +37,11 @@ createRoot(rootElement).render(
     <ErrorBoundary>
       <QueryClientProvider client={getQueryClient()}>
         <LicenseProvider>
-          <ProfileProvider>
-            <App />
-          </ProfileProvider>
+          <RoleProvider>
+            <ProfileProvider>
+              <App />
+            </ProfileProvider>
+          </RoleProvider>
         </LicenseProvider>
       </QueryClientProvider>
     </ErrorBoundary>
