@@ -48,6 +48,14 @@ func initServeCmd(state *cliState) {
 The server provides a web-based UI for network diagnostics, monitoring,
 and analysis. It runs with HTTPS on port 8443. HTTPS is required —
 the HTTP listener exists only as a 308 redirector.`,
+		Example: `  # Start with the default config
+  seed serve
+
+  # Start with a specific config file
+  seed serve --config /etc/seed/seed.json
+
+  # Start behind a trusted reverse proxy (CIDR list)
+  seed serve --trusted-proxies 10.0.0.0/8,192.168.1.0/24`,
 		Run: func(cmd *cobra.Command, args []string) {
 			runServe(cmd, args, state)
 		},

@@ -61,6 +61,17 @@ Verification:
   seed install-ca --print-fingerprint
   curl -k https://localhost:8443/__version | jq -r .tlsFingerprint
 The two values must match.`,
+		Example: `  # Install seed's self-signed root into the OS trust store
+  sudo seed install-ca
+
+  # Print the cert's SHA-256 fingerprint (no trust-store change)
+  seed install-ca --print-fingerprint
+
+  # Remove the previously installed root from the OS trust store
+  sudo seed install-ca --uninstall
+
+  # Install a non-default certificate file
+  sudo seed install-ca --cert /etc/seed/certs/server.crt`,
 		Run: func(cmd *cobra.Command, args []string) {
 			runInstallCA(cmd, args, state)
 		},

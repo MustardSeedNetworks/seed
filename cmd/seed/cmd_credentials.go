@@ -34,6 +34,11 @@ The setup wizard allows you to:
   - Complete initial configuration
 
 Use the --json flag to output the status in machine-readable JSON format.`,
+		Example: `  # Show setup status as a banner
+  seed credentials
+
+  # Machine-readable output
+  seed credentials --json`,
 		Run: func(cmd *cobra.Command, args []string) {
 			runCredentials(cmd, args, state)
 		},

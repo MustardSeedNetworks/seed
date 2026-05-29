@@ -17,6 +17,8 @@ func initPlatformCmd(state *cliState) {
 Different operating systems have varying levels of support for network
 diagnostics features. This command shows what's available on your platform
 and provides guidance for features that require additional setup.`,
+		Example: `  # Show capabilities for the current OS
+  seed platform`,
 		Run: func(cmd *cobra.Command, _ []string) {
 			runPlatform(cmd.OutOrStdout())
 		},

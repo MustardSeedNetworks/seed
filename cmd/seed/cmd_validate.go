@@ -16,6 +16,17 @@ func initValidateCmd(state *cliState) {
 		Use:   "validate-config",
 		Short: "Validate configuration file",
 		Long:  "Validate the configuration file against the schema without starting the server",
+		Example: `  # Validate the active config (uses XDG/--config resolution)
+  seed validate-config
+
+  # Validate a specific config file
+  seed validate-config --config /etc/seed/seed.json
+
+  # Treat warnings as errors (CI-safe)
+  seed validate-config --strict
+
+  # Machine-readable output
+  seed validate-config --json`,
 		Run: func(cmd *cobra.Command, args []string) {
 			runValidate(cmd, args, state)
 		},
