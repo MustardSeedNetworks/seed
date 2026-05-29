@@ -438,7 +438,7 @@ export function DiscoveryModal({
                 radius.md,
                 'transition-colors',
                 showLocalOnly
-                  ? 'bg-brand-primary text-text-inverse'
+                  ? 'bg-brand-primary text-on-brand'
                   : 'bg-surface-hover text-text-secondary hover:text-text-primary',
               )}
             >

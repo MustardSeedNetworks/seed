@@ -210,7 +210,7 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps): R
           <label
             className={cn(
               button.size.sm,
-              'bg-brand-primary text-text-inverse',
+              'bg-brand-primary text-on-brand',
               radius.md,
               'hover:bg-brand-primary/90 cursor-pointer',
             )}
@@ -442,7 +442,7 @@ export function AirMapperImport({ onImport, onCancel }: AirMapperImportProps): R
             onClick={handleConfirmImport}
             className={cn(
               button.size.sm,
-              'bg-brand-primary text-text-inverse',
+              'bg-brand-primary text-on-brand',
               radius.md,
               'hover:bg-brand-primary/90',
               layout.inline.default,

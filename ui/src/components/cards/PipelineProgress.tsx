@@ -191,7 +191,7 @@ export const PipelineProgress: React.NamedExoticComponent<PipelineProgressProps>
                     'flex-center w-8 h-8',
                     radius.full,
                     isComplete && 'bg-status-success text-text-inverse',
-                    isCurrent && 'bg-brand-primary text-text-inverse',
+                    isCurrent && 'bg-brand-primary text-on-brand',
                     isPending && 'bg-surface-sunken text-text-muted',
                   )}
                 >

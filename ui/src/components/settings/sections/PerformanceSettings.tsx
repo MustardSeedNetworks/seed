@@ -472,7 +472,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                           radius.full,
                           'border body-small font-medium transition-colors',
                           checked
-                            ? 'bg-brand-primary text-text-inverse border-brand-primary'
+                            ? 'bg-brand-primary text-on-brand border-brand-primary'
                             : 'bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover',
                         )}
                       >
@@ -523,7 +523,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
                           radius.full,
                           'border body-small font-medium transition-colors',
                           checked
-                            ? 'bg-brand-primary text-text-inverse border-brand-primary'
+                            ? 'bg-brand-primary text-on-brand border-brand-primary'
                             : 'bg-surface-base border-surface-border text-text-primary hover:bg-surface-hover',
                         )}
                       >

@@ -126,7 +126,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   onClick={this.handleRetry}
                   className={cn(
                     button.size.md,
-                    'bg-brand-primary text-text-inverse',
+                    'bg-brand-primary text-on-brand',
                     radius.md,
                     'hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary',
                   )}

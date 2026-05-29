@@ -87,7 +87,7 @@ export function SurveyViewFloorPlanPanel({
               onClick={() => setHeatmapMetric(null)}
               className={cn(
                 button.size.sm,
-                'body-small bg-brand-primary text-text-inverse',
+                'body-small bg-brand-primary text-on-brand',
                 radius.md,
                 'hover:bg-brand-primary/90',
               )}
@@ -205,7 +205,7 @@ export function SurveyViewFloorPlanPanel({
                       disabled={calibrationPoints.length !== 2 || !calibrationDistance}
                       className={cn(
                         button.size.sm,
-                        'bg-brand-primary text-text-inverse',
+                        'bg-brand-primary text-on-brand',
                         radius.md,
                         'hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed',
                       )}
@@ -326,7 +326,7 @@ export function SurveyViewFloorPlanPanel({
               className={cn(
                 'inline-block',
                 button.size.md,
-                'bg-brand-primary text-text-inverse',
+                'bg-brand-primary text-on-brand',
                 radius.md,
                 'cursor-pointer hover:bg-brand-primary/90',
               )}

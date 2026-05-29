@@ -42,11 +42,11 @@ const sizeStyles: Record<ButtonSize, string> = {
 const variantStyles: Record<ButtonVariant, Record<ButtonTone, string>> = {
   solid: {
     violet:
-      'bg-brand-primary hover:bg-brand-accent text-text-inverse shadow-lg shadow-brand-primary/25 focus:ring-brand-primary',
-    red: 'bg-status-error hover:bg-status-error/85 text-text-inverse shadow-lg shadow-status-error/25 focus:ring-status-error',
+      'bg-brand-primary hover:bg-brand-accent text-on-brand shadow-lg shadow-brand-primary/25 focus:ring-brand-primary',
+    red: 'bg-status-error hover:bg-status-error/85 text-on-danger shadow-lg shadow-status-error/25 focus:ring-status-error',
     green:
-      'bg-status-success hover:bg-status-success/85 text-text-inverse shadow-lg shadow-status-success/25 focus:ring-status-success',
-    blue: 'bg-status-info hover:bg-status-info/85 text-text-inverse shadow-lg shadow-status-info/25 focus:ring-status-info',
+      'bg-status-success hover:bg-status-success/85 text-on-brand shadow-lg shadow-status-success/25 focus:ring-status-success',
+    blue: 'bg-status-info hover:bg-status-info/85 text-on-info shadow-lg shadow-status-info/25 focus:ring-status-info',
     gray: 'bg-surface-hover hover:bg-surface-sunken text-text-primary shadow-lg shadow-surface-border/25 focus:ring-border-muted',
   },
   outline: {

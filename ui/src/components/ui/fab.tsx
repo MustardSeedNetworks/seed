@@ -85,7 +85,7 @@ export function Fab({ className = '' }: FabProps): React.JSX.Element {
       onClick={handleClick}
       disabled={isRunning}
       className={cn(
-        'w-14 h-14 bg-brand-primary text-text-inverse shadow-lg hover:bg-brand-accent active:scale-95 transition-all touch-manipulation focus:outline-none focus:ring-4 focus:ring-brand-primary/50 focus:ring-offset-2 focus:ring-offset-surface-base',
+        'w-14 h-14 bg-brand-primary text-on-brand shadow-lg hover:bg-brand-accent active:scale-95 transition-all touch-manipulation focus:outline-none focus:ring-4 focus:ring-brand-primary/50 focus:ring-offset-2 focus:ring-offset-surface-base',
         layout.flex.center,
         radius.full,
         isRunning && 'opacity-75 cursor-not-allowed',

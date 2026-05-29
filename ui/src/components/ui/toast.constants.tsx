@@ -31,7 +31,7 @@ export const typeStyles: Record<ToastType, string> = {
   success: 'bg-status-success text-text-inverse',
   error: 'bg-status-error text-text-inverse',
   warning: 'bg-status-warning text-text-inverse',
-  info: 'bg-brand-primary text-text-inverse',
+  info: 'bg-brand-primary text-on-brand',
 };
 
 // Icon size for toast notifications

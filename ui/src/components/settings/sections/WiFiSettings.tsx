@@ -450,7 +450,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
                         'body-small font-medium',
                         spacing.chip.lg,
                         radius.default,
-                        'bg-brand-primary text-text-inverse',
+                        'bg-brand-primary text-on-brand',
                         'hover:bg-brand-accent disabled:opacity-50',
                       )}
                     >

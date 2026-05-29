@@ -468,7 +468,7 @@ function CreateSurveyDialog({
               className={cn(
                 'flex-1',
                 button.size.md,
-                'bg-brand-primary text-text-inverse',
+                'bg-brand-primary text-on-brand',
                 radius.md,
                 'hover:bg-brand-primary/90',
               )}

@@ -551,6 +551,12 @@ body {
     z-index: 100; /* skip links, always-on-top affordances */
   }
 
+  /* Subtle top-edge highlight for active nav items (replaces a raw
+   * rgba(255,255,255,0.1) inline shadow — white at 10% via the knob token). */
+  .shadow-edge-highlight {
+    box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-knob) 10%, transparent);
+  }
+
   /* ========================================================================
      MARGIN UTILITIES
      ========================================================================

@@ -431,7 +431,7 @@ export function WifiChannelGraph({
                     'rounded',
                     'transition-colors',
                     selectedBand === band
-                      ? 'bg-brand-primary text-text-inverse'
+                      ? 'bg-brand-primary text-on-brand'
                       : 'bg-surface-hover text-text-primary hover:bg-surface-border',
                   )}
                 >

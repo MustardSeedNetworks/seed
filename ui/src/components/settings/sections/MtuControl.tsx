@@ -97,7 +97,7 @@ export const MtuControl: React.NamedExoticComponent<Record<string, never>> = mem
             disabled={loading}
             className={cn(
               button.size.md,
-              'bg-brand-primary text-text-inverse',
+              'bg-brand-primary text-on-brand',
               radius.md,
               'body-small font-medium hover:bg-brand-accent disabled:opacity-50',
             )}
