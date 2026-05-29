@@ -401,7 +401,7 @@ function DeviceSelectorComponent({
                   className={cn(
                     'flex-1 px-3 py-compact-md',
                     'body-small font-medium',
-                    'bg-brand-primary text-text-inverse',
+                    'bg-brand-primary text-on-brand',
                     radius.md,
                     'hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-primary',
                   )}

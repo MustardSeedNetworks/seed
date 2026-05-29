@@ -569,7 +569,7 @@ export function SurveyConfigPanel({
                               radius.sm,
                               'min-w-[2.5rem]',
                               selectedChannels.includes(channel)
-                                ? 'bg-brand-primary text-text-inverse'
+                                ? 'bg-brand-primary text-on-brand'
                                 : 'bg-surface-base border border-surface-border hover:bg-surface-hover',
                             )}
                           >

@@ -389,7 +389,7 @@ export function RecoveryForm({
             className={cn(
               'w-full',
               button.size.md,
-              'bg-brand-primary text-text-inverse',
+              'bg-brand-primary text-on-brand',
               radius.md,
               'font-medium hover:bg-brand-accent',
               'focus:outline-none focus:ring-2 focus:ring-brand-primary',

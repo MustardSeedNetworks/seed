@@ -536,7 +536,7 @@ export function SurveyAnalysisPanel({
               onClick={() => onGenerateReport(findings)}
               className={cn(
                 button.size.sm,
-                'bg-brand-primary text-text-inverse',
+                'bg-brand-primary text-on-brand',
                 radius.md,
                 'hover:opacity-90',
                 layout.inline.tight,

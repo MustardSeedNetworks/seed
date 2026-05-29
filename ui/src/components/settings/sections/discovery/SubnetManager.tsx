@@ -134,7 +134,7 @@ export const SubnetManager: React.NamedExoticComponent<SubnetManagerProps> = mem
             className={cn(
               'w-full',
               spacing.pad.sm,
-              'bg-brand-primary hover:bg-brand-accent text-text-inverse',
+              'bg-brand-primary hover:bg-brand-accent text-on-brand',
               radius.default,
               'body-small',
             )}

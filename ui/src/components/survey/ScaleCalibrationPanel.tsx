@@ -271,7 +271,7 @@ export function ScaleCalibrationPanel({
               disabled={!dimensionValue}
               className={cn(
                 button.size.sm,
-                'bg-brand-primary text-text-inverse',
+                'bg-brand-primary text-on-brand',
                 radius.md,
                 'hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed',
               )}
@@ -330,7 +330,7 @@ export function ScaleCalibrationPanel({
                   radius.md,
                   'border',
                   selectedPreset === preset.id
-                    ? 'bg-brand-primary text-text-inverse border-brand-primary'
+                    ? 'bg-brand-primary text-on-brand border-brand-primary'
                     : 'border-surface-border hover:bg-surface-hover',
                 )}
               >

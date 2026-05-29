@@ -101,7 +101,7 @@ export const VlanControl: React.NamedExoticComponent<Record<string, never>> = me
             disabled={loading || !vlanId}
             className={cn(
               button.size.sm,
-              'bg-brand-primary text-text-inverse',
+              'bg-brand-primary text-on-brand',
               radius.md,
               'body-small font-medium hover:bg-brand-accent disabled:opacity-50',
             )}

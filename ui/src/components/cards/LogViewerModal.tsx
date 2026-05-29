@@ -64,7 +64,7 @@ function FilterBadge({ label, active, onClick, color }: FilterBadgeProps): React
         radius.md,
         'text-sm font-medium cursor-pointer transition-all',
         active
-          ? color || 'bg-brand-primary text-text-inverse'
+          ? color || 'bg-brand-primary text-on-brand'
           : 'bg-surface-base text-text-secondary hover:bg-surface-hover',
       )}
       onClick={onClick}

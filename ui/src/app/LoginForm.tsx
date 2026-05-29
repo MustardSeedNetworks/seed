@@ -313,7 +313,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
             className={cn(
               'w-full',
               button.size.md,
-              'bg-brand-primary text-text-inverse',
+              'bg-brand-primary text-on-brand',
               radius.md,
               'font-medium hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50',
             )}

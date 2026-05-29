@@ -44,7 +44,7 @@ else
 fi
 
 # Definition sites, tests, and the documented fixed-palette exceptions.
-EXCLUDE_RE='\.(test|spec|stories|mock)\.(ts|tsx):|/styles/|/constants/|/cableWire\.ts:|/reportRenderer\.ts:|/FloorPlanCanvas\.tsx:|/logger\.ts:'
+EXCLUDE_RE='\.(test|spec|stories|mock)\.(ts|tsx):|/styles/|/constants/|/cableWire\.ts:|/reportRenderer\.ts:|/FloorPlanCanvas\.tsx:|/HeatmapLegend\.tsx:|/logger\.ts:'
 
 FAIL_COUNT=0
 
@@ -89,6 +89,9 @@ block ARBITRARY_COLOR_VAR \
 block RAW_HEX_COLOR \
   '#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?\b' \
   'Use a CSS theme variable; for <canvas>/PDF read it via styles/tokens.ts'
+block RGB_HSL_COLOR \
+  '\b(rgba?|hsla?)\([0-9]' \
+  'Use a CSS theme variable; for white/black overlays use color-mix(var(--color-knob|scrim))'
 
 # ── ADVISORY: spacing / typography / flex (warn-only) ───────────────────────
 advise RAW_SPACE_Y '(?<![-\w])space-y-(1|2|3|4|6)(?![-\w])' 'Use stack-xs/sm/[default]/lg/xl'

@@ -64,7 +64,7 @@ export function SurveyViewHeader({
               title={getStartButtonTitle()}
               className={cn(
                 button.size.md,
-                'bg-brand-primary text-text-inverse',
+                'bg-brand-primary text-on-brand',
                 radius.md,
                 'hover:bg-brand-primary/90',
                 layout.inline.default,
@@ -130,7 +130,7 @@ export function SurveyViewHeader({
                 title={getStartButtonTitle()}
                 className={cn(
                   button.size.md,
-                  'bg-brand-primary text-text-inverse',
+                  'bg-brand-primary text-on-brand',
                   radius.md,
                   'hover:bg-brand-primary/90',
                   layout.inline.default,

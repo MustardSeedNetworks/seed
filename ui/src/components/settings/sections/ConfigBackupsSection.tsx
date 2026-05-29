@@ -323,7 +323,7 @@ export const ConfigBackupsSection: React.NamedExoticComponent<Record<string, nev
             className={cn(
               'w-full',
               button.size.md,
-              'bg-brand-primary text-text-inverse',
+              'bg-brand-primary text-on-brand',
               radius.md,
               'font-medium hover:bg-brand-primary-hover transition-colors flex-center',
               spacing.gap.compact,

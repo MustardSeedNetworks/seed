@@ -76,7 +76,7 @@ export function SettingsDrawerNetworkSection({
               radius.md,
               'body-small font-medium transition-colors',
               ipSettings.mode === 'dhcp'
-                ? 'bg-brand-primary text-text-inverse'
+                ? 'bg-brand-primary text-on-brand'
                 : 'bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover',
             )}
           >
@@ -90,7 +90,7 @@ export function SettingsDrawerNetworkSection({
               radius.md,
               'body-small font-medium transition-colors',
               ipSettings.mode === 'static'
-                ? 'bg-brand-primary text-text-inverse'
+                ? 'bg-brand-primary text-on-brand'
                 : 'bg-surface-base border border-surface-border text-text-primary hover:bg-surface-hover',
             )}
           >
@@ -217,7 +217,7 @@ export function SettingsDrawerNetworkSection({
           className={cn(
             'w-full',
             button.size.md,
-            'bg-brand-primary text-text-inverse',
+            'bg-brand-primary text-on-brand',
             radius.md,
             'font-medium hover:bg-brand-accent disabled:opacity-50 transition-colors',
           )}

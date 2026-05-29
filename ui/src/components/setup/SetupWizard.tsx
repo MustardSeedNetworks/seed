@@ -233,7 +233,7 @@ export function SetupWizard({
     <div className={cn('min-h-screen bg-surface-base', layout.flex.center, 'pad')}>
       <div className="w-full max-w-md">
         <div className={cn('text-center', spacing.margin.bottom.sectionLg)}>
-          <div className="w-16 h-16 mx-auto flex-center rounded-2xl bg-brand-primary text-text-inverse">
+          <div className="w-16 h-16 mx-auto flex-center rounded-2xl bg-brand-primary text-on-brand">
             <Activity className="w-8 h-8" />
           </div>
           <h1 className={cn('heading-2', spacing.margin.top.heading)}>{t('welcome.title')}</h1>
