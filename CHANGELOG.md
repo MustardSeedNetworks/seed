@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.201.2](https://github.com/krisarmstrong/seed/compare/v0.201.1...v0.201.2) (2026-05-29)
+
+
+### Bug Fixes
+
+* **security:** rate-limit /auth/refresh ([#1224](https://github.com/krisarmstrong/seed/issues/1224)) ([#1243](https://github.com/krisarmstrong/seed/issues/1243)) ([641b79d](https://github.com/krisarmstrong/seed/commit/641b79dd4e9f73a956cd01033c5c62414ae156ed))
+
 ## [0.201.1](https://github.com/krisarmstrong/seed/compare/v0.201.0...v0.201.1) (2026-05-28)
 
 
