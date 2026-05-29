@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.202.1](https://github.com/krisarmstrong/seed/compare/v0.202.0...v0.202.1) (2026-05-29)
+
+
+### Bug Fixes
+
+* **ui:** replace undefined bg-surface-secondary token in SLA card ([#1253](https://github.com/krisarmstrong/seed/issues/1253)) ([5d4a922](https://github.com/krisarmstrong/seed/commit/5d4a9228c80546501eadcd678869721a99fd524d))
+
 ## [0.202.0](https://github.com/krisarmstrong/seed/compare/v0.201.2...v0.202.0) (2026-05-29)
 
 
