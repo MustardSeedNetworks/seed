@@ -24,9 +24,32 @@ func (c *Config) Validate() error {
 	errs = append(errs, c.validateAuthConfig()...)
 	errs = append(errs, c.validateSNMPConfig()...)
 	errs = append(errs, c.validateLoggingConfig()...)
+	errs = append(errs, c.validateCORSConfig()...)
 
 	if len(errs) > 0 {
 		return fmt.Errorf("configuration validation failed:\n  - %s", strings.Join(errs, "\n  - "))
+	}
+	return nil
+}
+
+// validateCORSConfig refuses `*` in Security.AllowedOrigins (#1256). Seed's
+// corsMiddleware always responds with `Access-Control-Allow-Credentials:
+// true`, and per the CORS spec wildcard origin with credentials is an
+// invalid pair: browsers reject it. Honoring `*` here is at best
+// non-functional and at worst the kind of subtle config footgun where
+// credentialed responses leak across origins if a UA ever does honor it.
+// Operators must list explicit origins; the WARN-only behavior of the
+// pre-#1256 path silently allowed insecure setups.
+func (c *Config) validateCORSConfig() []string {
+	for _, origin := range c.Security.AllowedOrigins {
+		if strings.TrimSpace(origin) == "*" {
+			return []string{
+				"security.allowed_origins: `*` is not allowed because " +
+					"credentialed CORS (Access-Control-Allow-Credentials: true) " +
+					"is invalid with a wildcard origin per the CORS spec; " +
+					"list explicit origins (e.g. https://seed.example.com)",
+			}
+		}
 	}
 	return nil
 }
