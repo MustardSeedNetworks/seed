@@ -11,6 +11,9 @@
 #       - bare bg/text/border-white|black
 #       - text-[var(--color-X)] indirection (use text-X directly)
 #       - raw 6/8-digit hex colors in .ts/.tsx
+#       - undefined tokens: bg-/text-/… utilities whose --color-* is not in
+#         index.css (compiles to nothing, renders no color) — see
+#         resolve-token-refs.py
 #   ADVISORY (warns, never fails) — spacing / typography / flex shortcuts that
 #     have semantic replacements. Pre-existing debt; surfaced for burn-down.
 #
@@ -92,6 +95,25 @@ block RAW_HEX_COLOR \
 block RGB_HSL_COLOR \
   '\b(rgba?|hsla?)\([0-9]' \
   'Use a CSS theme variable; for white/black overlays use color-mix(var(--color-knob|scrim))'
+
+# UNDEFINED_TOKEN — every referenced color token must resolve to a --color-*
+# defined in index.css. Catches typos / renamed tokens that compile to nothing
+# and silently render no color (invisible to the palette/hex rules above).
+if command -v python3 >/dev/null 2>&1; then
+  resolve_out=$(python3 "$(dirname "$0")/resolve-token-refs.py" "$TARGET" 2>/dev/null)
+  if [ -n "$resolve_out" ]; then
+    rc_count=$(printf '%s\n' "$resolve_out" | grep -c 'undefined token:')
+    FAIL_COUNT=$((FAIL_COUNT + rc_count))
+    echo "============================================================"
+    echo "[BLOCK: UNDEFINED_TOKEN] $rc_count token(s) referenced but not defined in index.css"
+    echo "  fix: define the --color-* in index.css, or use the correct token name"
+    echo "------------------------------------------------------------"
+    printf '%s\n' "$resolve_out"
+    echo ""
+  fi
+else
+  echo "[warn: UNDEFINED_TOKEN] python3 not found — skipping undefined-token resolve check"
+fi
 
 # ── ADVISORY: spacing / typography / flex (warn-only) ───────────────────────
 advise RAW_SPACE_Y '(?<![-\w])space-y-(1|2|3|4|6)(?![-\w])' 'Use stack-xs/sm/[default]/lg/xl'
