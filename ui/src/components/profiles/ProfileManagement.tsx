@@ -213,7 +213,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                 spacing.pad.sm,
                 'px-4',
                 radius.md,
-                'bg-brand-primary hover:bg-brand-primary-hover text-on-brand body-small font-medium flex items-center gap-compact',
+                'bg-brand-primary hover:bg-brand-accent text-on-brand body-small font-medium flex items-center gap-compact',
               )}
             >
               <svg
@@ -353,7 +353,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
                       spacing.pad.sm,
                       'px-4',
                       radius.md,
-                      'bg-brand-primary hover:bg-brand-primary-hover text-on-brand body-small font-medium',
+                      'bg-brand-primary hover:bg-brand-accent text-on-brand body-small font-medium',
                     )}
                   >
                     {t('profile.createFirst', 'Create Your First Profile')}
@@ -562,7 +562,7 @@ function ProfileCard({
               className={cn(
                 spacing.chip.sm,
                 radius.md,
-                'bg-brand-primary hover:bg-brand-primary-hover text-on-brand caption font-medium flex items-center gap-1.5 ml-auto',
+                'bg-brand-primary hover:bg-brand-accent text-on-brand caption font-medium flex items-center gap-1.5 ml-auto',
               )}
               title={t('profile.activate', 'Activate')}
             >
