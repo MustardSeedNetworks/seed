@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.202.0](https://github.com/krisarmstrong/seed/compare/v0.201.2...v0.202.0) (2026-05-29)
+
+
+### Features
+
+* **ui:** establish semantic design-token foundation ([#1246](https://github.com/krisarmstrong/seed/issues/1246)) ([49013de](https://github.com/krisarmstrong/seed/commit/49013de44b56ee8bd161035b6d21edca5aef6e89))
+
+
+### Bug Fixes
+
+* **ui:** fix stale brand green in canvas/PDF; wire canvas markers to tokens ([#1249](https://github.com/krisarmstrong/seed/issues/1249)) ([055c923](https://github.com/krisarmstrong/seed/commit/055c9237d0d9aa7901672852defca1ce1c4a589d))
+* **ui:** repair token-discipline guard and close remaining color leaks ([#1251](https://github.com/krisarmstrong/seed/issues/1251)) ([6dd96c0](https://github.com/krisarmstrong/seed/commit/6dd96c0c55a7f1c02cb460a6d9db08bca4cc6c7b))
+
 ## [0.201.2](https://github.com/krisarmstrong/seed/compare/v0.201.1...v0.201.2) (2026-05-29)
 
 
