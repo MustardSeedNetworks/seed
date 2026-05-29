@@ -64,10 +64,6 @@ type SystemServerConfig struct {
 	// Env: SEED_HTTPS_ENABLED
 	HTTPS bool `json:"https"`
 
-	// HTTPRedirectPort is the port for HTTP->HTTPS redirect (0 = disabled).
-	// Env: SEED_HTTP_REDIRECT_PORT
-	HTTPRedirectPort int `json:"http_redirect_port,omitempty"`
-
 	// CertFile is the path to the TLS certificate.
 	// Env: SEED_TLS_CERT_FILE
 	CertFile string `json:"cert_file"`
@@ -295,11 +291,6 @@ func applyServerEnv(cfg *SystemConfig) {
 	if v := os.Getenv("SEED_HTTPS_ENABLED"); v != "" {
 		cfg.Server.HTTPS = parseBool(v)
 	}
-	if v := os.Getenv("SEED_HTTP_REDIRECT_PORT"); v != "" {
-		if i, err := strconv.Atoi(v); err == nil {
-			cfg.Server.HTTPRedirectPort = i
-		}
-	}
 	if v := os.Getenv("SEED_TLS_CERT_FILE"); v != "" {
 		cfg.Server.CertFile = v
 	}
@@ -501,7 +492,6 @@ func (c *SystemConfig) ToLegacyConfig() *Config {
 
 	cfg.Server.Port = c.Server.Port
 	cfg.Server.HTTPS = c.Server.HTTPS
-	cfg.Server.HTTPRedirectPort = c.Server.HTTPRedirectPort
 	cfg.Server.CertFile = c.Server.CertFile
 	cfg.Server.KeyFile = c.Server.KeyFile
 	cfg.Server.ACME.Enabled = c.Server.ACME.Enabled

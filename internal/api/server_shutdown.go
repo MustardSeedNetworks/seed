@@ -82,15 +82,6 @@ func (s *Server) onLinkStateChange(event netif.LinkEvent) {
 func (s *Server) Shutdown(ctx context.Context) error {
 	logging.GetLogger().InfoContext(ctx, "Shutting down server...")
 
-	// Shutdown HTTP redirect server if running (fixes #515)
-	if s.redirectServer != nil {
-		logging.GetLogger().InfoContext(ctx, "Shutting down HTTP redirect server...")
-		if err := s.redirectServer.Shutdown(ctx); err != nil {
-			logging.GetLogger().
-				ErrorContext(ctx, "Error shutting down redirect server", "error", err)
-		}
-	}
-
 	// Shutdown ACME HTTP-01 challenge server if running (fixes #837)
 	if s.acmeChallengeServer != nil {
 		logging.GetLogger().InfoContext(ctx, "Shutting down ACME challenge server...")

@@ -1,8 +1,7 @@
 package api
 
-// server_lifecycle.go contains the HTTP/HTTPS server lifecycle: Start, the
-// HTTP→HTTPS redirect server, ACME-managed HTTPS, and the self-signed
-// fallback certificate generator.
+// server_lifecycle.go contains the HTTP/HTTPS server lifecycle: Start,
+// ACME-managed HTTPS, and the self-signed fallback certificate generator.
 
 import (
 	"context"
@@ -15,12 +14,9 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 	"time"
 
 	"golang.org/x/crypto/acme"
@@ -131,10 +127,6 @@ func (s *Server) Start() error {
 	}
 
 	if s.config.Server.HTTPS {
-		// Start HTTP→HTTPS redirect server if configured
-		if s.config.Server.HTTPRedirectPort > 0 {
-			go s.startHTTPRedirect(s.config.Server.HTTPRedirectPort)
-		}
 		return s.startHTTPS()
 	}
 	return s.startHTTP()
@@ -157,79 +149,6 @@ func (s *Server) startHTTP() error {
 		return fmt.Errorf("http server: %w", serveErr)
 	}
 	return nil
-}
-
-// httpToHTTPSRedirectHandler returns an [http.Handler] that permanently
-// redirects every request to the equivalent HTTPS URL. Extracted from
-// startHTTPRedirect so it can be exercised in tests without bringing up
-// a real listener.
-func (s *Server) httpToHTTPSRedirectHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Build HTTPS URL preserving the host and path
-		host := r.Host
-		// Remove port from host if present (to avoid localhost:80 → https://localhost:80:8443)
-		if colonPos := strings.LastIndex(host, ":"); colonPos != -1 {
-			host = host[:colonPos]
-		}
-
-		// If HTTPS is on standard port 443, don't include it in URL
-		httpsPort := s.config.Server.Port
-		var httpsURL string
-		if httpsPort == httpsDefaultPort {
-			httpsURL = fmt.Sprintf("https://%s%s", host, r.RequestURI)
-		} else {
-			httpsURL = "https://" + net.JoinHostPort(host, strconv.Itoa(httpsPort)) + r.RequestURI
-		}
-
-		// #nosec G710 -- httpsURL is server-controlled: scheme/port from our config, host stripped to its
-		// bare form before re-joining; user-supplied r.RequestURI is appended as the path/query only.
-		//
-		// Use 308 Permanent Redirect (RFC 7538) rather than 301 so the HTTP
-		// method and body are preserved across the redirect. 301 allows
-		// clients to downgrade POST to GET, which would silently break
-		// state-changing API calls that arrive on the HTTP listener.
-		http.Redirect(w, r, httpsURL, http.StatusPermanentRedirect)
-	})
-}
-
-// startHTTPRedirect starts an HTTP server that redirects all requests to HTTPS (fixes #515).
-// Properly tracks the server and allows shutdown.
-func (s *Server) startHTTPRedirect(port int) {
-	redirectHandler := s.httpToHTTPSRedirectHandler()
-
-	// Bind via the port-fallback helper so a busy :80 (or whatever is
-	// configured) walks up to +9 instead of killing the redirect goroutine.
-	ln, actualPort, bindErr := bindWithFallback(context.Background(), "", port)
-	if bindErr != nil {
-		logging.GetLogger().Error("HTTP redirect server bind failed", "error", bindErr)
-		if s.redirectServerErr == nil {
-			s.redirectServerErr = make(chan error, 1)
-		}
-		s.redirectServerErr <- bindErr
-		return
-	}
-	addr := fmt.Sprintf(":%d", actualPort)
-	logging.GetLogger().Info("Starting HTTP→HTTPS redirect server", "addr", addr)
-
-	// Store redirect server for proper shutdown (fixes #515)
-	s.redirectServer = &http.Server{
-		Addr:         addr,
-		Handler:      redirectHandler,
-		ReadTimeout:  redirectReadWriteTimeoutSec * time.Second,
-		WriteTimeout: redirectReadWriteTimeoutSec * time.Second,
-	}
-
-	// Create error channel if not already created
-	if s.redirectServerErr == nil {
-		s.redirectServerErr = make(chan error, 1)
-	}
-
-	// Run server and report errors
-	err := s.redirectServer.Serve(ln)
-	if err != nil && err != http.ErrServerClosed {
-		logging.GetLogger().Error("HTTP redirect server error", "error", err)
-		s.redirectServerErr <- err
-	}
 }
 
 // startHTTPS starts the server in HTTPS mode.

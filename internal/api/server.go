@@ -42,9 +42,6 @@ const (
 	// logBroadcasterBufferSize is the buffer size for log broadcaster entries.
 	logBroadcasterBufferSize = 1000
 
-	// httpsDefaultPort is the standard HTTPS port number.
-	httpsDefaultPort = 443
-
 	// portScannerTimeout is the timeout for the port scanner.
 	portScannerTimeout = 5 * time.Second
 
@@ -59,9 +56,6 @@ const (
 
 	// serverIdleTimeoutSec is the HTTP server idle connection timeout in seconds.
 	serverIdleTimeoutSec = 60
-
-	// redirectReadWriteTimeoutSec is the timeout for HTTP redirect server operations.
-	redirectReadWriteTimeoutSec = 5
 
 	// acmeReadHeaderTimeoutSec is the timeout for reading ACME challenge request headers.
 	acmeReadHeaderTimeoutSec = 10
@@ -101,8 +95,6 @@ type Server struct {
 	// HTTP server components
 	httpServer          *http.Server
 	mux                 *http.ServeMux
-	redirectServer      *http.Server // HTTP→HTTPS redirect server (fixes #515)
-	redirectServerErr   chan error   // Error channel for redirect server
 	acmeChallengeServer *http.Server // HTTP-01 challenge server for ACME (fixes #837)
 
 	// Service container - holds all domain services (#888)

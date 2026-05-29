@@ -63,18 +63,6 @@ func (c *Config) validateServerConfig() []string {
 			fmt.Sprintf("server.port must be between 1-65535, got %d", c.Server.Port),
 		)
 	}
-	if c.Server.HTTPRedirectPort < 0 || c.Server.HTTPRedirectPort > 65535 {
-		errs = append(
-			errs,
-			fmt.Sprintf(
-				"server.http_redirect_port must be between 0-65535, got %d",
-				c.Server.HTTPRedirectPort,
-			),
-		)
-	}
-	if c.Server.HTTPRedirectPort > 0 && c.Server.Port == c.Server.HTTPRedirectPort {
-		errs = append(errs, "server.port and server.http_redirect_port cannot be the same")
-	}
 	return errs
 }
 

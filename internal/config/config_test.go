@@ -467,29 +467,6 @@ func TestValidateInvalidPort(t *testing.T) {
 	}
 }
 
-func TestValidateInvalidHTTPRedirectPort(t *testing.T) {
-	cfg := config.DefaultConfig()
-	cfg.Auth.DefaultPasswordHash = "hash"
-	cfg.Server.HTTPRedirectPort = -1
-
-	err := cfg.Validate()
-	if err == nil {
-		t.Error("expected validation error for negative HTTP redirect port")
-	}
-}
-
-func TestValidateSamePortAndRedirectPort(t *testing.T) {
-	cfg := config.DefaultConfig()
-	cfg.Auth.DefaultPasswordHash = "hash"
-	cfg.Server.Port = 8080
-	cfg.Server.HTTPRedirectPort = 8080 // Same as main port
-
-	err := cfg.Validate()
-	if err == nil {
-		t.Error("expected validation error when port equals HTTP redirect port")
-	}
-}
-
 // TestValidateCORSWildcardOrigin asserts the #1256 guard: a literal `*`
 // in security.allowed_origins refuses startup because Allow-Credentials
 // is unconditionally true, making the pair invalid per the CORS spec.

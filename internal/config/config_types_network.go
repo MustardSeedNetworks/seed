@@ -8,11 +8,10 @@ import "time"
 
 // ServerConfig contains HTTP server settings.
 type ServerConfig struct {
-	Port             int    `json:"port"`
-	HTTPS            bool   `json:"https"`
-	HTTPRedirectPort int    `json:"http_redirect_port,omitempty"` // Port for HTTP→HTTPS redirect (0 = disabled, typically 80)
-	CertFile         string `json:"cert_file"`
-	KeyFile          string `json:"key_file"`
+	Port     int    `json:"port"`
+	HTTPS    bool   `json:"https"`
+	CertFile string `json:"cert_file"`
+	KeyFile  string `json:"key_file"`
 	// Security fix #301: Removed LogAccessToken/LogAccessHeader - JWT authentication is sufficient
 
 	// ACME/Let's Encrypt automatic certificate management
