@@ -47,9 +47,15 @@ const apiTokenDisplayPrefix = 12
 // limit keeps DB rows compact and prevents UI overflow.
 const apiTokenNameMaxLen = 64
 
-// MintTokenRequest is the body of POST /api/v1/tokens.
+// MintTokenRequest is the body of POST /api/v1/tokens. Scope is the
+// optional per-token role cap (#1255): omit / empty means the token
+// inherits the owner's role at auth time; "viewer"/"operator"/"admin"
+// caps the effective role at min(owner.role, scope). A scope above the
+// owner's role is rejected up front so the UI surfaces a clear error
+// rather than minting a token that silently downgrades.
 type MintTokenRequest struct {
-	Name string `json:"name"`
+	Name  string `json:"name"`
+	Scope string `json:"scope,omitempty"`
 }
 
 // MintTokenResponse is returned by POST /api/v1/tokens. The Token
@@ -61,6 +67,9 @@ type MintTokenResponse struct {
 	Token     string    `json:"token"`
 	Prefix    string    `json:"prefix"`
 	CreatedAt time.Time `json:"createdAt"`
+	// Scope echoes the requested per-token cap (#1255). Empty when the
+	// token inherits the owner's role.
+	Scope string `json:"scope,omitempty"`
 }
 
 // TokenListItem is a sanitized projection of APITokenRecord for the
@@ -72,6 +81,10 @@ type TokenListItem struct {
 	CreatedAt  time.Time `json:"createdAt"`
 	LastUsedAt time.Time `json:"lastUsedAt,omitzero"`
 	RevokedAt  time.Time `json:"revokedAt,omitzero"`
+	// Scope is the per-token role cap, empty when inheriting the owner's
+	// role (#1255). Surfaced so the UI can show "viewer" / "operator" /
+	// "admin" badges next to each token.
+	Scope string `json:"scope,omitempty"`
 }
 
 // LicenseStatusResponse is returned by GET /api/v1/license. It tells
@@ -193,6 +206,24 @@ func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// #1255: optional per-token scope. Must be a legal role string and
+	// must not exceed the minter's own role — escalating via a PAT
+	// would defeat the role gate.
+	req.Scope = strings.TrimSpace(req.Scope)
+	if req.Scope != "" {
+		if !database.IsValidRole(req.Scope) {
+			writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeValidation,
+				"`scope` must be one of viewer, operator, admin")
+			return
+		}
+		ownerRole, ok := s.callerRole(r)
+		if !ok || roleRank(req.Scope) > roleRank(ownerRole) {
+			writeAPITokenError(w, r, http.StatusForbidden, ErrCodeForbidden,
+				"`scope` may not exceed your own role")
+			return
+		}
+	}
+
 	id, secret, mintErr := mintTokenMaterial()
 	if mintErr != nil {
 		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal,
@@ -207,6 +238,7 @@ func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 		TokenHash:     hashAPIToken(plaintext),
 		Prefix:        plaintext[:apiTokenDisplayPrefix],
 		CreatedAt:     time.Now().UTC(),
+		Scope:         req.Scope,
 	}
 	if insertErr := repo.Insert(r.Context(), rec); insertErr != nil {
 		logger := logging.FromContext(r.Context())
@@ -222,6 +254,7 @@ func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 		Token:     plaintext,
 		Prefix:    rec.Prefix,
 		CreatedAt: rec.CreatedAt,
+		Scope:     rec.Scope,
 	})
 }
 
@@ -255,6 +288,7 @@ func (s *Server) handleAPITokenList(w http.ResponseWriter, r *http.Request) {
 			CreatedAt:  t.CreatedAt,
 			LastUsedAt: t.LastUsedAt,
 			RevokedAt:  t.RevokedAt,
+			Scope:      t.Scope,
 		})
 	}
 	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, out)
@@ -337,23 +371,25 @@ func hashAPIToken(plaintext string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// resolveAPIToken returns the owning username for the given plaintext
-// token, or "" if no active token matches. Token's last_used_at is
-// touched on a successful lookup (best-effort; failures are logged
-// but do not block the request).
-func resolveAPIToken(ctx context.Context, repo *database.APITokenRepository, plaintext string) string {
+// resolveAPIToken returns the matched record for the given plaintext
+// token, or a zero record if no active token matches. The token's
+// last_used_at is touched on a successful lookup (best-effort; failures
+// are logged but do not block the request). Callers check the returned
+// OwnerUsername == "" to detect no-match; #1255 callers also read Scope
+// to clamp the effective role.
+func resolveAPIToken(ctx context.Context, repo *database.APITokenRepository, plaintext string) database.APITokenRecord {
 	if repo == nil || !strings.HasPrefix(plaintext, APITokenPrefix) {
-		return ""
+		return database.APITokenRecord{}
 	}
 	rec, err := repo.FindActiveByHash(ctx, hashAPIToken(plaintext))
 	if err != nil {
-		return ""
+		return database.APITokenRecord{}
 	}
 	if touchErr := repo.TouchLastUsed(ctx, rec.ID); touchErr != nil {
 		logging.GetLogger().WarnContext(ctx, "failed to update api token last_used_at",
 			"token_id", rec.ID, "error", touchErr)
 	}
-	return rec.OwnerUsername
+	return rec
 }
 
 // apiTokenMiddleware sits in front of the existing JWT auth middleware.
@@ -385,14 +421,21 @@ func apiTokenMiddleware(repo *database.APITokenRepository, next http.Handler) ht
 			next.ServeHTTP(w, r)
 			return
 		}
-		owner := resolveAPIToken(r.Context(), repo, token)
-		if owner == "" {
+		rec := resolveAPIToken(r.Context(), repo, token)
+		if rec.OwnerUsername == "" {
 			writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized,
 				"Invalid or revoked API token")
 			return
 		}
-		ctx := logging.WithUserID(r.Context(), owner)
-		r.Header.Set("X-Username", owner)
+		ctx := logging.WithUserID(r.Context(), rec.OwnerUsername)
+		r.Header.Set("X-Username", rec.OwnerUsername)
+		// #1255: thread the per-token scope so callerRole can clamp the
+		// effective role at min(owner.role, token.scope). Empty scope
+		// (legacy tokens / no-cap mints) leaves the header unset and
+		// the owner's full role applies.
+		if rec.Scope != "" {
+			r.Header.Set("X-Token-Scope", rec.Scope)
+		}
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
