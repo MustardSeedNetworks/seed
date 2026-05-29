@@ -333,7 +333,7 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
                     spacing.margin.top.tight,
                     inputTokens.base,
                     (settings.options?.portScan?.preset ?? 'common') !== 'custom'
-                      ? 'bg-surface-muted cursor-not-allowed opacity-60'
+                      ? 'bg-surface-hover cursor-not-allowed opacity-60'
                       : inputTokens.state.default,
                     inputTokens.size.sm,
                     'body-small',
@@ -377,7 +377,7 @@ export const DiscoveryCustomOptions: React.NamedExoticComponent<DiscoveryCustomO
                     spacing.margin.top.tight,
                     inputTokens.base,
                     (settings.options?.portScan?.preset ?? 'common') !== 'custom'
-                      ? 'bg-surface-muted cursor-not-allowed opacity-60'
+                      ? 'bg-surface-hover cursor-not-allowed opacity-60'
                       : inputTokens.state.default,
                     inputTokens.size.sm,
                     'body-small',

@@ -337,7 +337,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
                     button.size.md,
                     'bg-status-info text-text-inverse',
                     radius.md,
-                    'font-medium hover:bg-status-info-dark focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50',
+                    'font-medium hover:bg-status-info/85 focus:outline-none focus:ring-2 focus:ring-status-info focus:ring-offset-2 focus:ring-offset-surface-base disabled:opacity-50',
                   )}
                 >
                   {t('buttons.signInWithGoogle')}
