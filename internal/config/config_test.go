@@ -490,6 +490,36 @@ func TestValidateSamePortAndRedirectPort(t *testing.T) {
 	}
 }
 
+// TestValidateCORSWildcardOrigin asserts the #1256 guard: a literal `*`
+// in security.allowed_origins refuses startup because Allow-Credentials
+// is unconditionally true, making the pair invalid per the CORS spec.
+func TestValidateCORSWildcardOrigin(t *testing.T) {
+	cases := []struct {
+		name    string
+		origins []string
+		wantErr bool
+	}{
+		{"explicit origin is fine", []string{"https://seed.example.com"}, false},
+		{"explicit list mixed is fine", []string{"https://a.example.com", "https://b.example.com"}, false},
+		{"empty list defaults to RFC1918 and is fine", []string{}, false},
+		{"bare wildcard is rejected", []string{"*"}, true},
+		{"wildcard with surrounding whitespace is rejected", []string{" * "}, true},
+		{"wildcard mixed with explicit is rejected", []string{"https://seed.example.com", "*"}, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			cfg := config.DefaultConfig()
+			cfg.Auth.DefaultPasswordHash = "hash"
+			cfg.Security.AllowedOrigins = c.origins
+
+			err := cfg.Validate()
+			if (err != nil) != c.wantErr {
+				t.Errorf("Validate() err = %v, wantErr = %v", err, c.wantErr)
+			}
+		})
+	}
+}
+
 func TestValidateEmptyInterface(t *testing.T) {
 	// Empty interface is now valid - triggers auto-detection (#572)
 	cfg := config.DefaultConfig()
