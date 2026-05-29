@@ -41,7 +41,7 @@
     "dns": "Prueba resolución DNS y muestra servidores configurados",
     "wifi": "Muestra detalles de conexión WiFi y fuerza de señal",
     "cable": "Prueba integridad y longitud del cable Ethernet",
-    "performance": "Mide rendimiento de red y latencia",
+    "performance": "Mide throughput de red y latency",
     "healthChecks": "Monitorea disponibilidad de endpoints",
     "systemHealth": "Muestra uso de recursos del sistema"
   },
@@ -83,7 +83,7 @@
         },
         "performanceTesting": {
           "title": "Pruebas de rendimiento",
-          "description": "Ejecute pruebas de velocidad de internet y pruebas de rendimiento LAN con integración iperf3."
+          "description": "Ejecute pruebas de velocidad de internet y pruebas de throughput LAN con integración iperf3."
         },
         "cableDiagnostics": {
           "title": "Diagnóstico de cables",
@@ -114,7 +114,7 @@
         },
         "thresholds": {
           "title": "Configurar umbrales",
-          "description": "Abra Configuración → Umbrales para personalizar niveles de advertencia y críticos para latencia DNS, ping del gateway, intensidad de señal WiFi y más."
+          "description": "Abra Configuración → Umbrales para personalizar niveles de advertencia y críticos para latency DNS, ping del gateway, intensidad de señal WiFi y más."
         },
         "runTests": {
           "title": "Ejecutar pruebas",
@@ -237,7 +237,7 @@
       }
     },
     "gatewayHelp": {
-      "description": "Prueba alcanzabilidad y latencia a su puerta de enlace predeterminada.",
+      "description": "Prueba alcanzabilidad y latency a su puerta de enlace predeterminada.",
       "terms": {
         "ipv4Gateway": {
           "term": "Puerta de enlace IPv4",
@@ -252,7 +252,7 @@
           "description": "Si la puerta de enlace responde a solicitudes de ping ICMP."
         },
         "latency": {
-          "term": "Latencia",
+          "term": "Latency",
           "description": "Tiempo de ida y vuelta a la puerta de enlace. Debe ser <1ms para redes locales."
         },
         "packetLoss": {
@@ -277,13 +277,13 @@
           "description": "Resuelve nombre de host a dirección IPv6 (registro AAAA)."
         },
         "latency": {
-          "term": "Latencia",
+          "term": "Latency",
           "description": "Tiempo para completar la consulta DNS. Bueno: <50ms para DNS local."
         }
       }
     },
     "performanceTests": {
-      "description": "Ejecute pruebas de velocidad para medir el rendimiento de la red.",
+      "description": "Ejecute pruebas de velocidad para medir el throughput de la red.",
       "terms": {
         "internetSpeed": {
           "term": "Prueba de velocidad de internet",
@@ -291,7 +291,7 @@
         },
         "lanSpeed": {
           "term": "Velocidad LAN (iperf3)",
-          "description": "Prueba rendimiento en su red local usando iperf3 a un servidor configurado."
+          "description": "Prueba throughput en su red local usando iperf3 a un servidor configurado."
         },
         "download": {
           "term": "Descarga",
@@ -302,12 +302,12 @@
           "description": "Velocidad máxima de subida alcanzada durante la prueba."
         },
         "latency": {
-          "term": "Latencia",
+          "term": "Latency",
           "description": "Tiempo de ida y vuelta (ping) al servidor de prueba."
         },
         "jitter": {
           "term": "Jitter",
-          "description": "Variación en latencia a lo largo del tiempo. Menor es mejor para aplicaciones en tiempo real como VoIP y juegos."
+          "description": "Variación en latency a lo largo del tiempo. Menor es mejor para aplicaciones en tiempo real como VoIP y juegos."
         }
       }
     },
@@ -341,7 +341,7 @@
       "terms": {
         "pingTest": {
           "term": "Prueba de Ping (ICMP)",
-          "description": "Envía solicitudes de eco ICMP para verificar la alcanzabilidad del host. Devuelve métricas de latencia y pérdida de paquetes."
+          "description": "Envía solicitudes de eco ICMP para verificar la alcanzabilidad del host. Devuelve métricas de latency y pérdida de paquetes."
         },
         "tcpTest": {
           "term": "Prueba de Conexión TCP",
@@ -357,13 +357,13 @@
         },
         "thresholds": {
           "term": "Umbrales",
-          "description": "Establezca umbrales de advertencia (amarillo) y críticos (rojo) para latencia. Configure en Configuración → Umbrales."
+          "description": "Establezca umbrales de advertencia (amarillo) y críticos (rojo) para latency. Configure en Configuración → Umbrales."
         }
       },
       "commonIssues": {
         "title": "Problemas Comunes",
         "timeout": "Tiempo de espera agotado indica host inalcanzable, firewall bloqueando, o problema de ruta de red.",
-        "highLatency": "Alta latencia puede indicar congestión de red, problemas de enrutamiento, o servidor sobrecargado.",
+        "highLatency": "Alta latency puede indicar congestión de red, problemas de enrutamiento, o servidor sobrecargado.",
         "packetLoss": "Pérdida de paquetes sugiere congestión de red, equipo defectuoso, o interferencia inalámbrica.",
         "connectionRefused": "Conexión rechazada significa que el servicio no está ejecutándose o no está escuchando en ese puerto."
       }
@@ -540,7 +540,7 @@
             ]
           },
           "highLatency": {
-            "symptom": "Latencia de puerta de enlace >5ms",
+            "symptom": "Latency de puerta de enlace >5ms",
             "causes": [
               "Router sobrecargado con tráfico",
               "Conexión inalámbrica al router",
@@ -648,7 +648,7 @@
         },
         "coChannelInterference": {
           "term": "Interferencia co-canal",
-          "description": "Cuando múltiples puntos de acceso usan el mismo canal, deben compartir tiempo de aire, reduciendo el rendimiento. El estudio identifica redes superpuestas."
+          "description": "Cuando múltiples puntos de acceso usan el mismo canal, deben compartir tiempo de aire, reduciendo el throughput. El estudio identifica redes superpuestas."
         },
         "adjacentChannelInterference": {
           "term": "Interferencia de canal adyacente",
@@ -675,7 +675,7 @@
         },
         "6GHz": {
           "name": "Banda 6 GHz (WiFi 6E/7)",
-          "pros": "Completamente sin congestión, canales más anchos (hasta 320 MHz), menor latencia",
+          "pros": "Completamente sin congestión, canales más anchos (hasta 320 MHz), menor latency",
           "cons": "Menor alcance, requiere dispositivos WiFi 6E/7, penetración limitada",
           "bestFor": "Aplicaciones de alto rendimiento, AR/VR, despliegues empresariales"
         }
@@ -741,7 +741,11 @@
         },
         "authFailed": {
           "symptom": "401 No autorizado",
-          "causes": ["Credenciales incorrectas", "Cuenta bloqueada", "IP no en lista permitida"],
+          "causes": [
+            "Credenciales incorrectas",
+            "Cuenta bloqueada",
+            "IP no en lista permitida"
+          ],
           "solutions": [
             "Verifique usuario y contraseña",
             "Revise la gestión de usuarios de la cámara",
@@ -750,7 +754,11 @@
         },
         "streamNotFound": {
           "symptom": "404 Stream no encontrado",
-          "causes": ["Ruta de stream incorrecta", "Stream deshabilitado", "Canal no configurado"],
+          "causes": [
+            "Ruta de stream incorrecta",
+            "Stream deshabilitado",
+            "Canal no configurado"
+          ],
           "solutions": [
             "Revise la documentación de la cámara para el formato correcto de URL",
             "Verifique que el stream esté habilitado",
@@ -851,7 +859,11 @@
         },
         "connectionRefused": {
           "symptom": "Conexión rechazada",
-          "causes": ["Puerto incorrecto", "Servicio DICOM no ejecutándose", "Firewall bloqueando"],
+          "causes": [
+            "Puerto incorrecto",
+            "Servicio DICOM no ejecutándose",
+            "Firewall bloqueando"
+          ],
           "solutions": [
             "Verifique puerto DICOM con admin de PACS",
             "Revise estado del servicio DICOM",
@@ -915,8 +927,8 @@
               "description": "Verifique que la tarjeta de Estado del enlace muestre la velocidad esperada (1 Gbps para gigabit). Si muestra 100 Mbps, revise calidad del cable o puerto del switch."
             },
             {
-              "step": "Probar latencia de gateway",
-              "description": "La latencia del gateway debe ser <1ms para conexiones cableadas. Alta latencia aquí indica problemas de red local."
+              "step": "Probar latency de gateway",
+              "description": "La latency del gateway debe ser <1ms para conexiones cableadas. Alta latency aquí indica problemas de red local."
             },
             {
               "step": "Ejecutar prueba de velocidad de internet",
@@ -924,7 +936,7 @@
             },
             {
               "step": "Ejecutar prueba iPerf LAN",
-              "description": "Pruebe rendimiento de red local para aislar si el problema es local o hacia internet. Debe alcanzar velocidad cercana al cable."
+              "description": "Pruebe throughput de red local para aislar si el problema es local o hacia internet. Debe alcanzar velocidad cercana al cable."
             },
             {
               "step": "Verificar interferencias",
@@ -953,7 +965,7 @@
             },
             {
               "step": "Establecer umbrales",
-              "description": "Configure umbrales de latencia de advertencia (amarillo) y crítico (rojo) basados en requisitos del servicio."
+              "description": "Configure umbrales de latency de advertencia (amarillo) y crítico (rojo) basados en requisitos del servicio."
             },
             {
               "step": "Probar configuración",

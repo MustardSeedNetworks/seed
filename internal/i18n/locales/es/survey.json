@@ -11,8 +11,8 @@
     "close": "Cerrar",
     "hideHeatmap": "Ocultar Mapa de Calor",
     "rssiHeatmap": "Mapa de Calor RSSI",
-    "throughput": "Rendimiento",
-    "latency": "Latencia",
+    "throughput": "Throughput",
+    "latency": "Latency",
     "calibrateScale": "Calibrar Escala",
     "saveScale": "Guardar Escala",
     "cancel": "Cancelar",
@@ -65,7 +65,7 @@
     "types": {
       "passive": "Pasivo (Escanear todas las redes)",
       "active": "Activo (Monitorear conexión)",
-      "throughput": "Rendimiento (pruebas iperf3)"
+      "throughput": "Throughput (pruebas iperf3)"
     },
     "iperfServer": "Dirección del Servidor iperf3",
     "iperfServerHint": "Formato: hostname:puerto (puerto predeterminado es 5201)",
@@ -73,7 +73,7 @@
     "typesDescription": "Tipos de Encuesta:",
     "passiveDesc": "Escanea todas las redes WiFi visibles en cada punto",
     "activeDesc": "Monitorea tu conexión WiFi actual (RSSI, velocidad, roaming)",
-    "throughputDesc": "Ejecuta pruebas iperf3 para medir ancho de banda, latencia y jitter"
+    "throughputDesc": "Ejecuta pruebas iperf3 para medir ancho de banda, latency y jitter"
   },
   "scalePanel": {
     "title": "Configuración de Escala y Propagación",
@@ -133,12 +133,12 @@
       "coverageDesc": "Ver dónde llega el WiFi y medir la calidad de señal. Ideal para evaluación inicial del sitio.",
       "connection": "Calidad de Conexión",
       "connectionDesc": "Probar velocidades reales de conexión y comportamiento de roaming. Requiere conectarse a la red.",
-      "throughput": "Rendimiento Real",
+      "throughput": "Throughput Real",
       "throughputDesc": "Medir velocidades reales de transferencia de datos con iperf3. Requiere servidor iperf3.",
       "complete": "Análisis Completo",
       "completeDesc": "Cobertura más calidad de conexión en una sola encuesta. Ideal para nuevas implementaciones.",
       "validation": "Validación de Rendimiento",
-      "validationDesc": "Cobertura más pruebas reales de rendimiento. Ideal para verificación de rendimiento."
+      "validationDesc": "Cobertura más pruebas reales de throughput. Ideal para verificación de throughput."
     },
     "recommended": "Recomendado",
     "oneRadio": "1 radio",
@@ -157,7 +157,7 @@
     "remove": "Eliminar",
     "addAdapter": "Agregar Adaptador",
     "multiAdapterTip": "Con múltiples adaptadores, puede ejecutar escaneo pasivo y pruebas activas simultáneamente para una encuesta completa en una sola pasada.",
-    "throughputSettings": "Configuración de Pruebas de Rendimiento",
+    "throughputSettings": "Configuración de Pruebas de Throughput",
     "singlePassTip": "Configure ambos adaptadores para una encuesta de una sola pasada: uno para escaneo pasivo, otro para pruebas activas."
   },
   "import": {
@@ -192,8 +192,8 @@
     "rssi": "Intensidad de Señal",
     "snr": "SNR",
     "noise": "Piso de Ruido",
-    "throughput": "Rendimiento",
-    "latency": "Latencia",
+    "throughput": "Throughput",
+    "latency": "Latency",
     "cochannel": "Co-Canal",
     "adjacent": "Canal Adyacente",
     "channelUtil": "Utilización de Canal",
@@ -306,7 +306,7 @@
     "title": "Criterios de Aprobación/Fallo",
     "passiveSection": "Criterios de Encuesta Pasiva",
     "activeSection": "Criterios de Encuesta Activa",
-    "throughputSection": "Criterios de Prueba de Rendimiento",
+    "throughputSection": "Criterios de Prueba de Throughput",
     "allSection": "Todos los Criterios",
     "runTest": "Ejecutar Prueba",
     "validating": "Validando...",
@@ -323,7 +323,7 @@
     "activeSnr": "SNR Activo",
     "linkRate": "Tasa de Enlace",
     "bandwidth": "Ancho de Banda",
-    "latency": "Latencia",
+    "latency": "Latency",
     "jitter": "Jitter",
     "statusPass": "APROBADO",
     "statusFail": "FALLIDO",
@@ -361,8 +361,8 @@
       "rssi": "Este mapa de calor muestra el Indicador de Intensidad de Señal Recibida (RSSI) en dBm en toda el área encuestada. Las áreas verdes (-30 a -65 dBm) indican excelente cobertura adecuada para todas las aplicaciones. Las áreas amarillas (-65 a -75 dBm) indican cobertura aceptable para conectividad básica. Las áreas rojas (por debajo de -75 dBm) indican cobertura deficiente que puede causar problemas de conectividad, conexiones caídas o rendimiento lento.",
       "snr": "La Relación Señal-Ruido (SNR) mide la diferencia entre la intensidad de la señal y el ruido ambiental. Valores más altos indican señales más limpias. Las áreas verdes (25+ dB) proporcionan conexiones confiables de alta velocidad. Las áreas amarillas (15-25 dB) ofrecen rendimiento aceptable. Las áreas rojas (por debajo de 15 dB) pueden experimentar interferencia y velocidades reducidas.",
       "noise": "El mapa de calor del piso de ruido muestra los niveles de interferencia RF ambiental. Valores más bajos (verde, por debajo de -90 dBm) indican un entorno RF limpio. Niveles de ruido más altos (rojo) pueden degradar el rendimiento WiFi incluso con señal fuerte.",
-      "throughput": "El rendimiento medido muestra las velocidades reales de transferencia de datos en cada ubicación. Esto refleja el rendimiento real considerando la calidad de la señal, interferencia y condiciones de red.",
-      "latency": "La latencia mide el tiempo de ida y vuelta de los paquetes de red. Menor latencia (verde) es esencial para aplicaciones en tiempo real como voz y video. Mayor latencia (rojo) puede causar retrasos notables.",
+      "throughput": "El throughput medido muestra las velocidades reales de transferencia de datos en cada ubicación. Esto refleja el throughput real considerando la calidad de la señal, interferencia y condiciones de red.",
+      "latency": "La latency mide el tiempo de ida y vuelta de los paquetes de red. Menor latency (verde) es esencial para aplicaciones en tiempo real como voz y video. Mayor latency (rojo) puede causar retrasos notables.",
       "cochannel": "La interferencia de co-canal ocurre cuando múltiples APs operan en el mismo canal. Este mapa de calor muestra áreas donde la interferencia excesiva de co-canal puede degradar el rendimiento. Menos APs por canal (verde) es mejor.",
       "adjacent": "La interferencia de canal adyacente ocurre entre canales WiFi superpuestos. Esto es más común en 2.4 GHz donde los canales se superponen. Las áreas verdes tienen mínima interferencia de canal adyacente."
     },
