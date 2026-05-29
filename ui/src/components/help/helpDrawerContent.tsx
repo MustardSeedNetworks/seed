@@ -23,6 +23,7 @@ import type { HelpTranslations } from '../../i18n/types';
 import {
   Activity,
   AlertTriangle,
+  BarChart3,
   BookOpen,
   Cable,
   Heart,
@@ -32,6 +33,8 @@ import {
   Lightbulb,
   Monitor,
   Network,
+  Route,
+  ScrollText,
   Search,
   Server,
   Shield,
@@ -945,6 +948,119 @@ export const helpSections: HelpSection[] = [
           {
             description:
               'Run the tests manually to confirm connectivity, then enable continuous monitoring and save to the appropriate profile.',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'path',
+    titleKey: 'sections.path',
+    icon: <Route className={ICON} />,
+    keywords: ['path', 'traceroute', 'route', 'hops', 'arp', 'l2', 'l3', 'gateway'],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'Path Analysis traces how traffic leaves the local network and reaches a destination. It surfaces every L2 hop on the local segment, every L3 hop on the route off-link, and the on-link devices ARP/ND can see along the way. The Roots module owns this surface.',
+      },
+      {
+        kind: 'terms',
+        heading: 'Terms',
+        items: [
+          {
+            term: 'L2 path',
+            description:
+              'Hops within the same broadcast domain (switches, bridges), discovered via ARP and on-link MAC tables.',
+          },
+          {
+            term: 'L3 path',
+            description:
+              'Per-hop IPv4/IPv6 traceroute with round-trip latency to each hop and any AS / reverse-DNS metadata.',
+          },
+          {
+            term: 'Gateway hop',
+            description:
+              'The first L3 hop off the local subnet — usually the router that issued the DHCP lease.',
+          },
+          {
+            term: 'On-link discovery',
+            description:
+              'ARP / ND sweep that surfaces neighbors visible without crossing a router.',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'reports',
+    titleKey: 'sections.reports',
+    icon: <BarChart3 className={ICON} />,
+    keywords: ['reports', 'sla', 'compliance', 'history', 'export', 'csv', 'json', 'pdf'],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'Reports collects the results of Seed’s diagnostic tests over time and exports them as SLA dashboards, compliance summaries, and historical CSV/JSON. The Harvest module owns this surface.',
+      },
+      {
+        kind: 'terms',
+        heading: 'Terms',
+        items: [
+          {
+            term: 'SLA dashboard',
+            description:
+              'Rolling availability and latency view derived from health-check probe results.',
+          },
+          {
+            term: 'Compliance summary',
+            description:
+              'Snapshot of which checks pass against the active profile’s thresholds — useful for audits.',
+          },
+          {
+            term: 'Scheduled reports',
+            description: 'Pro-tier feature that produces a periodic PDF report on a cadence.',
+          },
+          {
+            term: 'Export',
+            description:
+              'Download a slice of the underlying data as CSV or JSON for downstream tooling.',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'logs',
+    titleKey: 'sections.logs',
+    icon: <ScrollText className={ICON} />,
+    keywords: ['logs', 'log', 'stream', 'tail', 'daemon', 'level', 'source', 'debug'],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'Logs streams the seed daemon’s structured log entries live as they are emitted, with filters by level, source, and free-text. Useful for confirming what the backend just did or diagnosing why a test failed.',
+      },
+      {
+        kind: 'terms',
+        heading: 'Terms',
+        items: [
+          {
+            term: 'Level',
+            description:
+              'Standard severity (debug / info / warn / error). Filter to narrow the view.',
+          },
+          {
+            term: 'Source',
+            description:
+              'The internal package emitting the entry (for example discovery, canopy, shell).',
+          },
+          {
+            term: 'Live tail',
+            description:
+              'WebSocket stream of new entries as they are produced by the running seed process.',
+          },
+          {
+            term: 'Daemon health',
+            description:
+              'Rotating-file usage, error counts, and uptime of the seed process itself.',
           },
         ],
       },
