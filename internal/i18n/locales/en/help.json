@@ -24,7 +24,10 @@
     "security": "Security & Administration",
     "troubleshooting": "Troubleshooting",
     "howTo": "How-To Guides",
-    "glossary": "Glossary"
+    "glossary": "Glossary",
+    "path": "Path Analysis",
+    "reports": "Reports",
+    "logs": "Logs"
   },
   "instructions": {
     "runTests": "Tap the play button to run all tests.",
@@ -728,7 +731,11 @@
         "title": "Troubleshooting RTSP",
         "connectionRefused": {
           "symptom": "Connection refused",
-          "causes": ["Camera powered off", "RTSP service not running", "Wrong port number"],
+          "causes": [
+            "Camera powered off",
+            "RTSP service not running",
+            "Wrong port number"
+          ],
           "solutions": [
             "Verify camera is powered and online",
             "Check RTSP is enabled in camera settings",
@@ -737,7 +744,11 @@
         },
         "authFailed": {
           "symptom": "401 Unauthorized",
-          "causes": ["Incorrect credentials", "Account locked", "IP not in allowed list"],
+          "causes": [
+            "Incorrect credentials",
+            "Account locked",
+            "IP not in allowed list"
+          ],
           "solutions": [
             "Verify username and password",
             "Check camera's user management",
@@ -746,7 +757,11 @@
         },
         "streamNotFound": {
           "symptom": "404 Stream Not Found",
-          "causes": ["Incorrect stream path", "Stream disabled", "Channel not configured"],
+          "causes": [
+            "Incorrect stream path",
+            "Stream disabled",
+            "Channel not configured"
+          ],
           "solutions": [
             "Check camera documentation for correct URL format",
             "Verify stream is enabled",
@@ -755,7 +770,11 @@
         },
         "timeout": {
           "symptom": "Connection timeout",
-          "causes": ["Network connectivity issue", "Firewall blocking", "Camera overloaded"],
+          "causes": [
+            "Network connectivity issue",
+            "Firewall blocking",
+            "Camera overloaded"
+          ],
           "solutions": [
             "Test network path to camera",
             "Check firewall rules for port 554",
@@ -843,7 +862,11 @@
         },
         "connectionRefused": {
           "symptom": "Connection Refused",
-          "causes": ["Wrong port", "DICOM service not running", "Firewall blocking"],
+          "causes": [
+            "Wrong port",
+            "DICOM service not running",
+            "Firewall blocking"
+          ],
           "solutions": [
             "Verify DICOM port with PACS admin",
             "Check DICOM service status",
@@ -852,7 +875,11 @@
         },
         "timeout": {
           "symptom": "Connection Timeout",
-          "causes": ["Network path issue", "Remote system overloaded", "Wrong IP address"],
+          "causes": [
+            "Network path issue",
+            "Remote system overloaded",
+            "Wrong IP address"
+          ],
           "solutions": [
             "Test basic network connectivity with ping",
             "Check system load on PACS",

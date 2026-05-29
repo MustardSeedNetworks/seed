@@ -24,7 +24,10 @@
     "security": "Seguridad y administración",
     "troubleshooting": "Solución de problemas",
     "howTo": "Guías prácticas",
-    "glossary": "Glosario"
+    "glossary": "Glosario",
+    "path": "Análisis de ruta",
+    "reports": "Informes",
+    "logs": "Logs"
   },
   "instructions": {
     "runTests": "Toque el botón de reproducir para ejecutar todas las pruebas.",
@@ -741,7 +744,11 @@
         },
         "authFailed": {
           "symptom": "401 No autorizado",
-          "causes": ["Credenciales incorrectas", "Cuenta bloqueada", "IP no en lista permitida"],
+          "causes": [
+            "Credenciales incorrectas",
+            "Cuenta bloqueada",
+            "IP no en lista permitida"
+          ],
           "solutions": [
             "Verifique usuario y contraseña",
             "Revise la gestión de usuarios de la cámara",
@@ -750,7 +757,11 @@
         },
         "streamNotFound": {
           "symptom": "404 Stream no encontrado",
-          "causes": ["Ruta de stream incorrecta", "Stream deshabilitado", "Canal no configurado"],
+          "causes": [
+            "Ruta de stream incorrecta",
+            "Stream deshabilitado",
+            "Canal no configurado"
+          ],
           "solutions": [
             "Revise la documentación de la cámara para el formato correcto de URL",
             "Verifique que el stream esté habilitado",
@@ -851,7 +862,11 @@
         },
         "connectionRefused": {
           "symptom": "Conexión rechazada",
-          "causes": ["Puerto incorrecto", "Servicio DICOM no ejecutándose", "Firewall bloqueando"],
+          "causes": [
+            "Puerto incorrecto",
+            "Servicio DICOM no ejecutándose",
+            "Firewall bloqueando"
+          ],
           "solutions": [
             "Verifique puerto DICOM con admin de PACS",
             "Revise estado del servicio DICOM",
