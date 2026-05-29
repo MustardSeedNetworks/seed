@@ -79,7 +79,7 @@ export function ProfileEditor({
 
   return (
     <div className="fixed inset-0 z-50 flex-center pad">
-      <div className="fixed inset-0 bg-black/50" onClick={onCancel} aria-hidden="true" />
+      <div className="fixed inset-0 bg-scrim/50" onClick={onCancel} aria-hidden="true" />
       <div
         className={cn(
           'relative w-full max-w-lg',

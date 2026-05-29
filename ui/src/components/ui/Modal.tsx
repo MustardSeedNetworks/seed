@@ -71,12 +71,12 @@ export const Modal: FC<ModalProps> = ({
       {closeOnBackdropClick ? (
         <button
           type="button"
-          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          className="absolute inset-0 bg-scrim/70 backdrop-blur-sm"
           onClick={onClose}
           aria-label="Close modal"
         />
       ) : (
-        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-scrim/70 backdrop-blur-sm" />
       )}
       <div
         ref={containerRef}
