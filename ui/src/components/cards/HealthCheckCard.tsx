@@ -324,7 +324,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
     return (
       <div className={spacing.micro.mtCompactMd}>
         {/* Stacked bar */}
-        <div className={cn('h-2', radius.full, 'overflow-hidden flex bg-bg-tertiary')}>
+        <div className={cn('h-2', radius.full, 'overflow-hidden flex bg-surface-sunken')}>
           {segments.map((seg, i) => {
             const widthPercent = Math.min(100, Math.max(0, (seg.value / total) * 100));
             return (
