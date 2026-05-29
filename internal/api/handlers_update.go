@@ -61,14 +61,14 @@ func (s *Server) registerUpdateRoutes() {
 	s.mux.HandleFunc("GET /api/v1/updates/status", s.handleUpdateStatus)
 	s.mux.HandleFunc("GET /api/v1/updates/info", s.handleUpdateInfo)
 
-	// Update actions
-	s.mux.HandleFunc("POST /api/v1/updates/download", s.handleUpdateDownload)
-	s.mux.HandleFunc("POST /api/v1/updates/apply", s.handleUpdateApply)
-	s.mux.HandleFunc("POST /api/v1/updates/rollback", s.handleUpdateRollback)
+	// Update actions — mutate system state, so operator-or-above only (#1226).
+	s.mux.HandleFunc("POST /api/v1/updates/download", s.writeGated(s.handleUpdateDownload))
+	s.mux.HandleFunc("POST /api/v1/updates/apply", s.writeGated(s.handleUpdateApply))
+	s.mux.HandleFunc("POST /api/v1/updates/rollback", s.writeGated(s.handleUpdateRollback))
 
 	// Configuration
 	s.mux.HandleFunc("GET /api/v1/updates/config", s.handleGetUpdateConfig)
-	s.mux.HandleFunc("PATCH /api/v1/updates/config", s.handleUpdateConfig)
+	s.mux.HandleFunc("PATCH /api/v1/updates/config", s.writeGated(s.handleUpdateConfig))
 }
 
 // handleUpdateCheck checks for available updates.
