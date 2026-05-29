@@ -160,7 +160,7 @@ function StatBlock({
           status === 'success' && 'bg-status-success/10 text-status-success',
           status === 'warning' && 'bg-status-warning/10 text-status-warning',
           status === 'error' && 'bg-status-error/10 text-status-error',
-          !status && 'bg-surface-secondary text-text-muted',
+          !status && 'bg-surface-hover text-text-muted',
         )}
       >
         <ICON className={iconTokens.size.sm} />
@@ -272,8 +272,8 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
       >
         {loading ? (
           <div className={cn('animate-pulse stack-lg', spacing.pad.default)}>
-            <div className="h-20 bg-surface-secondary rounded-lg" />
-            <div className="h-16 bg-surface-secondary rounded-lg" />
+            <div className="h-20 bg-surface-hover rounded-lg" />
+            <div className="h-16 bg-surface-hover rounded-lg" />
           </div>
         ) : null}
         {error ? (
@@ -292,7 +292,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
                     'px-cell py-compact text-xs rounded transition-colors',
                     period === p
                       ? 'bg-brand-primary text-on-brand'
-                      : 'bg-surface-secondary text-text-muted hover:text-text-primary',
+                      : 'bg-surface-hover text-text-muted hover:text-text-primary',
                   )}
                 >
                   {t(`slaDashboard.period.${p}`, p.charAt(0).toUpperCase() + p.slice(1))}
