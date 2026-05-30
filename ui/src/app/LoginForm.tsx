@@ -310,6 +310,7 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps): JSX.El
           <button
             type="submit"
             disabled={isLoading}
+            data-testid="login-submit"
             className={cn(
               'w-full',
               button.size.md,

@@ -40,7 +40,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await expect(page.getByTestId('login-title')).toBeVisible();
       await expect(page.getByLabel(/username/i)).toBeVisible();
       await expect(page.getByLabel(/password/i)).toBeVisible();
-      await expect(page.getByRole('button', { name: /sign in|login/i })).toBeVisible();
+      await expect(page.getByTestId('login-submit')).toBeVisible();
     });
 
     test('should show error with invalid credentials', async ({ page }) => {
@@ -49,7 +49,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Attempt login with invalid credentials
       await page.getByLabel(/username/i).fill('wronguser');
       await page.getByLabel(/password/i).fill('wrongpassword');
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByTestId('login-submit').click();
 
       // Verify error message displays
       await expect(page.getByRole('alert')).toBeVisible({
@@ -66,7 +66,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Login with valid credentials
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByTestId('login-submit').click();
 
       // Verify redirect to dashboard
       await expect(page.getByTestId('page-header-title')).toBeVisible({
@@ -83,7 +83,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Attempt login with invalid credentials
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill('wrongpassword');
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByTestId('login-submit').click();
 
       // Wait for error
       await expect(page.getByRole('alert')).toBeVisible({
@@ -300,7 +300,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.goto('/');
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByTestId('login-submit').click();
       await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
@@ -336,7 +336,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.goto('/');
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByTestId('login-submit').click();
       await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
@@ -362,7 +362,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Login again
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByTestId('login-submit').click();
 
       // Should successfully login again
       await expect(page.getByTestId('page-header-title')).toBeVisible({
@@ -390,7 +390,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.goto('/');
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByTestId('login-submit').click();
 
       // Should access dashboard
       await expect(page.getByTestId('page-header-title')).toBeVisible({
@@ -410,7 +410,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.goto('/');
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByTestId('login-submit').click();
       await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
@@ -438,7 +438,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.goto('/');
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByTestId('login-submit').click();
       await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
@@ -476,7 +476,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.goto('/');
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByTestId('login-submit').click();
       await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
@@ -512,7 +512,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Login
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByTestId('login-submit').click();
       await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
@@ -541,7 +541,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Login
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByTestId('login-submit').click();
       await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });

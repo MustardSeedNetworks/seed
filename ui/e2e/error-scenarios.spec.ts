@@ -66,7 +66,7 @@ test.describe('API Error Scenarios', () => {
 
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByTestId('login-submit').click();
 
       // Should show user-friendly error message
       await expect(page.getByRole('alert')).toBeVisible({
@@ -209,7 +209,7 @@ test.describe('API Error Scenarios', () => {
 
       await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
       await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      await page.getByTestId('login-submit').click();
 
       // Should show timeout or error message. Old form raced .isVisible({15s})
       // against a 100ms hard sleep — the sleep branch always won, defeating
@@ -484,7 +484,7 @@ test.describe('Validation Error Scenarios', () => {
       await page.goto('/');
 
       // Try to submit empty form
-      const loginButton = page.getByRole('button', { name: /sign in|login/i });
+      const loginButton = page.getByTestId('login-submit');
       await loginButton.click();
 
       // Should show validation error or button be disabled
@@ -879,7 +879,7 @@ test.describe('Error Recovery Mechanisms', () => {
     // First attempt
     await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
     await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-    await page.getByRole('button', { name: /sign in|login/i }).click();
+    await page.getByTestId('login-submit').click();
 
     // Should show error
     await expect(page.getByRole('alert')).toBeVisible({
