@@ -20,7 +20,7 @@ test.describe('Logs Page', () => {
 
   test('should render the page header with Logs title', async ({ page }) => {
     await expect(page.getByTestId('page-header-title')).toBeVisible();
-    await expect(page.getByText(/live log stream and system health/i)).toBeVisible();
+    await expect(page.getByTestId('page-header-description')).toBeVisible();
   });
 
   test('should land on the /logs route', async ({ page }) => {

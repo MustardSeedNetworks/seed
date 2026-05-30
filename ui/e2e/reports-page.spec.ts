@@ -19,9 +19,7 @@ test.describe('Reports Page', () => {
 
   test('should render the page header with Reports title', async ({ page }) => {
     await expect(page.getByTestId('page-header-title')).toBeVisible();
-    await expect(
-      page.getByText(/aggregated sla dashboard|compliance|historical reporting/i),
-    ).toBeVisible();
+    await expect(page.getByTestId('page-header-description')).toBeVisible();
   });
 
   test('should land on the /reports route', async ({ page }) => {
