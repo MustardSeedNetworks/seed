@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { TEST_CREDENTIALS } from './helpers/auth';
+import { AUTH_STORAGE_STATE, disableAnimations, TEST_CREDENTIALS } from './helpers/auth';
 
 /**
  * Complete Authentication Lifecycle E2E Tests
@@ -23,15 +23,14 @@ import { TEST_CREDENTIALS } from './helpers/auth';
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Complete Authentication Lifecycle', () => {
-  test.beforeEach(async ({ page }) => {
-    // Clear all storage to start fresh
-    await page.goto('/');
-    await page.evaluate(() => {
-      localStorage.clear();
-      sessionStorage.clear();
-    });
-    await page.reload();
-  });
+  // No outer-level beforeEach: each test already starts in a fresh
+  // browser context with cookies/origins cleared by the file-wide
+  // `test.use` above, so the legacy `localStorage.clear()` +
+  // `page.reload()` ritual is redundant. Each inner describe owns its
+  // own setup — the Logout Flow describe in particular overrides the
+  // storageState to start authenticated via the global-setup session
+  // instead of driving a form login per test (which would otherwise
+  // hit the 5/15-min rate limiter).
 
   test.describe('Login Flow', () => {
     test('should display login form when not authenticated', async ({ page }) => {
@@ -100,12 +99,21 @@ test.describe('Complete Authentication Lifecycle', () => {
   });
 
   test.describe('Logout Flow', () => {
+    // PR-1 (E2E hardening): override the file-wide unauthenticated
+    // storage with the global-setup authenticated session. The previous
+    // per-test form-login beforeEach drove 5 real logins per browser
+    // per run from this describe alone (×2 browsers ×CI retries =
+    // 20–30 form logins), tripping the 5/15-min rate limiter and
+    // cascading lockouts across the rest of the suite. Switching to
+    // storageState collapses that to zero new logins — the single
+    // login from e2e/global-setup.ts is reused.
+    test.use({ storageState: AUTH_STORAGE_STATE });
+
     test.beforeEach(async ({ page }) => {
-      // Login first for logout tests
+      await disableAnimations(page);
       await page.goto('/');
-      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByRole('button', { name: /sign in|login/i }).click();
+      // Authenticated session lands on the dashboard; wait for it
+      // before each test exercises the logout action.
       await expect(page.getByTestId('page-header-title')).toBeVisible({
         timeout: 10000,
       });
