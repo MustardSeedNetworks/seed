@@ -244,7 +244,14 @@ func (s *Server) createSurvey(w http.ResponseWriter, r *http.Request) {
 func (s *Server) listSurveys(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	surveys := s.surveyManager().ListSurveys()
-	sendJSONResponse(w, logger, http.StatusOK, surveys)
+	// #1226 / wifi_roam_analysis: filter the roam fields per-tier.
+	// Returns the slice as-is for Pro / dev builds; deep-copies + zeroes
+	// for Free / Starter.
+	filtered := make([]*survey.Survey, len(surveys))
+	for i, sv := range surveys {
+		filtered[i] = s.applyRoamFilterIfGated(sv)
+	}
+	sendJSONResponse(w, logger, http.StatusOK, filtered)
 }
 
 func (s *Server) getSurvey(w http.ResponseWriter, r *http.Request) {
@@ -278,7 +285,8 @@ func (s *Server) getSurvey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, surveyData)
+	// #1226 / wifi_roam_analysis: filter the roam fields per-tier.
+	sendJSONResponse(w, logger, http.StatusOK, s.applyRoamFilterIfGated(surveyData))
 }
 
 func (s *Server) deleteSurvey(w http.ResponseWriter, r *http.Request) {
@@ -392,4 +400,76 @@ func (s *Server) pauseSurvey(w http.ResponseWriter, r *http.Request) {
 func (s *Server) completeSurvey(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	s.handleSurveyStateChange(w, r, logger, "complete", s.surveyManager().CompleteSurvey)
+}
+
+// filterSurveyRoamFields strips the wifi_roam_analysis fields
+// (RoamingEvent, PreviousBSSID, RoamCount) from every ActiveSample in
+// the survey when the active license does not include the
+// `wifi_roam_analysis` feature. Returns a deep-copied survey so the
+// in-memory cache held by surveyManager is not mutated. Free / Starter
+// tiers see the basic survey data (SSID, BSSID, RSSI, DataRate) and
+// receive zero/empty for the roam-analytics fields; Pro receives the
+// untouched record.
+//
+// wifi_association_forensics is also a Pro-tier flag in the matrix
+// but maps to no distinct data fields in the current Sample structs —
+// association-event modeling is part of the broader Wi-Fi build-out
+// that's still in progress. When those fields land, extend this
+// helper or add a sibling filter for that flag.
+func filterSurveyRoamFields(in *survey.Survey) *survey.Survey {
+	if in == nil {
+		return nil
+	}
+	out := *in
+	if len(out.Samples) > 0 {
+		out.Samples = filterSamplePointsRoam(out.Samples)
+	}
+	if len(out.Floors) > 0 {
+		floors := make([]*survey.Floor, len(out.Floors))
+		for i, f := range out.Floors {
+			if f == nil {
+				continue
+			}
+			fCopy := *f
+			fCopy.Samples = filterSamplePointsRoam(f.Samples)
+			floors[i] = &fCopy
+		}
+		out.Floors = floors
+	}
+	return &out
+}
+
+func filterSamplePointsRoam(in []*survey.SamplePoint) []*survey.SamplePoint {
+	if len(in) == 0 {
+		return in
+	}
+	out := make([]*survey.SamplePoint, len(in))
+	for i, sp := range in {
+		if sp == nil {
+			continue
+		}
+		cp := *sp
+		if active, ok := sp.SampleData.(*survey.ActiveSample); ok && active != nil {
+			ac := *active
+			ac.RoamingEvent = false
+			ac.PreviousBSSID = ""
+			ac.RoamCount = 0
+			cp.SampleData = &ac
+		}
+		out[i] = &cp
+	}
+	return out
+}
+
+// applyRoamFilterIfGated returns the survey unchanged when the active
+// license includes wifi_roam_analysis (or no license manager is wired
+// — dev/test builds); otherwise returns a copy with the roam fields
+// stripped. Centralizes the gate so getSurvey + listSurveys share the
+// same policy.
+func (s *Server) applyRoamFilterIfGated(in *survey.Survey) *survey.Survey {
+	mgr := s.services.Auth.License
+	if mgr == nil || mgr.HasFeature("wifi_roam_analysis") {
+		return in
+	}
+	return filterSurveyRoamFields(in)
 }
