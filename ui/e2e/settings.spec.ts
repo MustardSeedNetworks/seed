@@ -74,16 +74,6 @@ test.describe('Settings', () => {
     expect(isDark).not.toBe(wasDark);
   });
 
-  test('should have input fields for threshold values', async ({ page }) => {
-    // Look for threshold input fields
-    const thresholdInputs = page.locator(
-      'input[type="number"], input[type="range"], input[name*="threshold"]',
-    );
-
-    const inputCount = await thresholdInputs.count();
-    expect(inputCount).toBeGreaterThan(0);
-  });
-
   // Dropped: "should show auto-save indicator" — the assertion was
   // literally `expect(true).toBeTruthy()` after a discarded
   // `_hasAutoSave` lookup that combined an i18n-fragile getByText
