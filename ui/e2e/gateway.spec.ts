@@ -35,7 +35,7 @@ import { skipSetupWizard } from './helpers/auth';
 test.describe('Gateway', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
-    await page.goto('/');
+    await page.goto('/network');
     await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
@@ -88,7 +88,7 @@ test.describe('Gateway', () => {
 test.describe('Gateway Help', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
-    await page.goto('/');
+    await page.goto('/network');
     await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });

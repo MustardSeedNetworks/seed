@@ -25,14 +25,20 @@ test.describe('Dashboard', () => {
   });
 
   test('should display Link Status card', async ({ page }) => {
+    // LinkCard renders on /link route (default after redirect from /).
+    // Card.tsx generates id="card-title-<slug>"; "Link Status" -> "link-status".
+    await page.goto('/link');
     // Card.tsx generates id="card-title-<slug>" on every card's H3 — same
     // pattern as the Gateway/DNS assertions below. Drops the brittle
     // `h3:has-text("Link")` fallback that matched any element containing
     // "Link" as a substring (including the sidebar nav item).
-    await expect(page.locator('#card-title-link')).toBeVisible();
+    await expect(page.locator('#card-title-link-status')).toBeVisible();
   });
 
   test('should display Gateway card', async ({ page }) => {
+    // GatewayCard renders on /network route. Test originally navigated to /
+    // which redirects to /link where GatewayCard is NOT rendered.
+    await page.goto('/network');
     // Card.tsx generates id="card-title-<slug>" on every card's H3 —
     // stable across i18n drift since slug derives from the title prop
     // at component-mount time (still English in the dev backend).
@@ -40,10 +46,14 @@ test.describe('Dashboard', () => {
   });
 
   test('should display DNS card', async ({ page }) => {
+    // DnsCard renders on /network route. Test originally navigated to /
+    // which redirects to /link where DnsCard is NOT rendered.
+    await page.goto('/network');
     await expect(page.locator('#card-title-dns')).toBeVisible();
   });
 
   test('should open settings drawer', async ({ page }) => {
+    await page.goto('/');
     // Click settings button
     const settingsButton = sidebarSettingsButton(page);
     await settingsButton.click();
@@ -53,6 +63,7 @@ test.describe('Dashboard', () => {
   });
 
   test('should toggle theme in settings', async ({ page }) => {
+    await page.goto('/');
     // Open settings
     const settingsButton = sidebarSettingsButton(page);
     await settingsButton.click();
@@ -64,6 +75,7 @@ test.describe('Dashboard', () => {
   });
 
   test('should show help modal', async ({ page }) => {
+    await page.goto('/');
     // Click help button
     const helpButton = sidebarHelpButton(page);
     await helpButton.click();
