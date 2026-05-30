@@ -180,19 +180,11 @@ test.describe('Responsive Layout Tests', () => {
       }
     });
 
-    test('should scroll cards vertically on mobile', async ({ page }) => {
-      // Get initial scroll position
-      const initialScroll = await page.evaluate(() => window.scrollY);
-
-      // Scroll down
-      await page.evaluate(() => window.scrollBy(0, 300));
-
-      // Get new scroll position
-      const newScroll = await page.evaluate(() => window.scrollY);
-
-      // Scroll position should have changed
-      expect(newScroll).toBeGreaterThan(initialScroll);
-    });
+    // PR-C1 cleanup: dropped "should scroll cards vertically on mobile" —
+    // it asserted `window.scrollBy(0, 300)` actually moved scrollY, which
+    // tests the BROWSER (or jsdom), not the app. Any future regression to
+    // mobile scroll would never surface here; the test added a CI run-cost
+    // for zero defensive signal.
 
     test('should open help modal properly on mobile', async ({ page }) => {
       // Help lives in the sidebar drawer behind the hamburger on mobile.
@@ -214,8 +206,11 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should display all essential features on mobile', async ({ page }) => {
-      // Verify essential UI elements are present
-      const cards = page.locator('[class*="card"]');
+      // Verify essential UI elements are present. PR-3 / PR-C1 swap:
+      // `[class*="card"]` was substring-matching against Tailwind's
+      // hashed class names and grabbing arbitrary unrelated nodes;
+      // BaseCard emits `data-testid="card"` on every wrapper.
+      const cards = page.locator('[data-testid="card"]');
       const cardCount = await cards.count();
 
       expect(cardCount).toBeGreaterThan(0);
@@ -343,15 +338,17 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should display all cards on tablet', async ({ page }) => {
-      // Count visible cards
-      const cards = page.locator('[class*="card"]');
+      // PR-C1: same fix as the two other shard sites in this file —
+      // [class*="card"] was non-deterministic, and the `text=/link/i`
+      // fallback would match the sidebar nav item before reaching the
+      // dashboard card. Use the stable BaseCard `data-testid="card"`
+      // and the `#card-title-link` ID also emitted by BaseCard.
+      const cards = page.locator('[data-testid="card"]');
       const cardCount = await cards.count();
 
       expect(cardCount).toBeGreaterThan(0);
 
-      // Verify common cards are visible
-      const linkCard = page.locator('text=/link/i').first();
-      await expect(linkCard).toBeVisible();
+      await expect(page.locator('#card-title-link')).toBeVisible();
     });
   });
 
