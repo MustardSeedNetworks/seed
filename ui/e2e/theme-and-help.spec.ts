@@ -210,12 +210,16 @@ test.describe('Theme Toggle and Help Modal', { tag: '@smoke' }, () => {
       const drawer = page.getByTestId('help-drawer');
       await expect(drawer).toBeVisible();
 
-      // Click the backdrop (dark overlay behind the drawer).
-      const backdrop = page.locator('[class*="backdrop"]').first();
-      if (await backdrop.isVisible()) {
-        await backdrop.click({ position: { x: 10, y: 10 } });
-        await expect(drawer).not.toBeVisible({ timeout: 3000 });
-      }
+      // Click the backdrop (dark overlay behind the drawer). The
+      // previous `[class*="backdrop"]` substring-match against
+      // Tailwind utilities was unreliable AND was wrapped in an
+      // `if (await backdrop.isVisible())` gate that silently passed
+      // when the locator missed — flagged by the cleanup audit as
+      // the last hidden-failure test in seed E2E.
+      const backdrop = page.getByTestId('help-drawer-backdrop');
+      await expect(backdrop).toBeVisible();
+      await backdrop.click({ position: { x: 10, y: 10 } });
+      await expect(drawer).not.toBeVisible({ timeout: 3000 });
     });
 
     test('should switch sections when clicking a table-of-contents entry', async ({ page }) => {
