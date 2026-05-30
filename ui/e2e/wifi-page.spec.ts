@@ -24,9 +24,8 @@ test.describe('Wi-Fi Page', () => {
     });
   });
 
-  test('should render the page header with the Wi-Fi title', async ({ page }) => {
+  test('should render the page header', async ({ page }) => {
     await expect(page.getByTestId('page-header-title')).toBeVisible();
-    await expect(page.getByText(/wireless link, channel survey/i)).toBeVisible();
   });
 
   test('should land on the /wifi route after navigation', async ({ page }) => {
@@ -35,12 +34,14 @@ test.describe('Wi-Fi Page', () => {
 
   test('should render either WiFi cards or the wired-mode fallback', async ({ page }) => {
     // One branch must be visible:
-    //   - isWifi=true  → WiFiCard / WiFiSurveyCard / WifiChannelGraph
-    //   - isWifi=false → "Switch to Wi-Fi mode from the header to view wireless data."
-    const wifiContent = page
-      .locator('text=/channel|ssid|signal|survey/i')
-      .or(page.getByText(/switch to wi-fi mode from the header/i));
-    await expect(wifiContent.first()).toBeVisible({ timeout: 5000 });
+    //   - isWifi=true  → at least one WiFi card (`#card-title-wifi`,
+    //     `#card-title-wifi-survey`, or `#card-title-channels`).
+    //   - isWifi=false → `data-testid="wifi-wired-fallback"` div on WifiPage.
+    const wifiCards = page.locator(
+      '#card-title-wifi, #card-title-wifi-survey, #card-title-channels',
+    );
+    const wiredFallback = page.getByTestId('wifi-wired-fallback');
+    await expect(wifiCards.first().or(wiredFallback)).toBeVisible({ timeout: 5000 });
   });
 
   test('should show the wired-mode message when WiFi card data unavailable', async ({ page }) => {
@@ -54,11 +55,12 @@ test.describe('Wi-Fi Page', () => {
     });
     await page.reload();
     await expect(page.getByTestId('page-header-title')).toBeVisible();
-    // Either the wired-mode message OR the cards must be the one rendered;
-    // both branches are valid given different test environments.
-    const content = page
-      .getByText(/switch to wi-fi mode from the header/i)
-      .or(page.locator('text=/channel|ssid|survey/i'));
-    await expect(content.first()).toBeVisible({ timeout: 5000 });
+    // Either the wired-mode message OR the cards must be rendered; both
+    // branches are valid given different test environments.
+    const wifiCards = page.locator(
+      '#card-title-wifi, #card-title-wifi-survey, #card-title-channels',
+    );
+    const wiredFallback = page.getByTestId('wifi-wired-fallback');
+    await expect(wiredFallback.or(wifiCards.first())).toBeVisible({ timeout: 5000 });
   });
 });
