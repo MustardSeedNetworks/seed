@@ -122,6 +122,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
                 'hover:bg-brand-primary/90 transition-colors font-medium body-small',
               )}
               aria-label="Start network discovery scan"
+              data-testid="discovery-scan-button"
             >
               {t('discovery.startScan')}
             </button>
@@ -206,6 +207,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
                 aria-label={
                   status.scanning || isPipelineRunning ? 'Scanning network' : 'Start network scan'
                 }
+                data-testid="discovery-scan-button"
               >
                 {status.scanning || isPipelineRunning ? (
                   <>
