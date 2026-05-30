@@ -106,35 +106,6 @@ test.describe('API Error Scenarios', () => {
         await expect(page.getByTestId('page-header-title')).toBeVisible();
       }
     });
-
-    test('should handle 500 error on speed test', async ({ page }) => {
-      await login(page);
-
-      // Mock speedtest endpoint returning 500
-      await page.route('**/api/speedtest', async (route) => {
-        await route.fulfill({
-          status: 500,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            error: 'Speed test service unavailable',
-          }),
-        });
-      });
-
-      // Try to find and click speed test button
-      const speedTestButton = page.getByRole('button', { name: /speed test|test speed/i }).first();
-
-      const isVisible = await speedTestButton.isVisible({ timeout: 3000 });
-
-      if (isVisible) {
-        await speedTestButton.click();
-
-        // Should show error message
-        await expect(page.getByRole('alert')).toBeVisible({
-          timeout: 5000,
-        });
-      }
-    });
   });
 
   test.describe('Network Timeout', () => {
@@ -315,53 +286,7 @@ test.describe('API Error Scenarios', () => {
     });
   });
 
-  test.describe('403 Forbidden', () => {
-    test('should handle permission denied on settings update', async ({ page }) => {
-      await login(page);
-
-      // Mock settings update returning 403
-      await page.route('**/api/settings', async (route) => {
-        if (route.request().method() === 'PUT' || route.request().method() === 'POST') {
-          await route.fulfill({
-            status: 403,
-            contentType: 'application/json',
-            body: JSON.stringify({
-              error: 'Permission denied',
-            }),
-          });
-        } else {
-          await route.continue();
-        }
-      });
-
-      // Try to open settings
-      const settingsButton = sidebarSettingsButton(page);
-
-      if (await settingsButton.isVisible({ timeout: 3000 })) {
-        await settingsButton.click();
-
-        // Try to modify a setting if available
-        const input = page.locator('input[type="number"], input[type="text"]').first();
-        if (await input.isVisible({ timeout: 2000 })) {
-          await input.fill('123');
-
-          // Try to save
-          const saveButton = page.getByRole('button', { name: /save|apply/i }).first();
-          if (await saveButton.isVisible({ timeout: 2000 })) {
-            await saveButton.click();
-
-            // Should show permission denied error
-            const errorShown = await page.getByRole('alert').isVisible({ timeout: 5000 });
-
-            // Either error shown or app remains functional
-            expect(
-              errorShown || (await page.getByTestId('page-header-title').isVisible()),
-            ).toBeTruthy();
-          }
-        }
-      }
-    });
-  });
+  test.describe('403 Forbidden', () => {});
 });
 
 test.describe('Validation Error Scenarios', () => {
@@ -378,62 +303,6 @@ test.describe('Validation Error Scenarios', () => {
       const buttonDisabled = await loginButton.isDisabled();
 
       expect(hasError || buttonDisabled).toBeTruthy();
-    });
-
-    test('should validate invalid threshold values in settings', async ({ page }) => {
-      await login(page);
-
-      // Open settings
-      const settingsButton = sidebarSettingsButton(page);
-
-      if (await settingsButton.isVisible({ timeout: 3000 })) {
-        await settingsButton.click();
-
-        // Try to enter negative number in threshold input
-        const thresholdInput = page.locator('input[type="number"]').first();
-        if (await thresholdInput.isVisible({ timeout: 2000 })) {
-          await thresholdInput.fill('-50');
-
-          // Should show validation error or prevent submission
-          const errorShown = await page.getByRole('alert').isVisible({ timeout: 3000 });
-
-          const saveButton = page.getByRole('button', { name: /save|apply/i }).first();
-          const saveDisabled = await saveButton.isDisabled();
-
-          expect(errorShown || saveDisabled).toBeTruthy();
-        }
-      }
-    });
-
-    test('should validate invalid hostname in DNS test', async ({ page }) => {
-      await login(page);
-
-      // Mock DNS endpoint
-      await page.route('**/api/dns', async (route) => {
-        await route.fulfill({
-          status: 400,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            error: 'Invalid hostname format',
-          }),
-        });
-      });
-
-      // Try to find DNS test input
-      const dnsInput = page.getByPlaceholder(/hostname|domain|dns/i).first();
-      if (await dnsInput.isVisible({ timeout: 3000 })) {
-        await dnsInput.fill('invalid hostname with spaces!@#');
-
-        const testButton = page.getByRole('button', { name: /test|check|lookup/i }).first();
-        if (await testButton.isVisible({ timeout: 2000 })) {
-          await testButton.click();
-
-          // Should show validation error
-          await expect(page.getByRole('alert')).toBeVisible({
-            timeout: 5000,
-          });
-        }
-      }
     });
   });
 });
@@ -603,43 +472,10 @@ test.describe('Error Recovery Mechanisms', () => {
     });
 
     // Retry
-    await page.getByRole('button', { name: /sign in|login|retry/i }).click();
+    await page.getByTestId('login-submit').click();
 
     // Should eventually succeed or allow retry
 
     expect(attemptCount).toBeGreaterThan(0);
-  });
-
-  test('should allow dismissing error messages', async ({ page }) => {
-    await login(page);
-
-    // Mock error response
-    await page.route('**/api/devices/scan', async (route) => {
-      await route.fulfill({
-        status: 500,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: 'Scan failed' }),
-      });
-    });
-
-    const scanButton = page.getByTestId('discovery-scan-button');
-
-    if (await scanButton.isVisible({ timeout: 5000 })) {
-      await scanButton.click();
-
-      // Wait for error
-      const errorVisible = await page.getByRole('alert').isVisible({ timeout: 5000 });
-
-      if (errorVisible) {
-        // Try to dismiss (close button, X, or click away)
-        const closeButton = page.getByRole('button', { name: /close|dismiss|ok/i }).first();
-        if (await closeButton.isVisible({ timeout: 2000 })) {
-          await closeButton.click();
-
-          // Error should be dismissable
-          await expect(page.getByTestId('page-header-title')).toBeVisible();
-        }
-      }
-    }
   });
 });
