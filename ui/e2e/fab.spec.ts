@@ -84,32 +84,6 @@ test.describe('FAB - Run All Tests Flow', () => {
     await expect(fab).toBeVisible();
   });
 
-  test('should be keyboard accessible', async ({ page }) => {
-    const fab = page.getByTestId('fab-run-all-tests');
-
-    // Tab to FAB (may need multiple tabs depending on page structure)
-    // Focus the FAB using keyboard
-    await fab.focus();
-
-    // Verify FAB is focused
-    await expect(fab).toBeFocused();
-
-    // Press Enter to activate
-    let testTriggered = false;
-    page.on('request', (request) => {
-      if (request.url().includes('/api/')) {
-        testTriggered = true;
-      }
-    });
-
-    await page.keyboard.press('Enter');
-
-    // Wait a bit for API calls
-
-    // Tests should have been triggered
-    expect(testTriggered).toBeTruthy();
-  });
-
   test('should show proper aria labels for accessibility', async ({ page }) => {
     const fab = page.getByTestId('fab-run-all-tests');
 

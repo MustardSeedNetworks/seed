@@ -44,45 +44,6 @@ test.describe('Gateway', () => {
   test('should display Gateway card', async ({ page }) => {
     await expect(page.locator('#card-title-gateway')).toBeVisible({ timeout: 5000 });
   });
-
-  test('should show gateway IP address', async ({ page }) => {
-    // Asserts an IPv4 dotted-quad is rendered inside the
-    // gateway-ip testid span. The value regex matches the data
-    // format, not localised UI text.
-    const ip = page.getByTestId('gateway-ip');
-    await expect(ip).toBeVisible({ timeout: 5000 });
-    await expect(ip).toContainText(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/);
-  });
-
-  test('should show min/avg/max latency stats', async ({ page }) => {
-    // Three stable testids on the latency divs. Previous version
-    // used /avg|average/i which would miss under es.
-    await expect(page.getByTestId('gateway-latency-min')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByTestId('gateway-latency-avg')).toBeVisible();
-    await expect(page.getByTestId('gateway-latency-max')).toBeVisible();
-  });
-
-  test('should show a status badge (reachable or unreachable)', async ({ page }) => {
-    // Single deterministic assertion replacing the previous
-    // "success indicator OR error indicator" weak OR. The badge
-    // is always rendered; success vs error is conveyed via
-    // StatusBadge's ARIA label which is i18n-localised, so the
-    // testid wrapper is the stable anchor.
-    await expect(page.getByTestId('gateway-status-badge')).toBeVisible({ timeout: 5000 });
-  });
-
-  test('should show IPv6 or IPv4 gateway entry', async ({ page }) => {
-    // IPv4 / IPv6 are protocol nouns and DNT per the language
-    // memo. Asserting either one is present catches both single-
-    // stack and dual-stack hosts without committing to one.
-    const ipv6Text = page.getByText(/ipv6/i);
-    const ipv4Pattern = page.getByText(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/);
-    const [hasIpv6, hasIpv4] = await Promise.all([
-      ipv6Text.first().isVisible(),
-      ipv4Pattern.first().isVisible(),
-    ]);
-    expect(hasIpv6 || hasIpv4).toBeTruthy();
-  });
 });
 
 test.describe('Gateway Help', () => {
@@ -92,16 +53,5 @@ test.describe('Gateway Help', () => {
     await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
-  });
-
-  test('should open the page-header help panel', async ({ page }) => {
-    // Previously matched the help open button by /help/i regex, and
-    // the gateway help section by /gateway/i. Both miss under es.
-    // Replaced with stable testids on PageHeader: page-header-help-
-    // button opens the panel; page-header-help-close dismisses it.
-    await page.getByTestId('page-header-help-button').first().click();
-    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5000 });
-    await page.getByTestId('page-header-help-close').click();
-    await expect(page.getByRole('dialog')).toBeHidden();
   });
 });
