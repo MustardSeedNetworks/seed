@@ -31,7 +31,7 @@ export function WifiPage() {
           />
         ) : null}
         {!isWifi && (
-          <div className="col-span-full text-sm text-text-muted">
+          <div data-testid="wifi-wired-fallback" className="col-span-full text-sm text-text-muted">
             Switch to Wi-Fi mode from the header to view wireless data.
           </div>
         )}
