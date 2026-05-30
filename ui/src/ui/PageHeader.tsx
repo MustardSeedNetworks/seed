@@ -107,6 +107,7 @@ const HelpPanel: FC<HelpPanelProps> = ({ title, children, onClose }) => {
             type="button"
             onClick={onClose}
             aria-label="Close help"
+            data-testid="page-header-help-close"
             className="rounded p-1 text-text-muted hover:bg-surface-hover hover:text-text-primary"
           >
             <X className={iconSizes.lg} />
@@ -157,6 +158,7 @@ export const PageHeader: FC<PageHeaderProps> = ({
               onClick={() => setHelpOpen(true)}
               aria-label={`Open help for ${title}`}
               title={`What is ${title}?`}
+              data-testid="page-header-help-button"
               className="rounded-full p-1.5 text-text-muted hover:bg-surface-hover hover:text-text-primary"
             >
               <HelpCircle className={iconSizes.lg} />

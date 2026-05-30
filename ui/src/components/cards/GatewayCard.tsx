@@ -154,13 +154,17 @@ export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard
       status={status}
     >
       <div className={layout.flex.between}>
-        <CardValue value={data.gateway} size="lg" />
-        <StatusBadge status={data.reachable ? 'success' : 'error'} size="sm" />
+        <span data-testid="gateway-ip">
+          <CardValue value={data.gateway} size="lg" />
+        </span>
+        <span data-testid="gateway-status-badge">
+          <StatusBadge status={data.reachable ? 'success' : 'error'} size="sm" />
+        </span>
       </div>
       <CardDivider />
       {/* Latency stats */}
       <div className={cn('grid grid-cols-3', spacing.gap.compact, spacing.margin.bottom.inline)}>
-        <div className="text-center">
+        <div className="text-center" data-testid="gateway-latency-min">
           <p className="caption">{tr('gateway.min')}</p>
           <p
             className={cn(
@@ -171,7 +175,7 @@ export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard
             {data.minTime > 0 ? formatTime(data.minTime) : '-'}
           </p>
         </div>
-        <div className="text-center">
+        <div className="text-center" data-testid="gateway-latency-avg">
           <p className="caption">{tr('gateway.avg')}</p>
           <p
             className={cn(
@@ -182,7 +186,7 @@ export const GatewayCard: React.FC<GatewayCardProps> = memo(function gatewayCard
             {data.avgTime > 0 ? formatTime(data.avgTime) : '-'}
           </p>
         </div>
-        <div className="text-center">
+        <div className="text-center" data-testid="gateway-latency-max">
           <p className="caption">{tr('gateway.max')}</p>
           <p
             className={cn(
