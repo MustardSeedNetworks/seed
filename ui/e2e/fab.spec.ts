@@ -87,27 +87,22 @@ test.describe('FAB - Run All Tests Flow', () => {
   test('should be keyboard accessible', async ({ page }) => {
     const fab = page.getByTestId('fab-run-all-tests');
 
-    // Tab to FAB (may need multiple tabs depending on page structure)
     // Focus the FAB using keyboard
     await fab.focus();
-
-    // Verify FAB is focused
     await expect(fab).toBeFocused();
 
-    // Press Enter to activate
-    let testTriggered = false;
-    page.on('request', (request) => {
-      if (request.url().includes('/api/')) {
-        testTriggered = true;
-      }
+    // Arm a waiter for the next /api/ request BEFORE pressing Enter —
+    // the click handler dispatches multiple async fetches and the
+    // previous version of this test asserted `testTriggered` immediately
+    // after the keypress with no wait, racing the handler. waitForRequest
+    // sets up the listener before the action and resolves on the first
+    // matching request.
+    const requestPromise = page.waitForRequest((req) => req.url().includes('/api/'), {
+      timeout: 10000,
     });
-
     await page.keyboard.press('Enter');
-
-    // Wait a bit for API calls
-
-    // Tests should have been triggered
-    expect(testTriggered).toBeTruthy();
+    const request = await requestPromise;
+    expect(request.url()).toMatch(/\/api\//);
   });
 
   test('should show proper aria labels for accessibility', async ({ page }) => {

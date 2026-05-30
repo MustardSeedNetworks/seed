@@ -20,6 +20,20 @@ export function NetworkPage() {
         title="Network"
         description="DHCP, gateway, DNS, public IP, and upstream switch detection."
         iconColorClass="text-module-sap"
+        help={
+          <div className="stack-md">
+            <p>
+              The Network page shows the diagnostic state of the upstream link: DHCP lease, default
+              gateway, DNS resolvers, the public IP the gateway uses, and (when wired) the
+              directly-attached switch and its VLAN configuration.
+            </p>
+            <p>
+              Each card refreshes on its own schedule and reflects the active interface selected in
+              the header. If a card shows "no data", either the interface has not yet been probed,
+              or that piece of the upstream config is not present (e.g., no IPv6 gateway).
+            </p>
+          </div>
+        }
       />
       <div className={layout.grid.cards}>
         {(!isWifi || cards.wifi) && (

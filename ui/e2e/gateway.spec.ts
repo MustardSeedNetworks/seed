@@ -32,8 +32,52 @@ import { skipSetupWizard } from './helpers/auth';
  *   - IPv6 / IPv4 protocol nouns — DNT per the language memo.
  */
 
+/**
+ * Synthetic gateway response. The /api/v1/sap/gateway endpoint in CI
+ * returns empty data (no active interface), so the GatewayCard falls
+ * into its "no gateway detected" branch and never emits the gateway-ip,
+ * gateway-status-badge, or gateway-latency-* testids the assertions
+ * below depend on. Mocking the endpoint with a deterministic dual-stack
+ * record makes the populated render branch fire every time.
+ */
+const MOCK_GATEWAY = {
+  gateway: '192.168.1.1',
+  reachable: true,
+  sent: 10,
+  received: 10,
+  lossPercent: 0,
+  minTime: 1.2,
+  maxTime: 3.4,
+  avgTime: 2.1,
+  lastTime: 2.0,
+  status: 'success',
+  ipv6: {
+    gateway: 'fe80::1',
+    reachable: true,
+    sent: 10,
+    received: 10,
+    lossPercent: 0,
+    minTime: 1.5,
+    maxTime: 3.0,
+    avgTime: 2.2,
+    lastTime: 2.1,
+    status: 'success',
+  },
+};
+
+async function mockGatewayEndpoint(page: import('@playwright/test').Page): Promise<void> {
+  await page.route(/\/api\/v1\/sap\/gateway(\?.*)?$/, (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_GATEWAY),
+    });
+  });
+}
+
 test.describe('Gateway', () => {
   test.beforeEach(async ({ page }) => {
+    await mockGatewayEndpoint(page);
     await skipSetupWizard(page);
     await page.goto('/network');
     await expect(page.getByTestId('page-header-title')).toBeVisible({
@@ -87,6 +131,7 @@ test.describe('Gateway', () => {
 
 test.describe('Gateway Help', () => {
   test.beforeEach(async ({ page }) => {
+    await mockGatewayEndpoint(page);
     await skipSetupWizard(page);
     await page.goto('/network');
     await expect(page.getByTestId('page-header-title')).toBeVisible({
