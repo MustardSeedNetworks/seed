@@ -92,7 +92,7 @@ test.describe('API Error Scenarios', () => {
       });
 
       // Try to trigger a scan
-      const scanButton = page.getByRole('button', { name: /scan|discover|refresh/i }).first();
+      const scanButton = page.getByTestId('discovery-scan-button');
 
       if (await scanButton.isVisible({ timeout: 5000 })) {
         await scanButton.click();
@@ -234,7 +234,7 @@ test.describe('API Error Scenarios', () => {
         await route.abort('timedout');
       });
 
-      const scanButton = page.getByRole('button', { name: /scan|discover|refresh/i }).first();
+      const scanButton = page.getByTestId('discovery-scan-button');
 
       if (await scanButton.isVisible({ timeout: 5000 })) {
         await scanButton.click();
@@ -405,7 +405,7 @@ test.describe('API Error Scenarios', () => {
         });
       });
 
-      const scanButton = page.getByRole('button', { name: /scan|discover|refresh/i }).first();
+      const scanButton = page.getByTestId('discovery-scan-button');
 
       if (await scanButton.isVisible({ timeout: 5000 })) {
         await scanButton.click();
@@ -726,7 +726,7 @@ test.describe('Resource Error Scenarios - Empty States', () => {
 
     // Should show either empty state or scan prompt
     expect(
-      emptyStateShown || (await page.getByRole('button', { name: /scan/i }).isVisible()),
+      emptyStateShown || (await page.getByTestId('discovery-scan-button').isVisible()),
     ).toBeTruthy();
   });
 
@@ -906,7 +906,7 @@ test.describe('Error Recovery Mechanisms', () => {
       });
     });
 
-    const scanButton = page.getByRole('button', { name: /scan/i }).first();
+    const scanButton = page.getByTestId('discovery-scan-button');
 
     if (await scanButton.isVisible({ timeout: 5000 })) {
       await scanButton.click();
