@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.205.0](https://github.com/krisarmstrong/seed/compare/v0.204.0...v0.205.0) (2026-05-30)
+
+
+### Features
+
+* **api:** gate /events SSE on live_telemetry — close Pro revenue leak ([#1278](https://github.com/krisarmstrong/seed/issues/1278)) ([f08b8ef](https://github.com/krisarmstrong/seed/commit/f08b8ef17b999c88af341ccd5d382d1d1f5a09aa))
+* **api:** gate wifi_roam_analysis on survey response — close revenue leak ([#1280](https://github.com/krisarmstrong/seed/issues/1280)) ([bdec2ff](https://github.com/krisarmstrong/seed/commit/bdec2ff922725d83ca737e97a876415a87ebe016))
+
 ## [0.204.0](https://github.com/krisarmstrong/seed/compare/v0.203.0...v0.204.0) (2026-05-29)
 
 
