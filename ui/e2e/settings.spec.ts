@@ -84,18 +84,14 @@ test.describe('Settings', () => {
     expect(inputCount).toBeGreaterThan(0);
   });
 
-  test('should show auto-save indicator', async ({ page }) => {
-    // Look for auto-save status
-    const autoSave = page
-      .getByText(/auto.?save|saved|saving/i)
-      .or(page.locator('[data-testid="auto-save"]'))
-      .first();
-
-    const _hasAutoSave = await autoSave.isVisible();
-
-    // Auto-save indicator may not always be visible, but settings should work
-    expect(true).toBeTruthy();
-  });
+  // Dropped: "should show auto-save indicator" — the assertion was
+  // literally `expect(true).toBeTruthy()` after a discarded
+  // `_hasAutoSave` lookup that combined an i18n-fragile getByText
+  // regex with a `[data-testid="auto-save"]` selector that has no
+  // matching element in the seed UI. Net signal: zero.
+  // Auto-save behaviour is exercised by the threshold-update CRUD
+  // test below ("should update threshold values and persist") which
+  // polls window.localStorage for the actual flushed state.
 
   test('should close settings drawer', async ({ page }) => {
     // settings-drawer-close testid is on SettingsDrawer.tsx.
