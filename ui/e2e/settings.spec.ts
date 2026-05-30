@@ -34,8 +34,7 @@ test.describe('Settings', () => {
   });
 
   test('should display Appearance settings section', async ({ page }) => {
-    const appearanceSection = page.getByText(/appearance|theme/i).first();
-    await expect(appearanceSection).toBeVisible();
+    await expect(page.getByTestId('appearance-settings-section')).toBeVisible();
   });
 
   test('should display Thresholds settings section', async ({ page }) => {
@@ -112,8 +111,10 @@ test.describe('Settings', () => {
 
     await closeButton.click();
 
-    // Drawer should close - settings text no longer visible
-    await expect(page.getByText(/thresholds|appearance/i).first()).toBeHidden({
+    // Drawer should close. Assert the drawer itself is hidden via its
+    // stable testid (settings-drawer) rather than per-section text —
+    // /thresholds|appearance/i was i18n-fragile.
+    await expect(page.getByTestId('settings-drawer')).toBeHidden({
       timeout: 3000,
     });
   });

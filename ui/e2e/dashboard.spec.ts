@@ -57,9 +57,10 @@ test.describe('Dashboard', () => {
     const settingsButton = sidebarSettingsButton(page);
     await settingsButton.click();
 
-    // Find and click theme toggle
-    const themeSection = page.getByText(/appearance|theme/i).first();
-    await expect(themeSection).toBeVisible();
+    // Find appearance section by stable testid (was /appearance|theme/i —
+    // both translated under es). AppearanceSettings carries
+    // data-testid="appearance-settings-section" on its CollapsibleSection.
+    await expect(page.getByTestId('appearance-settings-section')).toBeVisible();
   });
 
   test('should show help modal', async ({ page }) => {

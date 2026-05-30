@@ -69,6 +69,7 @@ export const AppearanceSettings: React.NamedExoticComponent<AppearanceSettingsPr
 
     return (
       <CollapsibleSection
+        data-testid="appearance-settings-section"
         title={
           <div className={layout.inline.default}>
             <Palette className={iconTokens.size.sm} />
