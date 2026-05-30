@@ -44,8 +44,9 @@ test.describe('Authentication', () => {
     await page.getByLabel(/password/i).fill('wrongpassword');
     await page.getByRole('button', { name: /sign in|login/i }).click();
 
-    // Should show error message
-    await expect(page.getByText(/invalid|incorrect|failed/i)).toBeVisible({
+    // Should show error message. role=alert is i18n-stable; the
+    // LoginForm error alert (LoginForm.tsx:298) carries it natively.
+    await expect(page.getByRole('alert')).toBeVisible({
       timeout: 5000,
     });
   });

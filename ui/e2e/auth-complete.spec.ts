@@ -52,7 +52,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.getByRole('button', { name: /sign in|login/i }).click();
 
       // Verify error message displays
-      await expect(page.getByText(/invalid|incorrect|failed/i)).toBeVisible({
+      await expect(page.getByRole('alert')).toBeVisible({
         timeout: 5000,
       });
 
@@ -86,7 +86,7 @@ test.describe('Complete Authentication Lifecycle', () => {
       await page.getByRole('button', { name: /sign in|login/i }).click();
 
       // Wait for error
-      await expect(page.getByText(/invalid|incorrect|failed/i)).toBeVisible({
+      await expect(page.getByRole('alert')).toBeVisible({
         timeout: 5000,
       });
 
@@ -323,10 +323,12 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Trigger an API call (reload page or wait for WebSocket/polling)
       await page.reload();
 
-      // Should redirect to login or show session expired message
-      await expect(
-        page.getByText(/session expired|logged out|please login/i).or(page.getByLabel(/username/i)),
-      ).toBeVisible({ timeout: 10000 });
+      // Should redirect to login or show session expired message.
+      // login-title testid is the stable surface; previously this
+      // fell back to language-specific regex which would miss in es.
+      await expect(page.getByTestId('login-title').or(page.getByRole('alert'))).toBeVisible({
+        timeout: 10000,
+      });
     });
 
     test('should allow re-login after session expiry', async ({ page }) => {
