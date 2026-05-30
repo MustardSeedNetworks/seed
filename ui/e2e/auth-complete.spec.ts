@@ -110,6 +110,22 @@ test.describe('Complete Authentication Lifecycle', () => {
     test.use({ storageState: AUTH_STORAGE_STATE });
 
     test.beforeEach(async ({ page }) => {
+      // PR-1.3: mock /api/v1/auth/logout (and the legacy unprefixed
+      // route) so the request still fires (tests that assert the call
+      // happens still pass) but the backend doesn't actually invalidate
+      // the storageState token. Without this mock, the first Logout
+      // test invalidates the shared session on the real backend; every
+      // subsequent test loads the same now-stale token, the SPA's next
+      // /api/v1/status call gets 401, and the SPA's mid-test redirect
+      // to login detaches the dropdown panel before .click() can land.
+      // PR-1.2's explicit toBeVisible passed because the button WAS
+      // visible for a moment — then the SPA navigated and the button
+      // was DOM-detached. Mocking lets every Logout test keep the same
+      // valid token while still exercising the client-side flow.
+      await page.route(/\/api(\/v1)?\/auth\/logout$/, (route) => {
+        route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+      });
+
       await disableAnimations(page);
       await page.goto('/');
       // Authenticated session lands on the dashboard; wait for it
