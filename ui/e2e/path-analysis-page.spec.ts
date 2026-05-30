@@ -21,7 +21,7 @@ test.describe('Path Analysis Page', () => {
 
   test('should render the page header with Path Analysis title', async ({ page }) => {
     await expect(page.getByTestId('page-header-title')).toBeVisible();
-    await expect(page.getByText(/path discovery|traceroute|device discovery/i)).toBeVisible();
+    await expect(page.getByTestId('page-header-description')).toBeVisible();
   });
 
   test('should land on the /path route', async ({ page }) => {

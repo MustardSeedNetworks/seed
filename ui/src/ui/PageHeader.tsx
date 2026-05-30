@@ -142,7 +142,11 @@ export const PageHeader: FC<PageHeaderProps> = ({
             <h1 className="heading-1 font-display" data-testid="page-header-title">
               {title}
             </h1>
-            {description ? <p className="body-small mt-tight max-w-2xl">{description}</p> : null}
+            {description ? (
+              <p className="body-small mt-tight max-w-2xl" data-testid="page-header-description">
+                {description}
+              </p>
+            ) : null}
           </div>
         </div>
         <div className="flex items-center gap-default">

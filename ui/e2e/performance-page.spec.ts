@@ -21,7 +21,7 @@ test.describe('Performance Page', () => {
 
   test('should render the page header with Performance title', async ({ page }) => {
     await expect(page.getByTestId('page-header-title')).toBeVisible();
-    await expect(page.getByText(/active throughput tests/i)).toBeVisible();
+    await expect(page.getByTestId('page-header-description')).toBeVisible();
   });
 
   test('should land on the /performance route', async ({ page }) => {

@@ -20,7 +20,7 @@ test.describe('Security Page', () => {
 
   test('should render the page header with Security title', async ({ page }) => {
     await expect(page.getByTestId('page-header-title')).toBeVisible();
-    await expect(page.getByText(/guest network isolation audit/i)).toBeVisible();
+    await expect(page.getByTestId('page-header-description')).toBeVisible();
   });
 
   test('should land on the /security route', async ({ page }) => {

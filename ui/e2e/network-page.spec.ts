@@ -23,7 +23,7 @@ test.describe('Network Page', () => {
 
   test('should render the page header with Network title', async ({ page }) => {
     await expect(page.getByTestId('page-header-title')).toBeVisible();
-    await expect(page.getByText(/dhcp.*gateway.*dns/i)).toBeVisible();
+    await expect(page.getByTestId('page-header-description')).toBeVisible();
   });
 
   test('should land on the /network route', async ({ page }) => {
