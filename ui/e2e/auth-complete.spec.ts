@@ -257,10 +257,13 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Trigger an API call (reload page or wait for WebSocket/polling)
       await page.reload();
 
-      // Should redirect to login or show session expired message.
-      // login-title testid is the stable surface; previously this
-      // fell back to language-specific regex which would miss in es.
-      await expect(page.getByTestId('login-title').or(page.getByRole('alert'))).toBeVisible({
+      // Should redirect to login (SPA observes 401 from /api/v1/status
+      // and dumps the session). The login surface renders BOTH
+      // login-title AND a "Session expired" role=alert — using .or()
+      // resolved to two elements and tripped strict mode. Asserting
+      // the login-title directly is unambiguous; the alert presence
+      // is implied by the 401 mock chain landing.
+      await expect(page.getByTestId('login-title')).toBeVisible({
         timeout: 10000,
       });
     });
