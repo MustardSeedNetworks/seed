@@ -47,34 +47,37 @@ async function login(page: Page): Promise<void> {
 
 test.describe('API Error Scenarios', () => {
   test.describe('500 Internal Server Error', () => {
-    test('should handle 500 error on login', async ({ page }) => {
-      await page.goto('/');
+    test.describe('on login form', () => {
+      test.use({ storageState: { cookies: [], origins: [] } });
+      test('should handle 500 error on login', async ({ page }) => {
+        await page.goto('/');
 
-      // Mock login endpoint returning 500. Match both /api/auth/login (legacy)
-      // and /api/v1/auth/login (current — UI calls this since the v1 prefix
-      // rollout). The previous glob `**/api/auth/login` would not intercept
-      // the v1 form, so the mock was silently inert.
-      await page.route(/\/api(\/v1)?\/auth\/login$/, async (route) => {
-        await route.fulfill({
-          status: 500,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            error: 'Internal server error',
-          }),
+        // Mock login endpoint returning 500. Match both /api/auth/login (legacy)
+        // and /api/v1/auth/login (current — UI calls this since the v1 prefix
+        // rollout). The previous glob `**/api/auth/login` would not intercept
+        // the v1 form, so the mock was silently inert.
+        await page.route(/\/api(\/v1)?\/auth\/login$/, async (route) => {
+          await route.fulfill({
+            status: 500,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              error: 'Internal server error',
+            }),
+          });
         });
+
+        await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+        await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
+        await page.getByTestId('login-submit').click();
+
+        // Should show user-friendly error message
+        await expect(page.getByRole('alert')).toBeVisible({
+          timeout: 5000,
+        });
+
+        // Should not crash the app
+        await expect(page.getByLabel(/username/i)).toBeVisible();
       });
-
-      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByTestId('login-submit').click();
-
-      // Should show user-friendly error message
-      await expect(page.getByRole('alert')).toBeVisible({
-        timeout: 5000,
-      });
-
-      // Should not crash the app
-      await expect(page.getByLabel(/username/i)).toBeVisible();
     });
 
     test('should handle 500 error on device scan', async ({ page }) => {
@@ -109,36 +112,39 @@ test.describe('API Error Scenarios', () => {
   });
 
   test.describe('Network Timeout', () => {
-    test('should handle API timeout gracefully', async ({ page }) => {
-      await page.goto('/');
+    test.describe('on login form', () => {
+      test.use({ storageState: { cookies: [], origins: [] } });
+      test('should handle API timeout gracefully', async ({ page }) => {
+        await page.goto('/');
 
-      // Mock login endpoint that never responds (simulates timeout).
-      // RegExp matches both /api/auth/login and /api/v1/auth/login.
-      let timeoutHandle: NodeJS.Timeout;
-      await page.route(/\/api(\/v1)?\/auth\/login$/, async (route) => {
-        // Delay indefinitely to trigger timeout
-        await new Promise((resolve) => {
-          timeoutHandle = setTimeout(resolve, 60000); // 1 minute
+        // Mock login endpoint that never responds (simulates timeout).
+        // RegExp matches both /api/auth/login and /api/v1/auth/login.
+        let timeoutHandle: NodeJS.Timeout;
+        await page.route(/\/api(\/v1)?\/auth\/login$/, async (route) => {
+          // Delay indefinitely to trigger timeout
+          await new Promise((resolve) => {
+            timeoutHandle = setTimeout(resolve, 60000); // 1 minute
+          });
+          await route.abort('timedout');
         });
-        await route.abort('timedout');
+
+        await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+        await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
+        await page.getByTestId('login-submit').click();
+
+        // Should show timeout or error message. Old form raced .isVisible({15s})
+        // against a 100ms hard sleep — the sleep branch always won, defeating
+        // the race. Direct isVisible with the desired timeout is equivalent and
+        // honest about what we're waiting for.
+        const errorShown = await page.getByRole('alert').isVisible({ timeout: 15000 });
+
+        if (timeoutHandle) {
+          clearTimeout(timeoutHandle);
+        }
+
+        // Either error shown or loading state ended
+        expect(errorShown || (await page.getByLabel(/username/i).isVisible())).toBeTruthy();
       });
-
-      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByTestId('login-submit').click();
-
-      // Should show timeout or error message. Old form raced .isVisible({15s})
-      // against a 100ms hard sleep — the sleep branch always won, defeating
-      // the race. Direct isVisible with the desired timeout is equivalent and
-      // honest about what we're waiting for.
-      const errorShown = await page.getByRole('alert').isVisible({ timeout: 15000 });
-
-      if (timeoutHandle) {
-        clearTimeout(timeoutHandle);
-      }
-
-      // Either error shown or loading state ended
-      expect(errorShown || (await page.getByLabel(/username/i).isVisible())).toBeTruthy();
     });
 
     test('should handle device scan timeout', async ({ page }) => {
@@ -291,6 +297,7 @@ test.describe('API Error Scenarios', () => {
 
 test.describe('Validation Error Scenarios', () => {
   test.describe('Invalid Form Inputs', () => {
+    test.use({ storageState: { cookies: [], origins: [] } });
     test('should validate empty login credentials', async ({ page }) => {
       await page.goto('/');
 
@@ -436,6 +443,7 @@ test.describe('Backend Service Unavailable', () => {
 });
 
 test.describe('Error Recovery Mechanisms', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
   test('should allow retry after failed login', async ({ page }) => {
     await page.goto('/');
 
