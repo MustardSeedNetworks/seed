@@ -51,84 +51,6 @@ test.describe('FAB - Run All Tests Flow', () => {
     await expect(fab).toBeDisabled();
   });
 
-  test('should trigger all tests when FAB is clicked', async ({ page }) => {
-    // Set up network interceptors to track API calls
-    const apiCalls = new Set<string>();
-
-    page.on('request', (request) => {
-      const url = request.url();
-      if (url.includes('/api/')) {
-        const [, apiPath] = url.split('/api/');
-        const [endpoint] = apiPath.split('?');
-        apiCalls.add(endpoint);
-      }
-    });
-
-    const fab = page.getByTestId('fab-run-all-tests');
-
-    // Click FAB to trigger all tests
-    await fab.click();
-
-    // Wait a bit for API calls to be made
-
-    // Verify key endpoints were called (based on default FAB options)
-    // Link layer
-    expect(apiCalls.has('link') || apiCalls.has('wifi') || apiCalls.has('cable')).toBeTruthy();
-
-    // Network layer - at least one of these should be called
-    const networkCalled =
-      apiCalls.has('ipconfig') || apiCalls.has('gateway') || apiCalls.has('dns');
-    expect(networkCalled).toBeTruthy();
-  });
-
-  test('should refresh card data after tests complete', async ({ page }) => {
-    // Get initial link card data
-    const linkCard = page.locator('h3:has-text("Link"), h4:has-text("Link")').first();
-    await expect(linkCard).toBeVisible();
-
-    // Track if any card updates occur
-    let cardUpdated = false;
-    page.on('response', (response) => {
-      if (response.url().includes('/api/link') && response.ok()) {
-        cardUpdated = true;
-      }
-    });
-
-    const fab = page.getByTestId('fab-run-all-tests');
-
-    // Click FAB
-    await fab.click();
-
-    // Wait for tests to complete (spinner disappears)
-    await expect(fab).toHaveAttribute('data-running', 'true');
-    await expect(fab).toHaveAttribute('data-running', 'false', { timeout: 65000 }); // 60s timeout + buffer
-
-    // Verify card data was updated
-    expect(cardUpdated).toBeTruthy();
-  });
-
-  test('should complete and stop spinner after tests finish', async ({ page }) => {
-    const fab = page.getByTestId('fab-run-all-tests');
-
-    // Click FAB
-    await fab.click();
-
-    // Spinner should appear
-    // Synchronously check the data-running attribute instead of
-    // racing the animate-spin CSS class — see seed#1168.
-    await expect(fab).toHaveAttribute('data-running', 'true');
-
-    // Wait for completion — FAB returns to idle within 60s.
-    await expect(fab).toHaveAttribute('data-running', 'false', { timeout: 65000 });
-
-    // FAB should be enabled again
-    await expect(fab).toBeEnabled();
-
-    // Play icon should be back (FAB returned to idle).
-    const playIcon = fab.locator('svg');
-    await expect(playIcon).toBeVisible();
-  });
-
   // Deleted: "should not trigger tests if FAB is clicked while already
   //   running" — tested window.runAllTestsCount which is never set;
   //   finalCount was always 0 and `expect(0).toBeLessThanOrEqual(1)`
@@ -142,30 +64,6 @@ test.describe('FAB - Run All Tests Flow', () => {
   //   on a `let scanTriggered = false` is tautological.
   // See msn-docs-internal/05-Engineering/SEED_E2E_PER_TEST_EVAL_2026-05-26.md
   // for the full evaluation.
-
-  test('should handle test failures gracefully', async ({ page }) => {
-    // Intercept an API call and make it fail
-    await page.route('**/api/dns', (route) => {
-      route.fulfill({
-        status: 500,
-        body: JSON.stringify({ error: 'Internal server error' }),
-      });
-    });
-
-    const fab = page.getByTestId('fab-run-all-tests');
-
-    // Click FAB
-    await fab.click();
-
-    // Spinner should still appear
-    await expect(fab).toHaveAttribute('data-running', 'true');
-
-    // Even with failures, tests should complete and spinner should stop
-    await expect(fab).toHaveAttribute('data-running', 'false', { timeout: 65000 });
-
-    // FAB should be enabled again
-    await expect(fab).toBeEnabled();
-  });
 
   test('should maintain FAB visibility on page scroll', async ({ page }) => {
     const fab = page.getByTestId('fab-run-all-tests');

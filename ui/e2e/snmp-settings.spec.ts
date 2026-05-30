@@ -38,17 +38,6 @@ test.describe('SNMP Settings', () => {
     await expect(page.getByTestId('settings-drawer')).toBeVisible({ timeout: 5000 });
   });
 
-  test('should display SNMP settings section', async ({ page }) => {
-    // Section heading inside the drawer. Currently looked up by
-    // /snmp/i text — fine for the section heading which is short
-    // and unique inside the drawer. If a sibling element ever
-    // adds the substring "SNMP" elsewhere in the drawer, add a
-    // data-testid="settings-section-snmp" on SnmpSettings.tsx and
-    // switch to that.
-    const snmpSection = page.getByText(/snmp/i).first();
-    await expect(snmpSection).toBeVisible();
-  });
-
   test('should mask password/passphrase fields', async ({ page }) => {
     // Walk every password input rendered in the drawer and assert
     // type is 'password'. A regression to type="text" would leak

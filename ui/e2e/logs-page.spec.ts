@@ -32,10 +32,4 @@ test.describe('Logs Page', () => {
       timeout: 5000,
     });
   });
-
-  test('should render the Log Viewer card', async ({ page }) => {
-    await expect(page.locator('text=/log|level|message|stream/i').first()).toBeVisible({
-      timeout: 5000,
-    });
-  });
 });

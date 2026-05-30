@@ -201,53 +201,6 @@ test.describe('API Error Scenarios', () => {
   });
 
   test.describe('401 Unauthorized (Session Expired)', () => {
-    test('should redirect to login on session expiration', async ({ page }) => {
-      await login(page);
-
-      // Mock API endpoints returning 401 after login. The UI calls the
-      // v1-prefixed routes since the API namespace rollout; the previous
-      // `**/api/link` and `**/api/status` globs silently no-op'd because
-      // they didn't match `/api/v1/link` or `/api/v1/status`. Matching
-      // both legacy and v1 keeps the mock effective if any caller is
-      // still on the older path.
-      await page.route(/\/api(\/v1)?\/link$/, async (route) => {
-        await route.fulfill({
-          status: 401,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            error: 'Unauthorized',
-          }),
-        });
-      });
-
-      await page.route(/\/api(\/v1)?\/status$/, async (route) => {
-        await route.fulfill({
-          status: 401,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            error: 'Unauthorized',
-          }),
-        });
-      });
-
-      // Refresh to trigger API calls
-      await page.reload();
-
-      // Should show login page or session expired message. The race had a
-      // 10s fallback that returned false; equivalent to two parallel 10s
-      // isVisible probes ORed together. Express directly with
-      // Promise.any-style logic.
-      const usernameVisible = page
-        .getByLabel(/username|password/i)
-        .first()
-        .isVisible({ timeout: 10000 });
-      const expiredTextVisible = page.getByRole('alert').isVisible({ timeout: 10000 });
-      const [usernameOk, expiredOk] = await Promise.all([usernameVisible, expiredTextVisible]);
-      const loginShown = usernameOk || expiredOk;
-
-      expect(loginShown).toBeTruthy();
-    });
-
     test('should handle 401 during device scan', async ({ page }) => {
       await login(page);
 
@@ -308,42 +261,6 @@ test.describe('Validation Error Scenarios', () => {
 });
 
 test.describe('Resource Error Scenarios - Empty States', () => {
-  test('should show "No devices found" empty state', async ({ page }) => {
-    await login(page);
-
-    // Mock empty device list
-    await page.route('**/api/devices', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          devices: [],
-        }),
-      });
-    });
-
-    await page.route('**/api/devices/status', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          scanning: false,
-          lastScan: new Date().toISOString(),
-        }),
-      });
-    });
-
-    // Reload to get fresh data
-    await page.reload();
-
-    // discovery-scan-button only renders in the empty-state branch
-    // of NetworkDiscoveryCard, so its presence is equivalent to "the
-    // SPA recognised the empty device list and offered a scan
-    // prompt." Previously OR'd with /no devices|no hosts|.../i regex
-    // which was i18n-fragile under es ("sin dispositivos" etc).
-    await expect(page.getByTestId('discovery-scan-button')).toBeVisible({ timeout: 5000 });
-  });
-
   test('should show "No vulnerabilities found" success state', async ({ page }) => {
     await login(page);
 

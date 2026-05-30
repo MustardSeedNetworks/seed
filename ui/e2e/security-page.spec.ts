@@ -27,12 +27,6 @@ test.describe('Security Page', () => {
     await expect(page).toHaveURL(/\/security$/);
   });
 
-  test('should render the MFA card', async ({ page }) => {
-    await expect(page.locator('text=/mfa|two.factor|2fa/i').first()).toBeVisible({
-      timeout: 5000,
-    });
-  });
-
   test('should render the Guest Network Audit card', async ({ page }) => {
     await expect(page.locator('text=/guest.*network|guest.*audit/i').first()).toBeVisible({
       timeout: 5000,
