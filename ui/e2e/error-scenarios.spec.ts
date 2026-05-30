@@ -351,8 +351,13 @@ test.describe('API Error Scenarios', () => {
     test('should redirect to login on session expiration', async ({ page }) => {
       await login(page);
 
-      // Mock API endpoints returning 401 after login
-      await page.route('**/api/link', async (route) => {
+      // Mock API endpoints returning 401 after login. The UI calls the
+      // v1-prefixed routes since the API namespace rollout; the previous
+      // `**/api/link` and `**/api/status` globs silently no-op'd because
+      // they didn't match `/api/v1/link` or `/api/v1/status`. Matching
+      // both legacy and v1 keeps the mock effective if any caller is
+      // still on the older path.
+      await page.route(/\/api(\/v1)?\/link$/, async (route) => {
         await route.fulfill({
           status: 401,
           contentType: 'application/json',
@@ -362,7 +367,7 @@ test.describe('API Error Scenarios', () => {
         });
       });
 
-      await page.route('**/api/status', async (route) => {
+      await page.route(/\/api(\/v1)?\/status$/, async (route) => {
         await route.fulfill({
           status: 401,
           contentType: 'application/json',
@@ -1156,8 +1161,14 @@ test.describe('Cross-Browser Error Handling', () => {
   test('should handle errors consistently across browsers', async ({ page }) => {
     await login(page);
 
-    // Mock error
-    await page.route('**/api/status', async (route) => {
+    // Mock error. The UI calls `/api/v1/status`; the previous
+    // `**/api/status` glob silently no-op'd against the v1 endpoint
+    // and the test was relying on the real backend response, not the
+    // mock. The dual `headerVisible || loginVisible` assertion was a
+    // tolerance band that masked the bug — collapsed to the single
+    // expected behaviour: a /api/v1/status 500 is non-fatal for the
+    // SPA, so the page header stays visible.
+    await page.route(/\/api(\/v1)?\/status$/, async (route) => {
       await route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -1167,17 +1178,8 @@ test.describe('Cross-Browser Error Handling', () => {
 
     await page.reload();
 
-    // Should handle error consistently regardless of browser — either
-    // the page-header (post-login) OR the login form is showing.
-    const headerVisible = await page
-      .getByTestId('page-header-title')
-      .isVisible({ timeout: 10000 })
-      .catch(() => false);
-    const loginVisible = await page
-      .getByTestId('login-title')
-      .isVisible({ timeout: 1000 })
-      .catch(() => false);
-
-    expect(headerVisible || loginVisible).toBeTruthy();
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
+      timeout: 10000,
+    });
   });
 });
