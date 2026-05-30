@@ -1,81 +1,68 @@
 import { expect, test } from '@playwright/test';
+import { AUTH_STORAGE_STATE, sidebarHelpButton, sidebarSettingsButton } from './helpers/auth';
 
-/**
- * Smoke Tests
- *
- * Quick sanity checks to verify the app is running:
- * - Page loads without errors
- * - No console errors
- * - Basic UI elements render
- */
+const VERSION_KEYS = ['version', 'commit', 'buildTime', 'uiBuildHash'] as const;
 
-test.describe('Smoke Tests', { tag: '@smoke' }, () => {
-  test('should load the application without errors', async ({ page }) => {
-    const errors: string[] = [];
+test.describe('smoke @ unauthenticated', { tag: '@smoke' }, () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
 
-    // Capture console errors
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        errors.push(msg.text());
-      }
-    });
-
-    await page.goto('/');
-
-    // Page should have loaded something
-    await expect(page.locator('body')).not.toBeEmpty();
-
-    // Filter out expected errors. Smoke is for CATASTROPHIC errors only
-    // (page fails to render, bundle fails to load, JS exception bubbles up).
-    // The following are expected on a freshly-started backend:
-    //   - 401 / Unauthorized: pre-login probes against authenticated endpoints
-    //   - "Failed to fetch": transient network during initial app boot
-    //   - 404 / "Failed to load resource": endpoints not wired up yet
-    //     (notably /api/v1/profiles and /api/events — tracked separately
-    //     in the backend backlog; they don't break the UI render)
-    const criticalErrors = errors.filter(
-      (e) =>
-        !(
-          e.includes('401') ||
-          e.includes('404') ||
-          e.includes('Unauthorized') ||
-          e.includes('Failed to fetch') ||
-          e.includes('Failed to load resource')
-        ),
-    );
-
-    // No critical console errors
-    expect(criticalErrors).toHaveLength(0);
+  test('GET /__version returns canonical build metadata', async ({ request }) => {
+    const res = await request.get('/__version');
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    for (const k of VERSION_KEYS) {
+      expect(body[k], `missing ${k} in /__version`).toBeTruthy();
+      expect(typeof body[k]).toBe('string');
+    }
   });
 
-  test('should have proper page title', async ({ page }) => {
+  test('login surface renders for unauthenticated visitors', async ({ page }) => {
     await page.goto('/');
+    await expect(page.getByTestId('login-title')).toBeVisible({ timeout: 10000 });
+  });
+});
 
-    // Title should contain app name
-    await expect(page).toHaveTitle(/seed|The Seed|network/i);
+test.describe('smoke @ authenticated', { tag: '@smoke' }, () => {
+  test.use({ storageState: AUTH_STORAGE_STATE });
+
+  test('dashboard renders with page header and at least one card', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('card').first()).toBeVisible();
   });
 
-  test('should have proper viewport and be responsive', async ({ page }) => {
+  test('theme toggle is interactive', async ({ page }) => {
     await page.goto('/');
-
-    // Set mobile viewport
-    await page.setViewportSize({ width: 375, height: 667 });
-
-    // Content should still be visible
-    await expect(page.locator('body')).toBeVisible();
-
-    // Set desktop viewport
-    await page.setViewportSize({ width: 1920, height: 1080 });
-
-    // Content should still be visible
-    await expect(page.locator('body')).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
+    const toggle = page.getByTestId('theme-toggle');
+    await expect(toggle).toBeVisible();
+    await toggle.click();
+    await expect(toggle).toBeVisible();
   });
 
-  test('should handle 404 routes gracefully', async ({ page }) => {
-    await page.goto('/nonexistent-route-12345');
+  test('settings drawer opens from sidebar', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
+    await sidebarSettingsButton(page).click();
+    await expect(page.getByTestId('settings-drawer')).toBeVisible();
+    await page.getByTestId('settings-drawer-close').click();
+    await expect(page.getByTestId('settings-drawer')).toBeHidden();
+  });
 
-    // Should either redirect to login or show 404 page
-    const hasContent = await page.locator('body').textContent();
-    expect(hasContent).toBeTruthy();
+  test('help drawer opens from sidebar', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
+    await sidebarHelpButton(page).click();
+    await expect(page.getByTestId('help-drawer')).toBeVisible();
+    await expect(page.getByTestId('help-drawer-content')).toBeVisible();
+    await page.getByTestId('help-drawer-close').click();
+    await expect(page.getByTestId('help-drawer')).toBeHidden();
+  });
+
+  test('profile dropdown reveals logout control', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
+    await page.getByTestId('header-profile').click();
+    await expect(page.getByTestId('header-logout')).toBeVisible({ timeout: 5000 });
   });
 });
