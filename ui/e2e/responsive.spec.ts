@@ -94,8 +94,13 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should stack cards vertically on mobile', async ({ page }) => {
-      // Get all cards
-      const cards = page.locator('[class*="card"]');
+      // BaseCard emits `data-testid="card"` on every wrapper
+      // (components/ui/card.tsx:125). The previous `[class*="card"]`
+      // substring match against Tailwind's hashed classes was non-
+      // deterministic — under strict mode it grabbed arbitrary unrelated
+      // nodes (button class names, icon decorations) and the count check
+      // landed on whichever order Tailwind merged classes that build.
+      const cards = page.locator('[data-testid="card"]');
       const cardCount = await cards.count();
 
       expect(cardCount).toBeGreaterThan(0);
@@ -253,8 +258,13 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should arrange cards in 2-column grid on tablet', async ({ page }) => {
-      // Get all cards
-      const cards = page.locator('[class*="card"]');
+      // BaseCard emits `data-testid="card"` on every wrapper
+      // (components/ui/card.tsx:125). The previous `[class*="card"]`
+      // substring match against Tailwind's hashed classes was non-
+      // deterministic — under strict mode it grabbed arbitrary unrelated
+      // nodes (button class names, icon decorations) and the count check
+      // landed on whichever order Tailwind merged classes that build.
+      const cards = page.locator('[data-testid="card"]');
       const cardCount = await cards.count();
 
       expect(cardCount).toBeGreaterThan(0);
@@ -383,8 +393,13 @@ test.describe('Responsive Layout Tests', () => {
     });
 
     test('should arrange cards in 3-4 column grid on desktop', async ({ page }) => {
-      // Get all cards
-      const cards = page.locator('[class*="card"]');
+      // BaseCard emits `data-testid="card"` on every wrapper
+      // (components/ui/card.tsx:125). The previous `[class*="card"]`
+      // substring match against Tailwind's hashed classes was non-
+      // deterministic — under strict mode it grabbed arbitrary unrelated
+      // nodes (button class names, icon decorations) and the count check
+      // landed on whichever order Tailwind merged classes that build.
+      const cards = page.locator('[data-testid="card"]');
       const cardCount = await cards.count();
 
       expect(cardCount).toBeGreaterThan(0);

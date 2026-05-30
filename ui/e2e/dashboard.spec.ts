@@ -25,10 +25,11 @@ test.describe('Dashboard', () => {
   });
 
   test('should display Link Status card', async ({ page }) => {
-    const linkCard = page
-      .locator('[data-testid="link-card"]')
-      .or(page.locator('h3:has-text("Link"), h4:has-text("Link")').first());
-    await expect(linkCard).toBeVisible();
+    // Card.tsx generates id="card-title-<slug>" on every card's H3 — same
+    // pattern as the Gateway/DNS assertions below. Drops the brittle
+    // `h3:has-text("Link")` fallback that matched any element containing
+    // "Link" as a substring (including the sidebar nav item).
+    await expect(page.locator('#card-title-link')).toBeVisible();
   });
 
   test('should display Gateway card', async ({ page }) => {
