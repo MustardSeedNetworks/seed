@@ -428,7 +428,9 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Profile dropdown trigger lives in the icon toolbar, which is
       // visible on mobile too — no separate hamburger step needed.
       await page.getByTestId('header-profile').click();
+      // PR-1.2: explicit visibility settle (see Logout Flow describe).
       const logoutButton = page.getByTestId('header-logout');
+      await expect(logoutButton).toBeVisible({ timeout: 5000 });
 
       await logoutButton.click();
 
