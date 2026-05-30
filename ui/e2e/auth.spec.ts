@@ -33,7 +33,7 @@ test.describe('Authentication', () => {
     await expect(page.getByTestId('login-title')).toBeVisible();
     await expect(page.getByLabel(/username/i)).toBeVisible();
     await expect(page.getByLabel(/password/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /sign in|login/i })).toBeVisible();
+    await expect(page.getByTestId('login-submit')).toBeVisible();
   });
 
   test('should show error with invalid credentials', async ({ page }) => {
@@ -42,7 +42,7 @@ test.describe('Authentication', () => {
     // Fill in invalid credentials
     await page.getByLabel(/username/i).fill('wronguser');
     await page.getByLabel(/password/i).fill('wrongpassword');
-    await page.getByRole('button', { name: /sign in|login/i }).click();
+    await page.getByTestId('login-submit').click();
 
     // Should show error message. role=alert is i18n-stable; the
     // LoginForm error alert (LoginForm.tsx:298) carries it natively.
@@ -59,7 +59,7 @@ test.describe('Authentication', () => {
     // shared strong passphrase from helpers/auth.ts.
     await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
     await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-    await page.getByRole('button', { name: /sign in|login/i }).click();
+    await page.getByTestId('login-submit').click();
 
     // Should redirect to dashboard
     await expect(page.getByTestId('page-header-title')).toBeVisible({

@@ -86,7 +86,7 @@ export async function loginViaUI(
   await page.reload();
   await page.getByLabel(/username/i).fill(creds.username);
   await page.getByLabel(/password/i).fill(creds.password);
-  await page.getByRole('button', { name: /sign in|login/i }).click();
+  await page.getByTestId('login-submit').click();
 }
 
 /**
