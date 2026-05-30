@@ -31,10 +31,4 @@ test.describe('Performance Page', () => {
   test('should render the Health Check card', async ({ page }) => {
     await expect(page.locator('text=/health.*check/i').first()).toBeVisible({ timeout: 5000 });
   });
-
-  test('should render a card grid (Performance card visible when enabled)', async ({ page }) => {
-    // Either the Performance card or the Health Check card must be in the grid.
-    const cards = page.locator('text=/health.*check|performance|speed.*test|iperf/i');
-    await expect(cards.first()).toBeVisible({ timeout: 5000 });
-  });
 });

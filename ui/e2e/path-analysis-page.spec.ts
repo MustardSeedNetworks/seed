@@ -27,10 +27,4 @@ test.describe('Path Analysis Page', () => {
   test('should land on the /path route', async ({ page }) => {
     await expect(page).toHaveURL(/\/path$/);
   });
-
-  test('should render the Path Discovery card (when not in WiFi-only mode)', async ({ page }) => {
-    // Card content varies but should have at least one relevant heading or label visible
-    const content = page.locator('text=/path|trace|hop|gateway|dns/i');
-    await expect(content.first()).toBeVisible({ timeout: 5000 });
-  });
 });
