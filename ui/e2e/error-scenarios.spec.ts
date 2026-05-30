@@ -336,15 +336,12 @@ test.describe('Resource Error Scenarios - Empty States', () => {
     // Reload to get fresh data
     await page.reload();
 
-    // Should show helpful empty state message
-    const emptyStateShown = await page
-      .getByText(/no devices|no hosts|0 devices|empty|start.*scan/i)
-      .isVisible({ timeout: 5000 });
-
-    // Should show either empty state or scan prompt
-    expect(
-      emptyStateShown || (await page.getByTestId('discovery-scan-button').isVisible()),
-    ).toBeTruthy();
+    // discovery-scan-button only renders in the empty-state branch
+    // of NetworkDiscoveryCard, so its presence is equivalent to "the
+    // SPA recognised the empty device list and offered a scan
+    // prompt." Previously OR'd with /no devices|no hosts|.../i regex
+    // which was i18n-fragile under es ("sin dispositivos" etc).
+    await expect(page.getByTestId('discovery-scan-button')).toBeVisible({ timeout: 5000 });
   });
 
   test('should show "No vulnerabilities found" success state', async ({ page }) => {
@@ -373,14 +370,12 @@ test.describe('Resource Error Scenarios - Empty States', () => {
       });
     });
 
-    // App should show this as a positive result
-
-    // Should either show success message or be functional
-    const successShown = await page
-      .getByText(/no vulnerabilities|secure|safe|clean/i)
-      .isVisible({ timeout: 5000 });
-
-    expect(successShown || (await page.getByTestId('page-header-title').isVisible())).toBeTruthy();
+    // The /no vulnerabilities|secure|safe|clean/i success-text regex
+    // was i18n-fragile and its OR-with-page-header-title meant the
+    // assertion never failed independently. Reduced to the survivor:
+    // the page renders. Real empty-state coverage needs a stable
+    // testid on the vulnerabilities EmptyState component.
+    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -401,14 +396,14 @@ test.describe('Backend Service Unavailable', () => {
       });
     });
 
-    // Should show installation prompt
-
-    const promptShown = await page
-      .getByText(/install|not installed|iperf|unavailable/i)
-      .isVisible({ timeout: 5000 });
-
-    // Either shows prompt or app remains functional
-    expect(promptShown || (await page.getByTestId('page-header-title').isVisible())).toBeTruthy();
+    // The /install|not installed|iperf|unavailable/i regex was
+    // partially DNT-safe ("iperf" is a product name) but the rest
+    // of the alternation was i18n-fragile, and the OR-with-page-
+    // header-title meant the assertion never failed independently.
+    // Reduced to the survivor: the page renders. Real iperf3-missing
+    // coverage needs a stable testid on the iperf-availability
+    // banner / error component.
+    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 5000 });
   });
 
   test('should handle speedtest.net unavailable', async ({ page }) => {
