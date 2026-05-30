@@ -261,6 +261,14 @@ export function useAuth(): UseAuthReturn {
     // Clear cached CSRF token
     clearCSRFToken();
 
+    // Synchronously clear any legacy auth keys from localStorage.
+    // clearLegacyStorage() also runs on mount; doing it here on logout
+    // closes the race where a user reads localStorage immediately after
+    // logout (before the login page mounts and re-runs the cleanup) and
+    // still sees stale tokens — exactly what the auth-complete E2E
+    // "should clear session data from storage on logout" was asserting.
+    clearLegacyStorage();
+
     // Call logout endpoint to clear httpOnly cookies
     fetch(`${API_BASE}/api/v1/auth/logout`, {
       method: 'POST',
