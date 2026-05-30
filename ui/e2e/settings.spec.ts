@@ -54,29 +54,24 @@ test.describe('Settings', () => {
   });
 
   test('should toggle theme between light and dark', async ({ page }) => {
-    // Find theme toggle
-    const themeToggle = page
-      .getByRole('button', { name: /dark|light|theme/i })
-      .or(page.locator('input[type="checkbox"][name*="theme"]'))
-      .or(page.locator('[data-testid="theme-toggle"]'))
-      .first();
+    // theme-toggle testid is on AppearanceSettings.tsx:169 (the quick-
+    // toggle button). The Appearance section is collapsed by default;
+    // expand it first. Previously a .or() chain with /dark|light|theme/i
+    // regex + checkbox + the testid silently no-op'd because the
+    // appearance section wasn't expanded.
+    await page.getByTestId('appearance-settings-section').click();
+    const themeToggle = page.getByTestId('theme-toggle');
+    await expect(themeToggle).toBeVisible();
 
-    const hasToggle = await themeToggle.isVisible();
+    const htmlClasses = await page.locator('html').getAttribute('class');
+    const wasDark = htmlClasses?.includes('dark') ?? false;
 
-    if (hasToggle) {
-      // Get current theme state
-      const htmlClasses = await page.locator('html').getAttribute('class');
-      const wasDark = htmlClasses?.includes('dark') ?? false;
+    await themeToggle.click();
 
-      // Click toggle
-      await themeToggle.click();
+    const newHtmlClasses = await page.locator('html').getAttribute('class');
+    const isDark = newHtmlClasses?.includes('dark') ?? false;
 
-      // Check theme changed
-      const newHtmlClasses = await page.locator('html').getAttribute('class');
-      const isDark = newHtmlClasses?.includes('dark') ?? false;
-
-      expect(isDark).not.toBe(wasDark);
-    }
+    expect(isDark).not.toBe(wasDark);
   });
 
   test('should have input fields for threshold values', async ({ page }) => {
@@ -103,49 +98,34 @@ test.describe('Settings', () => {
   });
 
   test('should close settings drawer', async ({ page }) => {
-    // Find close button
-    const closeButton = page
-      .getByRole('button', { name: /close/i })
-      .or(page.locator('button:has(svg[class*="x"], svg[class*="close"])'))
-      .first();
-
-    await closeButton.click();
-
-    // Drawer should close. Assert the drawer itself is hidden via its
-    // stable testid (settings-drawer) rather than per-section text —
-    // /thresholds|appearance/i was i18n-fragile.
+    // settings-drawer-close testid is on SettingsDrawer.tsx.
+    // Previously matched by /close/i regex + svg class fallback —
+    // i18n-fragile + brittle to icon library changes.
+    await page.getByTestId('settings-drawer-close').click();
     await expect(page.getByTestId('settings-drawer')).toBeHidden({
       timeout: 3000,
     });
   });
 
   test('should persist settings after drawer close and reopen', async ({ page }) => {
-    // Find a theme toggle or setting to change
-    const themeToggle = page
-      .getByRole('button', { name: /dark|light/i })
-      .or(page.locator('[data-testid="theme-toggle"]'))
-      .first();
+    // Expand Appearance section first; theme-toggle lives inside it.
+    await page.getByTestId('appearance-settings-section').click();
+    const themeToggle = page.getByTestId('theme-toggle');
+    await expect(themeToggle).toBeVisible();
 
-    const hasToggle = await themeToggle.isVisible();
+    await themeToggle.click();
+    const themeAfterToggle = await page.locator('html').getAttribute('class');
 
-    if (hasToggle) {
-      // Toggle theme
-      await themeToggle.click();
+    // Close drawer using stable testid
+    await page.getByTestId('settings-drawer-close').click();
+    await expect(page.getByTestId('settings-drawer')).toBeHidden();
 
-      const themeAfterToggle = await page.locator('html').getAttribute('class');
+    // Reopen via sidebar settings helper
+    await sidebarSettingsButton(page).click();
+    await expect(page.getByTestId('settings-drawer')).toBeVisible();
 
-      // Close drawer
-      const closeButton = page.getByRole('button', { name: /close/i }).first();
-      await closeButton.click();
-
-      // Reopen drawer
-      const settingsButton = page.getByRole('button', { name: /settings/i }).first();
-      await settingsButton.click();
-
-      // Theme should still be the same
-      const themeAfterReopen = await page.locator('html').getAttribute('class');
-      expect(themeAfterReopen).toBe(themeAfterToggle);
-    }
+    const themeAfterReopen = await page.locator('html').getAttribute('class');
+    expect(themeAfterReopen).toBe(themeAfterToggle);
   });
 });
 
@@ -521,12 +501,8 @@ test.describe('Settings CRUD Operations', () => {
 
     await firstCheckbox.click();
 
-    // Close drawer
-    const closeButton = page
-      .getByRole('button', { name: /close/i })
-      .or(page.locator('button:has(svg[class*="x"], svg[class*="close"])'))
-      .first();
-    await closeButton.click();
+    // Close drawer via stable testid
+    await page.getByTestId('settings-drawer-close').click();
 
     // Reopen drawer
     const settingsButton = sidebarSettingsButton(page);
