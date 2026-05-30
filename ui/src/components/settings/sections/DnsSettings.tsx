@@ -94,6 +94,7 @@ export const DnsSettings: React.NamedExoticComponent<DnsSettingsProps> = memo(
 
     return (
       <CollapsibleSection
+        data-testid="dns-settings-section"
         title={
           <div className={layout.inline.default}>
             <Globe className={iconTokens.size.sm} />

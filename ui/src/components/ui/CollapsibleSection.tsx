@@ -52,6 +52,14 @@ interface CollapsibleSectionProps {
   status?: Status;
   /** Use compact styling for inside cards */
   variant?: 'default' | 'compact';
+  /**
+   * Stable test selector for E2E. Landed on the root `<section>` so the
+   * section is queryable whether collapsed or expanded — call sites that
+   * previously relied on `getByText(/title-substring/i)` were i18n-unsafe
+   * and matched the wrong node when a sibling tab or breadcrumb shared the
+   * substring (settings.spec.ts:41-58 was the canonical victim).
+   */
+  'data-testid'?: string;
 }
 
 /**
@@ -64,6 +72,7 @@ export function CollapsibleSection({
   count,
   status,
   variant = 'default',
+  'data-testid': dataTestId,
 }: CollapsibleSectionProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -71,6 +80,7 @@ export function CollapsibleSection({
 
   return (
     <section
+      data-testid={dataTestId}
       className={cn(
         !isCompact && border.card,
         !isCompact && radius.lg,

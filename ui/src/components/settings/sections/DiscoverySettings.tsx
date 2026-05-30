@@ -108,6 +108,7 @@ export const DiscoverySettings: React.NamedExoticComponent<DiscoverySettingsProp
 
     return (
       <CollapsibleSection
+        data-testid="discovery-settings-section"
         title={
           <div className={layout.inline.default}>
             <ScanSearch className={iconTokens.size.sm} />

@@ -39,23 +39,19 @@ test.describe('Settings', () => {
   });
 
   test('should display Thresholds settings section', async ({ page }) => {
-    const thresholdsSection = page.getByText(/threshold/i).first();
-    await expect(thresholdsSection).toBeVisible();
+    await expect(page.getByTestId('thresholds-settings-section')).toBeVisible();
   });
 
   test('should display Discovery settings section', async ({ page }) => {
-    const discoverySection = page.getByText(/discovery/i).first();
-    await expect(discoverySection).toBeVisible();
+    await expect(page.getByTestId('discovery-settings-section')).toBeVisible();
   });
 
   test('should display DNS settings section', async ({ page }) => {
-    const dnsSection = page.getByText(/dns/i).first();
-    await expect(dnsSection).toBeVisible();
+    await expect(page.getByTestId('dns-settings-section')).toBeVisible();
   });
 
   test('should display Performance settings section', async ({ page }) => {
-    const perfSection = page.getByText(/performance|speed|iperf/i).first();
-    await expect(perfSection).toBeVisible();
+    await expect(page.getByTestId('performance-settings-section')).toBeVisible();
   });
 
   test('should toggle theme between light and dark', async ({ page }) => {
