@@ -31,14 +31,12 @@ test.describe('smoke @ authenticated', { tag: '@smoke' }, () => {
     await expect(page.getByTestId('card').first()).toBeVisible();
   });
 
-  test('theme toggle is interactive', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
-    const toggle = page.getByTestId('theme-toggle');
-    await expect(toggle).toBeVisible();
-    await toggle.click();
-    await expect(toggle).toBeVisible();
-  });
+  // No top-level theme-toggle smoke test: seed's data-testid="theme-toggle"
+  // lives on AppearanceSettings.tsx — only mounted when the settings
+  // drawer is open. Theme behaviour is covered by theme-and-help.spec.ts
+  // at the @smoke tier (reached through the drawer). Putting a deep-link
+  // assertion at the top-level smoke tier was a mis-port of stem's smoke
+  // shape (stem has header-theme-toggle at the chrome level).
 
   test('settings drawer opens from sidebar', async ({ page }) => {
     await page.goto('/');
