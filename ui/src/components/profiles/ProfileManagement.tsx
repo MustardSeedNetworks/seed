@@ -176,6 +176,7 @@ export function ProfileManagement({ onClose }: ProfileManagementProps): React.Re
               type="button"
               ref={closeButtonRef}
               onClick={onClose}
+              data-testid="profile-modal-close"
               className={cn(
                 'pad-xs',
                 radius.md,
