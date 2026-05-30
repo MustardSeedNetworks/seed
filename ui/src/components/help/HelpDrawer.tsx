@@ -78,6 +78,7 @@ export function HelpDrawer({ isOpen, onClose, version }: HelpDrawerProps): React
         className="fixed inset-0 bg-scrim/50 backdrop-blur-sm z-40"
         onClick={onClose}
         aria-hidden="true"
+        data-testid="help-drawer-backdrop"
       />
 
       {/* Drawer */}
