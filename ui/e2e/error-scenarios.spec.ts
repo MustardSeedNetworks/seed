@@ -69,7 +69,7 @@ test.describe('API Error Scenarios', () => {
       await page.getByRole('button', { name: /sign in|login/i }).click();
 
       // Should show user-friendly error message
-      await expect(page.getByText(/error|failed|unable/i)).toBeVisible({
+      await expect(page.getByRole('alert')).toBeVisible({
         timeout: 5000,
       });
 
@@ -98,7 +98,7 @@ test.describe('API Error Scenarios', () => {
         await scanButton.click();
 
         // Should show error message
-        await expect(page.getByText(/error|failed/i)).toBeVisible({
+        await expect(page.getByRole('alert')).toBeVisible({
           timeout: 5000,
         });
 
@@ -130,7 +130,7 @@ test.describe('API Error Scenarios', () => {
         await speedTestButton.click();
 
         // Should show error message
-        await expect(page.getByText(/error|failed|unavailable/i)).toBeVisible({
+        await expect(page.getByRole('alert')).toBeVisible({
           timeout: 5000,
         });
       }
@@ -182,7 +182,7 @@ test.describe('API Error Scenarios', () => {
               await submitButton.click();
 
               // Should show error
-              await expect(page.getByText(/error|failed/i)).toBeVisible({
+              await expect(page.getByRole('alert')).toBeVisible({
                 timeout: 5000,
               });
             }
@@ -215,9 +215,7 @@ test.describe('API Error Scenarios', () => {
       // against a 100ms hard sleep — the sleep branch always won, defeating
       // the race. Direct isVisible with the desired timeout is equivalent and
       // honest about what we're waiting for.
-      const errorShown = await page
-        .getByText(/timeout|error|failed|unable/i)
-        .isVisible({ timeout: 15000 });
+      const errorShown = await page.getByRole('alert').isVisible({ timeout: 15000 });
 
       if (timeoutHandle) {
         clearTimeout(timeoutHandle);
@@ -299,9 +297,7 @@ test.describe('API Error Scenarios', () => {
           // were effectively checking with a 250ms timeout. Direct isVisible
           // is honest about the actual budget; keeping it short to match the
           // original intent.
-          const notFoundShown = await page
-            .getByText(/not found|doesn't exist|unavailable/i)
-            .isVisible({ timeout: 1000 });
+          const notFoundShown = await page.getByRole('alert').isVisible({ timeout: 1000 });
 
           // Either shows error or remains functional
           expect(
@@ -388,9 +384,7 @@ test.describe('API Error Scenarios', () => {
         .getByLabel(/username|password/i)
         .first()
         .isVisible({ timeout: 10000 });
-      const expiredTextVisible = page
-        .getByText(/session.*expired|unauthorized|login/i)
-        .isVisible({ timeout: 10000 });
+      const expiredTextVisible = page.getByRole('alert').isVisible({ timeout: 10000 });
       const [usernameOk, expiredOk] = await Promise.all([usernameVisible, expiredTextVisible]);
       const loginShown = usernameOk || expiredOk;
 
@@ -422,7 +416,7 @@ test.describe('API Error Scenarios', () => {
         // 250ms branch always won. Replaced with parallel short-timeout probes
         // ORed together for the same semantics, no race.
         const [authTextSeen, loginFieldSeen] = await Promise.all([
-          page.getByText(/unauthorized|session|login/i).isVisible({ timeout: 1000 }),
+          page.getByRole('alert').isVisible({ timeout: 1000 }),
           page
             .getByLabel(/username|password/i)
             .first()
@@ -471,9 +465,7 @@ test.describe('API Error Scenarios', () => {
             await saveButton.click();
 
             // Should show permission denied error
-            const errorShown = await page
-              .getByText(/permission|forbidden|denied|authorized/i)
-              .isVisible({ timeout: 5000 });
+            const errorShown = await page.getByRole('alert').isVisible({ timeout: 5000 });
 
             // Either error shown or app remains functional
             expect(
@@ -496,7 +488,7 @@ test.describe('Validation Error Scenarios', () => {
       await loginButton.click();
 
       // Should show validation error or button be disabled
-      const hasError = await page.getByText(/required|enter|provide/i).isVisible({ timeout: 3000 });
+      const hasError = await page.getByRole('alert').isVisible({ timeout: 3000 });
       const buttonDisabled = await loginButton.isDisabled();
 
       expect(hasError || buttonDisabled).toBeTruthy();
@@ -517,9 +509,7 @@ test.describe('Validation Error Scenarios', () => {
           await thresholdInput.fill('-50');
 
           // Should show validation error or prevent submission
-          const errorShown = await page
-            .getByText(/invalid|positive|greater/i)
-            .isVisible({ timeout: 3000 });
+          const errorShown = await page.getByRole('alert').isVisible({ timeout: 3000 });
 
           const saveButton = page.getByRole('button', { name: /save|apply/i }).first();
           const saveDisabled = await saveButton.isDisabled();
@@ -553,7 +543,7 @@ test.describe('Validation Error Scenarios', () => {
           await testButton.click();
 
           // Should show validation error
-          await expect(page.getByText(/invalid|format|error/i)).toBeVisible({
+          await expect(page.getByRole('alert')).toBeVisible({
             timeout: 5000,
           });
         }
@@ -589,9 +579,7 @@ test.describe('Validation Error Scenarios', () => {
             await submitButton.click();
 
             // Should show validation error or button be disabled
-            const errorShown = await page
-              .getByText(/required|name|enter/i)
-              .isVisible({ timeout: 3000 });
+            const errorShown = await page.getByRole('alert').isVisible({ timeout: 3000 });
             const submitDisabled = await submitButton.isDisabled();
 
             expect(errorShown || submitDisabled).toBeTruthy();
@@ -658,9 +646,7 @@ test.describe('Validation Error Scenarios', () => {
           });
 
           // Should show error about invalid file type
-          const errorShown = await page
-            .getByText(/invalid|file type|png|jpg|jpeg|image/i)
-            .isVisible({ timeout: 5000 });
+          const errorShown = await page.getByRole('alert').isVisible({ timeout: 5000 });
 
           expect(errorShown).toBeTruthy();
         }
@@ -896,7 +882,7 @@ test.describe('Error Recovery Mechanisms', () => {
     await page.getByRole('button', { name: /sign in|login/i }).click();
 
     // Should show error
-    await expect(page.getByText(/error|failed/i)).toBeVisible({
+    await expect(page.getByRole('alert')).toBeVisible({
       timeout: 5000,
     });
 
@@ -926,7 +912,7 @@ test.describe('Error Recovery Mechanisms', () => {
       await scanButton.click();
 
       // Wait for error
-      const errorVisible = await page.getByText(/error|failed/i).isVisible({ timeout: 5000 });
+      const errorVisible = await page.getByRole('alert').isVisible({ timeout: 5000 });
 
       if (errorVisible) {
         // Try to dismiss (close button, X, or click away)
