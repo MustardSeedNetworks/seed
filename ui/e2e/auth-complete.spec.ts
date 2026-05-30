@@ -121,6 +121,9 @@ test.describe('Complete Authentication Lifecycle', () => {
 
     test('should logout successfully on desktop', async ({ page }) => {
       // Find and click logout button
+      // Open the profile dropdown — header-logout lives inside the
+      // dropdown panel (HeaderBar.tsx:382), not on the header rail.
+      await page.getByTestId('header-profile').click();
       const logoutButton = page.getByTestId('header-logout');
 
       await logoutButton.click();
@@ -147,6 +150,9 @@ test.describe('Complete Authentication Lifecycle', () => {
       });
 
       // Click logout
+      // Open the profile dropdown — header-logout lives inside the
+      // dropdown panel (HeaderBar.tsx:382), not on the header rail.
+      await page.getByTestId('header-profile').click();
       const logoutButton = page.getByTestId('header-logout');
 
       await logoutButton.click();
@@ -171,6 +177,9 @@ test.describe('Complete Authentication Lifecycle', () => {
       });
 
       // Logout
+      // Open the profile dropdown — header-logout lives inside the
+      // dropdown panel (HeaderBar.tsx:382), not on the header rail.
+      await page.getByTestId('header-profile').click();
       const logoutButton = page.getByTestId('header-logout');
 
       await logoutButton.click();
@@ -192,6 +201,9 @@ test.describe('Complete Authentication Lifecycle', () => {
 
     test('should prevent access to protected routes after logout', async ({ page }) => {
       // Logout
+      // Open the profile dropdown — header-logout lives inside the
+      // dropdown panel (HeaderBar.tsx:382), not on the header rail.
+      await page.getByTestId('header-profile').click();
       const logoutButton = page.getByTestId('header-logout');
 
       await logoutButton.click();
@@ -209,6 +221,9 @@ test.describe('Complete Authentication Lifecycle', () => {
 
     test('should display empty login form after logout', async ({ page }) => {
       // Logout
+      // Open the profile dropdown — header-logout lives inside the
+      // dropdown panel (HeaderBar.tsx:382), not on the header rail.
+      await page.getByTestId('header-profile').click();
       const logoutButton = page.getByTestId('header-logout');
 
       await logoutButton.click();
@@ -274,6 +289,9 @@ test.describe('Complete Authentication Lifecycle', () => {
       });
 
       // Logout to simulate session expiry
+      // Open the profile dropdown — header-logout lives inside the
+      // dropdown panel (HeaderBar.tsx:382), not on the header rail.
+      await page.getByTestId('header-profile').click();
       const logoutButton = page.getByTestId('header-logout');
 
       await logoutButton.click();
@@ -365,17 +383,9 @@ test.describe('Complete Authentication Lifecycle', () => {
         timeout: 10000,
       });
 
-      // On mobile, logout might be in a menu - try hamburger menu first
-      const hamburgerMenu = page.locator(
-        'button[aria-label*="menu" i], button:has(svg[class*="menu"])',
-      );
-      const hasHamburger = await hamburgerMenu.isVisible();
-
-      if (hasHamburger) {
-        await hamburgerMenu.click();
-      }
-
-      // Find logout button
+      // Profile dropdown trigger lives in the icon toolbar, which is
+      // visible on mobile too — no separate hamburger step needed.
+      await page.getByTestId('header-profile').click();
       const logoutButton = page.getByTestId('header-logout');
 
       await logoutButton.click();

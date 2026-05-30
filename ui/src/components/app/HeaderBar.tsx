@@ -244,6 +244,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
           <div ref={profileDropdownRef} className="relative">
             <button
               type="button"
+              data-testid="header-profile"
               className={iconButtonClass}
               onClick={(): void => setProfileDropdownOpen(!profileDropdownOpen)}
               aria-label={t('accessibility.selectProfile', 'Select profile')}
