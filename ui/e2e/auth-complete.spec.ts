@@ -124,7 +124,14 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Open the profile dropdown — header-logout lives inside the
       // dropdown panel (HeaderBar.tsx:382), not on the header rail.
       await page.getByTestId('header-profile').click();
+      // PR-1.2: explicit visibility settle. Playwright's .click()
+      // auto-wait races React's re-render that mounts the dropdown —
+      // the locator resolves but its retried actionability check
+      // times out on stability before the action fires. Awaiting
+      // toBeVisible() forces the auto-wait to land on the same
+      // settled render pass that mounted the button.
       const logoutButton = page.getByTestId('header-logout');
+      await expect(logoutButton).toBeVisible({ timeout: 5000 });
 
       await logoutButton.click();
 
@@ -153,7 +160,14 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Open the profile dropdown — header-logout lives inside the
       // dropdown panel (HeaderBar.tsx:382), not on the header rail.
       await page.getByTestId('header-profile').click();
+      // PR-1.2: explicit visibility settle. Playwright's .click()
+      // auto-wait races React's re-render that mounts the dropdown —
+      // the locator resolves but its retried actionability check
+      // times out on stability before the action fires. Awaiting
+      // toBeVisible() forces the auto-wait to land on the same
+      // settled render pass that mounted the button.
       const logoutButton = page.getByTestId('header-logout');
+      await expect(logoutButton).toBeVisible({ timeout: 5000 });
 
       await logoutButton.click();
 
@@ -180,7 +194,14 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Open the profile dropdown — header-logout lives inside the
       // dropdown panel (HeaderBar.tsx:382), not on the header rail.
       await page.getByTestId('header-profile').click();
+      // PR-1.2: explicit visibility settle. Playwright's .click()
+      // auto-wait races React's re-render that mounts the dropdown —
+      // the locator resolves but its retried actionability check
+      // times out on stability before the action fires. Awaiting
+      // toBeVisible() forces the auto-wait to land on the same
+      // settled render pass that mounted the button.
       const logoutButton = page.getByTestId('header-logout');
+      await expect(logoutButton).toBeVisible({ timeout: 5000 });
 
       await logoutButton.click();
       await expect(page.getByTestId('login-title')).toBeVisible({
@@ -204,7 +225,14 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Open the profile dropdown — header-logout lives inside the
       // dropdown panel (HeaderBar.tsx:382), not on the header rail.
       await page.getByTestId('header-profile').click();
+      // PR-1.2: explicit visibility settle. Playwright's .click()
+      // auto-wait races React's re-render that mounts the dropdown —
+      // the locator resolves but its retried actionability check
+      // times out on stability before the action fires. Awaiting
+      // toBeVisible() forces the auto-wait to land on the same
+      // settled render pass that mounted the button.
       const logoutButton = page.getByTestId('header-logout');
+      await expect(logoutButton).toBeVisible({ timeout: 5000 });
 
       await logoutButton.click();
       await expect(page.getByTestId('login-title')).toBeVisible({
@@ -224,7 +252,14 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Open the profile dropdown — header-logout lives inside the
       // dropdown panel (HeaderBar.tsx:382), not on the header rail.
       await page.getByTestId('header-profile').click();
+      // PR-1.2: explicit visibility settle. Playwright's .click()
+      // auto-wait races React's re-render that mounts the dropdown —
+      // the locator resolves but its retried actionability check
+      // times out on stability before the action fires. Awaiting
+      // toBeVisible() forces the auto-wait to land on the same
+      // settled render pass that mounted the button.
       const logoutButton = page.getByTestId('header-logout');
+      await expect(logoutButton).toBeVisible({ timeout: 5000 });
 
       await logoutButton.click();
       await expect(page.getByTestId('login-title')).toBeVisible({
@@ -292,7 +327,14 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Open the profile dropdown — header-logout lives inside the
       // dropdown panel (HeaderBar.tsx:382), not on the header rail.
       await page.getByTestId('header-profile').click();
+      // PR-1.2: explicit visibility settle. Playwright's .click()
+      // auto-wait races React's re-render that mounts the dropdown —
+      // the locator resolves but its retried actionability check
+      // times out on stability before the action fires. Awaiting
+      // toBeVisible() forces the auto-wait to land on the same
+      // settled render pass that mounted the button.
       const logoutButton = page.getByTestId('header-logout');
+      await expect(logoutButton).toBeVisible({ timeout: 5000 });
 
       await logoutButton.click();
       await expect(page.getByTestId('login-title')).toBeVisible({
