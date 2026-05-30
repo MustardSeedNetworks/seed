@@ -140,7 +140,10 @@ func (s *Server) handleLicenseStatus(w http.ResponseWriter, r *http.Request) {
 		resp.CanMintTokens = true
 	} else {
 		resp.Tier = st.Tier.String()
-		resp.CanMintTokens = st.Tier >= license.TierPro
+		// Route the UI signal through the same catalog lookup the
+		// backend gate uses (licenseAllowsAPITokens). Keeps the two
+		// in lock-step if rest_api ever moves between tiers.
+		resp.CanMintTokens = mgr.HasFeature("rest_api")
 	}
 	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, resp)
 }
@@ -328,23 +331,27 @@ func (s *Server) handleAPITokenRevoke(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// licenseAllowsAPITokens reports whether the active license tier is
-// allowed to mint API tokens. Pro grants it; trial mode (which grants
-// Pro-equivalent features) grants it. Free / Starter do not.
+// licenseAllowsAPITokens reports whether the active license includes
+// the rest_api feature (PAT minting + scoped automation tokens). Pro
+// grants it; trial mode grants it via the same catalog. Free / Starter
+// do not.
 //
 // A nil license manager is treated as "license disabled" (developer
 // builds, tests) and permits minting so the feature stays usable
-// without forcing a license setup.
+// without forcing a license setup. The HasFeature call handles the
+// state==nil / not-activated / expired-trial cases internally and
+// returns false, matching the previous explicit guards.
+//
+// Mirrors the pattern used by licenseAllowsMultiUser. The feature
+// catalog (internal/license/validator.go) is the single source of
+// truth for which features belong to which tier — moving rest_api to
+// a different tier would not need a code change here.
 func (s *Server) licenseAllowsAPITokens() bool {
 	mgr := s.services.Auth.License
 	if mgr == nil {
 		return true
 	}
-	st := mgr.GetState()
-	if st == nil {
-		return false
-	}
-	return st.IsTrialMode || st.Tier >= license.TierPro
+	return mgr.HasFeature("rest_api")
 }
 
 // mintTokenMaterial returns (id, secret, err). The ID is a hex string
