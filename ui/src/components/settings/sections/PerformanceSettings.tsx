@@ -110,6 +110,7 @@ export const PerformanceSettings: React.NamedExoticComponent<PerformanceSettings
 
     return (
       <CollapsibleSection
+        data-testid="performance-settings-section"
         title={
           <div className={layout.inline.default}>
             <Gauge className={iconTokens.size.sm} />

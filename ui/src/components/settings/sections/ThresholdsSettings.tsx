@@ -107,6 +107,7 @@ export const ThresholdsSettings: React.NamedExoticComponent<ThresholdsSettingsPr
 
     return (
       <CollapsibleSection
+        data-testid="thresholds-settings-section"
         title={
           <div className={layout.inline.default}>
             <SlidersHorizontal className={iconTokens.size.sm} />
