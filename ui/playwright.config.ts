@@ -23,13 +23,14 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   // retries 1 (not 2) — one retry is enough to dodge transient flakes; the
   //   second retry was costing ~30s × N flaky tests with no incremental signal.
-  // workers 2 in CI (was 1) — GH Actions runners are 4-vCPU; 1 worker wastes
-  //   75% of the box and is the biggest single driver of the 30-min full-suite
-  //   runtime we're trying to fix (issue #1072). Two workers run safely against
-  //   our single-instance backend without state interference today; bump to 4
-  //   once we've audited tests that mutate global server state.
+  // workers 4 in CI (bumped from 2 in PR-2.5) — GH Actions ubuntu-latest is
+  //   4-vCPU; running 4 workers fills the box. The matrix in ci.yml further
+  //   splits the suite across 4 shards per browser, so each runner sees only
+  //   ~46 tests and the wall-clock per browser drops from ~17 min (workers=2,
+  //   single shard) to ~5 min (workers=4, 4 shards) — and to ~2 min once the
+  //   failing-test backlog from PRs 1–5 is cleared.
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  workers: process.env.CI ? 4 : undefined,
   timeout: 30000,
   expect: {
     timeout: 10000,
