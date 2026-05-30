@@ -113,6 +113,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
+            data-testid="logs-card-maximize"
             className={cn(
               'p-1.5',
               'bg-surface-hover text-text-secondary',

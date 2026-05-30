@@ -302,6 +302,7 @@ function ProfileSelectorComponent({
             <button
               type="button"
               onClick={goToManagement}
+              data-testid="profile-manage-open"
               className={cn(
                 'w-full flex-center',
                 spacing.gap.tight,

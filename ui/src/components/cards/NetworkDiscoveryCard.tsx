@@ -159,6 +159,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
             <button
               type="button"
               onClick={(): void => setIsModalOpen(true)}
+              data-testid="discovery-card-maximize"
               className={cn(
                 'p-1.5',
                 'bg-surface-hover text-text-secondary',

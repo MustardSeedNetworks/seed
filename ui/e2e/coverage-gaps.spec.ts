@@ -11,30 +11,37 @@ test.describe('Coverage gaps', () => {
   });
 
   test('opens profile management modal', async ({ page }) => {
+    // profile-manage-open testid is on ProfileSelector.tsx (the
+    // "Manage Profiles" link inside the profile dropdown).
+    // profile-modal-close is on ProfileManagement.tsx.
+    // Previously matched /manage profiles/i and /close/i — both
+    // translated under es ("Administrar perfiles", "Cerrar").
     await page.getByLabel(/select profile/i).click();
-    await page.getByRole('button', { name: /manage profiles/i }).click();
+    await page.getByTestId('profile-manage-open').click();
 
     // ProfileManagement.tsx already gives the H2 id="profile-modal-title"
-    // (aria-labelledby target on the dialog); using it avoids i18n drift
-    // on the /profile management/i regex.
+    // (aria-labelledby target on the dialog); using it avoids i18n drift.
     await expect(page.locator('#profile-modal-title')).toBeVisible();
 
-    await page.getByRole('button', { name: /close/i }).click();
+    await page.getByTestId('profile-modal-close').click();
   });
 
   test('opens log viewer modal', async ({ page }) => {
-    // Card.tsx generates id="card-title-<slug>" — see comment in
-    // dashboard.spec.ts. "System Logs" → "system-logs".
+    // Card.tsx generates id="card-title-<slug>"; logs-card-maximize is
+    // on LogViewerCard.tsx. Previously matched /full screen/i which
+    // would miss under es ("Pantalla completa").
     const logsCardTitle = page.locator('#card-title-system-logs');
     await expect(logsCardTitle).toBeVisible();
 
     const logsCard = logsCardTitle.locator('..').first();
-    await logsCard.getByRole('button', { name: /full screen/i }).click();
+    await logsCard.getByTestId('logs-card-maximize').click();
     await expect(page.getByText(/system logs/i)).toBeVisible();
   });
 
   test('opens discovery modal', async ({ page }) => {
-    await page.getByRole('button', { name: /open full screen view/i }).click();
+    // discovery-card-maximize is on NetworkDiscoveryCard.tsx (the
+    // expand-to-modal button). Previously /open full screen view/i.
+    await page.getByTestId('discovery-card-maximize').click();
     await expect(page.getByText(/network discovery/i)).toBeVisible();
   });
 });
