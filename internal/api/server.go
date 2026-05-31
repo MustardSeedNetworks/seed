@@ -31,6 +31,8 @@ import (
 	"github.com/krisarmstrong/seed/internal/oauth"
 	"github.com/krisarmstrong/seed/internal/paths"
 	"github.com/krisarmstrong/seed/internal/pipeline/publicip"
+	snmporchestrator "github.com/krisarmstrong/seed/internal/polling/snmp/orchestrator"
+	"github.com/krisarmstrong/seed/internal/polling/snmp/snmpclient"
 	"github.com/krisarmstrong/seed/internal/probe"
 	"github.com/krisarmstrong/seed/internal/probe/checkers"
 	"github.com/krisarmstrong/seed/internal/scheduler"
@@ -266,6 +268,7 @@ func initDatabaseDependentServices(services *ServiceContainer, db *database.DB) 
 	initListeners(services, db)
 	initTopologyReconcilers(services, db)
 	initAlertPipelines(services, db)
+	initSNMPPoller(services, db)
 }
 
 // initLicenseAndAPITokens wires the Phase D-2 license manager + API
@@ -357,6 +360,48 @@ func initListeners(services *ServiceContainer, db *database.DB) {
 		} else if regErr := services.Engines.Register(l); regErr != nil {
 			logger.Warn("snmp trap listener registry registration failed", "error", regErr)
 		}
+	}
+}
+
+// snmpPollerSchedulerTick is the cadence the snmp.Poller's
+// scheduler wakes up at to dispatch due target jobs. The actual
+// per-target cadence comes from polling_targets.poll_interval_seconds
+// (default 300s); a 5s tick gives 1% scheduling-grain overhead on
+// the default-cadence targets and is plenty fast for the 60s
+// cadence operators typically use on high-priority devices.
+const snmpPollerSchedulerTick = 5 * time.Second
+
+// initSNMPPoller wires the orchestrator-built [*snmp.Poller] into
+// the engine registry. Three things have to be true for the poller
+// to do useful work:
+//
+//  1. The orchestrator needs a [snmp.ClientFactory] — we supply
+//     the production gosnmp-backed one from internal/polling/snmp/
+//     snmpclient.
+//  2. There needs to be at least one row in polling_targets —
+//     V1.0 operators populate this via the A5.3 CRUD API. With
+//     zero rows the poller still starts (idempotent) but does
+//     no work.
+//  3. The scheduler needs a tick interval; snmpPollerSchedulerTick
+//     defaults to 5s — see the doc comment for the rationale.
+//
+// V1.0 NMS expansion — Stage A5.4.
+func initSNMPPoller(services *ServiceContainer, db *database.DB) {
+	logger := logging.GetLogger()
+	sched := scheduler.New(snmpPollerSchedulerTick)
+	factory := snmpclient.NewFactory(snmpclient.Options{})
+	poller, err := snmporchestrator.Build(snmporchestrator.Config{
+		DB:            db,
+		Scheduler:     sched,
+		ClientFactory: factory,
+		Logger:        logger,
+	})
+	if err != nil {
+		logger.Warn("snmp poller init failed", "error", err)
+		return
+	}
+	if regErr := services.Engines.Register(poller); regErr != nil {
+		logger.Warn("snmp poller registry registration failed", "error", regErr)
 	}
 }
 
