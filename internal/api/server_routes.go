@@ -34,6 +34,11 @@ func (s *Server) setupTopologyRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/topology/nodes", s.handleTopologyNodes)
 	s.mux.HandleFunc(APIVersionPrefix+"/topology/nodes/", s.handleTopologyNodeByID)
 	s.mux.HandleFunc(APIVersionPrefix+"/topology/links", s.handleTopologyLinks)
+
+	// Stage A5.2 — alerts API. GET is read-only; the action endpoint
+	// is writeGated so only operator+ can ack/resolve.
+	s.mux.HandleFunc(APIVersionPrefix+"/alerts", s.handleAlerts)
+	s.mux.HandleFunc(APIVersionPrefix+"/alerts/", s.writeGated(s.handleAlertAction))
 }
 
 // setupAPITokenRoutes registers the Phase D-2 personal-access-token
