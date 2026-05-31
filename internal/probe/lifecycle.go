@@ -45,9 +45,13 @@ func (e *Engine) WithStorage(storage probeStorage, sched probeScheduler) *Engine
 	return e
 }
 
-// Start loads every enabled probe from the storage layer, registers
-// each as a scheduler job, and begins the scheduler's tick loop.
-// Returns ErrStorageNotConfigured if WithStorage was not called.
+// Name returns "probe". Implements [engine.Engine] so the probe
+// engine can register in the lifecycle registry alongside other
+// long-running subsystems.
+func (*Engine) Name() string { return "probe" }
+
+// Start dispatches the scheduled probes. Returns
+// ErrStorageNotConfigured if WithStorage was not called.
 //
 // Start is idempotent at the second-call level: a second Start
 // without an intervening Stop returns nil immediately. Honors ctx

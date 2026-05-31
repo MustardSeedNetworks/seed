@@ -81,6 +81,11 @@ func (p *Poller) RegisterCollector(c Collector) {
 	p.collectors[c.Name()] = c
 }
 
+// Name returns "snmp-poller". Implements [engine.Engine] so the
+// poller registers in the lifecycle registry alongside the probe +
+// retention engines.
+func (*Poller) Name() string { return "snmp-poller" }
+
 // Start loads all enabled polling_targets and registers one job
 // per target with the scheduler. Idempotent.
 func (p *Poller) Start(ctx context.Context) error {

@@ -112,6 +112,11 @@ func (e *Engine) Register(src RollupSource) {
 	e.sources = append(e.sources, src)
 }
 
+// Name returns "retention". Implements [engine.Engine] so the
+// retention engine registers in the lifecycle registry alongside
+// the probe + snmp engines.
+func (*Engine) Name() string { return "retention" }
+
 // Start begins the periodic rollup + purge loop. Returns nil if
 // already started.
 func (e *Engine) Start(ctx context.Context) error {
