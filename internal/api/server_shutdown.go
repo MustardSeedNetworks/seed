@@ -104,21 +104,17 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	logging.GetLogger().InfoContext(ctx, "Stopping VLAN traffic monitor...")
 	s.vlanTrafficMonitor().Stop()
 
-	// Stop probe engine (Stage A1.8) — drains in-flight probes via
-	// the scheduler's WaitGroup.
-	if engine := s.services.Probe.Engine; engine != nil {
-		logging.GetLogger().InfoContext(ctx, "Stopping probe engine...")
-		if stopErr := engine.Stop(ctx); stopErr != nil {
-			logging.GetLogger().WarnContext(ctx, "probe engine stop returned error", "error", stopErr)
-		}
-	}
-
-	// Stop retention engine (Stage A2) — waits for in-flight rollup
-	// pass to complete.
-	if engine := s.services.Probe.Retention; engine != nil {
-		logging.GetLogger().InfoContext(ctx, "Stopping retention engine...")
-		if stopErr := engine.Stop(ctx); stopErr != nil {
-			logging.GetLogger().WarnContext(ctx, "retention engine stop returned error", "error", stopErr)
+	// Stop every engine registered with the lifecycle registry
+	// (probe, retention, snmp-poller, listeners, …) in reverse
+	// registration order. Registry.Stop continues past per-engine
+	// errors so a stuck engine doesn't prevent the others from
+	// winding down. Stage A3.5d unified what was previously two
+	// ad-hoc Stop blocks (probe + retention) into one registry
+	// drive.
+	if reg := s.services.Engines; reg != nil {
+		logging.GetLogger().InfoContext(ctx, "Stopping engines...")
+		if stopErr := reg.Stop(ctx); stopErr != nil {
+			logging.GetLogger().WarnContext(ctx, "engine registry stop returned error", "error", stopErr)
 		}
 	}
 
