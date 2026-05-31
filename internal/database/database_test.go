@@ -115,6 +115,68 @@ func TestMigrations(t *testing.T) {
 	}
 }
 
+// TestStageA11ClientsArtifacts asserts that the Stage A1.1
+// multi-tenancy foundation landed correctly: the clients table
+// exists with the seeded default row, and every targeted table
+// has a client_id column. See SEED_ARCHITECTURE.md section 3.0.
+func TestStageA11ClientsArtifacts(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// clients table exists and the default client row is present.
+	var defaultClientName string
+	err := db.QueryRow(ctx,
+		"SELECT name FROM clients WHERE id = 'default'").Scan(&defaultClientName)
+	if err != nil {
+		t.Fatalf("default client not seeded: %v", err)
+	}
+	if defaultClientName != "Default" {
+		t.Errorf("default client name = %q, want %q", defaultClientName, "Default")
+	}
+
+	// client_id column exists on every targeted legacy + V1.0 table.
+	tables := []string{
+		"profiles", "alerts", "metrics",
+		"speedtest_results", "dns_results", "gateway_results",
+		"survey_samples",
+		"discovered_devices", "discovery_interfaces",
+		"wifi_networks", "wifi_access_points", "channel_utilization",
+		"discovery_history", "bluetooth_devices", "bluetooth_scan_history",
+		"network_problems",
+	}
+	for _, tbl := range tables {
+		assertHasColumn(t, db, tbl, "client_id")
+	}
+}
+
+// assertHasColumn fails the test if the named column is missing from
+// the table. Uses PRAGMA table_info which is SQLite-specific.
+func assertHasColumn(t *testing.T, db *database.DB, table, column string) {
+	t.Helper()
+	rows, err := db.Query(context.Background(),
+		"SELECT name FROM pragma_table_info(?)", table)
+	if err != nil {
+		t.Fatalf("query pragma_table_info(%s): %v", table, err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	for rows.Next() {
+		var name string
+		if scanErr := rows.Scan(&name); scanErr != nil {
+			t.Fatalf("scan column name from %s: %v", table, scanErr)
+		}
+		if name == column {
+			return
+		}
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		t.Fatalf("rows iter on %s: %v", table, rowsErr)
+	}
+	t.Errorf("table %s missing column %s", table, column)
+}
+
 func TestClose(t *testing.T) {
 	db, cleanup := testDB(t)
 	defer cleanup()

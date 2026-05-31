@@ -992,6 +992,85 @@ func getMigrationDefs() []migrationDef {
 			    CHECK (scope IS NULL OR scope IN ('admin','operator','viewer'));
 		`,
 		},
+		{
+			// Stage A1.1 (2026-05-30) — multi-tenancy foundation. Creates
+			// the clients table and seeds a single 'default' client. All
+			// observation tables get client_id added in subsequent
+			// migrations; existing rows backfill to 'default'.
+			// MSP-first per SEED_ARCHITECTURE.md section 3.0.
+			Description: "Create clients table and seed default client (multi-tenancy foundation)",
+			Up: `
+			CREATE TABLE IF NOT EXISTS clients (
+				id TEXT PRIMARY KEY,
+				name TEXT NOT NULL,
+				slug TEXT NOT NULL UNIQUE,
+				branding_json TEXT,
+				default_retention_overrides_json TEXT,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			);
+			CREATE INDEX IF NOT EXISTS idx_clients_slug ON clients(slug);
+
+			INSERT OR IGNORE INTO clients (id, name, slug, created_at, updated_at)
+			VALUES ('default', 'Default', 'default', datetime('now'), datetime('now'));
+		`,
+		},
+		{
+			// Stage A1.1 — add client_id to legacy observation + result
+			// tables. Backfills existing rows to the default client via
+			// the column DEFAULT. AirMapper / Wi-Fi survey
+			// (survey_samples) included; canopy/ code continues working
+			// unchanged because writes default to 'default' client. A
+			// follow-up A1 step will update canopy/ to set client_id
+			// explicitly.
+			Description: "Add client_id to legacy observation and result tables",
+			Up: `
+			ALTER TABLE profiles ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE alerts ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE metrics ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE speedtest_results ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE dns_results ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE gateway_results ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE survey_samples ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+
+			CREATE INDEX IF NOT EXISTS idx_profiles_client ON profiles(client_id);
+			CREATE INDEX IF NOT EXISTS idx_alerts_client ON alerts(client_id);
+			CREATE INDEX IF NOT EXISTS idx_metrics_client ON metrics(client_id);
+			CREATE INDEX IF NOT EXISTS idx_speedtest_results_client ON speedtest_results(client_id);
+			CREATE INDEX IF NOT EXISTS idx_dns_results_client ON dns_results(client_id);
+			CREATE INDEX IF NOT EXISTS idx_gateway_results_client ON gateway_results(client_id);
+			CREATE INDEX IF NOT EXISTS idx_survey_samples_client ON survey_samples(client_id);
+		`,
+		},
+		{
+			// Stage A1.1 — add client_id to discovery + inventory
+			// tables. wifi_networks / wifi_access_points /
+			// channel_utilization are AirMapper / Wi-Fi visibility
+			// surfaces; same DEFAULT 'default' semantics — existing
+			// code unchanged, canopy/ updated in a follow-up step.
+			Description: "Add client_id to discovery and inventory tables",
+			Up: `
+			ALTER TABLE discovered_devices ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE discovery_interfaces ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE wifi_networks ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE wifi_access_points ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE channel_utilization ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE discovery_history ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE bluetooth_devices ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE bluetooth_scan_history ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE network_problems ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+
+			CREATE INDEX IF NOT EXISTS idx_discovered_devices_client ON discovered_devices(client_id);
+			CREATE INDEX IF NOT EXISTS idx_discovery_interfaces_client ON discovery_interfaces(client_id);
+			CREATE INDEX IF NOT EXISTS idx_wifi_networks_client ON wifi_networks(client_id);
+			CREATE INDEX IF NOT EXISTS idx_wifi_access_points_client ON wifi_access_points(client_id);
+			CREATE INDEX IF NOT EXISTS idx_channel_utilization_client ON channel_utilization(client_id);
+			CREATE INDEX IF NOT EXISTS idx_discovery_history_client ON discovery_history(client_id);
+			CREATE INDEX IF NOT EXISTS idx_bluetooth_devices_client ON bluetooth_devices(client_id);
+			CREATE INDEX IF NOT EXISTS idx_bluetooth_scan_history_client ON bluetooth_scan_history(client_id);
+			CREATE INDEX IF NOT EXISTS idx_network_problems_client ON network_problems(client_id);
+		`,
+		},
 	}
 }
 
