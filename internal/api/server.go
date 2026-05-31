@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	alertpipeline "github.com/krisarmstrong/seed/internal/alerts/pipeline"
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/canopy/survey"
 	"github.com/krisarmstrong/seed/internal/canopy/wifi"
@@ -41,6 +42,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/services/speedtest"
 	"github.com/krisarmstrong/seed/internal/services/vlan"
 	"github.com/krisarmstrong/seed/internal/timeseries/retention"
+	"github.com/krisarmstrong/seed/internal/topology"
 )
 
 // indexHTMLPath is the path to the SPA entry point.
@@ -262,6 +264,8 @@ func initDatabaseDependentServices(services *ServiceContainer, db *database.DB) 
 	initProbeEngine(services, db)
 	initRetentionEngine(services, db)
 	initListeners(services, db)
+	initTopologyReconcilers(services, db)
+	initAlertPipelines(services, db)
 }
 
 // initLicenseAndAPITokens wires the Phase D-2 license manager + API
@@ -353,6 +357,82 @@ func initListeners(services *ServiceContainer, db *database.DB) {
 		} else if regErr := services.Engines.Register(l); regErr != nil {
 			logger.Warn("snmp trap listener registry registration failed", "error", regErr)
 		}
+	}
+}
+
+// initTopologyReconcilers wires the four Stage A4 reconcilers
+// (sysinfo, iftable, edge, arp) into the engine registry. They
+// consume snmp_observations on a tick and maintain the fat-Node
+// topology graph in topology_nodes / topology_interfaces /
+// topology_links / topology_arp_bindings.
+//
+// V1.0 NMS expansion — Stage A4 wire-up.
+func initTopologyReconcilers(services *ServiceContainer, db *database.DB) {
+	logger := logging.GetLogger()
+	obs := db.SNMPObservations()
+	topo := db.Topology()
+	settings := db.Settings()
+
+	if r, err := topology.NewSysInfoReconciler(topology.Config{
+		Observations: obs, Nodes: topo, Settings: settings, Logger: logger,
+	}); err != nil {
+		logger.Warn("sysinfo reconciler init failed", "error", err)
+	} else if regErr := services.Engines.Register(r); regErr != nil {
+		logger.Warn("sysinfo reconciler registry registration failed", "error", regErr)
+	}
+
+	if r, err := topology.NewIfTableReconciler(topology.IfTableConfig{
+		Observations: obs, Store: topo, Settings: settings, Logger: logger,
+	}); err != nil {
+		logger.Warn("iftable reconciler init failed", "error", err)
+	} else if regErr := services.Engines.Register(r); regErr != nil {
+		logger.Warn("iftable reconciler registry registration failed", "error", regErr)
+	}
+
+	if r, err := topology.NewEdgeReconciler(topology.EdgeConfig{
+		Observations: obs, Store: topo, Settings: settings, Logger: logger,
+	}); err != nil {
+		logger.Warn("edge reconciler init failed", "error", err)
+	} else if regErr := services.Engines.Register(r); regErr != nil {
+		logger.Warn("edge reconciler registry registration failed", "error", regErr)
+	}
+
+	if r, err := topology.NewARPReconciler(topology.ARPConfig{
+		Observations: obs, Store: topo, Settings: settings, Logger: logger,
+	}); err != nil {
+		logger.Warn("arp reconciler init failed", "error", err)
+	} else if regErr := services.Engines.Register(r); regErr != nil {
+		logger.Warn("arp reconciler registry registration failed", "error", regErr)
+	}
+}
+
+// initAlertPipelines wires the two Stage A4.5 / A4.6 alert
+// pipelines into the engine registry. The listener pipeline scans
+// listener_events for severe syslog + traps; the observation
+// pipeline scans snmp_observations for state transitions
+// (iface down, BGP flap, storage thresholds). Both write into the
+// existing alerts table via the same Alert repository.
+//
+// V1.0 NMS expansion — Stage A4 wire-up.
+func initAlertPipelines(services *ServiceContainer, db *database.DB) {
+	logger := logging.GetLogger()
+	settings := db.Settings()
+	alerts := db.Alerts()
+
+	if p, err := alertpipeline.NewListenerPipeline(alertpipeline.ListenerConfig{
+		Events: db.ListenerEvents(), Alerts: alerts, Settings: settings, Logger: logger,
+	}); err != nil {
+		logger.Warn("listener alert pipeline init failed", "error", err)
+	} else if regErr := services.Engines.Register(p); regErr != nil {
+		logger.Warn("listener alert pipeline registry registration failed", "error", regErr)
+	}
+
+	if p, err := alertpipeline.NewObservationPipeline(alertpipeline.ObservationConfig{
+		Observations: db.SNMPObservations(), Alerts: alerts, Settings: settings, Logger: logger,
+	}); err != nil {
+		logger.Warn("observation alert pipeline init failed", "error", err)
+	} else if regErr := services.Engines.Register(p); regErr != nil {
+		logger.Warn("observation alert pipeline registry registration failed", "error", regErr)
 	}
 }
 
