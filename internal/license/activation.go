@@ -415,6 +415,29 @@ func (m *Manager) saveState() error {
 	return nil
 }
 
+// EncryptSecret encrypts arbitrary bytes for at-rest storage using
+// the same key-derivation chain as the license state file. Returns
+// base64-encoded AES-256-GCM ciphertext.
+//
+// Phase 2a (V1.0 NMS expansion) uses this to seal SNMPv3 auth/priv
+// passphrases in the device_credentials table. See
+// msn-docs-internal/01-Strategy/SEED_NMS_EXPANSION.md.
+//
+// Callers should treat encryption as best-effort tamper resistance
+// against on-disk snooping — the derivation depends on the device
+// fingerprint, so credentials are bound to this seed install. They
+// will not roundtrip after a fingerprint change.
+func (m *Manager) EncryptSecret(plaintext []byte) ([]byte, error) {
+	return m.encrypt(plaintext)
+}
+
+// DecryptSecret reverses EncryptSecret. Returns an error if the
+// fingerprint key no longer matches what the ciphertext was sealed
+// with.
+func (m *Manager) DecryptSecret(ciphertext []byte) ([]byte, error) {
+	return m.decrypt(ciphertext)
+}
+
 func (m *Manager) encrypt(plaintext []byte) ([]byte, error) {
 	key := m.deriveKey()
 

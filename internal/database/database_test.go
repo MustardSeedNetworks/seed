@@ -115,6 +115,72 @@ func TestMigrations(t *testing.T) {
 	}
 }
 
+// TestV10NMSSchemaArtifacts asserts that every V1.0 NMS-expansion
+// table (Phase 0 schema landed in migrations 36-53) was actually
+// created after the standard migrate-on-open, plus the
+// wifi_access_points 802.11 management-frame columns. Catches typos
+// in CREATE TABLE / ALTER TABLE statements that compile but produce
+// no artifact.
+//
+// See msn-docs-internal/01-Strategy/SEED_NMS_EXPANSION.md.
+func TestV10NMSSchemaArtifacts(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	nmsTables := []string{
+		"metrics_hourly",
+		"metrics_daily",
+		"dns_monitors",
+		"ssl_monitors",
+		"cert_observations",
+		"microburst_events",
+		"polling_targets",
+		"device_credentials",
+		"topology_nodes",
+		"topology_links",
+		"wifi_clients",
+		"wifi_associations",
+		"wifi_roams",
+		"wifi_deauths",
+		"wifi_rogues",
+		"voip_calls",
+		"bgp_sessions",
+	}
+
+	for _, tbl := range nmsTables {
+		var name string
+		err := db.QueryRow(ctx,
+			"SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+			tbl).Scan(&name)
+		if errors.Is(err, sql.ErrNoRows) {
+			t.Errorf("V1.0 NMS table %q missing after migrate", tbl)
+			continue
+		}
+		if err != nil {
+			t.Errorf("query for table %q failed: %v", tbl, err)
+		}
+	}
+
+	// ALTER wifi_access_points — verify each added 802.11
+	// management-frame decode column landed.
+	addedColumns := []string{
+		"beacon_interval_tu",
+		"rsn_cipher",
+		"rsn_akm",
+		"phy_capabilities",
+		"supports_11k",
+		"supports_11v",
+		"supports_11r",
+		"bss_load_json",
+		"vendor_ies_json",
+	}
+	for _, col := range addedColumns {
+		assertHasColumn(t, db, "wifi_access_points", col)
+	}
+}
+
 // TestStageA12ProbeArtifacts asserts that the Stage A1.2 unified
 // probe schema landed correctly: probes and probe_results tables
 // exist with the expected columns.
