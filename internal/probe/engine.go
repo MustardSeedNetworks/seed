@@ -20,9 +20,10 @@ const defaultSubscriberBufferSize = 64
 var ErrCheckerNotRegistered = errors.New("no checker registered for kind")
 
 // Engine schedules and dispatches probes, evaluates thresholds, and
-// emits ResultEvents to subscribers. Stage A1.3 lands the dispatch +
-// threshold + subscriber surface; auto-scheduling against the
-// probes table follows in A1.3b once the scheduler primitive lands.
+// emits ResultEvents to subscribers. Storage + scheduling fields are
+// optional — wire them via WithStorage to enable Start/Stop/RunNow.
+// Without storage the Engine still supports in-memory dispatch via
+// RunDefinition.
 type Engine struct {
 	logger *slog.Logger
 
@@ -30,6 +31,16 @@ type Engine struct {
 	checkers map[string]Checker
 	subs     []chan ResultEvent
 	dropped  uint64 // total events dropped due to full subscriber buffers
+
+	// Storage + scheduling (Stage A1.3b). Both nil = in-memory mode
+	// (RunDefinition + subscribers work; Start/Stop/RunNow do not).
+	storage   probeStorage
+	scheduler probeScheduler
+
+	// runMu guards lifecycle state.
+	runMu   sync.Mutex
+	started bool
+	jobIDs  []string
 }
 
 // NewEngine returns a freshly-constructed Engine with no Checkers
