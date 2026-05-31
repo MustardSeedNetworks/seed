@@ -2,7 +2,9 @@ package database
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -86,6 +88,126 @@ func (r *PollingTargetRepository) Get(ctx context.Context, id string) (*PollingT
 		FROM polling_targets WHERE id = ?
 	`, id)
 	return scanPollingTarget(row.Scan)
+}
+
+// Create inserts a new polling target. ID + timestamps are stamped
+// here if zero; the caller is expected to populate the remaining
+// fields (Name, IPAddress, SNMPVersion, CollectorChain, etc.).
+// Default poll interval is 300s when caller passes 0.
+func (r *PollingTargetRepository) Create(ctx context.Context, t *PollingTarget) error {
+	if t.IPAddress == "" {
+		return errors.New("polling_targets: IPAddress required")
+	}
+	if t.Name == "" {
+		return errors.New("polling_targets: Name required")
+	}
+	if t.ID == "" {
+		t.ID = "tgt-" + randomID()
+	}
+	if t.ClientID == "" {
+		t.ClientID = "default"
+	}
+	if t.SNMPVersion == "" {
+		t.SNMPVersion = "v2c"
+	}
+	if t.PollIntervalSec == 0 {
+		t.PollIntervalSec = 300
+	}
+	chainJSON, _ := json.Marshal(t.CollectorChain)
+	if len(t.CollectorChain) == 0 {
+		// Default chain matches the migration default so a freshly
+		// added target picks up the same set the migration would
+		// have populated.
+		chainJSON = []byte(`["sys_info","if_table","lldp","arp","fdb"]`)
+	}
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	t.CreatedAt = time.Now().UTC()
+	t.UpdatedAt = t.CreatedAt
+	enabled := 0
+	if t.Enabled {
+		enabled = 1
+	}
+	_, err := r.db.Exec(ctx, `
+		INSERT INTO polling_targets
+		  (id, client_id, name, ip_address, snmp_version, credentials_id,
+		   poll_interval_seconds, enabled, collector_chain,
+		   created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`,
+		t.ID, t.ClientID, t.Name, t.IPAddress, t.SNMPVersion,
+		toNullString(t.CredentialsID),
+		t.PollIntervalSec, enabled, string(chainJSON),
+		now, now,
+	)
+	if err != nil {
+		return fmt.Errorf("create polling_target: %w", err)
+	}
+	return nil
+}
+
+// Update modifies the writable fields (name, ip, snmp version, poll
+// interval, enabled, collector chain, credentials_id). Read-only
+// audit columns (created_at, last_polled_at, last_status, last_error)
+// stay untouched. Returns [ErrPollingTargetNotFound] when id is
+// absent — distinguishes a missing target from a SQL-level
+// [sql.ErrNoRows] surface so handlers can map it to HTTP 404.
+func (r *PollingTargetRepository) Update(ctx context.Context, t *PollingTarget) error {
+	if t.ID == "" {
+		return errors.New("polling_targets: ID required for Update")
+	}
+	chainJSON, _ := json.Marshal(t.CollectorChain)
+	enabled := 0
+	if t.Enabled {
+		enabled = 1
+	}
+	res, err := r.db.Exec(ctx, `
+		UPDATE polling_targets SET
+			name = ?, ip_address = ?, snmp_version = ?,
+			credentials_id = ?, poll_interval_seconds = ?, enabled = ?,
+			collector_chain = ?, updated_at = ?
+		WHERE id = ?
+	`,
+		t.Name, t.IPAddress, t.SNMPVersion,
+		toNullString(t.CredentialsID),
+		t.PollIntervalSec, enabled, string(chainJSON),
+		time.Now().UTC().Format(time.RFC3339Nano),
+		t.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("update polling_target: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return ErrPollingTargetNotFound
+	}
+	return nil
+}
+
+// Delete removes a polling target by id. Cascades via foreign-key
+// chain on dependent rows (none today). Returns
+// ErrPollingTargetNotFound when no row matched.
+func (r *PollingTargetRepository) Delete(ctx context.Context, id string) error {
+	if id == "" {
+		return errors.New("polling_targets: ID required for Delete")
+	}
+	res, err := r.db.Exec(ctx, `DELETE FROM polling_targets WHERE id = ?`, id)
+	if err != nil {
+		return fmt.Errorf("delete polling_target: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return ErrPollingTargetNotFound
+	}
+	return nil
+}
+
+// randomID returns a 12-char hex string suitable for non-secret IDs.
+// crypto/rand is overkill for primary keys; we keep it for the
+// uniform-distribution guarantee under contention.
+func randomID() string {
+	var b [6]byte
+	_, _ = rand.Read(b[:])
+	return hex.EncodeToString(b[:])
 }
 
 // UpdateLastPoll records the outcome of the most recent poll attempt.
