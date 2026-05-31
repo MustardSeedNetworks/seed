@@ -129,12 +129,13 @@ func TestV10NMSSchemaArtifacts(t *testing.T) {
 
 	ctx := context.Background()
 
+	// dns_monitors, ssl_monitors, cert_observations are NOT in this
+	// list — Stage A1.9 drops them after the V1.0 NMS WIP services
+	// are absorbed into the unified probes engine. See
+	// SEED_ARCHITECTURE.md section 3.1.
 	nmsTables := []string{
 		"metrics_hourly",
 		"metrics_daily",
-		"dns_monitors",
-		"ssl_monitors",
-		"cert_observations",
 		"microburst_events",
 		"polling_targets",
 		"device_credentials",

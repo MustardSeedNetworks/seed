@@ -1634,6 +1634,37 @@ func getMigrationDefs() []migrationDef {
 			CREATE INDEX IF NOT EXISTS idx_device_credentials_client ON device_credentials(client_id);
 		`,
 		},
+		{
+			// Stage A1.9 (2026-05-31) — drop dns_monitors. The DNS
+			// checker in internal/probe/checkers/dns.go writes
+			// directly into the unified probe_results table; there is
+			// no remaining consumer of the dns_monitors config table.
+			// The probes config table replaces it (one row per
+			// configured probe with kind='dns').
+			Description: "Drop dns_monitors (superseded by probes + probe_results)",
+			Up: `
+			DROP TABLE IF EXISTS dns_monitors;
+		`,
+		},
+		{
+			// Stage A1.9 — drop ssl_monitors + cert_observations. The
+			// TLS checker in internal/probe/checkers/tls.go writes
+			// directly into probe_results with cert metadata in
+			// Metadata JSON. No remaining consumers.
+			Description: "Drop ssl_monitors (superseded by probes + probe_results)",
+			Up: `
+			DROP TABLE IF EXISTS ssl_monitors;
+		`,
+		},
+		{
+			// Stage A1.9 — drop cert_observations. Cert expiry data
+			// lives in probe_results.metadata_json (kind='tls') from
+			// the TLS checker.
+			Description: "Drop cert_observations (superseded by probe_results.metadata_json)",
+			Up: `
+			DROP TABLE IF EXISTS cert_observations;
+		`,
+		},
 	}
 }
 
