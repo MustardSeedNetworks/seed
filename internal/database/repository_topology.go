@@ -38,7 +38,10 @@ type TopologyRepository struct {
 
 // GetByIdentityHash returns the node with the given identity hash
 // or ErrTopologyNodeNotFound when absent.
-func (r *TopologyRepository) GetByIdentityHash(ctx context.Context, hash string) (*TopologyNode, error) {
+func (r *TopologyRepository) GetByIdentityHash(
+	ctx context.Context,
+	hash string,
+) (*TopologyNode, error) {
 	row := r.db.QueryRow(ctx, `
 		SELECT id, client_id, identity_hash, display_name, device_type,
 		       chassis_id, sys_name, primary_mac, primary_ip,
@@ -59,7 +62,10 @@ var ErrTopologyNodeNotFound = errors.New("topology node not found")
 //
 // Returns the up-to-date row including any FirstSeen the existing
 // record carried.
-func (r *TopologyRepository) Upsert(ctx context.Context, node *TopologyNode) (*TopologyNode, error) {
+func (r *TopologyRepository) Upsert(
+	ctx context.Context,
+	node *TopologyNode,
+) (*TopologyNode, error) {
 	if node.IdentityHash == "" {
 		return nil, errors.New("topology_nodes: IdentityHash required")
 	}
@@ -150,7 +156,10 @@ type TopologyListOptions struct {
 }
 
 // List returns nodes matching opts ordered by LastSeen desc.
-func (r *TopologyRepository) List(ctx context.Context, opts TopologyListOptions) ([]*TopologyNode, error) {
+func (r *TopologyRepository) List(
+	ctx context.Context,
+	opts TopologyListOptions,
+) ([]*TopologyNode, error) {
 	const defaultLimit, maxLimit = 100, 5000
 
 	query, args := newListQueryBuilder(`
@@ -176,6 +185,200 @@ func toNullTime(t time.Time) sql.NullString {
 		return sql.NullString{}
 	}
 	return sql.NullString{String: t.UTC().Format(time.RFC3339Nano), Valid: true}
+}
+
+// TopologyInterface mirrors one row of topology_interfaces.
+// Reconciled from if_table observations; columns shaped so alert
+// rules can index admin/oper status and speed without parsing JSON.
+type TopologyInterface struct {
+	ID            int64
+	NodeID        string
+	IfIndex       uint32
+	IfName        string
+	IfDescr       string
+	IfAlias       string
+	IfType        uint32
+	IfAdminStatus int
+	IfOperStatus  int
+	IfPhysAddr    string
+	SpeedBps      uint64
+	LastSeen      time.Time
+}
+
+// UpsertTargetNode records the (client_id, target_id) -> node_id
+// mapping so A4.2+ reconcilers (if_table, lldp, arp, fdb, routing,
+// bgp4) can resolve their observations to the right topology node
+// without re-decoding sysinfo. The sysinfo reconciler calls this on
+// every node upsert.
+func (r *TopologyRepository) UpsertTargetNode(
+	ctx context.Context,
+	clientID, targetID, nodeID string,
+	lastSeen time.Time,
+) error {
+	if targetID == "" {
+		return errors.New("topology_target_nodes: TargetID required")
+	}
+	if nodeID == "" {
+		return errors.New("topology_target_nodes: NodeID required")
+	}
+	if clientID == "" {
+		clientID = "default"
+	}
+	if lastSeen.IsZero() {
+		lastSeen = time.Now().UTC()
+	}
+	_, err := r.db.Exec(ctx, `
+		INSERT INTO topology_target_nodes (client_id, target_id, node_id, last_seen)
+		VALUES (?, ?, ?, ?)
+		ON CONFLICT(client_id, target_id) DO UPDATE SET
+			node_id = excluded.node_id,
+			last_seen = excluded.last_seen
+	`,
+		clientID, targetID, nodeID,
+		lastSeen.UTC().Format(time.RFC3339Nano),
+	)
+	if err != nil {
+		return fmt.Errorf("upsert topology_target_nodes: %w", err)
+	}
+	return nil
+}
+
+// NodeIDForTarget resolves (client_id, target_id) -> node_id. Returns
+// "" + ErrTopologyNodeNotFound when no mapping exists yet (the
+// sysinfo reconciler hasn't seen this target).
+func (r *TopologyRepository) NodeIDForTarget(
+	ctx context.Context,
+	clientID, targetID string,
+) (string, error) {
+	if clientID == "" {
+		clientID = "default"
+	}
+	row := r.db.QueryRow(ctx,
+		`SELECT node_id FROM topology_target_nodes WHERE client_id = ? AND target_id = ?`,
+		clientID, targetID,
+	)
+	var nodeID string
+	if err := row.Scan(&nodeID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", ErrTopologyNodeNotFound
+		}
+		return "", fmt.Errorf("nodeIDForTarget: %w", err)
+	}
+	return nodeID, nil
+}
+
+// UpsertInterface inserts or updates one topology_interfaces row.
+// Reconcilers call this once per if_table row per node per poll.
+func (r *TopologyRepository) UpsertInterface(ctx context.Context, iface *TopologyInterface) error {
+	if iface.NodeID == "" {
+		return errors.New("topology_interfaces: NodeID required")
+	}
+	if iface.LastSeen.IsZero() {
+		iface.LastSeen = time.Now().UTC()
+	}
+
+	const ifaceUpsertSQL = `
+		INSERT INTO topology_interfaces
+		  (node_id, if_index, if_name, if_descr, if_alias, if_type,
+		   if_admin_status, if_oper_status, if_phys_addr, speed_bps,
+		   last_seen)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(node_id, if_index) DO UPDATE SET
+			if_name = excluded.if_name,
+			if_descr = excluded.if_descr,
+			if_alias = excluded.if_alias,
+			if_type = excluded.if_type,
+			if_admin_status = excluded.if_admin_status,
+			if_oper_status = excluded.if_oper_status,
+			if_phys_addr = excluded.if_phys_addr,
+			speed_bps = excluded.speed_bps,
+			last_seen = excluded.last_seen
+	`
+	_, err := r.db.Exec(ctx, ifaceUpsertSQL,
+		iface.NodeID, iface.IfIndex,
+		toNullString(iface.IfName), toNullString(iface.IfDescr),
+		toNullString(iface.IfAlias), iface.IfType,
+		iface.IfAdminStatus, iface.IfOperStatus,
+		toNullString(iface.IfPhysAddr),
+		iface.SpeedBps,
+		iface.LastSeen.UTC().Format(time.RFC3339Nano),
+	)
+	if err != nil {
+		return fmt.Errorf("upsert topology_interface: %w", err)
+	}
+	return nil
+}
+
+// ListInterfaces returns every interface for a node ordered by
+// IfIndex ascending.
+func (r *TopologyRepository) ListInterfaces(
+	ctx context.Context,
+	nodeID string,
+) ([]*TopologyInterface, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT id, node_id, if_index, if_name, if_descr, if_alias,
+		       if_type, if_admin_status, if_oper_status, if_phys_addr,
+		       speed_bps, last_seen
+		FROM topology_interfaces
+		WHERE node_id = ?
+		ORDER BY if_index ASC
+	`, nodeID)
+	if err != nil {
+		return nil, fmt.Errorf("list topology_interfaces: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []*TopologyInterface
+	for rows.Next() {
+		iface, scanErr := scanTopologyInterface(rows.Scan)
+		if scanErr != nil {
+			return nil, scanErr
+		}
+		out = append(out, iface)
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("list topology_interfaces iter: %w", rowsErr)
+	}
+	return out, nil
+}
+
+func scanTopologyInterface(scan func(...any) error) (*TopologyInterface, error) {
+	var (
+		iface       TopologyInterface
+		ifName      sql.NullString
+		ifDescr     sql.NullString
+		ifAlias     sql.NullString
+		ifPhysAddr  sql.NullString
+		lastSeenStr string
+	)
+	err := scan(
+		&iface.ID, &iface.NodeID, &iface.IfIndex,
+		&ifName, &ifDescr, &ifAlias,
+		&iface.IfType, &iface.IfAdminStatus, &iface.IfOperStatus,
+		&ifPhysAddr, &iface.SpeedBps, &lastSeenStr,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrTopologyNodeNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("scan topology_interface: %w", err)
+	}
+	if ifName.Valid {
+		iface.IfName = ifName.String
+	}
+	if ifDescr.Valid {
+		iface.IfDescr = ifDescr.String
+	}
+	if ifAlias.Valid {
+		iface.IfAlias = ifAlias.String
+	}
+	if ifPhysAddr.Valid {
+		iface.IfPhysAddr = ifPhysAddr.String
+	}
+	if parsed, perr := time.Parse(time.RFC3339Nano, lastSeenStr); perr == nil {
+		iface.LastSeen = parsed
+	}
+	return &iface, nil
 }
 
 func scanTopologyNode(scan func(...any) error) (*TopologyNode, error) {

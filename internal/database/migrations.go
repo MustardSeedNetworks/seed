@@ -1809,6 +1809,57 @@ func getMigrationDefs() []migrationDef {
 			CREATE INDEX IF NOT EXISTS idx_listener_events_observed_at ON listener_events(observed_at);
 		`,
 		},
+		{
+			// Stage A4.2 — target -> node mapping. Most A4 reconcilers
+			// only see (client_id, target_id) on their observations
+			// (if_table, lldp, arp, fdb, routing, bgp4) and need to
+			// look up the topology_node that sysinfo identified. This
+			// table is the join: sysinfo reconciler writes
+			// (client_id, target_id, node_id) on every upsert; later
+			// reconcilers read it to attach their slice of state.
+			Description: "Create topology_target_nodes mapping",
+			Up: `
+			CREATE TABLE IF NOT EXISTS topology_target_nodes (
+				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+				target_id TEXT NOT NULL,
+				node_id TEXT NOT NULL REFERENCES topology_nodes(id) ON DELETE CASCADE,
+				last_seen TEXT NOT NULL,
+				PRIMARY KEY (client_id, target_id)
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_topology_target_nodes_node ON topology_target_nodes(node_id);
+		`,
+		},
+		{
+			// Stage A4.2 — per-node interface state. One row per
+			// (node_id, if_index); reconciled from if_table
+			// observations. Status + speed live as columns so alert
+			// rules can index them cheaply ("WHERE if_oper_status = 2"
+			// for down interfaces, "WHERE speed_bps < 1e9" for sub-
+			// gigabit links).
+			Description: "Create topology_interfaces for per-node if_table state",
+			Up: `
+			CREATE TABLE IF NOT EXISTS topology_interfaces (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				node_id TEXT NOT NULL REFERENCES topology_nodes(id) ON DELETE CASCADE,
+				if_index INTEGER NOT NULL,
+				if_name TEXT,
+				if_descr TEXT,
+				if_alias TEXT,
+				if_type INTEGER,
+				if_admin_status INTEGER,
+				if_oper_status INTEGER,
+				if_phys_addr TEXT,
+				speed_bps INTEGER,
+				last_seen TEXT NOT NULL,
+				UNIQUE(node_id, if_index)
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_topology_interfaces_node ON topology_interfaces(node_id);
+			CREATE INDEX IF NOT EXISTS idx_topology_interfaces_oper ON topology_interfaces(if_oper_status);
+			CREATE INDEX IF NOT EXISTS idx_topology_interfaces_last_seen ON topology_interfaces(last_seen);
+		`,
+		},
 	}
 }
 
