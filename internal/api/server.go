@@ -291,6 +291,12 @@ func initProbeEngine(services *ServiceContainer, db *database.DB) {
 	engine.RegisterChecker(checkers.NewDNSChecker())
 	engine.RegisterChecker(checkers.NewTLSChecker())
 	engine.RegisterChecker(checkers.NewPingChecker())
+	engine.RegisterChecker(checkers.NewTCPChecker())
+	engine.RegisterChecker(checkers.NewUDPChecker())
+	engine.RegisterChecker(checkers.NewHTTPChecker())
+	engine.RegisterChecker(checkers.NewHTTPSChecker())
+	engine.RegisterChecker(checkers.NewRTSPChecker())
+	engine.RegisterChecker(checkers.NewDICOMChecker())
 
 	services.Probe.Engine = engine
 	services.Probe.Scheduler = sched
