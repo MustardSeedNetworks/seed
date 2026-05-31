@@ -1747,6 +1747,38 @@ func getMigrationDefs() []migrationDef {
 			ALTER TABLE polling_targets ADD COLUMN collector_chain TEXT NOT NULL DEFAULT '["sys_info","if_table","lldp","arp","fdb"]';
 		`,
 		},
+		{
+			// Stage A3.5b — unified persistence for every SNMP
+			// collector observation. One row per (client, target,
+			// kind, observed_at); payload_json carries the typed
+			// observation struct. Stage A4 reconciler reads kind-
+			// filtered rows to build topology; the listener pipeline
+			// reads them to compute deltas and emit events.
+			//
+			// Single table beats per-kind tables for V1.0 because:
+			// 1. Schema evolution is JSON-only — adding a new
+			//    collector kind doesn't touch the migration list.
+			// 2. Retention is one DELETE WHERE observed_at < cutoff
+			//    instead of N tables.
+			// 3. The listener pipeline iterates kinds at SQL time,
+			//    not at schema definition time.
+			Description: "Create snmp_observations for unified collector output",
+			Up: `
+			CREATE TABLE IF NOT EXISTS snmp_observations (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+				target_id TEXT NOT NULL,
+				kind TEXT NOT NULL,
+				observed_at TEXT NOT NULL,
+				payload_json TEXT NOT NULL,
+				ingested_at TEXT NOT NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_snmp_observations_client_kind ON snmp_observations(client_id, kind, observed_at);
+			CREATE INDEX IF NOT EXISTS idx_snmp_observations_target ON snmp_observations(target_id, observed_at);
+			CREATE INDEX IF NOT EXISTS idx_snmp_observations_observed_at ON snmp_observations(observed_at);
+		`,
+		},
 	}
 }
 
