@@ -115,6 +115,346 @@ func TestMigrations(t *testing.T) {
 	}
 }
 
+// TestV10NMSSchemaArtifacts asserts that every V1.0 NMS-expansion
+// table (Phase 0 schema landed in migrations 36-53) was actually
+// created after the standard migrate-on-open, plus the
+// wifi_access_points 802.11 management-frame columns. Catches typos
+// in CREATE TABLE / ALTER TABLE statements that compile but produce
+// no artifact.
+//
+// See msn-docs-internal/01-Strategy/SEED_NMS_EXPANSION.md.
+func TestV10NMSSchemaArtifacts(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	nmsTables := []string{
+		"metrics_hourly",
+		"metrics_daily",
+		"dns_monitors",
+		"ssl_monitors",
+		"cert_observations",
+		"microburst_events",
+		"polling_targets",
+		"device_credentials",
+		"topology_nodes",
+		"topology_links",
+		"wifi_clients",
+		"wifi_associations",
+		"wifi_roams",
+		"wifi_deauths",
+		"wifi_rogues",
+		"voip_calls",
+		"bgp_sessions",
+	}
+
+	for _, tbl := range nmsTables {
+		var name string
+		err := db.QueryRow(ctx,
+			"SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+			tbl).Scan(&name)
+		if errors.Is(err, sql.ErrNoRows) {
+			t.Errorf("V1.0 NMS table %q missing after migrate", tbl)
+			continue
+		}
+		if err != nil {
+			t.Errorf("query for table %q failed: %v", tbl, err)
+		}
+	}
+
+	// ALTER wifi_access_points — verify each added 802.11
+	// management-frame decode column landed.
+	addedColumns := []string{
+		"beacon_interval_tu",
+		"rsn_cipher",
+		"rsn_akm",
+		"phy_capabilities",
+		"supports_11k",
+		"supports_11v",
+		"supports_11r",
+		"bss_load_json",
+		"vendor_ies_json",
+	}
+	for _, col := range addedColumns {
+		assertHasColumn(t, db, "wifi_access_points", col)
+	}
+}
+
+// TestStageA12ProbeArtifacts asserts that the Stage A1.2 unified
+// probe schema landed correctly: probes and probe_results tables
+// exist with the expected columns.
+func TestStageA12ProbeArtifacts(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	tables := map[string][]string{
+		"probes": {
+			"id", "client_id", "kind", "display_name", "target",
+			"params_json", "interval_seconds", "enabled",
+			"warning_json", "critical_json", "created_at", "updated_at",
+		},
+		"probe_results": {
+			"id", "probe_id", "client_id", "kind", "timestamp",
+			"success", "latency_ms", "error", "metadata_json",
+		},
+	}
+	for tbl, cols := range tables {
+		for _, col := range cols {
+			assertHasColumn(t, db, tbl, col)
+		}
+	}
+}
+
+// TestClientRepository_CRUD covers Create, Get, GetBySlug, Update,
+// List, Count, Delete on the clients table. The seeded default
+// client is the starting state.
+func TestClientRepository_CRUD(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Clients()
+
+	// Default client is present from migration.
+	defaultClient, err := repo.Get(ctx, database.DefaultClientID)
+	require.NoError(t, err)
+	if defaultClient.Slug != "default" {
+		t.Errorf("default client slug = %q, want %q", defaultClient.Slug, "default")
+	}
+
+	// Create a new client.
+	acme := &database.Client{
+		Name: "Acme Corp",
+		Slug: "acme-corp",
+	}
+	if createErr := repo.Create(ctx, acme); createErr != nil {
+		t.Fatalf("create client: %v", createErr)
+	}
+	if acme.ID == "" {
+		t.Fatal("client id not assigned after Create")
+	}
+
+	// Duplicate slug rejected.
+	dup := &database.Client{Name: "Acme 2", Slug: "acme-corp"}
+	if dupErr := repo.Create(ctx, dup); !errors.Is(dupErr, database.ErrClientSlugExists) {
+		t.Errorf("duplicate slug should return ErrClientSlugExists, got %v", dupErr)
+	}
+
+	// Get by slug.
+	got, err := repo.GetBySlug(ctx, "acme-corp")
+	require.NoError(t, err)
+	if got.ID != acme.ID {
+		t.Errorf("got.ID = %q, want %q", got.ID, acme.ID)
+	}
+
+	// Update.
+	acme.Name = "Acme Corporation"
+	if updErr := repo.Update(ctx, acme); updErr != nil {
+		t.Fatalf("update client: %v", updErr)
+	}
+	got, err = repo.Get(ctx, acme.ID)
+	require.NoError(t, err)
+	if got.Name != "Acme Corporation" {
+		t.Errorf("updated name = %q, want %q", got.Name, "Acme Corporation")
+	}
+
+	// List returns default + acme.
+	all, err := repo.List(ctx)
+	require.NoError(t, err)
+	if len(all) != 2 {
+		t.Errorf("list returned %d clients, want 2", len(all))
+	}
+
+	// Count.
+	count, err := repo.Count(ctx)
+	require.NoError(t, err)
+	if count != 2 {
+		t.Errorf("count = %d, want 2", count)
+	}
+
+	// Cannot delete default client.
+	if delErr := repo.Delete(ctx, database.DefaultClientID); delErr == nil {
+		t.Error("deleting default client should fail")
+	}
+
+	// Delete acme.
+	if delErr := repo.Delete(ctx, acme.ID); delErr != nil {
+		t.Errorf("delete acme: %v", delErr)
+	}
+
+	// Get after delete returns ErrClientNotFound.
+	if _, getErr := repo.Get(ctx, acme.ID); !errors.Is(getErr, database.ErrClientNotFound) {
+		t.Errorf("get deleted client should return ErrClientNotFound, got %v", getErr)
+	}
+}
+
+// TestProbeRepository_CRUDAndResults covers basic probe lifecycle
+// and result append+query.
+func TestProbeRepository_CRUDAndResults(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Probes()
+
+	// Create a probe in the default client.
+	p := &database.Probe{
+		Kind:            "dns",
+		DisplayName:     "google.com A",
+		Target:          "google.com",
+		ParamsJSON:      `{"record_type":"A"}`,
+		IntervalSeconds: 60,
+		Enabled:         true,
+		WarningJSON:     `{"latency_ms":100}`,
+		CriticalJSON:    `{"latency_ms":500}`,
+	}
+	if createErr := repo.CreateProbe(ctx, p); createErr != nil {
+		t.Fatalf("create probe: %v", createErr)
+	}
+	if p.ID == "" {
+		t.Fatal("probe id not assigned")
+	}
+	if p.ClientID != database.DefaultClientID {
+		t.Errorf("probe ClientID = %q, want %q", p.ClientID, database.DefaultClientID)
+	}
+
+	// Get round-trips fields.
+	got, err := repo.GetProbe(ctx, p.ID)
+	require.NoError(t, err)
+	if got.Kind != "dns" || got.Target != "google.com" {
+		t.Errorf("get returned wrong kind/target: %+v", got)
+	}
+	if got.ParamsJSON != `{"record_type":"A"}` {
+		t.Errorf("get returned wrong params: %q", got.ParamsJSON)
+	}
+	if !got.Enabled {
+		t.Error("probe should be enabled")
+	}
+
+	// Update.
+	got.IntervalSeconds = 30
+	got.DisplayName = "google.com fast"
+	if updErr := repo.UpdateProbe(ctx, got); updErr != nil {
+		t.Fatalf("update probe: %v", updErr)
+	}
+	updated, err := repo.GetProbe(ctx, p.ID)
+	require.NoError(t, err)
+	if updated.IntervalSeconds != 30 || updated.DisplayName != "google.com fast" {
+		t.Errorf("update did not persist: %+v", updated)
+	}
+
+	// Record two results.
+	r1 := &database.ProbeResult{
+		ProbeID:   p.ID,
+		Kind:      "dns",
+		Success:   true,
+		LatencyMs: 12.5,
+	}
+	if recErr := repo.RecordResult(ctx, r1); recErr != nil {
+		t.Fatalf("record result 1: %v", recErr)
+	}
+	r2 := &database.ProbeResult{
+		ProbeID:   p.ID,
+		Kind:      "dns",
+		Success:   false,
+		LatencyMs: 0,
+		Error:     "NXDOMAIN",
+	}
+	if recErr := repo.RecordResult(ctx, r2); recErr != nil {
+		t.Fatalf("record result 2: %v", recErr)
+	}
+
+	// Query returns 2 results.
+	results, err := repo.QueryResults(ctx, database.ProbeQueryOptions{
+		ClientID: database.DefaultClientID,
+		ProbeID:  p.ID,
+	})
+	require.NoError(t, err)
+	if len(results) != 2 {
+		t.Errorf("expected 2 results, got %d", len(results))
+	}
+
+	// Count.
+	count, err := repo.CountProbes(ctx, database.DefaultClientID, "")
+	require.NoError(t, err)
+	if count != 1 {
+		t.Errorf("count = %d, want 1", count)
+	}
+
+	// Delete probe cascades probe_results.
+	if delErr := repo.DeleteProbe(ctx, p.ID); delErr != nil {
+		t.Fatalf("delete probe: %v", delErr)
+	}
+	results, err = repo.QueryResults(ctx, database.ProbeQueryOptions{ProbeID: p.ID})
+	require.NoError(t, err)
+	if len(results) != 0 {
+		t.Errorf("expected 0 results after probe deletion, got %d", len(results))
+	}
+}
+
+// TestStageA11ClientsArtifacts asserts that the Stage A1.1
+// multi-tenancy foundation landed correctly: the clients table
+// exists with the seeded default row, and every targeted table
+// has a client_id column. See SEED_ARCHITECTURE.md section 3.0.
+func TestStageA11ClientsArtifacts(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// clients table exists and the default client row is present.
+	var defaultClientName string
+	err := db.QueryRow(ctx,
+		"SELECT name FROM clients WHERE id = 'default'").Scan(&defaultClientName)
+	if err != nil {
+		t.Fatalf("default client not seeded: %v", err)
+	}
+	if defaultClientName != "Default" {
+		t.Errorf("default client name = %q, want %q", defaultClientName, "Default")
+	}
+
+	// client_id column exists on every targeted legacy + V1.0 table.
+	tables := []string{
+		"profiles", "alerts", "metrics",
+		"speedtest_results", "dns_results", "gateway_results",
+		"survey_samples",
+		"discovered_devices", "discovery_interfaces",
+		"wifi_networks", "wifi_access_points", "channel_utilization",
+		"discovery_history", "bluetooth_devices", "bluetooth_scan_history",
+		"network_problems",
+	}
+	for _, tbl := range tables {
+		assertHasColumn(t, db, tbl, "client_id")
+	}
+}
+
+// assertHasColumn fails the test if the named column is missing from
+// the table. Uses PRAGMA table_info which is SQLite-specific.
+func assertHasColumn(t *testing.T, db *database.DB, table, column string) {
+	t.Helper()
+	rows, err := db.Query(context.Background(),
+		"SELECT name FROM pragma_table_info(?)", table)
+	if err != nil {
+		t.Fatalf("query pragma_table_info(%s): %v", table, err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	for rows.Next() {
+		var name string
+		if scanErr := rows.Scan(&name); scanErr != nil {
+			t.Fatalf("scan column name from %s: %v", table, scanErr)
+		}
+		if name == column {
+			return
+		}
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		t.Fatalf("rows iter on %s: %v", table, rowsErr)
+	}
+	t.Errorf("table %s missing column %s", table, column)
+}
+
 func TestClose(t *testing.T) {
 	db, cleanup := testDB(t)
 	defer cleanup()

@@ -992,6 +992,648 @@ func getMigrationDefs() []migrationDef {
 			    CHECK (scope IS NULL OR scope IN ('admin','operator','viewer'));
 		`,
 		},
+		{
+			// Stage A1.1 (2026-05-30) — multi-tenancy foundation. Creates
+			// the clients table and seeds a single 'default' client. All
+			// observation tables get client_id added in subsequent
+			// migrations; existing rows backfill to 'default'.
+			// MSP-first per SEED_ARCHITECTURE.md section 3.0.
+			Description: "Create clients table and seed default client (multi-tenancy foundation)",
+			Up: `
+			CREATE TABLE IF NOT EXISTS clients (
+				id TEXT PRIMARY KEY,
+				name TEXT NOT NULL,
+				slug TEXT NOT NULL UNIQUE,
+				branding_json TEXT,
+				default_retention_overrides_json TEXT,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			);
+			CREATE INDEX IF NOT EXISTS idx_clients_slug ON clients(slug);
+
+			INSERT OR IGNORE INTO clients (id, name, slug, created_at, updated_at)
+			VALUES ('default', 'Default', 'default', datetime('now'), datetime('now'));
+		`,
+		},
+		{
+			// Stage A1.1 — add client_id to legacy observation + result
+			// tables. Backfills existing rows to the default client via
+			// the column DEFAULT. AirMapper / Wi-Fi survey
+			// (survey_samples) included; canopy/ code continues working
+			// unchanged because writes default to 'default' client. A
+			// follow-up A1 step will update canopy/ to set client_id
+			// explicitly.
+			Description: "Add client_id to legacy observation and result tables",
+			Up: `
+			ALTER TABLE profiles ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE alerts ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE metrics ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE speedtest_results ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE dns_results ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE gateway_results ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE survey_samples ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+
+			CREATE INDEX IF NOT EXISTS idx_profiles_client ON profiles(client_id);
+			CREATE INDEX IF NOT EXISTS idx_alerts_client ON alerts(client_id);
+			CREATE INDEX IF NOT EXISTS idx_metrics_client ON metrics(client_id);
+			CREATE INDEX IF NOT EXISTS idx_speedtest_results_client ON speedtest_results(client_id);
+			CREATE INDEX IF NOT EXISTS idx_dns_results_client ON dns_results(client_id);
+			CREATE INDEX IF NOT EXISTS idx_gateway_results_client ON gateway_results(client_id);
+			CREATE INDEX IF NOT EXISTS idx_survey_samples_client ON survey_samples(client_id);
+		`,
+		},
+		{
+			// Stage A1.1 — add client_id to discovery + inventory
+			// tables. wifi_networks / wifi_access_points /
+			// channel_utilization are AirMapper / Wi-Fi visibility
+			// surfaces; same DEFAULT 'default' semantics — existing
+			// code unchanged, canopy/ updated in a follow-up step.
+			Description: "Add client_id to discovery and inventory tables",
+			Up: `
+			ALTER TABLE discovered_devices ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE discovery_interfaces ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE wifi_networks ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE wifi_access_points ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE channel_utilization ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE discovery_history ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE bluetooth_devices ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE bluetooth_scan_history ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE network_problems ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+
+			CREATE INDEX IF NOT EXISTS idx_discovered_devices_client ON discovered_devices(client_id);
+			CREATE INDEX IF NOT EXISTS idx_discovery_interfaces_client ON discovery_interfaces(client_id);
+			CREATE INDEX IF NOT EXISTS idx_wifi_networks_client ON wifi_networks(client_id);
+			CREATE INDEX IF NOT EXISTS idx_wifi_access_points_client ON wifi_access_points(client_id);
+			CREATE INDEX IF NOT EXISTS idx_channel_utilization_client ON channel_utilization(client_id);
+			CREATE INDEX IF NOT EXISTS idx_discovery_history_client ON discovery_history(client_id);
+			CREATE INDEX IF NOT EXISTS idx_bluetooth_devices_client ON bluetooth_devices(client_id);
+			CREATE INDEX IF NOT EXISTS idx_bluetooth_scan_history_client ON bluetooth_scan_history(client_id);
+			CREATE INDEX IF NOT EXISTS idx_network_problems_client ON network_problems(client_id);
+		`,
+		},
+		{
+			// Stage A1.2 (2026-05-30) — unified probe config table. One
+			// row per configured probe; kind selects the registered
+			// Checker implementation; params_json carries kind-specific
+			// configuration. See SEED_ARCHITECTURE.md section 3.1.
+			//
+			// V1.0 kinds: dns, tls, ping, tcp, udp, http, https, rtsp,
+			// dicom, hl7, fhir, lti, ldap, opcua, modbus, ntp, sip,
+			// dot1x, cable, transaction. Adding a new kind is a new
+			// Checker implementation in internal/probe/checkers/ — no
+			// schema change required.
+			Description: "Create probes config table (unified probe engine)",
+			Up: `
+			CREATE TABLE IF NOT EXISTS probes (
+				id TEXT PRIMARY KEY,
+				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+				kind TEXT NOT NULL,
+				display_name TEXT NOT NULL,
+				target TEXT NOT NULL,
+				params_json TEXT,
+				interval_seconds INTEGER NOT NULL DEFAULT 60,
+				enabled INTEGER NOT NULL DEFAULT 1,
+				warning_json TEXT,
+				critical_json TEXT,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_probes_client ON probes(client_id);
+			CREATE INDEX IF NOT EXISTS idx_probes_kind ON probes(kind);
+			CREATE INDEX IF NOT EXISTS idx_probes_enabled ON probes(enabled);
+			CREATE INDEX IF NOT EXISTS idx_probes_client_kind ON probes(client_id, kind);
+		`,
+		},
+		{
+			// Stage A1.2 — unified probe results table. Receives every
+			// probe.Result emitted by the engine. Coexists with
+			// health_check_results during the A1.3 checker port; once
+			// all checkers are ported and HealthCheckRepository is
+			// retired, A1.5 drops health_check_results.
+			Description: "Create probe_results table (unified probe results)",
+			Up: `
+			CREATE TABLE IF NOT EXISTS probe_results (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				probe_id TEXT NOT NULL,
+				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+				kind TEXT NOT NULL,
+				timestamp TEXT NOT NULL,
+				success INTEGER NOT NULL,
+				latency_ms REAL,
+				error TEXT,
+				metadata_json TEXT,
+				FOREIGN KEY (probe_id) REFERENCES probes(id) ON DELETE CASCADE
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_probe_results_probe ON probe_results(probe_id);
+			CREATE INDEX IF NOT EXISTS idx_probe_results_client ON probe_results(client_id);
+			CREATE INDEX IF NOT EXISTS idx_probe_results_kind ON probe_results(kind);
+			CREATE INDEX IF NOT EXISTS idx_probe_results_timestamp ON probe_results(timestamp);
+			CREATE INDEX IF NOT EXISTS idx_probe_results_client_kind_ts ON probe_results(client_id, kind, timestamp);
+		`,
+		},
+		// ---------------------------------------------------------------
+		// V1.0 NMS expansion — Phase 0 schema (2026-05-30).
+		// See msn-docs-internal/01-Strategy/SEED_NMS_EXPANSION.md.
+		// Tables are added now (empty) so Phases 1–3 can write to them
+		// without further infrastructure work.
+		// ---------------------------------------------------------------
+		{
+			// Phase 2.5 (Wi-Fi Management Frame Analysis) extends the
+			// existing wifi_access_points table with the per-beacon
+			// Information Element decode fields. ALTER ADD COLUMN is
+			// the only safe SQLite ALTER; new columns nullable so
+			// existing rows remain valid.
+			Description: "Extend wifi_access_points with 802.11 management-frame decode columns",
+			Up: `
+			ALTER TABLE wifi_access_points ADD COLUMN beacon_interval_tu INTEGER;
+			ALTER TABLE wifi_access_points ADD COLUMN rsn_cipher TEXT;
+			ALTER TABLE wifi_access_points ADD COLUMN rsn_akm TEXT;
+			ALTER TABLE wifi_access_points ADD COLUMN phy_capabilities TEXT;
+			ALTER TABLE wifi_access_points ADD COLUMN supports_11k INTEGER DEFAULT 0;
+			ALTER TABLE wifi_access_points ADD COLUMN supports_11v INTEGER DEFAULT 0;
+			ALTER TABLE wifi_access_points ADD COLUMN supports_11r INTEGER DEFAULT 0;
+			ALTER TABLE wifi_access_points ADD COLUMN bss_load_json TEXT;
+			ALTER TABLE wifi_access_points ADD COLUMN vendor_ies_json TEXT;
+		`,
+		},
+		{
+			// Phase 1c — tiered retention. Mirrors health_check_rollups_hourly.
+			// hour_bucket is RFC3339 truncated to the hour. UNIQUE
+			// constraint enables UPSERT semantics during rollup runs.
+			Description: "Create metrics_hourly for tiered retention rollups",
+			Up: `
+			CREATE TABLE IF NOT EXISTS metrics_hourly (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				metric_type TEXT NOT NULL,
+				interface_name TEXT NOT NULL,
+				hour_bucket TEXT NOT NULL,
+				sample_count INTEGER NOT NULL,
+				avg_value REAL,
+				min_value REAL,
+				max_value REAL,
+				p95_value REAL,
+				UNIQUE(metric_type, interface_name, hour_bucket)
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_metrics_hourly_bucket ON metrics_hourly(hour_bucket);
+			CREATE INDEX IF NOT EXISTS idx_metrics_hourly_type ON metrics_hourly(metric_type, hour_bucket);
+		`,
+		},
+		{
+			// Phase 1c — daily aggregates roll up from metrics_hourly.
+			Description: "Create metrics_daily for long-term retention rollups",
+			Up: `
+			CREATE TABLE IF NOT EXISTS metrics_daily (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				metric_type TEXT NOT NULL,
+				interface_name TEXT NOT NULL,
+				day_bucket TEXT NOT NULL,
+				sample_count INTEGER NOT NULL,
+				avg_value REAL,
+				min_value REAL,
+				max_value REAL,
+				p95_value REAL,
+				UNIQUE(metric_type, interface_name, day_bucket)
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_metrics_daily_bucket ON metrics_daily(day_bucket);
+			CREATE INDEX IF NOT EXISTS idx_metrics_daily_type ON metrics_daily(metric_type, day_bucket);
+		`,
+		},
+		{
+			// Phase 1a — DNS endpoint monitoring. Starter capped at 5
+			// monitors via in-handler check; Pro unlimited via same flag.
+			Description: "Create dns_monitors for scheduled DNS endpoint monitoring",
+			Up: `
+			CREATE TABLE IF NOT EXISTS dns_monitors (
+				id TEXT PRIMARY KEY,
+				name TEXT NOT NULL,
+				hostname TEXT NOT NULL,
+				server TEXT,
+				record_type TEXT NOT NULL DEFAULT 'A',
+				interval_seconds INTEGER NOT NULL DEFAULT 60,
+				enabled INTEGER NOT NULL DEFAULT 1,
+				warning_ms INTEGER DEFAULT 100,
+				critical_ms INTEGER DEFAULT 500,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_dns_monitors_enabled ON dns_monitors(enabled);
+			CREATE INDEX IF NOT EXISTS idx_dns_monitors_hostname ON dns_monitors(hostname);
+		`,
+		},
+		{
+			// Phase 1b — SSL/TLS cert expiry monitoring. Starter capped
+			// at 5 monitors via in-handler check.
+			Description: "Create ssl_monitors for cert expiry tracking",
+			Up: `
+			CREATE TABLE IF NOT EXISTS ssl_monitors (
+				id TEXT PRIMARY KEY,
+				name TEXT NOT NULL,
+				host TEXT NOT NULL,
+				port INTEGER NOT NULL DEFAULT 443,
+				server_name TEXT,
+				check_interval_seconds INTEGER NOT NULL DEFAULT 86400,
+				enabled INTEGER NOT NULL DEFAULT 1,
+				warning_days INTEGER NOT NULL DEFAULT 30,
+				critical_days INTEGER NOT NULL DEFAULT 7,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_ssl_monitors_enabled ON ssl_monitors(enabled);
+			CREATE INDEX IF NOT EXISTS idx_ssl_monitors_host ON ssl_monitors(host);
+		`,
+		},
+		{
+			// Phase 1b — per-observation history for SSL cert sweeps.
+			// CASCADE delete: removing a monitor drops its history.
+			Description: "Create cert_observations for SSL/TLS cert sweep history",
+			Up: `
+			CREATE TABLE IF NOT EXISTS cert_observations (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				monitor_id TEXT NOT NULL,
+				timestamp TEXT NOT NULL,
+				subject TEXT,
+				issuer TEXT,
+				not_before TEXT,
+				not_after TEXT,
+				sha256_fingerprint TEXT,
+				days_remaining INTEGER,
+				status TEXT NOT NULL,
+				error_message TEXT,
+				FOREIGN KEY (monitor_id) REFERENCES ssl_monitors(id) ON DELETE CASCADE
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_cert_obs_monitor ON cert_observations(monitor_id);
+			CREATE INDEX IF NOT EXISTS idx_cert_obs_timestamp ON cert_observations(timestamp);
+			CREATE INDEX IF NOT EXISTS idx_cert_obs_status ON cert_observations(status);
+		`,
+		},
+		{
+			// Phase 1e — microburst events. INTEGER PK because high churn.
+			// sampling_mode records whether the event was caught at
+			// 100ms baseline or in 10ms burst mode (auto-throttle).
+			Description: "Create microburst_events for sub-poll-interval burst tracking",
+			Up: `
+			CREATE TABLE IF NOT EXISTS microburst_events (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				timestamp TEXT NOT NULL,
+				device_id TEXT,
+				interface_name TEXT NOT NULL,
+				direction TEXT NOT NULL,
+				peak_utilization_pct REAL NOT NULL,
+				duration_ms INTEGER NOT NULL,
+				sampling_mode TEXT NOT NULL,
+				link_speed_mbps INTEGER,
+				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE SET NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_microburst_timestamp ON microburst_events(timestamp);
+			CREATE INDEX IF NOT EXISTS idx_microburst_device ON microburst_events(device_id);
+			CREATE INDEX IF NOT EXISTS idx_microburst_interface ON microburst_events(interface_name);
+		`,
+		},
+		{
+			// Phase 2a — estate-wide SNMP poller target list. credentials_id
+			// is nullable so a target can be defined before its credentials.
+			Description: "Create polling_targets for estate-wide SNMP poller",
+			Up: `
+			CREATE TABLE IF NOT EXISTS polling_targets (
+				id TEXT PRIMARY KEY,
+				name TEXT NOT NULL,
+				ip_address TEXT NOT NULL,
+				snmp_version TEXT NOT NULL DEFAULT 'v2c',
+				credentials_id TEXT,
+				poll_interval_seconds INTEGER NOT NULL DEFAULT 300,
+				enabled INTEGER NOT NULL DEFAULT 1,
+				last_polled_at TEXT,
+				last_status TEXT,
+				last_error TEXT,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_polling_targets_enabled ON polling_targets(enabled);
+			CREATE INDEX IF NOT EXISTS idx_polling_targets_ip ON polling_targets(ip_address);
+		`,
+		},
+		{
+			// Phase 2a — encrypted SNMP credential vault. Secret fields
+			// are BLOBs holding ciphertext produced by the same key-derivation
+			// chain as internal/auth/ session state (coordinate with auth
+			// workstream before Phase 2 implementation).
+			Description: "Create device_credentials (encrypted vault) for SNMP auth",
+			Up: `
+			CREATE TABLE IF NOT EXISTS device_credentials (
+				id TEXT PRIMARY KEY,
+				name TEXT NOT NULL,
+				snmp_community_enc BLOB,
+				snmp_v3_user TEXT,
+				snmp_v3_auth_enc BLOB,
+				snmp_v3_priv_enc BLOB,
+				snmp_v3_auth_proto TEXT,
+				snmp_v3_priv_proto TEXT,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_device_credentials_name ON device_credentials(name);
+		`,
+		},
+		{
+			// Phase 2b — stable topology node graph after identity merge.
+			// identity_hash dedupes the same physical device seen via
+			// multiple sources (LLDP/CDP/SNMP/discovery). expires_at
+			// drives stale-node archival (default 24h after last_seen).
+			Description: "Create topology_nodes for stable identity-merged graph",
+			Up: `
+			CREATE TABLE IF NOT EXISTS topology_nodes (
+				id TEXT PRIMARY KEY,
+				identity_hash TEXT NOT NULL UNIQUE,
+				display_name TEXT NOT NULL,
+				device_type TEXT,
+				chassis_id TEXT,
+				sys_name TEXT,
+				primary_mac TEXT,
+				primary_ip TEXT,
+				first_seen TEXT NOT NULL,
+				last_seen TEXT NOT NULL,
+				expires_at TEXT,
+				metadata_json TEXT
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_topology_nodes_identity ON topology_nodes(identity_hash);
+			CREATE INDEX IF NOT EXISTS idx_topology_nodes_last_seen ON topology_nodes(last_seen);
+			CREATE INDEX IF NOT EXISTS idx_topology_nodes_type ON topology_nodes(device_type);
+		`,
+		},
+		{
+			// Phase 2b — stable topology edges. evidence_json records the
+			// sources backing the link (LLDP|CDP|FDB|SNMP); used by the
+			// reconciliation layer to compute confidence.
+			Description: "Create topology_links for stable identity-merged edges",
+			Up: `
+			CREATE TABLE IF NOT EXISTS topology_links (
+				id TEXT PRIMARY KEY,
+				source_node_id TEXT NOT NULL,
+				target_node_id TEXT NOT NULL,
+				source_interface TEXT,
+				target_interface TEXT,
+				link_type TEXT NOT NULL DEFAULT 'unknown',
+				status TEXT NOT NULL DEFAULT 'up',
+				speed_mbps INTEGER,
+				utilization_pct REAL,
+				first_seen TEXT NOT NULL,
+				last_seen TEXT NOT NULL,
+				evidence_json TEXT,
+				FOREIGN KEY (source_node_id) REFERENCES topology_nodes(id) ON DELETE CASCADE,
+				FOREIGN KEY (target_node_id) REFERENCES topology_nodes(id) ON DELETE CASCADE
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_topology_links_source ON topology_links(source_node_id);
+			CREATE INDEX IF NOT EXISTS idx_topology_links_target ON topology_links(target_node_id);
+			CREATE INDEX IF NOT EXISTS idx_topology_links_last_seen ON topology_links(last_seen);
+		`,
+		},
+		{
+			// Phase 2.5c — clients seen via probe-request frames.
+			// Full MAC retained by default per EtherScope-parity decision
+			// (2026-05-29). Anonymize toggle replaces mac_full with the
+			// OUI prefix only; pnl_json is hashed when anonymized.
+			Description: "Create wifi_clients for 802.11 client tracking",
+			Up: `
+			CREATE TABLE IF NOT EXISTS wifi_clients (
+				id TEXT PRIMARY KEY,
+				mac_full TEXT NOT NULL UNIQUE,
+				vendor_oui TEXT,
+				vendor_name TEXT,
+				capabilities_json TEXT,
+				pnl_json TEXT,
+				first_seen TEXT NOT NULL,
+				last_seen TEXT NOT NULL,
+				anonymized INTEGER NOT NULL DEFAULT 0
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_wifi_clients_mac ON wifi_clients(mac_full);
+			CREATE INDEX IF NOT EXISTS idx_wifi_clients_oui ON wifi_clients(vendor_oui);
+			CREATE INDEX IF NOT EXISTS idx_wifi_clients_last_seen ON wifi_clients(last_seen);
+		`,
+		},
+		{
+			// Phase 2.5d — full association handshake forensics. Each row
+			// is one observed assoc attempt with its terminal status code
+			// (802.11-2020 §9.4.1.9). client_mac/ap_bssid are NOT foreign
+			// keys — events are observational facts independent of
+			// wifi_clients / wifi_access_points lifecycle.
+			Description: "Create wifi_associations for association forensics",
+			Up: `
+			CREATE TABLE IF NOT EXISTS wifi_associations (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				timestamp TEXT NOT NULL,
+				client_mac TEXT NOT NULL,
+				ap_bssid TEXT NOT NULL,
+				ssid TEXT,
+				attempt_type TEXT NOT NULL,
+				status_code INTEGER,
+				status_text TEXT,
+				failure_stage TEXT,
+				duration_ms INTEGER,
+				rsn_negotiation_json TEXT
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_wifi_assoc_timestamp ON wifi_associations(timestamp);
+			CREATE INDEX IF NOT EXISTS idx_wifi_assoc_client ON wifi_associations(client_mac);
+			CREATE INDEX IF NOT EXISTS idx_wifi_assoc_ap ON wifi_associations(ap_bssid);
+			CREATE INDEX IF NOT EXISTS idx_wifi_assoc_status ON wifi_associations(status_code);
+		`,
+		},
+		{
+			// Phase 2.5e — roam events correlate disassoc on AP-A with
+			// (re)assoc on AP-B for same client. roam_type distinguishes
+			// 802.11r FT exchange from full reassoc.
+			Description: "Create wifi_roams for client roam tracking",
+			Up: `
+			CREATE TABLE IF NOT EXISTS wifi_roams (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				client_mac TEXT NOT NULL,
+				from_bssid TEXT NOT NULL,
+				to_bssid TEXT NOT NULL,
+				ssid TEXT,
+				started_at TEXT NOT NULL,
+				completed_at TEXT,
+				duration_ms INTEGER,
+				roam_type TEXT,
+				rssi_before INTEGER,
+				rssi_after INTEGER
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_wifi_roams_started ON wifi_roams(started_at);
+			CREATE INDEX IF NOT EXISTS idx_wifi_roams_client ON wifi_roams(client_mac);
+			CREATE INDEX IF NOT EXISTS idx_wifi_roams_from ON wifi_roams(from_bssid);
+			CREATE INDEX IF NOT EXISTS idx_wifi_roams_to ON wifi_roams(to_bssid);
+		`,
+		},
+		{
+			// Phase 2.5f — deauth/disassoc reason codes per 802.11-2020.
+			// originator: 'ap' if the AP sent the frame, 'client' if the
+			// STA sent it. reason_code covers std 1-66 + vendor-specific.
+			Description: "Create wifi_deauths for deauth/disassoc reason-code events",
+			Up: `
+			CREATE TABLE IF NOT EXISTS wifi_deauths (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				timestamp TEXT NOT NULL,
+				ap_bssid TEXT NOT NULL,
+				client_mac TEXT NOT NULL,
+				frame_type TEXT NOT NULL,
+				reason_code INTEGER NOT NULL,
+				reason_text TEXT,
+				originator TEXT NOT NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_wifi_deauths_timestamp ON wifi_deauths(timestamp);
+			CREATE INDEX IF NOT EXISTS idx_wifi_deauths_ap ON wifi_deauths(ap_bssid);
+			CREATE INDEX IF NOT EXISTS idx_wifi_deauths_client ON wifi_deauths(client_mac);
+			CREATE INDEX IF NOT EXISTS idx_wifi_deauths_reason ON wifi_deauths(reason_code);
+		`,
+		},
+		{
+			// Phase 2.5g — rogue / evil-twin detection events.
+			// status moves active → acknowledged → resolved through the UI.
+			Description: "Create wifi_rogues for evil-twin and rogue-AP detection",
+			Up: `
+			CREATE TABLE IF NOT EXISTS wifi_rogues (
+				id TEXT PRIMARY KEY,
+				detected_at TEXT NOT NULL,
+				ap_bssid TEXT NOT NULL,
+				ssid TEXT,
+				rogue_type TEXT NOT NULL,
+				severity TEXT NOT NULL,
+				status TEXT NOT NULL DEFAULT 'active',
+				evidence_json TEXT,
+				acknowledged_at TEXT,
+				resolved_at TEXT
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_wifi_rogues_detected ON wifi_rogues(detected_at);
+			CREATE INDEX IF NOT EXISTS idx_wifi_rogues_bssid ON wifi_rogues(ap_bssid);
+			CREATE INDEX IF NOT EXISTS idx_wifi_rogues_status ON wifi_rogues(status);
+			CREATE INDEX IF NOT EXISTS idx_wifi_rogues_severity ON wifi_rogues(severity);
+		`,
+		},
+		{
+			// Phase 3a — VoIP call records with MOS scoring via E-model.
+			// call_id is the RTP-derived synthetic identifier (src+dst+ssrc).
+			Description: "Create voip_calls for RTP MOS scoring",
+			Up: `
+			CREATE TABLE IF NOT EXISTS voip_calls (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				call_id TEXT NOT NULL,
+				src_ip TEXT NOT NULL,
+				dst_ip TEXT NOT NULL,
+				src_port INTEGER,
+				dst_port INTEGER,
+				codec TEXT,
+				started_at TEXT NOT NULL,
+				ended_at TEXT,
+				duration_seconds INTEGER,
+				mos_score REAL,
+				avg_jitter_ms REAL,
+				packet_loss_pct REAL,
+				avg_latency_ms REAL,
+				direction TEXT
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_voip_calls_call_id ON voip_calls(call_id);
+			CREATE INDEX IF NOT EXISTS idx_voip_calls_started ON voip_calls(started_at);
+			CREATE INDEX IF NOT EXISTS idx_voip_calls_mos ON voip_calls(mos_score);
+		`,
+		},
+		{
+			// Phase 3b — BGP peer session monitoring via BGP4-MIB.
+			// device_id FK soft-references the polled router. state and
+			// last_state_change drive transition alerts.
+			Description: "Create bgp_sessions for BGP4-MIB neighbor monitoring",
+			Up: `
+			CREATE TABLE IF NOT EXISTS bgp_sessions (
+				id TEXT PRIMARY KEY,
+				device_id TEXT,
+				peer_address TEXT NOT NULL,
+				peer_as INTEGER,
+				local_as INTEGER,
+				state TEXT NOT NULL,
+				established_at TEXT,
+				last_state_change TEXT NOT NULL,
+				prefixes_received INTEGER DEFAULT 0,
+				prefixes_sent INTEGER DEFAULT 0,
+				last_error TEXT,
+				first_seen TEXT NOT NULL,
+				last_seen TEXT NOT NULL,
+				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE SET NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_bgp_sessions_device ON bgp_sessions(device_id);
+			CREATE INDEX IF NOT EXISTS idx_bgp_sessions_peer ON bgp_sessions(peer_address);
+			CREATE INDEX IF NOT EXISTS idx_bgp_sessions_state ON bgp_sessions(state);
+		`,
+		},
+		{
+			// Stage A1.1 — add client_id to V1.0 NMS observation tables
+			// (metrics rollups, microburst, voip, bgp).
+			Description: "Add client_id to V1.0 NMS observation tables",
+			Up: `
+			ALTER TABLE metrics_hourly ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE metrics_daily ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE microburst_events ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE voip_calls ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE bgp_sessions ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+
+			CREATE INDEX IF NOT EXISTS idx_metrics_hourly_client ON metrics_hourly(client_id);
+			CREATE INDEX IF NOT EXISTS idx_metrics_daily_client ON metrics_daily(client_id);
+			CREATE INDEX IF NOT EXISTS idx_microburst_events_client ON microburst_events(client_id);
+			CREATE INDEX IF NOT EXISTS idx_voip_calls_client ON voip_calls(client_id);
+			CREATE INDEX IF NOT EXISTS idx_bgp_sessions_client ON bgp_sessions(client_id);
+		`,
+		},
+		{
+			// Stage A1.1 — add client_id to V1.0 NMS event tables
+			// (wifi_*: clients, associations, roams, deauths, rogues).
+			Description: "Add client_id to V1.0 NMS wifi event tables",
+			Up: `
+			ALTER TABLE wifi_clients ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE wifi_associations ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE wifi_roams ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE wifi_deauths ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE wifi_rogues ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+
+			CREATE INDEX IF NOT EXISTS idx_wifi_clients_client ON wifi_clients(client_id);
+			CREATE INDEX IF NOT EXISTS idx_wifi_associations_client ON wifi_associations(client_id);
+			CREATE INDEX IF NOT EXISTS idx_wifi_roams_client ON wifi_roams(client_id);
+			CREATE INDEX IF NOT EXISTS idx_wifi_deauths_client ON wifi_deauths(client_id);
+			CREATE INDEX IF NOT EXISTS idx_wifi_rogues_client ON wifi_rogues(client_id);
+		`,
+		},
+		{
+			// Stage A1.1 — add client_id to V1.0 NMS topology and
+			// polling tables. dns_monitors/ssl_monitors/cert_observations
+			// are NOT migrated because Stage A1.2+ drops them as part
+			// of the probe-engine unification.
+			Description: "Add client_id to V1.0 NMS topology and polling tables",
+			Up: `
+			ALTER TABLE topology_nodes ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE topology_links ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE polling_targets ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+			ALTER TABLE device_credentials ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);
+
+			CREATE INDEX IF NOT EXISTS idx_topology_nodes_client ON topology_nodes(client_id);
+			CREATE INDEX IF NOT EXISTS idx_topology_links_client ON topology_links(client_id);
+			CREATE INDEX IF NOT EXISTS idx_polling_targets_client ON polling_targets(client_id);
+			CREATE INDEX IF NOT EXISTS idx_device_credentials_client ON device_credentials(client_id);
+		`,
+		},
 	}
 }
 

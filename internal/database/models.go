@@ -10,7 +10,29 @@ const (
 	defaultPaginationLimit = 100
 )
 
+// Client represents a tenant — the MSP-first multi-tenancy primitive
+// (SEED_ARCHITECTURE.md section 3.0). Single-tenant deployments use
+// the seeded 'default' client; multi-tenant (MSP) deployments add N.
+// BrandingJSON and DefaultRetentionOverridesJSON hold per-client
+// overrides; nil/empty means use the system defaults.
+type Client struct {
+	ID                            string    `json:"id"`
+	Name                          string    `json:"name"`
+	Slug                          string    `json:"slug"`
+	BrandingJSON                  string    `json:"branding,omitempty"`
+	DefaultRetentionOverridesJSON string    `json:"defaultRetentionOverrides,omitempty"`
+	CreatedAt                     time.Time `json:"createdAt"`
+	UpdatedAt                     time.Time `json:"updatedAt"`
+}
+
 // Profile represents a configuration profile.
+//
+// Stage A1.1 added a client_id column to the profiles table at the
+// schema level; existing rows default to 'default'. The Profile
+// struct does NOT yet expose ClientID — Stage A1.3 updates
+// ProfileRepository to set client_id on writes and surface it on
+// reads. Until then, profile CRUD silently scopes to the default
+// client.
 type Profile struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
@@ -269,4 +291,54 @@ type Pagination struct {
 // DefaultPagination returns default pagination (first 100 items).
 func DefaultPagination() Pagination {
 	return Pagination{Offset: 0, Limit: defaultPaginationLimit}
+}
+
+// Probe is one configured probe — the unified observation primitive
+// landing in Stage A1.2. Each row in the probes table maps to one
+// Probe; the engine selects a registered Checker by Kind and
+// dispatches at IntervalSeconds. ParamsJSON / WarningJSON /
+// CriticalJSON carry kind-specific configuration as opaque JSON.
+//
+// V1.0 Kind constants live in the internal/probe package
+// (probe.KindDNS, probe.KindTLS, etc.).
+type Probe struct {
+	ID              string    `json:"id"`
+	ClientID        string    `json:"clientId"`
+	Kind            string    `json:"kind"`
+	DisplayName     string    `json:"displayName"`
+	Target          string    `json:"target"`
+	ParamsJSON      string    `json:"params,omitempty"`
+	IntervalSeconds int       `json:"intervalSeconds"`
+	Enabled         bool      `json:"enabled"`
+	WarningJSON     string    `json:"warning,omitempty"`
+	CriticalJSON    string    `json:"critical,omitempty"`
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
+}
+
+// ProbeResult is one observation emitted by the engine for a Probe.
+// Persisted to probe_results. Coexists with HealthCheckResult during
+// the Stage A1.3 checker port; Stage A1.5 drops HealthCheckResult.
+type ProbeResult struct {
+	ID           int64     `json:"id"`
+	ProbeID      string    `json:"probeId"`
+	ClientID     string    `json:"clientId"`
+	Kind         string    `json:"kind"`
+	Timestamp    time.Time `json:"timestamp"`
+	Success      bool      `json:"success"`
+	LatencyMs    float64   `json:"latencyMs,omitempty"`
+	Error        string    `json:"error,omitempty"`
+	MetadataJSON string    `json:"metadata,omitempty"`
+}
+
+// ProbeQueryOptions filters a probe_results listing. Empty fields
+// disable the corresponding filter.
+type ProbeQueryOptions struct {
+	ClientID  string
+	ProbeID   string
+	Kind      string
+	StartTime time.Time
+	EndTime   time.Time
+	Limit     int
+	Offset    int
 }
