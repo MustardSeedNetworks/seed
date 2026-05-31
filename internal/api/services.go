@@ -7,6 +7,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/dhcp"
+	"github.com/krisarmstrong/seed/internal/engine"
 	"github.com/krisarmstrong/seed/internal/health"
 	"github.com/krisarmstrong/seed/internal/license"
 	"github.com/krisarmstrong/seed/internal/logging"
@@ -43,6 +44,13 @@ type ServiceContainer struct {
 	Database  *DatabaseServices
 	Health    *HealthServices
 	Update    *update.Service
+
+	// Engines is the lifecycle registry every long-running engine
+	// registers with (probe, retention, snmp-poller, listeners,
+	// discovery). Server.Start drives Registry.Start; Server.Shutdown
+	// drives Registry.Stop in reverse registration order.
+	// V1.0 NMS expansion — Stage A3.5d.
+	Engines *engine.Registry
 }
 
 // NewServiceContainer creates a new empty ServiceContainer.
@@ -59,6 +67,7 @@ func NewServiceContainer() *ServiceContainer {
 		RealTime:  &RealTimeServices{},
 		Database:  &DatabaseServices{},
 		Health:    &HealthServices{},
+		Engines:   engine.NewRegistry(nil),
 	}
 }
 

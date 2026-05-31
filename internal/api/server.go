@@ -285,23 +285,26 @@ func initLicenseAndAPITokens(services *ServiceContainer, db *database.DB) {
 func initProbeEngine(services *ServiceContainer, db *database.DB) {
 	sched := scheduler.New(probeSchedulerTick)
 
-	engine := probe.NewEngine(logging.GetLogger()).
+	probeEngine := probe.NewEngine(logging.GetLogger()).
 		WithStorage(db.Probes(), sched)
 
 	// Register V1.0 baseline checkers. Stage A1.7 will absorb the
 	// remaining 11 internal/api/health_checks_*.go kinds.
-	engine.RegisterChecker(checkers.NewDNSChecker())
-	engine.RegisterChecker(checkers.NewTLSChecker())
-	engine.RegisterChecker(checkers.NewPingChecker())
-	engine.RegisterChecker(checkers.NewTCPChecker())
-	engine.RegisterChecker(checkers.NewUDPChecker())
-	engine.RegisterChecker(checkers.NewHTTPChecker())
-	engine.RegisterChecker(checkers.NewHTTPSChecker())
-	engine.RegisterChecker(checkers.NewRTSPChecker())
-	engine.RegisterChecker(checkers.NewDICOMChecker())
+	probeEngine.RegisterChecker(checkers.NewDNSChecker())
+	probeEngine.RegisterChecker(checkers.NewTLSChecker())
+	probeEngine.RegisterChecker(checkers.NewPingChecker())
+	probeEngine.RegisterChecker(checkers.NewTCPChecker())
+	probeEngine.RegisterChecker(checkers.NewUDPChecker())
+	probeEngine.RegisterChecker(checkers.NewHTTPChecker())
+	probeEngine.RegisterChecker(checkers.NewHTTPSChecker())
+	probeEngine.RegisterChecker(checkers.NewRTSPChecker())
+	probeEngine.RegisterChecker(checkers.NewDICOMChecker())
 
-	services.Probe.Engine = engine
+	services.Probe.Engine = probeEngine
 	services.Probe.Scheduler = sched
+	if regErr := services.Engines.Register(probeEngine); regErr != nil {
+		logging.GetLogger().Warn("probe engine registry registration failed", "error", regErr)
+	}
 }
 
 // probeSchedulerTick is the scheduler's tick interval — how often
@@ -316,10 +319,16 @@ const probeSchedulerTick = 5 * time.Second
 //
 // V1.0 NMS expansion — Stage A2.
 func initRetentionEngine(services *ServiceContainer, db *database.DB) {
-	engine := retention.New(licenseTierAdapter{lm: services.Auth.License}, logging.GetLogger())
-	engine.Register(retention.NewProbeResultsSource(db))
-	engine.Register(retention.NewMetricsSource(db))
-	services.Probe.Retention = engine
+	retentionEngine := retention.New(
+		licenseTierAdapter{lm: services.Auth.License},
+		logging.GetLogger(),
+	)
+	retentionEngine.Register(retention.NewProbeResultsSource(db))
+	retentionEngine.Register(retention.NewMetricsSource(db))
+	services.Probe.Retention = retentionEngine
+	if regErr := services.Engines.Register(retentionEngine); regErr != nil {
+		logging.GetLogger().Warn("retention engine registry registration failed", "error", regErr)
+	}
 }
 
 // licenseTierAdapter satisfies retention.TierProvider by reading the

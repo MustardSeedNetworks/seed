@@ -22,30 +22,42 @@ import (
 	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
 
+	"github.com/krisarmstrong/seed/internal/engine"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // Start starts the HTTP/HTTPS server.
-// startBackgroundEngines fires up the probe + retention engines.
-// Both are non-fatal — failure logs a warning and the API surface
-// stays available. Extracted from Start() to keep that function
-// under the gocognit complexity limit.
+// startBackgroundEngines fires up every engine registered with the
+// service container's engine.Registry — probe + retention today,
+// snmp-poller + listeners as they land. Lifecycle ordering is
+// established at registration time; Registry.Start brings them up
+// in that order and rolls back already-started engines if any one
+// fails. Non-fatal: a failed Start logs a warning and the API
+// surface stays available. Extracted from Start() to keep that
+// function under the gocognit complexity limit.
+//
+// V1.0 NMS expansion — Stage A3.5d.
 func (s *Server) startBackgroundEngines() {
-	if engine := s.services.Probe.Engine; engine != nil {
-		if err := engine.Start(context.Background()); err != nil {
-			logging.GetLogger().Warn("probe engine failed to start", "error", err)
-		} else {
-			logging.GetLogger().Info("probe engine started")
-		}
+	if s.services.Engines == nil {
+		return
 	}
-	if engine := s.services.Probe.Retention; engine != nil {
-		if err := engine.Start(context.Background()); err != nil {
-			logging.GetLogger().Warn("retention engine failed to start", "error", err)
-		} else {
-			logging.GetLogger().Info("retention engine started")
-		}
+	if err := s.services.Engines.Start(context.Background()); err != nil {
+		logging.GetLogger().Warn("engine registry start failed", "error", err)
+		return
 	}
+	logging.GetLogger().Info("engine registry started",
+		"engines", engineNames(s.services.Engines.Engines()))
+}
+
+// engineNames extracts Name() from each engine for structured-log
+// emission without leaking the engine pointers.
+func engineNames(engines []engine.Engine) []string {
+	out := make([]string, 0, len(engines))
+	for _, e := range engines {
+		out = append(out, e.Name())
+	}
+	return out
 }
 
 func (s *Server) Start() error {
