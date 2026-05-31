@@ -40,6 +40,9 @@ const LogsPage = lazy(() => import('./pages/LogsPage').then((m) => ({ default: m
 const PollingTargetsPage = lazy(() =>
   import('./pages/PollingTargetsPage').then((m) => ({ default: m.PollingTargetsPage })),
 );
+const TopologyPage = lazy(() =>
+  import('./pages/TopologyPage').then((m) => ({ default: m.TopologyPage })),
+);
 
 export interface PageConfig {
   path: string;
@@ -122,5 +125,13 @@ export const pages: PageConfig[] = [
     description: 'SNMP-polled devices and their collector chains.',
     icon: ServerCog,
     component: PollingTargetsPage,
+  },
+  {
+    path: '/topology',
+    label: 'Topology',
+    title: 'Topology',
+    description: 'Fat-Node graph reconciled from SNMP observations.',
+    icon: Network,
+    component: TopologyPage,
   },
 ];
