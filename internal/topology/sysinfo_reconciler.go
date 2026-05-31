@@ -54,8 +54,17 @@ type observationsReader interface {
 }
 
 // nodeUpserter is the narrowed surface for topology_nodes writes.
+// UpsertTargetNode records the (client, target) -> node mapping so
+// downstream reconcilers (if_table, lldp, arp, fdb, routing, bgp4)
+// can resolve their observations to the right node without re-
+// decoding sysinfo on every pass.
 type nodeUpserter interface {
 	Upsert(ctx context.Context, node *database.TopologyNode) (*database.TopologyNode, error)
+	UpsertTargetNode(
+		ctx context.Context,
+		clientID, targetID, nodeID string,
+		lastSeen time.Time,
+	) error
 }
 
 // settingsKV is the high-water-mark store.
@@ -101,25 +110,14 @@ func NewSysInfoReconciler(cfg Config) (*SysInfoReconciler, error) {
 	if cfg.Settings == nil {
 		return nil, errors.New("topology: Settings required")
 	}
-	if cfg.Logger == nil {
-		cfg.Logger = slog.Default()
-	}
-	if cfg.Now == nil {
-		cfg.Now = func() time.Time { return time.Now().UTC() }
-	}
-	if cfg.Interval <= 0 {
-		cfg.Interval = defaultPollInterval
-	}
-	if cfg.Interval < minPollInterval {
-		cfg.Interval = minPollInterval
-	}
+	d := applyDefaults(cfg.Logger, cfg.Now, cfg.Interval)
 	return &SysInfoReconciler{
 		obs:      cfg.Observations,
 		nodes:    cfg.Nodes,
 		settings: cfg.Settings,
-		logger:   cfg.Logger,
-		now:      cfg.Now,
-		interval: cfg.Interval,
+		logger:   d.logger,
+		now:      d.now,
+		interval: d.interval,
 	}, nil
 }
 
@@ -224,10 +222,20 @@ func (r *SysInfoReconciler) ReconcileOnce(ctx context.Context) error {
 				"target_id", obs.TargetID, "error", buildErr)
 			continue
 		}
-		if _, upsertErr := r.nodes.Upsert(ctx, node); upsertErr != nil {
+		stored, upsertErr := r.nodes.Upsert(ctx, node)
+		if upsertErr != nil {
 			r.logger.WarnContext(ctx, "upsert topology_node failed",
 				"target_id", obs.TargetID, "identity", node.IdentityHash, "error", upsertErr)
 			continue
+		}
+		// Persist (client, target) -> node so A4.2+ reconcilers can
+		// look up the node by target_id without re-decoding sysinfo.
+		mapErr := r.nodes.UpsertTargetNode(
+			ctx, obs.ClientID, obs.TargetID, stored.ID, obs.ObservedAt,
+		)
+		if mapErr != nil {
+			r.logger.WarnContext(ctx, "upsert target_node mapping failed",
+				"target_id", obs.TargetID, "node_id", stored.ID, "error", mapErr)
 		}
 		upserted++
 	}
@@ -260,7 +268,9 @@ type sysInfoPayload struct {
 
 // buildNode decodes the observation payload into a TopologyNode
 // ready for upsert.
-func (r *SysInfoReconciler) buildNode(obs *database.SNMPObservation) (*database.TopologyNode, error) {
+func (r *SysInfoReconciler) buildNode(
+	obs *database.SNMPObservation,
+) (*database.TopologyNode, error) {
 	var p sysInfoPayload
 	if err := json.Unmarshal([]byte(obs.PayloadJSON), &p); err != nil {
 		return nil, fmt.Errorf("unmarshal sysinfo payload: %w", err)

@@ -22,7 +22,10 @@ type fakeObservations struct {
 	listErr error
 }
 
-func (f *fakeObservations) List(_ context.Context, _ database.ListOptions) ([]*database.SNMPObservation, error) {
+func (f *fakeObservations) List(
+	_ context.Context,
+	_ database.ListOptions,
+) ([]*database.SNMPObservation, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.listErr != nil {
@@ -36,10 +39,19 @@ func (f *fakeObservations) List(_ context.Context, _ database.ListOptions) ([]*d
 type fakeNodes struct {
 	mu        sync.Mutex
 	upserts   []*database.TopologyNode
+	mappings  []targetNodeMapping
 	upsertErr error
 }
 
-func (f *fakeNodes) Upsert(_ context.Context, node *database.TopologyNode) (*database.TopologyNode, error) {
+type targetNodeMapping struct {
+	clientID, targetID, nodeID string
+	lastSeen                   time.Time
+}
+
+func (f *fakeNodes) Upsert(
+	_ context.Context,
+	node *database.TopologyNode,
+) (*database.TopologyNode, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.upsertErr != nil {
@@ -47,6 +59,19 @@ func (f *fakeNodes) Upsert(_ context.Context, node *database.TopologyNode) (*dat
 	}
 	f.upserts = append(f.upserts, node)
 	return node, nil
+}
+
+func (f *fakeNodes) UpsertTargetNode(
+	_ context.Context,
+	clientID, targetID, nodeID string,
+	lastSeen time.Time,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.mappings = append(f.mappings, targetNodeMapping{
+		clientID: clientID, targetID: targetID, nodeID: nodeID, lastSeen: lastSeen,
+	})
+	return nil
 }
 
 type fakeSettings struct {
@@ -86,7 +111,10 @@ func payload(client, target, sysName, sysObjectID string) string {
 	return string(b)
 }
 
-func obs(client, target, sysName, sysObjectID string, observed time.Time) *database.SNMPObservation {
+func obs(
+	client, target, sysName, sysObjectID string,
+	observed time.Time,
+) *database.SNMPObservation {
 	return &database.SNMPObservation{
 		ClientID:    client,
 		TargetID:    target,
@@ -103,8 +131,14 @@ func TestNew_RejectsMissingDeps(t *testing.T) {
 		cfg  topology.Config
 	}{
 		{"missing Observations", topology.Config{Nodes: &fakeNodes{}, Settings: newFakeSettings()}},
-		{"missing Nodes", topology.Config{Observations: &fakeObservations{}, Settings: newFakeSettings()}},
-		{"missing Settings", topology.Config{Observations: &fakeObservations{}, Nodes: &fakeNodes{}}},
+		{
+			"missing Nodes",
+			topology.Config{Observations: &fakeObservations{}, Settings: newFakeSettings()},
+		},
+		{
+			"missing Settings",
+			topology.Config{Observations: &fakeObservations{}, Nodes: &fakeNodes{}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
