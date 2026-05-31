@@ -64,16 +64,17 @@ type DB struct {
 	closed bool
 
 	// Repositories - lazily initialized
-	profiles     *ProfileRepository
-	metrics      *MetricsRepository
-	devices      *DeviceRepository
-	alerts       *AlertRepository
-	settings     *SettingsRepository
-	logs         *LogRepository
-	healthChecks *HealthCheckRepository
-	discovery    *DiscoveryRepository
-	clients      *ClientRepository
-	probes       *ProbeRepository
+	profiles       *ProfileRepository
+	metrics        *MetricsRepository
+	devices        *DeviceRepository
+	alerts         *AlertRepository
+	settings       *SettingsRepository
+	logs           *LogRepository
+	healthChecks   *HealthCheckRepository
+	discovery      *DiscoveryRepository
+	clients        *ClientRepository
+	probes         *ProbeRepository
+	pollingTargets *PollingTargetRepository
 }
 
 // Config holds database configuration options.
@@ -472,6 +473,19 @@ func (db *DB) Probes() *ProbeRepository {
 		db.probes = &ProbeRepository{db: db}
 	}
 	return db.probes
+}
+
+// PollingTargets returns the polling-target repository (Stage A3.1).
+// Targets carry the per-target SNMP credentials + collector chain
+// that the Poller walks on each tick.
+func (db *DB) PollingTargets() *PollingTargetRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.pollingTargets == nil {
+		db.pollingTargets = &PollingTargetRepository{db: db}
+	}
+	return db.pollingTargets
 }
 
 // Exec executes a query without returning any rows.

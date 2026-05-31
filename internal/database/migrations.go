@@ -1735,6 +1735,18 @@ func getMigrationDefs() []migrationDef {
 			CREATE INDEX IF NOT EXISTS idx_probe_rollups_daily_probe ON probe_rollups_daily(probe_id, day_bucket);
 		`,
 		},
+		{
+			// Stage A3.1 — collector_chain on polling_targets.
+			// The estate-wide SNMP poller dispatches a target's chain
+			// in order; each chain entry names a Collector registered
+			// at startup (sys_info, if_table, lldp, arp, fdb, ...).
+			// Default chain covers the topology-relevant collectors so
+			// brand-new targets immediately feed Stage A4 topology.
+			Description: "Add collector_chain to polling_targets",
+			Up: `
+			ALTER TABLE polling_targets ADD COLUMN collector_chain TEXT NOT NULL DEFAULT '["sys_info","if_table","lldp","arp","fdb"]';
+		`,
+		},
 	}
 }
 
