@@ -465,7 +465,11 @@ func initAlertPipelines(services *ServiceContainer, db *database.DB) {
 	alerts := db.Alerts()
 
 	if p, err := alertpipeline.NewListenerPipeline(alertpipeline.ListenerConfig{
-		Events: db.ListenerEvents(), Alerts: alerts, Settings: settings, Logger: logger,
+		Events:     db.ListenerEvents(),
+		Alerts:     alerts,
+		Settings:   settings,
+		Logger:     logger,
+		AlertRules: db.AlertRules(),
 	}); err != nil {
 		logger.Warn("listener alert pipeline init failed", "error", err)
 	} else if regErr := registerEngineIfLicensed(services, p); regErr != nil {

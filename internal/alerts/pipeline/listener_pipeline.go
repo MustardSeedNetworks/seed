@@ -37,10 +37,11 @@ const listenerHighWaterKey = "alerts.listener.high_water"
 
 // Tunables — production defaults.
 const (
-	defaultBatch       = 500
-	defaultInterval    = 15 * time.Second
-	minInterval        = 100 * time.Millisecond
-	defaultSuppression = 5 * time.Minute
+	defaultBatch          = 500
+	defaultInterval       = 15 * time.Second
+	minInterval           = 100 * time.Millisecond
+	defaultSuppression    = 5 * time.Minute
+	defaultReloadInterval = 60 * time.Second
 )
 
 // listenerReader is the narrowed surface the listener pipeline
@@ -83,20 +84,24 @@ type Rule struct {
 // for every event matching any built-in rule. Suppression dedupes
 // repeated alerts for the same (rule, source) within the window.
 type ListenerPipeline struct {
-	events      listenerReader
-	alerts      alertWriter
-	settings    settingsKV
-	logger      *slog.Logger
-	now         func() time.Time
-	interval    time.Duration
-	rules       []Rule
-	suppression time.Duration
+	events         listenerReader
+	alerts         alertWriter
+	settings       settingsKV
+	alertRules     alertRulesReader
+	logger         *slog.Logger
+	now            func() time.Time
+	interval       time.Duration
+	reloadInterval time.Duration
+	staticRules    bool // true when Config.Rules was supplied; reloading disabled
+	defaults       []Rule
+	suppression    time.Duration
 
 	mu      sync.Mutex
 	started bool
 	cancel  context.CancelFunc
 	wg      sync.WaitGroup
 	emitted map[string]time.Time
+	rules   []Rule
 }
 
 // ListenerConfig wires the pipeline.
@@ -109,8 +114,22 @@ type ListenerConfig struct {
 	Interval    time.Duration
 	Suppression time.Duration
 
-	// Rules override the built-in set; when nil, DefaultListenerRules
-	// is used.
+	// AlertRules pulls operator-configured rows from alert_rules.
+	// When set, the pipeline reloads rules from the table on each
+	// ReloadInterval tick and falls back to DefaultListenerRules
+	// only when the table is empty / has no enabled rows.
+	// Ignored when Rules is also set (Rules wins for static-config
+	// tests).
+	AlertRules alertRulesReader
+
+	// ReloadInterval controls how often AlertRules is re-queried.
+	// Defaults to 60s; floored at 1s.
+	ReloadInterval time.Duration
+
+	// Rules override every other source; when set, the pipeline uses
+	// exactly these rules and never reloads. Primary use is tests.
+	// When nil and AlertRules is also nil, DefaultListenerRules() is
+	// used permanently.
 	Rules []Rule
 }
 
@@ -140,21 +159,45 @@ func NewListenerPipeline(cfg ListenerConfig) (*ListenerPipeline, error) {
 	if cfg.Suppression <= 0 {
 		cfg.Suppression = defaultSuppression
 	}
-	rules := cfg.Rules
-	if rules == nil {
-		rules = DefaultListenerRules()
+	if cfg.ReloadInterval <= 0 {
+		cfg.ReloadInterval = defaultReloadInterval
 	}
-	return &ListenerPipeline{
-		events:      cfg.Events,
-		alerts:      cfg.Alerts,
-		settings:    cfg.Settings,
-		logger:      cfg.Logger,
-		now:         cfg.Now,
-		interval:    cfg.Interval,
-		suppression: cfg.Suppression,
-		rules:       rules,
-		emitted:     make(map[string]time.Time),
-	}, nil
+	if cfg.ReloadInterval < time.Second {
+		cfg.ReloadInterval = time.Second
+	}
+	defaults := DefaultListenerRules()
+	staticRules := cfg.Rules != nil
+	initial := cfg.Rules
+	if initial == nil {
+		initial = defaults
+	}
+	p := &ListenerPipeline{
+		events:         cfg.Events,
+		alerts:         cfg.Alerts,
+		settings:       cfg.Settings,
+		alertRules:     cfg.AlertRules,
+		logger:         cfg.Logger,
+		now:            cfg.Now,
+		interval:       cfg.Interval,
+		reloadInterval: cfg.ReloadInterval,
+		staticRules:    staticRules,
+		defaults:       defaults,
+		suppression:    cfg.Suppression,
+		rules:          initial,
+		emitted:        make(map[string]time.Time),
+	}
+	// Prime ruleset from the DB before returning so a caller that
+	// jumps straight to ScanOnce (tests, single-shot use) sees the
+	// operator's configured rules rather than DefaultListenerRules.
+	// Failure here is non-fatal — the pipeline retains DefaultListenerRules
+	// and the next reload tick gets another chance.
+	if !staticRules && cfg.AlertRules != nil {
+		if reloadErr := p.ReloadRules(context.Background()); reloadErr != nil {
+			cfg.Logger.Warn("initial alert_rules load failed; using defaults",
+				"error", reloadErr)
+		}
+	}
+	return p, nil
 }
 
 // Name implements [engine.Engine].
@@ -162,6 +205,18 @@ func (*ListenerPipeline) Name() string { return ListenerPipelineName }
 
 // Start kicks off the scan loop. Idempotent.
 func (p *ListenerPipeline) Start(ctx context.Context) error {
+	// Prime the ruleset from DB before announcing started, so the
+	// first scan reflects operator config rather than the default
+	// rules for the first reload interval. A reload failure here is
+	// non-fatal — the pipeline retains DefaultListenerRules until a
+	// later reload succeeds.
+	if !p.staticRulesView() {
+		if reloadErr := p.ReloadRules(ctx); reloadErr != nil {
+			p.logger.WarnContext(ctx, "initial alert_rules reload failed; using defaults",
+				"error", reloadErr)
+		}
+	}
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if p.started {
@@ -172,9 +227,77 @@ func (p *ListenerPipeline) Start(ctx context.Context) error {
 	p.started = true
 	p.wg.Add(1)
 	go p.loop(loopCtx)
+	if !p.staticRules && p.alertRules != nil {
+		p.wg.Add(1)
+		go p.reloadLoop(loopCtx)
+	}
 	p.logger.InfoContext(ctx, "listener alert pipeline started",
-		"interval", p.interval, "rules", len(p.rules))
+		"interval", p.interval, "rules", len(p.rules),
+		"reload_interval", p.reloadInterval, "db_rules_active", p.alertRules != nil && !p.staticRules)
 	return nil
+}
+
+// staticRulesView reads p.staticRules without taking the mutex — safe
+// because it's set once at construction and never mutated.
+func (p *ListenerPipeline) staticRulesView() bool { return p.staticRules || p.alertRules == nil }
+
+// reloadLoop ticks every reloadInterval and pulls the latest enabled
+// rules from alertRules into the pipeline's ruleset.
+func (p *ListenerPipeline) reloadLoop(ctx context.Context) {
+	defer p.wg.Done()
+	t := time.NewTicker(p.reloadInterval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			if err := p.ReloadRules(ctx); err != nil {
+				p.logger.WarnContext(ctx, "alert_rules reload failed; keeping previous ruleset",
+					"error", err)
+			}
+		}
+	}
+}
+
+// ReloadRules pulls every enabled alert_rules row, compiles them into
+// runtime rules, and swaps them in atomically. Falls back to
+// DefaultListenerRules when the DB has no enabled rows. Returns the
+// list error from the repo unchanged so callers can decide to log /
+// retry. Safe to call concurrently with ScanOnce.
+func (p *ListenerPipeline) ReloadRules(ctx context.Context) error {
+	if p.alertRules == nil || p.staticRules {
+		return nil
+	}
+	rows, err := p.alertRules.List(ctx, true)
+	if err != nil {
+		return err
+	}
+	compiled := CompileRulesFromDB(rows)
+	var next []Rule
+	var usingDefaults bool
+	if len(compiled) == 0 {
+		next = p.defaults
+		usingDefaults = true
+	} else {
+		next = compiled
+	}
+	p.mu.Lock()
+	p.rules = next
+	p.mu.Unlock()
+	p.logger.DebugContext(ctx, "alert_rules reloaded",
+		"db_rows", len(rows), "compiled", len(compiled),
+		"active_rules", len(next), "defaults_fallback", usingDefaults)
+	return nil
+}
+
+// snapshotRules returns the current ruleset under p.mu so concurrent
+// reloads can't observe a torn iteration. The slice is shared, not
+// cloned, because Rule entries are immutable after compilation.
+func (p *ListenerPipeline) snapshotRules() []Rule {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.rules
 }
 
 // Stop terminates the scan loop. Honors ctx deadline.
@@ -265,7 +388,8 @@ func (p *ListenerPipeline) ScanOnce(ctx context.Context) error {
 func (p *ListenerPipeline) evaluate(ctx context.Context, evt *database.ListenerEvent) int {
 	now := p.now()
 	count := 0
-	for _, rule := range p.rules {
+	rules := p.snapshotRules()
+	for _, rule := range rules {
 		if !rule.Match(evt) {
 			continue
 		}
