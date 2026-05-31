@@ -126,6 +126,19 @@ func (s *Server) Start() error {
 		logging.GetLogger().Info("VLAN traffic monitor started")
 	}
 
+	// Start probe engine (Stage A1.8). The engine loads enabled
+	// probes from the DB on Start and dispatches them via the
+	// scheduler at their configured cadence. Failure here is
+	// non-fatal — the API surface stays up; only background
+	// dispatch is affected.
+	if engine := s.services.Probe.Engine; engine != nil {
+		if err := engine.Start(context.Background()); err != nil {
+			logging.GetLogger().Warn("probe engine failed to start", "error", err)
+		} else {
+			logging.GetLogger().Info("probe engine started")
+		}
+	}
+
 	if s.config.Server.HTTPS {
 		return s.startHTTPS()
 	}

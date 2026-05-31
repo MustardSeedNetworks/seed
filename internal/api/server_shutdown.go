@@ -104,6 +104,15 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	logging.GetLogger().InfoContext(ctx, "Stopping VLAN traffic monitor...")
 	s.vlanTrafficMonitor().Stop()
 
+	// Stop probe engine (Stage A1.8) — drains in-flight probes via
+	// the scheduler's WaitGroup.
+	if engine := s.services.Probe.Engine; engine != nil {
+		logging.GetLogger().InfoContext(ctx, "Stopping probe engine...")
+		if stopErr := engine.Stop(ctx); stopErr != nil {
+			logging.GetLogger().WarnContext(ctx, "probe engine stop returned error", "error", stopErr)
+		}
+	}
+
 	logging.GetLogger().InfoContext(ctx, "Stopping rate limiters...")
 	s.loginRateLimiter().Stop()
 	s.endpointRateLimiter().Stop()
