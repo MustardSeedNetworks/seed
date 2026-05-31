@@ -24,15 +24,22 @@ type fakeObservations struct {
 
 func (f *fakeObservations) List(
 	_ context.Context,
-	_ database.ListOptions,
+	opts database.ListOptions,
 ) ([]*database.SNMPObservation, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.listErr != nil {
 		return nil, f.listErr
 	}
-	out := make([]*database.SNMPObservation, len(f.rows))
-	copy(out, f.rows)
+	// Honor the kind filter so reconcilers that fan out across
+	// multiple kinds (lldp/cdp/fdp) don't see each other's rows.
+	out := make([]*database.SNMPObservation, 0, len(f.rows))
+	for _, row := range f.rows {
+		if opts.Kind != "" && row.Kind != opts.Kind {
+			continue
+		}
+		out = append(out, row)
+	}
 	return out, nil
 }
 
