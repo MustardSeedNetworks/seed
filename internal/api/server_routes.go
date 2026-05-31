@@ -39,6 +39,15 @@ func (s *Server) setupTopologyRoutes() {
 	// is writeGated so only operator+ can ack/resolve.
 	s.mux.HandleFunc(APIVersionPrefix+"/alerts", s.handleAlerts)
 	s.mux.HandleFunc(APIVersionPrefix+"/alerts/", s.writeGated(s.handleAlertAction))
+
+	// Stage A5.3 — polling targets CRUD. Collection-level routes
+	// (GET list, POST create) are method-dispatched in
+	// handlePollingTargets; resource-level (GET, PUT, DELETE) in
+	// handlePollingTargetByID. Both are writeGated because the
+	// collection handler accepts POST and any mutating method
+	// requires the operator+ role.
+	s.mux.HandleFunc(APIVersionPrefix+"/polling-targets", s.writeGated(s.handlePollingTargets))
+	s.mux.HandleFunc(APIVersionPrefix+"/polling-targets/", s.writeGated(s.handlePollingTargetByID))
 }
 
 // setupAPITokenRoutes registers the Phase D-2 personal-access-token
