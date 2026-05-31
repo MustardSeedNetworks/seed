@@ -21,7 +21,19 @@ func (s *Server) setupRoutes() {
 	s.setupRootsRoutes()
 	s.setupCanopyRoutes()
 	s.setupHarvestRoutes()
+	s.setupTopologyRoutes()
 	s.setupSSEAndStatic()
+}
+
+// setupTopologyRoutes registers the Stage A5.1 read-only topology
+// endpoints. All are GET-only and run through the same JWT/PAT auth
+// middleware as the rest of /api/v1.
+func (s *Server) setupTopologyRoutes() {
+	// /nodes path must register BEFORE /nodes/ so the router doesn't
+	// treat the list endpoint as a /nodes/{id} request.
+	s.mux.HandleFunc(APIVersionPrefix+"/topology/nodes", s.handleTopologyNodes)
+	s.mux.HandleFunc(APIVersionPrefix+"/topology/nodes/", s.handleTopologyNodeByID)
+	s.mux.HandleFunc(APIVersionPrefix+"/topology/links", s.handleTopologyLinks)
 }
 
 // setupAPITokenRoutes registers the Phase D-2 personal-access-token
