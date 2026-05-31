@@ -109,39 +109,58 @@ func TestFormatKey(t *testing.T) {
 // fix the cipher, or regenerate keygen + update all three products in
 // lockstep.
 //
-// Anchored to keygen v2.2.0 (2026-05-26) — multi_interface moved
-// Starter→Pro; multi_user added on Pro; multi_site renamed to
-// multi_client on Pro; sso added on Pro.
+// Anchored to keygen v2.3.0 (2026-05-30) — V1.0 NMS expansion:
+// Starter adds topology_local/dns_monitoring/ssl_cert_monitoring;
+// Pro adds 11 NMS flags (topology_estate, estate_polling,
+// microburst_detection, voip_mos_scoring, server_monitoring,
+// extended_retention, bgp_monitoring, wifi_management_capture,
+// wifi_rogue_detection, config_backup_diff, netflow_collection).
+// Pro also gets sso added at the keygen side to fix a latent
+// parity drift between this validator and keygen's productCatalog.
+// See msn-docs-internal/01-Strategy/SEED_NMS_EXPANSION.md.
 func TestKeygenContract(t *testing.T) {
 	t.Parallel()
 	vectors := []keygenVector{
 		{
-			name:    "seed-starter / serial SEEDSTR",
-			key:     "Q207-20AG-LLZR-C2C8",
+			name:    "seed-starter / serial TESTSTR (anchor v2.3.0)",
+			key:     "2Q07-20VG-PZZR-C28C",
 			tier:    license.TierStarter,
 			product: "4001",
-			serial:  "SEEDSTR",
+			serial:  "TESTSTR",
 			features: []string{
 				"monitoring_scheduled",
 				"wifi_visibility_basic",
 				"compliance_basic",
 				"export_csv_json",
+				"topology_local",
+				"dns_monitoring",
+				"ssl_cert_monitoring",
 			},
 		},
 		{
-			name:    "seed-pro / serial SEEDPRO",
-			key:     "MN07-25AG-LLVZ-P9GH",
+			name:    "seed-pro / serial TESTPRO (anchor v2.3.0)",
+			key:     "Z707-25VG-PZVZ-P9J5",
 			tier:    license.TierPro,
 			product: "4002",
-			serial:  "SEEDPRO",
+			serial:  "TESTPRO",
 			features: []string{
+				// Starter set.
 				"monitoring_scheduled", "wifi_visibility_basic",
 				"compliance_basic", "export_csv_json",
+				"topology_local", "dns_monitoring", "ssl_cert_monitoring",
+				// Pre-existing Pro set.
 				"wifi_roam_analysis", "wifi_association_forensics",
 				"airmapper_baseline_diff", "anomaly_detection", "path_analysis",
 				"live_telemetry", "compliance_advanced", "scheduled_reports",
 				"audit_pdf", "multi_interface", "multi_user", "multi_client",
 				"sso", "white_label", "rest_api",
+				// V1.0 NMS expansion additions.
+				"topology_estate", "estate_polling",
+				"microburst_detection", "voip_mos_scoring", "server_monitoring",
+				"extended_retention", "bgp_monitoring",
+				"wifi_management_capture", "wifi_rogue_detection",
+				// V1.1 flags (catalog-final now).
+				"config_backup_diff", "netflow_collection",
 			},
 		},
 	}

@@ -250,18 +250,32 @@ func (li *Info) CanRunPro() bool {
 //
 // As of keygen v2.1.0 (2026-05-26) multi_interface moved Starter → Pro:
 // Free/Starter are capped at 1 ethernet + 1 wifi; Pro is unlimited.
+//
+// V1.0 NMS expansion (2026-05-30) added three Starter flags:
+// topology_local (local-jack LLDP/CDP view), dns_monitoring (5-target
+// cap), ssl_cert_monitoring (5-cert cap). See
+// msn-docs-internal/01-Strategy/SEED_NMS_EXPANSION.md.
 func starterFeatures() []string {
 	return []string{
 		"monitoring_scheduled",
 		"wifi_visibility_basic",
 		"compliance_basic",
 		"export_csv_json",
+		"topology_local",
+		"dns_monitoring",
+		"ssl_cert_monitoring",
 	}
 }
 
 // proFeatures returns the feature list granted to Seed Pro (product
 // code 4002). Includes every Starter feature plus the Pro additions.
-// Mirrors keygen's productCatalog (anchor: v2.2.0, 2026-05-26).
+// Mirrors keygen's productCatalog (anchor: v2.3.0, 2026-05-30).
+//
+// V1.0 NMS expansion (2026-05-30) added 11 Pro flags:
+// topology_estate, estate_polling, microburst_detection,
+// voip_mos_scoring, server_monitoring, extended_retention,
+// bgp_monitoring, wifi_management_capture, wifi_rogue_detection,
+// config_backup_diff (V1.1), netflow_collection (V1.1).
 func proFeatures() []string {
 	pro := []string{
 		"wifi_roam_analysis",
@@ -279,6 +293,21 @@ func proFeatures() []string {
 		"sso",
 		"white_label",
 		"rest_api",
+		// V1.0 NMS expansion (Phase 0 anchor, 2026-05-30).
+		"topology_estate",
+		"estate_polling",
+		"microburst_detection",
+		"voip_mos_scoring",
+		"server_monitoring",
+		"extended_retention",
+		"bgp_monitoring",
+		"wifi_management_capture",
+		"wifi_rogue_detection",
+		// V1.1 flags — present in catalog now; routes that gate on
+		// them return 402 until Phase 4 (NetFlow + config backup/diff)
+		// implements them.
+		"config_backup_diff",
+		"netflow_collection",
 	}
 	return append(starterFeatures(), pro...)
 }

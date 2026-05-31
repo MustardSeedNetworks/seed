@@ -18,6 +18,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/dhcp"
+	"github.com/krisarmstrong/seed/internal/health"
 	"github.com/krisarmstrong/seed/internal/license"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/mibdb"
@@ -190,7 +191,7 @@ func NewServer(
 	// Initialize database services
 	services.Database.DB = db
 
-	initLicenseAndAPITokens(services, db)
+	initDatabaseDependentServices(services, db)
 
 	s := &Server{
 		config:        cfg,
@@ -238,6 +239,15 @@ func NewServer(
 	return s
 }
 
+// initDatabaseDependentServices wires every service that needs a
+// live database connection. Called from NewServer after services.Database.DB
+// is populated. Splits into per-concern helpers to keep each scope
+// focused and to keep NewServer under the funlen limit.
+func initDatabaseDependentServices(services *ServiceContainer, db *database.DB) {
+	initLicenseAndAPITokens(services, db)
+	initHealthServices(services, db)
+}
+
 // initLicenseAndAPITokens wires the Phase D-2 license manager + API
 // token repository into the service container. The license manager is
 // best-effort: failure to load isn't fatal, the mint endpoint just
@@ -251,6 +261,30 @@ func initLicenseAndAPITokens(services *ServiceContainer, db *database.DB) {
 		return
 	}
 	services.Auth.License = lm
+}
+
+// initHealthServices wires the previously-dead health subsystem
+// (Scorer, SLATracker, AnomalyDetector, DependencyMgr) into the
+// service container. Stage A1.6 — these services existed in code
+// since prior phases but were declared-but-never-assigned in
+// services.HealthServices, so the health-check API endpoints
+// returned HTTP 503 on every request. This wires them up.
+//
+// AlertManager and Repository are wired elsewhere (existing code);
+// this function only handles the four previously-dead services.
+func initHealthServices(services *ServiceContainer, db *database.DB) {
+	services.Health.Repository = db.HealthChecks()
+
+	logger := logging.GetLogger()
+	services.Health.Scorer = health.NewScoringService(db, logger)
+
+	services.Health.SLATracker = health.NewSLATracker(health.SLATrackerConfig{
+		Repository: services.Health.Repository,
+	})
+
+	services.Health.AnomalyDetector = health.NewAnomalyDetector(health.AnomalyDetectorConfig{})
+
+	services.Health.DependencyMgr = health.NewDependencyManager(health.DependencyManagerConfig{})
 }
 
 // Service accessors - provide backwards-compatible access to services (#888)
