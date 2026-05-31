@@ -48,6 +48,10 @@ func (s *Server) setupTopologyRoutes() {
 	// requires the operator+ role.
 	s.mux.HandleFunc(APIVersionPrefix+"/polling-targets", s.writeGated(s.handlePollingTargets))
 	s.mux.HandleFunc(APIVersionPrefix+"/polling-targets/", s.writeGated(s.handlePollingTargetByID))
+
+	// Stage A5.8 — read-only engine registry surface. Useful for
+	// the operator UI's "what's running" pane and for ops debugging.
+	s.mux.HandleFunc(APIVersionPrefix+"/engines", s.handleEngines)
 }
 
 // setupAPITokenRoutes registers the Phase D-2 personal-access-token
