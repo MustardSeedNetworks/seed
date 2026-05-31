@@ -187,6 +187,101 @@ func toNullTime(t time.Time) sql.NullString {
 	return sql.NullString{String: t.UTC().Format(time.RFC3339Nano), Valid: true}
 }
 
+// TopologyARPBinding mirrors one row of topology_arp_bindings.
+// Reconciled from arp observations; the row's MAC is the join key
+// used to backfill node.primary_ip when a binding matches a known
+// node's chassis/primary MAC.
+type TopologyARPBinding struct {
+	ID           int64
+	ClientID     string
+	SourceNodeID string
+	IfIndex      uint32
+	IPAddress    string
+	MACAddress   string
+	MediaType    int
+	LastSeen     time.Time
+}
+
+// UpsertARPBinding writes one binding row. The unique constraint
+// (source_node, if_index, ip_address) ensures repeated observations
+// of the same binding update one row.
+func (r *TopologyRepository) UpsertARPBinding(ctx context.Context, b *TopologyARPBinding) error {
+	if b.SourceNodeID == "" {
+		return errors.New("topology_arp_bindings: SourceNodeID required")
+	}
+	if b.IPAddress == "" || b.MACAddress == "" {
+		return errors.New("topology_arp_bindings: IPAddress + MACAddress required")
+	}
+	if b.ClientID == "" {
+		b.ClientID = "default"
+	}
+	if b.LastSeen.IsZero() {
+		b.LastSeen = time.Now().UTC()
+	}
+	_, err := r.db.Exec(ctx, `
+		INSERT INTO topology_arp_bindings
+		  (client_id, source_node_id, if_index, ip_address, mac_address, media_type, last_seen)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(source_node_id, if_index, ip_address) DO UPDATE SET
+			mac_address = excluded.mac_address,
+			media_type = excluded.media_type,
+			last_seen = excluded.last_seen
+	`,
+		b.ClientID, b.SourceNodeID, b.IfIndex,
+		b.IPAddress, b.MACAddress, b.MediaType,
+		b.LastSeen.UTC().Format(time.RFC3339Nano),
+	)
+	if err != nil {
+		return fmt.Errorf("upsert topology_arp_binding: %w", err)
+	}
+	return nil
+}
+
+// SetNodePrimaryIP updates a node's primary_ip column without
+// touching last_seen or first_seen. Used by the ARP reconciler to
+// backfill node identity when a binding's MAC matches the node's
+// primary MAC.
+func (r *TopologyRepository) SetNodePrimaryIP(ctx context.Context, nodeID, ip string) error {
+	if nodeID == "" {
+		return errors.New("topology_nodes: NodeID required")
+	}
+	_, err := r.db.Exec(ctx,
+		`UPDATE topology_nodes SET primary_ip = ? WHERE id = ?`,
+		toNullString(ip), nodeID,
+	)
+	if err != nil {
+		return fmt.Errorf("set primary_ip: %w", err)
+	}
+	return nil
+}
+
+// NodeIDForMAC resolves a MAC address to a node by matching against
+// topology_nodes.primary_mac. Returns ErrTopologyNodeNotFound when
+// no node has that MAC. Used by the ARP reconciler to identify
+// which (if any) node a binding's MAC corresponds to.
+func (r *TopologyRepository) NodeIDForMAC(ctx context.Context, clientID, mac string) (string, error) {
+	if clientID == "" {
+		clientID = "default"
+	}
+	if mac == "" {
+		return "", ErrTopologyNodeNotFound
+	}
+	row := r.db.QueryRow(ctx, `
+		SELECT id FROM topology_nodes
+		WHERE client_id = ? AND primary_mac = ?
+		ORDER BY last_seen DESC
+		LIMIT 1
+	`, clientID, mac)
+	var id string
+	if err := row.Scan(&id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", ErrTopologyNodeNotFound
+		}
+		return "", fmt.Errorf("nodeIDForMAC: %w", err)
+	}
+	return id, nil
+}
+
 // TopologyLink mirrors one row of topology_links. Edges are
 // identity-merged the same way nodes are — the link ID is derived
 // from (source_node, source_interface, target_node, target_interface)
