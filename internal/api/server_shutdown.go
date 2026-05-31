@@ -113,6 +113,15 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		}
 	}
 
+	// Stop retention engine (Stage A2) — waits for in-flight rollup
+	// pass to complete.
+	if engine := s.services.Probe.Retention; engine != nil {
+		logging.GetLogger().InfoContext(ctx, "Stopping retention engine...")
+		if stopErr := engine.Stop(ctx); stopErr != nil {
+			logging.GetLogger().WarnContext(ctx, "retention engine stop returned error", "error", stopErr)
+		}
+	}
+
 	logging.GetLogger().InfoContext(ctx, "Stopping rate limiters...")
 	s.loginRateLimiter().Stop()
 	s.endpointRateLimiter().Stop()

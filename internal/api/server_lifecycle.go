@@ -27,6 +27,27 @@ import (
 )
 
 // Start starts the HTTP/HTTPS server.
+// startBackgroundEngines fires up the probe + retention engines.
+// Both are non-fatal — failure logs a warning and the API surface
+// stays available. Extracted from Start() to keep that function
+// under the gocognit complexity limit.
+func (s *Server) startBackgroundEngines() {
+	if engine := s.services.Probe.Engine; engine != nil {
+		if err := engine.Start(context.Background()); err != nil {
+			logging.GetLogger().Warn("probe engine failed to start", "error", err)
+		} else {
+			logging.GetLogger().Info("probe engine started")
+		}
+	}
+	if engine := s.services.Probe.Retention; engine != nil {
+		if err := engine.Start(context.Background()); err != nil {
+			logging.GetLogger().Warn("retention engine failed to start", "error", err)
+		} else {
+			logging.GetLogger().Info("retention engine started")
+		}
+	}
+}
+
 func (s *Server) Start() error {
 	addr := fmt.Sprintf(":%d", s.config.Server.Port)
 
@@ -126,18 +147,7 @@ func (s *Server) Start() error {
 		logging.GetLogger().Info("VLAN traffic monitor started")
 	}
 
-	// Start probe engine (Stage A1.8). The engine loads enabled
-	// probes from the DB on Start and dispatches them via the
-	// scheduler at their configured cadence. Failure here is
-	// non-fatal — the API surface stays up; only background
-	// dispatch is affected.
-	if engine := s.services.Probe.Engine; engine != nil {
-		if err := engine.Start(context.Background()); err != nil {
-			logging.GetLogger().Warn("probe engine failed to start", "error", err)
-		} else {
-			logging.GetLogger().Info("probe engine started")
-		}
-	}
+	s.startBackgroundEngines()
 
 	if s.config.Server.HTTPS {
 		return s.startHTTPS()

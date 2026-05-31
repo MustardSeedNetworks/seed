@@ -23,6 +23,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/services/iperf"
 	"github.com/krisarmstrong/seed/internal/services/speedtest"
 	"github.com/krisarmstrong/seed/internal/services/vlan"
+	"github.com/krisarmstrong/seed/internal/timeseries/retention"
 	"github.com/krisarmstrong/seed/internal/update"
 )
 
@@ -148,6 +149,7 @@ type SapServices struct {
 type ProbeServices struct {
 	Engine    *probe.Engine
 	Scheduler *scheduler.Scheduler
+	Retention *retention.Engine
 }
 
 // CanopyServices groups Canopy module services (Wi-Fi planning).
