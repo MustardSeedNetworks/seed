@@ -9,6 +9,7 @@ package api
 
 import (
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -20,6 +21,9 @@ import (
 	"github.com/krisarmstrong/seed/internal/dhcp"
 	"github.com/krisarmstrong/seed/internal/health"
 	"github.com/krisarmstrong/seed/internal/license"
+	listenersink "github.com/krisarmstrong/seed/internal/listener/sink"
+	"github.com/krisarmstrong/seed/internal/listener/snmptrap"
+	"github.com/krisarmstrong/seed/internal/listener/syslog"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/mibdb"
 	"github.com/krisarmstrong/seed/internal/netif"
@@ -257,6 +261,7 @@ func initDatabaseDependentServices(services *ServiceContainer, db *database.DB) 
 	initHealthServices(services, db)
 	initProbeEngine(services, db)
 	initRetentionEngine(services, db)
+	initListeners(services, db)
 }
 
 // initLicenseAndAPITokens wires the Phase D-2 license manager + API
@@ -311,6 +316,45 @@ func initProbeEngine(services *ServiceContainer, db *database.DB) {
 // it checks whether any registered Job is due. Production default
 // 5s; tests can run faster via direct scheduler.New construction.
 const probeSchedulerTick = 5 * time.Second
+
+// initListeners wires the passive-ingress listeners (syslog UDP +
+// SNMPv2c traps) into the engine registry. Both are opt-in via env
+// variables — operators set SEED_SYSLOG_BIND / SEED_SNMP_TRAP_BIND
+// (e.g. ":514", ":162") to enable them. Default is off because
+// binding to <1024 requires elevated privileges and we don't want
+// the server to crash out of the box when run as a non-root user.
+//
+// V1.0 NMS expansion — Stage A3.5e-4.
+func initListeners(services *ServiceContainer, db *database.DB) {
+	persistSink := listenersink.New(db.ListenerEvents(), logging.GetLogger(), nil)
+	logger := logging.GetLogger()
+
+	if addr := os.Getenv("SEED_SYSLOG_BIND"); addr != "" {
+		l, err := syslog.New(syslog.Config{
+			BindAddr: addr,
+			Sink:     persistSink,
+			Logger:   logger,
+		})
+		if err != nil {
+			logger.Warn("syslog listener init failed", "error", err)
+		} else if regErr := services.Engines.Register(l); regErr != nil {
+			logger.Warn("syslog listener registry registration failed", "error", regErr)
+		}
+	}
+
+	if addr := os.Getenv("SEED_SNMP_TRAP_BIND"); addr != "" {
+		l, err := snmptrap.New(snmptrap.Config{
+			BindAddr: addr,
+			Sink:     persistSink,
+			Logger:   logger,
+		})
+		if err != nil {
+			logger.Warn("snmp trap listener init failed", "error", err)
+		} else if regErr := services.Engines.Register(l); regErr != nil {
+			logger.Warn("snmp trap listener registry registration failed", "error", regErr)
+		}
+	}
+}
 
 // initRetentionEngine constructs the unified retention engine and
 // registers V1.0 sources (probe_results, metrics). The engine is
