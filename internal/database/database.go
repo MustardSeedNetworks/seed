@@ -76,6 +76,7 @@ type DB struct {
 	probes           *ProbeRepository
 	pollingTargets   *PollingTargetRepository
 	snmpObservations *SNMPObservationsRepository
+	listenerEvents   *ListenerEventsRepository
 }
 
 // Config holds database configuration options.
@@ -501,6 +502,19 @@ func (db *DB) SNMPObservations() *SNMPObservationsRepository {
 		db.snmpObservations = &SNMPObservationsRepository{db: db}
 	}
 	return db.snmpObservations
+}
+
+// ListenerEvents returns the passive-ingress event repository
+// (Stage A3.5e). Every Listener emits Events into this store via
+// the listener.Sink seam; Stage A4 alert rules read from here.
+func (db *DB) ListenerEvents() *ListenerEventsRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.listenerEvents == nil {
+		db.listenerEvents = &ListenerEventsRepository{db: db}
+	}
+	return db.listenerEvents
 }
 
 // Exec executes a query without returning any rows.
