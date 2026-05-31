@@ -9,6 +9,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
   BarChart3,
+  Bell,
   Network,
   Route,
   ScrollText,
@@ -42,6 +43,9 @@ const PollingTargetsPage = lazy(() =>
 );
 const TopologyPage = lazy(() =>
   import('./pages/TopologyPage').then((m) => ({ default: m.TopologyPage })),
+);
+const AlertsPage = lazy(() =>
+  import('./pages/AlertsPage').then((m) => ({ default: m.AlertsPage })),
 );
 
 export interface PageConfig {
@@ -133,5 +137,13 @@ export const pages: PageConfig[] = [
     description: 'Fat-Node graph reconciled from SNMP observations.',
     icon: Network,
     component: TopologyPage,
+  },
+  {
+    path: '/alerts',
+    label: 'Alerts',
+    title: 'Alerts',
+    description: 'Events emitted by the listener + observation pipelines.',
+    icon: Bell,
+    component: AlertsPage,
   },
 ];
