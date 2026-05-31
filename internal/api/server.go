@@ -290,6 +290,7 @@ func initProbeEngine(services *ServiceContainer, db *database.DB) {
 	// remaining 11 internal/api/health_checks_*.go kinds.
 	engine.RegisterChecker(checkers.NewDNSChecker())
 	engine.RegisterChecker(checkers.NewTLSChecker())
+	engine.RegisterChecker(checkers.NewPingChecker())
 
 	services.Probe.Engine = engine
 	services.Probe.Scheduler = sched
