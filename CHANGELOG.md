@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.207.0](https://github.com/krisarmstrong/seed/compare/v0.206.0...v0.207.0) (2026-05-31)
+
+
+### Features
+
+* **api:** server lifecycle via engine.registry (stage a3.5d) ([#1345](https://github.com/krisarmstrong/seed/issues/1345)) ([8930e5b](https://github.com/krisarmstrong/seed/commit/8930e5b32b6a7443a5a22098ae006effeac75fed))
+* **engine:** minimal engine interface + lifecycle registry (stage a3.5a) ([#1343](https://github.com/krisarmstrong/seed/issues/1343)) ([7230f08](https://github.com/krisarmstrong/seed/commit/7230f08080f57d9a6f0ffe437fa71a01b3da5005))
+* **listener:** syslog udp listener + listener_events persistence (stage a3.5e-1) ([#1347](https://github.com/krisarmstrong/seed/issues/1347)) ([a80136d](https://github.com/krisarmstrong/seed/commit/a80136db157a9a3f1120b5a1ddfe5ab932d48f91))
+* **retention:** unified tier-aware retention engine (Stage A2) ([#1330](https://github.com/krisarmstrong/seed/issues/1330)) ([20fd168](https://github.com/krisarmstrong/seed/commit/20fd168d7267b629b01adb3b7b1af70a06b68491))
+* **snmp:** arp collector (stage a3.5) ([#1338](https://github.com/krisarmstrong/seed/issues/1338)) ([03efa76](https://github.com/krisarmstrong/seed/commit/03efa76199c75f89a72735ef54681b6438c6ade8))
+* **snmp:** bgp4_mib peer collector (stage a3.9) ([#1342](https://github.com/krisarmstrong/seed/issues/1342)) ([1af3269](https://github.com/krisarmstrong/seed/commit/1af32694490987e4a5af860a130b26617820aa94))
+* **snmp:** cdp neighbor collector (stage a3.4b) ([#1336](https://github.com/krisarmstrong/seed/issues/1336)) ([2ca9a89](https://github.com/krisarmstrong/seed/commit/2ca9a89b61654f30c112801c73e9e6167c80aa4d))
+* **snmp:** collector-chain poller scaffold (stage a3.1) ([#1332](https://github.com/krisarmstrong/seed/issues/1332)) ([e740ae0](https://github.com/krisarmstrong/seed/commit/e740ae018061ff2021ce5b7c3ebbb01ba1ffa41e))
+* **snmp:** fdb collector (stage a3.6) ([#1339](https://github.com/krisarmstrong/seed/issues/1339)) ([b5092e5](https://github.com/krisarmstrong/seed/commit/b5092e53bfe72f91079873016fd367f281aeb71d))
+* **snmp:** fdp neighbor collector via cdp wrapper (stage a3.4c) ([#1337](https://github.com/krisarmstrong/seed/issues/1337)) ([cfcd0d4](https://github.com/krisarmstrong/seed/commit/cfcd0d4943410d8c85e540da35759c412a9d7b7e))
+* **snmp:** gosnmp-backed client factory (stage a3.5c) ([#1346](https://github.com/krisarmstrong/seed/issues/1346)) ([970bd2c](https://github.com/krisarmstrong/seed/commit/970bd2c18d05360624558e05b359e1d2448194dc))
+* **snmp:** host_resources collector (stage a3.8) ([#1341](https://github.com/krisarmstrong/seed/issues/1341)) ([7ae707f](https://github.com/krisarmstrong/seed/commit/7ae707fc45285ce8d699ee6ac0c191dd4b04adad))
+* **snmp:** if_table collector (stage a3.3) ([#1334](https://github.com/krisarmstrong/seed/issues/1334)) ([d361c53](https://github.com/krisarmstrong/seed/commit/d361c53060ce42e11595b9faa7bc4f7155f37e3d))
+* **snmp:** lldp neighbor collector (stage a3.4) ([#1335](https://github.com/krisarmstrong/seed/issues/1335)) ([8ed4f01](https://github.com/krisarmstrong/seed/commit/8ed4f0193452d6fc864b1ddefb615a981016c04e))
+* **snmp:** orchestrator + observation persistence (stage a3.5b) ([#1344](https://github.com/krisarmstrong/seed/issues/1344)) ([a6c7cf1](https://github.com/krisarmstrong/seed/commit/a6c7cf1854279428a24321b977aaacc0584cdd15))
+* **snmp:** routing collector (stage a3.7) ([#1340](https://github.com/krisarmstrong/seed/issues/1340)) ([129e105](https://github.com/krisarmstrong/seed/commit/129e105a4b9a3d7c98da8db700997d206bb2b201))
+* **snmp:** sys_info collector (stage a3.2) ([#1333](https://github.com/krisarmstrong/seed/issues/1333)) ([7acf498](https://github.com/krisarmstrong/seed/commit/7acf4988f27e72fe46d0ed3dac26fbd4fc8a93db))
+
 ## [0.206.0](https://github.com/krisarmstrong/seed/compare/v0.205.0...v0.206.0) (2026-05-31)
 
 
