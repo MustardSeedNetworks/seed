@@ -120,7 +120,7 @@ func (s *Server) handleTopologyNodeByID(w http.ResponseWriter, r *http.Request) 
 		logger.ErrorContext(r.Context(), "list links failed", "node_id", node.ID, "error", err)
 	}
 
-	writeJSON(w, r, http.StatusOK, map[string]any{
+	writeJSON(w, r, map[string]any{
 		"node":       encodeNode(node),
 		"interfaces": encodeInterfaces(interfaces),
 		"links":      encodeLinks(links),
@@ -281,19 +281,21 @@ func formatTime(t time.Time) string {
 // the UI doesn't have to parse a bare array. Standard shape across
 // every topology list endpoint.
 func writeTopologyJSON(w http.ResponseWriter, r *http.Request, key string, payload any) {
-	writeJSON(w, r, http.StatusOK, map[string]any{
+	writeJSON(w, r, map[string]any{
 		"count": lenOf(payload),
 		key:     payload,
 	})
 }
 
-// writeJSON sets Content-Type + status, then encodes body. Wraps
-// the common pattern used across every other handler so we don't
-// repeat the header/encode/log triple at each call site.
-func writeJSON(w http.ResponseWriter, r *http.Request, status int, body any) {
+// writeJSON sets Content-Type + 200, then encodes body. Wraps the
+// common pattern used across every other handler so we don't repeat
+// the header/encode/log triple at each call site. Callers that need
+// a non-200 status set the header themselves before calling — none
+// do today, which is why the helper hard-codes 200.
+func writeJSON(w http.ResponseWriter, r *http.Request, body any) {
 	logger := logging.FromContext(r.Context())
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(body); err != nil {
 		logger.WarnContext(r.Context(), "writeJSON encode failed", "error", err)
 	}
