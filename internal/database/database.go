@@ -64,17 +64,18 @@ type DB struct {
 	closed bool
 
 	// Repositories - lazily initialized
-	profiles       *ProfileRepository
-	metrics        *MetricsRepository
-	devices        *DeviceRepository
-	alerts         *AlertRepository
-	settings       *SettingsRepository
-	logs           *LogRepository
-	healthChecks   *HealthCheckRepository
-	discovery      *DiscoveryRepository
-	clients        *ClientRepository
-	probes         *ProbeRepository
-	pollingTargets *PollingTargetRepository
+	profiles         *ProfileRepository
+	metrics          *MetricsRepository
+	devices          *DeviceRepository
+	alerts           *AlertRepository
+	settings         *SettingsRepository
+	logs             *LogRepository
+	healthChecks     *HealthCheckRepository
+	discovery        *DiscoveryRepository
+	clients          *ClientRepository
+	probes           *ProbeRepository
+	pollingTargets   *PollingTargetRepository
+	snmpObservations *SNMPObservationsRepository
 }
 
 // Config holds database configuration options.
@@ -486,6 +487,20 @@ func (db *DB) PollingTargets() *PollingTargetRepository {
 		db.pollingTargets = &PollingTargetRepository{db: db}
 	}
 	return db.pollingTargets
+}
+
+// SNMPObservations returns the unified SNMP observations repository
+// (Stage A3.5b). Every collector Publisher writes one row per poll;
+// Stage A4 topology + the listener pipeline read kind-filtered rows
+// downstream.
+func (db *DB) SNMPObservations() *SNMPObservationsRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.snmpObservations == nil {
+		db.snmpObservations = &SNMPObservationsRepository{db: db}
+	}
+	return db.snmpObservations
 }
 
 // Exec executes a query without returning any rows.
