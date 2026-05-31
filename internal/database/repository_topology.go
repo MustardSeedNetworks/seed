@@ -187,6 +187,212 @@ func toNullTime(t time.Time) sql.NullString {
 	return sql.NullString{String: t.UTC().Format(time.RFC3339Nano), Valid: true}
 }
 
+// TopologyLink mirrors one row of topology_links. Edges are
+// identity-merged the same way nodes are — the link ID is derived
+// from (source_node, source_interface, target_node, target_interface)
+// so re-observations of the same physical cable upsert rather than
+// duplicate.
+type TopologyLink struct {
+	ID              string
+	SourceNodeID    string
+	TargetNodeID    string
+	SourceInterface string
+	TargetInterface string
+	LinkType        string // "lldp", "cdp", "fdp"
+	Status          string // "up", "down", "unknown"
+	SpeedMbps       uint32
+	UtilizationPct  float64
+	FirstSeen       time.Time
+	LastSeen        time.Time
+	EvidenceJSON    string
+}
+
+// NodeIDForSysName resolves a sys_name back to its node_id by
+// looking up topology_nodes. Used by the edge reconciler to map
+// an LLDP/CDP neighbor's reported hostname to a known node.
+// Returns ErrTopologyNodeNotFound when no node has that sys_name.
+func (r *TopologyRepository) NodeIDForSysName(ctx context.Context, clientID, sysName string) (string, error) {
+	if clientID == "" {
+		clientID = "default"
+	}
+	if sysName == "" {
+		return "", ErrTopologyNodeNotFound
+	}
+	row := r.db.QueryRow(ctx, `
+		SELECT id FROM topology_nodes
+		WHERE client_id = ? AND sys_name = ?
+		ORDER BY last_seen DESC
+		LIMIT 1
+	`, clientID, sysName)
+	var id string
+	if err := row.Scan(&id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", ErrTopologyNodeNotFound
+		}
+		return "", fmt.Errorf("nodeIDForSysName: %w", err)
+	}
+	return id, nil
+}
+
+// UpsertLink inserts or updates a topology_links row. The link's
+// ID is the merge key — the edge reconciler computes it
+// deterministically from (source_node, source_interface,
+// target_node, target_interface) so two LLDP polls of the same
+// physical cable update one row instead of inserting two.
+func (r *TopologyRepository) UpsertLink(ctx context.Context, link *TopologyLink) error {
+	if link.ID == "" {
+		return errors.New("topology_links: ID required")
+	}
+	if link.SourceNodeID == "" || link.TargetNodeID == "" {
+		return errors.New("topology_links: SourceNodeID + TargetNodeID required")
+	}
+	if link.LinkType == "" {
+		link.LinkType = "unknown"
+	}
+	if link.Status == "" {
+		link.Status = "up"
+	}
+	if link.LastSeen.IsZero() {
+		link.LastSeen = time.Now().UTC()
+	}
+	if link.FirstSeen.IsZero() {
+		link.FirstSeen = link.LastSeen
+	}
+
+	// ON CONFLICT preserves first_seen; everything else refreshes
+	// from the new observation.
+	_, err := r.db.Exec(ctx, `
+		INSERT INTO topology_links
+		  (id, source_node_id, target_node_id, source_interface, target_interface,
+		   link_type, status, speed_mbps, utilization_pct,
+		   first_seen, last_seen, evidence_json)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(id) DO UPDATE SET
+			source_interface = excluded.source_interface,
+			target_interface = excluded.target_interface,
+			link_type = excluded.link_type,
+			status = excluded.status,
+			speed_mbps = excluded.speed_mbps,
+			utilization_pct = excluded.utilization_pct,
+			last_seen = excluded.last_seen,
+			evidence_json = excluded.evidence_json
+	`,
+		link.ID, link.SourceNodeID, link.TargetNodeID,
+		toNullString(link.SourceInterface), toNullString(link.TargetInterface),
+		link.LinkType, link.Status,
+		nullableUint32(link.SpeedMbps),
+		nullableFloat(link.UtilizationPct),
+		link.FirstSeen.UTC().Format(time.RFC3339Nano),
+		link.LastSeen.UTC().Format(time.RFC3339Nano),
+		toNullString(link.EvidenceJSON),
+	)
+	if err != nil {
+		return fmt.Errorf("upsert topology_link: %w", err)
+	}
+	return nil
+}
+
+// ListLinks returns every link involving nodeID (either source or
+// target) ordered by LastSeen desc.
+func (r *TopologyRepository) ListLinks(ctx context.Context, nodeID string) ([]*TopologyLink, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT id, source_node_id, target_node_id, source_interface, target_interface,
+		       link_type, status, speed_mbps, utilization_pct,
+		       first_seen, last_seen, evidence_json
+		FROM topology_links
+		WHERE source_node_id = ? OR target_node_id = ?
+		ORDER BY last_seen DESC
+	`, nodeID, nodeID)
+	if err != nil {
+		return nil, fmt.Errorf("list topology_links: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []*TopologyLink
+	for rows.Next() {
+		link, scanErr := scanTopologyLink(rows.Scan)
+		if scanErr != nil {
+			return nil, scanErr
+		}
+		out = append(out, link)
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("list topology_links iter: %w", rowsErr)
+	}
+	return out, nil
+}
+
+// nullableUint32 returns [sql.NullInt32] with valid=false when v == 0.
+// SpeedMbps + UtilizationPct are nullable in the schema so the UI
+// can distinguish "no measurement yet" from "0 Mbps". Values above
+// [math.MaxInt32] clamp down — SQLite stores INTEGER as int64 in
+// the driver but the NullInt32 wrapper is signed, so clamping keeps
+// the conversion well-defined for the (rare) terabit-per-second link.
+func nullableUint32(v uint32) sql.NullInt32 {
+	if v == 0 {
+		return sql.NullInt32{}
+	}
+	const maxInt32 uint32 = 1<<31 - 1
+	if v > maxInt32 {
+		v = maxInt32
+	}
+	return sql.NullInt32{Int32: int32(v), Valid: true}
+}
+
+func nullableFloat(v float64) sql.NullFloat64 {
+	if v == 0 {
+		return sql.NullFloat64{}
+	}
+	return sql.NullFloat64{Float64: v, Valid: true}
+}
+
+func scanTopologyLink(scan func(...any) error) (*TopologyLink, error) {
+	var (
+		link         TopologyLink
+		srcIface     sql.NullString
+		tgtIface     sql.NullString
+		speedMbps    sql.NullInt32
+		utilization  sql.NullFloat64
+		evidenceJSON sql.NullString
+		firstSeenStr string
+		lastSeenStr  string
+	)
+	err := scan(
+		&link.ID, &link.SourceNodeID, &link.TargetNodeID,
+		&srcIface, &tgtIface, &link.LinkType, &link.Status,
+		&speedMbps, &utilization,
+		&firstSeenStr, &lastSeenStr, &evidenceJSON,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrTopologyNodeNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("scan topology_link: %w", err)
+	}
+	if srcIface.Valid {
+		link.SourceInterface = srcIface.String
+	}
+	if tgtIface.Valid {
+		link.TargetInterface = tgtIface.String
+	}
+	if speedMbps.Valid && speedMbps.Int32 >= 0 {
+		link.SpeedMbps = uint32(speedMbps.Int32)
+	}
+	if utilization.Valid {
+		link.UtilizationPct = utilization.Float64
+	}
+	if evidenceJSON.Valid {
+		link.EvidenceJSON = evidenceJSON.String
+	}
+	if parsed, perr := time.Parse(time.RFC3339Nano, firstSeenStr); perr == nil {
+		link.FirstSeen = parsed
+	}
+	if parsed, perr := time.Parse(time.RFC3339Nano, lastSeenStr); perr == nil {
+		link.LastSeen = parsed
+	}
+	return &link, nil
+}
+
 // TopologyInterface mirrors one row of topology_interfaces.
 // Reconciled from if_table observations; columns shaped so alert
 // rules can index admin/oper status and speed without parsing JSON.
