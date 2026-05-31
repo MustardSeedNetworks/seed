@@ -1779,6 +1779,36 @@ func getMigrationDefs() []migrationDef {
 			CREATE INDEX IF NOT EXISTS idx_snmp_observations_observed_at ON snmp_observations(observed_at);
 		`,
 		},
+		{
+			// Stage A3.5e — unified persistence for passive-ingress
+			// events (syslog, snmp traps, future netflow). Mirrors
+			// snmp_observations: per-kind payload_json + client /
+			// source / timestamp indices for retention and for the
+			// listener-driven alert rules in Stage A4.
+			//
+			// source_addr is indexed because the enrichment step
+			// resolves it -> (client_id, target_id); O(log n) joins
+			// are mandatory during trap storms.
+			Description: "Create listener_events for syslog + snmp trap ingress",
+			Up: `
+			CREATE TABLE IF NOT EXISTS listener_events (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+				kind TEXT NOT NULL,
+				source_addr TEXT NOT NULL,
+				target_kind TEXT,
+				target_id TEXT,
+				severity TEXT,
+				observed_at TEXT NOT NULL,
+				payload_json TEXT NOT NULL,
+				ingested_at TEXT NOT NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_listener_events_client_kind ON listener_events(client_id, kind, observed_at);
+			CREATE INDEX IF NOT EXISTS idx_listener_events_source ON listener_events(source_addr, observed_at);
+			CREATE INDEX IF NOT EXISTS idx_listener_events_observed_at ON listener_events(observed_at);
+		`,
+		},
 	}
 }
 

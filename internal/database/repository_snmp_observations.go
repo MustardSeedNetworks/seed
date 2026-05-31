@@ -77,64 +77,24 @@ type ListOptions struct {
 }
 
 // List returns observations matching opts ordered by ObservedAt
-// descending (newest first). Limit is clamped to 1000 if unset.
+// descending (newest first). Limit defaults to 100; clamped to 1000.
 func (r *SNMPObservationsRepository) List(ctx context.Context, opts ListOptions) ([]*SNMPObservation, error) {
 	const defaultLimit, maxLimit = 100, 1000
 
-	query := `
+	query, args := newListQueryBuilder(`
 		SELECT id, client_id, target_id, kind, observed_at, payload_json, ingested_at
 		FROM snmp_observations
 		WHERE 1=1
-	`
-	args := []any{}
-	if opts.ClientID != "" {
-		query += " AND client_id = ?"
-		args = append(args, opts.ClientID)
-	}
-	if opts.TargetID != "" {
-		query += " AND target_id = ?"
-		args = append(args, opts.TargetID)
-	}
-	if opts.Kind != "" {
-		query += " AND kind = ?"
-		args = append(args, opts.Kind)
-	}
-	if !opts.Since.IsZero() {
-		query += " AND observed_at >= ?"
-		args = append(args, opts.Since.UTC().Format(time.RFC3339Nano))
-	}
-	if !opts.Until.IsZero() {
-		query += " AND observed_at <= ?"
-		args = append(args, opts.Until.UTC().Format(time.RFC3339Nano))
-	}
-	query += " ORDER BY observed_at DESC LIMIT ?"
-	limit := opts.Limit
-	if limit <= 0 {
-		limit = defaultLimit
-	}
-	if limit > maxLimit {
-		limit = maxLimit
-	}
-	args = append(args, limit)
+	`).
+		Where("AND client_id = ?", opts.ClientID).
+		Where("AND target_id = ?", opts.TargetID).
+		Where("AND kind = ?", opts.Kind).
+		WhereTime("AND observed_at >= ?", opts.Since).
+		WhereTime("AND observed_at <= ?", opts.Until).
+		OrderLimit("ORDER BY observed_at DESC", opts.Limit, defaultLimit, maxLimit).
+		Build()
 
-	rows, err := r.db.Query(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("list snmp_observations: %w", err)
-	}
-	defer func() { _ = rows.Close() }()
-
-	var out []*SNMPObservation
-	for rows.Next() {
-		obs, scanErr := scanSNMPObservation(rows.Scan)
-		if scanErr != nil {
-			return nil, scanErr
-		}
-		out = append(out, obs)
-	}
-	if rowsErr := rows.Err(); rowsErr != nil {
-		return nil, fmt.Errorf("list snmp_observations iter: %w", rowsErr)
-	}
-	return out, nil
+	return queryRows(ctx, r.db, query, args, scanSNMPObservation, "list snmp_observations")
 }
 
 // DeleteOlderThan removes observations whose observed_at is before
