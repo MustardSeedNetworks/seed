@@ -36,6 +36,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/services/iperf"
 	"github.com/krisarmstrong/seed/internal/services/speedtest"
 	"github.com/krisarmstrong/seed/internal/services/vlan"
+	"github.com/krisarmstrong/seed/internal/timeseries/retention"
 )
 
 // indexHTMLPath is the path to the SPA entry point.
@@ -255,6 +256,7 @@ func initDatabaseDependentServices(services *ServiceContainer, db *database.DB) 
 	initLicenseAndAPITokens(services, db)
 	initHealthServices(services, db)
 	initProbeEngine(services, db)
+	initRetentionEngine(services, db)
 }
 
 // initLicenseAndAPITokens wires the Phase D-2 license manager + API
@@ -306,6 +308,39 @@ func initProbeEngine(services *ServiceContainer, db *database.DB) {
 // it checks whether any registered Job is due. Production default
 // 5s; tests can run faster via direct scheduler.New construction.
 const probeSchedulerTick = 5 * time.Second
+
+// initRetentionEngine constructs the unified retention engine and
+// registers V1.0 sources (probe_results, metrics). The engine is
+// tier-aware — it reads license.Manager on each pass — so in-place
+// license upgrades take effect on the next tick.
+//
+// V1.0 NMS expansion — Stage A2.
+func initRetentionEngine(services *ServiceContainer, db *database.DB) {
+	engine := retention.New(licenseTierAdapter{lm: services.Auth.License}, logging.GetLogger())
+	engine.Register(retention.NewProbeResultsSource(db))
+	engine.Register(retention.NewMetricsSource(db))
+	services.Probe.Retention = engine
+}
+
+// licenseTierAdapter satisfies retention.TierProvider by reading the
+// active tier from license.Manager.GetState(). nil-safe — falls
+// back to TierFree when no license manager is wired.
+type licenseTierAdapter struct {
+	lm *license.Manager
+}
+
+// GetTier returns the active tier, defaulting to Free when the
+// license manager or its state is unavailable.
+func (a licenseTierAdapter) GetTier() license.Tier {
+	if a.lm == nil {
+		return license.TierFree
+	}
+	state := a.lm.GetState()
+	if state == nil {
+		return license.TierFree
+	}
+	return state.Tier
+}
 
 // initHealthServices wires the previously-dead health subsystem
 // (Scorer, SLATracker, AnomalyDetector, DependencyMgr) into the

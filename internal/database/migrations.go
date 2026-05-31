@@ -1665,6 +1665,76 @@ func getMigrationDefs() []migrationDef {
 			DROP TABLE IF EXISTS cert_observations;
 		`,
 		},
+		{
+			// Stage A2.1 (2026-05-31) — add target_kind + target_id to
+			// the metrics tables. interface_name is preserved as a
+			// backwards-compat column; new writes set both. The
+			// retention engine and tier-aware history queries use
+			// (target_kind, target_id) going forward; legacy callers
+			// still see interface_name.
+			//
+			// See SEED_ARCHITECTURE.md section 3.2 — Metrics.
+			Description: "Add target_kind + target_id to metrics tables",
+			Up: `
+			ALTER TABLE metrics ADD COLUMN target_kind TEXT NOT NULL DEFAULT 'interface';
+			ALTER TABLE metrics ADD COLUMN target_id TEXT NOT NULL DEFAULT '';
+			ALTER TABLE metrics_hourly ADD COLUMN target_kind TEXT NOT NULL DEFAULT 'interface';
+			ALTER TABLE metrics_hourly ADD COLUMN target_id TEXT NOT NULL DEFAULT '';
+			ALTER TABLE metrics_daily ADD COLUMN target_kind TEXT NOT NULL DEFAULT 'interface';
+			ALTER TABLE metrics_daily ADD COLUMN target_id TEXT NOT NULL DEFAULT '';
+
+			UPDATE metrics SET target_id = interface_name WHERE target_id = '';
+			UPDATE metrics_hourly SET target_id = interface_name WHERE target_id = '';
+			UPDATE metrics_daily SET target_id = interface_name WHERE target_id = '';
+
+			CREATE INDEX IF NOT EXISTS idx_metrics_target ON metrics(target_kind, target_id);
+			CREATE INDEX IF NOT EXISTS idx_metrics_hourly_target ON metrics_hourly(target_kind, target_id, hour_bucket);
+			CREATE INDEX IF NOT EXISTS idx_metrics_daily_target ON metrics_daily(target_kind, target_id, day_bucket);
+		`,
+		},
+		{
+			// Stage A2.1 — probe-result rollup tables. Parallel to
+			// metrics_hourly/daily; aggregated by (client_id, kind,
+			// probe_id) over hour/day buckets. The retention engine
+			// rolls probe_results into these tables and tier-purges
+			// raw probe_results past 7 days.
+			Description: "Create probe_rollups_hourly + probe_rollups_daily",
+			Up: `
+			CREATE TABLE IF NOT EXISTS probe_rollups_hourly (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+				kind TEXT NOT NULL,
+				probe_id TEXT NOT NULL,
+				hour_bucket TEXT NOT NULL,
+				sample_count INTEGER NOT NULL,
+				success_count INTEGER NOT NULL,
+				avg_latency_ms REAL,
+				min_latency_ms REAL,
+				max_latency_ms REAL,
+				p95_latency_ms REAL,
+				UNIQUE(client_id, kind, probe_id, hour_bucket)
+			);
+			CREATE INDEX IF NOT EXISTS idx_probe_rollups_hourly_bucket ON probe_rollups_hourly(hour_bucket);
+			CREATE INDEX IF NOT EXISTS idx_probe_rollups_hourly_probe ON probe_rollups_hourly(probe_id, hour_bucket);
+
+			CREATE TABLE IF NOT EXISTS probe_rollups_daily (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+				kind TEXT NOT NULL,
+				probe_id TEXT NOT NULL,
+				day_bucket TEXT NOT NULL,
+				sample_count INTEGER NOT NULL,
+				success_count INTEGER NOT NULL,
+				avg_latency_ms REAL,
+				min_latency_ms REAL,
+				max_latency_ms REAL,
+				p95_latency_ms REAL,
+				UNIQUE(client_id, kind, probe_id, day_bucket)
+			);
+			CREATE INDEX IF NOT EXISTS idx_probe_rollups_daily_bucket ON probe_rollups_daily(day_bucket);
+			CREATE INDEX IF NOT EXISTS idx_probe_rollups_daily_probe ON probe_rollups_daily(probe_id, day_bucket);
+		`,
+		},
 	}
 }
 
