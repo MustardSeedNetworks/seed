@@ -314,7 +314,7 @@ func initProbeEngine(services *ServiceContainer, db *database.DB) {
 
 	services.Probe.Engine = probeEngine
 	services.Probe.Scheduler = sched
-	if regErr := services.Engines.Register(probeEngine); regErr != nil {
+	if regErr := registerEngineIfLicensed(services, probeEngine); regErr != nil {
 		logging.GetLogger().Warn("probe engine registry registration failed", "error", regErr)
 	}
 }
@@ -344,7 +344,7 @@ func initListeners(services *ServiceContainer, db *database.DB) {
 		})
 		if err != nil {
 			logger.Warn("syslog listener init failed", "error", err)
-		} else if regErr := services.Engines.Register(l); regErr != nil {
+		} else if regErr := registerEngineIfLicensed(services, l); regErr != nil {
 			logger.Warn("syslog listener registry registration failed", "error", regErr)
 		}
 	}
@@ -357,7 +357,7 @@ func initListeners(services *ServiceContainer, db *database.DB) {
 		})
 		if err != nil {
 			logger.Warn("snmp trap listener init failed", "error", err)
-		} else if regErr := services.Engines.Register(l); regErr != nil {
+		} else if regErr := registerEngineIfLicensed(services, l); regErr != nil {
 			logger.Warn("snmp trap listener registry registration failed", "error", regErr)
 		}
 	}
@@ -400,7 +400,7 @@ func initSNMPPoller(services *ServiceContainer, db *database.DB) {
 		logger.Warn("snmp poller init failed", "error", err)
 		return
 	}
-	if regErr := services.Engines.Register(poller); regErr != nil {
+	if regErr := registerEngineIfLicensed(services, poller); regErr != nil {
 		logger.Warn("snmp poller registry registration failed", "error", regErr)
 	}
 }
@@ -422,7 +422,7 @@ func initTopologyReconcilers(services *ServiceContainer, db *database.DB) {
 		Observations: obs, Nodes: topo, Settings: settings, Logger: logger,
 	}); err != nil {
 		logger.Warn("sysinfo reconciler init failed", "error", err)
-	} else if regErr := services.Engines.Register(r); regErr != nil {
+	} else if regErr := registerEngineIfLicensed(services, r); regErr != nil {
 		logger.Warn("sysinfo reconciler registry registration failed", "error", regErr)
 	}
 
@@ -430,7 +430,7 @@ func initTopologyReconcilers(services *ServiceContainer, db *database.DB) {
 		Observations: obs, Store: topo, Settings: settings, Logger: logger,
 	}); err != nil {
 		logger.Warn("iftable reconciler init failed", "error", err)
-	} else if regErr := services.Engines.Register(r); regErr != nil {
+	} else if regErr := registerEngineIfLicensed(services, r); regErr != nil {
 		logger.Warn("iftable reconciler registry registration failed", "error", regErr)
 	}
 
@@ -438,7 +438,7 @@ func initTopologyReconcilers(services *ServiceContainer, db *database.DB) {
 		Observations: obs, Store: topo, Settings: settings, Logger: logger,
 	}); err != nil {
 		logger.Warn("edge reconciler init failed", "error", err)
-	} else if regErr := services.Engines.Register(r); regErr != nil {
+	} else if regErr := registerEngineIfLicensed(services, r); regErr != nil {
 		logger.Warn("edge reconciler registry registration failed", "error", regErr)
 	}
 
@@ -446,7 +446,7 @@ func initTopologyReconcilers(services *ServiceContainer, db *database.DB) {
 		Observations: obs, Store: topo, Settings: settings, Logger: logger,
 	}); err != nil {
 		logger.Warn("arp reconciler init failed", "error", err)
-	} else if regErr := services.Engines.Register(r); regErr != nil {
+	} else if regErr := registerEngineIfLicensed(services, r); regErr != nil {
 		logger.Warn("arp reconciler registry registration failed", "error", regErr)
 	}
 }
@@ -468,7 +468,7 @@ func initAlertPipelines(services *ServiceContainer, db *database.DB) {
 		Events: db.ListenerEvents(), Alerts: alerts, Settings: settings, Logger: logger,
 	}); err != nil {
 		logger.Warn("listener alert pipeline init failed", "error", err)
-	} else if regErr := services.Engines.Register(p); regErr != nil {
+	} else if regErr := registerEngineIfLicensed(services, p); regErr != nil {
 		logger.Warn("listener alert pipeline registry registration failed", "error", regErr)
 	}
 
@@ -476,7 +476,7 @@ func initAlertPipelines(services *ServiceContainer, db *database.DB) {
 		Observations: db.SNMPObservations(), Alerts: alerts, Settings: settings, Logger: logger,
 	}); err != nil {
 		logger.Warn("observation alert pipeline init failed", "error", err)
-	} else if regErr := services.Engines.Register(p); regErr != nil {
+	} else if regErr := registerEngineIfLicensed(services, p); regErr != nil {
 		logger.Warn("observation alert pipeline registry registration failed", "error", regErr)
 	}
 }
@@ -495,7 +495,7 @@ func initRetentionEngine(services *ServiceContainer, db *database.DB) {
 	retentionEngine.Register(retention.NewProbeResultsSource(db))
 	retentionEngine.Register(retention.NewMetricsSource(db))
 	services.Probe.Retention = retentionEngine
-	if regErr := services.Engines.Register(retentionEngine); regErr != nil {
+	if regErr := registerEngineIfLicensed(services, retentionEngine); regErr != nil {
 		logging.GetLogger().Warn("retention engine registry registration failed", "error", regErr)
 	}
 }
