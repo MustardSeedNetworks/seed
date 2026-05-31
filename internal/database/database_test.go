@@ -115,6 +115,218 @@ func TestMigrations(t *testing.T) {
 	}
 }
 
+// TestStageA12ProbeArtifacts asserts that the Stage A1.2 unified
+// probe schema landed correctly: probes and probe_results tables
+// exist with the expected columns.
+func TestStageA12ProbeArtifacts(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	tables := map[string][]string{
+		"probes": {
+			"id", "client_id", "kind", "display_name", "target",
+			"params_json", "interval_seconds", "enabled",
+			"warning_json", "critical_json", "created_at", "updated_at",
+		},
+		"probe_results": {
+			"id", "probe_id", "client_id", "kind", "timestamp",
+			"success", "latency_ms", "error", "metadata_json",
+		},
+	}
+	for tbl, cols := range tables {
+		for _, col := range cols {
+			assertHasColumn(t, db, tbl, col)
+		}
+	}
+}
+
+// TestClientRepository_CRUD covers Create, Get, GetBySlug, Update,
+// List, Count, Delete on the clients table. The seeded default
+// client is the starting state.
+func TestClientRepository_CRUD(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Clients()
+
+	// Default client is present from migration.
+	defaultClient, err := repo.Get(ctx, database.DefaultClientID)
+	require.NoError(t, err)
+	if defaultClient.Slug != "default" {
+		t.Errorf("default client slug = %q, want %q", defaultClient.Slug, "default")
+	}
+
+	// Create a new client.
+	acme := &database.Client{
+		Name: "Acme Corp",
+		Slug: "acme-corp",
+	}
+	if createErr := repo.Create(ctx, acme); createErr != nil {
+		t.Fatalf("create client: %v", createErr)
+	}
+	if acme.ID == "" {
+		t.Fatal("client id not assigned after Create")
+	}
+
+	// Duplicate slug rejected.
+	dup := &database.Client{Name: "Acme 2", Slug: "acme-corp"}
+	if dupErr := repo.Create(ctx, dup); !errors.Is(dupErr, database.ErrClientSlugExists) {
+		t.Errorf("duplicate slug should return ErrClientSlugExists, got %v", dupErr)
+	}
+
+	// Get by slug.
+	got, err := repo.GetBySlug(ctx, "acme-corp")
+	require.NoError(t, err)
+	if got.ID != acme.ID {
+		t.Errorf("got.ID = %q, want %q", got.ID, acme.ID)
+	}
+
+	// Update.
+	acme.Name = "Acme Corporation"
+	if updErr := repo.Update(ctx, acme); updErr != nil {
+		t.Fatalf("update client: %v", updErr)
+	}
+	got, err = repo.Get(ctx, acme.ID)
+	require.NoError(t, err)
+	if got.Name != "Acme Corporation" {
+		t.Errorf("updated name = %q, want %q", got.Name, "Acme Corporation")
+	}
+
+	// List returns default + acme.
+	all, err := repo.List(ctx)
+	require.NoError(t, err)
+	if len(all) != 2 {
+		t.Errorf("list returned %d clients, want 2", len(all))
+	}
+
+	// Count.
+	count, err := repo.Count(ctx)
+	require.NoError(t, err)
+	if count != 2 {
+		t.Errorf("count = %d, want 2", count)
+	}
+
+	// Cannot delete default client.
+	if delErr := repo.Delete(ctx, database.DefaultClientID); delErr == nil {
+		t.Error("deleting default client should fail")
+	}
+
+	// Delete acme.
+	if delErr := repo.Delete(ctx, acme.ID); delErr != nil {
+		t.Errorf("delete acme: %v", delErr)
+	}
+
+	// Get after delete returns ErrClientNotFound.
+	if _, getErr := repo.Get(ctx, acme.ID); !errors.Is(getErr, database.ErrClientNotFound) {
+		t.Errorf("get deleted client should return ErrClientNotFound, got %v", getErr)
+	}
+}
+
+// TestProbeRepository_CRUDAndResults covers basic probe lifecycle
+// and result append+query.
+func TestProbeRepository_CRUDAndResults(t *testing.T) {
+	db, cleanup := testDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	repo := db.Probes()
+
+	// Create a probe in the default client.
+	p := &database.Probe{
+		Kind:            "dns",
+		DisplayName:     "google.com A",
+		Target:          "google.com",
+		ParamsJSON:      `{"record_type":"A"}`,
+		IntervalSeconds: 60,
+		Enabled:         true,
+		WarningJSON:     `{"latency_ms":100}`,
+		CriticalJSON:    `{"latency_ms":500}`,
+	}
+	if createErr := repo.CreateProbe(ctx, p); createErr != nil {
+		t.Fatalf("create probe: %v", createErr)
+	}
+	if p.ID == "" {
+		t.Fatal("probe id not assigned")
+	}
+	if p.ClientID != database.DefaultClientID {
+		t.Errorf("probe ClientID = %q, want %q", p.ClientID, database.DefaultClientID)
+	}
+
+	// Get round-trips fields.
+	got, err := repo.GetProbe(ctx, p.ID)
+	require.NoError(t, err)
+	if got.Kind != "dns" || got.Target != "google.com" {
+		t.Errorf("get returned wrong kind/target: %+v", got)
+	}
+	if got.ParamsJSON != `{"record_type":"A"}` {
+		t.Errorf("get returned wrong params: %q", got.ParamsJSON)
+	}
+	if !got.Enabled {
+		t.Error("probe should be enabled")
+	}
+
+	// Update.
+	got.IntervalSeconds = 30
+	got.DisplayName = "google.com fast"
+	if updErr := repo.UpdateProbe(ctx, got); updErr != nil {
+		t.Fatalf("update probe: %v", updErr)
+	}
+	updated, err := repo.GetProbe(ctx, p.ID)
+	require.NoError(t, err)
+	if updated.IntervalSeconds != 30 || updated.DisplayName != "google.com fast" {
+		t.Errorf("update did not persist: %+v", updated)
+	}
+
+	// Record two results.
+	r1 := &database.ProbeResult{
+		ProbeID:   p.ID,
+		Kind:      "dns",
+		Success:   true,
+		LatencyMs: 12.5,
+	}
+	if recErr := repo.RecordResult(ctx, r1); recErr != nil {
+		t.Fatalf("record result 1: %v", recErr)
+	}
+	r2 := &database.ProbeResult{
+		ProbeID:   p.ID,
+		Kind:      "dns",
+		Success:   false,
+		LatencyMs: 0,
+		Error:     "NXDOMAIN",
+	}
+	if recErr := repo.RecordResult(ctx, r2); recErr != nil {
+		t.Fatalf("record result 2: %v", recErr)
+	}
+
+	// Query returns 2 results.
+	results, err := repo.QueryResults(ctx, database.ProbeQueryOptions{
+		ClientID: database.DefaultClientID,
+		ProbeID:  p.ID,
+	})
+	require.NoError(t, err)
+	if len(results) != 2 {
+		t.Errorf("expected 2 results, got %d", len(results))
+	}
+
+	// Count.
+	count, err := repo.CountProbes(ctx, database.DefaultClientID, "")
+	require.NoError(t, err)
+	if count != 1 {
+		t.Errorf("count = %d, want 1", count)
+	}
+
+	// Delete probe cascades probe_results.
+	if delErr := repo.DeleteProbe(ctx, p.ID); delErr != nil {
+		t.Fatalf("delete probe: %v", delErr)
+	}
+	results, err = repo.QueryResults(ctx, database.ProbeQueryOptions{ProbeID: p.ID})
+	require.NoError(t, err)
+	if len(results) != 0 {
+		t.Errorf("expected 0 results after probe deletion, got %d", len(results))
+	}
+}
+
 // TestStageA11ClientsArtifacts asserts that the Stage A1.1
 // multi-tenancy foundation landed correctly: the clients table
 // exists with the seeded default row, and every targeted table

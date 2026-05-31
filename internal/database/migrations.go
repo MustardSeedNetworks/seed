@@ -1071,6 +1071,68 @@ func getMigrationDefs() []migrationDef {
 			CREATE INDEX IF NOT EXISTS idx_network_problems_client ON network_problems(client_id);
 		`,
 		},
+		{
+			// Stage A1.2 (2026-05-30) — unified probe config table. One
+			// row per configured probe; kind selects the registered
+			// Checker implementation; params_json carries kind-specific
+			// configuration. See SEED_ARCHITECTURE.md section 3.1.
+			//
+			// V1.0 kinds: dns, tls, ping, tcp, udp, http, https, rtsp,
+			// dicom, hl7, fhir, lti, ldap, opcua, modbus, ntp, sip,
+			// dot1x, cable, transaction. Adding a new kind is a new
+			// Checker implementation in internal/probe/checkers/ — no
+			// schema change required.
+			Description: "Create probes config table (unified probe engine)",
+			Up: `
+			CREATE TABLE IF NOT EXISTS probes (
+				id TEXT PRIMARY KEY,
+				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+				kind TEXT NOT NULL,
+				display_name TEXT NOT NULL,
+				target TEXT NOT NULL,
+				params_json TEXT,
+				interval_seconds INTEGER NOT NULL DEFAULT 60,
+				enabled INTEGER NOT NULL DEFAULT 1,
+				warning_json TEXT,
+				critical_json TEXT,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_probes_client ON probes(client_id);
+			CREATE INDEX IF NOT EXISTS idx_probes_kind ON probes(kind);
+			CREATE INDEX IF NOT EXISTS idx_probes_enabled ON probes(enabled);
+			CREATE INDEX IF NOT EXISTS idx_probes_client_kind ON probes(client_id, kind);
+		`,
+		},
+		{
+			// Stage A1.2 — unified probe results table. Receives every
+			// probe.Result emitted by the engine. Coexists with
+			// health_check_results during the A1.3 checker port; once
+			// all checkers are ported and HealthCheckRepository is
+			// retired, A1.5 drops health_check_results.
+			Description: "Create probe_results table (unified probe results)",
+			Up: `
+			CREATE TABLE IF NOT EXISTS probe_results (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				probe_id TEXT NOT NULL,
+				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+				kind TEXT NOT NULL,
+				timestamp TEXT NOT NULL,
+				success INTEGER NOT NULL,
+				latency_ms REAL,
+				error TEXT,
+				metadata_json TEXT,
+				FOREIGN KEY (probe_id) REFERENCES probes(id) ON DELETE CASCADE
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_probe_results_probe ON probe_results(probe_id);
+			CREATE INDEX IF NOT EXISTS idx_probe_results_client ON probe_results(client_id);
+			CREATE INDEX IF NOT EXISTS idx_probe_results_kind ON probe_results(kind);
+			CREATE INDEX IF NOT EXISTS idx_probe_results_timestamp ON probe_results(timestamp);
+			CREATE INDEX IF NOT EXISTS idx_probe_results_client_kind_ts ON probe_results(client_id, kind, timestamp);
+		`,
+		},
 	}
 }
 

@@ -72,6 +72,8 @@ type DB struct {
 	logs         *LogRepository
 	healthChecks *HealthCheckRepository
 	discovery    *DiscoveryRepository
+	clients      *ClientRepository
+	probes       *ProbeRepository
 }
 
 // Config holds database configuration options.
@@ -444,6 +446,32 @@ func (db *DB) Discovery() *DiscoveryRepository {
 		db.discovery = &DiscoveryRepository{db: db}
 	}
 	return db.discovery
+}
+
+// Clients returns the client repository (Stage A1.1 multi-tenancy
+// foundation). The seeded default client is the fallback for
+// single-tenant deployments.
+func (db *DB) Clients() *ClientRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.clients == nil {
+		db.clients = &ClientRepository{db: db}
+	}
+	return db.clients
+}
+
+// Probes returns the probe repository (Stage A1.2 unified probe
+// engine foundation). Handles probes config + probe_results;
+// future probe_rollups_hourly / probe_rollups_daily land in Stage A2.
+func (db *DB) Probes() *ProbeRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.probes == nil {
+		db.probes = &ProbeRepository{db: db}
+	}
+	return db.probes
 }
 
 // Exec executes a query without returning any rows.
