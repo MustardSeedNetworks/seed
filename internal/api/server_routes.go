@@ -34,6 +34,7 @@ func (s *Server) setupTopologyRoutes() {
 	s.mux.HandleFunc(APIVersionPrefix+"/topology/nodes", s.handleTopologyNodes)
 	s.mux.HandleFunc(APIVersionPrefix+"/topology/nodes/", s.handleTopologyNodeByID)
 	s.mux.HandleFunc(APIVersionPrefix+"/topology/links", s.handleTopologyLinks)
+	s.mux.HandleFunc(APIVersionPrefix+"/topology/arp", s.handleTopologyARP)
 
 	// Stage A5.2 — alerts API. GET is read-only; the action endpoint
 	// is writeGated so only operator+ can ack/resolve.
