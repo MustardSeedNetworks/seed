@@ -65,8 +65,8 @@ func (s *Server) handleAlerts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, r, map[string]any{
-		"count":  len(alerts),
-		"alerts": encodeAlerts(alerts),
+		jsonKeyCount: len(alerts),
+		"alerts":     encodeAlerts(alerts),
 	})
 }
 

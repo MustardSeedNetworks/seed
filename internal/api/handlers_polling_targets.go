@@ -90,8 +90,8 @@ func (s *Server) listPollingTargets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, r, map[string]any{
-		"count":   len(targets),
-		"targets": encodePollingTargets(targets),
+		jsonKeyCount: len(targets),
+		"targets":    encodePollingTargets(targets),
 	})
 }
 
@@ -242,12 +242,12 @@ func encodePollingTarget(t *database.PollingTarget) map[string]any {
 	row := map[string]any{
 		"id":                  t.ID,
 		"clientId":            t.ClientID,
-		"name":                t.Name,
+		jsonKeyName:           t.Name,
 		"ipAddress":           t.IPAddress,
 		"snmpVersion":         t.SNMPVersion,
 		"credentialsId":       t.CredentialsID,
 		"pollIntervalSeconds": t.PollIntervalSec,
-		"enabled":             t.Enabled,
+		jsonKeyEnabled:        t.Enabled,
 		"collectorChain":      t.CollectorChain,
 		"lastStatus":          t.LastStatus,
 		"lastError":           t.LastError,
