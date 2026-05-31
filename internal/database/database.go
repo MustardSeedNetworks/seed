@@ -77,6 +77,7 @@ type DB struct {
 	pollingTargets   *PollingTargetRepository
 	snmpObservations *SNMPObservationsRepository
 	listenerEvents   *ListenerEventsRepository
+	topology         *TopologyRepository
 }
 
 // Config holds database configuration options.
@@ -515,6 +516,19 @@ func (db *DB) ListenerEvents() *ListenerEventsRepository {
 		db.listenerEvents = &ListenerEventsRepository{db: db}
 	}
 	return db.listenerEvents
+}
+
+// Topology returns the topology repository (Stage A4). Reconcilers
+// in internal/topology own writes; the operator UI + alert rules
+// own reads.
+func (db *DB) Topology() *TopologyRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.topology == nil {
+		db.topology = &TopologyRepository{db: db}
+	}
+	return db.topology
 }
 
 // Exec executes a query without returning any rows.
