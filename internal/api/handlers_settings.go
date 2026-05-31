@@ -116,8 +116,8 @@ func buildCardSettings() map[string]any {
 		"healthChecks": defaultCard, "networkDiscovery": defaultCard,
 		"performance": map[string]any{
 			"visible": true, "autoRunOnLink": true,
-			"speedtest": map[string]any{"enabled": true, "autoRunOnLink": true},
-			"iperf":     map[string]any{"enabled": false, "autoRunOnLink": false},
+			"speedtest": map[string]any{jsonKeyEnabled: true, "autoRunOnLink": true},
+			"iperf":     map[string]any{jsonKeyEnabled: false, "autoRunOnLink": false},
 		},
 	}
 }
@@ -132,7 +132,7 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 			"current":   s.config.Interface.Default,
 			"available": []string{},
 		},
-		"vlan":       map[string]any{"enabled": s.config.VLAN.Enabled, "id": s.config.VLAN.ID},
+		"vlan":       map[string]any{jsonKeyEnabled: s.config.VLAN.Enabled, "id": s.config.VLAN.ID},
 		"ip":         map[string]any{"mode": s.config.IP.Mode},
 		"thresholds": s.buildThresholdSettings(),
 		"healthChecks": map[string]any{

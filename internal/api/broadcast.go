@@ -384,7 +384,7 @@ func addServiceStatusToResult(result map[string]any, status *discovery.ServiceSt
 			"inProgress":    status.ProfilingStatus.InProgress,
 			"totalProfiled": status.ProfilingStatus.TotalProfiled,
 			"queueLength":   status.ProfilingStatus.QueueLength,
-			"enabled":       status.ProfilingStatus.Enabled,
+			jsonKeyEnabled:  status.ProfilingStatus.Enabled,
 			"scanIntensity": status.ProfilingStatus.ScanIntensity,
 		}
 	}

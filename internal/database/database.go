@@ -78,6 +78,7 @@ type DB struct {
 	snmpObservations *SNMPObservationsRepository
 	listenerEvents   *ListenerEventsRepository
 	topology         *TopologyRepository
+	alertRules       *AlertRulesRepository
 }
 
 // Config holds database configuration options.
@@ -529,6 +530,20 @@ func (db *DB) Topology() *TopologyRepository {
 		db.topology = &TopologyRepository{db: db}
 	}
 	return db.topology
+}
+
+// AlertRules returns the alert-rules repository (Stage A5.10).
+// Operators CRUD rules here; the listener pipeline reads them on
+// each scan and falls back to the hardcoded DefaultListenerRules
+// when the table is empty.
+func (db *DB) AlertRules() *AlertRulesRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.alertRules == nil {
+		db.alertRules = &AlertRulesRepository{db: db}
+	}
+	return db.alertRules
 }
 
 // Exec executes a query without returning any rows.

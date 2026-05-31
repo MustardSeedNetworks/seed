@@ -1861,6 +1861,40 @@ func getMigrationDefs() []migrationDef {
 		`,
 		},
 		{
+			// Stage A5.10 — operator-defined alert rules. The
+			// hardcoded rule set in
+			// internal/alerts/pipeline/listener_pipeline.go is the
+			// fallback; rules in this table are applied first.
+			//
+			// Match fields are intentionally simple for V1.0:
+			//   match_kind             listener event kind (or "" = any)
+			//   match_severity         listener severity (or "" = any)
+			//   match_payload_contains substring check on payload_json
+			//
+			// Alert fields drive the row written into the alerts
+			// table; title/message support {{.SourceAddr}} etc.
+			// via text/template.
+			Description: "Create alert_rules for operator-defined rules",
+			Up: `
+			CREATE TABLE IF NOT EXISTS alert_rules (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				name TEXT NOT NULL UNIQUE,
+				enabled INTEGER NOT NULL DEFAULT 1,
+				match_kind TEXT,
+				match_severity TEXT,
+				match_payload_contains TEXT,
+				alert_type TEXT NOT NULL,
+				alert_severity TEXT NOT NULL,
+				alert_title TEXT NOT NULL,
+				alert_message TEXT NOT NULL,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_alert_rules_enabled ON alert_rules(enabled);
+		`,
+		},
+		{
 			// Stage A4.4 — ARP binding store. Reconciled from arp
 			// observations; one row per (source_node, ifIndex, IP).
 			// mac_address is indexed because the reconciler joins

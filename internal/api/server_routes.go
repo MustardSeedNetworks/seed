@@ -52,6 +52,12 @@ func (s *Server) setupTopologyRoutes() {
 	// Stage A5.8 — read-only engine registry surface. Useful for
 	// the operator UI's "what's running" pane and for ops debugging.
 	s.mux.HandleFunc(APIVersionPrefix+"/engines", s.handleEngines)
+
+	// Stage A5.10 — operator-defined alert rules. Both endpoints
+	// writeGated because the collection accepts POST and any
+	// resource-level mutation requires the operator+ role.
+	s.mux.HandleFunc(APIVersionPrefix+"/alert-rules", s.writeGated(s.handleAlertRules))
+	s.mux.HandleFunc(APIVersionPrefix+"/alert-rules/", s.writeGated(s.handleAlertRuleByID))
 }
 
 // setupAPITokenRoutes registers the Phase D-2 personal-access-token

@@ -282,8 +282,8 @@ func formatTime(t time.Time) string {
 // every topology list endpoint.
 func writeTopologyJSON(w http.ResponseWriter, r *http.Request, key string, payload any) {
 	writeJSON(w, r, map[string]any{
-		"count": lenOf(payload),
-		key:     payload,
+		jsonKeyCount: lenOf(payload),
+		key:          payload,
 	})
 }
 

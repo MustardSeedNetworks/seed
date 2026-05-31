@@ -141,7 +141,7 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 
 	if s.vulnScanner() == nil {
 		sendJSONResponse(w, logger, http.StatusServiceUnavailable, map[string]any{
-			"enabled": false,
+			jsonKeyEnabled: false,
 		})
 		return
 	}
@@ -149,7 +149,7 @@ func (s *Server) handleVulnerabilityStatus(w http.ResponseWriter, r *http.Reques
 	stats := s.vulnScanner().GetStats()
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"enabled":        true,
+		jsonKeyEnabled:   true,
 		"scanning":       s.vulnScanner().IsRunning(),
 		"stats":          stats,
 		"severityFilter": s.config.Security.VulnerabilityScanning.SeverityThreshold,

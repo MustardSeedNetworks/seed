@@ -6,7 +6,7 @@ package api
 // 2 alert pipelines, plus any opt-in listeners).
 //
 //   GET /api/v1/engines
-//     -> { "count": N, "engines": [{ "name": "..." }, ...] }
+//     -> { jsonKeyCount: N, "engines": [{ jsonKeyName: "..." }, ...] }
 //
 // The endpoint deliberately does NOT expose per-engine status or
 // last-tick timestamps for V1.0 — the engine.Engine interface
@@ -26,16 +26,16 @@ func (s *Server) handleEngines(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if s.services == nil || s.services.Engines == nil {
-		writeJSON(w, r, map[string]any{"count": 0, "engines": []any{}})
+		writeJSON(w, r, map[string]any{jsonKeyCount: 0, "engines": []any{}})
 		return
 	}
 	engines := s.services.Engines.Engines()
 	out := make([]map[string]any, 0, len(engines))
 	for _, e := range engines {
-		out = append(out, map[string]any{"name": e.Name()})
+		out = append(out, map[string]any{jsonKeyName: e.Name()})
 	}
 	writeJSON(w, r, map[string]any{
-		"count":   len(out),
-		"engines": out,
+		jsonKeyCount: len(out),
+		"engines":    out,
 	})
 }
