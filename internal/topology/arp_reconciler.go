@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/krisarmstrong/seed/internal/engine"
 )
 
 // ARPReconcilerName is the engine identifier.
@@ -42,9 +43,11 @@ type ARPReconciler struct {
 	logger   *slog.Logger
 	now      func() time.Time
 	interval time.Duration
+	tracker  *tickTracker
 
 	mu      sync.Mutex
 	started bool
+	stopped bool
 	cancel  context.CancelFunc
 	wg      sync.WaitGroup
 }
@@ -78,11 +81,20 @@ func NewARPReconciler(cfg ARPConfig) (*ARPReconciler, error) {
 		logger:   d.logger,
 		now:      d.now,
 		interval: d.interval,
+		tracker:  newTickTracker(d.interval, d.now),
 	}, nil
 }
 
 // Name implements [engine.Engine].
 func (*ARPReconciler) Name() string { return ARPReconcilerName }
+
+// Status implements [engine.Reporter].
+func (r *ARPReconciler) Status() engine.Status {
+	r.mu.Lock()
+	stopped := r.stopped
+	r.mu.Unlock()
+	return r.tracker.status(stopped)
+}
 
 // Start kicks off the reconcile loop. Idempotent.
 func (r *ARPReconciler) Start(ctx context.Context) error {
@@ -108,6 +120,7 @@ func (r *ARPReconciler) Stop(ctx context.Context) error {
 		return nil
 	}
 	r.started = false
+	r.stopped = true
 	if r.cancel != nil {
 		r.cancel()
 	}
@@ -148,6 +161,12 @@ func (r *ARPReconciler) loop(ctx context.Context) {
 
 // ReconcileOnce processes one batch of new arp observations.
 func (r *ARPReconciler) ReconcileOnce(ctx context.Context) error {
+	err := r.reconcileOnceInner(ctx)
+	r.tracker.recordTick(err)
+	return err
+}
+
+func (r *ARPReconciler) reconcileOnceInner(ctx context.Context) error {
 	since, err := r.loadHighWater(ctx)
 	if err != nil {
 		return fmt.Errorf("load high-water: %w", err)
