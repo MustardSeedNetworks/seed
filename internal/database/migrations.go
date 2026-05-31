@@ -1860,6 +1860,32 @@ func getMigrationDefs() []migrationDef {
 			CREATE INDEX IF NOT EXISTS idx_topology_interfaces_last_seen ON topology_interfaces(last_seen);
 		`,
 		},
+		{
+			// Stage A4.4 — ARP binding store. Reconciled from arp
+			// observations; one row per (source_node, ifIndex, IP).
+			// mac_address is indexed because the reconciler joins
+			// against topology_nodes.primary_mac to backfill node
+			// identity (IP-to-MAC -> MAC matches a node's chassis ->
+			// IP becomes node.primary_ip).
+			Description: "Create topology_arp_bindings",
+			Up: `
+			CREATE TABLE IF NOT EXISTS topology_arp_bindings (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
+				source_node_id TEXT NOT NULL REFERENCES topology_nodes(id) ON DELETE CASCADE,
+				if_index INTEGER NOT NULL,
+				ip_address TEXT NOT NULL,
+				mac_address TEXT NOT NULL,
+				media_type INTEGER,
+				last_seen TEXT NOT NULL,
+				UNIQUE(source_node_id, if_index, ip_address)
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_arp_bindings_mac ON topology_arp_bindings(mac_address);
+			CREATE INDEX IF NOT EXISTS idx_arp_bindings_ip ON topology_arp_bindings(ip_address);
+			CREATE INDEX IF NOT EXISTS idx_arp_bindings_last_seen ON topology_arp_bindings(last_seen);
+		`,
+		},
 	}
 }
 
