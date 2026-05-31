@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.206.0](https://github.com/krisarmstrong/seed/compare/v0.205.0...v0.206.0) (2026-05-31)
+
+
+### Features
+
+* **api:** wire probe engine into server lifecycle (Stage A1.8) ([#1326](https://github.com/krisarmstrong/seed/issues/1326)) ([cbdacac](https://github.com/krisarmstrong/seed/commit/cbdacacc3fd7fb52a48543980b53226e0484fd3d))
+* **db:** drop superseded dns_monitors / ssl_monitors / cert_observations (Stage A1.9) ([#1327](https://github.com/krisarmstrong/seed/issues/1327)) ([0fd3e11](https://github.com/krisarmstrong/seed/commit/0fd3e11c6249be7bf428d84e5b4cdaa08fd0c9f4))
+* **probe:** engine lifecycle - storage + scheduler + RunNow (Stage A1.3b) ([#1325](https://github.com/krisarmstrong/seed/issues/1325)) ([0ed1138](https://github.com/krisarmstrong/seed/commit/0ed113883b274fbb00e467a794086123c06929a6))
+* **probe:** ping checker via TCP fallback (Stage A1.7 - 1 of N) ([#1328](https://github.com/krisarmstrong/seed/issues/1328)) ([93590dc](https://github.com/krisarmstrong/seed/commit/93590dc1be42295aa6fa6f30e4fa94781eb1c382))
+* V1.0 unified architecture foundation (Stage A0 + A1.1-A1.5) ([#1323](https://github.com/krisarmstrong/seed/issues/1323)) ([6004b02](https://github.com/krisarmstrong/seed/commit/6004b02d3e1ae4e8237014206151259c5de83ea0))
+
+
+### Bug Fixes
+
+* **e2e:** drop .or() in 401 test - strict-mode violation when both render ([#1322](https://github.com/krisarmstrong/seed/issues/1322)) ([d00719b](https://github.com/krisarmstrong/seed/commit/d00719b357740e719e3643ed679426d0b571d44e))
+* **e2e:** drop top-level theme-toggle smoke test from seed ([#1297](https://github.com/krisarmstrong/seed/issues/1297)) ([f4d44ea](https://github.com/krisarmstrong/seed/commit/f4d44ea25b55571f06e33d758cab00279a0f4b14))
+* **e2e:** mock /api/v1/sap/gateway + add NetworkPage help + race-free FAB keyboard test ([#1321](https://github.com/krisarmstrong/seed/issues/1321)) ([3443d99](https://github.com/krisarmstrong/seed/commit/3443d9974481f6309ddd1f92f91a263e188692f2))
+* **e2e:** override storageState for 4 login-form error-scenarios ([#1316](https://github.com/krisarmstrong/seed/issues/1316)) ([26451bb](https://github.com/krisarmstrong/seed/commit/26451bbed33f5121d6dc2311cfb4948f35bf5373))
+* **e2e:** route gateway + dashboard card tests to the right pages ([#1315](https://github.com/krisarmstrong/seed/issues/1315)) ([0484ce2](https://github.com/krisarmstrong/seed/commit/0484ce2655684ae6e88cf612fee81b0b58bfebaf))
+* **ui:** logout synchronously clears legacy localStorage keys ([#1317](https://github.com/krisarmstrong/seed/issues/1317)) ([7233b8c](https://github.com/krisarmstrong/seed/commit/7233b8c5d6ba2a6aec1a0c601f6affc19f835291))
+
 ## [0.205.0](https://github.com/krisarmstrong/seed/compare/v0.204.0...v0.205.0) (2026-05-30)
 
 
