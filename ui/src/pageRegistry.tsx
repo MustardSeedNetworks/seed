@@ -13,6 +13,7 @@ import {
   Route,
   ScrollText,
   Server,
+  ServerCog,
   Shield,
   Wifi,
 } from 'lucide-react';
@@ -36,6 +37,9 @@ const ReportsPage = lazy(() =>
   import('./pages/ReportsPage').then((m) => ({ default: m.ReportsPage })),
 );
 const LogsPage = lazy(() => import('./pages/LogsPage').then((m) => ({ default: m.LogsPage })));
+const PollingTargetsPage = lazy(() =>
+  import('./pages/PollingTargetsPage').then((m) => ({ default: m.PollingTargetsPage })),
+);
 
 export interface PageConfig {
   path: string;
@@ -110,5 +114,13 @@ export const pages: PageConfig[] = [
     description: 'Live log stream and daemon system health.',
     icon: ScrollText,
     component: LogsPage,
+  },
+  {
+    path: '/polling-targets',
+    label: 'Polling targets',
+    title: 'Polling targets',
+    description: 'SNMP-polled devices and their collector chains.',
+    icon: ServerCog,
+    component: PollingTargetsPage,
   },
 ];
