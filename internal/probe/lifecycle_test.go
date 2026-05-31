@@ -103,11 +103,10 @@ func (f *fakeScheduler) Unregister(id string) bool {
 	return present
 }
 
-func (f *fakeScheduler) Start(_ context.Context) error {
+func (f *fakeScheduler) Start(_ context.Context) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.started = true
-	return nil
 }
 
 func (f *fakeScheduler) Stop() {

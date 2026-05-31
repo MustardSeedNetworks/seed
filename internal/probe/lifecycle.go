@@ -30,7 +30,7 @@ type probeStorage interface {
 type probeScheduler interface {
 	Register(j scheduler.Job)
 	Unregister(id string) bool
-	Start(ctx context.Context) error
+	Start(ctx context.Context)
 	Stop()
 }
 
@@ -79,10 +79,7 @@ func (e *Engine) Start(ctx context.Context) error {
 		e.jobIDs = append(e.jobIDs, job.ID())
 	}
 
-	if startErr := sched.Start(ctx); startErr != nil {
-		return fmt.Errorf("scheduler start: %w", startErr)
-	}
-
+	sched.Start(ctx)
 	e.started = true
 	e.logger.InfoContext(ctx, "probe engine started",
 		"probes_scheduled", len(e.jobIDs),

@@ -14,6 +14,8 @@ import (
 	"github.com/krisarmstrong/seed/internal/netif"
 	"github.com/krisarmstrong/seed/internal/oauth"
 	"github.com/krisarmstrong/seed/internal/pipeline/publicip"
+	"github.com/krisarmstrong/seed/internal/probe"
+	"github.com/krisarmstrong/seed/internal/scheduler"
 	"github.com/krisarmstrong/seed/internal/services/cable"
 	"github.com/krisarmstrong/seed/internal/services/discovery"
 	"github.com/krisarmstrong/seed/internal/services/dns"
@@ -33,6 +35,7 @@ type ServiceContainer struct {
 	Network   *NetworkServices
 	Discovery *DiscoveryServices
 	Sap       *SapServices
+	Probe     *ProbeServices
 	Canopy    *CanopyServices
 	Roots     *RootsServices
 	RealTime  *RealTimeServices
@@ -49,6 +52,7 @@ func NewServiceContainer() *ServiceContainer {
 		Network:   &NetworkServices{},
 		Discovery: &DiscoveryServices{},
 		Sap:       &SapServices{},
+		Probe:     &ProbeServices{},
 		Canopy:    &CanopyServices{},
 		Roots:     &RootsServices{},
 		RealTime:  &RealTimeServices{},
@@ -128,6 +132,22 @@ type SapServices struct {
 	Iperf         *iperf.Manager
 	Cable         *cable.Tester
 	PublicIP      *publicip.Checker
+}
+
+// ProbeServices groups the unified probe engine + its substrate.
+// The engine schedules and dispatches every probe-style observation
+// (DNS, TLS, PING, TCP, UDP, HTTP, HTTPS, RTSP, DICOM, HL7, FHIR,
+// LTI, LDAP, OPCUA, MODBUS, NTP, SIP, 802.1X, cable, transaction)
+// and emits ResultEvents to subscribers (alerts pipeline).
+//
+// V1.0 NMS expansion — Stage A1.8 wires the engine into the
+// production server lifecycle. Stage A1.7 will absorb the
+// remaining 11 internal/api/health_checks_*.go checkers; until
+// then the engine runs in parallel and handles only the kinds
+// registered (DNS, TLS in V1.0 baseline).
+type ProbeServices struct {
+	Engine    *probe.Engine
+	Scheduler *scheduler.Scheduler
 }
 
 // CanopyServices groups Canopy module services (Wi-Fi planning).

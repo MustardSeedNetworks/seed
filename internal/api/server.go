@@ -26,6 +26,9 @@ import (
 	"github.com/krisarmstrong/seed/internal/oauth"
 	"github.com/krisarmstrong/seed/internal/paths"
 	"github.com/krisarmstrong/seed/internal/pipeline/publicip"
+	"github.com/krisarmstrong/seed/internal/probe"
+	"github.com/krisarmstrong/seed/internal/probe/checkers"
+	"github.com/krisarmstrong/seed/internal/scheduler"
 	"github.com/krisarmstrong/seed/internal/services/cable"
 	"github.com/krisarmstrong/seed/internal/services/discovery"
 	"github.com/krisarmstrong/seed/internal/services/dns"
@@ -244,8 +247,14 @@ func NewServer(
 // is populated. Splits into per-concern helpers to keep each scope
 // focused and to keep NewServer under the funlen limit.
 func initDatabaseDependentServices(services *ServiceContainer, db *database.DB) {
+	if db == nil {
+		// Tests construct a Server without a DB; skip the
+		// database-dependent wiring entirely rather than crash.
+		return
+	}
 	initLicenseAndAPITokens(services, db)
 	initHealthServices(services, db)
+	initProbeEngine(services, db)
 }
 
 // initLicenseAndAPITokens wires the Phase D-2 license manager + API
@@ -262,6 +271,34 @@ func initLicenseAndAPITokens(services *ServiceContainer, db *database.DB) {
 	}
 	services.Auth.License = lm
 }
+
+// initProbeEngine constructs the unified probe.Engine, wires it to
+// the probes table and a fresh scheduler, registers V1.0 baseline
+// Checkers (DNS + TLS), and parks it in services.Probe for the
+// lifecycle to Start. The engine is *not* started here — that
+// happens in Server.Start so probes don't run during partial
+// service-container construction.
+//
+// V1.0 NMS expansion — Stage A1.8.
+func initProbeEngine(services *ServiceContainer, db *database.DB) {
+	sched := scheduler.New(probeSchedulerTick)
+
+	engine := probe.NewEngine(logging.GetLogger()).
+		WithStorage(db.Probes(), sched)
+
+	// Register V1.0 baseline checkers. Stage A1.7 will absorb the
+	// remaining 11 internal/api/health_checks_*.go kinds.
+	engine.RegisterChecker(checkers.NewDNSChecker())
+	engine.RegisterChecker(checkers.NewTLSChecker())
+
+	services.Probe.Engine = engine
+	services.Probe.Scheduler = sched
+}
+
+// probeSchedulerTick is the scheduler's tick interval — how often
+// it checks whether any registered Job is due. Production default
+// 5s; tests can run faster via direct scheduler.New construction.
+const probeSchedulerTick = 5 * time.Second
 
 // initHealthServices wires the previously-dead health subsystem
 // (Scorer, SLATracker, AnomalyDetector, DependencyMgr) into the
