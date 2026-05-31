@@ -25,24 +25,19 @@ func TestHandleEngines_ReturnsRegistryContents(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	// 9 engines from initDatabaseDependentServices (verified by
-	// the wire-up test in server_a4_engines_internal_test.go).
-	const wantCount = 9
-	if resp.Count != wantCount {
-		t.Errorf("count = %d, want %d", resp.Count, wantCount)
-	}
+	// initDatabaseDependentServices wires a Free-tier
+	// license.Manager (no key file in tests), so Stage A5.9
+	// gating filters out everything above Free. The Free-tier
+	// engines (probe + retention) land.
 	names := map[string]bool{}
 	for _, e := range resp.Engines {
 		if n, ok := e["name"].(string); ok {
 			names[n] = true
 		}
 	}
-	for _, expected := range []string{
-		"probe", "retention", "snmp-poller",
-		"topology-sysinfo-reconciler", "alert-listener-pipeline",
-	} {
+	for _, expected := range []string{"probe", "retention"} {
 		if !names[expected] {
-			t.Errorf("missing engine %q in response", expected)
+			t.Errorf("missing free-tier engine %q in response; got %v", expected, names)
 		}
 	}
 }
