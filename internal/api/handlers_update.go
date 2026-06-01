@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/update"
 )
@@ -56,19 +57,19 @@ type UpdateConfigRequest struct {
 
 // registerUpdateRoutes registers update-related HTTP routes.
 func (s *Server) registerUpdateRoutes() {
-	// Update check endpoints
-	s.mux.HandleFunc("GET /api/v1/updates/check", s.handleUpdateCheck)
-	s.mux.HandleFunc("GET /api/v1/updates/status", s.handleUpdateStatus)
-	s.mux.HandleFunc("GET /api/v1/updates/info", s.handleUpdateInfo)
-
-	// Update actions — mutate system state, so operator-or-above only (#1226).
-	s.mux.HandleFunc("POST /api/v1/updates/download", s.writeGated(s.handleUpdateDownload))
-	s.mux.HandleFunc("POST /api/v1/updates/apply", s.writeGated(s.handleUpdateApply))
-	s.mux.HandleFunc("POST /api/v1/updates/rollback", s.writeGated(s.handleUpdateRollback))
-
-	// Configuration
-	s.mux.HandleFunc("GET /api/v1/updates/config", s.handleGetUpdateConfig)
-	s.mux.HandleFunc("PATCH /api/v1/updates/config", s.writeGated(s.handleUpdateConfig))
+	op := database.RoleOperator
+	// These use Go 1.22 method-prefixed patterns; the method is part of the path.
+	s.registerAll([]route{
+		{path: "GET /api/v1/updates/check", handler: s.handleUpdateCheck},
+		{path: "GET /api/v1/updates/status", handler: s.handleUpdateStatus},
+		{path: "GET /api/v1/updates/info", handler: s.handleUpdateInfo},
+		// Update actions mutate system state → operator-or-above only (#1226).
+		{path: "POST /api/v1/updates/download", handler: s.handleUpdateDownload, minRole: op},
+		{path: "POST /api/v1/updates/apply", handler: s.handleUpdateApply, minRole: op},
+		{path: "POST /api/v1/updates/rollback", handler: s.handleUpdateRollback, minRole: op},
+		{path: "GET /api/v1/updates/config", handler: s.handleGetUpdateConfig},
+		{path: "PATCH /api/v1/updates/config", handler: s.handleUpdateConfig, minRole: op},
+	})
 }
 
 // handleUpdateCheck checks for available updates.
