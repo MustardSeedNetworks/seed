@@ -23,7 +23,6 @@ import (
 	"github.com/krisarmstrong/seed/internal/netif"
 	"github.com/krisarmstrong/seed/internal/paths"
 	"github.com/krisarmstrong/seed/internal/services"
-	"github.com/krisarmstrong/seed/internal/services/shell"
 )
 
 const (
@@ -244,7 +243,6 @@ func initializeModulesForService(cfg *config.Config, db *database.DB) *api.Modul
 	modules := &api.Modules{}
 
 	modules.Sap = services.New(cfg, db)
-	modules.Shell = shell.New(cfg, db)
 	modules.Canopy = canopy.New(cfg, db)
 	modules.Harvest = app.NewHarvest(cfg, db)
 
