@@ -555,15 +555,10 @@ export interface ProfileImportRequest {
   overwrite?: boolean;
 }
 
-/**
- * ProfileImportResponse is returned after importing profiles.
- */
-export interface ProfileImportResponse {
-  created: number;
-  updated: number;
-  skipped: number;
-  errors?: string[];
-}
+// ProfileImportResponse now comes from the generated schema (code-first
+// contract): src/types/generated/profile-import-response.ts. ProfileImportRequest
+// stays here until Phase 3 — it carries an opaque json.RawMessage config that
+// has no generated transport DTO yet.
 
 /**
  * ProfileExportResponse is returned when exporting profiles.

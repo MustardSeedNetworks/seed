@@ -20,11 +20,11 @@ import {
   useSwitchProfileMutation,
   useUpdateProfileMutation,
 } from '../stores/profileQueries';
+import type { ProfileImportResponse } from '../types/generated/profile-import-response';
 import type {
   Profile,
   ProfileExportResponse,
   ProfileImportRequest,
-  ProfileImportResponse,
   ProfileRequest,
 } from '../types/profile';
 

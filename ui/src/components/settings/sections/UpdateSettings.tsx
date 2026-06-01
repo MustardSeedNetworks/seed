@@ -225,7 +225,7 @@ export const UpdateSettings: React.NamedExoticComponent<UpdateSettingsProps> = m
                 </div>
               ) : null}
 
-              {updateInfo.downloadSize > 0 ? (
+              {updateInfo.downloadSize ? (
                 <div className="body-small text-text-secondary">
                   {t('updates.downloadSize', 'Size')}: {formatBytes(updateInfo.downloadSize)}
                 </div>
