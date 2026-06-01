@@ -12,7 +12,7 @@ import (
 func TestAnalysisService_Creation(t *testing.T) {
 	t.Parallel()
 
-	svc := roots.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil)
 	if svc == nil {
 		t.Fatal("NewAnalysisService() returned nil")
 	}
@@ -116,7 +116,7 @@ func TestAnalysisService_ExportAnalyzeHops(t *testing.T) {
 		},
 	}
 
-	svc := roots.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -240,7 +240,7 @@ func TestAnalysisService_ExportDetectBottleneck(t *testing.T) {
 		},
 	}
 
-	svc := roots.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -403,7 +403,7 @@ func TestAnalysisService_ExportCalculateScore(t *testing.T) {
 		},
 	}
 
-	svc := roots.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -538,7 +538,7 @@ func TestAnalysisService_AnalyzePath_Comprehensive(t *testing.T) {
 		},
 	}
 
-	svc := roots.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
