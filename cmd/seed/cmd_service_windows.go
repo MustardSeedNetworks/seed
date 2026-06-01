@@ -21,7 +21,6 @@ import (
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/netif"
 	"github.com/krisarmstrong/seed/internal/paths"
-	"github.com/krisarmstrong/seed/internal/services"
 )
 
 const (
@@ -241,7 +240,6 @@ func initializeDatabaseForService(cfg *config.Config) *database.DB {
 func initializeModulesForService(cfg *config.Config, db *database.DB) *api.Modules {
 	modules := &api.Modules{}
 
-	modules.Sap = services.New(cfg, db)
 	modules.Harvest = app.NewHarvest(cfg, db)
 
 	return modules
