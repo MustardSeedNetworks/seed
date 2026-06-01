@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/ip-settings-response.schema.json",
+  "$ref": "#/$defs/IPSettingsResponse",
+  "$defs": {
+    "IPSettingsResponse": {
+      "properties": {
+        "mode": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "netmask": {
+          "type": "string"
+        },
+        "gateway": {
+          "type": "string"
+        },
+        "dns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "mode"
+      ]
+    }
+  },
+  "title": "IPSettingsResponse",
+  "description": "IPSettingsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

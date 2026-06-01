@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/vlan-traffic-response.schema.json",
+  "$ref": "#/$defs/VLANTrafficResponse",
+  "$defs": {
+    "VLANTrafficEntry": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "packets": {
+          "type": "integer"
+        },
+        "bytes": {
+          "type": "integer"
+        },
+        "lastSeen": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "packets",
+        "bytes",
+        "lastSeen"
+      ]
+    },
+    "VLANTrafficResponse": {
+      "properties": {
+        "vlans": {
+          "items": {
+            "$ref": "#/$defs/VLANTrafficEntry"
+          },
+          "type": "array"
+        },
+        "running": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "vlans",
+        "running"
+      ]
+    }
+  },
+  "title": "VLANTrafficResponse",
+  "description": "VLANTrafficResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

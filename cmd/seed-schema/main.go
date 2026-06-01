@@ -50,6 +50,7 @@ func schemaTargets() []schemaTarget {
 	t := requestSchemaTargets()
 	t = append(t, coreResponseSchemaTargets()...)
 	t = append(t, networkResponseSchemaTargets()...)
+	t = append(t, networkSettingsSchemaTargets()...)
 	return t
 }
 
@@ -142,6 +143,53 @@ func networkResponseSchemaTargets() []schemaTarget {
 			filename: "problem-scan-response.schema.json",
 			title:    "ProblemScanResponse",
 		},
+	}
+}
+
+// networkSettingsSchemaTargets are flat / self-contained SAP + network
+// settings DTOs (Phase 2). Every entry is either flat or nests only local,
+// purpose-built transport sub-structs defined in internal/api (e.g.
+// VLANTrafficEntry, PoEInfo, SFPInfo, the already-covered SpeedtestResponse) —
+// no internal domain types cross the wire. DTOs that nest domain types
+// (PathResponse→discovery, RogueServersResponse→dhcp, DNSResponse) or compose
+// other top-level responses (OptionsResponse) are deferred to Phase 3, where
+// they get hand-designed flat transport DTOs.
+func networkSettingsSchemaTargets() []schemaTarget {
+	return []schemaTarget{
+		{value: &api.IPSettingsRequest{}, filename: "ip-settings-request.schema.json", title: "IPSettingsRequest"},
+		{
+			value:    &api.IPSettingsResponse{},
+			filename: "ip-settings-response.schema.json",
+			title:    "IPSettingsResponse",
+		},
+		{value: &api.SubnetRequest{}, filename: "subnet-request.schema.json", title: "SubnetRequest"},
+		{value: &api.SubnetResponse{}, filename: "subnet-response.schema.json", title: "SubnetResponse"},
+		{
+			value:    &api.VLANInterfaceRequest{},
+			filename: "vlan-interface-request.schema.json",
+			title:    "VLANInterfaceRequest",
+		},
+		{
+			value:    &api.VLANTrafficResponse{},
+			filename: "vlan-traffic-response.schema.json",
+			title:    "VLANTrafficResponse",
+		},
+		{
+			value:    &api.SpeedtestStatusResponse{},
+			filename: "speedtest-status-response.schema.json",
+			title:    "SpeedtestStatusResponse",
+		},
+		{
+			value:    &api.RogueDHCPConfigResponse{},
+			filename: "rogue-dhcp-config-response.schema.json",
+			title:    "RogueDHCPConfigResponse",
+		},
+		{
+			value:    &api.DNSServerResponse{},
+			filename: "dns-server-response.schema.json",
+			title:    "DNSServerResponse",
+		},
+		{value: &api.LinkResponse{}, filename: "link-response.schema.json", title: "LinkResponse"},
 	}
 }
 
