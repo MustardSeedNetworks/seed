@@ -1,0 +1,15 @@
+status: 200
+headers:
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-Xss-Protection: 1; mode=block
+body:
+{
+  "buildTime": "\u003cvolatile\u003e",
+  "commit": "\u003cvolatile\u003e",
+  "tlsFingerprint": "",
+  "uiBuildHash": "\u003cvolatile\u003e",
+  "version": "\u003cvolatile\u003e"
+}
