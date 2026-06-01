@@ -304,21 +304,30 @@ func (s *Server) register(rt Route) { /* … */ s.manifest = append(s.manifest, 
 
 Greenfield bonus: normalize the gating-order divergences directly — no preserve-and-flag ceremony.
 
-### 5.2 Contract-first boundary
+### 5.2 Contract boundary — code-first (ADR-0003, amended)
 
-**Problem killed:** ~5% of routes are schema-generated; the rest (and the
-~1,300 LOC Profile/Settings types) are hand-typed twice → silent drift.
+**Problem killed:** most request/response types are hand-typed *twice* (the
+~1,300 LOC Profile/Settings types worst of all) with no enforced link → silent drift.
 
-**Change:** OpenAPI 3.1 in `contract/` is the source of truth. Generate Go
-transport DTOs (`oapi-codegen`, types mode) and the TS client (`openapi-typescript`).
-Greenfield → **author the API we want**; reverse-gen only as a starting draft, then
-refine without fear of breaking consumers.
+**Change (corrected from the original OpenAPI-first plan — see ADR-0003):** there is
+already a working, CI-gated **code-first** pipeline; the fix is *coverage*, not new
+tooling.
 
-- Transport DTOs live in `adapters/http`; handlers map DTO↔domain → modules never import contract types (purity preserved).
-- **Lint the spec with Spectral** in CI (consistent envelopes, RFC3339, pagination, error shape).
-- Extend the drift-gate pattern: `check-contract-drift.sh` regenerates and fails on diff.
-- Roll module-by-module (start with Sap — smallest, read-heavy). End state: delete hand-written `client.ts` and hand-maintained `profile.ts`/`settings.ts`.
-- Auto-publish a Redoc reference (gated) from the spec.
+```
+Go DTO ──seed-schema──► docs/schemas/api/*.schema.json ──gen-types──► ui generated TS
+   gated by check-schema-drift.sh + check-types-drift.sh
+```
+
+- **Go DTOs stay the single source of truth.** Widen `seed-schema`'s target list from
+  6 → all request/response DTOs; TS regenerates; drift fails CI.
+- **Delete hand-maintained TS twins** (`profile.ts`, `settings.ts`, hand-written
+  `client.ts` call sites) as each DTO is generated.
+- **OpenAPI is a deferred additive output**, not a rewrite: emit OpenAPI 3.1 from the
+  capability manifest (§5.1) + the schemas only when there's a reader (Redoc docs or a
+  third-party consumer). Non-breaking bolt-on, no rework. Mirrors the org's "API
+  versioning deferred until 3rd-party needs arise."
+- Rejected: hand-authored OpenAPI-first — discards working infra, adds a permanent
+  spec-vs-code sync burden for an API that currently serves only our own frontend.
 
 ### 5.3 Component lifecycle (`platform/lifecycle`)
 
@@ -708,7 +717,7 @@ allow-lists, the exact event catalog entries. Each is decided in its phase.
 |---|---|
 | [0001](decisions/0001-modulith-hexagon.md) | Modulith hexagon (modules / platform / adapters), not microservices, not layer-first |
 | [0002](decisions/0002-capability-registry.md) | Capability registry — authz/feature/rate-limit by construction |
-| [0003](decisions/0003-contract-first-boundary.md) | Contract-first OpenAPI boundary, generated both sides |
+| [0003](decisions/0003-contract-first-boundary.md) | Contract boundary — code-first (Go DTOs → schema → TS); OpenAPI deferred (amended) |
 | [0004](decisions/0004-event-bus.md) | In-process domain event bus for cross-module comms |
 | [0005](decisions/0005-unified-jobs.md) | Unified async job runner replacing per-feature run/status/cancel |
 | [0006](decisions/0006-migrations-sql-goose-strict.md) | Schema as embedded `.sql` files, run by goose, STRICT tables, single baseline |
