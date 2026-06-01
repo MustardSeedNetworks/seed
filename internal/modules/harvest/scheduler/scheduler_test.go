@@ -13,7 +13,7 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/harvest"
+	"github.com/krisarmstrong/seed/internal/modules/harvest"
 )
 
 // testDB creates a temporary database for testing.

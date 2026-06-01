@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/krisarmstrong/seed/internal/harvest/templates"
+	"github.com/krisarmstrong/seed/internal/modules/harvest/templates"
 )
 
 // ----------------------------------------------------------------------------
