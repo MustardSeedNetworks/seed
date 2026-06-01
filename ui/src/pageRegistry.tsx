@@ -8,6 +8,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
+  AlertTriangle,
   BarChart3,
   Bell,
   Network,
@@ -46,6 +47,9 @@ const TopologyPage = lazy(() =>
 );
 const AlertsPage = lazy(() =>
   import('./pages/AlertsPage').then((m) => ({ default: m.AlertsPage })),
+);
+const AlertRulesPage = lazy(() =>
+  import('./pages/AlertRulesPage').then((m) => ({ default: m.AlertRulesPage })),
 );
 
 export interface PageConfig {
@@ -145,5 +149,13 @@ export const pages: PageConfig[] = [
     description: 'Events emitted by the listener + observation pipelines.',
     icon: Bell,
     component: AlertsPage,
+  },
+  {
+    path: '/alert-rules',
+    label: 'Alert rules',
+    title: 'Alert rules',
+    description: 'Operator-defined rules feeding the listener pipeline.',
+    icon: AlertTriangle,
+    component: AlertRulesPage,
   },
 ];
