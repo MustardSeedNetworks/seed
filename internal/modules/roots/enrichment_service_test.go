@@ -1,4 +1,4 @@
-package pipeline_test
+package roots_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/pipeline"
+	"github.com/krisarmstrong/seed/internal/modules/roots"
 	"github.com/krisarmstrong/seed/internal/pipeline/publicip"
 )
 
@@ -17,27 +17,27 @@ func TestEnrichmentService_Creation(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		createFunc func() *pipeline.EnrichmentService
+		createFunc func() *roots.EnrichmentService
 		wantNil    bool
 	}{
 		{
 			name: "standard creation with nil config",
-			createFunc: func() *pipeline.EnrichmentService {
-				return pipeline.NewEnrichmentService(nil)
+			createFunc: func() *roots.EnrichmentService {
+				return roots.NewEnrichmentService(nil)
 			},
 			wantNil: false,
 		},
 		{
 			name: "creation with nil checker",
-			createFunc: func() *pipeline.EnrichmentService {
-				return pipeline.NewEnrichmentServiceWithChecker(nil, nil)
+			createFunc: func() *roots.EnrichmentService {
+				return roots.NewEnrichmentServiceWithChecker(nil, nil)
 			},
 			wantNil: false,
 		},
 		{
 			name: "creation with valid checker",
-			createFunc: func() *pipeline.EnrichmentService {
-				return pipeline.NewEnrichmentServiceWithChecker(nil, publicip.NewChecker())
+			createFunc: func() *roots.EnrichmentService {
+				return roots.NewEnrichmentServiceWithChecker(nil, publicip.NewChecker())
 			},
 			wantNil: false,
 		},
@@ -61,20 +61,20 @@ func TestEnrichmentService_Checker(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		createFunc     func() *pipeline.EnrichmentService
+		createFunc     func() *roots.EnrichmentService
 		wantNilChecker bool
 	}{
 		{
 			name: "standard service has checker",
-			createFunc: func() *pipeline.EnrichmentService {
-				return pipeline.NewEnrichmentService(nil)
+			createFunc: func() *roots.EnrichmentService {
+				return roots.NewEnrichmentService(nil)
 			},
 			wantNilChecker: false,
 		},
 		{
 			name: "nil checker service",
-			createFunc: func() *pipeline.EnrichmentService {
-				return pipeline.NewEnrichmentServiceWithChecker(nil, nil)
+			createFunc: func() *roots.EnrichmentService {
+				return roots.NewEnrichmentServiceWithChecker(nil, nil)
 			},
 			wantNilChecker: true,
 		},
@@ -97,7 +97,7 @@ func TestEnrichmentService_Checker(t *testing.T) {
 func TestEnrichmentService_Enrich_NilChecker(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewEnrichmentServiceWithChecker(nil, nil)
+	svc := roots.NewEnrichmentServiceWithChecker(nil, nil)
 	ctx := context.Background()
 
 	result, err := svc.Enrich(ctx, "8.8.8.8")
@@ -107,8 +107,8 @@ func TestEnrichmentService_Enrich_NilChecker(t *testing.T) {
 	if result != nil {
 		t.Errorf("Enrich() with nil checker should return nil result, got %+v", result)
 	}
-	if !errors.Is(err, pipeline.ErrNotInitialized) {
-		t.Errorf("error = %v, want %v", err, pipeline.ErrNotInitialized)
+	if !errors.Is(err, roots.ErrNotInitialized) {
+		t.Errorf("error = %v, want %v", err, roots.ErrNotInitialized)
 	}
 }
 
@@ -148,7 +148,7 @@ func TestEnrichmentService_Enrich_NotImplemented(t *testing.T) {
 		},
 	}
 
-	svc := pipeline.NewEnrichmentService(nil)
+	svc := roots.NewEnrichmentService(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -180,7 +180,7 @@ func TestEnrichmentService_Enrich_NotImplemented(t *testing.T) {
 func TestEnrichmentService_GetPublicIP_NilChecker(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewEnrichmentServiceWithChecker(nil, nil)
+	svc := roots.NewEnrichmentServiceWithChecker(nil, nil)
 	ctx := context.Background()
 
 	result, err := svc.GetPublicIP(ctx)
@@ -190,8 +190,8 @@ func TestEnrichmentService_GetPublicIP_NilChecker(t *testing.T) {
 	if result != nil {
 		t.Errorf("GetPublicIP() with nil checker should return nil result, got %+v", result)
 	}
-	if !errors.Is(err, pipeline.ErrNotInitialized) {
-		t.Errorf("error = %v, want %v", err, pipeline.ErrNotInitialized)
+	if !errors.Is(err, roots.ErrNotInitialized) {
+		t.Errorf("error = %v, want %v", err, roots.ErrNotInitialized)
 	}
 }
 
@@ -199,7 +199,7 @@ func TestEnrichmentService_GetPublicIP_NilChecker(t *testing.T) {
 func TestEnrichmentService_GetPublicIP_ContextCancellation(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewEnrichmentService(nil)
+	svc := roots.NewEnrichmentService(nil)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
 
@@ -213,7 +213,7 @@ func TestEnrichmentService_GetPublicIP_ContextCancellation(t *testing.T) {
 func TestEnrichmentService_GetPublicIP_ContextTimeout(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewEnrichmentService(nil)
+	svc := roots.NewEnrichmentService(nil)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	defer cancel()
 
@@ -233,160 +233,160 @@ func TestIPEnrichment_IndividualFields(t *testing.T) {
 	now := time.Now()
 	tests := []struct {
 		name       string
-		enrichment pipeline.IPEnrichment
-		checkFn    func(pipeline.IPEnrichment) bool
+		enrichment roots.IPEnrichment
+		checkFn    func(roots.IPEnrichment) bool
 		checkMsg   string
 	}{
 		{
 			name: "IP field",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				IP: "8.8.8.8",
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.IP == "8.8.8.8" },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.IP == "8.8.8.8" },
 			checkMsg: "IP should be 8.8.8.8",
 		},
 		{
 			name: "ASN field",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				ASN: 15169,
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.ASN == 15169 },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.ASN == 15169 },
 			checkMsg: "ASN should be 15169",
 		},
 		{
 			name: "ASName field",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				ASName: "GOOGLE",
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.ASName == "GOOGLE" },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.ASName == "GOOGLE" },
 			checkMsg: "ASName should be GOOGLE",
 		},
 		{
 			name: "ISP field",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				ISP: "Google LLC",
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.ISP == "Google LLC" },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.ISP == "Google LLC" },
 			checkMsg: "ISP should be Google LLC",
 		},
 		{
 			name: "Org field",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				Org: "Google LLC",
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.Org == "Google LLC" },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.Org == "Google LLC" },
 			checkMsg: "Org should be Google LLC",
 		},
 		{
 			name: "City field",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				City: "Mountain View",
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.City == "Mountain View" },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.City == "Mountain View" },
 			checkMsg: "City should be Mountain View",
 		},
 		{
 			name: "Region field",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				Region: "California",
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.Region == "California" },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.Region == "California" },
 			checkMsg: "Region should be California",
 		},
 		{
 			name: "Country field",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				Country: "United States",
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.Country == "United States" },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.Country == "United States" },
 			checkMsg: "Country should be United States",
 		},
 		{
 			name: "CountryCode field",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				CountryCode: "US",
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.CountryCode == "US" },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.CountryCode == "US" },
 			checkMsg: "CountryCode should be US",
 		},
 		{
 			name: "Latitude field",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				Latitude: 37.386,
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.Latitude == 37.386 },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.Latitude == 37.386 },
 			checkMsg: "Latitude should be 37.386",
 		},
 		{
 			name: "Longitude field",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				Longitude: -122.084,
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.Longitude == -122.084 },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.Longitude == -122.084 },
 			checkMsg: "Longitude should be -122.084",
 		},
 		{
 			name: "Timezone field",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				Timezone: "America/Los_Angeles",
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.Timezone == "America/Los_Angeles" },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.Timezone == "America/Los_Angeles" },
 			checkMsg: "Timezone should be America/Los_Angeles",
 		},
 		{
 			name: "IsProxy false",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				IsProxy: false,
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return !e.IsProxy },
+			checkFn:  func(e roots.IPEnrichment) bool { return !e.IsProxy },
 			checkMsg: "IsProxy should be false",
 		},
 		{
 			name: "IsProxy true",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				IsProxy: true,
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.IsProxy },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.IsProxy },
 			checkMsg: "IsProxy should be true",
 		},
 		{
 			name: "IsHosting false",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				IsHosting: false,
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return !e.IsHosting },
+			checkFn:  func(e roots.IPEnrichment) bool { return !e.IsHosting },
 			checkMsg: "IsHosting should be false",
 		},
 		{
 			name: "IsHosting true",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				IsHosting: true,
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.IsHosting },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.IsHosting },
 			checkMsg: "IsHosting should be true",
 		},
 		{
 			name: "IsTor false",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				IsTor: false,
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return !e.IsTor },
+			checkFn:  func(e roots.IPEnrichment) bool { return !e.IsTor },
 			checkMsg: "IsTor should be false",
 		},
 		{
 			name: "IsTor true",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				IsTor: true,
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.IsTor },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.IsTor },
 			checkMsg: "IsTor should be true",
 		},
 		{
 			name: "QueryTime field",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				QueryTime: now,
 			},
-			checkFn:  func(e pipeline.IPEnrichment) bool { return e.QueryTime.Equal(now) },
+			checkFn:  func(e roots.IPEnrichment) bool { return e.QueryTime.Equal(now) },
 			checkMsg: "QueryTime should equal now",
 		},
 	}
@@ -407,7 +407,7 @@ func TestIPEnrichment_AllFields(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now()
-	enrichment := pipeline.IPEnrichment{
+	enrichment := roots.IPEnrichment{
 		IP:          "8.8.8.8",
 		ASN:         15169,
 		ASName:      "GOOGLE",
@@ -481,7 +481,7 @@ func TestIPEnrichment_AllFields(t *testing.T) {
 func TestIPEnrichment_ZeroValues(t *testing.T) {
 	t.Parallel()
 
-	var enrichment pipeline.IPEnrichment
+	var enrichment roots.IPEnrichment
 
 	if enrichment.IP != "" {
 		t.Errorf("zero IP should be empty, got %q", enrichment.IP)

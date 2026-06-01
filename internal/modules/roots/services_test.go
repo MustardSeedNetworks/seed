@@ -1,4 +1,4 @@
-package pipeline_test
+package roots_test
 
 import (
 	"context"
@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/pipeline"
+	"github.com/krisarmstrong/seed/internal/modules/roots"
 )
 
 func TestNewAnalysisService(t *testing.T) {
-	svc := pipeline.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil, nil)
 	if svc == nil {
 		t.Fatal("NewAnalysisService() returned nil")
 	}
@@ -25,9 +25,9 @@ func TestAnalysisService_AnalyzePath(t *testing.T) {
 		},
 		{
 			name: "empty hops list",
-			result: &pipeline.TracerouteResult{
+			result: &roots.TracerouteResult{
 				Target:   "8.8.8.8",
-				Hops:     []pipeline.TracerouteHop{},
+				Hops:     []roots.TracerouteHop{},
 				Complete: true,
 			},
 			wantErr:        false,
@@ -38,9 +38,9 @@ func TestAnalysisService_AnalyzePath(t *testing.T) {
 		},
 		{
 			name: "single hop with low latency",
-			result: &pipeline.TracerouteResult{
+			result: &roots.TracerouteResult{
 				Target: "192.168.1.1",
-				Hops: []pipeline.TracerouteHop{
+				Hops: []roots.TracerouteHop{
 					{Number: 1, Address: net.ParseIP("192.168.1.1"), RTTMs: 1.0, Lost: false},
 				},
 				Complete: true,
@@ -53,9 +53,9 @@ func TestAnalysisService_AnalyzePath(t *testing.T) {
 		},
 		{
 			name: "multiple hops with increasing latency",
-			result: &pipeline.TracerouteResult{
+			result: &roots.TracerouteResult{
 				Target: "8.8.8.8",
-				Hops: []pipeline.TracerouteHop{
+				Hops: []roots.TracerouteHop{
 					{Number: 1, Address: net.ParseIP("192.168.1.1"), RTTMs: 1.0, Lost: false},
 					{Number: 2, Address: net.ParseIP("10.0.0.1"), RTTMs: 5.0, Lost: false},
 					{Number: 3, Address: net.ParseIP("172.16.0.1"), RTTMs: 10.0, Lost: false},
@@ -71,9 +71,9 @@ func TestAnalysisService_AnalyzePath(t *testing.T) {
 		},
 		{
 			name: "path with packet loss",
-			result: &pipeline.TracerouteResult{
+			result: &roots.TracerouteResult{
 				Target: "8.8.8.8",
-				Hops: []pipeline.TracerouteHop{
+				Hops: []roots.TracerouteHop{
 					{Number: 1, Address: net.ParseIP("192.168.1.1"), RTTMs: 1.0, Lost: false},
 					{Number: 2, Address: nil, RTTMs: 0, Lost: true},
 					{Number: 3, Address: net.ParseIP("10.0.0.1"), RTTMs: 10.0, Lost: false},
@@ -90,9 +90,9 @@ func TestAnalysisService_AnalyzePath(t *testing.T) {
 		},
 		{
 			name: "path with bottleneck",
-			result: &pipeline.TracerouteResult{
+			result: &roots.TracerouteResult{
 				Target: "8.8.8.8",
-				Hops: []pipeline.TracerouteHop{
+				Hops: []roots.TracerouteHop{
 					{Number: 1, Address: net.ParseIP("192.168.1.1"), RTTMs: 1.0, Lost: false},
 					{Number: 2, Address: net.ParseIP("10.0.0.1"), RTTMs: 5.0, Lost: false},
 					{Number: 3, Address: net.ParseIP("172.16.0.1"), RTTMs: 100.0, Lost: false}, // Bottleneck
@@ -108,9 +108,9 @@ func TestAnalysisService_AnalyzePath(t *testing.T) {
 		},
 		{
 			name: "path with high latency",
-			result: &pipeline.TracerouteResult{
+			result: &roots.TracerouteResult{
 				Target: "example.com",
-				Hops: []pipeline.TracerouteHop{
+				Hops: []roots.TracerouteHop{
 					{Number: 1, Address: net.ParseIP("192.168.1.1"), RTTMs: 50.0, Lost: false},
 					{Number: 2, Address: net.ParseIP("10.0.0.1"), RTTMs: 100.0, Lost: false},
 					{Number: 3, Address: net.ParseIP("172.16.0.1"), RTTMs: 150.0, Lost: false},
@@ -126,9 +126,9 @@ func TestAnalysisService_AnalyzePath(t *testing.T) {
 		},
 		{
 			name: "all hops lost",
-			result: &pipeline.TracerouteResult{
+			result: &roots.TracerouteResult{
 				Target: "unreachable.example",
-				Hops: []pipeline.TracerouteHop{
+				Hops: []roots.TracerouteHop{
 					{Number: 1, Lost: true},
 					{Number: 2, Lost: true},
 					{Number: 3, Lost: true},
@@ -143,7 +143,7 @@ func TestAnalysisService_AnalyzePath(t *testing.T) {
 		},
 	}
 
-	svc := pipeline.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil, nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -155,7 +155,7 @@ func TestAnalysisService_AnalyzePath(t *testing.T) {
 
 type analyzePathTestCase struct {
 	name           string
-	result         *pipeline.TracerouteResult
+	result         *roots.TracerouteResult
 	wantErr        bool
 	wantHops       int
 	wantScoreMin   int // minimum acceptable score
@@ -163,7 +163,7 @@ type analyzePathTestCase struct {
 	wantAnalysisOK bool
 }
 
-func assertAnalyzePathResult(t *testing.T, tc analyzePathTestCase, analysis *pipeline.PathAnalysis, err error) {
+func assertAnalyzePathResult(t *testing.T, tc analyzePathTestCase, analysis *roots.PathAnalysis, err error) {
 	t.Helper()
 
 	if (err != nil) != tc.wantErr {
@@ -195,7 +195,7 @@ func assertAnalyzePathResult(t *testing.T, tc analyzePathTestCase, analysis *pip
 func TestAnalysisService_AnalyzePath_PacketLoss(t *testing.T) {
 	tests := []struct {
 		name          string
-		hops          []pipeline.TracerouteHop
+		hops          []roots.TracerouteHop
 		wantLossMin   float64
 		wantLossMax   float64
 		wantAvgRTTMin float64
@@ -203,7 +203,7 @@ func TestAnalysisService_AnalyzePath_PacketLoss(t *testing.T) {
 	}{
 		{
 			name: "no packet loss",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, RTTMs: 10.0, Lost: false},
 				{Number: 2, RTTMs: 20.0, Lost: false},
 				{Number: 3, RTTMs: 30.0, Lost: false},
@@ -215,7 +215,7 @@ func TestAnalysisService_AnalyzePath_PacketLoss(t *testing.T) {
 		},
 		{
 			name: "50% packet loss",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, RTTMs: 10.0, Lost: false},
 				{Number: 2, Lost: true},
 				{Number: 3, RTTMs: 20.0, Lost: false},
@@ -228,7 +228,7 @@ func TestAnalysisService_AnalyzePath_PacketLoss(t *testing.T) {
 		},
 		{
 			name: "single responding hop",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, RTTMs: 50.0, Lost: false},
 				{Number: 2, Lost: true},
 				{Number: 3, Lost: true},
@@ -240,11 +240,11 @@ func TestAnalysisService_AnalyzePath_PacketLoss(t *testing.T) {
 		},
 	}
 
-	svc := pipeline.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil, nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := &pipeline.TracerouteResult{
+			result := &roots.TracerouteResult{
 				Target: "test",
 				Hops:   tt.hops,
 			}
@@ -278,12 +278,12 @@ func TestAnalysisService_AnalyzePath_PacketLoss(t *testing.T) {
 func TestAnalysisService_AnalyzePath_BottleneckDetection(t *testing.T) {
 	tests := []struct {
 		name               string
-		hops               []pipeline.TracerouteHop
+		hops               []roots.TracerouteHop
 		wantBottleneckHops []int // Expected hop numbers with bottlenecks
 	}{
 		{
 			name: "no bottleneck with gradual increase",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				// Use RTT values where each hop is less than 2x previous and increase is <50ms
 				{Number: 1, Address: net.ParseIP("192.168.1.1"), RTTMs: 40.0, Lost: false},
 				{Number: 2, Address: net.ParseIP("10.0.0.1"), RTTMs: 55.0, Lost: false},   // 1.37x, +15ms
@@ -293,7 +293,7 @@ func TestAnalysisService_AnalyzePath_BottleneckDetection(t *testing.T) {
 		},
 		{
 			name: "bottleneck with large RTT jump",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, Address: net.ParseIP("192.168.1.1"), RTTMs: 5.0, Lost: false},
 				{Number: 2, Address: net.ParseIP("10.0.0.1"), RTTMs: 10.0, Lost: false},
 				{Number: 3, Address: net.ParseIP("172.16.0.1"), RTTMs: 100.0, Lost: false}, // >50ms jump
@@ -302,7 +302,7 @@ func TestAnalysisService_AnalyzePath_BottleneckDetection(t *testing.T) {
 		},
 		{
 			name: "bottleneck with RTT doubling",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, Address: net.ParseIP("192.168.1.1"), RTTMs: 30.0, Lost: false},
 				{Number: 2, Address: net.ParseIP("10.0.0.1"), RTTMs: 70.0, Lost: false}, // >2x previous
 			},
@@ -310,7 +310,7 @@ func TestAnalysisService_AnalyzePath_BottleneckDetection(t *testing.T) {
 		},
 		{
 			name: "multiple bottlenecks",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, Address: net.ParseIP("192.168.1.1"), RTTMs: 1.0, Lost: false},
 				{Number: 2, Address: net.ParseIP("10.0.0.1"), RTTMs: 100.0, Lost: false}, // Bottleneck
 				{Number: 3, Address: net.ParseIP("172.16.0.1"), RTTMs: 110.0, Lost: false},
@@ -320,7 +320,7 @@ func TestAnalysisService_AnalyzePath_BottleneckDetection(t *testing.T) {
 		},
 		{
 			name: "bottleneck skips lost hops",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, Address: net.ParseIP("192.168.1.1"), RTTMs: 5.0, Lost: false},
 				{Number: 2, Lost: true},
 				{Number: 3, Address: net.ParseIP("10.0.0.1"), RTTMs: 100.0, Lost: false}, // Bottleneck
@@ -329,11 +329,11 @@ func TestAnalysisService_AnalyzePath_BottleneckDetection(t *testing.T) {
 		},
 	}
 
-	svc := pipeline.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil, nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := &pipeline.TracerouteResult{
+			result := &roots.TracerouteResult{
 				Target: "test",
 				Hops:   tt.hops,
 			}
@@ -372,12 +372,12 @@ func TestAnalysisService_AnalyzePath_BottleneckDetection(t *testing.T) {
 func TestAnalysisService_AnalyzePath_ScoreDescriptions(t *testing.T) {
 	tests := []struct {
 		name            string
-		hops            []pipeline.TracerouteHop
+		hops            []roots.TracerouteHop
 		wantDescription string
 	}{
 		{
 			name: "excellent path",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, RTTMs: 1.0, Lost: false},
 				{Number: 2, RTTMs: 2.0, Lost: false},
 			},
@@ -385,7 +385,7 @@ func TestAnalysisService_AnalyzePath_ScoreDescriptions(t *testing.T) {
 		},
 		{
 			name: "very poor path with total packet loss",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, Lost: true},
 				{Number: 2, Lost: true},
 				{Number: 3, Lost: true},
@@ -396,11 +396,11 @@ func TestAnalysisService_AnalyzePath_ScoreDescriptions(t *testing.T) {
 		},
 	}
 
-	svc := pipeline.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil, nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := &pipeline.TracerouteResult{
+			result := &roots.TracerouteResult{
 				Target: "test",
 				Hops:   tt.hops,
 			}
@@ -439,14 +439,14 @@ func TestScoreToDescription(t *testing.T) {
 		{score: 0, wantContain: "Very poor"},
 	}
 
-	svc := pipeline.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil, nil)
 
 	for _, tt := range tests {
 		t.Run("score_"+string(rune('0'+tt.score/10)), func(t *testing.T) {
 			// Create a path that roughly achieves this score
 			hops := createHopsForScore(tt.score)
 
-			result := &pipeline.TracerouteResult{
+			result := &roots.TracerouteResult{
 				Target: "test",
 				Hops:   hops,
 			}
@@ -457,7 +457,7 @@ func TestScoreToDescription(t *testing.T) {
 			}
 
 			// Verify description matches expected pattern
-			desc := pipeline.ExportScoreToDescription(analysis.Score)
+			desc := roots.ExportScoreToDescription(analysis.Score)
 			if desc == "" {
 				t.Error("scoreToDescription returned empty string")
 			}
@@ -466,10 +466,10 @@ func TestScoreToDescription(t *testing.T) {
 }
 
 // createHopsForScore creates a hop list that should approximately achieve the target score.
-func createHopsForScore(targetScore int) []pipeline.TracerouteHop {
+func createHopsForScore(targetScore int) []roots.TracerouteHop {
 	if targetScore >= 90 {
 		// Excellent: low latency, no packet loss
-		return []pipeline.TracerouteHop{
+		return []roots.TracerouteHop{
 			{Number: 1, RTTMs: 1.0, Lost: false},
 			{Number: 2, RTTMs: 2.0, Lost: false},
 		}
@@ -477,7 +477,7 @@ func createHopsForScore(targetScore int) []pipeline.TracerouteHop {
 
 	if targetScore >= 70 {
 		// Good: moderate latency
-		return []pipeline.TracerouteHop{
+		return []roots.TracerouteHop{
 			{Number: 1, RTTMs: 50.0, Lost: false},
 			{Number: 2, RTTMs: 80.0, Lost: false},
 			{Number: 3, RTTMs: 100.0, Lost: false},
@@ -486,7 +486,7 @@ func createHopsForScore(targetScore int) []pipeline.TracerouteHop {
 
 	if targetScore >= 50 {
 		// Fair: some packet loss or high latency
-		return []pipeline.TracerouteHop{
+		return []roots.TracerouteHop{
 			{Number: 1, RTTMs: 50.0, Lost: false},
 			{Number: 2, Lost: true},
 			{Number: 3, RTTMs: 100.0, Lost: false},
@@ -496,7 +496,7 @@ func createHopsForScore(targetScore int) []pipeline.TracerouteHop {
 
 	if targetScore >= 30 {
 		// Poor: significant packet loss
-		return []pipeline.TracerouteHop{
+		return []roots.TracerouteHop{
 			{Number: 1, RTTMs: 100.0, Lost: false},
 			{Number: 2, Lost: true},
 			{Number: 3, Lost: true},
@@ -505,7 +505,7 @@ func createHopsForScore(targetScore int) []pipeline.TracerouteHop {
 	}
 
 	// Very poor: mostly packet loss
-	return []pipeline.TracerouteHop{
+	return []roots.TracerouteHop{
 		{Number: 1, Lost: true},
 		{Number: 2, Lost: true},
 		{Number: 3, Lost: true},
@@ -515,13 +515,13 @@ func createHopsForScore(targetScore int) []pipeline.TracerouteHop {
 }
 
 func TestPathAnalysis_Fields(t *testing.T) {
-	analysis := pipeline.PathAnalysis{
+	analysis := roots.PathAnalysis{
 		Target:         "8.8.8.8",
 		Hops:           10,
 		AverageRTT:     25.5,
 		PacketLoss:     5.0,
 		ASNTransitions: 3,
-		Bottlenecks: []pipeline.PathBottleneck{
+		Bottlenecks: []roots.PathBottleneck{
 			{HopNumber: 5, Address: "10.0.0.1", RTTIncrease: 50.0, Reason: "Test"},
 		},
 		Analysis: "Good path quality",
@@ -555,7 +555,7 @@ func TestPathAnalysis_Fields(t *testing.T) {
 }
 
 func TestPathBottleneck_Fields(t *testing.T) {
-	bottleneck := pipeline.PathBottleneck{
+	bottleneck := roots.PathBottleneck{
 		HopNumber:   7,
 		Address:     "203.0.113.1",
 		RTTIncrease: 75.5,
@@ -577,7 +577,7 @@ func TestPathBottleneck_Fields(t *testing.T) {
 }
 
 func TestTracerouteHop_Fields(t *testing.T) {
-	hop := pipeline.TracerouteHop{
+	hop := roots.TracerouteHop{
 		Number:    5,
 		Address:   net.ParseIP("192.0.2.1"),
 		Hostname:  "router.example.com",
@@ -630,10 +630,10 @@ func TestTracerouteResult_Fields(t *testing.T) {
 	now := time.Now()
 	later := now.Add(5 * time.Second)
 
-	result := pipeline.TracerouteResult{
+	result := roots.TracerouteResult{
 		Target:     "google.com",
 		ResolvedIP: "142.250.80.46",
-		Hops: []pipeline.TracerouteHop{
+		Hops: []roots.TracerouteHop{
 			{Number: 1, RTTMs: 1.0},
 			{Number: 2, RTTMs: 5.0},
 		},
@@ -671,7 +671,7 @@ func TestTracerouteResult_Fields(t *testing.T) {
 }
 
 func TestTracerouteOptions_Fields(t *testing.T) {
-	opts := pipeline.TracerouteOptions{
+	opts := roots.TracerouteOptions{
 		MaxHops:     30,
 		Timeout:     2 * time.Second,
 		Probes:      3,
@@ -716,12 +716,12 @@ func TestRootsErrors(t *testing.T) {
 	}{
 		{
 			name: "ErrNotImplemented",
-			err:  pipeline.ErrNotImplemented,
+			err:  roots.ErrNotImplemented,
 			want: "not implemented: pending migration",
 		},
 		{
 			name: "ErrNotInitialized",
-			err:  pipeline.ErrNotInitialized,
+			err:  roots.ErrNotInitialized,
 			want: "service not initialized",
 		},
 	}
@@ -742,7 +742,7 @@ func TestRootsErrors(t *testing.T) {
 func TestNewEnrichmentService(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewEnrichmentService(nil)
+	svc := roots.NewEnrichmentService(nil)
 	if svc == nil {
 		t.Fatal("NewEnrichmentService() returned nil")
 	}
@@ -757,14 +757,14 @@ func TestEnrichmentService_GetPublicIP(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		setupSvc   func() *pipeline.EnrichmentService
+		setupSvc   func() *roots.EnrichmentService
 		wantErr    bool
 		errContain string
 	}{
 		{
 			name: "nil checker returns error",
-			setupSvc: func() *pipeline.EnrichmentService {
-				return pipeline.NewEnrichmentServiceWithChecker(nil, nil)
+			setupSvc: func() *roots.EnrichmentService {
+				return roots.NewEnrichmentServiceWithChecker(nil, nil)
 			},
 			wantErr:    true,
 			errContain: "not initialized",
@@ -809,15 +809,15 @@ func TestEnrichmentService_Enrich(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		setupSvc   func() *pipeline.EnrichmentService
+		setupSvc   func() *roots.EnrichmentService
 		ip         string
 		wantErr    bool
 		errContain string
 	}{
 		{
 			name: "nil checker returns error",
-			setupSvc: func() *pipeline.EnrichmentService {
-				return pipeline.NewEnrichmentServiceWithChecker(nil, nil)
+			setupSvc: func() *roots.EnrichmentService {
+				return roots.NewEnrichmentServiceWithChecker(nil, nil)
 			},
 			ip:         "8.8.8.8",
 			wantErr:    true,
@@ -825,8 +825,8 @@ func TestEnrichmentService_Enrich(t *testing.T) {
 		},
 		{
 			name: "arbitrary IP returns not implemented",
-			setupSvc: func() *pipeline.EnrichmentService {
-				return pipeline.NewEnrichmentService(nil)
+			setupSvc: func() *roots.EnrichmentService {
+				return roots.NewEnrichmentService(nil)
 			},
 			ip:         "192.0.2.1",
 			wantErr:    true,
@@ -871,7 +871,7 @@ func TestIPEnrichment_StructFields(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now()
-	enrichment := pipeline.IPEnrichment{
+	enrichment := roots.IPEnrichment{
 		IP:          "8.8.8.8",
 		ASN:         15169,
 		ASName:      "GOOGLE",
@@ -947,7 +947,7 @@ func TestIPEnrichment_StructFields(t *testing.T) {
 func TestNewTracerouteService(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewTracerouteService(nil)
+	svc := roots.NewTracerouteService(nil)
 	if svc == nil {
 		t.Fatal("NewTracerouteService() returned nil")
 	}
@@ -964,7 +964,7 @@ func TestNewTracerouteService(t *testing.T) {
 func TestNewTopologyService(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewTopologyService(nil, nil)
+	svc := roots.NewTopologyService(nil, nil)
 	if svc == nil {
 		t.Fatal("NewTopologyService() returned nil")
 	}
@@ -973,7 +973,7 @@ func TestNewTopologyService(t *testing.T) {
 func TestTopologyService_StartStop(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewTopologyService(nil, nil)
+	svc := roots.NewTopologyService(nil, nil)
 	ctx := context.Background()
 
 	// Start should not error
@@ -988,7 +988,7 @@ func TestTopologyService_StartStop(t *testing.T) {
 func TestTopologyService_GetTopology(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewTopologyService(nil, nil)
+	svc := roots.NewTopologyService(nil, nil)
 	ctx := context.Background()
 
 	_, err := svc.GetTopology(ctx)
@@ -1000,15 +1000,15 @@ func TestTopologyService_GetTopology(t *testing.T) {
 func TestTopologyNodeType_Constants(t *testing.T) {
 	t.Parallel()
 
-	nodeTypes := []pipeline.TopologyNodeType{
-		pipeline.NodeTypeRouter,
-		pipeline.NodeTypeSwitch,
-		pipeline.NodeTypeHost,
-		pipeline.NodeTypeGateway,
-		pipeline.NodeTypeFirewall,
-		pipeline.NodeTypeAP,
-		pipeline.NodeTypeCloud,
-		pipeline.NodeTypeUnknown,
+	nodeTypes := []roots.TopologyNodeType{
+		roots.NodeTypeRouter,
+		roots.NodeTypeSwitch,
+		roots.NodeTypeHost,
+		roots.NodeTypeGateway,
+		roots.NodeTypeFirewall,
+		roots.NodeTypeAP,
+		roots.NodeTypeCloud,
+		roots.NodeTypeUnknown,
 	}
 
 	for _, nt := range nodeTypes {
@@ -1021,13 +1021,13 @@ func TestTopologyNodeType_Constants(t *testing.T) {
 func TestTopologyLinkType_Constants(t *testing.T) {
 	t.Parallel()
 
-	linkTypes := []pipeline.TopologyLinkType{
-		pipeline.LinkTypeEthernet,
-		pipeline.LinkTypeWiFi,
-		pipeline.LinkTypeFiber,
-		pipeline.LinkTypeWAN,
-		pipeline.LinkTypeVPN,
-		pipeline.LinkTypeUnknown,
+	linkTypes := []roots.TopologyLinkType{
+		roots.LinkTypeEthernet,
+		roots.LinkTypeWiFi,
+		roots.LinkTypeFiber,
+		roots.LinkTypeWAN,
+		roots.LinkTypeVPN,
+		roots.LinkTypeUnknown,
 	}
 
 	for _, lt := range linkTypes {
@@ -1041,9 +1041,9 @@ func TestTopologyNode_StructFields(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now()
-	node := pipeline.TopologyNode{
+	node := roots.TopologyNode{
 		ID:        "node-1",
-		Type:      pipeline.NodeTypeRouter,
+		Type:      roots.NodeTypeRouter,
 		Label:     "Gateway Router",
 		IP:        "192.168.1.1",
 		MAC:       "00:11:22:33:44:55",
@@ -1057,8 +1057,8 @@ func TestTopologyNode_StructFields(t *testing.T) {
 	if node.ID != "node-1" {
 		t.Errorf("ID = %q, want %q", node.ID, "node-1")
 	}
-	if node.Type != pipeline.NodeTypeRouter {
-		t.Errorf("Type = %q, want %q", node.Type, pipeline.NodeTypeRouter)
+	if node.Type != roots.NodeTypeRouter {
+		t.Errorf("Type = %q, want %q", node.Type, roots.NodeTypeRouter)
 	}
 	if node.Label != "Gateway Router" {
 		t.Errorf("Label = %q, want %q", node.Label, "Gateway Router")
@@ -1090,11 +1090,11 @@ func TestTopologyLink_StructFields(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now()
-	link := pipeline.TopologyLink{
+	link := roots.TopologyLink{
 		ID:        "link-1",
 		SourceID:  "node-1",
 		TargetID:  "node-2",
-		Type:      pipeline.LinkTypeEthernet,
+		Type:      roots.LinkTypeEthernet,
 		Label:     "Primary Link",
 		Bandwidth: "1Gbps",
 		Latency:   0.5,
@@ -1111,8 +1111,8 @@ func TestTopologyLink_StructFields(t *testing.T) {
 	if link.TargetID != "node-2" {
 		t.Errorf("TargetID = %q, want %q", link.TargetID, "node-2")
 	}
-	if link.Type != pipeline.LinkTypeEthernet {
-		t.Errorf("Type = %q, want %q", link.Type, pipeline.LinkTypeEthernet)
+	if link.Type != roots.LinkTypeEthernet {
+		t.Errorf("Type = %q, want %q", link.Type, roots.LinkTypeEthernet)
 	}
 	if link.Label != "Primary Link" {
 		t.Errorf("Label = %q, want %q", link.Label, "Primary Link")
@@ -1135,12 +1135,12 @@ func TestTopology_StructFields(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now()
-	topology := pipeline.Topology{
-		Nodes: []pipeline.TopologyNode{
-			{ID: "node-1", Type: pipeline.NodeTypeRouter},
-			{ID: "node-2", Type: pipeline.NodeTypeHost},
+	topology := roots.Topology{
+		Nodes: []roots.TopologyNode{
+			{ID: "node-1", Type: roots.NodeTypeRouter},
+			{ID: "node-2", Type: roots.NodeTypeHost},
 		},
-		Links: []pipeline.TopologyLink{
+		Links: []roots.TopologyLink{
 			{ID: "link-1", SourceID: "node-1", TargetID: "node-2"},
 		},
 		UpdatedAt: now,
@@ -1164,7 +1164,7 @@ func TestTopology_StructFields(t *testing.T) {
 func TestNewModule(t *testing.T) {
 	t.Parallel()
 
-	m := pipeline.New(nil, nil)
+	m := roots.New(nil, nil)
 	if m == nil {
 		t.Fatal("New() returned nil")
 	}
@@ -1186,7 +1186,7 @@ func TestNewModule(t *testing.T) {
 func TestModule_StartStop(t *testing.T) {
 	t.Parallel()
 
-	m := pipeline.New(nil, nil)
+	m := roots.New(nil, nil)
 	ctx := context.Background()
 
 	// Start should not error

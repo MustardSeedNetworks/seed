@@ -1,4 +1,4 @@
-package pipeline
+package roots
 
 import (
 	"github.com/krisarmstrong/seed/internal/pipeline/publicip"

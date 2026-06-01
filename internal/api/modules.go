@@ -5,7 +5,7 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/canopy"
 	"github.com/krisarmstrong/seed/internal/modules/harvest"
-	"github.com/krisarmstrong/seed/internal/pipeline"
+	"github.com/krisarmstrong/seed/internal/modules/roots"
 	"github.com/krisarmstrong/seed/internal/services"
 	"github.com/krisarmstrong/seed/internal/services/shell"
 )
@@ -15,7 +15,7 @@ type Modules struct {
 	Sap     *services.Module
 	Shell   *shell.Module
 	Canopy  *canopy.Module
-	Roots   *pipeline.Module
+	Roots   *roots.Module
 	Harvest *harvest.Module
 }
 

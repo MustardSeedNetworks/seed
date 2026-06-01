@@ -1,4 +1,4 @@
-package pipeline_test
+package roots_test
 
 import (
 	"encoding/json"
@@ -6,24 +6,24 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/pipeline"
+	"github.com/krisarmstrong/seed/internal/modules/roots"
 )
 
 // TestTopologyNodeType tests the TopologyNodeType constants.
 func TestTopologyNodeType(t *testing.T) {
 	tests := []struct {
 		name     string
-		nodeType pipeline.TopologyNodeType
+		nodeType roots.TopologyNodeType
 		want     string
 	}{
-		{name: "router", nodeType: pipeline.NodeTypeRouter, want: "router"},
-		{name: "switch", nodeType: pipeline.NodeTypeSwitch, want: "switch"},
-		{name: "host", nodeType: pipeline.NodeTypeHost, want: "host"},
-		{name: "gateway", nodeType: pipeline.NodeTypeGateway, want: "gateway"},
-		{name: "firewall", nodeType: pipeline.NodeTypeFirewall, want: "firewall"},
-		{name: "access_point", nodeType: pipeline.NodeTypeAP, want: "access_point"},
-		{name: "cloud", nodeType: pipeline.NodeTypeCloud, want: "cloud"},
-		{name: "unknown", nodeType: pipeline.NodeTypeUnknown, want: "unknown"},
+		{name: "router", nodeType: roots.NodeTypeRouter, want: "router"},
+		{name: "switch", nodeType: roots.NodeTypeSwitch, want: "switch"},
+		{name: "host", nodeType: roots.NodeTypeHost, want: "host"},
+		{name: "gateway", nodeType: roots.NodeTypeGateway, want: "gateway"},
+		{name: "firewall", nodeType: roots.NodeTypeFirewall, want: "firewall"},
+		{name: "access_point", nodeType: roots.NodeTypeAP, want: "access_point"},
+		{name: "cloud", nodeType: roots.NodeTypeCloud, want: "cloud"},
+		{name: "unknown", nodeType: roots.NodeTypeUnknown, want: "unknown"},
 	}
 
 	for _, tt := range tests {
@@ -39,15 +39,15 @@ func TestTopologyNodeType(t *testing.T) {
 func TestTopologyLinkType(t *testing.T) {
 	tests := []struct {
 		name     string
-		linkType pipeline.TopologyLinkType
+		linkType roots.TopologyLinkType
 		want     string
 	}{
-		{name: "ethernet", linkType: pipeline.LinkTypeEthernet, want: "ethernet"},
-		{name: "wifi", linkType: pipeline.LinkTypeWiFi, want: "wifi"},
-		{name: "fiber", linkType: pipeline.LinkTypeFiber, want: "fiber"},
-		{name: "wan", linkType: pipeline.LinkTypeWAN, want: "wan"},
-		{name: "vpn", linkType: pipeline.LinkTypeVPN, want: "vpn"},
-		{name: "unknown", linkType: pipeline.LinkTypeUnknown, want: "unknown"},
+		{name: "ethernet", linkType: roots.LinkTypeEthernet, want: "ethernet"},
+		{name: "wifi", linkType: roots.LinkTypeWiFi, want: "wifi"},
+		{name: "fiber", linkType: roots.LinkTypeFiber, want: "fiber"},
+		{name: "wan", linkType: roots.LinkTypeWAN, want: "wan"},
+		{name: "vpn", linkType: roots.LinkTypeVPN, want: "vpn"},
+		{name: "unknown", linkType: roots.LinkTypeUnknown, want: "unknown"},
 	}
 
 	for _, tt := range tests {
@@ -63,14 +63,14 @@ func TestTopologyLinkType(t *testing.T) {
 func TestTopologyNode(t *testing.T) {
 	tests := []struct {
 		name    string
-		node    pipeline.TopologyNode
+		node    roots.TopologyNode
 		wantErr bool
 	}{
 		{
 			name: "complete node",
-			node: pipeline.TopologyNode{
+			node: roots.TopologyNode{
 				ID:        "node-1",
-				Type:      pipeline.NodeTypeRouter,
+				Type:      roots.NodeTypeRouter,
 				Label:     "Core Router",
 				IP:        "192.168.1.1",
 				MAC:       "00:11:22:33:44:55",
@@ -84,17 +84,17 @@ func TestTopologyNode(t *testing.T) {
 		},
 		{
 			name: "minimal node",
-			node: pipeline.TopologyNode{
+			node: roots.TopologyNode{
 				ID:   "node-2",
-				Type: pipeline.NodeTypeHost,
+				Type: roots.NodeTypeHost,
 			},
 			wantErr: false,
 		},
 		{
 			name: "node with empty metadata",
-			node: pipeline.TopologyNode{
+			node: roots.TopologyNode{
 				ID:       "node-3",
-				Type:     pipeline.NodeTypeSwitch,
+				Type:     roots.NodeTypeSwitch,
 				Metadata: map[string]string{},
 			},
 			wantErr: false,
@@ -111,7 +111,7 @@ func TestTopologyNode(t *testing.T) {
 			}
 
 			// Test JSON unmarshaling
-			var decoded pipeline.TopologyNode
+			var decoded roots.TopologyNode
 			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
 				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
@@ -138,16 +138,16 @@ func TestTopologyNode(t *testing.T) {
 func TestTopologyLink(t *testing.T) {
 	tests := []struct {
 		name    string
-		link    pipeline.TopologyLink
+		link    roots.TopologyLink
 		wantErr bool
 	}{
 		{
 			name: "complete link",
-			link: pipeline.TopologyLink{
+			link: roots.TopologyLink{
 				ID:        "link-1",
 				SourceID:  "node-1",
 				TargetID:  "node-2",
-				Type:      pipeline.LinkTypeEthernet,
+				Type:      roots.LinkTypeEthernet,
 				Label:     "Trunk Link",
 				Bandwidth: "10Gbps",
 				Latency:   0.5,
@@ -158,21 +158,21 @@ func TestTopologyLink(t *testing.T) {
 		},
 		{
 			name: "minimal link",
-			link: pipeline.TopologyLink{
+			link: roots.TopologyLink{
 				ID:       "link-2",
 				SourceID: "node-3",
 				TargetID: "node-4",
-				Type:     pipeline.LinkTypeWiFi,
+				Type:     roots.LinkTypeWiFi,
 			},
 			wantErr: false,
 		},
 		{
 			name: "link with high latency",
-			link: pipeline.TopologyLink{
+			link: roots.TopologyLink{
 				ID:       "link-3",
 				SourceID: "node-5",
 				TargetID: "node-6",
-				Type:     pipeline.LinkTypeWAN,
+				Type:     roots.LinkTypeWAN,
 				Latency:  150.75,
 			},
 			wantErr: false,
@@ -189,7 +189,7 @@ func TestTopologyLink(t *testing.T) {
 			}
 
 			// Test JSON unmarshaling
-			var decoded pipeline.TopologyLink
+			var decoded roots.TopologyLink
 			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
 				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
@@ -218,29 +218,29 @@ func TestTopology(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		topology pipeline.Topology
+		topology roots.Topology
 		wantErr  bool
 	}{
 		{
 			name: "complete topology",
-			topology: pipeline.Topology{
-				Nodes: []pipeline.TopologyNode{
-					{ID: "node-1", Type: pipeline.NodeTypeRouter, Label: "Router 1"},
-					{ID: "node-2", Type: pipeline.NodeTypeSwitch, Label: "Switch 1"},
-					{ID: "node-3", Type: pipeline.NodeTypeHost, Label: "Server 1"},
+			topology: roots.Topology{
+				Nodes: []roots.TopologyNode{
+					{ID: "node-1", Type: roots.NodeTypeRouter, Label: "Router 1"},
+					{ID: "node-2", Type: roots.NodeTypeSwitch, Label: "Switch 1"},
+					{ID: "node-3", Type: roots.NodeTypeHost, Label: "Server 1"},
 				},
-				Links: []pipeline.TopologyLink{
+				Links: []roots.TopologyLink{
 					{
 						ID:       "link-1",
 						SourceID: "node-1",
 						TargetID: "node-2",
-						Type:     pipeline.LinkTypeEthernet,
+						Type:     roots.LinkTypeEthernet,
 					},
 					{
 						ID:       "link-2",
 						SourceID: "node-2",
 						TargetID: "node-3",
-						Type:     pipeline.LinkTypeEthernet,
+						Type:     roots.LinkTypeEthernet,
 					},
 				},
 				UpdatedAt: now,
@@ -249,16 +249,16 @@ func TestTopology(t *testing.T) {
 		},
 		{
 			name: "empty topology",
-			topology: pipeline.Topology{
-				Nodes:     []pipeline.TopologyNode{},
-				Links:     []pipeline.TopologyLink{},
+			topology: roots.Topology{
+				Nodes:     []roots.TopologyNode{},
+				Links:     []roots.TopologyLink{},
 				UpdatedAt: now,
 			},
 			wantErr: false,
 		},
 		{
 			name: "topology with nil slices",
-			topology: pipeline.Topology{
+			topology: roots.Topology{
 				UpdatedAt: now,
 			},
 			wantErr: false,
@@ -275,7 +275,7 @@ func TestTopology(t *testing.T) {
 			}
 
 			// Test JSON unmarshaling
-			var decoded pipeline.Topology
+			var decoded roots.Topology
 			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
 				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
@@ -298,12 +298,12 @@ func TestTopology(t *testing.T) {
 func TestTracerouteHop(t *testing.T) {
 	tests := []struct {
 		name    string
-		hop     pipeline.TracerouteHop
+		hop     roots.TracerouteHop
 		wantErr bool
 	}{
 		{
 			name: "complete hop",
-			hop: pipeline.TracerouteHop{
+			hop: roots.TracerouteHop{
 				Number:    1,
 				Address:   net.ParseIP("192.168.1.1"),
 				Hostname:  "gateway.local",
@@ -320,7 +320,7 @@ func TestTracerouteHop(t *testing.T) {
 		},
 		{
 			name: "lost hop",
-			hop: pipeline.TracerouteHop{
+			hop: roots.TracerouteHop{
 				Number: 2,
 				Lost:   true,
 			},
@@ -328,7 +328,7 @@ func TestTracerouteHop(t *testing.T) {
 		},
 		{
 			name: "hop with IPv6",
-			hop: pipeline.TracerouteHop{
+			hop: roots.TracerouteHop{
 				Number:   3,
 				Address:  net.ParseIP("2001:db8::1"),
 				Hostname: "ipv6-router.example.com",
@@ -350,7 +350,7 @@ func TestTracerouteHop(t *testing.T) {
 			}
 
 			// Test JSON unmarshaling
-			var decoded pipeline.TracerouteHop
+			var decoded roots.TracerouteHop
 			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
 				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
@@ -376,15 +376,15 @@ func TestTracerouteResult(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		result  pipeline.TracerouteResult
+		result  roots.TracerouteResult
 		wantErr bool
 	}{
 		{
 			name: "complete result",
-			result: pipeline.TracerouteResult{
+			result: roots.TracerouteResult{
 				Target:     "google.com",
 				ResolvedIP: "142.250.80.46",
-				Hops: []pipeline.TracerouteHop{
+				Hops: []roots.TracerouteHop{
 					{Number: 1, Address: net.ParseIP("192.168.1.1"), RTTMs: 1.5},
 					{Number: 2, Address: net.ParseIP("10.0.0.1"), RTTMs: 5.0},
 					{Number: 3, Address: net.ParseIP("142.250.80.46"), RTTMs: 15.0},
@@ -399,10 +399,10 @@ func TestTracerouteResult(t *testing.T) {
 		},
 		{
 			name: "incomplete result",
-			result: pipeline.TracerouteResult{
+			result: roots.TracerouteResult{
 				Target:     "unreachable.example.com",
 				ResolvedIP: "192.0.2.1",
-				Hops: []pipeline.TracerouteHop{
+				Hops: []roots.TracerouteHop{
 					{Number: 1, Address: net.ParseIP("192.168.1.1"), RTTMs: 1.5},
 					{Number: 2, Lost: true},
 					{Number: 3, Lost: true},
@@ -417,9 +417,9 @@ func TestTracerouteResult(t *testing.T) {
 		},
 		{
 			name: "empty result",
-			result: pipeline.TracerouteResult{
+			result: roots.TracerouteResult{
 				Target:      "empty.example.com",
-				Hops:        []pipeline.TracerouteHop{},
+				Hops:        []roots.TracerouteHop{},
 				Complete:    false,
 				StartedAt:   now,
 				CompletedAt: now,
@@ -438,7 +438,7 @@ func TestTracerouteResult(t *testing.T) {
 			}
 
 			// Test JSON unmarshaling
-			var decoded pipeline.TracerouteResult
+			var decoded roots.TracerouteResult
 			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
 				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
@@ -462,12 +462,12 @@ func TestTracerouteResult(t *testing.T) {
 func TestTracerouteOptions(t *testing.T) {
 	tests := []struct {
 		name    string
-		opts    pipeline.TracerouteOptions
+		opts    roots.TracerouteOptions
 		wantErr bool
 	}{
 		{
 			name: "default options",
-			opts: pipeline.TracerouteOptions{
+			opts: roots.TracerouteOptions{
 				MaxHops:     30,
 				Timeout:     2 * time.Second,
 				Probes:      3,
@@ -480,7 +480,7 @@ func TestTracerouteOptions(t *testing.T) {
 		},
 		{
 			name: "UDP mode",
-			opts: pipeline.TracerouteOptions{
+			opts: roots.TracerouteOptions{
 				MaxHops:     64,
 				Timeout:     5 * time.Second,
 				Probes:      1,
@@ -494,7 +494,7 @@ func TestTracerouteOptions(t *testing.T) {
 		},
 		{
 			name: "minimal options",
-			opts: pipeline.TracerouteOptions{
+			opts: roots.TracerouteOptions{
 				MaxHops: 15,
 				Timeout: 1 * time.Second,
 			},
@@ -512,7 +512,7 @@ func TestTracerouteOptions(t *testing.T) {
 			}
 
 			// Test JSON unmarshaling
-			var decoded pipeline.TracerouteOptions
+			var decoded roots.TracerouteOptions
 			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
 				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
@@ -538,12 +538,12 @@ func TestIPEnrichment(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		enrichment pipeline.IPEnrichment
+		enrichment roots.IPEnrichment
 		wantErr    bool
 	}{
 		{
 			name: "complete enrichment",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				IP:          "203.0.113.1",
 				ASN:         12345,
 				ASName:      "Example ISP",
@@ -565,7 +565,7 @@ func TestIPEnrichment(t *testing.T) {
 		},
 		{
 			name: "minimal enrichment",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				IP:        "192.0.2.1",
 				QueryTime: now,
 			},
@@ -573,7 +573,7 @@ func TestIPEnrichment(t *testing.T) {
 		},
 		{
 			name: "proxy detection",
-			enrichment: pipeline.IPEnrichment{
+			enrichment: roots.IPEnrichment{
 				IP:        "198.51.100.1",
 				IsProxy:   true,
 				IsTor:     true,
@@ -593,7 +593,7 @@ func TestIPEnrichment(t *testing.T) {
 			}
 
 			// Test JSON unmarshaling
-			var decoded pipeline.IPEnrichment
+			var decoded roots.IPEnrichment
 			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
 				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
@@ -617,18 +617,18 @@ func TestIPEnrichment(t *testing.T) {
 func TestPathAnalysis(t *testing.T) {
 	tests := []struct {
 		name     string
-		analysis pipeline.PathAnalysis
+		analysis roots.PathAnalysis
 		wantErr  bool
 	}{
 		{
 			name: "excellent path",
-			analysis: pipeline.PathAnalysis{
+			analysis: roots.PathAnalysis{
 				Target:         "google.com",
 				Hops:           5,
 				AverageRTT:     15.5,
 				PacketLoss:     0.0,
 				ASNTransitions: 2,
-				Bottlenecks:    []pipeline.PathBottleneck{},
+				Bottlenecks:    []roots.PathBottleneck{},
 				Analysis:       "Excellent path quality with low latency and no packet loss.",
 				Score:          95,
 			},
@@ -636,13 +636,13 @@ func TestPathAnalysis(t *testing.T) {
 		},
 		{
 			name: "path with bottlenecks",
-			analysis: pipeline.PathAnalysis{
+			analysis: roots.PathAnalysis{
 				Target:         "slow-server.example.com",
 				Hops:           12,
 				AverageRTT:     150.0,
 				PacketLoss:     5.0,
 				ASNTransitions: 4,
-				Bottlenecks: []pipeline.PathBottleneck{
+				Bottlenecks: []roots.PathBottleneck{
 					{
 						HopNumber:   5,
 						Address:     "10.0.0.1",
@@ -663,7 +663,7 @@ func TestPathAnalysis(t *testing.T) {
 		},
 		{
 			name: "minimal analysis",
-			analysis: pipeline.PathAnalysis{
+			analysis: roots.PathAnalysis{
 				Target: "minimal.example.com",
 				Score:  50,
 			},
@@ -681,7 +681,7 @@ func TestPathAnalysis(t *testing.T) {
 			}
 
 			// Test JSON unmarshaling
-			var decoded pipeline.PathAnalysis
+			var decoded roots.PathAnalysis
 			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
 				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
@@ -709,12 +709,12 @@ func TestPathAnalysis(t *testing.T) {
 func TestPathBottleneck(t *testing.T) {
 	tests := []struct {
 		name       string
-		bottleneck pipeline.PathBottleneck
+		bottleneck roots.PathBottleneck
 		wantErr    bool
 	}{
 		{
 			name: "significant latency increase",
-			bottleneck: pipeline.PathBottleneck{
+			bottleneck: roots.PathBottleneck{
 				HopNumber:   5,
 				Address:     "10.0.0.1",
 				RTTIncrease: 75.0,
@@ -724,7 +724,7 @@ func TestPathBottleneck(t *testing.T) {
 		},
 		{
 			name: "congestion bottleneck",
-			bottleneck: pipeline.PathBottleneck{
+			bottleneck: roots.PathBottleneck{
 				HopNumber:   8,
 				Address:     "172.16.0.1",
 				RTTIncrease: 100.0,
@@ -734,7 +734,7 @@ func TestPathBottleneck(t *testing.T) {
 		},
 		{
 			name: "minimal bottleneck",
-			bottleneck: pipeline.PathBottleneck{
+			bottleneck: roots.PathBottleneck{
 				HopNumber:   3,
 				RTTIncrease: 50.0,
 			},
@@ -752,7 +752,7 @@ func TestPathBottleneck(t *testing.T) {
 			}
 
 			// Test JSON unmarshaling
-			var decoded pipeline.PathBottleneck
+			var decoded roots.PathBottleneck
 			if unmarshalErr := json.Unmarshal(data, &decoded); unmarshalErr != nil {
 				t.Errorf("json.Unmarshal() error = %v", unmarshalErr)
 				return
@@ -771,9 +771,9 @@ func TestPathBottleneck(t *testing.T) {
 
 // TestTopologyNodeJSONOmitEmpty verifies omitempty tags work correctly.
 func TestTopologyNodeJSONOmitEmpty(t *testing.T) {
-	node := pipeline.TopologyNode{
+	node := roots.TopologyNode{
 		ID:   "node-1",
-		Type: pipeline.NodeTypeHost,
+		Type: roots.NodeTypeHost,
 	}
 
 	data, err := json.Marshal(node)
@@ -794,11 +794,11 @@ func TestTopologyNodeJSONOmitEmpty(t *testing.T) {
 
 // TestTopologyLinkJSONOmitEmpty verifies omitempty tags work correctly for links.
 func TestTopologyLinkJSONOmitEmpty(t *testing.T) {
-	link := pipeline.TopologyLink{
+	link := roots.TopologyLink{
 		ID:       "link-1",
 		SourceID: "node-1",
 		TargetID: "node-2",
-		Type:     pipeline.LinkTypeEthernet,
+		Type:     roots.LinkTypeEthernet,
 	}
 
 	data, err := json.Marshal(link)

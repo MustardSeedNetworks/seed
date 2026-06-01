@@ -19,9 +19,9 @@ import (
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/krisarmstrong/seed/internal/modules/roots"
 	"github.com/krisarmstrong/seed/internal/netif"
 	"github.com/krisarmstrong/seed/internal/paths"
-	"github.com/krisarmstrong/seed/internal/pipeline"
 	"github.com/krisarmstrong/seed/internal/services"
 	"github.com/krisarmstrong/seed/internal/services/discovery"
 	"github.com/krisarmstrong/seed/internal/services/shell"
@@ -126,7 +126,7 @@ func initializeModules(cfg *config.Config, db *database.DB) *api.Modules {
 	logging.GetLogger().Info("Canopy module initialized")
 
 	// Roots: Path analysis (traceroute, topology, IP enrichment)
-	modules.Roots = pipeline.New(cfg, db)
+	modules.Roots = roots.New(cfg, db)
 	logging.GetLogger().Info("Roots module initialized")
 
 	// Harvest: Reporting (report generation, templates, scheduling)
