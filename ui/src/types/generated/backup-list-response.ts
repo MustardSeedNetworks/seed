@@ -5,7 +5,13 @@
  * after Go DTO changes). The schema source of truth lives at
  * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
-export interface RecoveryCompleteResponse {
-  success: boolean;
-  message: string;
+export interface BackupListResponse {
+  backups: BackupInfo[];
+}
+export interface BackupInfo {
+  name: string;
+  path: string;
+  size: number;
+  created_at: string;
+  version: number;
 }

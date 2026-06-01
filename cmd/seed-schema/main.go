@@ -137,11 +137,14 @@ func schemaTargets() []schemaTarget {
 			filename: "config-version-response.schema.json",
 			title:    "ConfigVersionResponse",
 		},
-		// NOTE: nested-type DTOs (e.g. BackupListResponse → BackupInfo) are
-		// deferred until gen-types.mjs bundles cross-$defs refs —
-		// json-schema-to-typescript v15 errors "Refs should have been resolved"
-		// on invopop's sibling-$def references. Tracked as the gating fix before
-		// the bulk DTO rollout (ADR-0003 / Phase 2).
+		// Nested-type DTO: BackupListResponse embeds []BackupInfo. Generates
+		// correctly now that gen-types.mjs strips the external $id so nested
+		// `#/$defs/...` refs resolve locally (the prior blocker).
+		{
+			value:    &api.BackupListResponse{},
+			filename: "backup-list-response.schema.json",
+			title:    "BackupListResponse",
+		},
 		{
 			value:    &api.TracerouteRequest{},
 			filename: "traceroute-request.schema.json",

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/backup-list-response.schema.json",
+  "$ref": "#/$defs/BackupListResponse",
+  "$defs": {
+    "BackupInfo": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "path",
+        "size",
+        "created_at",
+        "version"
+      ]
+    },
+    "BackupListResponse": {
+      "properties": {
+        "backups": {
+          "items": {
+            "$ref": "#/$defs/BackupInfo"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "backups"
+      ]
+    }
+  },
+  "title": "BackupListResponse",
+  "description": "BackupListResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

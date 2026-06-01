@@ -50,9 +50,34 @@ async function main() {
   for (const filename of schemas) {
     const schemaPath = resolve(SCHEMA_DIR, filename);
     const raw = await readFile(schemaPath, 'utf8');
-    const schema = JSON.parse(raw);
 
-    const ts = await compile(schema, schema.title || filename, {
+    // Normalize invopop's draft-2020 output for json-schema-to-typescript.
+    // invopop emits `{ $id, $ref: "#/$defs/Root", $defs: { Root, Nested, … } }`.
+    // j-s-to-ts mishandles that shape: dereferencing the ROOT $ref replaces the
+    // whole document with Root's body and discards `$defs`, so any nested ref
+    // (e.g. Root.items.$ref → Nested) then dangles and it throws "Refs should
+    // have been resolved...". Three in-memory fixes (committed schema files are
+    // unchanged, so schema-drift checks are unaffected):
+    //   1. `$defs` → `definitions` (the draft-07 key j-s-to-ts resolves best).
+    //   2. drop the external `$id` URL so internal refs resolve locally.
+    //   3. INLINE the root $ref to the top level while KEEPING `definitions`,
+    //      so nested refs still resolve.
+    const schema = JSON.parse(
+      raw.replaceAll('#/$defs/', '#/definitions/').replaceAll('"$defs"', '"definitions"'),
+    );
+    delete schema.$id;
+
+    let root = schema;
+    if (typeof schema.$ref === 'string' && schema.$ref.startsWith('#/definitions/')) {
+      const name = schema.$ref.slice('#/definitions/'.length);
+      const defs = { ...schema.definitions };
+      const inlined = defs[name];
+      delete defs[name]; // avoid a duplicate of the root type
+      root = { $schema: schema.$schema, ...inlined };
+      if (Object.keys(defs).length > 0) root.definitions = defs;
+    }
+
+    const ts = await compile(root, schema.title || filename, {
       bannerComment: '',
       style: { singleQuote: true, semi: true },
       additionalProperties: false,

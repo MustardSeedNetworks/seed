@@ -5,9 +5,6 @@
  * after Go DTO changes). The schema source of truth lives at
  * docs/schemas/api/; the Go DTO source lives at internal/api/.
  */
-/**
- * ConfigVersionResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes.
- */
 export interface ConfigVersionResponse {
   current: number;
   latest: number;
