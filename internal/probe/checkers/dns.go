@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/diagnostics/dns"
 	"github.com/krisarmstrong/seed/internal/probe"
-	"github.com/krisarmstrong/seed/internal/services/dns"
 )
 
 // DNSParams is the kind-specific params shape for the DNS probe.

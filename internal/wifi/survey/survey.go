@@ -11,8 +11,8 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/krisarmstrong/seed/internal/diagnostics/iperf"
 	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/services/iperf"
 	"github.com/krisarmstrong/seed/internal/wifi"
 )
 
