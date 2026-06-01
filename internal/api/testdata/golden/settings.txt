@@ -1,0 +1,129 @@
+status: 200
+body:
+{
+  "cardSettings": {
+    "dns": {
+      "autoRunOnLink": true,
+      "visible": true
+    },
+    "gateway": {
+      "autoRunOnLink": true,
+      "visible": true
+    },
+    "healthChecks": {
+      "autoRunOnLink": true,
+      "visible": true
+    },
+    "link": {
+      "autoRunOnLink": true,
+      "visible": true
+    },
+    "network": {
+      "autoRunOnLink": true,
+      "visible": true
+    },
+    "networkDiscovery": {
+      "autoRunOnLink": true,
+      "visible": true
+    },
+    "performance": {
+      "autoRunOnLink": true,
+      "iperf": {
+        "autoRunOnLink": false,
+        "enabled": false
+      },
+      "speedtest": {
+        "autoRunOnLink": true,
+        "enabled": true
+      },
+      "visible": true
+    },
+    "switch": {
+      "autoRunOnLink": true,
+      "visible": true
+    },
+    "vlan": {
+      "autoRunOnLink": true,
+      "visible": true
+    }
+  },
+  "displayOptions": {
+    "showPublicIP": true,
+    "unitSystem": "sae"
+  },
+  "healthChecks": {
+    "runDiscovery": true,
+    "runIperf": false,
+    "runPerformance": true,
+    "runSpeedtest": true
+  },
+  "interface": {
+    "available": [],
+    "current": "lo"
+  },
+  "ip": {
+    "mode": "dhcp"
+  },
+  "iperf": {
+    "autoRunOnLink": false,
+    "direction": "download",
+    "duration": "\u003cvolatile\u003e",
+    "enableServer": true,
+    "port": 5201,
+    "protocol": "tcp",
+    "server": "",
+    "serverPort": 5201
+  },
+  "speedtest": {
+    "autoRunOnLink": true,
+    "serverId": ""
+  },
+  "thresholds": {
+    "customHttp": {
+      "good": 500,
+      "warning": 2000
+    },
+    "customPing": {
+      "good": 50,
+      "warning": 100
+    },
+    "customTcp": {
+      "good": 100,
+      "warning": 500
+    },
+    "dns": {
+      "good": 100,
+      "warning": 500
+    },
+    "gateway": {
+      "good": 50,
+      "warning": 200
+    },
+    "httpTimings": {
+      "dns": {
+        "good": 100,
+        "warning": 500
+      },
+      "tcp": {
+        "good": 100,
+        "warning": 500
+      },
+      "tls": {
+        "good": 150,
+        "warning": 500
+      },
+      "ttfb": {
+        "good": 500,
+        "warning": 2000
+      }
+    },
+    "wifi": {
+      "good": -70,
+      "warning": -80
+    }
+  },
+  "vlan": {
+    "enabled": false,
+    "id": 0
+  }
+}
