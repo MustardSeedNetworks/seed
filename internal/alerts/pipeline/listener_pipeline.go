@@ -96,12 +96,12 @@ type ListenerPipeline struct {
 	defaults       []Rule
 	suppression    time.Duration
 
-	mu      sync.Mutex
-	started bool
-	cancel  context.CancelFunc
-	wg      sync.WaitGroup
-	emitted map[string]time.Time
-	rules   []Rule
+	mu       sync.Mutex
+	started  bool
+	cancel   context.CancelFunc
+	wg       sync.WaitGroup
+	suppress suppressionStore
+	rules    []Rule
 }
 
 // ListenerConfig wires the pipeline.
@@ -131,6 +131,13 @@ type ListenerConfig struct {
 	// When nil and AlertRules is also nil, DefaultListenerRules() is
 	// used permanently.
 	Rules []Rule
+
+	// Suppressions is the persistence backend for the per-(rule, entity)
+	// "don't re-fire within the window" check. When nil, an in-memory
+	// store is used (legacy — restart loses state). Production wires
+	// NewDBSuppressionStore(db.AlertSuppressions()) for restart-safety
+	// (#1380).
+	Suppressions suppressionStore
 }
 
 // NewListenerPipeline returns an unstarted pipeline.
@@ -171,6 +178,10 @@ func NewListenerPipeline(cfg ListenerConfig) (*ListenerPipeline, error) {
 	if initial == nil {
 		initial = defaults
 	}
+	suppress := cfg.Suppressions
+	if suppress == nil {
+		suppress = newInMemorySuppressionStore()
+	}
 	p := &ListenerPipeline{
 		events:         cfg.Events,
 		alerts:         cfg.Alerts,
@@ -184,7 +195,7 @@ func NewListenerPipeline(cfg ListenerConfig) (*ListenerPipeline, error) {
 		defaults:       defaults,
 		suppression:    cfg.Suppression,
 		rules:          initial,
-		emitted:        make(map[string]time.Time),
+		suppress:       suppress,
 	}
 	// Prime ruleset from the DB before returning so a caller that
 	// jumps straight to ScanOnce (tests, single-shot use) sees the
@@ -394,7 +405,12 @@ func (p *ListenerPipeline) evaluate(ctx context.Context, evt *database.ListenerE
 			continue
 		}
 		fingerprint := fingerprintFor(rule.ID, evt.SourceAddr, evt.Kind)
-		if p.suppressed(fingerprint, now) {
+		suppressed, suppErr := p.suppress.IsSuppressed(ctx, fingerprint, now)
+		if suppErr != nil {
+			p.logger.WarnContext(ctx, "suppression check failed",
+				"rule", rule.ID, "error", suppErr)
+		}
+		if suppressed {
 			continue
 		}
 		alert := rule.Build(evt)
@@ -406,7 +422,13 @@ func (p *ListenerPipeline) evaluate(ctx context.Context, evt *database.ListenerE
 				"rule", rule.ID, "source", evt.SourceAddr, "error", writeErr)
 			continue
 		}
-		p.markEmitted(fingerprint, now)
+		markErr := p.suppress.Mark(
+			ctx, fingerprint, rule.ID, evt.SourceAddr, now.Add(p.suppression),
+		)
+		if markErr != nil {
+			p.logger.WarnContext(ctx, "suppression mark failed",
+				"rule", rule.ID, "error", markErr)
+		}
 		count++
 	}
 	return count
@@ -421,38 +443,6 @@ func fingerprintFor(ruleID, source, kind string) string {
 	h.Write([]byte{0x00})
 	h.Write([]byte(kind))
 	return hex.EncodeToString(h.Sum(nil))[:24]
-}
-
-// suppressed returns true when this fingerprint has fired within the
-// suppression window.
-func (p *ListenerPipeline) suppressed(fingerprint string, now time.Time) bool {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	last, ok := p.emitted[fingerprint]
-	if !ok {
-		return false
-	}
-	return now.Sub(last) < p.suppression
-}
-
-// markEmitted records the fire time for a fingerprint. Old entries
-// (>2x suppression window) are evicted lazily to keep the map
-// bounded.
-func (p *ListenerPipeline) markEmitted(fingerprint string, now time.Time) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.emitted[fingerprint] = now
-	// Lazy eviction: walk the map only when it gets noticeably big.
-	const evictThreshold = 4096
-	if len(p.emitted) <= evictThreshold {
-		return
-	}
-	cutoff := now.Add(-2 * p.suppression)
-	for k, v := range p.emitted {
-		if v.Before(cutoff) {
-			delete(p.emitted, k)
-		}
-	}
 }
 
 func (p *ListenerPipeline) loadHighWater(ctx context.Context) (time.Time, error) {
