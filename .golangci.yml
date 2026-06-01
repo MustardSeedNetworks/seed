@@ -235,6 +235,36 @@ linters:
           deny:
             - pkg: log$
               desc: Use log/slog instead, see https://go.dev/blog/slog
+        # Phase 3 hexagon (ADR-0001): domain modules are PURE and inward-only —
+        # no transport, no SQL driver, no infra ring. Applies to every package
+        # under internal/modules/ as it is extracted (harvest first). This makes
+        # "dependencies point inward" a CI gate, not a hope.
+        "modules-domain-purity":
+          files:
+            - "**/internal/modules/**"
+          deny:
+            - pkg: net/http
+              desc: "modules are pure — define a port, implement it in adapters/http"
+            - pkg: database/sql
+              desc: "modules are pure — define a Repo port, implement it in adapters/store"
+            - pkg: github.com/krisarmstrong/seed/internal/adapters
+              desc: "inward-only — adapters depend on modules, never the reverse"
+        # Module independence: each module is an island; cross-module talk goes
+        # through platform/events, never a direct import. One rule per module
+        # (a module may import its OWN sub-packages, so only sibling module roots
+        # are denied). Sibling roots are listed ahead of their extraction.
+        "harvest-module-independence":
+          files:
+            - "**/internal/modules/harvest/**"
+          deny:
+            - pkg: github.com/krisarmstrong/seed/internal/modules/sap
+              desc: "modules must not import each other — use platform/events"
+            - pkg: github.com/krisarmstrong/seed/internal/modules/shell
+              desc: "modules must not import each other — use platform/events"
+            - pkg: github.com/krisarmstrong/seed/internal/modules/canopy
+              desc: "modules must not import each other — use platform/events"
+            - pkg: github.com/krisarmstrong/seed/internal/modules/roots
+              desc: "modules must not import each other — use platform/events"
 
     embeddedstructfieldcheck:
       # Checks that sync.Mutex and sync.RWMutex are not used as embedded fields.
