@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/krisarmstrong/seed/internal/engine"
 	"github.com/krisarmstrong/seed/internal/scheduler"
 )
 
@@ -53,7 +54,13 @@ type Poller struct {
 
 	runMu   sync.Mutex
 	started bool
+	stopped bool
 	jobIDs  []string
+
+	statusMu      sync.Mutex
+	lastChainAt   time.Time
+	lastChainErr  string
+	inflightCount int
 }
 
 // NewPoller returns an unstarted Poller. Pass nil logger to use
@@ -85,6 +92,58 @@ func (p *Poller) RegisterCollector(c Collector) {
 // poller registers in the lifecycle registry alongside the probe +
 // retention engines.
 func (*Poller) Name() string { return "snmp-poller" }
+
+// Status implements [engine.Reporter]. The poller doesn't have a
+// single "tick" — collectors run per-target on independent schedules
+// — so LastTickAt reports the most recent chain completion across
+// all targets, and Inflight reports how many chains are in flight
+// right now. State is "stopped" after Stop(), otherwise always "ok"
+// (degraded would need a per-target SLA the registry doesn't track).
+func (p *Poller) Status() engine.Status {
+	p.statusMu.Lock()
+	lastAt := p.lastChainAt
+	lastErr := p.lastChainErr
+	inflight := p.inflightCount
+	p.statusMu.Unlock()
+
+	p.runMu.Lock()
+	stopped := p.stopped
+	p.runMu.Unlock()
+
+	s := engine.Status{
+		LastTickAt: lastAt,
+		LastError:  lastErr,
+		Inflight:   inflight,
+	}
+	if stopped {
+		s.State = engine.StateStopped
+	} else {
+		s.State = engine.StateOK
+	}
+	return s
+}
+
+// recordChainStart bumps the inflight counter when a target's
+// collector chain kicks off.
+func (p *Poller) recordChainStart() {
+	p.statusMu.Lock()
+	defer p.statusMu.Unlock()
+	p.inflightCount++
+}
+
+// recordChainEnd stamps the completion time + error and decrements
+// inflight.
+func (p *Poller) recordChainEnd(err error) {
+	p.statusMu.Lock()
+	defer p.statusMu.Unlock()
+	p.inflightCount--
+	p.lastChainAt = time.Now().UTC()
+	if err != nil {
+		p.lastChainErr = err.Error()
+		return
+	}
+	p.lastChainErr = ""
+}
 
 // Start loads all enabled polling_targets and registers one job
 // per target with the scheduler. Idempotent.
@@ -131,6 +190,7 @@ func (p *Poller) Stop(ctx context.Context) error {
 	p.jobIDs = nil
 	p.scheduler.Stop()
 	p.started = false
+	p.stopped = true
 	p.logger.InfoContext(ctx, "snmp poller stopped")
 	return nil
 }
@@ -140,10 +200,12 @@ func (p *Poller) Stop(ctx context.Context) error {
 // continues. After the chain runs, last_status / last_error /
 // last_polled_at are recorded.
 func (p *Poller) runChain(ctx context.Context, target *database.PollingTarget) {
+	p.recordChainStart()
 	creds := credentialsForTarget(target)
 
 	wireTarget := wireTarget(target)
 	var firstErr error
+	defer func() { p.recordChainEnd(firstErr) }()
 	for _, name := range target.CollectorChain {
 		p.mu.RLock()
 		c, ok := p.collectors[name]
