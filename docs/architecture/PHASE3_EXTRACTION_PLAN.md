@@ -134,18 +134,69 @@ deny `net/http`, `database/sql`, `internal/adapters/**`, and the other four
       (no DB, no filesystem) — the payoff the phase exists for.
 - [ ] `internal/app/harvest.go` builds the module from `Deps`; `internal/api/modules.go`
       consumes the module through the same surface (no behavior change).
-- [ ] The harvest→health coupling is a `HealthSource` port, not a direct import.
+- [x] The harvest→health coupling is gone (it was dead code — deleted, #1428).
 - [ ] Docs synced (§7): `THE_SEED_ARCHITECTURE` harvest section + folder-tree + ring diagram.
 
-### 4.6 PR slicing (each green, admin-merged)
+### 4.6 PR slicing (each green, admin-merged) — STATUS
 
-1. **Scaffold + ports (no behavior change):** create `modules/harvest/` with
-   `service.go`+`ports.go`, move the pure logic, define the ports; `adapters/store`
-   + `adapters/http` shims implement/consume them; `depguard` rule at `warn`.
-2. **Cut the cross-module health import** to `HealthSource`.
-3. **Fake-port unit tests** for aggregator/generator/scheduler/service.
-4. **Flip `depguard` to `deny`**; retire harvest's slice of `ServiceContainer` into
-   `app/harvest.go`; doc sync.
+Resliced during execution into atomic PRs:
+
+1. ✅ **1a relocate** (#1427): `git mv internal/harvest → internal/modules/harvest`,
+   import-path rewrite. Pure move, golden-green.
+2. ✅ **1b-ii cut health** (#1428): `health_report.go` was **dead code**
+   (zero callers) → deleted, not ported. Removed harvest→health. Preserved
+   `statusCritical` into `types.go`.
+3. ✅ **1b-iii enforce purity** (#1429): `depguard` `modules-domain-purity`
+   (deny `net/http`/`database/sql`/`internal/adapters` on `internal/modules/**`)
+   + `harvest-module-independence` (deny sibling module roots). RED-proven.
+4. ⏳ **1b-iv ReportRepo** — NEXT (see §4.7). Relocate reports SQL into the
+   `adapters/store` ring behind a port.
+5. ⏳ **1b-v** — `ScheduleRepo` (scheduler) + `MetricsRepo`/`ExportRepo`
+   (aggregator + export device/vuln queries), then ban `internal/database` from
+   `modules/harvest` in `depguard` and seed `internal/app/harvest.go`.
+
+(Clock/IDGen ports: optional/low-value — `time.Now()` sprawls 7 files, mostly
+presentational PDF/CSV stamps. Skip unless determinism is needed.)
+
+### 4.7 ReportRepo execution recipe (turnkey for the fresh pass)
+
+Goal: move report-record SQL out of the module behind a port; harvest depends on
+an interface, the SQL lives in `internal/adapters/store`.
+
+1. **Port** — `internal/modules/harvest/ports.go` (new):
+   ```go
+   type ReportRepo interface {
+       GetReport(ctx context.Context, id string) (*Report, error)
+       ListReports(ctx context.Context) ([]Report, error)
+       SaveReport(ctx context.Context, r *Report) error
+       DeleteReport(ctx context.Context, id string) error // row only
+   }
+   ```
+2. **Adapter** — `internal/adapters/store/harvest_repo.go` (new pkg `store`):
+   `type ReportRepo struct { db *database.DB }` + `NewReportRepo(db)`. Move the
+   SQL + scanning verbatim from `services_reports.go` (`GetReport`/`ListReports`/
+   `scanReport`/`scanReportFromRows`) and `services.go:saveReport`, plus the
+   `DELETE FROM reports` from `DeleteReport`. Returns `*harvest.Report` (adapter
+   imports harvest — correct inward direction). **Move logic, don't rewrite.**
+3. **Service** — `GeneratorService` gains a `reports ReportRepo` field; its
+   `GetReport`/`ListReports`/`saveReport`/`DeleteReport` delegate to it.
+   `DeleteReport` keeps its `os.Remove(file)` orchestration. `GeneratorService`
+   **keeps `db`** for now (export `devices`/`device_vulnerabilities` queries in
+   `services_export.go` are a separate `ExportRepo` concern — slice 1b-v).
+4. **Wiring** — `NewGeneratorService(cfg, reports, db, ts, as)`; `harvest.New`
+   takes the repo and passes it (aggregator/scheduler stay on `db`). Build the
+   adapter in the 3 callers: `internal/api/modules.go`, `cmd/seed/cmd_serve.go`,
+   `cmd/seed/cmd_service_windows.go` → `store.NewReportRepo(db)`.
+5. **Tests** — ~10 `NewGeneratorService(cfg, db, ts, as)` sites in
+   `internal/modules/harvest/internal_test.go` (+ `services_test.go`) → pass
+   `store.NewReportRepo(db)`; add `adapters/store` import. (External test pkg
+   `harvest_test` may import adapters.) Optionally add a fake `ReportRepo` for a
+   DB-free unit test of `GeneratorService` (the §4.5 payoff).
+6. **Gates** — `go build ./...`, harvest unit tests, **golden HTTP suite** (the
+   behavior gate), `gofumpt -w` the rewired importers (import-path moves trip
+   import ordering), `golangci-lint` 0 issues. depguard stays green (still using
+   the `internal/database` wrapper, not `database/sql`; the `internal/database`
+   ban arrives in 1b-v after the store ring is fully populated).
 
 ---
 
