@@ -1,9 +1,21 @@
 # Seed Re-Architecture Blueprint
 
+> ⚠️ **AMENDED 2026-06-01 — Phase 3 pivoted.** The "modulith hexagon" with one
+> `internal/modules/<botanical>` package per product module (Roots/Canopy/Shell/
+> Sap/Harvest) proved, during execution, to be *dead parallel wiring* the HTTP
+> request path never consumed. Phase 3's live plan of record is now
+> **`PHASE3_RECONCILE_PROPOSAL.md`**: a right-sized modular monolith — fat
+> handlers + api `ServiceContainer` groupings → **capability-first** feature
+> packages (`internal/wifi`, `internal/diagnostics`, `internal/security`,
+> `internal/reporting`), one composition root, ports only at real I/O seams, and
+> **descriptive code names** (botanical names retained for *marketing* only). The
+> module facades have been deleted. Phases 0–2 (registry, code-first contract,
+> golden harness) stand. Read the RECONCILE proposal for current direction.
+
 **Product:** Seed (Network Diagnostics + Wi-Fi Troubleshooting + Security + Compliance)
 **Owner:** Mustard Seed Networks
-**Status:** Plan of record — approved direction, not yet implemented
-**Updated:** 2026-05-31
+**Status:** AMENDED — Phase 3 superseded by PHASE3_RECONCILE_PROPOSAL.md (2026-06-01)
+**Updated:** 2026-06-01
 **Companion ADRs:** [`decisions/`](decisions/)
 **Supersedes (structure):** the legacy seed/cross-repo structure plans in msn-docs — see [§17](#17-documentation-alignment-per-phase-gate)
 
