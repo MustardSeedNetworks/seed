@@ -20,7 +20,6 @@ import (
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/netif"
 	"github.com/krisarmstrong/seed/internal/paths"
-	"github.com/krisarmstrong/seed/internal/services"
 	"github.com/krisarmstrong/seed/internal/services/discovery"
 	"github.com/krisarmstrong/seed/internal/version"
 )
@@ -109,10 +108,6 @@ func initializeDatabase(cfg *config.Config) *database.DB {
 // initializeModules creates all application modules.
 func initializeModules(cfg *config.Config, db *database.DB) *api.Modules {
 	modules := &api.Modules{}
-
-	// Sap: Live telemetry (gateway, DNS, speedtest, iperf monitoring)
-	modules.Sap = services.New(cfg, db)
-	logging.GetLogger().Info("Sap module initialized")
 
 	// Harvest: Reporting (report generation, templates, scheduling)
 	modules.Harvest = app.NewHarvest(cfg, db)
