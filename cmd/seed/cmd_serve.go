@@ -23,7 +23,6 @@ import (
 	"github.com/krisarmstrong/seed/internal/paths"
 	"github.com/krisarmstrong/seed/internal/services"
 	"github.com/krisarmstrong/seed/internal/services/discovery"
-	"github.com/krisarmstrong/seed/internal/services/shell"
 	"github.com/krisarmstrong/seed/internal/version"
 )
 
@@ -115,10 +114,6 @@ func initializeModules(cfg *config.Config, db *database.DB) *api.Modules {
 	// Sap: Live telemetry (gateway, DNS, speedtest, iperf monitoring)
 	modules.Sap = services.New(cfg, db)
 	logging.GetLogger().Info("Sap module initialized")
-
-	// Shell: Security posture (DHCP monitoring, vulnerability scanning)
-	modules.Shell = shell.New(cfg, db)
-	logging.GetLogger().Info("Shell module initialized")
 
 	// Canopy: Wi-Fi planning (surveys, site planning)
 	modules.Canopy = canopy.New(cfg, db)
