@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/port-scan-request.schema.json",
+  "$ref": "#/$defs/PortScanRequest",
+  "$defs": {
+    "PortScanRequest": {
+      "properties": {
+        "target": {
+          "type": "string"
+        },
+        "ports": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "profile": {
+          "type": "string"
+        },
+        "workers": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "target"
+      ]
+    }
+  },
+  "title": "PortScanRequest",
+  "description": "PortScanRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

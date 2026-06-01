@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/dns-security-scan-request.schema.json",
+  "$ref": "#/$defs/DNSSecurityScanRequest",
+  "$defs": {
+    "DNSSecurityScanRequest": {
+      "properties": {
+        "servers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "servers"
+      ]
+    }
+  },
+  "title": "DNSSecurityScanRequest",
+  "description": "DNSSecurityScanRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

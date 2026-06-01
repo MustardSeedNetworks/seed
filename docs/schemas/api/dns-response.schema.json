@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/dns-response.schema.json",
+  "$ref": "#/$defs/DNSResponse",
+  "$defs": {
+    "DNSLookupResult": {
+      "properties": {
+        "result": {
+          "type": "string"
+        },
+        "time": {
+          "type": "integer"
+        },
+        "timeMs": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "resolved": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "result",
+        "time",
+        "timeMs",
+        "status"
+      ]
+    },
+    "DNSResponse": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "server": {
+          "type": "string"
+        },
+        "servers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "testHostname": {
+          "type": "string"
+        },
+        "forward": {
+          "$ref": "#/$defs/DNSLookupResult"
+        },
+        "forwardIpv6": {
+          "$ref": "#/$defs/DNSLookupResult"
+        },
+        "reverse": {
+          "$ref": "#/$defs/DNSLookupResult"
+        },
+        "reverseIpv6": {
+          "$ref": "#/$defs/DNSLookupResult"
+        },
+        "perServerResults": {
+          "items": {
+            "$ref": "#/$defs/DNSServerTestResult"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface",
+        "server",
+        "servers",
+        "testHostname"
+      ]
+    },
+    "DNSServerTestResult": {
+      "properties": {
+        "server": {
+          "type": "string"
+        },
+        "forward": {
+          "$ref": "#/$defs/DNSLookupResult"
+        },
+        "forwardIpv6": {
+          "$ref": "#/$defs/DNSLookupResult"
+        },
+        "status": {
+          "type": "string"
+        },
+        "avgTimeMs": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "server",
+        "status",
+        "avgTimeMs"
+      ]
+    }
+  },
+  "title": "DNSResponse",
+  "description": "DNSResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/iperf-client-request.schema.json",
+  "$ref": "#/$defs/IperfClientRequest",
+  "$defs": {
+    "IperfClientRequest": {
+      "properties": {
+        "server": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "reverse": {
+          "type": "boolean"
+        },
+        "direction": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "integer"
+        },
+        "parallel": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "server",
+        "port",
+        "protocol",
+        "reverse",
+        "direction",
+        "duration",
+        "parallel"
+      ]
+    }
+  },
+  "title": "IperfClientRequest",
+  "description": "IperfClientRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
