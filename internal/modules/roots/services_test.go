@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewAnalysisService(t *testing.T) {
-	svc := roots.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil)
 	if svc == nil {
 		t.Fatal("NewAnalysisService() returned nil")
 	}
@@ -143,7 +143,7 @@ func TestAnalysisService_AnalyzePath(t *testing.T) {
 		},
 	}
 
-	svc := roots.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -240,7 +240,7 @@ func TestAnalysisService_AnalyzePath_PacketLoss(t *testing.T) {
 		},
 	}
 
-	svc := roots.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -329,7 +329,7 @@ func TestAnalysisService_AnalyzePath_BottleneckDetection(t *testing.T) {
 		},
 	}
 
-	svc := roots.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -396,7 +396,7 @@ func TestAnalysisService_AnalyzePath_ScoreDescriptions(t *testing.T) {
 		},
 	}
 
-	svc := roots.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -439,7 +439,7 @@ func TestScoreToDescription(t *testing.T) {
 		{score: 0, wantContain: "Very poor"},
 	}
 
-	svc := roots.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil)
 
 	for _, tt := range tests {
 		t.Run("score_"+string(rune('0'+tt.score/10)), func(t *testing.T) {
@@ -964,7 +964,7 @@ func TestNewTracerouteService(t *testing.T) {
 func TestNewTopologyService(t *testing.T) {
 	t.Parallel()
 
-	svc := roots.NewTopologyService(nil, nil)
+	svc := roots.NewTopologyService(nil)
 	if svc == nil {
 		t.Fatal("NewTopologyService() returned nil")
 	}
@@ -973,7 +973,7 @@ func TestNewTopologyService(t *testing.T) {
 func TestTopologyService_StartStop(t *testing.T) {
 	t.Parallel()
 
-	svc := roots.NewTopologyService(nil, nil)
+	svc := roots.NewTopologyService(nil)
 	ctx := context.Background()
 
 	// Start should not error
@@ -988,7 +988,7 @@ func TestTopologyService_StartStop(t *testing.T) {
 func TestTopologyService_GetTopology(t *testing.T) {
 	t.Parallel()
 
-	svc := roots.NewTopologyService(nil, nil)
+	svc := roots.NewTopologyService(nil)
 	ctx := context.Background()
 
 	_, err := svc.GetTopology(ctx)
@@ -1164,7 +1164,7 @@ func TestTopology_StructFields(t *testing.T) {
 func TestNewModule(t *testing.T) {
 	t.Parallel()
 
-	m := roots.New(nil, nil)
+	m := roots.New(nil)
 	if m == nil {
 		t.Fatal("New() returned nil")
 	}
@@ -1186,7 +1186,7 @@ func TestNewModule(t *testing.T) {
 func TestModule_StartStop(t *testing.T) {
 	t.Parallel()
 
-	m := roots.New(nil, nil)
+	m := roots.New(nil)
 	ctx := context.Background()
 
 	// Start should not error

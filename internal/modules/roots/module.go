@@ -7,14 +7,14 @@ import (
 	"sync"
 
 	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/database"
 )
 
 // Module is the main Roots module providing path analysis and topology services.
+// It is persistence-free: none of its services touch the database (topology
+// persistence will arrive behind a repo port when it is implemented).
 type Module struct {
 	mu         sync.RWMutex
 	cfg        *config.Config
-	db         *database.DB
 	traceroute *TracerouteService
 	topology   *TopologyService
 	enrichment *EnrichmentService
@@ -22,16 +22,13 @@ type Module struct {
 }
 
 // New creates a new Roots module instance.
-func New(cfg *config.Config, db *database.DB) *Module {
-	m := &Module{
-		cfg: cfg,
-		db:  db,
-	}
+func New(cfg *config.Config) *Module {
+	m := &Module{cfg: cfg}
 
 	m.traceroute = NewTracerouteService(cfg)
-	m.topology = NewTopologyService(cfg, db)
+	m.topology = NewTopologyService(cfg)
 	m.enrichment = NewEnrichmentService(cfg)
-	m.analysis = NewAnalysisService(cfg, db)
+	m.analysis = NewAnalysisService(cfg)
 
 	return m
 }

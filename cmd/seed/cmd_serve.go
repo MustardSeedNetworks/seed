@@ -126,7 +126,7 @@ func initializeModules(cfg *config.Config, db *database.DB) *api.Modules {
 	logging.GetLogger().Info("Canopy module initialized")
 
 	// Roots: Path analysis (traceroute, topology, IP enrichment)
-	modules.Roots = roots.New(cfg, db)
+	modules.Roots = roots.New(cfg)
 	logging.GetLogger().Info("Roots module initialized")
 
 	// Harvest: Reporting (report generation, templates, scheduling)

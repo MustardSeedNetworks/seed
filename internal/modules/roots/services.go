@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/pipeline/publicip"
 	"github.com/krisarmstrong/seed/internal/services/discovery"
 )
@@ -134,17 +133,13 @@ func (s *TracerouteService) Trace(
 // TopologyService manages network topology discovery and storage.
 type TopologyService struct {
 	cfg    *config.Config
-	db     *database.DB
 	mu     sync.Mutex // Guards cancel against concurrent Start/Stop.
 	cancel context.CancelFunc
 }
 
 // NewTopologyService creates a new topology service.
-func NewTopologyService(cfg *config.Config, db *database.DB) *TopologyService {
-	return &TopologyService{
-		cfg: cfg,
-		db:  db,
-	}
+func NewTopologyService(cfg *config.Config) *TopologyService {
+	return &TopologyService{cfg: cfg}
 }
 
 // Start begins background topology discovery.
@@ -274,12 +269,11 @@ func (s *EnrichmentService) GetPublicIP(ctx context.Context) (*IPEnrichment, err
 // AnalysisService provides path quality analysis.
 type AnalysisService struct {
 	cfg *config.Config
-	db  *database.DB
 }
 
 // NewAnalysisService creates a new analysis service.
-func NewAnalysisService(cfg *config.Config, db *database.DB) *AnalysisService {
-	return &AnalysisService{cfg: cfg, db: db}
+func NewAnalysisService(cfg *config.Config) *AnalysisService {
+	return &AnalysisService{cfg: cfg}
 }
 
 // AnalyzePath performs quality analysis on a traceroute result.

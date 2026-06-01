@@ -28,7 +28,7 @@ func TestTopologyService_Creation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			svc := roots.NewTopologyService(nil, nil)
+			svc := roots.NewTopologyService(nil)
 			if (svc == nil) != tt.wantNil {
 				t.Errorf("NewTopologyService() nil = %v, want nil = %v", svc == nil, tt.wantNil)
 			}
@@ -63,7 +63,7 @@ func TestTopologyService_Start(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			svc := roots.NewTopologyService(nil, nil)
+			svc := roots.NewTopologyService(nil)
 			ctx, cancel := context.WithTimeout(context.Background(), tt.ctxTimeout)
 			defer cancel()
 
@@ -101,7 +101,7 @@ func TestTopologyService_Stop(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			svc := roots.NewTopologyService(nil, nil)
+			svc := roots.NewTopologyService(nil)
 
 			if tt.startFirst {
 				ctx := context.Background()
@@ -118,7 +118,7 @@ func TestTopologyService_Stop(t *testing.T) {
 func TestTopologyService_StopMultiple(t *testing.T) {
 	t.Parallel()
 
-	svc := roots.NewTopologyService(nil, nil)
+	svc := roots.NewTopologyService(nil)
 	ctx := context.Background()
 	_ = svc.Start(ctx)
 
@@ -146,7 +146,7 @@ func TestTopologyService_GetTopology_NotImplemented(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			svc := roots.NewTopologyService(nil, nil)
+			svc := roots.NewTopologyService(nil)
 			ctx := context.Background()
 
 			result, err := svc.GetTopology(ctx)
@@ -167,7 +167,7 @@ func TestTopologyService_GetTopology_NotImplemented(t *testing.T) {
 func TestTopologyService_ConcurrentOperations(t *testing.T) {
 	t.Parallel()
 
-	svc := roots.NewTopologyService(nil, nil)
+	svc := roots.NewTopologyService(nil)
 	ctx := context.Background()
 
 	const goroutines = 10

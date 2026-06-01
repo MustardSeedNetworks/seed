@@ -247,7 +247,7 @@ func initializeModulesForService(cfg *config.Config, db *database.DB) *api.Modul
 	modules.Sap = services.New(cfg, db)
 	modules.Shell = shell.New(cfg, db)
 	modules.Canopy = canopy.New(cfg, db)
-	modules.Roots = roots.New(cfg, db)
+	modules.Roots = roots.New(cfg)
 	modules.Harvest = app.NewHarvest(cfg, db)
 
 	return modules
