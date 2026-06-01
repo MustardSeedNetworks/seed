@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/fingerprinting-response.schema.json",
+  "$ref": "#/$defs/FingerprintingResponse",
+  "$defs": {
+    "FingerprintingResponse": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "osDetection": {
+          "type": "boolean"
+        },
+        "serviceProbes": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "osDetection",
+        "serviceProbes"
+      ]
+    }
+  },
+  "title": "FingerprintingResponse",
+  "description": "FingerprintingResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

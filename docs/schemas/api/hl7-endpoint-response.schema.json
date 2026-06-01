@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/hl7-endpoint-response.schema.json",
+  "$ref": "#/$defs/HL7EndpointResponse",
+  "$defs": {
+    "HL7EndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "sendingApp": {
+          "type": "string"
+        },
+        "sendingFacility": {
+          "type": "string"
+        },
+        "receivingApp": {
+          "type": "string"
+        },
+        "receivingFacility": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "sendingApp",
+        "sendingFacility",
+        "receivingApp",
+        "receivingFacility",
+        "enabled",
+        "criticality"
+      ]
+    }
+  },
+  "title": "HL7EndpointResponse",
+  "description": "HL7EndpointResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

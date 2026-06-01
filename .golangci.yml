@@ -525,6 +525,15 @@ linters:
       # the api package and is not refactorable to a single constant (#397).
       - path: 'internal/api/handlers_guest_audit\.go'
         linters: [ goconst ]
+      # schemaTargets() in cmd/seed-schema/main.go is a single declarative
+      # registry table — one row per published DTO (RE_ARCHITECTURE_BLUEPRINT.md
+      # Phase 2). Its length is data, not logic complexity, and it grows by one
+      # line per DTO as coverage widens, so funlen is relaxed for this file.
+      # Same spirit as the goconst lookup-table exclusions above; keeping it as
+      # one table (rather than near-identical split functions) is what avoids
+      # the dupl clones it would otherwise produce.
+      - path: 'cmd/seed-schema/main\.go'
+        linters: [ funlen ]
       - path: '_test\.go'
         linters:
           - bodyclose

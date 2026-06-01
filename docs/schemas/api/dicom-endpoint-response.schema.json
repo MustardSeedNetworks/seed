@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/dicom-endpoint-response.schema.json",
+  "$ref": "#/$defs/DICOMEndpointResponse",
+  "$defs": {
+    "DICOMEndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "calledAe": {
+          "type": "string"
+        },
+        "callingAe": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "calledAe",
+        "callingAe",
+        "enabled"
+      ]
+    }
+  },
+  "title": "DICOMEndpointResponse",
+  "description": "DICOMEndpointResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

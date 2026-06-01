@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/http-endpoint-response.schema.json",
+  "$ref": "#/$defs/HTTPEndpointResponse",
+  "$defs": {
+    "HTTPEndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "expectedStatus": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "bodyMatch": {
+          "type": "string"
+        },
+        "bodyMatchIsRegex": {
+          "type": "boolean"
+        },
+        "checkSecurityHeaders": {
+          "type": "boolean"
+        },
+        "followRedirects": {
+          "type": "boolean"
+        },
+        "maxRedirects": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "url",
+        "expectedStatus",
+        "enabled"
+      ]
+    }
+  },
+  "title": "HTTPEndpointResponse",
+  "description": "HTTPEndpointResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

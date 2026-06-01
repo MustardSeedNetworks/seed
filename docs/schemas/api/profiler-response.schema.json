@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/profiler-response.schema.json",
+  "$ref": "#/$defs/ProfilerResponse",
+  "$defs": {
+    "ProfilerResponse": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "timeoutMs": {
+          "type": "integer"
+        },
+        "maxConcurrent": {
+          "type": "integer"
+        },
+        "quickPorts": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "timeoutMs",
+        "maxConcurrent",
+        "quickPorts"
+      ]
+    }
+  },
+  "title": "ProfilerResponse",
+  "description": "ProfilerResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
