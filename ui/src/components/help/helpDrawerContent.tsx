@@ -1067,6 +1067,107 @@ export const helpSections: HelpSection[] = [
     ],
   },
   {
+    id: 'alerts',
+    titleKey: 'sections.alerts',
+    icon: <AlertTriangle className={ICON} />,
+    keywords: ['alerts', 'alert', 'acknowledge', 'resolve', 'severity', 'notification', 'incident'],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'Alerts lists the conditions the monitoring pipelines have raised — for example a polled device going unreachable or an interface changing state. Filter by severity, acknowledged, or resolved, then act on each row: acknowledge marks it seen, resolve marks it fixed. The person who clicks is recorded against the alert.',
+      },
+      {
+        kind: 'terms',
+        heading: 'Terms',
+        items: [
+          {
+            term: 'Severity',
+            description:
+              'How urgent the condition is. Filter to focus on the most important alerts first.',
+          },
+          {
+            term: 'Acknowledge',
+            description:
+              'Marks an alert as seen without closing it — signals someone is looking into it.',
+          },
+          {
+            term: 'Resolve',
+            description: 'Marks an alert as fixed and removes it from the default unresolved view.',
+          },
+          {
+            term: 'Acknowledged by',
+            description:
+              'The operator who acknowledged the alert, taken from the signed-in identity.',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'pollingTargets',
+    titleKey: 'sections.pollingTargets',
+    icon: <Server className={ICON} />,
+    keywords: ['polling', 'targets', 'snmp', 'monitor', 'device', 'collector', 'add', 'edit'],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'Polling targets is the list of devices Seed polls over SNMP. Add a target to start monitoring it, edit one to change its settings, or remove one you no longer track. A new target picks up the default collector chain and begins polling on the next cycle; the devices and links it discovers appear on the Topology page, and state changes surface as alerts.',
+      },
+      {
+        kind: 'terms',
+        heading: 'Terms',
+        items: [
+          {
+            term: 'Target',
+            description: 'A device (by address) that Seed polls on a recurring interval.',
+          },
+          {
+            term: 'Collector chain',
+            description:
+              'The set of SNMP collectors run against a target (system info, interface table, LLDP, ARP, and forwarding-database neighbors).',
+          },
+          {
+            term: 'SNMP',
+            description:
+              'Simple Network Management Protocol — the standard used to read device state and tables.',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'topology',
+    titleKey: 'sections.topology',
+    icon: <Network className={ICON} />,
+    keywords: ['topology', 'graph', 'nodes', 'links', 'neighbors', 'map', 'interfaces'],
+    blocks: [
+      {
+        kind: 'paragraph',
+        text: 'Topology shows the network graph reconciled from discovery and SNMP polling: every node visible to your session, with its interfaces and the links between nodes. Select a node to open a detail panel listing its interfaces and discovered links. The graph is built from the same observations that drive polling targets and alerts.',
+      },
+      {
+        kind: 'terms',
+        heading: 'Terms',
+        items: [
+          {
+            term: 'Node',
+            description:
+              'A discovered device in the graph — switch, router, host, or access point.',
+          },
+          {
+            term: 'Link',
+            description:
+              'A neighbor relationship between two nodes, learned from LLDP/CDP or forwarding tables.',
+          },
+          {
+            term: 'Interface',
+            description: 'A port on a node, with its status and any links observed on it.',
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'glossary',
     titleKey: 'sections.glossary',
     icon: <BookOpen className={ICON} />,

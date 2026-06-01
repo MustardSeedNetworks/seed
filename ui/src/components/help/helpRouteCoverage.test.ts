@@ -21,6 +21,9 @@ const ROUTE_TO_HELP: Record<string, string> = {
   '/performance': 'performance',
   '/reports': 'reports',
   '/logs': 'logs',
+  '/alerts': 'alerts',
+  '/polling-targets': 'pollingTargets',
+  '/topology': 'topology',
 };
 
 describe('GUI help — route coverage', () => {

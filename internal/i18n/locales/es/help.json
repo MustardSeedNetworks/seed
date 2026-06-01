@@ -27,7 +27,10 @@
     "glossary": "Glosario",
     "path": "Análisis de ruta",
     "reports": "Informes",
-    "logs": "Logs"
+    "logs": "Logs",
+    "alerts": "Alertas",
+    "pollingTargets": "Objetivos de sondeo",
+    "topology": "Topología"
   },
   "instructions": {
     "runTests": "Toque el botón de reproducir para ejecutar todas las pruebas.",
