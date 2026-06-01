@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/krisarmstrong/seed/internal/engine"
 )
 
 // IfTableReconcilerName is the engine identifier.
@@ -39,9 +40,11 @@ type IfTableReconciler struct {
 	logger   *slog.Logger
 	now      func() time.Time
 	interval time.Duration
+	tracker  *tickTracker
 
 	mu      sync.Mutex
 	started bool
+	stopped bool
 	cancel  context.CancelFunc
 	wg      sync.WaitGroup
 }
@@ -76,11 +79,20 @@ func NewIfTableReconciler(cfg IfTableConfig) (*IfTableReconciler, error) {
 		logger:   d.logger,
 		now:      d.now,
 		interval: d.interval,
+		tracker:  newTickTracker(d.interval, d.now),
 	}, nil
 }
 
 // Name implements [engine.Engine].
 func (*IfTableReconciler) Name() string { return IfTableReconcilerName }
+
+// Status implements [engine.Reporter].
+func (r *IfTableReconciler) Status() engine.Status {
+	r.mu.Lock()
+	stopped := r.stopped
+	r.mu.Unlock()
+	return r.tracker.status(stopped)
+}
 
 // Start kicks off the reconcile loop. Idempotent.
 func (r *IfTableReconciler) Start(ctx context.Context) error {
@@ -106,6 +118,7 @@ func (r *IfTableReconciler) Stop(ctx context.Context) error {
 		return nil
 	}
 	r.started = false
+	r.stopped = true
 	if r.cancel != nil {
 		r.cancel()
 	}
@@ -146,6 +159,12 @@ func (r *IfTableReconciler) loop(ctx context.Context) {
 
 // ReconcileOnce processes one batch of new if_table observations.
 func (r *IfTableReconciler) ReconcileOnce(ctx context.Context) error {
+	err := r.reconcileOnceInner(ctx)
+	r.tracker.recordTick(err)
+	return err
+}
+
+func (r *IfTableReconciler) reconcileOnceInner(ctx context.Context) error {
 	since, err := r.loadHighWater(ctx)
 	if err != nil {
 		return fmt.Errorf("load high-water: %w", err)

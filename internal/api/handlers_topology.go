@@ -156,6 +156,80 @@ func (s *Server) handleTopologyLinks(w http.ResponseWriter, r *http.Request) {
 	writeTopologyJSON(w, r, "links", encodeLinks(links))
 }
 
+// handleTopologyARP serves GET /api/v1/topology/arp. Filters via
+// ?node_id (source node), ?since (RFC3339), ?limit. Returns 200 with
+// a JSON envelope {count, bindings}. The bindings come from the ARP
+// reconciler which folds repeated observations into one row per
+// (source_node, if_index, ip_address).
+//
+// Query string is parsed inline (rather than via a parseFn helper)
+// because /topology/arp filters on node_id rather than device_type,
+// so the parser shape differs from parseTopologyListOptions enough
+// that sharing would just push the divergence into the helper.
+func (s *Server) handleTopologyARP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	q := r.URL.Query()
+	opts := database.TopologyARPListOptions{
+		ClientID:     q.Get("client_id"),
+		SourceNodeID: q.Get("node_id"),
+		Limit:        topologyDefaultLimit,
+	}
+	if sinceRaw := q.Get("since"); sinceRaw != "" {
+		t, err := time.Parse(time.RFC3339, sinceRaw)
+		if err != nil {
+			http.Error(w, "invalid 'since' (expect RFC3339)", http.StatusBadRequest)
+			return
+		}
+		opts.Since = t
+	}
+	if limitRaw := q.Get("limit"); limitRaw != "" {
+		n, err := strconv.Atoi(limitRaw)
+		if err != nil || n < 1 {
+			http.Error(w, "invalid 'limit' (positive integer)", http.StatusBadRequest)
+			return
+		}
+		if n > topologyMaxLimit {
+			n = topologyMaxLimit
+		}
+		opts.Limit = n
+	}
+
+	db := s.db()
+	if db == nil {
+		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
+		return
+	}
+	bindings, err := db.Topology().ListARPBindings(r.Context(), opts)
+	if err != nil {
+		logging.FromContext(r.Context()).ErrorContext(r.Context(),
+			"list topology_arp_bindings failed", "error", err)
+		http.Error(w, "Failed to list ARP bindings", http.StatusInternalServerError)
+		return
+	}
+	writeTopologyJSON(w, r, "bindings", encodeARPBindings(bindings))
+}
+
+// encodeARPBindings flattens TopologyARPBinding rows for JSON.
+func encodeARPBindings(bindings []*database.TopologyARPBinding) []map[string]any {
+	out := make([]map[string]any, 0, len(bindings))
+	for _, b := range bindings {
+		out = append(out, map[string]any{
+			"id":           b.ID,
+			"clientId":     b.ClientID,
+			"sourceNodeId": b.SourceNodeID,
+			"ifIndex":      b.IfIndex,
+			"ipAddress":    b.IPAddress,
+			"macAddress":   b.MACAddress,
+			"mediaType":    b.MediaType,
+			"lastSeen":     formatTime(b.LastSeen),
+		})
+	}
+	return out
+}
+
 // parseTopologyListOptions extracts query-string filters for the
 // nodes endpoint. Returns 400-shaped errors via plain text.
 func parseTopologyListOptions(r *http.Request) (database.TopologyListOptions, error) {

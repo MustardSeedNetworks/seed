@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -235,6 +236,79 @@ func (r *TopologyRepository) UpsertARPBinding(ctx context.Context, b *TopologyAR
 		return fmt.Errorf("upsert topology_arp_binding: %w", err)
 	}
 	return nil
+}
+
+// TopologyARPListOptions filters the ListARPBindings query.
+// Empty fields mean "no filter".
+type TopologyARPListOptions struct {
+	ClientID     string
+	SourceNodeID string
+	Since        time.Time
+	Limit        int
+}
+
+// ListARPBindings returns ARP bindings ordered by LastSeen desc.
+// All filter fields are optional. The Limit field caps the result
+// set; callers in handlers_topology.go clamp it to topologyMaxLimit
+// before invoking.
+func (r *TopologyRepository) ListARPBindings(
+	ctx context.Context, opts TopologyARPListOptions,
+) ([]*TopologyARPBinding, error) {
+	const maxFilterArgs = 4 // client_id + source_node_id + since + limit
+	args := make([]any, 0, maxFilterArgs)
+	clauses := []string{}
+	if opts.ClientID != "" {
+		clauses = append(clauses, "client_id = ?")
+		args = append(args, opts.ClientID)
+	}
+	if opts.SourceNodeID != "" {
+		clauses = append(clauses, "source_node_id = ?")
+		args = append(args, opts.SourceNodeID)
+	}
+	if !opts.Since.IsZero() {
+		clauses = append(clauses, "last_seen >= ?")
+		args = append(args, opts.Since.UTC().Format(time.RFC3339Nano))
+	}
+	query := `
+		SELECT id, client_id, source_node_id, if_index, ip_address,
+		       mac_address, media_type, last_seen
+		FROM topology_arp_bindings`
+	if len(clauses) > 0 {
+		query += " WHERE " + strings.Join(clauses, " AND ")
+	}
+	query += " ORDER BY last_seen DESC"
+	if opts.Limit > 0 {
+		query += " LIMIT ?"
+		args = append(args, opts.Limit)
+	}
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list topology_arp_bindings: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	out := make([]*TopologyARPBinding, 0)
+	for rows.Next() {
+		var (
+			b       TopologyARPBinding
+			lastStr string
+		)
+		if scanErr := rows.Scan(
+			&b.ID, &b.ClientID, &b.SourceNodeID, &b.IfIndex,
+			&b.IPAddress, &b.MACAddress, &b.MediaType, &lastStr,
+		); scanErr != nil {
+			return nil, fmt.Errorf("scan topology_arp_binding: %w", scanErr)
+		}
+		if parsed, perr := time.Parse(time.RFC3339Nano, lastStr); perr == nil {
+			b.LastSeen = parsed
+		}
+		out = append(out, &b)
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("list topology_arp_bindings iter: %w", rowsErr)
+	}
+	return out, nil
 }
 
 // SetNodePrimaryIP updates a node's primary_ip column without
