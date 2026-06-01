@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/speedtest-response.schema.json",
+  "$ref": "#/$defs/SpeedtestResponse",
+  "$defs": {
+    "SpeedtestResponse": {
+      "properties": {
+        "download": {
+          "type": "number"
+        },
+        "upload": {
+          "type": "number"
+        },
+        "latency": {
+          "type": "number"
+        },
+        "server": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "distance": {
+          "type": "number"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "testDuration": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "download",
+        "upload",
+        "latency",
+        "server",
+        "location",
+        "host",
+        "distance",
+        "timestamp",
+        "testDuration"
+      ]
+    }
+  },
+  "title": "SpeedtestResponse",
+  "description": "SpeedtestResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

@@ -71,8 +71,14 @@ async function main() {
     if (typeof schema.$ref === 'string' && schema.$ref.startsWith('#/definitions/')) {
       const name = schema.$ref.slice('#/definitions/'.length);
       const defs = { ...schema.definitions };
-      const inlined = defs[name];
-      delete defs[name]; // avoid a duplicate of the root type
+      // Rewrite the root type's self-references to the JSON-Schema root pointer
+      // "#" so a recursive type (e.g. GatewayResponse.ipv6 → GatewayResponse)
+      // self-references by its own name instead of generating a duplicate
+      // `<Name>1` interface. Non-self-refs (to sibling defs) are untouched.
+      const inlined = JSON.parse(
+        JSON.stringify(defs[name]).replaceAll(`"#/definitions/${name}"`, '"#"'),
+      );
+      delete defs[name]; // root is now inlined at the top level
       root = { $schema: schema.$schema, ...inlined };
       if (Object.keys(defs).length > 0) root.definitions = defs;
     }

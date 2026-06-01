@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/ipconfig-response.schema.json",
+  "$ref": "#/$defs/IPConfigResponse",
+  "$defs": {
+    "DHCPTimingInfo": {
+      "properties": {
+        "discover": {
+          "type": "integer"
+        },
+        "offer": {
+          "type": "integer"
+        },
+        "request": {
+          "type": "integer"
+        },
+        "ack": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "discover",
+        "offer",
+        "request",
+        "ack",
+        "total"
+      ]
+    },
+    "IPConfigResponse": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "ipv4": {
+          "$ref": "#/$defs/IPv4Info"
+        },
+        "ipv6": {
+          "items": {
+            "$ref": "#/$defs/IPv6Info"
+          },
+          "type": "array"
+        },
+        "dns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "timing": {
+          "$ref": "#/$defs/DHCPTimingInfo"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface",
+        "mac",
+        "mode",
+        "ipv6",
+        "dns"
+      ]
+    },
+    "IPv4Info": {
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "subnet": {
+          "type": "string"
+        },
+        "gateway": {
+          "type": "string"
+        },
+        "dhcpServer": {
+          "type": "string"
+        },
+        "leaseTime": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address",
+        "subnet"
+      ]
+    },
+    "IPv6Info": {
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "integer"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address",
+        "prefix",
+        "scope",
+        "source"
+      ]
+    }
+  },
+  "title": "IPConfigResponse",
+  "description": "IPConfigResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

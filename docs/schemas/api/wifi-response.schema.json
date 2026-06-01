@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/wifi-response.schema.json",
+  "$ref": "#/$defs/WiFiResponse",
+  "$defs": {
+    "WiFiResponse": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "ssid": {
+          "type": "string"
+        },
+        "bssid": {
+          "type": "string"
+        },
+        "signal": {
+          "type": "integer"
+        },
+        "channel": {
+          "type": "integer"
+        },
+        "frequency": {
+          "type": "integer"
+        },
+        "security": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface",
+        "ssid",
+        "bssid",
+        "signal",
+        "channel",
+        "frequency",
+        "security"
+      ]
+    }
+  },
+  "title": "WiFiResponse",
+  "description": "WiFiResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

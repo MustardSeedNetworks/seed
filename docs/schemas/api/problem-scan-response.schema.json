@@ -1,0 +1,319 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/problem-scan-response.schema.json",
+  "$ref": "#/$defs/ProblemScanResponse",
+  "$defs": {
+    "IPConflict": {
+      "properties": {
+        "ip_address": {
+          "type": "string"
+        },
+        "macs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "device_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "first_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "is_resolved": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ip_address",
+        "macs",
+        "device_ids",
+        "first_seen",
+        "last_seen",
+        "is_resolved"
+      ]
+    },
+    "InterfaceErrorStats": {
+      "properties": {
+        "device_id": {
+          "type": "string"
+        },
+        "interface_name": {
+          "type": "string"
+        },
+        "input_errors": {
+          "type": "integer"
+        },
+        "crc_errors": {
+          "type": "integer"
+        },
+        "frame_errors": {
+          "type": "integer"
+        },
+        "overruns": {
+          "type": "integer"
+        },
+        "dropped_input": {
+          "type": "integer"
+        },
+        "output_errors": {
+          "type": "integer"
+        },
+        "collisions": {
+          "type": "integer"
+        },
+        "late_collision": {
+          "type": "integer"
+        },
+        "carrier_errors": {
+          "type": "integer"
+        },
+        "dropped_output": {
+          "type": "integer"
+        },
+        "input_errors_delta": {
+          "type": "integer"
+        },
+        "output_errors_delta": {
+          "type": "integer"
+        },
+        "recorded_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "device_id",
+        "interface_name",
+        "input_errors",
+        "crc_errors",
+        "frame_errors",
+        "overruns",
+        "dropped_input",
+        "output_errors",
+        "collisions",
+        "late_collision",
+        "carrier_errors",
+        "dropped_output",
+        "recorded_at"
+      ]
+    },
+    "NetworkProblem": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "device_id": {
+          "type": "string"
+        },
+        "device_mac": {
+          "type": "string"
+        },
+        "interface_name": {
+          "type": "string"
+        },
+        "ip_address": {
+          "type": "string"
+        },
+        "affected_macs": {
+          "type": "string"
+        },
+        "ssid": {
+          "type": "string"
+        },
+        "bssid": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "integer"
+        },
+        "current_value": {
+          "type": "number"
+        },
+        "threshold_value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "first_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "resolved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "occurrence_count": {
+          "type": "integer"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "category",
+        "type",
+        "severity",
+        "status",
+        "title",
+        "description",
+        "first_seen",
+        "last_seen",
+        "occurrence_count"
+      ]
+    },
+    "ProblemScanResponse": {
+      "properties": {
+        "problems": {
+          "items": {
+            "$ref": "#/$defs/NetworkProblem"
+          },
+          "type": "array"
+        },
+        "ipConflicts": {
+          "items": {
+            "$ref": "#/$defs/IPConflict"
+          },
+          "type": "array"
+        },
+        "interfaceErrors": {
+          "items": {
+            "$ref": "#/$defs/InterfaceErrorStats"
+          },
+          "type": "array"
+        },
+        "wifiProblems": {
+          "items": {
+            "$ref": "#/$defs/WiFiProblem"
+          },
+          "type": "array"
+        },
+        "scanTime": {
+          "type": "string"
+        },
+        "durationMs": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "problems",
+        "ipConflicts",
+        "interfaceErrors",
+        "scanTime",
+        "durationMs"
+      ]
+    },
+    "WiFiProblem": {
+      "properties": {
+        "problem_type": {
+          "type": "string"
+        },
+        "ssid": {
+          "type": "string"
+        },
+        "bssid": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "integer"
+        },
+        "band": {
+          "type": "string"
+        },
+        "signal_dbm": {
+          "type": "integer"
+        },
+        "noise_dbm": {
+          "type": "integer"
+        },
+        "snr": {
+          "type": "integer"
+        },
+        "retry_percent": {
+          "type": "number"
+        },
+        "co_channel_aps": {
+          "type": "integer"
+        },
+        "adjacent_channel_aps": {
+          "type": "integer"
+        },
+        "utilization_percent": {
+          "type": "number"
+        },
+        "is_rogue": {
+          "type": "boolean"
+        },
+        "is_unauthorized": {
+          "type": "boolean"
+        },
+        "vendor_mismatch": {
+          "type": "boolean"
+        },
+        "expected_vendor": {
+          "type": "string"
+        },
+        "actual_vendor": {
+          "type": "string"
+        },
+        "first_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_seen": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "problem_type",
+        "first_seen",
+        "last_seen"
+      ]
+    }
+  },
+  "title": "ProblemScanResponse",
+  "description": "ProblemScanResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
