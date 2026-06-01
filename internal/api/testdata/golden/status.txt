@@ -1,0 +1,10 @@
+status: 200
+body:
+{
+  "icmpAvailable": false,
+  "interface": "lo",
+  "isWireless": false,
+  "status": "ok",
+  "uptime": "\u003cvolatile\u003e",
+  "version": "\u003cvolatile\u003e"
+}
