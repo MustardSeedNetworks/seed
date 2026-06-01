@@ -4,8 +4,8 @@ import (
 	"math"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/canopy/survey"
-	"github.com/krisarmstrong/seed/internal/canopy/wifi"
+	"github.com/krisarmstrong/seed/internal/wifi"
+	"github.com/krisarmstrong/seed/internal/wifi/survey"
 )
 
 func TestNewInterpolator(t *testing.T) {

@@ -10,13 +10,13 @@ import (
 	"slices"
 
 	"github.com/krisarmstrong/seed/internal/auth"
-	"github.com/krisarmstrong/seed/internal/canopy/survey"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/mibdb"
 	"github.com/krisarmstrong/seed/internal/services/discovery"
 	"github.com/krisarmstrong/seed/internal/services/dns"
+	"github.com/krisarmstrong/seed/internal/wifi/survey"
 )
 
 // initNetworkServices initializes DNS servers, device discovery subnets, and survey manager.

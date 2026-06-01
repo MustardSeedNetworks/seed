@@ -15,8 +15,6 @@ import (
 
 	alertpipeline "github.com/krisarmstrong/seed/internal/alerts/pipeline"
 	"github.com/krisarmstrong/seed/internal/auth"
-	"github.com/krisarmstrong/seed/internal/canopy/survey"
-	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/dhcp"
@@ -45,6 +43,8 @@ import (
 	"github.com/krisarmstrong/seed/internal/services/vlan"
 	"github.com/krisarmstrong/seed/internal/timeseries/retention"
 	"github.com/krisarmstrong/seed/internal/topology"
+	"github.com/krisarmstrong/seed/internal/wifi"
+	"github.com/krisarmstrong/seed/internal/wifi/survey"
 )
 
 // indexHTMLPath is the path to the SPA entry point.

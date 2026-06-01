@@ -10,9 +10,9 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/krisarmstrong/seed/internal/canopy/survey"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/krisarmstrong/seed/internal/wifi/survey"
 )
 
 // AddSampleRequest contains a WiFi signal sample measurement for a survey location.
