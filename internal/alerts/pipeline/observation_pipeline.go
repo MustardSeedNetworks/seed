@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"sync"
 	"time"
 
@@ -50,6 +51,7 @@ type ObservationPipeline struct {
 	now         func() time.Time
 	interval    time.Duration
 	suppression time.Duration
+	replayDepth int
 
 	mu       sync.Mutex
 	started  bool
@@ -65,6 +67,12 @@ type ObservationPipeline struct {
 	storageState map[string]float64 // (target, storage_index) -> last %
 }
 
+// defaultReplayDepth is how many recent observations per kind get
+// pulled at startup to prime the state caches. Two = the previous
+// state plus the current one, which is enough to detect the most
+// recent transition without a deeper history walk.
+const defaultReplayDepth = 2
+
 // ObservationConfig wires the pipeline.
 type ObservationConfig struct {
 	Observations observationReader
@@ -77,6 +85,12 @@ type ObservationConfig struct {
 
 	// Suppressions is the persistence backend; see ListenerConfig.
 	Suppressions suppressionStore
+
+	// ReplayDepth controls how many recent observations per kind
+	// are read at Start to prime the state caches (#1381). Zero
+	// uses defaultReplayDepth (2). Set to -1 to disable replay
+	// (legacy in-memory behavior — fresh state every restart).
+	ReplayDepth int
 }
 
 // NewObservationPipeline returns an unstarted pipeline.
@@ -109,6 +123,10 @@ func NewObservationPipeline(cfg ObservationConfig) (*ObservationPipeline, error)
 	if suppress == nil {
 		suppress = newInMemorySuppressionStore()
 	}
+	replayDepth := cfg.ReplayDepth
+	if replayDepth == 0 {
+		replayDepth = defaultReplayDepth
+	}
 	return &ObservationPipeline{
 		obs:          cfg.Observations,
 		alerts:       cfg.Alerts,
@@ -118,6 +136,7 @@ func NewObservationPipeline(cfg ObservationConfig) (*ObservationPipeline, error)
 		interval:     cfg.Interval,
 		suppression:  cfg.Suppression,
 		suppress:     suppress,
+		replayDepth:  replayDepth,
 		ifaceState:   make(map[string]int),
 		bgpState:     make(map[string]int),
 		storageState: make(map[string]float64),
@@ -128,7 +147,25 @@ func NewObservationPipeline(cfg ObservationConfig) (*ObservationPipeline, error)
 func (*ObservationPipeline) Name() string { return ObservationPipelineName }
 
 // Start kicks off the scan loop. Idempotent.
+//
+// Before the loop kicks, Start primes the per-entity state caches
+// from the most recent observations in the DB (#1381). Without this,
+// a Seed restart would re-fire every "interface down" alert on the
+// first scan because the state cache starts empty and any non-up
+// reading looks like a transition. The replay is bounded by
+// replayDepth so we don't pay for unbounded history at startup.
 func (p *ObservationPipeline) Start(ctx context.Context) error {
+	// Prime state outside the mu — primeFromHistory takes its own
+	// locks on the per-kind state maps. Replay errors are non-fatal:
+	// the worst case is a few spurious alerts on first scan, which
+	// suppression then absorbs.
+	if p.replayDepth > 0 {
+		if err := p.primeFromHistory(ctx); err != nil {
+			p.logger.WarnContext(ctx, "observation pipeline state replay failed",
+				"error", err)
+		}
+	}
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if p.started {
@@ -140,8 +177,82 @@ func (p *ObservationPipeline) Start(ctx context.Context) error {
 	p.wg.Add(1)
 	go p.loop(loopCtx)
 	p.logger.InfoContext(ctx, "observation alert pipeline started",
-		"interval", p.interval)
+		"interval", p.interval, "replay_depth", p.replayDepth)
 	return nil
+}
+
+// primeFromHistory reads recent observations and walks them through
+// the same payload-decode logic the scan loop uses, but stops short
+// of firing alerts. The point is to populate ifaceState / bgpState /
+// storageState so the first real scan after restart compares against
+// real previous values instead of zero.
+func (p *ObservationPipeline) primeFromHistory(ctx context.Context) error {
+	for _, kind := range observationKinds() {
+		observations, err := p.obs.List(ctx, database.ListOptions{
+			Kind:  kind,
+			Limit: p.replayDepth,
+		})
+		if err != nil {
+			return fmt.Errorf("replay %s: %w", kind, err)
+		}
+		// Walk oldest-first so the most recent observation overwrites
+		// older state — matches what the scan loop would have done.
+		for _, obs := range slices.Backward(observations) {
+			p.primeOne(kind, obs)
+		}
+	}
+	return nil
+}
+
+// primeOne dispatches to the per-kind primer. Unknown kinds are
+// silently skipped — they were filtered out by observationKinds()
+// at the caller, but we double-check here for safety.
+func (p *ObservationPipeline) primeOne(kind string, obs *database.SNMPObservation) {
+	switch kind {
+	case "if_table":
+		p.primeIfTable(obs)
+	case "bgp4_mib":
+		p.primeBGP(obs)
+	case "host_resources":
+		p.primeHostResources(obs)
+	}
+}
+
+func (p *ObservationPipeline) primeIfTable(obs *database.SNMPObservation) {
+	var pay ifTableObsPayload
+	if err := json.Unmarshal([]byte(obs.PayloadJSON), &pay); err != nil {
+		return
+	}
+	for _, row := range pay.Rows {
+		key := fmt.Sprintf("if/%s/%d", obs.TargetID, row.IfIndex)
+		p.recordIface(key, row.IfOper)
+	}
+}
+
+func (p *ObservationPipeline) primeBGP(obs *database.SNMPObservation) {
+	var pay bgpObsPayload
+	if err := json.Unmarshal([]byte(obs.PayloadJSON), &pay); err != nil {
+		return
+	}
+	for _, peer := range pay.Peers {
+		key := fmt.Sprintf("bgp/%s/%s", obs.TargetID, peer.RemoteAddr)
+		p.recordBGP(key, peer.State)
+	}
+}
+
+func (p *ObservationPipeline) primeHostResources(obs *database.SNMPObservation) {
+	var pay hostResObsPayload
+	if err := json.Unmarshal([]byte(obs.PayloadJSON), &pay); err != nil {
+		return
+	}
+	for _, st := range pay.Storage {
+		if st.SizeBytes == 0 {
+			continue
+		}
+		pct := percentMultiplier * float64(st.UsedBytes) / float64(st.SizeBytes)
+		key := fmt.Sprintf("storage/%s/%d", obs.TargetID, st.Index)
+		p.recordStorage(key, pct)
+	}
 }
 
 // Stop terminates the scan loop. Honors ctx deadline.
