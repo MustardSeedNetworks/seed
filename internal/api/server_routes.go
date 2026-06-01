@@ -127,138 +127,121 @@ func (s *Server) setupCoreRoutes() {
 
 // setupSAPRoutes registers SAP module routes (live telemetry).
 func (s *Server) setupSAPRoutes() {
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/link", s.handleLink)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/cable", s.handleCable)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/dns", s.handleDNS)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/dns/security", s.handleDNSSecurity)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/dns/security/settings", s.writeGated(s.handleDNSSecuritySettings))
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/gateway", s.handleGateway)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/dhcp/rogue", s.handleRogueDHCP)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/dhcp/rogue/servers", s.handleRogueDHCPServers)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/dhcp/rogue/config", s.writeGated(s.handleRogueDHCPConfig))
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/vlan", s.handleVLAN)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/vlan/traffic", s.handleVLANTraffic)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/vlan/interface", s.handleVLANInterface)
-	s.mux.Handle(
-		APIVersionPrefix+"/sap/speedtest",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleSpeedtest)),
-	)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/speedtest/status", s.handleSpeedtestStatus)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/iperf/info", s.handleIperfInfo)
-	s.mux.Handle(
-		APIVersionPrefix+"/sap/iperf/client",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleIperfClient)),
-	)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/iperf/client/status", s.handleIperfClientStatus)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/iperf/server", s.handleIperfServer)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/iperf/server/status", s.handleIperfServerStatus)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/iperf/suggestions", s.handleIperfSuggestions)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/settings", s.writeGated(s.handleHealthChecksSettings))
-	s.mux.Handle(
-		APIVersionPrefix+"/sap/health-checks/run",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleHealthChecks)),
-	)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/results", s.handleHealthCheckResults)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/history", s.handleHealthCheckHistory)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/scores", s.handleHealthCheckScores)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/sla", s.handleHealthCheckSLA)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/health-checks/alerts", s.handleHealthCheckAlerts)
-	// Anomaly detection is a Pro feature (LICENSE_STRATEGY §2). Base
-	// health-check results / history / alerts remain accessible to
-	// all tiers — only the trend/anomaly analysis is paid.
-	s.mux.HandleFunc(
-		APIVersionPrefix+"/sap/health-checks/anomalies",
-		s.requireFeature("anomaly_detection", s.handleHealthCheckAnomalies),
-	)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/snmp/settings", s.writeGated(s.handleSNMPSettings))
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/system/health", s.handleSystemHealth)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/ipconfig", s.handleIPConfig)
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/ipconfig/settings", s.writeGated(s.handleIPSettings))
-	s.mux.HandleFunc(APIVersionPrefix+"/sap/publicip", s.handlePublicIP)
+	op := database.RoleOperator
+	s.registerAll([]route{
+		{path: APIVersionPrefix + "/sap/link", handler: s.handleLink},
+		{path: APIVersionPrefix + "/sap/cable", handler: s.handleCable},
+		{path: APIVersionPrefix + "/sap/dns", handler: s.handleDNS},
+		{path: APIVersionPrefix + "/sap/dns/security", handler: s.handleDNSSecurity},
+		{path: APIVersionPrefix + "/sap/dns/security/settings", handler: s.handleDNSSecuritySettings, minRole: op},
+		{path: APIVersionPrefix + "/sap/gateway", handler: s.handleGateway},
+		{path: APIVersionPrefix + "/sap/dhcp/rogue", handler: s.handleRogueDHCP},
+		{path: APIVersionPrefix + "/sap/dhcp/rogue/servers", handler: s.handleRogueDHCPServers},
+		{path: APIVersionPrefix + "/sap/dhcp/rogue/config", handler: s.handleRogueDHCPConfig, minRole: op},
+		{path: APIVersionPrefix + "/sap/vlan", handler: s.handleVLAN},
+		{path: APIVersionPrefix + "/sap/vlan/traffic", handler: s.handleVLANTraffic},
+		{path: APIVersionPrefix + "/sap/vlan/interface", handler: s.handleVLANInterface},
+		{path: APIVersionPrefix + "/sap/speedtest", handler: s.handleSpeedtest, rateLimited: true},
+		{path: APIVersionPrefix + "/sap/speedtest/status", handler: s.handleSpeedtestStatus},
+		{path: APIVersionPrefix + "/sap/iperf/info", handler: s.handleIperfInfo},
+		{path: APIVersionPrefix + "/sap/iperf/client", handler: s.handleIperfClient, rateLimited: true},
+		{path: APIVersionPrefix + "/sap/iperf/client/status", handler: s.handleIperfClientStatus},
+		{path: APIVersionPrefix + "/sap/iperf/server", handler: s.handleIperfServer},
+		{path: APIVersionPrefix + "/sap/iperf/server/status", handler: s.handleIperfServerStatus},
+		{path: APIVersionPrefix + "/sap/iperf/suggestions", handler: s.handleIperfSuggestions},
+		{path: APIVersionPrefix + "/sap/health-checks/settings", handler: s.handleHealthChecksSettings, minRole: op},
+		{path: APIVersionPrefix + "/sap/health-checks/run", handler: s.handleHealthChecks, rateLimited: true},
+		{path: APIVersionPrefix + "/sap/health-checks/results", handler: s.handleHealthCheckResults},
+		{path: APIVersionPrefix + "/sap/health-checks/history", handler: s.handleHealthCheckHistory},
+		{path: APIVersionPrefix + "/sap/health-checks/scores", handler: s.handleHealthCheckScores},
+		{path: APIVersionPrefix + "/sap/health-checks/sla", handler: s.handleHealthCheckSLA},
+		{path: APIVersionPrefix + "/sap/health-checks/alerts", handler: s.handleHealthCheckAlerts},
+		// Anomaly detection is Pro (LICENSE_STRATEGY §2); base results/history/alerts
+		// stay open to all tiers — only the trend/anomaly analysis is paid.
+		{
+			path:    APIVersionPrefix + "/sap/health-checks/anomalies",
+			handler: s.handleHealthCheckAnomalies,
+			feature: "anomaly_detection",
+		},
+		{path: APIVersionPrefix + "/sap/snmp/settings", handler: s.handleSNMPSettings, minRole: op},
+		{path: APIVersionPrefix + "/sap/system/health", handler: s.handleSystemHealth},
+		{path: APIVersionPrefix + "/sap/ipconfig", handler: s.handleIPConfig},
+		{path: APIVersionPrefix + "/sap/ipconfig/settings", handler: s.handleIPSettings, minRole: op},
+		{path: APIVersionPrefix + "/sap/publicip", handler: s.handlePublicIP},
+	})
 }
 
 // setupShellRoutes registers Shell module routes (security posture).
 func (s *Server) setupShellRoutes() {
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery", s.handleDiscovery)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/probe", s.handleTCPProbe)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/portscan", s.handlePortScan)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/options", s.handleDiscoveryOptions)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/service/status", s.handleDiscoveryServiceStatus)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/discovery/fingerprint", s.handleAdvancedFingerprint)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices", s.handleDevices)
-	s.mux.Handle(
-		APIVersionPrefix+"/shell/devices/scan",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleDevicesScan)),
-	)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices/status", s.handleDevicesStatus)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices/settings", s.writeGated(s.handleDevicesSettings))
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/devices/subnets", s.handleDevicesSubnets)
-	// Vulnerability scan + guest-audit run are compliance_advanced
-	// (Pro) per LICENSE_STRATEGY §2. Read-only results / status /
-	// settings endpoints stay open so existing scan output remains
-	// visible to lower tiers (and so admins can downgrade then still
-	// read prior reports).
-	s.mux.Handle(
-		APIVersionPrefix+"/shell/vulnerabilities/scan",
-		s.endpointRateLimiter().RateLimitMiddleware(
-			s.requireFeature("compliance_advanced", s.handleVulnerabilityScan),
-		),
-	)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/status", s.handleVulnerabilityStatus)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/results", s.handleVulnerabilityResults)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/device", s.handleDeviceVulnerabilities)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/settings", s.writeGated(s.handleVulnerabilitySettings))
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/vulnerabilities/validate-api-key", s.handleNVDAPIKeyValidate)
-	// Guest-network isolation audit (#397).
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/guest-audit/settings", s.writeGated(s.handleGuestAuditSettings))
-	s.mux.Handle(
-		APIVersionPrefix+"/shell/guest-audit/run",
-		s.endpointRateLimiter().RateLimitMiddleware(
-			s.requireFeature("compliance_advanced", s.handleGuestAuditRun),
-		),
-	)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/status", s.handlePipelineStatus)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/start", s.handlePipelineStart)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/cancel", s.handlePipelineCancel)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/config", s.writeGated(s.handlePipelineConfigRoute))
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/port-intensity", s.handlePipelinePortIntensityInfo)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/pipeline/timing-profiles", s.handlePipelineTimingProfiles)
-
-	// Network problem detection routes
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/problems", s.handleNetworkProblems)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/problems/scan", s.handleProblemScan)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/problems/thresholds", s.writeGated(s.handleProblemThresholds))
-
-	// Bluetooth discovery routes
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/bluetooth/scan", s.handleBluetoothScan)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/bluetooth/devices", s.handleBluetoothDevices)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/bluetooth/stats", s.handleBluetoothStats)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/bluetooth/status", s.handleBluetoothStatus)
-
-	// Enhanced WiFi discovery routes (unified discovery)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/wifi/discovery/scan", s.handleWiFiDiscoveryScan)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/wifi/discovery/networks", s.handleWiFiDiscoveryNetworks)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/wifi/discovery/aps", s.handleWiFiDiscoveryAPs)
-	s.mux.HandleFunc(APIVersionPrefix+"/shell/wifi/discovery/stats", s.handleWiFiDiscoveryStats)
-
-	// Discovery Engine routes (primary unified discovery system)
-	s.mux.HandleFunc(APIVersionPrefix+"/discovery/engine", s.handleEngineDiscovery)
-	s.mux.Handle(
-		APIVersionPrefix+"/discovery/engine/scan",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleEngineScan)),
-	)
-	s.mux.Handle(
-		APIVersionPrefix+"/discovery/engine/quick",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleEngineQuickScan)),
-	)
-	s.mux.Handle(
-		APIVersionPrefix+"/discovery/engine/full",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.handleEngineFullScan)),
-	)
-	s.mux.HandleFunc(APIVersionPrefix+"/discovery/engine/stats", s.handleEngineStats)
-	s.mux.HandleFunc(APIVersionPrefix+"/discovery/engine/capabilities", s.handleEngineCapabilities)
-	s.mux.HandleFunc(APIVersionPrefix+"/discovery/engine/device/", s.handleEngineDevice)
-	s.mux.HandleFunc(APIVersionPrefix+"/discovery/engine/events", s.handleEngineEvents)
+	op := database.RoleOperator
+	s.registerAll([]route{
+		{path: APIVersionPrefix + "/shell/discovery", handler: s.handleDiscovery},
+		{path: APIVersionPrefix + "/shell/discovery/probe", handler: s.handleTCPProbe},
+		{path: APIVersionPrefix + "/shell/discovery/portscan", handler: s.handlePortScan},
+		{path: APIVersionPrefix + "/shell/discovery/options", handler: s.handleDiscoveryOptions},
+		{path: APIVersionPrefix + "/shell/discovery/service/status", handler: s.handleDiscoveryServiceStatus},
+		{path: APIVersionPrefix + "/shell/discovery/fingerprint", handler: s.handleAdvancedFingerprint},
+		{path: APIVersionPrefix + "/shell/devices", handler: s.handleDevices},
+		{path: APIVersionPrefix + "/shell/devices/scan", handler: s.handleDevicesScan, rateLimited: true},
+		{path: APIVersionPrefix + "/shell/devices/status", handler: s.handleDevicesStatus},
+		{path: APIVersionPrefix + "/shell/devices/settings", handler: s.handleDevicesSettings, minRole: op},
+		{path: APIVersionPrefix + "/shell/devices/subnets", handler: s.handleDevicesSubnets},
+		// Vulnerability scan + guest-audit run are compliance_advanced (Pro,
+		// LICENSE_STRATEGY §2); read-only results/status/settings stay open so prior
+		// scan output remains visible to lower tiers.
+		{
+			path:        APIVersionPrefix + "/shell/vulnerabilities/scan",
+			handler:     s.handleVulnerabilityScan,
+			feature:     "compliance_advanced",
+			rateLimited: true,
+		},
+		{path: APIVersionPrefix + "/shell/vulnerabilities/status", handler: s.handleVulnerabilityStatus},
+		{path: APIVersionPrefix + "/shell/vulnerabilities/results", handler: s.handleVulnerabilityResults},
+		{path: APIVersionPrefix + "/shell/vulnerabilities/device", handler: s.handleDeviceVulnerabilities},
+		{
+			path:    APIVersionPrefix + "/shell/vulnerabilities/settings",
+			handler: s.handleVulnerabilitySettings,
+			minRole: op,
+		},
+		{path: APIVersionPrefix + "/shell/vulnerabilities/validate-api-key", handler: s.handleNVDAPIKeyValidate},
+		// Guest-network isolation audit (#397).
+		{path: APIVersionPrefix + "/shell/guest-audit/settings", handler: s.handleGuestAuditSettings, minRole: op},
+		{
+			path:        APIVersionPrefix + "/shell/guest-audit/run",
+			handler:     s.handleGuestAuditRun,
+			feature:     "compliance_advanced",
+			rateLimited: true,
+		},
+		{path: APIVersionPrefix + "/shell/pipeline/status", handler: s.handlePipelineStatus},
+		{path: APIVersionPrefix + "/shell/pipeline/start", handler: s.handlePipelineStart},
+		{path: APIVersionPrefix + "/shell/pipeline/cancel", handler: s.handlePipelineCancel},
+		{path: APIVersionPrefix + "/shell/pipeline/config", handler: s.handlePipelineConfigRoute, minRole: op},
+		{path: APIVersionPrefix + "/shell/pipeline/port-intensity", handler: s.handlePipelinePortIntensityInfo},
+		{path: APIVersionPrefix + "/shell/pipeline/timing-profiles", handler: s.handlePipelineTimingProfiles},
+		// Network problem detection.
+		{path: APIVersionPrefix + "/shell/problems", handler: s.handleNetworkProblems},
+		{path: APIVersionPrefix + "/shell/problems/scan", handler: s.handleProblemScan},
+		{path: APIVersionPrefix + "/shell/problems/thresholds", handler: s.handleProblemThresholds, minRole: op},
+		// Bluetooth discovery.
+		{path: APIVersionPrefix + "/shell/bluetooth/scan", handler: s.handleBluetoothScan},
+		{path: APIVersionPrefix + "/shell/bluetooth/devices", handler: s.handleBluetoothDevices},
+		{path: APIVersionPrefix + "/shell/bluetooth/stats", handler: s.handleBluetoothStats},
+		{path: APIVersionPrefix + "/shell/bluetooth/status", handler: s.handleBluetoothStatus},
+		// Enhanced WiFi discovery (unified).
+		{path: APIVersionPrefix + "/shell/wifi/discovery/scan", handler: s.handleWiFiDiscoveryScan},
+		{path: APIVersionPrefix + "/shell/wifi/discovery/networks", handler: s.handleWiFiDiscoveryNetworks},
+		{path: APIVersionPrefix + "/shell/wifi/discovery/aps", handler: s.handleWiFiDiscoveryAPs},
+		{path: APIVersionPrefix + "/shell/wifi/discovery/stats", handler: s.handleWiFiDiscoveryStats},
+		// Discovery Engine (primary unified discovery system).
+		{path: APIVersionPrefix + "/discovery/engine", handler: s.handleEngineDiscovery},
+		{path: APIVersionPrefix + "/discovery/engine/scan", handler: s.handleEngineScan, rateLimited: true},
+		{path: APIVersionPrefix + "/discovery/engine/quick", handler: s.handleEngineQuickScan, rateLimited: true},
+		{path: APIVersionPrefix + "/discovery/engine/full", handler: s.handleEngineFullScan, rateLimited: true},
+		{path: APIVersionPrefix + "/discovery/engine/stats", handler: s.handleEngineStats},
+		{path: APIVersionPrefix + "/discovery/engine/capabilities", handler: s.handleEngineCapabilities},
+		{path: APIVersionPrefix + "/discovery/engine/device/", handler: s.handleEngineDevice},
+		{path: APIVersionPrefix + "/discovery/engine/events", handler: s.handleEngineEvents},
+	})
 }
 
 // setupRootsRoutes registers Roots module routes (path analysis).
