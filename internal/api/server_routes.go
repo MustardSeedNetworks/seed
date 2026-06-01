@@ -72,54 +72,57 @@ func (s *Server) setupAPITokenRoutes() {
 
 // setupCoreRoutes registers auth, settings, config, and setup routes.
 func (s *Server) setupCoreRoutes() {
-	s.mux.HandleFunc(APIVersionPrefix+"/auth/login", s.handleLogin)
-	s.mux.HandleFunc(APIVersionPrefix+"/auth/logout", s.handleLogout)
-	s.mux.HandleFunc(APIVersionPrefix+"/auth/refresh", s.handleRefreshToken)
-	s.mux.HandleFunc(APIVersionPrefix+"/auth/csrf", s.handleCSRFToken)
-	// Wave 3 (#85): MFA + WebAuthn endpoints.
-	s.mux.HandleFunc(APIVersionPrefix+"/auth/login/totp", s.handleLoginTOTP)
-	s.mux.HandleFunc(APIVersionPrefix+"/auth/totp/setup", s.handleTOTPSetup)
-	s.mux.HandleFunc(APIVersionPrefix+"/auth/totp/verify", s.handleTOTPVerify)
-	s.mux.HandleFunc(APIVersionPrefix+"/auth/totp/disable", s.handleTOTPDisable)
-	s.mux.HandleFunc(APIVersionPrefix+"/auth/mfa/status", s.handleMFAStatus)
-	s.mux.HandleFunc(APIVersionPrefix+"/auth/webauthn/register/begin", s.handleWebAuthnRegisterBegin)
-	s.mux.HandleFunc(APIVersionPrefix+"/auth/webauthn/register/finish", s.handleWebAuthnRegisterFinish)
-	s.mux.HandleFunc(APIVersionPrefix+"/auth/webauthn/login/begin", s.handleWebAuthnLoginBegin)
-	s.mux.HandleFunc(APIVersionPrefix+"/auth/webauthn/login/finish", s.handleWebAuthnLoginFinish)
-	s.mux.HandleFunc(APIVersionPrefix+"/status", s.handleStatus)
-	s.mux.HandleFunc(APIVersionPrefix+"/settings", s.writeGated(s.handleSettings))
-	s.mux.HandleFunc(APIVersionPrefix+"/settings/defaults", s.writeGated(s.handleSettingsDefaults))
-	s.mux.HandleFunc(APIVersionPrefix+"/settings/link", s.writeGated(s.handleLinkSettings))
-	s.mux.HandleFunc(APIVersionPrefix+"/settings/cable", s.writeGated(s.handleCableTestSettings))
-	s.mux.HandleFunc(APIVersionPrefix+"/interfaces", s.handleInterfaces)
-	s.mux.HandleFunc(APIVersionPrefix+"/interface", s.handleInterface)
-	s.mux.HandleFunc(APIVersionPrefix+"/network/mtu", s.writeGated(s.handleSetMTU))
-	s.mux.HandleFunc(APIVersionPrefix+"/config/backups", s.handleConfigBackups)
-	s.mux.HandleFunc(APIVersionPrefix+"/config/backup", s.writeGated(s.handleConfigBackupCreate))
-	s.mux.HandleFunc(APIVersionPrefix+"/config/backup/delete", s.writeGated(s.handleConfigBackupDelete))
-	s.mux.HandleFunc(APIVersionPrefix+"/config/restore", s.writeGated(s.handleConfigRestore))
-	s.mux.HandleFunc(APIVersionPrefix+"/config/version", s.handleConfigVersion)
-	s.mux.HandleFunc(APIVersionPrefix+"/profiles", s.writeGated(s.handleProfiles))
-	s.mux.HandleFunc(APIVersionPrefix+"/profiles/active", s.writeGated(s.handleActiveProfile))
-	s.mux.HandleFunc(APIVersionPrefix+"/profiles/import", s.writeGated(s.handleImportProfiles))
-	s.mux.HandleFunc(APIVersionPrefix+"/profiles/export", s.handleExportProfiles)
-	s.mux.HandleFunc(APIVersionPrefix+"/profiles/", s.writeGated(s.handleProfiles))
-	s.mux.HandleFunc(APIVersionPrefix+"/setup/status", s.handleSetupStatus)
-	s.mux.HandleFunc(APIVersionPrefix+"/setup/complete", s.handleSetupComplete)
-	s.mux.HandleFunc(APIVersionPrefix+"/recovery/status", s.handleRecoveryStatus)
-	s.mux.HandleFunc(APIVersionPrefix+"/recovery/complete", s.handleRecoveryComplete)
-	s.mux.HandleFunc(APIVersionPrefix+"/recovery/instructions", s.handleRecoveryInstructions)
-	s.mux.HandleFunc(APIVersionPrefix+"/sso/providers", s.handleSSOProviders)
-	s.mux.HandleFunc(APIVersionPrefix+"/sso/login", s.handleSSOLogin)
-	s.mux.HandleFunc(APIVersionPrefix+"/sso/callback", s.handleSSOCallback)
-	s.mux.HandleFunc(APIVersionPrefix+"/sso/settings", s.writeGated(s.handleSSOSettings))
-	// SSO settings PUT is Pro-gated via requireFeature("sso") — see seed#1198.
-	// GET stays open so operators can inspect existing config on any tier
-	// (a Pro→Free downgrade must not lock them out of reading current
-	// state). Provider login + callback continue to work for already-
-	// configured providers regardless of tier — only WRITES are blocked.
-	s.mux.HandleFunc(APIVersionPrefix+"/sso/update", s.writeGated(s.requireFeature("sso", s.handleSSOUpdate)))
-	s.mux.HandleFunc(APIVersionPrefix+"/health", s.handleHealth)
+	op := database.RoleOperator
+	s.registerAll([]route{
+		{path: APIVersionPrefix + "/auth/login", handler: s.handleLogin},
+		{path: APIVersionPrefix + "/auth/logout", handler: s.handleLogout},
+		{path: APIVersionPrefix + "/auth/refresh", handler: s.handleRefreshToken},
+		{path: APIVersionPrefix + "/auth/csrf", handler: s.handleCSRFToken},
+		// Wave 3 (#85): MFA + WebAuthn endpoints.
+		{path: APIVersionPrefix + "/auth/login/totp", handler: s.handleLoginTOTP},
+		{path: APIVersionPrefix + "/auth/totp/setup", handler: s.handleTOTPSetup},
+		{path: APIVersionPrefix + "/auth/totp/verify", handler: s.handleTOTPVerify},
+		{path: APIVersionPrefix + "/auth/totp/disable", handler: s.handleTOTPDisable},
+		{path: APIVersionPrefix + "/auth/mfa/status", handler: s.handleMFAStatus},
+		{path: APIVersionPrefix + "/auth/webauthn/register/begin", handler: s.handleWebAuthnRegisterBegin},
+		{path: APIVersionPrefix + "/auth/webauthn/register/finish", handler: s.handleWebAuthnRegisterFinish},
+		{path: APIVersionPrefix + "/auth/webauthn/login/begin", handler: s.handleWebAuthnLoginBegin},
+		{path: APIVersionPrefix + "/auth/webauthn/login/finish", handler: s.handleWebAuthnLoginFinish},
+		{path: APIVersionPrefix + "/status", handler: s.handleStatus},
+		{path: APIVersionPrefix + "/settings", handler: s.handleSettings, minRole: op},
+		{path: APIVersionPrefix + "/settings/defaults", handler: s.handleSettingsDefaults, minRole: op},
+		{path: APIVersionPrefix + "/settings/link", handler: s.handleLinkSettings, minRole: op},
+		{path: APIVersionPrefix + "/settings/cable", handler: s.handleCableTestSettings, minRole: op},
+		{path: APIVersionPrefix + "/interfaces", handler: s.handleInterfaces},
+		{path: APIVersionPrefix + "/interface", handler: s.handleInterface},
+		{path: APIVersionPrefix + "/network/mtu", handler: s.handleSetMTU, minRole: op},
+		{path: APIVersionPrefix + "/config/backups", handler: s.handleConfigBackups},
+		{path: APIVersionPrefix + "/config/backup", handler: s.handleConfigBackupCreate, minRole: op},
+		{path: APIVersionPrefix + "/config/backup/delete", handler: s.handleConfigBackupDelete, minRole: op},
+		{path: APIVersionPrefix + "/config/restore", handler: s.handleConfigRestore, minRole: op},
+		{path: APIVersionPrefix + "/config/version", handler: s.handleConfigVersion},
+		{path: APIVersionPrefix + "/profiles", handler: s.handleProfiles, minRole: op},
+		{path: APIVersionPrefix + "/profiles/active", handler: s.handleActiveProfile, minRole: op},
+		{path: APIVersionPrefix + "/profiles/import", handler: s.handleImportProfiles, minRole: op},
+		{path: APIVersionPrefix + "/profiles/export", handler: s.handleExportProfiles},
+		{path: APIVersionPrefix + "/profiles/", handler: s.handleProfiles, minRole: op},
+		{path: APIVersionPrefix + "/setup/status", handler: s.handleSetupStatus},
+		{path: APIVersionPrefix + "/setup/complete", handler: s.handleSetupComplete},
+		{path: APIVersionPrefix + "/recovery/status", handler: s.handleRecoveryStatus},
+		{path: APIVersionPrefix + "/recovery/complete", handler: s.handleRecoveryComplete},
+		{path: APIVersionPrefix + "/recovery/instructions", handler: s.handleRecoveryInstructions},
+		{path: APIVersionPrefix + "/sso/providers", handler: s.handleSSOProviders},
+		{path: APIVersionPrefix + "/sso/login", handler: s.handleSSOLogin},
+		{path: APIVersionPrefix + "/sso/callback", handler: s.handleSSOCallback},
+		{path: APIVersionPrefix + "/sso/settings", handler: s.handleSSOSettings, minRole: op},
+		// SSO update is Pro-gated (requireFeature "sso", #1198) AND operator-gated.
+		// NORMALIZATION (ADR-0002): the registry composes canonical order
+		// requireFeature(writeGated(h)) — a viewer on Free now receives 402
+		// (feature) where the prior hand-wrapped writeGated(requireFeature(...))
+		// returned 403 (role) first. Operators and Pro tiers are unaffected.
+		{path: APIVersionPrefix + "/sso/update", handler: s.handleSSOUpdate, minRole: op, feature: "sso"},
+		{path: APIVersionPrefix + "/health", handler: s.handleHealth},
+	})
 }
 
 // setupSAPRoutes registers SAP module routes (live telemetry).
