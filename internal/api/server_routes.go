@@ -30,54 +30,44 @@ func (s *Server) setupRoutes() {
 // endpoints. All are GET-only and run through the same JWT/PAT auth
 // middleware as the rest of /api/v1.
 func (s *Server) setupTopologyRoutes() {
-	// /nodes path must register BEFORE /nodes/ so the router doesn't
-	// treat the list endpoint as a /nodes/{id} request.
-	s.mux.HandleFunc(APIVersionPrefix+"/topology/nodes", s.handleTopologyNodes)
-	s.mux.HandleFunc(APIVersionPrefix+"/topology/nodes/", s.handleTopologyNodeByID)
-	s.mux.HandleFunc(APIVersionPrefix+"/topology/links", s.handleTopologyLinks)
-	s.mux.HandleFunc(APIVersionPrefix+"/topology/arp", s.handleTopologyARP)
-
-	// Stage A5.2 — alerts API. GET is read-only; the action endpoint
-	// is writeGated so only operator+ can ack/resolve.
-	s.mux.HandleFunc(APIVersionPrefix+"/alerts", s.handleAlerts)
-	s.mux.HandleFunc(APIVersionPrefix+"/alerts/", s.writeGated(s.handleAlertAction))
-
-	// Stage A5.3 — polling targets CRUD. Collection-level routes
-	// (GET list, POST create) are method-dispatched in
-	// handlePollingTargets; resource-level (GET, PUT, DELETE) in
-	// handlePollingTargetByID. Both are writeGated because the
-	// collection handler accepts POST and any mutating method
-	// requires the operator+ role.
-	s.mux.HandleFunc(APIVersionPrefix+"/polling-targets", s.writeGated(s.handlePollingTargets))
-	s.mux.HandleFunc(APIVersionPrefix+"/polling-targets/", s.writeGated(s.handlePollingTargetByID))
-
-	// Stage A5.8 — read-only engine registry surface. Useful for
-	// the operator UI's "what's running" pane and for ops debugging.
-	s.mux.HandleFunc(APIVersionPrefix+"/engines", s.handleEngines)
-
-	// Stage A5.10 — operator-defined alert rules. Both endpoints
-	// writeGated because the collection accepts POST and any
-	// resource-level mutation requires the operator+ role.
-	s.mux.HandleFunc(APIVersionPrefix+"/alert-rules", s.writeGated(s.handleAlertRules))
-	s.mux.HandleFunc(APIVersionPrefix+"/alert-rules/", s.writeGated(s.handleAlertRuleByID))
+	op := database.RoleOperator
+	s.registerAll([]route{
+		// /nodes must register BEFORE /nodes/ so the router doesn't treat the
+		// list endpoint as a /nodes/{id} request.
+		{path: APIVersionPrefix + "/topology/nodes", handler: s.handleTopologyNodes},
+		{path: APIVersionPrefix + "/topology/nodes/", handler: s.handleTopologyNodeByID},
+		{path: APIVersionPrefix + "/topology/links", handler: s.handleTopologyLinks},
+		{path: APIVersionPrefix + "/topology/arp", handler: s.handleTopologyARP},
+		// A5.2 alerts: GET read-only; the action endpoint is operator-gated.
+		{path: APIVersionPrefix + "/alerts", handler: s.handleAlerts},
+		{path: APIVersionPrefix + "/alerts/", handler: s.handleAlertAction, minRole: op},
+		// A5.3 polling targets CRUD: both writeGated (collection accepts POST).
+		{path: APIVersionPrefix + "/polling-targets", handler: s.handlePollingTargets, minRole: op},
+		{path: APIVersionPrefix + "/polling-targets/", handler: s.handlePollingTargetByID, minRole: op},
+		// A5.8 read-only engine registry surface.
+		{path: APIVersionPrefix + "/engines", handler: s.handleEngines},
+		// A5.10 operator-defined alert rules: both writeGated.
+		{path: APIVersionPrefix + "/alert-rules", handler: s.handleAlertRules, minRole: op},
+		{path: APIVersionPrefix + "/alert-rules/", handler: s.handleAlertRuleByID, minRole: op},
+	})
 }
 
 // setupAPITokenRoutes registers the Phase D-2 personal-access-token
 // endpoints and the read-only license status endpoint the UI uses to
 // know whether the mint button should be enabled.
 func (s *Server) setupAPITokenRoutes() {
-	s.mux.HandleFunc(APIVersionPrefix+"/tokens", s.writeGated(s.handleAPITokens))
-	s.mux.HandleFunc(APIVersionPrefix+"/tokens/", s.writeGated(s.handleAPITokenByID))
-	s.mux.HandleFunc(APIVersionPrefix+"/license", s.handleLicenseStatus)
-
-	// Users CRUD (seed#1191 — multi_user). The /users/me endpoint must
-	// register BEFORE /users/ so the path router doesn't treat "me"
-	// as a {username} suffix. POST /users is admin-only AND Pro-gated
-	// (the gate is checked inside the handler so a 403/402 carries the
-	// appropriate FeatureGateResponse rather than a generic Pro 402).
-	s.mux.HandleFunc(APIVersionPrefix+"/users/me", s.handleCurrentUser)
-	s.mux.HandleFunc(APIVersionPrefix+"/users", s.handleUsers)
-	s.mux.HandleFunc(APIVersionPrefix+"/users/", s.handleUserByName)
+	op := database.RoleOperator
+	s.registerAll([]route{
+		{path: APIVersionPrefix + "/tokens", handler: s.handleAPITokens, minRole: op},
+		{path: APIVersionPrefix + "/tokens/", handler: s.handleAPITokenByID, minRole: op},
+		{path: APIVersionPrefix + "/license", handler: s.handleLicenseStatus},
+		// Users CRUD (#1191): /users/me registers before /users/ for path routing.
+		// POST /users is admin-only AND Pro-gated, enforced inside the handler so the
+		// response carries the right 403/402 FeatureGateResponse.
+		{path: APIVersionPrefix + "/users/me", handler: s.handleCurrentUser},
+		{path: APIVersionPrefix + "/users", handler: s.handleUsers},
+		{path: APIVersionPrefix + "/users/", handler: s.handleUserByName},
+	})
 }
 
 // setupCoreRoutes registers auth, settings, config, and setup routes.
@@ -274,19 +264,17 @@ func (s *Server) setupShellRoutes() {
 // middleware still wraps traceroute so abuse remains capped even for
 // trial users.
 func (s *Server) setupRootsRoutes() {
-	s.mux.Handle(
-		APIVersionPrefix+"/roots/traceroute",
-		s.endpointRateLimiter().RateLimitMiddleware(
-			s.requireFeature("path_analysis", s.handleTraceroute),
-		),
-	)
-	s.mux.HandleFunc(
-		APIVersionPrefix+"/roots/path",
-		s.requireFeature("path_analysis", s.handlePath),
-	)
+	s.registerAll([]route{
+		{
+			path:        APIVersionPrefix + "/roots/traceroute",
+			handler:     s.handleTraceroute,
+			feature:     "path_analysis",
+			rateLimited: true,
+		},
+		{path: APIVersionPrefix + "/roots/path", handler: s.handlePath, feature: "path_analysis"},
+	})
 }
 
-// setupCanopyRoutes registers Canopy module routes (Wi-Fi planning).
 // setupCanopyRoutes registers Canopy module routes (Wi-Fi visibility &
 // troubleshooting). First module on the declarative capability registry
 // (ADR-0002): policy is data, composed by register() in one canonical order.
@@ -341,15 +329,14 @@ func (s *Server) setupCanopyRoutes() {
 // every tier; only data extraction (the customer-facing reporting
 // surface) is paid.
 func (s *Server) setupHarvestRoutes() {
-	s.mux.HandleFunc(
-		APIVersionPrefix+"/harvest/export",
-		s.requireFeature("export_csv_json", s.handleExport),
-	)
-	s.mux.HandleFunc(APIVersionPrefix+"/harvest/logs", s.handleLogs)
-	s.mux.HandleFunc(APIVersionPrefix+"/harvest/logs/client", s.handleClientLogs)
-	s.mux.HandleFunc(APIVersionPrefix+"/harvest/logs/query", s.handleLogsQuery)
-	s.mux.HandleFunc(APIVersionPrefix+"/harvest/logs/stats", s.handleLogsStats)
-	s.mux.HandleFunc(APIVersionPrefix+"/harvest/logs/recent", s.handleLogsRecent)
+	s.registerAll([]route{
+		{path: APIVersionPrefix + "/harvest/export", handler: s.handleExport, feature: "export_csv_json"},
+		{path: APIVersionPrefix + "/harvest/logs", handler: s.handleLogs},
+		{path: APIVersionPrefix + "/harvest/logs/client", handler: s.handleClientLogs},
+		{path: APIVersionPrefix + "/harvest/logs/query", handler: s.handleLogsQuery},
+		{path: APIVersionPrefix + "/harvest/logs/stats", handler: s.handleLogsStats},
+		{path: APIVersionPrefix + "/harvest/logs/recent", handler: s.handleLogsRecent},
+	})
 }
 
 // setupSSEAndStatic registers SSE and static file handlers.
