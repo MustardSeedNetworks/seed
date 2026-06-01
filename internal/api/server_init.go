@@ -38,7 +38,7 @@ func (s *Server) initNetworkServices(cfg *config.Config) {
 
 	// Initialize survey manager
 	surveyStoragePath := "data/surveys"
-	s.services.Canopy.Survey = survey.NewManager(
+	s.services.Wireless.Survey = survey.NewManager(
 		surveyStoragePath,
 		s.wifiScanner(),
 		s.wifiManager(),
@@ -251,11 +251,11 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 	logging.GetLogger().Info("Bluetooth scanner initialized")
 
 	// Initialize WiFi bridge connecting canopy/wifi to discovery
-	if s.services.Canopy.Scanner != nil {
+	if s.services.Wireless.Scanner != nil {
 		wifiBridgeConfig := discovery.DefaultWiFiBridgeConfig()
 		s.services.Discovery.WiFiBridge = discovery.NewWiFiBridge(
-			s.services.Canopy.Scanner,
-			s.services.Canopy.WiFi,
+			s.services.Wireless.Scanner,
+			s.services.Wireless.WiFi,
 			ouiDB,
 			wifiBridgeConfig,
 		)

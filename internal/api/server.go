@@ -185,25 +185,25 @@ func NewServer(
 	// Note: services.Discovery.Service is initialized after profiler is created (see below)
 
 	// Initialize SAP services
-	services.Sap.DNS = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
-	services.Sap.DNSSecurity = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
-	services.Sap.DHCP = dhcp.NewMonitor(cfg.Interface.Default)
-	services.Sap.RogueDetector = dhcp.NewRogueDetector(&dhcp.RogueDetectorConfig{
+	services.Diagnostics.DNS = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
+	services.Diagnostics.DNSSecurity = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
+	services.Diagnostics.DHCP = dhcp.NewMonitor(cfg.Interface.Default)
+	services.Diagnostics.RogueDetector = dhcp.NewRogueDetector(&dhcp.RogueDetectorConfig{
 		Interface:        cfg.Interface.Default,
 		KnownServers:     cfg.DHCP.RogueDetection.KnownServers,
 		AlertOnDetection: cfg.DHCP.RogueDetection.AlertOnDetection,
 	})
-	services.Sap.Gateway = gateway.NewTester(gateway.DefaultThresholds())
-	services.Sap.VLAN = vlan.NewManager(cfg.Interface.Default)
-	services.Sap.VLANTraffic = vlan.NewTrafficMonitor(cfg.Interface.Default)
-	services.Sap.Speedtest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
-	services.Sap.Iperf = iperf.NewManager()
-	services.Sap.Cable = cable.NewTester(cfg.Interface.Default)
-	services.Sap.PublicIP = publicip.NewChecker()
+	services.Diagnostics.Gateway = gateway.NewTester(gateway.DefaultThresholds())
+	services.Diagnostics.VLAN = vlan.NewManager(cfg.Interface.Default)
+	services.Diagnostics.VLANTraffic = vlan.NewTrafficMonitor(cfg.Interface.Default)
+	services.Diagnostics.Speedtest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
+	services.Diagnostics.Iperf = iperf.NewManager()
+	services.Diagnostics.Cable = cable.NewTester(cfg.Interface.Default)
+	services.Diagnostics.PublicIP = publicip.NewChecker()
 
 	// Initialize Canopy services
-	services.Canopy.WiFi = wifi.NewManager(cfg.Interface.Default)
-	services.Canopy.Scanner = wifi.NewScanner(cfg.Interface.Default)
+	services.Wireless.WiFi = wifi.NewManager(cfg.Interface.Default)
+	services.Wireless.Scanner = wifi.NewScanner(cfg.Interface.Default)
 
 	// Initialize database services
 	services.Database.DB = db
@@ -609,46 +609,46 @@ func (s *Server) VulnScanner() *discovery.VulnerabilityScanner {
 }
 
 // DNSTester returns the DNS tester.
-func (s *Server) DNSTester() *dns.Tester { return s.services.Sap.DNS }
+func (s *Server) DNSTester() *dns.Tester { return s.services.Diagnostics.DNS }
 
 // DNSSecurityScanner returns the DNS security scanner.
-func (s *Server) DNSSecurityScanner() *dns.SecurityScanner { return s.services.Sap.DNSSecurity }
+func (s *Server) DNSSecurityScanner() *dns.SecurityScanner { return s.services.Diagnostics.DNSSecurity }
 
 // DHCPMonitor returns the DHCP monitor.
-func (s *Server) DHCPMonitor() *dhcp.Monitor { return s.services.Sap.DHCP }
+func (s *Server) DHCPMonitor() *dhcp.Monitor { return s.services.Diagnostics.DHCP }
 
 // RogueDetector returns the rogue DHCP detector.
-func (s *Server) RogueDetector() *dhcp.RogueDetector { return s.services.Sap.RogueDetector }
+func (s *Server) RogueDetector() *dhcp.RogueDetector { return s.services.Diagnostics.RogueDetector }
 
 // GatewayTester returns the gateway tester.
-func (s *Server) GatewayTester() *gateway.Tester { return s.services.Sap.Gateway }
+func (s *Server) GatewayTester() *gateway.Tester { return s.services.Diagnostics.Gateway }
 
 // VLANManager returns the VLAN manager.
-func (s *Server) VLANManager() *vlan.Manager { return s.services.Sap.VLAN }
+func (s *Server) VLANManager() *vlan.Manager { return s.services.Diagnostics.VLAN }
 
 // VLANTrafficMonitor returns the VLAN traffic monitor.
-func (s *Server) VLANTrafficMonitor() *vlan.TrafficMonitor { return s.services.Sap.VLANTraffic }
+func (s *Server) VLANTrafficMonitor() *vlan.TrafficMonitor { return s.services.Diagnostics.VLANTraffic }
 
 // SpeedtestTester returns the speedtest tester.
-func (s *Server) SpeedtestTester() *speedtest.Tester { return s.services.Sap.Speedtest }
+func (s *Server) SpeedtestTester() *speedtest.Tester { return s.services.Diagnostics.Speedtest }
 
 // IperfManager returns the iperf manager.
-func (s *Server) IperfManager() *iperf.Manager { return s.services.Sap.Iperf }
+func (s *Server) IperfManager() *iperf.Manager { return s.services.Diagnostics.Iperf }
 
 // CableTester returns the cable tester.
-func (s *Server) CableTester() *cable.Tester { return s.services.Sap.Cable }
+func (s *Server) CableTester() *cable.Tester { return s.services.Diagnostics.Cable }
 
 // PublicIPChecker returns the public IP checker.
-func (s *Server) PublicIPChecker() *publicip.Checker { return s.services.Sap.PublicIP }
+func (s *Server) PublicIPChecker() *publicip.Checker { return s.services.Diagnostics.PublicIP }
 
 // WiFiManager returns the WiFi manager.
-func (s *Server) WiFiManager() *wifi.Manager { return s.services.Canopy.WiFi }
+func (s *Server) WiFiManager() *wifi.Manager { return s.services.Wireless.WiFi }
 
 // WiFiScanner returns the WiFi scanner.
-func (s *Server) WiFiScanner() *wifi.Scanner { return s.services.Canopy.Scanner }
+func (s *Server) WiFiScanner() *wifi.Scanner { return s.services.Wireless.Scanner }
 
 // SurveyManager returns the survey manager.
-func (s *Server) SurveyManager() *survey.Manager { return s.services.Canopy.Survey }
+func (s *Server) SurveyManager() *survey.Manager { return s.services.Wireless.Survey }
 
 // SSEHub returns the SSE hub.
 func (s *Server) SSEHub() *SSEHub { return s.services.RealTime.SSEHub }
@@ -682,20 +682,20 @@ func (s *Server) pipeline() *discovery.Pipeline               { return s.service
 func (s *Server) vulnScanner() *discovery.VulnerabilityScanner {
 	return s.services.Discovery.Vulnerability
 }
-func (s *Server) dnsTester() *dns.Tester                   { return s.services.Sap.DNS }
-func (s *Server) dnsSecurityScanner() *dns.SecurityScanner { return s.services.Sap.DNSSecurity }
-func (s *Server) dhcpMonitor() *dhcp.Monitor               { return s.services.Sap.DHCP }
-func (s *Server) rogueDetector() *dhcp.RogueDetector       { return s.services.Sap.RogueDetector }
-func (s *Server) gatewayTester() *gateway.Tester           { return s.services.Sap.Gateway }
-func (s *Server) vlanManager() *vlan.Manager               { return s.services.Sap.VLAN }
-func (s *Server) vlanTrafficMonitor() *vlan.TrafficMonitor { return s.services.Sap.VLANTraffic }
-func (s *Server) speedtestTester() *speedtest.Tester       { return s.services.Sap.Speedtest }
-func (s *Server) iperfManager() *iperf.Manager             { return s.services.Sap.Iperf }
-func (s *Server) cableTester() *cable.Tester               { return s.services.Sap.Cable }
-func (s *Server) publicipChecker() *publicip.Checker       { return s.services.Sap.PublicIP }
-func (s *Server) wifiManager() *wifi.Manager               { return s.services.Canopy.WiFi }
-func (s *Server) wifiScanner() *wifi.Scanner               { return s.services.Canopy.Scanner }
-func (s *Server) surveyManager() *survey.Manager           { return s.services.Canopy.Survey }
+func (s *Server) dnsTester() *dns.Tester                   { return s.services.Diagnostics.DNS }
+func (s *Server) dnsSecurityScanner() *dns.SecurityScanner { return s.services.Diagnostics.DNSSecurity }
+func (s *Server) dhcpMonitor() *dhcp.Monitor               { return s.services.Diagnostics.DHCP }
+func (s *Server) rogueDetector() *dhcp.RogueDetector       { return s.services.Diagnostics.RogueDetector }
+func (s *Server) gatewayTester() *gateway.Tester           { return s.services.Diagnostics.Gateway }
+func (s *Server) vlanManager() *vlan.Manager               { return s.services.Diagnostics.VLAN }
+func (s *Server) vlanTrafficMonitor() *vlan.TrafficMonitor { return s.services.Diagnostics.VLANTraffic }
+func (s *Server) speedtestTester() *speedtest.Tester       { return s.services.Diagnostics.Speedtest }
+func (s *Server) iperfManager() *iperf.Manager             { return s.services.Diagnostics.Iperf }
+func (s *Server) cableTester() *cable.Tester               { return s.services.Diagnostics.Cable }
+func (s *Server) publicipChecker() *publicip.Checker       { return s.services.Diagnostics.PublicIP }
+func (s *Server) wifiManager() *wifi.Manager               { return s.services.Wireless.WiFi }
+func (s *Server) wifiScanner() *wifi.Scanner               { return s.services.Wireless.Scanner }
+func (s *Server) surveyManager() *survey.Manager           { return s.services.Wireless.Survey }
 func (s *Server) sseHub() *SSEHub                          { return s.services.RealTime.SSEHub }
 func (s *Server) logBroadcaster() *logging.LogBroadcaster  { return s.services.RealTime.LogBroadcaster }
 func (s *Server) db() *database.DB                         { return s.services.Database.DB }

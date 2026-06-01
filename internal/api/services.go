@@ -32,18 +32,17 @@ import (
 // This reduces the Server struct's field count and enables dependency injection.
 // Related issue: #888.
 type ServiceContainer struct {
-	Auth      *AuthServices
-	RateLimit *RateLimitServices
-	Network   *NetworkServices
-	Discovery *DiscoveryServices
-	Sap       *SapServices
-	Probe     *ProbeServices
-	Canopy    *CanopyServices
-	Roots     *RootsServices
-	RealTime  *RealTimeServices
-	Database  *DatabaseServices
-	Health    *HealthServices
-	Update    *update.Service
+	Auth        *AuthServices
+	RateLimit   *RateLimitServices
+	Network     *NetworkServices
+	Discovery   *DiscoveryServices
+	Diagnostics *DiagnosticsServices
+	Probe       *ProbeServices
+	Wireless    *WiFiServices
+	RealTime    *RealTimeServices
+	Database    *DatabaseServices
+	Health      *HealthServices
+	Update      *update.Service
 
 	// Engines is the lifecycle registry every long-running engine
 	// registers with (probe, retention, snmp-poller, listeners,
@@ -56,18 +55,17 @@ type ServiceContainer struct {
 // NewServiceContainer creates a new empty ServiceContainer.
 func NewServiceContainer() *ServiceContainer {
 	return &ServiceContainer{
-		Auth:      &AuthServices{},
-		RateLimit: &RateLimitServices{},
-		Network:   &NetworkServices{},
-		Discovery: &DiscoveryServices{},
-		Sap:       &SapServices{},
-		Probe:     &ProbeServices{},
-		Canopy:    &CanopyServices{},
-		Roots:     &RootsServices{},
-		RealTime:  &RealTimeServices{},
-		Database:  &DatabaseServices{},
-		Health:    &HealthServices{},
-		Engines:   engine.NewRegistry(nil),
+		Auth:        &AuthServices{},
+		RateLimit:   &RateLimitServices{},
+		Network:     &NetworkServices{},
+		Discovery:   &DiscoveryServices{},
+		Diagnostics: &DiagnosticsServices{},
+		Probe:       &ProbeServices{},
+		Wireless:    &WiFiServices{},
+		RealTime:    &RealTimeServices{},
+		Database:    &DatabaseServices{},
+		Health:      &HealthServices{},
+		Engines:     engine.NewRegistry(nil),
 	}
 }
 
@@ -129,8 +127,8 @@ type DiscoveryServices struct {
 	Engine           *discovery.Engine         // Unified discovery engine (primary)
 }
 
-// SapServices groups SAP module services (live telemetry).
-type SapServices struct {
+// DiagnosticsServices groups the on-demand network diagnostic testers.
+type DiagnosticsServices struct {
 	DNS           *dns.Tester
 	DNSSecurity   *dns.SecurityScanner
 	DHCP          *dhcp.Monitor
@@ -161,18 +159,11 @@ type ProbeServices struct {
 	Retention *retention.Engine
 }
 
-// CanopyServices groups Canopy module services (Wi-Fi planning).
-type CanopyServices struct {
+// WiFiServices groups the Wi-Fi visibility services (scan, manage, survey).
+type WiFiServices struct {
 	WiFi    *wifi.Manager
 	Scanner *wifi.Scanner
 	Survey  *survey.Manager
-}
-
-// RootsServices groups Roots module services (path analysis).
-// Currently minimal - PublicIP moved to SapServices as it's telemetry-focused.
-type RootsServices struct {
-	// Traceroute and path analysis are handled directly in handlers
-	// as they don't require persistent state
 }
 
 // RealTimeServices groups real-time communication services.
@@ -235,8 +226,8 @@ func (sc *ServiceContainer) Stop() {
 	}
 
 	// Stop SAP services
-	if sc.Sap.VLANTraffic != nil {
-		sc.Sap.VLANTraffic.Stop()
+	if sc.Diagnostics.VLANTraffic != nil {
+		sc.Diagnostics.VLANTraffic.Stop()
 	}
 
 	// Stop update service

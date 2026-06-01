@@ -133,18 +133,18 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	// Handlers check for nil and return appropriate errors.
 
 	// Initialize lightweight Sap services (no slow I/O)
-	s.services.Sap.DNS = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
-	s.services.Sap.DNSSecurity = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
-	s.services.Sap.DHCP = dhcp.NewMonitor(cfg.Interface.Default)
-	s.services.Sap.Gateway = gateway.NewTester(gateway.DefaultThresholds())
-	s.services.Sap.VLAN = vlan.NewManager(cfg.Interface.Default)
-	s.services.Sap.VLANTraffic = vlan.NewTrafficMonitor(cfg.Interface.Default)
-	s.services.Sap.Speedtest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
-	s.services.Sap.Iperf = iperf.NewManager()
-	s.services.Sap.Cable = cable.NewTester(cfg.Interface.Default)
-	s.services.Sap.PublicIP = publicip.NewChecker()
+	s.services.Diagnostics.DNS = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
+	s.services.Diagnostics.DNSSecurity = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
+	s.services.Diagnostics.DHCP = dhcp.NewMonitor(cfg.Interface.Default)
+	s.services.Diagnostics.Gateway = gateway.NewTester(gateway.DefaultThresholds())
+	s.services.Diagnostics.VLAN = vlan.NewManager(cfg.Interface.Default)
+	s.services.Diagnostics.VLANTraffic = vlan.NewTrafficMonitor(cfg.Interface.Default)
+	s.services.Diagnostics.Speedtest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
+	s.services.Diagnostics.Iperf = iperf.NewManager()
+	s.services.Diagnostics.Cable = cable.NewTester(cfg.Interface.Default)
+	s.services.Diagnostics.PublicIP = publicip.NewChecker()
 
-	s.services.Canopy.WiFi = wifi.NewManager(cfg.Interface.Default)
+	s.services.Wireless.WiFi = wifi.NewManager(cfg.Interface.Default)
 
 	// Initialize SSE hub
 	s.services.RealTime.SSEHub = NewSSEHub()
