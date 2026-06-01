@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/services/shell/guestaudit"
+	"github.com/krisarmstrong/seed/internal/security/guestaudit"
 )
 
 func TestRun_RejectsEmptyTargets(t *testing.T) {

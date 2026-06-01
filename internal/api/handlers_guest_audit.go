@@ -15,7 +15,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/services/shell/guestaudit"
+	"github.com/krisarmstrong/seed/internal/security/guestaudit"
 	"github.com/krisarmstrong/seed/internal/validation"
 )
 
