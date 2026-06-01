@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/link-response.schema.json",
+  "$ref": "#/$defs/LinkResponse",
+  "$defs": {
+    "LinkHistoryEvent": {
+      "properties": {
+        "state": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "state",
+        "timestamp"
+      ]
+    },
+    "LinkResponse": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "linkUp": {
+          "type": "boolean"
+        },
+        "carrier": {
+          "type": "boolean"
+        },
+        "hasIP": {
+          "type": "boolean"
+        },
+        "speed": {
+          "type": "string"
+        },
+        "duplex": {
+          "type": "string"
+        },
+        "advertisedSpeeds": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "mtu": {
+          "type": "integer"
+        },
+        "autoNeg": {
+          "type": "boolean"
+        },
+        "flapCount24h": {
+          "type": "integer"
+        },
+        "history": {
+          "items": {
+            "$ref": "#/$defs/LinkHistoryEvent"
+          },
+          "type": "array"
+        },
+        "uptimeMs": {
+          "type": "integer"
+        },
+        "poe": {
+          "$ref": "#/$defs/PoEInfo"
+        },
+        "sfp": {
+          "$ref": "#/$defs/SFPInfo"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface",
+        "linkUp",
+        "carrier",
+        "hasIP",
+        "speed",
+        "duplex",
+        "advertisedSpeeds",
+        "mtu",
+        "autoNeg",
+        "flapCount24h"
+      ]
+    },
+    "PoEInfo": {
+      "properties": {
+        "detected": {
+          "type": "boolean"
+        },
+        "standard": {
+          "type": "string"
+        },
+        "class": {
+          "type": "integer"
+        },
+        "powerMw": {
+          "type": "number"
+        },
+        "voltage": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "detected"
+      ]
+    },
+    "SFPDDMInfo": {
+      "properties": {
+        "temperature": {
+          "type": "number"
+        },
+        "voltage": {
+          "type": "number"
+        },
+        "txPowerDbm": {
+          "type": "number"
+        },
+        "txPowerMw": {
+          "type": "number"
+        },
+        "rxPowerDbm": {
+          "type": "number"
+        },
+        "rxPowerMw": {
+          "type": "number"
+        },
+        "laserBiasMa": {
+          "type": "number"
+        },
+        "alarms": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "temperature",
+        "voltage",
+        "txPowerDbm",
+        "txPowerMw",
+        "rxPowerDbm",
+        "rxPowerMw",
+        "laserBiasMa"
+      ]
+    },
+    "SFPInfo": {
+      "properties": {
+        "present": {
+          "type": "boolean"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "partNumber": {
+          "type": "string"
+        },
+        "serial": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "wavelength": {
+          "type": "integer"
+        },
+        "distance": {
+          "type": "integer"
+        },
+        "connector": {
+          "type": "string"
+        },
+        "ddmSupport": {
+          "type": "boolean"
+        },
+        "ddm": {
+          "$ref": "#/$defs/SFPDDMInfo"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "present",
+        "ddmSupport"
+      ]
+    }
+  },
+  "title": "LinkResponse",
+  "description": "LinkResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

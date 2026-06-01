@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/dns-server-response.schema.json",
+  "$ref": "#/$defs/DNSServerResponse",
+  "$defs": {
+    "DNSServerResponse": {
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address",
+        "enabled"
+      ]
+    }
+  },
+  "title": "DNSServerResponse",
+  "description": "DNSServerResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

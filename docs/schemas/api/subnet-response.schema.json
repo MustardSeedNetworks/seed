@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/subnet-response.schema.json",
+  "$ref": "#/$defs/SubnetResponse",
+  "$defs": {
+    "SubnetResponse": {
+      "properties": {
+        "cidr": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "cidr",
+        "name",
+        "enabled"
+      ]
+    }
+  },
+  "title": "SubnetResponse",
+  "description": "SubnetResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

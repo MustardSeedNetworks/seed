@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/vlan-interface-request.schema.json",
+  "$ref": "#/$defs/VLANInterfaceRequest",
+  "$defs": {
+    "VLANInterfaceRequest": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "vlanId": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface",
+        "vlanId"
+      ]
+    }
+  },
+  "title": "VLANInterfaceRequest",
+  "description": "VLANInterfaceRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/speedtest-status-response.schema.json",
+  "$ref": "#/$defs/SpeedtestStatusResponse",
+  "$defs": {
+    "SpeedtestResponse": {
+      "properties": {
+        "download": {
+          "type": "number"
+        },
+        "upload": {
+          "type": "number"
+        },
+        "latency": {
+          "type": "number"
+        },
+        "server": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "distance": {
+          "type": "number"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "testDuration": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "download",
+        "upload",
+        "latency",
+        "server",
+        "location",
+        "host",
+        "distance",
+        "timestamp",
+        "testDuration"
+      ]
+    },
+    "SpeedtestStatusResponse": {
+      "properties": {
+        "running": {
+          "type": "boolean"
+        },
+        "phase": {
+          "type": "string"
+        },
+        "progress": {
+          "type": "number"
+        },
+        "last": {
+          "$ref": "#/$defs/SpeedtestResponse"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "running",
+        "phase",
+        "progress"
+      ]
+    }
+  },
+  "title": "SpeedtestStatusResponse",
+  "description": "SpeedtestStatusResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
