@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.208.0](https://github.com/krisarmstrong/seed/compare/v0.207.0...v0.208.0) (2026-06-01)
+
+
+### Features
+
+* **alerts:** load listener rules from db with hot reload ([#1386](https://github.com/krisarmstrong/seed/issues/1386)) ([2b0082c](https://github.com/krisarmstrong/seed/commit/2b0082c4691e324f6ea71a33a8490d8d947c6e3a))
+* **alerts:** replay observation state on startup ([#1399](https://github.com/krisarmstrong/seed/issues/1399)) ([06600ee](https://github.com/krisarmstrong/seed/commit/06600eec96ce89966942c815666b7e19ff1e2431))
+* **alerts:** time-windowed rule thresholds ([#1398](https://github.com/krisarmstrong/seed/issues/1398)) ([ee2a991](https://github.com/krisarmstrong/seed/commit/ee2a991abe77bcb0ef901c72ccfcbb4e57ec1031))
+* **api:** /api/v1/engines admin endpoint (stage a5.8, item 3) ([#1364](https://github.com/krisarmstrong/seed/issues/1364)) ([ef4fa05](https://github.com/krisarmstrong/seed/commit/ef4fa05f9f191db98659fbede66c225bf03db0a8))
+* **api:** alert-rule editor (stage a5.10, item 5) ([#1366](https://github.com/krisarmstrong/seed/issues/1366)) ([871414c](https://github.com/krisarmstrong/seed/commit/871414c866de7c626ec906c1af2922bf9b3a8722))
+* **api:** list arp bindings via /topology/arp ([#1387](https://github.com/krisarmstrong/seed/issues/1387)) ([9840f66](https://github.com/krisarmstrong/seed/commit/9840f66448cc33fff56e4a95b5dd1e157b3398eb)), closes [#1382](https://github.com/krisarmstrong/seed/issues/1382) [#1367](https://github.com/krisarmstrong/seed/issues/1367)
+* **api:** per-tier engine gating (stage a5.9, item 4) ([#1365](https://github.com/krisarmstrong/seed/issues/1365)) ([8f628dc](https://github.com/krisarmstrong/seed/commit/8f628dce708278cd7d0f72a8cb7b73e42c9994cf))
+* **engine:** optional reporter interface + /engines status surface ([#1389](https://github.com/krisarmstrong/seed/issues/1389)) ([19c117e](https://github.com/krisarmstrong/seed/commit/19c117e6f5cd4fda799f8a43ba1a86735cb53705))
+* **ui:** alert-rules editor page ([#1397](https://github.com/krisarmstrong/seed/issues/1397)) ([af4f85c](https://github.com/krisarmstrong/seed/commit/af4f85c610e0e721ebdcc5e1d87be6499b6552f3))
+* **ui:** alerts page — list + ack + resolve (stage a5.7) ([#1363](https://github.com/krisarmstrong/seed/issues/1363)) ([6e2d3e7](https://github.com/krisarmstrong/seed/commit/6e2d3e70774d9ab874b5eade3d4c9663ca8ec448))
+* **ui:** polling targets crud page (stage a5.5) ([#1361](https://github.com/krisarmstrong/seed/issues/1361)) ([c3734af](https://github.com/krisarmstrong/seed/commit/c3734af7cd8aa1228707f04ca8f42c92dbb90eb0))
+* **ui:** topology page — nodes list + node detail (stage a5.6) ([#1362](https://github.com/krisarmstrong/seed/issues/1362)) ([55de802](https://github.com/krisarmstrong/seed/commit/55de80281393a59a1defd4e2077f8eb2d4a36904))
+
+
+### Bug Fixes
+
+* **test:** serialize snmptrap tests to avoid upstream gosnmp race ([#1388](https://github.com/krisarmstrong/seed/issues/1388)) ([6280df4](https://github.com/krisarmstrong/seed/commit/6280df4ca4d8fde3a33043b839e8f722da0d1ab5))
+
 ## [0.207.0](https://github.com/krisarmstrong/seed/compare/v0.206.0...v0.207.0) (2026-05-31)
 
 
