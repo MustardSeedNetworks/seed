@@ -53,9 +53,9 @@ func setupSchedulerService(t *testing.T) (
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
-	ss := harvest.NewSchedulerService(cfg, db, gs)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	ss := harvest.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
 
 	return ss, cleanup
 }

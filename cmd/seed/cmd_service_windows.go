@@ -13,14 +13,13 @@ import (
 	"github.com/kardianos/service"
 	"github.com/spf13/cobra"
 
-	"github.com/krisarmstrong/seed/internal/adapters/store"
 	api "github.com/krisarmstrong/seed/internal/api"
+	"github.com/krisarmstrong/seed/internal/app"
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/canopy"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/modules/harvest"
 	"github.com/krisarmstrong/seed/internal/netif"
 	"github.com/krisarmstrong/seed/internal/paths"
 	"github.com/krisarmstrong/seed/internal/pipeline"
@@ -249,7 +248,7 @@ func initializeModulesForService(cfg *config.Config, db *database.DB) *api.Modul
 	modules.Shell = shell.New(cfg, db)
 	modules.Canopy = canopy.New(cfg, db)
 	modules.Roots = pipeline.New(cfg, db)
-	modules.Harvest = harvest.New(cfg, db, store.NewReportRepo(db))
+	modules.Harvest = app.NewHarvest(cfg, db)
 
 	return modules
 }

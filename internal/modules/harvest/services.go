@@ -18,7 +18,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/database"
 )
 
 // DefaultReportsPath is the default directory for storing generated reports.
@@ -33,9 +32,6 @@ const (
 	PeriodWeekly  = "weekly"
 	PeriodMonthly = "monthly"
 )
-
-// SQLite date format for grouping.
-const sqliteDateFormat = "%Y-%m-%d"
 
 // PDF layout and formatting constants.
 const (
@@ -96,15 +92,13 @@ const (
 	sectionOrderRemediation = 6 // Order for remediation section
 )
 
-// GeneratorService generates reports in various formats.
-//
-// It depends on a ReportRepo port for report-record persistence; db is
-// retained only for the bulk-export queries in services_export.go (devices /
-// device_vulnerabilities), which move behind an ExportRepo in slice 1b-v.
+// GeneratorService generates reports in various formats. It is persistence-free:
+// report records go through the ReportRepo port and bulk export through the
+// ExportRepo port.
 type GeneratorService struct {
 	cfg         *config.Config
 	reports     ReportRepo
-	db          *database.DB
+	export      ExportRepo
 	templates   *TemplateService
 	aggregator  *AggregatorService
 	reportsPath string
@@ -115,14 +109,14 @@ type GeneratorService struct {
 func NewGeneratorService(
 	cfg *config.Config,
 	reports ReportRepo,
-	db *database.DB,
+	export ExportRepo,
 	templates *TemplateService,
 	aggregator *AggregatorService,
 ) *GeneratorService {
 	return &GeneratorService{
 		cfg:         cfg,
 		reports:     reports,
-		db:          db,
+		export:      export,
 		templates:   templates,
 		aggregator:  aggregator,
 		reportsPath: DefaultReportsPath,

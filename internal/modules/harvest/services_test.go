@@ -365,7 +365,7 @@ func TestAggregatorService_Aggregate(t *testing.T) {
 	defer cleanup()
 
 	cfg := testConfig()
-	as := harvest.NewAggregatorService(cfg, db)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
 
 	tests := []struct {
 		name   string
@@ -414,7 +414,7 @@ func TestAggregatorService_AggregateWithData(t *testing.T) {
 	setupTestData(t, ctx, db)
 
 	cfg := testConfig()
-	as := harvest.NewAggregatorService(cfg, db)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
 
 	data, err := as.Aggregate(ctx, harvest.PeriodWeekly, "", "")
 	require.NoError(t, err)
@@ -429,7 +429,7 @@ func TestAggregatorService_GetTrends(t *testing.T) {
 	defer cleanup()
 
 	cfg := testConfig()
-	as := harvest.NewAggregatorService(cfg, db)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
 	ctx := context.Background()
 
 	tests := []struct {
@@ -474,9 +474,9 @@ func TestSchedulerService_Create(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
-	ss := harvest.NewSchedulerService(cfg, db, gs)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	ss := harvest.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
 
 	ctx := context.Background()
 
@@ -570,9 +570,9 @@ func TestSchedulerService_Get(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
-	ss := harvest.NewSchedulerService(cfg, db, gs)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	ss := harvest.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
 
 	ctx := context.Background()
 
@@ -629,9 +629,9 @@ func TestSchedulerService_List(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
-	ss := harvest.NewSchedulerService(cfg, db, gs)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	ss := harvest.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
 
 	ctx := context.Background()
 
@@ -670,9 +670,9 @@ func TestSchedulerService_Update(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
-	ss := harvest.NewSchedulerService(cfg, db, gs)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	ss := harvest.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
 
 	ctx := context.Background()
 
@@ -755,9 +755,9 @@ func TestSchedulerService_Delete(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
-	ss := harvest.NewSchedulerService(cfg, db, gs)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	ss := harvest.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
 
 	ctx := context.Background()
 
@@ -800,9 +800,9 @@ func TestSchedulerService_StartStop(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
-	ss := harvest.NewSchedulerService(cfg, db, gs)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	ss := harvest.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
@@ -828,9 +828,9 @@ func TestCalculateNextRun(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
-	ss := harvest.NewSchedulerService(cfg, db, gs)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	ss := harvest.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
 
 	ctx := context.Background()
 	now := time.Now()
@@ -900,8 +900,8 @@ func TestGeneratorService_Generate(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
 
 	ctx := context.Background()
 
@@ -984,8 +984,8 @@ func TestGeneratorService_GenerateFromTemplate(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
 
 	ctx := context.Background()
 
@@ -1049,10 +1049,10 @@ func TestGeneratorService_Export(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
 
 	// Create generator with a temp directory for reports
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
 
 	ctx := context.Background()
 
@@ -1138,8 +1138,8 @@ func TestGeneratorService_ListReports(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
 
 	ctx := context.Background()
 
@@ -1171,8 +1171,8 @@ func TestGeneratorService_GetReport(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
 
 	ctx := context.Background()
 
@@ -1206,8 +1206,8 @@ func TestGeneratorService_DeleteReport(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
 
 	ctx := context.Background()
 
@@ -1239,7 +1239,15 @@ func TestModule_New(t *testing.T) {
 	defer cleanup()
 
 	cfg := testConfig()
-	module := harvest.New(cfg, db, store.NewReportRepo(db))
+	module := harvest.New(
+		cfg,
+		harvest.Deps{
+			Reports:  store.NewReportRepo(db),
+			Schedule: store.NewScheduleRepo(db),
+			Metrics:  store.NewMetricsRepo(db),
+			Export:   store.NewExportRepo(db),
+		},
+	)
 
 	require.NotNil(t, module)
 	assert.NotNil(t, module.Generator())
@@ -1253,7 +1261,15 @@ func TestModule_StartStop(t *testing.T) {
 	defer cleanup()
 
 	cfg := testConfig()
-	module := harvest.New(cfg, db, store.NewReportRepo(db))
+	module := harvest.New(
+		cfg,
+		harvest.Deps{
+			Reports:  store.NewReportRepo(db),
+			Schedule: store.NewScheduleRepo(db),
+			Metrics:  store.NewMetricsRepo(db),
+			Export:   store.NewExportRepo(db),
+		},
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
@@ -1276,7 +1292,15 @@ func TestModule_Accessors(t *testing.T) {
 	defer cleanup()
 
 	cfg := testConfig()
-	module := harvest.New(cfg, db, store.NewReportRepo(db))
+	module := harvest.New(
+		cfg,
+		harvest.Deps{
+			Reports:  store.NewReportRepo(db),
+			Schedule: store.NewScheduleRepo(db),
+			Metrics:  store.NewMetricsRepo(db),
+			Export:   store.NewExportRepo(db),
+		},
+	)
 
 	// Multiple calls should return the same instance
 	gen1 := module.Generator()
@@ -1301,7 +1325,15 @@ func TestModule_ConcurrentAccess(t *testing.T) {
 	defer cleanup()
 
 	cfg := testConfig()
-	module := harvest.New(cfg, db, store.NewReportRepo(db))
+	module := harvest.New(
+		cfg,
+		harvest.Deps{
+			Reports:  store.NewReportRepo(db),
+			Schedule: store.NewScheduleRepo(db),
+			Metrics:  store.NewMetricsRepo(db),
+			Export:   store.NewExportRepo(db),
+		},
+	)
 
 	ctx := context.Background()
 	require.NoError(t, module.Start(ctx))
@@ -1356,8 +1388,8 @@ func TestGeneratorService_UnsupportedFormats(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
 
 	ctx := context.Background()
 
@@ -1392,7 +1424,7 @@ func TestAggregatorService_EmptyDatabase(t *testing.T) {
 	defer cleanup()
 
 	cfg := testConfig()
-	as := harvest.NewAggregatorService(cfg, db)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
 
 	ctx := context.Background()
 	data, err := as.Aggregate(ctx, harvest.PeriodWeekly, "", "")
@@ -1436,9 +1468,9 @@ func TestSchedulerService_InvalidTimezone(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
-	ss := harvest.NewSchedulerService(cfg, db, gs)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
+	ss := harvest.NewSchedulerService(cfg, store.NewScheduleRepo(db), gs)
 
 	ctx := context.Background()
 
@@ -1468,8 +1500,8 @@ func TestReportParams_DateRangeCalculation(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
 
 	ctx := context.Background()
 
@@ -1508,8 +1540,8 @@ func TestExportResult_Fields(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
 
 	ctx := context.Background()
 
@@ -1544,8 +1576,8 @@ func TestDatabaseInteraction_Reports(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
 
 	ctx := context.Background()
 
@@ -1650,8 +1682,8 @@ func TestGeneratorService_DownloadReport(t *testing.T) {
 	ts := harvest.NewTemplateService(cfg)
 	require.NoError(t, ts.Load())
 
-	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
+	as := harvest.NewAggregatorService(cfg, store.NewMetricsRepo(db))
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), store.NewExportRepo(db), ts, as)
 
 	ctx := context.Background()
 
