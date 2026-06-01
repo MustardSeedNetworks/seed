@@ -106,6 +106,47 @@ func schemaTargets() []schemaTarget {
 			filename: "license-status-response.schema.json",
 			title:    "LicenseStatusResponse",
 		},
+		// Batch 2: common error envelopes + recovery/config/roots DTOs.
+		{
+			value:    &api.ErrorResponse{},
+			filename: "error-response.schema.json",
+			title:    "ErrorResponse",
+		},
+		{
+			value:    &api.FeatureGateResponse{},
+			filename: "feature-gate-response.schema.json",
+			title:    "FeatureGateResponse",
+		},
+		{
+			value:    &api.RecoveryStatusResponse{},
+			filename: "recovery-status-response.schema.json",
+			title:    "RecoveryStatusResponse",
+		},
+		{
+			value:    &api.RecoveryInstructionsResponse{},
+			filename: "recovery-instructions-response.schema.json",
+			title:    "RecoveryInstructionsResponse",
+		},
+		{
+			value:    &api.RecoveryCompleteResponse{},
+			filename: "recovery-complete-response.schema.json",
+			title:    "RecoveryCompleteResponse",
+		},
+		{
+			value:    &api.ConfigVersionResponse{},
+			filename: "config-version-response.schema.json",
+			title:    "ConfigVersionResponse",
+		},
+		// NOTE: nested-type DTOs (e.g. BackupListResponse → BackupInfo) are
+		// deferred until gen-types.mjs bundles cross-$defs refs —
+		// json-schema-to-typescript v15 errors "Refs should have been resolved"
+		// on invopop's sibling-$def references. Tracked as the gating fix before
+		// the bulk DTO rollout (ADR-0003 / Phase 2).
+		{
+			value:    &api.TracerouteRequest{},
+			filename: "traceroute-request.schema.json",
+			title:    "TracerouteRequest",
+		},
 	}
 }
 
