@@ -9,9 +9,9 @@ import (
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/krisarmstrong/seed/internal/diagnostics/dns"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/services/dns"
 )
 
 // handleHealthChecksSettings handles GET/PUT for health check settings.

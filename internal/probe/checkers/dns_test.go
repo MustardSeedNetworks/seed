@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/diagnostics/dns"
 	"github.com/krisarmstrong/seed/internal/probe"
 	"github.com/krisarmstrong/seed/internal/probe/checkers"
-	"github.com/krisarmstrong/seed/internal/services/dns"
 )
 
 // fakeDNSResolver is the test seam for DNSChecker.
