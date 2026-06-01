@@ -110,6 +110,11 @@ type Server struct {
 	mux                 *http.ServeMux
 	acmeChallengeServer *http.Server // HTTP-01 challenge server for ACME (fixes #837)
 
+	// manifest records every route registered through register() (the
+	// capability registry, ADR-0002). Exposed read-only via /__capabilities
+	// for fleet policy audits.
+	manifest []route
+
 	// Service container - holds all domain services (#888)
 	services *ServiceContainer
 

@@ -7,9 +7,11 @@ package api
 // class). See docs/architecture/decisions/0002-capability-registry.md.
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/krisarmstrong/seed/internal/logging"
 )
 
 // route declares an HTTP route and its per-route policy. Authentication and CSRF
@@ -37,6 +39,9 @@ type route struct {
 // than at each call site — makes the policy declarative and the ordering
 // uniform, and is the single choke point a future audit/CI gate can enforce.
 func (s *Server) register(rt route) {
+	// Record the route for the /__capabilities manifest before composing.
+	s.manifest = append(s.manifest, rt)
+
 	h := rt.handler
 
 	// requireRole closest to the handler.
@@ -60,5 +65,35 @@ func (s *Server) register(rt route) {
 func (s *Server) registerAll(routes []route) {
 	for _, rt := range routes {
 		s.register(rt)
+	}
+}
+
+// capabilityView is the JSON-serializable projection of a route's policy for
+// the /__capabilities manifest (the handler func itself is not exposed).
+type capabilityView struct {
+	Path        string `json:"path"`
+	MinRole     string `json:"minRole,omitempty"`
+	Feature     string `json:"feature,omitempty"`
+	RateLimited bool   `json:"rateLimited,omitempty"`
+}
+
+// handleCapabilities serves the route-policy manifest: every route registered
+// through register() with its per-route policy (role / feature / rate-limit).
+// No auth — like /__version, it is a deployment/audit introspection surface.
+// Auth and CSRF are global and intentionally not represented here.
+func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
+	views := make([]capabilityView, 0, len(s.manifest))
+	for _, rt := range s.manifest {
+		views = append(views, capabilityView{
+			Path:        rt.path,
+			MinRole:     rt.minRole,
+			Feature:     rt.feature,
+			RateLimited: rt.rateLimited,
+		})
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(views); err != nil {
+		logging.FromContext(r.Context()).ErrorContext(r.Context(),
+			"failed to encode capabilities manifest", "error", err)
 	}
 }
