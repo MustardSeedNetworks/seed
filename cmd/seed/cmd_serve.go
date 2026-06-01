@@ -19,7 +19,6 @@ import (
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/modules/roots"
 	"github.com/krisarmstrong/seed/internal/netif"
 	"github.com/krisarmstrong/seed/internal/paths"
 	"github.com/krisarmstrong/seed/internal/services"
@@ -124,10 +123,6 @@ func initializeModules(cfg *config.Config, db *database.DB) *api.Modules {
 	// Canopy: Wi-Fi planning (surveys, site planning)
 	modules.Canopy = canopy.New(cfg, db)
 	logging.GetLogger().Info("Canopy module initialized")
-
-	// Roots: Path analysis (traceroute, topology, IP enrichment)
-	modules.Roots = roots.New(cfg)
-	logging.GetLogger().Info("Roots module initialized")
 
 	// Harvest: Reporting (report generation, templates, scheduling)
 	modules.Harvest = app.NewHarvest(cfg, db)

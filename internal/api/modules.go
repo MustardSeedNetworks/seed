@@ -5,7 +5,6 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/canopy"
 	"github.com/krisarmstrong/seed/internal/modules/harvest"
-	"github.com/krisarmstrong/seed/internal/modules/roots"
 	"github.com/krisarmstrong/seed/internal/services"
 	"github.com/krisarmstrong/seed/internal/services/shell"
 )
@@ -15,7 +14,6 @@ type Modules struct {
 	Sap     *services.Module
 	Shell   *shell.Module
 	Canopy  *canopy.Module
-	Roots   *roots.Module
 	Harvest *harvest.Module
 }
 
@@ -37,11 +35,6 @@ func (m *Modules) Start(ctx context.Context) error {
 			return err
 		}
 	}
-	if m.Roots != nil {
-		if err := m.Roots.Start(ctx); err != nil {
-			return err
-		}
-	}
 	if m.Harvest != nil {
 		if err := m.Harvest.Start(ctx); err != nil {
 			return err
@@ -55,9 +48,6 @@ func (m *Modules) Stop() error {
 	// Stop modules in reverse order
 	if m.Harvest != nil {
 		_ = m.Harvest.Stop()
-	}
-	if m.Roots != nil {
-		_ = m.Roots.Stop()
 	}
 	if m.Canopy != nil {
 		_ = m.Canopy.Stop()
