@@ -463,13 +463,15 @@ func initAlertPipelines(services *ServiceContainer, db *database.DB) {
 	logger := logging.GetLogger()
 	settings := db.Settings()
 	alerts := db.Alerts()
+	suppressions := alertpipeline.NewDBSuppressionStore(db.AlertSuppressions())
 
 	if p, err := alertpipeline.NewListenerPipeline(alertpipeline.ListenerConfig{
-		Events:     db.ListenerEvents(),
-		Alerts:     alerts,
-		Settings:   settings,
-		Logger:     logger,
-		AlertRules: db.AlertRules(),
+		Events:       db.ListenerEvents(),
+		Alerts:       alerts,
+		Settings:     settings,
+		Logger:       logger,
+		AlertRules:   db.AlertRules(),
+		Suppressions: suppressions,
 	}); err != nil {
 		logger.Warn("listener alert pipeline init failed", "error", err)
 	} else if regErr := registerEngineIfLicensed(services, p); regErr != nil {
@@ -477,7 +479,11 @@ func initAlertPipelines(services *ServiceContainer, db *database.DB) {
 	}
 
 	if p, err := alertpipeline.NewObservationPipeline(alertpipeline.ObservationConfig{
-		Observations: db.SNMPObservations(), Alerts: alerts, Settings: settings, Logger: logger,
+		Observations: db.SNMPObservations(),
+		Alerts:       alerts,
+		Settings:     settings,
+		Logger:       logger,
+		Suppressions: suppressions,
 	}); err != nil {
 		logger.Warn("observation alert pipeline init failed", "error", err)
 	} else if regErr := registerEngineIfLicensed(services, p); regErr != nil {

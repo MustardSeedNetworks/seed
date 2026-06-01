@@ -51,11 +51,11 @@ type ObservationPipeline struct {
 	interval    time.Duration
 	suppression time.Duration
 
-	mu      sync.Mutex
-	started bool
-	cancel  context.CancelFunc
-	wg      sync.WaitGroup
-	emitted map[string]time.Time
+	mu       sync.Mutex
+	started  bool
+	cancel   context.CancelFunc
+	wg       sync.WaitGroup
+	suppress suppressionStore
 
 	// Previous-state caches. Keyed by entity identifier
 	// ("target/ifindex" or "target/peer-ip", etc.). Updated after
@@ -74,6 +74,9 @@ type ObservationConfig struct {
 	Now          func() time.Time
 	Interval     time.Duration
 	Suppression  time.Duration
+
+	// Suppressions is the persistence backend; see ListenerConfig.
+	Suppressions suppressionStore
 }
 
 // NewObservationPipeline returns an unstarted pipeline.
@@ -102,6 +105,10 @@ func NewObservationPipeline(cfg ObservationConfig) (*ObservationPipeline, error)
 	if cfg.Suppression <= 0 {
 		cfg.Suppression = defaultSuppression
 	}
+	suppress := cfg.Suppressions
+	if suppress == nil {
+		suppress = newInMemorySuppressionStore()
+	}
 	return &ObservationPipeline{
 		obs:          cfg.Observations,
 		alerts:       cfg.Alerts,
@@ -110,7 +117,7 @@ func NewObservationPipeline(cfg ObservationConfig) (*ObservationPipeline, error)
 		now:          cfg.Now,
 		interval:     cfg.Interval,
 		suppression:  cfg.Suppression,
-		emitted:      make(map[string]time.Time),
+		suppress:     suppress,
 		ifaceState:   make(map[string]int),
 		bgpState:     make(map[string]int),
 		storageState: make(map[string]float64),
@@ -418,7 +425,12 @@ func (p *ObservationPipeline) fire(
 ) bool {
 	now := p.now()
 	fingerprint := fingerprintFor(ruleID, entityKey, alert.Source)
-	if p.suppressed(fingerprint, now) {
+	suppressed, suppErr := p.suppress.IsSuppressed(ctx, fingerprint, now)
+	if suppErr != nil {
+		p.logger.WarnContext(ctx, "suppression check failed",
+			"rule", ruleID, "key", entityKey, "error", suppErr)
+	}
+	if suppressed {
 		return false
 	}
 	if err := p.alerts.Create(ctx, alert); err != nil {
@@ -426,36 +438,11 @@ func (p *ObservationPipeline) fire(
 			"rule", ruleID, "key", entityKey, "error", err)
 		return false
 	}
-	p.markEmitted(fingerprint, now)
+	if markErr := p.suppress.Mark(ctx, fingerprint, ruleID, entityKey, now.Add(p.suppression)); markErr != nil {
+		p.logger.WarnContext(ctx, "suppression mark failed",
+			"rule", ruleID, "key", entityKey, "error", markErr)
+	}
 	return true
-}
-
-// suppression helpers — shared shape with listener_pipeline but on
-// this pipeline's own map so they don't contend on a shared mutex.
-func (p *ObservationPipeline) suppressed(fingerprint string, now time.Time) bool {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	last, ok := p.emitted[fingerprint]
-	if !ok {
-		return false
-	}
-	return now.Sub(last) < p.suppression
-}
-
-func (p *ObservationPipeline) markEmitted(fingerprint string, now time.Time) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.emitted[fingerprint] = now
-	const evictThreshold = 4096
-	if len(p.emitted) <= evictThreshold {
-		return
-	}
-	cutoff := now.Add(-2 * p.suppression)
-	for k, v := range p.emitted {
-		if v.Before(cutoff) {
-			delete(p.emitted, k)
-		}
-	}
 }
 
 // state map accessors keep the lock surface narrow.

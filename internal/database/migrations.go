@@ -1920,6 +1920,26 @@ func getMigrationDefs() []migrationDef {
 			CREATE INDEX IF NOT EXISTS idx_arp_bindings_last_seen ON topology_arp_bindings(last_seen);
 		`,
 		},
+		{
+			// Stage A5/#1380 — persistent alert suppression. Replaces
+			// the in-memory map both alert pipelines used to keep so
+			// a restart mid-incident doesn't re-fire alerts that were
+			// already emitted. fingerprint is the sha256 hash from
+			// the original suppression key (rule_id + source + kind).
+			Description: "Create alert_suppressions",
+			Up: `
+				CREATE TABLE IF NOT EXISTS alert_suppressions (
+					fingerprint TEXT PRIMARY KEY,
+					rule_id TEXT NOT NULL,
+					entity_key TEXT NOT NULL,
+					suppress_until TEXT NOT NULL,
+					created_at TEXT NOT NULL
+				);
+
+				CREATE INDEX IF NOT EXISTS idx_alert_suppressions_until
+				  ON alert_suppressions(suppress_until);
+			`,
+		},
 	}
 }
 
