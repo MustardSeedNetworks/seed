@@ -38,6 +38,8 @@ type alertRuleInput struct {
 	AlertSeverity        string `json:"alertSeverity"`
 	AlertTitle           string `json:"alertTitle"`
 	AlertMessage         string `json:"alertMessage"`
+	WindowSeconds        int    `json:"windowSeconds,omitempty"`
+	ThresholdCount       int    `json:"thresholdCount,omitempty"`
 }
 
 func (s *Server) handleAlertRules(w http.ResponseWriter, r *http.Request) {
@@ -235,6 +237,7 @@ func decodeAlertRuleInput(r *http.Request) (*alertRuleInput, error) {
 }
 
 func inputToRule(in *alertRuleInput, id int64) *database.AlertRule {
+	threshold := max(in.ThresholdCount, 1)
 	return &database.AlertRule{
 		ID:                   id,
 		Name:                 in.Name,
@@ -246,6 +249,8 @@ func inputToRule(in *alertRuleInput, id int64) *database.AlertRule {
 		AlertSeverity:        in.AlertSeverity,
 		AlertTitle:           in.AlertTitle,
 		AlertMessage:         in.AlertMessage,
+		WindowSeconds:        in.WindowSeconds,
+		ThresholdCount:       threshold,
 	}
 }
 
@@ -261,6 +266,8 @@ func encodeAlertRule(rule *database.AlertRule) map[string]any {
 		"alertSeverity":        rule.AlertSeverity,
 		"alertTitle":           rule.AlertTitle,
 		"alertMessage":         rule.AlertMessage,
+		"windowSeconds":        rule.WindowSeconds,
+		"thresholdCount":       rule.ThresholdCount,
 		"createdAt":            formatTime(rule.CreatedAt),
 		"updatedAt":            formatTime(rule.UpdatedAt),
 	}

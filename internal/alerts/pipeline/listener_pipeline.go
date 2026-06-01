@@ -79,6 +79,19 @@ type Rule struct {
 	// Build returns the alert to write. The returned Source is used
 	// in the suppression fingerprint alongside the rule ID.
 	Build func(evt *database.ListenerEvent) *database.Alert
+
+	// Threshold is how many matching events must accrue inside
+	// Window before this rule fires. Threshold=1 / Window=0 is the
+	// pre-#1379 fire-on-first-match path.
+	Threshold int
+
+	// Window is the time window over which Threshold accrues.
+	// Window=0 means "no window" (fire on first match).
+	Window time.Duration
+
+	// counter is the optional per-(rule, entity) rolling counter.
+	// nil when Threshold <= 1.
+	counter *windowCounter
 }
 
 // ListenerPipeline scans listener_events on a tick and writes alerts
@@ -457,6 +470,14 @@ func (p *ListenerPipeline) evaluate(ctx context.Context, evt *database.ListenerE
 		}
 		if suppressed {
 			continue
+		}
+		// Time-windowed threshold (#1379): only fire when the rule's
+		// counter crosses Threshold inside Window. Counter==nil means
+		// fire on first match (legacy path).
+		if rule.counter != nil {
+			if !rule.counter.Hit(evt.SourceAddr, now) {
+				continue
+			}
 		}
 		alert := rule.Build(evt)
 		if alert == nil {

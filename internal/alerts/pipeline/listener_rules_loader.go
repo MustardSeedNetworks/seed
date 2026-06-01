@@ -83,8 +83,18 @@ func compileOne(row *database.AlertRule) Rule {
 	titleRenderer := compileTemplate(row.AlertTitle)
 	messageRenderer := compileTemplate(row.AlertMessage)
 
+	threshold := max(row.ThresholdCount, 1)
+	window := time.Duration(row.WindowSeconds) * time.Second
+	var counter *windowCounter
+	if threshold > 1 && window > 0 {
+		counter = newWindowCounter(window, threshold)
+	}
+
 	return Rule{
-		ID: "db." + strconv.FormatInt(row.ID, 10),
+		ID:        "db." + strconv.FormatInt(row.ID, 10),
+		Threshold: threshold,
+		Window:    window,
+		counter:   counter,
 		Match: func(evt *database.ListenerEvent) bool {
 			if matchKind != "" && evt.Kind != matchKind {
 				return false
