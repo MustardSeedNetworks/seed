@@ -1,6 +1,17 @@
 # Phase 3 — Domain Core / Hexagon Extraction Plan
 
-**Status:** Proposed — 2026-06-01
+> ⛔ **SUPERSEDED (2026-06-01) — DO NOT FOLLOW THE "extract every feature into a
+> Module" DIRECTION BELOW.** Execution proved the module facades were *dead
+> parallel wiring* the HTTP request path never consumes (the api uses fat
+> handlers + `internal/api/services.go` groupings → feature packages directly).
+> The plan of record is now **`PHASE3_RECONCILE_PROPOSAL.md`**: delete the dead
+> facades, one composition root, capability-first descriptive names, ports only
+> at real I/O seams. The harvest pilot (1a–1b-v) is retained as the ports/repo
+> exemplar but `internal/modules/harvest` itself becomes `internal/reporting`.
+> This doc is kept for history (the pilot mechanics + the audit that exposed the
+> dead facades). See the RECONCILE proposal §0 for live status.
+
+**Status:** SUPERSEDED by PHASE3_RECONCILE_PROPOSAL.md — 2026-06-01
 **Owner:** re-architecture workstream
 **Scope:** Implements Phase 3 of `RE_ARCHITECTURE_BLUEPRINT.md` (§16) under ADR-0001
 (modulith hexagon). Phases 0–2 are complete (registry + code-first contract,

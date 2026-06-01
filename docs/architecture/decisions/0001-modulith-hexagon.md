@@ -1,6 +1,19 @@
 # ADR-0001: Modulith hexagon structure
 
-**Status:** Accepted — 2026-05-31
+**Status:** AMENDED — 2026-06-01 (see `PHASE3_RECONCILE_PROPOSAL.md`)
+
+> **Amendment (2026-06-01):** the `internal/modules/<botanical>` + `internal/
+> adapters/` rings this ADR proposed were found to be dead parallel wiring (the
+> api consumes feature packages directly, not the module facades). The structural
+> intent — *dependencies point inward, infra behind ports, depguard-enforced
+> direction* — is **retained**, but realized as a **capability-first modular
+> monolith**: flat `internal/<feature>` packages (`wifi`, `diagnostics`,
+> `security`, `reporting`), one composition root, **ports as a technique at real
+> I/O seams** (not a dedicated `adapters/` folder ring). The botanical module
+> facades + the `modules/`/`adapters/` rings are being removed. depguard now
+> enforces *direction*, not folder layout.
+
+**Status (original):** Accepted — 2026-05-31
 
 ## Context
 

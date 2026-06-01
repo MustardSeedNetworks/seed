@@ -1,8 +1,54 @@
 # Phase 3 — Reconcile Proposal: right-sized modular monolith + descriptive names
 
-**Status:** PROPOSED — 2026-06-01 — *awaiting owner decision, no code moves yet*
-**Supersedes (if approved):** the "extract every feature into a Module" framing of
+**Status:** APPROVED & IN PROGRESS — 2026-06-01.
+**Supersedes:** the "extract every feature into a Module" framing of
 `PHASE3_EXTRACTION_PLAN.md` (the harvest pilot under it is retained — see §6).
+
+---
+
+## 0. Execution status (2026-06-01 checkpoint) — RESUME HERE
+
+Owner approved Reconcile + **capability-first** layout + descriptive **code**
+names (botanical names OK for *marketing*, separate brand call). `main` is clean
+and green; all items below are merged.
+
+**Done:**
+- R1/R2 — all four dead facades deleted: roots (#1439), shell (#1441, kept
+  `guestaudit`), canopy (#1442, kept wifi/survey), sap (#1443, kept all
+  diagnostic subpkgs; its "monitors" were no-ops / a duplicate LinkMonitor).
+  `api.Modules` now holds only the report scheduler.
+- R4a reorg (capability-first, golden-gated each):
+  - `internal/canopy/{wifi,survey}` → `internal/wifi/{,survey}` (#1444)
+  - `internal/services/{dns,dhcp,gateway,vlan,speedtest,iperf,cable,link,snmp,
+    performance,telemetry}` → `internal/diagnostics/*` (#1445)
+  - `internal/services/shell/guestaudit` → `internal/security/guestaudit` (#1446)
+  - api `ServiceContainer`: `SapServices`→`DiagnosticsServices` (`.Sap`→
+    `.Diagnostics`), `CanopyServices`→`WiFiServices` (`.Canopy`→`.Wireless`),
+    delete dead `RootsServices` (commit `52a83718`).
+  - `internal/services/` now holds **only `discovery`** (HOT — promote to
+    `internal/discovery` in Phase 6, coordinated with the discovery workstream).
+
+**Remaining:**
+1. **harvest → reporting** (last R4a internal piece; its own careful PR — it
+   reworks depguard). Moves: `internal/modules/harvest` → `internal/reporting`;
+   `internal/adapters/store/harvest_*_repo.go` → `internal/reporting/store/`;
+   `internal/app/harvest.go` → `app/reporting.go` (`NewHarvest`→`NewReporting`);
+   `api.Modules.Harvest` → `Reporting`; cmd `app.NewHarvest`→`NewReporting`.
+   **depguard:** `harvest-no-database` / `harvest-module-independence` /
+   `modules-domain-purity` / `modules-no-adapter-import` are hexagon-ring
+   artifacts keyed on `internal/modules/**` + `internal/adapters/**` — repurpose
+   or drop (keep the `ReportRepo` *port* for testability; a light
+   `internal/reporting/store` boundary is optional). Afterward `internal/modules/`
+   and `internal/adapters/` are empty → remove.
+2. **R4b — customer-facing rename — GATED on the marketing-name decision
+   (pending).** Route prefixes `/api/v1/{sap,roots,shell,canopy,harvest}/*`
+   (28 groups, called by the UI + API clients) + UI `themeColors`/`pageRegistry`/
+   i18n (~60 files). Breaking → needs a versioned route alias / 308 deprecation
+   window if going descriptive. May be KEPT as decorative brand. Confirm.
+
+**Also open:** CI design-token gate is red on `main` (~108 pre-existing whole-repo
+violations — issue #1437); the Frontend job fails for every PR, so UI PRs land via
+`--admin`. Admin-merge is owner-authorized for this workstream.
 
 ---
 
