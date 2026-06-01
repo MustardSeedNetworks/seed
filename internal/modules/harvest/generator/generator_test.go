@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	// Import the package to ensure it compiles and is usable.
-	_ "github.com/krisarmstrong/seed/internal/harvest/generator"
+	_ "github.com/krisarmstrong/seed/internal/modules/harvest/generator"
 )
 
 // TestPackageExists verifies the generator package exists and can be imported.

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/krisarmstrong/seed/internal/canopy"
-	"github.com/krisarmstrong/seed/internal/harvest"
+	"github.com/krisarmstrong/seed/internal/modules/harvest"
 	"github.com/krisarmstrong/seed/internal/pipeline"
 	"github.com/krisarmstrong/seed/internal/services"
 	"github.com/krisarmstrong/seed/internal/services/shell"
