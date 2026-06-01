@@ -27,7 +27,10 @@
     "glossary": "Glossary",
     "path": "Path Analysis",
     "reports": "Reports",
-    "logs": "Logs"
+    "logs": "Logs",
+    "alerts": "Alerts",
+    "pollingTargets": "Polling Targets",
+    "topology": "Topology"
   },
   "instructions": {
     "runTests": "Tap the play button to run all tests.",
