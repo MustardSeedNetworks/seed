@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/krisarmstrong/seed/internal/canopy/survey"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/krisarmstrong/seed/internal/wifi/survey"
 )
 
 // GenerateReportRequest contains parameters for report generation.

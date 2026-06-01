@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/canopy/wifi"
+	"github.com/krisarmstrong/seed/internal/wifi"
 )
 
 // TestSignalStrengthCategories tests signal strength classification.

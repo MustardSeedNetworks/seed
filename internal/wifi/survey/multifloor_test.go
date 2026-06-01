@@ -3,8 +3,8 @@ package survey_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/canopy/survey"
-	"github.com/krisarmstrong/seed/internal/canopy/wifi"
+	"github.com/krisarmstrong/seed/internal/wifi"
+	"github.com/krisarmstrong/seed/internal/wifi/survey"
 )
 
 func TestManager_AddFloor(t *testing.T) {

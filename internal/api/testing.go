@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/krisarmstrong/seed/internal/auth"
-	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/dhcp"
@@ -17,6 +16,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/services/speedtest"
 	"github.com/krisarmstrong/seed/internal/services/vlan"
 	"github.com/krisarmstrong/seed/internal/testutil"
+	"github.com/krisarmstrong/seed/internal/wifi"
 )
 
 // NewTestServer creates a minimal server instance for testing.

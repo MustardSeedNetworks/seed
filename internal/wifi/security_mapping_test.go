@@ -5,7 +5,7 @@ package wifi_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/canopy/wifi"
+	"github.com/krisarmstrong/seed/internal/wifi"
 )
 
 // TestMapSecurityTypeComprehensive tests all security type mappings.

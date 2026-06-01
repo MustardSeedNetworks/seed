@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/canopy/wifi"
+	"github.com/krisarmstrong/seed/internal/wifi"
 )
 
 // TestEndToEndNetworkFlow tests the full flow from scan to graph data.

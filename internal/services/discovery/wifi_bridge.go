@@ -12,8 +12,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/krisarmstrong/seed/internal/canopy/wifi"
 	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/krisarmstrong/seed/internal/wifi"
 )
 
 // Constants for WiFi utilization estimation.
