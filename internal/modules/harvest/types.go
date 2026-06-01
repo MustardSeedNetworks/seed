@@ -4,6 +4,11 @@ import (
 	"time"
 )
 
+// statusCritical is the shared "critical" value used by the vulnerability
+// aggregator (severity match) and the report-template section id. (Previously
+// declared in the now-removed dead health_report.go.)
+const statusCritical = "critical"
+
 // Report represents a generated report.
 type Report struct {
 	ID          string       `json:"id"`
