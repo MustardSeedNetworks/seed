@@ -42,8 +42,7 @@ import {
 import type { PathResponse, TracerouteHop } from '../../types';
 import { Card, CardDivider, CardValue, type Status } from '../ui/card';
 import { Route } from '../ui/icons';
-import { L2_PATH_DISPLAY } from './PathDiscoveryCardL2';
-import { L3_PATH_DISPLAY } from './PathDiscoveryCardL3';
+import { PATH_TIMELINE } from './PathDiscoveryTimeline';
 import { formatRtt, getMaxRtt } from './pathDiscoveryHelpers';
 
 type Protocol = 'icmp' | 'udp' | 'tcp';
@@ -491,20 +490,14 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
         {/* Results */}
         {result && !loading ? (
           <div className="stack-md">
-            {/* L3 Path Results */}
-            {result.l3Path ? (
-              <L3_PATH_DISPLAY result={result.l3Path} maxRtt={maxRtt} t={t} />
-            ) : null}
-
-            {/* L2 Path Results */}
-            {result.l2Path ? (
-              <L2_PATH_DISPLAY
-                result={result.l2Path}
-                expandedHop={expandedL2Hop}
-                onToggleHop={setExpandedL2Hop}
-                t={t}
-              />
-            ) : null}
+            {/* Unified L2+L3 path: source -> switches -> routers -> destination */}
+            <PATH_TIMELINE
+              result={result}
+              maxRtt={maxRtt}
+              expandedL2Hop={expandedL2Hop}
+              onToggleL2Hop={setExpandedL2Hop}
+              t={t}
+            />
 
             {/* Export Actions */}
             <div

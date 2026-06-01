@@ -462,20 +462,28 @@
     "addPasskey": "Añadir llave de acceso"
   },
   "pathDiscovery": {
-    "title": "Descubrimiento de ruta",
     "copy": "Copiar",
+    "destination": "Destino",
     "dns": "DNS",
+    "egressPort": "Puerto de salida",
     "emptyHint": "Ingrese una IP o nombre de host para trazar la ruta de red.",
     "enterTarget": "Ingresar destino",
     "exportCSV": "Exportar CSV",
     "exportJSON": "Exportar JSON",
     "gateway": "Puerta de enlace",
+    "ingressPort": "Puerto de entrada",
     "internet": "Internet",
+    "layerL3": "Salto de capa 3",
+    "noL2Hops": "Sin saltos de switch L2 — requiere vecinos LLDP/CDP o SNMP",
     "protocol": "Protocolo",
     "quick": "Rápido",
     "rerun": "Volver a ejecutar",
+    "source": "Origen",
+    "thisDevice": "Este dispositivo",
+    "title": "Descubrimiento de ruta",
     "trace": "Trazar",
     "tracing": "Trazando ruta...",
-    "tracingHops": "Trazando... {{count}} saltos"
+    "tracingHops": "Trazando... {{count}} saltos",
+    "trunk": "Trunk"
   }
 }

@@ -462,20 +462,28 @@
     "addPasskey": "Add passkey"
   },
   "pathDiscovery": {
-    "title": "Path Discovery",
     "copy": "Copy",
+    "destination": "Destination",
     "dns": "DNS",
+    "egressPort": "Egress Port",
     "emptyHint": "Enter an IP or hostname to trace the network path.",
     "enterTarget": "Enter target",
     "exportCSV": "Export CSV",
     "exportJSON": "Export JSON",
     "gateway": "Gateway",
+    "ingressPort": "Ingress Port",
     "internet": "Internet",
+    "layerL3": "Layer 3 hop",
+    "noL2Hops": "No L2 switch hops — needs LLDP/CDP neighbors or SNMP",
     "protocol": "Protocol",
     "quick": "Quick",
     "rerun": "Re-run",
+    "source": "Source",
+    "thisDevice": "This device",
+    "title": "Path Discovery",
     "trace": "Trace",
     "tracing": "Tracing path...",
-    "tracingHops": "Tracing... {{count}} hops"
+    "tracingHops": "Tracing... {{count}} hops",
+    "trunk": "Trunk"
   }
 }
