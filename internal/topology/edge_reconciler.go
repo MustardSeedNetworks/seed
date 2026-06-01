@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/krisarmstrong/seed/internal/engine"
 )
 
 // EdgeReconcilerName is the engine identifier.
@@ -49,9 +50,11 @@ type EdgeReconciler struct {
 	logger   *slog.Logger
 	now      func() time.Time
 	interval time.Duration
+	tracker  *tickTracker
 
 	mu      sync.Mutex
 	started bool
+	stopped bool
 	cancel  context.CancelFunc
 	wg      sync.WaitGroup
 }
@@ -85,11 +88,20 @@ func NewEdgeReconciler(cfg EdgeConfig) (*EdgeReconciler, error) {
 		logger:   d.logger,
 		now:      d.now,
 		interval: d.interval,
+		tracker:  newTickTracker(d.interval, d.now),
 	}, nil
 }
 
 // Name implements [engine.Engine].
 func (*EdgeReconciler) Name() string { return EdgeReconcilerName }
+
+// Status implements [engine.Reporter].
+func (r *EdgeReconciler) Status() engine.Status {
+	r.mu.Lock()
+	stopped := r.stopped
+	r.mu.Unlock()
+	return r.tracker.status(stopped)
+}
 
 // Start kicks off the reconcile loop. Idempotent.
 func (r *EdgeReconciler) Start(ctx context.Context) error {
@@ -115,6 +127,7 @@ func (r *EdgeReconciler) Stop(ctx context.Context) error {
 		return nil
 	}
 	r.started = false
+	r.stopped = true
 	if r.cancel != nil {
 		r.cancel()
 	}
@@ -157,6 +170,12 @@ func (r *EdgeReconciler) loop(ctx context.Context) {
 // Iterating per-kind keeps the SQL filters indexed (snmp_observations
 // has an idx on (client_id, kind, observed_at)).
 func (r *EdgeReconciler) ReconcileOnce(ctx context.Context) error {
+	err := r.reconcileOnceInner(ctx)
+	r.tracker.recordTick(err)
+	return err
+}
+
+func (r *EdgeReconciler) reconcileOnceInner(ctx context.Context) error {
 	since, err := r.loadHighWater(ctx)
 	if err != nil {
 		return fmt.Errorf("load high-water: %w", err)
