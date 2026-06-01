@@ -1,5 +1,14 @@
 package snmptrap_test
 
+// Tests in this file deliberately avoid t.Parallel(). gosnmp v1.43.2's
+// (*GoSNMP).validateParameters writes to a package-level map without
+// synchronisation (see gosnmp@v1.43.2/gosnmp.go:405-406), so two
+// parallel listener startups race on that write. The race is in the
+// upstream library — fixing it from here would require monkey-patching
+// or upstream contribution. Serialising the tests instead keeps the
+// race detector clean and costs nothing meaningful (these tests
+// already bind sockets and aren't latency-sensitive).
+
 import (
 	"context"
 	"encoding/json"
@@ -61,7 +70,6 @@ func pickPort(t *testing.T) string {
 }
 
 func TestParse_V2CSysUptimeAndTrapOID(t *testing.T) {
-	t.Parallel()
 	pkt := &gosnmp.SnmpPacket{
 		Version:   gosnmp.Version2c,
 		Community: "public",
@@ -90,7 +98,6 @@ func TestParse_V2CSysUptimeAndTrapOID(t *testing.T) {
 }
 
 func TestParse_MissingTrapOIDStillEmitsVarbinds(t *testing.T) {
-	t.Parallel()
 	pkt := &gosnmp.SnmpPacket{
 		Version:   gosnmp.Version1,
 		Community: "private",
@@ -114,14 +121,12 @@ func TestParse_MissingTrapOIDStillEmitsVarbinds(t *testing.T) {
 }
 
 func TestNew_RejectsNilSink(t *testing.T) {
-	t.Parallel()
 	if _, err := snmptrap.New(snmptrap.Config{}); err == nil {
 		t.Error("expected New with nil Sink to fail")
 	}
 }
 
 func TestStartStop_BindAndUnbind(t *testing.T) {
-	t.Parallel()
 	addr := pickPort(t)
 	sink := &fakeSink{}
 	l, newErr := snmptrap.New(snmptrap.Config{
@@ -146,7 +151,6 @@ func TestStartStop_BindAndUnbind(t *testing.T) {
 }
 
 func TestStop_BeforeStartIsNoOp(t *testing.T) {
-	t.Parallel()
 	l, _ := snmptrap.New(snmptrap.Config{
 		BindAddr: pickPort(t),
 		Sink:     &fakeSink{},
@@ -160,7 +164,6 @@ func TestStop_BeforeStartIsNoOp(t *testing.T) {
 // TestRoundTrip_TrapArrivesAtSink fires a real SNMPv2c trap at the
 // listener via gosnmp's SendTrap and verifies it lands in the sink.
 func TestRoundTrip_TrapArrivesAtSink(t *testing.T) {
-	t.Parallel()
 	addr := pickPort(t)
 	sink := &fakeSink{}
 	l, newErr := snmptrap.New(snmptrap.Config{
