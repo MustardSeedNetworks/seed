@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/login-response.schema.json",
+  "$ref": "#/$defs/LoginResponse",
+  "$defs": {
+    "LoginResponse": {
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "expires": {
+          "type": "integer"
+        },
+        "mfa_required": {
+          "type": "boolean"
+        },
+        "mfa_token": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  },
+  "title": "LoginResponse",
+  "description": "LoginResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

@@ -78,6 +78,34 @@ func schemaTargets() []schemaTarget {
 			filename: "wifi-connect.schema.json",
 			title:    "WiFiConnectRequest",
 		},
+		// Phase 2 (ADR-0003, code-first): widening coverage to response DTOs,
+		// starting with the core auth/status responses that pair with the
+		// request DTOs above.
+		{
+			value:    &api.StatusResponse{},
+			filename: "status-response.schema.json",
+			title:    "StatusResponse",
+		},
+		{
+			value:    &api.LoginResponse{},
+			filename: "login-response.schema.json",
+			title:    "LoginResponse",
+		},
+		{
+			value:    &api.CSRFTokenResponse{},
+			filename: "csrf-token-response.schema.json",
+			title:    "CSRFTokenResponse",
+		},
+		{
+			value:    &api.SetupStatusResponse{},
+			filename: "setup-status-response.schema.json",
+			title:    "SetupStatusResponse",
+		},
+		{
+			value:    &api.LicenseStatusResponse{},
+			filename: "license-status-response.schema.json",
+			title:    "LicenseStatusResponse",
+		},
 	}
 }
 

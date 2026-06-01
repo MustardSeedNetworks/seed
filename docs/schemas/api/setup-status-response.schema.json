@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/setup-status-response.schema.json",
+  "$ref": "#/$defs/SetupStatusResponse",
+  "$defs": {
+    "SetupStatusResponse": {
+      "properties": {
+        "needsSetup": {
+          "type": "boolean"
+        },
+        "suggestedPassword": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "setupToken": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "needsSetup",
+        "username"
+      ]
+    }
+  },
+  "title": "SetupStatusResponse",
+  "description": "SetupStatusResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
