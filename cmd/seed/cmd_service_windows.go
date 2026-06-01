@@ -20,9 +20,9 @@ import (
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/krisarmstrong/seed/internal/modules/roots"
 	"github.com/krisarmstrong/seed/internal/netif"
 	"github.com/krisarmstrong/seed/internal/paths"
-	"github.com/krisarmstrong/seed/internal/pipeline"
 	"github.com/krisarmstrong/seed/internal/services"
 	"github.com/krisarmstrong/seed/internal/services/shell"
 )
@@ -247,7 +247,7 @@ func initializeModulesForService(cfg *config.Config, db *database.DB) *api.Modul
 	modules.Sap = services.New(cfg, db)
 	modules.Shell = shell.New(cfg, db)
 	modules.Canopy = canopy.New(cfg, db)
-	modules.Roots = pipeline.New(cfg, db)
+	modules.Roots = roots.New(cfg, db)
 	modules.Harvest = app.NewHarvest(cfg, db)
 
 	return modules

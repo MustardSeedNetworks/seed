@@ -1,6 +1,6 @@
-// Package pipeline provides network path analysis, topology mapping, and IP enrichment.
+// Package roots provides network path analysis, topology mapping, and IP enrichment.
 // Color: Amber #b45309
-package pipeline
+package roots
 
 import (
 	"context"

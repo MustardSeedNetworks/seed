@@ -1,18 +1,18 @@
-package pipeline_test
+package roots_test
 
 import (
 	"context"
 	"net"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/pipeline"
+	"github.com/krisarmstrong/seed/internal/modules/roots"
 )
 
 // TestAnalysisService_Creation validates service creation.
 func TestAnalysisService_Creation(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil, nil)
 	if svc == nil {
 		t.Fatal("NewAnalysisService() returned nil")
 	}
@@ -24,21 +24,21 @@ func TestAnalysisService_ExportAnalyzeHops(t *testing.T) {
 
 	tests := []struct {
 		name              string
-		hops              []pipeline.TracerouteHop
+		hops              []roots.TracerouteHop
 		wantTotalRTT      float64
 		wantLostHops      int
 		wantBottleneckCnt int
 	}{
 		{
 			name:              "empty hops",
-			hops:              []pipeline.TracerouteHop{},
+			hops:              []roots.TracerouteHop{},
 			wantTotalRTT:      0,
 			wantLostHops:      0,
 			wantBottleneckCnt: 0,
 		},
 		{
 			name: "all responding hops no bottleneck",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, RTTMs: 5.0, Lost: false},
 				{Number: 2, RTTMs: 8.0, Lost: false},  // 1.6x ratio < 2x, 3ms < 50ms
 				{Number: 3, RTTMs: 10.0, Lost: false}, // 1.25x ratio < 2x, 2ms < 50ms
@@ -49,7 +49,7 @@ func TestAnalysisService_ExportAnalyzeHops(t *testing.T) {
 		},
 		{
 			name: "all lost hops",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, Lost: true},
 				{Number: 2, Lost: true},
 				{Number: 3, Lost: true},
@@ -60,7 +60,7 @@ func TestAnalysisService_ExportAnalyzeHops(t *testing.T) {
 		},
 		{
 			name: "mixed with bottleneck from absolute increase",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, RTTMs: 5.0, Lost: false},
 				{Number: 2, RTTMs: 60.0, Lost: false}, // 55ms > 50ms threshold
 				{Number: 3, RTTMs: 65.0, Lost: false},
@@ -71,7 +71,7 @@ func TestAnalysisService_ExportAnalyzeHops(t *testing.T) {
 		},
 		{
 			name: "mixed with bottleneck from ratio",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, RTTMs: 10.0, Lost: false},
 				{Number: 2, RTTMs: 25.0, Lost: false}, // 2.5x ratio > 2x threshold
 				{Number: 3, RTTMs: 30.0, Lost: false},
@@ -82,7 +82,7 @@ func TestAnalysisService_ExportAnalyzeHops(t *testing.T) {
 		},
 		{
 			name: "lost hop between responding hops",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, RTTMs: 5.0, Lost: false},
 				{Number: 2, Lost: true},
 				{Number: 3, RTTMs: 8.0, Lost: false}, // 1.6x ratio < 2x, but comparing to hop 1
@@ -93,7 +93,7 @@ func TestAnalysisService_ExportAnalyzeHops(t *testing.T) {
 		},
 		{
 			name: "lost hop with subsequent bottleneck",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, RTTMs: 5.0, Lost: false},
 				{Number: 2, Lost: true},
 				{Number: 3, RTTMs: 20.0, Lost: false}, // 4x ratio > 2x threshold
@@ -104,7 +104,7 @@ func TestAnalysisService_ExportAnalyzeHops(t *testing.T) {
 		},
 		{
 			name: "multiple bottlenecks",
-			hops: []pipeline.TracerouteHop{
+			hops: []roots.TracerouteHop{
 				{Number: 1, RTTMs: 1.0, Lost: false},
 				{Number: 2, RTTMs: 60.0, Lost: false},  // Bottleneck (>50ms increase)
 				{Number: 3, RTTMs: 70.0, Lost: false},  // No bottleneck (10ms increase)
@@ -116,13 +116,13 @@ func TestAnalysisService_ExportAnalyzeHops(t *testing.T) {
 		},
 	}
 
-	svc := pipeline.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil, nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			bottlenecks := make([]pipeline.PathBottleneck, 0)
+			bottlenecks := make([]roots.PathBottleneck, 0)
 			totalRTT, lostHops := svc.ExportAnalyzeHops(tt.hops, &bottlenecks)
 
 			if totalRTT != tt.wantTotalRTT {
@@ -145,7 +145,7 @@ func TestAnalysisService_ExportDetectBottleneck(t *testing.T) {
 	tests := []struct {
 		name        string
 		hopIndex    int
-		hop         pipeline.TracerouteHop
+		hop         roots.TracerouteHop
 		previousRTT float64
 		currentRTT  float64
 		wantNil     bool
@@ -153,7 +153,7 @@ func TestAnalysisService_ExportDetectBottleneck(t *testing.T) {
 		{
 			name:        "first hop never bottleneck",
 			hopIndex:    0,
-			hop:         pipeline.TracerouteHop{Number: 1, RTTMs: 100.0},
+			hop:         roots.TracerouteHop{Number: 1, RTTMs: 100.0},
 			previousRTT: 0,
 			currentRTT:  100.0,
 			wantNil:     true,
@@ -161,7 +161,7 @@ func TestAnalysisService_ExportDetectBottleneck(t *testing.T) {
 		{
 			name:        "zero previous RTT",
 			hopIndex:    1,
-			hop:         pipeline.TracerouteHop{Number: 2, RTTMs: 100.0},
+			hop:         roots.TracerouteHop{Number: 2, RTTMs: 100.0},
 			previousRTT: 0,
 			currentRTT:  100.0,
 			wantNil:     true,
@@ -169,7 +169,7 @@ func TestAnalysisService_ExportDetectBottleneck(t *testing.T) {
 		{
 			name:        "zero current RTT",
 			hopIndex:    1,
-			hop:         pipeline.TracerouteHop{Number: 2, RTTMs: 0},
+			hop:         roots.TracerouteHop{Number: 2, RTTMs: 0},
 			previousRTT: 10.0,
 			currentRTT:  0,
 			wantNil:     true,
@@ -177,7 +177,7 @@ func TestAnalysisService_ExportDetectBottleneck(t *testing.T) {
 		{
 			name:        "negative previous RTT",
 			hopIndex:    1,
-			hop:         pipeline.TracerouteHop{Number: 2, RTTMs: 50.0},
+			hop:         roots.TracerouteHop{Number: 2, RTTMs: 50.0},
 			previousRTT: -1.0,
 			currentRTT:  50.0,
 			wantNil:     true,
@@ -185,7 +185,7 @@ func TestAnalysisService_ExportDetectBottleneck(t *testing.T) {
 		{
 			name:        "negative current RTT",
 			hopIndex:    1,
-			hop:         pipeline.TracerouteHop{Number: 2, RTTMs: -1.0},
+			hop:         roots.TracerouteHop{Number: 2, RTTMs: -1.0},
 			previousRTT: 10.0,
 			currentRTT:  -1.0,
 			wantNil:     true,
@@ -193,7 +193,7 @@ func TestAnalysisService_ExportDetectBottleneck(t *testing.T) {
 		{
 			name:        "exactly 2x ratio not bottleneck",
 			hopIndex:    1,
-			hop:         pipeline.TracerouteHop{Number: 2, RTTMs: 20.0},
+			hop:         roots.TracerouteHop{Number: 2, RTTMs: 20.0},
 			previousRTT: 10.0,
 			currentRTT:  20.0,
 			wantNil:     true, // 2x ratio == threshold, need > 2x
@@ -201,7 +201,7 @@ func TestAnalysisService_ExportDetectBottleneck(t *testing.T) {
 		{
 			name:        "exactly 50ms increase not bottleneck alone",
 			hopIndex:    1,
-			hop:         pipeline.TracerouteHop{Number: 2, RTTMs: 100.0},
+			hop:         roots.TracerouteHop{Number: 2, RTTMs: 100.0},
 			previousRTT: 50.0,
 			currentRTT:  100.0,
 			wantNil:     true, // 50ms == threshold, need > 50ms, and ratio is 2x not > 2x
@@ -209,7 +209,7 @@ func TestAnalysisService_ExportDetectBottleneck(t *testing.T) {
 		{
 			name:        "just above 2x ratio is bottleneck",
 			hopIndex:    1,
-			hop:         pipeline.TracerouteHop{Number: 2, RTTMs: 20.1},
+			hop:         roots.TracerouteHop{Number: 2, RTTMs: 20.1},
 			previousRTT: 10.0,
 			currentRTT:  20.1,
 			wantNil:     false,
@@ -217,7 +217,7 @@ func TestAnalysisService_ExportDetectBottleneck(t *testing.T) {
 		{
 			name:        "just above 50ms is bottleneck",
 			hopIndex:    1,
-			hop:         pipeline.TracerouteHop{Number: 2, RTTMs: 60.1},
+			hop:         roots.TracerouteHop{Number: 2, RTTMs: 60.1},
 			previousRTT: 10.0,
 			currentRTT:  60.1,
 			wantNil:     false,
@@ -225,7 +225,7 @@ func TestAnalysisService_ExportDetectBottleneck(t *testing.T) {
 		{
 			name:        "bottleneck with IP address",
 			hopIndex:    2,
-			hop:         pipeline.TracerouteHop{Number: 3, Address: net.ParseIP("192.168.1.1"), RTTMs: 70.0},
+			hop:         roots.TracerouteHop{Number: 3, Address: net.ParseIP("192.168.1.1"), RTTMs: 70.0},
 			previousRTT: 10.0,
 			currentRTT:  70.0,
 			wantNil:     false,
@@ -233,14 +233,14 @@ func TestAnalysisService_ExportDetectBottleneck(t *testing.T) {
 		{
 			name:        "bottleneck without IP address",
 			hopIndex:    2,
-			hop:         pipeline.TracerouteHop{Number: 3, Address: nil, RTTMs: 70.0},
+			hop:         roots.TracerouteHop{Number: 3, Address: nil, RTTMs: 70.0},
 			previousRTT: 10.0,
 			currentRTT:  70.0,
 			wantNil:     false,
 		},
 	}
 
-	svc := pipeline.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil, nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -282,87 +282,87 @@ func TestAnalysisService_ExportCalculateScore(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		analysis *pipeline.PathAnalysis
+		analysis *roots.PathAnalysis
 		want     int
 	}{
 		{
 			name: "perfect score",
-			analysis: &pipeline.PathAnalysis{
+			analysis: &roots.PathAnalysis{
 				PacketLoss:  0,
 				AverageRTT:  10.0,
-				Bottlenecks: []pipeline.PathBottleneck{},
+				Bottlenecks: []roots.PathBottleneck{},
 			},
 			want: 100,
 		},
 		{
 			name: "10% packet loss",
-			analysis: &pipeline.PathAnalysis{
+			analysis: &roots.PathAnalysis{
 				PacketLoss:  10.0,
 				AverageRTT:  10.0,
-				Bottlenecks: []pipeline.PathBottleneck{},
+				Bottlenecks: []roots.PathBottleneck{},
 			},
 			want: 90,
 		},
 		{
 			name: "50% packet loss",
-			analysis: &pipeline.PathAnalysis{
+			analysis: &roots.PathAnalysis{
 				PacketLoss:  50.0,
 				AverageRTT:  10.0,
-				Bottlenecks: []pipeline.PathBottleneck{},
+				Bottlenecks: []roots.PathBottleneck{},
 			},
 			want: 50,
 		},
 		{
 			name: "100% packet loss",
-			analysis: &pipeline.PathAnalysis{
+			analysis: &roots.PathAnalysis{
 				PacketLoss:  100.0,
 				AverageRTT:  0,
-				Bottlenecks: []pipeline.PathBottleneck{},
+				Bottlenecks: []roots.PathBottleneck{},
 			},
 			want: 0,
 		},
 		{
 			name: "high RTT exactly at threshold",
-			analysis: &pipeline.PathAnalysis{
+			analysis: &roots.PathAnalysis{
 				PacketLoss:  0,
 				AverageRTT:  100.0, // At threshold
-				Bottlenecks: []pipeline.PathBottleneck{},
+				Bottlenecks: []roots.PathBottleneck{},
 			},
 			want: 100, // No penalty at exactly 100ms
 		},
 		{
 			name: "high RTT above threshold",
-			analysis: &pipeline.PathAnalysis{
+			analysis: &roots.PathAnalysis{
 				PacketLoss:  0,
 				AverageRTT:  150.0, // 50ms above threshold
-				Bottlenecks: []pipeline.PathBottleneck{},
+				Bottlenecks: []roots.PathBottleneck{},
 			},
 			want: 95, // 100 - (50/10) = 95
 		},
 		{
 			name: "very high RTT",
-			analysis: &pipeline.PathAnalysis{
+			analysis: &roots.PathAnalysis{
 				PacketLoss:  0,
 				AverageRTT:  200.0, // 100ms above threshold
-				Bottlenecks: []pipeline.PathBottleneck{},
+				Bottlenecks: []roots.PathBottleneck{},
 			},
 			want: 90, // 100 - (100/10) = 90
 		},
 		{
 			name: "one bottleneck",
-			analysis: &pipeline.PathAnalysis{
+			analysis: &roots.PathAnalysis{
 				PacketLoss:  0,
 				AverageRTT:  10.0,
-				Bottlenecks: []pipeline.PathBottleneck{{HopNumber: 1}},
+				Bottlenecks: []roots.PathBottleneck{{HopNumber: 1}},
 			},
 			want: 95, // 100 - 5 = 95
 		},
 		{
 			name: "three bottlenecks",
-			analysis: &pipeline.PathAnalysis{
+			analysis: &roots.PathAnalysis{
 				PacketLoss: 0,
 				AverageRTT: 10.0,
-				Bottlenecks: []pipeline.PathBottleneck{
+				Bottlenecks: []roots.PathBottleneck{
 					{HopNumber: 1},
 					{HopNumber: 2},
 					{HopNumber: 3},
@@ -372,19 +372,19 @@ func TestAnalysisService_ExportCalculateScore(t *testing.T) {
 		},
 		{
 			name: "combined penalties",
-			analysis: &pipeline.PathAnalysis{
-				PacketLoss:  20.0,                                      // -20
-				AverageRTT:  150.0,                                     // -5
-				Bottlenecks: []pipeline.PathBottleneck{{HopNumber: 1}}, // -5
+			analysis: &roots.PathAnalysis{
+				PacketLoss:  20.0,                                   // -20
+				AverageRTT:  150.0,                                  // -5
+				Bottlenecks: []roots.PathBottleneck{{HopNumber: 1}}, // -5
 			},
 			want: 70, // 100 - 20 - 5 - 5 = 70
 		},
 		{
 			name: "score clamped at 0",
-			analysis: &pipeline.PathAnalysis{
+			analysis: &roots.PathAnalysis{
 				PacketLoss: 80.0,
 				AverageRTT: 500.0, // 400ms above threshold = -40
-				Bottlenecks: []pipeline.PathBottleneck{
+				Bottlenecks: []roots.PathBottleneck{
 					{HopNumber: 1},
 					{HopNumber: 2},
 					{HopNumber: 3},
@@ -394,16 +394,16 @@ func TestAnalysisService_ExportCalculateScore(t *testing.T) {
 		},
 		{
 			name: "score clamped at 100",
-			analysis: &pipeline.PathAnalysis{
+			analysis: &roots.PathAnalysis{
 				PacketLoss:  0,
 				AverageRTT:  1.0,
-				Bottlenecks: []pipeline.PathBottleneck{},
+				Bottlenecks: []roots.PathBottleneck{},
 			},
 			want: 100,
 		},
 	}
 
-	svc := pipeline.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil, nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -449,7 +449,7 @@ func TestScoreToDescription_AllBoundaries(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			desc := pipeline.ExportScoreToDescription(tt.score)
+			desc := roots.ExportScoreToDescription(tt.score)
 			if desc == "" {
 				t.Error("description should not be empty")
 			}
@@ -472,9 +472,9 @@ func TestAnalysisService_AnalyzePath_Comprehensive(t *testing.T) {
 		},
 		{
 			name: "empty hops",
-			result: &pipeline.TracerouteResult{
+			result: &roots.TracerouteResult{
 				Target: "test",
-				Hops:   []pipeline.TracerouteHop{},
+				Hops:   []roots.TracerouteHop{},
 			},
 			wantErr:       false,
 			wantScoreMin:  100,
@@ -487,9 +487,9 @@ func TestAnalysisService_AnalyzePath_Comprehensive(t *testing.T) {
 		},
 		{
 			name: "single responding hop",
-			result: &pipeline.TracerouteResult{
+			result: &roots.TracerouteResult{
 				Target: "test",
-				Hops: []pipeline.TracerouteHop{
+				Hops: []roots.TracerouteHop{
 					{Number: 1, RTTMs: 5.0, Lost: false},
 				},
 			},
@@ -504,9 +504,9 @@ func TestAnalysisService_AnalyzePath_Comprehensive(t *testing.T) {
 		},
 		{
 			name: "single lost hop",
-			result: &pipeline.TracerouteResult{
+			result: &roots.TracerouteResult{
 				Target: "test",
-				Hops: []pipeline.TracerouteHop{
+				Hops: []roots.TracerouteHop{
 					{Number: 1, Lost: true},
 				},
 			},
@@ -519,9 +519,9 @@ func TestAnalysisService_AnalyzePath_Comprehensive(t *testing.T) {
 		},
 		{
 			name: "path with bottleneck and loss",
-			result: &pipeline.TracerouteResult{
+			result: &roots.TracerouteResult{
 				Target: "test",
-				Hops: []pipeline.TracerouteHop{
+				Hops: []roots.TracerouteHop{
 					{Number: 1, Address: net.ParseIP("10.0.0.1"), RTTMs: 5.0, Lost: false},
 					{Number: 2, Lost: true},
 					{Number: 3, Address: net.ParseIP("10.0.0.2"), RTTMs: 100.0, Lost: false}, // Bottleneck
@@ -538,7 +538,7 @@ func TestAnalysisService_AnalyzePath_Comprehensive(t *testing.T) {
 		},
 	}
 
-	svc := pipeline.NewAnalysisService(nil, nil)
+	svc := roots.NewAnalysisService(nil, nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -550,7 +550,7 @@ func TestAnalysisService_AnalyzePath_Comprehensive(t *testing.T) {
 
 type analyzePathCase struct {
 	name           string
-	result         *pipeline.TracerouteResult
+	result         *roots.TracerouteResult
 	wantErr        bool
 	wantScoreMin   int
 	wantScoreMax   int
@@ -562,7 +562,7 @@ type analyzePathCase struct {
 	wantBottleneck int
 }
 
-func runAnalyzePathCase(t *testing.T, svc *pipeline.AnalysisService, tt analyzePathCase) {
+func runAnalyzePathCase(t *testing.T, svc *roots.AnalysisService, tt analyzePathCase) {
 	t.Helper()
 
 	analysis, err := svc.AnalyzePath(context.Background(), tt.result)
@@ -582,7 +582,7 @@ func runAnalyzePathCase(t *testing.T, svc *pipeline.AnalysisService, tt analyzeP
 	assertAnalysisValues(t, analysis, tt)
 }
 
-func assertAnalysisValues(t *testing.T, analysis *pipeline.PathAnalysis, tt analyzePathCase) {
+func assertAnalysisValues(t *testing.T, analysis *roots.PathAnalysis, tt analyzePathCase) {
 	t.Helper()
 
 	if analysis.Hops != tt.wantHops {
@@ -602,7 +602,7 @@ func assertAnalysisValues(t *testing.T, analysis *pipeline.PathAnalysis, tt anal
 	}
 }
 
-func assertPacketLossRange(t *testing.T, analysis *pipeline.PathAnalysis, tt analyzePathCase) {
+func assertPacketLossRange(t *testing.T, analysis *roots.PathAnalysis, tt analyzePathCase) {
 	t.Helper()
 
 	if tt.wantLossMax <= 0 {
@@ -615,7 +615,7 @@ func assertPacketLossRange(t *testing.T, analysis *pipeline.PathAnalysis, tt ana
 	}
 }
 
-func assertAverageRTTRange(t *testing.T, analysis *pipeline.PathAnalysis, tt analyzePathCase) {
+func assertAverageRTTRange(t *testing.T, analysis *roots.PathAnalysis, tt analyzePathCase) {
 	t.Helper()
 
 	if tt.wantAvgRTTMax <= 0 {
@@ -628,7 +628,7 @@ func assertAverageRTTRange(t *testing.T, analysis *pipeline.PathAnalysis, tt ana
 	}
 }
 
-func assertBottlenecks(t *testing.T, analysis *pipeline.PathAnalysis, tt analyzePathCase) {
+func assertBottlenecks(t *testing.T, analysis *roots.PathAnalysis, tt analyzePathCase) {
 	t.Helper()
 
 	if tt.wantBottleneck <= 0 {

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	// Verify the package can be imported.
-	_ "github.com/krisarmstrong/seed/internal/pipeline/topology"
+	_ "github.com/krisarmstrong/seed/internal/modules/roots/topology"
 )
 
 // TestPackageExists verifies the topology package exists and can be imported.

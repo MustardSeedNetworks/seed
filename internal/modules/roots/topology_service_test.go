@@ -1,4 +1,4 @@
-package pipeline_test
+package roots_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/pipeline"
+	"github.com/krisarmstrong/seed/internal/modules/roots"
 )
 
 // TestTopologyService_Creation validates service creation.
@@ -28,7 +28,7 @@ func TestTopologyService_Creation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			svc := pipeline.NewTopologyService(nil, nil)
+			svc := roots.NewTopologyService(nil, nil)
 			if (svc == nil) != tt.wantNil {
 				t.Errorf("NewTopologyService() nil = %v, want nil = %v", svc == nil, tt.wantNil)
 			}
@@ -63,7 +63,7 @@ func TestTopologyService_Start(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			svc := pipeline.NewTopologyService(nil, nil)
+			svc := roots.NewTopologyService(nil, nil)
 			ctx, cancel := context.WithTimeout(context.Background(), tt.ctxTimeout)
 			defer cancel()
 
@@ -101,7 +101,7 @@ func TestTopologyService_Stop(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			svc := pipeline.NewTopologyService(nil, nil)
+			svc := roots.NewTopologyService(nil, nil)
 
 			if tt.startFirst {
 				ctx := context.Background()
@@ -118,7 +118,7 @@ func TestTopologyService_Stop(t *testing.T) {
 func TestTopologyService_StopMultiple(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewTopologyService(nil, nil)
+	svc := roots.NewTopologyService(nil, nil)
 	ctx := context.Background()
 	_ = svc.Start(ctx)
 
@@ -146,7 +146,7 @@ func TestTopologyService_GetTopology_NotImplemented(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			svc := pipeline.NewTopologyService(nil, nil)
+			svc := roots.NewTopologyService(nil, nil)
 			ctx := context.Background()
 
 			result, err := svc.GetTopology(ctx)
@@ -156,8 +156,8 @@ func TestTopologyService_GetTopology_NotImplemented(t *testing.T) {
 			if result != nil {
 				t.Errorf("GetTopology() should return nil result, got %+v", result)
 			}
-			if !errors.Is(err, pipeline.ErrNotImplemented) {
-				t.Errorf("error = %v, want %v", err, pipeline.ErrNotImplemented)
+			if !errors.Is(err, roots.ErrNotImplemented) {
+				t.Errorf("error = %v, want %v", err, roots.ErrNotImplemented)
 			}
 		})
 	}
@@ -167,7 +167,7 @@ func TestTopologyService_GetTopology_NotImplemented(t *testing.T) {
 func TestTopologyService_ConcurrentOperations(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewTopologyService(nil, nil)
+	svc := roots.NewTopologyService(nil, nil)
 	ctx := context.Background()
 
 	const goroutines = 10
@@ -198,17 +198,17 @@ func TestTopologyNodeType_Values(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		nodeType pipeline.TopologyNodeType
+		nodeType roots.TopologyNodeType
 		want     string
 	}{
-		{name: "router", nodeType: pipeline.NodeTypeRouter, want: "router"},
-		{name: "switch", nodeType: pipeline.NodeTypeSwitch, want: "switch"},
-		{name: "host", nodeType: pipeline.NodeTypeHost, want: "host"},
-		{name: "gateway", nodeType: pipeline.NodeTypeGateway, want: "gateway"},
-		{name: "firewall", nodeType: pipeline.NodeTypeFirewall, want: "firewall"},
-		{name: "access_point", nodeType: pipeline.NodeTypeAP, want: "access_point"},
-		{name: "cloud", nodeType: pipeline.NodeTypeCloud, want: "cloud"},
-		{name: "unknown", nodeType: pipeline.NodeTypeUnknown, want: "unknown"},
+		{name: "router", nodeType: roots.NodeTypeRouter, want: "router"},
+		{name: "switch", nodeType: roots.NodeTypeSwitch, want: "switch"},
+		{name: "host", nodeType: roots.NodeTypeHost, want: "host"},
+		{name: "gateway", nodeType: roots.NodeTypeGateway, want: "gateway"},
+		{name: "firewall", nodeType: roots.NodeTypeFirewall, want: "firewall"},
+		{name: "access_point", nodeType: roots.NodeTypeAP, want: "access_point"},
+		{name: "cloud", nodeType: roots.NodeTypeCloud, want: "cloud"},
+		{name: "unknown", nodeType: roots.NodeTypeUnknown, want: "unknown"},
 	}
 
 	for _, tt := range tests {
@@ -226,18 +226,18 @@ func TestTopologyNodeType_Values(t *testing.T) {
 func TestTopologyNodeType_Uniqueness(t *testing.T) {
 	t.Parallel()
 
-	nodeTypes := []pipeline.TopologyNodeType{
-		pipeline.NodeTypeRouter,
-		pipeline.NodeTypeSwitch,
-		pipeline.NodeTypeHost,
-		pipeline.NodeTypeGateway,
-		pipeline.NodeTypeFirewall,
-		pipeline.NodeTypeAP,
-		pipeline.NodeTypeCloud,
-		pipeline.NodeTypeUnknown,
+	nodeTypes := []roots.TopologyNodeType{
+		roots.NodeTypeRouter,
+		roots.NodeTypeSwitch,
+		roots.NodeTypeHost,
+		roots.NodeTypeGateway,
+		roots.NodeTypeFirewall,
+		roots.NodeTypeAP,
+		roots.NodeTypeCloud,
+		roots.NodeTypeUnknown,
 	}
 
-	seen := make(map[pipeline.TopologyNodeType]bool)
+	seen := make(map[roots.TopologyNodeType]bool)
 	for _, nt := range nodeTypes {
 		if seen[nt] {
 			t.Errorf("duplicate TopologyNodeType: %s", nt)
@@ -252,15 +252,15 @@ func TestTopologyLinkType_Values(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		linkType pipeline.TopologyLinkType
+		linkType roots.TopologyLinkType
 		want     string
 	}{
-		{name: "ethernet", linkType: pipeline.LinkTypeEthernet, want: "ethernet"},
-		{name: "wifi", linkType: pipeline.LinkTypeWiFi, want: "wifi"},
-		{name: "fiber", linkType: pipeline.LinkTypeFiber, want: "fiber"},
-		{name: "wan", linkType: pipeline.LinkTypeWAN, want: "wan"},
-		{name: "vpn", linkType: pipeline.LinkTypeVPN, want: "vpn"},
-		{name: "unknown", linkType: pipeline.LinkTypeUnknown, want: "unknown"},
+		{name: "ethernet", linkType: roots.LinkTypeEthernet, want: "ethernet"},
+		{name: "wifi", linkType: roots.LinkTypeWiFi, want: "wifi"},
+		{name: "fiber", linkType: roots.LinkTypeFiber, want: "fiber"},
+		{name: "wan", linkType: roots.LinkTypeWAN, want: "wan"},
+		{name: "vpn", linkType: roots.LinkTypeVPN, want: "vpn"},
+		{name: "unknown", linkType: roots.LinkTypeUnknown, want: "unknown"},
 	}
 
 	for _, tt := range tests {
@@ -278,16 +278,16 @@ func TestTopologyLinkType_Values(t *testing.T) {
 func TestTopologyLinkType_Uniqueness(t *testing.T) {
 	t.Parallel()
 
-	linkTypes := []pipeline.TopologyLinkType{
-		pipeline.LinkTypeEthernet,
-		pipeline.LinkTypeWiFi,
-		pipeline.LinkTypeFiber,
-		pipeline.LinkTypeWAN,
-		pipeline.LinkTypeVPN,
-		pipeline.LinkTypeUnknown,
+	linkTypes := []roots.TopologyLinkType{
+		roots.LinkTypeEthernet,
+		roots.LinkTypeWiFi,
+		roots.LinkTypeFiber,
+		roots.LinkTypeWAN,
+		roots.LinkTypeVPN,
+		roots.LinkTypeUnknown,
 	}
 
-	seen := make(map[pipeline.TopologyLinkType]bool)
+	seen := make(map[roots.TopologyLinkType]bool)
 	for _, lt := range linkTypes {
 		if seen[lt] {
 			t.Errorf("duplicate TopologyLinkType: %s", lt)
@@ -301,13 +301,13 @@ func TestTopology_Struct(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now()
-	topology := pipeline.Topology{
-		Nodes: []pipeline.TopologyNode{
-			{ID: "node-1", Type: pipeline.NodeTypeRouter},
-			{ID: "node-2", Type: pipeline.NodeTypeSwitch},
+	topology := roots.Topology{
+		Nodes: []roots.TopologyNode{
+			{ID: "node-1", Type: roots.NodeTypeRouter},
+			{ID: "node-2", Type: roots.NodeTypeSwitch},
 		},
-		Links: []pipeline.TopologyLink{
-			{ID: "link-1", SourceID: "node-1", TargetID: "node-2", Type: pipeline.LinkTypeEthernet},
+		Links: []roots.TopologyLink{
+			{ID: "link-1", SourceID: "node-1", TargetID: "node-2", Type: roots.LinkTypeEthernet},
 		},
 		UpdatedAt: now,
 	}
@@ -327,9 +327,9 @@ func TestTopology_Struct(t *testing.T) {
 func TestTopology_EmptySlices(t *testing.T) {
 	t.Parallel()
 
-	topology := pipeline.Topology{
-		Nodes: []pipeline.TopologyNode{},
-		Links: []pipeline.TopologyLink{},
+	topology := roots.Topology{
+		Nodes: []roots.TopologyNode{},
+		Links: []roots.TopologyLink{},
 	}
 
 	if topology.Nodes == nil {
@@ -350,7 +350,7 @@ func TestTopology_EmptySlices(t *testing.T) {
 func TestTopology_NilSlices(t *testing.T) {
 	t.Parallel()
 
-	var topology pipeline.Topology
+	var topology roots.Topology
 
 	if topology.Nodes != nil {
 		t.Error("zero Nodes should be nil")
@@ -365,9 +365,9 @@ func TestTopologyNode_Struct(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now()
-	node := pipeline.TopologyNode{
+	node := roots.TopologyNode{
 		ID:        "node-1",
-		Type:      pipeline.NodeTypeRouter,
+		Type:      roots.NodeTypeRouter,
 		Label:     "Gateway Router",
 		IP:        "192.168.1.1",
 		MAC:       "00:11:22:33:44:55",
@@ -381,8 +381,8 @@ func TestTopologyNode_Struct(t *testing.T) {
 	if node.ID != "node-1" {
 		t.Errorf("ID = %q, want %q", node.ID, "node-1")
 	}
-	if node.Type != pipeline.NodeTypeRouter {
-		t.Errorf("Type = %q, want %q", node.Type, pipeline.NodeTypeRouter)
+	if node.Type != roots.NodeTypeRouter {
+		t.Errorf("Type = %q, want %q", node.Type, roots.NodeTypeRouter)
 	}
 	if node.Label != "Gateway Router" {
 		t.Errorf("Label = %q, want %q", node.Label, "Gateway Router")
@@ -415,11 +415,11 @@ func TestTopologyLink_Struct(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now()
-	link := pipeline.TopologyLink{
+	link := roots.TopologyLink{
 		ID:        "link-1",
 		SourceID:  "node-1",
 		TargetID:  "node-2",
-		Type:      pipeline.LinkTypeEthernet,
+		Type:      roots.LinkTypeEthernet,
 		Label:     "Primary Link",
 		Bandwidth: "1Gbps",
 		Latency:   0.5,
@@ -436,8 +436,8 @@ func TestTopologyLink_Struct(t *testing.T) {
 	if link.TargetID != "node-2" {
 		t.Errorf("TargetID = %q, want %q", link.TargetID, "node-2")
 	}
-	if link.Type != pipeline.LinkTypeEthernet {
-		t.Errorf("Type = %q, want %q", link.Type, pipeline.LinkTypeEthernet)
+	if link.Type != roots.LinkTypeEthernet {
+		t.Errorf("Type = %q, want %q", link.Type, roots.LinkTypeEthernet)
 	}
 	if link.Label != "Primary Link" {
 		t.Errorf("Label = %q, want %q", link.Label, "Primary Link")

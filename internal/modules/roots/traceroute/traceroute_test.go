@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/pipeline/traceroute"
+	"github.com/krisarmstrong/seed/internal/modules/roots/traceroute"
 )
 
 func TestNewService(t *testing.T) {

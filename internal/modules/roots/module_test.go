@@ -1,6 +1,6 @@
 // Package pipeline_test provides tests for the Roots module.
 // Test suite validates module initialization, lifecycle, and service accessors.
-package pipeline_test
+package roots_test
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/pipeline"
+	"github.com/krisarmstrong/seed/internal/modules/roots"
 )
 
 // TestNew validates module creation with various configurations.
@@ -40,7 +40,7 @@ func TestNew(t *testing.T) {
 			t.Parallel()
 
 			// Use nil values directly since config/db may require setup
-			m := pipeline.New(nil, nil)
+			m := roots.New(nil, nil)
 			if (m != nil) != tt.wantModule {
 				t.Errorf("New() returned module = %v, want module = %v", m != nil, tt.wantModule)
 			}
@@ -52,7 +52,7 @@ func TestNew(t *testing.T) {
 func TestModule_Services(t *testing.T) {
 	t.Parallel()
 
-	m := pipeline.New(nil, nil)
+	m := roots.New(nil, nil)
 	if m == nil {
 		t.Fatal("New() returned nil module")
 	}
@@ -103,7 +103,7 @@ func TestModule_Services(t *testing.T) {
 func TestModule_ServicesConcurrent(t *testing.T) {
 	t.Parallel()
 
-	m := pipeline.New(nil, nil)
+	m := roots.New(nil, nil)
 	if m == nil {
 		t.Fatal("New() returned nil module")
 	}
@@ -172,7 +172,7 @@ type moduleLifecycleCase struct {
 func runModuleLifecycleCase(t *testing.T, tt moduleLifecycleCase) {
 	t.Helper()
 
-	m := pipeline.New(nil, nil)
+	m := roots.New(nil, nil)
 	if m == nil {
 		t.Fatal("New() returned nil module")
 	}
@@ -193,7 +193,7 @@ func runModuleLifecycleCase(t *testing.T, tt moduleLifecycleCase) {
 	}
 }
 
-func assertStopResult(t *testing.T, m *pipeline.Module, wantStopErr bool) {
+func assertStopResult(t *testing.T, m *roots.Module, wantStopErr bool) {
 	t.Helper()
 
 	// Stop should not panic even if Start wasn't called.
@@ -206,7 +206,7 @@ func assertStopResult(t *testing.T, m *pipeline.Module, wantStopErr bool) {
 func TestModule_StartStop_Idempotent(t *testing.T) {
 	t.Parallel()
 
-	m := pipeline.New(nil, nil)
+	m := roots.New(nil, nil)
 	if m == nil {
 		t.Fatal("New() returned nil module")
 	}
@@ -232,7 +232,7 @@ func TestModule_StartStop_Idempotent(t *testing.T) {
 func TestModule_StartWithCancelledContext(t *testing.T) {
 	t.Parallel()
 
-	m := pipeline.New(nil, nil)
+	m := roots.New(nil, nil)
 	if m == nil {
 		t.Fatal("New() returned nil module")
 	}
@@ -254,7 +254,7 @@ func TestModule_StartWithCancelledContext(t *testing.T) {
 func TestModule_ConcurrentStartStop(t *testing.T) {
 	t.Parallel()
 
-	m := pipeline.New(nil, nil)
+	m := roots.New(nil, nil)
 	if m == nil {
 		t.Fatal("New() returned nil module")
 	}

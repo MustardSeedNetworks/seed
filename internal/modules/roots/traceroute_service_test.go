@@ -1,4 +1,4 @@
-package pipeline_test
+package roots_test
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/pipeline"
+	"github.com/krisarmstrong/seed/internal/modules/roots"
 )
 
 // TestTracerouteService_Creation validates service creation.
@@ -15,19 +15,19 @@ func TestTracerouteService_Creation(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		createFunc func() *pipeline.TracerouteService
+		createFunc func() *roots.TracerouteService
 		wantNil    bool
 	}{
 		{
 			name: "standard creation with nil config",
-			createFunc: func() *pipeline.TracerouteService {
-				return pipeline.NewTracerouteService(nil)
+			createFunc: func() *roots.TracerouteService {
+				return roots.NewTracerouteService(nil)
 			},
 			wantNil: false,
 		},
 		{
 			name:       "nil tracer creation for error testing",
-			createFunc: pipeline.NewTracerouteServiceNilTracer,
+			createFunc: roots.NewTracerouteServiceNilTracer,
 			wantNil:    false,
 		},
 	}
@@ -50,19 +50,19 @@ func TestTracerouteService_Tracer(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		createFunc   func() *pipeline.TracerouteService
+		createFunc   func() *roots.TracerouteService
 		wantNilTrace bool
 	}{
 		{
 			name: "standard service has tracer",
-			createFunc: func() *pipeline.TracerouteService {
-				return pipeline.NewTracerouteService(nil)
+			createFunc: func() *roots.TracerouteService {
+				return roots.NewTracerouteService(nil)
 			},
 			wantNilTrace: false,
 		},
 		{
 			name:         "nil tracer service",
-			createFunc:   pipeline.NewTracerouteServiceNilTracer,
+			createFunc:   roots.NewTracerouteServiceNilTracer,
 			wantNilTrace: true,
 		},
 	}
@@ -84,7 +84,7 @@ func TestTracerouteService_Tracer(t *testing.T) {
 func TestTracerouteService_Trace_NilTracer(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewTracerouteServiceNilTracer()
+	svc := roots.NewTracerouteServiceNilTracer()
 	ctx := context.Background()
 
 	result, err := svc.Trace(ctx, "8.8.8.8", nil)
@@ -94,8 +94,8 @@ func TestTracerouteService_Trace_NilTracer(t *testing.T) {
 	if result != nil {
 		t.Errorf("Trace() with nil tracer should return nil result, got %+v", result)
 	}
-	if !errors.Is(err, pipeline.ErrNotInitialized) {
-		t.Errorf("error = %v, want %v", err, pipeline.ErrNotInitialized)
+	if !errors.Is(err, roots.ErrNotInitialized) {
+		t.Errorf("error = %v, want %v", err, roots.ErrNotInitialized)
 	}
 }
 
@@ -113,7 +113,7 @@ func TestTracerouteService_Trace_WithOptions(t *testing.T) {
 		{
 			name:   "custom timeout",
 			target: "127.0.0.1",
-			opts: &pipeline.TracerouteOptions{
+			opts: &roots.TracerouteOptions{
 				Timeout: 500 * time.Millisecond,
 			},
 			wantErr: false,
@@ -121,7 +121,7 @@ func TestTracerouteService_Trace_WithOptions(t *testing.T) {
 		{
 			name:   "custom max hops",
 			target: "127.0.0.1",
-			opts: &pipeline.TracerouteOptions{
+			opts: &roots.TracerouteOptions{
 				MaxHops: 5,
 			},
 			wantErr: false,
@@ -129,7 +129,7 @@ func TestTracerouteService_Trace_WithOptions(t *testing.T) {
 		{
 			name:   "UDP mode",
 			target: "127.0.0.1",
-			opts: &pipeline.TracerouteOptions{
+			opts: &roots.TracerouteOptions{
 				UseUDP: true,
 			},
 			wantErr: false,
@@ -137,7 +137,7 @@ func TestTracerouteService_Trace_WithOptions(t *testing.T) {
 		{
 			name:   "don't resolve hostnames",
 			target: "127.0.0.1",
-			opts: &pipeline.TracerouteOptions{
+			opts: &roots.TracerouteOptions{
 				DontResolve: true,
 			},
 			wantErr: false,
@@ -145,7 +145,7 @@ func TestTracerouteService_Trace_WithOptions(t *testing.T) {
 		{
 			name:   "resolve hostnames enabled",
 			target: "127.0.0.1",
-			opts: &pipeline.TracerouteOptions{
+			opts: &roots.TracerouteOptions{
 				DontResolve: false,
 			},
 			wantErr: false,
@@ -153,7 +153,7 @@ func TestTracerouteService_Trace_WithOptions(t *testing.T) {
 		{
 			name:   "combined options",
 			target: "127.0.0.1",
-			opts: &pipeline.TracerouteOptions{
+			opts: &roots.TracerouteOptions{
 				MaxHops:     10,
 				Timeout:     1 * time.Second,
 				UseUDP:      false,
@@ -164,7 +164,7 @@ func TestTracerouteService_Trace_WithOptions(t *testing.T) {
 		{
 			name:   "zero timeout uses default",
 			target: "127.0.0.1",
-			opts: &pipeline.TracerouteOptions{
+			opts: &roots.TracerouteOptions{
 				Timeout: 0,
 			},
 			wantErr: false,
@@ -172,14 +172,14 @@ func TestTracerouteService_Trace_WithOptions(t *testing.T) {
 		{
 			name:   "zero max hops uses default",
 			target: "127.0.0.1",
-			opts: &pipeline.TracerouteOptions{
+			opts: &roots.TracerouteOptions{
 				MaxHops: 0,
 			},
 			wantErr: false,
 		},
 	}
 
-	svc := pipeline.NewTracerouteService(nil)
+	svc := roots.NewTracerouteService(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -192,11 +192,11 @@ func TestTracerouteService_Trace_WithOptions(t *testing.T) {
 type tracerouteCase struct {
 	name    string
 	target  string
-	opts    *pipeline.TracerouteOptions
+	opts    *roots.TracerouteOptions
 	wantErr bool
 }
 
-func runTracerouteCase(t *testing.T, svc *pipeline.TracerouteService, tt tracerouteCase) {
+func runTracerouteCase(t *testing.T, svc *roots.TracerouteService, tt tracerouteCase) {
 	t.Helper()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -215,7 +215,7 @@ func runTracerouteCase(t *testing.T, svc *pipeline.TracerouteService, tt tracero
 	assertTracerouteResult(t, result, tt.target)
 }
 
-func assertTracerouteResult(t *testing.T, result *pipeline.TracerouteResult, target string) {
+func assertTracerouteResult(t *testing.T, result *roots.TracerouteResult, target string) {
 	t.Helper()
 
 	if result == nil {
@@ -240,7 +240,7 @@ func assertTracerouteResult(t *testing.T, result *pipeline.TracerouteResult, tar
 func TestTracerouteService_Trace_ResultFields(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewTracerouteService(nil)
+	svc := roots.NewTracerouteService(nil)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -268,7 +268,7 @@ func TestTracerouteService_Trace_ResultFields(t *testing.T) {
 func TestTracerouteService_Trace_ContextCancellation(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewTracerouteService(nil)
+	svc := roots.NewTracerouteService(nil)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
 
@@ -284,7 +284,7 @@ func TestTracerouteService_Trace_ContextCancellation(t *testing.T) {
 func TestTracerouteService_Trace_ContextTimeout(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewTracerouteService(nil)
+	svc := roots.NewTracerouteService(nil)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	defer cancel()
 
@@ -303,12 +303,12 @@ func TestTracerouteService_Trace_ContextTimeout(t *testing.T) {
 func TestTracerouteService_Trace_HopProcessing(t *testing.T) {
 	t.Parallel()
 
-	svc := pipeline.NewTracerouteService(nil)
+	svc := roots.NewTracerouteService(nil)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	// Trace to localhost should complete quickly
-	result, err := svc.Trace(ctx, "127.0.0.1", &pipeline.TracerouteOptions{
+	result, err := svc.Trace(ctx, "127.0.0.1", &roots.TracerouteOptions{
 		MaxHops: 5,
 	})
 	if err != nil {
@@ -332,56 +332,56 @@ func TestTracerouteOptions_DefaultValues(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		opts     pipeline.TracerouteOptions
-		checkFn  func(pipeline.TracerouteOptions) bool
+		opts     roots.TracerouteOptions
+		checkFn  func(roots.TracerouteOptions) bool
 		checkMsg string
 	}{
 		{
 			name:     "empty options has zero MaxHops",
-			opts:     pipeline.TracerouteOptions{},
-			checkFn:  func(o pipeline.TracerouteOptions) bool { return o.MaxHops == 0 },
+			opts:     roots.TracerouteOptions{},
+			checkFn:  func(o roots.TracerouteOptions) bool { return o.MaxHops == 0 },
 			checkMsg: "empty MaxHops should be 0",
 		},
 		{
 			name:     "empty options has zero Timeout",
-			opts:     pipeline.TracerouteOptions{},
-			checkFn:  func(o pipeline.TracerouteOptions) bool { return o.Timeout == 0 },
+			opts:     roots.TracerouteOptions{},
+			checkFn:  func(o roots.TracerouteOptions) bool { return o.Timeout == 0 },
 			checkMsg: "empty Timeout should be 0",
 		},
 		{
 			name:     "empty options has false UseUDP",
-			opts:     pipeline.TracerouteOptions{},
-			checkFn:  func(o pipeline.TracerouteOptions) bool { return !o.UseUDP },
+			opts:     roots.TracerouteOptions{},
+			checkFn:  func(o roots.TracerouteOptions) bool { return !o.UseUDP },
 			checkMsg: "empty UseUDP should be false",
 		},
 		{
 			name:     "empty options has false DontResolve",
-			opts:     pipeline.TracerouteOptions{},
-			checkFn:  func(o pipeline.TracerouteOptions) bool { return !o.DontResolve },
+			opts:     roots.TracerouteOptions{},
+			checkFn:  func(o roots.TracerouteOptions) bool { return !o.DontResolve },
 			checkMsg: "empty DontResolve should be false",
 		},
 		{
 			name:     "empty options has false EnrichHops",
-			opts:     pipeline.TracerouteOptions{},
-			checkFn:  func(o pipeline.TracerouteOptions) bool { return !o.EnrichHops },
+			opts:     roots.TracerouteOptions{},
+			checkFn:  func(o roots.TracerouteOptions) bool { return !o.EnrichHops },
 			checkMsg: "empty EnrichHops should be false",
 		},
 		{
 			name:     "empty options has zero Probes",
-			opts:     pipeline.TracerouteOptions{},
-			checkFn:  func(o pipeline.TracerouteOptions) bool { return o.Probes == 0 },
+			opts:     roots.TracerouteOptions{},
+			checkFn:  func(o roots.TracerouteOptions) bool { return o.Probes == 0 },
 			checkMsg: "empty Probes should be 0",
 		},
 		{
 			name:     "empty options has zero PacketSize",
-			opts:     pipeline.TracerouteOptions{},
-			checkFn:  func(o pipeline.TracerouteOptions) bool { return o.PacketSize == 0 },
+			opts:     roots.TracerouteOptions{},
+			checkFn:  func(o roots.TracerouteOptions) bool { return o.PacketSize == 0 },
 			checkMsg: "empty PacketSize should be 0",
 		},
 		{
 			name:     "empty options has empty SourceAddr",
-			opts:     pipeline.TracerouteOptions{},
-			checkFn:  func(o pipeline.TracerouteOptions) bool { return o.SourceAddr == "" },
+			opts:     roots.TracerouteOptions{},
+			checkFn:  func(o roots.TracerouteOptions) bool { return o.SourceAddr == "" },
 			checkMsg: "empty SourceAddr should be empty",
 		},
 	}
