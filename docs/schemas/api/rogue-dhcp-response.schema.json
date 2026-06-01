@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/rogue-dhcp-response.schema.json",
+  "$ref": "#/$defs/RogueDHCPResponse",
+  "$defs": {
+    "RogueDHCPResponse": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "running": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "running"
+      ]
+    }
+  },
+  "title": "RogueDHCPResponse",
+  "description": "RogueDHCPResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

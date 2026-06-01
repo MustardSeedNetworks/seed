@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/cable-response.schema.json",
+  "$ref": "#/$defs/CableResponse",
+  "$defs": {
+    "CablePairResult": {
+      "properties": {
+        "pair": {
+          "type": "string"
+        },
+        "pairLetter": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "lengthM": {
+          "type": "number"
+        },
+        "lengthFt": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "pair",
+        "pairLetter",
+        "status"
+      ]
+    },
+    "CablePinout": {
+      "properties": {
+        "pin": {
+          "type": "integer"
+        },
+        "color": {
+          "type": "string"
+        },
+        "pair": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "pin",
+        "color",
+        "pair"
+      ]
+    },
+    "CableResponse": {
+      "properties": {
+        "supported": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string"
+        },
+        "length": {
+          "type": "number"
+        },
+        "lengthFt": {
+          "type": "number"
+        },
+        "pairs": {
+          "items": {
+            "$ref": "#/$defs/CablePairResult"
+          },
+          "type": "array"
+        },
+        "faults": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "wiringStandard": {
+          "type": "string"
+        },
+        "pinout": {
+          "items": {
+            "$ref": "#/$defs/CablePinout"
+          },
+          "type": "array"
+        },
+        "isCrossover": {
+          "type": "boolean"
+        },
+        "driverName": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "supported",
+        "status",
+        "faults",
+        "wiringStandard"
+      ]
+    }
+  },
+  "title": "CableResponse",
+  "description": "CableResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

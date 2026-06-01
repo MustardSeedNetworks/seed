@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/network-problems-response.schema.json",
+  "$ref": "#/$defs/NetworkProblemsResponse",
+  "$defs": {
+    "NetworkProblem": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "device_id": {
+          "type": "string"
+        },
+        "device_mac": {
+          "type": "string"
+        },
+        "interface_name": {
+          "type": "string"
+        },
+        "ip_address": {
+          "type": "string"
+        },
+        "affected_macs": {
+          "type": "string"
+        },
+        "ssid": {
+          "type": "string"
+        },
+        "bssid": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "integer"
+        },
+        "current_value": {
+          "type": "number"
+        },
+        "threshold_value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "first_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "resolved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "occurrence_count": {
+          "type": "integer"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "category",
+        "type",
+        "severity",
+        "status",
+        "title",
+        "description",
+        "first_seen",
+        "last_seen",
+        "occurrence_count"
+      ]
+    },
+    "NetworkProblemsResponse": {
+      "properties": {
+        "problems": {
+          "items": {
+            "$ref": "#/$defs/NetworkProblem"
+          },
+          "type": "array"
+        },
+        "summary": {
+          "$ref": "#/$defs/ProblemSummary"
+        },
+        "total": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "problems",
+        "summary",
+        "total"
+      ]
+    },
+    "ProblemSummary": {
+      "properties": {
+        "total_active": {
+          "type": "integer"
+        },
+        "by_severity": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "by_category": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "recent_count": {
+          "type": "integer"
+        },
+        "resolved_today": {
+          "type": "integer"
+        },
+        "last_scan_time": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "total_active",
+        "by_severity",
+        "by_category",
+        "recent_count",
+        "resolved_today",
+        "last_scan_time"
+      ]
+    }
+  },
+  "title": "NetworkProblemsResponse",
+  "description": "NetworkProblemsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

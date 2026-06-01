@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/discovery-response.schema.json",
+  "$ref": "#/$defs/DiscoveryResponse",
+  "$defs": {
+    "DiscoveryNeighborInfo": {
+      "properties": {
+        "protocol": {
+          "type": "string"
+        },
+        "chassisId": {
+          "type": "string"
+        },
+        "portId": {
+          "type": "string"
+        },
+        "portDescription": {
+          "type": "string"
+        },
+        "systemName": {
+          "type": "string"
+        },
+        "systemDescription": {
+          "type": "string"
+        },
+        "capabilities": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "managementAddress": {
+          "type": "string"
+        },
+        "ttl": {
+          "type": "integer"
+        },
+        "lastSeen": {
+          "type": "string"
+        },
+        "sourceMAC": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "protocol",
+        "chassisId",
+        "portId",
+        "ttl",
+        "lastSeen",
+        "sourceMAC"
+      ]
+    },
+    "DiscoveryResponse": {
+      "properties": {
+        "interface": {
+          "type": "string"
+        },
+        "running": {
+          "type": "boolean"
+        },
+        "neighbors": {
+          "items": {
+            "$ref": "#/$defs/DiscoveryNeighborInfo"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "interface",
+        "running",
+        "neighbors"
+      ]
+    }
+  },
+  "title": "DiscoveryResponse",
+  "description": "DiscoveryResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

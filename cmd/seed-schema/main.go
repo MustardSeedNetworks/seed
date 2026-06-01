@@ -47,55 +47,38 @@ type schemaTarget struct {
 // and to make the list lazily constructed (so init isn't pulling in
 // internal/api as a side effect of `go run`).
 func schemaTargets() []schemaTarget {
+	t := requestSchemaTargets()
+	t = append(t, coreResponseSchemaTargets()...)
+	t = append(t, networkResponseSchemaTargets()...)
+	return t
+}
+
+// requestSchemaTargets are the request DTOs — the original strict-decode +
+// validator surface (#1102).
+func requestSchemaTargets() []schemaTarget {
 	return []schemaTarget{
-		{
-			value:    &api.LoginRequest{},
-			filename: "login.schema.json",
-			title:    "LoginRequest",
-		},
-		{
-			value:    &api.SetupCompleteRequest{},
-			filename: "setup-complete.schema.json",
-			title:    "SetupCompleteRequest",
-		},
+		{value: &api.LoginRequest{}, filename: "login.schema.json", title: "LoginRequest"},
+		{value: &api.SetupCompleteRequest{}, filename: "setup-complete.schema.json", title: "SetupCompleteRequest"},
 		{
 			value:    &api.RecoveryCompleteRequest{},
 			filename: "recovery-complete.schema.json",
 			title:    "RecoveryCompleteRequest",
 		},
-		{
-			value:    &api.SetMTURequest{},
-			filename: "set-mtu.schema.json",
-			title:    "SetMTURequest",
-		},
-		{
-			value:    &api.PathRequest{},
-			filename: "path.schema.json",
-			title:    "PathRequest",
-		},
-		{
-			value:    &api.WiFiConnectRequest{},
-			filename: "wifi-connect.schema.json",
-			title:    "WiFiConnectRequest",
-		},
-		// Phase 2 (ADR-0003, code-first): widening coverage to response DTOs,
-		// starting with the core auth/status responses that pair with the
-		// request DTOs above.
-		{
-			value:    &api.StatusResponse{},
-			filename: "status-response.schema.json",
-			title:    "StatusResponse",
-		},
-		{
-			value:    &api.LoginResponse{},
-			filename: "login-response.schema.json",
-			title:    "LoginResponse",
-		},
-		{
-			value:    &api.CSRFTokenResponse{},
-			filename: "csrf-token-response.schema.json",
-			title:    "CSRFTokenResponse",
-		},
+		{value: &api.SetMTURequest{}, filename: "set-mtu.schema.json", title: "SetMTURequest"},
+		{value: &api.PathRequest{}, filename: "path.schema.json", title: "PathRequest"},
+		{value: &api.WiFiConnectRequest{}, filename: "wifi-connect.schema.json", title: "WiFiConnectRequest"},
+		{value: &api.TracerouteRequest{}, filename: "traceroute-request.schema.json", title: "TracerouteRequest"},
+	}
+}
+
+// coreResponseSchemaTargets are the auth / status / recovery / config response
+// DTOs (Phase 2, ADR-0003 code-first widening). BackupListResponse is a nested
+// type, supported after the gen-types ref fix.
+func coreResponseSchemaTargets() []schemaTarget {
+	return []schemaTarget{
+		{value: &api.StatusResponse{}, filename: "status-response.schema.json", title: "StatusResponse"},
+		{value: &api.LoginResponse{}, filename: "login-response.schema.json", title: "LoginResponse"},
+		{value: &api.CSRFTokenResponse{}, filename: "csrf-token-response.schema.json", title: "CSRFTokenResponse"},
 		{
 			value:    &api.SetupStatusResponse{},
 			filename: "setup-status-response.schema.json",
@@ -106,12 +89,7 @@ func schemaTargets() []schemaTarget {
 			filename: "license-status-response.schema.json",
 			title:    "LicenseStatusResponse",
 		},
-		// Batch 2: common error envelopes + recovery/config/roots DTOs.
-		{
-			value:    &api.ErrorResponse{},
-			filename: "error-response.schema.json",
-			title:    "ErrorResponse",
-		},
+		{value: &api.ErrorResponse{}, filename: "error-response.schema.json", title: "ErrorResponse"},
 		{
 			value:    &api.FeatureGateResponse{},
 			filename: "feature-gate-response.schema.json",
@@ -137,18 +115,32 @@ func schemaTargets() []schemaTarget {
 			filename: "config-version-response.schema.json",
 			title:    "ConfigVersionResponse",
 		},
-		// Nested-type DTO: BackupListResponse embeds []BackupInfo. Generates
-		// correctly now that gen-types.mjs strips the external $id so nested
-		// `#/$defs/...` refs resolve locally (the prior blocker).
+		{value: &api.BackupListResponse{}, filename: "backup-list-response.schema.json", title: "BackupListResponse"},
+	}
+}
+
+// networkResponseSchemaTargets are SAP / network / discovery response DTOs
+// (Phase 2). GatewayResponse is intentionally excluded — its `ipv6` field reuses
+// GatewayResponse itself (accidental recursion); transport DTOs must be
+// non-recursive, so it waits for a flat ipv6 sub-type (Phase 3).
+func networkResponseSchemaTargets() []schemaTarget {
+	return []schemaTarget{
+		{value: &api.CableResponse{}, filename: "cable-response.schema.json", title: "CableResponse"},
+		{value: &api.VLANResponse{}, filename: "vlan-response.schema.json", title: "VLANResponse"},
+		{value: &api.WiFiResponse{}, filename: "wifi-response.schema.json", title: "WiFiResponse"},
+		{value: &api.SpeedtestResponse{}, filename: "speedtest-response.schema.json", title: "SpeedtestResponse"},
+		{value: &api.RogueDHCPResponse{}, filename: "rogue-dhcp-response.schema.json", title: "RogueDHCPResponse"},
+		{value: &api.IPConfigResponse{}, filename: "ipconfig-response.schema.json", title: "IPConfigResponse"},
+		{value: &api.DiscoveryResponse{}, filename: "discovery-response.schema.json", title: "DiscoveryResponse"},
 		{
-			value:    &api.BackupListResponse{},
-			filename: "backup-list-response.schema.json",
-			title:    "BackupListResponse",
+			value:    &api.NetworkProblemsResponse{},
+			filename: "network-problems-response.schema.json",
+			title:    "NetworkProblemsResponse",
 		},
 		{
-			value:    &api.TracerouteRequest{},
-			filename: "traceroute-request.schema.json",
-			title:    "TracerouteRequest",
+			value:    &api.ProblemScanResponse{},
+			filename: "problem-scan-response.schema.json",
+			title:    "ProblemScanResponse",
 		},
 	}
 }
