@@ -16,7 +16,6 @@ import (
 	api "github.com/krisarmstrong/seed/internal/api"
 	"github.com/krisarmstrong/seed/internal/app"
 	"github.com/krisarmstrong/seed/internal/auth"
-	"github.com/krisarmstrong/seed/internal/canopy"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/logging"
@@ -243,7 +242,6 @@ func initializeModulesForService(cfg *config.Config, db *database.DB) *api.Modul
 	modules := &api.Modules{}
 
 	modules.Sap = services.New(cfg, db)
-	modules.Canopy = canopy.New(cfg, db)
 	modules.Harvest = app.NewHarvest(cfg, db)
 
 	return modules
