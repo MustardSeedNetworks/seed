@@ -7,6 +7,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -286,51 +287,51 @@ func (s *Server) setupRootsRoutes() {
 }
 
 // setupCanopyRoutes registers Canopy module routes (Wi-Fi planning).
+// setupCanopyRoutes registers Canopy module routes (Wi-Fi visibility &
+// troubleshooting). First module on the declarative capability registry
+// (ADR-0002): policy is data, composed by register() in one canonical order.
+// Behavior is identical to the prior hand-wrapped form.
 func (s *Server) setupCanopyRoutes() {
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi", s.handleWiFi)
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/scan", s.handleWiFiScan)
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/status", s.handleWiFiStatus)
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/channel-graph", s.handleWiFiChannelGraph)
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/settings", s.writeGated(s.handleWiFiSettings))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/connect", s.writeGated(s.handleWiFiConnect))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/disconnect", s.writeGated(s.handleWiFiDisconnect))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/saved", s.handleWiFiSavedNetworks)
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/wifi/forget", s.writeGated(s.handleWiFiForgetNetwork))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/create", s.writeGated(s.createSurvey))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/list", s.listSurveys)
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey", s.getSurvey)
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/delete", s.writeGated(s.deleteSurvey))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/start", s.writeGated(s.startSurvey))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/pause", s.writeGated(s.pauseSurvey))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/complete", s.writeGated(s.completeSurvey))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/sample", s.writeGated(s.addSurveySample))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/floorplan", s.writeGated(s.updateSurveyFloorPlan))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/settings", s.writeGated(s.updateSurveySettings))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/imported-data", s.writeGated(s.updateSurveyImportedData))
-	// AirMapper baseline-diff is a Pro feature (LICENSE_STRATEGY §2):
-	// imports an existing AirMapper survey JSON and diffs it against
-	// the current floor-plan baseline. The rate limiter still wraps
-	// the gated handler so trial / Pro users can't abuse the endpoint.
-	s.mux.Handle(
-		APIVersionPrefix+"/canopy/survey/import/airmapper",
-		s.endpointRateLimiter().RateLimitMiddleware(
-			s.requireFeature("airmapper_baseline_diff", s.writeGated(s.importAirMapper)),
-		),
-	)
-	s.mux.Handle(
-		APIVersionPrefix+"/canopy/survey/heatmap",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.getSurveyHeatmap)),
-	)
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/dead-zones", s.getSurveyDeadZones)
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/floors", s.writeGated(s.handleSurveyFloors))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/floor", s.writeGated(s.handleSurveyFloor))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/floor/floorplan", s.writeGated(s.updateFloorFloorPlan))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/floor/sample", s.writeGated(s.addFloorSample))
-	s.mux.HandleFunc(APIVersionPrefix+"/canopy/survey/active-floor", s.writeGated(s.setActiveFloor))
-	s.mux.Handle(
-		APIVersionPrefix+"/canopy/survey/report",
-		s.endpointRateLimiter().RateLimitMiddleware(http.HandlerFunc(s.generateSurveyReport)),
-	)
+	op := database.RoleOperator
+	s.registerAll([]route{
+		{path: APIVersionPrefix + "/canopy/wifi", handler: s.handleWiFi},
+		{path: APIVersionPrefix + "/canopy/wifi/scan", handler: s.handleWiFiScan},
+		{path: APIVersionPrefix + "/canopy/wifi/status", handler: s.handleWiFiStatus},
+		{path: APIVersionPrefix + "/canopy/wifi/channel-graph", handler: s.handleWiFiChannelGraph},
+		{path: APIVersionPrefix + "/canopy/wifi/settings", handler: s.handleWiFiSettings, minRole: op},
+		{path: APIVersionPrefix + "/canopy/wifi/connect", handler: s.handleWiFiConnect, minRole: op},
+		{path: APIVersionPrefix + "/canopy/wifi/disconnect", handler: s.handleWiFiDisconnect, minRole: op},
+		{path: APIVersionPrefix + "/canopy/wifi/saved", handler: s.handleWiFiSavedNetworks},
+		{path: APIVersionPrefix + "/canopy/wifi/forget", handler: s.handleWiFiForgetNetwork, minRole: op},
+		{path: APIVersionPrefix + "/canopy/survey/create", handler: s.createSurvey, minRole: op},
+		{path: APIVersionPrefix + "/canopy/survey/list", handler: s.listSurveys},
+		{path: APIVersionPrefix + "/canopy/survey", handler: s.getSurvey},
+		{path: APIVersionPrefix + "/canopy/survey/delete", handler: s.deleteSurvey, minRole: op},
+		{path: APIVersionPrefix + "/canopy/survey/start", handler: s.startSurvey, minRole: op},
+		{path: APIVersionPrefix + "/canopy/survey/pause", handler: s.pauseSurvey, minRole: op},
+		{path: APIVersionPrefix + "/canopy/survey/complete", handler: s.completeSurvey, minRole: op},
+		{path: APIVersionPrefix + "/canopy/survey/sample", handler: s.addSurveySample, minRole: op},
+		{path: APIVersionPrefix + "/canopy/survey/floorplan", handler: s.updateSurveyFloorPlan, minRole: op},
+		{path: APIVersionPrefix + "/canopy/survey/settings", handler: s.updateSurveySettings, minRole: op},
+		{path: APIVersionPrefix + "/canopy/survey/imported-data", handler: s.updateSurveyImportedData, minRole: op},
+		// AirMapper baseline-diff (Pro, LICENSE_STRATEGY §2): imports an AirMapper
+		// survey JSON and diffs it against the floor-plan baseline; rate-limited.
+		{
+			path:        APIVersionPrefix + "/canopy/survey/import/airmapper",
+			handler:     s.importAirMapper,
+			minRole:     op,
+			feature:     "airmapper_baseline_diff",
+			rateLimited: true,
+		},
+		{path: APIVersionPrefix + "/canopy/survey/heatmap", handler: s.getSurveyHeatmap, rateLimited: true},
+		{path: APIVersionPrefix + "/canopy/survey/dead-zones", handler: s.getSurveyDeadZones},
+		{path: APIVersionPrefix + "/canopy/survey/floors", handler: s.handleSurveyFloors, minRole: op},
+		{path: APIVersionPrefix + "/canopy/survey/floor", handler: s.handleSurveyFloor, minRole: op},
+		{path: APIVersionPrefix + "/canopy/survey/floor/floorplan", handler: s.updateFloorFloorPlan, minRole: op},
+		{path: APIVersionPrefix + "/canopy/survey/floor/sample", handler: s.addFloorSample, minRole: op},
+		{path: APIVersionPrefix + "/canopy/survey/active-floor", handler: s.setActiveFloor, minRole: op},
+		{path: APIVersionPrefix + "/canopy/survey/report", handler: s.generateSurveyReport, rateLimited: true},
+	})
 }
 
 // setupHarvestRoutes registers Harvest module routes (reporting).
