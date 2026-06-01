@@ -50,6 +50,9 @@ type goldenRoute struct {
 func goldenRoutes() []goldenRoute {
 	return []goldenRoute{
 		{name: "version", method: http.MethodGet, path: "/__version", body: bodyGolden},
+		// The capability manifest pins every route's policy (role/feature/rate) in
+		// one snapshot — the strongest regression detector for the registry.
+		{name: "capabilities", method: http.MethodGet, path: "/__capabilities", body: bodyGolden},
 		{name: "status", method: http.MethodGet, path: "/api/v1/status", body: bodyGolden},
 		{name: "settings", method: http.MethodGet, path: "/api/v1/settings", body: bodyGolden},
 		{name: "interfaces", method: http.MethodGet, path: "/api/v1/interfaces", body: bodyStatusOnly},

@@ -14,6 +14,11 @@ import (
 // setupRoutes configures all HTTP routes.
 func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/__version", s.handleBuildVersion)
+	// /__capabilities exposes the route-policy manifest (ADR-0002). Registered
+	// directly (not via register()) because it is infra introspection, not an
+	// API surface — same as /__version. Reads s.manifest at request time, after
+	// the module setups below have populated it.
+	s.mux.HandleFunc("/__capabilities", s.handleCapabilities)
 	s.setupCoreRoutes()
 	s.setupAPITokenRoutes()
 	s.registerUpdateRoutes()
@@ -334,7 +339,7 @@ func (s *Server) setupSSEAndStatic() {
 	// per-endpoint REST handlers without the WebSocket-like stream.
 	// `/discovery/engine/events` (the discovery-lifecycle SSE) is
 	// intentionally NOT gated here — discovery is a Free-tier surface.
-	s.mux.HandleFunc(APIVersionPrefix+"/events", s.requireFeature("live_telemetry", s.handleSSE))
+	s.register(route{path: APIVersionPrefix + "/events", handler: s.handleSSE, feature: "live_telemetry"})
 	frontendFS, err := getUIFS()
 	if err != nil {
 		logging.GetLogger().

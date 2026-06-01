@@ -1,0 +1,626 @@
+status: 200
+body:
+[
+  {
+    "path": "/api/v1/auth/login"
+  },
+  {
+    "path": "/api/v1/auth/logout"
+  },
+  {
+    "path": "/api/v1/auth/refresh"
+  },
+  {
+    "path": "/api/v1/auth/csrf"
+  },
+  {
+    "path": "/api/v1/auth/login/totp"
+  },
+  {
+    "path": "/api/v1/auth/totp/setup"
+  },
+  {
+    "path": "/api/v1/auth/totp/verify"
+  },
+  {
+    "path": "/api/v1/auth/totp/disable"
+  },
+  {
+    "path": "/api/v1/auth/mfa/status"
+  },
+  {
+    "path": "/api/v1/auth/webauthn/register/begin"
+  },
+  {
+    "path": "/api/v1/auth/webauthn/register/finish"
+  },
+  {
+    "path": "/api/v1/auth/webauthn/login/begin"
+  },
+  {
+    "path": "/api/v1/auth/webauthn/login/finish"
+  },
+  {
+    "path": "/api/v1/status"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/settings"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/settings/defaults"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/settings/link"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/settings/cable"
+  },
+  {
+    "path": "/api/v1/interfaces"
+  },
+  {
+    "path": "/api/v1/interface"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/network/mtu"
+  },
+  {
+    "path": "/api/v1/config/backups"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/config/backup"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/config/backup/delete"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/config/restore"
+  },
+  {
+    "path": "/api/v1/config/version"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/profiles"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/profiles/active"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/profiles/import"
+  },
+  {
+    "path": "/api/v1/profiles/export"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/profiles/"
+  },
+  {
+    "path": "/api/v1/setup/status"
+  },
+  {
+    "path": "/api/v1/setup/complete"
+  },
+  {
+    "path": "/api/v1/recovery/status"
+  },
+  {
+    "path": "/api/v1/recovery/complete"
+  },
+  {
+    "path": "/api/v1/recovery/instructions"
+  },
+  {
+    "path": "/api/v1/sso/providers"
+  },
+  {
+    "path": "/api/v1/sso/login"
+  },
+  {
+    "path": "/api/v1/sso/callback"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/sso/settings"
+  },
+  {
+    "feature": "sso",
+    "minRole": "operator",
+    "path": "/api/v1/sso/update"
+  },
+  {
+    "path": "/api/v1/health"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/tokens"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/tokens/"
+  },
+  {
+    "path": "/api/v1/license"
+  },
+  {
+    "path": "/api/v1/users/me"
+  },
+  {
+    "path": "/api/v1/users"
+  },
+  {
+    "path": "/api/v1/users/"
+  },
+  {
+    "path": "GET /api/v1/updates/check"
+  },
+  {
+    "path": "GET /api/v1/updates/status"
+  },
+  {
+    "path": "GET /api/v1/updates/info"
+  },
+  {
+    "minRole": "operator",
+    "path": "POST /api/v1/updates/download"
+  },
+  {
+    "minRole": "operator",
+    "path": "POST /api/v1/updates/apply"
+  },
+  {
+    "minRole": "operator",
+    "path": "POST /api/v1/updates/rollback"
+  },
+  {
+    "path": "GET /api/v1/updates/config"
+  },
+  {
+    "minRole": "operator",
+    "path": "PATCH /api/v1/updates/config"
+  },
+  {
+    "path": "/api/v1/sap/link"
+  },
+  {
+    "path": "/api/v1/sap/cable"
+  },
+  {
+    "path": "/api/v1/sap/dns"
+  },
+  {
+    "path": "/api/v1/sap/dns/security"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/sap/dns/security/settings"
+  },
+  {
+    "path": "/api/v1/sap/gateway"
+  },
+  {
+    "path": "/api/v1/sap/dhcp/rogue"
+  },
+  {
+    "path": "/api/v1/sap/dhcp/rogue/servers"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/sap/dhcp/rogue/config"
+  },
+  {
+    "path": "/api/v1/sap/vlan"
+  },
+  {
+    "path": "/api/v1/sap/vlan/traffic"
+  },
+  {
+    "path": "/api/v1/sap/vlan/interface"
+  },
+  {
+    "path": "/api/v1/sap/speedtest",
+    "rateLimited": true
+  },
+  {
+    "path": "/api/v1/sap/speedtest/status"
+  },
+  {
+    "path": "/api/v1/sap/iperf/info"
+  },
+  {
+    "path": "/api/v1/sap/iperf/client",
+    "rateLimited": true
+  },
+  {
+    "path": "/api/v1/sap/iperf/client/status"
+  },
+  {
+    "path": "/api/v1/sap/iperf/server"
+  },
+  {
+    "path": "/api/v1/sap/iperf/server/status"
+  },
+  {
+    "path": "/api/v1/sap/iperf/suggestions"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/sap/health-checks/settings"
+  },
+  {
+    "path": "/api/v1/sap/health-checks/run",
+    "rateLimited": true
+  },
+  {
+    "path": "/api/v1/sap/health-checks/results"
+  },
+  {
+    "path": "/api/v1/sap/health-checks/history"
+  },
+  {
+    "path": "/api/v1/sap/health-checks/scores"
+  },
+  {
+    "path": "/api/v1/sap/health-checks/sla"
+  },
+  {
+    "path": "/api/v1/sap/health-checks/alerts"
+  },
+  {
+    "feature": "anomaly_detection",
+    "path": "/api/v1/sap/health-checks/anomalies"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/sap/snmp/settings"
+  },
+  {
+    "path": "/api/v1/sap/system/health"
+  },
+  {
+    "path": "/api/v1/sap/ipconfig"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/sap/ipconfig/settings"
+  },
+  {
+    "path": "/api/v1/sap/publicip"
+  },
+  {
+    "path": "/api/v1/shell/discovery"
+  },
+  {
+    "path": "/api/v1/shell/discovery/probe"
+  },
+  {
+    "path": "/api/v1/shell/discovery/portscan"
+  },
+  {
+    "path": "/api/v1/shell/discovery/options"
+  },
+  {
+    "path": "/api/v1/shell/discovery/service/status"
+  },
+  {
+    "path": "/api/v1/shell/discovery/fingerprint"
+  },
+  {
+    "path": "/api/v1/shell/devices"
+  },
+  {
+    "path": "/api/v1/shell/devices/scan",
+    "rateLimited": true
+  },
+  {
+    "path": "/api/v1/shell/devices/status"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/shell/devices/settings"
+  },
+  {
+    "path": "/api/v1/shell/devices/subnets"
+  },
+  {
+    "feature": "compliance_advanced",
+    "path": "/api/v1/shell/vulnerabilities/scan",
+    "rateLimited": true
+  },
+  {
+    "path": "/api/v1/shell/vulnerabilities/status"
+  },
+  {
+    "path": "/api/v1/shell/vulnerabilities/results"
+  },
+  {
+    "path": "/api/v1/shell/vulnerabilities/device"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/shell/vulnerabilities/settings"
+  },
+  {
+    "path": "/api/v1/shell/vulnerabilities/validate-api-key"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/shell/guest-audit/settings"
+  },
+  {
+    "feature": "compliance_advanced",
+    "path": "/api/v1/shell/guest-audit/run",
+    "rateLimited": true
+  },
+  {
+    "path": "/api/v1/shell/pipeline/status"
+  },
+  {
+    "path": "/api/v1/shell/pipeline/start"
+  },
+  {
+    "path": "/api/v1/shell/pipeline/cancel"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/shell/pipeline/config"
+  },
+  {
+    "path": "/api/v1/shell/pipeline/port-intensity"
+  },
+  {
+    "path": "/api/v1/shell/pipeline/timing-profiles"
+  },
+  {
+    "path": "/api/v1/shell/problems"
+  },
+  {
+    "path": "/api/v1/shell/problems/scan"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/shell/problems/thresholds"
+  },
+  {
+    "path": "/api/v1/shell/bluetooth/scan"
+  },
+  {
+    "path": "/api/v1/shell/bluetooth/devices"
+  },
+  {
+    "path": "/api/v1/shell/bluetooth/stats"
+  },
+  {
+    "path": "/api/v1/shell/bluetooth/status"
+  },
+  {
+    "path": "/api/v1/shell/wifi/discovery/scan"
+  },
+  {
+    "path": "/api/v1/shell/wifi/discovery/networks"
+  },
+  {
+    "path": "/api/v1/shell/wifi/discovery/aps"
+  },
+  {
+    "path": "/api/v1/shell/wifi/discovery/stats"
+  },
+  {
+    "path": "/api/v1/discovery/engine"
+  },
+  {
+    "path": "/api/v1/discovery/engine/scan",
+    "rateLimited": true
+  },
+  {
+    "path": "/api/v1/discovery/engine/quick",
+    "rateLimited": true
+  },
+  {
+    "path": "/api/v1/discovery/engine/full",
+    "rateLimited": true
+  },
+  {
+    "path": "/api/v1/discovery/engine/stats"
+  },
+  {
+    "path": "/api/v1/discovery/engine/capabilities"
+  },
+  {
+    "path": "/api/v1/discovery/engine/device/"
+  },
+  {
+    "path": "/api/v1/discovery/engine/events"
+  },
+  {
+    "feature": "path_analysis",
+    "path": "/api/v1/roots/traceroute",
+    "rateLimited": true
+  },
+  {
+    "feature": "path_analysis",
+    "path": "/api/v1/roots/path"
+  },
+  {
+    "path": "/api/v1/canopy/wifi"
+  },
+  {
+    "path": "/api/v1/canopy/wifi/scan"
+  },
+  {
+    "path": "/api/v1/canopy/wifi/status"
+  },
+  {
+    "path": "/api/v1/canopy/wifi/channel-graph"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/wifi/settings"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/wifi/connect"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/wifi/disconnect"
+  },
+  {
+    "path": "/api/v1/canopy/wifi/saved"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/wifi/forget"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/create"
+  },
+  {
+    "path": "/api/v1/canopy/survey/list"
+  },
+  {
+    "path": "/api/v1/canopy/survey"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/delete"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/start"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/pause"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/complete"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/sample"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/floorplan"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/settings"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/imported-data"
+  },
+  {
+    "feature": "airmapper_baseline_diff",
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/import/airmapper",
+    "rateLimited": true
+  },
+  {
+    "path": "/api/v1/canopy/survey/heatmap",
+    "rateLimited": true
+  },
+  {
+    "path": "/api/v1/canopy/survey/dead-zones"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/floors"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/floor"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/floor/floorplan"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/floor/sample"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/canopy/survey/active-floor"
+  },
+  {
+    "path": "/api/v1/canopy/survey/report",
+    "rateLimited": true
+  },
+  {
+    "feature": "export_csv_json",
+    "path": "/api/v1/harvest/export"
+  },
+  {
+    "path": "/api/v1/harvest/logs"
+  },
+  {
+    "path": "/api/v1/harvest/logs/client"
+  },
+  {
+    "path": "/api/v1/harvest/logs/query"
+  },
+  {
+    "path": "/api/v1/harvest/logs/stats"
+  },
+  {
+    "path": "/api/v1/harvest/logs/recent"
+  },
+  {
+    "path": "/api/v1/topology/nodes"
+  },
+  {
+    "path": "/api/v1/topology/nodes/"
+  },
+  {
+    "path": "/api/v1/topology/links"
+  },
+  {
+    "path": "/api/v1/topology/arp"
+  },
+  {
+    "path": "/api/v1/alerts"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/alerts/"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/polling-targets"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/polling-targets/"
+  },
+  {
+    "path": "/api/v1/engines"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/alert-rules"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/alert-rules/"
+  },
+  {
+    "feature": "live_telemetry",
+    "path": "/api/v1/events"
+  }
+]
