@@ -240,3 +240,98 @@ func equalSlices(a, b []string) bool {
 	}
 	return true
 }
+
+// reportingFakeEngine implements both Engine and Reporter so the
+// type-assertion path in handlers_engines.go can be exercised.
+type reportingFakeEngine struct {
+	fakeEngine
+
+	status engine.Status
+}
+
+func (r *reportingFakeEngine) Status() engine.Status { return r.status }
+
+func TestStatusOK_DefaultStateIsOK(t *testing.T) {
+	t.Parallel()
+	s := engine.StatusOK()
+	if s.State != engine.StateOK {
+		t.Errorf("StatusOK().State = %q, want %q", s.State, engine.StateOK)
+	}
+	if s.LastError != "" {
+		t.Errorf("StatusOK().LastError = %q, want empty", s.LastError)
+	}
+}
+
+func TestStatusJSON_NameSurfaceIsStable(t *testing.T) {
+	t.Parallel()
+	// State constants must match the values handlers and operator
+	// tooling rely on. Locking them in tests prevents a silent
+	// rename that would break dashboards.
+	if engine.StateOK != "ok" {
+		t.Errorf("StateOK = %q, want \"ok\"", engine.StateOK)
+	}
+	if engine.StateDegraded != "degraded" {
+		t.Errorf("StateDegraded = %q, want \"degraded\"", engine.StateDegraded)
+	}
+	if engine.StateStopped != "stopped" {
+		t.Errorf("StateStopped = %q, want \"stopped\"", engine.StateStopped)
+	}
+}
+
+func TestReporter_TypeAssertion_EngineWithoutReporter(t *testing.T) {
+	t.Parallel()
+	// Plain fakeEngine doesn't implement Reporter — confirm the
+	// type assertion fails gracefully so the handler can fall
+	// back to StatusOK.
+	var e engine.Engine = &fakeEngine{name: "no-reporter"}
+	if _, ok := e.(engine.Reporter); ok {
+		t.Error("plain fakeEngine should not implement Reporter")
+	}
+}
+
+func TestReporter_TypeAssertion_EngineWithReporter(t *testing.T) {
+	t.Parallel()
+	custom := engine.Status{
+		State:     engine.StateDegraded,
+		LastError: "scan timeout",
+		Inflight:  2,
+	}
+	var e engine.Engine = &reportingFakeEngine{
+		fakeEngine: fakeEngine{name: "with-reporter"},
+		status:     custom,
+	}
+	rep, ok := e.(engine.Reporter)
+	if !ok {
+		t.Fatal("reportingFakeEngine should implement Reporter")
+	}
+	got := rep.Status()
+	if got.State != engine.StateDegraded {
+		t.Errorf("State = %q, want degraded", got.State)
+	}
+	if got.LastError != "scan timeout" {
+		t.Errorf("LastError = %q", got.LastError)
+	}
+	if got.Inflight != 2 {
+		t.Errorf("Inflight = %d, want 2", got.Inflight)
+	}
+}
+
+func TestRegistry_HoldsMixedEngines(t *testing.T) {
+	t.Parallel()
+	// Registry must accept engines whether or not they implement
+	// Reporter — adoption is opt-in.
+	r := engine.NewRegistry(silentLogger())
+	if err := r.Register(&fakeEngine{name: "plain"}); err != nil {
+		t.Fatalf("register plain: %v", err)
+	}
+	if err := r.Register(&reportingFakeEngine{
+		fakeEngine: fakeEngine{name: "reporting"},
+		status:     engine.StatusOK(),
+	}); err != nil {
+		t.Fatalf("register reporting: %v", err)
+	}
+	got := r.Engines()
+	if len(got) != 2 {
+		t.Errorf("registry holds %d engines, want 2", len(got))
+	}
+}

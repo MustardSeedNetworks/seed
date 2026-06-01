@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/krisarmstrong/seed/internal/engine"
 )
 
 // SysInfoReconcilerName is the engine identifier.
@@ -82,9 +83,11 @@ type SysInfoReconciler struct {
 	logger   *slog.Logger
 	now      func() time.Time
 	interval time.Duration
+	tracker  *tickTracker
 
 	mu      sync.Mutex
 	started bool
+	stopped bool
 	cancel  context.CancelFunc
 	wg      sync.WaitGroup
 }
@@ -118,11 +121,20 @@ func NewSysInfoReconciler(cfg Config) (*SysInfoReconciler, error) {
 		logger:   d.logger,
 		now:      d.now,
 		interval: d.interval,
+		tracker:  newTickTracker(d.interval, d.now),
 	}, nil
 }
 
 // Name implements [engine.Engine].
 func (*SysInfoReconciler) Name() string { return SysInfoReconcilerName }
+
+// Status implements [engine.Reporter].
+func (r *SysInfoReconciler) Status() engine.Status {
+	r.mu.Lock()
+	stopped := r.stopped
+	r.mu.Unlock()
+	return r.tracker.status(stopped)
+}
 
 // Start kicks off the reconcile loop. Idempotent.
 func (r *SysInfoReconciler) Start(ctx context.Context) error {
@@ -148,6 +160,7 @@ func (r *SysInfoReconciler) Stop(ctx context.Context) error {
 		return nil
 	}
 	r.started = false
+	r.stopped = true
 	if r.cancel != nil {
 		r.cancel()
 	}
@@ -192,6 +205,12 @@ func (r *SysInfoReconciler) loop(ctx context.Context) {
 // ReconcileOnce processes one batch of new sys_info observations.
 // Exposed for tests and for the engine loop alike.
 func (r *SysInfoReconciler) ReconcileOnce(ctx context.Context) error {
+	err := r.reconcileOnceInner(ctx)
+	r.tracker.recordTick(err)
+	return err
+}
+
+func (r *SysInfoReconciler) reconcileOnceInner(ctx context.Context) error {
 	since, err := r.loadHighWater(ctx)
 	if err != nil {
 		return fmt.Errorf("load high-water: %w", err)

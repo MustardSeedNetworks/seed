@@ -11,7 +11,13 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/krisarmstrong/seed/internal/engine"
 )
+
+// degradedTickMultiplier is how many scan intervals can elapse
+// before a pipeline's Status() reports degraded. Two ticks gives
+// the loop one missed tick of grace before paging.
+const degradedTickMultiplier = 2
 
 // ObservationPipelineName is the engine identifier.
 const ObservationPipelineName = "alert-observation-pipeline"
@@ -55,9 +61,14 @@ type ObservationPipeline struct {
 
 	mu       sync.Mutex
 	started  bool
+	stopped  bool
 	cancel   context.CancelFunc
 	wg       sync.WaitGroup
 	suppress suppressionStore
+
+	// Per-scan status, updated under mu for engine.Reporter.
+	lastTickAt time.Time
+	lastError  string
 
 	// Previous-state caches. Keyed by entity identifier
 	// ("target/ifindex" or "target/peer-ip", etc.). Updated after
@@ -145,6 +156,30 @@ func NewObservationPipeline(cfg ObservationConfig) (*ObservationPipeline, error)
 
 // Name implements [engine.Engine].
 func (*ObservationPipeline) Name() string { return ObservationPipelineName }
+
+// Status implements [engine.Reporter]. State derives from how long
+// it has been since the last scan completed: "ok" within
+// degradedTickMultiplier*interval, "degraded" beyond that, and
+// "stopped" after Stop has been called.
+func (p *ObservationPipeline) Status() engine.Status {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	s := engine.Status{
+		LastTickAt: p.lastTickAt,
+		LastError:  p.lastError,
+	}
+	switch {
+	case p.stopped:
+		s.State = engine.StateStopped
+	case p.lastTickAt.IsZero():
+		s.State = engine.StateOK
+	case p.now().Sub(p.lastTickAt) > degradedTickMultiplier*p.interval:
+		s.State = engine.StateDegraded
+	default:
+		s.State = engine.StateOK
+	}
+	return s
+}
 
 // Start kicks off the scan loop. Idempotent.
 //
@@ -263,6 +298,7 @@ func (p *ObservationPipeline) Stop(ctx context.Context) error {
 		return nil
 	}
 	p.started = false
+	p.stopped = true
 	if p.cancel != nil {
 		p.cancel()
 	}
@@ -305,6 +341,25 @@ func (p *ObservationPipeline) loop(ctx context.Context) {
 // has a delta signal. iftable + bgp4_mib + host_resources are the
 // V1.0 set; future kinds extend the per-kind dispatch.
 func (p *ObservationPipeline) ScanOnce(ctx context.Context) error {
+	err := p.scanOnceInner(ctx)
+	p.recordScan(err)
+	return err
+}
+
+// recordScan stamps lastTickAt + lastError for engine.Reporter.
+// Called from ScanOnce on every pass; held briefly under mu.
+func (p *ObservationPipeline) recordScan(err error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.lastTickAt = p.now()
+	if err != nil {
+		p.lastError = err.Error()
+		return
+	}
+	p.lastError = ""
+}
+
+func (p *ObservationPipeline) scanOnceInner(ctx context.Context) error {
 	since, err := p.loadHighWater(ctx)
 	if err != nil {
 		return fmt.Errorf("load high-water: %w", err)

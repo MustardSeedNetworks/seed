@@ -226,6 +226,108 @@ func TestHandleTopologyLinks_ReturnsLinksForNode(t *testing.T) {
 	}
 }
 
+func seedARPBindingsForHandler(t *testing.T, db *database.DB) {
+	t.Helper()
+	// Reuse seedTopology to satisfy the FK on source_node_id, then
+	// insert two bindings under node-test-1.
+	_ = seedTopology(t, db)
+	ctx := context.Background()
+	for _, b := range []*database.TopologyARPBinding{
+		{
+			ClientID: "default", SourceNodeID: "node-test-1", IfIndex: 1,
+			IPAddress: "10.0.0.1", MACAddress: "aa:bb:cc:dd:ee:01",
+			LastSeen: time.Now().UTC(),
+		},
+		{
+			ClientID: "default", SourceNodeID: "node-test-1", IfIndex: 1,
+			IPAddress: "10.0.0.2", MACAddress: "aa:bb:cc:dd:ee:02",
+			LastSeen: time.Now().UTC(),
+		},
+	} {
+		if err := db.Topology().UpsertARPBinding(ctx, b); err != nil {
+			t.Fatalf("seed binding: %v", err)
+		}
+	}
+}
+
+func TestHandleTopologyARP_ReturnsBindings(t *testing.T) {
+	s := newTopologyTestServer(t)
+	seedARPBindingsForHandler(t, s.db())
+
+	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/topology/arp", http.NoBody)
+	w := httptest.NewRecorder()
+	s.handleTopologyARP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body=%s", w.Code, w.Body.String())
+	}
+	var resp struct {
+		Count    int              `json:"count"`
+		Bindings []map[string]any `json:"bindings"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Count != 2 || len(resp.Bindings) != 2 {
+		t.Errorf("count=%d / bindings=%d, want 2/2", resp.Count, len(resp.Bindings))
+	}
+}
+
+func TestHandleTopologyARP_FilterByNodeID(t *testing.T) {
+	s := newTopologyTestServer(t)
+	seedARPBindingsForHandler(t, s.db())
+
+	req := httptest.NewRequest(http.MethodGet,
+		APIVersionPrefix+"/topology/arp?node_id=node-test-1", http.NoBody)
+	w := httptest.NewRecorder()
+	s.handleTopologyARP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+	var resp struct {
+		Count int `json:"count"`
+	}
+	_ = json.Unmarshal(w.Body.Bytes(), &resp)
+	if resp.Count != 2 {
+		t.Errorf("count = %d, want 2 (both bindings live on node-test-1)", resp.Count)
+	}
+}
+
+func TestHandleTopologyARP_NonGETReturns405(t *testing.T) {
+	s := newTopologyTestServer(t)
+	req := httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/topology/arp", http.NoBody)
+	w := httptest.NewRecorder()
+	s.handleTopologyARP(w, req)
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Errorf("status = %d, want 405", w.Code)
+	}
+}
+
+func TestHandleTopologyARP_InvalidSinceReturns400(t *testing.T) {
+	s := newTopologyTestServer(t)
+	req := httptest.NewRequest(http.MethodGet,
+		APIVersionPrefix+"/topology/arp?since=garbage", http.NoBody)
+	w := httptest.NewRecorder()
+	s.handleTopologyARP(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want 400", w.Code)
+	}
+}
+
+func TestHandleTopologyARP_LimitClampsToMax(t *testing.T) {
+	s := newTopologyTestServer(t)
+	seedARPBindingsForHandler(t, s.db())
+
+	req := httptest.NewRequest(http.MethodGet,
+		APIVersionPrefix+"/topology/arp?limit=5000", http.NoBody)
+	w := httptest.NewRecorder()
+	s.handleTopologyARP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 (limit should clamp, not 400)", w.Code)
+	}
+}
+
 func TestRawJSON_InvalidFallsBackToEmpty(t *testing.T) {
 	if got := string(rawJSON("not json {")); got != "{}" {
 		t.Errorf("invalid JSON should fall back to {}, got %q", got)
