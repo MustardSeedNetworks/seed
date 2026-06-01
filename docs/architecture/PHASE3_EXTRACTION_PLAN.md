@@ -138,7 +138,15 @@ deny `net/http`, `database/sql`, `internal/adapters/**`, and the other four
 - [x] `internal/app/harvest.go` builds the module from `Deps`; `internal/api/modules.go`
       consumes the module through the same surface (no behavior change).
 - [x] The harvest→health coupling is gone (it was dead code — deleted, #1428).
-- [ ] Docs synced (§7): `THE_SEED_ARCHITECTURE` harvest section + folder-tree + ring diagram.
+- [x] Docs synced (§7): `THE_SEED_ARCHITECTURE` *Hexagon Structure* section
+      (ring diagram + harvest folder tree), `THE_SEED_BACKEND_ARCHITECTURE`
+      *Repository ports* subsection, and a `platform-architecture.md` note —
+      msn-docs #18.
+
+**Pilot complete (2026-06-01).** All §4.5 criteria green. harvest is the proven
+exemplar for the modulith hexagon; the pattern (relocate → cut cross-module
+leaks → ports → adapters/store → app composition root → depguard bans) is ready
+to copy to the next module (`roots`, §5).
 
 ### 4.6 PR slicing (each green, admin-merged) — STATUS
 
