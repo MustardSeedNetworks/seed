@@ -21,176 +21,133 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 
 	"github.com/invopop/jsonschema"
 
 	"github.com/krisarmstrong/seed/internal/api"
 )
 
-// schemaTarget pairs a Go DTO with the on-disk filename it should be
-// written to. Adding a DTO to this list is the only step required to
-// generate a schema for it; the generator handles the rest.
+// schemaTarget pairs a Go DTO with the on-disk schema filename and a
+// human-readable title. The title is the Go type name (derived, never
+// hand-written); the filename is explicit so legacy names that predate the
+// kebab convention (login.schema.json, ipconfig-response.schema.json,
+// set-mtu.schema.json …) stay stable for existing clients.
 type schemaTarget struct {
 	value    any    // pointer to a zero-value of the DTO
 	filename string // filename without directory (e.g., "login.schema.json")
-	title    string // human-readable schema title
+	title    string // human-readable schema title (the Go type name)
 }
 
-// schemaTargets returns the DTOs we currently publish schemas for.
+// reg is one row of the schema registry: a DTO pointer and the schema file it
+// is written to. It exists so the registry below reads as a flat data table —
+// one line per DTO — rather than a set of near-identical builder functions.
+type reg struct {
+	value    any
+	filename string
+}
+
+// schemaTargets is the single source of truth for the DTOs we publish schemas
+// for: one declarative row per DTO, grouped by comment only. It is a data
+// table, not logic — adding a DTO is one line — so its length is expected to
+// grow (funlen is intentionally relaxed for this file). The title is taken
+// from the Go type name so it can never drift from the type.
 //
-// Today the list is the auth + recovery + network + WiFi + path DTOs —
-// the security-critical surface that already carries `validate:` tags
-// (#1102). The list will grow as more handlers are migrated to the
-// strict-decode + validator pattern (#1101 follow-up #1131).
+// POLICY (RE_ARCHITECTURE_BLUEPRINT.md Phase 2 — flat + self-contained): a DTO
+// belongs here iff it is flat or nests only local, purpose-built transport
+// sub-structs in internal/api. DTOs that put an internal domain type on the
+// wire (discovery.*/dhcp.*/netif.*/logging.*/survey.*/config), compose another
+// top-level *Response/*Request, carry [json.RawMessage], or self-recurse
+// (GatewayResponse.ipv6) are deferred to Phase 3, where they get hand-designed
+// flat transport DTOs. Unexported lowercase DTOs cannot be referenced here.
 //
-// Function rather than package-level var to keep gochecknoglobals happy
-// and to make the list lazily constructed (so init isn't pulling in
-// internal/api as a side effect of `go run`).
+// Function rather than a package-level var to keep gochecknoglobals happy and
+// so `go run` doesn't pull internal/api into an init side effect.
 func schemaTargets() []schemaTarget {
-	t := requestSchemaTargets()
-	t = append(t, coreResponseSchemaTargets()...)
-	t = append(t, networkResponseSchemaTargets()...)
-	t = append(t, networkSettingsSchemaTargets()...)
-	return t
-}
+	rows := []reg{
+		// Request DTOs — strict-decode + validator surface (#1102).
+		{&api.LoginRequest{}, "login.schema.json"},
+		{&api.SetupCompleteRequest{}, "setup-complete.schema.json"},
+		{&api.RecoveryCompleteRequest{}, "recovery-complete.schema.json"},
+		{&api.SetMTURequest{}, "set-mtu.schema.json"},
+		{&api.PathRequest{}, "path.schema.json"},
+		{&api.WiFiConnectRequest{}, "wifi-connect.schema.json"},
+		{&api.TracerouteRequest{}, "traceroute-request.schema.json"},
 
-// requestSchemaTargets are the request DTOs — the original strict-decode +
-// validator surface (#1102).
-func requestSchemaTargets() []schemaTarget {
-	return []schemaTarget{
-		{value: &api.LoginRequest{}, filename: "login.schema.json", title: "LoginRequest"},
-		{value: &api.SetupCompleteRequest{}, filename: "setup-complete.schema.json", title: "SetupCompleteRequest"},
-		{
-			value:    &api.RecoveryCompleteRequest{},
-			filename: "recovery-complete.schema.json",
-			title:    "RecoveryCompleteRequest",
-		},
-		{value: &api.SetMTURequest{}, filename: "set-mtu.schema.json", title: "SetMTURequest"},
-		{value: &api.PathRequest{}, filename: "path.schema.json", title: "PathRequest"},
-		{value: &api.WiFiConnectRequest{}, filename: "wifi-connect.schema.json", title: "WiFiConnectRequest"},
-		{value: &api.TracerouteRequest{}, filename: "traceroute-request.schema.json", title: "TracerouteRequest"},
-	}
-}
+		// Auth / status / recovery / config responses.
+		{&api.StatusResponse{}, "status-response.schema.json"},
+		{&api.LoginResponse{}, "login-response.schema.json"},
+		{&api.CSRFTokenResponse{}, "csrf-token-response.schema.json"},
+		{&api.SetupStatusResponse{}, "setup-status-response.schema.json"},
+		{&api.LicenseStatusResponse{}, "license-status-response.schema.json"},
+		{&api.ErrorResponse{}, "error-response.schema.json"},
+		{&api.FeatureGateResponse{}, "feature-gate-response.schema.json"},
+		{&api.RecoveryStatusResponse{}, "recovery-status-response.schema.json"},
+		{&api.RecoveryInstructionsResponse{}, "recovery-instructions-response.schema.json"},
+		{&api.RecoveryCompleteResponse{}, "recovery-complete-response.schema.json"},
+		{&api.ConfigVersionResponse{}, "config-version-response.schema.json"},
+		{&api.BackupListResponse{}, "backup-list-response.schema.json"},
 
-// coreResponseSchemaTargets are the auth / status / recovery / config response
-// DTOs (Phase 2, ADR-0003 code-first widening). BackupListResponse is a nested
-// type, supported after the gen-types ref fix.
-func coreResponseSchemaTargets() []schemaTarget {
-	return []schemaTarget{
-		{value: &api.StatusResponse{}, filename: "status-response.schema.json", title: "StatusResponse"},
-		{value: &api.LoginResponse{}, filename: "login-response.schema.json", title: "LoginResponse"},
-		{value: &api.CSRFTokenResponse{}, filename: "csrf-token-response.schema.json", title: "CSRFTokenResponse"},
-		{
-			value:    &api.SetupStatusResponse{},
-			filename: "setup-status-response.schema.json",
-			title:    "SetupStatusResponse",
-		},
-		{
-			value:    &api.LicenseStatusResponse{},
-			filename: "license-status-response.schema.json",
-			title:    "LicenseStatusResponse",
-		},
-		{value: &api.ErrorResponse{}, filename: "error-response.schema.json", title: "ErrorResponse"},
-		{
-			value:    &api.FeatureGateResponse{},
-			filename: "feature-gate-response.schema.json",
-			title:    "FeatureGateResponse",
-		},
-		{
-			value:    &api.RecoveryStatusResponse{},
-			filename: "recovery-status-response.schema.json",
-			title:    "RecoveryStatusResponse",
-		},
-		{
-			value:    &api.RecoveryInstructionsResponse{},
-			filename: "recovery-instructions-response.schema.json",
-			title:    "RecoveryInstructionsResponse",
-		},
-		{
-			value:    &api.RecoveryCompleteResponse{},
-			filename: "recovery-complete-response.schema.json",
-			title:    "RecoveryCompleteResponse",
-		},
-		{
-			value:    &api.ConfigVersionResponse{},
-			filename: "config-version-response.schema.json",
-			title:    "ConfigVersionResponse",
-		},
-		{value: &api.BackupListResponse{}, filename: "backup-list-response.schema.json", title: "BackupListResponse"},
-	}
-}
+		// SAP / network / discovery responses.
+		{&api.CableResponse{}, "cable-response.schema.json"},
+		{&api.VLANResponse{}, "vlan-response.schema.json"},
+		{&api.WiFiResponse{}, "wifi-response.schema.json"},
+		{&api.SpeedtestResponse{}, "speedtest-response.schema.json"},
+		{&api.RogueDHCPResponse{}, "rogue-dhcp-response.schema.json"},
+		{&api.IPConfigResponse{}, "ipconfig-response.schema.json"},
+		{&api.DiscoveryResponse{}, "discovery-response.schema.json"},
+		{&api.NetworkProblemsResponse{}, "network-problems-response.schema.json"},
+		{&api.ProblemScanResponse{}, "problem-scan-response.schema.json"},
 
-// networkResponseSchemaTargets are SAP / network / discovery response DTOs
-// (Phase 2). GatewayResponse is intentionally excluded — its `ipv6` field reuses
-// GatewayResponse itself (accidental recursion); transport DTOs must be
-// non-recursive, so it waits for a flat ipv6 sub-type (Phase 3).
-func networkResponseSchemaTargets() []schemaTarget {
-	return []schemaTarget{
-		{value: &api.CableResponse{}, filename: "cable-response.schema.json", title: "CableResponse"},
-		{value: &api.VLANResponse{}, filename: "vlan-response.schema.json", title: "VLANResponse"},
-		{value: &api.WiFiResponse{}, filename: "wifi-response.schema.json", title: "WiFiResponse"},
-		{value: &api.SpeedtestResponse{}, filename: "speedtest-response.schema.json", title: "SpeedtestResponse"},
-		{value: &api.RogueDHCPResponse{}, filename: "rogue-dhcp-response.schema.json", title: "RogueDHCPResponse"},
-		{value: &api.IPConfigResponse{}, filename: "ipconfig-response.schema.json", title: "IPConfigResponse"},
-		{value: &api.DiscoveryResponse{}, filename: "discovery-response.schema.json", title: "DiscoveryResponse"},
-		{
-			value:    &api.NetworkProblemsResponse{},
-			filename: "network-problems-response.schema.json",
-			title:    "NetworkProblemsResponse",
-		},
-		{
-			value:    &api.ProblemScanResponse{},
-			filename: "problem-scan-response.schema.json",
-			title:    "ProblemScanResponse",
-		},
-	}
-}
+		// SAP / network settings.
+		{&api.IPSettingsRequest{}, "ip-settings-request.schema.json"},
+		{&api.IPSettingsResponse{}, "ip-settings-response.schema.json"},
+		{&api.SubnetRequest{}, "subnet-request.schema.json"},
+		{&api.SubnetResponse{}, "subnet-response.schema.json"},
+		{&api.VLANInterfaceRequest{}, "vlan-interface-request.schema.json"},
+		{&api.VLANTrafficResponse{}, "vlan-traffic-response.schema.json"},
+		{&api.SpeedtestStatusResponse{}, "speedtest-status-response.schema.json"},
+		{&api.RogueDHCPConfigResponse{}, "rogue-dhcp-config-response.schema.json"},
+		{&api.DNSServerResponse{}, "dns-server-response.schema.json"},
+		{&api.LinkResponse{}, "link-response.schema.json"},
 
-// networkSettingsSchemaTargets are flat / self-contained SAP + network
-// settings DTOs (Phase 2). Every entry is either flat or nests only local,
-// purpose-built transport sub-structs defined in internal/api (e.g.
-// VLANTrafficEntry, PoEInfo, SFPInfo, the already-covered SpeedtestResponse) —
-// no internal domain types cross the wire. DTOs that nest domain types
-// (PathResponse→discovery, RogueServersResponse→dhcp, DNSResponse) or compose
-// other top-level responses (OptionsResponse) are deferred to Phase 3, where
-// they get hand-designed flat transport DTOs.
-func networkSettingsSchemaTargets() []schemaTarget {
-	return []schemaTarget{
-		{value: &api.IPSettingsRequest{}, filename: "ip-settings-request.schema.json", title: "IPSettingsRequest"},
-		{
-			value:    &api.IPSettingsResponse{},
-			filename: "ip-settings-response.schema.json",
-			title:    "IPSettingsResponse",
-		},
-		{value: &api.SubnetRequest{}, filename: "subnet-request.schema.json", title: "SubnetRequest"},
-		{value: &api.SubnetResponse{}, filename: "subnet-response.schema.json", title: "SubnetResponse"},
-		{
-			value:    &api.VLANInterfaceRequest{},
-			filename: "vlan-interface-request.schema.json",
-			title:    "VLANInterfaceRequest",
-		},
-		{
-			value:    &api.VLANTrafficResponse{},
-			filename: "vlan-traffic-response.schema.json",
-			title:    "VLANTrafficResponse",
-		},
-		{
-			value:    &api.SpeedtestStatusResponse{},
-			filename: "speedtest-status-response.schema.json",
-			title:    "SpeedtestStatusResponse",
-		},
-		{
-			value:    &api.RogueDHCPConfigResponse{},
-			filename: "rogue-dhcp-config-response.schema.json",
-			title:    "RogueDHCPConfigResponse",
-		},
-		{
-			value:    &api.DNSServerResponse{},
-			filename: "dns-server-response.schema.json",
-			title:    "DNSServerResponse",
-		},
-		{value: &api.LinkResponse{}, filename: "link-response.schema.json", title: "LinkResponse"},
+		// Health-check endpoint responses (per protocol).
+		{&api.DICOMEndpointResponse{}, "dicom-endpoint-response.schema.json"},
+		{&api.FHIREndpointResponse{}, "fhir-endpoint-response.schema.json"},
+		{&api.FileShareEndpointResponse{}, "file-share-endpoint-response.schema.json"},
+		{&api.HL7EndpointResponse{}, "hl7-endpoint-response.schema.json"},
+		{&api.HTTPEndpointResponse{}, "http-endpoint-response.schema.json"},
+		{&api.LDAPEndpointResponse{}, "ldap-endpoint-response.schema.json"},
+		{&api.LTIEndpointResponse{}, "lti-endpoint-response.schema.json"},
+		{&api.ModbusEndpointResponse{}, "modbus-endpoint-response.schema.json"},
+		{&api.OPCUAEndpointResponse{}, "opcua-endpoint-response.schema.json"},
+		{&api.RTSPEndpointResponse{}, "rtsp-endpoint-response.schema.json"},
+		{&api.SQLEndpointResponse{}, "sql-endpoint-response.schema.json"},
+		{&api.PingTargetResponse{}, "ping-target-response.schema.json"},
+
+		// Health-check / discovery settings value objects.
+		{&api.TCPPortResponse{}, "tcp-port-response.schema.json"},
+		{&api.UDPPortResponse{}, "udp-port-response.schema.json"},
+		{&api.IperfSettingsResponse{}, "iperf-settings-response.schema.json"},
+		{&api.SpeedtestSettingsResponse{}, "speedtest-settings-response.schema.json"},
+		{&api.TCPProbeSettingsResponse{}, "tcp-probe-settings-response.schema.json"},
+		{&api.PassiveProtocolResponse{}, "passive-protocol-response.schema.json"},
+		{&api.PortScanResponse{}, "port-scan-response.schema.json"},
+		{&api.ProfilerResponse{}, "profiler-response.schema.json"},
+		{&api.TimingResponse{}, "timing-response.schema.json"},
+		{&api.FingerprintingResponse{}, "fingerprinting-response.schema.json"},
 	}
+
+	targets := make([]schemaTarget, len(rows))
+	for i, row := range rows {
+		targets[i] = schemaTarget{
+			value:    row.value,
+			filename: row.filename,
+			title:    reflect.TypeOf(row.value).Elem().Name(),
+		}
+	}
+
+	return targets
 }
 
 func main() {

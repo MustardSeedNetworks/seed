@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/timing-response.schema.json",
+  "$ref": "#/$defs/TimingResponse",
+  "$defs": {
+    "TimingResponse": {
+      "properties": {
+        "probeIntervalMs": {
+          "type": "integer"
+        },
+        "rescanIntervalMs": {
+          "type": "integer"
+        },
+        "workers": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "probeIntervalMs",
+        "rescanIntervalMs",
+        "workers"
+      ]
+    }
+  },
+  "title": "TimingResponse",
+  "description": "TimingResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

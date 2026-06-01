@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/port-scan-response.schema.json",
+  "$ref": "#/$defs/PortScanResponse",
+  "$defs": {
+    "PortScanResponse": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "tcpPorts": {
+          "type": "string"
+        },
+        "udpPorts": {
+          "type": "string"
+        },
+        "bannerTimeoutMs": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "tcpPorts",
+        "udpPorts",
+        "bannerTimeoutMs"
+      ]
+    }
+  },
+  "title": "PortScanResponse",
+  "description": "PortScanResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

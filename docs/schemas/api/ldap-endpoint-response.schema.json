@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/ldap-endpoint-response.schema.json",
+  "$ref": "#/$defs/LDAPEndpointResponse",
+  "$defs": {
+    "LDAPEndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "useTls": {
+          "type": "boolean"
+        },
+        "startTls": {
+          "type": "boolean"
+        },
+        "baseDn": {
+          "type": "string"
+        },
+        "searchFilter": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "useTls",
+        "startTls",
+        "baseDn",
+        "enabled",
+        "criticality"
+      ]
+    }
+  },
+  "title": "LDAPEndpointResponse",
+  "description": "LDAPEndpointResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

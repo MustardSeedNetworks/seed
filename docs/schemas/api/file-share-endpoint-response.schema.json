@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/file-share-endpoint-response.schema.json",
+  "$ref": "#/$defs/FileShareEndpointResponse",
+  "$defs": {
+    "FileShareEndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "share": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "testReadPerformance": {
+          "type": "boolean"
+        },
+        "testWritePerformance": {
+          "type": "boolean"
+        },
+        "testFileSizeMb": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "protocol",
+        "host",
+        "share",
+        "enabled",
+        "criticality"
+      ]
+    }
+  },
+  "title": "FileShareEndpointResponse",
+  "description": "FileShareEndpointResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

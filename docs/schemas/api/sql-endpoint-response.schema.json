@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/sql-endpoint-response.schema.json",
+  "$ref": "#/$defs/SQLEndpointResponse",
+  "$defs": {
+    "SQLEndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "driver": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "database": {
+          "type": "string"
+        },
+        "sslMode": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "driver",
+        "host",
+        "port",
+        "database",
+        "enabled",
+        "criticality"
+      ]
+    }
+  },
+  "title": "SQLEndpointResponse",
+  "description": "SQLEndpointResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
