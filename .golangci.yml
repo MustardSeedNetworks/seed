@@ -267,6 +267,17 @@ linters:
         # through platform/events, never a direct import. One rule per module
         # (a module may import its OWN sub-packages, so only sibling module roots
         # are denied). Sibling roots are listed ahead of their extraction.
+        # harvest is fully persistence-free (Phase 3 slice 1b-v): all SQL lives
+        # behind repo ports in adapters/store. Production code must not import
+        # internal/database. Test files are exempt (!$test) — they open real
+        # SQLite DBs via database.Open to back the store adapters under test.
+        "harvest-no-database":
+          files:
+            - "**/internal/modules/harvest/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/krisarmstrong/seed/internal/database
+              desc: "harvest is persistence-free — define a Repo port, implement it in adapters/store"
         "harvest-module-independence":
           files:
             - "**/internal/modules/harvest/**"

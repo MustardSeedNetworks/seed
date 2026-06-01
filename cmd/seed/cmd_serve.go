@@ -12,14 +12,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/krisarmstrong/seed/internal/adapters/store"
 	api "github.com/krisarmstrong/seed/internal/api"
+	"github.com/krisarmstrong/seed/internal/app"
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/canopy"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/modules/harvest"
 	"github.com/krisarmstrong/seed/internal/netif"
 	"github.com/krisarmstrong/seed/internal/paths"
 	"github.com/krisarmstrong/seed/internal/pipeline"
@@ -131,7 +130,7 @@ func initializeModules(cfg *config.Config, db *database.DB) *api.Modules {
 	logging.GetLogger().Info("Roots module initialized")
 
 	// Harvest: Reporting (report generation, templates, scheduling)
-	modules.Harvest = harvest.New(cfg, db, store.NewReportRepo(db))
+	modules.Harvest = app.NewHarvest(cfg, db)
 	logging.GetLogger().Info("Harvest module initialized")
 
 	return modules

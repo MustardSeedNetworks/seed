@@ -127,15 +127,15 @@ deny `net/http`, `database/sql`, `internal/adapters/**`, and the other four
 
 ### 4.5 Acceptance criteria (pilot done when all true)
 
-- [ ] `go test ./...` green; **harvest report/export golden snapshots unchanged**.
-- [ ] `internal/modules/harvest` imports no `net/http`, no `database/sql`, no
-      `internal/adapters/**`, no sibling `internal/modules/*` — `depguard` at `deny`.
-- [~] harvest's logic has table-driven unit tests that run with **fake ports**
-      (no DB, no filesystem) — the payoff the phase exists for. Started in
-      1b-iv: `report_repo_test.go` exercises `GeneratorService` report CRUD with
-      a fake `ReportRepo` and nil db/templates/aggregator. Completes as the
-      remaining repos (1b-v) land.
-- [ ] `internal/app/harvest.go` builds the module from `Deps`; `internal/api/modules.go`
+- [x] `go test ./...` green; **harvest report/export golden snapshots unchanged**.
+- [x] `internal/modules/harvest` imports no `net/http`, no `database/sql`, no
+      `internal/adapters/**`, no `internal/database`, no sibling
+      `internal/modules/*` — `depguard` at `deny` (1b-v completed the
+      `internal/database` ban, prod-only via `harvest-no-database`).
+- [x] harvest's logic has table-driven unit tests that run with **fake ports**
+      (no DB, no filesystem) — `report_repo_test.go` (fake `ReportRepo`) and
+      `aggregator_repo_test.go` (fake `MetricsRepo`).
+- [x] `internal/app/harvest.go` builds the module from `Deps`; `internal/api/modules.go`
       consumes the module through the same surface (no behavior change).
 - [x] The harvest→health coupling is gone (it was dead code — deleted, #1428).
 - [ ] Docs synced (§7): `THE_SEED_ARCHITECTURE` harvest section + folder-tree + ring diagram.
@@ -163,9 +163,20 @@ Resliced during execution into atomic PRs:
    the real store adapter (`modules-no-adapter-import`). Golden HTTP suite
    unchanged; lint 0; `go test ./...` green. Added a DB-free `GeneratorService`
    unit test via a fake `ReportRepo`.
-5. ⏳ **1b-v** — NEXT: `ScheduleRepo` (scheduler) + `MetricsRepo`/`ExportRepo`
-   (aggregator + export device/vuln queries), then ban `internal/database` from
-   `modules/harvest` in `depguard` and seed `internal/app/harvest.go`.
+5. ✅ **1b-v ScheduleRepo + MetricsRepo + ExportRepo** — all remaining harvest
+   SQL lifted into `internal/adapters/store` (`harvest_schedule_repo.go`,
+   `harvest_metrics_repo.go`, `harvest_export_repo.go`), behind three new ports
+   in `ports.go`. The aggregator keeps severity-bucket / category semantics
+   (the meaning of `statusCritical` stays in the domain; `MetricsRepo` returns a
+   raw `severity → count` map); `sqliteDateFormat` moved to the adapter (a SQL
+   concern). `GeneratorService`/`AggregatorService`/`SchedulerService` no longer
+   hold `*database.DB`. `harvest.New` now takes a **`Deps`** struct; the new
+   `internal/app/harvest.go` composition root wires the store adapters and is
+   called by both prod callers (`app.NewHarvest(cfg, db)`). `depguard`
+   `harvest-no-database` bans `internal/database` in harvest production code
+   (`!$test`; tests still open real SQLite). Golden HTTP suite unchanged; lint 0;
+   `go test ./...` green. Added `aggregator_repo_test.go` (DB-free aggregator via
+   a fake `MetricsRepo`). **The harvest module is now fully persistence-free.**
 
 (Clock/IDGen ports: optional/low-value — `time.Now()` sprawls 7 files, mostly
 presentational PDF/CSV stamps. Skip unless determinism is needed.)

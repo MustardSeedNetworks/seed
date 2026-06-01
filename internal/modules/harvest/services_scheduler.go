@@ -6,7 +6,6 @@ package harvest
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -15,13 +14,13 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/database"
 )
 
-// SchedulerService manages scheduled reports.
+// SchedulerService manages scheduled reports. It keeps schedules in memory and
+// ticks once per minute; row persistence goes through the ScheduleRepo port.
 type SchedulerService struct {
 	cfg       *config.Config
-	db        *database.DB
+	repo      ScheduleRepo
 	generator *GeneratorService
 	cancel    context.CancelFunc
 	mu        sync.RWMutex
@@ -31,12 +30,12 @@ type SchedulerService struct {
 // NewSchedulerService creates a new scheduler service.
 func NewSchedulerService(
 	cfg *config.Config,
-	db *database.DB,
+	repo ScheduleRepo,
 	generator *GeneratorService,
 ) *SchedulerService {
 	return &SchedulerService{
 		cfg:       cfg,
-		db:        db,
+		repo:      repo,
 		generator: generator,
 		schedules: make(map[string]*ScheduledReport),
 	}
@@ -58,58 +57,16 @@ func (s *SchedulerService) Start(ctx context.Context) error {
 }
 
 func (s *SchedulerService) loadSchedules(ctx context.Context) error {
-	rows, err := s.db.Query(ctx, `
-		SELECT id, name, template, format, schedule_json, parameters_json, recipients_json, enabled, last_run, next_run, created_at, updated_at
-		FROM scheduled_reports
-	`)
+	schedules, err := s.repo.ListSchedules(ctx)
 	if err != nil {
-		return fmt.Errorf("querying scheduled reports: %w", err)
+		return err
 	}
-	defer rows.Close()
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	for rows.Next() {
-		var sr ScheduledReport
-		var scheduleJSON, paramsJSON, recipientsJSON string
-		var lastRun, nextRun *string
-
-		scanErr := rows.Scan(
-			&sr.ID,
-			&sr.Name,
-			&sr.Template,
-			&sr.Format,
-			&scheduleJSON,
-			&paramsJSON,
-			&recipientsJSON,
-			&sr.Enabled,
-			&lastRun,
-			&nextRun,
-			&sr.CreatedAt,
-			&sr.UpdatedAt,
-		)
-		if scanErr != nil {
-			continue
-		}
-
-		_ = json.Unmarshal([]byte(scheduleJSON), &sr.Schedule)
-		_ = json.Unmarshal([]byte(paramsJSON), &sr.Parameters)
-		_ = json.Unmarshal([]byte(recipientsJSON), &sr.Recipients)
-
-		if lastRun != nil {
-			t, _ := time.Parse(time.RFC3339, *lastRun)
-			sr.LastRun = &t
-		}
-		if nextRun != nil {
-			t, _ := time.Parse(time.RFC3339, *nextRun)
-			sr.NextRun = &t
-		}
-
-		s.schedules[sr.ID] = &sr
-	}
-	if rowsErr := rows.Err(); rowsErr != nil {
-		return fmt.Errorf("iterating scheduled reports: %w", rowsErr)
+	for i := range schedules {
+		s.schedules[schedules[i].ID] = &schedules[i]
 	}
 
 	return nil
@@ -248,44 +205,7 @@ func (s *SchedulerService) Create(ctx context.Context, sr *ScheduledReport) erro
 }
 
 func (s *SchedulerService) saveSchedule(ctx context.Context, sr *ScheduledReport) error {
-	scheduleJSON, _ := json.Marshal(sr.Schedule)
-	paramsJSON, _ := json.Marshal(sr.Parameters)
-	recipientsJSON, _ := json.Marshal(sr.Recipients)
-
-	var lastRun, nextRun *string
-	if sr.LastRun != nil {
-		t := sr.LastRun.Format(time.RFC3339)
-		lastRun = &t
-	}
-	if sr.NextRun != nil {
-		t := sr.NextRun.Format(time.RFC3339)
-		nextRun = &t
-	}
-
-	_, err := s.db.Exec(
-		ctx,
-		`
-		INSERT OR REPLACE INTO scheduled_reports (id, name, template, format, schedule_json, parameters_json, recipients_json, enabled, last_run, next_run, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`,
-		sr.ID,
-		sr.Name,
-		sr.Template,
-		sr.Format,
-		string(scheduleJSON),
-		string(paramsJSON),
-		string(recipientsJSON),
-		sr.Enabled,
-		lastRun,
-		nextRun,
-		sr.CreatedAt.Format(time.RFC3339),
-		sr.UpdatedAt.Format(time.RFC3339),
-	)
-	if err != nil {
-		return fmt.Errorf("saving scheduled report: %w", err)
-	}
-
-	return nil
+	return s.repo.SaveSchedule(ctx, sr)
 }
 
 // Get retrieves a scheduled report.
@@ -342,9 +262,5 @@ func (s *SchedulerService) Delete(ctx context.Context, id string) error {
 	}
 
 	delete(s.schedules, id)
-	_, err := s.db.Exec(ctx, "DELETE FROM scheduled_reports WHERE id = ?", id)
-	if err != nil {
-		return fmt.Errorf("deleting scheduled report: %w", err)
-	}
-	return nil
+	return s.repo.DeleteSchedule(ctx, id)
 }

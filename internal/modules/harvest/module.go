@@ -7,39 +7,41 @@ import (
 	"sync"
 
 	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/database"
 )
 
 // Module is the main Harvest module providing reporting services.
 type Module struct {
 	mu         sync.RWMutex
 	cfg        *config.Config
-	db         *database.DB
 	generator  *GeneratorService
 	templates  *TemplateService
 	scheduler  *SchedulerService
 	aggregator *AggregatorService
 }
 
-// New creates a new Harvest module instance. The report-record persistence
-// adapter is injected (ReportRepo port) so the module stays free of SQL for
-// report CRUD; aggregator/scheduler still take db directly until their own
-// repos are extracted (slice 1b-v).
-func New(cfg *config.Config, db *database.DB, reports ReportRepo) *Module {
-	m := &Module{
-		cfg: cfg,
-		db:  db,
-	}
+// Deps holds the persistence adapters the Harvest module depends on. The
+// composition root (internal/app) implements these ports with the SQLite
+// adapters in internal/adapters/store; the module itself is persistence-free.
+type Deps struct {
+	Reports  ReportRepo
+	Schedule ScheduleRepo
+	Metrics  MetricsRepo
+	Export   ExportRepo
+}
+
+// New creates a new Harvest module instance from its port dependencies.
+func New(cfg *config.Config, deps Deps) *Module {
+	m := &Module{cfg: cfg}
 
 	// Create services in dependency order:
 	// 1. Templates (no dependencies)
-	// 2. Aggregator (needs db)
-	// 3. Generator (needs report repo + templates + aggregator)
-	// 4. Scheduler (needs generator)
+	// 2. Aggregator (needs the metrics repo)
+	// 3. Generator (needs report + export repos + templates + aggregator)
+	// 4. Scheduler (needs the schedule repo + generator)
 	m.templates = NewTemplateService(cfg)
-	m.aggregator = NewAggregatorService(cfg, db)
-	m.generator = NewGeneratorService(cfg, reports, db, m.templates, m.aggregator)
-	m.scheduler = NewSchedulerService(cfg, db, m.generator)
+	m.aggregator = NewAggregatorService(cfg, deps.Metrics)
+	m.generator = NewGeneratorService(cfg, deps.Reports, deps.Export, m.templates, m.aggregator)
+	m.scheduler = NewSchedulerService(cfg, deps.Schedule, m.generator)
 
 	return m
 }
