@@ -39,19 +39,13 @@ export interface UpdateStatus {
   startedAt: string;
 }
 
-/** Combined status response from the API */
-export interface UpdateStatusResponse {
-  state: UpdateState;
-  progress: number;
-  message: string;
-  error: string;
-  downloadedBytes: number;
-  totalBytes: number;
-  startedAt: string;
-  lastCheck: string;
-  updateReady: boolean;
-  requiresAction: boolean;
-}
+// UpdateStatusResponse, UpdateConfigRequest, and UpdateCheckResponse now come
+// from the generated schema (code-first contract) under
+// src/types/generated/. The hand-maintained twins had already drifted from the
+// backend DTO (e.g. downloadURL vs the real downloadUrl, missing canAutoUpdate/
+// requiresRestart) — the generated types are the source of truth. The
+// remaining types here (UpdateState, UpdateInfo, UpdateStatus, UpdateConfig,
+// UpdateActionResponse) have no generated DTO and stay hand-maintained.
 
 /** Update configuration */
 export interface UpdateConfig {
@@ -60,27 +54,6 @@ export interface UpdateConfig {
   autoDownload: boolean;
   autoApply: boolean;
   includePrerelease: boolean;
-}
-
-/** Request to update configuration */
-export interface UpdateConfigRequest {
-  enabled?: boolean;
-  checkInterval?: string;
-  autoDownload?: boolean;
-  autoApply?: boolean;
-  includePrerelease?: boolean;
-}
-
-/** API response for check/info endpoints */
-export interface UpdateCheckResponse {
-  available: boolean;
-  currentVersion: string;
-  latestVersion: string;
-  releaseNotes: string;
-  publishedAt: string;
-  downloadURL: string;
-  downloadSize: number;
-  checksumURL: string;
 }
 
 /** API response for action endpoints */

@@ -27,13 +27,10 @@
 import { useCallback, useState } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
-import type {
-  UpdateActionResponse,
-  UpdateCheckResponse,
-  UpdateConfig,
-  UpdateConfigRequest,
-  UpdateStatusResponse,
-} from '../types/update';
+import type { UpdateCheckResponse } from '../types/generated/update-check-response';
+import type { UpdateConfigRequest } from '../types/generated/update-config-request';
+import type { UpdateStatusResponse } from '../types/generated/update-status-response';
+import type { UpdateActionResponse, UpdateConfig } from '../types/update';
 
 /**
  * Custom hook for managing application updates.

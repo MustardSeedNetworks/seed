@@ -40,6 +40,7 @@ import {
   useVulnerabilitySettings,
   useWifiSettings,
 } from '../stores/profileStore';
+import type { ProfileImportResponse } from '../types/generated/profile-import-response';
 import type {
   AppearanceConfig,
   CableTestConfig,
@@ -52,7 +53,6 @@ import type {
   Profile,
   ProfileExportResponse,
   ProfileImportRequest,
-  ProfileImportResponse,
   ProfileInterfaceSelection,
   ProfileRequest,
   ProfileSettings,

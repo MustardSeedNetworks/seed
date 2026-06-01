@@ -143,13 +143,11 @@ export interface Settings {
 // Traceroute Types
 // ============================================================================
 
-export interface TracerouteRequest {
-  target: string;
-  protocol: 'icmp' | 'udp' | 'tcp';
-  port?: number;
-  maxHops?: number;
-  timeout?: number;
-}
+// TracerouteRequest and PathRequest now come from the generated schema
+// (code-first contract): src/types/generated/traceroute-request.ts and path.ts.
+// The result/view-model types below (TracerouteResult, L2PathResult,
+// PathResponse) stay hand-maintained — PathResponse is a Phase-3-deferred DTO
+// (it nests discovery.* domain types) and the others are its building blocks.
 
 export interface TracerouteHop {
   ttl: number;
@@ -193,14 +191,6 @@ export interface L2Hop {
 
 export interface L2PathResult {
   hops: L2Hop[];
-}
-
-export interface PathRequest {
-  source: string; // IP or "self"
-  destination: string; // IP or hostname
-  method: 'l3' | 'l2' | 'both';
-  protocol: 'icmp' | 'udp' | 'tcp';
-  port?: number;
 }
 
 export interface PathResponse {

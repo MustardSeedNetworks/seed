@@ -23,11 +23,11 @@ import { useEffect } from 'react';
 import { api } from '../api';
 import { LogComponents, logger } from '../lib/logger';
 import type { DefaultSettings } from '../types/defaults';
+import type { ProfileImportResponse } from '../types/generated/profile-import-response';
 import type {
   Profile,
   ProfileExportResponse,
   ProfileImportRequest,
-  ProfileImportResponse,
   ProfileListResponse,
   ProfileRequest,
 } from '../types/profile';
