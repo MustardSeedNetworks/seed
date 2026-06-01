@@ -9,7 +9,6 @@ package harvest
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -98,8 +97,13 @@ const (
 )
 
 // GeneratorService generates reports in various formats.
+//
+// It depends on a ReportRepo port for report-record persistence; db is
+// retained only for the bulk-export queries in services_export.go (devices /
+// device_vulnerabilities), which move behind an ExportRepo in slice 1b-v.
 type GeneratorService struct {
 	cfg         *config.Config
+	reports     ReportRepo
 	db          *database.DB
 	templates   *TemplateService
 	aggregator  *AggregatorService
@@ -110,12 +114,14 @@ type GeneratorService struct {
 // NewGeneratorService creates a new generator service.
 func NewGeneratorService(
 	cfg *config.Config,
+	reports ReportRepo,
 	db *database.DB,
 	templates *TemplateService,
 	aggregator *AggregatorService,
 ) *GeneratorService {
 	return &GeneratorService{
 		cfg:         cfg,
+		reports:     reports,
 		db:          db,
 		templates:   templates,
 		aggregator:  aggregator,
@@ -258,27 +264,5 @@ func (s *GeneratorService) failReport(ctx context.Context, report *Report, errMs
 }
 
 func (s *GeneratorService) saveReport(ctx context.Context, report *Report) error {
-	paramsJSON, _ := json.Marshal(report.Parameters)
-
-	var completedAt, expiresAt *string
-	if report.CompletedAt != nil {
-		t := report.CompletedAt.Format(time.RFC3339)
-		completedAt = &t
-	}
-	if report.ExpiresAt != nil {
-		t := report.ExpiresAt.Format(time.RFC3339)
-		expiresAt = &t
-	}
-
-	_, err := s.db.Exec(ctx, `
-		INSERT OR REPLACE INTO reports (id, name, type, format, template, status, file_path, file_size, parameters_json, error, created_at, completed_at, expires_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, report.ID, report.Name, report.Type, report.Format, report.Template, report.Status,
-		report.FilePath, report.FileSize, string(paramsJSON), report.Error,
-		report.CreatedAt.Format(time.RFC3339), completedAt, expiresAt)
-	if err != nil {
-		return fmt.Errorf("saving report to database: %w", err)
-	}
-
-	return nil
+	return s.reports.SaveReport(ctx, report)
 }

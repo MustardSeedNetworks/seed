@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/krisarmstrong/seed/internal/adapters/store"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/modules/harvest"
@@ -53,7 +54,7 @@ func setupSchedulerService(t *testing.T) (
 	require.NoError(t, ts.Load())
 
 	as := harvest.NewAggregatorService(cfg, db)
-	gs := harvest.NewGeneratorService(cfg, db, ts, as)
+	gs := harvest.NewGeneratorService(cfg, store.NewReportRepo(db), db, ts, as)
 	ss := harvest.NewSchedulerService(cfg, db, gs)
 
 	return ss, cleanup
