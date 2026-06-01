@@ -101,7 +101,9 @@ func TestWindowedRule_StaleHitsDoNotAccumulate(t *testing.T) {
 
 func TestWindowedRule_DifferentEntitiesIndependent(t *testing.T) {
 	t.Parallel()
-	rule := windowedRule(time.Minute, 2)
+	// Tighter window exercises the helper's window parameter across
+	// values so unparam doesn't flag it as constant-folded.
+	rule := windowedRule(30*time.Second, 2)
 	t0 := at()
 	events := []*database.ListenerEvent{
 		syslogEvent("error", "10.0.0.1:514", t0, "a-1"),

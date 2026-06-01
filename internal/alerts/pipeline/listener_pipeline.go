@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/krisarmstrong/seed/internal/engine"
 )
 
 // ListenerPipelineName is the engine identifier.
@@ -109,12 +110,15 @@ type ListenerPipeline struct {
 	defaults       []Rule
 	suppression    time.Duration
 
-	mu       sync.Mutex
-	started  bool
-	cancel   context.CancelFunc
-	wg       sync.WaitGroup
-	suppress suppressionStore
-	rules    []Rule
+	mu         sync.Mutex
+	started    bool
+	stopped    bool
+	cancel     context.CancelFunc
+	wg         sync.WaitGroup
+	suppress   suppressionStore
+	rules      []Rule
+	lastTickAt time.Time
+	lastError  string
 }
 
 // ListenerConfig wires the pipeline.
@@ -227,6 +231,28 @@ func NewListenerPipeline(cfg ListenerConfig) (*ListenerPipeline, error) {
 // Name implements [engine.Engine].
 func (*ListenerPipeline) Name() string { return ListenerPipelineName }
 
+// Status implements [engine.Reporter]. See observation_pipeline.go
+// for the state model — same rules apply here.
+func (p *ListenerPipeline) Status() engine.Status {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	s := engine.Status{
+		LastTickAt: p.lastTickAt,
+		LastError:  p.lastError,
+	}
+	switch {
+	case p.stopped:
+		s.State = engine.StateStopped
+	case p.lastTickAt.IsZero():
+		s.State = engine.StateOK
+	case p.now().Sub(p.lastTickAt) > degradedTickMultiplier*p.interval:
+		s.State = engine.StateDegraded
+	default:
+		s.State = engine.StateOK
+	}
+	return s
+}
+
 // Start kicks off the scan loop. Idempotent.
 func (p *ListenerPipeline) Start(ctx context.Context) error {
 	// Prime the ruleset from DB before announcing started, so the
@@ -332,6 +358,7 @@ func (p *ListenerPipeline) Stop(ctx context.Context) error {
 		return nil
 	}
 	p.started = false
+	p.stopped = true
 	if p.cancel != nil {
 		p.cancel()
 	}
@@ -372,6 +399,24 @@ func (p *ListenerPipeline) loop(ctx context.Context) {
 
 // ScanOnce processes one batch of listener_events.
 func (p *ListenerPipeline) ScanOnce(ctx context.Context) error {
+	err := p.scanOnceInner(ctx)
+	p.recordScan(err)
+	return err
+}
+
+// recordScan stamps lastTickAt + lastError for engine.Reporter.
+func (p *ListenerPipeline) recordScan(err error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.lastTickAt = p.now()
+	if err != nil {
+		p.lastError = err.Error()
+		return
+	}
+	p.lastError = ""
+}
+
+func (p *ListenerPipeline) scanOnceInner(ctx context.Context) error {
 	since, err := p.loadHighWater(ctx)
 	if err != nil {
 		return fmt.Errorf("load high-water: %w", err)
