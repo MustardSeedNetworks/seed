@@ -60,21 +60,17 @@ func engineNames(engines []engine.Engine) []string {
 	return out
 }
 
-func (s *Server) Start() error {
-	addr := fmt.Sprintf(":%d", s.config.Server.Port)
-
-	// Apply middleware stack: panic recovery → request ID → logging → security headers → body limit → CORS → i18n → auth → CSRF (fixes #519)
-	// Panic recovery is outermost to catch all panics
-	// Request ID middleware generates unique IDs for request correlation in logs
-	// Logging middleware logs all HTTP requests with timing, status, and request IDs
-	// Body limit middleware enforces request body size limits
-	// i18n middleware extracts Accept-Language and attaches localizer to context
-	// CSRF middleware validates tokens on state-changing requests (POST, PUT, DELETE)
-	// Phase D-2: apiTokenMiddleware sits in front of the JWT middleware.
-	// If the request carries `Authorization: Bearer sd_pat_…` it resolves
-	// the personal-access token, sets X-Username, and forwards. Otherwise
-	// it falls through and the JWT middleware handles the request normally.
-	handler := recoverMiddleware(
+// Handler returns the fully composed HTTP handler: the route mux wrapped in the
+// complete middleware stack. Both Start (production) and characterization tests
+// use this so they exercise the identical chain.
+//
+// Stack (outermost → innermost): panic recovery → request ID → logging →
+// security headers → body limit → CORS → i18n → API-token → auth (JWT) → CSRF
+// → mux (fixes #519). apiTokenMiddleware sits in front of the JWT middleware so
+// an `Authorization: Bearer sd_pat_…` resolves a personal-access token before
+// the JWT middleware runs; otherwise it falls through.
+func (s *Server) Handler() http.Handler {
+	return recoverMiddleware(
 		logging.RequestIDMiddleware(
 			logging.LoggingMiddleware(
 				securityHeadersMiddleware(
@@ -84,10 +80,14 @@ func (s *Server) Start() error {
 								apiTokenMiddleware(s.services.Auth.APITokens,
 									s.authManager().Middleware(
 										s.csrfManager().CSRFMiddleware(s.mux))))))))))
+}
+
+func (s *Server) Start() error {
+	addr := fmt.Sprintf(":%d", s.config.Server.Port)
 
 	s.httpServer = &http.Server{
 		Addr:         addr,
-		Handler:      handler,
+		Handler:      s.Handler(),
 		ReadTimeout:  serverReadTimeoutSec * time.Second,
 		WriteTimeout: serverWriteTimeoutMin * time.Minute, // Increased for large file downloads/exports (fixes #529)
 		IdleTimeout:  serverIdleTimeoutSec * time.Second,
