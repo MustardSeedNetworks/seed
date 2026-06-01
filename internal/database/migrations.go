@@ -1940,6 +1940,19 @@ func getMigrationDefs() []migrationDef {
 				  ON alert_suppressions(suppress_until);
 			`,
 		},
+		{
+			// #1379 — time-windowed alert rules. window_seconds=0
+			// preserves fire-on-first-match (legacy default).
+			// threshold_count is the count of matching events that
+			// must accrue inside window_seconds before the rule fires.
+			Description: "Add window_seconds + threshold_count to alert_rules",
+			Up: `
+				ALTER TABLE alert_rules
+				  ADD COLUMN window_seconds INTEGER NOT NULL DEFAULT 0;
+				ALTER TABLE alert_rules
+				  ADD COLUMN threshold_count INTEGER NOT NULL DEFAULT 1;
+			`,
+		},
 	}
 }
 

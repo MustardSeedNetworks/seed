@@ -10,6 +10,13 @@ import (
 
 // AlertRule is one row of alert_rules. Match fields default to ""
 // which the listener pipeline treats as "any value matches".
+//
+// Time-windowed rules (#1379): WindowSeconds > 0 + ThresholdCount > 1
+// means "fire only after N matching events within W seconds." The
+// default (0/1) preserves the pre-#1379 fire-on-first-match
+// behavior. Validation rejects ThresholdCount > 1 with WindowSeconds
+// = 0 because a threshold without a window has no time bound and
+// would silently never reset.
 type AlertRule struct {
 	ID                   int64
 	Name                 string
@@ -21,6 +28,8 @@ type AlertRule struct {
 	AlertSeverity        string
 	AlertTitle           string
 	AlertMessage         string
+	WindowSeconds        int
+	ThresholdCount       int
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 }
@@ -33,8 +42,12 @@ type AlertRulesRepository struct {
 // ErrAlertRuleNotFound is returned when a rule lookup misses.
 var ErrAlertRuleNotFound = errors.New("alert rule not found")
 
-// Create inserts a new rule.
-func (r *AlertRulesRepository) Create(ctx context.Context, rule *AlertRule) error {
+// validateRule enforces invariants both Create and Update need.
+// Time-window validation (#1379): threshold > 1 requires a window;
+// negative values are nonsense for either field. ThresholdCount == 0
+// is normalized to 1 in-place so callers (handlers, tests) that
+// don't think about windowing don't need to set the field.
+func validateRule(rule *AlertRule) error {
 	if rule.Name == "" {
 		return errors.New("alert_rules: Name required")
 	}
@@ -43,6 +56,26 @@ func (r *AlertRulesRepository) Create(ctx context.Context, rule *AlertRule) erro
 	}
 	if rule.AlertTitle == "" {
 		return errors.New("alert_rules: AlertTitle required")
+	}
+	if rule.WindowSeconds < 0 {
+		return errors.New("alert_rules: WindowSeconds must be >= 0")
+	}
+	if rule.ThresholdCount == 0 {
+		rule.ThresholdCount = 1
+	}
+	if rule.ThresholdCount < 1 {
+		return errors.New("alert_rules: ThresholdCount must be >= 1")
+	}
+	if rule.ThresholdCount > 1 && rule.WindowSeconds <= 0 {
+		return errors.New("alert_rules: ThresholdCount > 1 requires WindowSeconds > 0")
+	}
+	return nil
+}
+
+// Create inserts a new rule.
+func (r *AlertRulesRepository) Create(ctx context.Context, rule *AlertRule) error {
+	if err := validateRule(rule); err != nil {
+		return err
 	}
 	now := time.Now().UTC()
 	rule.CreatedAt = now
@@ -55,8 +88,9 @@ func (r *AlertRulesRepository) Create(ctx context.Context, rule *AlertRule) erro
 		INSERT INTO alert_rules
 		  (name, enabled, match_kind, match_severity, match_payload_contains,
 		   alert_type, alert_severity, alert_title, alert_message,
+		   window_seconds, threshold_count,
 		   created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`,
 		rule.Name, enabled,
 		toNullString(rule.MatchKind),
@@ -64,6 +98,7 @@ func (r *AlertRulesRepository) Create(ctx context.Context, rule *AlertRule) erro
 		toNullString(rule.MatchPayloadContains),
 		rule.AlertType, rule.AlertSeverity,
 		rule.AlertTitle, rule.AlertMessage,
+		rule.WindowSeconds, rule.ThresholdCount,
 		now.Format(time.RFC3339Nano), now.Format(time.RFC3339Nano),
 	)
 	if err != nil {
@@ -80,6 +115,7 @@ func (r *AlertRulesRepository) Get(ctx context.Context, id int64) (*AlertRule, e
 	row := r.db.QueryRow(ctx, `
 		SELECT id, name, enabled, match_kind, match_severity, match_payload_contains,
 		       alert_type, alert_severity, alert_title, alert_message,
+		       window_seconds, threshold_count,
 		       created_at, updated_at
 		FROM alert_rules WHERE id = ?
 	`, id)
@@ -93,6 +129,7 @@ func (r *AlertRulesRepository) List(ctx context.Context, enabledOnly bool) ([]*A
 	query := `
 		SELECT id, name, enabled, match_kind, match_severity, match_payload_contains,
 		       alert_type, alert_severity, alert_title, alert_message,
+		       window_seconds, threshold_count,
 		       created_at, updated_at
 		FROM alert_rules
 	`
@@ -110,8 +147,8 @@ func (r *AlertRulesRepository) Update(ctx context.Context, rule *AlertRule) erro
 	if rule.ID == 0 {
 		return errors.New("alert_rules: ID required for Update")
 	}
-	if rule.Name == "" || rule.AlertType == "" || rule.AlertSeverity == "" || rule.AlertTitle == "" {
-		return errors.New("alert_rules: Name + AlertType + AlertSeverity + AlertTitle required")
+	if err := validateRule(rule); err != nil {
+		return err
 	}
 	enabled := 0
 	if rule.Enabled {
@@ -122,6 +159,7 @@ func (r *AlertRulesRepository) Update(ctx context.Context, rule *AlertRule) erro
 			name = ?, enabled = ?,
 			match_kind = ?, match_severity = ?, match_payload_contains = ?,
 			alert_type = ?, alert_severity = ?, alert_title = ?, alert_message = ?,
+			window_seconds = ?, threshold_count = ?,
 			updated_at = ?
 		WHERE id = ?
 	`,
@@ -131,6 +169,7 @@ func (r *AlertRulesRepository) Update(ctx context.Context, rule *AlertRule) erro
 		toNullString(rule.MatchPayloadContains),
 		rule.AlertType, rule.AlertSeverity,
 		rule.AlertTitle, rule.AlertMessage,
+		rule.WindowSeconds, rule.ThresholdCount,
 		time.Now().UTC().Format(time.RFC3339Nano),
 		rule.ID,
 	)
@@ -172,6 +211,7 @@ func scanAlertRule(scan func(...any) error) (*AlertRule, error) {
 		&matchKind, &matchSev, &matchPayload,
 		&rule.AlertType, &rule.AlertSeverity,
 		&rule.AlertTitle, &rule.AlertMessage,
+		&rule.WindowSeconds, &rule.ThresholdCount,
 		&createdStr, &updatedStr,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
