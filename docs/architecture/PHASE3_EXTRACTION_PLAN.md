@@ -130,8 +130,11 @@ deny `net/http`, `database/sql`, `internal/adapters/**`, and the other four
 - [ ] `go test ./...` green; **harvest report/export golden snapshots unchanged**.
 - [ ] `internal/modules/harvest` imports no `net/http`, no `database/sql`, no
       `internal/adapters/**`, no sibling `internal/modules/*` — `depguard` at `deny`.
-- [ ] harvest's logic has table-driven unit tests that run with **fake ports**
-      (no DB, no filesystem) — the payoff the phase exists for.
+- [~] harvest's logic has table-driven unit tests that run with **fake ports**
+      (no DB, no filesystem) — the payoff the phase exists for. Started in
+      1b-iv: `report_repo_test.go` exercises `GeneratorService` report CRUD with
+      a fake `ReportRepo` and nil db/templates/aggregator. Completes as the
+      remaining repos (1b-v) land.
 - [ ] `internal/app/harvest.go` builds the module from `Deps`; `internal/api/modules.go`
       consumes the module through the same surface (no behavior change).
 - [x] The harvest→health coupling is gone (it was dead code — deleted, #1428).
@@ -149,9 +152,18 @@ Resliced during execution into atomic PRs:
 3. ✅ **1b-iii enforce purity** (#1429): `depguard` `modules-domain-purity`
    (deny `net/http`/`database/sql`/`internal/adapters` on `internal/modules/**`)
    + `harvest-module-independence` (deny sibling module roots). RED-proven.
-4. ⏳ **1b-iv ReportRepo** — NEXT (see §4.7). Relocate reports SQL into the
-   `adapters/store` ring behind a port.
-5. ⏳ **1b-v** — `ScheduleRepo` (scheduler) + `MetricsRepo`/`ExportRepo`
+4. ✅ **1b-iv ReportRepo** (see §4.7): report-record SQL (`GetReport`/
+   `ListReports`/`scanReport`/`saveReport`/`DeleteReport` row) lifted verbatim
+   into `internal/adapters/store/harvest_repo.go` behind the `harvest.ReportRepo`
+   port (`ports.go`). `GeneratorService` delegates and keeps `db` for export
+   (1b-v). Rewired `harvest.New`/`NewGeneratorService` + the 2 prod callers
+   (`cmd_serve.go`, `cmd_service_windows.go`) + all test sites. `depguard`
+   `modules-domain-purity` split: the transport/SQL-driver ban stays universal,
+   the infra-ring ban is now production-only (`!$test`) so test files can wire
+   the real store adapter (`modules-no-adapter-import`). Golden HTTP suite
+   unchanged; lint 0; `go test ./...` green. Added a DB-free `GeneratorService`
+   unit test via a fake `ReportRepo`.
+5. ⏳ **1b-v** — NEXT: `ScheduleRepo` (scheduler) + `MetricsRepo`/`ExportRepo`
    (aggregator + export device/vuln queries), then ban `internal/database` from
    `modules/harvest` in `depguard` and seed `internal/app/harvest.go`.
 

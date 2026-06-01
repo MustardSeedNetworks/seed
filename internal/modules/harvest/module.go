@@ -21,8 +21,11 @@ type Module struct {
 	aggregator *AggregatorService
 }
 
-// New creates a new Harvest module instance.
-func New(cfg *config.Config, db *database.DB) *Module {
+// New creates a new Harvest module instance. The report-record persistence
+// adapter is injected (ReportRepo port) so the module stays free of SQL for
+// report CRUD; aggregator/scheduler still take db directly until their own
+// repos are extracted (slice 1b-v).
+func New(cfg *config.Config, db *database.DB, reports ReportRepo) *Module {
 	m := &Module{
 		cfg: cfg,
 		db:  db,
@@ -31,11 +34,11 @@ func New(cfg *config.Config, db *database.DB) *Module {
 	// Create services in dependency order:
 	// 1. Templates (no dependencies)
 	// 2. Aggregator (needs db)
-	// 3. Generator (needs templates + aggregator)
+	// 3. Generator (needs report repo + templates + aggregator)
 	// 4. Scheduler (needs generator)
 	m.templates = NewTemplateService(cfg)
 	m.aggregator = NewAggregatorService(cfg, db)
-	m.generator = NewGeneratorService(cfg, db, m.templates, m.aggregator)
+	m.generator = NewGeneratorService(cfg, reports, db, m.templates, m.aggregator)
 	m.scheduler = NewSchedulerService(cfg, db, m.generator)
 
 	return m

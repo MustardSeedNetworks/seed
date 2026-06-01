@@ -12,6 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/krisarmstrong/seed/internal/adapters/store"
 	api "github.com/krisarmstrong/seed/internal/api"
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/canopy"
@@ -130,7 +131,7 @@ func initializeModules(cfg *config.Config, db *database.DB) *api.Modules {
 	logging.GetLogger().Info("Roots module initialized")
 
 	// Harvest: Reporting (report generation, templates, scheduling)
-	modules.Harvest = harvest.New(cfg, db)
+	modules.Harvest = harvest.New(cfg, db, store.NewReportRepo(db))
 	logging.GetLogger().Info("Harvest module initialized")
 
 	return modules

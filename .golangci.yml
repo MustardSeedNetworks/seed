@@ -239,6 +239,10 @@ linters:
         # no transport, no SQL driver, no infra ring. Applies to every package
         # under internal/modules/ as it is extracted (harvest first). This makes
         # "dependencies point inward" a CI gate, not a hope.
+        #
+        # The no-transport / no-SQL-driver ban holds for ALL files (production
+        # AND tests): module code, even in tests, talks to I/O through ports and
+        # the internal/database wrapper, never net/http or a raw database/sql.
         "modules-domain-purity":
           files:
             - "**/internal/modules/**"
@@ -247,6 +251,16 @@ linters:
               desc: "modules are pure — define a port, implement it in adapters/http"
             - pkg: database/sql
               desc: "modules are pure — define a Repo port, implement it in adapters/store"
+        # The infra-ring ban is production-only: a module's own code must never
+        # import internal/adapters (inward-only direction). Test files are
+        # exempt because they are mini composition roots — they wire the real
+        # store/http adapter to exercise the module end-to-end (e.g. harvest's
+        # tests build store.NewReportRepo(db)). $test = all _test.go files.
+        "modules-no-adapter-import":
+          files:
+            - "**/internal/modules/**"
+            - "!$test"
+          deny:
             - pkg: github.com/krisarmstrong/seed/internal/adapters
               desc: "inward-only — adapters depend on modules, never the reverse"
         # Module independence: each module is an island; cross-module talk goes
