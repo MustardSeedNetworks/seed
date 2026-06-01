@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/user-response.schema.json",
+  "$ref": "#/$defs/UserResponse",
+  "$defs": {
+    "UserResponse": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "username": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "authProvider": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "lastLogin": {
+          "type": "string"
+        },
+        "lockedUntilFuture": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "username",
+        "role",
+        "isActive",
+        "authProvider",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "title": "UserResponse",
+  "description": "UserResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

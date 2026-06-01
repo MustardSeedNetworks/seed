@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/mint-token-request.schema.json",
+  "$ref": "#/$defs/MintTokenRequest",
+  "$defs": {
+    "MintTokenRequest": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name"
+      ]
+    }
+  },
+  "title": "MintTokenRequest",
+  "description": "MintTokenRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

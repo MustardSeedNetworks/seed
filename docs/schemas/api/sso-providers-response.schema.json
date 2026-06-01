@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/sso-providers-response.schema.json",
+  "$ref": "#/$defs/SSOProvidersResponse",
+  "$defs": {
+    "SSOProvidersResponse": {
+      "properties": {
+        "providers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "providers"
+      ]
+    }
+  },
+  "title": "SSOProvidersResponse",
+  "description": "SSOProvidersResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

@@ -149,6 +149,24 @@ func schemaTargets() []schemaTarget {
 		{&api.EngineScanRequest{}, "engine-scan-request.schema.json"},
 		{&api.SetInterfaceRequest{}, "set-interface-request.schema.json"},
 		{&api.WiFiSettingsResponse{}, "wifi-settings-response.schema.json"},
+
+		// Users / API tokens / update / SSO / logs.
+		{&api.UserResponse{}, "user-response.schema.json"},
+		{&api.CreateUserRequest{}, "create-user-request.schema.json"},
+		{&api.UpdateUserRequest{}, "update-user-request.schema.json"},
+		{&api.MintTokenRequest{}, "mint-token-request.schema.json"},
+		{&api.MintTokenResponse{}, "mint-token-response.schema.json"},
+		{&api.UpdateCheckResponse{}, "update-check-response.schema.json"},
+		{&api.UpdateConfigRequest{}, "update-config-request.schema.json"},
+		{&api.UpdateConfigResponse{}, "update-config-response.schema.json"},
+		{&api.UpdateStatusResponse{}, "update-status-response.schema.json"},
+		{&api.SSOProvidersResponse{}, "sso-providers-response.schema.json"},
+		{&api.NVDAPIKeyValidateRequest{}, "nvd-api-key-validate-request.schema.json"},
+		{&api.NVDAPIKeyValidateResponse{}, "nvd-api-key-validate-response.schema.json"},
+		{&api.RestoreRequest{}, "restore-request.schema.json"},
+		{&api.ClientLogRequest{}, "client-log-request.schema.json"},
+		{&api.LogStatsResponse{}, "log-stats-response.schema.json"},
+		{&api.SNMPv3CredentialResponse{}, "snmpv3-credential-response.schema.json"},
 	}
 
 	targets := make([]schemaTarget, len(rows))

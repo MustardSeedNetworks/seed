@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/restore-request.schema.json",
+  "$ref": "#/$defs/RestoreRequest",
+  "$defs": {
+    "RestoreRequest": {
+      "properties": {
+        "backup_name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "backup_name"
+      ]
+    }
+  },
+  "title": "RestoreRequest",
+  "description": "RestoreRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

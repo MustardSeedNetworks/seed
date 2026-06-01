@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/client-log-request.schema.json",
+  "$ref": "#/$defs/ClientLogRequest",
+  "$defs": {
+    "ClientLogEntry": {
+      "properties": {
+        "timestamp": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "stack": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "timestamp",
+        "level",
+        "component",
+        "message"
+      ]
+    },
+    "ClientLogRequest": {
+      "properties": {
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/ClientLogEntry"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "entries"
+      ]
+    }
+  },
+  "title": "ClientLogRequest",
+  "description": "ClientLogRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
