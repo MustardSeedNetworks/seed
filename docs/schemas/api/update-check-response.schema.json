@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/update-check-response.schema.json",
+  "$ref": "#/$defs/UpdateCheckResponse",
+  "$defs": {
+    "UpdateCheckResponse": {
+      "properties": {
+        "available": {
+          "type": "boolean"
+        },
+        "currentVersion": {
+          "type": "string"
+        },
+        "latestVersion": {
+          "type": "string"
+        },
+        "releaseNotes": {
+          "type": "string"
+        },
+        "releaseUrl": {
+          "type": "string"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "downloadUrl": {
+          "type": "string"
+        },
+        "downloadSize": {
+          "type": "integer"
+        },
+        "checksumUrl": {
+          "type": "string"
+        },
+        "canAutoUpdate": {
+          "type": "boolean"
+        },
+        "requiresRestart": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "available",
+        "currentVersion",
+        "latestVersion",
+        "canAutoUpdate",
+        "requiresRestart"
+      ]
+    }
+  },
+  "title": "UpdateCheckResponse",
+  "description": "UpdateCheckResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

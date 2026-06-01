@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/update-status-response.schema.json",
+  "$ref": "#/$defs/UpdateStatusResponse",
+  "$defs": {
+    "UpdateStatusResponse": {
+      "properties": {
+        "state": {
+          "type": "string"
+        },
+        "progress": {
+          "type": "number"
+        },
+        "message": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "downloadedBytes": {
+          "type": "integer"
+        },
+        "totalBytes": {
+          "type": "integer"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastCheck": {
+          "type": "string"
+        },
+        "updateReady": {
+          "type": "boolean"
+        },
+        "requiresAction": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "state",
+        "progress",
+        "updateReady",
+        "requiresAction"
+      ]
+    }
+  },
+  "title": "UpdateStatusResponse",
+  "description": "UpdateStatusResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

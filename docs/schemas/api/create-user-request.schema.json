@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/create-user-request.schema.json",
+  "$ref": "#/$defs/CreateUserRequest",
+  "$defs": {
+    "CreateUserRequest": {
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "username",
+        "password",
+        "role"
+      ]
+    }
+  },
+  "title": "CreateUserRequest",
+  "description": "CreateUserRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
