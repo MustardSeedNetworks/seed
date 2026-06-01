@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/iperf-info-response.schema.json",
+  "$ref": "#/$defs/IperfInfoResponse",
+  "$defs": {
+    "IperfInfoResponse": {
+      "properties": {
+        "installed": {
+          "type": "boolean"
+        },
+        "version": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "installed"
+      ]
+    }
+  },
+  "title": "IperfInfoResponse",
+  "description": "IperfInfoResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
