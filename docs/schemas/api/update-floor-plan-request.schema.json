@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/update-floor-plan-request.schema.json",
+  "$ref": "#/$defs/UpdateFloorPlanRequest",
+  "$defs": {
+    "UpdateFloorPlanRequest": {
+      "properties": {
+        "imageData": {
+          "type": "string"
+        },
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "scaleM": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "imageData",
+        "width",
+        "height",
+        "scaleM"
+      ]
+    }
+  },
+  "title": "UpdateFloorPlanRequest",
+  "description": "UpdateFloorPlanRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

@@ -167,6 +167,18 @@ func schemaTargets() []schemaTarget {
 		{&api.ClientLogRequest{}, "client-log-request.schema.json"},
 		{&api.LogStatsResponse{}, "log-stats-response.schema.json"},
 		{&api.SNMPv3CredentialResponse{}, "snmpv3-credential-response.schema.json"},
+
+		// Survey (Canopy) request DTOs + profile-import response.
+		{&api.CreateSurveyRequest{}, "create-survey-request.schema.json"},
+		{&api.AddFloorRequest{}, "add-floor-request.schema.json"},
+		{&api.UpdateFloorRequest{}, "update-floor-request.schema.json"},
+		{&api.UpdateFloorPlanRequest{}, "update-floor-plan-request.schema.json"},
+		{&api.SetActiveFloorRequest{}, "set-active-floor-request.schema.json"},
+		{&api.AddFloorSampleRequest{}, "add-floor-sample-request.schema.json"},
+		{&api.AddSampleRequest{}, "add-sample-request.schema.json"},
+		{&api.UpdateSurveySettingsRequest{}, "update-survey-settings-request.schema.json"},
+		{&api.GenerateReportRequest{}, "generate-report-request.schema.json"},
+		{&api.ProfileImportResponse{}, "profile-import-response.schema.json"},
 	}
 
 	targets := make([]schemaTarget, len(rows))

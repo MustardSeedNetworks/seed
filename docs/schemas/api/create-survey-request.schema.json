@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/create-survey-request.schema.json",
+  "$ref": "#/$defs/CreateSurveyRequest",
+  "$defs": {
+    "CreateSurveyRequest": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "surveyType": {
+          "type": "string"
+        },
+        "interface": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "description",
+        "surveyType",
+        "interface"
+      ]
+    }
+  },
+  "title": "CreateSurveyRequest",
+  "description": "CreateSurveyRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
