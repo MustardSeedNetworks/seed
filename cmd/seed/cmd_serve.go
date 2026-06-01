@@ -15,7 +15,6 @@ import (
 	api "github.com/krisarmstrong/seed/internal/api"
 	"github.com/krisarmstrong/seed/internal/app"
 	"github.com/krisarmstrong/seed/internal/auth"
-	"github.com/krisarmstrong/seed/internal/canopy"
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/logging"
@@ -114,10 +113,6 @@ func initializeModules(cfg *config.Config, db *database.DB) *api.Modules {
 	// Sap: Live telemetry (gateway, DNS, speedtest, iperf monitoring)
 	modules.Sap = services.New(cfg, db)
 	logging.GetLogger().Info("Sap module initialized")
-
-	// Canopy: Wi-Fi planning (surveys, site planning)
-	modules.Canopy = canopy.New(cfg, db)
-	logging.GetLogger().Info("Canopy module initialized")
 
 	// Harvest: Reporting (report generation, templates, scheduling)
 	modules.Harvest = app.NewHarvest(cfg, db)
