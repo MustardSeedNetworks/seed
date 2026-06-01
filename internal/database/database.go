@@ -64,21 +64,22 @@ type DB struct {
 	closed bool
 
 	// Repositories - lazily initialized
-	profiles         *ProfileRepository
-	metrics          *MetricsRepository
-	devices          *DeviceRepository
-	alerts           *AlertRepository
-	settings         *SettingsRepository
-	logs             *LogRepository
-	healthChecks     *HealthCheckRepository
-	discovery        *DiscoveryRepository
-	clients          *ClientRepository
-	probes           *ProbeRepository
-	pollingTargets   *PollingTargetRepository
-	snmpObservations *SNMPObservationsRepository
-	listenerEvents   *ListenerEventsRepository
-	topology         *TopologyRepository
-	alertRules       *AlertRulesRepository
+	profiles          *ProfileRepository
+	metrics           *MetricsRepository
+	devices           *DeviceRepository
+	alerts            *AlertRepository
+	settings          *SettingsRepository
+	logs              *LogRepository
+	healthChecks      *HealthCheckRepository
+	discovery         *DiscoveryRepository
+	clients           *ClientRepository
+	probes            *ProbeRepository
+	pollingTargets    *PollingTargetRepository
+	snmpObservations  *SNMPObservationsRepository
+	listenerEvents    *ListenerEventsRepository
+	topology          *TopologyRepository
+	alertRules        *AlertRulesRepository
+	alertSuppressions *AlertSuppressionsRepository
 }
 
 // Config holds database configuration options.
@@ -544,6 +545,20 @@ func (db *DB) AlertRules() *AlertRulesRepository {
 		db.alertRules = &AlertRulesRepository{db: db}
 	}
 	return db.alertRules
+}
+
+// AlertSuppressions returns the repo for persisted suppression
+// markers used by the alert pipelines (#1380). Persisting means a
+// restart mid-incident doesn't re-fire alerts that were already
+// emitted.
+func (db *DB) AlertSuppressions() *AlertSuppressionsRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.alertSuppressions == nil {
+		db.alertSuppressions = &AlertSuppressionsRepository{db: db}
+	}
+	return db.alertSuppressions
 }
 
 // Exec executes a query without returning any rows.
