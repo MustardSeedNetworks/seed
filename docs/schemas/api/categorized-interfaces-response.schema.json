@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/categorized-interfaces-response.schema.json",
+  "$ref": "#/$defs/CategorizedInterfacesResponse",
+  "$defs": {
+    "CategorizedInterfacesResponse": {
+      "properties": {
+        "ethernet": {
+          "items": {
+            "$ref": "#/$defs/InterfaceInfo"
+          },
+          "type": "array"
+        },
+        "wifi": {
+          "items": {
+            "$ref": "#/$defs/InterfaceInfo"
+          },
+          "type": "array"
+        },
+        "recommendedEthernet": {
+          "type": "string"
+        },
+        "recommendedWifi": {
+          "type": "string"
+        },
+        "currentInterface": {
+          "type": "string"
+        },
+        "currentType": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ethernet",
+        "wifi",
+        "currentInterface",
+        "currentType"
+      ]
+    },
+    "InterfaceInfo": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "friendlyName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "up": {
+          "type": "boolean"
+        },
+        "running": {
+          "type": "boolean"
+        },
+        "hardwareAddr": {
+          "type": "string"
+        },
+        "mtu": {
+          "type": "integer"
+        },
+        "addresses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "speed": {
+          "type": "integer"
+        },
+        "speedDisplay": {
+          "type": "string"
+        },
+        "chipsetVendor": {
+          "type": "string"
+        },
+        "chipsetModel": {
+          "type": "string"
+        },
+        "hasTDR": {
+          "type": "boolean"
+        },
+        "hasDOM": {
+          "type": "boolean"
+        },
+        "score": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "type",
+        "up",
+        "running",
+        "hardwareAddr",
+        "mtu",
+        "addresses"
+      ]
+    }
+  },
+  "title": "CategorizedInterfacesResponse",
+  "description": "CategorizedInterfacesResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

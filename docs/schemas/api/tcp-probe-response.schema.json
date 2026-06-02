@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/tcp-probe-response.schema.json",
+  "$ref": "#/$defs/TCPProbeResponse",
+  "$defs": {
+    "TCPProbeResponse": {
+      "properties": {
+        "target": {
+          "type": "string"
+        },
+        "results": {
+          "items": {
+            "$ref": "#/$defs/TCPProbeResult"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "target",
+        "results"
+      ]
+    },
+    "TCPProbeResult": {
+      "properties": {
+        "ip": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "state": {
+          "type": "string"
+        },
+        "ttl": {
+          "type": "integer"
+        },
+        "rtt": {
+          "type": "integer"
+        },
+        "flags": {
+          "type": "integer"
+        },
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ip",
+        "port",
+        "state",
+        "ttl",
+        "rtt"
+      ]
+    }
+  },
+  "title": "TCPProbeResponse",
+  "description": "TCPProbeResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

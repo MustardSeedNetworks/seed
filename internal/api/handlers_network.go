@@ -182,12 +182,65 @@ type SetMTURequest struct {
 // CategorizedInterfacesResponse groups interfaces by type for UI display.
 // #756: Interfaces are categorized so WiFi only shows under WiFi, Ethernet under Ethernet.
 type CategorizedInterfacesResponse struct {
-	Ethernet            []*netif.InterfaceInfo `json:"ethernet"`
-	WiFi                []*netif.InterfaceInfo `json:"wifi"`
-	RecommendedEthernet string                 `json:"recommendedEthernet,omitempty"`
-	RecommendedWiFi     string                 `json:"recommendedWifi,omitempty"`
-	CurrentInterface    string                 `json:"currentInterface"`
-	CurrentType         string                 `json:"currentType"`
+	Ethernet            []InterfaceInfo `json:"ethernet"`
+	WiFi                []InterfaceInfo `json:"wifi"`
+	RecommendedEthernet string          `json:"recommendedEthernet,omitempty"`
+	RecommendedWiFi     string          `json:"recommendedWifi,omitempty"`
+	CurrentInterface    string          `json:"currentInterface"`
+	CurrentType         string          `json:"currentType"`
+}
+
+// InterfaceInfo is the flat transport view of a network interface, mirroring
+// netif.InterfaceInfo's wire shape so the published schema does not depend on
+// the netif domain package. Type is a plain string (the domain's InterfaceType
+// is a string enum).
+type InterfaceInfo struct {
+	Name          string   `json:"name"`
+	FriendlyName  string   `json:"friendlyName,omitempty"`
+	Description   string   `json:"description,omitempty"`
+	Type          string   `json:"type"`
+	Up            bool     `json:"up"`
+	Running       bool     `json:"running"`
+	HardwareAddr  string   `json:"hardwareAddr"`
+	MTU           int      `json:"mtu"`
+	Addresses     []string `json:"addresses"`
+	Speed         int64    `json:"speed,omitempty"`
+	SpeedDisplay  string   `json:"speedDisplay,omitempty"`
+	ChipsetVendor string   `json:"chipsetVendor,omitempty"`
+	ChipsetModel  string   `json:"chipsetModel,omitempty"`
+	HasTDR        bool     `json:"hasTDR,omitempty"`
+	HasDOM        bool     `json:"hasDOM,omitempty"`
+	Score         int      `json:"score,omitempty"`
+}
+
+// toInterfaceInfos maps physical interfaces onto their flat transport view. It
+// always returns a non-nil slice so an empty category serializes as [] not null.
+func toInterfaceInfos(ifaces []*netif.InterfaceInfo) []InterfaceInfo {
+	out := make([]InterfaceInfo, 0, len(ifaces))
+	for _, iface := range ifaces {
+		if iface == nil {
+			continue
+		}
+		out = append(out, InterfaceInfo{
+			Name:          iface.Name,
+			FriendlyName:  iface.FriendlyName,
+			Description:   iface.Description,
+			Type:          string(iface.Type),
+			Up:            iface.Up,
+			Running:       iface.Running,
+			HardwareAddr:  iface.HardwareAddr,
+			MTU:           iface.MTU,
+			Addresses:     iface.Addresses,
+			Speed:         iface.Speed,
+			SpeedDisplay:  iface.SpeedDisplay,
+			ChipsetVendor: iface.ChipsetVendor,
+			ChipsetModel:  iface.ChipsetModel,
+			HasTDR:        iface.HasTDR,
+			HasDOM:        iface.HasDOM,
+			Score:         iface.Score,
+		})
+	}
+	return out
 }
 
 func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
@@ -264,23 +317,22 @@ func (s *Server) handleCategorizedInterfaces(w http.ResponseWriter, _ *http.Requ
 	interfaces := s.netManager().GetPhysicalInterfaces()
 
 	resp := CategorizedInterfacesResponse{
-		Ethernet:         make([]*netif.InterfaceInfo, 0),
-		WiFi:             make([]*netif.InterfaceInfo, 0),
 		CurrentInterface: s.netManager().GetCurrentInterface(),
 	}
 
 	// Categorize interfaces and find best in each category
+	var ethernet, wifi []*netif.InterfaceInfo
 	var bestEthernet, bestWiFi *netif.InterfaceInfo
 
 	for _, iface := range interfaces {
 		switch iface.Type {
 		case netif.InterfaceTypeEthernet:
-			resp.Ethernet = append(resp.Ethernet, iface)
+			ethernet = append(ethernet, iface)
 			if isBetterInterface(iface, bestEthernet) {
 				bestEthernet = iface
 			}
 		case netif.InterfaceTypeWiFi:
-			resp.WiFi = append(resp.WiFi, iface)
+			wifi = append(wifi, iface)
 			if isBetterInterface(iface, bestWiFi) {
 				bestWiFi = iface
 			}
@@ -289,6 +341,9 @@ func (s *Server) handleCategorizedInterfaces(w http.ResponseWriter, _ *http.Requ
 			continue
 		}
 	}
+
+	resp.Ethernet = toInterfaceInfos(ethernet)
+	resp.WiFi = toInterfaceInfos(wifi)
 
 	// Set recommended interfaces
 	if bestEthernet != nil {

@@ -193,6 +193,15 @@ func schemaTargets() []schemaTarget {
 		{&api.SNMPSettingsResponse{}, "snmp-settings-response.schema.json"},
 		{&api.TestsSettingsResponse{}, "tests-settings-response.schema.json"},
 		{&api.IperfClientStatusResponse{}, "iperf-client-status-response.schema.json"},
+
+		// Domain-nested DTOs that now carry flat transport mirrors (the handler
+		// maps the discovery/dhcp/netif/logging domain value onto a local
+		// purpose-built sub-struct), so the published schema no longer reaches
+		// into a domain package.
+		{&api.TCPProbeResponse{}, "tcp-probe-response.schema.json"},
+		{&api.RogueServersResponse{}, "rogue-servers-response.schema.json"},
+		{&api.CategorizedInterfacesResponse{}, "categorized-interfaces-response.schema.json"},
+		{&api.LogQueryResponse{}, "log-query-response.schema.json"},
 	}
 
 	targets := make([]schemaTarget, len(rows))
