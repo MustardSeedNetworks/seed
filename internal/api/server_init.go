@@ -15,6 +15,8 @@ import (
 	"github.com/krisarmstrong/seed/internal/diagnostics/dns"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/mibdb"
+	"github.com/krisarmstrong/seed/internal/platform/events"
+	"github.com/krisarmstrong/seed/internal/platform/jobs"
 	"github.com/krisarmstrong/seed/internal/services/discovery"
 	"github.com/krisarmstrong/seed/internal/wifi/survey"
 )
@@ -146,6 +148,17 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 	// Initialize log broadcaster for real-time log streaming
 	s.services.RealTime.LogBroadcaster = logging.InitBroadcaster(logBroadcasterBufferSize)
 	s.logBroadcaster().SetBroadcaster(&sseLogBroadcastAdapter{hub: s.sseHub()})
+
+	// Initialize the in-process event bus and the unified job runner (ADR-0004 /
+	// ADR-0005). The runner publishes job state changes onto the bus; the
+	// /api/v1/jobs surface (POST/GET/DELETE + the /jobs/events SSE stream)
+	// adapts it. No job kinds are registered yet — they arrive as the real
+	// long-ops are migrated in a later slice; both Close() on shutdown.
+	s.services.RealTime.EventBus = events.New(logging.GetLogger())
+	s.services.RealTime.Jobs = jobs.New(
+		s.services.RealTime.EventBus, logging.GetLogger(), jobs.Config{Retention: jobsRetention},
+	)
+	s.services.RealTime.JobIdempotency = newJobIdempotencyCache(jobIdempotencyCapacity)
 
 	// Wire up database persistence for logs if database is available
 	if db != nil {

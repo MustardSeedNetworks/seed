@@ -81,6 +81,13 @@ var (
 // "job.running". Subscribers register per state.
 func Topic(s State) string { return "job." + string(s) }
 
+// States returns the five lifecycle states in canonical order. A consumer that
+// must observe every transition — an SSE bridge, an audit sink — subscribes to
+// Topic(s) for each, rather than hardcoding the set at the call site.
+func States() []State {
+	return []State{StateQueued, StateRunning, StateSucceeded, StateFailed, StateCancelled}
+}
+
 // Job is an immutable snapshot of a unit of work. Get and JobEvent hand out
 // copies; mutating one never affects the runner's state.
 type Job struct {

@@ -56,6 +56,10 @@ func authChainRoutes() []goldenRoute {
 		{name: "settings-link-post", method: http.MethodPost, path: "/api/v1/settings/link"},
 		{name: "survey-create-post", method: http.MethodPost, path: "/api/v1/wifi/survey/create"},
 		{name: "path-get", method: http.MethodGet, path: "/api/v1/path/path"},
+		// Unified job runner (ADR-0005): create is operator-gated/mutating,
+		// inspect is a safe read — both behind the global auth chain.
+		{name: "jobs-create-post", method: http.MethodPost, path: "/api/v1/jobs"},
+		{name: "jobs-get", method: http.MethodGet, path: "/api/v1/jobs/some-id"},
 	}
 }
 
