@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/wifi-discovery-stats-response.schema.json",
+  "$ref": "#/$defs/WiFiDiscoveryStatsResponse",
+  "$defs": {
+    "WiFiDiscoveryStats": {
+      "properties": {
+        "total_networks": {
+          "type": "integer"
+        },
+        "hidden_networks": {
+          "type": "integer"
+        },
+        "total_aps": {
+          "type": "integer"
+        },
+        "authorized_aps": {
+          "type": "integer"
+        },
+        "unauthorized_aps": {
+          "type": "integer"
+        },
+        "total_clients": {
+          "type": "integer"
+        },
+        "channels_by_band": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "security_breakdown": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "vendor_breakdown": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "last_scan_time": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "total_networks",
+        "hidden_networks",
+        "total_aps",
+        "authorized_aps",
+        "unauthorized_aps",
+        "total_clients",
+        "channels_by_band",
+        "security_breakdown",
+        "vendor_breakdown",
+        "last_scan_time"
+      ]
+    },
+    "WiFiDiscoveryStatsResponse": {
+      "properties": {
+        "stats": {
+          "$ref": "#/$defs/WiFiDiscoveryStats"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "stats"
+      ]
+    }
+  },
+  "title": "WiFiDiscoveryStatsResponse",
+  "description": "WiFiDiscoveryStatsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

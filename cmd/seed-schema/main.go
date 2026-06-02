@@ -205,6 +205,10 @@ func schemaTargets() []schemaTarget {
 		{&api.BluetoothScanResponse{}, "bluetooth-scan-response.schema.json"},
 		{&api.BluetoothDevicesResponse{}, "bluetooth-devices-response.schema.json"},
 		{&api.BluetoothStatsResponse{}, "bluetooth-stats-response.schema.json"},
+		{&api.WiFiDiscoveryScanResponse{}, "wifi-discovery-scan-response.schema.json"},
+		{&api.WiFiDiscoveryNetworksResponse{}, "wifi-discovery-networks-response.schema.json"},
+		{&api.WiFiDiscoveryAPsResponse{}, "wifi-discovery-aps-response.schema.json"},
+		{&api.WiFiDiscoveryStatsResponse{}, "wifi-discovery-stats-response.schema.json"},
 	}
 
 	targets := make([]schemaTarget, len(rows))
