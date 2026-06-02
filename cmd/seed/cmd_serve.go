@@ -109,9 +109,9 @@ func initializeDatabase(cfg *config.Config) *database.DB {
 func initializeModules(cfg *config.Config, db *database.DB) *api.Modules {
 	modules := &api.Modules{}
 
-	// Harvest: Reporting (report generation, templates, scheduling)
-	modules.Harvest = app.NewHarvest(cfg, db)
-	logging.GetLogger().Info("Harvest module initialized")
+	// Reporting: report generation, templates, scheduling
+	modules.Reporting = app.NewReporting(cfg, db)
+	logging.GetLogger().Info("Reporting module initialized")
 
 	return modules
 }
