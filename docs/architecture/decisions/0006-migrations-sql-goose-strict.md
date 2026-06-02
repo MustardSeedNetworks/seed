@@ -2,6 +2,12 @@
 
 **Status:** Accepted — 2026-05-31
 
+> **Amendment (2026-06-02):** the Phase 3 reconcile removed the
+> `internal/adapters/` ring. When this is implemented (schema collapse, Phase 5),
+> the `.sql` migrations live under **`internal/database/migrations/`** (a peer
+> package), not `internal/adapters/store/migrations/`. Everything else (goose,
+> STRICT tables, `//go:embed`) stands.
+
 ## Context
 
 The schema lives as raw SQL inside Go string literals (`internal/database/migrations.go`,

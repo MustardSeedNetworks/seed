@@ -4,7 +4,7 @@
 **Scope:** Why seed links libpcap (CGO), where that cost lands, and how to keep
 builds fast. Records the four findings from the 2026-06-01 build audit and the
 plan to shrink the CGO blast radius behind a `Capture` port (executes with the
-Phase 6 `discovery`/`sap` extraction — see `PHASE3_EXTRACTION_PLAN.md` §5).
+Phase 6 `discovery`/`sap` extraction — see `PHASE3_RECONCILE_PROPOSAL.md` §5).
 
 ---
 
@@ -26,53 +26,52 @@ required for those features. The Windows build is already `CGO_ENABLED=0`
 |---|---|---|
 | 1 | **Local incremental builds are already fast** — once the build cache is warm, a rebuild after editing a CGO-tainted package is **<0.1s**. The "57s" seen during the audit was a *one-time cold-cache* CGO compile (libpcap cgo stubs + first external link), caused by thrashing the cache with killed concurrent builds. | No action — don't `go clean -cache`; don't run many concurrent full builds. |
 | 2 | **CI recompiles from cold on every run** — the `setup-go` composite had `cache: false` and there was **no `actions/cache`** step, while CI overrides `GOCACHE`/`GOMODCACHE` to workspace paths that were never persisted. Every job paid the full CGO+libpcap compile/link each run. | **Fixed** — `setup-go` now persists the build + module caches (path-discriminated, go.sum + per-commit keyed). |
-| 3 | **CGO blast radius is large** — `gopacket/pcap` is imported by `dhcp`, `services/discovery`, and `services/vlan`, and fans up to **11 packages** (incl. `api`, `services`, `pipeline`, `shell`, `cmd/seed`). Every CGO-tainted *test binary* re-links libpcap, so a cold `go test ./...` does many slow external links. | **Planned** — `Capture` port (§3 below). Executes with Phase 6 because `discovery` (the dominant importer) is a HOT zone; until it moves, the taint keeps flowing up regardless of `dhcp`/`vlan`. |
+| 3 | **CGO blast radius is large** — `gopacket/pcap` is imported by `dhcp`, `services/discovery`, and `diagnostics/vlan`, and fans up to **11 packages** (incl. `api`, `diagnostics`, `pipeline`, `security`, `cmd/seed`). Every CGO-tainted *test binary* re-links libpcap, so a cold `go test ./...` does many slow external links. | **Planned** — `Capture` port (§3 below). Executes with Phase 6 because `discovery` (the dominant importer) is a HOT zone; until it moves, the taint keeps flowing up regardless of `dhcp`/`vlan`. |
 | 4 | **`ld: warning: ignoring duplicate libraries: '-lpcap'`** — gopacket declares `#cgo darwin LDFLAGS: -lpcap` in **both** `pcap_darwin.go` and `pcap_unix.go`, so macOS links it twice. | Upstream, darwin-only, cosmetic (the linker ignores the dup). Not fixable without forking gopacket — **ignore**. |
 
 ## 3. Plan: live capture behind a `Capture` port
 
-The hexagon-correct way to shrink the blast radius (finding #3): make libpcap an
+The capability-first way to shrink the blast radius (finding #3): make libpcap an
 *adapter*, not a deep dependency. Today every package that does discovery/DHCP/
 VLAN capture imports `gopacket/pcap` directly, so CGO taints them and everything
 above them. Instead:
 
 ```
-internal/modules/<m>/ports.go      Capture port (interface): OpenLive, ReadPacket, Close, ...
-internal/adapters/net/pcap/        the ONLY package importing gopacket/pcap (CGO lives here)
-internal/adapters/net/nullcapture/ CGO-free stub (returns "capture unavailable") for CGO_ENABLED=0
-internal/app/                      wires the real pcap adapter into the modules
+internal/<feature>/ports.go      Capture port (interface): OpenLive, ReadPacket, Close, ...
+internal/capture/pcap/        the ONLY package importing gopacket/pcap (CGO lives here)
+internal/capture/nullcapture/ CGO-free stub (returns "capture unavailable") for CGO_ENABLED=0
+internal/app/                      wires the real pcap adapter into the features
 ```
 
-Result: only `internal/adapters/net/pcap` and the final `cmd/seed` binary need
+Result: only `internal/capture/pcap` and the final `cmd/seed` binary need
 CGO. The domain packages (`dhcp`, `discovery`, `vlan`, and everything that
-imports them — `api`, `services`, `pipeline`, `shell`) compile and **test** with
+imports them — `api`, `diagnostics`, `pipeline`, `security`) compile and **test** with
 `CGO_ENABLED=0`, so `go test ./...` stops re-linking libpcap across ~11 packages.
 
 ### Sequencing (why not now)
 
 - The dominant importer is `services/discovery` (the 24.5K-line monolith), a
-  **HOT zone** and explicitly **Phase 6** per `PHASE3_EXTRACTION_PLAN.md` §5 and
+  **HOT zone** and explicitly **Phase 6** per `PHASE3_RECONCILE_PROPOSAL.md` §5 and
   the CLAUDE.md "do not touch" list. Touching it now risks colliding with the
   active discovery/NMS workstream.
 - Extracting only the cold importers (`dhcp`, `vlan`) would establish the
-  `Capture` port + `internal/adapters/net` ring but yield **little build-speed
+  `Capture` port + a dedicated `internal/capture` package but yield **little build-speed
   payoff**, because `discovery` keeps libpcap flowing up into `api`/`services`/
   `cmd`. The test-speed win only materializes once *all three* importers sit
   behind the port.
-- Therefore: design the `Capture` port when **roots** lands (it needs no
-  capture, so it's a clean place to set the `internal/adapters/net` precedent),
-  and complete the pcap move as part of the **Phase 6 discovery split**, where
+- Therefore: design the `Capture` port as a standalone `internal/capture` package
+  (no feature migration required to establish the precedent), and complete the pcap move as part of the **Phase 6 discovery split**, where
   `dhcp`/`vlan`/`discovery` all migrate together.
 
 ### Acceptance criteria (when executed)
 
-- [ ] Exactly one package imports `gopacket/pcap` (`internal/adapters/net/pcap`).
+- [ ] Exactly one package imports `gopacket/pcap` (`internal/capture/pcap`).
 - [ ] `go build ./... ` with `CGO_ENABLED=0` succeeds (uses the null adapter);
       `CGO_ENABLED=1` builds keep live capture.
 - [ ] `go vet`/`go test` for `dhcp`/`discovery`/`vlan` run `CGO_ENABLED=0`.
 - [ ] Golden HTTP suite unchanged; capture features behave identically with the
       real adapter.
-- [ ] `depguard`: `gopacket/pcap` denied outside `internal/adapters/net/pcap`.
+- [ ] `depguard`: `gopacket/pcap` denied outside `internal/capture/pcap`.
 
 ## 4. CI caching (finding #2 — shipped)
 
