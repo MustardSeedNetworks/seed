@@ -350,7 +350,7 @@ export function useSettings<T>(endpoint: string) {
 }
 
 // Usage:
-const { settings, update } = useSettings<DeviceSettings>("/api/v1/shell/devices/settings");
+const { settings, update } = useSettings<DeviceSettings>("/api/v1/security/devices/settings");
 ```
 
 ### Backend Service Check Helper
