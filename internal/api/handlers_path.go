@@ -43,8 +43,120 @@ type PathRequest struct {
 
 // PathResponse contains both L2 and L3 path information.
 type PathResponse struct {
-	L3Path *discovery.TracerouteResult `json:"l3Path,omitempty"`
-	L2Path *discovery.L2PathResult     `json:"l2Path,omitempty"`
+	L3Path *TracerouteResult `json:"l3Path,omitempty"`
+	L2Path *L2PathResult     `json:"l2Path,omitempty"`
+}
+
+// TracerouteResult is the flat transport view of discovery.TracerouteResult
+// (an L3 path), mirroring its wire shape so the published schema does not
+// depend on the discovery domain package.
+type TracerouteResult struct {
+	Target    string          `json:"target"`
+	TargetIP  string          `json:"targetIp"`
+	Protocol  string          `json:"protocol"`
+	Port      int             `json:"port,omitempty"`
+	Hops      []TracerouteHop `json:"hops"`
+	Completed bool            `json:"completed"`
+	Error     string          `json:"error,omitempty"`
+}
+
+// TracerouteHop is the flat transport view of a single L3 traceroute hop.
+type TracerouteHop struct {
+	TTL      int           `json:"ttl"`
+	IP       string        `json:"ip,omitempty"`
+	Hostname string        `json:"hostname,omitempty"`
+	RTT      time.Duration `json:"rtt"`
+	State    string        `json:"state"`
+}
+
+// L2PathResult is the flat transport view of discovery.L2PathResult (an L2
+// switch path).
+type L2PathResult struct {
+	Hops []L2Hop `json:"hops"`
+}
+
+// L2Hop is the flat transport view of a single L2 hop. IngressPort/EgressPort
+// keep pointer semantics (no omitempty) so an unknown port stays null on the
+// wire, matching the domain shape.
+type L2Hop struct {
+	Device      string    `json:"device"`
+	DeviceIP    string    `json:"deviceIp"`
+	IngressPort *PortInfo `json:"ingressPort"`
+	EgressPort  *PortInfo `json:"egressPort"`
+	Source      string    `json:"source"`
+}
+
+// PortInfo is the flat transport view of a switch port on an L2 hop.
+type PortInfo struct {
+	Name        string `json:"name"`
+	Index       int    `json:"index"`
+	Speed       string `json:"speed"`
+	Duplex      string `json:"duplex"`
+	VLANs       []int  `json:"vlans"`
+	IsTrunk     bool   `json:"isTrunk"`
+	ConnectedTo string `json:"connectedTo"`
+}
+
+// toTracerouteResult maps an L3 traceroute result onto its flat transport view,
+// preserving nil so an absent L3 path stays omitted.
+func toTracerouteResult(result *discovery.TracerouteResult) *TracerouteResult {
+	if result == nil {
+		return nil
+	}
+	hops := make([]TracerouteHop, 0, len(result.Hops))
+	for _, h := range result.Hops {
+		hops = append(hops, TracerouteHop{
+			TTL:      h.TTL,
+			IP:       h.IP,
+			Hostname: h.Hostname,
+			RTT:      h.RTT,
+			State:    h.State,
+		})
+	}
+	return &TracerouteResult{
+		Target:    result.Target,
+		TargetIP:  result.TargetIP,
+		Protocol:  result.Protocol,
+		Port:      result.Port,
+		Hops:      hops,
+		Completed: result.Completed,
+		Error:     result.Error,
+	}
+}
+
+// toL2PathResult maps an L2 switch path onto its flat transport view,
+// preserving nil so an absent L2 path stays omitted.
+func toL2PathResult(result *discovery.L2PathResult) *L2PathResult {
+	if result == nil {
+		return nil
+	}
+	hops := make([]L2Hop, 0, len(result.Hops))
+	for _, h := range result.Hops {
+		hops = append(hops, L2Hop{
+			Device:      h.Device,
+			DeviceIP:    h.DeviceIP,
+			IngressPort: toPortInfo(h.IngressPort),
+			EgressPort:  toPortInfo(h.EgressPort),
+			Source:      h.Source,
+		})
+	}
+	return &L2PathResult{Hops: hops}
+}
+
+// toPortInfo maps a switch port onto its flat transport view, preserving nil.
+func toPortInfo(port *discovery.PortInfo) *PortInfo {
+	if port == nil {
+		return nil
+	}
+	return &PortInfo{
+		Name:        port.Name,
+		Index:       port.Index,
+		Speed:       port.Speed,
+		Duplex:      port.Duplex,
+		VLANs:       port.VLANs,
+		IsTrunk:     port.IsTrunk,
+		ConnectedTo: port.ConnectedTo,
+	}
 }
 
 // handlePath performs L2 and/or L3 path discovery between two endpoints.
@@ -192,7 +304,7 @@ func (s *Server) performPathDiscovery(
 				return nil
 			}
 		}
-		response.L3Path = l3Path
+		response.L3Path = toTracerouteResult(l3Path)
 	}
 
 	// Perform L2 path discovery if requested
@@ -214,7 +326,7 @@ func (s *Server) performPathDiscovery(
 				return nil
 			}
 		} else {
-			response.L2Path = l2Path
+			response.L2Path = toL2PathResult(l2Path)
 		}
 	}
 
