@@ -39,11 +39,11 @@ const (
 
 // seedProgram implements service.Interface for Windows service management.
 type seedProgram struct {
-	state     *cliState
-	server    *api.Server
-	modules   *api.Modules
-	stopChan  chan struct{}
-	stoppedCh chan struct{}
+	state      *cliState
+	server     *api.Server
+	components *api.BackgroundComponents
+	stopChan   chan struct{}
+	stoppedCh  chan struct{}
 }
 
 // Start is called when the Windows Service Manager starts the service.
@@ -90,19 +90,19 @@ func (p *seedProgram) run() {
 	// Initialize database
 	db := initializeDatabaseForService(cfg)
 
-	// Initialize modules
-	p.modules = initializeModulesForService(cfg, db)
+	// Initialize components
+	p.components = initializeBackgroundComponentsForService(cfg, db)
 
-	p.server = api.NewServer(cfg, configPath, logPath, netMgr, true, proxies, db, p.modules)
+	p.server = api.NewServer(cfg, configPath, logPath, netMgr, true, proxies, db, p.components)
 
-	// Start modules
+	// Start components
 	ctx := context.Background()
-	if p.modules != nil {
-		if err := p.modules.Start(ctx); err != nil {
-			logging.GetLogger().Error("Failed to start modules", "error", err)
+	if p.components != nil {
+		if err := p.components.Start(ctx); err != nil {
+			logging.GetLogger().Error("Failed to start components", "error", err)
 			return
 		}
-		logging.GetLogger().Info("All modules started successfully")
+		logging.GetLogger().Info("All components started successfully")
 	}
 
 	// Start server in goroutine
@@ -121,11 +121,11 @@ func (p *seedProgram) run() {
 	case <-p.stopChan:
 		logging.GetLogger().Info("Service stop requested, shutting down...")
 
-		// Stop modules first
-		if p.modules != nil {
-			logging.GetLogger().Info("Stopping modules...")
-			if err := p.modules.Stop(); err != nil {
-				logging.GetLogger().Error("Error stopping modules", "error", err)
+		// Stop components first
+		if p.components != nil {
+			logging.GetLogger().Info("Stopping components...")
+			if err := p.components.Stop(); err != nil {
+				logging.GetLogger().Error("Error stopping components", "error", err)
 			}
 		}
 
@@ -236,13 +236,13 @@ func initializeDatabaseForService(cfg *config.Config) *database.DB {
 	return db
 }
 
-// initializeModulesForService creates all application modules.
-func initializeModulesForService(cfg *config.Config, db *database.DB) *api.Modules {
-	modules := &api.Modules{}
+// initializeBackgroundComponentsForService creates all application components.
+func initializeBackgroundComponentsForService(cfg *config.Config, db *database.DB) *api.BackgroundComponents {
+	components := &api.BackgroundComponents{}
 
-	modules.Reporting = app.NewReporting(cfg, db)
+	components.Reporting = app.NewReporting(cfg, db)
 
-	return modules
+	return components
 }
 
 func initServiceCmd(state *cliState) {

@@ -81,11 +81,11 @@ func runServe(_ *cobra.Command, _ []string, state *cliState) {
 	// Initialize database
 	db := initializeDatabase(cfg)
 
-	// Initialize modules
-	modules := initializeModules(cfg, db)
+	// Initialize components
+	components := initializeBackgroundComponents(cfg, db)
 
-	server := api.NewServer(cfg, configPath, logPath, netMgr, icmpAvailable, proxies, db, modules)
-	runServerWithShutdown(server, cfg, modules)
+	server := api.NewServer(cfg, configPath, logPath, netMgr, icmpAvailable, proxies, db, components)
+	runServerWithShutdown(server, cfg, components)
 }
 
 // initializeDatabase opens and configures the SQLite database.
@@ -105,15 +105,15 @@ func initializeDatabase(cfg *config.Config) *database.DB {
 	return db
 }
 
-// initializeModules creates all application modules.
-func initializeModules(cfg *config.Config, db *database.DB) *api.Modules {
-	modules := &api.Modules{}
+// initializeBackgroundComponents creates all application components.
+func initializeBackgroundComponents(cfg *config.Config, db *database.DB) *api.BackgroundComponents {
+	components := &api.BackgroundComponents{}
 
 	// Reporting: report generation, templates, scheduling
-	modules.Reporting = app.NewReporting(cfg, db)
+	components.Reporting = app.NewReporting(cfg, db)
 	logging.GetLogger().Info("Reporting module initialized")
 
-	return modules
+	return components
 }
 
 // checkICMPCapabilities checks for ICMP privileges and returns availability status.
@@ -381,15 +381,15 @@ func applyActiveInterface(
 }
 
 // runServerWithShutdown starts the server and handles graceful shutdown.
-func runServerWithShutdown(server *api.Server, cfg *config.Config, modules *api.Modules) {
-	// Start modules
+func runServerWithShutdown(server *api.Server, cfg *config.Config, components *api.BackgroundComponents) {
+	// Start components
 	ctx := context.Background()
-	if modules != nil {
-		if err := modules.Start(ctx); err != nil {
-			logging.GetLogger().Error("Failed to start modules", "error", err)
+	if components != nil {
+		if err := components.Start(ctx); err != nil {
+			logging.GetLogger().Error("Failed to start components", "error", err)
 			os.Exit(1)
 		}
-		logging.GetLogger().Info("All modules started successfully")
+		logging.GetLogger().Info("All components started successfully")
 	}
 
 	serverErrors := make(chan error, 1)
@@ -421,11 +421,11 @@ func runServerWithShutdown(server *api.Server, cfg *config.Config, modules *api.
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeoutSeconds*time.Second)
 		defer cancel()
 
-		// Stop modules first
-		if modules != nil {
-			logging.GetLogger().Info("Stopping modules...")
-			if err := modules.Stop(); err != nil {
-				logging.GetLogger().Error("Error stopping modules", "error", err)
+		// Stop components first
+		if components != nil {
+			logging.GetLogger().Info("Stopping components...")
+			if err := components.Stop(); err != nil {
+				logging.GetLogger().Error("Error stopping components", "error", err)
 			}
 		}
 
