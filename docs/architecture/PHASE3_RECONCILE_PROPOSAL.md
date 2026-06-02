@@ -46,14 +46,30 @@ and green; all items below are merged.
     Internal botanical names in **code** are now 0 — only R4b's customer-facing
     surface remains.
 
+- **R4b landed as a CODE-vs-BRAND split (2026-06-02):**
+  - **#1450** — dropped the dead Module vestige: `api.Modules`→`BackgroundComponents`,
+    `reporting.Module`→`reporting.Service`.
+  - **#1451** — botanical→meaningful **code** rename (clean break, no aliases):
+    route prefixes `/api/v1/{sap→telemetry, roots→path, shell→security,
+    canopy→wifi, harvest→reporting}/*` + 5 `setup*Routes` fns + CSRF/multipart
+    exemptions + route + stale package doc comments; golden HTTP + authchain
+    fixtures regenerated (0 botanical / 106 meaningful paths). UI: 36 fetch
+    call-site files in lockstep + internal CSS/theme identifiers (`moduleColor`
+    keys + `--color-module-*` var names), **hex colors unchanged**.
+  - **Brand HELD botanical (deliberate):** user-visible `navGroups` sidebar
+    labels, the help-drawer glossary, and Storybook copy stay botanical. The
+    locked "botanical = marketing brand → KEEP" rule is therefore STILL ACCURATE
+    (not overridden); the code-vs-brand split is now fully realized.
+
 **Remaining:**
-1. **R4b — customer-facing rename — GATED on the marketing-name decision
-   (pending; the immediate next step now that the internal rename has landed).**
-   Route prefixes `/api/v1/{sap,roots,shell,canopy,harvest}/*` (28 groups,
-   called by the UI + API clients) + `setupHarvestRoutes`/comments in
-   `internal/api/server_routes.go` + UI `themeColors`/`pageRegistry`/i18n
-   (~60 files). Breaking → needs a versioned route alias / 308 deprecation
-   window if going descriptive. May be KEPT as decorative brand. Confirm.
+1. **Phase 3.x — IA & API-taxonomy redesign (DEFERRED, tracked).** This pass was a
+   1:1 *rename*; a deliberate later phase may re-group the sidebar information
+   architecture and restructure the `/api/v1/*` taxonomy. Out of scope here.
+2. **(Optional, if the brand is ever retired)** a deliberate brand-removal step
+   (sidebar labels + glossary) gated on a LICENSE_STRATEGY brand decision.
+3. **Docs reconcile (PR C, low-stakes):** CLAUDE.md "Module Architecture" /
+   "Project Structure" trees + msn-docs `THE_SEED_ARCHITECTURE` /
+   `_BACKEND_ARCHITECTURE` to the capability-first layout + new route prefixes.
 
 **Also open:** CI design-token gate is red on `main` (~108 pre-existing whole-repo
 violations — issue #1437); the Frontend job fails for every PR, so UI PRs land via
