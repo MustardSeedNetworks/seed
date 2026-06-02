@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/iperf-client-status-response.schema.json",
+  "$ref": "#/$defs/IperfClientStatusResponse",
+  "$defs": {
+    "IperfClientStatusResponse": {
+      "properties": {
+        "running": {
+          "type": "boolean"
+        },
+        "phase": {
+          "type": "string"
+        },
+        "progress": {
+          "type": "number"
+        },
+        "last": {
+          "$ref": "#/$defs/IperfResultResponse"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "running",
+        "phase",
+        "progress"
+      ]
+    },
+    "IperfResultResponse": {
+      "properties": {
+        "bandwidth": {
+          "type": "number"
+        },
+        "transfer": {
+          "type": "number"
+        },
+        "retransmits": {
+          "type": "integer"
+        },
+        "jitter": {
+          "type": "number"
+        },
+        "lostPackets": {
+          "type": "integer"
+        },
+        "lostPercent": {
+          "type": "number"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "server": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "downloadBandwidth": {
+          "type": "number"
+        },
+        "uploadBandwidth": {
+          "type": "number"
+        },
+        "downloadTransfer": {
+          "type": "number"
+        },
+        "uploadTransfer": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "bandwidth",
+        "transfer",
+        "retransmits",
+        "jitter",
+        "lostPackets",
+        "lostPercent",
+        "protocol",
+        "direction",
+        "duration",
+        "server",
+        "port",
+        "timestamp"
+      ]
+    }
+  },
+  "title": "IperfClientStatusResponse",
+  "description": "IperfClientStatusResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

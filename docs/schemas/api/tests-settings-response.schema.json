@@ -1,0 +1,647 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/tests-settings-response.schema.json",
+  "$ref": "#/$defs/TestsSettingsResponse",
+  "$defs": {
+    "DICOMEndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "calledAe": {
+          "type": "string"
+        },
+        "callingAe": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "calledAe",
+        "callingAe",
+        "enabled"
+      ]
+    },
+    "DNSServerResponse": {
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address",
+        "enabled"
+      ]
+    },
+    "FHIREndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "baseUrl": {
+          "type": "string"
+        },
+        "authType": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "baseUrl",
+        "authType",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "FileShareEndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "share": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "testReadPerformance": {
+          "type": "boolean"
+        },
+        "testWritePerformance": {
+          "type": "boolean"
+        },
+        "testFileSizeMb": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "protocol",
+        "host",
+        "share",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "HL7EndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "sendingApp": {
+          "type": "string"
+        },
+        "sendingFacility": {
+          "type": "string"
+        },
+        "receivingApp": {
+          "type": "string"
+        },
+        "receivingFacility": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "sendingApp",
+        "sendingFacility",
+        "receivingApp",
+        "receivingFacility",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "HTTPEndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "expectedStatus": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "bodyMatch": {
+          "type": "string"
+        },
+        "bodyMatchIsRegex": {
+          "type": "boolean"
+        },
+        "checkSecurityHeaders": {
+          "type": "boolean"
+        },
+        "followRedirects": {
+          "type": "boolean"
+        },
+        "maxRedirects": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "url",
+        "expectedStatus",
+        "enabled"
+      ]
+    },
+    "IperfSettingsResponse": {
+      "properties": {
+        "autoRunOnLink": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "autoRunOnLink"
+      ]
+    },
+    "LDAPEndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "useTls": {
+          "type": "boolean"
+        },
+        "startTls": {
+          "type": "boolean"
+        },
+        "baseDn": {
+          "type": "string"
+        },
+        "searchFilter": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "useTls",
+        "startTls",
+        "baseDn",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "LTIEndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "launchUrl": {
+          "type": "string"
+        },
+        "ltiVersion": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "launchUrl",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "ModbusEndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "unitId": {
+          "type": "integer"
+        },
+        "testRegister": {
+          "type": "integer"
+        },
+        "registerType": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "unitId",
+        "testRegister",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "OPCUAEndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "endpointUrl": {
+          "type": "string"
+        },
+        "securityMode": {
+          "type": "string"
+        },
+        "securityPolicy": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "endpointUrl",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "PingTargetResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "enabled"
+      ]
+    },
+    "RTSPEndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "url",
+        "enabled"
+      ]
+    },
+    "SQLEndpointResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "driver": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "database": {
+          "type": "string"
+        },
+        "sslMode": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "driver",
+        "host",
+        "port",
+        "database",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "SpeedtestSettingsResponse": {
+      "properties": {
+        "serverId": {
+          "type": "string"
+        },
+        "autoRunOnLink": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "serverId",
+        "autoRunOnLink"
+      ]
+    },
+    "TCPPortResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "enabled"
+      ]
+    },
+    "TestsSettingsResponse": {
+      "properties": {
+        "dnsHostname": {
+          "type": "string"
+        },
+        "dnsServers": {
+          "items": {
+            "$ref": "#/$defs/DNSServerResponse"
+          },
+          "type": "array"
+        },
+        "pingTargets": {
+          "items": {
+            "$ref": "#/$defs/PingTargetResponse"
+          },
+          "type": "array"
+        },
+        "tcpPorts": {
+          "items": {
+            "$ref": "#/$defs/TCPPortResponse"
+          },
+          "type": "array"
+        },
+        "udpPorts": {
+          "items": {
+            "$ref": "#/$defs/UDPPortResponse"
+          },
+          "type": "array"
+        },
+        "httpEndpoints": {
+          "items": {
+            "$ref": "#/$defs/HTTPEndpointResponse"
+          },
+          "type": "array"
+        },
+        "rtspEndpoints": {
+          "items": {
+            "$ref": "#/$defs/RTSPEndpointResponse"
+          },
+          "type": "array"
+        },
+        "dicomEndpoints": {
+          "items": {
+            "$ref": "#/$defs/DICOMEndpointResponse"
+          },
+          "type": "array"
+        },
+        "hl7Endpoints": {
+          "items": {
+            "$ref": "#/$defs/HL7EndpointResponse"
+          },
+          "type": "array"
+        },
+        "fhirEndpoints": {
+          "items": {
+            "$ref": "#/$defs/FHIREndpointResponse"
+          },
+          "type": "array"
+        },
+        "sqlEndpoints": {
+          "items": {
+            "$ref": "#/$defs/SQLEndpointResponse"
+          },
+          "type": "array"
+        },
+        "fileShareEndpoints": {
+          "items": {
+            "$ref": "#/$defs/FileShareEndpointResponse"
+          },
+          "type": "array"
+        },
+        "ldapEndpoints": {
+          "items": {
+            "$ref": "#/$defs/LDAPEndpointResponse"
+          },
+          "type": "array"
+        },
+        "ltiEndpoints": {
+          "items": {
+            "$ref": "#/$defs/LTIEndpointResponse"
+          },
+          "type": "array"
+        },
+        "opcuaEndpoints": {
+          "items": {
+            "$ref": "#/$defs/OPCUAEndpointResponse"
+          },
+          "type": "array"
+        },
+        "modbusEndpoints": {
+          "items": {
+            "$ref": "#/$defs/ModbusEndpointResponse"
+          },
+          "type": "array"
+        },
+        "speedtest": {
+          "$ref": "#/$defs/SpeedtestSettingsResponse"
+        },
+        "iperf": {
+          "$ref": "#/$defs/IperfSettingsResponse"
+        },
+        "runPerformance": {
+          "type": "boolean"
+        },
+        "runSpeedtest": {
+          "type": "boolean"
+        },
+        "runIperf": {
+          "type": "boolean"
+        },
+        "runDiscovery": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "dnsHostname",
+        "dnsServers",
+        "pingTargets",
+        "tcpPorts",
+        "udpPorts",
+        "httpEndpoints",
+        "rtspEndpoints",
+        "dicomEndpoints",
+        "hl7Endpoints",
+        "fhirEndpoints",
+        "sqlEndpoints",
+        "fileShareEndpoints",
+        "ldapEndpoints",
+        "ltiEndpoints",
+        "opcuaEndpoints",
+        "modbusEndpoints",
+        "speedtest",
+        "iperf",
+        "runPerformance",
+        "runSpeedtest",
+        "runIperf",
+        "runDiscovery"
+      ]
+    },
+    "UDPPortResponse": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "enabled"
+      ]
+    }
+  },
+  "title": "TestsSettingsResponse",
+  "description": "TestsSettingsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
