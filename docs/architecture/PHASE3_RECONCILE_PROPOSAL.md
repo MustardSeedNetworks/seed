@@ -27,23 +27,32 @@ and green; all items below are merged.
     delete dead `RootsServices` (commit `52a83718`).
   - `internal/services/` now holds **only `discovery`** (HOT — promote to
     `internal/discovery` in Phase 6, coordinated with the discovery workstream).
+  - **harvest → reporting (#1448)** — last R4a internal piece.
+    `internal/modules/harvest` → `internal/reporting` (package `reporting`);
+    `internal/adapters/store/harvest_*_repo.go` → `internal/reporting/store/`
+    (`repo`/`schedule_repo`/`metrics_repo`/`export_repo`.go, `harvest_` prefix
+    dropped); `internal/app/harvest.go` → `internal/app/reporting.go`
+    (`NewHarvest`→`NewReporting`); `api.Modules.Harvest`→`Reporting`; cmd wires
+    `app.NewReporting`. **depguard reworked:** the four hexagon-ring rules
+    (`modules-domain-purity` / `modules-no-adapter-import` / `harvest-no-database`
+    / `harvest-module-independence`, keyed on `internal/modules/**` +
+    `internal/adapters/**`) were retired and replaced by capability-first rules
+    keyed on `internal/reporting/**` with `store/` excluded:
+    `reporting-domain-purity` (no `net/http`, no `database/sql`) +
+    `reporting-no-persistence` (no `internal/database`, no
+    `internal/reporting/store` in production, `!$test`). Both RED-proven; the
+    `ReportRepo`/`ScheduleRepo`/`MetricsRepo`/`ExportRepo` ports are kept. The
+    now-empty `internal/modules/` and `internal/adapters/` rings were removed.
+    Internal botanical names in **code** are now 0 — only R4b's customer-facing
+    surface remains.
 
 **Remaining:**
-1. **harvest → reporting** (last R4a internal piece; its own careful PR — it
-   reworks depguard). Moves: `internal/modules/harvest` → `internal/reporting`;
-   `internal/adapters/store/harvest_*_repo.go` → `internal/reporting/store/`;
-   `internal/app/harvest.go` → `app/reporting.go` (`NewHarvest`→`NewReporting`);
-   `api.Modules.Harvest` → `Reporting`; cmd `app.NewHarvest`→`NewReporting`.
-   **depguard:** `harvest-no-database` / `harvest-module-independence` /
-   `modules-domain-purity` / `modules-no-adapter-import` are hexagon-ring
-   artifacts keyed on `internal/modules/**` + `internal/adapters/**` — repurpose
-   or drop (keep the `ReportRepo` *port* for testability; a light
-   `internal/reporting/store` boundary is optional). Afterward `internal/modules/`
-   and `internal/adapters/` are empty → remove.
-2. **R4b — customer-facing rename — GATED on the marketing-name decision
-   (pending).** Route prefixes `/api/v1/{sap,roots,shell,canopy,harvest}/*`
-   (28 groups, called by the UI + API clients) + UI `themeColors`/`pageRegistry`/
-   i18n (~60 files). Breaking → needs a versioned route alias / 308 deprecation
+1. **R4b — customer-facing rename — GATED on the marketing-name decision
+   (pending; the immediate next step now that the internal rename has landed).**
+   Route prefixes `/api/v1/{sap,roots,shell,canopy,harvest}/*` (28 groups,
+   called by the UI + API clients) + `setupHarvestRoutes`/comments in
+   `internal/api/server_routes.go` + UI `themeColors`/`pageRegistry`/i18n
+   (~60 files). Breaking → needs a versioned route alias / 308 deprecation
    window if going descriptive. May be KEPT as decorative brand. Confirm.
 
 **Also open:** CI design-token gate is red on `main` (~108 pre-existing whole-repo
