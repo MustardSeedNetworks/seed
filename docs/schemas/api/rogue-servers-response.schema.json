@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/rogue-servers-response.schema.json",
+  "$ref": "#/$defs/RogueServersResponse",
+  "$defs": {
+    "RogueServer": {
+      "properties": {
+        "ip": {
+          "type": "string"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "firstSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "offerCount": {
+          "type": "integer"
+        },
+        "isAuthorized": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ip",
+        "mac",
+        "firstSeen",
+        "lastSeen",
+        "offerCount",
+        "isAuthorized"
+      ]
+    },
+    "RogueServersResponse": {
+      "properties": {
+        "servers": {
+          "items": {
+            "$ref": "#/$defs/RogueServer"
+          },
+          "type": "array"
+        },
+        "rogueCount": {
+          "type": "integer"
+        },
+        "authorizedCount": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "servers",
+        "rogueCount",
+        "authorizedCount"
+      ]
+    }
+  },
+  "title": "RogueServersResponse",
+  "description": "RogueServersResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

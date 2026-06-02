@@ -31,9 +31,40 @@ type RogueDHCPResponse struct {
 
 // RogueServersResponse contains the list of detected DHCP servers.
 type RogueServersResponse struct {
-	Servers         []*dhcp.RogueServer `json:"servers"`
-	RogueCount      int                 `json:"rogueCount"`
-	AuthorizedCount int                 `json:"authorizedCount"`
+	Servers         []RogueServer `json:"servers"`
+	RogueCount      int           `json:"rogueCount"`
+	AuthorizedCount int           `json:"authorizedCount"`
+}
+
+// RogueServer is the flat transport view of a detected DHCP server, mirroring
+// dhcp.RogueServer's wire shape so the published schema does not depend on the
+// dhcp domain package.
+type RogueServer struct {
+	IP           string    `json:"ip"`
+	MAC          string    `json:"mac"`
+	FirstSeen    time.Time `json:"firstSeen"`
+	LastSeen     time.Time `json:"lastSeen"`
+	OfferCount   int       `json:"offerCount"`
+	IsAuthorized bool      `json:"isAuthorized"`
+}
+
+// toRogueServers maps detected DHCP servers onto their flat transport view.
+func toRogueServers(servers []*dhcp.RogueServer) []RogueServer {
+	out := make([]RogueServer, 0, len(servers))
+	for _, srv := range servers {
+		if srv == nil {
+			continue
+		}
+		out = append(out, RogueServer{
+			IP:           srv.IP,
+			MAC:          srv.MAC,
+			FirstSeen:    srv.FirstSeen,
+			LastSeen:     srv.LastSeen,
+			OfferCount:   srv.OfferCount,
+			IsAuthorized: srv.IsAuthorized,
+		})
+	}
+	return out
 }
 
 // RogueDHCPConfigResponse contains the rogue DHCP detector configuration.
@@ -160,7 +191,7 @@ func (s *Server) handleRogueDHCPServers(w http.ResponseWriter, r *http.Request) 
 		rogues := s.rogueDetector().GetRogueServers()
 
 		resp := RogueServersResponse{
-			Servers:         servers,
+			Servers:         toRogueServers(servers),
 			RogueCount:      len(rogues),
 			AuthorizedCount: len(servers) - len(rogues),
 		}

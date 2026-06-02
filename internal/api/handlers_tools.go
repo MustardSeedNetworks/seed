@@ -57,8 +57,42 @@ type TCPProbeRequest struct {
 
 // TCPProbeResponse represents TCP probe results.
 type TCPProbeResponse struct {
-	Target  string                     `json:"target"`
-	Results []discovery.TCPProbeResult `json:"results"`
+	Target  string           `json:"target"`
+	Results []TCPProbeResult `json:"results"`
+}
+
+// TCPProbeResult is the flat transport view of a single TCP probe outcome. It
+// mirrors discovery.TCPProbeResult's wire shape so the published schema stays
+// self-contained instead of reaching into the discovery domain package. State
+// is a plain string (the domain's PortState is a string enum); Error carries
+// the error message (the domain's error field serialized as an opaque "{}").
+type TCPProbeResult struct {
+	IP    string        `json:"ip"`
+	Port  int           `json:"port"`
+	State string        `json:"state"`
+	TTL   int           `json:"ttl"`
+	RTT   time.Duration `json:"rtt"`
+	Flags uint8         `json:"flags,omitempty"`
+	Error string        `json:"error,omitempty"`
+}
+
+// toTCPProbeResults maps discovery probe results onto their flat transport view.
+func toTCPProbeResults(results []discovery.TCPProbeResult) []TCPProbeResult {
+	out := make([]TCPProbeResult, len(results))
+	for i, r := range results {
+		out[i] = TCPProbeResult{
+			IP:    r.IP,
+			Port:  r.Port,
+			State: string(r.State),
+			TTL:   r.TTL,
+			RTT:   r.RTT,
+			Flags: r.Flags,
+		}
+		if r.Error != nil {
+			out[i].Error = r.Error.Error()
+		}
+	}
+	return out
 }
 
 // resolveTargetIP resolves a target string to an IP address.
@@ -183,7 +217,7 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 
 	resp := TCPProbeResponse{
 		Target:  req.Target,
-		Results: results,
+		Results: toTCPProbeResults(results),
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)

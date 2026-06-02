@@ -41,10 +41,49 @@ type ClientLogEntry struct {
 
 // LogQueryResponse represents the response for log queries.
 type LogQueryResponse struct {
-	Logs       []*logging.LogEntry `json:"logs"`
-	TotalCount int                 `json:"total_count"`
-	Offset     int                 `json:"offset"`
-	Limit      int                 `json:"limit"`
+	Logs       []LogEntry `json:"logs"`
+	TotalCount int        `json:"total_count"`
+	Offset     int        `json:"offset"`
+	Limit      int        `json:"limit"`
+}
+
+// LogEntry is the flat transport view of a log record, mirroring
+// logging.LogEntry's wire shape so the published schema does not depend on the
+// logging domain package.
+type LogEntry struct {
+	Timestamp  time.Time      `json:"timestamp"`
+	Level      string         `json:"level"`
+	Layer      string         `json:"layer"`
+	RequestID  string         `json:"request_id,omitempty"`
+	SessionID  string         `json:"session_id,omitempty"`
+	Message    string         `json:"message"`
+	Component  string         `json:"component,omitempty"`
+	DurationMs int64          `json:"duration_ms,omitempty"`
+	Metadata   map[string]any `json:"metadata,omitempty"`
+	Stack      string         `json:"stack,omitempty"`
+}
+
+// toLogEntries maps logging records onto their flat transport view.
+func toLogEntries(entries []*logging.LogEntry) []LogEntry {
+	out := make([]LogEntry, 0, len(entries))
+	for _, e := range entries {
+		if e == nil {
+			continue
+		}
+		out = append(out, LogEntry{
+			Timestamp:  e.Timestamp,
+			Level:      e.Level,
+			Layer:      e.Layer,
+			RequestID:  e.RequestID,
+			SessionID:  e.SessionID,
+			Message:    e.Message,
+			Component:  e.Component,
+			DurationMs: e.DurationMs,
+			Metadata:   e.Metadata,
+			Stack:      e.Stack,
+		})
+	}
+	return out
 }
 
 // LogStatsResponse represents log statistics.
@@ -211,7 +250,7 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 		dbLogs, err := s.queryLogsFromDB(r.Context(), params)
 		if err == nil {
 			sendJSONResponse(w, logger, http.StatusOK, LogQueryResponse{
-				Logs:       dbLogs,
+				Logs:       toLogEntries(dbLogs),
 				TotalCount: len(dbLogs), // TODO: get actual count from DB
 				Offset:     params.offset,
 				Limit:      params.limit,
@@ -249,7 +288,7 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 	filtered = paginateLogs(filtered, params.offset, params.limit)
 
 	sendJSONResponse(w, logger, http.StatusOK, LogQueryResponse{
-		Logs:       filtered,
+		Logs:       toLogEntries(filtered),
 		TotalCount: totalCount,
 		Offset:     params.offset,
 		Limit:      params.limit,

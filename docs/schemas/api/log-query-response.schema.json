@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/log-query-response.schema.json",
+  "$ref": "#/$defs/LogQueryResponse",
+  "$defs": {
+    "LogEntry": {
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "level": {
+          "type": "string"
+        },
+        "layer": {
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        },
+        "duration_ms": {
+          "type": "integer"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "stack": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "timestamp",
+        "level",
+        "layer",
+        "message"
+      ]
+    },
+    "LogQueryResponse": {
+      "properties": {
+        "logs": {
+          "items": {
+            "$ref": "#/$defs/LogEntry"
+          },
+          "type": "array"
+        },
+        "total_count": {
+          "type": "integer"
+        },
+        "offset": {
+          "type": "integer"
+        },
+        "limit": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "logs",
+        "total_count",
+        "offset",
+        "limit"
+      ]
+    }
+  },
+  "title": "LogQueryResponse",
+  "description": "LogQueryResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
