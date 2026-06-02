@@ -8,8 +8,8 @@ import (
 	"github.com/krisarmstrong/seed/internal/config"
 )
 
-// Module is the reporting component providing report generation services.
-type Module struct {
+// Service is the reporting component providing report generation services.
+type Service struct {
 	mu         sync.RWMutex
 	cfg        *config.Config
 	generator  *GeneratorService
@@ -29,8 +29,8 @@ type Deps struct {
 }
 
 // New creates a new reporting component instance from its port dependencies.
-func New(cfg *config.Config, deps Deps) *Module {
-	m := &Module{cfg: cfg}
+func New(cfg *config.Config, deps Deps) *Service {
+	m := &Service{cfg: cfg}
 
 	// Create services in dependency order:
 	// 1. Templates (no dependencies)
@@ -46,35 +46,35 @@ func New(cfg *config.Config, deps Deps) *Module {
 }
 
 // Generator returns the report generator service.
-func (m *Module) Generator() *GeneratorService {
+func (m *Service) Generator() *GeneratorService {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.generator
 }
 
 // Templates returns the template management service.
-func (m *Module) Templates() *TemplateService {
+func (m *Service) Templates() *TemplateService {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.templates
 }
 
 // Scheduler returns the scheduled report service.
-func (m *Module) Scheduler() *SchedulerService {
+func (m *Service) Scheduler() *SchedulerService {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.scheduler
 }
 
 // Aggregator returns the data aggregation service.
-func (m *Module) Aggregator() *AggregatorService {
+func (m *Service) Aggregator() *AggregatorService {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.aggregator
 }
 
 // Start initializes and starts the reporting component services.
-func (m *Module) Start(ctx context.Context) error {
+func (m *Service) Start(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -92,7 +92,7 @@ func (m *Module) Start(ctx context.Context) error {
 }
 
 // Stop gracefully shuts down all reporting component services.
-func (m *Module) Stop() error {
+func (m *Service) Stop() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

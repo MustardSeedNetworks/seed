@@ -13,7 +13,7 @@ import (
 )
 
 // NewReporting builds the reporting component backed by the SQLite store adapters.
-func NewReporting(cfg *config.Config, db *database.DB) *reporting.Module {
+func NewReporting(cfg *config.Config, db *database.DB) *reporting.Service {
 	return reporting.New(cfg, reporting.Deps{
 		Reports:  store.NewReportRepo(db),
 		Schedule: store.NewScheduleRepo(db),
