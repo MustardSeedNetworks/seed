@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/profile-import-request.schema.json",
+  "$ref": "#/$defs/ProfileImportRequest",
+  "$defs": {
+    "ProfileImportRequest": {
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "profiles": {
+          "items": {
+            "$ref": "#/$defs/ProfileRequest"
+          },
+          "type": "array"
+        },
+        "overwrite": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "version",
+        "profiles",
+        "overwrite"
+      ]
+    },
+    "ProfileRequest": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "config": true,
+        "is_default": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "description",
+        "config",
+        "is_default"
+      ]
+    }
+  },
+  "title": "ProfileImportRequest",
+  "description": "ProfileImportRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

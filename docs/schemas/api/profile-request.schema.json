@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/profile-request.schema.json",
+  "$ref": "#/$defs/ProfileRequest",
+  "$defs": {
+    "ProfileRequest": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "config": true,
+        "is_default": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "description",
+        "config",
+        "is_default"
+      ]
+    }
+  },
+  "title": "ProfileRequest",
+  "description": "ProfileRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

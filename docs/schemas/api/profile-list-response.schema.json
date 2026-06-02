@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/profile-list-response.schema.json",
+  "$ref": "#/$defs/ProfileListResponse",
+  "$defs": {
+    "ProfileListResponse": {
+      "properties": {
+        "profiles": {
+          "items": {
+            "$ref": "#/$defs/ProfileResponse"
+          },
+          "type": "array"
+        },
+        "total": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "profiles",
+        "total"
+      ]
+    },
+    "ProfileResponse": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "config": true,
+        "is_default": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "description",
+        "config",
+        "is_default",
+        "created_at",
+        "updated_at"
+      ]
+    }
+  },
+  "title": "ProfileListResponse",
+  "description": "ProfileListResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

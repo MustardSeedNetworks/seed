@@ -130,6 +130,15 @@ func fillValue(t *testing.T, typ reflect.Type) reflect.Value {
 		return reflect.ValueOf(time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC))
 	}
 
+	// json.RawMessage is a []byte, but it must carry VALID JSON: its MarshalJSON
+	// emits the bytes verbatim and errors on anything else. The generic []byte
+	// path below would fill it with \x01..., so hand it a representative JSON
+	// object. A RawMessage field reflects to an open schema (true), so any
+	// well-formed JSON validates.
+	if typ == reflect.TypeFor[json.RawMessage]() {
+		return reflect.ValueOf(json.RawMessage(`{"sample":true}`))
+	}
+
 	// Every reflect.Kind is listed (no default) so a future field type the
 	// filler can't represent fails the exhaustiveness check at compile-review
 	// time rather than silently producing a bogus sample.

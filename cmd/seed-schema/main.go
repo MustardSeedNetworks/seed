@@ -211,6 +211,20 @@ func schemaTargets() []schemaTarget {
 		{&api.WiFiDiscoveryStatsResponse{}, "wifi-discovery-stats-response.schema.json"},
 		{&api.PathResponse{}, "path-response.schema.json"},
 		{&api.UpdateSurveyImportedDataRequest{}, "update-survey-imported-data-request.schema.json"},
+
+		// Profile envelope DTOs. The backend treats the per-profile Config as an
+		// opaque JSON blob (json.RawMessage) — it only ever inspects the
+		// `interface` block for license gating and otherwise stores/forwards it
+		// verbatim — so the published schema documents config as arbitrary JSON.
+		// Modeling that blob as typed Go structs, and retiring the hand-written
+		// profile.ts/settings.ts TS twins, is deferred to Phase 7 (frontend
+		// re-architecture); here we just complete contract coverage of the
+		// envelope itself.
+		{&api.ProfileRequest{}, "profile-request.schema.json"},
+		{&api.ProfileResponse{}, "profile-response.schema.json"},
+		{&api.ProfileListResponse{}, "profile-list-response.schema.json"},
+		{&api.ProfileImportRequest{}, "profile-import-request.schema.json"},
+		{&api.ProfileExportResponse{}, "profile-export-response.schema.json"},
 	}
 
 	targets := make([]schemaTarget, len(rows))
