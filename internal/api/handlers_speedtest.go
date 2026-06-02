@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/diagnostics/speedtest"
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
@@ -149,18 +150,26 @@ func (s *Server) handleSpeedtestStatus(w http.ResponseWriter, r *http.Request) {
 
 	// Include last result if available
 	if lastResult := s.speedtestTester().GetLastResult(); lastResult != nil {
-		resp.Last = &SpeedtestResponse{
-			Download:     lastResult.Download,
-			Upload:       lastResult.Upload,
-			Latency:      lastResult.Latency,
-			Server:       lastResult.Server,
-			Location:     lastResult.Location,
-			Host:         lastResult.Host,
-			Distance:     lastResult.Distance,
-			Timestamp:    lastResult.Timestamp.Format(time.RFC3339),
-			TestDuration: lastResult.TestDuration,
-		}
+		last := toSpeedtestResponse(lastResult)
+		resp.Last = &last
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)
+}
+
+// toSpeedtestResponse maps a speedtest.Result to the API wire shape. Shared by
+// the status handler and the speedtest job kind so the result shape stays
+// identical across both paths.
+func toSpeedtestResponse(r *speedtest.Result) SpeedtestResponse {
+	return SpeedtestResponse{
+		Download:     r.Download,
+		Upload:       r.Upload,
+		Latency:      r.Latency,
+		Server:       r.Server,
+		Location:     r.Location,
+		Host:         r.Host,
+		Distance:     r.Distance,
+		Timestamp:    r.Timestamp.Format(time.RFC3339),
+		TestDuration: r.TestDuration,
+	}
 }
