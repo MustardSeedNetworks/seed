@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/wifi-discovery-networks-response.schema.json",
+  "$ref": "#/$defs/WiFiDiscoveryNetworksResponse",
+  "$defs": {
+    "WiFiDiscoveryNetworksResponse": {
+      "properties": {
+        "networks": {
+          "items": {
+            "$ref": "#/$defs/WiFiNetwork"
+          },
+          "type": "array"
+        },
+        "total": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "networks",
+        "total"
+      ]
+    },
+    "WiFiNetwork": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "ssid": {
+          "type": "string"
+        },
+        "is_hidden": {
+          "type": "boolean"
+        },
+        "security_type": {
+          "type": "string"
+        },
+        "authorization_status": {
+          "type": "string"
+        },
+        "first_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ap_count": {
+          "type": "integer"
+        },
+        "best_signal": {
+          "type": "integer"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "ssid",
+        "is_hidden",
+        "security_type",
+        "authorization_status",
+        "first_seen",
+        "last_seen"
+      ]
+    }
+  },
+  "title": "WiFiDiscoveryNetworksResponse",
+  "description": "WiFiDiscoveryNetworksResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

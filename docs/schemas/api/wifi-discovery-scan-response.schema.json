@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/wifi-discovery-scan-response.schema.json",
+  "$ref": "#/$defs/WiFiDiscoveryScanResponse",
+  "$defs": {
+    "ChannelUtilization": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "integer"
+        },
+        "band": {
+          "type": "string"
+        },
+        "frequency_mhz": {
+          "type": "integer"
+        },
+        "utilization_percent": {
+          "type": "number"
+        },
+        "non_wifi_percent": {
+          "type": "number"
+        },
+        "retry_percent": {
+          "type": "number"
+        },
+        "ap_count": {
+          "type": "integer"
+        },
+        "client_count": {
+          "type": "integer"
+        },
+        "recorded_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "channel",
+        "band",
+        "frequency_mhz",
+        "utilization_percent",
+        "non_wifi_percent",
+        "retry_percent",
+        "ap_count",
+        "client_count",
+        "recorded_at"
+      ]
+    },
+    "WiFiAccessPoint": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "device_id": {
+          "type": "string"
+        },
+        "bssid": {
+          "type": "string"
+        },
+        "ssid_id": {
+          "type": "string"
+        },
+        "ssid_name": {
+          "type": "string"
+        },
+        "ap_name": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "integer"
+        },
+        "channel_width": {
+          "type": "integer"
+        },
+        "frequency_mhz": {
+          "type": "integer"
+        },
+        "band": {
+          "type": "string"
+        },
+        "wifi_standard": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "signal_dbm": {
+          "type": "integer"
+        },
+        "noise_dbm": {
+          "type": "integer"
+        },
+        "client_count": {
+          "type": "integer"
+        },
+        "max_clients": {
+          "type": "integer"
+        },
+        "is_authorized": {
+          "type": "boolean"
+        },
+        "first_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "bssid",
+        "channel",
+        "channel_width",
+        "frequency_mhz",
+        "band",
+        "signal_dbm",
+        "client_count",
+        "is_authorized",
+        "first_seen",
+        "last_seen"
+      ]
+    },
+    "WiFiDiscoveryScanResponse": {
+      "properties": {
+        "networks": {
+          "items": {
+            "$ref": "#/$defs/WiFiNetwork"
+          },
+          "type": "array"
+        },
+        "accessPoints": {
+          "items": {
+            "$ref": "#/$defs/WiFiAccessPoint"
+          },
+          "type": "array"
+        },
+        "channelUtilization": {
+          "items": {
+            "$ref": "#/$defs/ChannelUtilization"
+          },
+          "type": "array"
+        },
+        "scanTime": {
+          "type": "string"
+        },
+        "interface": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "networks",
+        "accessPoints",
+        "channelUtilization",
+        "scanTime",
+        "interface"
+      ]
+    },
+    "WiFiNetwork": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "ssid": {
+          "type": "string"
+        },
+        "is_hidden": {
+          "type": "boolean"
+        },
+        "security_type": {
+          "type": "string"
+        },
+        "authorization_status": {
+          "type": "string"
+        },
+        "first_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ap_count": {
+          "type": "integer"
+        },
+        "best_signal": {
+          "type": "integer"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "ssid",
+        "is_hidden",
+        "security_type",
+        "authorization_status",
+        "first_seen",
+        "last_seen"
+      ]
+    }
+  },
+  "title": "WiFiDiscoveryScanResponse",
+  "description": "WiFiDiscoveryScanResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

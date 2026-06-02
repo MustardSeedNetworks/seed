@@ -6,6 +6,7 @@ package api
 import (
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
@@ -673,28 +674,191 @@ func (s *Server) wifiBridge() *discovery.WiFiBridge {
 
 // WiFiDiscoveryScanResponse contains enhanced WiFi scan results.
 type WiFiDiscoveryScanResponse struct {
-	Networks    []discovery.WiFiNetwork        `json:"networks"`
-	APs         []discovery.WiFiAccessPoint    `json:"accessPoints"`
-	Utilization []discovery.ChannelUtilization `json:"channelUtilization"`
-	ScanTime    string                         `json:"scanTime"`
-	Interface   string                         `json:"interface"`
+	Networks    []WiFiNetwork        `json:"networks"`
+	APs         []WiFiAccessPoint    `json:"accessPoints"`
+	Utilization []ChannelUtilization `json:"channelUtilization"`
+	ScanTime    string               `json:"scanTime"`
+	Interface   string               `json:"interface"`
 }
 
 // WiFiDiscoveryNetworksResponse contains discovered WiFi networks.
 type WiFiDiscoveryNetworksResponse struct {
-	Networks []discovery.WiFiNetwork `json:"networks"`
-	Total    int                     `json:"total"`
+	Networks []WiFiNetwork `json:"networks"`
+	Total    int           `json:"total"`
 }
 
 // WiFiDiscoveryAPsResponse contains discovered access points.
 type WiFiDiscoveryAPsResponse struct {
-	AccessPoints []discovery.WiFiAccessPoint `json:"accessPoints"`
-	Total        int                         `json:"total"`
+	AccessPoints []WiFiAccessPoint `json:"accessPoints"`
+	Total        int               `json:"total"`
 }
 
 // WiFiDiscoveryStatsResponse contains WiFi discovery statistics.
 type WiFiDiscoveryStatsResponse struct {
-	Stats *discovery.WiFiDiscoveryStats `json:"stats"`
+	Stats *WiFiDiscoveryStats `json:"stats"`
+}
+
+// WiFiNetwork is the flat transport view of discovery.WiFiNetwork. It and its
+// siblings (WiFiAccessPoint, ChannelUtilization, WiFiDiscoveryStats) mirror the
+// discovery domain's Wi-Fi types so the published schemas do not depend on the
+// discovery package; named string enums (security/authorization/band) collapse
+// to string.
+type WiFiNetwork struct {
+	ID                  string         `json:"id"`
+	SSID                string         `json:"ssid"`
+	IsHidden            bool           `json:"is_hidden"`
+	SecurityType        string         `json:"security_type"`
+	AuthorizationStatus string         `json:"authorization_status"`
+	FirstSeen           time.Time      `json:"first_seen"`
+	LastSeen            time.Time      `json:"last_seen"`
+	APCount             int            `json:"ap_count,omitempty"`
+	BestSignal          int            `json:"best_signal,omitempty"`
+	Metadata            map[string]any `json:"metadata,omitempty"`
+}
+
+// WiFiAccessPoint is the flat transport view of discovery.WiFiAccessPoint.
+type WiFiAccessPoint struct {
+	ID           string         `json:"id"`
+	DeviceID     string         `json:"device_id,omitempty"`
+	BSSID        string         `json:"bssid"`
+	SSIDID       string         `json:"ssid_id,omitempty"`
+	SSIDName     string         `json:"ssid_name,omitempty"`
+	APName       string         `json:"ap_name,omitempty"`
+	Vendor       string         `json:"vendor,omitempty"`
+	Channel      int            `json:"channel"`
+	ChannelWidth int            `json:"channel_width"`
+	FrequencyMHz int            `json:"frequency_mhz"`
+	Band         string         `json:"band"`
+	WiFiStandard []string       `json:"wifi_standard,omitempty"`
+	SignalDBm    int            `json:"signal_dbm"`
+	NoiseDBm     int            `json:"noise_dbm,omitempty"`
+	ClientCount  int            `json:"client_count"`
+	MaxClients   int            `json:"max_clients,omitempty"`
+	IsAuthorized bool           `json:"is_authorized"`
+	FirstSeen    time.Time      `json:"first_seen"`
+	LastSeen     time.Time      `json:"last_seen"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
+}
+
+// ChannelUtilization is the flat transport view of discovery.ChannelUtilization.
+type ChannelUtilization struct {
+	ID                 string    `json:"id"`
+	Channel            int       `json:"channel"`
+	Band               string    `json:"band"`
+	FrequencyMHz       int       `json:"frequency_mhz"`
+	UtilizationPercent float64   `json:"utilization_percent"`
+	NonWiFiPercent     float64   `json:"non_wifi_percent"`
+	RetryPercent       float64   `json:"retry_percent"`
+	APCount            int       `json:"ap_count"`
+	ClientCount        int       `json:"client_count"`
+	RecordedAt         time.Time `json:"recorded_at"`
+}
+
+// WiFiDiscoveryStats is the flat transport view of discovery.WiFiDiscoveryStats.
+type WiFiDiscoveryStats struct {
+	TotalNetworks     int            `json:"total_networks"`
+	HiddenNetworks    int            `json:"hidden_networks"`
+	TotalAPs          int            `json:"total_aps"`
+	AuthorizedAPs     int            `json:"authorized_aps"`
+	UnauthorizedAPs   int            `json:"unauthorized_aps"`
+	TotalClients      int            `json:"total_clients"`
+	ChannelsByBand    map[string]int `json:"channels_by_band"`
+	SecurityBreakdown map[string]int `json:"security_breakdown"`
+	VendorBreakdown   map[string]int `json:"vendor_breakdown"`
+	LastScanTime      time.Time      `json:"last_scan_time"`
+}
+
+// toWiFiNetworks maps discovered Wi-Fi networks onto their flat transport view,
+// always returning a non-nil slice so an empty result serializes as [].
+func toWiFiNetworks(networks []discovery.WiFiNetwork) []WiFiNetwork {
+	out := make([]WiFiNetwork, 0, len(networks))
+	for _, n := range networks {
+		out = append(out, WiFiNetwork{
+			ID:                  n.ID,
+			SSID:                n.SSID,
+			IsHidden:            n.IsHidden,
+			SecurityType:        string(n.SecurityType),
+			AuthorizationStatus: string(n.AuthorizationStatus),
+			FirstSeen:           n.FirstSeen,
+			LastSeen:            n.LastSeen,
+			APCount:             n.APCount,
+			BestSignal:          n.BestSignal,
+			Metadata:            n.Metadata,
+		})
+	}
+	return out
+}
+
+// toWiFiAccessPoints maps discovered access points onto their flat transport
+// view, always returning a non-nil slice.
+func toWiFiAccessPoints(aps []discovery.WiFiAccessPoint) []WiFiAccessPoint {
+	out := make([]WiFiAccessPoint, 0, len(aps))
+	for _, ap := range aps {
+		out = append(out, WiFiAccessPoint{
+			ID:           ap.ID,
+			DeviceID:     ap.DeviceID,
+			BSSID:        ap.BSSID,
+			SSIDID:       ap.SSIDID,
+			SSIDName:     ap.SSIDName,
+			APName:       ap.APName,
+			Vendor:       ap.Vendor,
+			Channel:      ap.Channel,
+			ChannelWidth: ap.ChannelWidth,
+			FrequencyMHz: ap.FrequencyMHz,
+			Band:         string(ap.Band),
+			WiFiStandard: ap.WiFiStandard,
+			SignalDBm:    ap.SignalDBm,
+			NoiseDBm:     ap.NoiseDBm,
+			ClientCount:  ap.ClientCount,
+			MaxClients:   ap.MaxClients,
+			IsAuthorized: ap.IsAuthorized,
+			FirstSeen:    ap.FirstSeen,
+			LastSeen:     ap.LastSeen,
+			Metadata:     ap.Metadata,
+		})
+	}
+	return out
+}
+
+// toChannelUtilizations maps channel-utilization records onto their flat
+// transport view, always returning a non-nil slice.
+func toChannelUtilizations(utils []discovery.ChannelUtilization) []ChannelUtilization {
+	out := make([]ChannelUtilization, 0, len(utils))
+	for _, u := range utils {
+		out = append(out, ChannelUtilization{
+			ID:                 u.ID,
+			Channel:            u.Channel,
+			Band:               string(u.Band),
+			FrequencyMHz:       u.FrequencyMHz,
+			UtilizationPercent: u.UtilizationPercent,
+			NonWiFiPercent:     u.NonWiFiPercent,
+			RetryPercent:       u.RetryPercent,
+			APCount:            u.APCount,
+			ClientCount:        u.ClientCount,
+			RecordedAt:         u.RecordedAt,
+		})
+	}
+	return out
+}
+
+// toWiFiDiscoveryStats maps Wi-Fi discovery statistics onto their flat
+// transport view, preserving nil so an absent stats block stays omitted.
+func toWiFiDiscoveryStats(stats *discovery.WiFiDiscoveryStats) *WiFiDiscoveryStats {
+	if stats == nil {
+		return nil
+	}
+	return &WiFiDiscoveryStats{
+		TotalNetworks:     stats.TotalNetworks,
+		HiddenNetworks:    stats.HiddenNetworks,
+		TotalAPs:          stats.TotalAPs,
+		AuthorizedAPs:     stats.AuthorizedAPs,
+		UnauthorizedAPs:   stats.UnauthorizedAPs,
+		TotalClients:      stats.TotalClients,
+		ChannelsByBand:    stats.ChannelsByBand,
+		SecurityBreakdown: stats.SecurityBreakdown,
+		VendorBreakdown:   stats.VendorBreakdown,
+		LastScanTime:      stats.LastScanTime,
+	}
 }
 
 // handleWiFiDiscoveryScan performs an enhanced WiFi scan using the WiFiBridge.
@@ -749,9 +913,9 @@ func (s *Server) handleWiFiDiscoveryScan(w http.ResponseWriter, r *http.Request)
 	}
 
 	resp := WiFiDiscoveryScanResponse{
-		Networks:    result.Networks,
-		APs:         result.APs,
-		Utilization: result.Utilization,
+		Networks:    toWiFiNetworks(result.Networks),
+		APs:         toWiFiAccessPoints(result.APs),
+		Utilization: toChannelUtilizations(result.Utilization),
 		ScanTime:    result.ScanTime.Format("2006-01-02T15:04:05Z07:00"),
 		Interface:   result.Interface,
 	}
@@ -797,7 +961,7 @@ func (s *Server) handleWiFiDiscoveryNetworks(w http.ResponseWriter, r *http.Requ
 
 	networks := bridge.GetNetworks()
 	sendJSONResponse(w, logger, http.StatusOK, WiFiDiscoveryNetworksResponse{
-		Networks: networks,
+		Networks: toWiFiNetworks(networks),
 		Total:    len(networks),
 	})
 }
@@ -840,7 +1004,7 @@ func (s *Server) handleWiFiDiscoveryAPs(w http.ResponseWriter, r *http.Request) 
 
 	aps := bridge.GetAccessPoints()
 	sendJSONResponse(w, logger, http.StatusOK, WiFiDiscoveryAPsResponse{
-		AccessPoints: aps,
+		AccessPoints: toWiFiAccessPoints(aps),
 		Total:        len(aps),
 	})
 }
@@ -883,6 +1047,6 @@ func (s *Server) handleWiFiDiscoveryStats(w http.ResponseWriter, r *http.Request
 
 	stats := bridge.GetStats()
 	sendJSONResponse(w, logger, http.StatusOK, WiFiDiscoveryStatsResponse{
-		Stats: stats,
+		Stats: toWiFiDiscoveryStats(stats),
 	})
 }

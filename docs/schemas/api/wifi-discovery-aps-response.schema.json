@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/wifi-discovery-aps-response.schema.json",
+  "$ref": "#/$defs/WiFiDiscoveryAPsResponse",
+  "$defs": {
+    "WiFiAccessPoint": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "device_id": {
+          "type": "string"
+        },
+        "bssid": {
+          "type": "string"
+        },
+        "ssid_id": {
+          "type": "string"
+        },
+        "ssid_name": {
+          "type": "string"
+        },
+        "ap_name": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "integer"
+        },
+        "channel_width": {
+          "type": "integer"
+        },
+        "frequency_mhz": {
+          "type": "integer"
+        },
+        "band": {
+          "type": "string"
+        },
+        "wifi_standard": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "signal_dbm": {
+          "type": "integer"
+        },
+        "noise_dbm": {
+          "type": "integer"
+        },
+        "client_count": {
+          "type": "integer"
+        },
+        "max_clients": {
+          "type": "integer"
+        },
+        "is_authorized": {
+          "type": "boolean"
+        },
+        "first_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "bssid",
+        "channel",
+        "channel_width",
+        "frequency_mhz",
+        "band",
+        "signal_dbm",
+        "client_count",
+        "is_authorized",
+        "first_seen",
+        "last_seen"
+      ]
+    },
+    "WiFiDiscoveryAPsResponse": {
+      "properties": {
+        "accessPoints": {
+          "items": {
+            "$ref": "#/$defs/WiFiAccessPoint"
+          },
+          "type": "array"
+        },
+        "total": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "accessPoints",
+        "total"
+      ]
+    }
+  },
+  "title": "WiFiDiscoveryAPsResponse",
+  "description": "WiFiDiscoveryAPsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
