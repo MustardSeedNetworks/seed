@@ -634,16 +634,18 @@ func TestDNSLookupResult(t *testing.T) {
 
 func TestGatewayResponse(t *testing.T) {
 	resp := api.GatewayResponse{
-		Gateway:     "192.168.1.1",
-		Reachable:   true,
-		Sent:        5,
-		Received:    5,
-		LossPercent: 0,
-		MinTime:     10.5,
-		MaxTime:     25.3,
-		AvgTime:     15.2,
-		LastTime:    12.1,
-		Status:      "success",
+		GatewayPingResult: api.GatewayPingResult{
+			Gateway:     "192.168.1.1",
+			Reachable:   true,
+			Sent:        5,
+			Received:    5,
+			LossPercent: 0,
+			MinTime:     10.5,
+			MaxTime:     25.3,
+			AvgTime:     15.2,
+			LastTime:    12.1,
+			Status:      "success",
+		},
 	}
 
 	if !resp.Reachable && resp.LossPercent < 100 {

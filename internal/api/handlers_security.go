@@ -266,19 +266,31 @@ func (s *Server) handleRogueDHCPConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GatewayResponse represents the gateway ping test results for the API.
+// GatewayPingResult is the ping outcome for a single gateway. It is the flat,
+// self-contained value object shared by the IPv4 and IPv6 sides of a gateway
+// test, so the transport contract never has to reference itself.
+type GatewayPingResult struct {
+	Gateway     string  `json:"gateway"`
+	Reachable   bool    `json:"reachable"`
+	Sent        int     `json:"sent"`
+	Received    int     `json:"received"`
+	LossPercent float64 `json:"lossPercent"`
+	MinTime     float64 `json:"minTime"`
+	MaxTime     float64 `json:"maxTime"`
+	AvgTime     float64 `json:"avgTime"`
+	LastTime    float64 `json:"lastTime"`
+	Status      string  `json:"status"`
+}
+
+// GatewayResponse represents the gateway ping test results for the API: the
+// IPv4 gateway result (promoted to the top level) plus the IPv6 gateway result
+// when one is detected. It is non-recursive — the IPv6 sibling is a flat
+// GatewayPingResult and carries no further nesting — which keeps the published
+// schema acyclic.
 type GatewayResponse struct {
-	Gateway     string           `json:"gateway"`
-	Reachable   bool             `json:"reachable"`
-	Sent        int              `json:"sent"`
-	Received    int              `json:"received"`
-	LossPercent float64          `json:"lossPercent"`
-	MinTime     float64          `json:"minTime"`
-	MaxTime     float64          `json:"maxTime"`
-	AvgTime     float64          `json:"avgTime"`
-	LastTime    float64          `json:"lastTime"`
-	Status      string           `json:"status"`
-	IPv6        *GatewayResponse `json:"ipv6,omitempty"`
+	GatewayPingResult
+
+	IPv6 *GatewayPingResult `json:"ipv6,omitempty"`
 }
 
 // handleGateway performs gateway ping testing and returns results.
@@ -316,9 +328,11 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 		// If link is down, return disconnected status
 		if !s.linkMonitor().IsUp() {
 			resp := GatewayResponse{
-				Gateway:   "",
-				Reachable: false,
-				Status:    "disconnected",
+				GatewayPingResult: GatewayPingResult{
+					Gateway:   "",
+					Reachable: false,
+					Status:    "disconnected",
+				},
 			}
 			sendJSONResponse(w, logger, http.StatusOK, resp)
 			return
@@ -329,16 +343,18 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 	stats := s.gatewayTester().Test()
 
 	resp := GatewayResponse{
-		Gateway:     stats.Gateway,
-		Reachable:   stats.Reachable,
-		Sent:        stats.Sent,
-		Received:    stats.Received,
-		LossPercent: stats.LossPercent,
-		MinTime:     stats.MinTime,
-		MaxTime:     stats.MaxTime,
-		AvgTime:     stats.AvgTime,
-		LastTime:    stats.LastTime,
-		Status:      string(stats.Status),
+		GatewayPingResult: GatewayPingResult{
+			Gateway:     stats.Gateway,
+			Reachable:   stats.Reachable,
+			Sent:        stats.Sent,
+			Received:    stats.Received,
+			LossPercent: stats.LossPercent,
+			MinTime:     stats.MinTime,
+			MaxTime:     stats.MaxTime,
+			AvgTime:     stats.AvgTime,
+			LastTime:    stats.LastTime,
+			Status:      string(stats.Status),
+		},
 	}
 
 	// Detect and ping IPv6 gateway if available
@@ -349,7 +365,7 @@ func (s *Server) handleGateway(w http.ResponseWriter, r *http.Request) {
 		ipv6Tester.SetGateway(ipv6Gateway)
 		ipv6Stats := ipv6Tester.Test()
 
-		resp.IPv6 = &GatewayResponse{
+		resp.IPv6 = &GatewayPingResult{
 			Gateway:     ipv6Stats.Gateway,
 			Reachable:   ipv6Stats.Reachable,
 			Sent:        ipv6Stats.Sent,

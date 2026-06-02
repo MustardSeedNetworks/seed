@@ -56,10 +56,12 @@ type reg struct {
 // POLICY (RE_ARCHITECTURE_BLUEPRINT.md Phase 2 — flat + self-contained): a DTO
 // belongs here iff it is flat or nests only local, purpose-built transport
 // sub-structs in internal/api. DTOs that put an internal domain type on the
-// wire (discovery.*/dhcp.*/netif.*/logging.*/survey.*/config), compose another
-// top-level *Response/*Request, carry [json.RawMessage], or self-recurse
-// (GatewayResponse.ipv6) are deferred to Phase 3, where they get hand-designed
-// flat transport DTOs. Unexported lowercase DTOs cannot be referenced here.
+// wire (discovery.*/dhcp.*/netif.*/logging.*/survey.*/config), carry
+// [json.RawMessage], or self-recurse (a field typed as the DTO itself) are
+// deferred to Phase 3, where they get hand-designed flat transport DTOs — e.g.
+// GatewayResponse's recursive ipv6 field was split out into the flat
+// GatewayPingResult value object so the published schema stays acyclic.
+// Unexported lowercase DTOs cannot be referenced here.
 //
 // Function rather than a package-level var to keep gochecknoglobals happy and
 // so `go run` doesn't pull internal/api into an init side effect.
@@ -98,6 +100,7 @@ func schemaTargets() []schemaTarget {
 		{&api.DiscoveryResponse{}, "discovery-response.schema.json"},
 		{&api.NetworkProblemsResponse{}, "network-problems-response.schema.json"},
 		{&api.ProblemScanResponse{}, "problem-scan-response.schema.json"},
+		{&api.GatewayResponse{}, "gateway-response.schema.json"},
 
 		// telemetry / network settings.
 		{&api.IPSettingsRequest{}, "ip-settings-request.schema.json"},

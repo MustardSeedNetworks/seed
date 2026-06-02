@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/gateway-response.schema.json",
+  "$ref": "#/$defs/GatewayResponse",
+  "$defs": {
+    "GatewayPingResult": {
+      "properties": {
+        "gateway": {
+          "type": "string"
+        },
+        "reachable": {
+          "type": "boolean"
+        },
+        "sent": {
+          "type": "integer"
+        },
+        "received": {
+          "type": "integer"
+        },
+        "lossPercent": {
+          "type": "number"
+        },
+        "minTime": {
+          "type": "number"
+        },
+        "maxTime": {
+          "type": "number"
+        },
+        "avgTime": {
+          "type": "number"
+        },
+        "lastTime": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "gateway",
+        "reachable",
+        "sent",
+        "received",
+        "lossPercent",
+        "minTime",
+        "maxTime",
+        "avgTime",
+        "lastTime",
+        "status"
+      ]
+    },
+    "GatewayResponse": {
+      "properties": {
+        "gateway": {
+          "type": "string"
+        },
+        "reachable": {
+          "type": "boolean"
+        },
+        "sent": {
+          "type": "integer"
+        },
+        "received": {
+          "type": "integer"
+        },
+        "lossPercent": {
+          "type": "number"
+        },
+        "minTime": {
+          "type": "number"
+        },
+        "maxTime": {
+          "type": "number"
+        },
+        "avgTime": {
+          "type": "number"
+        },
+        "lastTime": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string"
+        },
+        "ipv6": {
+          "$ref": "#/$defs/GatewayPingResult"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "gateway",
+        "reachable",
+        "sent",
+        "received",
+        "lossPercent",
+        "minTime",
+        "maxTime",
+        "avgTime",
+        "lastTime",
+        "status"
+      ]
+    }
+  },
+  "title": "GatewayResponse",
+  "description": "GatewayResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
