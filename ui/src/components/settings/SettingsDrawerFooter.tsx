@@ -72,7 +72,7 @@ export function SettingsDrawerFooter({
           {t('export.title')}
         </h3>
         <a
-          href={`${API_BASE}/api/v1/harvest/export`}
+          href={`${API_BASE}/api/v1/reporting/export`}
           download="seed-export.json"
           className={cn(
             'w-full',

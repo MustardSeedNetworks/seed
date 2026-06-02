@@ -1,2 +1,2 @@
-// Package performance is part of the sap module.
+// Package performance is part of the diagnostics package.
 package performance

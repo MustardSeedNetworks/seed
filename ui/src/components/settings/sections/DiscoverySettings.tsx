@@ -81,7 +81,7 @@ export const DiscoverySettings: React.NamedExoticComponent<DiscoverySettingsProp
     const fetchServiceStatus = useCallback(async (): Promise<void> => {
       setStatusLoading(true);
       try {
-        const response = await fetch('/api/v1/shell/discovery/service/status');
+        const response = await fetch('/api/v1/security/discovery/service/status');
         if (response.ok) {
           const data = (await response.json()) as DiscoveryServiceStatusType;
           setServiceStatus(data);

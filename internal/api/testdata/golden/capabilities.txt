@@ -191,230 +191,230 @@ body:
     "path": "PATCH /api/v1/updates/config"
   },
   {
-    "path": "/api/v1/sap/link"
+    "path": "/api/v1/telemetry/link"
   },
   {
-    "path": "/api/v1/sap/cable"
+    "path": "/api/v1/telemetry/cable"
   },
   {
-    "path": "/api/v1/sap/dns"
+    "path": "/api/v1/telemetry/dns"
   },
   {
-    "path": "/api/v1/sap/dns/security"
-  },
-  {
-    "minRole": "operator",
-    "path": "/api/v1/sap/dns/security/settings"
-  },
-  {
-    "path": "/api/v1/sap/gateway"
-  },
-  {
-    "path": "/api/v1/sap/dhcp/rogue"
-  },
-  {
-    "path": "/api/v1/sap/dhcp/rogue/servers"
+    "path": "/api/v1/telemetry/dns/security"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/sap/dhcp/rogue/config"
+    "path": "/api/v1/telemetry/dns/security/settings"
   },
   {
-    "path": "/api/v1/sap/vlan"
+    "path": "/api/v1/telemetry/gateway"
   },
   {
-    "path": "/api/v1/sap/vlan/traffic"
+    "path": "/api/v1/telemetry/dhcp/rogue"
   },
   {
-    "path": "/api/v1/sap/vlan/interface"
-  },
-  {
-    "path": "/api/v1/sap/speedtest",
-    "rateLimited": true
-  },
-  {
-    "path": "/api/v1/sap/speedtest/status"
-  },
-  {
-    "path": "/api/v1/sap/iperf/info"
-  },
-  {
-    "path": "/api/v1/sap/iperf/client",
-    "rateLimited": true
-  },
-  {
-    "path": "/api/v1/sap/iperf/client/status"
-  },
-  {
-    "path": "/api/v1/sap/iperf/server"
-  },
-  {
-    "path": "/api/v1/sap/iperf/server/status"
-  },
-  {
-    "path": "/api/v1/sap/iperf/suggestions"
+    "path": "/api/v1/telemetry/dhcp/rogue/servers"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/sap/health-checks/settings"
+    "path": "/api/v1/telemetry/dhcp/rogue/config"
   },
   {
-    "path": "/api/v1/sap/health-checks/run",
+    "path": "/api/v1/telemetry/vlan"
+  },
+  {
+    "path": "/api/v1/telemetry/vlan/traffic"
+  },
+  {
+    "path": "/api/v1/telemetry/vlan/interface"
+  },
+  {
+    "path": "/api/v1/telemetry/speedtest",
     "rateLimited": true
   },
   {
-    "path": "/api/v1/sap/health-checks/results"
+    "path": "/api/v1/telemetry/speedtest/status"
   },
   {
-    "path": "/api/v1/sap/health-checks/history"
+    "path": "/api/v1/telemetry/iperf/info"
   },
   {
-    "path": "/api/v1/sap/health-checks/scores"
+    "path": "/api/v1/telemetry/iperf/client",
+    "rateLimited": true
   },
   {
-    "path": "/api/v1/sap/health-checks/sla"
+    "path": "/api/v1/telemetry/iperf/client/status"
   },
   {
-    "path": "/api/v1/sap/health-checks/alerts"
+    "path": "/api/v1/telemetry/iperf/server"
+  },
+  {
+    "path": "/api/v1/telemetry/iperf/server/status"
+  },
+  {
+    "path": "/api/v1/telemetry/iperf/suggestions"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/telemetry/health-checks/settings"
+  },
+  {
+    "path": "/api/v1/telemetry/health-checks/run",
+    "rateLimited": true
+  },
+  {
+    "path": "/api/v1/telemetry/health-checks/results"
+  },
+  {
+    "path": "/api/v1/telemetry/health-checks/history"
+  },
+  {
+    "path": "/api/v1/telemetry/health-checks/scores"
+  },
+  {
+    "path": "/api/v1/telemetry/health-checks/sla"
+  },
+  {
+    "path": "/api/v1/telemetry/health-checks/alerts"
   },
   {
     "feature": "anomaly_detection",
-    "path": "/api/v1/sap/health-checks/anomalies"
+    "path": "/api/v1/telemetry/health-checks/anomalies"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/sap/snmp/settings"
+    "path": "/api/v1/telemetry/snmp/settings"
   },
   {
-    "path": "/api/v1/sap/system/health"
+    "path": "/api/v1/telemetry/system/health"
   },
   {
-    "path": "/api/v1/sap/ipconfig"
+    "path": "/api/v1/telemetry/ipconfig"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/sap/ipconfig/settings"
+    "path": "/api/v1/telemetry/ipconfig/settings"
   },
   {
-    "path": "/api/v1/sap/publicip"
+    "path": "/api/v1/telemetry/publicip"
   },
   {
-    "path": "/api/v1/shell/discovery"
+    "path": "/api/v1/security/discovery"
   },
   {
-    "path": "/api/v1/shell/discovery/probe"
+    "path": "/api/v1/security/discovery/probe"
   },
   {
-    "path": "/api/v1/shell/discovery/portscan"
+    "path": "/api/v1/security/discovery/portscan"
   },
   {
-    "path": "/api/v1/shell/discovery/options"
+    "path": "/api/v1/security/discovery/options"
   },
   {
-    "path": "/api/v1/shell/discovery/service/status"
+    "path": "/api/v1/security/discovery/service/status"
   },
   {
-    "path": "/api/v1/shell/discovery/fingerprint"
+    "path": "/api/v1/security/discovery/fingerprint"
   },
   {
-    "path": "/api/v1/shell/devices"
+    "path": "/api/v1/security/devices"
   },
   {
-    "path": "/api/v1/shell/devices/scan",
+    "path": "/api/v1/security/devices/scan",
     "rateLimited": true
   },
   {
-    "path": "/api/v1/shell/devices/status"
+    "path": "/api/v1/security/devices/status"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/shell/devices/settings"
+    "path": "/api/v1/security/devices/settings"
   },
   {
-    "path": "/api/v1/shell/devices/subnets"
+    "path": "/api/v1/security/devices/subnets"
   },
   {
     "feature": "compliance_advanced",
-    "path": "/api/v1/shell/vulnerabilities/scan",
+    "path": "/api/v1/security/vulnerabilities/scan",
     "rateLimited": true
   },
   {
-    "path": "/api/v1/shell/vulnerabilities/status"
+    "path": "/api/v1/security/vulnerabilities/status"
   },
   {
-    "path": "/api/v1/shell/vulnerabilities/results"
+    "path": "/api/v1/security/vulnerabilities/results"
   },
   {
-    "path": "/api/v1/shell/vulnerabilities/device"
-  },
-  {
-    "minRole": "operator",
-    "path": "/api/v1/shell/vulnerabilities/settings"
-  },
-  {
-    "path": "/api/v1/shell/vulnerabilities/validate-api-key"
+    "path": "/api/v1/security/vulnerabilities/device"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/shell/guest-audit/settings"
+    "path": "/api/v1/security/vulnerabilities/settings"
+  },
+  {
+    "path": "/api/v1/security/vulnerabilities/validate-api-key"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/security/guest-audit/settings"
   },
   {
     "feature": "compliance_advanced",
-    "path": "/api/v1/shell/guest-audit/run",
+    "path": "/api/v1/security/guest-audit/run",
     "rateLimited": true
   },
   {
-    "path": "/api/v1/shell/pipeline/status"
+    "path": "/api/v1/security/pipeline/status"
   },
   {
-    "path": "/api/v1/shell/pipeline/start"
+    "path": "/api/v1/security/pipeline/start"
   },
   {
-    "path": "/api/v1/shell/pipeline/cancel"
-  },
-  {
-    "minRole": "operator",
-    "path": "/api/v1/shell/pipeline/config"
-  },
-  {
-    "path": "/api/v1/shell/pipeline/port-intensity"
-  },
-  {
-    "path": "/api/v1/shell/pipeline/timing-profiles"
-  },
-  {
-    "path": "/api/v1/shell/problems"
-  },
-  {
-    "path": "/api/v1/shell/problems/scan"
+    "path": "/api/v1/security/pipeline/cancel"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/shell/problems/thresholds"
+    "path": "/api/v1/security/pipeline/config"
   },
   {
-    "path": "/api/v1/shell/bluetooth/scan"
+    "path": "/api/v1/security/pipeline/port-intensity"
   },
   {
-    "path": "/api/v1/shell/bluetooth/devices"
+    "path": "/api/v1/security/pipeline/timing-profiles"
   },
   {
-    "path": "/api/v1/shell/bluetooth/stats"
+    "path": "/api/v1/security/problems"
   },
   {
-    "path": "/api/v1/shell/bluetooth/status"
+    "path": "/api/v1/security/problems/scan"
   },
   {
-    "path": "/api/v1/shell/wifi/discovery/scan"
+    "minRole": "operator",
+    "path": "/api/v1/security/problems/thresholds"
   },
   {
-    "path": "/api/v1/shell/wifi/discovery/networks"
+    "path": "/api/v1/security/bluetooth/scan"
   },
   {
-    "path": "/api/v1/shell/wifi/discovery/aps"
+    "path": "/api/v1/security/bluetooth/devices"
   },
   {
-    "path": "/api/v1/shell/wifi/discovery/stats"
+    "path": "/api/v1/security/bluetooth/stats"
+  },
+  {
+    "path": "/api/v1/security/bluetooth/status"
+  },
+  {
+    "path": "/api/v1/security/wifi/discovery/scan"
+  },
+  {
+    "path": "/api/v1/security/wifi/discovery/networks"
+  },
+  {
+    "path": "/api/v1/security/wifi/discovery/aps"
+  },
+  {
+    "path": "/api/v1/security/wifi/discovery/stats"
   },
   {
     "path": "/api/v1/discovery/engine"
@@ -445,141 +445,141 @@ body:
   },
   {
     "feature": "path_analysis",
-    "path": "/api/v1/roots/traceroute",
+    "path": "/api/v1/path/traceroute",
     "rateLimited": true
   },
   {
     "feature": "path_analysis",
-    "path": "/api/v1/roots/path"
+    "path": "/api/v1/path/path"
   },
   {
-    "path": "/api/v1/canopy/wifi"
+    "path": "/api/v1/wifi/wifi"
   },
   {
-    "path": "/api/v1/canopy/wifi/scan"
+    "path": "/api/v1/wifi/wifi/scan"
   },
   {
-    "path": "/api/v1/canopy/wifi/status"
+    "path": "/api/v1/wifi/wifi/status"
   },
   {
-    "path": "/api/v1/canopy/wifi/channel-graph"
-  },
-  {
-    "minRole": "operator",
-    "path": "/api/v1/canopy/wifi/settings"
+    "path": "/api/v1/wifi/wifi/channel-graph"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/wifi/connect"
+    "path": "/api/v1/wifi/wifi/settings"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/wifi/disconnect"
-  },
-  {
-    "path": "/api/v1/canopy/wifi/saved"
+    "path": "/api/v1/wifi/wifi/connect"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/wifi/forget"
+    "path": "/api/v1/wifi/wifi/disconnect"
+  },
+  {
+    "path": "/api/v1/wifi/wifi/saved"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/create"
-  },
-  {
-    "path": "/api/v1/canopy/survey/list"
-  },
-  {
-    "path": "/api/v1/canopy/survey"
+    "path": "/api/v1/wifi/wifi/forget"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/delete"
+    "path": "/api/v1/wifi/survey/create"
+  },
+  {
+    "path": "/api/v1/wifi/survey/list"
+  },
+  {
+    "path": "/api/v1/wifi/survey"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/start"
+    "path": "/api/v1/wifi/survey/delete"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/pause"
+    "path": "/api/v1/wifi/survey/start"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/complete"
+    "path": "/api/v1/wifi/survey/pause"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/sample"
+    "path": "/api/v1/wifi/survey/complete"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/floorplan"
+    "path": "/api/v1/wifi/survey/sample"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/settings"
+    "path": "/api/v1/wifi/survey/floorplan"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/imported-data"
+    "path": "/api/v1/wifi/survey/settings"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/wifi/survey/imported-data"
   },
   {
     "feature": "airmapper_baseline_diff",
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/import/airmapper",
+    "path": "/api/v1/wifi/survey/import/airmapper",
     "rateLimited": true
   },
   {
-    "path": "/api/v1/canopy/survey/heatmap",
+    "path": "/api/v1/wifi/survey/heatmap",
     "rateLimited": true
   },
   {
-    "path": "/api/v1/canopy/survey/dead-zones"
+    "path": "/api/v1/wifi/survey/dead-zones"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/floors"
+    "path": "/api/v1/wifi/survey/floors"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/floor"
+    "path": "/api/v1/wifi/survey/floor"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/floor/floorplan"
+    "path": "/api/v1/wifi/survey/floor/floorplan"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/floor/sample"
+    "path": "/api/v1/wifi/survey/floor/sample"
   },
   {
     "minRole": "operator",
-    "path": "/api/v1/canopy/survey/active-floor"
+    "path": "/api/v1/wifi/survey/active-floor"
   },
   {
-    "path": "/api/v1/canopy/survey/report",
+    "path": "/api/v1/wifi/survey/report",
     "rateLimited": true
   },
   {
     "feature": "export_csv_json",
-    "path": "/api/v1/harvest/export"
+    "path": "/api/v1/reporting/export"
   },
   {
-    "path": "/api/v1/harvest/logs"
+    "path": "/api/v1/reporting/logs"
   },
   {
-    "path": "/api/v1/harvest/logs/client"
+    "path": "/api/v1/reporting/logs/client"
   },
   {
-    "path": "/api/v1/harvest/logs/query"
+    "path": "/api/v1/reporting/logs/query"
   },
   {
-    "path": "/api/v1/harvest/logs/stats"
+    "path": "/api/v1/reporting/logs/stats"
   },
   {
-    "path": "/api/v1/harvest/logs/recent"
+    "path": "/api/v1/reporting/logs/recent"
   },
   {
     "path": "/api/v1/topology/nodes"

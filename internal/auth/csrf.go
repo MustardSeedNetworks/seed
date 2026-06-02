@@ -201,7 +201,7 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 			r.URL.Path == "/api/v1/auth/logout" ||
 			r.URL.Path == "/api/v1/setup/status" ||
 			r.URL.Path == "/api/v1/setup/complete" ||
-			r.URL.Path == "/api/v1/harvest/logs/client" ||
+			r.URL.Path == "/api/v1/reporting/logs/client" ||
 			strings.HasPrefix(r.URL.Path, "/api/v1/sso/") {
 			next.ServeHTTP(w, r)
 			return

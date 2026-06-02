@@ -3,7 +3,7 @@
  *
  * Owns the scan poll interval and timeout refs and tears them down on
  * unmount. Returns a stable trigger callback for App.tsx and other
- * callers to kick off a /api/v1/shell/devices/scan run.
+ * callers to kick off a /api/v1/security/devices/scan run.
  */
 
 import { useCallback, useEffect, useRef } from 'react';
@@ -47,12 +47,12 @@ export function useDeviceScan({
           : null,
       );
 
-      await api.post('/api/v1/shell/devices/scan');
+      await api.post('/api/v1/security/devices/scan');
 
       // Poll for completion
       scanPollIntervalRef.current = setInterval(async () => {
         try {
-          const status = await api.get<{ scanning: boolean }>('/api/v1/shell/devices/status');
+          const status = await api.get<{ scanning: boolean }>('/api/v1/security/devices/status');
           if (!status.scanning) {
             if (scanPollIntervalRef.current) {
               clearInterval(scanPollIntervalRef.current);

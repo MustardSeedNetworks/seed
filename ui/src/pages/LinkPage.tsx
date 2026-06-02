@@ -17,7 +17,7 @@ export function LinkPage() {
         icon={Network}
         title="Link"
         description="Physical link state, cable diagnostics, and Wi-Fi association for the active interface."
-        iconColorClass="text-module-sap"
+        iconColorClass="text-module-telemetry"
       />
       <div className={layout.grid.cards}>
         {isWifi ? <WiFiCard data={cards.wifi} loading={loading} visible={true} /> : null}

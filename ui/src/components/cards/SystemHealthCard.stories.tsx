@@ -25,7 +25,7 @@ const meta: Meta<typeof SystemHealthCard> = {
     layout: 'centered',
     mockData: [
       {
-        url: '/api/v1/sap/system/health',
+        url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
         response: {
@@ -77,7 +77,7 @@ export const ModerateLoad: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/v1/sap/system/health',
+        url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
         response: {
@@ -112,7 +112,7 @@ export const HighLoad: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/v1/sap/system/health',
+        url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
         response: {
@@ -147,7 +147,7 @@ export const DiskSpaceCritical: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/v1/sap/system/health',
+        url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
         response: {
@@ -182,7 +182,7 @@ export const Macos: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/v1/sap/system/health',
+        url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
         response: {
@@ -217,7 +217,7 @@ export const Windows: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/v1/sap/system/health',
+        url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
         response: {
@@ -252,7 +252,7 @@ export const RecentlyBooted: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/v1/sap/system/health',
+        url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
         response: {
@@ -287,7 +287,7 @@ export const LongUptime: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/v1/sap/system/health',
+        url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
         response: {
@@ -322,7 +322,7 @@ export const HighGoroutines: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/v1/sap/system/health',
+        url: '/api/v1/telemetry/system/health',
         method: 'GET',
         status: 200,
         response: {
@@ -357,7 +357,7 @@ export const Loading: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/v1/sap/system/health',
+        url: '/api/v1/telemetry/system/health',
         method: 'GET',
         delay: 999999,
         status: 200,

@@ -16,7 +16,7 @@ export function ReportsPage() {
             icon={BarChart3}
             title="Reports"
             description="Aggregated SLA dashboard, compliance tracking, and historical reporting."
-            iconColorClass="text-module-harvest"
+            iconColorClass="text-module-reporting"
           />
           <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad text-sm text-status-warning">
             Reports require the Starter tier or higher. Start a 14-day Pro trial with
@@ -36,7 +36,7 @@ export function ReportsPage() {
           icon={BarChart3}
           title="Reports"
           description="Aggregated SLA dashboard, compliance tracking, and historical reporting."
-          iconColorClass="text-module-harvest"
+          iconColorClass="text-module-reporting"
         />
         <div className={layout.grid.cards}>
           <SLADashboardCard />

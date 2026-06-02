@@ -147,7 +147,7 @@ export const PathDiscoveryCard: React.NamedExoticComponent<PathDiscoveryCardProp
         activeTraceRef.current = traceTarget.trim(); // Set active trace target
 
         try {
-          const data = await api.post<PathResponse>('/api/v1/roots/path', {
+          const data = await api.post<PathResponse>('/api/v1/path/path', {
             source: 'self',
             destination: traceTarget.trim(),
             method: 'both', // Always do both L2+L3

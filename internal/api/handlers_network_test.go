@@ -161,7 +161,7 @@ func TestHandleLinkGET(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/sap/link", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/telemetry/link", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -187,7 +187,7 @@ func TestHandleLinkGETWithInterface(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/sap/link?interface=lo", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/telemetry/link?interface=lo", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -210,7 +210,7 @@ func TestHandleLinkMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/sap/link", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/telemetry/link", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)
@@ -230,7 +230,7 @@ func TestHandleIPConfigGET(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/sap/ipconfig", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/telemetry/ipconfig", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -264,7 +264,7 @@ func TestHandleIPConfigMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/sap/ipconfig", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/telemetry/ipconfig", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)
@@ -284,7 +284,7 @@ func TestHandleIPSettingsGET(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/sap/ipconfig/settings", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/telemetry/ipconfig/settings", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -337,7 +337,7 @@ func TestHandleIPSettingsPUT(t *testing.T) {
 			server.SetConfigPath("/tmp/test-config.yaml")
 
 			body, _ := json.Marshal(tt.request)
-			req := httptest.NewRequest(http.MethodPut, "/api/v1/sap/ipconfig/settings", bytes.NewReader(body))
+			req := httptest.NewRequest(http.MethodPut, "/api/v1/telemetry/ipconfig/settings", bytes.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 
@@ -367,7 +367,7 @@ func TestHandleIPSettingsMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodPost, http.MethodDelete, http.MethodPatch}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/sap/ipconfig/settings", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/telemetry/ipconfig/settings", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)

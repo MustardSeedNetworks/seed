@@ -195,7 +195,7 @@ export function SystemHealthCard(): React.ReactElement {
 
   const fetchHealth = useCallback(async () => {
     try {
-      const response = await fetch('/api/v1/sap/system/health', {
+      const response = await fetch('/api/v1/telemetry/system/health', {
         credentials: 'include',
       });
       if (response.status === 401) {

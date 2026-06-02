@@ -184,7 +184,7 @@ func NewServer(
 	)
 	// Note: services.Discovery.Service is initialized after profiler is created (see below)
 
-	// Initialize SAP services
+	// Initialize telemetry services
 	services.Diagnostics.DNS = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
 	services.Diagnostics.DNSSecurity = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
 	services.Diagnostics.DHCP = dhcp.NewMonitor(cfg.Interface.Default)
@@ -201,7 +201,7 @@ func NewServer(
 	services.Diagnostics.Cable = cable.NewTester(cfg.Interface.Default)
 	services.Diagnostics.PublicIP = publicip.NewChecker()
 
-	// Initialize Canopy services
+	// Initialize Wi-Fi services
 	services.Wireless.WiFi = wifi.NewManager(cfg.Interface.Default)
 	services.Wireless.Scanner = wifi.NewScanner(cfg.Interface.Default)
 

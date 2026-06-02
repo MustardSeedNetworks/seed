@@ -19,7 +19,7 @@ export function NetworkPage() {
         icon={Server}
         title="Network"
         description="DHCP, gateway, DNS, public IP, and upstream switch detection."
-        iconColorClass="text-module-sap"
+        iconColorClass="text-module-telemetry"
         help={
           <div className="stack-md">
             <p>

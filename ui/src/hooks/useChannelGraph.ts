@@ -107,7 +107,7 @@ export function useChannelGraph({
     setChannelGraphLoading(true);
     try {
       const response = await api.get<ChannelGraphApiResponse>(
-        `/api/v1/canopy/wifi/channel-graph?interface=${currentInterface}`,
+        `/api/v1/wifi/wifi/channel-graph?interface=${currentInterface}`,
       );
       setChannelGraphData(normalizeChannelGraphResponse(response));
     } catch {

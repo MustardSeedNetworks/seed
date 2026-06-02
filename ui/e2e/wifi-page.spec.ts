@@ -46,7 +46,7 @@ test.describe('Wi-Fi Page', () => {
 
   test('should show the wired-mode message when WiFi card data unavailable', async ({ page }) => {
     // Mock the wifi endpoint to return empty so isWifi remains false
-    await page.route('**/api/v1/canopy/wifi', (route) => {
+    await page.route('**/api/v1/wifi/wifi', (route) => {
       route.fulfill({
         status: 200,
         body: JSON.stringify({ available: false }),

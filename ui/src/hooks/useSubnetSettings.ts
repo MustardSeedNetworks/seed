@@ -2,7 +2,7 @@
  * useSubnetSettings
  *
  * Manages the list of configured network-discovery subnets on the
- * /api/v1/shell/devices/subnets endpoint. Owns the subnet list state,
+ * /api/v1/security/devices/subnets endpoint. Owns the subnet list state,
  * the new-subnet form fields, the save-status, and the
  * fetch/add/toggle/delete callbacks. Previously inline in
  * SettingsDrawer.
@@ -40,7 +40,7 @@ export function useSubnetSettings(isOpen: boolean): UseSubnetSettingsResult {
 
   const fetchSubnets = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/shell/devices/subnets`, {
+      const response = await fetch(`${API_BASE}/api/v1/security/devices/subnets`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -69,7 +69,7 @@ export function useSubnetSettings(isOpen: boolean): UseSubnetSettingsResult {
     setSubnetsStatus('saving');
 
     try {
-      const response = await fetch(`${API_BASE}/api/v1/shell/devices/subnets`, {
+      const response = await fetch(`${API_BASE}/api/v1/security/devices/subnets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -108,7 +108,7 @@ export function useSubnetSettings(isOpen: boolean): UseSubnetSettingsResult {
     async (cidr: string, enabled: boolean): Promise<void> => {
       setSubnetsStatus('saving');
       try {
-        const response = await fetch(`${API_BASE}/api/v1/shell/devices/subnets`, {
+        const response = await fetch(`${API_BASE}/api/v1/security/devices/subnets`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -135,7 +135,7 @@ export function useSubnetSettings(isOpen: boolean): UseSubnetSettingsResult {
       try {
         // Backend expects CIDR as query parameter, not in body
         const response = await fetch(
-          `${API_BASE}/api/v1/shell/devices/subnets?cidr=${encodeURIComponent(cidr)}`,
+          `${API_BASE}/api/v1/security/devices/subnets?cidr=${encodeURIComponent(cidr)}`,
           {
             method: 'DELETE',
             credentials: 'include',

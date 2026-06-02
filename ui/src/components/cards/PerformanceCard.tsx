@@ -192,8 +192,8 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
         const action = shouldRun ? 'start' : 'stop';
         // Use api.post() for CSRF token inclusion (#CSRF-FIX)
         // api.post throws on non-2xx, so reaching the next line implies success.
-        await api.post('/api/v1/sap/iperf/server', { action, port });
-        const statusRes = await fetch('/api/v1/sap/iperf/server/status', {
+        await api.post('/api/v1/telemetry/iperf/server', { action, port });
+        const statusRes = await fetch('/api/v1/telemetry/iperf/server/status', {
           credentials: 'include',
         });
         if (statusRes.ok) {
@@ -209,7 +209,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
       const fetchStatus = async (): Promise<void> => {
         try {
           // Fetch speedtest status
-          const speedRes = await fetch('/api/v1/sap/speedtest/status', {
+          const speedRes = await fetch('/api/v1/telemetry/speedtest/status', {
             credentials: 'include',
           });
           if (speedRes.ok) {
@@ -222,7 +222,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
           }
 
           // Fetch iperf3 info
-          const iperfInfoRes = await fetch('/api/v1/sap/iperf/info', {
+          const iperfInfoRes = await fetch('/api/v1/telemetry/iperf/info', {
             credentials: 'include',
           });
           if (iperfInfoRes.ok) {
@@ -230,7 +230,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
           }
 
           // Fetch iperf3 client status
-          const iperfClientRes = await fetch('/api/v1/sap/iperf/client/status', {
+          const iperfClientRes = await fetch('/api/v1/telemetry/iperf/client/status', {
             credentials: 'include',
           });
           if (iperfClientRes.ok) {
@@ -243,7 +243,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
           }
 
           // Fetch iperf3 server status
-          const iperfServerRes = await fetch('/api/v1/sap/iperf/server/status', {
+          const iperfServerRes = await fetch('/api/v1/telemetry/iperf/server/status', {
             credentials: 'include',
           });
           if (iperfServerRes.ok) {
@@ -272,7 +272,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
         // Check current server status and sync if needed
         const syncServerState = async (): Promise<void> => {
           try {
-            const res = await fetch('/api/v1/sap/iperf/server/status', {
+            const res = await fetch('/api/v1/telemetry/iperf/server/status', {
               credentials: 'include',
             });
             if (res.ok) {
@@ -322,7 +322,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
       const interval = setInterval((): void => {
         (async (): Promise<void> => {
           try {
-            const res = await fetch('/api/v1/sap/speedtest/status', {
+            const res = await fetch('/api/v1/telemetry/speedtest/status', {
               credentials: 'include',
             });
             if (res.ok) {
@@ -361,7 +361,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
       const interval = setInterval((): void => {
         (async (): Promise<void> => {
           try {
-            const res = await fetch('/api/v1/sap/iperf/client/status', {
+            const res = await fetch('/api/v1/telemetry/iperf/client/status', {
               credentials: 'include',
             });
             if (res.ok) {
@@ -408,7 +408,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
       });
 
       try {
-        await api.post('/api/v1/sap/speedtest');
+        await api.post('/api/v1/telemetry/speedtest');
       } catch (err) {
         setSpeedtestError(err instanceof Error ? err.message : t('performance.speedtestFailed'));
         setSpeedtestStatus({
@@ -438,7 +438,7 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
       setIperfClientStatus({ running: true, phase: 'connecting', progress: 0 });
 
       try {
-        await api.post('/api/v1/sap/iperf/client', {
+        await api.post('/api/v1/telemetry/iperf/client', {
           server: iperfSettings.server,
           port: iperfSettings.port,
           protocol: iperfSettings.protocol,

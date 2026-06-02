@@ -132,7 +132,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	// Discovery.Device, Discovery.Service, Discovery.Engine are nil by default.
 	// Handlers check for nil and return appropriate errors.
 
-	// Initialize lightweight Sap services (no slow I/O)
+	// Initialize lightweight telemetry services (no slow I/O)
 	s.services.Diagnostics.DNS = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
 	s.services.Diagnostics.DNSSecurity = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
 	s.services.Diagnostics.DHCP = dhcp.NewMonitor(cfg.Interface.Default)

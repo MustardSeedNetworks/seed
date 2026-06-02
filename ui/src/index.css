@@ -6,7 +6,7 @@
      TAILWIND CSS v4 THEME CONFIGURATION
      ==========================================================================
      Maps CSS custom properties to Tailwind utility classes.
-     Usage: bg-brand-primary, text-module-roots, etc.
+     Usage: bg-brand-primary, text-module-path, etc.
      ========================================================================== */
 
   /* Custom font sizes */
@@ -71,11 +71,11 @@
   --color-status-info: var(--color-status-info);
 
   /* Module Accent Colors - for icons/badges only */
-  --color-module-roots: var(--color-module-roots);
-  --color-module-canopy: var(--color-module-canopy);
-  --color-module-shell: var(--color-module-shell);
-  --color-module-sap: var(--color-module-sap);
-  --color-module-harvest: var(--color-module-harvest);
+  --color-module-path: var(--color-module-path);
+  --color-module-wifi: var(--color-module-wifi);
+  --color-module-security: var(--color-module-security);
+  --color-module-telemetry: var(--color-module-telemetry);
+  --color-module-reporting: var(--color-module-reporting);
 
   /* Deeper surface — gradient terminus for the shared shell. */
   --color-surface-deep: var(--color-surface-deep);
@@ -180,11 +180,11 @@
   --color-status-info: #1976d2; /* Material blue = stem-500 */
 
   /* Module Accent Colors - for icons/badges only, not backgrounds */
-  --color-module-roots: #b45309; /* Amber/Brown - foundation, path analysis */
-  --color-module-canopy: #2d7a3e; /* Green - coverage, WiFi (matches brand) */
-  --color-module-shell: #ea580c; /* Orange - security, protection */
-  --color-module-sap: #0891b2; /* Cyan - telemetry, data flow */
-  --color-module-harvest: #d4a017; /* Gold - reports, results */
+  --color-module-path: #b45309; /* Amber/Brown - foundation, path analysis */
+  --color-module-wifi: #2d7a3e; /* Green - coverage, WiFi (matches brand) */
+  --color-module-security: #ea580c; /* Orange - security, protection */
+  --color-module-telemetry: #0891b2; /* Cyan - telemetry, data flow */
+  --color-module-reporting: #d4a017; /* Gold - reports, results */
 
   /* Deeper surface — gradient terminus for the shell. */
   --color-surface-deep: #d9d2bd;
@@ -278,11 +278,11 @@
   --color-status-info: #1976d2;
 
   /* Module Accent Colors - Lightened for dark backgrounds */
-  --color-module-roots: #fbbf24; /* Lighter Amber - foundation, path analysis */
-  --color-module-canopy: #81c784; /* Lighter Green - coverage, WiFi */
-  --color-module-shell: #fb923c; /* Lighter Orange - security, protection */
-  --color-module-sap: #22d3ee; /* Lighter Cyan - telemetry, data flow */
-  --color-module-harvest: #fbbf24; /* Lighter Gold - reports, results */
+  --color-module-path: #fbbf24; /* Lighter Amber - foundation, path analysis */
+  --color-module-wifi: #81c784; /* Lighter Green - coverage, WiFi */
+  --color-module-security: #fb923c; /* Lighter Orange - security, protection */
+  --color-module-telemetry: #22d3ee; /* Lighter Cyan - telemetry, data flow */
+  --color-module-reporting: #fbbf24; /* Lighter Gold - reports, results */
 
   /* Categorical data-viz palette — DARK (≈400 weight, AA on deep green-black). */
   --color-cat-1: #60a5fa; /* blue */

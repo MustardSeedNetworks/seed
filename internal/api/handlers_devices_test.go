@@ -25,7 +25,7 @@ func TestHandleDevicesGET(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/shell/devices", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/security/devices", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -66,7 +66,7 @@ func TestHandleDevicesMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/shell/devices", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/security/devices", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)
@@ -89,7 +89,7 @@ func TestHandleDevicesScanPOST(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/shell/devices/scan", http.NoBody)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/security/devices/scan", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -130,7 +130,7 @@ func TestHandleDevicesScanMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/shell/devices/scan", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/security/devices/scan", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)
@@ -153,7 +153,7 @@ func TestHandleDevicesStatusGET(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/shell/devices/status", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/security/devices/status", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -186,7 +186,7 @@ func TestHandleDevicesStatusMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/shell/devices/status", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/security/devices/status", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)
@@ -209,7 +209,7 @@ func TestHandleDevicesSettingsGET(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/shell/devices/settings", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/security/devices/settings", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -251,7 +251,7 @@ func TestHandleDevicesSettingsPUT(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodPut,
-		"/api/v1/shell/devices/settings",
+		"/api/v1/security/devices/settings",
 		bytes.NewReader(body),
 	)
 	req.Header.Set("Content-Type", "application/json")
@@ -282,7 +282,7 @@ func TestHandleDevicesSettingsMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodPost, http.MethodDelete, http.MethodPatch}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/shell/devices/settings", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/security/devices/settings", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)
@@ -307,7 +307,7 @@ func TestHandleDevicesSettingsInvalidJSON(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodPut,
-		"/api/v1/shell/devices/settings",
+		"/api/v1/security/devices/settings",
 		bytes.NewReader([]byte("invalid json")),
 	)
 	req.Header.Set("Content-Type", "application/json")
@@ -326,7 +326,7 @@ func TestHandleDevicesSubnetsGET(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/shell/devices/subnets", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/security/devices/subnets", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -358,7 +358,7 @@ func TestHandleDevicesSubnetsPOST(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodPost,
-		"/api/v1/shell/devices/subnets",
+		"/api/v1/security/devices/subnets",
 		bytes.NewReader(body),
 	)
 	req.Header.Set("Content-Type", "application/json")
@@ -386,7 +386,7 @@ func TestHandleDevicesSubnetsPOSTInvalidCIDR(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodPost,
-		"/api/v1/shell/devices/subnets",
+		"/api/v1/security/devices/subnets",
 		bytes.NewReader(body),
 	)
 	req.Header.Set("Content-Type", "application/json")
@@ -414,7 +414,7 @@ func TestHandleDevicesSubnetsPUT(t *testing.T) {
 	})
 	addReq := httptest.NewRequest(
 		http.MethodPost,
-		"/api/v1/shell/devices/subnets",
+		"/api/v1/security/devices/subnets",
 		bytes.NewReader(addBody),
 	)
 	addReq.Header.Set("Content-Type", "application/json")
@@ -429,7 +429,7 @@ func TestHandleDevicesSubnetsPUT(t *testing.T) {
 	})
 	updateReq := httptest.NewRequest(
 		http.MethodPut,
-		"/api/v1/shell/devices/subnets",
+		"/api/v1/security/devices/subnets",
 		bytes.NewReader(updateBody),
 	)
 	updateReq.Header.Set("Content-Type", "application/json")
@@ -460,7 +460,7 @@ func TestHandleDevicesSubnetsPUTNotFound(t *testing.T) {
 	})
 	req := httptest.NewRequest(
 		http.MethodPut,
-		"/api/v1/shell/devices/subnets",
+		"/api/v1/security/devices/subnets",
 		bytes.NewReader(updateBody),
 	)
 	req.Header.Set("Content-Type", "application/json")
@@ -488,7 +488,7 @@ func TestHandleDevicesSubnetsDELETE(t *testing.T) {
 	})
 	addReq := httptest.NewRequest(
 		http.MethodPost,
-		"/api/v1/shell/devices/subnets",
+		"/api/v1/security/devices/subnets",
 		bytes.NewReader(addBody),
 	)
 	addReq.Header.Set("Content-Type", "application/json")
@@ -498,7 +498,7 @@ func TestHandleDevicesSubnetsDELETE(t *testing.T) {
 	// Now delete it
 	req := httptest.NewRequest(
 		http.MethodDelete,
-		"/api/v1/shell/devices/subnets?cidr=192.168.50.0/24",
+		"/api/v1/security/devices/subnets?cidr=192.168.50.0/24",
 		http.NoBody,
 	)
 	w := httptest.NewRecorder()
@@ -516,7 +516,7 @@ func TestHandleDevicesSubnetsDELETEMissingCIDR(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodDelete, "/api/v1/shell/devices/subnets", http.NoBody)
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/security/devices/subnets", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -534,7 +534,7 @@ func TestHandleDevicesSubnetsDELETENotFound(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodDelete,
-		"/api/v1/shell/devices/subnets?cidr=10.99.99.0/24",
+		"/api/v1/security/devices/subnets?cidr=10.99.99.0/24",
 		http.NoBody,
 	)
 	w := httptest.NewRecorder()
@@ -552,7 +552,7 @@ func TestHandlePublicIPGET(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/sap/publicip", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/telemetry/publicip", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -578,7 +578,7 @@ func TestHandlePublicIPPOST(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/sap/publicip", http.NoBody)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/publicip", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -597,7 +597,7 @@ func TestHandlePublicIPMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodPut, http.MethodDelete, http.MethodPatch}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/sap/publicip", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/telemetry/publicip", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)

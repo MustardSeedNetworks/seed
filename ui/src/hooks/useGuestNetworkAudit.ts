@@ -4,9 +4,9 @@
  * Drives the on-demand Guest Network isolation audit (#397).
  *
  * The hook:
- * - Loads the configured target list from /api/v1/shell/guest-audit/settings.
+ * - Loads the configured target list from /api/v1/security/guest-audit/settings.
  * - Exposes saveSettings to persist target/port edits.
- * - Exposes runAudit which fires /api/v1/shell/guest-audit/run and stores
+ * - Exposes runAudit which fires /api/v1/security/guest-audit/run and stores
  *   the most recent report, including the high-level isolationFailed flag
  *   that the UI surfaces as a critical security alert.
  */
@@ -77,7 +77,7 @@ export function useGuestNetworkAudit(): UseGuestNetworkAuditResult {
   useEffect(() => {
     setLoading(true);
     api
-      .get<GuestAuditSettings>('/api/v1/shell/guest-audit/settings')
+      .get<GuestAuditSettings>('/api/v1/security/guest-audit/settings')
       .then((data) => {
         setSettings({
           enabled: data.enabled ?? false,
@@ -96,7 +96,7 @@ export function useGuestNetworkAudit(): UseGuestNetworkAuditResult {
   const saveSettings = useCallback(async (): Promise<void> => {
     setError(null);
     try {
-      await api.put('/api/v1/shell/guest-audit/settings', settings);
+      await api.put('/api/v1/security/guest-audit/settings', settings);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save guest-audit settings';
       setError(msg);
@@ -109,7 +109,7 @@ export function useGuestNetworkAudit(): UseGuestNetworkAuditResult {
     setRunning(true);
     setError(null);
     try {
-      const result = await api.post<GuestAuditReport>('/api/v1/shell/guest-audit/run', {});
+      const result = await api.post<GuestAuditReport>('/api/v1/security/guest-audit/run', {});
       setReport(result);
       if (result.isolationFailed) {
         logger.warn(LogComponents.VULN, 'Guest network isolation FAILED', {

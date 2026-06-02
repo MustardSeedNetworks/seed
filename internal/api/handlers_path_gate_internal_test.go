@@ -20,11 +20,11 @@ func TestRootsPathRequiresPro(t *testing.T) {
 	s, mgr := apiTokenTestSetup(t)
 	// setupRoutes is normally called by NewServer; the test helper
 	// skips it (the helper builds a Server directly). Invoke it here
-	// so the /roots/path mux entry exists.
+	// so the /path/path mux entry exists.
 	s.setupRoutes()
 
 	// 1. No license → 402.
-	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/roots/path", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/path/path", http.NoBody)
 	req.Header.Set("X-Username", "alice")
 	w := httptest.NewRecorder()
 	s.mux.ServeHTTP(w, req)
@@ -48,7 +48,7 @@ func TestRootsPathRequiresPro(t *testing.T) {
 	if res := mgr.StartTrial(); !res.Success {
 		t.Fatalf("StartTrial: %s", res.Message)
 	}
-	req2 := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/roots/path", http.NoBody)
+	req2 := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/path/path", http.NoBody)
 	req2.Header.Set("X-Username", "alice")
 	w2 := httptest.NewRecorder()
 	s.mux.ServeHTTP(w2, req2)

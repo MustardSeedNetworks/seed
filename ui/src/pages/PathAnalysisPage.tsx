@@ -28,7 +28,7 @@ export function PathAnalysisPage() {
             icon={Route}
             title="Path Analysis"
             description="L2/L3 path discovery, traceroute hops, and on-link device discovery."
-            iconColorClass="text-module-roots"
+            iconColorClass="text-module-path"
           />
           <div className="rounded-lg border border-status-warning/30 bg-status-warning/5 pad text-sm text-status-warning">
             Path Analysis is a Pro-tier feature. Start a 14-day Pro trial with
@@ -48,7 +48,7 @@ export function PathAnalysisPage() {
           icon={Route}
           title="Path Analysis"
           description="L2/L3 path discovery, traceroute hops, and on-link device discovery."
-          iconColorClass="text-module-roots"
+          iconColorClass="text-module-path"
         />
         <div className={layout.grid.cards}>
           {(!isWifi || cards.wifi) && (

@@ -33,7 +33,7 @@ import { skipSetupWizard } from './helpers/auth';
  */
 
 /**
- * Synthetic gateway response. The /api/v1/sap/gateway endpoint in CI
+ * Synthetic gateway response. The /api/v1/telemetry/gateway endpoint in CI
  * returns empty data (no active interface), so the GatewayCard falls
  * into its "no gateway detected" branch and never emits the gateway-ip,
  * gateway-status-badge, or gateway-latency-* testids the assertions

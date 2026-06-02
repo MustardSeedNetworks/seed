@@ -1,6 +1,6 @@
 // Package link provides network interface link status monitoring and utilities.
 // It wraps the lower-level network.LinkMonitor to provide a higher-level API
-// for the sap module.
+// for the diagnostics package.
 package link
 
 import (

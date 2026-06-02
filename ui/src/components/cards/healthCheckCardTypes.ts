@@ -1,7 +1,7 @@
 /**
  * Result types consumed by HealthCheckCard and its protocol section subviews.
  *
- * Mirrors the /api/v1/sap/health-checks/run response. Split out so the
+ * Mirrors the /api/v1/telemetry/health-checks/run response. Split out so the
  * card itself and the protocol sections can share these definitions
  * without one file owning all the noise.
  */

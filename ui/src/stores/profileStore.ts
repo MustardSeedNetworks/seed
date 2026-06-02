@@ -103,7 +103,7 @@ const DEFAULT_CARD_SETTINGS: CardSettingsConfig = {
 // All *Config types have fully optional fields. These last-resort defaults
 // are only used when both the active profile AND backendDefaults are
 // missing the section. The backend ships canonical defaults via
-// /api/v1/sap/defaults, so the empty literals here are intentional —
+// /api/v1/telemetry/defaults, so the empty literals here are intentional —
 // they exist so selectors return a non-undefined value rather than
 // claiming any specific defaults that would drift from the backend.
 const DEFAULT_DISPLAY_OPTIONS: DisplayOptionsConfig = {};

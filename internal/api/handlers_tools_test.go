@@ -77,7 +77,7 @@ func TestHandleTCPProbe(t *testing.T) {
 			body, _ := json.Marshal(tt.request)
 			req := httptest.NewRequest(
 				http.MethodPost,
-				"/api/v1/shell/discovery/probe",
+				"/api/v1/security/discovery/probe",
 				bytes.NewReader(body),
 			)
 			req.Header.Set("Content-Type", "application/json")
@@ -118,7 +118,7 @@ func TestHandleTCPProbeMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/shell/discovery/probe", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/security/discovery/probe", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)
@@ -145,7 +145,7 @@ func TestHandleTCPProbeInvalidJSON(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodPost,
-		"/api/v1/shell/discovery/probe",
+		"/api/v1/security/discovery/probe",
 		bytes.NewReader([]byte("invalid json")),
 	)
 	req.Header.Set("Content-Type", "application/json")
@@ -181,7 +181,7 @@ func TestHandleTCPProbeTooManyPorts(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodPost,
-		"/api/v1/shell/discovery/probe",
+		"/api/v1/security/discovery/probe",
 		bytes.NewReader(body),
 	)
 	req.Header.Set("Content-Type", "application/json")
@@ -211,7 +211,7 @@ func TestHandleTCPProbeInvalidTarget(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodPost,
-		"/api/v1/shell/discovery/probe",
+		"/api/v1/security/discovery/probe",
 		bytes.NewReader(body),
 	)
 	req.Header.Set("Content-Type", "application/json")
@@ -314,7 +314,7 @@ func TestHandleTraceroute(t *testing.T) {
 			body, _ := json.Marshal(tt.request)
 			req := httptest.NewRequest(
 				http.MethodPost,
-				"/api/v1/roots/traceroute",
+				"/api/v1/path/traceroute",
 				bytes.NewReader(body),
 			)
 			req.Header.Set("Content-Type", "application/json")
@@ -345,7 +345,7 @@ func TestHandleTracerouteMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/roots/traceroute", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/path/traceroute", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)
@@ -372,7 +372,7 @@ func TestHandleTracerouteInvalidJSON(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodPost,
-		"/api/v1/roots/traceroute",
+		"/api/v1/path/traceroute",
 		bytes.NewReader([]byte("invalid json")),
 	)
 	req.Header.Set("Content-Type", "application/json")
@@ -441,7 +441,7 @@ func TestHandlePortScan(t *testing.T) {
 			body, _ := json.Marshal(tt.request)
 			req := httptest.NewRequest(
 				http.MethodPost,
-				"/api/v1/shell/discovery/portscan",
+				"/api/v1/security/discovery/portscan",
 				bytes.NewReader(body),
 			)
 			req.Header.Set("Content-Type", "application/json")
@@ -472,7 +472,7 @@ func TestHandlePortScanMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/shell/discovery/portscan", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/security/discovery/portscan", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)
@@ -499,7 +499,7 @@ func TestHandlePortScanInvalidJSON(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodPost,
-		"/api/v1/shell/discovery/portscan",
+		"/api/v1/security/discovery/portscan",
 		bytes.NewReader([]byte("invalid json")),
 	)
 	req.Header.Set("Content-Type", "application/json")
@@ -555,7 +555,7 @@ func TestHandleAdvancedFingerprint(t *testing.T) {
 			body, _ := json.Marshal(tt.request)
 			req := httptest.NewRequest(
 				http.MethodPost,
-				"/api/v1/shell/discovery/fingerprint",
+				"/api/v1/security/discovery/fingerprint",
 				bytes.NewReader(body),
 			)
 			req.Header.Set("Content-Type", "application/json")
@@ -586,7 +586,7 @@ func TestHandleAdvancedFingerprintMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/shell/discovery/fingerprint", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/security/discovery/fingerprint", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)
@@ -613,7 +613,7 @@ func TestHandleAdvancedFingerprintInvalidJSON(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodPost,
-		"/api/v1/shell/discovery/fingerprint",
+		"/api/v1/security/discovery/fingerprint",
 		bytes.NewReader([]byte("invalid json")),
 	)
 	req.Header.Set("Content-Type", "application/json")

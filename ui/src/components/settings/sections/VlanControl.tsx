@@ -40,7 +40,7 @@ export const VlanControl: React.NamedExoticComponent<Record<string, never>> = me
       setLoading(true);
       setMessage(null);
       try {
-        await api.post('/api/v1/sap/vlan/interface', { vlanId: id });
+        await api.post('/api/v1/telemetry/vlan/interface', { vlanId: id });
         setMessage({ text: t('network.vlan.created', { id }), isError: false });
         setVlanId('');
       } catch {
@@ -60,7 +60,7 @@ export const VlanControl: React.NamedExoticComponent<Record<string, never>> = me
       setLoading(true);
       setMessage(null);
       try {
-        await api.delete('/api/v1/sap/vlan/interface', {
+        await api.delete('/api/v1/telemetry/vlan/interface', {
           body: JSON.stringify({ vlanId: id }),
           headers: { 'Content-Type': 'application/json' },
         });

@@ -199,7 +199,7 @@ type UpdateSurveyImportedDataRequest struct {
 	PassFailCriteria []survey.PassFailCriterion `json:"passFailCriteria"`
 }
 
-// updateSurveyImportedData handles PUT /api/canopy/survey/imported-data?id=xxx.
+// updateSurveyImportedData handles PUT /api/wifi/survey/imported-data?id=xxx.
 // Replaces the survey's AP/client placements and pass-fail criteria. This is
 // what the AirMapper import flow uses to persist parsed survey data so it
 // survives reload (#727).

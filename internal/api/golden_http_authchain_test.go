@@ -43,8 +43,8 @@ func stableSecurityHeaderNames() []string {
 
 // authChainRoutes is the representative slice through the full chain: public
 // pass-through (version, status), protected GET (settings, profiles), writeGated
-// mutating POST (settings/link, canopy/survey/create), and a feature-gated route
-// (roots/path). The harness records whatever the current behavior is
+// mutating POST (settings/link, wifi/survey/create), and a feature-gated route
+// (path/path). The harness records whatever the current behavior is
 // (characterization); it asserts nothing — a refactor that changes any outcome
 // produces a reviewable golden diff.
 func authChainRoutes() []goldenRoute {
@@ -54,8 +54,8 @@ func authChainRoutes() []goldenRoute {
 		{name: "settings-get", method: http.MethodGet, path: "/api/v1/settings"},
 		{name: "profiles-get", method: http.MethodGet, path: "/api/v1/profiles"},
 		{name: "settings-link-post", method: http.MethodPost, path: "/api/v1/settings/link"},
-		{name: "survey-create-post", method: http.MethodPost, path: "/api/v1/canopy/survey/create"},
-		{name: "roots-path-get", method: http.MethodGet, path: "/api/v1/roots/path"},
+		{name: "survey-create-post", method: http.MethodPost, path: "/api/v1/wifi/survey/create"},
+		{name: "path-get", method: http.MethodGet, path: "/api/v1/path/path"},
 	}
 }
 

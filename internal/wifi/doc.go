@@ -1,2 +1,2 @@
-// Package wifi is part of the canopy module.
+// Package wifi is part of the wifi package.
 package wifi

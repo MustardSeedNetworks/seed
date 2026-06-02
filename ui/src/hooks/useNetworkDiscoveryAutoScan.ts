@@ -49,7 +49,7 @@ export function useNetworkDiscoveryAutoScan(
       const apiBase = import.meta.env.VITE_API_BASE || '';
       try {
         // Fetch discovery options from correct endpoint
-        const discoveryResponse = await fetch(`${apiBase}/api/v1/shell/discovery/options`, {
+        const discoveryResponse = await fetch(`${apiBase}/api/v1/security/discovery/options`, {
           credentials: 'include',
         });
         if (discoveryResponse.ok) {
@@ -58,7 +58,7 @@ export function useNetworkDiscoveryAutoScan(
           const portScanEnabled = discoveryData?.options?.PortScan?.Enabled ?? false;
 
           // Fetch vulnerability settings from correct endpoint
-          const vulnResponse = await fetch(`${apiBase}/api/v1/shell/vulnerabilities/settings`, {
+          const vulnResponse = await fetch(`${apiBase}/api/v1/security/vulnerabilities/settings`, {
             credentials: 'include',
           });
           let vulnEnabled = false;
@@ -142,7 +142,7 @@ export function useNetworkDiscoveryAutoScan(
           ip,
           reasons: reasons.join(', '),
         });
-        await api.post('/api/v1/shell/vulnerabilities/scan', { targets: [ip] });
+        await api.post('/api/v1/security/vulnerabilities/scan', { targets: [ip] });
       } catch (error) {
         logger.debug(LogComponents.DISCOVERY, 'Failed to trigger vulnerability scan', {
           error: error instanceof Error ? error.message : String(error),
@@ -158,7 +158,7 @@ export function useNetworkDiscoveryAutoScan(
 
       try {
         const apiResponse = await api.post<PortScanApiResponse>(
-          '/api/v1/shell/discovery/portscan',
+          '/api/v1/security/discovery/portscan',
           {
             target: ip,
             ports: COMMON_PORTS,
