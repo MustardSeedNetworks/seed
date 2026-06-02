@@ -235,61 +235,43 @@ linters:
           deny:
             - pkg: log$
               desc: Use log/slog instead, see https://go.dev/blog/slog
-        # Phase 3 hexagon (ADR-0001): domain modules are PURE and inward-only —
-        # no transport, no SQL driver, no infra ring. Applies to every package
-        # under internal/modules/ as it is extracted (harvest first). This makes
-        # "dependencies point inward" a CI gate, not a hope.
+        # Phase 3 reconcile: capability-first feature packages (internal/<feature>)
+        # are persistence-free and transport-free. SQL lives behind repo ports
+        # implemented in a single store adapter sub-package; the feature owns the
+        # ports. depguard makes "dependencies point inward" a CI gate, not a hope.
+        # The hexagon rings (internal/modules/** + internal/adapters/**) were
+        # unwound; reporting is the one feature with a persistence boundary today.
+        #
+        # The store sub-package is the adapter, so it is exempt from these bans.
         #
         # The no-transport / no-SQL-driver ban holds for ALL files (production
-        # AND tests): module code, even in tests, talks to I/O through ports and
-        # the internal/database wrapper, never net/http or a raw database/sql.
-        "modules-domain-purity":
+        # AND tests): reporting code, even in tests, talks to I/O through ports
+        # and the internal/database wrapper, never net/http or a raw database/sql.
+        "reporting-domain-purity":
           files:
-            - "**/internal/modules/**"
+            - "**/internal/reporting/**"
+            - "!**/internal/reporting/store/**"
           deny:
             - pkg: net/http
-              desc: "modules are pure — define a port, implement it in adapters/http"
+              desc: "reporting is transport-free — define a port, implement it in an adapter"
             - pkg: database/sql
-              desc: "modules are pure — define a Repo port, implement it in adapters/store"
-        # The infra-ring ban is production-only: a module's own code must never
-        # import internal/adapters (inward-only direction). Test files are
-        # exempt because they are mini composition roots — they wire the real
-        # store/http adapter to exercise the module end-to-end (e.g. harvest's
-        # tests build store.NewReportRepo(db)). $test = all _test.go files.
-        "modules-no-adapter-import":
+              desc: "reporting is persistence-free — define a Repo port, implement it in internal/reporting/store"
+        # The persistence-direction ban is production-only: reporting's own code
+        # must never import internal/database nor its own store adapter (inward
+        # only — the store imports reporting, never the reverse; internal/app
+        # wires them). Test files are exempt because they are mini composition
+        # roots — they wire the real store adapter and open real SQLite DBs to
+        # exercise reporting end-to-end. $test = all _test.go files.
+        "reporting-no-persistence":
           files:
-            - "**/internal/modules/**"
-            - "!$test"
-          deny:
-            - pkg: github.com/krisarmstrong/seed/internal/adapters
-              desc: "inward-only — adapters depend on modules, never the reverse"
-        # Module independence: each module is an island; cross-module talk goes
-        # through platform/events, never a direct import. One rule per module
-        # (a module may import its OWN sub-packages, so only sibling module roots
-        # are denied). Sibling roots are listed ahead of their extraction.
-        # harvest is fully persistence-free (Phase 3 slice 1b-v): all SQL lives
-        # behind repo ports in adapters/store. Production code must not import
-        # internal/database. Test files are exempt (!$test) — they open real
-        # SQLite DBs via database.Open to back the store adapters under test.
-        "harvest-no-database":
-          files:
-            - "**/internal/modules/harvest/**"
+            - "**/internal/reporting/**"
+            - "!**/internal/reporting/store/**"
             - "!$test"
           deny:
             - pkg: github.com/krisarmstrong/seed/internal/database
-              desc: "harvest is persistence-free — define a Repo port, implement it in adapters/store"
-        "harvest-module-independence":
-          files:
-            - "**/internal/modules/harvest/**"
-          deny:
-            - pkg: github.com/krisarmstrong/seed/internal/modules/sap
-              desc: "modules must not import each other — use platform/events"
-            - pkg: github.com/krisarmstrong/seed/internal/modules/shell
-              desc: "modules must not import each other — use platform/events"
-            - pkg: github.com/krisarmstrong/seed/internal/modules/canopy
-              desc: "modules must not import each other — use platform/events"
-            - pkg: github.com/krisarmstrong/seed/internal/modules/roots
-              desc: "modules must not import each other — use platform/events"
+              desc: "reporting is persistence-free — define a Repo port, implement it in internal/reporting/store"
+            - pkg: github.com/krisarmstrong/seed/internal/reporting/store
+              desc: "inward-only — the store adapter imports reporting, never the reverse; wire it in internal/app"
 
     embeddedstructfieldcheck:
       # Checks that sync.Mutex and sync.RWMutex are not used as embedded fields.

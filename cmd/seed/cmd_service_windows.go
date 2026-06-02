@@ -240,7 +240,7 @@ func initializeDatabaseForService(cfg *config.Config) *database.DB {
 func initializeModulesForService(cfg *config.Config, db *database.DB) *api.Modules {
 	modules := &api.Modules{}
 
-	modules.Harvest = app.NewHarvest(cfg, db)
+	modules.Reporting = app.NewReporting(cfg, db)
 
 	return modules
 }
