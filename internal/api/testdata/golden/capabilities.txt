@@ -620,6 +620,18 @@ body:
     "path": "/api/v1/alert-rules/"
   },
   {
+    "minRole": "operator",
+    "path": "/api/v1/jobs",
+    "rateLimited": true
+  },
+  {
+    "path": "/api/v1/jobs/events"
+  },
+  {
+    "minRole": "operator",
+    "path": "/api/v1/jobs/"
+  },
+  {
     "feature": "live_telemetry",
     "path": "/api/v1/events"
   }

@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+
 	"github.com/krisarmstrong/seed/internal/alerts"
 	"github.com/krisarmstrong/seed/internal/auth"
 	"github.com/krisarmstrong/seed/internal/database"
@@ -19,6 +21,8 @@ import (
 	"github.com/krisarmstrong/seed/internal/netif"
 	"github.com/krisarmstrong/seed/internal/oauth"
 	"github.com/krisarmstrong/seed/internal/pipeline/publicip"
+	"github.com/krisarmstrong/seed/internal/platform/events"
+	"github.com/krisarmstrong/seed/internal/platform/jobs"
 	"github.com/krisarmstrong/seed/internal/probe"
 	"github.com/krisarmstrong/seed/internal/scheduler"
 	"github.com/krisarmstrong/seed/internal/services/discovery"
@@ -170,6 +174,9 @@ type WiFiServices struct {
 type RealTimeServices struct {
 	SSEHub         *SSEHub                 // SSE hub for real-time updates
 	LogBroadcaster *logging.LogBroadcaster // Log streaming
+	EventBus       *events.Bus             // in-process domain event bus (ADR-0004)
+	Jobs           *jobs.Runner            // unified async job runner (ADR-0005)
+	JobIdempotency *jobIdempotencyCache    // Idempotency-Key dedup for POST /jobs
 }
 
 // DatabaseServices groups database-related services.
@@ -204,9 +211,20 @@ func (sc *ServiceContainer) Stop() {
 		sc.Auth.CSRF.Stop()
 	}
 
-	// Stop real-time services
+	// Stop real-time services. Close the job runner first (it stops publishing
+	// state changes), then drain the event bus.
 	if sc.RealTime.SSEHub != nil {
 		sc.RealTime.SSEHub.Shutdown()
+	}
+	if sc.RealTime.Jobs != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), jobsShutdownTimeout)
+		_ = sc.RealTime.Jobs.Close(ctx)
+		cancel()
+	}
+	if sc.RealTime.EventBus != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), jobsShutdownTimeout)
+		_ = sc.RealTime.EventBus.Close(ctx)
+		cancel()
 	}
 
 	// Stop network services

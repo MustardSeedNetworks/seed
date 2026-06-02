@@ -35,6 +35,8 @@ import (
 	"github.com/krisarmstrong/seed/internal/oauth"
 	"github.com/krisarmstrong/seed/internal/paths"
 	"github.com/krisarmstrong/seed/internal/pipeline/publicip"
+	"github.com/krisarmstrong/seed/internal/platform/events"
+	"github.com/krisarmstrong/seed/internal/platform/jobs"
 	snmporchestrator "github.com/krisarmstrong/seed/internal/polling/snmp/orchestrator"
 	"github.com/krisarmstrong/seed/internal/polling/snmp/snmpclient"
 	"github.com/krisarmstrong/seed/internal/probe"
@@ -698,6 +700,9 @@ func (s *Server) wifiScanner() *wifi.Scanner               { return s.services.W
 func (s *Server) surveyManager() *survey.Manager           { return s.services.Wireless.Survey }
 func (s *Server) sseHub() *SSEHub                          { return s.services.RealTime.SSEHub }
 func (s *Server) logBroadcaster() *logging.LogBroadcaster  { return s.services.RealTime.LogBroadcaster }
+func (s *Server) eventBus() *events.Bus                    { return s.services.RealTime.EventBus }
+func (s *Server) jobsRunner() *jobs.Runner                 { return s.services.RealTime.Jobs }
+func (s *Server) jobIdempotency() *jobIdempotencyCache     { return s.services.RealTime.JobIdempotency }
 func (s *Server) db() *database.DB                         { return s.services.Database.DB }
 
 // webAuthnConfigFromServer derives the relying-party config for the

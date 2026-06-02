@@ -493,6 +493,24 @@ func TestCleanupLeavesActiveJobs(t *testing.T) {
 	}
 }
 
+func TestStatesIsCanonicalAndComplete(t *testing.T) {
+	t.Parallel()
+
+	got := jobs.States()
+	want := []jobs.State{
+		jobs.StateQueued, jobs.StateRunning,
+		jobs.StateSucceeded, jobs.StateFailed, jobs.StateCancelled,
+	}
+	if len(got) != len(want) {
+		t.Fatalf("States() = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("States()[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
 func TestRegisterValidation(t *testing.T) {
 	t.Parallel()
 
