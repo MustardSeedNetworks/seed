@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/update-survey-imported-data-request.schema.json",
+  "$ref": "#/$defs/UpdateSurveyImportedDataRequest",
+  "$defs": {
+    "APLocation": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "x": {
+          "type": "integer"
+        },
+        "y": {
+          "type": "integer"
+        },
+        "label": {
+          "type": "string"
+        },
+        "bssid": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "imported": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "x",
+        "y"
+      ]
+    },
+    "ClientLocation": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "x": {
+          "type": "integer"
+        },
+        "y": {
+          "type": "integer"
+        },
+        "label": {
+          "type": "string"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "imported": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "x",
+        "y"
+      ]
+    },
+    "PassFailCriterion": {
+      "properties": {
+        "option": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "number"
+        },
+        "suffix": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "ap": {
+          "type": "integer"
+        },
+        "imported": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "option",
+        "limit",
+        "enabled"
+      ]
+    },
+    "UpdateSurveyImportedDataRequest": {
+      "properties": {
+        "apLocations": {
+          "items": {
+            "$ref": "#/$defs/APLocation"
+          },
+          "type": "array"
+        },
+        "clientLocations": {
+          "items": {
+            "$ref": "#/$defs/ClientLocation"
+          },
+          "type": "array"
+        },
+        "passFailCriteria": {
+          "items": {
+            "$ref": "#/$defs/PassFailCriterion"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apLocations",
+        "clientLocations",
+        "passFailCriteria"
+      ]
+    }
+  },
+  "title": "UpdateSurveyImportedDataRequest",
+  "description": "UpdateSurveyImportedDataRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/path-response.schema.json",
+  "$ref": "#/$defs/PathResponse",
+  "$defs": {
+    "L2Hop": {
+      "properties": {
+        "device": {
+          "type": "string"
+        },
+        "deviceIp": {
+          "type": "string"
+        },
+        "ingressPort": {
+          "$ref": "#/$defs/PortInfo"
+        },
+        "egressPort": {
+          "$ref": "#/$defs/PortInfo"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "device",
+        "deviceIp",
+        "ingressPort",
+        "egressPort",
+        "source"
+      ]
+    },
+    "L2PathResult": {
+      "properties": {
+        "hops": {
+          "items": {
+            "$ref": "#/$defs/L2Hop"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "hops"
+      ]
+    },
+    "PathResponse": {
+      "properties": {
+        "l3Path": {
+          "$ref": "#/$defs/TracerouteResult"
+        },
+        "l2Path": {
+          "$ref": "#/$defs/L2PathResult"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "PortInfo": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer"
+        },
+        "speed": {
+          "type": "string"
+        },
+        "duplex": {
+          "type": "string"
+        },
+        "vlans": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "isTrunk": {
+          "type": "boolean"
+        },
+        "connectedTo": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "index",
+        "speed",
+        "duplex",
+        "vlans",
+        "isTrunk",
+        "connectedTo"
+      ]
+    },
+    "TracerouteHop": {
+      "properties": {
+        "ttl": {
+          "type": "integer"
+        },
+        "ip": {
+          "type": "string"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "rtt": {
+          "type": "integer"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ttl",
+        "rtt",
+        "state"
+      ]
+    },
+    "TracerouteResult": {
+      "properties": {
+        "target": {
+          "type": "string"
+        },
+        "targetIp": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "hops": {
+          "items": {
+            "$ref": "#/$defs/TracerouteHop"
+          },
+          "type": "array"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "target",
+        "targetIp",
+        "protocol",
+        "hops",
+        "completed"
+      ]
+    }
+  },
+  "title": "PathResponse",
+  "description": "PathResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

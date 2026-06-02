@@ -194,9 +194,111 @@ func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 // endpoint. Any field left nil is left unchanged on the survey; an empty
 // slice clears the corresponding list.
 type UpdateSurveyImportedDataRequest struct {
-	APLocations      []survey.APLocation        `json:"apLocations"`
-	ClientLocations  []survey.ClientLocation    `json:"clientLocations"`
-	PassFailCriteria []survey.PassFailCriterion `json:"passFailCriteria"`
+	APLocations      []APLocation        `json:"apLocations"`
+	ClientLocations  []ClientLocation    `json:"clientLocations"`
+	PassFailCriteria []PassFailCriterion `json:"passFailCriteria"`
+}
+
+// APLocation is the flat transport view of survey.APLocation. It and its
+// siblings (ClientLocation, PassFailCriterion) mirror the survey domain's
+// imported-data value objects so the published request schema does not depend
+// on the survey package.
+type APLocation struct {
+	ID       string `json:"id"`
+	X        int    `json:"x"`
+	Y        int    `json:"y"`
+	Label    string `json:"label,omitempty"`
+	BSSID    string `json:"bssid,omitempty"`
+	Vendor   string `json:"vendor,omitempty"`
+	Notes    string `json:"notes,omitempty"`
+	Imported bool   `json:"imported,omitempty"`
+}
+
+// ClientLocation is the flat transport view of survey.ClientLocation.
+type ClientLocation struct {
+	ID       string `json:"id"`
+	X        int    `json:"x"`
+	Y        int    `json:"y"`
+	Label    string `json:"label,omitempty"`
+	MAC      string `json:"mac,omitempty"`
+	Imported bool   `json:"imported,omitempty"`
+}
+
+// PassFailCriterion is the flat transport view of survey.PassFailCriterion.
+type PassFailCriterion struct {
+	Option   string  `json:"option"`
+	Name     string  `json:"name,omitempty"`
+	Limit    float64 `json:"limit"`
+	Suffix   string  `json:"suffix,omitempty"`
+	Enabled  bool    `json:"enabled"`
+	Mode     string  `json:"mode,omitempty"`
+	APCount  int     `json:"ap,omitempty"`
+	Imported bool    `json:"imported,omitempty"`
+}
+
+// toSurveyAPLocations maps inbound AP placements onto the survey domain type.
+// A nil input stays nil (the field is left unchanged); a non-nil input maps
+// element-for-element (an empty slice clears the list) — see the request doc.
+func toSurveyAPLocations(in []APLocation) []survey.APLocation {
+	if in == nil {
+		return nil
+	}
+	out := make([]survey.APLocation, len(in))
+	for i, l := range in {
+		out[i] = survey.APLocation{
+			ID:       l.ID,
+			X:        l.X,
+			Y:        l.Y,
+			Label:    l.Label,
+			BSSID:    l.BSSID,
+			Vendor:   l.Vendor,
+			Notes:    l.Notes,
+			Imported: l.Imported,
+		}
+	}
+	return out
+}
+
+// toSurveyClientLocations maps inbound client placements onto the survey type,
+// preserving nil-vs-empty semantics.
+func toSurveyClientLocations(in []ClientLocation) []survey.ClientLocation {
+	if in == nil {
+		return nil
+	}
+	out := make([]survey.ClientLocation, len(in))
+	for i, l := range in {
+		out[i] = survey.ClientLocation{
+			ID:       l.ID,
+			X:        l.X,
+			Y:        l.Y,
+			Label:    l.Label,
+			MAC:      l.MAC,
+			Imported: l.Imported,
+		}
+	}
+	return out
+}
+
+// toSurveyPassFailCriteria maps inbound pass/fail criteria onto the survey
+// type, preserving nil-vs-empty semantics.
+func toSurveyPassFailCriteria(in []PassFailCriterion) []survey.PassFailCriterion {
+	if in == nil {
+		return nil
+	}
+	out := make([]survey.PassFailCriterion, len(in))
+	for i, c := range in {
+		out[i] = survey.PassFailCriterion{
+			Option:   c.Option,
+			Name:     c.Name,
+			Limit:    c.Limit,
+			Suffix:   c.Suffix,
+			Enabled:  c.Enabled,
+			Mode:     c.Mode,
+			APCount:  c.APCount,
+			Imported: c.Imported,
+		}
+	}
+	return out
 }
 
 // updateSurveyImportedData handles PUT /api/wifi/survey/imported-data?id=xxx.
@@ -225,9 +327,9 @@ func (s *Server) updateSurveyImportedData(w http.ResponseWriter, r *http.Request
 	}
 
 	update := survey.ImportedDataUpdate{
-		APLocations:      req.APLocations,
-		ClientLocations:  req.ClientLocations,
-		PassFailCriteria: req.PassFailCriteria,
+		APLocations:      toSurveyAPLocations(req.APLocations),
+		ClientLocations:  toSurveyClientLocations(req.ClientLocations),
+		PassFailCriteria: toSurveyPassFailCriteria(req.PassFailCriteria),
 	}
 	if err := s.surveyManager().UpdateImportedData(id, update); err != nil {
 		logger.ErrorContext(r.Context(), "Failed to update imported data", "error", err)

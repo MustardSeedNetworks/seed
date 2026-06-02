@@ -209,6 +209,8 @@ func schemaTargets() []schemaTarget {
 		{&api.WiFiDiscoveryNetworksResponse{}, "wifi-discovery-networks-response.schema.json"},
 		{&api.WiFiDiscoveryAPsResponse{}, "wifi-discovery-aps-response.schema.json"},
 		{&api.WiFiDiscoveryStatsResponse{}, "wifi-discovery-stats-response.schema.json"},
+		{&api.PathResponse{}, "path-response.schema.json"},
+		{&api.UpdateSurveyImportedDataRequest{}, "update-survey-imported-data-request.schema.json"},
 	}
 
 	targets := make([]schemaTarget, len(rows))
