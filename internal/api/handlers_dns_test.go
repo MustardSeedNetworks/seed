@@ -19,7 +19,7 @@ func TestHandleDNSGET(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/sap/dns", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/telemetry/dns", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -51,7 +51,7 @@ func TestHandleDNSGETWithInterface(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/sap/dns?interface=lo", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/telemetry/dns?interface=lo", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -73,7 +73,7 @@ func TestHandleDNSMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/sap/dns", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/telemetry/dns", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)
@@ -93,7 +93,7 @@ func TestHandleDNSSecurityGET(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/sap/dns/security", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/telemetry/dns/security", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -120,7 +120,7 @@ func TestHandleDNSSecurityPOST(t *testing.T) {
 	}
 	body, _ := json.Marshal(reqBody)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/sap/dns/security", bytes.NewReader(body))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/dns/security", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -147,7 +147,7 @@ func TestHandleDNSSecurityPOSTNoServers(t *testing.T) {
 	}
 	body, _ := json.Marshal(reqBody)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/sap/dns/security", bytes.NewReader(body))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/dns/security", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -168,7 +168,11 @@ func TestHandleDNSSecurityPOSTInvalidJSON(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/sap/dns/security", bytes.NewReader([]byte("invalid json")))
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/telemetry/dns/security",
+		bytes.NewReader([]byte("invalid json")),
+	)
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -190,7 +194,7 @@ func TestHandleDNSSecurityMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodPut, http.MethodDelete, http.MethodPatch}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/sap/dns/security", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/telemetry/dns/security", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)
@@ -210,7 +214,7 @@ func TestHandleDNSSecuritySettingsGET(t *testing.T) {
 	server := api.NewTestServer()
 	defer server.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/sap/dns/security/settings", http.NoBody)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/telemetry/dns/security/settings", http.NoBody)
 	w := httptest.NewRecorder()
 
 	server.Mux().ServeHTTP(w, req)
@@ -243,7 +247,7 @@ func TestHandleDNSSecuritySettingsPUT(t *testing.T) {
 	}
 	body, _ := json.Marshal(reqBody)
 
-	req := httptest.NewRequest(http.MethodPut, "/api/v1/sap/dns/security/settings", bytes.NewReader(body))
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/telemetry/dns/security/settings", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -274,7 +278,7 @@ func TestHandleDNSSecuritySettingsMethodNotAllowed(t *testing.T) {
 	methods := []string{http.MethodPost, http.MethodDelete, http.MethodPatch}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/sap/dns/security/settings", http.NoBody)
+			req := httptest.NewRequest(method, "/api/v1/telemetry/dns/security/settings", http.NoBody)
 			w := httptest.NewRecorder()
 
 			server.Mux().ServeHTTP(w, req)

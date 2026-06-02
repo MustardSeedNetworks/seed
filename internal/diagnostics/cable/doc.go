@@ -1,2 +1,2 @@
-// Package cable is part of the sap module.
+// Package cable is part of the diagnostics package.
 package cable

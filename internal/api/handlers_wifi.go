@@ -699,7 +699,7 @@ type WiFiDiscoveryStatsResponse struct {
 
 // handleWiFiDiscoveryScan performs an enhanced WiFi scan using the WiFiBridge.
 //
-// POST /api/v1/shell/wifi/discovery/scan
+// POST /api/v1/security/wifi/discovery/scan
 //
 // Triggers a WiFi scan with enhanced metadata including vendor lookup,
 // authorization status, and channel utilization.
@@ -761,7 +761,7 @@ func (s *Server) handleWiFiDiscoveryScan(w http.ResponseWriter, r *http.Request)
 
 // handleWiFiDiscoveryNetworks returns discovered WiFi networks.
 //
-// GET /api/v1/shell/wifi/discovery/networks
+// GET /api/v1/security/wifi/discovery/networks
 //
 // Returns the list of WiFi networks from the most recent enhanced scan.
 //
@@ -804,7 +804,7 @@ func (s *Server) handleWiFiDiscoveryNetworks(w http.ResponseWriter, r *http.Requ
 
 // handleWiFiDiscoveryAPs returns discovered WiFi access points.
 //
-// GET /api/v1/shell/wifi/discovery/aps
+// GET /api/v1/security/wifi/discovery/aps
 //
 // Returns the list of WiFi access points with extended metadata.
 //
@@ -847,7 +847,7 @@ func (s *Server) handleWiFiDiscoveryAPs(w http.ResponseWriter, r *http.Request) 
 
 // handleWiFiDiscoveryStats returns WiFi discovery statistics.
 //
-// GET /api/v1/shell/wifi/discovery/stats
+// GET /api/v1/security/wifi/discovery/stats
 //
 // Returns aggregated statistics from WiFi discovery.
 //

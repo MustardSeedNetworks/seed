@@ -92,7 +92,7 @@ export function useSettingsDrawerSavers({
     setTestsStatus('saving');
     try {
       const payload = normalizeTestsSettingsForSave(testsSettings);
-      const response = await fetch(`${API_BASE}/api/v1/sap/health-checks/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/telemetry/health-checks/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -113,7 +113,7 @@ export function useSettingsDrawerSavers({
   const saveWifiSettings = useCallback(async () => {
     setWifiStatus('saving');
     try {
-      const response = await fetch(`${API_BASE}/api/v1/canopy/wifi/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/wifi/wifi/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -176,7 +176,7 @@ export function useSettingsDrawerSavers({
   const saveNetworkDiscoverySettings = useCallback(async () => {
     setNetworkDiscoveryStatus('saving');
     try {
-      const response = await fetch(`${API_BASE}/api/v1/shell/devices/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/security/devices/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -196,7 +196,7 @@ export function useSettingsDrawerSavers({
   const saveSnmpSettings = useCallback(async () => {
     setSnmpStatus('saving');
     try {
-      const response = await fetch(`${API_BASE}/api/v1/sap/snmp/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/telemetry/snmp/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

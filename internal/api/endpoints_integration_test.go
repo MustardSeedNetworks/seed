@@ -121,9 +121,9 @@ func (s *testEndpointServer) testSNMPSettingsEndpoint(t *testing.T) {
 	t.Helper()
 	client := &http.Client{Timeout: 15 * time.Second}
 
-	resp, err := client.Get(s.ts.URL + "/api/v1/sap/snmp/settings")
+	resp, err := client.Get(s.ts.URL + "/api/v1/telemetry/snmp/settings")
 	if err != nil {
-		t.Fatalf("GET /api/sap/snmp/settings failed: %v", err)
+		t.Fatalf("GET /api/telemetry/snmp/settings failed: %v", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -146,9 +146,9 @@ func (s *testEndpointServer) testSNMPSettingsEndpoint(t *testing.T) {
 
 func (s *testEndpointServer) testWiFiSettingsEndpoint(t *testing.T) {
 	t.Helper()
-	resp, err := http.Get(s.ts.URL + "/api/v1/canopy/wifi/settings")
+	resp, err := http.Get(s.ts.URL + "/api/v1/wifi/wifi/settings")
 	if err != nil {
-		t.Fatalf("GET /api/canopy/wifi/settings failed: %v", err)
+		t.Fatalf("GET /api/wifi/wifi/settings failed: %v", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -182,9 +182,9 @@ func (s *testEndpointServer) testIPConfigEndpoint(t *testing.T) {
 
 func (s *testEndpointServer) testSystemHealthEndpoint(t *testing.T) {
 	t.Helper()
-	resp, err := http.Get(s.ts.URL + "/api/v1/sap/system/health")
+	resp, err := http.Get(s.ts.URL + "/api/v1/telemetry/system/health")
 	if err != nil {
-		t.Fatalf("GET /api/sap/system/health failed: %v", err)
+		t.Fatalf("GET /api/telemetry/system/health failed: %v", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -348,20 +348,20 @@ func (s *devicesTestServer) assertGetEndpointOK(t *testing.T, endpoint string) {
 
 func (s *devicesTestServer) testGetDevices(t *testing.T) {
 	t.Helper()
-	s.assertGetEndpointOK(t, "/api/v1/shell/devices")
+	s.assertGetEndpointOK(t, "/api/v1/security/devices")
 }
 
 func (s *devicesTestServer) testGetDevicesStatus(t *testing.T) {
 	t.Helper()
-	s.assertGetEndpointOK(t, "/api/v1/shell/devices/status")
+	s.assertGetEndpointOK(t, "/api/v1/security/devices/status")
 }
 
 func (s *devicesTestServer) testGetDevicesSettings(t *testing.T) {
 	t.Helper()
 
-	resp, err := http.Get(s.ts.URL + "/api/v1/shell/devices/settings")
+	resp, err := http.Get(s.ts.URL + "/api/v1/security/devices/settings")
 	if err != nil {
-		t.Fatalf("GET /api/shell/devices/settings failed: %v", err)
+		t.Fatalf("GET /api/security/devices/settings failed: %v", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -382,12 +382,12 @@ func (s *devicesTestServer) testGetDevicesSettings(t *testing.T) {
 func (s *devicesTestServer) testScanDevices(t *testing.T) {
 	t.Helper()
 
-	req, _ := http.NewRequest(http.MethodPost, s.ts.URL+"/api/v1/shell/devices/scan", http.NoBody)
+	req, _ := http.NewRequest(http.MethodPost, s.ts.URL+"/api/v1/security/devices/scan", http.NoBody)
 	client := &http.Client{Timeout: 15 * time.Second}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("POST /api/shell/devices/scan failed: %v", err)
+		t.Fatalf("POST /api/security/devices/scan failed: %v", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -433,9 +433,9 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 	defer ts.Close()
 
 	t.Run("GetHealthChecksSettings", func(t *testing.T) {
-		resp, err := http.Get(ts.URL + "/api/v1/sap/health-checks/settings")
+		resp, err := http.Get(ts.URL + "/api/v1/telemetry/health-checks/settings")
 		if err != nil {
-			t.Fatalf("GET /api/sap/health-checks/settings failed: %v", err)
+			t.Fatalf("GET /api/telemetry/health-checks/settings failed: %v", err)
 		}
 		defer func() { _ = resp.Body.Close() }()
 
@@ -460,7 +460,7 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		body, _ := json.Marshal(settings)
 		req, _ := http.NewRequest(
 			http.MethodPut,
-			ts.URL+"/api/v1/sap/health-checks/settings",
+			ts.URL+"/api/v1/telemetry/health-checks/settings",
 			bytes.NewReader(body),
 		)
 		req.Header.Set("Content-Type", "application/json")
@@ -468,7 +468,7 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		client := &http.Client{Timeout: 15 * time.Second}
 		resp, err := client.Do(req)
 		if err != nil {
-			t.Fatalf("PUT /api/sap/health-checks/settings failed: %v", err)
+			t.Fatalf("PUT /api/telemetry/health-checks/settings failed: %v", err)
 		}
 		defer func() { _ = resp.Body.Close() }()
 

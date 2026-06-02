@@ -1,2 +1,2 @@
-// Package gateway is part of the sap module.
+// Package gateway is part of the diagnostics package.
 package gateway

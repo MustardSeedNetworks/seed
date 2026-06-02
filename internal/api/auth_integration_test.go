@@ -102,37 +102,37 @@ func TestEndpointAuthentication(t *testing.T) {
 		},
 
 		// DNS and Gateway
-		{"DNS", "GET", "/api/v1/sap/dns", false, "DNS test results require auth"},
-		{"Gateway", "GET", "/api/v1/sap/gateway", false, "Gateway status requires auth"},
+		{"DNS", "GET", "/api/v1/telemetry/dns", false, "DNS test results require auth"},
+		{"Gateway", "GET", "/api/v1/telemetry/gateway", false, "Gateway status requires auth"},
 
 		// VLAN
-		{"VLAN", "GET", "/api/v1/sap/vlan", false, "VLAN status requires auth"},
-		{"VLAN Traffic", "GET", "/api/v1/sap/vlan/traffic", false, "VLAN traffic requires auth"},
-		{"VLAN Interface", "PUT", "/api/v1/sap/vlan/interface", false, "Setting VLAN requires auth"},
+		{"VLAN", "GET", "/api/v1/telemetry/vlan", false, "VLAN status requires auth"},
+		{"VLAN Traffic", "GET", "/api/v1/telemetry/vlan/traffic", false, "VLAN traffic requires auth"},
+		{"VLAN Interface", "PUT", "/api/v1/telemetry/vlan/interface", false, "Setting VLAN requires auth"},
 
 		// WiFi
-		{"WiFi", "GET", "/api/v1/canopy/wifi", false, "WiFi status requires auth"},
-		{"WiFi Settings GET", "GET", "/api/v1/canopy/wifi/settings", false, "WiFi settings require auth"},
+		{"WiFi", "GET", "/api/v1/wifi/wifi", false, "WiFi status requires auth"},
+		{"WiFi Settings GET", "GET", "/api/v1/wifi/wifi/settings", false, "WiFi settings require auth"},
 		{
 			"WiFi Settings PUT",
 			"PUT",
-			"/api/v1/canopy/wifi/settings",
+			"/api/v1/wifi/wifi/settings",
 			false,
 			"Changing WiFi settings requires auth",
 		},
 
 		// Cable diagnostics
-		{"Cable", "GET", "/api/v1/sap/cable", false, "Cable diagnostics require auth"},
+		{"Cable", "GET", "/api/v1/telemetry/cable", false, "Cable diagnostics require auth"},
 
 		// Public IP
-		{"Public IP", "GET", "/api/v1/sap/publicip", false, "Public IP lookup requires auth"},
+		{"Public IP", "GET", "/api/v1/telemetry/publicip", false, "Public IP lookup requires auth"},
 
 		// Speed tests
-		{"Speedtest", "POST", "/api/v1/sap/speedtest", false, "Starting speedtest requires auth"},
+		{"Speedtest", "POST", "/api/v1/telemetry/speedtest", false, "Starting speedtest requires auth"},
 		{
 			"Speedtest Status",
 			"GET",
-			"/api/v1/sap/speedtest/status",
+			"/api/v1/telemetry/speedtest/status",
 			false,
 			"Speedtest status requires auth",
 		},
@@ -141,86 +141,86 @@ func TestEndpointAuthentication(t *testing.T) {
 		{
 			"Health Checks Settings GET",
 			"GET",
-			"/api/v1/sap/health-checks/settings",
+			"/api/v1/telemetry/health-checks/settings",
 			false,
 			"Health check settings require auth",
 		},
 		{
 			"Health Checks Settings PUT",
 			"PUT",
-			"/api/v1/sap/health-checks/settings",
+			"/api/v1/telemetry/health-checks/settings",
 			false,
 			"Changing health check settings requires auth",
 		},
 		{
 			"Run Health Checks",
 			"GET",
-			"/api/v1/sap/health-checks/run",
+			"/api/v1/telemetry/health-checks/run",
 			false,
 			"Running health checks requires auth",
 		},
 
 		// iperf3
-		{"iperf Info", "GET", "/api/v1/sap/iperf/info", false, "iperf info requires auth"},
-		{"iperf Client", "POST", "/api/v1/sap/iperf/client", false, "Running iperf client requires auth"},
+		{"iperf Info", "GET", "/api/v1/telemetry/iperf/info", false, "iperf info requires auth"},
+		{"iperf Client", "POST", "/api/v1/telemetry/iperf/client", false, "Running iperf client requires auth"},
 		{
 			"iperf Client Status",
 			"GET",
-			"/api/v1/sap/iperf/client/status",
+			"/api/v1/telemetry/iperf/client/status",
 			false,
 			"iperf client status requires auth",
 		},
-		{"iperf Server", "POST", "/api/v1/sap/iperf/server", false, "Managing iperf server requires auth"},
+		{"iperf Server", "POST", "/api/v1/telemetry/iperf/server", false, "Managing iperf server requires auth"},
 		{
 			"iperf Server Status",
 			"GET",
-			"/api/v1/sap/iperf/server/status",
+			"/api/v1/telemetry/iperf/server/status",
 			false,
 			"iperf server status requires auth",
 		},
 		{
 			"iperf Suggestions",
 			"GET",
-			"/api/v1/sap/iperf/suggestions",
+			"/api/v1/telemetry/iperf/suggestions",
 			false,
 			"iperf suggestions require auth",
 		},
 
 		// Network device discovery
-		{"Devices", "GET", "/api/v1/shell/devices", false, "Discovered devices require auth"},
-		{"Devices Scan", "POST", "/api/v1/shell/devices/scan", false, "Triggering scan requires auth"},
-		{"Devices Status", "GET", "/api/v1/shell/devices/status", false, "Scan status requires auth"},
+		{"Devices", "GET", "/api/v1/security/devices", false, "Discovered devices require auth"},
+		{"Devices Scan", "POST", "/api/v1/security/devices/scan", false, "Triggering scan requires auth"},
+		{"Devices Status", "GET", "/api/v1/security/devices/status", false, "Scan status requires auth"},
 		{
 			"Devices Settings GET",
 			"GET",
-			"/api/v1/shell/devices/settings",
+			"/api/v1/security/devices/settings",
 			false,
 			"Discovery settings require auth",
 		},
 		{
 			"Devices Settings PUT",
 			"PUT",
-			"/api/v1/shell/devices/settings",
+			"/api/v1/security/devices/settings",
 			false,
 			"Changing discovery settings requires auth",
 		},
 		{
 			"Devices Subnets GET",
 			"GET",
-			"/api/v1/shell/devices/subnets",
+			"/api/v1/security/devices/subnets",
 			false,
 			"Subnet config requires auth",
 		},
 		{
 			"Devices Subnets PUT",
 			"PUT",
-			"/api/v1/shell/devices/subnets",
+			"/api/v1/security/devices/subnets",
 			false,
 			"Changing subnets requires auth",
 		},
 
 		// System health
-		{"System Health", "GET", "/api/v1/sap/system/health", false, "System health requires auth"},
+		{"System Health", "GET", "/api/v1/telemetry/system/health", false, "System health requires auth"},
 	}
 
 	for _, tt := range tests {

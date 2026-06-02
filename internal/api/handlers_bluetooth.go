@@ -37,7 +37,7 @@ type BluetoothStatsResponse struct {
 
 // handleBluetoothScan triggers a Bluetooth scan and returns results.
 //
-// POST /api/v1/shell/bluetooth/scan
+// POST /api/v1/security/bluetooth/scan
 //
 // Triggers an active Bluetooth scan on the configured adapter.
 // Returns discovered devices including classic and BLE.
@@ -100,7 +100,7 @@ func (s *Server) handleBluetoothScan(w http.ResponseWriter, r *http.Request) {
 
 // handleBluetoothDevices returns discovered Bluetooth devices.
 //
-// GET /api/v1/shell/bluetooth/devices
+// GET /api/v1/security/bluetooth/devices
 //
 // Returns the list of Bluetooth devices from the most recent scan.
 //
@@ -151,7 +151,7 @@ func (s *Server) handleBluetoothDevices(w http.ResponseWriter, r *http.Request) 
 
 // handleBluetoothStats returns Bluetooth discovery statistics.
 //
-// GET /api/v1/shell/bluetooth/stats
+// GET /api/v1/security/bluetooth/stats
 //
 // Returns aggregated statistics from Bluetooth discovery.
 //
@@ -193,7 +193,7 @@ func (s *Server) handleBluetoothStats(w http.ResponseWriter, r *http.Request) {
 
 // handleBluetoothStatus returns the Bluetooth adapter status.
 //
-// GET /api/v1/shell/bluetooth/status
+// GET /api/v1/security/bluetooth/status
 //
 // Returns the current Bluetooth adapter status and availability.
 //

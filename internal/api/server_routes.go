@@ -1,8 +1,8 @@
 package api
 
 // server_routes.go contains the HTTP route table: setupRoutes plus the
-// per-module setup helpers (core auth/settings, SAP telemetry, Shell, Roots,
-// Canopy, Harvest) and the SSE + static file fallback.
+// per-capability setup helpers (core auth/settings, telemetry, security, path,
+// wifi, reporting) and the SSE + static file fallback.
 
 import (
 	"net/http"
@@ -22,11 +22,11 @@ func (s *Server) setupRoutes() {
 	s.setupCoreRoutes()
 	s.setupAPITokenRoutes()
 	s.registerUpdateRoutes()
-	s.setupSAPRoutes()
-	s.setupShellRoutes()
-	s.setupRootsRoutes()
-	s.setupCanopyRoutes()
-	s.setupHarvestRoutes()
+	s.setupTelemetryRoutes()
+	s.setupSecurityRoutes()
+	s.setupPathRoutes()
+	s.setupWiFiRoutes()
+	s.setupReportingRoutes()
 	s.setupTopologyRoutes()
 	s.setupSSEAndStatic()
 }
@@ -130,113 +130,121 @@ func (s *Server) setupCoreRoutes() {
 	})
 }
 
-// setupSAPRoutes registers SAP module routes (live telemetry).
-func (s *Server) setupSAPRoutes() {
+// setupTelemetryRoutes registers telemetry routes.
+func (s *Server) setupTelemetryRoutes() {
 	op := database.RoleOperator
 	s.registerAll([]route{
-		{path: APIVersionPrefix + "/sap/link", handler: s.handleLink},
-		{path: APIVersionPrefix + "/sap/cable", handler: s.handleCable},
-		{path: APIVersionPrefix + "/sap/dns", handler: s.handleDNS},
-		{path: APIVersionPrefix + "/sap/dns/security", handler: s.handleDNSSecurity},
-		{path: APIVersionPrefix + "/sap/dns/security/settings", handler: s.handleDNSSecuritySettings, minRole: op},
-		{path: APIVersionPrefix + "/sap/gateway", handler: s.handleGateway},
-		{path: APIVersionPrefix + "/sap/dhcp/rogue", handler: s.handleRogueDHCP},
-		{path: APIVersionPrefix + "/sap/dhcp/rogue/servers", handler: s.handleRogueDHCPServers},
-		{path: APIVersionPrefix + "/sap/dhcp/rogue/config", handler: s.handleRogueDHCPConfig, minRole: op},
-		{path: APIVersionPrefix + "/sap/vlan", handler: s.handleVLAN},
-		{path: APIVersionPrefix + "/sap/vlan/traffic", handler: s.handleVLANTraffic},
-		{path: APIVersionPrefix + "/sap/vlan/interface", handler: s.handleVLANInterface},
-		{path: APIVersionPrefix + "/sap/speedtest", handler: s.handleSpeedtest, rateLimited: true},
-		{path: APIVersionPrefix + "/sap/speedtest/status", handler: s.handleSpeedtestStatus},
-		{path: APIVersionPrefix + "/sap/iperf/info", handler: s.handleIperfInfo},
-		{path: APIVersionPrefix + "/sap/iperf/client", handler: s.handleIperfClient, rateLimited: true},
-		{path: APIVersionPrefix + "/sap/iperf/client/status", handler: s.handleIperfClientStatus},
-		{path: APIVersionPrefix + "/sap/iperf/server", handler: s.handleIperfServer},
-		{path: APIVersionPrefix + "/sap/iperf/server/status", handler: s.handleIperfServerStatus},
-		{path: APIVersionPrefix + "/sap/iperf/suggestions", handler: s.handleIperfSuggestions},
-		{path: APIVersionPrefix + "/sap/health-checks/settings", handler: s.handleHealthChecksSettings, minRole: op},
-		{path: APIVersionPrefix + "/sap/health-checks/run", handler: s.handleHealthChecks, rateLimited: true},
-		{path: APIVersionPrefix + "/sap/health-checks/results", handler: s.handleHealthCheckResults},
-		{path: APIVersionPrefix + "/sap/health-checks/history", handler: s.handleHealthCheckHistory},
-		{path: APIVersionPrefix + "/sap/health-checks/scores", handler: s.handleHealthCheckScores},
-		{path: APIVersionPrefix + "/sap/health-checks/sla", handler: s.handleHealthCheckSLA},
-		{path: APIVersionPrefix + "/sap/health-checks/alerts", handler: s.handleHealthCheckAlerts},
+		{path: APIVersionPrefix + "/telemetry/link", handler: s.handleLink},
+		{path: APIVersionPrefix + "/telemetry/cable", handler: s.handleCable},
+		{path: APIVersionPrefix + "/telemetry/dns", handler: s.handleDNS},
+		{path: APIVersionPrefix + "/telemetry/dns/security", handler: s.handleDNSSecurity},
+		{
+			path:    APIVersionPrefix + "/telemetry/dns/security/settings",
+			handler: s.handleDNSSecuritySettings,
+			minRole: op,
+		},
+		{path: APIVersionPrefix + "/telemetry/gateway", handler: s.handleGateway},
+		{path: APIVersionPrefix + "/telemetry/dhcp/rogue", handler: s.handleRogueDHCP},
+		{path: APIVersionPrefix + "/telemetry/dhcp/rogue/servers", handler: s.handleRogueDHCPServers},
+		{path: APIVersionPrefix + "/telemetry/dhcp/rogue/config", handler: s.handleRogueDHCPConfig, minRole: op},
+		{path: APIVersionPrefix + "/telemetry/vlan", handler: s.handleVLAN},
+		{path: APIVersionPrefix + "/telemetry/vlan/traffic", handler: s.handleVLANTraffic},
+		{path: APIVersionPrefix + "/telemetry/vlan/interface", handler: s.handleVLANInterface},
+		{path: APIVersionPrefix + "/telemetry/speedtest", handler: s.handleSpeedtest, rateLimited: true},
+		{path: APIVersionPrefix + "/telemetry/speedtest/status", handler: s.handleSpeedtestStatus},
+		{path: APIVersionPrefix + "/telemetry/iperf/info", handler: s.handleIperfInfo},
+		{path: APIVersionPrefix + "/telemetry/iperf/client", handler: s.handleIperfClient, rateLimited: true},
+		{path: APIVersionPrefix + "/telemetry/iperf/client/status", handler: s.handleIperfClientStatus},
+		{path: APIVersionPrefix + "/telemetry/iperf/server", handler: s.handleIperfServer},
+		{path: APIVersionPrefix + "/telemetry/iperf/server/status", handler: s.handleIperfServerStatus},
+		{path: APIVersionPrefix + "/telemetry/iperf/suggestions", handler: s.handleIperfSuggestions},
+		{
+			path:    APIVersionPrefix + "/telemetry/health-checks/settings",
+			handler: s.handleHealthChecksSettings,
+			minRole: op,
+		},
+		{path: APIVersionPrefix + "/telemetry/health-checks/run", handler: s.handleHealthChecks, rateLimited: true},
+		{path: APIVersionPrefix + "/telemetry/health-checks/results", handler: s.handleHealthCheckResults},
+		{path: APIVersionPrefix + "/telemetry/health-checks/history", handler: s.handleHealthCheckHistory},
+		{path: APIVersionPrefix + "/telemetry/health-checks/scores", handler: s.handleHealthCheckScores},
+		{path: APIVersionPrefix + "/telemetry/health-checks/sla", handler: s.handleHealthCheckSLA},
+		{path: APIVersionPrefix + "/telemetry/health-checks/alerts", handler: s.handleHealthCheckAlerts},
 		// Anomaly detection is Pro (LICENSE_STRATEGY §2); base results/history/alerts
 		// stay open to all tiers — only the trend/anomaly analysis is paid.
 		{
-			path:    APIVersionPrefix + "/sap/health-checks/anomalies",
+			path:    APIVersionPrefix + "/telemetry/health-checks/anomalies",
 			handler: s.handleHealthCheckAnomalies,
 			feature: "anomaly_detection",
 		},
-		{path: APIVersionPrefix + "/sap/snmp/settings", handler: s.handleSNMPSettings, minRole: op},
-		{path: APIVersionPrefix + "/sap/system/health", handler: s.handleSystemHealth},
-		{path: APIVersionPrefix + "/sap/ipconfig", handler: s.handleIPConfig},
-		{path: APIVersionPrefix + "/sap/ipconfig/settings", handler: s.handleIPSettings, minRole: op},
-		{path: APIVersionPrefix + "/sap/publicip", handler: s.handlePublicIP},
+		{path: APIVersionPrefix + "/telemetry/snmp/settings", handler: s.handleSNMPSettings, minRole: op},
+		{path: APIVersionPrefix + "/telemetry/system/health", handler: s.handleSystemHealth},
+		{path: APIVersionPrefix + "/telemetry/ipconfig", handler: s.handleIPConfig},
+		{path: APIVersionPrefix + "/telemetry/ipconfig/settings", handler: s.handleIPSettings, minRole: op},
+		{path: APIVersionPrefix + "/telemetry/publicip", handler: s.handlePublicIP},
 	})
 }
 
-// setupShellRoutes registers Shell module routes (security posture).
-func (s *Server) setupShellRoutes() {
+// setupSecurityRoutes registers security routes.
+func (s *Server) setupSecurityRoutes() {
 	op := database.RoleOperator
 	s.registerAll([]route{
-		{path: APIVersionPrefix + "/shell/discovery", handler: s.handleDiscovery},
-		{path: APIVersionPrefix + "/shell/discovery/probe", handler: s.handleTCPProbe},
-		{path: APIVersionPrefix + "/shell/discovery/portscan", handler: s.handlePortScan},
-		{path: APIVersionPrefix + "/shell/discovery/options", handler: s.handleDiscoveryOptions},
-		{path: APIVersionPrefix + "/shell/discovery/service/status", handler: s.handleDiscoveryServiceStatus},
-		{path: APIVersionPrefix + "/shell/discovery/fingerprint", handler: s.handleAdvancedFingerprint},
-		{path: APIVersionPrefix + "/shell/devices", handler: s.handleDevices},
-		{path: APIVersionPrefix + "/shell/devices/scan", handler: s.handleDevicesScan, rateLimited: true},
-		{path: APIVersionPrefix + "/shell/devices/status", handler: s.handleDevicesStatus},
-		{path: APIVersionPrefix + "/shell/devices/settings", handler: s.handleDevicesSettings, minRole: op},
-		{path: APIVersionPrefix + "/shell/devices/subnets", handler: s.handleDevicesSubnets},
+		{path: APIVersionPrefix + "/security/discovery", handler: s.handleDiscovery},
+		{path: APIVersionPrefix + "/security/discovery/probe", handler: s.handleTCPProbe},
+		{path: APIVersionPrefix + "/security/discovery/portscan", handler: s.handlePortScan},
+		{path: APIVersionPrefix + "/security/discovery/options", handler: s.handleDiscoveryOptions},
+		{path: APIVersionPrefix + "/security/discovery/service/status", handler: s.handleDiscoveryServiceStatus},
+		{path: APIVersionPrefix + "/security/discovery/fingerprint", handler: s.handleAdvancedFingerprint},
+		{path: APIVersionPrefix + "/security/devices", handler: s.handleDevices},
+		{path: APIVersionPrefix + "/security/devices/scan", handler: s.handleDevicesScan, rateLimited: true},
+		{path: APIVersionPrefix + "/security/devices/status", handler: s.handleDevicesStatus},
+		{path: APIVersionPrefix + "/security/devices/settings", handler: s.handleDevicesSettings, minRole: op},
+		{path: APIVersionPrefix + "/security/devices/subnets", handler: s.handleDevicesSubnets},
 		// Vulnerability scan + guest-audit run are compliance_advanced (Pro,
 		// LICENSE_STRATEGY §2); read-only results/status/settings stay open so prior
 		// scan output remains visible to lower tiers.
 		{
-			path:        APIVersionPrefix + "/shell/vulnerabilities/scan",
+			path:        APIVersionPrefix + "/security/vulnerabilities/scan",
 			handler:     s.handleVulnerabilityScan,
 			feature:     "compliance_advanced",
 			rateLimited: true,
 		},
-		{path: APIVersionPrefix + "/shell/vulnerabilities/status", handler: s.handleVulnerabilityStatus},
-		{path: APIVersionPrefix + "/shell/vulnerabilities/results", handler: s.handleVulnerabilityResults},
-		{path: APIVersionPrefix + "/shell/vulnerabilities/device", handler: s.handleDeviceVulnerabilities},
+		{path: APIVersionPrefix + "/security/vulnerabilities/status", handler: s.handleVulnerabilityStatus},
+		{path: APIVersionPrefix + "/security/vulnerabilities/results", handler: s.handleVulnerabilityResults},
+		{path: APIVersionPrefix + "/security/vulnerabilities/device", handler: s.handleDeviceVulnerabilities},
 		{
-			path:    APIVersionPrefix + "/shell/vulnerabilities/settings",
+			path:    APIVersionPrefix + "/security/vulnerabilities/settings",
 			handler: s.handleVulnerabilitySettings,
 			minRole: op,
 		},
-		{path: APIVersionPrefix + "/shell/vulnerabilities/validate-api-key", handler: s.handleNVDAPIKeyValidate},
+		{path: APIVersionPrefix + "/security/vulnerabilities/validate-api-key", handler: s.handleNVDAPIKeyValidate},
 		// Guest-network isolation audit (#397).
-		{path: APIVersionPrefix + "/shell/guest-audit/settings", handler: s.handleGuestAuditSettings, minRole: op},
+		{path: APIVersionPrefix + "/security/guest-audit/settings", handler: s.handleGuestAuditSettings, minRole: op},
 		{
-			path:        APIVersionPrefix + "/shell/guest-audit/run",
+			path:        APIVersionPrefix + "/security/guest-audit/run",
 			handler:     s.handleGuestAuditRun,
 			feature:     "compliance_advanced",
 			rateLimited: true,
 		},
-		{path: APIVersionPrefix + "/shell/pipeline/status", handler: s.handlePipelineStatus},
-		{path: APIVersionPrefix + "/shell/pipeline/start", handler: s.handlePipelineStart},
-		{path: APIVersionPrefix + "/shell/pipeline/cancel", handler: s.handlePipelineCancel},
-		{path: APIVersionPrefix + "/shell/pipeline/config", handler: s.handlePipelineConfigRoute, minRole: op},
-		{path: APIVersionPrefix + "/shell/pipeline/port-intensity", handler: s.handlePipelinePortIntensityInfo},
-		{path: APIVersionPrefix + "/shell/pipeline/timing-profiles", handler: s.handlePipelineTimingProfiles},
+		{path: APIVersionPrefix + "/security/pipeline/status", handler: s.handlePipelineStatus},
+		{path: APIVersionPrefix + "/security/pipeline/start", handler: s.handlePipelineStart},
+		{path: APIVersionPrefix + "/security/pipeline/cancel", handler: s.handlePipelineCancel},
+		{path: APIVersionPrefix + "/security/pipeline/config", handler: s.handlePipelineConfigRoute, minRole: op},
+		{path: APIVersionPrefix + "/security/pipeline/port-intensity", handler: s.handlePipelinePortIntensityInfo},
+		{path: APIVersionPrefix + "/security/pipeline/timing-profiles", handler: s.handlePipelineTimingProfiles},
 		// Network problem detection.
-		{path: APIVersionPrefix + "/shell/problems", handler: s.handleNetworkProblems},
-		{path: APIVersionPrefix + "/shell/problems/scan", handler: s.handleProblemScan},
-		{path: APIVersionPrefix + "/shell/problems/thresholds", handler: s.handleProblemThresholds, minRole: op},
+		{path: APIVersionPrefix + "/security/problems", handler: s.handleNetworkProblems},
+		{path: APIVersionPrefix + "/security/problems/scan", handler: s.handleProblemScan},
+		{path: APIVersionPrefix + "/security/problems/thresholds", handler: s.handleProblemThresholds, minRole: op},
 		// Bluetooth discovery.
-		{path: APIVersionPrefix + "/shell/bluetooth/scan", handler: s.handleBluetoothScan},
-		{path: APIVersionPrefix + "/shell/bluetooth/devices", handler: s.handleBluetoothDevices},
-		{path: APIVersionPrefix + "/shell/bluetooth/stats", handler: s.handleBluetoothStats},
-		{path: APIVersionPrefix + "/shell/bluetooth/status", handler: s.handleBluetoothStatus},
+		{path: APIVersionPrefix + "/security/bluetooth/scan", handler: s.handleBluetoothScan},
+		{path: APIVersionPrefix + "/security/bluetooth/devices", handler: s.handleBluetoothDevices},
+		{path: APIVersionPrefix + "/security/bluetooth/stats", handler: s.handleBluetoothStats},
+		{path: APIVersionPrefix + "/security/bluetooth/status", handler: s.handleBluetoothStatus},
 		// Enhanced WiFi discovery (unified).
-		{path: APIVersionPrefix + "/shell/wifi/discovery/scan", handler: s.handleWiFiDiscoveryScan},
-		{path: APIVersionPrefix + "/shell/wifi/discovery/networks", handler: s.handleWiFiDiscoveryNetworks},
-		{path: APIVersionPrefix + "/shell/wifi/discovery/aps", handler: s.handleWiFiDiscoveryAPs},
-		{path: APIVersionPrefix + "/shell/wifi/discovery/stats", handler: s.handleWiFiDiscoveryStats},
+		{path: APIVersionPrefix + "/security/wifi/discovery/scan", handler: s.handleWiFiDiscoveryScan},
+		{path: APIVersionPrefix + "/security/wifi/discovery/networks", handler: s.handleWiFiDiscoveryNetworks},
+		{path: APIVersionPrefix + "/security/wifi/discovery/aps", handler: s.handleWiFiDiscoveryAPs},
+		{path: APIVersionPrefix + "/security/wifi/discovery/stats", handler: s.handleWiFiDiscoveryStats},
 		// Discovery Engine (primary unified discovery system).
 		{path: APIVersionPrefix + "/discovery/engine", handler: s.handleEngineDiscovery},
 		{path: APIVersionPrefix + "/discovery/engine/scan", handler: s.handleEngineScan, rateLimited: true},
@@ -249,84 +257,84 @@ func (s *Server) setupShellRoutes() {
 	})
 }
 
-// setupRootsRoutes registers Roots module routes (path analysis).
+// setupPathRoutes registers path-analysis routes.
 // Both endpoints are gated on the `path_analysis` feature (Pro tier);
 // Free / Starter receive 402 with an upgrade hint. The rate-limit
 // middleware still wraps traceroute so abuse remains capped even for
 // trial users.
-func (s *Server) setupRootsRoutes() {
+func (s *Server) setupPathRoutes() {
 	s.registerAll([]route{
 		{
-			path:        APIVersionPrefix + "/roots/traceroute",
+			path:        APIVersionPrefix + "/path/traceroute",
 			handler:     s.handleTraceroute,
 			feature:     "path_analysis",
 			rateLimited: true,
 		},
-		{path: APIVersionPrefix + "/roots/path", handler: s.handlePath, feature: "path_analysis"},
+		{path: APIVersionPrefix + "/path/path", handler: s.handlePath, feature: "path_analysis"},
 	})
 }
 
-// setupCanopyRoutes registers Canopy module routes (Wi-Fi visibility &
+// setupWiFiRoutes registers Wi-Fi routes (Wi-Fi visibility &
 // troubleshooting). First module on the declarative capability registry
 // (ADR-0002): policy is data, composed by register() in one canonical order.
 // Behavior is identical to the prior hand-wrapped form.
-func (s *Server) setupCanopyRoutes() {
+func (s *Server) setupWiFiRoutes() {
 	op := database.RoleOperator
 	s.registerAll([]route{
-		{path: APIVersionPrefix + "/canopy/wifi", handler: s.handleWiFi},
-		{path: APIVersionPrefix + "/canopy/wifi/scan", handler: s.handleWiFiScan},
-		{path: APIVersionPrefix + "/canopy/wifi/status", handler: s.handleWiFiStatus},
-		{path: APIVersionPrefix + "/canopy/wifi/channel-graph", handler: s.handleWiFiChannelGraph},
-		{path: APIVersionPrefix + "/canopy/wifi/settings", handler: s.handleWiFiSettings, minRole: op},
-		{path: APIVersionPrefix + "/canopy/wifi/connect", handler: s.handleWiFiConnect, minRole: op},
-		{path: APIVersionPrefix + "/canopy/wifi/disconnect", handler: s.handleWiFiDisconnect, minRole: op},
-		{path: APIVersionPrefix + "/canopy/wifi/saved", handler: s.handleWiFiSavedNetworks},
-		{path: APIVersionPrefix + "/canopy/wifi/forget", handler: s.handleWiFiForgetNetwork, minRole: op},
-		{path: APIVersionPrefix + "/canopy/survey/create", handler: s.createSurvey, minRole: op},
-		{path: APIVersionPrefix + "/canopy/survey/list", handler: s.listSurveys},
-		{path: APIVersionPrefix + "/canopy/survey", handler: s.getSurvey},
-		{path: APIVersionPrefix + "/canopy/survey/delete", handler: s.deleteSurvey, minRole: op},
-		{path: APIVersionPrefix + "/canopy/survey/start", handler: s.startSurvey, minRole: op},
-		{path: APIVersionPrefix + "/canopy/survey/pause", handler: s.pauseSurvey, minRole: op},
-		{path: APIVersionPrefix + "/canopy/survey/complete", handler: s.completeSurvey, minRole: op},
-		{path: APIVersionPrefix + "/canopy/survey/sample", handler: s.addSurveySample, minRole: op},
-		{path: APIVersionPrefix + "/canopy/survey/floorplan", handler: s.updateSurveyFloorPlan, minRole: op},
-		{path: APIVersionPrefix + "/canopy/survey/settings", handler: s.updateSurveySettings, minRole: op},
-		{path: APIVersionPrefix + "/canopy/survey/imported-data", handler: s.updateSurveyImportedData, minRole: op},
+		{path: APIVersionPrefix + "/wifi/wifi", handler: s.handleWiFi},
+		{path: APIVersionPrefix + "/wifi/wifi/scan", handler: s.handleWiFiScan},
+		{path: APIVersionPrefix + "/wifi/wifi/status", handler: s.handleWiFiStatus},
+		{path: APIVersionPrefix + "/wifi/wifi/channel-graph", handler: s.handleWiFiChannelGraph},
+		{path: APIVersionPrefix + "/wifi/wifi/settings", handler: s.handleWiFiSettings, minRole: op},
+		{path: APIVersionPrefix + "/wifi/wifi/connect", handler: s.handleWiFiConnect, minRole: op},
+		{path: APIVersionPrefix + "/wifi/wifi/disconnect", handler: s.handleWiFiDisconnect, minRole: op},
+		{path: APIVersionPrefix + "/wifi/wifi/saved", handler: s.handleWiFiSavedNetworks},
+		{path: APIVersionPrefix + "/wifi/wifi/forget", handler: s.handleWiFiForgetNetwork, minRole: op},
+		{path: APIVersionPrefix + "/wifi/survey/create", handler: s.createSurvey, minRole: op},
+		{path: APIVersionPrefix + "/wifi/survey/list", handler: s.listSurveys},
+		{path: APIVersionPrefix + "/wifi/survey", handler: s.getSurvey},
+		{path: APIVersionPrefix + "/wifi/survey/delete", handler: s.deleteSurvey, minRole: op},
+		{path: APIVersionPrefix + "/wifi/survey/start", handler: s.startSurvey, minRole: op},
+		{path: APIVersionPrefix + "/wifi/survey/pause", handler: s.pauseSurvey, minRole: op},
+		{path: APIVersionPrefix + "/wifi/survey/complete", handler: s.completeSurvey, minRole: op},
+		{path: APIVersionPrefix + "/wifi/survey/sample", handler: s.addSurveySample, minRole: op},
+		{path: APIVersionPrefix + "/wifi/survey/floorplan", handler: s.updateSurveyFloorPlan, minRole: op},
+		{path: APIVersionPrefix + "/wifi/survey/settings", handler: s.updateSurveySettings, minRole: op},
+		{path: APIVersionPrefix + "/wifi/survey/imported-data", handler: s.updateSurveyImportedData, minRole: op},
 		// AirMapper baseline-diff (Pro, LICENSE_STRATEGY §2): imports an AirMapper
 		// survey JSON and diffs it against the floor-plan baseline; rate-limited.
 		{
-			path:        APIVersionPrefix + "/canopy/survey/import/airmapper",
+			path:        APIVersionPrefix + "/wifi/survey/import/airmapper",
 			handler:     s.importAirMapper,
 			minRole:     op,
 			feature:     "airmapper_baseline_diff",
 			rateLimited: true,
 		},
-		{path: APIVersionPrefix + "/canopy/survey/heatmap", handler: s.getSurveyHeatmap, rateLimited: true},
-		{path: APIVersionPrefix + "/canopy/survey/dead-zones", handler: s.getSurveyDeadZones},
-		{path: APIVersionPrefix + "/canopy/survey/floors", handler: s.handleSurveyFloors, minRole: op},
-		{path: APIVersionPrefix + "/canopy/survey/floor", handler: s.handleSurveyFloor, minRole: op},
-		{path: APIVersionPrefix + "/canopy/survey/floor/floorplan", handler: s.updateFloorFloorPlan, minRole: op},
-		{path: APIVersionPrefix + "/canopy/survey/floor/sample", handler: s.addFloorSample, minRole: op},
-		{path: APIVersionPrefix + "/canopy/survey/active-floor", handler: s.setActiveFloor, minRole: op},
-		{path: APIVersionPrefix + "/canopy/survey/report", handler: s.generateSurveyReport, rateLimited: true},
+		{path: APIVersionPrefix + "/wifi/survey/heatmap", handler: s.getSurveyHeatmap, rateLimited: true},
+		{path: APIVersionPrefix + "/wifi/survey/dead-zones", handler: s.getSurveyDeadZones},
+		{path: APIVersionPrefix + "/wifi/survey/floors", handler: s.handleSurveyFloors, minRole: op},
+		{path: APIVersionPrefix + "/wifi/survey/floor", handler: s.handleSurveyFloor, minRole: op},
+		{path: APIVersionPrefix + "/wifi/survey/floor/floorplan", handler: s.updateFloorFloorPlan, minRole: op},
+		{path: APIVersionPrefix + "/wifi/survey/floor/sample", handler: s.addFloorSample, minRole: op},
+		{path: APIVersionPrefix + "/wifi/survey/active-floor", handler: s.setActiveFloor, minRole: op},
+		{path: APIVersionPrefix + "/wifi/survey/report", handler: s.generateSurveyReport, rateLimited: true},
 	})
 }
 
-// setupHarvestRoutes registers Harvest module routes (reporting).
-// /harvest/export is gated behind the `export_csv_json` feature
+// setupReportingRoutes registers reporting routes.
+// /reporting/export is gated behind the `export_csv_json` feature
 // (Starter or higher) per LICENSE_STRATEGY §2. Log endpoints stay
 // ungated because operational visibility is a basic capability for
 // every tier; only data extraction (the customer-facing reporting
 // surface) is paid.
-func (s *Server) setupHarvestRoutes() {
+func (s *Server) setupReportingRoutes() {
 	s.registerAll([]route{
-		{path: APIVersionPrefix + "/harvest/export", handler: s.handleExport, feature: "export_csv_json"},
-		{path: APIVersionPrefix + "/harvest/logs", handler: s.handleLogs},
-		{path: APIVersionPrefix + "/harvest/logs/client", handler: s.handleClientLogs},
-		{path: APIVersionPrefix + "/harvest/logs/query", handler: s.handleLogsQuery},
-		{path: APIVersionPrefix + "/harvest/logs/stats", handler: s.handleLogsStats},
-		{path: APIVersionPrefix + "/harvest/logs/recent", handler: s.handleLogsRecent},
+		{path: APIVersionPrefix + "/reporting/export", handler: s.handleExport, feature: "export_csv_json"},
+		{path: APIVersionPrefix + "/reporting/logs", handler: s.handleLogs},
+		{path: APIVersionPrefix + "/reporting/logs/client", handler: s.handleClientLogs},
+		{path: APIVersionPrefix + "/reporting/logs/query", handler: s.handleLogsQuery},
+		{path: APIVersionPrefix + "/reporting/logs/stats", handler: s.handleLogsStats},
+		{path: APIVersionPrefix + "/reporting/logs/recent", handler: s.handleLogsRecent},
 	})
 }
 

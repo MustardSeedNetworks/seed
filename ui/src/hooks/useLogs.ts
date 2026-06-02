@@ -164,7 +164,7 @@ export function useLogs({
     setError(null);
 
     try {
-      const response = await fetch(`/api/v1/harvest/logs/recent?limit=${limit}`);
+      const response = await fetch(`/api/v1/reporting/logs/recent?limit=${limit}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch logs: ${response.statusText}`);
       }
@@ -184,7 +184,7 @@ export function useLogs({
    */
   const fetchStats = useCallback(async () => {
     try {
-      const response = await fetch('/api/v1/harvest/logs/stats');
+      const response = await fetch('/api/v1/reporting/logs/stats');
       if (!response.ok) {
         throw new Error(`Failed to fetch stats: ${response.statusText}`);
       }

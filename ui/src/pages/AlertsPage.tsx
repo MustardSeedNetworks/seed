@@ -28,7 +28,7 @@ export function AlertsPage(): JSX.Element {
         icon={Bell}
         title="Alerts"
         description="Events emitted by the listener + observation pipelines."
-        iconColorClass="text-module-shell"
+        iconColorClass="text-module-security"
       />
 
       <FilterBar filter={filter} onChange={setFilter} count={alerts.length} loading={loading} />

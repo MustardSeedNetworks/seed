@@ -36,7 +36,7 @@ export function PollingTargetsPage(): JSX.Element {
         icon={Server}
         title="Polling targets"
         description="SNMP-polled devices. New targets pick up the default collector chain and start polling on the next tick."
-        iconColorClass="text-module-shell"
+        iconColorClass="text-module-security"
       />
 
       {error ? (

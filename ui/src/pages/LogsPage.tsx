@@ -13,7 +13,7 @@ export function LogsPage() {
         icon={ScrollText}
         title="Logs"
         description="Live log stream and system health for the daemon."
-        iconColorClass="text-module-harvest"
+        iconColorClass="text-module-reporting"
       />
       <div className={layout.grid.cards}>
         <SystemHealthCard />

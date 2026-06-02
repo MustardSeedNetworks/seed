@@ -22,7 +22,7 @@ import (
 const guestAuditRunTimeout = 60 * time.Second
 
 // handleGuestAuditSettings returns or updates the configured target list.
-// Routes: GET and PUT on /api/v1/shell/guest-audit/settings.
+// Routes: GET and PUT on /api/v1/security/guest-audit/settings.
 func (s *Server) handleGuestAuditSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -102,7 +102,7 @@ func (s *Server) handleGuestAuditSettings(w http.ResponseWriter, r *http.Request
 }
 
 // handleGuestAuditRun executes the guest-network isolation audit on demand.
-// Route: POST /api/v1/shell/guest-audit/run.
+// Route: POST /api/v1/security/guest-audit/run.
 func (s *Server) handleGuestAuditRun(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)

@@ -21,7 +21,7 @@ export function WifiPage() {
         icon={Wifi}
         title="Wi-Fi"
         description="Wireless link, channel survey, and channel-overlap visualisation."
-        iconColorClass="text-module-canopy"
+        iconColorClass="text-module-wifi"
       />
       <div className={layout.grid.cards}>
         {isWifi ? <WiFiCard data={cards.wifi} loading={loading} visible={true} /> : null}

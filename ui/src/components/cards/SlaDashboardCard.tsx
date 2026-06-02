@@ -192,10 +192,10 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
 
       try {
         const [slaRes, scoresRes, alertsRes, anomaliesRes] = await Promise.all([
-          fetch(`/api/v1/sap/health-checks/sla?period=${period}`, { credentials: 'include' }),
-          fetch('/api/v1/sap/health-checks/scores', { credentials: 'include' }),
-          fetch('/api/v1/sap/health-checks/alerts', { credentials: 'include' }),
-          fetch('/api/v1/sap/health-checks/anomalies', { credentials: 'include' }),
+          fetch(`/api/v1/telemetry/health-checks/sla?period=${period}`, { credentials: 'include' }),
+          fetch('/api/v1/telemetry/health-checks/scores', { credentials: 'include' }),
+          fetch('/api/v1/telemetry/health-checks/alerts', { credentials: 'include' }),
+          fetch('/api/v1/telemetry/health-checks/anomalies', { credentials: 'include' }),
         ]);
 
         const newData: DashboardData = {

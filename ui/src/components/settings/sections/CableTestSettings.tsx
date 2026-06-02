@@ -67,7 +67,7 @@ export const CableTestSettings: React.NamedExoticComponent<CableTestSettingsProp
     const checkTdrSupport = useCallback(async (): Promise<void> => {
       setCheckingSupport(true);
       try {
-        const response = await fetch(`${API_BASE}/api/v1/sap/cable/support`, {
+        const response = await fetch(`${API_BASE}/api/v1/telemetry/cable/support`, {
           credentials: 'include',
         });
         if (response.ok) {

@@ -396,7 +396,7 @@ export const SettingsDrawer: React.MemoExoticComponent<
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
 
-      const response = await fetch(`${API_BASE}/api/v1/sap/ipconfig/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/telemetry/ipconfig/settings`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

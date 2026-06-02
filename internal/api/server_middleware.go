@@ -104,9 +104,9 @@ func bodyLimitMiddleware(next http.Handler) http.Handler {
 			limit = MaxBodySizeAuth
 		case strings.HasPrefix(path, APIVersionPrefix+"/config/"):
 			limit = MaxBodySizeConfig
-		case path == APIVersionPrefix+"/canopy/survey/floorplan":
+		case path == APIVersionPrefix+"/wifi/survey/floorplan":
 			limit = MaxBodySizeFloorPlan
-		case path == APIVersionPrefix+"/canopy/survey/import/airmapper":
+		case path == APIVersionPrefix+"/wifi/survey/import/airmapper":
 			limit = MaxBodySizeAirMapper
 		case strings.HasPrefix(path, APIVersionPrefix):
 			limit = MaxBodySizeJSON

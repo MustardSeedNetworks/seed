@@ -108,7 +108,7 @@ export function useSettingsDrawerLoaders({
 
   const fetchIpSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/sap/ipconfig/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/telemetry/ipconfig/settings`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -129,7 +129,7 @@ export function useSettingsDrawerLoaders({
 
   const fetchTestsSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/sap/health-checks/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/telemetry/health-checks/settings`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -181,7 +181,7 @@ export function useSettingsDrawerLoaders({
     setIperfSuggestionsStatus('loading');
     setIperfSuggestionsError(null);
     try {
-      const response = await fetch(`${API_BASE}/api/v1/sap/iperf/suggestions`, {
+      const response = await fetch(`${API_BASE}/api/v1/telemetry/iperf/suggestions`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -200,7 +200,7 @@ export function useSettingsDrawerLoaders({
 
   const fetchWifiSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/canopy/wifi/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/wifi/wifi/settings`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -218,7 +218,7 @@ export function useSettingsDrawerLoaders({
 
   const fetchNetworkDiscoverySettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/shell/devices/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/security/devices/settings`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -271,7 +271,7 @@ export function useSettingsDrawerLoaders({
 
   const fetchSnmpSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/sap/snmp/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/telemetry/snmp/settings`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -333,7 +333,7 @@ export function useSettingsDrawerLoaders({
     setLogLoading(true);
     setLogError(null);
     try {
-      const response = await fetch(`${API_BASE}/api/v1/harvest/logs?lines=200`, {
+      const response = await fetch(`${API_BASE}/api/v1/reporting/logs?lines=200`, {
         credentials: 'include',
       });
       if (!response.ok) {

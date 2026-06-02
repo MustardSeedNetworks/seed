@@ -132,7 +132,7 @@ func (s *Server) Start() error {
 	}
 
 	// Trigger initial device discovery scan to populate subnet info immediately
-	// This ensures /api/shell/devices/status returns valid subnet info on first call
+	// This ensures /api/security/devices/status returns valid subnet info on first call
 	// without requiring a manual scan trigger from the frontend
 	if s.config.NetworkDiscovery.Enabled {
 		go func() {

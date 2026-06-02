@@ -225,7 +225,7 @@ func (sc *ServiceContainer) Stop() {
 		sc.Discovery.Service.Stop()
 	}
 
-	// Stop SAP services
+	// Stop telemetry services
 	if sc.Diagnostics.VLANTraffic != nil {
 		sc.Diagnostics.VLANTraffic.Stop()
 	}

@@ -1,4 +1,4 @@
-// Package snmp provides SNMP data collection and device discovery for the sap module.
+// Package snmp provides SNMP data collection and device discovery for the diagnostics package.
 // It wraps the internal/snmp package with higher-level abstractions for telemetry collection.
 package snmp
 

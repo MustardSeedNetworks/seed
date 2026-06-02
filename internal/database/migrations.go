@@ -374,7 +374,7 @@ func getMigrationDefs() []migrationDef {
 		`,
 		},
 		{
-			Description: "Create reports and scheduled_reports tables for Harvest module",
+			Description: "Create reports and scheduled_reports tables for reporting",
 			Up: `
 			CREATE TABLE IF NOT EXISTS reports (
 				id TEXT PRIMARY KEY,
@@ -1019,9 +1019,9 @@ func getMigrationDefs() []migrationDef {
 			// Stage A1.1 — add client_id to legacy observation + result
 			// tables. Backfills existing rows to the default client via
 			// the column DEFAULT. AirMapper / Wi-Fi survey
-			// (survey_samples) included; canopy/ code continues working
+			// (survey_samples) included; wifi/ code continues working
 			// unchanged because writes default to 'default' client. A
-			// follow-up A1 step will update canopy/ to set client_id
+			// follow-up A1 step will update wifi/ to set client_id
 			// explicitly.
 			Description: "Add client_id to legacy observation and result tables",
 			Up: `
@@ -1047,7 +1047,7 @@ func getMigrationDefs() []migrationDef {
 			// tables. wifi_networks / wifi_access_points /
 			// channel_utilization are AirMapper / Wi-Fi visibility
 			// surfaces; same DEFAULT 'default' semantics — existing
-			// code unchanged, canopy/ updated in a follow-up step.
+			// code unchanged, wifi/ updated in a follow-up step.
 			Description: "Add client_id to discovery and inventory tables",
 			Up: `
 			ALTER TABLE discovered_devices ADD COLUMN client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id);

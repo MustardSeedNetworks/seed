@@ -27,7 +27,7 @@ export function TopologyPage(): JSX.Element {
         icon={Network}
         title="Topology"
         description="Devices polled and edges learned from LLDP/CDP/FDP neighbor discovery."
-        iconColorClass="text-module-shell"
+        iconColorClass="text-module-security"
       />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_2fr]">

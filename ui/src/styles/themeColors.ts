@@ -196,39 +196,39 @@ export const category = {
  * Cards should remain consistent (surface-raised) across all modules.
  *
  * Usage:
- * <RootIcon className={moduleColor.roots.icon} />
- * <span className={cn(moduleColor.canopy.badge, "px-2 py-1")}>WiFi</span>
+ * <RouteIcon className={moduleColor.path.icon} />
+ * <span className={cn(moduleColor.wifi.badge, "px-2 py-1")}>Wi-Fi</span>
  */
 export const moduleColor = {
-  // Roots - Path Analysis, Traceroute, Deep Connectivity
-  roots: {
-    icon: 'text-module-roots', // Uses CSS variable
-    badge: 'bg-module-roots/20 text-module-roots',
-    border: 'border-module-roots/30',
+  // Path - path analysis, traceroute, deep connectivity
+  path: {
+    icon: 'text-module-path', // Uses CSS variable
+    badge: 'bg-module-path/20 text-module-path',
+    border: 'border-module-path/30',
   },
-  // Canopy - WiFi Planning, Surveys, Coverage
-  canopy: {
-    icon: 'text-module-canopy', // Matches brand primary
-    badge: 'bg-module-canopy/20 text-module-canopy',
-    border: 'border-module-canopy/30',
+  // Wi-Fi - visibility, surveys, coverage
+  wifi: {
+    icon: 'text-module-wifi', // Matches brand primary
+    badge: 'bg-module-wifi/20 text-module-wifi',
+    border: 'border-module-wifi/30',
   },
-  // Shell - Security Posture, Hardening
-  shell: {
-    icon: 'text-module-shell',
-    badge: 'bg-module-shell/20 text-module-shell',
-    border: 'border-module-shell/30',
+  // Security - posture, hardening
+  security: {
+    icon: 'text-module-security',
+    badge: 'bg-module-security/20 text-module-security',
+    border: 'border-module-security/30',
   },
-  // Sap - Live Telemetry, Monitoring, Data Flow
-  sap: {
-    icon: 'text-module-sap',
-    badge: 'bg-module-sap/20 text-module-sap',
-    border: 'border-module-sap/30',
+  // Telemetry - live monitoring, data flow
+  telemetry: {
+    icon: 'text-module-telemetry',
+    badge: 'bg-module-telemetry/20 text-module-telemetry',
+    border: 'border-module-telemetry/30',
   },
-  // Harvest - Reports, Compliance, Exports
-  harvest: {
-    icon: 'text-module-harvest', // Matches brand gold
-    badge: 'bg-module-harvest/20 text-module-harvest',
-    border: 'border-module-harvest/30',
+  // Reporting - reports, compliance, exports
+  reporting: {
+    icon: 'text-module-reporting', // Matches brand gold
+    badge: 'bg-module-reporting/20 text-module-reporting',
+    border: 'border-module-reporting/30',
   },
 } as const;
 

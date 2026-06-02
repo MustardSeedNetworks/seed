@@ -13,7 +13,7 @@ export function SecurityPage() {
         icon={Shield}
         title="Security"
         description="Guest network isolation audit and security posture checks."
-        iconColorClass="text-module-shell"
+        iconColorClass="text-module-security"
       />
       <div className={layout.grid.cards}>
         <MfaCard />

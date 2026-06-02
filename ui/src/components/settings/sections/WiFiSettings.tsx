@@ -92,7 +92,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
       setScanError(null);
       try {
         const response = await api.get<{ networks: ScannedNetwork[]; error?: string }>(
-          `/api/v1/canopy/wifi/scan?interface=${wifiSettings.interface}`,
+          `/api/v1/wifi/wifi/scan?interface=${wifiSettings.interface}`,
         );
         if (response?.networks) {
           // Filter out hidden networks (empty SSID) and sort by signal strength
@@ -114,7 +114,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
     // Load saved networks
     const loadSavedNetworks = useCallback(async () => {
       try {
-        const response = await api.get<{ networks: SavedNetwork[] }>('/api/v1/canopy/wifi/saved');
+        const response = await api.get<{ networks: SavedNetwork[] }>('/api/v1/wifi/wifi/saved');
         if (response?.networks) {
           setSavedNetworks(response.networks);
         }
@@ -132,7 +132,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
       setConnecting(true);
       setConnectionStatus(null);
       try {
-        const response = await api.post<ConnectionResult>('/api/v1/canopy/wifi/connect', {
+        const response = await api.post<ConnectionResult>('/api/v1/wifi/wifi/connect', {
           ssid: selectedNetwork.ssid,
           password: password,
         });
@@ -156,7 +156,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
     const disconnectNetwork = useCallback(async () => {
       setConnecting(true);
       try {
-        const response = await api.post<ConnectionResult>('/api/v1/canopy/wifi/disconnect', {});
+        const response = await api.post<ConnectionResult>('/api/v1/wifi/wifi/disconnect', {});
         if (response?.success) {
           setConnectionStatus('Disconnected');
         } else {
@@ -173,7 +173,7 @@ export const WiFiSettings: React.NamedExoticComponent<WiFiSettingsProps> = memo(
     const forgetNetwork = useCallback(
       async (ssid: string) => {
         try {
-          await api.delete(`/api/v1/canopy/wifi/forget?ssid=${encodeURIComponent(ssid)}`);
+          await api.delete(`/api/v1/wifi/wifi/forget?ssid=${encodeURIComponent(ssid)}`);
           await loadSavedNetworks();
         } catch {
           // Ignore errors

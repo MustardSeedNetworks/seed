@@ -88,7 +88,7 @@ func schemaTargets() []schemaTarget {
 		{&api.ConfigVersionResponse{}, "config-version-response.schema.json"},
 		{&api.BackupListResponse{}, "backup-list-response.schema.json"},
 
-		// SAP / network / discovery responses.
+		// telemetry / network / discovery responses.
 		{&api.CableResponse{}, "cable-response.schema.json"},
 		{&api.VLANResponse{}, "vlan-response.schema.json"},
 		{&api.WiFiResponse{}, "wifi-response.schema.json"},
@@ -99,7 +99,7 @@ func schemaTargets() []schemaTarget {
 		{&api.NetworkProblemsResponse{}, "network-problems-response.schema.json"},
 		{&api.ProblemScanResponse{}, "problem-scan-response.schema.json"},
 
-		// SAP / network settings.
+		// telemetry / network settings.
 		{&api.IPSettingsRequest{}, "ip-settings-request.schema.json"},
 		{&api.IPSettingsResponse{}, "ip-settings-response.schema.json"},
 		{&api.SubnetRequest{}, "subnet-request.schema.json"},
@@ -168,7 +168,7 @@ func schemaTargets() []schemaTarget {
 		{&api.LogStatsResponse{}, "log-stats-response.schema.json"},
 		{&api.SNMPv3CredentialResponse{}, "snmpv3-credential-response.schema.json"},
 
-		// Survey (Canopy) request DTOs + profile-import response.
+		// Survey (Wi-Fi) request DTOs + profile-import response.
 		{&api.CreateSurveyRequest{}, "create-survey-request.schema.json"},
 		{&api.AddFloorRequest{}, "add-floor-request.schema.json"},
 		{&api.UpdateFloorRequest{}, "update-floor-request.schema.json"},

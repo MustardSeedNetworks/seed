@@ -130,7 +130,7 @@ export function useSurveyMutations({
         };
 
         const res: Response = await fetch(
-          `${API_BASE}/api/v1/canopy/survey/floorplan?id=${survey.id}`,
+          `${API_BASE}/api/v1/wifi/survey/floorplan?id=${survey.id}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -161,15 +161,12 @@ export function useSurveyMutations({
           ...configUpdates,
         } as SurveyConfig;
 
-        const res: Response = await fetch(
-          `${API_BASE}/api/v1/canopy/survey/config?id=${survey.id}`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(updatedConfig),
-          },
-        );
+        const res: Response = await fetch(`${API_BASE}/api/v1/wifi/survey/config?id=${survey.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(updatedConfig),
+        });
 
         if (!res.ok) {
           throw new Error('Failed to update survey config');
@@ -190,19 +187,16 @@ export function useSurveyMutations({
     setError(null);
 
     try {
-      const res: Response = await fetch(
-        `${API_BASE}/api/v1/canopy/survey/settings?id=${survey.id}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            surveyType: editSurveyType,
-            iperfServer: editIperfServer,
-            testDuration: editTestDuration,
-          }),
-        },
-      );
+      const res: Response = await fetch(`${API_BASE}/api/v1/wifi/survey/settings?id=${survey.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          surveyType: editSurveyType,
+          iperfServer: editIperfServer,
+          testDuration: editTestDuration,
+        }),
+      });
 
       if (!res.ok) {
         const errorText: string = await (res.text() as Promise<string>);
@@ -223,7 +217,7 @@ export function useSurveyMutations({
     async (action: 'start' | 'pause' | 'complete'): Promise<void> => {
       try {
         const res: Response = await fetch(
-          `${API_BASE}/api/v1/canopy/survey/${action}?id=${survey.id}`,
+          `${API_BASE}/api/v1/wifi/survey/${action}?id=${survey.id}`,
           {
             method: 'POST',
             credentials: 'include',
@@ -265,7 +259,7 @@ export function useSurveyMutations({
             originalFile: data.floorPlanFilename,
           };
 
-          const res = await fetch(`${API_BASE}/api/v1/canopy/survey/floorplan?id=${survey.id}`, {
+          const res = await fetch(`${API_BASE}/api/v1/wifi/survey/floorplan?id=${survey.id}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -294,7 +288,7 @@ export function useSurveyMutations({
         const importedData = buildImportedDataPayload(data);
         if (importedData) {
           const dataRes = await fetch(
-            `${API_BASE}/api/v1/canopy/survey/imported-data?id=${survey.id}`,
+            `${API_BASE}/api/v1/wifi/survey/imported-data?id=${survey.id}`,
             {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
