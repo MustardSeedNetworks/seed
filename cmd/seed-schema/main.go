@@ -202,6 +202,9 @@ func schemaTargets() []schemaTarget {
 		{&api.RogueServersResponse{}, "rogue-servers-response.schema.json"},
 		{&api.CategorizedInterfacesResponse{}, "categorized-interfaces-response.schema.json"},
 		{&api.LogQueryResponse{}, "log-query-response.schema.json"},
+		{&api.BluetoothScanResponse{}, "bluetooth-scan-response.schema.json"},
+		{&api.BluetoothDevicesResponse{}, "bluetooth-devices-response.schema.json"},
+		{&api.BluetoothStatsResponse{}, "bluetooth-stats-response.schema.json"},
 	}
 
 	targets := make([]schemaTarget, len(rows))

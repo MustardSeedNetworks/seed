@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/bluetooth-devices-response.schema.json",
+  "$ref": "#/$defs/BluetoothDevicesResponse",
+  "$defs": {
+    "BluetoothDevice": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "device_id": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "is_connected": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string"
+        },
+        "device_class": {
+          "type": "string"
+        },
+        "appearance": {
+          "type": "integer"
+        },
+        "class_of_device": {
+          "type": "integer"
+        },
+        "rssi": {
+          "type": "integer"
+        },
+        "tx_power": {
+          "type": "integer"
+        },
+        "est_distance_m": {
+          "type": "number"
+        },
+        "is_connectable": {
+          "type": "boolean"
+        },
+        "service_uuids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "manufacturer_id": {
+          "type": "integer"
+        },
+        "manufacturer_data": {
+          "type": "string",
+          "contentEncoding": "base64"
+        },
+        "is_authorized": {
+          "type": "boolean"
+        },
+        "is_trusted": {
+          "type": "boolean"
+        },
+        "is_paired": {
+          "type": "boolean"
+        },
+        "is_blocked": {
+          "type": "boolean"
+        },
+        "first_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_seen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "address",
+        "name",
+        "alias",
+        "vendor",
+        "is_connected",
+        "type",
+        "device_class",
+        "appearance",
+        "rssi",
+        "tx_power",
+        "est_distance_m",
+        "is_connectable",
+        "is_authorized",
+        "is_trusted",
+        "is_paired",
+        "is_blocked",
+        "first_seen",
+        "last_seen"
+      ]
+    },
+    "BluetoothDevicesResponse": {
+      "properties": {
+        "devices": {
+          "items": {
+            "$ref": "#/$defs/BluetoothDevice"
+          },
+          "type": "array"
+        },
+        "total": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "devices",
+        "total"
+      ]
+    }
+  },
+  "title": "BluetoothDevicesResponse",
+  "description": "BluetoothDevicesResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

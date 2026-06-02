@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/bluetooth-stats-response.schema.json",
+  "$ref": "#/$defs/BluetoothStatsResponse",
+  "$defs": {
+    "BluetoothDiscoveryStats": {
+      "properties": {
+        "total_devices": {
+          "type": "integer"
+        },
+        "classic_devices": {
+          "type": "integer"
+        },
+        "ble_devices": {
+          "type": "integer"
+        },
+        "dual_devices": {
+          "type": "integer"
+        },
+        "connected_devices": {
+          "type": "integer"
+        },
+        "authorized_count": {
+          "type": "integer"
+        },
+        "unauthorized_count": {
+          "type": "integer"
+        },
+        "devices_by_class": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "vendor_breakdown": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "last_scan_time": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "total_devices",
+        "classic_devices",
+        "ble_devices",
+        "dual_devices",
+        "connected_devices",
+        "authorized_count",
+        "unauthorized_count",
+        "devices_by_class",
+        "vendor_breakdown",
+        "last_scan_time"
+      ]
+    },
+    "BluetoothStatsResponse": {
+      "properties": {
+        "stats": {
+          "$ref": "#/$defs/BluetoothDiscoveryStats"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "stats"
+      ]
+    }
+  },
+  "title": "BluetoothStatsResponse",
+  "description": "BluetoothStatsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

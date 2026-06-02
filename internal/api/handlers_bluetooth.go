@@ -4,6 +4,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
@@ -16,23 +17,127 @@ import (
 
 // BluetoothScanResponse contains Bluetooth scan results.
 type BluetoothScanResponse struct {
-	Devices      []discovery.BluetoothDevice        `json:"devices"`
-	AdapterName  string                             `json:"adapterName"`
-	ScanType     string                             `json:"scanType"`
-	ScanTime     string                             `json:"scanTime"`
-	ScanDuration int64                              `json:"scanDurationMs"`
-	Stats        *discovery.BluetoothDiscoveryStats `json:"stats,omitempty"`
+	Devices      []BluetoothDevice        `json:"devices"`
+	AdapterName  string                   `json:"adapterName"`
+	ScanType     string                   `json:"scanType"`
+	ScanTime     string                   `json:"scanTime"`
+	ScanDuration int64                    `json:"scanDurationMs"`
+	Stats        *BluetoothDiscoveryStats `json:"stats,omitempty"`
 }
 
 // BluetoothDevicesResponse contains Bluetooth devices.
 type BluetoothDevicesResponse struct {
-	Devices []discovery.BluetoothDevice `json:"devices"`
-	Total   int                         `json:"total"`
+	Devices []BluetoothDevice `json:"devices"`
+	Total   int               `json:"total"`
 }
 
 // BluetoothStatsResponse contains Bluetooth statistics.
 type BluetoothStatsResponse struct {
-	Stats *discovery.BluetoothDiscoveryStats `json:"stats"`
+	Stats *BluetoothDiscoveryStats `json:"stats"`
+}
+
+// BluetoothDevice is the flat transport view of a discovered Bluetooth device,
+// mirroring discovery.BluetoothDevice's wire shape so the published schema does
+// not depend on the discovery domain package. Type and DeviceClass are plain
+// strings (the domain's BluetoothType/BluetoothDeviceClass are string enums).
+type BluetoothDevice struct {
+	ID               string         `json:"id"`
+	DeviceID         string         `json:"device_id,omitempty"`
+	Address          string         `json:"address"`
+	Name             string         `json:"name"`
+	Alias            string         `json:"alias"`
+	Vendor           string         `json:"vendor"`
+	IsConnected      bool           `json:"is_connected"`
+	Type             string         `json:"type"`
+	DeviceClass      string         `json:"device_class"`
+	Appearance       uint16         `json:"appearance"`
+	ClassOfDev       uint32         `json:"class_of_device,omitempty"`
+	RSSI             int            `json:"rssi"`
+	TxPower          int            `json:"tx_power"`
+	EstDistanceM     float64        `json:"est_distance_m"`
+	IsConnectable    bool           `json:"is_connectable"`
+	ServiceUUIDs     []string       `json:"service_uuids,omitempty"`
+	ManufacturerID   uint16         `json:"manufacturer_id,omitempty"`
+	ManufacturerData []byte         `json:"manufacturer_data,omitempty"`
+	IsAuthorized     bool           `json:"is_authorized"`
+	IsTrusted        bool           `json:"is_trusted"`
+	IsPaired         bool           `json:"is_paired"`
+	IsBlocked        bool           `json:"is_blocked"`
+	FirstSeen        time.Time      `json:"first_seen"`
+	LastSeen         time.Time      `json:"last_seen"`
+	Metadata         map[string]any `json:"metadata,omitempty"`
+}
+
+// BluetoothDiscoveryStats is the flat transport view of Bluetooth scan
+// statistics, mirroring discovery.BluetoothDiscoveryStats's wire shape.
+type BluetoothDiscoveryStats struct {
+	TotalDevices      int            `json:"total_devices"`
+	ClassicDevices    int            `json:"classic_devices"`
+	BLEDevices        int            `json:"ble_devices"`
+	DualDevices       int            `json:"dual_devices"`
+	ConnectedDevices  int            `json:"connected_devices"`
+	AuthorizedCount   int            `json:"authorized_count"`
+	UnauthorizedCount int            `json:"unauthorized_count"`
+	DevicesByClass    map[string]int `json:"devices_by_class"`
+	VendorBreakdown   map[string]int `json:"vendor_breakdown"`
+	LastScanTime      time.Time      `json:"last_scan_time"`
+}
+
+// toBluetoothDevices maps discovered Bluetooth devices onto their flat
+// transport view. It always returns a non-nil slice so an empty scan
+// serializes as [] not null.
+func toBluetoothDevices(devices []discovery.BluetoothDevice) []BluetoothDevice {
+	out := make([]BluetoothDevice, 0, len(devices))
+	for _, d := range devices {
+		out = append(out, BluetoothDevice{
+			ID:               d.ID,
+			DeviceID:         d.DeviceID,
+			Address:          d.Address,
+			Name:             d.Name,
+			Alias:            d.Alias,
+			Vendor:           d.Vendor,
+			IsConnected:      d.IsConnected,
+			Type:             string(d.Type),
+			DeviceClass:      string(d.DeviceClass),
+			Appearance:       d.Appearance,
+			ClassOfDev:       d.ClassOfDev,
+			RSSI:             d.RSSI,
+			TxPower:          d.TxPower,
+			EstDistanceM:     d.EstDistanceM,
+			IsConnectable:    d.IsConnectable,
+			ServiceUUIDs:     d.ServiceUUIDs,
+			ManufacturerID:   d.ManufacturerID,
+			ManufacturerData: d.ManufacturerData,
+			IsAuthorized:     d.IsAuthorized,
+			IsTrusted:        d.IsTrusted,
+			IsPaired:         d.IsPaired,
+			IsBlocked:        d.IsBlocked,
+			FirstSeen:        d.FirstSeen,
+			LastSeen:         d.LastSeen,
+			Metadata:         d.Metadata,
+		})
+	}
+	return out
+}
+
+// toBluetoothStats maps Bluetooth scan statistics onto their flat transport
+// view, preserving nil so an absent stats block stays omitted.
+func toBluetoothStats(stats *discovery.BluetoothDiscoveryStats) *BluetoothDiscoveryStats {
+	if stats == nil {
+		return nil
+	}
+	return &BluetoothDiscoveryStats{
+		TotalDevices:      stats.TotalDevices,
+		ClassicDevices:    stats.ClassicDevices,
+		BLEDevices:        stats.BLEDevices,
+		DualDevices:       stats.DualDevices,
+		ConnectedDevices:  stats.ConnectedDevices,
+		AuthorizedCount:   stats.AuthorizedCount,
+		UnauthorizedCount: stats.UnauthorizedCount,
+		DevicesByClass:    stats.DevicesByClass,
+		VendorBreakdown:   stats.VendorBreakdown,
+		LastScanTime:      stats.LastScanTime,
+	}
 }
 
 // handleBluetoothScan triggers a Bluetooth scan and returns results.
@@ -87,12 +192,12 @@ func (s *Server) handleBluetoothScan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := BluetoothScanResponse{
-		Devices:      result.Devices,
+		Devices:      toBluetoothDevices(result.Devices),
 		AdapterName:  result.AdapterName,
 		ScanType:     result.ScanType,
 		ScanTime:     result.ScanTime.Format("2006-01-02T15:04:05Z07:00"),
 		ScanDuration: result.ScanDuration.Milliseconds(),
-		Stats:        btScanner.GetStats(),
+		Stats:        toBluetoothStats(btScanner.GetStats()),
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)
@@ -137,14 +242,14 @@ func (s *Server) handleBluetoothDevices(w http.ResponseWriter, r *http.Request) 
 	lastScan := btScanner.GetLastScan()
 	if lastScan == nil {
 		sendJSONResponse(w, logger, http.StatusOK, BluetoothDevicesResponse{
-			Devices: []discovery.BluetoothDevice{},
+			Devices: []BluetoothDevice{},
 			Total:   0,
 		})
 		return
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, BluetoothDevicesResponse{
-		Devices: lastScan.Devices,
+		Devices: toBluetoothDevices(lastScan.Devices),
 		Total:   len(lastScan.Devices),
 	})
 }
@@ -187,7 +292,7 @@ func (s *Server) handleBluetoothStats(w http.ResponseWriter, r *http.Request) {
 
 	stats := btScanner.GetStats()
 	sendJSONResponse(w, logger, http.StatusOK, BluetoothStatsResponse{
-		Stats: stats,
+		Stats: toBluetoothStats(stats),
 	})
 }
 
