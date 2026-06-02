@@ -179,6 +179,17 @@ func schemaTargets() []schemaTarget {
 		{&api.UpdateSurveySettingsRequest{}, "update-survey-settings-request.schema.json"},
 		{&api.GenerateReportRequest{}, "generate-report-request.schema.json"},
 		{&api.ProfileImportResponse{}, "profile-import-response.schema.json"},
+
+		// Settings composers: top-level DTOs whose entire transitive closure is
+		// flat, local transport sub-structs in internal/api (every composed
+		// *Response is itself registered above). They compose, but never reach a
+		// domain type, json.RawMessage, or a self-reference, so the published
+		// schema stays self-contained and acyclic.
+		{&api.NetworkDiscoverySettingsResponse{}, "network-discovery-settings-response.schema.json"},
+		{&api.OptionsResponse{}, "options-response.schema.json"},
+		{&api.SNMPSettingsResponse{}, "snmp-settings-response.schema.json"},
+		{&api.TestsSettingsResponse{}, "tests-settings-response.schema.json"},
+		{&api.IperfClientStatusResponse{}, "iperf-client-status-response.schema.json"},
 	}
 
 	targets := make([]schemaTarget, len(rows))

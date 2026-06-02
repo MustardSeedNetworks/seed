@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/network-discovery-settings-response.schema.json",
+  "$ref": "#/$defs/NetworkDiscoverySettingsResponse",
+  "$defs": {
+    "FingerprintingResponse": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "osDetection": {
+          "type": "boolean"
+        },
+        "serviceProbes": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "osDetection",
+        "serviceProbes"
+      ]
+    },
+    "NetworkDiscoverySettingsResponse": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "arpScanWorkers": {
+          "type": "integer"
+        },
+        "pingTimeoutMs": {
+          "type": "integer"
+        },
+        "scanTimeoutMs": {
+          "type": "integer"
+        },
+        "autoScan": {
+          "type": "boolean"
+        },
+        "scanIntervalMs": {
+          "type": "integer"
+        },
+        "ouiFilePath": {
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/$defs/OptionsResponse"
+        },
+        "timing": {
+          "$ref": "#/$defs/TimingResponse"
+        },
+        "profiler": {
+          "$ref": "#/$defs/ProfilerResponse"
+        },
+        "fingerprinting": {
+          "$ref": "#/$defs/FingerprintingResponse"
+        },
+        "ipv6Enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "arpScanWorkers",
+        "pingTimeoutMs",
+        "scanTimeoutMs",
+        "autoScan",
+        "scanIntervalMs",
+        "ouiFilePath",
+        "options",
+        "timing",
+        "profiler",
+        "fingerprinting",
+        "ipv6Enabled"
+      ]
+    },
+    "OptionsResponse": {
+      "properties": {
+        "passiveProtocols": {
+          "$ref": "#/$defs/PassiveProtocolResponse"
+        },
+        "arpScan": {
+          "type": "boolean"
+        },
+        "icmpScan": {
+          "type": "boolean"
+        },
+        "portScan": {
+          "$ref": "#/$defs/PortScanResponse"
+        },
+        "tcpProbe": {
+          "$ref": "#/$defs/TCPProbeSettingsResponse"
+        },
+        "traceroute": {
+          "type": "boolean"
+        },
+        "snmpQuery": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "passiveProtocols",
+        "arpScan",
+        "icmpScan",
+        "portScan",
+        "tcpProbe",
+        "traceroute",
+        "snmpQuery"
+      ]
+    },
+    "PassiveProtocolResponse": {
+      "properties": {
+        "lldp": {
+          "type": "boolean"
+        },
+        "cdp": {
+          "type": "boolean"
+        },
+        "edp": {
+          "type": "boolean"
+        },
+        "ndp": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "lldp",
+        "cdp",
+        "edp",
+        "ndp"
+      ]
+    },
+    "PortScanResponse": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "tcpPorts": {
+          "type": "string"
+        },
+        "udpPorts": {
+          "type": "string"
+        },
+        "bannerTimeoutMs": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "tcpPorts",
+        "udpPorts",
+        "bannerTimeoutMs"
+      ]
+    },
+    "ProfilerResponse": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "timeoutMs": {
+          "type": "integer"
+        },
+        "maxConcurrent": {
+          "type": "integer"
+        },
+        "quickPorts": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "timeoutMs",
+        "maxConcurrent",
+        "quickPorts"
+      ]
+    },
+    "TCPProbeSettingsResponse": {
+      "properties": {
+        "timeoutMs": {
+          "type": "integer"
+        },
+        "workers": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "timeoutMs",
+        "workers"
+      ]
+    },
+    "TimingResponse": {
+      "properties": {
+        "probeIntervalMs": {
+          "type": "integer"
+        },
+        "rescanIntervalMs": {
+          "type": "integer"
+        },
+        "workers": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "probeIntervalMs",
+        "rescanIntervalMs",
+        "workers"
+      ]
+    }
+  },
+  "title": "NetworkDiscoverySettingsResponse",
+  "description": "NetworkDiscoverySettingsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

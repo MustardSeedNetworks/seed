@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/options-response.schema.json",
+  "$ref": "#/$defs/OptionsResponse",
+  "$defs": {
+    "OptionsResponse": {
+      "properties": {
+        "passiveProtocols": {
+          "$ref": "#/$defs/PassiveProtocolResponse"
+        },
+        "arpScan": {
+          "type": "boolean"
+        },
+        "icmpScan": {
+          "type": "boolean"
+        },
+        "portScan": {
+          "$ref": "#/$defs/PortScanResponse"
+        },
+        "tcpProbe": {
+          "$ref": "#/$defs/TCPProbeSettingsResponse"
+        },
+        "traceroute": {
+          "type": "boolean"
+        },
+        "snmpQuery": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "passiveProtocols",
+        "arpScan",
+        "icmpScan",
+        "portScan",
+        "tcpProbe",
+        "traceroute",
+        "snmpQuery"
+      ]
+    },
+    "PassiveProtocolResponse": {
+      "properties": {
+        "lldp": {
+          "type": "boolean"
+        },
+        "cdp": {
+          "type": "boolean"
+        },
+        "edp": {
+          "type": "boolean"
+        },
+        "ndp": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "lldp",
+        "cdp",
+        "edp",
+        "ndp"
+      ]
+    },
+    "PortScanResponse": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "tcpPorts": {
+          "type": "string"
+        },
+        "udpPorts": {
+          "type": "string"
+        },
+        "bannerTimeoutMs": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "tcpPorts",
+        "udpPorts",
+        "bannerTimeoutMs"
+      ]
+    },
+    "TCPProbeSettingsResponse": {
+      "properties": {
+        "timeoutMs": {
+          "type": "integer"
+        },
+        "workers": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "timeoutMs",
+        "workers"
+      ]
+    }
+  },
+  "title": "OptionsResponse",
+  "description": "OptionsResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
