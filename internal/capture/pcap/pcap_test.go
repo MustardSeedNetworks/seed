@@ -1,3 +1,5 @@
+//go:build cgo || windows
+
 package pcap_test
 
 import (

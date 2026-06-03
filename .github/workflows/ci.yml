@@ -190,6 +190,17 @@ jobs:
       - name: Deterministic build check
         run: go build -trimpath -buildvcs=false ./...
 
+      # Phase 6 capture port: the whole tree must build with CGO disabled, using
+      # the CGO-free null capture adapter. libpcap is confined to the build-tagged
+      # internal/capture/pcap package, which the ./... wildcard skips under
+      # CGO_ENABLED=0. A regression that re-imports gopacket/pcap from a domain
+      # package (depguard also guards this) would fail here.
+      # See docs/architecture/CGO_BUILD_STRATEGY.md.
+      - name: CGO-free build check (null capture adapter)
+        env:
+          CGO_ENABLED: 0
+        run: go build ./...
+
       - name: Check go mod tidy
         run: |
           go mod tidy

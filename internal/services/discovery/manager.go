@@ -31,6 +31,8 @@ package discovery
 import (
 	"sync"
 	"time"
+
+	"github.com/krisarmstrong/seed/internal/capture"
 )
 
 // Protocol represents a link-layer discovery protocol type.
@@ -104,12 +106,13 @@ type Neighbor struct {
 //	// Later, get all discovered neighbors
 //	neighbors := mgr.GetNeighbors()
 type Manager struct {
-	interfaceName string       // Network interface to capture on
-	lldp          *LLDPCapture // LLDP protocol capture instance
-	cdp           *CDPCapture  // CDP protocol capture instance
-	edp           *EDPCapture  // EDP protocol capture instance
-	mu            sync.RWMutex // Protects started flag
-	started       bool         // True if captures are running
+	interfaceName string         // Network interface to capture on
+	opener        capture.Opener // Live-capture port (libpcap adapter or no-op)
+	lldp          *LLDPCapture   // LLDP protocol capture instance
+	cdp           *CDPCapture    // CDP protocol capture instance
+	edp           *EDPCapture    // EDP protocol capture instance
+	mu            sync.RWMutex   // Protects started flag
+	started       bool           // True if captures are running
 }
 
 // NewManager creates a new discovery protocol manager for the specified network interface.
@@ -125,12 +128,14 @@ type Manager struct {
 //
 // The returned manager must eventually be stopped via Stop() to release
 // packet capture resources and stop background goroutines.
-func NewManager(interfaceName string) *Manager {
+func NewManager(interfaceName string, opts ...Option) *Manager {
+	opener := resolveCapture(opts...)
 	return &Manager{
 		interfaceName: interfaceName,
-		lldp:          NewLLDPCapture(interfaceName),
-		cdp:           NewCDPCapture(interfaceName),
-		edp:           NewEDPCapture(interfaceName),
+		opener:        opener,
+		lldp:          NewLLDPCapture(opener, interfaceName),
+		cdp:           NewCDPCapture(opener, interfaceName),
+		edp:           NewEDPCapture(opener, interfaceName),
 	}
 }
 
@@ -348,9 +353,9 @@ func (m *Manager) SetInterface(interfaceName string) error {
 
 	// Recreate captures for new interface
 	m.interfaceName = interfaceName
-	m.lldp = NewLLDPCapture(interfaceName)
-	m.cdp = NewCDPCapture(interfaceName)
-	m.edp = NewEDPCapture(interfaceName)
+	m.lldp = NewLLDPCapture(m.opener, interfaceName)
+	m.cdp = NewCDPCapture(m.opener, interfaceName)
+	m.edp = NewEDPCapture(m.opener, interfaceName)
 
 	// Restart if was running
 	if wasRunning {

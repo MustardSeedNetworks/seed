@@ -272,6 +272,19 @@ linters:
               desc: "reporting is persistence-free — define a Repo port, implement it in internal/reporting/store"
             - pkg: github.com/krisarmstrong/seed/internal/reporting/store
               desc: "inward-only — the store adapter imports reporting, never the reverse; wire it in internal/app"
+        # Phase 6 capture port: libpcap (via gopacket/pcap) carries the CGO
+        # taint that re-links libpcap into every dependent test binary. It is
+        # confined to the single adapter package internal/capture/pcap; every
+        # other package (discovery, dhcp, vlan, and everything above them) does
+        # live capture through the CGO-free capture.Opener port, so it builds and
+        # tests with CGO_ENABLED=0. See docs/architecture/CGO_BUILD_STRATEGY.md.
+        "capture-pcap-confinement":
+          files:
+            - "$all"
+            - "!**/internal/capture/pcap/**"
+          deny:
+            - pkg: github.com/gopacket/gopacket/pcap
+              desc: "live capture must go through the capture port (internal/capture); only internal/capture/pcap may import gopacket/pcap"
 
     embeddedstructfieldcheck:
       # Checks that sync.Mutex and sync.RWMutex are not used as embedded fields.

@@ -221,8 +221,12 @@ func (s *Server) initDiscoveryPipeline(cfg *config.Config) {
 		s.services.Discovery.PortScanner = portScanner
 	}
 
-	// Initialize discovery service with the shared profiler
-	s.services.Discovery.Service = discovery.NewService(cfg, cfg.Interface.Default, sharedProfiler)
+	// Initialize discovery service with the shared profiler. WithCapture injects
+	// the build-tagged capture adapter so the Service's internal device discovery
+	// uses real libpcap capture in production (CGO-free no-op under CGO_ENABLED=0).
+	s.services.Discovery.Service = discovery.NewService(
+		cfg, cfg.Interface.Default, sharedProfiler, discovery.WithCapture(defaultCaptureOpener()),
+	)
 	logging.GetLogger().Info("Discovery service initialized with shared profiler")
 
 	// Initialize discovery pipeline with the SAME shared profiler

@@ -1,6 +1,6 @@
 # CGO build strategy — libpcap blast radius & build speed
 
-**Status:** Findings + plan — 2026-06-01
+**Status:** Implemented — Capture port shipped in Phase 6 S1a/S1b (2026-06-03; findings 2026-06-01)
 **Scope:** Why seed links libpcap (CGO), where that cost lands, and how to keep
 builds fast. Records the four findings from the 2026-06-01 build audit and the
 plan to shrink the CGO blast radius behind a `Capture` port (executes with the
@@ -63,15 +63,30 @@ imports them — `api`, `diagnostics`, `pipeline`, `security`) compile and **tes
   (no feature migration required to establish the precedent), and complete the pcap move as part of the **Phase 6 discovery split**, where
   `dhcp`/`vlan`/`discovery` all migrate together.
 
-### Acceptance criteria (when executed)
+### Acceptance criteria — DONE (Phase 6 S1a #1487 + S1b)
 
-- [ ] Exactly one package imports `gopacket/pcap` (`internal/capture/pcap`).
-- [ ] `go build ./... ` with `CGO_ENABLED=0` succeeds (uses the null adapter);
-      `CGO_ENABLED=1` builds keep live capture.
-- [ ] `go vet`/`go test` for `dhcp`/`discovery`/`vlan` run `CGO_ENABLED=0`.
-- [ ] Golden HTTP suite unchanged; capture features behave identically with the
-      real adapter.
-- [ ] `depguard`: `gopacket/pcap` denied outside `internal/capture/pcap`.
+The `Capture` port shipped in two slices: S1a created `internal/capture`
+(port + `pcap`/`nullcapture` adapters); S1b migrated the six seam files
+(`discovery` cdp/lldp/edp, `dhcp` monitor/rogue, `vlan` traffic) onto the
+injected `capture.Opener` and added the enforcement gates.
+
+- [x] Exactly one package imports `gopacket/pcap` (`internal/capture/pcap`).
+- [x] `go build ./...` with `CGO_ENABLED=0` succeeds (the null adapter is wired;
+      the build-tagged `internal/capture/pcap` is skipped under `CGO_ENABLED=0`
+      on non-Windows). `CGO_ENABLED=1` (and any Windows build) keep live capture.
+- [x] `go build`/`go test` for `dhcp`/`discovery`/`vlan` run `CGO_ENABLED=0` —
+      `dhcp`/`vlan` test binaries no longer link libpcap (≈0.02s vs seconds).
+- [x] Golden HTTP suite unchanged; capture features behave identically with the
+      real adapter (the composition root injects `pcap.New()` via a build-tagged
+      `defaultCaptureOpener`).
+- [x] `depguard`: `gopacket/pcap` denied outside `internal/capture/pcap`.
+- [x] CI gate: a `CGO_ENABLED=0 go build ./...` step in the Backend (Go) job.
+
+**Capture-port wiring:** capture-using constructors take functional options
+(`WithCapture`), defaulting to the CGO-free no-op so existing call sites and
+tests are unchanged; the composition root (`internal/api`) injects the
+build-tagged real adapter via `defaultCaptureOpener` (`wire_capture_real.go`
+`//go:build cgo || windows`; `wire_capture_null.go` `//go:build !cgo && !windows`).
 
 ## 4. CI caching (finding #2 — shipped)
 

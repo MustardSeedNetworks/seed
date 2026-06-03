@@ -178,26 +178,16 @@ func NewServer(
 	primaryInterfaces := append(cfg.Interface.AllEthernet(), cfg.Interface.AllWiFi()...)
 	services.Network.LinkMonitorPool.Reconcile(primaryInterfaces)
 
-	// Initialize discovery services
-	services.Discovery.Device = discovery.NewDeviceDiscoveryWithOUI(
-		cfg.Interface.Default,
-		cfg.NetworkDiscovery.OUIFilePath,
-		cfg.NetworkDiscovery.OUIMaxAge,
-	)
-	// Note: services.Discovery.Service is initialized after profiler is created (see below)
+	// Initialize discovery + capture-using diagnostics services. WithCapture
+	// injects the build-tagged capture adapter (libpcap or CGO-free no-op) so the
+	// domain packages stay CGO-free. See docs/architecture/CGO_BUILD_STRATEGY.md.
+	initCaptureServices(services, cfg)
 
 	// Initialize telemetry services
 	services.Diagnostics.DNS = dns.NewTester("", cfg.DNS.TestHostname, dns.DefaultThresholds())
 	services.Diagnostics.DNSSecurity = dns.NewSecurityScanner(dns.DefaultSecurityScanConfig())
-	services.Diagnostics.DHCP = dhcp.NewMonitor(cfg.Interface.Default)
-	services.Diagnostics.RogueDetector = dhcp.NewRogueDetector(&dhcp.RogueDetectorConfig{
-		Interface:        cfg.Interface.Default,
-		KnownServers:     cfg.DHCP.RogueDetection.KnownServers,
-		AlertOnDetection: cfg.DHCP.RogueDetection.AlertOnDetection,
-	})
 	services.Diagnostics.Gateway = gateway.NewTester(gateway.DefaultThresholds())
 	services.Diagnostics.VLAN = vlan.NewManager(cfg.Interface.Default)
-	services.Diagnostics.VLANTraffic = vlan.NewTrafficMonitor(cfg.Interface.Default)
 	services.Diagnostics.Speedtest = speedtest.NewTesterWithConfig(cfg.Speedtest.ServerID)
 	services.Diagnostics.Iperf = iperf.NewManager()
 	services.Diagnostics.Cable = cable.NewTester(cfg.Interface.Default)
@@ -256,6 +246,32 @@ func NewServer(
 	s.setupRoutes()
 
 	return s
+}
+
+// initCaptureServices constructs the services that perform live packet capture
+// (device discovery via LLDP/CDP/EDP, DHCP monitoring, rogue-DHCP detection, and
+// VLAN traffic) and injects the capture port adapter into each. The adapter is
+// build-tagged (libpcap under CGO/Windows, a CGO-free no-op otherwise) so the
+// domain packages stay CGO-free. See docs/architecture/CGO_BUILD_STRATEGY.md.
+func initCaptureServices(services *ServiceContainer, cfg *config.Config) {
+	captureOpener := defaultCaptureOpener()
+
+	// services.Discovery.Service is initialized later, after the shared profiler.
+	services.Discovery.Device = discovery.NewDeviceDiscoveryWithOUI(
+		cfg.Interface.Default,
+		cfg.NetworkDiscovery.OUIFilePath,
+		cfg.NetworkDiscovery.OUIMaxAge,
+		discovery.WithCapture(captureOpener),
+	)
+	services.Diagnostics.DHCP = dhcp.NewMonitor(cfg.Interface.Default, dhcp.WithCapture(captureOpener))
+	services.Diagnostics.RogueDetector = dhcp.NewRogueDetector(&dhcp.RogueDetectorConfig{
+		Interface:        cfg.Interface.Default,
+		KnownServers:     cfg.DHCP.RogueDetection.KnownServers,
+		AlertOnDetection: cfg.DHCP.RogueDetection.AlertOnDetection,
+	}, dhcp.WithCapture(captureOpener))
+	services.Diagnostics.VLANTraffic = vlan.NewTrafficMonitor(
+		cfg.Interface.Default, vlan.WithCapture(captureOpener),
+	)
 }
 
 // initDatabaseDependentServices wires every service that needs a

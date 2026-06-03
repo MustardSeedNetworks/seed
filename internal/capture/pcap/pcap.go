@@ -1,4 +1,12 @@
+//go:build cgo || windows
+
 // Package pcap is the libpcap-backed adapter for the capture port.
+//
+// The build constraint (cgo || windows) keeps this package out of CGO_ENABLED=0
+// builds on non-Windows platforms, where libpcap cannot be linked — there the
+// composition root selects the CGO-free no-op adapter (nullcapture) instead, and
+// a CGO_ENABLED=0 `go build ./...` skips this package cleanly. On Windows
+// gopacket/pcap is CGO-free (wpcap), so live capture is retained there.
 //
 // It is the ONLY package in seed that imports github.com/gopacket/gopacket/pcap,
 // and therefore the only CGO-tainted (libpcap-linked) package. A depguard rule

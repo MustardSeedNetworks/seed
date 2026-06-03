@@ -114,16 +114,18 @@ func loadOUIWithAutoUpdate(oui *OUIDatabase, ouiPath string, ouiMaxAge time.Dura
 }
 
 // NewDeviceDiscovery creates a new device discovery aggregator.
-func NewDeviceDiscovery(interfaceName string) *DeviceDiscovery {
-	return NewDeviceDiscoveryWithOUI(interfaceName, "", 0)
+func NewDeviceDiscovery(interfaceName string, opts ...Option) *DeviceDiscovery {
+	return NewDeviceDiscoveryWithOUI(interfaceName, "", 0, opts...)
 }
 
 // NewDeviceDiscoveryWithOUI creates a new device discovery aggregator with OUI configuration.
 // ouiPath specifies the path to store/load the OUI database file.
 // ouiMaxAge specifies how old the file can be before auto-downloading (0 = never auto-update).
+// opts inject optional dependencies such as the live-capture Opener (WithCapture).
 func NewDeviceDiscoveryWithOUI(
 	interfaceName, ouiPath string,
 	ouiMaxAge time.Duration,
+	opts ...Option,
 ) *DeviceDiscovery {
 	oui := NewOUIDatabase()
 	loadOUIDatabase(oui, ouiPath, ouiMaxAge)
@@ -133,7 +135,7 @@ func NewDeviceDiscoveryWithOUI(
 		oui:             oui,
 		arpScanner:      NewARPScanner(interfaceName, oui),
 		ndpScanner:      NewNDPScanner(interfaceName),
-		protoManager:    NewManager(interfaceName),
+		protoManager:    NewManager(interfaceName, opts...),
 		netbiosResolver: NewNetBIOSResolver(),
 		mdnsResolver:    NewMDNSResolver(interfaceName),
 		mdnsListener:    NewMDNSListener(interfaceName),

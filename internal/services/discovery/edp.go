@@ -14,7 +14,8 @@ import (
 
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
-	"github.com/gopacket/gopacket/pcap"
+
+	"github.com/krisarmstrong/seed/internal/capture"
 )
 
 // pcapSnapshotLengthEDP is the maximum number of bytes to capture from each packet.
@@ -62,7 +63,8 @@ type EDPNeighbor struct {
 // EDPCapture handles EDP frame capture on an interface.
 type EDPCapture struct {
 	interfaceName string
-	handle        *pcap.Handle
+	opener        capture.Opener
+	handle        capture.Handle
 	neighbors     map[string]*EDPNeighbor // keyed by DeviceID+PortID
 	mu            sync.RWMutex
 	ctx           context.Context
@@ -70,11 +72,13 @@ type EDPCapture struct {
 	started       bool
 }
 
-// NewEDPCapture creates a new EDP capture instance.
+// NewEDPCapture creates a new EDP capture instance bound to the given capture
+// Opener (the libpcap adapter in production, a no-op under CGO_ENABLED=0).
 // Fixes #903: Context is created in Start() to prevent leaks if Start() is never called.
-func NewEDPCapture(interfaceName string) *EDPCapture {
+func NewEDPCapture(opener capture.Opener, interfaceName string) *EDPCapture {
 	return &EDPCapture{
 		interfaceName: interfaceName,
+		opener:        opener,
 		neighbors:     make(map[string]*EDPNeighbor),
 	}
 }
@@ -89,25 +93,19 @@ func (c *EDPCapture) Start() error {
 		return nil
 	}
 
-	// Open capture handle
-	handle, err := pcap.OpenLive(c.interfaceName, pcapSnapshotLengthEDP, true, pcap.BlockForever)
+	// EDP frames are sent to the well-known dst MAC 00:e0:2b:00:00:00.
+	handle, linkType, err := openProtocolCapture(
+		c.opener, c.interfaceName, pcapSnapshotLengthEDP, "ether dst 00:e0:2b:00:00:00",
+	)
 	if err != nil {
 		c.mu.Unlock()
-		return fmt.Errorf("failed to open capture: %w", err)
-	}
-
-	// Set BPF filter for EDP (dst MAC 00:E0:2B:00:00:00)
-	if filterErr := handle.SetBPFFilter("ether dst 00:e0:2b:00:00:00"); filterErr != nil {
-		handle.Close()
-		c.mu.Unlock()
-		return fmt.Errorf("failed to set BPF filter: %w", filterErr)
+		return err
 	}
 
 	c.handle = handle
 	c.started = true
 	// Fixes #903: Create context here instead of in NewEDPCapture
 	c.ctx, c.cancel = context.WithCancel(context.Background())
-	linkType := handle.LinkType()
 	ctx := c.ctx
 	c.mu.Unlock()
 
@@ -153,7 +151,7 @@ func (c *EDPCapture) GetNeighbors() []*EDPNeighbor {
 }
 
 // captureLoop continuously captures and processes EDP frames.
-func (c *EDPCapture) captureLoop(ctx context.Context, handle *pcap.Handle, linkType layers.LinkType) {
+func (c *EDPCapture) captureLoop(ctx context.Context, handle capture.Handle, linkType layers.LinkType) {
 	if handle == nil {
 		return
 	}
