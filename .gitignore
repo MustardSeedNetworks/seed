@@ -131,3 +131,8 @@ yarn-error.log*
 build/
 dist/
 coverage.out
+
+# Track checked-in SQL artifacts (schema golden + goose migrations) even when a
+# developer's global gitignore ignores *.sql (the repo must be self-contained).
+!internal/database/testdata/*.sql
+!internal/database/migrations/*.sql
