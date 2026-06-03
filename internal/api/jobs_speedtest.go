@@ -78,6 +78,9 @@ func newSpeedtestHandler(newTester func() speedTester) jobs.Handler {
 func (s *Server) registerJobKinds() {
 	s.registerSpeedtestKind(func() speedTester { return speedtest.NewTester() })
 	s.registerIperfKind(func() iperfClient { return iperf.NewManager() })
+	s.registerVulnScanKind(func() vulnScanService {
+		return serverVulnScanService{scanner: s.vulnScanner(), devices: s.deviceDiscovery()}
+	})
 }
 
 // registerSpeedtestKind registers the speedtest kind with an injectable tester
