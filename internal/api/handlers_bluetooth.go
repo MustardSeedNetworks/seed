@@ -191,16 +191,25 @@ func (s *Server) handleBluetoothScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := BluetoothScanResponse{
+	resp := toBluetoothScanResponse(result, btScanner.GetStats())
+
+	sendJSONResponse(w, logger, http.StatusOK, resp)
+}
+
+// toBluetoothScanResponse maps a scan result + stats to the API wire shape.
+// Shared by the scan handler and the bluetooth-scan job kind so both paths
+// produce an identical response.
+func toBluetoothScanResponse(
+	result *discovery.BluetoothScanResult, stats *discovery.BluetoothDiscoveryStats,
+) BluetoothScanResponse {
+	return BluetoothScanResponse{
 		Devices:      toBluetoothDevices(result.Devices),
 		AdapterName:  result.AdapterName,
 		ScanType:     result.ScanType,
 		ScanTime:     result.ScanTime.Format("2006-01-02T15:04:05Z07:00"),
 		ScanDuration: result.ScanDuration.Milliseconds(),
-		Stats:        toBluetoothStats(btScanner.GetStats()),
+		Stats:        toBluetoothStats(stats),
 	}
-
-	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
 // handleBluetoothDevices returns discovered Bluetooth devices.

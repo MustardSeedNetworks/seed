@@ -82,6 +82,9 @@ func (s *Server) registerJobKinds() {
 		return serverVulnScanService{scanner: s.vulnScanner(), devices: s.deviceDiscovery()}
 	})
 	s.registerEngineScanKind(func() engineScanner { return s.services.Discovery.Engine })
+	s.registerBluetoothScanKind(func() bluetoothScannerService { return s.bluetoothScanner() })
+	s.registerWiFiDiscoveryScanKind(func() wifiDiscoveryBridge { return s.wifiBridge() })
+	s.registerDeviceScanKind(func() deviceScanService { return s.deviceDiscovery() })
 }
 
 // registerSpeedtestKind registers the speedtest kind with an injectable tester
