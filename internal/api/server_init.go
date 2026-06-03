@@ -165,7 +165,13 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 	s.services.RealTime.Jobs = jobs.New(
 		s.services.RealTime.EventBus, logging.GetLogger(), jobsCfg,
 	)
-	s.services.RealTime.JobIdempotency = newJobIdempotencyCache(jobIdempotencyCapacity)
+	if db != nil {
+		// Durable Idempotency-Key dedup (Phase 5c-4): survives restart, so a
+		// client retry across a restart still replays rather than duplicating.
+		s.services.RealTime.JobIdempotency = newDBJobIdempotency(db, logging.GetLogger())
+	} else {
+		s.services.RealTime.JobIdempotency = newJobIdempotencyCache(jobIdempotencyCapacity)
+	}
 	s.registerJobKinds()
 
 	// Reconcile jobs left in-flight by a previous process: their handler

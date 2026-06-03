@@ -265,6 +265,9 @@ CREATE INDEX idx_health_hourly_bucket ON health_check_rollups_hourly(hour_bucket
 CREATE UNIQUE INDEX idx_health_hourly_unique
 				ON health_check_rollups_hourly(check_type, endpoint_name, hour_bucket);
 
+-- index: idx_job_idempotency_job
+CREATE INDEX idx_job_idempotency_job ON job_idempotency(job_id);
+
 -- index: idx_jobs_completed
 CREATE INDEX idx_jobs_completed ON jobs(completed_at);
 
@@ -1030,6 +1033,14 @@ CREATE TABLE health_check_rollups_hourly (
 				max_latency_ms REAL,
 				p95_latency_ms REAL
 			) STRICT;
+
+-- table: job_idempotency
+CREATE TABLE job_idempotency (
+	key          TEXT NOT NULL PRIMARY KEY,
+	request_hash TEXT NOT NULL,
+	job_id       TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+	created_at   TEXT NOT NULL
+) STRICT;
 
 -- table: jobs
 CREATE TABLE jobs (

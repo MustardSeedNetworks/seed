@@ -153,6 +153,40 @@ func (r *JobRepository) MarkInterrupted(ctx context.Context) (int, error) {
 	return int(n), nil
 }
 
+// LookupIdempotency returns the job an Idempotency-Key created and the request
+// hash recorded with it. found is false (with nil error) when the key is unseen
+// — the caller should create a new job.
+func (r *JobRepository) LookupIdempotency(
+	ctx context.Context, key string,
+) (string, string, bool, error) {
+	var jobID, requestHash string
+	row := r.db.QueryRow(ctx,
+		`SELECT job_id, request_hash FROM job_idempotency WHERE key = ?`, key)
+	if scanErr := row.Scan(&jobID, &requestHash); scanErr != nil {
+		if errors.Is(scanErr, sql.ErrNoRows) {
+			return "", "", false, nil
+		}
+		return "", "", false, fmt.Errorf("lookup idempotency key: %w", scanErr)
+	}
+	return jobID, requestHash, true, nil
+}
+
+// RecordIdempotency binds an Idempotency-Key to the job it created plus the
+// request hash. A repeat of the same key is a no-op (the first write wins), so
+// concurrent retries converge. The job_id FK requires the job row to exist —
+// the runner persists it on Submit before the handler records the key.
+func (r *JobRepository) RecordIdempotency(ctx context.Context, key, requestHash, jobID string) error {
+	_, err := r.db.Exec(ctx, `
+		INSERT INTO job_idempotency (key, request_hash, job_id, created_at)
+		VALUES (?, ?, ?, ?)
+		ON CONFLICT(key) DO NOTHING
+	`, key, requestHash, jobID, time.Now().UTC().Format(time.RFC3339Nano))
+	if err != nil {
+		return fmt.Errorf("record idempotency key: %w", err)
+	}
+	return nil
+}
+
 // scanJob maps one jobs row into a JobRecord, translating [sql.ErrNoRows] into
 // ErrJobNotFound for the single-row Get path.
 func scanJob(scan func(...any) error) (*JobRecord, error) {
