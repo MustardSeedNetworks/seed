@@ -75,6 +75,7 @@ type DB struct {
 	clients           *ClientRepository
 	probes            *ProbeRepository
 	pollingTargets    *PollingTargetRepository
+	jobs              *JobRepository
 	snmpObservations  *SNMPObservationsRepository
 	listenerEvents    *ListenerEventsRepository
 	topology          *TopologyRepository
