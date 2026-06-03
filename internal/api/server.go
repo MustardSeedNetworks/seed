@@ -702,7 +702,7 @@ func (s *Server) sseHub() *SSEHub                          { return s.services.R
 func (s *Server) logBroadcaster() *logging.LogBroadcaster  { return s.services.RealTime.LogBroadcaster }
 func (s *Server) eventBus() *events.Bus                    { return s.services.RealTime.EventBus }
 func (s *Server) jobsRunner() *jobs.Runner                 { return s.services.RealTime.Jobs }
-func (s *Server) jobIdempotency() *jobIdempotencyCache     { return s.services.RealTime.JobIdempotency }
+func (s *Server) jobIdempotency() jobIdempotencyStore      { return s.services.RealTime.JobIdempotency }
 func (s *Server) db() *database.DB                         { return s.services.Database.DB }
 
 // webAuthnConfigFromServer derives the relying-party config for the

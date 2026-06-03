@@ -176,7 +176,7 @@ type RealTimeServices struct {
 	LogBroadcaster *logging.LogBroadcaster // Log streaming
 	EventBus       *events.Bus             // in-process domain event bus (ADR-0004)
 	Jobs           *jobs.Runner            // unified async job runner (ADR-0005)
-	JobIdempotency *jobIdempotencyCache    // Idempotency-Key dedup for POST /jobs
+	JobIdempotency jobIdempotencyStore     // Idempotency-Key dedup for POST /jobs
 }
 
 // DatabaseServices groups database-related services.

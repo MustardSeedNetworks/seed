@@ -252,6 +252,68 @@ func TestJobsMarkInterrupted(t *testing.T) {
 	}
 }
 
+func TestJobsIdempotency(t *testing.T) {
+	t.Parallel()
+	repo, ctx := setupJobsTest(t)
+
+	now := time.Now().UTC().Truncate(time.Second)
+	mustSave(ctx, t, repo, &database.JobRecord{ID: "j1", Kind: "k", State: "queued", CreatedAt: now, UpdatedAt: now})
+
+	// Unseen key.
+	if _, _, found, err := repo.LookupIdempotency(ctx, "k1"); err != nil || found {
+		t.Fatalf("unseen key: found=%v err=%v, want false/nil", found, err)
+	}
+
+	// Record then look up.
+	if err := repo.RecordIdempotency(ctx, "k1", "hashA", "j1"); err != nil {
+		t.Fatalf("record: %v", err)
+	}
+	jobID, hash, found, err := repo.LookupIdempotency(ctx, "k1")
+	if err != nil || !found || jobID != "j1" || hash != "hashA" {
+		t.Fatalf("lookup = (%q,%q,%v,%v), want (j1,hashA,true,nil)", jobID, hash, found, err)
+	}
+
+	// First write wins: a repeat is a no-op (ON CONFLICT DO NOTHING).
+	if recErr := repo.RecordIdempotency(ctx, "k1", "hashB", "j1"); recErr != nil {
+		t.Fatalf("re-record: %v", recErr)
+	}
+	if _, gotHash, _, _ := repo.LookupIdempotency(ctx, "k1"); gotHash != "hashA" {
+		t.Errorf("hash = %q after repeat, want hashA (first write wins)", gotHash)
+	}
+}
+
+func TestJobsIdempotencyFKRequiresJob(t *testing.T) {
+	t.Parallel()
+	repo, ctx := setupJobsTest(t)
+
+	// No job row exists for "ghost" -> the FK rejects the key.
+	if err := repo.RecordIdempotency(ctx, "k", "h", "ghost"); err == nil {
+		t.Fatal("expected FK violation recording a key for a nonexistent job")
+	}
+}
+
+func TestJobsIdempotencyCascadeOnJobDelete(t *testing.T) {
+	t.Parallel()
+	repo, ctx := setupJobsTest(t)
+
+	old := time.Now().UTC().Add(-2 * time.Hour).Truncate(time.Second)
+	mustSave(ctx, t, repo, &database.JobRecord{
+		ID: "j1", Kind: "k", State: "succeeded", Progress: 1,
+		CreatedAt: old, UpdatedAt: old, CompletedAt: old,
+	})
+	if err := repo.RecordIdempotency(ctx, "k1", "h", "j1"); err != nil {
+		t.Fatalf("record: %v", err)
+	}
+
+	// Retention deletes the job; ON DELETE CASCADE removes its key too.
+	if _, err := repo.DeleteCompletedBefore(ctx, time.Now().UTC().Add(-time.Hour)); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+	if _, _, found, _ := repo.LookupIdempotency(ctx, "k1"); found {
+		t.Error("idempotency key survived its job's deletion; expected CASCADE")
+	}
+}
+
 func mustSave(ctx context.Context, t *testing.T, repo *database.JobRepository, rec *database.JobRecord) {
 	t.Helper()
 	if err := repo.Save(ctx, rec); err != nil {

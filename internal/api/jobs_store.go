@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/database"
@@ -81,6 +82,40 @@ func (s *dbJobStore) Load(ctx context.Context, id string) (jobs.Job, bool, error
 // MarkInterrupted reconciles persisted in-flight jobs at startup.
 func (s *dbJobStore) MarkInterrupted(ctx context.Context) (int, error) {
 	return s.repo.MarkInterrupted(ctx)
+}
+
+// dbJobIdempotency is the durable Idempotency-Key store backing POST /jobs
+// (Phase 5c-4), satisfying jobIdempotencyStore over database.JobRepository.
+// Best-effort, matching the in-memory cache: a backend error degrades a check to
+// idemMiss (create afresh) and a store failure is logged, never surfaced.
+type dbJobIdempotency struct {
+	repo   *database.JobRepository
+	logger *slog.Logger
+}
+
+func newDBJobIdempotency(db *database.DB, logger *slog.Logger) *dbJobIdempotency {
+	return &dbJobIdempotency{repo: db.Jobs(), logger: logger}
+}
+
+func (d *dbJobIdempotency) check(ctx context.Context, key string, req CreateJobRequest) idemResult {
+	jobID, storedHash, found, err := d.repo.LookupIdempotency(ctx, key)
+	if err != nil {
+		d.logger.ErrorContext(ctx, "idempotency lookup failed; treating as miss", "err", err)
+		return idemResult{kind: idemMiss}
+	}
+	if !found {
+		return idemResult{kind: idemMiss}
+	}
+	if storedHash != requestHash(req) {
+		return idemResult{kind: idemConflict}
+	}
+	return idemResult{id: jobID, kind: idemHit}
+}
+
+func (d *dbJobIdempotency) store(ctx context.Context, key string, req CreateJobRequest, jobID string) {
+	if err := d.repo.RecordIdempotency(ctx, key, requestHash(req), jobID); err != nil {
+		d.logger.ErrorContext(ctx, "idempotency record failed", "err", err)
+	}
 }
 
 // jobStateTerminal reports whether a job state is final. It mirrors the runner's

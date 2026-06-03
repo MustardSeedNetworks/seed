@@ -101,7 +101,7 @@ func (s *Server) handleJobs(w http.ResponseWriter, r *http.Request) {
 	// than creating a duplicate; the same key with a different body conflicts.
 	key := r.Header.Get("Idempotency-Key")
 	if key != "" {
-		switch res := s.jobIdempotency().check(key, req); res.kind {
+		switch res := s.jobIdempotency().check(r.Context(), key, req); res.kind {
 		case idemConflict:
 			sendErrorResponseWithDetails(w, logger, http.StatusConflict, ErrCodeConflict,
 				"Idempotency-Key already used with different parameters", "")
@@ -122,7 +122,7 @@ func (s *Server) handleJobs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if key != "" {
-		s.jobIdempotency().store(key, req, id)
+		s.jobIdempotency().store(r.Context(), key, req, id)
 	}
 
 	j, _ := s.jobsRunner().Get(id)
@@ -359,8 +359,18 @@ func requestHash(req CreateJobRequest) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
+// jobIdempotencyStore dedups POST /jobs by Idempotency-Key. The in-memory
+// jobIdempotencyCache (no database) and the durable dbJobIdempotency both
+// satisfy it; ctx is honored by the durable implementation and ignored by the
+// cache. Both are best-effort: a backend error degrades to idemMiss (create)
+// rather than failing the request.
+type jobIdempotencyStore interface {
+	check(ctx context.Context, key string, req CreateJobRequest) idemResult
+	store(ctx context.Context, key string, req CreateJobRequest, jobID string)
+}
+
 // check classifies a key against a request without recording anything.
-func (c *jobIdempotencyCache) check(key string, req CreateJobRequest) idemResult {
+func (c *jobIdempotencyCache) check(_ context.Context, key string, req CreateJobRequest) idemResult {
 	h := requestHash(req)
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -375,7 +385,7 @@ func (c *jobIdempotencyCache) check(key string, req CreateJobRequest) idemResult
 }
 
 // store records the job a key created, evicting the oldest key past capacity.
-func (c *jobIdempotencyCache) store(key string, req CreateJobRequest, jobID string) {
+func (c *jobIdempotencyCache) store(_ context.Context, key string, req CreateJobRequest, jobID string) {
 	h := requestHash(req)
 	c.mu.Lock()
 	defer c.mu.Unlock()
