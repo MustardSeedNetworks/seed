@@ -213,6 +213,45 @@ func TestJobsProgressCheckRejectsOutOfRange(t *testing.T) {
 	}
 }
 
+func TestJobsMarkInterrupted(t *testing.T) {
+	t.Parallel()
+	repo, ctx := setupJobsTest(t)
+
+	now := time.Now().UTC().Truncate(time.Second)
+	mustSave(ctx, t, repo, &database.JobRecord{ID: "q", Kind: "k", State: "queued", CreatedAt: now, UpdatedAt: now})
+	mustSave(
+		ctx,
+		t,
+		repo,
+		&database.JobRecord{ID: "r", Kind: "k", State: "running", Progress: 0.5, CreatedAt: now, UpdatedAt: now},
+	)
+	mustSave(ctx, t, repo, &database.JobRecord{
+		ID: "ok", Kind: "k", State: "succeeded", Progress: 1,
+		CreatedAt: now, UpdatedAt: now, CompletedAt: now,
+	})
+
+	n, err := repo.MarkInterrupted(ctx)
+	if err != nil {
+		t.Fatalf("mark interrupted: %v", err)
+	}
+	if n != 2 {
+		t.Errorf("interrupted = %d, want 2 (queued + running)", n)
+	}
+	for _, id := range []string{"q", "r"} {
+		got, gErr := repo.Get(ctx, id)
+		if gErr != nil {
+			t.Fatalf("get %s: %v", id, gErr)
+		}
+		if got.State != "failed" || got.Error == "" || got.CompletedAt.IsZero() {
+			t.Errorf("%s: state=%q error=%q completedAt=%v, want failed/non-empty/non-zero",
+				id, got.State, got.Error, got.CompletedAt)
+		}
+	}
+	if got, _ := repo.Get(ctx, "ok"); got.State != "succeeded" {
+		t.Errorf("terminal job mutated to %q", got.State)
+	}
+}
+
 func mustSave(ctx context.Context, t *testing.T, repo *database.JobRepository, rec *database.JobRecord) {
 	t.Helper()
 	if err := repo.Save(ctx, rec); err != nil {

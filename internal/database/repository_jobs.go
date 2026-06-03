@@ -134,6 +134,25 @@ func (r *JobRepository) DeleteCompletedBefore(ctx context.Context, cutoff time.T
 	return n, nil
 }
 
+// MarkInterrupted transitions every non-terminal job (queued or running) to
+// failed, stamping an interruption error and the completion time. It is the
+// startup-recovery primitive (Phase 5c): after a restart the handler goroutines
+// of any in-flight job are gone, so those rows can never reach a terminal state
+// on their own and are reconciled here. Returns the number of rows transitioned.
+func (r *JobRepository) MarkInterrupted(ctx context.Context) (int, error) {
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	res, err := r.db.Exec(ctx, `
+		UPDATE jobs
+		SET state = 'failed', error = ?, updated_at = ?, completed_at = ?
+		WHERE state IN ('queued', 'running')
+	`, "interrupted by restart", now, now)
+	if err != nil {
+		return 0, fmt.Errorf("mark interrupted jobs: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	return int(n), nil
+}
+
 // scanJob maps one jobs row into a JobRecord, translating [sql.ErrNoRows] into
 // ErrJobNotFound for the single-row Get path.
 func scanJob(scan func(...any) error) (*JobRecord, error) {
