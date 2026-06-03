@@ -92,6 +92,28 @@ func (s *Server) handleEngineDiscovery(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
+// scanOptsFromRequest builds discovery scan options from a request: the
+// quick/full default plus the per-feature overrides. Shared by the engine-scan
+// handler and the engine-scan job kind so both produce identical options.
+func scanOptsFromRequest(req EngineScanRequest) *discovery.ScanOptions {
+	var opts *discovery.ScanOptions
+	if req.ScanType == "full" {
+		opts = discovery.DefaultFullScanOpts()
+	} else {
+		opts = discovery.DefaultQuickScanOpts()
+	}
+	opts.IncludeWired = req.IncludeWired
+	opts.IncludeWiFi = req.IncludeWiFi
+	opts.IncludeBluetooth = req.IncludeBluetooth
+	opts.IncludeSNMP = req.IncludeSNMP
+	opts.IncludePortScan = req.IncludePortScan
+	opts.IncludeVulnScan = req.IncludeVulnScan
+	opts.FreshWiredScan = req.FreshWiredScan
+	opts.FreshWiFiScan = req.FreshWiFiScan
+	opts.FreshBluetoothScan = req.FreshBluetoothScan
+	return opts
+}
+
 // handleEngineScan triggers a discovery engine scan.
 //
 // POST /api/v1/discovery/engine/scan triggers a new scan.
@@ -167,23 +189,7 @@ func (s *Server) handleEngineScan(w http.ResponseWriter, r *http.Request) {
 		if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
 			return
 		}
-
-		if req.ScanType == "full" {
-			opts = discovery.DefaultFullScanOpts()
-		} else {
-			opts = discovery.DefaultQuickScanOpts()
-		}
-
-		// Override with request values
-		opts.IncludeWired = req.IncludeWired
-		opts.IncludeWiFi = req.IncludeWiFi
-		opts.IncludeBluetooth = req.IncludeBluetooth
-		opts.IncludeSNMP = req.IncludeSNMP
-		opts.IncludePortScan = req.IncludePortScan
-		opts.IncludeVulnScan = req.IncludeVulnScan
-		opts.FreshWiredScan = req.FreshWiredScan
-		opts.FreshWiFiScan = req.FreshWiFiScan
-		opts.FreshBluetoothScan = req.FreshBluetoothScan
+		opts = scanOptsFromRequest(req)
 	} else {
 		opts = discovery.DefaultQuickScanOpts()
 	}
