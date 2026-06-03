@@ -49,8 +49,14 @@ Shipped:
 
 Deviations / deferred from the original decision:
 
-- **Persistence is in-memory v1** (fail-cleanly-on-restart), not durable. The transactional
-  outbox + durable job store land in **Phase 5**; the runner already exposes the seam.
+- **Persistence is in-memory v1** (fail-cleanly-on-restart), not durable. — *Updated
+  (Phase 5c, 2026-06-03):* the **durable job store landed** (#1481–#1485): write-through
+  persistence + Get fallback (`jobs.Store` / `dbJobStore` over the `jobs` table),
+  boot recovery (`Recover` → in-flight jobs reconciled to failed), durable
+  Idempotency-Key dedup, and a retention sweep on the maintenance loop. The
+  **transactional outbox is deferred** with a documented trigger — see the ADR-0004
+  amendment (in-process bus + re-fetch-on-reconnect makes the dual-write gap
+  unobservable today).
 - **Legacy endpoints retained.** Each migrated op keeps its old `/telemetry/*` or
   `/security/*` run/status endpoint (additive strangler); the "~15 endpoints collapse"
   completes when the frontend consumes `/jobs` in **Phase 7**, at which point the legacy
