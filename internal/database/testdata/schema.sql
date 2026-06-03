@@ -642,7 +642,7 @@ CREATE INDEX idx_wifi_rogues_status ON wifi_rogues(status);
 CREATE TABLE alert_rules (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				name TEXT NOT NULL UNIQUE,
-				enabled INTEGER NOT NULL DEFAULT 1,
+				enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0,1)),
 				match_kind TEXT,
 				match_severity TEXT,
 				match_payload_contains TEXT,
@@ -672,10 +672,10 @@ CREATE TABLE alerts (
 				message TEXT NOT NULL,
 				source TEXT,
 				device_id TEXT,
-				acknowledged INTEGER DEFAULT 0,
+				acknowledged INTEGER DEFAULT 0 CHECK (acknowledged IN (0,1)),
 				acknowledged_by TEXT,
 				acknowledged_at TEXT,
-				resolved INTEGER DEFAULT 0,
+				resolved INTEGER DEFAULT 0 CHECK (resolved IN (0,1)),
 				resolved_at TEXT,
 				created_at TEXT NOT NULL,
 				metadata_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
@@ -742,12 +742,12 @@ CREATE TABLE bluetooth_devices (
 				class_of_device INTEGER DEFAULT 0,
 				rssi INTEGER,
 				tx_power INTEGER,
-				is_connected INTEGER DEFAULT 0,
-				is_connectable INTEGER DEFAULT 0,
-				is_authorized INTEGER DEFAULT 0,
-				is_trusted INTEGER DEFAULT 0,
-				is_paired INTEGER DEFAULT 0,
-				is_blocked INTEGER DEFAULT 0,
+				is_connected INTEGER DEFAULT 0 CHECK (is_connected IN (0,1)),
+				is_connectable INTEGER DEFAULT 0 CHECK (is_connectable IN (0,1)),
+				is_authorized INTEGER DEFAULT 0 CHECK (is_authorized IN (0,1)),
+				is_trusted INTEGER DEFAULT 0 CHECK (is_trusted IN (0,1)),
+				is_paired INTEGER DEFAULT 0 CHECK (is_paired IN (0,1)),
+				is_blocked INTEGER DEFAULT 0 CHECK (is_blocked IN (0,1)),
 				service_uuids_json TEXT,
 				manufacturer_id INTEGER,
 				first_seen TEXT NOT NULL,
@@ -855,7 +855,7 @@ CREATE TABLE device_vulnerabilities (
 				cvss_vector TEXT,
 				affected_component TEXT,
 				affected_version TEXT,
-				fix_available INTEGER DEFAULT 0,
+				fix_available INTEGER DEFAULT 0 CHECK (fix_available IN (0,1)),
 				status TEXT DEFAULT 'new',
 				detected_at TEXT NOT NULL,
 				resolved_at TEXT,
@@ -874,7 +874,7 @@ CREATE TABLE devices (
 				os_family TEXT,
 				first_seen TEXT NOT NULL,
 				last_seen TEXT NOT NULL,
-				is_active INTEGER DEFAULT 1,
+				is_active INTEGER DEFAULT 1 CHECK (is_active IN (0,1)),
 				ports_json TEXT,
 				metadata_json TEXT
 			) STRICT;
@@ -891,7 +891,7 @@ CREATE TABLE discovered_devices (
 				criticality INTEGER DEFAULT 5,
 				first_seen TEXT NOT NULL,
 				last_seen TEXT NOT NULL,
-				is_online INTEGER DEFAULT 1,
+				is_online INTEGER DEFAULT 1 CHECK (is_online IN (0,1)),
 				notes TEXT,
 				tags TEXT,
 				metadata_json TEXT,
@@ -918,7 +918,7 @@ CREATE TABLE discovery_interfaces (
 				mac_address TEXT NOT NULL,
 				ip_addresses TEXT,
 				interface_name TEXT,
-				is_primary INTEGER DEFAULT 0,
+				is_primary INTEGER DEFAULT 0 CHECK (is_primary IN (0,1)),
 
 				-- Wired-specific
 				switch_port TEXT,
@@ -972,7 +972,7 @@ CREATE TABLE gateway_results (
 				gateway TEXT NOT NULL,
 				latency_ms REAL,
 				packet_loss REAL,
-				reachable INTEGER,
+				reachable INTEGER CHECK (reachable IN (0,1)),
 				timestamp TEXT NOT NULL
 			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
@@ -982,7 +982,7 @@ CREATE TABLE health_check_results (
 				check_type TEXT NOT NULL,
 				endpoint_name TEXT NOT NULL,
 				endpoint_target TEXT NOT NULL,
-				success INTEGER NOT NULL,
+				success INTEGER NOT NULL CHECK (success IN (0,1)),
 				latency_ms REAL,
 				status_code INTEGER,
 				error_message TEXT,
@@ -1128,7 +1128,7 @@ CREATE TABLE network_problems (
 				interface_id TEXT,
 				description TEXT NOT NULL,
 				details_json TEXT,
-				is_resolved INTEGER DEFAULT 0,
+				is_resolved INTEGER DEFAULT 0 CHECK (is_resolved IN (0,1)),
 				detected_at TEXT NOT NULL,
 				resolved_at TEXT,
 				acknowledged_at TEXT,
@@ -1143,7 +1143,7 @@ CREATE TABLE oui_vendors (
 				oui TEXT PRIMARY KEY,
 				vendor_name TEXT NOT NULL,
 				vendor_short TEXT,
-				is_private INTEGER DEFAULT 0,
+				is_private INTEGER DEFAULT 0 CHECK (is_private IN (0,1)),
 				device_category TEXT,
 				updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 			) STRICT;
@@ -1169,13 +1169,14 @@ CREATE TABLE polling_targets (
 				snmp_version TEXT NOT NULL DEFAULT 'v2c',
 				credentials_id TEXT,
 				poll_interval_seconds INTEGER NOT NULL DEFAULT 300,
-				enabled INTEGER NOT NULL DEFAULT 1,
+				enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0,1)),
 				last_polled_at TEXT,
 				last_status TEXT,
 				last_error TEXT,
 				created_at TEXT NOT NULL,
 				updated_at TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), collector_chain TEXT NOT NULL DEFAULT '["sys_info","if_table","lldp","arp","fdb"]') STRICT;
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), collector_chain TEXT NOT NULL DEFAULT '["sys_info","if_table","lldp","arp","fdb"]',
+				FOREIGN KEY (credentials_id) REFERENCES device_credentials(id) ON DELETE SET NULL) STRICT;
 
 -- table: probe_results
 CREATE TABLE probe_results (
@@ -1184,7 +1185,7 @@ CREATE TABLE probe_results (
 				client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
 				kind TEXT NOT NULL,
 				timestamp TEXT NOT NULL,
-				success INTEGER NOT NULL,
+				success INTEGER NOT NULL CHECK (success IN (0,1)),
 				latency_ms REAL,
 				error TEXT,
 				metadata_json TEXT,
@@ -1232,7 +1233,7 @@ CREATE TABLE probes (
 				target TEXT NOT NULL,
 				params_json TEXT,
 				interval_seconds INTEGER NOT NULL DEFAULT 60,
-				enabled INTEGER NOT NULL DEFAULT 1,
+				enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0,1)),
 				warning_json TEXT,
 				critical_json TEXT,
 				created_at TEXT NOT NULL,
@@ -1245,7 +1246,7 @@ CREATE TABLE profiles (
 				name TEXT NOT NULL UNIQUE,
 				description TEXT,
 				config_json TEXT NOT NULL,
-				is_default INTEGER DEFAULT 0,
+				is_default INTEGER DEFAULT 0 CHECK (is_default IN (0,1)),
 				created_at TEXT NOT NULL,
 				updated_at TEXT NOT NULL
 			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
@@ -1276,7 +1277,7 @@ CREATE TABLE scheduled_reports (
 				schedule_json TEXT NOT NULL,
 				parameters_json TEXT,
 				recipients_json TEXT,
-				enabled INTEGER DEFAULT 1,
+				enabled INTEGER DEFAULT 1 CHECK (enabled IN (0,1)),
 				last_run TEXT,
 				next_run TEXT,
 				created_at TEXT NOT NULL,
@@ -1413,13 +1414,13 @@ CREATE TABLE "users" (
 				username        TEXT    NOT NULL UNIQUE CHECK (LENGTH(username) >= 3 AND LENGTH(username) <= 64),
 				password_hash   TEXT    NOT NULL,
 				role            TEXT    NOT NULL DEFAULT 'viewer' CHECK (role IN ('admin','operator','viewer')),
-				is_active       INTEGER NOT NULL DEFAULT 1,
+				is_active       INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0,1)),
 				last_login      TEXT,
 				failed_attempts INTEGER NOT NULL DEFAULT 0,
 				locked_until    TEXT,
 				token_version   INTEGER NOT NULL DEFAULT 1,
 				totp_secret     TEXT,
-				totp_enabled    INTEGER NOT NULL DEFAULT 0,
+				totp_enabled    INTEGER NOT NULL DEFAULT 0 CHECK (totp_enabled IN (0,1)),
 				auth_provider   TEXT    NOT NULL DEFAULT 'local' CHECK (auth_provider IN ('local','google','microsoft','github')),
 				external_id     TEXT,
 				email           TEXT,
@@ -1486,11 +1487,11 @@ CREATE TABLE wifi_access_points (
 				-- Status
 				client_count INTEGER DEFAULT 0,
 				max_clients INTEGER,
-				is_authorized INTEGER DEFAULT 1,
+				is_authorized INTEGER DEFAULT 1 CHECK (is_authorized IN (0,1)),
 
 				first_seen TEXT NOT NULL,
 				last_seen TEXT NOT NULL,
-				metadata_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), beacon_interval_tu INTEGER, rsn_cipher TEXT, rsn_akm TEXT, phy_capabilities TEXT, supports_11k INTEGER DEFAULT 0, supports_11v INTEGER DEFAULT 0, supports_11r INTEGER DEFAULT 0, bss_load_json TEXT, vendor_ies_json TEXT,
+				metadata_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), beacon_interval_tu INTEGER, rsn_cipher TEXT, rsn_akm TEXT, phy_capabilities TEXT, supports_11k INTEGER DEFAULT 0 CHECK (supports_11k IN (0,1)), supports_11v INTEGER DEFAULT 0 CHECK (supports_11v IN (0,1)), supports_11r INTEGER DEFAULT 0 CHECK (supports_11r IN (0,1)), bss_load_json TEXT, vendor_ies_json TEXT,
 
 				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE SET NULL,
 				FOREIGN KEY (ssid_id) REFERENCES wifi_networks(id) ON DELETE SET NULL
@@ -1521,7 +1522,7 @@ CREATE TABLE wifi_clients (
 				pnl_json TEXT,
 				first_seen TEXT NOT NULL,
 				last_seen TEXT NOT NULL,
-				anonymized INTEGER NOT NULL DEFAULT 0
+				anonymized INTEGER NOT NULL DEFAULT 0 CHECK (anonymized IN (0,1))
 			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: wifi_deauths
@@ -1540,7 +1541,7 @@ CREATE TABLE wifi_deauths (
 CREATE TABLE wifi_networks (
 				id TEXT PRIMARY KEY,
 				ssid TEXT NOT NULL,
-				is_hidden INTEGER DEFAULT 0,
+				is_hidden INTEGER DEFAULT 0 CHECK (is_hidden IN (0,1)),
 				security_type TEXT,
 				authorization_status TEXT DEFAULT 'unknown',
 				first_seen TEXT NOT NULL,
