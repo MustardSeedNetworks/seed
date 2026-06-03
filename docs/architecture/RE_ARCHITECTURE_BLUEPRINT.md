@@ -176,6 +176,16 @@ seed/
 
 **Package migration map (current → target):**
 
+> **SUPERSEDED (Phase 3 reconcile, 2026-06).** The `internal/modules/*` +
+> `internal/adapters/*` hexagon rings below were **abandoned**. The backend is
+> **capability-first**: flat `internal/<feature>` packages (e.g. `internal/harvest`,
+> `internal/reporting`, `internal/discovery`), with ports applied as a technique at
+> the I/O seam (e.g. `internal/reporting/store`) and `depguard` enforcing direction.
+> This table is kept only as a record of the original plan. Concretely:
+> `internal/services/discovery` relocated to **`internal/discovery`** (Phase 6 S3,
+> #1489), *not* `internal/modules/shell/*`; `internal/harvest` stayed flat (not
+> `internal/modules/harvest`). Treat the rows below as historical, not the target.
+
 | Current | → Target |
 |---|---|
 | `internal/canopy/{,channel,survey,wifi,data}` | `internal/modules/canopy/…` |
