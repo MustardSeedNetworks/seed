@@ -265,27 +265,35 @@ func (s *Server) handleIperfClientStatus(w http.ResponseWriter, r *http.Request)
 	}
 
 	if lastResult := s.iperfManager().GetLastResult(); lastResult != nil {
-		resp.Last = &IperfResultResponse{
-			Bandwidth:         lastResult.Bandwidth,
-			Transfer:          lastResult.Transfer,
-			Retransmits:       lastResult.Retransmits,
-			Jitter:            lastResult.Jitter,
-			LostPackets:       lastResult.LostPackets,
-			LostPercent:       lastResult.LostPercent,
-			Protocol:          lastResult.Protocol,
-			Direction:         lastResult.Direction,
-			Duration:          lastResult.Duration,
-			Server:            lastResult.Server,
-			Port:              lastResult.Port,
-			Timestamp:         lastResult.Timestamp.Format(time.RFC3339),
-			DownloadBandwidth: lastResult.DownloadBandwidth,
-			UploadBandwidth:   lastResult.UploadBandwidth,
-			DownloadTransfer:  lastResult.DownloadTransfer,
-			UploadTransfer:    lastResult.UploadTransfer,
-		}
+		last := toIperfResultResponse(lastResult)
+		resp.Last = &last
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, resp)
+}
+
+// toIperfResultResponse maps an iperf.Result to the API wire shape. Shared by
+// the status handler and the iperf job kind so the result shape stays identical
+// across both paths.
+func toIperfResultResponse(r *iperf.Result) IperfResultResponse {
+	return IperfResultResponse{
+		Bandwidth:         r.Bandwidth,
+		Transfer:          r.Transfer,
+		Retransmits:       r.Retransmits,
+		Jitter:            r.Jitter,
+		LostPackets:       r.LostPackets,
+		LostPercent:       r.LostPercent,
+		Protocol:          r.Protocol,
+		Direction:         r.Direction,
+		Duration:          r.Duration,
+		Server:            r.Server,
+		Port:              r.Port,
+		Timestamp:         r.Timestamp.Format(time.RFC3339),
+		DownloadBandwidth: r.DownloadBandwidth,
+		UploadBandwidth:   r.UploadBandwidth,
+		DownloadTransfer:  r.DownloadTransfer,
+		UploadTransfer:    r.UploadTransfer,
+	}
 }
 
 // handleIperfServer starts or stops the iperf3 server.

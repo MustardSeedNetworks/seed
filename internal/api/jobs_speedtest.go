@@ -10,6 +10,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/diagnostics/iperf"
 	"github.com/krisarmstrong/seed/internal/diagnostics/speedtest"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/platform/jobs"
@@ -76,6 +77,7 @@ func newSpeedtestHandler(newTester func() speedTester) jobs.Handler {
 // registerJobKinds registers the built-in job kinds on the runner at startup.
 func (s *Server) registerJobKinds() {
 	s.registerSpeedtestKind(func() speedTester { return speedtest.NewTester() })
+	s.registerIperfKind(func() iperfClient { return iperf.NewManager() })
 }
 
 // registerSpeedtestKind registers the speedtest kind with an injectable tester
