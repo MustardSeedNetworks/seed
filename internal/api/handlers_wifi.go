@@ -912,15 +912,22 @@ func (s *Server) handleWiFiDiscoveryScan(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	resp := WiFiDiscoveryScanResponse{
+	resp := toWiFiDiscoveryScanResponse(result)
+
+	sendJSONResponse(w, logger, http.StatusOK, resp)
+}
+
+// toWiFiDiscoveryScanResponse maps a Wi-Fi scan result to the API wire shape.
+// Shared by the scan handler and the wifi-discovery-scan job kind so both paths
+// produce an identical response.
+func toWiFiDiscoveryScanResponse(result *discovery.WiFiScanResult) WiFiDiscoveryScanResponse {
+	return WiFiDiscoveryScanResponse{
 		Networks:    toWiFiNetworks(result.Networks),
 		APs:         toWiFiAccessPoints(result.APs),
 		Utilization: toChannelUtilizations(result.Utilization),
 		ScanTime:    result.ScanTime.Format("2006-01-02T15:04:05Z07:00"),
 		Interface:   result.Interface,
 	}
-
-	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
 // handleWiFiDiscoveryNetworks returns discovered WiFi networks.
