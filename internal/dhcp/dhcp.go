@@ -1,8 +1,9 @@
 package dhcp
 
 //
-// The Monitor uses gopacket/pcap for real-time DHCP packet capture to measure
-// transaction timing (DISCOVER→OFFER→REQUEST→ACK). Requires root/CAP_NET_RAW.
+// The Monitor uses the capture port (internal/capture) for real-time DHCP packet
+// capture to measure transaction timing (DISCOVER→OFFER→REQUEST→ACK). The
+// libpcap-backed adapter requires root/CAP_NET_RAW; wire it via WithCapture.
 
 import (
 	"bufio"
@@ -20,8 +21,8 @@ import (
 
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
-	"github.com/gopacket/gopacket/pcap"
 
+	"github.com/krisarmstrong/seed/internal/capture"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -147,15 +148,18 @@ type Monitor struct {
 	lastTiming    *Timing
 	transactions  map[uint32]*Transaction
 	stopChan      chan struct{}
-	handle        *pcap.Handle
+	opener        capture.Opener
+	handle        capture.Handle
 	cleanupDone   chan struct{} // Signals cleanup goroutine exit (fixes #841)
 }
 
-// NewMonitor creates a new DHCP monitor.
-func NewMonitor(interfaceName string) *Monitor {
+// NewMonitor creates a new DHCP monitor. opts inject optional dependencies such
+// as the live-capture Opener (WithCapture); the default is the CGO-free no-op.
+func NewMonitor(interfaceName string, opts ...Option) *Monitor {
 	return &Monitor{
 		interfaceName: interfaceName,
 		transactions:  make(map[uint32]*Transaction),
+		opener:        resolveCapture(opts...),
 	}
 }
 
@@ -172,7 +176,7 @@ func (m *Monitor) Start() error {
 	// Open pcap handle on the interface
 	// Snapshot length of pcapSnapshotLen bytes is enough for DHCP packets
 	// Timeout of pcapTimeout for packet batching
-	handle, err := pcap.OpenLive(m.interfaceName, pcapSnapshotLen, true, pcapTimeout)
+	handle, err := m.opener.OpenLive(m.interfaceName, pcapSnapshotLen, true, pcapTimeout)
 	if err != nil {
 		return err
 	}
@@ -202,7 +206,7 @@ func (m *Monitor) Start() error {
 // capturePackets runs the packet capture loop. stopChan is passed as a
 // parameter rather than read from m.stopChan so Stop's nil-assignment doesn't
 // race against this goroutine.
-func (m *Monitor) capturePackets(handle *pcap.Handle, linkType layers.LinkType, stopChan <-chan struct{}) {
+func (m *Monitor) capturePackets(handle capture.Handle, linkType layers.LinkType, stopChan <-chan struct{}) {
 	if handle == nil {
 		return
 	}

@@ -10,8 +10,8 @@ import (
 
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
-	"github.com/gopacket/gopacket/pcap"
 
+	"github.com/krisarmstrong/seed/internal/capture"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -53,7 +53,8 @@ type RogueDetector struct {
 	mu              sync.RWMutex
 	config          *RogueDetectorConfig
 	running         bool
-	handle          *pcap.Handle
+	opener          capture.Opener
+	handle          capture.Handle
 	cancel          context.CancelFunc
 	detectedServers map[string]*RogueServer // key is IP address
 	knownServerSet  map[string]bool         // for fast lookup
@@ -61,7 +62,9 @@ type RogueDetector struct {
 
 // NewRogueDetector creates a new rogue DHCP server detector.
 // The Interface field in config must be set - no hardcoded defaults are used (#572).
-func NewRogueDetector(config *RogueDetectorConfig) *RogueDetector {
+// opts inject optional dependencies such as the live-capture Opener (WithCapture);
+// the default is the CGO-free no-op.
+func NewRogueDetector(config *RogueDetectorConfig, opts ...Option) *RogueDetector {
 	if config == nil {
 		config = &RogueDetectorConfig{
 			Interface:        "", // Must be set by caller - no hardcoded defaults
@@ -78,6 +81,7 @@ func NewRogueDetector(config *RogueDetectorConfig) *RogueDetector {
 
 	return &RogueDetector{
 		config:          config,
+		opener:          resolveCapture(opts...),
 		detectedServers: make(map[string]*RogueServer),
 		knownServerSet:  knownSet,
 	}
@@ -101,7 +105,7 @@ func (rd *RogueDetector) startLocked() error {
 	// Use snapshot length of roguePcapSnapshotLen bytes (enough for DHCP packets)
 	// Set promiscuous mode to false (we only need broadcast packets)
 	// Set timeout to roguePcapTimeout for responsive shutdown
-	handle, err := pcap.OpenLive(rd.config.Interface, roguePcapSnapshotLen, false, roguePcapTimeout)
+	handle, err := rd.opener.OpenLive(rd.config.Interface, roguePcapSnapshotLen, false, roguePcapTimeout)
 	if err != nil {
 		return fmt.Errorf("failed to open pcap: %w (requires CAP_NET_RAW or root)", err)
 	}
@@ -169,7 +173,7 @@ func (rd *RogueDetector) IsRunning() bool {
 }
 
 // capturePackets is the main packet capture loop.
-func (rd *RogueDetector) capturePackets(ctx context.Context, handle *pcap.Handle, linkType layers.LinkType) {
+func (rd *RogueDetector) capturePackets(ctx context.Context, handle capture.Handle, linkType layers.LinkType) {
 	// Ensure cleanup happens if capturePackets exits unexpectedly (fixes #831)
 	defer func() {
 		rd.mu.Lock()

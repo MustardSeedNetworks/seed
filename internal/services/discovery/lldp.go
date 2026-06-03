@@ -2,14 +2,14 @@ package discovery
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"sync"
 	"time"
 
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
-	"github.com/gopacket/gopacket/pcap"
+
+	"github.com/krisarmstrong/seed/internal/capture"
 )
 
 // pcapSnapshotLengthLLDP is the maximum number of bytes to capture from each packet.
@@ -36,7 +36,8 @@ type LLDPNeighbor struct {
 // LLDPCapture handles LLDP frame capture on an interface.
 type LLDPCapture struct {
 	interfaceName string
-	handle        *pcap.Handle
+	opener        capture.Opener
+	handle        capture.Handle
 	neighbors     map[string]*LLDPNeighbor // keyed by ChassisID+PortID
 	mu            sync.RWMutex
 	ctx           context.Context
@@ -44,11 +45,13 @@ type LLDPCapture struct {
 	started       bool
 }
 
-// NewLLDPCapture creates a new LLDP capture instance.
+// NewLLDPCapture creates a new LLDP capture instance bound to the given capture
+// Opener (the libpcap adapter in production, a no-op under CGO_ENABLED=0).
 // Fixes #903: Context is created in Start() to prevent leaks if Start() is never called.
-func NewLLDPCapture(interfaceName string) *LLDPCapture {
+func NewLLDPCapture(opener capture.Opener, interfaceName string) *LLDPCapture {
 	return &LLDPCapture{
 		interfaceName: interfaceName,
+		opener:        opener,
 		neighbors:     make(map[string]*LLDPNeighbor),
 	}
 }
@@ -63,18 +66,13 @@ func (c *LLDPCapture) Start() error {
 		return nil
 	}
 
-	// Open capture handle
-	handle, err := pcap.OpenLive(c.interfaceName, pcapSnapshotLengthLLDP, true, pcap.BlockForever)
+	// LLDP frames carry EtherType 0x88cc.
+	handle, linkType, err := openProtocolCapture(
+		c.opener, c.interfaceName, pcapSnapshotLengthLLDP, "ether proto 0x88cc",
+	)
 	if err != nil {
 		c.mu.Unlock()
-		return fmt.Errorf("failed to open capture: %w", err)
-	}
-
-	// Set BPF filter for LLDP (EtherType 0x88cc)
-	if filterErr := handle.SetBPFFilter("ether proto 0x88cc"); filterErr != nil {
-		handle.Close()
-		c.mu.Unlock()
-		return fmt.Errorf("failed to set BPF filter: %w", filterErr)
+		return err
 	}
 
 	c.handle = handle
@@ -83,7 +81,6 @@ func (c *LLDPCapture) Start() error {
 	c.ctx, c.cancel = context.WithCancel(context.Background())
 	c.mu.Unlock()
 
-	linkType := handle.LinkType()
 	go c.captureLoop(c.ctx, handle, linkType)
 	return nil
 }
@@ -122,7 +119,7 @@ func (c *LLDPCapture) GetNeighbors() []*LLDPNeighbor {
 }
 
 // captureLoop continuously captures and processes LLDP frames.
-func (c *LLDPCapture) captureLoop(ctx context.Context, handle *pcap.Handle, linkType layers.LinkType) {
+func (c *LLDPCapture) captureLoop(ctx context.Context, handle capture.Handle, linkType layers.LinkType) {
 	if handle == nil {
 		return
 	}

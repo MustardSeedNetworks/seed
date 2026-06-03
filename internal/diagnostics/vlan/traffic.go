@@ -8,8 +8,8 @@ import (
 
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
-	"github.com/gopacket/gopacket/pcap"
 
+	"github.com/krisarmstrong/seed/internal/capture"
 	"github.com/krisarmstrong/seed/internal/logging"
 )
 
@@ -31,7 +31,8 @@ type Traffic struct {
 // TrafficMonitor captures and tracks 802.1Q VLAN-tagged traffic.
 type TrafficMonitor struct {
 	interfaceName string
-	handle        *pcap.Handle
+	opener        capture.Opener
+	handle        capture.Handle
 	stats         map[int]*Traffic // keyed by VLAN ID
 	mu            sync.RWMutex
 	ctx           context.Context
@@ -39,11 +40,14 @@ type TrafficMonitor struct {
 	started       bool
 }
 
-// NewTrafficMonitor creates a new VLAN traffic monitor.
+// NewTrafficMonitor creates a new VLAN traffic monitor. opts inject optional
+// dependencies such as the live-capture Opener (WithCapture); the default is the
+// CGO-free no-op.
 // Fixes #916: Context is created in Start() to prevent leaks if Start() is never called.
-func NewTrafficMonitor(interfaceName string) *TrafficMonitor {
+func NewTrafficMonitor(interfaceName string, opts ...Option) *TrafficMonitor {
 	return &TrafficMonitor{
 		interfaceName: interfaceName,
+		opener:        resolveCapture(opts...),
 		stats:         make(map[int]*Traffic),
 	}
 }
@@ -57,7 +61,7 @@ func (m *TrafficMonitor) Start() error {
 	}
 
 	// Open capture handle
-	handle, err := pcap.OpenLive(m.interfaceName, pcapSnapshotLen, true, pcap.BlockForever)
+	handle, err := m.opener.OpenLive(m.interfaceName, pcapSnapshotLen, true, capture.BlockForever)
 	if err != nil {
 		m.mu.Unlock()
 		return fmt.Errorf("failed to open capture: %w", err)
@@ -152,7 +156,7 @@ func (m *TrafficMonitor) Reset() {
 }
 
 // captureLoop continuously captures and processes VLAN-tagged frames.
-func (m *TrafficMonitor) captureLoop(ctx context.Context, handle *pcap.Handle, linkType layers.LinkType) {
+func (m *TrafficMonitor) captureLoop(ctx context.Context, handle capture.Handle, linkType layers.LinkType) {
 	if handle == nil {
 		return
 	}

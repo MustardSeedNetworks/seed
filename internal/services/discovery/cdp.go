@@ -6,13 +6,13 @@ package discovery
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
-	"github.com/gopacket/gopacket/pcap"
+
+	"github.com/krisarmstrong/seed/internal/capture"
 )
 
 // pcapSnapshotLength is the maximum number of bytes to capture from each packet.
@@ -38,7 +38,8 @@ type CDPNeighbor struct {
 // CDPCapture handles CDP frame capture on an interface.
 type CDPCapture struct {
 	interfaceName string
-	handle        *pcap.Handle
+	opener        capture.Opener
+	handle        capture.Handle
 	neighbors     map[string]*CDPNeighbor // keyed by DeviceID+PortID
 	mu            sync.RWMutex
 	ctx           context.Context
@@ -46,11 +47,13 @@ type CDPCapture struct {
 	started       bool
 }
 
-// NewCDPCapture creates a new CDP capture instance.
+// NewCDPCapture creates a new CDP capture instance bound to the given capture
+// Opener (the libpcap adapter in production, a no-op under CGO_ENABLED=0).
 // Fixes #903: Context is created in Start() to prevent leaks if Start() is never called.
-func NewCDPCapture(interfaceName string) *CDPCapture {
+func NewCDPCapture(opener capture.Opener, interfaceName string) *CDPCapture {
 	return &CDPCapture{
 		interfaceName: interfaceName,
+		opener:        opener,
 		neighbors:     make(map[string]*CDPNeighbor),
 	}
 }
@@ -65,18 +68,13 @@ func (c *CDPCapture) Start() error {
 		return nil
 	}
 
-	// Open capture handle
-	handle, err := pcap.OpenLive(c.interfaceName, pcapSnapshotLength, true, pcap.BlockForever)
+	// CDP frames are sent to the well-known dst MAC 01:00:0c:cc:cc:cc.
+	handle, linkType, err := openProtocolCapture(
+		c.opener, c.interfaceName, pcapSnapshotLength, "ether dst 01:00:0c:cc:cc:cc",
+	)
 	if err != nil {
 		c.mu.Unlock()
-		return fmt.Errorf("failed to open capture: %w", err)
-	}
-
-	// Set BPF filter for CDP (dst MAC 01:00:0c:cc:cc:cc)
-	if filterErr := handle.SetBPFFilter("ether dst 01:00:0c:cc:cc:cc"); filterErr != nil {
-		handle.Close()
-		c.mu.Unlock()
-		return fmt.Errorf("failed to set BPF filter: %w", filterErr)
+		return err
 	}
 
 	c.handle = handle
@@ -85,7 +83,6 @@ func (c *CDPCapture) Start() error {
 	c.ctx, c.cancel = context.WithCancel(context.Background())
 	c.mu.Unlock()
 
-	linkType := handle.LinkType()
 	go c.captureLoop(c.ctx, handle, linkType)
 	return nil
 }
@@ -124,7 +121,7 @@ func (c *CDPCapture) GetNeighbors() []*CDPNeighbor {
 }
 
 // captureLoop continuously captures and processes CDP frames.
-func (c *CDPCapture) captureLoop(ctx context.Context, handle *pcap.Handle, linkType layers.LinkType) {
+func (c *CDPCapture) captureLoop(ctx context.Context, handle capture.Handle, linkType layers.LinkType) {
 	if handle == nil {
 		return
 	}

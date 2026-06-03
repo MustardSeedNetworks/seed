@@ -63,7 +63,12 @@ type ServiceStatus struct {
 // NewService creates a new unified discovery service.
 // If profiler is nil, a new DeviceProfiler is created internally.
 // If profiler is provided, it will be shared (e.g., with Pipeline).
-func NewService(cfg *config.Config, interfaceName string, profiler *DeviceProfiler) *Service {
+func NewService(
+	cfg *config.Config,
+	interfaceName string,
+	profiler *DeviceProfiler,
+	opts ...Option,
+) *Service {
 	if profiler == nil {
 		profiler = NewDeviceProfiler(DefaultProfilerConfig(), &cfg.SNMP)
 	}
@@ -74,6 +79,7 @@ func NewService(cfg *config.Config, interfaceName string, profiler *DeviceProfil
 			interfaceName,
 			cfg.NetworkDiscovery.OUIFilePath,
 			cfg.NetworkDiscovery.OUIMaxAge,
+			opts...,
 		),
 		profiler: profiler,
 		metrics:  NewMetrics(),
