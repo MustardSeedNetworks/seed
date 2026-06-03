@@ -159,6 +159,7 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 		s.services.RealTime.EventBus, logging.GetLogger(), jobs.Config{Retention: jobsRetention},
 	)
 	s.services.RealTime.JobIdempotency = newJobIdempotencyCache(jobIdempotencyCapacity)
+	s.registerJobKinds()
 
 	// Wire up database persistence for logs if database is available
 	if db != nil {

@@ -166,6 +166,17 @@ func (t *Tester) setCurrentSpeeds(download, upload float64) {
 	t.status.CurrentUpload = upload
 }
 
+// abortIfCancelled returns ctx.Err() and resets status to idle if ctx is done,
+// so a cancelled run leaves the tester in a clean state. It is the phase-boundary
+// cancellation check used throughout RunTest.
+func (t *Tester) abortIfCancelled(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		t.setStatus("idle", 0)
+		return err
+	}
+	return nil
+}
+
 // findTestServer discovers and selects the best speedtest server.
 func (t *Tester) findTestServer() (*speedtest.Server, error) {
 	speedtestClient := speedtest.New()
@@ -269,8 +280,16 @@ func (t *Tester) buildTestResult(server *speedtest.Server, startTime time.Time) 
 	}
 }
 
-// RunTest performs a complete speedtest.
-func (t *Tester) RunTest(_ context.Context) (*Result, error) {
+// RunTest performs a complete speedtest. It honors ctx at every phase boundary:
+// if ctx is cancelled (or its deadline passes), RunTest stops before the next
+// phase and returns ctx.Err(), rather than running the full ~minute test to
+// completion. The underlying library calls are not themselves interruptible, so
+// cancellation takes effect at the next boundary, not mid-phase.
+func (t *Tester) RunTest(ctx context.Context) (*Result, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	// Check if already running
 	t.mu.RLock()
 	if t.status.Running {
@@ -285,6 +304,9 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 	startTime := time.Now()
 
 	// Find servers
+	if cerr := t.abortIfCancelled(ctx); cerr != nil {
+		return nil, cerr
+	}
 	t.setStatus("finding_server", progressFindingServer)
 	server, err := t.findTestServer()
 	if err != nil {
@@ -293,6 +315,9 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 	}
 
 	// Test latency
+	if cerr := t.abortIfCancelled(ctx); cerr != nil {
+		return nil, cerr
+	}
 	t.setStatus("testing_latency", progressTestingLatency)
 	err = server.PingTest(nil)
 	if err != nil {
@@ -301,6 +326,9 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 	}
 
 	// Test download with live speed updates
+	if cerr := t.abortIfCancelled(ctx); cerr != nil {
+		return nil, cerr
+	}
 	err = t.runDownloadTest(server)
 	if err != nil {
 		t.setStatus("idle", 0)
@@ -311,6 +339,9 @@ func (t *Tester) RunTest(_ context.Context) (*Result, error) {
 	finalDownload := server.DLSpeed.Mbps()
 
 	// Test upload with live speed updates
+	if cerr := t.abortIfCancelled(ctx); cerr != nil {
+		return nil, cerr
+	}
 	err = t.runUploadTest(server, finalDownload)
 	if err != nil {
 		t.setStatus("idle", 0)
