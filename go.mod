@@ -56,6 +56,7 @@ require (
 	github.com/mdlayher/genetlink v1.4.0 // indirect
 	github.com/mdlayher/netlink v1.11.2 // indirect
 	github.com/mdlayher/socket v0.6.0 // indirect
+	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/pb33f/ordered-map/v2 v2.3.1 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
@@ -63,6 +64,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
+	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/shoenig/go-m1cpu v0.2.1 // indirect
 	github.com/shoenig/test v1.12.2 // indirect
 	github.com/test-go/testify v1.1.4 // indirect
@@ -72,6 +74,7 @@ require (
 	github.com/vishvananda/netns v0.0.5 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.2 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
@@ -91,4 +94,5 @@ require (
 	github.com/go-webauthn/webauthn v0.17.4
 	github.com/invopop/jsonschema v0.14.0
 	github.com/pquerna/otp v1.5.0
+	github.com/pressly/goose/v3 v3.27.1
 )
