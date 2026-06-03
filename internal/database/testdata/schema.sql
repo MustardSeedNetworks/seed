@@ -652,7 +652,7 @@ CREATE TABLE alert_rules (
 				alert_message TEXT NOT NULL,
 				created_at TEXT NOT NULL,
 				updated_at TEXT NOT NULL
-			, window_seconds INTEGER NOT NULL DEFAULT 0, threshold_count INTEGER NOT NULL DEFAULT 1);
+			, window_seconds INTEGER NOT NULL DEFAULT 0, threshold_count INTEGER NOT NULL DEFAULT 1) STRICT;
 
 -- table: alert_suppressions
 CREATE TABLE alert_suppressions (
@@ -661,7 +661,7 @@ CREATE TABLE alert_suppressions (
 					entity_key TEXT NOT NULL,
 					suppress_until TEXT NOT NULL,
 					created_at TEXT NOT NULL
-				);
+				) STRICT;
 
 -- table: alerts
 CREATE TABLE alerts (
@@ -680,7 +680,7 @@ CREATE TABLE alerts (
 				created_at TEXT NOT NULL,
 				metadata_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
 				FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE SET NULL
-			);
+			) STRICT;
 
 -- table: api_tokens
 CREATE TABLE "api_tokens" (
@@ -694,7 +694,7 @@ CREATE TABLE "api_tokens" (
 				revoked_at      TEXT, scope TEXT
 			    CHECK (scope IS NULL OR scope IN ('admin','operator','viewer')),
 				FOREIGN KEY (owner_username) REFERENCES users(username) ON DELETE CASCADE ON UPDATE CASCADE
-			);
+			) STRICT;
 
 -- table: audit_log
 CREATE TABLE audit_log (
@@ -708,7 +708,7 @@ CREATE TABLE audit_log (
 				ip_address TEXT,
 				user_agent TEXT,
 				timestamp TEXT NOT NULL
-			);
+			) STRICT;
 
 -- table: bgp_sessions
 CREATE TABLE bgp_sessions (
@@ -726,7 +726,7 @@ CREATE TABLE bgp_sessions (
 				first_seen TEXT NOT NULL,
 				last_seen TEXT NOT NULL, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
 				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE SET NULL
-			);
+			) STRICT;
 
 -- table: bluetooth_devices
 CREATE TABLE bluetooth_devices (
@@ -755,7 +755,7 @@ CREATE TABLE bluetooth_devices (
 				metadata_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
 
 				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE SET NULL
-			);
+			) STRICT;
 
 -- table: bluetooth_scan_history
 CREATE TABLE bluetooth_scan_history (
@@ -767,7 +767,7 @@ CREATE TABLE bluetooth_scan_history (
 				ble_count INTEGER DEFAULT 0,
 				scan_duration_ms INTEGER,
 				scan_time TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: channel_utilization
 CREATE TABLE channel_utilization (
@@ -786,7 +786,7 @@ CREATE TABLE channel_utilization (
 				recorded_at TEXT NOT NULL, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
 
 				UNIQUE(channel, band, recorded_at)
-			);
+			) STRICT;
 
 -- table: clients
 CREATE TABLE clients (
@@ -797,7 +797,7 @@ CREATE TABLE clients (
 				default_retention_overrides_json TEXT,
 				created_at TEXT NOT NULL,
 				updated_at TEXT NOT NULL
-			);
+			) STRICT;
 
 -- table: device_credentials
 CREATE TABLE device_credentials (
@@ -811,7 +811,7 @@ CREATE TABLE device_credentials (
 				snmp_v3_priv_proto TEXT,
 				created_at TEXT NOT NULL,
 				updated_at TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: device_interfaces
 CREATE TABLE device_interfaces (
@@ -829,7 +829,7 @@ CREATE TABLE device_interfaces (
 				oper_status TEXT,
 				collected_at TEXT NOT NULL,
 				FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
-			);
+			) STRICT;
 
 -- table: device_ports
 CREATE TABLE device_ports (
@@ -843,7 +843,7 @@ CREATE TABLE device_ports (
 				version TEXT,
 				scanned_at TEXT NOT NULL,
 				FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
-			);
+			) STRICT;
 
 -- table: device_vulnerabilities
 CREATE TABLE device_vulnerabilities (
@@ -861,7 +861,7 @@ CREATE TABLE device_vulnerabilities (
 				resolved_at TEXT,
 				notes TEXT,
 				FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
-			);
+			) STRICT;
 
 -- table: devices
 CREATE TABLE devices (
@@ -877,7 +877,7 @@ CREATE TABLE devices (
 				is_active INTEGER DEFAULT 1,
 				ports_json TEXT,
 				metadata_json TEXT
-			);
+			) STRICT;
 
 -- table: discovered_devices
 CREATE TABLE discovered_devices (
@@ -897,7 +897,7 @@ CREATE TABLE discovered_devices (
 				metadata_json TEXT,
 				created_at TEXT DEFAULT CURRENT_TIMESTAMP,
 				updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: discovery_history
 CREATE TABLE discovery_history (
@@ -908,7 +908,7 @@ CREATE TABLE discovery_history (
 				recorded_at TEXT NOT NULL, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
 
 				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE CASCADE
-			);
+			) STRICT;
 
 -- table: discovery_interfaces
 CREATE TABLE discovery_interfaces (
@@ -950,7 +950,7 @@ CREATE TABLE discovery_interfaces (
 
 				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE CASCADE,
 				UNIQUE(device_id, mac_address)
-			);
+			) STRICT;
 
 -- table: dns_results
 CREATE TABLE dns_results (
@@ -963,7 +963,7 @@ CREATE TABLE dns_results (
 				status TEXT NOT NULL,
 				error_message TEXT,
 				timestamp TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: gateway_results
 CREATE TABLE gateway_results (
@@ -974,7 +974,7 @@ CREATE TABLE gateway_results (
 				packet_loss REAL,
 				reachable INTEGER,
 				timestamp TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: health_check_results
 CREATE TABLE health_check_results (
@@ -988,7 +988,7 @@ CREATE TABLE health_check_results (
 				error_message TEXT,
 				metadata_json TEXT,
 				recorded_at TEXT NOT NULL
-			);
+			) STRICT;
 
 -- table: health_check_rollups_daily
 CREATE TABLE health_check_rollups_daily (
@@ -1003,7 +1003,7 @@ CREATE TABLE health_check_rollups_daily (
 				max_latency_ms REAL,
 				p95_latency_ms REAL,
 				availability_percent REAL
-			);
+			) STRICT;
 
 -- table: health_check_rollups_hourly
 CREATE TABLE health_check_rollups_hourly (
@@ -1017,7 +1017,7 @@ CREATE TABLE health_check_rollups_hourly (
 				min_latency_ms REAL,
 				max_latency_ms REAL,
 				p95_latency_ms REAL
-			);
+			) STRICT;
 
 -- table: listener_events
 CREATE TABLE listener_events (
@@ -1031,7 +1031,7 @@ CREATE TABLE listener_events (
 				observed_at TEXT NOT NULL,
 				payload_json TEXT NOT NULL,
 				ingested_at TEXT NOT NULL
-			);
+			) STRICT;
 
 -- table: logs
 CREATE TABLE logs (
@@ -1046,7 +1046,7 @@ CREATE TABLE logs (
 				duration_ms INTEGER,
 				metadata_json TEXT,
 				stack TEXT
-			);
+			) STRICT;
 
 -- table: metrics
 CREATE TABLE metrics (
@@ -1057,7 +1057,7 @@ CREATE TABLE metrics (
 				unit TEXT,
 				timestamp TEXT NOT NULL,
 				metadata_json TEXT
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), target_kind TEXT NOT NULL DEFAULT 'interface', target_id TEXT NOT NULL DEFAULT '');
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), target_kind TEXT NOT NULL DEFAULT 'interface', target_id TEXT NOT NULL DEFAULT '') STRICT;
 
 -- table: metrics_daily
 CREATE TABLE metrics_daily (
@@ -1071,7 +1071,7 @@ CREATE TABLE metrics_daily (
 				max_value REAL,
 				p95_value REAL, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), target_kind TEXT NOT NULL DEFAULT 'interface', target_id TEXT NOT NULL DEFAULT '',
 				UNIQUE(metric_type, interface_name, day_bucket)
-			);
+			) STRICT;
 
 -- table: metrics_hourly
 CREATE TABLE metrics_hourly (
@@ -1085,7 +1085,7 @@ CREATE TABLE metrics_hourly (
 				max_value REAL,
 				p95_value REAL, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), target_kind TEXT NOT NULL DEFAULT 'interface', target_id TEXT NOT NULL DEFAULT '',
 				UNIQUE(metric_type, interface_name, hour_bucket)
-			);
+			) STRICT;
 
 -- table: mib_oid_names
 CREATE TABLE mib_oid_names (
@@ -1094,7 +1094,7 @@ CREATE TABLE mib_oid_names (
 				full_path TEXT,                  -- Full descriptive path (optional)
 				mib_name TEXT,                   -- Source MIB name (e.g., "SNMPv2-MIB")
 				created_at TEXT DEFAULT (datetime('now'))
-			);
+			) STRICT;
 
 -- table: mib_sources
 CREATE TABLE mib_sources (
@@ -1103,7 +1103,7 @@ CREATE TABLE mib_sources (
 				vendor TEXT,
 				rfc_reference TEXT,
 				loaded_at TEXT DEFAULT (datetime('now'))
-			);
+			) STRICT;
 
 -- table: microburst_events
 CREATE TABLE microburst_events (
@@ -1117,7 +1117,7 @@ CREATE TABLE microburst_events (
 				sampling_mode TEXT NOT NULL,
 				link_speed_mbps INTEGER, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
 				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE SET NULL
-			);
+			) STRICT;
 
 -- table: network_problems
 CREATE TABLE network_problems (
@@ -1136,7 +1136,7 @@ CREATE TABLE network_problems (
 
 				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE CASCADE,
 				FOREIGN KEY (interface_id) REFERENCES discovery_interfaces(id) ON DELETE CASCADE
-			);
+			) STRICT;
 
 -- table: oui_vendors
 CREATE TABLE oui_vendors (
@@ -1146,7 +1146,7 @@ CREATE TABLE oui_vendors (
 				is_private INTEGER DEFAULT 0,
 				device_category TEXT,
 				updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-			);
+			) STRICT;
 
 -- table: pipeline_runs
 CREATE TABLE pipeline_runs (
@@ -1159,7 +1159,7 @@ CREATE TABLE pipeline_runs (
 				config_json TEXT,
 				summary_json TEXT,
 				error_message TEXT
-			);
+			) STRICT;
 
 -- table: polling_targets
 CREATE TABLE polling_targets (
@@ -1175,7 +1175,7 @@ CREATE TABLE polling_targets (
 				last_error TEXT,
 				created_at TEXT NOT NULL,
 				updated_at TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), collector_chain TEXT NOT NULL DEFAULT '["sys_info","if_table","lldp","arp","fdb"]');
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), collector_chain TEXT NOT NULL DEFAULT '["sys_info","if_table","lldp","arp","fdb"]') STRICT;
 
 -- table: probe_results
 CREATE TABLE probe_results (
@@ -1189,7 +1189,7 @@ CREATE TABLE probe_results (
 				error TEXT,
 				metadata_json TEXT,
 				FOREIGN KEY (probe_id) REFERENCES probes(id) ON DELETE CASCADE
-			);
+			) STRICT;
 
 -- table: probe_rollups_daily
 CREATE TABLE probe_rollups_daily (
@@ -1205,7 +1205,7 @@ CREATE TABLE probe_rollups_daily (
 				max_latency_ms REAL,
 				p95_latency_ms REAL,
 				UNIQUE(client_id, kind, probe_id, day_bucket)
-			);
+			) STRICT;
 
 -- table: probe_rollups_hourly
 CREATE TABLE probe_rollups_hourly (
@@ -1221,7 +1221,7 @@ CREATE TABLE probe_rollups_hourly (
 				max_latency_ms REAL,
 				p95_latency_ms REAL,
 				UNIQUE(client_id, kind, probe_id, hour_bucket)
-			);
+			) STRICT;
 
 -- table: probes
 CREATE TABLE probes (
@@ -1237,7 +1237,7 @@ CREATE TABLE probes (
 				critical_json TEXT,
 				created_at TEXT NOT NULL,
 				updated_at TEXT NOT NULL
-			);
+			) STRICT;
 
 -- table: profiles
 CREATE TABLE profiles (
@@ -1248,7 +1248,7 @@ CREATE TABLE profiles (
 				is_default INTEGER DEFAULT 0,
 				created_at TEXT NOT NULL,
 				updated_at TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: reports
 CREATE TABLE reports (
@@ -1265,7 +1265,7 @@ CREATE TABLE reports (
 				created_at TEXT NOT NULL,
 				completed_at TEXT,
 				expires_at TEXT
-			);
+			) STRICT;
 
 -- table: scheduled_reports
 CREATE TABLE scheduled_reports (
@@ -1281,14 +1281,14 @@ CREATE TABLE scheduled_reports (
 				next_run TEXT,
 				created_at TEXT NOT NULL,
 				updated_at TEXT NOT NULL
-			);
+			) STRICT;
 
 -- table: settings
 CREATE TABLE settings (
 				key TEXT PRIMARY KEY,
 				value TEXT NOT NULL,
 				updated_at TEXT NOT NULL
-			);
+			) STRICT;
 
 -- table: snmp_observations
 CREATE TABLE snmp_observations (
@@ -1299,7 +1299,7 @@ CREATE TABLE snmp_observations (
 				observed_at TEXT NOT NULL,
 				payload_json TEXT NOT NULL,
 				ingested_at TEXT NOT NULL
-			);
+			) STRICT;
 
 -- table: speedtest_results
 CREATE TABLE speedtest_results (
@@ -1314,7 +1314,7 @@ CREATE TABLE speedtest_results (
 				packet_loss REAL,
 				timestamp TEXT NOT NULL,
 				metadata_json TEXT
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: survey_samples
 CREATE TABLE survey_samples (
@@ -1332,7 +1332,7 @@ CREATE TABLE survey_samples (
 				timestamp TEXT NOT NULL,
 				networks_json TEXT,
 				metadata_json TEXT
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: topology_arp_bindings
 CREATE TABLE topology_arp_bindings (
@@ -1345,7 +1345,7 @@ CREATE TABLE topology_arp_bindings (
 				media_type INTEGER,
 				last_seen TEXT NOT NULL,
 				UNIQUE(source_node_id, if_index, ip_address)
-			);
+			) STRICT;
 
 -- table: topology_interfaces
 CREATE TABLE topology_interfaces (
@@ -1362,7 +1362,7 @@ CREATE TABLE topology_interfaces (
 				speed_bps INTEGER,
 				last_seen TEXT NOT NULL,
 				UNIQUE(node_id, if_index)
-			);
+			) STRICT;
 
 -- table: topology_links
 CREATE TABLE topology_links (
@@ -1380,7 +1380,7 @@ CREATE TABLE topology_links (
 				evidence_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
 				FOREIGN KEY (source_node_id) REFERENCES topology_nodes(id) ON DELETE CASCADE,
 				FOREIGN KEY (target_node_id) REFERENCES topology_nodes(id) ON DELETE CASCADE
-			);
+			) STRICT;
 
 -- table: topology_nodes
 CREATE TABLE topology_nodes (
@@ -1396,7 +1396,7 @@ CREATE TABLE topology_nodes (
 				last_seen TEXT NOT NULL,
 				expires_at TEXT,
 				metadata_json TEXT
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: topology_target_nodes
 CREATE TABLE topology_target_nodes (
@@ -1405,7 +1405,7 @@ CREATE TABLE topology_target_nodes (
 				node_id TEXT NOT NULL REFERENCES topology_nodes(id) ON DELETE CASCADE,
 				last_seen TEXT NOT NULL,
 				PRIMARY KEY (client_id, target_id)
-			);
+			) STRICT;
 
 -- table: users
 CREATE TABLE "users" (
@@ -1427,7 +1427,7 @@ CREATE TABLE "users" (
 				created_at      TEXT    NOT NULL,
 				updated_at      TEXT    NOT NULL,
 				UNIQUE (auth_provider, external_id)
-			);
+			) STRICT;
 
 -- table: voip_calls
 CREATE TABLE voip_calls (
@@ -1446,7 +1446,7 @@ CREATE TABLE voip_calls (
 				packet_loss_pct REAL,
 				avg_latency_ms REAL,
 				direction TEXT
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: webauthn_credentials
 CREATE TABLE webauthn_credentials (
@@ -1461,7 +1461,7 @@ CREATE TABLE webauthn_credentials (
 				created_at TEXT NOT NULL,
 				last_used_at TEXT,
 				FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-			);
+			) STRICT;
 
 -- table: wifi_access_points
 CREATE TABLE wifi_access_points (
@@ -1494,7 +1494,7 @@ CREATE TABLE wifi_access_points (
 
 				FOREIGN KEY (device_id) REFERENCES discovered_devices(id) ON DELETE SET NULL,
 				FOREIGN KEY (ssid_id) REFERENCES wifi_networks(id) ON DELETE SET NULL
-			);
+			) STRICT;
 
 -- table: wifi_associations
 CREATE TABLE wifi_associations (
@@ -1509,7 +1509,7 @@ CREATE TABLE wifi_associations (
 				failure_stage TEXT,
 				duration_ms INTEGER,
 				rsn_negotiation_json TEXT
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: wifi_clients
 CREATE TABLE wifi_clients (
@@ -1522,7 +1522,7 @@ CREATE TABLE wifi_clients (
 				first_seen TEXT NOT NULL,
 				last_seen TEXT NOT NULL,
 				anonymized INTEGER NOT NULL DEFAULT 0
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: wifi_deauths
 CREATE TABLE wifi_deauths (
@@ -1534,7 +1534,7 @@ CREATE TABLE wifi_deauths (
 				reason_code INTEGER NOT NULL,
 				reason_text TEXT,
 				originator TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: wifi_networks
 CREATE TABLE wifi_networks (
@@ -1547,7 +1547,7 @@ CREATE TABLE wifi_networks (
 				last_seen TEXT NOT NULL,
 				metadata_json TEXT, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id),
 				UNIQUE(ssid, security_type)
-			);
+			) STRICT;
 
 -- table: wifi_roams
 CREATE TABLE wifi_roams (
@@ -1562,7 +1562,7 @@ CREATE TABLE wifi_roams (
 				roam_type TEXT,
 				rssi_before INTEGER,
 				rssi_after INTEGER
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
 -- table: wifi_rogues
 CREATE TABLE wifi_rogues (
@@ -1576,5 +1576,5 @@ CREATE TABLE wifi_rogues (
 				evidence_json TEXT,
 				acknowledged_at TEXT,
 				resolved_at TEXT
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id));
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
 
