@@ -265,6 +265,18 @@ CREATE INDEX idx_health_hourly_bucket ON health_check_rollups_hourly(hour_bucket
 CREATE UNIQUE INDEX idx_health_hourly_unique
 				ON health_check_rollups_hourly(check_type, endpoint_name, hour_bucket);
 
+-- index: idx_jobs_completed
+CREATE INDEX idx_jobs_completed ON jobs(completed_at);
+
+-- index: idx_jobs_created
+CREATE INDEX idx_jobs_created ON jobs(created_at);
+
+-- index: idx_jobs_kind
+CREATE INDEX idx_jobs_kind ON jobs(kind);
+
+-- index: idx_jobs_state
+CREATE INDEX idx_jobs_state ON jobs(state);
+
 -- index: idx_listener_events_client_kind
 CREATE INDEX idx_listener_events_client_kind ON listener_events(client_id, kind, observed_at);
 
@@ -1018,6 +1030,20 @@ CREATE TABLE health_check_rollups_hourly (
 				max_latency_ms REAL,
 				p95_latency_ms REAL
 			) STRICT;
+
+-- table: jobs
+CREATE TABLE jobs (
+	id           TEXT NOT NULL PRIMARY KEY,
+	kind         TEXT NOT NULL,
+	state        TEXT NOT NULL DEFAULT 'queued'
+	             CHECK (state IN ('queued','running','succeeded','failed','cancelled')),
+	progress     REAL NOT NULL DEFAULT 0 CHECK (progress >= 0 AND progress <= 1),
+	result_json  TEXT,
+	error        TEXT,
+	created_at   TEXT NOT NULL,
+	updated_at   TEXT NOT NULL,
+	completed_at TEXT
+) STRICT;
 
 -- table: listener_events
 CREATE TABLE listener_events (
