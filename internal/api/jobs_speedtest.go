@@ -81,6 +81,7 @@ func (s *Server) registerJobKinds() {
 	s.registerVulnScanKind(func() vulnScanService {
 		return serverVulnScanService{scanner: s.vulnScanner(), devices: s.deviceDiscovery()}
 	})
+	s.registerEngineScanKind(func() engineScanner { return s.services.Discovery.Engine })
 }
 
 // registerSpeedtestKind registers the speedtest kind with an injectable tester
