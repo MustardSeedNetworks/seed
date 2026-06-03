@@ -552,12 +552,12 @@ linters:
       # reference table mapping port numbers to user-facing protocol names.
       # The repeated strings (ftp/ssh/http/etc.) are protocol identifiers,
       # not refactorable constants.
-      - path: 'internal/services/discovery/profiler_infer\.go'
+      - path: 'internal/discovery/profiler_infer\.go'
         linters: [ goconst ]
       # oui.go is a MAC OUI -> vendor name lookup table. Apple/Dell appear
       # 16-24 times because the IEEE assigns them many prefixes; extracting
       # `const VendorApple` adds noise without improving safety.
-      - path: 'internal/services/discovery/oui\.go'
+      - path: 'internal/discovery/oui\.go'
         linters: [ goconst ]
       # Shared JSON response field-name conventions across all api handlers
       # (status/message/error/interface/available/good). Project uses literal
@@ -567,7 +567,7 @@ linters:
       - path: 'internal/api/'
         text: 'string `(status|message|error|interface|available|good|warning)` has'
         linters: [ goconst ]
-      - path: 'internal/services/discovery/profiler_scan\.go'
+      - path: 'internal/discovery/profiler_scan\.go'
         text: 'string `https?` has'
         linters: [ goconst ]
       # handlers_guest_audit.go uses "status"/"updated" as JSON response

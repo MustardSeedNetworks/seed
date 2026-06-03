@@ -32,8 +32,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/services/discovery"
 )
 
 const (

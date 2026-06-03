@@ -11,8 +11,8 @@ import (
 	"sync"
 
 	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/services/discovery"
 )
 
 // Message represents a broadcast message sent to SSE clients.
