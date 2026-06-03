@@ -68,6 +68,11 @@ jobs:
               - 'go.sum'
               - 'Makefile'
               - 'mk/**'
+              # Embedded migration baseline + its schema-gate golden are Go test
+              # inputs (//go:embed in internal/database); a change here must run
+              # the Go suite even when no .go file moves.
+              - 'internal/database/migrations/**'
+              - 'internal/database/testdata/**'
               - '.github/actions/setup-go/**'
               - '.github/actions/setup-libpcap/**'
             frontend:
