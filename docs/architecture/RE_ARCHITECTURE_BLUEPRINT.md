@@ -538,6 +538,18 @@ Uniform surface: `POST /jobs` (kind + params), `GET /jobs/{id}`, `DELETE /jobs/{
 (cancel), one SSE stream. Collapses ~15 endpoints into one model with consistent
 cancellation, progress, and timeouts.
 
+**Status — implemented in Phase 4 (2026-06-02).** Runner core (`internal/platform/jobs`),
+the HTTP surface (`/api/v1/jobs` + `/api/v1/jobs/events` SSE), and **7 long-op kinds**
+(speedtest, iperf, vuln-scan, engine-scan, bluetooth-scan, wifi-discovery-scan,
+device-scan) are on `main`. Each kind is an additive thin wrapper over the existing
+ctx-aware service behind an interface seam; the legacy run/status endpoints are retained
+until the frontend consumes `/jobs` (Phase 7), at which point they retire. Carve-outs:
+**persistence is in-memory v1** (durable store + transactional outbox → Phase 5);
+**survey stays a session** (not a one-shot job); **pipeline is deferred to Phase 6** —
+it duplicates the discovery `engine` (the canonical DeviceRegistry-as-SSoT orchestrator,
+already the `engine-scan` kind), so engine↔pipeline consolidation folds into the Phase-6
+discovery split rather than being enshrined as a kind. See ADR-0005 for detail.
+
 ---
 
 ## 9. Observability (local-only)
