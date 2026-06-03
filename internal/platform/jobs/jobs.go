@@ -31,8 +31,10 @@
 //   - Retention: terminal jobs are kept in memory until Cleanup removes those
 //     older than the configured retention window (driven by the scheduler).
 //
-// Durability across restarts is the persistence phase's concern; an in-memory
-// store that loses jobs on restart is the correct fail-cleanly v1 (ADR-0005).
+// Durability is optional via Config.Store (Phase 5c): when set, the runner
+// write-throughs each state transition and reads through on a Get miss, and
+// Recover reconciles jobs left in-flight by a previous process at startup. With
+// no store the runner is in-memory only — the correct fail-cleanly v1 (ADR-0005).
 package jobs
 
 import (
@@ -108,6 +110,24 @@ type JobEvent struct {
 // Topic routes the event by the job's new state, e.g. "job.succeeded".
 func (e JobEvent) Topic() string { return Topic(e.Job.State) }
 
+// Store is the durable backing for jobs (ADR-0005, Phase 5c). The Runner
+// write-throughs a snapshot on every state transition and falls back to it on a
+// Get miss, so a job survives a restart. nil disables persistence — the
+// in-memory map stays the source of truth for active jobs (the fail-cleanly v1).
+// Progress ticks are deliberately not persisted (too frequent); only state
+// changes are. Implementations must be safe for concurrent use.
+type Store interface {
+	// Save persists the current snapshot of j (upsert by ID). Best-effort from
+	// the Runner's perspective: a Save error is logged, never fails the job.
+	Save(ctx context.Context, j Job) error
+	// Load returns the persisted job and whether it exists.
+	Load(ctx context.Context, id string) (Job, bool, error)
+	// MarkInterrupted transitions every persisted non-terminal job (queued or
+	// running) to failed — called once at startup via Recover, since a restart's
+	// lost handler goroutines can't resume them. Returns the count transitioned.
+	MarkInterrupted(ctx context.Context) (int, error)
+}
+
 // Handler executes one job of a kind. It receives a context cancelled when the
 // job is cancelled or the runner shuts down, the submit-time params, and a
 // report callback for progress in [0,1]. Its return value becomes Job.Result; a
@@ -115,13 +135,18 @@ func (e JobEvent) Topic() string { return Topic(e.Job.State) }
 // is done.
 type Handler func(ctx context.Context, params any, report func(float64)) (any, error)
 
-// Config tunes a Runner. The zero value is valid: an 8-job cap and zero
-// retention (terminal jobs are eligible for Cleanup immediately).
+// Config tunes a Runner. The zero value is valid: an 8-job cap, zero
+// retention (terminal jobs are eligible for Cleanup immediately), and no
+// persistence.
 type Config struct {
 	// MaxConcurrent caps active (queued or running) jobs. <= 0 uses the default.
 	MaxConcurrent int
 	// Retention is how long a terminal job is kept before Cleanup may remove it.
 	Retention time.Duration
+	// Store, when non-nil, durably backs the runner: snapshots are written
+	// through on each state transition and read on a Get miss. nil keeps the
+	// in-memory-only fail-cleanly behavior.
+	Store Store
 }
 
 // Runner schedules and tracks jobs. The zero value is not usable; call New. A
@@ -129,6 +154,7 @@ type Config struct {
 type Runner struct {
 	bus       *events.Bus
 	logger    *slog.Logger
+	store     Store // nil when persistence is disabled
 	cap       int
 	retention time.Duration
 
@@ -159,6 +185,7 @@ func New(bus *events.Bus, logger *slog.Logger, cfg Config) *Runner {
 	return &Runner{
 		bus:       bus,
 		logger:    logger,
+		store:     cfg.Store,
 		cap:       cfg.MaxConcurrent,
 		retention: cfg.Retention,
 		handlers:  make(map[string]Handler),
@@ -220,19 +247,34 @@ func (r *Runner) Submit(kind string, params any) (string, error) {
 	r.mu.Unlock()
 
 	r.bus.Publish(JobEvent{Job: snap})
+	r.persist(snap)
 	go r.execute(ctx, e, h, params)
 	return id, nil
 }
 
-// Get returns a snapshot of the job and whether it exists.
+// Get returns a snapshot of the job and whether it exists. Active and recently
+// terminal jobs are served from memory; on a miss it falls back to the durable
+// store (if configured), so a job that completed before the last restart, or
+// was evicted by Cleanup but not yet by retention, is still retrievable.
 func (r *Runner) Get(id string) (Job, bool) {
 	r.mu.Lock()
-	defer r.mu.Unlock()
 	e, ok := r.jobs[id]
-	if !ok {
+	if ok {
+		snap := e.job
+		r.mu.Unlock()
+		return snap, true
+	}
+	r.mu.Unlock()
+
+	if r.store == nil {
 		return Job{}, false
 	}
-	return e.job, true
+	j, found, err := r.store.Load(context.Background(), id)
+	if err != nil {
+		r.logger.ErrorContext(context.Background(), "load job from store", "job", id, "err", err)
+		return Job{}, false
+	}
+	return j, found
 }
 
 // Cancel requests cancellation of a job, cancelling its context so a
@@ -349,6 +391,7 @@ func (r *Runner) finish(e *entry, result any, err error) {
 	r.mu.Unlock()
 
 	r.bus.Publish(JobEvent{Job: snap})
+	r.persist(snap)
 }
 
 // transition mutates a job's state under the lock and publishes the new fact.
@@ -359,6 +402,34 @@ func (r *Runner) transition(e *entry, mutate func(*Job)) {
 	r.mu.Unlock()
 
 	r.bus.Publish(JobEvent{Job: snap})
+	r.persist(snap)
+}
+
+// persist write-throughs a snapshot to the durable store, if one is configured.
+// It is best-effort: a store error is logged, never propagated — the in-memory
+// runner stays authoritative for the live job, so a transient persistence
+// failure never stalls or fails execution. Called outside the lock (after the
+// bus publish) so it never extends the critical section.
+func (r *Runner) persist(snap Job) {
+	if r.store == nil {
+		return
+	}
+	if err := r.store.Save(context.Background(), snap); err != nil {
+		r.logger.ErrorContext(context.Background(), "persist job snapshot",
+			"job", snap.ID, "state", snap.State, "err", err)
+	}
+}
+
+// Recover reconciles the durable store with reality at startup: any persisted
+// job still marked queued or running is from a previous process whose handler
+// goroutine is gone, so it can never complete — MarkInterrupted transitions it
+// to failed. It returns the number of jobs reconciled. A no-op (0, nil) when no
+// store is configured. Call once after Register, before serving.
+func (r *Runner) Recover(ctx context.Context) (int, error) {
+	if r.store == nil {
+		return 0, nil
+	}
+	return r.store.MarkInterrupted(ctx)
 }
 
 // safeRun invokes a handler with panic recovery, converting a panic into a
