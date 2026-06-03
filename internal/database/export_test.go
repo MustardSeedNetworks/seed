@@ -2,12 +2,25 @@ package database
 
 import (
 	"context"
+	"io/fs"
+	"strings"
 	"time"
 )
 
-// ExportMigrationsCount returns the count of migrations for testing.
+// ExportMigrationsCount returns the number of embedded goose migrations, for
+// testing. After the Phase-5 collapse this is the count of .sql baselines.
 func ExportMigrationsCount() int {
-	return len(getMigrations())
+	entries, err := fs.ReadDir(migrationsFS, "migrations")
+	if err != nil {
+		return 0
+	}
+	count := 0
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".sql") {
+			count++
+		}
+	}
+	return count
 }
 
 // DeleteAuditLogsOlderThan exports deleteAuditLogsOlderThan for testing.

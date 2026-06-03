@@ -1040,6 +1040,12 @@ CREATE INDEX idx_wifi_rogues_detected ON wifi_rogues(detected_at);
 CREATE INDEX idx_wifi_rogues_severity ON wifi_rogues(severity);
 CREATE INDEX idx_wifi_rogues_status ON wifi_rogues(status);
 
+-- Seed data carried over verbatim from the legacy migrations: a fresh DB must
+-- have the default client so profiles.client_id -> clients(id) (and the
+-- first-run default profile) is satisfiable.
+INSERT OR IGNORE INTO clients (id, name, slug, created_at, updated_at)
+VALUES ('default', 'Default', 'default', datetime('now'), datetime('now'));
+
 -- +goose Down
 DROP TABLE IF EXISTS wifi_rogues;
 DROP TABLE IF EXISTS wifi_roams;
