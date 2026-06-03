@@ -155,11 +155,29 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 	// adapts it. No job kinds are registered yet — they arrive as the real
 	// long-ops are migrated in a later slice; both Close() on shutdown.
 	s.services.RealTime.EventBus = events.New(logging.GetLogger())
+	jobsCfg := jobs.Config{Retention: jobsRetention}
+	if db != nil {
+		// Durable backing (Phase 5c): the runner write-throughs lifecycle
+		// transitions so a job survives a restart. Without a database the runner
+		// stays in-memory only (the fail-cleanly v1).
+		jobsCfg.Store = newDBJobStore(db)
+	}
 	s.services.RealTime.Jobs = jobs.New(
-		s.services.RealTime.EventBus, logging.GetLogger(), jobs.Config{Retention: jobsRetention},
+		s.services.RealTime.EventBus, logging.GetLogger(), jobsCfg,
 	)
 	s.services.RealTime.JobIdempotency = newJobIdempotencyCache(jobIdempotencyCapacity)
 	s.registerJobKinds()
+
+	// Reconcile jobs left in-flight by a previous process: their handler
+	// goroutines died with that process, so they can never complete and are
+	// transitioned to failed. No-op when the runner has no durable store.
+	if db != nil {
+		if n, recErr := s.jobsRunner().Recover(context.Background()); recErr != nil {
+			logging.GetLogger().Warn("job recovery failed", "error", recErr)
+		} else if n > 0 {
+			logging.GetLogger().Info("recovered interrupted jobs from a prior run", "count", n)
+		}
+	}
 
 	// Wire up database persistence for logs if database is available
 	if db != nil {
