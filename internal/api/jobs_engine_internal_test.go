@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/platform/jobs"
-	"github.com/krisarmstrong/seed/internal/services/discovery"
 )
 
 // fakeEngineScanner is a controllable engineScanner for the kind tests: it never

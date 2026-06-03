@@ -13,11 +13,11 @@ import (
 	"github.com/krisarmstrong/seed/internal/config"
 	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/diagnostics/dns"
+	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/mibdb"
 	"github.com/krisarmstrong/seed/internal/platform/events"
 	"github.com/krisarmstrong/seed/internal/platform/jobs"
-	"github.com/krisarmstrong/seed/internal/services/discovery"
 	"github.com/krisarmstrong/seed/internal/wifi/survey"
 )
 

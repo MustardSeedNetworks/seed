@@ -9,9 +9,9 @@ package api
 import (
 	"context"
 
+	"github.com/krisarmstrong/seed/internal/discovery"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/platform/jobs"
-	"github.com/krisarmstrong/seed/internal/services/discovery"
 )
 
 // bluetoothScanJobKind is the registered kind name for a Bluetooth scan.

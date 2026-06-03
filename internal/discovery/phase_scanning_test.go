@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/services/discovery"
+	"github.com/krisarmstrong/seed/internal/discovery"
 )
 
 func TestNewScanningPhase(t *testing.T) {
