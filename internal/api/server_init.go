@@ -109,11 +109,12 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 	// Initialize MIB database for SNMP OID resolution
 	s.initMibDatabase(db)
 
-	// Start data retention cleanup in background (fixes #848)
-	if cfg.Database.RetentionDays > 0 {
-		s.services.Database.RetentionStopCh = make(chan struct{})
-		go s.startDataRetention(cfg.Database.RetentionDays)
-	}
+	// Start the background maintenance loop (fixes #848). db is non-nil here
+	// (the function returns early otherwise), so it always runs: it sweeps jobs
+	// retention every tick (the runner map + jobs table always grow) and applies
+	// the data-retention policy when a positive window is configured.
+	s.services.Database.RetentionStopCh = make(chan struct{})
+	go s.startMaintenance(cfg.Database.RetentionDays)
 }
 
 // initMibDatabase initializes the MIB database and loads built-in OID definitions.

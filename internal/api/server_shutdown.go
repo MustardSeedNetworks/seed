@@ -151,9 +151,11 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-// startDataRetention runs periodic data cleanup based on retention policy (#755).
-// The goroutine respects shutdown signals to avoid leaks (fixes #848).
-func (s *Server) startDataRetention(retentionDays int) {
+// startMaintenance runs the periodic background maintenance loop: jobs retention
+// every tick (ADR-0005, Phase 5c) plus the data-retention policy (#755) when a
+// positive window is configured. The goroutine respects shutdown signals to
+// avoid leaks (fixes #848).
+func (s *Server) startMaintenance(retentionDays int) {
 	// Run cleanup every hour
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
@@ -174,8 +176,20 @@ func (s *Server) startDataRetention(retentionDays int) {
 			logging.GetLogger().Debug("Data retention goroutine shutting down")
 			return
 		case <-ticker.C:
-			if s.db() == nil {
-				return
+			// Jobs retention runs every tick, independent of the data-retention
+			// policy: the in-memory runner map and the durable jobs table both
+			// grow with every completed job (Phase 5c).
+			var jobsRepo *database.JobRepository
+			if s.db() != nil {
+				jobsRepo = s.db().Jobs()
+			}
+			sweepJobs(context.Background(), s.jobsRunner(), jobsRepo,
+				time.Now().UTC().Add(-jobsRetention), logging.GetLogger())
+
+			// Data-retention policy (metrics/alerts/etc.) is only applied when
+			// enabled; a zero window must never be interpreted as "delete all".
+			if retentionDays <= 0 || s.db() == nil {
+				continue
 			}
 			result, err := s.db().RunCleanup(context.Background(), policy)
 			if err != nil {
