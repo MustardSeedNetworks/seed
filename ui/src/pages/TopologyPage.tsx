@@ -47,9 +47,9 @@ function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
   const { nodes, loading, error, refresh } = useTopologyNodes();
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/30">
-      <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
-        <span className="text-xs font-medium uppercase tracking-wide text-zinc-400">
+    <div className="rounded-lg border border-surface-border bg-surface-raised">
+      <div className="flex items-center justify-between border-b border-surface-border px-4 py-2">
+        <span className="text-xs font-medium uppercase tracking-wide text-text-muted">
           {loading ? 'Loading…' : `${nodes.length} node${nodes.length === 1 ? '' : 's'}`}
         </span>
         <button
@@ -57,34 +57,36 @@ function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
           onClick={(): void => {
             void refresh();
           }}
-          className="text-zinc-400 hover:text-zinc-200"
+          className="text-text-muted hover:text-text-primary"
           aria-label="Refresh"
         >
           <RefreshCw className="h-4 w-4" />
         </button>
       </div>
       {error ? (
-        <div className="p-3 text-sm text-rose-300">{error}</div>
+        <div className="p-3 text-sm text-status-error">{error}</div>
       ) : nodes.length === 0 ? (
-        <div className="p-4 text-sm text-zinc-500">
+        <div className="p-4 text-sm text-text-muted">
           No nodes yet. Add a polling target and wait a poll cycle.
         </div>
       ) : (
-        <ul className="divide-y divide-zinc-800">
+        <ul className="divide-y divide-surface-border">
           {nodes.map((n) => (
             <li key={n.id}>
               <button
                 type="button"
                 onClick={(): void => onSelect(n.id)}
                 data-testid={`node-row-${n.id}`}
-                className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm transition hover:bg-zinc-800/50 ${
-                  selectedID === n.id ? 'bg-zinc-800/70' : ''
+                className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm transition hover:bg-surface-hover ${
+                  selectedID === n.id ? 'bg-surface-hover' : ''
                 }`}
               >
                 <span className="flex-1 truncate">
-                  <span className="font-medium text-zinc-100">{n.displayName || n.sysName}</span>
+                  <span className="font-medium text-text-primary">
+                    {n.displayName || n.sysName}
+                  </span>
                   {n.primaryIp ? (
-                    <span className="ml-2 font-mono text-xs text-zinc-500">{n.primaryIp}</span>
+                    <span className="ml-2 font-mono text-xs text-text-muted">{n.primaryIp}</span>
                   ) : null}
                 </span>
                 <DeviceTypeBadge type={n.deviceType} />
@@ -100,15 +102,17 @@ function NodeList({ selectedID, onSelect }: NodeListProps): JSX.Element {
 function DeviceTypeBadge({ type }: { type: string }): JSX.Element {
   // Coarse color hints for at-a-glance scanning — matches the
   // device_type values produced by topology.deviceTypeFromObjectID
-  // (cisco / juniper / arista / linux / mikrotik / unknown).
+  // (cisco / juniper / arista / linux / mikrotik / unknown). The
+  // vendor palette uses the categorical data-viz tokens (cat-*),
+  // which are theme-aware in both light and dark.
   const palette: Record<string, string> = {
-    cisco: 'bg-sky-500/20 text-sky-300',
-    juniper: 'bg-emerald-500/20 text-emerald-300',
-    arista: 'bg-orange-500/20 text-orange-300',
-    linux: 'bg-zinc-500/20 text-zinc-300',
-    mikrotik: 'bg-violet-500/20 text-violet-300',
+    cisco: 'bg-cat-1/20 text-cat-1',
+    juniper: 'bg-cat-2/20 text-cat-2',
+    arista: 'bg-cat-3/20 text-cat-3',
+    linux: 'bg-cat-4/20 text-cat-4',
+    mikrotik: 'bg-cat-5/20 text-cat-5',
   };
-  const cls = palette[type] ?? 'bg-zinc-700 text-zinc-400';
+  const cls = palette[type] ?? 'bg-surface-sunken text-text-muted';
   return (
     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{type || 'n/a'}</span>
   );
@@ -124,28 +128,28 @@ function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
 
   if (!id) {
     return (
-      <div className="flex min-h-[300px] items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/30 text-sm text-zinc-500">
+      <div className="flex min-h-[300px] items-center justify-center rounded-lg border border-surface-border bg-surface-raised text-sm text-text-muted">
         Select a node to see interfaces and links.
       </div>
     );
   }
   if (loading) {
     return (
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-6 text-sm text-zinc-500">
+      <div className="rounded-lg border border-surface-border bg-surface-raised p-6 text-sm text-text-muted">
         Loading node…
       </div>
     );
   }
   if (error) {
     return (
-      <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-6 text-sm text-rose-300">
+      <div className="rounded-lg border border-status-error/40 bg-status-error/10 p-6 text-sm text-status-error">
         {error}
       </div>
     );
   }
   if (!detail) {
     return (
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-6 text-sm text-zinc-500">
+      <div className="rounded-lg border border-surface-border bg-surface-raised p-6 text-sm text-text-muted">
         Node not found.
       </div>
     );
@@ -162,23 +166,23 @@ function NodeDetail({ id, onClear }: NodeDetailProps): JSX.Element {
 
 function NodeSummary({ node, onClear }: { node: TopologyNode; onClear: () => void }): JSX.Element {
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-4">
+    <div className="rounded-lg border border-surface-border bg-surface-raised p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-100">
+          <h2 className="text-lg font-semibold text-text-primary">
             {node.displayName || node.sysName}
           </h2>
-          <p className="text-xs text-zinc-500">{node.id}</p>
+          <p className="text-xs text-text-muted">{node.id}</p>
         </div>
         <button
           type="button"
           onClick={onClear}
-          className="text-xs text-zinc-400 hover:text-zinc-200"
+          className="text-xs text-text-muted hover:text-text-primary"
         >
           Clear
         </button>
       </div>
-      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-zinc-300">
+      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-text-secondary">
         <SummaryRow label="Device type" value={node.deviceType || 'n/a'} />
         <SummaryRow label="Sys name" value={node.sysName || 'n/a'} />
         <SummaryRow label="Primary MAC" value={node.primaryMac || 'n/a'} mono />
@@ -201,26 +205,28 @@ function SummaryRow({
 }): JSX.Element {
   return (
     <>
-      <dt className="text-xs uppercase tracking-wide text-zinc-500">{label}</dt>
-      <dd className={mono ? 'font-mono text-zinc-200' : 'text-zinc-200'}>{value}</dd>
+      <dt className="text-xs uppercase tracking-wide text-text-muted">{label}</dt>
+      <dd className={mono ? 'font-mono text-text-secondary' : 'text-text-secondary'}>{value}</dd>
     </>
   );
 }
 
 function InterfacesPanel({ interfaces }: { interfaces: TopologyInterface[] }): JSX.Element {
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/30">
-      <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-2">
-        <Activity className="h-4 w-4 text-emerald-400" />
-        <span className="text-sm font-medium text-zinc-100">Interfaces ({interfaces.length})</span>
+    <div className="rounded-lg border border-surface-border bg-surface-raised">
+      <div className="flex items-center gap-2 border-b border-surface-border px-4 py-2">
+        <Activity className="h-4 w-4 text-status-success" />
+        <span className="text-sm font-medium text-text-primary">
+          Interfaces ({interfaces.length})
+        </span>
       </div>
       {interfaces.length === 0 ? (
-        <div className="p-4 text-sm text-zinc-500">
+        <div className="p-4 text-sm text-text-muted">
           No interface data yet. The if_table reconciler folds these in on the next poll.
         </div>
       ) : (
         <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
+          <thead className="text-left text-xs uppercase tracking-wide text-text-muted">
             <tr>
               <th className="px-4 py-2">Index</th>
               <th className="px-4 py-2">Name</th>
@@ -229,16 +235,18 @@ function InterfacesPanel({ interfaces }: { interfaces: TopologyInterface[] }): J
               <th className="px-4 py-2">MAC</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-800">
+          <tbody className="divide-y divide-surface-border">
             {interfaces.map((i) => (
               <tr key={i.id}>
-                <td className="px-4 py-2 text-zinc-400">{i.ifIndex}</td>
-                <td className="px-4 py-2 text-zinc-100">{i.ifName || i.ifDescr}</td>
+                <td className="px-4 py-2 text-text-muted">{i.ifIndex}</td>
+                <td className="px-4 py-2 text-text-primary">{i.ifName || i.ifDescr}</td>
                 <td className="px-4 py-2">
                   <IfStatusPair admin={i.ifAdminStatus} oper={i.ifOperStatus} />
                 </td>
-                <td className="px-4 py-2 text-zinc-300">{fmtSpeed(i.speedBps)}</td>
-                <td className="px-4 py-2 font-mono text-xs text-zinc-400">{i.ifPhysAddr || '—'}</td>
+                <td className="px-4 py-2 text-text-secondary">{fmtSpeed(i.speedBps)}</td>
+                <td className="px-4 py-2 font-mono text-xs text-text-muted">
+                  {i.ifPhysAddr || '—'}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -253,10 +261,12 @@ function IfStatusPair({ admin, oper }: { admin: number; oper: number }): JSX.Ele
   // catch-all dim color.
   return (
     <span className="flex items-center gap-1 text-xs">
-      <span className={admin === 1 ? 'text-emerald-400' : 'text-zinc-500'}>admin</span>
-      <span className="text-zinc-600">/</span>
+      <span className={admin === 1 ? 'text-status-success' : 'text-text-muted'}>admin</span>
+      <span className="text-text-muted">/</span>
       <span
-        className={oper === 1 ? 'text-emerald-400' : oper === 2 ? 'text-rose-400' : 'text-zinc-500'}
+        className={
+          oper === 1 ? 'text-status-success' : oper === 2 ? 'text-status-error' : 'text-text-muted'
+        }
       >
         oper
       </span>
@@ -266,23 +276,25 @@ function IfStatusPair({ admin, oper }: { admin: number; oper: number }): JSX.Ele
 
 function LinksPanel({ links, nodeID }: { links: TopologyLink[]; nodeID: string }): JSX.Element {
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/30">
-      <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-2">
-        <Cable className="h-4 w-4 text-sky-400" />
-        <span className="text-sm font-medium text-zinc-100">Neighbor links ({links.length})</span>
+    <div className="rounded-lg border border-surface-border bg-surface-raised">
+      <div className="flex items-center gap-2 border-b border-surface-border px-4 py-2">
+        <Cable className="h-4 w-4 text-status-info" />
+        <span className="text-sm font-medium text-text-primary">
+          Neighbor links ({links.length})
+        </span>
       </div>
       {links.length === 0 ? (
-        <div className="p-4 text-sm text-zinc-500">
+        <div className="p-4 text-sm text-text-muted">
           No edges yet. LLDP/CDP/FDP needs both endpoints to be known nodes.
         </div>
       ) : (
-        <ul className="divide-y divide-zinc-800">
+        <ul className="divide-y divide-surface-border">
           {links.map((l) => {
             const otherEnd = l.sourceNodeId === nodeID ? l.targetNodeId : l.sourceNodeId;
             return (
               <li key={l.id} className="flex items-center justify-between px-4 py-2 text-sm">
-                <span className="text-zinc-100">↔ {otherEnd}</span>
-                <span className="text-xs text-zinc-500">
+                <span className="text-text-primary">↔ {otherEnd}</span>
+                <span className="text-xs text-text-muted">
                   {l.linkType} · {fmtTime(l.lastSeen)}
                 </span>
               </li>
