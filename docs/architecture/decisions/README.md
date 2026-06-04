@@ -14,3 +14,4 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0004](0004-event-bus.md) | In-process domain event bus | Accepted |
 | [0005](0005-unified-jobs.md) | Unified async job runner | Accepted |
 | [0006](0006-migrations-sql-goose-strict.md) | Schema as embedded `.sql` files, goose, STRICT tables | Accepted |
+| [0007](0007-discovery-orchestrator-convergence.md) | Discovery orchestrator convergence — engine vs pipeline, deferred to Phase 7 | Accepted |
