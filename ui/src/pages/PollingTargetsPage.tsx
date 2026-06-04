@@ -40,19 +40,19 @@ export function PollingTargetsPage(): JSX.Element {
       />
 
       {error ? (
-        <div className="rounded-md border border-rose-500/40 bg-rose-500/10 p-3 text-sm text-rose-200">
+        <div className="rounded-md border border-status-error/40 bg-status-error/10 p-3 text-sm text-status-error">
           {error}
         </div>
       ) : null}
 
       <div className="flex items-center justify-between">
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-text-muted">
           {loading ? 'Loading…' : `${targets.length} target${targets.length === 1 ? '' : 's'}`}
         </p>
         <button
           type="button"
           onClick={(): void => setShowCreate(true)}
-          className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+          className="inline-flex items-center gap-2 rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent"
         >
           <Plus className="h-4 w-4" />
           Add target
@@ -105,15 +105,15 @@ interface TargetTableProps {
 function TargetTable({ targets, onEdit, onDelete }: TargetTableProps): JSX.Element {
   if (targets.length === 0) {
     return (
-      <div className="rounded-md border border-zinc-700 bg-zinc-900/30 p-6 text-center text-sm text-zinc-400">
+      <div className="rounded-md border border-surface-border bg-surface-raised p-6 text-center text-sm text-text-muted">
         No polling targets yet. Click <strong>Add target</strong> to start polling a device.
       </div>
     );
   }
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/30">
+    <div className="overflow-hidden rounded-lg border border-surface-border bg-surface-raised">
       <table className="w-full text-sm">
-        <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
+        <thead className="text-left text-xs uppercase tracking-wide text-text-muted">
           <tr>
             <th className="px-4 py-2">Name</th>
             <th className="px-4 py-2">IP</th>
@@ -124,31 +124,31 @@ function TargetTable({ targets, onEdit, onDelete }: TargetTableProps): JSX.Eleme
             <th className="px-4 py-2 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-800">
+        <tbody className="divide-y divide-surface-border">
           {targets.map((t) => (
             <tr key={t.id} data-testid={`target-row-${t.id}`}>
-              <td className="px-4 py-2 font-medium text-zinc-100">{t.name}</td>
-              <td className="px-4 py-2 font-mono text-zinc-300">{t.ipAddress}</td>
-              <td className="px-4 py-2 text-zinc-300">{t.snmpVersion}</td>
-              <td className="px-4 py-2 text-zinc-300">{t.pollIntervalSeconds}s</td>
+              <td className="px-4 py-2 font-medium text-text-primary">{t.name}</td>
+              <td className="px-4 py-2 font-mono text-text-secondary">{t.ipAddress}</td>
+              <td className="px-4 py-2 text-text-secondary">{t.snmpVersion}</td>
+              <td className="px-4 py-2 text-text-secondary">{t.pollIntervalSeconds}s</td>
               <td className="px-4 py-2">
                 <EnabledBadge enabled={t.enabled} />
               </td>
-              <td className="px-4 py-2 text-zinc-400">
+              <td className="px-4 py-2 text-text-muted">
                 <LastPoll target={t} />
               </td>
               <td className="px-4 py-2 text-right">
                 <button
                   type="button"
                   onClick={(): void => onEdit(t)}
-                  className="mr-2 text-sm text-sky-400 hover:text-sky-300"
+                  className="mr-2 text-sm text-status-info hover:text-status-info/80"
                 >
                   Edit
                 </button>
                 <button
                   type="button"
                   onClick={(): void => onDelete(t)}
-                  className="text-sm text-rose-400 hover:text-rose-300"
+                  className="text-sm text-status-error hover:text-status-error/80"
                 >
                   Delete
                 </button>
@@ -166,8 +166,8 @@ function EnabledBadge({ enabled }: { enabled: boolean }): JSX.Element {
     <span
       className={
         enabled
-          ? 'rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-300'
-          : 'rounded-full bg-zinc-700 px-2 py-0.5 text-xs font-medium text-zinc-400'
+          ? 'rounded-full bg-status-success/20 px-2 py-0.5 text-xs font-medium text-status-success'
+          : 'rounded-full bg-surface-sunken px-2 py-0.5 text-xs font-medium text-text-muted'
       }
     >
       {enabled ? 'Enabled' : 'Disabled'}
@@ -177,13 +177,13 @@ function EnabledBadge({ enabled }: { enabled: boolean }): JSX.Element {
 
 function LastPoll({ target }: { target: PollingTarget }): JSX.Element {
   if (!target.lastPolledAt) {
-    return <span className="text-zinc-500">never</span>;
+    return <span className="text-text-muted">never</span>;
   }
   const when = new Date(target.lastPolledAt).toLocaleString();
   const ok = target.lastStatus === 'ok';
   return (
     <span title={target.lastError || target.lastStatus}>
-      <span className={ok ? 'text-emerald-400' : 'text-rose-400'}>●</span> {when}
+      <span className={ok ? 'text-status-success' : 'text-status-error'}>●</span> {when}
     </span>
   );
 }
@@ -222,21 +222,21 @@ function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProps): JSX
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/60">
       <form
         onSubmit={(e): void => {
           void handleSubmit(e);
         }}
-        className="w-full max-w-md rounded-lg border border-zinc-700 bg-zinc-900 p-6 shadow-xl"
+        className="w-full max-w-md rounded-lg border border-surface-border bg-surface-raised p-6 shadow-xl"
       >
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-          <h2 className="text-lg font-semibold text-zinc-100">
+        <div className="flex items-center justify-between border-b border-surface-border pb-3">
+          <h2 className="text-lg font-semibold text-text-primary">
             {mode === 'create' ? 'Add polling target' : 'Edit polling target'}
           </h2>
           <button
             type="button"
             onClick={onCancel}
-            className="text-zinc-400 hover:text-zinc-200"
+            className="text-text-muted hover:text-text-primary"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -244,7 +244,7 @@ function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProps): JSX
         </div>
 
         {formError ? (
-          <div className="mt-3 rounded-md border border-rose-500/40 bg-rose-500/10 p-2 text-sm text-rose-200">
+          <div className="mt-3 rounded-md border border-status-error/40 bg-status-error/10 p-2 text-sm text-status-error">
             {formError}
           </div>
         ) : null}
@@ -289,7 +289,7 @@ function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProps): JSX
               className={inputClass}
             />
           </Field>
-          <label className="flex items-center gap-2 text-sm text-zinc-300">
+          <label className="flex items-center gap-2 text-sm text-text-secondary">
             <input
               type="checkbox"
               checked={form.enabled}
@@ -299,18 +299,18 @@ function TargetForm({ mode, initial, onSubmit, onCancel }: TargetFormProps): JSX
           </label>
         </div>
 
-        <div className="mt-5 flex justify-end gap-2 border-t border-zinc-800 pt-4">
+        <div className="mt-5 flex justify-end gap-2 border-t border-surface-border pt-4">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md px-3 py-2 text-sm text-zinc-400 hover:text-zinc-200"
+            className="rounded-md px-3 py-2 text-sm text-text-muted hover:text-text-primary"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-60"
+            className="rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-on-brand hover:bg-brand-accent disabled:opacity-60"
           >
             {submitting ? 'Saving…' : mode === 'create' ? 'Add target' : 'Save changes'}
           </button>
@@ -328,7 +328,7 @@ function Field({ label, children }: { label: string; children: JSX.Element }): J
   // <span> text.
   return (
     <div className="block">
-      <span className="block text-xs font-medium uppercase tracking-wide text-zinc-400">
+      <span className="block text-xs font-medium uppercase tracking-wide text-text-muted">
         {label}
       </span>
       <span className="mt-1 block">{children}</span>
@@ -337,7 +337,7 @@ function Field({ label, children }: { label: string; children: JSX.Element }): J
 }
 
 const inputClass: string =
-  'w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none';
+  'w-full rounded-md border border-surface-border bg-surface-sunken px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-brand-primary focus:outline-none';
 
 /** emptyInput is the create-form default. Mirrors the server defaults
  * but explicit so the operator sees them in the form before submit. */
