@@ -20,7 +20,6 @@ type Service struct {
 	interfaceName   string
 	deviceDiscovery *DeviceDiscovery
 	profiler        *DeviceProfiler
-	pipeline        *Pipeline // Reference to discovery pipeline for coordination
 
 	// Runtime state
 	mu           sync.RWMutex
@@ -33,9 +32,6 @@ type Service struct {
 	previousScan  []*DiscoveredDevice // For delta computation
 	lastDelta     *ScanDelta
 	lastDeltaTime time.Time
-
-	// Callback for pipeline completion
-	onPipelineComplete func(devices []*DiscoveredDevice)
 }
 
 // ServiceStatus represents the current state of the discovery service.
@@ -50,8 +46,6 @@ type ServiceStatus struct {
 	Interface       string           `json:"interface"`
 	ActiveMethods   []string         `json:"activeMethods"`
 	RescanInterval  time.Duration    `json:"rescanInterval"`
-	PipelineStatus  string           `json:"pipelineStatus,omitempty"`  // "idle", "running", "completed", "failed"
-	PipelinePhase   string           `json:"pipelinePhase,omitempty"`   // Current phase name
 	ProfilingStatus *ProfilingStatus `json:"profilingStatus,omitempty"` // Detailed profiling state
 
 	// Metrics and health
@@ -84,30 +78,6 @@ func NewService(
 		profiler: profiler,
 		metrics:  NewMetrics(),
 	}
-}
-
-// SetPipeline sets the discovery pipeline reference for coordination.
-// This enables the service to trigger pipeline runs and receive completion callbacks.
-// Automatically wires up the onComplete callback to sync pipeline results.
-func (s *Service) SetPipeline(pipeline *Pipeline) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.pipeline = pipeline
-
-	// Wire up completion callback to sync pipeline results back to Service
-	if pipeline != nil {
-		pipeline.SetOnComplete(func(devices []*DiscoveredDevice) {
-			s.syncPipelineResults(devices)
-		})
-	}
-}
-
-// SetOnPipelineComplete sets a callback that's called when pipeline completes.
-// This allows the service to update its device cache with pipeline results.
-func (s *Service) SetOnPipelineComplete(callback func(devices []*DiscoveredDevice)) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.onPipelineComplete = callback
 }
 
 // GetProfiler returns the shared DeviceProfiler instance.
@@ -323,22 +293,7 @@ func (s *Service) Scan(ctx context.Context) error {
 }
 
 // queueDevicesForProfiling queues all discovered devices for profiling.
-// Skips queuing if pipeline is running (pipeline handles profiling in Phase 3).
 func (s *Service) queueDevicesForProfiling() {
-	// Skip if pipeline is running - it handles profiling in Phase 3
-	// This eliminates dual orchestration and duplicate profiling work
-	s.mu.RLock()
-	pipeline := s.pipeline
-	s.mu.RUnlock()
-
-	if pipeline != nil {
-		status := pipeline.GetStatus()
-		if isRunningPipelineState(status.Status) {
-			logging.GetLogger().Debug("Skipping device profiling - pipeline is running")
-			return
-		}
-	}
-
 	devices := s.deviceDiscovery.GetDevices()
 	queued := 0
 	for _, device := range devices {
@@ -351,14 +306,6 @@ func (s *Service) queueDevicesForProfiling() {
 	if queued > 0 {
 		logging.GetLogger().Info("Queued devices for profiling after scan", "count", queued)
 	}
-}
-
-// isRunningPipelineState checks if a pipeline state indicates active execution.
-func isRunningPipelineState(state PipelineState) bool {
-	return state == PipelineStateEnumerating ||
-		state == PipelineStateResolving ||
-		state == PipelineStateScanning ||
-		state == PipelineStateAssessing
 }
 
 // Reload reapplies discovery options from config at runtime.
@@ -480,7 +427,6 @@ func (s *Service) GetStatus() *ServiceStatus {
 	s.mu.RLock()
 	running := s.running
 	rescanInterval := s.cfg.NetworkDiscovery.Timing.RescanInterval
-	pipeline := s.pipeline
 	metrics := s.metrics
 	lastDelta := s.lastDelta
 	s.mu.RUnlock()
@@ -505,13 +451,6 @@ func (s *Service) GetStatus() *ServiceStatus {
 		Interface:      deviceStatus.Interface,
 		RescanInterval: rescanInterval,
 		ActiveMethods:  s.getActiveMethods(),
-	}
-
-	// Add pipeline status if available
-	if pipeline != nil {
-		pipelineRun := pipeline.GetStatus()
-		status.PipelineStatus = string(pipelineRun.Status) // Convert PipelineState to string
-		status.PipelinePhase = pipelineRun.CurrentPhase
 	}
 
 	// Add profiling status
@@ -595,131 +534,6 @@ func (s *Service) ClearDevices() {
 // DeviceDiscovery returns the underlying DeviceDiscovery for direct access if needed.
 func (s *Service) DeviceDiscovery() *DeviceDiscovery {
 	return s.deviceDiscovery
-}
-
-// StartPipeline triggers a full discovery pipeline run.
-// This is the recommended way to run comprehensive discovery.
-// The trigger parameter identifies what initiated the pipeline (e.g., "manual", "scheduled", "api").
-// Returns error if pipeline is not configured or already running.
-func (s *Service) StartPipeline(ctx context.Context, trigger string) error {
-	s.mu.RLock()
-	pipeline := s.pipeline
-	s.mu.RUnlock()
-
-	if pipeline == nil {
-		return &Error{
-			Phase:   "start",
-			Message: "discovery pipeline not configured",
-			Code:    "PIPELINE_NOT_CONFIGURED",
-		}
-	}
-
-	// Check if already running (any active phase state)
-	status := pipeline.GetStatus()
-	if status.Status == PipelineStateEnumerating ||
-		status.Status == PipelineStateResolving ||
-		status.Status == PipelineStateScanning ||
-		status.Status == PipelineStateAssessing {
-		return &Error{
-			Phase:   "start",
-			Message: "discovery pipeline already running",
-			Code:    "PIPELINE_ALREADY_RUNNING",
-		}
-	}
-
-	if trigger == "" {
-		trigger = "service"
-	}
-
-	// Start pipeline in background
-	run, err := pipeline.Start(ctx, trigger)
-	if err != nil {
-		return err
-	}
-
-	logging.GetLogger().InfoContext(ctx, "Discovery pipeline started from service",
-		"run_id", run.ID,
-		"trigger", trigger,
-		"phases", len(run.PhaseDurations))
-
-	return nil
-}
-
-// GetPipelineStatus returns the current pipeline status.
-// Returns nil if pipeline is not configured.
-func (s *Service) GetPipelineStatus() *PipelineRun {
-	s.mu.RLock()
-	pipeline := s.pipeline
-	s.mu.RUnlock()
-
-	if pipeline == nil {
-		return nil
-	}
-
-	return pipeline.GetStatus()
-}
-
-// IsPipelineRunning returns true if the discovery pipeline is currently running.
-func (s *Service) IsPipelineRunning() bool {
-	s.mu.RLock()
-	pipeline := s.pipeline
-	s.mu.RUnlock()
-
-	if pipeline == nil {
-		return false
-	}
-
-	status := pipeline.GetStatus()
-	return status.Status == PipelineStateEnumerating ||
-		status.Status == PipelineStateResolving ||
-		status.Status == PipelineStateScanning ||
-		status.Status == PipelineStateAssessing
-}
-
-// syncPipelineResults updates the Service's device cache with pipeline results.
-// This is called when the pipeline completes successfully.
-// It ensures Service.GetDevices() returns the fully-enriched device list.
-func (s *Service) syncPipelineResults(devices []*DiscoveredDevice) {
-	if len(devices) == 0 {
-		return
-	}
-
-	var callback func(devices []*DiscoveredDevice)
-
-	s.mu.Lock()
-
-	// Update metrics with pipeline results
-	if s.metrics != nil {
-		s.metrics.UpdateFromDevices(devices)
-	}
-
-	// Compute delta for change tracking
-	if s.previousScan != nil {
-		s.lastDelta = ComputeDelta(s.previousScan, devices)
-		s.lastDeltaTime = time.Now()
-
-		if len(s.lastDelta.NewDevices) > 0 || len(s.lastDelta.RemovedDevices) > 0 {
-			logging.GetLogger().Info("Pipeline completed - synced devices",
-				"total", len(devices),
-				"new", len(s.lastDelta.NewDevices),
-				"updated", len(s.lastDelta.UpdatedDevices),
-				"removed", len(s.lastDelta.RemovedDevices))
-		}
-	}
-
-	// Store copy for next delta computation
-	s.previousScan = make([]*DiscoveredDevice, len(devices))
-	copy(s.previousScan, devices)
-
-	// Capture callback under lock
-	callback = s.onPipelineComplete
-
-	s.mu.Unlock()
-
-	// Call user callback outside of lock to prevent deadlock
-	if callback != nil {
-		callback(devices)
-	}
 }
 
 // Error represents a discovery-specific error with categorization.

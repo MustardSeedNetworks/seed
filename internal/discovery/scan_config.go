@@ -1,55 +1,44 @@
 package discovery
 
-// pipeline_defaults.go contains the timing/port presets, DefaultPipelineConfig,
-// the adapter that converts a config.PipelineConfig into the runtime
-// PipelineConfig, and the canonical top-1000 port list used for comprehensive
-// scans.
+// scan_config.go holds the engine's port-scan configuration vocabulary: the
+// intensity/timing enums and the canonical port lists the DeviceProfiler uses
+// (GetPortsForIntensity). These were extracted from the retired pipeline
+// orchestrator (Phase 7, ADR-0007) — the engine + jobs spine now own discovery.
 
-import "time"
+// PortScanIntensity defines port scanning levels.
+type PortScanIntensity string
 
-// Pipeline timing and channel constants.
+// Port scan intensity level constants.
 const (
-	pipelineProgressChannelSize  = 10  // Buffer size for progress channels
-	pipelinePercentComplete      = 100 // Value representing 100% completion
-	pipelineProgressTickerMs     = 500 // Progress ticker interval in milliseconds
-	pipelineDefaultPhaseTimeoutM = 10  // Default phase timeout in minutes
-
-	// Polite profile timing constants.
-	politeProbeDelayMs    = 200 // Probe delay for polite profile in milliseconds
-	politeHostDelayMs     = 100 // Host delay for polite profile in milliseconds
-	politeConcurrentHosts = 5   // Max concurrent hosts for polite profile
-	politePhaseTimeoutMin = 30  // Phase timeout for polite profile in minutes
-
-	// Normal profile timing constants.
-	normalProbeDelayMs    = 50 // Probe delay for normal profile in milliseconds
-	normalHostDelayMs     = 20 // Host delay for normal profile in milliseconds
-	normalConcurrentHosts = 20 // Max concurrent hosts for normal profile
-	normalPhaseTimeoutMin = 10 // Phase timeout for normal profile in minutes
-
-	// Aggressive profile timing constants.
-	aggressiveProbeDelayMs    = 10  // Probe delay for aggressive profile in milliseconds
-	aggressiveHostDelayMs     = 5   // Host delay for aggressive profile in milliseconds
-	aggressiveConcurrentHosts = 100 // Max concurrent hosts for aggressive profile
-	aggressivePhaseTimeoutMin = 5   // Phase timeout for aggressive profile in minutes
-
-	// Port scan configuration constants.
-	portScanConnectTimeoutS = 2 // Default connect timeout in seconds
-
-	// SNMP collection configuration constants.
-	snmpWalkTimeoutS       = 30 // SNMP walk timeout in seconds
-	snmpMaxOIDsPerRequest  = 10 // Maximum OIDs per SNMP request
-	snmpDefaultConcurrency = 10 // Default SNMP concurrency
-
-	// Persistence configuration constants.
-	persistStalenessHours = 24 // Staleness threshold in hours
-
-	// Resolution timing constants (pipeline).
-	pipelineResDNSTimeoutMs   = 500 // DNS timeout in milliseconds
-	pipelineResMDNSTimeoutS   = 2   // mDNS timeout in seconds
-	pipelineResMaxConcDNS     = 50  // Max concurrent DNS lookups
-	pipelineResMaxConcNetBIOS = 20  // Max concurrent NetBIOS queries
-	pipelineResMaxConcMDNS    = 10  // Max concurrent mDNS queries
+	PortScanOff           PortScanIntensity = "off"
+	PortScanQuick         PortScanIntensity = "quick"
+	PortScanStandard      PortScanIntensity = "standard"
+	PortScanComprehensive PortScanIntensity = "comprehensive"
+	PortScanCustom        PortScanIntensity = "custom"
 )
+
+// ScanTimingProfile defines pre-configured timing settings for IDS-aware scans.
+type ScanTimingProfile string
+
+// Scan timing profile constants.
+const (
+	ScanProfilePolite     ScanTimingProfile = "polite"
+	ScanProfileNormal     ScanTimingProfile = "normal"
+	ScanProfileAggressive ScanTimingProfile = "aggressive"
+)
+
+// SNMPMIBSelection selects which MIB groups the SNMP collector walks. Consumed
+// by NewSNMPCollector / the DeviceProfiler; extracted from the retired pipeline.
+type SNMPMIBSelection struct {
+	System      bool `yaml:"system"       json:"system"`      // SNMPv2-MIB::system (always on)
+	Interfaces  bool `yaml:"interfaces"   json:"interfaces"`  // IF-MIB (ifTable, ifXTable)
+	IPAddresses bool `yaml:"ip_addresses" json:"ipAddresses"` // IP-MIB (ipAddrTable)
+	Routing     bool `yaml:"routing"      json:"routing"`     // IP-FORWARD-MIB
+	Bridge      bool `yaml:"bridge"       json:"bridge"`      // BRIDGE-MIB (MAC table)
+	Entity      bool `yaml:"entity"       json:"entity"`      // ENTITY-MIB (physical inventory)
+	LLDP        bool `yaml:"lldp"         json:"lldp"`        // LLDP-MIB
+	VLAN        bool `yaml:"vlan"         json:"vlan"`        // Q-BRIDGE-MIB
+}
 
 // GetQuickPorts returns minimal set for device type identification (6 ports).
 func GetQuickPorts() []int {
@@ -85,130 +74,6 @@ func GetStandardPorts() []int {
 // GetComprehensivePorts returns top 1000 most common ports.
 func GetComprehensivePorts() []int {
 	return generateComprehensivePorts()
-}
-
-// GetScanTimingPresets returns the scan timing presets map.
-func GetScanTimingPresets() map[ScanTimingProfile]PipelineTiming {
-	return map[ScanTimingProfile]PipelineTiming{
-		ScanProfilePolite: {
-			ProbeDelay:         politeProbeDelayMs * time.Millisecond,
-			HostDelay:          politeHostDelayMs * time.Millisecond,
-			MaxConcurrentHosts: politeConcurrentHosts,
-			PhaseTimeout:       politePhaseTimeoutMin * time.Minute,
-		},
-		ScanProfileNormal: {
-			ProbeDelay:         normalProbeDelayMs * time.Millisecond,
-			HostDelay:          normalHostDelayMs * time.Millisecond,
-			MaxConcurrentHosts: normalConcurrentHosts,
-			PhaseTimeout:       normalPhaseTimeoutMin * time.Minute,
-		},
-		ScanProfileAggressive: {
-			ProbeDelay:         aggressiveProbeDelayMs * time.Millisecond,
-			HostDelay:          aggressiveHostDelayMs * time.Millisecond,
-			MaxConcurrentHosts: aggressiveConcurrentHosts,
-			PhaseTimeout:       aggressivePhaseTimeoutMin * time.Minute,
-		},
-	}
-}
-
-// DefaultPipelineConfig returns default pipeline configuration.
-func DefaultPipelineConfig() PipelineConfig {
-	return PipelineConfig{
-		Phases: PipelinePhaseConfig{
-			Enumeration:      true,  // Always enabled
-			NameResolution:   true,  // Enabled by default
-			ServiceDiscovery: false, // Disabled by default (requires opt-in)
-			VulnAssessment:   false, // Disabled by default (requires opt-in)
-		},
-		Timing: PipelineTiming{
-			ProbeDelay:         normalProbeDelayMs * time.Millisecond,
-			HostDelay:          normalHostDelayMs * time.Millisecond,
-			MaxConcurrentHosts: normalConcurrentHosts,
-			PhaseTimeout:       normalPhaseTimeoutMin * time.Minute,
-			Profile:            ScanProfileNormal,
-		},
-		PortScan: PipelinePortScanConfig{
-			Intensity:      PortScanOff, // OFF by default - security conscious
-			BannerGrab:     true,
-			ConnectTimeout: portScanConnectTimeoutS * time.Second,
-		},
-		SNMPCollection: SNMPCollectionConfig{
-			Enabled: true,
-			MIBs: SNMPMIBSelection{
-				System:      true,  // Always collect system info
-				Interfaces:  true,  // Critical for network devices
-				IPAddresses: true,  // Essential for topology
-				Routing:     true,  // Required for L3 diagrams
-				Bridge:      false, // Can be large on switches
-				Entity:      false, // Physical inventory
-				LLDP:        true,  // Required for L2 topology
-				VLAN:        true,  // Required for L2 VLAN diagrams
-			},
-			WalkTimeout:       snmpWalkTimeoutS * time.Second,
-			MaxOIDsPerRequest: snmpMaxOIDsPerRequest,
-		},
-		Resolution: PipelineResolutionConfig{
-			DNS:     true, // Enabled by default
-			NetBIOS: true, // Enabled by default for Windows devices
-			MDNS:    true, // Enabled by default for Apple/Linux devices
-		},
-		Persistence: PipelinePersistenceConfig{
-			StoreHistory:       true,
-			StalenessThreshold: persistStalenessHours * time.Hour,
-			PurgeAfter:         30 * persistStalenessHours * time.Hour,
-		},
-	}
-}
-
-// PipelineConfigFromAdapter converts a ConfigPipelineAdapter to discovery.PipelineConfig.
-func PipelineConfigFromAdapter(cfg ConfigPipelineAdapter) PipelineConfig {
-	enumeration, nameRes, svcDisc, vulnAssess := cfg.GetPhases()
-	probeDelay, hostDelay, phaseTimeout, maxConcurrent, profile := cfg.GetTiming()
-	intensity, customPorts, bannerGrab, connectTimeout := cfg.GetPortScan()
-	snmpEnabled, system, ifaces, ipAddrs, routing, bridge, entity, lldp, vlan, walkTimeout, maxOIDs := cfg.GetSNMP()
-	storeHistory, staleness, purge := cfg.GetPersistence()
-
-	return PipelineConfig{
-		Phases: PipelinePhaseConfig{
-			Enumeration:      enumeration,
-			NameResolution:   nameRes,
-			ServiceDiscovery: svcDisc,
-			VulnAssessment:   vulnAssess,
-		},
-		Timing: PipelineTiming{
-			ProbeDelay:         probeDelay,
-			HostDelay:          hostDelay,
-			PhaseTimeout:       phaseTimeout,
-			MaxConcurrentHosts: maxConcurrent,
-			Profile:            ScanTimingProfile(profile),
-		},
-		PortScan: PipelinePortScanConfig{
-			Intensity:      PortScanIntensity(intensity),
-			CustomPorts:    customPorts,
-			BannerGrab:     bannerGrab,
-			ConnectTimeout: connectTimeout,
-		},
-		SNMPCollection: SNMPCollectionConfig{
-			Enabled: snmpEnabled,
-			MIBs: SNMPMIBSelection{
-				System:      system,
-				Interfaces:  ifaces,
-				IPAddresses: ipAddrs,
-				Routing:     routing,
-				Bridge:      bridge,
-				Entity:      entity,
-				LLDP:        lldp,
-				VLAN:        vlan,
-			},
-			WalkTimeout:       walkTimeout,
-			MaxOIDsPerRequest: maxOIDs,
-		},
-		Persistence: PipelinePersistenceConfig{
-			StoreHistory:       storeHistory,
-			StalenessThreshold: staleness,
-			PurgeAfter:         purge,
-		},
-	}
 }
 
 // generateComprehensivePorts generates the top 1000 most common ports.
