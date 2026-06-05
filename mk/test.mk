@@ -10,7 +10,7 @@
 #
 # =============================================================================
 
-.PHONY: test test-all test-backend test-backend-quiet test-frontend test-frontend-quiet \
+.PHONY: test test-all test-backend test-backend-quiet test-fast test-frontend test-frontend-quiet \
         test-e2e test-e2e-ui test-e2e-install test-coverage test-integration
 
 # =============================================================================
@@ -74,6 +74,20 @@ test-backend-quiet:
 		COV=$$(go tool cover -func=coverage.out | grep total | awk '{print $$3}'); \
 		printf "   📊 Coverage: %s\n" "$$COV"; \
 	fi
+
+# test-fast is the libpcap-free inner loop. Local `make test` runs `go test
+# -race`, which forces CGO=1; under CGO=1 internal/api compiles its
+# wire_capture_real.go (//go:build cgo), pulling in internal/capture/pcap and
+# thus requiring a system libpcap. CGO=0 selects the null-capture stub instead,
+# so the backend suite runs with no libpcap and no C toolchain — much faster for
+# iterating, at the cost of the race detector and the real-capture package
+# (both still covered by `make test` and CI). The cgo-tagged pcap package has no
+# buildable files under CGO=0, so it is excluded explicitly.
+test-fast: ## Fast libpcap-free backend tests (CGO=0, null capture, no -race)
+	@printf "\n$(BOLD)🏃 Fast backend tests (CGO=0, no libpcap, no -race)...$(RESET)\n"
+	@PKGS=$$(go list ./... 2>/dev/null | grep -v '/cmd/' | grep -v '/ui$$' | grep -v '/i18n$$' | grep -v '/oauth$$' | grep -v '/capture/pcap$$'); \
+	CGO_ENABLED=0 go test $$PKGS
+	@printf "\n$(GREEN)✓ Fast tests complete — run 'make test' (or CI) for -race + real capture$(RESET)\n"
 
 # =============================================================================
 # Frontend Tests
