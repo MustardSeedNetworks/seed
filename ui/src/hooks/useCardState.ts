@@ -24,10 +24,31 @@ import type { PublicIpData } from '../components/cards/PublicIpCard';
 import type { SwitchData, VlanData } from '../components/cards/SwitchCard';
 import type { WiFiData } from '../components/cards/WiFiCard';
 import { LogComponents, logger } from '../lib/logger';
-import type { PipelineEvent, PipelineEventType } from './usePipelineStatus';
 import type { SseCardUpdate as CardUpdate, SseMessage as Message } from './useSse';
 
-// Pipeline event types for routing WebSocket messages
+// Pipeline event types for routing backend WebSocket/SSE messages. Defined
+// here (previously in the removed usePipelineStatus hook) because this event
+// router is their last consumer; they go away with the pipeline backend at
+// retirement.
+export type PipelineEventType =
+  | 'pipeline_started'
+  | 'phase_started'
+  | 'phase_progress'
+  | 'phase_completed'
+  | 'phase_failed'
+  | 'device_discovered'
+  | 'device_updated'
+  | 'pipeline_completed'
+  | 'pipeline_failed'
+  | 'pipeline_canceled';
+
+export interface PipelineEvent {
+  type: PipelineEventType;
+  timestamp: string;
+  runId: string;
+  payload: unknown;
+}
+
 const PIPELINE_EVENT_TYPES: PipelineEventType[] = [
   'pipeline_started',
   'phase_started',
