@@ -151,7 +151,16 @@ type ScanOptions struct {
 	PortScanIntensity   PortScanIntensity
 	PortScanCustomPorts []int
 	TimingProfile       ScanTimingProfile
+
+	// Progress, if non-nil, is invoked once per completed scan phase with the
+	// cumulative fraction in [0,1] and the phase name. It lets a caller (e.g.
+	// the engine-scan job) surface phase-grained progress; nil disables it.
+	// Not serialized — it is a server-side observability hook, not wire config.
+	Progress ProgressFunc
 }
+
+// ProgressFunc reports cumulative scan progress at a phase boundary.
+type ProgressFunc func(fraction float64, phase string)
 
 // DefaultQuickScanOpts returns options for a quick correlation-only scan.
 func DefaultQuickScanOpts() *ScanOptions {
@@ -429,8 +438,16 @@ func (e *Engine) Scan(ctx context.Context, opts *ScanOptions) (*ScanResult, erro
 	return result, nil
 }
 
-// runScanPhases executes all scan phases in order.
+// runScanPhases executes all scan phases in order, reporting cumulative
+// progress at each phase boundary (S4.2).
 func (e *Engine) runScanPhases(ctx context.Context, logger *slog.Logger, opts *ScanOptions, result *ScanResult) {
+	total := e.countScanPhases(opts)
+	done := 0
+	complete := func(phase string) {
+		done++
+		e.reportScanProgress(opts, phase, float64(done)/float64(total))
+	}
+
 	// Phase 1: Discovery
 	logger.InfoContext(ctx, "Starting discovery phase")
 	result.Phases = append(result.Phases, "discovery")
@@ -438,11 +455,13 @@ func (e *Engine) runScanPhases(ctx context.Context, logger *slog.Logger, opts *S
 		result.Error = err.Error()
 		logger.ErrorContext(ctx, "Discovery phase failed", "error", err)
 	}
+	complete("discovery")
 
 	// Phase 2: Correlation
 	logger.InfoContext(ctx, "Starting correlation phase")
 	result.Phases = append(result.Phases, "correlation")
 	e.correlateDevices(ctx)
+	complete("correlation")
 
 	// Phase 3: Name Resolution
 	if opts.IncludeNameRes && e.wiredCollector != nil {
@@ -450,6 +469,7 @@ func (e *Engine) runScanPhases(ctx context.Context, logger *slog.Logger, opts *S
 		result.Phases = append(result.Phases, "name_resolution")
 		e.wiredCollector.ResolveNetBIOSNames(ctx)
 		e.wiredCollector.ResolveMDNSNames(ctx)
+		complete("name_resolution")
 	}
 
 	// Phase 4: Enrichment
@@ -457,6 +477,7 @@ func (e *Engine) runScanPhases(ctx context.Context, logger *slog.Logger, opts *S
 		logger.InfoContext(ctx, "Starting enrichment phase")
 		result.Phases = append(result.Phases, "enrichment")
 		e.runEnrichmentPhase(ctx, opts, result.Stats)
+		complete("enrichment")
 	}
 
 	// Phase 5: Assessment
@@ -464,7 +485,37 @@ func (e *Engine) runScanPhases(ctx context.Context, logger *slog.Logger, opts *S
 		logger.InfoContext(ctx, "Starting assessment phase")
 		result.Phases = append(result.Phases, "assessment")
 		e.runAssessmentPhase(ctx, result.Stats)
+		complete("assessment")
 	}
+}
+
+// countScanPhases returns how many phases this scan will run, so progress
+// fractions are denominated against the actual (opts-gated) phase set.
+// Discovery + correlation always run; the rest are conditional.
+func (e *Engine) countScanPhases(opts *ScanOptions) int {
+	total := 2 // discovery + correlation always run
+	if opts.IncludeNameRes && e.wiredCollector != nil {
+		total++
+	}
+	if opts.IncludeSNMP || opts.IncludePortScan || opts.IncludeProfiling {
+		total++
+	}
+	if opts.IncludeVulnScan && e.vulnScanner != nil {
+		total++
+	}
+	return total
+}
+
+// reportScanProgress surfaces a completed-phase progress update on both the
+// per-scan callback (opts.Progress, e.g. the engine-scan job) and the engine
+// event bus (EventScanProgress, for /discovery/engine/events subscribers).
+// Both are nil-safe / always-on respectively; behavior is unchanged when no
+// caller supplies a Progress hook and nothing subscribes to the bus.
+func (e *Engine) reportScanProgress(opts *ScanOptions, phase string, fraction float64) {
+	if opts.Progress != nil {
+		opts.Progress(fraction, phase)
+	}
+	e.eventBus.Publish(NewScanProgressEvent(phase, fraction))
 }
 
 // QuickScan performs a quick correlation-only scan.
