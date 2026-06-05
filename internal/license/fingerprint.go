@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -40,9 +41,27 @@ type DeviceFingerprint struct {
 	Platform   string `json:"platform"`
 }
 
-// GenerateFingerprint creates a unique device fingerprint.
-// The result is cached after the first call since hardware IDs don't change.
+// generateFingerprintOnce memoizes the device fingerprint for the process
+// lifetime. The fingerprint is a stable machine property, but computing it
+// shells out to OS tools (getCPUSerial/getDiskSerial, 5s timeout) and reads
+// the host interfaces, all of which can transiently fail, time out, or reorder
+// under load. Recomputing per call therefore yielded a NON-DETERMINISTIC
+// Hash() within a single process — which spuriously invalidated a valid
+// license on reload (state.DeviceHash != fingerprint.Hash()) on a busy host,
+// and flaked TestActivationLifecycle under parallel test load. Computing it
+// once and reusing it is both correct (the device does not change while the
+// process runs) and what the original doc comment always promised.
+var generateFingerprintOnce = sync.OnceValues(computeFingerprint)
+
+// GenerateFingerprint returns the process-wide device fingerprint, computing
+// it on first call and caching it thereafter (hardware IDs don't change).
 func GenerateFingerprint() (*DeviceFingerprint, error) {
+	return generateFingerprintOnce()
+}
+
+// computeFingerprint gathers the raw device identifiers. Called at most once
+// per process via generateFingerprintOnce.
+func computeFingerprint() (*DeviceFingerprint, error) {
 	fp := &DeviceFingerprint{
 		MACAddress: "",
 		CPUSerial:  "",
