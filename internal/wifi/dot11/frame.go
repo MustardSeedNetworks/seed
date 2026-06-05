@@ -191,10 +191,18 @@ func (b Band) String() string {
 type Frame struct {
 	Kind Kind
 
-	// 802.11 addresses (nil when not present for the frame type).
-	BSSID       net.HardwareAddr // the BSS the frame belongs to
+	// 802.11 addresses as carried in the header (nil when not present). For
+	// management frames Address3 is the BSSID; for data frames the BSSID and
+	// station addresses depend on ToDS/FromDS — use BSSIDOf/StationOf rather
+	// than reading these directly for data frames.
+	BSSID       net.HardwareAddr // Address3
 	Transmitter net.HardwareAddr // Address2 — who sent it
 	Receiver    net.HardwareAddr // Address1 — intended recipient
+
+	// ToDS/FromDS distinguish the data-frame addressing modes (client→AP,
+	// AP→client, IBSS, WDS) so a station attributes to the right BSSID.
+	ToDS   bool
+	FromDS bool
 
 	// Radio (radiotap) measurements; zero when the header omitted them.
 	SignalDBm  int8
@@ -207,6 +215,51 @@ type Frame struct {
 
 	// BSS advertisement, present for beacon/probe-response frames.
 	BSS *BSS
+}
+
+// BSSIDOf returns the BSSID the frame belongs to, accounting for data-frame
+// ToDS/FromDS addressing. Returns nil when it cannot be determined (e.g. a
+// 4-address WDS frame). For management frames the BSSID is Address3.
+func (f *Frame) BSSIDOf() net.HardwareAddr {
+	if f.Kind != KindData {
+		return f.BSSID // management/control: Address3
+	}
+	switch {
+	case f.ToDS && !f.FromDS: // client → AP: Address1 is the BSSID
+		return f.Receiver
+	case !f.ToDS && f.FromDS: // AP → client: Address2 is the BSSID
+		return f.Transmitter
+	case !f.ToDS && !f.FromDS: // IBSS: Address3 is the BSSID
+		return f.BSSID
+	default: // WDS (4-address): no single BSSID
+		return nil
+	}
+}
+
+// StationOf returns the non-AP station (client) MAC this frame attributes to a
+// BSS, or nil if the frame does not identify a client. It covers the common
+// passive sources: data frames (by DS direction) and (re)association frames.
+func (f *Frame) StationOf() net.HardwareAddr {
+	switch f.Kind {
+	case KindData:
+		switch {
+		case f.ToDS && !f.FromDS: // client → AP: Address2 is the client
+			return f.Transmitter
+		case !f.ToDS && f.FromDS: // AP → client: Address1 is the client
+			return f.Receiver
+		default:
+			return nil
+		}
+	case KindAssocRequest, KindReassocRequest, KindProbeRequest:
+		return f.Transmitter // client transmits to the AP
+	case KindAssocResponse, KindReassocResponse:
+		return f.Receiver // AP responds to the client
+	case KindOther, KindBeacon, KindProbeResponse, KindAuth, KindDeauth,
+		KindDisassoc, KindAction:
+		return nil
+	default:
+		return nil
+	}
 }
 
 // BSS is everything a beacon/probe-response advertises about a basic service

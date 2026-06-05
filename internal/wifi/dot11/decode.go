@@ -53,6 +53,8 @@ func Decode(data []byte) (*Frame, error) {
 	f := &Frame{
 		Kind:        classify(d11.Type),
 		Retry:       d11.Flags.Retry(),
+		ToDS:        d11.Flags.ToDS(),
+		FromDS:      d11.Flags.FromDS(),
 		Receiver:    d11.Address1,
 		Transmitter: d11.Address2,
 		BSSID:       d11.Address3, // for management frames, Address3 is the BSSID
