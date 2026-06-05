@@ -16,4 +16,8 @@ export interface EngineScanRequest {
   freshWiredScan: boolean;
   freshWifiScan: boolean;
   freshBluetoothScan: boolean;
+  portScanIntensity?: string;
+  portScanCustomPorts?: number[];
+  timingProfile?: string;
+  acknowledgeIdsRisk?: boolean;
 }

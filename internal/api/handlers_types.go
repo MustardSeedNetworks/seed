@@ -30,6 +30,7 @@ const (
 	ErrCodeForbidden        = "FORBIDDEN"
 	ErrCodeNotFound         = "NOT_FOUND"
 	ErrCodeConflict         = "CONFLICT"
+	ErrCodePreconditionFail = "PRECONDITION_FAILED"
 	ErrCodeMethodNotAllowed = "METHOD_NOT_ALLOWED"
 	ErrCodeInternal         = "INTERNAL_ERROR"
 	ErrCodeServiceUnavail   = "SERVICE_UNAVAILABLE"
