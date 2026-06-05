@@ -39,7 +39,6 @@ type Config struct {
 	DisplayOptions   DisplayOptionsConfig   `json:"displayOptions"`
 	Logging          LoggingConfig          `json:"logging"`
 	Database         DatabaseConfig         `json:"database"`
-	Pipeline         PipelineConfig         `json:"pipeline"`
 	// Profile-specific settings (not in YAML config, only stored per-profile)
 	Link      LinkConfig      `json:"link,omitzero"`
 	CableTest CableTestConfig `json:"cableTest,omitzero"`
@@ -101,7 +100,6 @@ func (c *Config) cloneFields() *Config {
 		DisplayOptions:   c.DisplayOptions,
 		Logging:          c.Logging,
 		Database:         c.Database,
-		Pipeline:         c.Pipeline,
 	}
 
 	// Deep copy slices to prevent shared references (fixes #958)
@@ -147,5 +145,4 @@ func (c *Config) CopyFieldsFrom(src *Config) {
 	c.DisplayOptions = temp.DisplayOptions
 	c.Logging = temp.Logging
 	c.Database = temp.Database
-	c.Pipeline = temp.Pipeline
 }

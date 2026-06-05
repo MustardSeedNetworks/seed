@@ -81,7 +81,6 @@ func DefaultConfig() *Config {
 			EnableWAL:      true,
 			MaxConnections: defaultDBMaxConnections,
 		},
-		Pipeline: defaultPipelineConfig(),
 	}
 }
 
@@ -315,49 +314,6 @@ func defaultSecurityConfig() SecurityConfig {
 			SeverityThreshold: "medium",
 			MaxConcurrent:     defaultMDNSMaxConcurrent,
 			AutoScan:          true,
-		},
-	}
-}
-
-// defaultPipelineConfig returns the default pipeline configuration.
-func defaultPipelineConfig() PipelineConfig {
-	return PipelineConfig{
-		Phases: PipelinePhaseConfig{
-			Enumeration:      true,
-			NameResolution:   true,
-			ServiceDiscovery: true,
-			VulnAssessment:   false,
-		},
-		Timing: PipelineTimingConfig{
-			ProbeDelay:         defaultPipelineProbeDelayMs * time.Millisecond,
-			HostDelay:          defaultPipelineHostDelayMs * time.Millisecond,
-			MaxConcurrentHosts: defaultPipelineMaxConcurrentHosts,
-			PhaseTimeout:       defaultPipelinePhaseTimeoutMin * time.Minute,
-			Profile:            "normal",
-		},
-		PortScan: PipelinePortScanConfig{
-			Intensity:      "off",
-			BannerGrab:     true,
-			ConnectTimeout: defaultBannerTimeoutSec * time.Second,
-		},
-		SNMPCollection: PipelineSNMPConfig{
-			Enabled: true,
-			MIBs: PipelineSNMPMIBs{
-				System:      true,
-				Interfaces:  true,
-				IPAddresses: true,
-				Routing:     false,
-				Bridge:      false,
-				Entity:      false,
-				LLDP:        true,
-				VLAN:        false,
-			},
-			WalkTimeout: defaultSNMPWalkTimeoutSec * time.Second, MaxOIDsPerRequest: defaultSNMPMaxOIDsPerRequest,
-		},
-		Persistence: PipelinePersistenceConfig{
-			StoreHistory:       true,
-			StalenessThreshold: defaultStalenessThresholdHours * time.Hour,
-			PurgeAfter:         defaultPurgeAfterDays * 24 * time.Hour,
 		},
 	}
 }

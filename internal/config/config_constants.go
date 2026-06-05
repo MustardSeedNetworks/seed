@@ -160,33 +160,6 @@ const (
 	defaultVulnUpdateIntervalSec = 86400
 )
 
-// Pipeline timing constants.
-const (
-	// defaultPipelineProbeDelayMs is the delay in milliseconds between pipeline probes.
-	defaultPipelineProbeDelayMs = 50
-
-	// defaultPipelineHostDelayMs is the delay in milliseconds between scanning hosts.
-	defaultPipelineHostDelayMs = 20
-
-	// defaultPipelineMaxConcurrentHosts is the maximum concurrent hosts in pipeline scanning.
-	defaultPipelineMaxConcurrentHosts = 20
-
-	// defaultPipelinePhaseTimeoutMin is the timeout in minutes for each pipeline phase.
-	defaultPipelinePhaseTimeoutMin = 10
-
-	// defaultSNMPWalkTimeoutSec is the timeout in seconds for SNMP walk operations.
-	defaultSNMPWalkTimeoutSec = 30
-
-	// defaultSNMPMaxOIDsPerRequest is the maximum OIDs per SNMP bulk request.
-	defaultSNMPMaxOIDsPerRequest = 10
-
-	// defaultStalenessThresholdHours is hours before a device is considered stale.
-	defaultStalenessThresholdHours = 24
-
-	// defaultPurgeAfterDays is days before inactive devices are purged.
-	defaultPurgeAfterDays = 30
-)
-
 // Threshold timing constants (in milliseconds).
 const (
 	// thresholdDHCPTotalWarningMs is the warning threshold for total DHCP time.
