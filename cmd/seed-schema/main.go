@@ -63,6 +63,15 @@ type reg struct {
 // GatewayPingResult value object so the published schema stays acyclic.
 // Unexported lowercase DTOs cannot be referenced here.
 //
+// EXCEPTION (ADR-0008): genuinely PURE-DATA domain types whose JSON shape the
+// endpoint already serializes at runtime may be reflected directly, rather than
+// hand-mirrored. EngineDiscoveryResponse uses this for the discovery.* result
+// cluster (DiscoveredDevice/EngineStats/ScanResult and their pure-data closure):
+// internal/discovery is CGO-free, the /discovery/engine endpoint already emits
+// these structs, and the cluster carries no behavior/channels/funcs. The
+// exception is narrow — behavior- or I/O-bearing domain types still get a flat
+// mirror. The round-trip + acyclicity guardrails enforce it either way.
+//
 // Function rather than a package-level var to keep gochecknoglobals happy and
 // so `go run` doesn't pull internal/api into an init side effect.
 func schemaTargets() []schemaTarget {
@@ -234,6 +243,15 @@ func schemaTargets() []schemaTarget {
 		// existed; Phase 7 S1 adds the TS /jobs client that consumes these.
 		{&api.CreateJobRequest{}, "create-job-request.schema.json"},
 		{&api.JobResponse{}, "job-response.schema.json"},
+
+		// Engine discovery result — the ADR-0008 pure-data exception. Reflects
+		// the discovery.* result cluster (DiscoveredDevice/EngineStats/
+		// ScanResult and their pure-data closure) directly rather than
+		// hand-mirroring ~150 fields: internal/discovery is CGO-free, the
+		// /discovery/engine endpoint already serializes these structs, and the
+		// cluster carries no behavior. Unblocks the Phase 7 frontend consuming
+		// typed engine results off the /jobs spine.
+		{&api.EngineDiscoveryResponse{}, "engine-discovery-response.schema.json"},
 	}
 
 	targets := make([]schemaTarget, len(rows))

@@ -1,0 +1,1142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/engine-discovery-response.schema.json",
+  "$ref": "#/$defs/EngineDiscoveryResponse",
+  "$defs": {
+    "BluetoothPresence": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "deviceClass": {
+          "type": "string"
+        },
+        "rssi": {
+          "type": "integer"
+        },
+        "txPower": {
+          "type": "integer"
+        },
+        "isPaired": {
+          "type": "boolean"
+        },
+        "isConnected": {
+          "type": "boolean"
+        },
+        "isAuthorized": {
+          "type": "boolean"
+        },
+        "services": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "type",
+        "isPaired",
+        "isConnected",
+        "isAuthorized",
+        "lastSeen"
+      ]
+    },
+    "CDPDeviceInfo": {
+      "properties": {
+        "deviceId": {
+          "type": "string"
+        },
+        "portId": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "softwareVersion": {
+          "type": "string"
+        },
+        "capabilities": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "managementAddress": {
+          "type": "string"
+        },
+        "nativeVlan": {
+          "type": "integer"
+        },
+        "voiceVlan": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "deviceId",
+        "portId"
+      ]
+    },
+    "DeviceProfile": {
+      "properties": {
+        "profiledAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "openPorts": {
+          "items": {
+            "$ref": "#/$defs/OpenPort"
+          },
+          "type": "array"
+        },
+        "httpInfo": {
+          "$ref": "#/$defs/HTTPInfo"
+        },
+        "snmpInfo": {
+          "$ref": "#/$defs/SNMPInfo"
+        },
+        "mdnsServices": {
+          "items": {
+            "$ref": "#/$defs/MDNSService"
+          },
+          "type": "array"
+        },
+        "deviceType": {
+          "type": "string"
+        },
+        "deviceIcons": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "profiledAt"
+      ]
+    },
+    "DeviceVulnerabilities": {
+      "properties": {
+        "deviceIp": {
+          "type": "string"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "product": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "vulnerabilities": {
+          "items": {
+            "$ref": "#/$defs/Vulnerability"
+          },
+          "type": "array"
+        },
+        "scanTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "deviceIp",
+        "mac",
+        "hostname",
+        "vendor",
+        "product",
+        "version",
+        "vulnerabilities",
+        "scanTime"
+      ]
+    },
+    "DiscoveredDevice": {
+      "properties": {
+        "ip": {
+          "type": "string"
+        },
+        "ipv6": {
+          "type": "string"
+        },
+        "ipv6Addresses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "netbiosName": {
+          "type": "string"
+        },
+        "mdnsName": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "osGuess": {
+          "type": "string"
+        },
+        "ttl": {
+          "type": "integer"
+        },
+        "discoveryMethod": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "isLocal": {
+          "type": "boolean"
+        },
+        "isRouter": {
+          "type": "boolean"
+        },
+        "hasDuplicateIP": {
+          "type": "boolean"
+        },
+        "duplicateMACs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "lldpInfo": {
+          "$ref": "#/$defs/LLDPDeviceInfo"
+        },
+        "cdpInfo": {
+          "$ref": "#/$defs/CDPDeviceInfo"
+        },
+        "edpInfo": {
+          "$ref": "#/$defs/EDPDeviceInfo"
+        },
+        "ndpInfo": {
+          "$ref": "#/$defs/NDPDeviceInfo"
+        },
+        "profile": {
+          "$ref": "#/$defs/DeviceProfile"
+        },
+        "snmpData": {
+          "$ref": "#/$defs/SNMPFullData"
+        },
+        "vulnerabilities": {
+          "$ref": "#/$defs/DeviceVulnerabilities"
+        },
+        "wolCapable": {
+          "type": "boolean"
+        },
+        "wolStatus": {
+          "type": "string"
+        },
+        "connectionTypes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "wifiPresence": {
+          "$ref": "#/$defs/WiFiPresence"
+        },
+        "bluetoothPresence": {
+          "$ref": "#/$defs/BluetoothPresence"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ip",
+        "mac",
+        "discoveryMethod",
+        "lastSeen",
+        "isLocal"
+      ]
+    },
+    "EDPDeviceInfo": {
+      "properties": {
+        "deviceId": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "portId": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "softwareVersion": {
+          "type": "string"
+        },
+        "vlan": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "deviceId",
+        "portId"
+      ]
+    },
+    "EngineDiscoveryResponse": {
+      "properties": {
+        "devices": {
+          "items": {
+            "$ref": "#/$defs/DiscoveredDevice"
+          },
+          "type": "array"
+        },
+        "stats": {
+          "$ref": "#/$defs/EngineStats"
+        },
+        "scanResult": {
+          "$ref": "#/$defs/ScanResult"
+        },
+        "capabilities": {
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "devices",
+        "stats",
+        "capabilities"
+      ]
+    },
+    "EngineStats": {
+      "properties": {
+        "registry": {
+          "$ref": "#/$defs/RegistryStats"
+        },
+        "events": {
+          "$ref": "#/$defs/EventBusStats"
+        },
+        "scanCount": {
+          "type": "integer"
+        },
+        "running": {
+          "type": "boolean"
+        },
+        "scanning": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "registry",
+        "events",
+        "scanCount",
+        "running",
+        "scanning"
+      ]
+    },
+    "EventBusStats": {
+      "properties": {
+        "eventCount": {
+          "type": "integer"
+        },
+        "subscriberCount": {
+          "type": "integer"
+        },
+        "bufferedEvents": {
+          "type": "integer"
+        },
+        "bufferSize": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "eventCount",
+        "subscriberCount",
+        "bufferedEvents",
+        "bufferSize"
+      ]
+    },
+    "HTTPInfo": {
+      "properties": {
+        "port": {
+          "type": "integer"
+        },
+        "statusCode": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "server": {
+          "type": "string"
+        },
+        "isHttps": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "port",
+        "statusCode",
+        "isHttps"
+      ]
+    },
+    "LLDPDeviceInfo": {
+      "properties": {
+        "chassisId": {
+          "type": "string"
+        },
+        "portId": {
+          "type": "string"
+        },
+        "portDescription": {
+          "type": "string"
+        },
+        "systemName": {
+          "type": "string"
+        },
+        "systemDescription": {
+          "type": "string"
+        },
+        "capabilities": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "managementAddress": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "chassisId",
+        "portId"
+      ]
+    },
+    "MDNSService": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "txt": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "type"
+      ]
+    },
+    "NDPDeviceInfo": {
+      "properties": {
+        "linkLayerAddress": {
+          "type": "string"
+        },
+        "isRouter": {
+          "type": "boolean"
+        },
+        "reachableTime": {
+          "type": "integer"
+        },
+        "retransTimer": {
+          "type": "integer"
+        },
+        "flags": {
+          "type": "integer"
+        },
+        "lastAdvertisement": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "linkLayerAddress",
+        "isRouter"
+      ]
+    },
+    "OpenPort": {
+      "properties": {
+        "port": {
+          "type": "integer"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "service": {
+          "type": "string"
+        },
+        "banner": {
+          "type": "string"
+        },
+        "isOpen": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "port",
+        "protocol",
+        "isOpen"
+      ]
+    },
+    "RegistryStats": {
+      "properties": {
+        "totalDevices": {
+          "type": "integer"
+        },
+        "wiredDevices": {
+          "type": "integer"
+        },
+        "wifiDevices": {
+          "type": "integer"
+        },
+        "btDevices": {
+          "type": "integer"
+        },
+        "multiConnected": {
+          "type": "integer"
+        },
+        "addCount": {
+          "type": "integer"
+        },
+        "updateCount": {
+          "type": "integer"
+        },
+        "removeCount": {
+          "type": "integer"
+        },
+        "lastUpdate": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "totalDevices",
+        "wiredDevices",
+        "wifiDevices",
+        "btDevices",
+        "multiConnected",
+        "addCount",
+        "updateCount",
+        "removeCount",
+        "lastUpdate"
+      ]
+    },
+    "SNMPEntity": {
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "description": {
+          "type": "string"
+        },
+        "vendorType": {
+          "type": "string"
+        },
+        "containedIn": {
+          "type": "integer"
+        },
+        "class": {
+          "type": "string"
+        },
+        "parentRelPos": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "hardwareRev": {
+          "type": "string"
+        },
+        "firmwareRev": {
+          "type": "string"
+        },
+        "softwareRev": {
+          "type": "string"
+        },
+        "serialNum": {
+          "type": "string"
+        },
+        "mfgName": {
+          "type": "string"
+        },
+        "modelName": {
+          "type": "string"
+        },
+        "isFRU": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "index"
+      ]
+    },
+    "SNMPFullData": {
+      "properties": {
+        "collectedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "system": {
+          "$ref": "#/$defs/SystemInfo"
+        },
+        "interfaces": {
+          "items": {
+            "$ref": "#/$defs/SNMPInterface"
+          },
+          "type": "array"
+        },
+        "ipAddresses": {
+          "items": {
+            "$ref": "#/$defs/SNMPIPAddress"
+          },
+          "type": "array"
+        },
+        "macTable": {
+          "items": {
+            "$ref": "#/$defs/SNMPMACEntry"
+          },
+          "type": "array"
+        },
+        "vlans": {
+          "items": {
+            "$ref": "#/$defs/SNMPVLAN"
+          },
+          "type": "array"
+        },
+        "inventory": {
+          "items": {
+            "$ref": "#/$defs/SNMPEntity"
+          },
+          "type": "array"
+        },
+        "lldpNeighbors": {
+          "items": {
+            "$ref": "#/$defs/SNMPLLDPNeighbor"
+          },
+          "type": "array"
+        },
+        "routing": {
+          "items": {
+            "$ref": "#/$defs/SNMPRoute"
+          },
+          "type": "array"
+        },
+        "errors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "collectedAt"
+      ]
+    },
+    "SNMPIPAddress": {
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "integer"
+        },
+        "ifIndex": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        },
+        "addressIP": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address",
+        "ifIndex"
+      ]
+    },
+    "SNMPInfo": {
+      "properties": {
+        "sysDescr": {
+          "type": "string"
+        },
+        "sysName": {
+          "type": "string"
+        },
+        "sysContact": {
+          "type": "string"
+        },
+        "sysLocation": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "SNMPInterface": {
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer"
+        },
+        "mtu": {
+          "type": "integer"
+        },
+        "speedMbps": {
+          "type": "integer"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "adminStatus": {
+          "type": "string"
+        },
+        "operStatus": {
+          "type": "string"
+        },
+        "inOctets": {
+          "type": "integer"
+        },
+        "outOctets": {
+          "type": "integer"
+        },
+        "inErrors": {
+          "type": "integer"
+        },
+        "outErrors": {
+          "type": "integer"
+        },
+        "inDiscards": {
+          "type": "integer"
+        },
+        "outDiscards": {
+          "type": "integer"
+        },
+        "lastUpdated": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "index"
+      ]
+    },
+    "SNMPLLDPNeighbor": {
+      "properties": {
+        "localIfIndex": {
+          "type": "integer"
+        },
+        "localPortId": {
+          "type": "string"
+        },
+        "remoteChassisId": {
+          "type": "string"
+        },
+        "remotePortId": {
+          "type": "string"
+        },
+        "remoteSysName": {
+          "type": "string"
+        },
+        "remoteSysDescr": {
+          "type": "string"
+        },
+        "remoteMgmtAddr": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "localIfIndex"
+      ]
+    },
+    "SNMPMACEntry": {
+      "properties": {
+        "mac": {
+          "type": "string"
+        },
+        "vlan": {
+          "type": "integer"
+        },
+        "ifIndex": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        },
+        "port": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "mac",
+        "ifIndex"
+      ]
+    },
+    "SNMPRoute": {
+      "properties": {
+        "destination": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "integer"
+        },
+        "nextHop": {
+          "type": "string"
+        },
+        "ifIndex": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "destination"
+      ]
+    },
+    "SNMPVLAN": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "egressPorts": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id"
+      ]
+    },
+    "ScanResult": {
+      "properties": {
+        "devices": {
+          "items": {
+            "$ref": "#/$defs/DiscoveredDevice"
+          },
+          "type": "array"
+        },
+        "stats": {
+          "$ref": "#/$defs/ScanStats"
+        },
+        "phases": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "scanType": {
+          "type": "string"
+        },
+        "startTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "duration": {
+          "type": "integer"
+        },
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "devices",
+        "stats",
+        "phases",
+        "scanType",
+        "startTime",
+        "endTime",
+        "duration"
+      ]
+    },
+    "ScanStats": {
+      "properties": {
+        "totalDevices": {
+          "type": "integer"
+        },
+        "wiredDevices": {
+          "type": "integer"
+        },
+        "wifiDevices": {
+          "type": "integer"
+        },
+        "bluetoothDevices": {
+          "type": "integer"
+        },
+        "multiConnected": {
+          "type": "integer"
+        },
+        "newDevices": {
+          "type": "integer"
+        },
+        "updatedDevices": {
+          "type": "integer"
+        },
+        "enrichedDevices": {
+          "type": "integer"
+        },
+        "vulnerableDevices": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "totalDevices",
+        "wiredDevices",
+        "wifiDevices",
+        "bluetoothDevices",
+        "multiConnected",
+        "newDevices",
+        "updatedDevices",
+        "enrichedDevices",
+        "vulnerableDevices"
+      ]
+    },
+    "SystemInfo": {
+      "properties": {
+        "sysDescr": {
+          "type": "string"
+        },
+        "sysObjectId": {
+          "type": "string"
+        },
+        "sysName": {
+          "type": "string"
+        },
+        "sysContact": {
+          "type": "string"
+        },
+        "sysLocation": {
+          "type": "string"
+        },
+        "sysUpTime": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "sysDescr",
+        "sysObjectId",
+        "sysName",
+        "sysContact",
+        "sysLocation",
+        "sysUpTime"
+      ]
+    },
+    "Vulnerability": {
+      "properties": {
+        "cveId": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "score": {
+          "type": "number"
+        },
+        "published": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "modified": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "references": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "affectedCpe": {
+          "type": "string"
+        },
+        "activelyExploited": {
+          "type": "boolean"
+        },
+        "ransomwareRelated": {
+          "type": "boolean"
+        },
+        "requiredAction": {
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "string"
+        },
+        "originalSeverity": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "cveId",
+        "description",
+        "severity",
+        "score",
+        "published",
+        "modified",
+        "references",
+        "affectedCpe"
+      ]
+    },
+    "WiFiPresence": {
+      "properties": {
+        "ssid": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "integer"
+        },
+        "channelWidth": {
+          "type": "integer"
+        },
+        "frequencyMHz": {
+          "type": "integer"
+        },
+        "signalDbm": {
+          "type": "integer"
+        },
+        "isAccessPoint": {
+          "type": "boolean"
+        },
+        "isAuthorized": {
+          "type": "boolean"
+        },
+        "securityType": {
+          "type": "string"
+        },
+        "band": {
+          "type": "string"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "isAccessPoint",
+        "isAuthorized",
+        "lastSeen"
+      ]
+    }
+  },
+  "title": "EngineDiscoveryResponse",
+  "description": "EngineDiscoveryResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
