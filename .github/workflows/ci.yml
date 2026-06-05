@@ -145,6 +145,9 @@ jobs:
       - name: Route-policy gate — capability registry (ADR-0002)
         run: ./scripts/check-route-policy.sh
 
+      - name: JSON wire-casing gate — camelCase ratchet (ADR-0010)
+        run: ./scripts/check-json-casing.sh
+
       - name: Run staticcheck
         run: |
           go install honnef.co/go/tools/cmd/staticcheck@latest
