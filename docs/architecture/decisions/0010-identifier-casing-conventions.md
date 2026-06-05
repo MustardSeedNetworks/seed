@@ -45,6 +45,29 @@ The canonical casing conventions for seed (and, going forward, stem and niac):
    `redirect_uri`), SNMP, and other external-contract fields stay as the external spec
    dictates, even if snake_case — they are allow-listed exceptions, not drift.
 
+### File and directory naming (audited 2026-06-05 — already consistent)
+
+A full naming audit confirmed these are already followed everywhere; recorded here so they
+stay that way:
+
+| Artifact | Convention | Example |
+|---|---|---|
+| Go source files | snake_case | `config_types_network.go` |
+| Go packages / directories | short, lowercase, no underscores | `internal/discovery` |
+| Go command directories | kebab-case allowed (binary name) | `cmd/seed-schema` |
+| SQL migration files | goose `NNNNN_snake.sql` | `00003_job_idempotency.sql` |
+| SQL tables / columns | snake_case | `polling_targets.credentials_id` |
+| Shell scripts | kebab-case | `check-json-casing.sh` |
+| Config files (on disk) | lowercase `.yaml`, snake_case keys | `configs/seed.yaml`, `health_checks:` |
+| Generated JSON schema files | kebab-case | `engine-discovery-response.schema.json` |
+| UI React components (`.tsx`) | PascalCase | `NetworkDiscoveryCard.tsx` |
+| UI hooks (`.ts`) | `useXxx` camelCase | `useEngineScan.ts` |
+| UI utilities / modules (`.ts`) | camelCase | `jobsClient.ts` |
+| UI generated types (`.ts`) | kebab-case (mirror their schema file) | `job-response.ts` |
+
+The only naming debt in the codebase is the JSON wire-tag casing (item 1) — everything above
+already conforms.
+
 ## Consequences
 
 - **Phase 8** normalizes the snake_case JSON wire tags in `internal/api` (102) and
