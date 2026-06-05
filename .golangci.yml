@@ -584,6 +584,16 @@ linters:
       # the dupl clones it would otherwise produce.
       - path: 'cmd/seed-schema/main\.go'
         linters: [ funlen ]
+      # internal/license/fingerprint.go memoizes the device fingerprint for the
+      # process lifetime via sync.OnceValues (a package-level var). This is a
+      # required process-singleton: the fingerprint is a stable machine property,
+      # and recomputing it per call shells out to OS tools that transiently fail
+      # under load, yielding a non-deterministic Hash() that spuriously
+      # invalidates a valid license on reload. The memo must outlive any single
+      # Manager, so it cannot hang off an instance.
+      - path: 'internal/license/fingerprint\.go'
+        text: 'generateFingerprintOnce is a global variable'
+        linters: [ gochecknoglobals ]
       - path: '_test\.go'
         linters:
           - bodyclose
