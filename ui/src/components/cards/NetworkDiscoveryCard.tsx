@@ -2,8 +2,9 @@
 import type React from 'react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useEnginePhase } from '../../hooks/useEnginePhase';
+import { useEngineScan } from '../../hooks/useEngineScan';
 import { useNetworkDiscoveryAutoScan } from '../../hooks/useNetworkDiscoveryAutoScan';
-import { usePipelineStatus } from '../../hooks/usePipelineStatus';
 import { button, cn, icon as iconTokens, radius, spacing } from '../../styles/theme';
 import { Card, CardValue, type Status } from '../ui/card';
 import { Maximize2, RefreshCw, ScanSearch } from '../ui/icons';
@@ -52,15 +53,11 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
     // Search and sort state lived here when the card embedded a sortable
     // device table; those rows now live entirely inside DiscoveryModal.
 
-    // Pipeline status hook for multi-phase progress display
-    const { status: pipelineStatus, startPipeline, cancelPipeline } = usePipelineStatus();
-
-    // Check if pipeline is actively running
-    const isPipelineRunning =
-      pipelineStatus.state !== 'idle' &&
-      pipelineStatus.state !== 'complete' &&
-      pipelineStatus.state !== 'failed' &&
-      pipelineStatus.state !== 'canceled';
+    // Discovery scan via the unified jobs spine: an engine-scan job
+    // (useEngineScan) drives lifecycle + progress %, and the engine event bus
+    // (useEnginePhase) supplies the current phase name.
+    const { running, status: scanStatus, startScan, cancelScan } = useEngineScan();
+    const { phase: scanPhase } = useEnginePhase();
 
     // Auto-scan + vuln-scan orchestration lives in its own hook
     const { handleDeepScan } = useNetworkDiscoveryAutoScan(data);
@@ -135,7 +132,7 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
     const categories = categorizeDevices(devices);
 
     const getOverallStatus = (): Status => {
-      if (status.scanning || isPipelineRunning) {
+      if (status.scanning || running) {
         return 'loading';
       }
       if (deviceCount === 0) {
@@ -173,56 +170,41 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
             </button>
 
             {/* Scan button */}
-            {onScan || startPipeline ? (
-              <button
-                type="button"
-                onClick={(): void => {
-                  // Use pipeline start with port scanning enabled
-                  // This enables the serviceDiscovery phase with quick port scan
-                  startPipeline({
-                    phases: {
-                      enumeration: true,
-                      nameResolution: true,
-                      serviceDiscovery: true,
-                      vulnAssessment: false,
-                    },
-                    portScan: {
-                      intensity: 'quick',
-                      bannerGrab: true,
-                      connectTimeout: 2000,
-                    },
-                  }).catch(() => {
-                    // Errors handled in usePipelineStatus
-                  });
-                  // Also call onScan for backwards compatibility
-                  onScan?.();
-                }}
-                disabled={status.scanning || isPipelineRunning}
-                className={cn(
-                  spacing.chip.sm,
-                  'bg-brand-primary text-on-brand',
-                  radius.md,
-                  'hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center',
-                  spacing.inline.sm,
-                )}
-                aria-label={
-                  status.scanning || isPipelineRunning ? 'Scanning network' : 'Start network scan'
-                }
-                data-testid="discovery-scan-button"
-              >
-                {status.scanning || isPipelineRunning ? (
-                  <>
-                    <RefreshCw
-                      className={cn(iconTokens.size.xs, 'animate-spin')}
-                      aria-hidden="true"
-                    />
-                    {t('discovery.scan')}
-                  </>
-                ) : (
-                  t('discovery.scan')
-                )}
-              </button>
-            ) : null}
+            <button
+              type="button"
+              onClick={(): void => {
+                // Submit an engine-scan job (name resolution + service
+                // discovery at quick intensity) via the unified jobs spine.
+                // The hook's default params encode the prior pipeline config.
+                startScan().catch(() => {
+                  // Errors surfaced via useEngineScan status.
+                });
+                // Also call onScan for backwards compatibility.
+                onScan?.();
+              }}
+              disabled={status.scanning || running}
+              className={cn(
+                spacing.chip.sm,
+                'bg-brand-primary text-on-brand',
+                radius.md,
+                'hover:bg-brand-primary/90 transition-colors font-medium caption disabled:opacity-50 disabled:cursor-not-allowed flex items-center',
+                spacing.inline.sm,
+              )}
+              aria-label={status.scanning || running ? 'Scanning network' : 'Start network scan'}
+              data-testid="discovery-scan-button"
+            >
+              {status.scanning || running ? (
+                <>
+                  <RefreshCw
+                    className={cn(iconTokens.size.xs, 'animate-spin')}
+                    aria-hidden="true"
+                  />
+                  {t('discovery.scan')}
+                </>
+              ) : (
+                t('discovery.scan')
+              )}
+            </button>
           </div>
         }
       >
@@ -231,11 +213,13 @@ export const NetworkDiscoveryCard: React.NamedExoticComponent<NetworkDiscoveryCa
           status={status}
           deviceCount={deviceCount}
           categories={categories}
-          pipelineStatus={pipelineStatus}
-          onCancelPipeline={cancelPipeline}
+          scanRunning={running}
+          scanPercent={scanStatus.percentComplete}
+          scanPhase={scanPhase}
+          onCancelScan={cancelScan}
           t={t}
         />
-        {deviceCount === 0 && !status.scanning && !isPipelineRunning ? (
+        {deviceCount === 0 && !status.scanning && !running ? (
           <p className={cn('body-small text-text-muted text-center', spacing.pad.default)}>
             {t('discovery.noDevices')}
           </p>
