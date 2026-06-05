@@ -57,7 +57,10 @@ type BluetoothDevice struct {
 	EstDistanceM     float64        `json:"estDistanceM"`
 	IsConnectable    bool           `json:"isConnectable"`
 	ServiceUUIDs     []string       `json:"serviceUuids,omitempty"`
+	ServiceNames     []string       `json:"serviceNames,omitempty"` // decoded GATT service names
 	ManufacturerID   uint16         `json:"manufacturerId,omitempty"`
+	CompanyName      string         `json:"companyName,omitempty"`     // decoded manufacturer ID
+	AppearanceLabel  string         `json:"appearanceLabel,omitempty"` // decoded BLE appearance
 	ManufacturerData []byte         `json:"manufacturerData,omitempty"`
 	IsAuthorized     bool           `json:"isAuthorized"`
 	IsTrusted        bool           `json:"isTrusted"`
@@ -106,7 +109,10 @@ func toBluetoothDevices(devices []discovery.BluetoothDevice) []BluetoothDevice {
 			EstDistanceM:     d.EstDistanceM,
 			IsConnectable:    d.IsConnectable,
 			ServiceUUIDs:     d.ServiceUUIDs,
+			ServiceNames:     decodeBTServices(d.ServiceUUIDs),
 			ManufacturerID:   d.ManufacturerID,
+			CompanyName:      decodeBTCompany(d.ManufacturerID),
+			AppearanceLabel:  decodeBTAppearance(d.Appearance),
 			ManufacturerData: d.ManufacturerData,
 			IsAuthorized:     d.IsAuthorized,
 			IsTrusted:        d.IsTrusted,
