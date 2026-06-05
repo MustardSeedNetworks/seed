@@ -18,3 +18,5 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0008](0008-pure-data-discovery-types-in-schema.md) | Pure-data discovery types may be reflected into the published schema | Accepted |
 | [0009](0009-profile-ui-types-are-a-curated-view.md) | profile.ts/settings.ts are a curated UI view, not a config.Config mirror | Accepted |
 | [0010](0010-identifier-casing-conventions.md) | Identifier casing — camelCase JSON wire, snake_case files/SQL | Accepted |
+| [0011](0011-network-anomaly-engine.md) | Network-wide anomaly engine — one typed stream, data-driven catalog | Accepted |
+| [0012](0012-wifi-monitor-capture-decode.md) | Wi-Fi monitor-mode capture port + 802.11 decode pipeline | Accepted |
