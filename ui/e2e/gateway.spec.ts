@@ -66,7 +66,7 @@ const MOCK_GATEWAY = {
 };
 
 async function mockGatewayEndpoint(page: import('@playwright/test').Page): Promise<void> {
-  await page.route(/\/api\/v1\/sap\/gateway(\?.*)?$/, (route) => {
+  await page.route(/\/api\/v1\/telemetry\/gateway(\?.*)?$/, (route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
