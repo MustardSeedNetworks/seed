@@ -116,16 +116,19 @@ test.describe('Gateway', () => {
   });
 
   test('should show IPv6 or IPv4 gateway entry', async ({ page }) => {
-    // IPv4 / IPv6 are protocol nouns and DNT per the language
-    // memo. Asserting either one is present catches both single-
-    // stack and dual-stack hosts without committing to one.
-    const ipv6Text = page.getByText(/ipv6/i);
-    const ipv4Pattern = page.getByText(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/);
-    const [hasIpv6, hasIpv4] = await Promise.all([
-      ipv6Text.first().isVisible(),
-      ipv4Pattern.first().isVisible(),
-    ]);
-    expect(hasIpv6 || hasIpv4).toBeTruthy();
+    // IPv4 / IPv6 are protocol nouns and DNT per the language memo.
+    // Anchor on the stable gateway-ip testid and use a web-first
+    // assertion that POLLS: the previous instant isVisible() pair lost
+    // a deterministic render race on slow WebKit (failed on retry too),
+    // because the gateway fetch+paint had not landed when the snapshot
+    // was read. toHaveText retries until the value paints. Either an
+    // IPv4 dotted-quad or an IPv6 colon-hex form satisfies single- and
+    // dual-stack hosts without committing to one.
+    const gatewayIp = page.getByTestId('gateway-ip');
+    await expect(gatewayIp).toBeVisible({ timeout: 5000 });
+    await expect(gatewayIp).toHaveText(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|[0-9a-f]*:[0-9a-f:]+/i, {
+      timeout: 5000,
+    });
   });
 });
 
