@@ -30,7 +30,10 @@ export interface BluetoothDevice {
   estDistanceM: number;
   isConnectable: boolean;
   serviceUuids?: string[];
+  serviceNames?: string[];
   manufacturerId?: number;
+  companyName?: string;
+  appearanceLabel?: string;
   manufacturerData?: string;
   isAuthorized: boolean;
   isTrusted: boolean;

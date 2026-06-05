@@ -56,8 +56,20 @@
           },
           "type": "array"
         },
+        "serviceNames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "manufacturerId": {
           "type": "integer"
+        },
+        "companyName": {
+          "type": "string"
+        },
+        "appearanceLabel": {
+          "type": "string"
         },
         "manufacturerData": {
           "type": "string",
