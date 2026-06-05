@@ -12,6 +12,8 @@ export interface EngineScanRequest {
   includeBluetooth: boolean;
   includeSnmp: boolean;
   includePortScan: boolean;
+  includeProfiling: boolean;
+  includeNameRes: boolean;
   includeVulnScan: boolean;
   freshWiredScan: boolean;
   freshWifiScan: boolean;

@@ -23,6 +23,12 @@
         "includePortScan": {
           "type": "boolean"
         },
+        "includeProfiling": {
+          "type": "boolean"
+        },
+        "includeNameRes": {
+          "type": "boolean"
+        },
         "includeVulnScan": {
           "type": "boolean"
         },
@@ -60,6 +66,8 @@
         "includeBluetooth",
         "includeSnmp",
         "includePortScan",
+        "includeProfiling",
+        "includeNameRes",
         "includeVulnScan",
         "freshWiredScan",
         "freshWifiScan",

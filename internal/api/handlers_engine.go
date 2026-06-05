@@ -36,9 +36,11 @@ type EngineScanRequest struct {
 	IncludeBluetooth bool `json:"includeBluetooth"`
 
 	// Enrichment options (full scan)
-	IncludeSNMP     bool `json:"includeSnmp"`
-	IncludePortScan bool `json:"includePortScan"`
-	IncludeVulnScan bool `json:"includeVulnScan"`
+	IncludeSNMP      bool `json:"includeSnmp"`
+	IncludePortScan  bool `json:"includePortScan"`
+	IncludeProfiling bool `json:"includeProfiling"`
+	IncludeNameRes   bool `json:"includeNameRes"`
+	IncludeVulnScan  bool `json:"includeVulnScan"`
 
 	// Fresh scan triggers
 	FreshWiredScan     bool `json:"freshWiredScan"`
@@ -184,6 +186,8 @@ func scanOptsFromRequest(req EngineScanRequest) *discovery.ScanOptions {
 	opts.IncludeBluetooth = req.IncludeBluetooth
 	opts.IncludeSNMP = req.IncludeSNMP
 	opts.IncludePortScan = req.IncludePortScan
+	opts.IncludeProfiling = req.IncludeProfiling
+	opts.IncludeNameRes = req.IncludeNameRes
 	opts.IncludeVulnScan = req.IncludeVulnScan
 	opts.FreshWiredScan = req.FreshWiredScan
 	opts.FreshWiFiScan = req.FreshWiFiScan
