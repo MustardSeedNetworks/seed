@@ -225,6 +225,15 @@ func schemaTargets() []schemaTarget {
 		{&api.ProfileListResponse{}, "profile-list-response.schema.json"},
 		{&api.ProfileImportRequest{}, "profile-import-request.schema.json"},
 		{&api.ProfileExportResponse{}, "profile-export-response.schema.json"},
+
+		// Jobs spine — unified job runner transport (ADR-0005, §8). The job
+		// request params and the job result are deliberately opaque: params is
+		// json.RawMessage (each kind validates its own shape) and result is a
+		// bare interface (kind-specific payload), so both document as arbitrary
+		// JSON. Registration was deferred in #1468 until a frontend consumer
+		// existed; Phase 7 S1 adds the TS /jobs client that consumes these.
+		{&api.CreateJobRequest{}, "create-job-request.schema.json"},
+		{&api.JobResponse{}, "job-response.schema.json"},
 	}
 
 	targets := make([]schemaTarget, len(rows))
