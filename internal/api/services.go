@@ -121,7 +121,6 @@ type NetworkServices struct {
 type DiscoveryServices struct {
 	Device           *discovery.DeviceDiscovery
 	Service          *discovery.Service
-	Pipeline         *discovery.Pipeline
 	Vulnerability    *discovery.VulnerabilityScanner
 	ProblemDetector  *discovery.ProblemDetector
 	BluetoothScanner *discovery.BluetoothScanner

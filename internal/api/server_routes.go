@@ -226,12 +226,6 @@ func (s *Server) setupSecurityRoutes() {
 			feature:     "compliance_advanced",
 			rateLimited: true,
 		},
-		{path: APIVersionPrefix + "/security/pipeline/status", handler: s.handlePipelineStatus},
-		{path: APIVersionPrefix + "/security/pipeline/start", handler: s.handlePipelineStart},
-		{path: APIVersionPrefix + "/security/pipeline/cancel", handler: s.handlePipelineCancel},
-		{path: APIVersionPrefix + "/security/pipeline/config", handler: s.handlePipelineConfigRoute, minRole: op},
-		{path: APIVersionPrefix + "/security/pipeline/port-intensity", handler: s.handlePipelinePortIntensityInfo},
-		{path: APIVersionPrefix + "/security/pipeline/timing-profiles", handler: s.handlePipelineTimingProfiles},
 		// Network problem detection.
 		{path: APIVersionPrefix + "/security/problems", handler: s.handleNetworkProblems},
 		{path: APIVersionPrefix + "/security/problems/scan", handler: s.handleProblemScan},

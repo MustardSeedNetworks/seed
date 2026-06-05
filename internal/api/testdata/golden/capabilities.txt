@@ -364,25 +364,6 @@ body:
     "rateLimited": true
   },
   {
-    "path": "/api/v1/security/pipeline/status"
-  },
-  {
-    "path": "/api/v1/security/pipeline/start"
-  },
-  {
-    "path": "/api/v1/security/pipeline/cancel"
-  },
-  {
-    "minRole": "operator",
-    "path": "/api/v1/security/pipeline/config"
-  },
-  {
-    "path": "/api/v1/security/pipeline/port-intensity"
-  },
-  {
-    "path": "/api/v1/security/pipeline/timing-profiles"
-  },
-  {
     "path": "/api/v1/security/problems"
   },
   {

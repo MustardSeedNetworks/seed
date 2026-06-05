@@ -269,21 +269,6 @@ func parseOctet(s string) int {
 	return n
 }
 
-// pipelineBroadcastAdapter implements discovery.EventBroadcaster using SSE for real-time updates.
-type pipelineBroadcastAdapter struct {
-	hub *SSEHub
-}
-
-// BroadcastPipelineEvent implements discovery.EventBroadcaster interface.
-func (a *pipelineBroadcastAdapter) BroadcastPipelineEvent(event discovery.PipelineEvent) {
-	if a.hub != nil {
-		a.hub.Broadcast(Message{
-			Type:    "pipeline",
-			Payload: event,
-		})
-	}
-}
-
 // dbLogWriterAdapter implements logging.DBLogWriter for database persistence.
 type dbLogWriterAdapter struct {
 	db *database.DB
