@@ -33,13 +33,16 @@ type engineScanner interface {
 // newEngineScanHandler returns the job Handler for the "engine-scan" kind. It
 // runs one scan (cancellable via the job context) and returns the same
 // EngineDiscoveryResponse the legacy endpoint produces. The report callback is
-// unused: the engine surfaces no progress fraction, only running/idle.
+// driven by the engine's per-phase progress (S4.2).
 func newEngineScanHandler(newEngine func() engineScanner) jobs.Handler {
-	return func(ctx context.Context, params any, _ func(float64)) (any, error) {
+	return func(ctx context.Context, params any, report func(float64)) (any, error) {
 		opts, err := engineScanOptsFromParams(params)
 		if err != nil {
 			return nil, err
 		}
+		// Surface engine phase boundaries as job progress; the phase name is
+		// observable on the engine event bus, the job tracks the fraction.
+		opts.Progress = func(fraction float64, _ string) { report(fraction) }
 
 		engine := newEngine()
 		result, scanErr := engine.Scan(ctx, opts)

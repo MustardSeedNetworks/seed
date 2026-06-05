@@ -160,6 +160,15 @@ func NewScanStartedEvent(scanType string) *Event {
 	})
 }
 
+// NewScanProgressEvent creates a scan progress event marking the completion of
+// a named phase. fraction is the cumulative scan progress in [0,1].
+func NewScanProgressEvent(phase string, fraction float64) *Event {
+	return NewEvent(EventScanProgress, SourceEngine).WithPayload(map[string]any{
+		"phase":    phase,
+		"fraction": fraction,
+	})
+}
+
 // NewScanCompletedEvent creates a scan completed event.
 func NewScanCompletedEvent(scanType string, deviceCount int, duration time.Duration) *Event {
 	return NewEvent(EventScanCompleted, SourceEngine).WithPayload(map[string]any{

@@ -131,6 +131,44 @@ func TestEngineScanWithoutCollectors(t *testing.T) {
 	}
 }
 
+func TestEngineScanReportsPhaseProgress(t *testing.T) {
+	engine := discovery.NewEngine(nil)
+	defer engine.Stop()
+
+	var fractions []float64
+	var phases []string
+	opts := discovery.DefaultQuickScanOpts()
+	opts.Progress = func(fraction float64, phase string) {
+		fractions = append(fractions, fraction)
+		phases = append(phases, phase)
+	}
+
+	if _, err := engine.Scan(context.Background(), opts); err != nil {
+		t.Fatalf("Scan failed: %v", err)
+	}
+
+	// No collectors + quick opts => discovery + correlation always run.
+	if len(fractions) < 2 {
+		t.Fatalf("expected >=2 progress reports, got %d (%v)", len(fractions), phases)
+	}
+	prev := 0.0
+	for i, f := range fractions {
+		if f < prev {
+			t.Errorf("progress went backwards at %d: %v", i, fractions)
+		}
+		if f < 0 || f > 1 {
+			t.Errorf("progress fraction out of [0,1] at %d: %v", i, f)
+		}
+		prev = f
+	}
+	if last := fractions[len(fractions)-1]; last != 1.0 {
+		t.Errorf("final progress = %v, want 1.0 (%v)", last, fractions)
+	}
+	if phases[0] != "discovery" {
+		t.Errorf("first phase = %q, want discovery", phases[0])
+	}
+}
+
 func TestEngineScanAlreadyInProgress(_ *testing.T) {
 	engine := discovery.NewEngine(&discovery.EngineConfig{
 		ScanTimeout: 5 * time.Second,
