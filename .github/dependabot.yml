@@ -25,6 +25,15 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # download-artifact v8 enforces a stricter digest check that is
+      # incompatible with artifacts produced by upload-artifact v7 (which
+      # has no v8 release yet), so a v7-uploaded artifact intermittently
+      # fails the v8 download with `digest-mismatch: error` under the
+      # concurrent restores of the 8-way E2E shard matrix. Pin both to v7
+      # until upload-artifact ships a matching v8 and bump them together.
+      - dependency-name: "actions/download-artifact"
+        update-types: ["version-update:semver-major"]
 
   # Keep Go dependencies up to date
   - package-ecosystem: "gomod"
