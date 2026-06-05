@@ -594,6 +594,13 @@ linters:
       - path: 'internal/license/fingerprint\.go'
         text: 'generateFingerprintOnce is a global variable'
         linters: [ gochecknoglobals ]
+      # internal/wifi/dot11/decode.go classify() switches over gopacket's
+      # layers.Dot11Type, a third-party enum with 30+ control/data subtypes. We
+      # map the management subtypes the visibility feature decodes and fold the
+      # rest into KindData/KindOther via default; enumerating every foreign
+      # control-frame subtype would add noise without changing behaviour.
+      - path: 'internal/wifi/dot11/decode\.go'
+        linters: [ exhaustive ]
       - path: '_test\.go'
         linters:
           - bodyclose
