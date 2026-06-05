@@ -20,3 +20,4 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0010](0010-identifier-casing-conventions.md) | Identifier casing — camelCase JSON wire, snake_case files/SQL | Accepted |
 | [0011](0011-network-anomaly-engine.md) | Network-wide anomaly engine — one typed stream, data-driven catalog | Accepted |
 | [0012](0012-wifi-monitor-capture-decode.md) | Wi-Fi monitor-mode capture port + 802.11 decode pipeline | Accepted |
+| [0013](0013-bluetooth-live-capture.md) | Bluetooth live-scan capture port | Accepted |
