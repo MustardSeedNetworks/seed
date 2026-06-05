@@ -206,9 +206,11 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 	}
 }
 
-// initDiscoveryPipeline initializes the discovery service and pipeline.
-func (s *Server) initDiscoveryPipeline(cfg *config.Config) {
-	// Create SHARED DeviceProfiler - used by Service, Pipeline, and Engine
+// initDiscovery initializes the shared discovery profiler, port scanner, and
+// the discovery service. (The legacy pipeline orchestrator was retired in
+// Phase 7 — discovery now runs through the engine + jobs spine.)
+func (s *Server) initDiscovery(cfg *config.Config) {
+	// Create SHARED DeviceProfiler - used by Service and Engine
 	// This ensures port scan results and SNMP data are consistent across the system
 	sharedProfiler := discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), &cfg.SNMP)
 	s.services.Discovery.Profiler = sharedProfiler
@@ -228,32 +230,6 @@ func (s *Server) initDiscoveryPipeline(cfg *config.Config) {
 		cfg, cfg.Interface.Default, sharedProfiler, discovery.WithCapture(defaultCaptureOpener()),
 	)
 	logging.GetLogger().Info("Discovery service initialized with shared profiler")
-
-	// Initialize discovery pipeline with the SAME shared profiler
-	pipelineCfg := discovery.PipelineConfigFromAdapter(&cfg.Pipeline)
-	s.services.Discovery.Pipeline = discovery.NewPipeline(
-		&pipelineCfg,
-		s.deviceDiscovery(),
-		sharedProfiler, // Use the same profiler as Service
-		&pipelineBroadcastAdapter{hub: s.sseHub()},
-	)
-
-	// Link Service and Pipeline for coordination
-	s.discoveryService().SetPipeline(s.pipeline())
-
-	// Set up pipeline completion callback to sync results back to service
-	s.discoveryService().SetOnPipelineComplete(func(devices []*discovery.DiscoveredDevice) {
-		logging.GetLogger().Info(
-			"Pipeline completed, syncing results to discovery service",
-			"device_count",
-			len(devices),
-		)
-	})
-
-	logging.GetLogger().Info("Discovery pipeline initialized",
-		"phases_enabled", s.pipeline().GetEnabledPhaseNames(),
-		"port_scan_intensity", cfg.Pipeline.PortScan.Intensity,
-		"shared_profiler", true)
 }
 
 // initVulnerabilityScanner initializes the vulnerability scanner if enabled.

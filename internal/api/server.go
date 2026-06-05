@@ -234,7 +234,7 @@ func NewServer(
 	s.initSSEAndLogging(db)
 
 	// Initialize discovery service and pipeline
-	s.initDiscoveryPipeline(cfg)
+	s.initDiscovery(cfg)
 
 	// Initialize vulnerability scanner if enabled
 	s.initVulnerabilityScanner(cfg)
@@ -619,7 +619,6 @@ func (s *Server) DeviceDiscovery() *discovery.DeviceDiscovery { return s.service
 func (s *Server) DiscoveryService() *discovery.Service { return s.services.Discovery.Service }
 
 // Pipeline returns the discovery pipeline.
-func (s *Server) Pipeline() *discovery.Pipeline { return s.services.Discovery.Pipeline }
 
 // VulnScanner returns the vulnerability scanner.
 func (s *Server) VulnScanner() *discovery.VulnerabilityScanner {
@@ -696,7 +695,6 @@ func (s *Server) netManager() *netif.Manager                  { return s.service
 func (s *Server) linkMonitor() *netif.LinkMonitor             { return s.services.Network.LinkMonitor }
 func (s *Server) deviceDiscovery() *discovery.DeviceDiscovery { return s.services.Discovery.Device }
 func (s *Server) discoveryService() *discovery.Service        { return s.services.Discovery.Service }
-func (s *Server) pipeline() *discovery.Pipeline               { return s.services.Discovery.Pipeline }
 func (s *Server) vulnScanner() *discovery.VulnerabilityScanner {
 	return s.services.Discovery.Vulnerability
 }
