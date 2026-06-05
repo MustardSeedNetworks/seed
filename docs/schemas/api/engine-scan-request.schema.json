@@ -34,6 +34,18 @@
         },
         "freshBluetoothScan": {
           "type": "boolean"
+        },
+        "portScanIntensity": {
+          "type": "string"
+        },
+        "portScanCustomPorts": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "timingProfile": {
+          "type": "string"
         }
       },
       "additionalProperties": false,

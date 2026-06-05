@@ -142,6 +142,15 @@ type ScanOptions struct {
 
 	// Scan timeout (0 = use engine default)
 	Timeout time.Duration
+
+	// Port-scan + timing configuration, folded from the pipeline orchestrator
+	// (ADR-0007, Phase 7 S4). These tune the profiler's port scan the same way
+	// Pipeline does via DeviceProfiler.UpdateScanConfig. Zero values are inert:
+	// an empty PortScanIntensity leaves the profiler's existing config
+	// untouched, so the engine's prior behavior is unchanged when unset.
+	PortScanIntensity   PortScanIntensity
+	PortScanCustomPorts []int
+	TimingProfile       ScanTimingProfile
 }
 
 // DefaultQuickScanOpts returns options for a quick correlation-only scan.
@@ -379,6 +388,13 @@ func (e *Engine) Scan(ctx context.Context, opts *ScanOptions) (*ScanResult, erro
 		return nil, errors.New("scan already in progress")
 	}
 	defer e.endScan()
+
+	// Apply folded pipeline port-scan/timing config to the profiler (S4). Gated
+	// on a set intensity so the default (unset) path leaves the profiler's
+	// existing configuration — and thus prior behavior — untouched.
+	if e.profiler != nil && opts.PortScanIntensity != "" {
+		e.profiler.UpdateScanConfig(opts.PortScanIntensity, opts.PortScanCustomPorts, opts.TimingProfile)
+	}
 
 	timeout := opts.Timeout
 	if timeout == 0 {

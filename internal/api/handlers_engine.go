@@ -41,6 +41,15 @@ type EngineScanRequest struct {
 	FreshWiredScan     bool `json:"freshWiredScan"`
 	FreshWiFiScan      bool `json:"freshWifiScan"`
 	FreshBluetoothScan bool `json:"freshBluetoothScan"`
+
+	// Port-scan + timing config, folded from the pipeline orchestrator
+	// (ADR-0007, Phase 7 S4). Empty PortScanIntensity = engine default
+	// (profiler config left unchanged). Intensity is one of
+	// off/quick/standard/comprehensive/custom; TimingProfile is one of
+	// polite/normal/aggressive.
+	PortScanIntensity   string `json:"portScanIntensity,omitempty"`
+	PortScanCustomPorts []int  `json:"portScanCustomPorts,omitempty"`
+	TimingProfile       string `json:"timingProfile,omitempty"`
 }
 
 // handleEngineDiscovery returns all devices from the discovery engine registry.
@@ -111,6 +120,9 @@ func scanOptsFromRequest(req EngineScanRequest) *discovery.ScanOptions {
 	opts.FreshWiredScan = req.FreshWiredScan
 	opts.FreshWiFiScan = req.FreshWiFiScan
 	opts.FreshBluetoothScan = req.FreshBluetoothScan
+	opts.PortScanIntensity = discovery.PortScanIntensity(req.PortScanIntensity)
+	opts.PortScanCustomPorts = req.PortScanCustomPorts
+	opts.TimingProfile = discovery.ScanTimingProfile(req.TimingProfile)
 	return opts
 }
 
