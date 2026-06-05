@@ -42,45 +42,45 @@ type BluetoothStatsResponse struct {
 // strings (the domain's BluetoothType/BluetoothDeviceClass are string enums).
 type BluetoothDevice struct {
 	ID               string         `json:"id"`
-	DeviceID         string         `json:"device_id,omitempty"`
+	DeviceID         string         `json:"deviceId,omitempty"`
 	Address          string         `json:"address"`
 	Name             string         `json:"name"`
 	Alias            string         `json:"alias"`
 	Vendor           string         `json:"vendor"`
-	IsConnected      bool           `json:"is_connected"`
+	IsConnected      bool           `json:"isConnected"`
 	Type             string         `json:"type"`
-	DeviceClass      string         `json:"device_class"`
+	DeviceClass      string         `json:"deviceClass"`
 	Appearance       uint16         `json:"appearance"`
-	ClassOfDev       uint32         `json:"class_of_device,omitempty"`
+	ClassOfDev       uint32         `json:"classOfDevice,omitempty"`
 	RSSI             int            `json:"rssi"`
-	TxPower          int            `json:"tx_power"`
-	EstDistanceM     float64        `json:"est_distance_m"`
-	IsConnectable    bool           `json:"is_connectable"`
-	ServiceUUIDs     []string       `json:"service_uuids,omitempty"`
-	ManufacturerID   uint16         `json:"manufacturer_id,omitempty"`
-	ManufacturerData []byte         `json:"manufacturer_data,omitempty"`
-	IsAuthorized     bool           `json:"is_authorized"`
-	IsTrusted        bool           `json:"is_trusted"`
-	IsPaired         bool           `json:"is_paired"`
-	IsBlocked        bool           `json:"is_blocked"`
-	FirstSeen        time.Time      `json:"first_seen"`
-	LastSeen         time.Time      `json:"last_seen"`
+	TxPower          int            `json:"txPower"`
+	EstDistanceM     float64        `json:"estDistanceM"`
+	IsConnectable    bool           `json:"isConnectable"`
+	ServiceUUIDs     []string       `json:"serviceUuids,omitempty"`
+	ManufacturerID   uint16         `json:"manufacturerId,omitempty"`
+	ManufacturerData []byte         `json:"manufacturerData,omitempty"`
+	IsAuthorized     bool           `json:"isAuthorized"`
+	IsTrusted        bool           `json:"isTrusted"`
+	IsPaired         bool           `json:"isPaired"`
+	IsBlocked        bool           `json:"isBlocked"`
+	FirstSeen        time.Time      `json:"firstSeen"`
+	LastSeen         time.Time      `json:"lastSeen"`
 	Metadata         map[string]any `json:"metadata,omitempty"`
 }
 
 // BluetoothDiscoveryStats is the flat transport view of Bluetooth scan
 // statistics, mirroring discovery.BluetoothDiscoveryStats's wire shape.
 type BluetoothDiscoveryStats struct {
-	TotalDevices      int            `json:"total_devices"`
-	ClassicDevices    int            `json:"classic_devices"`
-	BLEDevices        int            `json:"ble_devices"`
-	DualDevices       int            `json:"dual_devices"`
-	ConnectedDevices  int            `json:"connected_devices"`
-	AuthorizedCount   int            `json:"authorized_count"`
-	UnauthorizedCount int            `json:"unauthorized_count"`
-	DevicesByClass    map[string]int `json:"devices_by_class"`
-	VendorBreakdown   map[string]int `json:"vendor_breakdown"`
-	LastScanTime      time.Time      `json:"last_scan_time"`
+	TotalDevices      int            `json:"totalDevices"`
+	ClassicDevices    int            `json:"classicDevices"`
+	BLEDevices        int            `json:"bleDevices"`
+	DualDevices       int            `json:"dualDevices"`
+	ConnectedDevices  int            `json:"connectedDevices"`
+	AuthorizedCount   int            `json:"authorizedCount"`
+	UnauthorizedCount int            `json:"unauthorizedCount"`
+	DevicesByClass    map[string]int `json:"devicesByClass"`
+	VendorBreakdown   map[string]int `json:"vendorBreakdown"`
+	LastScanTime      time.Time      `json:"lastScanTime"`
 }
 
 // toBluetoothDevices maps discovered Bluetooth devices onto their flat

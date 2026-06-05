@@ -15,44 +15,44 @@ export interface BluetoothScanResponse {
 }
 export interface BluetoothDevice {
   id: string;
-  device_id?: string;
+  deviceId?: string;
   address: string;
   name: string;
   alias: string;
   vendor: string;
-  is_connected: boolean;
+  isConnected: boolean;
   type: string;
-  device_class: string;
+  deviceClass: string;
   appearance: number;
-  class_of_device?: number;
+  classOfDevice?: number;
   rssi: number;
-  tx_power: number;
-  est_distance_m: number;
-  is_connectable: boolean;
-  service_uuids?: string[];
-  manufacturer_id?: number;
-  manufacturer_data?: string;
-  is_authorized: boolean;
-  is_trusted: boolean;
-  is_paired: boolean;
-  is_blocked: boolean;
-  first_seen: string;
-  last_seen: string;
+  txPower: number;
+  estDistanceM: number;
+  isConnectable: boolean;
+  serviceUuids?: string[];
+  manufacturerId?: number;
+  manufacturerData?: string;
+  isAuthorized: boolean;
+  isTrusted: boolean;
+  isPaired: boolean;
+  isBlocked: boolean;
+  firstSeen: string;
+  lastSeen: string;
   metadata?: {};
 }
 export interface BluetoothDiscoveryStats {
-  total_devices: number;
-  classic_devices: number;
-  ble_devices: number;
-  dual_devices: number;
-  connected_devices: number;
-  authorized_count: number;
-  unauthorized_count: number;
-  devices_by_class: {
+  totalDevices: number;
+  classicDevices: number;
+  bleDevices: number;
+  dualDevices: number;
+  connectedDevices: number;
+  authorizedCount: number;
+  unauthorizedCount: number;
+  devicesByClass: {
     [k: string]: number;
   };
-  vendor_breakdown: {
+  vendorBreakdown: {
     [k: string]: number;
   };
-  last_scan_time: string;
+  lastScanTime: string;
 }

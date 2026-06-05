@@ -8,7 +8,7 @@
         "id": {
           "type": "string"
         },
-        "device_id": {
+        "deviceId": {
           "type": "string"
         },
         "address": {
@@ -23,63 +23,63 @@
         "vendor": {
           "type": "string"
         },
-        "is_connected": {
+        "isConnected": {
           "type": "boolean"
         },
         "type": {
           "type": "string"
         },
-        "device_class": {
+        "deviceClass": {
           "type": "string"
         },
         "appearance": {
           "type": "integer"
         },
-        "class_of_device": {
+        "classOfDevice": {
           "type": "integer"
         },
         "rssi": {
           "type": "integer"
         },
-        "tx_power": {
+        "txPower": {
           "type": "integer"
         },
-        "est_distance_m": {
+        "estDistanceM": {
           "type": "number"
         },
-        "is_connectable": {
+        "isConnectable": {
           "type": "boolean"
         },
-        "service_uuids": {
+        "serviceUuids": {
           "items": {
             "type": "string"
           },
           "type": "array"
         },
-        "manufacturer_id": {
+        "manufacturerId": {
           "type": "integer"
         },
-        "manufacturer_data": {
+        "manufacturerData": {
           "type": "string",
           "contentEncoding": "base64"
         },
-        "is_authorized": {
+        "isAuthorized": {
           "type": "boolean"
         },
-        "is_trusted": {
+        "isTrusted": {
           "type": "boolean"
         },
-        "is_paired": {
+        "isPaired": {
           "type": "boolean"
         },
-        "is_blocked": {
+        "isBlocked": {
           "type": "boolean"
         },
-        "first_seen": {
+        "firstSeen": {
           "type": "string",
           "format": "date-time"
         },
-        "last_seen": {
+        "lastSeen": {
           "type": "string",
           "format": "date-time"
         },
@@ -95,58 +95,58 @@
         "name",
         "alias",
         "vendor",
-        "is_connected",
+        "isConnected",
         "type",
-        "device_class",
+        "deviceClass",
         "appearance",
         "rssi",
-        "tx_power",
-        "est_distance_m",
-        "is_connectable",
-        "is_authorized",
-        "is_trusted",
-        "is_paired",
-        "is_blocked",
-        "first_seen",
-        "last_seen"
+        "txPower",
+        "estDistanceM",
+        "isConnectable",
+        "isAuthorized",
+        "isTrusted",
+        "isPaired",
+        "isBlocked",
+        "firstSeen",
+        "lastSeen"
       ]
     },
     "BluetoothDiscoveryStats": {
       "properties": {
-        "total_devices": {
+        "totalDevices": {
           "type": "integer"
         },
-        "classic_devices": {
+        "classicDevices": {
           "type": "integer"
         },
-        "ble_devices": {
+        "bleDevices": {
           "type": "integer"
         },
-        "dual_devices": {
+        "dualDevices": {
           "type": "integer"
         },
-        "connected_devices": {
+        "connectedDevices": {
           "type": "integer"
         },
-        "authorized_count": {
+        "authorizedCount": {
           "type": "integer"
         },
-        "unauthorized_count": {
+        "unauthorizedCount": {
           "type": "integer"
         },
-        "devices_by_class": {
+        "devicesByClass": {
           "additionalProperties": {
             "type": "integer"
           },
           "type": "object"
         },
-        "vendor_breakdown": {
+        "vendorBreakdown": {
           "additionalProperties": {
             "type": "integer"
           },
           "type": "object"
         },
-        "last_scan_time": {
+        "lastScanTime": {
           "type": "string",
           "format": "date-time"
         }
@@ -154,16 +154,16 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "total_devices",
-        "classic_devices",
-        "ble_devices",
-        "dual_devices",
-        "connected_devices",
-        "authorized_count",
-        "unauthorized_count",
-        "devices_by_class",
-        "vendor_breakdown",
-        "last_scan_time"
+        "totalDevices",
+        "classicDevices",
+        "bleDevices",
+        "dualDevices",
+        "connectedDevices",
+        "authorizedCount",
+        "unauthorizedCount",
+        "devicesByClass",
+        "vendorBreakdown",
+        "lastScanTime"
       ]
     },
     "BluetoothScanResponse": {

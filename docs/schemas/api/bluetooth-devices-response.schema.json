@@ -8,7 +8,7 @@
         "id": {
           "type": "string"
         },
-        "device_id": {
+        "deviceId": {
           "type": "string"
         },
         "address": {
@@ -23,63 +23,63 @@
         "vendor": {
           "type": "string"
         },
-        "is_connected": {
+        "isConnected": {
           "type": "boolean"
         },
         "type": {
           "type": "string"
         },
-        "device_class": {
+        "deviceClass": {
           "type": "string"
         },
         "appearance": {
           "type": "integer"
         },
-        "class_of_device": {
+        "classOfDevice": {
           "type": "integer"
         },
         "rssi": {
           "type": "integer"
         },
-        "tx_power": {
+        "txPower": {
           "type": "integer"
         },
-        "est_distance_m": {
+        "estDistanceM": {
           "type": "number"
         },
-        "is_connectable": {
+        "isConnectable": {
           "type": "boolean"
         },
-        "service_uuids": {
+        "serviceUuids": {
           "items": {
             "type": "string"
           },
           "type": "array"
         },
-        "manufacturer_id": {
+        "manufacturerId": {
           "type": "integer"
         },
-        "manufacturer_data": {
+        "manufacturerData": {
           "type": "string",
           "contentEncoding": "base64"
         },
-        "is_authorized": {
+        "isAuthorized": {
           "type": "boolean"
         },
-        "is_trusted": {
+        "isTrusted": {
           "type": "boolean"
         },
-        "is_paired": {
+        "isPaired": {
           "type": "boolean"
         },
-        "is_blocked": {
+        "isBlocked": {
           "type": "boolean"
         },
-        "first_seen": {
+        "firstSeen": {
           "type": "string",
           "format": "date-time"
         },
-        "last_seen": {
+        "lastSeen": {
           "type": "string",
           "format": "date-time"
         },
@@ -95,20 +95,20 @@
         "name",
         "alias",
         "vendor",
-        "is_connected",
+        "isConnected",
         "type",
-        "device_class",
+        "deviceClass",
         "appearance",
         "rssi",
-        "tx_power",
-        "est_distance_m",
-        "is_connectable",
-        "is_authorized",
-        "is_trusted",
-        "is_paired",
-        "is_blocked",
-        "first_seen",
-        "last_seen"
+        "txPower",
+        "estDistanceM",
+        "isConnectable",
+        "isAuthorized",
+        "isTrusted",
+        "isPaired",
+        "isBlocked",
+        "firstSeen",
+        "lastSeen"
       ]
     },
     "BluetoothDevicesResponse": {
