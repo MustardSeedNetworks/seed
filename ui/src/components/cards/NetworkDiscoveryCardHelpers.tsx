@@ -12,7 +12,6 @@
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import type { useTranslation } from 'react-i18next';
-import type { usePipelineStatus } from '../../hooks/usePipelineStatus';
 import {
   category as categoryTheme,
   cn,
@@ -34,7 +33,7 @@ import {
   Wifi,
 } from '../ui/icons';
 import type { DiscoveredDevice, DiscoveryStatus } from './networkDiscoveryCardTypes';
-import { PipelineProgress } from './PipelineProgress';
+import { ScanProgress } from './ScanProgress';
 
 type CardsT = ReturnType<typeof useTranslation<'cards'>>['t'];
 
@@ -260,30 +259,26 @@ export function DiscoverySummary({
   status,
   deviceCount,
   categories,
-  pipelineStatus,
-  onCancelPipeline,
+  scanRunning,
+  scanPercent,
+  scanPhase,
+  onCancelScan,
   t,
 }: {
   status: DiscoveryStatus;
   deviceCount: number;
   categories: CategoryCounts;
-  pipelineStatus?: ReturnType<typeof usePipelineStatus>['status'];
-  onCancelPipeline?: () => void;
+  scanRunning?: boolean;
+  scanPercent?: number;
+  scanPhase?: string;
+  onCancelScan?: () => void;
   t: CardsT;
 }): React.ReactElement {
-  // Check if pipeline is actively running
-  const isPipelineRunning =
-    pipelineStatus &&
-    pipelineStatus.state !== 'idle' &&
-    pipelineStatus.state !== 'complete' &&
-    pipelineStatus.state !== 'failed' &&
-    pipelineStatus.state !== 'canceled';
-
-  // Show pipeline progress when running
-  if (isPipelineRunning && pipelineStatus) {
+  // Show scan progress while the engine-scan job is running (S3).
+  if (scanRunning) {
     return (
       <div className="stack-sm">
-        <PipelineProgress status={pipelineStatus} onCancel={onCancelPipeline} />
+        <ScanProgress percent={scanPercent ?? 0} phase={scanPhase ?? ''} onCancel={onCancelScan} />
       </div>
     );
   }
