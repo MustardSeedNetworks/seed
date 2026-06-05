@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/create-job-request.schema.json",
+  "$ref": "#/$defs/CreateJobRequest",
+  "$defs": {
+    "CreateJobRequest": {
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "params": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "kind"
+      ]
+    }
+  },
+  "title": "CreateJobRequest",
+  "description": "CreateJobRequest — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
