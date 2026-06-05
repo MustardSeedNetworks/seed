@@ -5,40 +5,40 @@
   "$defs": {
     "BluetoothDiscoveryStats": {
       "properties": {
-        "total_devices": {
+        "totalDevices": {
           "type": "integer"
         },
-        "classic_devices": {
+        "classicDevices": {
           "type": "integer"
         },
-        "ble_devices": {
+        "bleDevices": {
           "type": "integer"
         },
-        "dual_devices": {
+        "dualDevices": {
           "type": "integer"
         },
-        "connected_devices": {
+        "connectedDevices": {
           "type": "integer"
         },
-        "authorized_count": {
+        "authorizedCount": {
           "type": "integer"
         },
-        "unauthorized_count": {
+        "unauthorizedCount": {
           "type": "integer"
         },
-        "devices_by_class": {
+        "devicesByClass": {
           "additionalProperties": {
             "type": "integer"
           },
           "type": "object"
         },
-        "vendor_breakdown": {
+        "vendorBreakdown": {
           "additionalProperties": {
             "type": "integer"
           },
           "type": "object"
         },
-        "last_scan_time": {
+        "lastScanTime": {
           "type": "string",
           "format": "date-time"
         }
@@ -46,16 +46,16 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "total_devices",
-        "classic_devices",
-        "ble_devices",
-        "dual_devices",
-        "connected_devices",
-        "authorized_count",
-        "unauthorized_count",
-        "devices_by_class",
-        "vendor_breakdown",
-        "last_scan_time"
+        "totalDevices",
+        "classicDevices",
+        "bleDevices",
+        "dualDevices",
+        "connectedDevices",
+        "authorizedCount",
+        "unauthorizedCount",
+        "devicesByClass",
+        "vendorBreakdown",
+        "lastScanTime"
       ]
     },
     "BluetoothStatsResponse": {

@@ -9,18 +9,18 @@ export interface BluetoothStatsResponse {
   stats: BluetoothDiscoveryStats;
 }
 export interface BluetoothDiscoveryStats {
-  total_devices: number;
-  classic_devices: number;
-  ble_devices: number;
-  dual_devices: number;
-  connected_devices: number;
-  authorized_count: number;
-  unauthorized_count: number;
-  devices_by_class: {
+  totalDevices: number;
+  classicDevices: number;
+  bleDevices: number;
+  dualDevices: number;
+  connectedDevices: number;
+  authorizedCount: number;
+  unauthorizedCount: number;
+  devicesByClass: {
     [k: string]: number;
   };
-  vendor_breakdown: {
+  vendorBreakdown: {
     [k: string]: number;
   };
-  last_scan_time: string;
+  lastScanTime: string;
 }
