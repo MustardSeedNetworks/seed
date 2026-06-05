@@ -103,21 +103,6 @@ func DefaultProfilerConfig() *ProfilerConfig {
 	}
 }
 
-// NewProfilerConfigFromPipeline creates a ProfilerConfig from pipeline settings.
-func NewProfilerConfigFromPipeline(pipelineConfig *PipelineConfig) *ProfilerConfig {
-	cfg := DefaultProfilerConfig()
-	cfg.PortScanIntensity = pipelineConfig.PortScan.Intensity
-	cfg.CustomPorts = pipelineConfig.PortScan.CustomPorts
-	cfg.BannerGrab = pipelineConfig.PortScan.BannerGrab
-	cfg.ConnectTimeout = pipelineConfig.PortScan.ConnectTimeout
-	cfg.TimingProfile = pipelineConfig.Timing.Profile
-	cfg.ProbeDelay = pipelineConfig.Timing.ProbeDelay
-	cfg.HostDelay = pipelineConfig.Timing.HostDelay
-	cfg.MaxConcurrent = pipelineConfig.Timing.MaxConcurrentHosts
-	cfg.Timeout = pipelineConfig.Timing.PhaseTimeout
-	return cfg
-}
-
 // GetPortsForIntensity returns the appropriate port list based on intensity level.
 func (c *ProfilerConfig) GetPortsForIntensity() []int {
 	switch c.PortScanIntensity {

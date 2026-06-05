@@ -376,9 +376,6 @@ func addServiceStatusToResult(result map[string]any, status *discovery.ServiceSt
 		return
 	}
 
-	result["pipelineStatus"] = status.PipelineStatus
-	result["pipelinePhase"] = status.PipelinePhase
-
 	if status.ProfilingStatus != nil {
 		result["profilingStatus"] = map[string]any{
 			"inProgress":    status.ProfilingStatus.InProgress,

@@ -26,46 +26,6 @@ import type { WiFiData } from '../components/cards/WiFiCard';
 import { LogComponents, logger } from '../lib/logger';
 import type { SseCardUpdate as CardUpdate, SseMessage as Message } from './useSse';
 
-// Pipeline event types for routing backend WebSocket/SSE messages. Defined
-// here (previously in the removed usePipelineStatus hook) because this event
-// router is their last consumer; they go away with the pipeline backend at
-// retirement.
-export type PipelineEventType =
-  | 'pipeline_started'
-  | 'phase_started'
-  | 'phase_progress'
-  | 'phase_completed'
-  | 'phase_failed'
-  | 'device_discovered'
-  | 'device_updated'
-  | 'pipeline_completed'
-  | 'pipeline_failed'
-  | 'pipeline_canceled';
-
-export interface PipelineEvent {
-  type: PipelineEventType;
-  timestamp: string;
-  runId: string;
-  payload: unknown;
-}
-
-const PIPELINE_EVENT_TYPES: PipelineEventType[] = [
-  'pipeline_started',
-  'phase_started',
-  'phase_progress',
-  'phase_completed',
-  'phase_failed',
-  'device_discovered',
-  'device_updated',
-  'pipeline_completed',
-  'pipeline_failed',
-  'pipeline_canceled',
-];
-
-function isPipelineEvent(type: string): type is PipelineEventType {
-  return PIPELINE_EVENT_TYPES.includes(type as PipelineEventType);
-}
-
 /**
  * Centralized state for all network monitoring cards.
  * Each card can be null if not yet loaded or unavailable.
@@ -148,62 +108,6 @@ export function useCardState({
 
   const handleMessage = useCallback(
     (message: Message) => {
-      // Route pipeline events to the pipeline status hook
-      // Backend sends: { type: "pipeline", payload: PipelineEvent }
-      // PipelineEvent has: { Type: "pipeline_started", Timestamp, RunID, Payload }
-      if (message.type === 'pipeline') {
-        const rawEvent = message.payload as {
-          type?: string;
-          timestamp?: string;
-          runId?: string;
-          payload?: unknown;
-        };
-
-        // Validate the nested event structure
-        if (!rawEvent || typeof rawEvent.type !== 'string') {
-          logger.warn(LogComponents.WEBSOCKET, 'Invalid pipeline event structure', {
-            payload: message.payload,
-          });
-          return;
-        }
-
-        // Check if it's a valid pipeline event type
-        if (!isPipelineEvent(rawEvent.type)) {
-          logger.warn(LogComponents.WEBSOCKET, 'Unknown pipeline event type', {
-            type: rawEvent.type,
-          });
-          return;
-        }
-
-        const pipelineEvent: PipelineEvent = {
-          type: rawEvent.type,
-          timestamp: rawEvent.timestamp || new Date().toISOString(),
-          runId: rawEvent.runId || '',
-          payload: rawEvent.payload,
-        };
-
-        // Dispatch to the pipeline event handler stored on window
-        // Fixes #934: Validate handler is a function before calling
-        const handler = (
-          window as unknown as {
-            __pipelineEventHandler?: (event: PipelineEvent) => void;
-          }
-        ).__pipelineEventHandler;
-
-        // Fixes #966: Wrap in try-catch to prevent handler errors from crashing WebSocket
-        if (typeof handler === 'function') {
-          try {
-            handler(pipelineEvent);
-          } catch (err) {
-            logger.error(LogComponents.WEBSOCKET, 'Pipeline event handler threw exception', {
-              error: err,
-              eventType: pipelineEvent.type,
-            });
-          }
-        }
-        return;
-      }
-
       // Route traceHop events to the path discovery component
       if (message.type === 'traceHop') {
         const traceHopMessage = message.payload as TraceHopMessage;

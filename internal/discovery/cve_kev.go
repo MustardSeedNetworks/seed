@@ -40,6 +40,10 @@ const (
 	kevCacheDirPerms   = 0o750          // Cache directory permissions
 	kevHTTPTimeoutS    = 30             // HTTP client timeout in seconds
 	kevMaxCVSSScore    = 10.0           // Maximum CVSS score for actively exploited vulns
+
+	// severityCritical is the canonical critical-severity label (relocated from
+	// the retired pipeline assessment phase; KEV entries escalate to it).
+	severityCritical = "CRITICAL"
 )
 
 // KEVCatalog represents the CISA Known Exploited Vulnerabilities catalog.

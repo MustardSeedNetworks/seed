@@ -166,16 +166,6 @@ func (d *DeviceDiscoveryTestAccessor) GetProtoManager() *Manager {
 	return d.Discovery.protoManager
 }
 
-// ExportGenerateHostIPs exposes generateHostIPs for testing.
-func ExportGenerateHostIPs(subnet *net.IPNet) []net.IP {
-	return generateHostIPs(subnet)
-}
-
-// ExportMethodsToStrings exposes methodsToStrings for testing.
-func ExportMethodsToStrings(methods []Method) []string {
-	return methodsToStrings(methods)
-}
-
 // ExportIsLocallyAdministeredMAC exposes isLocallyAdministeredMAC for testing.
 func ExportIsLocallyAdministeredMAC(mac string) bool {
 	return isLocallyAdministeredMAC(mac)
