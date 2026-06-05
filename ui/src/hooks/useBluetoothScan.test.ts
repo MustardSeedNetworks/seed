@@ -115,6 +115,25 @@ describe('useBluetoothScan', () => {
     expect(result.current.stats?.bleDevices).toBe(1);
   });
 
+  it('captures the result when submit returns an already-terminal job', async () => {
+    // A synchronous job may be succeeded on the submit response itself, with no
+    // separate SSE frame; the hook must capture the result from it directly.
+    vi.mocked(submitJob).mockResolvedValueOnce({
+      ...queuedJob,
+      state: 'succeeded',
+      progress: 1,
+      result: scanResult,
+    });
+    const { result } = renderHook(() => useBluetoothScan());
+    await act(async () => {
+      await result.current.startScan();
+    });
+
+    expect(result.current.status.state).toBe('complete');
+    expect(result.current.devices).toHaveLength(1);
+    expect(result.current.devices[0].companyName).toBe('Google');
+  });
+
   it('shows 0% while running (scan reports no intermediate progress)', async () => {
     vi.mocked(submitJob).mockResolvedValueOnce(queuedJob);
     const { result } = renderHook(() => useBluetoothScan());

@@ -109,17 +109,27 @@ export function useBluetoothScan(): UseBluetoothScanReturn {
   const [result, setResult] = useState<BluetoothScanResponse | null>(null);
   const jobIdRef = useRef<string>('');
 
+  // applyJob updates status from a job snapshot and captures the scan result
+  // once it succeeds. Used both for live SSE updates and for the submit
+  // response itself (a synchronous job may already be terminal on return).
+  const applyJob = useCallback((job: JobResponse): void => {
+    setStatus(statusFromJob(job));
+    if (job.state === 'succeeded' && isScanResponse(job.result)) {
+      setResult(job.result);
+    }
+  }, []);
+
   // Apply events for OUR job only; the stream multiplexes every job.
   useJobEvents(
-    useCallback((job: JobResponse) => {
-      if (job.id !== jobIdRef.current) {
-        return;
-      }
-      setStatus(statusFromJob(job));
-      if (job.state === 'succeeded' && isScanResponse(job.result)) {
-        setResult(job.result);
-      }
-    }, []),
+    useCallback(
+      (job: JobResponse) => {
+        if (job.id !== jobIdRef.current) {
+          return;
+        }
+        applyJob(job);
+      },
+      [applyJob],
+    ),
   );
 
   const startScan = useCallback(async (): Promise<void> => {
@@ -128,7 +138,7 @@ export function useBluetoothScan(): UseBluetoothScanReturn {
       // bluetooth-scan takes no params; the scanner is injected server-side.
       const job = await submitJob({ kind: 'bluetooth-scan' });
       jobIdRef.current = job.id;
-      setStatus(statusFromJob(job));
+      applyJob(job);
     } catch (err) {
       jobIdRef.current = '';
       setStatus({
