@@ -68,6 +68,11 @@ func engineScanOptsFromParams(params any) (*discovery.ScanOptions, error) {
 	if err := json.Unmarshal(raw, &req); err != nil {
 		return nil, fmt.Errorf("invalid engine-scan params: %w", err)
 	}
+	// Same guards as the direct endpoint; a job carries no request headers, so
+	// the IDS-risk acknowledgment travels in the acknowledgeIdsRisk param.
+	if err := validateEngineScanConfig(req, req.AcknowledgeIDsRisk); err != nil {
+		return nil, err
+	}
 	return scanOptsFromRequest(req), nil
 }
 

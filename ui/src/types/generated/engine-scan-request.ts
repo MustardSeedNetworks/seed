@@ -19,4 +19,5 @@ export interface EngineScanRequest {
   portScanIntensity?: string;
   portScanCustomPorts?: number[];
   timingProfile?: string;
+  acknowledgeIdsRisk?: boolean;
 }

@@ -136,6 +136,16 @@ func (c *ProfilerConfig) GetPortsForIntensity() []int {
 	}
 }
 
+// ScanConfigSnapshot returns the current port-scan configuration (intensity,
+// custom ports, timing) so a caller can restore it after a one-off per-scan
+// override. Thread-safe; the returned slice is a copy.
+func (p *DeviceProfiler) ScanConfigSnapshot() (PortScanIntensity, []int, ScanTimingProfile) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	ports := append([]int(nil), p.config.CustomPorts...)
+	return p.config.PortScanIntensity, ports, p.config.TimingProfile
+}
+
 // UpdateScanConfig updates the port scanning configuration.
 // This allows Pipeline to set the scan intensity without recreating the profiler.
 // Thread-safe: can be called while profiler is running.

@@ -389,11 +389,16 @@ func (e *Engine) Scan(ctx context.Context, opts *ScanOptions) (*ScanResult, erro
 	}
 	defer e.endScan()
 
-	// Apply folded pipeline port-scan/timing config to the profiler (S4). Gated
-	// on a set intensity so the default (unset) path leaves the profiler's
-	// existing configuration — and thus prior behavior — untouched.
+	// Apply folded pipeline port-scan/timing config to the profiler (S4) for the
+	// duration of THIS scan only. Gated on a set intensity so the default (unset)
+	// path leaves the profiler's configuration untouched. The prior config is
+	// captured and restored on return so a one-off override does not silently
+	// become the engine's persistent scan policy (scans are serialized by
+	// tryStartScan, so the snapshot/restore pair is not racing another scan).
 	if e.profiler != nil && opts.PortScanIntensity != "" {
+		prevIntensity, prevPorts, prevTiming := e.profiler.ScanConfigSnapshot()
 		e.profiler.UpdateScanConfig(opts.PortScanIntensity, opts.PortScanCustomPorts, opts.TimingProfile)
+		defer e.profiler.UpdateScanConfig(prevIntensity, prevPorts, prevTiming)
 	}
 
 	timeout := opts.Timeout

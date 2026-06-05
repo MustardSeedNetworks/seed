@@ -2,6 +2,9 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -50,6 +53,13 @@ type EngineScanRequest struct {
 	PortScanIntensity   string `json:"portScanIntensity,omitempty"`
 	PortScanCustomPorts []int  `json:"portScanCustomPorts,omitempty"`
 	TimingProfile       string `json:"timingProfile,omitempty"`
+
+	// AcknowledgeIDsRisk is the job-params equivalent of the
+	// X-Acknowledge-Ids-Risk header the pipeline endpoint requires for
+	// comprehensive scans (which may trip IDS/IPS). The direct
+	// /discovery/engine/scan handler reads the header; the engine-scan job
+	// reads this field, since a job carries no request headers to its run.
+	AcknowledgeIDsRisk bool `json:"acknowledgeIdsRisk,omitempty"`
 }
 
 // handleEngineDiscovery returns all devices from the discovery engine registry.
@@ -101,6 +111,64 @@ func (s *Server) handleEngineDiscovery(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, resp)
 }
 
+// maxEngineCustomPorts bounds an engine-scan custom port list so a single
+// request can't queue an unbounded scan.
+const maxEngineCustomPorts = 1024
+
+// errIDsRiskUnacknowledged signals that a comprehensive scan was requested
+// without the IDS-risk acknowledgment. Callers map it to 428 (the direct
+// endpoint) or surface it as a job error; ordinary validation failures map to
+// 400.
+var errIDsRiskUnacknowledged = errors.New(
+	"comprehensive port scanning may trigger IDS/IPS alerts; acknowledge the risk to proceed",
+)
+
+// validateEngineScanConfig enforces, for the engine scan paths, the same guards
+// the pipeline applies to risky scan configuration (ADR-0007 fold, S4):
+//   - comprehensive intensity requires an explicit IDS-risk acknowledgment
+//     (acknowledged = X-Acknowledge-Ids-Risk header on the direct endpoint, or
+//     the acknowledgeIdsRisk param on the engine-scan job);
+//   - custom ports are only valid with custom intensity, must each be in
+//     1..65535, and are bounded in number.
+func validateEngineScanConfig(req EngineScanRequest, acknowledged bool) error {
+	if req.PortScanIntensity == string(discovery.PortScanComprehensive) && !acknowledged {
+		return errIDsRiskUnacknowledged
+	}
+	if len(req.PortScanCustomPorts) == 0 {
+		return nil
+	}
+	if req.PortScanIntensity != string(discovery.PortScanCustom) {
+		return fmt.Errorf("custom ports require portScanIntensity=%q", discovery.PortScanCustom)
+	}
+	if len(req.PortScanCustomPorts) > maxEngineCustomPorts {
+		return fmt.Errorf("too many custom ports: %d (max %d)",
+			len(req.PortScanCustomPorts), maxEngineCustomPorts)
+	}
+	for _, p := range req.PortScanCustomPorts {
+		if p < 1 || p > 65535 {
+			return fmt.Errorf("custom port out of range: %d (must be 1..65535)", p)
+		}
+	}
+	return nil
+}
+
+// dedupePorts returns the input with duplicates removed, order preserved.
+func dedupePorts(ports []int) []int {
+	if len(ports) == 0 {
+		return ports
+	}
+	seen := make(map[int]struct{}, len(ports))
+	out := make([]int, 0, len(ports))
+	for _, p := range ports {
+		if _, ok := seen[p]; ok {
+			continue
+		}
+		seen[p] = struct{}{}
+		out = append(out, p)
+	}
+	return out
+}
+
 // scanOptsFromRequest builds discovery scan options from a request: the
 // quick/full default plus the per-feature overrides. Shared by the engine-scan
 // handler and the engine-scan job kind so both produce identical options.
@@ -121,9 +189,40 @@ func scanOptsFromRequest(req EngineScanRequest) *discovery.ScanOptions {
 	opts.FreshWiFiScan = req.FreshWiFiScan
 	opts.FreshBluetoothScan = req.FreshBluetoothScan
 	opts.PortScanIntensity = discovery.PortScanIntensity(req.PortScanIntensity)
-	opts.PortScanCustomPorts = req.PortScanCustomPorts
+	opts.PortScanCustomPorts = dedupePorts(req.PortScanCustomPorts)
 	opts.TimingProfile = discovery.ScanTimingProfile(req.TimingProfile)
 	return opts
+}
+
+// parseEngineScanOpts decodes and validates the optional scan body, applying
+// the same IDS-risk + custom-port guards as the engine-scan job. On a bad or
+// unacknowledged request it writes the error response (428 for the IDS gate,
+// 400 otherwise) and returns ok=false. An empty body yields a quick scan.
+func parseEngineScanOpts(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *slog.Logger,
+) (*discovery.ScanOptions, bool) {
+	if r.ContentLength <= 0 {
+		return discovery.DefaultQuickScanOpts(), true
+	}
+	// Note: previously this handler leaked the json parser error into the
+	// `details` field; the strict helper drops that (the structured WARN log
+	// retains the diagnostic).
+	var req EngineScanRequest
+	if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
+		return nil, false
+	}
+	acknowledged := r.Header.Get("X-Acknowledge-Ids-Risk") == "true"
+	if err := validateEngineScanConfig(req, acknowledged); err != nil {
+		status, code := http.StatusBadRequest, ErrCodeValidation
+		if errors.Is(err, errIDsRiskUnacknowledged) {
+			status, code = http.StatusPreconditionRequired, ErrCodePreconditionFail
+		}
+		sendErrorResponseWithDetails(w, logger, status, code, err.Error(), "")
+		return nil, false
+	}
+	return scanOptsFromRequest(req), true
 }
 
 // handleEngineScan triggers a discovery engine scan.
@@ -191,19 +290,10 @@ func (s *Server) handleEngineScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse options from body, default to quick scan
-	var opts *discovery.ScanOptions
-	if r.ContentLength > 0 {
-		// Note: previously this handler leaked the json parser error into
-		// the `details` field; the strict helper drops that (the
-		// structured WARN log retains the diagnostic).
-		var req EngineScanRequest
-		if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
-			return
-		}
-		opts = scanOptsFromRequest(req)
-	} else {
-		opts = discovery.DefaultQuickScanOpts()
+	// Parse + validate options from body, default to quick scan.
+	opts, ok := parseEngineScanOpts(w, r, logger)
+	if !ok {
+		return
 	}
 
 	// Run scan
