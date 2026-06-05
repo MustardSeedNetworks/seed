@@ -1,0 +1,1909 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/config.schema.json",
+  "$ref": "#/$defs/Config",
+  "$defs": {
+    "ACMEConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "domain": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "cache_dir": {
+          "type": "string"
+        },
+        "staging": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "domain",
+        "email"
+      ]
+    },
+    "AuthConfig": {
+      "properties": {
+        "default_username": {
+          "type": "string"
+        },
+        "default_password_hash": {
+          "type": "string"
+        },
+        "session_timeout": {
+          "type": "integer"
+        },
+        "jwt_secret": {
+          "type": "string"
+        },
+        "sso": {
+          "$ref": "#/$defs/SSOConfig"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "default_username",
+        "default_password_hash",
+        "session_timeout"
+      ]
+    },
+    "CableTestConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled"
+      ]
+    },
+    "CertExpiryThreshold": {
+      "properties": {
+        "warning": {
+          "type": "integer"
+        },
+        "critical": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "warning",
+        "critical"
+      ]
+    },
+    "Config": {
+      "properties": {
+        "version": {
+          "type": "integer"
+        },
+        "server": {
+          "$ref": "#/$defs/ServerConfig"
+        },
+        "interface": {
+          "$ref": "#/$defs/InterfaceConfig"
+        },
+        "vlan": {
+          "$ref": "#/$defs/VLANConfig"
+        },
+        "ip": {
+          "$ref": "#/$defs/IPConfig"
+        },
+        "discovery": {
+          "$ref": "#/$defs/DiscoveryConfig"
+        },
+        "networkDiscovery": {
+          "$ref": "#/$defs/NetworkDiscoveryConfig"
+        },
+        "dns": {
+          "$ref": "#/$defs/DNSConfig"
+        },
+        "healthChecks": {
+          "$ref": "#/$defs/HealthChecksConfig"
+        },
+        "speedtest": {
+          "$ref": "#/$defs/SpeedtestConfig"
+        },
+        "iperf": {
+          "$ref": "#/$defs/IperfConfig"
+        },
+        "thresholds": {
+          "$ref": "#/$defs/ThresholdsConfig"
+        },
+        "auth": {
+          "$ref": "#/$defs/AuthConfig"
+        },
+        "security": {
+          "$ref": "#/$defs/SecurityConfig"
+        },
+        "dhcp": {
+          "$ref": "#/$defs/DHCPConfig"
+        },
+        "snmp": {
+          "$ref": "#/$defs/SNMPConfig"
+        },
+        "fabOptions": {
+          "$ref": "#/$defs/FABOptionsConfig"
+        },
+        "displayOptions": {
+          "$ref": "#/$defs/DisplayOptionsConfig"
+        },
+        "logging": {
+          "$ref": "#/$defs/LoggingConfig"
+        },
+        "database": {
+          "$ref": "#/$defs/DatabaseConfig"
+        },
+        "link": {
+          "$ref": "#/$defs/LinkConfig"
+        },
+        "cableTest": {
+          "$ref": "#/$defs/CableTestConfig"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "version",
+        "server",
+        "interface",
+        "vlan",
+        "ip",
+        "discovery",
+        "networkDiscovery",
+        "dns",
+        "healthChecks",
+        "speedtest",
+        "iperf",
+        "thresholds",
+        "auth",
+        "security",
+        "dhcp",
+        "snmp",
+        "fabOptions",
+        "displayOptions",
+        "logging",
+        "database"
+      ]
+    },
+    "CustomThresholds": {
+      "properties": {
+        "ping": {
+          "$ref": "#/$defs/Threshold"
+        },
+        "tcp": {
+          "$ref": "#/$defs/Threshold"
+        },
+        "udp": {
+          "$ref": "#/$defs/Threshold"
+        },
+        "http": {
+          "$ref": "#/$defs/Threshold"
+        },
+        "http_timings": {
+          "$ref": "#/$defs/HTTPTimingThresholds"
+        },
+        "cert_expiry": {
+          "$ref": "#/$defs/CertExpiryThreshold"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ping",
+        "tcp",
+        "udp",
+        "http",
+        "http_timings",
+        "cert_expiry"
+      ]
+    },
+    "DHCPConfig": {
+      "properties": {
+        "rogue_detection": {
+          "$ref": "#/$defs/RogueDetectionConfig"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "rogue_detection"
+      ]
+    },
+    "DHCPThresholds": {
+      "properties": {
+        "total": {
+          "$ref": "#/$defs/Threshold"
+        },
+        "per_phase": {
+          "$ref": "#/$defs/Threshold"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "total",
+        "per_phase"
+      ]
+    },
+    "DICOMEndpoint": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "called_ae": {
+          "type": "string"
+        },
+        "calling_ae": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "called_ae",
+        "calling_ae",
+        "enabled"
+      ]
+    },
+    "DNSConfig": {
+      "properties": {
+        "test_hostname": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "integer"
+        },
+        "servers": {
+          "items": {
+            "$ref": "#/$defs/DNSServer"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "test_hostname",
+        "timeout"
+      ]
+    },
+    "DNSServer": {
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address",
+        "enabled"
+      ]
+    },
+    "DatabaseConfig": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "retention_days": {
+          "type": "integer"
+        },
+        "enable_wal": {
+          "type": "boolean"
+        },
+        "max_connections": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "path",
+        "retention_days",
+        "enable_wal",
+        "max_connections"
+      ]
+    },
+    "DeviceProfilerConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "timeout": {
+          "type": "integer"
+        },
+        "max_concurrent": {
+          "type": "integer"
+        },
+        "quick_ports": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "timeout",
+        "max_concurrent",
+        "quick_ports"
+      ]
+    },
+    "DiscoveryConfig": {
+      "properties": {
+        "protocol": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "protocol",
+        "timeout"
+      ]
+    },
+    "DiscoveryOptions": {
+      "properties": {
+        "passiveProtocols": {
+          "$ref": "#/$defs/PassiveProtocolConfig"
+        },
+        "arpScan": {
+          "type": "boolean"
+        },
+        "icmpScan": {
+          "type": "boolean"
+        },
+        "portScan": {
+          "$ref": "#/$defs/PortScanConfig"
+        },
+        "tcpProbe": {
+          "$ref": "#/$defs/TCPProbeConfig"
+        },
+        "traceroute": {
+          "type": "boolean"
+        },
+        "snmpQuery": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "passiveProtocols",
+        "arpScan",
+        "icmpScan",
+        "portScan",
+        "tcpProbe",
+        "traceroute",
+        "snmpQuery"
+      ]
+    },
+    "DiscoveryTiming": {
+      "properties": {
+        "probe_interval": {
+          "type": "integer"
+        },
+        "rescan_interval": {
+          "type": "integer"
+        },
+        "workers": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "probe_interval",
+        "rescan_interval",
+        "workers"
+      ]
+    },
+    "DisplayOptionsConfig": {
+      "properties": {
+        "show_public_ip": {
+          "type": "boolean"
+        },
+        "unit_system": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "show_public_ip",
+        "unit_system"
+      ]
+    },
+    "FABOptionsConfig": {
+      "properties": {
+        "run_link": {
+          "type": "boolean"
+        },
+        "run_switch": {
+          "type": "boolean"
+        },
+        "run_vlan": {
+          "type": "boolean"
+        },
+        "run_ip_config": {
+          "type": "boolean"
+        },
+        "run_gateway": {
+          "type": "boolean"
+        },
+        "run_dns": {
+          "type": "boolean"
+        },
+        "run_health_checks": {
+          "type": "boolean"
+        },
+        "run_network_discovery": {
+          "type": "boolean"
+        },
+        "run_speedtest": {
+          "type": "boolean"
+        },
+        "run_iperf": {
+          "type": "boolean"
+        },
+        "run_performance": {
+          "type": "boolean"
+        },
+        "auto_scan_on_link": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "run_link",
+        "run_switch",
+        "run_vlan",
+        "run_ip_config",
+        "run_gateway",
+        "run_dns",
+        "run_health_checks",
+        "run_network_discovery",
+        "run_speedtest",
+        "run_iperf",
+        "run_performance",
+        "auto_scan_on_link"
+      ]
+    },
+    "FHIREndpoint": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "base_url": {
+          "type": "string"
+        },
+        "auth_type": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "bearer_token": {
+          "type": "string"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "client_secret": {
+          "type": "string"
+        },
+        "token_url": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "base_url",
+        "auth_type",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "FileShareEndpoint": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "share": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        },
+        "test_read_performance": {
+          "type": "boolean"
+        },
+        "test_write_performance": {
+          "type": "boolean"
+        },
+        "test_file_size_mb": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "protocol",
+        "host",
+        "share",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "FingerprintingConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "os_detection": {
+          "type": "boolean"
+        },
+        "service_probes": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "os_detection",
+        "service_probes"
+      ]
+    },
+    "GuestAuditTarget": {
+      "properties": {
+        "ip": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ip"
+      ]
+    },
+    "GuestNetworkAuditConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "targets": {
+          "items": {
+            "$ref": "#/$defs/GuestAuditTarget"
+          },
+          "type": "array"
+        },
+        "ports": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled"
+      ]
+    },
+    "HL7Endpoint": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "sending_app": {
+          "type": "string"
+        },
+        "sending_facility": {
+          "type": "string"
+        },
+        "receiving_app": {
+          "type": "string"
+        },
+        "receiving_facility": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "sending_app",
+        "sending_facility",
+        "receiving_app",
+        "receiving_facility",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "HTTPEndpoint": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "expected_status": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "body_match": {
+          "type": "string"
+        },
+        "body_match_is_regex": {
+          "type": "boolean"
+        },
+        "check_security_headers": {
+          "type": "boolean"
+        },
+        "follow_redirects": {
+          "type": "boolean"
+        },
+        "max_redirects": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "url",
+        "expected_status",
+        "enabled"
+      ]
+    },
+    "HTTPTimingThresholds": {
+      "properties": {
+        "dns": {
+          "$ref": "#/$defs/Threshold"
+        },
+        "tcp": {
+          "$ref": "#/$defs/Threshold"
+        },
+        "tls": {
+          "$ref": "#/$defs/Threshold"
+        },
+        "ttfb": {
+          "$ref": "#/$defs/Threshold"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "dns",
+        "tcp",
+        "tls",
+        "ttfb"
+      ]
+    },
+    "HealthChecksConfig": {
+      "properties": {
+        "ping_targets": {
+          "items": {
+            "$ref": "#/$defs/PingTarget"
+          },
+          "type": "array"
+        },
+        "tcp_ports": {
+          "items": {
+            "$ref": "#/$defs/TCPPortTest"
+          },
+          "type": "array"
+        },
+        "udp_ports": {
+          "items": {
+            "$ref": "#/$defs/UDPPortTest"
+          },
+          "type": "array"
+        },
+        "http_endpoints": {
+          "items": {
+            "$ref": "#/$defs/HTTPEndpoint"
+          },
+          "type": "array"
+        },
+        "rtsp_endpoints": {
+          "items": {
+            "$ref": "#/$defs/RTSPEndpoint"
+          },
+          "type": "array"
+        },
+        "dicom_endpoints": {
+          "items": {
+            "$ref": "#/$defs/DICOMEndpoint"
+          },
+          "type": "array"
+        },
+        "hl7_endpoints": {
+          "items": {
+            "$ref": "#/$defs/HL7Endpoint"
+          },
+          "type": "array"
+        },
+        "fhir_endpoints": {
+          "items": {
+            "$ref": "#/$defs/FHIREndpoint"
+          },
+          "type": "array"
+        },
+        "sql_endpoints": {
+          "items": {
+            "$ref": "#/$defs/SQLEndpoint"
+          },
+          "type": "array"
+        },
+        "fileshare_endpoints": {
+          "items": {
+            "$ref": "#/$defs/FileShareEndpoint"
+          },
+          "type": "array"
+        },
+        "ldap_endpoints": {
+          "items": {
+            "$ref": "#/$defs/LDAPEndpoint"
+          },
+          "type": "array"
+        },
+        "lti_endpoints": {
+          "items": {
+            "$ref": "#/$defs/LTIEndpoint"
+          },
+          "type": "array"
+        },
+        "opcua_endpoints": {
+          "items": {
+            "$ref": "#/$defs/OPCUAEndpoint"
+          },
+          "type": "array"
+        },
+        "modbus_endpoints": {
+          "items": {
+            "$ref": "#/$defs/ModbusEndpoint"
+          },
+          "type": "array"
+        },
+        "run_performance": {
+          "type": "boolean"
+        },
+        "run_speedtest": {
+          "type": "boolean"
+        },
+        "run_iperf": {
+          "type": "boolean"
+        },
+        "run_discovery": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ping_targets",
+        "tcp_ports",
+        "udp_ports",
+        "http_endpoints",
+        "rtsp_endpoints",
+        "dicom_endpoints",
+        "hl7_endpoints",
+        "fhir_endpoints",
+        "sql_endpoints",
+        "fileshare_endpoints",
+        "ldap_endpoints",
+        "lti_endpoints",
+        "opcua_endpoints",
+        "modbus_endpoints",
+        "run_performance",
+        "run_speedtest",
+        "run_iperf",
+        "run_discovery"
+      ]
+    },
+    "IPConfig": {
+      "properties": {
+        "mode": {
+          "type": "string"
+        },
+        "static": {
+          "$ref": "#/$defs/StaticIP"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "mode"
+      ]
+    },
+    "IntThreshold": {
+      "properties": {
+        "warning": {
+          "type": "integer"
+        },
+        "critical": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "warning",
+        "critical"
+      ]
+    },
+    "InterfaceConfig": {
+      "properties": {
+        "default": {
+          "type": "string"
+        },
+        "fallbacks": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "wifi": {
+          "type": "string"
+        },
+        "ethernet": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "wifi_list": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "startup_retries": {
+          "type": "integer"
+        },
+        "startup_retry_wait": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "default",
+        "fallbacks",
+        "startup_retries",
+        "startup_retry_wait"
+      ]
+    },
+    "IperfConfig": {
+      "properties": {
+        "auto_run_on_link": {
+          "type": "boolean"
+        },
+        "server": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "integer"
+        },
+        "server_port": {
+          "type": "integer"
+        },
+        "enable_server": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "auto_run_on_link",
+        "server",
+        "port",
+        "protocol",
+        "direction",
+        "duration",
+        "server_port",
+        "enable_server"
+      ]
+    },
+    "LDAPEndpoint": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "use_tls": {
+          "type": "boolean"
+        },
+        "start_tls": {
+          "type": "boolean"
+        },
+        "base_dn": {
+          "type": "string"
+        },
+        "bind_dn": {
+          "type": "string"
+        },
+        "bind_password": {
+          "type": "string"
+        },
+        "search_filter": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "use_tls",
+        "start_tls",
+        "base_dn",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "LTIEndpoint": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "launch_url": {
+          "type": "string"
+        },
+        "consumer_key": {
+          "type": "string"
+        },
+        "consumer_secret": {
+          "type": "string"
+        },
+        "lti_version": {
+          "type": "string"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "deployment_id": {
+          "type": "string"
+        },
+        "platform_url": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "launch_url",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "LinkConfig": {
+      "properties": {
+        "mode": {
+          "type": "string"
+        },
+        "available_modes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "LinkThresholds": {
+      "properties": {
+        "flap_count_24h": {
+          "$ref": "#/$defs/IntThreshold"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "flap_count_24h"
+      ]
+    },
+    "LoggingConfig": {
+      "properties": {
+        "level": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "add_source": {
+          "type": "boolean"
+        },
+        "file": {
+          "type": "string"
+        },
+        "max_size": {
+          "type": "integer"
+        },
+        "max_backups": {
+          "type": "integer"
+        },
+        "max_age": {
+          "type": "integer"
+        },
+        "compress": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "level",
+        "format",
+        "add_source",
+        "file",
+        "max_size",
+        "max_backups",
+        "max_age",
+        "compress"
+      ]
+    },
+    "ModbusEndpoint": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "unit_id": {
+          "type": "integer"
+        },
+        "test_register": {
+          "type": "integer"
+        },
+        "register_type": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "unit_id",
+        "test_register",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "NetworkDiscoveryConfig": {
+      "properties": {
+        "options": {
+          "$ref": "#/$defs/DiscoveryOptions"
+        },
+        "timing": {
+          "$ref": "#/$defs/DiscoveryTiming"
+        },
+        "additional_subnets": {
+          "items": {
+            "$ref": "#/$defs/SubnetConfig"
+          },
+          "type": "array"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "arp_scan_workers": {
+          "type": "integer"
+        },
+        "ping_timeout": {
+          "type": "integer"
+        },
+        "scan_timeout": {
+          "type": "integer"
+        },
+        "auto_scan": {
+          "type": "boolean"
+        },
+        "scan_interval": {
+          "type": "integer"
+        },
+        "oui_file_path": {
+          "type": "string"
+        },
+        "oui_max_age": {
+          "type": "integer"
+        },
+        "fingerprinting": {
+          "$ref": "#/$defs/FingerprintingConfig"
+        },
+        "profiler": {
+          "$ref": "#/$defs/DeviceProfilerConfig"
+        },
+        "ipv6_enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "options",
+        "timing",
+        "additional_subnets",
+        "enabled",
+        "arp_scan_workers",
+        "ping_timeout",
+        "scan_timeout",
+        "auto_scan",
+        "scan_interval",
+        "oui_file_path",
+        "oui_max_age",
+        "ipv6_enabled"
+      ]
+    },
+    "OPCUAEndpoint": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "endpoint_url": {
+          "type": "string"
+        },
+        "security_mode": {
+          "type": "string"
+        },
+        "security_policy": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "cert_path": {
+          "type": "string"
+        },
+        "key_path": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "endpoint_url",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "PassiveProtocolConfig": {
+      "properties": {
+        "lldp": {
+          "type": "boolean"
+        },
+        "cdp": {
+          "type": "boolean"
+        },
+        "edp": {
+          "type": "boolean"
+        },
+        "ndp": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "lldp",
+        "cdp",
+        "edp",
+        "ndp"
+      ]
+    },
+    "PingTarget": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "enabled"
+      ]
+    },
+    "PortScanConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "preset": {
+          "type": "string"
+        },
+        "tcpPorts": {
+          "type": "string"
+        },
+        "udpPorts": {
+          "type": "string"
+        },
+        "bannerTimeout": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "preset",
+        "tcpPorts",
+        "udpPorts",
+        "bannerTimeout"
+      ]
+    },
+    "RTSPEndpoint": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "url",
+        "enabled"
+      ]
+    },
+    "RogueDetectionConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "known_servers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "alert_on_detection": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "known_servers",
+        "alert_on_detection"
+      ]
+    },
+    "SNMPConfig": {
+      "properties": {
+        "communities": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "v3_credentials": {
+          "items": {
+            "$ref": "#/$defs/SNMPv3Credential"
+          },
+          "type": "array"
+        },
+        "timeout": {
+          "type": "integer"
+        },
+        "retries": {
+          "type": "integer"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "max_repetitions": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "communities",
+        "timeout",
+        "retries",
+        "port",
+        "max_repetitions"
+      ]
+    },
+    "SNMPv3Credential": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "auth_protocol": {
+          "type": "string"
+        },
+        "auth_password": {
+          "type": "string"
+        },
+        "priv_protocol": {
+          "type": "string"
+        },
+        "priv_password": {
+          "type": "string"
+        },
+        "context_name": {
+          "type": "string"
+        },
+        "security_level": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "username",
+        "auth_protocol",
+        "auth_password",
+        "priv_protocol",
+        "priv_password",
+        "context_name",
+        "security_level"
+      ]
+    },
+    "SQLEndpoint": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "driver": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "database": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "ssl_mode": {
+          "type": "string"
+        },
+        "test_query": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "criticality": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "driver",
+        "host",
+        "port",
+        "database",
+        "enabled",
+        "criticality"
+      ]
+    },
+    "SSOConfig": {
+      "properties": {
+        "providers": {
+          "items": {
+            "$ref": "#/$defs/SSOProviderConfig"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "providers"
+      ]
+    },
+    "SSOProviderConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "client_secret": {
+          "type": "string"
+        },
+        "redirect_url": {
+          "type": "string"
+        },
+        "scopes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "tenant_id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "name",
+        "client_id",
+        "client_secret",
+        "redirect_url"
+      ]
+    },
+    "SecurityConfig": {
+      "properties": {
+        "allowed_origins": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "vulnerability_scanning": {
+          "$ref": "#/$defs/VulnerabilityScanConfig"
+        },
+        "guest_network_audit": {
+          "$ref": "#/$defs/GuestNetworkAuditConfig"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "allowed_origins",
+        "vulnerability_scanning",
+        "guest_network_audit"
+      ]
+    },
+    "ServerConfig": {
+      "properties": {
+        "port": {
+          "type": "integer"
+        },
+        "https": {
+          "type": "boolean"
+        },
+        "cert_file": {
+          "type": "string"
+        },
+        "key_file": {
+          "type": "string"
+        },
+        "acme": {
+          "$ref": "#/$defs/ACMEConfig"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "port",
+        "https",
+        "cert_file",
+        "key_file"
+      ]
+    },
+    "SignalThreshold": {
+      "properties": {
+        "warning": {
+          "type": "integer"
+        },
+        "critical": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "warning",
+        "critical"
+      ]
+    },
+    "SpeedtestConfig": {
+      "properties": {
+        "server_id": {
+          "type": "string"
+        },
+        "auto_run_on_link": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "server_id",
+        "auto_run_on_link"
+      ]
+    },
+    "StaticIP": {
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "netmask": {
+          "type": "string"
+        },
+        "gateway": {
+          "type": "string"
+        },
+        "dns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address",
+        "netmask",
+        "gateway",
+        "dns"
+      ]
+    },
+    "SubnetConfig": {
+      "properties": {
+        "cidr": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "cidr",
+        "name",
+        "enabled"
+      ]
+    },
+    "TCPPortTest": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "enabled"
+      ]
+    },
+    "TCPProbeConfig": {
+      "properties": {
+        "timeout": {
+          "type": "integer"
+        },
+        "workers": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "timeout",
+        "workers"
+      ]
+    },
+    "Threshold": {
+      "properties": {
+        "warning": {
+          "type": "integer"
+        },
+        "critical": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "warning",
+        "critical"
+      ]
+    },
+    "ThresholdsConfig": {
+      "properties": {
+        "dhcp": {
+          "$ref": "#/$defs/DHCPThresholds"
+        },
+        "dns": {
+          "$ref": "#/$defs/Threshold"
+        },
+        "ping": {
+          "$ref": "#/$defs/Threshold"
+        },
+        "wifi": {
+          "$ref": "#/$defs/WiFiThresholds"
+        },
+        "link": {
+          "$ref": "#/$defs/LinkThresholds"
+        },
+        "custom_tests": {
+          "$ref": "#/$defs/CustomThresholds"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "dhcp",
+        "dns",
+        "ping",
+        "wifi",
+        "link",
+        "custom_tests"
+      ]
+    },
+    "UDPPortTest": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "host",
+        "port",
+        "enabled"
+      ]
+    },
+    "VLANConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "id": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "id"
+      ]
+    },
+    "VulnerabilityScanConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "cve_database": {
+          "type": "string"
+        },
+        "nvd_api_key": {
+          "type": "string"
+        },
+        "update_interval": {
+          "type": "integer"
+        },
+        "severity_threshold": {
+          "type": "string"
+        },
+        "max_concurrent": {
+          "type": "integer"
+        },
+        "auto_scan": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "enabled",
+        "cve_database",
+        "nvd_api_key",
+        "update_interval",
+        "severity_threshold",
+        "max_concurrent",
+        "auto_scan"
+      ]
+    },
+    "WiFiThresholds": {
+      "properties": {
+        "signal": {
+          "$ref": "#/$defs/SignalThreshold"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "signal"
+      ]
+    }
+  },
+  "title": "Config",
+  "description": "Config — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

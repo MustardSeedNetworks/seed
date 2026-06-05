@@ -26,6 +26,7 @@ import (
 	"github.com/invopop/jsonschema"
 
 	"github.com/krisarmstrong/seed/internal/api"
+	"github.com/krisarmstrong/seed/internal/config"
 )
 
 // schemaTarget pairs a Go DTO with the on-disk schema filename and a
@@ -243,6 +244,14 @@ func schemaTargets() []schemaTarget {
 		// existed; Phase 7 S1 adds the TS /jobs client that consumes these.
 		{&api.CreateJobRequest{}, "create-job-request.schema.json"},
 		{&api.JobResponse{}, "job-response.schema.json"},
+
+		// Profile/settings config — code-first model of the per-profile
+		// config.Config blob (ADR-0007/0008, Phase 7 S6). The profile Config
+		// is applied via Config.ApplyProfileJSON, so config.Config is its
+		// canonical shape; this generates the Config TS type that replaces the
+		// hand-written profile.ts/settings.ts twins. Pure data (the mutex is
+		// json:"-").
+		{&config.Config{}, "config.schema.json"},
 
 		// Engine discovery result — the ADR-0008 pure-data exception. Reflects
 		// the discovery.* result cluster (DiscoveredDevice/EngineStats/
