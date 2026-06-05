@@ -38,6 +38,8 @@ import {
   AlertTriangle,
   ArrowUpDown,
   BarChart3,
+  Bluetooth,
+  BluetoothConnected,
   BookOpen,
   Cable,
   Calendar,
@@ -134,6 +136,8 @@ export {
   AlertTriangle,
   ArrowUpDown,
   BarChart3,
+  Bluetooth,
+  BluetoothConnected,
   // Help/documentation icons
   BookOpen,
   Cable,
