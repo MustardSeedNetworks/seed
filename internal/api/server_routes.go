@@ -781,6 +781,21 @@ func (s *Server) setupWiFiRoutes() {
 			handler: s.handleWiFiChannelGraph,
 			methods: get,
 		},
+		// Pro: monitor-mode airspace visibility + anomaly stream (W5). Read-only;
+		// the capture source feeds the model out-of-band. Feature-gated so the
+		// tree/forensics surface stays on the Pro tier (LICENSE_STRATEGY.md).
+		{
+			path:    APIVersionPrefix + "/wifi/airspace",
+			handler: s.handleWiFiAirspace,
+			methods: get,
+			feature: "wifi_management_capture",
+		},
+		{
+			path:    APIVersionPrefix + "/wifi/anomalies",
+			handler: s.handleWiFiAnomalies,
+			methods: get,
+			feature: "wifi_association_forensics",
+		},
 		{
 			path:    APIVersionPrefix + "/wifi/wifi/settings",
 			handler: s.handleWiFiSettings,

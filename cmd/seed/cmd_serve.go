@@ -113,6 +113,16 @@ func initializeBackgroundComponents(cfg *config.Config, db *database.DB) *api.Ba
 	components.Reporting = app.NewReporting(cfg, db)
 	logging.GetLogger().Info("Reporting module initialized")
 
+	// Wi-Fi airspace visibility: holds the live airspace + anomaly engine, fed by
+	// the monitor-mode capture source. A malformed catalog is a programming error
+	// — log and continue without the component (handlers degrade gracefully).
+	if wifiVis, err := app.NewWiFiVisibility(); err != nil {
+		logging.GetLogger().Error("Wi-Fi visibility init failed; feature disabled", "error", err)
+	} else {
+		components.WiFiVisibility = wifiVis
+		logging.GetLogger().Info("Wi-Fi visibility module initialized")
+	}
+
 	return components
 }
 
