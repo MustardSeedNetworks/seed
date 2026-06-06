@@ -1,6 +1,7 @@
 package wificapture_test
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"net"
@@ -188,6 +189,73 @@ func TestOptionsApplied(t *testing.T) {
 	waitFor(t, func() bool { return sink.frameCount() == 1 })
 	if err := c.Stop(); err != nil {
 		t.Fatalf("Stop: %v", err)
+	}
+}
+
+type fakeEnabler struct {
+	mu          sync.Mutex
+	enableCalls int
+	restoreHits int
+	err         error
+	restoreErr  error // returned by the restore closure (default nil)
+}
+
+func (e *fakeEnabler) Enable(context.Context, string) (func() error, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.enableCalls++
+	if e.err != nil {
+		return nil, e.err
+	}
+	return func() error {
+		e.mu.Lock()
+		defer e.mu.Unlock()
+		e.restoreHits++
+		return e.restoreErr
+	}, nil
+}
+
+func (e *fakeEnabler) counts() (int, int) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.enableCalls, e.restoreHits
+}
+
+func TestCaptureEnablesMonitorAndRestores(t *testing.T) {
+	h := &fakeHandle{frames: [][]byte{beaconBytes("corp")}, linkType: layers.LinkTypeIEEE80211Radio}
+	en := &fakeEnabler{}
+	c := wificapture.New(&fakeOpener{handle: h}, &fakeSink{}, "wlan1", wificapture.WithEnabler(en))
+
+	if err := c.Start(t.Context()); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	if enabled, _ := en.counts(); enabled != 1 {
+		t.Errorf("Enable calls = %d, want 1 (before open)", enabled)
+	}
+	if err := c.Stop(); err != nil {
+		t.Fatalf("Stop: %v", err)
+	}
+	if _, restored := en.counts(); restored != 1 {
+		t.Errorf("restore calls = %d, want 1 (on stop)", restored)
+	}
+}
+
+func TestCaptureContinuesWhenEnableFails(t *testing.T) {
+	h := &fakeHandle{frames: [][]byte{beaconBytes("corp")}, linkType: layers.LinkTypeIEEE80211Radio}
+	en := &fakeEnabler{err: io.ErrClosedPipe}
+	sink := &fakeSink{}
+	c := wificapture.New(&fakeOpener{handle: h}, sink, "wlan1", wificapture.WithEnabler(en))
+
+	if err := c.Start(t.Context()); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	// Enable failed, but the interface may already be monitor — capture proceeds.
+	waitFor(t, func() bool { return sink.frameCount() == 1 })
+	if err := c.Stop(); err != nil {
+		t.Fatalf("Stop: %v", err)
+	}
+	if _, restored := en.counts(); restored != 0 {
+		t.Errorf("a failed Enable must not register a restore, got %d", restored)
 	}
 }
 

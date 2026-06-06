@@ -44,13 +44,15 @@ type Capture struct {
 	sink    Sink
 	iface   string
 	snapLen int32
+	enabler Enabler
 	now     func() time.Time
 	log     *slog.Logger
 
-	mu     sync.Mutex
-	handle capture.Handle
-	cancel context.CancelFunc
-	wg     sync.WaitGroup
+	mu      sync.Mutex
+	handle  capture.Handle
+	cancel  context.CancelFunc
+	restore func() error
+	wg      sync.WaitGroup
 }
 
 // Option configures a Capture.
@@ -79,6 +81,17 @@ func WithSnapLen(n int32) Option {
 	return func(c *Capture) {
 		if n > 0 {
 			c.snapLen = n
+		}
+	}
+}
+
+// WithEnabler installs an Enabler that switches the interface into monitor mode
+// before capture and restores it afterwards. Without one, capture is
+// bring-your-own monitor (the interface must already be in monitor mode).
+func WithEnabler(e Enabler) Option {
+	return func(c *Capture) {
+		if e != nil {
+			c.enabler = e
 		}
 	}
 }
@@ -116,14 +129,30 @@ func (c *Capture) Start(ctx context.Context) error {
 		return nil
 	}
 
+	// Optionally switch the interface into monitor mode. A failure is not fatal —
+	// the interface may already be in monitor mode (bring-your-own), and the
+	// link-type guard below catches the case where it is not.
+	var restore func() error
+	if c.enabler != nil {
+		r, enErr := c.enabler.Enable(ctx, c.iface)
+		if enErr != nil {
+			c.log.WarnContext(ctx, "monitor-mode enable failed; trying interface as-is",
+				"iface", c.iface, "error", enErr)
+		} else {
+			restore = r
+		}
+	}
+
 	handle, err := c.opener.OpenLive(c.iface, c.snapLen, true, capture.BlockForever)
 	if err != nil {
+		runRestore(restore)
 		c.log.WarnContext(ctx, "wifi capture unavailable: cannot open interface",
 			"iface", c.iface, "error", err)
 		return nil
 	}
 	if lt := handle.LinkType(); lt != layers.LinkTypeIEEE80211Radio {
 		handle.Close()
+		runRestore(restore)
 		c.log.WarnContext(ctx, "wifi capture unavailable: interface is not in monitor mode (radiotap required)",
 			"iface", c.iface, "linkType", lt.String())
 		return nil
@@ -132,11 +161,20 @@ func (c *Capture) Start(ctx context.Context) error {
 	loopCtx, cancel := context.WithCancel(ctx)
 	c.cancel = cancel
 	c.handle = handle
+	c.restore = restore
 	c.sink.SetSource(c.iface)
 	c.wg.Add(1)
 	go c.loop(loopCtx, handle)
 	c.log.InfoContext(ctx, "wifi monitor capture started", "iface", c.iface)
 	return nil
+}
+
+// runRestore invokes a restore function if present, ignoring its error (best
+// effort during a degraded/abort path).
+func runRestore(restore func() error) {
+	if restore != nil {
+		_ = restore()
+	}
 }
 
 // loop reads frames until the handle is closed (by Stop) or a read error occurs.
@@ -166,8 +204,10 @@ func (c *Capture) Stop() error {
 	c.mu.Lock()
 	cancel := c.cancel
 	handle := c.handle
+	restore := c.restore
 	c.cancel = nil
 	c.handle = nil
+	c.restore = nil
 	c.mu.Unlock()
 
 	if cancel == nil {
@@ -179,5 +219,6 @@ func (c *Capture) Stop() error {
 	}
 	c.wg.Wait()
 	c.sink.ClearSource()
+	runRestore(restore) // revert the interface to its prior mode
 	return nil
 }
