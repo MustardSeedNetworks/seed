@@ -21,6 +21,7 @@ const (
 	DefDefaultSSIDName         = "wifi-default-ssid-name"
 	DefSSIDSprawl              = "wifi-ssid-sprawl"
 	DefInconsistentRoaming     = "wifi-inconsistent-roaming"
+	DefRegulatoryViolation     = "wifi-regulatory-violation"
 )
 
 // CapActiveTest names the platform capability required to run an active
@@ -287,6 +288,22 @@ func Defs() []anomaly.Def {
 				"roams, dropped real-time sessions, and sticky-client behaviour.",
 			Recommendation: "Enable the same roaming features (802.11r/k/v) consistently on every AP " +
 				"serving the SSID, or disable them uniformly if a legacy client cannot cope.",
+		},
+		{
+			ID:              DefRegulatoryViolation,
+			Category:        anomaly.CategoryStandards,
+			DefaultSeverity: anomaly.SeverityWarning,
+			Standards:       []string{"IEEE 802.11d", "ITU/regional 2.4 GHz channel plans"},
+			Title:           "Channel not permitted in the declared regulatory domain",
+			Description: "The BSS operates on a 2.4 GHz channel that is not allowed in the country " +
+				"it advertises (802.11d). Channels 12-13 are not permitted under the US/Canada FCC " +
+				"domain, and channel 14 is permitted only in Japan; using them elsewhere violates " +
+				"the local regulatory plan.",
+			Impact: "Operating outside the permitted channel set can cause interference with " +
+				"licensed services and other networks, and is a regulatory-compliance violation; it " +
+				"can also indicate a misconfigured or spoofed regulatory domain.",
+			Recommendation: "Move the radio to a channel permitted in the deployment's country " +
+				"(1-11 under FCC) and set the correct regulatory domain on the AP.",
 		},
 	}
 }
