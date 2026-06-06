@@ -42,6 +42,7 @@ export interface BSSView {
   hasBssLoad: boolean;
   signalDbm: number;
   beacons: number;
+  recentDeauths: number;
   lastSeen: string;
   stations: StationView[];
 }

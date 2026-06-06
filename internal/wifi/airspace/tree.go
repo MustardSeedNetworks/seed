@@ -36,13 +36,16 @@ type BSSView struct {
 	ChannelWidthMHz int `json:"channelWidthMhz"`
 	// ChannelUtil is the BSS Load channel-utilization figure (0-255); valid only
 	// when HasBSSLoad. AdvertisedStations is the AP's advertised association count.
-	ChannelUtil        int           `json:"channelUtil"`
-	AdvertisedStations int           `json:"advertisedStations"`
-	HasBSSLoad         bool          `json:"hasBssLoad"`
-	SignalDBm          int           `json:"signalDbm"`
-	Beacons            int           `json:"beacons"`
-	LastSeen           time.Time     `json:"lastSeen"`
-	Stations           []StationView `json:"stations"`
+	ChannelUtil        int  `json:"channelUtil"`
+	AdvertisedStations int  `json:"advertisedStations"`
+	HasBSSLoad         bool `json:"hasBssLoad"`
+	SignalDBm          int  `json:"signalDbm"`
+	Beacons            int  `json:"beacons"`
+	// RecentDeauths is the number of deauth/disassoc frames seen for this BSSID
+	// within the current retention window; a spike feeds the deauth-flood rule.
+	RecentDeauths int           `json:"recentDeauths"`
+	LastSeen      time.Time     `json:"lastSeen"`
+	Stations      []StationView `json:"stations"`
 }
 
 // APGroup clusters the BSSIDs believed to belong to one physical AP.
@@ -165,6 +168,7 @@ func toBSSView(b *bss) BSSView {
 		HasBSSLoad:         b.hasBSSLoad,
 		SignalDBm:          int(b.signalDBm),
 		Beacons:            b.beacons,
+		RecentDeauths:      len(b.deauthTimes),
 		LastSeen:           b.lastSeen,
 		Stations:           make([]StationView, 0, len(b.stations)),
 	}

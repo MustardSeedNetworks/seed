@@ -55,6 +55,10 @@ type bss struct {
 	lastSeen       time.Time
 	beacons        int
 	stations       map[string]*station
+	// deauthTimes holds the observation times of deauthentication/disassociation
+	// frames attributed to this BSSID, kept as a sliding window (Prune drops
+	// entries older than the cutoff). A spike feeds the deauth-flood rule (W4e).
+	deauthTimes []time.Time
 }
 
 // Airspace is the live aggregate of everything seen on the air. Safe for
@@ -83,7 +87,25 @@ func (a *Airspace) Observe(f *dot11.Frame, at time.Time) {
 	if f.BSS != nil {
 		a.applyBeacon(f, at)
 	}
+	if f.Kind == dot11.KindDeauth || f.Kind == dot11.KindDisassoc {
+		a.applyDeauth(f, at)
+	}
 	a.applyStation(f, at)
+}
+
+// applyDeauth records a deauthentication/disassociation frame against its BSS
+// (creating a thin entry if needed), keeping the sliding window the deauth-flood
+// rule reads. Frames that do not resolve to a BSSID are ignored.
+func (a *Airspace) applyDeauth(f *dot11.Frame, at time.Time) {
+	bssid := macKey(f.BSSIDOf())
+	if bssid == "" {
+		return
+	}
+	b := a.ensureBSS(bssid, at)
+	b.deauthTimes = append(b.deauthTimes, at)
+	if at.After(b.lastSeen) {
+		b.lastSeen = at
+	}
 }
 
 // applyBeacon upserts the BSS advertised by a beacon/probe-response.
@@ -170,10 +192,28 @@ func (a *Airspace) Prune(cutoff time.Time) {
 				delete(b.stations, mac)
 			}
 		}
-		if b.beacons == 0 && len(b.stations) == 0 && b.lastSeen.Before(cutoff) {
+		b.deauthTimes = pruneDeauthTimes(b.deauthTimes, cutoff)
+		if b.beacons == 0 && len(b.stations) == 0 && len(b.deauthTimes) == 0 &&
+			b.lastSeen.Before(cutoff) {
 			delete(a.bsses, key)
 		}
 	}
+}
+
+// pruneDeauthTimes drops deauth observations older than cutoff, sliding the
+// window forward. It compacts in place and returns nil once the window is empty
+// so a long-lived (beaconed) BSS does not accumulate stale timestamps.
+func pruneDeauthTimes(times []time.Time, cutoff time.Time) []time.Time {
+	kept := times[:0]
+	for _, t := range times {
+		if !t.Before(cutoff) {
+			kept = append(kept, t)
+		}
+	}
+	if len(kept) == 0 {
+		return nil
+	}
+	return kept
 }
 
 // macKey normalizes a hardware address to a lowercase string key, or "" if nil.
