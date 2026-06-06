@@ -121,6 +121,16 @@ func initializeBackgroundComponents(cfg *config.Config, db *database.DB) *api.Ba
 	} else {
 		components.WiFiVisibility = wifiVis
 		logging.GetLogger().Info("Wi-Fi visibility module initialized")
+
+		// Monitor-mode capture is opt-in via a bring-your-own monitor interface
+		// (third-party adapter): set SEED_WIFI_MONITOR_IFACE to the iface name.
+		// Unset (the default) leaves the visibility endpoints serving an empty
+		// airspace; capture also degrades gracefully if the iface is not in
+		// monitor mode or libpcap is unavailable.
+		if iface := os.Getenv("SEED_WIFI_MONITOR_IFACE"); iface != "" {
+			components.WiFiCapture = app.NewWiFiCapture(wifiVis, iface)
+			logging.GetLogger().Info("Wi-Fi monitor capture configured", "iface", iface)
+		}
 	}
 
 	return components
