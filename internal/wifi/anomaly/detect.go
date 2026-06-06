@@ -146,6 +146,12 @@ func perBSSDetections(tree []airspace.SSIDGroup) []anomaly.Detection {
 		if b.Hidden {
 			out = append(out, anomaly.Detection{DefKey: DefHiddenSSID, Subject: subject, Evidence: ev})
 		}
+
+		if b.Band == band24GHz && b.CountryCode != "" && b.Channel != 0 {
+			if channelStatus2GHz(b.CountryCode, b.Channel) == chanForbidden {
+				out = append(out, anomaly.Detection{DefKey: DefRegulatoryViolation, Subject: subject, Evidence: ev})
+			}
+		}
 	})
 	return out
 }
@@ -387,6 +393,9 @@ func bssEvidence(b airspace.BSSView) map[string]string {
 	}
 	if b.SSID == "" {
 		ev["ssid"] = "(hidden)"
+	}
+	if b.CountryCode != "" {
+		ev["countryCode"] = b.CountryCode
 	}
 	return ev
 }

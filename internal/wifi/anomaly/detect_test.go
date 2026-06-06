@@ -85,6 +85,7 @@ func TestCatalogBuildsAndCoversEveryDefID(t *testing.T) {
 		wifianomaly.DefDefaultSSIDName,
 		wifianomaly.DefSSIDSprawl,
 		wifianomaly.DefInconsistentRoaming,
+		wifianomaly.DefRegulatoryViolation,
 	}
 	if cat.Len() != len(ids) {
 		t.Errorf("catalog Len = %d, want %d (every exported def ID, no extras)", cat.Len(), len(ids))
