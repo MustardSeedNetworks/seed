@@ -83,7 +83,7 @@ func TestGoldenHTTPAuthChain(t *testing.T) {
 func newFullChainServer(t *testing.T) *testEndpointServer {
 	t.Helper()
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "test-config.yaml")
+	configPath := filepath.Join(tmpDir, "test-config.json")
 
 	cfg := testutil.NewConfigBuilder().WithPort(8080).Build()
 	if err := cfg.Save(configPath); err != nil {

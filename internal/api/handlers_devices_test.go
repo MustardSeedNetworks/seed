@@ -237,7 +237,7 @@ func TestHandleDevicesSettingsPUT(t *testing.T) {
 	skipInShortMode(t)
 	server := api.NewTestServer()
 	defer server.Close()
-	server.SetConfigPath("/tmp/test-config.yaml")
+	server.SetConfigPath("/tmp/test-config.json")
 
 	reqBody := api.NetworkDiscoverySettingsResponse{
 		Enabled:        true,
@@ -347,7 +347,7 @@ func TestHandleDevicesSubnetsPOST(t *testing.T) {
 	skipInShortMode(t)
 	server := api.NewTestServer()
 	defer server.Close()
-	server.SetConfigPath("/tmp/test-config.yaml")
+	server.SetConfigPath("/tmp/test-config.json")
 
 	reqBody := api.SubnetRequest{
 		CIDR:    "10.0.0.0/24",
@@ -404,7 +404,7 @@ func TestHandleDevicesSubnetsPUT(t *testing.T) {
 	skipInShortMode(t)
 	server := api.NewTestServer()
 	defer server.Close()
-	server.SetConfigPath("/tmp/test-config.yaml")
+	server.SetConfigPath("/tmp/test-config.json")
 
 	// First add a subnet
 	addBody, _ := json.Marshal(api.SubnetRequest{
@@ -478,7 +478,7 @@ func TestHandleDevicesSubnetsDELETE(t *testing.T) {
 	skipInShortMode(t)
 	server := api.NewTestServer()
 	defer server.Close()
-	server.SetConfigPath("/tmp/test-config.yaml")
+	server.SetConfigPath("/tmp/test-config.json")
 
 	// First add a subnet
 	addBody, _ := json.Marshal(api.SubnetRequest{

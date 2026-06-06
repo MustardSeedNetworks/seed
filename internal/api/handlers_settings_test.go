@@ -326,7 +326,7 @@ func TestApplyThresholdUpdates(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
 			defer server.Close()
-			server.SetConfigPath("/tmp/test-config.yaml")
+			server.SetConfigPath("/tmp/test-config.json")
 
 			body, _ := json.Marshal(tt.payload)
 			req := httptest.NewRequest(http.MethodPut, "/api/v1/settings", bytes.NewReader(body))
@@ -369,7 +369,7 @@ func TestApplyHealthChecksUpdates(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
 			defer server.Close()
-			server.SetConfigPath("/tmp/test-config.yaml")
+			server.SetConfigPath("/tmp/test-config.json")
 
 			body, _ := json.Marshal(tt.payload)
 			req := httptest.NewRequest(http.MethodPut, "/api/v1/settings", bytes.NewReader(body))
@@ -415,7 +415,7 @@ func TestApplySpeedtestUpdates(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
 			defer server.Close()
-			server.SetConfigPath("/tmp/test-config.yaml")
+			server.SetConfigPath("/tmp/test-config.json")
 
 			body, _ := json.Marshal(tt.payload)
 			req := httptest.NewRequest(http.MethodPut, "/api/v1/settings", bytes.NewReader(body))
@@ -461,7 +461,7 @@ func TestApplyIperfUpdates(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
 			defer server.Close()
-			server.SetConfigPath("/tmp/test-config.yaml")
+			server.SetConfigPath("/tmp/test-config.json")
 
 			body, _ := json.Marshal(tt.payload)
 			req := httptest.NewRequest(http.MethodPut, "/api/v1/settings", bytes.NewReader(body))
@@ -509,7 +509,7 @@ func TestApplyDisplayOptionsUpdates(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
 			defer server.Close()
-			server.SetConfigPath("/tmp/test-config.yaml")
+			server.SetConfigPath("/tmp/test-config.json")
 
 			body, _ := json.Marshal(tt.payload)
 			req := httptest.NewRequest(http.MethodPut, "/api/v1/settings", bytes.NewReader(body))
@@ -569,7 +569,7 @@ func TestApplyHTTPTimingThresholds(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
 			defer server.Close()
-			server.SetConfigPath("/tmp/test-config.yaml")
+			server.SetConfigPath("/tmp/test-config.json")
 
 			body, _ := json.Marshal(tt.payload)
 			req := httptest.NewRequest(http.MethodPut, "/api/v1/settings", bytes.NewReader(body))
@@ -631,7 +631,7 @@ func TestApplyCustomTestThresholds(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
 			defer server.Close()
-			server.SetConfigPath("/tmp/test-config.yaml")
+			server.SetConfigPath("/tmp/test-config.json")
 
 			body, _ := json.Marshal(tt.payload)
 			req := httptest.NewRequest(http.MethodPut, "/api/v1/settings", bytes.NewReader(body))
@@ -768,7 +768,7 @@ func TestApplyFABOptionsUpdates(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
 			defer server.Close()
-			server.SetConfigPath("/tmp/test-config.yaml")
+			server.SetConfigPath("/tmp/test-config.json")
 
 			body, _ := json.Marshal(tt.payload)
 			req := httptest.NewRequest(http.MethodPut, "/api/v1/settings", bytes.NewReader(body))

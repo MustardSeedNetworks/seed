@@ -1,0 +1,383 @@
+{
+  "version": 1,
+  "server": {
+    "port": 8443,
+    "https": true,
+    "cert_file": "",
+    "key_file": ""
+  },
+  "interface": {
+    "default": "",
+    "fallbacks": [],
+    "startup_retries": 3,
+    "startup_retry_wait": 5000000000
+  },
+  "vlan": {
+    "enabled": false,
+    "id": 0
+  },
+  "ip": {
+    "mode": "dhcp"
+  },
+  "discovery": {
+    "protocol": "auto",
+    "timeout": 30000000000
+  },
+  "networkDiscovery": {
+    "options": {
+      "passiveProtocols": {
+        "lldp": true,
+        "cdp": true,
+        "edp": true,
+        "ndp": true
+      },
+      "arpScan": true,
+      "icmpScan": true,
+      "portScan": {
+        "enabled": false,
+        "preset": "common",
+        "tcpPorts": "",
+        "udpPorts": "",
+        "bannerTimeout": 2000000000
+      },
+      "tcpProbe": {
+        "timeout": 2000000000,
+        "workers": 20
+      },
+      "traceroute": false,
+      "snmpQuery": false
+    },
+    "timing": {
+      "probe_interval": 75000000,
+      "rescan_interval": 600000000000,
+      "workers": 50
+    },
+    "additional_subnets": [],
+    "enabled": true,
+    "arp_scan_workers": 50,
+    "ping_timeout": 500000000,
+    "scan_timeout": 30000000000,
+    "auto_scan": true,
+    "scan_interval": 0,
+    "oui_file_path": "data/oui.txt",
+    "oui_max_age": 2592000000000000,
+    "profiler": {
+      "enabled": true,
+      "timeout": 2000000000,
+      "max_concurrent": 5,
+      "quick_ports": [
+        22,
+        80,
+        443,
+        8080
+      ]
+    },
+    "ipv6_enabled": true
+  },
+  "dns": {
+    "test_hostname": "google.com",
+    "timeout": 5000000000
+  },
+  "healthChecks": {
+    "ping_targets": [
+      {
+        "name": "Google DNS",
+        "host": "8.8.8.8",
+        "enabled": true
+      },
+      {
+        "name": "Cloudflare",
+        "host": "1.1.1.1",
+        "enabled": true
+      }
+    ],
+    "tcp_ports": [
+      {
+        "name": "HTTPS",
+        "host": "www.google.com",
+        "port": 443,
+        "enabled": true
+      },
+      {
+        "name": "DICOM",
+        "host": "dicomserver.co.uk",
+        "port": 104,
+        "enabled": true
+      },
+      {
+        "name": "FTP",
+        "host": "ftp.debian.org",
+        "port": 21,
+        "enabled": true
+      },
+      {
+        "name": "SMB",
+        "host": "files.example.com",
+        "port": 445,
+        "enabled": false
+      },
+      {
+        "name": "RTSP",
+        "host": "wowzaec2demo.streamlock.net",
+        "port": 554,
+        "enabled": true
+      },
+      {
+        "name": "PostgreSQL",
+        "host": "db.example.com",
+        "port": 5432,
+        "enabled": false
+      },
+      {
+        "name": "SFTP",
+        "host": "sftp.example.com",
+        "port": 22,
+        "enabled": false
+      }
+    ],
+    "udp_ports": [
+      {
+        "name": "DNS",
+        "host": "8.8.8.8",
+        "port": 53,
+        "enabled": true
+      },
+      {
+        "name": "NTP",
+        "host": "time.google.com",
+        "port": 123,
+        "enabled": true
+      }
+    ],
+    "http_endpoints": [
+      {
+        "name": "Google HTTPS",
+        "url": "https://www.google.com",
+        "expected_status": 200,
+        "enabled": true
+      },
+      {
+        "name": "Cloudflare",
+        "url": "https://www.cloudflare.com",
+        "expected_status": 200,
+        "enabled": true
+      },
+      {
+        "name": "Example HTTP",
+        "url": "http://example.com",
+        "expected_status": 200,
+        "enabled": true
+      }
+    ],
+    "rtsp_endpoints": [
+      {
+        "name": "Wowza Demo Stream",
+        "url": "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4",
+        "enabled": true
+      }
+    ],
+    "dicom_endpoints": [
+      {
+        "name": "Public DICOM Server",
+        "host": "dicomserver.co.uk",
+        "port": 104,
+        "called_ae": "ANY-SCP",
+        "calling_ae": "SEED-SCU",
+        "enabled": true
+      }
+    ],
+    "hl7_endpoints": null,
+    "fhir_endpoints": null,
+    "sql_endpoints": null,
+    "fileshare_endpoints": null,
+    "ldap_endpoints": null,
+    "lti_endpoints": null,
+    "opcua_endpoints": null,
+    "modbus_endpoints": null,
+    "run_performance": true,
+    "run_speedtest": true,
+    "run_iperf": true,
+    "run_discovery": true
+  },
+  "speedtest": {
+    "server_id": "",
+    "auto_run_on_link": true
+  },
+  "iperf": {
+    "auto_run_on_link": false,
+    "server": "",
+    "port": 5201,
+    "protocol": "tcp",
+    "direction": "download",
+    "duration": 10,
+    "server_port": 5201,
+    "enable_server": true
+  },
+  "thresholds": {
+    "dhcp": {
+      "total": {
+        "warning": 500000000,
+        "critical": 2000000000
+      },
+      "per_phase": {
+        "warning": 200000000,
+        "critical": 1000000000
+      }
+    },
+    "dns": {
+      "warning": 100000000,
+      "critical": 500000000
+    },
+    "ping": {
+      "warning": 50000000,
+      "critical": 200000000
+    },
+    "wifi": {
+      "signal": {
+        "warning": -70,
+        "critical": -80
+      }
+    },
+    "link": {
+      "flap_count_24h": {
+        "warning": 3,
+        "critical": 5
+      }
+    },
+    "custom_tests": {
+      "ping": {
+        "warning": 50000000,
+        "critical": 100000000
+      },
+      "tcp": {
+        "warning": 100000000,
+        "critical": 500000000
+      },
+      "udp": {
+        "warning": 100000000,
+        "critical": 500000000
+      },
+      "http": {
+        "warning": 500000000,
+        "critical": 2000000000
+      },
+      "http_timings": {
+        "dns": {
+          "warning": 100000000,
+          "critical": 500000000
+        },
+        "tcp": {
+          "warning": 100000000,
+          "critical": 500000000
+        },
+        "tls": {
+          "warning": 150000000,
+          "critical": 500000000
+        },
+        "ttfb": {
+          "warning": 500000000,
+          "critical": 2000000000
+        }
+      },
+      "cert_expiry": {
+        "warning": 30,
+        "critical": 7
+      }
+    }
+  },
+  "auth": {
+    "default_username": "admin",
+    "default_password_hash": "",
+    "session_timeout": 86400000000000,
+    "sso": {
+      "providers": [
+        {
+          "enabled": false,
+          "name": "google",
+          "client_id": "",
+          "client_secret": "",
+          "redirect_url": ""
+        },
+        {
+          "enabled": false,
+          "name": "microsoft",
+          "client_id": "",
+          "client_secret": "",
+          "redirect_url": ""
+        },
+        {
+          "enabled": false,
+          "name": "github",
+          "client_id": "",
+          "client_secret": "",
+          "redirect_url": ""
+        }
+      ]
+    }
+  },
+  "security": {
+    "allowed_origins": [],
+    "vulnerability_scanning": {
+      "enabled": true,
+      "cve_database": "nvd",
+      "nvd_api_key": "",
+      "update_interval": 86400,
+      "severity_threshold": "medium",
+      "max_concurrent": 5,
+      "auto_scan": true
+    },
+    "guest_network_audit": {
+      "enabled": false
+    }
+  },
+  "dhcp": {
+    "rogue_detection": {
+      "enabled": false,
+      "known_servers": null,
+      "alert_on_detection": false
+    }
+  },
+  "snmp": {
+    "communities": [
+      "public"
+    ],
+    "timeout": 5000000000,
+    "retries": 2,
+    "port": 161,
+    "max_repetitions": 10
+  },
+  "fabOptions": {
+    "run_link": true,
+    "run_switch": true,
+    "run_vlan": true,
+    "run_ip_config": true,
+    "run_gateway": true,
+    "run_dns": true,
+    "run_health_checks": true,
+    "run_network_discovery": true,
+    "run_speedtest": true,
+    "run_iperf": false,
+    "run_performance": true,
+    "auto_scan_on_link": true
+  },
+  "displayOptions": {
+    "show_public_ip": true,
+    "unit_system": "sae"
+  },
+  "logging": {
+    "level": "info",
+    "format": "text",
+    "add_source": false,
+    "file": "",
+    "max_size": 100,
+    "max_backups": 5,
+    "max_age": 30,
+    "compress": true
+  },
+  "database": {
+    "path": "data/seed.db",
+    "retention_days": 90,
+    "enable_wal": true,
+    "max_connections": 10
+  }
+}

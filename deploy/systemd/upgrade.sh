@@ -12,7 +12,7 @@ set -e
 
 # Configuration
 INSTALL_DIR="/usr/local/seed"
-CONFIG_FILE="/etc/seed/seed.yaml"
+CONFIG_FILE="/etc/seed/seed.json"
 SERVICE_NAME="seed"
 BINARY_NAME="seed"
 

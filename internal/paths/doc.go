@@ -33,7 +33,7 @@ package paths
 //
 // ResolveConfigPath determines the config file location with this priority:
 //
-//  1. Explicit path argument (if non-empty and not the default "config.yaml")
+//  1. Explicit path argument (if non-empty and not the default "seed.json")
 //  2. SEED_CONFIG_PATH environment variable
 //  3. XDG-compliant path based on detected mode
 //

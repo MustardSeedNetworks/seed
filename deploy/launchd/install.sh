@@ -191,7 +191,7 @@ if launchctl list | grep -q "com.seed"; then
 
         # Check if initial setup is required and display instructions
         log_info "Checking setup status..."
-        if "$INSTALL_DIR/$BINARY_NAME" credentials --config "$INSTALL_DIR/configs/seed.yaml" --json 2>/dev/null | grep -q '"needs_setup":true'; then
+        if "$INSTALL_DIR/$BINARY_NAME" credentials --config "$INSTALL_DIR/configs/seed.json" --json 2>/dev/null | grep -q '"needs_setup":true'; then
             echo ""
             log_warn "Initial setup required!"
             log_warn "Visit the web UI to set your admin password: https://localhost:8443"

@@ -26,7 +26,7 @@ type testEndpointServer struct {
 func newTestEndpointServer(t *testing.T) *testEndpointServer {
 	t.Helper()
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "test-config.yaml")
+	configPath := filepath.Join(tmpDir, "test-config.json")
 
 	// Use testutil for consistent test configuration
 	cfg := testutil.NewConfigBuilder().
@@ -237,7 +237,7 @@ func TestWebSocketHub(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "test-config.yaml")
+	configPath := filepath.Join(tmpDir, "test-config.json")
 
 	// Use testutil for consistent test configuration
 	cfg := testutil.NewConfigBuilder().Build()
@@ -259,7 +259,7 @@ func TestWebSocketHub(t *testing.T) {
 
 // func TestThresholdsUpdate(t *testing.T) {
 // 	tmpDir := t.TempDir()
-// 	configPath := filepath.Join(tmpDir, "test-config.yaml")
+// 	configPath := filepath.Join(tmpDir, "test-config.json")
 //
 // 	cfg := config.DefaultConfig()
 // 	cfg.Interface.Default = "lo"
@@ -311,7 +311,7 @@ func newDevicesTestServer(t *testing.T) *devicesTestServer {
 	t.Helper()
 
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "test-config.yaml")
+	configPath := filepath.Join(tmpDir, "test-config.json")
 
 	cfg := testutil.NewConfigBuilder().Build()
 	cfg.NetworkDiscovery.Enabled = true
@@ -416,7 +416,7 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "test-config.yaml")
+	configPath := filepath.Join(tmpDir, "test-config.json")
 
 	// Use testutil for consistent test configuration
 	cfg := testutil.NewConfigBuilder().Build()

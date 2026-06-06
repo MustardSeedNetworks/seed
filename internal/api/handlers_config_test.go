@@ -17,7 +17,7 @@ import (
 func TestHandleConfigVersion(t *testing.T) {
 	// Create temp config
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 	// Use testutil for consistent test configuration
 	cfg := testutil.NewConfigBuilder().Build()
 	if err := cfg.Save(configPath); err != nil {
@@ -58,7 +58,7 @@ func TestHandleConfigVersion(t *testing.T) {
 func TestHandleConfigBackups(t *testing.T) {
 	// Create temp config
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 	// Use testutil for consistent test configuration
 	cfg := testutil.NewConfigBuilder().Build()
 	if err := cfg.Save(configPath); err != nil {
@@ -98,7 +98,7 @@ func TestHandleConfigBackups(t *testing.T) {
 func TestHandleConfigBackupCreate(t *testing.T) {
 	// Create temp config
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 	// Use testutil for consistent test configuration
 	cfg := testutil.NewConfigBuilder().Build()
 	if err := cfg.Save(configPath); err != nil {
@@ -138,7 +138,7 @@ func TestHandleConfigBackupCreate(t *testing.T) {
 func TestHandleConfigRestore(t *testing.T) {
 	// Create temp config
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 	// Use testutil for consistent test configuration
 	cfg := testutil.NewConfigBuilder().
 		WithPort(8080).
@@ -186,7 +186,7 @@ func TestHandleConfigRestore(t *testing.T) {
 func TestHandleConfigBackupDelete(t *testing.T) {
 	// Create temp config
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 	// Use testutil for consistent test configuration
 	cfg := testutil.NewConfigBuilder().Build()
 	if err := cfg.Save(configPath); err != nil {
@@ -230,7 +230,7 @@ func TestHandleConfigVersion_MethodNotAllowed(t *testing.T) {
 	s := &api.Server{}
 	s.InitServices()
 	s.SetConfig(testutil.NewConfigBuilder().Build())
-	s.SetConfigPath("/tmp/config.yaml")
+	s.SetConfigPath("/tmp/config.json")
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/config/version", http.NoBody)
 	w := httptest.NewRecorder()
@@ -250,7 +250,7 @@ func TestHandleConfigRestore_MissingBackupName(t *testing.T) {
 	s := &api.Server{}
 	s.InitServices()
 	s.SetConfig(testutil.NewConfigBuilder().Build())
-	s.SetConfigPath("/tmp/config.yaml")
+	s.SetConfigPath("/tmp/config.json")
 
 	body, _ := json.Marshal(api.RestoreRequest{BackupName: ""})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/config/restore", bytes.NewReader(body))

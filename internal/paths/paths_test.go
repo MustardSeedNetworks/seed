@@ -22,7 +22,7 @@ func TestResolve_SystemMode(t *testing.T) {
 		expected string
 	}{
 		{"ConfigDir", p.ConfigDir, "/etc/seed"},
-		{"ConfigFile", p.ConfigFile, "/etc/seed/config.yaml"},
+		{"ConfigFile", p.ConfigFile, "/etc/seed/seed.json"},
 		{"DataDir", p.DataDir, "/var/lib/seed"},
 		{"LogDir", p.LogDir, "/var/log/seed"},
 		{"CacheDir", p.CacheDir, "/var/cache/seed"},
@@ -65,7 +65,7 @@ func TestResolve_UserMode_WithXDG(t *testing.T) {
 		expected string
 	}{
 		{"ConfigDir", p.ConfigDir, filepath.Join(configHome, "seed")},
-		{"ConfigFile", p.ConfigFile, filepath.Join(configHome, "seed", "config.yaml")},
+		{"ConfigFile", p.ConfigFile, filepath.Join(configHome, "seed", "seed.json")},
 		{"DataDir", p.DataDir, filepath.Join(dataHome, "seed")},
 		{"LogDir", p.LogDir, filepath.Join(stateHome, "seed", "logs")},
 		{"CacheDir", p.CacheDir, filepath.Join(cacheHome, "seed")},
@@ -104,7 +104,7 @@ func TestResolve_UserMode_WithoutXDG(t *testing.T) {
 		expected string
 	}{
 		{"ConfigDir", p.ConfigDir, filepath.Join(homeDir, ".config", "seed")},
-		{"ConfigFile", p.ConfigFile, filepath.Join(homeDir, ".config", "seed", "config.yaml")},
+		{"ConfigFile", p.ConfigFile, filepath.Join(homeDir, ".config", "seed", "seed.json")},
 		{"DataDir", p.DataDir, filepath.Join(homeDir, ".local", "share", "seed")},
 		{"LogDir", p.LogDir, filepath.Join(homeDir, ".local", "state", "seed", "logs")},
 		{"CacheDir", p.CacheDir, filepath.Join(homeDir, ".cache", "seed")},
@@ -146,7 +146,7 @@ func TestResolve_ModeAuto_AsUser(t *testing.T) {
 		t.Fatalf("failed to get home directory: %v", err)
 	}
 
-	expectedConfig := filepath.Join(homeDir, ".config", "seed", "config.yaml")
+	expectedConfig := filepath.Join(homeDir, ".config", "seed", "seed.json")
 	if p.ConfigFile != expectedConfig {
 		t.Errorf("ConfigFile: got %q, want %q", p.ConfigFile, expectedConfig)
 	}
@@ -168,8 +168,8 @@ func TestResolve_ModeAuto_WithSystemd(t *testing.T) {
 		t.Errorf("ModeAuto should resolve to ModeSystem when systemd detected, got %v", p.Mode)
 	}
 
-	if p.ConfigFile != "/etc/seed/config.yaml" {
-		t.Errorf("ConfigFile: got %q, want %q", p.ConfigFile, "/etc/seed/config.yaml")
+	if p.ConfigFile != "/etc/seed/seed.json" {
+		t.Errorf("ConfigFile: got %q, want %q", p.ConfigFile, "/etc/seed/seed.json")
 	}
 }
 
@@ -184,19 +184,19 @@ func TestResolveConfigPath_Priority(t *testing.T) {
 	}{
 		{
 			name:        "explicit_path_takes_priority",
-			explicit:    "/custom/config.yaml",
-			envValue:    "/env/config.yaml",
+			explicit:    "/custom/seed.json",
+			envValue:    "/env/seed.json",
 			mode:        paths.ModeUser,
-			expected:    "/custom/config.yaml",
+			expected:    "/custom/seed.json",
 			description: "explicit path should override env and defaults",
 		},
 		{
 			name:        "default_filename_ignored",
-			explicit:    "config.yaml",
-			envValue:    "/env/config.yaml",
+			explicit:    "seed.json",
+			envValue:    "/env/seed.json",
 			mode:        paths.ModeUser,
-			expected:    "/env/config.yaml",
-			description: "explicit 'config.yaml' should be treated as default",
+			expected:    "/env/seed.json",
+			description: "explicit default filename 'seed.json' should be treated as default",
 		},
 		{
 			name:        "env_overrides_default",
@@ -219,7 +219,7 @@ func TestResolveConfigPath_Priority(t *testing.T) {
 			explicit:    "",
 			envValue:    "",
 			mode:        paths.ModeSystem,
-			expected:    "/etc/seed/config.yaml",
+			expected:    "/etc/seed/seed.json",
 			description: "should fall back to system path",
 		},
 	}
