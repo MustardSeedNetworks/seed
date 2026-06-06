@@ -584,6 +584,14 @@ linters:
       # the dupl clones it would otherwise produce.
       - path: 'cmd/seed-schema/main\.go'
         linters: [ funlen ]
+      # internal/api/server_routes.go's setup* helpers are declarative route
+      # tables (ADR-0002 capability registry): one row per route carrying its
+      # path/handler/methods/body-limit/role/feature/rate policy. Their length is
+      # data, not logic complexity, and grows by one (golines-wrapped) row per
+      # route. Same spirit as the seed-schema table above — keeping each as one
+      # cohesive table beats near-identical split functions (which dupl flags).
+      - path: 'internal/api/server_routes\.go'
+        linters: [ funlen ]
       # internal/license/fingerprint.go memoizes the device fingerprint for the
       # process lifetime via sync.OnceValues (a package-level var). This is a
       # required process-singleton: the fingerprint is a stable machine property,

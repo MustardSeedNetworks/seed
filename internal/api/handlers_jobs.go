@@ -303,9 +303,24 @@ func writeJobError(w http.ResponseWriter, logger *slog.Logger, err error) {
 func (s *Server) jobsRoutes() []route {
 	op := database.RoleOperator
 	return []route{
-		{path: APIVersionPrefix + "/jobs", handler: s.handleJobs, minRole: op, rateLimited: true},
-		{path: APIVersionPrefix + "/jobs/events", handler: s.handleJobsEvents},
-		{path: APIVersionPrefix + "/jobs/", handler: s.handleJobByID, minRole: op},
+		{
+			path:        APIVersionPrefix + "/jobs",
+			handler:     s.handleJobs,
+			methods:     []string{http.MethodPost},
+			minRole:     op,
+			rateLimited: true,
+		},
+		{
+			path:    APIVersionPrefix + "/jobs/events",
+			handler: s.handleJobsEvents,
+			methods: []string{http.MethodGet},
+		},
+		{
+			path:    APIVersionPrefix + "/jobs/",
+			handler: s.handleJobByID,
+			methods: []string{http.MethodGet, http.MethodDelete},
+			minRole: op,
+		},
 	}
 }
 
@@ -370,7 +385,11 @@ type jobIdempotencyStore interface {
 }
 
 // check classifies a key against a request without recording anything.
-func (c *jobIdempotencyCache) check(_ context.Context, key string, req CreateJobRequest) idemResult {
+func (c *jobIdempotencyCache) check(
+	_ context.Context,
+	key string,
+	req CreateJobRequest,
+) idemResult {
 	h := requestHash(req)
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -385,7 +404,12 @@ func (c *jobIdempotencyCache) check(_ context.Context, key string, req CreateJob
 }
 
 // store records the job a key created, evicting the oldest key past capacity.
-func (c *jobIdempotencyCache) store(_ context.Context, key string, req CreateJobRequest, jobID string) {
+func (c *jobIdempotencyCache) store(
+	_ context.Context,
+	key string,
+	req CreateJobRequest,
+	jobID string,
+) {
 	h := requestHash(req)
 	c.mu.Lock()
 	defer c.mu.Unlock()
