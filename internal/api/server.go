@@ -127,6 +127,8 @@ type Server struct {
 	setupModeStartTime time.Time             // Security fix #891: Track when setup mode started
 	background         *BackgroundComponents // Long-lived components with background lifecycle (report scheduler)
 	wifiQueries        *wifiapp.Queries      // Wi-Fi visibility read use-case (ADR-0016 strangle exemplar)
+	wifiManagement     *wifiapp.Management   // Wi-Fi settings/scan/status/connect use-case (ADR-0016 phase 2)
+	wifiDiscovery      *wifiapp.Discovery    // Enhanced Wi-Fi discovery use-case (ADR-0016 phase 2)
 	tlsFingerprint     tlsFingerprintCache   // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
 }
 
@@ -238,6 +240,9 @@ func NewServer(
 
 	// Initialize discovery service and pipeline
 	s.initDiscovery(cfg)
+
+	// Wire the Wi-Fi use-cases now that the discovery bridge exists (ADR-0016).
+	s.initWiFiUseCases()
 
 	// Initialize vulnerability scanner if enabled
 	s.initVulnerabilityScanner(cfg)
