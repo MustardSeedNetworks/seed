@@ -592,6 +592,14 @@ linters:
       # cohesive table beats near-identical split functions (which dupl flags).
       - path: 'internal/api/server_routes\.go'
         linters: [ funlen ]
+      # Defs() in internal/wifi/anomaly/catalog.go is the Wi-Fi anomaly catalog:
+      # a single declarative table of anomaly definitions (originally-authored
+      # copy + 802.11 citations + recommendation per entry, ADR-0011). Its length
+      # is data, not logic complexity, and it grows by one entry per anomaly type.
+      # Same spirit as the seed-schema table above — keeping it as one cohesive
+      # catalog beats near-identical split functions (which dupl flags).
+      - path: 'internal/wifi/anomaly/catalog\.go'
+        linters: [ funlen ]
       # internal/license/fingerprint.go memoizes the device fingerprint for the
       # process lifetime via sync.OnceValues (a package-level var). This is a
       # required process-singleton: the fingerprint is a stable machine property,
