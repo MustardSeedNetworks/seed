@@ -10,14 +10,38 @@ else
     echo "warning: setcap not found; install libcap/libcap2-bin for non-root diagnostics"
 fi
 
-if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q "Status: active"; then
-    ufw allow 8443/tcp comment 'Seed WebUI HTTPS' >/dev/null 2>&1 || true
-fi
+PORT=8443
 
-if command -v firewall-cmd >/dev/null 2>&1 && systemctl is-active --quiet firewalld 2>/dev/null; then
-    firewall-cmd --permanent --add-port=8443/tcp >/dev/null 2>&1 || true
-    firewall-cmd --reload >/dev/null 2>&1 || true
-fi
+open_firewall() {
+    opened=""
+    if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q "Status: active"; then
+        if ufw allow ${PORT}/tcp comment 'Seed WebUI HTTPS' >/dev/null 2>&1; then
+            opened="ufw"
+        fi
+    fi
+    if command -v firewall-cmd >/dev/null 2>&1 && systemctl is-active --quiet firewalld 2>/dev/null; then
+        firewall-cmd --permanent --add-port=${PORT}/tcp >/dev/null 2>&1 || true
+        firewall-cmd --reload >/dev/null 2>&1 || true
+        opened="${opened:+$opened, }firewalld"
+    fi
+    if [ -n "$opened" ]; then
+        echo "Opened TCP ${PORT} on: $opened (SEED_OPEN_FIREWALL set)"
+    fi
+}
+
+firewall_hint() {
+    if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q "Status: active"; then
+        echo "  sudo ufw allow ${PORT}/tcp"
+    elif command -v firewall-cmd >/dev/null 2>&1 && systemctl is-active --quiet firewalld 2>/dev/null; then
+        echo "  sudo firewall-cmd --permanent --add-port=${PORT}/tcp && sudo firewall-cmd --reload"
+    fi
+}
+
+# Network exposure is the operator's choice. We do NOT open the firewall by
+# default; set SEED_OPEN_FIREWALL=1 to opt in (e.g. automated provisioning).
+case "${SEED_OPEN_FIREWALL:-0}" in
+    1 | true | yes | TRUE | YES) open_firewall ;;
+esac
 
 if command -v systemctl >/dev/null 2>&1; then
     systemctl daemon-reload || true
@@ -44,5 +68,20 @@ Commands:
   Stop:       sudo systemctl stop seed
 
 EOF
+
+# When we did not open the firewall, tell the operator how (only if one is active).
+case "${SEED_OPEN_FIREWALL:-0}" in
+    1 | true | yes | TRUE | YES) : ;;
+    *)
+        hint=$(firewall_hint)
+        if [ -n "$hint" ]; then
+            echo "An active firewall was detected; TCP ${PORT} is NOT open to the network."
+            echo "To allow remote access to the web interface, run:"
+            echo "$hint"
+            echo "(or re-install with SEED_OPEN_FIREWALL=1 to open it automatically)"
+            echo ""
+        fi
+        ;;
+esac
 
 exit 0

@@ -64,11 +64,21 @@ chown -R seed:seed /etc/seed /var/lib/seed /var/log/seed
 # - CAP_NET_ADMIN: Required for ethtool link configuration, interface control
 /usr/sbin/setcap 'cap_net_raw,cap_net_admin=+ep' /usr/bin/seed || true
 
-# Configure firewall if firewalld is running
+# Network exposure is the operator's choice. We do NOT open the firewall by
+# default; set SEED_OPEN_FIREWALL=1 to opt in (e.g. automated provisioning).
 if systemctl is-active --quiet firewalld 2>/dev/null; then
-    firewall-cmd --permanent --add-port=8443/tcp 2>/dev/null || true
-    firewall-cmd --reload 2>/dev/null || true
-    echo "Firewall configured for Seed service (port 8443)"
+    case "${SEED_OPEN_FIREWALL:-0}" in
+        1|true|yes|TRUE|YES)
+            firewall-cmd --permanent --add-port=8443/tcp 2>/dev/null || true
+            firewall-cmd --reload 2>/dev/null || true
+            echo "Opened TCP 8443 in firewalld (SEED_OPEN_FIREWALL set)"
+            ;;
+        *)
+            echo "An active firewall was detected; TCP 8443 is NOT open to the network."
+            echo "To allow remote access to the web interface, run:"
+            echo "  sudo firewall-cmd --permanent --add-port=8443/tcp && sudo firewall-cmd --reload"
+            ;;
+    esac
 fi
 
 %systemd_post seed.service
