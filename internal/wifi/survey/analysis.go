@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+
+	"github.com/krisarmstrong/seed/internal/anomaly"
 )
 
 // DeadZone represents a detected area of poor WiFi coverage.
@@ -19,11 +21,12 @@ type DeadZone struct {
 
 // DeadZoneAnalysis contains the results of dead zone detection analysis.
 type DeadZoneAnalysis struct {
-	SurveyID        string     `json:"survey_id"`
-	ThresholdDBm    int        `json:"threshold_dbm"`
-	DeadZones       []DeadZone `json:"dead_zones"`
-	CoverageScore   float64    `json:"coverage_score"` // 0-100
-	Recommendations []string   `json:"recommendations"`
+	SurveyID        string            `json:"survey_id"`
+	ThresholdDBm    int               `json:"threshold_dbm"`
+	DeadZones       []DeadZone        `json:"dead_zones"`
+	CoverageScore   float64           `json:"coverage_score"` // 0-100
+	Recommendations []string          `json:"recommendations"`
+	Anomalies       []anomaly.Anomaly `json:"anomalies"` // Wi-Fi anomalies detected from the survey's passive AP observations
 }
 
 // Coverage level thresholds in dBm.
@@ -125,12 +128,20 @@ func DetectDeadZones(survey *Survey, threshold int) (*DeadZoneAnalysis, error) {
 	// Generate recommendations
 	recommendations := generateRecommendations(deadZones, coverageScore, len(samples))
 
+	// Surface Wi-Fi anomalies (security/RF/standards) from the same survey's
+	// passive AP observations, alongside the coverage analysis.
+	anomalies, err := AnalyzeAnomalies(survey)
+	if err != nil {
+		return nil, fmt.Errorf("analyze survey anomalies: %w", err)
+	}
+
 	return &DeadZoneAnalysis{
 		SurveyID:        survey.ID,
 		ThresholdDBm:    threshold,
 		DeadZones:       deadZones,
 		CoverageScore:   coverageScore,
 		Recommendations: recommendations,
+		Anomalies:       anomalies,
 	}, nil
 }
 
