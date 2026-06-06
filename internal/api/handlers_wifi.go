@@ -4,6 +4,7 @@ package api
 // Split from handlers_network.go for code organization (Plan F).
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/i18n"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/wifi"
+	wifiapp "github.com/krisarmstrong/seed/internal/wifi/app"
 )
 
 // ============================================================================
@@ -63,29 +65,12 @@ func (s *Server) handleWiFiSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) getWiFiSettings(w http.ResponseWriter, _ *http.Request) {
-	// Get configured WLAN interface (or fall back to current) - IEEE 802.11
-	wlanIface := s.config.Interface.WiFi
-	if wlanIface == "" {
-		wlanIface = s.config.Interface.Default
-	}
-
-	// Get list of available wireless interfaces
-	availableWLAN := []string{}
-	if s.netManager() != nil {
-		for _, iface := range s.netManager().GetInterfaces() {
-			if s.netManager().IsWireless(iface.Name) {
-				availableWLAN = append(availableWLAN, iface.Name)
-			}
-		}
-	}
-
-	resp := WiFiSettingsResponse{
-		Interface:     wlanIface,
-		AvailableWiFi: availableWLAN,
-		IsWireless:    s.wifiManager() != nil && s.wifiManager().IsWireless(),
-	}
-
-	sendJSONResponse(w, nil, http.StatusOK, resp)
+	res := s.wifiManagement.Settings()
+	sendJSONResponse(w, nil, http.StatusOK, WiFiSettingsResponse{
+		Interface:     res.Interface,
+		AvailableWiFi: res.AvailableWiFi,
+		IsWireless:    res.IsWireless,
+	})
 }
 
 func (s *Server) updateWiFiSettings(
@@ -101,23 +86,7 @@ func (s *Server) updateWiFiSettings(
 		return
 	}
 
-	// Lock config for write access
-	// NOTE: Must unlock before Save() - Save() acquires RLock internally
-	s.config.Lock()
-
-	// Update WiFi interface in config
-	s.config.Interface.WiFi = req.Interface
-
-	// Update WiFi manager to use new interface
-	if s.wifiManager() != nil && req.Interface != "" {
-		s.wifiManager().SetInterface(req.Interface)
-	}
-
-	// Unlock before Save() to avoid deadlock - Save() acquires RLock internally
-	s.config.Unlock()
-
-	// Save config
-	if err := s.config.Save(s.configPath); err != nil {
+	if err := s.wifiManagement.UpdateInterface(req.Interface); err != nil {
 		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
 		sendErrorResponseWithDetails(
 			w,
@@ -224,134 +193,34 @@ func (s *Server) handleWiFi(w http.ResponseWriter, r *http.Request) {
 // ============================================================================
 
 // handleWiFiScan performs a WiFi network scan and returns discovered networks.
+// Thin handler (ADR-0016): it resolves the requested interface from the request
+// and delegates to the Wi-Fi management use-case, which owns the degrade logic.
 func (s *Server) handleWiFiScan(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
+	res := s.wifiManagement.Scan(s.getInterfaceFromRequest(r))
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
+	resp := map[string]any{
+		"interface": res.Interface,
+		"available": res.Available,
+		"networks":  res.Networks,
 	}
-
-	// Get interface from query param or use current/default
-	wlanIface := s.getInterfaceFromRequest(r)
-	if wlanIface == "" {
-		wlanIface = s.config.Interface.WiFi
-		if wlanIface == "" {
-			wlanIface = s.config.Interface.Default
-		}
+	if res.Error != "" {
+		resp["error"] = res.Error
 	}
-
-	if s.wifiScanner() == nil {
-		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-			"interface": wlanIface,
-			"available": false,
-			"error":     "WiFi scanner not initialized",
-			"networks":  []any{},
-		})
-		return
-	}
-
-	// Check if interface is wireless
-	if s.wifiManager() == nil || !s.wifiManager().IsWireless() {
-		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-			"interface": wlanIface,
-			"available": false,
-			"error":     "No wireless adapter available. Connect a WiFi adapter to scan networks.",
-			"networks":  []any{},
-		})
-		return
-	}
-
-	// Perform scan
-	networks, err := s.wifiScanner().Scan()
-	if err != nil {
-		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-			"interface": wlanIface,
-			"available": true,
-			"error":     "Wi-Fi scan failed. Check permissions and interface availability.",
-			"networks":  []any{},
-		})
-		return
-	}
-
-	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"interface": wlanIface,
-		"available": true,
-		"networks":  networks,
-	})
+	sendJSONResponse(w, nil, http.StatusOK, resp)
 }
 
 // handleWiFiStatus returns the WiFi adapter status without performing a scan.
+// Thin handler (ADR-0016) delegating to the Wi-Fi management use-case.
 func (s *Server) handleWiFiStatus(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
-
-	// Get list of available wireless interfaces
-	availableAdapters := []string{}
-	if s.netManager() != nil {
-		for _, iface := range s.netManager().GetInterfaces() {
-			if s.netManager().IsWireless(iface.Name) {
-				availableAdapters = append(availableAdapters, iface.Name)
-			}
-		}
-	}
-
-	// Get interface from query param or use current/default
-	currentInterface := s.getInterfaceFromRequest(r)
-	if currentInterface == "" {
-		currentInterface = s.config.Interface.WiFi
-		if currentInterface == "" {
-			currentInterface = s.config.Interface.Default
-		}
-	}
-
-	// Check if current interface is wireless
-	isWireless := false
-	if s.wifiManager() != nil {
-		isWireless = s.wifiManager().IsWireless()
-	}
-
-	// Determine status message
-	var status, message string
-	switch {
-	case len(availableAdapters) == 0:
-		status = "unavailable"
-		message = "No wireless adapter detected. Connect a WiFi adapter to perform surveys."
-	case !isWireless:
-		status = "available"
-		message = "Wireless adapter available but not selected as current interface."
-	default:
-		status = "ready"
-		message = "Wireless adapter ready for scanning."
-	}
+	res := s.wifiManagement.Status(s.getInterfaceFromRequest(r))
 
 	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
-		"status":            status,
-		"message":           message,
-		"currentInterface":  currentInterface,
-		"isWireless":        isWireless,
-		"availableAdapters": availableAdapters,
-		"canScan":           isWireless && len(availableAdapters) > 0,
+		"status":            res.Status,
+		"message":           res.Message,
+		"currentInterface":  res.CurrentInterface,
+		"isWireless":        res.IsWireless,
+		"availableAdapters": res.AvailableAdapters,
+		"canScan":           res.CanScan,
 	})
 }
 
@@ -369,37 +238,12 @@ type WiFiConnectRequest struct {
 	Password string `json:"password,omitempty" validate:"omitempty,min=8"`       // WPA2 minimum is 8
 }
 
-// handleWiFiConnect handles WiFi connection requests.
+// handleWiFiConnect handles WiFi connection requests. Thin handler (ADR-0016):
+// decode the request, delegate to the management use-case, map domain errors to
+// status codes.
 func (s *Server) handleWiFiConnect(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
-
-	if s.wifiManager() == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"WiFi manager not available",
-			"",
-		)
-		return
-	}
-
-	// Parse request body
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeJSON)
 
 	var req WiFiConnectRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
@@ -418,9 +262,19 @@ func (s *Server) handleWiFiConnect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Attempt connection
-	result, err := s.wifiManager().Connect(req.SSID, req.Password)
-	if err != nil {
+	result, err := s.wifiManagement.Connect(req.SSID, req.Password)
+	switch {
+	case errors.Is(err, wifiapp.ErrRadioUnavailable):
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail,
+			"WiFi manager not available",
+			"",
+		)
+		return
+	case err != nil:
 		logger.ErrorContext(r.Context(), "WiFi connection failed", "error", err, "ssid", req.SSID)
 		sendErrorResponseWithDetails(
 			w,
@@ -436,24 +290,14 @@ func (s *Server) handleWiFiConnect(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, result)
 }
 
-// handleWiFiDisconnect handles WiFi disconnection requests.
+// handleWiFiDisconnect handles WiFi disconnection requests. Thin handler
+// (ADR-0016) delegating to the management use-case.
 func (s *Server) handleWiFiDisconnect(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
-
-	if s.wifiManager() == nil {
+	result, err := s.wifiManagement.Disconnect()
+	switch {
+	case errors.Is(err, wifiapp.ErrRadioUnavailable):
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -463,11 +307,7 @@ func (s *Server) handleWiFiDisconnect(w http.ResponseWriter, r *http.Request) {
 			"",
 		)
 		return
-	}
-
-	// Attempt disconnection
-	result, err := s.wifiManager().Disconnect()
-	if err != nil {
+	case err != nil:
 		logger.ErrorContext(r.Context(), "WiFi disconnection failed", "error", err)
 		sendErrorResponseWithDetails(
 			w,
@@ -871,35 +711,13 @@ func toWiFiDiscoveryStats(stats *discovery.WiFiDiscoveryStats) *WiFiDiscoverySta
 // Response: 200 OK with WiFiDiscoveryScanResponse.
 func (s *Server) handleWiFiDiscoveryScan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
+	result, err := s.wifiDiscovery.Scan(r.Context())
+	switch {
+	case errors.Is(err, wifiapp.ErrDiscoveryUnavailable):
+		s.respondWiFiDiscoveryUnavailable(w, logger)
 		return
-	}
-
-	bridge := s.wifiBridge()
-	if bridge == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"WiFi discovery bridge not available",
-			"",
-		)
-		return
-	}
-
-	result, err := bridge.Scan(r.Context())
-	if err != nil {
+	case err != nil:
 		logger.ErrorContext(r.Context(), "WiFi discovery scan failed", "error", err)
 		sendErrorResponseWithDetails(
 			w,
@@ -912,9 +730,20 @@ func (s *Server) handleWiFiDiscoveryScan(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	resp := toWiFiDiscoveryScanResponse(result)
+	sendJSONResponse(w, logger, http.StatusOK, toWiFiDiscoveryScanResponse(result))
+}
 
-	sendJSONResponse(w, logger, http.StatusOK, resp)
+// respondWiFiDiscoveryUnavailable emits the shared 503 for the enhanced Wi-Fi
+// discovery handlers when no bridge is wired.
+func (s *Server) respondWiFiDiscoveryUnavailable(w http.ResponseWriter, logger *slog.Logger) {
+	sendErrorResponseWithDetails(
+		w,
+		logger,
+		http.StatusServiceUnavailable,
+		ErrCodeServiceUnavail,
+		"WiFi discovery bridge not available",
+		"",
+	)
 }
 
 // toWiFiDiscoveryScanResponse maps a Wi-Fi scan result to the API wire shape.
@@ -939,34 +768,13 @@ func toWiFiDiscoveryScanResponse(result *discovery.WiFiScanResult) WiFiDiscovery
 // Response: 200 OK with WiFiDiscoveryNetworksResponse.
 func (s *Server) handleWiFiDiscoveryNetworks(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
+	networks, err := s.wifiDiscovery.Networks()
+	if errors.Is(err, wifiapp.ErrDiscoveryUnavailable) {
+		s.respondWiFiDiscoveryUnavailable(w, logger)
 		return
 	}
 
-	bridge := s.wifiBridge()
-	if bridge == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"WiFi discovery bridge not available",
-			"",
-		)
-		return
-	}
-
-	networks := bridge.GetNetworks()
 	sendJSONResponse(w, logger, http.StatusOK, WiFiDiscoveryNetworksResponse{
 		Networks: toWiFiNetworks(networks),
 		Total:    len(networks),
@@ -982,34 +790,13 @@ func (s *Server) handleWiFiDiscoveryNetworks(w http.ResponseWriter, r *http.Requ
 // Response: 200 OK with WiFiDiscoveryAPsResponse.
 func (s *Server) handleWiFiDiscoveryAPs(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
+	aps, err := s.wifiDiscovery.AccessPoints()
+	if errors.Is(err, wifiapp.ErrDiscoveryUnavailable) {
+		s.respondWiFiDiscoveryUnavailable(w, logger)
 		return
 	}
 
-	bridge := s.wifiBridge()
-	if bridge == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"WiFi discovery bridge not available",
-			"",
-		)
-		return
-	}
-
-	aps := bridge.GetAccessPoints()
 	sendJSONResponse(w, logger, http.StatusOK, WiFiDiscoveryAPsResponse{
 		AccessPoints: toWiFiAccessPoints(aps),
 		Total:        len(aps),
@@ -1025,34 +812,13 @@ func (s *Server) handleWiFiDiscoveryAPs(w http.ResponseWriter, r *http.Request) 
 // Response: 200 OK with WiFiDiscoveryStatsResponse.
 func (s *Server) handleWiFiDiscoveryStats(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
+	stats, err := s.wifiDiscovery.Stats()
+	if errors.Is(err, wifiapp.ErrDiscoveryUnavailable) {
+		s.respondWiFiDiscoveryUnavailable(w, logger)
 		return
 	}
 
-	bridge := s.wifiBridge()
-	if bridge == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"WiFi discovery bridge not available",
-			"",
-		)
-		return
-	}
-
-	stats := bridge.GetStats()
 	sendJSONResponse(w, logger, http.StatusOK, WiFiDiscoveryStatsResponse{
 		Stats: toWiFiDiscoveryStats(stats),
 	})
