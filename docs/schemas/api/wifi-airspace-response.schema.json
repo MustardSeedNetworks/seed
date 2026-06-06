@@ -1,0 +1,228 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/wifi-airspace-response.schema.json",
+  "$ref": "#/$defs/WiFiAirspaceResponse",
+  "$defs": {
+    "APGroup": {
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "bsses": {
+          "items": {
+            "$ref": "#/$defs/BSSView"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "key",
+        "bsses"
+      ]
+    },
+    "BSSView": {
+      "properties": {
+        "bssid": {
+          "type": "string"
+        },
+        "ssid": {
+          "type": "string"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "band": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "integer"
+        },
+        "security": {
+          "type": "string"
+        },
+        "standard": {
+          "type": "string"
+        },
+        "countryCode": {
+          "type": "string"
+        },
+        "pmfRequired": {
+          "type": "boolean"
+        },
+        "rrmNeighbor": {
+          "type": "boolean"
+        },
+        "btmSupported": {
+          "type": "boolean"
+        },
+        "ftSupported": {
+          "type": "boolean"
+        },
+        "wpsEnabled": {
+          "type": "boolean"
+        },
+        "signalDbm": {
+          "type": "integer"
+        },
+        "beacons": {
+          "type": "integer"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "stations": {
+          "items": {
+            "$ref": "#/$defs/StationView"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "bssid",
+        "ssid",
+        "hidden",
+        "band",
+        "channel",
+        "security",
+        "standard",
+        "pmfRequired",
+        "rrmNeighbor",
+        "btmSupported",
+        "ftSupported",
+        "wpsEnabled",
+        "signalDbm",
+        "beacons",
+        "lastSeen",
+        "stations"
+      ]
+    },
+    "SSIDGroup": {
+      "properties": {
+        "ssid": {
+          "type": "string"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "apCount": {
+          "type": "integer"
+        },
+        "bssCount": {
+          "type": "integer"
+        },
+        "stationCount": {
+          "type": "integer"
+        },
+        "aps": {
+          "items": {
+            "$ref": "#/$defs/APGroup"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ssid",
+        "hidden",
+        "apCount",
+        "bssCount",
+        "stationCount",
+        "aps"
+      ]
+    },
+    "StationView": {
+      "properties": {
+        "mac": {
+          "type": "string"
+        },
+        "signalDbm": {
+          "type": "integer"
+        },
+        "frames": {
+          "type": "integer"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "mac",
+        "signalDbm",
+        "frames",
+        "lastSeen"
+      ]
+    },
+    "Status": {
+      "properties": {
+        "captureActive": {
+          "type": "boolean"
+        },
+        "source": {
+          "type": "string"
+        },
+        "ssids": {
+          "type": "integer"
+        },
+        "aps": {
+          "type": "integer"
+        },
+        "bsses": {
+          "type": "integer"
+        },
+        "stations": {
+          "type": "integer"
+        },
+        "anomalies": {
+          "type": "integer"
+        },
+        "lastEvaluated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "captureActive",
+        "ssids",
+        "aps",
+        "bsses",
+        "stations",
+        "anomalies"
+      ]
+    },
+    "WiFiAirspaceResponse": {
+      "properties": {
+        "ssids": {
+          "items": {
+            "$ref": "#/$defs/SSIDGroup"
+          },
+          "type": "array"
+        },
+        "status": {
+          "$ref": "#/$defs/Status"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ssids",
+        "status"
+      ]
+    }
+  },
+  "title": "WiFiAirspaceResponse",
+  "description": "WiFiAirspaceResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

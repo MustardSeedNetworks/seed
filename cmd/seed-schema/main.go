@@ -104,6 +104,8 @@ func schemaTargets() []schemaTarget {
 		{&api.CableResponse{}, "cable-response.schema.json"},
 		{&api.VLANResponse{}, "vlan-response.schema.json"},
 		{&api.WiFiResponse{}, "wifi-response.schema.json"},
+		{&api.WiFiAirspaceResponse{}, "wifi-airspace-response.schema.json"},
+		{&api.WiFiAnomaliesResponse{}, "wifi-anomalies-response.schema.json"},
 		{&api.SpeedtestResponse{}, "speedtest-response.schema.json"},
 		{&api.RogueDHCPResponse{}, "rogue-dhcp-response.schema.json"},
 		{&api.IPConfigResponse{}, "ipconfig-response.schema.json"},

@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/wifi-anomalies-response.schema.json",
+  "$ref": "#/$defs/WiFiAnomaliesResponse",
+  "$defs": {
+    "Anomaly": {
+      "properties": {
+        "defKey": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "subject": {
+          "$ref": "#/$defs/SubjectRef"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "impact": {
+          "type": "string"
+        },
+        "recommendation": {
+          "type": "string"
+        },
+        "standards": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "evidence": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "followUps": {
+          "items": {
+            "$ref": "#/$defs/FollowUp"
+          },
+          "type": "array"
+        },
+        "firstSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "count": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "defKey",
+        "category",
+        "severity",
+        "subject",
+        "title",
+        "description",
+        "recommendation",
+        "firstSeen",
+        "lastSeen",
+        "count"
+      ]
+    },
+    "FollowUp": {
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "capability": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "kind",
+        "label",
+        "action"
+      ]
+    },
+    "Status": {
+      "properties": {
+        "captureActive": {
+          "type": "boolean"
+        },
+        "source": {
+          "type": "string"
+        },
+        "ssids": {
+          "type": "integer"
+        },
+        "aps": {
+          "type": "integer"
+        },
+        "bsses": {
+          "type": "integer"
+        },
+        "stations": {
+          "type": "integer"
+        },
+        "anomalies": {
+          "type": "integer"
+        },
+        "lastEvaluated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "captureActive",
+        "ssids",
+        "aps",
+        "bsses",
+        "stations",
+        "anomalies"
+      ]
+    },
+    "SubjectRef": {
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "kind",
+        "id"
+      ]
+    },
+    "WiFiAnomaliesResponse": {
+      "properties": {
+        "anomalies": {
+          "items": {
+            "$ref": "#/$defs/Anomaly"
+          },
+          "type": "array"
+        },
+        "status": {
+          "$ref": "#/$defs/Status"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "anomalies",
+        "status"
+      ]
+    }
+  },
+  "title": "WiFiAnomaliesResponse",
+  "description": "WiFiAnomaliesResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

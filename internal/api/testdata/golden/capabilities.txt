@@ -1019,6 +1019,22 @@ body:
     "path": "/api/v1/wifi/wifi/channel-graph"
   },
   {
+    "feature": "wifi_management_capture",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/wifi/airspace"
+  },
+  {
+    "feature": "wifi_association_forensics",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
+    "path": "/api/v1/wifi/anomalies"
+  },
+  {
     "maxBodyBytes": 262144,
     "methods": [
       "GET",
