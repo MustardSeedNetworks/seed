@@ -23,3 +23,4 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0013](0013-bluetooth-live-capture.md) | Bluetooth live-scan capture port | Accepted |
 | [0014](0014-config-validation-schema-is-a-constraints-validator.md) | config validation schema is a curated constraints validator, not a duplicate | Accepted |
 | [0015](0015-credential-encryption-key-separation.md) | Separate the credential data-encryption key from `Auth.JWTSecret` | Proposed |
+| [0016](0016-strangle-internal-api-into-use-cases.md) | Strangle `internal/api` into per-domain use-case services | Accepted |

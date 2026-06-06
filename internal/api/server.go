@@ -46,6 +46,7 @@ import (
 	"github.com/krisarmstrong/seed/internal/timeseries/retention"
 	"github.com/krisarmstrong/seed/internal/topology"
 	"github.com/krisarmstrong/seed/internal/wifi"
+	wifiapp "github.com/krisarmstrong/seed/internal/wifi/app"
 	"github.com/krisarmstrong/seed/internal/wifi/survey"
 )
 
@@ -125,6 +126,7 @@ type Server struct {
 	startTime          time.Time             // Application start time for uptime tracking (fixes #540)
 	setupModeStartTime time.Time             // Security fix #891: Track when setup mode started
 	background         *BackgroundComponents // Long-lived components with background lifecycle (report scheduler)
+	wifiQueries        *wifiapp.Queries      // Wi-Fi visibility read use-case (ADR-0016 strangle exemplar)
 	tlsFingerprint     tlsFingerprintCache   // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
 }
 
@@ -210,6 +212,7 @@ func NewServer(
 		icmpAvailable: icmpAvailable,
 		startTime:     time.Now(),
 		background:    background,
+		wifiQueries:   wifiapp.NewQueries(wifiVisibilitySource(background)),
 		services:      services,
 	}
 

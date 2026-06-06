@@ -5,6 +5,7 @@ import (
 
 	"github.com/krisarmstrong/seed/internal/anomaly"
 	"github.com/krisarmstrong/seed/internal/wifi/airspace"
+	wifiapp "github.com/krisarmstrong/seed/internal/wifi/app"
 	"github.com/krisarmstrong/seed/internal/wifi/visibility"
 )
 
@@ -22,36 +23,29 @@ type WiFiAnomaliesResponse struct {
 	Status    visibility.Status `json:"status"`
 }
 
-// wifiVisibility returns the live visibility service, or nil when no capture
-// component is wired (e.g. no monitor-capable interface). Handlers degrade to an
-// empty-but-valid response in that case rather than erroring.
-func (s *Server) wifiVisibility() *visibility.Service {
-	if s.background == nil {
+// wifiVisibilitySource adapts the background visibility component to the use-case
+// port, returning a nil interface (not a typed-nil) when no capture component is
+// wired — so wifiapp.Queries sees a genuinely-absent source.
+func wifiVisibilitySource(bg *BackgroundComponents) wifiapp.VisibilitySource {
+	if bg == nil || bg.WiFiVisibility == nil {
 		return nil
 	}
-	return s.background.WiFiVisibility
+	return bg.WiFiVisibility
 }
 
-// handleWiFiAirspace serves GET /api/v1/wifi/airspace — the airspace tree. The
+// handleWiFiAirspace serves GET /api/v1/wifi/airspace. Thin handler (ADR-0016):
+// it delegates to the Wi-Fi visibility read use-case and encodes the result. The
 // route is feature-gated (wifi_management_capture); an absent capture component
 // yields an empty tree with captureActive=false, not an error.
 func (s *Server) handleWiFiAirspace(w http.ResponseWriter, _ *http.Request) {
-	resp := WiFiAirspaceResponse{SSIDs: []airspace.SSIDGroup{}}
-	if svc := s.wifiVisibility(); svc != nil {
-		resp.SSIDs = svc.Tree()
-		resp.Status = svc.Status()
-	}
-	sendJSONResponse(w, nil, http.StatusOK, resp)
+	res := s.wifiQueries.Airspace()
+	sendJSONResponse(w, nil, http.StatusOK, WiFiAirspaceResponse{SSIDs: res.SSIDs, Status: res.Status})
 }
 
-// handleWiFiAnomalies serves GET /api/v1/wifi/anomalies — the Wi-Fi anomaly
-// stream. Feature-gated (wifi_association_forensics); degrades to an empty
-// stream when no capture component is present.
+// handleWiFiAnomalies serves GET /api/v1/wifi/anomalies. Thin handler delegating
+// to the use-case; feature-gated (wifi_association_forensics); degrades to an
+// empty stream when no capture component is present.
 func (s *Server) handleWiFiAnomalies(w http.ResponseWriter, _ *http.Request) {
-	resp := WiFiAnomaliesResponse{Anomalies: []anomaly.Anomaly{}}
-	if svc := s.wifiVisibility(); svc != nil {
-		resp.Anomalies = svc.Anomalies()
-		resp.Status = svc.Status()
-	}
-	sendJSONResponse(w, nil, http.StatusOK, resp)
+	res := s.wifiQueries.Anomalies()
+	sendJSONResponse(w, nil, http.StatusOK, WiFiAnomaliesResponse{Anomalies: res.Anomalies, Status: res.Status})
 }
