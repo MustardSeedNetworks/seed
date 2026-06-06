@@ -276,7 +276,6 @@ jobs:
         run: git diff --exit-code package-lock.json
 
       - name: Run TypeScript check
-        continue-on-error: true
         run: npx tsc --noEmit
 
       - name: Run Biome (lint + format)
