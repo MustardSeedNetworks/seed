@@ -6,17 +6,21 @@ import "github.com/krisarmstrong/seed/internal/anomaly"
 // API/UI key off them, and tests assert against them — so they live as exported
 // constants rather than string literals scattered through the rules.
 const (
-	DefOpenNetwork            = "wifi-open-network"
-	DefWEPInUse               = "wifi-wep-in-use"
-	DefWPSEnabled             = "wifi-wps-enabled"
-	DefPMFNotRequired         = "wifi-pmf-not-required"
-	DefSecurityMismatch       = "wifi-security-mismatch"
-	DefEvilTwin               = "wifi-evil-twin"
-	DefCoChannelContention    = "wifi-co-channel-contention"
-	DefAdjacentChannelOverlap = "wifi-adjacent-channel-overlap"
-	DefHiddenSSID             = "wifi-hidden-ssid"
-	DefCountryConflict        = "wifi-country-conflict"
-	DefStandardMismatch       = "wifi-standard-mismatch"
+	DefOpenNetwork             = "wifi-open-network"
+	DefWEPInUse                = "wifi-wep-in-use"
+	DefWPSEnabled              = "wifi-wps-enabled"
+	DefPMFNotRequired          = "wifi-pmf-not-required"
+	DefSecurityMismatch        = "wifi-security-mismatch"
+	DefEvilTwin                = "wifi-evil-twin"
+	DefCoChannelContention     = "wifi-co-channel-contention"
+	DefAdjacentChannelOverlap  = "wifi-adjacent-channel-overlap"
+	DefHiddenSSID              = "wifi-hidden-ssid"
+	DefCountryConflict         = "wifi-country-conflict"
+	DefStandardMismatch        = "wifi-standard-mismatch"
+	DefWPA3TransitionDowngrade = "wifi-wpa3-transition-downgrade"
+	DefDefaultSSIDName         = "wifi-default-ssid-name"
+	DefSSIDSprawl              = "wifi-ssid-sprawl"
+	DefInconsistentRoaming     = "wifi-inconsistent-roaming"
 )
 
 // CapActiveTest names the platform capability required to run an active
@@ -224,6 +228,65 @@ func Defs() []anomaly.Def {
 			Recommendation: "Standardise AP hardware/firmware where practical, or confirm the " +
 				"mixed generations are intentional and the older radios are scoped to legacy " +
 				"clients only.",
+		},
+		{
+			ID:              DefWPA3TransitionDowngrade,
+			Category:        anomaly.CategorySecurity,
+			DefaultSeverity: anomaly.SeverityInfo,
+			Standards:       []string{"WPA3 Specification (transition mode)", "IEEE 802.11-2020 §12"},
+			Title:           "WPA3 transition mode (downgrade-capable)",
+			Description: "The BSS runs WPA3/WPA2 transition mode, advertising both SAE (WPA3) and " +
+				"PSK (WPA2) so legacy clients can still join. An on-path attacker can strip the " +
+				"WPA3 offer and force a WPA2 association, defeating SAE's offline-dictionary " +
+				"resistance for that client.",
+			Impact: "Clients capable of WPA3 may be downgraded to WPA2, exposing the passphrase to " +
+				"offline cracking that pure WPA3-SAE would prevent.",
+			Recommendation: "Once all clients support WPA3, move the SSID to WPA3-only (SAE). Keep " +
+				"transition mode only as long as WPA2-only clients genuinely remain.",
+		},
+		{
+			ID:              DefDefaultSSIDName,
+			Category:        anomaly.CategorySecurity,
+			DefaultSeverity: anomaly.SeverityInfo,
+			Standards:       []string{"IEEE 802.11 (SSID element)"},
+			Title:           "Default/manufacturer SSID name",
+			Description: "The SSID matches a well-known router/manufacturer default (e.g. " +
+				"\"linksys\", \"NETGEAR\", \"dlink\"). A default name signals an unconfigured or " +
+				"lightly-managed device and often correlates with default credentials and a " +
+				"vendor-derivable default passphrase.",
+			Impact: "Default-named networks advertise the hardware vendor to an attacker and are " +
+				"more likely to retain default management credentials and weak factory keys.",
+			Recommendation: "Rename the SSID to a non-identifying value and confirm the device's " +
+				"admin credentials and Wi-Fi passphrase have been changed from the factory defaults.",
+		},
+		{
+			ID:              DefSSIDSprawl,
+			Category:        anomaly.CategoryCapacity,
+			DefaultSeverity: anomaly.SeverityInfo,
+			Standards:       []string{"IEEE 802.11 (beacon/airtime)"},
+			Title:           "SSID sprawl on one AP",
+			Description: "A single access point advertises many SSIDs. Every SSID needs its own " +
+				"beacon at the beacon interval on every radio, so each extra SSID consumes fixed " +
+				"management airtime whether or not any client uses it.",
+			Impact: "Excess beacons reduce the airtime available for data, most noticeably in the " +
+				"2.4 GHz band and in dense deployments, degrading throughput for every nearby cell.",
+			Recommendation: "Consolidate SSIDs — use one or two with role-based VLANs/RADIUS rather " +
+				"than a separate SSID per purpose, and disable unused SSIDs.",
+		},
+		{
+			ID:              DefInconsistentRoaming,
+			Category:        anomaly.CategoryRoaming,
+			DefaultSeverity: anomaly.SeverityWarning,
+			Standards:       []string{"IEEE 802.11r", "IEEE 802.11k", "IEEE 802.11v"},
+			Title:           "Inconsistent roaming support across an SSID",
+			Description: "BSSes advertising the same SSID disagree on roaming assistance: some " +
+				"advertise 802.11r (fast transition), 802.11k (neighbor reports), or 802.11v (BSS " +
+				"transition management) while others do not. Clients roam best when every AP in the " +
+				"WLAN offers the same assistance.",
+			Impact: "Clients moving between a supporting and a non-supporting AP get slow or failed " +
+				"roams, dropped real-time sessions, and sticky-client behaviour.",
+			Recommendation: "Enable the same roaming features (802.11r/k/v) consistently on every AP " +
+				"serving the SSID, or disable them uniformly if a legacy client cannot cope.",
 		},
 	}
 }

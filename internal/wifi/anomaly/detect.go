@@ -23,11 +23,19 @@ const minCoChannelThreshold = 2
 // across one SSID that constitutes a mismatch.
 const minDistinctForMismatch = 2
 
+// defaultSSIDSprawlThreshold is the number of distinct SSIDs on one AP at or
+// above which beacon-airtime sprawl is reported.
+const defaultSSIDSprawlThreshold = 5
+
+// minSSIDSprawlThreshold is the floor for a configured sprawl threshold.
+const minSSIDSprawlThreshold = 2
+
 // Detector evaluates the airspace tree against the Wi-Fi rule set and returns
 // the detections to feed an [anomaly.Engine]. It is stateless apart from its
 // tuning thresholds; the engine owns coalescing, escalation, and ageing.
 type Detector struct {
-	coChannelThreshold int
+	coChannelThreshold  int
+	ssidSprawlThreshold int
 }
 
 // Option tunes a Detector.
@@ -44,9 +52,23 @@ func WithCoChannelThreshold(n int) Option {
 	}
 }
 
+// WithSSIDSprawlThreshold sets the SSID-sprawl reporting threshold (distinct
+// SSIDs per AP). Values below 2 are clamped to 2.
+func WithSSIDSprawlThreshold(n int) Option {
+	return func(d *Detector) {
+		if n < minSSIDSprawlThreshold {
+			n = minSSIDSprawlThreshold
+		}
+		d.ssidSprawlThreshold = n
+	}
+}
+
 // NewDetector returns a Detector with the given options applied.
 func NewDetector(opts ...Option) *Detector {
-	d := &Detector{coChannelThreshold: defaultCoChannelThreshold}
+	d := &Detector{
+		coChannelThreshold:  defaultCoChannelThreshold,
+		ssidSprawlThreshold: defaultSSIDSprawlThreshold,
+	}
 	for _, o := range opts {
 		o(d)
 	}
@@ -63,6 +85,7 @@ func (d *Detector) Detect(tree []airspace.SSIDGroup) []anomaly.Detection {
 	out = append(out, ssidGroupDetections(tree)...)
 	out = append(out, d.coChannelDetections(tree)...)
 	out = append(out, countryConflictDetections(tree)...)
+	out = append(out, d.ssidSprawlDetections(tree)...)
 
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].DefKey != out[j].DefKey {
@@ -88,7 +111,8 @@ func forEachBSS(tree []airspace.SSIDGroup, fn func(g airspace.SSIDGroup, ap airs
 }
 
 // perBSSDetections runs the rules that judge a single BSS in isolation:
-// open/WEP/WPS, PMF-not-required, adjacent-channel overlap, and hidden SSID.
+// open/WEP/WPS, WPA3 transition downgrade, PMF-not-required, adjacent-channel
+// overlap, and hidden SSID.
 func perBSSDetections(tree []airspace.SSIDGroup) []anomaly.Detection {
 	var out []anomaly.Detection
 	forEachBSS(tree, func(_ airspace.SSIDGroup, _ airspace.APGroup, b airspace.BSSView) {
@@ -100,6 +124,8 @@ func perBSSDetections(tree []airspace.SSIDGroup) []anomaly.Detection {
 			out = append(out, anomaly.Detection{DefKey: DefOpenNetwork, Subject: subject, Evidence: ev})
 		case secWEP:
 			out = append(out, anomaly.Detection{DefKey: DefWEPInUse, Subject: subject, Evidence: ev})
+		case secWPA2WPA3:
+			out = append(out, anomaly.Detection{DefKey: DefWPA3TransitionDowngrade, Subject: subject, Evidence: ev})
 		}
 
 		if b.WPSEnabled {
@@ -156,6 +182,100 @@ func ssidGroupDetections(tree []airspace.SSIDGroup) []anomaly.Detection {
 				Evidence: map[string]string{"standards": strings.Join(standards.sorted(), ", ")},
 			})
 		}
+		if isDefaultSSID(g.SSID) {
+			out = append(out, anomaly.Detection{
+				DefKey: DefDefaultSSIDName, Subject: subject,
+				Evidence: map[string]string{"ssid": g.SSID},
+			})
+		}
+		if mixed, ev := roamingInconsistency(g); mixed {
+			out = append(out, anomaly.Detection{
+				DefKey: DefInconsistentRoaming, Subject: subject, Evidence: ev,
+			})
+		}
+	}
+	return out
+}
+
+// roamingInconsistency reports whether the BSSes under one SSID disagree on any
+// roaming-assist feature (802.11r FT / 802.11k RRM / 802.11v BTM): at least one
+// BSS advertises it and at least one does not. It needs at least two BSSes to
+// have a disagreement. The evidence names the inconsistent features.
+func roamingInconsistency(g airspace.SSIDGroup) (bool, map[string]string) {
+	feats := map[string]*featureTally{"ft": {}, "rrm": {}, "btm": {}}
+	total := 0
+	for _, ap := range g.APs {
+		for _, b := range ap.BSSes {
+			total++
+			feats["ft"].add(b.FTSupported)
+			feats["rrm"].add(b.RRMNeighbor)
+			feats["btm"].add(b.BTMSupported)
+		}
+	}
+	if total < minDistinctForMismatch {
+		return false, nil
+	}
+	inconsistent := newStringSet()
+	for name, c := range feats {
+		if c.mixed() {
+			inconsistent.add(name)
+		}
+	}
+	if inconsistent.len() == 0 {
+		return false, nil
+	}
+	return true, map[string]string{"inconsistentFeatures": strings.Join(inconsistent.sorted(), ", ")}
+}
+
+// featureTally counts how many BSSes do and do not advertise one capability.
+type featureTally struct{ yes, no int }
+
+func (c *featureTally) add(supported bool) {
+	if supported {
+		c.yes++
+		return
+	}
+	c.no++
+}
+
+// mixed reports whether the capability is advertised by some BSSes but not all.
+func (c *featureTally) mixed() bool { return c.yes > 0 && c.no > 0 }
+
+// ssidSprawlDetections reports access points advertising many SSIDs (beacon
+// airtime tax). It aggregates distinct SSIDs per AP key across the whole tree —
+// an AP that serves several SSIDs appears once under each SSID group.
+func (d *Detector) ssidSprawlDetections(tree []airspace.SSIDGroup) []anomaly.Detection {
+	byAP := map[string]*stringSet{}
+	order := []string{}
+	for _, g := range tree {
+		if g.SSID == "" {
+			continue
+		}
+		for _, ap := range g.APs {
+			set, ok := byAP[ap.Key]
+			if !ok {
+				set = newStringSet()
+				byAP[ap.Key] = set
+				order = append(order, ap.Key)
+			}
+			set.add(g.SSID)
+		}
+	}
+
+	var out []anomaly.Detection
+	for _, key := range order {
+		ssids := byAP[key]
+		if ssids.len() < d.ssidSprawlThreshold {
+			continue
+		}
+		out = append(out, anomaly.Detection{
+			DefKey:  DefSSIDSprawl,
+			Subject: anomaly.SubjectRef{Kind: anomaly.SubjectDevice, ID: key},
+			Evidence: map[string]string{
+				"ssidCount": strconv.Itoa(ssids.len()),
+				"ssids":     strings.Join(ssids.sorted(), ", "),
+			},
+		})
 	}
 	return out
 }

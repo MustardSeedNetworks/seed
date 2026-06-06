@@ -1,6 +1,9 @@
 package wifianomaly
 
-import "sort"
+import (
+	"sort"
+	"strings"
+)
 
 // The airspace Tree exposes Security/Standard/Band as the strings produced by
 // dot11's String() methods (those nouns are kept verbatim — DNT). The rules
@@ -67,6 +70,32 @@ func hasWeakAndStrong(securities *stringSet) bool {
 // channels (1, 6, 11). Any other 2.4 GHz channel partially overlaps a neighbour.
 func is24NonOverlapping(ch int) bool {
 	return ch == 1 || ch == 6 || ch == 11
+}
+
+// defaultSSIDPrefixes are well-known router/manufacturer default network-name
+// prefixes. Matching is conservative (prefix on a lower-cased, separator-stripped
+// SSID) to flag clearly-unconfigured devices without snaring intentional names.
+func defaultSSIDPrefixes() []string {
+	return []string{
+		"linksys", "netgear", "dlink", "tplink", "belkin",
+		"asus", "tendawifi", "default", "wireless",
+	}
+}
+
+// isDefaultSSID reports whether ssid looks like an unconfigured manufacturer
+// default. Empty/cloaked SSIDs are not considered defaults (handled elsewhere).
+func isDefaultSSID(ssid string) bool {
+	norm := strings.ToLower(ssid)
+	norm = strings.NewReplacer("-", "", "_", "", " ", "").Replace(norm)
+	if norm == "" {
+		return false
+	}
+	for _, p := range defaultSSIDPrefixes() {
+		if strings.HasPrefix(norm, p) {
+			return true
+		}
+	}
+	return false
 }
 
 // stringSet is a tiny ordered-output set used to collect distinct evidence
