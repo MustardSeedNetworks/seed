@@ -127,20 +127,21 @@ func TestCallerRole_NoDBIsImplicitAdmin(t *testing.T) {
 }
 
 // TestWriteGate_WiredOnSettingsRoute proves the wrapper is actually
-// attached at route registration: a viewer hitting POST /api/v1/settings
-// is rejected with 403 by the gate, never reaching handleSettings. If
-// somebody removes the s.writeGated(...) wrap at registration time, this
-// test fails — guarding against a silent regression of the policy.
+// attached at route registration: a viewer hitting PUT /api/v1/settings
+// (a mutating method the route accepts) is rejected with 403 by the gate,
+// never reaching handleSettings. If somebody removes the s.writeGated(...)
+// wrap at registration time, this test fails — guarding against a silent
+// regression of the policy.
 func TestWriteGate_WiredOnSettingsRoute(t *testing.T) {
 	t.Parallel()
 	s, _ := usersTestSetup(t)
 	seedRoledUser(t, s, "viewer1", database.RoleViewer)
 	s.setupRoutes()
 
-	req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/settings", []byte(`{}`), "viewer1")
+	req := newAuthedRequest(http.MethodPut, APIVersionPrefix+"/settings", []byte(`{}`), "viewer1")
 	w := httptest.NewRecorder()
 	s.mux.ServeHTTP(w, req)
 	if w.Code != http.StatusForbidden {
-		t.Errorf("viewer POST /settings via mux: status = %d, want 403 (gate must be wired at registration)", w.Code)
+		t.Errorf("viewer PUT /settings via mux: status = %d, want 403 (gate must be wired at registration)", w.Code)
 	}
 }

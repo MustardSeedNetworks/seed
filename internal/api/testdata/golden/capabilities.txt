@@ -2,618 +2,1387 @@ status: 200
 body:
 [
   {
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/auth/login"
   },
   {
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/auth/logout"
   },
   {
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/auth/refresh"
   },
   {
+    "maxBodyBytes": 1024,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/auth/csrf"
   },
   {
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/auth/login/totp"
   },
   {
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/auth/totp/setup"
   },
   {
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/auth/totp/verify"
   },
   {
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/auth/totp/disable"
   },
   {
+    "maxBodyBytes": 1024,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/auth/mfa/status"
   },
   {
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/auth/webauthn/register/begin"
   },
   {
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/auth/webauthn/register/finish"
   },
   {
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/auth/webauthn/login/begin"
   },
   {
+    "maxBodyBytes": 1024,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/auth/webauthn/login/finish"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/status"
   },
   {
+    "maxBodyBytes": 65536,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/settings"
   },
   {
+    "maxBodyBytes": 65536,
+    "methods": [
+      "GET"
+    ],
     "minRole": "operator",
     "path": "/api/v1/settings/defaults"
   },
   {
+    "maxBodyBytes": 65536,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/settings/link"
   },
   {
+    "maxBodyBytes": 65536,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/settings/cable"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/interfaces"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "path": "/api/v1/interface"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/network/mtu"
   },
   {
+    "maxBodyBytes": 65536,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/config/backups"
   },
   {
+    "maxBodyBytes": 65536,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/config/backup"
   },
   {
+    "maxBodyBytes": 65536,
+    "methods": [
+      "DELETE"
+    ],
     "minRole": "operator",
     "path": "/api/v1/config/backup/delete"
   },
   {
+    "maxBodyBytes": 65536,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/config/restore"
   },
   {
+    "maxBodyBytes": 65536,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/config/version"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE"
+    ],
     "minRole": "operator",
     "path": "/api/v1/profiles"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/profiles/active"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/profiles/import"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/profiles/export"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE"
+    ],
     "minRole": "operator",
     "path": "/api/v1/profiles/"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/setup/status"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/setup/complete"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/recovery/status"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/recovery/complete"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/recovery/instructions"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/sso/providers"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/sso/login"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/sso/callback"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "minRole": "operator",
     "path": "/api/v1/sso/settings"
   },
   {
     "feature": "sso",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/sso/update"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/health"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/tokens"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "DELETE"
+    ],
     "minRole": "operator",
     "path": "/api/v1/tokens/"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/license"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/users/me"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
     "path": "/api/v1/users"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PATCH",
+      "DELETE"
+    ],
     "path": "/api/v1/users/"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "GET /api/v1/updates/check"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "GET /api/v1/updates/status"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "GET /api/v1/updates/info"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "POST /api/v1/updates/download"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "POST /api/v1/updates/apply"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "POST /api/v1/updates/rollback"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "GET /api/v1/updates/config"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "PATCH"
+    ],
     "minRole": "operator",
     "path": "PATCH /api/v1/updates/config"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/link"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/cable"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
     "path": "/api/v1/telemetry/dns"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
     "path": "/api/v1/telemetry/dns/security"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/telemetry/dns/security/settings"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/gateway"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
     "path": "/api/v1/telemetry/dhcp/rogue"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
     "path": "/api/v1/telemetry/dhcp/rogue/servers"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/telemetry/dhcp/rogue/config"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/vlan"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/vlan/traffic"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST",
+      "PUT"
+    ],
     "path": "/api/v1/telemetry/vlan/interface"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/telemetry/speedtest",
     "rateLimited": true
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/speedtest/status"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/iperf/info"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/telemetry/iperf/client",
     "rateLimited": true
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/iperf/client/status"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/iperf/server"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/iperf/server/status"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/iperf/suggestions"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/telemetry/health-checks/settings"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
     "path": "/api/v1/telemetry/health-checks/run",
     "rateLimited": true
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/health-checks/results"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/health-checks/history"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/health-checks/scores"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/health-checks/sla"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/health-checks/alerts"
   },
   {
     "feature": "anomaly_detection",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/health-checks/anomalies"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/telemetry/snmp/settings"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/system/health"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/telemetry/ipconfig"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/telemetry/ipconfig/settings"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST",
+      "PUT"
+    ],
     "path": "/api/v1/telemetry/publicip"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/security/discovery"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/security/discovery/probe"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/security/discovery/portscan"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "path": "/api/v1/security/discovery/options"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/security/discovery/service/status"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/security/discovery/fingerprint"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
     "path": "/api/v1/security/devices"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/security/devices/scan",
     "rateLimited": true
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/security/devices/status"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/security/devices/settings"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE"
+    ],
     "path": "/api/v1/security/devices/subnets"
   },
   {
     "feature": "compliance_advanced",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/security/vulnerabilities/scan",
     "rateLimited": true
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/security/vulnerabilities/status"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/security/vulnerabilities/results"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/security/vulnerabilities/device"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/security/vulnerabilities/settings"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/security/vulnerabilities/validate-api-key"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/security/guest-audit/settings"
   },
   {
     "feature": "compliance_advanced",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/security/guest-audit/run",
     "rateLimited": true
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/security/problems"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/security/problems/scan"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/security/problems/thresholds"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/security/bluetooth/scan"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/security/bluetooth/devices"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/security/bluetooth/stats"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/security/bluetooth/status"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/security/wifi/discovery/scan"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/security/wifi/discovery/networks"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/security/wifi/discovery/aps"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/security/wifi/discovery/stats"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/discovery/engine"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/discovery/engine/scan",
     "rateLimited": true
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/discovery/engine/quick",
     "rateLimited": true
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/discovery/engine/full",
     "rateLimited": true
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/discovery/engine/stats"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/discovery/engine/capabilities"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/discovery/engine/device/"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/discovery/engine/events"
   },
   {
     "feature": "path_analysis",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/path/traceroute",
     "rateLimited": true
   },
   {
     "feature": "path_analysis",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/path/path"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST",
+      "PUT"
+    ],
     "path": "/api/v1/wifi/wifi"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/wifi/wifi/scan"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/wifi/wifi/status"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/wifi/wifi/channel-graph"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/wifi/settings"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/wifi/connect"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/wifi/disconnect"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/wifi/wifi/saved"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "DELETE"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/wifi/forget"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/create"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/wifi/survey/list"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/wifi/survey"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "DELETE"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/delete"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/start"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/pause"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/complete"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/sample"
   },
   {
+    "maxBodyBytes": 10485760,
+    "methods": [
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/floorplan"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/settings"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/imported-data"
   },
   {
     "feature": "airmapper_baseline_diff",
+    "maxBodyBytes": 52428800,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/import/airmapper",
     "rateLimited": true
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/wifi/survey/heatmap",
     "rateLimited": true
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/wifi/survey/dead-zones"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/floors"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST",
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/floor"
   },
   {
+    "maxBodyBytes": 10485760,
+    "methods": [
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/floor/floorplan"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/floor/sample"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "PUT"
+    ],
     "minRole": "operator",
     "path": "/api/v1/wifi/survey/active-floor"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/wifi/survey/report",
     "rateLimited": true
   },
   {
     "feature": "export_csv_json",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/reporting/export"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/reporting/logs"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "path": "/api/v1/reporting/logs/client"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/reporting/logs/query"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/reporting/logs/stats"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/reporting/logs/recent"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/topology/nodes"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/topology/nodes/"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/topology/links"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/topology/arp"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/alerts"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/alerts/"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/polling-targets"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT",
+      "DELETE"
+    ],
     "minRole": "operator",
     "path": "/api/v1/polling-targets/"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/engines"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/alert-rules"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "PUT",
+      "DELETE"
+    ],
     "minRole": "operator",
     "path": "/api/v1/alert-rules/"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "POST"
+    ],
     "minRole": "operator",
     "path": "/api/v1/jobs",
     "rateLimited": true
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/jobs/events"
   },
   {
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET",
+      "DELETE"
+    ],
     "minRole": "operator",
     "path": "/api/v1/jobs/"
   },
   {
     "feature": "live_telemetry",
+    "maxBodyBytes": 262144,
+    "methods": [
+      "GET"
+    ],
     "path": "/api/v1/events"
   }
 ]

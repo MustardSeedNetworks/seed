@@ -91,32 +91,16 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// bodyLimitMiddleware enforces request body size limits to prevent DoS attacks.
-// Different endpoints have different limits based on expected payload size.
+// bodyLimitMiddleware caps request bodies on NON-API paths (a DoS backstop for
+// the SPA/static + infra routes). Per-route body limits for /api/v1 are
+// authoritative in the capability registry (route.maxBodyBytes, applied by
+// register()), so a path-switch here would be a second, drift-prone source of
+// truth — the registry is the single source (ADR-0002).
 func bodyLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Determine limit based on endpoint
-		var limit int64
-		path := r.URL.Path
-
-		switch {
-		case strings.HasPrefix(path, APIVersionPrefix+"/auth/"):
-			limit = MaxBodySizeAuth
-		case strings.HasPrefix(path, APIVersionPrefix+"/config/"):
-			limit = MaxBodySizeConfig
-		case path == APIVersionPrefix+"/wifi/survey/floorplan":
-			limit = MaxBodySizeFloorPlan
-		case path == APIVersionPrefix+"/wifi/survey/import/airmapper":
-			limit = MaxBodySizeAirMapper
-		case strings.HasPrefix(path, APIVersionPrefix):
-			limit = MaxBodySizeJSON
-		default:
-			limit = MaxBodySizeDefault
+		if !strings.HasPrefix(r.URL.Path, APIVersionPrefix) {
+			r.Body = http.MaxBytesReader(w, r.Body, MaxBodySizeDefault)
 		}
-
-		// Wrap the body with a limit reader
-		r.Body = http.MaxBytesReader(w, r.Body, limit)
-
 		next.ServeHTTP(w, r)
 	})
 }

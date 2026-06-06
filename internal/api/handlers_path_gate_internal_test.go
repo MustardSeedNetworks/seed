@@ -24,7 +24,7 @@ func TestRootsPathRequiresPro(t *testing.T) {
 	s.setupRoutes()
 
 	// 1. No license → 402.
-	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/path/path", http.NoBody)
+	req := httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/path/path", http.NoBody)
 	req.Header.Set("X-Username", "alice")
 	w := httptest.NewRecorder()
 	s.mux.ServeHTTP(w, req)
@@ -48,7 +48,7 @@ func TestRootsPathRequiresPro(t *testing.T) {
 	if res := mgr.StartTrial(); !res.Success {
 		t.Fatalf("StartTrial: %s", res.Message)
 	}
-	req2 := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/path/path", http.NoBody)
+	req2 := httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/path/path", http.NoBody)
 	req2.Header.Set("X-Username", "alice")
 	w2 := httptest.NewRecorder()
 	s.mux.ServeHTTP(w2, req2)
