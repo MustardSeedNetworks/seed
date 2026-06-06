@@ -128,8 +128,13 @@ func initializeBackgroundComponents(cfg *config.Config, db *database.DB) *api.Ba
 		// airspace; capture also degrades gracefully if the iface is not in
 		// monitor mode or libpcap is unavailable.
 		if iface := os.Getenv("SEED_WIFI_MONITOR_IFACE"); iface != "" {
-			components.WiFiCapture = app.NewWiFiCapture(wifiVis, iface)
-			logging.GetLogger().Info("Wi-Fi monitor capture configured", "iface", iface)
+			// SEED_WIFI_MONITOR_AUTO=1 also switches the interface into monitor
+			// mode on start (Linux iw/nl80211); otherwise it must already be in
+			// monitor mode (bring-your-own).
+			autoEnable := os.Getenv("SEED_WIFI_MONITOR_AUTO") == "1"
+			components.WiFiCapture = app.NewWiFiCapture(wifiVis, iface, autoEnable)
+			logging.GetLogger().Info("Wi-Fi monitor capture configured",
+				"iface", iface, "autoEnable", autoEnable)
 		}
 	}
 
