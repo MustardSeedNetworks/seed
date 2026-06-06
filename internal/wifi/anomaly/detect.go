@@ -38,12 +38,21 @@ const bssLoadSaturationThreshold = 191
 // a BSS is reported as using a wide (overlapping) channel.
 const wideChannel24MinMHz = 40
 
+// defaultDeauthFloodThreshold is the number of deauth/disassoc frames in the
+// retention window at or above which a BSS is reported as flooded. Normal roams
+// produce a handful; a sustained burst well above that signals a DoS.
+const defaultDeauthFloodThreshold = 5
+
+// minDeauthFloodThreshold is the floor for a configured deauth-flood threshold.
+const minDeauthFloodThreshold = 2
+
 // Detector evaluates the airspace tree against the Wi-Fi rule set and returns
 // the detections to feed an [anomaly.Engine]. It is stateless apart from its
 // tuning thresholds; the engine owns coalescing, escalation, and ageing.
 type Detector struct {
-	coChannelThreshold  int
-	ssidSprawlThreshold int
+	coChannelThreshold   int
+	ssidSprawlThreshold  int
+	deauthFloodThreshold int
 }
 
 // Option tunes a Detector.
@@ -71,11 +80,23 @@ func WithSSIDSprawlThreshold(n int) Option {
 	}
 }
 
+// WithDeauthFloodThreshold sets the deauth-flood reporting threshold (deauth/
+// disassoc frames per retention window). Values below 2 are clamped to 2.
+func WithDeauthFloodThreshold(n int) Option {
+	return func(d *Detector) {
+		if n < minDeauthFloodThreshold {
+			n = minDeauthFloodThreshold
+		}
+		d.deauthFloodThreshold = n
+	}
+}
+
 // NewDetector returns a Detector with the given options applied.
 func NewDetector(opts ...Option) *Detector {
 	d := &Detector{
-		coChannelThreshold:  defaultCoChannelThreshold,
-		ssidSprawlThreshold: defaultSSIDSprawlThreshold,
+		coChannelThreshold:   defaultCoChannelThreshold,
+		ssidSprawlThreshold:  defaultSSIDSprawlThreshold,
+		deauthFloodThreshold: defaultDeauthFloodThreshold,
 	}
 	for _, o := range opts {
 		o(d)
@@ -94,6 +115,7 @@ func (d *Detector) Detect(tree []airspace.SSIDGroup) []anomaly.Detection {
 	out = append(out, d.coChannelDetections(tree)...)
 	out = append(out, countryConflictDetections(tree)...)
 	out = append(out, d.ssidSprawlDetections(tree)...)
+	out = append(out, d.deauthFloodDetections(tree)...)
 
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].DefKey != out[j].DefKey {
@@ -311,6 +333,28 @@ func (d *Detector) ssidSprawlDetections(tree []airspace.SSIDGroup) []anomaly.Det
 			},
 		})
 	}
+	return out
+}
+
+// deauthFloodDetections reports each BSS whose recent deauth/disassoc count (a
+// sliding window maintained by the airspace model) reaches the threshold — a
+// management-frame DoS signal. It is a per-BSS security rule but lives on the
+// Detector because it is threshold-tuned. The empty/cloaked-SSID grouping does
+// not matter here: the subject is the BSSID, evaluated wherever it appears.
+func (d *Detector) deauthFloodDetections(tree []airspace.SSIDGroup) []anomaly.Detection {
+	var out []anomaly.Detection
+	forEachBSS(tree, func(_ airspace.SSIDGroup, _ airspace.APGroup, b airspace.BSSView) {
+		if b.RecentDeauths < d.deauthFloodThreshold {
+			return
+		}
+		ev := bssEvidence(b)
+		ev["deauthCount"] = strconv.Itoa(b.RecentDeauths)
+		out = append(out, anomaly.Detection{
+			DefKey:   DefDeauthFlood,
+			Subject:  anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: b.BSSID},
+			Evidence: ev,
+		})
+	})
 	return out
 }
 

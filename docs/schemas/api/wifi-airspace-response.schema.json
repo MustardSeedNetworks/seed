@@ -84,6 +84,9 @@
         "beacons": {
           "type": "integer"
         },
+        "recentDeauths": {
+          "type": "integer"
+        },
         "lastSeen": {
           "type": "string",
           "format": "date-time"
@@ -116,6 +119,7 @@
         "hasBssLoad",
         "signalDbm",
         "beacons",
+        "recentDeauths",
         "lastSeen",
         "stations"
       ]

@@ -25,6 +25,7 @@ const (
 	DefBSSLoadSaturation       = "wifi-bss-load-saturation"
 	DefWideChannel24GHz        = "wifi-wide-channel-2ghz"
 	DefChannelWidthMismatch    = "wifi-channel-width-mismatch"
+	DefDeauthFlood             = "wifi-deauth-flood"
 )
 
 // CapActiveTest names the platform capability required to run an active
@@ -349,6 +350,30 @@ func Defs() []anomaly.Def {
 				"wider radios may overlap channels the planning assumed were clear.",
 			Recommendation: "Standardise the channel width across APs serving the SSID per band, or " +
 				"confirm the mix is intentional for capacity tiering.",
+		},
+		{
+			ID:              DefDeauthFlood,
+			Category:        anomaly.CategorySecurity,
+			DefaultSeverity: anomaly.SeverityWarning,
+			Standards:       []string{"IEEE 802.11-2020 §9.3.3.3", "IEEE 802.11w-2009"},
+			Title:           "Deauthentication/disassociation flood",
+			Description: "An unusually high number of deauthentication or disassociation management " +
+				"frames was attributed to this BSSID within a short window. On a BSS that does not " +
+				"require Protected Management Frames these frames are unauthenticated, so a burst is a " +
+				"classic management-frame denial-of-service — and the forced-disconnect step that " +
+				"evil-twin and handshake-capture attacks rely on.",
+			Impact: "Clients are repeatedly knocked off the network, causing dropped sessions and roam " +
+				"churn, and the disconnects create the window an attacker uses to capture handshakes or " +
+				"lure clients onto a rogue AP.",
+			Recommendation: "Require Protected Management Frames (802.11w) on the SSID to authenticate " +
+				"deauth/disassoc frames, and investigate the source — a misbehaving client/AP or an " +
+				"active attacker — using the BSSID and channel.",
+			FollowUps: []anomaly.FollowUp{{
+				Kind:  anomaly.FollowUpPrompt,
+				Label: "Locate the deauth source",
+				Action: "Watch the affected channel and correlate the deauth burst with a transmitter; " +
+					"confirm whether the BSS requires PMF.",
+			}},
 		},
 	}
 }
