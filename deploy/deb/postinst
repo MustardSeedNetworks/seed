@@ -73,12 +73,20 @@ else
     echo "  sudo apt install libcap2-bin"
 fi
 
-# Configure firewall (ufw) if available and active
-if command -v ufw >/dev/null 2>&1; then
-    if ufw status 2>/dev/null | grep -q "Status: active"; then
-        ufw allow 8443/tcp comment 'Seed WebUI HTTPS' >/dev/null 2>&1 || true
-        echo "Firewall configured for Seed service (port 8443)"
-    fi
+# Network exposure is the operator's choice. We do NOT open the firewall by
+# default; set SEED_OPEN_FIREWALL=1 to opt in (e.g. automated provisioning).
+if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q "Status: active"; then
+    case "${SEED_OPEN_FIREWALL:-0}" in
+        1|true|yes|TRUE|YES)
+            ufw allow 8443/tcp comment 'Seed WebUI HTTPS' >/dev/null 2>&1 || true
+            echo "Opened TCP 8443 in ufw (SEED_OPEN_FIREWALL set)"
+            ;;
+        *)
+            echo "An active firewall was detected; TCP 8443 is NOT open to the network."
+            echo "To allow remote access to the web interface, run:"
+            echo "  sudo ufw allow 8443/tcp"
+            ;;
+    esac
 fi
 
 # Reload systemd daemon
