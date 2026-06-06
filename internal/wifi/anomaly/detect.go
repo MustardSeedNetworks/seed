@@ -30,6 +30,14 @@ const defaultSSIDSprawlThreshold = 5
 // minSSIDSprawlThreshold is the floor for a configured sprawl threshold.
 const minSSIDSprawlThreshold = 2
 
+// bssLoadSaturationThreshold is the 802.11e channel-utilization figure (0-255)
+// at or above which a channel is reported as saturated. 191 ≈ 75% busy.
+const bssLoadSaturationThreshold = 191
+
+// wideChannel24MinMHz is the channel width in the 2.4 GHz band at or above which
+// a BSS is reported as using a wide (overlapping) channel.
+const wideChannel24MinMHz = 40
+
 // Detector evaluates the airspace tree against the Wi-Fi rule set and returns
 // the detections to feed an [anomaly.Engine]. It is stateless apart from its
 // tuning thresholds; the engine owns coalescing, escalation, and ageing.
@@ -118,41 +126,55 @@ func perBSSDetections(tree []airspace.SSIDGroup) []anomaly.Detection {
 	forEachBSS(tree, func(_ airspace.SSIDGroup, _ airspace.APGroup, b airspace.BSSView) {
 		subject := anomaly.SubjectRef{Kind: anomaly.SubjectBSSID, ID: b.BSSID}
 		ev := bssEvidence(b)
-
-		switch b.Security {
-		case secOpen:
-			out = append(out, anomaly.Detection{DefKey: DefOpenNetwork, Subject: subject, Evidence: ev})
-		case secWEP:
-			out = append(out, anomaly.Detection{DefKey: DefWEPInUse, Subject: subject, Evidence: ev})
-		case secWPA2WPA3:
-			out = append(out, anomaly.Detection{DefKey: DefWPA3TransitionDowngrade, Subject: subject, Evidence: ev})
-		}
-
-		if b.WPSEnabled {
-			out = append(out, anomaly.Detection{DefKey: DefWPSEnabled, Subject: subject, Evidence: ev})
-		}
-
-		// PMF (802.11w) is only defined for RSN suites; flag an RSN BSS that
-		// does not require it. Open/WEP/legacy-WPA carry no RSN, so PMF does
-		// not apply and must not be reported.
-		if securityTier(b.Security) == tierStrong && !b.PMFRequired {
-			out = append(out, anomaly.Detection{DefKey: DefPMFNotRequired, Subject: subject, Evidence: ev})
-		}
-
-		if b.Band == band24GHz && b.Channel != 0 && !is24NonOverlapping(b.Channel) {
-			out = append(out, anomaly.Detection{DefKey: DefAdjacentChannelOverlap, Subject: subject, Evidence: ev})
-		}
-
-		if b.Hidden {
-			out = append(out, anomaly.Detection{DefKey: DefHiddenSSID, Subject: subject, Evidence: ev})
-		}
-
-		if b.Band == band24GHz && b.CountryCode != "" && b.Channel != 0 {
-			if channelStatus2GHz(b.CountryCode, b.Channel) == chanForbidden {
-				out = append(out, anomaly.Detection{DefKey: DefRegulatoryViolation, Subject: subject, Evidence: ev})
-			}
-		}
+		out = append(out, bssSecurityDetections(b, subject, ev)...)
+		out = append(out, bssRFDetections(b, subject, ev)...)
 	})
+	return out
+}
+
+// bssSecurityDetections covers the access-protection rules for one BSS:
+// open/WEP, WPA3 transition downgrade, WPS, PMF-not-required, and the hidden SSID.
+func bssSecurityDetections(b airspace.BSSView, subject anomaly.SubjectRef, ev map[string]string) []anomaly.Detection {
+	var out []anomaly.Detection
+	switch b.Security {
+	case secOpen:
+		out = append(out, anomaly.Detection{DefKey: DefOpenNetwork, Subject: subject, Evidence: ev})
+	case secWEP:
+		out = append(out, anomaly.Detection{DefKey: DefWEPInUse, Subject: subject, Evidence: ev})
+	case secWPA2WPA3:
+		out = append(out, anomaly.Detection{DefKey: DefWPA3TransitionDowngrade, Subject: subject, Evidence: ev})
+	}
+	if b.WPSEnabled {
+		out = append(out, anomaly.Detection{DefKey: DefWPSEnabled, Subject: subject, Evidence: ev})
+	}
+	// PMF (802.11w) is only defined for RSN suites; flag an RSN BSS that does not
+	// require it. Open/WEP/legacy-WPA carry no RSN, so PMF does not apply.
+	if securityTier(b.Security) == tierStrong && !b.PMFRequired {
+		out = append(out, anomaly.Detection{DefKey: DefPMFNotRequired, Subject: subject, Evidence: ev})
+	}
+	if b.Hidden {
+		out = append(out, anomaly.Detection{DefKey: DefHiddenSSID, Subject: subject, Evidence: ev})
+	}
+	return out
+}
+
+// bssRFDetections covers the RF/regulatory rules for one BSS: adjacent-channel
+// overlap, 2.4 GHz wide channels, BSS-Load saturation, and 802.11d violations.
+func bssRFDetections(b airspace.BSSView, subject anomaly.SubjectRef, ev map[string]string) []anomaly.Detection {
+	var out []anomaly.Detection
+	if b.Band == band24GHz && b.Channel != 0 && !is24NonOverlapping(b.Channel) {
+		out = append(out, anomaly.Detection{DefKey: DefAdjacentChannelOverlap, Subject: subject, Evidence: ev})
+	}
+	if b.Band == band24GHz && b.ChannelWidthMHz >= wideChannel24MinMHz {
+		out = append(out, anomaly.Detection{DefKey: DefWideChannel24GHz, Subject: subject, Evidence: ev})
+	}
+	if b.HasBSSLoad && b.ChannelUtil >= bssLoadSaturationThreshold {
+		out = append(out, anomaly.Detection{DefKey: DefBSSLoadSaturation, Subject: subject, Evidence: ev})
+	}
+	if b.Band == band24GHz && b.CountryCode != "" && b.Channel != 0 &&
+		channelStatus2GHz(b.CountryCode, b.Channel) == chanForbidden {
+		out = append(out, anomaly.Detection{DefKey: DefRegulatoryViolation, Subject: subject, Evidence: ev})
+	}
 	return out
 }
 
@@ -186,6 +208,12 @@ func ssidGroupDetections(tree []airspace.SSIDGroup) []anomaly.Detection {
 			out = append(out, anomaly.Detection{
 				DefKey: DefStandardMismatch, Subject: subject,
 				Evidence: map[string]string{"standards": strings.Join(standards.sorted(), ", ")},
+			})
+		}
+		if facts.widths.len() >= minDistinctForMismatch {
+			out = append(out, anomaly.Detection{
+				DefKey: DefChannelWidthMismatch, Subject: subject,
+				Evidence: map[string]string{"widthsMhz": strings.Join(facts.widths.sorted(), ", ")},
 			})
 		}
 		if isDefaultSSID(g.SSID) {
@@ -292,12 +320,18 @@ type ssidFacts struct {
 	securities *stringSet
 	standards  *stringSet
 	vendors    *stringSet
+	widths     *stringSet
 }
 
 // collectSSIDFacts gathers the distinct classified security suites, known
-// 802.11 standards, and AP vendors advertised under one SSID group.
+// 802.11 standards, AP vendors, and channel widths advertised under one SSID.
 func collectSSIDFacts(g airspace.SSIDGroup) ssidFacts {
-	f := ssidFacts{securities: newStringSet(), standards: newStringSet(), vendors: newStringSet()}
+	f := ssidFacts{
+		securities: newStringSet(),
+		standards:  newStringSet(),
+		vendors:    newStringSet(),
+		widths:     newStringSet(),
+	}
 	for _, ap := range g.APs {
 		if ap.Vendor != "" {
 			f.vendors.add(ap.Vendor)
@@ -308,6 +342,9 @@ func collectSSIDFacts(g airspace.SSIDGroup) ssidFacts {
 			}
 			if b.Standard != "" && b.Standard != stdUnknown {
 				f.standards.add(b.Standard)
+			}
+			if b.ChannelWidthMHz > 0 {
+				f.widths.add(strconv.Itoa(b.ChannelWidthMHz))
 			}
 		}
 	}

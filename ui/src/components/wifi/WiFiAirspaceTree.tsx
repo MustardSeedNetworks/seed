@@ -32,8 +32,10 @@ function BSSRows({ ap }: { ap: APGroup }) {
       {ap.bsses.map((b) => (
         <li key={b.bssid} data-testid="wifi-bss" className="stack-2xs">
           <p className="text-xs text-text-secondary">
-            <span className="font-mono">{b.bssid}</span> · {b.band} ch {b.channel} · {b.security} ·{' '}
+            <span className="font-mono">{b.bssid}</span> · {b.band} ch {b.channel}
+            {b.channelWidthMhz > 0 ? ` (${b.channelWidthMhz} MHz)` : ''} · {b.security} ·{' '}
             {b.standard} · {b.signalDbm} dBm
+            {b.hasBssLoad ? ` · ${Math.round((b.channelUtil / 255) * 100)}% util` : ''}
           </p>
           <StationRows bss={b} />
         </li>

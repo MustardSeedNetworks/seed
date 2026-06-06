@@ -22,6 +22,9 @@ const (
 	DefSSIDSprawl              = "wifi-ssid-sprawl"
 	DefInconsistentRoaming     = "wifi-inconsistent-roaming"
 	DefRegulatoryViolation     = "wifi-regulatory-violation"
+	DefBSSLoadSaturation       = "wifi-bss-load-saturation"
+	DefWideChannel24GHz        = "wifi-wide-channel-2ghz"
+	DefChannelWidthMismatch    = "wifi-channel-width-mismatch"
 )
 
 // CapActiveTest names the platform capability required to run an active
@@ -304,6 +307,48 @@ func Defs() []anomaly.Def {
 				"can also indicate a misconfigured or spoofed regulatory domain.",
 			Recommendation: "Move the radio to a channel permitted in the deployment's country " +
 				"(1-11 under FCC) and set the correct regulatory domain on the AP.",
+		},
+		{
+			ID:              DefBSSLoadSaturation,
+			Category:        anomaly.CategoryCapacity,
+			DefaultSeverity: anomaly.SeverityWarning,
+			Standards:       []string{"IEEE 802.11e (BSS Load element)"},
+			Title:           "BSS Load channel saturation",
+			Description: "The BSS advertises a high channel-utilization figure in its 802.11e BSS " +
+				"Load element. Channel utilization measures how much airtime is already busy; a " +
+				"sustained high value means little airtime is left for new traffic.",
+			Impact: "Clients on a saturated channel see low throughput and high latency/jitter " +
+				"regardless of signal strength — the channel itself is the bottleneck.",
+			Recommendation: "Reduce the load on the channel: move clients or APs to a less-utilized " +
+				"channel or band, add capacity, or lower cell size so fewer clients share airtime.",
+		},
+		{
+			ID:              DefWideChannel24GHz,
+			Category:        anomaly.CategoryRF,
+			DefaultSeverity: anomaly.SeverityInfo,
+			Standards:       []string{"IEEE 802.11n (2.4 GHz 40 MHz)"},
+			Title:           "Wide channel in 2.4 GHz",
+			Description: "The BSS uses a 40 MHz (or wider) channel in the 2.4 GHz band. With only " +
+				"three non-overlapping 20 MHz channels (1/6/11), a 40 MHz channel occupies most of " +
+				"the band and necessarily overlaps neighbouring networks.",
+			Impact: "Wide 2.4 GHz channels raise the noise floor for every nearby network and are " +
+				"frequently forced back to 20 MHz by coexistence rules — net throughput often drops.",
+			Recommendation: "Use 20 MHz channels in 2.4 GHz; reserve 40/80/160 MHz widths for 5 and " +
+				"6 GHz where the spectrum exists.",
+		},
+		{
+			ID:              DefChannelWidthMismatch,
+			Category:        anomaly.CategoryRF,
+			DefaultSeverity: anomaly.SeverityInfo,
+			Standards:       []string{"IEEE 802.11n/ac/ax (channel width)"},
+			Title:           "Inconsistent channel width across an SSID",
+			Description: "BSSes advertising the same SSID operate at different channel widths. " +
+				"Mixed widths across an ESS can cause uneven throughput and complicate channel " +
+				"planning as clients roam between radios.",
+			Impact: "Clients get inconsistent peak rates depending on which radio they land on, and " +
+				"wider radios may overlap channels the planning assumed were clear.",
+			Recommendation: "Standardise the channel width across APs serving the SSID per band, or " +
+				"confirm the mix is intentional for capacity tiering.",
 		},
 	}
 }

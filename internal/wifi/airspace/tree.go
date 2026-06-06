@@ -19,23 +19,30 @@ type StationView struct {
 
 // BSSView is one BSSID (radio) under an AP.
 type BSSView struct {
-	BSSID        string        `json:"bssid"`
-	SSID         string        `json:"ssid"`
-	Hidden       bool          `json:"hidden"`
-	Band         string        `json:"band"`
-	Channel      int           `json:"channel"`
-	Security     string        `json:"security"`
-	Standard     string        `json:"standard"`
-	CountryCode  string        `json:"countryCode,omitempty"`
-	PMFRequired  bool          `json:"pmfRequired"`
-	RRMNeighbor  bool          `json:"rrmNeighbor"`
-	BTMSupported bool          `json:"btmSupported"`
-	FTSupported  bool          `json:"ftSupported"`
-	WPSEnabled   bool          `json:"wpsEnabled"`
-	SignalDBm    int           `json:"signalDbm"`
-	Beacons      int           `json:"beacons"`
-	LastSeen     time.Time     `json:"lastSeen"`
-	Stations     []StationView `json:"stations"`
+	BSSID        string `json:"bssid"`
+	SSID         string `json:"ssid"`
+	Hidden       bool   `json:"hidden"`
+	Band         string `json:"band"`
+	Channel      int    `json:"channel"`
+	Security     string `json:"security"`
+	Standard     string `json:"standard"`
+	CountryCode  string `json:"countryCode,omitempty"`
+	PMFRequired  bool   `json:"pmfRequired"`
+	RRMNeighbor  bool   `json:"rrmNeighbor"`
+	BTMSupported bool   `json:"btmSupported"`
+	FTSupported  bool   `json:"ftSupported"`
+	WPSEnabled   bool   `json:"wpsEnabled"`
+	// ChannelWidthMHz is the operating width (20/40/80/160/320), 0 if unknown.
+	ChannelWidthMHz int `json:"channelWidthMhz"`
+	// ChannelUtil is the BSS Load channel-utilization figure (0-255); valid only
+	// when HasBSSLoad. AdvertisedStations is the AP's advertised association count.
+	ChannelUtil        int           `json:"channelUtil"`
+	AdvertisedStations int           `json:"advertisedStations"`
+	HasBSSLoad         bool          `json:"hasBssLoad"`
+	SignalDBm          int           `json:"signalDbm"`
+	Beacons            int           `json:"beacons"`
+	LastSeen           time.Time     `json:"lastSeen"`
+	Stations           []StationView `json:"stations"`
 }
 
 // APGroup clusters the BSSIDs believed to belong to one physical AP.
@@ -103,23 +110,27 @@ func buildSSIDGroup(ssid string, apBuckets map[string][]*bss) SSIDGroup {
 
 func toBSSView(b *bss) BSSView {
 	v := BSSView{
-		BSSID:        b.bssid,
-		SSID:         b.ssid,
-		Hidden:       b.hidden,
-		Band:         b.band.String(),
-		Channel:      b.channel,
-		Security:     b.security.String(),
-		Standard:     b.standard.String(),
-		CountryCode:  b.countryCode,
-		PMFRequired:  b.pmfRequired,
-		RRMNeighbor:  b.rrmNeighbor,
-		BTMSupported: b.btm,
-		FTSupported:  b.ft,
-		WPSEnabled:   b.wps,
-		SignalDBm:    int(b.signalDBm),
-		Beacons:      b.beacons,
-		LastSeen:     b.lastSeen,
-		Stations:     make([]StationView, 0, len(b.stations)),
+		BSSID:              b.bssid,
+		SSID:               b.ssid,
+		Hidden:             b.hidden,
+		Band:               b.band.String(),
+		Channel:            b.channel,
+		Security:           b.security.String(),
+		Standard:           b.standard.String(),
+		CountryCode:        b.countryCode,
+		PMFRequired:        b.pmfRequired,
+		RRMNeighbor:        b.rrmNeighbor,
+		BTMSupported:       b.btm,
+		FTSupported:        b.ft,
+		WPSEnabled:         b.wps,
+		ChannelWidthMHz:    b.channelWidthM,
+		ChannelUtil:        b.chanUtil,
+		AdvertisedStations: b.advertStations,
+		HasBSSLoad:         b.hasBSSLoad,
+		SignalDBm:          int(b.signalDBm),
+		Beacons:            b.beacons,
+		LastSeen:           b.lastSeen,
+		Stations:           make([]StationView, 0, len(b.stations)),
 	}
 	for _, s := range b.stations {
 		v.Stations = append(v.Stations, StationView{
