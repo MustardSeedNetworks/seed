@@ -5,6 +5,8 @@ import { WiFiSurveyCard } from '../components/cards/WiFiSurveyCard';
 import { BetaBadge } from '../components/ui/BetaBadge';
 import { Card } from '../components/ui/card';
 import { RequireFeature } from '../components/ui/RequireFeature';
+import { WiFiAirspaceCard } from '../components/wifi/WiFiAirspaceCard';
+import { WiFiAnomaliesCard } from '../components/wifi/WiFiAnomaliesCard';
 import { useAppContext } from '../contexts/AppContext';
 import { layout } from '../styles/theme';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
@@ -34,22 +36,21 @@ export function WifiPage() {
           />
         ) : null}
 
-        {/* Phase 2.5 scaffolding — fills with real data when 802.11
-            management-frame capture lands. See
-            msn-docs-internal/01-Strategy/SEED_NMS_EXPANSION.md. */}
-        <RequireFeature feature="wifi_association_forensics">
-          <Card
-            title="Association Forensics"
-            subtitle="802.11 assoc / EAPOL handshake decode with status-code drill-down."
-            status="unknown"
-            headerAction={<BetaBadge />}
-          >
-            <p data-testid="wifi-assoc-forensics-pending" className="text-sm text-text-muted">
-              Capture lands in Seed v1.0 — see release notes when Phase 2.5 ships.
-            </p>
-          </Card>
+        {/* Wi-Fi visibility (W5/W6): live airspace tree + anomaly stream from
+            802.11 management-frame capture (internal/wifi/visibility). Each card
+            is Pro-gated and degrades to an empty/last-observed view when no
+            monitor-capable interface is feeding the capture loop. */}
+        <RequireFeature feature="wifi_management_capture">
+          <WiFiAirspaceCard />
         </RequireFeature>
 
+        <RequireFeature feature="wifi_association_forensics">
+          <WiFiAnomaliesCard />
+        </RequireFeature>
+
+        {/* Phase 2.5 scaffolding — fills with real data when per-client roam
+            correlation lands. See
+            msn-docs-internal/01-Strategy/SEED_NMS_EXPANSION.md. */}
         <RequireFeature feature="wifi_roam_analysis">
           <Card
             title="Roam Analysis"
