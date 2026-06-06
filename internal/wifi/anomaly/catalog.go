@@ -26,6 +26,7 @@ const (
 	DefWideChannel24GHz        = "wifi-wide-channel-2ghz"
 	DefChannelWidthMismatch    = "wifi-channel-width-mismatch"
 	DefDeauthFlood             = "wifi-deauth-flood"
+	DefRogueAPOnLAN            = "wifi-rogue-ap-on-lan"
 )
 
 // CapActiveTest names the platform capability required to run an active
@@ -373,6 +374,28 @@ func Defs() []anomaly.Def {
 				Label: "Locate the deauth source",
 				Action: "Watch the affected channel and correlate the deauth burst with a transmitter; " +
 					"confirm whether the BSS requires PMF.",
+			}},
+		},
+		{
+			ID:              DefRogueAPOnLAN,
+			Category:        anomaly.CategoryAuthorization,
+			DefaultSeverity: anomaly.SeverityCritical,
+			Standards:       []string{"IEEE 802.11", "IEEE 802.1X"},
+			Title:           "Rogue AP bridged to the wired LAN",
+			Description: "A BSSID observed over the air also appears in the wired network's known " +
+				"MAC set (e.g. the ARP/switch table from discovery). An access point whose radio " +
+				"MAC is present on the wired side is bridging Wi-Fi traffic onto the LAN — typically " +
+				"an unsanctioned AP plugged into a corporate port, not part of the managed wireless.",
+			Impact: "An unauthorized bridge exposes the internal network to anyone in radio range, " +
+				"bypassing perimeter controls, NAC, and the sanctioned SSID's security policy.",
+			Recommendation: "Confirm the BSSID is not a sanctioned AP, then locate the switch port it " +
+				"is connected to (by MAC) and disable it. Add the device to the authorization " +
+				"allowlist only if it is intentional.",
+			FollowUps: []anomaly.FollowUp{{
+				Kind:  anomaly.FollowUpPrompt,
+				Label: "Trace the switch port",
+				Action: "Look up the BSSID/MAC in the switch CAM table to find the access port, and " +
+					"verify whether the AP is sanctioned.",
 			}},
 		},
 	}
