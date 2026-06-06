@@ -4,7 +4,7 @@ This directory contains JSON Schema definitions for The Seed configuration files
 
 ## config.schema.json
 
-JSON Schema (Draft 2020-12) for The Seed configuration file (`config.yaml`).
+JSON Schema (Draft 2020-12) for The Seed configuration file (`seed.json`).
 
 ### Usage
 
@@ -14,9 +14,12 @@ Add to `.vscode/settings.json`:
 
 ````json
 {
-  "yaml.schemas": {
-    "./schemas/config.schema.json": "config.yaml"
-  }
+  "json.schemas": [
+    {
+      "fileMatch": ["seed.json", "config.json"],
+      "url": "./schemas/config.schema.json"
+    }
+  ]
 }
 ```bash
 
@@ -25,11 +28,11 @@ Add to `.vscode/settings.json`:
 ```bash
 # Using ajv-cli
 npm install -g ajv-cli
-ajv validate -s schemas/config.schema.json -d config.yaml
+ajv validate -s schemas/config.schema.json -d seed.json
 
 # Using check-jsonschema
 pip install check-jsonschema
-check-jsonschema --schemafile schemas/config.schema.json config.yaml
+check-jsonschema --schemafile schemas/config.schema.json seed.json
 ```python
 
 ### Schema Details

@@ -58,7 +58,7 @@ stay that way:
 | SQL migration files | goose `NNNNN_snake.sql` | `00003_job_idempotency.sql` |
 | SQL tables / columns | snake_case | `polling_targets.credentials_id` |
 | Shell scripts | kebab-case | `check-json-casing.sh` |
-| Config files (on disk) | lowercase `.yaml`, snake_case keys | `configs/seed.yaml`, `health_checks:` |
+| Config files (on disk) | on-disk *format* is a per-product best-practice choice; seed = JSON (`.json`), snake_case keys | `configs/seed.json`, `"jwt_secret"` (amended 2026-06-05 — see below) |
 | Generated JSON schema files | kebab-case | `engine-discovery-response.schema.json` |
 | UI React components (`.tsx`) | PascalCase | `NetworkDiscoveryCard.tsx` |
 | UI hooks (`.ts`) | `useXxx` camelCase | `useEngineScan.ts` |
@@ -77,5 +77,27 @@ already conforms.
   (tsc + grep) → golden regen → verify. Sequenced in `SEED_PHASE8_CASING_PLAN.md`.
 - This ADR is the standard new code is held to; the gate makes it enforceable rather than
   aspirational (the lesson from the design-token gate).
-- stem and niac adopt the same convention + gate during their re-architectures (the seed
-  template is mirrored, per the no-master, harmonized-by-convention rule).
+- stem and niac adopt the same *casing* convention + gate during their re-architectures (the
+  seed template is mirrored, per the no-master, harmonized-by-convention rule). On-disk config
+  *format* (JSON vs YAML) is decided per product on its own merits — see the amendment below.
+
+## Amendment (2026-06-05) — config on-disk format is JSON for seed, decided per product
+
+The original "Config files (on disk)" row claimed `.yaml`, and the naming audit recorded it as
+"already followed everywhere." That was wrong on the substantive point: seed's config **loader
+has only ever been `encoding/json`** (`internal/config/config_load.go` — `json.Unmarshal` /
+`json.MarshalIndent`). The `.yaml` filenames (`configs/seed.yaml`, `internal/paths` defaults,
+deploy scripts, docs) were aspirational drift that was never wired — the shipped `configs/
+seed.yaml` was real YAML the JSON loader could not parse, and `internal/paths` resolved
+`config.yaml` while `seed install` wrote `seed.json`, so the installed file was never loaded
+(arch-review finding #1).
+
+**Correction:** for **seed**, the on-disk config format is **JSON** (`seed.json`), aligning
+docs/paths/deploy/sample to what the engine actually does (JSON Schema validation and the
+casing gate are JSON-native too). The casing rule is **unchanged and universal**: config-file
+keys stay **snake_case** (`"jwt_secret"`), distinct from the camelCase JSON *wire* convention.
+
+On-disk format is **not** a harmonized-across-products decision. Each product chooses on its
+own merits: seed is machine-managed (setup wizard + API write the file) and env-var-dominated,
+so JSON fits; a product with hand-authored, comment-heavy config (e.g. NIAC simulation
+scenarios) may legitimately choose YAML. Only the *casing* convention is mirrored fleet-wide.

@@ -270,8 +270,8 @@ func TestConfigLoad(t *testing.T) {
     tmpDir := t.TempDir() // Auto-cleaned after test
 
     // Create test config file
-    configPath := filepath.Join(tmpDir, "test-config.yaml")
-    testConfig := []byte(`interface: eth0\nport: 8080`)
+    configPath := filepath.Join(tmpDir, "test-config.json")
+    testConfig := []byte(`{"interface":{"default":"eth0"},"server":{"port":8080}}`)
     if err := os.WriteFile(configPath, testConfig, 0644); err != nil {
         t.Fatal(err)
     }

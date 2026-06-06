@@ -161,13 +161,13 @@ if systemctl is-active --quiet seed; then
     echo ""
 
     # Show initial credentials if available
-    if [[ -f "$INSTALL_DIR/configs/seed.yaml" ]]; then
-        log_info "Configuration file created at: $INSTALL_DIR/configs/seed.yaml"
+    if [[ -f "$INSTALL_DIR/configs/seed.json" ]]; then
+        log_info "Configuration file created at: $INSTALL_DIR/configs/seed.json"
     fi
 
     # Check if initial setup is required and display instructions
     log_info "Checking setup status..."
-    if "$INSTALL_DIR/$BINARY_NAME" credentials --config "$INSTALL_DIR/configs/seed.yaml" --json 2>/dev/null | grep -q '"needs_setup":true'; then
+    if "$INSTALL_DIR/$BINARY_NAME" credentials --config "$INSTALL_DIR/configs/seed.json" --json 2>/dev/null | grep -q '"needs_setup":true'; then
         echo ""
         log_warn "Initial setup required!"
         log_warn "Visit the web UI to set your admin password: https://$(hostname -I | awk '{print $1}'):8443"

@@ -65,7 +65,7 @@ func TestDefaultConfig(t *testing.T) {
 }
 
 func TestLoadNonExistentFile(t *testing.T) {
-	cfg, err := config.Load("/nonexistent/path/config.yaml")
+	cfg, err := config.Load("/nonexistent/path/config.json")
 	if err != nil {
 		t.Fatalf("expected no error for non-existent file, got %v", err)
 	}
@@ -81,7 +81,7 @@ func TestLoadNonExistentFile(t *testing.T) {
 
 func TestLoadAndSave(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "test-config.yaml")
+	configPath := filepath.Join(tmpDir, "test-config.json")
 
 	// Create and save config
 	cfg := config.DefaultConfig()
@@ -117,7 +117,7 @@ func TestLoadAndSave(t *testing.T) {
 
 func TestLoadInvalidYAML(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "invalid-config.yaml")
+	configPath := filepath.Join(tmpDir, "invalid-config.json")
 
 	// Write invalid YAML
 	if err := os.WriteFile(configPath, []byte("invalid: [yaml: content"), 0o600); err != nil {
@@ -173,7 +173,7 @@ func TestThresholdDefaults(t *testing.T) {
 
 func TestEnsureConfigFirstBoot(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "new-config.yaml")
+	configPath := filepath.Join(tmpDir, "new-config.json")
 
 	// First boot - no existing config file
 	cfg, result, err := config.EnsureConfig(configPath, nil)
@@ -198,7 +198,7 @@ func TestEnsureConfigFirstBoot(t *testing.T) {
 
 func TestEnsureConfigDetectsInsecurePassword(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "insecure-config.yaml")
+	configPath := filepath.Join(tmpDir, "insecure-config.json")
 
 	// Create config with a known insecure password hash
 	cfg := config.DefaultConfig()
@@ -228,7 +228,7 @@ func TestEnsureConfigDetectsInsecurePassword(t *testing.T) {
 
 func TestEnsureConfigSecurePassword(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "secure-config.yaml")
+	configPath := filepath.Join(tmpDir, "secure-config.json")
 
 	// Create config with a secure password hash
 	cfg := config.DefaultConfig()
@@ -258,7 +258,7 @@ func TestEnsureConfigSecurePassword(t *testing.T) {
 
 func TestEnsureConfigEmptyJWTSecret(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "empty-jwt-config.yaml")
+	configPath := filepath.Join(tmpDir, "empty-jwt-config.json")
 
 	// Create config with secure password but empty JWT secret
 	cfg := config.DefaultConfig()
@@ -328,7 +328,7 @@ func TestUpdateJWTSecret(t *testing.T) {
 
 func TestCredentialsPersistence(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "persist-test.yaml")
+	configPath := filepath.Join(tmpDir, "persist-test.json")
 
 	// Create and save config with credentials
 	cfg := config.DefaultConfig()
@@ -362,7 +362,7 @@ func TestCredentialsPersistence(t *testing.T) {
 
 func TestConfigSavePermissions(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "perms-test.yaml")
+	configPath := filepath.Join(tmpDir, "perms-test.json")
 
 	cfg := config.DefaultConfig()
 	if err := cfg.Save(configPath); err != nil {
@@ -385,7 +385,7 @@ func TestConfigSavePermissions(t *testing.T) {
 func TestEnsureConfigCreatesDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
 	// Nested path that doesn't exist - EnsureConfig should create it
-	configPath := filepath.Join(tmpDir, "nested", "deep", "config.yaml")
+	configPath := filepath.Join(tmpDir, "nested", "deep", "config.json")
 
 	// EnsureConfig creates the directory structure
 	_, _, err := config.EnsureConfig(configPath, nil)
@@ -1279,7 +1279,7 @@ func TestConfigCopyFieldsFrom(t *testing.T) {
 
 func TestGetBackupDir(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 	backupDir := filepath.Join(tmpDir, "backups")
 
 	// Create backup manager
@@ -1294,7 +1294,7 @@ func TestGetBackupDir(t *testing.T) {
 
 func TestSaveWithBackup(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.yaml")
+	configPath := filepath.Join(tmpDir, "config.json")
 	backupDir := filepath.Join(tmpDir, "backups")
 
 	// Create initial config

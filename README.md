@@ -127,20 +127,15 @@ sudo seed install-ca --uninstall
 
 ## Configuration
 
-`seed.yaml` (and `SEED_*` env vars) configure the appliance:
+`seed.json` (and `SEED_*` env vars) configure the appliance. See
+[`configs/seed.json`](configs/seed.json) for the full default config and
+[`configs/README.md`](configs/README.md) for field documentation:
 
-```yaml
-server:
-  port: 8443      # HTTPS
-  https: true
-
-interface:
-  default: eth0
-
-thresholds:
-  dhcp:  { warning: 500ms, critical: 2s }
-  dns:   { warning: 100ms, critical: 500ms }
-  ping:  { warning:  50ms, critical: 200ms }
+```json
+{
+  "server": { "port": 8443, "https": true },
+  "interface": { "default": "eth0" }
+}
 ```
 
 Common environment overrides:

@@ -334,7 +334,7 @@ func TestHandleIPSettingsPUT(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := api.NewTestServer()
 			defer server.Close()
-			server.SetConfigPath("/tmp/test-config.yaml")
+			server.SetConfigPath("/tmp/test-config.json")
 
 			body, _ := json.Marshal(tt.request)
 			req := httptest.NewRequest(http.MethodPut, "/api/v1/telemetry/ipconfig/settings", bytes.NewReader(body))

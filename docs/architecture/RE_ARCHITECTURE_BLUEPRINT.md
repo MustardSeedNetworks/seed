@@ -382,7 +382,7 @@ domain stays transport-ignorant; status codes are never chosen inside business l
 
 Seed has **two** config sources that must not be conflated:
 
-- **Bootstrap/infra config** — `config.yaml` + env (flags > env > file > defaults),
+- **Bootstrap/infra config** — `seed.json` + env (flags > env > file > defaults),
   loaded once at boot, validated, secrets env-only. Immutable at runtime. Each module
   receives a small slice (`sap.Config`) with only its fields, built in the composition
   root — **never the god `*config.Config`**. Removes a fat coupling point; modules test
