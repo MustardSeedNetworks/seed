@@ -22,3 +22,4 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0012](0012-wifi-monitor-capture-decode.md) | Wi-Fi monitor-mode capture port + 802.11 decode pipeline | Accepted |
 | [0013](0013-bluetooth-live-capture.md) | Bluetooth live-scan capture port | Accepted |
 | [0014](0014-config-validation-schema-is-a-constraints-validator.md) | config validation schema is a curated constraints validator, not a duplicate | Accepted |
+| [0015](0015-credential-encryption-key-separation.md) | Separate the credential data-encryption key from `Auth.JWTSecret` | Proposed |
