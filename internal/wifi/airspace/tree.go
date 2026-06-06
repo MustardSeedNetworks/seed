@@ -82,21 +82,57 @@ func (a *Airspace) Tree() []SSIDGroup {
 
 	groups := make([]SSIDGroup, 0, len(bySSID))
 	for ssid, apBuckets := range bySSID {
-		groups = append(groups, buildSSIDGroup(ssid, apBuckets))
+		// Convert the internal BSSes to views, then assemble with the shared
+		// builder so the live Tree and TreeFromBSSViews stay identical.
+		viewBuckets := make(map[string][]BSSView, len(apBuckets))
+		for key, bsses := range apBuckets {
+			views := make([]BSSView, 0, len(bsses))
+			for _, b := range bsses {
+				views = append(views, toBSSView(b))
+			}
+			viewBuckets[key] = views
+		}
+		groups = append(groups, assembleSSIDGroup(ssid, viewBuckets))
 	}
 	sort.Slice(groups, func(i, j int) bool { return groups[i].SSID < groups[j].SSID })
 	return groups
 }
 
-func buildSSIDGroup(ssid string, apBuckets map[string][]*bss) SSIDGroup {
+// TreeFromBSSViews assembles the sorted SSID → AP → BSSID hierarchy from a flat
+// set of BSS views (e.g. captured during a site survey), using the same
+// AP-clustering and ordering as the live Tree. Stations are carried through from
+// each view as-is. It is a pure function of its input — no airspace state.
+func TreeFromBSSViews(bsses []BSSView) []SSIDGroup {
+	bySSID := make(map[string]map[string][]BSSView)
+	for _, b := range bsses {
+		apBuckets, ok := bySSID[b.SSID]
+		if !ok {
+			apBuckets = make(map[string][]BSSView)
+			bySSID[b.SSID] = apBuckets
+		}
+		k := apKey(b.BSSID)
+		apBuckets[k] = append(apBuckets[k], b)
+	}
+
+	groups := make([]SSIDGroup, 0, len(bySSID))
+	for ssid, apBuckets := range bySSID {
+		groups = append(groups, assembleSSIDGroup(ssid, apBuckets))
+	}
+	sort.Slice(groups, func(i, j int) bool { return groups[i].SSID < groups[j].SSID })
+	return groups
+}
+
+// assembleSSIDGroup builds one SSIDGroup from AP-keyed BSS views, applying the
+// deterministic BSS/AP ordering and the cross-reference counts.
+func assembleSSIDGroup(ssid string, apBuckets map[string][]BSSView) SSIDGroup {
 	g := SSIDGroup{SSID: ssid}
-	for key, bsses := range apBuckets {
+	for key, views := range apBuckets {
 		ap := APGroup{Key: key, Vendor: vendorOUI(key)}
-		for _, b := range bsses {
-			ap.BSSes = append(ap.BSSes, toBSSView(b))
+		for _, v := range views {
+			ap.BSSes = append(ap.BSSes, v)
 			g.BSSCount++
-			g.StationCount += len(b.stations)
-			if b.hidden {
+			g.StationCount += len(v.Stations)
+			if v.Hidden {
 				g.Hidden = true
 			}
 		}
