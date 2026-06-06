@@ -29,6 +29,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -240,6 +241,29 @@ func matchIgnoreCase(a, b string) bool {
 	return true
 }
 
+// dbFileMode is the owner-only permission enforced on the database file and its
+// WAL/SHM sidecars (they hold tokens, credentials, and audit data).
+const dbFileMode = 0o600
+
+// restrictDBFileMode sets owner-only permissions on the database file and, when
+// present, its WAL/SHM sidecars. In-memory databases have no backing file and
+// are skipped. A missing sidecar is not an error (WAL/SHM are created lazily on
+// first write); only the main file is required to exist by call time.
+func restrictDBFileMode(path string) error {
+	if path == "" || path == ":memory:" || strings.Contains(path, ":memory:") {
+		return nil
+	}
+	if err := os.Chmod(path, dbFileMode); err != nil {
+		return err
+	}
+	for _, suffix := range []string{"-wal", "-shm"} {
+		if err := os.Chmod(path+suffix, dbFileMode); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+	}
+	return nil
+}
+
 // OpenWithConfig creates a new database connection with custom configuration.
 func OpenWithConfig(cfg Config) (*DB, error) {
 	if cfg.Path == "" {
@@ -289,6 +313,15 @@ func OpenWithConfig(cfg Config) (*DB, error) {
 	if pingErr := conn.PingContext(ctx); pingErr != nil {
 		_ = conn.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", pingErr)
+	}
+
+	// Restrict the database file (and its WAL/SHM sidecars) to owner-only. The
+	// SQLite driver creates them honouring umask, which on most systems leaves
+	// them group/world-readable; the DB holds tokens, credentials, and audit
+	// data, so the mode is made explicit rather than left to the environment.
+	if chmodErr := restrictDBFileMode(cfg.Path); chmodErr != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("failed to secure database file: %w", chmodErr)
 	}
 
 	db := &DB{
