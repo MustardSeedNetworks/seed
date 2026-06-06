@@ -46,10 +46,15 @@ type bss struct {
 	ft          bool
 	wps         bool
 	signalDBm   int8
-	firstSeen   time.Time
-	lastSeen    time.Time
-	beacons     int
-	stations    map[string]*station
+	// Channel width + BSS Load (802.11e), decoded from the beacon IEs.
+	channelWidthM  int
+	chanUtil       int // raw 0..255 channel utilization from the BSS Load IE
+	advertStations int // station count the AP advertises in the BSS Load IE
+	hasBSSLoad     bool
+	firstSeen      time.Time
+	lastSeen       time.Time
+	beacons        int
+	stations       map[string]*station
 }
 
 // Airspace is the live aggregate of everything seen on the air. Safe for
@@ -105,6 +110,12 @@ func (a *Airspace) applyBeacon(f *dot11.Frame, at time.Time) {
 	b.btm = info.BTMSupported
 	b.ft = info.FTSupported
 	b.wps = info.WPSEnabled
+	b.channelWidthM = info.ChannelWidthM
+	if info.HasBSSLoad {
+		b.hasBSSLoad = true
+		b.chanUtil = info.ChannelUtilByte
+		b.advertStations = info.StationCount
+	}
 	if f.SignalDBm != 0 {
 		b.signalDBm = f.SignalDBm
 	}

@@ -66,6 +66,18 @@
         "wpsEnabled": {
           "type": "boolean"
         },
+        "channelWidthMhz": {
+          "type": "integer"
+        },
+        "channelUtil": {
+          "type": "integer"
+        },
+        "advertisedStations": {
+          "type": "integer"
+        },
+        "hasBssLoad": {
+          "type": "boolean"
+        },
         "signalDbm": {
           "type": "integer"
         },
@@ -98,6 +110,10 @@
         "btmSupported",
         "ftSupported",
         "wpsEnabled",
+        "channelWidthMhz",
+        "channelUtil",
+        "advertisedStations",
+        "hasBssLoad",
         "signalDbm",
         "beacons",
         "lastSeen",

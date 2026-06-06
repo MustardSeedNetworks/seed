@@ -36,6 +36,10 @@ export interface BSSView {
   btmSupported: boolean;
   ftSupported: boolean;
   wpsEnabled: boolean;
+  channelWidthMhz: number;
+  channelUtil: number;
+  advertisedStations: number;
+  hasBssLoad: boolean;
   signalDbm: number;
   beacons: number;
   lastSeen: string;
