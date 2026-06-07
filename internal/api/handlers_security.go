@@ -519,7 +519,7 @@ func (s *Server) convertSNMPv3Credential(
 
 	// Handle AuthPassword
 	if cred.AuthPassword != "" && cred.AuthPassword != passwordPlaceholder {
-		encrypted, err := config.EncryptCredential(cred.AuthPassword, s.config.Auth.JWTSecret)
+		encrypted, err := s.config.EncryptCredentialValue(cred.AuthPassword)
 		if err != nil {
 			logger.Error("Failed to encrypt auth password", "error", err, "credential_name", cred.Name)
 			return nil, fmt.Errorf("encrypt auth password: %w", err)
@@ -531,7 +531,7 @@ func (s *Server) convertSNMPv3Credential(
 
 	// Handle PrivPassword
 	if cred.PrivPassword != "" && cred.PrivPassword != passwordPlaceholder {
-		encrypted, err := config.EncryptCredential(cred.PrivPassword, s.config.Auth.JWTSecret)
+		encrypted, err := s.config.EncryptCredentialValue(cred.PrivPassword)
 		if err != nil {
 			logger.Error("Failed to encrypt priv password", "error", err, "credential_name", cred.Name)
 			return nil, fmt.Errorf("encrypt priv password: %w", err)

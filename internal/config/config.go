@@ -42,6 +42,11 @@ type Config struct {
 	// Profile-specific settings (not in YAML config, only stored per-profile)
 	Link      LinkConfig      `json:"link,omitzero"`
 	CableTest CableTestConfig `json:"cableTest,omitzero"`
+
+	// credentialKeyring holds the DEK used for SNMP-credential encryption
+	// (ADR-0015), decoupled from Auth.JWTSecret. It is never serialised; it is
+	// initialised via InitCredentialKeyring and shared across Clone.
+	credentialKeyring *Keyring `json:"-"`
 }
 
 // Lock acquires a write lock on the config.
@@ -100,6 +105,8 @@ func (c *Config) cloneFields() *Config {
 		DisplayOptions:   c.DisplayOptions,
 		Logging:          c.Logging,
 		Database:         c.Database,
+		// The keyring is immutable after init and safe to share across clones.
+		credentialKeyring: c.credentialKeyring,
 	}
 
 	// Deep copy slices to prevent shared references (fixes #958)
@@ -145,4 +152,5 @@ func (c *Config) CopyFieldsFrom(src *Config) {
 	c.DisplayOptions = temp.DisplayOptions
 	c.Logging = temp.Logging
 	c.Database = temp.Database
+	c.credentialKeyring = temp.credentialKeyring
 }

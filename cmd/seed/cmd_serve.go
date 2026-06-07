@@ -222,6 +222,7 @@ func loadAndConfigureConfig(configPath string) *config.Config {
 	}
 
 	ensureJWTSecret(cfg, configPath)
+	ensureCredentialKeyring(cfg, configPath)
 
 	if errors.Is(err, config.ErrInsecureCredentials) {
 		fmt.Fprintln(
@@ -261,23 +262,40 @@ func ensureJWTSecret(cfg *config.Config, configPath string) {
 	}
 }
 
-// migrateSNMPCredentials encrypts plaintext SNMP credentials.
+// ensureCredentialKeyring loads or creates the credential DEK keyring (ADR-0015)
+// in the config directory, decoupling SNMP-credential encryption from the JWT
+// signing secret. Note: Called before logging is initialized, so uses
+// [fmt.Fprintf]. A failure here is non-fatal: encryption falls back to an
+// in-memory key, but persisted ciphertext would not survive a restart, so the
+// warning is loud.
+func ensureCredentialKeyring(cfg *config.Config, configPath string) {
+	if err := cfg.InitCredentialKeyring(filepath.Dir(configPath)); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: Failed to initialize credential key: %v\n", err)
+	}
+}
+
+// credentialNeedsMigration reports whether a credential value still needs to be
+// encrypted (plaintext) or upgraded from the legacy JWT-derived format to the
+// versioned DEK format (ADR-0015).
+func credentialNeedsMigration(value string) bool {
+	if value == "" {
+		return false
+	}
+	return !config.IsEncrypted(value) || config.IsLegacyEncrypted(value)
+}
+
+// migrateSNMPCredentials encrypts plaintext SNMP credentials and migrates legacy
+// JWT-derived ciphertext to the versioned DEK format (ADR-0015).
 // Note: Called before logging is initialized, so uses [fmt.Fprintf].
-// Security fix #884: Warn if JWT secret is missing (should never happen after ensureJWTSecret).
 func migrateSNMPCredentials(cfg *config.Config, configPath string) {
 	if len(cfg.SNMP.V3Credentials) == 0 {
-		return
-	}
-	if cfg.Auth.JWTSecret == "" {
-		fmt.Fprintln(os.Stderr, "Warning: Cannot encrypt SNMP credentials - JWT secret is missing")
 		return
 	}
 
 	needsSave := false
 	for i := range cfg.SNMP.V3Credentials {
 		cred := &cfg.SNMP.V3Credentials[i]
-		if (cred.AuthPassword != "" && !config.IsEncrypted(cred.AuthPassword)) ||
-			(cred.PrivPassword != "" && !config.IsEncrypted(cred.PrivPassword)) {
+		if credentialNeedsMigration(cred.AuthPassword) || credentialNeedsMigration(cred.PrivPassword) {
 			needsSave = true
 			break
 		}

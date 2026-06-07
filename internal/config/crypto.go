@@ -121,42 +121,113 @@ func IsEncrypted(value string) bool {
 	return strings.HasPrefix(value, encryptedPrefix)
 }
 
-// EncryptSNMPCredentials encrypts all SNMP v3 credentials in the config (fixes #518).
-func (c *Config) EncryptSNMPCredentials() error {
-	if c.Auth.JWTSecret == "" {
-		return errors.New("JWT secret required for credential encryption")
+// InitCredentialKeyring loads or creates the credential DEK keyring in dir
+// (ADR-0015). It must be called once during startup, before any credential
+// encryption or decryption, so ciphertext is persisted and survives restart.
+func (c *Config) InitCredentialKeyring(dir string) error {
+	kr, err := LoadOrCreateKeyring(dir)
+	if err != nil {
+		return err
+	}
+	c.credentialKeyring = kr
+	return nil
+}
+
+// ensureKeyring returns the configured keyring, lazily creating a non-persistent
+// ephemeral one if InitCredentialKeyring was never called. Production startup
+// always initialises a persistent keyring; the ephemeral fallback exists only
+// so unit tests and incidental code paths round-trip within a process.
+func (c *Config) ensureKeyring() (*Keyring, error) {
+	if c.credentialKeyring != nil {
+		return c.credentialKeyring, nil
+	}
+	kr, err := newEphemeralKeyring()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrKeyringUnavailable, err)
+	}
+	c.credentialKeyring = kr
+	return kr, nil
+}
+
+// EncryptCredentialValue encrypts a single credential value with the active DEK
+// version (ADR-0015). It replaces the JWT-derived EncryptCredential call sites.
+func (c *Config) EncryptCredentialValue(plaintext string) (string, error) {
+	kr, err := c.ensureKeyring()
+	if err != nil {
+		return "", err
+	}
+	return kr.EncryptValue(plaintext)
+}
+
+// reEncryptCredential normalises a credential value to the active DEK version.
+// Plaintext is encrypted; legacy v0 (JWT-derived) ciphertext is decrypted with
+// Auth.JWTSecret and re-encrypted with the DEK; already-versioned values are
+// returned unchanged. Legacy values are left intact (not lost) when JWTSecret is
+// unavailable.
+func (c *Config) reEncryptCredential(value string) (string, error) {
+	if value == "" || isVersionedCiphertext(value) {
+		return value, nil
 	}
 
+	plaintext := value
+	if IsLegacyEncrypted(value) {
+		if c.Auth.JWTSecret == "" {
+			return value, nil // cannot migrate without the legacy key; keep intact
+		}
+		decrypted, err := DecryptCredential(value, c.Auth.JWTSecret)
+		if err != nil {
+			return value, fmt.Errorf("decrypt legacy credential: %w", err)
+		}
+		plaintext = decrypted
+	}
+
+	return c.EncryptCredentialValue(plaintext)
+}
+
+// EncryptSNMPCredentials encrypts (and migrates legacy v0 values for) all SNMP
+// v3 credentials with the DEK keyring (fixes #518; ADR-0015).
+func (c *Config) EncryptSNMPCredentials() error {
 	for i := range c.SNMP.V3Credentials {
 		cred := &c.SNMP.V3Credentials[i]
 
-		// Encrypt AuthPassword if not already encrypted
-		if cred.AuthPassword != "" && !IsEncrypted(cred.AuthPassword) {
-			encrypted, err := EncryptCredential(cred.AuthPassword, c.Auth.JWTSecret)
-			if err != nil {
-				return fmt.Errorf("failed to encrypt auth password for %s: %w", cred.Name, err)
-			}
-			cred.AuthPassword = encrypted
+		authPw, err := c.reEncryptCredential(cred.AuthPassword)
+		if err != nil {
+			return fmt.Errorf("failed to encrypt auth password for %s: %w", cred.Name, err)
 		}
+		cred.AuthPassword = authPw
 
-		// Encrypt PrivPassword if not already encrypted
-		if cred.PrivPassword != "" && !IsEncrypted(cred.PrivPassword) {
-			encrypted, err := EncryptCredential(cred.PrivPassword, c.Auth.JWTSecret)
-			if err != nil {
-				return fmt.Errorf("failed to encrypt priv password for %s: %w", cred.Name, err)
-			}
-			cred.PrivPassword = encrypted
+		privPw, err := c.reEncryptCredential(cred.PrivPassword)
+		if err != nil {
+			return fmt.Errorf("failed to encrypt priv password for %s: %w", cred.Name, err)
 		}
+		cred.PrivPassword = privPw
 	}
 
 	return nil
 }
 
-// DecryptSNMPPassword decrypts an SNMP password for use (fixes #518).
+// DecryptSNMPPassword decrypts an SNMP password for use (fixes #518; ADR-0015).
+// Versioned ciphertext is decrypted with the DEK keyring; legacy unversioned
+// ciphertext falls back to the JWT-derived key (read-only migration path).
 func (c *Config) DecryptSNMPPassword(encrypted string) (string, error) {
-	if c.Auth.JWTSecret == "" {
-		return "", errors.New("JWT secret required for credential decryption")
+	if encrypted == "" {
+		return "", nil
+	}
+	if !IsEncrypted(encrypted) {
+		return encrypted, nil // plaintext, returned as-is for backward compatibility
 	}
 
+	if isVersionedCiphertext(encrypted) {
+		kr, err := c.ensureKeyring()
+		if err != nil {
+			return "", err
+		}
+		return kr.DecryptValue(encrypted)
+	}
+
+	// Legacy v0 (JWT-derived) — read-only path retained for migration.
+	if c.Auth.JWTSecret == "" {
+		return "", errors.New("JWT secret required to decrypt legacy credential")
+	}
 	return DecryptCredential(encrypted, c.Auth.JWTSecret)
 }
