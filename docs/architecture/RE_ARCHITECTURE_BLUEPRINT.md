@@ -465,15 +465,22 @@ between modules.
 
 ## 7. Persistence (`adapters/store`)
 
-> **STATUS (2026-06-07): Phase 5b — schema modernization — is DONE; two items
-> remain.** Done: `.sql` migrations embedded via `//go:embed` + the **goose**
-> runner (`internal/database/goose.go`), the **collapsed `0001_init.sql`
-> baseline** (61 STRICT tables), the migrate-from-empty drift gate
-> (`goose_baseline_test.go` / `schema_snapshot_test.go`), and a `WithTx`
-> transaction wrapper (`database.go`). **Remaining (feature-sized):**
-> (1) the **transactional outbox relay** (the `00002_jobs.sql` + `platform/events`
-> comments both note it is "layered on" later) and (2) **optimistic concurrency**
-> (version/ETag + `If-Match`) on the mutable resources — not yet implemented.
+> **STATUS (2026-06-07): Phase 5b — schema modernization — is DONE; optimistic
+> concurrency is DONE for both mutable resources; one item remains.** Done: `.sql`
+> migrations embedded via `//go:embed` + the **goose** runner
+> (`internal/database/goose.go`), the **collapsed `0001_init.sql` baseline** (61
+> STRICT tables), the migrate-from-empty drift gate (`goose_baseline_test.go` /
+> `schema_snapshot_test.go`), and a `WithTx` transaction wrapper (`database.go`).
+> **Optimistic concurrency (ETag + `If-Match` → 412, additive):** **profiles** —
+> the row-backed resource — uses a dedicated monotonic `row_version` column
+> (migration `00004`, bumped on every write, exact: a sub-second double-write is
+> caught; #1559 shipped the flow on `updated_at`, hardened here); **settings** —
+> file-backed (`config.json`) — uses a content-hash of the mutable subset
+> (`config.SettingsETag`, #1560), which is also exact and immune to unrelated
+> global-config writes. **Remaining (feature-sized):** the **transactional outbox
+> relay** (the `00002_jobs.sql` + `platform/events` comments both note it is
+> "layered on" later) — deferred (YAGNI: no consumer needs cross-restart durable
+> delivery; reconcilers re-derive on restart).
 > The repo-interfaces-as-domain-ports point below is piloted in
 > `internal/reporting/store` (ReportRepo/ScheduleRepo/MetricsRepo/ExportRepo);
 > generalizing it to all 21 repos is deliberately deferred — done bespoke per
@@ -489,9 +496,11 @@ between modules.
 - **Transactional outbox** table: domain writes + the event row commit together;
   a relay publishes to the bus post-commit. *(OPEN — the durability layer for
   `platform/events`.)*
-- **Optimistic concurrency:** version/ETag + `If-Match` on mutable resources
-  (config, profiles, settings) — multi-user is live; last-write-wins loses data.
-  *(OPEN — the highest-value remaining correctness item.)*
+- **Optimistic concurrency:** version/ETag + `If-Match` on mutable resources.
+  *(DONE — profiles via `row_version` (migration `00004`, #1559 + hardening);
+  settings via a mutable-subset content-hash (`config.SettingsETag`, #1560). Both
+  tokens are exact; an absent `If-Match` stays unconditional, so existing clients
+  are unaffected.)*
 - **Reference data** (OUI vendor DB, MIB defs, default config, NVD cache) is
   **embedded read-only**, never rows in the mutable DB.
 

@@ -49,6 +49,9 @@ type Profile struct {
 	IsDefault   bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	// RowVersion is the optimistic-concurrency token surfaced as the ETag. It is
+	// opaque to the use-case (the ifMatch string is passed through to the Store).
+	RowVersion int64
 }
 
 // NewProfile is the input for Create.

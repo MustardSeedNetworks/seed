@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -254,11 +255,11 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 	sendJSONResponse(w, logger, http.StatusOK, profileToResponse(profile))
 }
 
-// profileETag returns the strong ETag for a profile — its updated_at timestamp,
-// the optimistic-concurrency version token, in the same RFC3339 form the row is
-// stored as, wrapped in quotes per RFC 9110.
+// profileETag returns the strong ETag for a profile — its row_version, the
+// monotonic optimistic-concurrency token, wrapped in quotes per RFC 9110. Unlike
+// the prior updated_at token it is exact, so a sub-second double-write conflicts.
 func profileETag(p profilesapp.Profile) string {
-	return `"` + p.UpdatedAt.Format(time.RFC3339) + `"`
+	return `"` + strconv.FormatInt(p.RowVersion, 10) + `"`
 }
 
 // parseIfMatch returns the bare ETag value from the request's If-Match header,

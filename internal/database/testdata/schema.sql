@@ -1286,7 +1286,7 @@ CREATE TABLE profiles (
 				is_default INTEGER DEFAULT 0 CHECK (is_default IN (0,1)),
 				created_at TEXT NOT NULL,
 				updated_at TEXT NOT NULL
-			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id)) STRICT;
+			, client_id TEXT NOT NULL DEFAULT 'default' REFERENCES clients(id), row_version INTEGER NOT NULL DEFAULT 1) STRICT;
 
 -- table: reports
 CREATE TABLE reports (

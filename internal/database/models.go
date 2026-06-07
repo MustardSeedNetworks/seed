@@ -41,6 +41,10 @@ type Profile struct {
 	IsDefault   bool      `json:"isDefault"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
+	// RowVersion is the optimistic-concurrency token: a monotonic counter bumped
+	// on every write (ADR re-arch Phase 5). It is the profile ETag — exact, so a
+	// sub-second double-write is still detected (unlike the prior updated_at).
+	RowVersion int64 `json:"-"`
 }
 
 // Metric represents a single metric data point.
