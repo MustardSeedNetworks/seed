@@ -42,6 +42,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/snmpclient"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
 	"github.com/MustardSeedNetworks/seed/internal/probe/checkers"
+	profilesapp "github.com/MustardSeedNetworks/seed/internal/profiles/app"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 	settingsapp "github.com/MustardSeedNetworks/seed/internal/settings/app"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
@@ -131,6 +132,7 @@ type Server struct {
 	wifiManagement     *wifiapp.Management      // Wi-Fi settings/scan/status/connect use-case (ADR-0016 phase 2)
 	wifiDiscovery      *wifiapp.Discovery       // Enhanced Wi-Fi discovery use-case (ADR-0016 phase 2)
 	settingsStore      *settingsapp.Persistence // Settings-to-profile persistence use-case (ADR-0016 phase 3)
+	profiles           *profilesapp.Service     // Profile CRUD/active/import use-case (ADR-0016 phase 3)
 	tlsFingerprint     tlsFingerprintCache      // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
 }
 
@@ -249,6 +251,9 @@ func NewServer(
 	// Wire the settings-persistence use-case (ADR-0016 phase 3). The adapter
 	// resolves the database lazily, so it tolerates a nil or later-set db.
 	s.initSettingsUseCase()
+
+	// Wire the profiles use-case (ADR-0016 phase 3), also over the lazy db.
+	s.initProfilesUseCase()
 
 	// Initialize vulnerability scanner if enabled
 	s.initVulnerabilityScanner(cfg)
