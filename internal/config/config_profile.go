@@ -6,6 +6,8 @@ package config
 // Auth, Security, Logging, Database) are deliberately excluded.
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 )
@@ -27,14 +29,10 @@ type ProfileExportFields struct {
 	CableTest        CableTestConfig        `json:"cableTest,omitzero"`
 }
 
-// ToProfileJSON exports profile-specific settings as JSON.
-// Only settings that vary per-profile are included.
-// Global settings (Server, Auth, Security) are excluded.
-func (c *Config) ToProfileJSON() (string, error) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	export := ProfileExportFields{
+// profileExportLocked snapshots the per-profile (mutable-settings) subset.
+// The caller must already hold at least c.mu.RLock.
+func (c *Config) profileExportLocked() ProfileExportFields {
+	return ProfileExportFields{
 		Thresholds:       c.Thresholds,
 		HealthChecks:     c.HealthChecks,
 		Speedtest:        c.Speedtest,
@@ -47,12 +45,47 @@ func (c *Config) ToProfileJSON() (string, error) {
 		Link:             c.Link,
 		CableTest:        c.CableTest,
 	}
+}
 
-	data, err := json.Marshal(export)
+// ToProfileJSON exports profile-specific settings as JSON.
+// Only settings that vary per-profile are included.
+// Global settings (Server, Auth, Security) are excluded.
+func (c *Config) ToProfileJSON() (string, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	data, err := json.Marshal(c.profileExportLocked())
 	if err != nil {
 		return "", fmt.Errorf("marshal profile settings: %w", err)
 	}
 	return string(data), nil
+}
+
+// SettingsETag returns the optimistic-concurrency version token for the
+// file-backed settings resource (ADR re-arch Phase 5): a strong ETag whose body
+// is the SHA-256 of the mutable-settings subset (the same ProfileExportFields
+// ToProfileJSON serializes), quoted per RFC 9110. It is a content-hash, not a
+// timestamp — so it is exact (no sub-second window) and is unaffected by writes
+// to the excluded GLOBAL config (Server/Auth/Security/Logging/Database).
+func (c *Config) SettingsETag() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.SettingsETagLocked()
+}
+
+// SettingsETagLocked is SettingsETag for callers that already hold the config
+// lock (the getSettings RLock path and the updateSettings write-lock
+// compare-and-apply). It performs no locking itself.
+func (c *Config) SettingsETagLocked() string {
+	// ProfileExportFields contains no map fields, so json.Marshal is
+	// deterministic and the hash is a stable token. A marshal error cannot
+	// arise from these plain structs; fall back to an empty body defensively.
+	data, err := json.Marshal(c.profileExportLocked())
+	if err != nil {
+		return `""`
+	}
+	sum := sha256.Sum256(data)
+	return `"` + hex.EncodeToString(sum[:]) + `"`
 }
 
 // ApplyProfileJSON applies profile settings from JSON to this config.

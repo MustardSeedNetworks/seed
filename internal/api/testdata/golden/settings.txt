@@ -53,7 +53,7 @@ body:
   },
   "healthChecks": {
     "runDiscovery": true,
-    "runIperf": false,
+    "runIperf": true,
     "runPerformance": true,
     "runSpeedtest": true
   },

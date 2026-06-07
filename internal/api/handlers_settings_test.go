@@ -819,3 +819,104 @@ func TestSettingsThresholdDurationConversion(t *testing.T) {
 		t.Errorf("Expected dns.warning to be 500, got %v", warning)
 	}
 }
+
+// TestHandleSettingsETagReflectsConfig is the regression for the pre-existing
+// getSettings mismatch: GET must report the live config, not hardcoded values.
+// Under the default config RunIperf is true, so the response healthChecks.runIperf
+// must be true (it was previously hardcoded false).
+func TestHandleSettingsETagReflectsConfig(t *testing.T) {
+	server := api.NewTestServer()
+	defer server.Close()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/settings", http.NoBody)
+	w := httptest.NewRecorder()
+	server.HandleSettings(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET settings: expected 200, got %d", w.Code)
+	}
+
+	// GET emits a quoted, non-empty ETag (optimistic-concurrency token).
+	etag := w.Header().Get("ETag")
+	if len(etag) < 3 || etag[0] != '"' || etag[len(etag)-1] != '"' {
+		t.Fatalf("GET settings: expected a quoted ETag, got %q", etag)
+	}
+	if want := server.Config().SettingsETag(); etag != want {
+		t.Fatalf("GET ETag %q != config SettingsETag %q", etag, want)
+	}
+
+	var resp map[string]any
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	health := resp["healthChecks"].(map[string]any)
+	if runIperf, ok := health["runIperf"].(bool); !ok || !runIperf {
+		t.Errorf("healthChecks.runIperf should reflect config (true), got %v", health["runIperf"])
+	}
+}
+
+// TestHandleSettingsIfMatch covers optimistic concurrency on PUT /settings:
+// a stale If-Match is rejected with 412 and leaves config untouched; the current
+// token writes through and returns a fresh (different) ETag; an absent header is
+// unconditional (prior behavior).
+func TestHandleSettingsIfMatch(t *testing.T) {
+	body := []byte(`{"thresholds":{"dns":{"good":777}}}`)
+
+	t.Run("stale If-Match -> 412, config untouched", func(t *testing.T) {
+		server := api.NewTestServer()
+		defer server.Close()
+
+		before := server.Config().Thresholds.DNS.Warning // "good" maps to DNS.Warning
+
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/settings", bytes.NewReader(body))
+		req.Header.Set("If-Match", `"stale-token"`)
+		w := httptest.NewRecorder()
+		server.HandleSettings(w, req)
+
+		if w.Code != http.StatusPreconditionFailed {
+			t.Fatalf("expected 412, got %d", w.Code)
+		}
+		if after := server.Config().Thresholds.DNS.Warning; after != before {
+			t.Errorf("config mutated on 412: before=%v after=%v", before, after)
+		}
+	})
+
+	t.Run("current If-Match -> 200 + fresh ETag", func(t *testing.T) {
+		server := api.NewTestServer()
+		defer server.Close()
+
+		current := server.Config().SettingsETag()
+
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/settings", bytes.NewReader(body))
+		req.Header.Set("If-Match", current)
+		w := httptest.NewRecorder()
+		server.HandleSettings(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected 200, got %d (body %s)", w.Code, w.Body.String())
+		}
+		if got := server.Config().Thresholds.DNS.Warning; got != 777*time.Millisecond {
+			t.Errorf("threshold not applied: got %v", got)
+		}
+		fresh := w.Header().Get("ETag")
+		if fresh == "" || fresh == current {
+			t.Errorf("expected a fresh ETag different from %q, got %q", current, fresh)
+		}
+	})
+
+	t.Run("absent If-Match -> 200 unconditional", func(t *testing.T) {
+		server := api.NewTestServer()
+		defer server.Close()
+
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/settings", bytes.NewReader(body))
+		w := httptest.NewRecorder()
+		server.HandleSettings(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected 200, got %d", w.Code)
+		}
+		if got := server.Config().Thresholds.DNS.Warning; got != 777*time.Millisecond {
+			t.Errorf("threshold not applied: got %v", got)
+		}
+	})
+}
