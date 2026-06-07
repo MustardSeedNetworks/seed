@@ -130,5 +130,8 @@
     "selfDeactivate": "No puede desactivar su propia cuenta.",
     "selfDemote": "No puede degradar su propia cuenta de administrador.",
     "featureRequired": "Agregar usuarios adicionales requiere una licencia Pro."
+  },
+  "settings": {
+    "conflict": "Otro usuario cambió esta configuración desde que la cargaste. Vuelve a cargarla y aplica tus cambios de nuevo."
   }
 }

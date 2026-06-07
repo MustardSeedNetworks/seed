@@ -130,5 +130,8 @@
     "selfDeactivate": "You cannot deactivate your own account.",
     "selfDemote": "You cannot demote your own account from admin.",
     "featureRequired": "Adding additional users requires a Pro license."
+  },
+  "settings": {
+    "conflict": "This setting was changed by another user since you loaded it. Reload and apply your changes again."
   }
 }

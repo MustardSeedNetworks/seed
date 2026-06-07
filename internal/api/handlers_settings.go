@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
@@ -132,15 +134,18 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 		"vlan":       map[string]any{jsonKeyEnabled: s.config.VLAN.Enabled, "id": s.config.VLAN.ID},
 		"ip":         map[string]any{"mode": s.config.IP.Mode},
 		"thresholds": s.buildThresholdSettings(),
+		// Reflect the live config — these were previously hardcoded, so a GET never
+		// echoed what a prior PUT wrote (and any concurrency token derived from them
+		// would be incoherent).
 		"healthChecks": map[string]any{
-			"runPerformance": true,
-			"runSpeedtest":   true,
-			"runIperf":       false,
-			"runDiscovery":   true,
+			"runPerformance": s.config.HealthChecks.RunPerformance,
+			"runSpeedtest":   s.config.HealthChecks.RunSpeedtest,
+			"runIperf":       s.config.HealthChecks.RunIperf,
+			"runDiscovery":   s.config.HealthChecks.RunDiscovery,
 		},
 		"speedtest": map[string]any{
 			"serverId":      s.config.Speedtest.ServerID,
-			"autoRunOnLink": true,
+			"autoRunOnLink": s.config.Speedtest.AutoRunOnLink,
 		},
 		"iperf": map[string]any{
 			"autoRunOnLink": s.config.Iperf.AutoRunOnLink, "server": s.config.Iperf.Server,
@@ -155,6 +160,10 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
+	// Optimistic-concurrency token (ADR re-arch Phase 5): a content-hash of the
+	// mutable-settings subset, so a subsequent conditional PUT can detect a
+	// concurrent edit. Computed under the RLock already held here.
+	w.Header().Set("ETag", s.config.SettingsETagLocked())
 	sendJSONResponse(w, logger, http.StatusOK, settings)
 }
 
@@ -170,9 +179,25 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Optimistic concurrency (ADR re-arch Phase 5): an If-Match ETag, when
+	// present, makes the write conditional on the mutable-settings subset not
+	// having changed since the caller read it. Absent (or "*") => unconditional,
+	// as before, so existing clients are unaffected (additive).
+	ifMatch := parseIfMatch(r)
+
 	// Lock config for write access
 	// NOTE: Must unlock before Save() - Save() acquires RLock internally (fixes #783)
 	s.config.Lock()
+
+	// Compare-and-apply is atomic under the write lock: a concurrent writer cannot
+	// slip between this check and the updates below.
+	if ifMatch != "" && ifMatch != strings.Trim(s.config.SettingsETagLocked(), `"`) {
+		s.config.Unlock()
+		localizer := i18n.FromRequest(r)
+		sendErrorResponseWithDetails(w, logger, http.StatusPreconditionFailed,
+			ErrCodeConflict, localizer.T("errors.settings.conflict"), "")
+		return
+	}
 
 	// Apply updates using helper functions (fixes #784 - return errors for invalid types)
 	var applyErrors []error
@@ -237,6 +262,8 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Emit the fresh token so the client can chain a subsequent conditional write.
+	w.Header().Set("ETag", s.config.SettingsETag())
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
 }
 
