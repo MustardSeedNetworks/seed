@@ -17,6 +17,7 @@ func newAlertRulesTestServer(t *testing.T) *Server {
 	db := newTestDB(t)
 	s := &Server{services: NewServiceContainer()}
 	s.services.Database = &DatabaseServices{DB: db}
+	s.initAlertsUseCase()
 	return s
 }
 
