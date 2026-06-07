@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,11 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
-	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
+	profilesapp "github.com/MustardSeedNetworks/seed/internal/profiles/app"
 )
 
 // ProfileRequest represents a profile create/update request.
@@ -108,9 +105,8 @@ func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleListProfiles(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-	ctx := r.Context()
 
-	profiles, err := s.db().Profiles().List(ctx)
+	profiles, err := s.profiles.List(r.Context())
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to list profiles", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
@@ -122,7 +118,6 @@ func (s *Server) handleListProfiles(w http.ResponseWriter, r *http.Request) {
 		Profiles: make([]ProfileResponse, 0, len(profiles)),
 		Total:    len(profiles),
 	}
-
 	for _, p := range profiles {
 		response.Profiles = append(response.Profiles, profileToResponse(p))
 	}
@@ -134,7 +129,6 @@ func (s *Server) handleListProfiles(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-	ctx := r.Context()
 
 	// multi_client gate: Free/Starter may keep their bootstrap profile,
 	// but a SECOND (or later) profile requires Pro. Checked before body
@@ -148,7 +142,8 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate required fields
+	// Preserve the pre-strangle ordering: empty-name 400 fires before the
+	// multi_interface gate so the message is stable for an empty over-cap body.
 	if req.Name == "" {
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeValidation, localizer.T("errors.profile.nameRequired"), "") // fixes #694
@@ -161,28 +156,28 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create profile
-	profile := &database.Profile{
-		ID:          uuid.New().String(),
+	profile, err := s.profiles.Create(r.Context(), profilesapp.NewProfile{
 		Name:        req.Name,
 		Description: req.Description,
 		ConfigJSON:  string(req.Config),
 		IsDefault:   req.IsDefault,
-	}
-
-	if err := s.db().Profiles().Create(ctx, profile); err != nil {
-		if errors.Is(err, database.ErrProfileNameExists) {
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, profilesapp.ErrNameRequired):
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+				ErrCodeValidation, localizer.T("errors.profile.nameRequired"), "")
+		case errors.Is(err, profilesapp.ErrNameExists):
 			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 				ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
-			return
+		default:
+			logger.ErrorContext(r.Context(), "Failed to create profile", "error", err, "profile_name", req.Name)
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+				ErrCodeInternal, localizer.T("errors.profile.createFailed"), "") // fixes #694, #H7
 		}
-		logger.ErrorContext(r.Context(), "Failed to create profile", "error", err, "profile_name", req.Name)
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.createFailed"), "") // fixes #694, #H7
 		return
 	}
 
-	// If this profile is set as default, it was already handled by the repository
 	sendJSONResponse(w, logger, http.StatusCreated, profileToResponse(profile))
 }
 
@@ -190,11 +185,10 @@ func (s *Server) handleCreateProfile(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleGetProfile(w http.ResponseWriter, r *http.Request, id string) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-	ctx := r.Context()
 
-	profile, err := s.db().Profiles().Get(ctx, id)
+	profile, err := s.profiles.Get(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, database.ErrProfileNotFound) {
+		if errors.Is(err, profilesapp.ErrNotFound) {
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
 			return
@@ -211,51 +205,41 @@ func (s *Server) handleGetProfile(w http.ResponseWriter, r *http.Request, id str
 func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id string) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-	ctx := r.Context()
 
 	var req ProfileRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 
-	// multi_interface gate (seed#1192): if the incoming config exceeds the
-	// 1+1 cap, Pro is required. Done before the DB read so a 402 short-
-	// circuits without a wasted query.
+	// multi_interface gate (seed#1192): done before the DB read so a 402
+	// short-circuits without a wasted query.
 	if req.Config != nil && !s.enforceMultiInterfaceGate(w, r, req.Config) {
 		return
 	}
 
-	// Get existing profile
-	profile, err := s.db().Profiles().Get(ctx, id)
+	update := profilesapp.ProfileUpdate{
+		Name:        req.Name,
+		Description: req.Description,
+		IsDefault:   req.IsDefault,
+	}
+	if req.Config != nil {
+		cfg := string(req.Config)
+		update.ConfigJSON = &cfg
+	}
+
+	profile, err := s.profiles.Update(r.Context(), id, update)
 	if err != nil {
-		if errors.Is(err, database.ErrProfileNotFound) {
+		switch {
+		case errors.Is(err, profilesapp.ErrNotFound):
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
-			return
-		}
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.getFailed"), "") // fixes #694, #H7
-		return
-	}
-
-	// Update fields
-	if req.Name != "" {
-		profile.Name = req.Name
-	}
-	profile.Description = req.Description
-	if req.Config != nil {
-		profile.ConfigJSON = string(req.Config)
-	}
-	profile.IsDefault = req.IsDefault
-
-	if updateErr := s.db().Profiles().Update(ctx, profile); updateErr != nil {
-		if errors.Is(updateErr, database.ErrProfileNameExists) {
+		case errors.Is(err, profilesapp.ErrNameExists):
 			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 				ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
-			return
+		default:
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+				ErrCodeInternal, localizer.T("errors.profile.updateFailed"), "") // fixes #694, #H7
 		}
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.updateFailed"), "") // fixes #694, #H7
 		return
 	}
 
@@ -266,47 +250,26 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 func (s *Server) handleDeleteProfile(w http.ResponseWriter, r *http.Request, id string) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-	ctx := r.Context()
 
-	// Check if profile exists
-	profile, err := s.db().Profiles().Get(ctx, id)
-	if err != nil {
-		if errors.Is(err, database.ErrProfileNotFound) {
-			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
-				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
-			return
-		}
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.getFailed"), "") // fixes #694, #H7
-		return
-	}
-
-	// Prevent deleting the default profile
-	if profile.IsDefault {
+	err := s.profiles.Delete(r.Context(), id)
+	switch {
+	case err == nil:
+		sendJSONResponse(w, logger, http.StatusOK, map[string]string{
+			"message": "Profile deleted successfully",
+		})
+	case errors.Is(err, profilesapp.ErrNotFound):
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
+			ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
+	case errors.Is(err, profilesapp.ErrDeleteDefault):
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeBadRequest, localizer.T("errors.profile.cannotDeleteDefault"), "") // fixes #694
-		return
-	}
-
-	// Check if this is the active profile
-	activeID, _ := s.db().Settings().
-		GetValue(ctx, database.SettingKeyActiveProfile)
-
-	if activeID == id {
+	case errors.Is(err, profilesapp.ErrDeleteActive):
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeBadRequest, localizer.T("errors.profile.cannotDeleteActive"), "") // fixes #694
-		return
-	}
-
-	if deleteErr := s.db().Profiles().Delete(ctx, id); deleteErr != nil {
+	default:
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.profile.deleteFailed"), "") // fixes #694, #H7
-		return
 	}
-
-	sendJSONResponse(w, logger, http.StatusOK, map[string]string{
-		"message": "Profile deleted successfully",
-	})
 }
 
 // handleActiveProfile handles getting and setting the active profile.
@@ -341,64 +304,27 @@ func (s *Server) handleActiveProfile(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-	ctx := r.Context()
 
-	// Get active profile ID from settings
-	activeID, err := s.db().Settings().GetValue(ctx, database.SettingKeyActiveProfile)
+	profile, err := s.profiles.ActiveProfile(r.Context())
 	if err != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.getActiveFailed"), "") // fixes #694, #H7
-		return
-	}
-
-	// If no active profile set, return the default profile
-	if activeID == "" {
-		profile, defaultErr := s.db().Profiles().GetDefault(ctx)
-		if defaultErr != nil {
-			if errors.Is(defaultErr, database.ErrProfileNotFound) {
-				sendErrorResponseWithDetails(
-					w,
-					logger,
-					http.StatusNotFound,
-					ErrCodeNotFound,
-					localizer.T("errors.profile.noActiveOrDefault"),
-					"",
-				) // fixes #694
-				return
-			}
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusInternalServerError,
-				ErrCodeInternal,
-				localizer.T("errors.profile.getDefaultFailed"),
-				"",
-			) // fixes #694, #H7
-			return
-		}
-		sendJSONResponse(w, logger, http.StatusOK, profileToResponse(profile))
-		return
-	}
-
-	// Get the active profile
-	profile, err := s.db().Profiles().Get(ctx, activeID)
-	if err != nil {
-		if errors.Is(err, database.ErrProfileNotFound) {
-			// Active profile was deleted, fall back to default
-			profile, err = s.db().Profiles().GetDefault(ctx)
-			if err != nil {
-				sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
-					ErrCodeNotFound, localizer.T("errors.profile.activeNotFound"), "") // fixes #694
-				return
-			}
-			// Update setting to use default
-			_ = s.db().Settings().
-				Set(ctx, database.SettingKeyActiveProfile, profile.ID)
-		} else {
+		switch {
+		case errors.Is(err, profilesapp.ErrNoActiveOrDefault):
+			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
+				ErrCodeNotFound, localizer.T("errors.profile.noActiveOrDefault"), "") // fixes #694
+		case errors.Is(err, profilesapp.ErrActiveNotFound):
+			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
+				ErrCodeNotFound, localizer.T("errors.profile.activeNotFound"), "") // fixes #694
+		case errors.Is(err, profilesapp.ErrDefaultLookup):
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+				ErrCodeInternal, localizer.T("errors.profile.getDefaultFailed"), "") // fixes #694, #H7
+		case errors.Is(err, profilesapp.ErrActiveLookup):
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+				ErrCodeInternal, localizer.T("errors.profile.getActiveFailed"), "") // fixes #694, #H7
+		default:
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 				ErrCodeInternal, localizer.T("errors.profile.getFailed"), "") // fixes #694, #H7
-			return
 		}
+		return
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, profileToResponse(profile))
@@ -408,7 +334,6 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-	ctx := r.Context()
 
 	var req struct {
 		ProfileID string `json:"profile_id"`
@@ -417,58 +342,39 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if req.ProfileID == "" {
-		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
-			ErrCodeValidation, localizer.T("errors.profile.idRequired"), "") // fixes #694
-		return
-	}
-
-	// Verify profile exists
-	profile, err := s.db().Profiles().Get(ctx, req.ProfileID)
+	profile, err := s.profiles.SetActiveProfile(r.Context(), req.ProfileID)
 	if err != nil {
-		if errors.Is(err, database.ErrProfileNotFound) {
+		switch {
+		case errors.Is(err, profilesapp.ErrIDRequired):
+			sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+				ErrCodeValidation, localizer.T("errors.profile.idRequired"), "") // fixes #694
+		case errors.Is(err, profilesapp.ErrNotFound):
 			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
 				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
-			return
+		default:
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+				ErrCodeInternal, localizer.T("errors.profile.setActiveFailed"), "") // fixes #694, #H7
 		}
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.getFailed"), "") // fixes #694, #H7
 		return
 	}
 
-	// Set active profile in settings
-	if setErr := s.db().Settings().Set(ctx, database.SettingKeyActiveProfile, req.ProfileID); setErr != nil {
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.setActiveFailed"), "") // fixes #694, #H7
-		return
-	}
-
-	// Apply profile settings to the active config (fixes #781)
-	// Uses Config.ApplyProfileJSON() - single source of truth, no ProfileSettings intermediate
+	// Apply profile settings to the active config (fixes #781).
+	// Uses Config.ApplyProfileJSON() - single source of truth.
 	if profile.ConfigJSON != "" {
 		if applyErr := s.config.ApplyProfileJSON(profile.ConfigJSON); applyErr != nil {
 			logger.WarnContext(r.Context(),
 				"Failed to parse profile settings, using defaults",
-				"error",
-				applyErr,
-				"profile_id",
-				profile.ID,
+				"error", applyErr, "profile_id", profile.ID,
 			)
+		} else if saveErr := s.config.Save(s.configPath); saveErr != nil {
+			// fixes #782 - return error instead of silent warning
+			logger.ErrorContext(r.Context(), "Failed to save config after profile switch", "error", saveErr)
+			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+				ErrCodeInternal, localizer.T("errors.config.failedToSave"), saveErr.Error())
+			return
 		} else {
-			// Save updated config to file (fixes #782 - return error instead of silent warning)
-			if saveErr := s.config.Save(s.configPath); saveErr != nil {
-				logger.ErrorContext(r.Context(), "Failed to save config after profile switch", "error", saveErr)
-				sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-					ErrCodeInternal, localizer.T("errors.config.failedToSave"), saveErr.Error())
-				return
-			}
-			logger.InfoContext(
-				r.Context(),
-				"Applied profile settings",
-				"profile_id",
-				profile.ID,
-				"profile_name",
-				profile.Name,
+			logger.InfoContext(r.Context(),
+				"Applied profile settings", "profile_id", profile.ID, "profile_name", profile.Name,
 			)
 		}
 	}
@@ -517,25 +423,9 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	ctx := r.Context()
-
 	// Extract profile ID from path
 	path := strings.TrimPrefix(r.URL.Path, "/api/profiles/")
-	path = strings.TrimSuffix(path, "/duplicate")
-	id := path
-
-	// Get source profile
-	source, err := s.db().Profiles().Get(ctx, id)
-	if err != nil {
-		if errors.Is(err, database.ErrProfileNotFound) {
-			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
-				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
-			return
-		}
-		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
-			ErrCodeInternal, localizer.T("errors.profile.getFailed"), "") // fixes #694, #H7
-		return
-	}
+	id := strings.TrimSuffix(path, "/duplicate")
 
 	// Parse optional new name from request body
 	var req struct {
@@ -543,38 +433,20 @@ func (s *Server) handleDuplicateProfile(w http.ResponseWriter, r *http.Request) 
 	}
 	_ = json.NewDecoder(r.Body).Decode(&req)
 
-	newName := req.Name
-	if newName == "" {
-		newName = source.Name + " (Copy)"
-	}
-
-	// Create duplicate
-	duplicate := &database.Profile{
-		ID:          uuid.New().String(),
-		Name:        newName,
-		Description: source.Description,
-		ConfigJSON:  source.ConfigJSON,
-		IsDefault:   false, // Duplicates are never default
-	}
-
-	if createErr := s.db().Profiles().Create(ctx, duplicate); createErr != nil {
-		if errors.Is(createErr, database.ErrProfileNameExists) {
-			// Try with timestamp suffix
-			duplicate.Name = fmt.Sprintf(
-				"%s (%s)",
-				source.Name,
-				time.Now().Format("2006-01-02 15:04"),
-			)
-			if retryErr := s.db().Profiles().Create(ctx, duplicate); retryErr != nil {
-				sendErrorResponseWithDetails(w, logger, http.StatusConflict,
-					ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
-				return
-			}
-		} else {
+	duplicate, err := s.profiles.Duplicate(r.Context(), id, req.Name)
+	if err != nil {
+		switch {
+		case errors.Is(err, profilesapp.ErrNotFound):
+			sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
+				ErrCodeNotFound, localizer.T("errors.profile.notFound"), "") // fixes #694
+		case errors.Is(err, profilesapp.ErrNameExists):
+			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
+				ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
+		default:
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 				ErrCodeInternal, localizer.T("errors.profile.duplicateFailed"), "") // fixes #694, #H7
-			return
 		}
+		return
 	}
 
 	sendJSONResponse(w, logger, http.StatusCreated, profileToResponse(duplicate))
@@ -591,9 +463,9 @@ func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// multi_client gate: any import that would land >1 profile total
-	// requires Pro. We gate at entry rather than mid-loop so partial
-	// imports don't leave the operator in an inconsistent state.
+	// multi_client gate: any import that would land >1 profile total requires
+	// Pro. We gate at entry so partial imports don't leave the operator in an
+	// inconsistent state.
 	if !s.enforceMultiClientGate(w, r) {
 		return
 	}
@@ -610,83 +482,27 @@ func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := r.Context()
-
 	var req ProfileImportRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
 	}
 
-	result := ProfileImportResponse{
-		Errors: make([]string, 0),
-	}
-
-	for i, p := range req.Profiles {
-		if p.Name == "" {
-			result.Errors = append(result.Errors, fmt.Sprintf("Profile %d: name is required", i+1))
-			result.Skipped++
-			continue
-		}
-
-		// Check if profile with this name exists
-		existing, _ := s.db().Profiles().GetByName(ctx, p.Name)
-		if existing != nil {
-			s.handleExistingProfileImport(ctx, existing, &p, req.Overwrite, &result)
-			continue
-		}
-
-		// Create new profile
-		profile := &database.Profile{
-			ID:          uuid.New().String(),
+	items := make([]profilesapp.ImportItem, 0, len(req.Profiles))
+	for _, p := range req.Profiles {
+		items = append(items, profilesapp.ImportItem{
 			Name:        p.Name,
 			Description: p.Description,
 			ConfigJSON:  string(p.Config),
-			IsDefault:   false, // Never import as default
-		}
-
-		if err := s.db().Profiles().Create(ctx, profile); err != nil {
-			result.Errors = append(
-				result.Errors,
-				fmt.Sprintf("Profile '%s': failed to create - %v", p.Name, err),
-			)
-			result.Skipped++
-		} else {
-			result.Created++
-		}
+		})
 	}
 
-	sendJSONResponse(w, logger, http.StatusOK, result)
-}
-
-// handleExistingProfileImport handles importing a profile that already exists.
-func (s *Server) handleExistingProfileImport(
-	ctx context.Context,
-	existing *database.Profile,
-	p *ProfileRequest,
-	overwrite bool,
-	result *ProfileImportResponse,
-) {
-	if !overwrite {
-		result.Errors = append(
-			result.Errors,
-			fmt.Sprintf("Profile '%s': already exists (use overwrite=true to update)", p.Name),
-		)
-		result.Skipped++
-		return
-	}
-
-	// Update existing profile
-	existing.Description = p.Description
-	existing.ConfigJSON = string(p.Config)
-	if err := s.db().Profiles().Update(ctx, existing); err != nil {
-		result.Errors = append(
-			result.Errors,
-			fmt.Sprintf("Profile '%s': failed to update - %v", p.Name, err),
-		)
-		result.Skipped++
-		return
-	}
-	result.Updated++
+	res := s.profiles.Import(r.Context(), items, req.Overwrite)
+	sendJSONResponse(w, logger, http.StatusOK, ProfileImportResponse{
+		Created: res.Created,
+		Updated: res.Updated,
+		Skipped: res.Skipped,
+		Errors:  res.Errors,
+	})
 }
 
 // handleExportProfiles exports all profiles to JSON.
@@ -712,9 +528,7 @@ func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := r.Context()
-
-	profiles, err := s.db().Profiles().List(ctx)
+	profiles, err := s.profiles.List(r.Context())
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to list profiles", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
@@ -727,7 +541,6 @@ func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 		ExportedAt: time.Now().UTC().Format(time.RFC3339),
 		Profiles:   make([]ProfileResponse, 0, len(profiles)),
 	}
-
 	for _, p := range profiles {
 		response.Profiles = append(response.Profiles, profileToResponse(p))
 	}
@@ -739,29 +552,28 @@ func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, logger, http.StatusOK, response)
 }
 
-// enforceMultiClientGate returns true if the request may proceed and
-// writes a 402 FeatureGateResponse + returns false when the operator
-// has reached the Free/Starter 1-profile cap and lacks the `multi_client`
-// feature. The first profile (bootstrap) is always allowed so a fresh
-// install is functional on any tier; this gate fires only when creating
-// a 2nd or later profile.
+// enforceMultiClientGate returns true if the request may proceed and writes a
+// 402 + returns false when the operator has reached the Free/Starter 1-profile
+// cap and lacks the `multi_client` feature. The first profile (bootstrap) is
+// always allowed so a fresh install is functional on any tier; this gate fires
+// only when creating a 2nd or later profile.
 //
-// MSP positioning: customer-facing copy always calls these "client
-// profiles." The internal feature key stays `multi_client`.
+// MSP positioning: customer-facing copy always calls these "client profiles."
+// The internal feature key stays `multi_client`.
 func (s *Server) enforceMultiClientGate(w http.ResponseWriter, r *http.Request) bool {
 	logger := logging.FromContext(r.Context())
 
 	if s.db() == nil {
-		// No DB → no profile count to compare; fall through. The
-		// downstream handler returns a service-unavailable error.
+		// No DB → no profile count to compare; fall through. The downstream
+		// handler returns a service-unavailable error.
 		return true
 	}
 
-	count, err := s.db().Profiles().Count(r.Context())
+	count, err := s.profiles.Count(r.Context())
 	if err != nil {
 		logger.WarnContext(r.Context(), "multi_client gate: failed to count profiles", "error", err)
-		// Fail open — refusing to gate is safer than blocking the
-		// operator when the DB hiccups. CI catches it as a real error.
+		// Fail open — refusing to gate is safer than blocking the operator when
+		// the DB hiccups. CI catches it as a real error.
 		return true
 	}
 	if count < 1 {
@@ -791,8 +603,8 @@ func (s *Server) enforceMultiClientGate(w http.ResponseWriter, r *http.Request) 
 	return false
 }
 
-// profileToResponse converts a database profile to an API response.
-func profileToResponse(p *database.Profile) ProfileResponse {
+// profileToResponse converts a use-case profile to an API response.
+func profileToResponse(p profilesapp.Profile) ProfileResponse {
 	var configJSON json.RawMessage
 	if p.ConfigJSON != "" {
 		configJSON = json.RawMessage(p.ConfigJSON)
@@ -811,10 +623,8 @@ func profileToResponse(p *database.Profile) ProfileResponse {
 	}
 }
 
-// profileInterfaceShape is the just-enough projection of a profile's
-// ConfigJSON we need to count interfaces for the multi_interface gate.
-// We avoid pulling in the full config.Config schema here — JSON
-// unmarshal of unknown fields is fine; only the interface block matters.
+// profileInterfaceShape is the just-enough projection of a profile's ConfigJSON
+// we need to count interfaces for the multi_interface gate.
 type profileInterfaceShape struct {
 	Interface struct {
 		Default  string   `json:"default"`
@@ -824,14 +634,9 @@ type profileInterfaceShape struct {
 	} `json:"interface"`
 }
 
-// enforceMultiInterfaceGate returns true if the request may proceed and
-// writes a 402 + returns false when the profile's interface block
-// exceeds 1 ethernet + 1 wifi without the `multi_interface` feature.
-//
-// The "active" / single-interface workflow (Default + WiFi) always
-// passes — Free/Starter are explicitly entitled to one of each.
-// Pro is required only when Ethernet[] or WiFiList[] would push the
-// count above 1 in either category.
+// enforceMultiInterfaceGate returns true if the request may proceed and writes a
+// 402 + returns false when the profile's interface block exceeds 1 ethernet + 1
+// wifi without the `multi_interface` feature.
 func (s *Server) enforceMultiInterfaceGate(w http.ResponseWriter, r *http.Request, rawConfig json.RawMessage) bool {
 	logger := logging.FromContext(r.Context())
 
@@ -841,9 +646,9 @@ func (s *Server) enforceMultiInterfaceGate(w http.ResponseWriter, r *http.Reques
 
 	var shape profileInterfaceShape
 	if err := json.Unmarshal(rawConfig, &shape); err != nil {
-		// Malformed JSON is the caller's problem to surface; let the
-		// downstream validation reject it. We must not gate on parse
-		// failure or we'd lock operators out of fixing bad configs.
+		// Malformed JSON is the caller's problem to surface; let the downstream
+		// validation reject it. We must not gate on parse failure or we'd lock
+		// operators out of fixing bad configs.
 		logger.DebugContext(r.Context(), "multi_interface gate: skipping due to config parse error", "error", err)
 		return true
 	}
@@ -876,9 +681,8 @@ func (s *Server) enforceMultiInterfaceGate(w http.ResponseWriter, r *http.Reques
 	return false
 }
 
-// countNonEmpty counts how many distinct non-empty interface names are
-// present in (primary, extras). Empty strings and duplicates of the
-// primary are skipped so the same name appearing in both fields is one.
+// countNonEmpty counts how many distinct non-empty interface names are present
+// in (primary, extras). Empty strings and duplicates of the primary are skipped.
 func countNonEmpty(primary string, extras []string) int {
 	seen := make(map[string]struct{}, len(extras)+1)
 	if primary != "" {
