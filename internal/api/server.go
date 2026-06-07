@@ -33,6 +33,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/mibdb"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
+	networkapp "github.com/MustardSeedNetworks/seed/internal/network/app"
 	"github.com/MustardSeedNetworks/seed/internal/oauth"
 	"github.com/MustardSeedNetworks/seed/internal/paths"
 	"github.com/MustardSeedNetworks/seed/internal/pipeline/publicip"
@@ -133,6 +134,7 @@ type Server struct {
 	wifiDiscovery      *wifiapp.Discovery       // Enhanced Wi-Fi discovery use-case (ADR-0016 phase 2)
 	settingsStore      *settingsapp.Persistence // Settings-to-profile persistence use-case (ADR-0016 phase 3)
 	profiles           *profilesapp.Service     // Profile CRUD/active/import use-case (ADR-0016 phase 3)
+	networkIP          *networkapp.IPService    // IP-config + MTU use-case (ADR-0016 phase 3)
 	tlsFingerprint     tlsFingerprintCache      // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
 }
 
@@ -254,6 +256,9 @@ func NewServer(
 
 	// Wire the profiles use-case (ADR-0016 phase 3), also over the lazy db.
 	s.initProfilesUseCase()
+
+	// Wire the network IP-config + MTU use-case (ADR-0016 phase 3).
+	s.initNetworkUseCase()
 
 	// Initialize vulnerability scanner if enabled
 	s.initVulnerabilityScanner(cfg)
