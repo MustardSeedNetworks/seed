@@ -68,7 +68,16 @@ func (f *fakeStore) Create(_ context.Context, p profilesapp.Profile) error {
 	return nil
 }
 
-func (f *fakeStore) Update(_ context.Context, p profilesapp.Profile) error {
+func (f *fakeStore) Update(_ context.Context, p profilesapp.Profile, ifMatch string) error {
+	existing, ok := f.byID[p.ID]
+	if ifMatch != "" {
+		if !ok {
+			return profilesapp.ErrNotFound
+		}
+		if existing.ConfigJSON != ifMatch { // tests use ConfigJSON as the version token
+			return profilesapp.ErrConflict
+		}
+	}
 	f.byID[p.ID] = p
 	return nil
 }
@@ -112,7 +121,7 @@ func TestUpdatePartialSemantics(t *testing.T) {
 	svc := profilesapp.NewService(store)
 
 	// Empty name keeps existing; nil config keeps existing; description always applied.
-	got, err := svc.Update(ctx(), "p1", profilesapp.ProfileUpdate{Name: "", Description: "new", ConfigJSON: nil})
+	got, err := svc.Update(ctx(), "p1", profilesapp.ProfileUpdate{Name: "", Description: "new", ConfigJSON: nil}, "")
 	if err != nil {
 		t.Fatalf("update: %v", err)
 	}
@@ -121,16 +130,44 @@ func TestUpdatePartialSemantics(t *testing.T) {
 	}
 
 	cfg := `{"x":2}`
-	got, _ = svc.Update(ctx(), "p1", profilesapp.ProfileUpdate{Name: "renamed", ConfigJSON: &cfg})
+	got, _ = svc.Update(ctx(), "p1", profilesapp.ProfileUpdate{Name: "renamed", ConfigJSON: &cfg}, "")
 	if got.Name != "renamed" || got.ConfigJSON != cfg {
 		t.Fatalf("full update mismatch: %+v", got)
 	}
 
-	if _, missErr := svc.Update(ctx(), "missing", profilesapp.ProfileUpdate{}); !errors.Is(
+	if _, missErr := svc.Update(ctx(), "missing", profilesapp.ProfileUpdate{}, ""); !errors.Is(
 		missErr,
 		profilesapp.ErrNotFound,
 	) {
 		t.Fatalf("update missing should be ErrNotFound, got %v", missErr)
+	}
+}
+
+func TestUpdateIfMatch(t *testing.T) {
+	store := newFakeStore()
+	// fakeStore.UpdateIfMatch treats ConfigJSON as the version token.
+	store.byID["p1"] = profilesapp.Profile{ID: "p1", Name: "n", ConfigJSON: "v1"}
+	svc := profilesapp.NewService(store)
+
+	// Matching ETag writes through.
+	upd := `v2`
+	if _, err := svc.Update(ctx(), "p1", profilesapp.ProfileUpdate{ConfigJSON: &upd}, "v1"); err != nil {
+		t.Fatalf("matching if-match should succeed: %v", err)
+	}
+
+	// Stale ETag (the row is now "v2") conflicts.
+	again := `v3`
+	if _, err := svc.Update(ctx(), "p1", profilesapp.ProfileUpdate{ConfigJSON: &again}, "v1"); !errors.Is(
+		err,
+		profilesapp.ErrConflict,
+	) {
+		t.Fatalf("stale if-match should be ErrConflict, got %v", err)
+	}
+
+	// Empty if-match stays unconditional.
+	last := `v4`
+	if _, err := svc.Update(ctx(), "p1", profilesapp.ProfileUpdate{ConfigJSON: &last}, ""); err != nil {
+		t.Fatalf("unconditional update should succeed: %v", err)
 	}
 }
 

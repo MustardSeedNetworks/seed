@@ -30,6 +30,8 @@ func mapProfileErr(err error) error {
 		return profilesapp.ErrNotFound
 	case errors.Is(err, database.ErrProfileNameExists):
 		return profilesapp.ErrNameExists
+	case errors.Is(err, database.ErrProfileConflict):
+		return profilesapp.ErrConflict
 	default:
 		return err
 	}
@@ -105,8 +107,11 @@ func (s profilesStore) Create(ctx context.Context, p profilesapp.Profile) error 
 	return mapProfileErr(s.db().Profiles().Create(ctx, appToDBProfile(p)))
 }
 
-func (s profilesStore) Update(ctx context.Context, p profilesapp.Profile) error {
-	return mapProfileErr(s.db().Profiles().Update(ctx, appToDBProfile(p)))
+func (s profilesStore) Update(ctx context.Context, p profilesapp.Profile, ifMatch string) error {
+	if ifMatch == "" {
+		return mapProfileErr(s.db().Profiles().Update(ctx, appToDBProfile(p)))
+	}
+	return mapProfileErr(s.db().Profiles().UpdateIfMatch(ctx, appToDBProfile(p), ifMatch))
 }
 
 func (s profilesStore) Delete(ctx context.Context, id string) error {
