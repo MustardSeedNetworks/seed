@@ -17,7 +17,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/MustardSeedNetworks/seed/internal/database"
+	alertsapp "github.com/MustardSeedNetworks/seed/internal/alerts/app"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -78,13 +78,12 @@ func (s *Server) handleAlertRuleByID(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) listAlertRules(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	db := s.db()
-	if db == nil {
+	if s.db() == nil {
 		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
 		return
 	}
 	enabledOnly := r.URL.Query().Get("enabled_only") == "true"
-	rules, err := db.AlertRules().List(r.Context(), enabledOnly)
+	rules, err := s.alertRules.List(r.Context(), enabledOnly)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "list alert_rules failed", "error", err)
 		http.Error(w, "Failed to list rules", http.StatusInternalServerError)
@@ -98,14 +97,13 @@ func (s *Server) listAlertRules(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getAlertRule(w http.ResponseWriter, r *http.Request, id int64) {
 	logger := logging.FromContext(r.Context())
-	db := s.db()
-	if db == nil {
+	if s.db() == nil {
 		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
 		return
 	}
-	rule, err := db.AlertRules().Get(r.Context(), id)
+	rule, err := s.alertRules.Get(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, database.ErrAlertRuleNotFound) {
+		if errors.Is(err, alertsapp.ErrRuleNotFound) {
 			http.Error(w, "Rule not found", http.StatusNotFound)
 			return
 		}
@@ -118,8 +116,7 @@ func (s *Server) getAlertRule(w http.ResponseWriter, r *http.Request, id int64) 
 
 func (s *Server) createAlertRule(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	db := s.db()
-	if db == nil {
+	if s.db() == nil {
 		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
 		return
 	}
@@ -128,13 +125,14 @@ func (s *Server) createAlertRule(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	rule := inputToRule(in, 0)
-	if createErr := db.AlertRules().Create(r.Context(), rule); createErr != nil {
-		logger.ErrorContext(r.Context(), "create alert_rule failed", "error", createErr)
-		if strings.HasPrefix(createErr.Error(), "alert_rules:") {
-			http.Error(w, createErr.Error(), http.StatusBadRequest)
+	rule, createErr := s.alertRules.Create(r.Context(), inputToRule(in))
+	if createErr != nil {
+		var ve *alertsapp.ValidationError
+		if errors.As(createErr, &ve) {
+			http.Error(w, ve.Msg, http.StatusBadRequest)
 			return
 		}
+		logger.ErrorContext(r.Context(), "create alert_rule failed", "error", createErr)
 		http.Error(w, "Failed to create rule", http.StatusInternalServerError)
 		return
 	}
@@ -143,70 +141,39 @@ func (s *Server) createAlertRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) updateAlertRule(w http.ResponseWriter, r *http.Request, id int64) {
-	in, err := s.parseRuleUpdate(w, r)
-	if err != nil {
-		return
-	}
-	rule := inputToRule(in, id)
-	if !s.applyRuleUpdate(w, r, id, rule) {
-		return
-	}
-	// Echo the freshly-read row so the JSON reflects updated_at.
-	// Get failures fall back to echoing the request shape.
-	current, getErr := s.db().AlertRules().Get(r.Context(), id)
-	if getErr != nil || current == nil {
-		writeJSON(w, r, encodeAlertRule(rule))
-		return
-	}
-	writeJSON(w, r, encodeAlertRule(current))
-}
-
-// parseRuleUpdate consolidates the precondition checks (db ready +
-// body decode) the PUT handler shares with no other handler. Splits
-// out from updateAlertRule so the call site reads top-down and so
-// the structural shape doesn't mirror handlers_polling_targets.
-func (s *Server) parseRuleUpdate(w http.ResponseWriter, r *http.Request) (*alertRuleInput, error) {
+	logger := logging.FromContext(r.Context())
 	if s.db() == nil {
 		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
-		return nil, errors.New("db not ready")
+		return
 	}
 	in, err := decodeAlertRuleInput(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		return nil, err
+		return
 	}
-	return in, nil
-}
-
-// applyRuleUpdate runs the repo Update + maps errors to HTTP
-// statuses. Returns true on success so the caller proceeds to
-// echo; false when an error response has already been written.
-func (s *Server) applyRuleUpdate(
-	w http.ResponseWriter, r *http.Request, id int64, rule *database.AlertRule,
-) bool {
-	logger := logging.FromContext(r.Context())
-	if err := s.db().AlertRules().Update(r.Context(), rule); err != nil {
-		if errors.Is(err, database.ErrAlertRuleNotFound) {
+	// The use-case writes the row and echoes the freshly-read record so the
+	// JSON reflects updated_at (falling back to the written shape on re-read).
+	rule, updateErr := s.alertRules.Update(r.Context(), id, inputToRule(in))
+	if updateErr != nil {
+		if errors.Is(updateErr, alertsapp.ErrRuleNotFound) {
 			http.Error(w, "Rule not found", http.StatusNotFound)
-			return false
+			return
 		}
-		logger.ErrorContext(r.Context(), "update alert_rule failed",
-			"id", id, "error", err)
+		logger.ErrorContext(r.Context(), "update alert_rule failed", "id", id, "error", updateErr)
 		http.Error(w, "Failed to update rule", http.StatusInternalServerError)
-		return false
+		return
 	}
-	return true
+	writeJSON(w, r, encodeAlertRule(rule))
 }
 
 func (s *Server) deleteAlertRule(w http.ResponseWriter, r *http.Request, id int64) {
 	logger := logging.FromContext(r.Context())
-	db := s.db()
-	if db == nil {
+	if s.db() == nil {
 		http.Error(w, "Database not initialized", http.StatusServiceUnavailable)
 		return
 	}
-	if err := db.AlertRules().Delete(r.Context(), id); err != nil {
-		if errors.Is(err, database.ErrAlertRuleNotFound) {
+	if err := s.alertRules.Delete(r.Context(), id); err != nil {
+		if errors.Is(err, alertsapp.ErrRuleNotFound) {
 			http.Error(w, "Rule not found", http.StatusNotFound)
 			return
 		}
@@ -236,10 +203,10 @@ func decodeAlertRuleInput(r *http.Request) (*alertRuleInput, error) {
 	return &in, nil
 }
 
-func inputToRule(in *alertRuleInput, id int64) *database.AlertRule {
-	threshold := max(in.ThresholdCount, 1)
-	return &database.AlertRule{
-		ID:                   id,
+// inputToRule maps the wire input to the use-case model. The ThresholdCount
+// floor (>=1) is applied by the use-case, so it is passed through raw here.
+func inputToRule(in *alertRuleInput) alertsapp.Rule {
+	return alertsapp.Rule{
 		Name:                 in.Name,
 		Enabled:              in.Enabled,
 		MatchKind:            in.MatchKind,
@@ -250,11 +217,11 @@ func inputToRule(in *alertRuleInput, id int64) *database.AlertRule {
 		AlertTitle:           in.AlertTitle,
 		AlertMessage:         in.AlertMessage,
 		WindowSeconds:        in.WindowSeconds,
-		ThresholdCount:       threshold,
+		ThresholdCount:       in.ThresholdCount,
 	}
 }
 
-func encodeAlertRule(rule *database.AlertRule) map[string]any {
+func encodeAlertRule(rule alertsapp.Rule) map[string]any {
 	return map[string]any{
 		"id":                   rule.ID,
 		jsonKeyName:            rule.Name,
@@ -273,7 +240,7 @@ func encodeAlertRule(rule *database.AlertRule) map[string]any {
 	}
 }
 
-func encodeAlertRules(rules []*database.AlertRule) []map[string]any {
+func encodeAlertRules(rules []alertsapp.Rule) []map[string]any {
 	out := make([]map[string]any, 0, len(rules))
 	for _, r := range rules {
 		out = append(out, encodeAlertRule(r))

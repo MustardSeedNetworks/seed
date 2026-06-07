@@ -154,6 +154,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	s.initSettingsUseCase()
 	s.initProfilesUseCase()
 	s.initNetworkUseCase()
+	s.initAlertsUseCase()
 
 	// Setup routes
 	s.setupRoutes()
