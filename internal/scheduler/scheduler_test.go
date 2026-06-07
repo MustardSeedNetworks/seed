@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/scheduler"
+	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 )
 
 // fakeJob is a controllable Job for tests.

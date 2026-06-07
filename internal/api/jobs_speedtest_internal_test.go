@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/speedtest"
-	"github.com/krisarmstrong/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
+	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
 // fakeSpeedTester is a controllable speedTester for the kind tests: it never

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	// Import the package to verify it compiles correctly.
-	_ "github.com/krisarmstrong/seed/internal/diagnostics/performance"
+	_ "github.com/MustardSeedNetworks/seed/internal/diagnostics/performance"
 )
 
 func TestPackageCompiles(t *testing.T) {

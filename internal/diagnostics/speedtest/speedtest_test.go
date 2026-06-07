@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/speedtest"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 )
 
 func TestNewTester(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // ============================================================================

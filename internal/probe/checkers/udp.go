@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/probe"
+	"github.com/MustardSeedNetworks/seed/internal/probe"
 )
 
 // defaultUDPProbeTimeout is the per-attempt UDP probe timeout.

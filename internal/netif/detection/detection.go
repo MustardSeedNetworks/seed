@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // Interface type constants.

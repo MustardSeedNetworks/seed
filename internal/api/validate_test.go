@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/api"
-	"github.com/krisarmstrong/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/i18n"
 )
 
 // testLocalizer returns a localizer that surfaces the message key as the

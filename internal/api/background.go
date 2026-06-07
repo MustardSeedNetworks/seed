@@ -3,9 +3,9 @@ package api
 import (
 	"context"
 
-	"github.com/krisarmstrong/seed/internal/reporting"
-	wificapture "github.com/krisarmstrong/seed/internal/wifi/capture"
-	"github.com/krisarmstrong/seed/internal/wifi/visibility"
+	"github.com/MustardSeedNetworks/seed/internal/reporting"
+	wificapture "github.com/MustardSeedNetworks/seed/internal/wifi/capture"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/visibility"
 )
 
 // BackgroundComponents holds the long-lived components that own real background

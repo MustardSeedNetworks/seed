@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/krisarmstrong/seed/internal/truststore"
+	"github.com/MustardSeedNetworks/seed/internal/truststore"
 )
 
 const (

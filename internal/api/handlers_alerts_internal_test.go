@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 // newAlertsTestServer mirrors newTopologyTestServer but exists as

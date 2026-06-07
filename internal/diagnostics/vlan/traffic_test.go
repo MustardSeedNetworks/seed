@@ -10,7 +10,7 @@ import (
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/vlan"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
 )
 
 // createVLANPacket creates a gopacket.Packet with a VLAN tag for testing.

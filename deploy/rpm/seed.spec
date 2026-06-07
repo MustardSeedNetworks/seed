@@ -3,7 +3,7 @@ Version:    __VERSION__
 Release:    1%{?dist}
 Summary:    The Seed - Network Diagnostic Tool by Mustard Seed Networks
 License:    BSL 1.1
-URL:        https://github.com/krisarmstrong/seed
+URL:        https://github.com/MustardSeedNetworks/seed
 BuildArch:  __ARCHITECTURE__
 
 Requires:   libpcap, systemd, libcap

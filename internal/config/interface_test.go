@@ -4,7 +4,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 func TestHasIPv4Address(t *testing.T) {

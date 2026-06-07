@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	api "github.com/krisarmstrong/seed/internal/api"
+	api "github.com/MustardSeedNetworks/seed/internal/api"
 )
 
 // TestEndpointAuthentication verifies that all API endpoints properly enforce JWT authentication

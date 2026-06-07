@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/probe"
-	"github.com/krisarmstrong/seed/internal/probe/checkers"
+	"github.com/MustardSeedNetworks/seed/internal/probe"
+	"github.com/MustardSeedNetworks/seed/internal/probe/checkers"
 )
 
 // scriptedConn delivers canned bytes on Read; ignores Write.

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/dns"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 )
 
 func TestParseResolvConfDarwin(t *testing.T) {

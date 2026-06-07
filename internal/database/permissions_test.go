@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 // TestOpenRestrictsFileMode verifies the database file (and any WAL/SHM sidecars)

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 func TestRedactString(t *testing.T) {

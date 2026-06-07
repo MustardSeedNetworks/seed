@@ -14,9 +14,9 @@ package api
 // msn-docs-internal/10-Portal-License/LICENSE_STRATEGY.md.
 
 import (
-	"github.com/krisarmstrong/seed/internal/engine"
-	"github.com/krisarmstrong/seed/internal/license"
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // minTierForEngine returns the minimum license tier required to

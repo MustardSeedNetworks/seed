@@ -10,7 +10,7 @@ import (
 	"crypto/x509"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // ProfilerConfig holds configuration for the device profiler.

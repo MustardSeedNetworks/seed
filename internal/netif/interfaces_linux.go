@@ -13,7 +13,7 @@ import (
 
 	"github.com/vishvananda/netlink"
 
-	"github.com/krisarmstrong/seed/internal/validation"
+	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
 // netmaskToCIDR converts a dotted decimal netmask to CIDR prefix length.

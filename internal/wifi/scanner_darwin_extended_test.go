@@ -5,7 +5,7 @@ package wifi_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/wifi"
+	"github.com/MustardSeedNetworks/seed/internal/wifi"
 )
 
 // TestParseAirportLineSecurityTypes tests parsing various security type formats.

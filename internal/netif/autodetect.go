@@ -1,7 +1,7 @@
 package netif
 
 import (
-	"github.com/krisarmstrong/seed/internal/netif/detection"
+	"github.com/MustardSeedNetworks/seed/internal/netif/detection"
 )
 
 // AutoDetectInterfaceName returns the name of the highest-scoring live interface.

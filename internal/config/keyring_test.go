@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 // versionedPrefix is the on-the-wire prefix for DEK-encrypted credentials.

@@ -7,8 +7,8 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/protocols/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
 // TestParseIPAddressFromOIDWithValidIPv4 tests parsing valid IPv4 addresses from OID.

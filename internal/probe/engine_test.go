@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/probe"
+	"github.com/MustardSeedNetworks/seed/internal/probe"
 )
 
 // fakeChecker is a programmable Checker for engine tests.

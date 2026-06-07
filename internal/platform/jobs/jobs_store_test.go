@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
 // fakeStore is a concurrency-safe in-memory jobs.Store for exercising the

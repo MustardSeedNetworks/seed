@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 func setupAPITokenTest(t *testing.T, owners ...string) (*database.APITokenRepository, context.Context) {

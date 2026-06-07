@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/speedtest"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 )
 
 // TestBuildTestResultFromParams tests the result building logic with explicit parameters.

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 // MetricsSource rolls up internal/database.metrics into

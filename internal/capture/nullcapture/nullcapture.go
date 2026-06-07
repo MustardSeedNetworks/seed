@@ -11,7 +11,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/capture"
+	"github.com/MustardSeedNetworks/seed/internal/capture"
 )
 
 // ErrUnavailable is returned by OpenLive when the binary was built without live

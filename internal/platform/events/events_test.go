@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/platform/events"
+	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 )
 
 // testEvent is a minimal domain fact used by the bus tests.

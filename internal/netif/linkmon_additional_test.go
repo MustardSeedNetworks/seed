@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/netif"
+	"github.com/MustardSeedNetworks/seed/internal/netif"
 )
 
 func TestLinkStateStringDefaultCase(t *testing.T) {

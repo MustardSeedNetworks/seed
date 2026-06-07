@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
 // hourlyPassInterval is how often the engine attempts hourly rollups

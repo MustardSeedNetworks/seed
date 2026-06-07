@@ -3,7 +3,7 @@ package wifianomaly_test
 import (
 	"testing"
 
-	wifianomaly "github.com/krisarmstrong/seed/internal/wifi/anomaly"
+	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
 )
 
 func TestDeauthFlood(t *testing.T) {

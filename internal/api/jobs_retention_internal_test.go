@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/platform/events"
-	"github.com/krisarmstrong/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/platform/events"
+	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
 // TestSweepJobsDurable: only terminal jobs older than the cutoff are deleted

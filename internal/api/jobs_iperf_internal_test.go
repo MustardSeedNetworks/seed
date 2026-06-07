@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/iperf"
-	"github.com/krisarmstrong/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
+	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
 // fakeIperfClient is a controllable iperfClient for the kind tests: it never

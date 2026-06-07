@@ -12,8 +12,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // route declares an HTTP route and its per-route policy. Authentication and CSRF

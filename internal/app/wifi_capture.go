@@ -1,8 +1,8 @@
 package app
 
 import (
-	wificapture "github.com/krisarmstrong/seed/internal/wifi/capture"
-	"github.com/krisarmstrong/seed/internal/wifi/visibility"
+	wificapture "github.com/MustardSeedNetworks/seed/internal/wifi/capture"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/visibility"
 )
 
 // NewWiFiCapture builds the monitor-mode capture producer feeding the visibility

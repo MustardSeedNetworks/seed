@@ -18,7 +18,7 @@ import (
 
 	"golang.org/x/net/dns/dnsmessage"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 const (

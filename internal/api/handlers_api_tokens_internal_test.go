@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
 // apiTokenTestSetup wires up the minimum surface needed by the

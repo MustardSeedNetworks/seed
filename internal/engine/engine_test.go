@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/engine"
 )
 
 func silentLogger() *slog.Logger { return slog.New(slog.DiscardHandler) }

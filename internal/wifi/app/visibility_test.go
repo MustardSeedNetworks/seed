@@ -3,10 +3,10 @@ package wifiapp_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/anomaly"
-	"github.com/krisarmstrong/seed/internal/wifi/airspace"
-	wifiapp "github.com/krisarmstrong/seed/internal/wifi/app"
-	"github.com/krisarmstrong/seed/internal/wifi/visibility"
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
+	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/visibility"
 )
 
 type fakeSource struct {

@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/wifi"
-	wifianomaly "github.com/krisarmstrong/seed/internal/wifi/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/wifi"
+	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
 )
 
 func TestBandLabel(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/probe"
+	"github.com/MustardSeedNetworks/seed/internal/probe"
 )
 
 // defaultRTSPTimeout is the per-attempt RTSP probe timeout.

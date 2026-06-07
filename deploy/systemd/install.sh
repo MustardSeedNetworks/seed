@@ -100,7 +100,7 @@ else
     cat > /etc/systemd/system/seed.service << 'EOF'
 [Unit]
 Description=The Seed - Mustard Seed Networks
-Documentation=https://github.com/krisarmstrong/seed
+Documentation=https://github.com/MustardSeedNetworks/seed
 After=network-online.target
 Wants=network-online.target
 

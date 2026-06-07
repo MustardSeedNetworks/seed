@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/net/route"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/gateway"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
 )
 
 func TestExtractRouteIPInet4(t *testing.T) {

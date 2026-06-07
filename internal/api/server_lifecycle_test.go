@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/api"
 )
 
 // TestEnsureSelfSignedCertIsCAEligible verifies the generated self-signed

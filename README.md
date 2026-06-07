@@ -2,12 +2,12 @@
 
 > Portable network diagnostic appliance with real-time web UI.
 
-[![CI](https://github.com/krisarmstrong/seed/actions/workflows/ci.yml/badge.svg)](https://github.com/krisarmstrong/seed/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/krisarmstrong/seed?logo=github)](https://github.com/krisarmstrong/seed/releases/latest)
-[![CodeQL](https://github.com/krisarmstrong/seed/actions/workflows/codeql.yml/badge.svg)](https://github.com/krisarmstrong/seed/actions/workflows/codeql.yml)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/krisarmstrong/seed/badge)](https://scorecard.dev/viewer/?uri=github.com/krisarmstrong/seed)
-[![Go Reference](https://pkg.go.dev/badge/github.com/krisarmstrong/seed.svg)](https://pkg.go.dev/github.com/krisarmstrong/seed)
-[![Go Report Card](https://goreportcard.com/badge/github.com/krisarmstrong/seed)](https://goreportcard.com/report/github.com/krisarmstrong/seed)
+[![CI](https://github.com/MustardSeedNetworks/seed/actions/workflows/ci.yml/badge.svg)](https://github.com/MustardSeedNetworks/seed/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/MustardSeedNetworks/seed?logo=github)](https://github.com/MustardSeedNetworks/seed/releases/latest)
+[![CodeQL](https://github.com/MustardSeedNetworks/seed/actions/workflows/codeql.yml/badge.svg)](https://github.com/MustardSeedNetworks/seed/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/MustardSeedNetworks/seed/badge)](https://scorecard.dev/viewer/?uri=github.com/MustardSeedNetworks/seed)
+[![Go Reference](https://pkg.go.dev/badge/github.com/MustardSeedNetworks/seed.svg)](https://pkg.go.dev/github.com/MustardSeedNetworks/seed)
+[![Go Report Card](https://goreportcard.com/badge/github.com/MustardSeedNetworks/seed)](https://goreportcard.com/report/github.com/MustardSeedNetworks/seed)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE)
 
 The Seed is a network diagnostic appliance from **Mustard Seed Networks**.
@@ -77,17 +77,17 @@ sudo setcap cap_net_raw,cap_net_admin=+ep ./seed
 ### Install + run
 
 ```bash
-git clone https://github.com/krisarmstrong/seed.git
+git clone https://github.com/MustardSeedNetworks/seed.git
 cd seed
 make build            # builds frontend + backend in one step
 sudo ./seed           # listens on https://localhost:8443
 ```
 
-Or grab a package from the [releases page](https://github.com/krisarmstrong/seed/releases)
+Or grab a package from the [releases page](https://github.com/MustardSeedNetworks/seed/releases)
 (`.deb`, `.rpm`, macOS `.pkg`, Windows `.zip`) or install via Homebrew:
 
 ```bash
-brew install krisarmstrong/tap/seed
+brew install MustardSeedNetworks/tap/seed
 ```
 
 ### First run
@@ -200,7 +200,7 @@ Cross-platform releases (linux/macOS/windows × amd64/arm64) are built by
 
 ```bash
 docker run --rm --net host --cap-add NET_RAW --cap-add NET_ADMIN \
-  ghcr.io/krisarmstrong/seed:latest
+  ghcr.io/mustardseednetworks/seed:latest
 ```
 
 Multi-arch images (linux/amd64, linux/arm64) built on native runners with
@@ -241,5 +241,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 The Seed is the diagnostic appliance. Two sibling tools complete the
 Mustard Seed Networks testing toolkit:
 
-- **[stem](https://github.com/krisarmstrong/stem)** — RFC-compliant network performance testing
-- **[niac-go](https://github.com/krisarmstrong/niac-go)** — network device simulator
+- **[stem](https://github.com/MustardSeedNetworks/stem)** — RFC-compliant network performance testing
+- **[niac-go](https://github.com/MustardSeedNetworks/niac-go)** — network device simulator

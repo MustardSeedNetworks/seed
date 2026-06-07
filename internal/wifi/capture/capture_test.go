@@ -12,9 +12,9 @@ import (
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
 
-	"github.com/krisarmstrong/seed/internal/capture"
-	wificapture "github.com/krisarmstrong/seed/internal/wifi/capture"
-	"github.com/krisarmstrong/seed/internal/wifi/dot11"
+	"github.com/MustardSeedNetworks/seed/internal/capture"
+	wificapture "github.com/MustardSeedNetworks/seed/internal/wifi/capture"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
 )
 
 // --- fakes ----------------------------------------------------------------

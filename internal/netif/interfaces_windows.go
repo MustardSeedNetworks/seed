@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/validation"
+	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
 // Command timeout constants for Windows system utilities.

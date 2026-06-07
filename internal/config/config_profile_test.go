@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 // TestProfileJSONRoundTrip is the previously-missing coverage for the profile

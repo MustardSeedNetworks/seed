@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	wifianomaly "github.com/krisarmstrong/seed/internal/wifi/anomaly"
-	"github.com/krisarmstrong/seed/internal/wifi/dot11"
-	"github.com/krisarmstrong/seed/internal/wifi/visibility"
+	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/visibility"
 )
 
 func mac(t *testing.T, s string) net.HardwareAddr {

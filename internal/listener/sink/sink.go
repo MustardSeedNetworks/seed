@@ -16,8 +16,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/listener"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/listener"
 )
 
 // eventsStore is the narrowed surface the sink uses. Tests inject a

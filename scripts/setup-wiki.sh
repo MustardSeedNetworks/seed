@@ -2,7 +2,7 @@
 # Setup script to populate GitHub Wiki with user-facing documentation
 #
 # Prerequisites:
-# 1. Go to https://github.com/krisarmstrong/seed/wiki
+# 1. Go to https://github.com/MustardSeedNetworks/seed/wiki
 # 2. Click "Create the first page"
 # 3. Title: "Home"
 # 4. Content: "Initializing wiki..."
@@ -23,12 +23,12 @@ if [ ! -d "/tmp/seed.wiki" ]; then
     cd /tmp
     rm -rf seed.wiki 2>/dev/null || true
 
-    if ! git clone https://github.com/krisarmstrong/seed.wiki.git; then
+    if ! git clone https://github.com/MustardSeedNetworks/seed.wiki.git; then
         echo ""
         echo "❌ ERROR: Wiki repository not found."
         echo ""
         echo "Please initialize the wiki first:"
-        echo "1. Go to: https://github.com/krisarmstrong/seed/wiki"
+        echo "1. Go to: https://github.com/MustardSeedNetworks/seed/wiki"
         echo "2. Click 'Create the first page'"
         echo "3. Save with any content"
         echo "4. Then run this script again"
@@ -70,20 +70,20 @@ cat > Home.md << 'EOFHOME'
 - 📖 Storybook component documentation
 - 🧪 Multi-browser testing (Chrome, Firefox, WebKit, Edge)
 
-[View Full Changelog →](https://github.com/krisarmstrong/seed/releases)
+[View Full Changelog →](https://github.com/MustardSeedNetworks/seed/releases)
 
 ## Getting Help
 
-- 💬 **Community:** [GitHub Discussions](https://github.com/krisarmstrong/seed/discussions)
-- 🐛 **Bug Reports:** [GitHub Issues](https://github.com/krisarmstrong/seed/issues)
+- 💬 **Community:** [GitHub Discussions](https://github.com/MustardSeedNetworks/seed/discussions)
+- 🐛 **Bug Reports:** [GitHub Issues](https://github.com/MustardSeedNetworks/seed/issues)
 - 📧 **Support:** support@mustardseednetworks.com
 
 ## Contributing
 
 The Seed is proprietary software, but we welcome feedback and bug reports.
 
-- [GitHub Issues](https://github.com/krisarmstrong/seed/issues)
-- [GitHub Discussions](https://github.com/krisarmstrong/seed/discussions)
+- [GitHub Issues](https://github.com/MustardSeedNetworks/seed/issues)
+- [GitHub Discussions](https://github.com/MustardSeedNetworks/seed/discussions)
 
 ---
 
@@ -109,7 +109,7 @@ cat > Installation-macOS.md << 'EOFMACOS'
 
 ### Method 1: Download Binary (Recommended)
 
-1. **Download** the latest release for macOS from [Releases](https://github.com/krisarmstrong/seed/releases/latest)
+1. **Download** the latest release for macOS from [Releases](https://github.com/MustardSeedNetworks/seed/releases/latest)
 
 2. **Extract** the archive:
    ```bash
@@ -131,7 +131,7 @@ cat > Installation-macOS.md << 'EOFMACOS'
 
 ### Method 2: Build from Source
 
-See the main [README](https://github.com/krisarmstrong/seed/blob/main/README.md) for build instructions.
+See the main [README](https://github.com/MustardSeedNetworks/seed/blob/main/README.md) for build instructions.
 
 ## First Run
 
@@ -225,9 +225,9 @@ sudo dnf install libpcap
 ### 2. Download Binary
 
 ```bash
-wget https://github.com/krisarmstrong/seed/releases/latest/download/seed-linux-amd64.tar.gz
+wget https://github.com/MustardSeedNetworks/seed/releases/latest/download/seed-linux-amd64.tar.gz
 # OR for ARM64
-wget https://github.com/krisarmstrong/seed/releases/latest/download/seed-linux-arm64.tar.gz
+wget https://github.com/MustardSeedNetworks/seed/releases/latest/download/seed-linux-arm64.tar.gz
 ```
 
 ### 3. Install
@@ -252,7 +252,7 @@ seed --version
 
 ## Running as a Service (systemd)
 
-See [deploy/systemd](https://github.com/krisarmstrong/seed/tree/main/deploy/systemd) for systemd service installation.
+See [deploy/systemd](https://github.com/MustardSeedNetworks/seed/tree/main/deploy/systemd) for systemd service installation.
 
 ## Firewall Configuration
 
@@ -351,8 +351,8 @@ The setup wizard will:
 ---
 
 **Need help?**
-- [Troubleshooting](https://github.com/krisarmstrong/seed/wiki)
-- [GitHub Discussions](https://github.com/krisarmstrong/seed/discussions)
+- [Troubleshooting](https://github.com/MustardSeedNetworks/seed/wiki)
+- [GitHub Discussions](https://github.com/MustardSeedNetworks/seed/discussions)
 - Email: support@mustardseednetworks.com
 EOFQUICKSTART
 
@@ -430,7 +430,7 @@ Each discovered device shows:
 
 ## Related
 
-- [SNMP Configuration](https://github.com/krisarmstrong/seed/blob/main/README.md)
+- [SNMP Configuration](https://github.com/MustardSeedNetworks/seed/blob/main/README.md)
 - [Hardware Compatibility](Hardware-Compatibility)
 EOFDISCOVERY
 
@@ -480,7 +480,7 @@ For detailed compatibility reports by chipset:
 Run the compatibility test script:
 
 ```bash
-curl -O https://raw.githubusercontent.com/krisarmstrong/seed/main/scripts/test-hardware-compatibility.sh
+curl -O https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/scripts/test-hardware-compatibility.sh
 chmod +x test-hardware-compatibility.sh
 sudo ./test-hardware-compatibility.sh wlan0  # WiFi
 sudo ./test-hardware-compatibility.sh eth0   # Ethernet
@@ -490,11 +490,11 @@ sudo ./test-hardware-compatibility.sh eth0   # Ethernet
 
 Submit your hardware test results to help the community!
 
-[Create a Hardware Report Issue](https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml)
+[Create a Hardware Report Issue](https://github.com/MustardSeedNetworks/seed/issues/new?template=hardware-report.yml)
 
 ---
 
-*See also: [HARDWARE.md](https://github.com/krisarmstrong/seed/blob/main/HARDWARE.md)*
+*See also: [HARDWARE.md](https://github.com/MustardSeedNetworks/seed/blob/main/HARDWARE.md)*
 EOFHARDWARE
 
 echo "  ✅ Hardware-Compatibility.md"
@@ -621,21 +621,21 @@ Yes! Designed for healthcare:
 
 ### How do I get help?
 
-- [GitHub Discussions](https://github.com/krisarmstrong/seed/discussions)
-- [GitHub Issues](https://github.com/krisarmstrong/seed/issues)
+- [GitHub Discussions](https://github.com/MustardSeedNetworks/seed/discussions)
+- [GitHub Issues](https://github.com/MustardSeedNetworks/seed/issues)
 - Email: support@mustardseednetworks.com
 
 ### How do I report a bug?
 
-1. Check [existing issues](https://github.com/krisarmstrong/seed/issues)
-2. [Create new issue](https://github.com/krisarmstrong/seed/issues/new)
+1. Check [existing issues](https://github.com/MustardSeedNetworks/seed/issues)
+2. [Create new issue](https://github.com/MustardSeedNetworks/seed/issues/new)
 3. Include: The Seed version, OS, steps to reproduce, logs
 
 ---
 
 **Still have questions?**
 
-Ask in [GitHub Discussions](https://github.com/krisarmstrong/seed/discussions)
+Ask in [GitHub Discussions](https://github.com/MustardSeedNetworks/seed/discussions)
 EOFFAQ
 
 echo "  ✅ FAQ.md"
@@ -664,5 +664,5 @@ git push origin master
 echo ""
 echo "✅ Wiki setup complete!"
 echo ""
-echo "🌐 View at: https://github.com/krisarmstrong/seed/wiki"
+echo "🌐 View at: https://github.com/MustardSeedNetworks/seed/wiki"
 echo ""

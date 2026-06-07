@@ -47,7 +47,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/krisarmstrong/seed/internal/platform/events"
+	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 )
 
 // defaultMaxConcurrent bounds in-flight jobs when Config leaves it unset. Sized

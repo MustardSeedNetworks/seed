@@ -4,7 +4,7 @@ import (
 	"image/color"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/wifi/survey"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/survey"
 )
 
 func TestColorScale_GetColor(t *testing.T) {

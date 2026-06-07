@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/vlan"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
 )
 
 // TestTrafficMonitorFullLifecycle tests the complete lifecycle.

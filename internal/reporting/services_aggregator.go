@@ -8,7 +8,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 // AggregatorService aggregates data for reports. It reads metrics through the

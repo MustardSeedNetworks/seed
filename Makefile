@@ -140,7 +140,7 @@ endef
 BINARY_NAME=seed
 
 # Version package path for ldflags injection
-VERSION_PKG=github.com/krisarmstrong/seed/internal/version
+VERSION_PKG=github.com/MustardSeedNetworks/seed/internal/version
 
 # Go build flags for reproducible builds
 GO_BUILD_FLAGS := -trimpath -buildvcs=false
@@ -349,7 +349,7 @@ release: ## Create release (VERSION=vX.Y.Z required)
 			echo "Note: Upload binaries manually if gh release failed"; \
 	else \
 		echo "GitHub CLI not installed. Create release manually at:"; \
-		echo "https://github.com/krisarmstrong/seed/releases/new?tag=$(VERSION)"; \
+		echo "https://github.com/MustardSeedNetworks/seed/releases/new?tag=$(VERSION)"; \
 	fi
 	@echo ""
 	@printf "$(GREEN)╔══════════════════════════════════════════════════════════════════════════════╗$(RESET)\n"

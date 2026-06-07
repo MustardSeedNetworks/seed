@@ -10,7 +10,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // Scan performs an active network scan and aggregates results.

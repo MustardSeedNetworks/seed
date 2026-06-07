@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/gateway"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
 )
 
 func TestDefaultThresholds(t *testing.T) {

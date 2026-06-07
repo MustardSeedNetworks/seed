@@ -3,9 +3,9 @@ package wifiapp
 import (
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/anomaly"
-	"github.com/krisarmstrong/seed/internal/wifi/airspace"
-	wifianomaly "github.com/krisarmstrong/seed/internal/wifi/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
+	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
 )
 
 // AnalyzeBSSes runs the Wi-Fi anomaly rules over a flat set of observed BSSes

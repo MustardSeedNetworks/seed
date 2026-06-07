@@ -11,9 +11,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/iperf"
-	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/wifi"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/wifi"
 )
 
 // Type indicates the type of survey being conducted.

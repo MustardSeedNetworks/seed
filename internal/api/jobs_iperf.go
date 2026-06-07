@@ -15,9 +15,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/iperf"
-	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
 const (

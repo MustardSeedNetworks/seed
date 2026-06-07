@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/version"
+	"github.com/MustardSeedNetworks/seed/internal/version"
 )
 
 const (

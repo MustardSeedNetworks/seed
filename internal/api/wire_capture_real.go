@@ -3,8 +3,8 @@
 package api
 
 import (
-	"github.com/krisarmstrong/seed/internal/capture"
-	"github.com/krisarmstrong/seed/internal/capture/pcap"
+	"github.com/MustardSeedNetworks/seed/internal/capture"
+	"github.com/MustardSeedNetworks/seed/internal/capture/pcap"
 )
 
 // defaultCaptureOpener returns the libpcap-backed capture adapter that powers

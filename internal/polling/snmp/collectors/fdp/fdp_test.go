@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/polling/snmp"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/collectors/cdp"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/collectors/fdp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/cdp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/fdp"
 )
 
 type fakeClient struct {

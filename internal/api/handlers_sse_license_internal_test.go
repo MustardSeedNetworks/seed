@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
 // TestSSEEventsRequiresLiveTelemetry asserts the `/events` SSE route

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/auth"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 )
 
 // TestCryptoRandReadSuccess verifies normal operation succeeds.

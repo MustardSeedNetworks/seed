@@ -13,8 +13,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/paths"
+	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/paths"
 )
 
 const (
@@ -64,7 +64,7 @@ const systemdServiceTemplate = `[Unit]
 Description=The Seed - Network Diagnostics by Mustard Seed Networks
 After=network-online.target
 Wants=network-online.target
-Documentation=https://github.com/krisarmstrong/seed
+Documentation=https://github.com/MustardSeedNetworks/seed
 
 [Service]
 Type=simple

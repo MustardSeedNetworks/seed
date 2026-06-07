@@ -3,7 +3,7 @@ package wifiapp
 import (
 	"errors"
 
-	"github.com/krisarmstrong/seed/internal/wifi"
+	"github.com/MustardSeedNetworks/seed/internal/wifi"
 )
 
 // ErrRadioUnavailable is returned by the management use-cases when the Wi-Fi

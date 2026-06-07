@@ -43,7 +43,7 @@ formatters:
       # with the given prefixes are grouped after 3rd-party packages.
       # Default: []
       local-prefixes:
-        - github.com/krisarmstrong/seed
+        - github.com/MustardSeedNetworks/seed
 
     golines:
       # Target maximum line length.
@@ -274,9 +274,9 @@ linters:
             - "!**/internal/reporting/store/**"
             - "!$test"
           deny:
-            - pkg: github.com/krisarmstrong/seed/internal/database
+            - pkg: github.com/MustardSeedNetworks/seed/internal/database
               desc: "reporting is persistence-free — define a Repo port, implement it in internal/reporting/store"
-            - pkg: github.com/krisarmstrong/seed/internal/reporting/store
+            - pkg: github.com/MustardSeedNetworks/seed/internal/reporting/store
               desc: "inward-only — the store adapter imports reporting, never the reverse; wire it in internal/app"
         # Phase 6 capture port: libpcap (via gopacket/pcap) carries the CGO
         # taint that re-links libpcap into every dependent test binary. It is

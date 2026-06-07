@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	wifianomaly "github.com/krisarmstrong/seed/internal/wifi/anomaly"
-	wifiapp "github.com/krisarmstrong/seed/internal/wifi/app"
-	"github.com/krisarmstrong/seed/internal/wifi/dot11"
-	"github.com/krisarmstrong/seed/internal/wifi/visibility"
+	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
+	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/visibility"
 )
 
 // The feature-gate middleware is applied at route registration and exercised by

@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/dhcp"
-	"github.com/krisarmstrong/seed/internal/diagnostics/gateway"
-	"github.com/krisarmstrong/seed/internal/i18n"
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/dhcp"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/gateway"
+	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // passwordPlaceholder is used to mask sensitive values in API responses.

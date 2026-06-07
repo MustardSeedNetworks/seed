@@ -56,10 +56,10 @@ builds:
       - -buildvcs=false
     ldflags: &ldflags
       - -s -w
-      - -X github.com/krisarmstrong/seed/internal/version.Version={{.Version}}
-      - -X github.com/krisarmstrong/seed/internal/version.Commit={{.Commit}}
-      - -X github.com/krisarmstrong/seed/internal/version.BuildTime={{.Date}}
-      - -X github.com/krisarmstrong/seed/internal/version.UIBuildHash={{.Env.UI_BUILD_HASH}}
+      - -X github.com/MustardSeedNetworks/seed/internal/version.Version={{.Version}}
+      - -X github.com/MustardSeedNetworks/seed/internal/version.Commit={{.Commit}}
+      - -X github.com/MustardSeedNetworks/seed/internal/version.BuildTime={{.Date}}
+      - -X github.com/MustardSeedNetworks/seed/internal/version.UIBuildHash={{.Env.UI_BUILD_HASH}}
     # Per-target cross-compile settings. goreleaser-cross has all of
     # these toolchains preinstalled; without them, building linux/arm64
     # from an amd64 host fails on cgo runtime ARM64 assembly.
@@ -154,7 +154,7 @@ nfpms:
     ids: [seed-linux]
     package_name: seed
     vendor: Mustard Seed Networks
-    homepage: https://github.com/krisarmstrong/seed
+    homepage: https://github.com/MustardSeedNetworks/seed
     maintainer: Kris Armstrong <kris.armstrong@icloud.com>
     description: |
       The Seed - Network Diagnostic Tool by Mustard Seed Networks
@@ -257,14 +257,14 @@ signs:
 
 # Homebrew tap publishing previously lived here. Removed 2026-05-18
 # because the HOMEBREW_TAP_TOKEN repo secret is unset / lacks scope on
-# krisarmstrong/homebrew-tap, which made every release error out
+# MustardSeedNetworks/homebrew-tap, which made every release error out
 # at the brew step with 403, blocking the downstream SLSA attestation
 # job (needs: [goreleaser]). Restore by re-adding the brews: block
 # once the PAT is provisioned — see git history of this file.
 
 release:
   github:
-    owner: krisarmstrong
+    owner: MustardSeedNetworks
     name: seed
   # Use release-please's CHANGELOG.md section as the release body. The
   # `replace_existing_artifacts: true` lets a re-run overwrite a partial
@@ -276,7 +276,7 @@ release:
   header: |
     The Seed {{ .Tag }} — Network Diagnostic Tool by Mustard Seed Networks.
 
-    See [CHANGELOG.md](https://github.com/krisarmstrong/seed/blob/main/CHANGELOG.md)
+    See [CHANGELOG.md](https://github.com/MustardSeedNetworks/seed/blob/main/CHANGELOG.md)
     for the full release notes.
 
 snapshot:

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/reporting"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/reporting"
 )
 
 // ExportRepo implements reporting.ExportRepo over the devices and

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 )
 
 // These cover the port-scan config vocabulary relocated into scan_config.go

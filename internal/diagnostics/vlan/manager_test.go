@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/vlan"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
 )
 
 // TestManagerConcurrencyStress tests concurrent access under high load.

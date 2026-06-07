@@ -5,7 +5,7 @@ package detection_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/netif/detection"
+	"github.com/MustardSeedNetworks/seed/internal/netif/detection"
 )
 
 func TestNewChipsetDatabase(t *testing.T) {

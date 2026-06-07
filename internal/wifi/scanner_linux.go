@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // wifiCmdTimeout bounds external Wi-Fi tooling (nmcli/iw/ip) to prevent

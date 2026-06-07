@@ -6,7 +6,7 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/krisarmstrong/seed/internal/paths"
+	"github.com/MustardSeedNetworks/seed/internal/paths"
 )
 
 func TestCopyFileLogic(t *testing.T) {

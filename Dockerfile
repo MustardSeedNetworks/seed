@@ -45,7 +45,7 @@ ARG COMMIT=unknown
 ARG BUILD_DATE=unknown
 RUN UI_HASH=$(find internal/api/ui -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1) \
     && CGO_ENABLED=1 go build -trimpath -buildvcs=false \
-        -ldflags="-s -w -X github.com/krisarmstrong/seed/internal/version.Version=${VERSION} -X github.com/krisarmstrong/seed/internal/version.Commit=${COMMIT} -X github.com/krisarmstrong/seed/internal/version.BuildTime=${BUILD_DATE} -X github.com/krisarmstrong/seed/internal/version.UIBuildHash=${UI_HASH}" \
+        -ldflags="-s -w -X github.com/MustardSeedNetworks/seed/internal/version.Version=${VERSION} -X github.com/MustardSeedNetworks/seed/internal/version.Commit=${COMMIT} -X github.com/MustardSeedNetworks/seed/internal/version.BuildTime=${BUILD_DATE} -X github.com/MustardSeedNetworks/seed/internal/version.UIBuildHash=${UI_HASH}" \
         -o /out/seed ./cmd/seed
 
 # -----------------------------------------------------------------------------
@@ -82,7 +82,7 @@ EXPOSE 8443 8042
 ARG VERSION=dev
 ARG COMMIT=unknown
 LABEL org.opencontainers.image.title="seed" \
-      org.opencontainers.image.source="https://github.com/krisarmstrong/seed" \
+      org.opencontainers.image.source="https://github.com/MustardSeedNetworks/seed" \
       org.opencontainers.image.licenses="BSL-1.1" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${COMMIT}"

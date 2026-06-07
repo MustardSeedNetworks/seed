@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/netif"
+	"github.com/MustardSeedNetworks/seed/internal/netif"
 )
 
 func TestGetPhysicalInterfaces(t *testing.T) {

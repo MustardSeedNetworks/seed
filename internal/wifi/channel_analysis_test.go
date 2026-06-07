@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/wifi"
+	"github.com/MustardSeedNetworks/seed/internal/wifi"
 )
 
 // TestChannel24GHzComplete tests all 2.4 GHz channels (1-14).

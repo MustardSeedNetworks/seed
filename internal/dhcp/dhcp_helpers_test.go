@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/dhcp"
+	"github.com/MustardSeedNetworks/seed/internal/dhcp"
 )
 
 // TestIsDHCPPort verifies the isDHCPPort function correctly identifies DHCP ports.

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/krisarmstrong/seed/internal/reporting"
+	"github.com/MustardSeedNetworks/seed/internal/reporting"
 )
 
 // fakeMetricsRepo is an in-memory reporting.MetricsRepo. It lets the aggregator's

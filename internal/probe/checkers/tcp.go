@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/probe"
+	"github.com/MustardSeedNetworks/seed/internal/probe"
 )
 
 // defaultTCPDialTimeout is the default per-attempt dial timeout.

@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/engine"
 )
 
 // IfTableReconcilerName is the engine identifier.

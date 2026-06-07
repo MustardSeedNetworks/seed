@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/paths"
+	"github.com/MustardSeedNetworks/seed/internal/paths"
 )
 
 func TestResolve_SystemMode(t *testing.T) {

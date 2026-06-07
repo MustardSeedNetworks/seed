@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	settingsapp "github.com/krisarmstrong/seed/internal/settings/app"
+	settingsapp "github.com/MustardSeedNetworks/seed/internal/settings/app"
 )
 
 type fakeStore struct {

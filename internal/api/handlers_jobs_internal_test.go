@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/platform/events"
-	"github.com/krisarmstrong/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/platform/events"
+	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
 // --- harness --------------------------------------------------------------

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/link"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/link"
 )
 
 // TestStateConstants verifies the State constants have correct values.

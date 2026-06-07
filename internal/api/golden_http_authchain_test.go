@@ -22,10 +22,10 @@ import (
 	"strings"
 	"testing"
 
-	api "github.com/krisarmstrong/seed/internal/api"
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/netif"
-	"github.com/krisarmstrong/seed/internal/testutil"
+	api "github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/netif"
+	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
 
 // stableSecurityHeaderNames is the deterministic subset of response headers worth

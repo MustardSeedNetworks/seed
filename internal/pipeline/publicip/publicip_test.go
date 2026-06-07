@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/pipeline/publicip"
+	"github.com/MustardSeedNetworks/seed/internal/pipeline/publicip"
 )
 
 func TestNewChecker(t *testing.T) {

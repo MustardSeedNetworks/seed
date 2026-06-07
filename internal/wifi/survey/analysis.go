@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/krisarmstrong/seed/internal/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 )
 
 // DeadZone represents a detected area of poor WiFi coverage.

@@ -14,7 +14,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // embeddedBinaries contains pre-built iperf3 binaries for supported platforms.

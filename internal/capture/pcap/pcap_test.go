@@ -7,7 +7,7 @@ import (
 
 	gpcap "github.com/gopacket/gopacket/pcap"
 
-	"github.com/krisarmstrong/seed/internal/capture"
+	"github.com/MustardSeedNetworks/seed/internal/capture"
 )
 
 // TestBlockForeverMatchesPcap guards against drift: capture.BlockForever is

@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/krisarmstrong/seed/internal/reporting"
+	"github.com/MustardSeedNetworks/seed/internal/reporting"
 )
 
 // fakeReportRepo is an in-memory reporting.ReportRepo. It is the payoff of the

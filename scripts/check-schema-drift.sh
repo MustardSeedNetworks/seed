@@ -4,7 +4,7 @@
 # internal/api Go DTOs without a matching `make schema` commit get
 # caught at PR time instead of after merge.
 #
-# Mirrors the gate documented in krisarmstrong/niac-go ADR 0001
+# Mirrors the gate documented in MustardSeedNetworks/niac-go ADR 0001
 # (docs/adr/0001-schema-generation-from-go-structs.md).
 #
 # Run locally with: ./scripts/check-schema-drift.sh

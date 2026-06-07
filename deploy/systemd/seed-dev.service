@@ -1,6 +1,6 @@
 [Unit]
 Description=The Seed - Development
-Documentation=https://github.com/krisarmstrong/seed
+Documentation=https://github.com/MustardSeedNetworks/seed
 After=network-online.target
 Wants=network-online.target
 

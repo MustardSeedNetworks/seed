@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // captureLogs swaps the global logger to a buffer-backed JSON sink for

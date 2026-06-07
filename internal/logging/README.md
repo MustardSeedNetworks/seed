@@ -57,7 +57,7 @@ requests, headers, and data structures.
 ### Basic String Redaction
 
 ```go
-import "github.com/krisarmstrong/seed/internal/logging"
+import "github.com/MustardSeedNetworks/seed/internal/logging"
 
 // Instead of:
 log.Printf("error: %v", err) // May contain passwords!
@@ -210,7 +210,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 ### After (SAFE ✅)
 
 ```go
-import "github.com/krisarmstrong/seed/internal/logging"
+import "github.com/MustardSeedNetworks/seed/internal/logging"
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
     r.Body = http.MaxBytesReader(w, r.Body, 1024)

@@ -7,7 +7,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/i18n"
 )
 
 func TestGetSupportedLanguages(t *testing.T) {

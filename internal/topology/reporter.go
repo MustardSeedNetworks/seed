@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/engine"
 )
 
 // degradedTickMultiplier mirrors the alerts/pipeline constant: a

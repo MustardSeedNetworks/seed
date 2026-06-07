@@ -9,11 +9,11 @@ package api
 import (
 	"context"
 
-	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/netif"
-	"github.com/krisarmstrong/seed/internal/wifi"
-	wifiapp "github.com/krisarmstrong/seed/internal/wifi/app"
+	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/netif"
+	"github.com/MustardSeedNetworks/seed/internal/wifi"
+	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
 )
 
 // wifiHardwareAdapter implements wifiapp.Hardware over the Wi-Fi manager and

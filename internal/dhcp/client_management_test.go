@@ -6,7 +6,7 @@ import (
 
 	"github.com/gopacket/gopacket/layers"
 
-	"github.com/krisarmstrong/seed/internal/dhcp"
+	"github.com/MustardSeedNetworks/seed/internal/dhcp"
 )
 
 // TestRogueDetectorNewComprehensive tests NewRogueDetector with various configurations.

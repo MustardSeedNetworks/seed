@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	api "github.com/krisarmstrong/seed/internal/api"
+	api "github.com/MustardSeedNetworks/seed/internal/api"
 )
 
 // Engine tests verify handlers return proper errors when engine is unavailable.

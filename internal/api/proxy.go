@@ -29,7 +29,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // TrustedProxies manages a list of trusted proxy IP addresses and CIDR ranges.

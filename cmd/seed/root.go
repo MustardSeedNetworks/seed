@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/krisarmstrong/seed/internal/version"
+	"github.com/MustardSeedNetworks/seed/internal/version"
 )
 
 // binaryName is the canonical name of the seed binary used in cobra Use:,

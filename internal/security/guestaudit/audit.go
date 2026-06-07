@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/validation"
+	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
 // DefaultPorts returns the set of TCP ports probed against each target when
