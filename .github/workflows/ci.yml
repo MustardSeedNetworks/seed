@@ -321,7 +321,23 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
 
-      - name: Run gosec
+      # gosec is ENFORCED (blocking) by the golangci-lint job: `gosec` is an
+      # enabled linter there, and high-signal rules fail the build — verified:
+      # G401/G501 (weak crypto), G101 literal secrets, etc. are caught. The
+      # taint/heuristic rules that are FP-prone by nature (G204 subprocess,
+      # G304 file-from-variable, G115 integer-conversion) are excluded from the
+      # gate via golangci-lint's `common-false-positives` preset (.golangci.yml,
+      # exclusions.presets) — a deliberate, documented decision: in this codebase
+      # those fire on safe dynamic paths, controlled network-tool args, and
+      # already-bounds-checked SNMP conversions.
+      #
+      # The standalone run below scans with the DEFAULT (un-pruned) rule set and
+      # exists ONLY to publish SARIF to the GitHub code-scanning / Security tab,
+      # so those taint-rule findings stay visible for review. It is intentionally
+      # continue-on-error (a visibility feed, not a second gate) and must not be
+      # promoted to blocking — that would gate on the known FP-prone rule set the
+      # golangci-lint gate intentionally excludes.
+      - name: Run gosec (SARIF visibility only — gate is golangci-lint)
         uses: securego/gosec@4a3bd8af174872c778439083ded7adbf3747e770 # v2.26.1
         continue-on-error: true
         with:
