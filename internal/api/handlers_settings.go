@@ -1,15 +1,12 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/database"
 	"github.com/krisarmstrong/seed/internal/logging"
 	"github.com/krisarmstrong/seed/internal/validation"
 )
@@ -230,80 +227,17 @@ func (s *Server) updateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Also save settings to the active profile (fixes #781)
-	if s.db() != nil {
-		if err := s.saveSettingsToActiveProfile(ctx, logger); err != nil {
-			sendJSONResponse(w, logger, http.StatusInternalServerError, map[string]string{
-				"error": "Failed to save settings",
-			})
-			return
-		}
+	// Also persist settings to the active profile (fixes #781). The use-case is a
+	// no-op when no database/profile is wired (ADR-0016 phase 3).
+	if err := s.settingsStore.SaveToActiveProfile(ctx); err != nil {
+		logger.ErrorContext(ctx, "Failed to save settings to profile", "error", err)
+		sendJSONResponse(w, logger, http.StatusInternalServerError, map[string]string{
+			"error": "Failed to save settings",
+		})
+		return
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
-}
-
-// saveSettingsToActiveProfile saves current settings to the active profile's ConfigJSON.
-// This ensures profile-specific settings are persisted (fixes #781).
-func (s *Server) saveSettingsToActiveProfile(ctx context.Context, logger *slog.Logger) error {
-	// Get active profile ID
-	activeID, err := s.db().Settings().GetValue(ctx, database.SettingKeyActiveProfile)
-	if err != nil || activeID == "" {
-		// No active profile, try to get default
-		defaultProfile, getDefaultErr := s.db().Profiles().GetDefault(ctx)
-		if getDefaultErr != nil {
-			// No profile exists - this is not an error, just nothing to save to
-			logger.DebugContext(ctx,
-				"No active or default profile to save settings to",
-				"reason",
-				getDefaultErr.Error(),
-			)
-			return nil
-		}
-		activeID = defaultProfile.ID
-	}
-
-	// Get the profile
-	profile, err := s.db().Profiles().Get(ctx, activeID)
-	if err != nil {
-		logger.WarnContext(ctx,
-			"Failed to get active profile for settings save",
-			"error",
-			err,
-			"profile_id",
-			activeID,
-		)
-		return nil
-	}
-
-	// Export current settings from config using single source of truth
-	configJSON, jsonErr := s.config.ToProfileJSON()
-	if jsonErr != nil {
-		logger.WarnContext(ctx, "Failed to serialize profile settings", "error", jsonErr)
-		return nil
-	}
-
-	// Update profile
-	profile.ConfigJSON = configJSON
-	if updateErr := s.db().Profiles().Update(ctx, profile); updateErr != nil {
-		logger.ErrorContext(ctx,
-			"Failed to save settings to profile",
-			"error",
-			updateErr,
-			"profile_id",
-			profile.ID,
-		)
-		return updateErr
-	}
-
-	logger.DebugContext(ctx,
-		"Saved settings to active profile",
-		"profile_id",
-		profile.ID,
-		"profile_name",
-		profile.Name,
-	)
-	return nil
 }
 
 // applyThresholdUpdates applies threshold configuration updates.
@@ -1033,19 +967,18 @@ func (s *Server) updateLinkSettings(w http.ResponseWriter, r *http.Request) {
 	s.config.Link = updates
 	s.config.Unlock()
 
-	// Save to active profile in database
-	if s.db() != nil {
-		if err := s.saveSettingsToActiveProfile(ctx, logger); err != nil {
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusInternalServerError,
-				ErrCodeInternal,
-				"Failed to save link settings",
-				"",
-			)
-			return
-		}
+	// Persist to the active profile (ADR-0016 phase 3; no-op without a db).
+	if err := s.settingsStore.SaveToActiveProfile(ctx); err != nil {
+		logger.ErrorContext(ctx, "Failed to save link settings to profile", "error", err)
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			"Failed to save link settings",
+			"",
+		)
+		return
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
@@ -1106,19 +1039,18 @@ func (s *Server) updateCableTestSettings(w http.ResponseWriter, r *http.Request)
 	s.config.CableTest = updates
 	s.config.Unlock()
 
-	// Save to active profile in database
-	if s.db() != nil {
-		if err := s.saveSettingsToActiveProfile(ctx, logger); err != nil {
-			sendErrorResponseWithDetails(
-				w,
-				logger,
-				http.StatusInternalServerError,
-				ErrCodeInternal,
-				"Failed to save cable test settings",
-				"",
-			)
-			return
-		}
+	// Persist to the active profile (ADR-0016 phase 3; no-op without a db).
+	if err := s.settingsStore.SaveToActiveProfile(ctx); err != nil {
+		logger.ErrorContext(ctx, "Failed to save cable test settings to profile", "error", err)
+		sendErrorResponseWithDetails(
+			w,
+			logger,
+			http.StatusInternalServerError,
+			ErrCodeInternal,
+			"Failed to save cable test settings",
+			"",
+		)
+		return
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]string{"status": "updated"})
