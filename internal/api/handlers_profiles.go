@@ -198,6 +198,7 @@ func (s *Server) handleGetProfile(w http.ResponseWriter, r *http.Request, id str
 		return
 	}
 
+	w.Header().Set("ETag", profileETag(profile))
 	sendJSONResponse(w, logger, http.StatusOK, profileToResponse(profile))
 }
 
@@ -227,7 +228,10 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 		update.ConfigJSON = &cfg
 	}
 
-	profile, err := s.profiles.Update(r.Context(), id, update)
+	// Optimistic concurrency (ADR re-arch Phase 5): an If-Match ETag, when
+	// present, makes the write conditional on the profile not having changed
+	// since the caller read it. Absent (or "*") => unconditional, as before.
+	profile, err := s.profiles.Update(r.Context(), id, update, parseIfMatch(r))
 	if err != nil {
 		switch {
 		case errors.Is(err, profilesapp.ErrNotFound):
@@ -236,6 +240,9 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 		case errors.Is(err, profilesapp.ErrNameExists):
 			sendErrorResponseWithDetails(w, logger, http.StatusConflict,
 				ErrCodeConflict, localizer.T("errors.profile.nameExists"), "") // fixes #694
+		case errors.Is(err, profilesapp.ErrConflict):
+			sendErrorResponseWithDetails(w, logger, http.StatusPreconditionFailed,
+				ErrCodeConflict, localizer.T("errors.profile.conflict"), "")
 		default:
 			sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 				ErrCodeInternal, localizer.T("errors.profile.updateFailed"), "") // fixes #694, #H7
@@ -243,7 +250,27 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request, id 
 		return
 	}
 
+	w.Header().Set("ETag", profileETag(profile))
 	sendJSONResponse(w, logger, http.StatusOK, profileToResponse(profile))
+}
+
+// profileETag returns the strong ETag for a profile — its updated_at timestamp,
+// the optimistic-concurrency version token, in the same RFC3339 form the row is
+// stored as, wrapped in quotes per RFC 9110.
+func profileETag(p profilesapp.Profile) string {
+	return `"` + p.UpdatedAt.Format(time.RFC3339) + `"`
+}
+
+// parseIfMatch returns the bare ETag value from the request's If-Match header,
+// or "" when absent or "*" (i.e. unconditional). Surrounding quotes and an
+// optional weak-validator prefix are stripped.
+func parseIfMatch(r *http.Request) string {
+	v := strings.TrimSpace(r.Header.Get("If-Match"))
+	if v == "" || v == "*" {
+		return ""
+	}
+	v = strings.TrimPrefix(v, "W/")
+	return strings.Trim(v, `"`)
 }
 
 // handleDeleteProfile deletes a profile.
@@ -327,6 +354,7 @@ func (s *Server) handleGetActiveProfile(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	w.Header().Set("ETag", profileETag(profile))
 	sendJSONResponse(w, logger, http.StatusOK, profileToResponse(profile))
 }
 

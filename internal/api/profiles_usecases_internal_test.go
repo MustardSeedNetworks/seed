@@ -2,7 +2,10 @@ package api
 
 import (
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
@@ -86,5 +89,57 @@ func TestProfilesUseCaseAdapterCRUD(t *testing.T) {
 	// Cannot delete the default profile.
 	if defErr := s.profiles.Delete(ctx, list[0].ID); !errors.Is(defErr, profilesapp.ErrDeleteDefault) {
 		t.Fatalf("deleting default should be ErrDeleteDefault, got %v", defErr)
+	}
+}
+
+// TestProfileOptimisticConcurrencyHTTP exercises the Phase-5 ETag/If-Match flow
+// through the handlers: GET emits an ETag, a stale If-Match yields 412, and the
+// current ETag updates and returns a fresh ETag.
+func TestProfileOptimisticConcurrencyHTTP(t *testing.T) {
+	s, db := newProfilesTestServer(t)
+	ctx := t.Context()
+
+	if err := db.Profiles().Create(ctx, &database.Profile{ID: "p1", Name: "orig", ConfigJSON: "{}"}); err != nil {
+		t.Fatalf("seed profile: %v", err)
+	}
+
+	// GET emits an ETag.
+	getRec := httptest.NewRecorder()
+	s.handleGetProfile(getRec, httptest.NewRequest(http.MethodGet, "/", http.NoBody), "p1")
+	if getRec.Code != http.StatusOK {
+		t.Fatalf("GET status = %d", getRec.Code)
+	}
+	etag := getRec.Header().Get("ETag")
+	if etag == "" {
+		t.Fatal("GET should emit an ETag header")
+	}
+
+	body := `{"name":"renamed","config":{"x":1}}`
+
+	// A stale If-Match is rejected with 412 and the row is untouched.
+	staleRec := httptest.NewRecorder()
+	staleReq := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(body))
+	staleReq.Header.Set("If-Match", `"1999-01-01T00:00:00Z"`)
+	s.handleUpdateProfile(staleRec, staleReq, "p1")
+	if staleRec.Code != http.StatusPreconditionFailed {
+		t.Fatalf("stale If-Match status = %d, want 412", staleRec.Code)
+	}
+	if cur, _ := db.Profiles().Get(ctx, "p1"); cur.Name != "orig" {
+		t.Fatalf("row should be unchanged after 412, got name=%q", cur.Name)
+	}
+
+	// The current ETag succeeds and returns a fresh ETag.
+	okRec := httptest.NewRecorder()
+	okReq := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(body))
+	okReq.Header.Set("If-Match", etag)
+	s.handleUpdateProfile(okRec, okReq, "p1")
+	if okRec.Code != http.StatusOK {
+		t.Fatalf("matching If-Match status = %d, want 200 (body=%s)", okRec.Code, okRec.Body.String())
+	}
+	if okRec.Header().Get("ETag") == "" {
+		t.Fatal("successful PUT should emit a fresh ETag")
+	}
+	if cur, _ := db.Profiles().Get(ctx, "p1"); cur.Name != "renamed" {
+		t.Fatalf("update should have persisted, got name=%q", cur.Name)
 	}
 }

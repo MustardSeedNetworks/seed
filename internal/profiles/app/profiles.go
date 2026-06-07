@@ -26,6 +26,9 @@ var (
 	ErrIDRequired    = errors.New("profile id is required")
 	ErrDeleteDefault = errors.New("cannot delete the default profile")
 	ErrDeleteActive  = errors.New("cannot delete the active profile")
+	// ErrConflict is an optimistic-concurrency conflict: the caller's If-Match
+	// ETag no longer matches the stored profile (a concurrent writer won).
+	ErrConflict = errors.New("profile was modified by another writer")
 
 	// ErrActiveLookup and the ErrNoActiveOrDefault/ErrDefaultLookup/
 	// ErrActiveNotFound cases below each map to a distinct active-profile
@@ -92,7 +95,10 @@ type Store interface {
 	GetByName(ctx context.Context, name string) (Profile, bool, error)
 	GetDefault(ctx context.Context) (Profile, error)
 	Create(ctx context.Context, p Profile) error
-	Update(ctx context.Context, p Profile) error
+	// Update writes p. An empty ifMatch is unconditional; a non-empty ifMatch
+	// makes the write optimistic-concurrency-checked against that version
+	// (ETag), returning ErrConflict on mismatch.
+	Update(ctx context.Context, p Profile, ifMatch string) error
 	Delete(ctx context.Context, id string) error
 	Count(ctx context.Context) (int, error)
 	ActiveID(ctx context.Context) (string, error)
@@ -142,8 +148,12 @@ func (s *Service) Create(ctx context.Context, in NewProfile) (Profile, error) {
 	return p, nil
 }
 
-// Update applies a partial update to an existing profile.
-func (s *Service) Update(ctx context.Context, id string, u ProfileUpdate) (Profile, error) {
+// Update applies a partial update to an existing profile. When ifMatch is
+// non-empty the write is optimistic-concurrency-checked against that ETag
+// (ErrConflict on mismatch); an empty ifMatch performs an unconditional write,
+// preserving the prior behavior. It re-reads the row so the returned profile
+// carries the fresh updated_at (the new ETag).
+func (s *Service) Update(ctx context.Context, id string, u ProfileUpdate, ifMatch string) (Profile, error) {
 	p, err := s.store.Get(ctx, id)
 	if err != nil {
 		return Profile{}, err
@@ -156,8 +166,14 @@ func (s *Service) Update(ctx context.Context, id string, u ProfileUpdate) (Profi
 		p.ConfigJSON = *u.ConfigJSON
 	}
 	p.IsDefault = u.IsDefault
-	if updateErr := s.store.Update(ctx, p); updateErr != nil {
-		return Profile{}, updateErr
+
+	if err = s.store.Update(ctx, p, ifMatch); err != nil {
+		return Profile{}, err
+	}
+
+	// Re-read so the caller gets the persisted updated_at for the next ETag.
+	if current, getErr := s.store.Get(ctx, id); getErr == nil {
+		return current, nil
 	}
 	return p, nil
 }
@@ -320,7 +336,7 @@ func (s *Service) importExisting(
 
 	existing.Description = item.Description
 	existing.ConfigJSON = item.ConfigJSON
-	if err := s.store.Update(ctx, existing); err != nil {
+	if err := s.store.Update(ctx, existing, ""); err != nil {
 		result.Errors = append(result.Errors, fmt.Sprintf("Profile '%s': failed to update - %v", item.Name, err))
 		result.Skipped++
 		return

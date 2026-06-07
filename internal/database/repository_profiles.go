@@ -16,6 +16,11 @@ var ErrProfileNotFound = errors.New("profile not found")
 // ErrProfileNameExists is returned when a profile name already exists.
 var ErrProfileNameExists = errors.New("profile name already exists")
 
+// ErrProfileConflict is returned by UpdateIfMatch when the profile exists but
+// its current updated_at does not match the caller's expected value — an
+// optimistic-concurrency conflict (a concurrent writer moved the row first).
+var ErrProfileConflict = errors.New("profile was modified by another writer")
+
 // ProfileRepository provides CRUD operations for profiles.
 type ProfileRepository struct {
 	db *DB
@@ -136,6 +141,45 @@ func (r *ProfileRepository) Update(ctx context.Context, profile *Profile) error 
 	}
 
 	return nil
+}
+
+// UpdateIfMatch is the optimistic-concurrency variant of Update: it writes the
+// profile only when the row's current updated_at equals expectedUpdatedAt
+// (the ETag the caller last read). It returns ErrProfileConflict when the row
+// exists but has moved on, ErrProfileNotFound when it no longer exists, and
+// ErrProfileNameExists on a name collision — mirroring Update otherwise.
+func (r *ProfileRepository) UpdateIfMatch(
+	ctx context.Context, profile *Profile, expectedUpdatedAt string,
+) error {
+	profile.UpdatedAt = time.Now().UTC()
+
+	result, err := r.db.Exec(ctx, `
+		UPDATE profiles
+		SET name = ?, description = ?, config_json = ?, is_default = ?, updated_at = ?
+		WHERE id = ? AND updated_at = ?
+	`, profile.Name, profile.Description, profile.ConfigJSON,
+		boolToInt(profile.IsDefault), profile.UpdatedAt.Format(time.RFC3339),
+		profile.ID, expectedUpdatedAt)
+	if err != nil {
+		if isUniqueConstraintError(err) {
+			return ErrProfileNameExists
+		}
+		return fmt.Errorf("failed to update profile: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rowsAffected > 0 {
+		return nil
+	}
+
+	// 0 rows: distinguish a stale ETag (row exists) from a deleted row.
+	if _, getErr := r.Get(ctx, profile.ID); getErr != nil {
+		return ErrProfileNotFound // Get maps no-row to ErrProfileNotFound
+	}
+	return ErrProfileConflict
 }
 
 // Delete deletes a profile by ID.
