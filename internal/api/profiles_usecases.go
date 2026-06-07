@@ -9,6 +9,7 @@ package api
 import (
 	"context"
 	"errors"
+	"strconv"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	profilesapp "github.com/MustardSeedNetworks/seed/internal/profiles/app"
@@ -46,6 +47,7 @@ func dbToAppProfile(p *database.Profile) profilesapp.Profile {
 		IsDefault:   p.IsDefault,
 		CreatedAt:   p.CreatedAt,
 		UpdatedAt:   p.UpdatedAt,
+		RowVersion:  p.RowVersion,
 	}
 }
 
@@ -58,6 +60,7 @@ func appToDBProfile(p profilesapp.Profile) *database.Profile {
 		IsDefault:   p.IsDefault,
 		CreatedAt:   p.CreatedAt,
 		UpdatedAt:   p.UpdatedAt,
+		RowVersion:  p.RowVersion,
 	}
 }
 
@@ -111,7 +114,14 @@ func (s profilesStore) Update(ctx context.Context, p profilesapp.Profile, ifMatc
 	if ifMatch == "" {
 		return mapProfileErr(s.db().Profiles().Update(ctx, appToDBProfile(p)))
 	}
-	return mapProfileErr(s.db().Profiles().UpdateIfMatch(ctx, appToDBProfile(p), ifMatch))
+	// The ETag is the row_version as a decimal string. A token that does not parse
+	// to an int64 cannot match any row's version, so it is a precondition failure
+	// (412), not a 500 — treat it as a conflict without touching the row.
+	expectedVersion, err := strconv.ParseInt(ifMatch, 10, 64)
+	if err != nil {
+		return profilesapp.ErrConflict
+	}
+	return mapProfileErr(s.db().Profiles().UpdateIfMatch(ctx, appToDBProfile(p), expectedVersion))
 }
 
 func (s profilesStore) Delete(ctx context.Context, id string) error {

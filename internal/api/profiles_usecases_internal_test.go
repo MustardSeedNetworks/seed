@@ -119,7 +119,7 @@ func TestProfileOptimisticConcurrencyHTTP(t *testing.T) {
 	// A stale If-Match is rejected with 412 and the row is untouched.
 	staleRec := httptest.NewRecorder()
 	staleReq := httptest.NewRequest(http.MethodPut, "/", strings.NewReader(body))
-	staleReq.Header.Set("If-Match", `"1999-01-01T00:00:00Z"`)
+	staleReq.Header.Set("If-Match", `"999999"`) // a row_version that cannot match
 	s.handleUpdateProfile(staleRec, staleReq, "p1")
 	if staleRec.Code != http.StatusPreconditionFailed {
 		t.Fatalf("stale If-Match status = %d, want 412", staleRec.Code)
@@ -136,8 +136,8 @@ func TestProfileOptimisticConcurrencyHTTP(t *testing.T) {
 	if okRec.Code != http.StatusOK {
 		t.Fatalf("matching If-Match status = %d, want 200 (body=%s)", okRec.Code, okRec.Body.String())
 	}
-	if okRec.Header().Get("ETag") == "" {
-		t.Fatal("successful PUT should emit a fresh ETag")
+	if fresh := okRec.Header().Get("ETag"); fresh == "" || fresh == etag {
+		t.Fatalf("successful PUT should emit a fresh ETag different from %q, got %q", etag, fresh)
 	}
 	if cur, _ := db.Profiles().Get(ctx, "p1"); cur.Name != "renamed" {
 		t.Fatalf("update should have persisted, got name=%q", cur.Name)

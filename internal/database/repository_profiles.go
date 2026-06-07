@@ -34,6 +34,7 @@ func (r *ProfileRepository) Create(ctx context.Context, profile *Profile) error 
 	now := time.Now().UTC()
 	profile.CreatedAt = now
 	profile.UpdatedAt = now
+	profile.RowVersion = 1 // matches the column DEFAULT; the first version
 
 	_, err := r.db.Exec(
 		ctx,
@@ -64,7 +65,7 @@ func (r *ProfileRepository) Create(ctx context.Context, profile *Profile) error 
 // Get retrieves a profile by ID.
 func (r *ProfileRepository) Get(ctx context.Context, id string) (*Profile, error) {
 	row := r.db.QueryRow(ctx, `
-		SELECT id, name, description, config_json, is_default, created_at, updated_at
+		SELECT id, name, description, config_json, is_default, created_at, updated_at, row_version
 		FROM profiles WHERE id = ?
 	`, id)
 
@@ -74,7 +75,7 @@ func (r *ProfileRepository) Get(ctx context.Context, id string) (*Profile, error
 // GetByName retrieves a profile by name.
 func (r *ProfileRepository) GetByName(ctx context.Context, name string) (*Profile, error) {
 	row := r.db.QueryRow(ctx, `
-		SELECT id, name, description, config_json, is_default, created_at, updated_at
+		SELECT id, name, description, config_json, is_default, created_at, updated_at, row_version
 		FROM profiles WHERE name = ?
 	`, name)
 
@@ -84,7 +85,7 @@ func (r *ProfileRepository) GetByName(ctx context.Context, name string) (*Profil
 // GetDefault retrieves the default profile.
 func (r *ProfileRepository) GetDefault(ctx context.Context) (*Profile, error) {
 	row := r.db.QueryRow(ctx, `
-		SELECT id, name, description, config_json, is_default, created_at, updated_at
+		SELECT id, name, description, config_json, is_default, created_at, updated_at, row_version
 		FROM profiles WHERE is_default = 1 LIMIT 1
 	`)
 
@@ -94,7 +95,7 @@ func (r *ProfileRepository) GetDefault(ctx context.Context) (*Profile, error) {
 // List retrieves all profiles.
 func (r *ProfileRepository) List(ctx context.Context) ([]*Profile, error) {
 	rows, err := r.db.Query(ctx, `
-		SELECT id, name, description, config_json, is_default, created_at, updated_at
+		SELECT id, name, description, config_json, is_default, created_at, updated_at, row_version
 		FROM profiles ORDER BY name
 	`)
 	if err != nil {
@@ -114,72 +115,76 @@ func (r *ProfileRepository) List(ctx context.Context) ([]*Profile, error) {
 	return profiles, rows.Err()
 }
 
-// Update updates a profile.
+// Update updates a profile unconditionally, bumping row_version. The new version
+// is read back into profile.RowVersion (via RETURNING) so the in-memory row stays
+// consistent for a subsequent ETag.
 func (r *ProfileRepository) Update(ctx context.Context, profile *Profile) error {
 	profile.UpdatedAt = time.Now().UTC()
 
-	result, err := r.db.Exec(ctx, `
+	row := r.db.QueryRow(ctx, `
 		UPDATE profiles
-		SET name = ?, description = ?, config_json = ?, is_default = ?, updated_at = ?
+		SET name = ?, description = ?, config_json = ?, is_default = ?, updated_at = ?,
+			row_version = row_version + 1
 		WHERE id = ?
+		RETURNING row_version
 	`, profile.Name, profile.Description, profile.ConfigJSON,
 		boolToInt(profile.IsDefault), profile.UpdatedAt.Format(time.RFC3339), profile.ID)
-	if err != nil {
-		if isUniqueConstraintError(err) {
+
+	var newVersion int64
+	if err := row.Scan(&newVersion); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrProfileNotFound
+		case isUniqueConstraintError(err):
 			return ErrProfileNameExists
+		default:
+			return fmt.Errorf("failed to update profile: %w", err)
 		}
-		return fmt.Errorf("failed to update profile: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return ErrProfileNotFound
-	}
-
+	profile.RowVersion = newVersion
 	return nil
 }
 
 // UpdateIfMatch is the optimistic-concurrency variant of Update: it writes the
-// profile only when the row's current updated_at equals expectedUpdatedAt
-// (the ETag the caller last read). It returns ErrProfileConflict when the row
+// profile only when the row's current row_version equals expectedVersion (the
+// ETag the caller last read). row_version is monotonic and bumped on every
+// write, so — unlike the prior second-precision updated_at token — a sub-second
+// double-write is still caught. It returns ErrProfileConflict when the row
 // exists but has moved on, ErrProfileNotFound when it no longer exists, and
 // ErrProfileNameExists on a name collision — mirroring Update otherwise.
 func (r *ProfileRepository) UpdateIfMatch(
-	ctx context.Context, profile *Profile, expectedUpdatedAt string,
+	ctx context.Context, profile *Profile, expectedVersion int64,
 ) error {
 	profile.UpdatedAt = time.Now().UTC()
 
-	result, err := r.db.Exec(ctx, `
+	row := r.db.QueryRow(ctx, `
 		UPDATE profiles
-		SET name = ?, description = ?, config_json = ?, is_default = ?, updated_at = ?
-		WHERE id = ? AND updated_at = ?
+		SET name = ?, description = ?, config_json = ?, is_default = ?, updated_at = ?,
+			row_version = row_version + 1
+		WHERE id = ? AND row_version = ?
+		RETURNING row_version
 	`, profile.Name, profile.Description, profile.ConfigJSON,
 		boolToInt(profile.IsDefault), profile.UpdatedAt.Format(time.RFC3339),
-		profile.ID, expectedUpdatedAt)
-	if err != nil {
+		profile.ID, expectedVersion)
+
+	var newVersion int64
+	if err := row.Scan(&newVersion); err != nil {
 		if isUniqueConstraintError(err) {
 			return ErrProfileNameExists
 		}
-		return fmt.Errorf("failed to update profile: %w", err)
+		if !errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("failed to update profile: %w", err)
+		}
+		// 0 rows: distinguish a stale version (row exists) from a deleted row.
+		if _, getErr := r.Get(ctx, profile.ID); getErr != nil {
+			return ErrProfileNotFound // Get maps no-row to ErrProfileNotFound
+		}
+		return ErrProfileConflict
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-	if rowsAffected > 0 {
-		return nil
-	}
-
-	// 0 rows: distinguish a stale ETag (row exists) from a deleted row.
-	if _, getErr := r.Get(ctx, profile.ID); getErr != nil {
-		return ErrProfileNotFound // Get maps no-row to ErrProfileNotFound
-	}
-	return ErrProfileConflict
+	profile.RowVersion = newVersion
+	return nil
 }
 
 // Delete deletes a profile by ID.
@@ -252,6 +257,7 @@ func (r *ProfileRepository) scanProfile(row *sql.Row) (*Profile, error) {
 		&isDefault,
 		&createdAt,
 		&updatedAt,
+		&p.RowVersion,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -285,6 +291,7 @@ func (r *ProfileRepository) scanProfileFromRows(rows *sql.Rows) (*Profile, error
 		&isDefault,
 		&createdAt,
 		&updatedAt,
+		&p.RowVersion,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan profile: %w", err)
