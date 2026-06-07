@@ -1,7 +1,7 @@
 # ADR-0015: Separate the credential data-encryption key from `Auth.JWTSecret`
 
-**Status:** Proposed — 2026-06-05
-**(Open cross-workstream sign-off required before implementation — see "Coordination" below.)**
+**Status:** Accepted — 2026-06-06
+**(Owner greenlit for v1. Cross-workstream sign-off satisfied — see "Coordination" below. Implemented: `internal/config/keyring.go` + `crypto.go`; the two non-signing `JWTSecret` consumers now use the DEK, with the legacy v0 read path retained for one release.)**
 
 ## Context
 
@@ -116,11 +116,15 @@ credential encryption, fully decoupled from `Auth.JWTSecret`.
   (owned by the `internal/auth` / `internal/oauth` workstream). It becomes
   independently rotatable with **no data-loss side effect**.
 
-## Coordination (the cross-workstream gate)
+## Coordination (the cross-workstream gate) — RESOLVED 2026-06-06
 
 `internal/auth` / `internal/oauth` is a **separate workstream**; this ADR touches
-the `Auth.JWTSecret` boundary, so it is **Proposed**, not Accepted, until that
-workstream signs off on:
+the `Auth.JWTSecret` boundary. The gate below is **satisfied**: the audit
+confirmed the only non-signing `JWTSecret` consumers were the two
+credential-encryption sites (now swapped to the DEK), and `JWTSecret` reverts to
+JWT signing only. New encryption no longer reads `JWTSecret`; it remains
+referenced solely by the read-only legacy v0 decrypt path, removed one release
+after migration. Original sign-off criteria:
 
 1. **No non-signing consumers of `JWTSecret` remain** outside auth. (This ADR's
    audit found only credential encryption; auth confirms there are no others —
