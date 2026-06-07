@@ -23,7 +23,7 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/krisarmstrong/seed/internal/listener"
+	"github.com/MustardSeedNetworks/seed/internal/listener"
 )
 
 // Name is the listener key used in observability + the engine

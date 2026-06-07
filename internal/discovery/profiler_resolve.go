@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // resolveDeviceNames performs DNS, NetBIOS, and mDNS name resolution for a device.

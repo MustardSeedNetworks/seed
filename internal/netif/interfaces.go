@@ -12,8 +12,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/netif/detection"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/netif/detection"
 )
 
 // InterfaceType represents the type of network interface.

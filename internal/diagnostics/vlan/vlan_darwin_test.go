@@ -6,7 +6,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/vlan"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
 )
 
 func TestGetVlanInfoNonVlanInterface(t *testing.T) {

@@ -19,7 +19,7 @@ import (
 
 	"github.com/gopacket/gopacket/pcap"
 
-	"github.com/krisarmstrong/seed/internal/capture"
+	"github.com/MustardSeedNetworks/seed/internal/capture"
 )
 
 // Compile-time guarantees: this adapter implements the port, and *pcap.Handle

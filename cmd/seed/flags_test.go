@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/krisarmstrong/seed/internal/paths"
+	"github.com/MustardSeedNetworks/seed/internal/paths"
 )
 
 func TestParseInstallFlagsValidation(t *testing.T) {

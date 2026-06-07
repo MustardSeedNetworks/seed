@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/krisarmstrong/seed/internal/reporting/aggregator"
+	"github.com/MustardSeedNetworks/seed/internal/reporting/aggregator"
 )
 
 // ----------------------------------------------------------------------------

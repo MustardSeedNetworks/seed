@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/protocols/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
 func TestExtractVLANIndex(t *testing.T) {

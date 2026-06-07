@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/scheduler"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 )
 
 // ErrStorageNotConfigured is returned by Start / Stop / RunNow when

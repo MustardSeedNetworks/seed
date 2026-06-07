@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/auth"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 )
 
 // hibpAlwaysClean returns a server that says "no match" for everything.

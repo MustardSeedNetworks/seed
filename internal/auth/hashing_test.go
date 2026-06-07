@@ -10,7 +10,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/krisarmstrong/seed/internal/auth"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 )
 
 // knownBcryptPlaintext is the plaintext that the bcrypt fixture

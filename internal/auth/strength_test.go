@@ -5,7 +5,7 @@ package auth_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/auth"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 )
 
 func TestEvaluatePasswordStrength_Weak(t *testing.T) {

@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/probe"
-	"github.com/krisarmstrong/seed/internal/probe/checkers"
+	"github.com/MustardSeedNetworks/seed/internal/probe"
+	"github.com/MustardSeedNetworks/seed/internal/probe/checkers"
 )
 
 func TestTCPChecker_Kind(t *testing.T) {

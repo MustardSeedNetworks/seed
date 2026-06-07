@@ -3,7 +3,7 @@ package cable_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/cable"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/cable"
 )
 
 func TestStatusConstants(t *testing.T) {

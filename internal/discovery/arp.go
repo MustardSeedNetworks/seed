@@ -55,7 +55,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // ARPEntry represents a discovered device from ARP or ICMP scanning.

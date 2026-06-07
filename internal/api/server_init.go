@@ -9,16 +9,16 @@ import (
 	"context"
 	"slices"
 
-	"github.com/krisarmstrong/seed/internal/auth"
-	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/diagnostics/dns"
-	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/mibdb"
-	"github.com/krisarmstrong/seed/internal/platform/events"
-	"github.com/krisarmstrong/seed/internal/platform/jobs"
-	"github.com/krisarmstrong/seed/internal/wifi/survey"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
+	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/mibdb"
+	"github.com/MustardSeedNetworks/seed/internal/platform/events"
+	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/survey"
 )
 
 // initNetworkServices initializes DNS servers, device discovery subnets, and survey manager.

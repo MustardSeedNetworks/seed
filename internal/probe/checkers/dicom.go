@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/probe"
+	"github.com/MustardSeedNetworks/seed/internal/probe"
 )
 
 // defaultDICOMTimeout is the per-attempt DICOM probe timeout.

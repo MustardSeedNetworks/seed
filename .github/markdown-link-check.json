@@ -16,7 +16,7 @@
       "pattern": "^http://<device-ip>"
     },
     {
-      "pattern": "^https://github.com/krisarmstrong/seed/(commit|commits|compare)"
+      "pattern": "^https://github.com/MustardSeedNetworks/seed/(commit|commits|compare)"
     }
   ],
   "replacementPatterns": [

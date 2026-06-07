@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/dhcp"
+	"github.com/MustardSeedNetworks/seed/internal/dhcp"
 )
 
 // TestMonitorSetInterfaceComprehensive tests SetInterface with various scenarios.

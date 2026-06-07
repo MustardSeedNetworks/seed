@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/auth"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 )
 
 // sha1Hex returns the uppercase hex SHA-1 of the given input.

@@ -3,7 +3,7 @@ package snmp
 import (
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 // ExportFormatSNMPValue exports formatSNMPValue for testing.

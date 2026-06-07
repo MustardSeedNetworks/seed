@@ -5,7 +5,7 @@ package vlan_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/vlan"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
 )
 
 func TestNewManager(t *testing.T) {

@@ -1,8 +1,8 @@
 package discovery
 
 import (
-	"github.com/krisarmstrong/seed/internal/capture"
-	"github.com/krisarmstrong/seed/internal/capture/nullcapture"
+	"github.com/MustardSeedNetworks/seed/internal/capture"
+	"github.com/MustardSeedNetworks/seed/internal/capture/nullcapture"
 )
 
 // Option configures optional dependencies of the discovery constructors

@@ -3,10 +3,10 @@ package survey
 import (
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/anomaly"
-	"github.com/krisarmstrong/seed/internal/wifi"
-	"github.com/krisarmstrong/seed/internal/wifi/airspace"
-	wifiapp "github.com/krisarmstrong/seed/internal/wifi/app"
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/wifi"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
+	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
 )
 
 // Band boundary frequencies in MHz used to label a scanned network's band so the

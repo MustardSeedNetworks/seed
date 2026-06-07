@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/wifi/survey"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/survey"
 )
 
 func TestMigrateToMultiFloor_AlreadyMigrated(t *testing.T) {

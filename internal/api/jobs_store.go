@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
 // dbJobStore adapts the durable database.JobRepository to the jobs.Store seam

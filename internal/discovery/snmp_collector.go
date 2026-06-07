@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/protocols/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
 // SNMP collector constants.

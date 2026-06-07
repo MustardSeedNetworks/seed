@@ -8,7 +8,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // UpdateCredentials updates the authentication credentials in the config.

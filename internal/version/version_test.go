@@ -3,7 +3,7 @@ package version_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/version"
+	"github.com/MustardSeedNetworks/seed/internal/version"
 )
 
 func TestInfo(t *testing.T) {

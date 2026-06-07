@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	api "github.com/krisarmstrong/seed/internal/api"
-	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/testutil"
+	api "github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
 
 func TestHandleConfigVersion(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // SafeMarshal marshals v to JSON, logging errors if they occur.

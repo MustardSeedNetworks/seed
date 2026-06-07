@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/probe"
+	"github.com/MustardSeedNetworks/seed/internal/probe"
 )
 
 // defaultHTTPTimeout is the default request timeout.

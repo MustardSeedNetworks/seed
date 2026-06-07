@@ -19,7 +19,7 @@ description: |
   instantly see link status, switch information, DHCP details, DNS health,
   gateway connectivity, Wi-Fi survey data, and vulnerability findings.
 vendor: Mustard Seed Networks
-homepage: https://github.com/krisarmstrong/seed
+homepage: https://github.com/MustardSeedNetworks/seed
 license: BSL-1.1
 
 overrides:

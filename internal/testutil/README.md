@@ -15,7 +15,7 @@ across all test files.
 ### Using Test Defaults
 
 ````go
-import "github.com/krisarmstrong/seed/internal/testutil"
+import "github.com/MustardSeedNetworks/seed/internal/testutil"
 
 func TestMyFunction(t *testing.T) {
     defaults := testutil.GetTestDefaults()

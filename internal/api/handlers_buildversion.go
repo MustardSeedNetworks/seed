@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/version"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/version"
 )
 
 // handleBuildVersion serves GET /__version with build metadata for deployment

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/wifi"
+	"github.com/MustardSeedNetworks/seed/internal/wifi"
 )
 
 // channelGraphTestCase defines a test case for GetChannelGraphData.

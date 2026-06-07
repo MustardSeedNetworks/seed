@@ -8,13 +8,13 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/dhcp"
-	"github.com/krisarmstrong/seed/internal/i18n"
-	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/netif"
-	"github.com/krisarmstrong/seed/internal/phy"
-	"github.com/krisarmstrong/seed/internal/validation"
+	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/dhcp"
+	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/netif"
+	"github.com/MustardSeedNetworks/seed/internal/phy"
+	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
 // IP configuration mode constants.

@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/wifi/airspace"
-	"github.com/krisarmstrong/seed/internal/wifi/dot11"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
 )
 
 func mac(t *testing.T, s string) net.HardwareAddr {

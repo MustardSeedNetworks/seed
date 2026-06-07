@@ -6,7 +6,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/netif/detection"
+	"github.com/MustardSeedNetworks/seed/internal/netif/detection"
 )
 
 func TestNewDetector(t *testing.T) {

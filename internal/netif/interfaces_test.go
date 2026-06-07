@@ -6,7 +6,7 @@ package netif_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/netif"
+	"github.com/MustardSeedNetworks/seed/internal/netif"
 )
 
 func TestNewManager(t *testing.T) {

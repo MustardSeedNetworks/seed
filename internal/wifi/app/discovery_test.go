@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/discovery"
-	wifiapp "github.com/krisarmstrong/seed/internal/wifi/app"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
 )
 
 type fakeDiscoverySource struct {

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	api "github.com/krisarmstrong/seed/internal/api"
+	api "github.com/MustardSeedNetworks/seed/internal/api"
 )
 
 // TestHandleStatus tests the status endpoint.

@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/platform/events"
-	"github.com/krisarmstrong/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/platform/events"
+	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
 // TestDBJobIdempotency exercises the durable Idempotency-Key store through its

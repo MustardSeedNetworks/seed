@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/protocols/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
 // L2PathResult represents the complete Layer 2 path between two endpoints.

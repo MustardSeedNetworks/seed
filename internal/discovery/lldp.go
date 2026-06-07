@@ -9,7 +9,7 @@ import (
 	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/layers"
 
-	"github.com/krisarmstrong/seed/internal/capture"
+	"github.com/MustardSeedNetworks/seed/internal/capture"
 )
 
 // pcapSnapshotLengthLLDP is the maximum number of bytes to capture from each packet.

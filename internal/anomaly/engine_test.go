@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 )
 
 func testCatalog(t *testing.T) *anomaly.Catalog {

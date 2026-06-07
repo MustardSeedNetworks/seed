@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 func TestNewRingBuffer(t *testing.T) {

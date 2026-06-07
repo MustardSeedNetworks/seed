@@ -5,9 +5,9 @@ package api
 import (
 	"net/http"
 
-	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/i18n"
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // ============================================================================

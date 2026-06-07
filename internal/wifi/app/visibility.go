@@ -7,9 +7,9 @@
 package wifiapp
 
 import (
-	"github.com/krisarmstrong/seed/internal/anomaly"
-	"github.com/krisarmstrong/seed/internal/wifi/airspace"
-	"github.com/krisarmstrong/seed/internal/wifi/visibility"
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/visibility"
 )
 
 // VisibilitySource is the narrow capability the read use-cases need from the

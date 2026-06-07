@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/polling/snmp"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/collectors/routing"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/routing"
 )
 
 const tablePrefix = "1.3.6.1.2.1.4.24.4.1"

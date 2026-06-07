@@ -35,7 +35,7 @@ endif
 # Project Info
 # =============================================================================
 PROJECT_NAME := seed
-MODULE_PATH := github.com/krisarmstrong/seed
+MODULE_PATH := github.com/MustardSeedNetworks/seed
 VERSION_PKG := $(MODULE_PATH)/internal/version
 
 # =============================================================================

@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/probe"
-	"github.com/krisarmstrong/seed/internal/probe/checkers"
+	"github.com/MustardSeedNetworks/seed/internal/probe"
+	"github.com/MustardSeedNetworks/seed/internal/probe/checkers"
 )
 
 // fakeTLSDialer returns canned ConnState / errors for tests.

@@ -20,8 +20,8 @@ import (
 
 	"github.com/gopacket/gopacket/layers"
 
-	"github.com/krisarmstrong/seed/internal/capture"
-	"github.com/krisarmstrong/seed/internal/wifi/dot11"
+	"github.com/MustardSeedNetworks/seed/internal/capture"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
 )
 
 // defaultSnapLen is the per-packet capture length. Radiotap + a full management

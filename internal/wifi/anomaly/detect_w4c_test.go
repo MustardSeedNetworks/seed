@@ -3,8 +3,8 @@ package wifianomaly_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/wifi/airspace"
-	wifianomaly "github.com/krisarmstrong/seed/internal/wifi/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
+	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
 )
 
 func TestWPA3TransitionDowngrade(t *testing.T) {

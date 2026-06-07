@@ -41,9 +41,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/auth"
-	"github.com/krisarmstrong/seed/internal/i18n"
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
+	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 const (

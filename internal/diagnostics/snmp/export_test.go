@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 // CollectorConfig returns the config for testing.

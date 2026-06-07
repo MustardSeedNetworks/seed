@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/wifi/dot11"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
 )
 
 // apGroupMask groups the BSSIDs of one physical AP. Many APs assign their

@@ -3,8 +3,8 @@
 package wificapture
 
 import (
-	"github.com/krisarmstrong/seed/internal/capture"
-	"github.com/krisarmstrong/seed/internal/capture/nullcapture"
+	"github.com/MustardSeedNetworks/seed/internal/capture"
+	"github.com/MustardSeedNetworks/seed/internal/capture/nullcapture"
 )
 
 // DefaultOpener returns the CGO-free no-op capture adapter, compiled only for

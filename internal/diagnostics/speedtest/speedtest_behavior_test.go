@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/speedtest"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 )
 
 // TestRunTestGuardBehavior documents the behavior of the RunTest guard that prevents concurrent tests.

@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/license"
-	"github.com/krisarmstrong/seed/internal/timeseries/retention"
+	"github.com/MustardSeedNetworks/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
 )
 
 func silentLogger() *slog.Logger { return slog.New(slog.DiscardHandler) }

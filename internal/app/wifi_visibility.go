@@ -1,6 +1,6 @@
 package app
 
-import "github.com/krisarmstrong/seed/internal/wifi/visibility"
+import "github.com/MustardSeedNetworks/seed/internal/wifi/visibility"
 
 // NewWiFiVisibility builds the Wi-Fi airspace visibility component. It owns no
 // persistence (it is fed decoded frames by the capture source, not the DB), so

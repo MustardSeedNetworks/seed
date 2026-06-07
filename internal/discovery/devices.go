@@ -22,7 +22,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // DeviceDiscovery aggregates device discovery from all sources.

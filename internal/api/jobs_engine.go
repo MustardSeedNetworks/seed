@@ -13,9 +13,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
 // engineScanJobKind is the registered kind name for a discovery engine scan.

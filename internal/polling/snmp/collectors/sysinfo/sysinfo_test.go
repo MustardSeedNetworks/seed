@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/polling/snmp"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/collectors/sysinfo"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/sysinfo"
 )
 
 // fakeClient records the OIDs requested and replays a fixed varbind

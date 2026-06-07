@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/paths"
+	"github.com/MustardSeedNetworks/seed/internal/paths"
 )
 
 func TestModeString(t *testing.T) {

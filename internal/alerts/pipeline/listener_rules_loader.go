@@ -30,7 +30,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 // ListenerEventContext is the data passed to AlertTitle / AlertMessage

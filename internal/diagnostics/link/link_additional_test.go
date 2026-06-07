@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/link"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/link"
 )
 
 // TestCheckAndNotifyViaPolling tests the checkAndNotify method through the polling mechanism.

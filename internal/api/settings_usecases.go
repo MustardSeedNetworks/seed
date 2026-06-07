@@ -10,9 +10,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/database"
-	settingsapp "github.com/krisarmstrong/seed/internal/settings/app"
+	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	settingsapp "github.com/MustardSeedNetworks/seed/internal/settings/app"
 )
 
 // settingsProfileStore implements settingsapp.ProfileStore over the database

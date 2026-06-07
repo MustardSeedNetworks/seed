@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/speedtest"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 )
 
 // TestRunTestHonorsCancelledContext verifies RunTest returns promptly with the

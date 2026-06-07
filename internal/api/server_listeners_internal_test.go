@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 // freeAddr returns a free UDP loopback address as a "host:port"

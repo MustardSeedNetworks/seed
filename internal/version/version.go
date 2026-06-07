@@ -8,7 +8,7 @@ import (
 )
 
 // These variables are set via ldflags at build time.
-// Example: -ldflags "-X github.com/krisarmstrong/seed/internal/version.Version=v1.0.0".
+// Example: -ldflags "-X github.com/MustardSeedNetworks/seed/internal/version.Version=v1.0.0".
 //
 //nolint:gochecknoglobals // Build metadata injected via ldflags.
 var (

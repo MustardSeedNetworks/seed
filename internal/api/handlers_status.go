@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/dhcp"
-	"github.com/krisarmstrong/seed/internal/logging"
-	"github.com/krisarmstrong/seed/internal/system"
-	"github.com/krisarmstrong/seed/internal/version"
+	"github.com/MustardSeedNetworks/seed/internal/dhcp"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/system"
+	"github.com/MustardSeedNetworks/seed/internal/version"
 )
 
 // Log retrieval constants.

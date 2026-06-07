@@ -5,7 +5,7 @@ package link_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/link"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/link"
 )
 
 // TestDarwinCheckLinkStatePlatform tests macOS-specific link state detection.

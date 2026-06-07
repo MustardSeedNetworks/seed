@@ -3,8 +3,8 @@
 package api
 
 import (
-	"github.com/krisarmstrong/seed/internal/capture"
-	"github.com/krisarmstrong/seed/internal/capture/nullcapture"
+	"github.com/MustardSeedNetworks/seed/internal/capture"
+	"github.com/MustardSeedNetworks/seed/internal/capture/nullcapture"
 )
 
 // defaultCaptureOpener returns the CGO-free no-op capture adapter. This file is

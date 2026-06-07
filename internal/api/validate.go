@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
-	"github.com/krisarmstrong/seed/internal/i18n"
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // dtoValidator is the package-level validator instance used to enforce

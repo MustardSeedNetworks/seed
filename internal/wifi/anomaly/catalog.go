@@ -1,6 +1,6 @@
 package wifianomaly
 
-import "github.com/krisarmstrong/seed/internal/anomaly"
+import "github.com/MustardSeedNetworks/seed/internal/anomaly"
 
 // Exported def IDs are the stable catalog keys. Detections reference these, the
 // API/UI key off them, and tests assert against them — so they live as exported

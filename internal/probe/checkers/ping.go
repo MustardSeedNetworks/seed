@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/probe"
+	"github.com/MustardSeedNetworks/seed/internal/probe"
 )
 
 // defaultPingDialTimeout is the per-attempt dial timeout. Probes

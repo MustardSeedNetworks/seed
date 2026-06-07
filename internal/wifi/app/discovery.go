@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/krisarmstrong/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 )
 
 // ErrDiscoveryUnavailable is returned by the discovery use-case when the Wi-Fi

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/diagnostics/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/snmp"
 )
 
 func TestStatusConstants(t *testing.T) {

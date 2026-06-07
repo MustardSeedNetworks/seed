@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 // TestShippedSampleConfigLoads guards finding #1: the sample config that ships

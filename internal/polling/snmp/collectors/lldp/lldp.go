@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/polling/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
 )
 
 // Name is the collector key used in polling_targets.collector_chain.

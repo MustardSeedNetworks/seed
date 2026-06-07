@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	api "github.com/krisarmstrong/seed/internal/api"
-	"github.com/krisarmstrong/seed/internal/auth"
-	"github.com/krisarmstrong/seed/internal/config"
-	"github.com/krisarmstrong/seed/internal/testutil"
+	api "github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
+	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
 
 // refreshTokenTestCase defines a test case for token refresh.

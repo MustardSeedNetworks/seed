@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 )
 
 // TesterPingCount returns the ping count for testing.

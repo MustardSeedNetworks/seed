@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/alerts/pipeline"
-	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 func silentLogger() *slog.Logger { return slog.New(slog.DiscardHandler) }

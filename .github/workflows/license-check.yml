@@ -49,7 +49,7 @@ jobs:
           # Restricted: LGPL, CC-BY-SA (requires review)
 
           go-licenses check ./... \
-            --ignore=github.com/krisarmstrong/seed \
+            --ignore=github.com/MustardSeedNetworks/seed \
             --ignore=modernc.org/mathutil \
             --allowed_licenses=MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MPL-2.0,CC0-1.0 || {
             echo "❌ FAILED: Incompatible licenses found in Go dependencies"

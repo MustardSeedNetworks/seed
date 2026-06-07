@@ -7,9 +7,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/probe"
-	"github.com/krisarmstrong/seed/internal/scheduler"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/probe"
+	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 )
 
 // fakeStorage implements probe.storage's behavior for tests.

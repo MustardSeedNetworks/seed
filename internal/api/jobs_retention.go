@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
 // sweepJobs evicts terminal jobs past the retention window (ADR-0005, Phase 5c).

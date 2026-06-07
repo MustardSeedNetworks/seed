@@ -31,7 +31,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // ouiFieldSplitLimit is the number of parts to split the OUI file line into.

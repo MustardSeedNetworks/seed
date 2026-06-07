@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 func newAlertRulesTestServer(t *testing.T) *Server {

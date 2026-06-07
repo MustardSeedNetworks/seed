@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	api "github.com/krisarmstrong/seed/internal/api"
+	api "github.com/MustardSeedNetworks/seed/internal/api"
 )
 
 func TestNewRateLimiter(t *testing.T) {

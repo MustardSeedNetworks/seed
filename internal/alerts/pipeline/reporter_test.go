@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/alerts/pipeline"
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/engine"
 )
 
 func TestListenerPipeline_Status_BeforeFirstScan(t *testing.T) {

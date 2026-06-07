@@ -31,7 +31,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // HIBP integration constants.

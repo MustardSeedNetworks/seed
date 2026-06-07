@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/vlan"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
 )
 
 // TestDetectVlanSubinterfacesPlatformConcurrent tests concurrent detection.

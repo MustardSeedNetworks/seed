@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 func TestRedactSecrets(t *testing.T) {

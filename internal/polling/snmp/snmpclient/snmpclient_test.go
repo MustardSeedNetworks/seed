@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/polling/snmp"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/snmpclient"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/snmpclient"
 )
 
 func TestNewFactory_RejectsEmptyIPAddress(t *testing.T) {

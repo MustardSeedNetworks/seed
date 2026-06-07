@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/polling/snmp"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/collectors/iftable"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/iftable"
 )
 
 type fakeClient struct {

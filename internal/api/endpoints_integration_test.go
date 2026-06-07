@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	api "github.com/krisarmstrong/seed/internal/api"
-	"github.com/krisarmstrong/seed/internal/netif"
-	"github.com/krisarmstrong/seed/internal/testutil"
+	api "github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/netif"
+	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
 
 // testEndpointServer holds shared test server state.

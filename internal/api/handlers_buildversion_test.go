@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/api"
 )
 
 func TestHandleBuildVersionGET(t *testing.T) {

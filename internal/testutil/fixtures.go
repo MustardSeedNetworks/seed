@@ -1,6 +1,6 @@
 package testutil
 
-import "github.com/krisarmstrong/seed/internal/config"
+import "github.com/MustardSeedNetworks/seed/internal/config"
 
 // Test fixture constants.
 const (

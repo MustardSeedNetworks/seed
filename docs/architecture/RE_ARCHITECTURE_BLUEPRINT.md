@@ -224,20 +224,20 @@ linters-settings:
             desc: "modules are pure: define a port, implement it in adapters/http"
           - pkg: "database/sql"
             desc: "modules are pure: define a Repo port, implement it in adapters/store"
-          - pkg: "github.com/krisarmstrong/seed/internal/adapters"
+          - pkg: "github.com/MustardSeedNetworks/seed/internal/adapters"
             desc: "inward-only: adapters depend on modules, never the reverse"
       module-independence:
         files: ["**/internal/modules/**"]
         deny:
           # each module is an island; cross-module talk goes through platform/events.
           # (enumerated per-module in practice: canopy may not import sap/shell/roots/harvest, etc.)
-          - pkg: "github.com/krisarmstrong/seed/internal/modules"
+          - pkg: "github.com/MustardSeedNetworks/seed/internal/modules"
             desc: "modules must not import each other — publish/subscribe via platform/events"
       platform-isolation:
         files: ["**/internal/platform/**"]
         deny:
-          - pkg: "github.com/krisarmstrong/seed/internal/modules"
-          - pkg: "github.com/krisarmstrong/seed/internal/adapters"
+          - pkg: "github.com/MustardSeedNetworks/seed/internal/modules"
+          - pkg: "github.com/MustardSeedNetworks/seed/internal/adapters"
 ```
 
 > The `module-independence` rule needs per-module allow/deny tuning (a module

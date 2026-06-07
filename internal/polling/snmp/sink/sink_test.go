@@ -9,17 +9,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/collectors/arp"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/collectors/bgp4"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/collectors/cdp"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/collectors/fdb"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/collectors/hostresources"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/collectors/iftable"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/collectors/lldp"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/collectors/routing"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/collectors/sysinfo"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/sink"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/arp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/bgp4"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/cdp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/fdb"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/hostresources"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/iftable"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/lldp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/routing"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/collectors/sysinfo"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/sink"
 )
 
 func silentLogger() *slog.Logger { return slog.New(slog.DiscardHandler) }

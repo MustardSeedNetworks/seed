@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/system"
+	"github.com/MustardSeedNetworks/seed/internal/system"
 )
 
 func TestGetHealth(t *testing.T) {

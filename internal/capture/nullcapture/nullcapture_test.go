@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/capture"
-	"github.com/krisarmstrong/seed/internal/capture/nullcapture"
+	"github.com/MustardSeedNetworks/seed/internal/capture"
+	"github.com/MustardSeedNetworks/seed/internal/capture/nullcapture"
 )
 
 // TestOpenLiveReturnsUnavailable verifies the stub never opens a handle and

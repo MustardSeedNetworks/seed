@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/reporting"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/reporting"
 )
 
 // ReportRepo implements reporting.ReportRepo over the SQLite reports table. The

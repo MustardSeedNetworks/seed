@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/krisarmstrong/seed/main/docs/schemas/api/link-response.schema.json",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/seed/main/docs/schemas/api/link-response.schema.json",
   "$ref": "#/$defs/LinkResponse",
   "$defs": {
     "LinkHistoryEvent": {

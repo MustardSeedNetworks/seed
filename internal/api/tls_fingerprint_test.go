@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/api"
 )
 
 // makeTestCertPEM generates a self-signed X.509 certificate for testing

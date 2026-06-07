@@ -11,8 +11,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/krisarmstrong/seed/internal/license"
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // errCodeTierTooLow is the standard error code for routes blocked by

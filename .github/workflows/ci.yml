@@ -735,10 +735,10 @@ jobs:
           echo "UI_BUILD_HASH=${UI_BUILD_HASH}"
           go build -trimpath -buildvcs=false \
             -ldflags="-s -w \
-              -X github.com/krisarmstrong/seed/internal/version.Version=${VERSION} \
-              -X github.com/krisarmstrong/seed/internal/version.Commit=${COMMIT} \
-              -X github.com/krisarmstrong/seed/internal/version.BuildTime=${BUILD_TIME} \
-              -X github.com/krisarmstrong/seed/internal/version.UIBuildHash=${UI_BUILD_HASH}" \
+              -X github.com/MustardSeedNetworks/seed/internal/version.Version=${VERSION} \
+              -X github.com/MustardSeedNetworks/seed/internal/version.Commit=${COMMIT} \
+              -X github.com/MustardSeedNetworks/seed/internal/version.BuildTime=${BUILD_TIME} \
+              -X github.com/MustardSeedNetworks/seed/internal/version.UIBuildHash=${UI_BUILD_HASH}" \
             -o seed-linux-amd64 ./cmd/seed
 
       - name: Install arm64 cross-build dependencies
@@ -784,10 +784,10 @@ jobs:
           UI_BUILD_HASH=$(find internal/api/ui -type f -exec md5sum {} \; 2>/dev/null | sort | md5sum 2>/dev/null | cut -d' ' -f1)
           go build -trimpath -buildvcs=false \
             -ldflags="-s -w \
-              -X github.com/krisarmstrong/seed/internal/version.Version=${VERSION} \
-              -X github.com/krisarmstrong/seed/internal/version.Commit=${COMMIT} \
-              -X github.com/krisarmstrong/seed/internal/version.BuildTime=${BUILD_TIME} \
-              -X github.com/krisarmstrong/seed/internal/version.UIBuildHash=${UI_BUILD_HASH}" \
+              -X github.com/MustardSeedNetworks/seed/internal/version.Version=${VERSION} \
+              -X github.com/MustardSeedNetworks/seed/internal/version.Commit=${COMMIT} \
+              -X github.com/MustardSeedNetworks/seed/internal/version.BuildTime=${BUILD_TIME} \
+              -X github.com/MustardSeedNetworks/seed/internal/version.UIBuildHash=${UI_BUILD_HASH}" \
             -o seed-linux-arm64 ./cmd/seed
 
       - name: Verify binaries

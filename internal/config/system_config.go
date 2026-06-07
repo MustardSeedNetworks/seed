@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // SystemConfig contains the minimal configuration needed to bootstrap the system.

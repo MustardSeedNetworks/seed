@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/dhcp"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dhcp"
 )
 
 func TestParseIPConfigOutput(t *testing.T) {

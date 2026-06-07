@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 func setupJobsTest(t *testing.T) (*database.JobRepository, context.Context) {

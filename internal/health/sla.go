@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 // SLA reporting periods.

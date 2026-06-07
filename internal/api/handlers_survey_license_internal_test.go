@@ -5,7 +5,7 @@ package api
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/wifi/survey"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/survey"
 )
 
 // newRoamFixture returns a survey with one Active + one Passive sample

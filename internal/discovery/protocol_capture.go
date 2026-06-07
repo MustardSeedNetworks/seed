@@ -5,7 +5,7 @@ import (
 
 	"github.com/gopacket/gopacket/layers"
 
-	"github.com/krisarmstrong/seed/internal/capture"
+	"github.com/MustardSeedNetworks/seed/internal/capture"
 )
 
 // openProtocolCapture opens a live capture handle on iface in promiscuous mode,

@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/polling/snmp"
-	"github.com/krisarmstrong/seed/internal/polling/snmp/orchestrator"
-	"github.com/krisarmstrong/seed/internal/scheduler"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
+	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 )
 
 func silentLogger() *slog.Logger { return slog.New(slog.DiscardHandler) }

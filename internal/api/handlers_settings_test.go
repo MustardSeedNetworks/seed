@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	api "github.com/krisarmstrong/seed/internal/api"
-	"github.com/krisarmstrong/seed/internal/config"
+	api "github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 // TestHandleSettingsDefaultsGET tests the settings defaults endpoint.

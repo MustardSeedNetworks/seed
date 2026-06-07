@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/auth"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 )
 
 func TestNewRecoveryTokenManager(t *testing.T) {

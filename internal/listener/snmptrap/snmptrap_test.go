@@ -20,8 +20,8 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/krisarmstrong/seed/internal/listener"
-	"github.com/krisarmstrong/seed/internal/listener/snmptrap"
+	"github.com/MustardSeedNetworks/seed/internal/listener"
+	"github.com/MustardSeedNetworks/seed/internal/listener/snmptrap"
 )
 
 func silentLogger() *slog.Logger { return slog.New(slog.DiscardHandler) }

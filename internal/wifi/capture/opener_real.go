@@ -3,8 +3,8 @@
 package wificapture
 
 import (
-	"github.com/krisarmstrong/seed/internal/capture"
-	"github.com/krisarmstrong/seed/internal/capture/pcap"
+	"github.com/MustardSeedNetworks/seed/internal/capture"
+	"github.com/MustardSeedNetworks/seed/internal/capture/pcap"
 )
 
 // DefaultOpener returns the libpcap-backed capture adapter. Compiled when CGO is

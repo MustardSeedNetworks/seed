@@ -19,7 +19,7 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/krisarmstrong/seed/internal/polling/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/polling/snmp"
 )
 
 // Default network parameters. Real production may override via

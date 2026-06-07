@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/iperf"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 )
 
 // TestDetectPackageManagerByPlatform tests package manager detection on different platforms.

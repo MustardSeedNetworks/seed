@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/listener"
-	"github.com/krisarmstrong/seed/internal/listener/sink"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/listener"
+	"github.com/MustardSeedNetworks/seed/internal/listener/sink"
 )
 
 func silentLogger() *slog.Logger { return slog.New(slog.DiscardHandler) }

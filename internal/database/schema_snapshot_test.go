@@ -17,7 +17,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 // schemaBookkeepingTables are migration-bookkeeping tables: runner-internal and

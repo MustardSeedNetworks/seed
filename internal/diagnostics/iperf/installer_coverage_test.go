@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/iperf"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 )
 
 // TestDetectLinuxPackageManagerValidation tests Linux package manager detection validation.

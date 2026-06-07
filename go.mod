@@ -1,4 +1,4 @@
-module github.com/krisarmstrong/seed
+module github.com/MustardSeedNetworks/seed
 
 go 1.26.4
 

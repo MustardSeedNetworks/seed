@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
 // hourFormat / dayFormat match the SQLite strftime forms used in

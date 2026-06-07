@@ -16,10 +16,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/anomaly"
-	"github.com/krisarmstrong/seed/internal/wifi/airspace"
-	wifianomaly "github.com/krisarmstrong/seed/internal/wifi/anomaly"
-	"github.com/krisarmstrong/seed/internal/wifi/dot11"
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
+	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
 )
 
 const (

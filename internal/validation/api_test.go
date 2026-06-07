@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/validation"
+	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
 func TestWriteJSONError(t *testing.T) {

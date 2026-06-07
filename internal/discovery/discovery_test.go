@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/testutil"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
 
 func TestDeviceDiscovery(t *testing.T) {

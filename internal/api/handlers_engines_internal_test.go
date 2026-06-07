@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/engine"
 )
 
 // minimalEngine is an Engine that does not implement Reporter — used

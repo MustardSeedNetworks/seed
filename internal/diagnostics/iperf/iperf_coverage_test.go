@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/iperf"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 )
 
 // TestStartServerInvalidPorts tests starting server with various invalid ports.

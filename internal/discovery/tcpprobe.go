@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // PortState represents the state of a TCP port.

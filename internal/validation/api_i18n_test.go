@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/i18n"
-	"github.com/krisarmstrong/seed/internal/validation"
+	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
 func TestTranslateFieldErrors(t *testing.T) {

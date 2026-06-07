@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 )
 
 func TestTCPProber_ProbeTCP(t *testing.T) {

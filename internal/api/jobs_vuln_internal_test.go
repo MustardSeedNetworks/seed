@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/discovery"
-	"github.com/krisarmstrong/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
 // fakeVulnScanService is a controllable vulnScanService for the kind tests: it

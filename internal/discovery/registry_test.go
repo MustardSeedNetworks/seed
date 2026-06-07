@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 )
 
 func TestNewDeviceRegistry(t *testing.T) {

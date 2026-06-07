@@ -9,8 +9,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
 // usersTestSetup creates a Server with a temp DB and a pre-seeded

@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/krisarmstrong/seed/internal/anomaly"
-	"github.com/krisarmstrong/seed/internal/wifi/airspace"
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
 )
 
 // defaultCoChannelThreshold is the number of BSSes sharing one channel at or

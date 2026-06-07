@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/iperf"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 )
 
 // TestWaitForPortReady tests the port readiness check function.

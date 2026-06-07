@@ -20,7 +20,7 @@ Be respectful, inclusive, and professional in all interactions.
 
 ````bash
 # Clone the repository
-git clone https://github.com/krisarmstrong/seed.git
+git clone https://github.com/MustardSeedNetworks/seed.git
 cd seed
 
 # Install Go dependencies

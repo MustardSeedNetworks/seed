@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/api"
 )
 
 // TestBindWithFallback_FreePort confirms a free port is bound at offset 0.

@@ -107,7 +107,7 @@ func DefaultConfig() UpdateConfig {
 		AutoDownload:      false,
 		AutoApply:         false,
 		IncludePrerelease: false,
-		GitHubOwner:       "krisarmstrong",
+		GitHubOwner:       "MustardSeedNetworks",
 		GitHubRepo:        "seed",
 	}
 }

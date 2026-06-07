@@ -280,7 +280,7 @@ fi
 echo ""
 echo -e "${BLUE}=== Next Steps ===${NC}"
 echo "1. Review the test results above"
-echo "2. Submit a hardware report: https://github.com/krisarmstrong/seed/issues/new?template=hardware-report.yml"
+echo "2. Submit a hardware report: https://github.com/MustardSeedNetworks/seed/issues/new?template=hardware-report.yml"
 echo "3. See HARDWARE.md for recommended alternatives if hardware is not fully compatible"
 echo ""
 echo "Test completed at $(date)"

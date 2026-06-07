@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/wifi/airspace"
-	"github.com/krisarmstrong/seed/internal/wifi/dot11"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/dot11"
 )
 
 // deauth builds a deauthentication management frame from an AP (Address3=BSSID).

@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/engine"
-	"github.com/krisarmstrong/seed/internal/scheduler"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/engine"
+	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 )
 
 // pollStatusOK / pollStatusError are the values written into

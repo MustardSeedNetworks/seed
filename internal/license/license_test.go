@@ -5,7 +5,7 @@ package license_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
 func TestTierString(t *testing.T) {

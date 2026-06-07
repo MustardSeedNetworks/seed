@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	api "github.com/krisarmstrong/seed/internal/api"
-	"github.com/krisarmstrong/seed/internal/auth"
+	api "github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
 )
 
 // TestHandleRecoveryStatusNoManager tests recovery status when manager is not configured.

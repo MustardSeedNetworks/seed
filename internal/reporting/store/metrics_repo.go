@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/database"
-	"github.com/krisarmstrong/seed/internal/reporting"
+	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/reporting"
 )
 
 // sqliteDateFormat is the strftime grouping format for trend buckets. It is a

@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/anomaly"
-	"github.com/krisarmstrong/seed/internal/wifi/airspace"
-	wifianomaly "github.com/krisarmstrong/seed/internal/wifi/anomaly"
-	wifiapp "github.com/krisarmstrong/seed/internal/wifi/app"
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
+	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
+	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
 )
 
 func hasDef(anoms []anomaly.Anomaly, defKey string) bool {

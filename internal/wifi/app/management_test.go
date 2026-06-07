@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/wifi"
-	wifiapp "github.com/krisarmstrong/seed/internal/wifi/app"
+	"github.com/MustardSeedNetworks/seed/internal/wifi"
+	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
 )
 
 // fakeHardware is a configurable wifiapp.Hardware for the management tests.

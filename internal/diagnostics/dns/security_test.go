@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/diagnostics/dns"
+	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 )
 
 func TestDefaultSecurityScanConfig(t *testing.T) {

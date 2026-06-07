@@ -4,7 +4,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 )
 
 func TestExportIncrementIP(t *testing.T) {

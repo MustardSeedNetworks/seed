@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/license"
+	"github.com/MustardSeedNetworks/seed/internal/license"
 )
 
 func TestMinTierForEngine_Mapping(t *testing.T) {

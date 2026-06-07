@@ -5,7 +5,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/validation"
+	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
 
 func TestIsPrivateIP(t *testing.T) {

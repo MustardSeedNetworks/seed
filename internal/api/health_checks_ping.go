@@ -9,7 +9,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 // PingStats holds extended ping statistics.

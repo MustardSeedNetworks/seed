@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/api"
 )
 
 type decodeFixture struct {

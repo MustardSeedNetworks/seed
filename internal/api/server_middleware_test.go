@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	api "github.com/krisarmstrong/seed/internal/api"
+	api "github.com/MustardSeedNetworks/seed/internal/api"
 )
 
 // Verifies bodyLimitMiddleware caps GET requests on NON-API paths (regression

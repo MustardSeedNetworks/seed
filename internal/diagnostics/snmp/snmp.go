@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/config"
-	coresnmp "github.com/krisarmstrong/seed/internal/protocols/snmp"
+	"github.com/MustardSeedNetworks/seed/internal/config"
+	coresnmp "github.com/MustardSeedNetworks/seed/internal/protocols/snmp"
 )
 
 // Status represents the status of an SNMP operation.

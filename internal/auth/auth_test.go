@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/seed/internal/auth"
-	"github.com/krisarmstrong/seed/internal/testutil"
+	"github.com/MustardSeedNetworks/seed/internal/auth"
+	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
 
 // assertAuthError is a test helper that verifies authentication failed as expected.

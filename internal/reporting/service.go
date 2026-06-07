@@ -5,7 +5,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/krisarmstrong/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/config"
 )
 
 // Service is the reporting component providing report generation services.

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	// Import the package to ensure it compiles and is usable.
-	_ "github.com/krisarmstrong/seed/internal/reporting/generator"
+	_ "github.com/MustardSeedNetworks/seed/internal/reporting/generator"
 )
 
 // TestPackageExists verifies the generator package exists and can be imported.

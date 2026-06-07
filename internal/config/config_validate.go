@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/krisarmstrong/seed/internal/logging"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // Validate checks if the configuration values are valid.
