@@ -149,6 +149,12 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	// Initialize SSE hub
 	s.services.RealTime.SSEHub = NewSSEHub()
 
+	// Wire the ADR-0016 use-cases the same way NewServer does, so handlers that
+	// depend on them work under the test harness.
+	s.initSettingsUseCase()
+	s.initProfilesUseCase()
+	s.initNetworkUseCase()
+
 	// Setup routes
 	s.setupRoutes()
 

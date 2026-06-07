@@ -5,14 +5,15 @@ package api
 // Related handlers moved to: handlers_wifi.go, handlers_vlan.go, handlers_cable.go
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
-	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/dhcp"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
+	networkapp "github.com/MustardSeedNetworks/seed/internal/network/app"
 	"github.com/MustardSeedNetworks/seed/internal/phy"
 	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
@@ -761,49 +762,14 @@ func (s *Server) handleIPSettings(w http.ResponseWriter, r *http.Request) {
 
 // handleIPSettingsGet returns the current IP configuration settings.
 func (s *Server) handleIPSettingsGet(w http.ResponseWriter, _ *http.Request) {
-	resp := IPSettingsResponse{
-		Mode: s.config.IP.Mode,
-	}
-
-	if s.config.IP.Static != nil {
-		resp.Address = s.config.IP.Static.Address
-		resp.Netmask = s.config.IP.Static.Netmask
-		resp.Gateway = s.config.IP.Static.Gateway
-		resp.DNS = s.config.IP.Static.DNS
-	}
-
-	sendJSONResponse(w, nil, http.StatusOK, resp)
-}
-
-// applyStaticIPConfig applies static IP configuration, returns error message on failure.
-func (s *Server) applyStaticIPConfig(
-	iface string,
-	req *IPSettingsRequest,
-	logger *slog.Logger,
-) error {
-	cfg := &netif.StaticIPConfig{
-		Address: req.Address, Netmask: req.Netmask, Gateway: req.Gateway, DNS: req.DNS,
-	}
-	if err := s.netManager().ConfigureStaticIP(iface, cfg); err != nil {
-		logger.Error("Failed to configure static IP", "error", err, "interface", iface)
-		return err
-	}
-	s.config.IP.Mode = ipModeStatic
-	s.config.IP.Static = &config.StaticIP{
-		Address: req.Address, Netmask: req.Netmask, Gateway: req.Gateway, DNS: req.DNS,
-	}
-	return nil
-}
-
-// applyDHCPConfig applies DHCP configuration, returns error on failure.
-func (s *Server) applyDHCPConfig(iface string, logger *slog.Logger) error {
-	if err := s.netManager().ConfigureDHCP(iface); err != nil {
-		logger.Error("Failed to configure DHCP", "error", err, "interface", iface)
-		return err
-	}
-	s.config.IP.Mode = ipModeDHCP
-	s.config.IP.Static = nil
-	return nil
+	st := s.networkIP.Settings()
+	sendJSONResponse(w, nil, http.StatusOK, IPSettingsResponse{
+		Mode:    st.Mode,
+		Address: st.Address,
+		Netmask: st.Netmask,
+		Gateway: st.Gateway,
+		DNS:     st.DNS,
+	})
 }
 
 // handleIPSettingsPut updates the IP configuration settings.
@@ -819,69 +785,12 @@ func (s *Server) handleIPSettingsPut(
 		return
 	}
 
-	if req.Mode != ipModeDHCP && req.Mode != ipModeStatic {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusBadRequest,
-			ErrCodeValidation,
-			localizer.T("errors.netif.invalidMode"),
-			"",
-		)
-		return
-	}
-
-	s.config.Lock()
-	currentIface := s.getInterfaceFromRequest(r)
-
-	var configErr error
-	if req.Mode == ipModeStatic {
-		configErr = s.applyStaticIPConfig(currentIface, &req, logger)
-	} else {
-		configErr = s.applyDHCPConfig(currentIface, logger)
-	}
-
-	s.config.Unlock()
-
-	if configErr != nil {
-		errMsg := localizer.T("errors.netif.staticConfigFailed")
-		if req.Mode == ipModeDHCP {
-			errMsg = localizer.T("errors.netif.dhcpConfigFailed")
-		}
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			errMsg,
-			"",
-		)
-		return
-	}
-
-	if err := s.config.Save(s.configPath); err != nil {
-		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.config.failedToSave"),
-			"",
-		)
-		return
-	}
-
-	if err := s.netManager().RefreshInterfaces(); err != nil {
-		logger.ErrorContext(r.Context(), "Failed to refresh interfaces", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			localizer.T("errors.netif.refreshFailed"),
-			"",
-		)
+	iface := s.getInterfaceFromRequest(r)
+	err := s.networkIP.Apply(iface, req.Mode, networkapp.StaticIP{
+		Address: req.Address, Netmask: req.Netmask, Gateway: req.Gateway, DNS: req.DNS,
+	})
+	if err != nil {
+		s.writeIPApplyError(w, r, logger, localizer, err)
 		return
 	}
 
@@ -891,6 +800,36 @@ func (s *Server) handleIPSettingsPut(
 		http.StatusOK,
 		map[string]string{"status": statusSuccess, "message": "IP configuration updated"},
 	)
+}
+
+// writeIPApplyError maps an IPService.Apply sentinel to the pre-strangle HTTP
+// response (status + localized message).
+func (s *Server) writeIPApplyError(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *slog.Logger,
+	localizer *i18n.Localizer,
+	err error,
+) {
+	switch {
+	case errors.Is(err, networkapp.ErrInvalidMode):
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+			ErrCodeValidation, localizer.T("errors.netif.invalidMode"), "")
+	case errors.Is(err, networkapp.ErrStaticConfig):
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, localizer.T("errors.netif.staticConfigFailed"), "")
+	case errors.Is(err, networkapp.ErrDHCPConfig):
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, localizer.T("errors.netif.dhcpConfigFailed"), "")
+	case errors.Is(err, networkapp.ErrSave):
+		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, localizer.T("errors.config.failedToSave"), "")
+	default: // ErrRefresh
+		logger.ErrorContext(r.Context(), "Failed to refresh interfaces", "error", err)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, localizer.T("errors.netif.refreshFailed"), "")
+	}
 }
 
 // handleSetMTU handles POST requests to set interface MTU.
@@ -929,14 +868,10 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Use current interface if not specified
-	iface := req.Interface
-	if iface == "" {
-		iface = s.netManager().GetCurrentInterface()
-	}
-
-	// Set the MTU
-	if err := s.netManager().SetMTU(iface, req.MTU); err != nil {
+	// Set the MTU (the use-case resolves the current interface when unset and
+	// refreshes best-effort).
+	iface, err := s.networkIP.SetMTU(req.Interface, req.MTU)
+	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to set MTU", "error", err, "interface", iface, "mtu", req.MTU)
 		sendErrorResponseWithDetails(
 			w,
@@ -947,11 +882,6 @@ func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 			"",
 		)
 		return
-	}
-
-	// Refresh interface data
-	if err := s.netManager().RefreshInterfaces(); err != nil {
-		logging.GetLogger().WarnContext(r.Context(), "Failed to refresh interfaces after MTU change", "error", err)
 	}
 
 	sendJSONResponse(w, nil, http.StatusOK, map[string]any{
