@@ -465,17 +465,44 @@ between modules.
 
 ## 7. Persistence (`adapters/store`)
 
+> **STATUS (2026-06-07): Phase 5b — schema modernization — is DONE; two items
+> remain.** Done: `.sql` migrations embedded via `//go:embed` + the **goose**
+> runner (`internal/database/goose.go`), the **collapsed `0001_init.sql`
+> baseline** (61 STRICT tables), the migrate-from-empty drift gate
+> (`goose_baseline_test.go` / `schema_snapshot_test.go`), and a `WithTx`
+> transaction wrapper (`database.go`). **Remaining (feature-sized):**
+> (1) the **transactional outbox relay** (the `00002_jobs.sql` + `platform/events`
+> comments both note it is "layered on" later) and (2) **optimistic concurrency**
+> (version/ETag + `If-Match`) on the mutable resources — not yet implemented.
+> The repo-interfaces-as-domain-ports point below is piloted in
+> `internal/reporting/store` (ReportRepo/ScheduleRepo/MetricsRepo/ExportRepo);
+> generalizing it to all 21 repos is deliberately deferred — done bespoke per
+> domain only where a use-case needs it (the ADR-0016 strangle), not wholesale
+> (which just produces near-identical adapters, as the polling-targets attempt
+> confirmed).
+
 - Repo **interfaces defined in the domain** (`modules/*/ports.go`), implemented in
-  `adapters/store`. Eager-constructed at boot (kills the lazy-init race).
-- **UnitOfWork / Tx** abstraction for multi-table atomicity.
+  `adapters/store`. Eager-constructed at boot (kills the lazy-init race). *(Piloted
+  in `reporting/store`; generalize on demand, not wholesale.)*
+- **UnitOfWork / Tx** abstraction for multi-table atomicity. *(`DB.WithTx` exists;
+  a typed UnitOfWork over the domain ports is the open generalization.)*
 - **Transactional outbox** table: domain writes + the event row commit together;
-  a relay publishes to the bus post-commit.
+  a relay publishes to the bus post-commit. *(OPEN — the durability layer for
+  `platform/events`.)*
 - **Optimistic concurrency:** version/ETag + `If-Match` on mutable resources
   (config, profiles, settings) — multi-user is live; last-write-wins loses data.
+  *(OPEN — the highest-value remaining correctness item.)*
 - **Reference data** (OUI vendor DB, MIB defs, default config, NVD cache) is
   **embedded read-only**, never rows in the mutable DB.
 
 ### 7.1 Schema & migrations (ADR-0006)
+
+> **✅ IMPLEMENTED (Phase 5b).** The whole target below shipped: `.sql` files under
+> `internal/database/migrations/` embedded via `//go:embed`, the **goose** runner
+> (`goose.go`), a collapsed **`0001_init.sql`** baseline with **STRICT** tables +
+> explicit FK/CHECK/UNIQUE constraints, and the migrate-from-empty drift gate. The
+> homegrown index+1 runner and the Go-string migrations are gone. The paragraph
+> below is the original problem statement, kept for historical context.
 
 Today the schema lives as raw SQL **inside Go string literals** (`migrations.go`,
 2,190 lines, ~40 tables; up-only homegrown runner; version = slice index+1). The
