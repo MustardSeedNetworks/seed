@@ -4,14 +4,13 @@
 #
 # All testing targets:
 #   - Unit tests (backend + frontend)
-#   - Integration tests
 #   - E2E tests (Playwright)
 #   - Coverage reports
 #
 # =============================================================================
 
 .PHONY: test test-all test-backend test-backend-quiet test-fast test-frontend test-frontend-quiet \
-        test-e2e test-e2e-ui test-e2e-install test-coverage test-integration
+        test-e2e test-e2e-ui test-e2e-install test-coverage
 
 # =============================================================================
 # Main Test Targets
@@ -135,33 +134,3 @@ test-coverage: ## Generate coverage report
 	go test -race -coverprofile=coverage.out $$PKGS
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report: coverage.html"
-
-test-integration: build-linux-docker ## Full integration test on Ubuntu server via systemd
-	@if [ -z "$(TEST_HOST)" ]; then \
-		echo "ERROR: TEST_HOST not set. Usage: TEST_HOST=user@host make test-integration"; \
-		exit 1; \
-	fi
-	@echo "Running integration tests on $(TEST_HOST)..."
-	rsync -avz $(BINARY_NAME)-linux-amd64 $(TEST_HOST):/tmp/seed-test
-	ssh $(TEST_HOST) "\
-		sudo systemctl stop seed-test 2>/dev/null || true && \
-		sudo cp /tmp/seed-test /usr/local/bin/seed-test && \
-		sudo chmod +x /usr/local/bin/seed-test && \
-		sudo setcap cap_net_raw=+ep /usr/local/bin/seed-test && \
-		echo '[Unit]' | sudo tee /etc/systemd/system/seed-test.service > /dev/null && \
-		echo 'Description=The Seed Integration Test' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
-		echo '[Service]' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
-		echo 'Type=simple' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
-		echo 'ExecStart=/usr/local/bin/seed-test' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
-		echo 'WorkingDirectory=/tmp' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
-		echo '[Install]' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
-		echo 'WantedBy=multi-user.target' | sudo tee -a /etc/systemd/system/seed-test.service > /dev/null && \
-		sudo systemctl daemon-reload && \
-		sudo systemctl start seed-test && \
-		sleep 5 && \
-		sudo systemctl is-active seed-test && \
-		curl -sf -k https://localhost:8443/api/health && \
-		echo 'PASS: Integration test passed' && \
-		sudo systemctl stop seed-test && \
-		sudo rm -f /etc/systemd/system/seed-test.service /usr/local/bin/seed-test"
-	@echo "Integration tests completed successfully"

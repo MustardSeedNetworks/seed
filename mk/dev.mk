@@ -1,8 +1,8 @@
 # =============================================================================
 # Dev-experience helpers — capability-aware run for local iteration
 # =============================================================================
-# Production installs (.deb/.rpm/.pkg) use systemd/launchd units that already
-# declare CAP_NET_RAW + CAP_NET_ADMIN and run as a non-root user. For local
+# Production service installs use units that already declare CAP_NET_RAW +
+# CAP_NET_ADMIN and run as a non-root user. For local
 # dev (`make build && ./seed`) those capabilities have to be set on the
 # binary OR you have to sudo. These targets handle that automatically per
 # platform.
