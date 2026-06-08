@@ -55,6 +55,38 @@ type PortScannerPort interface {
 	QuickScan(ctx context.Context, target string) *PortScanResult
 }
 
+// The collector ports are the enumerate stage's input seams (ADR-0018, Phase 6):
+// the Engine drives the wired / Wi-Fi / Bluetooth collectors through these narrow
+// interfaces rather than holding their concrete types, so the collectors can be
+// relocated to internal/discovery/enumerate without the kernel depending on the
+// stage subpackage. The composition root injects the concrete collectors. The
+// result types in these signatures (DiscoveredDevice, WiFiScanResult,
+// WiFiAccessPoint, BluetoothScanResult) stay kernel-side.
+
+// WiredCollectorPort is the wired/active host-discovery collector (ARP/ICMP/NDP/
+// passive protocols) plus its name-resolution pass, consumed by the enumerate and
+// resolve stages.
+type WiredCollectorPort interface {
+	Scan(ctx context.Context) error
+	GetDevices() []*DiscoveredDevice
+	ResolveNetBIOSNames(ctx context.Context)
+	ResolveMDNSNames(ctx context.Context)
+}
+
+// WiFiCollectorPort is the Wi-Fi access-point collector consumed by the enumerate
+// stage.
+type WiFiCollectorPort interface {
+	Scan(ctx context.Context) (*WiFiScanResult, error)
+	GetAccessPoints() []WiFiAccessPoint
+}
+
+// BluetoothCollectorPort is the Bluetooth device collector consumed by the
+// enumerate stage.
+type BluetoothCollectorPort interface {
+	Scan(ctx context.Context) (*BluetoothScanResult, error)
+	GetLastScan() *BluetoothScanResult
+}
+
 // --- Stage 1: enumerate ------------------------------------------------------
 
 // enumerateStage runs the discovery sources concurrently and writes results to
@@ -63,9 +95,9 @@ type PortScannerPort interface {
 type enumerateStage struct {
 	registry           *DeviceRegistry
 	config             *EngineConfig
-	wiredCollector     *DeviceDiscovery
-	wifiCollector      *WiFiBridge
-	bluetoothCollector *BluetoothScanner
+	wiredCollector     WiredCollectorPort
+	wifiCollector      WiFiCollectorPort
+	bluetoothCollector BluetoothCollectorPort
 }
 
 func (s *enumerateStage) Enumerate(ctx context.Context, opts *ScanOptions) error {
@@ -152,7 +184,7 @@ func (s *enumerateStage) enumerateBluetooth(ctx context.Context, opts *ScanOptio
 
 // resolveStage attaches names via the wired collector's resolvers.
 type resolveStage struct {
-	wiredCollector *DeviceDiscovery
+	wiredCollector WiredCollectorPort
 }
 
 func (s *resolveStage) Resolve(ctx context.Context) {
