@@ -3,6 +3,9 @@
 This design system ensures consistent styling across the application. Instead of scattered utility classes, use the
 centralized theme tokens and component utilities.
 
+> **State management** (React Query vs Zustand vs Context vs local) lives in
+> [`../STATE.md`](../STATE.md) — read it before adding a new store or context.
+
 ## Token Architecture (read first)
 
 Three tiers, **one** source of truth for values, **one** derivation direction:
