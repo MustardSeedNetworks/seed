@@ -5,7 +5,7 @@
 # the goreleaser-cross container (which ships gcc + osxcross + mingw-w64).
 #
 # Covers natively:
-#   - Multi-arch builds (linux/darwin/windows × amd64/arm64)
+#   - Multi-arch builds (linux/windows × amd64/arm64; darwin arm64 only)
 #   - Archives (.tar.gz, .zip), Linux packages (.deb, .rpm) via nfpm
 #   - ldflags injection (Version, Commit, BuildTime, UIBuildHash)
 #   - cosign keyless signing of every artifact
@@ -76,7 +76,8 @@ builds:
     env:
       - CGO_ENABLED=1
     goos: [darwin]
-    goarch: [amd64, arm64]
+    # Intel macOS (amd64) support dropped fleet-wide 2026-06-08 — Apple Silicon only.
+    goarch: [arm64]
     flags:
       - -trimpath
       - -buildvcs=false
@@ -84,11 +85,6 @@ builds:
     # macOS cross-compile via osxcross (bundled in goreleaser-cross).
     # The CC paths are stable inside the container image.
     overrides:
-      - goos: darwin
-        goarch: amd64
-        env:
-          - CC=o64-clang
-          - CXX=o64-clang++
       - goos: darwin
         goarch: arm64
         env:
