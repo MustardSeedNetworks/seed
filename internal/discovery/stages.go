@@ -45,6 +45,16 @@ type Assessor interface {
 	Assess(ctx context.Context, stats *ScanStats)
 }
 
+// PortScannerPort is the fingerprint stage's port-scan seam (ADR-0018, Phase 6):
+// a quick scan of a host's common ports, returning the open services. The
+// concrete scanner lives in internal/discovery/fingerprint; the composition root
+// injects it so the enrich stage depends only on this narrow port, never on the
+// stage subpackage. PortScanResult stays kernel-side (portscan_types.go) so it
+// sits in this signature without inverting the dependency.
+type PortScannerPort interface {
+	QuickScan(ctx context.Context, target string) *PortScanResult
+}
+
 // --- Stage 1: enumerate ------------------------------------------------------
 
 // enumerateStage runs the discovery sources concurrently and writes results to
@@ -158,7 +168,7 @@ type enrichStage struct {
 	registry      *DeviceRegistry
 	config        *EngineConfig
 	snmpCollector *SNMPCollector
-	portScanner   *PortScanner
+	portScanner   PortScannerPort
 	profiler      *DeviceProfiler
 }
 

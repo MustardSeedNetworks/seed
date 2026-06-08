@@ -1,8 +1,12 @@
-package discovery
+package fingerprint
 
 // Port scanning support enables detection of open services and their versions on discovered devices.
 // Performs banner grabbing to identify service types and versions, mapping active services
 // and potential vulnerabilities based on detected ports and versions.
+//
+// The PortScanResult / ServiceInfo / PortState result types live in the discovery
+// kernel (aliased in aliases.go) so they sit in the PortScannerPort seam without
+// inverting the stage→kernel dependency.
 
 import (
 	"bufio"
@@ -14,7 +18,10 @@ import (
 	"time"
 )
 
-// Error messages and common values for port scanning.
+// Error messages and common values for port scanning. errNoIPv4ForTarget and
+// serviceUnknown are private copies of the kernel constants of the same name
+// (the kernel keeps its own for traceroute / the device classifier); they are
+// unexported and so cannot be aliased across the package boundary.
 const (
 	errNoIPv4ForTarget = "no IPv4 address found for target"
 	serviceUnknown     = "unknown"
@@ -31,25 +38,6 @@ const (
 	bannerTimeoutS       = 2    // Banner timeout in seconds
 	maxBannerBytes       = 512  // Maximum bytes to read from banner
 )
-
-// ServiceInfo contains information about a detected service.
-type ServiceInfo struct {
-	Port     int       `json:"port"`
-	State    PortState `json:"state"`
-	Service  string    `json:"service"`            // Service name (http, ssh, etc.)
-	Banner   string    `json:"banner,omitempty"`   // Raw banner text
-	Version  string    `json:"version,omitempty"`  // Parsed version if available
-	Protocol string    `json:"protocol,omitempty"` // tcp or udp
-}
-
-// PortScanResult contains the complete result of a port scan.
-type PortScanResult struct {
-	IP       string        `json:"ip"`
-	Hostname string        `json:"hostname,omitempty"`
-	Services []ServiceInfo `json:"services"`
-	ScanTime time.Duration `json:"scanTime"`
-	Error    string        `json:"error,omitempty"`
-}
 
 // PortScanner provides port scanning with service detection.
 type PortScanner struct {
