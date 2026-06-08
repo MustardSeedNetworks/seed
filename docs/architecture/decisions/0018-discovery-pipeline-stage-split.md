@@ -194,7 +194,27 @@ orchestrates the ports. Per-stage subpackage relocation + depguard follow.
       port; `internal/api` wires `vuln.NewStage(scanner, engine.Registry(),
       engine.EventBus())`. depguard rule `discovery-stage-direction` bans the kernel
       from importing the stage. Golden byte-identical, schema unchanged.
-- [ ] 2. `fingerprint`/enrich stage → `discovery/fingerprint` + depguard
+- [ ] 2. `fingerprint`/enrich stage → `discovery/fingerprint` + depguard.
+      **DESIGN (scoped 2026-06-07): this is an ATOMIC ~9-file move, not per-component.**
+      `DeviceProfiler` embeds `*SNMPCollector` + `*PortScanner` (profiler.go), so the
+      three enrich components are mutually coupled and relocate together: `snmp_collector`,
+      `portscan`, `tcpprobe(_windows)`, `profiler{,_config,_scan,_resolve,_infer,_accessors}`.
+      **Component-port approach (keeps GetCapabilities byte-identical):** define three
+      seams in the kernel — `SNMPCollectorPort{Collect}`, `PortScannerPort{QuickScan}`,
+      `ProfilerPort{QueueProfile,GetProfile}` — change the kernel `enrichStage` + `Engine`
+      fields (and the `Set*` injectors) to those interface types; the concrete producers
+      move to `fingerprint` and implement them. `Engine.GetCapabilities` keeps its
+      per-component nil-checks on the interface fields → identical wire. **Result/config
+      types STAY in the kernel (split out, then alias in fingerprint):** `SNMPFullData`
+      + nested (snmp_collector.go), `DeviceProfile`/`OpenPort`/`OSFingerprint`/
+      `ServiceVersion`/`TLSInfo`/`ResolvedNames` (profiler_types.go — already mostly a
+      types file), `PortScanResult`/`PortInfo`/`ServiceInfo` (portscan.go),
+      `PortScanIntensity`/`ScanTimingProfile` (scan_config.go — used by kernel
+      `ScanOptions`). `Fingerprinter` + `Tracer` are NOT in the enrich path — leave them
+      in the kernel for a later slice. api re-points `New{DeviceProfiler,PortScanner,
+      TCPProber}`/`DefaultProfilerConfig`/`DeviceProfiler`/`PortScanner` → `fingerprint.*`;
+      keeps `discovery.{DeviceProfile,PortInfo,PortScanResult,PortScanIntensity,
+      ScanTimingProfile}` (result types). SNMP is currently dormant (never wired in api).
 - [ ] 3. `resolve` stage → `discovery/resolve` + depguard
 - [ ] 4. `enumerate` stage → `discovery/enumerate` + depguard
 - [ ] 5. direction-lock depguard + cleanup + §16 doc
