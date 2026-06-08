@@ -26,3 +26,4 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0016](0016-strangle-internal-api-into-use-cases.md) | Strangle `internal/api` into per-domain use-case services | Accepted |
 | [0017](0017-transactional-outbox-relay.md) | Transactional outbox relay — durable post-commit event delivery | Accepted |
 | [0018](0018-discovery-pipeline-stage-split.md) | Discovery pipeline stage split — capabilities as staged ports | Accepted |
+| [0019](0019-ed25519-signed-license-tokens.md) | Replace forgeable rotor-cipher license key with Ed25519-signed tokens | Accepted |
