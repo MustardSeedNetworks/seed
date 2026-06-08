@@ -27,7 +27,6 @@
  */
 
 import { useEffect, useRef } from 'react';
-import type { StoreApi, UseBoundStore } from 'zustand';
 import { create } from 'zustand';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
 
@@ -70,9 +69,11 @@ const initialState: TestRunState = {
   awaiting: false,
 };
 
-export const useTestRunStore: UseBoundStore<StoreApi<TestRunState & TestRunActions>> = create<
-  TestRunState & TestRunActions
->()(
+// NB: the store type is inferred (not annotated) so the `subscribeWithSelector`
+// augmentation to `.subscribe(selector, listener)` survives — an explicit
+// `UseBoundStore<StoreApi<…>>` annotation would erase that overload, which
+// `useTestRunSignal` below depends on.
+export const useTestRunStore = create<TestRunState & TestRunActions>()(
   devtools(
     subscribeWithSelector((set, get) => ({
       ...initialState,
