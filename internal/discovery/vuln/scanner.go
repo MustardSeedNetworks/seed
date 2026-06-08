@@ -1,4 +1,4 @@
-package discovery
+package vuln
 
 // Vulnerability scanning integrates with the NVD (National Vulnerability Database) to identify
 // CVEs (Common Vulnerabilities and Exposures) affecting detected devices. Maps software versions
@@ -39,37 +39,9 @@ const (
 	severityRankCritical = 4 // Critical severity rank
 )
 
-// Vulnerability represents a CVE vulnerability for a device.
-type Vulnerability struct {
-	CVEID       string    `json:"cveId"`       // CVE-2023-12345
-	Description string    `json:"description"` // Brief description
-	Severity    string    `json:"severity"`    // CRITICAL, HIGH, MEDIUM, LOW
-	Score       float64   `json:"score"`       // CVSS score (0-10)
-	Published   time.Time `json:"published"`
-	Modified    time.Time `json:"modified"`
-	References  []string  `json:"references"`  // URLs to advisories
-	AffectedCPE string    `json:"affectedCpe"` // CPE string that matched
-
-	// CISA KEV (Known Exploited Vulnerabilities) enrichment fields
-	ActivelyExploited bool   `json:"activelyExploited,omitempty"` // In CISA KEV catalog
-	RansomwareRelated bool   `json:"ransomwareRelated,omitempty"` // Known ransomware use
-	RequiredAction    string `json:"requiredAction,omitempty"`    // CISA remediation guidance
-	DueDate           string `json:"dueDate,omitempty"`           // CISA remediation deadline
-	OriginalSeverity  string `json:"originalSeverity,omitempty"`  // Pre-KEV severity (if escalated)
-}
-
-// DeviceVulnerabilities holds vulnerability scan results for a device.
-type DeviceVulnerabilities struct {
-	DeviceIP        string          `json:"deviceIp"`
-	MAC             string          `json:"mac"`
-	Hostname        string          `json:"hostname"`
-	Vendor          string          `json:"vendor"`
-	Product         string          `json:"product"`
-	Version         string          `json:"version"`
-	Vulnerabilities []Vulnerability `json:"vulnerabilities"`
-	ScanTime        time.Time       `json:"scanTime"`
-	Error           string          `json:"error,omitempty"`
-}
+// Vulnerability and DeviceVulnerabilities are the kernel result types (see
+// aliases.go); they are defined in package discovery because DiscoveredDevice
+// embeds them.
 
 // VulnerabilityScannerConfig holds configuration for vulnerability scanning.
 type VulnerabilityScannerConfig struct {

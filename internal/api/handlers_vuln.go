@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/validation"
@@ -281,7 +282,7 @@ func (s *Server) handleVulnerabilitySettings(w http.ResponseWriter, r *http.Requ
 		sendJSONResponse(w, logger, http.StatusOK, s.config.Security.VulnerabilityScanning)
 
 	case http.MethodPut:
-		var settings discovery.VulnerabilityScannerConfig
+		var settings vuln.VulnerabilityScannerConfig
 		if !decodeJSONStrictLocalized(w, r, &settings, MaxBodySizeJSON,
 			logger, localizer) {
 			return
@@ -382,7 +383,7 @@ func (s *Server) handleNVDAPIKeyValidate(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Validate the API key by making a test request to NVD
-	valid, err := discovery.ValidateNVDAPIKey(r.Context(), req.APIKey)
+	valid, err := vuln.ValidateNVDAPIKey(r.Context(), req.APIKey)
 	if err != nil {
 		logger.WarnContext(r.Context(), "NVD API key validation failed", "error", err)
 		response.Valid = false

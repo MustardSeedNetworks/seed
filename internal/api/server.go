@@ -26,6 +26,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/health"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	listenersink "github.com/MustardSeedNetworks/seed/internal/listener/sink"
@@ -650,7 +651,7 @@ func (s *Server) DiscoveryService() *discovery.Service { return s.services.Disco
 // Pipeline returns the discovery pipeline.
 
 // VulnScanner returns the vulnerability scanner.
-func (s *Server) VulnScanner() *discovery.VulnerabilityScanner {
+func (s *Server) VulnScanner() *vuln.VulnerabilityScanner {
 	return s.services.Discovery.Vulnerability
 }
 
@@ -724,7 +725,7 @@ func (s *Server) netManager() *netif.Manager                  { return s.service
 func (s *Server) linkMonitor() *netif.LinkMonitor             { return s.services.Network.LinkMonitor }
 func (s *Server) deviceDiscovery() *discovery.DeviceDiscovery { return s.services.Discovery.Device }
 func (s *Server) discoveryService() *discovery.Service        { return s.services.Discovery.Service }
-func (s *Server) vulnScanner() *discovery.VulnerabilityScanner {
+func (s *Server) vulnScanner() *vuln.VulnerabilityScanner {
 	return s.services.Discovery.Vulnerability
 }
 func (s *Server) dnsTester() *dns.Tester                   { return s.services.Diagnostics.DNS }

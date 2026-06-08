@@ -234,46 +234,11 @@ func (s *enrichStage) profileDevice(device *DiscoveredDevice) {
 }
 
 // --- Stage 4: vuln (assess) --------------------------------------------------
-
-// assessStage scans each registry device for vulnerabilities and emits an event
-// per finding.
-type assessStage struct {
-	registry    *DeviceRegistry
-	eventBus    *EventBus
-	vulnScanner *VulnerabilityScanner
-}
-
-func (s *assessStage) Assess(ctx context.Context, stats *ScanStats) {
-	for _, device := range s.registry.GetDevices() {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
-
-		vulns := s.assess(ctx, device)
-		if vulns != nil && len(vulns.Vulnerabilities) > 0 {
-			device.Vulnerabilities = vulns
-			stats.VulnerableDevices++
-			s.registry.AddOrUpdate(device)
-
-			for _, v := range vulns.Vulnerabilities {
-				s.eventBus.Publish(NewVulnDiscoveredEvent(device, v.CVEID, v.Severity))
-			}
-		}
-	}
-}
-
-func (s *assessStage) assess(ctx context.Context, device *DiscoveredDevice) *DeviceVulnerabilities {
-	if s.vulnScanner == nil {
-		return nil
-	}
-	vulns, err := s.vulnScanner.ScanDevice(ctx, device)
-	if err != nil {
-		return nil
-	}
-	return vulns
-}
+//
+// The assess stage's implementation lives in the internal/discovery/vuln
+// subpackage (it owns the scanner + CVE providers); it satisfies the Assessor
+// port above and is injected into the Engine by the composition root. The kernel
+// keeps only the port, not the concrete stage (ADR-0018, Phase 6).
 
 // --- shared converters (pure transforms; package-level so any stage can use) --
 

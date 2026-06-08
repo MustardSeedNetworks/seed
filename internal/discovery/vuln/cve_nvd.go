@@ -1,4 +1,4 @@
-package discovery
+package vuln
 
 //
 // This file integrates with the National Vulnerability Database (NVD) to identify known
