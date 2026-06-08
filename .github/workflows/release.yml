@@ -165,10 +165,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-iperf3, build-ui]
     container:
-      # Docker Hub tag scheme: <go-version>-<bundle-revision>. v1.26.2-3
-      # tracks Go 1.26.2 + goreleaser v2.15.4. Pin so behaviour stays
-      # reproducible; bump via dependabot when newer revs land.
-      image: goreleaser/goreleaser-cross:v1.26.2-3
+      # Docker Hub tag scheme: <go-version>-<goreleaser-version>. v1.26.3-v2.16.0
+      # tracks Go 1.26.3 + goreleaser v2.16.0. Pin so behaviour stays
+      # reproducible; bump via dependabot when newer revs land. Kept fresh so the
+      # image's baked Multi-Arch:same libs (libsystemd0, …) stay aligned with
+      # ubuntu-ports — a stale image drifts and breaks the arm64 libpcap install.
+      image: goreleaser/goreleaser-cross:v1.26.3-v2.16.0
     outputs:
       # base64-encoded SHA-256 hashes of all release artifacts, formatted
       # for slsa-github-generator's base64-subjects input. Set only on a
@@ -183,26 +185,23 @@ jobs:
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Install libpcap headers for amd64 + arm64
-        # goreleaser-cross ships compilers but not libpcap headers.
-        # gopacket/pcap needs pcap.h for cgo. Add the arm64 architecture
-        # and pull libpcap-dev for both archs.
+        # goreleaser-cross ships compilers but not libpcap headers. gopacket/pcap
+        # needs pcap.h + libpcap.so (and its transitive link deps: libdbus-1-3,
+        # libibverbs, …) for cgo, per target arch.
+        #
+        # The image is Ubuntu-based and already carries ubuntu-ports for the
+        # non-amd64 architectures, so adding arm64 and installing the full
+        # libpcap-dev:arm64 package pulls every arm64 link dependency from the
+        # container's own (trusted) sources — no hand-written source list or
+        # keyring. This only resolves cleanly when the image's baked amd64 libs
+        # match ubuntu-ports (Multi-Arch:same lockstep), which is why the image
+        # pin above is kept current. `apt-get update` runs strict so a future
+        # drift fails loud instead of silently shipping a broken cross-build.
         shell: bash
         run: |
           set -euo pipefail
           dpkg --add-architecture arm64
-          if [ -f /etc/apt/sources.list ]; then
-            sed -i 's|^deb |deb [arch=amd64] |' /etc/apt/sources.list
-          fi
-          shopt -s nullglob
-          for f in /etc/apt/sources.list.d/*.list; do
-            sed -i 's|^deb |deb [arch=amd64] |' "$f"
-          done
-          cat > /etc/apt/sources.list.d/arm64.list <<'EOF'
-          deb [arch=arm64] http://deb.debian.org/debian bookworm main
-          deb [arch=arm64] http://deb.debian.org/debian-security bookworm-security main
-          deb [arch=arm64] http://deb.debian.org/debian bookworm-updates main
-          EOF
-          apt-get update || true
+          apt-get update
           apt-get install -y libpcap-dev libpcap-dev:arm64
 
       - name: Download iperf3 artifacts (amd64 + arm64)
