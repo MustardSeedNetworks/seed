@@ -96,6 +96,60 @@ describe('Fab', () => {
     expect(button).not.toBeDisabled();
   });
 
+  it('marks the run partial when the backstop timeout fires (no completion)', () => {
+    render(<Fab />);
+
+    const button = screen.getByRole('button');
+    fireEvent.click(button);
+    expect(button).toHaveAttribute('data-run-status', 'running');
+
+    act(() => {
+      vi.advanceTimersByTime(60000);
+    });
+
+    // Timed out without a completion signal: partial, never a clean done.
+    expect(button).not.toBeDisabled();
+    expect(button).toHaveAttribute('data-run-status', 'partial');
+    expect(button).toHaveAttribute(
+      'aria-label',
+      'Some checks did not finish — tap to run all tests again',
+    );
+  });
+
+  it('marks the run partial when testsComplete reports partial: true (C2)', () => {
+    render(<Fab />);
+
+    const button = screen.getByRole('button');
+    fireEvent.click(button);
+    act(() => {
+      window.dispatchEvent(new CustomEvent('testsComplete', { detail: { partial: true } }));
+    });
+
+    expect(button).not.toBeDisabled();
+    expect(button).toHaveAttribute('data-run-status', 'partial');
+  });
+
+  it('settles to idle on a complete (partial: false) run and clears a prior warning', () => {
+    render(<Fab />);
+
+    const button = screen.getByRole('button');
+
+    // First run times out -> partial.
+    fireEvent.click(button);
+    act(() => {
+      vi.advanceTimersByTime(60000);
+    });
+    expect(button).toHaveAttribute('data-run-status', 'partial');
+
+    // A fresh run that completes cleanly clears the partial warning.
+    fireEvent.click(button);
+    act(() => {
+      window.dispatchEvent(new CustomEvent('testsComplete', { detail: { partial: false } }));
+    });
+    expect(button).toHaveAttribute('data-run-status', 'idle');
+    expect(button).toHaveAttribute('aria-label', 'Run All Tests');
+  });
+
   it('does not dispatch multiple events while running', () => {
     const dispatchEventSpy = vi.spyOn(window, 'dispatchEvent');
 
