@@ -1,35 +1,23 @@
 /**
- * FAB.test.tsx - Floating Action Button Tests
+ * fab.test.tsx - Floating Action Button Tests
  *
- * Purpose: Test suite for the FAB (Floating Action Button) component testing
- * button rendering, event dispatching, loading state, and timeout handling.
+ * The FAB triggers a run via the testRunStore and reflects the store's run
+ * status (idle / running / partial). These tests pin: clicking starts a run,
+ * the button disables while running, a re-click is ignored, the 60s backstop
+ * surfaces a partial outcome, and a clean completion settles back to idle.
  *
- * Key Test Areas:
- * - Rendering: FAB button displays with correct aria-label
- * - Event dispatch: clicking button dispatches runAllTests event
- * - Custom event: verifies CustomEvent structure and detail
- * - Loading state: shows spinner while tests are running
- * - Test completion: listens for testsComplete event
- * - Timeout handling: 60-second timeout clears loading state
- * - Visual feedback: spinner visible during test execution
- *
- * Test Framework: Vitest with React Testing Library and fake timers
- *
- * Usage:
- * ```bash
- * npm test -- FAB.test.tsx
- * ```
- *
- * Dependencies: vitest, @testing-library/react
+ * Test Framework: Vitest with React Testing Library and fake timers.
  */
 
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useTestRunStore } from '../../stores/testRunStore';
 import { Fab } from './fab';
 
 describe('Fab', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    useTestRunStore.getState().reset();
   });
 
   afterEach(() => {
@@ -44,56 +32,27 @@ describe('Fab', () => {
     expect(button).toHaveAttribute('aria-label', 'Run All Tests');
   });
 
-  it('dispatches runAllTests event when clicked', () => {
-    const dispatchEventSpy = vi.spyOn(window, 'dispatchEvent');
-
+  it('starts a run when clicked', () => {
+    const before = useTestRunStore.getState().startSignal;
     render(<Fab />);
 
-    const button = screen.getByRole('button');
-    fireEvent.click(button);
+    fireEvent.click(screen.getByRole('button'));
 
-    expect(dispatchEventSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'runAllTests',
-      }),
-    );
-
-    dispatchEventSpy.mockRestore();
+    expect(useTestRunStore.getState().startSignal).toBe(before + 1);
+    expect(useTestRunStore.getState().status).toBe('running');
   });
 
-  it('shows spinner when running', () => {
+  it('shows spinner and disables while running', () => {
     render(<Fab />);
 
     const button = screen.getByRole('button');
-
-    // Initially not running
     expect(button).not.toBeDisabled();
 
-    // Click to start running
-    fireEvent.click(button);
-
-    // Should be disabled while running
-    expect(button).toBeDisabled();
-
-    // Should show spinner (has animate-spin class)
-    const spinner = button.querySelector('.animate-spin');
-    expect(spinner).toBeInTheDocument();
-  });
-
-  it('resets after timeout', () => {
-    render(<Fab />);
-
-    const button = screen.getByRole('button');
     fireEvent.click(button);
 
     expect(button).toBeDisabled();
-
-    // Fast forward fallback timeout (60s)
-    act(() => {
-      vi.advanceTimersByTime(60000);
-    });
-
-    expect(button).not.toBeDisabled();
+    expect(button).toHaveAttribute('data-run-status', 'running');
+    expect(button.querySelector('.animate-spin')).toBeInTheDocument();
   });
 
   it('marks the run partial when the backstop timeout fires (no completion)', () => {
@@ -116,20 +75,22 @@ describe('Fab', () => {
     );
   });
 
-  it('marks the run partial when testsComplete reports partial: true (C2)', () => {
+  it('reflects a partial outcome settled on the store (C2)', () => {
     render(<Fab />);
 
     const button = screen.getByRole('button');
     fireEvent.click(button);
+    const { runId } = useTestRunStore.getState();
+
     act(() => {
-      window.dispatchEvent(new CustomEvent('testsComplete', { detail: { partial: true } }));
+      useTestRunStore.getState().settlePartial(runId);
     });
 
     expect(button).not.toBeDisabled();
     expect(button).toHaveAttribute('data-run-status', 'partial');
   });
 
-  it('settles to idle on a complete (partial: false) run and clears a prior warning', () => {
+  it('settles to idle on a complete run and clears a prior warning', () => {
     render(<Fab />);
 
     const button = screen.getByRole('button');
@@ -141,31 +102,26 @@ describe('Fab', () => {
     });
     expect(button).toHaveAttribute('data-run-status', 'partial');
 
-    // A fresh run that completes cleanly clears the partial warning.
+    // A fresh run with no card tests completes cleanly and clears the warning.
     fireEvent.click(button);
     act(() => {
-      window.dispatchEvent(new CustomEvent('testsComplete', { detail: { partial: false } }));
+      useTestRunStore.getState().awaitTests([]);
     });
     expect(button).toHaveAttribute('data-run-status', 'idle');
     expect(button).toHaveAttribute('aria-label', 'Run All Tests');
   });
 
-  it('does not dispatch multiple events while running', () => {
-    const dispatchEventSpy = vi.spyOn(window, 'dispatchEvent');
-
+  it('does not start a second run while one is running', () => {
     render(<Fab />);
 
     const button = screen.getByRole('button');
 
-    // First click
     fireEvent.click(button);
-    expect(dispatchEventSpy).toHaveBeenCalledTimes(1);
+    const afterFirst = useTestRunStore.getState().startSignal;
 
-    // Second click while running - should not dispatch
+    // Second click while running - should not start again.
     fireEvent.click(button);
-    expect(dispatchEventSpy).toHaveBeenCalledTimes(1);
-
-    dispatchEventSpy.mockRestore();
+    expect(useTestRunStore.getState().startSignal).toBe(afterFirst);
   });
 
   it('has correct accessibility attributes', () => {

@@ -67,6 +67,7 @@ import { useTheme } from './hooks/useTheme';
 import { LogComponents, logger } from './lib/logger';
 import { navGroups } from './navGroups';
 import { pages } from './pageRegistry';
+import { useTestRunSignal, useTestRunStore } from './stores/testRunStore';
 import { cn, section } from './styles/theme';
 import { PageLoader } from './ui/PageLoader';
 import { SidebarLayout } from './ui/Sidebar';
@@ -446,8 +447,12 @@ function App(): JSX.Element {
     [cardSettings],
   );
 
-  // Listen for FAB "run all tests" event with per-card autoRunOnLink settings
-  useEffect(() => {
+  // React to a run start (FAB click or link-up auto-run) via the testRunStore.
+  // This replaces the former `window` runAllTests/cardTestComplete/testsComplete
+  // event bus (seed#1568, SEED_UI_ARCH_PLAN.md A2/H2). The handler closure reads
+  // the latest render scope each time (useTestRunSignal captures it by ref), so
+  // no dependency array is needed.
+  useTestRunSignal((runId: number): void => {
     const handleRunAllTests = async (): Promise<void> => {
       // Use per-card autoRunOnLink settings to determine which tests to run
 
@@ -483,8 +488,8 @@ function App(): JSX.Element {
       }
 
       // Wait for all fetches to complete
-      // Note: runSpeedtest/runIperf and runHealthChecks are handled by
-      // their respective card components listening for the 'runAllTests' event
+      // Note: runSpeedtest/runIperf and runHealthChecks are handled by their
+      // respective card components reacting to the same testRunStore start signal.
       await Promise.all(fetchPromises);
 
       // Determine how many card-managed tests we need to wait for
@@ -499,61 +504,34 @@ function App(): JSX.Element {
         cardTestsToWait.push('healthchecks');
       }
 
-      // If no card-managed tests, the run is fully complete now.
+      // Declare the card-managed tests this run must await. Completion
+      // accounting lives in the store: each card calls reportComplete() and the
+      // last one settles the run to idle — no listener-lifecycle race. An empty
+      // set settles the run immediately.
+      useTestRunStore.getState().awaitTests(cardTestsToWait);
       if (cardTestsToWait.length === 0) {
-        window.dispatchEvent(new CustomEvent('testsComplete', { detail: { partial: false } }));
         return;
       }
 
-      // Wait for all card-managed tests to complete
-      const completed = new Set<string>();
-      const handleCardComplete = (event: CustomEvent): void => {
-        const testName = event.detail?.test;
-        if (testName && cardTestsToWait.includes(testName)) {
-          completed.add(testName);
-          // Check if all expected tests are done
-          if (completed.size === cardTestsToWait.length) {
-            window.removeEventListener('cardTestComplete', handleCardComplete as EventListener);
-            // Every expected card reported: a genuine, complete run.
-            window.dispatchEvent(new CustomEvent('testsComplete', { detail: { partial: false } }));
-          }
-        }
-      };
-
-      // Listen for card test completions
-      window.addEventListener('cardTestComplete', handleCardComplete as EventListener);
-
-      // Failsafe timeout (90s) in case a card never reports completion. The run
-      // is then PARTIAL — some checks did not finish — and must be surfaced as
-      // such (partial: true), never as a clean completion. Presenting partial
-      // results as final was the C2 correctness defect.
+      // Failsafe (90s) in case a card never reports completion. The run is then
+      // PARTIAL — some checks did not finish — surfaced as such, never as a clean
+      // completion. Presenting partial results as final was the C2 defect.
+      // Scoped to this run id so a stale timeout cannot clobber a later run.
       setTimeout(() => {
-        window.removeEventListener('cardTestComplete', handleCardComplete as EventListener);
-        if (completed.size < cardTestsToWait.length) {
-          logger.warn(LogComponents.UI, 'FAB timeout: not all card tests completed', {
-            completed: completed.size,
-            expected: cardTestsToWait.length,
+        const { pending, expected } = useTestRunStore.getState();
+        if (pending.length > 0) {
+          logger.warn(LogComponents.UI, 'run timeout: not all card tests completed', {
+            completed: expected.length - pending.length,
+            expected: expected.length,
           });
-          window.dispatchEvent(new CustomEvent('testsComplete', { detail: { partial: true } }));
+          useTestRunStore.getState().settlePartial(runId);
         }
       }, 90000);
     };
-    window.addEventListener('runAllTests', handleRunAllTests);
-    return () => {
-      window.removeEventListener('runAllTests', handleRunAllTests);
-    };
-  }, [
-    fetchLinkData,
-    fetchIpConfig,
-    fetchDiscoveryData,
-    fetchDnsData,
-    fetchGatewayData,
-    fetchVlanData,
-    fetchWifiData,
-    fetchCableData,
-    triggerDeviceScan,
-    runOpts,
-  ]);
+    handleRunAllTests().catch((err: unknown) => {
+      logger.error(LogComponents.UI, 'run-all-tests orchestration failed', { error: err });
+    });
+  });
 
   // SSE connection for real-time updates (simpler than WebSocket)
   const { status: sseStatus, reconnect } = useSse({

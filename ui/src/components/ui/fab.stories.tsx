@@ -1,5 +1,5 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
-import { useEffect } from 'react';
+import { useTestRunSignal, useTestRunStore } from '../../stores/testRunStore';
 import { cn, spacing } from '../../styles/theme';
 import { Fab } from './fab';
 
@@ -35,17 +35,13 @@ export const Default: Story = {};
 
 export const WithSimulatedTest: Story = {
   render: () => {
-    // Simulate test completion after 3 seconds
-    useEffect(() => {
-      const handleRunTests = () => {
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('testsComplete'));
-        }, 3000);
-      };
-
-      window.addEventListener('runAllTests', handleRunTests);
-      return () => window.removeEventListener('runAllTests', handleRunTests);
-    }, []);
+    // Simulate a card-managed run that completes after 3 seconds via the store.
+    useTestRunSignal((): void => {
+      useTestRunStore.getState().awaitTests(['speedtest']);
+      setTimeout(() => {
+        useTestRunStore.getState().reportComplete('speedtest');
+      }, 3000);
+    });
 
     return <Fab />;
   },

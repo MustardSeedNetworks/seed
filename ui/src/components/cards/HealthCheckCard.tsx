@@ -29,6 +29,7 @@
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../contexts/useSettings';
+import { useTestRunSignal, useTestRunStore } from '../../stores/testRunStore';
 import {
   cn,
   icon as iconTokens,
@@ -101,34 +102,27 @@ export const HealthCheckCard: React.MemoExoticComponent<
     };
   }, [fetchTests]);
 
-  // Listen for FAB "run all tests" event
-  useEffect((): (() => void) => {
+  // React to a run start via the testRunStore (was the `window` runAllTests
+  // event). Reports completion to the run orchestrator when the fetch settles.
+  useTestRunSignal((): void => {
     const handleRunAllTests = async (): Promise<void> => {
-      // Check per-card autoRunOnLink setting - skip if health checks disabled
+      // Check per-card autoRunOnLink setting - skip if health checks disabled.
+      // (The orchestrator only awaits 'healthchecks' under the same setting, so
+      // an early return here keeps the run accounting consistent.)
       if (!cardSettings.healthChecks.autoRunOnLink) {
         return;
       }
 
       if (!isRunning) {
         await fetchTests();
-        // Signal FAB that healthchecks are complete
-        window.dispatchEvent(
-          new CustomEvent('cardTestComplete', {
-            detail: { test: 'healthchecks' },
-          }),
-        );
+        // Signal the run orchestrator that healthchecks are complete.
+        useTestRunStore.getState().reportComplete('healthchecks');
       }
     };
-    const wrappedHandler = (): void => {
-      handleRunAllTests().catch((): void => {
-        /* Error handled in fetchTests */
-      });
-    };
-    window.addEventListener('runAllTests', wrappedHandler);
-    return (): void => {
-      window.removeEventListener('runAllTests', wrappedHandler);
-    };
-  }, [fetchTests, isRunning, cardSettings.healthChecks.autoRunOnLink]);
+    handleRunAllTests().catch((): void => {
+      /* Error handled in fetchTests */
+    });
+  });
 
   // Don't render card if no tests are configured
   if (!(data?.hasTests || loading || isRunning)) {

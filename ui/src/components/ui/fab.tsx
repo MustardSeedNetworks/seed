@@ -6,29 +6,23 @@
  * Features:
  * - Fixed positioning (bottom-right corner)
  * - Loading spinner animation while tests are running
- * - Dispatches 'runAllTests' custom event
- * - Fallback 60-second timeout if event never completes
+ * - Starts a run via the testRunStore (`start()`)
+ * - Fallback 60-second backstop if the run never settles
  * - Disabled state during test execution
  * - Keyboard accessible with focus ring
  * - Touch-friendly sizing (56x56 pixels)
  *
- * Usage:
- * ```tsx
- * // In app layout:
- * <Fab />
- *
- * // Listen for test completion:
- * window.addEventListener('testsComplete', () => {
- *   // Handle completion
- * });
- * ```
+ * Run state (idle / running / partial) is owned by the testRunStore, not by
+ * local component state or a `window` event bus — see seed#1568 (C2) and the
+ * store's module doc. The FAB reads `status` and triggers `start()`.
  *
  * The FAB is rendered at the root App level and provides quick access
  * to running all network diagnostics without opening settings.
  */
 
 import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { useTestRunStore } from '../../stores/testRunStore';
 import { cn, icon as iconTokens, layout, radius } from '../../styles/theme';
 
 /**
@@ -43,51 +37,42 @@ interface FabProps {
  * Floating Action Button - triggers all diagnostic tests
  */
 export function Fab({ className = '' }: FabProps): React.JSX.Element {
-  const [isRunning, setIsRunning] = useState(false);
-  // partial = the previous run finished without every check reporting (a timeout
-  // or a card that never completed). Surfaced distinctly so partial results are
-  // never presented as a clean completion (the C2 correctness fix).
-  const [partial, setPartial] = useState(false);
+  // Run state is owned by the store. `running` disables the button and shows the
+  // spinner; `partial` warns that the previous run finished without every check
+  // reporting — surfaced distinctly so partial results are never presented as a
+  // clean completion (the C2 correctness fix, seed#1568).
+  const status = useTestRunStore((s) => s.status);
+  const start = useTestRunStore((s) => s.start);
+  const isRunning = status === 'running';
+  const partial = status === 'partial';
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Settle the run when testsComplete fires: success clears any partial flag;
-  // a partial completion records it so the button can warn the operator.
-  useEffect(() => {
-    const handleTestsComplete = (event: Event): void => {
-      const detail = (event as CustomEvent<{ partial?: boolean }>).detail;
-      setIsRunning(false);
-      setPartial(Boolean(detail?.partial));
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    };
-
-    window.addEventListener('testsComplete', handleTestsComplete);
-    return (): void => {
-      window.removeEventListener('testsComplete', handleTestsComplete);
+  // Clear a pending backstop on unmount.
+  useEffect(
+    () => (): void => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-    };
-  }, []);
+    },
+    [],
+  );
 
   const handleClick = useCallback((): void => {
     if (isRunning) {
       return;
     }
-    setIsRunning(true);
-    setPartial(false); // a fresh run clears the prior partial warning
+    const runId = start();
 
-    window.dispatchEvent(new CustomEvent('runAllTests'));
-
-    // Backstop: if no testsComplete arrives (e.g. the orchestrator never ran),
-    // stop the spinner and mark the run partial — never silently "done".
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    // Backstop: if the run never settles (e.g. the orchestrator never ran),
+    // mark it partial — never silently "done". Scoped to this run id so a
+    // stale timeout cannot clobber a later run.
     timeoutRef.current = setTimeout(() => {
-      setIsRunning(false);
-      setPartial(true);
+      useTestRunStore.getState().settlePartial(runId);
     }, 60000);
-  }, [isRunning]);
+  }, [isRunning, start]);
 
   const runStatus = isRunning ? 'running' : partial ? 'partial' : 'idle';
   const label = partial
