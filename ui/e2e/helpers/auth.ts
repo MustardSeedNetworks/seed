@@ -1,4 +1,4 @@
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * Shared E2E auth helpers.
@@ -87,6 +87,36 @@ export async function loginViaUI(
   await page.getByLabel(/username/i).fill(creds.username);
   await page.getByLabel(/password/i).fill(creds.password);
   await page.getByTestId('login-submit').click();
+}
+
+/**
+ * Fill the login form, submit, and wait for the authenticated
+ * dashboard to mount (page-header-title). The caller is responsible
+ * for navigating to the login surface (`await page.goto('/')`) and any
+ * pre-login setup (viewport, request listeners, route mocks) first —
+ * this helper owns only the credential entry, submit, and the
+ * post-login settle.
+ *
+ * The 20s settle (vs. the per-test default 10s) is deliberate: the
+ * post-login chain — login POST → SPA route swap → dashboard's first
+ * data fetch → header paint — occasionally exceeds 10s on the heaviest
+ * shard (auth-complete.spec.ts lands on shard-1) when the single CI
+ * backend is serving four Playwright workers at once. That contention
+ * produced a rotating one-test-per-run flake on main (#1170): whichever
+ * login-then-dashboard test happened to land the slowest mount failed
+ * the 10s assertion, then passed on retry. 20s sits comfortably inside
+ * the 30s per-test budget (45s for the multi-login describes) and
+ * removes the race without weakening the assertion — the login still
+ * has to succeed and the real dashboard still has to render.
+ */
+export async function loginAndAwaitDashboard(
+  page: Page,
+  creds: { username: string; password: string } = TEST_CREDENTIALS,
+): Promise<void> {
+  await page.getByLabel(/username/i).fill(creds.username);
+  await page.getByLabel(/password/i).fill(creds.password);
+  await page.getByTestId('login-submit').click();
+  await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
 }
 
 /**
