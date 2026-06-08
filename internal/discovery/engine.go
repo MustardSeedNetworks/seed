@@ -15,7 +15,6 @@ package discovery
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"slices"
 	"sync"
@@ -448,10 +447,17 @@ func (e *Engine) runScanPhases(ctx context.Context, logger *slog.Logger, opts *S
 		e.reportScanProgress(opts, phase, float64(done)/float64(total))
 	}
 
-	// Phase 1: Discovery
+	// Phase 1: Discovery (enumerate stage)
 	logger.InfoContext(ctx, "Starting discovery phase")
 	result.Phases = append(result.Phases, "discovery")
-	if err := e.runDiscoveryPhase(ctx, opts, result.Stats); err != nil {
+	var enumerate Enumerator = &enumerateStage{
+		registry:           e.registry,
+		config:             e.config,
+		wiredCollector:     e.wiredCollector,
+		wifiCollector:      e.wifiCollector,
+		bluetoothCollector: e.bluetoothCollector,
+	}
+	if err := enumerate.Enumerate(ctx, opts); err != nil {
 		result.Error = err.Error()
 		logger.ErrorContext(ctx, "Discovery phase failed", "error", err)
 	}
@@ -463,28 +469,40 @@ func (e *Engine) runScanPhases(ctx context.Context, logger *slog.Logger, opts *S
 	e.correlateDevices(ctx)
 	complete("correlation")
 
-	// Phase 3: Name Resolution
+	// Phase 3: Name Resolution (resolve stage)
 	if opts.IncludeNameRes && e.wiredCollector != nil {
 		logger.InfoContext(ctx, "Starting name resolution phase")
 		result.Phases = append(result.Phases, "name_resolution")
-		e.wiredCollector.ResolveNetBIOSNames(ctx)
-		e.wiredCollector.ResolveMDNSNames(ctx)
+		var resolve Resolver = &resolveStage{wiredCollector: e.wiredCollector}
+		resolve.Resolve(ctx)
 		complete("name_resolution")
 	}
 
-	// Phase 4: Enrichment
+	// Phase 4: Enrichment (fingerprint stage)
 	if opts.IncludeSNMP || opts.IncludePortScan || opts.IncludeProfiling {
 		logger.InfoContext(ctx, "Starting enrichment phase")
 		result.Phases = append(result.Phases, "enrichment")
-		e.runEnrichmentPhase(ctx, opts, result.Stats)
+		var enrich Enricher = &enrichStage{
+			registry:      e.registry,
+			config:        e.config,
+			snmpCollector: e.snmpCollector,
+			portScanner:   e.portScanner,
+			profiler:      e.profiler,
+		}
+		enrich.Enrich(ctx, opts, result.Stats)
 		complete("enrichment")
 	}
 
-	// Phase 5: Assessment
+	// Phase 5: Assessment (vuln stage)
 	if opts.IncludeVulnScan && e.vulnScanner != nil {
 		logger.InfoContext(ctx, "Starting assessment phase")
 		result.Phases = append(result.Phases, "assessment")
-		e.runAssessmentPhase(ctx, result.Stats)
+		var assess Assessor = &assessStage{
+			registry:    e.registry,
+			eventBus:    e.eventBus,
+			vulnScanner: e.vulnScanner,
+		}
+		assess.Assess(ctx, result.Stats)
 		complete("assessment")
 	}
 }
@@ -528,99 +546,6 @@ func (e *Engine) FullScan(ctx context.Context) (*ScanResult, error) {
 	return e.Scan(ctx, DefaultFullScanOpts())
 }
 
-// runWiredDiscovery performs wired device discovery.
-func (e *Engine) runWiredDiscovery(ctx context.Context, opts *ScanOptions) error {
-	if opts.FreshWiredScan {
-		if err := e.wiredCollector.Scan(ctx); err != nil {
-			return fmt.Errorf("wired scan: %w", err)
-		}
-	}
-	for _, device := range e.wiredCollector.GetDevices() {
-		device.ConnectionTypes = ensureConnectionType(device.ConnectionTypes, ConnectionWired)
-		e.registry.AddOrUpdate(device)
-	}
-	return nil
-}
-
-// runWiFiDiscovery performs WiFi device discovery.
-func (e *Engine) runWiFiDiscovery(ctx context.Context, opts *ScanOptions) error {
-	if opts.FreshWiFiScan {
-		if _, err := e.wifiCollector.Scan(ctx); err != nil {
-			return fmt.Errorf("wifi scan: %w", err)
-		}
-	}
-	aps := e.wifiCollector.GetAccessPoints()
-	for i := range aps {
-		device := e.wifiAPToDevice(&aps[i])
-		e.registry.AddOrUpdate(device)
-	}
-	return nil
-}
-
-// runBluetoothDiscovery performs Bluetooth device discovery.
-func (e *Engine) runBluetoothDiscovery(ctx context.Context, opts *ScanOptions) error {
-	if opts.FreshBluetoothScan {
-		if _, err := e.bluetoothCollector.Scan(ctx); err != nil {
-			return fmt.Errorf("bluetooth scan: %w", err)
-		}
-	}
-	scanResult := e.bluetoothCollector.GetLastScan()
-	if scanResult != nil {
-		for i := range scanResult.Devices {
-			device := e.bluetoothDeviceToDevice(&scanResult.Devices[i])
-			e.registry.AddOrUpdate(device)
-		}
-	}
-	return nil
-}
-
-// runDiscoveryPhase collects devices from all enabled sources.
-func (e *Engine) runDiscoveryPhase(ctx context.Context, opts *ScanOptions, _ *ScanStats) error {
-	var wg sync.WaitGroup
-	errCh := make(chan error, discoveryPhaseChannelBuffer)
-
-	// Wired discovery
-	if opts.IncludeWired && e.wiredCollector != nil && e.config.EnableWired {
-		wg.Go(func() {
-			if err := e.runWiredDiscovery(ctx, opts); err != nil {
-				errCh <- err
-			}
-		})
-	}
-
-	// WiFi discovery
-	if opts.IncludeWiFi && e.wifiCollector != nil && e.config.EnableWiFi {
-		wg.Go(func() {
-			if err := e.runWiFiDiscovery(ctx, opts); err != nil {
-				errCh <- err
-			}
-		})
-	}
-
-	// Bluetooth discovery
-	if opts.IncludeBluetooth && e.bluetoothCollector != nil && e.config.EnableBluetooth {
-		wg.Go(func() {
-			if err := e.runBluetoothDiscovery(ctx, opts); err != nil {
-				errCh <- err
-			}
-		})
-	}
-
-	wg.Wait()
-	close(errCh)
-
-	var errs []error
-	for err := range errCh {
-		errs = append(errs, err)
-	}
-
-	if len(errs) > 0 {
-		return errors.Join(errs...)
-	}
-
-	return nil
-}
-
 // correlateDevices merges devices seen on multiple networks.
 // Since we use MAC as the primary key, correlation happens automatically
 // in AddOrUpdate. This method handles any additional correlation logic.
@@ -628,187 +553,6 @@ func (e *Engine) correlateDevices(_ context.Context) {
 	// The registry already correlates by MAC on AddOrUpdate.
 	// This method can be extended for additional correlation strategies
 	// (e.g., IP-based correlation, hostname matching, etc.)
-}
-
-// runEnrichmentPhase performs SNMP, port scanning, and profiling.
-func (e *Engine) runEnrichmentPhase(ctx context.Context, opts *ScanOptions, stats *ScanStats) {
-	devices := e.registry.GetDevices()
-
-	for _, device := range devices {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
-
-		// SNMP enrichment
-		if opts.IncludeSNMP && e.snmpCollector != nil && e.config.EnableSNMP {
-			if snmpData := e.collectSNMPData(ctx, device); snmpData != nil {
-				device.SNMPData = snmpData
-				stats.EnrichedDevices++
-			}
-		}
-
-		// Port scanning
-		if opts.IncludePortScan && e.portScanner != nil && e.config.EnablePortScan {
-			if profile := e.scanPorts(ctx, device); profile != nil {
-				device.Profile = profile
-			}
-		}
-
-		// Profiling
-		if opts.IncludeProfiling && e.profiler != nil && e.config.EnableProfiling {
-			e.profileDevice(ctx, device)
-		}
-
-		// Update device in registry
-		e.registry.AddOrUpdate(device)
-	}
-}
-
-// runAssessmentPhase performs vulnerability scanning.
-func (e *Engine) runAssessmentPhase(ctx context.Context, stats *ScanStats) {
-	devices := e.registry.GetDevices()
-
-	for _, device := range devices {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
-
-		vulns := e.assessVulnerabilities(ctx, device)
-		if vulns != nil && len(vulns.Vulnerabilities) > 0 {
-			device.Vulnerabilities = vulns
-			stats.VulnerableDevices++
-			e.registry.AddOrUpdate(device)
-
-			// Emit vulnerability event for each finding
-			for _, v := range vulns.Vulnerabilities {
-				e.eventBus.Publish(NewVulnDiscoveredEvent(device, v.CVEID, v.Severity))
-			}
-		}
-	}
-}
-
-// collectSNMPData collects SNMP data for a device.
-func (e *Engine) collectSNMPData(ctx context.Context, device *DiscoveredDevice) *SNMPFullData {
-	if device.IP == "" || e.snmpCollector == nil {
-		return nil
-	}
-
-	// Try SNMP collection (collector handles v2c and v3)
-	data, err := e.snmpCollector.Collect(ctx, device.IP)
-	if err != nil {
-		return nil
-	}
-	return data
-}
-
-// scanPorts scans ports on a device.
-func (e *Engine) scanPorts(ctx context.Context, device *DiscoveredDevice) *DeviceProfile {
-	if device.IP == "" || e.portScanner == nil {
-		return nil
-	}
-
-	result := e.portScanner.QuickScan(ctx, device.IP)
-	if result == nil || result.Error != "" {
-		return nil
-	}
-
-	// Convert ServiceInfo to OpenPort
-	openPorts := make([]OpenPort, 0, len(result.Services))
-	for _, svc := range result.Services {
-		openPorts = append(openPorts, OpenPort{
-			Port:     svc.Port,
-			Protocol: svc.Protocol,
-			Service:  svc.Service,
-			Banner:   svc.Banner,
-			IsOpen:   svc.State == "open",
-		})
-	}
-
-	profile := &DeviceProfile{
-		OpenPorts: openPorts,
-	}
-	return profile
-}
-
-// profileDevice performs device profiling.
-func (e *Engine) profileDevice(_ context.Context, device *DiscoveredDevice) {
-	if e.profiler == nil || device.IP == "" {
-		return
-	}
-
-	// Queue the device for profiling (async)
-	if err := e.profiler.QueueProfile(device.IP); err != nil {
-		return
-	}
-
-	// Check if profile is already available (from previous profiling)
-	if profile := e.profiler.GetProfile(device.IP); profile != nil {
-		device.Profile = profile
-	}
-}
-
-// assessVulnerabilities checks a device for vulnerabilities.
-func (e *Engine) assessVulnerabilities(ctx context.Context, device *DiscoveredDevice) *DeviceVulnerabilities {
-	if e.vulnScanner == nil {
-		return nil
-	}
-
-	vulns, err := e.vulnScanner.ScanDevice(ctx, device)
-	if err != nil {
-		return nil
-	}
-	return vulns
-}
-
-// wifiAPToDevice converts a WiFi access point to a DiscoveredDevice.
-func (e *Engine) wifiAPToDevice(ap *WiFiAccessPoint) *DiscoveredDevice {
-	device := &DiscoveredDevice{
-		MAC:             ap.BSSID,
-		Vendor:          ap.Vendor,
-		DiscoveryMethod: []Method{},
-		ConnectionTypes: []ConnectionType{ConnectionWiFi},
-		WiFiPresence: &WiFiPresence{
-			SSID:          ap.SSIDName,
-			Channel:       ap.Channel,
-			ChannelWidth:  ap.ChannelWidth,
-			FrequencyMHz:  ap.FrequencyMHz,
-			SignalDBm:     ap.SignalDBm,
-			IsAccessPoint: true,
-			IsAuthorized:  ap.IsAuthorized,
-			Band:          string(ap.Band),
-			LastSeen:      ap.LastSeen,
-		},
-		LastSeen: ap.LastSeen,
-	}
-	return device
-}
-
-// bluetoothDeviceToDevice converts a Bluetooth device to a DiscoveredDevice.
-func (e *Engine) bluetoothDeviceToDevice(bt *BluetoothDevice) *DiscoveredDevice {
-	device := &DiscoveredDevice{
-		MAC:             bt.Address,
-		Vendor:          bt.Vendor,
-		DiscoveryMethod: []Method{},
-		ConnectionTypes: []ConnectionType{ConnectionBluetooth},
-		BluetoothPresence: &BluetoothPresence{
-			Name:         bt.Name,
-			Type:         bt.Type,
-			DeviceClass:  bt.DeviceClass,
-			RSSI:         bt.RSSI,
-			TxPower:      bt.TxPower,
-			IsPaired:     bt.IsPaired,
-			IsConnected:  bt.IsConnected,
-			IsAuthorized: bt.IsAuthorized,
-			Services:     bt.ServiceUUIDs,
-			LastSeen:     bt.LastSeen,
-		},
-		LastSeen: bt.LastSeen,
-	}
-	return device
 }
 
 // autoScanLoop runs periodic scans. stopCh is passed as a parameter rather

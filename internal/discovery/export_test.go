@@ -176,6 +176,32 @@ func ExportEnsureConnectionType(types []ConnectionType, add ConnectionType) []Co
 	return ensureConnectionType(types, add)
 }
 
+// ExportWiFiAPToDevice exposes wifiAPToDevice (ADR-0018 enumerate stage) for testing.
+func ExportWiFiAPToDevice(ap *WiFiAccessPoint) *DiscoveredDevice {
+	return wifiAPToDevice(ap)
+}
+
+// ExportBluetoothDeviceToDevice exposes bluetoothDeviceToDevice for testing.
+func ExportBluetoothDeviceToDevice(bt *BluetoothDevice) *DiscoveredDevice {
+	return bluetoothDeviceToDevice(bt)
+}
+
+// NewEnumerateStageForTest builds the enumerate stage (no collectors) as its
+// port, for nil-safety testing (ADR-0018).
+func NewEnumerateStageForTest(reg *DeviceRegistry, cfg *EngineConfig) Enumerator {
+	return &enumerateStage{registry: reg, config: cfg}
+}
+
+// NewEnrichStageForTest builds the enrich stage (no components) as its port.
+func NewEnrichStageForTest(reg *DeviceRegistry, cfg *EngineConfig) Enricher {
+	return &enrichStage{registry: reg, config: cfg}
+}
+
+// NewAssessStageForTest builds the assess stage (no scanner) as its port.
+func NewAssessStageForTest(reg *DeviceRegistry, bus *EventBus) Assessor {
+	return &assessStage{registry: reg, eventBus: bus}
+}
+
 // EngineTestAccessor provides access to Engine's private fields for testing.
 type EngineTestAccessor struct {
 	Engine *Engine
