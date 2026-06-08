@@ -3,10 +3,89 @@
 package license_test
 
 import (
+	"crypto/ed25519"
+	"encoding/base64"
+	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/license"
 )
+
+// testSigningSeedB64 is a TEST-ONLY Ed25519 private seed, distinct from the
+// production key. Tokens minted with it validate through a Verifier built on its
+// public half (testVerifier) and through a Manager created with that verifier,
+// but are correctly REJECTED by the embedded production key — which is what
+// makes the forgery tests meaningful.
+const testSigningSeedB64 = "XCx+b6yDNFoRanJhHeqX3pjXlhjNvXvAzojwaSq8lAs="
+
+// Production-signed contract vectors (serial 1234567), produced by the keygen
+// tool against the embedded production key (pre-launch keypair). They MUST
+// validate via the default verifier; regenerate together with the embedded key
+// if it rotates. See ADR-0019.
+const (
+	prodSeedStarterVector = "MSN1.eyJjb2RlIjoiNDAwMSIsImlhdCI6MTc4MDg3NjgwMCwibWF4RGV2aWNlcyI6MywicHJvZHVjdCI6InNlZWQiLCJzZXJpYWwiOiIxMjM0NTY3IiwidGllciI6MSwidiI6MX0.KEv70KrphG0Y7ATG_OPJhf4I0YJNcF7KNAVY4GPSj_Mdvxkhi4aEi6_h4Ux2EV-vkiA3lV0l_Bo7yTN9zI29CA"
+	prodSeedProVector     = "MSN1.eyJjb2RlIjoiNDAwMiIsImlhdCI6MTc4MDg3NjgwMCwibWF4RGV2aWNlcyI6MywicHJvZHVjdCI6InNlZWQiLCJzZXJpYWwiOiIxMjM0NTY3IiwidGllciI6MiwidiI6MX0.wGtw4OLbVFHE19Zqt7ZK4_10P6sbmvdwa0pjoY_9U0ggR2w_Ix5Sy8KvIB3p4uO62p8tIhMon6hj_T60pK4VDA"
+)
+
+func testSigningKey(t *testing.T) ed25519.PrivateKey {
+	t.Helper()
+	seed, err := base64.StdEncoding.DecodeString(testSigningSeedB64)
+	if err != nil {
+		t.Fatalf("decode test seed: %v", err)
+	}
+	return ed25519.NewKeyFromSeed(seed)
+}
+
+// testVerifier returns a Verifier for the test signing key. Tokens from
+// signTestKey validate against it.
+func testVerifier(t *testing.T) *license.Verifier {
+	t.Helper()
+	pub := testSigningKey(t).Public().(ed25519.PublicKey)
+	return license.NewVerifier(pub)
+}
+
+// signLicenseToken mints an MSN1 token signed by priv. It mirrors the keygen /
+// verifier wire format so tests can produce arbitrary tokens (including ones
+// signed by an attacker key for forgery tests, or for another product) without
+// the production private key.
+func signLicenseToken(
+	t *testing.T,
+	priv ed25519.PrivateKey,
+	product, code, serial string,
+	tier license.Tier,
+	exp int64,
+) string {
+	t.Helper()
+	payload := map[string]any{
+		"v":          1,
+		"product":    product,
+		"code":       code,
+		"serial":     serial,
+		"tier":       int(tier),
+		"maxDevices": 3,
+		"iat":        time.Date(2026, 6, 8, 0, 0, 0, 0, time.UTC).Unix(),
+	}
+	if exp > 0 {
+		payload["exp"] = exp
+	}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+	sig := ed25519.Sign(priv, b)
+	return "MSN1." + base64.RawURLEncoding.EncodeToString(b) +
+		"." + base64.RawURLEncoding.EncodeToString(sig)
+}
+
+// signTestKey replaces the removed license.GenerateLicenseKey: it mints a
+// production-shaped seed token signed by the TEST key. It validates through
+// testVerifier and through a Manager built with
+// NewManagerWithVerifier(dir, testVerifier(t)).
+func signTestKey(t *testing.T, code, serial string, tier license.Tier) string {
+	t.Helper()
+	return signLicenseToken(t, testSigningKey(t), "seed", code, serial, tier, 0)
+}
 
 func TestTierString(t *testing.T) {
 	t.Parallel()
@@ -26,8 +105,9 @@ func TestTierString(t *testing.T) {
 	}
 }
 
-func TestGenerateAndValidateRoundTrip(t *testing.T) {
+func TestSignAndValidateRoundTrip(t *testing.T) {
 	t.Parallel()
+	v := testVerifier(t)
 	cases := []struct {
 		product string
 		tier    license.Tier
@@ -36,13 +116,10 @@ func TestGenerateAndValidateRoundTrip(t *testing.T) {
 		{"4002", license.TierPro},
 	}
 	for _, c := range cases {
-		key, err := license.GenerateLicenseKey(c.product, "ABCDEFG", c.tier)
-		if err != nil {
-			t.Fatalf("GenerateLicenseKey(%s, %v): %v", c.product, c.tier, err)
-		}
-		info := license.ValidateLicenseKey(key)
+		key := signTestKey(t, c.product, "ABCDEFG", c.tier)
+		info := v.Validate(key)
 		if !info.Valid {
-			t.Errorf("ValidateLicenseKey(%q): not valid (err=%q)", key, info.ErrorMsg)
+			t.Errorf("Validate(%q): not valid (err=%q)", key, info.ErrorMsg)
 			continue
 		}
 		if info.ProductCode != c.product {
@@ -56,21 +133,23 @@ func TestGenerateAndValidateRoundTrip(t *testing.T) {
 
 func TestValidateRejectsBadInputs(t *testing.T) {
 	t.Parallel()
+	v := testVerifier(t)
 	cases := []struct {
 		name string
 		key  string
 	}{
 		{"empty", ""},
-		{"too short", "AAAA-BBBB"},
-		{"too long", "AAAA-BBBB-CCCC-DDDD-EEEE"},
-		{"non-alphanumeric", "AAAA-BBBB-CCCC-D!DD"},
-		{"bad checksum", "AAAA-BBBB-CCCC-DDDD"},
+		{"not a token", "AAAA-BBBB-CCCC-DDDD"},
+		{"wrong scheme", "MSN9.abc.def"},
+		{"too few parts", "MSN1.abc"},
+		{"garbage payload", "MSN1.!!!.???"},
 		{"unknown product code", mustMakeKey(t, "9999", "TESTKEY", license.TierStarter)},
+		{"code/tier mismatch", mustMakeKey(t, "4001", "TESTKEY", license.TierPro)},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			info := license.ValidateLicenseKey(c.key)
+			info := v.Validate(c.key)
 			if info.Valid {
 				t.Errorf("expected invalid, got valid (key=%q)", c.key)
 			}
@@ -81,87 +160,47 @@ func TestValidateRejectsBadInputs(t *testing.T) {
 	}
 }
 
-// mustMakeKey is a test helper that calls GenerateLicenseKey and fails
-// the test on error.
+// mustMakeKey is a test helper that calls signTestKey and fails the test on
+// error.
 func mustMakeKey(t *testing.T, product, serial string, tier license.Tier) string {
 	t.Helper()
-	k, err := license.GenerateLicenseKey(product, serial, tier)
-	if err != nil {
-		t.Fatalf("mustMakeKey(%q, %q, %v): %v", product, serial, tier, err)
-	}
-	return k
+	return signTestKey(t, product, serial, tier)
 }
 
 func TestFormatKey(t *testing.T) {
 	t.Parallel()
-	got := license.FormatKey("MN0725AGLLVZP9GH")
-	want := "MN07-25AG-LLVZ-P9GH"
-	if got != want {
-		t.Errorf("FormatKey = %q, want %q", got, want)
+	// Tokens are single-line and copy/paste ready; FormatKey only trims
+	// surrounding whitespace (it must NOT strip base64url '-'/'_').
+	got := license.FormatKey("  " + prodSeedProVector + "\n")
+	if got != prodSeedProVector {
+		t.Errorf("FormatKey = %q, want %q", got, prodSeedProVector)
 	}
 }
 
-// TestKeygenContract pins the cross-tool cipher contract. Every key in
-// this table was produced by the canonical keygen tool
-// (msn-internal-tools/keygen) and MUST validate identically in every
-// product's license package (stem, seed, niac). If this test fails the
-// rotor cipher has drifted from keygen — DO NOT "fix" the assertions;
-// fix the cipher, or regenerate keygen + update all three products in
-// lockstep.
-//
-// Anchored to keygen v2.3.0 (2026-05-30) — V1.0 NMS expansion:
-// Starter adds topology_local/dns_monitoring/ssl_cert_monitoring;
-// Pro adds 11 NMS flags (topology_estate, estate_polling,
-// microburst_detection, voip_mos_scoring, server_monitoring,
-// extended_retention, bgp_monitoring, wifi_management_capture,
-// wifi_rogue_detection, config_backup_diff, netflow_collection).
-// Pro also gets sso added at the keygen side to fix a latent
-// parity drift between this validator and keygen's productCatalog.
-// See msn-docs-internal/01-Strategy/SEED_NMS_EXPANSION.md.
+// TestKeygenContract pins the cross-tool signing contract. Each token in this
+// table was produced by the canonical keygen tool (msn-internal-tools/keygen)
+// signing with the production private key, and MUST validate against the
+// embedded production public key in every product. If this test fails the
+// embedded key has drifted from keygen — DO NOT "fix" the assertions; rotate
+// the embedded key and regenerate these vectors in lockstep (see ADR-0019).
 func TestKeygenContract(t *testing.T) {
 	t.Parallel()
 	vectors := []keygenVector{
 		{
-			name:    "seed-starter / serial TESTSTR (anchor v2.3.0)",
-			key:     "2Q07-20VG-PZZR-C28C",
-			tier:    license.TierStarter,
-			product: "4001",
-			serial:  "TESTSTR",
-			features: []string{
-				"monitoring_scheduled",
-				"wifi_visibility_basic",
-				"compliance_basic",
-				"export_csv_json",
-				"topology_local",
-				"dns_monitoring",
-				"ssl_cert_monitoring",
-			},
+			name:     "seed-starter / serial 1234567",
+			key:      prodSeedStarterVector,
+			tier:     license.TierStarter,
+			product:  "4001",
+			serial:   "1234567",
+			features: starterFeatureList(),
 		},
 		{
-			name:    "seed-pro / serial TESTPRO (anchor v2.3.0)",
-			key:     "Z707-25VG-PZVZ-P9J5",
-			tier:    license.TierPro,
-			product: "4002",
-			serial:  "TESTPRO",
-			features: []string{
-				// Starter set.
-				"monitoring_scheduled", "wifi_visibility_basic",
-				"compliance_basic", "export_csv_json",
-				"topology_local", "dns_monitoring", "ssl_cert_monitoring",
-				// Pre-existing Pro set.
-				"wifi_roam_analysis", "wifi_association_forensics",
-				"airmapper_baseline_diff", "anomaly_detection", "path_analysis",
-				"live_telemetry", "compliance_advanced", "scheduled_reports",
-				"audit_pdf", "multi_interface", "multi_user", "multi_client",
-				"sso", "white_label", "rest_api",
-				// V1.0 NMS expansion additions.
-				"topology_estate", "estate_polling",
-				"microburst_detection", "voip_mos_scoring", "server_monitoring",
-				"extended_retention", "bgp_monitoring",
-				"wifi_management_capture", "wifi_rogue_detection",
-				// V1.1 flags (catalog-final now).
-				"config_backup_diff", "netflow_collection",
-			},
+			name:     "seed-pro / serial 1234567",
+			key:      prodSeedProVector,
+			tier:     license.TierPro,
+			product:  "4002",
+			serial:   "1234567",
+			features: proFeatureList(),
 		},
 	}
 
@@ -173,8 +212,34 @@ func TestKeygenContract(t *testing.T) {
 	}
 }
 
-// keygenVector is a (key, expected-validation) pair produced by the
-// canonical keygen tool.
+// starterFeatureList mirrors validator.go's starterFeatures(); kept here so the
+// contract test pins the externally observable feature set.
+func starterFeatureList() []string {
+	return []string{
+		"monitoring_scheduled", "wifi_visibility_basic",
+		"compliance_basic", "export_csv_json",
+		"topology_local", "dns_monitoring", "ssl_cert_monitoring",
+	}
+}
+
+// proFeatureList mirrors validator.go's proFeatures() (Starter set + Pro
+// additions).
+func proFeatureList() []string {
+	return append(starterFeatureList(),
+		"wifi_roam_analysis", "wifi_association_forensics", "airmapper_baseline_diff",
+		"anomaly_detection", "path_analysis", "live_telemetry",
+		"compliance_advanced", "scheduled_reports", "audit_pdf",
+		"multi_interface", "multi_user", "multi_client",
+		"sso", "white_label", "rest_api",
+		"topology_estate", "estate_polling", "microburst_detection",
+		"voip_mos_scoring", "server_monitoring", "extended_retention",
+		"bgp_monitoring", "wifi_management_capture", "wifi_rogue_detection",
+		"config_backup_diff", "netflow_collection",
+	)
+}
+
+// keygenVector is a (token, expected-validation) pair produced by the canonical
+// keygen tool against the production key.
 type keygenVector struct {
 	name     string
 	key      string
@@ -186,6 +251,8 @@ type keygenVector struct {
 
 func assertKeygenVector(t *testing.T, v keygenVector) {
 	t.Helper()
+	// Validates against the EMBEDDED PRODUCTION key — the whole point of the
+	// contract test.
 	info := license.ValidateLicenseKey(v.key)
 	if !info.Valid {
 		t.Fatalf("Valid = false, want true (err=%q)", info.ErrorMsg)
@@ -209,12 +276,106 @@ func assertKeygenVector(t *testing.T, v keygenVector) {
 	}
 }
 
+// TestProductMismatchRejected verifies a correctly signed token for another
+// product (stem) is rejected by seed's validator even when signed by the same
+// key seed trusts.
+func TestProductMismatchRejected(t *testing.T) {
+	t.Parallel()
+	v := testVerifier(t)
+	token := signLicenseToken(t, testSigningKey(t), "stem", "2001", "1234567", license.TierPro, 0)
+	info := v.Validate(token)
+	if info.Valid {
+		t.Error("a token issued for product 'stem' must not validate in seed")
+	}
+	if info.ErrorMsg != license.ErrLicenseInvalid {
+		t.Errorf("ErrorMsg = %q, want %q", info.ErrorMsg, license.ErrLicenseInvalid)
+	}
+}
+
+// TestForgeryRejected verifies a token signed by an attacker key is rejected by
+// the embedded production verifier (ValidateLicenseKey).
+func TestForgeryRejected(t *testing.T) {
+	t.Parallel()
+	_, attackerPriv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("generate attacker key: %v", err)
+	}
+	forged := signLicenseToken(t, attackerPriv, "seed", "4002", "1234567", license.TierPro, 0)
+	info := license.ValidateLicenseKey(forged)
+	if info.Valid {
+		t.Error("token signed by a non-production key must be rejected")
+	}
+	if info.ErrorMsg != license.ErrLicenseInvalid {
+		t.Errorf("forged token ErrorMsg = %q, want %q", info.ErrorMsg, license.ErrLicenseInvalid)
+	}
+}
+
+// TestTamperRejected verifies that altering a signed token's payload (flipping
+// Starter→Pro) invalidates the signature.
+func TestTamperRejected(t *testing.T) {
+	t.Parallel()
+	v := testVerifier(t)
+	starter := signTestKey(t, "4001", "1234567", license.TierStarter)
+	// Swap the payload segment for a Pro payload while keeping the Starter
+	// signature: the signature no longer matches.
+	pro := signTestKey(t, "4002", "1234567", license.TierPro)
+	tampered := spliceProPayload(t, starter, pro)
+	info := v.Validate(tampered)
+	if info.Valid {
+		t.Error("a token with a swapped payload must fail signature verification")
+	}
+}
+
+// spliceProPayload builds a token from the Pro payload segment and the Starter
+// signature segment, producing a deliberately invalid token.
+func spliceProPayload(t *testing.T, starter, pro string) string {
+	t.Helper()
+	sParts := splitToken(t, starter)
+	pParts := splitToken(t, pro)
+	return pParts[0] + "." + pParts[1] + "." + sParts[2]
+}
+
+func splitToken(t *testing.T, token string) [3]string {
+	t.Helper()
+	var out [3]string
+	n := 0
+	start := 0
+	for i := 0; i < len(token) && n < 3; i++ {
+		if token[i] == '.' {
+			out[n] = token[start:i]
+			n++
+			start = i + 1
+		}
+	}
+	if n != 2 {
+		t.Fatalf("token does not have 3 parts: %q", token)
+	}
+	out[2] = token[start:]
+	return out
+}
+
+// TestExpiredTokenRejected verifies a signed token whose exp is in the past is
+// rejected with the expiry message.
+func TestExpiredTokenRejected(t *testing.T) {
+	t.Parallel()
+	v := testVerifier(t)
+	expired := signLicenseToken(t, testSigningKey(t), "seed", "4002", "1234567", license.TierPro,
+		time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC).Unix())
+	info := v.Validate(expired)
+	if info.Valid {
+		t.Error("expired token should not be valid")
+	}
+	if info.ErrorMsg != "License has expired" {
+		t.Errorf("ErrorMsg = %q, want %q", info.ErrorMsg, "License has expired")
+	}
+}
+
 func TestActivationLifecycle(t *testing.T) {
 	t.Parallel()
 	tmp := t.TempDir()
-	mgr, err := license.NewManagerWithDir(tmp)
+	mgr, err := license.NewManagerWithVerifier(tmp, testVerifier(t))
 	if err != nil {
-		t.Fatalf("NewManagerWithDir: %v", err)
+		t.Fatalf("NewManagerWithVerifier: %v", err)
 	}
 
 	// No state yet.
@@ -231,8 +392,8 @@ func TestActivationLifecycle(t *testing.T) {
 		t.Error("expected trial to be active")
 	}
 
-	// Activate a real key.
-	key, _ := license.GenerateLicenseKey("4002", "ABCDEFG", license.TierPro)
+	// Activate a real (test-signed) key.
+	key := signTestKey(t, "4002", "ABCDEFG", license.TierPro)
 	res := mgr.Activate(key)
 	if !res.Success || res.Tier != license.TierPro {
 		t.Errorf("Activate unexpected: %+v", res)
@@ -243,9 +404,9 @@ func TestActivationLifecycle(t *testing.T) {
 	}
 
 	// Reload from disk and re-check.
-	mgr2, err := license.NewManagerWithDir(tmp)
+	mgr2, err := license.NewManagerWithVerifier(tmp, testVerifier(t))
 	if err != nil {
-		t.Fatalf("reload NewManagerWithDir: %v", err)
+		t.Fatalf("reload NewManagerWithVerifier: %v", err)
 	}
 	if !mgr2.IsActivated() {
 		t.Error("expected reloaded state to be activated")
@@ -263,22 +424,22 @@ func TestActivationLifecycle(t *testing.T) {
 	}
 }
 
-// TestManagerConcurrentReadsAndWrites exercises the RWMutex so `go test
-// -race` fails loudly if the locking ever regresses. Per-feature gates
-// in the HTTP layer call read methods on every request; activation
-// can land via CLI or future portal pushes mid-flight.
+// TestManagerConcurrentReadsAndWrites exercises the RWMutex so `go test -race`
+// fails loudly if the locking ever regresses. Per-feature gates in the HTTP
+// layer call read methods on every request; activation can land via CLI or
+// future portal pushes mid-flight.
 func TestManagerConcurrentReadsAndWrites(t *testing.T) {
 	t.Parallel()
 	tmp := t.TempDir()
-	mgr, err := license.NewManagerWithDir(tmp)
+	mgr, err := license.NewManagerWithVerifier(tmp, testVerifier(t))
 	if err != nil {
-		t.Fatalf("NewManagerWithDir: %v", err)
+		t.Fatalf("NewManagerWithVerifier: %v", err)
 	}
 
-	key, _ := license.GenerateLicenseKey("4002", "ABCDEFG", license.TierPro)
+	key := signTestKey(t, "4002", "ABCDEFG", license.TierPro)
 
-	// Spin up a writer goroutine that toggles activation, plus several
-	// reader goroutines that hammer the read API.
+	// Spin up a writer goroutine that toggles activation, plus several reader
+	// goroutines that hammer the read API.
 	done := make(chan struct{})
 	go func() {
 		for range 50 {

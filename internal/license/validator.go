@@ -3,69 +3,71 @@
 package license
 
 import (
-	"errors"
-	"fmt"
-	"regexp"
 	"slices"
 	"strings"
 	"time"
 )
 
 /*
-Seed License Key Format (16 characters, identical to the format
-used by Stem and NIAC — keys are produced by the canonical keygen
-tool and the rotor cipher is byte-compatible across products).
+Seed licenses are Ed25519-signed tokens (see signing.go). The previous 16-char
+rotor-cipher key format was removed: its generator (GenerateLicenseKey) shipped
+inside the binary, so any copy of Seed could mint a valid key. Tokens are now
+signed by the keygen tool's private key and verified here with an embedded
+public key — offline and un-forgeable. See ADR-0019.
 
-+------+--------+-------+------+----------+
-| CC   | PPPP   |SSSSSSS| T    | XX       |
-|Check |Product |Serial |Tier  | Checksum |
-+------+--------+-------+------+----------+
+Product codes:
+  4001: Seed Starter (tier 1)
+  4002: Seed Pro     (tier 2). Includes every Starter feature.
 
-Positions:
-  0-1:  Checksum prefix (encoded validation).
-  2-5:  Product code (4001=Seed Starter, 4002=Seed Pro).
-  6-12: Serial number (unique per license).
-  13:   Tier (1=Starter, 2=Pro).
-  14-15: Checksum suffix.
-
-Free is the unlicensed tier — no key required. Starter and Pro
-require valid keys with matching product codes.
+Free is the unlicensed tier — no key required.
 */
 
-// License key format constants.
 const (
-	keyLength         = 16
-	productCodeLength = 4
-	serialLength      = 7
-	checksumLength    = 2
-	cipherStartPos    = 7 // MSN rotor cipher starting position.
-	defaultMaxDevices = 3 // Default activations per license.
+	defaultMaxDevices = 3 // default activations per license
+
+	// productName identifies this binary in a signed payload. A token issued
+	// for another product (stem/niac) is rejected even if correctly signed.
+	productName = "seed"
 )
+
+// Product codes accepted by Seed.
+const (
+	codeStarter = "4001"
+	codePro     = "4002"
+)
+
+// licensePublicKeyB64 is the standard-base64 Ed25519 public key that verifies
+// production license tokens. The matching private key lives only in the keygen
+// tool (msn-internal-tools/keygen) and never ships. See ADR-0019.
+//
+// Pre-launch signing key — rotate via keygen before GA.
+const licensePublicKeyB64 = "O+o8n4qHHp/X//JrRXSdgGSWa2Fqz79OtgUkcylNxZg="
 
 // Tier represents the license tier.
 type Tier int
 
-// License tier constants. Numeric values are wire-compatible with the
-// tier digit embedded in the license key (positions 13 of the encoded
-// key). Tier 0 is the implicit Free tier.
+// License tier constants. Numeric values are the wire tier values embedded in
+// the signed token payload. Tier 0 is the implicit Free tier.
 const (
 	// TierInvalid represents an invalid or unrecognized license tier.
 	TierInvalid Tier = -1
 	// TierFree is the unlicensed tier. No key needed; only the basic
 	// feature set is available.
 	TierFree Tier = 0
-	// TierStarter unlocks the Starter feature set. Wire tier digit 1.
+	// TierStarter unlocks the Starter feature set. Wire tier value 1.
 	TierStarter Tier = 1
 	// TierPro unlocks the full Professional feature set (includes
-	// everything in Starter). Wire tier digit 2.
+	// everything in Starter). Wire tier value 2.
 	TierPro Tier = 2
 )
 
 // Error messages.
 const (
 	errProductCodeMismatch = "Product code mismatch for tier"
-	// ErrLicenseKeyLength indicates the key length validation error message.
-	ErrLicenseKeyLength = "License key must be 16 characters"
+	// ErrLicenseInvalid is the generic rejection message. Validation failures
+	// deliberately do not distinguish "bad signature" from "tampered payload"
+	// to a caller — both mean the same thing: not a genuine license.
+	ErrLicenseInvalid = "License key is not valid"
 )
 
 // String returns the tier name.
@@ -99,54 +101,48 @@ type Info struct {
 	ErrorMsg    string    `json:"error,omitempty"`
 }
 
-// ValidateLicenseKey performs offline validation of a license key.
+// ValidateLicenseKey performs offline validation of a license token against the
+// embedded production key. The verifier wraps a 32-byte key, so it is rebuilt
+// per call rather than held as a package global; validation is not on a hot
+// path (feature checks read cached Info, they do not re-validate).
 func ValidateLicenseKey(key string) *Info {
+	return mustVerifierFromB64(licensePublicKeyB64).Validate(key)
+}
+
+// Validate verifies a signed token and maps it to product feature data. The
+// signature is checked first (in parseAndVerify); only a genuinely signed,
+// current-version payload reaches the product-specific interpretation below.
+func (v *Verifier) Validate(key string) *Info {
 	info := &Info{
-		Key:         key,
-		Valid:       false,
-		Tier:        TierInvalid,
-		ProductCode: "",
-		Serial:      "",
-		MaxDevices:  defaultMaxDevices,
+		Key:        strings.TrimSpace(key),
+		Valid:      false,
+		Tier:       TierInvalid,
+		MaxDevices: defaultMaxDevices,
 	}
 
-	// Normalize the key (strip separators, uppercase).
-	normalized := normalizeKey(key)
-	if len(normalized) != keyLength {
-		info.ErrorMsg = ErrLicenseKeyLength
+	payload, err := v.parseAndVerify(key)
+	if err != nil {
+		info.ErrorMsg = ErrLicenseInvalid
 		return info
 	}
 
-	// Reject any character outside the alphanumeric set the cipher
-	// emits. This catches transcription errors before we attempt to
-	// decode (the cipher would otherwise treat unexpected characters
-	// as literal passthrough, producing confusing validation errors).
-	if !validKeyChars(normalized) {
-		info.ErrorMsg = "License key contains invalid characters"
+	// A correctly signed token for a different product must not validate here.
+	if payload.Product != productName {
+		info.ErrorMsg = ErrLicenseInvalid
 		return info
 	}
 
-	// Decode through the rotor cipher.
-	cipher := NewRotorCipher(cipherStartPos)
-	decoded := cipher.DecodeString(normalized)
+	info.ProductCode = payload.Code
+	info.Serial = payload.Serial
 
-	// Validate the embedded checksum.
-	if !validateKeyChecksum(decoded) {
-		info.ErrorMsg = "License key failed checksum validation"
-		return info
-	}
-
-	// Extract components.
-	info.ProductCode = decoded[2:6]
-	info.Serial = decoded[6:13]
-	tierChar := decoded[13]
-
-	// Parse tier.
-	switch tierChar {
-	case '1':
+	// Tier and feature set are authoritative in-binary: the payload's tier is
+	// mapped to the feature list defined here, so a signed token can only grant
+	// what this build knows about.
+	switch payload.Tier {
+	case int(TierStarter):
 		info.Tier = TierStarter
 		info.Features = starterFeatures()
-	case '2':
+	case int(TierPro):
 		info.Tier = TierPro
 		info.Features = proFeatures()
 	default:
@@ -154,80 +150,46 @@ func ValidateLicenseKey(key string) *Info {
 		return info
 	}
 
-	// Validate product code matches tier.
-	switch info.ProductCode {
-	case "4001":
-		if info.Tier != TierStarter {
-			info.ErrorMsg = errProductCodeMismatch
-			return info
-		}
-	case "4002":
-		if info.Tier != TierPro {
-			info.ErrorMsg = errProductCodeMismatch
-			return info
-		}
-	default:
-		info.ErrorMsg = "Unknown product code"
+	if !productCodeMatchesTier(payload.Code, info.Tier) {
+		info.ErrorMsg = errProductCodeMismatch
 		return info
+	}
+
+	if payload.MaxDevices > 0 {
+		info.MaxDevices = payload.MaxDevices
+	}
+	if payload.ExpiresAt > 0 {
+		info.ExpiresAt = time.Unix(payload.ExpiresAt, 0).UTC()
+		if time.Now().After(info.ExpiresAt) {
+			info.ErrorMsg = "License has expired"
+			return info
+		}
 	}
 
 	info.Valid = true
 	return info
 }
 
-// validKeyChars returns true if every character of the normalized key
-// is in the cipher's accepted alphabet (digits, uppercase ASCII).
-var keyCharRE = regexp.MustCompile(`^[0-9A-Z]+$`)
-
-func validKeyChars(s string) bool {
-	return keyCharRE.MatchString(s)
-}
-
-// validateKeyChecksum checks the embedded checksum.
-func validateKeyChecksum(key string) bool {
-	payload := key[2:14]
-	expected := CalculateChecksum(payload)
-	prefixMatch := key[0:2] == expected
-	suffixMatch := key[14:16] == expected
-	return prefixMatch && suffixMatch
-}
-
-// GenerateLicenseKey creates a new license key (for testing — production
-// keys are issued by the keygen tool).
-func GenerateLicenseKey(productCode string, serial string, tier Tier) (string, error) {
-	if len(productCode) != productCodeLength {
-		return "", errors.New("product code must be 4 characters")
+// productCodeMatchesTier enforces that the product code embedded in the payload
+// is the one expected for the tier, so a token cannot claim a code/tier pairing
+// the catalog never issued.
+func productCodeMatchesTier(code string, tier Tier) bool {
+	switch code {
+	case codeStarter:
+		return tier == TierStarter
+	case codePro:
+		return tier == TierPro
+	default:
+		return false
 	}
-	if len(serial) != serialLength {
-		return "", errors.New("serial must be 7 characters")
-	}
-	if tier < TierStarter || tier > TierPro {
-		return "", errors.New("invalid tier")
-	}
-
-	payload := productCode + serial + fmt.Sprintf("%d", tier)
-	checksum := CalculateChecksum(payload)
-	fullKey := checksum[0:checksumLength] + payload + checksum
-	cipher := NewRotorCipher(cipherStartPos)
-	encoded := cipher.EncodeString(fullKey)
-	return strings.ToUpper(encoded), nil
 }
 
-// normalizeKey cleans up a license key for validation.
-func normalizeKey(key string) string {
-	key = strings.ReplaceAll(key, "-", "")
-	key = strings.ReplaceAll(key, " ", "")
-	key = strings.ReplaceAll(key, ".", "")
-	return strings.ToUpper(key)
-}
-
-// FormatKey formats a license key for display (adds dashes).
+// FormatKey returns a signed token for display. Tokens are already
+// display-ready (single line, copy/paste); only surrounding whitespace is
+// trimmed. Unlike the old 16-char format, tokens must NOT have characters
+// stripped — base64url uses '-' and '_'.
 func FormatKey(key string) string {
-	key = normalizeKey(key)
-	if len(key) != keyLength {
-		return key
-	}
-	return key[0:4] + "-" + key[4:8] + "-" + key[8:12] + "-" + key[12:16]
+	return strings.TrimSpace(key)
 }
 
 // HasFeature checks if the license includes a specific feature.

@@ -80,10 +80,12 @@ type Manager struct {
 	state       *ActivationState
 	fingerprint *DeviceFingerprint
 	configDir   string
+	verifier    *Verifier // verifies signed license tokens; production key by default
 }
 
 // NewManager creates a new license manager rooted at the default
-// per-user config directory.
+// per-user config directory, verifying tokens against the embedded
+// production key.
 func NewManager() (*Manager, error) {
 	homeDir, homeErr := os.UserHomeDir()
 	if homeErr != nil {
@@ -93,9 +95,23 @@ func NewManager() (*Manager, error) {
 }
 
 // NewManagerWithDir creates a license manager that persists state in
-// the given directory. Exposed so tests can use a tmpdir without
-// poking at the user's real config.
+// the given directory and verifies tokens against the embedded
+// production key. Exposed so tests can use a tmpdir without poking at
+// the user's real config.
 func NewManagerWithDir(configDir string) (*Manager, error) {
+	return newManager(configDir, mustVerifierFromB64(licensePublicKeyB64))
+}
+
+// NewManagerWithVerifier creates a license manager rooted at configDir
+// that verifies tokens against the supplied Verifier instead of the
+// embedded production key. It exists so tests can activate tokens minted
+// with an ephemeral key (the production private key never ships);
+// production code uses [NewManager] or [NewManagerWithDir].
+func NewManagerWithVerifier(configDir string, v *Verifier) (*Manager, error) {
+	return newManager(configDir, v)
+}
+
+func newManager(configDir string, v *Verifier) (*Manager, error) {
 	fp, fpErr := GenerateFingerprint()
 	if fpErr != nil {
 		return nil, fmt.Errorf("failed to generate fingerprint: %w", fpErr)
@@ -105,6 +121,7 @@ func NewManagerWithDir(configDir string) (*Manager, error) {
 		state:       nil,
 		fingerprint: fp,
 		configDir:   configDir,
+		verifier:    v,
 	}
 
 	// Load existing state (best-effort, non-fatal).
@@ -275,7 +292,8 @@ func (m *Manager) StartTrial() *ActivationResult {
 
 // Activate attempts to activate a license key.
 func (m *Manager) Activate(licenseKey string) *ActivationResult {
-	info := ValidateLicenseKey(licenseKey)
+	// Validate the license token offline against this manager's verifier.
+	info := m.verifier.Validate(licenseKey)
 	if !info.Valid {
 		return &ActivationResult{
 			Success: false,
