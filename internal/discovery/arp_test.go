@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 )
 
 func TestNewARPScanner(t *testing.T) {
-	oui := discovery.NewOUIDatabase()
+	oui := resolve.NewOUIDatabase()
 	scanner := discovery.NewARPScanner("lo", oui)
 
 	if scanner == nil {
@@ -30,7 +31,7 @@ func TestNewARPScanner(t *testing.T) {
 }
 
 func TestARPScanner_SetInterface(t *testing.T) {
-	oui := discovery.NewOUIDatabase()
+	oui := resolve.NewOUIDatabase()
 	scanner := discovery.NewARPScanner("lo", oui)
 
 	scanner.SetInterface("eth0")
@@ -49,7 +50,7 @@ func TestARPScanner_SetInterface(t *testing.T) {
 }
 
 func TestARPScanner_SetAdditionalSubnets(t *testing.T) {
-	oui := discovery.NewOUIDatabase()
+	oui := resolve.NewOUIDatabase()
 	scanner := discovery.NewARPScanner("lo", oui)
 
 	// Valid CIDRs
@@ -71,7 +72,7 @@ func TestARPScanner_SetAdditionalSubnets(t *testing.T) {
 }
 
 func TestARPScanner_GetAdditionalSubnets(t *testing.T) {
-	oui := discovery.NewOUIDatabase()
+	oui := resolve.NewOUIDatabase()
 	scanner := discovery.NewARPScanner("lo", oui)
 
 	// Empty initially
@@ -196,7 +197,7 @@ func TestGuessOSFromTTL(t *testing.T) {
 }
 
 func TestARPScanner_IsScanning(t *testing.T) {
-	oui := discovery.NewOUIDatabase()
+	oui := resolve.NewOUIDatabase()
 	scanner := discovery.NewARPScanner("lo", oui)
 
 	// Initially not scanning
@@ -206,7 +207,7 @@ func TestARPScanner_IsScanning(t *testing.T) {
 }
 
 func TestARPScanner_LastScan(t *testing.T) {
-	oui := discovery.NewOUIDatabase()
+	oui := resolve.NewOUIDatabase()
 	scanner := discovery.NewARPScanner("lo", oui)
 
 	// Initially zero
@@ -216,7 +217,7 @@ func TestARPScanner_LastScan(t *testing.T) {
 }
 
 func TestARPScanner_Count(t *testing.T) {
-	oui := discovery.NewOUIDatabase()
+	oui := resolve.NewOUIDatabase()
 	scanner := discovery.NewARPScanner("lo", oui)
 
 	// Initially zero
@@ -226,7 +227,7 @@ func TestARPScanner_Count(t *testing.T) {
 }
 
 func TestARPScanner_GetEntries(t *testing.T) {
-	oui := discovery.NewOUIDatabase()
+	oui := resolve.NewOUIDatabase()
 	scanner := discovery.NewARPScanner("lo", oui)
 
 	// Initially empty
@@ -237,7 +238,7 @@ func TestARPScanner_GetEntries(t *testing.T) {
 }
 
 func TestARPScanner_GetEntry(t *testing.T) {
-	oui := discovery.NewOUIDatabase()
+	oui := resolve.NewOUIDatabase()
 	scanner := discovery.NewARPScanner("lo", oui)
 
 	// Non-existent entry
@@ -248,7 +249,7 @@ func TestARPScanner_GetEntry(t *testing.T) {
 }
 
 func TestARPScanner_ScanAlreadyInProgress(t *testing.T) {
-	oui := discovery.NewOUIDatabase()
+	oui := resolve.NewOUIDatabase()
 	scanner := discovery.NewARPScanner("lo", oui)
 
 	// Set scanning to true manually
@@ -268,7 +269,7 @@ func TestARPScanner_ScanAlreadyInProgress(t *testing.T) {
 }
 
 func TestARPScanner_ScanInvalidInterface(t *testing.T) {
-	oui := discovery.NewOUIDatabase()
+	oui := resolve.NewOUIDatabase()
 	scanner := discovery.NewARPScanner("nonexistent_interface_xyz", oui)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -331,7 +332,7 @@ func TestARPEntry_Fields(t *testing.T) {
 }
 
 func TestARPScanner_isInSubnet(t *testing.T) {
-	oui := discovery.NewOUIDatabase()
+	oui := resolve.NewOUIDatabase()
 	scanner := discovery.NewARPScanner("lo", oui)
 
 	// Set up a subnet on the scanner

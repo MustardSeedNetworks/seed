@@ -15,6 +15,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/fingerprint"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/mibdb"
@@ -278,7 +279,7 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 
 	// Initialize Bluetooth scanner
 	btConfig := discovery.DefaultBluetoothScanConfig()
-	var ouiDB *discovery.OUIDatabase
+	var ouiDB *resolve.OUIDatabase
 	if s.services.Discovery.Device != nil {
 		ouiDB = s.services.Discovery.Device.GetOUIDatabase()
 	}

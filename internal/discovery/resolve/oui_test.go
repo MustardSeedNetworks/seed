@@ -1,4 +1,4 @@
-package discovery_test
+package resolve_test
 
 import (
 	"context"
@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 )
 
 func TestNewOUIDatabase(t *testing.T) {
-	db := discovery.NewOUIDatabase()
+	db := resolve.NewOUIDatabase()
 
 	if db == nil {
 		t.Fatal("NewOUIDatabase returned nil")
@@ -25,7 +25,7 @@ func TestNewOUIDatabase(t *testing.T) {
 }
 
 func TestOUILookup(t *testing.T) {
-	db := discovery.NewOUIDatabase()
+	db := resolve.NewOUIDatabase()
 
 	tests := []struct {
 		mac      string
@@ -53,7 +53,7 @@ func TestOUILookup(t *testing.T) {
 }
 
 func TestOUILookupWithDefault(t *testing.T) {
-	db := discovery.NewOUIDatabase()
+	db := resolve.NewOUIDatabase()
 
 	// Known vendor
 	result := db.LookupWithDefault("00:00:0C:12:34:56", "Unknown")
@@ -78,7 +78,7 @@ func TestOUILoadFromFile(t *testing.T) {
 		t.Fatalf("Failed to write temp OUI file: %v", err)
 	}
 
-	db := discovery.NewOUIDatabase()
+	db := resolve.NewOUIDatabase()
 	initialCount := db.Count()
 
 	if err := db.LoadFromFile(ouiFile); err != nil {
@@ -125,7 +125,7 @@ DDEEFF     (base 16)		Another Corp
 		t.Fatalf("Failed to write temp IEEE OUI file: %v", err)
 	}
 
-	db := discovery.NewOUIDatabase()
+	db := resolve.NewOUIDatabase()
 	initialCount := db.Count()
 
 	if err := db.LoadFromIEEEFormat(ouiFile); err != nil {
@@ -151,7 +151,7 @@ func TestOUINeedsUpdate(t *testing.T) {
 	tmpDir := t.TempDir()
 	ouiFile := filepath.Join(tmpDir, "oui.txt")
 
-	db := discovery.NewOUIDatabase()
+	db := resolve.NewOUIDatabase()
 
 	// Non-existent file should need update
 	if !db.NeedsUpdate(ouiFile, 24*time.Hour) {
@@ -190,7 +190,7 @@ func TestOUIDownloadDatabase(t *testing.T) {
 	tmpDir := t.TempDir()
 	ouiFile := filepath.Join(tmpDir, "oui.txt")
 
-	db := discovery.NewOUIDatabase()
+	db := resolve.NewOUIDatabase()
 	initialCount := db.Count()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
@@ -232,7 +232,7 @@ func TestOUIUpdateIfNeeded(t *testing.T) {
 	tmpDir := t.TempDir()
 	ouiFile := filepath.Join(tmpDir, "oui.txt")
 
-	db := discovery.NewOUIDatabase()
+	db := resolve.NewOUIDatabase()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()

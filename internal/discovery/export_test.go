@@ -3,7 +3,11 @@ package discovery
 // This file is only compiled during testing (due to _test.go suffix)
 // and provides access to internal implementation details.
 
-import "net"
+import (
+	"net"
+
+	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
+)
 
 // ExportIncrementIP exposes incrementIP for testing.
 func ExportIncrementIP(ip net.IP, n int) net.IP {
@@ -36,7 +40,7 @@ func (a *ARPScannerTestAccessor) GetInterfaceName() string {
 }
 
 // GetOUI returns the scanner's OUI database.
-func (a *ARPScannerTestAccessor) GetOUI() *OUIDatabase {
+func (a *ARPScannerTestAccessor) GetOUI() *resolve.OUIDatabase {
 	return a.Scanner.oui
 }
 

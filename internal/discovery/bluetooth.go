@@ -18,6 +18,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -180,14 +181,14 @@ type BluetoothScanner struct {
 	mu                sync.RWMutex
 	adapterName       string
 	config            *BluetoothScanConfig
-	oui               *OUIDatabase
+	oui               *resolve.OUIDatabase
 	lastScan          *BluetoothScanResult
 	lastScanTime      time.Time
 	authorizedDevices map[string]bool // Authorized MAC addresses
 }
 
 // NewBluetoothScanner creates a new Bluetooth scanner.
-func NewBluetoothScanner(adapterName string, config *BluetoothScanConfig, oui *OUIDatabase) *BluetoothScanner {
+func NewBluetoothScanner(adapterName string, config *BluetoothScanConfig, oui *resolve.OUIDatabase) *BluetoothScanner {
 	if config == nil {
 		config = DefaultBluetoothScanConfig()
 	}

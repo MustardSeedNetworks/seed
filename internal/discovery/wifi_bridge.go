@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
 )
@@ -28,7 +29,7 @@ type WiFiBridge struct {
 	mu              sync.RWMutex
 	scanner         *wifi.Scanner
 	manager         *wifi.Manager
-	oui             *OUIDatabase
+	oui             *resolve.OUIDatabase
 	config          *WiFiBridgeConfig
 	lastScan        *WiFiScanResult
 	lastScanTime    time.Time
@@ -67,7 +68,7 @@ func DefaultWiFiBridgeConfig() *WiFiBridgeConfig {
 func NewWiFiBridge(
 	scanner *wifi.Scanner,
 	manager *wifi.Manager,
-	oui *OUIDatabase,
+	oui *resolve.OUIDatabase,
 	config *WiFiBridgeConfig,
 ) *WiFiBridge {
 	if config == nil {

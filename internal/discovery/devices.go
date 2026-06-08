@@ -22,19 +22,20 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // DeviceDiscovery aggregates device discovery from all sources.
 type DeviceDiscovery struct {
 	interfaceName   string
-	oui             *OUIDatabase
+	oui             *resolve.OUIDatabase
 	arpScanner      *ARPScanner
 	ndpScanner      *NDPScanner
 	protoManager    *Manager
-	netbiosResolver *NetBIOSResolver
-	mdnsResolver    *MDNSResolver // Active mDNS resolution
-	mdnsListener    *MDNSListener // Passive mDNS capture
+	netbiosResolver *resolve.NetBIOSResolver
+	mdnsResolver    *resolve.MDNSResolver // Active mDNS resolution
+	mdnsListener    *resolve.MDNSListener // Passive mDNS capture
 	mu              sync.RWMutex
 	devices         map[string]*DiscoveredDevice // Key by MAC
 	lastScan        time.Time
@@ -47,7 +48,7 @@ type DeviceDiscovery struct {
 
 // loadOUIDatabase loads the OUI database based on configuration.
 // Uses early returns to minimize nesting complexity.
-func loadOUIDatabase(oui *OUIDatabase, ouiPath string, ouiMaxAge time.Duration) {
+func loadOUIDatabase(oui *resolve.OUIDatabase, ouiPath string, ouiMaxAge time.Duration) {
 	// No path provided: try standard locations silently
 	if ouiPath == "" {
 		_ = oui.TryLoadIEEEFile()
@@ -65,7 +66,7 @@ func loadOUIDatabase(oui *OUIDatabase, ouiPath string, ouiMaxAge time.Duration) 
 }
 
 // loadOUIFromFile loads OUI from a specific file path with fallback.
-func loadOUIFromFile(oui *OUIDatabase, ouiPath string) {
+func loadOUIFromFile(oui *resolve.OUIDatabase, ouiPath string) {
 	if err := oui.LoadFromIEEEFormat(ouiPath); err != nil {
 		logging.GetLogger().Warn("Failed to load OUI from file", "path", ouiPath, "error", err)
 		if loadErr := oui.TryLoadIEEEFile(); loadErr != nil {
@@ -87,7 +88,7 @@ func loadOUIFromFile(oui *OUIDatabase, ouiPath string) {
 //
 // Production binaries get a fresh OUI baked in at build time, so the
 // in-process refresh is a quality-of-life feature, not load-bearing.
-func loadOUIWithAutoUpdate(oui *OUIDatabase, ouiPath string, ouiMaxAge time.Duration) {
+func loadOUIWithAutoUpdate(oui *resolve.OUIDatabase, ouiPath string, ouiMaxAge time.Duration) {
 	if os.Getenv("SKIP_NETWORK_TESTS") != "" {
 		if err := oui.TryLoadIEEEFile(); err != nil {
 			logging.GetLogger().Warn("SKIP_NETWORK_TESTS set; bundled OUI file not loadable", "error", err)
@@ -127,7 +128,7 @@ func NewDeviceDiscoveryWithOUI(
 	ouiMaxAge time.Duration,
 	opts ...Option,
 ) *DeviceDiscovery {
-	oui := NewOUIDatabase()
+	oui := resolve.NewOUIDatabase()
 	loadOUIDatabase(oui, ouiPath, ouiMaxAge)
 
 	return &DeviceDiscovery{
@@ -136,9 +137,9 @@ func NewDeviceDiscoveryWithOUI(
 		arpScanner:      NewARPScanner(interfaceName, oui),
 		ndpScanner:      NewNDPScanner(interfaceName),
 		protoManager:    NewManager(interfaceName, opts...),
-		netbiosResolver: NewNetBIOSResolver(),
-		mdnsResolver:    NewMDNSResolver(interfaceName),
-		mdnsListener:    NewMDNSListener(interfaceName),
+		netbiosResolver: resolve.NewNetBIOSResolver(),
+		mdnsResolver:    resolve.NewMDNSResolver(interfaceName),
+		mdnsListener:    resolve.NewMDNSListener(interfaceName),
 		devices:         make(map[string]*DiscoveredDevice),
 		nameResolution:  true,                       // Enabled by default
 		deviceTTL:       deviceTTLHours * time.Hour, // Default: expire stale devices after 24h (fixes #829)
@@ -213,7 +214,7 @@ func (d *DeviceDiscovery) SetInterface(name string) error {
 	// Update all sub-components that can accept interface changes (fixes #840)
 	d.arpScanner.SetInterface(name)
 
-	// Note: NDPScanner, MDNSResolver, MDNSListener, and NetBIOSResolver
+	// Note: NDPScanner, resolve.MDNSResolver, resolve.MDNSListener, and resolve.NetBIOSResolver
 	// don't have SetInterface methods - they're bound to the original interface.
 	// For a complete interface change, Stop() and recreate the DeviceDiscovery.
 
@@ -328,7 +329,7 @@ func (d *DeviceDiscovery) SetNameResolution(enabled bool) {
 
 // GetOUIDatabase returns the OUI database for vendor lookups.
 // This allows other discovery components (Bluetooth, WiFi) to share the same OUI data.
-func (d *DeviceDiscovery) GetOUIDatabase() *OUIDatabase {
+func (d *DeviceDiscovery) GetOUIDatabase() *resolve.OUIDatabase {
 	return d.oui
 }
 

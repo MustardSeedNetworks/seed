@@ -1,4 +1,4 @@
-package discovery
+package resolve
 
 //
 // This file implements a MAC address vendor lookup system using IEEE OUI assignments.
