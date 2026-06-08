@@ -44,12 +44,19 @@ interface FabProps {
  */
 export function Fab({ className = '' }: FabProps): React.JSX.Element {
   const [isRunning, setIsRunning] = useState(false);
+  // partial = the previous run finished without every check reporting (a timeout
+  // or a card that never completed). Surfaced distinctly so partial results are
+  // never presented as a clean completion (the C2 correctness fix).
+  const [partial, setPartial] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Stop spinner when testsComplete fires
+  // Settle the run when testsComplete fires: success clears any partial flag;
+  // a partial completion records it so the button can warn the operator.
   useEffect(() => {
-    const handleTestsComplete = (): void => {
+    const handleTestsComplete = (event: Event): void => {
+      const detail = (event as CustomEvent<{ partial?: boolean }>).detail;
       setIsRunning(false);
+      setPartial(Boolean(detail?.partial));
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -70,14 +77,22 @@ export function Fab({ className = '' }: FabProps): React.JSX.Element {
       return;
     }
     setIsRunning(true);
+    setPartial(false); // a fresh run clears the prior partial warning
 
     window.dispatchEvent(new CustomEvent('runAllTests'));
 
-    // Fallback timeout in case testsComplete never fires
+    // Backstop: if no testsComplete arrives (e.g. the orchestrator never ran),
+    // stop the spinner and mark the run partial — never silently "done".
     timeoutRef.current = setTimeout(() => {
       setIsRunning(false);
+      setPartial(true);
     }, 60000);
   }, [isRunning]);
+
+  const runStatus = isRunning ? 'running' : partial ? 'partial' : 'idle';
+  const label = partial
+    ? 'Some checks did not finish — tap to run all tests again'
+    : 'Run All Tests';
 
   return (
     <button
@@ -91,14 +106,16 @@ export function Fab({ className = '' }: FabProps): React.JSX.Element {
         isRunning && 'opacity-75 cursor-not-allowed',
         className,
       )}
-      title="Run All Tests"
-      aria-label="Run All Tests"
+      title={label}
+      aria-label={label}
       // aria-busy + data-testid let E2E specs synchronise on the
       // "running" → "idle" transition without racing the animate-spin
-      // class on the SVG. See seed#1168 / E2E_CONVENTIONS.
+      // class on the SVG. See seed#1168 / E2E_CONVENTIONS. data-run-status
+      // additionally exposes the partial outcome (idle | running | partial).
       aria-busy={isRunning}
       data-testid="fab-run-all-tests"
       data-running={isRunning ? 'true' : 'false'}
+      data-run-status={runStatus}
     >
       {isRunning ? (
         <svg
@@ -120,6 +137,24 @@ export function Fab({ className = '' }: FabProps): React.JSX.Element {
             fill="currentColor"
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           />
+        </svg>
+      ) : partial ? (
+        // Partial run: a warning triangle distinguishes "some checks did not
+        // finish" from a clean completion, so partial results are never read as
+        // final (C2). A re-click clears it and starts a fresh run.
+        <svg
+          className={iconTokens.size.lg}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+          <path d="M12 9v4" />
+          <path d="M12 17h.01" />
         </svg>
       ) : (
         <svg

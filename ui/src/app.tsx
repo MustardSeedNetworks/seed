@@ -499,9 +499,9 @@ function App(): JSX.Element {
         cardTestsToWait.push('healthchecks');
       }
 
-      // If no card-managed tests, signal completion immediately
+      // If no card-managed tests, the run is fully complete now.
       if (cardTestsToWait.length === 0) {
-        window.dispatchEvent(new CustomEvent('testsComplete'));
+        window.dispatchEvent(new CustomEvent('testsComplete', { detail: { partial: false } }));
         return;
       }
 
@@ -514,7 +514,8 @@ function App(): JSX.Element {
           // Check if all expected tests are done
           if (completed.size === cardTestsToWait.length) {
             window.removeEventListener('cardTestComplete', handleCardComplete as EventListener);
-            window.dispatchEvent(new CustomEvent('testsComplete'));
+            // Every expected card reported: a genuine, complete run.
+            window.dispatchEvent(new CustomEvent('testsComplete', { detail: { partial: false } }));
           }
         }
       };
@@ -522,15 +523,18 @@ function App(): JSX.Element {
       // Listen for card test completions
       window.addEventListener('cardTestComplete', handleCardComplete as EventListener);
 
-      // Failsafe timeout (90s) in case a card doesn't report completion
+      // Failsafe timeout (90s) in case a card never reports completion. The run
+      // is then PARTIAL — some checks did not finish — and must be surfaced as
+      // such (partial: true), never as a clean completion. Presenting partial
+      // results as final was the C2 correctness defect.
       setTimeout(() => {
         window.removeEventListener('cardTestComplete', handleCardComplete as EventListener);
         if (completed.size < cardTestsToWait.length) {
-          logger.warn(
-            LogComponents.UI,
-            'FAB timeout: Not all card tests completed, signaling done anyway',
-          );
-          window.dispatchEvent(new CustomEvent('testsComplete'));
+          logger.warn(LogComponents.UI, 'FAB timeout: not all card tests completed', {
+            completed: completed.size,
+            expected: cardTestsToWait.length,
+          });
+          window.dispatchEvent(new CustomEvent('testsComplete', { detail: { partial: true } }));
         }
       }, 90000);
     };
