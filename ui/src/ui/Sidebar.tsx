@@ -11,7 +11,6 @@
  * AppShell level alongside the existing test/state plumbing.
  */
 import {
-  Activity,
   ChevronLeft,
   ChevronRight,
   HelpCircle,
@@ -25,6 +24,7 @@ import {
 import { createElement, type FC, type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { SeedLogo } from '../components/app/SeedLogo';
 import { iconSizes } from '../constants/sizes';
 import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';
@@ -147,9 +147,7 @@ const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse }) => {
     >
       <div className={`flex items-center gap-compact ${collapsed ? 'justify-center' : ''}`}>
         <div className="relative flex-shrink-0">
-          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex-center shadow-lg">
-            <Activity className={`${iconSizes.lg} text-text-inverse`} />
-          </div>
+          <SeedLogo badge badgeClassName="h-9 w-9 shadow-lg" glyphClassName={iconSizes.lg} />
           <div className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-status-success border-2 border-surface-raised" />
         </div>
         {!collapsed ? (
@@ -354,9 +352,7 @@ const MobileTopBar: FC<MobileTopBarProps> = ({ mobileOpen, toggleMobile }) => {
   return (
     <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex-between px-4 py-row-lg bg-surface-raised/95 backdrop-blur-xl border-b border-surface-border">
       <div className="flex items-center gap-compact">
-        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent flex-center">
-          <Activity className={`${iconSizes.md} text-text-inverse`} />
-        </div>
+        <SeedLogo badge badgeClassName="h-8 w-8" glyphClassName={iconSizes.md} />
         <span className="font-display font-bold text-text-primary">{t('app.title')}</span>
       </div>
       <button
