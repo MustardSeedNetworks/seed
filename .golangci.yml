@@ -580,12 +580,6 @@ linters:
       # not refactorable constants.
       - path: 'internal/discovery/profiler_infer\.go'
         linters: [ goconst ]
-      # oui.go is a MAC OUI -> vendor name lookup table. Apple/Dell appear
-      # 16-24 times because the IEEE assigns them many prefixes; extracting
-      # `const VendorApple` adds noise without improving safety. (Relocated to
-      # the resolve leaf package in Phase 6, ADR-0018.)
-      - path: 'internal/discovery/resolve/oui\.go'
-        linters: [ goconst ]
       # Shared JSON response field-name conventions across all api handlers
       # (status/message/error/interface/available/good). Project uses literal
       # keys in map[string]any{...} payloads by convention; consolidating

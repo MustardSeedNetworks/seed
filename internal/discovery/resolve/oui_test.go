@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,36 +18,46 @@ func TestNewOUIDatabase(t *testing.T) {
 		t.Fatal("NewOUIDatabase returned nil")
 	}
 
-	// Should have embedded common OUIs loaded
+	// NewOUIDatabase seeds from the embedded IEEE registry (~39k assignments).
 	count := db.Count()
-	if count < 100 {
-		t.Errorf("Expected at least 100 embedded OUI entries, got %d", count)
+	if count < 30000 {
+		t.Errorf("Expected the embedded IEEE registry (>=30k entries), got %d", count)
 	}
 }
 
 func TestOUILookup(t *testing.T) {
 	db := resolve.NewOUIDatabase()
 
-	tests := []struct {
-		mac      string
-		expected string
+	// Vendor names come from the embedded IEEE registry (e.g. "Apple, Inc."),
+	// so assert the brand is contained rather than an exact short string — the
+	// IEEE org text changes over time but the brand substring is stable.
+	contains := []struct {
+		mac   string
+		brand string
 	}{
-		{"00:00:0C:12:34:56", "Cisco"},        // Cisco MAC
-		{"00:03:93:AB:CD:EF", "Apple"},        // Apple MAC
-		{"B8:27:EB:00:00:00", "Raspberry Pi"}, // Raspberry Pi
-		{"00:50:56:12:34:56", "VMware"},       // VMware
-		{"08:00:27:AB:CD:EF", "VirtualBox"},   // VirtualBox
-		{"00:00:00:00:00:00", ""},             // Unknown - should return empty
-		{"ff:ff:ff:ff:ff:ff", ""},             // Broadcast - no vendor
-		{"00-00-0C-12-34-56", "Cisco"},        // Hyphen format
-		{"00000C123456", ""},                  // Compact format (not supported for lookup)
+		{"00:00:0C:12:34:56", "Cisco"},        // Cisco Systems, Inc
+		{"00:03:93:AB:CD:EF", "Apple"},        // Apple, Inc.
+		{"B8:27:EB:00:00:00", "Raspberry Pi"}, // Raspberry Pi Foundation
+		{"00:50:56:12:34:56", "VMware"},       // VMware, Inc.
+		{"00-00-0C-12-34-56", "Cisco"},        // Hyphen format normalises
 	}
-
-	for _, tt := range tests {
+	for _, tt := range contains {
 		t.Run(tt.mac, func(t *testing.T) {
 			result := db.Lookup(tt.mac)
-			if result != tt.expected {
-				t.Errorf("Lookup(%q) = %q, want %q", tt.mac, result, tt.expected)
+			if !strings.Contains(result, tt.brand) {
+				t.Errorf("Lookup(%q) = %q, want a string containing %q", tt.mac, result, tt.brand)
+			}
+		})
+	}
+
+	empty := []string{
+		"02:00:00:00:00:00", // locally-administered (never IEEE-assigned) -> empty
+		"00000C123456",      // compact format (not supported for lookup) -> empty
+	}
+	for _, mac := range empty {
+		t.Run("empty/"+mac, func(t *testing.T) {
+			if result := db.Lookup(mac); result != "" {
+				t.Errorf("Lookup(%q) = %q, want empty", mac, result)
 			}
 		})
 	}
@@ -55,14 +66,14 @@ func TestOUILookup(t *testing.T) {
 func TestOUILookupWithDefault(t *testing.T) {
 	db := resolve.NewOUIDatabase()
 
-	// Known vendor
+	// Known vendor (embedded IEEE registry).
 	result := db.LookupWithDefault("00:00:0C:12:34:56", "Unknown")
-	if result != "Cisco" {
-		t.Errorf("Expected Cisco, got %q", result)
+	if !strings.Contains(result, "Cisco") {
+		t.Errorf("Expected a Cisco vendor string, got %q", result)
 	}
 
-	// Unknown vendor - should return default
-	result = db.LookupWithDefault("00:00:00:00:00:00", "Unknown")
+	// Unknown vendor (locally-administered, never IEEE-assigned) - returns default
+	result = db.LookupWithDefault("02:00:00:00:00:00", "Unknown")
 	if result != "Unknown" {
 		t.Errorf("Expected Unknown, got %q", result)
 	}
@@ -191,7 +202,6 @@ func TestOUIDownloadDatabase(t *testing.T) {
 	ouiFile := filepath.Join(tmpDir, "oui.txt")
 
 	db := resolve.NewOUIDatabase()
-	initialCount := db.Count()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -213,9 +223,10 @@ func TestOUIDownloadDatabase(t *testing.T) {
 		t.Errorf("OUI file too small: %d bytes (expected > 1MB)", info.Size())
 	}
 
-	// Verify entries were loaded
-	if db.Count() <= initialCount {
-		t.Errorf("Expected more entries after download, got %d (was %d)", db.Count(), initialCount)
+	// The DB already carries the embedded IEEE baseline; a fresh download loads
+	// the same registry on top, so assert a healthy full set rather than growth.
+	if db.Count() < 30000 {
+		t.Errorf("Expected the full IEEE registry after download, got %d", db.Count())
 	}
 
 	t.Logf("Downloaded OUI database: %d bytes, %d entries", info.Size(), db.Count())
