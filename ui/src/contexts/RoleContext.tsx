@@ -67,6 +67,17 @@ interface RoleProviderProps {
 
 const ROLE_RANK: Record<Role, number> = { viewer: 1, operator: 2, admin: 3 };
 
+/**
+ * meetsRole reports whether `user`'s role rank is at least `min`. Fail-closed:
+ * returns false for a null user (also the loading state), an inactive user, so
+ * write/admin controls hide rather than flash visible. Shared by canWrite /
+ * isAdmin and by the <RequireRole> / <RequireAdmin> gates so all role decisions
+ * use one rank comparison (#1254).
+ */
+export function meetsRole(user: CurrentUser | null, min: Role): boolean {
+  return user?.isActive === true && ROLE_RANK[user.role] >= ROLE_RANK[min];
+}
+
 export function RoleProvider({ children }: RoleProviderProps): React.ReactElement {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,8 +100,8 @@ export function RoleProvider({ children }: RoleProviderProps): React.ReactElemen
     void refresh();
   }, [refresh]);
 
-  const canWrite = user?.isActive === true && ROLE_RANK[user.role] >= ROLE_RANK.operator;
-  const isAdmin = user?.isActive === true && user.role === 'admin';
+  const canWrite = meetsRole(user, 'operator');
+  const isAdmin = meetsRole(user, 'admin');
 
   return (
     <RoleContext.Provider value={{ user, loading, error, refresh, canWrite, isAdmin }}>
