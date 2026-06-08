@@ -317,7 +317,7 @@
     "recommended": "Recomendado",
     "switchTo": "Cambiar a {{name}}",
     "wifi": "Wi-Fi",
-    "wifiPlanning": "Planificación Wi-Fi"
+    "wifiSurvey": "Modo de encuesta Wi-Fi"
   },
   "pathDiscovery": {
     "completed": "Completado",
