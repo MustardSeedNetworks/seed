@@ -2,13 +2,13 @@
 # Seed Makefile
 # =============================================================================
 #
-# Build, test, and package automation for Seed network diagnostics tool.
+# Local build, test, and development automation for Seed network diagnostics tool.
 #
 # QUICK START
 # -----------
-#   make build          Build production binary (frontend + backend)
+#   make build          Build current-host binary (frontend + backend)
 #   make test           Run all unit tests (backend + frontend)
-#   make verify         Full CI pipeline (lint, test, security, build)
+#   make verify         Full local verification (lint, test, security, build)
 #   make dev            Run backend in dev mode (hot reload frontend)
 #   make help           Show all available targets
 #
@@ -21,7 +21,7 @@
 # REQUIREMENTS
 # ------------
 #   - Go 1.25.5+ (with CGO for libpcap)
-#   - Node.js 25.2.1+ and npm
+#   - Node.js 26.2.0+ and npm
 #   - libpcap-dev (Linux) or libpcap (macOS via Homebrew)
 #
 # =============================================================================
