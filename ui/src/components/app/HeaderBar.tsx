@@ -12,6 +12,18 @@ import {
 } from '../../styles/theme';
 import type { Profile } from '../../types/profile';
 import type { NetworkInterface } from '../ui/InterfaceSelector';
+import {
+  Check,
+  EthernetPort,
+  Loader,
+  LogOut,
+  Moon,
+  Settings,
+  Star,
+  Sun,
+  User,
+  Wifi,
+} from '../ui/icons';
 import { SeedLogo } from './SeedLogo';
 
 type WsStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -251,41 +263,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
               }
             >
               {profilesLoading ? (
-                <svg
-                  className={cn(iconTokens.size.md, 'animate-spin')}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                  />
-                </svg>
+                <Loader className={cn(iconTokens.size.md, 'animate-spin')} aria-hidden="true" />
               ) : (
-                <svg
-                  className={iconTokens.size.md}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
+                <User className={iconTokens.size.md} aria-hidden="true" />
               )}
             </button>
 
@@ -325,14 +305,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                             {profile.name}
                           </span>
                           {profile.id === activeProfile?.id && (
-                            <svg
+                            <Check
                               className={cn(iconTokens.size.sm, 'text-brand-primary')}
-                              fill="currentColor"
-                              viewBox="0 0 24 24"
                               aria-hidden="true"
-                            >
-                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                            </svg>
+                            />
                           )}
                         </div>
                       </button>
@@ -353,26 +329,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                       'hover:bg-surface-hover text-brand-primary',
                     )}
                   >
-                    <svg
-                      className={iconTokens.size.sm}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
+                    <Settings className={iconTokens.size.sm} aria-hidden="true" />
                     <span className="body-small font-medium">{t('profile.manage', 'Manage')}</span>
                   </button>
                 </div>
@@ -391,20 +348,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                       'hover:bg-surface-hover text-status-error',
                     )}
                   >
-                    <svg
-                      className={iconTokens.size.sm}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                      />
-                    </svg>
+                    <LogOut className={iconTokens.size.sm} aria-hidden="true" />
                     <span className="body-small font-medium">{t('buttons.logout', 'Logout')}</span>
                   </button>
                 </div>
@@ -425,20 +369,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
               title={t('interface.ethernet', 'Ethernet')}
             >
               {/* RJ45 Ethernet jack icon */}
-              <svg
-                className={iconTokens.size.md}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 4h8v4H8zM6 8h12v10a2 2 0 01-2 2H8a2 2 0 01-2-2V8zM9 12v4M12 12v4M15 12v4"
-                />
-              </svg>
+              <EthernetPort className={iconTokens.size.md} aria-hidden="true" />
             </button>
 
             {/* Ethernet interface dropdown */}
@@ -489,19 +420,13 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                                 </span>
                                 {/* #756: Show star for recommended (most capable) interface */}
                                 {iface.name === recommendedEthernet && (
-                                  <svg
+                                  <Star
                                     className={cn(
                                       iconTokens.size.xs,
                                       'text-status-success shrink-0',
                                     )}
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
                                     aria-label={t('interface.recommended', 'Recommended')}
-                                  >
-                                    <title>{t('interface.recommended', 'Recommended')}</title>
-                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                                  </svg>
+                                  />
                                 )}
                               </div>
                               <span
@@ -516,14 +441,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
                               </span>
                             </div>
                             {iface.name === currentInterface && (
-                              <svg
+                              <Check
                                 className={cn(iconTokens.size.sm, 'text-brand-primary shrink-0')}
-                                fill="currentColor"
-                                viewBox="0 0 24 24"
                                 aria-hidden="true"
-                              >
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                              </svg>
+                              />
                             )}
                           </div>
                         </button>
@@ -556,20 +477,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
               }
             >
               {/* WiFi signal icon */}
-              <svg
+              <Wifi
                 className={cn(iconTokens.size.md, !hasWifiInterface && 'opacity-60')}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
                 aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"
-                />
-              </svg>
+              />
               {/* Small indicator when no WiFi hardware */}
               {!hasWifiInterface && (
                 <span
@@ -595,27 +506,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
             }
           >
             {isDark ? (
-              <svg
-                className={iconTokens.size.md}
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                aria-hidden="true"
-              >
-                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-              </svg>
+              <Moon className={iconTokens.size.md} aria-hidden="true" />
             ) : (
-              <svg
-                className={iconTokens.size.md}
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                aria-hidden="true"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              <Sun className={iconTokens.size.md} aria-hidden="true" />
             )}
           </button>
 
@@ -645,26 +538,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function headerBar({
           >
             {wsStatus === 'connecting' ? (
               <>
-                <svg
-                  className={cn(iconTokens.size.sm, 'animate-spin')}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
-                  />
-                </svg>
+                <Loader className={cn(iconTokens.size.sm, 'animate-spin')} aria-hidden="true" />
                 {t('status.connecting', 'Connecting...')}
               </>
             ) : (
