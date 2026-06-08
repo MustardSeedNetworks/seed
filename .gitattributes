@@ -42,3 +42,8 @@ ui/playwright-report/**     linguist-generated=true
 # pcap fixtures (binary)
 *.pcap      binary
 *.pcapng    binary
+
+# Embedded IEEE OUI registry: pin LF (the IEEE source is CRLF) for byte-for-byte
+# build determinism, and mark generated so the 6.5MB diff is collapsed in PRs
+# and excluded from the language bar. Refreshed by .github/workflows/update-oui.yml.
+internal/discovery/resolve/oui.txt  text eol=lf linguist-generated=true

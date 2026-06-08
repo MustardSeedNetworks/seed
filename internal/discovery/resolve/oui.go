@@ -18,7 +18,9 @@ package resolve
 
 import (
 	"bufio"
+	"bytes"
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"io"
@@ -34,15 +36,29 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
+// embeddedOUI is the IEEE OUI registry (standards-oui.ieee.org/oui/oui.txt)
+// baked into the binary at build time. It is the single source of truth and the
+// always-present baseline every OUIDatabase starts from — no hand-maintained
+// vendor table, no runtime file required (air-gapped-safe, no phone-home).
+// Operators can still layer a fresher on-disk/downloaded copy on top at runtime
+// via LoadFromFile / LoadFromIEEEFormat / UpdateIfNeeded. Refresh by replacing
+// this file from the IEEE source and rebuilding.
+//
+//go:embed oui.txt
+var embeddedOUI []byte
+
+// embeddedOUIKey is the ieeeOUICache key under which the parsed embedded
+// registry is memoised (parsing the ~6.5MB file is done once per process).
+const embeddedOUIKey = "<embedded-ieee-oui>"
+
 // ouiFieldSplitLimit is the number of parts to split the OUI file line into.
 const ouiFieldSplitLimit = 2
 
 // OUI lookup constants.
 const (
-	macPrefixMinLen       = 8   // Minimum MAC address length for lookup (AA:BB:CC)
-	regexMatchCount       = 3   // Expected number of regex matches (full match + 2 groups)
-	ouiDownloadTimeS      = 60  // HTTP timeout in seconds for OUI database download
-	commonOUIEntriesCount = 135 // Number of pre-loaded common vendor entries
+	macPrefixMinLen  = 8  // Minimum MAC address length for lookup (AA:BB:CC)
+	regexMatchCount  = 3  // Expected number of regex matches (full match + 2 groups)
+	ouiDownloadTimeS = 60 // HTTP timeout in seconds for OUI database download
 )
 
 // OUIDatabase provides MAC address manufacturer lookups.
@@ -51,177 +67,22 @@ type OUIDatabase struct {
 	vendors map[string]string // MAC prefix (AA:BB:CC) -> Vendor name
 }
 
-// getCommonOUIEntries returns frequently encountered vendor MAC prefixes.
-// This provides basic functionality without requiring the full IEEE database.
-func getCommonOUIEntries() map[string]string {
-	result := make(map[string]string, commonOUIEntriesCount)
-	maps.Copy(result, getAppleVMwareOUIEntries())
-	maps.Copy(result, getDellOUIEntries())
-	maps.Copy(result, getHPOUIEntries())
-	return result
-}
-
-// getAppleVMwareOUIEntries returns Apple, VMware, VirtualBox, Raspberry Pi, Google, and Cisco entries.
-func getAppleVMwareOUIEntries() map[string]string {
-	return map[string]string{
-		"00:00:0C": "Cisco",
-		"00:03:93": "Apple",
-		"00:05:02": "Apple",
-		"00:0A:95": "Apple",
-		"00:0D:93": "Apple",
-		"00:11:24": "Apple",
-		"00:14:51": "Apple",
-		"00:17:F2": "Apple",
-		"00:1B:63": "Apple",
-		"00:1C:B3": "Apple",
-		"00:1E:C2": "Apple",
-		"00:21:E9": "Apple",
-		"00:22:41": "Apple",
-		"00:23:12": "Apple",
-		"00:23:32": "Apple",
-		"00:23:6C": "Apple",
-		"00:23:DF": "Apple",
-		"00:24:36": "Apple",
-		"00:25:00": "Apple",
-		"00:25:4B": "Apple",
-		"00:25:BC": "Apple",
-		"00:26:08": "Apple",
-		"00:26:4A": "Apple",
-		"00:26:B0": "Apple",
-		"00:26:BB": "Apple",
-		"00:50:56": "VMware",
-		"00:0C:29": "VMware",
-		"00:1C:14": "VMware",
-		"00:50:C2": "VMware",
-		"08:00:27": "VirtualBox",
-		"0A:00:27": "VirtualBox",
-		"B8:27:EB": "Raspberry Pi",
-		"DC:A6:32": "Raspberry Pi",
-		"E4:5F:01": "Raspberry Pi",
-		"28:CD:C1": "Raspberry Pi",
-		"D8:3A:DD": "Raspberry Pi",
-		"00:1A:11": "Google",
-	}
-}
-
-// getDellOUIEntries returns Dell MAC address prefixes.
-func getDellOUIEntries() map[string]string {
-	return map[string]string{
-		"00:1A:A0": "Dell",
-		"00:06:5B": "Dell",
-		"00:14:22": "Dell",
-		"00:15:C5": "Dell",
-		"00:18:8B": "Dell",
-		"00:19:B9": "Dell",
-		"00:1C:23": "Dell",
-		"00:1D:09": "Dell",
-		"00:1E:4F": "Dell",
-		"00:21:9B": "Dell",
-		"00:21:70": "Dell",
-		"00:22:19": "Dell",
-		"00:24:E8": "Dell",
-		"00:25:64": "Dell",
-		"00:26:B9": "Dell",
-		"00:0D:56": "Dell",
-	}
-}
-
-// getHPOUIEntries returns HP/Hewlett-Packard MAC address prefixes.
-func getHPOUIEntries() map[string]string {
-	return map[string]string{
-		"3C:D9:2B": "HP",
-		"00:14:38": "HP",
-		"00:17:A4": "HP",
-		"00:1A:4B": "HP",
-		"00:1B:78": "HP",
-		"00:1C:C4": "HP",
-		"00:1E:0B": "HP",
-		"00:1F:29": "HP",
-		"00:21:5A": "HP",
-		"00:22:64": "HP",
-		"00:23:7D": "HP",
-		"00:24:81": "HP",
-		"00:25:B3": "HP",
-		"00:26:55": "HP",
-		"00:30:6E": "HP",
-		"00:0B:CD": "HP",
-		"00:0D:9D": "HP",
-		"00:0E:7F": "HP",
-		"00:0F:20": "HP",
-		"00:10:83": "HP",
-		"00:11:0A": "HP",
-		"00:11:85": "HP",
-		"00:12:79": "HP",
-		"00:13:21": "HP",
-		"14:02:EC": "HP",
-		"18:A9:05": "HP",
-		"1C:C1:DE": "HP",
-		"2C:27:D7": "HP",
-		"2C:41:38": "HP",
-		"2C:44:FD": "HP",
-		"2C:59:E5": "HP",
-		"30:8D:99": "HP",
-		"34:64:A9": "HP",
-		"38:63:BB": "HP",
-		"3C:4A:92": "HP",
-		"40:B0:34": "HP",
-		"44:1E:A1": "HP",
-		"44:31:92": "HP",
-		"48:0F:CF": "HP",
-		"48:DF:37": "HP",
-		"54:80:28": "HP",
-		"64:51:06": "HP",
-		"68:B5:99": "HP",
-		"6C:3B:E5": "HP",
-		"70:10:6F": "HP",
-		"74:46:A0": "HP",
-		"78:AC:C0": "HP",
-		"80:C1:6E": "HP",
-		"84:34:97": "HP",
-		"88:51:FB": "HP",
-		"8C:DC:D4": "HP",
-		"94:57:A5": "HP",
-		"98:4B:E1": "HP",
-		"9C:8E:99": "HP",
-		"9C:B6:54": "HP",
-		"A0:1D:48": "HP",
-		"A0:2B:B8": "HP",
-		"A0:D3:C1": "HP",
-		"A4:5D:36": "HP",
-		"AC:16:2D": "HP",
-		"B0:5A:DA": "HP",
-		"B4:99:BA": "HP",
-		"B4:B5:2F": "HP",
-		"BC:EA:FA": "HP",
-		"C0:91:34": "HP",
-		"C4:34:6B": "HP",
-		"C8:B5:AD": "HP",
-		"CC:3E:5F": "HP",
-		"D0:7E:28": "HP",
-		"D4:85:64": "HP",
-		"D4:C9:EF": "HP",
-		"D8:9D:67": "HP",
-		"DC:4A:3E": "HP",
-		"E0:07:1B": "HP",
-		"E4:11:5B": "HP",
-		"E8:39:35": "HP",
-		"EC:8E:B5": "HP",
-		"EC:B1:D7": "HP",
-		"F0:92:1C": "HP",
-		"F4:03:43": "HP",
-		"FC:15:B4": "HP",
-	}
-}
-
-// NewOUIDatabase creates a new OUI database with common vendor entries preloaded.
-// For full IEEE database coverage, call LoadFromIEEEFormat or TryLoadIEEEFile.
+// NewOUIDatabase creates an OUI database seeded from the embedded IEEE registry
+// (the single source of truth, baked into the binary). The full ~39k assignments
+// are available immediately with no runtime file or network. Callers may layer a
+// fresher on-disk/downloaded copy on top via LoadFromFile / LoadFromIEEEFormat /
+// UpdateIfNeeded. The embedded file is parsed once per process and memoised.
 func NewOUIDatabase() *OUIDatabase {
-	commonEntries := getCommonOUIEntries()
-	db := &OUIDatabase{
-		vendors: make(map[string]string, len(commonEntries)),
+	db := &OUIDatabase{vendors: make(map[string]string, estimatedOUIEntries)}
+
+	base, err := cachedVendors(embeddedOUIKey, func() (map[string]string, error) {
+		return parseIEEEOUIReader(bytes.NewReader(embeddedOUI))
+	})
+	if err != nil {
+		logging.GetLogger().Warn("Failed to parse embedded OUI database", "error", err)
+		return db
 	}
-	// Preload common OUI entries
-	maps.Copy(db.vendors, commonEntries)
+	maps.Copy(db.vendors, base)
 	return db
 }
 
@@ -418,6 +279,22 @@ type ieeeOUIEntry struct {
 // cheaper than rehashing during the parse.
 const estimatedOUIEntries = 50000
 
+// cachedVendors memoises a parsed vendor map under key in ieeeOUICache, running
+// parse at most once per key for the process lifetime. Both the embedded
+// registry (keyed by embeddedOUIKey) and on-disk files (keyed by absolute path)
+// share this cache so each ~6.5MB parse happens once.
+func cachedVendors(key string, parse func() (map[string]string, error)) (map[string]string, error) {
+	val, _ := ieeeOUICache.LoadOrStore(key, &ieeeOUIEntry{})
+	entry, ok := val.(*ieeeOUIEntry)
+	if !ok {
+		return nil, fmt.Errorf("ouiCache: unexpected entry type %T for key %q", val, key)
+	}
+	entry.once.Do(func() {
+		entry.vendors, entry.err = parse()
+	})
+	return entry.vendors, entry.err
+}
+
 // LoadFromIEEEFormat loads OUI entries from the IEEE oui.txt format
 // Format: "AA-BB-CC   (hex)\t\tVendor Name".
 func (db *OUIDatabase) LoadFromIEEEFormat(path string) error {
@@ -425,22 +302,17 @@ func (db *OUIDatabase) LoadFromIEEEFormat(path string) error {
 	if absErr != nil {
 		abs = path
 	}
-	val, _ := ieeeOUICache.LoadOrStore(abs, &ieeeOUIEntry{})
-	entry, ok := val.(*ieeeOUIEntry)
-	if !ok {
-		return fmt.Errorf("ouiCache: unexpected entry type %T for path %q", val, abs)
-	}
-	entry.once.Do(func() {
-		entry.vendors, entry.err = parseIEEEOUIFile(path)
+	vendors, err := cachedVendors(abs, func() (map[string]string, error) {
+		return parseIEEEOUIFile(path)
 	})
-	if entry.err != nil {
-		return entry.err
+	if err != nil {
+		return err
 	}
 
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	maps.Copy(db.vendors, entry.vendors)
-	logging.GetLogger().Debug("Loaded OUI database from cache", "path", abs, "entries", len(entry.vendors))
+	maps.Copy(db.vendors, vendors)
+	logging.GetLogger().Debug("Loaded OUI database from cache", "path", abs, "entries", len(vendors))
 	return nil
 }
 
@@ -452,7 +324,12 @@ func parseIEEEOUIFile(path string) (map[string]string, error) {
 		return nil, fmt.Errorf("open IEEE OUI file: %w", err)
 	}
 	defer func() { _ = file.Close() }()
+	return parseIEEEOUIReader(file)
+}
 
+// parseIEEEOUIReader parses IEEE oui.txt content into a vendor map. Shared by the
+// embedded-registry loader (bytes reader) and the on-disk loader (file reader).
+func parseIEEEOUIReader(r io.Reader) (map[string]string, error) {
 	// IEEE format regex: "AA-BB-CC   (hex)\t\tVendor Name"
 	// or "AABBCC     (base 16)\t\tVendor Name"
 	hexPattern := regexp.MustCompile(
@@ -461,7 +338,7 @@ func parseIEEEOUIFile(path string) (map[string]string, error) {
 	base16Pattern := regexp.MustCompile(`^([0-9A-Fa-f]{6})\s+\(base 16\)\s+(.+)$`)
 
 	vendors := make(map[string]string, estimatedOUIEntries)
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(r)
 	count := 0
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -492,7 +369,7 @@ func parseIEEEOUIFile(path string) (map[string]string, error) {
 	if scanErr := scanner.Err(); scanErr != nil {
 		return nil, fmt.Errorf("scan IEEE OUI file: %w", scanErr)
 	}
-	logging.GetLogger().Info("Parsed IEEE OUI file", "path", path, "entries", count)
+	logging.GetLogger().Debug("Parsed IEEE OUI data", "entries", count)
 	return vendors, nil
 }
 
