@@ -388,6 +388,12 @@ CREATE INDEX idx_oui_category ON oui_vendors(device_category);
 -- index: idx_oui_vendor_name
 CREATE INDEX idx_oui_vendor_name ON oui_vendors(vendor_name);
 
+-- index: idx_outbox_published
+CREATE INDEX idx_outbox_published ON outbox(published_at);
+
+-- index: idx_outbox_unpublished
+CREATE INDEX idx_outbox_unpublished ON outbox(id) WHERE published_at IS NULL;
+
 -- index: idx_pipeline_runs_started
 CREATE INDEX idx_pipeline_runs_started ON pipeline_runs(started_at);
 
@@ -1184,6 +1190,17 @@ CREATE TABLE oui_vendors (
 				device_category TEXT,
 				updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 			) STRICT;
+
+-- table: outbox
+CREATE TABLE outbox (
+	-- AUTOINCREMENT so ids are monotonic and never reused after retention
+	-- deletes — the dedup key (Message.ID) must stay stable and collision-free.
+	id           INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+	topic        TEXT NOT NULL CHECK (topic <> ''),
+	payload      BLOB NOT NULL,
+	created_at   TEXT NOT NULL,
+	published_at TEXT
+) STRICT;
 
 -- table: pipeline_runs
 CREATE TABLE pipeline_runs (

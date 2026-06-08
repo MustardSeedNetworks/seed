@@ -1,7 +1,7 @@
 # ADR-0004: In-process domain event bus
 
 **Status:** Accepted — 2026-05-31 · Core implemented (Phase 4) — 2026-06-02 ·
-Outbox deferred (Phase 5c) — 2026-06-03
+Outbox deferred (Phase 5c) — 2026-06-03 · Outbox built (ADR-0017) — 2026-06-07
 
 ## Context
 
@@ -81,3 +81,14 @@ becomes true — at which point the dual-write gap gains an observable victim:
 
 Until then the in-process bus + durable, queryable job state is the correct design.
 ADR-0005's "events emit post-commit via outbox" line is governed by this amendment.
+
+## Update (2026-06-07): outbox **built** — see ADR-0017
+
+The transactional outbox relay was subsequently built (**ADR-0017**) to close the
+Phase-5 persistence track, providing the durable-delivery seam ahead of the first
+triggering consumer. It is **additive**: producers that need cross-restart durable
+delivery enqueue in-transaction and a relay republishes post-commit onto this same
+bus. The jobs runner's direct-publish path is deliberately **unchanged** — the
+defer reasoning above stands for that producer (its durability is its store +
+`Recover`, and its state is re-fetchable), so it was not migrated. ADR-0017
+governs the outbox from here; this amendment is preserved for the reasoning.

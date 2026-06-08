@@ -77,6 +77,7 @@ type DB struct {
 	probes            *ProbeRepository
 	pollingTargets    *PollingTargetRepository
 	jobs              *JobRepository
+	outbox            *OutboxRepository
 	snmpObservations  *SNMPObservationsRepository
 	listenerEvents    *ListenerEventsRepository
 	topology          *TopologyRepository

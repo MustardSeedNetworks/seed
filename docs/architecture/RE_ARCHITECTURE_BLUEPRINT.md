@@ -455,7 +455,11 @@ other; they publish/subscribe typed events.
 - **Ephemeral by default**; **audit events are durable** (→ `platform/audit`).
 - **Subscribers registered before publishers start** (supervisor ordering).
 - **Transactional outbox** (→ [§7](#7-persistence)): events emit only *after* the DB
-  commit, so a rolled-back op never fires an "it happened" event.
+  commit, so a rolled-back op never fires an "it happened" event. **DONE (ADR-0017,
+  2026-06-07):** `internal/platform/outbox` — producers `Enqueue` in-transaction,
+  the `Relay` republishes post-commit onto this bus on the original topic;
+  at-least-once with `Dedupe` for idempotent consumers. Additive — the jobs runner
+  still publishes directly (its durability is its store + `Recover`).
 
 Example fan-out: `shell` emits `DeviceDiscovered` → `sap/health` starts monitoring,
 `harvest` records it, `sap/alerts` evaluates thresholds — with zero import edges
@@ -465,8 +469,9 @@ between modules.
 
 ## 7. Persistence (`adapters/store`)
 
-> **STATUS (2026-06-07): Phase 5b — schema modernization — is DONE; optimistic
-> concurrency is DONE for both mutable resources; one item remains.** Done: `.sql`
+> **STATUS (2026-06-07): Phase 5 is COMPLETE.** Schema modernization (5b),
+> optimistic concurrency on both mutable resources, AND the transactional outbox
+> relay (ADR-0017) have all landed. Done: `.sql`
 > migrations embedded via `//go:embed` + the **goose** runner
 > (`internal/database/goose.go`), the **collapsed `0001_init.sql` baseline** (61
 > STRICT tables), the migrate-from-empty drift gate (`goose_baseline_test.go` /
@@ -477,10 +482,15 @@ between modules.
 > caught; #1559 shipped the flow on `updated_at`, hardened here); **settings** —
 > file-backed (`config.json`) — uses a content-hash of the mutable subset
 > (`config.SettingsETag`, #1560), which is also exact and immune to unrelated
-> global-config writes. **Remaining (feature-sized):** the **transactional outbox
-> relay** (the `00002_jobs.sql` + `platform/events` comments both note it is
-> "layered on" later) — deferred (YAGNI: no consumer needs cross-restart durable
-> delivery; reconcilers re-derive on restart).
+> global-config writes. **Transactional outbox relay — DONE (ADR-0017):**
+> `internal/platform/outbox` + migration `00005_outbox.sql`. A producer enqueues
+> an event in the SAME transaction as its domain write
+> (`database.OutboxRepository.Enqueue` on the caller's `*sql.Tx`); a post-commit
+> `Relay` drains pending rows, republishes each onto the bus on its original
+> topic, marks them published, and prunes delivered rows on the maintenance loop.
+> At-least-once + `Dedupe` for idempotent consumers. The seam is additive and
+> dormant until a producer opts in — the jobs runner keeps publishing directly
+> (its durability is its store + `Recover`, not the outbox).
 > The repo-interfaces-as-domain-ports point below is piloted in
 > `internal/reporting/store` (ReportRepo/ScheduleRepo/MetricsRepo/ExportRepo);
 > generalizing it to all 21 repos is deliberately deferred — done bespoke per
@@ -494,8 +504,9 @@ between modules.
 - **UnitOfWork / Tx** abstraction for multi-table atomicity. *(`DB.WithTx` exists;
   a typed UnitOfWork over the domain ports is the open generalization.)*
 - **Transactional outbox** table: domain writes + the event row commit together;
-  a relay publishes to the bus post-commit. *(OPEN — the durability layer for
-  `platform/events`.)*
+  a relay publishes to the bus post-commit. *(DONE — ADR-0017. `outbox` table
+  (migration `00005`) + `internal/platform/outbox.Relay`; the durability layer for
+  `platform/events`, additive and dormant until a producer enqueues.)*
 - **Optimistic concurrency:** version/ETag + `If-Match` on mutable resources.
   *(DONE — profiles via `row_version` (migration `00004`, #1559 + hardening);
   settings via a mutable-subset content-hash (`config.SettingsETag`, #1560). Both

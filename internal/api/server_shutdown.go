@@ -186,6 +186,10 @@ func (s *Server) startMaintenance(retentionDays int) {
 			sweepJobs(context.Background(), s.jobsRunner(), jobsRepo,
 				time.Now().UTC().Add(-jobsRetention), logging.GetLogger())
 
+			// Outbox retention (ADR-0017): prune delivered event rows so the
+			// table does not grow without bound. Pending rows are never touched.
+			s.sweepOutbox(context.Background())
+
 			// Data-retention policy (metrics/alerts/etc.) is only applied when
 			// enabled; a zero window must never be interpreted as "delete all".
 			if retentionDays <= 0 || s.db() == nil {
