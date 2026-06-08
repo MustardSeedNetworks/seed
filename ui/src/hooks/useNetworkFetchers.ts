@@ -33,6 +33,7 @@ import type { PublicIpData } from '../components/cards/PublicIpCard';
 import type { SwitchData, VlanData } from '../components/cards/SwitchCard';
 import type { WiFiData } from '../components/cards/WiFiCard';
 import { LogComponents, logger } from '../lib/logger';
+import { useTestRunStore } from '../stores/testRunStore';
 
 const API_BASE: string = import.meta.env.VITE_API_BASE || '';
 
@@ -148,7 +149,7 @@ export function useNetworkFetchers({
         if (newLinkUp && wasDown) {
           logger.info(LogComponents.NETWORK, 'Link up detected (poll), triggering auto-run tests');
           setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('runAllTests'));
+            useTestRunStore.getState().start();
           }, 1500);
         }
 

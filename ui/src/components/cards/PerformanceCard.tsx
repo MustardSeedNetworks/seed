@@ -35,6 +35,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import { useSettings } from '../../contexts/useSettings';
 import { LogComponents, logger } from '../../lib/logger';
+import { useTestRunSignal, useTestRunStore } from '../../stores/testRunStore';
 import {
   cn,
   icon as iconTokens,
@@ -333,12 +334,8 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                 if (data.last) {
                   setSpeedtestResult(data.last);
                 }
-                // Signal FAB that speedtest is complete
-                window.dispatchEvent(
-                  new CustomEvent('cardTestComplete', {
-                    detail: { test: 'speedtest' },
-                  }),
-                );
+                // Signal the run orchestrator that speedtest is complete.
+                useTestRunStore.getState().reportComplete('speedtest');
               }
             }
           } catch (err) {
@@ -372,12 +369,8 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
                 if (data.last) {
                   setIperfResult(data.last);
                 }
-                // Signal FAB that iperf is complete
-                window.dispatchEvent(
-                  new CustomEvent('cardTestComplete', {
-                    detail: { test: 'iperf' },
-                  }),
-                );
+                // Signal the run orchestrator that iperf is complete.
+                useTestRunStore.getState().reportComplete('iperf');
               }
             }
           } catch (err) {
@@ -454,45 +447,25 @@ export const PerformanceCard: React.NamedExoticComponent<PerformanceCardProps> =
       }
     }, [iperfSettings, runIperfEnabled, t]);
 
-    // Listen for FAB "run all tests" event
-    useEffect(() => {
-      const handleRunAllTests = (): void => {
-        // Run speedtest if enabled
-        if (runSpeedtestEnabled && !speedtestRunning) {
-          runSpeedtest().catch(() => {
-            // Error handled in runSpeedtest
+    // React to a run start via the testRunStore (was the `window` runAllTests
+    // event). Completion is reported from the poll effects above.
+    useTestRunSignal((): void => {
+      // Run speedtest if enabled
+      if (runSpeedtestEnabled && !speedtestRunning) {
+        runSpeedtest().catch(() => {
+          // Error handled in runSpeedtest
+        });
+      }
+      // Run iperf client test if enabled and configured
+      if (runIperfEnabled && !iperfClientRunning && iperfSettings.server && iperfInfo?.installed) {
+        // Delay slightly so tests don't all hammer at once
+        setTimeout((): void => {
+          runIperfClient().catch(() => {
+            // Error handled in runIperfClient
           });
-        }
-        // Run iperf client test if enabled and configured
-        if (
-          runIperfEnabled &&
-          !iperfClientRunning &&
-          iperfSettings.server &&
-          iperfInfo?.installed
-        ) {
-          // Delay slightly so tests don't all hammer at once
-          setTimeout((): void => {
-            runIperfClient().catch(() => {
-              // Error handled in runIperfClient
-            });
-          }, 500);
-        }
-      };
-
-      window.addEventListener('runAllTests', handleRunAllTests);
-      return (): void => {
-        window.removeEventListener('runAllTests', handleRunAllTests);
-      };
-    }, [
-      runSpeedtest,
-      runIperfClient,
-      speedtestRunning,
-      iperfClientRunning,
-      iperfSettings.server,
-      iperfInfo?.installed,
-      runSpeedtestEnabled,
-      runIperfEnabled,
-    ]);
+        }, 500);
+      }
+    });
 
     const formatSpeed = (mbps: number): string => {
       if (mbps >= 1000) {

@@ -24,6 +24,7 @@ import type { PublicIpData } from '../components/cards/PublicIpCard';
 import type { SwitchData, VlanData } from '../components/cards/SwitchCard';
 import type { WiFiData } from '../components/cards/WiFiCard';
 import { LogComponents, logger } from '../lib/logger';
+import { useTestRunStore } from '../stores/testRunStore';
 import type { SseCardUpdate as CardUpdate, SseMessage as Message } from './useSse';
 
 /**
@@ -190,7 +191,7 @@ export function useCardState({
                     // Track timeout for cleanup on unmount (fixes #851)
                     const timeoutId = setTimeout(() => {
                       timeoutIdsRef.current.delete(timeoutId);
-                      window.dispatchEvent(new CustomEvent('runAllTests'));
+                      useTestRunStore.getState().start();
                     }, 2000);
                     timeoutIdsRef.current.add(timeoutId);
                   }
@@ -273,7 +274,7 @@ export function useCardState({
         // Track timeout for cleanup on unmount (fixes #851)
         const timeoutId = setTimeout(() => {
           timeoutIdsRef.current.delete(timeoutId);
-          window.dispatchEvent(new CustomEvent('runAllTests'));
+          useTestRunStore.getState().start();
         }, 1500);
         timeoutIdsRef.current.add(timeoutId);
       }
