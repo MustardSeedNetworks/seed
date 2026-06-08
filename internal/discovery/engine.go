@@ -57,8 +57,9 @@ type Engine struct {
 	portScanner   *PortScanner
 	profiler      *DeviceProfiler
 
-	// Assessment components
-	vulnScanner *VulnerabilityScanner
+	// Assessment stage (ADR-0018): the vuln Assessor port, injected by the
+	// composition root (the concrete stage lives in internal/discovery/vuln).
+	assessor Assessor
 
 	// Configuration
 	config *EngineConfig
@@ -289,11 +290,13 @@ func (e *Engine) SetProfiler(profiler *DeviceProfiler) {
 	e.profiler = profiler
 }
 
-// SetVulnScanner sets the vulnerability scanner.
-func (e *Engine) SetVulnScanner(scanner *VulnerabilityScanner) {
+// SetAssessor sets the vulnerability-assessment stage (ADR-0018). The composition
+// root builds the concrete stage (internal/discovery/vuln) over the engine's
+// registry + event bus and injects it here as the Assessor port.
+func (e *Engine) SetAssessor(assessor Assessor) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	e.vulnScanner = scanner
+	e.assessor = assessor
 }
 
 // Start starts the discovery engine.
@@ -494,15 +497,10 @@ func (e *Engine) runScanPhases(ctx context.Context, logger *slog.Logger, opts *S
 	}
 
 	// Phase 5: Assessment (vuln stage)
-	if opts.IncludeVulnScan && e.vulnScanner != nil {
+	if opts.IncludeVulnScan && e.assessor != nil {
 		logger.InfoContext(ctx, "Starting assessment phase")
 		result.Phases = append(result.Phases, "assessment")
-		var assess Assessor = &assessStage{
-			registry:    e.registry,
-			eventBus:    e.eventBus,
-			vulnScanner: e.vulnScanner,
-		}
-		assess.Assess(ctx, result.Stats)
+		e.assessor.Assess(ctx, result.Stats)
 		complete("assessment")
 	}
 }
@@ -518,7 +516,7 @@ func (e *Engine) countScanPhases(opts *ScanOptions) int {
 	if opts.IncludeSNMP || opts.IncludePortScan || opts.IncludeProfiling {
 		total++
 	}
-	if opts.IncludeVulnScan && e.vulnScanner != nil {
+	if opts.IncludeVulnScan && e.assessor != nil {
 		total++
 	}
 	return total
@@ -635,7 +633,7 @@ func (e *Engine) GetCapabilities() map[string]bool {
 		"snmp":        e.snmpCollector != nil && e.config.EnableSNMP,
 		"portScan":    e.portScanner != nil && e.config.EnablePortScan,
 		"profiling":   e.profiler != nil && e.config.EnableProfiling,
-		"vulnScan":    e.vulnScanner != nil && e.config.EnableVulnScan,
+		"vulnScan":    e.assessor != nil && e.config.EnableVulnScan,
 		"nameRes":     e.wiredCollector != nil,
 		"correlation": true, // Always available
 	}

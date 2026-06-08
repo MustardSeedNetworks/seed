@@ -14,6 +14,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	"github.com/MustardSeedNetworks/seed/internal/health"
 	"github.com/MustardSeedNetworks/seed/internal/license"
@@ -121,7 +122,7 @@ type NetworkServices struct {
 type DiscoveryServices struct {
 	Device           *discovery.DeviceDiscovery
 	Service          *discovery.Service
-	Vulnerability    *discovery.VulnerabilityScanner
+	Vulnerability    *vuln.VulnerabilityScanner
 	ProblemDetector  *discovery.ProblemDetector
 	BluetoothScanner *discovery.BluetoothScanner
 	WiFiBridge       *discovery.WiFiBridge

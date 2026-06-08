@@ -14,6 +14,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/mibdb"
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
@@ -252,7 +253,7 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 		return
 	}
 
-	scannerCfg := &discovery.VulnerabilityScannerConfig{
+	scannerCfg := &vuln.VulnerabilityScannerConfig{
 		Enabled:           cfg.Security.VulnerabilityScanning.Enabled,
 		CVEDatabase:       cfg.Security.VulnerabilityScanning.CVEDatabase,
 		NVDAPIKey:         cfg.Security.VulnerabilityScanning.NVDAPIKey,
@@ -261,7 +262,7 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 		MaxConcurrent:     cfg.Security.VulnerabilityScanning.MaxConcurrent,
 	}
 
-	vulnScanner, err := discovery.NewVulnerabilityScanner(scannerCfg)
+	vulnScanner, err := vuln.NewVulnerabilityScanner(scannerCfg)
 	if err != nil {
 		logging.GetLogger().Warn("Failed to initialize vulnerability scanner", "error", err)
 		return
@@ -316,7 +317,13 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 		s.services.Discovery.Engine.SetPortScanner(s.services.Discovery.PortScanner)
 	}
 	if s.services.Discovery.Vulnerability != nil {
-		s.services.Discovery.Engine.SetVulnScanner(s.services.Discovery.Vulnerability)
+		// ADR-0018: the vuln assessment stage is a subpackage adapter injected
+		// as the engine's Assessor port, built over the engine's registry + bus.
+		s.services.Discovery.Engine.SetAssessor(vuln.NewStage(
+			s.services.Discovery.Vulnerability,
+			s.services.Discovery.Engine.Registry(),
+			s.services.Discovery.Engine.EventBus(),
+		))
 	}
 
 	// Start the engine

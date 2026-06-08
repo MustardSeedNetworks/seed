@@ -94,19 +94,5 @@ func TestEnrichStageNilComponentsIsNoop(t *testing.T) {
 	}
 }
 
-func TestAssessStageNilScannerIsNoop(t *testing.T) {
-	t.Parallel()
-	reg := newTestRegistry()
-	reg.AddOrUpdate(&discovery.DiscoveredDevice{MAC: "de:ad:be:ef:00:02", IP: "10.0.0.2"})
-	stage := discovery.NewAssessStageForTest(reg, discovery.NewEventBus(&discovery.EventBusConfig{}))
-	stats := &discovery.ScanStats{}
-
-	stage.Assess(context.Background(), stats) // nil vulnScanner
-
-	if stats.VulnerableDevices != 0 {
-		t.Fatalf("VulnerableDevices = %d, want 0 with nil scanner", stats.VulnerableDevices)
-	}
-	if d := reg.GetDevice("de:ad:be:ef:00:02"); d == nil || d.Vulnerabilities != nil {
-		t.Fatalf("device unexpectedly assessed: %+v", d)
-	}
-}
+// The assess stage's nil-safety test moved to internal/discovery/vuln with the
+// stage (TestStageNilScannerIsNoop).

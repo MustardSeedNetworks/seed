@@ -136,15 +136,5 @@ func TestExportSplitSubnetIntoChunks(t *testing.T) {
 	}
 }
 
-func TestNVDRateLimitConstants(t *testing.T) {
-	// Test that NVD rate limit constants are accessible
-	if discovery.NVDRateLimitNoKey <= 0 {
-		t.Error("Expected NVDRateLimitNoKey to be positive")
-	}
-	if discovery.NVDRateLimitWithKey <= 0 {
-		t.Error("Expected NVDRateLimitWithKey to be positive")
-	}
-	if discovery.NVDRateLimitWithKey <= discovery.NVDRateLimitNoKey {
-		t.Error("Expected NVDRateLimitWithKey to be greater than NVDRateLimitNoKey")
-	}
-}
+// TestNVDRateLimitConstants moved to internal/discovery/vuln with the NVD
+// provider (ADR-0018).

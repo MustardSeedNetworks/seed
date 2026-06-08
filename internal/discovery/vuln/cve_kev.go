@@ -1,4 +1,4 @@
-package discovery
+package vuln
 
 //
 // This file integrates with the CISA KEV (Known Exploited Vulnerabilities) catalog

@@ -187,7 +187,13 @@ orchestrates the ports. Per-stage subpackage relocation + depguard follow.
 
 - [x] 0. stage ports + stage types in-package; Engine orchestrates ports
       (`stages.go`); behaviour-preserving, golden byte-identical
-- [ ] 1. `vuln` stage → `discovery/vuln` subpackage + depguard
+- [x] 1. `vuln` stage → `discovery/vuln` subpackage + depguard. `VulnerabilityScanner`
+      + CVE providers (NVD/local/KEV) + the assess `Stage` moved; result types
+      (`Vulnerability`/`DeviceVulnerabilities`) stay in the kernel (DiscoveredDevice
+      fields) and are aliased in the stage. Engine holds the injected `Assessor`
+      port; `internal/api` wires `vuln.NewStage(scanner, engine.Registry(),
+      engine.EventBus())`. depguard rule `discovery-stage-direction` bans the kernel
+      from importing the stage. Golden byte-identical, schema unchanged.
 - [ ] 2. `fingerprint`/enrich stage → `discovery/fingerprint` + depguard
 - [ ] 3. `resolve` stage → `discovery/resolve` + depguard
 - [ ] 4. `enumerate` stage → `discovery/enumerate` + depguard

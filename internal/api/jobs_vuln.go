@@ -13,6 +13,7 @@ import (
 	"fmt"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
@@ -103,7 +104,7 @@ func decodeVulnScanParams(params any) (VulnScanParams, error) {
 // serverVulnScanService adapts the Server's scanner + device registry to the
 // vulnScanService seam.
 type serverVulnScanService struct {
-	scanner *discovery.VulnerabilityScanner
+	scanner *vuln.VulnerabilityScanner
 	devices *discovery.DeviceDiscovery
 }
 

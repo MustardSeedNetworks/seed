@@ -3,10 +3,7 @@ package discovery
 // This file is only compiled during testing (due to _test.go suffix)
 // and provides access to internal implementation details.
 
-import (
-	"net"
-	"sync"
-)
+import "net"
 
 // ExportIncrementIP exposes incrementIP for testing.
 func ExportIncrementIP(ip net.IP, n int) net.IP {
@@ -27,12 +24,6 @@ func ExportGuessOSFromTTL(ttl int) string {
 func ExportSplitSubnetIntoChunks(subnet *net.IPNet, maxChunks int) []*net.IPNet {
 	return splitSubnetIntoChunks(subnet, maxChunks)
 }
-
-// Export NVD rate limit constants for testing.
-const (
-	NVDRateLimitNoKey   = nvdRateLimitNoKey
-	NVDRateLimitWithKey = nvdRateLimitWithKey
-)
 
 // ARPScannerTestAccessor provides access to ARPScanner's private fields for testing.
 type ARPScannerTestAccessor struct {
@@ -109,53 +100,6 @@ func (t *TracerTestAccessor) GetMaxHops() int {
 	return t.Tracer.maxHops
 }
 
-// VulnerabilityScannerTestAccessor provides access to VulnerabilityScanner's private fields for testing.
-type VulnerabilityScannerTestAccessor struct {
-	Scanner *VulnerabilityScanner
-}
-
-// GetMu returns the scanner's mutex for testing.
-func (v *VulnerabilityScannerTestAccessor) GetMu() *sync.RWMutex {
-	return &v.Scanner.mu
-}
-
-// GetDeviceResults returns the scanner's deviceResults map.
-func (v *VulnerabilityScannerTestAccessor) GetDeviceResults() map[string]*DeviceVulnerabilities {
-	return v.Scanner.deviceResults
-}
-
-// SetDeviceResults sets the scanner's deviceResults map.
-func (v *VulnerabilityScannerTestAccessor) SetDeviceResults(
-	results map[string]*DeviceVulnerabilities,
-) {
-	v.Scanner.deviceResults = results
-}
-
-// GetConfig returns the scanner's config.
-func (v *VulnerabilityScannerTestAccessor) GetConfig() *VulnerabilityScannerConfig {
-	return v.Scanner.config
-}
-
-// FilterBySeverity exposes the private filterBySeverity method.
-func (v *VulnerabilityScannerTestAccessor) FilterBySeverity(vulns []Vulnerability) []Vulnerability {
-	return v.Scanner.filterBySeverity(vulns)
-}
-
-// NVDProviderTestAccessor provides access to NVDProvider's private fields for testing.
-type NVDProviderTestAccessor struct {
-	Provider *NVDProvider
-}
-
-// GetAPIKey returns the provider's API key.
-func (n *NVDProviderTestAccessor) GetAPIKey() string {
-	return n.Provider.apiKey
-}
-
-// GetRateLimit returns the provider's rate limit.
-func (n *NVDProviderTestAccessor) GetRateLimit() int {
-	return n.Provider.rateLimit
-}
-
 // DeviceDiscoveryTestAccessor provides access to DeviceDiscovery's private fields for testing.
 type DeviceDiscoveryTestAccessor struct {
 	Discovery *DeviceDiscovery
@@ -195,11 +139,6 @@ func NewEnumerateStageForTest(reg *DeviceRegistry, cfg *EngineConfig) Enumerator
 // NewEnrichStageForTest builds the enrich stage (no components) as its port.
 func NewEnrichStageForTest(reg *DeviceRegistry, cfg *EngineConfig) Enricher {
 	return &enrichStage{registry: reg, config: cfg}
-}
-
-// NewAssessStageForTest builds the assess stage (no scanner) as its port.
-func NewAssessStageForTest(reg *DeviceRegistry, bus *EventBus) Assessor {
-	return &assessStage{registry: reg, eventBus: bus}
 }
 
 // EngineTestAccessor provides access to Engine's private fields for testing.

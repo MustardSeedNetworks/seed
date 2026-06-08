@@ -291,6 +291,23 @@ linters:
           deny:
             - pkg: github.com/gopacket/gopacket/pcap
               desc: "live capture must go through the capture port (internal/capture); only internal/capture/pcap may import gopacket/pcap"
+        # ADR-0018 (Phase 6): the discovery KERNEL (internal/discovery) holds the
+        # shared device + result types and the stage PORTS (stages.go); each
+        # pipeline stage lives in a subpackage that depends INWARD on the kernel.
+        # The kernel must never import a stage subpackage — that would invert the
+        # direction and create an import cycle. The Engine holds each stage as a
+        # port interface (e.g. Assessor) and the composition root (internal/api)
+        # injects the concrete stage. Applies to production AND tests. As further
+        # stages are relocated (fingerprint/resolve/enumerate) they are added to
+        # the exclusions + deny list. The vuln subpackage is exempt — it is the
+        # stage and legitimately imports the kernel.
+        "discovery-stage-direction":
+          files:
+            - "**/internal/discovery/**"
+            - "!**/internal/discovery/vuln/**"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/seed/internal/discovery/vuln
+              desc: "inward-only — a discovery stage (internal/discovery/vuln) imports the kernel, never the reverse; the Engine holds the Assessor port and the composition root injects the stage"
 
     embeddedstructfieldcheck:
       # Checks that sync.Mutex and sync.RWMutex are not used as embedded fields.

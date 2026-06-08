@@ -58,7 +58,7 @@ func TestEngineSetCollectors(_ *testing.T) {
 	engine.SetSNMPCollector(nil)
 	engine.SetPortScanner(nil)
 	engine.SetProfiler(nil)
-	engine.SetVulnScanner(nil)
+	engine.SetAssessor(nil)
 }
 
 func TestEngineGetCapabilities(t *testing.T) {

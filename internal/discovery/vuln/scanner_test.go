@@ -1,22 +1,22 @@
-package discovery_test
+package vuln_test
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 )
 
 func TestNewVulnerabilityScanner(t *testing.T) {
 	// Test with nil config (should use defaults)
-	config := &discovery.VulnerabilityScannerConfig{
+	config := &vuln.VulnerabilityScannerConfig{
 		Enabled:           true,
 		CVEDatabase:       "nvd",
 		SeverityThreshold: "medium",
 	}
 
-	scanner, err := discovery.NewVulnerabilityScanner(config)
+	scanner, err := vuln.NewVulnerabilityScanner(config)
 	if err != nil {
 		t.Fatalf("NewVulnerabilityScanner failed: %v", err)
 	}
@@ -26,14 +26,14 @@ func TestNewVulnerabilityScanner(t *testing.T) {
 }
 
 func TestVulnerabilityScanner_StartStop(t *testing.T) {
-	config := &discovery.VulnerabilityScannerConfig{
+	config := &vuln.VulnerabilityScannerConfig{
 		Enabled:           true,
 		CVEDatabase:       "nvd",
 		SeverityThreshold: "medium",
 		UpdateInterval:    3600,
 	}
 
-	scanner, scannerErr := discovery.NewVulnerabilityScanner(config)
+	scanner, scannerErr := vuln.NewVulnerabilityScanner(config)
 	if scannerErr != nil {
 		t.Fatalf("NewVulnerabilityScanner failed: %v", scannerErr)
 	}
@@ -77,19 +77,19 @@ func TestVulnerabilityScanner_StartStop(t *testing.T) {
 }
 
 func TestVulnerabilityScanner_FilterBySeverity(t *testing.T) {
-	config := &discovery.VulnerabilityScannerConfig{
+	config := &vuln.VulnerabilityScannerConfig{
 		Enabled:           true,
 		CVEDatabase:       "nvd",
 		SeverityThreshold: "high",
 	}
 
-	scanner, err := discovery.NewVulnerabilityScanner(config)
+	scanner, err := vuln.NewVulnerabilityScanner(config)
 	if err != nil {
 		t.Fatalf("NewVulnerabilityScanner failed: %v", err)
 	}
 
 	// Create test vulnerabilities with different severities
-	vulns := []discovery.Vulnerability{
+	vulns := []vuln.Vulnerability{
 		{CVEID: "CVE-2023-0001", Severity: "LOW", Score: 3.5},
 		{CVEID: "CVE-2023-0002", Severity: "MEDIUM", Score: 5.5},
 		{CVEID: "CVE-2023-0003", Severity: "HIGH", Score: 7.5},
@@ -97,7 +97,7 @@ func TestVulnerabilityScanner_FilterBySeverity(t *testing.T) {
 	}
 
 	// Filter with "high" threshold should only return HIGH and CRITICAL
-	accessor := &discovery.VulnerabilityScannerTestAccessor{Scanner: scanner}
+	accessor := &vuln.VulnerabilityScannerTestAccessor{Scanner: scanner}
 	filtered := accessor.FilterBySeverity(vulns)
 	if len(filtered) != 2 {
 		t.Errorf("expected 2 vulnerabilities, got %d", len(filtered))
@@ -112,18 +112,18 @@ func TestVulnerabilityScanner_FilterBySeverity(t *testing.T) {
 }
 
 func TestVulnerabilityScanner_FilterBySeverityLow(t *testing.T) {
-	config := &discovery.VulnerabilityScannerConfig{
+	config := &vuln.VulnerabilityScannerConfig{
 		Enabled:           true,
 		CVEDatabase:       "nvd",
 		SeverityThreshold: "low",
 	}
 
-	scanner, err := discovery.NewVulnerabilityScanner(config)
+	scanner, err := vuln.NewVulnerabilityScanner(config)
 	if err != nil {
 		t.Fatalf("NewVulnerabilityScanner failed: %v", err)
 	}
 
-	vulns := []discovery.Vulnerability{
+	vulns := []vuln.Vulnerability{
 		{CVEID: "CVE-2023-0001", Severity: "LOW", Score: 3.5},
 		{CVEID: "CVE-2023-0002", Severity: "MEDIUM", Score: 5.5},
 		{CVEID: "CVE-2023-0003", Severity: "HIGH", Score: 7.5},
@@ -131,7 +131,7 @@ func TestVulnerabilityScanner_FilterBySeverityLow(t *testing.T) {
 	}
 
 	// Filter with "low" threshold should return all
-	accessor := &discovery.VulnerabilityScannerTestAccessor{Scanner: scanner}
+	accessor := &vuln.VulnerabilityScannerTestAccessor{Scanner: scanner}
 	filtered := accessor.FilterBySeverity(vulns)
 	if len(filtered) != len(vulns) {
 		t.Errorf("expected %d vulnerabilities, got %d", len(vulns), len(filtered))
@@ -139,31 +139,31 @@ func TestVulnerabilityScanner_FilterBySeverityLow(t *testing.T) {
 }
 
 func TestVulnerabilityScanner_GetStats(t *testing.T) {
-	config := &discovery.VulnerabilityScannerConfig{
+	config := &vuln.VulnerabilityScannerConfig{
 		Enabled:           true,
 		CVEDatabase:       "nvd",
 		SeverityThreshold: "low",
 	}
 
-	scanner, err := discovery.NewVulnerabilityScanner(config)
+	scanner, err := vuln.NewVulnerabilityScanner(config)
 	if err != nil {
 		t.Fatalf("NewVulnerabilityScanner failed: %v", err)
 	}
 
 	// Add some mock results
-	accessor := &discovery.VulnerabilityScannerTestAccessor{Scanner: scanner}
+	accessor := &vuln.VulnerabilityScannerTestAccessor{Scanner: scanner}
 	accessor.GetMu().Lock()
-	accessor.SetDeviceResults(map[string]*discovery.DeviceVulnerabilities{
+	accessor.SetDeviceResults(map[string]*vuln.DeviceVulnerabilities{
 		"192.168.1.100": {
 			DeviceIP: "192.168.1.100",
-			Vulnerabilities: []discovery.Vulnerability{
+			Vulnerabilities: []vuln.Vulnerability{
 				{CVEID: "CVE-2023-0001", Severity: "CRITICAL", Score: 9.5},
 				{CVEID: "CVE-2023-0002", Severity: "HIGH", Score: 7.5},
 			},
 		},
 		"192.168.1.101": {
 			DeviceIP: "192.168.1.101",
-			Vulnerabilities: []discovery.Vulnerability{
+			Vulnerabilities: []vuln.Vulnerability{
 				{CVEID: "CVE-2023-0003", Severity: "MEDIUM", Score: 5.5},
 			},
 		},
@@ -199,22 +199,22 @@ func TestVulnerabilityScanner_GetStats(t *testing.T) {
 }
 
 func TestVulnerabilityScanner_ClearResults(t *testing.T) {
-	config := &discovery.VulnerabilityScannerConfig{
+	config := &vuln.VulnerabilityScannerConfig{
 		Enabled:           true,
 		CVEDatabase:       "nvd",
 		SeverityThreshold: "low",
 	}
 
-	scanner, err := discovery.NewVulnerabilityScanner(config)
+	scanner, err := vuln.NewVulnerabilityScanner(config)
 	if err != nil {
 		t.Fatalf("NewVulnerabilityScanner failed: %v", err)
 	}
 
 	// Add some mock results
-	accessor := &discovery.VulnerabilityScannerTestAccessor{Scanner: scanner}
+	accessor := &vuln.VulnerabilityScannerTestAccessor{Scanner: scanner}
 	accessor.GetMu().Lock()
 	results := accessor.GetDeviceResults()
-	results["192.168.1.100"] = &discovery.DeviceVulnerabilities{
+	results["192.168.1.100"] = &vuln.DeviceVulnerabilities{
 		DeviceIP: "192.168.1.100",
 	}
 	accessor.GetMu().Unlock()
@@ -234,20 +234,20 @@ func TestVulnerabilityScanner_ClearResults(t *testing.T) {
 }
 
 func TestVulnerabilityScanner_GetConfig(t *testing.T) {
-	config := &discovery.VulnerabilityScannerConfig{
+	config := &vuln.VulnerabilityScannerConfig{
 		Enabled:           true,
 		CVEDatabase:       "nvd",
 		SeverityThreshold: "high",
 		UpdateInterval:    7200,
 	}
 
-	scanner, err := discovery.NewVulnerabilityScanner(config)
+	scanner, err := vuln.NewVulnerabilityScanner(config)
 	if err != nil {
 		t.Fatalf("NewVulnerabilityScanner failed: %v", err)
 	}
 
 	retrievedConfig := scanner.GetConfig()
-	accessor := &discovery.VulnerabilityScannerTestAccessor{Scanner: scanner}
+	accessor := &vuln.VulnerabilityScannerTestAccessor{Scanner: scanner}
 
 	// Verify it's a copy, not the original
 	if retrievedConfig == accessor.GetConfig() {
@@ -271,7 +271,7 @@ func TestVulnerabilityScanner_GetConfig(t *testing.T) {
 
 func TestNVDProvider_NewNVDProvider(t *testing.T) {
 	// Test without API key
-	provider, err := discovery.NewNVDProvider("")
+	provider, err := vuln.NewNVDProvider("")
 	if err != nil {
 		t.Fatalf("NewNVDProvider failed: %v", err)
 	}
@@ -279,36 +279,36 @@ func TestNVDProvider_NewNVDProvider(t *testing.T) {
 		t.Fatal("provider should not be nil")
 	}
 
-	accessor := &discovery.NVDProviderTestAccessor{Provider: provider}
-	if accessor.GetRateLimit() != discovery.NVDRateLimitNoKey {
+	accessor := &vuln.NVDProviderTestAccessor{Provider: provider}
+	if accessor.GetRateLimit() != vuln.NVDRateLimitNoKey {
 		t.Errorf(
 			"expected rate limit %d, got %d",
-			discovery.NVDRateLimitNoKey,
+			vuln.NVDRateLimitNoKey,
 			accessor.GetRateLimit(),
 		)
 	}
 
 	// Test with API key
-	provider, err = discovery.NewNVDProvider("test-api-key")
+	provider, err = vuln.NewNVDProvider("test-api-key")
 	if err != nil {
 		t.Fatalf("NewNVDProvider with key failed: %v", err)
 	}
 
-	accessor = &discovery.NVDProviderTestAccessor{Provider: provider}
+	accessor = &vuln.NVDProviderTestAccessor{Provider: provider}
 	if accessor.GetAPIKey() != "test-api-key" {
 		t.Error("API key not set correctly")
 	}
-	if accessor.GetRateLimit() != discovery.NVDRateLimitWithKey {
+	if accessor.GetRateLimit() != vuln.NVDRateLimitWithKey {
 		t.Errorf(
 			"expected rate limit %d, got %d",
-			discovery.NVDRateLimitWithKey,
+			vuln.NVDRateLimitWithKey,
 			accessor.GetRateLimit(),
 		)
 	}
 }
 
 func TestNVDProvider_UpdateDatabase(t *testing.T) {
-	provider, providerErr := discovery.NewNVDProvider("")
+	provider, providerErr := vuln.NewNVDProvider("")
 	if providerErr != nil {
 		t.Fatalf("NewNVDProvider failed: %v", providerErr)
 	}

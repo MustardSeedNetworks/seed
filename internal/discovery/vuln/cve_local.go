@@ -1,4 +1,4 @@
-package discovery
+package vuln
 
 //
 // The LocalProvider loads CVE data from a JSON file, enabling vulnerability scanning
