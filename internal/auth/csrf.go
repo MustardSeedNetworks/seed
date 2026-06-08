@@ -171,6 +171,28 @@ func (m *CSRFManager) Stop() {
 	m.cancel()
 }
 
+// isCSRFExemptPath reports whether path is on the curated CSRF exempt-list:
+// pre-session auth/setup endpoints, the client-log sink, and the SSO handshake.
+// Every entry MUST be safe to serve on a state-changing method without a CSRF
+// token — i.e. pre-session or non-security-state-changing — NEVER a data-mutating
+// route. csrf_coverage_test.go pins this set (#1223): a change here must be
+// reflected and justified there. Kept as a switch (no package globals) per the
+// repo's gochecknoglobals convention; the switch is also allocation-free on the
+// per-request hot path.
+func isCSRFExemptPath(path string) bool {
+	switch path {
+	case "/api/v1/auth/login", // pre-session: no CSRF token issued yet
+		"/api/v1/auth/refresh",          // access token may be expired → no valid token yet
+		"/api/v1/auth/logout",           // safe/idempotent session teardown
+		"/api/v1/setup/status",          // first-run, pre-auth
+		"/api/v1/setup/complete",        // first-run, pre-auth
+		"/api/v1/reporting/logs/client": // logger runs before CSRF tokens exist
+		return true
+	}
+	// SSO handshake endpoints are pre-session.
+	return strings.HasPrefix(path, "/api/v1/sso/")
+}
+
 // CSRFMiddleware returns HTTP middleware that validates CSRF tokens on state-changing requests.
 // It exempts GET, HEAD, OPTIONS, and TRACE methods as they should be safe/idempotent.
 func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
@@ -190,19 +212,11 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Skip CSRF for auth endpoints that don't have a session yet, token refresh,
-		// logout (safe operation), SSO, and client logging. Refresh needs exemption because
-		// the user may not have a valid CSRF token when their access token expires.
-		// Client logs endpoint is exempted because the logger runs before CSRF tokens are
-		// available and logging doesn't change security-sensitive state.
-		// Note: API routes use /api/v1/ prefix
-		if r.URL.Path == "/api/v1/auth/login" ||
-			r.URL.Path == "/api/v1/auth/refresh" ||
-			r.URL.Path == "/api/v1/auth/logout" ||
-			r.URL.Path == "/api/v1/setup/status" ||
-			r.URL.Path == "/api/v1/setup/complete" ||
-			r.URL.Path == "/api/v1/reporting/logs/client" ||
-			strings.HasPrefix(r.URL.Path, "/api/v1/sso/") {
+		// Skip CSRF for the curated exempt-list (pre-session auth/setup + client
+		// logging + SSO handshake). See isCSRFExemptPath for the per-entry
+		// justification; the set is pinned by csrf_coverage_test.go (#1223) so a
+		// new exemption can't slip in unreviewed.
+		if isCSRFExemptPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
