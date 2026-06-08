@@ -161,11 +161,34 @@ them at the subpackages directly once the dust settles.
   error when the depguard rule lands — which is exactly the coupling this surfaces
   and fixes, not a regression.
 
+## Implementation note (2026-06-07): ports-first, root-as-kernel
+
+During implementation a lower-risk refinement of the foundation step emerged. The
+hub type `DiscoveredDevice` aggregates a field of every stage's result type
+(`*DeviceProfile`, `*SNMPFullData`, `*DeviceVulnerabilities`, the protocol-info
+structs). Moving those result types into a `model` leaf is therefore impossible
+without either moving the whole cluster or creating an import cycle. So instead of
+a `model` leaf + facade aliases, the **root `discovery` package is the kernel**:
+it keeps `DiscoveredDevice` + all result types + the stage **port interfaces**;
+each stage *subpackage* will import the kernel for those types and implement its
+port; the kernel does **not** import the stages (the orchestrator holds the ports
+as interfaces, and the composition root injects the concrete stages). `depguard`
+enforces `stages → kernel`, never the reverse, and no sibling-to-sibling imports.
+This keeps shared types put (zero `internal/api` churn, golden/schema unchanged)
+and avoids the large, risky type move the `model`-leaf plan implied.
+
+The first increment ("define stage seams as ports") was therefore done
+**in-package**: the four ports (`Enumerator`, `Resolver`, `Enricher`, `Assessor`
+— `Enricher` rather than `Fingerprinter`, which is an existing capability type)
+and their stage structs live in `stages.go`, and `Engine.runScanPhases` now
+orchestrates the ports. Per-stage subpackage relocation + depguard follow.
+
 ## Implementation status
 
-- [ ] 1. `model` foundation + facade aliases
-- [ ] 2. `vuln` stage + `Assessor` port + depguard
-- [ ] 3. `fingerprint` stage + `Fingerprinter` port + depguard
-- [ ] 4. `resolve` stage + `Resolver` port + depguard
-- [ ] 5. `enumerate` stage + `Enumerator` port + depguard
-- [ ] 6. direction-lock depguard + cleanup + §16 doc
+- [x] 0. stage ports + stage types in-package; Engine orchestrates ports
+      (`stages.go`); behaviour-preserving, golden byte-identical
+- [ ] 1. `vuln` stage → `discovery/vuln` subpackage + depguard
+- [ ] 2. `fingerprint`/enrich stage → `discovery/fingerprint` + depguard
+- [ ] 3. `resolve` stage → `discovery/resolve` + depguard
+- [ ] 4. `enumerate` stage → `discovery/enumerate` + depguard
+- [ ] 5. direction-lock depguard + cleanup + §16 doc
