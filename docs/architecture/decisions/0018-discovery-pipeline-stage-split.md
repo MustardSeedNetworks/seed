@@ -1,0 +1,171 @@
+# ADR-0018: Discovery pipeline stage split — capabilities as staged ports
+
+**Status:** Accepted — 2026-06-07 · Phase 6 (the discovery split)
+
+## Context
+
+`internal/discovery` is the largest package in the codebase (~20.8K lines of
+non-test code across ~54 files). It is a flat package: the orchestrator (`Engine`),
+the device store (`DeviceRegistry`), the event bus, and every capability — ARP,
+ICMP, NDP, mDNS, NetBIOS, WoL, Bluetooth, LLDP/CDP/EDP, OUI, port scan, TCP probe,
+SNMP, profiler, fingerprint, traceroute, vulnerability/CVE/KEV, problem detection
+— all sit side by side with no enforced internal direction. Any file can call any
+other; the only seams are four ports (`capture.Opener`, `CVEProvider`,
+`DBDeviceWriter`, `ProblemListener`) and the registry/event bus.
+
+The blueprint (§16) calls for splitting this monolith into discrete pipeline
+**stages**: **enumerate → resolve → fingerprint → vuln**. That mirrors what the
+`Engine` already does at runtime. `Engine.Scan` (`engine.go`) runs a fixed
+five-phase sequence in `runScanPhases`:
+
+1. **Discovery** (`runDiscoveryPhase`) — wired/Wi-Fi/Bluetooth collectors enumerate
+   hosts and links, writing devices to the registry. → **enumerate**
+2. **Correlation** (`correlateDevices`) — currently a no-op; the registry already
+   de-dupes by MAC on `AddOrUpdate`. → folds into enumerate
+3. **Name resolution** (`ResolveNetBIOSNames` / `ResolveMDNSNames`) — attach
+   hostnames. → **resolve**
+4. **Enrichment** (`runEnrichmentPhase`) — SNMP collect, port scan, profile. →
+   **fingerprint**
+5. **Assessment** (`runAssessmentPhase`) — CVE/KEV vulnerability scan. → **vuln**
+
+So the stage boundaries are not speculative; they are the existing phase boundaries,
+just not expressed as package or interface boundaries.
+
+### Why now — ADR-0007's deferral is unblocked
+
+ADR-0007 deferred the discovery **orchestrator convergence** (Engine vs Pipeline)
+to Phase 7, gated on two facts that are **no longer true**:
+
+- *"the shipping UX rides Pipeline, the preferred Engine has no users."* The
+  `/api/v1/security/pipeline/*` endpoints have since been **retired**; only
+  `/api/v1/discovery/engine/*` remains, and **Engine is the canonical
+  orchestrator**. The Pipeline→Engine fold already happened.
+- *"discovery is a hot shared workstream needing coordination."* The owner now
+  holds **sole ownership** of discovery; there is no parallel session to coordinate
+  with.
+
+This ADR is about a **different, complementary axis** than ADR-0007: not *which
+orchestrator wins* (settled — Engine), but *how the capability code is packaged*
+(by stage, behind ports). With both of ADR-0007's gates gone, the Phase-6 stage
+split proceeds.
+
+## Decision
+
+Split the capability code into four **stage subpackages** behind **stage ports**,
+with the `Engine` orchestrating the ports and `depguard` enforcing a one-way
+dependency direction. Strangle one stage at a time, leaf-first, behind the golden
+HTTP harness — **byte-identical wire output at every step**.
+
+### Target structure
+
+```
+internal/discovery/
+  model/        — leaf: DiscoveredDevice + all inter-stage data types, enums, ports
+  enumerate/    — ARP/ICMP/NDP/mDNS-listen/NetBIOS/WoL/Bluetooth/LLDP/CDP/EDP/Wi-Fi/L2/manager/devices
+  resolve/      — OUI + active DNS/NetBIOS/mDNS name resolution
+  fingerprint/  — SNMP collect, port scan, TCP probe, profiler, fingerprint, traceroute
+  vuln/         — vulnerability scan, CVE (NVD/local), KEV, problem detection
+  (root)        — Engine, DeviceRegistry, EventBus, metrics, retry: the orchestrator
+                  + the FACADE that re-exports the external surface (see below)
+```
+
+**Dependency direction (depguard-enforced):**
+`root (orchestrator) → {enumerate, resolve, fingerprint, vuln} → model`.
+A stage may import `model`; it may **not** import the root or a sibling stage. The
+root imports the stages. `model` imports nothing from `discovery`.
+
+### Stage ports
+
+Each stage exposes a single small interface the Engine drives; the registry remains
+the single source of truth, written between stages by the orchestrator:
+
+```go
+// in model (consumed by the Engine; implemented by each stage package)
+type Enumerator interface {
+    Enumerate(ctx context.Context, opts EnumerateOptions) ([]*DiscoveredDevice, error)
+}
+type Resolver interface {
+    Resolve(ctx context.Context, devices []*DiscoveredDevice) error // attaches names
+}
+type Fingerprinter interface {
+    Fingerprint(ctx context.Context, devices []*DiscoveredDevice, opts FingerprintOptions) error
+}
+type Assessor interface {
+    Assess(ctx context.Context, devices []*DiscoveredDevice) error // attaches vulnerabilities
+}
+```
+
+The interfaces stay ≤ a few methods (interfacebloat-safe). Stage *constructors*
+take the existing capability dependencies (e.g. `Assessor` takes a `CVEProvider`).
+
+### The facade — preserve the external surface
+
+`internal/api` references ~50 `discovery.*` symbols (`DiscoveredDevice`, `Engine`,
+`NewVulnerabilityScanner`, `PortScanIntensity`, `ScanOptions`, …). To keep the
+strangle **golden-safe and API-churn-free**, the root `discovery` package stays a
+**facade**: it re-exports moved types via aliases (`type DiscoveredDevice =
+model.DiscoveredDevice`) and moved constructors via thin wrappers
+(`func NewVulnerabilityScanner(...) = vuln.NewScanner(...)`). Aliases preserve the
+reflected type name, so the code-first schema (`cmd/seed-schema`) and the
+`/api/v1/discovery/engine/*` response shapes are unchanged. Callers in
+`internal/api` are not touched in the stage PRs; a later optional cleanup can point
+them at the subpackages directly once the dust settles.
+
+### Strangle order (leaf-first, lowest risk first)
+
+1. **Foundation — `model`.** Move `DiscoveredDevice`, the protocol-info structs,
+   enums, the inter-stage DTOs (`DeviceProfile`, SNMP data, `DeviceVulnerabilities`,
+   `WiFiPresence`, `BluetoothPresence`, `ScanOptions`/`ScanResult`/`EngineStats`),
+   and the stage port interfaces into `internal/discovery/model`. Add aliases in the
+   root. Golden + schema unchanged. *(No depguard rule yet — nothing to enforce.)*
+2. **vuln.** Move `vulnerability.go`, `cve_*.go`, `problem*.go` → `discovery/vuln`
+   (it already has the `CVEProvider` port; pure leaf). Engine calls the `Assessor`
+   port. depguard: `vuln → model` only.
+3. **fingerprint.** Move SNMP/portscan/tcpprobe/profiler/fingerprint/traceroute →
+   `discovery/fingerprint`. Engine calls `Fingerprinter`. depguard added.
+4. **resolve.** Move OUI + active name resolution → `discovery/resolve`. Engine
+   calls `Resolver`. depguard added.
+5. **enumerate.** Move the host/link discovery capabilities (the largest set,
+   including the platform-specific `*_linux/_windows/_darwin.go` and the
+   `capture.Opener` consumers) → `discovery/enumerate`. Engine calls `Enumerator`.
+   depguard added.
+6. **Direction lock + cleanup.** Final depguard rule set, remove now-dead facade
+   indirection where safe, document in §16.
+
+### Invariants held at every step
+
+- **Golden HTTP harness byte-identical** (`TestGoldenHTTP*`); regenerate with
+  `UPDATE_GOLDEN` only when a change is *intended* and reviewed.
+- **Schema drift gate green** — regenerate `docs/schemas/api` + TS types if a moved
+  type's reflection changes; aliases are chosen specifically to avoid that.
+- **`make test-fast` (CGO=0) locally**; `-race` + real capture run in CI.
+- **depguard rule lands with the stage it governs** (RED-proven, as in Phase 3).
+- **Registry stays the SSoT write seam; the event bus stays the read seam.** Stages
+  do not call each other; the orchestrator threads devices between them.
+- **No behavior change, no endpoint change** — this is packaging, not a redesign.
+  Any intended behavior change is called out explicitly in its PR.
+
+## Consequences
+
+- The hottest package in the tree gains an enforced internal architecture: four
+  stages with a one-way dependency graph, each testable in isolation behind a port.
+- The strangle is ~6 focused PRs, each green and golden-stable; risk is bounded per
+  PR and the facade keeps `internal/api` untouched.
+- Short-term cost: the root package carries facade aliases/wrappers during and after
+  the migration. That indirection is the price of a churn-free, golden-safe move; a
+  later cleanup may retire it.
+- Complements ADR-0007 (orchestrator convergence, settled on Engine) and ADR-0008
+  (pure-data discovery types in the schema): the `model` package is the natural home
+  for those pure-data types.
+- Risk: a moved capability that secretly depended on a sibling becomes a compile
+  error when the depguard rule lands — which is exactly the coupling this surfaces
+  and fixes, not a regression.
+
+## Implementation status
+
+- [ ] 1. `model` foundation + facade aliases
+- [ ] 2. `vuln` stage + `Assessor` port + depguard
+- [ ] 3. `fingerprint` stage + `Fingerprinter` port + depguard
+- [ ] 4. `resolve` stage + `Resolver` port + depguard
+- [ ] 5. `enumerate` stage + `Enumerator` port + depguard
+- [ ] 6. direction-lock depguard + cleanup + §16 doc
