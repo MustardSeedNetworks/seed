@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { AUTH_STORAGE_STATE, disableAnimations, TEST_CREDENTIALS } from './helpers/auth';
+import {
+  AUTH_STORAGE_STATE,
+  disableAnimations,
+  loginAndAwaitDashboard,
+  TEST_CREDENTIALS,
+} from './helpers/auth';
 
 /**
  * Complete Authentication Lifecycle E2E Tests
@@ -23,6 +28,13 @@ import { AUTH_STORAGE_STATE, disableAnimations, TEST_CREDENTIALS } from './helpe
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Complete Authentication Lifecycle', () => {
+  // This is the heaviest auth file and Playwright assigns it to a
+  // single shard; under workers=4 the post-login dashboard mount can
+  // run long (see loginAndAwaitDashboard's 20s settle). Give the file
+  // 45s per test so the multi-login tests (re-login after expiry) keep
+  // headroom above the default 30s budget.
+  test.describe.configure({ timeout: 45_000 });
+
   // No outer-level beforeEach: each test already starts in a fresh
   // browser context with cookies/origins cleared by the file-wide
   // `test.use` above, so the legacy `localStorage.clear()` +
@@ -63,15 +75,8 @@ test.describe('Complete Authentication Lifecycle', () => {
     test('should login successfully with valid credentials', async ({ page }) => {
       await page.goto('/');
 
-      // Login with valid credentials
-      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByTestId('login-submit').click();
-
-      // Verify redirect to dashboard
-      await expect(page.getByTestId('page-header-title')).toBeVisible({
-        timeout: 10000,
-      });
+      // Login with valid credentials and wait for the dashboard.
+      await loginAndAwaitDashboard(page);
 
       // Verify URL changed from root
       expect(page.url()).not.toBe('http://localhost:5173/');
@@ -232,12 +237,7 @@ test.describe('Complete Authentication Lifecycle', () => {
     test('should handle 401 unauthorized response gracefully', async ({ page }) => {
       // Login first
       await page.goto('/');
-      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByTestId('login-submit').click();
-      await expect(page.getByTestId('page-header-title')).toBeVisible({
-        timeout: 10000,
-      });
+      await loginAndAwaitDashboard(page);
 
       // Mock expired session by intercepting API calls to return 401
       await page.route('**/api/**', (route) => {
@@ -271,12 +271,7 @@ test.describe('Complete Authentication Lifecycle', () => {
     test('should allow re-login after session expiry', async ({ page }) => {
       // Login first
       await page.goto('/');
-      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByTestId('login-submit').click();
-      await expect(page.getByTestId('page-header-title')).toBeVisible({
-        timeout: 10000,
-      });
+      await loginAndAwaitDashboard(page);
 
       // Logout to simulate session expiry
       // Open the profile dropdown — header-logout lives inside the
@@ -296,15 +291,8 @@ test.describe('Complete Authentication Lifecycle', () => {
         timeout: 5000,
       });
 
-      // Login again
-      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByTestId('login-submit').click();
-
-      // Should successfully login again
-      await expect(page.getByTestId('page-header-title')).toBeVisible({
-        timeout: 10000,
-      });
+      // Login again and confirm the dashboard mounts.
+      await loginAndAwaitDashboard(page);
     });
   });
 
@@ -323,16 +311,9 @@ test.describe('Complete Authentication Lifecycle', () => {
     });
 
     test('should allow access to protected routes when authenticated', async ({ page }) => {
-      // Login
+      // Login and land on the dashboard.
       await page.goto('/');
-      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByTestId('login-submit').click();
-
-      // Should access dashboard
-      await expect(page.getByTestId('page-header-title')).toBeVisible({
-        timeout: 10000,
-      });
+      await loginAndAwaitDashboard(page);
 
       // Verify dashboard cards are loading
       const linkCard = page
@@ -343,14 +324,9 @@ test.describe('Complete Authentication Lifecycle', () => {
     });
 
     test('should persist authentication on page reload', async ({ page }) => {
-      // Login
+      // Login and land on the dashboard.
       await page.goto('/');
-      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByTestId('login-submit').click();
-      await expect(page.getByTestId('page-header-title')).toBeVisible({
-        timeout: 10000,
-      });
+      await loginAndAwaitDashboard(page);
 
       // Reload page
       await page.reload();
@@ -371,14 +347,9 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
 
-      // Login
+      // Login and land on the dashboard.
       await page.goto('/');
-      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByTestId('login-submit').click();
-      await expect(page.getByTestId('page-header-title')).toBeVisible({
-        timeout: 10000,
-      });
+      await loginAndAwaitDashboard(page);
 
       // Profile dropdown trigger lives in the icon toolbar, which is
       // visible on mobile too — no separate hamburger step needed.
@@ -409,14 +380,9 @@ test.describe('Complete Authentication Lifecycle', () => {
         }
       });
 
-      // Login
+      // Login and land on the dashboard.
       await page.goto('/');
-      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByTestId('login-submit').click();
-      await expect(page.getByTestId('page-header-title')).toBeVisible({
-        timeout: 10000,
-      });
+      await loginAndAwaitDashboard(page);
 
       // Wait to see if any automatic refresh happens
       // (In a real scenario, we'd mock a near-expiry token)
@@ -446,13 +412,8 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Check remember me
       await rememberMe.check();
 
-      // Login
-      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByTestId('login-submit').click();
-      await expect(page.getByTestId('page-header-title')).toBeVisible({
-        timeout: 10000,
-      });
+      // Login and land on the dashboard.
+      await loginAndAwaitDashboard(page);
 
       // Close and reopen (simulate browser restart)
       const _cookies = await page.context().cookies();
@@ -475,13 +436,8 @@ test.describe('Complete Authentication Lifecycle', () => {
       // Ensure remember me is unchecked
       await rememberMe.uncheck();
 
-      // Login
-      await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-      await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-      await page.getByTestId('login-submit').click();
-      await expect(page.getByTestId('page-header-title')).toBeVisible({
-        timeout: 10000,
-      });
+      // Login and land on the dashboard.
+      await loginAndAwaitDashboard(page);
 
       // Close and reopen (simulate browser restart)
       await page.context().clearCookies();
