@@ -11,7 +11,7 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0001](0001-modulith-hexagon.md) | Modulith hexagon structure | Accepted |
 | [0002](0002-capability-registry.md) | Capability registry for route policy | Accepted |
 | [0003](0003-contract-first-boundary.md) | Contract boundary — code-first; OpenAPI deferred | Amended |
-| [0004](0004-event-bus.md) | In-process domain event bus | Accepted |
+| [0004](0004-event-bus.md) | In-process domain event bus | Amended |
 | [0005](0005-unified-jobs.md) | Unified async job runner | Accepted |
 | [0006](0006-migrations-sql-goose-strict.md) | Schema as embedded `.sql` files, goose, STRICT tables | Accepted |
 | [0007](0007-discovery-orchestrator-convergence.md) | Discovery orchestrator convergence — engine vs pipeline, deferred to Phase 7 | Accepted |
@@ -24,3 +24,4 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0014](0014-config-validation-schema-is-a-constraints-validator.md) | config validation schema is a curated constraints validator, not a duplicate | Accepted |
 | [0015](0015-credential-encryption-key-separation.md) | Separate the credential data-encryption key from `Auth.JWTSecret` | Proposed |
 | [0016](0016-strangle-internal-api-into-use-cases.md) | Strangle `internal/api` into per-domain use-case services | Accepted |
+| [0017](0017-transactional-outbox-relay.md) | Transactional outbox relay — durable post-commit event delivery | Accepted |

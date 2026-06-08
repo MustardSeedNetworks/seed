@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
 )
 
@@ -34,5 +35,22 @@ func sweepJobs(
 		} else if n > 0 {
 			logger.InfoContext(ctx, "jobs retention cleanup completed", "jobs_deleted", n)
 		}
+	}
+}
+
+// sweepOutbox prunes delivered outbox rows past the retention window (ADR-0017).
+// It is a no-op unless the relay is wired (db-backed); pending rows are never
+// touched. Driven by the maintenance loop alongside sweepJobs.
+func (s *Server) sweepOutbox(ctx context.Context) {
+	if s.background == nil || s.background.Outbox == nil {
+		return
+	}
+	n, err := s.background.Outbox.Cleanup(ctx, outboxRetention)
+	if err != nil {
+		logging.GetLogger().ErrorContext(ctx, "outbox retention cleanup failed", "error", err)
+		return
+	}
+	if n > 0 {
+		logging.GetLogger().InfoContext(ctx, "outbox retention cleanup completed", "rows_deleted", n)
 	}
 }

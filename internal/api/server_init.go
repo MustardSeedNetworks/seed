@@ -18,6 +18,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/mibdb"
 	"github.com/MustardSeedNetworks/seed/internal/platform/events"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
+	"github.com/MustardSeedNetworks/seed/internal/platform/outbox"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/survey"
 )
 
@@ -184,6 +185,19 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 		} else if n > 0 {
 			logging.GetLogger().Info("recovered interrupted jobs from a prior run", "count", n)
 		}
+	}
+
+	// Transactional-outbox relay (ADR-0017): drains durable events written in a
+	// domain transaction and republishes them post-commit onto the same bus. It
+	// needs both the bus (built just above) and a durable store, so it is created
+	// here and attached to the background components — started/stopped with them.
+	// Dormant until a producer enqueues (no producer is rewired today; the jobs
+	// runner keeps publishing directly). Subscribers register before Start, so a
+	// future durable consumer never misses the startup replay.
+	if db != nil && s.background != nil {
+		s.background.Outbox = outbox.NewRelay(
+			newDBOutboxStore(db), s.eventBus(), logging.GetLogger(),
+		)
 	}
 
 	// Wire up database persistence for logs if database is available
