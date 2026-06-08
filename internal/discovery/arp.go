@@ -55,6 +55,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -115,7 +116,7 @@ const (
 // ARPScanner performs active network discovery via ARP.
 type ARPScanner struct {
 	interfaceName     string
-	oui               *OUIDatabase
+	oui               *resolve.OUIDatabase
 	mu                sync.RWMutex
 	entries           map[string]*ARPEntry // Key by IP
 	subnet            *net.IPNet
@@ -130,7 +131,7 @@ type ARPScanner struct {
 }
 
 // NewARPScanner creates a new ARP scanner for the given interface.
-func NewARPScanner(interfaceName string, oui *OUIDatabase) *ARPScanner {
+func NewARPScanner(interfaceName string, oui *resolve.OUIDatabase) *ARPScanner {
 	return &ARPScanner{
 		interfaceName:     interfaceName,
 		oui:               oui,

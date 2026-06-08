@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -131,7 +132,7 @@ func (p *DeviceProfiler) SetInterface(interfaceName string) {
 	defer p.mu.Unlock()
 	p.interfaceName = interfaceName
 	if p.mdnsResolver != nil {
-		p.mdnsResolver = NewMDNSResolver(interfaceName)
+		p.mdnsResolver = resolve.NewMDNSResolver(interfaceName)
 	}
 }
 

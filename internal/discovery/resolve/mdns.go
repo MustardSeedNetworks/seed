@@ -1,4 +1,4 @@
-package discovery
+package resolve
 
 // This file implements mDNS/Bonjour name resolution for Apple/Linux device discovery.
 //

@@ -1,4 +1,4 @@
-package discovery
+package resolve
 
 // This file implements NetBIOS name resolution (NBNS) for Windows device discovery.
 //
