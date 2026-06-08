@@ -1,15 +1,15 @@
-package discovery_test
+package fingerprint_test
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/fingerprint"
 )
 
 func TestTCPProber_ProbeTCP(t *testing.T) {
-	prober, err := discovery.NewTCPProber(2 * time.Second)
+	prober, err := fingerprint.NewTCPProber(2 * time.Second)
 	if err != nil {
 		t.Fatalf("failed to create prober: %v", err)
 	}
@@ -29,7 +29,7 @@ func TestTCPProber_ProbeTCP(t *testing.T) {
 }
 
 func TestTCPProber_ProbeClosedPort(t *testing.T) {
-	prober, err := discovery.NewTCPProber(1 * time.Second)
+	prober, err := fingerprint.NewTCPProber(1 * time.Second)
 	if err != nil {
 		t.Fatalf("failed to create prober: %v", err)
 	}
@@ -40,13 +40,13 @@ func TestTCPProber_ProbeClosedPort(t *testing.T) {
 	result := prober.ProbeTCP(ctx, "127.0.0.1", 59999)
 
 	// Should be closed on localhost
-	if result.State != discovery.PortClosed {
+	if result.State != fingerprint.PortClosed {
 		t.Logf("expected closed state, got %s (may vary by system config)", result.State)
 	}
 }
 
 func TestTCPProber_ScanPorts(t *testing.T) {
-	prober, err := discovery.NewTCPProber(1 * time.Second)
+	prober, err := fingerprint.NewTCPProber(1 * time.Second)
 	if err != nil {
 		t.Fatalf("failed to create prober: %v", err)
 	}
@@ -72,12 +72,12 @@ func TestTCPProber_ScanPorts(t *testing.T) {
 
 func TestPortState_String(t *testing.T) {
 	tests := []struct {
-		state    discovery.PortState
+		state    fingerprint.PortState
 		expected string
 	}{
-		{discovery.PortOpen, "open"},
-		{discovery.PortClosed, "closed"},
-		{discovery.PortFiltered, "filtered"},
+		{fingerprint.PortOpen, "open"},
+		{fingerprint.PortClosed, "closed"},
+		{fingerprint.PortFiltered, "filtered"},
 	}
 
 	for _, tt := range tests {
@@ -89,7 +89,7 @@ func TestPortState_String(t *testing.T) {
 
 func TestGetCommonPorts(t *testing.T) {
 	// Verify common ports slice is populated
-	commonPorts := discovery.GetCommonPorts()
+	commonPorts := fingerprint.GetCommonPorts()
 	if len(commonPorts) == 0 {
 		t.Error("GetCommonPorts() should not return empty slice")
 	}

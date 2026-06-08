@@ -14,6 +14,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/fingerprint"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/mibdb"
@@ -231,7 +232,7 @@ func (s *Server) initDiscovery(cfg *config.Config) {
 	s.services.Discovery.Profiler = sharedProfiler
 
 	// Create PortScanner for Engine
-	portScanner, err := discovery.NewPortScanner(portScannerTimeout)
+	portScanner, err := fingerprint.NewPortScanner(portScannerTimeout)
 	if err != nil {
 		logging.GetLogger().Warn("Failed to create port scanner", "error", err)
 	} else {

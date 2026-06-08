@@ -52,9 +52,12 @@ type Engine struct {
 	wifiCollector      *WiFiBridge
 	bluetoothCollector *BluetoothScanner
 
-	// Enrichment components
+	// Enrichment components. portScanner is the fingerprint stage's PortScannerPort
+	// (ADR-0018, Phase 6): the concrete scanner lives in internal/discovery/fingerprint
+	// and is injected by the composition root. snmpCollector + profiler stay concrete
+	// kernel types — the kernel orchestrator (Service) co-owns the profiler lifecycle.
 	snmpCollector *SNMPCollector
-	portScanner   *PortScanner
+	portScanner   PortScannerPort
 	profiler      *DeviceProfiler
 
 	// Assessment stage (ADR-0018): the vuln Assessor port, injected by the
@@ -276,8 +279,8 @@ func (e *Engine) SetSNMPCollector(collector *SNMPCollector) {
 	e.snmpCollector = collector
 }
 
-// SetPortScanner sets the port scanner.
-func (e *Engine) SetPortScanner(scanner *PortScanner) {
+// SetPortScanner sets the port scanner (the fingerprint stage's PortScannerPort).
+func (e *Engine) SetPortScanner(scanner PortScannerPort) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.portScanner = scanner

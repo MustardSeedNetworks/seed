@@ -1,6 +1,6 @@
 //go:build !windows
 
-package discovery
+package fingerprint
 
 import (
 	"context"
@@ -15,17 +15,9 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
-// PortState represents the state of a TCP port.
-type PortState string
-
-// TCP port state constants indicating probe results.
-const (
-	PortOpen     PortState = "open"     // SYN/ACK received
-	PortClosed   PortState = "closed"   // RST received
-	PortFiltered PortState = "filtered" // No response (timeout)
-)
-
-// TCPProbeResult contains the result of a TCP probe.
+// TCPProbeResult contains the result of a TCP probe. PortState (and its
+// PortOpen/PortClosed/PortFiltered constants) live in the discovery kernel and
+// are aliased in aliases.go.
 type TCPProbeResult struct {
 	IP    string        `json:"ip"`
 	Port  int           `json:"port"`
@@ -44,7 +36,10 @@ const (
 )
 
 // TCP probe constants.
-const tcpProbeDialTimeoutS = 5 // Default timeout in seconds for local IP detection dial
+const (
+	tcpProbeDialTimeoutS = 5               // Default timeout in seconds for local IP detection dial
+	defaultProbeTimeout  = 1 * time.Second // Default prober timeout
+)
 
 // TCPProber provides TCP connect probing functionality.
 type TCPProber struct {
@@ -59,7 +54,7 @@ type TCPProber struct {
 // Requires root privileges or CAP_NET_RAW capability.
 func NewTCPProber(timeout time.Duration) (*TCPProber, error) {
 	if timeout == 0 {
-		timeout = defaultTimeout
+		timeout = defaultProbeTimeout
 	}
 
 	// Get local IP for source address

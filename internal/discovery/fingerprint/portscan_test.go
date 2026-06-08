@@ -1,4 +1,4 @@
-package discovery_test
+package fingerprint_test
 
 import (
 	"context"
@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/fingerprint"
 )
 
 func TestNewPortScanner(t *testing.T) {
-	scanner, err := discovery.NewPortScanner(100 * time.Millisecond)
+	scanner, err := fingerprint.NewPortScanner(100 * time.Millisecond)
 	if err != nil {
 		t.Fatalf("NewPortScanner failed: %v", err)
 	}
@@ -25,7 +25,7 @@ func TestNewPortScanner(t *testing.T) {
 }
 
 func TestPortScanner_Close(t *testing.T) {
-	scanner, err := discovery.NewPortScanner(100 * time.Millisecond)
+	scanner, err := fingerprint.NewPortScanner(100 * time.Millisecond)
 	if err != nil {
 		t.Fatalf("NewPortScanner failed: %v", err)
 	}
@@ -43,9 +43,9 @@ func TestPortScanner_Close(t *testing.T) {
 }
 
 func TestServiceInfo_Fields(t *testing.T) {
-	info := discovery.ServiceInfo{
+	info := fingerprint.ServiceInfo{
 		Port:     22,
-		State:    discovery.PortOpen,
+		State:    fingerprint.PortOpen,
 		Service:  "ssh",
 		Banner:   "SSH-2.0-OpenSSH_8.4p1",
 		Version:  "8.4p1",
@@ -55,7 +55,7 @@ func TestServiceInfo_Fields(t *testing.T) {
 	if info.Port != 22 {
 		t.Errorf("Port should be 22, got %d", info.Port)
 	}
-	if info.State != discovery.PortOpen {
+	if info.State != fingerprint.PortOpen {
 		t.Errorf("State should be PortOpen, got %v", info.State)
 	}
 	if info.Service != "ssh" {
@@ -73,10 +73,10 @@ func TestServiceInfo_Fields(t *testing.T) {
 }
 
 func TestPortScanResult_Fields(t *testing.T) {
-	result := discovery.PortScanResult{
+	result := fingerprint.PortScanResult{
 		IP:       "192.168.1.10",
 		Hostname: "test-host",
-		Services: []discovery.ServiceInfo{
+		Services: []fingerprint.ServiceInfo{
 			{Port: 22, Service: "ssh"},
 			{Port: 80, Service: "http"},
 		},
@@ -102,7 +102,7 @@ func TestPortScanResult_Fields(t *testing.T) {
 }
 
 func TestPortScanResult_WithError(t *testing.T) {
-	result := discovery.PortScanResult{
+	result := fingerprint.PortScanResult{
 		IP:    "192.168.1.10",
 		Error: "connection refused",
 	}
@@ -116,7 +116,7 @@ func TestPortScanResult_WithError(t *testing.T) {
 }
 
 func TestPortScanner_ScanWithBanners_NonRoutable(t *testing.T) {
-	scanner, err := discovery.NewPortScanner(100 * time.Millisecond)
+	scanner, err := fingerprint.NewPortScanner(100 * time.Millisecond)
 	if err != nil {
 		t.Fatalf("NewPortScanner failed: %v", err)
 	}
@@ -141,7 +141,7 @@ func TestPortScanner_ScanWithBanners_NonRoutable(t *testing.T) {
 }
 
 func TestPortScanner_ScanWithBanners_ContextCancelled(t *testing.T) {
-	scanner, err := discovery.NewPortScanner(1 * time.Second)
+	scanner, err := fingerprint.NewPortScanner(1 * time.Second)
 	if err != nil {
 		t.Fatalf("NewPortScanner failed: %v", err)
 	}
@@ -159,7 +159,7 @@ func TestPortScanner_ScanWithBanners_ContextCancelled(t *testing.T) {
 }
 
 func TestPortScanner_QuickScan(t *testing.T) {
-	scanner, err := discovery.NewPortScanner(50 * time.Millisecond)
+	scanner, err := fingerprint.NewPortScanner(50 * time.Millisecond)
 	if err != nil {
 		t.Fatalf("NewPortScanner failed: %v", err)
 	}
@@ -180,7 +180,7 @@ func TestPortScanner_QuickScan(t *testing.T) {
 }
 
 func TestPortScanner_WebScan(t *testing.T) {
-	scanner, err := discovery.NewPortScanner(50 * time.Millisecond)
+	scanner, err := fingerprint.NewPortScanner(50 * time.Millisecond)
 	if err != nil {
 		t.Fatalf("NewPortScanner failed: %v", err)
 	}
@@ -202,7 +202,7 @@ func TestPortScanner_FullScan(t *testing.T) {
 		t.Skip("Skipping full scan in short mode")
 	}
 
-	scanner, err := discovery.NewPortScanner(10 * time.Millisecond)
+	scanner, err := fingerprint.NewPortScanner(10 * time.Millisecond)
 	if err != nil {
 		t.Fatalf("NewPortScanner failed: %v", err)
 	}
@@ -223,7 +223,7 @@ func TestPortScanner_FullScan(t *testing.T) {
 }
 
 func TestPortScanner_ScanWithBanners_Hostname(t *testing.T) {
-	scanner, err := discovery.NewPortScanner(100 * time.Millisecond)
+	scanner, err := fingerprint.NewPortScanner(100 * time.Millisecond)
 	if err != nil {
 		t.Fatalf("NewPortScanner failed: %v", err)
 	}
@@ -243,7 +243,7 @@ func TestPortScanner_ScanWithBanners_Hostname(t *testing.T) {
 }
 
 func TestPortScanner_ScanWithBanners_InvalidHostname(t *testing.T) {
-	scanner, err := discovery.NewPortScanner(100 * time.Millisecond)
+	scanner, err := fingerprint.NewPortScanner(100 * time.Millisecond)
 	if err != nil {
 		t.Fatalf("NewPortScanner failed: %v", err)
 	}
@@ -265,7 +265,7 @@ func TestPortScanner_ScanWithBanners_InvalidHostname(t *testing.T) {
 }
 
 func TestGetWebPorts(t *testing.T) {
-	ports := discovery.GetWebPorts()
+	ports := fingerprint.GetWebPorts()
 
 	if len(ports) == 0 {
 		t.Fatal("GetWebPorts should return ports")
@@ -282,13 +282,13 @@ func TestGetWebPorts(t *testing.T) {
 
 func TestPortState_Constants(t *testing.T) {
 	// Verify port state constants exist and are distinct
-	if discovery.PortOpen == discovery.PortClosed {
+	if fingerprint.PortOpen == fingerprint.PortClosed {
 		t.Error("PortOpen and PortClosed should be different")
 	}
-	if discovery.PortOpen == discovery.PortFiltered {
+	if fingerprint.PortOpen == fingerprint.PortFiltered {
 		t.Error("PortOpen and PortFiltered should be different")
 	}
-	if discovery.PortClosed == discovery.PortFiltered {
+	if fingerprint.PortClosed == fingerprint.PortFiltered {
 		t.Error("PortClosed and PortFiltered should be different")
 	}
 }

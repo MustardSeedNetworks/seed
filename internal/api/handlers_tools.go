@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/fingerprint"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/validation"
@@ -62,7 +63,7 @@ type TCPProbeResponse struct {
 }
 
 // TCPProbeResult is the flat transport view of a single TCP probe outcome. It
-// mirrors discovery.TCPProbeResult's wire shape so the published schema stays
+// mirrors fingerprint.TCPProbeResult's wire shape so the published schema stays
 // self-contained instead of reaching into the discovery domain package. State
 // is a plain string (the domain's PortState is a string enum); Error carries
 // the error message (the domain's error field serialized as an opaque "{}").
@@ -77,7 +78,7 @@ type TCPProbeResult struct {
 }
 
 // toTCPProbeResults maps discovery probe results onto their flat transport view.
-func toTCPProbeResults(results []discovery.TCPProbeResult) []TCPProbeResult {
+func toTCPProbeResults(results []fingerprint.TCPProbeResult) []TCPProbeResult {
 	out := make([]TCPProbeResult, len(results))
 	for i, r := range results {
 		out[i] = TCPProbeResult{
@@ -194,7 +195,7 @@ func (s *Server) handleTCPProbe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create prober
-	prober, err := discovery.NewTCPProber(timeout)
+	prober, err := fingerprint.NewTCPProber(timeout)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to create TCP prober", "error", err)
 		sendErrorResponseWithDetails(
@@ -387,7 +388,7 @@ func (s *Server) handlePortScan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create scanner
-	scanner, err := discovery.NewPortScanner(portScanTimeoutSec * time.Second)
+	scanner, err := fingerprint.NewPortScanner(portScanTimeoutSec * time.Second)
 	if err != nil {
 		logger.ErrorContext(r.Context(), "Failed to create port scanner", "error", err)
 		sendErrorResponseWithDetails(
