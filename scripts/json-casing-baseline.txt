@@ -108,8 +108,6 @@ internal/discovery/bluetooth.go	total_devices
 internal/discovery/bluetooth.go	tx_power
 internal/discovery/bluetooth.go	unauthorized_count
 internal/discovery/bluetooth.go	vendor_breakdown
-internal/discovery/cve_local.go	cvss_score
-internal/discovery/cve_local.go	last_updated
 internal/discovery/problems.go	actual_vendor
 internal/discovery/problems.go	adjacent_channel_aps
 internal/discovery/problems.go	affected_macs
@@ -184,6 +182,8 @@ internal/discovery/problems.go	total_active
 internal/discovery/problems.go	utilization_percent
 internal/discovery/problems.go	vendor_mismatch
 internal/discovery/problems.go	wifi_problems
+internal/discovery/vuln/cve_local.go	cvss_score
+internal/discovery/vuln/cve_local.go	last_updated
 internal/discovery/wifi_bridge.go	authorized_bssids
 internal/discovery/wifi_bridge.go	authorized_ssids
 internal/discovery/wifi_bridge.go	min_signal_dbm
