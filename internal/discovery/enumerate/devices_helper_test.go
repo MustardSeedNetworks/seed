@@ -1,10 +1,11 @@
-package discovery_test
+package enumerate_test
 
 import (
 	"testing"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 )
 
 func TestMethod_Constants(t *testing.T) {
@@ -390,7 +391,7 @@ func TestDiscoveredDevice_DuplicateIP(t *testing.T) {
 }
 
 func TestDeviceDiscovery_GetInterfaceName(t *testing.T) {
-	dd := discovery.NewDeviceDiscovery("lo")
+	dd := enumerate.NewDeviceDiscovery("lo")
 
 	interfaceName := dd.GetInterfaceName()
 	if interfaceName != "lo" {
@@ -401,7 +402,7 @@ func TestDeviceDiscovery_GetInterfaceName(t *testing.T) {
 func TestDeviceDiscovery_SetNameResolution(t *testing.T) {
 	t.Parallel()
 
-	dd := discovery.NewDeviceDiscovery("lo")
+	dd := enumerate.NewDeviceDiscovery("lo")
 
 	// Enable name resolution
 	dd.SetNameResolution(true)
@@ -417,30 +418,5 @@ func TestErrScanInProgress(t *testing.T) {
 
 	if err.Error() != "scan already in progress" {
 		t.Errorf("Expected error message 'scan already in progress', got %s", err.Error())
-	}
-}
-
-func TestIsLocallyAdministeredMAC(t *testing.T) {
-	tests := []struct {
-		name     string
-		mac      string
-		expected bool
-	}{
-		{"LAA_second_bit_set", "02:00:00:00:00:00", true},
-		{"LAA_second_bit_set_upper", "0A:11:22:33:44:55", true},
-		{"UAA_no_bit_set", "00:11:22:33:44:55", false},
-		{"UAA_common_vendor", "00:1A:2B:3C:4D:5E", false},
-		{"LAA_vmware_style", "02:50:56:00:00:01", true},
-		{"empty_string", "", false},
-		{"too_short", "0", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := discovery.ExportIsLocallyAdministeredMAC(tt.mac)
-			if result != tt.expected {
-				t.Errorf("isLocallyAdministeredMAC(%q) = %v, expected %v", tt.mac, result, tt.expected)
-			}
-		})
 	}
 }

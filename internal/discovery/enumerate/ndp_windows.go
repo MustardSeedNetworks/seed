@@ -2,7 +2,7 @@
 
 // Windows-specific NDP (IPv6 Neighbor Discovery Protocol) implementation.
 // Uses GetIpNetTable2 to read IPv6 neighbor entries from Windows.
-package discovery
+package enumerate
 
 import (
 	"fmt"

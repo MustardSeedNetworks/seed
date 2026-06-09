@@ -122,8 +122,8 @@ type NetworkServices struct {
 
 // DiscoveryServices groups device and network discovery services.
 type DiscoveryServices struct {
-	Device           *discovery.DeviceDiscovery
-	Service          *discovery.Service
+	Device           *enumerate.DeviceDiscovery
+	Service          *enumerate.Service
 	Vulnerability    *vuln.VulnerabilityScanner
 	ProblemDetector  *discovery.ProblemDetector
 	BluetoothScanner *enumerate.BluetoothScanner

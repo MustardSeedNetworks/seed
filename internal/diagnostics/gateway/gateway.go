@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 )
 
 // Status represents the status of a gateway ping operation.
@@ -111,7 +111,7 @@ type Tester struct {
 	stopCh      chan struct{}
 	running     bool
 	stopOnce    sync.Once             // Prevents double-close panic on stopCh (fixes #854)
-	pinger      *discovery.ICMPPinger // Raw ICMP pinger (nil if unavailable)
+	pinger      *enumerate.ICMPPinger // Raw ICMP pinger (nil if unavailable)
 }
 
 // NewTester creates a new gateway tester.
@@ -125,7 +125,7 @@ func NewTester(thresholds Thresholds) *Tester {
 	}
 
 	// Try to create ICMP pinger (requires CAP_NET_RAW or root)
-	pinger, err := discovery.NewICMPPinger(t.pingTimeout)
+	pinger, err := enumerate.NewICMPPinger(t.pingTimeout)
 	if err == nil {
 		t.pinger = pinger
 	}

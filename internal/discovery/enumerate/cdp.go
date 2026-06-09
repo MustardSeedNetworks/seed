@@ -1,4 +1,4 @@
-package discovery
+package enumerate
 
 // CDP (Cisco Discovery Protocol) support enables discovery of Cisco networking equipment
 // and compatible devices that advertise their capabilities, platform, and management information

@@ -2,7 +2,7 @@
 
 // Windows-specific ARP table implementation using Windows IP Helper API.
 // Uses GetIpNetTable to read the ARP cache entries.
-package discovery
+package enumerate
 
 import (
 	"fmt"

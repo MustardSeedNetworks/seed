@@ -1,4 +1,4 @@
-package discovery
+package enumerate
 
 // devices_scan.go contains DeviceDiscovery.Scan plus the per-protocol merge
 // helpers (ARP/LLDP/CDP/EDP/NDP), the duplicate-IP detector, the vendor /

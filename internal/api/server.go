@@ -25,7 +25,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
-	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/health"
 	"github.com/MustardSeedNetworks/seed/internal/license"
@@ -287,11 +287,11 @@ func initCaptureServices(services *ServiceContainer, cfg *config.Config) {
 	captureOpener := defaultCaptureOpener()
 
 	// services.Discovery.Service is initialized later, after the shared profiler.
-	services.Discovery.Device = discovery.NewDeviceDiscoveryWithOUI(
+	services.Discovery.Device = enumerate.NewDeviceDiscoveryWithOUI(
 		cfg.Interface.Default,
 		cfg.NetworkDiscovery.OUIFilePath,
 		cfg.NetworkDiscovery.OUIMaxAge,
-		discovery.WithCapture(captureOpener),
+		enumerate.WithCapture(captureOpener),
 	)
 	services.Diagnostics.DHCP = dhcp.NewMonitor(cfg.Interface.Default, dhcp.WithCapture(captureOpener))
 	services.Diagnostics.RogueDetector = dhcp.NewRogueDetector(&dhcp.RogueDetectorConfig{
@@ -643,10 +643,10 @@ func (s *Server) NetManager() *netif.Manager { return s.services.Network.Manager
 func (s *Server) LinkMonitor() *netif.LinkMonitor { return s.services.Network.LinkMonitor }
 
 // DeviceDiscovery returns the device discovery service.
-func (s *Server) DeviceDiscovery() *discovery.DeviceDiscovery { return s.services.Discovery.Device }
+func (s *Server) DeviceDiscovery() *enumerate.DeviceDiscovery { return s.services.Discovery.Device }
 
 // DiscoveryService returns the unified discovery service.
-func (s *Server) DiscoveryService() *discovery.Service { return s.services.Discovery.Service }
+func (s *Server) DiscoveryService() *enumerate.Service { return s.services.Discovery.Service }
 
 // Pipeline returns the discovery pipeline.
 
@@ -723,8 +723,8 @@ func (s *Server) loginRateLimiter() *RateLimiter              { return s.service
 func (s *Server) endpointRateLimiter() *EndpointRateLimiter   { return s.services.RateLimit.Endpoint }
 func (s *Server) netManager() *netif.Manager                  { return s.services.Network.Manager }
 func (s *Server) linkMonitor() *netif.LinkMonitor             { return s.services.Network.LinkMonitor }
-func (s *Server) deviceDiscovery() *discovery.DeviceDiscovery { return s.services.Discovery.Device }
-func (s *Server) discoveryService() *discovery.Service        { return s.services.Discovery.Service }
+func (s *Server) deviceDiscovery() *enumerate.DeviceDiscovery { return s.services.Discovery.Device }
+func (s *Server) discoveryService() *enumerate.Service        { return s.services.Discovery.Service }
 func (s *Server) vulnScanner() *vuln.VulnerabilityScanner {
 	return s.services.Discovery.Vulnerability
 }
