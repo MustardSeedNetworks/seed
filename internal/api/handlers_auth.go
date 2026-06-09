@@ -39,8 +39,8 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Token       string `json:"token,omitempty"`
 	Expires     int64  `json:"expires,omitempty"`
-	MFARequired bool   `json:"mfa_required,omitempty"`
-	MFAToken    string `json:"mfa_token,omitempty"`
+	MFARequired bool   `json:"mfaRequired,omitempty"`
+	MFAToken    string `json:"mfaToken,omitempty"`
 }
 
 // handleLoginRateLimited checks and handles rate limiting, returns true if blocked.

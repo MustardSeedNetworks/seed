@@ -1,11 +1,3 @@
-internal/api/handlers_auth.go	mfa_required
-internal/api/handlers_auth.go	mfa_token
-internal/api/handlers_mfa.go	mfa_token
-internal/api/handlers_mfa.go	provisioning_uri
-internal/api/handlers_mfa.go	qr_code_png_base64
-internal/api/handlers_mfa.go	totp_enabled
-internal/api/handlers_mfa.go	webauthn_credential_count
-internal/api/handlers_mfa.go	webauthn_enabled
 internal/api/handlers_oauth.go	client_id
 internal/api/handlers_oauth.go	client_secret
 internal/api/handlers_oauth.go	redirect_url

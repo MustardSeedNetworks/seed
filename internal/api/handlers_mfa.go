@@ -195,8 +195,8 @@ func recordMFAAuditEvent(
 // <img src="data:image/png;base64,..." />.
 type totpSetupResponse struct {
 	Secret          string `json:"secret"`
-	ProvisioningURI string `json:"provisioning_uri"`
-	QRCodePNGBase64 string `json:"qr_code_png_base64"`
+	ProvisioningURI string `json:"provisioningUri"`
+	QRCodePNGBase64 string `json:"qrCodePngBase64"`
 }
 
 // handleTOTPSetup generates a fresh TOTP secret for the authenticated
@@ -393,8 +393,8 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 
 // totpLoginRequest is the body for POST /api/v1/auth/login/totp.
 type totpLoginRequest struct {
-	MFAToken string `json:"mfa_token" validate:"required"`
-	Code     string `json:"code"      validate:"required,numeric,len=6"`
+	MFAToken string `json:"mfaToken" validate:"required"`
+	Code     string `json:"code"     validate:"required,numeric,len=6"`
 }
 
 // handleLoginTOTP trades an mfa_pending token + a valid TOTP code for
@@ -800,9 +800,9 @@ func (s *Server) handleWebAuthnLoginFinish(w http.ResponseWriter, r *http.Reques
 
 // mfaStatusResponse is returned by GET /api/v1/auth/mfa/status.
 type mfaStatusResponse struct {
-	TOTPEnabled       bool `json:"totp_enabled"`
-	WebAuthnEnabled   bool `json:"webauthn_enabled"`
-	WebAuthnCredCount int  `json:"webauthn_credential_count"`
+	TOTPEnabled       bool `json:"totpEnabled"`
+	WebAuthnEnabled   bool `json:"webauthnEnabled"`
+	WebAuthnCredCount int  `json:"webauthnCredentialCount"`
 }
 
 // handleMFAStatus returns a compact MFA enrolment summary for the UI.
