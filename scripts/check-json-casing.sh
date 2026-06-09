@@ -3,20 +3,26 @@
 #
 # ADR-0010: JSON API wire tags are camelCase. The config-file format
 # (internal/config) and SQL columns are snake_case by design and are NOT
-# scanned here. Protocol-mandated keys (OAuth client_id, etc.) keep their spec
-# casing and are grandfathered via the baseline.
+# scanned here.
+#
+# All of OUR own wire/domain tags are now camelCase (the Phase-8 normalization
+# is complete). The baseline is therefore NOT a debt list — it is an
+# EXTERNAL-BOUNDARY allow-list: the only remaining entries are the macOS
+# `system_profiler SPBluetoothDataType -json` keys that bluetooth_darwin.go
+# unmarshals verbatim (device_address, controller_state, …). Those keys are
+# Apple's external contract; matching the struct tags to them is the correct,
+# best-practice way to parse the OS tool's output, so they stay snake_case by
+# design. Do NOT add OUR keys here — fix the casing instead.
 #
 # This gate scans `json:"..."` struct tags in internal/api + internal/discovery
-# for snake_case keys and compares them to a committed baseline
+# for snake_case keys and compares them to the committed allow-list
 # (scripts/json-casing-baseline.txt). It is a RATCHET:
-#   - it FAILS if a NEW snake_case tag appears that is not in the baseline
+#   - it FAILS if a NEW snake_case tag appears that is not in the allow-list
 #     (i.e. new drift), and
 #   - it passes when violations only shrink.
-# Phase 8 normalizes the baselined tags to camelCase, regenerating the baseline
-# (smaller) each step until it is empty.
 #
-# Regenerate the baseline after cleaning (or to grandfather a legitimate
-# protocol key):  scripts/check-json-casing.sh --update
+# Regenerate the allow-list only when adding a genuinely-external contract key:
+#   scripts/check-json-casing.sh --update
 #
 # Run locally: scripts/check-json-casing.sh
 set -euo pipefail
@@ -61,6 +67,7 @@ if [[ -n "$new" ]]; then
 	exit 1
 fi
 
-# Informational: how much of the baseline remains to normalize.
+# Informational: size of the external-boundary allow-list (macOS system_profiler
+# keys). This is no longer "debt to normalize" — our own tags are all camelCase.
 remaining=$(current_violations | comm -12 - <(sort -u "$BASELINE") | wc -l | tr -d ' ')
-echo "JSON casing gate OK — no new snake_case wire tags. ${remaining} baselined tag(s) remain to normalize (ADR-0010 / Phase 8)."
+echo "JSON casing gate OK — no new snake_case wire tags. ${remaining} external-contract tag(s) on the allow-list (macOS system_profiler; ADR-0010)."
