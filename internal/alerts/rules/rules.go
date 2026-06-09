@@ -1,10 +1,11 @@
-// Package alertsapp holds the alerts application (use-case) layer (ADR-0016
-// strangle). It owns the operator-defined alert-rule orchestration (and, over
-// time, the alert acknowledge/resolve flow) that previously reached into the
-// database repositories from the api.Server handlers, behind a narrow
-// consumer-defined Store port. Handlers keep transport concerns: request
-// decode, field validation, JSON encoding, and error→HTTP mapping.
-package alertsapp
+// Package rules holds the alert-rule application (use-case) layer (ADR-0020). It
+// owns the operator-defined alert-rule orchestration (and, over time, the alert
+// acknowledge/resolve flow) that previously reached into the database
+// repositories from the api.Server handlers, behind a narrow consumer-defined
+// Store port. Handlers keep transport concerns: request decode, field
+// validation, JSON encoding, and error→HTTP mapping. The adapter satisfying the
+// Store port lives in the composition root (internal/app).
+package rules
 
 import (
 	"context"
@@ -12,8 +13,8 @@ import (
 	"time"
 )
 
-// ErrRuleNotFound is returned when no alert rule has the given id.
-var ErrRuleNotFound = errors.New("alert rule not found")
+// ErrNotFound is returned when no alert rule has the given id.
+var ErrNotFound = errors.New("alert rule not found")
 
 // ValidationError carries a repository-level validation message verbatim so the
 // handler can echo it as a 400, preserving the pre-strangle response body.
@@ -40,11 +41,11 @@ type Rule struct {
 	UpdatedAt            time.Time
 }
 
-// RuleStore is the persistence surface the rule use-case needs, defined at the
-// consumer (ADR-0016). The adapter satisfies it over the database AlertRules
-// repository, mapping ErrAlertRuleNotFound -> ErrRuleNotFound and the repo's
+// Store is the persistence surface the rule use-case needs, defined at the
+// consumer (ADR-0020). The adapter satisfies it over the database AlertRules
+// repository, mapping ErrAlertRuleNotFound -> ErrNotFound and the repo's
 // "alert_rules:"-prefixed validation errors -> *ValidationError.
-type RuleStore interface {
+type Store interface {
 	List(ctx context.Context, enabledOnly bool) ([]Rule, error)
 	Get(ctx context.Context, id int64) (Rule, error)
 	// Create stores r and returns it with the generated ID + timestamps.
@@ -53,14 +54,14 @@ type RuleStore interface {
 	Delete(ctx context.Context, id int64) error
 }
 
-// RuleService is the alert-rule use-case.
-type RuleService struct {
-	store RuleStore
+// Service is the alert-rule use-case.
+type Service struct {
+	store Store
 }
 
-// NewRuleService builds the use-case over its Store port.
-func NewRuleService(store RuleStore) *RuleService {
-	return &RuleService{store: store}
+// NewService builds the use-case over its Store port.
+func NewService(store Store) *Service {
+	return &Service{store: store}
 }
 
 // minThreshold mirrors the pre-strangle max(threshold, 1): a rule fires on the
@@ -73,17 +74,17 @@ func minThreshold(n int) int {
 }
 
 // List returns alert rules, optionally only the enabled ones.
-func (s *RuleService) List(ctx context.Context, enabledOnly bool) ([]Rule, error) {
+func (s *Service) List(ctx context.Context, enabledOnly bool) ([]Rule, error) {
 	return s.store.List(ctx, enabledOnly)
 }
 
-// Get returns one alert rule (ErrRuleNotFound when absent).
-func (s *RuleService) Get(ctx context.Context, id int64) (Rule, error) {
+// Get returns one alert rule (ErrNotFound when absent).
+func (s *Service) Get(ctx context.Context, id int64) (Rule, error) {
 	return s.store.Get(ctx, id)
 }
 
 // Create stores a new rule and returns the persisted row.
-func (s *RuleService) Create(ctx context.Context, r Rule) (Rule, error) {
+func (s *Service) Create(ctx context.Context, r Rule) (Rule, error) {
 	r.ID = 0
 	r.ThresholdCount = minThreshold(r.ThresholdCount)
 	return s.store.Create(ctx, r)
@@ -91,7 +92,7 @@ func (s *RuleService) Create(ctx context.Context, r Rule) (Rule, error) {
 
 // Update writes the rule at id and returns the freshly-read row so callers see
 // the new updated_at; on a post-write read failure it echoes the written rule.
-func (s *RuleService) Update(ctx context.Context, id int64, r Rule) (Rule, error) {
+func (s *Service) Update(ctx context.Context, id int64, r Rule) (Rule, error) {
 	r.ID = id
 	r.ThresholdCount = minThreshold(r.ThresholdCount)
 	if err := s.store.Update(ctx, r); err != nil {
@@ -105,7 +106,7 @@ func (s *RuleService) Update(ctx context.Context, id int64, r Rule) (Rule, error
 	return r, nil
 }
 
-// Delete removes the rule at id (ErrRuleNotFound when absent).
-func (s *RuleService) Delete(ctx context.Context, id int64) error {
+// Delete removes the rule at id (ErrNotFound when absent).
+func (s *Service) Delete(ctx context.Context, id int64) error {
 	return s.store.Delete(ctx, id)
 }
