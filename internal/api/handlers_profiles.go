@@ -19,7 +19,7 @@ type ProfileRequest struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
 	Config      json.RawMessage `json:"config"`
-	IsDefault   bool            `json:"is_default"`
+	IsDefault   bool            `json:"isDefault"`
 }
 
 // ProfileResponse represents a profile in API responses.
@@ -28,9 +28,9 @@ type ProfileResponse struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
 	Config      json.RawMessage `json:"config"`
-	IsDefault   bool            `json:"is_default"`
-	CreatedAt   string          `json:"created_at"`
-	UpdatedAt   string          `json:"updated_at"`
+	IsDefault   bool            `json:"isDefault"`
+	CreatedAt   string          `json:"createdAt"`
+	UpdatedAt   string          `json:"updatedAt"`
 }
 
 // ProfileListResponse represents the list profiles response.
@@ -57,7 +57,7 @@ type ProfileImportResponse struct {
 // ProfileExportResponse represents an export response.
 type ProfileExportResponse struct {
 	Version    string            `json:"version"`
-	ExportedAt string            `json:"exported_at"`
+	ExportedAt string            `json:"exportedAt"`
 	Profiles   []ProfileResponse `json:"profiles"`
 }
 
@@ -365,7 +365,7 @@ func (s *Server) handleSetActiveProfile(w http.ResponseWriter, r *http.Request) 
 	localizer := i18n.FromRequest(r)
 
 	var req struct {
-		ProfileID string `json:"profile_id"`
+		ProfileID string `json:"profileId"`
 	}
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
@@ -635,7 +635,7 @@ type profileInterfaceShape struct {
 		Default  string   `json:"default"`
 		WiFi     string   `json:"wifi"`
 		Ethernet []string `json:"ethernet"`
-		WiFiList []string `json:"wifi_list"`
+		WiFiList []string `json:"wifiList"`
 	} `json:"interface"`
 }
 

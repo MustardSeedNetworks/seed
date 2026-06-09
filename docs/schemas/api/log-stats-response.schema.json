@@ -5,43 +5,43 @@
   "$defs": {
     "LogStatsResponse": {
       "properties": {
-        "total_count": {
+        "totalCount": {
           "type": "integer"
         },
-        "by_level": {
+        "byLevel": {
           "additionalProperties": {
             "type": "integer"
           },
           "type": "object"
         },
-        "by_layer": {
+        "byLayer": {
           "additionalProperties": {
             "type": "integer"
           },
           "type": "object"
         },
-        "by_component": {
+        "byComponent": {
           "additionalProperties": {
             "type": "integer"
           },
           "type": "object"
         },
-        "errors_last_hour": {
+        "errorsLastHour": {
           "type": "integer"
         },
-        "warnings_last_hour": {
+        "warningsLastHour": {
           "type": "integer"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "total_count",
-        "by_level",
-        "by_layer",
-        "by_component",
-        "errors_last_hour",
-        "warnings_last_hour"
+        "totalCount",
+        "byLevel",
+        "byLayer",
+        "byComponent",
+        "errorsLastHour",
+        "warningsLastHour"
       ]
     }
   },

@@ -33,8 +33,8 @@ type ClientLogEntry struct {
 	Level     string         `json:"level"`
 	Component string         `json:"component"`
 	Message   string         `json:"message"`
-	RequestID string         `json:"request_id,omitempty"`
-	SessionID string         `json:"session_id,omitempty"`
+	RequestID string         `json:"requestId,omitempty"`
+	SessionID string         `json:"sessionId,omitempty"`
 	Metadata  map[string]any `json:"metadata,omitempty"`
 	Stack     string         `json:"stack,omitempty"`
 }
@@ -42,7 +42,7 @@ type ClientLogEntry struct {
 // LogQueryResponse represents the response for log queries.
 type LogQueryResponse struct {
 	Logs       []LogEntry `json:"logs"`
-	TotalCount int        `json:"total_count"`
+	TotalCount int        `json:"totalCount"`
 	Offset     int        `json:"offset"`
 	Limit      int        `json:"limit"`
 }
@@ -54,11 +54,11 @@ type LogEntry struct {
 	Timestamp  time.Time      `json:"timestamp"`
 	Level      string         `json:"level"`
 	Layer      string         `json:"layer"`
-	RequestID  string         `json:"request_id,omitempty"`
-	SessionID  string         `json:"session_id,omitempty"`
+	RequestID  string         `json:"requestId,omitempty"`
+	SessionID  string         `json:"sessionId,omitempty"`
 	Message    string         `json:"message"`
 	Component  string         `json:"component,omitempty"`
-	DurationMs int64          `json:"duration_ms,omitempty"`
+	DurationMs int64          `json:"durationMs,omitempty"`
 	Metadata   map[string]any `json:"metadata,omitempty"`
 	Stack      string         `json:"stack,omitempty"`
 }
@@ -88,12 +88,12 @@ func toLogEntries(entries []*logging.LogEntry) []LogEntry {
 
 // LogStatsResponse represents log statistics.
 type LogStatsResponse struct {
-	TotalCount       int            `json:"total_count"`
-	ByLevel          map[string]int `json:"by_level"`
-	ByLayer          map[string]int `json:"by_layer"`
-	ByComponent      map[string]int `json:"by_component"`
-	ErrorsLastHour   int            `json:"errors_last_hour"`
-	WarningsLastHour int            `json:"warnings_last_hour"`
+	TotalCount       int            `json:"totalCount"`
+	ByLevel          map[string]int `json:"byLevel"`
+	ByLayer          map[string]int `json:"byLayer"`
+	ByComponent      map[string]int `json:"byComponent"`
+	ErrorsLastHour   int            `json:"errorsLastHour"`
+	WarningsLastHour int            `json:"warningsLastHour"`
 }
 
 // handleClientLogs receives log entries from the frontend and stores them.

@@ -15,10 +15,10 @@
         "layer": {
           "type": "string"
         },
-        "request_id": {
+        "requestId": {
           "type": "string"
         },
-        "session_id": {
+        "sessionId": {
           "type": "string"
         },
         "message": {
@@ -27,7 +27,7 @@
         "component": {
           "type": "string"
         },
-        "duration_ms": {
+        "durationMs": {
           "type": "integer"
         },
         "metadata": {
@@ -54,7 +54,7 @@
           },
           "type": "array"
         },
-        "total_count": {
+        "totalCount": {
           "type": "integer"
         },
         "offset": {
@@ -68,7 +68,7 @@
       "type": "object",
       "required": [
         "logs",
-        "total_count",
+        "totalCount",
         "offset",
         "limit"
       ]
