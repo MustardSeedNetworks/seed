@@ -123,6 +123,10 @@ ui/playwright/.auth/
 # Frontend build outputs (Vite builds directly to internal/api/ui)
 internal/api/ui/*
 !internal/api/ui/.gitkeep
+# Emitted Vite config artifacts — tsconfig.node.json is noEmit, but guard
+# against a stray tsc emit. vite.config.ts is the only tracked Vite config.
+ui/vite.config.js
+ui/vite.config.d.ts
 ui/test-results/
 vendor/
 yarn-error.log*
