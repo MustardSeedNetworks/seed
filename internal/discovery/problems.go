@@ -83,154 +83,154 @@ type NetworkProblem struct {
 	Description string          `json:"description"`
 
 	// Device correlation
-	DeviceID      string `json:"device_id,omitempty"`      // Links to DiscoveredDevice
-	DeviceMAC     string `json:"device_mac,omitempty"`     // MAC address involved
-	InterfaceName string `json:"interface_name,omitempty"` // Specific interface if applicable
+	DeviceID      string `json:"deviceId,omitempty"`      // Links to DiscoveredDevice
+	DeviceMAC     string `json:"deviceMac,omitempty"`     // MAC address involved
+	InterfaceName string `json:"interfaceName,omitempty"` // Specific interface if applicable
 
 	// Additional context
-	IPAddress    string `json:"ip_address,omitempty"`
-	AffectedMACs string `json:"affected_macs,omitempty"` // Comma-separated for IP conflicts
-	SSID         string `json:"ssid,omitempty"`          // WiFi network if applicable
-	BSSID        string `json:"bssid,omitempty"`         // AP BSSID if applicable
-	Channel      int    `json:"channel,omitempty"`       // WiFi channel if applicable
+	IPAddress    string `json:"ipAddress,omitempty"`
+	AffectedMACs string `json:"affectedMacs,omitempty"` // Comma-separated for IP conflicts
+	SSID         string `json:"ssid,omitempty"`         // WiFi network if applicable
+	BSSID        string `json:"bssid,omitempty"`        // AP BSSID if applicable
+	Channel      int    `json:"channel,omitempty"`      // WiFi channel if applicable
 
 	// Metrics
-	CurrentValue   float64 `json:"current_value,omitempty"`   // Current measured value
-	ThresholdValue float64 `json:"threshold_value,omitempty"` // Threshold that was exceeded
-	Unit           string  `json:"unit,omitempty"`            // Unit of measurement
+	CurrentValue   float64 `json:"currentValue,omitempty"`   // Current measured value
+	ThresholdValue float64 `json:"thresholdValue,omitempty"` // Threshold that was exceeded
+	Unit           string  `json:"unit,omitempty"`           // Unit of measurement
 
 	// Timestamps
-	FirstSeen  time.Time  `json:"first_seen"`
-	LastSeen   time.Time  `json:"last_seen"`
-	ResolvedAt *time.Time `json:"resolved_at,omitempty"`
+	FirstSeen  time.Time  `json:"firstSeen"`
+	LastSeen   time.Time  `json:"lastSeen"`
+	ResolvedAt *time.Time `json:"resolvedAt,omitempty"`
 
 	// Occurrence tracking
-	OccurrenceCount int `json:"occurrence_count"`
+	OccurrenceCount int `json:"occurrenceCount"`
 
 	Metadata map[string]any `json:"metadata,omitempty"`
 }
 
 // IPConflict represents a duplicate IP address situation.
 type IPConflict struct {
-	IPAddress  string    `json:"ip_address"`
-	MACs       []string  `json:"macs"`       // All MACs claiming this IP
-	DeviceIDs  []string  `json:"device_ids"` // Corresponding device IDs
-	FirstSeen  time.Time `json:"first_seen"`
-	LastSeen   time.Time `json:"last_seen"`
-	IsResolved bool      `json:"is_resolved"`
+	IPAddress  string    `json:"ipAddress"`
+	MACs       []string  `json:"macs"`      // All MACs claiming this IP
+	DeviceIDs  []string  `json:"deviceIds"` // Corresponding device IDs
+	FirstSeen  time.Time `json:"firstSeen"`
+	LastSeen   time.Time `json:"lastSeen"`
+	IsResolved bool      `json:"isResolved"`
 }
 
 // DuplexMismatch represents a speed/duplex negotiation issue.
 type DuplexMismatch struct {
-	DeviceID       string    `json:"device_id"`
-	InterfaceName  string    `json:"interface_name"`
-	LocalDuplex    string    `json:"local_duplex"`    // half/full
-	LocalSpeed     int       `json:"local_speed"`     // Mbps
-	RemoteDuplex   string    `json:"remote_duplex"`   // half/full (if detectable)
-	RemoteSpeed    int       `json:"remote_speed"`    // Mbps
-	CollisionCount int64     `json:"collision_count"` // High collisions indicate mismatch
-	LateCollisions int64     `json:"late_collisions"` // Late collisions are a clear indicator
-	FirstSeen      time.Time `json:"first_seen"`
-	LastSeen       time.Time `json:"last_seen"`
+	DeviceID       string    `json:"deviceId"`
+	InterfaceName  string    `json:"interfaceName"`
+	LocalDuplex    string    `json:"localDuplex"`    // half/full
+	LocalSpeed     int       `json:"localSpeed"`     // Mbps
+	RemoteDuplex   string    `json:"remoteDuplex"`   // half/full (if detectable)
+	RemoteSpeed    int       `json:"remoteSpeed"`    // Mbps
+	CollisionCount int64     `json:"collisionCount"` // High collisions indicate mismatch
+	LateCollisions int64     `json:"lateCollisions"` // Late collisions are a clear indicator
+	FirstSeen      time.Time `json:"firstSeen"`
+	LastSeen       time.Time `json:"lastSeen"`
 }
 
 // STPEvent represents a Spanning Tree Protocol event.
 type STPEvent struct {
-	DeviceID      string    `json:"device_id"`
-	InterfaceName string    `json:"interface_name"`
-	EventType     string    `json:"event_type"` // topology_change, root_change, port_state_change
-	OldState      string    `json:"old_state,omitempty"`
-	NewState      string    `json:"new_state,omitempty"`
-	RootBridgeID  string    `json:"root_bridge_id,omitempty"`
-	BridgeCost    int       `json:"bridge_cost,omitempty"`
-	RecordedAt    time.Time `json:"recorded_at"`
+	DeviceID      string    `json:"deviceId"`
+	InterfaceName string    `json:"interfaceName"`
+	EventType     string    `json:"eventType"` // topology_change, root_change, port_state_change
+	OldState      string    `json:"oldState,omitempty"`
+	NewState      string    `json:"newState,omitempty"`
+	RootBridgeID  string    `json:"rootBridgeId,omitempty"`
+	BridgeCost    int       `json:"bridgeCost,omitempty"`
+	RecordedAt    time.Time `json:"recordedAt"`
 }
 
 // ResourceThreshold represents a device resource usage alert.
 type ResourceThreshold struct {
-	DeviceID     string    `json:"device_id"`
-	ResourceType string    `json:"resource_type"` // cpu, memory, disk, temperature
-	CurrentValue float64   `json:"current_value"`
+	DeviceID     string    `json:"deviceId"`
+	ResourceType string    `json:"resourceType"` // cpu, memory, disk, temperature
+	CurrentValue float64   `json:"currentValue"`
 	Threshold    float64   `json:"threshold"`
 	Unit         string    `json:"unit"` // percent, bytes, celsius
-	IsExceeded   bool      `json:"is_exceeded"`
-	RecordedAt   time.Time `json:"recorded_at"`
+	IsExceeded   bool      `json:"isExceeded"`
+	RecordedAt   time.Time `json:"recordedAt"`
 }
 
 // InterfaceErrorStats represents error counters for an interface.
 type InterfaceErrorStats struct {
-	DeviceID      string `json:"device_id"`
-	InterfaceName string `json:"interface_name"`
+	DeviceID      string `json:"deviceId"`
+	InterfaceName string `json:"interfaceName"`
 
 	// Input errors
-	InputErrors  int64 `json:"input_errors"`
-	CRCErrors    int64 `json:"crc_errors"`
-	FrameErrors  int64 `json:"frame_errors"`
+	InputErrors  int64 `json:"inputErrors"`
+	CRCErrors    int64 `json:"crcErrors"`
+	FrameErrors  int64 `json:"frameErrors"`
 	Overruns     int64 `json:"overruns"`
-	DroppedInput int64 `json:"dropped_input"`
+	DroppedInput int64 `json:"droppedInput"`
 
 	// Output errors
-	OutputErrors  int64 `json:"output_errors"`
+	OutputErrors  int64 `json:"outputErrors"`
 	Collisions    int64 `json:"collisions"`
-	LateCollision int64 `json:"late_collision"`
-	CarrierErrors int64 `json:"carrier_errors"`
-	DroppedOutput int64 `json:"dropped_output"`
+	LateCollision int64 `json:"lateCollision"`
+	CarrierErrors int64 `json:"carrierErrors"`
+	DroppedOutput int64 `json:"droppedOutput"`
 
 	// Delta calculations (change since last poll)
-	InputErrorsDelta  int64 `json:"input_errors_delta,omitempty"`
-	OutputErrorsDelta int64 `json:"output_errors_delta,omitempty"`
+	InputErrorsDelta  int64 `json:"inputErrorsDelta,omitempty"`
+	OutputErrorsDelta int64 `json:"outputErrorsDelta,omitempty"`
 
-	RecordedAt time.Time `json:"recorded_at"`
+	RecordedAt time.Time `json:"recordedAt"`
 }
 
 // WiFiProblem represents a WiFi-specific issue.
 type WiFiProblem struct {
-	ProblemType string   `json:"problem_type"` // rogue_ap, weak_signal, channel_interference, unauthorized_client
+	ProblemType string   `json:"problemType"` // rogue_ap, weak_signal, channel_interference, unauthorized_client
 	SSID        string   `json:"ssid,omitempty"`
 	BSSID       string   `json:"bssid,omitempty"`
 	Channel     int      `json:"channel,omitempty"`
 	Band        WiFiBand `json:"band,omitempty"`
 
 	// Signal issues
-	SignalDBm    int     `json:"signal_dbm,omitempty"`
-	NoiseDBm     int     `json:"noise_dbm,omitempty"`
+	SignalDBm    int     `json:"signalDbm,omitempty"`
+	NoiseDBm     int     `json:"noiseDbm,omitempty"`
 	SNR          int     `json:"snr,omitempty"`
-	RetryPercent float64 `json:"retry_percent,omitempty"`
+	RetryPercent float64 `json:"retryPercent,omitempty"`
 
 	// Channel issues
-	CoChannelAPs       int     `json:"co_channel_aps,omitempty"`       // APs on same channel
-	AdjacentChannelAPs int     `json:"adjacent_channel_aps,omitempty"` // APs on adjacent channels
-	UtilizationPercent float64 `json:"utilization_percent,omitempty"`
+	CoChannelAPs       int     `json:"coChannelAps,omitempty"`       // APs on same channel
+	AdjacentChannelAPs int     `json:"adjacentChannelAps,omitempty"` // APs on adjacent channels
+	UtilizationPercent float64 `json:"utilizationPercent,omitempty"`
 
 	// Rogue detection
-	IsRogue        bool   `json:"is_rogue,omitempty"`
-	IsUnauthorized bool   `json:"is_unauthorized,omitempty"`
-	VendorMismatch bool   `json:"vendor_mismatch,omitempty"`
-	ExpectedVendor string `json:"expected_vendor,omitempty"`
-	ActualVendor   string `json:"actual_vendor,omitempty"`
+	IsRogue        bool   `json:"isRogue,omitempty"`
+	IsUnauthorized bool   `json:"isUnauthorized,omitempty"`
+	VendorMismatch bool   `json:"vendorMismatch,omitempty"`
+	ExpectedVendor string `json:"expectedVendor,omitempty"`
+	ActualVendor   string `json:"actualVendor,omitempty"`
 
-	FirstSeen time.Time `json:"first_seen"`
-	LastSeen  time.Time `json:"last_seen"`
+	FirstSeen time.Time `json:"firstSeen"`
+	LastSeen  time.Time `json:"lastSeen"`
 }
 
 // ProblemThresholds defines when to trigger problem detection.
 type ProblemThresholds struct {
 	// Resource thresholds
-	CPUPercent    float64 `json:"cpu_percent"    yaml:"cpu_percent"`    // Default: 90
-	MemoryPercent float64 `json:"memory_percent" yaml:"memory_percent"` // Default: 90
-	DiskPercent   float64 `json:"disk_percent"   yaml:"disk_percent"`   // Default: 90
-	TempCelsius   float64 `json:"temp_celsius"   yaml:"temp_celsius"`   // Default: 85
+	CPUPercent    float64 `json:"cpuPercent"    yaml:"cpu_percent"`    // Default: 90
+	MemoryPercent float64 `json:"memoryPercent" yaml:"memory_percent"` // Default: 90
+	DiskPercent   float64 `json:"diskPercent"   yaml:"disk_percent"`   // Default: 90
+	TempCelsius   float64 `json:"tempCelsius"   yaml:"temp_celsius"`   // Default: 85
 
 	// Interface error thresholds (errors per minute)
-	InputErrorsPerMin  int64 `json:"input_errors_per_min"  yaml:"input_errors_per_min"`  // Default: 10
-	OutputErrorsPerMin int64 `json:"output_errors_per_min" yaml:"output_errors_per_min"` // Default: 10
-	CollisionsPerMin   int64 `json:"collisions_per_min"    yaml:"collisions_per_min"`    // Default: 100
+	InputErrorsPerMin  int64 `json:"inputErrorsPerMin"  yaml:"input_errors_per_min"`  // Default: 10
+	OutputErrorsPerMin int64 `json:"outputErrorsPerMin" yaml:"output_errors_per_min"` // Default: 10
+	CollisionsPerMin   int64 `json:"collisionsPerMin"   yaml:"collisions_per_min"`    // Default: 100
 
 	// WiFi thresholds
-	MinSignalDBm    int     `json:"min_signal_dbm"     yaml:"min_signal_dbm"`     // Default: -75
-	MaxRetryPercent float64 `json:"max_retry_percent"  yaml:"max_retry_percent"`  // Default: 15
-	MaxChannelUtil  float64 `json:"max_channel_util"   yaml:"max_channel_util"`   // Default: 80
-	MaxCoChannelAPs int     `json:"max_co_channel_aps" yaml:"max_co_channel_aps"` // Default: 3
+	MinSignalDBm    int     `json:"minSignalDbm"    yaml:"min_signal_dbm"`     // Default: -75
+	MaxRetryPercent float64 `json:"maxRetryPercent" yaml:"max_retry_percent"`  // Default: 15
+	MaxChannelUtil  float64 `json:"maxChannelUtil"  yaml:"max_channel_util"`   // Default: 80
+	MaxCoChannelAPs int     `json:"maxCoChannelAps" yaml:"max_co_channel_aps"` // Default: 3
 }
 
 // DefaultProblemThresholds returns sensible default thresholds.
@@ -252,25 +252,25 @@ func DefaultProblemThresholds() ProblemThresholds {
 
 // ProblemSummary provides an overview of detected problems.
 type ProblemSummary struct {
-	TotalActive   int            `json:"total_active"`
-	BySeverity    map[string]int `json:"by_severity"`
-	ByCategory    map[string]int `json:"by_category"`
-	RecentCount   int            `json:"recent_count"`   // Problems in last hour
-	ResolvedToday int            `json:"resolved_today"` // Problems resolved today
-	LastScanTime  time.Time      `json:"last_scan_time"`
+	TotalActive   int            `json:"totalActive"`
+	BySeverity    map[string]int `json:"bySeverity"`
+	ByCategory    map[string]int `json:"byCategory"`
+	RecentCount   int            `json:"recentCount"`   // Problems in last hour
+	ResolvedToday int            `json:"resolvedToday"` // Problems resolved today
+	LastScanTime  time.Time      `json:"lastScanTime"`
 }
 
 // ProblemDetectionResult contains results from a problem detection scan.
 type ProblemDetectionResult struct {
 	Problems         []NetworkProblem      `json:"problems"`
-	IPConflicts      []IPConflict          `json:"ip_conflicts"`
-	DuplexMismatches []DuplexMismatch      `json:"duplex_mismatches"`
-	STPEvents        []STPEvent            `json:"stp_events"`
-	ResourceAlerts   []ResourceThreshold   `json:"resource_alerts"`
-	InterfaceErrors  []InterfaceErrorStats `json:"interface_errors"`
-	WiFiProblems     []WiFiProblem         `json:"wifi_problems"`
-	ScanTime         time.Time             `json:"scan_time"`
-	ScanDurationMS   int64                 `json:"scan_duration_ms"`
+	IPConflicts      []IPConflict          `json:"ipConflicts"`
+	DuplexMismatches []DuplexMismatch      `json:"duplexMismatches"`
+	STPEvents        []STPEvent            `json:"stpEvents"`
+	ResourceAlerts   []ResourceThreshold   `json:"resourceAlerts"`
+	InterfaceErrors  []InterfaceErrorStats `json:"interfaceErrors"`
+	WiFiProblems     []WiFiProblem         `json:"wifiProblems"`
+	ScanTime         time.Time             `json:"scanTime"`
+	ScanDurationMS   int64                 `json:"scanDurationMs"`
 }
 
 // SeverityForResourceUsage determines severity based on usage percentage.

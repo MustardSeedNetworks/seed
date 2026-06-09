@@ -5,7 +5,7 @@
   "$defs": {
     "IPConflict": {
       "properties": {
-        "ip_address": {
+        "ipAddress": {
           "type": "string"
         },
         "macs": {
@@ -14,80 +14,80 @@
           },
           "type": "array"
         },
-        "device_ids": {
+        "deviceIds": {
           "items": {
             "type": "string"
           },
           "type": "array"
         },
-        "first_seen": {
+        "firstSeen": {
           "type": "string",
           "format": "date-time"
         },
-        "last_seen": {
+        "lastSeen": {
           "type": "string",
           "format": "date-time"
         },
-        "is_resolved": {
+        "isResolved": {
           "type": "boolean"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "ip_address",
+        "ipAddress",
         "macs",
-        "device_ids",
-        "first_seen",
-        "last_seen",
-        "is_resolved"
+        "deviceIds",
+        "firstSeen",
+        "lastSeen",
+        "isResolved"
       ]
     },
     "InterfaceErrorStats": {
       "properties": {
-        "device_id": {
+        "deviceId": {
           "type": "string"
         },
-        "interface_name": {
+        "interfaceName": {
           "type": "string"
         },
-        "input_errors": {
+        "inputErrors": {
           "type": "integer"
         },
-        "crc_errors": {
+        "crcErrors": {
           "type": "integer"
         },
-        "frame_errors": {
+        "frameErrors": {
           "type": "integer"
         },
         "overruns": {
           "type": "integer"
         },
-        "dropped_input": {
+        "droppedInput": {
           "type": "integer"
         },
-        "output_errors": {
+        "outputErrors": {
           "type": "integer"
         },
         "collisions": {
           "type": "integer"
         },
-        "late_collision": {
+        "lateCollision": {
           "type": "integer"
         },
-        "carrier_errors": {
+        "carrierErrors": {
           "type": "integer"
         },
-        "dropped_output": {
+        "droppedOutput": {
           "type": "integer"
         },
-        "input_errors_delta": {
+        "inputErrorsDelta": {
           "type": "integer"
         },
-        "output_errors_delta": {
+        "outputErrorsDelta": {
           "type": "integer"
         },
-        "recorded_at": {
+        "recordedAt": {
           "type": "string",
           "format": "date-time"
         }
@@ -95,19 +95,19 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "device_id",
-        "interface_name",
-        "input_errors",
-        "crc_errors",
-        "frame_errors",
+        "deviceId",
+        "interfaceName",
+        "inputErrors",
+        "crcErrors",
+        "frameErrors",
         "overruns",
-        "dropped_input",
-        "output_errors",
+        "droppedInput",
+        "outputErrors",
         "collisions",
-        "late_collision",
-        "carrier_errors",
-        "dropped_output",
-        "recorded_at"
+        "lateCollision",
+        "carrierErrors",
+        "droppedOutput",
+        "recordedAt"
       ]
     },
     "NetworkProblem": {
@@ -133,19 +133,19 @@
         "description": {
           "type": "string"
         },
-        "device_id": {
+        "deviceId": {
           "type": "string"
         },
-        "device_mac": {
+        "deviceMac": {
           "type": "string"
         },
-        "interface_name": {
+        "interfaceName": {
           "type": "string"
         },
-        "ip_address": {
+        "ipAddress": {
           "type": "string"
         },
-        "affected_macs": {
+        "affectedMacs": {
           "type": "string"
         },
         "ssid": {
@@ -157,28 +157,28 @@
         "channel": {
           "type": "integer"
         },
-        "current_value": {
+        "currentValue": {
           "type": "number"
         },
-        "threshold_value": {
+        "thresholdValue": {
           "type": "number"
         },
         "unit": {
           "type": "string"
         },
-        "first_seen": {
+        "firstSeen": {
           "type": "string",
           "format": "date-time"
         },
-        "last_seen": {
+        "lastSeen": {
           "type": "string",
           "format": "date-time"
         },
-        "resolved_at": {
+        "resolvedAt": {
           "type": "string",
           "format": "date-time"
         },
-        "occurrence_count": {
+        "occurrenceCount": {
           "type": "integer"
         },
         "metadata": {
@@ -195,9 +195,9 @@
         "status",
         "title",
         "description",
-        "first_seen",
-        "last_seen",
-        "occurrence_count"
+        "firstSeen",
+        "lastSeen",
+        "occurrenceCount"
       ]
     },
     "ProblemScanResponse": {
@@ -245,7 +245,7 @@
     },
     "WiFiProblem": {
       "properties": {
-        "problem_type": {
+        "problemType": {
           "type": "string"
         },
         "ssid": {
@@ -260,47 +260,47 @@
         "band": {
           "type": "string"
         },
-        "signal_dbm": {
+        "signalDbm": {
           "type": "integer"
         },
-        "noise_dbm": {
+        "noiseDbm": {
           "type": "integer"
         },
         "snr": {
           "type": "integer"
         },
-        "retry_percent": {
+        "retryPercent": {
           "type": "number"
         },
-        "co_channel_aps": {
+        "coChannelAps": {
           "type": "integer"
         },
-        "adjacent_channel_aps": {
+        "adjacentChannelAps": {
           "type": "integer"
         },
-        "utilization_percent": {
+        "utilizationPercent": {
           "type": "number"
         },
-        "is_rogue": {
+        "isRogue": {
           "type": "boolean"
         },
-        "is_unauthorized": {
+        "isUnauthorized": {
           "type": "boolean"
         },
-        "vendor_mismatch": {
+        "vendorMismatch": {
           "type": "boolean"
         },
-        "expected_vendor": {
+        "expectedVendor": {
           "type": "string"
         },
-        "actual_vendor": {
+        "actualVendor": {
           "type": "string"
         },
-        "first_seen": {
+        "firstSeen": {
           "type": "string",
           "format": "date-time"
         },
-        "last_seen": {
+        "lastSeen": {
           "type": "string",
           "format": "date-time"
         }
@@ -308,9 +308,9 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "problem_type",
-        "first_seen",
-        "last_seen"
+        "problemType",
+        "firstSeen",
+        "lastSeen"
       ]
     }
   },
