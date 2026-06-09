@@ -8,6 +8,6 @@
 export interface LoginResponse {
   token?: string;
   expires?: number;
-  mfa_required?: boolean;
-  mfa_token?: string;
+  mfaRequired?: boolean;
+  mfaToken?: string;
 }

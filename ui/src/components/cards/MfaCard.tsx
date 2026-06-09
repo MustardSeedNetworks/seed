@@ -27,16 +27,16 @@ import { Shield } from '../ui/icons';
 
 /** Backend response shape for GET /api/v1/auth/mfa/status. */
 interface MfaStatus {
-  totp_enabled: boolean;
-  webauthn_enabled: boolean;
-  webauthn_credential_count: number;
+  totpEnabled: boolean;
+  webauthnEnabled: boolean;
+  webauthnCredentialCount: number;
 }
 
 /** Backend response shape for POST /api/v1/auth/totp/setup. */
 interface TotpSetup {
   secret: string;
-  provisioning_uri: string;
-  qr_code_png_base64: string;
+  provisioningUri: string;
+  qrCodePngBase64: string;
 }
 
 export function MfaCard(): JSX.Element {
@@ -115,13 +115,13 @@ export function MfaCard(): JSX.Element {
     if (!status) {
       return t('mfa.loading', 'Loading…');
     }
-    if (status.totp_enabled && status.webauthn_enabled) {
+    if (status.totpEnabled && status.webauthnEnabled) {
       return t('mfa.bothEnabled', 'TOTP + Passkey enabled');
     }
-    if (status.totp_enabled) {
+    if (status.totpEnabled) {
       return t('mfa.totpEnabled', 'TOTP enabled');
     }
-    if (status.webauthn_enabled) {
+    if (status.webauthnEnabled) {
       return t('mfa.passkeyEnabled', 'Passkey enabled');
     }
     return t('mfa.none', 'No second factor enrolled');
@@ -131,13 +131,13 @@ export function MfaCard(): JSX.Element {
     <Card
       title={t('mfa.title', 'Multi-factor authentication')}
       icon={<Shield className={iconTokens.size.md} />}
-      status={status?.totp_enabled || status?.webauthn_enabled ? 'success' : 'unknown'}
+      status={status?.totpEnabled || status?.webauthnEnabled ? 'success' : 'unknown'}
     >
       <div className="stack-sm">
         <p className="body-small text-text-muted">{statusLine}</p>
         {error ? <p className="body-small text-status-error">{error}</p> : null}
 
-        {!(status?.totp_enabled || setup) ? (
+        {!(status?.totpEnabled || setup) ? (
           <button
             type="button"
             className="btn btn-secondary"
@@ -154,7 +154,7 @@ export function MfaCard(): JSX.Element {
           <div className="stack-sm">
             <img
               alt={t('mfa.qrAlt', 'TOTP QR code')}
-              src={`data:image/png;base64,${setup.qr_code_png_base64}`}
+              src={`data:image/png;base64,${setup.qrCodePngBase64}`}
               width={200}
               height={200}
             />

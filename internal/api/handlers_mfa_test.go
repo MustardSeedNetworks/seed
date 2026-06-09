@@ -130,8 +130,8 @@ func TestTOTPEnrollmentFlow(t *testing.T) {
 	require.Equal(t, http.StatusOK, w.Code, "setup body: %s", w.Body.String())
 	var setupResp struct {
 		Secret          string `json:"secret"`
-		ProvisioningURI string `json:"provisioning_uri"`
-		QRCodePNGBase64 string `json:"qr_code_png_base64"`
+		ProvisioningURI string `json:"provisioningUri"`
+		QRCodePNGBase64 string `json:"qrCodePngBase64"`
 	}
 	require.NoError(t, json.NewDecoder(w.Body).Decode(&setupResp))
 	assert.NotEmpty(t, setupResp.Secret)
@@ -162,8 +162,8 @@ func TestTOTPEnrollmentFlow(t *testing.T) {
 
 	// 5. POST the code to /login/totp and expect a real token
 	w = f.post(t, "/api/v1/auth/login/totp", map[string]string{
-		"mfa_token": loginResp.MFAToken,
-		"code":      codeNow(t, setupResp.Secret),
+		"mfaToken": loginResp.MFAToken,
+		"code":     codeNow(t, setupResp.Secret),
 	}, "")
 	require.Equal(t, http.StatusOK, w.Code, "login/totp body: %s", w.Body.String())
 	var final api.LoginResponse
@@ -194,8 +194,8 @@ func TestLoginTOTP_BadMFAToken(t *testing.T) {
 	f := newMFAFixture(t)
 
 	w := f.post(t, "/api/v1/auth/login/totp", map[string]string{
-		"mfa_token": "not-a-real-jwt",
-		"code":      "123456",
+		"mfaToken": "not-a-real-jwt",
+		"code":     "123456",
 	}, "")
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
@@ -266,9 +266,9 @@ func TestMFAStatus(t *testing.T) {
 	f.handler.ServeHTTP(w, req)
 	require.Equal(t, http.StatusOK, w.Code)
 	var status struct {
-		TOTPEnabled       bool `json:"totp_enabled"`
-		WebAuthnEnabled   bool `json:"webauthn_enabled"`
-		WebAuthnCredCount int  `json:"webauthn_credential_count"`
+		TOTPEnabled       bool `json:"totpEnabled"`
+		WebAuthnEnabled   bool `json:"webauthnEnabled"`
+		WebAuthnCredCount int  `json:"webauthnCredentialCount"`
 	}
 	require.NoError(t, json.NewDecoder(w.Body).Decode(&status))
 	assert.False(t, status.TOTPEnabled)
