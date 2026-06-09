@@ -148,6 +148,9 @@ jobs:
       - name: JSON wire-casing gate — camelCase ratchet (ADR-0010)
         run: ./scripts/check-json-casing.sh
 
+      - name: Filename-policy gate — no monolith naming outside internal/api
+        run: ./scripts/check-filename-policy.sh
+
       - name: Run staticcheck
         run: |
           go install honnef.co/go/tools/cmd/staticcheck@latest
