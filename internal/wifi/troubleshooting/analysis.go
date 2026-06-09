@@ -1,4 +1,4 @@
-package wifiapp
+package troubleshooting
 
 import (
 	"time"

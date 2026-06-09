@@ -6,7 +6,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
-	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 )
 
 // Band boundary frequencies in MHz used to label a scanned network's band so the
@@ -23,7 +23,7 @@ const (
 // AnalyzeAnomalies runs the Wi-Fi anomaly engine over the access points captured
 // in a survey's passive samples and returns the detected anomalies. It reuses
 // the same rule catalog as the live visibility capture path (via
-// wifiapp.AnalyzeBSSes), so a site survey surfaces security/RF/standards
+// troubleshooting.AnalyzeBSSes), so a site survey surfaces security/RF/standards
 // problems alongside its coverage (dead-zone) analysis.
 //
 // A survey with no passive AP observations yields no anomalies (and no error).
@@ -38,7 +38,7 @@ func AnalyzeAnomalies(survey *Survey) ([]anomaly.Anomaly, error) {
 	if at.IsZero() {
 		at = survey.UpdatedAt
 	}
-	return wifiapp.AnalyzeBSSes(bsses, nil, at)
+	return troubleshooting.AnalyzeBSSes(bsses, nil, at)
 }
 
 // surveyBSSViews flattens a survey's passive-scan observations into the airspace

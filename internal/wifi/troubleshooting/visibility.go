@@ -1,10 +1,12 @@
-// Package wifiapp holds the Wi-Fi application (use-case) services that the API
-// handlers call. It is the per-domain use-case layer from ADR-0016 (strangle
-// internal/api): handlers decode/encode and delegate here, instead of reaching
-// into the API service container or background components. The package name is
-// wifiapp (not app) so the internal/app composition root can import it without
-// an alias clash.
-package wifiapp
+// Package troubleshooting holds the Wi-Fi troubleshooting application (use-case)
+// services the API handlers call (ADR-0020 clean-hexagonal). It exposes three
+// cohesive use-cases over one Wi-Fi capability — Queries (airspace/anomaly
+// visibility reads), Management (radio/interface settings, scan, status,
+// connect), and Discovery (enhanced vendor/authorization/channel scan) — plus
+// AnalyzeBSSes for the survey path. The consumer-defined ports live here at the
+// consumer (interface-segregation); the composition root (internal/app) builds
+// the adapters and injects the use-cases, keeping internal/api pure transport.
+package troubleshooting
 
 import (
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"

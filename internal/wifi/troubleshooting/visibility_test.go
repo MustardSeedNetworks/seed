@@ -1,11 +1,11 @@
-package wifiapp_test
+package troubleshooting_test
 
 import (
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
-	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/visibility"
 )
 
@@ -20,7 +20,7 @@ func (f fakeSource) Anomalies() []anomaly.Anomaly { return f.anomalies }
 func (f fakeSource) Status() visibility.Status    { return f.status }
 
 func TestQueriesNilSourceDegradesEmpty(t *testing.T) {
-	q := wifiapp.NewQueries(nil)
+	q := troubleshooting.NewQueries(nil)
 	air := q.Airspace()
 	if air.SSIDs == nil || len(air.SSIDs) != 0 || air.Status.CaptureActive {
 		t.Errorf("nil source should yield empty inactive airspace, got %+v", air)
@@ -37,7 +37,7 @@ func TestQueriesDelegatesToSource(t *testing.T) {
 		anomalies: []anomaly.Anomaly{{DefKey: "wifi-open-network"}},
 		status:    visibility.Status{CaptureActive: true, Source: "mon0", SSIDs: 1},
 	}
-	q := wifiapp.NewQueries(src)
+	q := troubleshooting.NewQueries(src)
 
 	air := q.Airspace()
 	if len(air.SSIDs) != 1 || air.SSIDs[0].SSID != "corp" || !air.Status.CaptureActive {

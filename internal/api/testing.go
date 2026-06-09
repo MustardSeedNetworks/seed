@@ -150,12 +150,16 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	// Initialize SSE hub
 	s.services.RealTime.SSEHub = NewSSEHub()
 
-	// Wire the ADR-0016 use-cases the same way NewServer does, so handlers that
-	// depend on them work under the test harness.
+	// Wire the ADR-0020 use-cases the same way NewServer does, so handlers that
+	// depend on them work under the test harness. The Wi-Fi use-cases degrade
+	// gracefully here: no visibility component, scanner, or discovery bridge is
+	// wired, so reads return empty results and management/discovery report the
+	// adapter-absent states.
 	s.settingsStore = app.NewSettings(s.db, s.config)
 	s.profiles = app.NewProfiles(s.db)
 	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
 	s.alertRules = app.NewAlertRules(s.db)
+	s.initWiFiUseCases()
 
 	// Setup routes
 	s.setupRoutes()

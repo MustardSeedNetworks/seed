@@ -5,7 +5,6 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
-	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/visibility"
 )
 
@@ -23,17 +22,18 @@ type WiFiAnomaliesResponse struct {
 	Status    visibility.Status `json:"status"`
 }
 
-// wifiVisibilitySource adapts the background visibility component to the use-case
-// port, returning a nil interface (not a typed-nil) when no capture component is
-// wired — so wifiapp.Queries sees a genuinely-absent source.
-func wifiVisibilitySource(bg *BackgroundComponents) wifiapp.VisibilitySource {
-	if bg == nil || bg.WiFiVisibility == nil {
+// wifiVisibility returns the live Wi-Fi visibility component, or nil when no
+// capture component is wired (e.g. the test harness). The composition root
+// (app.NewWiFiQueries) maps a nil component to a genuinely-absent use-case
+// source, so the read use-case degrades to empty-but-valid results.
+func (s *Server) wifiVisibility() *visibility.Service {
+	if s.background == nil {
 		return nil
 	}
-	return bg.WiFiVisibility
+	return s.background.WiFiVisibility
 }
 
-// handleWiFiAirspace serves GET /api/v1/wifi/airspace. Thin handler (ADR-0016):
+// handleWiFiAirspace serves GET /api/v1/wifi/airspace. Thin handler (ADR-0020):
 // it delegates to the Wi-Fi visibility read use-case and encodes the result. The
 // route is feature-gated (wifi_management_capture); an absent capture component
 // yields an empty tree with captureActive=false, not an error.

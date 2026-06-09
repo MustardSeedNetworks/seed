@@ -1,4 +1,4 @@
-package wifiapp_test
+package troubleshooting_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/airspace"
 	wifianomaly "github.com/MustardSeedNetworks/seed/internal/wifi/anomaly"
-	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 )
 
 func hasDef(anoms []anomaly.Anomaly, defKey string) bool {
@@ -20,7 +20,7 @@ func hasDef(anoms []anomaly.Anomaly, defKey string) bool {
 }
 
 func TestAnalyzeBSSesEmpty(t *testing.T) {
-	got, err := wifiapp.AnalyzeBSSes(nil, nil, time.Unix(0, 0))
+	got, err := troubleshooting.AnalyzeBSSes(nil, nil, time.Unix(0, 0))
 	if err != nil {
 		t.Fatalf("AnalyzeBSSes: %v", err)
 	}
@@ -33,7 +33,7 @@ func TestAnalyzeBSSesOpenNetwork(t *testing.T) {
 	bsses := []airspace.BSSView{
 		{BSSID: "aa:bb:cc:00:00:01", SSID: "guest", Band: "2.4 GHz", Channel: 6, Security: "Open"},
 	}
-	got, err := wifiapp.AnalyzeBSSes(bsses, nil, time.Unix(100, 0))
+	got, err := troubleshooting.AnalyzeBSSes(bsses, nil, time.Unix(100, 0))
 	if err != nil {
 		t.Fatalf("AnalyzeBSSes: %v", err)
 	}
@@ -48,7 +48,7 @@ func TestAnalyzeBSSesSecurityMismatch(t *testing.T) {
 		{BSSID: "aa:bb:cc:00:00:01", SSID: "corp", Band: "5 GHz", Channel: 36, Security: "Open"},
 		{BSSID: "dd:ee:ff:00:00:02", SSID: "corp", Band: "5 GHz", Channel: 40, Security: "WPA2"},
 	}
-	got, err := wifiapp.AnalyzeBSSes(bsses, nil, time.Unix(100, 0))
+	got, err := troubleshooting.AnalyzeBSSes(bsses, nil, time.Unix(100, 0))
 	if err != nil {
 		t.Fatalf("AnalyzeBSSes: %v", err)
 	}
@@ -63,11 +63,11 @@ func TestAnalyzeBSSesDeterministic(t *testing.T) {
 		{BSSID: "aa:bb:cc:00:00:02", SSID: "guest2", Band: "2.4 GHz", Channel: 6, Security: "WEP"},
 	}
 	at := time.Unix(100, 0)
-	first, err := wifiapp.AnalyzeBSSes(bsses, nil, at)
+	first, err := troubleshooting.AnalyzeBSSes(bsses, nil, at)
 	if err != nil {
 		t.Fatalf("AnalyzeBSSes: %v", err)
 	}
-	second, _ := wifiapp.AnalyzeBSSes(bsses, nil, at)
+	second, _ := troubleshooting.AnalyzeBSSes(bsses, nil, at)
 	if len(first) != len(second) {
 		t.Fatalf("non-deterministic length: %d vs %d", len(first), len(second))
 	}
