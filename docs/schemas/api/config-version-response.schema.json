@@ -11,7 +11,7 @@
         "latest": {
           "type": "integer"
         },
-        "needs_migration": {
+        "needsMigration": {
           "type": "boolean"
         }
       },
@@ -20,7 +20,7 @@
       "required": [
         "current",
         "latest",
-        "needs_migration"
+        "needsMigration"
       ]
     }
   },

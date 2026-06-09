@@ -33,11 +33,11 @@ export interface LogEntry {
   timestamp: string;
   level: LogLevel;
   layer: LogLayer;
-  request_id?: string;
-  session_id?: string;
+  requestId?: string;
+  sessionId?: string;
   message: string;
   component?: string;
-  duration_ms?: number;
+  durationMs?: number;
   metadata?: Record<string, unknown>;
   stack?: string;
 }
@@ -52,12 +52,12 @@ export interface LogFilters {
 
 /** Log statistics from backend */
 export interface LogStats {
-  total_count: number;
-  by_level: Record<string, number>;
-  by_layer: Record<string, number>;
-  by_component: Record<string, number>;
-  errors_last_hour: number;
-  warnings_last_hour: number;
+  totalCount: number;
+  byLevel: Record<string, number>;
+  byLayer: Record<string, number>;
+  byComponent: Record<string, number>;
+  errorsLastHour: number;
+  warningsLastHour: number;
 }
 
 /** Configuration options for useLogs hook */
@@ -110,12 +110,12 @@ const DEFAULT_FILTERS: LogFilters = {
 };
 
 const DEFAULT_STATS: LogStats = {
-  total_count: 0,
-  by_level: {},
-  by_layer: {},
-  by_component: {},
-  errors_last_hour: 0,
-  warnings_last_hour: 0,
+  totalCount: 0,
+  byLevel: {},
+  byLayer: {},
+  byComponent: {},
+  errorsLastHour: 0,
+  warningsLastHour: 0,
 };
 
 /**
@@ -247,7 +247,7 @@ export function useLogs({
         (log) =>
           log.message.toLowerCase().includes(searchLower) ||
           log.component?.toLowerCase().includes(searchLower) ||
-          log.request_id?.toLowerCase().includes(searchLower),
+          log.requestId?.toLowerCase().includes(searchLower),
       );
     }
 

@@ -24,7 +24,7 @@ const (
 type ConfigVersionResponse struct {
 	Current        int  `json:"current"`
 	Latest         int  `json:"latest"`
-	NeedsMigration bool `json:"needs_migration"`
+	NeedsMigration bool `json:"needsMigration"`
 }
 
 // BackupListResponse contains a list of config backups.
@@ -34,7 +34,7 @@ type BackupListResponse struct {
 
 // RestoreRequest contains the backup name to restore from.
 type RestoreRequest struct {
-	BackupName string `json:"backup_name"`
+	BackupName string `json:"backupName"`
 }
 
 // handleConfigBackups handles GET /api/config/backups - list all backups.

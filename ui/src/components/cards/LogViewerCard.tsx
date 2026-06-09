@@ -44,8 +44,8 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Calculate error and warning counts
-  const errorCount = stats?.by_level && 'ERROR' in stats.by_level ? stats.by_level.ERROR : 0;
-  const warnCount = stats?.by_level && 'WARN' in stats.by_level ? stats.by_level.WARN : 0;
+  const errorCount = stats?.byLevel && 'ERROR' in stats.byLevel ? stats.byLevel.ERROR : 0;
+  const warnCount = stats?.byLevel && 'WARN' in stats.byLevel ? stats.byLevel.WARN : 0;
 
   // Determine card status based on errors
   const getCardStatus = (): Status => {
@@ -129,7 +129,7 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
       }
     >
       {/* Main stat - total logs */}
-      <CardValue value={stats?.total_count ?? 0} size="lg" />
+      <CardValue value={stats?.totalCount ?? 0} size="lg" />
       <CardRow label={t('logs.totalLogs', 'Total logs')} value="" />
       <CardDivider />
       {/* Error count */}
@@ -163,13 +163,13 @@ export function LogViewerCard({ className = '' }: LogViewerCardProps): JSX.Eleme
         </span>
       </div>
       {/* Errors in last hour */}
-      {stats?.errors_last_hour !== undefined && stats.errors_last_hour > 0 && (
+      {stats?.errorsLastHour !== undefined && stats.errorsLastHour > 0 && (
         <>
           <CardDivider />
           <CardRow
             label={t('logs.errorsLastHour', 'Errors (last hour)')}
-            value={stats.errors_last_hour}
-            status={stats.errors_last_hour > 0 ? 'error' : 'success'}
+            value={stats.errorsLastHour}
+            status={stats.errorsLastHour > 0 ? 'error' : 'success'}
           />
         </>
       )}

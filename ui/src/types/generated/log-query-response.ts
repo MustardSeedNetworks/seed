@@ -7,7 +7,7 @@
  */
 export interface LogQueryResponse {
   logs: LogEntry[];
-  total_count: number;
+  totalCount: number;
   offset: number;
   limit: number;
 }
@@ -15,11 +15,11 @@ export interface LogEntry {
   timestamp: string;
   level: string;
   layer: string;
-  request_id?: string;
-  session_id?: string;
+  requestId?: string;
+  sessionId?: string;
   message: string;
   component?: string;
-  duration_ms?: number;
+  durationMs?: number;
   metadata?: {};
   stack?: string;
 }

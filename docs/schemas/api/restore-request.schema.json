@@ -5,14 +5,14 @@
   "$defs": {
     "RestoreRequest": {
       "properties": {
-        "backup_name": {
+        "backupName": {
           "type": "string"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "backup_name"
+        "backupName"
       ]
     }
   },
