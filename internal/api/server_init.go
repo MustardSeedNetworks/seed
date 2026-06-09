@@ -289,8 +289,8 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 
 	// Initialize WiFi bridge connecting canopy/wifi to discovery
 	if s.services.Wireless.Scanner != nil {
-		wifiBridgeConfig := discovery.DefaultWiFiBridgeConfig()
-		s.services.Discovery.WiFiBridge = discovery.NewWiFiBridge(
+		wifiBridgeConfig := enumerate.DefaultWiFiBridgeConfig()
+		s.services.Discovery.WiFiBridge = enumerate.NewWiFiBridge(
 			s.services.Wireless.Scanner,
 			s.services.Wireless.WiFi,
 			ouiDB,

@@ -127,7 +127,7 @@ type DiscoveryServices struct {
 	Vulnerability    *vuln.VulnerabilityScanner
 	ProblemDetector  *discovery.ProblemDetector
 	BluetoothScanner *enumerate.BluetoothScanner
-	WiFiBridge       *discovery.WiFiBridge
+	WiFiBridge       *enumerate.WiFiBridge
 	Profiler         *discovery.DeviceProfiler // Shared profiler for SNMP/ports/fingerprinting
 	PortScanner      *fingerprint.PortScanner  // TCP port scanner (fingerprint stage)
 	Engine           *discovery.Engine         // Unified discovery engine (primary)
