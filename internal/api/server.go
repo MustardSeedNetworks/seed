@@ -26,7 +26,11 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/iperf"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/bluetooth"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/devices"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/problems"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/health"
 	"github.com/MustardSeedNetworks/seed/internal/license"
@@ -139,6 +143,9 @@ type Server struct {
 	profiles           *catalog.Service            // Profile CRUD/active/import use-case (ADR-0020)
 	networkIP          *ipconfig.Service           // IP-config + MTU use-case (ADR-0020)
 	alertRules         *rules.Service              // Alert-rule CRUD use-case (ADR-0020)
+	discoveryDevices   *devices.Service            // Unified-discovery (engine) use-case (ADR-0020)
+	networkProblems    *problems.Service           // Network problem-detection use-case (ADR-0020)
+	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
 	tlsFingerprint     tlsFingerprintCache         // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
 }
 
@@ -250,8 +257,10 @@ func NewServer(
 	// Initialize discovery service and pipeline
 	s.initDiscovery(cfg)
 
-	// Wire the Wi-Fi troubleshooting use-cases now the discovery bridge exists.
+	// Wire the troubleshooting + discovery use-cases now the discovery
+	// components exist (ADR-0020).
 	s.initWiFiUseCases()
+	s.initDiscoveryUseCases()
 
 	// Wire the settings-persistence use-case (ADR-0020). The composition root
 	// builds the adapters; api passes its lazy db accessor + live config.
@@ -728,6 +737,15 @@ func (s *Server) netManager() *netif.Manager                  { return s.service
 func (s *Server) linkMonitor() *netif.LinkMonitor             { return s.services.Network.LinkMonitor }
 func (s *Server) deviceDiscovery() *enumerate.DeviceDiscovery { return s.services.Discovery.Device }
 func (s *Server) discoveryService() *enumerate.Service        { return s.services.Discovery.Service }
+func (s *Server) discoveryEngine() *discovery.Engine          { return s.services.Discovery.Engine }
+func (s *Server) problemDetector() *discovery.ProblemDetector {
+	return s.services.Discovery.ProblemDetector
+}
+
+func (s *Server) bluetoothScanner() *enumerate.BluetoothScanner {
+	return s.services.Discovery.BluetoothScanner
+}
+
 func (s *Server) vulnScanner() *vuln.VulnerabilityScanner {
 	return s.services.Discovery.Vulnerability
 }
@@ -760,6 +778,17 @@ func (s *Server) initWiFiUseCases() {
 	s.wifiQueries = app.NewWiFiQueries(s.wifiVisibility)
 	s.wifiManagement = app.NewWiFiManagement(s.wifiManager, s.wifiScanner, s.netManager, s.config, s.configPath)
 	s.wifiDiscovery = app.NewWiFiDiscovery(s.wifiBridge)
+}
+
+// initDiscoveryUseCases wires the discovery use-cases (ADR-0020) from the
+// composition root: the unified-discovery engine, the network problem detector,
+// and the Bluetooth scanner, each over the server's lazy accessors so a nil or
+// later-set collaborator (the test harness) is honored. The problem detector's
+// scan reads the discovered devices through the device-discovery accessor.
+func (s *Server) initDiscoveryUseCases() {
+	s.discoveryDevices = app.NewDiscoveryDevices(s.discoveryEngine)
+	s.networkProblems = app.NewProblems(s.problemDetector, s.discoveryService)
+	s.bluetoothScans = app.NewBluetooth(s.bluetoothScanner)
 }
 
 // webAuthnConfigFromServer derives the relying-party config for the

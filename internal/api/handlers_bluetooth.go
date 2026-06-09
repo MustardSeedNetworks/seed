@@ -1,13 +1,19 @@
 package api
 
-// handlers_bluetooth.go contains Bluetooth discovery and scanning handlers.
+// handlers_bluetooth.go contains Bluetooth discovery and scanning handlers. The
+// handlers are pure transport (ADR-0020): they map the domain result onto the
+// flat wire DTOs and map a bluetooth use-case sentinel to its HTTP status; the
+// scan orchestration lives in internal/discovery/bluetooth, with the adapter in
+// internal/app.
 
 import (
+	"errors"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
-	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/bluetooth"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -146,6 +152,12 @@ func toBluetoothStats(stats *discovery.BluetoothDiscoveryStats) *BluetoothDiscov
 	}
 }
 
+// writeBluetoothUnavailable writes the pre-strangle 503 for an absent scanner.
+func writeBluetoothUnavailable(w http.ResponseWriter, logger *slog.Logger) {
+	sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
+		ErrCodeServiceUnavail, "Bluetooth scanner not available", "")
+}
+
 // handleBluetoothScan triggers a Bluetooth scan and returns results.
 //
 // POST /api/v1/security/bluetooth/scan
@@ -157,36 +169,19 @@ func toBluetoothStats(stats *discovery.BluetoothDiscoveryStats) *BluetoothDiscov
 func (s *Server) handleBluetoothScan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	btScanner := s.bluetoothScanner()
-	if btScanner == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"Bluetooth scanner not available",
-			"",
-		)
-		return
-	}
-
-	result, err := btScanner.Scan(r.Context())
+	scan, err := s.bluetoothScans.Scan(r.Context())
 	if err != nil {
+		if errors.Is(err, bluetooth.ErrUnavailable) {
+			writeBluetoothUnavailable(w, logger)
+			return
+		}
 		logger.ErrorContext(r.Context(), "Bluetooth scan failed", "error", err)
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			"Bluetooth scan failed: "+err.Error(),
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, "Bluetooth scan failed: "+err.Error(), "")
 		return
 	}
 
-	resp := toBluetoothScanResponse(result, btScanner.GetStats())
-
-	sendJSONResponse(w, logger, http.StatusOK, resp)
+	sendJSONResponse(w, logger, http.StatusOK, toBluetoothScanResponse(scan.Result, scan.Stats))
 }
 
 // toBluetoothScanResponse maps a scan result + stats to the API wire shape.
@@ -215,20 +210,12 @@ func toBluetoothScanResponse(
 func (s *Server) handleBluetoothDevices(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	btScanner := s.bluetoothScanner()
-	if btScanner == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"Bluetooth scanner not available",
-			"",
-		)
+	lastScan, err := s.bluetoothScans.Devices()
+	if err != nil {
+		writeBluetoothUnavailable(w, logger)
 		return
 	}
 
-	lastScan := btScanner.GetLastScan()
 	if lastScan == nil {
 		sendJSONResponse(w, logger, http.StatusOK, BluetoothDevicesResponse{
 			Devices: []BluetoothDevice{},
@@ -253,20 +240,12 @@ func (s *Server) handleBluetoothDevices(w http.ResponseWriter, r *http.Request) 
 func (s *Server) handleBluetoothStats(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	btScanner := s.bluetoothScanner()
-	if btScanner == nil {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"Bluetooth scanner not available",
-			"",
-		)
+	stats, err := s.bluetoothScans.Stats()
+	if err != nil {
+		writeBluetoothUnavailable(w, logger)
 		return
 	}
 
-	stats := btScanner.GetStats()
 	sendJSONResponse(w, logger, http.StatusOK, BluetoothStatsResponse{
 		Stats: toBluetoothStats(stats),
 	})
@@ -282,29 +261,18 @@ func (s *Server) handleBluetoothStats(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleBluetoothStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	btScanner := s.bluetoothScanner()
-	available := btScanner != nil
+	status := s.bluetoothScans.Status()
 
 	var lastScanTime string
 	var deviceCount int
-	if available {
-		if lastScan := btScanner.GetLastScan(); lastScan != nil {
-			lastScanTime = lastScan.ScanTime.Format("2006-01-02T15:04:05Z07:00")
-			deviceCount = len(lastScan.Devices)
-		}
+	if status.LastScan != nil {
+		lastScanTime = status.LastScan.ScanTime.Format("2006-01-02T15:04:05Z07:00")
+		deviceCount = len(status.LastScan.Devices)
 	}
 
 	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
-		"available":    available,
+		"available":    status.Available,
 		"lastScanTime": lastScanTime,
 		"deviceCount":  deviceCount,
 	})
-}
-
-// bluetoothScanner returns the Bluetooth scanner from the service container.
-func (s *Server) bluetoothScanner() *enumerate.BluetoothScanner {
-	if s.services == nil || s.services.Discovery == nil {
-		return nil
-	}
-	return s.services.Discovery.BluetoothScanner
 }

@@ -59,6 +59,10 @@ func apiTokenTestSetup(t *testing.T) (*Server, *license.Manager) {
 	s.services.Database.DB = db
 	s.services.Auth.APITokens = database.NewAPITokenRepository(db)
 	s.services.Auth.License = mgr
+	// Wire the discovery use-cases so routed handlers (e.g. the
+	// /discovery/engine/events SSE policy test) have a non-nil use-case; the
+	// engine stays nil here, so they degrade to the unavailable (503) path.
+	s.initDiscoveryUseCases()
 	return s, mgr
 }
 

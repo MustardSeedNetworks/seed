@@ -9,12 +9,19 @@ import (
 	"strings"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/devices"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
 // ============================================================================
 // Discovery Engine Handlers (new unified discovery system)
+//
+// These handlers are pure transport (ADR-0020): they decode/validate the
+// request, call one devices use-case method, and encode the response or map a
+// use-case sentinel to its HTTP status. The orchestration and the engine-nil
+// degraded behavior live in internal/discovery/devices; the engine adapter lives
+// in the composition root (internal/app).
 // ============================================================================
 
 // EngineDiscoveryResponse contains discovery engine results.
@@ -64,6 +71,49 @@ type EngineScanRequest struct {
 	AcknowledgeIDsRisk bool `json:"acknowledgeIdsRisk,omitempty"`
 }
 
+// engineResponse assembles the wire response from a use-case snapshot.
+func engineResponse(snap devices.Snapshot) EngineDiscoveryResponse {
+	return EngineDiscoveryResponse{
+		Devices:      snap.Devices,
+		Stats:        snap.Stats,
+		ScanResult:   snap.ScanResult,
+		Capabilities: snap.Capabilities,
+	}
+}
+
+// writeEngineError maps a devices use-case sentinel to its pre-strangle HTTP
+// response. ErrUnavailable is the golden-pinned 503 degraded path.
+func writeEngineError(w http.ResponseWriter, logger *slog.Logger, err error) {
+	switch {
+	case errors.Is(err, devices.ErrUnavailable):
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail, "Discovery engine not available", "")
+	case errors.Is(err, devices.ErrDeviceNotFound):
+		sendErrorResponseWithDetails(w, logger, http.StatusNotFound,
+			ErrCodeNotFound, "Device not found", "")
+	default:
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, "Discovery engine error", err.Error())
+	}
+}
+
+// writeEngineScanError maps a scan error to its response: the availability and
+// in-progress sentinels keep their dedicated status, any other failure is a 500
+// carrying the named scan and the underlying error detail.
+func writeEngineScanError(w http.ResponseWriter, logger *slog.Logger, scanName string, err error) {
+	switch {
+	case errors.Is(err, devices.ErrUnavailable):
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail, "Discovery engine not available", "")
+	case errors.Is(err, devices.ErrScanInProgress):
+		sendErrorResponseWithDetails(w, logger, http.StatusConflict,
+			ErrCodeConflict, "A scan is already in progress", "")
+	default:
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, scanName+" failed", err.Error())
+	}
+}
+
 // handleEngineDiscovery returns all devices from the discovery engine registry.
 //
 // GET /api/v1/discovery/engine returns all discovered devices.
@@ -79,26 +129,12 @@ type EngineScanRequest struct {
 func (s *Server) handleEngineDiscovery(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	engine := s.services.Discovery.Engine
-	if engine == nil {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"Discovery engine not available",
-			"",
-		)
+	snap, err := s.discoveryDevices.Snapshot()
+	if err != nil {
+		writeEngineError(w, logger, err)
 		return
 	}
-
-	resp := EngineDiscoveryResponse{
-		Devices:      engine.GetDevices(),
-		Stats:        engine.GetStats(),
-		ScanResult:   engine.GetLastScan(),
-		Capabilities: engine.GetCapabilities(),
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, resp)
+	sendJSONResponse(w, logger, http.StatusOK, engineResponse(snap))
 }
 
 // maxEngineCustomPorts bounds an engine-scan custom port list so a single
@@ -226,77 +262,36 @@ func parseEngineScanOpts(
 // Quick scan: Correlation of existing data, fast
 // Full scan: Fresh discovery + enrichment + assessment
 //
-// Request body (optional):
-//
-//	{
-//	  "scanType": "quick",          // or "full"
-//	  "includeWired": true,
-//	  "includeWifi": true,
-//	  "includeBluetooth": true,
-//	  "includeSnmp": true,
-//	  "includePortScan": true,
-//	  "includeVulnScan": true,
-//	  "freshWiredScan": true,
-//	  "freshWifiScan": true,
-//	  "freshBluetoothScan": true
-//	}
-//
 // Authentication: Required
 // Rate limiting: Yes (scans can be resource intensive).
 func (s *Server) handleEngineScan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	engine := s.services.Discovery.Engine
-	if engine == nil {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"Discovery engine not available",
-			"",
-		)
+	// Probe availability + in-progress before parsing the body so the engine-nil
+	// 503 and the in-progress 409 precede any request-validation error (the order
+	// the engine handler tests pin).
+	if !s.discoveryDevices.Available() {
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail, "Discovery engine not available", "")
+		return
+	}
+	if s.discoveryDevices.Scanning() {
+		sendErrorResponseWithDetails(w, logger, http.StatusConflict,
+			ErrCodeConflict, "A scan is already in progress", "")
 		return
 	}
 
-	// Check if already scanning
-	if engine.IsScanning() {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusConflict,
-			ErrCodeConflict,
-			"A scan is already in progress",
-			"",
-		)
-		return
-	}
-
-	// Parse + validate options from body, default to quick scan.
 	opts, ok := parseEngineScanOpts(w, r, logger)
 	if !ok {
 		return
 	}
 
-	// Run scan
-	result, err := engine.Scan(r.Context(), opts)
+	snap, err := s.discoveryDevices.Scan(r.Context(), opts)
 	if err != nil {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			"Scan failed",
-			err.Error(),
-		)
+		writeEngineScanError(w, logger, "Scan", err)
 		return
 	}
-
-	resp := EngineDiscoveryResponse{
-		Devices:      engine.GetDevices(),
-		Stats:        engine.GetStats(),
-		ScanResult:   result,
-		Capabilities: engine.GetCapabilities(),
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, resp)
+	sendJSONResponse(w, logger, http.StatusOK, engineResponse(snap))
 }
 
 // scanType indicates the type of scan to perform.
@@ -307,7 +302,9 @@ const (
 	scanTypeFull
 )
 
-// executeScan is a helper that handles common scan logic.
+// executeScan runs a quick or full scan and writes the response. The use-case
+// applies the availability + in-progress guards in order, so the handler maps
+// the resulting sentinels to status.
 func (s *Server) executeScan(w http.ResponseWriter, r *http.Request, st scanType) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
@@ -323,61 +320,24 @@ func (s *Server) executeScan(w http.ResponseWriter, r *http.Request, st scanType
 		return
 	}
 
-	engine := s.services.Discovery.Engine
-	if engine == nil {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"Discovery engine not available",
-			"",
-		)
-		return
-	}
-
-	if engine.IsScanning() {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusConflict,
-			ErrCodeConflict,
-			"A scan is already in progress",
-			"",
-		)
-		return
-	}
-
-	var result *discovery.ScanResult
+	var snap devices.Snapshot
 	var err error
 	var scanName string
 
 	switch st {
 	case scanTypeQuick:
 		scanName = "Quick scan"
-		result, err = engine.QuickScan(r.Context())
+		snap, err = s.discoveryDevices.QuickScan(r.Context())
 	case scanTypeFull:
 		scanName = "Full scan"
-		result, err = engine.FullScan(r.Context())
+		snap, err = s.discoveryDevices.FullScan(r.Context())
 	}
 
 	if err != nil {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			scanName+" failed",
-			err.Error(),
-		)
+		writeEngineScanError(w, logger, scanName, err)
 		return
 	}
-
-	resp := EngineDiscoveryResponse{
-		Devices:      engine.GetDevices(),
-		Stats:        engine.GetStats(),
-		ScanResult:   result,
-		Capabilities: engine.GetCapabilities(),
-	}
-
-	sendJSONResponse(w, logger, http.StatusOK, resp)
+	sendJSONResponse(w, logger, http.StatusOK, engineResponse(snap))
 }
 
 // handleEngineQuickScan triggers a quick discovery scan.
@@ -417,19 +377,11 @@ func (s *Server) handleEngineFullScan(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleEngineStats(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	engine := s.services.Discovery.Engine
-	if engine == nil {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"Discovery engine not available",
-			"",
-		)
+	stats, err := s.discoveryDevices.Stats()
+	if err != nil {
+		writeEngineError(w, logger, err)
 		return
 	}
-
-	stats := engine.GetStats()
 	sendJSONResponse(w, logger, http.StatusOK, stats)
 }
 
@@ -442,19 +394,11 @@ func (s *Server) handleEngineStats(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleEngineCapabilities(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	engine := s.services.Discovery.Engine
-	if engine == nil {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"Discovery engine not available",
-			"",
-		)
+	caps, err := s.discoveryDevices.Capabilities()
+	if err != nil {
+		writeEngineError(w, logger, err)
 		return
 	}
-
-	caps := engine.GetCapabilities()
 	sendJSONResponse(w, logger, http.StatusOK, caps)
 }
 
@@ -470,56 +414,34 @@ func (s *Server) handleEngineCapabilities(w http.ResponseWriter, r *http.Request
 func (s *Server) handleEngineDevice(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	engine := s.services.Discovery.Engine
-	if engine == nil {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"Discovery engine not available",
-			"",
-		)
+	// Engine availability is checked first so a nil engine returns 503 before any
+	// path validation (the order the engine handler tests pin).
+	if !s.discoveryDevices.Available() {
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail, "Discovery engine not available", "")
 		return
 	}
 
-	// Extract MAC from URL path
-	// URL format: /api/v1/discovery/engine/device/{mac}
+	// Extract MAC from URL path: /api/v1/discovery/engine/device/{mac}
 	path := r.URL.Path
 	prefix := APIVersionPrefix + "/discovery/engine/device/"
 	if !strings.HasPrefix(path, prefix) {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			"Invalid request path",
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+			ErrCodeBadRequest, "Invalid request path", "")
 		return
 	}
 	mac := strings.TrimPrefix(path, prefix)
 	if mac == "" {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusBadRequest,
-			ErrCodeBadRequest,
-			"MAC address required",
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
+			ErrCodeBadRequest, "MAC address required", "")
 		return
 	}
 
-	device := engine.GetDevice(mac)
-	if device == nil {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusNotFound,
-			ErrCodeNotFound,
-			"Device not found",
-			"",
-		)
+	device, err := s.discoveryDevices.Device(mac)
+	if err != nil {
+		writeEngineError(w, logger, err)
 		return
 	}
-
 	sendJSONResponse(w, logger, http.StatusOK, device)
 }
 
@@ -539,28 +461,19 @@ func (s *Server) handleEngineDevice(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleEngineEvents(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	engine := s.services.Discovery.Engine
-	if engine == nil {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusServiceUnavailable,
-			ErrCodeServiceUnavail,
-			"Discovery engine not available",
-			"",
-		)
+	// Availability is checked before any SSE headers are written so the engine-nil
+	// case can still return a 503 status.
+	if !s.discoveryDevices.Available() {
+		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
+			ErrCodeServiceUnavail, "Discovery engine not available", "")
 		return
 	}
 
 	// Check if SSE is supported
 	flusher, ok := w.(http.Flusher)
 	if !ok {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusInternalServerError,
-			ErrCodeInternal,
-			"Streaming not supported",
-			"",
-		)
+		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
+			ErrCodeInternal, "Streaming not supported", "")
 		return
 	}
 
@@ -571,9 +484,9 @@ func (s *Server) handleEngineEvents(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Accel-Buffering", "no")
 
 	// Subscribe to all events
-	sub := engine.SubscribeAll(func(event *discovery.Event) {
-		data, err := json.Marshal(event)
-		if err != nil {
+	id, err := s.discoveryDevices.Subscribe(func(event *discovery.Event) {
+		data, marshalErr := json.Marshal(event)
+		if marshalErr != nil {
 			return
 		}
 		// Write SSE format
@@ -581,7 +494,11 @@ func (s *Server) handleEngineEvents(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("data: " + string(data) + "\n\n"))
 		flusher.Flush()
 	})
-	defer engine.Unsubscribe(sub.ID())
+	if err != nil {
+		writeEngineError(w, logger, err)
+		return
+	}
+	defer s.discoveryDevices.Unsubscribe(id)
 
 	// Keep connection open until client disconnects
 	<-r.Context().Done()
