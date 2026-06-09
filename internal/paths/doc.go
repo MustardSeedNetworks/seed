@@ -37,12 +37,6 @@ package paths
 //  2. SEED_CONFIG_PATH environment variable
 //  3. XDG-compliant path based on detected mode
 //
-// # Legacy Support
-//
-// DetectLegacyConfig checks for configuration files in legacy locations
-// (current directory) and returns the path if found, allowing smooth
-// migration from old installations.
-//
 // # Example Usage
 //
 //	// Auto-detect mode and resolve paths
@@ -52,8 +46,3 @@ package paths
 //
 //	// Resolve config with priority handling
 //	configPath := paths.ResolveConfigPath(cliFlag, paths.ModeAuto)
-//
-//	// Check for legacy config
-//	if legacy, ok := paths.DetectLegacyConfig(); ok {
-//	    fmt.Printf("Found legacy config: %s\n", legacy)
-//	}
