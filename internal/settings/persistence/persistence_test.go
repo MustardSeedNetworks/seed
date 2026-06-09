@@ -1,11 +1,11 @@
-package settingsapp_test
+package persistence_test
 
 import (
 	"context"
 	"errors"
 	"testing"
 
-	settingsapp "github.com/MustardSeedNetworks/seed/internal/settings/app"
+	"github.com/MustardSeedNetworks/seed/internal/settings/persistence"
 )
 
 type fakeStore struct {
@@ -43,7 +43,7 @@ func (f fakeConfig) ProfileJSON() (string, error) { return f.json, f.err }
 
 func TestSaveToActiveProfileUsesActiveID(t *testing.T) {
 	store := &fakeStore{activeID: "active-1"}
-	uc := settingsapp.NewPersistence(store, fakeConfig{json: `{"k":"v"}`})
+	uc := persistence.NewService(store, fakeConfig{json: `{"k":"v"}`})
 
 	if err := uc.SaveToActiveProfile(context.Background()); err != nil {
 		t.Fatalf("SaveToActiveProfile: %v", err)
@@ -69,7 +69,7 @@ func TestSaveToActiveProfileFallsBackToDefault(t *testing.T) {
 		{"active lookup error", &fakeStore{activeErr: errors.New("boom"), defaultID: "default-1"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			uc := settingsapp.NewPersistence(tc.store, fakeConfig{json: "{}"})
+			uc := persistence.NewService(tc.store, fakeConfig{json: "{}"})
 			if err := uc.SaveToActiveProfile(context.Background()); err != nil {
 				t.Fatalf("SaveToActiveProfile: %v", err)
 			}
@@ -81,8 +81,8 @@ func TestSaveToActiveProfileFallsBackToDefault(t *testing.T) {
 }
 
 func TestSaveToActiveProfileNoProfileIsNoOp(t *testing.T) {
-	store := &fakeStore{activeID: "", defaultErr: settingsapp.ErrNoProfile}
-	uc := settingsapp.NewPersistence(store, fakeConfig{json: "{}"})
+	store := &fakeStore{activeID: "", defaultErr: persistence.ErrNoProfile}
+	uc := persistence.NewService(store, fakeConfig{json: "{}"})
 
 	if err := uc.SaveToActiveProfile(context.Background()); err != nil {
 		t.Fatalf("expected nil (no-op), got %v", err)
@@ -95,7 +95,7 @@ func TestSaveToActiveProfileNoProfileIsNoOp(t *testing.T) {
 func TestSaveToActiveProfileSerializeErrorPropagates(t *testing.T) {
 	wantErr := errors.New("serialize failed")
 	store := &fakeStore{activeID: "active-1"}
-	uc := settingsapp.NewPersistence(store, fakeConfig{err: wantErr})
+	uc := persistence.NewService(store, fakeConfig{err: wantErr})
 
 	if err := uc.SaveToActiveProfile(context.Background()); !errors.Is(err, wantErr) {
 		t.Fatalf("expected serialize error to propagate, got %v", err)
@@ -110,7 +110,7 @@ func TestSaveToActiveProfileDefaultLookupErrorPropagates(t *testing.T) {
 	// (only ErrNoProfile is the legitimate no-op).
 	wantErr := errors.New("db down")
 	store := &fakeStore{activeID: "", defaultErr: wantErr}
-	uc := settingsapp.NewPersistence(store, fakeConfig{json: "{}"})
+	uc := persistence.NewService(store, fakeConfig{json: "{}"})
 
 	if err := uc.SaveToActiveProfile(context.Background()); !errors.Is(err, wantErr) {
 		t.Fatalf("expected default lookup error to propagate, got %v", err)
@@ -120,7 +120,7 @@ func TestSaveToActiveProfileDefaultLookupErrorPropagates(t *testing.T) {
 func TestSaveToActiveProfileSaveErrorPropagates(t *testing.T) {
 	wantErr := errors.New("update failed")
 	store := &fakeStore{activeID: "active-1", saveErr: wantErr}
-	uc := settingsapp.NewPersistence(store, fakeConfig{json: "{}"})
+	uc := persistence.NewService(store, fakeConfig{json: "{}"})
 
 	if err := uc.SaveToActiveProfile(context.Background()); !errors.Is(err, wantErr) {
 		t.Fatalf("expected save error to propagate, got %v", err)
@@ -128,11 +128,11 @@ func TestSaveToActiveProfileSaveErrorPropagates(t *testing.T) {
 }
 
 func TestSaveToActiveProfileNilStoreIsNoOp(t *testing.T) {
-	uc := settingsapp.NewPersistence(nil, fakeConfig{json: "{}"})
+	uc := persistence.NewService(nil, fakeConfig{json: "{}"})
 	if err := uc.SaveToActiveProfile(context.Background()); err != nil {
 		t.Fatalf("nil store should be a no-op, got %v", err)
 	}
-	var nilUC *settingsapp.Persistence
+	var nilUC *persistence.Service
 	if err := nilUC.SaveToActiveProfile(context.Background()); err != nil {
 		t.Fatalf("nil use-case should be a no-op, got %v", err)
 	}

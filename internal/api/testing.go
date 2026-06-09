@@ -152,7 +152,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 
 	// Wire the ADR-0016 use-cases the same way NewServer does, so handlers that
 	// depend on them work under the test harness.
-	s.initSettingsUseCase()
+	s.settingsStore = app.NewSettings(s.db, s.config)
 	s.initProfilesUseCase()
 	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
 	s.alertRules = app.NewAlertRules(s.db)

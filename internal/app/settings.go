@@ -1,10 +1,10 @@
-package api
+package app
 
-// settings_usecases.go wires the API layer to the settings application
-// (use-case) service (ADR-0016 strangle phase 3). The adapters below implement
-// the narrow ports declared in internal/settings/app over the concrete database
-// repositories and the live config, so the settings handlers depend on a
-// use-case instead of reaching into ServiceContainer / s.db() directly.
+// settings.go wires the composition root to the settings-persistence
+// application (use-case) service (ADR-0020). The adapters below implement the
+// narrow ports declared in internal/settings/persistence over the concrete
+// database repositories and the live config, so the settings handlers depend on
+// a use-case instead of reaching into ServiceContainer / s.db() directly.
 
 import (
 	"context"
@@ -12,13 +12,23 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
-	settingsapp "github.com/MustardSeedNetworks/seed/internal/settings/app"
+	"github.com/MustardSeedNetworks/seed/internal/settings/persistence"
 )
 
-// settingsProfileStore implements settingsapp.ProfileStore over the database
+// NewSettings builds the settings-persistence use-case (ADR-0020) from the lazy
+// database accessor and the live config. The database is resolved through db on
+// each call so a nil or later-assigned db is tolerated, preserving the handlers'
+// historic "no db -> persist to config file only" behavior.
+func NewSettings(db func() *database.DB, cfg *config.Config) *persistence.Service {
+	return persistence.NewService(
+		settingsProfileStore{db: db},
+		settingsConfigSource{cfg: cfg},
+	)
+}
+
+// settingsProfileStore implements persistence.ProfileStore over the database
 // repositories. It resolves the *database.DB lazily (via the accessor) so it
-// tolerates a nil or later-assigned database, preserving the handlers' historic
-// "no db -> persist to config file only" behavior.
+// tolerates a nil or later-assigned database.
 type settingsProfileStore struct {
 	db func() *database.DB
 }
@@ -34,12 +44,12 @@ func (s settingsProfileStore) ActiveProfileID(ctx context.Context) (string, erro
 func (s settingsProfileStore) DefaultProfileID(ctx context.Context) (string, error) {
 	db := s.db()
 	if db == nil {
-		return "", settingsapp.ErrNoProfile
+		return "", persistence.ErrNoProfile
 	}
 	profile, err := db.Profiles().GetDefault(ctx)
 	if err != nil {
 		// No default profile exists — nothing to persist to (not an error).
-		return "", settingsapp.ErrNoProfile
+		return "", persistence.ErrNoProfile
 	}
 	return profile.ID, nil
 }
@@ -57,7 +67,7 @@ func (s settingsProfileStore) SaveProfileConfig(ctx context.Context, id, configJ
 	return db.Profiles().Update(ctx, profile)
 }
 
-// settingsConfigSource implements settingsapp.ConfigSource over the live config,
+// settingsConfigSource implements persistence.ConfigSource over the live config,
 // serializing it with the single-source-of-truth profile encoder.
 type settingsConfigSource struct {
 	cfg *config.Config
@@ -65,13 +75,4 @@ type settingsConfigSource struct {
 
 func (c settingsConfigSource) ProfileJSON() (string, error) {
 	return c.cfg.ToProfileJSON()
-}
-
-// initSettingsUseCase builds the settings-persistence use-case (ADR-0016 phase
-// 3) from the lazy database accessor and the live config.
-func (s *Server) initSettingsUseCase() {
-	s.settingsStore = settingsapp.NewPersistence(
-		settingsProfileStore{db: s.db},
-		settingsConfigSource{cfg: s.config},
-	)
 }
