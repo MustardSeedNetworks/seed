@@ -1,4 +1,10 @@
-package discovery
+// Package enumerate is the discovery pipeline's host/link enumeration stage
+// (ADR-0018, Phase 6): the device collectors the Engine drives via narrow kernel
+// ports (BluetoothCollectorPort and siblings). It depends inward on the discovery
+// kernel for the shared Bluetooth result/data types and on
+// internal/discovery/resolve for OUI lookups; the kernel never imports this
+// package (depguard-enforced one-way direction).
+package enumerate
 
 // bluetooth.go extends the discovery system with Bluetooth/BLE device tracking.
 // This integrates with the existing DiscoveredDevice system by correlating
@@ -9,6 +15,10 @@ package discovery
 // - Supports device classification (phone, computer, audio, IoT, etc.)
 // - Tracks signal strength for proximity estimation
 // - Links to DiscoveredDevice when MAC correlation is possible
+//
+// The Bluetooth result/data types (BluetoothDevice, BluetoothScanResult,
+// BluetoothDiscoveryStats, BluetoothType, BluetoothDeviceClass) live in the
+// discovery kernel and are aliased here via aliases.go.
 
 import (
 	"context"
@@ -20,32 +30,6 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
-)
-
-// BluetoothType represents the Bluetooth protocol type.
-type BluetoothType string
-
-const (
-	BluetoothTypeClassic BluetoothType = "classic" // BR/EDR (Basic Rate/Enhanced Data Rate)
-	BluetoothTypeBLE     BluetoothType = "ble"     // Bluetooth Low Energy
-	BluetoothTypeDual    BluetoothType = "dual"    // Supports both
-)
-
-// BluetoothDeviceClass represents major device classes per Bluetooth spec.
-type BluetoothDeviceClass string
-
-const (
-	BluetoothClassMisc          BluetoothDeviceClass = "miscellaneous"
-	BluetoothClassComputer      BluetoothDeviceClass = "computer"
-	BluetoothClassPhone         BluetoothDeviceClass = "phone"
-	BluetoothClassLAN           BluetoothDeviceClass = "lan_access"
-	BluetoothClassAudioVideo    BluetoothDeviceClass = "audio_video"
-	BluetoothClassPeripheral    BluetoothDeviceClass = "peripheral"
-	BluetoothClassImaging       BluetoothDeviceClass = "imaging"
-	BluetoothClassWearable      BluetoothDeviceClass = "wearable"
-	BluetoothClassToy           BluetoothDeviceClass = "toy"
-	BluetoothClassHealth        BluetoothDeviceClass = "health"
-	BluetoothClassUncategorized BluetoothDeviceClass = "uncategorized"
 )
 
 // Bluetooth configuration constants.
@@ -78,90 +62,27 @@ const (
 	btMajorClassHealth     = 9
 )
 
-// BluetoothDevice represents a discovered Bluetooth device.
-type BluetoothDevice struct {
-	ID       string `json:"id"`
-	DeviceID string `json:"device_id,omitempty"` // Links to DiscoveredDevice if correlated
-
-	// Identity
-	Address     string `json:"address"`      // MAC address (AA:BB:CC:DD:EE:FF)
-	Name        string `json:"name"`         // Advertised device name
-	Alias       string `json:"alias"`        // User-assigned alias
-	Vendor      string `json:"vendor"`       // OUI vendor lookup
-	IsConnected bool   `json:"is_connected"` // Currently connected to this host
-
-	// Classification
-	Type        BluetoothType        `json:"type"`                      // classic, ble, dual
-	DeviceClass BluetoothDeviceClass `json:"device_class"`              // Major device class
-	Appearance  uint16               `json:"appearance"`                // BLE appearance value
-	ClassOfDev  uint32               `json:"class_of_device,omitempty"` // Classic CoD
-
-	// Signal
-	RSSI         int     `json:"rssi"`           // Signal strength in dBm
-	TxPower      int     `json:"tx_power"`       // Advertised TX power (BLE)
-	EstDistanceM float64 `json:"est_distance_m"` // Estimated distance in meters
-
-	// BLE-specific
-	IsConnectable    bool     `json:"is_connectable"`
-	ServiceUUIDs     []string `json:"service_uuids,omitempty"`
-	ManufacturerID   uint16   `json:"manufacturer_id,omitempty"`
-	ManufacturerData []byte   `json:"manufacturer_data,omitempty"`
-
-	// Authorization
-	IsAuthorized bool `json:"is_authorized"`
-	IsTrusted    bool `json:"is_trusted"`
-	IsPaired     bool `json:"is_paired"`
-	IsBlocked    bool `json:"is_blocked"`
-
-	// Timestamps
-	FirstSeen time.Time `json:"first_seen"`
-	LastSeen  time.Time `json:"last_seen"`
-
-	Metadata map[string]any `json:"metadata,omitempty"`
-}
-
-// BluetoothScanResult contains results from a Bluetooth scan.
-type BluetoothScanResult struct {
-	Devices      []BluetoothDevice `json:"devices"`
-	ScanTime     time.Time         `json:"scan_time"`
-	ScanDuration time.Duration     `json:"scan_duration"`
-	AdapterName  string            `json:"adapter_name"`
-	ScanType     string            `json:"scan_type"` // "passive", "active"
-}
-
-// BluetoothDiscoveryStats contains aggregated Bluetooth discovery statistics.
-type BluetoothDiscoveryStats struct {
-	TotalDevices      int            `json:"total_devices"`
-	ClassicDevices    int            `json:"classic_devices"`
-	BLEDevices        int            `json:"ble_devices"`
-	DualDevices       int            `json:"dual_devices"`
-	ConnectedDevices  int            `json:"connected_devices"`
-	AuthorizedCount   int            `json:"authorized_count"`
-	UnauthorizedCount int            `json:"unauthorized_count"`
-	DevicesByClass    map[string]int `json:"devices_by_class"`
-	VendorBreakdown   map[string]int `json:"vendor_breakdown"`
-	LastScanTime      time.Time      `json:"last_scan_time"`
-}
-
-// BluetoothScanConfig configures Bluetooth scanning behavior.
+// BluetoothScanConfig configures Bluetooth scanning behavior. JSON keys are
+// camelCase (API convention); YAML keys stay snake_case (config-file convention),
+// matching the repo pattern in scan_config.go.
 type BluetoothScanConfig struct {
 	// ScanDurationSec is how long to scan in seconds
-	ScanDurationSec int `json:"scan_duration_sec" yaml:"scan_duration_sec"`
+	ScanDurationSec int `json:"scanDurationSec" yaml:"scan_duration_sec"`
 
 	// ScanType: "passive" (listen only) or "active" (send inquiries)
-	ScanType string `json:"scan_type" yaml:"scan_type"`
+	ScanType string `json:"scanType" yaml:"scan_type"`
 
 	// IncludeClassic enables classic Bluetooth discovery
-	IncludeClassic bool `json:"include_classic" yaml:"include_classic"`
+	IncludeClassic bool `json:"includeClassic" yaml:"include_classic"`
 
 	// IncludeBLE enables BLE scanning
-	IncludeBLE bool `json:"include_ble" yaml:"include_ble"`
+	IncludeBLE bool `json:"includeBle" yaml:"include_ble"`
 
 	// MinRSSI filters out devices below this signal strength
-	MinRSSI int `json:"min_rssi" yaml:"min_rssi"`
+	MinRSSI int `json:"minRssi" yaml:"min_rssi"`
 
 	// AuthorizedAddresses lists MAC addresses to mark as authorized
-	AuthorizedAddresses []string `json:"authorized_addresses" yaml:"authorized_addresses"`
+	AuthorizedAddresses []string `json:"authorizedAddresses" yaml:"authorized_addresses"`
 }
 
 // DefaultBluetoothScanConfig returns sensible defaults for Bluetooth scanning.

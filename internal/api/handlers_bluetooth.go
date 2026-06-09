@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -354,7 +355,7 @@ func (s *Server) handleBluetoothStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // bluetoothScanner returns the Bluetooth scanner from the service container.
-func (s *Server) bluetoothScanner() *discovery.BluetoothScanner {
+func (s *Server) bluetoothScanner() *enumerate.BluetoothScanner {
 	if s.services == nil || s.services.Discovery == nil {
 		return nil
 	}

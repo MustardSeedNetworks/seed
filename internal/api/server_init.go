@@ -14,6 +14,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/dns"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/fingerprint"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
@@ -278,12 +279,12 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 	logging.GetLogger().Info("Problem detector initialized")
 
 	// Initialize Bluetooth scanner
-	btConfig := discovery.DefaultBluetoothScanConfig()
+	btConfig := enumerate.DefaultBluetoothScanConfig()
 	var ouiDB *resolve.OUIDatabase
 	if s.services.Discovery.Device != nil {
 		ouiDB = s.services.Discovery.Device.GetOUIDatabase()
 	}
-	s.services.Discovery.BluetoothScanner = discovery.NewBluetoothScanner("", btConfig, ouiDB)
+	s.services.Discovery.BluetoothScanner = enumerate.NewBluetoothScanner("", btConfig, ouiDB)
 	logging.GetLogger().Info("Bluetooth scanner initialized")
 
 	// Initialize WiFi bridge connecting canopy/wifi to discovery

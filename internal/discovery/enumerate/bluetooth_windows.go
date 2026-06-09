@@ -8,7 +8,7 @@
 //   - Limited compared to Linux BlueZ capabilities
 //   - May require administrator privileges for some operations
 //   - Full BLE scanning requires Windows Runtime API (WinRT)
-package discovery
+package enumerate
 
 import (
 	"context"
