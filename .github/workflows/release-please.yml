@@ -50,7 +50,13 @@ jobs:
           # secret isn't set, so the workflow doesn't break if the PAT
           # expires before being renewed (cascade is lost until renewed).
           token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
-          release-type: go
+          # NOTE: do NOT pass release-type here. It is declared per-package in
+          # release-please-config.json (release-type: go). Passing it as a direct
+          # action input forces a mode that ignores the config-file's per-package
+          # options — including bump-minor-pre-major / bump-patch-for-minor-pre-major
+          # — which made release-please propose a 1.0.0 major bump off a pre-1.0
+          # breaking change. We are pre-alpha and stay on 0.x; the config governs
+          # versioning. (seed #1602)
           config-file: .github/release-please-config.json
           manifest-file: .github/.release-please-manifest.json
 
