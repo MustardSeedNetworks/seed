@@ -18,32 +18,32 @@ export interface NetworkProblem {
   status: string;
   title: string;
   description: string;
-  device_id?: string;
-  device_mac?: string;
-  interface_name?: string;
-  ip_address?: string;
-  affected_macs?: string;
+  deviceId?: string;
+  deviceMac?: string;
+  interfaceName?: string;
+  ipAddress?: string;
+  affectedMacs?: string;
   ssid?: string;
   bssid?: string;
   channel?: number;
-  current_value?: number;
-  threshold_value?: number;
+  currentValue?: number;
+  thresholdValue?: number;
   unit?: string;
-  first_seen: string;
-  last_seen: string;
-  resolved_at?: string;
-  occurrence_count: number;
+  firstSeen: string;
+  lastSeen: string;
+  resolvedAt?: string;
+  occurrenceCount: number;
   metadata?: {};
 }
 export interface ProblemSummary {
-  total_active: number;
-  by_severity: {
+  totalActive: number;
+  bySeverity: {
     [k: string]: number;
   };
-  by_category: {
+  byCategory: {
     [k: string]: number;
   };
-  recent_count: number;
-  resolved_today: number;
-  last_scan_time: string;
+  recentCount: number;
+  resolvedToday: number;
+  lastScanTime: string;
 }
