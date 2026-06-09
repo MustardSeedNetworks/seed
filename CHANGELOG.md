@@ -5,6 +5,75 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.211.0](https://github.com/MustardSeedNetworks/seed/compare/v0.210.0...v0.211.0) (2026-06-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* the SSO config API (/api/v1 sso update) and the CVE-database file format now use camelCase keys (clientId, clientSecret, redirectUrl, tenantId, cvssScore, lastUpdated) instead of snake_case. Pre-1.0, no external consumers.
+* **api:** the MFA (/api/v1 mfa) and auth-login responses now use camelCase json keys (totpEnabled, provisioningUri, qrCodePngBase64, mfaRequired, mfaToken, etc.) instead of snake_case. Pre-1.0, no external consumers; the bundled UI is updated in lockstep.
+* **api:** the logs (/api logs query + stats), profiles (/api profiles), and config-version/restore APIs now use camelCase json keys (requestId, durationMs, totalCount, byLevel, isDefault, needsMigration, backupName, etc.) instead of snake_case. Pre-1.0, no external consumers; the bundled UI is updated in lockstep.
+* **discovery:** the network problem-detection API (/api problem + network-problems responses) now uses camelCase json keys (deviceId, bySeverity, signalDbm, interfaceErrors, scanDurationMs, etc.) instead of snake_case. Pre-1.0, no external consumers; the bundled UI is updated in lockstep via regenerated types.
+* **discovery:** the wi-fi discovery API (/api/v1/wifi discovery responses) now uses camelCase json keys (isHidden, securityType, frequencyMhz, signalDbm, etc.) instead of snake_case. Pre-1.0, no external consumers; the bundled UI is updated in lockstep via regenerated types.
+
+### Features
+
+* **discovery:** embed ieee oui registry as single source, drop hardcoded maps ([#1591](https://github.com/MustardSeedNetworks/seed/issues/1591)) ([18cc72b](https://github.com/MustardSeedNetworks/seed/commit/18cc72b7b54adfa27b523d4b4d584a4d2d05118c))
+
+
+### Bug Fixes
+
+* **auth:** stop a late mount /status probe from clobbering a completed login ([#1598](https://github.com/MustardSeedNetworks/seed/issues/1598)) ([cc43f4a](https://github.com/MustardSeedNetworks/seed/commit/cc43f4a86933502bcaa71a1eedb40be194f1761b))
+* **ui:** suppress node dep0205 build warning ([e3dadd7](https://github.com/MustardSeedNetworks/seed/commit/e3dadd74db4be15a8228a5129e0a8d7c535e04df))
+
+
+### Performance Improvements
+
+* **ui:** split vendor chunks, add modern build target + analyzer ([#1599](https://github.com/MustardSeedNetworks/seed/issues/1599)) ([f451a70](https://github.com/MustardSeedNetworks/seed/commit/f451a70af38814f805ed97f7dc6846887fb3f723))
+
+
+### Code Refactoring
+
+* **api:** camelcase the logs, profiles, and config-version apis (no grandfathering) ([#1606](https://github.com/MustardSeedNetworks/seed/issues/1606)) ([865fc78](https://github.com/MustardSeedNetworks/seed/commit/865fc78f29faa791ec92a20510a803f67a1a9c2f))
+* **api:** camelcase the mfa + auth-login apis (no grandfathering) ([#1607](https://github.com/MustardSeedNetworks/seed/issues/1607)) ([bac77f5](https://github.com/MustardSeedNetworks/seed/commit/bac77f5c947b772755fb373b79aea948dcd21462))
+* **api:** drop redundant in-handler method guards (registry is authoritative) ([#1597](https://github.com/MustardSeedNetworks/seed/issues/1597)) ([2abceb3](https://github.com/MustardSeedNetworks/seed/commit/2abceb33e30ec293007039cae1b14c4c159d9059))
+* camelcase the sso-config + cve-db apis; finish OUR de-grandfathering ([#1608](https://github.com/MustardSeedNetworks/seed/issues/1608)) ([e072884](https://github.com/MustardSeedNetworks/seed/commit/e0728848990f356d9a4c085113cf6df677adb746))
+* **discovery:** camelcase the problem-detection api (no grandfathering) ([#1605](https://github.com/MustardSeedNetworks/seed/issues/1605)) ([5aff651](https://github.com/MustardSeedNetworks/seed/commit/5aff651975a10b85fec246dbf2a7820a0966ba16))
+* **discovery:** drive Engine collectors through ports (adr-0018) ([#1592](https://github.com/MustardSeedNetworks/seed/issues/1592)) ([9edde7b](https://github.com/MustardSeedNetworks/seed/commit/9edde7b6031041b66b59506e56cfe25870684934))
+* **discovery:** extract name/identity resolution to resolve leaf (adr-0018) ([#1589](https://github.com/MustardSeedNetworks/seed/issues/1589)) ([a874afd](https://github.com/MustardSeedNetworks/seed/commit/a874afd779d066ecf507d0130db5d2f8da3e3eba))
+* **discovery:** relocate bluetooth collector to enumerate stage (adr-0018) ([#1595](https://github.com/MustardSeedNetworks/seed/issues/1595)) ([4933b79](https://github.com/MustardSeedNetworks/seed/commit/4933b79351872eba417584471a1e8c6d73b37ddb))
+* **discovery:** relocate port-scan leaf to fingerprint stage (adr-0018) ([#1587](https://github.com/MustardSeedNetworks/seed/issues/1587)) ([e598809](https://github.com/MustardSeedNetworks/seed/commit/e5988094e2e6458f276cda5bcb172a8a63ccacc7))
+* **discovery:** relocate wi-fi collector to enumerate + camelcase the wi-fi api (adr-0018) ([#1596](https://github.com/MustardSeedNetworks/seed/issues/1596)) ([6d2f3d8](https://github.com/MustardSeedNetworks/seed/commit/6d2f3d8a83198da719bdd4d4f6b6339cb8ea3398))
+* **discovery:** relocate wired+service collector to enumerate stage (adr-0018) ([#1600](https://github.com/MustardSeedNetworks/seed/issues/1600)) ([9139cbe](https://github.com/MustardSeedNetworks/seed/commit/9139cbe31b746e1cc01d445263cec29284bf8737))
+* **ui:** decompose app.tsx god component into AppShell + useAppOrchestration (b1) ([#1578](https://github.com/MustardSeedNetworks/seed/issues/1578)) ([c58408d](https://github.com/MustardSeedNetworks/seed/commit/c58408d817a8cd8d2496b57e4159dc6b3a9fd58c))
+* **ui:** replace HeaderBar inline SVGs with lucide icons (m2) ([#1582](https://github.com/MustardSeedNetworks/seed/issues/1582)) ([3932184](https://github.com/MustardSeedNetworks/seed/commit/39321848d97bb60858b001c31b05e7a4e19e2f67))
+* **ui:** single canonical SeedLogo brand mark (m3) ([#1580](https://github.com/MustardSeedNetworks/seed/issues/1580)) ([90663a6](https://github.com/MustardSeedNetworks/seed/commit/90663a68e3e35ef516aa645ca25ad61d963cfb46))
+
+
+### Documentation
+
+* **ui:** add STATE.md state-placement guide (l2) ([#1583](https://github.com/MustardSeedNetworks/seed/issues/1583)) ([02f995c](https://github.com/MustardSeedNetworks/seed/commit/02f995c5b0ad82ea767ffce85abc684099ad863d))
+
+
+### Tests
+
+* **auth:** lock the first-run no-usable-default-password invariant ([#1242](https://github.com/MustardSeedNetworks/seed/issues/1242)) ([#1585](https://github.com/MustardSeedNetworks/seed/issues/1585)) ([322c902](https://github.com/MustardSeedNetworks/seed/commit/322c902a9ea9877b7865ca2cfdac926665d6ec2b))
+* **auth:** pin the CSRF exempt-list with a coverage gate ([#1223](https://github.com/MustardSeedNetworks/seed/issues/1223)) ([#1584](https://github.com/MustardSeedNetworks/seed/issues/1584)) ([ddb05de](https://github.com/MustardSeedNetworks/seed/commit/ddb05dece69e7e5c63a0fc7ef6ea6282412eb19c))
+* **e2e:** fix rotating post-login dashboard flake in auth-complete ([#1588](https://github.com/MustardSeedNetworks/seed/issues/1588)) ([d7689b9](https://github.com/MustardSeedNetworks/seed/commit/d7689b93b0d0b65eb28e8ea5742578c88571449a))
+
+
+### Continuous Integration
+
+* **e2e:** promote full E2E suite to a blocking gate via CI Complete ([#1590](https://github.com/MustardSeedNetworks/seed/issues/1590)) ([1df9974](https://github.com/MustardSeedNetworks/seed/commit/1df9974ad352aa496f00f967f65b043dcc2b2601))
+* **release-please:** honor pre-major bump config; force next release to 0.211.0 ([#1603](https://github.com/MustardSeedNetworks/seed/issues/1603)) ([d5a784e](https://github.com/MustardSeedNetworks/seed/commit/d5a784e68eeebf787004defecdf77c328249dcdc))
+* **release:** drop macOS amd64 (Intel) build target ([#1579](https://github.com/MustardSeedNetworks/seed/issues/1579)) ([9eaa9d4](https://github.com/MustardSeedNetworks/seed/commit/9eaa9d474dbb04bd7d185ae72fc46a32acfa4c50))
+
+
+### Miscellaneous
+
+* **release-please:** sync version manifest to current release (0.210.0) ([#1601](https://github.com/MustardSeedNetworks/seed/issues/1601)) ([f0a4975](https://github.com/MustardSeedNetworks/seed/commit/f0a4975c8efb182b0ff7026a065117ebd2a4daf6))
+* **ui:** harmonize tsconfig layout, remove emitted vite.config.d.ts ([#1594](https://github.com/MustardSeedNetworks/seed/issues/1594)) ([c7eec34](https://github.com/MustardSeedNetworks/seed/commit/c7eec34920b533e05e48cee743cbd47f9c37b1a9))
+
 ## [0.210.0](https://github.com/MustardSeedNetworks/seed/compare/v0.209.0...v0.210.0) (2026-06-08)
 
 
