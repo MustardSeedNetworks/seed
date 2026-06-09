@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0](https://github.com/MustardSeedNetworks/seed/compare/v0.210.0...v1.0.0) (2026-06-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **discovery:** the wi-fi discovery API (/api/v1/wifi discovery responses) now uses camelCase json keys (isHidden, securityType, frequencyMhz, signalDbm, etc.) instead of snake_case. Pre-1.0, no external consumers; the bundled UI is updated in lockstep via regenerated types.
+
+### Features
+
+* **discovery:** embed ieee oui registry as single source, drop hardcoded maps ([#1591](https://github.com/MustardSeedNetworks/seed/issues/1591)) ([18cc72b](https://github.com/MustardSeedNetworks/seed/commit/18cc72b7b54adfa27b523d4b4d584a4d2d05118c))
+
+
+### Bug Fixes
+
+* **auth:** stop a late mount /status probe from clobbering a completed login ([#1598](https://github.com/MustardSeedNetworks/seed/issues/1598)) ([cc43f4a](https://github.com/MustardSeedNetworks/seed/commit/cc43f4a86933502bcaa71a1eedb40be194f1761b))
+* **ui:** suppress node dep0205 build warning ([e3dadd7](https://github.com/MustardSeedNetworks/seed/commit/e3dadd74db4be15a8228a5129e0a8d7c535e04df))
+
+
+### Performance Improvements
+
+* **ui:** split vendor chunks, add modern build target + analyzer ([#1599](https://github.com/MustardSeedNetworks/seed/issues/1599)) ([f451a70](https://github.com/MustardSeedNetworks/seed/commit/f451a70af38814f805ed97f7dc6846887fb3f723))
+
+
+### Code Refactoring
+
+* **discovery:** relocate wi-fi collector to enumerate + camelcase the wi-fi api (adr-0018) ([#1596](https://github.com/MustardSeedNetworks/seed/issues/1596)) ([6d2f3d8](https://github.com/MustardSeedNetworks/seed/commit/6d2f3d8a83198da719bdd4d4f6b6339cb8ea3398))
+
 ## [0.210.0](https://github.com/MustardSeedNetworks/seed/compare/v0.209.0...v0.210.0) (2026-06-08)
 
 
