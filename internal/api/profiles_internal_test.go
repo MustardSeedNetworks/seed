@@ -8,8 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
-	profilesapp "github.com/MustardSeedNetworks/seed/internal/profiles/app"
+	"github.com/MustardSeedNetworks/seed/internal/profiles/catalog"
 )
 
 // newProfilesTestServer builds a Server wired to a real database (which seeds a
@@ -24,12 +25,12 @@ func newProfilesTestServer(t *testing.T) (*Server, *database.DB) {
 
 	s := &Server{services: NewServiceContainer()}
 	s.services.Database.DB = db
-	s.initProfilesUseCase()
+	s.profiles = app.NewProfiles(s.db)
 	return s, db
 }
 
 // TestProfilesUseCaseAdapterCRUD exercises the ADR-0016 phase-3 adapter against a
-// real database: the database.Profile <-> profilesapp.Profile mapping and the
+// real database: the database.Profile <-> catalog.Profile mapping and the
 // ErrProfileNotFound/ErrProfileNameExists -> sentinel translation.
 func TestProfilesUseCaseAdapterCRUD(t *testing.T) {
 	s, _ := newProfilesTestServer(t)
@@ -45,7 +46,7 @@ func TestProfilesUseCaseAdapterCRUD(t *testing.T) {
 	}
 
 	// Create.
-	created, err := s.profiles.Create(ctx, profilesapp.NewProfile{Name: "field-site", ConfigJSON: `{"k":1}`})
+	created, err := s.profiles.Create(ctx, catalog.NewProfile{Name: "field-site", ConfigJSON: `{"k":1}`})
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -54,9 +55,9 @@ func TestProfilesUseCaseAdapterCRUD(t *testing.T) {
 	}
 
 	// Duplicate name maps to the sentinel.
-	if _, dupErr := s.profiles.Create(ctx, profilesapp.NewProfile{Name: "field-site"}); !errors.Is(
+	if _, dupErr := s.profiles.Create(ctx, catalog.NewProfile{Name: "field-site"}); !errors.Is(
 		dupErr,
-		profilesapp.ErrNameExists,
+		catalog.ErrNameExists,
 	) {
 		t.Fatalf("duplicate create should map to ErrNameExists, got %v", dupErr)
 	}
@@ -68,7 +69,7 @@ func TestProfilesUseCaseAdapterCRUD(t *testing.T) {
 	}
 
 	// Missing id maps to ErrNotFound.
-	if _, missErr := s.profiles.Get(ctx, "nope"); !errors.Is(missErr, profilesapp.ErrNotFound) {
+	if _, missErr := s.profiles.Get(ctx, "nope"); !errors.Is(missErr, catalog.ErrNotFound) {
 		t.Fatalf("missing get should map to ErrNotFound, got %v", missErr)
 	}
 
@@ -82,12 +83,12 @@ func TestProfilesUseCaseAdapterCRUD(t *testing.T) {
 	}
 
 	// Cannot delete the active profile.
-	if delErr := s.profiles.Delete(ctx, created.ID); !errors.Is(delErr, profilesapp.ErrDeleteActive) {
+	if delErr := s.profiles.Delete(ctx, created.ID); !errors.Is(delErr, catalog.ErrDeleteActive) {
 		t.Fatalf("deleting active should be ErrDeleteActive, got %v", delErr)
 	}
 
 	// Cannot delete the default profile.
-	if defErr := s.profiles.Delete(ctx, list[0].ID); !errors.Is(defErr, profilesapp.ErrDeleteDefault) {
+	if defErr := s.profiles.Delete(ctx, list[0].ID); !errors.Is(defErr, catalog.ErrDeleteDefault) {
 		t.Fatalf("deleting default should be ErrDeleteDefault, got %v", defErr)
 	}
 }

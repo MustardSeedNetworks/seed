@@ -1,10 +1,11 @@
-package api
+package app
 
-// profiles_usecases.go wires the API layer to the profiles application
-// (use-case) service (ADR-0016 strangle phase 3). The adapter implements the
-// narrow profilesapp.Store port over the database Profiles + Settings
-// repositories, mapping the repository's domain errors to the use-case's
-// sentinels and the database.Profile row to the use-case model.
+// profiles.go wires the composition root to the profiles catalog application
+// (use-case) service (ADR-0020). The adapter implements the narrow catalog.Store
+// port over the database Profiles + Settings repositories, mapping the
+// repository's domain errors to the use-case's sentinels and the
+// database.Profile row to the use-case model, so the profile handlers depend on
+// a use-case instead of reaching into the database repositories directly.
 
 import (
 	"context"
@@ -12,10 +13,10 @@ import (
 	"strconv"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
-	profilesapp "github.com/MustardSeedNetworks/seed/internal/profiles/app"
+	"github.com/MustardSeedNetworks/seed/internal/profiles/catalog"
 )
 
-// profilesStore implements profilesapp.Store over the database repositories.
+// profilesStore implements catalog.Store over the database repositories.
 // The database is resolved lazily; callers (handlers) gate on s.db() != nil
 // before invoking the use-case, so a nil db here is not expected.
 type profilesStore struct {
@@ -28,18 +29,18 @@ func mapProfileErr(err error) error {
 	case err == nil:
 		return nil
 	case errors.Is(err, database.ErrProfileNotFound):
-		return profilesapp.ErrNotFound
+		return catalog.ErrNotFound
 	case errors.Is(err, database.ErrProfileNameExists):
-		return profilesapp.ErrNameExists
+		return catalog.ErrNameExists
 	case errors.Is(err, database.ErrProfileConflict):
-		return profilesapp.ErrConflict
+		return catalog.ErrConflict
 	default:
 		return err
 	}
 }
 
-func dbToAppProfile(p *database.Profile) profilesapp.Profile {
-	return profilesapp.Profile{
+func dbToAppProfile(p *database.Profile) catalog.Profile {
+	return catalog.Profile{
 		ID:          p.ID,
 		Name:        p.Name,
 		Description: p.Description,
@@ -51,7 +52,7 @@ func dbToAppProfile(p *database.Profile) profilesapp.Profile {
 	}
 }
 
-func appToDBProfile(p profilesapp.Profile) *database.Profile {
+func appToDBProfile(p catalog.Profile) *database.Profile {
 	return &database.Profile{
 		ID:          p.ID,
 		Name:        p.Name,
@@ -64,53 +65,53 @@ func appToDBProfile(p profilesapp.Profile) *database.Profile {
 	}
 }
 
-func (s profilesStore) List(ctx context.Context) ([]profilesapp.Profile, error) {
+func (s profilesStore) List(ctx context.Context) ([]catalog.Profile, error) {
 	rows, err := s.db().Profiles().List(ctx)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]profilesapp.Profile, 0, len(rows))
+	out := make([]catalog.Profile, 0, len(rows))
 	for _, p := range rows {
 		out = append(out, dbToAppProfile(p))
 	}
 	return out, nil
 }
 
-func (s profilesStore) Get(ctx context.Context, id string) (profilesapp.Profile, error) {
+func (s profilesStore) Get(ctx context.Context, id string) (catalog.Profile, error) {
 	p, err := s.db().Profiles().Get(ctx, id)
 	if err != nil {
-		return profilesapp.Profile{}, mapProfileErr(err)
+		return catalog.Profile{}, mapProfileErr(err)
 	}
 	return dbToAppProfile(p), nil
 }
 
-func (s profilesStore) GetByName(ctx context.Context, name string) (profilesapp.Profile, bool, error) {
+func (s profilesStore) GetByName(ctx context.Context, name string) (catalog.Profile, bool, error) {
 	p, err := s.db().Profiles().GetByName(ctx, name)
 	if err != nil {
 		if errors.Is(err, database.ErrProfileNotFound) {
-			return profilesapp.Profile{}, false, nil
+			return catalog.Profile{}, false, nil
 		}
-		return profilesapp.Profile{}, false, err
+		return catalog.Profile{}, false, err
 	}
 	if p == nil {
-		return profilesapp.Profile{}, false, nil
+		return catalog.Profile{}, false, nil
 	}
 	return dbToAppProfile(p), true, nil
 }
 
-func (s profilesStore) GetDefault(ctx context.Context) (profilesapp.Profile, error) {
+func (s profilesStore) GetDefault(ctx context.Context) (catalog.Profile, error) {
 	p, err := s.db().Profiles().GetDefault(ctx)
 	if err != nil {
-		return profilesapp.Profile{}, mapProfileErr(err)
+		return catalog.Profile{}, mapProfileErr(err)
 	}
 	return dbToAppProfile(p), nil
 }
 
-func (s profilesStore) Create(ctx context.Context, p profilesapp.Profile) error {
+func (s profilesStore) Create(ctx context.Context, p catalog.Profile) error {
 	return mapProfileErr(s.db().Profiles().Create(ctx, appToDBProfile(p)))
 }
 
-func (s profilesStore) Update(ctx context.Context, p profilesapp.Profile, ifMatch string) error {
+func (s profilesStore) Update(ctx context.Context, p catalog.Profile, ifMatch string) error {
 	if ifMatch == "" {
 		return mapProfileErr(s.db().Profiles().Update(ctx, appToDBProfile(p)))
 	}
@@ -119,7 +120,7 @@ func (s profilesStore) Update(ctx context.Context, p profilesapp.Profile, ifMatc
 	// (412), not a 500 — treat it as a conflict without touching the row.
 	expectedVersion, err := strconv.ParseInt(ifMatch, 10, 64)
 	if err != nil {
-		return profilesapp.ErrConflict
+		return catalog.ErrConflict
 	}
 	return mapProfileErr(s.db().Profiles().UpdateIfMatch(ctx, appToDBProfile(p), expectedVersion))
 }
@@ -141,8 +142,10 @@ func (s profilesStore) SetActiveID(ctx context.Context, id string) error {
 	return s.db().Settings().Set(ctx, database.SettingKeyActiveProfile, id)
 }
 
-// initProfilesUseCase builds the profiles use-case over the lazy database
-// accessor (ADR-0016 phase 3).
-func (s *Server) initProfilesUseCase() {
-	s.profiles = profilesapp.NewService(profilesStore{db: s.db})
+// NewProfiles builds the profiles catalog use-case (ADR-0020) over the lazy db
+// accessor, assembling the catalog.Store adapter over the database Profiles +
+// Settings repositories. The database is resolved through db on each call so the
+// api test harness's later-set DB is honored; handlers gate on db() != nil first.
+func NewProfiles(db func() *database.DB) *catalog.Service {
+	return catalog.NewService(profilesStore{db: db})
 }

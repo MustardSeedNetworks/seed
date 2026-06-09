@@ -1,81 +1,81 @@
-package profilesapp_test
+package catalog_test
 
 import (
 	"context"
 	"errors"
 	"testing"
 
-	profilesapp "github.com/MustardSeedNetworks/seed/internal/profiles/app"
+	"github.com/MustardSeedNetworks/seed/internal/profiles/catalog"
 )
 
 // fakeStore is an in-memory Store for use-case tests.
 type fakeStore struct {
-	byID       map[string]profilesapp.Profile
+	byID       map[string]catalog.Profile
 	activeID   string
 	createErr  error
 	failGetDef bool
 }
 
-func newFakeStore() *fakeStore { return &fakeStore{byID: map[string]profilesapp.Profile{}} }
+func newFakeStore() *fakeStore { return &fakeStore{byID: map[string]catalog.Profile{}} }
 
-func (f *fakeStore) List(context.Context) ([]profilesapp.Profile, error) {
-	out := make([]profilesapp.Profile, 0, len(f.byID))
+func (f *fakeStore) List(context.Context) ([]catalog.Profile, error) {
+	out := make([]catalog.Profile, 0, len(f.byID))
 	for _, p := range f.byID {
 		out = append(out, p)
 	}
 	return out, nil
 }
 
-func (f *fakeStore) Get(_ context.Context, id string) (profilesapp.Profile, error) {
+func (f *fakeStore) Get(_ context.Context, id string) (catalog.Profile, error) {
 	p, ok := f.byID[id]
 	if !ok {
-		return profilesapp.Profile{}, profilesapp.ErrNotFound
+		return catalog.Profile{}, catalog.ErrNotFound
 	}
 	return p, nil
 }
 
-func (f *fakeStore) GetByName(_ context.Context, name string) (profilesapp.Profile, bool, error) {
+func (f *fakeStore) GetByName(_ context.Context, name string) (catalog.Profile, bool, error) {
 	for _, p := range f.byID {
 		if p.Name == name {
 			return p, true, nil
 		}
 	}
-	return profilesapp.Profile{}, false, nil
+	return catalog.Profile{}, false, nil
 }
 
-func (f *fakeStore) GetDefault(context.Context) (profilesapp.Profile, error) {
+func (f *fakeStore) GetDefault(context.Context) (catalog.Profile, error) {
 	if f.failGetDef {
-		return profilesapp.Profile{}, errors.New("db down")
+		return catalog.Profile{}, errors.New("db down")
 	}
 	for _, p := range f.byID {
 		if p.IsDefault {
 			return p, nil
 		}
 	}
-	return profilesapp.Profile{}, profilesapp.ErrNotFound
+	return catalog.Profile{}, catalog.ErrNotFound
 }
 
-func (f *fakeStore) Create(_ context.Context, p profilesapp.Profile) error {
+func (f *fakeStore) Create(_ context.Context, p catalog.Profile) error {
 	if f.createErr != nil {
 		return f.createErr
 	}
 	for _, ex := range f.byID {
 		if ex.Name == p.Name {
-			return profilesapp.ErrNameExists
+			return catalog.ErrNameExists
 		}
 	}
 	f.byID[p.ID] = p
 	return nil
 }
 
-func (f *fakeStore) Update(_ context.Context, p profilesapp.Profile, ifMatch string) error {
+func (f *fakeStore) Update(_ context.Context, p catalog.Profile, ifMatch string) error {
 	existing, ok := f.byID[p.ID]
 	if ifMatch != "" {
 		if !ok {
-			return profilesapp.ErrNotFound
+			return catalog.ErrNotFound
 		}
 		if existing.ConfigJSON != ifMatch { // tests use ConfigJSON as the version token
-			return profilesapp.ErrConflict
+			return catalog.ErrConflict
 		}
 	}
 	f.byID[p.ID] = p
@@ -93,13 +93,13 @@ func (f *fakeStore) SetActiveID(_ context.Context, id string) error {
 func ctx() context.Context { return context.Background() }
 
 func TestCreateValidatesNameAndStores(t *testing.T) {
-	svc := profilesapp.NewService(newFakeStore())
+	svc := catalog.NewService(newFakeStore())
 
-	if _, err := svc.Create(ctx(), profilesapp.NewProfile{Name: ""}); !errors.Is(err, profilesapp.ErrNameRequired) {
+	if _, err := svc.Create(ctx(), catalog.NewProfile{Name: ""}); !errors.Is(err, catalog.ErrNameRequired) {
 		t.Fatalf("empty name should be ErrNameRequired, got %v", err)
 	}
 
-	p, err := svc.Create(ctx(), profilesapp.NewProfile{Name: "alpha", ConfigJSON: `{"a":1}`})
+	p, err := svc.Create(ctx(), catalog.NewProfile{Name: "alpha", ConfigJSON: `{"a":1}`})
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -107,9 +107,9 @@ func TestCreateValidatesNameAndStores(t *testing.T) {
 		t.Fatalf("unexpected created profile: %+v", p)
 	}
 
-	if _, dupErr := svc.Create(ctx(), profilesapp.NewProfile{Name: "alpha"}); !errors.Is(
+	if _, dupErr := svc.Create(ctx(), catalog.NewProfile{Name: "alpha"}); !errors.Is(
 		dupErr,
-		profilesapp.ErrNameExists,
+		catalog.ErrNameExists,
 	) {
 		t.Fatalf("duplicate name should be ErrNameExists, got %v", dupErr)
 	}
@@ -117,11 +117,11 @@ func TestCreateValidatesNameAndStores(t *testing.T) {
 
 func TestUpdatePartialSemantics(t *testing.T) {
 	store := newFakeStore()
-	store.byID["p1"] = profilesapp.Profile{ID: "p1", Name: "orig", Description: "d", ConfigJSON: "{}"}
-	svc := profilesapp.NewService(store)
+	store.byID["p1"] = catalog.Profile{ID: "p1", Name: "orig", Description: "d", ConfigJSON: "{}"}
+	svc := catalog.NewService(store)
 
 	// Empty name keeps existing; nil config keeps existing; description always applied.
-	got, err := svc.Update(ctx(), "p1", profilesapp.ProfileUpdate{Name: "", Description: "new", ConfigJSON: nil}, "")
+	got, err := svc.Update(ctx(), "p1", catalog.ProfileUpdate{Name: "", Description: "new", ConfigJSON: nil}, "")
 	if err != nil {
 		t.Fatalf("update: %v", err)
 	}
@@ -130,14 +130,14 @@ func TestUpdatePartialSemantics(t *testing.T) {
 	}
 
 	cfg := `{"x":2}`
-	got, _ = svc.Update(ctx(), "p1", profilesapp.ProfileUpdate{Name: "renamed", ConfigJSON: &cfg}, "")
+	got, _ = svc.Update(ctx(), "p1", catalog.ProfileUpdate{Name: "renamed", ConfigJSON: &cfg}, "")
 	if got.Name != "renamed" || got.ConfigJSON != cfg {
 		t.Fatalf("full update mismatch: %+v", got)
 	}
 
-	if _, missErr := svc.Update(ctx(), "missing", profilesapp.ProfileUpdate{}, ""); !errors.Is(
+	if _, missErr := svc.Update(ctx(), "missing", catalog.ProfileUpdate{}, ""); !errors.Is(
 		missErr,
-		profilesapp.ErrNotFound,
+		catalog.ErrNotFound,
 	) {
 		t.Fatalf("update missing should be ErrNotFound, got %v", missErr)
 	}
@@ -146,43 +146,43 @@ func TestUpdatePartialSemantics(t *testing.T) {
 func TestUpdateIfMatch(t *testing.T) {
 	store := newFakeStore()
 	// fakeStore.UpdateIfMatch treats ConfigJSON as the version token.
-	store.byID["p1"] = profilesapp.Profile{ID: "p1", Name: "n", ConfigJSON: "v1"}
-	svc := profilesapp.NewService(store)
+	store.byID["p1"] = catalog.Profile{ID: "p1", Name: "n", ConfigJSON: "v1"}
+	svc := catalog.NewService(store)
 
 	// Matching ETag writes through.
 	upd := `v2`
-	if _, err := svc.Update(ctx(), "p1", profilesapp.ProfileUpdate{ConfigJSON: &upd}, "v1"); err != nil {
+	if _, err := svc.Update(ctx(), "p1", catalog.ProfileUpdate{ConfigJSON: &upd}, "v1"); err != nil {
 		t.Fatalf("matching if-match should succeed: %v", err)
 	}
 
 	// Stale ETag (the row is now "v2") conflicts.
 	again := `v3`
-	if _, err := svc.Update(ctx(), "p1", profilesapp.ProfileUpdate{ConfigJSON: &again}, "v1"); !errors.Is(
+	if _, err := svc.Update(ctx(), "p1", catalog.ProfileUpdate{ConfigJSON: &again}, "v1"); !errors.Is(
 		err,
-		profilesapp.ErrConflict,
+		catalog.ErrConflict,
 	) {
 		t.Fatalf("stale if-match should be ErrConflict, got %v", err)
 	}
 
 	// Empty if-match stays unconditional.
 	last := `v4`
-	if _, err := svc.Update(ctx(), "p1", profilesapp.ProfileUpdate{ConfigJSON: &last}, ""); err != nil {
+	if _, err := svc.Update(ctx(), "p1", catalog.ProfileUpdate{ConfigJSON: &last}, ""); err != nil {
 		t.Fatalf("unconditional update should succeed: %v", err)
 	}
 }
 
 func TestDeleteGuards(t *testing.T) {
 	store := newFakeStore()
-	store.byID["def"] = profilesapp.Profile{ID: "def", Name: "default", IsDefault: true}
-	store.byID["act"] = profilesapp.Profile{ID: "act", Name: "active"}
-	store.byID["ok"] = profilesapp.Profile{ID: "ok", Name: "ok"}
+	store.byID["def"] = catalog.Profile{ID: "def", Name: "default", IsDefault: true}
+	store.byID["act"] = catalog.Profile{ID: "act", Name: "active"}
+	store.byID["ok"] = catalog.Profile{ID: "ok", Name: "ok"}
 	store.activeID = "act"
-	svc := profilesapp.NewService(store)
+	svc := catalog.NewService(store)
 
-	if err := svc.Delete(ctx(), "def"); !errors.Is(err, profilesapp.ErrDeleteDefault) {
+	if err := svc.Delete(ctx(), "def"); !errors.Is(err, catalog.ErrDeleteDefault) {
 		t.Fatalf("deleting default should be ErrDeleteDefault, got %v", err)
 	}
-	if err := svc.Delete(ctx(), "act"); !errors.Is(err, profilesapp.ErrDeleteActive) {
+	if err := svc.Delete(ctx(), "act"); !errors.Is(err, catalog.ErrDeleteActive) {
 		t.Fatalf("deleting active should be ErrDeleteActive, got %v", err)
 	}
 	if err := svc.Delete(ctx(), "ok"); err != nil {
@@ -196,9 +196,9 @@ func TestDeleteGuards(t *testing.T) {
 func TestActiveProfileResolution(t *testing.T) {
 	t.Run("explicit active", func(t *testing.T) {
 		store := newFakeStore()
-		store.byID["p1"] = profilesapp.Profile{ID: "p1", Name: "one"}
+		store.byID["p1"] = catalog.Profile{ID: "p1", Name: "one"}
 		store.activeID = "p1"
-		got, err := profilesapp.NewService(store).ActiveProfile(ctx())
+		got, err := catalog.NewService(store).ActiveProfile(ctx())
 		if err != nil || got.ID != "p1" {
 			t.Fatalf("want p1, got %+v err=%v", got, err)
 		}
@@ -206,25 +206,25 @@ func TestActiveProfileResolution(t *testing.T) {
 
 	t.Run("falls back to default when unset", func(t *testing.T) {
 		store := newFakeStore()
-		store.byID["d"] = profilesapp.Profile{ID: "d", Name: "def", IsDefault: true}
-		got, err := profilesapp.NewService(store).ActiveProfile(ctx())
+		store.byID["d"] = catalog.Profile{ID: "d", Name: "def", IsDefault: true}
+		got, err := catalog.NewService(store).ActiveProfile(ctx())
 		if err != nil || got.ID != "d" {
 			t.Fatalf("want default d, got %+v err=%v", got, err)
 		}
 	})
 
 	t.Run("no active and no default", func(t *testing.T) {
-		_, err := profilesapp.NewService(newFakeStore()).ActiveProfile(ctx())
-		if !errors.Is(err, profilesapp.ErrNoActiveOrDefault) {
+		_, err := catalog.NewService(newFakeStore()).ActiveProfile(ctx())
+		if !errors.Is(err, catalog.ErrNoActiveOrDefault) {
 			t.Fatalf("want ErrNoActiveOrDefault, got %v", err)
 		}
 	})
 
 	t.Run("stale active self-heals to default", func(t *testing.T) {
 		store := newFakeStore()
-		store.byID["d"] = profilesapp.Profile{ID: "d", Name: "def", IsDefault: true}
+		store.byID["d"] = catalog.Profile{ID: "d", Name: "def", IsDefault: true}
 		store.activeID = "ghost" // points at a deleted profile
-		got, err := profilesapp.NewService(store).ActiveProfile(ctx())
+		got, err := catalog.NewService(store).ActiveProfile(ctx())
 		if err != nil || got.ID != "d" {
 			t.Fatalf("want self-heal to d, got %+v err=%v", got, err)
 		}
@@ -236,13 +236,13 @@ func TestActiveProfileResolution(t *testing.T) {
 
 func TestSetActiveProfile(t *testing.T) {
 	store := newFakeStore()
-	store.byID["p1"] = profilesapp.Profile{ID: "p1", Name: "one"}
-	svc := profilesapp.NewService(store)
+	store.byID["p1"] = catalog.Profile{ID: "p1", Name: "one"}
+	svc := catalog.NewService(store)
 
-	if _, err := svc.SetActiveProfile(ctx(), ""); !errors.Is(err, profilesapp.ErrIDRequired) {
+	if _, err := svc.SetActiveProfile(ctx(), ""); !errors.Is(err, catalog.ErrIDRequired) {
 		t.Fatalf("empty id should be ErrIDRequired, got %v", err)
 	}
-	if _, err := svc.SetActiveProfile(ctx(), "missing"); !errors.Is(err, profilesapp.ErrNotFound) {
+	if _, err := svc.SetActiveProfile(ctx(), "missing"); !errors.Is(err, catalog.ErrNotFound) {
 		t.Fatalf("missing id should be ErrNotFound, got %v", err)
 	}
 	p, err := svc.SetActiveProfile(ctx(), "p1")
@@ -253,9 +253,9 @@ func TestSetActiveProfile(t *testing.T) {
 
 func TestDuplicateRetriesOnNameCollision(t *testing.T) {
 	store := newFakeStore()
-	store.byID["src"] = profilesapp.Profile{ID: "src", Name: "src", ConfigJSON: `{"k":1}`}
-	store.byID["copy"] = profilesapp.Profile{ID: "copy", Name: "src (Copy)"} // forces first-attempt collision
-	svc := profilesapp.NewService(store)
+	store.byID["src"] = catalog.Profile{ID: "src", Name: "src", ConfigJSON: `{"k":1}`}
+	store.byID["copy"] = catalog.Profile{ID: "copy", Name: "src (Copy)"} // forces first-attempt collision
+	svc := catalog.NewService(store)
 
 	dup, err := svc.Duplicate(ctx(), "src", "")
 	if err != nil {
@@ -271,10 +271,10 @@ func TestDuplicateRetriesOnNameCollision(t *testing.T) {
 
 func TestImportCreateUpdateSkip(t *testing.T) {
 	store := newFakeStore()
-	store.byID["e"] = profilesapp.Profile{ID: "e", Name: "exists", ConfigJSON: "{}"}
-	svc := profilesapp.NewService(store)
+	store.byID["e"] = catalog.Profile{ID: "e", Name: "exists", ConfigJSON: "{}"}
+	svc := catalog.NewService(store)
 
-	res := svc.Import(ctx(), []profilesapp.ImportItem{
+	res := svc.Import(ctx(), []catalog.ImportItem{
 		{Name: "fresh", ConfigJSON: `{"a":1}`},
 		{Name: ""},                              // skipped: name required
 		{Name: "exists", ConfigJSON: `{"b":2}`}, // skipped: no overwrite
@@ -287,7 +287,7 @@ func TestImportCreateUpdateSkip(t *testing.T) {
 		t.Fatalf("expected 2 errors, got %v", res.Errors)
 	}
 
-	res = svc.Import(ctx(), []profilesapp.ImportItem{{Name: "exists", ConfigJSON: `{"c":3}`}}, true)
+	res = svc.Import(ctx(), []catalog.ImportItem{{Name: "exists", ConfigJSON: `{"c":3}`}}, true)
 	if res.Updated != 1 || res.Created != 0 || res.Skipped != 0 {
 		t.Fatalf("import(overwrite) tally: %+v", res)
 	}

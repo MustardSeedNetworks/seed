@@ -1,11 +1,11 @@
-// Package profilesapp holds the profiles application (use-case) layer
-// (ADR-0016 strangle phase 3). It owns the CRUD, active-profile resolution,
-// duplicate, and import/export orchestration that previously lived in the
-// api.Server profile handlers, behind a narrow consumer-defined Store port — so
-// handlers depend on a use-case instead of reaching into the database
-// repositories. Handlers keep transport concerns (decode/encode, localized
-// error mapping), license feature-gating, and the config-apply/SSE side effects.
-package profilesapp
+// Package catalog holds the profiles application (use-case) layer (ADR-0020).
+// It owns the CRUD, active-profile resolution, duplicate, and import/export
+// orchestration that previously lived in the api.Server profile handlers,
+// behind a narrow consumer-defined Store port — so handlers depend on a
+// use-case instead of reaching into the database repositories. Handlers keep
+// transport concerns (decode/encode, localized error mapping), license
+// feature-gating, and the config-apply/SSE side effects.
+package catalog
 
 import (
 	"context"
