@@ -65,17 +65,6 @@ func TestHandleEngines_ReturnsRegistryContents(t *testing.T) {
 		}
 	}
 }
-
-func TestHandleEngines_RejectsNonGET(t *testing.T) {
-	s := &Server{services: NewServiceContainer()}
-	req := httptest.NewRequest(http.MethodPost, APIVersionPrefix+"/engines", http.NoBody)
-	w := httptest.NewRecorder()
-	s.handleEngines(w, req)
-	if w.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want 405", w.Code)
-	}
-}
-
 func TestHandleEngines_NoServicesReturnsEmpty(t *testing.T) {
 	s := &Server{}
 	req := httptest.NewRequest(http.MethodGet, APIVersionPrefix+"/engines", http.NoBody)

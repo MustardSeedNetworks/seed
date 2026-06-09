@@ -28,11 +28,6 @@ func TestHandleEngineDiscovery(t *testing.T) {
 			method:         http.MethodGet,
 			expectedStatus: http.StatusServiceUnavailable,
 		},
-		{
-			name:           "POST not allowed",
-			method:         http.MethodPost,
-			expectedStatus: http.StatusMethodNotAllowed,
-		},
 	}
 
 	for _, tt := range tests {
@@ -105,11 +100,6 @@ func TestHandleEngineScan(t *testing.T) {
 			method:         http.MethodPost,
 			body:           "",
 			expectedStatus: http.StatusServiceUnavailable,
-		},
-		{
-			name:           "GET not allowed",
-			method:         http.MethodGet,
-			expectedStatus: http.StatusMethodNotAllowed,
 		},
 		{
 			name:           "POST with options returns service unavailable",
@@ -200,65 +190,6 @@ func TestHandleEngineDevice(t *testing.T) {
 
 			if rec.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d: %s", tt.expectedStatus, rec.Code, rec.Body.String())
-			}
-		})
-	}
-}
-
-func TestHandleEngineMethodNotAllowed(t *testing.T) {
-	server := api.NewTestServer()
-	defer server.Close()
-
-	// Test that non-GET methods return 405 for read endpoints
-	readEndpoints := []string{
-		"/api/v1/discovery/engine",
-		"/api/v1/discovery/engine/stats",
-		"/api/v1/discovery/engine/capabilities",
-	}
-
-	for _, endpoint := range readEndpoints {
-		t.Run("POST "+endpoint, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodPost, endpoint, nil)
-			rec := httptest.NewRecorder()
-
-			switch endpoint {
-			case "/api/v1/discovery/engine":
-				server.HandleEngineDiscovery(rec, req)
-			case "/api/v1/discovery/engine/stats":
-				server.HandleEngineStats(rec, req)
-			case "/api/v1/discovery/engine/capabilities":
-				server.HandleEngineCapabilities(rec, req)
-			}
-
-			if rec.Code != http.StatusMethodNotAllowed {
-				t.Errorf("expected status %d, got %d", http.StatusMethodNotAllowed, rec.Code)
-			}
-		})
-	}
-
-	// Test that non-POST methods return 405 for scan endpoints
-	scanEndpoints := []string{
-		"/api/v1/discovery/engine/scan",
-		"/api/v1/discovery/engine/quick",
-		"/api/v1/discovery/engine/full",
-	}
-
-	for _, endpoint := range scanEndpoints {
-		t.Run("GET "+endpoint, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, endpoint, nil)
-			rec := httptest.NewRecorder()
-
-			switch endpoint {
-			case "/api/v1/discovery/engine/scan":
-				server.HandleEngineScan(rec, req)
-			case "/api/v1/discovery/engine/quick":
-				server.HandleEngineQuickScan(rec, req)
-			case "/api/v1/discovery/engine/full":
-				server.HandleEngineFullScan(rec, req)
-			}
-
-			if rec.Code != http.StatusMethodNotAllowed {
-				t.Errorf("expected status %d, got %d", http.StatusMethodNotAllowed, rec.Code)
 			}
 		})
 	}

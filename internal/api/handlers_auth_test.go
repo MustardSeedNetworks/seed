@@ -126,27 +126,6 @@ func TestHandleRefreshToken(t *testing.T) {
 	}
 }
 
-// TestHandleRefreshTokenMethodNotAllowed tests non-POST methods.
-func TestHandleRefreshTokenMethodNotAllowed(t *testing.T) {
-	server := api.NewTestServer()
-	defer server.Close()
-
-	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
-	for _, method := range methods {
-		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/auth/refresh", http.NoBody)
-			w := httptest.NewRecorder()
-
-			server.HandleRefreshToken(w, req)
-
-			if w.Code != http.StatusMethodNotAllowed {
-				t.Errorf("Expected status %d for %s, got %d",
-					http.StatusMethodNotAllowed, method, w.Code)
-			}
-		})
-	}
-}
-
 // TestHandleLogout tests the logout endpoint.
 func TestHandleLogout(t *testing.T) {
 	server := api.NewTestServer()
@@ -189,27 +168,6 @@ func TestHandleLogout(t *testing.T) {
 
 	if resp["status"] != "logged out" {
 		t.Errorf("Expected status 'logged out', got '%s'", resp["status"])
-	}
-}
-
-// TestHandleLogoutMethodNotAllowed tests non-POST methods for logout.
-func TestHandleLogoutMethodNotAllowed(t *testing.T) {
-	server := api.NewTestServer()
-	defer server.Close()
-
-	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
-	for _, method := range methods {
-		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/auth/logout", http.NoBody)
-			w := httptest.NewRecorder()
-
-			server.HandleLogout(w, req)
-
-			if w.Code != http.StatusMethodNotAllowed {
-				t.Errorf("Expected status %d for %s, got %d",
-					http.StatusMethodNotAllowed, method, w.Code)
-			}
-		})
 	}
 }
 

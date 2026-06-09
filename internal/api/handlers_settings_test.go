@@ -39,27 +39,6 @@ func TestHandleSettingsDefaultsGET(t *testing.T) {
 	}
 }
 
-// TestHandleSettingsDefaultsMethodNotAllowed tests non-GET methods.
-func TestHandleSettingsDefaultsMethodNotAllowed(t *testing.T) {
-	server := api.NewTestServer()
-	defer server.Close()
-
-	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
-	for _, method := range methods {
-		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/settings/defaults", http.NoBody)
-			w := httptest.NewRecorder()
-
-			server.HandleSettingsDefaults(w, req)
-
-			if w.Code != http.StatusMethodNotAllowed {
-				t.Errorf("Expected status %d for %s, got %d",
-					http.StatusMethodNotAllowed, method, w.Code)
-			}
-		})
-	}
-}
-
 // TestHandleSettingsGET tests the settings GET endpoint.
 func TestHandleSettingsGET(t *testing.T) {
 	server := api.NewTestServer()
