@@ -1,11 +1,12 @@
-// Package networkapp holds the network application (use-case) layer
-// (ADR-0016 strangle phase 3). It owns the IP-configuration and MTU
-// orchestration that previously lived in the api.Server network handlers —
-// the multi-step "configure the interface, persist the config, refresh"
-// sequence — behind narrow consumer-defined ports over the netif manager and
-// the config store. Handlers keep transport concerns: request decode, input
-// validation, interface-from-query resolution, and localized error mapping.
-package networkapp
+// Package ipconfig holds the network IP-configuration application (use-case)
+// layer (ADR-0020). It owns the IP-configuration and MTU orchestration that
+// previously lived in the api.Server network handlers — the multi-step
+// "configure the interface, persist the config, refresh" sequence — behind
+// narrow consumer-defined ports over the netif manager and the config store.
+// Handlers keep transport concerns: request decode, input validation,
+// interface-from-query resolution, and localized error mapping. The adapters
+// satisfying the ports live in the composition root (internal/app).
+package ipconfig
 
 import "errors"
 
@@ -43,7 +44,7 @@ type Settings struct {
 }
 
 // Hardware is the netif surface the use-case drives, defined at the consumer
-// (ADR-0016) and satisfied by an adapter over *netif.Manager.
+// (ADR-0020) and satisfied by an adapter over *netif.Manager in internal/app.
 type Hardware interface {
 	ConfigureStaticIP(iface string, ip StaticIP) error
 	ConfigureDHCP(iface string) error
@@ -60,19 +61,19 @@ type ConfigStore interface {
 	PersistDHCP() error
 }
 
-// IPService is the IP-configuration + MTU use-case.
-type IPService struct {
+// Service is the IP-configuration + MTU use-case.
+type Service struct {
 	hw    Hardware
 	store ConfigStore
 }
 
-// NewIPService builds the use-case over its narrow dependencies.
-func NewIPService(hw Hardware, store ConfigStore) *IPService {
-	return &IPService{hw: hw, store: store}
+// NewService builds the use-case over its narrow dependencies.
+func NewService(hw Hardware, store ConfigStore) *Service {
+	return &Service{hw: hw, store: store}
 }
 
 // Settings returns the current IP configuration.
-func (s *IPService) Settings() Settings {
+func (s *Service) Settings() Settings {
 	return s.store.IPSettings()
 }
 
@@ -80,7 +81,7 @@ func (s *IPService) Settings() Settings {
 // config, then refreshes the interface table. Hardware configuration runs first
 // so the persisted config only changes after the interface accepts it; each step
 // maps to its own sentinel for faithful handler error mapping.
-func (s *IPService) Apply(iface, mode string, ip StaticIP) error {
+func (s *Service) Apply(iface, mode string, ip StaticIP) error {
 	switch mode {
 	case ModeStatic:
 		if err := s.hw.ConfigureStaticIP(iface, ip); err != nil {
@@ -109,7 +110,7 @@ func (s *IPService) Apply(iface, mode string, ip StaticIP) error {
 // SetMTU sets the interface MTU, defaulting to the current interface when iface
 // is empty, and refreshes interfaces best-effort. It returns the resolved
 // interface name so the handler can echo it.
-func (s *IPService) SetMTU(iface string, mtu int) (string, error) {
+func (s *Service) SetMTU(iface string, mtu int) (string, error) {
 	if iface == "" {
 		iface = s.hw.CurrentInterface()
 	}

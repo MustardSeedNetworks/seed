@@ -13,7 +13,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
-	networkapp "github.com/MustardSeedNetworks/seed/internal/network/app"
+	"github.com/MustardSeedNetworks/seed/internal/network/ipconfig"
 	"github.com/MustardSeedNetworks/seed/internal/phy"
 	"github.com/MustardSeedNetworks/seed/internal/validation"
 )
@@ -756,7 +756,7 @@ func (s *Server) handleIPSettingsPut(
 	}
 
 	iface := s.getInterfaceFromRequest(r)
-	err := s.networkIP.Apply(iface, req.Mode, networkapp.StaticIP{
+	err := s.networkIP.Apply(iface, req.Mode, ipconfig.StaticIP{
 		Address: req.Address, Netmask: req.Netmask, Gateway: req.Gateway, DNS: req.DNS,
 	})
 	if err != nil {
@@ -782,16 +782,16 @@ func (s *Server) writeIPApplyError(
 	err error,
 ) {
 	switch {
-	case errors.Is(err, networkapp.ErrInvalidMode):
+	case errors.Is(err, ipconfig.ErrInvalidMode):
 		sendErrorResponseWithDetails(w, logger, http.StatusBadRequest,
 			ErrCodeValidation, localizer.T("errors.netif.invalidMode"), "")
-	case errors.Is(err, networkapp.ErrStaticConfig):
+	case errors.Is(err, ipconfig.ErrStaticConfig):
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.netif.staticConfigFailed"), "")
-	case errors.Is(err, networkapp.ErrDHCPConfig):
+	case errors.Is(err, ipconfig.ErrDHCPConfig):
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.netif.dhcpConfigFailed"), "")
-	case errors.Is(err, networkapp.ErrSave):
+	case errors.Is(err, ipconfig.ErrSave):
 		logger.ErrorContext(r.Context(), "Failed to save config", "error", err)
 		sendErrorResponseWithDetails(w, logger, http.StatusInternalServerError,
 			ErrCodeInternal, localizer.T("errors.config.failedToSave"), "")

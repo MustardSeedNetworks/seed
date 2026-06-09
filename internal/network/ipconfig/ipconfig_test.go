@@ -1,10 +1,10 @@
-package networkapp_test
+package ipconfig_test
 
 import (
 	"errors"
 	"testing"
 
-	networkapp "github.com/MustardSeedNetworks/seed/internal/network/app"
+	"github.com/MustardSeedNetworks/seed/internal/network/ipconfig"
 )
 
 type fakeHW struct {
@@ -15,7 +15,7 @@ type fakeHW struct {
 	refreshed                              int
 }
 
-func (h *fakeHW) ConfigureStaticIP(iface string, _ networkapp.StaticIP) error {
+func (h *fakeHW) ConfigureStaticIP(iface string, _ ipconfig.StaticIP) error {
 	h.staticIface = iface
 	return h.staticErr
 }
@@ -30,14 +30,14 @@ func (h *fakeHW) CurrentInterface() string { return h.current }
 func (h *fakeHW) RefreshInterfaces() error { h.refreshed++; return h.refreshErr }
 
 type fakeStore struct {
-	settings    networkapp.Settings
+	settings    ipconfig.Settings
 	persisted   string // "static" | "dhcp"
 	persistErr  error
-	persistedIP networkapp.StaticIP
+	persistedIP ipconfig.StaticIP
 }
 
-func (s *fakeStore) IPSettings() networkapp.Settings { return s.settings }
-func (s *fakeStore) PersistStatic(ip networkapp.StaticIP) error {
+func (s *fakeStore) IPSettings() ipconfig.Settings { return s.settings }
+func (s *fakeStore) PersistStatic(ip ipconfig.StaticIP) error {
 	s.persisted, s.persistedIP = "static", ip
 	return s.persistErr
 }
@@ -45,9 +45,9 @@ func (s *fakeStore) PersistDHCP() error { s.persisted = "dhcp"; return s.persist
 
 func TestApplyStaticHappyPath(t *testing.T) {
 	hw, store := &fakeHW{}, &fakeStore{}
-	svc := networkapp.NewIPService(hw, store)
+	svc := ipconfig.NewService(hw, store)
 
-	err := svc.Apply("eth0", networkapp.ModeStatic, networkapp.StaticIP{Address: "10.0.0.5"})
+	err := svc.Apply("eth0", ipconfig.ModeStatic, ipconfig.StaticIP{Address: "10.0.0.5"})
 	if err != nil {
 		t.Fatalf("apply static: %v", err)
 	}
@@ -66,7 +66,7 @@ func TestApplyStaticHappyPath(t *testing.T) {
 
 func TestApplyDHCPHappyPath(t *testing.T) {
 	hw, store := &fakeHW{}, &fakeStore{}
-	if err := networkapp.NewIPService(hw, store).Apply("eth1", networkapp.ModeDHCP, networkapp.StaticIP{}); err != nil {
+	if err := ipconfig.NewService(hw, store).Apply("eth1", ipconfig.ModeDHCP, ipconfig.StaticIP{}); err != nil {
 		t.Fatalf("apply dhcp: %v", err)
 	}
 	if hw.dhcpIface != "eth1" || store.persisted != "dhcp" || hw.refreshed != 1 {
@@ -82,39 +82,39 @@ func TestApplyErrorMapping(t *testing.T) {
 		mode string
 		want error
 	}{
-		{"invalid mode", &fakeHW{}, &fakeStore{}, "bogus", networkapp.ErrInvalidMode},
+		{"invalid mode", &fakeHW{}, &fakeStore{}, "bogus", ipconfig.ErrInvalidMode},
 		{
 			"static hw fails",
 			&fakeHW{staticErr: errors.New("x")},
 			&fakeStore{},
-			networkapp.ModeStatic,
-			networkapp.ErrStaticConfig,
+			ipconfig.ModeStatic,
+			ipconfig.ErrStaticConfig,
 		},
 		{
 			"dhcp hw fails",
 			&fakeHW{dhcpErr: errors.New("x")},
 			&fakeStore{},
-			networkapp.ModeDHCP,
-			networkapp.ErrDHCPConfig,
+			ipconfig.ModeDHCP,
+			ipconfig.ErrDHCPConfig,
 		},
 		{
 			"persist fails",
 			&fakeHW{},
 			&fakeStore{persistErr: errors.New("x")},
-			networkapp.ModeStatic,
-			networkapp.ErrSave,
+			ipconfig.ModeStatic,
+			ipconfig.ErrSave,
 		},
 		{
 			"refresh fails",
 			&fakeHW{refreshErr: errors.New("x")},
 			&fakeStore{},
-			networkapp.ModeStatic,
-			networkapp.ErrRefresh,
+			ipconfig.ModeStatic,
+			ipconfig.ErrRefresh,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := networkapp.NewIPService(tc.hw, tc.st).Apply("eth0", tc.mode, networkapp.StaticIP{})
+			err := ipconfig.NewService(tc.hw, tc.st).Apply("eth0", tc.mode, ipconfig.StaticIP{})
 			if !errors.Is(err, tc.want) {
 				t.Fatalf("want %v, got %v", tc.want, err)
 			}
@@ -124,7 +124,7 @@ func TestApplyErrorMapping(t *testing.T) {
 
 func TestApplyDoesNotPersistWhenHardwareFails(t *testing.T) {
 	hw, store := &fakeHW{staticErr: errors.New("nope")}, &fakeStore{}
-	_ = networkapp.NewIPService(hw, store).Apply("eth0", networkapp.ModeStatic, networkapp.StaticIP{})
+	_ = ipconfig.NewService(hw, store).Apply("eth0", ipconfig.ModeStatic, ipconfig.StaticIP{})
 	if store.persisted != "" {
 		t.Fatalf("config must not be persisted when hardware config fails, got %q", store.persisted)
 	}
@@ -132,7 +132,7 @@ func TestApplyDoesNotPersistWhenHardwareFails(t *testing.T) {
 
 func TestSetMTUResolvesCurrentInterface(t *testing.T) {
 	hw := &fakeHW{current: "wlan0"}
-	got, err := networkapp.NewIPService(hw, &fakeStore{}).SetMTU("", 9000)
+	got, err := ipconfig.NewService(hw, &fakeStore{}).SetMTU("", 9000)
 	if err != nil {
 		t.Fatalf("set mtu: %v", err)
 	}
@@ -143,7 +143,7 @@ func TestSetMTUResolvesCurrentInterface(t *testing.T) {
 
 func TestSetMTUError(t *testing.T) {
 	hw := &fakeHW{mtuErr: errors.New("eio")}
-	if _, err := networkapp.NewIPService(hw, &fakeStore{}).SetMTU("eth0", 1500); !errors.Is(err, networkapp.ErrSetMTU) {
+	if _, err := ipconfig.NewService(hw, &fakeStore{}).SetMTU("eth0", 1500); !errors.Is(err, ipconfig.ErrSetMTU) {
 		t.Fatalf("want ErrSetMTU, got %v", err)
 	}
 }

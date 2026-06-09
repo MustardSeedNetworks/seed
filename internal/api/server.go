@@ -15,6 +15,7 @@ import (
 
 	alertsapp "github.com/MustardSeedNetworks/seed/internal/alerts/app"
 	alertpipeline "github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
@@ -35,7 +36,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/mibdb"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
-	networkapp "github.com/MustardSeedNetworks/seed/internal/network/app"
+	"github.com/MustardSeedNetworks/seed/internal/network/ipconfig"
 	"github.com/MustardSeedNetworks/seed/internal/oauth"
 	"github.com/MustardSeedNetworks/seed/internal/paths"
 	"github.com/MustardSeedNetworks/seed/internal/pipeline/publicip"
@@ -136,7 +137,7 @@ type Server struct {
 	wifiDiscovery      *wifiapp.Discovery       // Enhanced Wi-Fi discovery use-case (ADR-0016 phase 2)
 	settingsStore      *settingsapp.Persistence // Settings-to-profile persistence use-case (ADR-0016 phase 3)
 	profiles           *profilesapp.Service     // Profile CRUD/active/import use-case (ADR-0016 phase 3)
-	networkIP          *networkapp.IPService    // IP-config + MTU use-case (ADR-0016 phase 3)
+	networkIP          *ipconfig.Service        // IP-config + MTU use-case (ADR-0020)
 	alertRules         *alertsapp.RuleService   // Alert-rule CRUD use-case (ADR-0016)
 	tlsFingerprint     tlsFingerprintCache      // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
 }
@@ -260,8 +261,9 @@ func NewServer(
 	// Wire the profiles use-case (ADR-0016 phase 3), also over the lazy db.
 	s.initProfilesUseCase()
 
-	// Wire the network IP-config + MTU use-case (ADR-0016 phase 3).
-	s.initNetworkUseCase()
+	// Wire the network IP-config + MTU use-case (ADR-0020). The composition root
+	// builds the adapters; api passes its lazy manager accessor + config.
+	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
 
 	// Wire the alert-rule use-case (ADR-0016), over the lazy db.
 	s.initAlertsUseCase()
