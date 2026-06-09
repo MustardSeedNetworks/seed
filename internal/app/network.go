@@ -1,24 +1,29 @@
-package api
-
-// network_usecases.go wires the API layer to the network application (use-case)
-// service (ADR-0016 strangle phase 3). The adapters implement the narrow
-// networkapp ports over the netif manager and the live config, so the IP-config
-// and MTU handlers depend on a use-case instead of reaching into s.netManager()
-// and s.config directly.
+package app
 
 import (
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
-	networkapp "github.com/MustardSeedNetworks/seed/internal/network/app"
+	"github.com/MustardSeedNetworks/seed/internal/network/ipconfig"
 )
 
-// networkHardware implements networkapp.Hardware over the netif manager. The
+// NewNetworkIP builds the IP-config + MTU use-case (ADR-0020), assembling the
+// ipconfig ports over the netif manager and the live config. The manager is
+// resolved through mgr on each call so a later-set manager (the api test
+// harness) is honored; cfg/path are fixed for the process lifetime.
+func NewNetworkIP(mgr func() *netif.Manager, cfg *config.Config, path string) *ipconfig.Service {
+	return ipconfig.NewService(
+		networkHardware{mgr: mgr},
+		networkConfigStore{cfg: cfg, path: path},
+	)
+}
+
+// networkHardware implements ipconfig.Hardware over the netif manager. The
 // manager is resolved lazily so a later-set manager (tests) is honored.
 type networkHardware struct {
 	mgr func() *netif.Manager
 }
 
-func (a networkHardware) ConfigureStaticIP(iface string, ip networkapp.StaticIP) error {
+func (a networkHardware) ConfigureStaticIP(iface string, ip ipconfig.StaticIP) error {
 	return a.mgr().ConfigureStaticIP(iface, &netif.StaticIPConfig{
 		Address: ip.Address,
 		Netmask: ip.Netmask,
@@ -34,18 +39,18 @@ func (a networkHardware) SetMTU(iface string, mtu int) error {
 func (a networkHardware) CurrentInterface() string { return a.mgr().GetCurrentInterface() }
 func (a networkHardware) RefreshInterfaces() error { return a.mgr().RefreshInterfaces() }
 
-// networkConfigStore implements networkapp.ConfigStore over the live config,
+// networkConfigStore implements ipconfig.ConfigStore over the live config,
 // owning the lock + on-disk save the port abstracts away.
 type networkConfigStore struct {
 	cfg  *config.Config
 	path string
 }
 
-func (c networkConfigStore) IPSettings() networkapp.Settings {
+func (c networkConfigStore) IPSettings() ipconfig.Settings {
 	c.cfg.RLock()
 	defer c.cfg.RUnlock()
 
-	s := networkapp.Settings{Mode: c.cfg.IP.Mode}
+	s := ipconfig.Settings{Mode: c.cfg.IP.Mode}
 	if c.cfg.IP.Static != nil {
 		s.Address = c.cfg.IP.Static.Address
 		s.Netmask = c.cfg.IP.Static.Netmask
@@ -55,11 +60,11 @@ func (c networkConfigStore) IPSettings() networkapp.Settings {
 	return s
 }
 
-func (c networkConfigStore) PersistStatic(ip networkapp.StaticIP) error {
+func (c networkConfigStore) PersistStatic(ip ipconfig.StaticIP) error {
 	// Lock for the in-memory mutation only; Save acquires its own RLock and so
 	// must run unlocked to avoid the historic deadlock (fixes #783).
 	c.cfg.Lock()
-	c.cfg.IP.Mode = ipModeStatic
+	c.cfg.IP.Mode = ipconfig.ModeStatic
 	c.cfg.IP.Static = &config.StaticIP{
 		Address: ip.Address,
 		Netmask: ip.Netmask,
@@ -72,16 +77,8 @@ func (c networkConfigStore) PersistStatic(ip networkapp.StaticIP) error {
 
 func (c networkConfigStore) PersistDHCP() error {
 	c.cfg.Lock()
-	c.cfg.IP.Mode = ipModeDHCP
+	c.cfg.IP.Mode = ipconfig.ModeDHCP
 	c.cfg.IP.Static = nil
 	c.cfg.Unlock()
 	return c.cfg.Save(c.path)
-}
-
-// initNetworkUseCase builds the IP-config + MTU use-case (ADR-0016 phase 3).
-func (s *Server) initNetworkUseCase() {
-	s.networkIP = networkapp.NewIPService(
-		networkHardware{mgr: s.netManager},
-		networkConfigStore{cfg: s.config, path: s.configPath},
-	)
 }

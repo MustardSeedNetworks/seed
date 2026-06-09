@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
@@ -153,7 +154,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	// depend on them work under the test harness.
 	s.initSettingsUseCase()
 	s.initProfilesUseCase()
-	s.initNetworkUseCase()
+	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
 	s.initAlertsUseCase()
 
 	// Setup routes
