@@ -1,29 +1,36 @@
-package api
+package app
 
-// alerts_usecases.go wires the API layer to the alerts application (use-case)
-// service (ADR-0016 strangle). The adapter implements the narrow
-// alertsapp.RuleStore port over the database AlertRules repository, mapping the
-// database.AlertRule row to the use-case model and the repo's
-// ErrAlertRuleNotFound / "alert_rules:"-prefixed validation errors to the
-// use-case's sentinels.
+// alerts.go wires the composition root to the alert-rule application (use-case)
+// service (ADR-0020). The adapter implements the narrow rules.Store port over
+// the database AlertRules repository, mapping the database.AlertRule row to the
+// use-case model and the repo's ErrAlertRuleNotFound / "alert_rules:"-prefixed
+// validation errors to the use-case's sentinels.
 
 import (
 	"context"
 	"errors"
 	"strings"
 
-	alertsapp "github.com/MustardSeedNetworks/seed/internal/alerts/app"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/rules"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
-// alertRuleStore implements alertsapp.RuleStore over the database repository.
-// The database is resolved lazily; handlers gate on s.db() != nil first.
+// NewAlertRules builds the alert-rule use-case (ADR-0020) over the lazy db
+// accessor, assembling the rules.Store adapter over the database repository.
+// The database is resolved through db on each call so the api test harness's
+// later-set DB is honored; handlers gate on db() != nil first.
+func NewAlertRules(db func() *database.DB) *rules.Service {
+	return rules.NewService(alertRuleStore{db: db})
+}
+
+// alertRuleStore implements rules.Store over the database repository. The
+// database is resolved lazily; handlers gate on db() != nil first.
 type alertRuleStore struct {
 	db func() *database.DB
 }
 
-func toAppRule(r *database.AlertRule) alertsapp.Rule {
-	return alertsapp.Rule{
+func toAppRule(r *database.AlertRule) rules.Rule {
+	return rules.Rule{
 		ID:                   r.ID,
 		Name:                 r.Name,
 		Enabled:              r.Enabled,
@@ -41,7 +48,7 @@ func toAppRule(r *database.AlertRule) alertsapp.Rule {
 	}
 }
 
-func toDBRule(r alertsapp.Rule) *database.AlertRule {
+func toDBRule(r rules.Rule) *database.AlertRule {
 	return &database.AlertRule{
 		ID:                   r.ID,
 		Name:                 r.Name,
@@ -62,53 +69,48 @@ func toDBRule(r alertsapp.Rule) *database.AlertRule {
 
 func mapAlertRuleErr(err error) error {
 	if errors.Is(err, database.ErrAlertRuleNotFound) {
-		return alertsapp.ErrRuleNotFound
+		return rules.ErrNotFound
 	}
 	return err
 }
 
-func (a alertRuleStore) List(ctx context.Context, enabledOnly bool) ([]alertsapp.Rule, error) {
+func (a alertRuleStore) List(ctx context.Context, enabledOnly bool) ([]rules.Rule, error) {
 	rows, err := a.db().AlertRules().List(ctx, enabledOnly)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]alertsapp.Rule, 0, len(rows))
+	out := make([]rules.Rule, 0, len(rows))
 	for _, r := range rows {
 		out = append(out, toAppRule(r))
 	}
 	return out, nil
 }
 
-func (a alertRuleStore) Get(ctx context.Context, id int64) (alertsapp.Rule, error) {
+func (a alertRuleStore) Get(ctx context.Context, id int64) (rules.Rule, error) {
 	r, err := a.db().AlertRules().Get(ctx, id)
 	if err != nil {
-		return alertsapp.Rule{}, mapAlertRuleErr(err)
+		return rules.Rule{}, mapAlertRuleErr(err)
 	}
 	return toAppRule(r), nil
 }
 
-func (a alertRuleStore) Create(ctx context.Context, r alertsapp.Rule) (alertsapp.Rule, error) {
+func (a alertRuleStore) Create(ctx context.Context, r rules.Rule) (rules.Rule, error) {
 	row := toDBRule(r)
 	if err := a.db().AlertRules().Create(ctx, row); err != nil {
 		// The repo signals validation failures with an "alert_rules:" prefix;
 		// surface them verbatim so the handler returns a 400 with the message.
 		if strings.HasPrefix(err.Error(), "alert_rules:") {
-			return alertsapp.Rule{}, &alertsapp.ValidationError{Msg: err.Error()}
+			return rules.Rule{}, &rules.ValidationError{Msg: err.Error()}
 		}
-		return alertsapp.Rule{}, err
+		return rules.Rule{}, err
 	}
 	return toAppRule(row), nil
 }
 
-func (a alertRuleStore) Update(ctx context.Context, r alertsapp.Rule) error {
+func (a alertRuleStore) Update(ctx context.Context, r rules.Rule) error {
 	return mapAlertRuleErr(a.db().AlertRules().Update(ctx, toDBRule(r)))
 }
 
 func (a alertRuleStore) Delete(ctx context.Context, id int64) error {
 	return mapAlertRuleErr(a.db().AlertRules().Delete(ctx, id))
-}
-
-// initAlertsUseCase builds the alert-rule use-case over the lazy db accessor.
-func (s *Server) initAlertsUseCase() {
-	s.alertRules = alertsapp.NewRuleService(alertRuleStore{db: s.db})
 }

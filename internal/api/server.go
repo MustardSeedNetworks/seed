@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"time"
 
-	alertsapp "github.com/MustardSeedNetworks/seed/internal/alerts/app"
 	alertpipeline "github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
+	"github.com/MustardSeedNetworks/seed/internal/alerts/rules"
 	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
@@ -138,7 +138,7 @@ type Server struct {
 	settingsStore      *settingsapp.Persistence // Settings-to-profile persistence use-case (ADR-0016 phase 3)
 	profiles           *profilesapp.Service     // Profile CRUD/active/import use-case (ADR-0016 phase 3)
 	networkIP          *ipconfig.Service        // IP-config + MTU use-case (ADR-0020)
-	alertRules         *alertsapp.RuleService   // Alert-rule CRUD use-case (ADR-0016)
+	alertRules         *rules.Service           // Alert-rule CRUD use-case (ADR-0020)
 	tlsFingerprint     tlsFingerprintCache      // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
 }
 
@@ -265,8 +265,9 @@ func NewServer(
 	// builds the adapters; api passes its lazy manager accessor + config.
 	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
 
-	// Wire the alert-rule use-case (ADR-0016), over the lazy db.
-	s.initAlertsUseCase()
+	// Wire the alert-rule use-case (ADR-0020). The composition root builds the
+	// adapter; api passes its lazy db accessor.
+	s.alertRules = app.NewAlertRules(s.db)
 
 	// Initialize vulnerability scanner if enabled
 	s.initVulnerabilityScanner(cfg)

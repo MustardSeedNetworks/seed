@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
@@ -17,7 +18,7 @@ func newAlertRulesTestServer(t *testing.T) *Server {
 	db := newTestDB(t)
 	s := &Server{services: NewServiceContainer()}
 	s.services.Database = &DatabaseServices{DB: db}
-	s.initAlertsUseCase()
+	s.alertRules = app.NewAlertRules(s.db)
 	return s
 }
 

@@ -155,7 +155,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	s.initSettingsUseCase()
 	s.initProfilesUseCase()
 	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
-	s.initAlertsUseCase()
+	s.alertRules = app.NewAlertRules(s.db)
 
 	// Setup routes
 	s.setupRoutes()
