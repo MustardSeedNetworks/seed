@@ -1,7 +1,3 @@
-internal/api/handlers_oauth.go	client_id
-internal/api/handlers_oauth.go	client_secret
-internal/api/handlers_oauth.go	redirect_url
-internal/api/handlers_oauth.go	tenant_id
 internal/discovery/enumerate/bluetooth_darwin.go	controller_address
 internal/discovery/enumerate/bluetooth_darwin.go	controller_properties
 internal/discovery/enumerate/bluetooth_darwin.go	controller_state
@@ -15,5 +11,3 @@ internal/discovery/enumerate/bluetooth_darwin.go	device_minorType
 internal/discovery/enumerate/bluetooth_darwin.go	device_rssi
 internal/discovery/enumerate/bluetooth_darwin.go	device_services
 internal/discovery/enumerate/bluetooth_darwin.go	devices_not_connected
-internal/discovery/vuln/cve_local.go	cvss_score
-internal/discovery/vuln/cve_local.go	last_updated

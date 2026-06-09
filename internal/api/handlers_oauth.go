@@ -513,10 +513,10 @@ func (s *Server) handleSSOSettings(w http.ResponseWriter, r *http.Request) {
 type ssoUpdateRequest struct {
 	Provider     string   `json:"provider"`
 	Enabled      bool     `json:"enabled"`
-	ClientID     string   `json:"client_id"`
-	ClientSecret string   `json:"client_secret"`
-	RedirectURL  string   `json:"redirect_url"`
-	TenantID     string   `json:"tenant_id,omitempty"`
+	ClientID     string   `json:"clientId"`
+	ClientSecret string   `json:"clientSecret"`
+	RedirectURL  string   `json:"redirectUrl"`
+	TenantID     string   `json:"tenantId,omitempty"`
 	Scopes       []string `json:"scopes,omitempty"`
 }
 

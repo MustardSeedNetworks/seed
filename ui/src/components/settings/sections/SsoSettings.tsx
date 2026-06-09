@@ -29,10 +29,10 @@ type ProviderName = 'google' | 'microsoft' | 'github';
 interface ProviderConfig {
   name: ProviderName;
   enabled: boolean;
-  client_id: string;
-  client_secret: string;
-  redirect_url: string;
-  tenant_id?: string;
+  clientId: string;
+  clientSecret: string;
+  redirectUrl: string;
+  tenantId?: string;
   scopes?: string[];
 }
 
@@ -41,16 +41,16 @@ interface SettingsResponse {
 }
 
 const PROVIDER_DEFAULTS: Record<ProviderName, ProviderConfig> = {
-  google: { name: 'google', enabled: false, client_id: '', client_secret: '', redirect_url: '' },
+  google: { name: 'google', enabled: false, clientId: '', clientSecret: '', redirectUrl: '' },
   microsoft: {
     name: 'microsoft',
     enabled: false,
-    client_id: '',
-    client_secret: '',
-    redirect_url: '',
-    tenant_id: 'common',
+    clientId: '',
+    clientSecret: '',
+    redirectUrl: '',
+    tenantId: 'common',
   },
-  github: { name: 'github', enabled: false, client_id: '', client_secret: '', redirect_url: '' },
+  github: { name: 'github', enabled: false, clientId: '', clientSecret: '', redirectUrl: '' },
 };
 
 function defaultRedirectUrl(): string {
@@ -63,9 +63,9 @@ export function SsoSettings(): React.ReactElement {
   const { status: licenseStatus } = useLicense();
 
   const [providers, setProviders] = useState<Record<ProviderName, ProviderConfig>>(() => ({
-    google: { ...PROVIDER_DEFAULTS.google, redirect_url: defaultRedirectUrl() },
-    microsoft: { ...PROVIDER_DEFAULTS.microsoft, redirect_url: defaultRedirectUrl() },
-    github: { ...PROVIDER_DEFAULTS.github, redirect_url: defaultRedirectUrl() },
+    google: { ...PROVIDER_DEFAULTS.google, redirectUrl: defaultRedirectUrl() },
+    microsoft: { ...PROVIDER_DEFAULTS.microsoft, redirectUrl: defaultRedirectUrl() },
+    github: { ...PROVIDER_DEFAULTS.github, redirectUrl: defaultRedirectUrl() },
   }));
   const [loading, setLoading] = useState(true);
   const [savingProvider, setSavingProvider] = useState<ProviderName | null>(null);
@@ -116,15 +116,15 @@ export function SsoSettings(): React.ReactElement {
         await api.put('/api/v1/sso/update', {
           provider: cfg.name,
           enabled: cfg.enabled,
-          client_id: cfg.client_id,
-          client_secret: cfg.client_secret,
-          redirect_url: cfg.redirect_url || defaultRedirectUrl(),
-          tenant_id: cfg.tenant_id,
+          clientId: cfg.clientId,
+          clientSecret: cfg.clientSecret,
+          redirectUrl: cfg.redirectUrl || defaultRedirectUrl(),
+          tenantId: cfg.tenantId,
           scopes: cfg.scopes,
         });
         setSaveStatus(t('settings:sso.status.saved', { provider: name }));
         // Wipe the secret input now that it's saved server-side.
-        updateField(name, 'client_secret', '');
+        updateField(name, 'clientSecret', '');
         await refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to save SSO provider');
@@ -253,8 +253,8 @@ function ProviderCard({
         </label>
         <Input
           id={`sso-${name}-cid`}
-          value={cfg.client_id}
-          onChange={(e) => onChange(name, 'client_id', e.target.value)}
+          value={cfg.clientId}
+          onChange={(e) => onChange(name, 'clientId', e.target.value)}
           disabled={!canEdit || saving}
           data-testid={`sso-client-id-${name}`}
         />
@@ -267,8 +267,8 @@ function ProviderCard({
         <Input
           id={`sso-${name}-cs`}
           type="password"
-          value={cfg.client_secret}
-          onChange={(e) => onChange(name, 'client_secret', e.target.value)}
+          value={cfg.clientSecret}
+          onChange={(e) => onChange(name, 'clientSecret', e.target.value)}
           placeholder={t('settings:sso.fields.clientSecretMask')}
           disabled={!canEdit || saving}
           data-testid={`sso-client-secret-${name}`}
@@ -281,8 +281,8 @@ function ProviderCard({
         </label>
         <Input
           id={`sso-${name}-ru`}
-          value={cfg.redirect_url || defaultRedirectUrl()}
-          onChange={(e) => onChange(name, 'redirect_url', e.target.value)}
+          value={cfg.redirectUrl || defaultRedirectUrl()}
+          onChange={(e) => onChange(name, 'redirectUrl', e.target.value)}
           disabled={!canEdit || saving}
           data-testid={`sso-redirect-${name}`}
         />
@@ -298,8 +298,8 @@ function ProviderCard({
           </label>
           <Input
             id={`sso-${name}-tid`}
-            value={cfg.tenant_id ?? ''}
-            onChange={(e) => onChange(name, 'tenant_id', e.target.value)}
+            value={cfg.tenantId ?? ''}
+            onChange={(e) => onChange(name, 'tenantId', e.target.value)}
             placeholder="common | organizations | <tenant-guid>"
             disabled={!canEdit || saving}
             data-testid={`sso-tenant-${name}`}
