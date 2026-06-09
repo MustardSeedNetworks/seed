@@ -299,3 +299,16 @@ func WakeDevices(ctx context.Context, macs []string) []WoLResult {
 
 	return results
 }
+
+// containsAny reports whether s contains any of the given substrings. It is a
+// kernel-local helper (the OS-fingerprint heuristics in this file use it); it
+// lived in wifi_bridge.go historically but is not Wi-Fi-specific. The enumerate
+// stage keeps its own copy for the same reason it copies normalizeMAC.
+func containsAny(s string, subs ...string) bool {
+	for _, sub := range subs {
+		if strings.Contains(s, sub) {
+			return true
+		}
+	}
+	return false
+}

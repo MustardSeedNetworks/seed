@@ -5,43 +5,43 @@
   "$defs": {
     "WiFiDiscoveryStats": {
       "properties": {
-        "total_networks": {
+        "totalNetworks": {
           "type": "integer"
         },
-        "hidden_networks": {
+        "hiddenNetworks": {
           "type": "integer"
         },
-        "total_aps": {
+        "totalAps": {
           "type": "integer"
         },
-        "authorized_aps": {
+        "authorizedAps": {
           "type": "integer"
         },
-        "unauthorized_aps": {
+        "unauthorizedAps": {
           "type": "integer"
         },
-        "total_clients": {
+        "totalClients": {
           "type": "integer"
         },
-        "channels_by_band": {
+        "channelsByBand": {
           "additionalProperties": {
             "type": "integer"
           },
           "type": "object"
         },
-        "security_breakdown": {
+        "securityBreakdown": {
           "additionalProperties": {
             "type": "integer"
           },
           "type": "object"
         },
-        "vendor_breakdown": {
+        "vendorBreakdown": {
           "additionalProperties": {
             "type": "integer"
           },
           "type": "object"
         },
-        "last_scan_time": {
+        "lastScanTime": {
           "type": "string",
           "format": "date-time"
         }
@@ -49,16 +49,16 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "total_networks",
-        "hidden_networks",
-        "total_aps",
-        "authorized_aps",
-        "unauthorized_aps",
-        "total_clients",
-        "channels_by_band",
-        "security_breakdown",
-        "vendor_breakdown",
-        "last_scan_time"
+        "totalNetworks",
+        "hiddenNetworks",
+        "totalAps",
+        "authorizedAps",
+        "unauthorizedAps",
+        "totalClients",
+        "channelsByBand",
+        "securityBreakdown",
+        "vendorBreakdown",
+        "lastScanTime"
       ]
     },
     "WiFiDiscoveryStatsResponse": {

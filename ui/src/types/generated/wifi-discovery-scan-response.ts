@@ -15,46 +15,46 @@ export interface WiFiDiscoveryScanResponse {
 export interface WiFiNetwork {
   id: string;
   ssid: string;
-  is_hidden: boolean;
-  security_type: string;
-  authorization_status: string;
-  first_seen: string;
-  last_seen: string;
-  ap_count?: number;
-  best_signal?: number;
+  isHidden: boolean;
+  securityType: string;
+  authorizationStatus: string;
+  firstSeen: string;
+  lastSeen: string;
+  apCount?: number;
+  bestSignal?: number;
   metadata?: {};
 }
 export interface WiFiAccessPoint {
   id: string;
-  device_id?: string;
+  deviceId?: string;
   bssid: string;
-  ssid_id?: string;
-  ssid_name?: string;
-  ap_name?: string;
+  ssidId?: string;
+  ssidName?: string;
+  apName?: string;
   vendor?: string;
   channel: number;
-  channel_width: number;
-  frequency_mhz: number;
+  channelWidth: number;
+  frequencyMhz: number;
   band: string;
-  wifi_standard?: string[];
-  signal_dbm: number;
-  noise_dbm?: number;
-  client_count: number;
-  max_clients?: number;
-  is_authorized: boolean;
-  first_seen: string;
-  last_seen: string;
+  wifiStandard?: string[];
+  signalDbm: number;
+  noiseDbm?: number;
+  clientCount: number;
+  maxClients?: number;
+  isAuthorized: boolean;
+  firstSeen: string;
+  lastSeen: string;
   metadata?: {};
 }
 export interface ChannelUtilization {
   id: string;
   channel: number;
   band: string;
-  frequency_mhz: number;
-  utilization_percent: number;
-  non_wifi_percent: number;
-  retry_percent: number;
-  ap_count: number;
-  client_count: number;
-  recorded_at: string;
+  frequencyMhz: number;
+  utilizationPercent: number;
+  nonWifiPercent: number;
+  retryPercent: number;
+  apCount: number;
+  clientCount: number;
+  recordedAt: string;
 }

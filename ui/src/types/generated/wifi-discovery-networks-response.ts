@@ -12,12 +12,12 @@ export interface WiFiDiscoveryNetworksResponse {
 export interface WiFiNetwork {
   id: string;
   ssid: string;
-  is_hidden: boolean;
-  security_type: string;
-  authorization_status: string;
-  first_seen: string;
-  last_seen: string;
-  ap_count?: number;
-  best_signal?: number;
+  isHidden: boolean;
+  securityType: string;
+  authorizationStatus: string;
+  firstSeen: string;
+  lastSeen: string;
+  apCount?: number;
+  bestSignal?: number;
   metadata?: {};
 }

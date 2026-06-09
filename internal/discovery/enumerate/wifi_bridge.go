@@ -1,8 +1,13 @@
-package discovery
+package enumerate
 
 // wifi_bridge.go connects the existing canopy/wifi scanner to the unified discovery
 // types. This allows WiFi scan results to be stored with extended metadata,
 // authorization tracking, and correlation with discovered devices.
+//
+// The Wi-Fi result/data types (WiFiScanResult, WiFiNetwork, WiFiAccessPoint,
+// WiFiClient, ChannelUtilization, WiFiDiscoveryStats, WiFiBand, WiFiSecurityType,
+// WiFiAuthorizationStatus) live in the discovery kernel and are aliased here via
+// wifi_aliases.go.
 
 import (
 	"context"
@@ -39,19 +44,21 @@ type WiFiBridge struct {
 	authorizedMACs  map[string]bool
 }
 
-// WiFiBridgeConfig configures the WiFi bridge behavior.
+// WiFiBridgeConfig configures the WiFi bridge behavior. JSON keys are camelCase
+// (API convention); YAML keys stay snake_case (config-file convention), matching
+// the repo pattern in scan_config.go.
 type WiFiBridgeConfig struct {
 	// MinSignalDBm filters out APs below this signal strength
-	MinSignalDBm int `json:"min_signal_dbm" yaml:"min_signal_dbm"`
+	MinSignalDBm int `json:"minSignalDbm" yaml:"min_signal_dbm"`
 
 	// AuthorizedSSIDs lists SSIDs to mark as authorized
-	AuthorizedSSIDs []string `json:"authorized_ssids" yaml:"authorized_ssids"`
+	AuthorizedSSIDs []string `json:"authorizedSsids" yaml:"authorized_ssids"`
 
 	// AuthorizedBSSIDs lists BSSIDs to mark as authorized
-	AuthorizedBSSIDs []string `json:"authorized_bssids" yaml:"authorized_bssids"`
+	AuthorizedBSSIDs []string `json:"authorizedBssids" yaml:"authorized_bssids"`
 
 	// TrackHistory enables historical tracking of networks
-	TrackHistory bool `json:"track_history" yaml:"track_history"`
+	TrackHistory bool `json:"trackHistory" yaml:"track_history"`
 }
 
 // DefaultWiFiBridgeConfig returns sensible defaults.

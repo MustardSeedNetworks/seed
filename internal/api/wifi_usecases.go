@@ -11,6 +11,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
 	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
@@ -89,9 +90,9 @@ func (s wifiInterfaceStore) SaveWiFiInterface(name string) error {
 	return s.cfg.Save(s.path)
 }
 
-// wifiBridgeSource adapts *discovery.WiFiBridge to wifiapp.DiscoverySource.
+// wifiBridgeSource adapts *enumerate.WiFiBridge to wifiapp.DiscoverySource.
 type wifiBridgeSource struct {
-	bridge *discovery.WiFiBridge
+	bridge *enumerate.WiFiBridge
 }
 
 func (b wifiBridgeSource) Scan(ctx context.Context) (*discovery.WiFiScanResult, error) {
@@ -106,7 +107,7 @@ func (b wifiBridgeSource) Stats() *discovery.WiFiDiscoveryStats { return b.bridg
 // wifiDiscoverySource returns the discovery use-case source for the current
 // bridge, or a genuinely-nil interface when no bridge is wired so the use-case
 // degrades to ErrDiscoveryUnavailable rather than panicking on a typed nil.
-func wifiDiscoverySource(bridge *discovery.WiFiBridge) wifiapp.DiscoverySource {
+func wifiDiscoverySource(bridge *enumerate.WiFiBridge) wifiapp.DiscoverySource {
 	if bridge == nil {
 		return nil
 	}

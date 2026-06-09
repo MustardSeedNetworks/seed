@@ -14,25 +14,25 @@
         "band": {
           "type": "string"
         },
-        "frequency_mhz": {
+        "frequencyMhz": {
           "type": "integer"
         },
-        "utilization_percent": {
+        "utilizationPercent": {
           "type": "number"
         },
-        "non_wifi_percent": {
+        "nonWifiPercent": {
           "type": "number"
         },
-        "retry_percent": {
+        "retryPercent": {
           "type": "number"
         },
-        "ap_count": {
+        "apCount": {
           "type": "integer"
         },
-        "client_count": {
+        "clientCount": {
           "type": "integer"
         },
-        "recorded_at": {
+        "recordedAt": {
           "type": "string",
           "format": "date-time"
         }
@@ -43,13 +43,13 @@
         "id",
         "channel",
         "band",
-        "frequency_mhz",
-        "utilization_percent",
-        "non_wifi_percent",
-        "retry_percent",
-        "ap_count",
-        "client_count",
-        "recorded_at"
+        "frequencyMhz",
+        "utilizationPercent",
+        "nonWifiPercent",
+        "retryPercent",
+        "apCount",
+        "clientCount",
+        "recordedAt"
       ]
     },
     "WiFiAccessPoint": {
@@ -57,19 +57,19 @@
         "id": {
           "type": "string"
         },
-        "device_id": {
+        "deviceId": {
           "type": "string"
         },
         "bssid": {
           "type": "string"
         },
-        "ssid_id": {
+        "ssidId": {
           "type": "string"
         },
-        "ssid_name": {
+        "ssidName": {
           "type": "string"
         },
-        "ap_name": {
+        "apName": {
           "type": "string"
         },
         "vendor": {
@@ -78,41 +78,41 @@
         "channel": {
           "type": "integer"
         },
-        "channel_width": {
+        "channelWidth": {
           "type": "integer"
         },
-        "frequency_mhz": {
+        "frequencyMhz": {
           "type": "integer"
         },
         "band": {
           "type": "string"
         },
-        "wifi_standard": {
+        "wifiStandard": {
           "items": {
             "type": "string"
           },
           "type": "array"
         },
-        "signal_dbm": {
+        "signalDbm": {
           "type": "integer"
         },
-        "noise_dbm": {
+        "noiseDbm": {
           "type": "integer"
         },
-        "client_count": {
+        "clientCount": {
           "type": "integer"
         },
-        "max_clients": {
+        "maxClients": {
           "type": "integer"
         },
-        "is_authorized": {
+        "isAuthorized": {
           "type": "boolean"
         },
-        "first_seen": {
+        "firstSeen": {
           "type": "string",
           "format": "date-time"
         },
-        "last_seen": {
+        "lastSeen": {
           "type": "string",
           "format": "date-time"
         },
@@ -126,14 +126,14 @@
         "id",
         "bssid",
         "channel",
-        "channel_width",
-        "frequency_mhz",
+        "channelWidth",
+        "frequencyMhz",
         "band",
-        "signal_dbm",
-        "client_count",
-        "is_authorized",
-        "first_seen",
-        "last_seen"
+        "signalDbm",
+        "clientCount",
+        "isAuthorized",
+        "firstSeen",
+        "lastSeen"
       ]
     },
     "WiFiDiscoveryScanResponse": {
@@ -181,27 +181,27 @@
         "ssid": {
           "type": "string"
         },
-        "is_hidden": {
+        "isHidden": {
           "type": "boolean"
         },
-        "security_type": {
+        "securityType": {
           "type": "string"
         },
-        "authorization_status": {
+        "authorizationStatus": {
           "type": "string"
         },
-        "first_seen": {
+        "firstSeen": {
           "type": "string",
           "format": "date-time"
         },
-        "last_seen": {
+        "lastSeen": {
           "type": "string",
           "format": "date-time"
         },
-        "ap_count": {
+        "apCount": {
           "type": "integer"
         },
-        "best_signal": {
+        "bestSignal": {
           "type": "integer"
         },
         "metadata": {
@@ -213,11 +213,11 @@
       "required": [
         "id",
         "ssid",
-        "is_hidden",
-        "security_type",
-        "authorization_status",
-        "first_seen",
-        "last_seen"
+        "isHidden",
+        "securityType",
+        "authorizationStatus",
+        "firstSeen",
+        "lastSeen"
       ]
     }
   },
