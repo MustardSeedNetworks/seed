@@ -114,6 +114,14 @@ export function useAuth(): UseAuthReturn {
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const pollingIntervalRef = useRef<number | null>(null);
+  // Guards the mount-time /api/v1/status probe from clobbering an explicit
+  // login. The probe is fired once on mount while unauthenticated; under
+  // backend contention its (401) response can resolve AFTER the user has
+  // logged in, and its setState({isAuthenticated:false}) would bounce the SPA
+  // back to the login page. login() flips this so a late probe result is
+  // ignored. Fixes the rotating E2E flake (seed#1593) and the real
+  // load-then-login-fast bounce it mirrors.
+  const loginSupersededProbeRef = useRef(false);
 
   // Expire session handler - clears state and shows error message
   const expireSession = useCallback((message = 'Session expired. Please sign in again.') => {
@@ -158,6 +166,11 @@ export function useAuth(): UseAuthReturn {
       credentials: 'include', // Send cookies
     })
       .then((response) => {
+        // A login that started after this probe is authoritative — never let a
+        // late/stale probe result override it (seed#1593).
+        if (loginSupersededProbeRef.current) {
+          return;
+        }
         if (response.ok) {
           // Authenticated - we don't have username from /api/v1/status, will be set on login
           setState({
@@ -177,6 +190,10 @@ export function useAuth(): UseAuthReturn {
         }
       })
       .catch((err) => {
+        // A login that started after this probe is authoritative (seed#1593).
+        if (loginSupersededProbeRef.current) {
+          return;
+        }
         // Error checking auth, assume not authenticated
         // fixes #678 - added logging for auth check errors
         logger.error(LogComponents.AUTH, 'Failed to check authentication status', err, {
@@ -195,6 +212,9 @@ export function useAuth(): UseAuthReturn {
   }, []);
 
   const login = useCallback(async (username: string, password: string): Promise<boolean> => {
+    // From here on, the mount-time /status probe must not override our result:
+    // an explicit login is authoritative even if the probe resolves later.
+    loginSupersededProbeRef.current = true;
     setIsLoading(true);
     setError(null);
 
