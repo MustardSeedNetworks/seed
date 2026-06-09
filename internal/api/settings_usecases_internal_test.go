@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/MustardSeedNetworks/seed/internal/app"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
@@ -33,7 +34,7 @@ func TestSettingsUseCasePersistsToDefaultProfile(t *testing.T) {
 		services: NewServiceContainer(),
 	}
 	s.services.Database.DB = db
-	s.initSettingsUseCase()
+	s.settingsStore = app.NewSettings(s.db, s.config)
 
 	if saveErr := s.settingsStore.SaveToActiveProfile(t.Context()); saveErr != nil {
 		t.Fatalf("SaveToActiveProfile: %v", saveErr)
@@ -63,7 +64,7 @@ func TestSettingsUseCaseNoDatabaseIsNoOp(t *testing.T) {
 		config:   config.DefaultConfig(),
 		services: NewServiceContainer(),
 	}
-	s.initSettingsUseCase()
+	s.settingsStore = app.NewSettings(s.db, s.config)
 
 	if err := s.settingsStore.SaveToActiveProfile(t.Context()); err != nil {
 		t.Fatalf("expected no-op without a db, got %v", err)

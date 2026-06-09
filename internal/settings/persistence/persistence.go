@@ -1,10 +1,11 @@
-// Package settingsapp holds the settings application (use-case) layer
-// (ADR-0016 strangle phase 3). It owns the orchestration that previously lived
-// in the api.Server settings handlers — resolving the active profile and
-// persisting the current configuration to it — behind narrow, consumer-defined
-// ports, so handlers depend on a use-case instead of reaching into the database
-// repositories and the config directly.
-package settingsapp
+// Package persistence holds the settings-persistence application (use-case)
+// layer (ADR-0020). It owns the orchestration that previously lived in the
+// api.Server settings handlers — resolving the active profile and persisting the
+// current configuration to it — behind narrow, consumer-defined ports, so
+// handlers depend on a use-case instead of reaching into the database
+// repositories and the config directly. The adapters satisfying the ports live
+// in the composition root (internal/app).
+package persistence
 
 import (
 	"context"
@@ -18,7 +19,7 @@ import (
 var ErrNoProfile = errors.New("no profile to persist settings to")
 
 // ProfileStore is the narrow persistence surface the settings use-case needs.
-// It is defined here at the consumer (ADR-0016 interface-segregation) and
+// It is defined here at the consumer (ADR-0020 interface-segregation) and
 // satisfied by an adapter that owns the database.Profile type, the database
 // repositories, and the row read-modify-write.
 type ProfileStore interface {
@@ -37,17 +38,17 @@ type ConfigSource interface {
 	ProfileJSON() (string, error)
 }
 
-// Persistence is the settings-persistence use-case: it writes the current
+// Service is the settings-persistence use-case: it writes the current
 // configuration to the active profile. Handlers depend on it instead of
 // reaching into the database repositories.
-type Persistence struct {
+type Service struct {
 	store ProfileStore
 	cfg   ConfigSource
 }
 
-// NewPersistence builds the use-case over its narrow dependencies.
-func NewPersistence(store ProfileStore, cfg ConfigSource) *Persistence {
-	return &Persistence{store: store, cfg: cfg}
+// NewService builds the use-case over its narrow dependencies.
+func NewService(store ProfileStore, cfg ConfigSource) *Service {
+	return &Service{store: store, cfg: cfg}
 }
 
 // SaveToActiveProfile persists current settings to the active (or default)
@@ -55,7 +56,7 @@ func NewPersistence(store ProfileStore, cfg ConfigSource) *Persistence {
 // profile exists (ErrNoProfile) — settings still live in the config file. Any
 // other failure (serialization, the row write) propagates, so a genuinely
 // broken save surfaces as an error instead of being silently dropped.
-func (p *Persistence) SaveToActiveProfile(ctx context.Context) error {
+func (p *Service) SaveToActiveProfile(ctx context.Context) error {
 	if p == nil || p.store == nil {
 		return nil
 	}
