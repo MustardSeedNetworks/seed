@@ -1,6 +1,6 @@
 //go:build darwin
 
-package discovery
+package enumerate
 
 // bluetooth_darwin.go implements Bluetooth scanning on macOS using system_profiler
 // and blueutil (if available) for basic device discovery.

@@ -1,6 +1,6 @@
 //go:build linux
 
-package discovery
+package enumerate
 
 // bluetooth_linux.go implements Bluetooth scanning on Linux using bluetoothctl
 // and hcitool for device discovery.

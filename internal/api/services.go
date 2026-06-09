@@ -14,6 +14,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/speedtest"
 	"github.com/MustardSeedNetworks/seed/internal/diagnostics/vlan"
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/fingerprint"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
@@ -125,7 +126,7 @@ type DiscoveryServices struct {
 	Service          *discovery.Service
 	Vulnerability    *vuln.VulnerabilityScanner
 	ProblemDetector  *discovery.ProblemDetector
-	BluetoothScanner *discovery.BluetoothScanner
+	BluetoothScanner *enumerate.BluetoothScanner
 	WiFiBridge       *discovery.WiFiBridge
 	Profiler         *discovery.DeviceProfiler // Shared profiler for SNMP/ports/fingerprinting
 	PortScanner      *fingerprint.PortScanner  // TCP port scanner (fingerprint stage)

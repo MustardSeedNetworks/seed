@@ -306,11 +306,14 @@ linters:
             - "**/internal/discovery/**"
             - "!**/internal/discovery/vuln/**"
             - "!**/internal/discovery/fingerprint/**"
+            - "!**/internal/discovery/enumerate/**"
           deny:
             - pkg: github.com/MustardSeedNetworks/seed/internal/discovery/vuln
               desc: "inward-only — a discovery stage (internal/discovery/vuln) imports the kernel, never the reverse; the Engine holds the Assessor port and the composition root injects the stage"
             - pkg: github.com/MustardSeedNetworks/seed/internal/discovery/fingerprint
               desc: "inward-only — a discovery stage (internal/discovery/fingerprint) imports the kernel, never the reverse; the Engine holds the PortScannerPort and the composition root injects the scanner"
+            - pkg: github.com/MustardSeedNetworks/seed/internal/discovery/enumerate
+              desc: "inward-only — a discovery stage (internal/discovery/enumerate) imports the kernel, never the reverse; the Engine holds the BluetoothCollectorPort and the composition root injects the collector"
 
     embeddedstructfieldcheck:
       # Checks that sync.Mutex and sync.RWMutex are not used as embedded fields.
