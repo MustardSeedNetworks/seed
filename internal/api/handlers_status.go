@@ -47,18 +47,6 @@ type ExportDeviceInfo struct {
 // handleStatus returns the system status (fixes #544 - split from handlers.go).
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			"Method not allowed",
-			"",
-		) // fixes #694, #699
-		return
-	}
-
 	// Check if current interface is wireless
 	isWireless := false
 	if s.wifiManager() != nil {
@@ -80,18 +68,6 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 // Accepts optional query parameter: ?interface=eth0.
 func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			"Method not allowed",
-			"",
-		) // fixes #694, #699
-		return
-	}
-
 	// Get interface from query param or fallback to current.
 	currentIface := s.getInterfaceFromRequest(r)
 	if err := s.netManager().RefreshInterfaces(); err != nil {
@@ -289,18 +265,6 @@ func (s *Server) exportIperfCard(cards map[string]any) {
 // Security fix #301: Removed insecure LOG_ACCESS_TOKEN - JWT authentication is sufficient.
 func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			"Method not allowed",
-			"",
-		) // fixes #694, #699
-		return
-	}
-
 	// JWT authentication is enforced by the global auth middleware
 	// X-Username header is set by the middleware after validating the JWT
 
@@ -352,18 +316,6 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request) {
 // Returns 200 OK if server is running, minimal response for fast health checks.
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			"Method not allowed",
-			"",
-		) // fixes #694, #699
-		return
-	}
-
 	// Simple health check - just return OK
 	// For detailed health, use /api/system/health
 	sendJSONResponse(w, logger, http.StatusOK, map[string]any{
@@ -375,18 +327,6 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 // handleSystemHealth handles GET /api/system/health - returns comprehensive health metrics (fixes #540, #544).
 func (s *Server) handleSystemHealth(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			"Method not allowed",
-			"",
-		) // fixes #694, #699
-		return
-	}
-
 	// Get system health metrics
 	health, err := system.GetHealth()
 	if err != nil {

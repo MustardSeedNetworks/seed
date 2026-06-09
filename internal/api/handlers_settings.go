@@ -22,18 +22,6 @@ import (
 // The defaults are served from the backend's DefaultConfig() function.
 func (s *Server) handleSettingsDefaults(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			"Method not allowed",
-			"",
-		)
-		return
-	}
-
 	defaults := config.GetDefaultSettings()
 	sendJSONResponse(w, logger, http.StatusOK, defaults)
 }

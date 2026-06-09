@@ -78,18 +78,6 @@ type EngineScanRequest struct {
 // Rate limiting: None (read-only operation).
 func (s *Server) handleEngineDiscovery(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	engine := s.services.Discovery.Engine
 	if engine == nil {
@@ -257,18 +245,6 @@ func parseEngineScanOpts(
 // Rate limiting: Yes (scans can be resource intensive).
 func (s *Server) handleEngineScan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	engine := s.services.Discovery.Engine
 	if engine == nil {
@@ -440,18 +416,6 @@ func (s *Server) handleEngineFullScan(w http.ResponseWriter, r *http.Request) {
 // Rate limiting: None (read-only).
 func (s *Server) handleEngineStats(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	engine := s.services.Discovery.Engine
 	if engine == nil {
@@ -477,18 +441,6 @@ func (s *Server) handleEngineStats(w http.ResponseWriter, r *http.Request) {
 // Rate limiting: None (read-only).
 func (s *Server) handleEngineCapabilities(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	engine := s.services.Discovery.Engine
 	if engine == nil {
@@ -517,18 +469,6 @@ func (s *Server) handleEngineCapabilities(w http.ResponseWriter, r *http.Request
 // Rate limiting: None (read-only).
 func (s *Server) handleEngineDevice(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	engine := s.services.Discovery.Engine
 	if engine == nil {
@@ -598,18 +538,6 @@ func (s *Server) handleEngineDevice(w http.ResponseWriter, r *http.Request) {
 // Rate limiting: None (streaming endpoint).
 func (s *Server) handleEngineEvents(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w, logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	engine := s.services.Discovery.Engine
 	if engine == nil {

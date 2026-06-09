@@ -327,19 +327,6 @@ func (s *Server) handleWiFiDisconnect(w http.ResponseWriter, r *http.Request) {
 // handleWiFiSavedNetworks returns a list of saved WiFi networks.
 func (s *Server) handleWiFiSavedNetworks(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	if s.wifiManager() == nil {
 		sendJSONResponse(w, nil, http.StatusOK, map[string]any{
@@ -366,19 +353,6 @@ func (s *Server) handleWiFiSavedNetworks(w http.ResponseWriter, r *http.Request)
 // handleWiFiForgetNetwork handles requests to forget a saved WiFi network.
 func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodDelete {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	if s.wifiManager() == nil {
 		sendErrorResponseWithDetails(
@@ -428,21 +402,6 @@ func (s *Server) handleWiFiForgetNetwork(w http.ResponseWriter, r *http.Request)
 // handleWiFiChannelGraph returns channel overlap graph data for WiFi visualization.
 // It scans available networks and organizes them by frequency band with channel overlap information.
 func (s *Server) handleWiFiChannelGraph(w http.ResponseWriter, r *http.Request) {
-	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
-
 	// Get interface from query param or use current/default
 	wlanIface := s.getInterfaceFromRequest(r)
 	if wlanIface == "" {

@@ -107,10 +107,6 @@ func (s *Server) handleUserByName(w http.ResponseWriter, r *http.Request) {
 // "you" badge on the Users list and to enforce client-side
 // self-edit-only paths.
 func (s *Server) handleCurrentUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeAPITokenError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed, "Method not allowed")
-		return
-	}
 	caller := usernameFromContext(r)
 	if caller == "" {
 		writeAPITokenError(w, r, http.StatusUnauthorized, ErrCodeUnauthorized, "Authentication required")

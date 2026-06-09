@@ -224,27 +224,6 @@ func TestHandleConfigBackupDelete(t *testing.T) {
 		t.Error("Backup file should be deleted")
 	}
 }
-
-func TestHandleConfigVersion_MethodNotAllowed(t *testing.T) {
-	// Use testutil for consistent test configuration
-	s := &api.Server{}
-	s.InitServices()
-	s.SetConfig(testutil.NewConfigBuilder().Build())
-	s.SetConfigPath("/tmp/config.json")
-
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/config/version", http.NoBody)
-	w := httptest.NewRecorder()
-	s.HandleConfigVersion(w, req)
-
-	if w.Code != http.StatusMethodNotAllowed {
-		t.Errorf(
-			"HandleConfigVersion(POST) status = %d, want %d",
-			w.Code,
-			http.StatusMethodNotAllowed,
-		)
-	}
-}
-
 func TestHandleConfigRestore_MissingBackupName(t *testing.T) {
 	// Use testutil for consistent test configuration
 	s := &api.Server{}

@@ -56,18 +56,6 @@ type VLANInterfaceRequest struct {
 func (s *Server) handleVLAN(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			"Method not allowed",
-			"",
-		)
-		return
-	}
-
 	if s.vlanManager() == nil {
 		sendErrorResponseWithDetails(
 			w,
@@ -129,18 +117,6 @@ func (s *Server) getVLANsFromDiscovery() (*int, *int) {
 func (s *Server) handleVLANTraffic(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	if s.vlanTrafficMonitor() == nil {
 		sendErrorResponseWithDetails(

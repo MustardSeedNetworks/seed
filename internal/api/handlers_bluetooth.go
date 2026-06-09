@@ -8,7 +8,6 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
-	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -157,19 +156,6 @@ func toBluetoothStats(stats *discovery.BluetoothDiscoveryStats) *BluetoothDiscov
 // Response: 200 OK with BluetoothScanResponse.
 func (s *Server) handleBluetoothScan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	btScanner := s.bluetoothScanner()
 	if btScanner == nil {
@@ -228,19 +214,6 @@ func toBluetoothScanResponse(
 // Response: 200 OK with BluetoothDevicesResponse.
 func (s *Server) handleBluetoothDevices(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	btScanner := s.bluetoothScanner()
 	if btScanner == nil {
@@ -279,19 +252,6 @@ func (s *Server) handleBluetoothDevices(w http.ResponseWriter, r *http.Request) 
 // Response: 200 OK with BluetoothStatsResponse.
 func (s *Server) handleBluetoothStats(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	btScanner := s.bluetoothScanner()
 	if btScanner == nil {
@@ -321,19 +281,6 @@ func (s *Server) handleBluetoothStats(w http.ResponseWriter, r *http.Request) {
 // Response: 200 OK with status information.
 func (s *Server) handleBluetoothStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	btScanner := s.bluetoothScanner()
 	available := btScanner != nil

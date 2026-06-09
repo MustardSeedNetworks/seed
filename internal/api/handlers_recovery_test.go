@@ -37,27 +37,6 @@ func TestHandleRecoveryStatusNoManager(t *testing.T) {
 	}
 }
 
-// TestHandleRecoveryStatusMethodNotAllowed tests non-GET methods.
-func TestHandleRecoveryStatusMethodNotAllowed(t *testing.T) {
-	server := api.NewTestServer()
-	defer server.Close()
-
-	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
-	for _, method := range methods {
-		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/recovery/status", http.NoBody)
-			w := httptest.NewRecorder()
-
-			server.HandleRecoveryStatus(w, req)
-
-			if w.Code != http.StatusMethodNotAllowed {
-				t.Errorf("expected status %d for %s, got %d",
-					http.StatusMethodNotAllowed, method, w.Code)
-			}
-		})
-	}
-}
-
 // TestHandleRecoveryStatusWithManager tests recovery status with a configured manager.
 func TestHandleRecoveryStatusWithManager(t *testing.T) {
 	server := api.NewTestServer()
@@ -144,27 +123,6 @@ func TestHandleRecoveryCompleteNoManager(t *testing.T) {
 	}
 }
 
-// TestHandleRecoveryCompleteMethodNotAllowed tests non-POST methods.
-func TestHandleRecoveryCompleteMethodNotAllowed(t *testing.T) {
-	server := api.NewTestServer()
-	defer server.Close()
-
-	methods := []string{http.MethodGet, http.MethodPut, http.MethodDelete}
-	for _, method := range methods {
-		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/recovery/complete", http.NoBody)
-			w := httptest.NewRecorder()
-
-			server.HandleRecoveryComplete(w, req)
-
-			if w.Code != http.StatusMethodNotAllowed {
-				t.Errorf("expected status %d for %s, got %d",
-					http.StatusMethodNotAllowed, method, w.Code)
-			}
-		})
-	}
-}
-
 // TestHandleRecoveryCompleteInvalidToken tests recovery with invalid token.
 func TestHandleRecoveryCompleteInvalidToken(t *testing.T) {
 	server := api.NewTestServer()
@@ -213,27 +171,6 @@ func TestHandleRecoveryInstructionsNoManager(t *testing.T) {
 
 	if w.Code != http.StatusServiceUnavailable {
 		t.Errorf("expected status %d, got %d", http.StatusServiceUnavailable, w.Code)
-	}
-}
-
-// TestHandleRecoveryInstructionsMethodNotAllowed tests non-GET methods.
-func TestHandleRecoveryInstructionsMethodNotAllowed(t *testing.T) {
-	server := api.NewTestServer()
-	defer server.Close()
-
-	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete}
-	for _, method := range methods {
-		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/api/v1/recovery/instructions", http.NoBody)
-			w := httptest.NewRecorder()
-
-			server.HandleRecoveryInstructions(w, req)
-
-			if w.Code != http.StatusMethodNotAllowed {
-				t.Errorf("expected status %d for %s, got %d",
-					http.StatusMethodNotAllowed, method, w.Code)
-			}
-		})
 	}
 }
 

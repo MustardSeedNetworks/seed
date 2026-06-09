@@ -149,19 +149,6 @@ func validateIperfClientRequest(req *IperfClientRequest) error {
 // handleIperfInfo returns iperf3 installation status and version.
 func (s *Server) handleIperfInfo(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	resp := IperfInfoResponse{}
 	iperfVersion, err := iperf.GetVersion()
@@ -181,18 +168,6 @@ func (s *Server) handleIperfInfo(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	var req IperfClientRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
@@ -243,19 +218,6 @@ func (s *Server) handleIperfClient(w http.ResponseWriter, r *http.Request) {
 // handleIperfClientStatus returns the status of the iperf3 client test.
 func (s *Server) handleIperfClientStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	status := s.iperfManager().GetClientStatus()
 	resp := IperfClientStatusResponse{
@@ -371,19 +333,6 @@ func (s *Server) handleIperfServer(w http.ResponseWriter, r *http.Request) {
 // handleIperfServerStatus returns the iperf3 server status.
 func (s *Server) handleIperfServerStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	status := s.iperfManager().GetServerStatus()
 	sendJSONResponse(w, logger, http.StatusOK, status)
@@ -393,18 +342,6 @@ func (s *Server) handleIperfServerStatus(w http.ResponseWriter, r *http.Request)
 func (s *Server) handleIperfSuggestions(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	if s.deviceDiscovery() == nil {
 		sendErrorResponseWithDetails(

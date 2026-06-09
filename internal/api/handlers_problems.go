@@ -40,19 +40,6 @@ type ProblemScanResponse struct {
 // Response: 200 OK with NetworkProblemsResponse.
 func (s *Server) handleNetworkProblems(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	detector := s.problemDetector()
 	if detector == nil {
@@ -86,19 +73,6 @@ func (s *Server) handleNetworkProblems(w http.ResponseWriter, r *http.Request) {
 // Response: 200 OK with ProblemScanResponse.
 func (s *Server) handleProblemScan(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	detector := s.problemDetector()
 	if detector == nil {

@@ -42,18 +42,6 @@ func (s *Server) handleConfigBackups(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
-
 	backupDir := filepath.Dir(s.configPath)
 	backupMgr := config.NewBackupManager(s.configPath, backupDir, defaultBackupMaxCount)
 
@@ -78,18 +66,6 @@ func (s *Server) handleConfigBackups(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleConfigBackupCreate(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
 
 	backupDir := filepath.Dir(s.configPath)
 	backupMgr := config.NewBackupManager(s.configPath, backupDir, defaultBackupMaxCount)
@@ -122,18 +98,6 @@ func (s *Server) handleConfigBackupCreate(w http.ResponseWriter, r *http.Request
 func (s *Server) handleConfigRestore(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
 
 	var req RestoreRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
@@ -210,18 +174,6 @@ func (s *Server) handleConfigBackupDelete(w http.ResponseWriter, r *http.Request
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodDelete {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
-
 	backupName := r.URL.Query().Get("name")
 	if backupName == "" {
 		sendErrorResponseWithDetails(
@@ -285,19 +237,6 @@ func (s *Server) handleConfigBackupDelete(w http.ResponseWriter, r *http.Request
 // handleConfigVersion handles GET /api/config/version - get config version info.
 func (s *Server) handleConfigVersion(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
 
 	s.config.RLock()
 	currentVersion := s.config.Version
