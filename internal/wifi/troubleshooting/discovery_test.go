@@ -1,4 +1,4 @@
-package wifiapp_test
+package troubleshooting_test
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
-	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 )
 
 type fakeDiscoverySource struct {
@@ -25,18 +25,18 @@ func (f fakeDiscoverySource) AccessPoints() []discovery.WiFiAccessPoint { return
 func (f fakeDiscoverySource) Stats() *discovery.WiFiDiscoveryStats      { return f.stats }
 
 func TestDiscoveryNilSourceUnavailable(t *testing.T) {
-	d := wifiapp.NewDiscovery(nil)
+	d := troubleshooting.NewDiscovery(nil)
 
-	if _, err := d.Scan(context.Background()); !errors.Is(err, wifiapp.ErrDiscoveryUnavailable) {
+	if _, err := d.Scan(context.Background()); !errors.Is(err, troubleshooting.ErrDiscoveryUnavailable) {
 		t.Errorf("Scan err = %v, want ErrDiscoveryUnavailable", err)
 	}
-	if _, err := d.Networks(); !errors.Is(err, wifiapp.ErrDiscoveryUnavailable) {
+	if _, err := d.Networks(); !errors.Is(err, troubleshooting.ErrDiscoveryUnavailable) {
 		t.Errorf("Networks err = %v, want ErrDiscoveryUnavailable", err)
 	}
-	if _, err := d.AccessPoints(); !errors.Is(err, wifiapp.ErrDiscoveryUnavailable) {
+	if _, err := d.AccessPoints(); !errors.Is(err, troubleshooting.ErrDiscoveryUnavailable) {
 		t.Errorf("AccessPoints err = %v, want ErrDiscoveryUnavailable", err)
 	}
-	if _, err := d.Stats(); !errors.Is(err, wifiapp.ErrDiscoveryUnavailable) {
+	if _, err := d.Stats(); !errors.Is(err, troubleshooting.ErrDiscoveryUnavailable) {
 		t.Errorf("Stats err = %v, want ErrDiscoveryUnavailable", err)
 	}
 }
@@ -48,7 +48,7 @@ func TestDiscoveryDelegates(t *testing.T) {
 		aps:      []discovery.WiFiAccessPoint{{BSSID: "aa:bb"}},
 		stats:    &discovery.WiFiDiscoveryStats{TotalNetworks: 1},
 	}
-	d := wifiapp.NewDiscovery(src)
+	d := troubleshooting.NewDiscovery(src)
 
 	res, err := d.Scan(context.Background())
 	if err != nil || res.Interface != "wlan0" {

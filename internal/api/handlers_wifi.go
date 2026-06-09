@@ -14,7 +14,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
-	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 )
 
 // ============================================================================
@@ -265,7 +265,7 @@ func (s *Server) handleWiFiConnect(w http.ResponseWriter, r *http.Request) {
 
 	result, err := s.wifiManagement.Connect(req.SSID, req.Password)
 	switch {
-	case errors.Is(err, wifiapp.ErrRadioUnavailable):
+	case errors.Is(err, troubleshooting.ErrRadioUnavailable):
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -298,7 +298,7 @@ func (s *Server) handleWiFiDisconnect(w http.ResponseWriter, r *http.Request) {
 
 	result, err := s.wifiManagement.Disconnect()
 	switch {
-	case errors.Is(err, wifiapp.ErrRadioUnavailable):
+	case errors.Is(err, troubleshooting.ErrRadioUnavailable):
 		sendErrorResponseWithDetails(
 			w,
 			logger,
@@ -674,7 +674,7 @@ func (s *Server) handleWiFiDiscoveryScan(w http.ResponseWriter, r *http.Request)
 
 	result, err := s.wifiDiscovery.Scan(r.Context())
 	switch {
-	case errors.Is(err, wifiapp.ErrDiscoveryUnavailable):
+	case errors.Is(err, troubleshooting.ErrDiscoveryUnavailable):
 		s.respondWiFiDiscoveryUnavailable(w, logger)
 		return
 	case err != nil:
@@ -730,7 +730,7 @@ func (s *Server) handleWiFiDiscoveryNetworks(w http.ResponseWriter, r *http.Requ
 	logger := logging.FromContext(r.Context())
 
 	networks, err := s.wifiDiscovery.Networks()
-	if errors.Is(err, wifiapp.ErrDiscoveryUnavailable) {
+	if errors.Is(err, troubleshooting.ErrDiscoveryUnavailable) {
 		s.respondWiFiDiscoveryUnavailable(w, logger)
 		return
 	}
@@ -752,7 +752,7 @@ func (s *Server) handleWiFiDiscoveryAPs(w http.ResponseWriter, r *http.Request) 
 	logger := logging.FromContext(r.Context())
 
 	aps, err := s.wifiDiscovery.AccessPoints()
-	if errors.Is(err, wifiapp.ErrDiscoveryUnavailable) {
+	if errors.Is(err, troubleshooting.ErrDiscoveryUnavailable) {
 		s.respondWiFiDiscoveryUnavailable(w, logger)
 		return
 	}
@@ -774,7 +774,7 @@ func (s *Server) handleWiFiDiscoveryStats(w http.ResponseWriter, r *http.Request
 	logger := logging.FromContext(r.Context())
 
 	stats, err := s.wifiDiscovery.Stats()
-	if errors.Is(err, wifiapp.ErrDiscoveryUnavailable) {
+	if errors.Is(err, troubleshooting.ErrDiscoveryUnavailable) {
 		s.respondWiFiDiscoveryUnavailable(w, logger)
 		return
 	}

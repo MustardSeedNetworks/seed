@@ -1,14 +1,14 @@
-package wifiapp_test
+package troubleshooting_test
 
 import (
 	"errors"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
-	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 )
 
-// fakeHardware is a configurable wifiapp.Hardware for the management tests.
+// fakeHardware is a configurable troubleshooting.Hardware for the management tests.
 type fakeHardware struct {
 	managerAvail bool
 	scannerAvail bool
@@ -57,7 +57,7 @@ func (f *fakeStore) SaveWiFiInterface(name string) error {
 }
 
 func TestSettings(t *testing.T) {
-	m := wifiapp.NewManagement(
+	m := troubleshooting.NewManagement(
 		&fakeHardware{managerAvail: true, wireless: true},
 		fakeLister{names: []string{"wlan0", "wlan1"}},
 		&fakeStore{resolved: "wlan0"},
@@ -75,7 +75,7 @@ func TestSettings(t *testing.T) {
 }
 
 func TestSettingsNoManager(t *testing.T) {
-	m := wifiapp.NewManagement(
+	m := troubleshooting.NewManagement(
 		&fakeHardware{managerAvail: false, wireless: true},
 		fakeLister{},
 		&fakeStore{resolved: "eth0"},
@@ -88,7 +88,7 @@ func TestSettingsNoManager(t *testing.T) {
 func TestUpdateInterfaceSetsRadioAndSaves(t *testing.T) {
 	hw := &fakeHardware{managerAvail: true}
 	store := &fakeStore{}
-	m := wifiapp.NewManagement(hw, fakeLister{}, store)
+	m := troubleshooting.NewManagement(hw, fakeLister{}, store)
 
 	if err := m.UpdateInterface("wlan2"); err != nil {
 		t.Fatalf("UpdateInterface: %v", err)
@@ -104,7 +104,7 @@ func TestUpdateInterfaceSetsRadioAndSaves(t *testing.T) {
 func TestUpdateInterfaceEmptySkipsRadio(t *testing.T) {
 	hw := &fakeHardware{managerAvail: true}
 	store := &fakeStore{}
-	m := wifiapp.NewManagement(hw, fakeLister{}, store)
+	m := troubleshooting.NewManagement(hw, fakeLister{}, store)
 
 	if err := m.UpdateInterface(""); err != nil {
 		t.Fatalf("UpdateInterface: %v", err)
@@ -119,7 +119,7 @@ func TestUpdateInterfaceEmptySkipsRadio(t *testing.T) {
 
 func TestScanResolvesAndSucceeds(t *testing.T) {
 	nets := []*wifi.ScannedNetwork{{SSID: "office"}}
-	m := wifiapp.NewManagement(
+	m := troubleshooting.NewManagement(
 		&fakeHardware{managerAvail: true, scannerAvail: true, wireless: true, scanNets: nets},
 		fakeLister{},
 		&fakeStore{resolved: "wlan0"},
@@ -167,7 +167,7 @@ func TestScanDegrades(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			m := wifiapp.NewManagement(tc.hw, fakeLister{}, &fakeStore{resolved: "wlan0"})
+			m := troubleshooting.NewManagement(tc.hw, fakeLister{}, &fakeStore{resolved: "wlan0"})
 			got := m.Scan("wlan9")
 			if got.Interface != "wlan9" {
 				t.Errorf("interface = %q, want requested wlan9", got.Interface)
@@ -210,7 +210,7 @@ func TestStatus(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			m := wifiapp.NewManagement(tc.hw, fakeLister{names: tc.adapters}, &fakeStore{resolved: "wlan0"})
+			m := troubleshooting.NewManagement(tc.hw, fakeLister{names: tc.adapters}, &fakeStore{resolved: "wlan0"})
 			got := m.Status("")
 			if got.Status != tc.wantStatus {
 				t.Errorf("status = %q, want %q", got.Status, tc.wantStatus)
@@ -227,7 +227,7 @@ func TestStatus(t *testing.T) {
 
 func TestConnect(t *testing.T) {
 	res := &wifi.ConnectionResult{Success: true}
-	m := wifiapp.NewManagement(
+	m := troubleshooting.NewManagement(
 		&fakeHardware{managerAvail: true, connectRes: res},
 		fakeLister{}, &fakeStore{},
 	)
@@ -238,15 +238,15 @@ func TestConnect(t *testing.T) {
 }
 
 func TestConnectNoRadio(t *testing.T) {
-	m := wifiapp.NewManagement(&fakeHardware{managerAvail: false}, fakeLister{}, &fakeStore{})
-	if _, err := m.Connect("ssid", ""); !errors.Is(err, wifiapp.ErrRadioUnavailable) {
+	m := troubleshooting.NewManagement(&fakeHardware{managerAvail: false}, fakeLister{}, &fakeStore{})
+	if _, err := m.Connect("ssid", ""); !errors.Is(err, troubleshooting.ErrRadioUnavailable) {
 		t.Fatalf("err = %v, want ErrRadioUnavailable", err)
 	}
 }
 
 func TestDisconnectNoRadio(t *testing.T) {
-	m := wifiapp.NewManagement(&fakeHardware{managerAvail: false}, fakeLister{}, &fakeStore{})
-	if _, err := m.Disconnect(); !errors.Is(err, wifiapp.ErrRadioUnavailable) {
+	m := troubleshooting.NewManagement(&fakeHardware{managerAvail: false}, fakeLister{}, &fakeStore{})
+	if _, err := m.Disconnect(); !errors.Is(err, troubleshooting.ErrRadioUnavailable) {
 		t.Fatalf("err = %v, want ErrRadioUnavailable", err)
 	}
 }

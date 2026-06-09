@@ -52,8 +52,8 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
-	wifiapp "github.com/MustardSeedNetworks/seed/internal/wifi/app"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/survey"
+	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
 )
 
 // indexHTMLPath is the path to the SPA entry point.
@@ -128,18 +128,18 @@ type Server struct {
 	services *ServiceContainer
 
 	// Runtime state
-	icmpAvailable      bool                  // Whether raw ICMP sockets are available
-	startTime          time.Time             // Application start time for uptime tracking (fixes #540)
-	setupModeStartTime time.Time             // Security fix #891: Track when setup mode started
-	background         *BackgroundComponents // Long-lived components with background lifecycle (report scheduler)
-	wifiQueries        *wifiapp.Queries      // Wi-Fi visibility read use-case (ADR-0016 strangle exemplar)
-	wifiManagement     *wifiapp.Management   // Wi-Fi settings/scan/status/connect use-case (ADR-0016 phase 2)
-	wifiDiscovery      *wifiapp.Discovery    // Enhanced Wi-Fi discovery use-case (ADR-0016 phase 2)
-	settingsStore      *persistence.Service  // Settings-to-profile persistence use-case (ADR-0020)
-	profiles           *catalog.Service      // Profile CRUD/active/import use-case (ADR-0020)
-	networkIP          *ipconfig.Service     // IP-config + MTU use-case (ADR-0020)
-	alertRules         *rules.Service        // Alert-rule CRUD use-case (ADR-0020)
-	tlsFingerprint     tlsFingerprintCache   // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
+	icmpAvailable      bool                        // Whether raw ICMP sockets are available
+	startTime          time.Time                   // Application start time for uptime tracking (fixes #540)
+	setupModeStartTime time.Time                   // Security fix #891: Track when setup mode started
+	background         *BackgroundComponents       // Long-lived components with background lifecycle (report scheduler)
+	wifiQueries        *troubleshooting.Queries    // Wi-Fi visibility read use-case (ADR-0020)
+	wifiManagement     *troubleshooting.Management // Wi-Fi settings/scan/status/connect use-case (ADR-0020)
+	wifiDiscovery      *troubleshooting.Discovery  // Enhanced Wi-Fi discovery use-case (ADR-0020)
+	settingsStore      *persistence.Service        // Settings-to-profile persistence use-case (ADR-0020)
+	profiles           *catalog.Service            // Profile CRUD/active/import use-case (ADR-0020)
+	networkIP          *ipconfig.Service           // IP-config + MTU use-case (ADR-0020)
+	alertRules         *rules.Service              // Alert-rule CRUD use-case (ADR-0020)
+	tlsFingerprint     tlsFingerprintCache         // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
 }
 
 // NewServer creates a new server instance.
@@ -224,7 +224,6 @@ func NewServer(
 		icmpAvailable: icmpAvailable,
 		startTime:     time.Now(),
 		background:    background,
-		wifiQueries:   wifiapp.NewQueries(wifiVisibilitySource(background)),
 		services:      services,
 	}
 
@@ -251,7 +250,7 @@ func NewServer(
 	// Initialize discovery service and pipeline
 	s.initDiscovery(cfg)
 
-	// Wire the Wi-Fi use-cases now that the discovery bridge exists (ADR-0016).
+	// Wire the Wi-Fi troubleshooting use-cases now the discovery bridge exists.
 	s.initWiFiUseCases()
 
 	// Wire the settings-persistence use-case (ADR-0020). The composition root
@@ -752,6 +751,16 @@ func (s *Server) eventBus() *events.Bus                    { return s.services.R
 func (s *Server) jobsRunner() *jobs.Runner                 { return s.services.RealTime.Jobs }
 func (s *Server) jobIdempotency() jobIdempotencyStore      { return s.services.RealTime.JobIdempotency }
 func (s *Server) db() *database.DB                         { return s.services.Database.DB }
+
+// initWiFiUseCases wires the Wi-Fi troubleshooting use-cases (ADR-0020) from the
+// composition root: the visibility-read, management, and discovery use-cases over
+// the server's lazy accessors + live config. Called after initDiscovery so the
+// discovery bridge the discovery use-case captures already exists.
+func (s *Server) initWiFiUseCases() {
+	s.wifiQueries = app.NewWiFiQueries(s.wifiVisibility)
+	s.wifiManagement = app.NewWiFiManagement(s.wifiManager, s.wifiScanner, s.netManager, s.config, s.configPath)
+	s.wifiDiscovery = app.NewWiFiDiscovery(s.wifiBridge)
+}
 
 // webAuthnConfigFromServer derives the relying-party config for the
 // WebAuthn manager from the server config. The RPID is bound to the
