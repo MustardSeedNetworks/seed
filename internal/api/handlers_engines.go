@@ -26,10 +26,6 @@ import (
 )
 
 func (s *Server) handleEngines(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	if s.services == nil || s.services.Engines == nil {
 		writeJSON(w, r, map[string]any{jsonKeyCount: 0, "engines": []any{}})
 		return

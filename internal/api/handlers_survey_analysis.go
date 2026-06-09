@@ -20,18 +20,6 @@ func (s *Server) getSurveyDeadZones(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 	ctx := r.Context()
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
-
 	id := r.URL.Query().Get("id")
 	if !isValidSurveyID(id) {
 		sendErrorResponseWithDetails(
@@ -140,18 +128,6 @@ func parseHeatmapConfig(r *http.Request) survey.HeatmapConfig {
 func (s *Server) getSurveyHeatmap(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
 
 	id := r.URL.Query().Get("id")
 	if !isValidSurveyID(id) {

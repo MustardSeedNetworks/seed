@@ -42,10 +42,6 @@ const (
 //	since=2026-01-01T00:00:00Z   RFC3339
 //	limit=100   offset=0         pagination
 func (s *Server) handleAlerts(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	logger := logging.FromContext(r.Context())
 	db := s.db()
 	if db == nil {
@@ -75,10 +71,6 @@ func (s *Server) handleAlerts(w http.ResponseWriter, r *http.Request) {
 // registration to two entries (alertsPath + alertsPathPrefix)
 // instead of one per (id, action) combinator.
 func (s *Server) handleAlertAction(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	id, action, ok := splitAlertActionPath(r.URL.Path)
 	if !ok {
 		http.Error(w, "Path must be /alerts/{id}/{acknowledge|resolve}", http.StatusBadRequest)

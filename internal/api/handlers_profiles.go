@@ -499,18 +499,6 @@ func (s *Server) handleImportProfiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
-
 	var req ProfileImportRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
@@ -542,18 +530,6 @@ func (s *Server) handleExportProfiles(w http.ResponseWriter, r *http.Request) {
 	if s.db() == nil {
 		sendErrorResponseWithDetails(w, logger, http.StatusServiceUnavailable,
 			ErrCodeServiceUnavail, localizer.T("errors.profile.dbNotAvailable"), "") // fixes #694
-		return
-	}
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
 		return
 	}
 

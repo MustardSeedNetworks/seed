@@ -55,18 +55,6 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.health.speedtestPostRequired"),
-			"",
-		)
-		return
-	}
-
 	if s.speedtestTester() == nil {
 		sendErrorResponseWithDetails(
 			w,
@@ -116,18 +104,6 @@ func (s *Server) handleSpeedtest(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleSpeedtestStatus(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	if s.speedtestTester() == nil {
 		sendErrorResponseWithDetails(

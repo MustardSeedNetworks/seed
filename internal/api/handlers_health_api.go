@@ -45,11 +45,6 @@ func parsePeriodDuration(period string) time.Duration {
 
 // handleHealthCheckResults returns the latest health check results.
 func (s *Server) handleHealthCheckResults(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	logger := logging.FromContext(r.Context())
 	ctx := r.Context()
 	repo := s.services.Health.Repository
@@ -91,11 +86,6 @@ func (s *Server) handleHealthCheckResults(w http.ResponseWriter, r *http.Request
 
 // handleHealthCheckHistory returns historical health check data.
 func (s *Server) handleHealthCheckHistory(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	logger := logging.FromContext(r.Context())
 	ctx := r.Context()
 	repo := s.services.Health.Repository
@@ -177,11 +167,6 @@ func (s *Server) handleHealthCheckHistory(w http.ResponseWriter, r *http.Request
 
 // handleHealthCheckScores returns computed health scores for all endpoints.
 func (s *Server) handleHealthCheckScores(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	logger := logging.FromContext(r.Context())
 	ctx := r.Context()
 	scorer := s.services.Health.Scorer
@@ -233,11 +218,6 @@ func (s *Server) handleHealthCheckScores(w http.ResponseWriter, r *http.Request)
 
 // handleHealthCheckSLA returns SLA compliance information.
 func (s *Server) handleHealthCheckSLA(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	logger := logging.FromContext(r.Context())
 	ctx := r.Context()
 	slaTracker := s.services.Health.SLATracker
@@ -355,11 +335,6 @@ func (s *Server) acknowledgeHealthCheckAlert(w http.ResponseWriter, r *http.Requ
 
 // handleHealthCheckAnomalies returns detected anomalies.
 func (s *Server) handleHealthCheckAnomalies(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	logger := logging.FromContext(r.Context())
 	detector := s.services.Health.AnomalyDetector
 	if detector == nil {

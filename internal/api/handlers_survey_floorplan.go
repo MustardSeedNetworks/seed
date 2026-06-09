@@ -138,11 +138,6 @@ func (s *Server) updateSurveySettings(w http.ResponseWriter, r *http.Request) {
 	localizer := i18n.FromRequest(r)
 	ctx := &surveyHandlerContext{w, logger, localizer}
 
-	if r.Method != http.MethodPut {
-		ctx.sendMethodNotAllowed()
-		return
-	}
-
 	id := r.URL.Query().Get("id")
 	if !isValidSurveyID(id) {
 		ctx.sendValidationError("errors.survey.invalidId")
@@ -310,11 +305,6 @@ func (s *Server) updateSurveyImportedData(w http.ResponseWriter, r *http.Request
 	localizer := i18n.FromRequest(r)
 	ctx := &surveyHandlerContext{w, logger, localizer}
 
-	if r.Method != http.MethodPut {
-		ctx.sendMethodNotAllowed()
-		return
-	}
-
 	id := r.URL.Query().Get("id")
 	if !isValidSurveyID(id) {
 		ctx.sendValidationError("errors.survey.invalidId")
@@ -353,11 +343,6 @@ func (s *Server) importAirMapper(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 	ctx := &surveyHandlerContext{w, logger, localizer}
-
-	if r.Method != http.MethodPost {
-		ctx.sendMethodNotAllowed()
-		return
-	}
 
 	if !s.endpointRateLimiter().Allow(s.getClientIP(r)) {
 		ctx.sendRateLimitError()

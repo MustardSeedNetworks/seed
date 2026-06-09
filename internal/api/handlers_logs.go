@@ -102,18 +102,6 @@ func (s *Server) handleClientLogs(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
-
 	var req ClientLogRequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
 		return
@@ -231,18 +219,6 @@ func (s *Server) handleLogsQuery(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
-
 	params := parseLogQueryParams(r)
 
 	// Try database first if available (for persisted logs)
@@ -347,18 +323,6 @@ func (s *Server) handleLogsStats(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
-
 	broadcaster := logging.GetBroadcaster()
 	if broadcaster == nil {
 		sendErrorResponseWithDetails(
@@ -413,18 +377,6 @@ func (s *Server) handleLogsStats(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleLogsRecent(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
 
 	broadcaster := logging.GetBroadcaster()
 	if broadcaster == nil {

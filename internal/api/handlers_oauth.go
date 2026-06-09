@@ -13,7 +13,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
-	"github.com/MustardSeedNetworks/seed/internal/i18n"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/oauth"
 )
@@ -84,18 +83,6 @@ func (s *Server) initOAuthManager() {
 func (s *Server) handleSSOProviders(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			"Method not allowed",
-			"",
-		)
-		return
-	}
-
 	providers := s.oauthManager().ListProviders()
 	sendJSONResponse(w, logger, http.StatusOK, SSOProvidersResponse{
 		Providers: providers,
@@ -105,19 +92,6 @@ func (s *Server) handleSSOProviders(w http.ResponseWriter, r *http.Request) {
 // handleSSOLogin initiates OAuth flow by redirecting to the provider.
 func (s *Server) handleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		)
-		return
-	}
 
 	// Get provider from query parameter
 	providerName := r.URL.Query().Get("provider")
@@ -408,16 +382,7 @@ func (s *Server) completeOAuthLogin(
 // handleSSOCallback handles the OAuth callback from the provider.
 func (s *Server) handleSSOCallback(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	localizer := i18n.FromRequest(r)
 	clientIP := s.getClientIP(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w, logger, http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "",
-		)
-		return
-	}
 
 	// Validate callback and get OAuth parameters
 	params, ok := s.validateOAuthCallback(w, r, logger, clientIP)
@@ -505,18 +470,6 @@ type SSOProviderInfo struct {
 // Security fix #757: Require authentication to view SSO settings.
 func (s *Server) handleSSOSettings(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			"Method not allowed",
-			"",
-		)
-		return
-	}
 
 	// Security: Require authentication (fixes #757)
 	token, _ := auth.GetTokenFromRequest(r)
@@ -634,18 +587,6 @@ func (s *Server) updateProviderConfig(req *ssoUpdateRequest) bool {
 // Security fix #757, #760: Require authentication and add body limit + config locking.
 func (s *Server) handleSSOUpdate(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-
-	if r.Method != http.MethodPut {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			"Method not allowed",
-			"",
-		)
-		return
-	}
 
 	// Security: Require authentication (fixes #757)
 	if !s.requireSSOAuth(w, r, logger) {

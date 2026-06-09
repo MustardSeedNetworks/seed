@@ -103,12 +103,6 @@ type LicenseStatusResponse struct {
 // handleLicenseStatus exposes the local license state to the UI. The
 // unlicensed (Free) state is a valid result, not an error condition.
 func (s *Server) handleLicenseStatus(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeAPITokenError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed,
-			"Method not allowed")
-		return
-	}
-
 	resp := LicenseStatusResponse{
 		Tier:          license.TierFree.String(),
 		TierValue:     int(license.TierFree),
@@ -163,11 +157,6 @@ func (s *Server) handleAPITokens(w http.ResponseWriter, r *http.Request) {
 
 // handleAPITokenByID routes /api/v1/tokens/<id> (DELETE = revoke).
 func (s *Server) handleAPITokenByID(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodDelete {
-		writeAPITokenError(w, r, http.StatusMethodNotAllowed, ErrCodeMethodNotAllowed,
-			"Method not allowed")
-		return
-	}
 	s.handleAPITokenRevoke(w, r)
 }
 

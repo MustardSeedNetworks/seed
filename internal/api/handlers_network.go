@@ -248,18 +248,6 @@ func (s *Server) handleInterfaces(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
-
 	if s.netManager() == nil {
 		sendErrorResponseWithDetails(
 			w,
@@ -580,12 +568,6 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
 
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(w, logger, http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed, localizer.T("errors.api.methodNotAllowed"), "")
-		return
-	}
-
 	if s.netManager() == nil {
 		sendErrorResponseWithDetails(
 			w,
@@ -645,18 +627,6 @@ func (s *Server) handleLink(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleIPConfig(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodGet {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
 
 	if s.netManager() == nil {
 		sendErrorResponseWithDetails(
@@ -836,18 +806,6 @@ func (s *Server) writeIPApplyError(
 func (s *Server) handleSetMTU(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 	localizer := i18n.FromRequest(r)
-
-	if r.Method != http.MethodPost {
-		sendErrorResponseWithDetails(
-			w,
-			logger,
-			http.StatusMethodNotAllowed,
-			ErrCodeMethodNotAllowed,
-			localizer.T("errors.api.methodNotAllowed"),
-			"",
-		) // fixes #694
-		return
-	}
 
 	var req SetMTURequest
 	if !decodeJSONStrictLocalized(w, r, &req, MaxBodySizeJSON, logger, localizer) {
