@@ -1,10 +1,10 @@
-package discovery_test
+package enumerate_test
 
 import (
 	"net"
 	"testing"
 
-	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 )
 
 func TestExportIncrementIP(t *testing.T) {
@@ -28,7 +28,7 @@ func TestExportIncrementIP(t *testing.T) {
 				t.Fatalf("Failed to parse IP: %s", tt.ip)
 			}
 
-			result := discovery.ExportIncrementIP(ip, tt.n)
+			result := enumerate.ExportIncrementIP(ip, tt.n)
 			if result == nil {
 				t.Fatalf("incrementIP returned nil for %s + %d", tt.ip, tt.n)
 			}
@@ -56,7 +56,7 @@ func TestExportNormalizeMac(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := discovery.ExportNormalizeMac(tt.mac)
+			result := enumerate.ExportNormalizeMac(tt.mac)
 			if result != tt.expected {
 				t.Errorf("normalizeMac(%q) = %q, expected %q", tt.mac, result, tt.expected)
 			}
@@ -84,7 +84,7 @@ func TestExportGuessOSFromTTL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := discovery.ExportGuessOSFromTTL(tt.ttl)
+			result := enumerate.ExportGuessOSFromTTL(tt.ttl)
 			if result != tt.expected {
 				t.Errorf("guessOSFromTTL(%d) = %q, expected %q", tt.ttl, result, tt.expected)
 			}
@@ -114,7 +114,7 @@ func TestExportSplitSubnetIntoChunks(t *testing.T) {
 				t.Fatalf("Failed to parse CIDR %s: %v", tt.cidr, err)
 			}
 
-			chunks := discovery.ExportSplitSubnetIntoChunks(subnet, tt.maxChunks)
+			chunks := enumerate.ExportSplitSubnetIntoChunks(subnet, tt.maxChunks)
 			if len(chunks) < tt.minExpected || len(chunks) > tt.maxExpected {
 				t.Errorf(
 					"splitSubnetIntoChunks(%s, %d) returned %d chunks, expected %d-%d",

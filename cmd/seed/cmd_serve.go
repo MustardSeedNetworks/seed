@@ -17,7 +17,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
-	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/paths"
@@ -144,7 +144,7 @@ func initializeBackgroundComponents(cfg *config.Config, db *database.DB) *api.Ba
 // checkICMPCapabilities checks for ICMP privileges and returns availability status.
 // Note: Called before logging is initialized, so uses [fmt.Fprintf].
 func checkICMPCapabilities() bool {
-	if err := discovery.CheckICMPPrivilegesWithMessage(); err != nil {
+	if err := enumerate.CheckICMPPrivilegesWithMessage(); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: ICMP features disabled - %v\n", err)
 		fmt.Fprintln(
 			os.Stderr,

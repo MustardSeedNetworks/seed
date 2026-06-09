@@ -1,27 +1,27 @@
-package discovery_test
+package enumerate_test
 
 import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 )
 
 func TestProtocolConstants(t *testing.T) {
-	if discovery.ProtocolLLDP != "lldp" {
-		t.Errorf("Expected ProtocolLLDP='lldp', got %q", discovery.ProtocolLLDP)
+	if enumerate.ProtocolLLDP != "lldp" {
+		t.Errorf("Expected ProtocolLLDP='lldp', got %q", enumerate.ProtocolLLDP)
 	}
-	if discovery.ProtocolCDP != "cdp" {
-		t.Errorf("Expected ProtocolCDP='cdp', got %q", discovery.ProtocolCDP)
+	if enumerate.ProtocolCDP != "cdp" {
+		t.Errorf("Expected ProtocolCDP='cdp', got %q", enumerate.ProtocolCDP)
 	}
-	if discovery.ProtocolEDP != "edp" {
-		t.Errorf("Expected ProtocolEDP='edp', got %q", discovery.ProtocolEDP)
+	if enumerate.ProtocolEDP != "edp" {
+		t.Errorf("Expected ProtocolEDP='edp', got %q", enumerate.ProtocolEDP)
 	}
 }
 
 func TestNeighbor_Fields(t *testing.T) {
-	n := discovery.Neighbor{
-		Protocol:          discovery.ProtocolLLDP,
+	n := enumerate.Neighbor{
+		Protocol:          enumerate.ProtocolLLDP,
 		ChassisID:         "00:11:22:33:44:55",
 		PortID:            "Gi0/1",
 		PortDescription:   "Uplink to Core",
@@ -37,7 +37,7 @@ func TestNeighbor_Fields(t *testing.T) {
 		SourceMAC:         "AA:BB:CC:DD:EE:FF",
 	}
 
-	if n.Protocol != discovery.ProtocolLLDP {
+	if n.Protocol != enumerate.ProtocolLLDP {
 		t.Errorf("Expected Protocol LLDP, got %v", n.Protocol)
 	}
 	if n.ChassisID != "00:11:22:33:44:55" {
@@ -82,7 +82,7 @@ func TestNeighbor_Fields(t *testing.T) {
 }
 
 func TestNewManager(t *testing.T) {
-	mgr := discovery.NewManager("lo")
+	mgr := enumerate.NewManager("lo")
 
 	if mgr == nil {
 		t.Fatal("NewManager returned nil")
@@ -93,7 +93,7 @@ func TestNewManager(t *testing.T) {
 }
 
 func TestManager_IsRunning(t *testing.T) {
-	mgr := discovery.NewManager("lo")
+	mgr := enumerate.NewManager("lo")
 
 	if mgr.IsRunning() {
 		t.Error("Manager should not be running initially")
@@ -101,7 +101,7 @@ func TestManager_IsRunning(t *testing.T) {
 }
 
 func TestManager_GetNeighbors_Empty(t *testing.T) {
-	mgr := discovery.NewManager("lo")
+	mgr := enumerate.NewManager("lo")
 
 	neighbors := mgr.GetNeighbors()
 	if len(neighbors) != 0 {
@@ -110,7 +110,7 @@ func TestManager_GetNeighbors_Empty(t *testing.T) {
 }
 
 func TestManager_GetLLDPNeighbors_Empty(t *testing.T) {
-	mgr := discovery.NewManager("lo")
+	mgr := enumerate.NewManager("lo")
 
 	neighbors := mgr.GetLLDPNeighbors()
 	if len(neighbors) != 0 {
@@ -119,7 +119,7 @@ func TestManager_GetLLDPNeighbors_Empty(t *testing.T) {
 }
 
 func TestManager_GetCDPNeighbors_Empty(t *testing.T) {
-	mgr := discovery.NewManager("lo")
+	mgr := enumerate.NewManager("lo")
 
 	neighbors := mgr.GetCDPNeighbors()
 	if len(neighbors) != 0 {
@@ -128,7 +128,7 @@ func TestManager_GetCDPNeighbors_Empty(t *testing.T) {
 }
 
 func TestManager_GetEDPNeighbors_Empty(t *testing.T) {
-	mgr := discovery.NewManager("lo")
+	mgr := enumerate.NewManager("lo")
 
 	neighbors := mgr.GetEDPNeighbors()
 	if len(neighbors) != 0 {
@@ -137,7 +137,7 @@ func TestManager_GetEDPNeighbors_Empty(t *testing.T) {
 }
 
 func TestManager_Stop_WhenNotRunning(t *testing.T) {
-	mgr := discovery.NewManager("lo")
+	mgr := enumerate.NewManager("lo")
 
 	// Stop when not running should be safe (no-op)
 	mgr.Stop()

@@ -1,4 +1,4 @@
-package discovery
+package enumerate
 
 //
 // This file provides active Layer 2 and Layer 3 network scanning to discover
@@ -55,6 +55,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -296,7 +297,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 
 	// Perform ping sweep on primary subnet with retry logic
 	// Note: ping sweep may fail without CAP_NET_RAW - continue with ARP table
-	result := RetryWithBackoff(ctx, NetworkRetryConfig(), func() error {
+	result := discovery.RetryWithBackoff(ctx, discovery.NetworkRetryConfig(), func() error {
 		return s.pingSweep(ctx, subnet)
 	})
 	if !result.Successful {
@@ -315,7 +316,7 @@ func (s *ARPScanner) Scan(ctx context.Context) error {
 		default:
 			// Retry logic for additional subnets - continue even if some fail
 			subnetCopy := additionalSubnet // Capture for closure
-			subnetResult := RetryWithBackoff(ctx, NetworkRetryConfig(), func() error {
+			subnetResult := discovery.RetryWithBackoff(ctx, discovery.NetworkRetryConfig(), func() error {
 				return s.pingSweep(ctx, subnetCopy)
 			})
 			if !subnetResult.Successful {

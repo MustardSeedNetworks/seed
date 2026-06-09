@@ -1,4 +1,4 @@
-package discovery
+package enumerate
 
 // devices_copy.go contains the deep-copy helpers that GetDevices / GetDevice /
 // GetDeviceByIP use to return immutable snapshots to callers, plus the per-

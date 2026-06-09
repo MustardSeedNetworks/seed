@@ -1,4 +1,4 @@
-package discovery
+package enumerate
 
 // Discovery service coordinates all discovery methods (ARP, NDP, LLDP, CDP, EDP, ICMP, profiling)
 // with direct settings configuration. Manages orchestration, timing, and aggregation of discovery results.
@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
+	"github.com/MustardSeedNetworks/seed/internal/discovery"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -64,7 +65,7 @@ func NewService(
 	opts ...Option,
 ) *Service {
 	if profiler == nil {
-		profiler = NewDeviceProfiler(DefaultProfilerConfig(), &cfg.SNMP)
+		profiler = discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), &cfg.SNMP)
 	}
 	return &Service{
 		cfg:           cfg,
@@ -76,7 +77,7 @@ func NewService(
 			opts...,
 		),
 		profiler: profiler,
-		metrics:  NewMetrics(),
+		metrics:  discovery.NewMetrics(),
 	}
 }
 
@@ -271,7 +272,7 @@ func (s *Service) Scan(ctx context.Context) error {
 
 	// Compute delta from previous scan
 	if s.previousScan != nil {
-		s.lastDelta = ComputeDelta(s.previousScan, devices)
+		s.lastDelta = discovery.ComputeDelta(s.previousScan, devices)
 		s.lastDeltaTime = time.Now()
 
 		if len(s.lastDelta.NewDevices) > 0 || len(s.lastDelta.RemovedDevices) > 0 {

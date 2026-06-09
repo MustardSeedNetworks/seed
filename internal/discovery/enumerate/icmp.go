@@ -1,4 +1,4 @@
-package discovery
+package enumerate
 
 // ICMP ping support enables active probing of devices to verify reachability,
 // measure latency, and identify responsive hosts on the network. Supports both

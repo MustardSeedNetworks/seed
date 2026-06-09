@@ -13,6 +13,7 @@ import (
 	"fmt"
 
 	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/platform/jobs"
@@ -105,7 +106,7 @@ func decodeVulnScanParams(params any) (VulnScanParams, error) {
 // vulnScanService seam.
 type serverVulnScanService struct {
 	scanner *vuln.VulnerabilityScanner
-	devices *discovery.DeviceDiscovery
+	devices *enumerate.DeviceDiscovery
 }
 
 func (a serverVulnScanService) Devices(targetIP string) []*discovery.DiscoveredDevice {

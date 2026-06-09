@@ -1,6 +1,6 @@
 //go:build darwin
 
-package discovery
+package enumerate
 
 // NDP (Neighbor Discovery Protocol) support for macOS is a stub implementation
 // as IPv6 neighbor discovery on macOS is complex and the primary production target is Linux.

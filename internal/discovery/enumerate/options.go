@@ -1,4 +1,4 @@
-package discovery
+package enumerate
 
 import (
 	"github.com/MustardSeedNetworks/seed/internal/capture"

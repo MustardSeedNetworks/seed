@@ -65,25 +65,6 @@ type BluetoothPresence struct {
 	LastSeen     time.Time            `json:"lastSeen"`
 }
 
-// Time constants for device discovery operations.
-const (
-	ouiUpdateTimeoutMinutes = 2  // Timeout for OUI database updates
-	nameResGoroutineCount   = 2  // Number of name resolution goroutines
-	dbPersistTimeoutSeconds = 30 // Timeout for database persistence operations
-)
-
-// MAC address parsing constants.
-const (
-	macOctetMinLen  = 2    // Minimum length to parse a MAC octet
-	hexLetterOffset = 10   // Offset to add when parsing A-F hex digits (after subtracting 'A' or 'a')
-	localAdminBit   = 0x02 // Bit mask for locally administered MAC address check
-	deviceTTLHours  = 24   // Default device TTL in hours before expiration
-)
-
-// maxIPv6AddressesPerDevice limits IPv6 address accumulation to prevent
-// unbounded memory growth from devices with many addresses (fixes #884).
-const maxIPv6AddressesPerDevice = 16
-
 // DiscoveredDevice represents a network device with aggregated discovery info.
 type DiscoveredDevice struct {
 	IP              string    `json:"ip"`                      // Primary IPv4 address

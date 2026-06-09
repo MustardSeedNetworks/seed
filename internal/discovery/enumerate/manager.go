@@ -1,4 +1,4 @@
-package discovery
+package enumerate
 
 //
 // This file implements the Manager, which orchestrates multiple discovery protocol

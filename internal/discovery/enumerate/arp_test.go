@@ -1,4 +1,4 @@
-package discovery_test
+package enumerate_test
 
 import (
 	"context"
@@ -6,19 +6,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/discovery"
+	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/resolve"
 )
 
 func TestNewARPScanner(t *testing.T) {
 	oui := resolve.NewOUIDatabase()
-	scanner := discovery.NewARPScanner("lo", oui)
+	scanner := enumerate.NewARPScanner("lo", oui)
 
 	if scanner == nil {
 		t.Fatal("NewARPScanner returned nil")
 	}
 
-	accessor := &discovery.ARPScannerTestAccessor{Scanner: scanner}
+	accessor := &enumerate.ARPScannerTestAccessor{Scanner: scanner}
 	if accessor.GetInterfaceName() != "lo" {
 		t.Errorf("Expected interface 'lo', got %q", accessor.GetInterfaceName())
 	}
@@ -32,11 +32,11 @@ func TestNewARPScanner(t *testing.T) {
 
 func TestARPScanner_SetInterface(t *testing.T) {
 	oui := resolve.NewOUIDatabase()
-	scanner := discovery.NewARPScanner("lo", oui)
+	scanner := enumerate.NewARPScanner("lo", oui)
 
 	scanner.SetInterface("eth0")
 
-	accessor := &discovery.ARPScannerTestAccessor{Scanner: scanner}
+	accessor := &enumerate.ARPScannerTestAccessor{Scanner: scanner}
 	if accessor.GetInterfaceName() != "eth0" {
 		t.Errorf("Expected interface 'eth0', got %q", accessor.GetInterfaceName())
 	}
@@ -51,7 +51,7 @@ func TestARPScanner_SetInterface(t *testing.T) {
 
 func TestARPScanner_SetAdditionalSubnets(t *testing.T) {
 	oui := resolve.NewOUIDatabase()
-	scanner := discovery.NewARPScanner("lo", oui)
+	scanner := enumerate.NewARPScanner("lo", oui)
 
 	// Valid CIDRs
 	err := scanner.SetAdditionalSubnets([]string{"192.168.1.0/24", "10.0.0.0/8"})
@@ -73,7 +73,7 @@ func TestARPScanner_SetAdditionalSubnets(t *testing.T) {
 
 func TestARPScanner_GetAdditionalSubnets(t *testing.T) {
 	oui := resolve.NewOUIDatabase()
-	scanner := discovery.NewARPScanner("lo", oui)
+	scanner := enumerate.NewARPScanner("lo", oui)
 
 	// Empty initially
 	subnets := scanner.GetAdditionalSubnets()
@@ -111,7 +111,7 @@ func TestIncrementIP(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ip := net.ParseIP(tt.ip).To4()
-			result := discovery.ExportIncrementIP(ip, tt.n)
+			result := enumerate.ExportIncrementIP(ip, tt.n)
 			if result.String() != tt.expected {
 				t.Errorf(
 					"incrementIP(%s, %d) = %s, want %s",
@@ -128,13 +128,13 @@ func TestIncrementIP(t *testing.T) {
 func TestIncrementIP_Nil(t *testing.T) {
 	// IPv6 address should return nil (only IPv4 supported)
 	ip := net.ParseIP("::1")
-	result := discovery.ExportIncrementIP(ip, 1)
+	result := enumerate.ExportIncrementIP(ip, 1)
 	if result != nil {
 		t.Errorf("Expected nil for IPv6, got %v", result)
 	}
 
 	// nil input
-	result = discovery.ExportIncrementIP(nil, 1)
+	result = enumerate.ExportIncrementIP(nil, 1)
 	if result != nil {
 		t.Errorf("Expected nil for nil input, got %v", result)
 	}
@@ -156,7 +156,7 @@ func TestNormalizeMac(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := discovery.ExportNormalizeMac(tt.input)
+			result := enumerate.ExportNormalizeMac(tt.input)
 			if result != tt.expected {
 				t.Errorf("normalizeMac(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
@@ -188,7 +188,7 @@ func TestGuessOSFromTTL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expected, func(t *testing.T) {
-			result := discovery.ExportGuessOSFromTTL(tt.ttl)
+			result := enumerate.ExportGuessOSFromTTL(tt.ttl)
 			if result != tt.expected {
 				t.Errorf("guessOSFromTTL(%d) = %q, want %q", tt.ttl, result, tt.expected)
 			}
@@ -198,7 +198,7 @@ func TestGuessOSFromTTL(t *testing.T) {
 
 func TestARPScanner_IsScanning(t *testing.T) {
 	oui := resolve.NewOUIDatabase()
-	scanner := discovery.NewARPScanner("lo", oui)
+	scanner := enumerate.NewARPScanner("lo", oui)
 
 	// Initially not scanning
 	if scanner.IsScanning() {
@@ -208,7 +208,7 @@ func TestARPScanner_IsScanning(t *testing.T) {
 
 func TestARPScanner_LastScan(t *testing.T) {
 	oui := resolve.NewOUIDatabase()
-	scanner := discovery.NewARPScanner("lo", oui)
+	scanner := enumerate.NewARPScanner("lo", oui)
 
 	// Initially zero
 	if !scanner.LastScan().IsZero() {
@@ -218,7 +218,7 @@ func TestARPScanner_LastScan(t *testing.T) {
 
 func TestARPScanner_Count(t *testing.T) {
 	oui := resolve.NewOUIDatabase()
-	scanner := discovery.NewARPScanner("lo", oui)
+	scanner := enumerate.NewARPScanner("lo", oui)
 
 	// Initially zero
 	if scanner.Count() != 0 {
@@ -228,7 +228,7 @@ func TestARPScanner_Count(t *testing.T) {
 
 func TestARPScanner_GetEntries(t *testing.T) {
 	oui := resolve.NewOUIDatabase()
-	scanner := discovery.NewARPScanner("lo", oui)
+	scanner := enumerate.NewARPScanner("lo", oui)
 
 	// Initially empty
 	entries := scanner.GetEntries()
@@ -239,7 +239,7 @@ func TestARPScanner_GetEntries(t *testing.T) {
 
 func TestARPScanner_GetEntry(t *testing.T) {
 	oui := resolve.NewOUIDatabase()
-	scanner := discovery.NewARPScanner("lo", oui)
+	scanner := enumerate.NewARPScanner("lo", oui)
 
 	// Non-existent entry
 	entry := scanner.GetEntry("192.168.1.1")
@@ -250,10 +250,10 @@ func TestARPScanner_GetEntry(t *testing.T) {
 
 func TestARPScanner_ScanAlreadyInProgress(t *testing.T) {
 	oui := resolve.NewOUIDatabase()
-	scanner := discovery.NewARPScanner("lo", oui)
+	scanner := enumerate.NewARPScanner("lo", oui)
 
 	// Set scanning to true manually
-	accessor := &discovery.ARPScannerTestAccessor{Scanner: scanner}
+	accessor := &enumerate.ARPScannerTestAccessor{Scanner: scanner}
 	accessor.Lock()
 	accessor.SetScanning(true)
 	accessor.Unlock()
@@ -270,7 +270,7 @@ func TestARPScanner_ScanAlreadyInProgress(t *testing.T) {
 
 func TestARPScanner_ScanInvalidInterface(t *testing.T) {
 	oui := resolve.NewOUIDatabase()
-	scanner := discovery.NewARPScanner("nonexistent_interface_xyz", oui)
+	scanner := enumerate.NewARPScanner("nonexistent_interface_xyz", oui)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -282,7 +282,7 @@ func TestARPScanner_ScanInvalidInterface(t *testing.T) {
 }
 
 func TestARPEntry_Fields(t *testing.T) {
-	entry := discovery.ARPEntry{
+	entry := enumerate.ARPEntry{
 		IP:           "192.168.1.1",
 		MAC:          "AA:BB:CC:DD:EE:FF",
 		Vendor:       "Test Vendor",
@@ -333,11 +333,11 @@ func TestARPEntry_Fields(t *testing.T) {
 
 func TestARPScanner_isInSubnet(t *testing.T) {
 	oui := resolve.NewOUIDatabase()
-	scanner := discovery.NewARPScanner("lo", oui)
+	scanner := enumerate.NewARPScanner("lo", oui)
 
 	// Set up a subnet on the scanner
 	_, subnet, _ := net.ParseCIDR("192.168.1.0/24")
-	accessor := &discovery.ARPScannerTestAccessor{Scanner: scanner}
+	accessor := &enumerate.ARPScannerTestAccessor{Scanner: scanner}
 	accessor.Lock()
 	accessor.SetSubnet(subnet)
 	accessor.Unlock()
@@ -475,7 +475,7 @@ func getSubnetChunkTestCases() []subnetChunkTestCase {
 		{
 			name:           "/16 - 256 chunks (capped by default)",
 			cidr:           "10.0.0.0/16",
-			expectedChunks: discovery.MaxChunksDefault, // 256 - capped by default
+			expectedChunks: enumerate.MaxChunksDefault, // 256 - capped by default
 			firstChunk:     "10.0.0.0/24",
 			lastChunk:      "10.0.255.0/24",
 		},
@@ -491,7 +491,7 @@ func runSubnetChunkTest(t *testing.T, tc subnetChunkTestCase) {
 		t.Fatalf("Invalid CIDR %s: %v", tc.cidr, err)
 	}
 
-	chunks := discovery.ExportSplitSubnetIntoChunks(subnet, tc.maxChunks)
+	chunks := enumerate.ExportSplitSubnetIntoChunks(subnet, tc.maxChunks)
 
 	assertChunkCount(t, len(chunks), tc.expectedChunks)
 	assertFirstChunk(t, chunks, tc.firstChunk)
@@ -516,7 +516,7 @@ func TestSplitSubnetIntoChunks_MaxChunksCap(t *testing.T) {
 	_, subnet, _ := net.ParseCIDR("10.0.0.0/8")
 
 	// With cap of 16, should only get 16 chunks
-	chunks := discovery.ExportSplitSubnetIntoChunks(subnet, 16)
+	chunks := enumerate.ExportSplitSubnetIntoChunks(subnet, 16)
 	if len(chunks) != 16 {
 		t.Errorf("/8 with maxChunks=16: expected 16 chunks, got %d", len(chunks))
 	}
@@ -537,11 +537,11 @@ func TestSplitSubnetIntoChunks_DefaultCap(t *testing.T) {
 	_, subnet, _ := net.ParseCIDR("10.0.0.0/8")
 
 	// With default cap, should get MaxChunksDefault chunks
-	chunks := discovery.ExportSplitSubnetIntoChunks(subnet, 0)
-	if len(chunks) != discovery.MaxChunksDefault {
+	chunks := enumerate.ExportSplitSubnetIntoChunks(subnet, 0)
+	if len(chunks) != enumerate.MaxChunksDefault {
 		t.Errorf(
 			"/8 with default cap: expected %d chunks, got %d",
-			discovery.MaxChunksDefault,
+			enumerate.MaxChunksDefault,
 			len(chunks),
 		)
 	}

@@ -1,4 +1,4 @@
-package discovery
+package enumerate
 
 // Package discovery aggregates device information discovered through various
 // protocols (ARP, NDP, LLDP, CDP, EDP, mDNS, and ICMP ping) and maintains a

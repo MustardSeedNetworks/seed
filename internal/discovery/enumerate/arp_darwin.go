@@ -15,7 +15,7 @@
 
 //go:build darwin
 
-package discovery
+package enumerate
 
 import (
 	"encoding/binary"

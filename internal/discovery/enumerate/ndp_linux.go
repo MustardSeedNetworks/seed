@@ -4,7 +4,7 @@
 // NDP (Neighbor Discovery Protocol) support for Linux enables IPv6 neighbor discovery
 // by reading from the kernel's neighbor table, allowing detection of IPv6-capable devices
 // and routers on the local network segment.
-package discovery
+package enumerate
 
 import (
 	"fmt"

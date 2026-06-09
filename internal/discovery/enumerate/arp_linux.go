@@ -15,7 +15,7 @@
 
 //go:build linux
 
-package discovery
+package enumerate
 
 import (
 	"time"
