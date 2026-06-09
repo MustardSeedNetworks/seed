@@ -46,7 +46,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/snmpclient"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
 	"github.com/MustardSeedNetworks/seed/internal/probe/checkers"
-	profilesapp "github.com/MustardSeedNetworks/seed/internal/profiles/app"
+	"github.com/MustardSeedNetworks/seed/internal/profiles/catalog"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
 	"github.com/MustardSeedNetworks/seed/internal/settings/persistence"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
@@ -136,7 +136,7 @@ type Server struct {
 	wifiManagement     *wifiapp.Management   // Wi-Fi settings/scan/status/connect use-case (ADR-0016 phase 2)
 	wifiDiscovery      *wifiapp.Discovery    // Enhanced Wi-Fi discovery use-case (ADR-0016 phase 2)
 	settingsStore      *persistence.Service  // Settings-to-profile persistence use-case (ADR-0020)
-	profiles           *profilesapp.Service  // Profile CRUD/active/import use-case (ADR-0016 phase 3)
+	profiles           *catalog.Service      // Profile CRUD/active/import use-case (ADR-0020)
 	networkIP          *ipconfig.Service     // IP-config + MTU use-case (ADR-0020)
 	alertRules         *rules.Service        // Alert-rule CRUD use-case (ADR-0020)
 	tlsFingerprint     tlsFingerprintCache   // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
@@ -258,8 +258,9 @@ func NewServer(
 	// builds the adapters; api passes its lazy db accessor + live config.
 	s.settingsStore = app.NewSettings(s.db, s.config)
 
-	// Wire the profiles use-case (ADR-0016 phase 3), also over the lazy db.
-	s.initProfilesUseCase()
+	// Wire the profiles catalog use-case (ADR-0020). The composition root builds
+	// the adapter; api passes its lazy db accessor.
+	s.profiles = app.NewProfiles(s.db)
 
 	// Wire the network IP-config + MTU use-case (ADR-0020). The composition root
 	// builds the adapters; api passes its lazy manager accessor + config.
