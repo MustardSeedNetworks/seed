@@ -42,8 +42,8 @@ func initServeCmd(state *cliState) {
 		Long: `Start The Seed network diagnostics server.
 
 The server provides a web-based UI for network diagnostics, monitoring,
-and analysis. It runs with HTTPS on port 8443. HTTPS is required —
-the HTTP listener exists only as a 308 redirector.`,
+and analysis. It serves HTTPS only on port 8443 — the daemon binds no
+plain-HTTP listener, so clients must use the https:// scheme.`,
 		Example: `  # Start with the default config
   seed serve
 
@@ -236,8 +236,8 @@ func loadAndConfigureConfig(configPath string) *config.Config {
 
 	migrateSNMPCredentials(cfg, configPath)
 
-	// HTTPS is required, unconditionally. The HTTP listener exists only as a
-	// 308 redirector. No --dev or env-var opt-out is supported.
+	// HTTPS is required, unconditionally — the daemon binds no HTTP listener.
+	// No --dev or env-var opt-out is supported.
 	cfg.Server.HTTPS = true
 
 	if validateErr := cfg.Validate(); validateErr != nil {
