@@ -27,3 +27,5 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0017](0017-transactional-outbox-relay.md) | Transactional outbox relay — durable post-commit event delivery | Accepted |
 | [0018](0018-discovery-pipeline-stage-split.md) | Discovery pipeline stage split — capabilities as staged ports | Accepted |
 | [0019](0019-ed25519-signed-license-tokens.md) | Replace forgeable rotor-cipher license key with Ed25519-signed tokens | Accepted |
+| [0020](0020-clean-hexagonal-api-foundation.md) | Clean-hexagonal `internal/api` foundation — use-cases + composition root | Accepted |
+| [0021](0021-persist-and-converge-anomaly-engine.md) | Persist the anomaly engine in SQL and converge every source on it | Proposed |
