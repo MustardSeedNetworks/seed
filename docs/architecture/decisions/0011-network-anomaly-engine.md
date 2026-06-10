@@ -1,6 +1,6 @@
 # ADR-0011: Network-wide anomaly engine (one typed stream, data-driven catalog)
 
-**Status:** Accepted — 2026-06-05 · implementation pending (Wi-Fi feature W4)
+**Status:** Accepted — 2026-06-05 · in-memory engine (`internal/anomaly`) + Wi-Fi source implemented; SQL persistence and health-source convergence deferred to [ADR-0021](0021-persist-and-converge-anomaly-engine.md). The bespoke `internal/health.AnomalyDetector` is an unfed stub that ADR-0021 removes.
 
 ## Context
 
