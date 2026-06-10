@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	alertpipeline "github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/rules"
 	"github.com/MustardSeedNetworks/seed/internal/app"
@@ -33,6 +34,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery/problems"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/health"
+	"github.com/MustardSeedNetworks/seed/internal/health/monitoring"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	listenersink "github.com/MustardSeedNetworks/seed/internal/listener/sink"
 	"github.com/MustardSeedNetworks/seed/internal/listener/snmptrap"
@@ -146,6 +148,7 @@ type Server struct {
 	discoveryDevices   *devices.Service            // Unified-discovery (engine) use-case (ADR-0020)
 	networkProblems    *problems.Service           // Network problem-detection use-case (ADR-0020)
 	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
+	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	tlsFingerprint     tlsFingerprintCache         // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
 }
 
@@ -257,10 +260,8 @@ func NewServer(
 	// Initialize discovery service and pipeline
 	s.initDiscovery(cfg)
 
-	// Wire the troubleshooting + discovery use-cases now the discovery
-	// components exist (ADR-0020).
-	s.initWiFiUseCases()
-	s.initDiscoveryUseCases()
+	// Wire the ADR-0020 use-cases now the discovery components exist.
+	s.initUseCases()
 
 	// Wire the settings-persistence use-case (ADR-0020). The composition root
 	// builds the adapters; api passes its lazy db accessor + live config.
@@ -742,6 +743,16 @@ func (s *Server) problemDetector() *discovery.ProblemDetector {
 	return s.services.Discovery.ProblemDetector
 }
 
+func (s *Server) healthRepository() *database.HealthCheckRepository {
+	return s.services.Health.Repository
+}
+func (s *Server) healthScorer() *health.ScoringService     { return s.services.Health.Scorer }
+func (s *Server) healthSLATracker() *health.SLATracker     { return s.services.Health.SLATracker }
+func (s *Server) healthAlertManager() *alerts.AlertManager { return s.services.Health.AlertManager }
+func (s *Server) healthAnomalyDetector() *health.AnomalyDetector {
+	return s.services.Health.AnomalyDetector
+}
+
 func (s *Server) bluetoothScanner() *enumerate.BluetoothScanner {
 	return s.services.Discovery.BluetoothScanner
 }
@@ -789,6 +800,28 @@ func (s *Server) initDiscoveryUseCases() {
 	s.discoveryDevices = app.NewDiscoveryDevices(s.discoveryEngine)
 	s.networkProblems = app.NewProblems(s.problemDetector, s.discoveryService)
 	s.bluetoothScans = app.NewBluetooth(s.bluetoothScanner)
+}
+
+// initHealthUseCases wires the health-monitoring use-case (ADR-0020) from the
+// composition root over the server's lazy accessors for the health-check
+// repository, scorer, SLA tracker, alert manager, and anomaly detector, so a nil
+// or later-set collaborator (the test harness) is honored.
+func (s *Server) initHealthUseCases() {
+	s.healthMonitoring = app.NewHealthMonitoring(
+		s.healthRepository,
+		s.healthScorer,
+		s.healthSLATracker,
+		s.healthAlertManager,
+		s.healthAnomalyDetector,
+	)
+}
+
+// initUseCases wires the ADR-0020 application use-cases that depend on the
+// discovery components existing: troubleshooting + discovery + health.
+func (s *Server) initUseCases() {
+	s.initWiFiUseCases()
+	s.initDiscoveryUseCases()
+	s.initHealthUseCases()
 }
 
 // webAuthnConfigFromServer derives the relying-party config for the
