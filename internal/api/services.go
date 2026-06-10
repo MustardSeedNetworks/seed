@@ -76,11 +76,6 @@ func NewServiceContainer() *ServiceContainer {
 	}
 }
 
-// GetUpdateService returns the update service.
-func (sc *ServiceContainer) GetUpdateService() *update.Service {
-	return sc.Update
-}
-
 // AuthServices groups authentication and security-related services.
 type AuthServices struct {
 	Manager        *auth.Manager

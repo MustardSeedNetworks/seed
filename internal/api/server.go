@@ -57,6 +57,8 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/settings/persistence"
 	"github.com/MustardSeedNetworks/seed/internal/timeseries/retention"
 	"github.com/MustardSeedNetworks/seed/internal/topology"
+	"github.com/MustardSeedNetworks/seed/internal/update"
+	"github.com/MustardSeedNetworks/seed/internal/update/lifecycle"
 	"github.com/MustardSeedNetworks/seed/internal/wifi"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/survey"
 	"github.com/MustardSeedNetworks/seed/internal/wifi/troubleshooting"
@@ -149,6 +151,7 @@ type Server struct {
 	networkProblems    *problems.Service           // Network problem-detection use-case (ADR-0020)
 	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
+	updateLifecycle    *lifecycle.Service          // Update-lifecycle use-case (ADR-0020)
 	tlsFingerprint     tlsFingerprintCache         // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
 }
 
@@ -780,6 +783,7 @@ func (s *Server) eventBus() *events.Bus                    { return s.services.R
 func (s *Server) jobsRunner() *jobs.Runner                 { return s.services.RealTime.Jobs }
 func (s *Server) jobIdempotency() jobIdempotencyStore      { return s.services.RealTime.JobIdempotency }
 func (s *Server) db() *database.DB                         { return s.services.Database.DB }
+func (s *Server) updateService() *update.Service           { return s.services.Update }
 
 // initWiFiUseCases wires the Wi-Fi troubleshooting use-cases (ADR-0020) from the
 // composition root: the visibility-read, management, and discovery use-cases over
@@ -816,12 +820,20 @@ func (s *Server) initHealthUseCases() {
 	)
 }
 
+// initUpdateUseCases wires the update-lifecycle use-case (ADR-0020) from the
+// composition root over the server's lazy accessor for the update service, so
+// a nil or later-set service (the test harness) is honored.
+func (s *Server) initUpdateUseCases() {
+	s.updateLifecycle = app.NewUpdateLifecycle(s.updateService)
+}
+
 // initUseCases wires the ADR-0020 application use-cases that depend on the
-// discovery components existing: troubleshooting + discovery + health.
+// discovery components existing: troubleshooting + discovery + health + update.
 func (s *Server) initUseCases() {
 	s.initWiFiUseCases()
 	s.initDiscoveryUseCases()
 	s.initHealthUseCases()
+	s.initUpdateUseCases()
 }
 
 // webAuthnConfigFromServer derives the relying-party config for the
