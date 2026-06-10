@@ -159,8 +159,7 @@ func NewTestServerWithConfig(cfg *config.Config) *Server {
 	s.profiles = app.NewProfiles(s.db)
 	s.networkIP = app.NewNetworkIP(s.netManager, s.config, s.configPath)
 	s.alertRules = app.NewAlertRules(s.db)
-	s.initWiFiUseCases()
-	s.initDiscoveryUseCases()
+	s.initUseCases()
 
 	// Setup routes
 	s.setupRoutes()
