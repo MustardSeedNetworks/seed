@@ -2,12 +2,21 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/update"
+	"github.com/MustardSeedNetworks/seed/internal/update/lifecycle"
 )
+
+// Software-update transport (ADR-0020). These handlers decode the request,
+// call the internal/update/lifecycle use-case via s.updateLifecycle, shape the
+// response, and map lifecycle.ErrUnavailable to the pre-strangle 503. All
+// orchestration (download/apply preconditions, status read-model assembly,
+// configuration patching) lives in the use-case.
 
 // sendUpdateError sends a standardized error response for update endpoints.
 func sendUpdateError(w http.ResponseWriter, r *http.Request, status int, message string) {
@@ -55,6 +64,17 @@ type UpdateConfigRequest struct {
 	IncludePrerelease *bool   `json:"includePrerelease,omitempty"`
 }
 
+// updateConfigResponse shapes a domain config into the transport DTO.
+func updateConfigResponse(config update.UpdateConfig) UpdateConfigResponse {
+	return UpdateConfigResponse{
+		Enabled:           config.Enabled,
+		CheckInterval:     config.CheckInterval.String(),
+		AutoDownload:      config.AutoDownload,
+		AutoApply:         config.AutoApply,
+		IncludePrerelease: config.IncludePrerelease,
+	}
+}
+
 // registerUpdateRoutes registers update-related HTTP routes.
 func (s *Server) registerUpdateRoutes() {
 	op := database.RoleOperator
@@ -76,14 +96,12 @@ func (s *Server) registerUpdateRoutes() {
 func (s *Server) handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	updateService := s.services.GetUpdateService()
-	if updateService == nil {
-		sendUpdateError(w, r, http.StatusServiceUnavailable, "Update service not available")
-		return
-	}
-
-	info, err := updateService.CheckForUpdate(r.Context())
+	info, err := s.updateLifecycle.Check(r.Context())
 	if err != nil {
+		if errors.Is(err, lifecycle.ErrUnavailable) {
+			sendUpdateError(w, r, http.StatusServiceUnavailable, "Update service not available")
+			return
+		}
 		logger.WarnContext(r.Context(), "Update check failed", "error", err)
 		sendUpdateError(w, r, http.StatusInternalServerError, "Failed to check for updates")
 		return
@@ -94,28 +112,19 @@ func (s *Server) handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
 
 // handleUpdateStatus returns the current update status.
 func (s *Server) handleUpdateStatus(w http.ResponseWriter, r *http.Request) {
-	updateService := s.services.GetUpdateService()
-	if updateService == nil {
+	status, err := s.updateLifecycle.Status()
+	if err != nil {
 		sendUpdateError(w, r, http.StatusServiceUnavailable, "Update service not available")
 		return
 	}
 
-	status := updateService.GetStatus()
-	lastCheck := updateService.GetLastCheckTime()
-	info := updateService.GetUpdateInfo()
-
 	resp := UpdateStatusResponse{
-		UpdateStatus: &status,
-		UpdateReady:  updateService.IsUpdateDownloaded(),
+		UpdateStatus:   &status.Status,
+		UpdateReady:    status.Ready,
+		RequiresAction: status.RequiresAction,
 	}
-
-	if !lastCheck.IsZero() {
-		resp.LastCheck = lastCheck.Format("2006-01-02T15:04:05Z07:00")
-	}
-
-	// Determine if user action is needed
-	if info != nil && info.Available && !updateService.IsUpdateDownloaded() {
-		resp.RequiresAction = true
+	if !status.LastCheck.IsZero() {
+		resp.LastCheck = status.LastCheck.Format(time.RFC3339)
 	}
 
 	sendUpdateJSON(w, r, http.StatusOK, resp)
@@ -123,20 +132,9 @@ func (s *Server) handleUpdateStatus(w http.ResponseWriter, r *http.Request) {
 
 // handleUpdateInfo returns information about available updates.
 func (s *Server) handleUpdateInfo(w http.ResponseWriter, r *http.Request) {
-	updateService := s.services.GetUpdateService()
-	if updateService == nil {
+	info, err := s.updateLifecycle.Info()
+	if err != nil {
 		sendUpdateError(w, r, http.StatusServiceUnavailable, "Update service not available")
-		return
-	}
-
-	info := updateService.GetUpdateInfo()
-	if info == nil {
-		// No update check has been performed yet
-		sendUpdateJSON(w, r, http.StatusOK, update.UpdateInfo{
-			Available:      false,
-			CurrentVersion: "",
-			LatestVersion:  "",
-		})
 		return
 	}
 
@@ -147,21 +145,14 @@ func (s *Server) handleUpdateInfo(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleUpdateDownload(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	updateService := s.services.GetUpdateService()
-	if updateService == nil {
+	switch err := s.updateLifecycle.Download(r.Context()); {
+	case errors.Is(err, lifecycle.ErrUnavailable):
 		sendUpdateError(w, r, http.StatusServiceUnavailable, "Update service not available")
 		return
-	}
-
-	info := updateService.GetUpdateInfo()
-	if info == nil || !info.Available {
+	case errors.Is(err, lifecycle.ErrNoUpdate):
 		sendUpdateError(w, r, http.StatusBadRequest, "No update available")
 		return
-	}
-
-	// Start download (this is blocking)
-	_, err := updateService.DownloadUpdate(r.Context(), nil)
-	if err != nil {
+	case err != nil:
 		logger.WarnContext(r.Context(), "Update download failed", "error", err)
 		sendUpdateError(w, r, http.StatusInternalServerError, "Failed to download update")
 		return
@@ -177,19 +168,14 @@ func (s *Server) handleUpdateDownload(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleUpdateApply(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	updateService := s.services.GetUpdateService()
-	if updateService == nil {
+	switch err := s.updateLifecycle.Apply(r.Context()); {
+	case errors.Is(err, lifecycle.ErrUnavailable):
 		sendUpdateError(w, r, http.StatusServiceUnavailable, "Update service not available")
 		return
-	}
-
-	if !updateService.IsUpdateDownloaded() {
+	case errors.Is(err, lifecycle.ErrNotDownloaded):
 		sendUpdateError(w, r, http.StatusBadRequest, "No update downloaded")
 		return
-	}
-
-	// Apply the update
-	if err := updateService.ApplyUpdate(r.Context()); err != nil {
+	case err != nil:
 		logger.WarnContext(r.Context(), "Update apply failed", "error", err)
 		sendUpdateError(w, r, http.StatusInternalServerError, "Failed to apply update")
 		return
@@ -205,13 +191,11 @@ func (s *Server) handleUpdateApply(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleUpdateRollback(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
 
-	updateService := s.services.GetUpdateService()
-	if updateService == nil {
+	switch err := s.updateLifecycle.Rollback(); {
+	case errors.Is(err, lifecycle.ErrUnavailable):
 		sendUpdateError(w, r, http.StatusServiceUnavailable, "Update service not available")
 		return
-	}
-
-	if err := updateService.Rollback(); err != nil {
+	case err != nil:
 		logger.WarnContext(r.Context(), "Update rollback failed", "error", err)
 		sendUpdateError(w, r, http.StatusInternalServerError, "Failed to rollback update")
 		return
@@ -225,31 +209,17 @@ func (s *Server) handleUpdateRollback(w http.ResponseWriter, r *http.Request) {
 
 // handleGetUpdateConfig returns the current update configuration.
 func (s *Server) handleGetUpdateConfig(w http.ResponseWriter, r *http.Request) {
-	updateService := s.services.GetUpdateService()
-	if updateService == nil {
+	config, err := s.updateLifecycle.Config()
+	if err != nil {
 		sendUpdateError(w, r, http.StatusServiceUnavailable, "Update service not available")
 		return
 	}
 
-	config := updateService.GetConfig()
-
-	sendUpdateJSON(w, r, http.StatusOK, UpdateConfigResponse{
-		Enabled:           config.Enabled,
-		CheckInterval:     config.CheckInterval.String(),
-		AutoDownload:      config.AutoDownload,
-		AutoApply:         config.AutoApply,
-		IncludePrerelease: config.IncludePrerelease,
-	})
+	sendUpdateJSON(w, r, http.StatusOK, updateConfigResponse(config))
 }
 
 // handleUpdateConfig updates the update configuration.
 func (s *Server) handleUpdateConfig(w http.ResponseWriter, r *http.Request) {
-	updateService := s.services.GetUpdateService()
-	if updateService == nil {
-		sendUpdateError(w, r, http.StatusServiceUnavailable, "Update service not available")
-		return
-	}
-
 	// Strict decode — unknown fields rejected, body size capped.
 	// This endpoint uses sendUpdateError (a localized variant with
 	// release-channel context), so we keep that envelope shape and just
@@ -263,28 +233,25 @@ func (s *Server) handleUpdateConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	config := updateService.GetConfig()
-
-	if req.Enabled != nil {
-		config.Enabled = *req.Enabled
-	}
-	if req.AutoDownload != nil {
-		config.AutoDownload = *req.AutoDownload
-	}
-	if req.AutoApply != nil {
-		config.AutoApply = *req.AutoApply
-	}
-	if req.IncludePrerelease != nil {
-		config.IncludePrerelease = *req.IncludePrerelease
-	}
-
-	updateService.SetConfig(config)
-
-	sendUpdateJSON(w, r, http.StatusOK, UpdateConfigResponse{
-		Enabled:           config.Enabled,
-		CheckInterval:     config.CheckInterval.String(),
-		AutoDownload:      config.AutoDownload,
-		AutoApply:         config.AutoApply,
-		IncludePrerelease: config.IncludePrerelease,
+	config, err := s.updateLifecycle.Configure(lifecycle.ConfigPatch{
+		Enabled:           req.Enabled,
+		CheckInterval:     req.CheckInterval,
+		AutoDownload:      req.AutoDownload,
+		AutoApply:         req.AutoApply,
+		IncludePrerelease: req.IncludePrerelease,
 	})
+	switch {
+	case errors.Is(err, lifecycle.ErrUnavailable):
+		sendUpdateError(w, r, http.StatusServiceUnavailable, "Update service not available")
+		return
+	case errors.Is(err, lifecycle.ErrInvalidInterval):
+		sendUpdateError(w, r, http.StatusBadRequest,
+			"Invalid checkInterval: must be a duration of at least 1m")
+		return
+	case err != nil:
+		sendUpdateError(w, r, http.StatusInternalServerError, "Failed to update configuration")
+		return
+	}
+
+	sendUpdateJSON(w, r, http.StatusOK, updateConfigResponse(config))
 }
