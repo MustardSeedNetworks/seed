@@ -67,51 +67,6 @@ func (c *Config) EncryptCredentialValue(plaintext string) (string, error) {
 	return kr.EncryptValue(plaintext)
 }
 
-// reEncryptCredential ensures a stored credential is in the active versioned DEK
-// format. Already-versioned values are returned unchanged (idempotent). Empty
-// values are returned unchanged. Any other value — including bare plaintext or
-// the legacy v0/JWT-derived format — is an error: credentials must be set via
-// the API/CLI (EncryptCredentialValue), not hand-edited or silently coerced.
-func (c *Config) reEncryptCredential(value string) (string, error) {
-	if value == "" || isVersionedCiphertext(value) {
-		return value, nil
-	}
-	// Neither empty nor versioned — this is plaintext or legacy ciphertext.
-	// Reject: the caller must set the credential via the API/CLI.
-	if IsEncrypted(value) {
-		// Legacy v0 (JWT-derived) unversioned ciphertext.
-		return "", fmt.Errorf("SNMP v3 credential: legacy v0/JWT-derived ciphertext is no longer "+
-			"supported; re-set the credential via the API/CLI so it is re-encrypted at rest: %w",
-			ErrPlaintextCredential)
-	}
-	return "", fmt.Errorf("SNMP v3 credential: %w", ErrPlaintextCredential)
-}
-
-// EncryptSNMPCredentials re-encrypts all SNMP v3 credentials that are already
-// in versioned DEK format (idempotent) and returns an error for any credential
-// that is still in plaintext or the legacy v0/JWT-derived format. Callers must
-// set such credentials via the API/CLI (EncryptCredentialValue) before calling
-// this function.
-func (c *Config) EncryptSNMPCredentials() error {
-	for i := range c.SNMP.V3Credentials {
-		cred := &c.SNMP.V3Credentials[i]
-
-		authPw, err := c.reEncryptCredential(cred.AuthPassword)
-		if err != nil {
-			return fmt.Errorf("failed to encrypt auth password for %s: %w", cred.Name, err)
-		}
-		cred.AuthPassword = authPw
-
-		privPw, err := c.reEncryptCredential(cred.PrivPassword)
-		if err != nil {
-			return fmt.Errorf("failed to encrypt priv password for %s: %w", cred.Name, err)
-		}
-		cred.PrivPassword = privPw
-	}
-
-	return nil
-}
-
 // DecryptSNMPPassword decrypts an SNMP password for use (ADR-0015).
 // Only versioned DEK ciphertext ("enc:v<N>:...") is accepted. Empty values
 // return empty. Plaintext or legacy v0/JWT-derived ciphertext is rejected:

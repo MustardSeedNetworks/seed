@@ -149,17 +149,18 @@ to zero:
 
 1. **Legacy v0/JWT-derived path deleted.** `EncryptCredential`, `DecryptCredential`,
    and `IsLegacyEncrypted` have been removed from `internal/config/crypto.go` and
-   `internal/config/keyring.go`. The `reEncryptCredential` helper and
-   `DecryptSNMPPassword` no longer have a JWT-key fallback branch. The startup
-   migration helper (`migrateSNMPCredentials` / `credentialNeedsMigration`) in
-   `cmd/seed/cmd_serve.go` has been removed.
+   `internal/config/keyring.go`. The bulk on-save re-encryption pass
+   (`EncryptSNMPCredentials` / `reEncryptCredential`) is deleted along with its only
+   caller, the startup migration helper (`migrateSNMPCredentials` /
+   `credentialNeedsMigration`) in `cmd/seed/cmd_serve.go`; `DecryptSNMPPassword`
+   no longer has a JWT-key fallback branch.
 
 2. **Plaintext credential values are rejected — not silently encrypted.** The
    invariant is: a stored credential value is ONLY ever versioned DEK ciphertext
    (`enc:v<N>:...`). Any stored value that is not versioned DEK ciphertext is now
-   an error at both the read path (`DecryptSNMPPassword`) and the save path
-   (`EncryptSNMPCredentials` / `reEncryptCredential`). `Config.Validate()` also
-   rejects non-ciphertext credential values with an actionable message.
+   an error at the read path (`DecryptSNMPPassword`), and `Config.Validate()`
+   rejects it at load time with an actionable message — the gate that stops the
+   daemon from starting with a plaintext secret in config.
 
 3. **The one legitimate plaintext→ciphertext path is preserved.** `EncryptCredentialValue`
    (called by the API handler `convertSNMPv3Credential` and any CLI set path) is the
@@ -167,7 +168,8 @@ to zero:
    is unchanged.
 
 4. **Error sentinel.** `ErrPlaintextCredential` is the new typed error returned by
-   the read and save paths when a non-ciphertext value is encountered.
+   `DecryptSNMPPassword` (and surfaced through `Config.Validate()`) when a
+   non-ciphertext value is encountered.
 
 ### Rationale
 
@@ -176,12 +178,11 @@ plaintext was a "make illegal states representable" affordance that hides
 misconfiguration. Rejecting it at load and validation time surfaces the problem
 immediately with an actionable message pointing operators to the API/CLI.
 
-### Note for reviewer (Opus)
+### Status
 
-The ADR Status is currently "Accepted". The amendment records a follow-up
-implementation decision consistent with the original decision's goals. Whether
-the status line should be updated (e.g. to "Accepted — amended") or left as-is
-is flagged for Opus to decide; the amendment text above is the record either way.
+The status line records this amendment (`Accepted — 2026-06-06; amended
+2026-06-10`), and the ADR index (`docs/architecture/decisions/README.md`) marks
+ADR-0015 as *Amended*.
 
 ## Consequences
 

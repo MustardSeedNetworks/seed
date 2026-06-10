@@ -30,103 +30,6 @@ func TestIsEncrypted(t *testing.T) {
 	}
 }
 
-// TestEncryptSNMPCredentials verifies that already-versioned DEK ciphertext is
-// left unchanged (idempotent) by EncryptSNMPCredentials.
-func TestEncryptSNMPCredentials(t *testing.T) {
-	cfg := newKeyedConfigForCrypto(t)
-
-	// Encrypt with the API path first.
-	authEnc, err := cfg.EncryptCredentialValue("authPass123")
-	if err != nil {
-		t.Fatalf("EncryptCredentialValue auth: %v", err)
-	}
-	privEnc, err := cfg.EncryptCredentialValue("privPass456")
-	if err != nil {
-		t.Fatalf("EncryptCredentialValue priv: %v", err)
-	}
-
-	cfg.SNMP.V3Credentials = []config.SNMPv3Credential{
-		{Name: "test-cred", AuthPassword: authEnc, PrivPassword: privEnc},
-	}
-
-	err = cfg.EncryptSNMPCredentials()
-	if err != nil {
-		t.Fatalf("EncryptSNMPCredentials failed: %v", err)
-	}
-
-	cred := cfg.SNMP.V3Credentials[0]
-	if !config.IsEncrypted(cred.AuthPassword) {
-		t.Error("AuthPassword should be encrypted")
-	}
-	if !config.IsEncrypted(cred.PrivPassword) {
-		t.Error("PrivPassword should be encrypted")
-	}
-
-	authPass, err := cfg.DecryptSNMPPassword(cred.AuthPassword)
-	if err != nil {
-		t.Fatalf("Failed to decrypt auth password: %v", err)
-	}
-	if authPass != "authPass123" {
-		t.Errorf("Decrypted auth password = %q, want %q", authPass, "authPass123")
-	}
-
-	privPass, err := cfg.DecryptSNMPPassword(cred.PrivPassword)
-	if err != nil {
-		t.Fatalf("Failed to decrypt priv password: %v", err)
-	}
-	if privPass != "privPass456" {
-		t.Errorf("Decrypted priv password = %q, want %q", privPass, "privPass456")
-	}
-}
-
-// TestEncryptSNMPCredentialsIdempotent verifies that calling EncryptSNMPCredentials
-// twice on already-versioned ciphertext does not change the stored value.
-func TestEncryptSNMPCredentialsIdempotent(t *testing.T) {
-	cfg := newKeyedConfigForCrypto(t)
-
-	authEnc, err := cfg.EncryptCredentialValue("password")
-	if err != nil {
-		t.Fatalf("EncryptCredentialValue: %v", err)
-	}
-	cfg.SNMP.V3Credentials = []config.SNMPv3Credential{
-		{Name: "test", AuthPassword: authEnc},
-	}
-
-	err = cfg.EncryptSNMPCredentials()
-	if err != nil {
-		t.Fatalf("First EncryptSNMPCredentials failed: %v", err)
-	}
-	firstEncrypted := cfg.SNMP.V3Credentials[0].AuthPassword
-
-	err = cfg.EncryptSNMPCredentials()
-	if err != nil {
-		t.Fatalf("Second EncryptSNMPCredentials failed: %v", err)
-	}
-	secondEncrypted := cfg.SNMP.V3Credentials[0].AuthPassword
-
-	if firstEncrypted != secondEncrypted {
-		t.Error("EncryptSNMPCredentials should be idempotent for already-encrypted values")
-	}
-}
-
-// TestEncryptSNMPCredentialsRejectsPlaintext verifies that EncryptSNMPCredentials
-// returns an error when a credential is still in plaintext. Credentials must be
-// set via the API/CLI; silent on-save encryption is no longer accepted.
-func TestEncryptSNMPCredentialsRejectsPlaintext(t *testing.T) {
-	cfg := newKeyedConfigForCrypto(t)
-	cfg.SNMP.V3Credentials = []config.SNMPv3Credential{
-		{Name: "bad-cred", AuthPassword: "plaintext-password"},
-	}
-
-	err := cfg.EncryptSNMPCredentials()
-	if err == nil {
-		t.Fatal("EncryptSNMPCredentials should reject plaintext credential, got nil error")
-	}
-	if !errors.Is(err, config.ErrPlaintextCredential) {
-		t.Errorf("expected ErrPlaintextCredential, got: %v", err)
-	}
-}
-
 // TestDecryptSNMPPasswordRejectsPlaintext verifies that DecryptSNMPPassword
 // returns an error for a non-encrypted value.
 func TestDecryptSNMPPasswordRejectsPlaintext(t *testing.T) {
@@ -165,6 +68,26 @@ func TestDecryptSNMPPasswordRejectsLegacyCiphertext(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "legacy v0") {
 		t.Errorf("error message should mention legacy v0, got: %v", err)
+	}
+}
+
+// TestValidateRejectsPlaintextSNMPCredential verifies the startup gate:
+// Config.Validate() (via validateSNMPCredentials) refuses a config whose SNMP v3
+// credential is plaintext rather than versioned DEK ciphertext, with a message
+// pointing operators to the API/CLI. This is the enforcement point that stops the
+// daemon from running with a plaintext secret at rest.
+func TestValidateRejectsPlaintextSNMPCredential(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.SNMP.V3Credentials = []config.SNMPv3Credential{
+		{Name: "plain-cred", Username: "snmpuser", AuthProtocol: "SHA256", AuthPassword: "plaintext-secret"},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Fatal("Validate should reject a plaintext SNMP v3 credential, got nil error")
+	}
+	if !strings.Contains(err.Error(), "must be set via the API/CLI") {
+		t.Errorf("validation error should point operators to the API/CLI, got: %v", err)
 	}
 }
 
