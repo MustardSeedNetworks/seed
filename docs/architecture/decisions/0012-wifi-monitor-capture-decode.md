@@ -1,6 +1,6 @@
 # ADR-0012: Wi-Fi monitor-mode capture port + 802.11 decode pipeline
 
-**Status:** Accepted — 2026-06-05 · implementation pending (Wi-Fi feature W1–W6)
+**Status:** Accepted — 2026-06-05 · capture port + CGO-free 802.11 decode (`internal/wifi/{capture,dot11,visibility}`) + SSID→AP→BSSID airspace hierarchy implemented; opt-in and unreleased (monitor capture activates only when `SEED_WIFI_MONITOR_IFACE` is set, empty airspace otherwise). Full client-tracking + W1–W6 feature surface still pending.
 
 ## Context
 

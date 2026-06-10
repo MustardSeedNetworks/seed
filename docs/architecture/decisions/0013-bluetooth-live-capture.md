@@ -1,6 +1,6 @@
 # ADR-0013: Bluetooth live-scan capture port
 
-**Status:** Accepted — 2026-06-05 · implementation pending (BT live-scan upgrade)
+**Status:** Accepted — 2026-06-05 · `Scanner` port + data types defined (`internal/discovery/bluetooth`); per-OS live-scan drivers (CoreBluetooth / BlueZ D-Bus / WinRT) not yet implemented, so live BLE advertisement sweep remains pending.
 
 ## Context
 
