@@ -234,8 +234,6 @@ func loadAndConfigureConfig(configPath string) *config.Config {
 		cfg.Auth.DefaultPasswordHash = auth.SetupModePlaceholder
 	}
 
-	migrateSNMPCredentials(cfg, configPath)
-
 	// HTTPS is required, unconditionally — the daemon binds no HTTP listener.
 	// No --dev or env-var opt-out is supported.
 	cfg.Server.HTTPS = true
@@ -271,47 +269,6 @@ func ensureJWTSecret(cfg *config.Config, configPath string) {
 func ensureCredentialKeyring(cfg *config.Config, configPath string) {
 	if err := cfg.InitCredentialKeyring(filepath.Dir(configPath)); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: Failed to initialize credential key: %v\n", err)
-	}
-}
-
-// credentialNeedsMigration reports whether a credential value still needs to be
-// encrypted (plaintext) or upgraded from the legacy JWT-derived format to the
-// versioned DEK format (ADR-0015).
-func credentialNeedsMigration(value string) bool {
-	if value == "" {
-		return false
-	}
-	return !config.IsEncrypted(value) || config.IsLegacyEncrypted(value)
-}
-
-// migrateSNMPCredentials encrypts plaintext SNMP credentials and migrates legacy
-// JWT-derived ciphertext to the versioned DEK format (ADR-0015).
-// Note: Called before logging is initialized, so uses [fmt.Fprintf].
-func migrateSNMPCredentials(cfg *config.Config, configPath string) {
-	if len(cfg.SNMP.V3Credentials) == 0 {
-		return
-	}
-
-	needsSave := false
-	for i := range cfg.SNMP.V3Credentials {
-		cred := &cfg.SNMP.V3Credentials[i]
-		if credentialNeedsMigration(cred.AuthPassword) || credentialNeedsMigration(cred.PrivPassword) {
-			needsSave = true
-			break
-		}
-	}
-
-	if !needsSave {
-		return
-	}
-
-	fmt.Fprintln(os.Stderr, "Migrating SNMP credentials to encrypted format...")
-	if encryptErr := cfg.EncryptSNMPCredentials(); encryptErr != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to encrypt SNMP credentials: %v\n", encryptErr)
-	} else if saveErr := cfg.Save(configPath); saveErr != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Failed to persist encrypted SNMP credentials: %v\n", saveErr)
-	} else {
-		fmt.Fprintln(os.Stderr, "SNMP credentials encrypted and saved securely")
 	}
 }
 

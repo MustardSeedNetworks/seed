@@ -1,7 +1,7 @@
 # ADR-0015: Separate the credential data-encryption key from `Auth.JWTSecret`
 
-**Status:** Accepted — 2026-06-06
-**(Owner greenlit for v1. Cross-workstream sign-off satisfied — see "Coordination" below. Implemented: `internal/config/keyring.go` + `crypto.go`; the two non-signing `JWTSecret` consumers now use the DEK, with the legacy v0 read path retained for one release.)**
+**Status:** Accepted — 2026-06-06; amended 2026-06-10 (pre-alpha cleanup: legacy v0 path deleted, plaintext rejected)
+**(Owner greenlit for v1. Cross-workstream sign-off satisfied — see "Coordination" below. Implemented: `internal/config/keyring.go` + `crypto.go`. Pre-alpha amendment (2026-06-10): the legacy v0/JWT-derived path has been deleted entirely and plaintext credential values are now rejected — see "Amendment" below.)**
 
 ## Context
 
@@ -138,6 +138,50 @@ after migration. Original sign-off criteria:
 Once aligned, implementation proceeds as a small, test-first slice (keyring +
 KDF + versioned format + migration + call-site swap), behind the golden HTTP
 harness and the existing config tests, with no wire/DTO change.
+
+## Amendment — 2026-06-10: legacy v0 path deleted; plaintext rejected (pre-alpha)
+
+This is pre-alpha (no `v1.0.0` tag), so there is no backwards-compatibility
+obligation. The "one release" window described in §4 above has been collapsed
+to zero:
+
+### What changed
+
+1. **Legacy v0/JWT-derived path deleted.** `EncryptCredential`, `DecryptCredential`,
+   and `IsLegacyEncrypted` have been removed from `internal/config/crypto.go` and
+   `internal/config/keyring.go`. The `reEncryptCredential` helper and
+   `DecryptSNMPPassword` no longer have a JWT-key fallback branch. The startup
+   migration helper (`migrateSNMPCredentials` / `credentialNeedsMigration`) in
+   `cmd/seed/cmd_serve.go` has been removed.
+
+2. **Plaintext credential values are rejected — not silently encrypted.** The
+   invariant is: a stored credential value is ONLY ever versioned DEK ciphertext
+   (`enc:v<N>:...`). Any stored value that is not versioned DEK ciphertext is now
+   an error at both the read path (`DecryptSNMPPassword`) and the save path
+   (`EncryptSNMPCredentials` / `reEncryptCredential`). `Config.Validate()` also
+   rejects non-ciphertext credential values with an actionable message.
+
+3. **The one legitimate plaintext→ciphertext path is preserved.** `EncryptCredentialValue`
+   (called by the API handler `convertSNMPv3Credential` and any CLI set path) is the
+   single place operator-supplied plaintext becomes versioned DEK ciphertext. This path
+   is unchanged.
+
+4. **Error sentinel.** `ErrPlaintextCredential` is the new typed error returned by
+   the read and save paths when a non-ciphertext value is encountered.
+
+### Rationale
+
+Pre-alpha, no backwards-compat obligation. Silent on-save migration of hand-edited
+plaintext was a "make illegal states representable" affordance that hides
+misconfiguration. Rejecting it at load and validation time surfaces the problem
+immediately with an actionable message pointing operators to the API/CLI.
+
+### Note for reviewer (Opus)
+
+The ADR Status is currently "Accepted". The amendment records a follow-up
+implementation decision consistent with the original decision's goals. Whether
+the status line should be updated (e.g. to "Accepted — amended") or left as-is
+is flagged for Opus to decide; the amendment text above is the record either way.
 
 ## Consequences
 

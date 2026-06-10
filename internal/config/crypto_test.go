@@ -1,148 +1,12 @@
 package config_test
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/config"
 )
-
-func TestEncryptDecryptCredential(t *testing.T) {
-	masterSecret := "test-secret-key-for-encryption"
-	plaintext := "mySecretPassword123!"
-
-	// Test encryption
-	encrypted, err := config.EncryptCredential(plaintext, masterSecret)
-	if err != nil {
-		t.Fatalf("EncryptCredential failed: %v", err)
-	}
-
-	// Verify encrypted value is different from plaintext
-	if encrypted == plaintext {
-		t.Error("Encrypted value should differ from plaintext")
-	}
-
-	// Verify encrypted value has prefix
-	if !strings.HasPrefix(encrypted, config.EncryptedPrefix) {
-		t.Errorf("Encrypted value should have prefix %q, got %q", config.EncryptedPrefix, encrypted)
-	}
-
-	// Test decryption
-	decrypted, err := config.DecryptCredential(encrypted, masterSecret)
-	if err != nil {
-		t.Fatalf("DecryptCredential failed: %v", err)
-	}
-
-	// Verify decrypted matches original
-	if decrypted != plaintext {
-		t.Errorf("Decrypted value %q doesn't match original %q", decrypted, plaintext)
-	}
-}
-
-func TestEncryptDecryptEmptyString(t *testing.T) {
-	masterSecret := "test-secret-key"
-
-	encrypted, err := config.EncryptCredential("", masterSecret)
-	if err != nil {
-		t.Fatalf("EncryptCredential with empty string failed: %v", err)
-	}
-
-	if encrypted != "" {
-		t.Errorf("Empty string should encrypt to empty string, got %q", encrypted)
-	}
-
-	decrypted, err := config.DecryptCredential("", masterSecret)
-	if err != nil {
-		t.Fatalf("DecryptCredential with empty string failed: %v", err)
-	}
-
-	if decrypted != "" {
-		t.Errorf("Empty string should decrypt to empty string, got %q", decrypted)
-	}
-}
-
-func TestDecryptPlaintextBackwardCompatibility(t *testing.T) {
-	masterSecret := "test-secret-key"
-	plaintext := "oldPlaintextPassword"
-
-	// Decrypting plaintext (no prefix) should return it as-is
-	decrypted, err := config.DecryptCredential(plaintext, masterSecret)
-	if err != nil {
-		t.Fatalf("DecryptCredential with plaintext failed: %v", err)
-	}
-
-	if decrypted != plaintext {
-		t.Errorf("Plaintext should be returned as-is, got %q", decrypted)
-	}
-}
-
-func TestEncryptAlreadyEncrypted(t *testing.T) {
-	masterSecret := "test-secret-key"
-	plaintext := "password"
-
-	// First encryption
-	encrypted1, err := config.EncryptCredential(plaintext, masterSecret)
-	if err != nil {
-		t.Fatalf("First encryption failed: %v", err)
-	}
-
-	// Second encryption of already encrypted value
-	encrypted2, err := config.EncryptCredential(encrypted1, masterSecret)
-	if err != nil {
-		t.Fatalf("Second encryption failed: %v", err)
-	}
-
-	// Should return same value (idempotent)
-	if encrypted2 != encrypted1 {
-		t.Error("Encrypting an already encrypted value should be idempotent")
-	}
-}
-
-func TestDecryptInvalidCiphertext(t *testing.T) {
-	masterSecret := "test-secret-key"
-
-	testCases := []struct {
-		name       string
-		ciphertext string
-	}{
-		{"invalid base64", config.EncryptedPrefix + "not-valid-base64!!!"},
-		{
-			"too short",
-			config.EncryptedPrefix + "YWJj",
-		}, // "abc" in base64, too short for nonce
-		{
-			"tampered",
-			config.EncryptedPrefix + "dGFtcGVyZWRkYXRhdGFtcGVyZWRkYXRh",
-		}, // valid base64 but invalid ciphertext
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			_, err := config.DecryptCredential(tc.ciphertext, masterSecret)
-			if err == nil {
-				t.Error("Expected error for invalid ciphertext, got nil")
-			}
-		})
-	}
-}
-
-func TestEncryptDecryptWithDifferentSecrets(t *testing.T) {
-	plaintext := "password"
-	secret1 := "secret1"
-	secret2 := "secret2"
-
-	// Encrypt with secret1
-	encrypted, err := config.EncryptCredential(plaintext, secret1)
-	if err != nil {
-		t.Fatalf("Encryption failed: %v", err)
-	}
-
-	// Try to decrypt with secret2 (should fail)
-	_, err = config.DecryptCredential(encrypted, secret2)
-	if err == nil {
-		t.Error("Expected error when decrypting with wrong secret, got nil")
-	}
-}
 
 func TestIsEncrypted(t *testing.T) {
 	testCases := []struct {
@@ -166,29 +30,30 @@ func TestIsEncrypted(t *testing.T) {
 	}
 }
 
+// TestEncryptSNMPCredentials verifies that already-versioned DEK ciphertext is
+// left unchanged (idempotent) by EncryptSNMPCredentials.
 func TestEncryptSNMPCredentials(t *testing.T) {
-	cfg := &config.Config{
-		Auth: config.AuthConfig{
-			JWTSecret: "test-jwt-secret-for-encryption",
-		},
-		SNMP: config.SNMPConfig{
-			V3Credentials: []config.SNMPv3Credential{
-				{
-					Name:         "test-cred",
-					AuthPassword: "authPass123",
-					PrivPassword: "privPass456",
-				},
-			},
-		},
+	cfg := newKeyedConfigForCrypto(t)
+
+	// Encrypt with the API path first.
+	authEnc, err := cfg.EncryptCredentialValue("authPass123")
+	if err != nil {
+		t.Fatalf("EncryptCredentialValue auth: %v", err)
+	}
+	privEnc, err := cfg.EncryptCredentialValue("privPass456")
+	if err != nil {
+		t.Fatalf("EncryptCredentialValue priv: %v", err)
 	}
 
-	// Encrypt credentials
-	err := cfg.EncryptSNMPCredentials()
+	cfg.SNMP.V3Credentials = []config.SNMPv3Credential{
+		{Name: "test-cred", AuthPassword: authEnc, PrivPassword: privEnc},
+	}
+
+	err = cfg.EncryptSNMPCredentials()
 	if err != nil {
 		t.Fatalf("EncryptSNMPCredentials failed: %v", err)
 	}
 
-	// Verify passwords are encrypted
 	cred := cfg.SNMP.V3Credentials[0]
 	if !config.IsEncrypted(cred.AuthPassword) {
 		t.Error("AuthPassword should be encrypted")
@@ -197,15 +62,6 @@ func TestEncryptSNMPCredentials(t *testing.T) {
 		t.Error("PrivPassword should be encrypted")
 	}
 
-	// Verify passwords are not the original values
-	if cred.AuthPassword == "authPass123" {
-		t.Error("AuthPassword should not be plaintext")
-	}
-	if cred.PrivPassword == "privPass456" {
-		t.Error("PrivPassword should not be plaintext")
-	}
-
-	// Test decryption
 	authPass, err := cfg.DecryptSNMPPassword(cred.AuthPassword)
 	if err != nil {
 		t.Fatalf("Failed to decrypt auth password: %v", err)
@@ -223,38 +79,102 @@ func TestEncryptSNMPCredentials(t *testing.T) {
 	}
 }
 
+// TestEncryptSNMPCredentialsIdempotent verifies that calling EncryptSNMPCredentials
+// twice on already-versioned ciphertext does not change the stored value.
 func TestEncryptSNMPCredentialsIdempotent(t *testing.T) {
-	cfg := &config.Config{
-		Auth: config.AuthConfig{
-			JWTSecret: "test-jwt-secret",
-		},
-		SNMP: config.SNMPConfig{
-			V3Credentials: []config.SNMPv3Credential{
-				{
-					Name:         "test",
-					AuthPassword: "password",
-				},
-			},
-		},
-	}
+	cfg := newKeyedConfigForCrypto(t)
 
-	// First encryption
-	err := cfg.EncryptSNMPCredentials()
+	authEnc, err := cfg.EncryptCredentialValue("password")
 	if err != nil {
-		t.Fatalf("First encryption failed: %v", err)
+		t.Fatalf("EncryptCredentialValue: %v", err)
+	}
+	cfg.SNMP.V3Credentials = []config.SNMPv3Credential{
+		{Name: "test", AuthPassword: authEnc},
 	}
 
-	firstEncrypted := cfg.SNMP.V3Credentials[0].AuthPassword
-
-	// Second encryption (should be idempotent)
 	err = cfg.EncryptSNMPCredentials()
 	if err != nil {
-		t.Fatalf("Second encryption failed: %v", err)
+		t.Fatalf("First EncryptSNMPCredentials failed: %v", err)
 	}
+	firstEncrypted := cfg.SNMP.V3Credentials[0].AuthPassword
 
+	err = cfg.EncryptSNMPCredentials()
+	if err != nil {
+		t.Fatalf("Second EncryptSNMPCredentials failed: %v", err)
+	}
 	secondEncrypted := cfg.SNMP.V3Credentials[0].AuthPassword
 
 	if firstEncrypted != secondEncrypted {
-		t.Error("EncryptSNMPCredentials should be idempotent")
+		t.Error("EncryptSNMPCredentials should be idempotent for already-encrypted values")
 	}
+}
+
+// TestEncryptSNMPCredentialsRejectsPlaintext verifies that EncryptSNMPCredentials
+// returns an error when a credential is still in plaintext. Credentials must be
+// set via the API/CLI; silent on-save encryption is no longer accepted.
+func TestEncryptSNMPCredentialsRejectsPlaintext(t *testing.T) {
+	cfg := newKeyedConfigForCrypto(t)
+	cfg.SNMP.V3Credentials = []config.SNMPv3Credential{
+		{Name: "bad-cred", AuthPassword: "plaintext-password"},
+	}
+
+	err := cfg.EncryptSNMPCredentials()
+	if err == nil {
+		t.Fatal("EncryptSNMPCredentials should reject plaintext credential, got nil error")
+	}
+	if !errors.Is(err, config.ErrPlaintextCredential) {
+		t.Errorf("expected ErrPlaintextCredential, got: %v", err)
+	}
+}
+
+// TestDecryptSNMPPasswordRejectsPlaintext verifies that DecryptSNMPPassword
+// returns an error for a non-encrypted value.
+func TestDecryptSNMPPasswordRejectsPlaintext(t *testing.T) {
+	cfg := newKeyedConfigForCrypto(t)
+
+	_, err := cfg.DecryptSNMPPassword("plaintext-value")
+	if err == nil {
+		t.Fatal("DecryptSNMPPassword should reject plaintext, got nil error")
+	}
+	if !errors.Is(err, config.ErrPlaintextCredential) {
+		t.Errorf("expected ErrPlaintextCredential, got: %v", err)
+	}
+}
+
+// TestDecryptSNMPPasswordRejectsLegacyCiphertext verifies that the legacy
+// v0/JWT-derived "enc:..." format (unversioned) is rejected by DecryptSNMPPassword.
+// The v0 read path has been removed; operators must re-set such credentials via
+// the API/CLI.
+func TestDecryptSNMPPasswordRejectsLegacyCiphertext(t *testing.T) {
+	cfg := newKeyedConfigForCrypto(t)
+
+	// Craft a value that looks like legacy v0 ciphertext: has "enc:" prefix
+	// but no version segment ("enc:v<N>:").
+	legacyLike := config.EncryptedPrefix + "dGhpcyBpcyBmYWtlIGxlZ2FjeSBkYXRh"
+
+	if !config.IsEncrypted(legacyLike) {
+		t.Fatalf("test setup: value should be detected as encrypted: %q", legacyLike)
+	}
+
+	_, err := cfg.DecryptSNMPPassword(legacyLike)
+	if err == nil {
+		t.Fatal("DecryptSNMPPassword should reject legacy v0 ciphertext, got nil error")
+	}
+	if !errors.Is(err, config.ErrPlaintextCredential) {
+		t.Errorf("expected ErrPlaintextCredential, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "legacy v0") {
+		t.Errorf("error message should mention legacy v0, got: %v", err)
+	}
+}
+
+// newKeyedConfigForCrypto creates a minimal Config with an ephemeral keyring for
+// crypto_test.go tests (no JWTSecret dependency).
+func newKeyedConfigForCrypto(t *testing.T) *config.Config {
+	t.Helper()
+	cfg := &config.Config{}
+	if err := cfg.InitCredentialKeyring(t.TempDir()); err != nil {
+		t.Fatalf("InitCredentialKeyring: %v", err)
+	}
+	return cfg
 }

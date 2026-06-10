@@ -360,9 +360,3 @@ func isVersionedCiphertext(value string) bool {
 	_, _, ok := parseVersioned(value)
 	return ok
 }
-
-// IsLegacyEncrypted reports whether value is an encrypted credential in the
-// legacy unversioned ("enc:...", JWT-derived) format that must be migrated.
-func IsLegacyEncrypted(value string) bool {
-	return IsEncrypted(value) && !isVersionedCiphertext(value)
-}
