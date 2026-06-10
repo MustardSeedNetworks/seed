@@ -194,6 +194,32 @@ func (c *Config) validateSNMPConfig() []string {
 	if c.SNMP.Timeout <= 0 {
 		errs = append(errs, "snmp.timeout must be positive")
 	}
+	errs = append(errs, c.validateSNMPCredentials()...)
+	return errs
+}
+
+// validateSNMPCredentials rejects any SNMP v3 credential whose value is not
+// versioned DEK ciphertext. Plaintext and legacy v0/JWT-derived ciphertext are
+// illegal states: credentials must be set via the API/CLI (EncryptCredentialValue)
+// so they are encrypted at rest before being written to config.
+func (c *Config) validateSNMPCredentials() []string {
+	var errs []string
+	for _, cred := range c.SNMP.V3Credentials {
+		if cred.AuthPassword != "" && !isVersionedCiphertext(cred.AuthPassword) {
+			errs = append(errs, fmt.Sprintf(
+				"SNMP v3 credential %q: auth_password must be set via the API/CLI so it is "+
+					"encrypted at rest; plaintext or legacy ciphertext in config is not accepted",
+				cred.Name,
+			))
+		}
+		if cred.PrivPassword != "" && !isVersionedCiphertext(cred.PrivPassword) {
+			errs = append(errs, fmt.Sprintf(
+				"SNMP v3 credential %q: priv_password must be set via the API/CLI so it is "+
+					"encrypted at rest; plaintext or legacy ciphertext in config is not accepted",
+				cred.Name,
+			))
+		}
+	}
 	return errs
 }
 

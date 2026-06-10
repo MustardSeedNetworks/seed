@@ -22,7 +22,7 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0012](0012-wifi-monitor-capture-decode.md) | Wi-Fi monitor-mode capture port + 802.11 decode pipeline | Accepted |
 | [0013](0013-bluetooth-live-capture.md) | Bluetooth live-scan capture port | Accepted |
 | [0014](0014-config-validation-schema-is-a-constraints-validator.md) | config validation schema is a curated constraints validator, not a duplicate | Accepted |
-| [0015](0015-credential-encryption-key-separation.md) | Separate the credential data-encryption key from `Auth.JWTSecret` | Proposed |
+| [0015](0015-credential-encryption-key-separation.md) | Separate the credential data-encryption key from `Auth.JWTSecret` | Amended |
 | [0016](0016-strangle-internal-api-into-use-cases.md) | Strangle `internal/api` into per-domain use-case services | Accepted |
 | [0017](0017-transactional-outbox-relay.md) | Transactional outbox relay — durable post-commit event delivery | Accepted |
 | [0018](0018-discovery-pipeline-stage-split.md) | Discovery pipeline stage split — capabilities as staged ports | Accepted |
