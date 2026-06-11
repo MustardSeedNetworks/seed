@@ -155,8 +155,8 @@ func (c *DICOMChecker) Run(ctx context.Context, p probe.Probe) probe.Result {
 
 	pduType := hdr[0]
 	meta, _ := json.Marshal(map[string]any{
-		"addr":     addr,
-		"pdu_type": pduType,
+		metaKeyAddr: addr,
+		"pdu_type":  pduType,
 	})
 
 	if pduType != dicomPDUTypeAAssociateAC {

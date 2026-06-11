@@ -13,6 +13,11 @@ import (
 // defaultTCPDialTimeout is the default per-attempt dial timeout.
 const defaultTCPDialTimeout = 5 * time.Second
 
+// metaKeyAddr is the shared Result.Metadata key for the dialed
+// host:port address. Checkers across this package surface it so the
+// probe result shows exactly which endpoint was contacted.
+const metaKeyAddr = "addr"
+
 // TCPParams is the kind-specific params shape. Port is required;
 // TimeoutMs overrides the default dial timeout.
 type TCPParams struct {
@@ -84,7 +89,7 @@ func (c *TCPChecker) Run(ctx context.Context, p probe.Probe) probe.Result {
 	}
 	_ = conn.Close()
 
-	meta, _ := json.Marshal(map[string]any{"addr": addr})
+	meta, _ := json.Marshal(map[string]any{metaKeyAddr: addr})
 	return probe.Result{
 		ProbeID:   p.ID,
 		ClientID:  p.ClientID,

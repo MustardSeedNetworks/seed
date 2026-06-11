@@ -1,6 +1,21 @@
 # ADR-0027: Migrate the on-demand health-check stack onto the probe engine, then rename the transport
 
-**Status:** Proposed — 2026-06-11 (scoping ADR; no code in this change)
+**Status:** Accepted — 2026-06-11 (scoping ADR; P1 implemented)
+
+> **P1 as-built (2026-06-11).** The eight vertical checkers landed as `probe.Checker`
+> implementations under `internal/probe/checkers/` (`hl7.go`, `fhir.go`, `sql.go`,
+> `fileshare.go`, `ldap.go`, `lti.go`, `opcua.go`, `modbus.go`), each registered in the
+> engine in `server.go`. HL7 (MLLP ACK), FHIR (CapabilityStatement), LTI (HEAD), OPC-UA
+> (Hello probe), and Modbus (read-register ADU) port the legacy protocol behavior faithfully.
+> SQL, FileShare, and LDAP port the **honest working** behavior only — TCP/TLS reachability —
+> because the legacy `sql.Open`/driver, SMB/NFS local-mount perf test, and LDAP bind/search
+> paths were dead or library-dependent (no driver/library is imported in the module). Those
+> deeper capabilities are deferred and noted in each checker's doc comment; adding a real
+> SQL driver or LDAP library is a separate, security-scanned dependency decision.
+> No new threshold field or catalog `Def` was needed: `success`→`probe-unreachable` and
+> `latency_ms`→`probe-high-latency` already cover the breach side (ADR-0025), and protocol
+> detail (ACK code, FHIR version, register value) is surfaced as informational `Result.Metadata`.
+> P2–P5 (settings storage, `/run` rewire + legacy deletion, frontend, transport rename) follow.
 
 ## Context
 
