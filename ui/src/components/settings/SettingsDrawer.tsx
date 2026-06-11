@@ -50,6 +50,7 @@ import type {
   WiFiSettings as WiFiSettingsType,
 } from '../../types/settings';
 import { ReadOnlyView } from '../ui/ReadOnlyView';
+import { RequireAdmin } from '../ui/RequireRole';
 import { SettingsDrawerFooter } from './SettingsDrawerFooter';
 import { SettingsDrawerNetworkSection } from './SettingsDrawerNetworkSection';
 import { ApiTokensSettings } from './sections/ApiTokensSettings';
@@ -684,8 +685,12 @@ export const SettingsDrawer: React.MemoExoticComponent<
             {/* API tokens (Phase D-2 LICENSE_STRATEGY) */}
             <ApiTokensSettings />
 
-            {/* Users CRUD (multi_user, seed#1191) */}
-            <UsersSettings />
+            {/* Users CRUD (multi_user, seed#1191) — admin-only section, so an
+                operator/viewer never sees user management at all (#1254). The
+                in-section buttons stay isAdmin-gated as defense-in-depth. */}
+            <RequireAdmin>
+              <UsersSettings />
+            </RequireAdmin>
 
             {/* SSO admin panel (seed#1198) */}
             <SsoSettings />
