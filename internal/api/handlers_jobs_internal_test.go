@@ -27,11 +27,11 @@ func newJobsTestServer(t *testing.T, cfg jobs.Config) (*Server, *jobs.Runner) {
 	t.Helper()
 	bus := events.New(slog.New(slog.DiscardHandler))
 	runner := jobs.New(bus, slog.New(slog.DiscardHandler), cfg)
-	srv := &Server{services: &ServiceContainer{RealTime: &RealTimeServices{
-		EventBus:       bus,
-		Jobs:           runner,
-		JobIdempotency: newJobIdempotencyCache(16),
-	}}}
+	srv := &Server{
+		bus:       bus,
+		jobRunner: runner,
+		jobIdemp:  newJobIdempotencyCache(16),
+	}
 	t.Cleanup(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()

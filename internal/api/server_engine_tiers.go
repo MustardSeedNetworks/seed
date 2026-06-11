@@ -50,19 +50,19 @@ func minTierForEngine(name string) license.Tier {
 //
 // Semantics when no license.Manager is configured:
 //
-//   - Pre-license state (services.Auth.License == nil) is treated
-//     as Pro tier. This matches the dev / fresh-install / test
-//     experience where everything should be available; production
-//     deployments always configure a Manager (the install flow
-//     creates a Free license file even when no paid key is
-//     entered), so the gate kicks in there.
+//   - Pre-license state (s.licenseMgr == nil) is treated as Pro
+//     tier. This matches the dev / fresh-install / test experience
+//     where everything should be available; production deployments
+//     always configure a Manager (the install flow creates a Free
+//     license file even when no paid key is entered), so the gate
+//     kicks in there.
 //   - A configured Manager that reports TierFree gates Starter +
 //     Pro engines out, as intended for the Free SKU.
-func registerEngineIfLicensed(services *ServiceContainer, eng engine.Engine) error {
-	if services == nil || services.Engines == nil {
+func (s *Server) registerEngineIfLicensed(eng engine.Engine) error {
+	if s == nil || s.engines == nil {
 		return nil
 	}
-	tier := effectiveTier(services)
+	tier := s.effectiveTier()
 	minTier := minTierForEngine(eng.Name())
 	if tier < minTier {
 		logging.GetLogger().Info("engine skipped: license tier below minimum",
@@ -72,15 +72,15 @@ func registerEngineIfLicensed(services *ServiceContainer, eng engine.Engine) err
 		)
 		return nil
 	}
-	return services.Engines.Register(eng)
+	return s.engines.Register(eng)
 }
 
 // effectiveTier picks the tier to gate against. nil Manager (dev,
 // tests, pre-install) -> Pro; otherwise delegate to the existing
 // licenseTierAdapter which already nil-guards GetState() etc.
-func effectiveTier(services *ServiceContainer) license.Tier {
-	if services.Auth == nil || services.Auth.License == nil {
+func (s *Server) effectiveTier() license.Tier {
+	if s.licenseMgr == nil {
 		return license.TierPro
 	}
-	return licenseTierAdapter{lm: services.Auth.License}.GetTier()
+	return licenseTierAdapter{lm: s.licenseMgr}.GetTier()
 }

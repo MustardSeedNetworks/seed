@@ -41,7 +41,7 @@ type SSOProvidersResponse struct {
 
 // initOAuthManager creates and configures the OAuth manager from config.
 func (s *Server) initOAuthManager() {
-	s.services.Auth.OAuth = oauth.NewManager()
+	s.oauthMgr = oauth.NewManager()
 
 	for _, providerConfig := range s.config.Auth.SSO.Providers {
 		if !providerConfig.Enabled || providerConfig.ClientID == "" {

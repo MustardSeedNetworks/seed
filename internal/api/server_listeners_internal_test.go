@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/engine"
 )
 
 // freeAddr returns a free UDP loopback address as a "host:port"
@@ -37,10 +38,10 @@ func TestInitListeners_NoEnvVarsRegistersNoListeners(t *testing.T) {
 	t.Setenv("SEED_SYSLOG_BIND", "")
 	t.Setenv("SEED_SNMP_TRAP_BIND", "")
 
-	services := NewServiceContainer()
-	before := len(services.Engines.Engines())
-	initListeners(services, newTestDB(t))
-	after := len(services.Engines.Engines())
+	s := &Server{engines: engine.NewRegistry(nil)}
+	before := len(s.engines.Engines())
+	s.initListeners(newTestDB(t))
+	after := len(s.engines.Engines())
 
 	if after != before {
 		t.Errorf("engines after init = %d, want %d (no listeners enabled)", after, before)
@@ -51,11 +52,11 @@ func TestInitListeners_SyslogEnvVarRegistersListener(t *testing.T) {
 	t.Setenv("SEED_SYSLOG_BIND", freeAddr(t))
 	t.Setenv("SEED_SNMP_TRAP_BIND", "")
 
-	services := NewServiceContainer()
-	initListeners(services, newTestDB(t))
+	s := &Server{engines: engine.NewRegistry(nil)}
+	s.initListeners(newTestDB(t))
 
 	names := make(map[string]bool)
-	for _, e := range services.Engines.Engines() {
+	for _, e := range s.engines.Engines() {
 		names[e.Name()] = true
 	}
 	if !names["syslog-udp"] {
@@ -70,11 +71,11 @@ func TestInitListeners_SnmpTrapEnvVarRegistersListener(t *testing.T) {
 	t.Setenv("SEED_SYSLOG_BIND", "")
 	t.Setenv("SEED_SNMP_TRAP_BIND", freeAddr(t))
 
-	services := NewServiceContainer()
-	initListeners(services, newTestDB(t))
+	s := &Server{engines: engine.NewRegistry(nil)}
+	s.initListeners(newTestDB(t))
 
 	names := make(map[string]bool)
-	for _, e := range services.Engines.Engines() {
+	for _, e := range s.engines.Engines() {
 		names[e.Name()] = true
 	}
 	if !names["snmp-trap-v2c"] {
@@ -86,11 +87,11 @@ func TestInitListeners_BothEnvVarsRegistersBoth(t *testing.T) {
 	t.Setenv("SEED_SYSLOG_BIND", freeAddr(t))
 	t.Setenv("SEED_SNMP_TRAP_BIND", freeAddr(t))
 
-	services := NewServiceContainer()
-	initListeners(services, newTestDB(t))
+	s := &Server{engines: engine.NewRegistry(nil)}
+	s.initListeners(newTestDB(t))
 
 	names := make(map[string]bool)
-	for _, e := range services.Engines.Engines() {
+	for _, e := range s.engines.Engines() {
 		names[e.Name()] = true
 	}
 	if !names["syslog-udp"] || !names["snmp-trap-v2c"] {

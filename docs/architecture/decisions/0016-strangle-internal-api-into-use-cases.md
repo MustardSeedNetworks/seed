@@ -1,6 +1,8 @@
 # ADR-0016: Strangle `internal/api` into per-domain use-case services
 
-**Status:** Accepted — 2026-06-06
+**Status:** Completed — 2026-06-10 (terminal phase landed: `ServiceContainer`
+deleted, every handler now reaches services through direct `Server` fields /
+ADR-0020 use-cases)
 
 ## Context
 
@@ -84,7 +86,11 @@ Each phase is one PR, one domain slice, goldens green:
   first); each lands only when its goldens are green.
 - **Terminal — retire the bag.** When no handler reaches `ServiceContainer`
   fields directly, replace it with the set of injected use-cases and delete the
-  god accessor.
+  god accessor. **Done (D1, 2026-06-10):** `ServiceContainer` and its grouped
+  sub-structs were deleted; the ~30 services are now direct `Server` fields, the
+  ~80 lowercase/exported accessors return those fields (they remain methods —
+  the ADR-0020 use-cases bind them as lazy method values at the composition
+  root), and the per-engine init helpers became `*Server` methods.
 
 ### Naming
 

@@ -45,7 +45,7 @@ func (s *Server) initNetworkServices(cfg *config.Config) {
 
 	// Initialize survey manager
 	surveyStoragePath := "data/surveys"
-	s.services.Wireless.Survey = survey.NewManager(
+	s.surveyMgr = survey.NewManager(
 		surveyStoragePath,
 		s.wifiScanner(),
 		s.wifiManager(),
@@ -118,7 +118,7 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 	// (the function returns early otherwise), so it always runs: it sweeps jobs
 	// retention every tick (the runner map + jobs table always grow) and applies
 	// the data-retention policy when a positive window is configured.
-	s.services.Database.RetentionStopCh = make(chan struct{})
+	s.retentionStopCh = make(chan struct{})
 	go s.startMaintenance(cfg.Database.RetentionDays)
 }
 
@@ -126,7 +126,7 @@ func (s *Server) initDatabaseServices(cfg *config.Config, db *database.DB) {
 func (s *Server) initMibDatabase(db *database.DB) {
 	// Create MIB database interface using the underlying SQL connection
 	mibDB := mibdb.New(db.Conn())
-	s.services.Database.MibDB = mibDB
+	s.mibDB = mibDB
 
 	// Load built-in OID definitions (918+ standard OIDs from RFC MIBs)
 	if err := mibDB.LoadBuiltinOIDs(); err != nil {
@@ -148,11 +148,11 @@ func (s *Server) initMibDatabase(db *database.DB) {
 // initSSEAndLogging initializes the SSE hub and log broadcaster.
 func (s *Server) initSSEAndLogging(db *database.DB) {
 	// Initialize SSE hub for real-time updates
-	s.services.RealTime.SSEHub = NewSSEHub()
+	s.sse = NewSSEHub()
 	go s.sseHub().Run()
 
 	// Initialize log broadcaster for real-time log streaming
-	s.services.RealTime.LogBroadcaster = logging.InitBroadcaster(logBroadcasterBufferSize)
+	s.logBroadcast = logging.InitBroadcaster(logBroadcasterBufferSize)
 	s.logBroadcaster().SetBroadcaster(&sseLogBroadcastAdapter{hub: s.sseHub()})
 
 	// Initialize the in-process event bus and the unified job runner (ADR-0004 /
@@ -160,7 +160,7 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 	// /api/v1/jobs surface (POST/GET/DELETE + the /jobs/events SSE stream)
 	// adapts it. No job kinds are registered yet — they arrive as the real
 	// long-ops are migrated in a later slice; both Close() on shutdown.
-	s.services.RealTime.EventBus = events.New(logging.GetLogger())
+	s.bus = events.New(logging.GetLogger())
 	jobsCfg := jobs.Config{Retention: jobsRetention}
 	if db != nil {
 		// Durable backing (Phase 5c): the runner write-throughs lifecycle
@@ -168,15 +168,15 @@ func (s *Server) initSSEAndLogging(db *database.DB) {
 		// stays in-memory only (the fail-cleanly v1).
 		jobsCfg.Store = newDBJobStore(db)
 	}
-	s.services.RealTime.Jobs = jobs.New(
-		s.services.RealTime.EventBus, logging.GetLogger(), jobsCfg,
+	s.jobRunner = jobs.New(
+		s.bus, logging.GetLogger(), jobsCfg,
 	)
 	if db != nil {
 		// Durable Idempotency-Key dedup (Phase 5c-4): survives restart, so a
 		// client retry across a restart still replays rather than duplicating.
-		s.services.RealTime.JobIdempotency = newDBJobIdempotency(db, logging.GetLogger())
+		s.jobIdemp = newDBJobIdempotency(db, logging.GetLogger())
 	} else {
-		s.services.RealTime.JobIdempotency = newJobIdempotencyCache(jobIdempotencyCapacity)
+		s.jobIdemp = newJobIdempotencyCache(jobIdempotencyCapacity)
 	}
 	s.registerJobKinds()
 
@@ -231,20 +231,20 @@ func (s *Server) initDiscovery(cfg *config.Config) {
 	// Create SHARED DeviceProfiler - used by Service and Engine
 	// This ensures port scan results and SNMP data are consistent across the system
 	sharedProfiler := discovery.NewDeviceProfiler(discovery.DefaultProfilerConfig(), &cfg.SNMP)
-	s.services.Discovery.Profiler = sharedProfiler
+	s.profiler = sharedProfiler
 
 	// Create PortScanner for Engine
 	portScanner, err := fingerprint.NewPortScanner(portScannerTimeout)
 	if err != nil {
 		logging.GetLogger().Warn("Failed to create port scanner", "error", err)
 	} else {
-		s.services.Discovery.PortScanner = portScanner
+		s.portScanner = portScanner
 	}
 
 	// Initialize discovery service with the shared profiler. WithCapture injects
 	// the build-tagged capture adapter so the Service's internal device discovery
 	// uses real libpcap capture in production (CGO-free no-op under CGO_ENABLED=0).
-	s.services.Discovery.Service = enumerate.NewService(
+	s.discoverySvc = enumerate.NewService(
 		cfg, cfg.Interface.Default, sharedProfiler, enumerate.WithCapture(defaultCaptureOpener()),
 	)
 	logging.GetLogger().Info("Discovery service initialized with shared profiler")
@@ -270,29 +270,29 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 		logging.GetLogger().Warn("Failed to initialize vulnerability scanner", "error", err)
 		return
 	}
-	s.services.Discovery.Vulnerability = vulnScanner
+	s.vulnScan = vulnScanner
 	logging.GetLogger().Info("Vulnerability scanner initialized",
 		"cve_database", scannerCfg.CVEDatabase, "threshold", scannerCfg.SeverityThreshold)
 
 	// Initialize problem detector for network issue detection
-	s.services.Discovery.ProblemDetector = discovery.NewProblemDetector()
+	s.problemDet = discovery.NewProblemDetector()
 	logging.GetLogger().Info("Problem detector initialized")
 
 	// Initialize Bluetooth scanner
 	btConfig := enumerate.DefaultBluetoothScanConfig()
 	var ouiDB *resolve.OUIDatabase
-	if s.services.Discovery.Device != nil {
-		ouiDB = s.services.Discovery.Device.GetOUIDatabase()
+	if s.deviceDisc != nil {
+		ouiDB = s.deviceDisc.GetOUIDatabase()
 	}
-	s.services.Discovery.BluetoothScanner = enumerate.NewBluetoothScanner("", btConfig, ouiDB)
+	s.bluetoothScan = enumerate.NewBluetoothScanner("", btConfig, ouiDB)
 	logging.GetLogger().Info("Bluetooth scanner initialized")
 
-	// Initialize WiFi bridge connecting canopy/wifi to discovery
-	if s.services.Wireless.Scanner != nil {
+	// Initialize WiFi bridge connecting wifi to discovery
+	if s.wifiScan != nil {
 		wifiBridgeConfig := enumerate.DefaultWiFiBridgeConfig()
-		s.services.Discovery.WiFiBridge = enumerate.NewWiFiBridge(
-			s.services.Wireless.Scanner,
-			s.services.Wireless.WiFi,
+		s.wifiBridgeSvc = enumerate.NewWiFiBridge(
+			s.wifiScan,
+			s.wifiMgr,
 			ouiDB,
 			wifiBridgeConfig,
 		)
@@ -301,40 +301,40 @@ func (s *Server) initVulnerabilityScanner(cfg *config.Config) {
 
 	// Initialize Discovery Engine (primary unified discovery system)
 	engineConfig := discovery.DefaultEngineConfig()
-	s.services.Discovery.Engine = discovery.NewEngine(engineConfig)
+	s.discoveryEng = discovery.NewEngine(engineConfig)
 
 	// Wire in all collectors
-	if s.services.Discovery.Device != nil {
-		s.services.Discovery.Engine.SetWiredCollector(s.services.Discovery.Device)
+	if s.deviceDisc != nil {
+		s.discoveryEng.SetWiredCollector(s.deviceDisc)
 	}
-	if s.services.Discovery.WiFiBridge != nil {
-		s.services.Discovery.Engine.SetWiFiCollector(s.services.Discovery.WiFiBridge)
+	if s.wifiBridgeSvc != nil {
+		s.discoveryEng.SetWiFiCollector(s.wifiBridgeSvc)
 	}
-	if s.services.Discovery.BluetoothScanner != nil {
-		s.services.Discovery.Engine.SetBluetoothCollector(s.services.Discovery.BluetoothScanner)
+	if s.bluetoothScan != nil {
+		s.discoveryEng.SetBluetoothCollector(s.bluetoothScan)
 	}
-	if s.services.Discovery.Profiler != nil {
-		s.services.Discovery.Engine.SetProfiler(s.services.Discovery.Profiler)
+	if s.profiler != nil {
+		s.discoveryEng.SetProfiler(s.profiler)
 	}
-	if s.services.Discovery.PortScanner != nil {
-		s.services.Discovery.Engine.SetPortScanner(s.services.Discovery.PortScanner)
+	if s.portScanner != nil {
+		s.discoveryEng.SetPortScanner(s.portScanner)
 	}
-	if s.services.Discovery.Vulnerability != nil {
+	if s.vulnScan != nil {
 		// ADR-0018: the vuln assessment stage is a subpackage adapter injected
 		// as the engine's Assessor port, built over the engine's registry + bus.
-		s.services.Discovery.Engine.SetAssessor(vuln.NewStage(
-			s.services.Discovery.Vulnerability,
-			s.services.Discovery.Engine.Registry(),
-			s.services.Discovery.Engine.EventBus(),
+		s.discoveryEng.SetAssessor(vuln.NewStage(
+			s.vulnScan,
+			s.discoveryEng.Registry(),
+			s.discoveryEng.EventBus(),
 		))
 	}
 
 	// Start the engine
-	if startErr := s.services.Discovery.Engine.Start(context.Background()); startErr != nil {
+	if startErr := s.discoveryEng.Start(context.Background()); startErr != nil {
 		logging.GetLogger().Error("Failed to start discovery engine", "error", startErr)
 	} else {
 		logging.GetLogger().Info("Discovery engine started",
-			"capabilities", s.services.Discovery.Engine.GetCapabilities(),
+			"capabilities", s.discoveryEng.GetCapabilities(),
 		)
 	}
 }

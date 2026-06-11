@@ -2,6 +2,8 @@ package api
 
 import (
 	"testing"
+
+	"github.com/MustardSeedNetworks/seed/internal/engine"
 )
 
 // These tests exercise the wire-up before the Stage A5.9 tier
@@ -13,7 +15,7 @@ import (
 // The test environment goes through initLicenseAndAPITokens which
 // calls license.NewManager() — that returns a Free-tier Manager
 // (no key file present). The gate then filters Starter + Pro
-// engines, leaving only probe + retention in services.Engines.
+// engines, leaving only probe + retention in s.engines.
 //
 // We therefore assert "construction succeeded" by checking the
 // init function didn't panic and the registry has the Free-tier
@@ -23,11 +25,11 @@ import (
 func TestInitTopologyReconcilers_RegistersOnPro(t *testing.T) {
 	// No license manager wired -> effectiveTier returns Pro,
 	// so all four topology reconcilers land.
-	services := NewServiceContainer()
-	initTopologyReconcilers(services, newTestDB(t))
+	s := &Server{engines: engine.NewRegistry(nil)}
+	s.initTopologyReconcilers(newTestDB(t))
 
 	names := make(map[string]bool)
-	for _, e := range services.Engines.Engines() {
+	for _, e := range s.engines.Engines() {
 		names[e.Name()] = true
 	}
 	want := []string{
@@ -44,11 +46,11 @@ func TestInitTopologyReconcilers_RegistersOnPro(t *testing.T) {
 }
 
 func TestInitAlertPipelines_RegistersOnPro(t *testing.T) {
-	services := NewServiceContainer()
-	initAlertPipelines(services, newTestDB(t))
+	s := &Server{engines: engine.NewRegistry(nil)}
+	s.initAlertPipelines(newTestDB(t))
 
 	names := make(map[string]bool)
-	for _, e := range services.Engines.Engines() {
+	for _, e := range s.engines.Engines() {
 		names[e.Name()] = true
 	}
 	want := []string{
@@ -66,11 +68,11 @@ func TestInitDatabaseDependentServices_GatesByFreeLicense(t *testing.T) {
 	// initLicenseAndAPITokens wires a Free-tier license.Manager,
 	// so the tier gate filters out everything Starter+ during the
 	// full init pass. probe + retention are Free-tier and survive.
-	services := NewServiceContainer()
-	initDatabaseDependentServices(services, newTestDB(t))
+	s := &Server{engines: engine.NewRegistry(nil)}
+	s.initDatabaseDependentServices(newTestDB(t))
 
 	names := make(map[string]bool)
-	for _, e := range services.Engines.Engines() {
+	for _, e := range s.engines.Engines() {
 		names[e.Name()] = true
 	}
 	freeTierEngines := []string{"probe", "retention"}

@@ -30,10 +30,9 @@ func TestSettingsUseCasePersistsToDefaultProfile(t *testing.T) {
 	cfg.DisplayOptions.UnitSystem = "metric" // a distinctive, serialized value
 
 	s := &Server{
-		config:   cfg,
-		services: NewServiceContainer(),
+		config: cfg,
 	}
-	s.services.Database.DB = db
+	s.dbConn = db
 	s.settingsStore = app.NewSettings(s.db, s.config)
 	// Wire the identity use-cases (ADR-0024) so any callerRole path resolves
 	// through the repository port instead of nil-panicking on a bare server.
@@ -64,8 +63,7 @@ func TestSettingsUseCasePersistsToDefaultProfile(t *testing.T) {
 // database (the historic "persist to config file only" path) without error.
 func TestSettingsUseCaseNoDatabaseIsNoOp(t *testing.T) {
 	s := &Server{
-		config:   config.DefaultConfig(),
-		services: NewServiceContainer(),
+		config: config.DefaultConfig(),
 	}
 	s.settingsStore = app.NewSettings(s.db, s.config)
 

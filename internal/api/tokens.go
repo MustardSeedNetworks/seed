@@ -10,8 +10,7 @@ package api
 // All token-store access in handler bodies goes through s.identityTokens (the
 // use-case, ADR-0024). The PAT authentication seam (apiTokenMiddleware /
 // resolveAPIToken) remains unchanged — it is wired in server_lifecycle.go
-// via s.services.Auth.APITokens and is authentication infrastructure, not
-// handler data access.
+// via s.apiTokens and is authentication infrastructure, not handler data access.
 
 import (
 	"context"

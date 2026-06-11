@@ -48,11 +48,10 @@ func usersTestSetup(t *testing.T) (*Server, *license.Manager) {
 	}
 
 	s := &Server{
-		mux:      http.NewServeMux(),
-		services: NewServiceContainer(),
+		mux: http.NewServeMux(),
 	}
-	s.services.Database.DB = db
-	s.services.Auth.License = mgr
+	s.dbConn = db
+	s.licenseMgr = mgr
 	// Wire the identity use-cases (ADR-0024) so callerRole/requireRole and the
 	// user/token handlers resolve through the repository ports against the
 	// seeded store rather than nil-panicking on a bare server.
@@ -68,7 +67,7 @@ func TestUserCreate_RequiresAdmin(t *testing.T) {
 	}
 
 	// Add a non-admin user.
-	_, err := s.services.Database.DB.CreateUser(t.Context(), "viewer1", "$2a$10$x", database.RoleViewer)
+	_, err := s.dbConn.CreateUser(t.Context(), "viewer1", "$2a$10$x", database.RoleViewer)
 	if err != nil {
 		t.Fatalf("seed viewer: %v", err)
 	}
@@ -141,7 +140,7 @@ func TestUserDelete_RefusesLastAdmin(t *testing.T) {
 	// Seed a second admin so we can delete one of them without hitting
 	// the self-delete guard, then expect the last-admin guard to fire
 	// when we try to delete the remaining admin (us).
-	_, err := s.services.Database.DB.CreateUser(t.Context(), "admin2", "$2a$10$x", database.RoleAdmin)
+	_, err := s.dbConn.CreateUser(t.Context(), "admin2", "$2a$10$x", database.RoleAdmin)
 	if err != nil {
 		t.Fatalf("seed admin2: %v", err)
 	}
@@ -157,12 +156,12 @@ func TestUserDelete_RefusesLastAdmin(t *testing.T) {
 	// Now try to delete admin via another admin — there's only one left.
 	// We need a second admin to act, so re-seed and then try to delete
 	// the first one.
-	_, err = s.services.Database.DB.CreateUser(t.Context(), "admin3", "$2a$10$x", database.RoleAdmin)
+	_, err = s.dbConn.CreateUser(t.Context(), "admin3", "$2a$10$x", database.RoleAdmin)
 	if err != nil {
 		t.Fatalf("seed admin3: %v", err)
 	}
 	// Now demote admin3 and try to delete admin (the only admin left).
-	if upErr := s.services.Database.DB.UpdateUserRole(t.Context(), "admin3", database.RoleOperator); upErr != nil {
+	if upErr := s.dbConn.UpdateUserRole(t.Context(), "admin3", database.RoleOperator); upErr != nil {
 		t.Fatalf("demote admin3: %v", upErr)
 	}
 
@@ -196,7 +195,7 @@ func TestUserList_AdminOnly(t *testing.T) {
 	if r := mgr.StartTrial(); !r.Success {
 		t.Fatalf("StartTrial: %s", r.Message)
 	}
-	_, err := s.services.Database.DB.CreateUser(t.Context(), "viewer1", "$2a$10$x", database.RoleViewer)
+	_, err := s.dbConn.CreateUser(t.Context(), "viewer1", "$2a$10$x", database.RoleViewer)
 	if err != nil {
 		t.Fatalf("seed viewer: %v", err)
 	}
@@ -325,7 +324,7 @@ func TestDeleteUser_CascadesAPITokens(t *testing.T) {
 	if r := mgr.StartTrial(); !r.Success {
 		t.Fatalf("StartTrial: %s", r.Message)
 	}
-	db := s.services.Database.DB
+	db := s.dbConn
 
 	// Seed a second admin so we can delete one of them.
 	if _, err := db.CreateUser(t.Context(), "bob", "$2a$10$x", database.RoleAdmin); err != nil {
@@ -333,7 +332,7 @@ func TestDeleteUser_CascadesAPITokens(t *testing.T) {
 	}
 
 	repo := database.NewAPITokenRepository(db)
-	s.services.Auth.APITokens = repo
+	s.apiTokens = repo
 
 	// Insert a token owned by bob.
 	if err := repo.Insert(t.Context(), database.APITokenRecord{

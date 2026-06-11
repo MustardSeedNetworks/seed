@@ -16,8 +16,8 @@ import (
 func newPollingTargetsTestServer(t *testing.T) *Server {
 	t.Helper()
 	db := newTestDB(t)
-	s := &Server{services: NewServiceContainer()}
-	s.services.Database = &DatabaseServices{DB: db}
+	s := &Server{}
+	s.dbConn = db
 	return s
 }
 

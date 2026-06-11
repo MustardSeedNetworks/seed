@@ -10,7 +10,7 @@ package api
 // unmanageable.
 //
 // All user-store access goes through s.identityUsers (the use-case, ADR-0024).
-// No raw s.services.Database.DB references remain in this file.
+// No raw s.dbConn references remain in this file.
 
 import (
 	"errors"
@@ -422,7 +422,7 @@ func (s *Server) callerRole(r *http.Request) (string, bool) {
 	// fires in bare-server unit tests), so the gate has nothing to enforce —
 	// treat the request as admin. This preserves the long-standing
 	// callerIsAdmin "no user store = admin" tolerance from the pre-strangle
-	// `s.services.Database.DB == nil` branch.
+	// `s.dbConn == nil` branch.
 	if s.identityUsers == nil {
 		return database.RoleAdmin, true
 	}
