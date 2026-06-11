@@ -157,6 +157,13 @@ type instanceKey struct {
 	id   string
 }
 
+// recordID renders the key as the stable persistence id (store.go). It must
+// equal RecordID(def, SubjectRef{kind, id}) — the engine key and the stored id
+// are the same identity, which is what makes restart re-load idempotent.
+func (k instanceKey) recordID() string {
+	return k.def + "|" + string(k.kind) + "|" + k.id
+}
+
 // Anomaly is the projected, JSON-serializable view of a live detection: the
 // catalog copy (title/description/recommendation/standards) merged with the
 // instance evidence and lifecycle (firstSeen/lastSeen/count). Wire tags are

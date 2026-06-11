@@ -66,42 +66,69 @@ func NewEngine(catalog *Catalog, opts ...Option) *Engine {
 	return e
 }
 
-// Observe folds one detection into the stream at observation time `at`. A new
+// observeResult reports the effect of one Observe on the live stream so the
+// persistence Coordinator (store.go) can tell a material change — written
+// through immediately — from mere recurrence, which is batched into the next
+// Flush. Package-internal: external callers use Observe and ignore it.
+type observeResult struct {
+	key      instanceKey
+	created  bool // a new instance was inserted
+	material bool // created, OR base severity changed, OR escalation threshold crossed
+}
+
+// observe folds one detection into the stream and reports what changed. A new
 // (type, subject) pair creates an instance; a repeat updates lastSeen and the
 // recurrence count (which can escalate severity). It errors if the detection's
 // DefKey is not in the catalog or its severity override is invalid — a rule
 // source must only emit defined anomalies.
-func (e *Engine) Observe(d Detection, at time.Time) error {
+func (e *Engine) observe(d Detection, at time.Time) (observeResult, error) {
 	if _, ok := e.catalog.Lookup(d.DefKey); !ok {
-		return fmt.Errorf("anomaly: detection references unknown def %q", d.DefKey)
+		return observeResult{}, fmt.Errorf("anomaly: detection references unknown def %q", d.DefKey)
 	}
 	if d.Severity != "" && !d.Severity.valid() {
-		return fmt.Errorf("anomaly: detection for %q has invalid severity %q", d.DefKey, d.Severity)
+		return observeResult{}, fmt.Errorf(
+			"anomaly: detection for %q has invalid severity %q", d.DefKey, d.Severity)
 	}
 
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
 	k := d.key()
+	newBase := e.baseSeverity(d)
 	t, ok := e.active[k]
 	if !ok {
 		e.active[k] = &tracked{
 			det:          d,
-			baseSeverity: e.baseSeverity(d),
+			baseSeverity: newBase,
 			firstSeen:    at,
 			lastSeen:     at,
 			count:        1,
 		}
-		return nil
+		return observeResult{key: k, created: true, material: true}, nil
 	}
-	// Coalesce: refresh evidence + lifecycle, keep the earliest firstSeen.
+	// Coalesce: refresh evidence + lifecycle, keep the earliest firstSeen. A
+	// material change — a base-severity change or crossing the escalation
+	// threshold — warrants a durable write; a plain recurrence does not.
+	beforeEff := e.effectiveSeverityOf(t.baseSeverity, t.count)
+	baseChanged := t.baseSeverity != newBase
 	t.det = d
-	t.baseSeverity = e.baseSeverity(d)
+	t.baseSeverity = newBase
 	t.count++
 	if at.After(t.lastSeen) {
 		t.lastSeen = at
 	}
-	return nil
+	afterEff := e.effectiveSeverityOf(t.baseSeverity, t.count)
+	return observeResult{key: k, material: baseChanged || afterEff != beforeEff}, nil
+}
+
+// Observe folds one detection into the stream at observation time `at`. A new
+// (type, subject) pair creates an instance; a repeat updates lastSeen and the
+// recurrence count (which can escalate severity). It errors if the detection's
+// DefKey is not in the catalog or its severity override is invalid — a rule
+// source must only emit defined anomalies.
+func (e *Engine) Observe(d Detection, at time.Time) error {
+	_, err := e.observe(d, at)
+	return err
 }
 
 // baseSeverity is the detection's explicit severity, else the catalog default.
@@ -113,13 +140,18 @@ func (e *Engine) baseSeverity(d Detection) Severity {
 	return def.DefaultSeverity
 }
 
-// effectiveSeverity applies recurrence escalation: a base severity bumps one
-// level once count reaches escalateAfter, capped at critical.
+// effectiveSeverity applies recurrence escalation to a tracked instance.
 func (e *Engine) effectiveSeverity(t *tracked) Severity {
-	if e.escalateAfter <= 0 || t.count < e.escalateAfter {
-		return t.baseSeverity
+	return e.effectiveSeverityOf(t.baseSeverity, t.count)
+}
+
+// effectiveSeverityOf bumps base one level once count reaches escalateAfter,
+// capped at critical (escalateAfter <= 0 disables escalation).
+func (e *Engine) effectiveSeverityOf(base Severity, count int) Severity {
+	if e.escalateAfter <= 0 || count < e.escalateAfter {
+		return base
 	}
-	switch t.baseSeverity {
+	switch base {
 	case SeverityInfo:
 		return SeverityWarning
 	case SeverityWarning:
@@ -127,23 +159,67 @@ func (e *Engine) effectiveSeverity(t *tracked) Severity {
 	case SeverityCritical:
 		return SeverityCritical
 	default:
-		return t.baseSeverity
+		return base
 	}
 }
 
 // Prune clears instances not re-observed since cutoff (the anomaly's condition
 // is considered resolved). Returns the number cleared.
 func (e *Engine) Prune(cutoff time.Time) int {
+	return len(e.pruneKeys(cutoff))
+}
+
+// pruneKeys clears instances not re-observed since cutoff and returns their
+// keys, so the persistence Coordinator can mark exactly those resolved.
+func (e *Engine) pruneKeys(cutoff time.Time) []instanceKey {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	n := 0
+	var cleared []instanceKey
 	for k, t := range e.active {
 		if t.lastSeen.Before(cutoff) {
+			cleared = append(cleared, k)
 			delete(e.active, k)
-			n++
 		}
 	}
-	return n
+	return cleared
+}
+
+// project builds the Anomaly view of one tracked instance, merging catalog copy
+// with instance evidence/lifecycle and degrading capability-gated auto
+// follow-ups to prompts. The caller holds e.mu.
+func (e *Engine) project(t *tracked) Anomaly {
+	def, _ := e.catalog.Lookup(t.det.DefKey)
+	return Anomaly{
+		DefKey:         def.ID,
+		Category:       def.Category,
+		Severity:       e.effectiveSeverity(t),
+		Subject:        t.det.Subject,
+		Title:          def.Title,
+		Description:    def.Description,
+		Impact:         def.Impact,
+		Recommendation: def.Recommendation,
+		Standards:      def.Standards,
+		Evidence:       t.det.Evidence,
+		FollowUps:      e.projectFollowUps(def.FollowUps),
+		FirstSeen:      t.firstSeen,
+		LastSeen:       t.lastSeen,
+		Count:          t.count,
+	}
+}
+
+// snapshotKeys projects the named live instances, skipping any no longer
+// present. Used by the persistence Coordinator to build write-through and Flush
+// records without re-projecting the whole stream.
+func (e *Engine) snapshotKeys(keys []instanceKey) []Anomaly {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	out := make([]Anomaly, 0, len(keys))
+	for _, k := range keys {
+		if t, ok := e.active[k]; ok {
+			out = append(out, e.project(t))
+		}
+	}
+	return out
 }
 
 // Snapshot projects the live stream as deterministically-ordered Anomaly views,
@@ -156,23 +232,7 @@ func (e *Engine) Snapshot() []Anomaly {
 
 	out := make([]Anomaly, 0, len(e.active))
 	for _, t := range e.active {
-		def, _ := e.catalog.Lookup(t.det.DefKey)
-		out = append(out, Anomaly{
-			DefKey:         def.ID,
-			Category:       def.Category,
-			Severity:       e.effectiveSeverity(t),
-			Subject:        t.det.Subject,
-			Title:          def.Title,
-			Description:    def.Description,
-			Impact:         def.Impact,
-			Recommendation: def.Recommendation,
-			Standards:      def.Standards,
-			Evidence:       t.det.Evidence,
-			FollowUps:      e.projectFollowUps(def.FollowUps),
-			FirstSeen:      t.firstSeen,
-			LastSeen:       t.lastSeen,
-			Count:          t.count,
-		})
+		out = append(out, e.project(t))
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if ri, rj := out[i].Severity.rank(), out[j].Severity.rank(); ri != rj {

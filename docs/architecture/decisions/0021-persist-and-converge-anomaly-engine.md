@@ -1,6 +1,7 @@
 # ADR-0021: Persist the anomaly engine in SQL and converge every source on it
 
-**Status:** Proposed — 2026-06-10 · completes the deferred persistence clause of
+**Status:** Accepted — 2026-06-11 (owner-confirmed the cadence/retention/phase
+decisions below on 2026-06-10) · completes the deferred persistence clause of
 [ADR-0011](0011-network-anomaly-engine.md); builds on [ADR-0006](0006-migrations-sql-goose-strict.md)
 (goose/STRICT migrations), [ADR-0004](0004-event-bus.md)/[ADR-0017](0017-transactional-outbox-relay.md)
 (events), [ADR-0002](0002-capability-registry.md) (Pro gating), [ADR-0010](0010-identifier-casing-conventions.md) (casing).
@@ -76,9 +77,12 @@ ADR-0011's architecture; it implements its persistence clause and enforces its s
    `/wifi/anomalies` endpoint, and Survey analysis all read persisted anomalies (with history +
    lifecycle), not per-detector in-memory snapshots. Pro sources stay gated via `requireFeature`
    (ADR-0002); the engine and store are tier-neutral.
-5. **Lifecycle + retention** (defaults below, to confirm): persist on state change (new/escalated/
-   resolved), debounced; keep active anomalies indefinitely; age resolved ones via TTL with
-   optional daily rollups mirroring `health_check_rollups_*`.
+5. **Lifecycle + retention (owner-confirmed 2026-06-10).** **Write cadence: write-through on
+   material state change** (a new anomaly or a severity escalation) for durability, with the
+   high-frequency recurrence updates (`last_seen`/`count`) **batched via a periodic flush** — so a
+   scan burst is one write, not one per observation. Resolution (Prune) is written through. **Retention:
+   keep active anomalies indefinitely; TTL-age resolved ones (default 90d) with daily per-(def,subject)
+   rollups** mirroring `health_check_rollups_*`, for bounded growth on appliances.
 
 6. **Catalog model & severity (per ADR-0011's `AnomalyDef`).** Each anomaly *type* is a catalog
    entry that gives the operator a guided answer, not just a flag: a one-line **title** (the
@@ -142,11 +146,24 @@ ADR-0011's architecture; it implements its persistence clause and enforces its s
   (3) health source convergence + delete bespoke detector; (4) repoint readers (monitoring/wifi/
   Survey); (5) catalog growth (wired/SNMP/etc.) as those sources land.
 
-## Decisions to confirm (owner)
+## Confirmed decisions (owner, 2026-06-10)
 
-1. **Write cadence** — write-through on state change, debounced (recommended) vs periodic flush
-   vs write-through every Observe. Trade-off: durability vs write volume.
-2. **Retention** — keep active forever + TTL-age resolved with daily rollups (recommended) vs
-   raw-forever vs TTL-everything.
-3. **Phase label** — standalone "Anomaly Platform" workstream (recommended) vs a phase appended
-   to the strangle plan.
+1. **Write cadence** — write-through on material state change, recurrence batched via periodic
+   flush. (Resolved over "write every Observe" — durability for events that matter without a
+   per-scan write storm.)
+2. **Retention** — keep active forever + TTL-age resolved (90d default) with daily rollups.
+3. **Phase label** — tracked as the "Anomaly Platform" workstream in the master roadmap; the
+   bespoke `internal/health.AnomalyDetector` is deleted outright in the producer slice (pre-alpha,
+   no compat).
+
+## Implementation phasing (as-built status)
+
+Phase 1 (this slice) lands the **persistence foundation** the rest builds on: the `anomaly.Store`
+port + `Record`/`Source` model, the `anomalies` migration, the `database.AnomalyRepository`
+implementation, and the persistence-aware `anomaly.Coordinator` (write-through on material change,
+batched `Flush`, resolve-on-`Prune`). The four-level severity ladder (`Info → Warning → Error →
+Critical`) refines ADR-0011's three levels and is a **separate, additive change** (engine
+`rank`/escalation + catalog defaults); the persistence layer stores the severity string verbatim, so
+adding `Error` later needs no schema change. Subsequent phases (per the Consequences list): load-on-
+start + TTL/rollup retention; health-source convergence + delete the bespoke detector; repoint the
+monitoring/Wi-Fi/Survey readers; catalog growth as each source lands.
