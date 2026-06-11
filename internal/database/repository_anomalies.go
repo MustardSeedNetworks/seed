@@ -115,6 +115,25 @@ func (r *AnomalyRepository) MarkResolved(ctx context.Context, ids []string, at t
 	})
 }
 
+// DeleteResolvedOlderThan removes resolved anomalies whose resolved_at predates
+// cutoff, bounding table growth on appliances (ADR-0021 retention: TTL-age
+// resolved). Active instances are NEVER deleted regardless of age — a long-idle
+// but still-open anomaly is kept until it actually resolves. Returns the number
+// of rows removed.
+func (r *AnomalyRepository) DeleteResolvedOlderThan(ctx context.Context, cutoff time.Time) (int64, error) {
+	result, err := r.db.Exec(ctx, `
+		DELETE FROM anomalies WHERE is_resolved = 1 AND resolved_at < ?
+	`, cutoff.UTC().Format(time.RFC3339))
+	if err != nil {
+		return 0, fmt.Errorf("delete resolved anomalies: %w", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("delete resolved anomalies rows affected: %w", err)
+	}
+	return affected, nil
+}
+
 // LoadActive returns every unresolved instance, ordered by id for determinism,
 // so the engine can be repopulated on start.
 func (r *AnomalyRepository) LoadActive(ctx context.Context) ([]anomaly.Record, error) {

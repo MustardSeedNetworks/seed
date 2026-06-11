@@ -38,6 +38,11 @@ const (
 
 	// defaultHealthCheckDailyDays is the default retention for daily rollups (365 days).
 	defaultHealthCheckDailyDays = 365
+
+	// defaultAnomalyResolvedDays is the default retention for resolved anomalies
+	// (90 days). Active anomalies are kept indefinitely (ADR-0021); only resolved
+	// instances age out, bounding table growth on appliances.
+	defaultAnomalyResolvedDays = 90
 )
 
 // SQL query fragment constants.
@@ -86,6 +91,10 @@ type RetentionPolicy struct {
 
 	// HealthCheckDailyDays is how many days to keep daily rollups (0 = forever)
 	HealthCheckDailyDays int
+
+	// AnomalyResolvedDays is how many days to keep RESOLVED anomalies (0 =
+	// forever). Active anomalies are never aged out (ADR-0021).
+	AnomalyResolvedDays int
 }
 
 // DefaultRetentionPolicy returns the default retention policy.
@@ -101,6 +110,7 @@ func DefaultRetentionPolicy() RetentionPolicy {
 		HealthCheckRawDays:    defaultHealthCheckRawDays,
 		HealthCheckHourlyDays: defaultHealthCheckHourlyDays,
 		HealthCheckDailyDays:  defaultHealthCheckDailyDays,
+		AnomalyResolvedDays:   defaultAnomalyResolvedDays,
 	}
 }
 
@@ -116,6 +126,7 @@ type CleanupResult struct {
 	HealthCheckRawDeleted    int64
 	HealthCheckHourlyDeleted int64
 	HealthCheckDailyDeleted  int64
+	AnomaliesResolvedDeleted int64
 	Duration                 time.Duration
 }
 
@@ -161,6 +172,7 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 		{policy.HealthCheckRawDays, db.cleanupHealthCheckRaw, "health check raw"},
 		{policy.HealthCheckHourlyDays, db.cleanupHealthCheckHourly, "health check hourly"},
 		{policy.HealthCheckDailyDays, db.cleanupHealthCheckDaily, "health check daily"},
+		{policy.AnomalyResolvedDays, db.cleanupResolvedAnomalies, "resolved anomalies"},
 	}
 
 	results := make([]int64, len(tasks))
@@ -182,6 +194,7 @@ func (db *DB) RunCleanup(ctx context.Context, policy RetentionPolicy) (*CleanupR
 	result.HealthCheckRawDeleted = results[7]
 	result.HealthCheckHourlyDeleted = results[8]
 	result.HealthCheckDailyDeleted = results[9]
+	result.AnomaliesResolvedDeleted = results[10]
 	result.Duration = time.Since(start)
 
 	return result, nil
@@ -318,6 +331,11 @@ func (db *DB) cleanupHealthCheckHourly(ctx context.Context, cutoff time.Time) (i
 // cleanupHealthCheckDaily wraps HealthChecks().DeleteDailyRollupsOlderThan.
 func (db *DB) cleanupHealthCheckDaily(ctx context.Context, cutoff time.Time) (int64, error) {
 	return db.HealthChecks().DeleteDailyRollupsOlderThan(ctx, cutoff)
+}
+
+// cleanupResolvedAnomalies wraps Anomalies().DeleteResolvedOlderThan (ADR-0021).
+func (db *DB) cleanupResolvedAnomalies(ctx context.Context, cutoff time.Time) (int64, error) {
+	return db.Anomalies().DeleteResolvedOlderThan(ctx, cutoff)
 }
 
 // RecordAuditLog records an audit log entry.
