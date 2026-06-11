@@ -6,6 +6,7 @@ package api
 // rtsp, dicom). DNS, Speedtest, and iPerf handlers live in separate files.
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
@@ -195,6 +196,12 @@ func (s *Server) handleHealthChecks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// The probes table is the store of record for health-check targets
+	// (ADR-0027 P2). Hydrate the in-memory config snapshot from it so the
+	// run*Tests helpers below see the current set. P3 rewires /run onto
+	// Engine.RunNow and deletes these helpers along with this hydration.
+	s.hydrateHealthCheckTargets(r.Context())
+
 	result := CustomTestsResult{
 		PingResults:  s.runPingTests(),
 		TCPResults:   s.runTCPTests(r.Context()),
@@ -223,6 +230,35 @@ func (s *Server) handleHealthChecks(w http.ResponseWriter, r *http.Request) {
 		len(s.config.HealthChecks.ModbusEndpoints) > 0
 
 	sendJSONResponse(w, logger, http.StatusOK, result)
+}
+
+// hydrateHealthCheckTargets refreshes the in-memory config's health-check
+// endpoint lists from the probes table (the store of record, ADR-0027 P2),
+// leaving the performance toggles untouched. Best-effort: a load failure is
+// logged and the previous in-memory snapshot is left in place. P3 removes
+// this once /run dispatches through Engine.RunNow directly.
+func (s *Server) hydrateHealthCheckTargets(ctx context.Context) {
+	hc, err := loadHealthCheckEndpoints(ctx, s.db().Probes())
+	if err != nil {
+		logging.FromContext(ctx).WarnContext(ctx, "Failed to hydrate health-check targets from probes", "error", err)
+		return
+	}
+	s.config.Lock()
+	defer s.config.Unlock()
+	s.config.HealthChecks.PingTargets = hc.PingTargets
+	s.config.HealthChecks.TCPPorts = hc.TCPPorts
+	s.config.HealthChecks.UDPPorts = hc.UDPPorts
+	s.config.HealthChecks.HTTPEndpoints = hc.HTTPEndpoints
+	s.config.HealthChecks.RTSPEndpoints = hc.RTSPEndpoints
+	s.config.HealthChecks.DICOMEndpoints = hc.DICOMEndpoints
+	s.config.HealthChecks.HL7Endpoints = hc.HL7Endpoints
+	s.config.HealthChecks.FHIREndpoints = hc.FHIREndpoints
+	s.config.HealthChecks.SQLEndpoints = hc.SQLEndpoints
+	s.config.HealthChecks.FileShareEndpoints = hc.FileShareEndpoints
+	s.config.HealthChecks.LDAPEndpoints = hc.LDAPEndpoints
+	s.config.HealthChecks.LTIEndpoints = hc.LTIEndpoints
+	s.config.HealthChecks.OPCUAEndpoints = hc.OPCUAEndpoints
+	s.config.HealthChecks.ModbusEndpoints = hc.ModbusEndpoints
 }
 
 // getTestStatus returns status based on latency and thresholds.

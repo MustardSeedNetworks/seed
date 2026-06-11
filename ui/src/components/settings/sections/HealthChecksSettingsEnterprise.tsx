@@ -36,7 +36,6 @@ export function HealthChecksSettingsEnterprise({
     database: '',
     username: '',
     enabled: true,
-    criticality: 7,
   }));
 
   const {
@@ -49,7 +48,6 @@ export function HealthChecksSettingsEnterprise({
     host: '',
     sharePath: '',
     enabled: true,
-    criticality: 5,
   }));
 
   const {
@@ -63,7 +61,6 @@ export function HealthChecksSettingsEnterprise({
     useTls: false,
     baseDn: '',
     enabled: true,
-    criticality: 7,
   }));
 
   return (

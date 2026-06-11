@@ -14,5 +14,4 @@ export interface LDAPEndpointResponse {
   baseDn: string;
   searchFilter?: string;
   enabled: boolean;
-  criticality: number;
 }

@@ -14,5 +14,4 @@ export interface HL7EndpointResponse {
   receivingApp: string;
   receivingFacility: string;
   enabled: boolean;
-  criticality: number;
 }

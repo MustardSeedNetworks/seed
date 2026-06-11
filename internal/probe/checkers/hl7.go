@@ -47,12 +47,12 @@ const minHL7MSAErrorFields = 4
 // application / facility identifiers default to the values the legacy
 // internal/api/handlers_medical_checks.go used.
 type HL7Params struct {
-	Port         int    `json:"port,omitempty"`          // default 2575
-	SendingApp   string `json:"sending_app,omitempty"`   // default "SEED"
-	SendingFac   string `json:"sending_fac,omitempty"`   // default "SEED_FAC"
-	ReceivingApp string `json:"receiving_app,omitempty"` // default "TARGET"
-	ReceivingFac string `json:"receiving_fac,omitempty"` // default "TARGET_FAC"
-	TimeoutMs    int    `json:"timeout_ms,omitempty"`    // default 10000
+	Port         int    `json:"port,omitempty"`               // default 2575
+	SendingApp   string `json:"sending_app,omitempty"`        // default "SEED"
+	SendingFac   string `json:"sending_facility,omitempty"`   // default "SEED_FAC"
+	ReceivingApp string `json:"receiving_app,omitempty"`      // default "TARGET"
+	ReceivingFac string `json:"receiving_facility,omitempty"` // default "TARGET_FAC"
+	TimeoutMs    int    `json:"timeout_ms,omitempty"`         // default 10000
 }
 
 // HL7Checker implements probe.Checker for Kind="hl7". It opens a TCP
