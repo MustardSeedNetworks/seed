@@ -9,7 +9,8 @@ package anomaly
 import "time"
 
 // Severity is the anomaly urgency, aligned with the fleet alert vocabulary
-// (internal/database AlertSeverity*). info < warning < critical.
+// (internal/database AlertSeverity*, which carries the same four levels).
+// info < warning < error < critical.
 type Severity string
 
 const (
@@ -17,6 +18,9 @@ const (
 	SeverityInfo Severity = "info"
 	// SeverityWarning is a degradation or risk that should be addressed.
 	SeverityWarning Severity = "warning"
+	// SeverityError is an error-level fault — more urgent than a warning but not
+	// yet an active outage/exposure.
+	SeverityError Severity = "error"
 	// SeverityCritical is an active problem or security exposure.
 	SeverityCritical Severity = "critical"
 )
@@ -27,6 +31,7 @@ const (
 	rankNone = iota
 	rankInfo
 	rankWarning
+	rankError
 	rankCritical
 )
 
@@ -35,6 +40,8 @@ func (s Severity) rank() int {
 	switch s {
 	case SeverityCritical:
 		return rankCritical
+	case SeverityError:
+		return rankError
 	case SeverityWarning:
 		return rankWarning
 	case SeverityInfo:

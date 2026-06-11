@@ -220,4 +220,21 @@ so no frontend type migration was required. No migration → no schema-golden ch
   the engine — a decision the probe-vs-jobs ADR must make first. The endpoint is correctly plumbed and
   lights up the moment a real source=health producer persists. The **health catalog `Def`s**
   (latency_spike/availability_dip/error_spike/…) land with that producer, since they are only exercised
-  once detections flow.
+  once detections flow. (The probe-vs-jobs decision was subsequently made in
+  [ADR-0025](0025-probe-is-the-active-monitoring-anomaly-source.md): `internal/probe` is the producer,
+  `source=health`→`source=probe`; the dormant health-check stack was deleted in
+  [ADR-0026](0026-delete-dead-health-check-read-path.md).)
+
+**Phase 5 (as-built) — the four-level severity ladder, live.** The `Info → Warning → Error → Critical`
+ladder anticipated in phase 1 is now realized: `anomaly.SeverityError` (`"error"`) joins the enum
+between `Warning` and `Critical`, with a matching `rankError` so ordering/coalescing is `info < warning
+< error < critical`, and the engine's recurrence escalation (`effectiveSeverityOf`) bumps one level per
+step through the full ladder (`warning → error → critical`, capped at critical). This aligns `anomaly`
+with the fleet alert vocabulary (`database.AlertSeverity*` already carried all four). As predicted, the
+persistence layer needed **no schema change** — `severity` is stored verbatim (the migration's only
+constraint is `<> ''`), so no migration and no schema-golden change. The frontend severity map
+(`ui/.../wifi/severity.ts`) gains an `error` badge on the existing `severity-high` design token (the
+orange slot between warning-yellow and critical-red; critical keeps `status-error` red), and
+`WiFiAnomaliesCard` treats `error` as an elevated card status alongside `critical`. **Catalog growth is
+separate:** existing `Def` defaults are unchanged; assigning `Error` to specific failure modes is
+per-def authoring that lands with each source's catalog work, not in this mechanism slice.

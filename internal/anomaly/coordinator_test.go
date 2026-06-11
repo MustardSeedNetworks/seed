@@ -152,8 +152,8 @@ func TestCoordinatorWritesThroughOnEscalation(t *testing.T) {
 	if store.upserts != 2 {
 		t.Fatalf("escalation crossing should write through: upsert calls = %d, want 2", store.upserts)
 	}
-	if store.rows["open-ssid|bssid|aa"].Anomaly.Severity != anomaly.SeverityCritical {
-		t.Errorf("persisted severity = %q, want critical (escalated)",
+	if store.rows["open-ssid|bssid|aa"].Anomaly.Severity != anomaly.SeverityError {
+		t.Errorf("persisted severity = %q, want error (one bump up the ladder from warning)",
 			store.rows["open-ssid|bssid|aa"].Anomaly.Severity)
 	}
 }

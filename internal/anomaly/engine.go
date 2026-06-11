@@ -190,6 +190,8 @@ func (e *Engine) effectiveSeverityOf(base Severity, count int) Severity {
 	case SeverityInfo:
 		return SeverityWarning
 	case SeverityWarning:
+		return SeverityError
+	case SeverityError:
 		return SeverityCritical
 	case SeverityCritical:
 		return SeverityCritical
