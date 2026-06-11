@@ -43,7 +43,7 @@ export const SLADashboardCard: React.NamedExoticComponent<SLADashboardCardProps>
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('/api/v1/telemetry/health-checks/anomalies', {
+        const res = await fetch('/api/v1/telemetry/probes/anomalies', {
           credentials: 'include',
         });
         if (res.ok) {

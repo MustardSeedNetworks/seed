@@ -65,7 +65,7 @@ export const HealthCheckCard: React.MemoExoticComponent<
     setIsRunning(true);
     setError(null);
     try {
-      const res: Response = await fetch('/api/v1/telemetry/health-checks/run', {
+      const res: Response = await fetch('/api/v1/telemetry/probes/run', {
         credentials: 'include',
       });
       if (res.ok) {

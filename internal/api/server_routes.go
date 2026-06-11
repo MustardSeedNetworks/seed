@@ -456,13 +456,13 @@ func (s *Server) setupTelemetryRoutes() {
 			methods: get,
 		},
 		{
-			path:    APIVersionPrefix + "/telemetry/health-checks/settings",
+			path:    APIVersionPrefix + "/telemetry/probes/settings",
 			handler: s.handleHealthChecksSettings,
 			methods: getPut,
 			minRole: op,
 		},
 		{
-			path:        APIVersionPrefix + "/telemetry/health-checks/run",
+			path:        APIVersionPrefix + "/telemetry/probes/run",
 			handler:     s.handleHealthChecks,
 			methods:     getPost,
 			rateLimited: true,
@@ -472,7 +472,7 @@ func (s *Server) setupTelemetryRoutes() {
 		// results/history/scores/sla/alerts read-path over health_check_results
 		// was deleted as dead code (ADR-0026).
 		{
-			path:    APIVersionPrefix + "/telemetry/health-checks/anomalies",
+			path:    APIVersionPrefix + "/telemetry/probes/anomalies",
 			handler: s.handleHealthCheckAnomalies,
 			methods: get,
 			feature: "anomaly_detection",

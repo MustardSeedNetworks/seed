@@ -1,6 +1,26 @@
 # ADR-0027: Migrate the on-demand health-check stack onto the probe engine, then rename the transport
 
-**Status:** Accepted — 2026-06-11 (scoping ADR; P1–P3 + P4 implemented; only the P5 transport rename remains)
+**Status:** Accepted — 2026-06-11 (scoping ADR; **fully implemented** — P1–P5 landed)
+
+> **P5 transport rename as-built (2026-06-11).** Now that `/run` + `/settings` are probe-backed
+> (P2–P4), the three surviving routes were renamed `/telemetry/health-checks/{run,settings,anomalies}`
+> → `/telemetry/probes/{run,settings,anomalies}` — three `path:` literals in `server_routes.go`, the
+> `capabilities.txt` route-inventory golden, the two integration tests, the live
+> `docs/architecture/route-inventory.md` snapshot, and the four frontend fetch sites
+> (`HealthCheckCard` `/run`, `SlaDashboardCard` `/anomalies`, the two settings-drawer hooks
+> `/settings`). No `/telemetry/probes/*` path existed before, so there was no collision. **Scope
+> deviation from the original §5 plan:** the *user-facing* "Health Checks" feature name and the
+> `HealthCheck*` component/type/i18n identifiers were **kept** — the transport path saying "probes"
+> is an API-consistency concern (the data comes from the probe engine), whereas the feature's product
+> name is a separate decision and renaming ~6 components + ~80 i18n keys would be churn with no user
+> benefit and would muddy the feature's identity. The endpoint handler names (`handleHealthChecks`,
+> `handleHealthChecksSettings`) likewise stay. The botanical→descriptive prefix history in
+> route-inventory.md shows this kind of path rename is routine. Prior ADRs (0021/0025/0026) that
+> reference the old `/telemetry/health-checks/anomalies` path are left as point-in-time records.
+>
+> **ADR-0027 is complete.** The on-demand health-check stack runs on one engine, one config store
+> (the `probes` table), one transport family (`/telemetry/probes/*`). The only loose end is the noted
+> `config.HealthChecks` endpoint-list cleanup (a `HealthChecksConfig` type split), tracked separately.
 
 > **P3+P4 cutover as-built (2026-06-11).** `/telemetry/health-checks/run` now dispatches the
 > operator's configured probes through `Engine.RunNow` (load from the `probes` table → dispatch
@@ -185,7 +205,7 @@ Each phase is its own PR; the behavioral migration (1–4) **must precede** the 
 | **P2** ✅ | `/settings` storage migration: `config.Config.HealthChecks` target lists → `probes` table; a goose migration if the `probes` schema needs new columns. **As-built: `criticality` was removed outright** (unread since ADR-0026), not mapped; no migration was needed. | Settling the config→DB move; the scheduler now monitors these targets continuously. |
 | **P3** ✅ | Rewire `/run` to fan `Engine.RunNow` over the configured probes; **delete** the legacy protocol files + `run*Tests()`/`Run*Checks()` methods. **As-built: ~3,600 LOC deleted** (combined with P4 — see the as-built note). Config-file-list plumbing left as a noted follow-up. | The deletion landed here once P3a covered the rendered metadata. |
 | **P4** ✅ | Frontend rework. **As-built: nearly free** — the new `/run` Go DTO mirrors the card's existing `HealthCheckData` shape field-for-field (and fixes a pre-existing FE/backend drift), so the card was untouched and no shape reshuffle/broken-intermediate was needed. Component/token renames are cosmetic and not required for correctness; deferred. | Folded into the P3 PR to avoid a broken intermediate. |
-| **P5** | Transport rename `/telemetry/health-checks/*` → `/telemetry/probes/*` (3 backend literals + `capabilities.txt` golden + integration tests + 4 FE fetch sites + i18n namespace). | Pure rename; rides last so it is never a half-rename. |
+| **P5** ✅ | Transport rename `/telemetry/health-checks/*` → `/telemetry/probes/*` (3 backend literals + `capabilities.txt` golden + integration tests + route-inventory doc + 4 FE fetch sites). **As-built: path only** — the user-facing "Health Checks" feature name + `HealthCheck*` component/handler identifiers were kept (see as-built note). | Pure rename; rode last so it was never a half-rename. |
 
 ## Alternatives considered
 
