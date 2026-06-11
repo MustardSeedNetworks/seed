@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/MustardSeedNetworks/seed/internal/alerts"
 	alertpipeline "github.com/MustardSeedNetworks/seed/internal/alerts/pipeline"
 	"github.com/MustardSeedNetworks/seed/internal/alerts/rules"
 	"github.com/MustardSeedNetworks/seed/internal/app"
@@ -36,7 +35,6 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/engine"
 	enginestatus "github.com/MustardSeedNetworks/seed/internal/engine/status"
-	"github.com/MustardSeedNetworks/seed/internal/health"
 	"github.com/MustardSeedNetworks/seed/internal/health/monitoring"
 	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
 	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
@@ -216,13 +214,6 @@ type Server struct {
 	dbConn          *database.DB
 	mibDB           *mibdb.DB // MIB database for SNMP OID resolution
 	retentionStopCh chan struct{}
-
-	// --- Health-check monitoring ---
-	healthRepo   *database.HealthCheckRepository
-	healthScore  *health.ScoringService
-	healthSLA    *health.SLATracker
-	healthAlerts *alerts.AlertManager
-	healthDeps   *health.DependencyManager
 
 	// --- Update service ---
 	updateSvc *update.Service
@@ -430,7 +421,6 @@ func (s *Server) initDatabaseDependentServices(db *database.DB) {
 		return
 	}
 	s.initLicenseAndAPITokens(db)
-	s.initHealthServices(db)
 	s.initProbeEngine(db)
 	s.initRetentionEngine(db)
 	s.initListeners(db)
@@ -717,28 +707,6 @@ func (a licenseTierAdapter) GetTier() license.Tier {
 	return state.Tier
 }
 
-// initHealthServices wires the previously-dead health subsystem
-// (Scorer, SLATracker, DependencyMgr) onto the server. Stage A1.6 —
-// these services existed in code since prior phases but were
-// declared-but-never-assigned, so the health-check API endpoints
-// returned HTTP 503 on every request. This wires them up.
-//
-// Anomaly detection no longer has a bespoke health detector: anomalies
-// converged on the unified SQL store (ADR-0021), read via db.Anomalies().
-// AlertManager and Repository are wired elsewhere (existing code).
-func (s *Server) initHealthServices(db *database.DB) {
-	s.healthRepo = db.HealthChecks()
-
-	logger := logging.GetLogger()
-	s.healthScore = health.NewScoringService(db, logger)
-
-	s.healthSLA = health.NewSLATracker(health.SLATrackerConfig{
-		Repository: s.healthRepo,
-	})
-
-	s.healthDeps = health.NewDependencyManager(health.DependencyManagerConfig{})
-}
-
 // Service accessors — the in-package read interface and the lazy method
 // values the ADR-0020 use-cases bind to (D1, formerly #888).
 
@@ -858,11 +826,6 @@ func (s *Server) discoveryService() *enumerate.Service        { return s.discove
 func (s *Server) discoveryEngine() *discovery.Engine          { return s.discoveryEng }
 func (s *Server) problemDetector() *discovery.ProblemDetector { return s.problemDet }
 
-func (s *Server) healthRepository() *database.HealthCheckRepository { return s.healthRepo }
-func (s *Server) healthScorer() *health.ScoringService              { return s.healthScore }
-func (s *Server) healthSLATracker() *health.SLATracker              { return s.healthSLA }
-func (s *Server) healthAlertManager() *alerts.AlertManager          { return s.healthAlerts }
-
 // anomalyStore is the unified anomaly system of record (ADR-0021), the read
 // source for the health-checks anomaly endpoint after the bespoke health
 // detector was deleted. Nil-safe for the test harness (no DB wired).
@@ -922,17 +885,11 @@ func (s *Server) initDiscoveryUseCases() {
 }
 
 // initHealthUseCases wires the health-monitoring use-case (ADR-0020) from the
-// composition root over the server's lazy accessors for the health-check
-// repository, scorer, SLA tracker, alert manager, and anomaly detector, so a nil
-// or later-set collaborator (the test harness) is honored.
+// composition root over the server's lazy accessor for the unified anomaly store
+// (the only remaining concern after the dead health_check_results read-path was
+// deleted — ADR-0026), so a nil or later-set store (the test harness) is honored.
 func (s *Server) initHealthUseCases() {
-	s.healthMonitoring = app.NewHealthMonitoring(
-		s.healthRepository,
-		s.healthScorer,
-		s.healthSLATracker,
-		s.healthAlertManager,
-		s.anomalyStore,
-	)
+	s.healthMonitoring = app.NewHealthMonitoring(s.anomalyStore)
 }
 
 // initUpdateUseCases wires the update-lifecycle use-case (ADR-0020) from the

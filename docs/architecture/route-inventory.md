@@ -144,14 +144,9 @@ today; the registry makes it explicit per route.
 | `/api/v1/telemetry/dns/security` | `handleDNSSecurity` | — | — | — |
 | `/api/v1/telemetry/dns/security/settings` | `handleDNSSecuritySettings` | operator | — | — |
 | `/api/v1/telemetry/gateway` | `handleGateway` | — | — | — |
-| `/api/v1/telemetry/health-checks/alerts` | `handleHealthCheckAlerts` | — | — | — |
 | `/api/v1/telemetry/health-checks/anomalies` | `handleHealthCheckAnomalies` | — | anomaly_detection | — |
-| `/api/v1/telemetry/health-checks/history` | `handleHealthCheckHistory` | — | — | — |
-| `/api/v1/telemetry/health-checks/results` | `handleHealthCheckResults` | — | — | — |
 | `/api/v1/telemetry/health-checks/run` | `handleHealthChecks` | — | — | yes |
-| `/api/v1/telemetry/health-checks/scores` | `handleHealthCheckScores` | — | — | — |
 | `/api/v1/telemetry/health-checks/settings` | `handleHealthChecksSettings` | operator | — | — |
-| `/api/v1/telemetry/health-checks/sla` | `handleHealthCheckSLA` | — | — | — |
 | `/api/v1/telemetry/ipconfig` | `handleIPConfig` | — | — | — |
 | `/api/v1/telemetry/ipconfig/settings` | `handleIPSettings` | operator | — | — |
 | `/api/v1/telemetry/iperf/client` | `handleIperfClient` | — | — | yes |

@@ -467,33 +467,10 @@ func (s *Server) setupTelemetryRoutes() {
 			methods:     getPost,
 			rateLimited: true,
 		},
-		{
-			path:    APIVersionPrefix + "/telemetry/health-checks/results",
-			handler: s.handleHealthCheckResults,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/health-checks/history",
-			handler: s.handleHealthCheckHistory,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/health-checks/scores",
-			handler: s.handleHealthCheckScores,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/health-checks/sla",
-			handler: s.handleHealthCheckSLA,
-			methods: get,
-		},
-		{
-			path:    APIVersionPrefix + "/telemetry/health-checks/alerts",
-			handler: s.handleHealthCheckAlerts,
-			methods: get,
-		},
-		// Anomaly detection is Pro (LICENSE_STRATEGY §2); base results/history/alerts
-		// stay open to all tiers — only the trend/anomaly analysis is paid.
+		// Anomaly detection is Pro (LICENSE_STRATEGY §2). It reads the unified
+		// anomaly store's source=probe slice (ADR-0021/0025); the legacy
+		// results/history/scores/sla/alerts read-path over health_check_results
+		// was deleted as dead code (ADR-0026).
 		{
 			path:    APIVersionPrefix + "/telemetry/health-checks/anomalies",
 			handler: s.handleHealthCheckAnomalies,

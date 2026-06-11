@@ -71,7 +71,6 @@ type DB struct {
 	alerts            *AlertRepository
 	settings          *SettingsRepository
 	logs              *LogRepository
-	healthChecks      *HealthCheckRepository
 	discovery         *DiscoveryRepository
 	clients           *ClientRepository
 	probes            *ProbeRepository
@@ -466,17 +465,6 @@ func (db *DB) Logs() *LogRepository {
 		db.logs = &LogRepository{db: db}
 	}
 	return db.logs
-}
-
-// HealthChecks returns the health checks repository.
-func (db *DB) HealthChecks() *HealthCheckRepository {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-
-	if db.healthChecks == nil {
-		db.healthChecks = &HealthCheckRepository{db: db}
-	}
-	return db.healthChecks
 }
 
 // Discovery returns the discovery repository for WiFi, problems, and OUI data.

@@ -40,7 +40,6 @@ import type { CardSettings, SaveStatus, TestsSettings } from '../../../types/set
 import { CollapsibleSection } from '../../ui/CollapsibleSection';
 import { HeartPulse } from '../../ui/icons';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
-import { HealthChecksSettingsAdvanced } from './HealthChecksSettingsAdvanced';
 import { HealthChecksSettingsEnterprise } from './HealthChecksSettingsEnterprise';
 import { HealthChecksSettingsSpecialty } from './HealthChecksSettingsSpecialty';
 
@@ -147,7 +146,10 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                 checked={cardSettings.healthChecks.enabled}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                   updateCardSettings({
-                    healthChecks: { ...cardSettings.healthChecks, enabled: e.target.checked },
+                    healthChecks: {
+                      ...cardSettings.healthChecks,
+                      enabled: e.target.checked,
+                    },
                   })
                 }
                 className={iconTokens.size.sm}
@@ -175,7 +177,10 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
                 checked={cardSettings.healthChecks.autoRunOnLink}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                   updateCardSettings({
-                    healthChecks: { ...cardSettings.healthChecks, autoRunOnLink: e.target.checked },
+                    healthChecks: {
+                      ...cardSettings.healthChecks,
+                      autoRunOnLink: e.target.checked,
+                    },
                   })
                 }
                 className={iconTokens.size.sm}
@@ -516,11 +521,6 @@ export const HealthChecksSettings: React.NamedExoticComponent<HealthChecksSettin
           />
 
           <HealthChecksSettingsSpecialty
-            testsSettings={testsSettings}
-            setTestsSettings={setTestsSettings}
-          />
-
-          <HealthChecksSettingsAdvanced
             testsSettings={testsSettings}
             setTestsSettings={setTestsSettings}
           />

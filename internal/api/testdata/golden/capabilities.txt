@@ -603,41 +603,6 @@ body:
     "rateLimited": true
   },
   {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET"
-    ],
-    "path": "/api/v1/telemetry/health-checks/results"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET"
-    ],
-    "path": "/api/v1/telemetry/health-checks/history"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET"
-    ],
-    "path": "/api/v1/telemetry/health-checks/scores"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET"
-    ],
-    "path": "/api/v1/telemetry/health-checks/sla"
-  },
-  {
-    "maxBodyBytes": 262144,
-    "methods": [
-      "GET"
-    ],
-    "path": "/api/v1/telemetry/health-checks/alerts"
-  },
-  {
     "feature": "anomaly_detection",
     "maxBodyBytes": 262144,
     "methods": [
