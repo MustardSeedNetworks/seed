@@ -37,6 +37,8 @@ func defKeyForField(field string) string {
 		return DefUnreachable
 	case "latency_ms":
 		return DefHighLatency
+	case "cert_days_remaining":
+		return DefCertExpiry
 	default:
 		return DefThresholdBreach
 	}

@@ -181,60 +181,93 @@ func (e *Engine) emit(re ResultEvent) {
 
 // evaluateThresholds compares a Result against the Warning and
 // Critical threshold JSON on the Probe. Returns one Breach per
-// violated rule. V1.0 supports latency_ms thresholds; kind-specific
-// thresholds (cert days_remaining, BGP state, etc.) are added per-
-// checker in A1.4+ via custom JSON shapes the Checker reads
-// directly from p.Critical / p.Warning before returning Result.
+// violated rule. Two metrics are gated centrally today: latency_ms
+// (breach when actual EXCEEDS the bound — higher is worse) and
+// cert_days_remaining (breach when actual falls BELOW the bound —
+// fewer days is worse). The cert metric is read from
+// Result.Metadata.days_remaining, which only TLS-family checkers
+// publish, so it auto-scopes to cert-bearing probes. Further
+// kind-specific metrics (BGP state, etc.) add a field to
+// genericThreshold and a gate here as their checkers expose them.
 func evaluateThresholds(p Probe, r Result) []Breach {
 	var breaches []Breach
-	if warn := parseGenericThreshold(p.Warning); warn != nil {
-		if warn.LatencyMs > 0 && r.LatencyMs > warn.LatencyMs {
-			breaches = append(breaches, Breach{
-				ProbeID:   p.ID,
-				ClientID:  p.ClientID,
-				Severity:  "warning",
-				Field:     "latency_ms",
-				Threshold: warn.LatencyMs,
-				Actual:    r.LatencyMs,
-				Timestamp: r.Timestamp,
-			})
+	warn := parseGenericThreshold(p.Warning)
+	crit := parseGenericThreshold(p.Critical)
+
+	// latency_ms: breach when the measured value exceeds the bound.
+	if warn != nil && warn.LatencyMs > 0 && r.LatencyMs > warn.LatencyMs {
+		breaches = append(breaches, breachOf(p, r, "warning", "latency_ms", warn.LatencyMs, r.LatencyMs))
+	}
+	if crit != nil && crit.LatencyMs > 0 && r.LatencyMs > crit.LatencyMs {
+		breaches = append(breaches, breachOf(p, r, "critical", "latency_ms", crit.LatencyMs, r.LatencyMs))
+	}
+
+	// cert_days_remaining: breach when the certificate's remaining days
+	// fall below the bound (inverted from latency). Only evaluated when the
+	// probe published days_remaining in its metadata — a non-TLS probe has
+	// none and skips the gate.
+	if days, ok := certDaysRemaining(r); ok {
+		if warn != nil && warn.CertDaysRemaining > 0 && days < warn.CertDaysRemaining {
+			breaches = append(breaches, breachOf(p, r, "warning", "cert_days_remaining", warn.CertDaysRemaining, days))
+		}
+		if crit != nil && crit.CertDaysRemaining > 0 && days < crit.CertDaysRemaining {
+			breaches = append(breaches, breachOf(p, r, "critical", "cert_days_remaining", crit.CertDaysRemaining, days))
 		}
 	}
-	if crit := parseGenericThreshold(p.Critical); crit != nil {
-		if crit.LatencyMs > 0 && r.LatencyMs > crit.LatencyMs {
-			breaches = append(breaches, Breach{
-				ProbeID:   p.ID,
-				ClientID:  p.ClientID,
-				Severity:  "critical",
-				Field:     "latency_ms",
-				Threshold: crit.LatencyMs,
-				Actual:    r.LatencyMs,
-				Timestamp: r.Timestamp,
-			})
-		}
-	}
+
 	// Success=false always breaches at critical when no other
 	// threshold matched. Lets every probe at minimum surface "this
 	// failed" to the alerts pipeline.
 	if !r.Success && len(breaches) == 0 {
-		breaches = append(breaches, Breach{
-			ProbeID:   p.ID,
-			ClientID:  p.ClientID,
-			Severity:  "critical",
-			Field:     "success",
-			Threshold: true,
-			Actual:    false,
-			Timestamp: r.Timestamp,
-		})
+		breaches = append(breaches, breachOf(p, r, "critical", "success", true, false))
 	}
 	return breaches
 }
 
-// genericThreshold is the V1.0 base threshold shape. Checkers that
-// need kind-specific fields (e.g. cert_days_remaining for TLS)
-// embed this and add their own.
+// breachOf builds a Breach for a violated threshold, stamping the probe/client
+// identity and result timestamp shared by every breach. Threshold and actual are
+// any so each metric supplies its own value type (float latency, int days, bool
+// success).
+func breachOf(p Probe, r Result, severity, field string, threshold, actual any) Breach {
+	return Breach{
+		ProbeID:   p.ID,
+		ClientID:  p.ClientID,
+		Severity:  severity,
+		Field:     field,
+		Threshold: threshold,
+		Actual:    actual,
+		Timestamp: r.Timestamp,
+	}
+}
+
+// genericThreshold is the threshold shape parsed from a probe's Warning/Critical
+// JSON. Each field is one centrally-gated metric (see evaluateThresholds); a
+// zero value means that metric is unconfigured for this probe.
 type genericThreshold struct {
-	LatencyMs float64 `json:"latency_ms,omitempty"`
+	LatencyMs         float64 `json:"latency_ms,omitempty"`
+	CertDaysRemaining int     `json:"cert_days_remaining,omitempty"`
+}
+
+// certMetadata is the slice of a TLS-family probe's Result.Metadata the cert
+// gate reads. The JSON field name is the contract with the TLS checker's
+// TLSCertInfo (internal/probe/checkers); a pointer distinguishes "absent" (a
+// non-TLS probe) from a real zero/negative days-remaining (an expired cert).
+type certMetadata struct {
+	DaysRemaining *int `json:"days_remaining"`
+}
+
+// certDaysRemaining extracts the certificate days-remaining a TLS-family probe
+// publishes in Result.Metadata. The bool is false when the field is absent, so a
+// probe that does not report a certificate skips the cert gate entirely.
+func certDaysRemaining(r Result) (int, bool) {
+	if len(r.Metadata) == 0 {
+		return 0, false
+	}
+	var m certMetadata
+	if err := json.Unmarshal(r.Metadata, &m); err != nil || m.DaysRemaining == nil {
+		return 0, false
+	}
+	return *m.DaysRemaining, true
 }
 
 // parseGenericThreshold decodes a threshold JSON blob into the
