@@ -74,6 +74,25 @@ pattern the Wi-Fi visibility producer uses, applied to a push channel rather tha
   threshold shapes). `Breach.Field` selects the `defKey`; `Breach.Severity` overrides the catalog
   default; `Field`/`Threshold`/`Actual`/`Kind`/`Target` become the detection evidence.
 
+**As-built (2026-06-11) — cert-expiry is the first kind-specific threshold beyond latency/success.**
+Catalog growth must ship *with* a real breach-emission path (defs matching emitted breaches, not
+speculative stubs). The probe engine previously emitted only `success` (bool) and `latency_ms` (float)
+breaches; the TLS checker computed certificate days-remaining into `Result.Metadata.days_remaining` but
+never threshold-evaluated it. This slice closes that gap end-to-end:
+- `genericThreshold` gains `cert_days_remaining` (int) in the per-probe `Warning`/`Critical` JSON,
+  evaluated centrally in `evaluateThresholds` like `latency_ms` — but **inverted**: a breach fires when
+  remaining days fall *below* the bound (fewer is worse; a negative value is an already-expired cert).
+- The actual value is read from `Result.Metadata.days_remaining` via a pointer field, so "absent"
+  (a non-TLS probe) is distinct from a real zero/negative — the gate **auto-scopes** to cert-bearing
+  probes without the engine knowing about TLS. The JSON field name is the only coupling (the contract
+  with the checker's `TLSCertInfo`), kept in the shared `probe` package.
+- New `DefCertExpiry` (`probe-cert-expiry`, cites RFC 5280 §4.1.2.5) + a `defKeyForField` case for
+  `cert_days_remaining`. The generic `DefThresholdBreach` stays as the fallback for still-unmapped
+  fields (e.g. a future BGP state field). Severity stays **warning/critical** from the two thresholds —
+  cert-expiry is naturally two-tier, so `SeverityError` is not shoehorned in here (it remains for
+  genuinely error-tier defs as the catalog grows). DNS-failure and BGP defs remain deferred: no checker
+  emits a kind-specific breach for them yet.
+
 ### 3. Resolution is push-model TTL-on-silence
 
 Unlike the Wi-Fi producer, which re-snapshots the full live set each evaluation and prunes anything

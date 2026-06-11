@@ -17,8 +17,12 @@ const (
 	DefUnreachable = "probe-unreachable"
 	// DefHighLatency is a latency threshold breach (Breach.Field == "latency_ms").
 	DefHighLatency = "probe-high-latency"
+	// DefCertExpiry is a certificate nearing or past expiry (Breach.Field ==
+	// "cert_days_remaining"): a TLS-family probe's leaf certificate has fewer days
+	// left than the configured warning/critical bound.
+	DefCertExpiry = "probe-cert-expiry"
 	// DefThresholdBreach is the generic fallback for any other breached field a
-	// checker reports (cert days-remaining, BGP state, …) before that field has a
+	// checker reports (e.g. a future BGP state field) before that field has a
 	// dedicated def. It keeps a breach from being silently dropped.
 	DefThresholdBreach = "probe-threshold-breach"
 )
@@ -65,13 +69,31 @@ func Defs() []anomaly.Def {
 				"correlate with other probes sharing the path.",
 		},
 		{
+			ID:              DefCertExpiry,
+			Category:        anomaly.CategoryNetHealth,
+			DefaultSeverity: anomaly.SeverityWarning,
+			Standards:       []string{"RFC 5280 §4.1.2.5"},
+			Title:           "TLS certificate nearing expiry",
+			Description: "A TLS probe's leaf certificate has fewer days remaining than its " +
+				"configured warning or critical bound (a negative value means the certificate " +
+				"has already expired). The handshake still succeeds, so the target is reachable, " +
+				"but the certificate needs renewal.",
+			Impact: "Once the certificate expires, clients that validate it will refuse the " +
+				"connection, causing an outage of the service this probe checks. Renewing late " +
+				"risks the gap between expiry and replacement.",
+			Recommendation: "Renew or rotate the certificate before it expires. Confirm the " +
+				"automated renewal pipeline (for example ACME) is healthy, and check the " +
+				"certificate's issuer and chain in the anomaly evidence.",
+		},
+		{
 			ID:              DefThresholdBreach,
 			Category:        anomaly.CategoryNetHealth,
 			DefaultSeverity: anomaly.SeverityWarning,
 			Title:           "Monitored target threshold breach",
 			Description: "A scheduled probe reported a value outside its configured " +
-				"threshold for a check-specific field (for example a certificate's remaining " +
-				"days, or a protocol-state field). The exact field is in the anomaly evidence.",
+				"threshold for a check-specific field (for example a protocol-state field) " +
+				"that does not yet have a dedicated anomaly type. The exact field is in the " +
+				"anomaly evidence.",
 			Impact: "A monitored condition has crossed the operator's defined bound and " +
 				"needs attention before it escalates to an outage.",
 			Recommendation: "Read the breached field, threshold, and actual value in the " +

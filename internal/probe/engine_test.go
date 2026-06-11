@@ -176,6 +176,126 @@ func TestEngine_Thresholds_CriticalLatency(t *testing.T) {
 	}
 }
 
+// TestEngine_Thresholds_CertExpiry covers the certificate days-remaining gate.
+// Unlike latency (breach when actual exceeds the bound), cert-expiry breaches
+// when the remaining days fall BELOW the bound — fewer days is worse. The actual
+// value is read from Result.Metadata.days_remaining, which only TLS-family
+// checkers publish, so a probe without that metadata skips the gate entirely.
+func TestEngine_Thresholds_CertExpiry(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		metadata     string // Result.Metadata JSON ("" = none, e.g. a non-TLS probe)
+		warning      string // Probe.Warning JSON
+		critical     string // Probe.Critical JSON
+		wantBreaches int
+		wantSevs     []string // severities expected, any order
+	}{
+		{
+			name:         "below warning fires warning",
+			metadata:     `{"days_remaining": 20}`,
+			warning:      `{"cert_days_remaining": 30}`,
+			wantBreaches: 1,
+			wantSevs:     []string{"warning"},
+		},
+		{
+			name:         "below both fires warning and critical",
+			metadata:     `{"days_remaining": 3}`,
+			warning:      `{"cert_days_remaining": 30}`,
+			critical:     `{"cert_days_remaining": 7}`,
+			wantBreaches: 2,
+			wantSevs:     []string{"warning", "critical"},
+		},
+		{
+			name:         "expired cert (negative days) fires critical",
+			metadata:     `{"days_remaining": -5}`,
+			critical:     `{"cert_days_remaining": 7}`,
+			wantBreaches: 1,
+			wantSevs:     []string{"critical"},
+		},
+		{
+			name:         "healthy cert above threshold does not breach",
+			metadata:     `{"days_remaining": 90}`,
+			warning:      `{"cert_days_remaining": 30}`,
+			wantBreaches: 0,
+		},
+		{
+			name:         "no cert metadata skips the gate",
+			metadata:     "",
+			warning:      `{"cert_days_remaining": 30}`,
+			wantBreaches: 0,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			e := probe.NewEngine(silentLogger())
+			e.RegisterChecker(&fakeChecker{
+				kind: "tls",
+				result: probe.Result{
+					Success:  true, // a TLS handshake to an expiring cert still succeeds
+					Metadata: rawOrNil(tc.metadata),
+				},
+			})
+			sub := e.Subscribe()
+
+			p := probe.Probe{
+				ID:       "p-1",
+				Kind:     "tls",
+				Warning:  rawOrNil(tc.warning),
+				Critical: rawOrNil(tc.critical),
+			}
+			e.RunDefinition(context.Background(), p)
+
+			evt := waitForEvent(t, sub)
+			if len(evt.Breaches) != tc.wantBreaches {
+				t.Fatalf("got %d breaches, want %d: %+v", len(evt.Breaches), tc.wantBreaches, evt.Breaches)
+			}
+			gotSevs := certBreachSeverities(t, evt.Breaches)
+			for _, want := range tc.wantSevs {
+				if !gotSevs[want] {
+					t.Errorf("missing %q breach; got %v", want, gotSevs)
+				}
+			}
+		})
+	}
+}
+
+// waitForEvent reads one ResultEvent from sub or fails after a timeout.
+func waitForEvent(t *testing.T, sub <-chan probe.ResultEvent) probe.ResultEvent {
+	t.Helper()
+	select {
+	case evt := <-sub:
+		return evt
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for event")
+		return probe.ResultEvent{}
+	}
+}
+
+// certBreachSeverities asserts every breach is on the cert field and returns the
+// set of severities seen, so a test can check which thresholds fired.
+func certBreachSeverities(t *testing.T, breaches []probe.Breach) map[string]bool {
+	t.Helper()
+	sevs := map[string]bool{}
+	for _, b := range breaches {
+		if b.Field != "cert_days_remaining" {
+			t.Errorf("Breach.Field = %q, want %q", b.Field, "cert_days_remaining")
+		}
+		sevs[b.Severity] = true
+	}
+	return sevs
+}
+
+// rawOrNil returns nil for an empty string so a test case can express "no JSON
+// configured" distinctly from an empty object.
+func rawOrNil(s string) json.RawMessage {
+	if s == "" {
+		return nil
+	}
+	return json.RawMessage(s)
+}
+
 func TestEngine_FailedProbe_AlwaysBreaches(t *testing.T) {
 	t.Parallel()
 	e := probe.NewEngine(silentLogger())

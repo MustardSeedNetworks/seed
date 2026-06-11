@@ -19,6 +19,7 @@ func TestCatalogBuildsAndCoversMappedDefs(t *testing.T) {
 	for _, id := range []string{
 		probeanomaly.DefUnreachable,
 		probeanomaly.DefHighLatency,
+		probeanomaly.DefCertExpiry,
 		probeanomaly.DefThresholdBreach,
 	} {
 		if _, ok := cat.Lookup(id); !ok {
@@ -70,20 +71,36 @@ func TestDetectionsMapsBreaches(t *testing.T) {
 			wantDef: probeanomaly.DefUnreachable, wantSev: anomaly.SeverityCritical, wantSubID: "p2",
 		},
 		{
-			name: "unknown field -> generic threshold breach",
+			name: "cert days-remaining breach -> cert-expiry",
 			event: probe.ResultEvent{
 				Result: probe.Result{ProbeID: "p3", Kind: "tls"},
 				Breaches: []probe.Breach{
 					{
 						ProbeID:   "p3",
-						Severity:  "warning",
+						Severity:  "critical",
 						Field:     "cert_days_remaining",
-						Threshold: 14,
+						Threshold: 7,
 						Actual:    3,
 					},
 				},
 			},
-			wantDef: probeanomaly.DefThresholdBreach, wantSev: anomaly.SeverityWarning, wantSubID: "p3",
+			wantDef: probeanomaly.DefCertExpiry, wantSev: anomaly.SeverityCritical, wantSubID: "p3",
+		},
+		{
+			name: "still-unmapped field -> generic threshold breach",
+			event: probe.ResultEvent{
+				Result: probe.Result{ProbeID: "p4", Kind: "bgp"},
+				Breaches: []probe.Breach{
+					{
+						ProbeID:   "p4",
+						Severity:  "warning",
+						Field:     "bgp_state",
+						Threshold: "established",
+						Actual:    "idle",
+					},
+				},
+			},
+			wantDef: probeanomaly.DefThresholdBreach, wantSev: anomaly.SeverityWarning, wantSubID: "p4",
 		},
 	}
 
