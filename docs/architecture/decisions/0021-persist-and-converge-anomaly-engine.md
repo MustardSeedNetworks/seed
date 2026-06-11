@@ -167,3 +167,26 @@ Critical`) refines ADR-0011's three levels and is a **separate, additive change*
 adding `Error` later needs no schema change. Subsequent phases (per the Consequences list): load-on-
 start + TTL/rollup retention; health-source convergence + delete the bespoke detector; repoint the
 monitoring/Wi-Fi/Survey readers; catalog growth as each source lands.
+
+**Phase 2 (as-built) — resolved-anomaly TTL purge, live.** `AnomalyRepository.DeleteResolvedOlderThan`
+deletes `is_resolved = 1 AND resolved_at < cutoff` and is wired as a `RetentionPolicy` task
+(`AnomalyResolvedDays`, default 90) into the existing periodic `DB.RunCleanup` maintenance loop —
+so the "keep active forever, age out resolved at 90d" decision is enforced in production now, bounding
+table growth on appliances. Active rows are structurally safe (their `resolved_at` is NULL, so the
+predicate never matches them). Two items the original phase-2 sketch bundled were **re-sequenced**,
+deliberately:
+- **Daily rollups → deferred (own design pass).** The `timeseries/retention.RollupSource` framework
+  is a poor fit for mutable anomaly *instances* (its `PurgeRaw(cutoff)` would age out active rows, and
+  its 7-day raw floor / hourly tier don't apply). The legacy health-style rollup is the right model,
+  but health's own `CreateDailyRollup` has no scheduled caller today — rollups need a dedicated
+  design that doesn't copy that latent gap. The TTL purge already delivers the growth-bounding win;
+  rollups are long-term history, separable.
+- **Load-on-start → folded into the producer phase.** Repopulating the in-memory engine from
+  `LoadActive` is only meaningful once a long-lived, server-owned `Coordinator` exists (the per-request
+  Wi-Fi engines are transient). Persistence already satisfies the "anomalies survive restart" *query*
+  promise; engine count/escalation *continuity* is secondary, so load-on-start lands with the server
+  Coordinator + producers rather than in isolation. **Note for that phase:** persisted `severity` is
+  the effective (post-escalation) value; on reload the engine seeds `baseSeverity` from it, which can
+  let an already-escalated instance bump one further level on continued recurrence after a restart — an
+  accepted, bounded artifact (a persistent cross-restart problem reading as more urgent), not a second
+  stored column.

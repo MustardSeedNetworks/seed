@@ -12,7 +12,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/database"
 )
 
-func setupAnomalyTest(t *testing.T) (*database.AnomalyRepository, context.Context) {
+func setupAnomalyDB(t *testing.T) (*database.DB, context.Context) {
 	t.Helper()
 	tmpFile, err := os.CreateTemp(t.TempDir(), "seed-anomalies-*.db")
 	if err != nil {
@@ -27,7 +27,13 @@ func setupAnomalyTest(t *testing.T) (*database.AnomalyRepository, context.Contex
 		t.Fatalf("open db: %v", openErr)
 	}
 	t.Cleanup(func() { _ = db.Close() })
-	return db.Anomalies(), context.Background()
+	return db, context.Background()
+}
+
+func setupAnomalyTest(t *testing.T) (*database.AnomalyRepository, context.Context) {
+	t.Helper()
+	db, ctx := setupAnomalyDB(t)
+	return db.Anomalies(), ctx
 }
 
 func sampleRecord(id string) anomaly.Record {
@@ -186,5 +192,90 @@ func TestAnomalyEmptyBatchesAreNoops(t *testing.T) {
 	}
 	if len(active) != 0 {
 		t.Errorf("empty store returned %d records", len(active))
+	}
+}
+
+// TestAnomalyDeleteResolvedOlderThan asserts the TTL purge removes only resolved
+// instances past the cutoff, never active ones (ADR-0021 retention).
+func TestAnomalyDeleteResolvedOlderThan(t *testing.T) {
+	t.Parallel()
+	repo, ctx := setupAnomalyTest(t)
+
+	for _, id := range []string{"old-resolved", "recent-resolved", "active"} {
+		if err := repo.Upsert(ctx, []anomaly.Record{sampleRecord(id)}); err != nil {
+			t.Fatalf("Upsert %q: %v", id, err)
+		}
+	}
+	now := time.Date(2026, 6, 11, 12, 0, 0, 0, time.UTC)
+	// old-resolved cleared 100d ago; recent-resolved cleared 1d ago; active stays open.
+	if err := repo.MarkResolved(ctx, []string{"old-resolved"}, now.AddDate(0, 0, -100)); err != nil {
+		t.Fatalf("MarkResolved old: %v", err)
+	}
+	if err := repo.MarkResolved(ctx, []string{"recent-resolved"}, now.AddDate(0, 0, -1)); err != nil {
+		t.Fatalf("MarkResolved recent: %v", err)
+	}
+
+	// Purge resolved older than 90d: only old-resolved qualifies.
+	cutoff := now.AddDate(0, 0, -90)
+	deleted, err := repo.DeleteResolvedOlderThan(ctx, cutoff)
+	if err != nil {
+		t.Fatalf("DeleteResolvedOlderThan: %v", err)
+	}
+	if deleted != 1 {
+		t.Fatalf("deleted = %d, want 1 (only old-resolved)", deleted)
+	}
+
+	// active is untouched and still loadable.
+	active, err := repo.LoadActive(ctx)
+	if err != nil {
+		t.Fatalf("LoadActive: %v", err)
+	}
+	if len(active) != 1 || active[0].ID != "active" {
+		t.Fatalf("active set = %+v, want only 'active'", active)
+	}
+
+	// recent-resolved survived the first purge; a purge at `now` removes it,
+	// proving it was still present (not collaterally deleted).
+	deleted2, err := repo.DeleteResolvedOlderThan(ctx, now)
+	if err != nil {
+		t.Fatalf("second DeleteResolvedOlderThan: %v", err)
+	}
+	if deleted2 != 1 {
+		t.Errorf("second purge deleted = %d, want 1 (recent-resolved)", deleted2)
+	}
+}
+
+// TestRunCleanupPurgesResolvedAnomalies proves the retention task is wired into
+// RunCleanup: a resolved anomaly past the window is reported deleted while an
+// active one survives.
+func TestRunCleanupPurgesResolvedAnomalies(t *testing.T) {
+	t.Parallel()
+	db, ctx := setupAnomalyDB(t)
+	repo := db.Anomalies()
+
+	for _, id := range []string{"stale-resolved", "open"} {
+		if err := repo.Upsert(ctx, []anomaly.Record{sampleRecord(id)}); err != nil {
+			t.Fatalf("Upsert %q: %v", id, err)
+		}
+	}
+	// Resolve one well beyond the 90d window (relative to now, since RunCleanup
+	// computes its cutoff from time.Now).
+	if err := repo.MarkResolved(ctx, []string{"stale-resolved"}, time.Now().UTC().AddDate(0, 0, -120)); err != nil {
+		t.Fatalf("MarkResolved: %v", err)
+	}
+
+	result, err := db.RunCleanup(ctx, database.RetentionPolicy{AnomalyResolvedDays: 90})
+	if err != nil {
+		t.Fatalf("RunCleanup: %v", err)
+	}
+	if result.AnomaliesResolvedDeleted != 1 {
+		t.Errorf("AnomaliesResolvedDeleted = %d, want 1", result.AnomaliesResolvedDeleted)
+	}
+	active, err := repo.LoadActive(ctx)
+	if err != nil {
+		t.Fatalf("LoadActive: %v", err)
+	}
+	if len(active) != 1 || active[0].ID != "open" {
+		t.Errorf("active set = %+v, want only 'open'", active)
 	}
 }
