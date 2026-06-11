@@ -26,6 +26,9 @@ func newProfilesTestServer(t *testing.T) (*Server, *database.DB) {
 	s := &Server{services: NewServiceContainer()}
 	s.services.Database.DB = db
 	s.profiles = app.NewProfiles(s.db)
+	// Wire the identity use-cases (ADR-0024) so writeGated→requireRole→callerRole
+	// resolves through the repository port instead of nil-panicking.
+	s.initIdentityUseCases()
 	return s, db
 }
 

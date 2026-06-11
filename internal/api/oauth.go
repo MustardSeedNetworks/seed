@@ -13,6 +13,7 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/config"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 	"github.com/MustardSeedNetworks/seed/internal/oauth"
 )
@@ -323,21 +324,19 @@ func (s *Server) completeOAuthLogin(
 	providerName string,
 	logger *slog.Logger,
 ) bool {
-	db := s.services.Database.DB
-	if db == nil {
-		logger.ErrorContext(r.Context(), "SSO callback: database unavailable for user upsert",
-			"provider", providerName, "email", userInfo.Email)
-		s.redirectWithError(w, r, "User store unavailable.")
-		return false
-	}
-
-	user, err := db.UpsertSSOUser(r.Context(), database.SSOUserInput{
+	user, err := s.identityOAuth.SyncUser(r.Context(), database.SSOUserInput{
 		Provider:    providerName,
 		ExternalID:  userInfo.ID,
 		Email:       userInfo.Email,
 		DisplayName: userInfo.Name,
 	})
 	if err != nil {
+		if errors.Is(err, ssosync.ErrUnavailable) {
+			logger.ErrorContext(r.Context(), "SSO callback: database unavailable for user upsert",
+				"provider", providerName, "email", userInfo.Email)
+			s.redirectWithError(w, r, "User store unavailable.")
+			return false
+		}
 		logger.ErrorContext(r.Context(), "SSO callback: UpsertSSOUser failed",
 			"provider", providerName, "email", userInfo.Email, "error", err)
 		s.redirectWithError(w, r, "Could not create your user record. Contact your administrator.")

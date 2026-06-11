@@ -35,6 +35,9 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
 	"github.com/MustardSeedNetworks/seed/internal/health"
 	"github.com/MustardSeedNetworks/seed/internal/health/monitoring"
+	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
+	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
+	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	listenersink "github.com/MustardSeedNetworks/seed/internal/listener/sink"
 	"github.com/MustardSeedNetworks/seed/internal/listener/snmptrap"
@@ -152,6 +155,9 @@ type Server struct {
 	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	updateLifecycle    *lifecycle.Service          // Update-lifecycle use-case (ADR-0020)
+	identityUsers      *users.Service              // User-management use-case (ADR-0020, ADR-0024)
+	identityTokens     *tokens.Service             // PAT mint/list/revoke use-case (ADR-0020, ADR-0024)
+	identityOAuth      *ssosync.Service            // SSO identity-sync use-case (ADR-0020, ADR-0024)
 	tlsFingerprint     tlsFingerprintCache         // Cached SHA-256 fingerprint of the active TLS cert, exposed via /__version
 }
 
@@ -763,27 +769,29 @@ func (s *Server) bluetoothScanner() *enumerate.BluetoothScanner {
 func (s *Server) vulnScanner() *vuln.VulnerabilityScanner {
 	return s.services.Discovery.Vulnerability
 }
-func (s *Server) dnsTester() *dns.Tester                   { return s.services.Diagnostics.DNS }
-func (s *Server) dnsSecurityScanner() *dns.SecurityScanner { return s.services.Diagnostics.DNSSecurity }
-func (s *Server) dhcpMonitor() *dhcp.Monitor               { return s.services.Diagnostics.DHCP }
-func (s *Server) rogueDetector() *dhcp.RogueDetector       { return s.services.Diagnostics.RogueDetector }
-func (s *Server) gatewayTester() *gateway.Tester           { return s.services.Diagnostics.Gateway }
-func (s *Server) vlanManager() *vlan.Manager               { return s.services.Diagnostics.VLAN }
-func (s *Server) vlanTrafficMonitor() *vlan.TrafficMonitor { return s.services.Diagnostics.VLANTraffic }
-func (s *Server) speedtestTester() *speedtest.Tester       { return s.services.Diagnostics.Speedtest }
-func (s *Server) iperfManager() *iperf.Manager             { return s.services.Diagnostics.Iperf }
-func (s *Server) cableTester() *cable.Tester               { return s.services.Diagnostics.Cable }
-func (s *Server) publicipChecker() *publicip.Checker       { return s.services.Diagnostics.PublicIP }
-func (s *Server) wifiManager() *wifi.Manager               { return s.services.Wireless.WiFi }
-func (s *Server) wifiScanner() *wifi.Scanner               { return s.services.Wireless.Scanner }
-func (s *Server) surveyManager() *survey.Manager           { return s.services.Wireless.Survey }
-func (s *Server) sseHub() *SSEHub                          { return s.services.RealTime.SSEHub }
-func (s *Server) logBroadcaster() *logging.LogBroadcaster  { return s.services.RealTime.LogBroadcaster }
-func (s *Server) eventBus() *events.Bus                    { return s.services.RealTime.EventBus }
-func (s *Server) jobsRunner() *jobs.Runner                 { return s.services.RealTime.Jobs }
-func (s *Server) jobIdempotency() jobIdempotencyStore      { return s.services.RealTime.JobIdempotency }
-func (s *Server) db() *database.DB                         { return s.services.Database.DB }
-func (s *Server) updateService() *update.Service           { return s.services.Update }
+func (s *Server) dnsTester() *dns.Tester                     { return s.services.Diagnostics.DNS }
+func (s *Server) dnsSecurityScanner() *dns.SecurityScanner   { return s.services.Diagnostics.DNSSecurity }
+func (s *Server) dhcpMonitor() *dhcp.Monitor                 { return s.services.Diagnostics.DHCP }
+func (s *Server) rogueDetector() *dhcp.RogueDetector         { return s.services.Diagnostics.RogueDetector }
+func (s *Server) gatewayTester() *gateway.Tester             { return s.services.Diagnostics.Gateway }
+func (s *Server) vlanManager() *vlan.Manager                 { return s.services.Diagnostics.VLAN }
+func (s *Server) vlanTrafficMonitor() *vlan.TrafficMonitor   { return s.services.Diagnostics.VLANTraffic }
+func (s *Server) speedtestTester() *speedtest.Tester         { return s.services.Diagnostics.Speedtest }
+func (s *Server) iperfManager() *iperf.Manager               { return s.services.Diagnostics.Iperf }
+func (s *Server) cableTester() *cable.Tester                 { return s.services.Diagnostics.Cable }
+func (s *Server) publicipChecker() *publicip.Checker         { return s.services.Diagnostics.PublicIP }
+func (s *Server) wifiManager() *wifi.Manager                 { return s.services.Wireless.WiFi }
+func (s *Server) wifiScanner() *wifi.Scanner                 { return s.services.Wireless.Scanner }
+func (s *Server) surveyManager() *survey.Manager             { return s.services.Wireless.Survey }
+func (s *Server) sseHub() *SSEHub                            { return s.services.RealTime.SSEHub }
+func (s *Server) logBroadcaster() *logging.LogBroadcaster    { return s.services.RealTime.LogBroadcaster }
+func (s *Server) eventBus() *events.Bus                      { return s.services.RealTime.EventBus }
+func (s *Server) jobsRunner() *jobs.Runner                   { return s.services.RealTime.Jobs }
+func (s *Server) jobIdempotency() jobIdempotencyStore        { return s.services.RealTime.JobIdempotency }
+func (s *Server) db() *database.DB                           { return s.services.Database.DB }
+func (s *Server) apiTokenRepo() *database.APITokenRepository { return s.services.Auth.APITokens }
+func (s *Server) licenseManager() *license.Manager           { return s.services.Auth.License }
+func (s *Server) updateService() *update.Service             { return s.services.Update }
 
 // initWiFiUseCases wires the Wi-Fi troubleshooting use-cases (ADR-0020) from the
 // composition root: the visibility-read, management, and discovery use-cases over
@@ -827,13 +835,25 @@ func (s *Server) initUpdateUseCases() {
 	s.updateLifecycle = app.NewUpdateLifecycle(s.updateService)
 }
 
+// initIdentityUseCases wires the identity use-cases (ADR-0020, ADR-0024) from
+// the composition root over the server's lazy accessors for the database, the
+// token repository, and the license manager, so a nil or later-set collaborator
+// (the api test harness) is honored.
+func (s *Server) initIdentityUseCases() {
+	s.identityUsers = app.NewIdentityUsers(s.db)
+	s.identityTokens = app.NewIdentityTokens(s.apiTokenRepo, s.licenseManager)
+	s.identityOAuth = app.NewIdentityOAuth(s.db)
+}
+
 // initUseCases wires the ADR-0020 application use-cases that depend on the
-// discovery components existing: troubleshooting + discovery + health + update.
+// discovery components existing: troubleshooting + discovery + health + update +
+// identity.
 func (s *Server) initUseCases() {
 	s.initWiFiUseCases()
 	s.initDiscoveryUseCases()
 	s.initHealthUseCases()
 	s.initUpdateUseCases()
+	s.initIdentityUseCases()
 }
 
 // webAuthnConfigFromServer derives the relying-party config for the

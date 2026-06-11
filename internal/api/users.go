@@ -2,12 +2,15 @@
 
 package api
 
-// handlers_users.go implements the Settings → Users CRUD surface added
-// for seed#1191 (multi_user). The endpoints are admin-only except for
-// the self-password change path (operators and viewers may rotate their
-// own password). Creating users is Pro-gated via requireFeature; all
-// other operations are available on any tier so a Pro→Free downgrade
-// doesn't render the existing users unmanageable.
+// users.go implements the Settings → Users CRUD surface added for seed#1191
+// (multi_user). The endpoints are admin-only except for the self-password
+// change path (operators and viewers may rotate their own password). Creating
+// users is Pro-gated via requireFeature; all other operations are available on
+// any tier so a Pro→Free downgrade doesn't render the existing users
+// unmanageable.
+//
+// All user-store access goes through s.identityUsers (the use-case, ADR-0024).
+// No raw s.services.Database.DB references remain in this file.
 
 import (
 	"errors"
@@ -17,6 +20,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/auth"
 	"github.com/MustardSeedNetworks/seed/internal/database"
+	"github.com/MustardSeedNetworks/seed/internal/identity/users"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
 
@@ -119,19 +123,18 @@ func (s *Server) handleUsersList(w http.ResponseWriter, r *http.Request) {
 	if !s.requireAdmin(w, r) {
 		return
 	}
-	db := s.services.Database.DB
-	if db == nil {
-		writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
-		return
-	}
-	users, err := db.ListUsers(r.Context())
+	list, err := s.identityUsers.List(r.Context())
 	if err != nil {
+		if errors.Is(err, users.ErrUnavailable) {
+			writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
+			return
+		}
 		logging.FromContext(r.Context()).ErrorContext(r.Context(), "list users failed", "error", err)
 		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to list users")
 		return
 	}
-	resp := make([]UserResponse, 0, len(users))
-	for _, u := range users {
+	resp := make([]UserResponse, 0, len(list))
+	for _, u := range list {
 		resp = append(resp, toUserResponse(u))
 	}
 	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, resp)
@@ -183,19 +186,17 @@ func (s *Server) handleUserCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db := s.services.Database.DB
-	if db == nil {
-		writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
-		return
-	}
-	user, err := db.CreateUser(r.Context(), req.Username, hash, req.Role)
+	user, err := s.identityUsers.Create(r.Context(), req.Username, hash, req.Role)
 	if err != nil {
-		if errors.Is(err, database.ErrUserExists) {
+		switch {
+		case errors.Is(err, users.ErrUnavailable):
+			writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
+		case errors.Is(err, database.ErrUserExists):
 			writeAPITokenError(w, r, http.StatusConflict, "USER_EXISTS", "Username already in use")
-			return
+		default:
+			logging.FromContext(r.Context()).ErrorContext(r.Context(), "create user failed", "error", err)
+			writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to create user")
 		}
-		logging.FromContext(r.Context()).ErrorContext(r.Context(), "create user failed", "error", err)
-		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to create user")
 		return
 	}
 
@@ -217,18 +218,16 @@ func (s *Server) handleUserGet(w http.ResponseWriter, r *http.Request, target st
 		writeAPITokenError(w, r, http.StatusForbidden, ErrCodeForbidden, "Admin role required")
 		return
 	}
-	db := s.services.Database.DB
-	if db == nil {
-		writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
-		return
-	}
-	user, err := db.GetUser(r.Context(), target)
+	user, err := s.identityUsers.Get(r.Context(), target)
 	if err != nil {
-		if errors.Is(err, database.ErrUserNotFound) {
+		switch {
+		case errors.Is(err, users.ErrUnavailable):
+			writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
+		case errors.Is(err, database.ErrUserNotFound):
 			writeAPITokenError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
-			return
+		default:
+			writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to fetch user")
 		}
-		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to fetch user")
 		return
 	}
 	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, toUserResponse(user))
@@ -249,23 +248,27 @@ func (s *Server) handleUserUpdate(w http.ResponseWriter, r *http.Request, target
 		return
 	}
 
-	db := s.services.Database.DB
-	if db == nil {
-		writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
+	// Pre-check availability before any mutation so the 503 precedes
+	// partial-update confusion when the store is nil.
+	if _, checkErr := s.identityUsers.Get(r.Context(), target); checkErr != nil {
+		if errors.Is(checkErr, users.ErrUnavailable) {
+			writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
+			return
+		}
+		// ErrUserNotFound and other errors propagate from the mutation helpers below.
+	}
+
+	if req.Password != "" && !s.applyPasswordUpdate(w, r, target, req.Password) {
+		return
+	}
+	if req.Role != "" && !s.applyRoleUpdate(w, r, target, req.Role) {
+		return
+	}
+	if req.IsActive != nil && !*req.IsActive && !s.applyDeactivation(w, r, caller, target) {
 		return
 	}
 
-	if req.Password != "" && !s.applyPasswordUpdate(w, r, db, target, req.Password) {
-		return
-	}
-	if req.Role != "" && !s.applyRoleUpdate(w, r, db, target, req.Role) {
-		return
-	}
-	if req.IsActive != nil && !*req.IsActive && !s.applyDeactivation(w, r, db, caller, target) {
-		return
-	}
-
-	updated, err := db.GetUser(r.Context(), target)
+	updated, err := s.identityUsers.Get(r.Context(), target)
 	if err != nil {
 		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to reload user")
 		return
@@ -293,10 +296,10 @@ func (s *Server) checkUserUpdateAuthorization(
 	return true
 }
 
-// applyPasswordUpdate validates strength, hashes, and persists. Returns
-// false (and writes the error response) on any failure.
+// applyPasswordUpdate validates strength, hashes, and persists via the
+// use-case. Returns false (and writes the error response) on any failure.
 func (s *Server) applyPasswordUpdate(
-	w http.ResponseWriter, r *http.Request, db *database.DB, target, password string,
+	w http.ResponseWriter, r *http.Request, target, password string,
 ) bool {
 	if err := auth.ValidatePasswordStrength(password); err != nil {
 		writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeValidation, err.Error())
@@ -307,7 +310,7 @@ func (s *Server) applyPasswordUpdate(
 		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal, "Failed to hash password")
 		return false
 	}
-	if updErr := db.UpdateUserPassword(r.Context(), target, hash); updErr != nil {
+	if updErr := s.identityUsers.UpdatePassword(r.Context(), target, hash); updErr != nil {
 		if errors.Is(updErr, database.ErrUserNotFound) {
 			writeAPITokenError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
 			return false
@@ -319,14 +322,14 @@ func (s *Server) applyPasswordUpdate(
 }
 
 func (s *Server) applyRoleUpdate(
-	w http.ResponseWriter, r *http.Request, db *database.DB, target, role string,
+	w http.ResponseWriter, r *http.Request, target, role string,
 ) bool {
 	if !database.IsValidRole(role) {
 		writeAPITokenError(w, r, http.StatusBadRequest, ErrCodeValidation,
 			"role must be one of: admin, operator, viewer")
 		return false
 	}
-	err := db.UpdateUserRole(r.Context(), target, role)
+	err := s.identityUsers.UpdateRole(r.Context(), target, role)
 	if err == nil {
 		return true
 	}
@@ -342,14 +345,14 @@ func (s *Server) applyRoleUpdate(
 }
 
 func (s *Server) applyDeactivation(
-	w http.ResponseWriter, r *http.Request, db *database.DB, caller, target string,
+	w http.ResponseWriter, r *http.Request, caller, target string,
 ) bool {
 	if caller == target {
 		writeAPITokenError(w, r, http.StatusConflict, "SELF_DEACTIVATE",
 			"You cannot deactivate your own account")
 		return false
 	}
-	if err := db.DeactivateUser(r.Context(), target); err != nil {
+	if err := s.identityUsers.Deactivate(r.Context(), target); err != nil {
 		if errors.Is(err, database.ErrUserNotFound) {
 			writeAPITokenError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
 			return false
@@ -369,13 +372,10 @@ func (s *Server) handleUserDelete(w http.ResponseWriter, r *http.Request, target
 		writeAPITokenError(w, r, http.StatusConflict, "SELF_DELETE", "You cannot delete your own account")
 		return
 	}
-	db := s.services.Database.DB
-	if db == nil {
-		writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
-		return
-	}
-	if err := db.DeleteUser(r.Context(), target); err != nil {
+	if err := s.identityUsers.Delete(r.Context(), target); err != nil {
 		switch {
+		case errors.Is(err, users.ErrUnavailable):
+			writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail, "User store unavailable")
 		case errors.Is(err, database.ErrUserNotFound):
 			writeAPITokenError(w, r, http.StatusNotFound, ErrCodeNotFound, "User not found")
 		case errors.Is(err, database.ErrLastAdmin):
@@ -411,22 +411,31 @@ func (s *Server) requireAdmin(w http.ResponseWriter, r *http.Request) bool {
 // When no user DB is configured (single-user/env mode) it returns
 // admin/true: the lone env-configured operator is implicitly admin, which
 // keeps single-user dev builds fully usable.
+//
+// The user lookup goes through the identityUsers use-case (ADR-0024):
+// users.ErrUnavailable maps to the existing "no DB = admin" dev tolerance;
+// all other errors (not-found, inactive) return ("", false).
 func (s *Server) callerRole(r *http.Request) (string, bool) {
-	db := s.services.Database.DB
 	caller := usernameFromContext(r)
-	// No user DB attached = no multi-user authorization model in effect,
-	// so the gate has nothing to enforce — treat the request as admin.
-	// Production single-user still gets X-Username from the auth
-	// middleware, so this branch only fires in test/dev contexts that
-	// reach the mux without auth middleware, matching the long-standing
-	// callerIsAdmin "no DB = admin" tolerance.
-	if db == nil {
+	// No user use-case wired = no multi-user authorization model in effect
+	// (the use-case is always wired in production via initUseCases; this only
+	// fires in bare-server unit tests), so the gate has nothing to enforce —
+	// treat the request as admin. This preserves the long-standing
+	// callerIsAdmin "no user store = admin" tolerance from the pre-strangle
+	// `s.services.Database.DB == nil` branch.
+	if s.identityUsers == nil {
+		return database.RoleAdmin, true
+	}
+	// Production single-user still gets X-Username from the auth middleware,
+	// so a wired use-case with a nil underlying store (ErrUnavailable) keeps
+	// the same admin tolerance.
+	u, err := s.identityUsers.Get(r.Context(), caller)
+	if errors.Is(err, users.ErrUnavailable) {
 		return database.RoleAdmin, true
 	}
 	if caller == "" {
 		return "", false
 	}
-	u, err := db.GetUser(r.Context(), caller)
 	if err != nil || !u.IsActive {
 		return "", false
 	}
