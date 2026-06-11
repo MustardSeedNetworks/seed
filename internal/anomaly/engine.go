@@ -269,16 +269,24 @@ func (e *Engine) Snapshot() []Anomaly {
 	for _, t := range e.active {
 		out = append(out, e.project(t))
 	}
-	sort.Slice(out, func(i, j int) bool {
-		if ri, rj := out[i].Severity.rank(), out[j].Severity.rank(); ri != rj {
+	SortAnomalies(out)
+	return out
+}
+
+// SortAnomalies orders anomalies canonically in place: most-urgent severity
+// first, then defKey, then subject id. It is the single stable ordering shared by
+// the engine's live Snapshot and by store-backed reads (ADR-0021 §4), so the API
+// presents the same order whether anomalies come from memory or SQL.
+func SortAnomalies(a []Anomaly) {
+	sort.Slice(a, func(i, j int) bool {
+		if ri, rj := a[i].Severity.rank(), a[j].Severity.rank(); ri != rj {
 			return ri > rj // most urgent first
 		}
-		if out[i].DefKey != out[j].DefKey {
-			return out[i].DefKey < out[j].DefKey
+		if a[i].DefKey != a[j].DefKey {
+			return a[i].DefKey < a[j].DefKey
 		}
-		return out[i].Subject.ID < out[j].Subject.ID
+		return a[i].Subject.ID < a[j].Subject.ID
 	})
-	return out
 }
 
 // projectFollowUps degrades an "auto" follow-up to a prompt when its required

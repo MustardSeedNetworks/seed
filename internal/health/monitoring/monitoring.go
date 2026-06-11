@@ -4,8 +4,8 @@
 // the latest check results and their history, computing endpoint health scores,
 // reporting SLA compliance, surfacing active alerts (and acknowledging them),
 // and reporting detected anomalies — behind narrow consumer-defined ports over
-// the persistence repository, scorer, SLA tracker, alert manager, and anomaly
-// detector. Handlers keep transport concerns: request decode, query-parameter
+// the persistence repository, scorer, SLA tracker, alert manager, and the
+// unified anomaly store (ADR-0021). Handlers keep transport concerns: request decode, query-parameter
 // parsing, response shaping, and error-to-status mapping. The adapters
 // satisfying the ports live in the composition root (internal/app) and resolve
 // each collaborator lazily, so a nil collaborator degrades the relevant method
@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/health"
 )
@@ -112,11 +113,14 @@ type AlertReader interface {
 	Acknowledge(alertID, acknowledgedBy string) bool
 }
 
-// AnomalyReader is the anomaly-detection surface the use-case reads.
+// AnomalyReader is the anomaly surface the use-case reads. It reads the
+// source=health slice of the unified anomaly store (ADR-0021) — the bespoke
+// per-endpoint statistical detector this seam used to front was deleted when
+// health converged on the single engine, so there are no longer per-endpoint
+// rolling statistics to expose.
 type AnomalyReader interface {
 	Available() bool
-	ActiveAnomalies() []*health.Anomaly
-	AllStats() map[string]*health.EndpointStats
+	ActiveAnomalies(ctx context.Context) ([]anomaly.Anomaly, error)
 }
 
 // Service is the health-monitoring use-case.
@@ -312,39 +316,32 @@ func (s *Service) AcknowledgeAlert(alertID, acknowledgedBy string) error {
 }
 
 // Anomalies is the use-case read model for detected anomalies: the (optionally
-// endpoint-filtered) anomaly list, the total active count across all endpoints,
-// and, when requested, per-endpoint statistics (also endpoint-filtered).
+// endpoint-filtered) anomaly list and the total active count across all subjects.
 type Anomalies struct {
-	Anomalies   []*health.Anomaly
+	Anomalies   []anomaly.Anomaly
 	ActiveCount int
-	Stats       []*health.EndpointStats
 }
 
-// Anomalies returns detected anomalies, optionally filtered to one endpoint.
-// ActiveCount always reflects the total active anomalies (independent of the
-// filter). Stats is populated only when includeStats is set.
-func (s *Service) Anomalies(endpoint string, includeStats bool) (Anomalies, error) {
+// Anomalies returns the active health-source anomalies, optionally filtered to a
+// single endpoint (matched against the anomaly subject id). ActiveCount always
+// reflects the total active anomalies independent of the filter.
+func (s *Service) Anomalies(ctx context.Context, endpoint string) (Anomalies, error) {
 	if !s.anomaly.Available() {
 		return Anomalies{}, ErrUnavailable
 	}
-	active := s.anomaly.ActiveAnomalies()
+	active, err := s.anomaly.ActiveAnomalies(ctx)
+	if err != nil {
+		return Anomalies{}, err
+	}
 	out := Anomalies{ActiveCount: len(active)}
 
 	if endpoint == "" {
 		out.Anomalies = active
-	} else {
-		for _, a := range active {
-			if a.EndpointName == endpoint {
-				out.Anomalies = append(out.Anomalies, a)
-			}
-		}
+		return out, nil
 	}
-
-	if includeStats {
-		for name, st := range s.anomaly.AllStats() {
-			if endpoint == "" || name == endpoint {
-				out.Stats = append(out.Stats, st)
-			}
+	for _, a := range active {
+		if a.Subject.ID == endpoint {
+			out.Anomalies = append(out.Anomalies, a)
 		}
 	}
 	return out, nil

@@ -190,3 +190,34 @@ deliberately:
   let an already-escalated instance bump one further level on continued recurrence after a restart — an
   accepted, bounded artifact (a persistent cross-restart problem reading as more urgent), not a second
   stored column.
+
+**Phase 3 (as-built) — Wi-Fi producer persists + load-on-start.** The long-lived Wi-Fi
+`visibility.Service` became the first real producer: `anomaly.Engine.Restore` + `Coordinator.Load`
+repopulate the live set from `LoadActive` on boot, and the service write-throughs material changes,
+batches recurrence into one `Flush` per evaluation tick, and resolves on `Prune`. A nil store keeps the
+pure in-memory engine. This delivered the deferred load-on-start (folded here, as the phase-2 note
+predicted) for the Wi-Fi source.
+
+**Phase 4 (as-built) — delete the bespoke health detector + repoint the reader to the store.** The
+never-fed `internal/health.AnomalyDetector` (and its `Anomaly`/`EndpointStats` types) is **deleted
+outright** (pre-alpha, no compat) — the de-scatter the Decision mandates. The C2
+`internal/health/monitoring` `AnomalyReader` seam and the `/telemetry/health-checks/anomalies` endpoint
+now read the unified store's source=health slice through a new
+`AnomalyRepository.ActiveBySource(ctx, source)` read (canonically ordered via the shared
+`anomaly.SortAnomalies`). The endpoint DTO changes from the bespoke `health.Anomaly` shape to
+`anomaly.Anomaly`; the per-endpoint rolling-stddev `AllStats`/`EndpointStats` surface is dropped (the
+unified model carries evidence + count + lifecycle instead). The frontend consumes only `activeCount`,
+so no frontend type migration was required. No migration → no schema-golden change.
+
+- **Health *producer* deliberately NOT built in this slice — blocked on architecture.** Phase 4 wires
+  the *read* path; it does not invent a health *write* path, because there is no live health data source
+  to feed one. The health-check subsystem is **dormant**: `HealthCheckRepository.Record`/`RecordBatch`
+  have zero production callers, so scoring/SLA/alerts/anomalies all read a table nothing writes. The only
+  live latency-evaluating subsystem is `internal/probe` (its engine evaluates `latency_ms` thresholds),
+  which is exactly the scope of the **deferred probe-vs-jobs ADR**. Authoring a synthetic health producer
+  now would recreate the unfed-stub anti-pattern in a new place. The health-source slice of the store is
+  therefore empty until either the dormant health-check executor is stood up or `probe` is bridged into
+  the engine — a decision the probe-vs-jobs ADR must make first. The endpoint is correctly plumbed and
+  lights up the moment a real source=health producer persists. The **health catalog `Def`s**
+  (latency_spike/availability_dip/error_spike/…) land with that producer, since they are only exercised
+  once detections flow.

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/health/monitoring"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -213,39 +214,31 @@ func (s *Server) acknowledgeHealthCheckAlert(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-// handleHealthCheckAnomalies returns detected anomalies.
+// handleHealthCheckAnomalies returns the active health-source anomalies from the
+// unified store (ADR-0021), optionally filtered to one endpoint. The per-endpoint
+// rolling statistics the bespoke detector once exposed are gone with it; the
+// unified model carries evidence, count, and lifecycle instead.
 func (s *Server) handleHealthCheckAnomalies(w http.ResponseWriter, r *http.Request) {
 	logger := logging.FromContext(r.Context())
-	q := r.URL.Query()
-	includeStats := q.Get("includeStats") == "true"
 
-	result, err := s.healthMonitoring.Anomalies(q.Get("endpoint"), includeStats)
-	if err != nil {
+	result, err := s.healthMonitoring.Anomalies(r.Context(), r.URL.Query().Get("endpoint"))
+	switch {
+	case errors.Is(err, monitoring.ErrUnavailable):
 		http.Error(w, "Anomaly detection service not available", http.StatusServiceUnavailable)
+		return
+	case err != nil:
+		http.Error(w, "Failed to read anomalies", http.StatusInternalServerError)
 		return
 	}
 
+	anomalies := result.Anomalies
+	if anomalies == nil {
+		anomalies = []anomaly.Anomaly{}
+	}
 	response := map[string]any{
 		"timestamp":   time.Now().UTC().Format(time.RFC3339),
-		"anomalies":   result.Anomalies,
+		"anomalies":   anomalies,
 		"activeCount": result.ActiveCount,
-	}
-
-	if includeStats {
-		statsOutput := make([]map[string]any, 0, len(result.Stats))
-		for _, st := range result.Stats {
-			statsOutput = append(statsOutput, map[string]any{
-				"endpointName": st.EndpointName,
-				"mean":         st.Mean,
-				"stdDev":       st.StdDev,
-				"min":          st.Min,
-				"max":          st.Max,
-				"sampleCount":  st.SampleCount,
-				"lastValue":    st.LastValue,
-				"lastUpdate":   st.LastUpdate.Format(time.RFC3339),
-			})
-		}
-		response["statistics"] = statsOutput
 	}
 
 	w.Header().Set("Content-Type", "application/json")

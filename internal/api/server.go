@@ -216,12 +216,11 @@ type Server struct {
 	retentionStopCh chan struct{}
 
 	// --- Health-check monitoring ---
-	healthRepo    *database.HealthCheckRepository
-	healthScore   *health.ScoringService
-	healthSLA     *health.SLATracker
-	healthAlerts  *alerts.AlertManager
-	healthAnomaly *health.AnomalyDetector
-	healthDeps    *health.DependencyManager
+	healthRepo   *database.HealthCheckRepository
+	healthScore  *health.ScoringService
+	healthSLA    *health.SLATracker
+	healthAlerts *alerts.AlertManager
+	healthDeps   *health.DependencyManager
 
 	// --- Update service ---
 	updateSvc *update.Service
@@ -698,13 +697,14 @@ func (a licenseTierAdapter) GetTier() license.Tier {
 }
 
 // initHealthServices wires the previously-dead health subsystem
-// (Scorer, SLATracker, AnomalyDetector, DependencyMgr) onto the
-// server. Stage A1.6 — these services existed in code since prior
-// phases but were declared-but-never-assigned, so the health-check
-// API endpoints returned HTTP 503 on every request. This wires them up.
+// (Scorer, SLATracker, DependencyMgr) onto the server. Stage A1.6 —
+// these services existed in code since prior phases but were
+// declared-but-never-assigned, so the health-check API endpoints
+// returned HTTP 503 on every request. This wires them up.
 //
-// AlertManager and Repository are wired elsewhere (existing code);
-// this function only handles the four previously-dead services.
+// Anomaly detection no longer has a bespoke health detector: anomalies
+// converged on the unified SQL store (ADR-0021), read via db.Anomalies().
+// AlertManager and Repository are wired elsewhere (existing code).
 func (s *Server) initHealthServices(db *database.DB) {
 	s.healthRepo = db.HealthChecks()
 
@@ -714,8 +714,6 @@ func (s *Server) initHealthServices(db *database.DB) {
 	s.healthSLA = health.NewSLATracker(health.SLATrackerConfig{
 		Repository: s.healthRepo,
 	})
-
-	s.healthAnomaly = health.NewAnomalyDetector(health.AnomalyDetectorConfig{})
 
 	s.healthDeps = health.NewDependencyManager(health.DependencyManagerConfig{})
 }
@@ -843,7 +841,16 @@ func (s *Server) healthRepository() *database.HealthCheckRepository { return s.h
 func (s *Server) healthScorer() *health.ScoringService              { return s.healthScore }
 func (s *Server) healthSLATracker() *health.SLATracker              { return s.healthSLA }
 func (s *Server) healthAlertManager() *alerts.AlertManager          { return s.healthAlerts }
-func (s *Server) healthAnomalyDetector() *health.AnomalyDetector    { return s.healthAnomaly }
+
+// anomalyStore is the unified anomaly system of record (ADR-0021), the read
+// source for the health-checks anomaly endpoint after the bespoke health
+// detector was deleted. Nil-safe for the test harness (no DB wired).
+func (s *Server) anomalyStore() *database.AnomalyRepository {
+	if s.dbConn == nil {
+		return nil
+	}
+	return s.dbConn.Anomalies()
+}
 
 func (s *Server) bluetoothScanner() *enumerate.BluetoothScanner { return s.bluetoothScan }
 func (s *Server) vulnScanner() *vuln.VulnerabilityScanner       { return s.vulnScan }
@@ -903,7 +910,7 @@ func (s *Server) initHealthUseCases() {
 		s.healthScorer,
 		s.healthSLATracker,
 		s.healthAlertManager,
-		s.healthAnomalyDetector,
+		s.anomalyStore,
 	)
 }
 

@@ -279,3 +279,56 @@ func TestRunCleanupPurgesResolvedAnomalies(t *testing.T) {
 		t.Errorf("active set = %+v, want only 'open'", active)
 	}
 }
+
+// recordForSource builds a minimal record tagged with the given source/id so the
+// source-scoped read can be exercised across producers.
+func recordForSource(id string, source anomaly.Source) anomaly.Record {
+	rec := sampleRecord(id)
+	rec.Source = source
+	return rec
+}
+
+// TestActiveBySourceFiltersAndExcludesResolved asserts the source-scoped read
+// returns only the requested producer's unresolved instances.
+func TestActiveBySourceFiltersAndExcludesResolved(t *testing.T) {
+	t.Parallel()
+	repo, ctx := setupAnomalyTest(t)
+
+	recs := []anomaly.Record{
+		recordForSource("h1", anomaly.SourceHealth),
+		recordForSource("h2", anomaly.SourceHealth),
+		recordForSource("w1", anomaly.SourceWiFi),
+	}
+	if err := repo.Upsert(ctx, recs); err != nil {
+		t.Fatalf("Upsert: %v", err)
+	}
+
+	health, err := repo.ActiveBySource(ctx, anomaly.SourceHealth)
+	if err != nil {
+		t.Fatalf("ActiveBySource(health): %v", err)
+	}
+	if len(health) != 2 {
+		t.Fatalf("want 2 health anomalies, got %d (%+v)", len(health), health)
+	}
+
+	// Resolving one health instance drops it from the active read; the other
+	// source is untouched.
+	at := time.Date(2026, 6, 11, 13, 0, 0, 0, time.UTC)
+	if err = repo.MarkResolved(ctx, []string{"h1"}, at); err != nil {
+		t.Fatalf("MarkResolved: %v", err)
+	}
+	health, err = repo.ActiveBySource(ctx, anomaly.SourceHealth)
+	if err != nil {
+		t.Fatalf("ActiveBySource(health) after resolve: %v", err)
+	}
+	if len(health) != 1 {
+		t.Fatalf("want 1 active health anomaly after resolve, got %d", len(health))
+	}
+	wifi, err := repo.ActiveBySource(ctx, anomaly.SourceWiFi)
+	if err != nil {
+		t.Fatalf("ActiveBySource(wifi): %v", err)
+	}
+	if len(wifi) != 1 || wifi[0].Subject != recs[2].Anomaly.Subject {
+		t.Fatalf("want the single wifi anomaly intact, got %+v", wifi)
+	}
+}

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/health"
 	"github.com/MustardSeedNetworks/seed/internal/health/monitoring"
@@ -90,13 +91,14 @@ func (f *fakeAlerts) Acknowledge(alertID, _ string) bool {
 
 type fakeAnomaly struct {
 	available bool
-	anomalies []*health.Anomaly
-	stats     map[string]*health.EndpointStats
+	anomalies []anomaly.Anomaly
+	err       error
 }
 
-func (f *fakeAnomaly) Available() bool                            { return f.available }
-func (f *fakeAnomaly) ActiveAnomalies() []*health.Anomaly         { return f.anomalies }
-func (f *fakeAnomaly) AllStats() map[string]*health.EndpointStats { return f.stats }
+func (f *fakeAnomaly) Available() bool { return f.available }
+func (f *fakeAnomaly) ActiveAnomalies(context.Context) ([]anomaly.Anomaly, error) {
+	return f.anomalies, f.err
+}
 
 func newService(
 	res *fakeResults, sc *fakeScorer, sla *fakeSLA, al *fakeAlerts, an *fakeAnomaly,
@@ -239,23 +241,23 @@ func TestAcknowledgeAlert(t *testing.T) {
 	})
 }
 
+func anomalyForSubject(id string) anomaly.Anomaly {
+	return anomaly.Anomaly{Subject: anomaly.SubjectRef{Kind: anomaly.SubjectDevice, ID: id}}
+}
+
 func TestAnomaliesFilterAndCount(t *testing.T) {
 	t.Parallel()
 	an := &fakeAnomaly{
 		available: true,
-		anomalies: []*health.Anomaly{
-			{EndpointName: "host-a"}, {EndpointName: "host-b"}, {EndpointName: "host-a"},
-		},
-		stats: map[string]*health.EndpointStats{
-			"host-a": {EndpointName: "host-a"},
-			"host-b": {EndpointName: "host-b"},
+		anomalies: []anomaly.Anomaly{
+			anomalyForSubject("host-a"), anomalyForSubject("host-b"), anomalyForSubject("host-a"),
 		},
 	}
 	svc := newService(&fakeResults{}, &fakeScorer{}, &fakeSLA{}, &fakeAlerts{}, an)
 
-	t.Run("filtered list, total active count, filtered stats", func(t *testing.T) {
+	t.Run("filtered list keeps the total active count", func(t *testing.T) {
 		t.Parallel()
-		got, err := svc.Anomalies("host-a", true)
+		got, err := svc.Anomalies(context.Background(), "host-a")
 		if err != nil {
 			t.Fatalf("unexpected err: %v", err)
 		}
@@ -265,29 +267,32 @@ func TestAnomaliesFilterAndCount(t *testing.T) {
 		if got.ActiveCount != 3 {
 			t.Fatalf("ActiveCount must be total (3), got %d", got.ActiveCount)
 		}
-		if len(got.Stats) != 1 || got.Stats[0].EndpointName != "host-a" {
-			t.Fatalf("want 1 filtered stat for host-a, got %+v", got.Stats)
-		}
 	})
-	t.Run("no filter returns all, no stats unless requested", func(t *testing.T) {
+	t.Run("no filter returns all", func(t *testing.T) {
 		t.Parallel()
-		got, err := svc.Anomalies("", false)
+		got, err := svc.Anomalies(context.Background(), "")
 		if err != nil {
 			t.Fatalf("unexpected err: %v", err)
 		}
 		if len(got.Anomalies) != 3 || got.ActiveCount != 3 {
 			t.Fatalf("want all 3, got %d (count %d)", len(got.Anomalies), got.ActiveCount)
 		}
-		if got.Stats != nil {
-			t.Fatalf("want nil stats when not requested, got %+v", got.Stats)
-		}
 	})
+}
+
+func TestAnomaliesStoreError(t *testing.T) {
+	t.Parallel()
+	an := &fakeAnomaly{available: true, err: errors.New("query failed")}
+	svc := newService(&fakeResults{}, &fakeScorer{}, &fakeSLA{}, &fakeAlerts{}, an)
+	if _, err := svc.Anomalies(context.Background(), ""); err == nil {
+		t.Fatal("want the store error to propagate, got nil")
+	}
 }
 
 func TestAnomaliesUnavailable(t *testing.T) {
 	t.Parallel()
 	svc := newService(&fakeResults{}, &fakeScorer{}, &fakeSLA{}, &fakeAlerts{}, &fakeAnomaly{})
-	if _, err := svc.Anomalies("", false); !errors.Is(err, monitoring.ErrUnavailable) {
+	if _, err := svc.Anomalies(context.Background(), ""); !errors.Is(err, monitoring.ErrUnavailable) {
 		t.Fatalf("want ErrUnavailable, got %v", err)
 	}
 }
