@@ -63,6 +63,9 @@ func apiTokenTestSetup(t *testing.T) (*Server, *license.Manager) {
 	// /discovery/engine/events SSE policy test) have a non-nil use-case; the
 	// engine stays nil here, so they degrade to the unavailable (503) path.
 	s.initDiscoveryUseCases()
+	// Wire the identity use-cases (ADR-0024) so the token handlers and
+	// callerRole resolve through the repository ports against the seeded store.
+	s.initIdentityUseCases()
 	return s, mgr
 }
 
@@ -87,7 +90,8 @@ func newAuthedRequest(method, path string, body []byte, username string) *http.R
 func TestMintRequiresPro_NoLicense(t *testing.T) {
 	t.Parallel()
 	s, _ := apiTokenTestSetup(t)
-	// No StartTrial → license state is nil → licenseAllowsAPITokens=false.
+	// No StartTrial → license state is nil → the tokens use-case LicenseGate
+	// (HasFeature "rest_api") returns false → mint is rejected with 402.
 
 	body, _ := json.Marshal(MintTokenRequest{Name: "ci"})
 	req := newAuthedRequest(http.MethodPost, APIVersionPrefix+"/tokens", body, "alice")

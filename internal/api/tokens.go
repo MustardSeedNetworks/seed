@@ -2,11 +2,16 @@
 
 package api
 
-// handlers_api_tokens.go implements the personal-access-token surface
-// added in Phase D-2 of LICENSE_STRATEGY: API tokens for programmatic
-// access (scripts, monitoring, CI). Minting requires the Pro tier;
-// listing / revoking is available to any authenticated user for their
-// own tokens.
+// tokens.go implements the personal-access-token surface added in Phase D-2 of
+// LICENSE_STRATEGY: API tokens for programmatic access (scripts, monitoring,
+// CI). Minting requires the Pro tier; listing / revoking is available to any
+// authenticated user for their own tokens.
+//
+// All token-store access in handler bodies goes through s.identityTokens (the
+// use-case, ADR-0024). The PAT authentication seam (apiTokenMiddleware /
+// resolveAPIToken) remains unchanged — it is wired in server_lifecycle.go
+// via s.services.Auth.APITokens and is authentication infrastructure, not
+// handler data access.
 
 import (
 	"context"
@@ -21,6 +26,7 @@ import (
 
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/i18n"
+	"github.com/MustardSeedNetworks/seed/internal/identity/tokens"
 	"github.com/MustardSeedNetworks/seed/internal/license"
 	"github.com/MustardSeedNetworks/seed/internal/logging"
 )
@@ -102,6 +108,7 @@ type LicenseStatusResponse struct {
 
 // handleLicenseStatus exposes the local license state to the UI. The
 // unlicensed (Free) state is a valid result, not an error condition.
+// Out of scope for C4 (ADR-0024): reads s.services.Auth.License directly.
 func (s *Server) handleLicenseStatus(w http.ResponseWriter, r *http.Request) {
 	resp := LicenseStatusResponse{
 		Tier:          license.TierFree.String(),
@@ -112,7 +119,8 @@ func (s *Server) handleLicenseStatus(w http.ResponseWriter, r *http.Request) {
 	mgr := s.services.Auth.License
 	if mgr == nil {
 		// License disabled (dev / test build) — allow minting so the
-		// feature stays usable. Matches licenseAllowsAPITokens().
+		// feature stays usable. Matches the tokens use-case LicenseGate
+		// (a nil manager permits minting).
 		resp.CanMintTokens = true
 		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, resp)
 		return
@@ -135,8 +143,8 @@ func (s *Server) handleLicenseStatus(w http.ResponseWriter, r *http.Request) {
 	} else {
 		resp.Tier = st.Tier.String()
 		// Route the UI signal through the same catalog lookup the
-		// backend gate uses (licenseAllowsAPITokens). Keeps the two
-		// in lock-step if rest_api ever moves between tiers.
+		// backend gate (tokens.LicenseGate) uses. Keeps the two in
+		// lock-step if rest_api ever moves between tiers.
 		resp.CanMintTokens = mgr.HasFeature("rest_api")
 	}
 	sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK, resp)
@@ -168,20 +176,6 @@ func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !s.licenseAllowsAPITokens() {
-		writeAPITokenError(w, r, http.StatusPaymentRequired, "TIER_TOO_LOW",
-			"API token minting requires the Pro tier. "+
-				"Start a Pro trial with `seed license trial` or activate a Pro key.")
-		return
-	}
-
-	repo := s.services.Auth.APITokens
-	if repo == nil {
-		writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail,
-			"API token storage is not available")
-		return
-	}
-
 	var req MintTokenRequest
 	if !decodeJSONStrict(w, r, &req, MaxBodySizeJSON) {
 		return
@@ -200,7 +194,8 @@ func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 
 	// #1255: optional per-token scope. Must be a legal role string and
 	// must not exceed the minter's own role — escalating via a PAT
-	// would defeat the role gate.
+	// would defeat the role gate. Scope validation stays in the handler
+	// (authorization edge concern, ADR-0024).
 	req.Scope = strings.TrimSpace(req.Scope)
 	if req.Scope != "" {
 		if !database.IsValidRole(req.Scope) {
@@ -232,11 +227,22 @@ func (s *Server) handleAPITokenMint(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:     time.Now().UTC(),
 		Scope:         req.Scope,
 	}
-	if insertErr := repo.Insert(r.Context(), rec); insertErr != nil {
-		logger := logging.FromContext(r.Context())
-		logger.ErrorContext(r.Context(), "failed to insert api token", "error", insertErr)
-		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal,
-			"Failed to persist token")
+
+	if insertErr := s.identityTokens.Mint(r.Context(), rec); insertErr != nil {
+		switch {
+		case errors.Is(insertErr, tokens.ErrMintingNotAllowed):
+			writeAPITokenError(w, r, http.StatusPaymentRequired, "TIER_TOO_LOW",
+				"API token minting requires the Pro tier. "+
+					"Start a Pro trial with `seed license trial` or activate a Pro key.")
+		case errors.Is(insertErr, tokens.ErrUnavailable):
+			writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail,
+				"API token storage is not available")
+		default:
+			logger := logging.FromContext(r.Context())
+			logger.ErrorContext(r.Context(), "failed to insert api token", "error", insertErr)
+			writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal,
+				"Failed to persist token")
+		}
 		return
 	}
 
@@ -258,14 +264,7 @@ func (s *Server) handleAPITokenList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := s.services.Auth.APITokens
-	if repo == nil {
-		sendJSONResponse(w, logging.FromContext(r.Context()), http.StatusOK,
-			[]TokenListItem{})
-		return
-	}
-
-	rows, err := repo.ListByOwner(r.Context(), username)
+	rows, err := s.identityTokens.List(r.Context(), username)
 	if err != nil {
 		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal,
 			"Failed to list tokens")
@@ -301,46 +300,21 @@ func (s *Server) handleAPITokenRevoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := s.services.Auth.APITokens
-	if repo == nil {
-		writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail,
-			"API token storage is not available")
-		return
-	}
-	if err := repo.Revoke(r.Context(), id, username); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	if err := s.identityTokens.Revoke(r.Context(), id, username); err != nil {
+		switch {
+		case errors.Is(err, tokens.ErrUnavailable):
+			writeAPITokenError(w, r, http.StatusServiceUnavailable, ErrCodeServiceUnavail,
+				"API token storage is not available")
+		case errors.Is(err, sql.ErrNoRows):
 			writeAPITokenError(w, r, http.StatusNotFound, ErrCodeNotFound,
 				"Token not found or already revoked")
-			return
+		default:
+			writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal,
+				"Failed to revoke token")
 		}
-		writeAPITokenError(w, r, http.StatusInternalServerError, ErrCodeInternal,
-			"Failed to revoke token")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
-}
-
-// licenseAllowsAPITokens reports whether the active license includes
-// the rest_api feature (PAT minting + scoped automation tokens). Pro
-// grants it; trial mode grants it via the same catalog. Free / Starter
-// do not.
-//
-// A nil license manager is treated as "license disabled" (developer
-// builds, tests) and permits minting so the feature stays usable
-// without forcing a license setup. The HasFeature call handles the
-// state==nil / not-activated / expired-trial cases internally and
-// returns false, matching the previous explicit guards.
-//
-// Mirrors the pattern used by licenseAllowsMultiUser. The feature
-// catalog (internal/license/validator.go) is the single source of
-// truth for which features belong to which tier — moving rest_api to
-// a different tier would not need a code change here.
-func (s *Server) licenseAllowsAPITokens() bool {
-	mgr := s.services.Auth.License
-	if mgr == nil {
-		return true
-	}
-	return mgr.HasFeature("rest_api")
 }
 
 // mintTokenMaterial returns (id, secret, err). The ID is a hex string
@@ -373,6 +347,10 @@ func hashAPIToken(plaintext string) string {
 // are logged but do not block the request). Callers check the returned
 // OwnerUsername == "" to detect no-match; #1255 callers also read Scope
 // to clamp the effective role.
+//
+// This function is part of the PAT authentication seam and takes
+// *database.APITokenRepository directly — it is not a handler data-access
+// path and is intentionally excluded from the use-case strangle (ADR-0024).
 func resolveAPIToken(ctx context.Context, repo *database.APITokenRepository, plaintext string) database.APITokenRecord {
 	if repo == nil || !strings.HasPrefix(plaintext, APITokenPrefix) {
 		return database.APITokenRecord{}
@@ -393,6 +371,10 @@ func resolveAPIToken(ctx context.Context, repo *database.APITokenRepository, pla
 // up the token, sets X-Username, and forwards to `next` so downstream
 // handlers see an authenticated user. Otherwise it falls through to
 // `next` unchanged, letting the JWT middleware handle the request.
+//
+// This middleware is part of the PAT authentication seam — it takes
+// *database.APITokenRepository directly and is wired in server_lifecycle.go.
+// It is intentionally excluded from the use-case strangle (ADR-0024).
 func apiTokenMiddleware(repo *database.APITokenRepository, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Only attempt token auth for API paths; static assets and

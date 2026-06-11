@@ -53,6 +53,10 @@ func usersTestSetup(t *testing.T) (*Server, *license.Manager) {
 	}
 	s.services.Database.DB = db
 	s.services.Auth.License = mgr
+	// Wire the identity use-cases (ADR-0024) so callerRole/requireRole and the
+	// user/token handlers resolve through the repository ports against the
+	// seeded store rather than nil-panicking on a bare server.
+	s.initIdentityUseCases()
 	return s, mgr
 }
 
