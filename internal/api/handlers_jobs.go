@@ -44,7 +44,8 @@ const (
 	// retention sweep may remove them.
 	jobsRetention = time.Hour
 
-	// jobsShutdownTimeout bounds the graceful drain of the runner and event bus.
+	// jobsShutdownTimeout bounds the graceful drain of the runner and event bus
+	// on Server.Shutdown (see drainJobSubstrate).
 	jobsShutdownTimeout = 5 * time.Second
 )
 

@@ -118,26 +118,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		}
 	}
 
-	// Drain the async job substrate (ADR-0004 / ADR-0005). The runner publishes
-	// lifecycle transitions onto the bus, so close it first, then the bus. Each
-	// drain is bounded by jobsShutdownTimeout so a stuck handler can't wedge
-	// shutdown. (Folded in from the former ServiceContainer.Stop() in D1.)
-	if s.jobRunner != nil {
-		logging.GetLogger().InfoContext(ctx, "Stopping job runner...")
-		drainCtx, cancel := context.WithTimeout(ctx, jobsShutdownTimeout)
-		if closeErr := s.jobRunner.Close(drainCtx); closeErr != nil {
-			logging.GetLogger().WarnContext(ctx, "job runner close returned error", "error", closeErr)
-		}
-		cancel()
-	}
-	if s.bus != nil {
-		logging.GetLogger().InfoContext(ctx, "Draining event bus...")
-		drainCtx, cancel := context.WithTimeout(ctx, jobsShutdownTimeout)
-		if closeErr := s.bus.Close(drainCtx); closeErr != nil {
-			logging.GetLogger().WarnContext(ctx, "event bus close returned error", "error", closeErr)
-		}
-		cancel()
-	}
+	s.drainJobSubstrate(ctx)
 
 	logging.GetLogger().InfoContext(ctx, "Stopping rate limiters...")
 	s.loginRateLimiter().Stop()
@@ -170,6 +151,36 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		return fmt.Errorf("shutdown main server: %w", err)
 	}
 	return nil
+}
+
+// drainJobSubstrate gracefully closes the async job runner and the in-process
+// event bus (ADR-0004 / ADR-0005). The runner publishes lifecycle transitions
+// onto the bus, so it is closed first, then the bus. Each close is bounded by
+// jobsShutdownTimeout so a wedged handler can't stall shutdown indefinitely.
+//
+// This teardown previously lived only in ServiceContainer.Stop(), which had no
+// callers — so the runner goroutines and bus were never actually drained on a
+// real shutdown. D1 restored the drain onto the live Shutdown path; this
+// extracts it behind a single seam so the close ordering is unit-testable.
+// Both fields may be nil (the lightweight test server never wires them), so
+// each is nil-guarded.
+func (s *Server) drainJobSubstrate(ctx context.Context) {
+	if s.jobRunner != nil {
+		logging.GetLogger().InfoContext(ctx, "Stopping job runner...")
+		drainCtx, cancel := context.WithTimeout(ctx, jobsShutdownTimeout)
+		if closeErr := s.jobRunner.Close(drainCtx); closeErr != nil {
+			logging.GetLogger().WarnContext(ctx, "job runner close returned error", "error", closeErr)
+		}
+		cancel()
+	}
+	if s.bus != nil {
+		logging.GetLogger().InfoContext(ctx, "Draining event bus...")
+		drainCtx, cancel := context.WithTimeout(ctx, jobsShutdownTimeout)
+		if closeErr := s.bus.Close(drainCtx); closeErr != nil {
+			logging.GetLogger().WarnContext(ctx, "event bus close returned error", "error", closeErr)
+		}
+		cancel()
+	}
 }
 
 // startMaintenance runs the periodic background maintenance loop: jobs retention
