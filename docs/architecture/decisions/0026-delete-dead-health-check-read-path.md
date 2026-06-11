@@ -57,8 +57,12 @@ nothing is the staleness this codebase's Definition of Done forbids.
   `HealthCheckQueryOptions`); the `DB.HealthChecks()` accessor and `healthChecks` field; the
   `retention.go` `cleanupHealthCheck{Raw,Hourly,Daily}` tasks + their `RetentionPolicy`/`CleanupResult`
   fields.
-- **Domain:** `internal/health` (`scoring.go`, `sla.go`, `dependencies.go`) and `internal/alerts`
-  (whole packages).
+- **Domain:** the `internal/health` root package (`scoring.go`, `sla.go`, `dependencies.go` — its
+  only files; the `internal/health/monitoring` subpackage survives, narrowed) and the dead
+  `internal/alerts` root file `health_alerts.go` (the never-constructed `AlertManager`,
+  `HealthAlert`, `AlertStats`). The **live** `internal/alerts/pipeline` (syslog/SNMP →
+  `database.Alert`) and `internal/alerts/rules` subpackages are a separate alert system and are
+  **untouched**.
 - **Use-case (`internal/health/monitoring`):** the `ResultStore`, `Scorer`, `SLAReporter`, and
   `AlertReader` ports and the `Results`/`History`/`Scores`/`SLAReport`/`SLASummary`/`Alerts`/
   `AcknowledgeAlert` methods + their read models. The `AnomalyReader` port and `Anomalies` method
