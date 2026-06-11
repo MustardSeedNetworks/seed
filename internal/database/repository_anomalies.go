@@ -165,6 +165,45 @@ func (r *AnomalyRepository) LoadActive(ctx context.Context) ([]anomaly.Record, e
 	return out, nil
 }
 
+// ActiveBySource returns the unresolved anomaly instances produced by one source
+// as projected Anomaly views, canonically ordered (ADR-0021 §4: reads go through
+// the store). It is the source-scoped read path behind consumers like the
+// health-checks and Wi-Fi anomaly endpoints. Catalog-static copy (impact,
+// follow-ups) is not persisted; those fields are re-derived from the embedded
+// catalog by def_key once a server-owned catalog exists (the producer phase) —
+// the scalar, evidence, and lifecycle fields come straight from the row.
+func (r *AnomalyRepository) ActiveBySource(
+	ctx context.Context, source anomaly.Source,
+) ([]anomaly.Anomaly, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT id, def_key, source, category, severity, subject_kind, subject_id,
+		       title, description, recommendation, evidence, standards,
+		       count, first_seen, last_seen, resolved_at, is_resolved,
+		       acknowledged_by, acknowledged_at
+		FROM anomalies
+		WHERE is_resolved = 0 AND source = ?
+		ORDER BY id
+	`, string(source))
+	if err != nil {
+		return nil, fmt.Errorf("query active anomalies for source %q: %w", source, err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []anomaly.Anomaly
+	for rows.Next() {
+		rec, scanErr := scanAnomaly(rows)
+		if scanErr != nil {
+			return nil, scanErr
+		}
+		out = append(out, rec.Anomaly)
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("iterate active anomalies for source %q: %w", source, rowsErr)
+	}
+	anomaly.SortAnomalies(out)
+	return out, nil
+}
+
 // scanAnomaly maps one row back into a Record, decoding the JSON columns and
 // nullable lifecycle timestamps.
 func scanAnomaly(rows *sql.Rows) (anomaly.Record, error) {

@@ -16,6 +16,7 @@ import (
 	"context"
 
 	"github.com/MustardSeedNetworks/seed/internal/alerts"
+	"github.com/MustardSeedNetworks/seed/internal/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/health"
 	"github.com/MustardSeedNetworks/seed/internal/health/monitoring"
@@ -29,14 +30,14 @@ func NewHealthMonitoring(
 	scorer func() *health.ScoringService,
 	sla func() *health.SLATracker,
 	alertMgr func() *alerts.AlertManager,
-	detector func() *health.AnomalyDetector,
+	anomalyStore func() *database.AnomalyRepository,
 ) *monitoring.Service {
 	return monitoring.NewService(
 		healthResultStore{repo: repo},
 		healthScorer{scorer: scorer},
 		healthSLA{sla: sla},
 		healthAlerts{mgr: alertMgr},
-		healthAnomaly{detector: detector},
+		healthAnomaly{store: anomalyStore},
 	)
 }
 
@@ -111,16 +112,15 @@ func (a healthAlerts) Acknowledge(alertID, acknowledgedBy string) bool {
 	return a.mgr().AcknowledgeAlert(alertID, acknowledgedBy)
 }
 
-// healthAnomaly implements monitoring.AnomalyReader over the anomaly detector.
+// healthAnomaly implements monitoring.AnomalyReader over the unified anomaly
+// store (ADR-0021), reading the source=health slice. It replaced the bespoke,
+// never-fed health.AnomalyDetector that was deleted when health converged on the
+// single engine; per-endpoint rolling statistics went away with it.
 type healthAnomaly struct {
-	detector func() *health.AnomalyDetector
+	store func() *database.AnomalyRepository
 }
 
-func (a healthAnomaly) Available() bool { return a.detector() != nil }
-func (a healthAnomaly) ActiveAnomalies() []*health.Anomaly {
-	return a.detector().GetActiveAnomalies()
-}
-
-func (a healthAnomaly) AllStats() map[string]*health.EndpointStats {
-	return a.detector().GetAllStats()
+func (a healthAnomaly) Available() bool { return a.store() != nil }
+func (a healthAnomaly) ActiveAnomalies(ctx context.Context) ([]anomaly.Anomaly, error) {
+	return a.store().ActiveBySource(ctx, anomaly.SourceHealth)
 }
