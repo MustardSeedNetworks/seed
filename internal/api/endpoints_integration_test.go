@@ -13,6 +13,7 @@ import (
 	"time"
 
 	api "github.com/MustardSeedNetworks/seed/internal/api"
+	"github.com/MustardSeedNetworks/seed/internal/database"
 	"github.com/MustardSeedNetworks/seed/internal/netif"
 	"github.com/MustardSeedNetworks/seed/internal/testutil"
 )
@@ -425,8 +426,16 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		t.Fatalf("Failed to save test config: %v", err)
 	}
 
+	// The health-checks settings endpoint is store-of-record backed by the
+	// probes table (ADR-0027 P2), so the server needs a real database.
+	db, err := database.Open(filepath.Join(tmpDir, "test.db"))
+	if err != nil {
+		t.Fatalf("Failed to open test database: %v", err)
+	}
+	defer func() { _ = db.Close() }()
+
 	netMgr, _ := netif.NewManager("")
-	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, nil, nil)
+	server := api.NewServer(cfg, configPath, "", netMgr, false, nil, db, nil)
 	defer server.Close()
 
 	ts := httptest.NewServer(server.Mux())
@@ -449,8 +458,12 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("UpdateHealthChecksSettings", func(t *testing.T) {
-		// Issue #605 fixed: config.Save() deadlock resolved by unlocking before Save()
+	t.Run("UpdateHealthChecksSettingsIsWriteGated", func(t *testing.T) {
+		// The settings PUT persists to the probes table (ADR-0027 P2) and is a
+		// mutating route, so it must enforce the operator write gate. An
+		// unauthenticated request is rejected. The happy-path persistence
+		// round-trip is covered by the handler-level internal test
+		// (TestHealthChecksSettingsRoundTrip).
 		settings := api.TestsSettingsResponse{
 			DNSHostname: "example.com",
 			DNSServers:  []api.DNSServerResponse{{Address: "8.8.8.8", Enabled: true}},
@@ -472,8 +485,8 @@ func TestTestsSettingsEndpoints(t *testing.T) {
 		}
 		defer func() { _ = resp.Body.Close() }()
 
-		if resp.StatusCode != http.StatusOK {
-			t.Errorf("Expected status 200, got %d", resp.StatusCode)
+		if resp.StatusCode != http.StatusUnauthorized {
+			t.Errorf("Expected status 401 (write-gated), got %d", resp.StatusCode)
 		}
 	})
 }

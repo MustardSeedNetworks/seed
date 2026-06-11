@@ -212,7 +212,6 @@ export interface HL7Endpoint {
   receiving_app: string;
   receiving_facility: string;
   enabled: boolean;
-  criticality: number;
 }
 export interface FHIREndpoint {
   name: string;
@@ -225,7 +224,6 @@ export interface FHIREndpoint {
   client_secret?: string;
   token_url?: string;
   enabled: boolean;
-  criticality: number;
 }
 export interface SQLEndpoint {
   name: string;
@@ -238,7 +236,6 @@ export interface SQLEndpoint {
   ssl_mode?: string;
   test_query?: string;
   enabled: boolean;
-  criticality: number;
 }
 export interface FileShareEndpoint {
   name: string;
@@ -253,7 +250,6 @@ export interface FileShareEndpoint {
   test_write_performance?: boolean;
   test_file_size_mb?: number;
   enabled: boolean;
-  criticality: number;
 }
 export interface LDAPEndpoint {
   name: string;
@@ -266,7 +262,6 @@ export interface LDAPEndpoint {
   bind_password?: string;
   search_filter?: string;
   enabled: boolean;
-  criticality: number;
 }
 export interface LTIEndpoint {
   name: string;
@@ -278,7 +273,6 @@ export interface LTIEndpoint {
   deployment_id?: string;
   platform_url?: string;
   enabled: boolean;
-  criticality: number;
 }
 export interface OPCUAEndpoint {
   name: string;
@@ -290,7 +284,6 @@ export interface OPCUAEndpoint {
   cert_path?: string;
   key_path?: string;
   enabled: boolean;
-  criticality: number;
 }
 export interface ModbusEndpoint {
   name: string;
@@ -300,7 +293,6 @@ export interface ModbusEndpoint {
   test_register: number;
   register_type?: string;
   enabled: boolean;
-  criticality: number;
 }
 export interface SpeedtestConfig {
   server_id: string;

@@ -223,7 +223,6 @@
     "digestMode": "Modo resumen",
     "digestDescription": "Agrupar alertas en lugar de enviar inmediatamente",
     "maxSamples": "Tamaño de ventana móvil",
-    "criticality": "Criticidad (1-10)",
     "sqlEndpoints": "Endpoints de base de datos SQL",
     "sqlDescription": "Probar conectividad de base de datos (PostgreSQL, MySQL, SQL Server, Oracle)",
     "database": "Base de datos",

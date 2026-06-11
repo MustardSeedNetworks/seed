@@ -69,18 +69,8 @@ func (e *Engine) Start(ctx context.Context) error {
 		return err
 	}
 
-	probes, err := storage.ListProbes(ctx, "", "")
-	if err != nil {
-		return fmt.Errorf("load probes: %w", err)
-	}
-
-	for _, p := range probes {
-		if !p.Enabled {
-			continue
-		}
-		job := &probeJob{engine: e, probeID: p.ID, interval: time.Duration(p.IntervalSeconds) * time.Second}
-		sched.Register(job)
-		e.jobIDs = append(e.jobIDs, job.ID())
+	if err = e.loadAndRegisterProbes(ctx, storage, sched); err != nil {
+		return err
 	}
 
 	sched.Start(ctx)
@@ -116,6 +106,57 @@ func (e *Engine) Stop(ctx context.Context) error {
 	sched.Stop()
 	e.started = false
 	e.logger.InfoContext(ctx, "probe engine stopped")
+	return nil
+}
+
+// Reschedule re-reads probe definitions from storage and rebuilds the
+// scheduler's job set, so changes made after Start — a settings save
+// that adds, removes, enables, or disables probes — take effect on the
+// running engine without a restart. It is a no-op if the engine has not
+// been started (Start will pick up the current definitions). Safe for
+// concurrent use with Start/Stop; all serialize on runMu.
+func (e *Engine) Reschedule(ctx context.Context) error {
+	e.runMu.Lock()
+	defer e.runMu.Unlock()
+
+	if !e.started {
+		return nil
+	}
+
+	storage, sched, err := e.requireStorage()
+	if err != nil {
+		return err
+	}
+
+	for _, id := range e.jobIDs {
+		sched.Unregister(id)
+	}
+	e.jobIDs = nil
+
+	if err = e.loadAndRegisterProbes(ctx, storage, sched); err != nil {
+		return err
+	}
+
+	e.logger.InfoContext(ctx, "probe engine rescheduled", "probes_scheduled", len(e.jobIDs))
+	return nil
+}
+
+// loadAndRegisterProbes lists the enabled probes from storage and
+// registers a scheduler job for each, recording the job IDs on the
+// engine. Callers must hold runMu. Shared by Start and Reschedule.
+func (e *Engine) loadAndRegisterProbes(ctx context.Context, storage probeStorage, sched probeScheduler) error {
+	probes, err := storage.ListProbes(ctx, "", "")
+	if err != nil {
+		return fmt.Errorf("load probes: %w", err)
+	}
+	for _, p := range probes {
+		if !p.Enabled {
+			continue
+		}
+		job := &probeJob{engine: e, probeID: p.ID, interval: time.Duration(p.IntervalSeconds) * time.Second}
+		sched.Register(job)
+		e.jobIDs = append(e.jobIDs, job.ID())
+	}
 	return nil
 }
 

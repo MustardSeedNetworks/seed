@@ -83,14 +83,12 @@ export interface HL7EndpointResponse {
   receivingApp: string;
   receivingFacility: string;
   enabled: boolean;
-  criticality: number;
 }
 export interface FHIREndpointResponse {
   name: string;
   baseUrl: string;
   authType: string;
   enabled: boolean;
-  criticality: number;
 }
 export interface SQLEndpointResponse {
   name: string;
@@ -100,7 +98,6 @@ export interface SQLEndpointResponse {
   database: string;
   sslMode?: string;
   enabled: boolean;
-  criticality: number;
 }
 export interface FileShareEndpointResponse {
   name: string;
@@ -112,7 +109,6 @@ export interface FileShareEndpointResponse {
   testWritePerformance?: boolean;
   testFileSizeMb?: number;
   enabled: boolean;
-  criticality: number;
 }
 export interface LDAPEndpointResponse {
   name: string;
@@ -123,14 +119,12 @@ export interface LDAPEndpointResponse {
   baseDn: string;
   searchFilter?: string;
   enabled: boolean;
-  criticality: number;
 }
 export interface LTIEndpointResponse {
   name: string;
   launchUrl: string;
   ltiVersion?: string;
   enabled: boolean;
-  criticality: number;
 }
 export interface OPCUAEndpointResponse {
   name: string;
@@ -138,7 +132,6 @@ export interface OPCUAEndpointResponse {
   securityMode?: string;
   securityPolicy?: string;
   enabled: boolean;
-  criticality: number;
 }
 export interface ModbusEndpointResponse {
   name: string;
@@ -148,7 +141,6 @@ export interface ModbusEndpointResponse {
   testRegister: number;
   registerType?: string;
   enabled: boolean;
-  criticality: number;
 }
 export interface SpeedtestSettingsResponse {
   serverId: string;

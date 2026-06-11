@@ -31,9 +31,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "criticality": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -43,8 +40,7 @@
         "protocol",
         "host",
         "share",
-        "enabled",
-        "criticality"
+        "enabled"
       ]
     }
   },

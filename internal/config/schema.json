@@ -1057,12 +1057,6 @@
           "type": "boolean",
           "description": "Enable this test",
           "default": true
-        },
-        "criticality": {
-          "type": "integer",
-          "description": "1-10 scale for health scoring",
-          "minimum": 1,
-          "maximum": 10
         }
       }
     },
@@ -1116,12 +1110,6 @@
           "type": "boolean",
           "description": "Enable this test",
           "default": true
-        },
-        "criticality": {
-          "type": "integer",
-          "description": "1-10 scale for health scoring",
-          "minimum": 1,
-          "maximum": 10
         }
       }
     },
@@ -1173,12 +1161,6 @@
           "type": "boolean",
           "description": "Enable this test",
           "default": true
-        },
-        "criticality": {
-          "type": "integer",
-          "description": "1-10 scale for health scoring",
-          "minimum": 1,
-          "maximum": 10
         }
       }
     },
@@ -1238,12 +1220,6 @@
           "type": "boolean",
           "description": "Enable this test",
           "default": true
-        },
-        "criticality": {
-          "type": "integer",
-          "description": "1-10 scale for health scoring",
-          "minimum": 1,
-          "maximum": 10
         }
       }
     },
@@ -1293,12 +1269,6 @@
           "type": "boolean",
           "description": "Enable this test",
           "default": true
-        },
-        "criticality": {
-          "type": "integer",
-          "description": "1-10 scale for health scoring",
-          "minimum": 1,
-          "maximum": 10
         }
       }
     },
@@ -1347,12 +1317,6 @@
           "type": "boolean",
           "description": "Enable this test",
           "default": true
-        },
-        "criticality": {
-          "type": "integer",
-          "description": "1-10 scale for health scoring",
-          "minimum": 1,
-          "maximum": 10
         }
       }
     },
@@ -1400,12 +1364,6 @@
           "type": "boolean",
           "description": "Enable this test",
           "default": true
-        },
-        "criticality": {
-          "type": "integer",
-          "description": "1-10 scale for health scoring",
-          "minimum": 1,
-          "maximum": 10
         }
       }
     },
@@ -1446,12 +1404,6 @@
           "type": "boolean",
           "description": "Enable this test",
           "default": true
-        },
-        "criticality": {
-          "type": "integer",
-          "description": "1-10 scale for health scoring",
-          "minimum": 1,
-          "maximum": 10
         }
       }
     },

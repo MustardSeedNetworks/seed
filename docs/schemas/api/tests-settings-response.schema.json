@@ -64,9 +64,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "criticality": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -75,8 +72,7 @@
         "name",
         "baseUrl",
         "authType",
-        "enabled",
-        "criticality"
+        "enabled"
       ]
     },
     "FileShareEndpointResponse": {
@@ -107,9 +103,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "criticality": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -119,8 +112,7 @@
         "protocol",
         "host",
         "share",
-        "enabled",
-        "criticality"
+        "enabled"
       ]
     },
     "HL7EndpointResponse": {
@@ -148,9 +140,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "criticality": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -163,8 +152,7 @@
         "sendingFacility",
         "receivingApp",
         "receivingFacility",
-        "enabled",
-        "criticality"
+        "enabled"
       ]
     },
     "HTTPEndpointResponse": {
@@ -243,9 +231,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "criticality": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -257,8 +242,7 @@
         "useTls",
         "startTls",
         "baseDn",
-        "enabled",
-        "criticality"
+        "enabled"
       ]
     },
     "LTIEndpointResponse": {
@@ -274,9 +258,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "criticality": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -284,8 +265,7 @@
       "required": [
         "name",
         "launchUrl",
-        "enabled",
-        "criticality"
+        "enabled"
       ]
     },
     "ModbusEndpointResponse": {
@@ -310,9 +290,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "criticality": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -323,8 +300,7 @@
         "port",
         "unitId",
         "testRegister",
-        "enabled",
-        "criticality"
+        "enabled"
       ]
     },
     "OPCUAEndpointResponse": {
@@ -343,9 +319,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "criticality": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -353,8 +326,7 @@
       "required": [
         "name",
         "endpointUrl",
-        "enabled",
-        "criticality"
+        "enabled"
       ]
     },
     "PingTargetResponse": {
@@ -419,9 +391,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "criticality": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -432,8 +401,7 @@
         "host",
         "port",
         "database",
-        "enabled",
-        "criticality"
+        "enabled"
       ]
     },
     "SpeedtestSettingsResponse": {

@@ -25,9 +25,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "criticality": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -38,8 +35,7 @@
         "port",
         "unitId",
         "testRegister",
-        "enabled",
-        "criticality"
+        "enabled"
       ]
     }
   },

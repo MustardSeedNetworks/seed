@@ -28,9 +28,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "criticality": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -42,8 +39,7 @@
         "useTls",
         "startTls",
         "baseDn",
-        "enabled",
-        "criticality"
+        "enabled"
       ]
     }
   },
