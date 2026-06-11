@@ -33,11 +33,13 @@ while IFS= read -r f; do
 	# Allow the eponymous package file/test (dir named for the prefix token).
 	[[ "$dir" == "$prefix" ]] && continue
 	violations+="$f"$'\n'
-done < <(find . \
-	-type f \
-	\( -name 'handlers_*.go' -o -name 'jobs_*.go' \) \
-	-not -path './vendor/*' \
-	-not -path './internal/api/*')
+# Scan git-tracked files only — never a raw worktree walk. CI sets GOMODCACHE
+# inside the repo (./.cache/go/pkg/mod), so a find(1) sweep would trip on
+# third-party handlers_*.go in the module cache (a false positive). git ls-files
+# inherently ignores the cache, build artifacts, and anything gitignored.
+done < <(git ls-files -- \
+	':(glob)**/handlers_*.go' ':(glob)**/jobs_*.go' \
+	':(exclude)internal/api/**' ':(exclude)vendor/**')
 violations=$(printf '%s' "$violations" | sed '/^[[:space:]]*$/d' | sort)
 
 if [[ -n "$violations" ]]; then
