@@ -28,7 +28,8 @@ See the [Re-Architecture Blueprint](../RE_ARCHITECTURE_BLUEPRINT.md) for the ful
 | [0018](0018-discovery-pipeline-stage-split.md) | Discovery pipeline stage split — capabilities as staged ports | Accepted |
 | [0019](0019-ed25519-signed-license-tokens.md) | Replace forgeable rotor-cipher license key with Ed25519-signed tokens | Accepted |
 | [0020](0020-clean-hexagonal-api-foundation.md) | Clean-hexagonal `internal/api` foundation — use-cases + composition root | Accepted |
-| [0021](0021-persist-and-converge-anomaly-engine.md) | Persist the anomaly engine in SQL and converge every source on it | Proposed |
+| [0021](0021-persist-and-converge-anomaly-engine.md) | Persist the anomaly engine in SQL and converge every source on it | Accepted |
 | [0022](0022-passive-ingress-listeners.md) | Passive-ingress listeners share the engine lifecycle and a sink seam | Accepted |
 | [0023](0023-snmp-polling-orchestrator.md) | SNMP polling as one engine driving per-target collector chains | Accepted |
 | [0024](0024-identity-use-cases-and-repository-ports.md) | Identity decomposition — users / oauth / tokens use-cases over repository ports | Accepted |
+| [0025](0025-probe-is-the-active-monitoring-anomaly-source.md) | Probe is the recurring-observation engine and the anomaly producer (probe vs jobs) | Accepted |
