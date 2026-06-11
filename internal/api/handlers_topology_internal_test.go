@@ -97,6 +97,7 @@ func TestHandleTopologyNodes_ReturnsSeedededNodes(t *testing.T) {
 		t.Fatalf("nodes = %d, want 2", len(resp.Nodes))
 	}
 }
+
 func TestHandleTopologyNodes_DeviceTypeFilter(t *testing.T) {
 	s := newTopologyTestServer(t)
 	seedTopology(t, s.db())
@@ -280,6 +281,7 @@ func TestHandleTopologyARP_FilterByNodeID(t *testing.T) {
 		t.Errorf("count = %d, want 2 (both bindings live on node-test-1)", resp.Count)
 	}
 }
+
 func TestHandleTopologyARP_InvalidSinceReturns400(t *testing.T) {
 	s := newTopologyTestServer(t)
 	req := httptest.NewRequest(http.MethodGet,
