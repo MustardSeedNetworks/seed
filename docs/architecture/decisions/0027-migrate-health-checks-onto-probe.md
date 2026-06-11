@@ -92,6 +92,17 @@
 > the probes table via a thin best-effort hydrate snapshot; P3 deletes that. No schema
 > migration was needed. (Landed in #1642.)
 
+> **First-run seeding follow-up (2026-06-11).** Making the `probes` table the store of
+> record left a gap P2 did not close: nothing populated it on a fresh install, so the
+> health-check card came up empty out-of-box (the pre-ADR-0027 `/run` path read factory
+> defaults straight from `config.HealthChecks`; that fallback is gone). Fixed by seeding
+> `config.DefaultConfig().HealthChecks` through the same `healthCheckProbesFromConfig` +
+> `ReplaceProbesByKinds` used by the settings save, run once at server init
+> (`seedDefaultHealthCheckProbes`) and gated by a persistent `settings` marker
+> (`health_checks.seeded`) so deleting every probe does not re-seed on the next restart.
+> An install that already holds health-check probes (the upgrade path, marker absent) is
+> marked seeded and left untouched.
+
 > **P1 as-built (2026-06-11).** The eight vertical checkers landed as `probe.Checker`
 > implementations under `internal/probe/checkers/` (`hl7.go`, `fhir.go`, `sql.go`,
 > `fileshare.go`, `ldap.go`, `lti.go`, `opcua.go`, `modbus.go`), each registered in the
