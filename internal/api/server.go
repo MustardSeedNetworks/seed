@@ -57,6 +57,7 @@ import (
 	snmporchestrator "github.com/MustardSeedNetworks/seed/internal/polling/snmp/orchestrator"
 	"github.com/MustardSeedNetworks/seed/internal/polling/snmp/snmpclient"
 	"github.com/MustardSeedNetworks/seed/internal/probe"
+	probeanomaly "github.com/MustardSeedNetworks/seed/internal/probe/anomaly"
 	"github.com/MustardSeedNetworks/seed/internal/probe/checkers"
 	"github.com/MustardSeedNetworks/seed/internal/profiles/catalog"
 	"github.com/MustardSeedNetworks/seed/internal/scheduler"
@@ -196,6 +197,7 @@ type Server struct {
 	// --- Unified probe engine + substrate (Stage A1.8) ---
 	probeEngine     *probe.Engine
 	probeScheduler  *scheduler.Scheduler
+	probeAnomaly    *probeanomaly.Producer
 	retentionEngine *retention.Engine
 
 	// --- Wi-Fi visibility (scan, manage, survey) ---
@@ -482,6 +484,25 @@ func (s *Server) initProbeEngine(db *database.DB) {
 	s.probeScheduler = sched
 	if regErr := s.registerEngineIfLicensed(probeEngine); regErr != nil {
 		logging.GetLogger().Warn("probe engine registry registration failed", "error", regErr)
+	}
+
+	// Wire the active-monitoring anomaly producer (ADR-0025): it subscribes to
+	// the probe engine's ResultEvent channel here (so it does not miss events
+	// before its own Start) and persists threshold breaches as anomalies under
+	// source=probe. Subscription happens now; the consume/maintenance loops start
+	// with the lifecycle. A catalog error is logged and skips the producer rather
+	// than aborting probe startup.
+	producer, prodErr := probeanomaly.New(
+		probeEngine.Subscribe(), db.Anomalies(),
+		probeanomaly.WithLogger(logging.GetLogger()),
+	)
+	if prodErr != nil {
+		logging.GetLogger().Warn("probe anomaly producer not wired", "error", prodErr)
+		return
+	}
+	s.probeAnomaly = producer
+	if regErr := s.registerEngineIfLicensed(producer); regErr != nil {
+		logging.GetLogger().Warn("probe anomaly producer registry registration failed", "error", regErr)
 	}
 }
 
