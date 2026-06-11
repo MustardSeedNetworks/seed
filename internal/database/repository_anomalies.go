@@ -134,6 +134,97 @@ func (r *AnomalyRepository) DeleteResolvedOlderThan(ctx context.Context, cutoff 
 	return affected, nil
 }
 
+// truncToUTCDay returns t collapsed to UTC midnight, the canonical day boundary
+// for census buckets.
+func truncToUTCDay(t time.Time) time.Time {
+	y, m, d := t.UTC().Date()
+	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+}
+
+// anomalyDayFormat is the YYYY-MM-DD UTC form stored in
+// anomaly_rollups_daily.day_bucket. It matches internal/timeseries/retention's
+// dayFormat so anomaly and probe rollups bucket identically.
+const anomalyDayFormat = "2006-01-02"
+
+// censusDaySQL writes one anomaly_rollups_daily row per (def, subject) whose
+// lifecycle intersects the given UTC day (ADR-0028 §1): the day falls in
+// [date(first_seen), date(coalesce(resolved_at, last_seen))]. coalesce folds the
+// resolution day in for resolved rows (resolved_at >= last_seen) and uses
+// last_seen for active rows (resolved_at NULL). INSERT OR REPLACE on the PK
+// (day_bucket, def_key, subject_kind, subject_id) makes a re-census idempotent —
+// it refreshes the snapshot to the latest cumulative count / severity. The live
+// `severity` is taken as max_severity: the coalescing engine escalates-only
+// within a live instance, so the current value is the highest the (def, subject)
+// has held (ADR-0028 §4).
+const censusDaySQL = `
+	INSERT OR REPLACE INTO anomaly_rollups_daily
+	  (day_bucket, def_key, source, category, subject_kind, subject_id,
+	   max_severity, count_cumulative, first_seen, last_seen, is_resolved, resolved_at)
+	SELECT
+	  ?, def_key, source, category, subject_kind, subject_id,
+	  severity, count, first_seen, last_seen, is_resolved, resolved_at
+	FROM anomalies
+	WHERE date(first_seen) <= ?
+	  AND ? <= date(COALESCE(resolved_at, last_seen))`
+
+// CensusThrough writes the daily census for every UTC day from the last censused
+// day through today inclusive (ADR-0028 §1/§3), so a server that missed day
+// boundaries during downtime catches up on its next maintenance pass. The
+// rollup table is its own high-water mark — MAX(day_bucket) — so no separate
+// marker is needed; an empty table censuses today only. Re-censusing the
+// high-water day is harmless (idempotent) and captures late-in-day updates.
+// Returns the number of rows written across all censused days. Call BEFORE the
+// resolved-anomaly TTL purge so a resolution-day row is captured before its live
+// row is deleted (ADR-0028 §2: census first, purge second).
+func (r *AnomalyRepository) CensusThrough(ctx context.Context, today time.Time) (int64, error) {
+	today = truncToUTCDay(today)
+
+	var highWater sql.NullString
+	if err := r.db.QueryRow(ctx,
+		`SELECT MAX(day_bucket) FROM anomaly_rollups_daily`,
+	).Scan(&highWater); err != nil {
+		return 0, fmt.Errorf("anomaly rollup high-water: %w", err)
+	}
+
+	start := today
+	if highWater.Valid {
+		if hw, err := time.Parse(anomalyDayFormat, highWater.String); err == nil && hw.Before(today) {
+			start = truncToUTCDay(hw)
+		}
+	}
+
+	var written int64
+	for day := start; !day.After(today); day = day.AddDate(0, 0, 1) {
+		bucket := day.Format(anomalyDayFormat)
+		res, err := r.db.Exec(ctx, censusDaySQL, bucket, bucket, bucket)
+		if err != nil {
+			return written, fmt.Errorf("census anomalies for %s: %w", bucket, err)
+		}
+		if n, raErr := res.RowsAffected(); raErr == nil {
+			written += n
+		}
+	}
+	return written, nil
+}
+
+// PurgeRollupsDailyOlderThan removes census rows whose day_bucket predates cutoff,
+// bounding the rollup table by the DailyDays tier horizon (ADR-0028 §4, mirroring
+// probe_rollups_daily). Returns the number of rows removed.
+func (r *AnomalyRepository) PurgeRollupsDailyOlderThan(ctx context.Context, cutoff time.Time) (int64, error) {
+	result, err := r.db.Exec(ctx,
+		`DELETE FROM anomaly_rollups_daily WHERE day_bucket < ?`,
+		cutoff.UTC().Format(anomalyDayFormat),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("purge anomaly rollups daily: %w", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("purge anomaly rollups daily rows affected: %w", err)
+	}
+	return affected, nil
+}
+
 // LoadActive returns every unresolved instance, ordered by id for determinism,
 // so the engine can be repopulated on start.
 func (r *AnomalyRepository) LoadActive(ctx context.Context) ([]anomaly.Record, error) {
