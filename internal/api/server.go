@@ -33,6 +33,8 @@ import (
 	"github.com/MustardSeedNetworks/seed/internal/discovery/enumerate"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/problems"
 	"github.com/MustardSeedNetworks/seed/internal/discovery/vuln"
+	"github.com/MustardSeedNetworks/seed/internal/engine"
+	enginestatus "github.com/MustardSeedNetworks/seed/internal/engine/status"
 	"github.com/MustardSeedNetworks/seed/internal/health"
 	"github.com/MustardSeedNetworks/seed/internal/health/monitoring"
 	ssosync "github.com/MustardSeedNetworks/seed/internal/identity/oauth"
@@ -155,6 +157,7 @@ type Server struct {
 	bluetoothScans     *bluetooth.Service          // Bluetooth-discovery use-case (ADR-0020)
 	healthMonitoring   *monitoring.Service         // Health-monitoring use-case (ADR-0020)
 	updateLifecycle    *lifecycle.Service          // Update-lifecycle use-case (ADR-0020)
+	engineStatus       *enginestatus.Service       // Engine-status use-case (ADR-0020)
 	identityUsers      *users.Service              // User-management use-case (ADR-0020, ADR-0024)
 	identityTokens     *tokens.Service             // PAT mint/list/revoke use-case (ADR-0020, ADR-0024)
 	identityOAuth      *ssosync.Service            // SSO identity-sync use-case (ADR-0020, ADR-0024)
@@ -792,6 +795,7 @@ func (s *Server) db() *database.DB                           { return s.services
 func (s *Server) apiTokenRepo() *database.APITokenRepository { return s.services.Auth.APITokens }
 func (s *Server) licenseManager() *license.Manager           { return s.services.Auth.License }
 func (s *Server) updateService() *update.Service             { return s.services.Update }
+func (s *Server) engineRegistry() *engine.Registry           { return s.services.Engines }
 
 // initWiFiUseCases wires the Wi-Fi troubleshooting use-cases (ADR-0020) from the
 // composition root: the visibility-read, management, and discovery use-cases over
@@ -835,6 +839,13 @@ func (s *Server) initUpdateUseCases() {
 	s.updateLifecycle = app.NewUpdateLifecycle(s.updateService)
 }
 
+// initEngineUseCases wires the engine-status use-case (ADR-0020) from the
+// composition root over the server's lazy accessor for the engine registry,
+// so a nil or later-set registry (the api test harness) is honored.
+func (s *Server) initEngineUseCases() {
+	s.engineStatus = app.NewEngineStatus(s.engineRegistry)
+}
+
 // initIdentityUseCases wires the identity use-cases (ADR-0020, ADR-0024) from
 // the composition root over the server's lazy accessors for the database, the
 // token repository, and the license manager, so a nil or later-set collaborator
@@ -847,12 +858,13 @@ func (s *Server) initIdentityUseCases() {
 
 // initUseCases wires the ADR-0020 application use-cases that depend on the
 // discovery components existing: troubleshooting + discovery + health + update +
-// identity.
+// identity + engine-status.
 func (s *Server) initUseCases() {
 	s.initWiFiUseCases()
 	s.initDiscoveryUseCases()
 	s.initHealthUseCases()
 	s.initUpdateUseCases()
+	s.initEngineUseCases()
 	s.initIdentityUseCases()
 }
 
