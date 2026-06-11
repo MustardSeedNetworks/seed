@@ -40,6 +40,22 @@ func healthCheckKinds() []string {
 	}
 }
 
+// countHealthCheckProbes returns the total number of probes across the
+// health-check kinds for the default client. Used by the first-run seed to
+// detect an install that already holds a configured set (the upgrade path)
+// so the factory defaults never overwrite it.
+func countHealthCheckProbes(ctx context.Context, repo *database.ProbeRepository) (int, error) {
+	total := 0
+	for _, kind := range healthCheckKinds() {
+		n, err := repo.CountProbes(ctx, database.DefaultClientID, kind)
+		if err != nil {
+			return 0, fmt.Errorf("count %s probes: %w", kind, err)
+		}
+		total += n
+	}
+	return total, nil
+}
+
 // endpointToProbe builds a probe row from an endpoint: the endpoint is
 // marshaled wholesale into params_json (Name/Target/Enabled are also
 // authoritative columns, so the duplicate keys in params are harmless
